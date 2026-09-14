@@ -32,8 +32,9 @@ import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
+import { scaledPx, useCardHeightScale } from '../../cardHeightContext'
 import { CSVExportButton } from '../../CSVExportButton'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { cexAnalyticsColumns } from './columns'
@@ -112,13 +113,11 @@ type CexAnalyticsDatasetProps = {
 }
 
 function DatasetState({
-	title,
 	isLoading,
 	isError,
 	errorMessage,
 	children
 }: {
-	title: string
 	isLoading: boolean
 	isError: boolean
 	errorMessage: string
@@ -126,13 +125,9 @@ function DatasetState({
 }) {
 	if (isLoading) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
-				</div>
-				<div className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading CEX analytics...</p>
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading CEX analytics…" />
 				</div>
 			</div>
 		)
@@ -140,11 +135,8 @@ function DatasetState({
 
 	if (isError) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
-				</div>
-				<div className="flex min-h-[320px] flex-1 items-center justify-center">
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(320px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">{errorMessage}</div>
 				</div>
 			</div>
@@ -227,12 +219,9 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 	]
 
 	return (
-		<div className="flex h-full w-full flex-col gap-4 p-4">
+		<div className="flex h-full w-full flex-col gap-4">
 			<div className="flex flex-wrap items-start justify-between gap-2">
-				<div>
-					<h3 className="text-lg font-semibold text-pro-text-primary">CEX Summary</h3>
-					<p className="text-sm text-pro-text-secondary">Snapshot metrics across centralized exchanges.</p>
-				</div>
+				<p className="text-sm text-pro-text-secondary">Snapshot metrics across centralized exchanges.</p>
 				{data.summary.loadedAt ? (
 					<span className="text-xs tracking-wide text-pro-text-tertiary uppercase">
 						Loaded {formatDateTime(data.summary.loadedAt, { timeZone: 'UTC' }) ?? '-'}
@@ -285,15 +274,12 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 	const [_venueName, setVenueName] = useTableSearch({ instance, columnToSearch: 'venue' })
 
 	return (
-		<div className="flex h-full w-full flex-col p-4">
+		<div className="flex h-full w-full flex-col">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<div className="mr-auto">
-						<h3 className="text-lg font-semibold text-pro-text-primary">CEX Comparison</h3>
-						<p className="text-sm text-pro-text-secondary">
-							Spot, derivatives, OI, leverage, and efficiency across CEXs.
-						</p>
-					</div>
+					<p className="mr-auto text-sm text-pro-text-secondary">
+						Spot, derivatives, OI, leverage, and efficiency across CEXs.
+					</p>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<CSVExportButton
 							onClick={() => {
@@ -336,7 +322,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							type="text"
 							placeholder="Search CEXs..."
 							onInput={(event) => setVenueName(event.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
@@ -359,6 +345,8 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 
 function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint> }) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(360, cardHeightScale)
 	const filtered = useMemo(
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
 		[data, timePeriod, customTimePeriod]
@@ -373,21 +361,21 @@ function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint>
 
 	if (dataset.source.length === 0) {
 		return (
-			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
+			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No volume data available.
 			</div>
 		)
 	}
 
 	return (
-		<div className="flex h-full w-full flex-col p-4">
-			<Suspense fallback={<div className="h-[360px]" />}>
+		<div className="flex h-full w-full flex-col">
+			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
 					title="Spot vs Derivatives Volume"
 					dataset={dataset}
 					charts={SPOT_VS_DERIVATIVES_CHARTS}
 					valueSymbol="$"
-					height="360px"
+					height={chartHeight}
 					hideDefaultLegend={false}
 				/>
 			</Suspense>
@@ -406,6 +394,8 @@ function VenueMarketShareChart({
 }) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(360, cardHeightScale)
 	const filtered = useMemo(
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
 		[data, timePeriod, customTimePeriod]
@@ -466,16 +456,15 @@ function VenueMarketShareChart({
 
 	if (dataset.source.length === 0 || charts.length === 0) {
 		return (
-			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
+			<div className="flex min-h-[calc(320px*var(--card-scale,1))] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No market share data available.
 			</div>
 		)
 	}
 
 	return (
-		<div className="flex h-full w-full flex-col p-4">
-			<div className="flex flex-wrap items-center justify-between gap-2 pb-2">
-				<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
+		<div className="flex h-full w-full flex-col">
+			<div className="flex flex-wrap items-center justify-end gap-2 pb-2">
 				<div className="flex flex-wrap items-center justify-end gap-2">
 					{venueSeries.length > 1 ? (
 						<SelectWithCombobox
@@ -498,7 +487,7 @@ function VenueMarketShareChart({
 					/>
 				</div>
 			</div>
-			<Suspense fallback={<div className="h-[360px]" />}>
+			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
 					title=""
 					dataset={dataset}
@@ -507,7 +496,7 @@ function VenueMarketShareChart({
 					chartOptions={STACKED_PERCENT_CHART_OPTIONS}
 					solidChartAreaStyle
 					valueSymbol="%"
-					height="360px"
+					height={chartHeight}
 					hideDefaultLegend={false}
 					exportButtons="hidden"
 					onReady={handleChartReady}
@@ -532,7 +521,6 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 	if (view === 'summary') {
 		return (
 			<DatasetState
-				title="CEX Summary"
 				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
 				isError={Boolean(snapshotQuery.error)}
 				errorMessage="Failed to load CEX summary"
@@ -545,7 +533,6 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 	if (view === 'comparison') {
 		return (
 			<DatasetState
-				title="CEX Comparison"
 				isLoading={snapshotQuery.isLoading || (!streamDone && snapshotQuery.data === undefined)}
 				isError={Boolean(snapshotQuery.error)}
 				errorMessage="Failed to load CEX comparison data"
@@ -558,7 +545,6 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 	if (view === 'spot-vs-derivatives') {
 		return (
 			<DatasetState
-				title="Spot vs Derivatives Volume"
 				isLoading={totalsQuery.isLoading || (!streamDone && totalsQuery.data === undefined)}
 				isError={Boolean(totalsQuery.error)}
 				errorMessage="Failed to load CEX volume history"
@@ -571,7 +557,6 @@ export function CexAnalyticsDataset({ config }: CexAnalyticsDatasetProps) {
 	if (view === 'market-share') {
 		return (
 			<DatasetState
-				title="CEX Market Share"
 				isLoading={shareQuery.isLoading || (!streamDone && shareQuery.data === undefined)}
 				isError={Boolean(shareQuery.error)}
 				errorMessage="Failed to load CEX market share"

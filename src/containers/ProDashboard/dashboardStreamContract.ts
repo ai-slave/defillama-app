@@ -90,4 +90,5 @@ export type DashboardStreamChunk =
 	| { type: 'yieldsDatasetData'; key: string; data: Array<ProYieldRow> }
 	| { type: 'stablecoinsTableData'; key: string; data: StablecoinsTableData }
 	| { type: 'stablecoinAssetData'; key: string; data: StablecoinAssetCacheValue }
+	| { type: 'itemReady'; itemIds: Array<string> }
 	| { type: 'done' }

@@ -1,5 +1,6 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
+import { getDashboardItemLayout } from '../dashboardLayout/cardHeight'
 import type { Dashboard } from '../dashboardTypes'
 import { DashboardError, dashboardAPI, type DashboardAuthorizedFetch } from '../services/DashboardAPI'
 import { toPersistedDashboardItems } from './dashboardUtils'
@@ -55,7 +56,7 @@ export function replaceDashboardItem(
 			? {
 					...replacement,
 					id: target.id,
-					...(target.colSpan === undefined ? {} : { colSpan: target.colSpan })
+					...getDashboardItemLayout(target)
 				}
 			: item
 	)

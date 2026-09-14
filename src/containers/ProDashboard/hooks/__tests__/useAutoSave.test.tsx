@@ -9,6 +9,8 @@ import type { SqlChartConfig } from '../../types'
 import { useAutoSave } from '../useAutoSave'
 
 const api = vi.hoisted(() => ({ update: vi.fn() }))
+const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
+vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ isAuthenticated: true, user: { id: 'owner' }, authorizedFetch: vi.fn() })
 }))
@@ -29,23 +31,35 @@ const saved: Dashboard = {
 	updated: ''
 }
 const items = (content: string) => [{ id: 'text', kind: 'text' as const, content }]
-function Harness({ dashboard = saved, enabled = true }: { dashboard?: Dashboard; enabled?: boolean }) {
+function Harness({
+	dashboard = saved,
+	enabled = true,
+	delay = 100,
+	isFreeUser = false
+}: {
+	dashboard?: Dashboard
+	enabled?: boolean
+	delay?: number
+	isFreeUser?: boolean
+}) {
 	autosave = useAutoSave({
 		dashboard,
 		enabled,
-		isFreeUser: false,
+		isFreeUser,
 		timePeriod: '365d',
 		customTimePeriod: null,
-		delay: 100
+		variables: [],
+		annotations: [],
+		delay
 	})
 	return null
 }
-async function mount(dashboard = saved, enabled = true) {
+async function mount(dashboard = saved, enabled = true, delay = 100, isFreeUser = false) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
 				<DashboardSaveGuard />
-				<Harness key={dashboard.id} dashboard={dashboard} enabled={enabled} />
+				<Harness key={dashboard.id} dashboard={dashboard} enabled={enabled} delay={delay} isFreeUser={isFreeUser} />
 			</QueryClientProvider>
 		)
 	)
@@ -61,6 +75,7 @@ function leaving() {
 beforeEach(() => {
 	vi.useFakeTimers()
 	vi.clearAllMocks()
+	window.sessionStorage.clear()
 	api.update.mockReset().mockImplementation(async (id, data) => ({ ...saved, id, data }))
 	client = new QueryClient()
 	container = document.createElement('div')
@@ -267,4 +282,47 @@ test('finishing an older save cannot clear the newer queued draft', async () => 
 	await act(async () => second.resolve(saved))
 	await advance()
 	expect(autosave.hasPendingSave()).toBe(false)
+})
+
+test('a document above 48 KiB flushes after 300ms while small documents keep the configured delay', async () => {
+	await mount(saved, true, 800)
+	await act(async () => autosave.autoSave(items('Small')))
+	await advance(300)
+	expect(api.update).not.toHaveBeenCalled()
+	await advance(500)
+	expect(api.update).toHaveBeenCalledOnce()
+
+	const largeItems = Array.from({ length: 60 }, (_, index) => ({
+		id: `text-${index}`,
+		kind: 'text' as const,
+		content: 'x'.repeat(1024)
+	}))
+	expect(JSON.stringify(largeItems).length).toBeGreaterThan(48 * 1024)
+	await act(async () => autosave.autoSave(largeItems))
+	await advance(299)
+	expect(api.update).toHaveBeenCalledOnce()
+	await advance(1)
+	expect(api.update).toHaveBeenCalledTimes(2)
+	expect(api.update.mock.calls[1][1].items).toHaveLength(60)
+})
+
+test('sends variables and annotations with every autosave, preferring explicit overrides', async () => {
+	await mount()
+	await act(async () => autosave.autoSave(items('Defaults')))
+	await advance()
+	expect(api.update.mock.calls[0][1]).toMatchObject({ variables: [], annotations: [] })
+	const variables = [{ id: 'chain', kind: 'chain' as const, label: 'Chain', value: 'Ethereum' }]
+	const annotations = [{ id: 'launch', date: '2026-03-01', label: 'Launch' }]
+	await act(async () => autosave.autoSave(items('Overrides'), { variables, annotations }))
+	await advance()
+	expect(api.update.mock.calls[1][1]).toMatchObject({ variables, annotations })
+})
+
+test('a free user autosaves as public and leaves the notice to the save paths', async () => {
+	const privateDashboard: Dashboard = { ...saved, visibility: 'private' }
+	await mount(privateDashboard, true, 100, true)
+	await act(async () => autosave.autoSave(items('First')))
+	await advance()
+	expect(api.update.mock.calls[0][1]).toMatchObject({ visibility: 'public' })
+	expect(toastMock).not.toHaveBeenCalled()
 })

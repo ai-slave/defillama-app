@@ -5,6 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chains/api'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import { AriakitMultiSelect } from '../../AriakitMultiSelect'
@@ -275,15 +276,15 @@ export function SelectItemsStep() {
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label={`Search ${typeLabel.toLowerCase()}`}
 							placeholder={`Search ${typeLabel.toLowerCase()}...`}
-							className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-2 pr-3 pl-9 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+							className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-2 pr-3 pl-9 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
 				<div ref={listRef} className="h-[280px] overflow-y-auto bg-pro-cards-bg">
 					{protocolsLoading ? (
-						<div className="flex h-full items-center justify-center">
-							<div className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+						<div className="flex h-full items-center justify-center text-pro-text-tertiary">
+							<LoadingSpinner size={24} />
 						</div>
 					) : protocolCatalog.status === 'error' ? (
 						<div role="alert" className="flex h-full flex-col items-center justify-center gap-2 text-pro-text-tertiary">
@@ -333,7 +334,7 @@ export function SelectItemsStep() {
 									>
 										<div
 											className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-												isSelected ? 'border-brand bg-brand' : 'border-pro-form-control-border bg-surface-elevated-1'
+												isSelected ? 'border-brand bg-brand' : 'border-pro-cards-border bg-surface-elevated-1'
 											}`}
 										>
 											{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}

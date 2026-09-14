@@ -54,7 +54,9 @@ interface UseStablecoinAssetChartDataResult {
 	isInactive: boolean
 	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
+	isFetching: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 const EMPTY_ASSET_PRESENTATIONS: Record<StablecoinAssetChartType, StablecoinAssetPresentation> = {
@@ -212,7 +214,9 @@ export function useStablecoinAssetChartData(
 	const {
 		data: rawData,
 		isLoading,
-		error
+		isFetching,
+		error,
+		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoin-asset-chart-data', stablecoinSlug],
 		queryFn: async () => {
@@ -264,7 +268,9 @@ export function useStablecoinAssetChartData(
 			isInactive,
 			prepareCompleteCsvDataset,
 			isLoading,
-			error
+			isFetching,
+			error,
+			refetch
 		}),
 		[
 			presentation,
@@ -274,7 +280,9 @@ export function useStablecoinAssetChartData(
 			isInactive,
 			prepareCompleteCsvDataset,
 			isLoading,
-			error
+			isFetching,
+			error,
+			refetch
 		]
 	)
 }

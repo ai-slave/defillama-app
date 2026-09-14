@@ -100,7 +100,7 @@ describe('InViewDashboardCard', () => {
 		)
 		expect(queryStarted).not.toHaveBeenCalled()
 		expect(mounted).not.toHaveBeenCalled()
-		expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading dashboard card')
+		expect(container.querySelector('[aria-busy="true"]')?.textContent).toContain('Loading card')
 		expect(container.firstElementChild?.getAttribute('aria-busy')).toBe('true')
 		const observer = observers[0]
 		if (!observer) throw new Error('Expected the dashboard card observer')

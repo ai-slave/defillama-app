@@ -42,6 +42,8 @@ export function DashboardSaveGuard() {
 		return () => window.removeEventListener('beforeunload', warn)
 	}, [unsaved])
 	const routeKey = router.query.dashboardId
+	const routeMode = Array.isArray(router.query.mode) ? router.query.mode[0] : router.query.mode
+	const onDashboardEditRoute = router.pathname === '/pro/[dashboardId]/[[...mode]]' && routeMode === 'edit'
 	const routeDashboard = client.getQueryData<Dashboard>([
 		'pro-dashboard',
 		'dashboard',
@@ -56,8 +58,7 @@ export function DashboardSaveGuard() {
 		>
 			{failures.map(({ request }) =>
 				pending.has(request.id) ||
-				(router.pathname === '/pro/[dashboardId]/edit' &&
-					(routeKey === request.id || routeDashboard?.id === request.id)) ? null : (
+				(onDashboardEditRoute && (routeKey === request.id || routeDashboard?.id === request.id)) ? null : (
 					<FailedDashboardDraft key={request.id} request={request} userId={user?.id} />
 				)
 			)}

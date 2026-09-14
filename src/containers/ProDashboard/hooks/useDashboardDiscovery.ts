@@ -16,29 +16,6 @@ interface SearchParams {
 	limit?: number
 }
 
-const POPULAR_TAGS = [
-	'analytics',
-	'finance',
-	'marketing',
-	'hr',
-	'sales',
-	'kpi',
-	'metrics',
-	'reporting',
-	'real-time',
-	'daily',
-	'weekly',
-	'monthly',
-	'revenue',
-	'costs',
-	'performance',
-	'trends',
-	'defi',
-	'trading',
-	'portfolio',
-	'risk'
-]
-
 export function useDashboardDiscovery(params: SearchParams) {
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
@@ -120,7 +97,6 @@ export function useDashboardDiscovery(params: SearchParams) {
 		totalPages: data?.totalPages || 1,
 		totalItems: data?.totalItems || 0,
 		currentPage: data?.page || 1,
-		popularTags: POPULAR_TAGS,
 		likeDashboard: likeMutation.mutate,
 		isLiking: likeMutation.isPending
 	}

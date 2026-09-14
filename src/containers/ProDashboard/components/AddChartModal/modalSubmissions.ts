@@ -2,11 +2,17 @@ import { isChainTokenChartType } from '../../chartSource'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import { createDatasetTableConfig, type NewDatasetTableSelection } from '../../dashboardConfig/datasetTableConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { getDashboardItemLayout } from '../../dashboardLayout/cardHeight'
+import { sanitizeDashboardItemBindings } from '../../dashboardVariables/bindableFields'
+import { setDashboardItemBinding } from '../../dashboardVariables/resolve'
 import {
 	type Chain,
 	CHART_TYPES,
 	type ChartConfig,
+	type DashboardBindableField,
 	type DashboardGrouping,
+	type DashboardItemBindings,
+	type DashboardItemLayout,
 	type DatasetTableConfig,
 	type MetricConfig,
 	type MetricSubject,
@@ -15,7 +21,19 @@ import {
 	limitMultiChartItems,
 	normalizeYieldChartType
 } from '../../types'
+import type { UnifiedTableConfig } from '../../unifiedTable/config/current'
 import type { ModalState } from './types'
+
+export function applyUnifiedTableBinding<Config extends Partial<UnifiedTableConfig>>(
+	config: Config,
+	variableId: string | null
+): Config {
+	const { bindings: previous, ...rest } = config
+	const bindings: DashboardItemBindings = { ...previous }
+	if (variableId) bindings.chains = variableId
+	else delete bindings.chains
+	return (Object.keys(bindings).length > 0 ? { ...rest, bindings } : rest) as Config
+}
 
 export function buildDatasetTableSelections(
 	state: ModalState,
@@ -104,6 +122,22 @@ export function buildDatasetTableSelections(
 
 export type DashboardItemIdFactory = (kind: string, identity: string) => string
 
+const CUSTOM_DATA_COL_SPAN = 2
+
+function withModalBindings(item: DashboardItemConfig, bindings: DashboardItemBindings): DashboardItemConfig {
+	const sanitized = sanitizeDashboardItemBindings(item, bindings)
+	if (!sanitized) return item
+	let bound: DashboardItemConfig = item
+	for (const [field, variableId] of Object.entries(sanitized)) {
+		bound = setDashboardItemBinding(bound, field as DashboardBindableField, variableId)
+	}
+	if (bound.kind === 'chart' && sanitized.subject !== undefined && bound.geckoId !== undefined) {
+		const { geckoId: _boundGeckoId, ...withoutGeckoId } = bound
+		return withoutGeckoId
+	}
+	return bound
+}
+
 interface BuildNewDashboardItemsInput {
 	state: ModalState
 	protocols: ReadonlyArray<Protocol>
@@ -144,7 +178,9 @@ function buildNewChart({
 	idFactory,
 	geckoId,
 	color,
-	dataType
+	dataType,
+	grouping: requestedGrouping,
+	showCumulative
 }: {
 	item: string
 	itemType: 'chain' | 'protocol'
@@ -153,11 +189,14 @@ function buildNewChart({
 	geckoId?: string | null
 	color?: string
 	dataType?: 'documented' | 'realtime'
+	grouping?: ChartConfig['grouping']
+	showCumulative?: boolean
 }): ChartConfig | null {
 	const id = idFactory(chartType, item)
 	const chartTypeDetails = isProDashboardChartType(chartType) ? CHART_TYPES[chartType] : null
-	const grouping: ChartConfig['grouping'] =
-		chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable ? 'day' : undefined
+	const groupable = chartTypeDetails !== null && 'groupable' in chartTypeDetails && chartTypeDetails.groupable === true
+	const grouping: ChartConfig['grouping'] = groupable ? (requestedGrouping ?? 'day') : undefined
+	const cumulative = showCumulative === true ? { showCumulative: true } : {}
 	if (itemType === 'chain') {
 		return createChartConfig({
 			id,
@@ -169,6 +208,7 @@ function buildNewChart({
 			...(geckoId === undefined ? {} : { geckoId }),
 			...(color === undefined ? {} : { color }),
 			...(dataType === undefined ? {} : { dataType }),
+			...cumulative,
 			colSpan: 1
 		})
 	}
@@ -182,6 +222,7 @@ function buildNewChart({
 		...(geckoId === undefined ? {} : { geckoId }),
 		...(color === undefined ? {} : { color }),
 		...(dataType === undefined ? {} : { dataType }),
+		...cumulative,
 		colSpan: 1
 	})
 }
@@ -194,7 +235,7 @@ function buildNewComparisonItems({
 	idFactory
 }: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
 	if (state.composerItems.length > 0) {
-		if (state.chartCreationMode === 'combined') {
+		if (state.chartCreationMode === 'combined' && state.composerItems.length > 1) {
 			let existingMultiCount = 0
 			for (const item of existingItems) if (item.kind === 'multi') existingMultiCount++
 			const defaultGrouping = 'day'
@@ -224,7 +265,9 @@ function buildNewComparisonItems({
 							idFactory,
 							...(chart.geckoId === undefined ? {} : { geckoId: chart.geckoId }),
 							...(chart.color === undefined ? {} : { color: chart.color }),
-							...(chart.dataType === undefined ? {} : { dataType: chart.dataType })
+							...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
+							...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
+							...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative })
 						})
 					: buildNewChart({
 							item: chart.protocol,
@@ -233,7 +276,9 @@ function buildNewComparisonItems({
 							idFactory,
 							...(chart.geckoId === undefined ? {} : { geckoId: chart.geckoId }),
 							...(chart.color === undefined ? {} : { color: chart.color }),
-							...(chart.dataType === undefined ? {} : { dataType: chart.dataType })
+							...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
+							...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
+							...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative })
 						})
 			if (item) items.push(item)
 		}
@@ -430,7 +475,7 @@ function buildNewManualChart(input: BuildNewDashboardItemsInput): Array<Dashboar
 	}
 }
 
-export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
+function buildNewItemsForTab(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
 	const { state, idFactory } = input
 	switch (state.selectedMainTab) {
 		case 'charts':
@@ -504,9 +549,31 @@ export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): Arra
 				: []
 		case 'sql':
 			return []
+		case 'custom-data': {
+			const { customData } = state
+			if (!customData.storedRows || customData.columns.length === 0) return []
+			const sourceName = customData.sourceName.trim()
+			return [
+				{
+					id: idFactory('custom-data', ''),
+					kind: 'custom-data',
+					name: customData.name.trim() || 'Custom data',
+					...(sourceName ? { sourceName } : {}),
+					columns: customData.columns,
+					rows: customData.storedRows,
+					chart: customData.chart,
+					displayMode: customData.displayMode,
+					colSpan: CUSTOM_DATA_COL_SPAN
+				}
+			]
+		}
 		default:
 			return state.selectedMainTab satisfies never
 	}
+}
+
+export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
+	return buildNewItemsForTab(input).map((item) => withModalBindings(item, input.state.bindings))
 }
 
 interface BuildEditedDashboardItemInput {
@@ -529,9 +596,11 @@ function getEditableGrouping(item: DashboardItemConfig): DashboardGrouping | und
 
 function hasSameChartSubject(
 	item: DashboardItemConfig,
-	subject: { subjectType: 'chain'; chain: string } | { subjectType: 'protocol'; protocol: string }
+	subject: { subjectType: 'chain'; chain: string } | { subjectType: 'protocol'; protocol: string },
+	keepsBinding: boolean
 ): item is ChartConfig {
 	if (item.kind !== 'chart' || item.subjectType !== subject.subjectType) return false
+	if (keepsBinding) return true
 	return subject.subjectType === 'chain' ? item.chain === subject.chain : item.protocol === subject.protocol
 }
 
@@ -539,9 +608,12 @@ function getRetainedChartFields(
 	item: DashboardItemConfig,
 	subject: { subjectType: 'chain'; chain: string } | { subjectType: 'protocol'; protocol: string },
 	chartType: string,
-	fallbackGeckoId: string | null | undefined
+	fallbackGeckoId: string | null | undefined,
+	subjectBinding: string | undefined
 ): Pick<ChartConfig, 'color' | 'dataType' | 'geckoId' | 'grouping' | 'showCumulative'> {
-	const previous = hasSameChartSubject(item, subject) ? item : null
+	const keepsBinding =
+		subjectBinding !== undefined && item.kind === 'chart' && item.bindings?.subject === subjectBinding
+	const previous = hasSameChartSubject(item, subject, keepsBinding) ? item : null
 	const chartTypeDetails = isProDashboardChartType(chartType) ? CHART_TYPES[chartType] : null
 	const isGroupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
 	return {
@@ -549,14 +621,47 @@ function getRetainedChartFields(
 		...(chartType === 'unlocks'
 			? { dataType: previous?.type === 'unlocks' ? (previous.dataType ?? 'documented') : 'documented' }
 			: {}),
-		...(previous?.geckoId === undefined
-			? fallbackGeckoId === undefined
-				? {}
-				: { geckoId: fallbackGeckoId }
-			: { geckoId: previous.geckoId }),
+		...(subjectBinding !== undefined
+			? {}
+			: previous?.geckoId === undefined
+				? fallbackGeckoId === undefined
+					? {}
+					: { geckoId: fallbackGeckoId }
+				: { geckoId: previous.geckoId }),
 		...(isGroupable ? { grouping: previous?.grouping ?? 'day' } : {}),
 		...(previous?.showCumulative === undefined ? {} : { showCumulative: previous.showCumulative })
 	}
+}
+
+function buildEditedComposerChart(
+	layout: DashboardItemLayout & { id: string },
+	chart: ChartConfig,
+	subjectBinding: string | undefined
+): DashboardItemConfig | null {
+	const presentation = {
+		...(chart.color === undefined ? {} : { color: chart.color }),
+		...(chart.grouping === undefined ? {} : { grouping: chart.grouping }),
+		...(chart.dataType === undefined ? {} : { dataType: chart.dataType }),
+		...(chart.showCumulative === undefined ? {} : { showCumulative: chart.showCumulative }),
+		...(subjectBinding !== undefined || chart.geckoId === undefined ? {} : { geckoId: chart.geckoId })
+	}
+	return chart.subjectType === 'chain'
+		? createChartConfig({
+				...layout,
+				kind: 'chart',
+				subjectType: 'chain',
+				chain: chart.chain,
+				type: chart.type,
+				...presentation
+			})
+		: createChartConfig({
+				...layout,
+				kind: 'chart',
+				subjectType: 'protocol',
+				protocol: chart.protocol,
+				type: chart.type,
+				...presentation
+			})
 }
 
 function buildEditedManualChart({
@@ -565,9 +670,14 @@ function buildEditedManualChart({
 	protocols,
 	chains
 }: BuildEditedDashboardItemInput): DashboardItemConfig | null {
-	const layout = {
-		id: editItem.id,
-		...(editItem.colSpan === undefined ? {} : { colSpan: editItem.colSpan })
+	const layout = { id: editItem.id, ...getDashboardItemLayout(editItem) }
+	const soleComposerChart = state.composerItems.length === 1 ? state.composerItems[0] : undefined
+	if (
+		editItem.kind === 'chart' &&
+		(state.selectedChartTab === 'chain' || state.selectedChartTab === 'protocol') &&
+		soleComposerChart
+	) {
+		return buildEditedComposerChart(layout, soleComposerChart, state.bindings.subject)
 	}
 	if (
 		(state.selectedChartTab === 'chain' || state.selectedChartTab === 'protocol') &&
@@ -669,7 +779,8 @@ function buildEditedManualChart({
 					editItem,
 					{ subjectType: 'protocol', protocol: state.selectedUnlocksProtocol },
 					'unlocks',
-					protocol?.geckoId
+					protocol?.geckoId,
+					state.bindings.subject
 				)
 			})
 		}
@@ -713,7 +824,8 @@ function buildEditedManualChart({
 					editItem,
 					{ subjectType: 'chain', chain: state.selectedChain },
 					chartType,
-					isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
+					isChainTokenChartType(chartType) ? chain?.gecko_id : undefined,
+					state.bindings.subject
 				)
 			})
 		}
@@ -731,7 +843,8 @@ function buildEditedManualChart({
 					editItem,
 					{ subjectType: 'protocol', protocol: state.selectedProtocol },
 					chartType,
-					protocol?.geckoId
+					protocol?.geckoId,
+					state.bindings.subject
 				)
 			})
 		}
@@ -740,16 +853,13 @@ function buildEditedManualChart({
 	}
 }
 
-export function buildEditedDashboardItem({
+function buildEditedItemForTab({
 	editItem,
 	state,
 	protocols,
 	chains
 }: BuildEditedDashboardItemInput): DashboardItemConfig | null {
-	const layout = {
-		id: editItem.id,
-		...(editItem.colSpan === undefined ? {} : { colSpan: editItem.colSpan })
-	}
+	const layout = { id: editItem.id, ...getDashboardItemLayout(editItem) }
 
 	switch (state.selectedMainTab) {
 		case 'charts':
@@ -790,6 +900,7 @@ export function buildEditedDashboardItem({
 			const metricLabel = state.metricLabel.trim()
 			if (state.metricSubjectType === 'chain') {
 				const geckoId =
+					state.bindings.subject === undefined &&
 					editItem.kind === 'metric' &&
 					editItem.subject.itemType === 'chain' &&
 					editItem.subject.chain === state.metricChain
@@ -814,6 +925,7 @@ export function buildEditedDashboardItem({
 					: null
 			}
 			const geckoId =
+				state.bindings.subject === undefined &&
 				editItem.kind === 'metric' &&
 				editItem.subject.itemType === 'protocol' &&
 				editItem.subject.protocol === state.metricProtocol
@@ -854,7 +966,29 @@ export function buildEditedDashboardItem({
 		}
 		case 'sql':
 			return null
+		case 'custom-data': {
+			const { customData } = state
+			const previous = editItem.kind === 'custom-data' ? editItem : null
+			const rows = customData.storedRows ?? previous?.rows ?? null
+			if (customData.columns.length === 0 || !rows) return null
+			const sourceName = customData.sourceName.trim()
+			return {
+				...layout,
+				kind: 'custom-data',
+				name: customData.name.trim() || 'Custom data',
+				...(sourceName ? { sourceName } : {}),
+				columns: customData.columns,
+				rows,
+				chart: customData.chart,
+				displayMode: customData.displayMode
+			}
+		}
 		default:
 			return state.selectedMainTab satisfies never
 	}
+}
+
+export function buildEditedDashboardItem(input: BuildEditedDashboardItemInput): DashboardItemConfig | null {
+	const item = buildEditedItemForTab(input)
+	return item ? withModalBindings(item, input.state.bindings) : item
 }

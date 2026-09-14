@@ -13,6 +13,7 @@ import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -227,7 +228,26 @@ export function UnlocksChartTab({
 		}
 	}, [availableChartTypes, selectedUnlocksChartType, onSelectedUnlocksChartTypeChange])
 
+	const protocolParameter = useModalFieldBinding('protocol', 'protocol')
+	const selectableProtocolOptions = useMemo(
+		() =>
+			protocolParameter.options.length > 0
+				? [...protocolParameter.options, ...unlocksProtocolOptions]
+				: unlocksProtocolOptions,
+		[protocolParameter.options, unlocksProtocolOptions]
+	)
+
 	const handleProtocolChange = (option: VirtualizedSelectOption) => {
+		const variable = protocolParameter.resolveSelection(option.value)
+		if (variable) {
+			onSelectedUnlocksProtocolChange(variable.value)
+			onSelectedUnlocksProtocolNameChange(
+				unlocksProtocolOptions.find((item) => item.value === variable.value)?.label ?? variable.value
+			)
+			onSelectedUnlocksChartTypeChange('total')
+			protocolParameter.bind(variable.id)
+			return
+		}
 		onSelectedUnlocksProtocolChange(option.value)
 		onSelectedUnlocksProtocolNameChange(option.label)
 		onSelectedUnlocksChartTypeChange('total')
@@ -326,9 +346,12 @@ export function UnlocksChartTab({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
+				{protocolParameter.boundVariable ? (
+					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
+				) : null}
 				<AriakitVirtualizedSelect
 					label="Protocol"
-					options={unlocksProtocolOptions}
+					options={selectableProtocolOptions}
 					selectedValue={selectedUnlocksProtocol || ''}
 					onChange={handleProtocolChange}
 					placeholder="Select protocol..."
@@ -352,7 +375,7 @@ export function UnlocksChartTab({
 				) : null}
 			</div>
 
-			<div className="overflow-hidden rounded-lg border pro-border">
+			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
 					Preview
 				</h4>

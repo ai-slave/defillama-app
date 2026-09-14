@@ -5,24 +5,22 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { Select } from '~/components/Select/Select'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
-import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
-import {
-	type Chain,
-	type ChartConfig,
-	type DashboardGrouping,
-	getProDashboardChartTypeConfig,
-	type Protocol
-} from '../types'
+import { type Chain, type ChartConfig, getProDashboardChartTypeConfig, type Protocol } from '../types'
+import { ProMeta, ProSegmented } from '../ui'
 import { generateChartColor, getItemIconUrl } from '../utils'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { useCardHeightScale, scaledPx } from './cardHeightContext'
+import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
+import { EntityIcon } from './EntityIcon'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading } from './ProCardStatus'
 import { buildSingleMetricChartDataset } from './singleMetricChart'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -79,49 +77,48 @@ function ChartRenderer({
 		]
 	}, [chartType.chartType, color, seriesName, showCumulative])
 
+	const todayHallmarks = useMemo<Array<[number, string]> | undefined>(
+		() => (type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined),
+		[todayTimestamp, type]
+	)
+	const hallmarks = useDashboardAnnotationHallmarks(todayHallmarks)
+	const syncGroup = useChartSyncGroup()
+	const scale = useCardHeightScale()
+	const chartHeight = scaledPx(type === 'unlocks' ? 360 : 300, scale)
+
 	if (isLoading) {
 		return (
-			<div className="flex flex-1 items-center justify-center">
-				<LoadingSpinner />
+			<div className="flex flex-1 flex-col" style={{ minHeight: chartHeight }}>
+				<ProCardLoading />
 			</div>
 		)
 	}
 
 	if (hasError) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center">
-				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="text-pro-text-form">Error loading data</p>
-				<button
-					type="button"
-					className="text-sm text-link hover:underline"
-					onClick={() => {
-						refetch()
-					}}
-				>
-					Try again
-				</button>
-			</div>
+			<ProCardError
+				onRetry={() => {
+					refetch()
+				}}
+			/>
 		)
 	}
 
 	if (dataset.source.length === 0) {
-		return <p className="flex flex-1 items-center justify-center text-pro-text-form">No data available</p>
+		return <ProCardEmpty message="No data available" />
 	}
 
-	const todayHallmarks: Array<[number, string]> | undefined =
-		type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined
-
 	return (
-		<Suspense fallback={<div className="h-[300px]" />}>
+		<Suspense fallback={<div style={{ height: chartHeight }} />}>
 			<MultiSeriesChart
 				dataset={dataset}
 				charts={charts}
 				valueSymbol={valueSymbol}
-				height={type === 'unlocks' ? '360px' : '300px'}
+				height={chartHeight}
 				hideDataZoom
-				{...(todayHallmarks ? { hallmarks: todayHallmarks } : {})}
+				{...(hallmarks ? { hallmarks } : {})}
 				hallmarkStyle="mark-line"
+				{...(syncGroup ? { syncGroup } : {})}
 				{...(chartOptions ? { chartOptions } : {})}
 				exportButtons="hidden"
 				onReady={onChartReady}
@@ -129,8 +126,6 @@ function ChartRenderer({
 		</Suspense>
 	)
 }
-
-const groupingOptions: Array<DashboardGrouping> = ['day', 'week', 'month', 'quarter', 'year']
 
 export function ChartCard({ chart }: ChartCardProps) {
 	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
@@ -215,40 +210,30 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const imageFilename = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}`
 	const imageTitle = `${itemName} ${chartTypeDetails.title}`
 
+	const subjectLabel = chart.subjectType === 'protocol' ? 'Protocol' : chart.chain === 'All' ? 'All chains' : 'Chain'
+	const groupingLabel = isGroupable ? DASHBOARD_GROUPING_LABELS[chart.grouping ?? 'day'] : null
+
 	return (
-		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-1 md:p-3">
-				<div className="mr-auto flex items-center gap-1">
-					{chart.subjectType === 'protocol' || chart.chain !== 'All' ? (
-						itemIconUrl ? (
-							<img src={itemIconUrl} alt={itemName} width={20} height={20} className="size-5 shrink-0 rounded-full" />
-						) : (
-							<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-xs text-secondary">
-								{itemName?.charAt(0)?.toUpperCase()}
-							</div>
-						)
-					) : null}
-					<h2 className="text-base font-semibold">
-						{itemName} {chartTypeDetails.title}
-					</h2>
-				</div>
-				<div className="flex flex-wrap items-center justify-end gap-2">
-					<ProCardEditControls>
+		<div className="flex min-h-[calc(344px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(360px*var(--card-scale,1))]">
+			<ProCardHeader
+				title={`${itemName} ${chartTypeDetails.title}`}
+				icon={
+					chart.subjectType === 'protocol' || chart.chain !== 'All' ? (
+						<EntityIcon src={itemIconUrl} name={itemName} />
+					) : null
+				}
+				badge={<BoundParameterBadge {...(chart.bindings === undefined ? {} : { bindings: chart.bindings })} />}
+				subtitle={<ProMeta items={[subjectLabel, groupingLabel]} />}
+				controls={
+					<>
 						{isGroupable ? (
-							<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
-								{groupingOptions.map((dataInterval) => (
-									<Tooltip
-										content={capitalizeFirstLetter(dataInterval)}
-										render={<button type="button" />}
-										className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
-										data-active={chart.grouping === dataInterval}
-										onClick={() => handleGroupingChange(chart.id, dataInterval)}
-										key={`${chart.id}-options-groupBy-${dataInterval}`}
-									>
-										{dataInterval.slice(0, 1).toUpperCase()}
-									</Tooltip>
-								))}
-							</div>
+							<ProSegmented
+								size="sm"
+								label="Grouping"
+								options={DASHBOARD_GROUPING_SEGMENTS}
+								value={chart.grouping ?? 'day'}
+								onValueChange={(value) => handleGroupingChange(chart.id, value)}
+							/>
 						) : null}
 						{isBarChart ? (
 							<Select
@@ -263,25 +248,29 @@ export function ChartCard({ chart }: ChartCardProps) {
 								variant="pro"
 							/>
 						) : null}
-					</ProCardEditControls>
-					{chartDataset.source.length > 0 ? (
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ onClick: handleCsvExport }}
-						/>
-					) : null}
-				</div>
-			</div>
-			<ChartRenderer
-				type={chart.type}
-				showCumulative={chart.showCumulative}
-				dataset={chartDataset}
-				isLoading={chartState.isLoading}
-				hasError={chartState.hasError}
-				refetch={chartState.refetch}
-				color={chartColor}
-				onChartReady={handleChartReady}
+					</>
+				}
+				menu={
+					chartDataset.source.length > 0
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { onClick: handleCsvExport }
+							}
+						: {}
+				}
 			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				<ChartRenderer
+					type={chart.type}
+					showCumulative={chart.showCumulative}
+					dataset={chartDataset}
+					isLoading={chartState.isLoading}
+					hasError={chartState.hasError}
+					refetch={chartState.refetch}
+					color={chartColor}
+					onChartReady={handleChartReady}
+				/>
+			</div>
 		</div>
 	)
 }

@@ -16,9 +16,16 @@ interface HBarChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function HBarChartAdapter({ config, result, classified, onReady }: HBarChartAdapterProps) {
+export function HBarChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: HBarChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const { categories, values } = useMemo(() => {
@@ -36,7 +43,7 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -44,7 +51,7 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 			<HBarChart
 				categories={categories}
 				values={values}
-				height={SQL_CHART_HEIGHT}
+				height={height}
 				valueSymbol={formatter.valueSymbol}
 				colors={colors}
 				onReady={onReady}

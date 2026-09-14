@@ -38,7 +38,9 @@ interface UseStablecoinsChartDataResult {
 	totalMcapCurrent: number | null
 	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
+	isFetching: boolean
 	error: Error | null
+	refetch: () => void
 }
 
 const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
@@ -49,7 +51,10 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 	showTotalInTooltip: false
 }
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
-type StablecoinPresentation = Omit<UseStablecoinsChartDataResult, 'prepareCompleteCsvDataset' | 'isLoading' | 'error'>
+type StablecoinPresentation = Omit<
+	UseStablecoinsChartDataResult,
+	'prepareCompleteCsvDataset' | 'isLoading' | 'isFetching' | 'error' | 'refetch'
+>
 
 const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
 	chartPayload: EMPTY_CHART_PAYLOAD,
@@ -205,8 +210,10 @@ export function useStablecoinsChartData(
 	const {
 		data: rawData,
 		isLoading,
+		isFetching,
 		error,
-		dataUpdatedAt
+		dataUpdatedAt,
+		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'stablecoins-chart-data', chain],
 		enabled: enabled && streamDone,
@@ -251,7 +258,9 @@ export function useStablecoinsChartData(
 		...presentation,
 		prepareCompleteCsvDataset,
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
-		error
+		isFetching,
+		error,
+		refetch
 	}
 }
 

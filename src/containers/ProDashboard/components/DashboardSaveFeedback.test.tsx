@@ -17,7 +17,10 @@ vi.mock('~/auth', () => ({
 	})
 }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
-vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
+vi.mock('react-hot-toast', () => {
+	const mock = Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() })
+	return { default: mock, toast: mock }
+})
 vi.mock('../services/DashboardAPI', async (original) => ({
 	...(await original<typeof import('../services/DashboardAPI')>()),
 	dashboardAPI: { listDashboards: async () => [], updateDashboard: api.update }
@@ -36,7 +39,6 @@ function Harness({ open }: { open: boolean }) {
 			dashboardName="Original"
 			visibility="public"
 			tags={[]}
-			description=""
 			onSave={async (overrides) => {
 				await updateDashboard.mutateAsync({
 					id: 'dashboard',
@@ -58,6 +60,17 @@ async function render(open: boolean) {
 async function submit() {
 	await act(async () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 }
+function tagInput() {
+	return document.querySelector<HTMLInputElement>('#dashboard-settings-tag-input')!
+}
+async function addTag(tag: string) {
+	tagInput().value = tag
+	await act(async () =>
+		Array.from(document.querySelectorAll<HTMLButtonElement>('button'))
+			.find((node) => node.textContent?.trim() === 'Add Tag')!
+			.click()
+	)
+}
 beforeEach(() => {
 	vi.clearAllMocks()
 	api.update.mockReset()
@@ -74,7 +87,7 @@ afterEach(async () => {
 test('a real API failure appears once in the open settings form and retry saves the retained draft', async () => {
 	api.update.mockRejectedValueOnce(new Error('Offline')).mockResolvedValueOnce({ id: 'dashboard' })
 	await render(true)
-	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Edited name'
+	await addTag('lending')
 	await submit()
 	await vi.waitFor(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
@@ -83,7 +96,7 @@ test('a real API failure appears once in the open settings form and retry saves 
 	expect(close).not.toHaveBeenCalled()
 	await submit()
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
-	expect(api.update.mock.calls.map(([, data]) => data.dashboardName)).toEqual(['Edited name', 'Edited name'])
+	expect(api.update.mock.calls.map(([, data]) => data.tags)).toEqual([['lending'], ['lending']])
 })
 test.each(['success', 'failure'] as const)(
 	'an old opening finishing with %s cannot affect a reopened form',
@@ -91,7 +104,7 @@ test.each(['success', 'failure'] as const)(
 		const pending = Promise.withResolvers<{ id: string }>()
 		api.update.mockReturnValueOnce(pending.promise)
 		await render(true)
-		const originalInput = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+		const originalInput = tagInput()
 		originalInput.focus()
 		await submit()
 		// `readOnly` comes from the mutation's pending state, so waiting on the API mock alone races the
@@ -104,7 +117,7 @@ test.each(['success', 'failure'] as const)(
 		expect(document.activeElement).toBe(originalInput)
 		await render(false)
 		await render(true)
-		const draft = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+		const draft = tagInput()
 		draft.value = 'New opening'
 		await act(async () => {
 			if (outcome === 'success') pending.resolve({ id: 'dashboard' })

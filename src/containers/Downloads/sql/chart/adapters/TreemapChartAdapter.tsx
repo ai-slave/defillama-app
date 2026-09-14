@@ -16,9 +16,16 @@ interface TreemapChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function TreemapChartAdapter({ config, result, classified, onReady }: TreemapChartAdapterProps) {
+export function TreemapChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: TreemapChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const nameCol = classified.find(
 		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)
@@ -44,7 +51,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -53,7 +60,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 				treeData={treeData}
 				variant="narrative"
 				colorMode="categorical"
-				height={SQL_CHART_HEIGHT}
+				height={height}
 				valueLabel={valueCol.name}
 				valueSymbol={formatter.valueSymbol}
 				onReady={onReady}

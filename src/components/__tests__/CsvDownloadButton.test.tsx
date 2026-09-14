@@ -14,7 +14,10 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('~/utils/download', () => ({ downloadCSV: mocks.download }))
 vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
-	useProDashboardPermissions: () => ({ isReadOnly: false })
+	useProDashboardPermissions: () => ({ isReadOnly: false }),
+	useProDashboardDashboard: () => ({ currentDashboard: null }),
+	useProDashboardItemsState: () => ({ items: [] }),
+	useProDashboardVariables: () => ({ variables: [], canEditVariables: false, bindItemField: () => {} })
 }))
 vi.mock('~/components/ChartExport/useChartPngExport', () => ({
 	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
@@ -173,7 +176,7 @@ test.each([true, false])(
 		await click('More actions')
 		await click(grouped ? 'Download CSV: Chains Only' : 'Download CSV')
 		await vi.waitFor(() => expect(exportRows.mock.calls).toEqual(grouped ? [['chain']] : [[]]))
-		expect(container.querySelector('input[aria-label="Search table rows"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label="Search table rows"]')).not.toBeNull()
 	}
 )
 

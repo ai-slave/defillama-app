@@ -1,15 +1,17 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartConfig } from '../types'
+import { ProMeta } from '../ui'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import {
 	buildRwaSnapshotCsvRows,
 	buildRwaSnapshotPresentation,
@@ -51,7 +53,13 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	const { metric, chartView, breakdown, chain } = config
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartDataset: rawDataset, isLoading } = useRWABreakdownChartData(breakdown, metric, chain)
+	const {
+		chartDataset: rawDataset,
+		isLoading,
+		isFetching,
+		error,
+		refetch
+	} = useRWABreakdownChartData(breakdown, metric, chain)
 
 	const timeSeriesDataset = useMemo(() => {
 		if (!rawDataset || chartView !== 'timeSeries') return null
@@ -92,52 +100,71 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 	}, [pieData])
 
 	const barData = snapshot?.view === 'hbar' ? snapshot : EMPTY_RWA_BAR_DATA
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
 	const treemapData = snapshot?.view === 'treemap' ? snapshot.data : []
 
-	if (isLoading) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LoadingSpinner />
+	const retryChartData = () => {
+		void refetch()
+	}
+
+	const title = `RWA ${metricLabel} - ${viewLabel}`
+	const subtitle = <ProMeta items={[chainLabel, chain ? null : `by ${breakdownLabel}`]} />
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={title} subtitle={subtitle} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (error && rawDataset === null) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	const hasExportData = hasRwaOverviewChartExportData(chartView, timeSeriesDataset, snapshot)
 
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">
-						RWA {metricLabel} - {viewLabel}
-					</h3>
-					<p className="text-xs text-pro-text-secondary">
-						{chainLabel}
-						{!chain ? ` by ${breakdownLabel}` : ''}
-					</p>
-				</div>
-				{hasExportData ? (
-					<ProCardOverflowMenu
-						image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-						csv={{
-							prepareCsv: () =>
-								timeSeriesDataset
-									? prepareProChartCsv(timeSeriesDataset, imageFilename)
-									: { filename: imageFilename, rows: buildRwaSnapshotCsvRows(snapshot, breakdownLabel, metricLabel) }
-						}}
-					/>
-				) : null}
-			</div>
-			<div className="flex-1" key={`${chartView}-${breakdown}-${metric}`}>
+		<div className="flex h-full flex-col p-0">
+			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={title}
+				subtitle={subtitle}
+				menu={
+					hasExportData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: {
+									prepareCsv: () =>
+										timeSeriesDataset
+											? prepareProChartCsv(timeSeriesDataset, imageFilename)
+											: {
+													filename: imageFilename,
+													rows: buildRwaSnapshotCsvRows(snapshot, breakdownLabel, metricLabel)
+												}
+								}
+							}
+						: {}
+				}
+			/>
+			<div className="flex-1 px-3 pb-3" key={`${chartView}-${breakdown}-${metric}`}>
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
 					{chartView === 'timeSeries' && timeSeriesDataset ? (
 						<MultiSeriesChart
+							height={chartHeight}
 							dataset={timeSeriesDataset}
 							hideDefaultLegend={false}
 							stacked
@@ -145,25 +172,26 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 							onReady={handleChartReady}
 						/>
 					) : chartView === 'pie' && pieData.length > 0 ? (
-						<PieChart onReady={handleChartReady} chartData={pieData} stackColors={pieColors} />
+						<PieChart onReady={handleChartReady} chartData={pieData} stackColors={pieColors} height={chartHeight} />
 					) : chartView === 'hbar' && barData.categories.length > 0 ? (
 						<HBarChart
 							categories={barData.categories}
 							values={barData.values}
 							valueSymbol="$"
+							height={chartHeight}
 							onReady={handleChartReady}
 						/>
 					) : chartView === 'treemap' && treemapData.length > 0 ? (
 						<TreemapChart
 							treeData={treemapData}
 							variant="rwa"
-							height="320px"
+							height={chartHeight}
 							onReady={handleChartReady}
 							valueLabel={metricLabel}
 						/>
 					) : (
-						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
-							No data available
+						<div className="flex h-[calc(320px*var(--card-scale,1))] flex-col justify-center">
+							<ProCardEmpty message="No data available" />
 						</div>
 					)}
 				</Suspense>

@@ -171,7 +171,7 @@ function CexAnalyticsPreview({
 					return (
 						<div
 							key={config.id}
-							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-xl border border-pro-cards-border`}
+							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-lg border border-pro-cards-border`}
 						>
 							<div className={`${heightClass} overflow-auto`}>
 								<CexAnalyticsDataset config={config} />
@@ -422,7 +422,7 @@ export function SimpleTableConfig({
 					) : null}
 					<button
 						type="button"
-						className="flex w-full items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-1.5 text-left text-pro-text-secondary transition-colors hover:text-pro-text-primary"
+						className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border px-3 py-1.5 text-left text-pro-text-secondary transition-colors hover:bg-pro-hover-fill hover:text-pro-text-primary"
 						onClick={() => onIncludeCexChange(!includeCex)}
 					>
 						<div className="relative size-4">
@@ -431,7 +431,7 @@ export function SimpleTableConfig({
 								className={`size-4 border-2 transition-all ${
 									includeCex
 										? 'border-pro-info-100 bg-pro-info-100 dark:border-pro-info-300/20 dark:bg-pro-info-300/20'
-										: 'pro-border bg-transparent'
+										: 'border-pro-cards-border bg-transparent'
 								}`}
 							>
 								{includeCex ? (

@@ -33,6 +33,18 @@ function button(name: string) {
 async function click(name: string) {
 	await act(async () => button(name).click())
 }
+async function clickMenuItem(name: string) {
+	await vi.waitFor(() => {
+		const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+			(e) => e.textContent?.trim() === name
+		)
+		expect(item).toBeDefined()
+	})
+	const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+		(e) => e.textContent?.trim() === name
+	)
+	await act(async () => item!.click())
+}
 function openDialog() {
 	return [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((e) => !e.hidden)
 }
@@ -98,7 +110,8 @@ test('dashboard deletion stays pending in the confirmation and retries failures 
 			</QueryClientProvider>
 		)
 	)
-	await click('Delete dashboard')
+	await click('Dashboard card actions')
+	await clickMenuItem('Delete…')
 	await click('Delete')
 	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
@@ -151,12 +164,13 @@ test('deleting the last dashboard returns focus to the surviving list', async ()
 			</QueryClientProvider>
 		)
 	)
-	await click('Delete dashboard')
+	await click('Dashboard card actions')
+	await clickMenuItem('Delete…')
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Delete')
 	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => request.resolve())
 	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Your dashboards'))
-	expect(button('Create Dashboard')).toBeDefined()
+	expect(button('Create dashboard')).toBeDefined()
 	expect(openDialog()).toBeUndefined()
 })

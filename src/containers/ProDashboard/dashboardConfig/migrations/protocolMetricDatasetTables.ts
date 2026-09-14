@@ -65,6 +65,7 @@ interface ProtocolMetricDatasetTableMigrationInput {
 	chains?: ReadonlyArray<string>
 	filters?: PersistedProtocolMetricDatasetFilters
 	colSpan?: UnversionedUnifiedTableConfig['colSpan']
+	height?: UnversionedUnifiedTableConfig['height']
 }
 
 /**
@@ -94,6 +95,7 @@ export function migrateProtocolMetricDatasetTable(
 				}
 			: {}),
 		activePresetId: PROTOCOL_METRIC_DATASET_PRESET[config.datasetType],
-		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan })
+		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan }),
+		...(config.height === undefined ? {} : { height: config.height })
 	}
 }

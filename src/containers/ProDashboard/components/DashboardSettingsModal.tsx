@@ -4,8 +4,9 @@ import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ProButton, ProDialog, proInputStyles } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
+import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
 interface DashboardSettingsModalProps {
 	isOpen: boolean
@@ -13,15 +14,17 @@ interface DashboardSettingsModalProps {
 	dashboardName: string
 	visibility: 'private' | 'public'
 	tags: Array<string>
-	description: string
 	dashboardId: string | null
-	onSave: (overrides?: {
-		dashboardName?: string
-		visibility?: 'private' | 'public'
-		tags?: Array<string>
-		description?: string
-	}) => Promise<void>
+	onSave: (overrides?: { visibility?: 'private' | 'public'; tags?: Array<string> }) => Promise<void>
 	onDelete?: (dashboardId: string) => Promise<void>
+}
+
+function visibilityCardStyles(selected: boolean) {
+	return `relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition-colors has-focus-visible:focus-ring ${
+		selected
+			? 'border-brand bg-pro-info-100/60 text-pro-text-primary'
+			: 'border-pro-cards-border text-pro-text-secondary hover:text-pro-text-primary'
+	}`
 }
 
 function DashboardSettingsModalInner({
@@ -30,7 +33,6 @@ function DashboardSettingsModalInner({
 	dashboardName,
 	visibility,
 	tags,
-	description,
 	dashboardId,
 	onSave,
 	onDelete
@@ -55,28 +57,18 @@ function DashboardSettingsModalInner({
 	})
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 	const tagInputRef = useRef<HTMLInputElement>(null)
-	const charCountRef = useRef<HTMLSpanElement>(null)
 
 	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		if (save.isPending || deletion.isPending) return
-		const formData = new FormData(e.currentTarget)
-		const localDashboardName = (formData.get('dashboardName') as string).trim()
-		const localDescription = formData.get('description') as string
-		if (!localDashboardName) {
-			const input = e.currentTarget.elements.namedItem('dashboardName') as HTMLInputElement
-			input.setCustomValidity('Dashboard name is required')
-			input.reportValidity()
-			return
-		}
 		save.mutate(
+			{ visibility: localVisibility, tags: localTags },
 			{
-				dashboardName: localDashboardName,
-				visibility: localVisibility,
-				tags: localTags,
-				description: localDescription
-			},
-			{ onSuccess: onClose }
+				onSuccess: () => {
+					toast.success('Settings saved', statusToastOptions('dashboard-settings-saved', TOAST_DURATION_SHORT))
+					onClose()
+				}
+			}
 		)
 	}
 
@@ -129,48 +121,14 @@ function DashboardSettingsModalInner({
 					if (!open) onClose()
 				}}
 			>
-				<Ariakit.Dialog
-					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
-					unmountOnHide
-					portal
+				<ProDialog
+					width="sm"
+					heading="Dashboard Settings"
+					closeButtonProps={{ ariaLabel: 'Close dashboard settings' }}
 					hideOnInteractOutside
 				>
-					<div className="mb-6 flex items-center justify-between">
-						<Ariakit.DialogHeading
-							render={<h2>Dashboard Settings</h2>}
-							className="text-xl font-semibold text-pro-text-primary"
-						/>
-						<Ariakit.DialogDismiss
-							aria-label="Close dashboard settings"
-							className="rounded-md pro-hover-bg p-1 transition-colors"
-						>
-							<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
-							<span className="sr-only">Close dialog</span>
-						</Ariakit.DialogDismiss>
-					</div>
-
 					<form ref={formRef} onSubmit={handleSave}>
 						<fieldset className="min-w-0 space-y-6">
-							<div>
-								<label
-									htmlFor="dashboard-settings-name"
-									className="mb-3 block text-sm font-medium text-pro-text-primary"
-								>
-									Dashboard Name
-								</label>
-								<input
-									id="dashboard-settings-name"
-									name="dashboardName"
-									readOnly={save.isPending || deletion.isPending}
-									required
-									onInput={(event) => event.currentTarget.setCustomValidity('')}
-									type="text"
-									defaultValue={dashboardName}
-									placeholder="Enter dashboard name"
-									className="w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-								/>
-							</div>
-
 							<div>
 								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
 									Visibility
@@ -180,14 +138,7 @@ function DashboardSettingsModalInner({
 									setValue={(value) => setLocalVisibility(value as 'public' | 'private')}
 								>
 									<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="dashboard-settings-visibility">
-										<label
-											htmlFor={`${id}-public`}
-											className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
-												localVisibility === 'public'
-													? 'pro-btn-primary'
-													: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-											}`}
-										>
+										<label htmlFor={`${id}-public`} className={visibilityCardStyles(localVisibility === 'public')}>
 											<Ariakit.Radio
 												id={`${id}-public`}
 												value="public"
@@ -201,12 +152,8 @@ function DashboardSettingsModalInner({
 										</label>
 										<label
 											htmlFor={`${id}-private`}
-											className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
-												localVisibility === 'private'
-													? 'pro-btn-primary'
-													: !hasActiveSubscription
-														? 'cursor-not-allowed pro-border text-pro-text-secondary opacity-50'
-														: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
+											className={`${visibilityCardStyles(localVisibility === 'private')} ${
+												!hasActiveSubscription && localVisibility !== 'private' ? 'cursor-not-allowed opacity-50' : ''
 											}`}
 										>
 											<Ariakit.Radio
@@ -252,16 +199,16 @@ function DashboardSettingsModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className="min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+										className={`${proInputStyles} min-w-0 flex-1`}
 									/>
-									<button
+									<ProButton
 										type="button"
+										variant="secondary"
 										onClick={handleAddTag}
 										disabled={save.isPending || deletion.isPending}
-										className="rounded-md pro-btn-primary-outline border px-4 py-2 transition-colors"
 									>
 										Add Tag
-									</button>
+									</ProButton>
 								</div>
 
 								<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
@@ -271,7 +218,7 @@ function DashboardSettingsModalInner({
 										{localTags.map((tag) => (
 											<span
 												key={tag}
-												className="flex max-w-full items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
+												className="flex max-w-full items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
 											>
 												<span className="min-w-0 wrap-anywhere">{tag}</span>
 												<button
@@ -290,46 +237,22 @@ function DashboardSettingsModalInner({
 								) : null}
 							</div>
 
-							<div>
-								<label
-									htmlFor="dashboard-settings-description"
-									className="mb-3 block text-sm font-medium text-pro-text-primary"
-								>
-									Description
-								</label>
-								<textarea
-									id="dashboard-settings-description"
-									name="description"
-									readOnly={save.isPending || deletion.isPending}
-									defaultValue={description}
-									onInput={(e) => {
-										if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
-									}}
-									placeholder="Describe your dashboard..."
-									maxLength={200}
-									rows={3}
-									className="w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-								/>
-								<p className="mt-1 text-xs text-pro-text-tertiary">
-									<span ref={charCountRef}>{description.length}</span>/200 characters
-								</p>
-							</div>
-
 							{onDelete && dashboardId ? (
 								<div className="border-t border-pro-cards-border pt-6">
-									<p className="mb-3 block text-sm font-medium text-error text-pro-text-primary">Danger Zone</p>
+									<p className="mb-3 block text-sm font-medium text-error">Danger Zone</p>
 									<p className="mb-4 text-sm text-pro-text-tertiary">
 										Once you delete a dashboard, there is no going back.
 									</p>
-									<button
+									<ProButton
 										type="button"
+										variant="danger"
 										onClick={handleDeleteClick}
-										disabled={save.isPending || deletion.isPending}
-										className="flex items-center gap-2 rounded-md bg-error/10 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-50"
+										disabled={save.isPending}
+										icon={<Icon name="trash-2" height={16} width={16} />}
+										{...(deletion.isPending ? { loading: true } : {})}
 									>
-										{deletion.isPending ? <LoadingSpinner size={16} /> : <Icon name="trash-2" height={16} width={16} />}
 										<span>Delete Dashboard</span>
-									</button>
+									</ProButton>
 								</div>
 							) : null}
 						</fieldset>
@@ -340,19 +263,17 @@ function DashboardSettingsModalInner({
 						) : null}
 
 						<div className="mt-8 flex gap-3">
-							<Ariakit.DialogDismiss
-								type="button"
-								className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-							>
+							<Ariakit.DialogDismiss type="button" render={<ProButton variant="secondary" className="flex-1" />}>
 								Cancel
 							</Ariakit.DialogDismiss>
 							<Ariakit.Button
 								type="submit"
 								accessibleWhenDisabled
 								disabled={save.isPending || deletion.isPending}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md pro-btn-primary px-4 py-2 transition-colors aria-disabled:opacity-50"
+								render={
+									<ProButton variant="primary" className="flex-1" {...(save.isPending ? { loading: true } : {})} />
+								}
 							>
-								{save.isPending ? <LoadingSpinner size={16} /> : null}
 								<span>{save.isPending ? 'Saving…' : 'Save Changes'}</span>
 							</Ariakit.Button>
 							<span role="status" className="sr-only">
@@ -360,7 +281,7 @@ function DashboardSettingsModalInner({
 							</span>
 						</div>
 					</form>
-				</Ariakit.Dialog>
+				</ProDialog>
 			</Ariakit.DialogProvider>
 
 			<ConfirmationModal
@@ -372,7 +293,7 @@ function DashboardSettingsModalInner({
 				pendingText="Deleting…"
 				error={deletion.isError ? 'Could not delete the dashboard. Please try again.' : null}
 				title="Delete Dashboard"
-				message="Are you sure you want to delete this dashboard? This action cannot be undone."
+				message={`Are you sure you want to delete “${dashboardName}”? This action cannot be undone.`}
 				confirmText="Delete"
 				cancelText="Cancel"
 			/>

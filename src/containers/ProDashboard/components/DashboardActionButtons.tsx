@@ -8,20 +8,26 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
+import { ProButton } from '../ui'
 
 export function EditDashboardButton({ href }: { href: string }) {
 	const router = useRouter()
-	const navigation = useMutation({ mutationFn: () => router.push(href) })
+	const navigation = useMutation({ mutationFn: () => router.push(href, undefined, { shallow: true }) })
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
 			<Ariakit.Button
-				type="button"
 				accessibleWhenDisabled
 				disabled={navigation.isPending}
 				onClick={() => navigation.mutate()}
-				className="flex items-center gap-1 rounded-md pro-btn-ai px-3 py-1.5 text-sm aria-disabled:cursor-wait aria-disabled:opacity-60"
+				render={
+					<ProButton
+						type="button"
+						variant="primary"
+						icon={<Icon name="pencil" height={16} width={16} />}
+						{...(navigation.isPending ? { loading: true } : {})}
+					/>
+				}
 			>
-				{navigation.isPending ? <LoadingSpinner size={16} /> : <Icon name="pencil" height={16} width={16} />}
 				{navigation.isPending ? 'Opening editor…' : 'Edit'}
 			</Ariakit.Button>
 			{navigation.isError ? (
@@ -52,7 +58,6 @@ export function CopyDashboardButton({
 		<div className="flex min-w-0 flex-col gap-1">
 			<Ariakit.Button
 				ref={buttonRef}
-				type="button"
 				accessibleWhenDisabled
 				disabled={copy.isPending || copy.isSuccess}
 				onClick={() => {
@@ -66,7 +71,7 @@ export function CopyDashboardButton({
 						}
 					})
 				}}
-				className="flex items-center gap-1 rounded-md pro-btn-primary-outline px-3 py-1.5 text-sm aria-disabled:opacity-60"
+				render={<ProButton type="button" variant="primary" />}
 			>
 				{copy.isPending ? (
 					<LoadingSpinner size={16} />
@@ -104,17 +109,22 @@ export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void>
 		<div className="flex min-w-0 flex-col gap-1">
 			<Ariakit.Button
 				ref={buttonRef}
-				type="button"
 				accessibleWhenDisabled
 				disabled={undo.isPending}
 				onClick={() => {
 					if (!undo.isPending) undo.mutate()
 				}}
-				className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary aria-disabled:opacity-60"
+				render={
+					<ProButton
+						type="button"
+						variant="secondary"
+						icon={<Icon name="arrow-left" height={16} width={16} />}
+						{...(undo.isPending ? { loading: true } : {})}
+					/>
+				}
 				aria-label="Undo AI changes"
 			>
-				{undo.isPending ? <LoadingSpinner size={16} /> : <Icon name="arrow-left" height={16} width={16} />}
-				{undo.isPending ? 'Undoing…' : 'Undo'}
+				{undo.isPending ? 'Undoing…' : 'Undo AI changes'}
 			</Ariakit.Button>
 			<span role="status" className="sr-only">
 				{undo.isPending ? 'Undoing AI changes' : ''}

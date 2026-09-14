@@ -10,11 +10,13 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
+import { prefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { formatPercent } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
+import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
@@ -31,6 +33,8 @@ echarts.use([
 ])
 
 const DEFAULT_PIE_CENTER_Y = '50%' as const
+
+const PIE_DRAW_DURATION = 500
 
 function normalizePieTooltipParams(params: unknown): PieTooltipParams {
 	const value = Array.isArray(params) ? params[0] : params
@@ -78,6 +82,7 @@ function PieChart({
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const persistentLifecycle = usePersistentEChartsLifecycle()
+	const { hasEnteredRef } = persistentLifecycle
 
 	const exportButtonsMode = exportButtons ?? 'hidden'
 	const exportButtonsConfig =
@@ -103,6 +108,7 @@ function PieChart({
 	const stackColorByName = useMemo(() => new Map(Object.entries(stackColors ?? {})), [stackColors])
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
+	const chartMotion = useChartMotion()
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -370,9 +376,16 @@ function PieChart({
 				right: 0
 			},
 			legend,
-			series
+			series,
+			...enterAnimationOptions(
+				chartMotion,
+				hasEnteredRef.current || chartData.length === 0,
+				prefersReducedMotion(),
+				PIE_DRAW_DURATION
+			)
 		}
 		instance.setOption(option)
+		if (chartData.length > 0) hasEnteredRef.current = true
 	}, [
 		series,
 		chartTheme,
@@ -384,7 +397,9 @@ function PieChart({
 		formatTooltip,
 		legendBoxWidth,
 		legendLabelByName,
-		legendAlign
+		legendAlign,
+		chartMotion,
+		hasEnteredRef
 	])
 
 	const syncLayout = useStableCallback(() => {

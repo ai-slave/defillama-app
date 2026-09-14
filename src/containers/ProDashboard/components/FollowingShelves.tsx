@@ -1,89 +1,56 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { FollowAuthorButton } from '~/containers/Authors/FollowAuthorButton'
+import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Icon } from '~/ui/Icon'
 import { useFollowingAuthors } from '../hooks/useFollowingAuthors'
 import type { FollowingShelf } from '../services/DashboardAPI'
+import { ProButton, proPanelStyles } from '../ui'
 import { DashboardCard } from './DashboardCard'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSkeleton } from './LoadingSkeleton'
 
 function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: number }) {
-	const scrollContainerRef = useRef<HTMLDivElement>(null)
-	const [canScrollLeft, setCanScrollLeft] = useState(false)
-	const [canScrollRight, setCanScrollRight] = useState(true)
-	const rafIdRef = useRef<number | null>(null)
-	const prevScrollStateRef = useRef({ canScrollLeft: false, canScrollRight: true })
-
-	const updateScrollState = () => {
-		if (rafIdRef.current) return
-
-		rafIdRef.current = requestAnimationFrame(() => {
-			rafIdRef.current = null
-			const container = scrollContainerRef.current
-			if (!container) return
-
-			const { scrollLeft, scrollWidth, clientWidth } = container
-			const newCanScrollLeft = scrollLeft > 0
-			const newCanScrollRight = scrollLeft < scrollWidth - clientWidth - 10
-
-			if (newCanScrollLeft !== prevScrollStateRef.current.canScrollLeft) {
-				prevScrollStateRef.current.canScrollLeft = newCanScrollLeft
-				setCanScrollLeft(newCanScrollLeft)
-			}
-			if (newCanScrollRight !== prevScrollStateRef.current.canScrollRight) {
-				prevScrollStateRef.current.canScrollRight = newCanScrollRight
-				setCanScrollRight(newCanScrollRight)
-			}
-		})
-	}
-
-	useEffect(() => {
-		return () => {
-			if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
-		}
-	}, [])
-
-	const scroll = (direction: 'left' | 'right') => {
-		const container = scrollContainerRef.current
-		if (!container) return
-		const scrollAmount = direction === 'left' ? -640 : 640
-		container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-	}
+	const { ref: scrollContainerRef, canScrollLeft, canScrollRight, scrollByPage } = useHorizontalOverflow()
 
 	return (
-		<div className="relative">
+		<div className="group/rail relative">
 			{canScrollLeft ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-					<button
+					<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+					<ProButton
 						type="button"
-						onClick={() => scroll('left')}
-						className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+						square
+						variant="secondary"
+						aria-label="Scroll dashboards left"
+						onClick={() => scrollByPage('left')}
+						className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 					>
-						<Icon name="chevron-left" height={20} width={20} />
-					</button>
+						<Icon name="chevron-left" height={16} width={16} />
+					</ProButton>
 				</>
 			) : null}
 
 			<div
 				ref={scrollContainerRef}
-				onScroll={updateScrollState}
-				className="flex scrollbar-none snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
+				className="-mt-1 flex scrollbar-none snap-x snap-mandatory items-stretch gap-3 overflow-x-auto pt-1 pb-2 md:snap-none"
 			>
 				{children}
 			</div>
 
 			{canScrollRight && itemCount > 3 ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-					<button
+					<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+					<ProButton
 						type="button"
-						onClick={() => scroll('right')}
-						className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+						square
+						variant="secondary"
+						aria-label="Scroll dashboards right"
+						onClick={() => scrollByPage('right')}
+						className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 					>
-						<Icon name="chevron-right" height={20} width={20} />
-					</button>
+						<Icon name="chevron-right" height={16} width={16} />
+					</ProButton>
 				</>
 			) : null}
 		</div>
@@ -100,7 +67,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 				<BasicLink href={`/authors/${author.slug}`} className="shrink-0">
 					{author.avatarUrl ? (
 						// eslint-disable-next-line @next/next/no-img-element
-						<img src={author.avatarUrl} alt="" className="size-10 rounded-full object-cover" />
+						<img src={author.avatarUrl} alt="" loading="lazy" className="size-10 rounded-full object-cover" />
 					) : (
 						<span
 							className="flex size-10 items-center justify-center rounded-full text-xl"
@@ -117,7 +84,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					>
 						{author.displayName}
 					</BasicLink>
-					<p className="truncate text-xs text-pro-text-label">
+					<p className="truncate text-xs text-pro-text-tertiary">
 						{shelf.dashboardCount} {shelf.dashboardCount === 1 ? 'dashboard' : 'dashboards'}
 					</p>
 				</div>
@@ -125,7 +92,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 			</div>
 
 			{shelf.dashboards.length === 0 ? (
-				<p className="rounded-md border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-label">
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
 					No public dashboards yet
 				</p>
 			) : (
@@ -141,7 +108,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border text-sm text-pro-text-label transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-lg border border-dashed border-pro-cards-border text-sm text-pro-text-secondary transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
@@ -157,22 +124,22 @@ export function FollowingShelves() {
 	const { shelves, isLoading, page, totalPages, goToPage } = useFollowingAuthors()
 
 	if (isLoading && shelves.length === 0) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<LoadingSpinner />
-			</div>
-		)
+		return <LoadingSkeleton viewMode="grid" items={8} />
 	}
 
 	if (shelves.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<Icon name="users" height={48} width={48} className="text-pro-text-label" />
-				<h1 className="text-center text-2xl font-bold">You're not following anyone yet</h1>
-				<p className="text-center text-pro-text-label">
-					Follow dashboard authors and their latest public dashboards will appear here. Find authors from the Discover
-					tab!
+			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
+				<Icon name="users" height={32} width={32} className="text-pro-text-tertiary" />
+				<h2 className="text-center text-base font-semibold text-pro-text-primary">You're not following anyone yet</h2>
+				<p className="text-center text-sm text-pro-text-secondary">
+					Follow authors and their public dashboards will show up here.
 				</p>
+				<div className="mt-7">
+					<ProButton as={BasicLink} href="/pro?tab=discover" size="lg" variant="secondary">
+						Browse dashboards
+					</ProButton>
+				</div>
 			</div>
 		)
 	}
@@ -184,15 +151,17 @@ export function FollowingShelves() {
 			))}
 
 			{totalPages > 1 ? (
-				<div className="flex items-center justify-center gap-2">
-					<button
+				<div className="flex items-center justify-center gap-1">
+					<ProButton
 						type="button"
+						square
+						variant="ghost"
+						aria-label="Previous page"
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed text-pro-text-tertiary' : 'text-pro-text-primary hover:bg-pro-glass-bg'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
-					</button>
+					</ProButton>
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
 						let pageNum = i + 1
@@ -203,31 +172,29 @@ export function FollowingShelves() {
 							}
 						}
 						return (
-							<button
+							<ProButton
 								type="button"
+								square
+								variant={page === pageNum ? 'primary' : 'ghost'}
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
-								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-brand text-on-brand' : 'text-pro-text-primary hover:bg-pro-glass-bg'
-								}`}
+								{...(page === pageNum ? { 'aria-current': 'page' as const } : {})}
 							>
 								{pageNum}
-							</button>
+							</ProButton>
 						)
 					})}
 
-					<button
+					<ProButton
 						type="button"
+						square
+						variant="ghost"
+						aria-label="Next page"
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
-						className={`px-3 py-1 ${
-							page === totalPages
-								? 'cursor-not-allowed text-pro-text-tertiary'
-								: 'text-pro-text-primary hover:bg-pro-glass-bg'
-						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />
-					</button>
+					</ProButton>
 				</div>
 			) : null}
 		</div>

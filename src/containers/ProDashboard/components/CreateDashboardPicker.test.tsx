@@ -9,7 +9,8 @@ import { CreateDashboardPicker } from './CreateDashboardPicker'
 const navigation = vi.hoisted(() => ({ push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => navigation }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
+const auth = vi.hoisted(() => ({ hasActiveSubscription: true }))
+vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 vi.mock('~/containers/Chains/api', () => ({ fetchChainsByCategory: async () => ({ chainsUnique: [] }) }))
 vi.mock('../ProDashboardAPIContext', () => ({
 	useProDashboardCatalog: () => ({ protocols: [], chains: [], protocolCatalog: { status: 'ready' } })
@@ -35,6 +36,7 @@ let store: Ariakit.DialogStore
 const create = vi.fn()
 beforeEach(() => {
 	vi.clearAllMocks()
+	auth.hasActiveSubscription = true
 	navigation.push.mockReset().mockResolvedValue(true)
 	create.mockReset()
 	client = new QueryClient()
@@ -107,7 +109,6 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 	await mount()
 	const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
 	name.value = 'Keep my draft'
-	await act(async () => document.querySelector<HTMLInputElement>('input[value="private"]')!.click())
 	await click('Create Dashboard')
 	expect(document.querySelector('fieldset')!.disabled).toBe(true)
 	await click('Creating…')
@@ -127,8 +128,23 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 	await click('Create Dashboard')
 	await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
 	await waitFor(() => expect(store.getState().open).toBe(false))
-	expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard')
+	expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard/edit')
 	expect(toast.error).not.toHaveBeenCalled()
+})
+test('a free account creates a public dashboard it cannot make private', async () => {
+	auth.hasActiveSubscription = false
+	create.mockResolvedValueOnce({ id: 'created', slug: 'free-dashboard' })
+	await mount()
+	expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.disabled).toBe(true)
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Open to everyone'
+	await click('Create Dashboard')
+	expect(create).toHaveBeenCalledExactlyOnceWith({
+		dashboardName: 'Open to everyone',
+		visibility: 'public',
+		tags: [],
+		description: ''
+	})
+	await waitFor(() => expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/free-dashboard/edit'))
 })
 test('a creation finishing after dismissal does not close a newly opened picker', async () => {
 	let finish!: () => void
@@ -192,9 +208,9 @@ test.each([
 	expect(create).toHaveBeenCalledOnce()
 	expect(exitButton.disabled || exitButton.closest('fieldset[disabled]') !== null).toBe(true)
 	await act(async () => saved.resolve({ id: 'created', slug: 'created-dashboard' }))
-	await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard"]')).not.toBeNull())
+	await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).not.toBeNull())
 	expect(toast.error).not.toHaveBeenCalled()
-	expect(document.querySelector('a[href="/pro/created-dashboard"]')?.textContent).toBe('Open dashboard')
+	expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open dashboard')
 	expect(createButton.textContent?.trim()).toBe('Created')
 	await click('Created')
 	expect(create).toHaveBeenCalledOnce()
@@ -209,7 +225,7 @@ test.each([
 	await act(async () => store.show())
 	if (mode === 'Comparison') await click('Back to dashboard choices')
 	await click('From Scratch')
-	expect(document.querySelector('a[href="/pro/created-dashboard"]')).toBeNull()
+	expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).toBeNull()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
 	expect(create).toHaveBeenCalledOnce()
 })
@@ -226,5 +242,5 @@ test('navigation completion cannot dismiss a newer picker opening', async () => 
 	await act(async () => store.show())
 	await act(async () => route.resolve(true))
 	expect(store.getState().open).toBe(true)
-	expect(document.querySelector('a[href="/pro/created"]')).toBeNull()
+	expect(document.querySelector('a[href="/pro/created/edit"]')).toBeNull()
 })

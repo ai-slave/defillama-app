@@ -25,13 +25,15 @@ export function migrateDatasetTable(
 			title: 'Trending Contracts retired',
 			content:
 				'This table used a non-canonical third-party feed and has been retired. Replace it with a canonical Pro dataset.',
-			...(config.colSpan === undefined ? {} : { colSpan: config.colSpan })
+			...(config.colSpan === undefined ? {} : { colSpan: config.colSpan }),
+			...(config.height === undefined ? {} : { height: config.height })
 		}
 	}
 
 	const common = {
 		id: config.id,
-		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan })
+		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan }),
+		...(config.height === undefined ? {} : { height: config.height })
 	}
 	const datasetType = config.datasetType ?? 'stablecoins'
 	switch (datasetType) {

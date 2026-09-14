@@ -18,8 +18,22 @@ vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ isAuthenticated: false, loaders: { userLoading: false } })
 }))
 vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
+const router = vi.hoisted(() => ({
+	push: vi.fn(),
+	replace: vi.fn(),
+	pathname: '/pro/[dashboardId]',
+	asPath: '/pro/x',
+	query: {}
+}))
+vi.mock('next/router', () => ({ useRouter: () => router }))
 vi.mock('../hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({ isDone: true, dashboard: null, error: null })
+	useDashboardStream: () => ({
+		isDone: true,
+		isStreaming: false,
+		readyItemIds: new Set<string>(),
+		dashboard: null,
+		error: null
+	})
 }))
 vi.mock('../hooks/useFreeTierStatus', () => ({
 	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: true })
@@ -29,7 +43,7 @@ vi.mock('../hooks/useDashboardPermissions', () => ({
 }))
 vi.mock('../hooks/useAutoSave', () => ({ useAutoSave: () => ({}) }))
 vi.mock('../hooks/useDashboardAPI', () => ({
-	getUnsavedDashboardItems: () => null,
+	getUnsavedDashboardChanges: () => null,
 	wasDashboardDeleted: () => false,
 	useDashboardAPI: () => ({ createDashboard: {}, updateDashboard: {} })
 }))

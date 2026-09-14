@@ -15,9 +15,16 @@ interface CandlestickChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function CandlestickChartAdapter({ config, result, classified, onReady }: CandlestickChartAdapterProps) {
+export function CandlestickChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: CandlestickChartAdapterProps) {
 	const mapping = config.candlestick
 	const data = useMemo(() => {
 		if (!mapping) return []
@@ -58,12 +65,12 @@ export function CandlestickChartAdapter({ config, result, classified, onReady }:
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
 		>
-			<CandlestickChart data={data} height={SQL_CHART_HEIGHT} onReady={onReady} />
+			<CandlestickChart data={data} height={height} onReady={onReady} />
 		</Suspense>
 	)
 }

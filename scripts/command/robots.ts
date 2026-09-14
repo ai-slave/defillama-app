@@ -28,6 +28,7 @@ Sitemap: ${normalizedSiteUrl}/research/sitemap.xml
 `
 		: `User-agent: *
 Allow: /.well-known/
+Allow: /api/og/
 Disallow: /
 `
 

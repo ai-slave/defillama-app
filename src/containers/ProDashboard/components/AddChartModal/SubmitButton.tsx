@@ -1,193 +1,63 @@
+import { useId } from 'react'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
-import type { ChartConfig } from '../../types'
-import type { ChartBuilderConfig, ChartModeType, ChartTabType, CombinedTableType, MainTabType } from './types'
-
-const EMPTY_ARRAY: Array<string> = []
+import { ProButton, ProMeta } from '../../ui'
+import { resolveSubmitBlocker } from './submitBlocker'
+import type { ModalState } from './types'
 
 interface SubmitButtonProps {
 	editItem?: DashboardItemConfig | null | undefined
-	selectedMainTab: MainTabType
-	selectedChartTab: ChartTabType
-	selectedChain: string | null
-	selectedChains: Array<string>
-	selectedProtocol: string | null
-	selectedChartTypes?: Array<string>
-	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
-	composerItems: Array<ChartConfig>
-	textContent: string
-	selectedTableType?: CombinedTableType
-	selectedDatasetChain?: string | null
-	selectedTokens?: Array<string>
-	chartBuilder?: ChartBuilderConfig
-	chartCreationMode?: 'separate' | 'combined'
-	chartMode?: ChartModeType
-	metricSubjectType?: 'chain' | 'protocol'
-	metricChain?: string | null
-	metricProtocol?: string | null
-	metricType?: string
-	selectedStablecoinChain?: string
-	selectedStablecoinChartType?: string
-	stablecoinMode?: 'chain' | 'asset'
-	selectedStablecoinAsset?: string | null
-	selectedStablecoinAssetId?: string | null
-	selectedStablecoinAssetChartType?: string
-	selectedAdvancedTvlProtocol?: string | null
-	selectedAdvancedTvlChartType?: string
-	selectedBorrowedProtocol?: string | null
-	selectedBorrowedChartType?: string
-	selectedIncomeStatementProtocol?: string | null
-	selectedLlamaAIChart?: { id: string; title: string } | null
-	selectedUnlocksProtocol?: string | null
-	selectedUnlocksChartType?: 'total' | 'schedule' | 'allocation' | 'locked-unlocked'
-	rwaMode?: 'overview' | 'asset'
-	selectedRwaAssetId?: string | null
-	selectedRwaAssetMetrics?: Array<string>
+	state: ModalState
 	onSubmit: () => void
 }
 
-export function SubmitButton({
-	editItem,
-	selectedMainTab,
-	selectedChartTab,
-	selectedChain: _selectedChain,
-	selectedChains: _selectedChains = EMPTY_ARRAY,
-	selectedProtocol: _selectedProtocol,
-	selectedChartTypes = EMPTY_ARRAY,
-	selectedYieldPool,
-	composerItems,
-	textContent,
-	selectedTableType = 'protocols',
-	selectedDatasetChain,
-	selectedTokens = EMPTY_ARRAY,
-	chartBuilder,
-	chartCreationMode = 'separate',
-	chartMode = 'manual',
-	metricSubjectType,
-	metricChain,
-	metricProtocol,
-	metricType,
-	selectedStablecoinChain,
-	selectedStablecoinChartType,
-	stablecoinMode = 'chain',
-	selectedStablecoinAsset,
-	selectedStablecoinAssetId,
-	selectedStablecoinAssetChartType,
-	selectedAdvancedTvlProtocol,
-	selectedAdvancedTvlChartType,
-	selectedBorrowedProtocol,
-	selectedBorrowedChartType,
-	selectedIncomeStatementProtocol,
-	selectedLlamaAIChart,
-	selectedUnlocksProtocol,
-	rwaMode = 'overview',
-	selectedRwaAssetId,
-	selectedRwaAssetMetrics = [],
-	onSubmit
-}: SubmitButtonProps) {
-	const isStablecoinChainModeInvalid =
-		stablecoinMode === 'chain' && (!selectedStablecoinChain || !selectedStablecoinChartType)
-	const isStablecoinAssetModeInvalid =
-		stablecoinMode === 'asset' &&
-		(!selectedStablecoinAsset || !selectedStablecoinAssetId || !selectedStablecoinAssetChartType)
-	const isAdvancedTvlInvalid = !selectedAdvancedTvlProtocol || !selectedAdvancedTvlChartType
-	const isBorrowedInvalid = !selectedBorrowedProtocol || !selectedBorrowedChartType
-	const isIncomeStatementInvalid = !selectedIncomeStatementProtocol
-	const isUnlocksInvalid = !selectedUnlocksProtocol
-	const isRwaAssetInvalid = rwaMode === 'asset' && (!selectedRwaAssetId || selectedRwaAssetMetrics.length === 0)
+function getButtonText(state: ModalState, editItem: DashboardItemConfig | null | undefined): string {
+	if (editItem) return 'Save changes'
 
-	const isDisabled =
-		(selectedMainTab === 'charts' && chartMode === 'manual' && selectedChartTab === 'yields' && !selectedYieldPool) ||
-		(selectedMainTab === 'charts' &&
-			chartMode === 'manual' &&
-			selectedChartTab === 'stablecoins' &&
-			(isStablecoinChainModeInvalid || isStablecoinAssetModeInvalid)) ||
-		(selectedMainTab === 'charts' &&
-			chartMode === 'manual' &&
-			selectedChartTab === 'advanced-tvl' &&
-			isAdvancedTvlInvalid) ||
-		(selectedMainTab === 'charts' && chartMode === 'manual' && selectedChartTab === 'borrowed' && isBorrowedInvalid) ||
-		(selectedMainTab === 'charts' &&
-			chartMode === 'manual' &&
-			selectedChartTab === 'income-statement' &&
-			isIncomeStatementInvalid) ||
-		(selectedMainTab === 'charts' && chartMode === 'manual' && selectedChartTab === 'unlocks' && isUnlocksInvalid) ||
-		(selectedMainTab === 'charts' && chartMode === 'manual' && selectedChartTab === 'rwa' && isRwaAssetInvalid) ||
-		(selectedMainTab === 'charts' &&
-			chartMode === 'manual' &&
-			selectedChartTab !== 'yields' &&
-			selectedChartTab !== 'stablecoins' &&
-			selectedChartTab !== 'advanced-tvl' &&
-			selectedChartTab !== 'borrowed' &&
-			selectedChartTab !== 'income-statement' &&
-			selectedChartTab !== 'unlocks' &&
-			selectedChartTab !== 'rwa' &&
-			composerItems.length === 0) ||
-		(selectedMainTab === 'charts' && chartMode === 'builder' && !chartBuilder?.metric) ||
-		(selectedMainTab === 'table' && selectedTableType === 'stablecoins' && !selectedDatasetChain) ||
-		(selectedMainTab === 'table' && selectedTableType === 'rwa-selected-chain' && !selectedDatasetChain) ||
-		(selectedMainTab === 'table' &&
-			selectedTableType === 'token-usage' &&
-			(!selectedTokens || selectedTokens.length === 0)) ||
-		(selectedMainTab === 'text' && !textContent.trim()) ||
-		(selectedMainTab === 'metric' &&
-			(!metricType ||
-				(metricSubjectType === 'chain' && !metricChain) ||
-				(metricSubjectType === 'protocol' && !metricProtocol))) ||
-		(selectedMainTab === 'llamaai' && !selectedLlamaAIChart)
-
-	const getButtonText = () => {
-		if (editItem) return 'Save Changes'
-
-		switch (selectedMainTab) {
-			case 'table':
-				return 'Add Table'
-			case 'metric':
-				return 'Add Metric'
-			case 'charts':
-				if (chartMode === 'builder') {
-					return 'Add Chart'
-				}
-				if (
-					selectedChartTab === 'yields' ||
-					selectedChartTab === 'stablecoins' ||
-					selectedChartTab === 'advanced-tvl' ||
-					selectedChartTab === 'borrowed' ||
-					selectedChartTab === 'income-statement' ||
-					selectedChartTab === 'rwa'
-				) {
-					return 'Add Chart'
-				}
-				if (chartCreationMode === 'combined') {
-					return 'Add Multi-Chart'
-				} else if (composerItems.length > 1) {
-					return `Add ${composerItems.length} Charts`
-				} else if (composerItems.length === 1) {
-					return 'Add Chart'
-				} else if (selectedChartTypes.length > 1) {
-					return `Add ${selectedChartTypes.length} Charts`
-				}
-				return 'Add Chart'
-			case 'text':
-				return 'Add Text'
-			case 'llamaai':
-				return 'Add Chart'
-			default:
-				return 'Add Chart'
+	switch (state.selectedMainTab) {
+		case 'table':
+			return 'Add card'
+		case 'metric':
+			return 'Add card'
+		case 'charts': {
+			if (state.chartMode === 'builder') return 'Add chart'
+			if (state.selectedChartTab !== 'chain' && state.selectedChartTab !== 'protocol') return 'Add chart'
+			if (state.chartCreationMode === 'combined') return 'Add chart'
+			const count = state.composerItems.length > 0 ? state.composerItems.length : state.selectedChartTypes.length
+			return count > 1 ? `Add ${count.toString()} cards` : 'Add card'
 		}
+		case 'text':
+			return 'Add card'
+		case 'llamaai':
+			return 'Add card'
+		case 'custom-data':
+			return 'Add card'
+		default:
+			return 'Add card'
 	}
+}
+
+export function SubmitButton({ editItem, state, onSubmit }: SubmitButtonProps) {
+	const reasonId = useId()
+	const disabledReason = resolveSubmitBlocker(state, editItem)
+	const isDisabled = disabledReason !== null
 
 	return (
-		<div className="mt-2 border-t pro-border pt-2">
-			<button
+		<div className="mt-2 flex items-center justify-between gap-3 border-t border-pro-cards-border pt-3">
+			<div id={reasonId} className="flex min-h-4 min-w-0 items-center">
+				<ProMeta items={[disabledReason]} />
+			</div>
+			<ProButton
 				type="button"
-				className={`w-full rounded-md px-3 py-1.5 text-xs font-medium transition-colors duration-200 md:px-4 md:py-2 md:text-sm ${
-					isDisabled ? 'cursor-not-allowed border pro-border text-pro-text-tertiary opacity-50' : 'pro-btn-primary'
-				}`}
-				onClick={onSubmit}
-				disabled={isDisabled}
+				variant="primary"
+				size="md"
+				onClick={() => {
+					if (!isDisabled) onSubmit()
+				}}
+				{...(isDisabled ? { 'aria-disabled': true, 'aria-describedby': reasonId, title: disabledReason } : {})}
+				{...(state.selectedMainTab === 'custom-data' ? { 'data-umami-event': 'custom-data-add' } : {})}
 			>
-				{getButtonText()}
-			</button>
+				{getButtonText(state, editItem)}
+			</ProButton>
 		</div>
 	)
 }

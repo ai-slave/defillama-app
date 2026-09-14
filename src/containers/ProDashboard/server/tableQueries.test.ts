@@ -1,11 +1,26 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { TokenUsageDatasetTableConfig } from '../types'
+import { createStreamItemReadiness, createStreamSourceRegistry } from './stream/itemReadiness'
 
 const llamaQuery = vi.hoisted(() => vi.fn())
 vi.mock('~/server/db/llama', () => ({ llamaDb: { query: llamaQuery } }))
 
 import { fetchProTokenUsageData, streamProTokenUsageData } from './tableQueries'
+
+function createSourceRegistry(items: Array<DashboardItemConfig>) {
+	const readyItemIds: Array<string> = []
+	const readiness = createStreamItemReadiness(items)
+	const sources = createStreamSourceRegistry(
+		readiness,
+		(run) => run(),
+		async (itemIds) => {
+			readyItemIds.push(...itemIds)
+		}
+	)
+	return { readiness, sources, readyItemIds }
+}
 
 const tokenUsageTable: TokenUsageDatasetTableConfig = {
 	id: 'token-usage',
@@ -21,16 +36,16 @@ describe('token usage table server data', () => {
 		llamaQuery.mockResolvedValue([])
 	})
 
-	test('queries normalized token symbols once and deduplicates matching configs', async () => {
+	test('queries normalized token symbols once and reports every deduplicated config ready', async () => {
 		const chunks: Array<{ key: string; data: Array<ProtocolTokenUsageData> }> = []
-		await streamProTokenUsageData(
-			[tokenUsageTable, { ...tokenUsageTable, id: 'duplicate', tokenSymbols: ['usdt', 'usdc'] }],
-			() => true,
-			(run) => run(),
-			async (chunk) => {
-				chunks.push(chunk)
-			}
-		)
+		const items: Array<DashboardItemConfig> = [
+			tokenUsageTable,
+			{ ...tokenUsageTable, id: 'duplicate', tokenSymbols: ['usdt', 'usdc'] }
+		]
+		const { sources, readyItemIds, readiness } = createSourceRegistry(items)
+		await streamProTokenUsageData(items, sources, async (chunk) => {
+			chunks.push(chunk)
+		})
 
 		expect(llamaQuery).toHaveBeenCalledOnce()
 		expect(llamaQuery).toHaveBeenCalledWith(expect.stringContaining("LIKE '%' || LOWER(requested.symbol) || '%'"), [
@@ -39,6 +54,8 @@ describe('token usage table server data', () => {
 		])
 		expect(llamaQuery.mock.calls[0]?.[0]).toContain('AND t.tvl IS NOT NULL')
 		expect(chunks).toHaveLength(1)
+		expect(readyItemIds.sort()).toEqual(['duplicate', 'token-usage'])
+		expect(readiness.pending()).toEqual([])
 	})
 
 	test('constructs canonical protocol totals from Lens token components', async () => {
@@ -73,23 +90,22 @@ describe('token usage table server data', () => {
 	})
 
 	test('does not create a legacy protocol source for Unified tables', async () => {
-		await streamProTokenUsageData(
-			[
-				{
-					id: 'unified',
-					kind: 'unified-table',
-					configVersion: 3,
-					strategy: 'protocols',
-					rowHeaders: ['protocol']
-				}
-			],
-			() => true,
-			(run) => run(),
-			async () => {
-				throw new Error('Unified tables must not produce token-usage data')
+		const items: Array<DashboardItemConfig> = [
+			{
+				id: 'unified',
+				kind: 'unified-table',
+				configVersion: 3,
+				strategy: 'protocols',
+				rowHeaders: ['protocol']
 			}
-		)
+		]
+		const { sources, readyItemIds, readiness } = createSourceRegistry(items)
+		await streamProTokenUsageData(items, sources, async () => {
+			throw new Error('Unified tables must not produce token-usage data')
+		})
 
 		expect(llamaQuery).not.toHaveBeenCalled()
+		expect(readyItemIds).toEqual([])
+		expect(readiness.unregistered()).toEqual(['unified'])
 	})
 })

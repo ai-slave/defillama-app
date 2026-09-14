@@ -2,15 +2,23 @@ import { useQuery } from '@tanstack/react-query'
 import { useContext, useMemo, useState } from 'react'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
-import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../AppMetadataContext'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { IncomeStatementConfig } from '../types'
+import { ProMeta, ProSegmented } from '../ui'
 import { getItemIconUrl } from '../utils'
-import { LoadingSpinner } from './LoadingSpinner'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { EntityIcon } from './EntityIcon'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 
 type ViewMode = 'table' | 'sankey'
+
+const INCOME_STATEMENT_VIEWS = [
+	{ value: 'table' as const, label: 'Table' },
+	{ value: 'sankey' as const, label: 'Sankey' }
+]
 
 interface IncomeStatementCardProps {
 	config: IncomeStatementConfig
@@ -37,7 +45,9 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const {
 		data: incomeStatement,
 		isLoading,
-		isError
+		isError,
+		isFetching,
+		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'income-statement', config.protocol],
 		queryFn: () => getProtocolIncomeStatement({ metadata }),
@@ -56,48 +66,40 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 	const iconUrl = getItemIconUrl('protocol', protocolInfo, config.protocol)
 	const queryRequired = Boolean(config.protocol && displayName && metadata.fees && metadata.revenue)
 	const showLoader = metadataLoading || isLoading || (queryRequired && !streamDone && incomeStatement === undefined)
+	const retryIncomeStatement = () => {
+		void refetch()
+	}
 
 	return (
-		<div className="flex min-h-[360px] flex-col p-2">
-			<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-				<div className="flex items-center gap-2">
-					{iconUrl ? (
-						<img src={iconUrl} alt={displayName} width={20} height={20} className="size-5 shrink-0 rounded-full" />
-					) : (
-						<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-xs text-secondary">
-							{displayName?.charAt(0)?.toUpperCase()}
-						</div>
-					)}
-					<h3 className="text-base font-semibold">{displayName} Income statement</h3>
-				</div>
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
-					{(['table', 'sankey'] as Array<ViewMode>).map((mode) => (
-						<button
-							key={mode}
-							type="button"
-							className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:bg-pro-link-hover-bg focus-visible:bg-pro-link-hover-bg data-[active=true]:font-medium data-[active=true]:text-link"
-							data-active={view === mode}
-							onClick={() => setView(mode)}
-						>
-							{mode === 'table' ? 'Table' : 'Sankey'}
-						</button>
-					))}
-				</div>
-			</div>
-			<div className="flex min-h-0 flex-1 flex-col">
+		<div className="flex min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			{isError && incomeStatement !== undefined ? <ProCardRefreshFailed onRetry={retryIncomeStatement} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={`${displayName} Income statement`}
+				icon={<EntityIcon src={iconUrl} name={displayName} />}
+				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
+				subtitle={<ProMeta items={[view === 'table' ? 'Table' : 'Sankey']} />}
+				viewerControls={
+					<ProSegmented<ViewMode>
+						size="sm"
+						label="Income statement view"
+						options={INCOME_STATEMENT_VIEWS}
+						value={view}
+						onValueChange={setView}
+					/>
+				}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{showLoader ? (
-					<div className="flex flex-1 items-center justify-center">
-						<LoadingSpinner />
-					</div>
-				) : isError ? (
-					<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-						<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-						<p className="text-sm text-pro-text-form">Error loading income statement</p>
-					</div>
+					<ProCardLoading />
+				) : isError && incomeStatement === undefined ? (
+					isFetching ? (
+						<ProCardLoading />
+					) : (
+						<ProCardError onRetry={retryIncomeStatement} />
+					)
 				) : !incomeStatement || !hasData ? (
-					<div className="flex flex-1 items-center justify-center text-pro-text-form">
-						No income statement data available
-					</div>
+					<ProCardEmpty message="No income statement data available" />
 				) : (
 					<div className="min-h-0 flex-1 overflow-auto">
 						<IncomeStatement

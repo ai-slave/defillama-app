@@ -4,6 +4,7 @@ import { useDeferredValue, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
 interface SavedChart {
@@ -71,8 +72,8 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 
 	if (isLoading) {
 		return (
-			<div className="flex min-h-[300px] items-center justify-center">
-				<div className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+			<div className="flex min-h-[300px] items-center justify-center text-pro-text-tertiary">
+				<LoadingSpinner size={24} />
 			</div>
 		)
 	}
@@ -111,7 +112,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 					type="text"
 					placeholder="Search saved charts..."
 					onInput={(e) => setSearchQuery(e.currentTarget.value)}
-					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
@@ -122,7 +123,9 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						key={chart.id}
 						onClick={() => onChartSelect(selectedChart?.id === chart.id ? null : chart)}
 						className={`group flex flex-col gap-2 rounded-lg border p-3 text-left transition-all ${
-							selectedChart?.id === chart.id ? 'border-brand bg-brand/5' : 'pro-border hover:border-brand/50'
+							selectedChart?.id === chart.id
+								? 'border-brand bg-brand/5'
+								: 'border-pro-cards-border hover:border-brand/50'
 						}`}
 					>
 						<div className="flex items-start justify-between gap-2">

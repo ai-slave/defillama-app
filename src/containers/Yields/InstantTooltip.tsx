@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { tooltipSurfaceStyles } from '~/ui/Popover'
+import { tooltipSurfaceStaticStyles } from '~/ui/Popover'
 
 // Zero-delay hover tooltip used by the reference-rates tables (weight-in-USD hints).
 type Props = Omit<Ariakit.TooltipAnchorOptions, 'render'> & {
@@ -29,7 +29,7 @@ export function InstantTooltip({ content, children, placement = 'top', className
 			>
 				{children}
 			</Ariakit.TooltipAnchor>
-			<Ariakit.Tooltip store={store} className={`${tooltipSurfaceStyles} ${sizeCls}`} unmountOnHide portal>
+			<Ariakit.Tooltip store={store} className={`${tooltipSurfaceStaticStyles} ${sizeCls}`} unmountOnHide portal>
 				{content}
 			</Ariakit.Tooltip>
 		</Ariakit.TooltipProvider>

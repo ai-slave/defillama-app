@@ -76,9 +76,13 @@ export function dashboardPathsToUrls(
 	const urls = new Set<string>()
 	for (const key of distinctKeys) {
 		urls.add(new URL(`/pro/${key}`, siteUrl).toString())
+		urls.add(new URL(`/pro/embed/${key}`, siteUrl).toString())
 		urls.add(new URL(`/api/dynamic/pro-dashboard/${key}/stream`, siteUrl).toString())
+		urls.add(new URL(`/api/og/pro/${key}`, siteUrl).toString())
+		urls.add(new URL(`/api/og/pro/${key}?variant=thumb`, siteUrl).toString())
 		if (buildId) {
 			urls.add(new URL(`/_next/data/${buildId}/pro/${key}.json`, siteUrl).toString())
+			urls.add(new URL(`/_next/data/${buildId}/pro/embed/${key}.json`, siteUrl).toString())
 		}
 	}
 	return Array.from(urls)

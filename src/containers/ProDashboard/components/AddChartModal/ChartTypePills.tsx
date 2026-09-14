@@ -96,7 +96,7 @@ export function ChartTypePills({
 				}
 			}}
 		>
-			<Ariakit.ComboboxSelect className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-xs text-pro-text-primary transition-colors hover:border-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden">
+			<Ariakit.ComboboxSelect className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-xs text-pro-text-primary transition-colors hover:border-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden">
 				<span className={selectedType ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}>{selectedLabel}</span>
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
@@ -108,7 +108,7 @@ export function ChartTypePills({
 			>
 				{groupedOptions.map(({ group, options }) => (
 					<Ariakit.ComboboxGroup key={group} className="py-1">
-						<Ariakit.ComboboxGroupLabel className="px-3 py-1.5 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
+						<Ariakit.ComboboxGroupLabel className="px-3 py-1.5 text-xs font-semibold tracking-wide text-pro-text-tertiary uppercase">
 							{group}
 						</Ariakit.ComboboxGroupLabel>
 						{options.map((option) => {

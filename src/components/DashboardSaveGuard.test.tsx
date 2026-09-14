@@ -3,10 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { getUnsavedDashboardItems, type DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
+import { getUnsavedDashboardChanges, type DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { DashboardSaveGuard } from './DashboardSaveGuard'
 
-const route = vi.hoisted(() => ({ pathname: '/yields', query: {} as { dashboardId?: string } }))
+const route = vi.hoisted(() => ({
+	pathname: '/yields',
+	query: {} as { dashboardId?: string; mode?: Array<string> }
+}))
 const auth = vi.hoisted(() => ({ user: { id: 'owner' }, isAuthenticated: true }))
 vi.mock('next/router', () => ({ useRouter: () => route }))
 vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
@@ -78,14 +81,14 @@ test('a failed draft on another page can be reopened, kept, or explicitly discar
 	)
 	await act(async () => button('Keep draft').click())
 	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
-	expect(getUnsavedDashboardItems(client, 'draft', 'owner')).toEqual(request.changes!.items)
+	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toEqual(request.changes)
 	expect(warns()).toBe(true)
 	await act(async () => trigger.click())
 	await act(async () => button('Discard draft').click())
 	await act(async () => {
 		await vi.waitFor(() => expect(container.querySelector('section')).toBeNull())
 	})
-	expect(getUnsavedDashboardItems(client, 'draft', 'owner')).toBeUndefined()
+	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toBeUndefined()
 	expect(warns()).toBe(false)
 	await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('main')))
 })
@@ -93,16 +96,20 @@ test('a failed draft on another page can be reopened, kept, or explicitly discar
 test('the notice is hidden only in its own editor, including slug routes', async () => {
 	await fail()
 	client.setQueryData(['pro-dashboard', 'dashboard', 'research', true, 'owner'], { id: 'draft' })
-	route.pathname = '/pro/[dashboardId]/edit'
-	route.query = { dashboardId: 'research' }
+	route.pathname = '/pro/[dashboardId]/[[...mode]]'
+	route.query = { dashboardId: 'research', mode: ['edit'] }
 	await render()
 	expect(container.querySelector('section')).toBeNull()
 	expect(warns()).toBe(true)
-	route.pathname = '/pro/[dashboardId]'
+	route.query = { dashboardId: 'research' }
 	await render()
 	expect(container.querySelector('section')).not.toBeNull()
-	route.pathname = '/pro/[dashboardId]/edit'
-	route.query = { dashboardId: 'other' }
+	route.query = { dashboardId: 'other', mode: ['edit'] }
+	await render()
+	expect(container.querySelector('section')).not.toBeNull()
+
+	route.pathname = '/pro'
+	route.query = { dashboardId: 'research', mode: ['edit'] }
 	await render()
 	expect(container.querySelector('section')).not.toBeNull()
 })

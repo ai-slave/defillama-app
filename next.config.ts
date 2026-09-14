@@ -22,9 +22,13 @@ const nextConfig: NextConfig = {
 			'./node_modules/@duckdb/node-api/**',
 			'./node_modules/@duckdb/node-bindings/**',
 			'./node_modules/@duckdb/node-bindings-*/**'
-		]
+		],
+		'/api/og/pro/[dashboardId]': ['./node_modules/next/dist/compiled/@vercel/og/**']
 	},
-	experimental: { ...getStaticGenerationConfig(process.env.VERCEL), proxyPrefetch: 'strict' },
+	experimental: {
+		...getStaticGenerationConfig(process.env.VERCEL),
+		proxyPrefetch: 'strict'
+	},
 	reactStrictMode: true,
 	reactCompiler: true,
 	// Increase timeout for static page generation (default is 60 seconds)
@@ -51,6 +55,10 @@ const nextConfig: NextConfig = {
 					},
 					{ key: 'Content-Security-Policy', value: 'frame-ancestors *' }
 				]
+			},
+			{
+				source: '/pro/embed/:path*',
+				headers: [{ key: 'Content-Security-Policy', value: 'frame-ancestors *' }]
 			},
 			{
 				source: '/assets/llamaai/llamaai.mp4',

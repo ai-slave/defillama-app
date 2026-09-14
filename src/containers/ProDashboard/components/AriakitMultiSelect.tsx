@@ -2,7 +2,7 @@ import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useId, useMemo } from 'react'
 import type { MultiSelectOption } from '~/components/Select/types'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 interface AriakitMultiSelectProps {
 	label: string
@@ -53,7 +53,7 @@ export function AriakitMultiSelect({
 
 	return (
 		<div className={className}>
-			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
+			<label htmlFor={disclosureId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
 				{label}
 				{selectedValues.length > 0 ? (
 					<span className="ml-1 text-xs text-pro-text-tertiary">
@@ -63,15 +63,15 @@ export function AriakitMultiSelect({
 				) : null}
 			</label>
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-pro-form-control-border bg-surface-elevated-1">
-					<LoadingSpinner size="sm" />
+				<div className="flex h-9 items-center justify-center rounded-md border border-pro-cards-border bg-surface-elevated-1">
+					<LoadingSpinner size={16} />
 				</div>
 			) : (
 				<>
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span
 							className={`truncate ${selectedValues.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
@@ -117,7 +117,7 @@ export function AriakitMultiSelect({
 										>
 											<div
 												className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-													isActive ? 'border-brand bg-brand' : 'border pro-border'
+													isActive ? 'border-brand bg-brand' : 'border border-pro-cards-border'
 												}`}
 											>
 												{isActive ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}
@@ -128,7 +128,7 @@ export function AriakitMultiSelect({
 								})}
 							</div>
 							{selectedValues.length > 0 ? (
-								<div className="mt-1 border-t pro-border pt-1">
+								<div className="mt-1 border-t border-pro-cards-border pt-1">
 									<button
 										type="button"
 										onClick={clearAll}

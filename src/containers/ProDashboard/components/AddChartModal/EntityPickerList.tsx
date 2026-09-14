@@ -104,7 +104,7 @@ export function EntityPickerList({
 					<input
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
-						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (
@@ -158,7 +158,7 @@ export function EntityPickerList({
 								>
 									<div
 										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-											isSelected ? 'border-brand bg-brand' : 'border-pro-form-control-border bg-surface-elevated-1'
+											isSelected ? 'border-brand bg-brand' : 'border-pro-cards-border bg-surface-elevated-1'
 										}`}
 									>
 										{isSelected ? <Icon name="check" width={10} height={10} className="text-on-brand" /> : null}

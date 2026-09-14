@@ -1,16 +1,17 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { buildChartRepairHref, storeChartRepairTarget } from '~/containers/LlamaAI/chartRepairTarget'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
-import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatDate } from '~/utils/dateFormat'
 import { useProDashboardDashboard, useProDashboardPermissions, useProDashboardTime } from '../ProDashboardAPIContext'
 import type { LlamaAIChartConfig } from '../types'
+import { ProBadge, ProButton, ProMeta } from '../ui'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
+import { useCardHeightScale } from './cardHeightContext'
 import {
 	getLlamaAIChartOwnerNotice,
 	getLlamaAIChartRefreshConfirmation,
@@ -18,7 +19,8 @@ import {
 	getLlamaAIChartSource,
 	isLlamaAIChartRepairNeeded
 } from './llamaAIChartSource'
-import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading } from './ProCardStatus'
 
 interface LlamaAIChartCardProps {
 	config: LlamaAIChartConfig
@@ -29,6 +31,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { dashboardId } = useProDashboardDashboard()
 	const { dashboardOwnerId } = useProDashboardPermissions()
+	const chartHeight = Math.round(360 * useCardHeightScale())
 
 	const hasInlineData = !!(config.inlineChartConfig && config.inlineChartData)
 	const source = getLlamaAIChartSource(config, dashboardId, AI_SERVER)
@@ -102,72 +105,83 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 
 	if (hasInlineData) {
 		return (
-			<div className="flex flex-col gap-2 p-2">
-				<h3 className="font-medium">{config.title || 'Custom Chart'}</h3>
-				<ChartRenderer charts={charts} chartData={filteredChartData!} />
+			<div className="flex flex-col p-0">
+				<ProCardHeader titleAs="h3" title={config.title || 'Custom Chart'} />
+				<div className="px-3 pb-3">
+					<ChartRenderer charts={charts} chartData={filteredChartData!} height={chartHeight} />
+				</div>
 			</div>
 		)
 	}
 
 	if (config.artifactStatus === 'needs-repair') {
 		return (
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2 p-4 text-center">
-				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="font-medium text-pro-text-form">This chart needs to be regenerated</p>
-				<p className="text-xs text-pro-text-form">The dashboard slot is preserved so the owner can replace it.</p>
-				{repairAction}
+			<div className="flex min-h-[calc(300px*var(--card-scale,1))] flex-col justify-center gap-2 p-4">
+				<ProCardError
+					role="status"
+					title="This chart needs to be regenerated"
+					detail="The dashboard slot is preserved so the owner can replace it."
+				/>
+				{repairAction ? <div className="flex justify-center">{repairAction}</div> : null}
 			</div>
 		)
 	}
 
-	if (isLoading || loaders.userLoading) {
-		return (
-			<div className="flex min-h-[300px] items-center justify-center">
-				<LoadingSpinner />
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex min-h-[calc(300px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={config.title || 'Custom Chart'} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading || loaders.userLoading) {
+		return renderStatusShell(<ProCardLoading />)
 	}
 
 	if (error) {
-		return (
-			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
-				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="text-pro-text-form">Failed to load chart</p>
-				<button
-					type="button"
-					className="text-sm text-link hover:underline"
-					onClick={() => {
-						void refetch()
-					}}
-				>
-					Try again
-				</button>
-			</div>
+		return renderStatusShell(
+			<ProCardError
+				onRetry={() => {
+					void refetch()
+				}}
+			/>
 		)
 	}
 
 	if (!data) {
-		return <p className="flex min-h-[300px] items-center justify-center text-pro-text-form">Chart not found</p>
+		return (
+			<div className="flex min-h-[calc(300px*var(--card-scale,1))] flex-col justify-center">
+				<ProCardEmpty message="Chart not found" />
+			</div>
+		)
 	}
 	const updatedAt = data.dataFreshness?.cachedAt || data.publishedAt
 
 	return (
-		<div className="flex flex-col gap-2 p-2">
-			<div className="flex items-center justify-between">
-				<h3 className="font-medium">{config.title || data.title}</h3>
-				<div className="flex items-center gap-2">
-					{data.status === 'legacy-snapshot' || data.status === 'snapshot-only' ? (
-						<span className="text-xs text-pro-text-form">Snapshot</span>
-					) : null}
-					{updatedAt ? (
-						<RelativeTime className="text-xs text-pro-text-form" value={updatedAt} prefix="Updated" />
-					) : data.dataAsOf ? (
-						<span className="text-xs text-pro-text-form">Data as of {formatDate(data.dataAsOf) ?? '-'}</span>
-					) : null}
-					{canRefresh ? (
-						<button
-							type="button"
-							className="text-xs text-link hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+		<div className="flex flex-col p-0">
+			<ProCardHeader
+				titleAs="h3"
+				title={config.title || data.title}
+				badge={
+					data.status === 'legacy-snapshot' || data.status === 'snapshot-only' ? (
+						<ProBadge tone="neutral">Snapshot</ProBadge>
+					) : null
+				}
+				subtitle={
+					<ProMeta
+						items={[
+							updatedAt ? <RelativeTime key="updated" value={updatedAt} prefix="Updated" /> : null,
+							!updatedAt && data.dataAsOf ? `Data as of ${formatDate(data.dataAsOf) ?? '-'}` : null
+						]}
+					/>
+				}
+				controls={
+					canRefresh ? (
+						<ProButton
+							size="sm"
+							variant="ghost"
 							disabled={data.refreshPending || refreshMutation.isPending}
 							onClick={() => {
 								if (refreshConfirmation && !window.confirm(refreshConfirmation)) return
@@ -175,24 +189,26 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 							}}
 						>
 							{data.refreshPending || refreshMutation.isPending ? 'Refreshing…' : 'Refresh'}
-						</button>
-					) : null}
-				</div>
+						</ProButton>
+					) : null
+				}
+			/>
+			<div className="flex flex-col gap-2 px-3 pb-3">
+				{ownerNotice ? <p className="text-xs text-sub-orange">{ownerNotice}</p> : null}
+				{data.refreshError && !ownerNotice ? (
+					<p className="text-xs text-sub-orange">Couldn&apos;t refresh — showing the last published snapshot.</p>
+				) : null}
+				{repairNeeded ? (
+					<div className="flex items-center justify-between gap-2 text-xs text-sub-orange">
+						<span>This chart can no longer refresh. The last published snapshot is shown.</span>
+						{repairAction}
+					</div>
+				) : null}
+				{refreshMutation.isError ? (
+					<p className="text-xs text-sub-orange">Couldn&apos;t queue refresh. Try again later.</p>
+				) : null}
+				<ChartRenderer charts={charts} chartData={filteredChartData!} height={chartHeight} />
 			</div>
-			{ownerNotice ? <p className="text-xs text-sub-orange">{ownerNotice}</p> : null}
-			{data.refreshError && !ownerNotice ? (
-				<p className="text-xs text-sub-orange">Couldn&apos;t refresh — showing the last published snapshot.</p>
-			) : null}
-			{repairNeeded ? (
-				<div className="flex items-center justify-between gap-2 text-xs text-sub-orange">
-					<span>This chart can no longer refresh. The last published snapshot is shown.</span>
-					{repairAction}
-				</div>
-			) : null}
-			{refreshMutation.isError ? (
-				<p className="text-xs text-sub-orange">Couldn&apos;t queue refresh. Try again later.</p>
-			) : null}
-			<ChartRenderer charts={charts} chartData={filteredChartData!} />
 		</div>
 	)
 }

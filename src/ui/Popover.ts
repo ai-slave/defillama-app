@@ -16,19 +16,25 @@ const menuSurfaceHeightStyles =
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles}`
+const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
 
-export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles}`
+const tooltipMotionStyles = tw`translate-y-1 opacity-0 transition-[opacity,translate] duration-120 ease-out-quart data-enter:translate-y-0 data-enter:opacity-100 data-leave:duration-100`
 
-export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles}`
+export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
+
+export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
+
+export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-overlay-sm`
 
-export const popoverHovercardSurfaceStyles = tw`z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-overlay-sm`
+export const popoverHovercardSurfaceStyles = `z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-overlay-sm ${surfaceMotionStyles}`
 
 /* Text-only tooltips: same chrome as hovercards, but radius follows the
    component's size — 6px on a one-line bubble, not the popover 12px. */
-export const tooltipSurfaceStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay body-sm shadow-overlay-sm lg:max-h-(--popover-available-height)`
+export const tooltipSurfaceStaticStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay body-sm shadow-overlay-sm lg:max-h-(--popover-available-height)`
+
+export const tooltipSurfaceStyles = `${tooltipSurfaceStaticStyles} ${tooltipMotionStyles}`
 
 export const popoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
@@ -87,15 +93,15 @@ export const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-a
 export const popoverMobileDismissStyles = tw`ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary sm:hidden`
 
 /* Compatibility styles for product surfaces that still consume shared menu/select components. */
-export const legacySelectPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
+export const legacySelectPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-export const productSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
+export const productSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 export const productSurfaceComboboxActionBarStyles = tw`sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link`
 
-export const legacyMenuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles}`
+export const legacyMenuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
-export const legacyNestedMenuSurfaceStyles = `flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:p-2 sm:p-0 ${nestedMenuSurfaceHeightStyles}`
+export const legacyNestedMenuSurfaceStyles = `flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:p-2 sm:p-0 ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 export const legacyNestedMenuRootFilterButtonStyles = tw`relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row`
 

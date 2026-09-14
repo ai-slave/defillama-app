@@ -1,30 +1,39 @@
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
+import type { ChartConfig as DownloadChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type {
 	ChartBuilderConfig as StoredChartBuilderConfig,
 	AdvancedTvlChartType,
 	BorrowedChartType,
 	ChartConfig,
+	CustomDataColumn,
+	CustomDataRows,
+	DashboardItemBindings,
 	MetricAggregator,
 	MetricChartType,
 	RWAOverviewChartBreakdown,
 	RWAOverviewChartMetric,
 	RWAOverviewChartView,
+	SqlSnapshotValue,
 	StablecoinAssetChartType,
 	StablecoinChartType,
 	YieldChartType
 } from '../../types'
+import type { DashboardItemPlacement } from '../../useDashboardActions'
 import type { UnifiedTableFocusSection } from '../UnifiedTable/types'
 
 export interface AddChartModalProps {
 	isOpen: boolean
 	onClose: () => void
+	onClosed?: () => void
 	editItem?: DashboardItemConfig | null | undefined
+	draftItem?: DashboardItemConfig
 	initialUnifiedFocusSection?: UnifiedTableFocusSection | undefined
 	onOpenSqlModal?: () => void
+	placement?: DashboardItemPlacement | undefined
 }
 
-export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'llamaai' | 'sql'
+export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'llamaai' | 'sql' | 'custom-data'
 export type ChartModeType = 'manual' | 'builder'
 export type ChartTabType =
 	| 'chain'
@@ -36,7 +45,6 @@ export type ChartTabType =
 	| 'income-statement'
 	| 'unlocks'
 	| 'rwa'
-export type ManualChartViewMode = 'cards' | 'form'
 export type CombinedTableType =
 	| 'protocols'
 	| 'cex'
@@ -58,11 +66,27 @@ export type ChartBuilderUpdate = Omit<Partial<ChartBuilderConfig>, 'protocol' | 
 	protocolCategories?: Array<string> | undefined
 }
 
+export interface CustomDataModalState {
+	name: string
+	sourceName: string
+	csvText: string
+	columns: Array<CustomDataColumn>
+	previewRows: Array<Array<SqlSnapshotValue>> | null
+	storedRows: CustomDataRows | null
+	chart: DownloadChartConfig
+	displayMode: 'chart' | 'table'
+	error: string
+	isPreparing: boolean
+}
+
 export interface ModalState {
 	selectedMainTab: MainTabType
 	selectedChartTab: ChartTabType
 	chartMode: ChartModeType
+	manualFormOpen: boolean
 	composerItems: Array<ChartConfig>
+	bindings: DashboardItemBindings
+	customData: CustomDataModalState
 	selectedChain: string | null
 	selectedChains: Array<string>
 	selectedProtocols: Array<string>

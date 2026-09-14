@@ -1,7 +1,7 @@
 import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
-import { SurfaceBodyStatus } from '~/ui/Status'
 import { downloadCSV } from '~/utils/download'
+import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions, useProDashboardPermissions } from '../../ProDashboardAPIContext'
 import type { UnifiedTableConfig, UnifiedTableFilters } from '../../unifiedTable/config/current'
 import { FILTERED_SHARE_METRIC_KEYS, getFilteredShareColumnId } from '../../unifiedTable/config/filteredShareColumns'
@@ -12,8 +12,9 @@ import {
 	sanitizeUnifiedTableRowHeaders
 } from '../../unifiedTable/config/layoutPolicy'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
+import { BoundParameterBadge } from '../BoundParameterBadge'
 import { ConfirmationModal } from '../ConfirmationModal'
-import { LoadingSpinner } from '../LoadingSpinner'
+import { ProCardError, ProCardLoading } from '../ProCardStatus'
 import { TablePagination } from '../Table/TablePagination'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
 import type { CsvExportLevel } from './core/csvExportLevels'
@@ -410,9 +411,10 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	const canCustomizeColumns = Boolean(!isReadOnly && onEdit)
 
 	return (
-		<div className="flex h-full w-full flex-col overflow-hidden p-2 sm:p-4">
+		<div className="flex h-full w-full flex-col overflow-hidden p-0">
 			<UnifiedTableHeader
 				title={title}
+				titleBadge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
 				scopeDescription={scopeDescription}
 				rowHeadersSummary={rowHeadersSummary}
 				onCustomizeColumns={canCustomizeColumns ? handleCustomizeColumns : undefined}
@@ -433,64 +435,63 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				selectedGroupingId={selectedGroupingId}
 				onGroupingChange={canEditGrouping ? handleGroupingChange : undefined}
 			/>
-			{unifiedTable.isLoading ? (
-				<div className="relative isolate h-[450px] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-					<div className="flex h-full items-center justify-center">
-						<LoadingSpinner />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				{unifiedTable.isLoading ? (
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
+						<ProCardLoading variant="table" />
 					</div>
-				</div>
-			) : unifiedTable.hasInitialError ? (
-				<div className="relative isolate flex h-[450px] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-					<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-2">
-						<span>Failed to load table data.</span>
-						<button
-							type="button"
-							className="text-sm text-link hover:underline"
-							onClick={() => void unifiedTable.refetch()}
-						>
-							Try again
-						</button>
-					</SurfaceBodyStatus>
-				</div>
-			) : (
-				<div className="relative isolate flex h-[450px] flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-					<UnifiedVirtualTable
-						rows={unifiedTable.rows}
-						headerGroups={unifiedTable.headerGroups}
-						visibleLeafColumns={unifiedTable.visibleLeafColumns}
-						totalTableWidth={unifiedTable.totalTableWidth}
-						pageIndex={unifiedTable.pageIndex}
-						pageSize={unifiedTable.pageSize}
-					/>
-					{unifiedTable.leafRows.length === 0 ? (
-						<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
-							<div className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 text-sm text-pro-text-secondary">
-								No rows match your scope or filters.
+				) : unifiedTable.hasInitialError ? (
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+						<ProCardError
+							title="Couldn't load this table"
+							onRetry={() => {
+								void unifiedTable.refetch()
+							}}
+						/>
+					</div>
+				) : (
+					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
+						<UnifiedVirtualTable
+							rows={unifiedTable.rows}
+							headerGroups={unifiedTable.headerGroups}
+							visibleLeafColumns={unifiedTable.visibleLeafColumns}
+							totalTableWidth={unifiedTable.totalTableWidth}
+							pageIndex={unifiedTable.pageIndex}
+							pageSize={unifiedTable.pageSize}
+						/>
+						{unifiedTable.leafRows.length === 0 ? (
+							<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
+								<div className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 text-sm text-pro-text-secondary">
+									No rows match your scope or filters.
+								</div>
 							</div>
-						</div>
-					) : null}
-				</div>
-			)}
-			<TablePagination
-				pageSize={unifiedTable.pageSize}
-				pageIndex={unifiedTable.pageIndex}
-				pageCount={unifiedTable.pageCount}
-				canPreviousPage={unifiedTable.canPreviousPage}
-				canNextPage={unifiedTable.canNextPage}
-				previousPage={unifiedTable.previousPage}
-				nextPage={unifiedTable.nextPage}
-				setPageSize={unifiedTable.setPageSize}
-				showPageSizes
-			/>
+						) : null}
+					</div>
+				)}
+				<TablePagination
+					pageSize={unifiedTable.pageSize}
+					pageIndex={unifiedTable.pageIndex}
+					pageCount={unifiedTable.pageCount}
+					canPreviousPage={unifiedTable.canPreviousPage}
+					canNextPage={unifiedTable.canNextPage}
+					previousPage={unifiedTable.previousPage}
+					nextPage={unifiedTable.nextPage}
+					setPageSize={unifiedTable.setPageSize}
+					showPageSizes
+				/>
+			</div>
 			<ConfirmationModal
 				isOpen={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
-				onConfirm={() => handleDuplicateUnifiedTable(config)}
+				onConfirm={() => {
+					const duplicateId = handleDuplicateUnifiedTable(config)
+					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
+				}}
 				title="Duplicate Table"
 				message="Create a duplicate of this table in the dashboard?"
 				confirmText="Duplicate"
 				cancelText="Cancel"
-				confirmButtonClass="pro-btn-primary"
+				tone="primary"
 			/>
 		</div>
 	)

@@ -22,7 +22,7 @@ export function CSVExportButton({
 }: CSVExportButtonProps) {
 	const resolvedClassName =
 		className ??
-		'flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+		'flex items-center gap-2 rounded-md border border-pro-cards-border hover:bg-pro-hover-fill bg-pro-cards-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors disabled:cursor-not-allowed disabled:opacity-50'
 	if (prepareCsv) {
 		return (
 			<CSVDownloadButton

@@ -1,35 +1,102 @@
 import {
+	type Announcements,
 	closestCenter,
+	defaultDropAnimationSideEffects,
 	DndContext,
 	type DragEndEvent,
+	DragOverlay,
+	type DragStartEvent,
+	type DropAnimation,
 	KeyboardSensor,
 	PointerSensor,
+	type ScreenReaderInstructions,
 	useSensor,
 	useSensors
 } from '@dnd-kit/core'
-import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable'
-import { lazy, memo, type ReactNode, Suspense, useContext, useMemo, useState } from 'react'
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { useRouter } from 'next/router'
+import {
+	lazy,
+	memo,
+	type ReactNode,
+	Suspense,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react'
+import toast from 'react-hot-toast'
+import { ChartMotionContext } from '~/components/ECharts/shared/chartMotion'
 import { ChartWatermarkContext } from '~/components/ECharts/shared/watermark'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
+import { usePrefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '../dashboardStreamContract'
 import {
+	buildDashboardLayout,
+	type DashboardLayout,
+	type DashboardLayoutGroup,
+	type DashboardLayoutTab,
+	dropGroupBounds,
+	findGroupHeadingForItem,
+	findTabForItem,
+	moveDashboardItemWithinBounds,
+	moveSectionWithChildren,
+	removeSectionKeepingChildren,
+	resolveDropIndex,
+	sectionRange,
+	streamPrefetchItemIds,
+	visibleGroupBounds
+} from '../dashboardLayout/buildDashboardLayout'
+import {
+	cardScaleStyle,
+	dashboardItemSupportsHeight,
+	getCardHeightScale,
+	getReadOnlyCardMinHeight,
+	getDashboardItemHeight
+} from '../dashboardLayout/cardHeight'
+import { DASHBOARD_HISTORY_LIMIT } from '../dashboardReducer'
+
+export { getReadOnlyCardMinHeight }
+import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '../dashboardStreamContract'
+import type { ParameterUnavailable } from '../dashboardVariables/resolve'
+import { useCollapsedSections } from '../hooks/useCollapsedSections'
+import {
+	dashboardItemElementId,
+	type DashboardItemRevealOptions,
+	requestDashboardItemReveal,
+	useDashboardItemDeepLink
+} from '../hooks/useDashboardItemDeepLink'
+import {
+	useProDashboardDashboard,
 	useProDashboardEditorActions,
+	useProDashboardHistory,
 	useProDashboardItemsState,
-	useProDashboardPermissions
+	useProDashboardPermissions,
+	useProDashboardVariables
 } from '../ProDashboardAPIContext'
-import { StreamDoneContext } from '../queries'
-import type { SqlChartConfig } from '../types'
+import { StreamDoneContext, StreamItemReadinessContext } from '../queries'
+import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type SectionConfig, type SqlChartConfig } from '../types'
+import { ProMeta } from '../ui'
+import { proCardShellStyles } from '../ui/styles'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
-import { moveDashboardItem } from '../utils/dashboardItemsUtils'
-import { ConfirmationModal } from './ConfirmationModal'
+import type { DashboardItemPlacement } from '../useDashboardActions'
+import { generateItemId } from '../utils/dashboardUtils'
+import { CardHeightScaleContext } from './cardHeightContext'
+import { CollapsibleGroup } from './CollapsibleGroup'
+import { DashboardCardContext, type DashboardCardContextValue } from './DashboardCardContext'
 import { DashboardCardLoader } from './DashboardCardLoader'
+import { dashboardItemLabel } from './dashboardItemLabel'
+import { DashboardTabs } from './DashboardTabs'
+import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
+import { DragPreviewCard } from './DragPreviewCard'
 import { InViewDashboardCard } from './InViewDashboardCard'
-import { keepKeyboardEventsInsideCard } from './ProCardActions'
+import { ParameterUnavailableCard } from './ParameterUnavailableCard'
+import { SectionCard } from './SectionCard'
 import { TextCard } from './TextCard'
 import type { UnifiedTableFocusSection } from './UnifiedTable/types'
 
@@ -95,6 +162,11 @@ const DatasetTableCard = lazy(() =>
 		default: mod.DatasetTableCard
 	}))
 )
+const CustomDataCard = lazy(() =>
+	import('./CustomData/CustomDataCard').then((mod) => ({
+		default: mod.CustomDataCard
+	}))
+)
 
 const STORED_COL_SPANS = [0.5, 1, 1.5, 2] as const satisfies ReadonlyArray<StoredColSpan>
 const METRIC_COL_SPANS = [0.5, 1] as const satisfies ReadonlyArray<StoredColSpan>
@@ -104,6 +176,21 @@ const COL_SPAN_CLASS_MAP: Record<1 | 2 | 3 | 4, string> = {
 	3: 'lg:col-span-3',
 	4: 'lg:col-span-4'
 }
+const GROUP_GRID_CLASS = 'grid grid-flow-dense grid-cols-1 gap-3 lg:grid-cols-4'
+const DRAGGING_CARD_CLASS =
+	'data-[dragging=true]:border-dashed data-[dragging=true]:border-pro-accent/60 data-[dragging=true]:bg-pro-app-bg data-[dragging=true]:shadow-none data-[dragging=true]:*:opacity-0'
+const DROP_ANIMATION: DropAnimation = {
+	duration: 200,
+	easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+	sideEffects: defaultDropAnimationSideEffects({ styles: { active: { opacity: '0' } } })
+}
+const DRAG_OVERLAY_TRANSITION = 'transform 180ms cubic-bezier(0.25, 1, 0.5, 1)'
+const DRAG_INSTRUCTIONS: ScreenReaderInstructions = {
+	draggable: 'Press space to pick up a card, arrow keys to move it, space to drop, escape to cancel.'
+}
+const READ_ONLY_SORTABLE = { draggable: true, droppable: true } as const
+const CARD_REMOVED_TOAST_ID = 'card-removed'
+const SECTION_REMOVED_TOAST_ID = 'section-removed'
 
 const normalizeStoredColSpan = (span: StoredColSpan | undefined, fallback: StoredColSpan = 1): StoredColSpan =>
 	span ?? fallback
@@ -116,36 +203,38 @@ const getEffectiveColSpan = (span?: StoredColSpan): 1 | 2 | 3 | 4 => {
 	return 4
 }
 
-type StoredColSpanOptions = readonly [StoredColSpan, ...Array<StoredColSpan>]
+const NO_COL_SPANS: ReadonlyArray<StoredColSpan> = []
+const NO_CARD_HEIGHTS: ReadonlyArray<DashboardCardHeight> = []
 
-const getPreviousStoredColSpan = (
-	span: StoredColSpan,
-	options: StoredColSpanOptions = STORED_COL_SPANS
-): StoredColSpan => {
-	const index = options.indexOf(span)
-	if (index <= 0) {
-		return options[0]
-	}
-	const previous = options[index - 1]
-	if (previous === undefined) throw new Error(`Missing previous column span for ${span}`)
-	return previous
+function itemColSpanOptions(item: DashboardItemConfig): ReadonlyArray<StoredColSpan> {
+	if (item.kind === 'section' || item.kind === 'dataset-table') return NO_COL_SPANS
+	return item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
 }
 
-const getNextStoredColSpan = (span: StoredColSpan, options: StoredColSpanOptions = STORED_COL_SPANS): StoredColSpan => {
-	const index = options.indexOf(span)
-	if (index === -1 || index >= options.length - 1) {
-		const last = options.at(-1)
-		if (last === undefined) throw new Error('Column span options must not be empty')
-		return last
-	}
-	const next = options[index + 1]
-	if (next === undefined) throw new Error(`Missing next column span for ${span}`)
-	return next
+function itemColSpan(item: DashboardItemConfig): StoredColSpan {
+	if (item.kind === 'section') return 2
+	const fallbackSpan: StoredColSpan = item.kind === 'metric' ? METRIC_COL_SPANS[0] : 1
+	return normalizeStoredColSpan(item.colSpan, fallbackSpan)
+}
+
+function SharedHeaderLabel() {
+	return (
+		<ProMeta
+			className="px-1"
+			items={[
+				<>
+					<Icon name="pin" height={12} width={12} />
+					Shown on every tab
+				</>
+			]}
+		/>
+	)
 }
 
 interface ChartGridProps {
-	onAddChartClick: () => void
+	onAddChartClick: (placement?: DashboardItemPlacement) => void
 	onEditItem?: (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => void
+	tabQueryParam?: string | undefined
 }
 
 interface UnifiedTableCardProps {
@@ -159,7 +248,7 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 	}
 
 	return (
-		<Suspense fallback={<DashboardCardLoader className="min-h-[360px] md:min-h-[380px]" />}>
+		<Suspense fallback={<DashboardCardLoader className="min-h-[360px] md:min-h-[380px]" kind="unified-table" />}>
 			<UnifiedTable config={item} {...(onEditItem ? { onEdit: handleEdit } : {})} />
 		</Suspense>
 	)
@@ -167,7 +256,7 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 
 function SqlChartItem({ item }: { item: SqlChartConfig }) {
 	return (
-		<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+		<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="sql" />}>
 			<SqlChartCard config={item} />
 		</Suspense>
 	)
@@ -189,12 +278,12 @@ type DashboardItemRendererProps = DashboardItemRendererBaseProps &
 
 // Two of its three call sites sit inside the grid's item map, where the compiler caches the callback
 // rather than each element, so an unrelated card changing would otherwise re-render every renderer.
-const DashboardItemRenderer = memo(function DashboardItemRenderer(props: DashboardItemRendererProps) {
+export const DashboardItemRenderer = memo(function DashboardItemRenderer(props: DashboardItemRendererProps) {
 	const { item, isEditable, onEditItem } = props
 
 	if (item.kind === 'chart') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="chart" />}>
 				<ChartCard chart={item} />
 			</Suspense>
 		)
@@ -202,7 +291,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'multi') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[402px] md:min-h-[418px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[402px] md:min-h-[418px]" kind="multi" />}>
 				<MultiChartCard multi={item} />
 			</Suspense>
 		)
@@ -210,7 +299,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'metric') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[140px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[140px]" kind="metric" />}>
 				<MetricCard metric={item} />
 			</Suspense>
 		)
@@ -218,7 +307,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'builder') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[422px] md:min-h-[438px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[422px] md:min-h-[438px]" kind="builder" />}>
 				<ChartBuilderCard builder={item} />
 			</Suspense>
 		)
@@ -226,7 +315,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'yields') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="yields" />}>
 				<YieldsChartCard config={item} />
 			</Suspense>
 		)
@@ -234,7 +323,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'stablecoins') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="stablecoins" />}>
 				<StablecoinsChartCard config={item} />
 			</Suspense>
 		)
@@ -242,7 +331,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'stablecoin-asset') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="stablecoin-asset" />}>
 				<StablecoinAssetChartCard config={item} />
 			</Suspense>
 		)
@@ -250,7 +339,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'advanced-tvl') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="advanced-tvl" />}>
 				<AdvancedTvlChartCard config={item} />
 			</Suspense>
 		)
@@ -258,7 +347,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'advanced-borrowed') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="advanced-borrowed" />}>
 				<BorrowedChartCard config={item} />
 			</Suspense>
 		)
@@ -266,7 +355,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'income-statement') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" kind="income-statement" />}>
 				<IncomeStatementCard config={item} />
 			</Suspense>
 		)
@@ -274,7 +363,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'unlocks-schedule') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" kind="unlocks-schedule" />}>
 				<UnlocksScheduleCard config={item} />
 			</Suspense>
 		)
@@ -282,7 +371,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'unlocks-pie') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" kind="unlocks-pie" />}>
 				<UnlocksPieCard config={item} />
 			</Suspense>
 		)
@@ -290,7 +379,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'llamaai-chart') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="llamaai-chart" />}>
 				<LlamaAIChartCard config={item} />
 			</Suspense>
 		)
@@ -298,7 +387,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'rwa-overview') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="rwa-overview" />}>
 				<RWAOverviewChartCard config={item} />
 			</Suspense>
 		)
@@ -306,7 +395,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'rwa-asset') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" kind="rwa-asset" />}>
 				<RWAAssetChartCard config={item} />
 			</Suspense>
 		)
@@ -316,8 +405,20 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 		return <SqlChartItem item={item} />
 	}
 
+	if (item.kind === 'custom-data') {
+		return (
+			<Suspense fallback={<DashboardCardLoader className="min-h-[380px]" kind="custom-data" />}>
+				<CustomDataCard config={item} />
+			</Suspense>
+		)
+	}
+
 	if (item.kind === 'text') {
 		return <TextCard text={item} />
+	}
+
+	if (item.kind === 'section') {
+		return null
 	}
 
 	if (item.kind === 'unified-table') {
@@ -326,7 +427,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'dataset-table') {
 		return (
-			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" kind="dataset-table" />}>
 				{props.isEditable ? (
 					<DatasetTableCard config={item} onConfigChange={(config) => props.handleEditItem(item.id, config)} />
 				) : (
@@ -340,72 +441,206 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 	return exhaustiveItem
 })
 
-function getReadOnlyCardMinHeight(item: DashboardItemConfig) {
-	if (item.kind === 'metric') return 140
-	if (item.kind === 'multi') return 418
-	if (item.kind === 'builder') return 438
-	if (item.kind === 'unified-table') return 380
-	return 360
-}
-
-function StreamPrefetchEligibleScope({ children }: { children: ReactNode }) {
+function StreamPrefetchEligibleScope({ children, itemId }: { children: ReactNode; itemId: string }) {
 	const streamDone = useContext(StreamDoneContext)
-	return <StreamDoneContext.Provider value={streamDone}>{children}</StreamDoneContext.Provider>
+	const readyItemIds = useContext(StreamItemReadinessContext)
+	const value = streamDone || readyItemIds?.has(itemId) === true
+	return <StreamDoneContext.Provider value={value}>{children}</StreamDoneContext.Provider>
 }
 
-function DashboardCardStreamScope({
+export function DashboardCardStreamScope({
 	children,
-	streamPrefetchEligible
+	streamPrefetchEligible,
+	itemId
 }: {
 	children: ReactNode
 	streamPrefetchEligible: boolean
+	itemId: string
 }) {
 	return streamPrefetchEligible ? (
-		<StreamPrefetchEligibleScope>{children}</StreamPrefetchEligibleScope>
+		<StreamPrefetchEligibleScope itemId={itemId}>{children}</StreamPrefetchEligibleScope>
 	) : (
 		<StreamDoneContext.Provider value>{children}</StreamDoneContext.Provider>
 	)
 }
 
-interface ReadOnlyDashboardItemProps {
-	item: DashboardItemConfig
-	streamPrefetchEligible: boolean
-}
-
-const ReadOnlyDashboardItem = memo(function ReadOnlyDashboardItem({
+const CardBody = memo(function CardBody({
 	item,
-	streamPrefetchEligible
-}: ReadOnlyDashboardItemProps) {
-	const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
-	const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
-	const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
-	const effectiveColSpan = getEffectiveColSpan(storedColSpan)
-	const content = <DashboardItemRenderer item={item} isEditable={false} />
-
+	rawItem,
+	unavailable,
+	streamPrefetchEligible,
+	editable,
+	canMoveUp,
+	canMoveDown,
+	onEditItem,
+	handleEditItem,
+	onColSpanChange,
+	onHeightChange,
+	onMoveItem,
+	onRemoveItem
+}: {
+	item: DashboardItemConfig
+	rawItem: DashboardItemConfig
+	unavailable: ParameterUnavailable | undefined
+	streamPrefetchEligible: boolean
+	editable: boolean
+	canMoveUp: boolean
+	canMoveDown: boolean
+	onEditItem?: ((item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => void) | undefined
+	handleEditItem?: ((itemId: string, newItem: DashboardItemConfig) => void) | undefined
+	onColSpanChange?: ((itemId: string, colSpan: StoredColSpan) => void) | undefined
+	onHeightChange?: ((itemId: string, height: DashboardCardHeight) => void) | undefined
+	onMoveItem?: ((itemId: string, direction: -1 | 1) => void) | undefined
+	onRemoveItem?: ((itemId: string) => void) | undefined
+}) {
+	const editRaw = onEditItem
+		? (_item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => onEditItem(rawItem, focusSection)
+		: undefined
+	const content = unavailable ? (
+		<ParameterUnavailableCard
+			item={rawItem}
+			unavailable={unavailable}
+			onEdit={editable && onEditItem ? () => onEditItem(rawItem) : undefined}
+		/>
+	) : editable && handleEditItem ? (
+		<DashboardItemRenderer
+			item={item}
+			isEditable
+			handleEditItem={handleEditItem}
+			{...(editRaw !== undefined ? { onEditItem: editRaw } : {})}
+		/>
+	) : (
+		<DashboardItemRenderer item={item} isEditable={false} />
+	)
+	const cardContextValue = useMemo<DashboardCardContextValue>(() => {
+		const allowsEdit = !(rawItem.kind === 'text' && rawItem.allowHtml)
+		const onEdit = editable && onEditItem && allowsEdit ? () => onEditItem(rawItem) : undefined
+		const onRemove = editable && onRemoveItem ? () => onRemoveItem(rawItem.id) : undefined
+		if (!onColSpanChange || !onHeightChange || !onMoveItem) return { itemId: rawItem.id, onEdit, onRemove }
+		const supportsHeight = dashboardItemSupportsHeight(rawItem)
+		return {
+			itemId: rawItem.id,
+			onEdit,
+			onRemove,
+			layout: {
+				colSpan: itemColSpan(rawItem),
+				colSpanOptions: itemColSpanOptions(rawItem),
+				onColSpanChange: (colSpan) => onColSpanChange(rawItem.id, colSpan),
+				height: supportsHeight ? getDashboardItemHeight(rawItem) : null,
+				heightOptions: supportsHeight ? DASHBOARD_CARD_HEIGHTS : NO_CARD_HEIGHTS,
+				onHeightChange: (height) => onHeightChange(rawItem.id, height),
+				canMoveUp,
+				canMoveDown,
+				onMove: (direction) => onMoveItem(rawItem.id, direction)
+			}
+		}
+	}, [rawItem, editable, onEditItem, onRemoveItem, canMoveUp, canMoveDown, onColSpanChange, onHeightChange, onMoveItem])
+	const cardHeightScale = getCardHeightScale(getDashboardItemHeight(rawItem))
+	const scoped = (
+		<DashboardCardContext.Provider value={cardContextValue}>
+			<CardHeightScaleContext.Provider value={cardHeightScale}>{content}</CardHeightScaleContext.Provider>
+		</DashboardCardContext.Provider>
+	)
+	if (item.kind === 'text') return scoped
 	return (
-		<div
-			className={`col-span-1 rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
-		>
-			{item.kind === 'text' ? (
-				content
-			) : (
-				<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>
-					<DashboardCardStreamScope streamPrefetchEligible={streamPrefetchEligible}>{content}</DashboardCardStreamScope>
-				</InViewDashboardCard>
-			)}
-		</div>
+		<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(rawItem)} kind={rawItem.kind}>
+			<DashboardCardStreamScope streamPrefetchEligible={streamPrefetchEligible} itemId={rawItem.id}>
+				{scoped}
+			</DashboardCardStreamScope>
+		</InViewDashboardCard>
 	)
 })
 
-export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
-	const { items } = useProDashboardItemsState()
-	const { handleChartsReordered, handleRemoveItem, handleColSpanChange, handleEditItem } =
-		useProDashboardEditorActions()
-	const { isReadOnly } = useProDashboardPermissions()
-	const [deleteConfirmItem, setDeleteConfirmItem] = useState<string | null>(null)
-	const isSmallScreen = useMedia('(max-width: 768px)')
+function useActiveTab(layout: DashboardLayout, tabQueryParam: string | undefined) {
+	const router = useRouter()
+	const [localTab, setLocalTab] = useState<string | null>(null)
+	const tabs = layout.tabs
+	const queryValue = tabQueryParam ? router.query[tabQueryParam] : undefined
+	const requested = tabQueryParam ? (Array.isArray(queryValue) ? queryValue[0] : queryValue) : localTab
+	const firstTabId = tabs?.[0]?.section.id ?? null
+	const activeTabId =
+		tabs && requested && tabs.some((tab) => tab.section.id === requested) ? requested : (firstTabId ?? null)
+	const staleTabQuery = tabQueryParam !== undefined && tabs === null && queryValue !== undefined
+	useEffect(() => {
+		if (!staleTabQuery || !tabQueryParam) return
+		const query = { ...router.query }
+		delete query[tabQueryParam]
+		void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false })
+	}, [staleTabQuery, tabQueryParam, router])
+	const setActiveTab = useCallback(
+		(tabId: string) => {
+			if (!tabQueryParam) {
+				setLocalTab(tabId)
+				return
+			}
+			const query = { ...router.query }
+			if (tabId === firstTabId) delete query[tabQueryParam]
+			else query[tabQueryParam] = tabId
+			void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false })
+		},
+		[router, tabQueryParam, firstTabId]
+	)
+	return { activeTabId, setActiveTab }
+}
 
+export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartGridProps) {
+	const { items } = useProDashboardItemsState()
+	const { resolvedItems, unavailableByItemId } = useProDashboardVariables()
+	const { dashboardId } = useProDashboardDashboard()
+	const {
+		handleChartsReordered,
+		handleRemoveItem,
+		handleColSpanChange,
+		handleHeightChange,
+		handleEditItem,
+		handleUpdateSection
+	} = useProDashboardEditorActions()
+	const { undo, undoDepth } = useProDashboardHistory()
+	const { isReadOnly } = useProDashboardPermissions()
+	const isSmallScreen = useMedia('(max-width: 768px)')
+	const gridRef = useRef<HTMLDivElement>(null)
+	const reducedMotion = usePrefersReducedMotion()
+	const [autoFocusSectionId, setAutoFocusSectionId] = useState<string | null>(null)
+	const [activeDragId, setActiveDragId] = useState<string | null>(null)
+
+	const rawById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+	const layout = useMemo(() => buildDashboardLayout(resolvedItems), [resolvedItems])
+	const prefetchIds = useMemo(() => new Set(streamPrefetchItemIds(items, INITIAL_DASHBOARD_STREAM_ITEM_COUNT)), [items])
+	const { activeTabId, setActiveTab } = useActiveTab(layout, tabQueryParam)
+	const { isCollapsed, toggle: toggleCollapsed, expand: expandSection } = useCollapsedSections(dashboardId)
+	const revealItem = useCallback(
+		(itemId: string) => {
+			const heading = findGroupHeadingForItem(layout, itemId)
+			if (heading) expandSection(heading)
+		},
+		[layout, expandSection]
+	)
+	const onRevealRequest = useCallback((itemId: string, options: DashboardItemRevealOptions) => {
+		if (options.focusTitle) setAutoFocusSectionId(itemId)
+	}, [])
+	useDashboardItemDeepLink({
+		layout,
+		setActiveTab,
+		enabled: typeof window !== 'undefined',
+		revealItem,
+		onRevealRequest
+	})
 	const sortableItemIds = useMemo(() => items.map((item) => item.id), [items])
+
+	const expectedUndoDepthRef = useRef<number | null>(null)
+	useEffect(() => {
+		if (expectedUndoDepthRef.current === null || expectedUndoDepthRef.current === undoDepth) return
+		expectedUndoDepthRef.current = null
+		toast.dismiss(CARD_REMOVED_TOAST_ID)
+		toast.dismiss(SECTION_REMOVED_TOAST_ID)
+	}, [undoDepth])
+	useEffect(
+		() => () => {
+			toast.dismiss(CARD_REMOVED_TOAST_ID)
+			toast.dismiss(SECTION_REMOVED_TOAST_ID)
+		},
+		[]
+	)
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -413,208 +648,349 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 				distance: isSmallScreen ? 999_999 : 5
 			}
 		}),
-		useSensor(KeyboardSensor)
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
 	)
 
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event
+	const activeDragItem = activeDragId === null ? null : (rawById.get(activeDragId) ?? null)
 
-		if (over && active.id !== over.id) {
-			const oldIndex = items.findIndex((item) => item.id === active.id)
-			const newIndex = items.findIndex((item) => item.id === over.id)
-			const newCharts = arrayMove(items, oldIndex, newIndex)
-			handleChartsReordered(newCharts)
+	const handleDragStart = (event: DragStartEvent) => {
+		setActiveDragId(String(event.active.id))
+	}
+
+	const handleDragCancel = () => {
+		setActiveDragId(null)
+	}
+
+	const handleDragEnd = (event: DragEndEvent) => {
+		setActiveDragId(null)
+		const { active, over } = event
+		if (!over) return
+		const targetIndex = resolveDropIndex(items, String(active.id), String(over.id), activeTabId)
+		if (targetIndex === null) return
+		const oldIndex = items.findIndex((item) => item.id === active.id)
+		if (oldIndex === -1) return
+		handleChartsReordered(arrayMove(items, oldIndex, targetIndex))
+	}
+
+	const announcements = useMemo<Announcements>(() => {
+		const labelFor = (id: string) => {
+			const item = rawById.get(id)
+			return item ? dashboardItemLabel(item) : 'Card'
 		}
+		const placeFor = (id: string) => {
+			const bounds = dropGroupBounds(items, id, activeTabId)
+			if (!bounds) return null
+			const siblings = items.slice(bounds[0], bounds[1]).filter((item) => item.kind !== 'section')
+			const position = siblings.findIndex((item) => item.id === id) + 1
+			if (position === 0) return null
+			const group = findGroupHeadingForItem(layout, id) ?? findTabForItem(layout, id)
+			return `position ${position} of ${siblings.length}${group ? ` in ${group.title}` : ''}`
+		}
+		return {
+			onDragStart: ({ active }) => {
+				const place = placeFor(String(active.id))
+				return `Picked up ${labelFor(String(active.id))}.${place ? ` Currently at ${place}.` : ''}`
+			},
+			onDragOver: ({ active, over }) => {
+				const label = labelFor(String(active.id))
+				if (!over) return `${label} is not over a card.`
+				const overLabel = labelFor(String(over.id))
+				if (
+					active.id !== over.id &&
+					resolveDropIndex(items, String(active.id), String(over.id), activeTabId) === null
+				) {
+					return `${label} is over ${overLabel}; cards move only inside their own section.`
+				}
+				const place = placeFor(String(over.id))
+				return place ? `${label} is over ${place}.` : `${label} is over ${overLabel}.`
+			},
+			onDragEnd: ({ active, over }) => {
+				const label = labelFor(String(active.id))
+				if (!over || active.id === over.id) return `${label} was dropped where it started.`
+				if (resolveDropIndex(items, String(active.id), String(over.id), activeTabId) === null) {
+					return `${label} stayed where it was. Cards move only inside their own section.`
+				}
+				const place = placeFor(String(over.id))
+				return place ? `${label} moved to ${place}.` : `${label} moved.`
+			},
+			onDragCancel: ({ active }) => `Moving ${labelFor(String(active.id))} cancelled.`
+		}
+	}, [items, activeTabId, layout, rawById])
+
+	const rememberUndoDepth = () => {
+		expectedUndoDepthRef.current = Math.min(undoDepth + 1, DASHBOARD_HISTORY_LIMIT)
+	}
+
+	const undoToast = (message: string, id: string) => {
+		actionToast({
+			message,
+			icon: <Icon name="trash-2" height={14} width={14} />,
+			action: { label: 'Undo', onClick: undo, umamiEvent: 'dashboard-undo' },
+			id,
+			duration: TOAST_DURATION_UNDO
+		})
 	}
 
 	const handleDeleteClick = (itemId: string) => {
-		setDeleteConfirmItem(itemId)
+		handleRemoveItem(itemId)
+		gridRef.current?.focus()
+		rememberUndoDepth()
+		undoToast('Card removed', CARD_REMOVED_TOAST_ID)
 	}
 
-	const handleConfirmDelete = () => {
-		if (deleteConfirmItem) {
-			handleRemoveItem(deleteConfirmItem)
-			setDeleteConfirmItem(null)
+	const handleMoveItem = (itemId: string, direction: -1 | 1) => {
+		const index = items.findIndex((item) => item.id === itemId)
+		if (index === -1) return
+		const next = moveDashboardItemWithinBounds(items, index, direction, visibleGroupBounds(items, itemId, activeTabId))
+		if (next === items) return
+		handleChartsReordered(next)
+		requestDashboardItemReveal(itemId, { scroll: 'nearest' })
+	}
+
+	const handleMoveSection = (sectionId: string, direction: -1 | 1) => {
+		const next = moveSectionWithChildren(items, sectionId, direction)
+		if (next === items) return
+		handleChartsReordered(next)
+		requestDashboardItemReveal(sectionId, { scroll: 'nearest' })
+	}
+
+	const handleDeleteSection = (sectionId: string) => {
+		const section = rawById.get(sectionId)
+		const next = removeSectionKeepingChildren(items, sectionId)
+		if (next === items) return
+		handleChartsReordered(next)
+		if (section?.kind === 'section' && section.displayAs === 'tab' && activeTabId === sectionId) {
+			const remainingTab = layout.tabs?.find((tab) => tab.section.id !== sectionId)
+			if (remainingTab) setActiveTab(remainingTab.section.id)
 		}
+		rememberUndoDepth()
+		undoToast('Section removed · cards stay', SECTION_REMOVED_TOAST_ID)
 	}
 
-	const handleMoveItem = (index: number, direction: -1 | 1) => {
-		const next = moveDashboardItem(items, index, direction)
-		if (next !== items) handleChartsReordered(next)
-	}
-	const handleCancelDelete = () => {
-		setDeleteConfirmItem(null)
+	const insertSection = (afterIndex: number) => {
+		const section: SectionConfig = {
+			id: generateItemId('section', ''),
+			kind: 'section',
+			title: 'New section',
+			displayAs: 'heading'
+		}
+		setAutoFocusSectionId(section.id)
+		const insertAt = Math.min(afterIndex + 1, items.length)
+		handleChartsReordered([...items.slice(0, insertAt), section, ...items.slice(insertAt)])
 	}
 
-	if (isReadOnly) {
+	const handleAddSectionBelow = (sectionId: string) => {
+		const range = sectionRange(items, sectionId)
+		insertSection(range ? range[1] - 1 : items.length - 1)
+	}
+
+	const renderItem = (item: DashboardItemConfig) => {
+		const rawItem = rawById.get(item.id) ?? item
+		const effectiveColSpan = getEffectiveColSpan(itemColSpan(rawItem))
+		const index = items.findIndex((candidate) => candidate.id === item.id)
+		const bounds = visibleGroupBounds(items, item.id, activeTabId)
 		return (
-			<ChartWatermarkContext.Provider value="export-only">
-				<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-					{items.map((item, index) => (
-						<ReadOnlyDashboardItem
-							key={item.id}
-							item={item}
-							streamPrefetchEligible={index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT}
-						/>
-					))}
+			<SortableItem
+				key={item.id}
+				id={item.id}
+				elementId={dashboardItemElementId(rawItem.id)}
+				{...(isReadOnly ? { disabled: READ_ONLY_SORTABLE } : {})}
+				isTable={rawItem.kind === 'dataset-table'}
+				data-col={itemColSpan(rawItem)}
+				data-item-id={rawItem.id}
+				style={cardScaleStyle(getDashboardItemHeight(rawItem))}
+				className={`${proCardShellStyles} ${DRAGGING_CARD_CLASS} group/dashboard-card col-span-1 flex flex-col overflow-hidden ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+			>
+				<div className="min-h-0 flex-1">
+					<CardBody
+						item={item}
+						rawItem={rawItem}
+						unavailable={unavailableByItemId.get(item.id)}
+						streamPrefetchEligible={prefetchIds.has(item.id)}
+						editable={!isReadOnly}
+						canMoveUp={!isReadOnly && !!bounds && index > bounds[0]}
+						canMoveDown={!isReadOnly && !!bounds && index < bounds[1] - 1}
+						{...(isReadOnly
+							? {}
+							: {
+									onEditItem,
+									handleEditItem,
+									onColSpanChange: handleColSpanChange,
+									onHeightChange: handleHeightChange,
+									onMoveItem: handleMoveItem,
+									onRemoveItem: handleDeleteClick
+								})}
+					/>
 				</div>
-			</ChartWatermarkContext.Provider>
+			</SortableItem>
 		)
 	}
 
-	return (
-		<ChartWatermarkContext.Provider value="export-only">
-			<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-				<SortableContext items={sortableItemIds} strategy={rectSortingStrategy}>
-					<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-						{items.map((item, index) => {
-							const spanOptions = item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
-							const fallbackSpan: StoredColSpan = item.kind === 'metric' ? spanOptions[0] : 1
-							const storedColSpan = normalizeStoredColSpan(item.colSpan, fallbackSpan)
-							const effectiveColSpan = getEffectiveColSpan(storedColSpan)
-							const shrinkTarget = getPreviousStoredColSpan(storedColSpan, spanOptions)
-							const expandTarget = getNextStoredColSpan(storedColSpan, spanOptions)
-							const disableShrink = shrinkTarget === storedColSpan
-							const disableExpand = expandTarget === storedColSpan
-							const streamPrefetchEligible = index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT
+	const renderSection = (
+		section: SectionConfig,
+		itemCount: number,
+		collapsed: boolean,
+		contentId: string,
+		flushTop = false
+	) => {
+		const canMoveUp = moveSectionWithChildren(items, section.id, -1) !== items
+		const canMoveDown = moveSectionWithChildren(items, section.id, 1) !== items
+		return (
+			<SortableItem
+				key={section.id}
+				id={section.id}
+				fullWidth
+				disabled={isReadOnly ? READ_ONLY_SORTABLE : { draggable: true, droppable: false }}
+				data-item-id={section.id}
+				className="col-span-full"
+			>
+				<SectionCard
+					section={section}
+					itemCount={itemCount}
+					collapsed={collapsed}
+					onToggleCollapsed={() => toggleCollapsed(section)}
+					contentId={contentId}
+					flushTop={flushTop}
+					{...(isReadOnly
+						? {}
+						: {
+								editing: {
+									autoFocusTitle: autoFocusSectionId === section.id,
+									onUpdate: (patch: Partial<SectionConfig>) => handleUpdateSection(section.id, patch),
+									onMove: (direction: -1 | 1) => handleMoveSection(section.id, direction),
+									canMoveUp,
+									canMoveDown,
+									onDelete: () => handleDeleteSection(section.id),
+									onAddSectionBelow: () => handleAddSectionBelow(section.id)
+								}
+							})}
+				/>
+			</SortableItem>
+		)
+	}
 
-							return (
-								<SortableItem
-									key={item.id}
-									id={item.id}
-									isTable={item.kind === 'dataset-table'}
-									data-col={item.colSpan}
-									className={`group/dashboard-card col-span-1 flex flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
-								>
-									<div className="flex flex-wrap items-center justify-end border-b border-pro-cards-border">
-										{([-1, 1] as const).map((direction) => (
-											<Tooltip
-												key={direction}
-												content={direction === -1 ? 'Move up' : 'Move down'}
-												render={
-													<button
-														type="button"
-														aria-label={direction === -1 ? 'Move up' : 'Move down'}
-														disabled={direction === -1 ? index === 0 : index === items.length - 1}
-														onClick={() => handleMoveItem(index, direction)}
-														onKeyDown={keepKeyboardEventsInsideCard}
-													/>
-												}
-												className="px-3 py-2 hover:pro-btn-primary disabled:opacity-50 md:hidden"
-											>
-												<Icon name={direction === -1 ? 'chevron-up' : 'chevron-down'} height={16} width={16} />
-												<span className="sr-only">{direction === -1 ? 'Move up' : 'Move down'}</span>
-											</Tooltip>
-										))}
+	const addItemTile = (placement?: DashboardItemPlacement) => (
+		<button
+			type="button"
+			onClick={() => onAddChartClick(placement)}
+			className="col-span-full flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-pro-cards-border text-sm font-medium text-link hover:bg-pro-info-300/5"
+		>
+			<Icon name="plus" height={16} width={16} />
+			Add card
+		</button>
+	)
 
-										{item.kind !== 'dataset-table' ? (
-											<>
-												<Tooltip
-													content="Shrink width"
-													render={
-														<button
-															type="button"
-															onClick={() => handleColSpanChange(item.id, shrinkTarget)}
-															disabled={disableShrink}
-														/>
-													}
-													className="px-3 py-2 hover:pro-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-												>
-													<Icon name="minus" height={14} width={14} />
-													<span className="sr-only">Shrink width</span>
-												</Tooltip>
-												<Tooltip
-													content="Expand width"
-													render={
-														<button
-															type="button"
-															onClick={() => handleColSpanChange(item.id, expandTarget)}
-															disabled={disableExpand}
-														/>
-													}
-													className="px-3 py-2 hover:pro-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
-												>
-													<Icon name="plus" height={14} width={14} />
-													<span className="sr-only">Expand width</span>
-												</Tooltip>
-											</>
-										) : null}
-										{onEditItem && !(item.kind === 'text' && item.allowHtml) ? (
-											<Tooltip
-												content="Edit item"
-												render={<button type="button" onClick={() => onEditItem(item)} />}
-												className="px-3 py-2 hover:pro-btn-primary"
-											>
-												<Icon name="pencil" height={14} width={14} />
-												<span className="sr-only">Edit item</span>
-											</Tooltip>
-										) : null}
-										<Tooltip
-											content="Remove item"
-											render={<button type="button" onClick={() => handleDeleteClick(item.id)} />}
-											className="rounded-tr-md px-3 py-2 hover:bg-error/10 hover:text-error"
-										>
-											<Icon name="x" height={14} width={14} />
-											<span className="sr-only">Remove item</span>
-										</Tooltip>
-									</div>
-									<div className="min-h-0 flex-1">
-										{item.kind === 'text' ? (
-											<DashboardItemRenderer
-												item={item}
-												isEditable
-												handleEditItem={handleEditItem}
-												{...(onEditItem !== undefined ? { onEditItem } : {})}
-											/>
-										) : (
-											<InViewDashboardCard minHeight={getReadOnlyCardMinHeight(item)}>
-												<DashboardCardStreamScope streamPrefetchEligible={streamPrefetchEligible}>
-													<DashboardItemRenderer
-														item={item}
-														isEditable
-														handleEditItem={handleEditItem}
-														{...(onEditItem !== undefined ? { onEditItem } : {})}
-													/>
-												</DashboardCardStreamScope>
-											</InViewDashboardCard>
-										)}
-									</div>
-								</SortableItem>
+	const renderGroups = (
+		groups: Array<DashboardLayoutGroup>,
+		options: { withAddTile: boolean; placement?: DashboardItemPlacement; inTab?: boolean; startsGrid?: boolean }
+	) =>
+		groups.map((group, index) => {
+			const collapsed = group.heading ? isCollapsed(group.heading) : false
+			const contentId = `section-content-${group.heading?.id ?? 'root'}`
+			const isLast = index === groups.length - 1
+			const showAddTile = options.withAddTile && isLast
+			const showEmptyTabNotice = options.inTab === true && group.items.length === 0 && isLast
+			return (
+				<div
+					key={group.heading?.id ?? `group-${index}`}
+					className="group/dashboard-section flex flex-col gap-2"
+					{...(group.heading ? { id: dashboardItemElementId(group.heading.id) } : {})}
+				>
+					{group.heading
+						? renderSection(
+								group.heading,
+								group.items.length,
+								collapsed,
+								contentId,
+								index === 0 && !!options.startsGrid
 							)
-						})}
-						<button
-							type="button"
-							onClick={onAddChartClick}
-							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 text-link hover:bg-pro-info-300/5 dark:hover:bg-pro-info-300/10"
+						: null}
+					<CollapsibleGroup id={contentId} collapsed={collapsed} contentClassName={GROUP_GRID_CLASS}>
+						{group.items.map(renderItem)}
+						{showAddTile ? addItemTile(options.placement) : null}
+					</CollapsibleGroup>
+					{showEmptyTabNotice ? (
+						<div
+							{...(showAddTile ? {} : { role: 'status' })}
+							className="flex min-h-24 items-center justify-center rounded-lg border border-dashed border-pro-cards-border px-3 text-center text-sm text-pro-text-tertiary"
 						>
-							<svg
-								width="40"
-								height="40"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<line x1="12" y1="5" x2="12" y2="19" />
-								<line x1="5" y1="12" x2="19" y2="12" />
-							</svg>
-							<span className="text-lg font-medium">Add Item</span>
-						</button>
-					</div>
-				</SortableContext>
-			</DndContext>
+							{showAddTile ? 'This tab has no cards yet. Add one or drag a card here.' : 'Nothing in this tab yet'}
+						</div>
+					) : null}
+				</div>
+			)
+		})
 
-			<ConfirmationModal
-				isOpen={!!deleteConfirmItem}
-				onClose={handleCancelDelete}
-				onConfirm={handleConfirmDelete}
-				title="Remove Item"
-				message="Are you sure you want to remove this item from your dashboard? This action cannot be undone."
-				confirmText="Remove"
-				cancelText="Cancel"
-			/>
-		</ChartWatermarkContext.Provider>
+	const renderTab = (tab: DashboardLayoutTab) => {
+		const tabItemCount = tab.groups.reduce((count, group) => count + group.items.length, 0)
+		return (
+			<>
+				{isReadOnly ? null : (
+					<div id={dashboardItemElementId(tab.section.id)} className="group/dashboard-section flex flex-col gap-2">
+						{renderSection(tab.section, tabItemCount, false, `section-content-${tab.section.id}`)}
+					</div>
+				)}
+				{renderGroups(tab.groups, { withAddTile: !isReadOnly, inTab: true })}
+			</>
+		)
+	}
+
+	const sharedPlacement = layout.tabs?.[0] ? { beforeItemId: layout.tabs[0].section.id } : undefined
+
+	return (
+		<ChartMotionContext.Provider value="draw">
+			<ChartWatermarkContext.Provider value="export-only">
+				<DndContext
+					sensors={sensors}
+					collisionDetection={closestCenter}
+					accessibility={{ announcements, screenReaderInstructions: DRAG_INSTRUCTIONS }}
+					onDragStart={handleDragStart}
+					onDragCancel={handleDragCancel}
+					onDragEnd={handleDragEnd}
+				>
+					<SortableContext items={sortableItemIds} strategy={rectSortingStrategy}>
+						<div
+							ref={gridRef}
+							tabIndex={-1}
+							className="flex flex-col gap-3 outline-hidden"
+							data-testid="dashboard-grid"
+						>
+							{layout.tabs === null ? (
+								renderGroups(layout.shared, { withAddTile: !isReadOnly, startsGrid: true })
+							) : layout.shared.length > 0 ? (
+								<div className="flex flex-col gap-2">
+									{isReadOnly ? null : <SharedHeaderLabel />}
+									{renderGroups(layout.shared, {
+										withAddTile: !isReadOnly,
+										startsGrid: isReadOnly,
+										...(sharedPlacement ? { placement: sharedPlacement } : {})
+									})}
+								</div>
+							) : isReadOnly ? null : (
+								<div className="flex flex-col gap-2">
+									<SharedHeaderLabel />
+									<div className={GROUP_GRID_CLASS}>{addItemTile(sharedPlacement)}</div>
+								</div>
+							)}
+							{layout.tabs && activeTabId ? (
+								<DashboardTabs
+									tabs={layout.tabs}
+									activeTabId={activeTabId}
+									onChange={setActiveTab}
+									renderTab={renderTab}
+								/>
+							) : null}
+						</div>
+					</SortableContext>
+					<DragOverlay
+						dropAnimation={reducedMotion ? null : DROP_ANIMATION}
+						zIndex={50}
+						{...(reducedMotion ? {} : { transition: DRAG_OVERLAY_TRANSITION })}
+					>
+						{activeDragItem ? <DragPreviewCard item={activeDragItem} /> : null}
+					</DragOverlay>
+				</DndContext>
+			</ChartWatermarkContext.Provider>
+		</ChartMotionContext.Provider>
 	)
 }

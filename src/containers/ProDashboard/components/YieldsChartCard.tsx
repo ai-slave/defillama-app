@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useContext } from 'react'
+import { lazy, type ReactNode, Suspense, useContext } from 'react'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
@@ -11,8 +11,12 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { fetchProDashboardProxy } from '../services/fetchViaProxy'
 import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProMeta } from '../ui'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 import { useYieldChartTransformations } from './useYieldChartTransformations'
 import {
 	borrowApyCharts,
@@ -51,7 +55,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const {
 		data: chart,
 		isLoading: fetchingChartData,
-		isError: chartError
+		isError: chartError,
+		isFetching: fetchingChart,
+		refetch: refetchChart
 	} = useQuery({
 		queryKey: ['yield-supply-history', poolConfigId],
 		queryFn: (): Promise<PoolHistory> => {
@@ -68,7 +74,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const {
 		data: borrowChart,
 		isLoading: fetchingBorrowData,
-		isError: borrowError
+		isError: borrowError,
+		isFetching: fetchingBorrow,
+		refetch: refetchBorrowChart
 	} = useQuery({
 		queryKey: ['yield-borrow-history', poolConfigId],
 		queryFn: (): Promise<BorrowMarketHistory> => {
@@ -157,29 +165,39 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		(needsBorrowData ? fetchingBorrowData : fetchingChartData) || (!streamDone && selectedData === undefined)
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
-
-	const hasRequiredData = currentChartDataset.source.length > 0
-
-	if (isLoading) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LoadingSpinner />
-			</div>
-		)
+	const isFetching = needsBorrowData ? fetchingBorrow || fetchingChart : fetchingChart
+	const retryChartData = () => {
+		if (chartError) void refetchChart()
+		if (borrowError) void refetchBorrowChart()
 	}
 
-	if (hasError) {
-		return (
-			<div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-center">
-				<span className="text-sm text-pro-text-tertiary">Failed to load chart data</span>
+	const hasRequiredData = currentChartDataset.source.length > 0
+	const hallmarks = useDashboardAnnotationHallmarks()
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={poolName} subtitle={<ProMeta items={[project, chain]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (hasError && selectedData === undefined) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	if (!hasRequiredData) {
 		return (
-			<div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-center">
-				<span className="text-sm text-pro-text-tertiary">No data available for this chart type</span>
+			<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col justify-center">
+				<ProCardEmpty message="No data available for this chart type" />
 			</div>
 		)
 	}
@@ -194,104 +212,121 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const chartTitle = chartTitles[chartType]
 
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{poolName}</h3>
-					<p className="text-xs text-pro-text-secondary">
-						{project} - {chain}{' '}
-						{chartType !== 'tvl-apy' ? <span className="text-pro-text-tertiary">({chartTitle})</span> : null}
-					</p>
-				</div>
-				{currentChartDataset.source.length > 0 ? (
-					<div className="flex gap-2">
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ onClick: handleCsvExport }}
-						/>
+		<div className="flex h-full flex-col p-0">
+			{hasError ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={poolName}
+				subtitle={<ProMeta items={[project, chain, chartType !== 'tvl-apy' ? chartTitle : null]} />}
+				menu={
+					currentChartDataset.source.length > 0
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { onClick: handleCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				{chartType === 'tvl-apy' && latestData.apy !== null && latestData.tvl !== null ? (
+					<div className="mb-2 flex gap-4">
+						<div className="flex flex-col">
+							<span className="text-xs text-pro-text-tertiary uppercase">Latest Supply APY</span>
+							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#cc3e82' }}>
+								{formatPercent(latestData.apy, { input: 'percent' })}
+							</span>
+						</div>
+						<div className="flex flex-col">
+							<span className="text-xs text-pro-text-tertiary uppercase">TVL</span>
+							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
+								{formatUsd(latestData.tvl, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							</span>
+						</div>
 					</div>
 				) : null}
-			</div>
 
-			{chartType === 'tvl-apy' && latestData.apy !== null && latestData.tvl !== null ? (
-				<div className="mb-2 flex gap-4">
-					<div className="flex flex-col">
-						<span className="text-[10px] text-pro-text-tertiary uppercase">Latest Supply APY</span>
-						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#cc3e82' }}>
-							{formatPercent(latestData.apy, { input: 'percent' })}
-						</span>
-					</div>
-					<div className="flex flex-col">
-						<span className="text-[10px] text-pro-text-tertiary uppercase">TVL</span>
-						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formatUsd(latestData.tvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						</span>
-					</div>
+				<div className="flex-1">
+					<Suspense
+						fallback={
+							<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+								<ProCardLoading />
+							</div>
+						}
+					>
+						{chartType === 'tvl-apy' ? (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={currentChartDataset}
+								charts={tvlApyCharts}
+								valueSymbol=""
+								alwaysShowTooltip={false}
+								hideDefaultLegend={false}
+								onReady={handleChartReady}
+							/>
+						) : null}
+						{chartType === 'supply-apy' ? (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={currentChartDataset}
+								charts={SUPPLY_APY_CHARTS}
+								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
+								valueSymbol="%"
+								hideDefaultLegend={false}
+								onReady={handleChartReady}
+							/>
+						) : null}
+						{chartType === 'supply-apy-7d' ? (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={currentChartDataset}
+								charts={supplyApy7dCharts}
+								{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
+								valueSymbol="%"
+								onReady={handleChartReady}
+							/>
+						) : null}
+						{chartType === 'borrow-apy' ? (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={currentChartDataset}
+								charts={BORROW_APY_CHARTS}
+								{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
+								valueSymbol="%"
+								hideDefaultLegend={false}
+								onReady={handleChartReady}
+							/>
+						) : null}
+						{chartType === 'net-borrow-apy' ? (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={currentChartDataset}
+								charts={netBorrowApyCharts}
+								{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
+								valueSymbol="%"
+								onReady={handleChartReady}
+							/>
+						) : null}
+					</Suspense>
 				</div>
-			) : null}
-
-			<div className="flex-1">
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					{chartType === 'tvl-apy' ? (
-						<MultiSeriesChart
-							height="320px"
-							dataset={currentChartDataset}
-							charts={tvlApyCharts}
-							valueSymbol=""
-							alwaysShowTooltip={false}
-							hideDefaultLegend={false}
-							onReady={handleChartReady}
-						/>
-					) : null}
-					{chartType === 'supply-apy' ? (
-						<MultiSeriesChart
-							height="320px"
-							dataset={currentChartDataset}
-							charts={SUPPLY_APY_CHARTS}
-							{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
-							valueSymbol="%"
-							hideDefaultLegend={false}
-							onReady={handleChartReady}
-						/>
-					) : null}
-					{chartType === 'supply-apy-7d' ? (
-						<MultiSeriesChart
-							height="320px"
-							dataset={currentChartDataset}
-							charts={supplyApy7dCharts}
-							{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
-							valueSymbol="%"
-							onReady={handleChartReady}
-						/>
-					) : null}
-					{chartType === 'borrow-apy' ? (
-						<MultiSeriesChart
-							height="320px"
-							dataset={currentChartDataset}
-							charts={BORROW_APY_CHARTS}
-							{...(percentTimeChartOptions ? { chartOptions: percentTimeChartOptions } : {})}
-							valueSymbol="%"
-							hideDefaultLegend={false}
-							onReady={handleChartReady}
-						/>
-					) : null}
-					{chartType === 'net-borrow-apy' ? (
-						<MultiSeriesChart
-							height="320px"
-							dataset={currentChartDataset}
-							charts={netBorrowApyCharts}
-							{...(singlePercentTimeChartOptions ? { chartOptions: singlePercentTimeChartOptions } : {})}
-							valueSymbol="%"
-							onReady={handleChartReady}
-						/>
-					) : null}
-				</Suspense>
 			</div>
 		</div>
 	)

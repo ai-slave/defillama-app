@@ -47,6 +47,8 @@
 	--radius-lg: 0.5rem; /* 8px at the standard root: cards, panels, inputs, medium controls */
 	--radius-xl: 0.75rem; /* 12px at the standard root: overlays, dialogs, roomy cards */
 
+	--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
 	--animate-loader: loader 800ms linear infinite;
 	--animate-wiggle: wiggle 300ms ease-out;
 	--animate-slidein: slidein 300ms ease-out;
@@ -195,6 +197,17 @@
 
 	:where(body *)::-webkit-scrollbar-thumb:hover {
 		background: var(--neutral-500);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*:not(.animate-spin, .animate-loader, .animate-shimmer, .animate-pulse, .animate-bounce),
+	*:not(.animate-spin, .animate-loader, .animate-shimmer, .animate-pulse, .animate-bounce)::before,
+	*:not(.animate-spin, .animate-loader, .animate-shimmer, .animate-pulse, .animate-bounce)::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
 	}
 }
 
@@ -542,6 +555,16 @@
 @layer components {
 	[data-backdrop] {
 		background-color: var(--bg-screen-dim);
+		opacity: 0;
+		transition: opacity 200ms var(--ease-out-quart);
+	}
+
+	[data-backdrop][data-enter] {
+		opacity: 1;
+	}
+
+	[data-backdrop][data-leave] {
+		transition-duration: 160ms;
 	}
 
 	/* ECharts HTML tooltips (renderMode html / default DOM tooltips). The chart

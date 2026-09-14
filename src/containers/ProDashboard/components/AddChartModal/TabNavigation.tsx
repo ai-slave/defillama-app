@@ -2,20 +2,33 @@ import * as Ariakit from '@ariakit/react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { Tab } from '~/ui/Tabs'
+import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { ProBadge, proTabStyles } from '../../ui'
 import type { MainTabType } from './types'
 
-const PRO_ONLY_TABS = new Set<MainTabType>(['llamaai'])
-const ALL_TABS: Array<{ id: MainTabType; label: string; subtitle?: string; mobileLabel: string }> = [
-	{ id: 'charts', label: 'Charts', subtitle: '', mobileLabel: 'Charts' },
-	{ id: 'metric', label: 'Metric', mobileLabel: 'Metric' },
-	{ id: 'table', label: 'Table', mobileLabel: 'Table' },
-	{ id: 'text', label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text' },
-	{ id: 'llamaai', label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI' },
-	{ id: 'sql', label: 'SQL', subtitle: '', mobileLabel: 'SQL' }
+const PRO_ONLY_TABS = new Set<MainTabType>(['llamaai', 'custom-data'])
+const ALL_TABS: Array<{
+	id: MainTabType
+	label: string
+	subtitle?: string
+	mobileLabel: string
+	editLabel: string
+}> = [
+	{ id: 'charts', label: 'Charts', subtitle: '', mobileLabel: 'Charts', editLabel: 'Chart' },
+	{ id: 'metric', label: 'Metric', mobileLabel: 'Metric', editLabel: 'Metric' },
+	{ id: 'table', label: 'Table', mobileLabel: 'Table', editLabel: 'Table' },
+	{ id: 'text', label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text', editLabel: 'Text' },
+	{ id: 'llamaai', label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI', editLabel: 'LlamaAI chart' },
+	{ id: 'custom-data', label: 'Custom data', subtitle: '', mobileLabel: 'Data', editLabel: 'Custom data' },
+	{ id: 'sql', label: 'SQL', subtitle: '', mobileLabel: 'SQL', editLabel: 'SQL' }
 ]
 
 export const MAIN_TAB_VALUES = ALL_TABS.map((tab) => tab.id)
+
+export function getMainTabEditLabel(tab: MainTabType): string {
+	return ALL_TABS.find((entry) => entry.id === tab)?.editLabel ?? 'Chart'
+}
 
 interface TabNavigationProps {
 	editItem?: DashboardItemConfig | null | undefined
@@ -25,31 +38,39 @@ interface TabNavigationProps {
 export function TabNavigation({ editItem, isSqlAllowed }: TabNavigationProps) {
 	const { hasActiveSubscription } = useAuthContext()
 
+	if (editItem) return null
+
 	return (
-		<div className="rounded-xl border border-pro-cards-border p-1 shadow-sm">
-			<Ariakit.TabList aria-label="Item type" className="grid grid-cols-3 gap-1 min-[400px]:grid-cols-6">
-				{ALL_TABS.map((tab) => {
-					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
-					return (
-						<Tab
-							value={tab.id}
-							key={tab.id}
-							className="rounded-lg px-1 py-2.5 text-xs font-medium text-pro-text-secondary transition-all duration-200 hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand data-[active=true]:shadow-md data-[active=true]:ring-1 data-[active=true]:ring-black/10 sm:px-3 md:text-sm"
-							disabled={!!editItem}
-						>
-							<span className="lg:hidden">
-								{tab.mobileLabel}
-								{locked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline" /> : null}
-							</span>
-							<span className="hidden lg:inline">
-								{tab.label}
-								{tab.subtitle ? <span className="ml-1 text-xs opacity-70">{tab.subtitle}</span> : null}
-								{locked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline opacity-70" /> : null}
-							</span>
-						</Tab>
-					)
-				})}
-			</Ariakit.TabList>
-		</div>
+		<Ariakit.TabList
+			aria-label="Card type"
+			className="flex scrollbar-none shrink-0 overflow-x-auto border-b border-pro-cards-border"
+		>
+			{ALL_TABS.map((tab) => {
+				const requiresApiPlan = tab.id === 'sql' && !isSqlAllowed
+				const requiresPro = PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription
+				const lockLabel = requiresApiPlan ? 'API' : requiresPro ? 'Pro' : null
+				const lockTooltip = requiresApiPlan ? 'Requires the API plan' : 'Requires a Pro subscription'
+				return (
+					<Tab
+						value={tab.id}
+						key={tab.id}
+						className={`${proTabStyles} disabled:cursor-not-allowed disabled:opacity-50`}
+					>
+						<span className="flex items-center justify-center gap-1.5">
+							<span className="lg:hidden">{tab.mobileLabel}</span>
+							<span className="hidden lg:inline">{tab.label}</span>
+							{tab.subtitle ? <span className="hidden text-pro-text-tertiary lg:inline">{tab.subtitle}</span> : null}
+							{lockLabel ? (
+								<Tooltip content={lockTooltip}>
+									<ProBadge tone="premium" icon={<Icon name="file-lock-2" height={12} width={12} />}>
+										{lockLabel}
+									</ProBadge>
+								</Tooltip>
+							) : null}
+						</span>
+					</Tab>
+				)
+			})}
+		</Ariakit.TabList>
 	)
 }

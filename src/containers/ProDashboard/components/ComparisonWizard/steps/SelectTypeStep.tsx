@@ -44,14 +44,14 @@ export function SelectTypeStep() {
 							key={option.type}
 							type="button"
 							onClick={() => actions.setComparisonType(option.type)}
-							className={`flex flex-col items-center gap-4 rounded-xl border-2 p-6 text-center transition-all ${
+							className={`flex flex-col items-center gap-4 rounded-lg border p-6 text-center transition-all ${
 								isSelected
-									? 'border-brand bg-brand/5 ring-2 ring-brand/20'
-									: 'border-pro-cards-border bg-pro-cards-bg hover:border-brand/40'
+									? 'border-brand bg-brand/5'
+									: 'border-pro-cards-border bg-pro-cards-bg hover:border-pro-accent/40'
 							}`}
 						>
 							<div
-								className={`flex size-16 items-center justify-center rounded-2xl transition-colors ${
+								className={`flex size-16 items-center justify-center rounded-lg transition-colors ${
 									isSelected ? 'bg-brand/15 text-brand' : 'text-pro-text-secondary'
 								}`}
 							>

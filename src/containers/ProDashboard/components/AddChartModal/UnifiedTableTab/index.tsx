@@ -14,6 +14,7 @@ import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedT
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 import { Icon } from '~/ui/Icon'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
+import { ProButton } from '../../../ui'
 import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
 import { EquitiesFilingsDataset } from '../../datasets/EquitiesDataset/EquitiesFilingsDataset'
@@ -25,6 +26,8 @@ import type { UnifiedTableFocusSection } from '../../UnifiedTable/types'
 import { applyPresetToConfig } from '../../UnifiedTable/utils/configHelpers'
 import { getOrderedCustomColumnIds } from '../../UnifiedTable/utils/customColumns'
 import { getActiveFilterChips } from '../../UnifiedTable/utils/filterChips'
+import { useModalFieldBinding } from '../bindingContext'
+import { applyUnifiedTableBinding } from '../modalSubmissions'
 import type { CombinedTableType } from '../types'
 import type { FilterPill } from './components/ActiveFilterPills'
 import { ActiveFilterPills } from './components/ActiveFilterPills'
@@ -239,6 +242,7 @@ function TabContent({
 	isEditingItem
 }: UnifiedTableTabProps) {
 	const { handleAddUnifiedTable, handleEditItem } = useProDashboardEditorActions()
+	const chainParameter = useModalFieldBinding('chains', 'chain')
 	const {
 		state: { chains, rowHeaders, filters, activePresetId, columnOrder, columnVisibility, sorting, customColumns },
 		actions: {
@@ -398,8 +402,9 @@ function TabContent({
 		(chainValue: string) => {
 			const nextChains = chains.filter((chain) => chain !== chainValue)
 			setChains(nextChains.length === 0 ? ['All'] : nextChains)
+			chainParameter.unbind()
 		},
-		[chains, setChains]
+		[chains, setChains, chainParameter]
 	)
 
 	const isModified =
@@ -410,14 +415,18 @@ function TabContent({
 	const visibleColumnsCount = columnOrder.filter((id) => id !== 'name' && (columnVisibility[id] ?? true)).length
 
 	const handleAdd = () => {
+		const boundVariableId = chainParameter.boundVariable?.id ?? null
 		if (editItem) {
-			const updatedConfig: UnifiedTableConfig = {
-				...editItem,
-				...draftConfig
-			}
+			const updatedConfig: UnifiedTableConfig = applyUnifiedTableBinding(
+				{
+					...editItem,
+					...draftConfig
+				},
+				boundVariableId
+			)
 			handleEditItem(editItem.id, updatedConfig)
 		} else {
-			handleAddUnifiedTable(draftConfig)
+			handleAddUnifiedTable(applyUnifiedTableBinding(draftConfig, boundVariableId))
 		}
 		onClose()
 	}
@@ -426,6 +435,7 @@ function TabContent({
 		setFilters(preset.filters ?? {})
 		if (preset.filters?.categories && preset.filters.categories.length > 0) {
 			setChains(['All'])
+			chainParameter.unbind()
 		}
 		if (preset.sortBy) {
 			setSorting([
@@ -527,7 +537,7 @@ function TabContent({
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
 									<h4 className="text-xs font-semibold text-pro-text-secondary">Recommended Data Views</h4>
-									<p className="text-[10px] text-pro-text-tertiary">Based on your filters</p>
+									<p className="text-xs text-pro-text-tertiary">Based on your filters</p>
 								</div>
 								<PresetPicker
 									activePresetId={activePresetId}
@@ -559,7 +569,7 @@ function TabContent({
 								type="button"
 								onClick={handleResetToPreset}
 								disabled={!isModified}
-								className={`rounded-md border px-2 py-0.5 text-[11px] transition ${
+								className={`rounded-md border px-2 py-0.5 text-xs transition ${
 									isModified
 										? 'border-brand text-brand hover:bg-brand/10'
 										: 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary'
@@ -591,7 +601,7 @@ function TabContent({
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
 							<h5 className="text-xs font-semibold tracking-wide text-pro-text-secondary uppercase">Active filters</h5>
-							<span className="text-[11px] text-pro-text-tertiary">
+							<span className="text-xs text-pro-text-tertiary">
 								{activeFilterCount > 0 ? `${activeFilterCount} applied` : 'None'}
 							</span>
 						</div>
@@ -601,7 +611,7 @@ function TabContent({
 					<div className="space-y-2">
 						<div>
 							<h5 className="text-xs font-semibold text-pro-text-secondary">Filter presets</h5>
-							<p className="text-[11px] text-pro-text-tertiary">Start from curated combinations.</p>
+							<p className="text-xs text-pro-text-tertiary">Start from curated combinations.</p>
 						</div>
 						<PresetSelector currentFilters={filters ?? {}} onApplyPreset={handleApplyPreset} />
 					</div>
@@ -609,7 +619,7 @@ function TabContent({
 					<div className="space-y-2">
 						<div>
 							<h5 className="text-xs font-semibold text-pro-text-secondary">Scope</h5>
-							<p className="text-[11px] text-pro-text-tertiary">
+							<p className="text-xs text-pro-text-tertiary">
 								Choose which chains, categories, protocols, or oracles to focus on.
 							</p>
 						</div>
@@ -625,7 +635,7 @@ function TabContent({
 					<div className="space-y-2">
 						<div>
 							<h5 className="text-xs font-semibold text-pro-text-secondary">Metric & flag filters</h5>
-							<p className="text-[11px] text-pro-text-tertiary">
+							<p className="text-xs text-pro-text-tertiary">
 								Add filters for TVL, volume, fees, revenue, and other metrics.
 							</p>
 						</div>
@@ -713,7 +723,7 @@ function TabContent({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-pro-cards-border">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-pro-cards-border">
 					<div className="h-full overflow-auto">
 						{activeRwaTab === 'rwa-chains' ? (
 							<RWAChainsDataset />
@@ -774,7 +784,7 @@ function TabContent({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-pro-cards-border">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-pro-cards-border">
 					<div className="h-full overflow-auto">
 						{activeEquitiesTab === 'equities' ? (
 							<EquitiesCompaniesDataset />
@@ -799,7 +809,7 @@ function TabContent({
 				<button
 					type="button"
 					onClick={() => handleSelectTableType(heroCard.value)}
-					className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-brand/50"
+					className="group relative flex flex-col rounded-lg border border-pro-cards-border p-5 text-left transition-all hover:border-pro-accent/40"
 				>
 					<div className="mb-3 flex items-center justify-between">
 						<div className="flex items-center gap-3">
@@ -862,7 +872,7 @@ function TabContent({
 											handleSelectTableType(card.value)
 										}
 									}}
-									className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-brand/50"
+									className="group flex items-start gap-2.5 rounded-lg border border-pro-cards-border p-3 text-left transition-all hover:border-pro-accent/40"
 								>
 									<div className="flex size-8 shrink-0 items-center justify-center rounded-md transition-colors group-hover:bg-brand/10">
 										<Icon
@@ -956,7 +966,7 @@ function TabContent({
 								</span>
 								{tab.badge ? (
 									<span
-										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium ${
+										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-xs font-medium ${
 											isActive ? 'bg-brand/20 text-brand' : 'bg-pro-cards-border text-pro-text-tertiary'
 										}`}
 										title={tab.badge?.toString()}
@@ -979,21 +989,13 @@ function TabContent({
 			</div>
 
 			<div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-pro-cards-border bg-pro-cards-bg pt-3 pb-2 shadow-top-edge">
-				<button
-					type="button"
-					onClick={onClose}
-					className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition hover:text-pro-text-primary"
-				>
+				<ProButton type="button" onClick={onClose} variant="secondary">
 					Cancel
-				</button>
-				<button
-					type="button"
-					onClick={handleAdd}
-					className="flex items-center gap-2 rounded-md pro-btn-primary px-4 py-2 text-sm font-semibold"
-				>
-					{isEditing ? 'Save Changes' : 'Add Table'}
+				</ProButton>
+				<ProButton type="button" onClick={handleAdd} variant="primary">
+					{isEditing ? 'Save changes' : 'Add card'}
 					<Icon name={isEditing ? 'check' : 'plus'} height={14} width={14} />
-				</button>
+				</ProButton>
 			</div>
 		</div>
 	)

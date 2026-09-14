@@ -3,7 +3,14 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
+import { popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 import type { CustomTimePeriod } from '../dashboardTypes'
+import { ProButton, ProSegmented } from '../ui'
+
+const CUSTOM_PERIOD_MODE_OPTIONS = [
+	{ value: 'relative' as const, label: 'Relative' },
+	{ value: 'absolute' as const, label: 'Absolute' }
+]
 
 interface CustomTimePeriodPickerProps {
 	isActive: boolean
@@ -108,11 +115,7 @@ export function CustomTimePeriodPicker({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
-				className={`-ml-px shrink-0 rounded-none rounded-r-md border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 md:flex-initial md:px-4 md:py-2 ${
-					isActive
-						? 'pro-border pro-btn-primary'
-						: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
-				} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+				render={<ProButton type="button" variant={isActive ? 'primary' : 'secondary'} />}
 				disabled={disabled}
 			>
 				<span className="flex items-center gap-1">
@@ -123,34 +126,20 @@ export function CustomTimePeriodPicker({
 
 			<Ariakit.Popover
 				gutter={8}
-				className="z-50 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 shadow-lg"
+				portal
+				unmountOnHide
+				className={popoverSurfaceStyles}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				style={{ minWidth: '300px' }}
 			>
-				<form onSubmit={handleApply} className="flex flex-col gap-4">
-					<div className="flex gap-2">
-						<button
-							type="button"
-							onClick={() => setMode('relative')}
-							className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-								mode === 'relative'
-									? 'bg-brand text-on-brand'
-									: 'border pro-border bg-surface-elevated-1 text-pro-text-secondary hover:bg-(--cards-hover)'
-							}`}
-						>
-							Relative
-						</button>
-						<button
-							type="button"
-							onClick={() => setMode('absolute')}
-							className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-								mode === 'absolute'
-									? 'bg-brand text-on-brand'
-									: 'border pro-border bg-surface-elevated-1 text-pro-text-secondary hover:bg-(--cards-hover)'
-							}`}
-						>
-							Absolute
-						</button>
-					</div>
+				<form onSubmit={handleApply} className="flex flex-col gap-4 p-4">
+					<ProSegmented<'relative' | 'absolute'>
+						value={mode}
+						onValueChange={setMode}
+						options={CUSTOM_PERIOD_MODE_OPTIONS}
+						label="Custom period mode"
+						size="sm"
+					/>
 
 					{mode === 'relative' ? (
 						<div className="flex flex-col gap-2">
@@ -165,7 +154,7 @@ export function CustomTimePeriodPicker({
 									inputMode="numeric"
 									defaultValue={defaultRelativeDays}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="flex-1 rounded-md border pro-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 									placeholder="Enter days"
 								/>
 								<span className="text-sm text-pro-text-secondary">days ago → Now</span>
@@ -184,7 +173,7 @@ export function CustomTimePeriodPicker({
 									defaultValue={defaultStartDate}
 									max={today}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="rounded-md border pro-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 							<div className="flex flex-col gap-2">
@@ -198,26 +187,19 @@ export function CustomTimePeriodPicker({
 									defaultValue={defaultEndDate}
 									max={today}
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									className="rounded-md border pro-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
 					)}
 
 					<div className="flex gap-2 border-t border-pro-cards-border pt-2">
-						<button
-							type="button"
-							onClick={handleClear}
-							className="flex-1 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm font-medium text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-						>
+						<ProButton type="button" onClick={handleClear} variant="secondary" className="flex-1">
 							Clear
-						</button>
-						<button
-							type="submit"
-							className="flex-1 rounded-md pro-btn-primary px-3 py-2 text-sm font-medium transition-colors"
-						>
+						</ProButton>
+						<ProButton type="submit" variant="primary" className="flex-1">
 							Apply
-						</button>
+						</ProButton>
 					</div>
 				</form>
 			</Ariakit.Popover>

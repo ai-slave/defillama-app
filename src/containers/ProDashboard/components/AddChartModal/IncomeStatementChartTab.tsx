@@ -6,6 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 interface IncomeStatementChartTabProps {
 	selectedIncomeStatementProtocol: string | null
@@ -72,17 +73,38 @@ export function IncomeStatementChartTab({
 		)
 	}, [incomeStatement])
 
+	const protocolParameter = useModalFieldBinding('protocol', 'protocol')
+	const selectableProtocolOptions = useMemo(
+		() =>
+			protocolParameter.options.length > 0
+				? [...protocolParameter.options, ...filteredProtocolOptions]
+				: filteredProtocolOptions,
+		[protocolParameter.options, filteredProtocolOptions]
+	)
+
 	const hasIncentives = Boolean(selectedRecord?.flags?.incentives || selectedRecord?.flags?.emissions)
 	const hasSelection = Boolean(selectedIncomeStatementProtocol)
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
+				{protocolParameter.boundVariable ? (
+					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
+				) : null}
 				<AriakitVirtualizedSelect
 					label="Protocol"
-					options={filteredProtocolOptions}
+					options={selectableProtocolOptions}
 					selectedValue={selectedIncomeStatementProtocol || ''}
 					onChange={(option) => {
+						const variable = protocolParameter.resolveSelection(option.value)
+						if (variable) {
+							onSelectedIncomeStatementProtocolChange(variable.value)
+							onSelectedIncomeStatementProtocolNameChange(
+								filteredProtocolOptions.find((item) => item.value === variable.value)?.label ?? variable.value
+							)
+							protocolParameter.bind(variable.id)
+							return
+						}
 						onSelectedIncomeStatementProtocolChange(option.value)
 						onSelectedIncomeStatementProtocolNameChange(option.label)
 					}}
@@ -94,7 +116,7 @@ export function IncomeStatementChartTab({
 				) : null}
 			</div>
 
-			<div className="overflow-hidden rounded-lg border pro-border">
+			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
 					Preview
 				</h4>

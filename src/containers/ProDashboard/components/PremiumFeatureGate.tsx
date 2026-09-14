@@ -4,6 +4,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
+import { ProButton } from '../ui'
 import { DashboardPaywallModal, type PaywallReason } from './DashboardPaywallModal'
 
 interface PremiumFeatureGateProps {
@@ -41,17 +42,18 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 						This feature requires a Pro subscription. Upgrade to unlock it.
 					</p>
 				</div>
-				<button
+				<ProButton
 					type="button"
 					onClick={() => {
 						setSignupSource('pro-dashboard')
 						setPaywallOpen(true)
 					}}
-					className="flex items-center gap-2 rounded-md pro-btn-primary px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+					variant="primary"
+					size="lg"
 				>
 					<Icon name="sparkles" height={16} width={16} />
 					Upgrade to Pro
-				</button>
+				</ProButton>
 			</div>
 
 			{paywallOpen ? <DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallReason} /> : null}

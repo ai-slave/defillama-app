@@ -36,7 +36,7 @@ export function useRWABreakdownChartData(
 	const authToken = useContext(ProxyAuthTokenContext)
 	const selectedChain = chain && chain !== 'All' ? chain : null
 
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, isFetching, error, refetch } = useQuery({
 		queryKey: getProRwaBreakdownQueryKey(breakdown, metric, chain),
 		enabled: streamDone,
 		queryFn: async () => {
@@ -69,7 +69,13 @@ export function useRWABreakdownChartData(
 		retry: 1
 	})
 
-	return { chartDataset: data ?? null, isLoading: isLoading || (!streamDone && data === undefined), error }
+	return {
+		chartDataset: data ?? null,
+		isLoading: isLoading || (!streamDone && data === undefined),
+		isFetching,
+		error,
+		refetch
+	}
 }
 
 export function useRWAChainsList() {
@@ -116,7 +122,7 @@ export function useRWAAssetChartData(assetId: string | null) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
 
-	const { data, isLoading, error } = useQuery({
+	const { data, isLoading, isFetching, error, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'rwa-asset-chart', assetId],
 		enabled: streamDone && !!assetId,
 		queryFn: async () => {
@@ -134,7 +140,9 @@ export function useRWAAssetChartData(assetId: string | null) {
 	return {
 		chartDataset: data ?? null,
 		isLoading: isLoading || (assetId !== null && !streamDone && data === undefined),
-		error
+		isFetching,
+		error,
+		refetch
 	}
 }
 

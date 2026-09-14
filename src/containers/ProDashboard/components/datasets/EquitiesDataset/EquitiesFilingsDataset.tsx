@@ -26,7 +26,7 @@ import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { CSVExportButton } from '../../CSVExportButton'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 
@@ -181,11 +181,8 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 
 	if (!ticker) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Equities Filings</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">No ticker specified</div>
 				</div>
 			</div>
@@ -194,13 +191,9 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Filings — {ticker}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading SEC filings...</p>
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading SEC filings…" />
 				</div>
 			</div>
 		)
@@ -208,11 +201,8 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 
 	if (error) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Filings — {ticker}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load SEC filings</div>
 				</div>
 			</div>
@@ -220,17 +210,16 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	}
 
 	return (
-		<div className="flex h-full w-full flex-col p-4">
+		<div className="flex h-full w-full flex-col">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Filings — {ticker}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<label className="flex items-center gap-2 text-sm">
 							<span className="text-pro-text-secondary">Form</span>
 							<select
 								value={selectedForm}
 								onChange={(e) => setSelectedForm(e.currentTarget.value)}
-								className="rounded-md border pro-border bg-pro-glass-bg px-2 py-1 text-sm text-pro-text-primary"
+								className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-2 py-1 text-sm text-pro-text-primary"
 							>
 								<option value="All">All</option>
 								{filingForms.map((form) => (
@@ -263,7 +252,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							type="text"
 							placeholder="Search filings..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

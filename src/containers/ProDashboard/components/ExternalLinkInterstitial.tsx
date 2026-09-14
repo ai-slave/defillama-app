@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/ui/Icon'
+import { ProButton, ProDialog } from '../ui'
 import { externalLinkHostname } from './externalLink'
 
 interface ExternalLinkInterstitialProps {
@@ -19,65 +19,58 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 				if (!open) onClose()
 			}}
 		>
-			<Ariakit.Dialog
-				className="dialog w-full max-w-md gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
-				unmountOnHide
-				portal
+			<ProDialog
+				width="sm"
+				heading="Leaving DefiLlama"
 				hideOnInteractOutside
+				footer={
+					<>
+						<Ariakit.DialogDismiss render={<ProButton type="button" variant="secondary" size="md" />}>
+							Cancel
+						</Ariakit.DialogDismiss>
+						{hostname && href && onAllowPermanently ? (
+							<ProButton
+								type="button"
+								variant="secondary"
+								size="md"
+								onClick={() => {
+									onAllowPermanently(hostname, href)
+									onClose()
+								}}
+							>
+								Always allow
+							</ProButton>
+						) : null}
+						<ProButton
+							as="a"
+							variant="primary"
+							size="md"
+							href={href ?? '#'}
+							target="_blank"
+							rel="noopener noreferrer nofollow ugc"
+							onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
+								if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+									onClose()
+									return
+								}
+								event.preventDefault()
+								if (href) window.open(href, '_blank', 'noopener,noreferrer')
+								onClose()
+							}}
+						>
+							Continue
+						</ProButton>
+					</>
+				}
 			>
-				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-xl font-semibold text-pro-text-primary">Leaving DefiLlama</h2>
-					<Ariakit.DialogDismiss
-						className="rounded-md pro-hover-bg p-1 text-pro-text-primary transition-colors"
-						aria-label="Close"
-					>
-						<Icon name="x" height={20} width={20} />
-					</Ariakit.DialogDismiss>
-				</div>
-
-				<p className="mb-2 text-pro-text-secondary">
+				<p className="text-pro-text-secondary">
 					You are about to visit an external site. DefiLlama is not responsible for its content.
 				</p>
-				<div className="mb-6 rounded-md border pro-border bg-surface-elevated-2 p-3 text-sm break-all text-pro-text-primary">
+				<div className="mt-2 rounded-md border border-pro-cards-border bg-surface-elevated-2 p-3 text-sm break-all text-pro-text-primary">
 					<div className="font-medium">{hostname}</div>
 					<div className="mt-1 text-xs break-all text-pro-text-secondary">{href}</div>
 				</div>
-
-				<div className="flex justify-end gap-3">
-					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary">
-						Cancel
-					</Ariakit.DialogDismiss>
-					{hostname && href && onAllowPermanently ? (
-						<button
-							type="button"
-							onClick={() => {
-								onAllowPermanently(hostname, href)
-								onClose()
-							}}
-							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-						>
-							Always allow
-						</button>
-					) : null}
-					<a
-						href={href ?? '#'}
-						target="_blank"
-						rel="noopener noreferrer nofollow ugc"
-						onClick={(event) => {
-							if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
-								onClose()
-								return
-							}
-							event.preventDefault()
-							if (href) window.open(href, '_blank', 'noopener,noreferrer')
-							onClose()
-						}}
-						className="rounded-md bg-pro-accent px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
-					>
-						Continue
-					</a>
-				</div>
-			</Ariakit.Dialog>
+			</ProDialog>
 		</Ariakit.DialogProvider>
 	)
 }

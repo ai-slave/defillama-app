@@ -1,7 +1,9 @@
 import Image from 'next/image'
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { CardLikeButton } from '~/containers/ProDashboard/components/CardLikeButton'
+import { buildDashboardPreview } from '~/containers/ProDashboard/components/dashboardPreview'
+import { DashboardPreview } from '~/containers/ProDashboard/components/DashboardPreview'
 import { Icon } from '~/ui/Icon'
 import type { IIcon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -196,6 +198,11 @@ function Avatar({ author, size = 'large' }: { author: PublicDashboardAuthor; siz
 	)
 }
 
+function AuthorDashboardPreview({ dashboard, className }: { dashboard: AuthorDashboardSummary; className?: string }) {
+	const tiles = useMemo(() => buildDashboardPreview(dashboard.data?.items ?? []), [dashboard.data?.items])
+	return <DashboardPreview tiles={tiles} {...(className === undefined ? {} : { className })} />
+}
+
 function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const itemsCount = dashboardItemCount(dashboard)
 	return (
@@ -215,8 +222,9 @@ function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }
 function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 4) : []
 	return (
-		<div className="group relative isolate grid min-h-[240px] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-link/50">
-			<div className="absolute inset-x-0 top-0 h-1 bg-link/70 opacity-0 transition-opacity group-hover:opacity-100" />
+		<div className="group relative isolate grid min-h-[240px] grid-rows-[auto_1fr] overflow-hidden rounded-md border border-medium bg-surface transition-colors focus-within:border-link hover:border-link/50">
+			<div className="absolute inset-x-0 top-0 z-10 h-1 bg-link/70 opacity-0 transition-opacity group-hover:opacity-100" />
+			<AuthorDashboardPreview dashboard={dashboard} className="border-b border-pro-cards-border" />
 			<div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
 				<div className="flex items-start justify-between gap-3">
 					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-primary group-hover:text-link">
@@ -278,6 +286,7 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 					) : null}
 				</div>
 				<div className="grid content-between gap-4 border-t border-medium pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+					<AuthorDashboardPreview dashboard={dashboard} className="rounded-md border border-pro-cards-border" />
 					<DashboardCardStats dashboard={dashboard} />
 					<div className="grid gap-2">
 						<p className="text-xs text-tertiary">

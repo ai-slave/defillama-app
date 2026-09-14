@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react'
+import {
+	BoundParameterChip,
+	useModalFieldBinding
+} from '~/containers/ProDashboard/components/AddChartModal/bindingContext'
 import { AriakitVirtualizedMultiSelect } from '~/containers/ProDashboard/components/AriakitVirtualizedMultiSelect'
 import { buildOracleFilterOptions } from '~/containers/ProDashboard/oracleFilterOptions'
 import { useProDashboardCatalog } from '~/containers/ProDashboard/ProDashboardAPIContext'
@@ -24,13 +28,14 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 	const { data: oracleNamesByProtocol } = useOracleNamesByProtocol()
 	const [categoryMode, setCategoryMode] = useState<'include' | 'exclude'>('include')
 
-	const chainSelectOptions = useMemo(() => {
-		if (availableChains.some((option) => option.value === 'All')) {
-			return availableChains
-		}
+	const chainParameter = useModalFieldBinding('chains', 'chain')
 
-		return [{ value: 'All', label: 'All Chains' }, ...availableChains]
-	}, [availableChains])
+	const chainSelectOptions = useMemo(() => {
+		const base = availableChains.some((option) => option.value === 'All')
+			? availableChains
+			: [{ value: 'All', label: 'All Chains' }, ...availableChains]
+		return chainParameter.options.length > 0 ? [...chainParameter.options, ...base] : base
+	}, [availableChains, chainParameter.options])
 
 	const selectedChainValues = chains.includes('All') ? ALL_CHAINS_SELECTION : chains
 
@@ -114,6 +119,17 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 	}
 
 	const handleChainMultiSelectChange = (values: Array<string>) => {
+		for (const value of values) {
+			const variable = chainParameter.resolveSelection(value)
+			if (variable) {
+				onChainsChange([variable.value])
+				chainParameter.bind(variable.id)
+				return
+			}
+		}
+
+		chainParameter.unbind()
+
 		if (values.length === 0) {
 			onChainsChange(['All'])
 			return
@@ -142,6 +158,9 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		<div className="max-h-[350px] overflow-y-auto">
 			<div className="grid gap-3 md:grid-cols-2">
 				<div className="flex flex-col gap-1.5">
+					{chainParameter.boundVariable ? (
+						<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+					) : null}
 					<AriakitVirtualizedMultiSelect
 						label="Chains"
 						options={chainSelectOptions}
@@ -155,7 +174,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 					<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
 						<div>
 							<p className="text-xs font-semibold text-pro-text-secondary">Categories</p>
-							<p className="text-[11px] text-pro-text-tertiary">Toggle include or exclude selections.</p>
+							<p className="text-xs text-pro-text-tertiary">Toggle include or exclude selections.</p>
 						</div>
 						<div className="flex items-center rounded-md border border-pro-cards-border">
 							{(['include', 'exclude'] as const).map((mode) => {
@@ -166,12 +185,12 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 										type="button"
 										key={mode}
 										onClick={() => setCategoryMode(mode)}
-										className={`px-2 py-1 text-[11px] font-medium transition ${
+										className={`px-2 py-1 text-xs font-medium transition ${
 											isActive ? 'bg-brand/10 text-brand' : 'text-pro-text-tertiary hover:text-pro-text-primary'
 										}`}
 									>
 										{mode === 'include' ? 'Include' : 'Exclude'}
-										{count > 0 ? <span className="ml-1 text-[10px] text-pro-text-tertiary">({count})</span> : null}
+										{count > 0 ? <span className="ml-1 text-xs text-pro-text-tertiary">({count})</span> : null}
 									</button>
 								)
 							})}

@@ -2,9 +2,17 @@ import { type MutationState, useMutationState, useQueryClient } from '@tanstack/
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import type { CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
+import type { CustomTimePeriod, Dashboard, DashboardAnnotation, DashboardVariable, TimePeriod } from '../dashboardTypes'
+import type { AutoSaveOverrides } from '../useDashboardActions'
 import { toDashboardSavePayload } from '../utils/dashboardUtils'
 import { type DashboardUpdate, useUpdateDashboard, wasDashboardDeleted } from './useDashboardAPI'
+
+const LARGE_DOCUMENT_ITEMS_LENGTH = 48 * 1024
+const LARGE_DOCUMENT_DEBOUNCE_MS = 300
+
+function isLargeDocument(update: DashboardUpdate): boolean {
+	return JSON.stringify(update.changes?.items ?? []).length > LARGE_DOCUMENT_ITEMS_LENGTH
+}
 
 export function useAutoSave({
 	dashboard,
@@ -12,6 +20,8 @@ export function useAutoSave({
 	isFreeUser,
 	timePeriod,
 	customTimePeriod,
+	variables,
+	annotations,
 	delay = 800
 }: {
 	dashboard: Dashboard | null
@@ -19,6 +29,8 @@ export function useAutoSave({
 	isFreeUser: boolean
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
+	variables: Array<DashboardVariable>
+	annotations: Array<DashboardAnnotation>
 	delay?: number
 }) {
 	const client = useQueryClient()
@@ -74,7 +86,8 @@ export function useAutoSave({
 	})
 	useEffect(() => {
 		if (!queued) return
-		const timer = setTimeout(() => onFlush(), delay)
+		const wait = isLargeDocument(queued) ? Math.min(delay, LARGE_DOCUMENT_DEBOUNCE_MS) : delay
+		const timer = setTimeout(() => onFlush(), wait)
 		return () => clearTimeout(timer)
 	}, [queued, delay])
 
@@ -105,10 +118,7 @@ export function useAutoSave({
 	}, [unsaved])
 
 	const autoSave = useCallback(
-		(
-			items: Array<DashboardItemConfig>,
-			overrides?: { timePeriod?: TimePeriod; customTimePeriod?: CustomTimePeriod | null }
-		) => {
+		(items: Array<DashboardItemConfig>, overrides?: AutoSaveOverrides) => {
 			if (!enabled || !dashboard) return
 			setQueued({
 				id: dashboard.id,
@@ -118,11 +128,13 @@ export function useAutoSave({
 					items,
 					timePeriod: overrides?.timePeriod ?? timePeriod,
 					customTimePeriod: overrides?.customTimePeriod !== undefined ? overrides.customTimePeriod : customTimePeriod,
+					variables: overrides?.variables ?? variables,
+					annotations: overrides?.annotations ?? annotations,
 					...(isFreeUser ? { visibility: 'public' as const } : {})
 				}
 			})
 		},
-		[enabled, dashboard, timePeriod, customTimePeriod, isFreeUser]
+		[enabled, dashboard, timePeriod, customTimePeriod, variables, annotations, isFreeUser]
 	)
 
 	const acknowledge = useCallback(

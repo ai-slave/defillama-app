@@ -1,6 +1,10 @@
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { Icon } from '~/ui/Icon'
+import { ProBadge, ProButton, ProChip, ProMeta } from '../../../ui'
+import { proInputStyles } from '../../../ui/styles'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
-import { ProCardOverflowMenu } from '../../ProCardActions'
+import { ProCardHeader } from '../../ProCardHeader'
 import type { ActiveFilterChip } from '../utils/filterChips'
 import type { CsvExportLevel } from './csvExportLevels'
 
@@ -11,6 +15,7 @@ interface GroupingOption {
 
 interface UnifiedTableHeaderProps {
 	title: string
+	titleBadge?: ReactNode
 	scopeDescription: string
 	rowHeadersSummary: string | null
 	onCustomizeColumns?: (() => void) | undefined
@@ -32,8 +37,67 @@ interface UnifiedTableHeaderProps {
 	onGroupingChange?: ((optionId: string) => void) | undefined
 }
 
+function TableSearchField({ onSearchChange }: { onSearchChange: (value: string) => void }) {
+	const [expanded, setExpanded] = useState(false)
+	const [retainedQuery, setRetainedQuery] = useState('')
+	const valueRef = useRef('')
+	const searchButtonRef = useRef<HTMLButtonElement>(null)
+	const restoreFocusRef = useRef(false)
+
+	useEffect(() => {
+		if (expanded || !restoreFocusRef.current) return
+		restoreFocusRef.current = false
+		searchButtonRef.current?.focus()
+	}, [expanded])
+
+	const collapse = (restoreFocus: boolean) => {
+		restoreFocusRef.current = restoreFocus
+		setRetainedQuery(valueRef.current)
+		setExpanded(false)
+	}
+
+	if (!expanded) {
+		return (
+			<ProButton
+				ref={searchButtonRef}
+				size="sm"
+				square
+				variant="ghost"
+				aria-label="Search table rows"
+				onClick={() => setExpanded(true)}
+			>
+				<Icon name="search" height={14} width={14} />
+			</ProButton>
+		)
+	}
+	return (
+		<input
+			type="search"
+			autoFocus
+			defaultValue={retainedQuery}
+			aria-label="Search table rows"
+			placeholder="Search rows…"
+			className={`${proInputStyles} w-64`}
+			onInput={(event) => {
+				valueRef.current = event.currentTarget.value
+				onSearchChange(valueRef.current)
+			}}
+			onBlur={(event) => {
+				if (valueRef.current) return
+				collapse(event.relatedTarget === null)
+			}}
+			onKeyDown={(event) => {
+				if (event.key !== 'Escape') return
+				event.stopPropagation()
+				collapse(true)
+			}}
+		/>
+	)
+}
+
 export function UnifiedTableHeader({
 	title,
+	titleBadge,
 	scopeDescription,
 	rowHeadersSummary,
 	onCustomizeColumns,
@@ -61,130 +125,88 @@ export function UnifiedTableHeader({
 	const groupingSelectValue = groupingOptions
 		? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
 		: ''
+	const groupingLabel = groupingOptions?.find((option) => option.id === groupingSelectValue)?.label ?? ''
 
 	return (
-		<div className="mb-3 flex flex-col gap-2">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="flex min-w-0 flex-col gap-1">
-					<h3 className="text-base font-semibold text-pro-text-primary">{title}</h3>
-					<div className="flex flex-wrap gap-2 text-xs text-pro-text-secondary">
-						<span>{scopeDescription}</span>
-						{rowHeadersSummary ? (
-							<>
-								<span>•</span>
-								<span>Grouped by {rowHeadersSummary}</span>
-							</>
+		<div className="mb-2 flex flex-col gap-2">
+			<ProCardHeader
+				titleAs="h3"
+				title={title}
+				badge={titleBadge}
+				subtitle={<ProMeta items={[scopeDescription, rowHeadersSummary ? `Grouped by ${rowHeadersSummary}` : null]} />}
+				viewerControls={
+					<>
+						<TableSearchField onSearchChange={onSearchChange} />
+						{onFiltersClick ? (
+							<ProButton size="sm" variant={activeFilterCount ? 'primary' : 'secondary'} onClick={onFiltersClick}>
+								Filters
+								{activeFilterCount ? <ProBadge tone="info">{activeFilterCount}</ProBadge> : null}
+							</ProButton>
 						) : null}
-					</div>
-				</div>
-				<div className="flex flex-wrap items-center justify-end gap-2">
-					{isGroupingInteractive && groupingOptions?.length ? (
-						<div className="relative">
-							<select
-								aria-label="Group table rows"
-								value={groupingSelectValue}
-								onChange={(event) => onGroupingChange?.(event.target.value)}
-								className="appearance-none rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 pr-8 text-sm text-pro-text-primary transition-colors"
-							>
-								{groupingOptions.map((option) => (
-									<option key={option.id} value={option.id}>
-										{option.label}
-									</option>
-								))}
-							</select>
-							<Icon
-								name="chevron-down"
-								height={14}
-								width={14}
-								className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-pro-text-tertiary"
+					</>
+				}
+				controls={
+					<>
+						{isGroupingInteractive && groupingOptions?.length ? (
+							<Select
+								size="sm"
+								variant="pro"
+								label={groupingLabel}
+								labelType="none"
+								allValues={groupingOptions.map((option) => ({ key: option.id, name: option.label }))}
+								selectedValues={groupingSelectValue}
+								setSelectedValues={(value: string) => onGroupingChange?.(value)}
+								triggerProps={{ 'aria-label': 'Group table rows' }}
 							/>
-						</div>
-					) : null}
-					{onFiltersClick ? (
-						<button
-							type="button"
-							onClick={onFiltersClick}
-							className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-								activeFilterCount
-									? 'border-brand bg-brand/10 text-brand'
-									: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
-							}`}
-						>
-							<span>Filters</span>
-							<span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-pro-cards-border px-1 text-xs font-semibold text-pro-text-secondary">
-								{activeFilterCount}
-							</span>
-						</button>
-					) : null}
-
-					{onCustomizeColumns ? (
-						<button
-							type="button"
-							onClick={onCustomizeColumns}
-							className="inline-flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary"
-						>
-							<Icon name="settings" height={14} width={14} />
-							<span>Customize Columns</span>
-						</button>
-					) : null}
-					<ProCardOverflowMenu
-						onDuplicate={onDuplicate}
-						disabled={isExportDisabled}
-						csvLevels={
-							hasCsvLevels && onCsvExportLevel && rowHeaders
-								? { rowHeaders, onExport: onCsvExportLevel, isLoading }
-								: undefined
-						}
-						csv={!hasCsvLevels && onCsvExport ? { onClick: onCsvExport, isLoading } : undefined}
-					/>
-				</div>
-			</div>
-
-			<div className="mt-2 flex flex-col gap-2">
-				<div className="relative w-full">
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
-					/>
-					<input
-						type="search"
-						aria-label="Search table rows"
-						onInput={(event) => onSearchChange(event.currentTarget.value)}
-						placeholder="Search protocols, chains, categories..."
-						className="w-full rounded-md border border-subtle bg-pro-cards-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-hidden"
-					/>
-				</div>
-				{hasFilters ? (
-					<div className="flex flex-wrap items-center gap-2">
-						{filterChips.map((chip) => (
-							<span
+						) : null}
+						{onCustomizeColumns ? (
+							<ProButton size="sm" variant="secondary" onClick={onCustomizeColumns}>
+								<Icon name="layout-grid" height={14} width={14} />
+								Columns
+								<span className="sr-only">Customize columns</span>
+							</ProButton>
+						) : null}
+					</>
+				}
+				menu={{
+					onDuplicate,
+					disabled: isExportDisabled,
+					csvLevels:
+						hasCsvLevels && onCsvExportLevel && rowHeaders
+							? { rowHeaders, onExport: onCsvExportLevel, isLoading }
+							: undefined,
+					csv: !hasCsvLevels && onCsvExport ? { onClick: onCsvExport, isLoading } : undefined
+				}}
+			/>
+			{hasFilters ? (
+				<div className="flex flex-wrap items-center gap-2 px-3">
+					{filterChips.map((chip) =>
+						canMutateFilters ? (
+							<ProChip
 								key={chip.id}
-								className="inline-flex items-center gap-1 rounded-full border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs text-pro-text-secondary"
+								as="button"
+								type="button"
+								onClick={() => onFilterRemove?.(chip)}
+								aria-label={`Remove filter: ${chip.label}`}
 							>
 								<span className="font-medium text-pro-text-primary">{chip.label}</span>
-								{chip.value ? <span className="text-pro-text-secondary">: {chip.value}</span> : null}
-								{canMutateFilters ? (
-									<button
-										type="button"
-										onClick={() => onFilterRemove?.(chip)}
-										className="ml-1 rounded-full p-0.5 text-pro-text-tertiary transition-colors hover:bg-border-subtle hover:text-pro-text-primary"
-										aria-label={`Remove filter: ${chip.label}`}
-									>
-										<Icon name="x" height={12} width={12} />
-									</button>
-								) : null}
-							</span>
-						))}
-						{hasFilters && canMutateFilters && onClearFilters ? (
-							<button type="button" onClick={onClearFilters} className="text-xs font-medium text-brand hover:underline">
-								Clear all filters
-							</button>
-						) : null}
-					</div>
-				) : null}
-			</div>
+								{chip.value ? <span>: {chip.value}</span> : null}
+								<Icon name="x" height={12} width={12} />
+							</ProChip>
+						) : (
+							<ProChip key={chip.id}>
+								<span className="font-medium text-pro-text-primary">{chip.label}</span>
+								{chip.value ? <span>: {chip.value}</span> : null}
+							</ProChip>
+						)
+					)}
+					{canMutateFilters && onClearFilters ? (
+						<ProButton size="sm" variant="ghost" onClick={onClearFilters}>
+							Clear all filters
+						</ProButton>
+					) : null}
+				</div>
+			) : null}
 		</div>
 	)
 }

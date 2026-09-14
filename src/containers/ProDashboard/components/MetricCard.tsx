@@ -1,16 +1,25 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 
 const SparklineChart = lazy(() =>
 	import('~/components/ECharts/SparklineChart').then((m) => ({ default: m.SparklineChart }))
 )
-const BarSparkline = lazy(() => import('~/components/ECharts/BarSparkline').then((m) => ({ default: m.BarSparkline })))
-import { Icon } from '~/ui/Icon'
+const BarSparkline = lazy(() =>
+	import('~/components/ECharts/BarSparkline').then((m) => ({
+		default: m.BarSparkline
+	}))
+)
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { useCountUp } from '../hooks/useCountUp'
 import { useMetricData } from '../hooks/useMetricData'
-import { useProDashboardCatalog, useProDashboardPermissions } from '../ProDashboardAPIContext'
+import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } from '../types'
 import { getProDashboardChartTypeConfig } from '../types'
+import { ProBadge, ProMeta } from '../ui'
 import { getItemIconUrl } from '../utils'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { EntityIcon } from './EntityIcon'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardError, ProCardLoading } from './ProCardStatus'
 
 const EMPTY_CHART_SERIES: Array<[number, number]> = []
 const VOLUME_METRIC_TYPES = new Set([
@@ -81,7 +90,6 @@ interface MetricCardProps {
 
 export function MetricCard({ metric }: MetricCardProps) {
 	const { getChainInfo, getProtocolInfo } = useProDashboardCatalog()
-	const { isReadOnly } = useProDashboardPermissions()
 	const {
 		value,
 		delta,
@@ -126,14 +134,21 @@ export function MetricCard({ metric }: MetricCardProps) {
 		return { displayTitle, baseTitle, iconUrl, format: fmt }
 	}, [metric, getChainInfo, getProtocolInfo])
 
-	const displayValue = (() => {
-		if (value == null) return '-'
+	const [hasSeenLoading, setHasSeenLoading] = useState(isLoading)
+	if (isLoading && !hasSeenLoading) setHasSeenLoading(true)
+	const animatedValue = useCountUp(value, { enabled: hasSeenLoading })
+
+	const formatMetricValue = (input: number | null | undefined) => {
+		if (input == null) return '-'
 		if (format === 'currency')
-			return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			return formatUsd(input, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		if (format === 'number')
-			return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		return `${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-	})()
+			return formatCompactNumber(input, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+		return `${formatPercent(input, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+	}
+
+	const displayValue = formatMetricValue(animatedValue)
+	const exactValue = formatMetricValue(value)
 
 	const compareFormat = metric.compare?.format ?? 'percent'
 
@@ -176,7 +191,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		if (value == null) {
 			return `${displayTitle} ${windowPhrase} (${aggregatorBadge}) has no data available yet.`
 		}
-		return `${displayTitle} — ${aggregatorSummary} ${windowPhrase} is ${displayValue}.`
+		return `${displayTitle} — ${aggregatorSummary} ${windowPhrase} is ${exactValue}.`
 	})()
 
 	const hasCustomLabel = Boolean(metric.label?.trim())
@@ -189,31 +204,30 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const content = useMemo(() => {
 		if (isLoading) {
-			return (
-				<div className="flex flex-1 items-center justify-center">
-					<div className="size-6 animate-spin rounded-full border-b-2 border-brand" />
-				</div>
-			)
+			return <ProCardLoading variant="metric" />
 		}
 
 		if (isError) {
-			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-pro-text-form">
-					<Icon name="alert-triangle" height={18} width={18} />
-					<span className="text-sm">Error</span>
-					<button type="button" className="text-sm text-link hover:underline" onClick={refetch}>
-						Try again
-					</button>
-				</div>
-			)
+			return <ProCardError onRetry={refetch} />
 		}
 
 		return (
-			<div className="flex h-full flex-1 flex-col items-center justify-center gap-3 text-center">
-				<p className="text-4xl leading-tight font-semibold">{displayValue}</p>
+			<div className="flex h-full flex-1 flex-col items-start justify-center gap-2">
+				<div className="flex flex-wrap items-baseline gap-2">
+					<p className="text-3xl leading-tight font-semibold tabular-nums">{displayValue}</p>
+					{deltaText && metric.aggregator !== 'growth' ? (
+						<ProBadge
+							tone={deltaPositive ? 'success' : deltaNegative ? 'warning' : 'neutral'}
+							{...(hasSeenLoading ? { className: 'animate-pro-rise [animation-delay:300ms]' } : {})}
+						>
+							{deltaPositive ? '▲' : deltaNegative ? '▼' : ''}
+							{deltaText}
+						</ProBadge>
+					) : null}
+				</div>
 				{chartSeries.length > 1 ? (
-					<Suspense fallback={<div className="h-16 w-full max-w-[280px]" />}>
-						<div className="w-full max-w-[280px]">
+					<Suspense fallback={<div className="h-16 w-full" />}>
+						<div className="w-full">
 							{chartType === 'bar' ? (
 								<BarSparkline data={chartSeries} height={64} />
 							) : (
@@ -222,16 +236,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 						</div>
 					</Suspense>
 				) : null}
-				{deltaText && metric.aggregator !== 'growth' ? (
-					<p
-						className={`text-xs font-semibold tracking-wide uppercase ${
-							deltaPositive ? 'text-success' : deltaNegative ? 'text-error' : 'text-pro-text-form'
-						}`}
-					>
-						{deltaText}
-					</p>
-				) : null}
-				<p className="max-w-[420px] text-sm text-pro-text-secondary">{summaryText}</p>
+				<p className="text-sm text-pro-text-secondary">{summaryText}</p>
 			</div>
 		)
 	}, [
@@ -242,6 +247,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 		displayValue,
 		isError,
 		isLoading,
+		hasSeenLoading,
 		metric.aggregator,
 		refetch,
 		chartSeries,
@@ -250,29 +256,14 @@ export function MetricCard({ metric }: MetricCardProps) {
 	])
 
 	return (
-		<div className="flex h-full min-h-[240px] flex-col gap-3 p-3">
-			<div className="flex items-start justify-between gap-4">
-				<div className="flex items-center gap-1">
-					{iconUrl ? (
-						<img src={iconUrl} alt={displayTitle} width={20} height={20} className="size-5 shrink-0 rounded-full" />
-					) : (
-						<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-xs font-semibold text-secondary">
-							{displayTitle?.charAt(0)?.toUpperCase()}
-						</div>
-					)}
-					<div className="flex flex-col">
-						<h2 className="text-base leading-tight font-semibold text-pro-text-primary">{displayTitle}</h2>
-						{hasCustomLabel ? <p className="text-[11px] leading-tight text-pro-text-tertiary">{baseTitle}</p> : null}
-					</div>
-				</div>
-				{!isReadOnly ? (
-					<div className="text-[11px] tracking-wide text-pro-text-form">
-						{windowBadge} · {aggregatorBadge}
-					</div>
-				) : null}
-			</div>
-
-			<div className="flex h-full flex-1 items-center justify-center pt-4">{content}</div>
+		<div className="flex h-full min-h-[calc(140px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader
+				title={displayTitle}
+				icon={<EntityIcon src={iconUrl} name={displayTitle} />}
+				badge={<BoundParameterBadge {...(metric.bindings === undefined ? {} : { bindings: metric.bindings })} />}
+				subtitle={<ProMeta items={[hasCustomLabel ? baseTitle : null, windowBadge, aggregatorBadge]} />}
+			/>
+			<div className="flex h-full min-h-0 flex-1 flex-col px-3 pb-3">{content}</div>
 		</div>
 	)
 }

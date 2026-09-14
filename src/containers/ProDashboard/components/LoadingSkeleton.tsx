@@ -1,3 +1,7 @@
+import { tw } from '~/ui/tw'
+import { proCardShellStyles } from '../ui'
+import { SkeletonShimmer } from './ProCardSkeleton'
+
 interface LoadingSkeletonProps {
 	viewMode?: 'grid' | 'list'
 	items?: number
@@ -7,7 +11,7 @@ export function LoadingSkeleton({ viewMode = 'grid', items = 18 }: LoadingSkelet
 	return (
 		<div
 			className={
-				viewMode === 'grid' ? 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'space-y-4'
+				viewMode === 'grid' ? 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4' : 'space-y-3'
 			}
 			role="status"
 			aria-live="polite"
@@ -21,13 +25,13 @@ export function LoadingSkeleton({ viewMode = 'grid', items = 18 }: LoadingSkelet
 	)
 }
 
+const GRID_CARD_CLASS = tw`relative isolate min-h-[220px] overflow-hidden`
+const LIST_CARD_CLASS = tw`relative isolate min-h-[156px] overflow-hidden`
+
 function SkeletonCard({ viewMode }: { viewMode: 'grid' | 'list' }) {
 	return (
-		<div
-			className={`relative isolate ${viewMode === 'grid' ? 'min-h-[220px]' : 'min-h-[156px]'} overflow-hidden rounded-md border border-subtle bg-surface-elevated-1`}
-			aria-hidden
-		>
-			<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
+		<div className={`${proCardShellStyles} ${viewMode === 'grid' ? GRID_CARD_CLASS : LIST_CARD_CLASS}`} aria-hidden>
+			<SkeletonShimmer />
 		</div>
 	)
 }

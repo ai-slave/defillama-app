@@ -16,7 +16,13 @@ import { tableFeaturesConfig, useUnifiedTable } from './useUnifiedTable'
 const dashboardMocks = vi.hoisted(() => ({
 	handleDuplicateUnifiedTable: vi.fn(),
 	handleEditItem: vi.fn(),
-	permissions: { isReadOnly: true, hideDuplicateButton: false }
+	permissions: { isReadOnly: true, hideDuplicateButton: false },
+	variables: [] as Array<{
+		id: string
+		kind: 'chain' | 'protocol'
+		label: string
+		value: string
+	}>
 }))
 
 vi.mock('../../../ProDashboardAPIContext', () => ({
@@ -25,7 +31,14 @@ vi.mock('../../../ProDashboardAPIContext', () => ({
 		handleDuplicateUnifiedTable: dashboardMocks.handleDuplicateUnifiedTable,
 		handleEditItem: dashboardMocks.handleEditItem
 	}),
-	useProDashboardPermissions: () => dashboardMocks.permissions
+	useProDashboardPermissions: () => ({ ...dashboardMocks.permissions }),
+	useProDashboardDashboard: () => ({
+		currentDashboard: null,
+		dashboardId: null
+	}),
+	useProDashboardItemsState: () => ({ items: [] }),
+	useProDashboardVariables: () => ({ variables: dashboardMocks.variables }),
+	useProDashboardAnnotations: () => ({ annotations: [] })
 }))
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
@@ -233,6 +246,7 @@ describe('UnifiedTable rendering', () => {
 		dashboardMocks.handleEditItem.mockReset()
 		dashboardMocks.permissions.isReadOnly = true
 		dashboardMocks.permissions.hideDuplicateButton = false
+		dashboardMocks.variables = []
 	})
 
 	afterEach(async () => {
@@ -333,6 +347,134 @@ describe('UnifiedTable rendering', () => {
 		expect(dashboardMocks.handleDuplicateUnifiedTable).toHaveBeenCalledWith(unifiedTableConfig)
 	})
 
+	test('shows the bound dashboard parameter beside the title only while the table is editable', async () => {
+		dashboardMocks.permissions.isReadOnly = false
+		dashboardMocks.variables = [{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }]
+		const boundConfig: UnifiedTableConfig = {
+			...unifiedTableConfig,
+			bindings: { chains: 'chain' }
+		}
+
+		const renderBound = () =>
+			act(async () =>
+				root.render(
+					<QueryClientProvider client={createQueryClient()}>
+						<StreamDoneContext.Provider value={false}>
+							<UnifiedTable key={String(dashboardMocks.permissions.isReadOnly)} config={boundConfig} />
+						</StreamDoneContext.Provider>
+					</QueryClientProvider>
+				)
+			)
+
+		await renderBound()
+		const badge = container.querySelector('[title="Bound to dashboard parameter"]')
+		expect(badge?.textContent).toBe('Chain')
+
+		dashboardMocks.permissions.isReadOnly = true
+		await renderBound()
+		expect(container.querySelector('[title="Bound to dashboard parameter"]')).toBeNull()
+	})
+
+	test('collapses the row search into an icon that expands into an input', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify(unifiedTableResponse), {
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					})
+			)
+		)
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={createQueryClient()}>
+					<StreamDoneContext.Provider value>
+						<UnifiedTable config={unifiedTableConfig} />
+					</StreamDoneContext.Provider>
+				</QueryClientProvider>
+			)
+		)
+		await waitForContent(container, 'Aave')
+		expect(container.querySelector('input[aria-label="Search table rows"]')).toBeNull()
+		await act(async () =>
+			(container.querySelector('button[aria-label="Search table rows"]') as HTMLButtonElement).click()
+		)
+		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')
+		expect(input).not.toBeNull()
+		await act(async () => {
+			input!.value = 'aave'
+			input!.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(input!.value).toBe('aave')
+	})
+
+	test('collapsing the search with Escape keeps the query and returns focus to the search button', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify(unifiedTableResponse), {
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					})
+			)
+		)
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={createQueryClient()}>
+					<StreamDoneContext.Provider value>
+						<UnifiedTable config={unifiedTableConfig} />
+					</StreamDoneContext.Provider>
+				</QueryClientProvider>
+			)
+		)
+		await waitForContent(container, 'Aave')
+		await act(async () =>
+			(container.querySelector('button[aria-label="Search table rows"]') as HTMLButtonElement).click()
+		)
+		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!
+		await act(async () => {
+			input.value = 'aave'
+			input.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await act(async () => {
+			input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+		})
+		expect(container.querySelector('input[aria-label="Search table rows"]')).toBeNull()
+		const searchButton = container.querySelector<HTMLButtonElement>('button[aria-label="Search table rows"]')
+		expect(searchButton).not.toBeNull()
+		expect(document.activeElement).toBe(searchButton)
+		await act(async () => searchButton!.click())
+		expect(container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!.value).toBe('aave')
+	})
+
+	test('a read-only table offers no grouping select and no columns button', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(
+				async () =>
+					new Response(JSON.stringify(unifiedTableResponse), {
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					})
+			)
+		)
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={createQueryClient()}>
+					<StreamDoneContext.Provider value>
+						<UnifiedTable config={unifiedTableConfig} />
+					</StreamDoneContext.Provider>
+				</QueryClientProvider>
+			)
+		)
+		await waitForContent(container, 'Aave')
+		expect(container.querySelector('[aria-label="Group table rows"]')).toBeNull()
+		expect(container.textContent).not.toContain('Customize columns')
+		expect(container.querySelector('button[aria-label="Search table rows"]')).not.toBeNull()
+	})
+
 	test('shows an initial query failure distinctly from an empty table and retries from the error state', async () => {
 		const fetchMock = vi.fn(async () => new Response('upstream unavailable', { status: 400 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -347,12 +489,12 @@ describe('UnifiedTable rendering', () => {
 				</QueryClientProvider>
 			)
 		)
-		await waitForContent(container, 'Failed to load table data.')
+		await waitForContent(container, "Couldn't load this table")
 		expect(container.textContent).not.toContain('No rows match your scope or filters.')
 
 		const attemptsBeforeRetry = fetchMock.mock.calls.length
 		await act(async () => button('Try again').click())
-		await waitForContent(container, 'Failed to load table data.')
+		await waitForContent(container, "Couldn't load this table")
 		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
 	})
 
@@ -387,6 +529,6 @@ describe('UnifiedTable rendering', () => {
 			await queryClient.invalidateQueries()
 		})
 		expect(container.textContent).toContain('Aave')
-		expect(container.textContent).not.toContain('Failed to load table data.')
+		expect(container.textContent).not.toContain("Couldn't load this table")
 	})
 })

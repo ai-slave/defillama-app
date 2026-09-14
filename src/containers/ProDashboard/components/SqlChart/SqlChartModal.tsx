@@ -27,16 +27,23 @@ import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatNumber } from '~/utils/numberFormat'
+import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
 import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
+import { ProButton } from '../../ui'
+import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { buildSqlChartConfig } from './buildSqlChartConfig'
 import { loadChartOptions } from './chartOptions'
 import { SqlChartModalSidebar } from './SqlChartModalSidebar'
 
 interface SqlChartModalProps {
 	editItem?: SqlChartConfig | null
+	placement?: DashboardItemPlacement
+	isOpen?: boolean
 	onClose: () => void
+	onClosed?: () => void
+	onSaved?: () => void
 }
 
 type RunOutcome = { result: QueryResult; chartConfig: ChartConfig; tables: Array<RegisteredTable> }
@@ -63,7 +70,7 @@ async function runWithSources(
 	return runSql(context, sql, options, undefined, signal)
 }
 
-export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
+export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onClosed, onSaved }: SqlChartModalProps) {
 	const { authorizedFetch } = useAuthContext()
 	const { handleAddSqlChart, handleEditItem } = useProDashboardEditorActions()
 	const duckdb = useDuckDB()
@@ -211,6 +218,24 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		onClose()
 	}
 
+	const dialogStore = Ariakit.useDialogStore({
+		open: isOpen,
+		setOpen: (open) => {
+			if (!open) handleClose()
+		}
+	})
+	const isMounted = Ariakit.useStoreState(dialogStore, 'mounted')
+	const wasMountedRef = useRef(false)
+	useEffect(() => {
+		if (isMounted) {
+			wasMountedRef.current = true
+			return
+		}
+		if (!wasMountedRef.current) return
+		wasMountedRef.current = false
+		onClosed?.()
+	}, [isMounted, onClosed])
+
 	const editorLineCount = sql.split('\n').length
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
 
@@ -242,10 +267,11 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			rowCap,
 			registryTables: outcome.tables
 		})
+		let addedId: false | string = false
 		if (editItem) {
 			handleEditItem(config.id, config)
 		} else {
-			handleAddSqlChart(config)
+			addedId = handleAddSqlChart(config, placement)
 		}
 		const queryInput = extractQueryConfig({
 			sql: config.query.sql,
@@ -261,7 +287,9 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			},
 			{ replaceByName: true }
 		)
-		onClose()
+		if (onSaved) onSaved()
+		else onClose()
+		if (addedId) requestDashboardItemReveal(addedId)
 	}, [
 		canSave,
 		needsRun,
@@ -277,30 +305,27 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		loadedTables,
 		handleEditItem,
 		handleAddSqlChart,
+		placement,
 		saveDownload,
-		onClose
+		onClose,
+		onSaved
 	])
 
 	return (
-		<Ariakit.DialogProvider
-			open
-			setOpen={(open) => {
-				if (!open) handleClose()
-			}}
-		>
+		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
 				unmountOnHide
 				portal
 				hideOnInteractOutside={false}
-				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-surface p-3 md:inset-4 md:rounded-md md:border md:border-medium md:p-4 md:shadow-xl"
+				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden bg-surface p-3 pro-dashboard md:inset-4 md:scale-[.98] md:rounded-xl md:border md:border-pro-cards-border md:p-4 md:opacity-0 md:shadow-dialog md:transition-[opacity,scale] md:duration-260 md:ease-out-quart md:data-enter:scale-100 md:data-enter:opacity-100 md:data-leave:duration-200"
 			>
 				<div className="flex shrink-0 items-center justify-between">
 					<Ariakit.DialogHeading
 						render={<h2>{editItem ? 'Edit SQL chart' : 'New SQL chart'}</h2>}
 						className="text-xl font-semibold text-pro-text-primary"
 					/>
-					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary">
-						<Icon name="x" height={20} width={20} />
+					<Ariakit.DialogDismiss render={<ProButton size="md" square variant="ghost" />}>
+						<Icon name="x" height={16} width={16} />
 						<span className="sr-only">Close dialog</span>
 					</Ariakit.DialogDismiss>
 				</div>
@@ -316,9 +341,9 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							value={name}
 							readOnly={savePending}
 							onChange={(e) => setName(e.target.value)}
-							aria-label="Widget name"
-							placeholder="Widget name (optional)"
-							className="shrink-0 rounded-md border pro-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+							aria-label="Card name"
+							placeholder="Optional"
+							className="shrink-0 rounded-md border border-pro-cards-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 
 						<div className="shrink-0">
@@ -342,15 +367,24 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 									(running ? execution.stopping : !!schemaLoading || engineLoading || engineError || !sql.trim())
 								}
 								accessibleWhenDisabled
-								className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+								{...(engineLoading
+									? { title: 'The in-browser SQL engine is still loading, this takes a few seconds the first time.' }
+									: {})}
+								render={
+									<ProButton
+										variant="primary"
+										icon={
+											running ? (
+												<LoadingSpinner size={14} />
+											) : (
+												<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+													<path d="M8 5v14l11-7z" />
+												</svg>
+											)
+										}
+									/>
+								}
 							>
-								{running ? (
-									<LoadingSpinner size={14} />
-								) : (
-									<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-										<path d="M8 5v14l11-7z" />
-									</svg>
-								)}
 								{savePending ? 'Running…' : execution?.stopping ? 'Stopping…' : running ? 'Stop query' : 'Run query'}
 								{!running ? (
 									<span aria-hidden className="flex items-center gap-0.5">
@@ -360,7 +394,11 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								) : null}
 							</Ariakit.Button>
 							{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
-							{engineLoading ? <span className="text-xs text-pro-text-tertiary">Starting SQL engine…</span> : null}
+							{engineLoading ? (
+								<span className="text-xs text-pro-text-tertiary">
+									Loading the in-browser SQL engine… queries run locally, this takes a few seconds the first time.
+								</span>
+							) : null}
 							{engineError ? (
 								<span role="alert" className="text-xs text-error">
 									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
@@ -382,7 +420,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 
 						{resultRowCount !== null && resultRowCount > rowCap ? (
 							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
-								Result has {formatNumber(resultRowCount)} rows. The widget will show the first {formatNumber(rowCap)}{' '}
+								Result has {formatNumber(resultRowCount)} rows. The card will show the first {formatNumber(rowCap)}{' '}
 								rows.
 							</div>
 						) : null}
@@ -441,10 +479,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								? (loadingStage ?? 'Running query…')
 								: ''}
 				</span>
-				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-medium pt-3">
+				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-pro-cards-border pt-3">
 					<div className="flex flex-wrap items-center gap-4">
 						<span className="text-xs text-pro-text-tertiary">
-							{displayMode === 'table' ? 'Widget shows the result as a table.' : 'Widget shows the result as a chart.'}
+							{displayMode === 'table' ? 'Card shows the result as a table.' : 'Card shows the result as a chart.'}
 						</span>
 						<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
 							Rows to display
@@ -460,27 +498,22 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 									if (Number.isFinite(next)) setRowCap(next)
 								}}
 								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
-								title={`How many query result rows the widget can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The widget keeps a preview of the query result and refreshes it when requested.`}
-								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
+								title={`How many query result rows the card can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The card keeps a preview of the query result and refreshes it when requested.`}
+								className="w-20 rounded-md border border-pro-cards-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>
 					</div>
 					<div className="flex items-center gap-2">
-						<button
-							type="button"
-							onClick={handleClose}
-							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-						>
+						<ProButton type="button" variant="secondary" onClick={handleClose}>
 							Cancel
-						</button>
+						</ProButton>
 						<Ariakit.Button
 							type="button"
 							onClick={() => (savePending ? stopQuery() : void handleSave())}
 							accessibleWhenDisabled
 							disabled={savePending ? execution?.stopping : !canSave}
-							className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+							render={<ProButton variant="primary" {...(savePending ? { icon: <LoadingSpinner size={14} /> } : {})} />}
 						>
-							{savePending ? <LoadingSpinner size={14} /> : null}
 							{savePending
 								? execution?.stopping
 									? 'Stopping…'

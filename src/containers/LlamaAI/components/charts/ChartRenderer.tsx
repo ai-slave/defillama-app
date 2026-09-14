@@ -75,6 +75,7 @@ interface ChartRendererProps {
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	height?: number
 	artifactRefs?: ChartArtifactRefs
 	/** Local persistence for style edits (e.g. research-article chart nodes). When set,
 	 * the style editor is enabled without a chat session and saves go here instead of the API. */
@@ -91,6 +92,7 @@ interface ChartRendererRuntimeProps {
 	sessionId: string | null | undefined
 	messageId: string | undefined
 	readOnly: boolean | undefined
+	height: number | undefined
 	artifactRefs: ChartArtifactRefs | undefined
 	onLocalStyleSave: ((config: ChartConfiguration) => void) | undefined
 }
@@ -103,6 +105,7 @@ interface SingleChartProps {
 	sessionId: string | null | undefined
 	messageId: string | undefined
 	readOnly: boolean | undefined
+	height: number | undefined
 	artifactRef: ChartArtifactRef | undefined
 	onLocalStyleSave: ((config: ChartConfiguration) => void) | undefined
 }
@@ -202,31 +205,35 @@ function buildChartPresentation(
 function renderChartContent(
 	renderPlan: ChartRenderPlan,
 	chartKey: string,
-	onChartReady: (instance: echarts.ECharts | null) => void
+	onChartReady: (instance: echarts.ECharts | null) => void,
+	height?: number
 ) {
+	const heightProp = height === undefined ? {} : { height: `${height}px` }
+	const fallback = (defaultClassName: string) =>
+		height === undefined ? <div className={defaultClassName} /> : <div style={{ height }} />
 	switch (renderPlan.rendererKind) {
 		case 'cartesian':
 			return (
-				<Suspense fallback={<div className="h-[338px]" />}>
-					<MultiSeriesChart key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
+				<Suspense fallback={fallback('h-[338px]')}>
+					<MultiSeriesChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'hbar':
 			return (
-				<Suspense fallback={<div className="h-[338px]" />}>
-					<HBarChart key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
+				<Suspense fallback={fallback('h-[338px]')}>
+					<HBarChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'pie':
 			return (
-				<Suspense fallback={<div className="h-[338px]" />}>
-					<PieChart key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
+				<Suspense fallback={fallback('h-[338px]')}>
+					<PieChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		case 'scatter':
 			return (
-				<Suspense fallback={<div className="h-[360px]" />}>
-					<ScatterChart key={chartKey} {...renderPlan.rendererProps} onReady={onChartReady} />
+				<Suspense fallback={fallback('h-[360px]')}>
+					<ScatterChart key={chartKey} {...renderPlan.rendererProps} {...heightProp} onReady={onChartReady} />
 				</Suspense>
 			)
 		default:
@@ -430,6 +437,7 @@ function SingleChart({
 	sessionId,
 	messageId,
 	readOnly,
+	height,
 	artifactRef,
 	onLocalStyleSave
 }: SingleChartProps) {
@@ -530,6 +538,7 @@ function SingleChart({
 			sessionId={sessionId}
 			messageId={messageId}
 			readOnly={readOnly}
+			height={height}
 			artifactRef={artifactRef}
 		/>
 	)
@@ -553,6 +562,7 @@ function ActiveSingleChart({
 	sessionId,
 	messageId,
 	readOnly,
+	height,
 	artifactRef
 }: {
 	config: ChartConfiguration
@@ -572,6 +582,7 @@ function ActiveSingleChart({
 	sessionId: string | null | undefined
 	messageId: string | undefined
 	readOnly: boolean | undefined
+	height: number | undefined
 	artifactRef: ChartArtifactRef | undefined
 }) {
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
@@ -595,7 +606,8 @@ function ActiveSingleChart({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	useEffect(() => {
 		if (!editing) return
-		const t = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 60)
+		const target = window
+		const t = setTimeout(() => target.dispatchEvent(new CustomEvent('chartResize')), 60)
 		return () => clearTimeout(t)
 	}, [editing])
 	const handleStackedChange = useCallback(
@@ -693,7 +705,7 @@ function ActiveSingleChart({
 	const normalizedState = renderPlan.controls.state
 	const exportModel = renderPlan.exportModel
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
-	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady)
+	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady, height)
 	const controls = title === undefined ? renderPlan.controls : { ...renderPlan.controls, title }
 
 	return (
@@ -866,6 +878,7 @@ export function ChartRenderer({
 	sessionId,
 	messageId,
 	readOnly,
+	height,
 	artifactRefs,
 	onLocalStyleSave
 }: ChartRendererProps) {
@@ -881,6 +894,7 @@ export function ChartRenderer({
 				sessionId,
 				messageId,
 				readOnly,
+				height,
 				artifactRefs,
 				onLocalStyleSave
 			}}
@@ -898,6 +912,7 @@ function ChartRendererImpl({
 	sessionId,
 	messageId,
 	readOnly,
+	height,
 	artifactRefs,
 	onLocalStyleSave
 }: ChartRendererRuntimeProps) {
@@ -982,6 +997,7 @@ function ChartRendererImpl({
 						sessionId={sessionId}
 						messageId={messageId}
 						readOnly={readOnly}
+						height={height}
 						artifactRef={artifactRefs?.[chart.id]}
 						onLocalStyleSave={onLocalStyleSave}
 					/>
@@ -999,6 +1015,7 @@ const ChartRendererMemoized = memo(ChartRendererImpl, (prev, next) => {
 		prev.sessionId === next.sessionId &&
 		prev.messageId === next.messageId &&
 		prev.readOnly === next.readOnly &&
+		prev.height === next.height &&
 		prev.artifactRefs === next.artifactRefs &&
 		prev.onLocalStyleSave === next.onLocalStyleSave &&
 		areStringArraysEqual(prev.chartTypes, next.chartTypes) &&

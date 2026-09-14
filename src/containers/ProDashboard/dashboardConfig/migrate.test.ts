@@ -1618,3 +1618,218 @@ test('preserves copy source attribution during migration', () => {
 	})
 	expect(migrated.copiedFrom).toEqual(copiedFrom)
 })
+
+describe('sections, custom data, heights, bindings and document-level parameters', () => {
+	const chart = {
+		chartType: 'bar' as const,
+		xCol: 'label',
+		yCols: ['value'],
+		splitByCol: null,
+		stackMode: 'off' as const,
+		rightAxisCols: [],
+		seriesKinds: {},
+		seriesColors: {},
+		numberFormat: 'auto' as const
+	}
+	const columns = [
+		{ name: 'label', type: 'VARCHAR' },
+		{ name: 'value', type: 'DOUBLE' }
+	]
+
+	test('keeps both stored row forms of a custom dataset and drops rows that do not match the columns', () => {
+		const inline = migrateDashboardItemConfig({
+			id: 'custom-inline',
+			kind: 'custom-data',
+			name: 'Inline',
+			sourceName: 'data.csv',
+			columns,
+			rows: [['a', 1], ['b', 2], ['broken'], 'not-a-row' as never],
+			chart,
+			displayMode: 'table',
+			colSpan: 2,
+			height: 'tall'
+		})
+		expect(inline).toEqual({
+			id: 'custom-inline',
+			kind: 'custom-data',
+			name: 'Inline',
+			sourceName: 'data.csv',
+			columns,
+			rows: [
+				['a', 1],
+				['b', 2]
+			],
+			chart,
+			displayMode: 'table',
+			colSpan: 2,
+			height: 'tall'
+		})
+
+		const encodedRows = { encoding: 'gzip-base64' as const, data: 'H4sIAAAAAAAA', rowCount: 120 }
+		const encoded = migrateDashboardItemConfig({
+			id: 'custom-encoded',
+			kind: 'custom-data',
+			name: 'Encoded',
+			columns,
+			rows: encodedRows,
+			chart,
+			displayMode: 'chart'
+		})
+		expect(encoded).toMatchObject({ kind: 'custom-data', rows: encodedRows, displayMode: 'chart' })
+
+		const withoutRows = migrateDashboardItemConfig({
+			id: 'custom-stripped',
+			kind: 'custom-data',
+			name: 'SSR',
+			columns,
+			chart,
+			displayMode: 'chart'
+		})
+		expect(withoutRows).not.toHaveProperty('rows')
+
+		const malformedRows = migrateDashboardItemConfig({
+			id: 'custom-malformed',
+			kind: 'custom-data',
+			name: 'Malformed',
+			columns,
+			rows: { encoding: 'zip', data: 42 } as never,
+			chart,
+			displayMode: 'chart'
+		})
+		expect(malformedRows).not.toHaveProperty('rows')
+	})
+
+	test('drops custom datasets without usable columns and sanitizes names as plain text', () => {
+		expect(
+			migrateDashboardItemConfig({
+				id: 'custom-no-columns',
+				kind: 'custom-data',
+				name: 'Empty',
+				columns: [{ name: 1 } as never, 'value' as never],
+				chart,
+				displayMode: 'chart'
+			})
+		).toBeNull()
+		expect(
+			migrateDashboardItemConfig({
+				id: 'custom-no-chart',
+				kind: 'custom-data',
+				name: 'No chart',
+				columns,
+				chart: null as never,
+				displayMode: 'chart'
+			})
+		).toBeNull()
+		expect(
+			migrateDashboardItemConfig({
+				id: 'custom-name',
+				kind: 'custom-data',
+				name: '  <b>Spaced</b>\n\tname  ',
+				columns,
+				chart,
+				displayMode: 'grid' as never
+			})
+		).toMatchObject({ name: '<b>Spaced</b> name', displayMode: 'chart' })
+	})
+
+	test('removes an unknown card height and unknown binding fields while keeping valid ones', () => {
+		expect(
+			migrateDashboardItemConfig({
+				id: 'text-height',
+				kind: 'text',
+				content: 'Body',
+				height: 'huge' as never
+			})
+		).toEqual({ id: 'text-height', kind: 'text', content: 'Body' })
+
+		const stablecoins = migrateDashboardItemConfig({
+			id: 'stablecoins-bound',
+			kind: 'stablecoins',
+			chain: 'Ethereum',
+			chartType: 'totalMcap',
+			height: 'compact',
+			bindings: { chain: 'chain', protocol: 'protocol', subject: '', unknown: 'x' } as never
+		})
+		expect(stablecoins).toEqual({
+			id: 'stablecoins-bound',
+			kind: 'stablecoins',
+			chain: 'Ethereum',
+			chartType: 'totalMcap',
+			height: 'compact',
+			bindings: { chain: 'chain' }
+		})
+
+		const unbindable = migrateDashboardItemConfig({
+			id: 'text-bound',
+			kind: 'text',
+			content: 'Body',
+			bindings: { subject: 'chain' }
+		} as never)
+		expect(unbindable).not.toHaveProperty('bindings')
+
+		const multi = migrateDashboardItemConfig({
+			id: 'multi-bound',
+			kind: 'multi',
+			items: [
+				{
+					id: 'eth-tvl',
+					kind: 'chart',
+					subjectType: 'chain',
+					chain: 'Ethereum',
+					type: 'tvl',
+					bindings: { subject: 'chain', chains: 'chain' }
+				} as PersistedChartConfig
+			]
+		})
+		expect(multi?.kind === 'multi' ? multi.items[0]?.bindings : undefined).toEqual({ subject: 'chain' })
+	})
+
+	test('sanitizes document variables and annotations during migration', () => {
+		const persisted: PersistedDashboard = {
+			id: 'dashboard-1',
+			user: 'owner-1',
+			created: '2026-01-01T00:00:00.000Z',
+			updated: '2026-01-02T00:00:00.000Z',
+			data: {
+				dashboardName: 'Dashboard',
+				items: [{ id: 'section', kind: 'section', title: '  Overview  ', displayAs: 'tab', collapsed: true }],
+				variables: [
+					{ id: 'chain', kind: 'chain', label: ' Chain ', value: 'Ethereum' },
+					{ id: 'chain', kind: 'chain', label: 'Duplicate', value: 'Base' },
+					{ id: 'Bad Id', kind: 'chain', label: 'Bad', value: 'Base' },
+					{ id: 'protocol', kind: 'protocol', label: '', value: 'aave' },
+					{ id: 'unknown', kind: 'token' as never, label: 'Token', value: 'ETH' },
+					{ id: 'injection', kind: 'chain', label: 'Injected', value: '<script>' },
+					{ id: 'p2', kind: 'protocol', label: 'Second', value: 'maker' },
+					{ id: 'p3', kind: 'protocol', label: 'Third', value: 'lido' },
+					{ id: 'p4', kind: 'protocol', label: 'Fourth', value: 'curve' }
+				],
+				annotations: [
+					{ id: 'a', date: '2026-02-30', label: 'Invalid date' },
+					{ id: 'b', date: '2026-03-01', label: '   ' },
+					{ id: 'c', date: '2026-03-01', label: ' Launch\n<b>day</b> ' },
+					{ id: 'c', date: '2026-03-02', label: 'Duplicate id' },
+					{ id: 'd', date: 20_260_301 as never, label: 'Numeric' }
+				]
+			}
+		}
+
+		const migrated = migrateDashboardConfig(persisted)
+
+		expect(migrated.data.items).toEqual([
+			{ id: 'section', kind: 'section', title: 'Overview', displayAs: 'tab', collapsed: true }
+		])
+		expect(migrated.data.variables).toEqual([
+			{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' },
+			{ id: 'protocol', kind: 'protocol', label: 'Protocol', value: 'aave' },
+			{ id: 'p2', kind: 'protocol', label: 'Second', value: 'maker' },
+			{ id: 'p3', kind: 'protocol', label: 'Third', value: 'lido' }
+		])
+		expect(migrated.data.annotations).toEqual([{ id: 'c', date: '2026-03-01', label: 'Launch <b>day</b>' }])
+		expect(persisted.data.variables).toHaveLength(9)
+
+		const untouched = migrateDashboardConfig({ ...persisted, data: { dashboardName: 'Plain', items: [] } })
+		expect(untouched.data).not.toHaveProperty('variables')
+		expect(untouched.data).not.toHaveProperty('annotations')
+	})
+})

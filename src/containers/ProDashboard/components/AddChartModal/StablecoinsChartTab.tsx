@@ -38,6 +38,7 @@ import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -141,6 +142,12 @@ export function StablecoinsChartTab({
 		}
 		return options
 	}, [chainsList])
+
+	const chainParameter = useModalFieldBinding('chain', 'chain')
+	const selectableChainOptions = useMemo(
+		() => (chainParameter.options.length > 0 ? [...chainParameter.options, ...chainOptions] : chainOptions),
+		[chainParameter.options, chainOptions]
+	)
 
 	const assetOptions: Array<VirtualizedSelectOption> = useMemo(() => {
 		return assetsList.map((asset) => ({
@@ -535,11 +542,22 @@ export function StablecoinsChartTab({
 
 				{stablecoinMode === 'chain' ? (
 					<>
+						{chainParameter.boundVariable ? (
+							<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+						) : null}
 						<AriakitVirtualizedSelect
 							label="Chain"
-							options={chainOptions}
+							options={selectableChainOptions}
 							selectedValue={selectedStablecoinChain}
-							onChange={(option) => onSelectedStablecoinChainChange(option.value)}
+							onChange={(option) => {
+								const variable = chainParameter.resolveSelection(option.value)
+								if (variable) {
+									onSelectedStablecoinChainChange(variable.value)
+									chainParameter.bind(variable.id)
+									return
+								}
+								onSelectedStablecoinChainChange(option.value)
+							}}
 							placeholder="Select chain..."
 							isLoading={chainsLoading}
 						/>
@@ -601,7 +619,7 @@ export function StablecoinsChartTab({
 				</div>
 			</div>
 
-			<div className="overflow-hidden rounded-lg border pro-border">
+			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 				<div className="flex flex-wrap items-center justify-between gap-2 border-b border-pro-cards-border px-3 py-2">
 					<h4 className="text-xs font-medium text-pro-text-secondary">Preview</h4>
 					{stablecoinMode === 'chain' && chainChartType === 'pie' && chainPieSeriesNames.length > 1 ? (

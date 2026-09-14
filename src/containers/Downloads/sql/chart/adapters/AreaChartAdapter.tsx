@@ -9,9 +9,10 @@ interface AreaChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function AreaChartAdapter({ config, result, classified, onReady }: AreaChartAdapterProps) {
+export function AreaChartAdapter({ config, result, classified, onReady, height }: AreaChartAdapterProps) {
 	const stackKey = config.chartType === 'areaStacked' || config.chartType === 'areaPct' ? 'area' : undefined
 	return (
 		<LineBarChart
@@ -19,6 +20,7 @@ export function AreaChartAdapter({ config, result, classified, onReady }: AreaCh
 			result={result}
 			classified={classified}
 			onReady={onReady}
+			{...(height === undefined ? {} : { height })}
 			forceType="line"
 			forceArea
 			forceStack={stackKey}

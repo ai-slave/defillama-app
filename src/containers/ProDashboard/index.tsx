@@ -1,28 +1,39 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { ErrorBoundary } from '~/components/ErrorBoundary'
 import { BasicLink } from '~/components/Link'
 import { getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults'
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
+import { isMacPlatform } from '~/utils/platform'
+import { toQueryString } from '~/utils/routerQuery'
 import { AppMetadataProvider } from './AppMetadataContext'
+import { AnnotationsPopover } from './components/AnnotationsPopover'
 import { AutosaveStatus } from './components/AutosaveStatus'
 import { ChartGrid } from './components/ChartGrid'
+import { ChartSyncToggle } from './components/ChartSyncToggle'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
 import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
 import { DashboardActionsSheet, type DashboardSheetAction } from './components/DashboardActionsSheet'
+import { DashboardLoadProgress } from './components/DashboardLoadProgress'
+import { DashboardOverflowMenu } from './components/DashboardOverflowMenu'
+import { DashboardVariablesBar } from './components/DashboardVariablesBar'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
+import { ParameterHint } from './components/ParameterHint'
+import { SimilarDashboards } from './components/SimilarDashboards'
 import {
 	getInitialSqlRefreshProgress,
 	getSqlRefreshProgress,
@@ -32,18 +43,54 @@ import {
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import { dashboardItemsUseTimePeriod } from './dashboardTimePeriodCapabilities'
-import type { TimePeriod } from './dashboardTypes'
+import {
+	type DashboardToolbarActionId,
+	desktopDashboardToolbarActions,
+	visibleDashboardToolbarActions
+} from './dashboardToolbarActions'
+import { DASHBOARD_DESCRIPTION_MAX_LENGTH, DASHBOARD_NAME_MAX_LENGTH, type TimePeriod } from './dashboardTypes'
+import { useDashboardEditorHotkeys } from './hooks/useDashboardEditorHotkeys'
+import { requestDashboardItemReveal } from './hooks/useDashboardItemDeepLink'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
 	useDashboardMode,
 	useProDashboardCatalog,
 	useProDashboardDashboard,
+	useProDashboardEditorActions,
+	useProDashboardHistory,
 	useProDashboardItemsState,
 	useProDashboardPermissions,
+	useProDashboardSave,
 	useProDashboardTime,
-	useProDashboardUI
+	useProDashboardUI,
+	useProDashboardVariables
 } from './ProDashboardAPIContext'
-import type { SqlChartConfig } from './types'
+import type { SectionConfig, SqlChartConfig } from './types'
+import {
+	InlineTextField,
+	ProBadge,
+	ProButton,
+	type ProButtonVariant,
+	ProChip,
+	ProDialogFallback,
+	ProSegmented
+} from './ui'
+import type { DashboardItemPlacement } from './useDashboardActions'
+import { generateItemId } from './utils/dashboardUtils'
+
+const SYNCABLE_CHART_KINDS: ReadonlySet<DashboardItemConfig['kind']> = new Set([
+	'chart',
+	'multi',
+	'builder',
+	'advanced-tvl',
+	'advanced-borrowed',
+	'stablecoins',
+	'stablecoin-asset',
+	'yields',
+	'unlocks-schedule'
+])
+
+const DONE_ACKNOWLEDGED_MS = 1500
 
 const DemoPreview = lazy(() => import('./components/DemoPreview').then((m) => ({ default: m.DemoPreview })))
 
@@ -67,17 +114,25 @@ const AIGenerationHistory = lazy(() =>
 	import('./components/AIGenerationHistory').then((m) => ({ default: m.AIGenerationHistory }))
 )
 const Rating = lazy(() => import('./components/Rating').then((m) => ({ default: m.Rating })))
+const QuickAddPalette = lazy(() => import('./components/QuickAddPalette').then((m) => ({ default: m.QuickAddPalette })))
+
+function warmEditorModalChunks() {
+	void import('./components/QuickAddPalette')
+	void import('./components/AddChartModal/AddChartModal')
+	void import('./components/SqlChart/SqlChartModal')
+	void import('./components/DashboardSettingsModal')
+}
 
 function DashboardAuthorByline({ author }: { author?: PublicDashboardAuthor }) {
 	if (!author) return null
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="mt-3 inline-flex items-center gap-2 text-sm text-pro-text-secondary hover:text-link"
+			className="inline-flex items-center gap-2 text-sm text-pro-text-secondary hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
-				<img src={author.avatarUrl} alt="" className="size-6 rounded-full object-cover" />
+				<img src={author.avatarUrl} alt="" loading="lazy" className="size-6 rounded-full object-cover" />
 			) : (
 				<span
 					className="flex size-6 items-center justify-center rounded-full text-sm"
@@ -98,7 +153,7 @@ function AuthorProfileSetupNotice() {
 	if (dismissed) return null
 
 	return (
-		<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-pro-link-button-bg px-3 py-2.5 text-sm">
+		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-pro-link-button-bg px-3 py-2 text-sm">
 			<div className="flex min-w-0 items-start gap-2">
 				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
 				<div className="min-w-0">
@@ -128,19 +183,72 @@ function AuthorProfileSetupNotice() {
 	)
 }
 
+type DashboardToolbarAction = DashboardSheetAction & {
+	variant: ProButtonVariant
+	square?: boolean
+	umami?: string
+	busy?: boolean
+}
+
+function DashboardToolbarButton({ action }: { action: DashboardToolbarAction }) {
+	return (
+		<Tooltip
+			content={action.title ?? action.label}
+			render={
+				<ProButton
+					type="button"
+					variant={action.variant}
+					square={action.square ?? false}
+					aria-label={action.label}
+					aria-disabled={action.disabled || undefined}
+					icon={<Icon name={action.icon} height={16} width={16} />}
+					{...(action.busy ? { loading: true } : {})}
+					onClick={() => {
+						if (!action.disabled) void action.onSelect()
+					}}
+					{...(action.umami ? { 'data-umami-event': action.umami } : {})}
+				/>
+			}
+		>
+			{action.square ? null : <span>{action.label}</span>}
+		</Tooltip>
+	)
+}
+
+function DemoPreviewFallback() {
+	return (
+		<div
+			role="alert"
+			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center"
+		>
+			<p className="text-sm text-pro-text-secondary">The preview could not be displayed.</p>
+			<BasicLink href="/pro?tab=discover" className="text-sm font-medium text-link hover:underline">
+				See community dashboards
+			</BasicLink>
+		</div>
+	)
+}
+
 function ProDashboardContent() {
-	const [showAddModal, setShowAddModal] = useState<boolean>(false)
+	const [addModalSession, setAddModalSession] = useState<{ key: number; open: boolean } | null>(null)
+	const [quickAddSession, setQuickAddSession] = useState<{
+		key: number
+		open: boolean
+		placement?: DashboardItemPlacement
+	} | null>(null)
+	const [addDraftItem, setAddDraftItem] = useState<DashboardItemConfig | null>(null)
 	const [editModalState, setEditModalState] = useState<{
 		item: DashboardItemConfig | null
 		focusSection?: UnifiedTableFocusSection
 	}>({ item: null })
-	const [sqlModalState, setSqlModalState] = useState<{ open: boolean; item: SqlChartConfig | null }>({
-		open: false,
-		item: null
-	})
+	const [sqlModalSession, setSqlModalSession] = useState<{
+		key: number
+		open: boolean
+		item: SqlChartConfig | null
+	} | null>(null)
 	const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false)
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription, user } = useAuthContext()
-	const { canCreateDashboard } = useFreeTierStatus()
+	const { canCreateDashboard, isFreeUser } = useFreeTierStatus()
 	const [paywallState, setPaywallState] = useState<{ open: boolean; reason: PaywallReason }>({
 		open: false,
 		reason: 'pro-feature'
@@ -155,10 +263,22 @@ function ProDashboardContent() {
 	}
 	const router = useRouter()
 	const mode = useDashboardMode()
+	useEffect(() => {
+		if (mode === 'edit') warmEditorModalChunks()
+	}, [mode])
 	const { items } = useProDashboardItemsState()
 	const { protocolsLoading } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod, setTimePeriod, setCustomTimePeriod } = useProDashboardTime()
-	const { isReadOnly } = useProDashboardPermissions()
+	const { isReadOnly, reason: readOnlyReason } = useProDashboardPermissions()
+	const { handleAppendItems } = useProDashboardEditorActions()
+	const { canUndo: canUndoEdit, canRedo: canRedoEdit, undo: undoEdit, redo: redoEdit } = useProDashboardHistory()
+	const { variables } = useProDashboardVariables()
+	useDashboardEditorHotkeys({
+		enabled: !isReadOnly,
+		undo: undoEdit,
+		redo: redoEdit,
+		openQuickAdd: () => openQuickAdd()
+	})
 	const sqlRefreshProgress = useSyncExternalStore(
 		subscribeSqlRefreshProgress,
 		getSqlRefreshProgress,
@@ -171,9 +291,9 @@ function ProDashboardContent() {
 		prevSqlRefreshActiveRef.current = sqlRefreshProgress.active
 		if (prevActive > 0 && sqlRefreshProgress.active === 0 && sqlRefreshProgress.bulk) {
 			if (sqlRefreshProgress.failed > 0) {
-				toast.error(`${sqlRefreshProgress.failed} of ${sqlRefreshProgress.total} SQL widgets failed to refresh`)
+				toast.error(`${sqlRefreshProgress.failed} of ${sqlRefreshProgress.total} SQL cards failed to refresh`)
 			} else {
-				toast.success('All SQL widgets refreshed')
+				toast.success('All SQL cards refreshed')
 			}
 		}
 	}, [sqlRefreshProgress])
@@ -185,7 +305,7 @@ function ProDashboardContent() {
 			event.returnValue = ''
 		}
 		const handleRouteChangeStart = () => {
-			if (window.confirm('SQL widgets are still refreshing. Leave anyway?')) return
+			if (window.confirm('SQL cards are still refreshing. Leave anyway?')) return
 			router.events.emit('routeChangeError')
 			throw new Error('Route change aborted: SQL refresh in progress')
 		}
@@ -200,6 +320,7 @@ function ProDashboardContent() {
 		dashboardName,
 		dashboardId,
 		saveDashboard,
+		publishDashboard,
 		copyDashboard,
 		dashboardVisibility,
 		dashboardTags,
@@ -221,6 +342,31 @@ function ProDashboardContent() {
 		showIterateDashboardModal,
 		setShowIterateDashboardModal
 	} = useProDashboardUI()
+	const createDashboardDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
+	const { flush: flushAutoSave, state: autoSaveState, saving: autoSaving } = useProDashboardSave()
+	const autoSaveFailed = autoSaveState?.status === 'error'
+	const [justPublished, setJustPublished] = useState(false)
+	const publishAndCelebrate = async () => {
+		await publishDashboard()
+		setJustPublished(true)
+	}
+	const [doneAcknowledged, setDoneAcknowledged] = useState(false)
+	useEffect(() => {
+		if (!doneAcknowledged || autoSaving || autoSaveFailed) return
+		const timeout = setTimeout(() => setDoneAcknowledged(false), DONE_ACKNOWLEDGED_MS)
+		return () => clearTimeout(timeout)
+	}, [doneAcknowledged, autoSaving, autoSaveFailed])
+	const doneStatusLabel =
+		doneAcknowledged && !autoSaveFailed && mode === 'view' ? (autoSaving ? 'Saving…' : 'Saved') : null
+	const finishEditing = () => {
+		if (autoSaveFailed) {
+			toast.error('Changes could not be saved. Retry the save first.', { id: 'dashboard-done-blocked' })
+			return
+		}
+		flushAutoSave()
+		setDoneAcknowledged(true)
+		void router.push(dashboardModeHref('view'), undefined, { shallow: true })
+	}
 	const isDashboardOwner = isAuthenticated && !!currentDashboard?.user && currentDashboard.user === user?.id
 	const { data: authorProfile, isSuccess: authorProfileLoaded } = useQuery({
 		queryKey: ['dashboard-author-profile', user?.id],
@@ -229,6 +375,23 @@ function ProDashboardContent() {
 		retry: false,
 		refetchOnWindowFocus: false
 	})
+
+	const subscriptionNoticeRef = useRef<string | null>(null)
+	useEffect(() => {
+		if (readOnlyReason !== 'subscription' || !dashboardId) return
+		if (!currentDashboard || currentDashboard.user !== user?.id) return
+		if (subscriptionNoticeRef.current === dashboardId) return
+		subscriptionNoticeRef.current = dashboardId
+		toast.error(
+			<span>
+				Your subscription has ended, so this dashboard is view-only.{' '}
+				<a href="/subscription" className="font-medium underline">
+					Renew
+				</a>
+			</span>,
+			{ id: 'subscription-readonly', duration: 12_000 }
+		)
+	}, [readOnlyReason, dashboardId, currentDashboard, user?.id])
 
 	const timePeriods: Array<{ value: TimePeriod; label: string }> = [
 		{ value: '30d', label: '30d' },
@@ -239,16 +402,68 @@ function ProDashboardContent() {
 		{ value: 'all', label: 'All' }
 	]
 
+	const isLoadingDashboardEdits =
+		mode === 'edit' && (readOnlyReason === 'loading' || readOnlyReason === 'dashboard-loading')
+	const canUseToolbarActions = !isReadOnly || isLoadingDashboardEdits
+	const hasAnyItems = items.length > 0
 	const hasTimePeriodItems = dashboardItemsUseTimePeriod(items)
-	const showTimePeriodSelector = hasTimePeriodItems || mode === 'edit'
+	const showTimePeriodSelector = hasTimePeriodItems || (mode === 'edit' && hasAnyItems)
 	const showSqlRefresh = !!dashboardId && items.some((item) => item.kind === 'sql')
+	const hasSyncableCharts = items.some((item) => SYNCABLE_CHART_KINDS.has(item.kind))
+	const showToolbarRow =
+		showTimePeriodSelector ||
+		showSqlRefresh ||
+		variables.length > 0 ||
+		hasSyncableCharts ||
+		(canUseToolbarActions && hasAnyItems)
 
 	const currentRatingSession = getCurrentRatingSession()
 	const shouldShowAuthorProfileSetup =
 		isDashboardOwner && authorProfileLoaded && !!authorProfile && !hasCustomizedAuthorProfile(authorProfile)
 
-	const openAddModal = () => {
-		setShowAddModal(true)
+	const [addPlacement, setAddPlacement] = useState<DashboardItemPlacement | undefined>(undefined)
+	const startAddModalSession = () => setAddModalSession((current) => ({ key: (current?.key ?? 0) + 1, open: true }))
+	const clearAddModalState = () => {
+		setAddModalSession(null)
+		setEditModalState({ item: null })
+		setAddPlacement(undefined)
+		setAddDraftItem(null)
+	}
+	const closeAddModalSession = () => {
+		if (!addModalSession) {
+			clearAddModalState()
+			return
+		}
+		setAddModalSession({ key: addModalSession.key, open: false })
+	}
+	const openQuickAdd = (placement?: DashboardItemPlacement) =>
+		setQuickAddSession((current) =>
+			current?.open
+				? current
+				: { key: (current?.key ?? 0) + 1, open: true, ...(placement === undefined ? {} : { placement }) }
+		)
+	const closeQuickAdd = () => setQuickAddSession((current) => (current ? { ...current, open: false } : null))
+	const clearQuickAddSession = () => setQuickAddSession(null)
+	const openFullEditorFromQuickAdd = ({
+		placement,
+		draftItem
+	}: {
+		placement?: DashboardItemPlacement
+		draftItem?: DashboardItemConfig
+	}) => {
+		closeQuickAdd()
+		setAddPlacement(placement)
+		setAddDraftItem(draftItem ?? null)
+		startAddModalSession()
+	}
+	const startSqlModalSession = (item: SqlChartConfig | null) =>
+		setSqlModalSession((current) => ({ key: (current?.key ?? 0) + 1, open: true, item }))
+	const closeSqlModalSession = () =>
+		setSqlModalSession((current) => (current ? { key: current.key, open: false, item: current.item } : null))
+
+	const dashboardModeHref = (targetMode: 'view' | 'edit') => {
+		const { dashboardId: _routeDashboardId, mode: _routeMode, ...carriedQuery } = router.query
+		return `/pro/${currentDashboard?.slug ?? dashboardId}${targetMode === 'edit' ? '/edit' : ''}${toQueryString(carriedQuery)}`
 	}
 
 	const openIterateDashboardOrPaywall = () => {
@@ -256,183 +471,301 @@ function ProDashboardContent() {
 		else showPaywall('llamaai')
 	}
 	const openDashboardSettings = () => setShowSettingsModal(true)
-	const mobileHeaderActions: Array<DashboardSheetAction> = []
-	if (!isReadOnly) {
-		mobileHeaderActions.push({ label: 'Add Item', icon: 'plus', onSelect: openAddModal, emphasis: 'primary' })
-		if (items.length > 0)
-			mobileHeaderActions.push({
-				label: 'Edit with LlamaAI',
-				icon: 'sparkles',
-				onSelect: openIterateDashboardOrPaywall,
-				emphasis: 'ai'
-			})
-		if (canUndo) mobileHeaderActions.push({ label: 'Undo', icon: 'arrow-left', onSelect: undoAIGeneration })
-		if (dashboardId) mobileHeaderActions.push({ label: 'Settings', icon: 'settings', onSelect: openDashboardSettings })
+	const renameDashboard = useMutation({ mutationFn: (next: string) => saveDashboard({ dashboardName: next }) })
+	const describeDashboard = useMutation({ mutationFn: (next: string) => saveDashboard({ description: next }) })
+	const canEditHeaderText = mode === 'edit' && !isReadOnly
+	const dashboardManageAction =
+		mode === 'view'
+			? {
+					label: 'Edit dashboard',
+					onSelect: () => void router.push(dashboardModeHref('edit'), undefined, { shallow: true })
+				}
+			: { label: 'Open settings', onSelect: openDashboardSettings }
+	const isClient = useIsClient()
+	const quickAddShortcutLabel = isClient && isMacPlatform() ? '⌘K' : 'Ctrl+K'
+	const addSection = () => {
+		const section: SectionConfig = {
+			id: generateItemId('section', ''),
+			kind: 'section',
+			title: 'New section',
+			displayAs: 'heading'
+		}
+		if (handleAppendItems(() => [section]) === false) return
+		requestDashboardItemReveal(section.id, { focusTitle: true })
 	}
+	const toolbarActionById: Record<DashboardToolbarActionId, DashboardToolbarAction> = {
+		'add-card': {
+			label: 'Add card',
+			icon: 'plus',
+			onSelect: () => openQuickAdd(),
+			variant: 'primary',
+			disabled: isLoadingDashboardEdits,
+			title: isLoadingDashboardEdits ? 'Loading dashboard…' : `Add a card (${quickAddShortcutLabel})`
+		},
+		'add-section': {
+			label: 'Add section',
+			icon: 'layout-grid',
+			onSelect: addSection,
+			variant: 'secondary',
+			disabled: isLoadingDashboardEdits,
+			title: isLoadingDashboardEdits ? 'Loading dashboard…' : 'Group cards into a section',
+			umami: 'dashboard-section-add'
+		},
+		'edit-with-ai': {
+			label: 'Edit with LlamaAI',
+			icon: 'sparkles',
+			onSelect: openIterateDashboardOrPaywall,
+			variant: 'ai'
+		},
+		'undo-ai': { label: 'Undo AI changes', icon: 'sparkles', onSelect: undoAIGeneration, variant: 'secondary' },
+		undo: {
+			label: 'Undo',
+			icon: 'arrow-left',
+			onSelect: () => void undoEdit(),
+			variant: 'ghost',
+			square: true,
+			title: 'Undo (Ctrl+Z)',
+			umami: 'dashboard-undo'
+		},
+		redo: {
+			label: 'Redo',
+			icon: 'arrow-right',
+			onSelect: () => void redoEdit(),
+			variant: 'ghost',
+			square: true,
+			title: 'Redo (Shift+Ctrl+Z)',
+			umami: 'dashboard-redo'
+		},
+		'refresh-sql': {
+			label: sqlRefreshActive
+				? `Refreshing ${sqlRefreshProgress.total - sqlRefreshProgress.active}/${sqlRefreshProgress.total}…`
+				: 'Refresh all SQL',
+			icon: 'repeat',
+			onSelect: () => refreshAllSqlCharts(),
+			variant: 'secondary',
+			disabled: sqlRefreshActive,
+			busy: sqlRefreshActive,
+			title: 'Re-run every SQL chart and table on this dashboard and update the results for everyone.'
+		},
+		settings: { label: 'Settings', icon: 'settings', onSelect: openDashboardSettings, variant: 'secondary' }
+	}
+	const toolbarActionState = {
+		isReadOnly,
+		hasAnyItems,
+		canUndoAi: canUndo,
+		canUndoEdit,
+		canRedoEdit,
+		hasDashboardId: !!dashboardId,
+		showSqlRefresh,
+		isLoadingEdits: isLoadingDashboardEdits
+	}
+	const visibleActionIds = visibleDashboardToolbarActions(toolbarActionState)
+	const desktopActions = desktopDashboardToolbarActions(toolbarActionState)
+	const sheetActions: Array<DashboardSheetAction> = canUseToolbarActions
+		? visibleActionIds.filter((id) => id !== 'refresh-sql').map((id) => toolbarActionById[id])
+		: []
 
 	const handleEditItemModal = (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => {
 		if (item.kind === 'sql') {
-			setSqlModalState({ open: true, item })
+			startSqlModalSession(item)
 			return
 		}
 		setEditModalState({ item, ...(focusSection === undefined ? {} : { focusSection }) })
-		setShowAddModal(true)
+		startAddModalSession()
 	}
 
 	const openSqlModal = () => {
-		setShowAddModal(false)
-		setEditModalState({ item: null })
-		setSqlModalState({ open: true, item: null })
+		startSqlModalSession(null)
 	}
 
 	if (!isAuthenticated && !hasActiveSubscription && dashboardVisibility !== 'public') {
 		return (
-			<Suspense
-				fallback={
-					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
-				}
-			>
-				<DemoPreview />
-			</Suspense>
+			<ErrorBoundary fallback={<DemoPreviewFallback />}>
+				<Suspense
+					fallback={
+						<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
+					}
+				>
+					<DemoPreview />
+				</Suspense>
+			</ErrorBoundary>
 		)
 	}
 
 	return (
-		<div className="flex flex-1 flex-col gap-2 pro-dashboard p-2 lg:px-0">
-			<BasicLink href="/pro" className="mr-auto mb-2 flex items-center gap-2 text-pro-text-label hover:text-link">
-				<Icon name="arrow-left" height={16} width={16} />
-				Back to Dashboards
-			</BasicLink>
-
-			<div className="overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
-				<div className="grid gap-5 px-4 py-4 md:px-5 md:py-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,480px)] xl:items-start">
-					<div className="min-w-0">
-						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-							<h1 className="text-[clamp(1.375rem,1.1rem+0.7vw,2rem)] leading-tight font-semibold text-pro-text-primary">
-								{dashboardName}
-							</h1>
-							{dashboardVisibility === 'public' ? (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-success-400/20 bg-pro-success-100 px-2 py-1 text-xs font-medium text-pro-success-400 dark:bg-pro-success-300/12 dark:text-pro-success-200">
-									<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-									Public
-								</p>
-							) : (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-premium-400/20 bg-pro-premium-100 px-2 py-1 text-xs font-medium text-pro-premium-400 dark:bg-pro-premium-300/12 dark:text-pro-premium-200">
-									<Icon name="key" height={12} width={12} />
-									Private
-								</p>
-							)}
-							{currentDashboard?.aiGenerated && Object.keys(currentDashboard.aiGenerated).length > 0 ? (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-info-400/20 bg-pro-info-100 px-2 py-1 text-xs font-medium text-pro-info-400 dark:bg-pro-info-300/12 dark:text-pro-info-200">
-									<Icon name="sparkles" height={13} width={13} />
-									AI Generated
-								</p>
-							) : null}
-						</div>
-						<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
-						{currentDashboard?.copiedFrom ? (
-							<p className="text-xs text-pro-text-secondary">
-								Forked from{' '}
-								<BasicLink
-									href={`/pro/${currentDashboard.copiedFrom.slug ?? currentDashboard.copiedFrom.id}`}
-									className="text-link"
+		<div className="flex flex-1 flex-col gap-2 p-2 pro-dashboard lg:px-0">
+			<div className="flex flex-wrap items-center gap-2">
+				<ProButton as={BasicLink} href="/pro" variant="ghost" className="-ml-3">
+					<Icon name="arrow-left" height={14} width={14} />
+					Dashboards
+				</ProButton>
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+					<Tooltip content="Views" render={<p />} className="min-h-8 gap-1.5 px-2 text-sm text-pro-text-tertiary">
+						<Icon name="eye" height={14} width={14} />
+						<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
+						<span className="sr-only">Views</span>
+					</Tooltip>
+					{currentDashboard && dashboardId ? (
+						<>
+							<LikeDashboardButton
+								currentDashboard={currentDashboard}
+								dashboardVisibility={dashboardVisibility}
+								dashboardId={dashboardId}
+							/>
+							<CopyDashboardLinkButton
+								dashboardVisibility={dashboardVisibility}
+								dashboardId={dashboardId}
+								isOwner={isDashboardOwner}
+								{...(isDashboardOwner ? { manageAction: dashboardManageAction } : {})}
+								{...(isDashboardOwner && !isFreeUser ? { onMakePublic: publishAndCelebrate } : {})}
+								{...(currentDashboard.slug ? { dashboardSlug: currentDashboard.slug } : {})}
+							/>
+						</>
+					) : null}
+					<DashboardOverflowMenu
+						{...(!isReadOnly && dashboardId ? { onOpenSettings: openDashboardSettings } : {})}
+						{...(isAuthenticated && dashboardId ? { onDuplicate: copyDashboard } : {})}
+						{...(isAuthenticated && dashboardId && !canCreateDashboard
+							? { onDuplicateBlocked: () => showPaywall('dashboard-limit') }
+							: {})}
+						{...(isAuthenticated
+							? {
+									onNewDashboard: () => {
+										if (canCreateDashboard) createDashboardDialogStore.show()
+										else showPaywall('dashboard-limit')
+									}
+								}
+							: {})}
+						{...(isDashboardOwner && dashboardId ? { onDelete: () => deleteDashboard(dashboardId) } : {})}
+					/>
+					<DashboardActionsSheet actions={sheetActions} />
+					{isAuthenticated ? (
+						<>
+							<span role="status" className="sr-only">
+								{doneStatusLabel ?? ''}
+							</span>
+							{doneStatusLabel ? (
+								<span
+									aria-hidden="true"
+									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 text-sm text-pro-text-secondary"
 								>
-									{currentDashboard.copiedFrom.name}
-								</BasicLink>
-							</p>
-						) : null}
-						{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
-						{dashboardDescription ? (
-							<p className="mt-2 max-w-3xl text-sm leading-6 text-pro-text-form">{dashboardDescription}</p>
-						) : null}
-						{dashboardTags.length > 0 ? (
-							<ul aria-label="Dashboard tags" className="mt-4 flex flex-wrap gap-1.5">
-								{dashboardTags.map((tag) => (
-									<li
-										key={tag}
-										className="rounded-md border border-pro-cards-border bg-surface-elevated-1/50 px-2 py-1 text-xs text-pro-text-label"
-									>
-										{tag}
-									</li>
-								))}
-							</ul>
-						) : null}
-					</div>
-					<div className="flex min-w-0 flex-col gap-3 xl:items-end">
-						<div className="flex flex-wrap items-center gap-2 xl:justify-end">
-							{isAuthenticated ? (
-								<>
-									{mode === 'view' && dashboardId && currentDashboard?.user === user?.id ? (
-										<EditDashboardButton
-											key={`edit-${dashboardId}`}
-											href={`/pro/${currentDashboard?.slug ?? dashboardId}/edit`}
-										/>
-									) : null}
-									{mode === 'edit' && dashboardId ? (
-										<button
-											type="button"
-											onClick={() => {
-												void router.push(`/pro/${currentDashboard?.slug ?? dashboardId}`)
-											}}
-											disabled={sqlRefreshActive}
-											title={sqlRefreshActive ? 'Wait for SQL widgets to finish refreshing' : undefined}
-											className="flex items-center gap-1 rounded-md pro-btn-ai px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-										>
-											{sqlRefreshActive ? <LoadingSpinner size={16} /> : <Icon name="check" height={16} width={16} />}
-											<span>Done</span>
-										</button>
-									) : null}
-									{isReadOnly ? (
-										<CopyDashboardButton
-											key={`copy-${dashboardId}`}
-											onCopy={copyDashboard}
-											onLimitReached={canCreateDashboard ? undefined : () => showPaywall('dashboard-limit')}
-										/>
-									) : null}
-									<button
-										type="button"
-										onClick={() => {
-											if (canCreateDashboard) {
-												createDashboardDialogStore.show()
-											} else {
-												showPaywall('dashboard-limit')
-											}
-										}}
-										className="flex items-center gap-1 rounded-md pro-btn-ai-outline px-3 py-1.5 text-sm"
-									>
-										<Icon name="plus" height={16} width={16} />
-										<span>New Dashboard</span>
-									</button>
-								</>
+									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" height={14} width={14} />}
+									{doneStatusLabel}
+								</span>
 							) : null}
-						</div>
-						<div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
-							<Tooltip
-								content="Views"
-								render={<p />}
-								className="inline-flex items-center gap-1.5 rounded-md border border-pro-cards-border bg-surface-elevated-1/45 px-2.5 py-1.5 text-xs font-medium text-pro-text-label"
-							>
-								<Icon name="eye" height={14} width={14} />
-								<span className="tabular-nums">{formatNumber(currentDashboard?.viewCount ?? 0)}</span>
-								<span className="sr-only">Views</span>
-							</Tooltip>
-							{currentDashboard && dashboardId ? (
-								<>
-									<LikeDashboardButton
-										currentDashboard={currentDashboard}
-										dashboardVisibility={dashboardVisibility}
-										dashboardId={dashboardId}
-									/>
-									<CopyDashboardLinkButton
-										dashboardVisibility={dashboardVisibility}
-										dashboardId={dashboardId}
-										{...(currentDashboard.slug ? { dashboardSlug: currentDashboard.slug } : {})}
-									/>
-								</>
+							{mode === 'view' && dashboardId && currentDashboard?.user === user?.id ? (
+								<EditDashboardButton key={`edit-${dashboardId}`} href={dashboardModeHref('edit')} />
 							) : null}
-						</div>
-					</div>
+							{mode === 'edit' && dashboardId ? (
+								<ProButton
+									type="button"
+									variant="primary"
+									onClick={finishEditing}
+									icon={<Icon name="check" height={16} width={16} />}
+									{...(sqlRefreshActive ? { loading: true, title: 'Wait for SQL cards to finish refreshing' } : {})}
+								>
+									<span>Done</span>
+								</ProButton>
+							) : null}
+							{isReadOnly && currentDashboard?.user !== user?.id ? (
+								<CopyDashboardButton
+									key={`copy-${dashboardId}`}
+									onCopy={copyDashboard}
+									onLimitReached={canCreateDashboard ? undefined : () => showPaywall('dashboard-limit')}
+								/>
+							) : null}
+						</>
+					) : null}
 				</div>
+			</div>
+
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+				<h1 className="text-2xl leading-tight font-semibold text-pro-text-primary md:text-3xl">
+					{canEditHeaderText ? (
+						<InlineTextField
+							value={dashboardName}
+							placeholder="Dashboard name"
+							maxLength={DASHBOARD_NAME_MAX_LENGTH}
+							status={renameDashboard.isPending ? 'saving' : renameDashboard.isError ? 'error' : 'idle'}
+							{...(renameDashboard.error ? { errorMessage: renameDashboard.error.message } : {})}
+							className="max-w-full text-2xl leading-tight font-semibold md:text-3xl"
+							onCommit={(next) => {
+								if (next) renameDashboard.mutate(next)
+							}}
+						/>
+					) : (
+						dashboardName
+					)}
+				</h1>
+				{dashboardVisibility === 'public' ? (
+					<ProBadge
+						key={dashboardVisibility}
+						tone="success"
+						icon={<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />}
+						{...(justPublished ? { className: 'animate-pro-pop' } : {})}
+					>
+						Public
+					</ProBadge>
+				) : (
+					<ProBadge tone="premium" icon={<Icon name="key" height={12} width={12} />}>
+						Private
+					</ProBadge>
+				)}
+				{currentDashboard?.aiGenerated && Object.keys(currentDashboard.aiGenerated).length > 0 ? (
+					<ProBadge tone="info" icon={<Icon name="sparkles" height={12} width={12} />}>
+						AI Generated
+					</ProBadge>
+				) : null}
+			</div>
+
+			<div className="flex min-w-0 flex-col gap-2">
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-pro-text-secondary">
+					<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
+					{currentDashboard?.author && (canEditHeaderText || dashboardDescription) ? (
+						<span aria-hidden="true">·</span>
+					) : null}
+					{canEditHeaderText ? (
+						<InlineTextField
+							multiline
+							value={dashboardDescription ?? ''}
+							placeholder="Add a description"
+							maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
+							status={describeDashboard.isPending ? 'saving' : describeDashboard.isError ? 'error' : 'idle'}
+							{...(describeDashboard.error ? { errorMessage: describeDashboard.error.message } : {})}
+							className="w-full max-w-3xl text-sm"
+							onCommit={(next) => describeDashboard.mutate(next)}
+						/>
+					) : dashboardDescription ? (
+						<p className="max-w-3xl leading-6">{dashboardDescription}</p>
+					) : null}
+				</div>
+				{currentDashboard?.copiedFrom ? (
+					<p className="text-xs text-pro-text-secondary">
+						Forked from{' '}
+						<BasicLink
+							href={`/pro/${currentDashboard.copiedFrom.slug ?? currentDashboard.copiedFrom.id}`}
+							className="text-link"
+						>
+							{currentDashboard.copiedFrom.name}
+						</BasicLink>
+					</p>
+				) : null}
+				{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
+				{dashboardTags.length > 0 ? (
+					<ul aria-label="Dashboard tags" className="flex flex-wrap gap-1.5">
+						{dashboardTags.map((tag) => (
+							<li key={tag}>
+								<ProChip
+									as={BasicLink}
+									href={`/pro?tab=discover&tag=${encodeURIComponent(tag)}`}
+									data-umami-event="dashboard-tag-click"
+								>
+									{tag}
+								</ProChip>
+							</li>
+						))}
+					</ul>
+				) : null}
 			</div>
 
 			{currentDashboard?.aiGenerated ? <AIGenerationHistory aiGenerated={currentDashboard.aiGenerated} /> : null}
@@ -449,157 +782,147 @@ function ProDashboardContent() {
 				</Suspense>
 			) : null}
 
-			{showTimePeriodSelector || showSqlRefresh ? (
-				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-					{showTimePeriodSelector ? (
-						<Tooltip
-							content={!hasTimePeriodItems ? 'Add chart items to enable time period selection' : null}
-							placement="bottom"
-						>
-							<div className="order-2 -mx-1 flex scrollbar-none gap-0 overflow-x-auto px-1 md:order-1 md:mx-0 md:px-0">
-								{timePeriods.map((period) => (
-									<button
-										type="button"
-										key={period.value}
-										className={`-ml-px shrink-0 rounded-none border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 first:ml-0 first:rounded-l-md md:flex-initial md:px-4 md:py-2 ${
-											timePeriod === period.value
-												? 'pro-border pro-btn-primary'
-												: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
-										} ${!hasTimePeriodItems ? 'cursor-not-allowed opacity-50' : ''}`}
-										onClick={() => hasTimePeriodItems && setTimePeriod(period.value)}
+			{showToolbarRow ? (
+				<div className="mt-1 flex min-h-8 flex-wrap items-center gap-2">
+					<div className="flex min-w-0 flex-wrap items-center gap-2">
+						{showTimePeriodSelector ? (
+							<Tooltip
+								content={!hasTimePeriodItems ? 'Add a chart card to enable the time period' : null}
+								placement="bottom"
+							>
+								<div className="flex max-w-full min-w-0 items-center gap-2">
+									<ProSegmented
+										className="min-w-0"
+										label="Time period"
+										options={timePeriods.map((period) => ({ ...period, disabled: !hasTimePeriodItems }))}
+										value={timePeriod}
+										onValueChange={(period) => setTimePeriod(period)}
+									/>
+									<CustomTimePeriodPicker
+										isActive={timePeriod === 'custom'}
+										customPeriod={customTimePeriod}
+										onApply={(period) => setCustomTimePeriod(period)}
+										onClear={() => setTimePeriod('365d')}
 										disabled={!hasTimePeriodItems}
-									>
-										{period.label}
-									</button>
-								))}
-								<CustomTimePeriodPicker
-									isActive={timePeriod === 'custom'}
-									customPeriod={customTimePeriod}
-									onApply={(period) => setCustomTimePeriod(period)}
-									onClear={() => setTimePeriod('365d')}
-									disabled={!hasTimePeriodItems}
-								/>
-							</div>
-						</Tooltip>
-					) : null}
-					<div className="order-3 flex min-w-0 flex-wrap items-center gap-2">
-						<DashboardActionsSheet actions={mobileHeaderActions} />
-						{showSqlRefresh ? (
-							<button
-								type="button"
-								className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-base"
-								onClick={() => refreshAllSqlCharts()}
-								disabled={sqlRefreshActive}
-								title="Re-run every SQL chart and table on this dashboard and update the results for everyone."
-							>
-								{sqlRefreshActive ? <LoadingSpinner size={16} /> : <Icon name="repeat" height={16} width={16} />}
-								{sqlRefreshActive
-									? `Refreshing ${sqlRefreshProgress.total - sqlRefreshProgress.active}/${sqlRefreshProgress.total}…`
-									: 'Refresh all SQL'}
-							</button>
+									/>
+								</div>
+							</Tooltip>
 						) : null}
-						{!isReadOnly && dashboardId ? (
-							<button
-								type="button"
-								onClick={openDashboardSettings}
-								className="hidden rounded-md pro-glass pro-hover-bg p-2 transition-colors md:flex"
-								aria-label="Dashboard Settings"
-								title="Dashboard Settings"
-							>
-								<Icon name="settings" height={20} width={20} className="text-pro-text-primary" />
-							</button>
+						<DashboardVariablesBar />
+					</div>
+					<div className="ml-auto flex shrink-0 items-center gap-1">
+						{hasSyncableCharts ? <ChartSyncToggle /> : null}
+						{!isReadOnly ? <AnnotationsPopover /> : null}
+						{visibleActionIds.includes('refresh-sql') ? (
+							<DashboardToolbarButton action={toolbarActionById['refresh-sql']} />
 						) : null}
-						{!isReadOnly && items.length > 0 ? (
-							<button
-								type="button"
-								className="hidden animate-pro-glow items-center gap-2 rounded-md pro-btn-primary-outline px-4 py-2 text-base whitespace-nowrap md:flex"
-								onClick={openIterateDashboardOrPaywall}
-								title="Edit with LlamaAI"
-							>
-								<Icon name="sparkles" height={16} width={16} />
-								Edit with LlamaAI
-							</button>
-						) : null}
-						{!isReadOnly && canUndo ? (
-							<div className="hidden md:block">
-								<UndoAIGenerationButton key={dashboardId} onUndo={undoAIGeneration} />
-							</div>
-						) : null}
-
-						{!isReadOnly ? (
-							<button
-								type="button"
-								className="hidden items-center gap-2 rounded-md pro-btn-primary px-4 py-2 text-base whitespace-nowrap md:flex"
-								onClick={openAddModal}
-								disabled={isReadOnly}
-							>
-								<Icon name="plus" height={16} width={16} />
-								Add Item
-							</button>
-						) : null}
+						<div className="hidden items-center gap-1 md:flex">
+							{desktopActions
+								.filter(({ id }) => id !== 'refresh-sql')
+								.map(({ id, disabled }) =>
+									id === 'undo-ai' ? (
+										<UndoAIGenerationButton key={dashboardId ?? id} onUndo={undoAIGeneration} />
+									) : (
+										<DashboardToolbarButton
+											key={id}
+											action={disabled ? { ...toolbarActionById[id], disabled: true } : toolbarActionById[id]}
+										/>
+									)
+								)}
+						</div>
 					</div>
 				</div>
 			) : null}
 
-			{!isReadOnly && dashboardId ? <AutosaveStatus /> : null}
+			<DashboardLoadProgress />
 
-			{items.length > 0 ? <ChartGrid onAddChartClick={openAddModal} onEditItem={handleEditItemModal} /> : null}
+			{dashboardId && (!isReadOnly || (isDashboardOwner && autoSaveFailed)) ? <AutosaveStatus /> : null}
 
-			<Suspense fallback={null}>
-				{showAddModal ? (
+			<ParameterHint />
+
+			{items.length > 0 ? (
+				<ChartGrid onAddChartClick={openQuickAdd} onEditItem={handleEditItemModal} tabQueryParam="tab" />
+			) : null}
+
+			{mode === 'view' && dashboardId && dashboardTags.length > 0 ? (
+				<SimilarDashboards dashboardId={dashboardId} tags={dashboardTags} />
+			) : null}
+
+			<Suspense fallback={<ProDialogFallback sheet />}>
+				{addModalSession ? (
 					<AddChartModal
-						key={editModalState.item?.id ?? 'new-dashboard-item'}
-						isOpen
-						onClose={() => {
-							setShowAddModal(false)
-							setEditModalState({ item: null })
-						}}
+						key={addModalSession.key}
+						isOpen={addModalSession.open}
+						onClose={closeAddModalSession}
+						onClosed={clearAddModalState}
 						editItem={editModalState.item}
 						initialUnifiedFocusSection={editModalState.focusSection}
 						onOpenSqlModal={openSqlModal}
+						{...(addPlacement ? { placement: addPlacement } : {})}
+						{...(addDraftItem ? { draftItem: addDraftItem } : {})}
 					/>
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={null}>
-				{sqlModalState.open ? (
+			<Suspense fallback={<ProDialogFallback width="md" />}>
+				{quickAddSession ? (
+					<QuickAddPalette
+						key={quickAddSession.key}
+						open={quickAddSession.open}
+						onClose={closeQuickAdd}
+						onClosed={clearQuickAddSession}
+						onOpenFullEditor={openFullEditorFromQuickAdd}
+						{...(quickAddSession.placement ? { placement: quickAddSession.placement } : {})}
+					/>
+				) : null}
+			</Suspense>
+
+			<Suspense fallback={<ProDialogFallback width="lg" />}>
+				{sqlModalSession ? (
 					<SqlChartModal
-						key={sqlModalState.item?.id ?? 'new-sql-item'}
-						editItem={sqlModalState.item}
-						onClose={() => setSqlModalState({ open: false, item: null })}
+						key={sqlModalSession.key}
+						isOpen={sqlModalSession.open}
+						editItem={sqlModalSession.item}
+						{...(addPlacement ? { placement: addPlacement } : {})}
+						onClose={closeSqlModalSession}
+						onClosed={() => setSqlModalSession(null)}
+						onSaved={() => {
+							closeSqlModalSession()
+							closeAddModalSession()
+						}}
 					/>
 				) : null}
 			</Suspense>
 
-			{!protocolsLoading && items.length === 0 ? (
+			{!protocolsLoading && !hasAnyItems ? (
 				<EmptyState
-					onAddChart={openAddModal}
+					onAddChart={() => openQuickAdd()}
 					onGenerateWithAI={
 						hasActiveSubscription ? () => setShowIterateDashboardModal(true) : () => showPaywall('llamaai')
 					}
 					isReadOnly={isReadOnly}
+					{...(isReadOnly && isDashboardOwner && dashboardId ? { editHref: dashboardModeHref('edit') } : {})}
 				/>
 			) : null}
 
-			<Suspense fallback={null}>
+			<Suspense fallback={showSettingsModal && !isReadOnly ? <ProDialogFallback width="sm" /> : null}>
 				<DashboardSettingsModal
-					isOpen={showSettingsModal}
+					isOpen={showSettingsModal && !isReadOnly}
 					onClose={() => setShowSettingsModal(false)}
 					dashboardName={dashboardName}
 					visibility={dashboardVisibility}
 					tags={dashboardTags}
-					description={dashboardDescription}
 					dashboardId={dashboardId}
 					onSave={saveDashboard}
 					onDelete={deleteDashboard}
 				/>
 			</Suspense>
 
-			<Suspense fallback={null}>
+			<Suspense fallback={createDashboardDialogOpen ? <ProDialogFallback width="sm" /> : null}>
 				<CreateDashboardPicker dialogStore={createDashboardDialogStore} onCreate={handleCreateDashboard} />
 			</Suspense>
 
-			<Suspense fallback={null}>
+			<Suspense fallback={showGenerateDashboardModal ? <ProDialogFallback width="md" /> : null}>
 				<GenerateDashboardModal
 					isOpen={showGenerateDashboardModal}
 					onClose={() => setShowGenerateDashboardModal(false)}
@@ -607,7 +930,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={null}>
+			<Suspense fallback={showIterateDashboardModal ? <ProDialogFallback width="md" /> : null}>
 				<GenerateDashboardModal
 					isOpen={showIterateDashboardModal}
 					onClose={() => setShowIterateDashboardModal(false)}

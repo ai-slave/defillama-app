@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo } from 'react'
+import { lazy, type ReactNode, Suspense, useContext, useMemo } from 'react'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
@@ -23,12 +23,17 @@ import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressAdvancedTvlTokenBreakdown } from '../services/protocolTvl'
 import type { AdvancedTvlChartConfig } from '../types'
+import { ProMeta } from '../ui'
 import { buildAdvancedTvlPresentation } from './advancedTvlPresentation'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import { useAdvancedTvlChartData } from './useAdvancedTvlChartData'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
@@ -68,7 +73,13 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		getProtocolInfo(protocol)?.misrepresentedTokens
 	)
 
-	const { data: basicTvlDataset, isLoading: isBasicTvlLoading } = useQuery({
+	const {
+		data: basicTvlDataset,
+		isLoading: isBasicTvlLoading,
+		isError: isBasicTvlError,
+		isFetching: isBasicTvlFetching,
+		refetch: refetchBasicTvl
+	} = useQuery({
 		queryKey: buildProtocolValueChartQueryKey({ source: 'tvl', protocol }),
 		queryFn: () => fetchProtocolValueChart({ source: 'tvl', protocol }),
 		enabled: streamDone && chartType === 'tvl',
@@ -78,6 +89,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 	const {
 		data: advancedData,
 		isLoading: isAdvancedLoading,
+		isError: isAdvancedError,
+		isFetching: isAdvancedFetching,
+		refetch: refetchAdvanced,
 		hasSourceData: hasAdvancedSourceData
 	} = useAdvancedTvlChartData({
 		protocol,
@@ -226,12 +240,34 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			? isBasicTvlLoading || (!streamDone && basicTvlDataset === undefined)
 			: isAdvancedLoading || (!streamDone && !hasAdvancedSourceData && !suppressTokenBreakdowns)
 
-	if (isLoading) {
-		return (
-			<div className="flex min-h-[402px] items-center justify-center md:min-h-[418px]">
-				<LoadingSpinner />
+	const hasError = chartType === 'tvl' ? isBasicTvlError : isAdvancedError
+	const isFetching = chartType === 'tvl' ? isBasicTvlFetching : isAdvancedFetching
+	const hasLoadedData = chartType === 'tvl' ? basicTvlDataset !== undefined : hasAdvancedSourceData
+	const retryChartData = () => {
+		if (chartType === 'tvl') void refetchBasicTvl()
+		else refetchAdvanced()
+	}
+
+	const hallmarks = useDashboardAnnotationHallmarks()
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(360, cardHeightScale)
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex min-h-[calc(402px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(418px*var(--card-scale,1))]">
+			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[protocolName]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (hasError && !hasLoadedData) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	const chartContent =
@@ -240,12 +276,15 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				chartData={piePresentation.chartData}
 				stackColors={{ ...piePresentation.stackColors, ...presentation.stackColors }}
 				exportButtons="hidden"
-				height="360px"
+				height={chartHeight}
 				onReady={handleChartReady}
 			/>
 		) : (
 			<MultiSeriesChart
 				title=""
+				{...(hallmarks ? { hallmarks } : {})}
+				hallmarkStyle="mark-line"
+				{...(syncGroup ? { syncGroup } : {})}
 				dataset={canonicalDataset}
 				charts={presentation.charts}
 				{...(selectorValues.length > 0 ? { selectedCharts: runtimePresentation.selectedCharts } : {})}
@@ -255,7 +294,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				solidChartAreaStyle={presentation.solidChartAreaStyle}
 				{...(presentation.chartOptions ? { chartOptions: presentation.chartOptions } : {})}
 				exportButtons={HIDDEN_EXPORTS}
-				height="360px"
+				height={chartHeight}
 				onReady={handleChartReady}
 			/>
 		)
@@ -266,15 +305,16 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			: filteredDataset.source.length > 0
 
 	return (
-		<div className="flex min-h-[402px] flex-col p-2 md:min-h-[418px]">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{chartTypeLabel}</h3>
-					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
-				</div>
-				{hasChartData ? (
-					<div className="flex flex-wrap items-center justify-end gap-2">
-						{chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (
+		<div className="flex min-h-[calc(402px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(418px*var(--card-scale,1))]">
+			{hasError ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTypeLabel}
+				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
+				subtitle={<ProMeta items={[protocolName]} />}
+				viewerControls={
+					hasChartData ? (
+						chartType === 'tokensPie' && pieSeriesNames.length > 1 ? (
 							<SelectWithCombobox
 								allValues={pieSeriesNames}
 								selectedValues={pieSelection.activeSeries}
@@ -282,7 +322,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 								label="Token"
 								labelType="smol"
 								variant="filter"
-								size="md"
+								size="sm"
 							/>
 						) : selectorValues.length > 1 ? (
 							<SelectWithCombobox
@@ -292,19 +332,24 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 								label={selectorLabel}
 								labelType="smol"
 								variant="filter"
-								size="md"
+								size="sm"
 							/>
-						) : null}
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ prepareCsv: prepareCsvExport }}
-						/>
-					</div>
-				) : null}
-			</div>
-
-			<div className="flex-1">
-				<Suspense fallback={<div className="min-h-[360px]" />}>{chartContent}</Suspense>
+						) : null
+					) : null
+				}
+				menu={
+					hasChartData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { prepareCsv: prepareCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				<div className="flex-1">
+					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>{chartContent}</Suspense>
+				</div>
 			</div>
 		</div>
 	)

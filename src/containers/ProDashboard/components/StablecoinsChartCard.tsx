@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
@@ -20,9 +20,14 @@ import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
+import { ProMeta } from '../ui'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
@@ -40,7 +45,6 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 	tokenInflows: 'Token Inflows'
 }
 
-const EMPTY_HALLMARKS: Array<[number, string]> = []
 const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
 	'tokenMcaps',
 	'dominance',
@@ -58,8 +62,17 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		}),
 		[selectionIntent]
 	)
-	const { chartPayload, pieSeries, seriesNames, defaultSeries, prepareCompleteCsvDataset, isLoading } =
-		useStablecoinsChartData(chain, chartType, true, selectionOptions)
+	const {
+		chartPayload,
+		pieSeries,
+		seriesNames,
+		defaultSeries,
+		prepareCompleteCsvDataset,
+		isLoading,
+		isFetching,
+		error,
+		refetch
+	} = useStablecoinsChartData(chain, chartType, true, selectionOptions)
 	const runtimeSeries = useMemo(() => getStablecoinRuntimeSeries(chartPayload), [chartPayload])
 	const { activeSeries, selectableSeries, renderedCharts, setSelectedSeries } = useStablecoinChartSelection({
 		marketCapSeries: null,
@@ -140,12 +153,30 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 	const hasChartData =
 		chartType === 'pie' ? pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0 : dataset.source.length > 0
 
-	if (isLoading) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LoadingSpinner />
+	const hallmarks = useDashboardAnnotationHallmarks()
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
+
+	const retryChartData = () => {
+		void refetch()
+	}
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={chartTypeLabel} subtitle={<ProMeta items={[`${chainLabel} Stablecoins`]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (error && !hasChartData) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	const chartOptions =
@@ -158,15 +189,16 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					: STABLECOIN_DOLLAR_CHART_OPTIONS
 
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{chartTypeLabel}</h3>
-					<p className="text-xs text-pro-text-secondary">{chainLabel} Stablecoins</p>
-				</div>
-				{hasChartData ? (
-					<div className="flex flex-wrap justify-end gap-2">
-						{chartType === 'pie' && pieSeries.peers.length > 1 ? (
+		<div className="flex h-full flex-col p-0">
+			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTypeLabel}
+				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
+				subtitle={<ProMeta items={[`${chainLabel} Stablecoins`]} />}
+				viewerControls={
+					hasChartData ? (
+						chartType === 'pie' && pieSeries.peers.length > 1 ? (
 							<SelectWithCombobox
 								size="sm"
 								allValues={pieSeriesNames}
@@ -188,61 +220,71 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 								variant="filter"
 								popoverVariant="legacy"
 							/>
-						) : null}
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ prepareCsv: prepareCsvExport }}
-						/>
+						) : null
+					) : null
+				}
+				menu={
+					hasChartData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { prepareCsv: prepareCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				{latestMcap !== null && chartType === 'totalMcap' ? (
+					<div className="mb-2 flex gap-4">
+						<div className="flex flex-col">
+							<span className="text-xs text-pro-text-tertiary uppercase">Total Market Cap</span>
+							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
+								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							</span>
+						</div>
 					</div>
 				) : null}
-			</div>
-			{latestMcap !== null && chartType === 'totalMcap' ? (
-				<div className="mb-2 flex gap-4">
-					<div className="flex flex-col">
-						<span className="text-[10px] text-pro-text-tertiary uppercase">Total Market Cap</span>
-						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						</span>
-					</div>
-				</div>
-			) : null}
 
-			<div className="flex-1" key={chartType}>
-				<Suspense
-					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					{chartType === 'pie' ? (
-						<PieChart
-							chartData={piePresentation.chartData}
-							stackColors={{ ...piePresentation.stackColors, ...stackColors }}
-							exportButtons="hidden"
-							onReady={handleChartReady}
-						/>
-					) : (
-						<MultiSeriesChart
-							title=""
-							dataset={dataset}
-							charts={charts}
-							{...(SERIES_SELECTION_CHARTS.has(chartType) ? { selectedCharts: renderedCharts } : {})}
-							valueSymbol={chartPayload.valueSymbol ?? ''}
-							{...(chartPayload.stacked === undefined ? {} : { stacked: chartPayload.stacked })}
-							{...(chartPayload.expandTo100Percent === undefined
-								? {}
-								: { expandTo100Percent: chartPayload.expandTo100Percent })}
-							{...(chartPayload.showTotalInTooltip === undefined
-								? {}
-								: { showTotalInTooltip: chartPayload.showTotalInTooltip })}
-							{...(chartType === 'totalMcap' ? { hallmarks: EMPTY_HALLMARKS } : {})}
-							{...(chartOptions ? { chartOptions } : {})}
-							exportButtons="hidden"
-							onReady={handleChartReady}
-						/>
-					)}
-				</Suspense>
+				<div className="flex-1" key={chartType}>
+					<Suspense
+						fallback={
+							<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+								<ProCardLoading />
+							</div>
+						}
+					>
+						{chartType === 'pie' ? (
+							<PieChart
+								chartData={piePresentation.chartData}
+								stackColors={{ ...piePresentation.stackColors, ...stackColors }}
+								exportButtons="hidden"
+								height={chartHeight}
+								onReady={handleChartReady}
+							/>
+						) : (
+							<MultiSeriesChart
+								title=""
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={dataset}
+								charts={charts}
+								{...(SERIES_SELECTION_CHARTS.has(chartType) ? { selectedCharts: renderedCharts } : {})}
+								valueSymbol={chartPayload.valueSymbol ?? ''}
+								{...(chartPayload.stacked === undefined ? {} : { stacked: chartPayload.stacked })}
+								{...(chartPayload.expandTo100Percent === undefined
+									? {}
+									: { expandTo100Percent: chartPayload.expandTo100Percent })}
+								{...(chartPayload.showTotalInTooltip === undefined
+									? {}
+									: { showTotalInTooltip: chartPayload.showTotalInTooltip })}
+								{...(chartOptions ? { chartOptions } : {})}
+								exportButtons="hidden"
+								onReady={handleChartReady}
+							/>
+						)}
+					</Suspense>
+				</div>
 			</div>
 		</div>
 	)

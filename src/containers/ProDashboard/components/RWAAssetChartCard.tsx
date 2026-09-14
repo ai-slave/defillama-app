@@ -1,12 +1,14 @@
-import { lazy, Suspense, useMemo } from 'react'
+import { lazy, type ReactNode, Suspense, useMemo } from 'react'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig } from '../types'
+import { ProMeta } from '../ui'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 import {
 	buildProRwaAssetChartSeries,
 	projectRwaAssetDatasetToMetrics,
@@ -23,7 +25,7 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const { assetId, assetName, metrics } = config
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
-	const { chartDataset, isLoading } = useRWAAssetChartData(assetId)
+	const { chartDataset, isLoading, isFetching, error, refetch } = useRWAAssetChartData(assetId)
 
 	const filteredDataset = useMemo(() => {
 		if (!chartDataset) return null
@@ -37,55 +39,72 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 	const imageTitle = `${assetName} - ${metricsLabel}`
 	const imageFilename = `rwa-${assetId}-${metrics.join('-')}`
 
-	if (isLoading) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LoadingSpinner />
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
+
+	const retryChartData = () => {
+		void refetch()
+	}
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={assetName} subtitle={<ProMeta items={[metricsLabel]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (error && chartDataset === null) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	const hasData = filteredDataset && filteredDataset.source.length > 0
 
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{assetName}</h3>
-					<p className="text-xs text-pro-text-secondary">{metricsLabel}</p>
-				</div>
-				{hasData ? (
-					<ProCardOverflowMenu
-						image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-						csv={
-							filteredDataset
-								? {
-										prepareCsv: () =>
-											prepareProChartCsv(projectRwaAssetDatasetToMetrics(filteredDataset, metrics), imageFilename)
-									}
-								: undefined
-						}
-					/>
-				) : null}
-			</div>
-			<div className="flex-1">
+		<div className="flex h-full flex-col p-0">
+			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={assetName}
+				subtitle={<ProMeta items={[metricsLabel]} />}
+				menu={
+					hasData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: filteredDataset
+									? {
+											prepareCsv: () =>
+												prepareProChartCsv(projectRwaAssetDatasetToMetrics(filteredDataset, metrics), imageFilename)
+										}
+									: undefined
+							}
+						: {}
+				}
+			/>
+			<div className="flex-1 px-3 pb-3">
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LoadingSpinner />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
 					{filteredDataset ? (
 						<MultiSeriesChart
+							height={chartHeight}
 							dataset={filteredDataset}
 							charts={charts}
 							hideDefaultLegend={false}
 							onReady={handleChartReady}
 						/>
 					) : (
-						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
-							No data available
+						<div className="flex h-[calc(320px*var(--card-scale,1))] flex-col justify-center">
+							<ProCardEmpty message="No data available" />
 						</div>
 					)}
 				</Suspense>

@@ -142,13 +142,14 @@ export interface ISEOProps {
 	canonicalUrl: string | null | undefined
 	noIndex?: boolean
 	jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>
+	ogImage?: string
 }
 
 function stringifyJsonLd(jsonLd: ISEOProps['jsonLd']): string {
 	return JSON.stringify(jsonLd).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
 }
 
-export function SEO({ title, description, canonicalUrl, noIndex, jsonLd }: ISEOProps) {
+export function SEO({ title, description, canonicalUrl, noIndex, jsonLd, ogImage }: ISEOProps) {
 	const normalizedCanonicalUrl = slug(canonicalUrl ?? '')
 	const url = `https://defillama.com${normalizedCanonicalUrl}`
 	return (
@@ -162,7 +163,13 @@ export function SEO({ title, description, canonicalUrl, noIndex, jsonLd }: ISEOP
 			{canonicalUrl != null ? <meta property="og:url" content={url} /> : null}
 			<meta property="og:site_name" content="DefiLlama" />
 			{description ? <meta property="og:description" content={description} /> : null}
-			{/* <meta property="og:image" content={cardURL} /> */}
+			{ogImage ? (
+				<>
+					<meta property="og:image" content={ogImage} />
+					<meta property="og:image:width" content="1200" />
+					<meta property="og:image:height" content="630" />
+				</>
+			) : null}
 			<meta name="twitter:card" content="summary_large_image" />
 			<meta property="twitter:domain" content="defillama.com" />
 			{canonicalUrl != null ? <meta property="twitter:url" content={url} /> : null}
@@ -170,7 +177,7 @@ export function SEO({ title, description, canonicalUrl, noIndex, jsonLd }: ISEOP
 			<meta name="twitter:site" content="@DefiLlama" />
 			<meta name="twitter:creator" content="@DefiLlama" />
 			{description ? <meta name="twitter:description" content={description} /> : null}
-			{/* <meta name="twitter:image" content={cardURL} /> */}
+			{ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
 			{jsonLd ? (
 				// eslint-disable-next-line react/no-danger -- JSON-LD has no React equivalent; stringifyJsonLd escapes < > &
 				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: stringifyJsonLd(jsonLd) }} />

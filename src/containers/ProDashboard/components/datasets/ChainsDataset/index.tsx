@@ -16,7 +16,7 @@ import { orderedFilteredTableFeatures } from '~/components/Table/features/ordere
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { buildChainShareTotals, CHAIN_SHARE_METRICS, getChainMetricShare } from './chainShares'
@@ -383,7 +383,7 @@ export function ChainsDataset({
 
 	if (isLoading) {
 		return (
-			<div className="isolate flex h-full w-full flex-col p-4">
+			<div className="isolate flex h-full w-full flex-col">
 				<ChainsTableHeader
 					selectedPreset="essential"
 					setSelectedPreset={() => {}}
@@ -391,11 +391,9 @@ export function ChainsDataset({
 					showColumnSelector={false}
 					setShowColumnSelector={() => {}}
 					handleExportCSV={() => {}}
-					category={category}
 				/>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading chains data...</p>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading chains data…" />
 				</div>
 			</div>
 		)
@@ -403,7 +401,7 @@ export function ChainsDataset({
 
 	if (error) {
 		return (
-			<div className="isolate flex h-full w-full flex-col p-4">
+			<div className="isolate flex h-full w-full flex-col">
 				<ChainsTableHeader
 					selectedPreset="essential"
 					setSelectedPreset={() => {}}
@@ -411,9 +409,8 @@ export function ChainsDataset({
 					showColumnSelector={false}
 					setShowColumnSelector={() => {}}
 					handleExportCSV={() => {}}
-					category={category}
 				/>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load chains data</div>
 				</div>
 			</div>
@@ -421,7 +418,7 @@ export function ChainsDataset({
 	}
 
 	return (
-		<div className="isolate flex h-full w-full flex-col p-4">
+		<div className="isolate flex h-full w-full flex-col">
 			<ChainsTableHeader
 				selectedPreset={selectedPreset}
 				setSelectedPreset={setSelectedPreset}
@@ -429,7 +426,6 @@ export function ChainsDataset({
 				showColumnSelector={showColumnPanel}
 				setShowColumnSelector={setShowColumnPanel}
 				handleExportCSV={handleExportCSV}
-				category={category}
 			/>
 
 			<ColumnManagementPanel

@@ -1,4 +1,5 @@
 import { useCallback, useReducer } from 'react'
+import { useAuthContext } from '~/auth'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import type { DashboardGrouping } from '../../../types'
 import type {
@@ -11,14 +12,13 @@ import type {
 } from '../types'
 import { getNextStep, getPrevStep } from '../types'
 
-const initialState: ComparisonWizardState = {
+const WIZARD_DEFAULTS: Omit<ComparisonWizardState, 'visibility'> = {
 	step: 'select-type',
 	comparisonType: null,
 	selectedItems: [],
 	selectedMetrics: [],
 	metricsForCards: [],
 	dashboardName: '',
-	visibility: 'public',
 	tags: [],
 	description: '',
 	grouping: 'day',
@@ -30,6 +30,10 @@ const initialState: ComparisonWizardState = {
 		chartType: 'sparkline'
 	},
 	includeTable: true
+}
+
+export function createInitialWizardState(hasActiveSubscription: boolean): ComparisonWizardState {
+	return { ...WIZARD_DEFAULTS, visibility: hasActiveSubscription ? 'private' : 'public' }
 }
 
 function reducer(state: ComparisonWizardState, action: WizardAction): ComparisonWizardState {
@@ -123,14 +127,15 @@ function reducer(state: ComparisonWizardState, action: WizardAction): Comparison
 		case 'SET_INCLUDE_TABLE':
 			return { ...state, includeTable: action.include }
 		case 'RESET':
-			return initialState
+			return createInitialWizardState(action.hasActiveSubscription)
 		default:
 			return state
 	}
 }
 
 export function useComparisonWizard() {
-	const [state, dispatch] = useReducer(reducer, initialState)
+	const { hasActiveSubscription } = useAuthContext()
+	const [state, dispatch] = useReducer(reducer, hasActiveSubscription, createInitialWizardState)
 	const { getProtocolInfo } = useProDashboardCatalog()
 
 	const setStep = useCallback((step: WizardStep) => dispatch({ type: 'SET_STEP', step }), [])
@@ -199,7 +204,7 @@ export function useComparisonWizard() {
 
 	const setIncludeTable = useCallback((include: boolean) => dispatch({ type: 'SET_INCLUDE_TABLE', include }), [])
 
-	const reset = useCallback(() => dispatch({ type: 'RESET' }), [])
+	const reset = useCallback(() => dispatch({ type: 'RESET', hasActiveSubscription }), [hasActiveSubscription])
 
 	const goToNextStep = useCallback(() => {
 		const next = getNextStep(state.step)

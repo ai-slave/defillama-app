@@ -1,27 +1,32 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { tw } from '~/ui/tw'
 import { useProDashboardSave } from '../ProDashboardAPIContext'
+import { proButtonStyles } from '../ui'
+
+const AUTOSAVE_STATUS_TEXT = tw`inline-flex items-center gap-1.5 text-xs text-pro-text-tertiary aria-disabled:cursor-default`
 
 export function AutosaveStatus() {
 	const { queued, state, retry, saving } = useProDashboardSave()
 	const pending = queued !== null || saving
-	const label = pending ? 'Saving changes…' : state?.status === 'error' ? 'Retry save' : 'Changes saved'
+	const canRetry = !pending && state?.status === 'error'
 	return (
 		<div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-pro-text-secondary">
 			{pending || state !== undefined ? (
 				<Ariakit.Button
+					type="button"
 					onClick={retry}
 					accessibleWhenDisabled
-					disabled={pending || state?.status !== 'error'}
-					className={`flex items-center gap-2 rounded-md px-3 py-1.5 aria-disabled:cursor-default ${!pending && state?.status === 'error' ? 'pro-btn-primary-outline' : ''}`}
+					disabled={!canRetry}
+					className={canRetry ? proButtonStyles({ size: 'sm', variant: 'secondary' }) : AUTOSAVE_STATUS_TEXT}
 				>
 					{pending ? (
 						<LoadingSpinner size={14} />
 					) : state?.status === 'success' ? (
 						<Icon name="check" height={14} width={14} />
 					) : null}
-					{label}
+					{pending ? 'Saving changes…' : canRetry ? 'Retry save' : 'Changes saved'}
 				</Ariakit.Button>
 			) : null}
 			<span role="status" className="sr-only">

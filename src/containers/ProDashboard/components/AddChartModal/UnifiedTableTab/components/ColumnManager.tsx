@@ -640,16 +640,12 @@ export function ColumnManager({
 				<div className="mb-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<h4 className="text-xs font-semibold text-pro-text-primary uppercase">Selected</h4>
-						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">
+						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-xs font-medium text-brand">
 							{selectedColumns.length}
 						</span>
 					</div>
 					{selectedColumns.length > 0 ? (
-						<button
-							type="button"
-							onClick={handleClearAll}
-							className="text-[10px] font-medium text-error hover:underline"
-						>
+						<button type="button" onClick={handleClearAll} className="text-xs font-medium text-error hover:underline">
 							Clear all
 						</button>
 					) : null}
@@ -696,7 +692,7 @@ export function ColumnManager({
 					</DragOverlay>
 				</DndContext>
 
-				<p className="mt-2 text-[10px] text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
+				<p className="mt-2 text-xs text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
 			</section>
 
 			{sorting !== undefined && onSortingChange ? (
@@ -717,7 +713,7 @@ export function ColumnManager({
 							key={filter.id}
 							type="button"
 							onClick={() => setGroupFilter(filter.id)}
-							className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+							className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
 								groupFilter === filter.id
 									? 'bg-brand/15 text-brand'
 									: 'text-pro-text-tertiary hover:text-pro-text-secondary'
@@ -808,10 +804,10 @@ export function ColumnManager({
 						/>
 						<span className="text-xs font-semibold text-pro-text-primary">
 							{editingId ? 'Edit Custom Column' : 'Custom Column'}
-							{!hasActiveSubscription ? <span className="ml-1 text-[10px] font-normal opacity-60">(Pro)</span> : null}
+							{!hasActiveSubscription ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
 						</span>
 						{(customColumns?.length ?? 0) > 0 ? (
-							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-500">
+							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-xs font-medium text-purple-500">
 								{customColumns?.length}
 							</span>
 						) : null}
@@ -830,7 +826,7 @@ export function ColumnManager({
 							key={preset.name}
 							type="button"
 							onClick={() => handleApplyPreset(preset)}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-[10px] font-medium text-pro-text-secondary transition-colors hover:border-brand hover:text-brand"
+							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand hover:text-brand"
 						>
 							{preset.name}
 						</button>
@@ -916,7 +912,7 @@ export function ColumnManager({
 
 						<div className="flex flex-wrap gap-2">
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Format</p>
+								<p className="mb-1 text-xs font-medium text-pro-text-secondary">Format</p>
 								<div className="flex gap-1">
 									{FORMAT_OPTIONS.map((opt) => (
 										<Tooltip
@@ -927,7 +923,7 @@ export function ColumnManager({
 												<button
 													type="button"
 													onClick={() => setCustomFormat(opt.id)}
-													className={`flex-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
+													className={`flex-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
 														customFormat === opt.id
 															? 'border-brand bg-brand/15 text-brand'
 															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
@@ -941,7 +937,7 @@ export function ColumnManager({
 								</div>
 							</div>
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Aggregation</p>
+								<p className="mb-1 text-xs font-medium text-pro-text-secondary">Aggregation</p>
 								<div className="flex gap-1">
 									{AGGREGATION_OPTIONS.map((opt) => (
 										<Tooltip
@@ -955,7 +951,7 @@ export function ColumnManager({
 														setAggregationTouched(true)
 														setCustomAggregation(opt.id)
 													}}
-													className={`flex-1 rounded-md border px-1 py-1 text-[10px] font-medium transition-colors ${
+													className={`flex-1 rounded-md border px-1 py-1 text-xs font-medium transition-colors ${
 														resolvedCustomAggregation === opt.id
 															? 'border-brand bg-brand/15 text-brand'
 															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
@@ -987,7 +983,7 @@ export function ColumnManager({
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success/20 pt-1">
 										{usedVariables.map((v) => (
-											<span key={v.key} className="text-[10px] text-pro-text-tertiary">
+											<span key={v.key} className="text-xs text-pro-text-tertiary">
 												<code>{v.key}</code>={v.formatted}
 											</span>
 										))}
@@ -1024,7 +1020,7 @@ export function ColumnManager({
 											{AGGREGATION_OPTIONS.find((a) => a.id === col.aggregation)?.label}
 										</span>
 									</div>
-									<code className="block truncate text-[10px] text-pro-text-tertiary">{col.expression}</code>
+									<code className="block truncate text-xs text-pro-text-tertiary">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
 									<button
@@ -1081,7 +1077,7 @@ function SortableChip({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] transition-colors ${
+			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs transition-colors ${
 				isFirst
 					? 'border-brand/50 bg-brand/10'
 					: isCustom
@@ -1205,7 +1201,7 @@ function SortingSection({
 						type="button"
 						onClick={() => onDirectionChange(false)}
 						disabled={!currentSortColumn}
-						className={`px-2 py-1 text-[10px] font-medium transition ${
+						className={`px-2 py-1 text-xs font-medium transition ${
 							!currentSortColumn
 								? 'cursor-not-allowed text-pro-text-tertiary'
 								: !isDescending
@@ -1219,7 +1215,7 @@ function SortingSection({
 						type="button"
 						onClick={() => onDirectionChange(true)}
 						disabled={!currentSortColumn}
-						className={`border-l border-pro-cards-border px-2 py-1 text-[10px] font-medium transition ${
+						className={`border-l border-pro-cards-border px-2 py-1 text-xs font-medium transition ${
 							!currentSortColumn
 								? 'cursor-not-allowed text-pro-text-tertiary'
 								: isDescending
@@ -1231,7 +1227,7 @@ function SortingSection({
 					</button>
 				</div>
 				{onReset ? (
-					<button type="button" onClick={onReset} className="text-[10px] text-brand hover:underline">
+					<button type="button" onClick={onReset} className="text-xs text-brand hover:underline">
 						Reset
 					</button>
 				) : null}

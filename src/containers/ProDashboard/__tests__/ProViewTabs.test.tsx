@@ -8,7 +8,8 @@ import HomePage from '~/pages/pro'
 
 const mocks = vi.hoisted(() => ({
 	router: { pathname: '/pro', query: {} as Record<string, string | Array<string>>, replace: vi.fn(), isReady: true },
-	authenticated: true
+	authenticated: true,
+	useMyDashboards: vi.fn(() => ({ dashboards: [], isLoading: false, totalPages: 0, totalItems: 0 }))
 }))
 vi.mock('next/router', () => ({ useRouter: () => mocks.router }))
 vi.mock('~/auth', () => ({
@@ -31,7 +32,7 @@ vi.mock('~/containers/ProDashboard/hooks/useFreeTierStatus', () => ({
 	useFreeTierStatus: () => ({ canCreateDashboard: true })
 }))
 vi.mock('~/containers/ProDashboard/hooks/useMyDashboards', () => ({
-	useMyDashboards: () => ({ dashboards: [], isLoading: false, totalPages: 0, totalItems: 0 })
+	useMyDashboards: mocks.useMyDashboards
 }))
 vi.mock('~/containers/ProDashboard/components/DashboardDiscovery', () => ({
 	DashboardDiscovery: () => <input aria-label="Discovery filter" />
@@ -170,3 +171,21 @@ test.each(['unknown', ['favorites', 'profile']])(
 		expect(mocks.router.replace).not.toHaveBeenCalled()
 	}
 )
+
+test('typing a query switches the hook to a single 100-item page', async () => {
+	mocks.router.query = { tab: 'my-dashboards', page: '3' }
+	await render()
+	expect(mocks.useMyDashboards).toHaveBeenLastCalledWith({ page: 3, limit: 20, enabled: true })
+	const search = container.querySelector<HTMLInputElement>('[aria-label="Search my dashboards"]')!
+	await act(async () => {
+		const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+		setValue.call(search, 'audit')
+		search.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	expect(mocks.useMyDashboards).toHaveBeenLastCalledWith({ page: 3, limit: 20, enabled: true })
+	await act(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 250))
+	})
+	expect(mocks.useMyDashboards).toHaveBeenLastCalledWith({ page: 1, limit: 100, enabled: true })
+	expect(mocks.router.replace).not.toHaveBeenCalled()
+})

@@ -6,12 +6,13 @@ import { Icon } from '~/ui/Icon'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { useDashboardDiscovery } from '../hooks/useDashboardDiscovery'
+import { useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
+import { ProButton } from '../ui'
 import { DashboardBrowse } from './DashboardBrowse'
 import { DashboardCard } from './DashboardCard'
 import { DashboardSearch } from './DashboardSearch'
+import { flattenDiscoveryCategories, rankDiscoveryTags } from './discoveryTags'
 import { LoadingSkeleton } from './LoadingSkeleton'
-
-const SUGGESTED_TAGS = ['DeFi', 'NFT', 'Analytics', 'DEX', 'Lending', 'L2']
 
 const viewModes = ['grid', 'list'] as const
 type ViewMode = (typeof viewModes)[number]
@@ -42,6 +43,43 @@ const isTimeFrameOptionKey = (value: string): value is TimeFrameOptionKey =>
 	timeFrameOptions.some((option) => option.key === value)
 
 const toPageQueryValue = (targetPage: number) => (targetPage === 1 ? undefined : targetPage)
+
+function SuggestedTags({
+	initialCategories,
+	selectedTags,
+	onTagClick
+}: {
+	initialCategories?: DiscoveryCategoriesInitialData | null
+	selectedTags: ReadonlyArray<string>
+	onTagClick: (tag: string) => void
+}) {
+	const { categories } = useDiscoveryCategories(initialCategories)
+	const alreadySelected = new Set(selectedTags.map((tag) => tag.trim().toLowerCase()))
+	const suggestedTags = rankDiscoveryTags(flattenDiscoveryCategories(categories)).filter(
+		(tag) => !alreadySelected.has(tag.toLowerCase())
+	)
+	if (suggestedTags.length === 0) return null
+
+	return (
+		<div className="flex flex-col items-center gap-3">
+			<p className="text-sm font-medium text-pro-text-label">Try these popular tags:</p>
+			<div className="flex flex-wrap justify-center gap-2">
+				{suggestedTags.map((tag) => (
+					<button
+						type="button"
+						key={tag}
+						onClick={() => onTagClick(tag)}
+						data-umami-event="dashboard-tag-click"
+						data-umami-event-tag={tag}
+						className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-text-form transition-[color,background-color,border-color,transform] duration-120 ease-out-quart hover:border-transparent hover:bg-brand hover:text-on-brand active:scale-[.985]"
+					>
+						{tag}
+					</button>
+				))}
+			</div>
+		</div>
+	)
+}
 
 export function DashboardDiscovery({
 	initialCategories
@@ -192,7 +230,7 @@ export function DashboardDiscovery({
 								popoverVariant="legacy"
 								triggerProps={{
 									className:
-										'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
+										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 								}}
 								aria-label="Items per page"
 							/>
@@ -222,7 +260,7 @@ export function DashboardDiscovery({
 								popoverVariant="legacy"
 								triggerProps={{
 									className:
-										'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
+										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 								}}
 								aria-label="Sort by"
 							/>
@@ -249,20 +287,20 @@ export function DashboardDiscovery({
 									popoverVariant="legacy"
 									triggerProps={{
 										className:
-											'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
+											'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 									}}
 									aria-label="Time frame"
 								/>
 							) : null}
 
-							<div className="flex items-center rounded-md border border-pro-form-control-border bg-pro-cards-bg">
+							<div className="flex items-center rounded-md border border-pro-cards-border bg-pro-cards-bg">
 								<button
 									type="button"
 									onClick={() => {
 										pushProQuery({ view: 'grid' })
 									}}
 									data-active={viewMode === 'grid'}
-									className="rounded-l-md border-r border-pro-form-control-border p-2 text-pro-text-label transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
+									className="rounded-l-md border-r border-pro-cards-border p-2 text-pro-text-label transition-colors duration-120 ease-out-quart data-[active=false]:hover:bg-pro-hover-fill data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
 								>
 									<Icon name="layout-grid" height={16} width={16} />
 									<span className="sr-only">View as grid</span>
@@ -273,7 +311,7 @@ export function DashboardDiscovery({
 										pushProQuery({ view: 'list' })
 									}}
 									data-active={viewMode === 'list'}
-									className="rounded-r-md p-2 text-pro-text-label transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
+									className="rounded-r-md p-2 text-pro-text-label transition-colors duration-120 ease-out-quart data-[active=false]:hover:bg-pro-hover-fill data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
 								>
 									<Icon name="menu" height={16} width={16} />
 									<span className="sr-only">View as list</span>
@@ -304,7 +342,7 @@ export function DashboardDiscovery({
 										}
 										pushProQuery({ tag: nextTag })
 									}}
-									className="flex items-center gap-1.5 rounded-full bg-pro-accent/15 px-2.5 py-1 text-xs font-medium text-pro-accent transition-all duration-150 hover:scale-105 hover:bg-pro-accent hover:text-on-brand"
+									className="flex items-center gap-1.5 rounded-full bg-pro-accent/15 px-2.5 py-1 text-xs font-medium text-pro-accent transition-[color,background-color,border-color,transform] duration-120 ease-out-quart hover:bg-pro-accent hover:text-on-brand active:scale-[.985]"
 								>
 									<span>{tag}</span>
 									<Icon name="x" height={12} width={12} />
@@ -337,7 +375,7 @@ export function DashboardDiscovery({
 				</>
 			) : dashboards.length === 0 ? (
 				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-6 py-16">
-					<div className="flex size-20 items-center justify-center rounded-full bg-(--bg-hover)">
+					<div className="flex size-20 items-center justify-center rounded-full bg-pro-hover-fill">
 						<Icon name="search" height={40} width={40} className="text-pro-text-label" />
 					</div>
 
@@ -351,21 +389,11 @@ export function DashboardDiscovery({
 					</div>
 
 					{searchQuery || selectedTags.length > 0 ? (
-						<div className="flex flex-col items-center gap-3">
-							<p className="text-sm font-medium text-pro-text-label">Try these popular tags:</p>
-							<div className="flex flex-wrap justify-center gap-2">
-								{SUGGESTED_TAGS.map((tag) => (
-									<button
-										type="button"
-										key={tag}
-										onClick={() => handleTagClick(tag)}
-										className="rounded-full border border-pro-switch-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-text-form transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-brand hover:text-on-brand"
-									>
-										{tag}
-									</button>
-								))}
-							</div>
-						</div>
+						<SuggestedTags
+							selectedTags={selectedTags}
+							onTagClick={handleTagClick}
+							{...(initialCategories !== undefined ? { initialCategories } : {})}
+						/>
 					) : null}
 
 					<div className="mt-2 flex items-center gap-3">
@@ -374,13 +402,10 @@ export function DashboardDiscovery({
 						<div className="h-px w-12 bg-pro-cards-border" />
 					</div>
 
-					<BasicLink
-						href="/pro?tab=dashboard"
-						className="flex items-center gap-2 rounded-md bg-pro-accent px-4 py-2.5 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90"
-					>
+					<ProButton as={BasicLink} href="/pro?tab=dashboard" variant="primary" size="lg">
 						<Icon name="plus" height={16} width={16} />
 						Create Your First Dashboard
-					</BasicLink>
+					</ProButton>
 				</div>
 			) : (
 				<>

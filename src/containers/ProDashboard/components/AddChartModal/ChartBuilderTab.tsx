@@ -8,6 +8,7 @@ import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/das
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -26,6 +27,7 @@ import { AriakitVirtualizedMultiSelect } from '../AriakitVirtualizedMultiSelect'
 import { AriakitVirtualizedSelect } from '../AriakitVirtualizedSelect'
 import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from '../chartBuilderSeries'
 import { createChartBuilderTooltipFormatter } from '../chartBuilderTooltip'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 import type { ChartBuilderConfig, ChartBuilderUpdate } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -135,7 +137,7 @@ function FilterModeToggle({
 			variant="default"
 			size="sm"
 			className="border-pro-cards-border bg-transparent"
-			buttonClassName="text-[10px] font-medium"
+			buttonClassName="text-xs font-medium"
 		/>
 	)
 }
@@ -402,6 +404,8 @@ export function ChartBuilderTab({
 		return protocolOptions.filter((opt) => hasProtocolBuilderMetric(opt.value, metric))
 	}, [protocolOptions, chartBuilder.mode, chartBuilder.metric, hasProtocolBuilderMetric, metaLoading, metaError])
 
+	const chainParameter = useModalFieldBinding('chains', 'chain')
+	const protocolParameter = useModalFieldBinding('protocol', 'protocol')
 	const handleMetricChange = (option: SelectOption) => {
 		const newMetric = METRIC_OPTIONS.find((metricOption) => metricOption.value === option.value)?.value
 		if (!newMetric) throw new Error(`Unsupported chart builder metric: ${option.value}`)
@@ -415,6 +419,7 @@ export function ChartBuilderTab({
 		}
 		if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(newMetric)) {
 			updates.protocol = undefined
+			protocolParameter.unbind()
 		}
 		if (newMetric === 'tvl' || PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(newMetric)) {
 			updates.protocolCategories = undefined
@@ -422,7 +427,24 @@ export function ChartBuilderTab({
 		onChartBuilderChange(updates)
 	}
 
+	const selectableChainFilterOptions = useMemo(
+		() =>
+			chainParameter.options.length > 0
+				? [...chainParameter.options, ...chainOptions.map((c) => ({ value: c.value, label: c.label }))]
+				: chainOptions.map((c) => ({ value: c.value, label: c.label })),
+		[chainParameter.options, chainOptions]
+	)
+
 	const handleChainsChange = (chains: Array<string>) => {
+		for (const chain of chains) {
+			const variable = chainParameter.resolveSelection(chain)
+			if (variable) {
+				onChartBuilderChange({ chains: [variable.value] })
+				chainParameter.bind(variable.id)
+				return
+			}
+		}
+		chainParameter.unbind()
 		onChartBuilderChange({ chains })
 	}
 
@@ -476,6 +498,8 @@ export function ChartBuilderTab({
 	}
 
 	const handleModeChange = (mode: 'chains' | 'protocol') => {
+		chainParameter.unbind()
+		protocolParameter.unbind()
 		const updates: ChartBuilderUpdate = {
 			mode,
 			chains: [],
@@ -514,7 +538,19 @@ export function ChartBuilderTab({
 		onChartBuilderChange({ seriesColors: {} })
 	}
 
+	const selectableProtocolOptions =
+		protocolParameter.options.length > 0
+			? [...protocolParameter.options, ...protocolOptionsFiltered]
+			: protocolOptionsFiltered
+
 	const handleProtocolChange = (option: { value: string }) => {
+		const variable = protocolParameter.resolveSelection(option.value)
+		if (variable) {
+			onChartBuilderChange({ protocol: variable.value, protocolCategories: undefined })
+			protocolParameter.bind(variable.id)
+			return
+		}
+		protocolParameter.unbind()
 		const updates: ChartBuilderUpdate = { protocol: option.value || undefined }
 		if (option.value) {
 			updates.protocolCategories = undefined
@@ -529,15 +565,15 @@ export function ChartBuilderTab({
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
-					aria-label="Chart name"
-					placeholder="Enter chart name..."
-					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					aria-label="Card name"
+					placeholder="Optional"
+					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
 				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 lg:w-[320px] xl:w-[360px]">
-					<h3 className="text-[11px] font-semibold text-pro-text-primary">Chart Configuration</h3>
+					<h3 className="text-xs font-semibold text-pro-text-primary">Chart Configuration</h3>
 
 					<div>
 						<AriakitSelect
@@ -550,8 +586,8 @@ export function ChartBuilderTab({
 						/>
 					</div>
 
-					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Mode</h4>
+					<div className="border-t border-pro-cards-border pt-1.5">
+						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Mode</h4>
 						<Ariakit.RadioProvider
 							orientation="both"
 							value={chartBuilder.mode}
@@ -583,26 +619,24 @@ export function ChartBuilderTab({
 						</Ariakit.RadioProvider>
 					</div>
 
-					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Filters</h4>
+					<div className="border-t border-pro-cards-border pt-1.5">
+						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Filters</h4>
 
 						{chartBuilder.mode === 'chains' ? (
 							<>
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium text-pro-text-secondary">Chains Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chains Filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
+									{chainParameter.boundVariable ? (
+										<div className="mb-1.5">
+											<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+										</div>
+									) : null}
 									<AriakitVirtualizedMultiSelect
 										label="Chains"
-										options={
-											chainOptions.length > 0
-												? chainOptions.map((c) => ({
-														value: c.value,
-														label: c.label
-													}))
-												: []
-										}
+										options={selectableChainFilterOptions}
 										selectedValues={chartBuilder.chains}
 										onChange={handleChainsChange}
 										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude...' : 'Select chains...'}
@@ -616,7 +650,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium text-pro-text-secondary">Categories Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Categories Filter</span>
 										<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
@@ -648,9 +682,9 @@ export function ChartBuilderTab({
 										<label className="flex cursor-pointer items-center gap-1.5">
 											<Ariakit.Checkbox
 												onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
+												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
 											/>
-											<span className="text-[10px] text-pro-text-secondary">
+											<span className="text-xs text-pro-text-secondary">
 												Hide "Others" (show only top {chartBuilder.limit})
 											</span>
 										</label>
@@ -667,9 +701,9 @@ export function ChartBuilderTab({
 														groupByParent: e.target.checked
 													})
 												}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
+												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border border-pro-cards-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
 											/>
-											<span className="text-[10px] text-pro-text-secondary">Group by parent protocol</span>
+											<span className="text-xs text-pro-text-secondary">Group by parent protocol</span>
 										</label>
 									</Ariakit.CheckboxProvider>
 								</div>
@@ -678,15 +712,21 @@ export function ChartBuilderTab({
 							<>
 								{isProtocolUnsupportedMetric ? (
 									<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-										<p className="text-[10px] text-pro-text-tertiary">
-											This metric is available only for All Protocols.
-										</p>
+										<p className="text-xs text-pro-text-tertiary">This metric is available only for All Protocols.</p>
 									</div>
 								) : (
 									<div className="mb-1.5">
+										{protocolParameter.boundVariable ? (
+											<div className="mb-1.5">
+												<BoundParameterChip
+													label={protocolParameter.boundVariable.label}
+													onUnbind={protocolParameter.unbind}
+												/>
+											</div>
+										) : null}
 										<AriakitVirtualizedSelect
 											label="Protocol"
-											options={protocolOptionsFiltered}
+											options={selectableProtocolOptions}
 											selectedValue={chartBuilder.protocol || null}
 											onChange={handleProtocolChange}
 											placeholder="Select protocol..."
@@ -698,19 +738,17 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium text-pro-text-secondary">Chains Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chains Filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
+									{chainParameter.boundVariable ? (
+										<div className="mb-1.5">
+											<BoundParameterChip label={chainParameter.boundVariable.label} onUnbind={chainParameter.unbind} />
+										</div>
+									) : null}
 									<AriakitVirtualizedMultiSelect
 										label="Chains"
-										options={
-											chainOptions.length > 0
-												? chainOptions.map((c) => ({
-														value: c.value,
-														label: c.label
-													}))
-												: []
-										}
+										options={selectableChainFilterOptions}
 										selectedValues={chartBuilder.chains}
 										onChange={handleChainsChange}
 										placeholder={chainFilterMode === 'exclude' ? 'Select chains to exclude...' : 'Select chains...'}
@@ -724,9 +762,7 @@ export function ChartBuilderTab({
 								{!isProtocolUnsupportedMetric && chartBuilder.metric !== 'tvl' && !chartBuilder.protocol ? (
 									<div className="mb-1.5">
 										<div className="mb-1 flex items-center justify-between">
-											<span className="text-[10px] font-medium text-pro-text-secondary">
-												Protocol Categories Filter
-											</span>
+											<span className="text-xs font-medium text-pro-text-secondary">Protocol Categories Filter</span>
 											<FilterModeToggle
 												value={protocolCategoryFilterMode}
 												onChange={handleProtocolCategoryFilterModeChange}
@@ -749,7 +785,7 @@ export function ChartBuilderTab({
 								) : null}
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium text-pro-text-secondary">Chain Categories Filter</span>
+										<span className="text-xs font-medium text-pro-text-secondary">Chain Categories Filter</span>
 										<FilterModeToggle value={chainCategoryFilterMode} onChange={handleChainCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
@@ -777,7 +813,7 @@ export function ChartBuilderTab({
 									/>
 								</div>
 								{!hasExactRemainder ? (
-									<p className="mb-1 text-[10px] text-pro-text-secondary">
+									<p className="mb-1 text-xs text-pro-text-secondary">
 										This source returns exact Top {chartBuilder.limit} chain series only.
 									</p>
 								) : !chartBuilder.chainCategories || chartBuilder.chainCategories.length === 0 ? (
@@ -792,7 +828,7 @@ export function ChartBuilderTab({
 													}
 													className="flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5] data-checked:bg-[#28a2b5]"
 												/>
-												<span className="text-[10px] text-pro-text-secondary">
+												<span className="text-xs text-pro-text-secondary">
 													Hide "Others" (show only top {chartBuilder.limit})
 												</span>
 											</label>
@@ -803,8 +839,8 @@ export function ChartBuilderTab({
 						)}
 					</div>
 
-					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Chart type</h4>
+					<div className="border-t border-pro-cards-border pt-1.5">
+						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Chart type</h4>
 						<Ariakit.RadioProvider
 							orientation="both"
 							value={chartBuilder.chartType}
@@ -820,12 +856,12 @@ export function ChartBuilderTab({
 										className={`relative flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1 text-center transition-colors has-focus-visible:focus-ring ${
 											chartBuilder.chartType === option.value
 												? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
-												: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
+												: 'border-pro-cards-border text-pro-text-secondary hover:bg-pro-hover-fill hover:text-pro-text-primary'
 										}`}
 									>
 										<Ariakit.Radio value={option.value} className="sr-only" />
 										<Icon name={option.icon} height={14} width={14} />
-										<span className="text-[10px]">{option.label}</span>
+										<span className="text-xs">{option.label}</span>
 									</label>
 								))}
 							</Ariakit.RadioGroup>
@@ -833,7 +869,7 @@ export function ChartBuilderTab({
 					</div>
 
 					{chartBuilder.chartType === 'treemap' && !isSnapshotMetric ? (
-						<div className="border-t pro-border pt-1.5">
+						<div className="border-t border-pro-cards-border pt-1.5">
 							<AriakitSelect
 								label="Treemap value"
 								options={TREEMAP_VALUE_OPTIONS}
@@ -845,8 +881,8 @@ export function ChartBuilderTab({
 						</div>
 					) : null}
 
-					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Display value as</h4>
+					<div className="border-t border-pro-cards-border pt-1.5">
+						<h4 className="mb-1 text-xs font-medium text-pro-text-secondary">Display value as</h4>
 						<Ariakit.RadioProvider
 							orientation="both"
 							value={displayAs}
@@ -884,7 +920,7 @@ export function ChartBuilderTab({
 				<div className="flex min-h-0 flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 					<div className="mb-2 flex shrink-0 items-center justify-between">
 						<h3 className="text-xs font-semibold text-pro-text-primary">Preview</h3>
-						<div className="flex items-center gap-1 text-[10px] text-pro-text-tertiary">
+						<div className="flex items-center gap-1 text-xs text-pro-text-tertiary">
 							<span>ⓘ</span>
 							<span>Updates as you configure</span>
 						</div>
@@ -895,9 +931,9 @@ export function ChartBuilderTab({
 						style={{ minHeight: '450px' }}
 					>
 						{previewLoading ? (
-							<div className="text-center">
-								<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-pro-info-100 dark:border-pro-info-300/20" />
-								<p className="text-sm text-pro-text-secondary">Loading preview...</p>
+							<div className="flex flex-col items-center gap-2 text-center text-pro-text-tertiary">
+								<LoadingSpinner size={24} />
+								<p className="text-sm text-pro-text-secondary">Loading preview…</p>
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
@@ -937,12 +973,12 @@ export function ChartBuilderTab({
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-2">
-								<h4 className="text-[11px] font-medium text-pro-text-secondary">Series Colors</h4>
+								<h4 className="text-xs font-medium text-pro-text-secondary">Series Colors</h4>
 								<button
 									type="button"
 									onClick={handleResetAllSeriesColors}
 									disabled={!hasCustomSeriesColors}
-									className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
+									className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
 										hasCustomSeriesColors
 											? 'text-pro-text-secondary hover:text-pro-text-primary'
 											: 'cursor-not-allowed text-pro-text-tertiary'
@@ -974,7 +1010,7 @@ export function ChartBuilderTab({
 												type="button"
 												onClick={() => handleSeriesColorReset(series.name)}
 												disabled={!hasOverride}
-												className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
+												className={`text-xs font-medium transition-colors disabled:cursor-not-allowed ${
 													hasOverride
 														? 'text-pro-text-tertiary hover:text-pro-text-primary'
 														: 'pro-text4 cursor-not-allowed'
@@ -989,10 +1025,10 @@ export function ChartBuilderTab({
 						</div>
 					) : null}
 
-					<div className="mt-2 shrink-0 rounded-sm pro-panel-raised p-2">
+					<div className="mt-2 shrink-0 rounded-sm bg-surface-elevated-1 p-2">
 						<div className="flex items-start gap-1">
-							<span className="text-[10px] text-pro-text-tertiary">ⓘ</span>
-							<p className="text-[10px] leading-relaxed text-pro-text-tertiary">
+							<span className="text-xs text-pro-text-tertiary">ⓘ</span>
+							<p className="text-xs leading-relaxed text-pro-text-tertiary">
 								This chart shows {chartBuilder.metric}
 								{chartBuilder.mode === 'protocol'
 									? ` for ${

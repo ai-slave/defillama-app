@@ -64,7 +64,7 @@ export type WizardAction =
 	| { type: 'SET_GROUPING'; grouping: DashboardGrouping }
 	| { type: 'SET_DISPLAY_MODE'; displayMode: DisplayMode }
 	| { type: 'SET_INCLUDE_TABLE'; include: boolean }
-	| { type: 'RESET' }
+	| { type: 'RESET'; hasActiveSubscription: boolean }
 
 export const WIZARD_STEPS: Array<WizardStep> = ['select-type', 'select-items', 'select-metrics', 'preview']
 

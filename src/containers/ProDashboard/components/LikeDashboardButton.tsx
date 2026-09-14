@@ -1,9 +1,9 @@
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
+import { ProButton } from '../ui'
 
 export function LikeDashboardButton({
 	currentDashboard,
@@ -22,21 +22,20 @@ export function LikeDashboardButton({
 		<Tooltip
 			content="Like dashboard"
 			render={
-				<button
+				<ProButton
 					aria-label="Like dashboard"
 					aria-pressed={isLiked}
 					type="button"
+					variant="ghost"
 					onClick={() => toggleLike()}
-					disabled={isLiking || !isAuthenticated}
+					disabled={!isAuthenticated}
+					icon={
+						<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />
+					}
+					{...(isLiking ? { loading: true } : {})}
 				/>
 			}
-			className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary"
 		>
-			{isLiking ? (
-				<LoadingSpinner size={14} />
-			) : (
-				<Icon name="star" height={14} width={14} className={isLiked ? 'fill-current text-warning' : 'fill-none'} />
-			)}
 			<span>{likeCount ?? currentDashboard.likeCount ?? 0}</span>
 			<span className="sr-only">Likes</span>
 		</Tooltip>

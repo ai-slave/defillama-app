@@ -16,7 +16,7 @@ export function SqlChartUpsell() {
 			<ul className="flex max-w-md flex-col gap-1.5 text-left text-xs text-pro-text-tertiary">
 				<li>· Query fees, revenue, TVL, yields, stablecoins and more</li>
 				<li>· Any chart type — bar, line, pie, treemap or table</li>
-				<li>· Cross-join datasets the standard widgets can't</li>
+				<li>· Cross-join datasets the standard cards can't</li>
 			</ul>
 			<BasicLink
 				href="/subscription"

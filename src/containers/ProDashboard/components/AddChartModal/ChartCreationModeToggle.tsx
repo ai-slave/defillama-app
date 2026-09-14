@@ -1,0 +1,34 @@
+import { MAX_MULTI_CHART_SERIES } from '../../types'
+import { ProSegmented } from '../../ui'
+
+const MODE_OPTIONS = [
+	{ value: 'combined', label: 'One chart' },
+	{ value: 'separate', label: 'Separate cards' }
+] as const
+
+interface ChartCreationModeToggleProps {
+	chartCreationMode: 'separate' | 'combined'
+	seriesCount: number
+	onChartCreationModeChange: (mode: 'separate' | 'combined') => void
+}
+
+export function ChartCreationModeToggle({
+	chartCreationMode,
+	seriesCount,
+	onChartCreationModeChange
+}: ChartCreationModeToggleProps) {
+	return (
+		<div className="flex shrink-0 flex-wrap items-center gap-2">
+			<ProSegmented
+				label="Chart layout"
+				size="sm"
+				options={MODE_OPTIONS}
+				value={chartCreationMode}
+				onValueChange={onChartCreationModeChange}
+			/>
+			{chartCreationMode === 'combined' && seriesCount > MAX_MULTI_CHART_SERIES ? (
+				<span className="text-xs text-pro-text-tertiary">max {MAX_MULTI_CHART_SERIES} series</span>
+			) : null}
+		</div>
+	)
+}

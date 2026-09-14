@@ -1,18 +1,20 @@
 import type * as echarts from 'echarts/core'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
+import { SQL_CHART_BASE_HEIGHT } from '~/containers/Downloads/sql/chart/chartLayout'
 import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
-import { ProCardOverflowMenu } from '../ProCardActions'
+import { ProButton, ProMeta, ProSegmented } from '../../ui'
+import { scaledPx, useCardHeightScale } from '../cardHeightContext'
+import { ProCardHeader } from '../ProCardHeader'
+import { ProCardEmpty, ProCardLoading, ProCardNotice } from '../ProCardStatus'
 import { SqlFreshness } from './SqlFreshness'
 import { SqlQueryView } from './SqlQueryView'
 import { reportSqlRefreshEnd, reportSqlRefreshStart, subscribeSqlRefreshAll } from './sqlRefreshBus'
@@ -27,6 +29,7 @@ interface SqlChartCardProps {
 export function SqlChartCard({ config }: SqlChartCardProps) {
 	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot ?? null)
 	const [cardView, setCardView] = useState<'output' | 'query'>('output')
+	const cardHeightScale = useCardHeightScale()
 
 	// Latest refresh and error for the refresh-all subscription and the unmount report, which run outside render.
 	const refreshRef = useRef(refresh)
@@ -61,13 +64,19 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	const canExportCsv = !!result
 
 	return (
-		<div className="flex h-full flex-col gap-2 p-1 md:p-3">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="mr-auto min-w-0">
-					<h2 className="truncate text-base font-semibold">{config.name || 'SQL chart'}</h2>
-				</div>
-				<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-					<SegmentedControl<'output' | 'query'>
+		<div className="flex h-full flex-col p-0">
+			<ProCardHeader
+				title={config.name || 'SQL chart'}
+				subtitle={
+					<ProMeta
+						items={[
+							displayMode === 'table' ? 'Table' : 'Chart',
+							snapshot ? <SqlFreshness key="freshness" computedAt={snapshot.computedAt} /> : null
+						]}
+					/>
+				}
+				viewerControls={
+					<ProSegmented<'output' | 'query'>
 						value={cardView}
 						onValueChange={setCardView}
 						options={[
@@ -75,80 +84,88 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 							{ value: 'query', label: 'SQL' }
 						]}
 						label="SQL card view"
-						variant="default"
 						size="sm"
 					/>
-					{snapshot ? <SqlFreshness computedAt={snapshot.computedAt} /> : null}
-					{canRefresh ? (
+				}
+				controls={
+					canRefresh ? (
 						<>
-							<button
-								type="button"
+							<ProButton
+								size="sm"
+								variant="ghost"
 								onClick={refresh}
 								disabled={isRefreshing}
-								className="flex items-center gap-1 text-xs text-link hover:underline disabled:opacity-50"
 								title="Re-run the query"
+								{...(isRefreshing ? { loading: true } : {})}
 							>
-								{isRefreshing ? <LoadingSpinner size={12} /> : null}
 								{isRefreshing ? 'Refreshing…' : 'Refresh'}
-							</button>
+							</ProButton>
 							<Tooltip content={REFRESH_HINT} className="flex items-center">
 								<Icon name="help-circle" height={13} width={13} className="text-pro-text-tertiary" />
 							</Tooltip>
 						</>
-					) : null}
-					{cardView === 'output' ? (
-						<ProCardOverflowMenu
-							image={
-								canExportPng
-									? {
-											chartInstance: getChartInstance,
-											filename: config.name || 'sql-chart',
-											title: config.name || 'SQL chart'
-										}
-									: undefined
-							}
-							csv={
-								canExportCsv
-									? { onClick: () => exportQueryResult(result, 'csv', config.name || 'sql-chart') }
-									: undefined
-							}
-						/>
-					) : null}
-				</div>
+					) : null
+				}
+				menu={{
+					image:
+						cardView === 'output' && canExportPng
+							? {
+									chartInstance: getChartInstance,
+									filename: config.name || 'sql-chart',
+									title: config.name || 'SQL chart'
+								}
+							: undefined,
+					csv:
+						cardView === 'output' && canExportCsv
+							? { onClick: () => exportQueryResult(result, 'csv', config.name || 'sql-chart') }
+							: undefined
+				}}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col gap-2 px-3 pb-3">
+				{error ? (
+					<ProCardNotice
+						tone="error"
+						title={error}
+						{...(canRefresh ? { action: { label: 'Try again', onClick: refresh } } : {})}
+					>
+						Couldn&apos;t refresh this query.
+					</ProCardNotice>
+				) : null}
+
+				{cardView === 'query' ? (
+					<SqlQueryView config={config} snapshot={snapshot} />
+				) : !snapshot || !result ? (
+					isRefreshing ? (
+						<ProCardLoading label="Running the query…" />
+					) : canRefresh ? (
+						<ProCardEmpty message="This query hasn't run yet." action={{ label: 'Run query', onClick: refresh }} />
+					) : (
+						<ProCardEmpty message="The owner hasn't run this query yet." />
+					)
+				) : displayMode === 'table' ? (
+					<div className="min-h-0 flex-1">
+						<ResultsGrid result={result} />
+					</div>
+				) : !hasNumeric ? (
+					<ProCardEmpty message="No numeric columns in this result to chart." />
+				) : (
+					<ChartRouter
+						config={resolvedConfig}
+						result={result}
+						classified={classified}
+						height={scaledPx(SQL_CHART_BASE_HEIGHT, cardHeightScale)}
+						onReady={(inst) => {
+							chartInstanceRef.current = inst
+						}}
+					/>
+				)}
+
+				{cardView === 'output' && snapshot?.truncated ? (
+					<span className="body-xs text-pro-text-tertiary">
+						Showing first {formatNumber(snapshot.rows.length)} of {formatNumber(snapshot.rowCount)} rows.
+					</span>
+				) : null}
 			</div>
-
-			{error ? <span className="body-xs text-data-down">Refresh failed: {error}</span> : null}
-
-			{cardView === 'query' ? (
-				<SqlQueryView config={config} snapshot={snapshot} />
-			) : !snapshot || !result ? (
-				<div className="flex flex-1 items-center justify-center text-sm text-pro-text-tertiary">
-					{isRefreshing ? <LoadingSpinner size={20} /> : 'No data yet.'}
-				</div>
-			) : displayMode === 'table' ? (
-				<div className="min-h-0 flex-1">
-					<ResultsGrid result={result} />
-				</div>
-			) : !hasNumeric ? (
-				<div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-pro-text-tertiary">
-					No numeric columns in this result to chart.
-				</div>
-			) : (
-				<ChartRouter
-					config={resolvedConfig}
-					result={result}
-					classified={classified}
-					onReady={(inst) => {
-						chartInstanceRef.current = inst
-					}}
-				/>
-			)}
-
-			{cardView === 'output' && snapshot?.truncated ? (
-				<span className="body-xs text-pro-text-tertiary">
-					Showing first {formatNumber(snapshot.rows.length)} of {formatNumber(snapshot.rowCount)} rows.
-				</span>
-			) : null}
 		</div>
 	)
 }

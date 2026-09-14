@@ -6,15 +6,17 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { AutosaveStatus } from './components/AutosaveStatus'
 import type { DashboardItemConfig } from './dashboardItemConfig'
-import type { Dashboard } from './dashboardTypes'
-import { useDashboardAPI } from './hooks/useDashboardAPI'
+import type { Dashboard, DashboardAnnotation, DashboardVariable } from './dashboardTypes'
+import { getUnsavedDashboardChanges, useDashboardAPI } from './hooks/useDashboardAPI'
 import {
 	ProDashboardAPIProvider,
 	useProDashboardDashboard,
 	useProDashboardEditorActions,
 	useProDashboardItemsState,
+	useProDashboardAnnotations,
 	useProDashboardSave,
-	useProDashboardUI
+	useProDashboardUI,
+	useProDashboardVariables
 } from './ProDashboardAPIContext'
 
 const api = vi.hoisted(() => ({ update: vi.fn(), remove: vi.fn(), get: vi.fn(), dashboard: null as Dashboard | null }))
@@ -30,18 +32,34 @@ vi.mock('~/auth', () => {
 	return { useAuthContext: () => auth }
 })
 vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
-vi.mock('next/router', () => {
-	const router = { push: vi.fn(), query: {} }
-	return { useRouter: () => router }
-})
-vi.mock('./hooks/useFreeTierStatus', () => ({
-	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: false })
+const router = vi.hoisted(() => ({
+	push: vi.fn(),
+	replace: vi.fn(),
+	pathname: '/pro/[dashboardId]',
+	asPath: '/pro/dashboard',
+	query: {}
 }))
+vi.mock('next/router', () => ({ useRouter: () => router }))
+const freeTier = vi.hoisted(() => ({ isFreeUser: false }))
+vi.mock('./hooks/useFreeTierStatus', () => ({
+	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: freeTier.isFreeUser })
+}))
+const toastMock = vi.hoisted(() =>
+	Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn(), loading: vi.fn(), custom: vi.fn() })
+)
+vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock, Toaster: () => null }))
 vi.mock('./hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({ dashboard: api.dashboard, isDone: true })
+	useDashboardStream: () => ({
+		dashboard: api.dashboard,
+		isDone: true,
+		isStreaming: false,
+		readyItemIds: new Set<string>(),
+		error: null
+	})
 }))
 vi.mock('./queries', () => ({
 	StreamDoneContext: createContext(true),
+	StreamItemReadinessContext: createContext(null),
 	ProxyAuthTokenContext: createContext(null),
 	useProtocolsAndChains: () => ({ data: { protocols: [], chains: [] } })
 }))
@@ -80,7 +98,20 @@ let editor: ReturnType<typeof useProDashboardEditorActions>
 let autosave: ReturnType<typeof useProDashboardSave>
 let items: Array<DashboardItemConfig>
 let ui: ReturnType<typeof useProDashboardUI>
+let variables: ReturnType<typeof useProDashboardVariables>
+let annotations: ReturnType<typeof useProDashboardAnnotations>
 let saveRenders = 0
+async function renderProvider() {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<ProDashboardAPIProvider mode="edit" initialDashboardId="dashboard" initialDashboard={original}>
+					<Probe />
+				</ProDashboardAPIProvider>
+			</QueryClientProvider>
+		)
+	)
+}
 const SaveConsumer = memo(({ save }: { save: typeof dashboard.saveDashboard }) => {
 	saveRenders++
 	return (
@@ -95,6 +126,8 @@ function Probe() {
 	items = useProDashboardItemsState().items
 	autosave = useProDashboardSave()
 	ui = useProDashboardUI()
+	variables = useProDashboardVariables()
+	annotations = useProDashboardAnnotations()
 	return (
 		<>
 			<AutosaveStatus />
@@ -119,15 +152,10 @@ beforeEach(async () => {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	await act(async () =>
-		root.render(
-			<QueryClientProvider client={client}>
-				<ProDashboardAPIProvider mode="edit" initialDashboardId="dashboard" initialDashboard={original}>
-					<Probe />
-				</ProDashboardAPIProvider>
-			</QueryClientProvider>
-		)
-	)
+	freeTier.isFreeUser = false
+	toastMock.mockClear()
+	window.sessionStorage.clear()
+	await renderProvider()
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
@@ -402,4 +430,94 @@ test('loading another id is independent of the hook’s deleted dashboard, while
 	client.setQueryData(['pro-dashboard-deleted', 'third', 'owner'], true)
 	late.resolve({ ...original, id: 'third' })
 	await expect(loading).resolves.toBeNull()
+})
+
+const countDashboardInvalidations = (spy: ReturnType<typeof vi.spyOn>) =>
+	spy.mock.calls.filter(([options]) => (options as { queryKey?: Array<unknown> })?.queryKey?.[2] === original.id).length
+
+test('returning to a visible tab does not invalidate the dashboard while a save is pending', async () => {
+	const pending = Promise.withResolvers<Dashboard>()
+	api.update.mockReturnValueOnce(pending.promise)
+	await act(async () => editor.handleEditItem('ai', laterItems[0]))
+	const invalidate = vi.spyOn(client, 'invalidateQueries')
+	await act(async () => {
+		document.dispatchEvent(new Event('visibilitychange'))
+	})
+	expect(countDashboardInvalidations(invalidate)).toBe(0)
+	await act(async () => autosave.flush())
+	await act(async () => {
+		await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
+	})
+	await act(async () => {
+		document.dispatchEvent(new Event('visibilitychange'))
+	})
+	expect(countDashboardInvalidations(invalidate)).toBe(0)
+	await act(async () => pending.resolve({ ...original, data: { ...original.data, items: laterItems } }))
+	await act(async () => {
+		await vi.waitFor(() => expect(autosave.state?.status).toBe('success'))
+	})
+	invalidate.mockRestore()
+})
+
+test('returning to a visible tab refetches the dashboard when nothing is pending', async () => {
+	const invalidate = vi.spyOn(client, 'invalidateQueries')
+	await act(async () => {
+		document.dispatchEvent(new Event('visibilitychange'))
+	})
+	expect(countDashboardInvalidations(invalidate)).toBe(1)
+	invalidate.mockRestore()
+})
+
+test('a free user is told once per session that a private choice is saved as public', async () => {
+	freeTier.isFreeUser = true
+	await renderProvider()
+	await act(async () => dashboard.saveDashboard({ visibility: 'private' }))
+	expect(api.update.mock.calls.at(-1)![1].visibility).toBe('public')
+	expect(toastMock).toHaveBeenCalledWith(
+		'Free dashboards are always public. Upgrade to keep one private.',
+		expect.objectContaining({ id: 'free-public' })
+	)
+
+	await act(async () => dashboard.saveDashboard({ visibility: 'private' }))
+	expect(toastMock).toHaveBeenCalledOnce()
+})
+
+test('a free user keeps a public save quiet', async () => {
+	freeTier.isFreeUser = true
+	await renderProvider()
+	await act(async () => dashboard.saveDashboard({ visibility: 'public' }))
+	expect(toastMock).not.toHaveBeenCalled()
+})
+
+test('a failed autosave recovers its parameters and annotations, not just its items', async () => {
+	const parameter: DashboardVariable = { id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }
+	const annotation: DashboardAnnotation = { id: 'note', date: '2026-09-01', label: 'Event' }
+	await act(async () => variables.addVariable(parameter, []))
+	await act(async () => annotations.setAnnotations([annotation]))
+	api.update.mockRejectedValueOnce(new Error('Offline'))
+	await act(async () => autosave.flush())
+	await act(async () => {
+		await vi.waitFor(() => expect(autosave.state?.status).toBe('error'), { timeout: 2000 })
+	})
+	const draft = getUnsavedDashboardChanges(client, 'dashboard', 'owner')
+	expect(draft?.variables).toEqual([parameter])
+	expect(draft?.annotations).toEqual([annotation])
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<p>Elsewhere</p>
+			</QueryClientProvider>
+		)
+	)
+	await renderProvider()
+	expect(variables.variables).toEqual([parameter])
+	expect(annotations.annotations).toEqual([annotation])
+	await act(async () => editor.handleEditItem('ai', laterItems[0]))
+	await act(async () => autosave.flush())
+	await act(async () => {
+		await vi.waitFor(() => expect(api.update).toHaveBeenCalledTimes(2), { timeout: 2000 })
+	})
+	const saved = api.update.mock.calls[1][1]
+	expect(saved.variables).toEqual([parameter])
+	expect(saved.annotations).toEqual([annotation])
 })

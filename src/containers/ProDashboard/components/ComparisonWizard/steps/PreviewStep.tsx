@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { useId, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
@@ -45,11 +46,22 @@ const WINDOW_OPTIONS: Array<SelectOption<MetricWindow>> = [
 	{ value: 'all', label: 'All' }
 ]
 
+function visibilityOptionStyles(selected: boolean, disabled: boolean) {
+	return `flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors has-focus-visible:focus-ring ${
+		selected
+			? 'border-brand bg-brand/10 text-brand'
+			: disabled
+				? 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary opacity-50'
+				: 'border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
+	}`
+}
+
 export function PreviewStep() {
 	const { state, actions } = useComparisonWizardContext()
 	const { hasActiveSubscription } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const [tagInput, setTagInput] = useState('')
+	const id = useId()
 
 	const selectedItemLabels = useMemo(() => {
 		return state.selectedItems.map((item) => {
@@ -82,8 +94,8 @@ export function PreviewStep() {
 	const metricCardsCount = state.metricsForCards.length * state.selectedItems.length
 
 	return (
-		<div className="grid grid-cols-2 items-start gap-5">
-			<div className="flex flex-col gap-3">
+		<div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+			<div className="flex min-w-0 flex-col gap-3">
 				<div>
 					<label htmlFor="comparison-dashboard-name" className="mb-1 block text-sm font-medium text-pro-text-primary">
 						Dashboard Name <span className="text-error">*</span>
@@ -94,44 +106,40 @@ export function PreviewStep() {
 						value={state.dashboardName}
 						onChange={(e) => actions.setDashboardName(e.target.value)}
 						placeholder="Enter dashboard name"
-						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 
-				<div className="flex items-center gap-3">
-					<div className="flex-1">
-						<p className="mb-1 block text-sm font-medium text-pro-text-primary">Visibility</p>
-						<div className="flex gap-1.5">
-							<button
-								type="button"
-								onClick={() => actions.setVisibility('public')}
-								className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
-									state.visibility === 'public'
-										? 'border-brand bg-brand/10 text-brand'
-										: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
-								}`}
-							>
+				<div>
+					<p id={`${id}-visibility`} className="mb-1 block text-sm font-medium text-pro-text-primary">
+						Visibility
+					</p>
+					<Ariakit.RadioProvider
+						value={state.visibility}
+						setValue={(value) => actions.setVisibility(value as 'public' | 'private')}
+					>
+						<Ariakit.RadioGroup className="flex gap-1.5" aria-labelledby={`${id}-visibility`}>
+							<label htmlFor={`${id}-public`} className={visibilityOptionStyles(state.visibility === 'public', false)}>
+								<Ariakit.Radio id={`${id}-public`} value="public" className="sr-only" />
 								<Icon name="earth" height={12} width={12} />
 								Public
-							</button>
-							<button
-								type="button"
-								onClick={() => hasActiveSubscription && actions.setVisibility('private')}
-								disabled={!hasActiveSubscription}
-								className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
-									state.visibility === 'private'
-										? 'border-brand bg-brand/10 text-brand'
-										: !hasActiveSubscription
-											? 'cursor-not-allowed border-pro-form-control-border text-pro-text-tertiary opacity-50'
-											: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
-								}`}
+							</label>
+							<label
+								htmlFor={`${id}-private`}
+								className={visibilityOptionStyles(state.visibility === 'private', !hasActiveSubscription)}
 							>
+								<Ariakit.Radio
+									id={`${id}-private`}
+									value="private"
+									disabled={!hasActiveSubscription}
+									className="sr-only"
+								/>
 								<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} height={12} width={12} />
 								Private
-								{!hasActiveSubscription ? <span className="text-[10px] font-normal opacity-70">(Pro)</span> : null}
-							</button>
-						</div>
-					</div>
+								{!hasActiveSubscription ? <span className="text-xs font-normal opacity-70">(Pro)</span> : null}
+							</label>
+						</Ariakit.RadioGroup>
+					</Ariakit.RadioProvider>
 				</div>
 
 				<div className="grid grid-cols-2 gap-2">
@@ -161,13 +169,13 @@ export function PreviewStep() {
 							onChange={(e) => setTagInput(e.target.value)}
 							onKeyDown={handleTagKeyDown}
 							placeholder="Add tags..."
-							className="flex-1 rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+							className="min-w-0 flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 						<button
 							type="button"
 							onClick={handleAddTag}
 							disabled={!tagInput.trim()}
-							className="rounded-md border border-pro-form-control-border px-2 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-pro-cards-border px-2 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							Add
 						</button>
@@ -206,12 +214,12 @@ export function PreviewStep() {
 						value={state.description}
 						onChange={(e) => actions.setDescription(e.target.value)}
 						placeholder="Brief description..."
-						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-3">
+			<div className="flex min-w-0 flex-col gap-3">
 				<div className="rounded-lg border border-pro-cards-border p-3">
 					<div className="mb-2 flex items-center justify-between">
 						<h3 className="flex items-center gap-1.5 text-sm font-semibold text-pro-text-primary">
@@ -231,7 +239,7 @@ export function PreviewStep() {
 									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
 										isSelected
 											? 'border-brand bg-brand/10 text-brand'
-											: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
+											: 'border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
 									}`}
 								>
 									<input
@@ -284,13 +292,15 @@ export function PreviewStep() {
 						Summary
 					</h3>
 					<div className="space-y-1.5 text-xs">
-						<div className="flex items-center justify-between">
-							<span className="text-pro-text-tertiary">Comparing</span>
-							<span className="font-medium text-pro-text-primary">{selectedItemLabels.join(', ')}</span>
+						<div className="flex items-start justify-between gap-3">
+							<span className="shrink-0 text-pro-text-tertiary">Comparing</span>
+							<span className="min-w-0 text-right font-medium wrap-break-word text-pro-text-primary">
+								{selectedItemLabels.join(', ')}
+							</span>
 						</div>
-						<div className="flex items-center justify-between">
-							<span className="text-pro-text-tertiary">Output</span>
-							<span className="font-medium text-brand">
+						<div className="flex items-start justify-between gap-3">
+							<span className="shrink-0 text-pro-text-tertiary">Output</span>
+							<span className="min-w-0 text-right font-medium text-brand">
 								{metricCardsCount > 0 ? `${metricCardsCount} cards + ` : null}
 								{state.selectedMetrics.length} charts
 								{state.includeTable ? ' + 1 table' : null}

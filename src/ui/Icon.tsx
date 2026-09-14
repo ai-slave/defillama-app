@@ -135,6 +135,7 @@ const ICON_NAMES = [
 	'briefcase-business',
 	'clipboard-check',
 	'shield-check',
+	'grip-vertical',
 	'badge-check',
 	'lock',
 	'clock'

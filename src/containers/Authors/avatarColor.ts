@@ -7,7 +7,7 @@ export function avatarColorStyle(seed: string): CSSProperties {
 	}
 	const hue = Math.abs(hash) % 360
 	return {
-		backgroundColor: `hsl(${hue} 48% 38%)`,
+		backgroundColor: `oklch(0.52 0.11 ${hue})`,
 		color: '#fff'
 	}
 }

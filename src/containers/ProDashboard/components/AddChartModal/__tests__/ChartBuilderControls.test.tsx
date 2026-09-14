@@ -12,7 +12,8 @@ vi.mock('../../../AppMetadataContext', () => ({
 	useAppMetadata: () => ({ loading: false, error: null, hasProtocolBuilderMetric: () => true })
 }))
 vi.mock('../../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ protocols: [], getProtocolInfo: () => null })
+	useProDashboardCatalog: () => ({ protocols: [], getProtocolInfo: () => null }),
+	useProDashboardVariables: () => ({ variables: [] })
 }))
 let root: Root
 let container: HTMLDivElement

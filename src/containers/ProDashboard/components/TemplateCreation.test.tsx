@@ -19,7 +19,13 @@ vi.mock('~/auth', () => ({
 }))
 vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
 vi.mock('../hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({ isDone: true, dashboard: null, error: null })
+	useDashboardStream: () => ({
+		isDone: true,
+		isStreaming: false,
+		readyItemIds: new Set<string>(),
+		dashboard: null,
+		error: null
+	})
 }))
 vi.mock('~/containers/Chains/api', () => ({
 	fetchChainsList: async () => [
@@ -119,7 +125,7 @@ test('cold catalog blocks Lending while From Scratch remains immediately usable'
 	await click('Create Dashboard')
 	expect(api.create).toHaveBeenCalledExactlyOnceWith({
 		dashboardName: 'Blank by choice',
-		visibility: 'public',
+		visibility: 'private',
 		tags: [],
 		description: ''
 	})
@@ -275,11 +281,11 @@ test('keeps the selected template busy until navigation finishes without creatin
 	await click('Lending Protocols')
 	await act(async () => {
 		await vi.waitFor(() =>
-			expect(document.querySelector('a[href="/pro/template-created"]')?.textContent).toBe('Open dashboard')
+			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
 		)
 	})
 	expect(button('Lending Protocols').getAttribute('aria-disabled')).toBe('true')
-	expect(document.querySelector('a[href="/pro/template-created"]')?.textContent).toBe('Open dashboard')
+	expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
 	await click('Lending Protocols')
 	expect(api.create).toHaveBeenCalledOnce()
 	await act(async () => navigation.resolve(true))

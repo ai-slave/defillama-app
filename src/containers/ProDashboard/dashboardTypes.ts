@@ -1,4 +1,5 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
+import type { DashboardPreviewTile } from './components/dashboardPreview'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 
 export type TimePeriod = '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all' | 'custom'
@@ -31,6 +32,26 @@ export interface AIUndoState {
 
 export type DashboardMode = 'view' | 'edit'
 
+export type DashboardVariableKind = 'chain' | 'protocol'
+
+export interface DashboardVariable {
+	id: string
+	kind: DashboardVariableKind
+	label: string
+	value: string
+}
+
+export interface DashboardAnnotation {
+	id: string
+	date: string
+	label: string
+}
+
+export const MAX_DASHBOARD_VARIABLES = 4
+export const MAX_DASHBOARD_ANNOTATIONS = 50
+export const DASHBOARD_VARIABLE_LABEL_MAX_LENGTH = 40
+export const DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH = 80
+
 export interface DashboardCopySource {
 	id: string
 	slug?: string
@@ -47,6 +68,8 @@ export interface Dashboard {
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
+		variables?: Array<DashboardVariable>
+		annotations?: Array<DashboardAnnotation>
 		aiUndoState?: AIUndoState
 	}
 	visibility?: 'private' | 'public'
@@ -63,6 +86,10 @@ export interface Dashboard {
 	collectionName?: string
 	aiGenerated?: AIGeneratedData | null
 	artifactActivationPending?: boolean
+	preview?: Array<DashboardPreviewTile>
 }
 
 export type DashboardRatingDecision = { rating: number; feedback?: string } | { skipped: true }
+
+export const DASHBOARD_NAME_MAX_LENGTH = 80
+export const DASHBOARD_DESCRIPTION_MAX_LENGTH = 200

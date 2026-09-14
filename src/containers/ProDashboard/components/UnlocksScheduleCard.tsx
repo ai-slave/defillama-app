@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useContext, useMemo, useState } from 'react'
+import { lazy, type ReactNode, Suspense, useContext, useMemo, useState } from 'react'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
@@ -10,10 +10,15 @@ import { slug } from '~/utils'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksScheduleConfig } from '../types'
+import { ProMeta } from '../ui'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -36,7 +41,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	)
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading } = useQuery({
+	const { data, isLoading, isError, isFetching, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-schedule', protocol, resolvedDataType],
 		queryFn: () => getProtocolEmissionsScheduleData(slug(protocol)),
 		enabled: streamDone && Boolean(protocol),
@@ -75,57 +80,85 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const prepareCsvExport = () =>
 		prepareProChartCsv(dataset, `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`)
 
-	if (isLoading || (!streamDone && data === undefined)) {
-		return (
-			<div className="flex min-h-[422px] items-center justify-center md:min-h-[438px]">
-				<LoadingSpinner />
+	const hallmarks = useDashboardAnnotationHallmarks(todayHallmarks)
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(360, cardHeightScale)
+
+	const retryScheduleData = () => {
+		void refetch()
+	}
+
+	const title = `${protocolName} Unlocks Schedule`
+	const dataTypeLabel = config.dataType === 'documented' ? 'Documented' : 'Realtime'
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
+			<ProCardHeader titleAs="h3" title={title} subtitle={<ProMeta items={[dataTypeLabel]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading || (!streamDone && data === undefined)) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (isError && data === undefined) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryScheduleData} />)
 	}
 
 	return (
-		<div className="flex min-h-[422px] flex-col p-2 md:min-h-[438px]">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{protocolName} Unlocks Schedule </h3>
-				</div>
-				{hasChartData ? (
-					<div className="flex flex-wrap justify-end gap-2">
-						{stacks.length > 1 ? (
-							<SelectWithCombobox
-								size="sm"
-								allValues={stacks}
-								selectedValues={activeCategories}
-								setSelectedValues={setSelectedSeries}
-								label="Category"
-								labelType="smol"
-								variant="filter"
-								popoverVariant="legacy"
-							/>
-						) : null}
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ prepareCsv: prepareCsvExport }}
+		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
+			{isError ? <ProCardRefreshFailed onRetry={retryScheduleData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={title}
+				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
+				subtitle={<ProMeta items={[dataTypeLabel]} />}
+				viewerControls={
+					hasChartData && stacks.length > 1 ? (
+						<SelectWithCombobox
+							size="sm"
+							allValues={stacks}
+							selectedValues={activeCategories}
+							setSelectedValues={setSelectedSeries}
+							label="Category"
+							labelType="smol"
+							variant="filter"
+							popoverVariant="legacy"
 						/>
-					</div>
-				) : null}
-			</div>
-			<div>
+					) : null
+				}
+				menu={
+					hasChartData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { prepareCsv: prepareCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="px-3 pb-3">
 				{hasChartData ? (
-					<Suspense fallback={<div className="min-h-[360px]" />}>
+					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>
 						<MultiSeriesChart
 							dataset={dataset}
+							height={chartHeight}
 							{...(apiCharts === undefined ? {} : { charts: apiCharts })}
 							selectedCharts={selectedChartsSet}
-							hallmarks={todayHallmarks}
+							{...(hallmarks ? { hallmarks } : {})}
+							hallmarkStyle="mark-line"
+							{...(syncGroup ? { syncGroup } : {})}
 							hideDataZoom
 							valueSymbol=""
 							onReady={handleChartReady}
 						/>
 					</Suspense>
 				) : (
-					<div className="flex h-[360px] items-center justify-center text-center text-pro-text-tertiary">
-						No unlocks data available.
+					<div className="flex h-[calc(360px*var(--card-scale,1))] flex-col justify-center">
+						<ProCardEmpty message="No unlocks data available." />
 					</div>
 				)}
 			</div>

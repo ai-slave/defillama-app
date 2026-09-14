@@ -20,9 +20,16 @@ interface BubbleChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function BubbleChartAdapter({ config, result, classified, onReady }: BubbleChartAdapterProps) {
+export function BubbleChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: BubbleChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const numericCols = classified.filter((c) => c.coarse === 'number')
 	const xCol = numericCols.find((column) => column.name === config.xCol) ?? numericCols[0] ?? null
@@ -103,7 +110,7 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -113,7 +120,7 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 				xAxisLabel={xCol.name}
 				yAxisLabel={yCol.name}
 				valueSymbol={formatter.valueSymbol}
-				height={SQL_CHART_HEIGHT}
+				height={height}
 				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}

@@ -199,6 +199,7 @@ interface AuthContextType {
 		addEmail: boolean
 		setPromotionalEmails: boolean
 		userLoading: boolean
+		sessionLoading: boolean
 		subscriptionInitialCheck: boolean
 	}
 }
@@ -314,7 +315,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	})
 
 	const authUserLoading = !authStoreState.token || !authStoreState.record ? userQueryIsLoading : false
+	const isSubscriptionPending = isAuthenticated && subscriptionUserId != null && subscriptionQuery.isPending
 	const userLoading = authUserLoading || (isAuthenticated && subscriptionQuery.data === undefined)
+	const sessionLoading = authUserLoading || isSubscriptionPending
 
 	const login = useCallback(
 		async (email: string, password: string, onSuccess?: () => void) => {
@@ -906,6 +909,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			addEmail: addEmail.isPending,
 			setPromotionalEmails: setPromotionalEmails.isPending,
 			userLoading,
+			sessionLoading,
 			subscriptionInitialCheck: isAuthenticated && !subscriptionQuery.isFetched
 		}
 	}

@@ -93,7 +93,7 @@ test('undo blocks another request while pending and keeps failure beside the ret
 	await vi.waitFor(() => expect(undo).toHaveBeenCalledTimes(2))
 	await vi.waitFor(() => {
 		expect(container.querySelector('[role="alert"]')).toBeNull()
-		expect(button('Undo AI changes').textContent).toBe('Undo')
+		expect(button('Undo AI changes').textContent).toBe('Undo AI changes')
 		expect(button('Undo AI changes').getAttribute('aria-disabled')).not.toBe('true')
 	})
 })
@@ -138,7 +138,7 @@ test('opening the editor blocks repeated navigation and exposes a retry after fa
 	await vi.waitFor(() => expect(button('Opening editor…')?.getAttribute('aria-disabled')).toBe('true'))
 	expect(document.activeElement).toBe(button('Opening editor…'))
 	await click('Opening editor…')
-	expect(push).toHaveBeenCalledExactlyOnceWith('/pro/example/edit')
+	expect(push).toHaveBeenCalledExactlyOnceWith('/pro/example/edit', undefined, { shallow: true })
 	await act(async () => route.reject(new Error('Offline')))
 	await vi.waitFor(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Could not open the editor')

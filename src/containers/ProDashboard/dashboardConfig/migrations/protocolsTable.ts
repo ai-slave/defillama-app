@@ -204,6 +204,7 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 		...(defaultSorting.length > 0 ? { defaultSorting } : {}),
 		...(preset ? { activePresetId: preset.targetPresetId } : {}),
 		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan }),
+		...(config.height === undefined ? {} : { height: config.height }),
 		...(customColumns.length > 0 ? { customColumns } : {})
 	}
 }

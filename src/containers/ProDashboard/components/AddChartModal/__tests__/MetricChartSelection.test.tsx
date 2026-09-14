@@ -8,6 +8,15 @@ vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
 vi.mock('../../../AppMetadataContext', () => ({
 	useAppMetadata: () => ({ availableProtocolChartTypes: () => [], availableChainChartTypes: () => [] })
 }))
+vi.mock('../bindingContext', () => ({
+	useModalFieldBinding: () => ({
+		options: [],
+		boundVariable: null,
+		bind: () => {},
+		unbind: () => {},
+		resolveSelection: () => null
+	})
+}))
 let root: Root
 let container: HTMLDivElement
 afterEach(async () => {

@@ -360,7 +360,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<span className="truncate text-[11px] opacity-80">{displayValue}</span>
+					<span className="truncate text-xs opacity-80">{displayValue}</span>
 				</div>
 				<button
 					type="button"
@@ -389,7 +389,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 							) : null}
 							{categoryBadge}
 						</div>
-						<span className="truncate text-[11px] opacity-80">{displayValue}</span>
+						<span className="truncate text-xs opacity-80">{displayValue}</span>
 					</div>
 				</button>
 				<button
@@ -423,7 +423,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					</button>
 				</div>
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-[10px] opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -431,14 +431,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
-					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
 				<button
 					type="button"
 					onClick={onEndEdit}
-					className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
+					className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-xs opacity-70 transition-opacity hover:opacity-100"
 				>
 					Done
 				</button>
@@ -467,7 +467,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					handleOperatorChange(operator)
 				}}
 			>
-				<Ariakit.ComboboxSelect className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
+				<Ariakit.ComboboxSelect className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden focus:border-current/50">
 					<Ariakit.ComboboxSelectedValue />
 					<Ariakit.ComboboxSelectArrow />
 				</Ariakit.ComboboxSelect>
@@ -490,7 +490,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			</Ariakit.ComboboxProvider>
 			{isBetween ? (
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-[10px] opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -498,9 +498,9 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleMinValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="Min"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
-					<span className="text-[10px] opacity-70">-</span>
+					<span className="text-xs opacity-70">-</span>
 					<input
 						type="text"
 						inputMode="decimal"
@@ -508,13 +508,13 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleMaxValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="Max"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
-					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
 			) : (
 				<div className="flex items-center gap-1.5">
-					{prefix ? <span className="text-[10px] opacity-70">{prefix}</span> : null}
+					{prefix ? <span className="text-xs opacity-70">{prefix}</span> : null}
 					<input
 						type="text"
 						inputMode="decimal"
@@ -522,15 +522,15 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-xs outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
-					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
+					{suffix ? <span className="text-xs opacity-70">{suffix}</span> : null}
 				</div>
 			)}
 			<button
 				type="button"
 				onClick={onEndEdit}
-				className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
+				className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-xs opacity-70 transition-opacity hover:opacity-100"
 			>
 				Done
 			</button>
@@ -687,10 +687,10 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 			<div className="flex min-w-0 flex-col gap-2">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
-						<span className="text-[11px] font-semibold tracking-wide text-pro-text-secondary uppercase">
+						<span className="text-xs font-semibold tracking-wide text-pro-text-secondary uppercase">
 							Browse filters
 						</span>
-						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-[10px] text-pro-text-tertiary">
+						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-xs text-pro-text-tertiary">
 							{search
 								? `${visibleAvailableCount} match${visibleAvailableCount === 1 ? '' : 'es'}`
 								: `${inactiveFiltersCount} available`}
@@ -700,14 +700,14 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<button
 							type="button"
 							onClick={expandAllCategories}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-[10px] text-pro-text-tertiary transition hover:text-pro-text-primary"
+							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
 						>
 							Expand all
 						</button>
 						<button
 							type="button"
 							onClick={collapseAllCategories}
-							className="rounded-md border border-pro-cards-border px-2 py-1 text-[10px] text-pro-text-tertiary transition hover:text-pro-text-primary"
+							className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
 						>
 							Collapse
 						</button>
@@ -749,8 +749,8 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-pro-cards-border/30"
 								>
 									<div className="flex items-center gap-2">
-										<span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badgeColor}`}>{label}</span>
-										<span className="text-[10px] text-pro-text-tertiary">{availableFilters.length}</span>
+										<span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${badgeColor}`}>{label}</span>
+										<span className="text-xs text-pro-text-tertiary">{availableFilters.length}</span>
 									</div>
 									<Icon
 										name="chevron-down"
@@ -786,12 +786,12 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						)
 					})}
 					{filteredCategories.length === 0 ? (
-						<div className="flex items-center justify-between rounded-md border border-dashed border-pro-cards-border bg-(--cards-bg2) p-3 text-[11px] text-pro-text-tertiary">
+						<div className="flex items-center justify-between rounded-md border border-dashed border-pro-cards-border bg-(--cards-bg2) p-3 text-xs text-pro-text-tertiary">
 							<span>No filters match "{search}".</span>
 							<button
 								type="button"
 								onClick={() => setSearch('')}
-								className="rounded-md border border-pro-cards-border px-2 py-1 text-[10px] text-pro-text-tertiary transition hover:text-pro-text-primary"
+								className="rounded-md border border-pro-cards-border px-2 py-1 text-xs text-pro-text-tertiary transition hover:text-pro-text-primary"
 							>
 								Clear search
 							</button>
@@ -809,7 +809,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<button
 							type="button"
 							onClick={handleClearAll}
-							className="cursor-pointer text-[10px] text-pro-text-tertiary transition-colors hover:text-error"
+							className="cursor-pointer text-xs text-pro-text-tertiary transition-colors hover:text-error"
 						>
 							Clear all
 						</button>

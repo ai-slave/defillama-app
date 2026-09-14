@@ -5,6 +5,7 @@ import { SANITIZE_REHYPE_PLUGINS } from '~/containers/LlamaAI/components/markdow
 import type { TextConfig } from '../types'
 import { isExternalLink } from './externalLink'
 import { ExternalLinkInterstitial } from './ExternalLinkInterstitial'
+import { ProCardHeader } from './ProCardHeader'
 
 interface TextCardProps {
 	text: TextConfig
@@ -16,95 +17,79 @@ export function TextCard({ text }: TextCardProps) {
 	const [pendingHref, setPendingHref] = useState<string | null>(null)
 
 	return (
-		<div className="prose prose-sm flex max-w-none flex-col gap-2 overflow-y-auto p-4 prose-invert">
-			{text.title ? <h2 className="text-lg font-semibold text-pro-text-primary">{text.title}</h2> : null}
-
-			<ReactMarkdown
-				remarkPlugins={REMARK_PLUGINS}
-				rehypePlugins={SANITIZE_REHYPE_PLUGINS}
-				components={{
-					h1: ({ children }) => <h3 className="m-0! text-xl font-bold text-pro-text-primary">{children}</h3>,
-					h2: ({ children }) => <h4 className="m-0! text-lg font-semibold text-pro-text-primary">{children}</h4>,
-					h3: ({ children }) => <h5 className="m-0! text-base font-medium text-pro-text-primary">{children}</h5>,
-					p: ({ children }) => <p className="m-0! leading-relaxed text-pro-text-secondary">{children}</p>,
-					ul: ({ children }) => <ul className="m-0! flex list-disc flex-col gap-1 pl-4">{children}</ul>,
-					ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
-					li: ({ children }) => <li className="m-0! text-pro-text-secondary">{children}</li>,
-					code: ({ children }) => (
-						<code className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 px-1 py-0.5 text-xs">
-							{children}
-						</code>
-					),
-					pre: ({ children }) => (
-						<pre className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 p-2">{children}</pre>
-					),
-					blockquote: ({ children }) => (
-						<blockquote className="m-0! overflow-x-auto border-l-3 border-pro-accent pl-2 text-pro-text-label italic">
-							{children}
-						</blockquote>
-					),
-					a: ({ children, href }) => {
-						const external = isExternalLink(href)
-						return (
-							<a
-								href={href}
-								className="m-0! text-link hover:underline"
-								target="_blank"
-								rel={external ? 'noopener noreferrer nofollow ugc' : 'noopener noreferrer'}
-								onClick={
-									external
-										? (event) => {
-												event.preventDefault()
-												setPendingHref(href ?? null)
-											}
-										: undefined
-								}
-							>
+		<div className="flex max-w-none flex-col overflow-y-auto p-0">
+			<ProCardHeader {...(text.title ? { title: text.title } : {})} />
+			<div className="prose prose-sm flex flex-col gap-2 px-3 pb-3 prose-invert">
+				<ReactMarkdown
+					remarkPlugins={REMARK_PLUGINS}
+					rehypePlugins={SANITIZE_REHYPE_PLUGINS}
+					components={{
+						h1: ({ children }) => <h3 className="m-0! text-xl font-bold text-pro-text-primary">{children}</h3>,
+						h2: ({ children }) => <h4 className="m-0! text-lg font-semibold text-pro-text-primary">{children}</h4>,
+						h3: ({ children }) => <h5 className="m-0! text-base font-medium text-pro-text-primary">{children}</h5>,
+						p: ({ children }) => <p className="m-0! leading-relaxed text-pro-text-secondary">{children}</p>,
+						ul: ({ children }) => <ul className="m-0! flex list-disc flex-col gap-1 pl-4">{children}</ul>,
+						ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
+						li: ({ children }) => <li className="m-0! text-pro-text-secondary">{children}</li>,
+						code: ({ children }) => (
+							<code className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 px-1 py-0.5 text-xs">
 								{children}
-							</a>
+							</code>
+						),
+						pre: ({ children }) => (
+							<pre className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 p-2">{children}</pre>
+						),
+						blockquote: ({ children }) => (
+							<blockquote className="m-0! overflow-x-auto border-l-3 border-pro-accent pl-2 text-pro-text-label italic">
+								{children}
+							</blockquote>
+						),
+						a: ({ children, href }) => {
+							const external = isExternalLink(href)
+							return (
+								<a
+									href={href}
+									className="m-0! text-link hover:underline"
+									target="_blank"
+									rel={external ? 'noopener noreferrer nofollow ugc' : 'noopener noreferrer'}
+									onClick={
+										external
+											? (event) => {
+													event.preventDefault()
+													setPendingHref(href ?? null)
+												}
+											: undefined
+									}
+								>
+									{children}
+								</a>
+							)
+						},
+						img: () => null,
+						strong: ({ children }) => <strong className="m-0! font-semibold text-pro-text-primary">{children}</strong>,
+						em: ({ children }) => <em className="m-0! text-pro-text-secondary italic">{children}</em>,
+						table: ({ children }) => (
+							<div className="overflow-x-auto">
+								<table className="m-0! w-full border-collapse text-sm">{children}</table>
+							</div>
+						),
+						thead: ({ children }) => <thead>{children}</thead>,
+						tbody: ({ children }) => <tbody>{children}</tbody>,
+						tr: ({ children }) => <tr>{children}</tr>,
+						th: ({ children }) => (
+							<th className="m-0! border-b border-pro-cards-border px-3 py-2 text-left font-semibold whitespace-nowrap text-pro-text-primary">
+								{children}
+							</th>
+						),
+						td: ({ children }) => (
+							<td className="m-0! border-b border-pro-cards-border px-3 py-1.5 text-pro-text-secondary">{children}</td>
 						)
-					},
-					img: () => null,
-					strong: ({ children }) => <strong className="m-0! font-semibold text-pro-text-primary">{children}</strong>,
-					em: ({ children }) => <em className="m-0! text-pro-text-secondary italic">{children}</em>,
-					table: ({ children }) => (
-						<div style={{ overflowX: 'auto' }}>
-							<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>{children}</table>
-						</div>
-					),
-					thead: ({ children }) => <thead>{children}</thead>,
-					tbody: ({ children }) => <tbody>{children}</tbody>,
-					tr: ({ children }) => <tr>{children}</tr>,
-					th: ({ children }) => (
-						<th
-							style={{
-								textAlign: 'left',
-								padding: '8px 12px',
-								borderBottom: '1px solid var(--pro-cards-border)',
-								fontWeight: 600,
-								color: 'var(--pro-text-primary)',
-								whiteSpace: 'nowrap'
-							}}
-						>
-							{children}
-						</th>
-					),
-					td: ({ children }) => (
-						<td
-							style={{
-								padding: '6px 12px',
-								borderBottom: '1px solid var(--pro-cards-border)',
-								color: 'var(--pro-text-secondary)'
-							}}
-						>
-							{children}
-						</td>
-					)
-				}}
-			>
-				{text.content}
-			</ReactMarkdown>
-			<ExternalLinkInterstitial href={pendingHref} onClose={() => setPendingHref(null)} />
+					}}
+				>
+					{text.content}
+				</ReactMarkdown>
+				<ExternalLinkInterstitial href={pendingHref} onClose={() => setPendingHref(null)} />
+			</div>
 		</div>
 	)
 }

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import type { KeyboardEvent, ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import toast from 'react-hot-toast'
 import { type ChartPngExportOptions, useChartPngExport } from '~/components/ChartExport/useChartPngExport'
 import {
@@ -20,14 +20,33 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
-import { useProDashboardPermissions } from '../ProDashboardAPIContext'
+import type { StoredColSpan } from '../dashboardConfig/colSpan'
+import { DASHBOARD_CARD_HEIGHT_LABELS, getEmbedCardHeight } from '../dashboardLayout/cardHeight'
+import { getBindableFieldsForKind } from '../dashboardVariables/resolve'
+import { dashboardItemHash } from '../hooks/useDashboardItemDeepLink'
+import {
+	useProDashboardDashboard,
+	useProDashboardItemsState,
+	useProDashboardPermissions,
+	useProDashboardVariables
+} from '../ProDashboardAPIContext'
+import { keepKeyboardEventsInsideCard } from '../ui/keyboard'
+import { proMenuGroupLabelStyles } from '../ui/styles'
 import type { UnifiedRowHeaderType } from '../unifiedTable/config/types'
+import { useDashboardCardContext } from './DashboardCardContext'
+import { buildEmbedIframeSnippet, cardEmbedSrc, copyTextToClipboard, EmbedSnippetDialog } from './EmbedSnippetDialog'
 import { type CsvExportLevel, EXPORT_LEVEL_LABELS } from './UnifiedTable/core/csvExportLevels'
 
 const noChart = () => null
-export function keepKeyboardEventsInsideCard(event: KeyboardEvent) {
-	event.stopPropagation()
-}
+
+const COL_SPAN_LABELS = {
+	0.5: 'Quarter width',
+	1: 'Half width',
+	1.5: 'Three-quarter width',
+	2: 'Full width'
+} as const satisfies Record<StoredColSpan, string>
+
+export { keepKeyboardEventsInsideCard }
 export function ProCardEditControls({ children }: { children: ReactNode }) {
 	const { isReadOnly } = useProDashboardPermissions()
 	if (isReadOnly) return null
@@ -35,13 +54,13 @@ export function ProCardEditControls({ children }: { children: ReactNode }) {
 		<div
 			role="presentation"
 			onKeyDown={keepKeyboardEventsInsideCard}
-			className="flex flex-wrap items-center gap-2 opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100"
+			className="flex min-w-0 flex-wrap items-center justify-end gap-2 opacity-0 transition-opacity group-focus-within/dashboard-card:opacity-100 group-hover/dashboard-card:opacity-100 group-data-[arrived=true]/dashboard-card:opacity-100 has-[[aria-expanded=true]]:opacity-100 motion-reduce:transition-none pointer-coarse:opacity-100"
 		>
 			{children}
 		</div>
 	)
 }
-interface ProCardOverflowMenuProps {
+export interface ProCardOverflowMenuProps {
 	image?: ChartPngExportOptions | undefined
 	csv?:
 		| { prepareCsv: PrepareCsv; onClick?: never; isLoading?: never; disabled?: boolean }
@@ -59,10 +78,15 @@ interface ProCardOverflowMenuProps {
 }
 export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabled }: ProCardOverflowMenuProps) {
 	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
+	const { currentDashboard } = useProDashboardDashboard()
+	const { items } = useProDashboardItemsState()
+	const { variables, canEditVariables, bindItemField } = useProDashboardVariables()
+	const cardContext = useDashboardCardContext()
 	const router = useRouter()
 	const { isExporting, downloadImage, copyImage } = useChartPngExport(image ?? { chartInstance: noChart })
 	const csvDownload = useCsvDownload()
 	const isClient = useIsClient()
+	const [isEmbedDialogOpen, setIsEmbedDialogOpen] = useState(false)
 	const menu = Ariakit.useMenuStore({
 		placement: 'bottom-end',
 		setOpen: (open) => {
@@ -70,7 +94,38 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 		}
 	})
 	const canDuplicate = !!onDuplicate && !isReadOnly && !hideDuplicateButton
-	if (!image && !csv && !csvLevels && !canDuplicate) return null
+	const shareableCard =
+		cardContext && currentDashboard?.visibility === 'public'
+			? {
+					itemId: cardContext.itemId,
+					dashboardKey: currentDashboard.slug ?? currentDashboard.id,
+					item: items.find((candidate) => candidate.id === cardContext.itemId)
+				}
+			: null
+	const hasExports = !!image || !!csv || !!csvLevels
+	const layout = isReadOnly ? null : (cardContext?.layout ?? null)
+	const onRemove = isReadOnly ? null : (cardContext?.onRemove ?? null)
+	const card = cardContext ? items.find((candidate) => candidate.id === cardContext.itemId) : undefined
+	const parameterActions =
+		card && canEditVariables && !isReadOnly
+			? variables.flatMap((variable) =>
+					getBindableFieldsForKind(card, variable.kind).map((field) => {
+						const bound = 'bindings' in card && card.bindings?.[field] === variable.id
+						return {
+							key: `${variable.id}:${field}`,
+							label: bound ? `Unbind from ${variable.label}` : `Bind to ${variable.label}`,
+							onSelect: () => bindItemField(card.id, field, bound ? null : variable.id)
+						}
+					})
+				)
+			: []
+	const hasParameterActions = parameterActions.length > 0
+	if (!hasExports && !canDuplicate && !shareableCard && !layout && !onRemove && !hasParameterActions) return null
+	const copyCardLink = () => {
+		if (!shareableCard) return
+		const url = `${window.location.origin}/pro/${shareableCard.dashboardKey}${dashboardItemHash(shareableCard.itemId)}`
+		void copyTextToClipboard(url, 'Card link copied')
+	}
 	const busy = !!disabled || isExporting
 	const csvBusy =
 		busy ||
@@ -105,7 +160,10 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 					render={
 						<Ariakit.MenuButton
 							render={<Button size="sm" square variant="ghost" />}
-							disabled={(disabled && !canDuplicate) || !isClient}
+							disabled={
+								(disabled && !canDuplicate && !shareableCard && !layout && !onRemove && !hasParameterActions) ||
+								!isClient
+							}
 							accessibleWhenDisabled
 							aria-label="More actions"
 						/>
@@ -176,12 +234,145 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								Download CSV: {EXPORT_LEVEL_LABELS[level]}
 							</Ariakit.MenuItem>
 						))}
+						{layout ? (
+							<>
+								{hasExports ? <Ariakit.MenuSeparator /> : null}
+								{layout.colSpanOptions.length > 0 ? (
+									<Ariakit.MenuGroup>
+										<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Width</Ariakit.MenuGroupLabel>
+										{layout.colSpanOptions.map((option) => (
+											<Ariakit.MenuItemRadio
+												key={option}
+												name="dashboard-card-width"
+												value={String(option)}
+												checked={option === layout.colSpan}
+												onClick={() => layout.onColSpanChange(option)}
+												className={popoverMenuItemStyles}
+												data-umami-event="dashboard-card-width"
+											>
+												<span className="mr-auto">{COL_SPAN_LABELS[option]}</span>
+												<Icon
+													name="check"
+													height={14}
+													width={14}
+													className={option === layout.colSpan ? 'text-link' : 'invisible'}
+												/>
+											</Ariakit.MenuItemRadio>
+										))}
+									</Ariakit.MenuGroup>
+								) : null}
+								{layout.height && layout.heightOptions.length > 0 ? (
+									<Ariakit.MenuGroup>
+										<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Height</Ariakit.MenuGroupLabel>
+										{layout.heightOptions.map((option) => (
+											<Ariakit.MenuItemRadio
+												key={option}
+												name="dashboard-card-height"
+												value={option}
+												checked={option === layout.height}
+												onClick={() => layout.onHeightChange(option)}
+												className={popoverMenuItemStyles}
+												data-umami-event="dashboard-card-height"
+											>
+												<span className="mr-auto">{DASHBOARD_CARD_HEIGHT_LABELS[option]}</span>
+												<Icon
+													name="check"
+													height={14}
+													width={14}
+													className={option === layout.height ? 'text-link' : 'invisible'}
+												/>
+											</Ariakit.MenuItemRadio>
+										))}
+									</Ariakit.MenuGroup>
+								) : null}
+								<Ariakit.MenuGroup>
+									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Move</Ariakit.MenuGroupLabel>
+									<Ariakit.MenuItem
+										className={popoverMenuItemStyles}
+										disabled={!layout.canMoveUp}
+										accessibleWhenDisabled
+										hideOnClick={false}
+										onClick={() => layout.onMove(-1)}
+									>
+										Move up
+									</Ariakit.MenuItem>
+									<Ariakit.MenuItem
+										className={popoverMenuItemStyles}
+										disabled={!layout.canMoveDown}
+										accessibleWhenDisabled
+										hideOnClick={false}
+										onClick={() => layout.onMove(1)}
+									>
+										Move down
+									</Ariakit.MenuItem>
+								</Ariakit.MenuGroup>
+							</>
+						) : null}
+						{hasParameterActions ? (
+							<>
+								{hasExports || layout ? <Ariakit.MenuSeparator /> : null}
+								<Ariakit.MenuGroup>
+									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Parameters</Ariakit.MenuGroupLabel>
+									{parameterActions.map((action) => (
+										<Ariakit.MenuItem
+											key={action.key}
+											className={popoverMenuItemStyles}
+											onClick={action.onSelect}
+											data-umami-event="dashboard-card-bind"
+											data-umami-event-page={router.pathname}
+										>
+											{action.label}
+										</Ariakit.MenuItem>
+									))}
+								</Ariakit.MenuGroup>
+							</>
+						) : null}
+						{shareableCard ? (
+							<>
+								{hasExports || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
+								<Ariakit.MenuItem
+									className={popoverMenuItemStyles}
+									onClick={copyCardLink}
+									data-umami-event="copy-card-link"
+									data-umami-event-page={router.pathname}
+								>
+									Copy link to card
+								</Ariakit.MenuItem>
+								<Ariakit.MenuItem
+									className={popoverMenuItemStyles}
+									onClick={() => setIsEmbedDialogOpen(true)}
+									data-umami-event="embed-card"
+									data-umami-event-page={router.pathname}
+								>
+									Embed card…
+								</Ariakit.MenuItem>
+							</>
+						) : null}
 						{canDuplicate ? (
 							<>
-								{image || csv || csvLevels ? <Ariakit.MenuSeparator /> : null}
-								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={onDuplicate}>
-									Duplicate
-								</Ariakit.MenuItem>
+								{hasExports || shareableCard || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
+								<Ariakit.MenuGroup>
+									<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={onDuplicate}>
+										Duplicate
+									</Ariakit.MenuItem>
+								</Ariakit.MenuGroup>
+							</>
+						) : null}
+						{onRemove ? (
+							<>
+								{hasExports || shareableCard || layout || canDuplicate || hasParameterActions ? (
+									<Ariakit.MenuSeparator />
+								) : null}
+								<Ariakit.MenuGroup>
+									<Ariakit.MenuItem
+										className={`${popoverMenuItemStyles} text-error`}
+										onClick={onRemove}
+										data-umami-event="dashboard-card-remove"
+									>
+										<Icon name="trash-2" height={14} width={14} />
+										Remove card
+									</Ariakit.MenuItem>
+								</Ariakit.MenuGroup>
 							</>
 						) : null}
 					</Ariakit.MenuList>
@@ -196,6 +387,19 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 				{csvDownload.status === 'pending' ? 'Preparing CSV download' : ''}
 			</span>
 			<CsvDownloadDialogs controller={csvDownload} />
+			{shareableCard ? (
+				<EmbedSnippetDialog
+					open={isEmbedDialogOpen}
+					onClose={() => setIsEmbedDialogOpen(false)}
+					heading="Embed card"
+					snippetFor={(theme) =>
+						buildEmbedIframeSnippet({
+							src: cardEmbedSrc(shareableCard.dashboardKey, shareableCard.itemId, theme),
+							height: getEmbedCardHeight(shareableCard.item)
+						})
+					}
+				/>
+			) : null}
 		</div>
 	)
 }

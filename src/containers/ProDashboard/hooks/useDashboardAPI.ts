@@ -1,6 +1,7 @@
 import { type MutationState, type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import type { Dashboard } from '../dashboardTypes'
@@ -244,7 +245,7 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 				if (!(error instanceof DashboardError) || error.status !== 409) throw error
 				const server = await dashboardAPI.getDashboard(id, authorizedFetch)
 				const items = mergeDashboardItems(base?.items ?? [], server.data.items ?? [], payload.items)
-				return await dashboardAPI.updateDashboard(
+				const merged = await dashboardAPI.updateDashboard(
 					id,
 					{
 						...toDashboardSavePayload(server),
@@ -254,6 +255,14 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 					authorizedFetch,
 					server.editedAt
 				)
+				if (items !== payload.items) {
+					toast('This dashboard was changed in another tab or session. Your edits were merged.', {
+						id: 'dashboard-merged',
+						duration: 8000,
+						ariaProps: { role: 'status', 'aria-live': 'polite' }
+					})
+				}
+				return merged
 			}
 		},
 		onSuccess: (dashboard: Dashboard) => {
@@ -280,7 +289,11 @@ function cachedDashboard(client: QueryClient, id: string, isAuthenticated: boole
 	)
 }
 
-export function getUnsavedDashboardItems(client: QueryClient, dashboardId: string | null, userId: string | undefined) {
+export function getUnsavedDashboardChanges(
+	client: QueryClient,
+	dashboardId: string | null,
+	userId: string | undefined
+): Partial<DashboardSavePayload> | undefined {
 	const state = client
 		.getMutationCache()
 		.findAll({
@@ -288,7 +301,7 @@ export function getUnsavedDashboardItems(client: QueryClient, dashboardId: strin
 			predicate: (mutation) => (mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave'
 		})
 		.at(-1)?.state as MutationState<Dashboard, Error, DashboardUpdate> | undefined
-	return state?.status === 'pending' || state?.status === 'error' ? state.variables?.changes?.items : undefined
+	return state?.status === 'pending' || state?.status === 'error' ? state.variables?.changes : undefined
 }
 
 export function wasDashboardDeleted(client: QueryClient, dashboardId: string, userId: string | undefined) {

@@ -82,9 +82,7 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 				return (
 					<div key={category}>
 						<div className="mb-1.5 flex items-center gap-2">
-							<span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${config.color}`}>
-								{config.label}
-							</span>
+							<span className={`rounded-sm px-1.5 py-0.5 text-xs font-semibold ${config.color}`}>{config.label}</span>
 						</div>
 						<div className="flex flex-wrap gap-1.5">
 							{presets.map((preset) => {

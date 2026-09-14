@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { type DashboardGrouping, getProDashboardChartTypeConfig } from '../../types'
@@ -77,13 +78,10 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			<div className="flex size-full items-center justify-center">
 				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 text-center">
 					{anyLoading ? (
-						<>
-							<svg className="mx-auto mb-2 size-5 animate-spin text-pro-text-tertiary" fill="none" viewBox="0 0 24 24">
-								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-							</svg>
+						<div className="flex flex-col items-center gap-2 text-pro-text-tertiary">
+							<LoadingSpinner size={20} />
 							<p className="text-xs text-pro-text-tertiary">Loading chart data…</p>
-						</>
+						</div>
 					) : (
 						<>
 							<p className="mb-2 text-sm text-pro-text-secondary">Chart Preview</p>

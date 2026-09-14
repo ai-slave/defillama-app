@@ -1,5 +1,6 @@
 import { Icon } from '~/ui/Icon'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
+import { ProChip, proInputStyles } from '../../ui'
 
 interface SelectionFooterProps {
 	composerItems: Array<ChartConfig>
@@ -31,8 +32,9 @@ export function SelectionFooter({
 					type="text"
 					value={unifiedChartName}
 					onChange={(e) => onUnifiedChartNameChange(e.target.value)}
-					placeholder="Chart name..."
-					className="w-full rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+					aria-label="Card name"
+					placeholder="Optional"
+					className={proInputStyles}
 				/>
 			) : null}
 			<div className="flex flex-wrap items-center gap-2">
@@ -48,10 +50,7 @@ export function SelectionFooter({
 				{composerItems.map((item) => {
 					const chartType = getProDashboardChartTypeConfig(item.type)
 					return (
-						<div
-							key={item.id}
-							className="flex shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs"
-						>
+						<ProChip key={item.id} className="shrink-0 gap-1.5">
 							<span className="text-pro-text-primary">
 								{item.subjectType === 'protocol' ? item.protocol : item.chain} - {chartType?.title || item.type}
 							</span>
@@ -70,14 +69,14 @@ export function SelectionFooter({
 							>
 								<Icon name="x" height={12} width={12} />
 							</button>
-						</div>
+						</ProChip>
 					)
 				})}
 			</div>
-			<div className="text-[10px] text-pro-text-tertiary">
+			<div className="text-xs text-pro-text-tertiary">
 				{chartCreationMode === 'combined'
 					? `1 combined chart with ${composerItems.length} series (max ${MAX_MULTI_CHART_SERIES})`
-					: `${composerItems.length} separate chart${composerItems.length !== 1 ? 's' : ''}`}
+					: `${composerItems.length} separate card${composerItems.length !== 1 ? 's' : ''}`}
 			</div>
 		</div>
 	)

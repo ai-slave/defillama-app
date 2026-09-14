@@ -1,25 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
+import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { Icon } from '~/ui/Icon'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useTopAuthors } from '../hooks/useTopAuthors'
+import { ProButton, ProMeta, proCardShellStyles } from '../ui'
+import { DiscoveryShelfHeading } from './DiscoverySection'
+
+const RAIL_TITLE = 'Top Authors'
+const RAIL_SUBTITLE = 'The most viewed dashboard builders on DefiLlama Pro'
+
+function compact(value: number): string {
+	return formatCompactNumber(value, { maximumFractionDigits: 1 })
+}
 
 function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 	const { author } = entry
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="group flex h-full flex-col gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 transition-colors hover:border-pro-accent/40"
+			className={`${proCardShellStyles} group flex h-full flex-col gap-2 p-3 transition-colors hover:border-pro-accent/40`}
 		>
-			<div className="flex items-center gap-3">
+			<div className="flex items-center gap-2">
 				{author.avatarUrl ? (
 					// eslint-disable-next-line @next/next/no-img-element
-					<img src={author.avatarUrl} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+					<img src={author.avatarUrl} alt="" loading="lazy" className="size-8 shrink-0 rounded-full object-cover" />
 				) : (
 					<span
-						className="flex size-10 shrink-0 items-center justify-center rounded-full text-xl"
+						className="flex size-8 shrink-0 items-center justify-center rounded-full text-base"
 						style={avatarColorStyle(author.slug)}
 					>
 						🦙
@@ -29,94 +38,36 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					<p className="truncate text-sm font-semibold text-pro-text-primary group-hover:text-pro-accent">
 						{author.displayName}
 					</p>
-					<p className="truncate text-xs text-pro-text-label">@{author.slug}</p>
+					<p className="truncate text-xs text-pro-text-tertiary">@{author.slug}</p>
 				</div>
 			</div>
-			{author.bio ? <p className="line-clamp-2 text-xs leading-5 text-pro-text-label">{author.bio}</p> : null}
-			<div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-pro-cards-border pt-3 text-xs text-pro-text-label tabular-nums">
-				<span className="inline-flex items-center gap-1" title="Public dashboards">
-					<Icon name="layout-grid" height={12} width={12} />
-					{formatCompactNumber(entry.dashboardCount, { maximumFractionDigits: 1 })}
-				</span>
-				<span className="inline-flex items-center gap-1" title="Total views">
-					<Icon name="eye" height={12} width={12} />
-					{formatCompactNumber(entry.totalViews, { maximumFractionDigits: 1 })}
-				</span>
-				<span className="inline-flex items-center gap-1" title="Total likes">
-					<Icon name="star" height={12} width={12} />
-					{formatCompactNumber(entry.totalLikes, { maximumFractionDigits: 1 })}
-				</span>
-				<span className="inline-flex items-center gap-1" title="Followers">
-					<Icon name="users" height={12} width={12} />
-					{formatCompactNumber(entry.followerCount, { maximumFractionDigits: 1 })}
-				</span>
-			</div>
+			{author.bio ? <p className="line-clamp-2 text-xs leading-5 text-pro-text-secondary">{author.bio}</p> : null}
+			<ProMeta
+				className="mt-auto tabular-nums"
+				items={[
+					`${compact(entry.dashboardCount)} dashboards`,
+					`${compact(entry.totalViews)} views`,
+					`${compact(entry.totalLikes)} likes`
+				]}
+			/>
 		</BasicLink>
 	)
 }
 
 export function TopAuthorsRail() {
 	const { authors, isLoading } = useTopAuthors()
-	const scrollContainerRef = useRef<HTMLDivElement>(null)
-	const [canScrollLeft, setCanScrollLeft] = useState(false)
-	const [canScrollRight, setCanScrollRight] = useState(true)
-	const rafIdRef = useRef<number | null>(null)
-	const prevScrollStateRef = useRef({ canScrollLeft: false, canScrollRight: true })
-
-	const updateScrollState = () => {
-		if (rafIdRef.current) return
-
-		rafIdRef.current = requestAnimationFrame(() => {
-			rafIdRef.current = null
-			const container = scrollContainerRef.current
-			if (!container) return
-
-			const { scrollLeft, scrollWidth, clientWidth } = container
-			const newCanScrollLeft = scrollLeft > 0
-			const newCanScrollRight = scrollLeft < scrollWidth - clientWidth - 10
-
-			if (newCanScrollLeft !== prevScrollStateRef.current.canScrollLeft) {
-				prevScrollStateRef.current.canScrollLeft = newCanScrollLeft
-				setCanScrollLeft(newCanScrollLeft)
-			}
-			if (newCanScrollRight !== prevScrollStateRef.current.canScrollRight) {
-				prevScrollStateRef.current.canScrollRight = newCanScrollRight
-				setCanScrollRight(newCanScrollRight)
-			}
-		})
-	}
-
-	useEffect(() => {
-		return () => {
-			if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
-		}
-	}, [])
-
-	const scroll = (direction: 'left' | 'right') => {
-		const container = scrollContainerRef.current
-		if (!container) return
-		const scrollAmount = direction === 'left' ? -560 : 560
-		container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-	}
+	const { ref: scrollContainerRef, canScrollLeft, canScrollRight, scrollByPage } = useHorizontalOverflow()
 
 	if (isLoading) {
 		return (
 			<div className="flex flex-col gap-3">
-				<div className="flex flex-col gap-0.5">
-					<h3 className="flex items-center gap-2 text-lg font-semibold">
-						<span className="flex size-7 items-center justify-center rounded-md bg-brand/15">
-							<Icon name="users" height={18} width={18} className="text-link" />
-						</span>
-						Top Authors
-					</h3>
-					<p className="ml-9 text-xs text-pro-text-label">The most viewed dashboard builders on DefiLlama Pro</p>
-				</div>
-				<div className="flex gap-4 overflow-hidden">
+				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
+				<div className="flex gap-3 overflow-hidden">
 					{Array.from({ length: 6 }).map((_, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-top-authors-${i}`}
-							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg"
+							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg"
 						>
 							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 						</div>
@@ -127,39 +78,40 @@ export function TopAuthorsRail() {
 	}
 
 	if (authors.length === 0) {
-		return null
+		return (
+			<div className="flex flex-col gap-3">
+				<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
+					No authors to show yet
+				</p>
+			</div>
+		)
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="flex flex-col gap-0.5">
-				<h3 className="flex items-center gap-2 text-lg font-semibold">
-					<span className="flex size-7 items-center justify-center rounded-md bg-brand/15">
-						<Icon name="users" height={18} width={18} className="text-link" />
-					</span>
-					Top Authors
-				</h3>
-				<p className="ml-9 text-xs text-pro-text-label">The most viewed dashboard builders on DefiLlama Pro</p>
-			</div>
+			<DiscoveryShelfHeading title={RAIL_TITLE} subtitle={RAIL_SUBTITLE} />
 
-			<div className="relative">
+			<div className="group/rail relative">
 				{canScrollLeft ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-						<button
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						<ProButton
 							type="button"
-							onClick={() => scroll('left')}
-							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+							square
+							variant="secondary"
+							aria-label="Scroll Top Authors left"
+							onClick={() => scrollByPage('left')}
+							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 						>
-							<Icon name="chevron-left" height={20} width={20} />
-						</button>
+							<Icon name="chevron-left" height={16} width={16} />
+						</ProButton>
 					</>
 				) : null}
 
 				<div
 					ref={scrollContainerRef}
-					onScroll={updateScrollState}
-					className="flex scrollbar-none snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
+					className="-mt-1 flex scrollbar-none snap-x snap-mandatory items-stretch gap-3 overflow-x-auto pt-1 pb-2 md:snap-none"
 				>
 					{authors.map((entry) => (
 						<div key={entry.author.slug} className="w-[260px] shrink-0 snap-start scroll-ml-4 md:snap-align-none">
@@ -170,14 +122,17 @@ export function TopAuthorsRail() {
 
 				{canScrollRight && authors.length > 4 ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-						<button
+						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						<ProButton
 							type="button"
-							onClick={() => scroll('right')}
-							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+							square
+							variant="secondary"
+							aria-label="Scroll Top Authors right"
+							onClick={() => scrollByPage('right')}
+							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 						>
-							<Icon name="chevron-right" height={20} width={20} />
-						</button>
+							<Icon name="chevron-right" height={16} width={16} />
+						</ProButton>
 					</>
 				) : null}
 			</div>

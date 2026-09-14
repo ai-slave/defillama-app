@@ -134,7 +134,7 @@ function InvestorsShell({
 
 	return (
 		<CustomServerDataContext.Provider value={customServerData ?? {}}>
-			<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-pro-app-bg md:flex-row">
+			<div className="investors-dashboard col-span-full flex min-h-screen flex-col bg-pro-app-bg pro-dashboard md:flex-row">
 				{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- a scrim over the sidebar; the close button and Escape are the keyboard paths. */}
 				{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
 

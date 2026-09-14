@@ -1,9 +1,10 @@
-import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import type { SegmentedControlOption } from '~/ui/SegmentedControl'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
+import { ProMeta, ProSegmented } from '../../ui'
 import { ChartBuilderTab } from './ChartBuilderTab'
 import type { ChartBuilderConfig, ChartBuilderUpdate, ChartModeType, ChartTabType } from './types'
 import { UnifiedChartTab } from './UnifiedChartTab'
@@ -12,6 +13,27 @@ const CHART_MODE_HINTS: Record<ChartModeType, string> = {
 	builder: 'Top protocols or chains by one metric, stacked into a single chart.',
 	manual: 'Pick a category, then choose specific protocols, chains or assets.'
 }
+
+const CHART_MODE_OPTIONS: Array<SegmentedControlOption<ChartModeType>> = [
+	{
+		value: 'builder',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="pencil-ruler" width={14} height={14} />
+				Top-N breakdown
+			</span>
+		)
+	},
+	{
+		value: 'manual',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="layers" width={14} height={14} />
+				Manual
+			</span>
+		)
+	}
+]
 
 interface ChartTabProps {
 	chartMode: ChartModeType
@@ -30,6 +52,10 @@ interface ChartTabProps {
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
 	composerItems: Array<ChartRuntimeView>
+	manualFormOpen: boolean
+	isEditingItem: boolean
+	onSelectCategory: (tab: ChartTabType) => void
+	onBackToCategories: () => void
 	onChartTabChange: (tab: ChartTabType) => void
 	onChartTypesChange: (types: Array<string>) => void
 	onBulkChartTypeChange: (nextType: string) => void
@@ -128,52 +154,10 @@ export function ChartTab(props: ChartTabProps) {
 	return (
 		<Tabs value={chartMode} values={CHART_MODES} onValueChange={onChartModeChange}>
 			<div className="flex h-full flex-col">
-				<div className="mb-3 rounded-xl border border-pro-cards-border p-1 shadow-sm">
-					<Ariakit.TabList aria-label="Chart creation" className="grid grid-cols-2 gap-1">
-						<Tab
-							value="builder"
-							className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-								chartMode === 'builder'
-									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-							}`}
-						>
-							<Icon
-								name="pencil-ruler"
-								width={15}
-								height={15}
-								className={
-									chartMode === 'builder'
-										? 'text-on-brand'
-										: 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
-								}
-							/>
-							<span>Top-N breakdown</span>
-						</Tab>
-						<Tab
-							value="manual"
-							className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-								chartMode === 'manual'
-									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-							}`}
-						>
-							<Icon
-								name="layers"
-								width={15}
-								height={15}
-								className={
-									chartMode === 'manual'
-										? 'text-on-brand'
-										: 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
-								}
-							/>
-							<span>Manual</span>
-						</Tab>
-					</Ariakit.TabList>
+				<div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+					<ProSegmented semantics="tabs" size="md" label="Chart creation" options={CHART_MODE_OPTIONS} />
+					<ProMeta className="min-w-0" items={[CHART_MODE_HINTS[chartMode]]} />
 				</div>
-
-				<p className="-mt-1 mb-3 px-1 text-xs text-pro-text-tertiary">{CHART_MODE_HINTS[chartMode]}</p>
 				<TabPanel value={chartMode} className="flex min-h-0 flex-1 flex-col">
 					{chartMode === 'builder' ? (
 						<ChartBuilderTab

@@ -1,7 +1,7 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useId, useMemo } from 'react'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 export interface SelectOption<TValue extends string = string> {
 	value: TValue
@@ -41,20 +41,20 @@ export function AriakitSelect<TValue extends string>({
 	return (
 		<div className={className}>
 			{label ? (
-				<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
+				<label htmlFor={disclosureId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
 					{label}
 				</label>
 			) : null}
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-pro-form-control-border bg-surface-elevated-1">
-					<LoadingSpinner size="sm" />
+				<div className="flex h-9 items-center justify-center rounded-md border border-pro-cards-border bg-surface-elevated-1">
+					<LoadingSpinner size={16} />
 				</div>
 			) : (
 				<>
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span className={`truncate ${selectedValue ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
 							{selectedLabel}

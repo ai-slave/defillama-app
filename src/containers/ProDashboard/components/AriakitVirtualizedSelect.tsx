@@ -3,7 +3,8 @@ import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { tw } from '~/ui/tw'
 
 export interface VirtualizedSelectOption {
 	value: string
@@ -16,8 +17,11 @@ export interface VirtualizedSelectOption {
 	extra?: string
 }
 
+const PRO_TOOLBAR_CHIP_CLASS = tw`inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 text-sm font-medium whitespace-nowrap text-pro-text-primary transition-[color,background-color,border-color,translate,scale] duration-120 ease-out-quart hover:bg-pro-hover-fill active:translate-y-px active:scale-[.985] disabled:active:translate-none disabled:active:scale-none aria-disabled:active:translate-none aria-disabled:active:scale-none`
+
 interface AriakitVirtualizedSelectProps {
 	label: string
+	variant?: 'field' | 'chip'
 	options: Array<VirtualizedSelectOption>
 	selectedValue: string | null
 	onChange: (option: VirtualizedSelectOption) => void
@@ -36,6 +40,7 @@ export function AriakitVirtualizedSelect({
 	placeholder = 'Select...',
 	isLoading = false,
 	className = '',
+	variant = 'field',
 	renderIcon,
 	placement = 'bottom-start'
 }: AriakitVirtualizedSelectProps) {
@@ -81,33 +86,71 @@ export function AriakitVirtualizedSelect({
 		}
 	}
 
+	const isChip = variant === 'chip'
+	const chipContent = (
+		<>
+			{selectedOption?.logo ? (
+				<img src={selectedOption.logo} alt="" loading="lazy" className="h-4 w-4 shrink-0 rounded-full" />
+			) : selectedOption?.icon ? (
+				<span aria-hidden>{selectedOption.icon}</span>
+			) : null}
+			<span className="text-pro-text-tertiary">{label}</span>
+			<span className={`truncate ${selectedOption ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
+				{selectedLabel}
+			</span>
+		</>
+	)
+
 	return (
 		<div className={className}>
-			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
+			<label
+				htmlFor={disclosureId}
+				className={isChip ? 'sr-only' : 'mb-1 block text-xs font-medium text-pro-text-secondary'}
+			>
 				{label}
 			</label>
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-pro-form-control-border bg-surface-elevated-1">
-					<LoadingSpinner size="sm" />
-				</div>
+				isChip ? (
+					<div className={`${PRO_TOOLBAR_CHIP_CLASS} cursor-default`}>
+						<span className="text-pro-text-tertiary">{label}</span>
+						<LoadingSpinner size={16} />
+					</div>
+				) : (
+					<div className="flex h-9 items-center justify-center rounded-md border border-pro-cards-border bg-surface-elevated-1">
+						<LoadingSpinner size={16} />
+					</div>
+				)
 			) : (
 				<>
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className={
+							isChip
+								? PRO_TOOLBAR_CHIP_CLASS
+								: 'flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden'
+						}
 					>
-						<span
-							className={`flex min-w-0 items-center gap-2 truncate ${selectedOption ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
-						>
-							{selectedOption?.icon ? (
-								<span className="text-sm" aria-hidden>
-									{selectedOption.icon}
-								</span>
-							) : null}
-							<span className="truncate">{selectedLabel}</span>
-						</span>
-						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
+						{isChip ? (
+							chipContent
+						) : (
+							<span
+								className={`flex min-w-0 items-center gap-2 truncate ${selectedOption ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
+							>
+								{selectedOption?.icon ? (
+									<span className="text-sm" aria-hidden>
+										{selectedOption.icon}
+									</span>
+								) : null}
+								<span className="truncate">{selectedLabel}</span>
+							</span>
+						)}
+						<Icon
+							name="chevron-down"
+							width={12}
+							height={12}
+							className={`shrink-0 opacity-70 ${isChip ? '' : 'ml-2'}`}
+						/>
 					</PopoverDisclosure>
 					<Popover
 						store={popover}
@@ -115,8 +158,8 @@ export function AriakitVirtualizedSelect({
 						portal
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"
-						style={{ width: 'var(--popover-anchor-width)' }}
+						className={`z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-overlay-sm ${isChip ? 'w-64' : ''}`}
+						style={isChip ? { minWidth: 'var(--popover-anchor-width)' } : { width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="p-2">
 							<div className="relative mb-2">
@@ -130,7 +173,7 @@ export function AriakitVirtualizedSelect({
 									value={search}
 									onChange={(e) => setSearch(e.target.value)}
 									placeholder="Search..."
-									className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 							<div
@@ -195,12 +238,10 @@ export function AriakitVirtualizedSelect({
 																{option.label}
 															</span>
 															{option.isChild ? (
-																<span className="text-[10px] text-pro-text-tertiary">Child protocol</span>
+																<span className="text-xs text-pro-text-tertiary">Child protocol</span>
 															) : null}
 															{option.description ? (
-																<span className="truncate text-[10px] text-pro-text-tertiary">
-																	{option.description}
-																</span>
+																<span className="truncate text-xs text-pro-text-tertiary">{option.description}</span>
 															) : null}
 														</div>
 													</div>

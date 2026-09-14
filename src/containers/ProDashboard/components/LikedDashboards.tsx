@@ -1,49 +1,54 @@
+import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 import { useLikedDashboards } from '../hooks/useLikedDashboards'
+import { ProButton, proPanelStyles } from '../ui'
 import { DashboardCard } from './DashboardCard'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSkeleton } from './LoadingSkeleton'
 
 export function LikedDashboards() {
 	const { dashboards, isLoading, page, totalPages, goToPage } = useLikedDashboards()
 
 	if (isLoading && dashboards.length === 0) {
-		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<LoadingSpinner />
-			</div>
-		)
+		return <LoadingSkeleton viewMode="grid" items={8} />
 	}
 
 	if (dashboards.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<Icon name="star" height={48} width={48} className="text-pro-text-label" />
-				<h1 className="text-center text-2xl font-bold">No favorite dashboards yet</h1>
-				<p className="text-center text-pro-text-label">
-					Dashboards you mark as favorites will appear here. Start exploring dashboards from the Discover tab!
+			<div className={`${proPanelStyles} flex flex-1 flex-col items-center justify-center gap-2 py-12`}>
+				<Icon name="star" height={32} width={32} className="text-pro-text-tertiary" />
+				<h2 className="text-center text-base font-semibold text-pro-text-primary">No favorite dashboards yet</h2>
+				<p className="text-center text-sm text-pro-text-secondary">
+					Star dashboards you like and they will show up here.
 				</p>
+				<div className="mt-7">
+					<ProButton as={BasicLink} href="/pro?tab=discover" size="lg" variant="secondary">
+						Browse dashboards
+					</ProButton>
+				</div>
 			</div>
 		)
 	}
 
 	return (
 		<div>
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 				{dashboards.map((dashboard) => (
 					<DashboardCard key={dashboard.id} dashboard={dashboard} viewMode="grid" />
 				))}
 			</div>
 
 			{totalPages > 1 ? (
-				<div className="mt-8 flex items-center justify-center gap-2">
-					<button
+				<div className="mt-8 flex items-center justify-center gap-1">
+					<ProButton
 						type="button"
+						square
+						variant="ghost"
+						aria-label="Previous page"
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed text-pro-text-tertiary' : 'text-pro-text-primary hover:bg-pro-glass-bg'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
-					</button>
+					</ProButton>
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
 						let pageNum = i + 1
@@ -54,31 +59,29 @@ export function LikedDashboards() {
 							}
 						}
 						return (
-							<button
+							<ProButton
 								type="button"
+								square
+								variant={page === pageNum ? 'primary' : 'ghost'}
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
-								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-brand text-on-brand' : 'text-pro-text-primary hover:bg-pro-glass-bg'
-								}`}
+								{...(page === pageNum ? { 'aria-current': 'page' as const } : {})}
 							>
 								{pageNum}
-							</button>
+							</ProButton>
 						)
 					})}
 
-					<button
+					<ProButton
 						type="button"
+						square
+						variant="ghost"
+						aria-label="Next page"
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
-						className={`px-3 py-1 ${
-							page === totalPages
-								? 'cursor-not-allowed text-pro-text-tertiary'
-								: 'text-pro-text-primary hover:bg-pro-glass-bg'
-						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />
-					</button>
+					</ProButton>
 				</div>
 			) : null}
 		</div>

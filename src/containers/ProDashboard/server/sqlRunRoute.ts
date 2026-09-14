@@ -102,7 +102,7 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 	}
 	const item = findSqlItem(dashboard, itemId)
 	if (!item) {
-		return res.status(404).json({ error: 'SQL widget not found on dashboard' })
+		return res.status(404).json({ error: 'SQL card not found on dashboard' })
 	}
 	try {
 		validateSqlRecipe(item.query)
@@ -123,7 +123,7 @@ export async function sqlRunHandler(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(access.status).json({ error: access.error })
 	}
 	if (forceRefresh && access.userId !== dashboard.user) {
-		return res.status(403).json({ error: 'Only an editor can refresh this SQL widget' })
+		return res.status(403).json({ error: 'Only an editor can refresh this SQL card' })
 	}
 
 	try {

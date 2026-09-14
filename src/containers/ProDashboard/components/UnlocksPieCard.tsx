@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useContext, useMemo } from 'react'
+import { lazy, type ReactNode, Suspense, useCallback, useContext, useMemo } from 'react'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProMeta } from '../ui'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
@@ -28,7 +31,7 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 
 	const streamDone = useContext(StreamDoneContext)
-	const { data, isLoading } = useQuery({
+	const { data, isLoading, isError, isFetching, refetch } = useQuery({
 		queryKey: ['pro-dashboard', 'unlocks-pie', protocol, includeSupplyMeta],
 		queryFn: () => getProtocolEmissionsPieData(slug(protocol), includeSupplyMeta),
 		enabled: streamDone && Boolean(protocol),
@@ -67,36 +70,53 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 		downloadCSV(csvFileName, rows)
 	}, [chartData, csvFileName, hasChartData])
 
-	if (isLoading || (!streamDone && data === undefined)) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LoadingSpinner />
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
+
+	const retryPieData = () => {
+		void refetch()
+	}
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader titleAs="h3" title={chartTitle} subtitle={<ProMeta items={[protocolName]} />} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading || (!streamDone && data === undefined)) {
+		return renderStatusShell(<ProCardLoading variant="pie" />)
+	}
+
+	if (isError && data === undefined) {
+		return renderStatusShell(isFetching ? <ProCardLoading variant="pie" /> : <ProCardError onRetry={retryPieData} />)
 	}
 
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{chartTitle}</h3>
-					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
-				</div>
-				{hasChartData ? (
-					<div className="flex gap-2">
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: csvFileName, title: chartTitle }}
-							csv={{ onClick: handleCsvExport }}
-						/>
-					</div>
-				) : null}
-			</div>
-			<div className="flex-1">
+		<div className="flex h-full flex-col p-0">
+			{isError ? <ProCardRefreshFailed onRetry={retryPieData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTitle}
+				badge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
+				subtitle={<ProMeta items={[protocolName]} />}
+				menu={
+					hasChartData
+						? {
+								image: { chartInstance, filename: csvFileName, title: chartTitle },
+								csv: { onClick: handleCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="flex-1 px-3 pb-3">
 				{hasChartData ? (
 					<Suspense
 						fallback={
-							<div className="flex h-[320px] items-center justify-center">
-								<LoadingSpinner />
+							<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+								<ProCardLoading variant="pie" />
 							</div>
 						}
 					>
@@ -105,12 +125,13 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 							chartData={chartData}
 							stackColors={stackColors}
 							valueSymbol={valueSymbol}
+							height={chartHeight}
 						/>
 					</Suspense>
 				) : (
-					<p className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
-						No unlocks data.
-					</p>
+					<div className="flex h-[calc(320px*var(--card-scale,1))] flex-col justify-center">
+						<ProCardEmpty message="No unlocks data." />
+					</div>
 				)}
 			</div>
 		</div>

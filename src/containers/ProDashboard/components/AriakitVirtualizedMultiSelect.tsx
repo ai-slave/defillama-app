@@ -4,7 +4,7 @@ import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import type { MultiSelectOption } from '~/components/Select/types'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 interface AriakitVirtualizedMultiSelectProps {
 	label: string
@@ -87,7 +87,7 @@ function MultiSelectPopoverBody({
 					value={search}
 					onChange={(e) => handleSearchChange(e.target.value)}
 					placeholder="Search..."
-					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 			<div
@@ -154,7 +154,7 @@ function MultiSelectPopoverBody({
 												{option.label}
 											</span>
 											{option.isChild ? (
-												<span className="text-[10px] leading-none text-pro-text-tertiary">Child protocol</span>
+												<span className="text-xs leading-none text-pro-text-tertiary">Child protocol</span>
 											) : null}
 										</div>
 									</div>
@@ -171,12 +171,12 @@ function MultiSelectPopoverBody({
 						<div className="flex size-5 items-center justify-center rounded-full bg-brand/15">
 							<Icon name="check" width={10} height={10} className="text-brand" />
 						</div>
-						<span className="text-[11px] font-medium text-pro-text-secondary">{selectedValues.length} selected</span>
+						<span className="text-xs font-medium text-pro-text-secondary">{selectedValues.length} selected</span>
 					</div>
 					<button
 						type="button"
 						onClick={clearAll}
-						className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-brand"
+						className="text-xs font-medium text-pro-text-tertiary transition-colors hover:text-brand"
 					>
 						Clear All
 					</button>
@@ -210,7 +210,7 @@ export function AriakitVirtualizedMultiSelect({
 
 	return (
 		<div className={className}>
-			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
+			<label htmlFor={disclosureId} className="mb-1 block text-xs font-medium text-pro-text-secondary">
 				{label}
 				{selectedValues.length > 0 ? (
 					<span className="ml-1 text-xs text-pro-text-tertiary">
@@ -220,15 +220,15 @@ export function AriakitVirtualizedMultiSelect({
 				) : null}
 			</label>
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-pro-form-control-border bg-surface-elevated-1">
-					<LoadingSpinner size="sm" />
+				<div className="flex h-9 items-center justify-center rounded-md border border-pro-cards-border bg-surface-elevated-1">
+					<LoadingSpinner size={16} />
 				</div>
 			) : (
 				<>
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span
 							className={`truncate ${selectedValues.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
@@ -243,7 +243,7 @@ export function AriakitVirtualizedMultiSelect({
 						portal
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"
+						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-overlay-sm"
 						style={{ width: 'var(--popover-anchor-width)' }}
 						unmountOnHide
 					>

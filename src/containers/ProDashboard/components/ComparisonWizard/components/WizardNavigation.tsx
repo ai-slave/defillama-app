@@ -70,7 +70,7 @@ export function WizardNavigation({
 					type="button"
 					onClick={onBack}
 					disabled={!canGoBack}
-					className="flex items-center gap-1.5 rounded-md border border-pro-form-control-border px-4 py-2 text-sm font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex items-center gap-1.5 rounded-md border border-pro-cards-border px-4 py-2 text-sm font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					<Icon name="arrow-left" height={14} width={14} />
 					Back

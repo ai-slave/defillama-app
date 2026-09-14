@@ -4,6 +4,8 @@ import * as React from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
+import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
@@ -466,14 +468,17 @@ export function DemoPreview() {
 	if (!firstMultiChart || !secondMultiChart || !thirdMultiChart) {
 		throw new Error('Demo preview requires three multi-chart examples')
 	}
+	const createAccountHref = `/subscription?returnUrl=${encodeURIComponent(router.asPath)}`
 
 	return (
 		<div className="relative min-h-screen pro-dashboard">
 			<div className="border-b border-subtle bg-(--bg) py-6">
 				<div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
 					<div className="text-center">
-						<h1 className="mb-2 text-3xl font-bold text-pro-text-primary">Pro Dashboard Preview</h1>
-						<p className="text-lg text-pro-text-secondary">See what you'll get with Pro access:</p>
+						<h1 className="mb-2 text-3xl font-bold text-pro-text-primary">Build your own DeFi dashboard</h1>
+						<p className="text-lg text-pro-text-secondary">
+							Combine TVL, fees, volume and protocol tables into one live view, then share it with a link.
+						</p>
 					</div>
 
 					<div className="flex items-center justify-center">
@@ -516,14 +521,14 @@ export function DemoPreview() {
 										<span className="text-secondary dark:text-pro-text-secondary">Basic DeFi data access</span>
 									</li>
 								</ul>
-								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>
+								<Link href={createAccountHref}>
 									<span className="inline-block cursor-pointer rounded-sm border border-brand px-6 py-2.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-on-brand">
 										Create Free Account
 									</span>
 								</Link>
 							</div>
 
-							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand/10 to-purple-600/10 px-6 py-8 text-center shadow-xl shadow-brand/10 transition-transform hover:scale-[1.02]">
+							<div className="relative flex transform flex-col rounded-sm border-2 border-brand bg-linear-to-br from-brand/10 to-purple-600/10 px-6 py-8 text-center shadow-overlay-sm transition-transform hover:scale-[1.02]">
 								<h3 className="mb-3 bg-linear-to-r from-brand to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
 									Pro
 								</h3>
@@ -556,7 +561,7 @@ export function DemoPreview() {
 										<span className="text-pro-text-primary">Priority access to new features</span>
 									</li>
 								</ul>
-								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>
+								<Link href={createAccountHref}>
 									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-brand to-purple-600 px-8 py-3 font-semibold text-on-brand shadow-lg transition-opacity hover:opacity-90">
 										<Icon name="sparkles" height={16} width={16} />
 										Upgrade to Pro
@@ -568,9 +573,31 @@ export function DemoPreview() {
 				</div>
 			</div>
 
+			<div className="sticky top-0 z-20 border-b border-subtle bg-(--bg)">
+				<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+					<p className="text-sm text-pro-text-secondary">
+						Start free to browse community dashboards, upgrade to Pro to build your own.
+					</p>
+					<div className="flex flex-wrap items-center gap-2">
+						<Button as={BasicLink} href="/pro?tab=discover" size="md" data-umami-event="demo-preview-discover">
+							See community dashboards
+						</Button>
+						<Button
+							as={BasicLink}
+							href={createAccountHref}
+							variant="primary"
+							size="md"
+							data-umami-event="demo-preview-create-account"
+						>
+							Create a free account
+						</Button>
+					</div>
+				</div>
+			</div>
+
 			<div className="mx-auto grid w-full max-w-7xl grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-2">
 				<p className="col-span-full p-2 text-center text-xs text-pro-text-form italic">
-					Demo Preview - All data shown below is simulated for demonstration purposes
+					Sample charts use illustrative data
 				</p>
 
 				<div
@@ -602,19 +629,6 @@ export function DemoPreview() {
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
-
-				<div className="col-span-2 rounded-md border border-pro-cards-border bg-pro-cards-bg">
-					<UnifiedTable
-						config={{
-							id: 'demo-ethereum-protocols',
-							kind: 'unified-table',
-							configVersion: 3,
-							strategy: 'protocols',
-							rowHeaders: ['parent-protocol', 'protocol'],
-							params: { chains: DEMO_CHAINS }
-						}}
-					/>
-				</div>
 
 				<div
 					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
@@ -653,6 +667,22 @@ export function DemoPreview() {
 					className={`${thirdMultiChart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<DemoMultiChartCard multi={thirdMultiChart} />
+				</div>
+			</div>
+
+			<div className="mx-auto flex w-full max-w-7xl flex-col gap-2">
+				<p className="p-2 text-center text-xs text-pro-text-form italic">Live data from DefiLlama</p>
+				<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg">
+					<UnifiedTable
+						config={{
+							id: 'demo-ethereum-protocols',
+							kind: 'unified-table',
+							configVersion: 3,
+							strategy: 'protocols',
+							rowHeaders: ['parent-protocol', 'protocol'],
+							params: { chains: DEMO_CHAINS }
+						}}
+					/>
 				</div>
 			</div>
 		</div>

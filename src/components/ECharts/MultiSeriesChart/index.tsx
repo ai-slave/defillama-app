@@ -28,12 +28,15 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
+import { prefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { slug } from '~/utils'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { ChartContainer } from '../shared/ChartContainer'
 import { ChartHeader } from '../shared/ChartHeader'
+import { joinChartHoverSync } from '../shared/chartHoverSync'
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
+import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
 import {
 	CHART_HALLMARK_LABEL_RESERVE,
 	CHART_INSET,
@@ -89,6 +92,7 @@ function isChartDisposed(instance: echarts.ECharts) {
 type GroupBy = NonNullable<IMultiSeriesChartProps['groupBy']>
 
 const CATEGORY_LOGO_SIZE = 22
+const OFFSCREEN_TOOLTIP_POSITION: [number, number] = [-100_000, -100_000]
 const CATEGORY_LOGO_BOTTOM_GAP = 10
 const EMPTY_CHART_OPTIONS: NonNullable<IMultiSeriesChartProps['chartOptions']> = {}
 
@@ -183,7 +187,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		headingAs,
 		containerClassName,
 		categoryLogos,
-		isThemeDark: isThemeDarkOverride
+		isThemeDark: isThemeDarkOverride,
+		syncGroup
 	} = props
 
 	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
@@ -208,6 +213,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		logoBg: string
 	} | null>(null)
 	const latestTooltipDataIndexRef = useRef<number | null>(null)
+	const chartMotion = useChartMotion()
 	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
 	// recreating it on effect re-runs and prevents cross-chart interference.
 	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)
@@ -216,6 +222,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const getChart = useStableCallback(() => chartRef.current)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const persistentLifecycle = usePersistentEChartsLifecycle()
+	const { hasEnteredRef } = persistentLifecycle
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, chartDomRef)
@@ -663,6 +670,13 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	}, [handleChartReady, persistentLifecycle, showLatestTooltip, syncCategoryLogos])
 
 	useEffect(() => {
+		const instance = chartRef.current
+		const el = chartDomRef.current
+		if (!instance || !el || !syncGroup) return
+		return joinChartHoverSync(syncGroup, instance, el)
+	}, [syncGroup])
+
+	useEffect(() => {
 		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
 	}, [handleChartReady, shouldEnableCSVDownload, shouldEnableImageExport])
 
@@ -747,6 +761,10 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			// Clamp against the layout viewport (excludes scrollbar width).
 			const vw = document.documentElement?.clientWidth || window.innerWidth
 			const vh = document.documentElement?.clientHeight || window.innerHeight
+
+			const containerOutsideViewport =
+				containerRect.bottom <= 0 || containerRect.top >= vh || containerRect.right <= 0 || containerRect.left >= vw
+			if (containerOutsideViewport) return OFFSCREEN_TOOLTIP_POSITION
 
 			const pX = Number.isFinite(px) ? px : 0
 			const pY = Number.isFinite(py) ? py : 0
@@ -886,12 +904,14 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			: series
 		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
 
+		const hasRenderableSeries = finalSeries.length > 0 && datasetLength > 0
 		const option: EChartsOption = {
 			tooltip: tooltipConfig,
 			grid: finalGrid,
 			yAxis: finalYAxisWithEvents,
 			series: finalSeries,
-			dataset: datasetForOption
+			dataset: datasetForOption,
+			...enterAnimationOptions(chartMotion, hasEnteredRef.current || !hasRenderableSeries, prefersReducedMotion())
 		}
 		const renderedLegend = finalLegend ?? legend
 		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
@@ -899,6 +919,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
 		if (!shouldHideDataZoom && dataZoom !== undefined) option.dataZoom = dataZoom
 		instance.setOption(option, { notMerge: true })
+		if (hasRenderableSeries) hasEnteredRef.current = true
 
 		if (hasCategoryLogos) {
 			const categoryValues = renderedDatasetSource.map((row) => row[0])
@@ -957,7 +978,9 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		categoryLogos,
 		hasCategoryLogos,
 		showLatestTooltip,
-		syncCategoryLogos
+		syncCategoryLogos,
+		chartMotion,
+		hasEnteredRef
 	])
 
 	useEffect(() => {

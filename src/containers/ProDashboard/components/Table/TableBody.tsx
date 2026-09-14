@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-table/static-functions'
 import type { SortingFeatures, VisibilityFeatures } from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { ProCardLoading } from '../ProCardStatus'
 
 interface TableBodyProps<F extends SortingFeatures & VisibilityFeatures, TData extends RowData> {
 	table: Table<F, TData>
@@ -90,9 +91,8 @@ export function TableBody<F extends SortingFeatures & VisibilityFeatures, TData 
 									<tr>
 										<td colSpan={table.getAllLeafColumns().length} className="py-8 text-center">
 											{isLoading ? (
-												<div className="flex items-center justify-center gap-2">
-													<div className="size-5 animate-spin rounded-full border-b-2 border-brand" />
-													<span className="text-pro-text-tertiary">Loading data...</span>
+												<div className="flex">
+													<ProCardLoading variant="table" label="Loading data…" />
 												</div>
 											) : (
 												<span className="text-pro-text-tertiary">{emptyMessage}</span>

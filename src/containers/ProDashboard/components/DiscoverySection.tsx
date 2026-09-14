@@ -1,99 +1,69 @@
-import { useRef, useState, useEffect } from 'react'
 import { BasicLink } from '~/components/Link'
-import { Icon, type IIcon } from '~/ui/Icon'
+import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
+import { Icon } from '~/ui/Icon'
 import type { Dashboard } from '../dashboardTypes'
+import { ProButton } from '../ui'
 import { DashboardCard } from './DashboardCard'
 
 interface DiscoverySectionProps {
 	title: string
 	subtitle?: string
-	icon: IIcon['name']
-	iconBg?: string
-	iconColor?: string
 	dashboards: Array<Dashboard>
 	isLoading: boolean
 	seeAllHref: string
+	emptyMessage: string
 	onTagClick: (tag: string) => void
+}
+
+export function DiscoveryShelfHeading({
+	title,
+	subtitle,
+	seeAllHref
+}: {
+	title: string
+	subtitle?: string | undefined
+	seeAllHref?: string | undefined
+}) {
+	return (
+		<div className="flex items-end justify-between gap-3">
+			<div className="flex min-w-0 flex-col gap-0.5">
+				<h3 className="text-base font-semibold text-pro-text-primary">{title}</h3>
+				{subtitle ? <p className="text-xs text-pro-text-tertiary">{subtitle}</p> : null}
+			</div>
+			{seeAllHref ? (
+				<BasicLink
+					href={seeAllHref}
+					className="flex shrink-0 items-center gap-1 text-sm font-medium text-link hover:underline"
+				>
+					See all
+					<Icon name="arrow-right" height={14} width={14} />
+				</BasicLink>
+			) : null}
+		</div>
+	)
 }
 
 export function DiscoverySection({
 	title,
 	subtitle,
-	icon,
-	iconBg,
-	iconColor,
 	dashboards,
 	isLoading,
 	seeAllHref,
+	emptyMessage,
 	onTagClick
 }: DiscoverySectionProps) {
-	const scrollContainerRef = useRef<HTMLDivElement>(null)
-	const [canScrollLeft, setCanScrollLeft] = useState(false)
-	const [canScrollRight, setCanScrollRight] = useState(true)
-	const rafIdRef = useRef<number | null>(null)
-	// Cache previous values to avoid unnecessary state updates
-	const prevScrollStateRef = useRef({ canScrollLeft: false, canScrollRight: true })
-
-	const updateScrollState = () => {
-		// Cancel any pending RAF to avoid stacking
-		if (rafIdRef.current) return
-
-		rafIdRef.current = requestAnimationFrame(() => {
-			rafIdRef.current = null
-			const container = scrollContainerRef.current
-			if (!container) return
-
-			// Batch read all scroll properties at once
-			const { scrollLeft, scrollWidth, clientWidth } = container
-			const newCanScrollLeft = scrollLeft > 0
-			const newCanScrollRight = scrollLeft < scrollWidth - clientWidth - 10
-
-			// Only update state if values changed
-			if (newCanScrollLeft !== prevScrollStateRef.current.canScrollLeft) {
-				prevScrollStateRef.current.canScrollLeft = newCanScrollLeft
-				setCanScrollLeft(newCanScrollLeft)
-			}
-			if (newCanScrollRight !== prevScrollStateRef.current.canScrollRight) {
-				prevScrollStateRef.current.canScrollRight = newCanScrollRight
-				setCanScrollRight(newCanScrollRight)
-			}
-		})
-	}
-
-	// Cleanup RAF on unmount
-	useEffect(() => {
-		return () => {
-			if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current)
-		}
-	}, [])
-
-	const scroll = (direction: 'left' | 'right') => {
-		const container = scrollContainerRef.current
-		if (!container) return
-		const scrollAmount = direction === 'left' ? -640 : 640
-		container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-	}
+	const { ref: scrollContainerRef, canScrollLeft, canScrollRight, scrollByPage } = useHorizontalOverflow()
 
 	if (isLoading) {
 		return (
 			<div className="flex flex-col gap-3">
-				<div className="flex items-center justify-between">
-					<div className="flex flex-col gap-0.5">
-						<h3 className="flex items-center gap-2 text-lg font-semibold">
-							<span className={`flex size-7 items-center justify-center rounded-md ${iconBg ?? 'bg-(--bg-hover)'}`}>
-								<Icon name={icon} height={18} width={18} className={iconColor} />
-							</span>
-							{title}
-						</h3>
-						{subtitle ? <p className="ml-9 text-xs text-pro-text-label">{subtitle}</p> : null}
-					</div>
-				</div>
-				<div className="flex gap-4 overflow-hidden">
+				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
+				<div className="flex gap-3 overflow-hidden">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<div
 							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-${title}-${i}`}
-							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg md:w-[320px]"
+							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg md:w-[320px]"
 						>
 							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 						</div>
@@ -104,48 +74,40 @@ export function DiscoverySection({
 	}
 
 	if (dashboards.length === 0) {
-		return null
+		return (
+			<div className="flex flex-col gap-3">
+				<DiscoveryShelfHeading title={title} subtitle={subtitle} />
+				<p className="rounded-lg border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-secondary">
+					{emptyMessage}
+				</p>
+			</div>
+		)
 	}
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="flex items-center justify-between">
-				<div className="flex flex-col gap-0.5">
-					<h3 className="flex items-center gap-2 text-lg font-semibold">
-						<span className={`flex size-7 items-center justify-center rounded-md ${iconBg ?? 'bg-(--bg-hover)'}`}>
-							<Icon name={icon} height={18} width={18} className={iconColor} />
-						</span>
-						{title}
-					</h3>
-					{subtitle ? <p className="ml-9 text-xs text-pro-text-label">{subtitle}</p> : null}
-				</div>
-				<BasicLink
-					href={seeAllHref}
-					className="flex items-center gap-1.5 rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-accent transition-colors duration-150 hover:border-pro-accent/30 hover:bg-pro-accent/10"
-				>
-					See all
-					<Icon name="arrow-right" height={14} width={14} />
-				</BasicLink>
-			</div>
+			<DiscoveryShelfHeading title={title} subtitle={subtitle} seeAllHref={seeAllHref} />
 
-			<div className="group relative">
+			<div className="group/rail relative">
 				{canScrollLeft ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
-						<button
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-12 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
+						<ProButton
 							type="button"
-							onClick={() => scroll('left')}
-							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+							square
+							variant="secondary"
+							aria-label={`Scroll ${title} left`}
+							onClick={() => scrollByPage('left')}
+							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 						>
-							<Icon name="chevron-left" height={20} width={20} />
-						</button>
+							<Icon name="chevron-left" height={16} width={16} />
+						</ProButton>
 					</>
 				) : null}
 
 				<div
 					ref={scrollContainerRef}
-					onScroll={updateScrollState}
-					className="flex scrollbar-none snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
+					className="-mt-1 flex scrollbar-none snap-x snap-mandatory items-stretch gap-3 overflow-x-auto pt-1 pb-2 md:snap-none"
 				>
 					{dashboards.map((dashboard) => (
 						<div
@@ -159,14 +121,17 @@ export function DiscoverySection({
 
 				{canScrollRight && dashboards.length > 3 ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
-						<button
+						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-12 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
+						<ProButton
 							type="button"
-							onClick={() => scroll('right')}
-							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+							square
+							variant="secondary"
+							aria-label={`Scroll ${title} right`}
+							onClick={() => scrollByPage('right')}
+							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 opacity-0 shadow-overlay-sm transition-opacity duration-120 group-hover/rail:opacity-100 focus-visible:opacity-100 md:flex"
 						>
-							<Icon name="chevron-right" height={20} width={20} />
-						</button>
+							<Icon name="chevron-right" height={16} width={16} />
+						</ProButton>
 					</>
 				) : null}
 			</div>

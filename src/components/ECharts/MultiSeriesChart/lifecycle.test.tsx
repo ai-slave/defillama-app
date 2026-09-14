@@ -3,6 +3,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { EChartsRenderVisibilityProvider } from '../renderVisibility'
+import { ChartMotionContext } from '../shared/chartMotion'
 import { ChartWatermarkContext } from '../shared/watermark'
 
 const mocks = vi.hoisted(() => {
@@ -12,6 +14,7 @@ const mocks = vi.hoisted(() => {
 		dispose: vi.fn(),
 		getHeight: vi.fn(() => 360),
 		getOption: vi.fn(() => ({})),
+		group: '',
 		isDisposed: vi.fn(() => false),
 		off: vi.fn(),
 		on: vi.fn(),
@@ -20,7 +23,9 @@ const mocks = vi.hoisted(() => {
 	}
 
 	return {
-		init: vi.fn(() => instance),
+		connect: vi.fn(),
+		disconnect: vi.fn(),
+		init: vi.fn((_element: HTMLElement) => instance),
 		instance,
 		use: vi.fn()
 	}
@@ -28,6 +33,8 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('echarts/core', () => ({
 	color: { lift: (value: string) => value },
+	connect: mocks.connect,
+	disconnect: mocks.disconnect,
 	graphic: { LinearGradient: class {} },
 	init: mocks.init,
 	use: mocks.use
@@ -65,6 +72,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		vi.clearAllMocks()
+		mocks.instance.group = ''
 	})
 
 	afterEach(async () => {
@@ -81,6 +89,125 @@ describe('MultiSeriesChart lifecycle', () => {
 			)
 		)
 		for (const [option] of mocks.instance.setOption.mock.calls) expect(option.graphic).toBeUndefined()
+	})
+
+	test('draws itself in once under a draw-mode provider and never re-animates', async () => {
+		await act(async () =>
+			root.render(
+				<ChartMotionContext.Provider value="draw">
+					<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />
+				</ChartMotionContext.Provider>
+			)
+		)
+
+		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
+		expect(mocks.instance.setOption.mock.calls[0][0]).toMatchObject({
+			animation: true,
+			animationDuration: 700,
+			animationEasing: 'quarticOut',
+			animationThreshold: 200_000
+		})
+		expect(mocks.instance.setOption.mock.calls[0][0]).not.toHaveProperty('animationDurationUpdate')
+
+		const updatedDataset: MultiSeriesChartDataset = {
+			dimensions: ['timestamp', 'Value'],
+			source: [
+				[1, 10],
+				[2, 20]
+			]
+		}
+		await act(async () =>
+			root.render(
+				<ChartMotionContext.Provider value="draw">
+					<MultiSeriesChart dataset={updatedDataset} charts={CHARTS} exportButtons="hidden" />
+				</ChartMotionContext.Provider>
+			)
+		)
+
+		expect(mocks.instance.setOption).toHaveBeenCalledTimes(2)
+		expect(mocks.instance.setOption.mock.calls[1][0]).not.toHaveProperty('animation')
+		expect(mocks.instance.setOption.mock.calls[1][0].animationDuration).toBe(0)
+	})
+
+	test('keeps the chart entered across a scroll-away remount', async () => {
+		const renderChart = (visible: boolean) =>
+			act(async () =>
+				root.render(
+					<ChartMotionContext.Provider value="draw">
+						<EChartsRenderVisibilityProvider visible={visible}>
+							<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />
+						</EChartsRenderVisibilityProvider>
+					</ChartMotionContext.Provider>
+				)
+			)
+
+		await renderChart(true)
+		expect(mocks.instance.setOption.mock.calls[0][0].animation).toBe(true)
+
+		await renderChart(false)
+		await renderChart(true)
+
+		expect(mocks.init).toHaveBeenCalledTimes(2)
+		expect(mocks.instance.setOption.mock.calls.at(-1)?.[0].animationDuration).toBe(0)
+	})
+
+	test('leaves an empty chart its first draw for when the data arrives', async () => {
+		await act(async () =>
+			root.render(
+				<ChartMotionContext.Provider value="draw">
+					<MultiSeriesChart
+						dataset={{ dimensions: ['timestamp', 'Value'], source: [] }}
+						charts={CHARTS}
+						exportButtons="hidden"
+					/>
+				</ChartMotionContext.Provider>
+			)
+		)
+		expect(mocks.instance.setOption.mock.calls[0][0].animationDuration).toBe(0)
+
+		await act(async () =>
+			root.render(
+				<ChartMotionContext.Provider value="draw">
+					<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />
+				</ChartMotionContext.Provider>
+			)
+		)
+		expect(mocks.instance.setOption.mock.calls[1][0].animation).toBe(true)
+	})
+
+	test('parks the tooltip offscreen while its chart is scrolled out of the viewport', async () => {
+		await act(async () =>
+			root.render(<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />)
+		)
+		const chartElement = mocks.init.mock.calls[0]![0] as HTMLElement
+		const lastOption = mocks.instance.setOption.mock.calls.at(-1)![0]
+		const position = lastOption.tooltip.position as (
+			point: [number, number],
+			params: unknown,
+			dom: HTMLElement,
+			rect: unknown,
+			size: { contentSize: [number, number] }
+		) => [number, number]
+		const rect = (top: number) => ({ top, bottom: top + 300, left: 0, right: 600, width: 600, height: 300 }) as DOMRect
+		const rectSpy = vi.spyOn(chartElement, 'getBoundingClientRect').mockReturnValue(rect(-900))
+		const parked = position([100, 100], [], document.createElement('div'), null, { contentSize: [200, 80] })
+		expect(parked[0]).toBeLessThan(-10_000)
+		expect(parked[1]).toBeLessThan(-10_000)
+		rectSpy.mockReturnValue(rect(100))
+		const [x, y] = position([100, 100], [], document.createElement('div'), null, { contentSize: [200, 80] })
+		expect(x).toBeGreaterThan(-100)
+		expect(y).toBeGreaterThan(-100)
+	})
+
+	test('leaves animation to echarts outside a draw-mode provider', async () => {
+		await act(async () =>
+			root.render(<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />)
+		)
+
+		const option = mocks.instance.setOption.mock.calls[0][0]
+		expect(option).not.toHaveProperty('animation')
+		expect(option).not.toHaveProperty('animationDuration')
+		expect(option).not.toHaveProperty('animationEasing')
 	})
 
 	test('reuses one owned instance and stable listeners across rerenders', async () => {
@@ -127,6 +254,56 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(mocks.instance.off.mock.calls.map(([event]) => event)).toEqual(['finished', 'globalout'])
 		expect(mocks.instance.dispose).toHaveBeenCalledOnce()
 		expect(onReady).toHaveBeenLastCalledWith(null)
+	})
+
+	test('joins the hover sync after init, again after re-init, and leaves it when the prop is removed', async () => {
+		const renderChart = (visible: boolean, syncGroup?: string) =>
+			act(async () =>
+				root.render(
+					<EChartsRenderVisibilityProvider visible={visible}>
+						<MultiSeriesChart
+							dataset={INITIAL_DATASET}
+							charts={CHARTS}
+							exportButtons="hidden"
+							{...(syncGroup === undefined ? {} : { syncGroup })}
+						/>
+					</EChartsRenderVisibilityProvider>
+				)
+			)
+		const pointerListeners = () =>
+			mocks.instance.on.mock.calls.filter(([event]: [string]) => event === 'updateAxisPointer').length
+		const pointerRemovals = () =>
+			mocks.instance.off.mock.calls.filter(([event]: [string]) => event === 'updateAxisPointer').length
+
+		await renderChart(true, 'pro-dashboard-1')
+
+		expect(mocks.init).toHaveBeenCalledOnce()
+		expect(pointerListeners()).toBe(1)
+		expect(pointerRemovals()).toBe(0)
+
+		await renderChart(false, 'pro-dashboard-1')
+
+		expect(mocks.instance.dispose).toHaveBeenCalledOnce()
+		expect(pointerRemovals()).toBe(1)
+
+		await renderChart(true, 'pro-dashboard-1')
+
+		expect(mocks.init).toHaveBeenCalledTimes(2)
+		expect(pointerListeners()).toBe(2)
+
+		await renderChart(true)
+
+		expect(pointerRemovals()).toBe(2)
+		expect(pointerListeners()).toBe(2)
+	})
+
+	test('does not join a sync group without the prop', async () => {
+		await act(async () =>
+			root.render(<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />)
+		)
+
+		expect(mocks.instance.group).toBe('')
+		expect(mocks.connect).not.toHaveBeenCalled()
 	})
 
 	test('infers series in dimension order without assigning timestamp a color', async () => {

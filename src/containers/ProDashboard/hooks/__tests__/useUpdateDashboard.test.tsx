@@ -8,6 +8,8 @@ import { DashboardError } from '../../services/DashboardAPI'
 import { useUpdateDashboard } from '../useDashboardAPI'
 
 const api = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }))
+const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
+vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ isAuthenticated: true, user: { id: 'owner' }, authorizedFetch: vi.fn() })
 }))
@@ -64,6 +66,7 @@ beforeEach(() => {
 		editedAt: `after ${baseEditedAt}`
 	}))
 	api.get.mockReset().mockResolvedValue(remote)
+	toastMock.mockClear()
 	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
@@ -107,6 +110,19 @@ test('a conflict re-reads the dashboard, merges items and retries once against t
 	expect(api.update.mock.calls[1][3]).toBe('v2')
 	expect(result.data.items).toEqual([a, c, b])
 	expect(client.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'])).toEqual(result)
+	expect(toastMock).toHaveBeenCalledWith(
+		'This dashboard was changed in another tab or session. Your edits were merged.',
+		expect.objectContaining({ id: 'dashboard-merged' })
+	)
+})
+
+test('a conflict that changes nothing stays silent', async () => {
+	api.update.mockRejectedValueOnce(conflict())
+	api.get.mockResolvedValue(cached)
+	await mount()
+	await act(async () => save({ dashboardName: 'Original', items: [a] }))
+	expect(api.update).toHaveBeenCalledTimes(2)
+	expect(toastMock).not.toHaveBeenCalled()
 })
 
 test('a second conflict propagates', async () => {

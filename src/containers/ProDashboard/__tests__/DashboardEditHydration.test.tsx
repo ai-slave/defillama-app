@@ -5,7 +5,7 @@ import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { DashboardInitialRenderPayload } from '~/containers/ProDashboard/initialDashboard'
-import DashboardEditPage from '~/pages/pro/[dashboardId]/edit'
+import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
 
 const mocks = vi.hoisted(() => {
 	const signedOut = { isAuthenticated: false, user: null as { id: string } | null, loaders: { userLoading: false } }
@@ -13,7 +13,11 @@ const mocks = vi.hoisted(() => {
 		signedOut,
 		session: { ...signedOut },
 		listeners: new Set<() => void>(),
-		router: { query: { dashboardId: 'test-dashboard' }, replace: vi.fn() }
+		router: {
+			query: { dashboardId: 'test-dashboard', mode: ['edit'] },
+			asPath: '/pro/test-dashboard/edit',
+			replace: vi.fn()
+		}
 	}
 })
 vi.mock('next/router', () => ({ default: mocks.router, useRouter: () => mocks.router }))
@@ -40,10 +44,16 @@ vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
 	})
 }))
 vi.mock('~/containers/ProDashboard', () => ({ default: () => <input aria-label="Widget name" /> }))
+vi.mock('~/containers/ProDashboard/hooks/useDashboardEngagement', () => ({
+	useDashboardEngagement: () => ({ trackView: vi.fn() })
+}))
 vi.mock('~/containers/ProDashboard/components/ProDashboardLoader', () => ({
 	ProDashboardLoader: () => <p role="status">Loading editor</p>
 }))
-vi.mock('~/containers/ProDashboard/queries.server', () => ({ fetchDashboardConfig: vi.fn() }))
+vi.mock('~/containers/ProDashboard/queries.server', () => ({
+	fetchDashboardConfig: vi.fn(),
+	fetchDashboardConfigWithStatus: vi.fn()
+}))
 vi.mock('~/containers/ProDashboard/server/auth', () => ({
 	fetchAuthenticatedUserId: vi.fn(),
 	getAuthTokenFromRequest: vi.fn()
@@ -74,7 +84,17 @@ afterEach(async () => {
 })
 
 async function hydrate() {
-	const page = <DashboardEditPage dashboardId="test-dashboard" initialDashboard={initialDashboard} />
+	const page = (
+		<DashboardPage
+			dashboardId="test-dashboard"
+			mode="edit"
+			initialDashboard={initialDashboard}
+			seo={null}
+			ogImage={null}
+			noIndex
+			status={200}
+		/>
+	)
 	container.innerHTML = renderToString(page)
 	expect(container.textContent).toBe('Loading editor')
 	const onRecoverableError = vi.fn()
@@ -109,7 +129,7 @@ test.each(['signed out', 'another account'])('redirects when the restored sessio
 			? mocks.signedOut
 			: { isAuthenticated: true, user: { id: 'other' }, loaders: { userLoading: false } }
 	await hydrate()
-	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard')
+	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
 })
 
 test('still redirects when the owner signs out after hydration', async () => {
@@ -118,5 +138,5 @@ test('still redirects when the owner signs out after hydration', async () => {
 		mocks.session = mocks.signedOut
 		for (const listener of mocks.listeners) listener()
 	})
-	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard')
+	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
 })

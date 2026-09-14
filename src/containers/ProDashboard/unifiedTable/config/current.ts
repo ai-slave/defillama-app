@@ -1,4 +1,5 @@
 import type { StoredColSpan } from '../../dashboardConfig/colSpan'
+import type { DashboardCardHeight, DashboardItemBindings } from '../../types'
 import type { CustomColumnDefinition, TableFilters, UnifiedRowHeaderType } from './types'
 
 export const UNIFIED_TABLE_CONFIG_VERSION = 3 as const
@@ -150,6 +151,8 @@ export interface ProtocolsUnifiedTableConfig {
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 	customColumns?: Array<CustomColumnDefinition>
 }
 

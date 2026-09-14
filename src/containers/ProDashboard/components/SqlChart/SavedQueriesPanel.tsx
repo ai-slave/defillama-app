@@ -21,7 +21,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				<Icon name="bookmark" className="size-4 text-tertiary" />
 				<p className="text-xs text-secondary">No saved queries yet.</p>
 				<p className="body-sm text-tertiary">
-					Saving a SQL widget stores its query here — reusable on any dashboard and in SQL Studio.
+					Saving a SQL card stores its query here — reusable on any dashboard and in SQL Studio.
 				</p>
 			</div>
 		)

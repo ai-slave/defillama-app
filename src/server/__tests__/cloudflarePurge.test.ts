@@ -51,40 +51,66 @@ describe('research Cloudflare purge helpers', () => {
 
 	test('uses the configured site url when building purge urls', () => {
 		expect(
-			researchPathsToUrls(['/research/report/story'], { ...process.env, SITE_URL: 'https://www.defillama.test' })
+			researchPathsToUrls(['/research/report/story'], {
+				...process.env,
+				SITE_URL: 'https://www.defillama.test'
+			})
 		).toEqual(['https://www.defillama.test/research/report/story'])
 	})
 })
 
 describe('dashboard Cloudflare purge helpers', () => {
-	const env = { ...process.env, NEXT_PUBLIC_SITE_URL: 'https://defillama.test' }
+	const env = {
+		...process.env,
+		NEXT_PUBLIC_SITE_URL: 'https://defillama.test'
+	}
 
 	test('builds page and stream urls for id, slug, and previous slug', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'yield-overview', previousSlug: 'old-yield' }, env)).toEqual([
 			'https://defillama.test/pro/dash-1',
+			'https://defillama.test/pro/embed/dash-1',
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',
+			'https://defillama.test/api/og/pro/dash-1',
+			'https://defillama.test/api/og/pro/dash-1?variant=thumb',
 			'https://defillama.test/pro/yield-overview',
+			'https://defillama.test/pro/embed/yield-overview',
 			'https://defillama.test/api/dynamic/pro-dashboard/yield-overview/stream',
+			'https://defillama.test/api/og/pro/yield-overview',
+			'https://defillama.test/api/og/pro/yield-overview?variant=thumb',
 			'https://defillama.test/pro/old-yield',
-			'https://defillama.test/api/dynamic/pro-dashboard/old-yield/stream'
+			'https://defillama.test/pro/embed/old-yield',
+			'https://defillama.test/api/dynamic/pro-dashboard/old-yield/stream',
+			'https://defillama.test/api/og/pro/old-yield',
+			'https://defillama.test/api/og/pro/old-yield?variant=thumb'
 		])
 	})
 
 	test('dedupes keys and skips empty slugs', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'dash-1', previousSlug: null }, env)).toEqual([
 			'https://defillama.test/pro/dash-1',
-			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream'
+			'https://defillama.test/pro/embed/dash-1',
+			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',
+			'https://defillama.test/api/og/pro/dash-1',
+			'https://defillama.test/api/og/pro/dash-1?variant=thumb'
 		])
 	})
 
 	test('purges next data payloads when a build id is known', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'yield-overview' }, env, 'build-123')).toEqual([
 			'https://defillama.test/pro/dash-1',
+			'https://defillama.test/pro/embed/dash-1',
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',
+			'https://defillama.test/api/og/pro/dash-1',
+			'https://defillama.test/api/og/pro/dash-1?variant=thumb',
 			'https://defillama.test/_next/data/build-123/pro/dash-1.json',
+			'https://defillama.test/_next/data/build-123/pro/embed/dash-1.json',
 			'https://defillama.test/pro/yield-overview',
+			'https://defillama.test/pro/embed/yield-overview',
 			'https://defillama.test/api/dynamic/pro-dashboard/yield-overview/stream',
-			'https://defillama.test/_next/data/build-123/pro/yield-overview.json'
+			'https://defillama.test/api/og/pro/yield-overview',
+			'https://defillama.test/api/og/pro/yield-overview?variant=thumb',
+			'https://defillama.test/_next/data/build-123/pro/yield-overview.json',
+			'https://defillama.test/_next/data/build-123/pro/embed/yield-overview.json'
 		])
 	})
 })

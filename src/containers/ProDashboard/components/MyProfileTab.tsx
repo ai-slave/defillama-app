@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import { getAuthorBySlug, getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { AuthorProfileView } from '~/containers/Authors/AuthorProfileView'
 import type { AuthorDashboardSort } from '~/containers/Authors/types'
-import { LoadingSpinner } from './LoadingSpinner'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 const DASHBOARD_LIMIT = 24
 
@@ -43,7 +43,7 @@ export function MyProfileTab() {
 	if (!view) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
-				<LoadingSpinner />
+				<LoadingSpinner size={24} />
 			</div>
 		)
 	}

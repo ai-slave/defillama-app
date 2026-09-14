@@ -146,7 +146,8 @@ export function createDatasetTableConfig(input: DatasetTableSelection): DatasetT
 	const common = {
 		id: input.id,
 		kind: 'dataset-table' as const,
-		...(input.colSpan === undefined ? {} : { colSpan: input.colSpan })
+		...(input.colSpan === undefined ? {} : { colSpan: input.colSpan }),
+		...(input.height === undefined ? {} : { height: input.height })
 	}
 	switch (input.datasetType) {
 		case 'token-usage':

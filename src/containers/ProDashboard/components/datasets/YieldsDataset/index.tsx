@@ -1,7 +1,7 @@
 import * as React from 'react'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import type { ProYieldRow } from '../../../yieldData'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { useYieldsData } from './useYieldsData'
@@ -77,9 +77,8 @@ export function YieldsDataset({
 	})
 
 	return (
-		<div className="isolate flex h-full w-full flex-col p-4">
+		<div className="isolate flex h-full w-full flex-col">
 			<YieldsTableHeader
-				chains={chains}
 				columnPresets={columnPresets}
 				applyPreset={applyPreset}
 				activePreset={activePreset}
@@ -94,12 +93,11 @@ export function YieldsDataset({
 			/>
 
 			{isLoading ? (
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading yields data...</p>
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading yields data…" />
 				</div>
 			) : error ? (
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load yields data</div>
 				</div>
 			) : (

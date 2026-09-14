@@ -3,7 +3,6 @@ import { Icon } from '~/ui/Icon'
 import { CSVExportButton } from '../../CSVExportButton'
 
 interface YieldsTableHeaderProps {
-	chains: Array<string> | undefined
 	columnPresets: Record<string, ReadonlyArray<string>>
 	applyPreset: (presetName: string) => void
 	activePreset: string | null
@@ -17,10 +16,7 @@ interface YieldsTableHeaderProps {
 	activeFilterCount: number
 }
 
-const EMPTY_CHAINS: Array<string> = []
-
 export function YieldsTableHeader({
-	chains = EMPTY_CHAINS,
 	columnPresets,
 	applyPreset,
 	activePreset,
@@ -33,25 +29,11 @@ export function YieldsTableHeader({
 	setShowFiltersPanel,
 	activeFilterCount
 }: YieldsTableHeaderProps) {
-	const displayTitle = React.useMemo(() => {
-		if (chains.length === 0 || (chains.length === 1 && chains[0] === 'All')) {
-			return 'Yield Opportunities'
-		}
-		if (chains.length === 1) {
-			return `${chains[0]} Yields`
-		}
-		if (chains.length <= 3) {
-			return `${chains.join(', ')} Yields`
-		}
-		return `${chains.length} Chains Yields`
-	}, [chains])
-
 	const presetKeys = React.useMemo(() => Object.keys(columnPresets), [columnPresets])
 
 	return (
 		<div className="mb-3 text-primary">
-			<div className="mb-3 flex items-center justify-between gap-4">
-				<h3 className="text-lg font-semibold">{displayTitle}</h3>
+			<div className="mb-3 flex items-center justify-end gap-4">
 				<div className="flex items-center gap-2">
 					<input
 						type="text"

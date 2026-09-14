@@ -145,4 +145,5 @@ export interface IMultiSeriesChartProps {
 	logEligibleYAxes?: Array<number>
 	/** Use an explicit theme for standalone/embed callers; normal pages use the shared theme manager. */
 	isThemeDark?: boolean
+	syncGroup?: string
 }

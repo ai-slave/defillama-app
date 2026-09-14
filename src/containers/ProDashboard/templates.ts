@@ -1,21 +1,33 @@
 import { createChartConfig, createMetricConfig } from './dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from './dashboardItemConfig'
+import type { DashboardVariable } from './dashboardTypes'
 import {
 	getProDashboardChartTypeConfig,
+	type AdvancedTvlChartConfig,
 	type Chain,
+	type ChainChartType,
 	type ChartConfig,
+	type IncomeStatementConfig,
 	type MetricConfig,
 	type MultiChartConfig,
 	type ProDashboardChartType,
-	type Protocol
+	type Protocol,
+	type ProtocolChartType,
+	type StablecoinsChartConfig,
+	type UnlocksScheduleConfig
 } from './types'
 import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from './unifiedTable/config/current'
 import { generateItemId } from './utils/dashboardUtils'
 
-export interface DashboardTemplate {
+interface DashboardTemplateBase {
 	id: string
 	name: string
 	description: string
+}
+
+export interface ComparisonDashboardTemplate extends DashboardTemplateBase {
+	parameterized?: false
+	variables?: never
 	type: 'chains' | 'protocols'
 	metrics: Array<ProDashboardChartType>
 	filter: {
@@ -30,7 +42,145 @@ export interface DashboardTemplate {
 	grouping?: 'day' | 'week' | 'month'
 }
 
+export interface ParameterizedDashboardTemplate extends DashboardTemplateBase {
+	parameterized: true
+	variables: Array<DashboardVariable>
+	createItems: () => Array<DashboardItemConfig>
+}
+
+export type DashboardTemplate = ComparisonDashboardTemplate | ParameterizedDashboardTemplate
+
+export interface GeneratedTemplate {
+	items: Array<DashboardItemConfig>
+	variables: Array<DashboardVariable>
+}
+
+const CHAIN_OVERVIEW_CHAIN = 'Ethereum'
+const CHAIN_OVERVIEW_METRIC_TYPES: Array<ChainChartType> = ['tvl', 'volume', 'fees', 'activeUsers']
+const CHAIN_OVERVIEW_CHART_TYPES: Array<ChainChartType> = ['tvl', 'fees']
+const CHAIN_OVERVIEW_TABLE_COLUMNS = ['name', 'category', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h']
+
+const PROTOCOL_DEEP_DIVE_PROTOCOL = { slug: 'aave', name: 'Aave' }
+const PROTOCOL_DEEP_DIVE_CHART_TYPES: Array<ProtocolChartType> = ['tvl', 'fees', 'revenue']
+
+function createChainOverviewItems(): Array<DashboardItemConfig> {
+	const chain = CHAIN_OVERVIEW_CHAIN
+	const metrics: Array<MetricConfig> = []
+	for (const type of CHAIN_OVERVIEW_METRIC_TYPES) {
+		const metric = createMetricConfig({
+			id: generateItemId('metric', `chain-overview-${type}`),
+			kind: 'metric',
+			subject: { itemType: 'chain', chain },
+			type,
+			aggregator: 'latest',
+			window: '30d',
+			compare: { mode: 'previous_window', format: 'percent' },
+			chartType: 'sparkline',
+			colSpan: 0.5,
+			bindings: { subject: 'chain' }
+		})
+		if (metric) metrics.push(metric)
+	}
+	const charts: Array<ChartConfig> = []
+	for (const type of CHAIN_OVERVIEW_CHART_TYPES) {
+		const chart = createChartConfig({
+			id: generateItemId('chart', `chain-overview-${type}`),
+			kind: 'chart',
+			subjectType: 'chain',
+			chain,
+			type,
+			colSpan: 1,
+			bindings: { subject: 'chain' }
+		})
+		if (chart) charts.push(chart)
+	}
+	const stablecoins: StablecoinsChartConfig = {
+		id: generateItemId('stablecoins', 'chain-overview'),
+		kind: 'stablecoins',
+		chain,
+		chartType: 'totalMcap',
+		colSpan: 2,
+		bindings: { chain: 'chain' }
+	}
+	const columnVisibility: Record<string, boolean> = {}
+	for (const column of CHAIN_OVERVIEW_TABLE_COLUMNS) columnVisibility[column] = true
+	const table: UnifiedTableConfig = {
+		id: generateItemId('unified-table', 'chain-overview'),
+		kind: 'unified-table',
+		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+		strategy: 'protocols',
+		rowHeaders: ['protocol'],
+		params: { chains: [chain] },
+		columnOrder: CHAIN_OVERVIEW_TABLE_COLUMNS,
+		columnVisibility,
+		defaultSorting: [{ id: 'tvl', desc: true }],
+		colSpan: 2,
+		bindings: { chains: 'chain' }
+	}
+	return [...metrics, ...charts, stablecoins, table]
+}
+
+function createProtocolDeepDiveItems(): Array<DashboardItemConfig> {
+	const { slug: protocol, name: protocolName } = PROTOCOL_DEEP_DIVE_PROTOCOL
+	const charts: Array<ChartConfig> = []
+	for (const type of PROTOCOL_DEEP_DIVE_CHART_TYPES) {
+		const chart = createChartConfig({
+			id: generateItemId('chart', `protocol-deep-dive-${type}`),
+			kind: 'chart',
+			subjectType: 'protocol',
+			protocol,
+			type,
+			colSpan: 1,
+			bindings: { subject: 'protocol' }
+		})
+		if (chart) charts.push(chart)
+	}
+	const incomeStatement: IncomeStatementConfig = {
+		id: generateItemId('income-statement', 'protocol-deep-dive'),
+		kind: 'income-statement',
+		protocol,
+		protocolName,
+		colSpan: 1,
+		bindings: { protocol: 'protocol' }
+	}
+	const advancedTvl: AdvancedTvlChartConfig = {
+		id: generateItemId('advanced-tvl', 'protocol-deep-dive'),
+		kind: 'advanced-tvl',
+		protocol,
+		protocolName,
+		chartType: 'tvl',
+		colSpan: 1,
+		bindings: { protocol: 'protocol' }
+	}
+	const unlocks: UnlocksScheduleConfig = {
+		id: generateItemId('unlocks-schedule', 'protocol-deep-dive'),
+		kind: 'unlocks-schedule',
+		protocol,
+		protocolName,
+		dataType: 'documented',
+		colSpan: 1,
+		bindings: { protocol: 'protocol' }
+	}
+	return [...charts, incomeStatement, advancedTvl, unlocks]
+}
+
 export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
+	{
+		id: 'chain-overview',
+		name: 'Chain overview',
+		description: 'TVL, volume, fees, users and stablecoins for one chain you can switch from the dashboard',
+		parameterized: true,
+		variables: [{ id: 'chain', kind: 'chain', label: 'Chain', value: CHAIN_OVERVIEW_CHAIN }],
+		createItems: createChainOverviewItems
+	},
+	{
+		id: 'protocol-deep-dive',
+		name: 'Protocol deep dive',
+		description: 'TVL, fees, revenue, income statement and unlocks for one protocol you can switch from the dashboard',
+		parameterized: true,
+		variables: [{ id: 'protocol', kind: 'protocol', label: 'Protocol', value: PROTOCOL_DEEP_DIVE_PROTOCOL.slug }],
+		createItems: createProtocolDeepDiveItems
+	},
 	{
 		id: 'top-l1-chains',
 		name: 'Top L1 Chains',
@@ -224,6 +374,7 @@ export function getTemplateItems(
 	chainCategoryData?: ChainCategoryData,
 	dimensionProtocols?: DimensionProtocols
 ): Array<SelectedItem> {
+	if (template.parameterized === true) return []
 	if (template.type === 'protocols') {
 		// Volume templates use the ranked dimension dataset, never a TVL-ranked fallback.
 		if (template.filter.metadataFlag) {
@@ -272,7 +423,10 @@ export function getTemplateItems(
 		.map((c) => ({ slug: c.name, name: c.name }))
 }
 
-function generateTemplateMetrics(template: DashboardTemplate, selectedItems: Array<SelectedItem>): Array<MetricConfig> {
+function generateTemplateMetrics(
+	template: ComparisonDashboardTemplate,
+	selectedItems: Array<SelectedItem>
+): Array<MetricConfig> {
 	const primaryMetric = template.metrics[0]
 	if (!primaryMetric) return []
 
@@ -297,7 +451,10 @@ function generateTemplateMetrics(template: DashboardTemplate, selectedItems: Arr
 	return metrics
 }
 
-function generateTemplateTable(template: DashboardTemplate, selectedItems: Array<SelectedItem>): UnifiedTableConfig {
+function generateTemplateTable(
+	template: ComparisonDashboardTemplate,
+	selectedItems: Array<SelectedItem>
+): UnifiedTableConfig {
 	const tableConfig = TEMPLATE_TABLE_COLUMNS[template.id] || {
 		columns: ['name', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h'],
 		sortBy: 'tvl'
@@ -325,7 +482,7 @@ function generateTemplateTable(template: DashboardTemplate, selectedItems: Array
 }
 
 function generateTemplateMultiCharts(
-	template: DashboardTemplate,
+	template: ComparisonDashboardTemplate,
 	selectedItems: Array<SelectedItem>
 ): Array<MultiChartConfig> {
 	return template.metrics.flatMap((metric) => {
@@ -365,9 +522,12 @@ function generateTemplateMultiCharts(
 export function generateTemplateCharts(
 	template: DashboardTemplate,
 	selectedItems: Array<SelectedItem>
-): Array<DashboardItemConfig> {
+): GeneratedTemplate {
+	if (template.parameterized === true) {
+		return { items: template.createItems(), variables: template.variables.map((variable) => ({ ...variable })) }
+	}
 	if (selectedItems.length === 0) {
-		return []
+		return { items: [], variables: [] }
 	}
 
 	const metricCards = generateTemplateMetrics(template, selectedItems)
@@ -382,5 +542,5 @@ export function generateTemplateCharts(
 		if (lastChart) lastChart.colSpan = 2
 	}
 
-	return [...metricCards, ...multiCharts, table]
+	return { items: [...metricCards, ...multiCharts, table], variables: [] }
 }

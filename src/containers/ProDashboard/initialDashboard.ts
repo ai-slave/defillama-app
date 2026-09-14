@@ -1,6 +1,6 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import type { DashboardItemConfig } from './dashboardItemConfig'
-import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import type { CustomTimePeriod, Dashboard, DashboardAnnotation, DashboardVariable, TimePeriod } from './dashboardTypes'
 import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
 const initialRenderDashboards = new WeakSet<Dashboard>()
@@ -10,6 +10,8 @@ type InitialDashboardData = {
 	dashboardName: string
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
+	variables?: Array<DashboardVariable>
+	annotations?: Array<DashboardAnnotation>
 }
 
 export interface DashboardInitialRenderPayload {
@@ -40,6 +42,10 @@ export type PublicDashboardInitialRenderPayload = Omit<
 
 function initialRenderItems(items: Array<DashboardItemConfig>): Array<DashboardItemConfig> {
 	return toPersistedDashboardItems(items).map((item) => {
+		if (item.kind === 'custom-data' && item.rows !== undefined) {
+			const { rows: _rows, ...config } = item
+			return config
+		}
 		if (item.kind !== 'llamaai-chart' || !item.inlineChartData) return item
 		const { inlineChartData: _inlineChartData, ...config } = item
 		return config
@@ -51,7 +57,9 @@ function initialDashboardData(dashboard: Dashboard): InitialDashboardData {
 		items: initialRenderItems(dashboard.data.items),
 		dashboardName: dashboard.data.dashboardName,
 		...(dashboard.data.timePeriod ? { timePeriod: dashboard.data.timePeriod } : {}),
-		...(dashboard.data.customTimePeriod !== undefined ? { customTimePeriod: dashboard.data.customTimePeriod } : {})
+		...(dashboard.data.customTimePeriod !== undefined ? { customTimePeriod: dashboard.data.customTimePeriod } : {}),
+		...(dashboard.data.variables === undefined ? {} : { variables: dashboard.data.variables }),
+		...(dashboard.data.annotations === undefined ? {} : { annotations: dashboard.data.annotations })
 	}
 }
 

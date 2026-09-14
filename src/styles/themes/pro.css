@@ -30,6 +30,59 @@
 		}
 	}
 
+	--animate-pro-fade-in: pro-fade-in 180ms var(--ease-out-quart) both;
+	--animate-pro-rise: pro-rise 180ms var(--ease-out-quart) both;
+	--animate-pro-pop: pro-pop 350ms var(--ease-out-quart);
+	--animate-pro-redraw: pro-redraw 900ms var(--ease-out-quart);
+	--animate-pro-bar-rise: pro-bar-rise 260ms var(--ease-out-quart);
+
+	@keyframes pro-fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes pro-rise {
+		from {
+			opacity: 0;
+			transform: translateY(4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes pro-pop {
+		from {
+			transform: scale(1.12);
+		}
+		to {
+			transform: scale(1);
+		}
+	}
+
+	@keyframes pro-redraw {
+		from {
+			stroke-dashoffset: 1;
+		}
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	@keyframes pro-bar-rise {
+		from {
+			transform: scaleY(0.6);
+		}
+		to {
+			transform: scaleY(1);
+		}
+	}
+
 	/* Pro base tokens registered as utilities (definitions at the bottom of
 	   this file: :root fallbacks + pro-dashboard / investors re-scopes; the
 	   var chain resolves per element, so scoped overrides keep working) */
@@ -43,11 +96,11 @@
 	--color-pro-app-bg: var(--pro-app-bg);
 	--color-pro-form-control-border: var(--pro-form-control-border);
 	--color-pro-accent: var(--pro-accent);
+	--color-pro-hover-fill: var(--hover-row);
 	--color-pro-glass-bg: var(--pro-glass-bg);
 	--color-pro-link-hover-bg: var(--pro-link-hover-bg);
 	--color-pro-link-button-bg: var(--pro-link-button-bg);
 	--color-pro-btn-secondary-hover: var(--pro-btn-secondary-hover);
-	--color-pro-switch-border: var(--pro-switch-border);
 
 	/* Investors (smart list) palette registered as utilities */
 	--color-sl-accent: var(--sl-accent);
@@ -110,37 +163,6 @@
 		--pro-divider: rgba(255, 255, 255, 0.1);
 		--pro-border: rgba(255, 255, 255, 0.2);
 		--pro-glass-border: rgba(255, 255, 255, 0.3);
-	}
-
-	& .pro-panel-bg {
-		background-color: var(--pro-panel-bg);
-	}
-	& .pro-panel-raised {
-		background-color: var(--pro-panel-raised);
-	}
-	& .pro-hover-fill {
-		background-color: var(--pro-hover-fill);
-	}
-	& .pro-glass-fill {
-		background-color: var(--pro-glass-fill);
-	}
-
-	& .pro-border {
-		border-color: var(--pro-border);
-	}
-	& .pro-divider {
-		border-color: var(--pro-divider);
-	}
-
-	& .pro-glass {
-		background-color: var(--pro-glass-fill);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
-		border: 1px solid var(--pro-glass-border);
-	}
-
-	& .pro-hover-bg:hover {
-		background-color: var(--pro-hover-fill);
 	}
 }
 
@@ -376,57 +398,6 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	}
 }
 
-@utility pro-panel-bg {
-	.pro-dashboard & {
-		background-color: var(--pro-panel-bg);
-	}
-}
-
-@utility pro-panel-raised {
-	.pro-dashboard & {
-		background-color: var(--pro-panel-raised);
-	}
-}
-
-@utility pro-hover-fill {
-	.pro-dashboard & {
-		background-color: var(--pro-hover-fill);
-	}
-}
-
-@utility pro-glass-fill {
-	.pro-dashboard & {
-		background-color: var(--pro-glass-fill);
-	}
-}
-
-@utility pro-border {
-	.pro-dashboard & {
-		border-color: var(--pro-border);
-	}
-}
-
-@utility pro-divider {
-	.pro-dashboard & {
-		border-color: var(--pro-divider);
-	}
-}
-
-@utility pro-glass {
-	.pro-dashboard & {
-		background-color: var(--pro-glass-fill);
-		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
-		border: 1px solid var(--pro-glass-border);
-	}
-}
-
-@utility pro-hover-bg {
-	.pro-dashboard &:hover {
-		background-color: var(--pro-hover-fill);
-	}
-}
-
 @utility pro-info-card {
 	.pro-dashboard & {
 		border-radius: 0.3rem;
@@ -437,20 +408,8 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	}
 }
 
-@utility pro-btn-ai {
-	@apply bg-pro-ai-100 text-pro-ai-400 hover:bg-pro-ai-300/20 focus-visible:bg-pro-ai-300/20 dark:bg-pro-ai-300/20 dark:text-pro-ai-200 hover:dark:bg-pro-ai-300/30 focus-visible:dark:bg-pro-ai-300/30;
-}
-
-@utility pro-btn-ai-outline {
-	@apply border border-pro-ai-100 text-pro-ai-400 hover:bg-pro-ai-300/20 focus-visible:bg-pro-ai-300/20 dark:border-pro-ai-300/20 dark:text-pro-ai-200 hover:dark:bg-pro-ai-300/30 focus-visible:dark:bg-pro-ai-300/30;
-}
-
 @utility pro-btn-primary {
 	@apply bg-pro-info-100 text-pro-info-400 hover:bg-pro-info-300/20 focus-visible:bg-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200 hover:dark:bg-pro-info-300/30 focus-visible:dark:bg-pro-info-300/30;
-}
-
-@utility pro-btn-primary-outline {
-	@apply border border-pro-info-100 text-pro-info-400 hover:bg-pro-info-300/20 focus-visible:bg-pro-info-300/20 dark:border-pro-info-300/20 dark:text-pro-info-200 hover:dark:bg-pro-info-300/30 focus-visible:dark:bg-pro-info-300/30;
 }
 
 /* Legacy dialog shell — consumed ONLY by excluded surfaces (ProDashboard,
@@ -479,14 +438,14 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	--pro-accent: var(--bg-brand);
 	/* Floating "glass" surfaces; no library token yet */
 	--pro-glass-bg: oklch(0.991 0.001 106.4);
-	/* Link-tint hovers/fills and switch chrome carried over from the app shell */
+	/* Link-tint hovers/fills carried over from the app shell */
 	--pro-link-hover-bg: #1f67d233;
 	--pro-link-button-bg: oklch(0.533 0.18 259 / 0.12);
 	--pro-btn-secondary-hover: oklch(0.571 0.191 258.5 / 0.2);
-	--pro-switch-border: oklch(0.533 0.18 259 / 0.5);
 }
 
 html.dark {
+	--pro-cards-border: var(--border-strong);
 	--pro-glass-bg: oklch(0.157 0.012 206.6 / 0.7);
 	--pro-link-hover-bg: #1f67d24d;
 }

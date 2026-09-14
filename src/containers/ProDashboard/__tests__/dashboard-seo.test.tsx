@@ -163,7 +163,7 @@ describe('pro dashboard SEO shell', () => {
 		expect(seo.description).toBe('Community-built DefiLlama Pro dashboard.')
 		expect(seo.itemCount).toBe(0)
 		expect(hasNestedUndefined(seo.jsonLd)).toBe(false)
-		expect(html).toContain('This public dashboard does not have any items yet.')
+		expect(html).toContain('This public dashboard does not have any cards yet.')
 	})
 
 	test('omits unavailable summary links so public dashboard props stay serializable', () => {

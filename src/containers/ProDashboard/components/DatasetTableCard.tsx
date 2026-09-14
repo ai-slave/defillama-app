@@ -1,5 +1,7 @@
 import { lazy } from 'react'
 import type { DatasetTableConfig } from '../types'
+import { dashboardItemLabel } from '../utils/seo'
+import { ProCardHeader } from './ProCardHeader'
 
 const CexAnalyticsDataset = lazy(() =>
 	import('./datasets/CexAnalyticsDataset').then((module) => ({ default: module.CexAnalyticsDataset }))
@@ -47,6 +49,17 @@ interface DatasetTableCardProps {
 }
 
 export function DatasetTableCard({ config, onConfigChange }: DatasetTableCardProps) {
+	return (
+		<div className="flex h-full w-full flex-col p-0">
+			<ProCardHeader title={dashboardItemLabel(config)} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				<DatasetTableBody config={config} {...(onConfigChange === undefined ? {} : { onConfigChange })} />
+			</div>
+		</div>
+	)
+}
+
+function DatasetTableBody({ config, onConfigChange }: DatasetTableCardProps) {
 	if (config.datasetType === 'cex-analytics') return <CexAnalyticsDataset config={config} />
 	if (config.datasetType === 'token-usage')
 		return onConfigChange ? (

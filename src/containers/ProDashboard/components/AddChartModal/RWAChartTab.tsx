@@ -278,7 +278,7 @@ function AssetControls({
 							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
 								isSelected
 									? 'bg-brand text-on-brand'
-									: 'border border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
+									: 'border border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
 							}`}
 						>
 							{METRIC_LABELS[metric]}

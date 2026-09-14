@@ -102,7 +102,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+							className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
 							readOnly={submission.isPending}
 						/>
 					</div>
@@ -178,7 +178,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+							className="w-full rounded-md border border-pro-cards-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
 							readOnly={submission.isPending}
 						/>
 					</div>

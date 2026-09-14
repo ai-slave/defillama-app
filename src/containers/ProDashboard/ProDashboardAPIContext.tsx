@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { replaceEqualDeep, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 import {
 	createContext,
 	type ReactNode,
@@ -23,8 +24,9 @@ import {
 	shouldApplyTrustedDashboard
 } from './dashboardHydrationState'
 import type { DashboardItemConfig } from './dashboardItemConfig'
+import { streamPrefetchItemIds } from './dashboardLayout/buildDashboardLayout'
 import { dashboardReducer, initDashboardState } from './dashboardReducer'
-import { dashboardStreamNeedsProtocolCatalog } from './dashboardStreamCapabilities'
+import { dashboardItemHasStreamSources, dashboardStreamNeedsProtocolCatalog } from './dashboardStreamCapabilities'
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from './dashboardStreamContract'
 import type {
 	AIGeneratedData,
@@ -32,21 +34,43 @@ import type {
 	AIUndoState,
 	CustomTimePeriod,
 	Dashboard,
+	DashboardAnnotation,
 	DashboardMode,
 	DashboardRatingDecision,
+	DashboardVariable,
 	TimePeriod
 } from './dashboardTypes'
+import { MAX_DASHBOARD_VARIABLES } from './dashboardTypes'
+import {
+	applyVariableValuesToItems,
+	bindDashboardItems,
+	type DashboardVariableCatalog,
+	detectParameterCandidates,
+	getEffectiveVariableValues,
+	type ParameterCandidate,
+	type ParameterUnavailable,
+	readVariableOverridesFromQuery,
+	resolveDashboardItems,
+	restoreItemsAfterIterate,
+	setDashboardItemBinding,
+	stripCustomDataRows,
+	unbindDashboardVariable,
+	VARIABLE_QUERY_PREFIX,
+	type VariableBindingTarget
+} from './dashboardVariables/resolve'
+import { isDashboardWidget } from './dashboardWidgets'
+import { notifyForcedPublicVisibility } from './freeTierNotice'
 import { useAutoSave } from './hooks/useAutoSave'
-import { getUnsavedDashboardItems, useDashboardAPI, wasDashboardDeleted } from './hooks/useDashboardAPI'
+import { getUnsavedDashboardChanges, useDashboardAPI, wasDashboardDeleted } from './hooks/useDashboardAPI'
 import { useDashboardConfigFallback } from './hooks/useDashboardConfigFallback'
-import { useDashboardPermissions } from './hooks/useDashboardPermissions'
+import { useDashboardPermissions, type DashboardReadOnlyReason } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { isDashboardInitialRenderHydration } from './initialDashboard'
 import { buildProDashboardParentMapping } from './protocolCatalog'
-import { ProxyAuthTokenContext, StreamDoneContext, useProtocolsAndChains } from './queries'
+import { ProxyAuthTokenContext, StreamDoneContext, StreamItemReadinessContext, useProtocolsAndChains } from './queries'
 import { DashboardError, dashboardUrlKey, matchesDashboardKey } from './services/DashboardAPI'
-import type { Chain, Protocol } from './types'
+import type { Chain, DashboardBindableField, Protocol } from './types'
 import { useDashboardActions } from './useDashboardActions'
 import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
@@ -117,6 +141,15 @@ interface ProDashboardPermissionsContextType {
 	isReadOnly: boolean
 	dashboardOwnerId: string | null
 	hideDuplicateButton: boolean
+	reason: DashboardReadOnlyReason
+}
+
+interface ProDashboardStreamProgressContextType {
+	readyCount: number
+	totalCount: number
+	isStreaming: boolean
+	isDone: boolean
+	error: string | null
 }
 
 interface ProDashboardModeContextType {
@@ -149,6 +182,7 @@ interface ProDashboardDashboardContextType {
 		items?: Array<DashboardItemConfig>
 		aiUndoState?: AIUndoState | null
 	}) => Promise<void>
+	publishDashboard: () => Promise<void>
 	copyDashboard: () => Promise<Dashboard>
 	handleCreateDashboard: (data: {
 		dashboardName: string
@@ -156,6 +190,7 @@ interface ProDashboardDashboardContextType {
 		tags: Array<string>
 		description: string
 		items?: Array<DashboardItemConfig>
+		variables?: Array<DashboardVariable>
 		aiGenerated?: AIGeneratedData | null
 	}) => Promise<Dashboard>
 	handleGenerateDashboard: (data: {
@@ -200,10 +235,46 @@ type ProDashboardEditorActionsContextType = Omit<
 	| 'setShowGenerateDashboardModal'
 	| 'setShowIterateDashboardModal'
 	| 'setItems'
+	| 'setVariables'
+	| 'setVariableOverrides'
+	| 'setAnnotations'
+	| 'dispatchItemsWithVariablesAndSave'
+	| 'undo'
+	| 'redo'
 >
 
 interface ProDashboardItemsStateContextType {
 	items: Array<DashboardItemConfig>
+}
+
+interface ProDashboardVariablesContextType {
+	variables: Array<DashboardVariable>
+	overrides: Record<string, string>
+	values: Record<string, string>
+	catalog: DashboardVariableCatalog | null
+	resolvedItems: Array<DashboardItemConfig>
+	unavailableByItemId: ReadonlyMap<string, ParameterUnavailable>
+	candidates: Array<ParameterCandidate>
+	canEditVariables: boolean
+	setVariableValue: (variableId: string, value: string, options?: { persist?: boolean }) => void
+	addVariable: (variable: DashboardVariable, bindTargets: ReadonlyArray<VariableBindingTarget>) => void
+	bindItemField: (itemId: string, field: DashboardBindableField, variableId: string | null) => void
+	renameVariable: (variableId: string, label: string) => void
+	removeVariable: (variableId: string) => void
+	unbindVariable: (variableId: string) => void
+}
+
+interface ProDashboardAnnotationsContextType {
+	annotations: Array<DashboardAnnotation>
+	setAnnotations: (annotations: Array<DashboardAnnotation>) => void
+}
+
+interface ProDashboardHistoryContextType {
+	canUndo: boolean
+	canRedo: boolean
+	undoDepth: number
+	undo: () => boolean
+	redo: () => boolean
 }
 
 interface ProDashboardUIContextType {
@@ -226,6 +297,21 @@ const ProDashboardDashboardContext = createContext<ProDashboardDashboardContextT
 const ProDashboardEditorActionsContext = createContext<ProDashboardEditorActionsContextType | undefined>(undefined)
 const ProDashboardItemsStateContext = createContext<ProDashboardItemsStateContextType | undefined>(undefined)
 const ProDashboardUIContext = createContext<ProDashboardUIContextType | undefined>(undefined)
+const ProDashboardVariablesContext = createContext<ProDashboardVariablesContextType | undefined>(undefined)
+const ProDashboardAnnotationsContext = createContext<ProDashboardAnnotationsContextType | undefined>(undefined)
+const ProDashboardHistoryContext = createContext<ProDashboardHistoryContextType | undefined>(undefined)
+const ProDashboardStreamProgressContext = createContext<ProDashboardStreamProgressContextType | undefined>(undefined)
+const EMPTY_VARIABLE_OVERRIDES: Record<string, string> = {}
+
+function readInitialVariableOverrides(): Record<string, string> {
+	if (typeof window === 'undefined') return EMPTY_VARIABLE_OVERRIDES
+	const query: Record<string, string> = {}
+	for (const [key, value] of new URLSearchParams(window.location.search)) {
+		if (key.startsWith(VARIABLE_QUERY_PREFIX)) query[key] = value
+	}
+	const overrides = readVariableOverridesFromQuery(query)
+	return Object.keys(overrides).length > 0 ? overrides : EMPTY_VARIABLE_OVERRIDES
+}
 
 export function ProDashboardAPIProvider({
 	children,
@@ -233,7 +319,8 @@ export function ProDashboardAPIProvider({
 	initialDashboard,
 	initialItems,
 	hideDuplicateButton = false,
-	mode = 'view'
+	mode = 'view',
+	streamItemId
 }: {
 	children: ReactNode
 	initialDashboardId?: string
@@ -241,12 +328,23 @@ export function ProDashboardAPIProvider({
 	initialItems?: Array<DashboardItemConfig>
 	hideDuplicateButton?: boolean
 	mode?: DashboardMode
+	streamItemId?: string
 }) {
 	const { authToken, hasActiveSubscription, loaders } = useAuthContext()
 	const hasMounted = useClientReady()
 	const hasStoredToken = typeof window !== 'undefined' && pb.authStore.isValid && !!pb.authStore.token
 	const authReady = hasMounted && !loaders.userLoading && (!hasStoredToken || !!authToken)
-	const stream = useDashboardStream(initialDashboardId, authToken, authReady)
+	const streamVariableOverrides = useMemo(() => readInitialVariableOverrides(), [])
+	const initialDashboardEditedAt = initialDashboard?.editedAt
+	const streamOptions = useMemo(
+		() => ({
+			...(streamVariableOverrides === EMPTY_VARIABLE_OVERRIDES ? {} : { variableOverrides: streamVariableOverrides }),
+			...(streamItemId === undefined ? {} : { itemId: streamItemId }),
+			...(initialDashboardEditedAt ? { version: initialDashboardEditedAt } : {})
+		}),
+		[streamVariableOverrides, streamItemId, initialDashboardEditedAt]
+	)
+	const stream = useDashboardStream(initialDashboardId, authToken, authReady, streamOptions)
 	const hasInitialDashboard = matchesDashboardKey(initialDashboard, initialDashboardId)
 	const { dashboardReady, streamDone, streamHasResolved, shouldFetchTrustedDashboardFallback } =
 		getDashboardHydrationState({
@@ -262,21 +360,23 @@ export function ProDashboardAPIProvider({
 	return (
 		<ProDashboardModeContext.Provider value={modeContextValue}>
 			<StreamDoneContext.Provider value={streamDone}>
-				<ProxyAuthTokenContext.Provider value={proxyAuthToken}>
-					<ProDashboardAPIProviderInner
-						stream={stream}
-						dashboardReady={dashboardReady}
-						streamHasResolved={streamHasResolved}
-						shouldFetchTrustedDashboardFallback={shouldFetchTrustedDashboardFallback}
-						mode={mode}
-						{...(initialDashboardId === undefined ? {} : { initialDashboardId })}
-						initialDashboard={hasInitialDashboard ? (initialDashboard ?? null) : null}
-						{...(initialItems === undefined ? {} : { initialItems })}
-						{...(hideDuplicateButton ? { hideDuplicateButton } : {})}
-					>
-						{children}
-					</ProDashboardAPIProviderInner>
-				</ProxyAuthTokenContext.Provider>
+				<StreamItemReadinessContext.Provider value={stream.readyItemIds}>
+					<ProxyAuthTokenContext.Provider value={proxyAuthToken}>
+						<ProDashboardAPIProviderInner
+							stream={stream}
+							dashboardReady={dashboardReady}
+							streamHasResolved={streamHasResolved}
+							shouldFetchTrustedDashboardFallback={shouldFetchTrustedDashboardFallback}
+							mode={mode}
+							{...(initialDashboardId === undefined ? {} : { initialDashboardId })}
+							initialDashboard={hasInitialDashboard ? (initialDashboard ?? null) : null}
+							{...(initialItems === undefined ? {} : { initialItems })}
+							{...(hideDuplicateButton ? { hideDuplicateButton } : {})}
+						>
+							{children}
+						</ProDashboardAPIProviderInner>
+					</ProxyAuthTokenContext.Provider>
+				</StreamItemReadinessContext.Provider>
 			</StreamDoneContext.Provider>
 		</ProDashboardModeContext.Provider>
 	)
@@ -339,14 +439,23 @@ function ProDashboardAPIProviderInner({
 			: initialDashboardId
 	const [state, dispatch] = useReducer(dashboardReducer, initArg, (arg) => {
 		const initial = initDashboardState(arg)
-		const draft = getUnsavedDashboardItems(queryClient, initial.dashboardId, user?.id)
-		// QueryClient retains in-flight/failed writes across route remounts. Recover the draft without retrying it.
-		return draft ? { ...initial, items: draft } : initial
+		const draft = getUnsavedDashboardChanges(queryClient, initial.dashboardId, user?.id)
+		// QueryClient retains in-flight/failed writes across route remounts. Recover the whole draft without retrying it.
+		return draft
+			? {
+					...initial,
+					...(draft.items === undefined ? {} : { items: draft.items }),
+					...(draft.variables === undefined ? {} : { variables: draft.variables }),
+					...(draft.annotations === undefined ? {} : { annotations: draft.annotations }),
+					...(draft.timePeriod === undefined ? {} : { timePeriod: draft.timePeriod }),
+					...(draft.customTimePeriod === undefined ? {} : { customTimePeriod: draft.customTimePeriod })
+				}
+			: initial
 	})
 
 	useEffect(() => {
 		if (!initialDashboard && initialItems && initialItems.length > 0) {
-			dispatch({ type: 'SET_ITEMS', payload: initialItems })
+			dispatch({ type: 'SET_ITEMS', payload: initialItems, skipHistory: true })
 		}
 	}, [initialDashboard, initialItems])
 
@@ -354,6 +463,10 @@ function ProDashboardAPIProviderInner({
 		items,
 		timePeriod,
 		customTimePeriod,
+		variables,
+		annotations,
+		variableOverrides,
+		history,
 		dashboardName,
 		dashboardId,
 		currentDashboard,
@@ -399,8 +512,24 @@ function ProDashboardAPIProviderInner({
 			if (wasDashboardDeleted(queryClient, dashboard.id, user?.id)) return
 			dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
 			if (currentDashboard?.id !== dashboard.id) {
-				const draft = getUnsavedDashboardItems(queryClient, dashboard.id, user?.id)
-				if (draft) dispatch({ type: 'SET_ITEMS', payload: draft })
+				const draft = getUnsavedDashboardChanges(queryClient, dashboard.id, user?.id)
+				if (draft) {
+					if (draft.items) {
+						dispatch({
+							type: 'SET_ITEMS',
+							payload: draft.items,
+							...(draft.variables === undefined ? {} : { variables: draft.variables }),
+							skipHistory: true
+						})
+					} else if (draft.variables) {
+						dispatch({ type: 'SET_VARIABLES', payload: draft.variables, skipHistory: true })
+					}
+					if (draft.annotations) dispatch({ type: 'SET_ANNOTATIONS', payload: draft.annotations })
+					if (draft.timePeriod) dispatch({ type: 'SET_TIME_PERIOD', payload: draft.timePeriod })
+					if (draft.customTimePeriod !== undefined) {
+						dispatch({ type: 'SET_CUSTOM_TIME_PERIOD', payload: draft.customTimePeriod })
+					}
+				}
 			}
 		},
 		[currentDashboard?.id, queryClient, user?.id]
@@ -418,7 +547,7 @@ function ProDashboardAPIProviderInner({
 	} = useDashboardAPI(dashboardId)
 
 	// Use the permissions hook
-	const { isReadOnly: rawIsReadOnly, dashboardOwnerId } = useDashboardPermissions(currentDashboard)
+	const { isReadOnly: rawIsReadOnly, dashboardOwnerId, reason } = useDashboardPermissions(currentDashboard)
 	const isReadOnly = mode === 'view' ? true : rawIsReadOnly
 	const isReadOnlyUntilDashboardLoaded = isDashboardEditingLocked({
 		isReadOnly,
@@ -428,13 +557,23 @@ function ProDashboardAPIProviderInner({
 		hasInitialDashboard: !!initialDashboard,
 		hasTrustedDashboard
 	})
+	const isOwnerWriteLocked = isDashboardEditingLocked({
+		isReadOnly: rawIsReadOnly,
+		hasDashboardId: !!initialDashboardId,
+		hasCurrentDashboard: !!currentDashboard,
+		mode: 'edit',
+		hasInitialDashboard: !!initialDashboard,
+		hasTrustedDashboard
+	})
 
 	const autosave = useAutoSave({
 		dashboard: currentDashboard,
 		isFreeUser,
 		enabled: !isReadOnlyUntilDashboardLoaded && isAuthenticated && !!user?.id && currentDashboard?.user === user.id,
 		timePeriod,
-		customTimePeriod
+		customTimePeriod,
+		variables,
+		annotations
 	})
 
 	const { flush, acknowledge, hasPendingSave } = autosave
@@ -467,7 +606,16 @@ function ProDashboardAPIProviderInner({
 		applyTrustedDashboard(stream.dashboard)
 	}, [applyTrustedDashboard, stream.dashboard])
 
-	const actions = useDashboardActions(dispatch, state, autosave.autoSave, isReadOnlyUntilDashboardLoaded)
+	const router = useRouter()
+	const routerQuery = router.query
+	const requestedTabId = typeof routerQuery.tab === 'string' ? routerQuery.tab : null
+	const actions = useDashboardActions(
+		dispatch,
+		state,
+		autosave.autoSave,
+		isReadOnlyUntilDashboardLoaded,
+		requestedTabId
+	)
 
 	const {
 		setTimePeriod,
@@ -478,8 +626,19 @@ function ProDashboardAPIProviderInner({
 		setDashboardDescription,
 		setShowGenerateDashboardModal,
 		setShowIterateDashboardModal,
-		setItems
+		setItems,
+		setVariables,
+		setVariableOverrides,
+		setAnnotations,
+		dispatchItemsWithVariablesAndSave,
+		undo,
+		redo
 	} = actions
+
+	useEffect(() => {
+		const overrides = readVariableOverridesFromQuery(routerQuery as Record<string, string | Array<string> | undefined>)
+		dispatch({ type: 'SET_VARIABLE_OVERRIDES', payload: overrides })
+	}, [routerQuery])
 
 	const getCurrentRatingSession = useCallback(() => {
 		if (!isAuthenticated || !currentDashboard?.aiGenerated || !user?.id) return null
@@ -517,6 +676,15 @@ function ProDashboardAPIProviderInner({
 		...(initialDashboardUpdatedAt === undefined ? {} : { initialDataUpdatedAt: initialDashboardUpdatedAt })
 	})
 	useDashboardConfigFallback(shouldFetchTrustedDashboardFallback, refetchDashboardQuery)
+	useEffect(() => {
+		if (!initialDashboardId || !dashboardReady) return
+		const refreshOnReturn = () => {
+			if (document.visibilityState !== 'visible' || hasPendingSave()) return
+			void queryClient.invalidateQueries({ queryKey: dashboardQueryKey })
+		}
+		document.addEventListener('visibilitychange', refreshOnReturn)
+		return () => document.removeEventListener('visibilitychange', refreshOnReturn)
+	}, [initialDashboardId, dashboardReady, hasPendingSave, queryClient, dashboardQueryKey])
 	// Loading until dashboard config arrives from stream (or query fallback)
 	const isLoadingDashboard =
 		(!!initialDashboardId && stream.dashboard === undefined && !dashboardReady) || isQueryLoadingDashboard
@@ -554,20 +722,23 @@ function ProDashboardAPIProviderInner({
 
 	// Save dashboard
 	const saveDashboard = useCallback(
-		async (overrides?: {
-			dashboardName?: string
-			visibility?: 'private' | 'public'
-			tags?: Array<string>
-			description?: string
-			aiGenerated?: AIGeneratedData | null
-			items?: Array<DashboardItemConfig>
-			aiUndoState?: AIUndoState | null
-		}) => {
+		async (
+			overrides?: {
+				dashboardName?: string
+				visibility?: 'private' | 'public'
+				tags?: Array<string>
+				description?: string
+				aiGenerated?: AIGeneratedData | null
+				items?: Array<DashboardItemConfig>
+				aiUndoState?: AIUndoState | null
+			},
+			options?: { allowOwnerInViewMode?: boolean }
+		) => {
 			if (!isAuthenticated) {
 				throw new Error('Please sign in to save dashboards')
 			}
 
-			if (isReadOnly) {
+			if (options?.allowOwnerInViewMode ? isOwnerWriteLocked : isReadOnly) {
 				throw new Error('This dashboard is read-only')
 			}
 
@@ -576,6 +747,8 @@ function ProDashboardAPIProviderInner({
 				items,
 				timePeriod,
 				customTimePeriod,
+				variables,
+				annotations,
 				dashboardName,
 				dashboardId,
 				dashboardVisibility,
@@ -587,12 +760,16 @@ function ProDashboardAPIProviderInner({
 			const nameToSave = overrides?.dashboardName ?? dashboardName
 			const aiGeneratedToSave =
 				overrides && 'aiGenerated' in overrides ? overrides.aiGenerated : (currentDashboard?.aiGenerated ?? null)
+			const requestedVisibility = overrides?.visibility ?? dashboardVisibility
+			if (isFreeUser && requestedVisibility !== 'public') notifyForcedPublicVisibility()
 			const data = {
 				items: cleanedItems,
 				dashboardName: nameToSave,
 				timePeriod,
 				customTimePeriod,
-				visibility: isFreeUser ? ('public' as const) : (overrides?.visibility ?? dashboardVisibility),
+				variables,
+				annotations,
+				visibility: isFreeUser ? ('public' as const) : requestedVisibility,
 				tags: overrides?.tags ?? dashboardTags,
 				description: overrides?.description ?? dashboardDescription,
 				aiGenerated: aiGeneratedToSave,
@@ -612,6 +789,8 @@ function ProDashboardAPIProviderInner({
 							: {}),
 						timePeriod,
 						customTimePeriod,
+						variables,
+						annotations,
 						...overrides,
 						...(overrides?.items ? { items: cleanedItems } : {}),
 						...(isFreeUser ? { visibility: 'public' as const } : {})
@@ -641,6 +820,8 @@ function ProDashboardAPIProviderInner({
 			dashboardName,
 			timePeriod,
 			customTimePeriod,
+			variables,
+			annotations,
 			dashboardId,
 			dashboardVisibility,
 			dashboardTags,
@@ -648,6 +829,7 @@ function ProDashboardAPIProviderInner({
 			currentDashboard,
 			isAuthenticated,
 			isReadOnly,
+			isOwnerWriteLocked,
 			isFreeUser,
 			updateDashboard,
 			flush,
@@ -657,38 +839,9 @@ function ProDashboardAPIProviderInner({
 		]
 	)
 
-	const copyDashboard = useCallback(async () => {
-		if (!isAuthenticated) {
-			throw new Error('Please sign in to copy dashboards')
-		}
-
-		if (!canCreateDashboard) {
-			throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
-		}
-
-		const cleanedItems = toPersistedDashboardItems(items)
-		const data = {
-			items: cleanedItems,
-			dashboardName,
-			timePeriod,
-			customTimePeriod,
-			visibility: isFreeUser ? ('public' as const) : dashboardVisibility,
-			...(dashboardId && { copySourceDashboardId: dashboardId })
-		}
-
-		return createDashboard(data)
-	}, [
-		items,
-		dashboardName,
-		timePeriod,
-		customTimePeriod,
-		isAuthenticated,
-		createDashboard,
-		canCreateDashboard,
-		isFreeUser,
-		dashboardVisibility,
-		dashboardId
-	])
+	const publishDashboard = useCallback(async () => {
+		await saveDashboard({ visibility: 'public' }, { allowOwnerInViewMode: true })
+	}, [saveDashboard])
 
 	const handleCreateDashboard = useCallback(
 		async (data: {
@@ -697,17 +850,21 @@ function ProDashboardAPIProviderInner({
 			tags: Array<string>
 			description: string
 			items?: Array<DashboardItemConfig>
+			variables?: Array<DashboardVariable>
 			aiGenerated?: AIGeneratedData | null
 		}) => {
 			if (!canCreateDashboard) {
 				throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 			}
 
+			if (isFreeUser && data.visibility !== 'public') notifyForcedPublicVisibility()
+
 			const defaultTimePeriod: TimePeriod = '365d'
 			const dashboardData = {
 				items: data.items ?? [],
 				dashboardName: data.dashboardName,
 				timePeriod: defaultTimePeriod,
+				...(data.variables === undefined ? {} : { variables: data.variables }),
 				visibility: isFreeUser ? ('public' as const) : data.visibility,
 				tags: data.tags,
 				description: data.description,
@@ -786,17 +943,18 @@ function ProDashboardAPIProviderInner({
 				}
 			}
 
+			const restoredItems = restoreItemsAfterIterate(items, data.items)
 			if (dashboardId) {
 				const aiUndoState: AIUndoState | undefined = data.aiGenerationContext
 					? {
-							items,
+							items: stripCustomDataRows(items),
 							timestamp: new Date().toISOString(),
 							sessionId: data.aiGenerationContext.sessionId
 						}
 					: undefined
 
 				await saveDashboard({
-					items: data.items,
+					items: restoredItems,
 					visibility: data.visibility,
 					tags: data.tags,
 					description: data.description,
@@ -804,7 +962,7 @@ function ProDashboardAPIProviderInner({
 					...(aiUndoState === undefined ? {} : { aiUndoState })
 				})
 			} else {
-				setItems(data.items)
+				setItems(restoredItems)
 			}
 		},
 		[dashboardId, saveDashboard, user, currentDashboard, items, setItems]
@@ -840,7 +998,12 @@ function ProDashboardAPIProviderInner({
 			return
 		}
 
-		const previousItems = currentDashboard.data.aiUndoState.items
+		const currentById = new Map(items.map((item) => [item.id, item]))
+		const previousItems = currentDashboard.data.aiUndoState.items.map((item) => {
+			if (item.kind !== 'custom-data' || item.rows !== undefined) return item
+			const current = currentById.get(item.id)
+			return current?.kind === 'custom-data' && current.rows !== undefined ? { ...item, rows: current.rows } : item
+		})
 		const sessionId = currentDashboard.data.aiUndoState.sessionId
 
 		const existingSession = currentDashboard.aiGenerated?.[sessionId]
@@ -858,7 +1021,8 @@ function ProDashboardAPIProviderInner({
 			aiUndoState: null,
 			aiGenerated: updatedAiGenerated
 		})
-	}, [currentDashboard, dashboardId, saveDashboard])
+		dispatch({ type: 'CLEAR_HISTORY' })
+	}, [currentDashboard, dashboardId, saveDashboard, items])
 
 	const canUndo = !!currentDashboard?.data?.aiUndoState?.items
 
@@ -894,6 +1058,202 @@ function ProDashboardAPIProviderInner({
 		[timePeriod, customTimePeriod, setTimePeriod, setCustomTimePeriod]
 	)
 
+	const variableCatalog = useMemo<DashboardVariableCatalog | null>(
+		() =>
+			protocolsAndChains
+				? { hasChain: (name) => chainByName.has(name), getProtocol: (slug) => protocolBySlug.get(slug) }
+				: null,
+		[protocolsAndChains, chainByName, protocolBySlug]
+	)
+	const variableValues = useMemo(
+		() => getEffectiveVariableValues(variables, variableOverrides, variableCatalog),
+		[variables, variableOverrides, variableCatalog]
+	)
+	const resolution = useMemo(
+		() => resolveDashboardItems(items, variables, variableOverrides, variableCatalog),
+		[items, variables, variableOverrides, variableCatalog]
+	)
+	const canEditVariables = !isReadOnlyUntilDashboardLoaded
+	const parameterCandidates = useMemo(
+		() => (canEditVariables && variables.length === 0 ? detectParameterCandidates(items) : []),
+		[canEditVariables, variables.length, items]
+	)
+	const copyDashboard = useCallback(async () => {
+		if (!isAuthenticated) {
+			throw new Error('Please sign in to copy dashboards')
+		}
+
+		if (!canCreateDashboard) {
+			throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
+		}
+
+		const effectiveVariables = variables.map((variable) => {
+			const value = variableValues[variable.id]
+			return value === undefined || value === variable.value ? variable : { ...variable, value }
+		})
+		const cleanedItems = toPersistedDashboardItems(
+			applyVariableValuesToItems(items, effectiveVariables, variableCatalog)
+		)
+		const data = {
+			items: cleanedItems,
+			dashboardName,
+			timePeriod,
+			customTimePeriod,
+			variables: effectiveVariables,
+			annotations,
+			visibility: isFreeUser ? ('public' as const) : dashboardVisibility,
+			...(dashboardId && { copySourceDashboardId: dashboardId })
+		}
+
+		return createDashboard(data)
+	}, [
+		items,
+		dashboardName,
+		timePeriod,
+		customTimePeriod,
+		variables,
+		variableValues,
+		variableCatalog,
+		annotations,
+		isAuthenticated,
+		createDashboard,
+		canCreateDashboard,
+		isFreeUser,
+		dashboardVisibility,
+		dashboardId
+	])
+
+	const setVariableValue = useCallback(
+		(variableId: string, value: string, options?: { persist?: boolean }) => {
+			const replaceVariableQuery = (nextOverrides: Record<string, string>) => {
+				const query = { ...router.query }
+				for (const key of Object.keys(query)) if (key.startsWith(VARIABLE_QUERY_PREFIX)) delete query[key]
+				for (const id in nextOverrides) query[`${VARIABLE_QUERY_PREFIX}${id}`] = nextOverrides[id] as string
+				void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false })
+			}
+			if (options?.persist && canEditVariables) {
+				const nextVariables = variables.map((variable) =>
+					variable.id === variableId && variable.value !== value ? { ...variable, value } : variable
+				)
+				const nextItems = applyVariableValuesToItems(items, nextVariables, variableCatalog)
+				dispatchItemsWithVariablesAndSave(nextItems, nextVariables)
+				if (variableOverrides[variableId] !== undefined) {
+					const rest = Object.fromEntries(Object.entries(variableOverrides).filter(([id]) => id !== variableId))
+					setVariableOverrides(rest)
+					replaceVariableQuery(rest)
+				}
+				return
+			}
+			const nextOverrides = { ...variableOverrides, [variableId]: value }
+			setVariableOverrides(nextOverrides)
+			replaceVariableQuery(nextOverrides)
+		},
+		[
+			canEditVariables,
+			variables,
+			items,
+			variableCatalog,
+			variableOverrides,
+			dispatchItemsWithVariablesAndSave,
+			setVariableOverrides,
+			router
+		]
+	)
+	const addVariable = useCallback(
+		(variable: DashboardVariable, bindTargets: ReadonlyArray<VariableBindingTarget>) => {
+			if (!canEditVariables || variables.length >= MAX_DASHBOARD_VARIABLES) return
+			if (variables.some((existing) => existing.id === variable.id)) return
+			const nextVariables = [...variables, variable]
+			const boundItems = bindDashboardItems(items, bindTargets, variable.id)
+			dispatchItemsWithVariablesAndSave(
+				applyVariableValuesToItems(boundItems, nextVariables, variableCatalog),
+				nextVariables
+			)
+		},
+		[canEditVariables, variables, items, variableCatalog, dispatchItemsWithVariablesAndSave]
+	)
+	const bindItemField = useCallback(
+		(itemId: string, field: DashboardBindableField, variableId: string | null) => {
+			if (!canEditVariables) return
+			const nextItems = items.map((item) =>
+				item.id === itemId ? setDashboardItemBinding(item, field, variableId) : item
+			)
+			if (nextItems.every((item, index) => item === items[index])) return
+			dispatchItemsWithVariablesAndSave(applyVariableValuesToItems(nextItems, variables, variableCatalog), variables)
+		},
+		[canEditVariables, items, variables, variableCatalog, dispatchItemsWithVariablesAndSave]
+	)
+	const renameVariable = useCallback(
+		(variableId: string, label: string) => {
+			setVariables(variables.map((variable) => (variable.id === variableId ? { ...variable, label } : variable)))
+		},
+		[variables, setVariables]
+	)
+	const unbindVariable = useCallback(
+		(variableId: string) => {
+			const nextItems = unbindDashboardVariable(items, variableId)
+			if (nextItems !== items) dispatchItemsWithVariablesAndSave(nextItems, variables)
+		},
+		[items, variables, dispatchItemsWithVariablesAndSave]
+	)
+	const removeVariable = useCallback(
+		(variableId: string) => {
+			if (!canEditVariables) return
+			dispatchItemsWithVariablesAndSave(
+				unbindDashboardVariable(items, variableId),
+				variables.filter((variable) => variable.id !== variableId)
+			)
+		},
+		[canEditVariables, items, variables, dispatchItemsWithVariablesAndSave]
+	)
+	const variablesContextValue = useMemo<ProDashboardVariablesContextType>(
+		() => ({
+			variables,
+			overrides: variableOverrides,
+			values: variableValues,
+			catalog: variableCatalog,
+			resolvedItems: resolution.items,
+			unavailableByItemId: resolution.unavailableByItemId,
+			candidates: parameterCandidates,
+			canEditVariables,
+			setVariableValue,
+			addVariable,
+			bindItemField,
+			renameVariable,
+			removeVariable,
+			unbindVariable
+		}),
+		[
+			variables,
+			variableOverrides,
+			variableValues,
+			variableCatalog,
+			resolution,
+			parameterCandidates,
+			canEditVariables,
+			setVariableValue,
+			addVariable,
+			bindItemField,
+			renameVariable,
+			removeVariable,
+			unbindVariable
+		]
+	)
+	const annotationsContextValue = useMemo<ProDashboardAnnotationsContextType>(
+		() => ({ annotations, setAnnotations }),
+		[annotations, setAnnotations]
+	)
+	const historyContextValue = useMemo<ProDashboardHistoryContextType>(
+		() => ({
+			canUndo: history.past.length > 0,
+			canRedo: history.future.length > 0,
+			undoDepth: history.past.length,
+			undo,
+			redo
+		}),
+		[history, undo, redo]
+	)
+
 	const catalogContextValue = useMemo(
 		() => ({
 			protocols,
@@ -908,13 +1268,17 @@ function ProDashboardAPIProviderInner({
 		[protocols, chains, protocolsLoading, protocolCatalog, getChainInfo, getProtocolInfo, parentMapping, protocolBySlug]
 	)
 
+	const readOnlyReason: DashboardReadOnlyReason =
+		reason ?? (mode === 'view' ? 'view-mode' : isReadOnlyUntilDashboardLoaded ? 'dashboard-loading' : null)
+
 	const permissionsContextValue = useMemo(
 		() => ({
 			isReadOnly: isReadOnlyUntilDashboardLoaded,
 			dashboardOwnerId,
-			hideDuplicateButton
+			hideDuplicateButton,
+			reason: readOnlyReason
 		}),
-		[isReadOnlyUntilDashboardLoaded, dashboardOwnerId, hideDuplicateButton]
+		[isReadOnlyUntilDashboardLoaded, dashboardOwnerId, hideDuplicateButton, readOnlyReason]
 	)
 
 	const dashboardContextValue = useMemo(
@@ -936,6 +1300,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			publishDashboard,
 			copyDashboard,
 			handleCreateDashboard,
 			handleGenerateDashboard,
@@ -962,6 +1327,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			publishDashboard,
 			copyDashboard,
 			handleCreateDashboard,
 			handleGenerateDashboard,
@@ -980,6 +1346,29 @@ function ProDashboardAPIProviderInner({
 		}),
 		[items]
 	)
+
+	const streamProgressItemIds = useMemo(() => {
+		const windowIds = new Set(streamPrefetchItemIds(items, INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
+		const ids: Array<string> = []
+		for (const item of items) {
+			if (!isDashboardWidget(item)) continue
+			if (dashboardItemHasStreamSources(item) && !windowIds.has(item.id)) continue
+			ids.push(item.id)
+		}
+		return ids
+	}, [items])
+
+	const streamProgressContextValue = useMemo(() => {
+		let readyCount = 0
+		for (const id of streamProgressItemIds) if (stream.readyItemIds.has(id)) readyCount++
+		return {
+			readyCount,
+			totalCount: streamProgressItemIds.length,
+			isStreaming: stream.isStreaming,
+			isDone: stream.isDone,
+			error: stream.error
+		}
+	}, [streamProgressItemIds, stream.error, stream.isDone, stream.isStreaming, stream.readyItemIds])
 
 	const uiContextValue = useMemo(
 		() => ({
@@ -1006,7 +1395,17 @@ function ProDashboardAPIProviderInner({
 						<ProDashboardDashboardContext.Provider value={dashboardContextValue}>
 							<ProDashboardEditorActionsContext.Provider value={editorActionsContextValue}>
 								<ProDashboardItemsStateContext.Provider value={itemsStateContextValue}>
-									<ProDashboardUIContext.Provider value={uiContextValue}>{children}</ProDashboardUIContext.Provider>
+									<ProDashboardStreamProgressContext.Provider value={streamProgressContextValue}>
+										<ProDashboardVariablesContext.Provider value={variablesContextValue}>
+											<ProDashboardAnnotationsContext.Provider value={annotationsContextValue}>
+												<ProDashboardHistoryContext.Provider value={historyContextValue}>
+													<ProDashboardUIContext.Provider value={uiContextValue}>
+														{children}
+													</ProDashboardUIContext.Provider>
+												</ProDashboardHistoryContext.Provider>
+											</ProDashboardAnnotationsContext.Provider>
+										</ProDashboardVariablesContext.Provider>
+									</ProDashboardStreamProgressContext.Provider>
 								</ProDashboardItemsStateContext.Provider>
 							</ProDashboardEditorActionsContext.Provider>
 						</ProDashboardDashboardContext.Provider>
@@ -1061,6 +1460,38 @@ export function useProDashboardItemsState() {
 	const context = useContext(ProDashboardItemsStateContext)
 	if (context === undefined) {
 		throw new Error('useProDashboardItemsState must be used within a ProDashboardAPIProvider')
+	}
+	return context
+}
+
+export function useDashboardStreamProgress() {
+	const context = useContext(ProDashboardStreamProgressContext)
+	if (context === undefined) {
+		throw new Error('useDashboardStreamProgress must be used within a ProDashboardAPIProvider')
+	}
+	return context
+}
+
+export function useProDashboardVariables() {
+	const context = useContext(ProDashboardVariablesContext)
+	if (context === undefined) {
+		throw new Error('useProDashboardVariables must be used within a ProDashboardAPIProvider')
+	}
+	return context
+}
+
+export function useProDashboardAnnotations() {
+	const context = useContext(ProDashboardAnnotationsContext)
+	if (context === undefined) {
+		throw new Error('useProDashboardAnnotations must be used within a ProDashboardAPIProvider')
+	}
+	return context
+}
+
+export function useProDashboardHistory() {
+	const context = useContext(ProDashboardHistoryContext)
+	if (context === undefined) {
+		throw new Error('useProDashboardHistory must be used within a ProDashboardAPIProvider')
 	}
 	return context
 }

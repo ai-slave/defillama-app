@@ -19,10 +19,11 @@ interface ChartRouterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function ChartRouter({ config, result, classified, onReady }: ChartRouterProps) {
-	const common = { config, result, classified, onReady }
+export function ChartRouter({ config, result, classified, onReady, height }: ChartRouterProps) {
+	const common = { config, result, classified, onReady, ...(height === undefined ? {} : { height }) }
 	switch (config.chartType) {
 		case 'line':
 			return <LineBarChart {...common} forceType="line" />

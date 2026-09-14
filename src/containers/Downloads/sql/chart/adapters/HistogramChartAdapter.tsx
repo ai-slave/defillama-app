@@ -20,9 +20,16 @@ interface HistogramChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function HistogramChartAdapter({ config, result, classified, onReady }: HistogramChartAdapterProps) {
+export function HistogramChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: HistogramChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const valueColName =
 		config.histogram?.valueCol ?? config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name ?? null
@@ -100,7 +107,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -108,7 +115,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 			<MultiSeriesChart
 				dataset={chartModel.dataset}
 				charts={chartModel.charts}
-				height={SQL_CHART_HEIGHT}
+				height={height}
 				hideDataZoom
 				chartOptions={chartOptions}
 				onReady={onReady}

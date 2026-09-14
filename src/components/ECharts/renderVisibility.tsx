@@ -10,9 +10,14 @@ export function EChartsRenderVisibilityProvider({ children, visible }: { childre
 interface EChartsLifecycle {
 	capture: (instance: ECharts) => void
 	restore: (instance: ECharts) => void
+	hasEnteredRef: { current: boolean }
 }
 
-const EMPTY_LIFECYCLE: EChartsLifecycle = { capture: () => {}, restore: () => {} }
+const EMPTY_LIFECYCLE: EChartsLifecycle = {
+	capture: () => {},
+	restore: () => {},
+	hasEnteredRef: { current: false }
+}
 const EChartsLifecycleContext = createContext<EChartsLifecycle>(EMPTY_LIFECYCLE)
 
 export function usePersistentEChartsLifecycle() {
@@ -23,6 +28,7 @@ export function withEChartsRenderVisibility<Props extends object>(Renderer: Comp
 	function VisibilityBoundary(props: Props) {
 		const visible = useContext(EChartsRenderVisibilityContext)
 		const interactiveStateRef = useRef<EChartsOption | null>(null)
+		const hasEnteredRef = useRef(false)
 
 		const capture = useCallback((instance: ECharts) => {
 			if (instance.isDisposed()) return
@@ -41,7 +47,7 @@ export function withEChartsRenderVisibility<Props extends object>(Renderer: Comp
 			})
 		}, [])
 
-		const lifecycle = useMemo(() => ({ capture, restore }), [capture, restore])
+		const lifecycle = useMemo(() => ({ capture, restore, hasEnteredRef }), [capture, restore])
 		return (
 			<EChartsLifecycleContext.Provider value={lifecycle}>
 				{visible ? <Renderer {...props} /> : null}

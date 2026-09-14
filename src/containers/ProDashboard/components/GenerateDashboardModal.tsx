@@ -6,12 +6,15 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { createDashboardStreamLineParser } from '../dashboardStreamLines'
 import type { Dashboard } from '../dashboardTypes'
+import { restoreItemsAfterIterate, stripCustomDataRows } from '../dashboardVariables/resolve'
 import { dashboardUrlKey } from '../services/DashboardAPI'
+import { ProButton, ProDialog } from '../ui'
 
 const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
 const EMPTY_DASHBOARD_TAGS: Array<string> = []
@@ -176,7 +179,10 @@ function GenerateDashboardModalInner({
 				: undefined
 			return {
 				...payload,
-				items: migrateDashboardItems(data.dashboardConfig.items),
+				items: restoreItemsAfterIterate(
+					existingDashboard?.items ?? EMPTY_DASHBOARD_ITEMS,
+					migrateDashboardItems(data.dashboardConfig.items)
+				),
 				...(aiGenerationContext ? { aiGenerationContext } : {})
 			}
 		},
@@ -245,7 +251,7 @@ function GenerateDashboardModalInner({
 						mode: 'iterate',
 						existingDashboard: {
 							dashboardName: existingDashboard?.dashboardName ?? '',
-							items: existingDashboard?.items ?? EMPTY_DASHBOARD_ITEMS,
+							items: stripCustomDataRows(existingDashboard?.items ?? EMPTY_DASHBOARD_ITEMS),
 							...(existingDashboard?.aiGenerated ? { aiGenerated: existingDashboard.aiGenerated } : {})
 						}
 					}
@@ -301,25 +307,12 @@ function GenerateDashboardModalInner({
 				if (!open) handleClose()
 			}}
 		>
-			<Ariakit.Dialog
-				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
-				unmountOnHide
-				portal
+			<ProDialog
+				width="md"
+				heading={mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'}
+				closeButtonProps={{ disabled: pending }}
 				hideOnInteractOutside
 			>
-				<div className="mb-6 flex items-center justify-between">
-					<Ariakit.DialogHeading className="text-xl font-semibold text-pro-text-primary">
-						{mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'}
-					</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss
-						disabled={pending}
-						className="rounded-md pro-hover-bg p-1 transition-colors disabled:opacity-50"
-					>
-						<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
-						<span className="sr-only">Close dialog</span>
-					</Ariakit.DialogDismiss>
-				</div>
-
 				<form ref={formRef} onSubmit={handleGenerate}>
 					<div className="space-y-6">
 						{mode === 'create' ? (
@@ -336,7 +329,7 @@ function GenerateDashboardModalInner({
 									type="text"
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
 									placeholder="e.g., Ethereum vs Arbitrum Analysis"
-									className={`w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+									className={`w-full rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 									readOnly={fieldsLocked}
 									required
 								/>
@@ -365,7 +358,7 @@ function GenerateDashboardModalInner({
 										: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
 								}
 								rows={4}
-								className={`w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+								className={`w-full resize-none rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 								readOnly={fieldsLocked}
 								required
 							/>
@@ -392,8 +385,8 @@ function GenerateDashboardModalInner({
 												key={option.value}
 												className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
 													visibility === option.value
-														? 'pro-btn-primary'
-														: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
+														? 'border-brand bg-pro-info-100/60 text-pro-text-primary'
+														: 'border-pro-cards-border text-pro-text-secondary hover:text-pro-text-primary'
 												} ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 											>
 												<Ariakit.Radio
@@ -431,19 +424,12 @@ function GenerateDashboardModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className={`min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+										className={`min-w-0 flex-1 rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 										disabled={fieldsLocked}
 									/>
-									<button
-										type="button"
-										onClick={handleAddTag}
-										disabled={fieldsLocked}
-										className={`rounded-md border px-4 py-2 transition-colors ${
-											!fieldsLocked ? 'pro-btn-primary-outline' : 'cursor-not-allowed pro-border text-pro-text-tertiary'
-										}`}
-									>
+									<ProButton type="button" onClick={handleAddTag} disabled={fieldsLocked} variant="primary">
 										Add Tag
-									</button>
+									</ProButton>
 								</div>
 
 								<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
@@ -453,7 +439,7 @@ function GenerateDashboardModalInner({
 										{tags.map((tag) => (
 											<span
 												key={tag}
-												className="flex max-w-full items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
+												className="flex max-w-full items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
 											>
 												<span className="min-w-0 wrap-anywhere">{tag}</span>
 												<button
@@ -497,7 +483,7 @@ function GenerateDashboardModalInner({
 						<Ariakit.DialogDismiss
 							type="button"
 							disabled={pending}
-							className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:opacity-50"
+							render={<ProButton variant="secondary" className="flex-1" />}
 						>
 							Cancel
 						</Ariakit.DialogDismiss>
@@ -505,15 +491,11 @@ function GenerateDashboardModalInner({
 							type="submit"
 							accessibleWhenDisabled
 							disabled={pending}
-							className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-								!pending
-									? 'animate-pro-glow pro-btn-primary'
-									: 'cursor-not-allowed border pro-border text-pro-text-tertiary'
-							}`}
+							render={<ProButton variant="primary" className={pending ? 'flex-1' : 'flex-1 animate-pro-glow'} />}
 						>
 							{pending ? (
 								<>
-									<Icon name="sparkles" height={16} width={16} className="animate-spin" />
+									<LoadingSpinner size={16} />
 									{pendingLabel}…
 								</>
 							) : (
@@ -528,7 +510,7 @@ function GenerateDashboardModalInner({
 						</span>
 					</div>
 				</form>
-			</Ariakit.Dialog>
+			</ProDialog>
 		</Ariakit.DialogProvider>
 	)
 }

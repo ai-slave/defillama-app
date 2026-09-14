@@ -13,7 +13,7 @@ import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { reactSelectStyles } from '../../../utils/reactSelectStyles'
 import { CSVExportButton } from '../../CSVExportButton'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { getColumns } from './columns'
@@ -197,13 +197,8 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	if (tokenSymbols.length === 0) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-base font-semibold text-pro-text-primary md:text-lg">Token Usage Comparison</h3>
-					</div>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4 px-4">
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col items-center justify-center gap-4 px-4">
 					{props.editable ? (
 						<>
 							<h3 className="text-center text-lg font-medium text-pro-text-primary md:text-xl">
@@ -229,17 +224,9 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	if (isLoading) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-base font-semibold text-pro-text-primary md:text-lg">
-							{tokenSymbols.length > 0 ? `Token Usage Comparison` : 'Token Usage'}
-						</h3>
-					</div>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading token usage data...</p>
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading token usage data…" />
 				</div>
 			</div>
 		)
@@ -247,13 +234,8 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	if (isError) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-base font-semibold text-pro-text-primary md:text-lg">Token Usage Comparison</h3>
-					</div>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col items-center justify-center gap-4">
 					<p className="mb-2 text-sm text-pro-text-secondary">Failed to load token usage data</p>
 					<button
 						type="button"
@@ -270,15 +252,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 	}
 
 	return (
-		<div className="flex size-full flex-col p-4">
-			<div className="mb-3">
-				<div className="flex items-center justify-between gap-4">
-					<h3 className="truncate text-base font-semibold text-pro-text-primary md:text-lg">
-						Token Usage {tokenSymbols.length > 0 ? `- ${tokenSymbols.map((s) => s.toUpperCase()).join(', ')}` : ''}
-					</h3>
-				</div>
-			</div>
-
+		<div className="flex size-full flex-col">
 			{summary.kind === 'single' ? (
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
 					<div className="border border-subtle p-3">
@@ -429,12 +403,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 			)}
 
 			<div className="mb-3">
-				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-					<h3 className="truncate text-base font-semibold text-pro-text-primary md:text-lg">
-						{tokenSymbols.length === 1 && tokenSymbols[0]
-							? `${tokenSymbols[0].toUpperCase()} Usage`
-							: `Comparing ${tokenSymbols.map((t) => t.toUpperCase()).join(', ')}`}
-					</h3>
+				<div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
 					<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
 						{props.editable ? (
 							<div className="order-2 w-full sm:order-1 sm:w-64 lg:w-96">
@@ -483,7 +452,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 							) : null}
 							<CSVExportButton
 								onClick={downloadCSV}
-								className="flex h-[38px] items-center gap-2 border pro-border bg-surface px-3 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
+								className="flex h-[38px] items-center gap-2 border border-pro-cards-border bg-surface px-3 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
 							/>
 						</div>
 					</div>
@@ -492,7 +461,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 					<input
 						placeholder="Search protocols..."
 						onInput={(e) => setSearch(e.currentTarget.value)}
-						className="w-full max-w-xs rounded-sm border pro-border pro-panel-bg px-2 py-1.5 text-sm text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-auto sm:px-3"
+						className="w-full max-w-xs rounded-sm border border-pro-cards-border bg-pro-cards-bg px-2 py-1.5 text-sm text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-auto sm:px-3"
 					/>
 				</div>
 			</div>

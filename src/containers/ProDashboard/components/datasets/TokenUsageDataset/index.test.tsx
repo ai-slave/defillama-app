@@ -8,11 +8,12 @@ import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 const mocks = vi.hoisted(() => ({
 	data: [] as Array<ProtocolTokenUsageData>,
 	downloadCSV: vi.fn(),
+	isLoading: false,
 	refetch: vi.fn()
 }))
 
 vi.mock('./useTokenUsageData', () => ({
-	useTokenUsageData: () => ({ data: mocks.data, isLoading: false, isError: false, refetch: mocks.refetch })
+	useTokenUsageData: () => ({ data: mocks.data, isLoading: mocks.isLoading, isError: false, refetch: mocks.refetch })
 }))
 vi.mock('./useTokenSearch', () => ({ useTokenSearch: () => ({ data: [], isLoading: false }) }))
 vi.mock('./columns', () => ({
@@ -31,7 +32,6 @@ vi.mock('../../CSVExportButton', () => ({
 	)
 }))
 vi.mock('../../Table/TablePagination', () => ({ TablePagination: () => null }))
-vi.mock('../../LoadingSpinner', () => ({ LoadingSpinner: () => null }))
 vi.mock('~/components/MultiSelect/ReactSelect', () => ({ ReactSelect: () => null }))
 
 import { TokenUsageDataset } from './index'
@@ -47,6 +47,7 @@ describe('TokenUsageDataset CSV export', () => {
 		root = createRoot(container)
 		mocks.downloadCSV.mockReset()
 		mocks.refetch.mockReset()
+		mocks.isLoading = false
 		mocks.data = [
 			{ name: 'Excluded', category: 'Other', amountUsd: 1000, tokens: { usdc: 1000 } },
 			...Array.from({ length: 12 }, (_, index) => {
@@ -64,6 +65,30 @@ describe('TokenUsageDataset CSV export', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+	})
+
+	test('announces the loading state with a skeleton and no stray text', async () => {
+		mocks.isLoading = true
+		await act(async () =>
+			root.render(
+				<TokenUsageDataset
+					editable={false}
+					config={{
+						id: 'token-usage',
+						kind: 'dataset-table',
+						datasetType: 'token-usage',
+						tokenSymbols: ['usdc'],
+						includeCex: false
+					}}
+				/>
+			)
+		)
+
+		const busy = container.querySelector('[aria-busy="true"]')
+		expect(busy).not.toBeNull()
+		expect(busy?.querySelector('[data-skeleton="table"]')).not.toBeNull()
+		expect(busy?.textContent).toBe('Loading token usage data…')
+		expect(container.textContent).not.toMatch(/\d/)
 	})
 
 	test('exports every filtered row in sorted order before pagination', async () => {

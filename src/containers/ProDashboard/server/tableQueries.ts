@@ -3,6 +3,7 @@ import { llamaDb } from '~/server/db/llama'
 import { tokenIconUrl } from '~/utils/icons'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { buildTokenUsageSourcePlan, type TokenUsageStreamData } from '../tokenUsageSourcePlan'
+import type { StreamSourceRegistry } from './stream/itemReadiness'
 import { formatDisplayName } from './unifiedTable/utils'
 
 export async function fetchProTokenUsageData(
@@ -57,20 +58,23 @@ export async function fetchProTokenUsageData(
 
 export async function streamProTokenUsageData(
 	items: Array<DashboardItemConfig>,
-	claimSource: (kind: string, key: ReadonlyArray<unknown>) => boolean,
-	schedule: (run: () => Promise<void>) => Promise<void>,
+	sources: StreamSourceRegistry,
 	onData: (data: TokenUsageStreamData) => Promise<void>
 ): Promise<void> {
 	const requests: Array<Promise<void>> = []
-	for (const source of buildTokenUsageSourcePlan(items)) {
-		if (!claimSource('table-token-usage', [source.cacheKey])) continue
-		requests.push(
-			schedule(() =>
-				fetchProTokenUsageData(source.tokenSymbols, source.includeCex).then((data) =>
-					onData({ key: source.cacheKey, data })
+	for (const item of items) {
+		for (const source of buildTokenUsageSourcePlan([item])) {
+			const sourceKey = sources.sourceKey('table-token-usage', [source.cacheKey])
+			sources.register(item.id, sourceKey)
+			if (!sources.claim(sourceKey)) continue
+			requests.push(
+				sources.schedule(sourceKey, () =>
+					fetchProTokenUsageData(source.tokenSymbols, source.includeCex).then((data) =>
+						onData({ key: source.cacheKey, data })
+					)
 				)
 			)
-		)
+		}
 	}
 	await Promise.allSettled(requests)
 }

@@ -1,38 +1,67 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { ProButton } from '../ui'
+import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
+import { buildEmbedIframeSnippet, dashboardEmbedPath, EMBED_ORIGIN } from './EmbedSnippetDialog'
+
+const DASHBOARD_EMBED_HEIGHT = 900
+type CopiedTarget = 'link' | 'embed'
 
 export function CopyDashboardLinkButton({
 	dashboardVisibility,
 	dashboardId,
-	dashboardSlug
+	dashboardSlug,
+	isOwner = false,
+	onMakePublic,
+	manageAction
 }: {
 	dashboardVisibility: 'private' | 'public'
 	dashboardId: string
 	dashboardSlug?: string
+	isOwner?: boolean
+	onMakePublic?: () => Promise<void>
+	manageAction?: { label: string; onSelect: () => void }
 }) {
-	const [copied, setCopied] = useState(false)
+	const [copied, setCopied] = useState<CopiedTarget | null>(null)
+	const [makingPublic, setMakingPublic] = useState(false)
+	const pendingCopyLinkFocusRef = useRef(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const copyLinkButtonRef = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		return () => {
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 		}
 	}, [])
+	const isPrivate = dashboardVisibility === 'private'
+	useEffect(() => {
+		if (isPrivate || !pendingCopyLinkFocusRef.current) return
+		pendingCopyLinkFocusRef.current = false
+		copyLinkButtonRef.current?.focus()
+	}, [isPrivate])
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
 
-	const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pro/${dashboardSlug || dashboardId}`
+	const dashboardKey = dashboardSlug || dashboardId
+	const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/pro/${dashboardKey}`
+	const embedSnippet = buildEmbedIframeSnippet({
+		src: `${EMBED_ORIGIN}${dashboardEmbedPath(dashboardKey)}`,
+		height: DASHBOARD_EMBED_HEIGHT
+	})
 
-	const handleCopyLink = async () => {
+	const copyToClipboard = async (text: string, target: CopiedTarget) => {
 		try {
-			await navigator.clipboard.writeText(shareUrl)
-			setCopied(true)
+			await navigator.clipboard.writeText(text)
+			setCopied(target)
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
-			copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000)
-		} catch (error) {
-			console.log('Failed to copy link:', error)
+			copiedTimeoutRef.current = setTimeout(() => setCopied(null), 2000)
+		} catch {
+			toast.error('Could not copy the link', { id: 'dashboard-copy' })
 		}
 	}
+	const handleCopyLink = () => copyToClipboard(shareUrl, 'link')
+	const handleCopyEmbed = () => copyToClipboard(embedSnippet, 'embed')
 
 	const handleShareTo = (social: 'twitter' | 'telegram') => {
 		const text = encodeURIComponent('Check out this dashboard on DefiLlama')
@@ -47,84 +76,172 @@ export function CopyDashboardLinkButton({
 		window.open(socialUrl, '_blank', 'noopener,noreferrer')
 	}
 
-	if (dashboardVisibility === 'private') {
-		return (
-			<Tooltip
-				content="Make dashboard public to share"
-				render={<button type="button" aria-disabled />}
-				className="flex cursor-not-allowed items-center gap-1 rounded-md border border-pro-cards-border px-1.5 py-1 text-xs text-tertiary hover:border-transparent focus-visible:border-transparent"
-			>
-				{copied ? <Icon name="check-circle" height={14} width={14} /> : <Icon name="link" height={14} width={14} />}
-				<span>Share</span>
-			</Tooltip>
-		)
+	if (isPrivate && !isOwner) return null
+
+	const makePublic = async () => {
+		if (!onMakePublic || makingPublic) return
+		setMakingPublic(true)
+		try {
+			await onMakePublic()
+			actionToast({
+				message: 'Dashboard is live',
+				icon: <Icon name="earth" height={14} width={14} />,
+				action: {
+					label: 'Copy link',
+					onClick: () => void handleCopyLink(),
+					umamiEvent: 'dashboard-live-copy-link'
+				},
+				id: 'dashboard-live',
+				duration: TOAST_DURATION_UNDO
+			})
+			pendingCopyLinkFocusRef.current = true
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Could not make this dashboard public')
+		}
+		setMakingPublic(false)
 	}
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary">
-				<Icon name="share" height={14} width={14} />
+			<Ariakit.PopoverDisclosure render={<ProButton type="button" variant="secondary" />}>
+				<Icon name={isPrivate ? 'link' : 'share'} height={14} width={14} />
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
 
 			<Ariakit.Popover
 				gutter={8}
-				className="z-50 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3 shadow-lg"
+				portal
+				unmountOnHide
+				className={popoverSurfaceStyles}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				style={{ minWidth: '280px' }}
 			>
-				<div className="flex flex-col gap-3">
-					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-pro-text-label">Share Link</p>
-						<div className="flex gap-2">
-							<input
-								type="text"
-								value={shareUrl}
-								readOnly
-								className="flex-1 rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
-							/>
-							<button
+				{isPrivate ? (
+					<div className="flex flex-col gap-2 p-3">
+						<p className="text-xs text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
+						{onMakePublic ? (
+							<ProButton
 								type="button"
+								size="sm"
+								variant="primary"
+								onClick={() => void makePublic()}
+								disabled={makingPublic}
+								data-umami-event="dashboard-make-public"
+							>
+								{makingPublic ? 'Making public…' : 'Make public'}
+							</ProButton>
+						) : null}
+						{manageAction ? (
+							<ProButton
+								type="button"
+								size="sm"
+								variant="secondary"
 								onClick={() => {
-									void handleCopyLink()
+									popover.setOpen(false)
+									manageAction.onSelect()
 								}}
-								className="flex items-center gap-1.5 rounded-md border pro-border pro-hover-bg px-2.5 py-1.5 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-								title="Copy link"
 							>
-								{copied ? (
-									<Icon name="check-circle" height={14} width={14} className="text-success" />
-								) : (
-									<Icon name="copy" height={14} width={14} />
-								)}
-							</button>
-						</div>
+								{manageAction.label}
+							</ProButton>
+						) : null}
 					</div>
+				) : (
+					<div className="flex flex-col gap-3 p-3">
+						<div className="flex flex-col gap-1.5">
+							<p className="text-xs font-medium text-pro-text-label">Share Link</p>
+							<div className="flex gap-2">
+								<input
+									type="text"
+									value={shareUrl}
+									readOnly
+									className="flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs"
+								/>
+								<ProButton
+									type="button"
+									size="sm"
+									square
+									variant="secondary"
+									ref={copyLinkButtonRef}
+									onClick={() => {
+										void handleCopyLink()
+									}}
+									title="Copy link"
+									aria-label="Copy link"
+								>
+									{copied === 'link' ? (
+										<Icon name="check-circle" height={14} width={14} className="text-success" />
+									) : (
+										<Icon name="copy" height={14} width={14} />
+									)}
+								</ProButton>
+							</div>
+						</div>
 
-					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-pro-text-label">Share on</p>
-						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={() => handleShareTo('twitter')}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-								title="Share on Twitter/X"
-							>
-								<Icon name="twitter" height={16} width={16} />
-								<span>Twitter</span>
-							</button>
-							<button
-								type="button"
-								onClick={() => handleShareTo('telegram')}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-								title="Share on Telegram"
-							>
-								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-									<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
-								</svg>
-								<span>Telegram</span>
-							</button>
+						<div className="flex flex-col gap-1.5">
+							<p className="text-xs font-medium text-pro-text-label">Embed dashboard</p>
+							<div className="flex gap-2">
+								<textarea
+									value={embedSnippet}
+									readOnly
+									rows={3}
+									aria-label="Embed code"
+									spellCheck={false}
+									onFocus={(event) => event.currentTarget.select()}
+									className="flex-1 resize-none rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 font-mono text-xs"
+								/>
+								<ProButton
+									type="button"
+									size="sm"
+									square
+									variant="secondary"
+									onClick={() => {
+										void handleCopyEmbed()
+									}}
+									data-umami-event="embed-dashboard"
+									className="self-start"
+									title="Copy embed code"
+									aria-label="Copy embed code"
+								>
+									{copied === 'embed' ? (
+										<Icon name="check-circle" height={14} width={14} className="text-success" />
+									) : (
+										<Icon name="code" height={14} width={14} />
+									)}
+								</ProButton>
+							</div>
+						</div>
+
+						<div className="flex flex-col gap-1.5">
+							<p className="text-xs font-medium text-pro-text-label">Share on</p>
+							<div className="flex gap-2">
+								<ProButton
+									type="button"
+									size="sm"
+									variant="secondary"
+									onClick={() => handleShareTo('twitter')}
+									className="flex-1"
+									title="Share on Twitter/X"
+								>
+									<Icon name="twitter" height={16} width={16} />
+									<span>Twitter</span>
+								</ProButton>
+								<ProButton
+									type="button"
+									size="sm"
+									variant="secondary"
+									onClick={() => handleShareTo('telegram')}
+									className="flex-1"
+									title="Share on Telegram"
+								>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+										<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
+									</svg>
+									<span>Telegram</span>
+								</ProButton>
+							</div>
 						</div>
 					</div>
-				</div>
+				)}
 			</Ariakit.Popover>
 		</Ariakit.PopoverProvider>
 	)

@@ -82,7 +82,7 @@ export function ColumnManagementPanel({
 								}
 							}
 						}}
-						className="rounded-md border pro-divider pro-hover-bg pro-panel-raised px-2 py-1 text-xs text-pro-text-secondary transition-colors"
+						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
 					>
 						Show All
 					</button>
@@ -95,7 +95,7 @@ export function ColumnManagementPanel({
 								}
 							}
 						}}
-						className="rounded-md border pro-divider pro-hover-bg pro-panel-raised px-2 py-1 text-xs text-pro-text-secondary transition-colors"
+						className="rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs text-pro-text-secondary transition-colors hover:bg-pro-hover-fill"
 					>
 						Hide All
 					</button>
@@ -114,7 +114,7 @@ export function ColumnManagementPanel({
 					placeholder="Search columns..."
 					defaultValue={searchTerm}
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border pro-border bg-pro-glass-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-cards-border bg-pro-glass-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 				/>
 			</div>
 
@@ -136,7 +136,7 @@ export function ColumnManagementPanel({
 							return (
 								<div
 									key={columnId}
-									className="flex items-center justify-between rounded-md border pro-divider pro-hover-bg pro-panel-raised p-2 transition-colors"
+									className="flex items-center justify-between rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 transition-colors hover:bg-pro-hover-fill"
 								>
 									<div className="flex items-center gap-2">
 										<Icon name="check" height={12} width={12} className="text-success" />
@@ -201,7 +201,7 @@ export function ColumnManagementPanel({
 												type="button"
 												key={column.id}
 												onClick={() => toggleColumnVisibility(column.id)}
-												className="flex w-full items-center gap-2 rounded-md border pro-divider pro-hover-bg pro-panel-raised p-2 text-left transition-colors"
+												className="flex w-full items-center gap-2 rounded-md border border-pro-cards-border bg-surface-elevated-1 p-2 text-left transition-colors hover:bg-pro-hover-fill"
 											>
 												<Icon name="plus" height={10} width={10} className="text-pro-text-tertiary" />
 												<span className="text-xs text-pro-text-primary">{column.name}</span>
@@ -219,7 +219,7 @@ export function ColumnManagementPanel({
 				</div>
 			</div>
 
-			<div className="mt-4 flex items-center justify-between border-t pro-divider pt-3 text-xs">
+			<div className="mt-4 flex items-center justify-between border-t border-pro-cards-border pt-3 text-xs">
 				<span className="text-pro-text-tertiary">
 					{activeColumns.length} of {columns.length} columns visible
 				</span>

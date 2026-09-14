@@ -4,7 +4,15 @@ import { FEATURES_SERVER } from '../../../constants'
 import { migrateDashboardConfig } from '../dashboardConfig/migrate'
 import type { PersistedDashboard } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import type { AIGeneratedData, AIUndoState, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
+import type {
+	AIGeneratedData,
+	AIUndoState,
+	CustomTimePeriod,
+	Dashboard,
+	DashboardAnnotation,
+	DashboardVariable,
+	TimePeriod
+} from '../dashboardTypes'
 
 export interface FollowingShelf {
 	author: PublicDashboardAuthor
@@ -82,6 +90,8 @@ export type DashboardSavePayload = {
 	dashboardName: string
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
+	variables?: Array<DashboardVariable>
+	annotations?: Array<DashboardAnnotation>
 	aiUndoState?: AIUndoState | null
 	visibility?: 'private' | 'public'
 	tags?: Array<string>

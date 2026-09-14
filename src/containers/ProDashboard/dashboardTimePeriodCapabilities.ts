@@ -17,7 +17,9 @@ const USES_TIME_PERIOD_BY_ITEM_KIND = {
 	metric: false,
 	text: false,
 	'unified-table': false,
-	sql: false
+	sql: false,
+	section: false,
+	'custom-data': false
 } satisfies Record<Exclude<DashboardItemConfig['kind'], 'dataset-table'>, boolean>
 export function dashboardItemUsesTimePeriod(item: DashboardItemConfig) {
 	return item.kind === 'dataset-table' ? item.datasetType === 'cex-analytics' : USES_TIME_PERIOD_BY_ITEM_KIND[item.kind]

@@ -50,7 +50,6 @@ async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'pu
 					dashboardName="Original"
 					visibility={visibility}
 					tags={[]}
-					description=""
 					dashboardId="test"
 					onSave={save}
 					onDelete={remove}
@@ -76,12 +75,7 @@ test('visibility arrows update only the local draft; cancel and reopen discard i
 	await act(async () =>
 		document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
-	expect(save).toHaveBeenCalledExactlyOnceWith({
-		dashboardName: 'Original',
-		visibility: 'private',
-		tags: [],
-		description: ''
-	})
+	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'private', tags: [] })
 })
 test('an unavailable private selection remains intact while Public stays keyboard reachable', async () => {
 	auth.hasActiveSubscription = false
@@ -130,8 +124,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 			})
 	)
 	await dashboard(true)
-	const input = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
-	input.value = 'My edited name'
+	await press(radio('public'), 'ArrowRight')
 	const submit = async () => {
 		await act(async () => {
 			document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
@@ -140,7 +133,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 	}
 	await submit()
 	expect(close).not.toHaveBeenCalled()
-	expect(input.value).toBe('My edited name')
+	expect(radio('private').checked).toBe(true)
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
 	await submit()
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
@@ -151,7 +144,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 		await new Promise((resolve) => setTimeout(resolve, 20))
 	})
 	expect(close).toHaveBeenCalledOnce()
-	expect(save.mock.calls[1][0].dashboardName).toBe('My edited name')
+	expect(save.mock.calls[1][0].visibility).toBe('private')
 })
 
 test('dashboard deletion keeps its confirmation open on error and closes settings only after success', async () => {

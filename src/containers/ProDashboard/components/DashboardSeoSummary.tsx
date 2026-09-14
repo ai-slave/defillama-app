@@ -28,7 +28,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 	const visibleSummaries = seo.itemSummaries.slice(0, 12)
 	const remainingItems = Math.max(0, seo.itemCount - visibleSummaries.length)
 	const metrics = [
-		{ label: 'Items', value: formatNumber(seo.itemCount ?? 0) },
+		{ label: 'Cards', value: formatNumber(seo.itemCount ?? 0) },
 		{
 			label: 'Updated',
 			value: updatedDate ? <time dateTime={updatedDate}>{updatedDate}</time> : 'Unknown'
@@ -40,7 +40,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 	return (
 		<section
 			aria-labelledby="dashboard-title"
-			className="isolate overflow-hidden rounded-md border pro-dashboard border-pro-cards-border bg-pro-cards-bg"
+			className="isolate overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg pro-dashboard"
 		>
 			<div className="grid gap-5 px-4 py-4 md:px-5 md:py-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] xl:items-start">
 				<div className="min-w-0">
@@ -89,7 +89,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 							key={metric.label}
 							className={`px-3 py-3 ${index % 2 === 1 ? 'border-l border-pro-cards-border' : ''} ${index > 1 ? 'border-t border-pro-cards-border' : ''} sm:border-t-0 sm:border-l sm:first:border-l-0 xl:[&:nth-child(3)]:border-l-0 xl:[&:nth-child(n+3)]:border-t`}
 						>
-							<dt className="text-[11px] leading-4 font-medium tracking-wide text-pro-text-label uppercase">
+							<dt className="text-xs leading-4 font-medium tracking-wide text-pro-text-label uppercase">
 								{metric.label}
 							</dt>
 							<dd className="mt-1 text-base leading-5 font-semibold text-pro-text-primary tabular-nums">
@@ -104,7 +104,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 				<div className="mb-3 flex flex-wrap items-center justify-between gap-2">
 					<h2 className="text-sm font-semibold text-pro-text-primary">Dashboard contents</h2>
 					<p className="text-xs text-pro-text-label">
-						{formatNumber(seo.itemCount ?? 0)} {seo.itemCount === 1 ? 'item' : 'items'}
+						{formatNumber(seo.itemCount ?? 0)} {seo.itemCount === 1 ? 'card' : 'cards'}
 					</p>
 				</div>
 				{visibleSummaries.length > 0 ? (
@@ -128,12 +128,12 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 						))}
 						{remainingItems > 0 ? (
 							<li className="border-t border-dashed border-pro-cards-border py-2.5 text-pro-text-label">
-								+{remainingItems} more items in this dashboard
+								+{remainingItems} more cards in this dashboard
 							</li>
 						) : null}
 					</ul>
 				) : (
-					<p className="text-sm text-pro-text-label">This public dashboard does not have any items yet.</p>
+					<p className="text-sm text-pro-text-label">This public dashboard does not have any cards yet.</p>
 				)}
 			</div>
 		</section>

@@ -84,3 +84,58 @@ describe('mergeDashboardItems', () => {
 		expect(mergeDashboardItems(base, server, local)).toBe(local)
 	})
 })
+
+const section = (id: string, title = id): DashboardItemConfig => ({ id, kind: 'section', title, displayAs: 'heading' })
+const customData = (id: string, name = id): DashboardItemConfig => ({
+	id,
+	kind: 'custom-data',
+	name,
+	columns: [{ name: 'date', type: 'date' }],
+	rows: [['2026-01-01']],
+	chart: {
+		chartType: 'line',
+		xCol: 'date',
+		yCols: [],
+		splitByCol: null,
+		stackMode: 'off',
+		rightAxisCols: [],
+		seriesKinds: {},
+		seriesColors: {},
+		numberFormat: 'auto'
+	},
+	displayMode: 'table'
+})
+
+describe('mergeDashboardItems with sections and custom data', () => {
+	test('a card another client added lands at the end, inside the last local section', () => {
+		const base = [text('a')]
+		const server = [text('a'), text('b')]
+		const local = [text('a'), section('overview'), text('c')]
+		expect(mergeDashboardItems(base, server, local).map((item) => item.id)).toEqual(['a', 'overview', 'c', 'b'])
+	})
+
+	test('sections follow the same per-id rules as cards', () => {
+		const base = [section('s', 'Original'), text('a')]
+		const server = [section('s', 'Server title'), text('a')]
+		const localEdit = [section('s', 'Local title'), text('a')]
+		expect(mergeDashboardItems(base, server, localEdit)).toEqual([section('s', 'Local title'), text('a')])
+		expect(mergeDashboardItems(base, server, [...base])).toEqual(server)
+		expect(mergeDashboardItems(base, [text('a')], [section('s', 'Original'), text('a'), text('b')])).toEqual([
+			text('a'),
+			text('b')
+		])
+	})
+
+	test('custom-data cards merge like any other card', () => {
+		const base = [customData('d', 'Original')]
+		const server = [customData('d', 'Original'), text('b')]
+		const localEdit = [customData('d', 'Edited')]
+		expect(mergeDashboardItems(base, server, localEdit)).toEqual([customData('d', 'Edited'), text('b')])
+		const normalized = [customData('d', 'Normalized')]
+		expect(mergeDashboardItems(base, normalized, [customData('d', 'Original'), text('c')])).toEqual([
+			customData('d', 'Normalized'),
+			text('c')
+		])
+		expect(mergeDashboardItems(base, [], [customData('d', 'Original')])).toEqual([])
+	})
+})

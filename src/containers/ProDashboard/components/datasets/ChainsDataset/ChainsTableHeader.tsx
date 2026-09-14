@@ -8,7 +8,6 @@ interface ChainsTableHeaderProps {
 	showColumnSelector: boolean
 	setShowColumnSelector: (show: boolean) => void
 	handleExportCSV: () => void
-	category: string | undefined
 }
 
 export function ChainsTableHeader({
@@ -17,8 +16,7 @@ export function ChainsTableHeader({
 	applyPreset,
 	showColumnSelector,
 	setShowColumnSelector,
-	handleExportCSV,
-	category
+	handleExportCSV
 }: ChainsTableHeaderProps) {
 	const presetButtons = [
 		{ key: 'essential', label: 'Essential' },
@@ -30,11 +28,7 @@ export function ChainsTableHeader({
 
 	return (
 		<div className="mb-4">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h3 className="text-lg font-semibold text-pro-text-primary">
-					{category ? `${category} Chains` : 'All Chains'}
-				</h3>
-
+			<div className="flex flex-wrap items-center justify-end gap-3">
 				<div className="flex flex-wrap items-center gap-2">
 					<div className="flex items-center gap-2">
 						{presetButtons.map((preset) => (
@@ -48,7 +42,7 @@ export function ChainsTableHeader({
 								className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 									selectedPreset === preset.key
 										? 'border-brand bg-brand text-on-brand'
-										: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
+										: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-primary hover:bg-pro-hover-fill'
 								}`}
 							>
 								{preset.label}
@@ -62,7 +56,7 @@ export function ChainsTableHeader({
 						<button
 							type="button"
 							onClick={() => setShowColumnSelector(!showColumnSelector)}
-							className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors"
+							className="flex items-center gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-pro-hover-fill"
 						>
 							<Icon name="settings" height={14} width={14} />
 							Customize Table

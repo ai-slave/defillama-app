@@ -1,9 +1,24 @@
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import toast from 'react-hot-toast'
 import type { StoredColSpan } from './dashboardConfig/colSpan'
 import type { DashboardItemConfig } from './dashboardItemConfig'
-import type { DashboardAction, DashboardState } from './dashboardReducer'
-import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
-import type { ChartBuilderConfig, DashboardGrouping, MultiChartConfig, SqlChartConfig } from './types'
+import { appendItemsToTab, insertItemsAfter, insertItemsBefore } from './dashboardLayout/buildDashboardLayout'
+import { type DashboardAction, type DashboardState, historySnapshot, stepHistory } from './dashboardReducer'
+import type {
+	AIUndoState,
+	CustomTimePeriod,
+	DashboardAnnotation,
+	DashboardVariable,
+	TimePeriod
+} from './dashboardTypes'
+import type {
+	ChartBuilderConfig,
+	DashboardCardHeight,
+	DashboardGrouping,
+	MultiChartConfig,
+	SectionConfig,
+	SqlChartConfig
+} from './types'
 import { limitMultiChartItems } from './types'
 import {
 	UNIFIED_TABLE_CONFIG_VERSION,
@@ -16,13 +31,46 @@ import {
 	DEFAULT_UNIFIED_TABLE_SORTING,
 	sanitizeUnifiedTableRowHeaders
 } from './unifiedTable/config/layoutPolicy'
+import {
+	DASHBOARD_DATA_LENGTH_LIMIT,
+	estimateDashboardDataLength,
+	formatDashboardDataLength
+} from './utils/dashboardDocumentSize'
 import { generateItemId } from './utils/dashboardUtils'
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-type AutoSaveOverrides = {
+export type AutoSaveOverrides = {
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
+	variables?: Array<DashboardVariable>
+	annotations?: Array<DashboardAnnotation>
+}
+
+export type DashboardItemPlacement = { afterItemId: string } | { beforeItemId: string }
+
+export function buildDefaultUnifiedTableConfig(configOverrides?: Partial<UnifiedTableConfig>): UnifiedTableConfig {
+	const resolvedSorting =
+		configOverrides?.defaultSorting && configOverrides.defaultSorting.length > 0
+			? configOverrides.defaultSorting
+			: DEFAULT_UNIFIED_TABLE_SORTING
+
+	return {
+		id: generateItemId('unified-table', 'protocols'),
+		kind: 'unified-table',
+		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
+		strategy: 'protocols',
+		rowHeaders: sanitizeUnifiedTableRowHeaders(configOverrides?.rowHeaders ?? DEFAULT_UNIFIED_TABLE_ROW_HEADERS),
+		defaultSorting: resolvedSorting,
+		params: configOverrides?.params ?? { chains: ['All'] },
+		...(configOverrides?.filters === undefined ? {} : { filters: configOverrides.filters }),
+		columnOrder: configOverrides?.columnOrder ?? [...DEFAULT_COLUMN_ORDER],
+		columnVisibility: configOverrides?.columnVisibility ?? {},
+		...(configOverrides?.activePresetId === undefined ? {} : { activePresetId: configOverrides.activePresetId }),
+		colSpan: configOverrides?.colSpan ?? 2,
+		...(configOverrides?.customColumns === undefined ? {} : { customColumns: configOverrides.customColumns }),
+		...(configOverrides?.bindings === undefined ? {} : { bindings: configOverrides.bindings })
+	}
 }
 
 type AutoSaveFunction = (items: Array<DashboardItemConfig>, overrides?: AutoSaveOverrides) => void
@@ -70,16 +118,38 @@ export function useDashboardActions(
 	dispatch: Dispatch<DashboardAction>,
 	state: DashboardState,
 	autoSave: AutoSaveFunction,
-	isReadOnlyUntilDashboardLoaded: boolean
+	isReadOnlyUntilDashboardLoaded: boolean,
+	requestedTabId: string | null = null
 ) {
-	const { items } = state
+	const { items, variables, annotations, history } = state
+	const aiUndoState = state.currentDashboard?.data.aiUndoState
 
 	const itemsRef = useRef(items)
+	const variablesRef = useRef(variables)
+	const annotationsRef = useRef(annotations)
+	const aiUndoStateRef = useRef<AIUndoState | undefined>(aiUndoState)
+	const historyRef = useRef(history)
 	const hasHydratedRef = useRef(false)
 	useIsomorphicLayoutEffect(() => {
 		itemsRef.current = items
+		variablesRef.current = variables
+		annotationsRef.current = annotations
+		aiUndoStateRef.current = aiUndoState
+		historyRef.current = history
 		hasHydratedRef.current = true
-	}, [items])
+	}, [items, variables, annotations, aiUndoState, history])
+
+	const fitsDashboardSizeLimit = useCallback((candidateItems: Array<DashboardItemConfig>) => {
+		const length = estimateDashboardDataLength({
+			items: candidateItems,
+			variables: variablesRef.current,
+			annotations: annotationsRef.current,
+			aiUndoState: aiUndoStateRef.current
+		})
+		if (length <= DASHBOARD_DATA_LENGTH_LIMIT) return true
+		toast.error(`Dashboard is too large (${formatDashboardDataLength(length)}). Remove rows or a card.`)
+		return false
+	}, [])
 
 	const dispatchItemsAndSave = useCallback(
 		(updater: SetStateAction<Array<DashboardItemConfig>>) => {
@@ -104,50 +174,107 @@ export function useDashboardActions(
 		[autoSave]
 	)
 
+	const dispatchItemsWithVariablesAndSave = useCallback(
+		(newItems: Array<DashboardItemConfig>, newVariables: Array<DashboardVariable>) => {
+			if (!hasHydratedRef.current || isReadOnlyUntilDashboardLoaded) return
+			if (newItems === itemsRef.current && newVariables === variablesRef.current) return
+			itemsRef.current = newItems
+			variablesRef.current = newVariables
+			dispatch({ type: 'SET_ITEMS', payload: newItems, variables: newVariables })
+			autoSave(newItems, { variables: newVariables })
+		},
+		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const setVariables = useCallback(
+		(newVariables: Array<DashboardVariable>) => {
+			if (!hasHydratedRef.current || isReadOnlyUntilDashboardLoaded) return
+			if (newVariables === variablesRef.current) return
+			variablesRef.current = newVariables
+			dispatch({ type: 'SET_VARIABLES', payload: newVariables })
+			autoSave(itemsRef.current, { variables: newVariables })
+		},
+		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const setVariableOverrides = useCallback(
+		(overrides: Record<string, string>) => {
+			dispatch({ type: 'SET_VARIABLE_OVERRIDES', payload: overrides })
+		},
+		[dispatch]
+	)
+
+	const setAnnotations = useCallback(
+		(nextAnnotations: Array<DashboardAnnotation>) => {
+			if (!hasHydratedRef.current || isReadOnlyUntilDashboardLoaded) return
+			dispatch({ type: 'SET_ANNOTATIONS', payload: nextAnnotations })
+			autoSave(itemsRef.current, { annotations: nextAnnotations })
+		},
+		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const stepHistoryAndSave = useCallback(
+		(direction: 'undo' | 'redo') => {
+			if (!hasHydratedRef.current || isReadOnlyUntilDashboardLoaded) return false
+			const step = stepHistory(
+				historyRef.current,
+				historySnapshot({ items: itemsRef.current, variables: variablesRef.current }),
+				direction
+			)
+			if (!step) return false
+			historyRef.current = step.history
+			itemsRef.current = step.entry.items
+			variablesRef.current = step.entry.variables
+			dispatch({ type: direction === 'undo' ? 'UNDO' : 'REDO' })
+			autoSave(step.entry.items, { variables: step.entry.variables })
+			return true
+		},
+		[dispatch, autoSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const undo = useCallback(() => stepHistoryAndSave('undo'), [stepHistoryAndSave])
+	const redo = useCallback(() => stepHistoryAndSave('redo'), [stepHistoryAndSave])
+
 	const handleAppendItems = useCallback(
-		(createItems: DashboardItemsFactory) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+		(createItems: DashboardItemsFactory, placement?: DashboardItemPlacement): false | Array<string> => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
+			let rejectedBySizeLimit = false
+			let appendedIds: Array<string> = []
 			dispatchItemsAndSave((existingItems) => {
 				const newItems = createItems(existingItems)
-				return newItems.length > 0 ? [...existingItems, ...newItems] : existingItems
+				if (newItems.length === 0) return existingItems
+				const nextItems = !placement
+					? appendItemsToTab(existingItems, newItems, requestedTabId)
+					: 'afterItemId' in placement
+						? insertItemsAfter(existingItems, placement.afterItemId, newItems)
+						: insertItemsBefore(existingItems, placement.beforeItemId, newItems)
+				if (fitsDashboardSizeLimit(nextItems)) {
+					const existingIds = new Set(existingItems.map((item) => item.id))
+					appendedIds = nextItems.filter((item) => !existingIds.has(item.id)).map((item) => item.id)
+					return nextItems
+				}
+				rejectedBySizeLimit = true
+				return existingItems
 			})
+			return rejectedBySizeLimit ? false : appendedIds
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, fitsDashboardSizeLimit, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const handleAddUnifiedTable = useCallback(
 		(configOverrides?: Partial<UnifiedTableConfig>) => {
 			if (isReadOnlyUntilDashboardLoaded) return
 
-			const resolvedSorting =
-				configOverrides?.defaultSorting && configOverrides.defaultSorting.length > 0
-					? configOverrides.defaultSorting
-					: DEFAULT_UNIFIED_TABLE_SORTING
+			const newUnifiedTable = buildDefaultUnifiedTableConfig(configOverrides)
 
-			const newUnifiedTable: UnifiedTableConfig = {
-				id: generateItemId('unified-table', 'protocols'),
-				kind: 'unified-table',
-				configVersion: UNIFIED_TABLE_CONFIG_VERSION,
-				strategy: 'protocols',
-				rowHeaders: sanitizeUnifiedTableRowHeaders(configOverrides?.rowHeaders ?? DEFAULT_UNIFIED_TABLE_ROW_HEADERS),
-				defaultSorting: resolvedSorting,
-				params: configOverrides?.params ?? { chains: ['All'] },
-				...(configOverrides?.filters === undefined ? {} : { filters: configOverrides.filters }),
-				columnOrder: configOverrides?.columnOrder ?? [...DEFAULT_COLUMN_ORDER],
-				columnVisibility: configOverrides?.columnVisibility ?? {},
-				...(configOverrides?.activePresetId === undefined ? {} : { activePresetId: configOverrides.activePresetId }),
-				colSpan: configOverrides?.colSpan ?? 2,
-				...(configOverrides?.customColumns === undefined ? {} : { customColumns: configOverrides.customColumns })
-			}
-
-			dispatchItemsAndSave((prev) => [...prev, newUnifiedTable])
+			dispatchItemsAndSave((prev) => appendItemsToTab(prev, [newUnifiedTable], requestedTabId))
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const handleDuplicateChartBuilder = useCallback(
 		(builder: ChartBuilderConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
 
 			const clonedConfig: ChartBuilderConfig['config'] = {
 				...builder.config,
@@ -158,58 +285,65 @@ export function useDashboardActions(
 				...(builder.config.seriesColors ? { seriesColors: { ...builder.config.seriesColors } } : {})
 			}
 
-			dispatchItemsAndSave((prev) => {
-				const newBuilder: ChartBuilderConfig = {
-					...builder,
-					id: generateItemId('builder', ''),
-					...(builder.name ? { name: `${builder.name} (Duplicate)` } : {}),
-					config: clonedConfig
-				}
-				return [...prev, newBuilder]
-			})
+			const newBuilder: ChartBuilderConfig = {
+				...builder,
+				id: generateItemId('builder', ''),
+				...(builder.name ? { name: `${builder.name} (Duplicate)` } : {}),
+				config: clonedConfig
+			}
+			dispatchItemsAndSave((prev) => insertItemsAfter(prev, builder.id, [newBuilder]))
+			return newBuilder.id
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleDuplicateUnifiedTable = useCallback(
 		(table: UnifiedTableConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
 
-			dispatchItemsAndSave((prev) => [...prev, cloneUnifiedTable(table)])
+			const clonedTable = cloneUnifiedTable(table)
+			dispatchItemsAndSave((prev) => insertItemsAfter(prev, table.id, [clonedTable]))
+			return clonedTable.id
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleDuplicateMultiChart = useCallback(
 		(multi: MultiChartConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return null
 
-			dispatchItemsAndSave((prev) => {
-				const newItems = limitMultiChartItems(multi.items).map((item) => ({
-					...item,
-					id: generateItemId('chart', `${item.subjectType === 'protocol' ? item.protocol : item.chain}-${item.type}`)
-				}))
-				const newMulti: MultiChartConfig = {
-					...multi,
-					id: generateItemId('multi', ''),
-					...(multi.name ? { name: `${multi.name} (Duplicate)` } : {}),
-					items: newItems
-				}
-				return [...prev, newMulti]
-			})
+			const newItems = limitMultiChartItems(multi.items).map((item) => ({
+				...item,
+				id: generateItemId('chart', `${item.subjectType === 'protocol' ? item.protocol : item.chain}-${item.type}`)
+			}))
+			const newMulti: MultiChartConfig = {
+				...multi,
+				id: generateItemId('multi', ''),
+				...(multi.name ? { name: `${multi.name} (Duplicate)` } : {}),
+				items: newItems
+			}
+			dispatchItemsAndSave((prev) => insertItemsAfter(prev, multi.id, [newMulti]))
+			return newMulti.id
 		},
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleEditItem = useCallback(
 		(itemId: string, newItem: DashboardItemConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
 
 			const boundedItem =
 				newItem.kind === 'multi' ? { ...newItem, items: limitMultiChartItems(newItem.items) } : newItem
-			dispatchItemsAndSave((prev) => prev.map((item) => (item.id === itemId ? boundedItem : item)))
+			let rejectedBySizeLimit = false
+			dispatchItemsAndSave((prev) => {
+				const nextItems = prev.map((item) => (item.id === itemId ? boundedItem : item))
+				if (fitsDashboardSizeLimit(nextItems)) return nextItems
+				rejectedBySizeLimit = true
+				return prev
+			})
+			return !rejectedBySizeLimit
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, fitsDashboardSizeLimit, isReadOnlyUntilDashboardLoaded]
 	)
 
 	const handleRemoveItem = useCallback(
@@ -222,12 +356,19 @@ export function useDashboardActions(
 	)
 
 	const handleAddSqlChart = useCallback(
-		(config: SqlChartConfig) => {
-			if (isReadOnlyUntilDashboardLoaded) return
+		(config: SqlChartConfig, placement?: DashboardItemPlacement): false | string => {
+			if (isReadOnlyUntilDashboardLoaded || !hasHydratedRef.current) return false
 
-			dispatchItemsAndSave((prev) => [...prev, config])
+			dispatchItemsAndSave((prev) =>
+				!placement
+					? appendItemsToTab(prev, [config], requestedTabId)
+					: 'afterItemId' in placement
+						? insertItemsAfter(prev, placement.afterItemId, [config])
+						: insertItemsBefore(prev, placement.beforeItemId, [config])
+			)
+			return config.id
 		},
-		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded, requestedTabId]
 	)
 
 	const setTimePeriod = useCallback(
@@ -298,6 +439,47 @@ export function useDashboardActions(
 						return { ...item, colSpan: newColSpan }
 					}
 					return item
+				})
+			)
+		},
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const handleHeightChange = useCallback(
+		(itemId: string, height: DashboardCardHeight) => {
+			if (isReadOnlyUntilDashboardLoaded) return
+
+			dispatchItemsAndSave((prev) =>
+				prev.map((item) => {
+					if (item.id !== itemId || item.kind === 'section') return item
+					if (height === 'default') {
+						const { height: _height, ...rest } = item
+						return rest
+					}
+					return { ...item, height }
+				})
+			)
+		},
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+	)
+
+	const handleUpdateSection = useCallback(
+		(
+			sectionId: string,
+			patch: { title?: string; description?: string; displayAs?: SectionConfig['displayAs']; collapsed?: boolean }
+		) => {
+			if (isReadOnlyUntilDashboardLoaded) return
+
+			dispatchItemsAndSave((prev) =>
+				prev.map((item) => {
+					if (item.id !== sectionId || item.kind !== 'section') return item
+					const { description, ...rest } = patch
+					const next: SectionConfig = { ...item, ...rest }
+					if (description !== undefined) {
+						if (description) next.description = description
+						else delete next.description
+					}
+					return next
 				})
 			)
 		},
@@ -486,6 +668,8 @@ export function useDashboardActions(
 			handleChartsReordered,
 			handleGroupingChange,
 			handleColSpanChange,
+			handleHeightChange,
+			handleUpdateSection,
 			handleCumulativeChange,
 			handlePercentageChange,
 			handleStackedChange,
@@ -498,7 +682,14 @@ export function useDashboardActions(
 			setDashboardDescription,
 			setShowGenerateDashboardModal,
 			setShowIterateDashboardModal,
-			setItems
+			setItems,
+			dispatchItemsAndSave,
+			dispatchItemsWithVariablesAndSave,
+			setVariables,
+			setVariableOverrides,
+			setAnnotations,
+			undo,
+			redo
 		}),
 		[
 			handleAppendItems,
@@ -514,6 +705,8 @@ export function useDashboardActions(
 			handleChartsReordered,
 			handleGroupingChange,
 			handleColSpanChange,
+			handleHeightChange,
+			handleUpdateSection,
 			handleCumulativeChange,
 			handlePercentageChange,
 			handleStackedChange,
@@ -526,7 +719,14 @@ export function useDashboardActions(
 			setDashboardDescription,
 			setShowGenerateDashboardModal,
 			setShowIterateDashboardModal,
-			setItems
+			setItems,
+			dispatchItemsAndSave,
+			dispatchItemsWithVariablesAndSave,
+			setVariables,
+			setVariableOverrides,
+			setAnnotations,
+			undo,
+			redo
 		]
 	)
 }

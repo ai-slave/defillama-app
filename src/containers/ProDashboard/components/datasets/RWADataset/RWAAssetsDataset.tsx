@@ -23,7 +23,7 @@ import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
 import { downloadCSV } from '~/utils/download'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import {
@@ -160,19 +160,15 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 		autoResetPageIndex: true
 	})
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
-	const title = chain === undefined ? 'RWA Assets' : `RWA on ${chain}`
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">
-						{chain === undefined ? 'Loading RWA assets data...' : `Loading RWA assets for ${chain}...`}
-					</p>
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading
+						variant="table"
+						label={chain === undefined ? 'Loading RWA assets data…' : `Loading RWA assets for ${chain}…`}
+					/>
 				</div>
 			</div>
 		)
@@ -180,11 +176,8 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 
 	if (error) {
 		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+			<div className="flex h-full w-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load RWA assets data</div>
 				</div>
 			</div>
@@ -192,10 +185,9 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 	}
 
 	return (
-		<div className="flex h-full w-full flex-col p-4">
+		<div className="flex h-full w-full flex-col">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">{title}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<CSVExportButton
 							onClick={() => {
@@ -212,7 +204,7 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 							type="text"
 							placeholder="Search assets..."
 							onInput={(event) => setProjectName(event.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border border-pro-cards-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

@@ -1,4 +1,4 @@
-export type ApiRouteKind = 'public' | 'private' | 'dynamic'
+export type ApiRouteKind = 'public' | 'private' | 'dynamic' | 'og'
 export type ApiRouteMethod = 'ANY' | 'GET' | 'POST'
 export type ApiRouteCachePolicy = 'shared-cacheable' | 'private' | 'dynamic'
 
@@ -68,6 +68,8 @@ export const dynamicApiRoutePaths = [
 	'sonic/burn-stream',
 	'visitor-region'
 ] as const
+
+export const ogApiRoutePaths = ['pro/[dashboardId]'] as const
 
 export const allApiRoutePaths = [
 	'aave/graphql',
@@ -171,6 +173,7 @@ export const allApiRoutePaths = [
 	'pro-dashboard/token-usage',
 	'pro-dashboard/tokens/search',
 	'pro-dashboard/unified-table/[strategy]',
+	'pro/[dashboardId]',
 	'protocol-icon',
 	'protocol-lists',
 	'protocol-rankings',
@@ -234,6 +237,7 @@ export const allApiRoutePaths = [
 
 const privateApiRoutePathSet = new Set<string>(privateApiRoutePaths)
 const dynamicApiRoutePathSet = new Set<string>(dynamicApiRoutePaths)
+const ogApiRoutePathSet = new Set<string>(ogApiRoutePaths)
 
 const routeMethodOverrides: Partial<Record<ApiRoutePath, ReadonlyArray<ApiRouteMethod>>> = {
 	'aave/graphql': ['POST'],
@@ -259,12 +263,14 @@ const routeMethodOverrides: Partial<Record<ApiRoutePath, ReadonlyArray<ApiRouteM
 const cachePolicyByKind = {
 	public: 'shared-cacheable',
 	private: 'private',
-	dynamic: 'dynamic'
+	dynamic: 'dynamic',
+	og: 'shared-cacheable'
 } satisfies Record<ApiRouteKind, ApiRouteCachePolicy>
 
 function getRouteKind(path: ApiRoutePath): ApiRouteKind {
 	if (privateApiRoutePathSet.has(path)) return 'private'
 	if (dynamicApiRoutePathSet.has(path)) return 'dynamic'
+	if (ogApiRoutePathSet.has(path)) return 'og'
 	return 'public'
 }
 

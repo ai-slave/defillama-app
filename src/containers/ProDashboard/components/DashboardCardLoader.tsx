@@ -1,13 +1,8 @@
-import { LoadingSpinner } from '~/ui/Loaders'
+import { skeletonVariantForItemKind } from './ProCardSkeleton'
+import { ProCardLoading } from './ProCardStatus'
 
-export function DashboardCardLoader({ className }: { className: string }) {
+export function DashboardCardLoader({ className, kind }: { className: string; kind?: string | undefined }) {
 	return (
-		<div
-			role="status"
-			className={`flex items-center justify-center gap-2 p-4 text-sm text-pro-text-tertiary ${className}`}
-		>
-			<LoadingSpinner size={16} />
-			Loading dashboard card…
-		</div>
+		<ProCardLoading label="Loading card…" variant={skeletonVariantForItemKind(kind)} className={`p-4 ${className}`} />
 	)
 }

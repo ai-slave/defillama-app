@@ -131,7 +131,7 @@ export default function AuthorPage({ data, slug, status }: InferGetServerSidePro
 			jsonLd={buildAuthorJsonLd(author, stats, dashboards.totalItems)}
 		>
 			<AuthorOgImage author={author} />
-			<div className="mx-auto grid w-full max-w-7xl gap-6 pro-dashboard px-3 py-5 lg:px-0">
+			<div className="mx-auto grid w-full max-w-7xl gap-6 px-3 py-5 pro-dashboard lg:px-0">
 				<BasicLink href="/pro" className="mr-auto flex items-center gap-2 text-sm text-secondary hover:text-link">
 					<Icon name="arrow-left" className="size-4" />
 					Back to Dashboards

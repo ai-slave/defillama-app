@@ -17,9 +17,16 @@ interface ScatterChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
-export function ScatterChartAdapter({ config, result, classified, onReady }: ScatterChartAdapterProps) {
+export function ScatterChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: ScatterChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const numericCols = classified.filter((c) => c.coarse === 'number')
@@ -73,7 +80,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+				<div className="flex items-center justify-center" style={{ height }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -83,7 +90,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 				xAxisLabel={xCol.name}
 				yAxisLabel={yCol.name}
 				valueSymbol={formatter.valueSymbol}
-				height={SQL_CHART_HEIGHT}
+				height={height}
 				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}

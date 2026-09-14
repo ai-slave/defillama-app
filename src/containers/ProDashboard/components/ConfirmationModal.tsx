@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { ProButton, ProDialog } from '../ui'
 
 interface ConfirmationModalProps {
 	finalFocus?: RefObject<HTMLElement | null>
@@ -17,7 +16,7 @@ interface ConfirmationModalProps {
 	message?: string
 	confirmText?: string
 	cancelText?: string
-	confirmButtonClass?: string
+	tone?: 'danger' | 'primary'
 }
 
 export function ConfirmationModal({
@@ -34,7 +33,7 @@ export function ConfirmationModal({
 	message = 'Are you sure you want to proceed with this action?',
 	confirmText = 'Confirm',
 	cancelText = 'Cancel',
-	confirmButtonClass = 'bg-error hover:bg-red-600 text-on-brand'
+	tone = 'danger'
 }: ConfirmationModalProps) {
 	return (
 		<Ariakit.DialogProvider
@@ -43,63 +42,51 @@ export function ConfirmationModal({
 				if (!open) onClose()
 			}}
 		>
-			<Ariakit.Dialog
+			<ProDialog
+				width="sm"
+				heading={title}
 				finalFocus={finalFocus}
 				autoFocusOnHide={(element) => {
-					if (element) return true
+					if (element?.isConnected) return true
 					fallbackFocus?.current?.focus()
 					return false
 				}}
-				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
-				unmountOnHide
-				portal
+				closeButtonProps={{ disabled: pending, ariaLabel: 'Close modal' }}
 				hideOnEscape={!pending}
 				hideOnInteractOutside={!pending}
+				footer={
+					<>
+						<Ariakit.DialogDismiss
+							autoFocus
+							disabled={pending}
+							render={<ProButton type="button" variant="secondary" size="md" />}
+						>
+							{cancelText}
+						</Ariakit.DialogDismiss>
+						<Ariakit.Button
+							accessibleWhenDisabled
+							disabled={pending}
+							render={<ProButton type="button" variant={tone} size="md" {...(pending ? { loading: true } : {})} />}
+							onClick={() => {
+								onConfirm()
+								if (closeOnConfirm) onClose()
+							}}
+						>
+							{pending ? pendingText : confirmText}
+						</Ariakit.Button>
+					</>
+				}
 			>
-				<div className="mb-6 flex items-center justify-between">
-					<Ariakit.DialogHeading className="text-xl font-semibold text-pro-text-primary">{title}</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss
-						disabled={pending}
-						className="rounded-md pro-hover-bg p-1 text-pro-text-primary transition-colors"
-						aria-label="Close modal"
-					>
-						<Icon name="x" height={20} width={20} />
-					</Ariakit.DialogDismiss>
-				</div>
-
-				<Ariakit.DialogDescription className="mb-6 text-pro-text-secondary">{message}</Ariakit.DialogDescription>
+				<Ariakit.DialogDescription className="text-pro-text-secondary">{message}</Ariakit.DialogDescription>
 				{error ? (
-					<p role="alert" className="mb-4 text-sm text-error">
+					<p role="alert" className="mt-4 text-sm text-error">
 						{error}
 					</p>
 				) : null}
-
-				<div className="flex justify-end gap-3">
-					<Ariakit.DialogDismiss
-						autoFocus
-						disabled={pending}
-						className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
-					>
-						{cancelText}
-					</Ariakit.DialogDismiss>
-					<Ariakit.Button
-						accessibleWhenDisabled
-						disabled={pending}
-						type="button"
-						onClick={() => {
-							onConfirm()
-							if (closeOnConfirm) onClose()
-						}}
-						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors aria-disabled:opacity-50 ${confirmButtonClass}`}
-					>
-						{pending ? <LoadingSpinner size={14} /> : null}
-						{pending ? pendingText : confirmText}
-					</Ariakit.Button>
-				</div>
 				<span role="status" className="sr-only">
 					{pending ? pendingText : ''}
 				</span>
-			</Ariakit.Dialog>
+			</ProDialog>
 		</Ariakit.DialogProvider>
 	)
 }

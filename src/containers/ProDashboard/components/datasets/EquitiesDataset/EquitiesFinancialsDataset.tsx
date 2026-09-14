@@ -26,7 +26,7 @@ import type { CsvCell } from '~/utils/csvCell'
 import { formatDate } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
 import { CSVExportButton } from '../../CSVExportButton'
-import { LoadingSpinner } from '../../LoadingSpinner'
+import { ProCardLoading } from '../../ProCardStatus'
 
 function formatStatementPeriodLabel(periodEnding: string): string {
 	return formatDate(periodEnding) ?? '-'
@@ -151,11 +151,8 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 
 	if (!ticker) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Equities Financials</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">No ticker specified</div>
 				</div>
 			</div>
@@ -164,13 +161,9 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 
 	if (isLoading) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm text-pro-text-secondary">Loading financial statements...</p>
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 flex-col p-3">
+					<ProCardLoading variant="table" label="Loading financial statements…" />
 				</div>
 			</div>
 		)
@@ -178,11 +171,8 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 
 	if (error || !statements) {
 		return (
-			<div className="flex size-full flex-col p-4">
-				<div className="mb-3">
-					<h3 className="text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
-				</div>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+			<div className="flex size-full flex-col">
+				<div className="flex min-h-[calc(500px*var(--card-scale,1))] flex-1 items-center justify-center">
 					<div className="text-center text-pro-text-secondary">Failed to load financial statements</div>
 				</div>
 			</div>
@@ -190,12 +180,11 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 	}
 
 	return (
-		<div className="flex size-full flex-col p-4">
+		<div className="flex size-full flex-col">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
-						<div className="flex items-center gap-1 rounded-md border pro-border p-0.5">
+						<div className="flex items-center gap-1 rounded-md border border-pro-cards-border p-0.5">
 							{EQUITIES_STATEMENT_OPTIONS.map((option) => (
 								<button
 									key={option}
@@ -211,7 +200,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 								</button>
 							))}
 						</div>
-						<div className="flex items-center gap-1 rounded-md border pro-border p-0.5">
+						<div className="flex items-center gap-1 rounded-md border border-pro-cards-border p-0.5">
 							{EQUITIES_STATEMENT_PERIOD_OPTIONS.map((option) => (
 								<button
 									key={option}

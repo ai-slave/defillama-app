@@ -1,10 +1,17 @@
+import type { ChartConfig as DownloadChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { sanitizeDashboardItemBindings } from '../../dashboardVariables/bindableFields'
 import {
 	type ChartConfig,
+	type CustomDataColumn,
+	type DashboardBindableField,
+	type DashboardItemBindings,
 	isDashboardChartTypeForSubject,
 	type MetricAggregator,
 	type MetricChartType,
-	normalizeYieldChartType
+	normalizeYieldChartType,
+	type CustomDataRows,
+	type SqlSnapshotValue
 } from '../../types'
 import { DEFAULT_CHART_MODE } from './chartModePreference'
 import type {
@@ -12,6 +19,7 @@ import type {
 	ChartModeType,
 	ChartTabType,
 	CombinedTableType,
+	CustomDataModalState,
 	MainTabType,
 	ModalState
 } from './types'
@@ -22,6 +30,7 @@ type ModalAction =
 	| { type: 'SET_SELECTED_MAIN_TAB'; payload: MainTabType }
 	| { type: 'SET_SELECTED_CHART_TAB'; payload: ChartTabType }
 	| { type: 'SET_CHART_MODE'; payload: ChartModeType }
+	| { type: 'SET_MANUAL_FORM_OPEN'; payload: boolean }
 	| { type: 'SET_COMPOSER_ITEMS'; payload: SetStateAction<Array<ChartConfig>> }
 	| { type: 'SET_SELECTED_CHAIN'; payload: string | null }
 	| { type: 'SET_SELECTED_CHAINS'; payload: Array<string> }
@@ -88,6 +97,22 @@ type ModalAction =
 	| { type: 'SET_SELECTED_RWA_ASSET_ID'; payload: string | null }
 	| { type: 'SET_SELECTED_RWA_ASSET_NAME'; payload: string | null }
 	| { type: 'SET_SELECTED_RWA_ASSET_METRICS'; payload: ModalState['selectedRwaAssetMetrics'] }
+	| { type: 'SET_ITEM_BINDING'; payload: { field: DashboardBindableField; variableId: string | null } }
+	| { type: 'SET_CUSTOM_DATA_NAME'; payload: string }
+	| { type: 'SET_CUSTOM_DATA_TEXT'; payload: string }
+	| {
+			type: 'SET_CUSTOM_DATA_PARSED'
+			payload: {
+				columns: Array<CustomDataColumn>
+				rows: Array<Array<SqlSnapshotValue>>
+				chart: DownloadChartConfig
+				sourceName: string
+			}
+	  }
+	| { type: 'SET_CUSTOM_DATA_STORED_ROWS'; payload: CustomDataRows | null }
+	| { type: 'SET_CUSTOM_DATA_ERROR'; payload: string }
+	| { type: 'SET_CUSTOM_DATA_CHART'; payload: Partial<DownloadChartConfig> }
+	| { type: 'SET_CUSTOM_DATA_DISPLAY_MODE'; payload: 'chart' | 'table' }
 	| { type: 'RESET_STATE' }
 	| { type: 'INITIALIZE_FROM_EDIT_ITEM'; payload: { editItem: DashboardItemConfig | null | undefined } }
 
@@ -136,11 +161,41 @@ const DEFAULT_CHART_BUILDER: ChartBuilderConfig = {
 	seriesColors: {}
 }
 
+const EMPTY_BINDINGS: DashboardItemBindings = {}
+
+const DEFAULT_CUSTOM_DATA_CHART: DownloadChartConfig = {
+	chartType: 'bar',
+	xCol: null,
+	yCols: [],
+	splitByCol: null,
+	stackMode: 'off',
+	rightAxisCols: [],
+	seriesKinds: {},
+	seriesColors: {},
+	numberFormat: 'auto'
+}
+
+const INITIAL_CUSTOM_DATA_STATE: CustomDataModalState = {
+	name: '',
+	sourceName: '',
+	csvText: '',
+	columns: [],
+	previewRows: null,
+	storedRows: null,
+	chart: DEFAULT_CUSTOM_DATA_CHART,
+	displayMode: 'chart',
+	error: '',
+	isPreparing: false
+}
+
 const INITIAL_MODAL_STATE: ModalState = {
 	selectedMainTab: 'charts',
 	selectedChartTab: 'chain',
 	chartMode: DEFAULT_CHART_MODE,
+	manualFormOpen: false,
 	composerItems: [],
+	bindings: EMPTY_BINDINGS,
+	customData: INITIAL_CUSTOM_DATA_STATE,
 	selectedChain: null,
 	selectedChains: [],
 	selectedProtocol: null,
@@ -214,6 +269,8 @@ export function initializeFromEditItem(
 			...INITIAL_MODAL_STATE,
 			chartMode: preferredChartMode,
 			composerItems: [],
+			bindings: EMPTY_BINDINGS,
+			customData: { ...INITIAL_CUSTOM_DATA_STATE, columns: [] },
 			selectedChains: [],
 			selectedProtocols: [],
 			selectedChartTypes: [],
@@ -234,7 +291,10 @@ export function initializeFromEditItem(
 
 	const base: ModalState = {
 		...INITIAL_MODAL_STATE,
+		manualFormOpen: true,
 		composerItems: [],
+		bindings: sanitizeDashboardItemBindings(editItem, 'bindings' in editItem ? editItem.bindings : undefined) ?? {},
+		customData: { ...INITIAL_CUSTOM_DATA_STATE, columns: [] },
 		selectedChains: [],
 		selectedProtocols: [],
 		selectedChartTypes: [],
@@ -263,11 +323,12 @@ export function initializeFromEditItem(
 			selectedMainTab: 'charts',
 			chartMode: 'manual',
 			selectedChartTab: editItem.subjectType,
+			composerItems: [editItem],
 			selectedChain: editItem.subjectType === 'chain' ? editItem.chain : null,
 			selectedProtocol: editItem.subjectType === 'protocol' ? editItem.protocol : null,
 			selectedChartType: editItem.type,
 			selectedChartTypes: [editItem.type],
-			chartCreationMode: 'combined',
+			chartCreationMode: 'separate',
 			unifiedChartName: ''
 		}
 	}
@@ -457,6 +518,22 @@ export function initializeFromEditItem(
 		}
 	}
 
+	if (editItem.kind === 'custom-data') {
+		return {
+			...base,
+			selectedMainTab: 'custom-data',
+			customData: {
+				...INITIAL_CUSTOM_DATA_STATE,
+				name: editItem.name,
+				sourceName: editItem.sourceName ?? '',
+				columns: editItem.columns,
+				storedRows: editItem.rows ?? null,
+				chart: editItem.chart,
+				displayMode: editItem.displayMode
+			}
+		}
+	}
+
 	if (editItem.kind === 'llamaai-chart') {
 		return {
 			...base,
@@ -496,10 +573,22 @@ export function initializeFromEditItem(
 	return base
 }
 
+function clearItemBinding(state: ModalState, field: DashboardBindableField): ModalState {
+	if (state.bindings[field] === undefined) return state
+	const bindings: DashboardItemBindings = { ...state.bindings }
+	delete bindings[field]
+	return { ...state, bindings }
+}
+
 export function modalReducer(state: ModalState, action: ModalAction): ModalState {
 	switch (action.type) {
 		case 'SET_SELECTED_MAIN_TAB':
-			return { ...state, selectedMainTab: action.payload }
+			if (action.payload === state.selectedMainTab) return state
+			return { ...state, selectedMainTab: action.payload, bindings: {} }
+
+		case 'SET_MANUAL_FORM_OPEN':
+			if (action.payload === state.manualFormOpen) return state
+			return { ...state, manualFormOpen: action.payload }
 
 		case 'SET_SELECTED_CHART_TAB': {
 			if (action.payload !== 'chain' && action.payload !== 'protocol')
@@ -523,13 +612,15 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			}
 
 		case 'SET_SELECTED_CHAIN':
-			return { ...state, selectedChain: action.payload }
+			if (action.payload === state.selectedChain) return state
+			return { ...clearItemBinding(state, 'subject'), selectedChain: action.payload }
 
 		case 'SET_SELECTED_CHAINS':
 			return { ...state, selectedChains: action.payload }
 
 		case 'SET_SELECTED_PROTOCOL':
-			return { ...state, selectedProtocol: action.payload }
+			if (action.payload === state.selectedProtocol) return state
+			return { ...clearItemBinding(state, 'subject'), selectedProtocol: action.payload }
 
 		case 'SET_SELECTED_PROTOCOLS':
 			return { ...state, selectedProtocols: action.payload }
@@ -583,13 +674,16 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			}
 
 		case 'SET_METRIC_SUBJECT_TYPE':
-			return { ...state, metricSubjectType: action.payload }
+			if (action.payload === state.metricSubjectType) return state
+			return { ...clearItemBinding(state, 'subject'), metricSubjectType: action.payload }
 
 		case 'SET_METRIC_CHAIN':
-			return { ...state, metricChain: action.payload }
+			if (action.payload === state.metricChain) return state
+			return { ...clearItemBinding(state, 'subject'), metricChain: action.payload }
 
 		case 'SET_METRIC_PROTOCOL':
-			return { ...state, metricProtocol: action.payload }
+			if (action.payload === state.metricProtocol) return state
+			return { ...clearItemBinding(state, 'subject'), metricProtocol: action.payload }
 
 		case 'SET_METRIC_TYPE':
 			return {
@@ -635,7 +729,8 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, maxTvl: action.payload }
 
 		case 'SET_SELECTED_STABLECOIN_CHAIN':
-			return { ...state, selectedStablecoinChain: action.payload }
+			if (action.payload === state.selectedStablecoinChain) return state
+			return { ...clearItemBinding(state, 'chain'), selectedStablecoinChain: action.payload }
 
 		case 'SET_SELECTED_STABLECOIN_CHART_TYPE':
 			return { ...state, selectedStablecoinChartType: action.payload }
@@ -653,7 +748,8 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, selectedStablecoinAssetChartType: action.payload }
 
 		case 'SET_SELECTED_ADVANCED_TVL_PROTOCOL':
-			return { ...state, selectedAdvancedTvlProtocol: action.payload }
+			if (action.payload === state.selectedAdvancedTvlProtocol) return state
+			return { ...clearItemBinding(state, 'protocol'), selectedAdvancedTvlProtocol: action.payload }
 
 		case 'SET_SELECTED_ADVANCED_TVL_PROTOCOL_NAME':
 			return { ...state, selectedAdvancedTvlProtocolName: action.payload }
@@ -662,7 +758,8 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, selectedAdvancedTvlChartType: action.payload }
 
 		case 'SET_SELECTED_BORROWED_PROTOCOL':
-			return { ...state, selectedBorrowedProtocol: action.payload }
+			if (action.payload === state.selectedBorrowedProtocol) return state
+			return { ...clearItemBinding(state, 'protocol'), selectedBorrowedProtocol: action.payload }
 
 		case 'SET_SELECTED_BORROWED_PROTOCOL_NAME':
 			return { ...state, selectedBorrowedProtocolName: action.payload }
@@ -671,7 +768,8 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, selectedBorrowedChartType: action.payload }
 
 		case 'SET_SELECTED_INCOME_STATEMENT_PROTOCOL':
-			return { ...state, selectedIncomeStatementProtocol: action.payload }
+			if (action.payload === state.selectedIncomeStatementProtocol) return state
+			return { ...clearItemBinding(state, 'protocol'), selectedIncomeStatementProtocol: action.payload }
 
 		case 'SET_SELECTED_INCOME_STATEMENT_PROTOCOL_NAME':
 			return { ...state, selectedIncomeStatementProtocolName: action.payload }
@@ -680,7 +778,8 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, selectedLlamaAIChart: action.payload }
 
 		case 'SET_SELECTED_UNLOCKS_PROTOCOL':
-			return { ...state, selectedUnlocksProtocol: action.payload }
+			if (action.payload === state.selectedUnlocksProtocol) return state
+			return { ...clearItemBinding(state, 'protocol'), selectedUnlocksProtocol: action.payload }
 
 		case 'SET_SELECTED_UNLOCKS_PROTOCOL_NAME':
 			return { ...state, selectedUnlocksProtocolName: action.payload }
@@ -714,6 +813,57 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 
 		case 'SET_SELECTED_RWA_ASSET_METRICS':
 			return { ...state, selectedRwaAssetMetrics: action.payload }
+
+		case 'SET_ITEM_BINDING': {
+			const { field, variableId } = action.payload
+			if ((state.bindings[field] ?? null) === variableId) return state
+			const bindings: DashboardItemBindings = { ...state.bindings }
+			if (variableId) bindings[field] = variableId
+			else delete bindings[field]
+			return { ...state, bindings }
+		}
+
+		case 'SET_CUSTOM_DATA_NAME':
+			return { ...state, customData: { ...state.customData, name: action.payload } }
+
+		case 'SET_CUSTOM_DATA_TEXT':
+			return {
+				...state,
+				customData: {
+					...state.customData,
+					csvText: action.payload,
+					storedRows: null,
+					error: '',
+					isPreparing: action.payload.trim().length > 0
+				}
+			}
+
+		case 'SET_CUSTOM_DATA_PARSED':
+			return {
+				...state,
+				customData: {
+					...state.customData,
+					columns: action.payload.columns,
+					previewRows: action.payload.rows,
+					storedRows: null,
+					chart: action.payload.chart,
+					sourceName: action.payload.sourceName,
+					error: '',
+					isPreparing: true
+				}
+			}
+
+		case 'SET_CUSTOM_DATA_STORED_ROWS':
+			return { ...state, customData: { ...state.customData, storedRows: action.payload, isPreparing: false } }
+
+		case 'SET_CUSTOM_DATA_ERROR':
+			return { ...state, customData: { ...state.customData, error: action.payload, isPreparing: false } }
+
+		case 'SET_CUSTOM_DATA_CHART':
+			return { ...state, customData: { ...state.customData, chart: { ...state.customData.chart, ...action.payload } } }
+
+		case 'SET_CUSTOM_DATA_DISPLAY_MODE':
+			return { ...state, customData: { ...state.customData, displayMode: action.payload } }
 
 		case 'RESET_STATE':
 			return initializeFromEditItem(null, state.chartMode)

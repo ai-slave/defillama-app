@@ -1,12 +1,28 @@
 import { replaceEqualDeep } from '@tanstack/react-query'
 import type { DashboardItemConfig } from './dashboardItemConfig'
-import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import type { CustomTimePeriod, Dashboard, DashboardAnnotation, DashboardVariable, TimePeriod } from './dashboardTypes'
 import { mergeDashboardItems } from './utils/dashboardUtils'
+
+export interface DashboardHistoryEntry {
+	items: Array<DashboardItemConfig>
+	variables: Array<DashboardVariable>
+}
+
+export interface DashboardHistory {
+	past: Array<DashboardHistoryEntry>
+	future: Array<DashboardHistoryEntry>
+}
+
+export const DASHBOARD_HISTORY_LIMIT = 50
 
 export interface DashboardState {
 	items: Array<DashboardItemConfig>
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
+	variables: Array<DashboardVariable>
+	annotations: Array<DashboardAnnotation>
+	variableOverrides: Record<string, string>
+	history: DashboardHistory
 	dashboardName: string
 	dashboardId: string | null
 	currentDashboard: Dashboard | null
@@ -17,13 +33,24 @@ export interface DashboardState {
 	showIterateDashboardModal: boolean
 }
 
-type DashboardSaveBaseline = Omit<
+export type DashboardSaveBaseline = Omit<
 	DashboardState,
-	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal'
+	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal' | 'variableOverrides' | 'history'
 >
 
 export type DashboardAction =
-	| { type: 'SET_ITEMS'; payload: Array<DashboardItemConfig> }
+	| {
+			type: 'SET_ITEMS'
+			payload: Array<DashboardItemConfig>
+			variables?: Array<DashboardVariable>
+			skipHistory?: boolean
+	  }
+	| { type: 'SET_VARIABLES'; payload: Array<DashboardVariable>; skipHistory?: boolean }
+	| { type: 'SET_VARIABLE_OVERRIDES'; payload: Record<string, string> }
+	| { type: 'SET_ANNOTATIONS'; payload: Array<DashboardAnnotation> }
+	| { type: 'UNDO' }
+	| { type: 'REDO' }
+	| { type: 'CLEAR_HISTORY' }
 	| { type: 'SET_TIME_PERIOD'; payload: TimePeriod }
 	| { type: 'SET_CUSTOM_TIME_PERIOD'; payload: CustomTimePeriod | null }
 	| { type: 'SET_DASHBOARD_NAME'; payload: string }
@@ -36,10 +63,16 @@ export type DashboardAction =
 	| { type: 'APPLY_DASHBOARD'; payload: Dashboard }
 	| { type: 'SAVE_DASHBOARD'; payload: Dashboard; submitted: DashboardSaveBaseline }
 
+const EMPTY_HISTORY: DashboardHistory = { past: [], future: [] }
+
 const INITIAL_DASHBOARD_STATE: DashboardState = {
 	items: [],
 	timePeriod: '365d',
 	customTimePeriod: null,
+	variables: [],
+	annotations: [],
+	variableOverrides: {},
+	history: EMPTY_HISTORY,
 	dashboardName: 'My Dashboard',
 	dashboardId: null,
 	currentDashboard: null,
@@ -58,6 +91,8 @@ function stateFromDashboard(dashboard: Dashboard): DashboardState {
 		items: dashboard.data.items,
 		timePeriod: dashboard.data.timePeriod || '365d',
 		customTimePeriod: dashboard.data.customTimePeriod || null,
+		variables: dashboard.data.variables ?? INITIAL_DASHBOARD_STATE.variables,
+		annotations: dashboard.data.annotations ?? INITIAL_DASHBOARD_STATE.annotations,
 		currentDashboard: dashboard,
 		dashboardVisibility: dashboard.visibility || 'private',
 		dashboardTags: dashboard.tags || INITIAL_DASHBOARD_STATE.dashboardTags,
@@ -85,6 +120,30 @@ export function initDashboardState(
 	}
 }
 
+export function historySnapshot(state: Pick<DashboardState, 'items' | 'variables'>): DashboardHistoryEntry {
+	return { items: state.items, variables: state.variables }
+}
+
+function pushHistory(history: DashboardHistory, entry: DashboardHistoryEntry): DashboardHistory {
+	const past = history.past.length >= DASHBOARD_HISTORY_LIMIT ? history.past.slice(1) : history.past
+	return { past: [...past, entry], future: [] }
+}
+
+export function stepHistory(
+	history: DashboardHistory,
+	current: DashboardHistoryEntry,
+	direction: 'undo' | 'redo'
+): { history: DashboardHistory; entry: DashboardHistoryEntry } | null {
+	if (direction === 'undo') {
+		const entry = history.past.at(-1)
+		if (!entry) return null
+		return { entry, history: { past: history.past.slice(0, -1), future: [current, ...history.future] } }
+	}
+	const entry = history.future[0]
+	if (!entry) return null
+	return { entry, history: { past: [...history.past, current], future: history.future.slice(1) } }
+}
+
 // Apply server-owned metadata, but retain fields edited since this request's baseline.
 // Compare arrays only on responses: server/cache copies need not share the local draft's references.
 function reconcileDashboard(
@@ -104,6 +163,12 @@ function reconcileDashboard(
 		dashboardName: state.dashboardName === baseline.dashboardName ? saved.dashboardName : state.dashboardName,
 		timePeriod: periodUnchanged ? saved.timePeriod : state.timePeriod,
 		customTimePeriod: periodUnchanged ? saved.customTimePeriod : state.customTimePeriod,
+		variables:
+			replaceEqualDeep(baseline.variables, state.variables) === baseline.variables ? saved.variables : state.variables,
+		annotations:
+			replaceEqualDeep(baseline.annotations, state.annotations) === baseline.annotations
+				? saved.annotations
+				: state.annotations,
 		dashboardVisibility:
 			state.dashboardVisibility === baseline.dashboardVisibility
 				? saved.dashboardVisibility
@@ -119,13 +184,49 @@ function reconcileDashboard(
 	}
 }
 
+function areVariableOverridesEqual(a: Record<string, string>, b: Record<string, string>): boolean {
+	const aKeys = Object.keys(a)
+	if (aKeys.length !== Object.keys(b).length) return false
+	return aKeys.every((key) => a[key] === b[key])
+}
+
 export function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
 	switch (action.type) {
-		case 'SET_ITEMS':
+		case 'SET_ITEMS': {
+			const variables = action.variables ?? state.variables
+			if (action.payload === state.items && variables === state.variables) return state
 			return {
 				...state,
-				items: action.payload
+				items: action.payload,
+				variables,
+				history: action.skipHistory ? state.history : pushHistory(state.history, historySnapshot(state))
 			}
+		}
+
+		case 'SET_VARIABLES':
+			if (action.payload === state.variables) return state
+			return {
+				...state,
+				variables: action.payload,
+				history: action.skipHistory ? state.history : pushHistory(state.history, historySnapshot(state))
+			}
+
+		case 'SET_VARIABLE_OVERRIDES':
+			if (areVariableOverridesEqual(state.variableOverrides, action.payload)) return state
+			return { ...state, variableOverrides: action.payload }
+
+		case 'SET_ANNOTATIONS':
+			return { ...state, annotations: action.payload }
+
+		case 'UNDO':
+		case 'REDO': {
+			const step = stepHistory(state.history, historySnapshot(state), action.type === 'UNDO' ? 'undo' : 'redo')
+			if (!step) return state
+			return { ...state, items: step.entry.items, variables: step.entry.variables, history: step.history }
+		}
+
+		case 'CLEAR_HISTORY':
+			return state.history === EMPTY_HISTORY ? state : { ...state, history: EMPTY_HISTORY }
 
 		case 'SET_TIME_PERIOD':
 			return {
@@ -176,6 +277,7 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 			}
 			return {
 				...stateFromDashboard(dashboard),
+				variableOverrides: state.variableOverrides,
 				showGenerateDashboardModal: state.showGenerateDashboardModal,
 				showIterateDashboardModal: state.showIterateDashboardModal
 			}

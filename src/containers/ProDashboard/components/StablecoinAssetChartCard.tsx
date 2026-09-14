@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, type ReactElement } from 'react'
+import { lazy, type ReactElement, type ReactNode, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -16,13 +16,17 @@ import {
 } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { LocalLoader } from '~/ui/Loaders'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
 import type { StablecoinAssetChartConfig } from '../types'
+import { ProMeta } from '../ui'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { prepareProChartCsv } from './chartCsv'
-import { ProCardOverflowMenu } from './ProCardActions'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
@@ -38,7 +42,6 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 	chainDominance: 'Dominance'
 }
 
-const EMPTY_HALLMARKS: Array<[number, string]> = []
 const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
 ]
@@ -68,7 +71,10 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		stablecoinSymbol,
 		isInactive,
 		prepareCompleteCsvDataset,
-		isLoading
+		isLoading,
+		isFetching,
+		error,
+		refetch
 	} = useStablecoinAssetChartData(stablecoinId, chartType, piePeriodBounds, selectionOptions)
 
 	const chainColors = useMemo(() => {
@@ -187,12 +193,37 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const imageTitle = `${displayName} - ${chartTypeLabel}`
 	const imageFilename = `${stablecoin.toLowerCase().replace(/\s+/g, '-')}-${chartType}`
 
-	if (isLoading) {
-		return (
-			<div className="flex h-full min-h-[360px] items-center justify-center">
-				<LocalLoader />
+	const hallmarks = useDashboardAnnotationHallmarks()
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(320, cardHeightScale)
+
+	const hasChartData =
+		(filteredDataset?.source.length ?? 0) > 0 ||
+		(pieSeries != null && (pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0))
+	const retryChartData = () => {
+		void refetch()
+	}
+
+	const renderStatusShell = (status: ReactNode) => (
+		<div className="flex h-full min-h-[calc(360px*var(--card-scale,1))] flex-col p-0">
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTypeLabel}
+				subtitle={<ProMeta items={[displayName, stablecoinSymbol || null]} />}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3" style={{ minHeight: chartHeight }}>
+				{status}
 			</div>
-		)
+		</div>
+	)
+
+	if (isLoading) {
+		return renderStatusShell(<ProCardLoading />)
+	}
+
+	if (error && !hasChartData) {
+		return renderStatusShell(isFetching ? <ProCardLoading /> : <ProCardError onRetry={retryChartData} />)
 	}
 
 	let chartContent: ReactElement | null = null
@@ -201,17 +232,20 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			chartContent = (
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LocalLoader />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
 					<MultiSeriesChart
 						title=""
+						height={chartHeight}
+						{...(hallmarks ? { hallmarks } : {})}
+						hallmarkStyle="mark-line"
+						{...(syncGroup ? { syncGroup } : {})}
 						dataset={filteredDataset!}
 						charts={TOTAL_CIRCULATING_CHARTS}
 						valueSymbol={stablecoinSymbol}
-						hallmarks={EMPTY_HALLMARKS}
 						chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
 						exportButtons="hidden"
 						onReady={handleChartReady}
@@ -223,13 +257,17 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			chartContent = (
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LocalLoader />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
 					<MultiSeriesChart
 						title=""
+						height={chartHeight}
+						{...(hallmarks ? { hallmarks } : {})}
+						hallmarkStyle="mark-line"
+						{...(syncGroup ? { syncGroup } : {})}
 						dataset={filteredDataset!}
 						charts={chainCharts}
 						selectedCharts={selectedCharts}
@@ -245,8 +283,8 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			chartContent = (
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LocalLoader />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
@@ -255,6 +293,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						stackColors={{ ...piePresentation.stackColors, ...chainColors }}
 						valueSymbol={stablecoinSymbol}
 						exportButtons="hidden"
+						height={chartHeight}
 						onReady={handleChartReady}
 					/>
 				</Suspense>
@@ -264,13 +303,17 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			chartContent = (
 				<Suspense
 					fallback={
-						<div className="flex h-[320px] items-center justify-center">
-							<LocalLoader />
+						<div className="flex h-[calc(320px*var(--card-scale,1))] items-center justify-center">
+							<ProCardLoading />
 						</div>
 					}
 				>
 					<MultiSeriesChart
 						title=""
+						height={chartHeight}
+						{...(hallmarks ? { hallmarks } : {})}
+						hallmarkStyle="mark-line"
+						{...(syncGroup ? { syncGroup } : {})}
 						valueSymbol="%"
 						dataset={filteredDataset!}
 						charts={chainDominanceCharts}
@@ -285,22 +328,16 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			break
 	}
 
-	const hasChartData =
-		(filteredDataset?.source.length ?? 0) > 0 ||
-		(pieSeries != null && (pieSeries.peers.length > 0 || pieSeries.upstreamOthersValue > 0))
-
 	return (
-		<div className="flex h-full flex-col p-2">
-			<div className="mb-2 flex items-start justify-between gap-2">
-				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold text-pro-text-primary">{chartTypeLabel}</h3>
-					<p className="text-xs text-pro-text-secondary">
-						{displayName} {stablecoinSymbol ? `(${stablecoinSymbol})` : ''}
-					</p>
-				</div>
-				{hasChartData ? (
-					<div className="flex flex-wrap justify-end gap-2">
-						{chartType === 'chainPie' && pieSeriesNames.length > 1 ? (
+		<div className="flex h-full flex-col p-0">
+			{error ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				titleAs="h3"
+				title={chartTypeLabel}
+				subtitle={<ProMeta items={[displayName, stablecoinSymbol || null]} />}
+				viewerControls={
+					hasChartData ? (
+						chartType === 'chainPie' && pieSeriesNames.length > 1 ? (
 							<SelectWithCombobox
 								size="sm"
 								allValues={pieSeriesNames}
@@ -322,31 +359,36 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 								variant="filter"
 								popoverVariant="legacy"
 							/>
-						) : null}
-						<ProCardOverflowMenu
-							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
-							csv={{ prepareCsv: prepareCsvExport }}
-						/>
+						) : null
+					) : null
+				}
+				menu={
+					hasChartData
+						? {
+								image: { chartInstance, filename: imageFilename, title: imageTitle },
+								csv: { prepareCsv: prepareCsvExport }
+							}
+						: {}
+				}
+			/>
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				{latestCirculating !== null && chartType === 'totalCirc' ? (
+					<div className="mb-2 flex gap-4">
+						<p className="flex flex-col">
+							<span className="text-xs text-pro-text-tertiary uppercase">Total Circulating</span>
+							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
+								{formatCompactNumber(latestCirculating, {
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}{' '}
+								{stablecoinSymbol}
+							</span>
+						</p>
 					</div>
 				) : null}
+
+				<div className="flex-1">{chartContent}</div>
 			</div>
-
-			{latestCirculating !== null && chartType === 'totalCirc' ? (
-				<div className="mb-2 flex gap-4">
-					<p className="flex flex-col">
-						<span className="text-[10px] text-pro-text-tertiary uppercase">Total Circulating</span>
-						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
-							{formatCompactNumber(latestCirculating, {
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}{' '}
-							{stablecoinSymbol}
-						</span>
-					</p>
-				</div>
-			) : null}
-
-			<div className="flex-1">{chartContent}</div>
 		</div>
 	)
 }

@@ -3,6 +3,7 @@ import type {
 	BorrowedChartConfig,
 	ChartBuilderConfig,
 	ChartConfig,
+	CustomDataConfig,
 	DatasetTableConfig,
 	IncomeStatementConfig,
 	LlamaAIChartConfig,
@@ -10,6 +11,7 @@ import type {
 	MultiChartConfig,
 	RWAAssetChartConfig,
 	RWAOverviewChartConfig,
+	SectionConfig,
 	SqlChartConfig,
 	StablecoinAssetChartConfig,
 	StablecoinsChartConfig,
@@ -40,3 +42,5 @@ export type DashboardItemConfig =
 	| RWAOverviewChartConfig
 	| RWAAssetChartConfig
 	| SqlChartConfig
+	| SectionConfig
+	| CustomDataConfig

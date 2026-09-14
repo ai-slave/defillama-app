@@ -36,7 +36,17 @@ vi.mock('../ProDashboardAPIContext', () => ({
 	}),
 	useProDashboardTime: () => ({ timePeriod: 'all', customTimePeriod: null }),
 	useProDashboardEditorActions: () => ({}),
-	useProDashboardPermissions: () => ({ isReadOnly: true, hideDuplicateButton: true })
+	useProDashboardPermissions: () => ({
+		isReadOnly: true,
+		hideDuplicateButton: true
+	}),
+	useProDashboardDashboard: () => ({
+		currentDashboard: null,
+		dashboardId: null
+	}),
+	useProDashboardItemsState: () => ({ items: [] }),
+	useProDashboardVariables: () => ({ variables: [] }),
+	useProDashboardAnnotations: () => ({ annotations: [] })
 }))
 vi.mock('~/components/ChartExport/useChartPngExport', () => ({
 	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })

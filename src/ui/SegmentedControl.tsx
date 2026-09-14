@@ -39,9 +39,8 @@ export const TAG_GROUP_VARIANTS = {
 			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	pro: {
-		container: 'text-sm flex items-center overflow-x-auto flex-nowrap w-fit border pro-border text-pro-text-primary',
-		button:
-			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:pro-panel-raised focus-visible:pro-panel-raised data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+		container: 'flex w-fit items-center rounded-md',
+		button: 'shrink-0 px-3 whitespace-nowrap'
 	}
 } as const
 

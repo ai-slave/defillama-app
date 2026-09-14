@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Icon } from '~/ui/Icon'
+import type { SegmentedControlOption } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
@@ -11,22 +12,47 @@ import {
 	type RWAOverviewChartMetric,
 	type RWAOverviewChartView
 } from '../../types'
+import { ProSegmented, proInputStyles } from '../../ui'
 import { AdvancedTvlChartTab } from './AdvancedTvlChartTab'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 import { BorrowedChartTab } from './BorrowedChartTab'
 import { CategoryCardsGrid } from './CategoryCardsGrid'
 import { CategoryFormHeader } from './CategoryFormHeader'
+import { ChartCreationModeToggle } from './ChartCreationModeToggle'
 import { ChartTypePills } from './ChartTypePills'
 import { CombinedChartPreview } from './CombinedChartPreview'
 import { EntityPickerList } from './EntityPickerList'
 import { IncomeStatementChartTab } from './IncomeStatementChartTab'
 import { RWAChartTab } from './RWAChartTab'
 import { SelectionFooter } from './SelectionFooter'
+import { SeparateChartsPreview } from './SeparateChartsPreview'
 import { StablecoinsChartTab } from './StablecoinsChartTab'
-import type { ChartTabType, ManualChartViewMode } from './types'
+import type { ChartTabType } from './types'
 import { UnlocksChartTab } from './UnlocksChartTab'
 import { YieldsChartTab } from './YieldsChartTab'
 
 const EMPTY_ARRAY: Array<string> = []
+
+const SUBJECT_OPTIONS: Array<SegmentedControlOption<'chain' | 'protocol'>> = [
+	{
+		value: 'chain',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="chain" width={14} height={14} />
+				Chains
+			</span>
+		)
+	},
+	{
+		value: 'protocol',
+		label: (
+			<span className="inline-flex items-center gap-1.5">
+				<Icon name="protocol" width={14} height={14} />
+				Protocols
+			</span>
+		)
+	}
+]
 
 interface UnifiedChartTabProps {
 	selectedChartTab: ChartTabType
@@ -37,6 +63,10 @@ interface UnifiedChartTabProps {
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
 	composerItems: Array<ChartRuntimeView>
+	manualFormOpen: boolean
+	isEditingItem: boolean
+	onSelectCategory: (tab: ChartTabType) => void
+	onBackToCategories: () => void
 	onChartTabChange: (tab: ChartTabType) => void
 	onChartTypesChange: (types: Array<string>) => void
 	onBulkChartTypeChange: (nextType: string) => void
@@ -139,6 +169,10 @@ export function UnifiedChartTab({
 	unifiedChartName,
 	chartCreationMode,
 	composerItems,
+	manualFormOpen,
+	isEditingItem,
+	onSelectCategory,
+	onBackToCategories,
 	onChartTabChange,
 	onChartTypesChange,
 	onBulkChartTypeChange,
@@ -216,29 +250,13 @@ export function UnifiedChartTab({
 	onSelectedRwaAssetNameChange,
 	onSelectedRwaAssetMetricsChange
 }: UnifiedChartTabPropsExtended) {
-	const specialtyTabs = new Set([
-		'yields',
-		'stablecoins',
-		'advanced-tvl',
-		'borrowed',
-		'income-statement',
-		'unlocks',
-		'rwa'
-	])
-	const [viewMode, setViewMode] = useState<ManualChartViewMode>(() =>
-		specialtyTabs.has(selectedChartTab) || composerItems.length > 0 ? 'form' : 'cards'
-	)
-
 	const { loading: metaLoading, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { protocols, chains } = useProDashboardCatalog()
+	const subjectParameter = useModalFieldBinding('subject', selectedChartTab === 'protocol' ? 'protocol' : 'chain')
 
-	const handleSelectCategory = (category: ChartTabType) => {
-		onChartTabChange(category)
-		setViewMode('form')
-	}
-
-	const handleBackToCards = () => {
-		setViewMode('cards')
+	const handleSubjectTabChange = (tab: ChartTabType) => {
+		subjectParameter.unbind()
+		onChartTabChange(tab)
 	}
 
 	const handleChartTypeSelect = useCallback((type: string) => onChartTypesChange([type]), [onChartTypesChange])
@@ -261,11 +279,11 @@ export function UnifiedChartTab({
 	}, [composerItems, selectedChartTab])
 
 	useEffect(() => {
-		if (viewMode !== 'form') return
+		if (!manualFormOpen) return
 		if (selectedChartTab !== 'chain' && selectedChartTab !== 'protocol') return
 		if (selectedChartTypes.length > 0) return
 		onChartTypesChange([defaultChartType])
-	}, [viewMode, selectedChartTab, selectedChartTypes.length, defaultChartType, onChartTypesChange])
+	}, [manualFormOpen, selectedChartTab, selectedChartTypes.length, defaultChartType, onChartTypesChange])
 
 	const selectedEntitiesForCurrentType = useMemo(() => {
 		if (!selectedChartTypeSingle) return []
@@ -280,6 +298,7 @@ export function UnifiedChartTab({
 	const handleEntityToggle = useCallback(
 		(entityValue: string) => {
 			if (!selectedChartTypeSingle) return
+			subjectParameter.unbind()
 
 			const isSelected = selectedEntitiesForCurrentType.includes(entityValue)
 
@@ -306,7 +325,8 @@ export function UnifiedChartTab({
 			composerItems,
 			selectedChartTab,
 			onRemoveFromComposer,
-			onAddToComposer
+			onAddToComposer,
+			subjectParameter
 		]
 	)
 
@@ -435,11 +455,11 @@ export function UnifiedChartTab({
 		availableProtocolChartTypes
 	])
 
-	if (viewMode === 'cards') {
+	if (!manualFormOpen) {
 		return (
 			<div className="flex h-full flex-col">
 				<div className="min-h-0 flex-1">
-					<CategoryCardsGrid onSelectCategory={handleSelectCategory} />
+					<CategoryCardsGrid onSelectCategory={onSelectCategory} />
 				</div>
 				<SelectionFooter
 					composerItems={composerItems}
@@ -457,7 +477,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'yields') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<YieldsChartTab
 						selectedYieldPool={selectedYieldPool}
@@ -494,7 +514,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'stablecoins') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<StablecoinsChartTab
 						selectedStablecoinChain={selectedStablecoinChain}
@@ -527,7 +547,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'rwa') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<RWAChartTab
 						rwaMode={rwaMode}
@@ -566,7 +586,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'advanced-tvl') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<AdvancedTvlChartTab
 						selectedAdvancedTvlProtocol={selectedAdvancedTvlProtocol}
@@ -595,7 +615,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'borrowed') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<BorrowedChartTab
 						selectedBorrowedProtocol={selectedBorrowedProtocol}
@@ -624,7 +644,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'income-statement') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<IncomeStatementChartTab
 						selectedIncomeStatementProtocol={selectedIncomeStatementProtocol}
@@ -651,7 +671,7 @@ export function UnifiedChartTab({
 	if (selectedChartTab === 'unlocks') {
 		return (
 			<div className="flex h-full flex-col">
-				<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+				<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 				<div className="min-h-0 flex-1">
 					<UnlocksChartTab
 						selectedUnlocksProtocol={selectedUnlocksProtocol}
@@ -679,57 +699,21 @@ export function UnifiedChartTab({
 
 	return (
 		<div className="flex h-full flex-col gap-3">
-			<CategoryFormHeader category={selectedChartTab} onBack={handleBackToCards} />
+			<CategoryFormHeader category={selectedChartTab} {...(isEditingItem ? {} : { onBack: onBackToCategories })} />
 
 			<div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
 				<div className="flex min-h-0 flex-col gap-3">
-					<div className="shrink-0 rounded-xl border border-pro-cards-border p-1 shadow-sm">
-						<div className="grid grid-cols-2 gap-1">
-							<button
-								type="button"
-								onClick={() => onChartTabChange('chain')}
-								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
-									selectedChartTab === 'chain'
-										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-								}`}
-							>
-								<Icon
-									name="chain"
-									width={14}
-									height={14}
-									className={
-										selectedChartTab === 'chain'
-											? 'text-on-brand'
-											: 'text-pro-text-tertiary transition-colors group-hover:text-pro-text-secondary'
-									}
-								/>
-								<span>Chains</span>
-							</button>
-							<button
-								type="button"
-								onClick={() => onChartTabChange('protocol')}
-								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
-									selectedChartTab === 'protocol'
-										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-										: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-								}`}
-							>
-								<Icon
-									name="protocol"
-									width={14}
-									height={14}
-									className={
-										selectedChartTab === 'protocol'
-											? 'text-on-brand'
-											: 'text-pro-text-tertiary transition-colors group-hover:text-pro-text-secondary'
-									}
-								/>
-								<span>Protocols</span>
-							</button>
-						</div>
-					</div>
-
+					{subjectParameter.boundVariable ? (
+						<BoundParameterChip label={subjectParameter.boundVariable.label} onUnbind={subjectParameter.unbind} />
+					) : null}
+					<ProSegmented
+						className="shrink-0"
+						label="Chart subject"
+						size="md"
+						options={SUBJECT_OPTIONS}
+						value={selectedChartTab === 'protocol' ? 'protocol' : 'chain'}
+						onValueChange={handleSubjectTabChange}
+					/>
 					<div className="shrink-0">
 						<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Select Chart Type</span>
 						<ChartTypePills
@@ -754,13 +738,16 @@ export function UnifiedChartTab({
 				</div>
 
 				<div className="flex min-h-0 flex-col gap-3">
-					<input
-						type="text"
-						value={unifiedChartName}
-						onChange={(e) => onUnifiedChartNameChange(e.target.value)}
-						placeholder="Chart name..."
-						className="w-full shrink-0 rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
-					/>
+					{chartCreationMode === 'combined' ? (
+						<input
+							type="text"
+							value={unifiedChartName}
+							onChange={(e) => onUnifiedChartNameChange(e.target.value)}
+							aria-label="Card name"
+							placeholder="Optional"
+							className={`${proInputStyles} shrink-0`}
+						/>
+					) : null}
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
 						<div className="shrink-0">
@@ -775,12 +762,26 @@ export function UnifiedChartTab({
 						</div>
 					) : null}
 
+					{composerItems.length > 1 ? (
+						<ChartCreationModeToggle
+							chartCreationMode={chartCreationMode}
+							seriesCount={composerItems.length}
+							onChartCreationModeChange={onChartCreationModeChange}
+						/>
+					) : null}
+
 					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
-						{composerItems.length > 0 ? (
-							<CombinedChartPreview composerItems={composerItems} />
-						) : (
+						{composerItems.length === 0 ? (
 							<div className="flex h-full items-center justify-center text-xs text-pro-text-tertiary">
 								Select entities to preview chart
+							</div>
+						) : chartCreationMode === 'separate' && composerItems.length > 1 ? (
+							<div data-testid="separate-preview" className="size-full">
+								<SeparateChartsPreview composerItems={composerItems} />
+							</div>
+						) : (
+							<div data-testid="combined-preview" className="size-full">
+								<CombinedChartPreview composerItems={composerItems} />
 							</div>
 						)}
 					</div>

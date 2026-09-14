@@ -2,7 +2,8 @@ import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { slug } from '~/utils'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import type { Dashboard } from '../dashboardTypes'
+import type { Dashboard, DashboardVariable } from '../dashboardTypes'
+import { countDashboardWidgets, isDashboardWidget } from '../dashboardWidgets'
 
 const SITE_URL = 'https://defillama.com'
 const DEFAULT_DASHBOARD_NAME = 'Untitled Dashboard'
@@ -97,7 +98,7 @@ export function markdownToPlainText(value: unknown): string {
 	)
 }
 
-function truncateText(value: string, maxLength: number): string {
+export function truncateText(value: string, maxLength: number): string {
 	const text = compactWhitespace(value)
 	if (text.length <= maxLength) return text
 	const sliced = text.slice(0, maxLength - 1)
@@ -181,88 +182,118 @@ function unifiedTableSummaryLabel(item: Extract<DashboardItemConfig, { kind: 'un
 	return `${tableName ?? headerName} table${chainScope}`
 }
 
-function summarizeSingleItem(item: DashboardItemConfig, index: number): DashboardItemSummary {
-	const subject = subjectLabel(item)
-	const fallbackId = `${item.kind}-${index}`
-	const id = 'id' in item && typeof item.id === 'string' ? item.id : fallbackId
+function datasetTableScope(item: Extract<DashboardItemConfig, { kind: 'dataset-table' }>): string {
+	if ('ticker' in item && item.ticker) return ` for ${item.ticker}`
+	if ('tokenSymbols' in item && item.tokenSymbols.length > 0)
+		return ` for ${item.tokenSymbols
+			.slice(0, 4)
+			.map((symbol) => symbol.toUpperCase())
+			.join(', ')}`
+	if ('chain' in item && item.chain) return ` for ${item.chain}`
+	if ('chains' in item && item.chains.length > 0) return ` for ${item.chains.slice(0, 3).join(', ')}`
+	if ('category' in item && item.category) return ` for ${item.category}`
+	if ('cexAnalyticsView' in item) return `: ${titleCaseToken(item.cexAnalyticsView)}`
+	return ''
+}
 
+export function dashboardItemLabel(item: DashboardItemConfig): string {
 	switch (item.kind) {
 		case 'chart':
-			return createDashboardItemSummary(id, `${subject.label} ${titleCaseToken(item.type)} chart`, subject.href)
+			return `${subjectLabel(item).label} ${titleCaseToken(item.type)} chart`
 		case 'multi':
-			return {
-				id,
-				label: item.name || `${item.items.length} chart comparison`
-			}
-		case 'dataset-table': {
-			const dataset = titleCaseToken(item.datasetType)
-			const chains = 'chains' in item && item.chains.length > 0 ? ` for ${item.chains.slice(0, 3).join(', ')}` : ''
-			return { id, label: `${dataset} table${chains}` }
-		}
+			return item.name || `${item.items.length} chart comparison`
+		case 'dataset-table':
+			return `${titleCaseToken(item.datasetType)} table${datasetTableScope(item)}`
 		case 'unified-table':
-			return { id, label: unifiedTableSummaryLabel(item) }
+			return unifiedTableSummaryLabel(item)
 		case 'text': {
 			const text = markdownToPlainText(item.title || item.content)
-			return { id, label: text ? `Text note: ${truncateText(text, 90)}` : 'Text note' }
+			return text ? `Text note: ${truncateText(text, 90)}` : 'Text note'
 		}
-		case 'metric': {
-			const label = item.label || `${subject.label} ${titleCaseToken(item.type)} metric`
-			return createDashboardItemSummary(id, label, subject.href)
-		}
+		case 'metric':
+			return item.label || `${subjectLabel(item).label} ${titleCaseToken(item.type)} metric`
 		case 'builder':
-			return { id, label: item.name || `${titleCaseToken(item.config.metric)} ${item.config.mode} chart builder` }
+			return item.name || `${titleCaseToken(item.config.metric)} ${item.config.mode} chart builder`
 		case 'yields':
-			return { id, label: `${item.project} ${item.poolName} ${titleCaseToken(item.chartType || 'yield')} chart` }
+			return `${item.project} ${item.poolName} ${titleCaseToken(item.chartType || 'yield')} chart`
 		case 'stablecoins':
-			return createDashboardItemSummary(
-				id,
-				`${item.chain} ${titleCaseToken(item.chartType)} stablecoins chart`,
-				chainHref(item.chain)
-			)
+			return `${item.chain} ${titleCaseToken(item.chartType)} stablecoins chart`
 		case 'stablecoin-asset':
-			return { id, label: `${item.stablecoin} ${titleCaseToken(item.chartType)} chart` }
+			return `${item.stablecoin} ${titleCaseToken(item.chartType)} chart`
 		case 'advanced-tvl':
-			return createDashboardItemSummary(
-				id,
-				`${item.protocolName} ${titleCaseToken(item.chartType)} chart`,
-				protocolHref(item.protocol)
-			)
+			return `${item.protocolName} ${titleCaseToken(item.chartType)} chart`
 		case 'advanced-borrowed':
-			return createDashboardItemSummary(
-				id,
-				`${item.protocolName} ${titleCaseToken(item.chartType)} borrowed chart`,
-				protocolHref(item.protocol)
-			)
+			return `${item.protocolName} ${titleCaseToken(item.chartType)} borrowed chart`
 		case 'income-statement':
-			return createDashboardItemSummary(id, `${item.protocolName} income statement`, protocolHref(item.protocol))
+			return `${item.protocolName} income statement`
 		case 'unlocks-schedule':
-			return createDashboardItemSummary(id, `${item.protocolName} unlocks schedule`, protocolHref(item.protocol))
+			return `${item.protocolName} unlocks schedule`
 		case 'unlocks-pie':
-			return createDashboardItemSummary(
-				id,
-				`${item.protocolName} ${titleCaseToken(item.chartType)} unlocks chart`,
-				protocolHref(item.protocol)
-			)
+			return `${item.protocolName} ${titleCaseToken(item.chartType)} unlocks chart`
 		case 'llamaai-chart':
-			return { id, label: item.title || 'LlamaAI chart' }
+			return item.title || 'LlamaAI chart'
 		case 'rwa-overview':
-			return { id, label: `${titleCaseToken(item.metric)} by ${titleCaseToken(item.breakdown)} RWA ${item.chartView}` }
+			return `${titleCaseToken(item.metric)} by ${titleCaseToken(item.breakdown)} RWA ${item.chartView}`
 		case 'rwa-asset':
-			return { id, label: `${item.assetName} RWA asset chart` }
+			return `${item.assetName} RWA asset chart`
 		case 'sql':
-			return { id, label: item.name || 'SQL chart' }
+			return item.name || 'SQL chart'
+		case 'section':
+			return `Section: ${item.title}`
+		case 'custom-data':
+			return item.name || 'Custom data'
 	}
+}
+
+function dashboardItemHref(item: DashboardItemConfig): string | undefined {
+	switch (item.kind) {
+		case 'chart':
+		case 'metric':
+			return subjectLabel(item).href
+		case 'stablecoins':
+			return chainHref(item.chain)
+		case 'advanced-tvl':
+		case 'advanced-borrowed':
+		case 'income-statement':
+		case 'unlocks-schedule':
+		case 'unlocks-pie':
+			return protocolHref(item.protocol)
+		default:
+			return undefined
+	}
+}
+
+function summarizeSingleItem(item: DashboardItemConfig, index: number): DashboardItemSummary {
+	const fallbackId = `${item.kind}-${index}`
+	const id = 'id' in item && typeof item.id === 'string' ? item.id : fallbackId
+	return createDashboardItemSummary(id, dashboardItemLabel(item), dashboardItemHref(item))
 }
 
 export function summarizeDashboardItems(items: Array<DashboardItemConfig> | undefined): Array<DashboardItemSummary> {
 	if (!Array.isArray(items)) return []
-	return items.slice(0, MAX_SUMMARY_ITEMS).map(summarizeSingleItem)
+	return items.filter(isDashboardWidget).slice(0, MAX_SUMMARY_ITEMS).map(summarizeSingleItem)
+}
+
+export function summarizeDashboardSections(items: Array<DashboardItemConfig> | undefined): Array<string> {
+	if (!Array.isArray(items)) return []
+	const titles: Array<string> = []
+	for (const item of items) {
+		if (item.kind === 'section' && item.title.trim()) titles.push(compactWhitespace(item.title))
+	}
+	return titles
+}
+
+export function summarizeDashboardVariables(variables: Array<DashboardVariable> | undefined): string {
+	if (!Array.isArray(variables) || variables.length === 0) return ''
+	return variables.map((variable) => `${variable.label} = ${variable.value}`).join(', ')
 }
 
 function buildFallbackDescription(
 	dashboardName: string,
 	itemSummaries: Array<DashboardItemSummary>,
-	itemCount: number
+	itemCount: number,
+	sectionTitles: Array<string>,
+	parameters: string
 ): string {
 	if (itemCount === 0) return DEFAULT_DESCRIPTION
 
@@ -271,19 +302,23 @@ function buildFallbackDescription(
 		.filter(Boolean)
 		.slice(0, 3)
 		.join(', ')
+	const sections = sectionTitles.slice(0, 4).join(', ')
 
 	return truncateText(
-		`${dashboardName} is a community-built DefiLlama Pro dashboard with ${itemCount} items${subjects ? ` covering ${subjects}` : ''}.`,
+		`${dashboardName} is a community-built DefiLlama Pro dashboard with ${itemCount} cards${subjects ? ` covering ${subjects}` : ''}${sections ? ` across ${sections}` : ''}.${parameters ? ` Parameters: ${parameters}.` : ''}`,
 		MAX_DESCRIPTION_LENGTH
 	)
 }
 
 export function buildDashboardSeo(dashboard: Dashboard): DashboardSeo {
 	const name = getDashboardName(dashboard)
-	const itemCount = Array.isArray(dashboard.data?.items) ? dashboard.data.items.length : 0
+	const itemCount = Array.isArray(dashboard.data?.items) ? countDashboardWidgets(dashboard.data.items) : 0
 	const itemSummaries = summarizeDashboardItems(dashboard.data?.items)
+	const sectionTitles = summarizeDashboardSections(dashboard.data?.items)
+	const parameters = summarizeDashboardVariables(dashboard.data?.variables)
 	const explicitDescription = truncateText(markdownToPlainText(dashboard.description), MAX_DESCRIPTION_LENGTH)
-	const description = explicitDescription || buildFallbackDescription(name, itemSummaries, itemCount)
+	const description =
+		explicitDescription || buildFallbackDescription(name, itemSummaries, itemCount, sectionTitles, parameters)
 	const canonicalPath = `/pro/${dashboard.slug || dashboard.id}`
 	const updated = getDashboardUpdated(dashboard)
 	const tags = Array.isArray(dashboard.tags)

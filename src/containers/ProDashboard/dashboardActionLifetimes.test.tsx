@@ -24,12 +24,25 @@ vi.mock('~/auth', () => ({
 	})
 }))
 vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
-vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), query: {} }) }))
+const router = vi.hoisted(() => ({
+	push: vi.fn(),
+	replace: vi.fn(),
+	pathname: '/pro/[dashboardId]',
+	asPath: '/pro/dashboard',
+	query: {}
+}))
+vi.mock('next/router', () => ({ useRouter: () => router }))
 vi.mock('./hooks/useFreeTierStatus', () => ({
 	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: false })
 }))
 vi.mock('./hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({ dashboard: api.dashboard, isDone: true })
+	useDashboardStream: () => ({
+		dashboard: api.dashboard,
+		isDone: true,
+		isStreaming: false,
+		readyItemIds: new Set<string>(),
+		error: null
+	})
 }))
 vi.mock('./hooks/useAutoSave', () => {
 	const hasPendingSave = () => false
@@ -37,6 +50,7 @@ vi.mock('./hooks/useAutoSave', () => {
 })
 vi.mock('./queries', () => ({
 	StreamDoneContext: createContext(true),
+	StreamItemReadinessContext: createContext(null),
 	ProxyAuthTokenContext: createContext(null),
 	useProtocolsAndChains: () => ({ data: { protocols: [], chains: [] } })
 }))

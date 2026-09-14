@@ -18,8 +18,11 @@ export interface DashboardStreamState {
 	/** undefined = not received yet, null = received as null, Dashboard = received */
 	dashboard: Dashboard | null | undefined
 	isDone: boolean
+	readyItemIds: ReadonlySet<string>
 	error: string | null
 }
+
+const NO_READY_ITEMS: ReadonlySet<string> = new Set()
 
 function seedSerializedQueryData<T>(
 	queryClient: ReturnType<typeof useQueryClient>,
@@ -64,11 +67,27 @@ function streamErrorMessage(error: unknown) {
 	return error instanceof Error ? error.message : 'Stream failed'
 }
 
-function buildStreamRequest(dashboardId: string, authToken: string | null | undefined, signal: AbortSignal) {
-	// The cache-buster is only needed on the authorized URL, which is why the two differ.
-	const url = authToken
-		? `/api/dynamic/pro-dashboard/${dashboardId}/stream?_=${Date.now()}`
-		: `/api/dynamic/pro-dashboard/${dashboardId}/stream`
+export interface DashboardStreamRequestOptions {
+	variableOverrides?: Readonly<Record<string, string>>
+	itemId?: string
+	version?: string
+}
+
+export function buildStreamRequest(
+	dashboardId: string,
+	authToken: string | null | undefined,
+	signal: AbortSignal,
+	options: DashboardStreamRequestOptions = {}
+) {
+	const params = new URLSearchParams()
+	if (authToken) params.set('_', String(Date.now()))
+	else if (options.version) params.set('v', options.version)
+	if (options.itemId) params.set('item', options.itemId)
+	for (const id of Object.keys(options.variableOverrides ?? {}).sort()) {
+		params.set(`var-${id}`, options.variableOverrides![id] as string)
+	}
+	const query = params.toString()
+	const url = `/api/dynamic/pro-dashboard/${dashboardId}/stream${query ? `?${query}` : ''}`
 	const init: RequestInit = { credentials: 'include', signal }
 	if (authToken) init.headers = { Authorization: `Bearer ${authToken}` }
 	return { url, init }
@@ -83,13 +102,15 @@ function usableStreamBody(response: Response) {
 export function useDashboardStream(
 	dashboardId: string | undefined,
 	authToken?: string | null,
-	enabled = true
+	enabled = true,
+	options: DashboardStreamRequestOptions = {}
 ): DashboardStreamState {
 	const queryClient = useQueryClient()
 	const [state, setState] = useState<DashboardStreamState>({
 		isStreaming: false,
 		dashboard: undefined,
 		isDone: !dashboardId || dashboardId === 'new',
+		readyItemIds: NO_READY_ITEMS,
 		error: null
 	})
 	const handleLine = useCallback(
@@ -184,6 +205,13 @@ export function useDashboardStream(
 				case 'equitiesFilingsData':
 					queryClient.setQueryData(getProEquitiesFilingsCacheKey(chunk.ticker), chunk.data, { updatedAt: now })
 					break
+				case 'itemReady':
+					setState((previousState) => {
+						const readyItemIds = new Set(previousState.readyItemIds)
+						for (const id of chunk.itemIds) readyItemIds.add(id)
+						return { ...previousState, readyItemIds }
+					})
+					break
 				case 'done':
 					setState((previousState) => ({
 						...previousState,
@@ -198,11 +226,19 @@ export function useDashboardStream(
 
 	// A new stream target (dashboard, token or enabled flag) starts a fresh streaming state in the same render
 	// that starts the stream, instead of one commit later.
-	const streamKey = dashboardId && dashboardId !== 'new' && enabled ? `${dashboardId}|${authToken ?? ''}` : null
+	const overridesKey = JSON.stringify(options.variableOverrides ?? {})
+	const itemKey = options.itemId ?? ''
+	const versionKey = options.version ?? ''
+	const streamKey =
+		dashboardId && dashboardId !== 'new' && enabled
+			? `${dashboardId}|${authToken ?? ''}|${overridesKey}|${itemKey}|${versionKey}`
+			: null
 	const [syncedStreamKey, setSyncedStreamKey] = useState<string | null>(null)
 	if (streamKey !== syncedStreamKey) {
 		setSyncedStreamKey(streamKey)
-		if (streamKey) setState({ isStreaming: true, dashboard: undefined, isDone: false, error: null })
+		if (streamKey) {
+			setState({ isStreaming: true, dashboard: undefined, isDone: false, readyItemIds: NO_READY_ITEMS, error: null })
+		}
 	}
 
 	useEffect(() => {
@@ -210,9 +246,14 @@ export function useDashboardStream(
 
 		const abortController = new AbortController()
 
+		const requestOptions: DashboardStreamRequestOptions = {
+			...(overridesKey === '{}' ? {} : { variableOverrides: JSON.parse(overridesKey) as Record<string, string> }),
+			...(itemKey ? { itemId: itemKey } : {}),
+			...(versionKey ? { version: versionKey } : {})
+		}
 		const startStream = async () => {
 			// Built before the try: its conditionals are value blocks, and assembling a request cannot fail.
-			const request = buildStreamRequest(dashboardId, authToken, abortController.signal)
+			const request = buildStreamRequest(dashboardId, authToken, abortController.signal, requestOptions)
 			try {
 				const response = await fetch(request.url, request.init)
 				if (abortController.signal.aborted) return
@@ -253,7 +294,7 @@ export function useDashboardStream(
 		return () => {
 			abortController.abort()
 		}
-	}, [authToken, dashboardId, enabled, handleLine])
+	}, [authToken, dashboardId, enabled, handleLine, overridesKey, itemKey, versionKey])
 
 	return state
 }

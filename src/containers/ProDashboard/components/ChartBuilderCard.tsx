@@ -13,6 +13,8 @@ import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
 import { chartBuilderHasExactRemainder, chartBuilderScopeHidesOthers } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
+import { chartBuilderSubtitleParts } from '../chartBuilderSubtitle'
+import { requestDashboardItemReveal } from '../hooks/useDashboardItemDeepLink'
 import {
 	useProDashboardCatalog,
 	useProDashboardEditorActions,
@@ -20,8 +22,11 @@ import {
 	useProDashboardTime
 } from '../ProDashboardAPIContext'
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
-import type { ChartBuilderConfig, DashboardGrouping } from '../types'
+import type { ChartBuilderConfig } from '../types'
+import { ProBadge, ProButton, ProMeta, ProSegmented } from '../ui'
 import { buildProTreemapData } from '../utils/treemap'
+import { BoundParameterBadge } from './BoundParameterBadge'
+import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import {
 	buildChartBuilderSeriesView,
 	isChartBuilderSnapshotMetric,
@@ -30,7 +35,11 @@ import {
 } from './chartBuilderSeries'
 import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
 import { ConfirmationModal } from './ConfirmationModal'
-import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
+import { DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
+import { ProCardHeader } from './ProCardHeader'
+import { ProCardEmpty, ProCardError, ProCardLoading, ProCardRefreshFailed } from './ProCardStatus'
+import { useChartSyncGroup } from './useChartSyncGroup'
+import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
@@ -38,7 +47,10 @@ const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart
 const DEFAULT_SERIES_COLOR = '#3e61cc'
 const EMPTY_SERIES_COLORS: Record<string, string> = {}
 const HEX_COLOR_REGEX = /^#([0-9a-f]{3}){1,2}$/i
-const CHART_TYPE_OPTIONS: Array<{ name: string; key: ChartBuilderConfig['config']['chartType'] }> = [
+const CHART_TYPE_OPTIONS: Array<{
+	name: string
+	key: ChartBuilderConfig['config']['chartType']
+}> = [
 	{ name: 'Stacked Bar', key: 'stackedBar' },
 	{ name: 'Stacked Area', key: 'stackedArea' },
 	{ name: 'Line', key: 'line' },
@@ -133,14 +145,10 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		hasCustomSeriesColors = true
 		break
 	}
-	const groupingOptions: Array<DashboardGrouping> = ['day', 'week', 'month', 'quarter', 'year']
-	const chainFilterMode = config.chainFilterMode
-	const categoryFilterMode = config.categoryFilterMode
-	const chainCategoryFilterMode = config.chainCategoryFilterMode
-	const protocolCategoryFilterMode = config.protocolCategoryFilterMode
 	const effectiveShowColors = !isReadOnly && showColors
 	const hasExactRemainder = chartBuilderHasExactRemainder(config)
 	const displayAs = hasExactRemainder ? config.displayAs : 'timeSeries'
+	const protocolDisplayName = config.protocol ? getProtocolInfo(config.protocol)?.name || config.protocol : null
 
 	const isSnapshotChart = isChartBuilderSnapshotMetric(config.metric)
 	const treemapValue = config.treemapValue || 'latest'
@@ -150,6 +158,13 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		() => buildHideOthersOptions(config.mode, config.limit),
 		[config.mode, config.limit]
 	)
+	const subtitleParts = chartBuilderSubtitleParts({
+		config,
+		protocolName: protocolDisplayName,
+		hasExactRemainder,
+		treemapMode,
+		timePeriod: timePeriod ?? null
+	})
 
 	const streamDone = useContext(StreamDoneContext)
 	const selectChartData = useCallback(
@@ -157,7 +172,13 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			selectChartBuilderSeries(data, { hideOthers: config.hideOthers === true, timePeriod, customTimePeriod }),
 		[config.hideOthers, timePeriod, customTimePeriod]
 	)
-	const { data: chartData, isPending: isChartDataPending } = useQuery({
+	const {
+		data: chartData,
+		isPending: isChartDataPending,
+		isError: isChartDataError,
+		isFetching: isChartDataFetching,
+		refetch: refetchChartData
+	} = useQuery({
 		queryKey: getChartBuilderQueryKey(config),
 		queryFn: () => fetchChartBuilderSeries(config).then((series) => ({ series })),
 		select: selectChartData,
@@ -214,6 +235,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const displayedSeries = chartData?.series ?? []
 	const hasRenderableData =
 		config.chartType === 'treemap' ? treemapData.length > 0 : chartView.dataset.source.length > 0
+	const retryChartData = () => {
+		void refetchChartData()
+	}
 
 	const chartOptions = useMemo<MultiSeriesChartOptions>(() => {
 		const tooltipFormatter = createChartBuilderTooltipFormatter({
@@ -338,6 +362,12 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		updateSeriesColors({})
 	}
 
+	const hallmarks = useDashboardAnnotationHallmarks()
+	const syncGroup = useChartSyncGroup()
+	const cardHeightScale = useCardHeightScale()
+	const chartHeight = scaledPx(360, cardHeightScale)
+	const treemapHeight = scaledPx(350, cardHeightScale)
+
 	const handleTreemapValueChange = (nextValue: string) => {
 		if (isReadOnly) {
 			return
@@ -358,33 +388,27 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	}
 
 	return (
-		<div className="flex min-h-[422px] flex-col p-1 md:min-h-[438px]">
-			<div className="flex flex-col gap-1 p-1 md:p-3">
-				<div className="flex flex-wrap items-center justify-end gap-2">
-					<h2 className="mr-auto text-base font-semibold">
-						{builder.name ||
-							(config.mode === 'protocol'
-								? `${(config.protocol && (getProtocolInfo(config.protocol)?.name || config.protocol)) || 'All Protocols'} ${config.metric} by Chain`
-								: `${config.metric} by Protocol`)}
-					</h2>
-					<ProCardEditControls>
+		<div className="flex min-h-[calc(422px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(438px*var(--card-scale,1))]">
+			{isChartDataError && hasRenderableData ? <ProCardRefreshFailed onRetry={retryChartData} /> : null}
+			<ProCardHeader
+				title={
+					builder.name ||
+					(config.mode === 'protocol'
+						? `${protocolDisplayName ?? 'All Protocols'} ${config.metric} by Chain`
+						: `${config.metric} by Protocol`)
+				}
+				badge={<BoundParameterBadge {...(builder.bindings === undefined ? {} : { bindings: builder.bindings })} />}
+				subtitle={<ProMeta items={subtitleParts} />}
+				controls={
+					<>
 						{hasRenderableData && config.chartType !== 'treemap' ? (
-							<div className="flex overflow-hidden rounded-md border border-pro-form-control-border">
-								{groupingOptions.map((option, index) => (
-									<button
-										type="button"
-										key={option}
-										onClick={() => handleGroupingChange(builder.id, option)}
-										className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-pro-form-control-border' : ''} ${
-											builder.grouping === option || (!builder.grouping && option === 'day')
-												? 'bg-brand text-on-brand focus:ring-2 focus:ring-brand/50 focus:outline-hidden'
-												: 'bg-transparent pro-hover-bg text-pro-text-secondary focus:ring-1 focus:ring-pro-form-control-border focus:outline-hidden'
-										}`}
-									>
-										{option.slice(0, 1).toUpperCase()}
-									</button>
-								))}
-							</div>
+							<ProSegmented
+								size="sm"
+								label="Grouping"
+								options={DASHBOARD_GROUPING_SEGMENTS}
+								value={builder.grouping ?? 'day'}
+								onValueChange={(value) => handleGroupingChange(builder.id, value)}
+							/>
 						) : null}
 
 						<Select
@@ -435,19 +459,15 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						) : null}
 
 						{hasRenderableData ? (
-							<button
-								type="button"
+							<ProButton
+								size="sm"
+								variant={effectiveShowColors ? 'primary' : 'secondary'}
 								data-btn="colors"
 								onClick={() => setShowColors((prev) => !prev)}
 								aria-pressed={effectiveShowColors}
-								className={`flex items-center gap-1 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:cursor-not-allowed ${
-									effectiveShowColors
-										? 'border-transparent bg-brand text-on-brand'
-										: 'border-pro-form-control-border hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary'
-								} disabled:border-pro-cards-border disabled:text-tertiary`}
 							>
 								Colors
-							</button>
+							</ProButton>
 						) : null}
 						{hasExactRemainder &&
 						(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
@@ -463,24 +483,26 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								variant="pro"
 							/>
 						) : !hasExactRemainder ? (
-							<span className="rounded-md border border-pro-form-control-border px-2 py-1 text-xs text-pro-text-secondary">
-								Top {config.limit}
-							</span>
+							<ProBadge tone="neutral">Top {config.limit}</ProBadge>
 						) : null}
-					</ProCardEditControls>
-					{hasRenderableData ? (
-						<ProCardOverflowMenu
-							image={{
-								chartInstance,
-								filename: builder.name || config.metric,
-								title: config.chartType === 'treemap' ? undefined : builder.name || `${config.metric} by Protocol`,
-								expandLegend: true
-							}}
-							csv={{ onClick: () => csvExportMutation.mutate(), isLoading: csvExportMutation.isPending }}
-							onDuplicate={() => setShowDuplicateConfirm(true)}
-						/>
-					) : null}
-				</div>
+					</>
+				}
+				menu={
+					hasRenderableData
+						? {
+								image: {
+									chartInstance,
+									filename: builder.name || config.metric,
+									title: config.chartType === 'treemap' ? undefined : builder.name || `${config.metric} by Protocol`,
+									expandLegend: true
+								},
+								csv: { onClick: () => csvExportMutation.mutate(), isLoading: csvExportMutation.isPending },
+								onDuplicate: () => setShowDuplicateConfirm(true)
+							}
+						: {}
+				}
+			/>
+			<div className="flex flex-col gap-1 px-3 pb-1">
 				{effectiveShowColors && hasRenderableData ? (
 					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
 						<span className="shrink-0 text-xs font-medium text-pro-text-label">Series Colors</span>
@@ -503,130 +525,88 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0 disabled:cursor-not-allowed"
 										aria-label={`Select color for ${series.name}`}
 									/>
-									<button
-										type="button"
+									<ProButton
+										size="sm"
+										variant="ghost"
 										onClick={() => handleSeriesColorReset(series.name)}
 										disabled={isReadOnly || !hasOverride}
-										className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
-											isReadOnly || !hasOverride
-												? 'text-tertiary'
-												: 'text-pro-text-tertiary hover:text-pro-text-primary'
-										}`}
 									>
 										Reset
-									</button>
+									</ProButton>
 								</div>
 							)
 						})}
-						<button
-							type="button"
+						<ProButton
+							size="sm"
+							variant="secondary"
 							onClick={handleResetAllSeriesColors}
 							disabled={isReadOnly || !hasCustomSeriesColors}
-							className={`flex shrink-0 items-center rounded-md border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
-								isReadOnly || !hasCustomSeriesColors
-									? 'border-pro-cards-border text-tertiary'
-									: 'border-pro-form-control-border text-pro-text-tertiary hover:text-pro-text-primary'
-							}`}
 						>
 							Reset All
-						</button>
+						</ProButton>
 					</div>
 				) : null}
-				{(() => {
-					const parts: Array<string> = []
-					if (config.mode === 'protocol') {
-						const protoName = config.protocol
-							? getProtocolInfo(config.protocol)?.name || config.protocol
-							: 'All Protocols'
-						parts.push(protoName)
-						if (!hasExactRemainder) parts.push(`Top ${config.limit} chains`)
-						if (chainFilterMode === 'exclude' && config.chains.length > 0) {
-							parts.push(`Excluding ${config.chains.join(', ')}`)
-						} else if (config.chains.length > 0) {
-							parts.push(config.chains.join(', '))
-						} else {
-							parts.push('All chains')
-						}
-						if (config.chainCategories && config.chainCategories.length > 0) {
-							const cats = config.chainCategories.join(', ')
-							if (chainCategoryFilterMode === 'exclude') parts.push(`Excluding ${cats}`)
-							else parts.push(cats)
-						}
-						if (config.protocolCategories && config.protocolCategories.length > 0) {
-							const cats = config.protocolCategories.join(', ')
-							if (protocolCategoryFilterMode === 'exclude') parts.push(`Excluding ${cats}`)
-							else parts.push(cats)
-						}
-					} else {
-						const chainLabel = config.chains.length > 0 ? config.chains.join(', ') : 'All chains'
-						const chainDisplay =
-							chainFilterMode === 'exclude' && config.chains.length > 0 ? `Excluding ${chainLabel}` : chainLabel
-						parts.push(`${chainDisplay} • Top ${config.limit} protocols${config.hideOthers ? ' only' : ''}`)
-						if (config.categories.length > 0) {
-							const cats = config.categories.join(', ')
-							if (categoryFilterMode === 'exclude') parts.push(`Excluding ${cats}`)
-							else parts.push(cats)
-						}
-					}
-					if (config.chartType === 'treemap') {
-						const treemapSummary = treemapMode === 'latest' ? 'Latest' : treemapMode === 'sum7d' ? '7D' : '30D'
-						parts.push(treemapSummary)
-					} else if (timePeriod && timePeriod !== 'all') {
-						parts.push(timePeriod.toUpperCase())
-					}
-					return <p className="text-xs text-pro-text-label">{parts.join(' • ')}</p>
-				})()}
 			</div>
 
-			{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
-			{isChartDataPending ? (
-				<div className="flex flex-1 flex-col items-center justify-center">
-					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand" />
-					<p className="text-sm text-pro-text-form">Loading chart...</p>
-				</div>
-			) : hasRenderableData ? (
-				<Suspense fallback={<div className="min-h-[300px]" />}>
-					{config.chartType === 'treemap' ? (
-						<BuilderTreemapChart data={treemapData} height="350px" onReady={handleChartReady} />
+			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+				{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
+				{isChartDataError && !hasRenderableData ? (
+					isChartDataFetching ? (
+						<ProCardLoading label="Loading chart…" />
 					) : (
-						<MultiSeriesChart
-							dataset={chartView.dataset}
-							charts={chartView.charts}
-							valueSymbol={displayAs === 'percentage' ? '%' : '$'}
-							groupBy={
-								builder.grouping === 'week'
-									? 'weekly'
-									: builder.grouping === 'month'
-										? 'monthly'
-										: builder.grouping === 'quarter'
-											? 'quarterly'
-											: builder.grouping === 'year'
-												? 'yearly'
-												: 'daily'
-							}
-							hideDataZoom
-							hideDefaultLegend={false}
-							solidChartAreaStyle={config.chartType === 'stackedArea'}
-							exportButtons="hidden"
-							onReady={handleChartReady}
-							chartOptions={chartOptions}
-						/>
-					)}
-				</Suspense>
-			) : (
-				<div className="flex flex-1 flex-col items-center justify-center">
-					<p className="text-sm text-pro-text-label">No data available</p>
-				</div>
-			)}
+						<ProCardError onRetry={retryChartData} />
+					)
+				) : isChartDataPending ? (
+					<ProCardLoading label="Loading chart…" />
+				) : hasRenderableData ? (
+					<Suspense fallback={<div className="min-h-[calc(300px*var(--card-scale,1))]" />}>
+						{config.chartType === 'treemap' ? (
+							<BuilderTreemapChart data={treemapData} height={treemapHeight} onReady={handleChartReady} />
+						) : (
+							<MultiSeriesChart
+								height={chartHeight}
+								{...(hallmarks ? { hallmarks } : {})}
+								hallmarkStyle="mark-line"
+								{...(syncGroup ? { syncGroup } : {})}
+								dataset={chartView.dataset}
+								charts={chartView.charts}
+								valueSymbol={displayAs === 'percentage' ? '%' : '$'}
+								groupBy={
+									builder.grouping === 'week'
+										? 'weekly'
+										: builder.grouping === 'month'
+											? 'monthly'
+											: builder.grouping === 'quarter'
+												? 'quarterly'
+												: builder.grouping === 'year'
+													? 'yearly'
+													: 'daily'
+								}
+								hideDataZoom
+								hideDefaultLegend={false}
+								solidChartAreaStyle={config.chartType === 'stackedArea'}
+								exportButtons="hidden"
+								onReady={handleChartReady}
+								chartOptions={chartOptions}
+							/>
+						)}
+					</Suspense>
+				) : (
+					<ProCardEmpty message="No data available" />
+				)}
+			</div>
 			<ConfirmationModal
 				isOpen={showDuplicateConfirm}
 				onClose={() => setShowDuplicateConfirm(false)}
-				onConfirm={() => handleDuplicateChartBuilder(builder)}
+				onConfirm={() => {
+					const duplicateId = handleDuplicateChartBuilder(builder)
+					if (duplicateId) requestDashboardItemReveal(duplicateId, { scroll: 'nearest' })
+				}}
 				title="Duplicate Chart"
 				message="Create a duplicate of this chart in the dashboard?"
 				confirmText="Duplicate"
 				cancelText="Cancel"
-				confirmButtonClass="pro-btn-primary"
+				tone="primary"
 			/>
 		</div>
 	)

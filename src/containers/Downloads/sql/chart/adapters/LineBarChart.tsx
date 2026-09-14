@@ -38,6 +38,7 @@ interface LineBarChartProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 	forceType?: 'line' | 'bar'
 	forceArea?: boolean
 	forceStack?: string
@@ -48,6 +49,7 @@ export function LineBarChart({
 	result,
 	classified,
 	onReady,
+	height = SQL_CHART_HEIGHT,
 	forceType,
 	forceArea,
 	forceStack
@@ -126,7 +128,7 @@ export function LineBarChart({
 		<div className="relative">
 			<Suspense
 				fallback={
-					<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+					<div className="flex items-center justify-center" style={{ height }}>
 						<LoadingSpinner size={18} />
 					</div>
 				}
@@ -134,7 +136,7 @@ export function LineBarChart({
 				<MultiSeriesChart
 					dataset={chartModel.dataset}
 					charts={chartModel.charts}
-					height={SQL_CHART_HEIGHT}
+					height={height}
 					valueSymbol={formatter.valueSymbol}
 					hideDataZoom={chartModel.dataset.source.length < 2}
 					chartOptions={chartOptions}

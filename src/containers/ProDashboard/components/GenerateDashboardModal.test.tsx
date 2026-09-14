@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
 import { GenerateDashboardModal } from './GenerateDashboardModal'
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), push: vi.fn() }))
@@ -18,7 +19,7 @@ let client: QueryClient
 const save = vi.fn()
 const close = vi.fn()
 const dashboard: Dashboard = { id: 'new', data: { items: [], dashboardName: 'My analysis' }, created: '', updated: '' }
-async function render(open = true, mode: 'create' | 'iterate' = 'create') {
+async function render(open = true, mode: 'create' | 'iterate' = 'create', items: Array<DashboardItemConfig> = []) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
@@ -32,7 +33,7 @@ async function render(open = true, mode: 'create' | 'iterate' = 'create') {
 						visibility: 'private',
 						tags: ['research'],
 						description: 'Saved description',
-						items: []
+						items
 					}}
 				/>
 			</QueryClientProvider>
@@ -154,6 +155,37 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	await act(async () => pending.resolve())
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).not.toHaveBeenCalled()
+})
+
+test('an iteration keeps custom data rows out of the request and restores what the model dropped', async () => {
+	const section = { id: 'section-1', kind: 'section', title: 'Overview', displayAs: 'heading' } as DashboardItemConfig
+	const customData = {
+		id: 'custom-1',
+		kind: 'custom-data',
+		name: 'Desk numbers',
+		columns: [{ name: 'date', type: 'date' }],
+		rows: [['2024-01-01']],
+		chart: { type: 'line' },
+		displayMode: 'table'
+	} as unknown as DashboardItemConfig
+	save.mockResolvedValueOnce(undefined)
+	await render(true, 'iterate', [section, customData])
+	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
+		'Add a fees comparison to this dashboard'
+	await submit()
+	await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
+	expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).existingDashboard.items).toEqual([
+		section,
+		{
+			id: 'custom-1',
+			kind: 'custom-data',
+			name: 'Desk numbers',
+			columns: [{ name: 'date', type: 'date' }],
+			chart: { type: 'line' },
+			displayMode: 'table'
+		}
+	])
+	expect(save.mock.calls[0][0].items).toEqual([section, customData])
 })
 
 test('editing the prompt explicitly discards the generated result before generating another', async () => {

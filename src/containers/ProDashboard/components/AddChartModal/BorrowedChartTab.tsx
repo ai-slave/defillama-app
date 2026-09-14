@@ -17,6 +17,7 @@ import type { BorrowedChartType } from '../../types'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { useBorrowedChartData } from '../useBorrowedChartData'
+import { BoundParameterChip, useModalFieldBinding } from './bindingContext'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -108,7 +109,23 @@ export function BorrowedChartTab({
 	)
 	const selectorLabel = activeChartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
+	const protocolParameter = useModalFieldBinding('protocol', 'protocol')
+	const selectableProtocolOptions = useMemo(
+		() => (protocolParameter.options.length > 0 ? [...protocolParameter.options, ...protocolOptions] : protocolOptions),
+		[protocolParameter.options, protocolOptions]
+	)
+
 	const handleProtocolChange = (option: VirtualizedSelectOption) => {
+		const variable = protocolParameter.resolveSelection(option.value)
+		if (variable) {
+			onSelectedBorrowedProtocolChange(variable.value)
+			onSelectedBorrowedProtocolNameChange(
+				protocolOptions.find((item) => item.value === variable.value)?.label ?? variable.value
+			)
+			onSelectedBorrowedChartTypeChange('chainsBorrowed')
+			protocolParameter.bind(variable.id)
+			return
+		}
 		onSelectedBorrowedProtocolChange(option.value)
 		onSelectedBorrowedProtocolNameChange(option.label)
 		onSelectedBorrowedChartTypeChange('chainsBorrowed')
@@ -230,9 +247,12 @@ export function BorrowedChartTab({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
+				{protocolParameter.boundVariable ? (
+					<BoundParameterChip label={protocolParameter.boundVariable.label} onUnbind={protocolParameter.unbind} />
+				) : null}
 				<AriakitVirtualizedSelect
 					label="Protocol"
-					options={protocolOptions}
+					options={selectableProtocolOptions}
 					selectedValue={selectedBorrowedProtocol || ''}
 					onChange={handleProtocolChange}
 					placeholder="Select protocol..."
@@ -262,7 +282,7 @@ export function BorrowedChartTab({
 				) : null}
 			</div>
 
-			<div className="overflow-hidden rounded-lg border pro-border">
+			<div className="overflow-hidden rounded-lg border border-pro-cards-border">
 				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
 					Preview
 				</h4>

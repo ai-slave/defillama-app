@@ -7,6 +7,21 @@ import type { StoredColSpan } from './dashboardConfig/colSpan'
 
 const dashboardBlue = '#326abd'
 
+export const DASHBOARD_CARD_HEIGHTS = ['compact', 'default', 'tall'] as const
+export type DashboardCardHeight = (typeof DASHBOARD_CARD_HEIGHTS)[number]
+
+export function isDashboardCardHeight(value: unknown): value is DashboardCardHeight {
+	return typeof value === 'string' && (DASHBOARD_CARD_HEIGHTS as ReadonlyArray<string>).includes(value)
+}
+
+export interface DashboardItemLayout {
+	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+}
+
+export type DashboardBindableField = 'subject' | 'chains' | 'protocol' | 'chain'
+export type DashboardItemBindings = Partial<Record<DashboardBindableField, string>>
+
 export type DashboardGrouping = 'day' | 'week' | 'month' | 'quarter' | 'year'
 
 export interface Chain {
@@ -25,6 +40,7 @@ export interface MultiChartConfig {
 	items: Array<ChartConfig>
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	showCumulative?: boolean
 	showPercentage?: boolean
 	showStacked?: boolean
@@ -39,8 +55,23 @@ export interface TextConfig {
 	title?: string
 	content: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	allowHtml?: boolean
 }
+
+export type SectionDisplayAs = 'heading' | 'tab'
+
+export interface SectionConfig {
+	id: string
+	kind: 'section'
+	title: string
+	description?: string
+	displayAs: SectionDisplayAs
+	collapsed?: boolean
+}
+
+export const SECTION_TITLE_MAX_LENGTH = 80
+export const SECTION_DESCRIPTION_MAX_LENGTH = 240
 
 export type MetricAggregator =
 	| 'latest'
@@ -93,6 +124,8 @@ interface MetricConfigBase<Type extends ProDashboardChartType, Subject extends M
 		compact?: boolean
 	}
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export type MetricConfig =
@@ -144,6 +177,8 @@ export interface ChartBuilderConfig {
 	}
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export type YieldChartType =
@@ -179,6 +214,7 @@ export interface YieldsChartConfig {
 	chain: string
 	chartType?: YieldChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export type StablecoinChartType = 'totalMcap' | 'tokenMcaps' | 'pie' | 'dominance' | 'usdInflows' | 'tokenInflows'
@@ -189,6 +225,8 @@ export interface StablecoinsChartConfig {
 	chain: string
 	chartType: StablecoinChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export type StablecoinAssetChartType = 'totalCirc' | 'chainMcaps' | 'chainPie' | 'chainDominance'
@@ -200,6 +238,7 @@ export interface StablecoinAssetChartConfig {
 	stablecoinId: string
 	chartType: StablecoinAssetChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export type AdvancedTvlChartType =
@@ -218,6 +257,8 @@ export interface AdvancedTvlChartConfig {
 	protocolName: string
 	chartType: AdvancedTvlChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export type BorrowedChartType = 'chainsBorrowed' | 'tokenBorrowedUsd' | 'tokensBorrowedPie' | 'tokenBorrowedRaw'
@@ -229,6 +270,8 @@ export interface BorrowedChartConfig {
 	protocolName: string
 	chartType: BorrowedChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export interface IncomeStatementConfig {
@@ -237,6 +280,8 @@ export interface IncomeStatementConfig {
 	protocol: string
 	protocolName: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export interface LlamaAIChartConfig {
@@ -255,6 +300,7 @@ export interface LlamaAIChartConfig {
 	inlineChartConfig?: ChartConfiguration
 	inlineChartData?: ChartDataByKey
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export type UnlocksDataType = 'documented' | 'realtime'
@@ -266,6 +312,8 @@ export interface UnlocksScheduleConfig {
 	protocolName: string
 	dataType: UnlocksDataType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 type UnlocksPieChartType = 'allocation' | 'locked-unlocked'
@@ -277,6 +325,8 @@ export interface UnlocksPieConfig {
 	protocolName: string
 	chartType: UnlocksPieChartType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 export type RWAOverviewChartView = 'timeSeries' | 'pie' | 'treemap' | 'hbar'
@@ -292,6 +342,7 @@ export interface RWAOverviewChartConfig {
 	chain?: string
 	treemapNestedBy?: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export interface RWAAssetChartConfig {
@@ -301,6 +352,7 @@ export interface RWAAssetChartConfig {
 	assetName: string
 	metrics: Array<RWAOverviewChartMetric>
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export type SqlSnapshotValue =
@@ -336,6 +388,35 @@ export interface SqlChartConfig {
 	rowCap?: number
 	snapshot?: SqlSnapshot | null
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+}
+
+export interface CustomDataColumn {
+	name: string
+	type: string
+}
+
+export type CustomDataEncodedRows = { encoding: 'gzip-base64'; data: string; rowCount: number }
+export type CustomDataRows = Array<Array<SqlSnapshotValue>> | CustomDataEncodedRows
+
+export interface CustomDataConfig extends DashboardItemLayout {
+	id: string
+	kind: 'custom-data'
+	name: string
+	sourceName?: string
+	columns: Array<CustomDataColumn>
+	rows?: CustomDataRows
+	chart: DownloadChartConfig
+	displayMode: 'chart' | 'table'
+}
+
+export function isCustomDataEncodedRows(rows: CustomDataRows): rows is CustomDataEncodedRows {
+	return !Array.isArray(rows)
+}
+
+export function getCustomDataRowCount(rows: CustomDataRows | undefined): number {
+	if (rows === undefined) return 0
+	return isCustomDataEncodedRows(rows) ? rows.rowCount : rows.length
 }
 
 interface ChartConfigBase<Type extends ProDashboardChartType> {
@@ -347,7 +428,9 @@ interface ChartConfigBase<Type extends ProDashboardChartType> {
 	geckoId?: string | null
 	dataType?: UnlocksDataType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	showCumulative?: boolean
+	bindings?: DashboardItemBindings
 }
 
 export type ChartSubject =
@@ -366,6 +449,7 @@ interface DatasetTableConfigBase {
 	id: string
 	kind: 'dataset-table'
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 export interface YieldsFilters {

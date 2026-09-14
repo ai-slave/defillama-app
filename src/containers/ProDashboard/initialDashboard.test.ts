@@ -7,7 +7,8 @@ import {
 	hydrateDashboardInitialRenderPayload,
 	isDashboardInitialRenderHydration,
 	toOwnerDashboardInitialRenderPayload,
-	toPublicDashboardInitialRenderPayload
+	toPublicDashboardInitialRenderPayload,
+	toPublicDashboardResponse
 } from './initialDashboard'
 import type { ChartConfig } from './types'
 import { buildDashboardSeo } from './utils/seo'
@@ -227,4 +228,79 @@ test('preserves public fork attribution through SSR hydration', () => {
 	for (const payload of [toPublicDashboardInitialRenderPayload(source), toOwnerDashboardInitialRenderPayload(source)]) {
 		expect(hydrateDashboardInitialRenderPayload(payload).copiedFrom).toEqual(copiedFrom)
 	}
+})
+
+describe('dashboard initial render payload with document-level fields and custom data', () => {
+	const variables = [{ id: 'chain', kind: 'chain' as const, label: 'Chain', value: 'Ethereum' }]
+	const annotations = [{ id: 'merge', date: '2026-03-01', label: 'Merge' }]
+	const customData: DashboardItemConfig = {
+		id: 'custom-1',
+		kind: 'custom-data',
+		name: 'Treasury',
+		columns: [
+			{ name: 'date', type: 'date' },
+			{ name: 'value', type: 'number' }
+		],
+		rows: [
+			['2026-01-01', 1],
+			['2026-01-02', 2]
+		],
+		chart: {
+			chartType: 'line',
+			xCol: 'date',
+			yCols: ['value'],
+			splitByCol: null,
+			stackMode: 'off',
+			rightAxisCols: [],
+			seriesKinds: {},
+			seriesColors: {},
+			numberFormat: 'auto'
+		},
+		displayMode: 'chart',
+		height: 'tall'
+	}
+	const source: Dashboard = {
+		...dashboard([customData, { id: 'text-1', kind: 'text', content: 'Notes' }]),
+		data: {
+			...dashboard([]).data,
+			items: [customData, { id: 'text-1', kind: 'text', content: 'Notes' }],
+			variables,
+			annotations
+		}
+	}
+
+	test.each([
+		['public', toPublicDashboardInitialRenderPayload],
+		['owner', toOwnerDashboardInitialRenderPayload]
+	] as const)('the %s SSR payload carries variables and annotations', (_label, toPayload) => {
+		const payload = toPayload(source)
+		expect(payload.data.variables).toEqual(variables)
+		expect(payload.data.annotations).toEqual(annotations)
+		expect(hydrateDashboardInitialRenderPayload(payload).data).toMatchObject({ variables, annotations })
+	})
+
+	test('omits absent variables and annotations instead of serializing undefined', () => {
+		const payload = toPublicDashboardInitialRenderPayload(dashboard([]))
+		expect(payload.data).not.toHaveProperty('variables')
+		expect(payload.data).not.toHaveProperty('annotations')
+	})
+
+	test('strips custom-data rows from the SSR payload while keeping the rest of the card', () => {
+		const payload = toPublicDashboardInitialRenderPayload(source)
+		const { rows: _rows, ...withoutRows } = customData
+		expect(payload.data.items[0]).toEqual(withoutRows)
+		expect(payload.data.items[0]).not.toHaveProperty('rows')
+		expect(payload.data.items[1]).toEqual({ id: 'text-1', kind: 'text', content: 'Notes' })
+		expect(toOwnerDashboardInitialRenderPayload(source).data.items[0]).not.toHaveProperty('rows')
+	})
+
+	test('keeps custom-data rows in the public API response', () => {
+		const response = toPublicDashboardResponse(source)
+		expect(response.data.items[0]).toBe(customData)
+		expect(response.data.items[0]).toHaveProperty('rows', customData.rows)
+		expect(response.data.variables).toEqual(variables)
+		expect(response.data.annotations).toEqual(annotations)
+		expect(response.data).not.toHaveProperty('aiUndoState')
+		expect(response).not.toHaveProperty('user')
+	})
 })

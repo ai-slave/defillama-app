@@ -18,11 +18,18 @@ interface PieChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
+	height?: string
 }
 
 const TOP_N_SLICES = 12
 
-export function PieChartAdapter({ config, result, classified, onReady }: PieChartAdapterProps) {
+export function PieChartAdapter({
+	config,
+	result,
+	classified,
+	onReady,
+	height = SQL_CHART_HEIGHT
+}: PieChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const nameCol = classified.find(
 		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)
@@ -56,7 +63,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 		<div className="flex flex-col gap-1.5">
 			<Suspense
 				fallback={
-					<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
+					<div className="flex items-center justify-center" style={{ height }}>
 						<LoadingSpinner size={18} />
 					</div>
 				}
@@ -67,7 +74,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 					valueSymbol={formatter.valueSymbol}
 					radius={isDonut ? ['42%', '70%'] : undefined}
 					showLegend
-					height={SQL_CHART_HEIGHT}
+					height={height}
 					formatTooltip={formatTooltip}
 					onReady={onReady}
 				/>

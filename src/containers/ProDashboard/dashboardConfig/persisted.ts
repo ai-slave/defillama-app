@@ -1,14 +1,25 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import type { AIGeneratedData, CustomTimePeriod, DashboardCopySource, TimePeriod } from '../dashboardTypes'
+import type {
+	AIGeneratedData,
+	CustomTimePeriod,
+	DashboardAnnotation,
+	DashboardCopySource,
+	DashboardVariable,
+	TimePeriod
+} from '../dashboardTypes'
 import type {
 	AdvancedTvlChartConfig,
 	BorrowedChartConfig,
+	CustomDataConfig,
+	DashboardCardHeight,
 	DashboardGrouping,
+	DashboardItemBindings,
 	DatasetTableConfig,
 	IncomeStatementConfig,
 	LlamaAIChartConfig,
 	RWAAssetChartConfig,
+	SectionConfig,
 	SqlChartConfig,
 	StablecoinAssetChartConfig,
 	StablecoinsChartConfig,
@@ -291,6 +302,8 @@ interface PersistedUnifiedTableConfigBase {
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 	customColumns?: Array<PersistedUnifiedTableCustomColumn>
 }
 
@@ -320,6 +333,8 @@ export interface UnversionedUnifiedTableConfig {
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 	customColumns?: Array<PersistedUnifiedTableCustomColumn>
 }
 
@@ -333,6 +348,7 @@ interface PersistedProtocolsTableConfigBase {
 	id: string
 	kind: 'table'
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	filters?: PersistedProtocolTableFilters
 	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
@@ -402,6 +418,8 @@ export interface PersistedLegacyChartConfig {
 	geckoId?: string | null
 	dataType?: UnlocksDataType
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 	showCumulative?: boolean
 }
 
@@ -414,6 +432,7 @@ export interface PersistedMultiChartConfig {
 	items: Array<PersistedChartConfig>
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	showCumulative?: boolean
 	showPercentage?: boolean
 	showStacked?: boolean
@@ -456,6 +475,8 @@ export interface PersistedLegacyMetricConfig {
 		compact?: boolean
 	}
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 /** Historical RWA overview aliases were accepted by Pro but both rendered the chain breakdown. */
@@ -468,6 +489,7 @@ export interface PersistedRWAOverviewChartConfig {
 	chain?: string
 	treemapNestedBy?: string
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 }
 
 type PersistedJsonValue =
@@ -526,6 +548,8 @@ export interface PersistedChartBuilderConfig {
 	}
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
+	bindings?: DashboardItemBindings
 }
 
 /** Historical persisted table contract. Migration is its only runtime consumer. */
@@ -536,6 +560,7 @@ export interface PersistedDatasetTableConfig {
 	datasetType?: PersistedDatasetType
 	chains?: Array<string>
 	colSpan?: StoredColSpan
+	height?: DashboardCardHeight
 	filters?: UnifiedTableV1Filters
 	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
@@ -577,6 +602,7 @@ export type PersistedProtocolMetricDatasetTableConfig = {
 		datasetType: DatasetType
 		chains: Array<string>
 		colSpan?: StoredColSpan
+		height?: DashboardCardHeight
 	} & (DatasetType extends PersistedFilterableProtocolMetricDatasetType
 		? { filters?: PersistedProtocolMetricDatasetFilters }
 		: Record<never, never>)
@@ -610,6 +636,8 @@ export type PersistedDashboardItemConfig =
 	| UnifiedTableV1Config
 	| UnifiedTableV2Config
 	| PersistedUnifiedTableV3Config
+	| SectionConfig
+	| CustomDataConfig
 
 export interface PersistedDashboard {
 	copiedFrom?: DashboardCopySource
@@ -621,6 +649,8 @@ export interface PersistedDashboard {
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
+		variables?: Array<DashboardVariable>
+		annotations?: Array<DashboardAnnotation>
 		aiUndoState?: {
 			items: Array<PersistedDashboardItemConfig>
 			timestamp: string

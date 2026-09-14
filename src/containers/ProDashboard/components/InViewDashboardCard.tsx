@@ -6,7 +6,15 @@ export const DASHBOARD_CARD_ROOT_MARGIN = '1000px 0px'
 
 type DashboardCardRenderState = 'deferred' | 'visible' | 'mounted-offscreen'
 
-export function InViewDashboardCard({ children, minHeight }: { children: ReactNode; minHeight: number }) {
+export function InViewDashboardCard({
+	children,
+	minHeight,
+	kind
+}: {
+	children: ReactNode
+	minHeight: number
+	kind?: string | undefined
+}) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [renderState, setRenderState] = useState<DashboardCardRenderState>('deferred')
 
@@ -37,7 +45,7 @@ export function InViewDashboardCard({ children, minHeight }: { children: ReactNo
 	return (
 		<div ref={containerRef} aria-busy={!hasMounted} style={{ minHeight }}>
 			<EChartsRenderVisibilityProvider visible={renderState === 'visible'}>
-				{hasMounted ? children : <DashboardCardLoader className="min-h-[inherit]" />}
+				{hasMounted ? children : <DashboardCardLoader className="min-h-[inherit]" kind={kind} />}
 			</EChartsRenderVisibilityProvider>
 		</div>
 	)

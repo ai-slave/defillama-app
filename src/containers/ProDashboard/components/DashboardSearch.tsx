@@ -68,7 +68,7 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 					value={inputValue}
 					onChange={(e) => handleChange(e.target.value)}
 					placeholder="Search dashboards…"
-					className="w-full rounded-md border border-pro-form-control-border bg-pro-cards-bg py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-brand focus:shadow-sub-focus-ring focus:outline-hidden"
+					className="w-full rounded-md border border-pro-cards-border bg-pro-cards-bg py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-brand focus:shadow-sub-focus-ring focus:outline-hidden"
 				/>
 				{inputValue ? (
 					<button

@@ -33,6 +33,8 @@ import { groupData } from './utils'
  */
 export const StreamDoneContext = createContext(true)
 
+export const StreamItemReadinessContext = createContext<ReadonlySet<string> | null>(null)
+
 /**
  * Auth token for proxying chart fetches through the server (bypasses rate limits).
  * null = no active subscription, fetch directly from public APIs.

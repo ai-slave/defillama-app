@@ -25,6 +25,7 @@ function Layout({
 	canonicalUrl,
 	noIndex,
 	jsonLd,
+	ogImage,
 	children,
 	pageName,
 	tvlOptions,
@@ -36,7 +37,14 @@ function Layout({
 	const isClient = useIsClient()
 	return (
 		<>
-			<SEO title={title} description={description} canonicalUrl={canonicalUrl} noIndex={noIndex} jsonLd={jsonLd} />
+			<SEO
+				title={title}
+				description={description}
+				canonicalUrl={canonicalUrl}
+				noIndex={noIndex}
+				jsonLd={jsonLd}
+				ogImage={ogImage}
+			/>
 			<Nav tvlOptions={tvlOptions} />
 			<main
 				{...props}

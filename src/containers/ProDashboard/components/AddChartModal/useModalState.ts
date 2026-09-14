@@ -1,6 +1,15 @@
 import { useCallback, useMemo, useReducer } from 'react'
+import type { ChartConfig as DownloadChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
-import type { ChartConfig, MetricAggregator, MetricChartType } from '../../types'
+import type {
+	ChartConfig,
+	CustomDataColumn,
+	CustomDataRows,
+	DashboardBindableField,
+	MetricAggregator,
+	MetricChartType,
+	SqlSnapshotValue
+} from '../../types'
 import { readPreferredChartMode, writePreferredChartMode } from './chartModePreference'
 import { initializeFromEditItem, modalReducer } from './modalReducer'
 import type {
@@ -12,8 +21,8 @@ import type {
 	ModalState
 } from './types'
 
-export function useModalState(editItem?: DashboardItemConfig | null) {
-	const [state, dispatch] = useReducer(modalReducer, editItem, (item) =>
+export function useModalState(editItem?: DashboardItemConfig | null, draftItem?: DashboardItemConfig | null) {
+	const [state, dispatch] = useReducer(modalReducer, editItem ?? draftItem, (item) =>
 		initializeFromEditItem(item, readPreferredChartMode())
 	)
 
@@ -29,6 +38,7 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 				writePreferredChartMode(mode)
 				dispatch({ type: 'SET_CHART_MODE', payload: mode })
 			},
+			setManualFormOpen: (open: boolean) => dispatch({ type: 'SET_MANUAL_FORM_OPEN', payload: open }),
 			setComposerItems: (items: React.SetStateAction<Array<ChartConfig>>) =>
 				dispatch({ type: 'SET_COMPOSER_ITEMS', payload: items }),
 			setSelectedChain: (chain: string | null) => dispatch({ type: 'SET_SELECTED_CHAIN', payload: chain }),
@@ -129,7 +139,24 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 			setSelectedRwaAssetName: (name: string | null) =>
 				dispatch({ type: 'SET_SELECTED_RWA_ASSET_NAME', payload: name }),
 			setSelectedRwaAssetMetrics: (metrics: ModalState['selectedRwaAssetMetrics']) =>
-				dispatch({ type: 'SET_SELECTED_RWA_ASSET_METRICS', payload: metrics })
+				dispatch({ type: 'SET_SELECTED_RWA_ASSET_METRICS', payload: metrics }),
+			setItemBinding: (field: DashboardBindableField, variableId: string | null) =>
+				dispatch({ type: 'SET_ITEM_BINDING', payload: { field, variableId } }),
+			setCustomDataName: (name: string) => dispatch({ type: 'SET_CUSTOM_DATA_NAME', payload: name }),
+			setCustomDataText: (text: string) => dispatch({ type: 'SET_CUSTOM_DATA_TEXT', payload: text }),
+			setCustomDataParsed: (payload: {
+				columns: Array<CustomDataColumn>
+				rows: Array<Array<SqlSnapshotValue>>
+				chart: DownloadChartConfig
+				sourceName: string
+			}) => dispatch({ type: 'SET_CUSTOM_DATA_PARSED', payload }),
+			setCustomDataStoredRows: (rows: CustomDataRows | null) =>
+				dispatch({ type: 'SET_CUSTOM_DATA_STORED_ROWS', payload: rows }),
+			setCustomDataError: (message: string) => dispatch({ type: 'SET_CUSTOM_DATA_ERROR', payload: message }),
+			setCustomDataChart: (patch: Partial<DownloadChartConfig>) =>
+				dispatch({ type: 'SET_CUSTOM_DATA_CHART', payload: patch }),
+			setCustomDataDisplayMode: (mode: 'chart' | 'table') =>
+				dispatch({ type: 'SET_CUSTOM_DATA_DISPLAY_MODE', payload: mode })
 		}),
 		[]
 	)

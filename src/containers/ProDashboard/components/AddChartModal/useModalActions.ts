@@ -1,8 +1,10 @@
 import { useCallback, useMemo } from 'react'
+import toast from 'react-hot-toast'
 import { normalizeChartBuilderConfig } from '../../chartBuilderCapabilities'
 import { isChainTokenChartType } from '../../chartSource'
 import { createChartConfig } from '../../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../../ProDashboardAPIContext'
 import {
 	type Chain,
@@ -12,18 +14,24 @@ import {
 	type Protocol,
 	isProDashboardChartType
 } from '../../types'
+import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
 import type { ChartBuilderUpdate, ChartTabType, MainTabType } from './types'
 import { useModalState } from './useModalState'
 
-export function useModalActions(editItem: DashboardItemConfig | null | undefined, onClose: () => void) {
+export function useModalActions(
+	editItem: DashboardItemConfig | null | undefined,
+	onClose: () => void,
+	placement?: DashboardItemPlacement | undefined,
+	draftItem?: DashboardItemConfig | null | undefined
+) {
 	const { protocols, chains, protocolsLoading } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleAppendItems, handleEditItem } = useProDashboardEditorActions()
 
-	const { state, actions } = useModalState(editItem)
+	const { state, actions } = useModalState(editItem, draftItem)
 
 	const selectedProtocolData = useMemo(
 		() => protocols.find((p: Protocol) => p.slug === state.selectedProtocol),
@@ -306,7 +314,6 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 			actions.setSelectedChartTypes([])
 			if (tab === 'charts' && state.chartMode === 'manual') {
 				actions.setUnifiedChartName('')
-				actions.setChartCreationMode('separate')
 			}
 		},
 		[actions, state.chartMode]
@@ -325,6 +332,18 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 		},
 		[actions]
 	)
+
+	const handleSelectChartCategory = useCallback(
+		(tab: ChartTabType) => {
+			handleChartTabChange(tab)
+			actions.setManualFormOpen(true)
+		},
+		[actions, handleChartTabChange]
+	)
+
+	const handleBackToChartCategories = useCallback(() => {
+		actions.setManualFormOpen(false)
+	}, [actions])
 
 	const updateChartBuilder = useCallback(
 		(updates: ChartBuilderUpdate) => {
@@ -346,17 +365,30 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const handleSubmit = useCallback(() => {
+		let applied = true
+		let appendedIds: Array<string> = []
 		if (editItem) {
 			const newItem = buildEditedDashboardItem({ editItem, state, protocols, chains })
-			if (newItem) handleEditItem(editItem.id, newItem)
+			if (newItem) applied = handleEditItem(editItem.id, newItem) !== false
 		} else {
-			handleAppendItems((existingItems) =>
-				buildNewDashboardItems({ state, protocols, chains, existingItems, idFactory: generateItemId })
+			const appended = handleAppendItems(
+				(existingItems) =>
+					buildNewDashboardItems({ state, protocols, chains, existingItems, idFactory: generateItemId }),
+				placement
 			)
+			applied = appended !== false
+			if (appended !== false) appendedIds = appended
+		}
+
+		if (!applied) {
+			toast.error('The dashboard is still loading. Try again in a moment.', { id: 'dashboard-not-ready' })
+			return
 		}
 
 		onClose()
-	}, [editItem, state, chains, protocols, handleEditItem, handleAppendItems, onClose])
+		const revealId = appendedIds[0]
+		if (revealId) requestDashboardItemReveal(revealId)
+	}, [editItem, state, chains, protocols, handleEditItem, handleAppendItems, onClose, placement])
 
 	const uiActions = useMemo(
 		() => ({
@@ -372,6 +404,8 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 			handleBulkChartTypeChange,
 			handleMainTabChange,
 			handleChartTabChange,
+			handleSelectChartCategory,
+			handleBackToChartCategories,
 			handleSubmit,
 			setChartBuilder: actions.setChartBuilder,
 			updateChartBuilder
@@ -389,6 +423,8 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 			handleBulkChartTypeChange,
 			handleMainTabChange,
 			handleChartTabChange,
+			handleSelectChartCategory,
+			handleBackToChartCategories,
 			handleSubmit,
 			updateChartBuilder
 		]

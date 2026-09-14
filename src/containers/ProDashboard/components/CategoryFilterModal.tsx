@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import type { GroupBase, MenuListProps, MultiValue } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
-import { Icon } from '~/ui/Icon'
+import { ProButton, ProDialog } from '../ui'
 import { reactSelectStyles } from '../utils/reactSelectStyles'
 
 interface CategoryFilterModalProps {
@@ -75,27 +75,46 @@ export function CategoryFilterModal({
 				if (!open) onClose()
 			}}
 		>
-			<Ariakit.Dialog
-				className="dialog max-h-[80dvh] w-full max-w-lg gap-0 rounded-md border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-lg"
-				unmountOnHide
-				portal
+			<ProDialog
+				width="md"
+				heading="Filter Categories"
 				hideOnInteractOutside
+				footer={
+					<div className="flex flex-1 items-center justify-between">
+						<ProButton
+							type="button"
+							variant="ghost"
+							size="md"
+							onClick={() => {
+								setSelectedInclude([])
+								setSelectedExclude([])
+								onClear()
+								onClose()
+							}}
+							disabled={!hasSelections}
+						>
+							Clear all
+						</ProButton>
+						<div className="flex gap-2">
+							<Ariakit.DialogDismiss render={<ProButton type="button" variant="secondary" size="md" />}>
+								Cancel
+							</Ariakit.DialogDismiss>
+							<ProButton
+								type="button"
+								variant="primary"
+								size="md"
+								onClick={() => {
+									onApply(selectedInclude, selectedExclude)
+									onClose()
+								}}
+							>
+								Apply Filters
+							</ProButton>
+						</div>
+					</div>
+				}
 			>
-				<div
-					className="flex items-center justify-between border-b pro-divider p-4"
-					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
-				>
-					<h2 className="text-lg font-semibold text-pro-text-primary">Filter Categories</h2>
-					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-2 transition-colors">
-						<Icon name="x" height={20} width={20} />
-						<span className="sr-only">Close dialog</span>
-					</Ariakit.DialogDismiss>
-				</div>
-
-				<div
-					className="min-h-0 flex-auto space-y-6 overflow-y-auto p-4"
-					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
-				>
+				<div className="space-y-6">
 					<div>
 						<label htmlFor="category-filter-include" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Include Categories
@@ -136,41 +155,7 @@ export function CategoryFilterModal({
 						/>
 					</div>
 				</div>
-
-				<div
-					className="flex items-center justify-between border-t pro-divider p-4"
-					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
-				>
-					<button
-						type="button"
-						onClick={() => {
-							setSelectedInclude([])
-							setSelectedExclude([])
-							onClear()
-							onClose()
-						}}
-						className="pro-text-dimmed px-4 py-2 text-sm transition-colors hover:text-pro-text-primary disabled:opacity-50"
-						disabled={!hasSelections}
-					>
-						Clear all
-					</button>
-					<div className="flex gap-2">
-						<Ariakit.DialogDismiss className="rounded-md border pro-divider pro-hover-bg px-4 py-2 text-sm text-pro-text-primary transition-colors">
-							Cancel
-						</Ariakit.DialogDismiss>
-						<button
-							type="button"
-							onClick={() => {
-								onApply(selectedInclude, selectedExclude)
-								onClose()
-							}}
-							className="rounded-md bg-brand px-4 py-2 text-sm text-on-brand transition-colors hover:bg-brand-muted"
-						>
-							Apply Filters
-						</button>
-					</div>
-				</div>
-			</Ariakit.Dialog>
+			</ProDialog>
 		</Ariakit.DialogProvider>
 	)
 }

@@ -30,7 +30,7 @@ import { tw } from './tw'
 ---------------------------------------------------------------------------- */
 
 const dialogSurfaceBaseStyles =
-	'fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,env(safe-area-inset-bottom))] shadow-dialog max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep'
+	'fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,env(safe-area-inset-bottom))] shadow-dialog max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
 
 export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 

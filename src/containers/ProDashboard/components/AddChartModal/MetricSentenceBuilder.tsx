@@ -19,6 +19,7 @@ import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
 import { getProDashboardChartTypeConfig } from '../../types'
 import { getItemIconUrl } from '../../utils'
+import { useModalFieldBinding } from './bindingContext'
 
 const CHART_TYPE_OPTIONS = [
 	{
@@ -177,6 +178,7 @@ export function MetricSentenceBuilder({
 	const [activeToken, setActiveToken] = useState<ActiveToken>(null)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [subjectTab, setSubjectTab] = useState<'chain' | 'protocol'>('chain')
+	const subjectParameter = useModalFieldBinding('subject', subjectTab)
 	const isMobile = useMedia('(max-width: 639px)')
 	const popover = usePopoverStore({
 		placement: isMobile ? 'bottom' : 'right-start',
@@ -411,6 +413,13 @@ export function MetricSentenceBuilder({
 		onChainChange(option)
 	}
 
+	const handleSubjectParameterSelect = (variableId: string, value: string) => {
+		if (subjectTab === 'chain') handleChainSelect({ value, label: value })
+		else handleProtocolSelect({ value, label: value })
+		subjectParameter.bind(variableId)
+		closePopover()
+	}
+
 	const handleProtocolSelect = (option: { value: string; label: string }) => {
 		onSubjectTypeChange('protocol')
 		onProtocolChange(option)
@@ -478,7 +487,7 @@ export function MetricSentenceBuilder({
 								onChange={(event) => setSearchTerm(event.target.value)}
 								aria-label="Search metrics"
 								placeholder="Search metrics..."
-								className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+								className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</div>
 						<div className="p-1.5">
@@ -513,7 +522,7 @@ export function MetricSentenceBuilder({
 					<ComboboxProvider store={subjectCombobox}>
 						<div className="w-full space-y-2.5 p-2.5 sm:space-y-3 sm:p-3" data-metric-token="true">
 							<div className="space-y-1.5">
-								<div className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
+								<div className="text-xs font-semibold tracking-wide text-pro-text-tertiary uppercase">
 									Select subject
 								</div>
 								<div className="rounded-lg border border-pro-cards-border p-0.5 shadow-sm">
@@ -567,10 +576,34 @@ export function MetricSentenceBuilder({
 							</div>
 
 							<div className="space-y-2">
+								{subjectParameter.options.length > 0 ? (
+									<div className="flex flex-col gap-1">
+										{subjectParameter.options.map((option) => {
+											const variable = subjectParameter.resolveSelection(option.value)
+											if (!variable) return null
+											return (
+												<button
+													key={option.value}
+													type="button"
+													onClick={() => handleSubjectParameterSelect(variable.id, variable.value)}
+													data-umami-event="dashboard-parameter-bind-metric-subject"
+													className={`flex items-center justify-between gap-2 rounded-md border border-pro-cards-border px-2.5 py-1.5 text-left text-sm transition-colors ${
+														subjectParameter.boundVariable?.id === variable.id
+															? 'bg-brand/10 font-semibold text-pro-text-primary'
+															: 'text-pro-text-secondary hover:bg-pro-cards-bg'
+													}`}
+												>
+													<span className="truncate">{variable.label}</span>
+													<span className="shrink-0 text-xs text-pro-text-tertiary">{option.description}</span>
+												</button>
+											)
+										})}
+									</div>
+								) : null}
 								<div className="rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 shadow-inner">
 									<Combobox
 										placeholder={subjectTab === 'chain' ? 'Search chains...' : 'Search protocols...'}
-										className="mb-1.5 w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
+										className="mb-1.5 w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 										aria-label="Search"
 									/>
 									{subjectTab === 'chain' ? (
@@ -670,7 +703,7 @@ export function MetricSentenceBuilder({
 																		{option.label}
 																	</span>
 																	{option.isChild ? (
-																		<span className="text-[11px] text-pro-text-tertiary">Child protocol</span>
+																		<span className="text-xs text-pro-text-tertiary">Child protocol</span>
 																	) : null}
 																</div>
 															</div>
@@ -706,9 +739,7 @@ export function MetricSentenceBuilder({
 					</div>
 					<div className="min-w-0">
 						<div className="text-xs font-semibold text-pro-text-primary">Metric sentence builder</div>
-						<div className="text-[10px] text-pro-text-tertiary sm:text-[11px]">
-							Create metrics based on natural language
-						</div>
+						<div className="text-xs text-pro-text-tertiary">Create metrics based on natural language</div>
 					</div>
 				</div>
 				<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-pro-text-primary sm:gap-x-2.5 sm:gap-y-2">
@@ -749,7 +780,7 @@ export function MetricSentenceBuilder({
 					/>
 				</div>
 				<div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-pro-cards-border px-2 py-1.5 sm:mt-3 sm:px-2.5">
-					<span className="text-[11px] font-medium text-pro-text-secondary sm:text-xs">Chart:</span>
+					<span className="text-xs font-medium text-pro-text-secondary">Chart:</span>
 					<SegmentedControl
 						label="Chart type"
 						value={chartType}
@@ -758,7 +789,7 @@ export function MetricSentenceBuilder({
 						variant="default"
 						size="sm"
 						className="flex-1 border-0 bg-surface-elevated-1"
-						buttonClassName="flex flex-1 items-center justify-center gap-1 text-[11px] font-medium sm:text-xs"
+						buttonClassName="flex flex-1 items-center justify-center gap-1 text-xs font-medium"
 					/>
 				</div>
 			</div>

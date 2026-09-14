@@ -70,7 +70,7 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 						{sourceNames.map((source) => (
 							<span
 								key={source}
-								className="rounded-sm border pro-border bg-page px-1.5 py-0.5 mono-sm text-pro-text-secondary"
+								className="rounded-sm border border-pro-cards-border bg-page px-1.5 py-0.5 mono-sm text-pro-text-secondary"
 							>
 								{source}
 							</span>
@@ -94,7 +94,7 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 			<div className="min-h-[180px]">
 				<Suspense
 					fallback={
-						<div className="flex min-h-[180px] items-center justify-center rounded-sm border pro-border bg-surface">
+						<div className="flex min-h-[180px] items-center justify-center rounded-sm border border-pro-cards-border bg-surface">
 							<LoadingSpinner size={16} />
 						</div>
 					}

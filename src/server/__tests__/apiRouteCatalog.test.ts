@@ -38,7 +38,7 @@ function isProductionSourceFile(filePath: string) {
 
 // /api/collections/ is PocketBase's namespace: those paths are sent through the
 // PocketBase client against POCKETBASE_URL, not this app's API routes.
-const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/|collections\/)[^'"`\s)]*)/g
+const legacyRelativeApiPathPattern = /['"`](\/api\/(?!public\/|private\/|dynamic\/|og\/|collections\/)[^'"`\s)]*)/g
 
 function findLegacyRelativeApiPaths(line: string) {
 	const paths: Array<string> = []
