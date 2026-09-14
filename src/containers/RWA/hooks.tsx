@@ -6,7 +6,6 @@ import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import {
-	isTrueQueryParam,
 	toNonEmptyArrayParam,
 	parseExcludeParam,
 	parseNumberInput,
@@ -18,16 +17,10 @@ import { normalizeRwaAssetGroup } from './assetGroup'
 import {
 	aggregateRwaMetricData,
 	buildRwaCanonicalMetricDataset,
-	buildRwaOpenInterestDataset,
-	type RWAChartDataset,
 	type RWAChartAggregationMode
 } from './chartAggregation'
-import {
-	mergeRwaPositionalChartDatasets,
-	toRwaMultiSeriesChartDataset,
-	type RWAPositionalChartDataset
-} from './chartDataset'
-import { getDefaultSelectedTypes, type RWAOverviewInclusionDefaults, type RWAOverviewMode } from './constants'
+import type { RWAPositionalChartDataset } from './chartDataset'
+import type { RWAOverviewInclusionDefaults } from './constants'
 import {
 	filterRwaOverviewDisplayRows,
 	getRwaDisplayedDefiActiveTvlByChain,
@@ -38,10 +31,12 @@ import {
 	parseAttributeFilterStatesParam,
 	resolveRWAOverviewInclusionFlag,
 	updateAttributeFilterStatesQueryValue,
-	type RWAAttributeFilterState
+	type RWAAttributeFilterState,
+	getRwaInclusionQueryValue
 } from './filterState'
 import { computeWeightedGroups, getPrimaryRwaCategory } from './grouping'
 import { rwaSlug } from './rwaSlug'
+import { getRwaTableViewQuery, parseRwaTableView, RWA_LEGACY_VIEW_QUERY_KEY, RWA_VIEW_QUERY_KEY } from './table/view'
 
 export { resolveRWAOverviewInclusionFlag } from './filterState'
 
@@ -106,9 +101,7 @@ export const useRWATableQueryParams = ({
 	rwaClassifications,
 	accessModels,
 	issuers,
-	categorySlug,
-	defaultInclusion,
-	mode
+	defaultInclusion
 }: {
 	assetNames: Array<string>
 	types: Array<string>
@@ -119,9 +112,7 @@ export const useRWATableQueryParams = ({
 	rwaClassifications: Array<string>
 	accessModels: Array<string>
 	issuers: Array<string>
-	categorySlug?: string | null
 	defaultInclusion: RWAOverviewInclusionDefaults
-	mode: RWAOverviewMode
 }) => {
 	const router = useRouter()
 	const {
@@ -151,9 +142,9 @@ export const useRWATableQueryParams = ({
 		maxDefiActiveTvlToActiveMcapPct: maxDefiActiveTvlToActiveMcapPctQ,
 		includeStablecoins: stablecoinsQ,
 		includeGovernance: governanceQ,
-		includeRwaPerps: rwaPerpsQ,
 		includeCex: cexQ,
 		includeBridgeTvl: bridgeTvlQ,
+		includeWrappers: wrappersQ,
 		redeemableStates: redeemableStatesQ,
 		attestationsStates: attestationsStatesQ,
 		cexListedStates: cexListedStatesQ,
@@ -162,6 +153,8 @@ export const useRWATableQueryParams = ({
 		transferableStates: transferableStatesQ,
 		selfCustodyStates: selfCustodyStatesQ
 	} = router.query
+	const viewQ = router.query[RWA_VIEW_QUERY_KEY]
+	const legacyViewQ = router.query[RWA_LEGACY_VIEW_QUERY_KEY]
 	const {
 		selectedAssetNames,
 		selectedTypes,
@@ -189,7 +182,8 @@ export const useRWATableQueryParams = ({
 		includeGovernance,
 		includeRwaPerps,
 		includeCex,
-		includeBridgeTvl
+		includeBridgeTvl,
+		includeWrappers
 	} = useMemo(() => {
 		// If query param is 'None', return empty array. If no param, return all (default). Otherwise parse the array.
 		const parseArrayParam = (
@@ -226,9 +220,16 @@ export const useRWATableQueryParams = ({
 
 		const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
 		const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
-		const includeRwaPerps = resolveRWAOverviewInclusionFlag(rwaPerpsQ, defaultInclusion.includeRwaPerps)
-		const includeCex = includeRwaPerps && isTrueQueryParam(cexQ)
+		// The view key is `perps`; the flag keeps its old name inside the code so the thirty call sites stay put.
+		const includeRwaPerps =
+			parseRwaTableView(
+				{ [RWA_VIEW_QUERY_KEY]: viewQ, [RWA_LEGACY_VIEW_QUERY_KEY]: legacyViewQ },
+				defaultInclusion.includeRwaPerps
+			) === 'perps'
+		// CEX venues are on by default in the Perps view.
+		const includeCex = includeRwaPerps && resolveRWAOverviewInclusionFlag(cexQ, true)
 		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
+		const includeWrappers = resolveRWAOverviewInclusionFlag(wrappersQ, defaultInclusion.includeWrappers ?? false)
 
 		// Build selected arrays with correct "exclude" semantics:
 		// - if include param missing but exclude param exists, selection is (all - excluded), NOT "defaults - excluded"
@@ -241,12 +242,7 @@ export const useRWATableQueryParams = ({
 		const selectedAssetNames =
 			excludeAssetNamesSet.size > 0 ? baseAssetNames.filter((a) => !excludeAssetNamesSet.has(a)) : baseAssetNames
 
-		const baseTypes =
-			typesQ != null
-				? parseArrayParam(typesQ, types, typesValidSet)
-				: excludeTypesSet.size > 0
-					? types
-					: getDefaultSelectedTypes(types, mode, categorySlug)
+		const baseTypes = typesQ != null ? parseArrayParam(typesQ, types, typesValidSet) : types
 		const selectedTypes = excludeTypesSet.size > 0 ? baseTypes.filter((t) => !excludeTypesSet.has(t)) : baseTypes
 
 		const baseCategories =
@@ -354,7 +350,8 @@ export const useRWATableQueryParams = ({
 			includeGovernance,
 			includeRwaPerps,
 			includeCex,
-			includeBridgeTvl
+			includeBridgeTvl,
+			includeWrappers
 		}
 	}, [
 		assetNamesQ,
@@ -390,13 +387,16 @@ export const useRWATableQueryParams = ({
 		maxDefiActiveTvlToActiveMcapPctQ,
 		stablecoinsQ,
 		governanceQ,
-		rwaPerpsQ,
+		viewQ,
+		legacyViewQ,
 		cexQ,
 		bridgeTvlQ,
 		defaultInclusion.includeStablecoins,
 		defaultInclusion.includeGovernance,
 		defaultInclusion.includeRwaPerps,
 		defaultInclusion.includeBridgeTvl,
+		defaultInclusion.includeWrappers,
+		wrappersQ,
 		assetNames,
 		types,
 		categories,
@@ -405,9 +405,7 @@ export const useRWATableQueryParams = ({
 		assetClasses,
 		rwaClassifications,
 		accessModels,
-		issuers,
-		mode,
-		categorySlug
+		issuers
 	])
 
 	const hasPerpsOverlayBlockingFilters = useMemo(
@@ -436,30 +434,36 @@ export const useRWATableQueryParams = ({
 
 	const setIncludeStablecoins = (value: boolean) => {
 		void pushShallowQuery(router, {
-			includeStablecoins: value === defaultInclusion.includeStablecoins ? undefined : value ? 'true' : 'false'
+			includeStablecoins: getRwaInclusionQueryValue(value, defaultInclusion.includeStablecoins)
 		})
 	}
 
 	const setIncludeGovernance = (value: boolean) => {
 		void pushShallowQuery(router, {
-			includeGovernance: value === defaultInclusion.includeGovernance ? undefined : value ? 'true' : 'false'
+			includeGovernance: getRwaInclusionQueryValue(value, defaultInclusion.includeGovernance)
 		})
 	}
 
 	const setIncludeRwaPerps = (value: boolean) => {
 		void pushShallowQuery(router, {
-			includeRwaPerps: value === defaultInclusion.includeRwaPerps ? undefined : value ? 'true' : 'false',
+			...getRwaTableViewQuery(value ? 'perps' : 'assets', defaultInclusion.includeRwaPerps),
 			includeCex: undefined
 		})
 	}
 
 	const setIncludeCex = (value: boolean) => {
-		void pushShallowQuery(router, { includeCex: includeRwaPerps && value ? 'true' : undefined })
+		void pushShallowQuery(router, { includeCex: includeRwaPerps ? getRwaInclusionQueryValue(value, true) : undefined })
 	}
 
 	const setIncludeBridgeTvl = (value: boolean) => {
 		void pushShallowQuery(router, {
-			includeBridgeTvl: value === (defaultInclusion.includeBridgeTvl ?? true) ? undefined : value ? 'true' : 'false'
+			includeBridgeTvl: getRwaInclusionQueryValue(value, defaultInclusion.includeBridgeTvl ?? true)
+		})
+	}
+
+	const setIncludeWrappers = (value: boolean) => {
+		void pushShallowQuery(router, {
+			includeWrappers: getRwaInclusionQueryValue(value, defaultInclusion.includeWrappers ?? false)
 		})
 	}
 
@@ -506,6 +510,7 @@ export const useRWATableQueryParams = ({
 		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
+		includeWrappers,
 		hasPerpsOverlayBlockingFilters,
 		setRedeemableStates,
 		setAttestationsStates,
@@ -521,6 +526,7 @@ export const useRWATableQueryParams = ({
 		setIncludeGovernance,
 		setIncludeRwaPerps,
 		setIncludeCex,
+		setIncludeWrappers,
 		setIncludeBridgeTvl
 	}
 }
@@ -551,6 +557,7 @@ export const useFilteredRwaAssets = ({
 	includeRwaPerps,
 	includeCex,
 	includeBridgeTvl = true,
+	includeWrappers = true,
 	hasPerpsOverlayBlockingFilters,
 	minDefiActiveTvlToOnChainMcapPct,
 	maxDefiActiveTvlToOnChainMcapPct,
@@ -582,6 +589,7 @@ export const useFilteredRwaAssets = ({
 	includeRwaPerps: boolean
 	includeCex: boolean
 	includeBridgeTvl?: boolean
+	includeWrappers?: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
@@ -619,6 +627,7 @@ export const useFilteredRwaAssets = ({
 			includeRwaPerps,
 			includeCex,
 			includeBridgeTvl,
+			includeWrappers,
 			hasPerpsOverlayBlockingFilters,
 			minDefiActiveTvlToOnChainMcapPct,
 			maxDefiActiveTvlToOnChainMcapPct,
@@ -651,6 +660,7 @@ export const useFilteredRwaAssets = ({
 		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
+		includeWrappers,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
@@ -1014,10 +1024,31 @@ const CHART_FILTER_QUERY_KEYS = new Set([
 	'maxDefiActiveTvlToActiveMcapPct',
 	'includeStablecoins',
 	'includeGovernance',
-	'includeRwaPerps',
+	RWA_VIEW_QUERY_KEY,
+	RWA_LEGACY_VIEW_QUERY_KEY,
 	'includeCex',
-	'includeBridgeTvl'
+	'includeBridgeTvl',
+	'includeWrappers'
 ])
+
+const SCOPE_FLAG_QUERY_KEYS = new Set([
+	'includeStablecoins',
+	'includeGovernance',
+	RWA_VIEW_QUERY_KEY,
+	RWA_LEGACY_VIEW_QUERY_KEY,
+	'includeCex',
+	'includeBridgeTvl',
+	'includeWrappers'
+])
+
+/** True when a filter from the Filters dialog is active; the scope toggles and the view do not count. */
+export function hasActiveRwaAttributeFilters(query: NextRouter['query']): boolean {
+	for (const key of CHART_FILTER_QUERY_KEYS) {
+		if (SCOPE_FLAG_QUERY_KEYS.has(key)) continue
+		if (key in query) return true
+	}
+	return false
+}
 
 export function hasActiveChartFilters(
 	query: NextRouter['query'],
@@ -1032,11 +1063,15 @@ export function hasActiveChartFilters(
 			if (hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance)) return true
 			continue
 		}
-		if (key === 'includeRwaPerps' || key === 'includeCex') {
+		if (key === RWA_VIEW_QUERY_KEY || key === RWA_LEGACY_VIEW_QUERY_KEY || key === 'includeCex') {
 			continue
 		}
 		if (key === 'includeBridgeTvl') {
 			if (hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true)) return true
+			continue
+		}
+		if (key === 'includeWrappers') {
+			if (hasActiveInclusionOverride(query.includeWrappers, defaultInclusion.includeWrappers ?? false)) return true
 			continue
 		}
 		if (key in query) return true
@@ -1062,10 +1097,6 @@ export function getRwaAssetChartQueryKey(
 	] as const
 }
 
-export function getRwaOpenInterestChartQueryKey(includeCex: boolean) {
-	return ['rwa-perps-open-interest-chart', includeCex] as const
-}
-
 function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message)
@@ -1076,7 +1107,7 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-async function fetchRwaAssetChartData(params: {
+export async function fetchRwaAssetChartData(params: {
 	key: RWAChartMetricKey
 	target: RWAAssetChartTarget
 	includeStablecoins: boolean
@@ -1110,37 +1141,26 @@ async function fetchRwaAssetChartData(params: {
 	return fetchJson<IRWAChartMetricRows>(`/api/public/rwa/asset-breakdown?${searchParams.toString()}`)
 }
 
-async function fetchRwaOpenInterestChartData(includeCex: boolean): Promise<RWAChartDataset> {
-	const searchParams = new URLSearchParams({ key: 'openInterest' })
-	if (includeCex) searchParams.set('includeCex', 'true')
-	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
-}
-
+/** The spot time series for one metric: the page's per-asset history folded by `mode`, or the build-time dataset. */
 export function useRwaChartDataset({
 	selectedMetric,
 	initialDataset,
-	initialOpenInterestDataset,
 	filteredAssets,
 	mode,
 	target,
 	includeStablecoins,
 	includeGovernance,
-	includeRwaPerps,
-	includeCex,
 	includeBridgeTvl = true,
 	useInitialDataset,
 	enabled = true
 }: {
 	selectedMetric: RWAChartMetricKey
 	initialDataset: RWAPositionalChartDataset | null
-	initialOpenInterestDataset: RWAChartDataset | null
 	filteredAssets: IRWAAssetsOverview['assets']
 	mode: RWAChartAggregationMode
 	target: RWAAssetChartTarget
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeRwaPerps: boolean
-	includeCex: boolean
 	includeBridgeTvl?: boolean
 	useInitialDataset: boolean
 	enabled?: boolean
@@ -1151,15 +1171,7 @@ export function useRwaChartDataset({
 	chartError: string | null
 } {
 	const hasSpotAssets = filteredAssets.some((asset) => asset.kind === 'spot')
-	const hasPerpsAssets = filteredAssets.some((asset) => asset.kind === 'perps')
 	const shouldFetchAssetRows = enabled && !useInitialDataset && hasSpotAssets
-	// The preloaded OI line only covers DEX markets; spot history is unaffected by CEX inclusion.
-	const useInitialOpenInterestDataset = useInitialDataset && !includeCex
-	const shouldFetchOpenInterest =
-		enabled &&
-		includeRwaPerps &&
-		hasPerpsAssets &&
-		(!useInitialOpenInterestDataset || initialOpenInterestDataset == null)
 	const {
 		data: assetRows,
 		isLoading,
@@ -1179,75 +1191,30 @@ export function useRwaChartDataset({
 		retry: 1,
 		enabled: shouldFetchAssetRows
 	})
-	const {
-		data: openInterestRows,
-		isLoading: isOpenInterestLoading,
-		error: openInterestError
-	} = useQuery({
-		queryKey: getRwaOpenInterestChartQueryKey(includeCex),
-		queryFn: () => fetchRwaOpenInterestChartData(includeCex),
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 1,
-		enabled: shouldFetchOpenInterest
-	})
-
 	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
 	const chartDataset = useMemo<RWAPositionalChartDataset>(() => {
 		if (!enabled) return { source: [], dimensions: ['timestamp'] }
-
-		const spotDataset = ((): RWAPositionalChartDataset => {
-			if (useInitialDataset && initialDataset) {
-				if (mode !== 'total') return initialDataset
-				const totalDimension = initialDataset.dimensions[1]
-				if (totalDimension === undefined) {
-					return { dimensions: ['timestamp'], source: initialDataset.source.map((row) => [row[0]]) }
-				}
-				return {
-					dimensions: ['timestamp', totalDimension],
-					source: initialDataset.source.map((row) => [row[0], row[1] ?? null])
-				}
+		if (useInitialDataset && initialDataset) {
+			if (mode !== 'total') return initialDataset
+			const totalDimension = initialDataset.dimensions[1]
+			if (totalDimension === undefined) {
+				return { dimensions: ['timestamp'], source: initialDataset.source.map((row) => [row[0]]) }
 			}
-			if (!assetRows) return { source: [], dimensions: ['timestamp'] }
-			const dataset = aggregateRwaMetricData(filteredAssets, assetRows, mode)
-			return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
-		})()
-
-		if (!includeRwaPerps || !hasPerpsAssets) return spotDataset
-
-		const openInterestDataset: RWAPositionalChartDataset =
-			useInitialOpenInterestDataset && initialOpenInterestDataset
-				? toRwaMultiSeriesChartDataset(initialOpenInterestDataset)
-				: openInterestRows
-					? toRwaMultiSeriesChartDataset(buildRwaOpenInterestDataset(filteredAssets, openInterestRows))
-					: { source: [], dimensions: ['timestamp'] }
-
-		return mergeRwaPositionalChartDatasets(spotDataset, openInterestDataset)
-	}, [
-		useInitialDataset,
-		initialDataset,
-		initialOpenInterestDataset,
-		useInitialOpenInterestDataset,
-		hasPerpsAssets,
-		assetRows,
-		openInterestRows,
-		filteredAssets,
-		mode,
-		selectedMetric,
-		includeRwaPerps,
-		enabled
-	])
+			return {
+				dimensions: ['timestamp', totalDimension],
+				source: initialDataset.source.map((row) => [row[0], row[1] ?? null])
+			}
+		}
+		if (!assetRows) return { source: [], dimensions: ['timestamp'] }
+		const dataset = aggregateRwaMetricData(filteredAssets, assetRows, mode)
+		return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
+	}, [useInitialDataset, initialDataset, assetRows, filteredAssets, mode, selectedMetric, enabled])
 
 	return {
 		chartDataset,
 		assetRows,
-		isChartLoading: (shouldFetchAssetRows && isLoading) || (shouldFetchOpenInterest && isOpenInterestLoading),
-		chartError:
-			shouldFetchAssetRows && error
-				? getErrorMessage(error)
-				: shouldFetchOpenInterest && openInterestError
-					? getErrorMessage(openInterestError)
-					: null
+		isChartLoading: shouldFetchAssetRows && isLoading,
+		chartError: shouldFetchAssetRows && error ? getErrorMessage(error) : null
 	}
 }

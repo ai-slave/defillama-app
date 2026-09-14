@@ -74,6 +74,7 @@ const baseFilterState: RWAFilterState = {
 	includeRwaPerps: true,
 	includeCex: false,
 	includeBridgeTvl: true,
+	includeWrappers: true,
 	hasPerpsOverlayBlockingFilters: false,
 	minDefiActiveTvlToOnChainMcapPct: null,
 	maxDefiActiveTvlToOnChainMcapPct: null,
@@ -87,6 +88,7 @@ const dexPerp: RWAPerpsContractOverlayRow = {
 	...baseAsset,
 	id: 'xyz:usdy',
 	kind: 'perps',
+	priceChange24h: null,
 	contract: 'xyz:USDY',
 	venueType: 'DEX',
 	type: 'Perp',
@@ -104,6 +106,9 @@ const cexPerp: RWAPerpsContractOverlayRow = {
 	openInterest: 200
 }
 
+const sumOpenInterest = (rows: Array<{ openInterest: number | null }>) =>
+	rows.reduce((total, row) => total + (row.openInterest ?? 0), 0)
+
 describe('RWA filter state', () => {
 	test('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
 		const rows = [baseAsset, dexPerp, cexPerp]
@@ -116,10 +121,8 @@ describe('RWA filter state', () => {
 		] as const) {
 			const result = filterRwaOverviewDisplayRows(rows, { ...baseFilterState, includeRwaPerps, includeCex })
 			expect(result.filteredAssets.map((asset) => asset.id)).toEqual(expectedIds)
-			expect(result.totalOpenInterest).toBe(expectedOi)
-			expect(result.totalOnChainMcap).toBe(100)
-			expect(result.totalActiveMcap).toBe(50)
-			expect(result.totalOnChainDeFiActiveTvl).toBe(25)
+			expect(sumOpenInterest(result.aggregateAssets)).toBe(expectedOi)
+			expect(result.aggregateAssets.map((asset) => asset.id)).toEqual(expectedIds)
 		}
 	})
 
@@ -143,7 +146,7 @@ describe('RWA filter state', () => {
 						includeGovernance: String(includeGovernance)
 					})
 				})
-				expect(result.totalOpenInterest).toBe(300)
+				expect(sumOpenInterest(result.aggregateAssets)).toBe(300)
 				expect(result.filteredAssets.map((asset) => asset.id)).toEqual([
 					'asset-1',
 					...(includeStablecoins ? ['stablecoin'] : []),
@@ -163,7 +166,7 @@ describe('RWA filter state', () => {
 			hasPerpsOverlayBlockingFilters: hasPerpsOverlayBlockingFiltersFromQuery({ attestationsStates: 'yes' })
 		})
 		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1'])
-		expect(result.totalOpenInterest).toBe(0)
+		expect(sumOpenInterest(result.aggregateAssets)).toBe(0)
 	})
 
 	test('parses attribute filter state params', () => {
@@ -175,7 +178,8 @@ describe('RWA filter state', () => {
 	})
 
 	test('treats asset-only query filters as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' })).toBe(true)
+		// The Types filter is a spot classification; the view switch owns perps, so it never hides them.
+		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' })).toBe(true)
 	})
@@ -253,9 +257,6 @@ describe('RWA filter state', () => {
 
 		expect(result.filteredAssets).toHaveLength(2)
 		expect(result.aggregateAssets.map((asset) => asset.id)).toEqual(['asset-1'])
-		expect(result.totalOnChainMcap).toBe(100)
-		expect(result.totalActiveMcap).toBe(50)
-		expect(result.totalIssuersCount).toBe(1)
 	})
 
 	test('includes suspicious assets in their own platform totals', () => {
@@ -267,9 +268,7 @@ describe('RWA filter state', () => {
 			selectedIssuers: ['Issuer One', 'Issuer Two']
 		})
 
-		expect(result.totalOnChainMcap).toBe(200)
 		expect(result.aggregateAssets).toBe(result.filteredAssets)
-		expect(result.totalActiveMcap).toBe(100)
-		expect(result.totalIssuersCount).toBe(2)
+		expect(result.aggregateAssets.map((asset) => asset.id)).toEqual(['asset-1', 'suspicious'])
 	})
 })

@@ -66,10 +66,10 @@ const RWA_METRIC_OPTIONS: Array<SelectOption<RWAOverviewChartMetric>> = getChart
 	value: option.key,
 	label: option.label
 }))
-const RWA_CHART_VIEW_OPTIONS: Array<SelectOption<RWAOverviewChartView>> = getChartViewOptions().map((option) => ({
-	value: option.key,
-	label: option.name
-}))
+// The share view belongs to the /rwa page; the dashboard card has no share renderer.
+const RWA_CHART_VIEW_OPTIONS: Array<SelectOption<RWAOverviewChartView>> = getChartViewOptions().flatMap((option) =>
+	option.key === 'share' ? [] : [{ value: option.key, label: option.name }]
+)
 
 export function RWAChartTab(props: RWAChartTabProps) {
 	const { hasActiveSubscription } = useAuthContext()

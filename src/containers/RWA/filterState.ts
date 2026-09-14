@@ -3,6 +3,7 @@ import { isTrueQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAAssetOverviewRow, RWAOverviewDisplayRow, RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { rwaSlug } from './rwaSlug'
+import { RWA_WRAPPER_TYPE } from './wrappers'
 
 export const RWA_ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
 export type RWAAttributeFilterState = (typeof RWA_ATTRIBUTE_FILTER_STATES)[number]
@@ -12,8 +13,6 @@ const RWA_ATTRIBUTE_FILTER_STATE_SET = new Set<RWAAttributeFilterState>(RWA_ATTR
 const RWA_PERPS_OVERLAY_BLOCKING_FILTER_KEYS = new Set([
 	'assetNames',
 	'excludeAssetNames',
-	'types',
-	'excludeTypes',
 	'redeemableStates',
 	'attestationsStates',
 	'cexListedStates',
@@ -52,6 +51,7 @@ export type RWAFilterState = {
 	includeRwaPerps: boolean
 	includeCex: boolean
 	includeBridgeTvl: boolean
+	includeWrappers: boolean
 	hasPerpsOverlayBlockingFilters: boolean
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
@@ -61,16 +61,10 @@ export type RWAFilterState = {
 	maxDefiActiveTvlToActiveMcapPct: number | null
 }
 
+/** The rows the page shows and the subset the tiles and charts sum over. */
 export type RWAFilteredRowsResult = {
 	filteredAssets: Array<RWAOverviewDisplayRow>
 	aggregateAssets: Array<RWAOverviewDisplayRow>
-	totalOnChainMcap: number
-	totalActiveMcap: number
-	totalOnChainDeFiActiveTvl: number
-	// Bridge/interop portion of totalOnChainDeFiActiveTvl; subtracted from the headline when the toggle is off.
-	totalBridgeTvl: number
-	totalOpenInterest: number
-	totalIssuersCount: number
 }
 
 type PreparedRwaFilters = {
@@ -139,6 +133,11 @@ export function resolveRWAOverviewInclusionFlag(
 	defaultValue: boolean
 ): boolean {
 	return queryValue != null ? isTrueQueryParam(queryValue) : defaultValue
+}
+
+/** Absent at the default, otherwise 'true' or 'false'. */
+export function getRwaInclusionQueryValue(value: boolean, defaultValue: boolean): 'true' | 'false' | undefined {
+	return value === defaultValue ? undefined : value ? 'true' : 'false'
 }
 
 export function hasActiveInclusionOverride(
@@ -218,49 +217,15 @@ export function filterRwaOverviewDisplayRows(
 		}
 	}
 	const filteredAssets: Array<RWAOverviewDisplayRow> = [...filteredSpotRows, ...filteredPerpsRows]
-	const aggregateAssets = filterState.isPlatformMode ? filteredAssets : []
+	const aggregateAssets = filterState.isPlatformMode
+		? filteredAssets
+		: filteredAssets.filter((asset) => asset.suspicious !== true)
 
-	let totalOnChainMcap = 0
-	let totalActiveMcap = 0
-	let totalOnChainDeFiActiveTvl = 0
-	let totalBridgeTvl = 0
-	let totalOpenInterest = 0
-	const totalIssuersSet = new Set<string>()
-
-	for (const asset of filteredAssets) {
-		if (asset.suspicious === true && !filterState.isPlatformMode) continue
-		if (!filterState.isPlatformMode) aggregateAssets.push(asset)
-		totalOnChainMcap += asset.onChainMcap?.total ?? 0
-		totalActiveMcap += asset.activeMcap?.total ?? 0
-		totalOnChainDeFiActiveTvl += asset.defiActiveTvl?.total ?? 0
-		if (asset.kind === 'spot') totalBridgeTvl += asset.bridgeTvl ?? 0
-		totalOpenInterest += asset.openInterest ?? 0
-		if (asset.issuer) totalIssuersSet.add(asset.issuer)
-	}
-
-	return {
-		filteredAssets,
-		aggregateAssets,
-		totalOnChainMcap,
-		totalActiveMcap,
-		totalOnChainDeFiActiveTvl,
-		totalBridgeTvl,
-		totalOpenInterest,
-		totalIssuersCount: totalIssuersSet.size
-	}
+	return { filteredAssets, aggregateAssets }
 }
 
 export function getEmptyRwaFilteredRowsResult(): RWAFilteredRowsResult {
-	return {
-		filteredAssets: [],
-		aggregateAssets: [],
-		totalOnChainMcap: 0,
-		totalActiveMcap: 0,
-		totalOnChainDeFiActiveTvl: 0,
-		totalBridgeTvl: 0,
-		totalOpenInterest: 0,
-		totalIssuersCount: 0
-	}
+	return { filteredAssets: [], aggregateAssets: [] }
 }
 
 export function getRwaDisplayedDefiActiveTvl(asset: RWAAssetOverviewRow, includeBridgeTvl = true): number {
@@ -356,6 +321,7 @@ function matchesRwaAssetFilters(
 	}
 	if (!filterState.includeStablecoins && asset.stablecoin) return false
 	if (!filterState.includeGovernance && asset.governance) return false
+	if (!filterState.includeWrappers && asset.type === RWA_WRAPPER_TYPE) return false
 	if (!matchesAssetAttributeFilters(asset, filters)) return false
 	if (!matchesAssetRatioFilters(asset, filterState)) return false
 	if (!filters.selectedTypes.has(asset.type || 'Unknown')) return false

@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
-import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
@@ -14,9 +13,16 @@ import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
 import { parseNumberInput, pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
-import { getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
+import type { RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
-import { hasActiveInclusionOverride, updateAttributeFilterStatesQueryValue } from './filterState'
+import {
+	getRwaInclusionQueryValue,
+	hasActiveInclusionOverride,
+	updateAttributeFilterStatesQueryValue
+} from './filterState'
+import { RWAIncludeInTvlSelect } from './IncludeInTvl'
+import { getRwaInclusionDefault, RWA_INCLUSION_OPTIONS, type RWAInclusionKey } from './inclusion'
+import { RWAListYourAssetsButton } from './links'
 
 /* inputStyles as a label shell: the wrapper carries the field chrome and
    focus-within lights the border while the inner input stays bare. */
@@ -69,9 +75,11 @@ const FILTER_QUERY_KEYS = [
 	...DIALOG_FILTER_QUERY_KEYS,
 	'includeStablecoins',
 	'includeGovernance',
+	'perps',
 	'includeRwaPerps',
 	'includeCex',
-	'includeBridgeTvl'
+	'includeBridgeTvl',
+	'includeWrappers'
 ] as const
 
 const CHART_QUERY_KEYS = [
@@ -156,20 +164,14 @@ type RWAFilterSelections = {
 	maxDefiActiveTvlToActiveMcapPct: number | null
 	includeStablecoins: boolean
 	includeGovernance: boolean
-	includeRwaPerps: boolean
-	includeCex: boolean
 	includeBridgeTvl: boolean
+	includeWrappers: boolean
 }
 
 type RWAFilterActions = {
 	setDefiActiveTvlToOnChainMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
 	setActiveMcapToOnChainMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
 	setDefiActiveTvlToActiveMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
-	setIncludeStablecoins: (value: boolean) => void
-	setIncludeGovernance: (value: boolean) => void
-	setIncludeRwaPerps: (value: boolean) => void
-	setIncludeCex: (value: boolean) => void
-	setIncludeBridgeTvl: (value: boolean) => void
 	setRedeemableStates: (values: Array<RWAAttributeFilterState>) => void
 	setAttestationsStates: (values: Array<RWAAttributeFilterState>) => void
 	setCexListedStates: (values: Array<RWAAttributeFilterState>) => void
@@ -221,7 +223,7 @@ type RWAActiveFilterPill = {
 }
 
 type RWAInclusionFilterConfig = {
-	id: 'includeStablecoins' | 'includeGovernance' | 'includeRwaPerps' | 'includeCex' | 'includeBridgeTvl'
+	id: RWAInclusionKey
 	label: string
 	value: boolean
 	defaultValue: boolean
@@ -242,6 +244,7 @@ type RWAFilterDraft = {
 	selectValues: Record<string, Array<string>>
 	ranges: Record<string, RWARangeDraft>
 	attributeStates: Record<string, Array<RWAAttributeFilterState>>
+	inclusion: Record<RWAInclusionKey, boolean>
 }
 
 const toggleAttributeFilterState = (
@@ -262,12 +265,6 @@ function getRwaSelectFilters({
 	options,
 	selections
 }: Pick<RWAOverviewFiltersProps, 'modes' | 'options' | 'selections'>): Array<RWASelectFilterConfig> {
-	const defaultSelectedTypes = getDefaultSelectedTypes(
-		options.typeOptions.map((o) => o.key),
-		modes.mode,
-		options.categorySlug
-	)
-
 	return [
 		{
 			enabled: options.typeOptions.length > 1,
@@ -275,8 +272,7 @@ function getRwaSelectFilters({
 			selectedValues: selections.selectedTypes,
 			includeQueryKey: 'types',
 			excludeQueryKey: 'excludeTypes',
-			label: 'Types',
-			defaultSelectedValues: defaultSelectedTypes
+			label: 'Types'
 		},
 		{
 			enabled: modes.isPlatformMode && options.assetNames.length > 1,
@@ -465,40 +461,20 @@ function hasResettableRwaQueryParam(query: ReturnType<typeof useRouter>['query']
 }
 
 function getRwaInclusionFilters(props: RWAOverviewFiltersProps): Array<RWAInclusionFilterConfig> {
-	const defaultInclusion = props.defaultInclusion
+	return RWA_INCLUSION_OPTIONS.map((option) => ({
+		id: option.key,
+		label: option.name,
+		value: props.selections[option.key],
+		defaultValue: getRwaInclusionDefault(props.defaultInclusion, option.key)
+	}))
+}
 
-	return [
-		{
-			id: 'includeStablecoins',
-			label: 'Stablecoins',
-			value: props.selections.includeStablecoins,
-			defaultValue: defaultInclusion.includeStablecoins
-		},
-		{
-			id: 'includeGovernance',
-			label: 'Governance Tokens',
-			value: props.selections.includeGovernance,
-			defaultValue: defaultInclusion.includeGovernance
-		},
-		{
-			id: 'includeRwaPerps',
-			label: 'RWA Perps',
-			value: props.selections.includeRwaPerps,
-			defaultValue: defaultInclusion.includeRwaPerps
-		},
-		{
-			id: 'includeCex',
-			label: 'Include CEX Perps',
-			value: props.selections.includeCex,
-			defaultValue: false
-		},
-		{
-			id: 'includeBridgeTvl',
-			label: 'Bridge/Interop TVL',
-			value: props.selections.includeBridgeTvl,
-			defaultValue: defaultInclusion.includeBridgeTvl ?? true
-		}
-	]
+function countRwaInclusionOverrides(props: RWAOverviewFiltersProps): number {
+	let count = 0
+	for (const config of getRwaInclusionFilters(props)) {
+		if (config.value !== config.defaultValue) count += 1
+	}
+	return count
 }
 
 function getRwaFilterDefinitions(props: RWAOverviewFiltersProps): Array<RWAFilterDefinition> {
@@ -560,7 +536,15 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 		if (config.selectedStates.length !== ATTRIBUTE_FILTER_STATES.length) pushActiveId(config.queryKey)
 	}
 
-	return { activeIds, selectValues, ranges, attributeStates }
+	const inclusion: Record<RWAInclusionKey, boolean> = {
+		includeStablecoins: false,
+		includeGovernance: false,
+		includeWrappers: false,
+		includeBridgeTvl: true
+	}
+	for (const config of getRwaInclusionFilters(props)) inclusion[config.id] = config.value
+
+	return { activeIds, selectValues, ranges, attributeStates, inclusion }
 }
 
 function getSelectDraftQueryUpdates(
@@ -577,12 +561,16 @@ function getSelectDraftQueryUpdates(
 }
 
 function serializeRwaFilterDraft(
-	filterDefinitions: Array<RWAFilterDefinition>,
+	props: RWAOverviewFiltersProps,
 	draft: RWAFilterDraft
 ): Record<string, string | Array<string> | undefined> {
+	const filterDefinitions = getRwaFilterDefinitions(props)
 	const updates: Record<string, string | Array<string> | undefined> = {}
 	for (const key of DIALOG_FILTER_QUERY_KEYS) {
 		updates[key] = undefined
+	}
+	for (const config of getRwaInclusionFilters(props)) {
+		updates[config.id] = getRwaInclusionQueryValue(draft.inclusion[config.id], config.defaultValue)
 	}
 
 	const activeIds = new Set(draft.activeIds)
@@ -679,14 +667,16 @@ function getRwaActiveFilterPills(
 		})
 	}
 
-	return activeFilters
-}
-
-function hasActiveRwaInclusionOverride(props: RWAOverviewFiltersProps, router: ReturnType<typeof useRouter>): boolean {
 	for (const config of getRwaInclusionFilters(props)) {
-		if (hasActiveInclusionOverride(router.query[config.id], config.defaultValue)) return true
+		if (!hasActiveInclusionOverride(router.query[config.id], config.defaultValue)) continue
+		activeFilters.push({
+			id: config.id,
+			label: `${config.label}: ${config.value ? 'included' : 'excluded'}`,
+			onRemove: () => clearRwaFilterQueryKeys(router, [config.id])
+		})
 	}
-	return false
+
+	return activeFilters
 }
 
 function RWAActiveFilterPills({ pills }: { pills: Array<RWAActiveFilterPill> }) {
@@ -709,88 +699,71 @@ function RWAActiveFilterPills({ pills }: { pills: Array<RWAActiveFilterPill> }) 
 	)
 }
 
-function RWAInclusionToggles({ selections, actions }: Pick<RWAOverviewFiltersProps, 'selections' | 'actions'>) {
+function RWAIncludeDraftSection({
+	inclusionFilters,
+	draft,
+	onDraftChange
+}: {
+	inclusionFilters: Array<RWAInclusionFilterConfig>
+	draft: RWAFilterDraft
+	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
+}) {
+	return (
+		<DialogPanelSection title="Include">
+			<div className="flex flex-wrap gap-1">
+				{inclusionFilters.map((config) => (
+					<Checkbox
+						key={config.id}
+						variant="filter"
+						value={config.id}
+						checked={draft.inclusion[config.id]}
+						onChange={() =>
+							onDraftChange((current) => ({
+								...current,
+								inclusion: { ...current.inclusion, [config.id]: !current.inclusion[config.id] }
+							}))
+						}
+					>
+						<span className="whitespace-nowrap">{config.label}</span>
+					</Checkbox>
+				))}
+			</div>
+		</DialogPanelSection>
+	)
+}
+
+/** Include in TVL and the Filters dialog. */
+export function RWAOverviewFilterControls(props: RWAOverviewFiltersProps) {
+	if (!props.enabled) return null
+
+	const selectedFilterCount = createRwaFilterDraft(props).activeIds.length + countRwaInclusionOverrides(props)
+
 	return (
 		<>
-			<Checkbox
-				variant="filter"
-				value="includeStablecoins"
-				checked={selections.includeStablecoins}
-				onChange={() => actions.setIncludeStablecoins(!selections.includeStablecoins)}
-			>
-				<span className="whitespace-nowrap">Stablecoins</span>
-			</Checkbox>
-			<Checkbox
-				variant="filter"
-				value="includeGovernance"
-				checked={selections.includeGovernance}
-				onChange={() => actions.setIncludeGovernance(!selections.includeGovernance)}
-			>
-				<span className="whitespace-nowrap">Governance Tokens</span>
-			</Checkbox>
-			<Checkbox
-				variant="filter"
-				value="includeRwaPerps"
-				checked={selections.includeRwaPerps}
-				onChange={() => actions.setIncludeRwaPerps(!selections.includeRwaPerps)}
-			>
-				<span className="whitespace-nowrap">RWA Perps</span>
-			</Checkbox>
-			{selections.includeRwaPerps ? (
-				<Checkbox
-					variant="filter"
-					value="includeCex"
-					checked={selections.includeCex}
-					onChange={() => actions.setIncludeCex(!selections.includeCex)}
-				>
-					<span className="whitespace-nowrap">Include CEX Perps</span>
-				</Checkbox>
-			) : null}
-			<Checkbox
-				variant="filter"
-				value="includeBridgeTvl"
-				checked={selections.includeBridgeTvl}
-				onChange={() => actions.setIncludeBridgeTvl(!selections.includeBridgeTvl)}
-			>
-				<span className="whitespace-nowrap">Bridge/Interop TVL</span>
-			</Checkbox>
+			<RWAIncludeInTvlSelect defaultInclusion={props.defaultInclusion} size="md" />
+			<RWAFiltersDialog {...props} selectedFilterCount={selectedFilterCount} />
 		</>
 	)
 }
 
-export function RWAOverviewFilters(props: RWAOverviewFiltersProps) {
+/**
+ * The strip above the chart: the page controls (leading), the active filter pills, then Include in TVL,
+ * Filters and List Your Assets. Everything here changes the page, so it sits above the page.
+ */
+export function RWAOverviewFilters(props: RWAOverviewFiltersProps & { leading?: ReactNode }) {
 	const router = useRouter()
 
 	if (!props.enabled) return null
 
 	const activeFilterPills = getRwaActiveFilterPills(props, router)
-	const hasActiveFilters = hasResettableRwaQueryParam(router.query) || hasActiveRwaInclusionOverride(props, router)
-	const selectedFilterCount = createRwaFilterDraft(props).activeIds.length
 
 	return (
-		<Card padding="sm" className="flex flex-col gap-2">
-			<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-				<RWAActiveFilterPills pills={activeFilterPills} />
-				<RWAFiltersDialog
-					{...props}
-					selectedFilterCount={selectedFilterCount}
-					hasActiveFilterPills={activeFilterPills.length > 0}
-				/>
-				<RWAInclusionToggles selections={props.selections} actions={props.actions} />
-				<Button
-					type="button"
-					size="md"
-					onClick={() => clearRwaFilterQueryKeys(router, RESETTABLE_QUERY_KEYS)}
-					disabled={!hasActiveFilters}
-				>
-					Reset filters
-				</Button>
-				<ExternalLinkButton href="https://forms.defillama.com/rwa-submission" icon="plus">
-					List Your Assets
-				</ExternalLinkButton>
-				<ExternalLinkButton href="https://docs.llama.fi/real-world-assets/real-world-assets" icon="file-text">
-					Docs
-				</ExternalLinkButton>
+		<Card padding="sm" className="flex flex-wrap items-center gap-2">
+			{props.leading}
+			<RWAActiveFilterPills pills={activeFilterPills} />
+			<div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+				<RWAOverviewFilterControls {...props} />
+				<RWAListYourAssetsButton />
 			</div>
 		</Card>
 	)
@@ -798,14 +771,16 @@ export function RWAOverviewFilters(props: RWAOverviewFiltersProps) {
 
 function RWAFiltersDialog({
 	selectedFilterCount,
-	hasActiveFilterPills,
 	...props
-}: RWAOverviewFiltersProps & { selectedFilterCount: number; hasActiveFilterPills: boolean }) {
+}: RWAOverviewFiltersProps & { selectedFilterCount: number }) {
 	const router = useRouter()
 	const [open, setOpen] = useState(false)
 	const [draft, setDraft] = useState<RWAFilterDraft>(() => createRwaFilterDraft(props))
 	const filterDefinitions = getRwaFilterDefinitions(props)
-	const draftSelectedCount = draft.activeIds.length
+	const inclusionFilters = getRwaInclusionFilters(props)
+	const draftSelectedCount =
+		draft.activeIds.length +
+		inclusionFilters.filter((config) => draft.inclusion[config.id] !== config.defaultValue).length
 
 	const handleOpenChange = (nextOpen: boolean) => {
 		if (nextOpen) {
@@ -815,7 +790,7 @@ function RWAFiltersDialog({
 	}
 
 	const saveDraft = () => {
-		void pushShallowQuery(router, serializeRwaFilterDraft(filterDefinitions, draft))
+		void pushShallowQuery(router, serializeRwaFilterDraft(props, draft))
 		setOpen(false)
 	}
 
@@ -825,8 +800,8 @@ function RWAFiltersDialog({
 				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
 					{selectedFilterCount}
 				</span>
-				<span>{hasActiveFilterPills ? 'Edit' : 'Filters'}</span>
-				<Icon name="pencil" className="size-3 text-tertiary" />
+				<span>Filters</span>
+				<Icon name="settings" className="size-3 text-tertiary" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
 				className={`${dialogSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
@@ -843,7 +818,12 @@ function RWAFiltersDialog({
 
 				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
 					<RWAFilterBrowser filterDefinitions={filterDefinitions} draft={draft} onDraftChange={setDraft} />
-					<RWAActiveDraftFilters filterDefinitions={filterDefinitions} draft={draft} onDraftChange={setDraft} />
+					<RWAActiveDraftFilters
+						filterDefinitions={filterDefinitions}
+						inclusionFilters={inclusionFilters}
+						draft={draft}
+						onDraftChange={setDraft}
+					/>
 				</div>
 
 				<div className="flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
@@ -965,10 +945,12 @@ function removeDraftFilter(draft: RWAFilterDraft, id: string): RWAFilterDraft {
 
 function RWAActiveDraftFilters({
 	filterDefinitions,
+	inclusionFilters,
 	draft,
 	onDraftChange
 }: {
 	filterDefinitions: Array<RWAFilterDefinition>
+	inclusionFilters: Array<RWAInclusionFilterConfig>
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
@@ -982,6 +964,7 @@ function RWAActiveDraftFilters({
 				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
 			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+				<RWAIncludeDraftSection inclusionFilters={inclusionFilters} draft={draft} onDraftChange={onDraftChange} />
 				{activeDefinitions.length > 0 ? (
 					activeDefinitions.map((definition) => (
 						<RWADraftFilterEditor
@@ -1176,6 +1159,7 @@ export const RWA_FILTERS_TEST_UTILS = {
 	createRwaFilterDraft,
 	getRwaActiveFilterPills,
 	getRwaFilterDefinitions,
+	getRwaInclusionFilters,
 	hasResettableRwaQueryParam,
 	removeDraftFilter,
 	serializeRwaFilterDraft

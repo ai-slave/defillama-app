@@ -1,4 +1,5 @@
 import { rwaSlug } from './rwaSlug'
+import { areWrappersIncludedByDefault } from './wrappers'
 
 export type RWAOverviewMode = 'chain' | 'category' | 'platform' | 'assetGroup'
 
@@ -8,6 +9,8 @@ export type RWAOverviewInclusionDefaults = {
 	includeRwaPerps: boolean
 	// Include the bridge/interop portion of DeFi Active TVL. Default true = today's numbers. Optional so existing callers/fixtures compile.
 	includeBridgeTvl?: boolean
+	/** Wrapper rows; off unless the page is about them. */
+	includeWrappers?: boolean
 }
 
 export type RWAOverviewInclusionContext = {
@@ -20,15 +23,10 @@ export type RWAOverviewInclusionContext = {
 
 type RWAOverviewPath = `/rwa${string}`
 
-export const DEFAULT_EXCLUDED_TYPES = new Set(['Wrapper'])
 export const OTHER_RWAS_SLUG = 'other-rwas'
 export const RWA_WRAPPERS_SLUG = 'rwa-wrappers'
 export const RWA_YIELD_WRAPPER_SLUG = 'rwa-yield-wrapper'
 export const EXCLUDED_STANDARD_RWA_CATEGORY_SLUGS = new Set(['rwa-perps'])
-const DEFAULT_INCLUDED_TYPES_BY_CATEGORY = new Map([
-	[OTHER_RWAS_SLUG, new Set(['Asset', 'Platform', 'Wrapper'])],
-	[RWA_WRAPPERS_SLUG, new Set(['Asset', 'Platform', 'Wrapper'])]
-])
 const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/fiat-stablecoins',
 	'/rwa/category/non-rwa-stablecoins',
@@ -85,7 +83,8 @@ export function inferPlatformRWAOverviewInclusion(
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps: false,
-		includeBridgeTvl: true
+		includeBridgeTvl: true,
+		includeWrappers: true
 	}
 }
 
@@ -117,7 +116,8 @@ export function getDefaultRWAOverviewInclusion({
 		includeStablecoins: path ? STABLECOINS_DEFAULT_RWA_PATHS.has(path) : false,
 		includeGovernance: path ? GOVERNANCE_DEFAULT_RWA_PATHS.has(path) : false,
 		includeRwaPerps: false,
-		includeBridgeTvl: true
+		includeBridgeTvl: true,
+		includeWrappers: areWrappersIncludedByDefault(mode, categorySlug)
 	}
 }
 
@@ -140,27 +140,4 @@ function getRWAOverviewPath({
 		default:
 			return null
 	}
-}
-
-export function isTypeIncludedByDefault(
-	type: string | null | undefined,
-	mode: RWAOverviewMode,
-	categorySlug?: string | null
-): boolean {
-	const normalizedType = type || 'Unknown'
-	if (mode === 'platform' || mode === 'assetGroup') return true
-	if (mode === 'category' && categorySlug) {
-		const includedTypes = DEFAULT_INCLUDED_TYPES_BY_CATEGORY.get(categorySlug)
-		if (includedTypes) return includedTypes.has(normalizedType)
-	}
-	if (mode === 'category' && categorySlug === RWA_YIELD_WRAPPER_SLUG) return true
-	return !DEFAULT_EXCLUDED_TYPES.has(normalizedType)
-}
-
-export function getDefaultSelectedTypes(
-	allTypes: Array<string>,
-	mode: RWAOverviewMode,
-	categorySlug?: string | null
-): Array<string> {
-	return allTypes.filter((type) => isTypeIncludedByDefault(type, mode, categorySlug))
 }

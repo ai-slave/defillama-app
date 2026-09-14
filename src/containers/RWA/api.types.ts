@@ -1,9 +1,11 @@
 import type { EarnPageRow } from '~/containers/Yields/data/types'
-import type { RWAChartDataset, RWAPositionalChartDataset } from './chartDataset'
+import type { RwaOverviewCards } from './cards/cardData'
+import type { RWAPositionalChartDataset } from './chartDataset'
 import type { RWAChartMetricAvailability } from './chartState'
 import type { RWAOverviewInclusionDefaults } from './constants'
 import type { RWAPerpsVenueType } from './Perps/api.types'
 import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
+import type { RWAGroupBy } from './table/groupBy'
 
 type RWANumberMap = Record<string, number>
 type RWAContractsByChain = Record<string, Array<string>>
@@ -181,12 +183,39 @@ export type RWAAssetOverviewRow = RWAOverviewDisplayRowBase & {
 	bridgeTvlByChain?: Exclude<RWAOverviewMetric, null>
 	// Protocol bridge values used to keep the asset table breakdown consistent with the total.
 	bridgeTvlByProtocol?: RWAOverviewMetric
+	/** Values 1d, 7d and 1m before the latest series point. */
+	priors?: RWAPriors
+	/** First series point with a value, in ms. */
+	firstSeen?: number | null
+}
+
+export type RWAPriorPeriod = '1d' | '7d' | '1m'
+export type RWAPriors = Record<RWAPriorPeriod, RWAPrior>
+
+/** Value before the latest point: null on a gap, 0 when the asset did not exist yet. */
+export type RWAPrior = {
+	activeMcap: number | null
+	onChainMcap: number | null
+	defiActiveTvl: number | null
+	bridgeTvl: number | null
 }
 
 export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
 	kind: 'perps'
 	contract: string
 	venueType: RWAPerpsVenueType
+	/** Mark price move over 24h, in percent. */
+	priceChange24h?: number | null
+	/** Open interest change over 24h, in percent. */
+	openInterestChange24h?: number | null
+	volume7d?: number | null
+	/** Funding rate per interval as a fraction; positive means longs pay shorts. */
+	fundingRate?: number | null
+	fundingIntervalHours?: number | null
+	/** Mark price over index price, minus one. */
+	premium?: number | null
+	maxLeverage?: number | null
+	protocolFees24h?: number | null
 }
 
 export type RWAOverviewDisplayRow = RWAAssetOverviewRow | RWAPerpsContractOverlayRow
@@ -242,16 +271,20 @@ export interface IRWAAssetsOverview {
 			issuers: Array<string>
 		}
 	}
-	initialChartDataset: IRWAInitialChartDataset | null
-	initialOpenInterestChartDataset: IRWAInitialTimeSeriesDataset | null
+	/** The chart datasets folded at build time: the default Group by on every page, plus Chain on the front page. */
+	initialChartDatasets: Array<IRWAInitialChartDataset>
+	/** The front page cards, folded at build time; null on scoped pages. */
+	cards: RwaOverviewCards | null
 	chartMetricAvailability: RWAChartMetricAvailability
+	platformLogos: Record<string, string>
+	/** Latest series point in ms, the page's reference for time windows. */
+	seriesLatestTimestamp: number | null
 	chainSlug: string | null
 	categorySlug: string | null
 	platformSlug: string | null
 	assetGroupSlug: string | null
 }
 
-export type IRWAInitialTimeSeriesDataset = RWAChartDataset
 export type RWAChartMetricKey = 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 export type IRWAChartMetricRows = Array<{ timestamp: number } & Record<string, number>>
 export type RWAAssetChartTarget =
@@ -261,8 +294,10 @@ export type RWAAssetChartTarget =
 	| { kind: 'platform'; slug: string }
 	| { kind: 'assetGroup'; slug: string }
 
+/** A chart dataset folded at build time for the page's default state: one metric, one Group by. */
 export type IRWAInitialChartDataset = {
 	metric: RWAChartMetricKey
+	groupBy: RWAGroupBy
 	dataset: RWAPositionalChartDataset
 }
 

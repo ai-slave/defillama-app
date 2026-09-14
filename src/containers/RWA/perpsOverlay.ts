@@ -1,9 +1,7 @@
-import type { IRWAInitialTimeSeriesDataset, RWAPerpsContractOverlayRow } from './api.types'
+import type { RWAPerpsContractOverlayRow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
-import { buildRwaOpenInterestDataset } from './chartAggregation'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
-import type { IRWAPerpsBreakdownChartResponse, IRWAPerpsMarket } from './Perps/api.types'
-import { toRWAPerpsBreakdownChartDataset } from './Perps/breakdownDataset'
+import type { IRWAPerpsMarket } from './Perps/api.types'
 import { rwaSlug } from './rwaSlug'
 
 export const getRealRwaPlatforms = (value: Parameters<typeof getRwaPlatforms>[0]) =>
@@ -21,6 +19,14 @@ export function toRWAPerpsContractOverlayRow(market: IRWAPerpsMarket): RWAPerpsC
 		primaryChain: null,
 		chain: null,
 		price: market.price,
+		priceChange24h: market.priceChange24h,
+		openInterestChange24h: market.openInterestChange24h,
+		volume7d: market.volume7d,
+		fundingRate: market.fundingRate,
+		fundingIntervalHours: market.fundingIntervalHours,
+		premium: market.premium,
+		maxLeverage: market.maxLeverage,
+		protocolFees24h: market.estimatedProtocolFees24h,
 		openInterest: market.openInterest,
 		volume24h: market.volume24h,
 		volume30d: market.volume30d,
@@ -84,15 +90,4 @@ export function buildRWAPerpsContractOverlayRows({
 	}
 
 	return rows
-}
-
-export function buildRWAPerpsOpenInterestOverlayDataset({
-	rows,
-	breakdownRows
-}: {
-	rows: Array<RWAPerpsContractOverlayRow>
-	breakdownRows: IRWAPerpsBreakdownChartResponse | null
-}): IRWAInitialTimeSeriesDataset | null {
-	if (breakdownRows == null) return null
-	return buildRwaOpenInterestDataset(rows, toRWAPerpsBreakdownChartDataset(breakdownRows))
 }

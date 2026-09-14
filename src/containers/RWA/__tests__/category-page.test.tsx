@@ -30,10 +30,6 @@ vi.mock('~/containers/RWA/queries', () => ({
 	getRWAAssetsOverview: vi.fn().mockImplementation(() => Promise.resolve(mockState.overviewData))
 }))
 
-vi.mock('~/containers/RWA/TabNav', () => ({
-	RWATabNav: () => null
-}))
-
 vi.mock('~/layout', () => ({
 	default: () => null
 }))

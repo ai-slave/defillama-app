@@ -513,50 +513,6 @@
       ]
     },
     {
-      "name": "RWA by Chain",
-      "route": "/rwa/chains",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) by chain",
-      "searchKeywords": [
-        "rwa chains",
-        "rwas by chain",
-        "real world assets by chain"
-      ]
-    },
-    {
-      "name": "RWA by Platform",
-      "route": "/rwa/platforms",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) by platform",
-      "searchKeywords": [
-        "rwa platforms",
-        "rwas by platform",
-        "real world assets by platform"
-      ]
-    },
-    {
-      "name": "RWA by Category",
-      "route": "/rwa/categories",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) by category",
-      "searchKeywords": [
-        "rwa categories",
-        "rwas by category",
-        "real world assets by category"
-      ]
-    },
-    {
-      "name": "RWA by Asset Group",
-      "route": "/rwa/asset-groups",
-      "category": "RWA",
-      "description": "Overview of all Real World Assets (RWAs) by asset group",
-      "searchKeywords": [
-        "rwa asset groups",
-        "rwas by asset group",
-        "real world assets by asset group"
-      ]
-    },
-    {
       "name": "RWA: Perps",
       "route": "/rwa/perps",
       "category": "RWA",

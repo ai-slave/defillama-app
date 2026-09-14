@@ -13,8 +13,8 @@ import {
 	type RWAChartRow,
 	type RWAPositionalChartDataset
 } from './chartDataset'
-import { isTypeIncludedByDefault, type RWAOverviewMode } from './constants'
 import { computeWeightedGroups, getPrimaryRwaCategory, UNKNOWN_PLATFORM } from './grouping'
+import { RWA_WRAPPER_TYPE } from './wrappers'
 
 export type RWAChartAggregationMode = 'total' | 'category' | 'assetClass' | 'assetName' | 'platform' | 'assetGroup'
 
@@ -68,47 +68,6 @@ export function buildRwaCanonicalMetricDataset(
 	}
 
 	return { source, dimensions }
-}
-
-export function buildRwaOpenInterestDataset(
-	assets: IRWAAssetsOverview['assets'],
-	dataset: RWAChartDataset
-): RWAChartDataset {
-	const contracts = new Set<string>()
-	for (const asset of assets) {
-		if (asset.kind !== 'perps') continue
-		if (asset.contract) contracts.add(asset.contract)
-	}
-
-	if (contracts.size === 0 || dataset.source.length === 0) return emptyChartDataset()
-
-	const source: RWAChartDataset['source'] = []
-	for (const row of dataset.source) {
-		let totalOpenInterest = 0
-		let hasOpenInterest = false
-
-		for (const contract of contracts) {
-			const value = row[contract]
-			if (value != null) {
-				hasOpenInterest = true
-				totalOpenInterest += value
-			}
-		}
-
-		if (hasOpenInterest) {
-			source.push({
-				timestamp: row.timestamp,
-				[RWA_OPEN_INTEREST_SERIES_LABEL]: totalOpenInterest
-			})
-		}
-	}
-
-	if (source.length === 0) return emptyChartDataset()
-
-	return {
-		source,
-		dimensions: ['timestamp', RWA_OPEN_INTEREST_SERIES_LABEL]
-	}
 }
 
 function buildAssetGroupMapping(
@@ -261,19 +220,17 @@ export function applyDefaultAssetFilters(
 	{
 		includeStablecoins,
 		includeGovernance,
-		mode,
-		categorySlug
+		includeWrappers
 	}: {
 		includeStablecoins: boolean
 		includeGovernance: boolean
-		mode?: RWAOverviewMode
-		categorySlug?: string | null
+		includeWrappers: boolean
 	}
 ): IRWAAssetsOverview['assets'] {
 	return assets.filter((asset) => {
 		if (!includeStablecoins && asset.stablecoin) return false
 		if (!includeGovernance && asset.governance) return false
-		if (!isTypeIncludedByDefault(asset.type, mode ?? 'chain', categorySlug)) return false
+		if (!includeWrappers && asset.type === RWA_WRAPPER_TYPE) return false
 		return true
 	})
 }

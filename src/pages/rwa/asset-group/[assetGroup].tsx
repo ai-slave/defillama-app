@@ -4,7 +4,6 @@ import { RWAOverview } from '~/containers/RWA'
 import { appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from '~/containers/RWA/assetGroup'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
-import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -56,7 +55,11 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/rwa/asset-group/${assetGroupSlug}`)
 		}
 
-		const props = await getRWAAssetsOverview({ assetGroup: assetGroupSlug, rwaList })
+		const props = await getRWAAssetsOverview({
+			assetGroup: assetGroupSlug,
+			rwaList,
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
+		})
 		if (!props || props.assets.length === 0) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
@@ -78,7 +81,6 @@ export default function RWAAssetGroupPage(props: InferGetStaticPropsType<typeof 
 			pageName={pageName}
 			canonicalUrl={`/rwa/asset-group/${props.assetGroupSlug}`}
 		>
-			<RWATabNav active="assetGroups" />
 			<RWAOverview {...props} />
 		</Layout>
 	)

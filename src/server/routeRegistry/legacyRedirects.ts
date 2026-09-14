@@ -740,5 +740,25 @@ export const legacyRedirects = [
 		source: '/unlocks/arbitrum',
 		destination: '/unlocks/arbitrum-foundation',
 		permanent: true
+	},
+	{
+		source: '/rwa/chains',
+		destination: '/rwa?groupBy=chain',
+		permanent: false
+	},
+	{
+		source: '/rwa/platforms',
+		destination: '/rwa?groupBy=platform',
+		permanent: false
+	},
+	{
+		source: '/rwa/asset-groups',
+		destination: '/rwa?groupBy=assetGroup',
+		permanent: false
+	},
+	{
+		source: '/rwa/categories',
+		destination: '/rwa?groupBy=category',
+		permanent: false
 	}
 ] satisfies Array<LegacyRedirect>

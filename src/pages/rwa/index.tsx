@@ -1,7 +1,6 @@
 import type { InferGetStaticPropsType } from 'next'
 import { RWAOverview } from '~/containers/RWA'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
-import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -9,7 +8,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 export const getStaticProps = withPerformanceLogging(`rwa/index`, async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const rwaList = metadataCache.rwaList
-	const props = await getRWAAssetsOverview({ rwaList })
+	const props = await getRWAAssetsOverview({ rwaList, rwaPlatformsIndex: metadataCache.rwaPlatformsIndex })
 
 	if (!props) return { notFound: true, revalidate: maxAgeForNext([22]) }
 
@@ -29,7 +28,6 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 			pageName={pageName}
 			canonicalUrl="/rwa"
 		>
-			<RWATabNav active="overview" />
 			<RWAOverview {...props} />
 		</Layout>
 	)

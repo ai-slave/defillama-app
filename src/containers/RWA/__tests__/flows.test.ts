@@ -402,6 +402,17 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
+	test('folds the series past maxSeries into Others', () => {
+		const jan5 = day(2026, 0, 5)
+		const chart = buildRWAFlowRotationChart(
+			[{ timestamp: jan5 / 1e3, Bonds: 10, Credit: 5, Gold: 2, Equity: 1 }],
+			'daily',
+			{ maxSeries: 3 }
+		)
+		expect(chart.dataset.dimensions).toEqual(['timestamp', 'Bonds', 'Credit', 'Others'])
+		expect(chart.dataset.source).toEqual([[jan5, 10, 5, 3]])
+	})
+
 	test('supports daily and yearly net-flow breakdowns', () => {
 		const jan5 = day(2026, 0, 5)
 		const dec5 = day(2026, 11, 5)

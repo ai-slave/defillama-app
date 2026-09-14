@@ -5,7 +5,6 @@ import {
 	aggregateRwaMetricData,
 	appendRwaChartDatasetTotal,
 	buildRwaCanonicalMetricDataset,
-	buildRwaOpenInterestDataset,
 	getRwaChartSeriesColorSlots,
 	getRwaReservedSeriesColorSlot,
 	mergeRwaChartDatasets,
@@ -99,6 +98,7 @@ function createPerpsAsset(
 	return {
 		id: 'perps-1',
 		kind: 'perps',
+		priceChange24h: null,
 		venueType: 'DEX',
 		detailHref: '/rwa/perps/contract/xyz%3Aalpha',
 		contract: 'xyz:alpha',
@@ -249,71 +249,6 @@ describe('appendRwaChartDatasetTotal', () => {
 				{ timestamp: 2, Treasuries: 90, Credit: 60, Total: 150 }
 			],
 			dimensions: ['timestamp', 'Total', 'Treasuries', 'Credit']
-		})
-	})
-})
-
-describe('buildRwaOpenInterestDataset', () => {
-	test('collapses filtered perps contracts into a single RWA Perps OI line', () => {
-		expect(
-			buildRwaOpenInterestDataset(
-				[
-					createSpotAsset({ canonicalMarketId: 'ondo/usdy' }),
-					createPerpsAsset({ contract: 'xyz:alpha' }),
-					createPerpsAsset({ id: 'perps-2', contract: 'xyz:beta' })
-				],
-				{
-					source: [
-						{ timestamp: 1, 'xyz:alpha': 10, 'xyz:beta': 15, 'xyz:gamma': 100 },
-						{ timestamp: 2, 'xyz:alpha': 12, 'xyz:beta': 18, 'xyz:gamma': 120 }
-					],
-					dimensions: ['timestamp', 'xyz:gamma', 'xyz:beta', 'xyz:alpha']
-				}
-			)
-		).toEqual({
-			source: [
-				{ timestamp: 1, 'RWA Perps OI': 25 },
-				{ timestamp: 2, 'RWA Perps OI': 30 }
-			],
-			dimensions: ['timestamp', 'RWA Perps OI']
-		})
-	})
-
-	test('preserves all-zero RWA Perps OI series when the source contains real zero values', () => {
-		expect(
-			buildRwaOpenInterestDataset([createPerpsAsset({ contract: 'xyz:alpha' })], {
-				source: [
-					{ timestamp: 1, 'xyz:alpha': 0 },
-					{ timestamp: 2, 'xyz:alpha': 0 }
-				],
-				dimensions: ['timestamp', 'xyz:alpha']
-			})
-		).toEqual({
-			source: [
-				{ timestamp: 1, 'RWA Perps OI': 0 },
-				{ timestamp: 2, 'RWA Perps OI': 0 }
-			],
-			dimensions: ['timestamp', 'RWA Perps OI']
-		})
-	})
-
-	test('omits prelaunch and gap timestamps without selected-contract measurements', () => {
-		expect(
-			buildRwaOpenInterestDataset([createPerpsAsset({ contract: 'xyz:alpha' })], {
-				source: [
-					{ timestamp: 1, 'xyz:beta': 20 },
-					{ timestamp: 2, 'xyz:alpha': 0 },
-					{ timestamp: 3, 'xyz:beta': 30 },
-					{ timestamp: 4, 'xyz:alpha': 12 }
-				],
-				dimensions: ['timestamp', 'xyz:alpha', 'xyz:beta']
-			})
-		).toEqual({
-			source: [
-				{ timestamp: 2, 'RWA Perps OI': 0 },
-				{ timestamp: 4, 'RWA Perps OI': 12 }
-			],
-			dimensions: ['timestamp', 'RWA Perps OI']
 		})
 	})
 })

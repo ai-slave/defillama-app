@@ -8,6 +8,7 @@ import type {
 	IRWAFlowsResponse,
 	RWAFlowOverviewSplitBy
 } from './api.types'
+import { RWA_FLOW_TOTAL_SPLIT_BY } from './flowSplit'
 
 const RWA_FLOWS_STALE_TIME = 30 * 60 * 1000
 const RWA_FLOWS_API = '/api/public/rwa/flows'
@@ -18,6 +19,9 @@ export type RWAFlowScope =
 	| { kind: 'category'; slug: string }
 	| { kind: 'platform'; slug: string }
 	| { kind: 'chain'; slug: string }
+
+/** A scope with a slug: the only ones with an asset breakdown small enough to read in the browser. */
+export type RWAFlowScopedTarget = Exclude<RWAFlowScope, { kind: 'overview' }>
 
 export function useRWAFlowSummary() {
 	return useQuery<IRWAFlowSummaryResponse>({
@@ -62,12 +66,11 @@ export function useRWAFlowOverviewSplitWithFilters(
 	})
 }
 
-export function useRWAFlowAssetBreakdown(target: RWAFlowScope, enabled: boolean) {
+export function useRWAFlowAssetBreakdown(target: RWAFlowScopedTarget | null, enabled: boolean) {
 	return useQuery<Array<IRWAFlowAssetBreakdownRow>>({
-		queryKey: ['rwa-flows', 'asset-breakdown', target.kind, target.kind === 'overview' ? 'all' : target.slug],
+		queryKey: ['rwa-flows', 'asset-breakdown', target?.kind ?? 'none', target?.slug ?? ''],
 		queryFn: () => {
-			if (target.kind === 'overview')
-				return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(`${RWA_FLOWS_API}/asset-breakdown`)
+			if (!target) throw new Error('The overview reads the flows split, not the asset breakdown')
 			return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(
 				`${RWA_FLOWS_API}/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
 			)
@@ -75,6 +78,44 @@ export function useRWAFlowAssetBreakdown(target: RWAFlowScope, enabled: boolean)
 		staleTime: RWA_FLOWS_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled
+		enabled: enabled && target != null
 	})
+}
+
+export type RWAFlowSeriesRequest = {
+	scope: RWAFlowScope
+	/** The split the front page reads; the total sums the asset group split when no grouping is asked for. */
+	splitBy?: RWAFlowOverviewSplitBy
+	includeStablecoin: boolean
+	includeGovernance: boolean
+	enabled: boolean
+}
+
+export type RWAFlowSeriesResult = {
+	/** The front page: one row per day with a value per asset group, summed by `sumRwaFlowSplit`. */
+	splitPoints: Array<IRWAFlowOverviewSplitPoint> | undefined
+	/** A scoped page: one row per day with a value per asset, folded by `aggregateRWAFlowRows`. */
+	assetRows: Array<IRWAFlowAssetBreakdownRow> | undefined
+	isLoading: boolean
+	error: unknown
+}
+
+/**
+ * The rows the flows chart reads. The front page reads the asset group split (about 0.5 MB) and never the
+ * unscoped asset breakdown (about 58 MB); scoped pages keep their scoped breakdown so the table filters apply.
+ */
+export function useRWAFlowSeries({
+	scope,
+	splitBy = RWA_FLOW_TOTAL_SPLIT_BY,
+	includeStablecoin,
+	includeGovernance,
+	enabled
+}: RWAFlowSeriesRequest): RWAFlowSeriesResult {
+	const isOverview = scope.kind === 'overview'
+	const split = useRWAFlowOverviewSplitWithFilters(splitBy, includeStablecoin, includeGovernance, enabled && isOverview)
+	const breakdown = useRWAFlowAssetBreakdown(isOverview ? null : scope, enabled && !isOverview)
+	if (isOverview) {
+		return { splitPoints: split.data, assetRows: undefined, isLoading: split.isLoading, error: split.error }
+	}
+	return { splitPoints: undefined, assetRows: breakdown.data, isLoading: breakdown.isLoading, error: breakdown.error }
 }

@@ -4,7 +4,6 @@ import { RWAOverview } from '~/containers/RWA'
 import { filterCategoriesForStandardRwaOverview } from '~/containers/RWA/constants'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
-import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -57,7 +56,11 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/rwa/category/${categorySlug}`)
 		}
 
-		const props = await getRWAAssetsOverview({ category: categorySlug, rwaList })
+		const props = await getRWAAssetsOverview({
+			category: categorySlug,
+			rwaList,
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
+		})
 
 		if (!props) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
@@ -80,7 +83,6 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 			pageName={pageName}
 			canonicalUrl={`/rwa/category/${props.categorySlug}`}
 		>
-			<RWATabNav active="categories" />
 			<RWAOverview {...props} />
 		</Layout>
 	)

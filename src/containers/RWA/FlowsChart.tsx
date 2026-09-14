@@ -39,11 +39,14 @@ function getVisibleRangeFromZoom(
 export function RWAFlowsChart({
 	chart,
 	defaultStartTimestamp,
+	containerClassName,
 	onReady,
 	onVisibleRangeChange
 }: {
 	chart: RWAFlowChart
 	defaultStartTimestamp?: number
+	/** Lets the chart fill a flex panel instead of its fixed height. */
+	containerClassName?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	onVisibleRangeChange?: (range: RWAFlowVisibleRange | null) => void
 }) {
@@ -107,6 +110,7 @@ export function RWAFlowsChart({
 			chartOptions={chartOptions}
 			hideDefaultLegend={false}
 			showTotalInTooltip={false}
+			{...(containerClassName ? { containerClassName } : {})}
 			onReady={handleReady}
 		/>
 	)

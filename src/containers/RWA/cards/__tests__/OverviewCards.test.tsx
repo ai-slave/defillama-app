@@ -1,0 +1,106 @@
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test, vi } from 'vitest'
+import type { RwaOverviewCards } from '../cardData'
+import { RWAOverviewCards } from '../OverviewCards'
+
+vi.mock('~/contexts/LocalStorage', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/contexts/LocalStorage')>()),
+	useDarkModeManager: () => [true, vi.fn()]
+}))
+
+const DAY = 24 * 60 * 60 * 1000
+
+const cards: RwaOverviewCards = {
+	defiByProtocol: {
+		withBridges: {
+			value: 3_880_000_000,
+			changeUsd: -79_500_000,
+			changePct: -2,
+			bars: [
+				{ name: 'Morpho Blue', value: 557_000_000 },
+				{ name: 'Across', value: 100_000_000 }
+			]
+		},
+		withoutBridges: {
+			value: 3_780_000_000,
+			changeUsd: -70_000_000,
+			changePct: -1.8,
+			bars: [{ name: 'Morpho Blue', value: 557_000_000 }]
+		}
+	},
+	chainChange: {
+		value: 32_000_000_000,
+		changeUsd: 654_000_000,
+		changePct: 2.09,
+		bars: [
+			{ name: 'Solana', changeUsd: 417_000_000, changePct: 20.3 },
+			{ name: 'Aptos', changeUsd: 100_000_000, changePct: 1463.2 },
+			{ name: 'BSC', changeUsd: -310_000_000, changePct: -6.2 }
+		]
+	},
+	perpsOpenInterest: {
+		withCex: {
+			value: 15_700_000_000,
+			changePct: 33.87,
+			series: [
+				[0, 10],
+				[DAY, 15]
+			]
+		},
+		dexOnly: {
+			value: 5_000_000_000,
+			changePct: -4,
+			series: [
+				[0, 6],
+				[DAY, 5]
+			]
+		}
+	}
+}
+
+describe('RWAOverviewCards', () => {
+	test('renders the three cards with their values, changes and bars', () => {
+		const markup = renderToStaticMarkup(<RWAOverviewCards cards={cards} includeBridgeTvl includeCex />)
+		expect(markup).toContain('RWA in DeFi by Protocol')
+		expect(markup).toContain('$3.88b')
+		expect(markup).toContain('-$79.5m')
+		expect(markup).toContain('Morpho Blue')
+		expect(markup).toContain('protocols/morpho-blue')
+		expect(markup).toContain('chains/rsz_solana')
+		expect(markup).toContain('Across')
+		expect(markup).toContain('Change by Chain, 30d')
+		expect(markup).toContain('+$654m')
+		expect(markup).toContain('+2.09%')
+		expect(markup).toContain('+$417m')
+		expect(markup).toContain('(+20.3%)')
+		expect(markup).toContain('(+1463%)')
+		expect(markup).toContain('bg-data-up')
+		expect(markup).toContain('-$310m')
+		expect(markup).toContain('bg-data-down')
+		expect(markup).toContain('RWA Perps Open Interest')
+		expect(markup).toContain('$15.7b')
+		expect(markup).toContain('+33.87%')
+		expect(markup.split('>30d<').length - 1).toBe(3)
+		expect(markup).toContain('<svg')
+	})
+
+	test('follows the Bridge TVL and CEX toggles', () => {
+		const markup = renderToStaticMarkup(<RWAOverviewCards cards={cards} includeBridgeTvl={false} includeCex={false} />)
+		expect(markup).toContain('$3.78b')
+		expect(markup).not.toContain('Across')
+		expect(markup).toContain('$5b')
+		expect(markup).toContain('-4.00%')
+	})
+
+	test('says unavailable when a card has no value', () => {
+		const empty: RwaOverviewCards = {
+			...cards,
+			perpsOpenInterest: {
+				withCex: { value: null, changePct: null, series: [] },
+				dexOnly: { value: null, changePct: null, series: [] }
+			}
+		}
+		const markup = renderToStaticMarkup(<RWAOverviewCards cards={empty} includeBridgeTvl includeCex />)
+		expect(markup).toContain('Unavailable')
+	})
+})

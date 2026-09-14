@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 
 import { act, createElement, type ComponentProps } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { RWA_FILTERS_TEST_UTILS, RWAOverviewFilters } from '../Filters'
+import { createRoot } from 'react-dom/client'
+import { describe, expect, test, vi } from 'vitest'
+import { RWA_FILTERS_TEST_UTILS, RWAOverviewFilterControls, RWAOverviewFilters } from '../Filters'
 import { useRWATableQueryParams } from '../hooks'
 
 const routerMock = vi.hoisted(() => ({
@@ -19,11 +19,6 @@ const actions = {
 	setDefiActiveTvlToOnChainMcapPctRange: () => {},
 	setActiveMcapToOnChainMcapPctRange: () => {},
 	setDefiActiveTvlToActiveMcapPctRange: () => {},
-	setIncludeStablecoins: () => {},
-	setIncludeGovernance: () => {},
-	setIncludeRwaPerps: () => {},
-	setIncludeCex: () => {},
-	setIncludeBridgeTvl: () => {},
 	setRedeemableStates: () => {},
 	setAttestationsStates: () => {},
 	setCexListedStates: () => {},
@@ -76,7 +71,7 @@ const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
 	},
 	selections: {
 		selectedAssetNames: ['USDY', 'USTB'],
-		selectedTypes: ['Asset', 'Platform'],
+		selectedTypes: ['Asset', 'Platform', 'Wrapper'],
 		selectedCategories: ['Treasuries', 'Private Credit'],
 		selectedPlatforms: ['Ondo', 'Maple', 'Centrifuge'],
 		selectedAssetGroups: ['Bonds', 'Private Credit'],
@@ -99,9 +94,8 @@ const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
 		maxDefiActiveTvlToActiveMcapPct: null,
 		includeStablecoins: false,
 		includeGovernance: false,
-		includeRwaPerps: false,
-		includeCex: false,
-		includeBridgeTvl: true
+		includeBridgeTvl: true,
+		includeWrappers: false
 	},
 	actions
 }
@@ -117,25 +111,24 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 }
 
 describe('RWA overview filter dialog helpers', () => {
-	test('marks non-all default select filters active on a clean page', () => {
+	test('starts with no active filter on a clean page', () => {
 		const props = makeProps()
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
 		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
 
-		expect(draft.activeIds).toEqual(['types'])
-		expect(draft.activeIds).not.toContain('platforms')
+		expect(draft.activeIds).toEqual([])
 		expect(definitions.filter((definition) => definition.kind === 'select').length).toBeGreaterThan(0)
 	})
 
-	test('serializes a removed default select filter as all values', () => {
-		const props = makeProps()
-		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
+	test('serializes a removed select filter as absent, so Clear all leaves the URL clean', () => {
+		const props = makeProps({ selections: { selectedTypes: ['Asset'] } })
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
+		expect(draft.activeIds).toEqual(['types'])
 		const nextDraft = RWA_FILTERS_TEST_UTILS.removeDraftFilter(draft, 'types')
-		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(definitions, nextDraft)
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, nextDraft)
 
 		expect(nextDraft.activeIds).toEqual([])
-		expect(updates.types).toEqual(['Asset', 'Platform', 'Wrapper'])
+		expect(updates.types).toBeUndefined()
 		expect(updates.excludeTypes).toBeUndefined()
 	})
 
@@ -146,8 +139,7 @@ describe('RWA overview filter dialog helpers', () => {
 			}
 		})
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
-		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
-		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(definitions, draft)
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, draft)
 
 		expect(draft.activeIds).toContain('platforms')
 		expect(updates.platforms).toBeUndefined()
@@ -161,42 +153,12 @@ describe('RWA overview filter dialog helpers', () => {
 		const platforms = definitions.find((definition) => definition.id === 'platforms')
 
 		const nextDraft = RWA_FILTERS_TEST_UTILS.addDraftFilter(draft, platforms!)
-		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(definitions, nextDraft)
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, nextDraft)
 
-		expect(nextDraft.activeIds).toEqual(['types', 'platforms'])
+		expect(nextDraft.activeIds).toEqual(['platforms'])
 		expect(nextDraft.selectValues.platforms).toEqual(['Ondo', 'Maple', 'Centrifuge'])
 		expect(updates.platforms).toBeUndefined()
 		expect(updates.excludePlatforms).toBeUndefined()
-	})
-
-	test('does not serialize None for a Types filter whose default selection is empty', () => {
-		const props = makeProps({
-			modes: {
-				mode: 'category',
-				isChainMode: false,
-				isCategoryMode: true
-			},
-			options: {
-				categorySlug: 'other-rwas',
-				typeOptions: [
-					{ key: 'Unknown', name: 'Unknown' },
-					{ key: 'Other', name: 'Other' }
-				]
-			},
-			selections: {
-				selectedTypes: []
-			}
-		})
-		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
-		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
-		const types = definitions.find((definition) => definition.id === 'types')
-
-		const nextDraft = RWA_FILTERS_TEST_UTILS.addDraftFilter(draft, types!)
-		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(definitions, nextDraft)
-
-		expect(nextDraft.selectValues.types).toEqual([])
-		expect(updates.types).toBeUndefined()
-		expect(updates.excludeTypes).toBeUndefined()
 	})
 
 	test('keeps reset enabled for hidden filter, chart, and flow params', () => {
@@ -238,87 +200,75 @@ function FiltersProbe() {
 		rwaClassifications: options.rwaClassificationOptions.map((option) => option.key),
 		accessModels: options.accessModelOptions.map((option) => option.key),
 		issuers: options.issuers,
-		defaultInclusion: baseProps.defaultInclusion,
-		mode: 'chain'
+		defaultInclusion: baseProps.defaultInclusion
 	})
-	return createElement(RWAOverviewFilters, { ...baseProps, selections: state, actions: state })
+	return createElement(
+		'div',
+		null,
+		createElement(
+			'div',
+			{ 'data-strip': true },
+			createElement(RWAOverviewFilters, { ...baseProps, selections: state, actions: state })
+		),
+		createElement(RWAOverviewFilterControls, { ...baseProps, selections: state, actions: state })
+	)
 }
 
-describe('RWA overview inclusion controls', () => {
-	let container: HTMLDivElement
-	let root: Root
-	const render = () =>
-		act(async () => {
+describe('RWA overview Include group', () => {
+	test('seeds the draft from the current inclusion and serializes only overrides', () => {
+		const props = makeProps()
+		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
+		expect(draft.inclusion).toEqual({
+			includeStablecoins: false,
+			includeGovernance: false,
+			includeWrappers: false,
+			includeBridgeTvl: true
+		})
+
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, {
+			...draft,
+			inclusion: { includeStablecoins: true, includeGovernance: false, includeWrappers: true, includeBridgeTvl: false }
+		})
+		expect(updates.includeStablecoins).toBe('true')
+		expect(updates.includeGovernance).toBeUndefined()
+		expect(updates.includeBridgeTvl).toBe('false')
+		expect(updates.includeWrappers).toBe('true')
+	})
+
+	test('clears an override that returns to its default', () => {
+		const props = makeProps({ selections: { includeStablecoins: true } })
+		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
+		expect(draft.inclusion.includeStablecoins).toBe(true)
+
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, {
+			...draft,
+			inclusion: { ...draft.inclusion, includeStablecoins: false }
+		})
+		expect(updates.includeStablecoins).toBeUndefined()
+	})
+
+	test('shows an override as a pill on the strip', () => {
+		const props = makeProps({ selections: { includeGovernance: true } })
+		const router = { query: { includeGovernance: 'true' } }
+		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, router as any)
+		expect(pills.map((pill) => pill.label)).toEqual(['Governance Tokens: included'])
+	})
+
+	test('renders the strip with Include in TVL, Filters and List Your Assets, and no pill without a filter', async () => {
+		const container = document.createElement('div')
+		document.body.appendChild(container)
+		const root = createRoot(container)
+		await act(async () => {
 			root.render(createElement(FiltersProbe))
 		})
-	const checkbox = (value: string) => container.querySelector<HTMLInputElement>(`input[value="${value}"]`)
-	const click = async (value: string) => {
-		await act(async () => {
-			checkbox(value)!.click()
-		})
-		await render()
-	}
-
-	beforeEach(() => {
-		routerMock.query = {}
-		routerMock.push.mockReset()
-		routerMock.push.mockImplementation(async ({ query }: { query: typeof routerMock.query }) => {
-			routerMock.query = query
-			return true
-		})
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-	})
-
-	afterEach(async () => {
+		expect(container.querySelector('input[value="includeRwaPerps"]')).toBeNull()
+		expect(container.querySelector('input[value="includeStablecoins"]')).toBeNull()
+		const strip = container.querySelector('[data-strip]')?.textContent ?? ''
+		expect(strip).toContain('Filters')
+		expect(strip).toContain('Include in TVL')
+		expect(strip).toContain('List Your Assets')
+		expect(strip).not.toContain('included')
 		await act(async () => root.unmount())
 		container.remove()
-	})
-
-	test('reveals CEX only with perps and clears its selection when perps are switched off', async () => {
-		await render()
-		expect(checkbox('includeCex')).toBeNull()
-		await click('includeRwaPerps')
-		expect(checkbox('includeCex')!.checked).toBe(false)
-		await click('includeCex')
-		expect(checkbox('includeCex')!.checked).toBe(true)
-		expect(routerMock.query).toMatchObject({ includeRwaPerps: 'true', includeCex: 'true' })
-		await click('includeRwaPerps')
-		expect(checkbox('includeCex')).toBeNull()
-		expect(routerMock.query.includeCex).toBeUndefined()
-		await click('includeRwaPerps')
-		expect(checkbox('includeCex')!.checked).toBe(false)
-	})
-
-	test('restores inclusion from the URL and lets Reset filters clear both boxes', async () => {
-		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
-		await render()
-		expect(checkbox('includeRwaPerps')!.checked).toBe(true)
-		expect(checkbox('includeCex')!.checked).toBe(true)
-		await act(async () => {
-			const reset = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Reset filters')!
-			reset.click()
-		})
-		await render()
-		expect(routerMock.query).toEqual({})
-		expect(checkbox('includeRwaPerps')!.checked).toBe(false)
-		expect(checkbox('includeCex')).toBeNull()
-	})
-
-	test('follows back/forward query changes without retaining a stale CEX selection', async () => {
-		await render()
-		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
-		await render()
-		expect(checkbox('includeCex')!.checked).toBe(true)
-		routerMock.query = { includeRwaPerps: 'true' }
-		await render()
-		expect(checkbox('includeCex')!.checked).toBe(false)
-		routerMock.query = { includeCex: 'true' }
-		await render()
-		expect(checkbox('includeRwaPerps')!.checked).toBe(false)
-		expect(checkbox('includeCex')).toBeNull()
-		await click('includeRwaPerps')
-		expect(checkbox('includeCex')!.checked).toBe(false)
 	})
 })

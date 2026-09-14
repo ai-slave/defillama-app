@@ -1,185 +1,40 @@
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { buildCsvFromDataset, ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
-import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
+import { useCallback, useMemo } from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
-import { Select } from '~/components/Select/Select'
-import { CHART_COLORS } from '~/constants/colors'
-import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { Card } from '~/ui/Card'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LoadingDots } from '~/ui/Loaders'
-import { SegmentedControl } from '~/ui/SegmentedControl'
-import { StatItem, SummaryCardGrid } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
-import { slug } from '~/utils'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
-import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam, toQueryString } from '~/utils/routerQuery'
-import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from './api.types'
-import { RWAAssetsTable } from './AssetsTable'
-import {
-	getRwaChartTotalLabel,
-	getRwaChartSeriesColorSlots,
-	getRwaReservedSeriesColorSlot,
-	isRwaTotalSeriesLabel,
-	sortRwaChartSeriesLabels,
-	type RWAChartAggregationMode
-} from './chartAggregation'
-import {
-	limitRwaHorizontalBarData,
-	materializeRwaIndependentChartDataset,
-	type RWAPositionalChartDataset
-} from './chartDataset'
-import {
-	createRwaChartModeState,
-	getBreakdownLabel,
-	getChartBreakdownOptions,
-	getChartBreakdownQueryValue,
-	getChartMetricLabel,
-	getChartMetricOptions,
-	getChartMetricQueryValue,
-	getChartViewOptions,
-	getChartViewQueryValue,
-	getDefaultChartBreakdown,
-	type RWAChartBreakdown,
-	getTreemapNestedByLabel,
-	getTreemapNestedByOptions,
-	getTreemapNestedByQueryValue,
-	getTreemapParentGrouping,
-	parseRwaChartState,
-	setChartBreakdown,
-	setTreemapNestedBy,
-	type RWAChartState
-} from './chartState'
+import { SummaryCardGrid } from '~/ui/SummaryStats'
+import { formatCompactNumber } from '~/utils/numberFormat'
+import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
+import type { IRWAAssetsOverview } from './api.types'
+import { foldRwaPerpsTotals, rankRwaDefiProtocols } from './cards/cardData'
+import { RWAOverviewCards } from './cards/OverviewCards'
 import type { RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import { RWAOverviewFilters } from './Filters'
-import { RWAFlowVsPriceStrip } from './FlowPanelParts'
-import {
-	aggregateRWAFlowRows,
-	buildRWAFlowChart,
-	getRWAFlowDefaultStartTimestamp,
-	getRWAFlowModeQueryValue,
-	getRWAFlowOverlayQueryValue,
-	getRWAFlowOverlayOptions,
-	getRWAFlowVsPriceAssetSummaries,
-	getRWAFlowVsPriceSummary,
-	parseRWAFlowQueryState,
-	parseRWAFlowOverlayMetrics,
-	RWA_FLOW_GROUPING_OPTIONS,
-	type RWAFlowChartSelection,
-	type RWAFlowGrouping,
-	type RWAFlowOverlay,
-	type RWAFlowVisibleRange
-} from './flows'
-import { type RWAFlowScope, useRWAFlowAssetBreakdown } from './flows.hooks'
+import { RWAHighlights } from './highlights/Highlights'
 import {
 	useFilteredRwaAssets,
 	useRWATableQueryParams,
-	useRWAAssetCategoryPieChartData,
-	useRwaAssetGroupPieChartData,
-	useRwaAssetNamePieChartData,
-	useRwaAssetPlatformPieChartData,
-	useRwaCategoryAssetClassPieChartData,
-	useRwaChainBreakdownPieChartData,
-	useRwaChartDataset,
 	hasActiveChartFilters,
-	limitRwaPieChartData
+	hasActiveRwaAttributeFilters
 } from './hooks'
+import { formatRwaKpiUsd } from './kpi/format'
+import { RWAKeyMetrics } from './kpi/KeyMetrics'
+import { sumRwaKpiTotals } from './kpi/kpiTotals'
+import { getAssetChartTarget, RWAOverviewChartPanel } from './OverviewChartPanel'
 import { perpsDefinitions } from './Perps/definitions'
 import { RWAPlatformDataViews, RWAPlatformHeader, type RWAPlatformListedTotal } from './PlatformPage'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
-import { rwaSlug } from './rwaSlug'
 import {
-	buildCompleteRwaTreemapTreeData,
-	buildRwaNestedTreemapTreeData,
-	buildRwaTreemapTreeData,
-	canBuildRwaNestedTreemap
-} from './treemap'
+	getRwaChangePeriodQueryValue,
+	parseRwaChangePeriod,
+	RWA_CHANGE_PERIOD_QUERY_KEY,
+	type RWAChangePeriod
+} from './table/change'
+import { getRwaGroupByQueryValue, parseRwaGroupBy, type RWAGroupByScope, type RWATableView } from './table/groupBy'
+import { RWATable } from './table/RWATable'
+import { RWATableControls } from './table/toolbar/TableControls'
 
-const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
-const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
-const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
-const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
-type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows' | 'flowVsPrice'
-
-const EMPTY_CHART_STACK_COLORS: Record<string, string> = {}
-/**
- * Chart presentation, memoized in its own hook. In the component body the compiler cannot preserve a
- * useMemo whose dependency is `chartView` or the pie selection (it reports "may be modified later" and
- * skips the whole component), and without a useMemo it caches nothing there. As hook parameters the same
- * values carry no such range, so these memos are preserved and RWAOverview still compiles.
- * `scripts/reactCompilerCheck.cjs --cached` checks both facts.
- */
-function useLimitedPieChartData(complete: Array<{ name: string; value: number }>, limit: number | null) {
-	return useMemo(() => (limit == null ? complete : limitRwaPieChartData(complete, limit)), [complete, limit])
-}
-
-function useRwaChartPresentation(
-	chartView: RWAChartState['view'] | 'timeSeries',
-	pieChartStackColors: Record<string, string>,
-	pieChartData: Array<{ name: string; value: number }>,
-	timeSeriesDataset: RWAPositionalChartDataset
-) {
-	const timeSeriesCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
-		() => (chartView === 'timeSeries' ? buildRwaTimeSeriesCharts(timeSeriesDataset) : []),
-		[chartView, timeSeriesDataset]
-	)
-	const stackColors = useMemo(
-		() =>
-			chartView === 'pie' || chartView === 'hbar'
-				? valueSortedStackColors(pieChartStackColors, pieChartData)
-				: EMPTY_CHART_STACK_COLORS,
-		[chartView, pieChartStackColors, pieChartData]
-	)
-	const barChart = useMemo(
-		() => (chartView === 'hbar' ? barChartPresentation(pieChartData, stackColors) : EMPTY_HBAR_PRESENTATION),
-		[chartView, pieChartData, stackColors]
-	)
-	return { timeSeriesCharts, stackColors, barChart }
-}
-
-function valueSortedStackColors(
-	baseColors: Record<string, string>,
-	data: Array<{ name: string; value: number }>
-): Record<string, string> {
-	const stackColors: Record<string, string> = { ...baseColors }
-	const sortedData: Array<{ name: string; value: number }> = []
-	for (const item of data) {
-		if (item.value > 0) sortedData.push(item)
-	}
-	sortedData.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
-	for (const [index, item] of sortedData.entries()) {
-		stackColors[item.name] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
-	}
-	return stackColors
-}
-
-function barChartPresentation(data: Array<{ name: string; value: number }>, stackColors: Record<string, string>) {
-	const rows = limitRwaHorizontalBarData(data, { sort: true })
-	const categories = new Array<string>(rows.length)
-	const values = new Array<number>(rows.length)
-	const colors = new Array<string>(rows.length)
-	for (const [index, row] of rows.entries()) {
-		categories[index] = row.name
-		values[index] = row.value
-		colors[index] = stackColors[row.name] ?? '#1f77b4'
-	}
-	return { categories, values, colors }
-}
-
-const EMPTY_HBAR_PRESENTATION = {
-	categories: [] as Array<string>,
-	values: [] as Array<number>,
-	colors: [] as Array<string>
-}
-
-// `hideEntityNav`: the platform/chain switcher is how the RWA section browses between
-// entities. On a protocol's own RWA tab the entity is fixed, so the row is dead weight.
+/** `hideEntityNav`: a protocol's own RWA tab fixes the entity, so the platform and chain switcher row is dead weight there. */
 export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolean }) {
 	const rankedFilterValues = useMemo(
 		() =>
@@ -205,41 +60,6 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 	const isCategoryMode = mode === 'category'
 	const isPlatformMode = mode === 'platform'
 	const isAssetGroupMode = mode === 'assetGroup'
-	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
-	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
-	const flowQueryState = parseRWAFlowQueryState(chartTypeQuery, flowModeQuery, isPlatformMode)
-	const isFlowVsPrice = flowQueryState.view === 'flowVsPrice'
-	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
-	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
-		// Written without optional chains in the condition: the compiler (1.0.0) cannot lower those inside a
-		// logical test and would skip the whole component.
-		setFlowVisibleRange((previous) => {
-			if (previous === null || range === null) return previous === range ? previous : range
-			return previous.start === range.start && previous.end === range.end ? previous : range
-		})
-	}, [])
-	const canBreakdownByChain = isCategoryMode || isPlatformMode || isAssetGroupMode || props.selectedChain === 'All'
-	const chartMode = createRwaChartModeState(mode, canBreakdownByChain, props.assetGroupSlug)
-	const chartMetricAvailability = props.chartMetricAvailability
-	const chartState = parseRwaChartState(router.query, chartMode, chartMetricAvailability)
-	const isFlowMetric = flowQueryState.view != null
-	const chartTypeKey = chartState.metric
-	const chartView = isFlowMetric ? 'timeSeries' : chartState.view
-	const rawTimeSeriesBreakdownQuery = router.query.timeSeriesChartBreakdown
-	const isTotalTimeSeriesSelected =
-		chartView === 'timeSeries' &&
-		(Array.isArray(rawTimeSeriesBreakdownQuery) ? rawTimeSeriesBreakdownQuery[0] : rawTimeSeriesBreakdownQuery) ===
-			'total'
-	const timeSeriesBreakdown = isFlowMetric
-		? getDefaultChartBreakdown(chartMode, 'timeSeries')
-		: chartView === 'timeSeries'
-			? isTotalTimeSeriesSelected
-				? 'total'
-				: chartState.breakdown
-			: getDefaultChartBreakdown(chartMode, 'timeSeries')
-	const nonTimeSeriesBreakdown =
-		chartView === 'timeSeries' ? getDefaultChartBreakdown(chartMode, 'pie') : chartState.breakdown
-	const shouldBuildNonTimeSeriesData = chartView !== 'timeSeries'
 
 	const {
 		selectedAssetNames,
@@ -269,15 +89,13 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
+		includeWrappers,
 		hasPerpsOverlayBlockingFilters,
 		setDefiActiveTvlToOnChainMcapPctRange,
 		setActiveMcapToOnChainMcapPctRange,
 		setDefiActiveTvlToActiveMcapPctRange,
-		setIncludeStablecoins,
-		setIncludeGovernance,
 		setIncludeRwaPerps,
 		setIncludeCex,
-		setIncludeBridgeTvl,
 		setRedeemableStates,
 		setAttestationsStates,
 		setCexListedStates,
@@ -295,21 +113,10 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		accessModels: rankedFilterValues.accessModels,
 		issuers: props.issuers,
 		assetGroups: props.assetGroups,
-		categorySlug: props.categorySlug,
-		defaultInclusion: props.defaultInclusion,
-		mode
+		defaultInclusion: props.defaultInclusion
 	})
 
-	const {
-		filteredAssets,
-		aggregateAssets,
-		totalOnChainMcap,
-		totalActiveMcap,
-		totalOnChainDeFiActiveTvl,
-		totalBridgeTvl,
-		totalOpenInterest,
-		totalIssuersCount
-	} = useFilteredRwaAssets({
+	const { filteredAssets, aggregateAssets } = useFilteredRwaAssets({
 		assets: props.assets,
 		isPlatformMode,
 		selectedAssetNames,
@@ -333,6 +140,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
+		includeWrappers,
 		hasPerpsOverlayBlockingFilters,
 		minDefiActiveTvlToOnChainMcapPct,
 		maxDefiActiveTvlToOnChainMcapPct,
@@ -342,225 +150,28 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		maxDefiActiveTvlToActiveMcapPct
 	})
 
-	// Headline DeFi Active TVL mirrors the chart: drop the bridge/interop portion when the toggle is off.
-	const displayedDefiActiveTvl = includeBridgeTvl
-		? totalOnChainDeFiActiveTvl
-		: totalOnChainDeFiActiveTvl - totalBridgeTvl
-
 	const activeFilters = hasActiveChartFilters(router.query, props.defaultInclusion)
-	const initialChartDataset = props.initialChartDataset
-	const getInitialMetricDataset = (metric: RWAChartMetricKey) =>
-		initialChartDataset?.metric === metric ? initialChartDataset.dataset : null
-	const chartTarget = getAssetChartTarget(props)
-	const flowScope = getRwaFlowScope(chartTarget)
-	const {
-		data: flowAssetRows,
-		isLoading: isFlowLoading,
-		error: flowError
-	} = useRWAFlowAssetBreakdown(flowScope, isFlowMetric)
-	const flowData = useMemo(
-		() => (flowAssetRows ? { series: aggregateRWAFlowRows(flowAssetRows, aggregateAssets) } : null),
-		[flowAssetRows, aggregateAssets]
+	const activeAttributeFilters = hasActiveRwaAttributeFilters(router.query)
+	const tableView: RWATableView = includeRwaPerps ? 'perps' : 'assets'
+	const groupByScope: RWAGroupByScope = getAssetChartTarget(props).kind
+	const tableGroupBy = parseRwaGroupBy(router.query.groupBy, tableView, { scope: groupByScope })
+	const handleTableViewChange = useCallback(
+		(view: RWATableView) => setIncludeRwaPerps(view === 'perps'),
+		[setIncludeRwaPerps]
 	)
-	const flowGroupBy = flowQueryState.groupBy
-	const selectedFlowOverlayMetrics = useMemo(
-		() => parseRWAFlowOverlayMetrics(toNonEmptyArrayParam(router.query.flowOverlays), chartMetricAvailability),
-		[router.query.flowOverlays, chartMetricAvailability]
+	const handleGroupByChange = useCallback(
+		(groupBy: Parameters<typeof getRwaGroupByQueryValue>[0]) => {
+			void pushShallowQuery(router, { groupBy: getRwaGroupByQueryValue(groupBy, tableView, { scope: groupByScope }) })
+		},
+		[groupByScope, router, tableView]
 	)
-	const flowOverlayOptions = getRWAFlowOverlayOptions(chartMetricAvailability)
-	const { chartDataset, isChartLoading, chartError } = useRwaChartDataset({
-		selectedMetric: chartTypeKey,
-		initialDataset: getInitialMetricDataset(chartTypeKey),
-		initialOpenInterestDataset: props.initialOpenInterestChartDataset,
-		filteredAssets: aggregateAssets,
-		mode: getRwaChartAggregationMode(timeSeriesBreakdown),
-		target: chartTarget,
-		includeStablecoins,
-		includeGovernance,
-		includeRwaPerps,
-		includeCex,
-		includeBridgeTvl,
-		enabled: !isFlowMetric && chartView === 'timeSeries',
-		useInitialDataset:
-			initialChartDataset?.metric === chartTypeKey &&
-			!activeFilters &&
-			(timeSeriesBreakdown === getDefaultChartBreakdown(chartMode, 'timeSeries') || timeSeriesBreakdown === 'total')
-	})
-	const {
-		chartDataset: flowOnChainMcapDataset,
-		assetRows: flowOnChainMcapAssetRows,
-		isChartLoading: isFlowMcapLoading,
-		chartError: flowMcapError
-	} = useRwaChartDataset({
-		selectedMetric: 'onChainMcap',
-		initialDataset: getInitialMetricDataset('onChainMcap'),
-		initialOpenInterestDataset: null,
-		filteredAssets: aggregateAssets,
-		mode: 'total',
-		target: chartTarget,
-		includeStablecoins,
-		includeGovernance,
-		includeRwaPerps: false,
-		includeCex: false,
-		enabled: isFlowMetric && (selectedFlowOverlayMetrics.includes('onChainMcap') || isFlowVsPrice),
-		useInitialDataset: initialChartDataset?.metric === 'onChainMcap' && !activeFilters && !isFlowVsPrice
-	})
-	const { chartDataset: flowActiveMcapDataset } = useRwaChartDataset({
-		selectedMetric: 'activeMcap',
-		initialDataset: getInitialMetricDataset('activeMcap'),
-		initialOpenInterestDataset: null,
-		filteredAssets: aggregateAssets,
-		mode: 'total',
-		target: chartTarget,
-		includeStablecoins,
-		includeGovernance,
-		includeRwaPerps: false,
-		includeCex: false,
-		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('activeMcap'),
-		useInitialDataset: initialChartDataset?.metric === 'activeMcap' && !activeFilters
-	})
-	const { chartDataset: flowDefiActiveTvlDataset } = useRwaChartDataset({
-		selectedMetric: 'defiActiveTvl',
-		initialDataset: getInitialMetricDataset('defiActiveTvl'),
-		initialOpenInterestDataset: null,
-		filteredAssets: aggregateAssets,
-		mode: 'total',
-		target: chartTarget,
-		includeStablecoins,
-		includeGovernance,
-		includeRwaPerps: false,
-		includeCex: false,
-		includeBridgeTvl,
-		enabled: isFlowMetric && !isFlowVsPrice && selectedFlowOverlayMetrics.includes('defiActiveTvl'),
-		useInitialDataset: initialChartDataset?.metric === 'defiActiveTvl' && !activeFilters
-	})
-	const flowOnChainMcapByTimestamp = useMemo(
-		() => getRwaTotalMetricByTimestamp(flowOnChainMcapDataset, 'onChainMcap'),
-		[flowOnChainMcapDataset]
+	const changePeriod = parseRwaChangePeriod(router.query[RWA_CHANGE_PERIOD_QUERY_KEY])
+	const handlePeriodChange = useCallback(
+		(period: RWAChangePeriod) => {
+			void pushShallowQuery(router, { [RWA_CHANGE_PERIOD_QUERY_KEY]: getRwaChangePeriodQueryValue(period) })
+		},
+		[router]
 	)
-	const flowActiveMcapByTimestamp = useMemo(
-		() => getRwaTotalMetricByTimestamp(flowActiveMcapDataset, 'activeMcap'),
-		[flowActiveMcapDataset]
-	)
-	const flowDefiActiveTvlByTimestamp = useMemo(
-		() => getRwaTotalMetricByTimestamp(flowDefiActiveTvlDataset, 'defiActiveTvl'),
-		[flowDefiActiveTvlDataset]
-	)
-	const flowOverlays = useMemo<Array<RWAFlowOverlay>>(
-		() =>
-			selectedFlowOverlayMetrics.map((metric) => ({
-				metric,
-				values:
-					metric === 'onChainMcap'
-						? flowOnChainMcapByTimestamp
-						: metric === 'activeMcap'
-							? flowActiveMcapByTimestamp
-							: flowDefiActiveTvlByTimestamp
-			})),
-		[selectedFlowOverlayMetrics, flowOnChainMcapByTimestamp, flowActiveMcapByTimestamp, flowDefiActiveTvlByTimestamp]
-	)
-	const { pieChartData: assetCategoryPieChartData, pieChartStackColors: assetCategoryPieChartStackColors } =
-		useRWAAssetCategoryPieChartData({
-			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'category',
-			assets: aggregateAssets,
-			categories: rankedFilterValues.categories,
-			selectedCategories,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-
-	const { pieChartData: assetClassPieChartData, pieChartStackColors: assetClassPieChartStackColors } =
-		useRwaCategoryAssetClassPieChartData({
-			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetClass',
-			assets: aggregateAssets,
-			assetClasses: rankedFilterValues.assetClasses,
-			selectedAssetClasses,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-
-	const shouldBuildAssetNamePieChartData = shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetName'
-	const { pieChartData: assetNamePieChartData, pieChartStackColors: assetNamePieChartStackColors } =
-		useRwaAssetNamePieChartData({
-			enabled: shouldBuildAssetNamePieChartData,
-			assets: aggregateAssets,
-			selectedAssetNames:
-				isAssetGroupMode && shouldBuildAssetNamePieChartData
-					? aggregateAssets.map((asset) => asset.assetName || asset.ticker)
-					: selectedAssetNames,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-
-	const { pieChartData: assetGroupPieChartData, pieChartStackColors: assetGroupPieChartStackColors } =
-		useRwaAssetGroupPieChartData({
-			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'assetGroup',
-			assets: aggregateAssets,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-
-	const { pieChartData: assetPlatformPieChartData, pieChartStackColors: assetPlatformPieChartStackColors } =
-		useRwaAssetPlatformPieChartData({
-			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'platform',
-			assets: aggregateAssets,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-	const { pieChartData: chainPieChartData, pieChartStackColors: chainPieChartStackColors } =
-		useRwaChainBreakdownPieChartData({
-			enabled: shouldBuildNonTimeSeriesData && nonTimeSeriesBreakdown === 'chain' && canBreakdownByChain,
-			assets: aggregateAssets,
-			metric: chartTypeKey,
-			includeBridgeTvl
-		})
-
-	// Select pie chart breakdown based on route mode (same precedence as nav links).
-	const { completePieChartData, pieChartStackColors } = (() => {
-		switch (nonTimeSeriesBreakdown) {
-			case 'chain':
-				return {
-					completePieChartData: chainPieChartData,
-					pieChartStackColors: chainPieChartStackColors
-				}
-			case 'assetGroup':
-				return {
-					completePieChartData: assetGroupPieChartData,
-					pieChartStackColors: assetGroupPieChartStackColors
-				}
-			case 'platform':
-				return {
-					completePieChartData: assetPlatformPieChartData,
-					pieChartStackColors: assetPlatformPieChartStackColors
-				}
-			case 'assetClass':
-				return {
-					completePieChartData: assetClassPieChartData,
-					pieChartStackColors: assetClassPieChartStackColors
-				}
-			case 'assetName':
-				return {
-					completePieChartData: assetNamePieChartData,
-					pieChartStackColors: assetNamePieChartStackColors
-				}
-			case 'category':
-				return {
-					completePieChartData: assetCategoryPieChartData,
-					pieChartStackColors: assetCategoryPieChartStackColors
-				}
-			default:
-				return assertNever(nonTimeSeriesBreakdown)
-		}
-	})()
-	const pieChartLimit =
-		nonTimeSeriesBreakdown === 'chain'
-			? 10
-			: nonTimeSeriesBreakdown === 'assetName' ||
-				  nonTimeSeriesBreakdown === 'assetGroup' ||
-				  nonTimeSeriesBreakdown === 'platform'
-				? 24
-				: null
-	const selectedPieChartData = useLimitedPieChartData(completePieChartData, pieChartLimit)
 
 	// Preserve filter/toggle query params only in chain mode.
 	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
@@ -578,331 +189,31 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		if (qs) navLinks = baseNavLinks.map((link) => ({ ...link, to: `${link.to}${qs}` }))
 	}
 
+	const selectedModeLabel = getSelectedModeLabel(mode, props)
 	const showFilters = props.assets.length > 0
 
-	const showCharts = props.assets.length > 1 || isPlatformMode || isFlowMetric
-
-	const { chartInstance: multiSeriesChart2Instance, handleChartReady: handleMultiSeriesChartReady } =
-		useChartImageExport()
-	const chartMetricLabel = isFlowVsPrice
-		? 'Flow vs Price'
-		: isFlowMetric
-			? 'Net Flows'
-			: getChartMetricLabel(chartTypeKey)
-	const chartMetricOptions = [
-		...getChartMetricOptions(chartMetricAvailability),
-		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label },
-		...(isPlatformMode ? [{ key: 'flowVsPrice' as const, label: definitions.flows.flowVsPrice.label }] : [])
-	]
-	const selectedChartMetric: RWAOverviewChartMetric = isFlowVsPrice
-		? 'flowVsPrice'
-		: isFlowMetric
-			? 'flows'
-			: chartTypeKey
-	const chartViewOptions = getChartViewOptions()
-	const selectedModeLabel = getSelectedModeLabel(mode, props)
-	const exportChartTitle = getRwaExportChartTitle({
-		mode,
-		metricLabel: chartMetricLabel,
-		selectedModeLabel
-	})
-	const timeSeriesChartFilename = `rwa-time-series-chart-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
-	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useChartImageExport()
-	const pieChartFilename = `rwa-pie-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
-	const { chartInstance: barChartInstance, handleChartReady: handleBarChartReady } = useChartImageExport()
-	const barChartFilename = `rwa-bar-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
-	const { chartInstance: treemapChartInstance, handleChartReady: handleTreemapChartReady } = useChartImageExport()
-	const treemapChartFilename = `rwa-treemap-${slug(chartMetricLabel)}-${rwaSlug(selectedModeLabel)}`
-	const flowChartSelection = useMemo<RWAFlowChartSelection>(
+	const kpiTotals = useMemo(
+		() => sumRwaKpiTotals(aggregateAssets, includeBridgeTvl),
+		[aggregateAssets, includeBridgeTvl]
+	)
+	/* The CEX toggle lives in the Perps view; the Assets view reads the panel and the cards with CEX venues in. */
+	const panelIncludeCex = includeRwaPerps ? includeCex : true
+	/* The Perps view reads the filtered rows like every other number; the Assets view has no perps rows in its
+	   fold, so it reads the page's perps rows under the page rules (no suspicious markets). */
+	const perpsRows = useMemo(
 		() =>
-			isFlowVsPrice
-				? {
-						view: 'flowVsPrice',
-						groupBy: flowGroupBy,
-						mcapByTimestamp: flowOnChainMcapByTimestamp
-					}
-				: { view: 'netFlows', groupBy: flowGroupBy, overlays: flowOverlays },
-		[flowGroupBy, flowOnChainMcapByTimestamp, flowOverlays, isFlowVsPrice]
+			includeRwaPerps ? aggregateAssets : props.assets.filter((asset) => asset.kind === 'perps' && !asset.suspicious),
+		[aggregateAssets, includeRwaPerps, props.assets]
 	)
-	const flowChart = useMemo(
-		() =>
-			isFlowMetric && flowData ? buildRWAFlowChart({ points: flowData.series, selection: flowChartSelection }) : null,
-		[flowChartSelection, flowData, isFlowMetric]
+	const perpsTotals = useMemo(() => foldRwaPerpsTotals(perpsRows, panelIncludeCex), [perpsRows, panelIncludeCex])
+	const largestProtocol = useMemo(
+		() => rankRwaDefiProtocols(aggregateAssets, includeBridgeTvl, 1)[0] ?? null,
+		[aggregateAssets, includeBridgeTvl]
 	)
-	const flowDefaultStartTimestamp =
-		flowGroupBy === 'daily' && flowData ? getRWAFlowDefaultStartTimestamp(flowData.series, 365) : undefined
-	const flowVsPriceSummary = useMemo(
-		() => (isFlowVsPrice && flowChart ? getRWAFlowVsPriceSummary(flowChart, flowVisibleRange) : null),
-		[flowChart, flowVisibleRange, isFlowVsPrice]
-	)
-	const flowVsPriceBreakdown = useMemo(
-		() =>
-			isFlowVsPrice && flowAssetRows && flowOnChainMcapAssetRows
-				? getRWAFlowVsPriceAssetSummaries(
-						flowAssetRows,
-						flowOnChainMcapAssetRows,
-						aggregateAssets,
-						flowGroupBy,
-						flowVisibleRange
-					)
-				: undefined,
-		[aggregateAssets, flowAssetRows, flowGroupBy, flowOnChainMcapAssetRows, flowVisibleRange, isFlowVsPrice]
-	)
-	const selectedTimeSeriesDataset = chartDataset
-	const deferredSelectedTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
-	const deferredSelectedPieChartData = useDeferredValue(selectedPieChartData)
-	const {
-		timeSeriesCharts,
-		stackColors: valueSortedPieChartStackColors,
-		barChart: selectedBarChartPresentation
-	} = useRwaChartPresentation(chartView, pieChartStackColors, deferredSelectedPieChartData, selectedTimeSeriesDataset)
-
-	const chartTypeSwitch = (
-		<SegmentedControl<RWAOverviewChartMetric>
-			value={selectedChartMetric}
-			onValueChange={(key) => {
-				if (key === 'flows' || key === 'flowVsPrice') {
-					void pushShallowQuery(router, {
-						chartType: key,
-						flowMode: flowGroupBy === 'daily' ? undefined : flowGroupBy,
-						flowOverlays: key === 'flowVsPrice' ? undefined : getRWAFlowOverlayQueryValue(selectedFlowOverlayMetrics)
-					})
-					return
-				}
-				void pushShallowQuery(router, {
-					chartType: getChartMetricQueryValue(key, chartMetricAvailability),
-					flowMode: undefined
-				})
-			}}
-			options={chartMetricOptions.map(({ key, label }) => ({
-				value: key,
-				label,
-				...(key === 'flows' || key === 'flowVsPrice'
-					? {
-							tooltip:
-								key === 'flows'
-									? definitions.flows.overviewNetFlows.description
-									: definitions.flows.flowVsPrice.description
-						}
-					: {})
-			}))}
-			label="Chart type"
-			variant="default"
-			size="md"
-			className="mr-auto max-w-full overflow-x-auto"
-		/>
-	)
-	/* The chart sits in two thirds of the summary grid on platform pages, where
-	   the full toolbar no longer fits one line. Rather than let it wrap raggedly
-	   — splitting the view/breakdown pair across lines and leaving one control
-	   stranded top-right — the metric switch takes a line of its own and the
-	   secondary controls right-align beneath it. */
-	const chartTypeSwitchRow = isPlatformMode ? <div className="w-full">{chartTypeSwitch}</div> : chartTypeSwitch
-	const flowOverlaySelect = (
-		<Tooltip content={definitions.flows.marketcapOverlay.description}>
-			<Select
-				allValues={flowOverlayOptions}
-				selectedValues={selectedFlowOverlayMetrics}
-				setSelectedValues={(values: Array<string>) => {
-					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
-				}}
-				label="Overlays"
-				labelType="smol"
-				variant="filter"
-				size="md"
-			/>
-		</Tooltip>
-	)
-
-	const chartViewSwitch = (
-		<Select
-			allValues={chartViewOptions}
-			selectedValues={chartView}
-			setSelectedValues={(value: string) => {
-				const selectedView = chartViewOptions.find((option) => option.key === value)?.key ?? chartView
-				void pushShallowQuery(router, { chartView: getChartViewQueryValue(selectedView) })
-			}}
-			label={chartViewOptions.find(({ key }) => key === chartView)?.name ?? 'Time Series Chart'}
-			labelType="none"
-			variant="filter"
-			size="md"
-		/>
-	)
-	const chartBreakdownOptions = getChartBreakdownOptions(chartState)
-	const timeSeriesChartBreakdownOptions =
-		chartView === 'timeSeries'
-			? ([{ key: 'total', name: 'Total' }, ...chartBreakdownOptions] as const)
-			: chartBreakdownOptions
-	const chartBreakdownLabel =
-		chartView === 'timeSeries' && isTotalTimeSeriesSelected ? 'Total' : getBreakdownLabel(chartState.breakdown)
-	const timeSeriesChartBreakdownSwitch = (
-		<Select
-			allValues={timeSeriesChartBreakdownOptions}
-			selectedValues={isTotalTimeSeriesSelected ? 'total' : chartState.breakdown}
-			setSelectedValues={(value: string) => {
-				const nextBreakdown = timeSeriesChartBreakdownOptions.find((option) => option.key === value)?.key
-				if (!nextBreakdown) throw new Error(`Unknown RWA chart breakdown: ${value}`)
-				if (nextBreakdown === 'total') {
-					void pushShallowQuery(router, {
-						timeSeriesChartBreakdown: 'total'
-					})
-					return
-				}
-
-				const nextState = setChartBreakdown(chartState, nextBreakdown)
-				void pushShallowQuery(router, {
-					timeSeriesChartBreakdown: getChartBreakdownQueryValue(nextState)
-				})
-			}}
-			label={chartBreakdownLabel}
-			labelType="none"
-			variant="filter"
-			size="md"
-		/>
-	)
-
-	const treemapParentGrouping = getTreemapParentGrouping(nonTimeSeriesBreakdown)
-	const treemapNestedBy = chartState.treemapNestedBy
-	const treemapNestedByOptions = getTreemapNestedByOptions(treemapParentGrouping)
-	const isNestedTreemapSupported = canBuildRwaNestedTreemap({
-		parentGrouping: treemapParentGrouping,
-		childGrouping: treemapNestedBy
-	})
-	const pieChartBreakdownSwitch = (
-		<Select
-			allValues={chartBreakdownOptions}
-			selectedValues={chartState.breakdown}
-			setSelectedValues={(value: string) => {
-				const nextBreakdown = chartBreakdownOptions.find((option) => option.key === value)?.key
-				if (!nextBreakdown) throw new Error(`Unknown RWA chart breakdown: ${value}`)
-				const nextState = setChartBreakdown(chartState, nextBreakdown)
-				void pushShallowQuery(router, {
-					nonTimeSeriesChartBreakdown: getChartBreakdownQueryValue(nextState),
-					treemapNestedBy: getTreemapNestedByQueryValue(nextState)
-				})
-			}}
-			label={chartBreakdownLabel}
-			labelType="none"
-			variant="filter"
-			size="md"
-		/>
-	)
-	const treemapNestedByLabel = getTreemapNestedByLabel(treemapNestedBy)
-	const treemapNestedBySwitch = (
-		<Select
-			allValues={treemapNestedByOptions}
-			selectedValues={treemapNestedBy}
-			setSelectedValues={(value: string) => {
-				const selectedNestedBy = treemapNestedByOptions.find((option) => option.key === value)?.key
-				if (!selectedNestedBy) throw new Error(`Unknown RWA treemap grouping: ${value}`)
-				const nextState = setTreemapNestedBy(chartState, selectedNestedBy)
-				void pushShallowQuery(router, { treemapNestedBy: getTreemapNestedByQueryValue(nextState) })
-			}}
-			label={`Nested by: ${treemapNestedByLabel}`}
-			labelType="none"
-			variant="filter"
-			size="md"
-		/>
-	)
-
-	const nestedTreemapTreeData = useMemo(() => {
-		if (chartView !== 'treemap') return []
-		if (!isNestedTreemapSupported) return []
-		return buildRwaNestedTreemapTreeData({
-			assets: aggregateAssets,
-			metric: chartTypeKey,
-			rootLabel: chartBreakdownLabel,
-			parentGrouping: treemapParentGrouping,
-			childGrouping: treemapNestedBy,
-			includeBridgeTvl
-		})
-	}, [
-		chartView,
-		chartTypeKey,
-		aggregateAssets,
-		chartBreakdownLabel,
-		isNestedTreemapSupported,
-		treemapNestedBy,
-		treemapParentGrouping,
-		includeBridgeTvl
-	])
-	const treemapTreeData = useMemo(
-		() =>
-			nestedTreemapTreeData.length > 0
-				? nestedTreemapTreeData
-				: buildRwaTreemapTreeData(selectedPieChartData, chartBreakdownLabel),
-		[chartBreakdownLabel, nestedTreemapTreeData, selectedPieChartData]
-	)
-	const nonTimeSeriesChartInstance =
-		chartView === 'treemap' ? treemapChartInstance : chartView === 'hbar' ? barChartInstance : pieChartInstance
-	const nonTimeSeriesChartFilename =
-		chartView === 'treemap' ? treemapChartFilename : chartView === 'hbar' ? barChartFilename : pieChartFilename
-
-	const summaryStatCards = (
-		<div className="flex flex-col gap-2 md:flex-row md:items-center">
-			<Card padding="sm" className="flex-1">
-				<StatItem
-					className="gap-1"
-					label={definitions.totalActiveMcap.label}
-					tooltip={definitions.totalActiveMcap.description}
-					value={formatUsd(totalActiveMcap, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			</Card>
-			<Card padding="sm" className="flex-1">
-				<StatItem
-					className="gap-1"
-					label={definitions.totalOnChainMcap.label}
-					tooltip={definitions.totalOnChainMcap.description}
-					value={formatUsd(totalOnChainMcap, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			</Card>
-			<Card padding="sm" className="flex-1">
-				<StatItem
-					className="gap-1"
-					label={definitions.totalDefiActiveTvl.label}
-					tooltip={definitions.totalDefiActiveTvl.description}
-					value={formatUsd(displayedDefiActiveTvl, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			</Card>
-			{includeRwaPerps ? (
-				<Card padding="sm" className="flex-1">
-					<StatItem
-						className="gap-1"
-						label="RWA Perps OI"
-						tooltip={perpsDefinitions.totalOpenInterest.description}
-						value={formatUsd(totalOpenInterest, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				</Card>
-			) : null}
-			<Card padding="sm" className="flex-1">
-				<StatItem
-					className="gap-1"
-					label={definitions.totalAssetIssuers.label}
-					tooltip={definitions.totalAssetIssuers.description}
-					value={formatCompactNumber(totalIssuersCount, {
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				/>
-			</Card>
-		</div>
-	)
+	const keyMetrics = <RWAKeyMetrics metrics={kpiTotals} perps={perpsTotals} largestProtocol={largestProtocol} />
+	const overviewCards = props.cards ? (
+		<RWAOverviewCards cards={props.cards} includeBridgeTvl={includeBridgeTvl} includeCex={panelIncludeCex} />
+	) : null
 
 	/* Platform pages already headline the platform's own AUM and DeFi TVL, so the
 	   same aggregates recomputed over the *filtered* asset set join the identity
@@ -918,221 +229,147 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		{
 			label: definitions.totalActiveMcap.label,
 			tooltip: definitions.totalActiveMcap.description,
-			value: formatUsd(totalActiveMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			value: formatRwaKpiUsd(kpiTotals.activeMcap)
 		},
 		{
 			label: definitions.totalOnChainMcap.label,
 			tooltip: definitions.totalOnChainMcap.description,
-			value: formatUsd(totalOnChainMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			value: formatRwaKpiUsd(kpiTotals.onChainMcap)
 		},
 		{
 			label: definitions.totalDefiActiveTvl.label,
 			tooltip: definitions.totalDefiActiveTvl.description,
-			value: formatUsd(displayedDefiActiveTvl, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})
+			value: formatRwaKpiUsd(kpiTotals.defiActiveTvl)
 		},
 		...(includeRwaPerps
 			? [
 					{
 						label: 'RWA Perps OI',
 						tooltip: perpsDefinitions.totalOpenInterest.description,
-						value: formatUsd(totalOpenInterest, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})
+						value: formatRwaKpiUsd(kpiTotals.openInterest)
 					}
 				]
 			: []),
 		{
 			label: definitions.totalAssetIssuers.label,
 			tooltip: definitions.totalAssetIssuers.description,
-			value: formatCompactNumber(totalIssuersCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+			value: formatCompactNumber(kpiTotals.issuerCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 		}
 	]
 
-	const chartSection = showCharts ? (
-		<>
-			{chartView === 'timeSeries' ? (
-				<ChartPanel>
-					<ChartPanelToolbar className="justify-end">
-						{chartTypeSwitchRow}
-						{isFlowMetric ? (
-							<SegmentedControl<RWAFlowGrouping>
-								value={flowGroupBy}
-								onValueChange={(nextFlowMode) => {
-									void pushShallowQuery(router, {
-										flowMode: getRWAFlowModeQueryValue(nextFlowMode, flowQueryState.view)
-									})
-								}}
-								options={RWA_FLOW_GROUPING_OPTIONS}
-								label="Flow period"
-								variant="default"
-								size="md"
-							/>
-						) : (
-							<>
-								{chartViewSwitch}
-								{timeSeriesChartBreakdownSwitch}
-							</>
-						)}
-						{isFlowMetric && !isFlowVsPrice ? flowOverlaySelect : null}
-						<ChartCsvExportButton
-							chartInstance={multiSeriesChart2Instance}
-							filename={timeSeriesChartFilename}
-							source={{
-								type: 'prepare-csv',
-								prepare: () => {
-									const exportDataset =
-										isFlowMetric && flowChart
-											? flowChart.dataset
-											: materializeRwaIndependentChartDataset(deferredSelectedTimeSeriesDataset)
-									return buildCsvFromDataset({
-										dimensions: exportDataset.dimensions,
-										source: exportDataset.source,
-										filenameBase: timeSeriesChartFilename
-									})
-								}
-							}}
-						/>
-						<ChartPngExportButton
-							chartInstance={multiSeriesChart2Instance}
-							filename={timeSeriesChartFilename}
-							title={exportChartTitle}
-						/>
-					</ChartPanelToolbar>
-					{isFlowVsPrice && flowVsPriceSummary ? (
-						<RWAFlowVsPriceStrip
-							summary={flowVsPriceSummary}
-							{...(flowVsPriceBreakdown ? { breakdown: flowVsPriceBreakdown } : {})}
-						/>
-					) : null}
-					{isFlowMetric ? (
-						isFlowLoading || (isFlowVsPrice && isFlowMcapLoading) ? (
-							<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-								Loading
-								<LoadingDots />
-							</ChartPanelBodyFallback>
-						) : flowError || (isFlowVsPrice && flowMcapError) ? (
-							<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-								{flowError instanceof Error
-									? flowError.message
-									: isFlowVsPrice && flowMcapError
-										? flowMcapError
-										: 'Failed to load flow data.'}
-							</ChartPanelBodyFallback>
-						) : flowChart ? (
-							<Suspense fallback={<ChartPanelBodyFallback />}>
-								<RWAFlowsChart
-									chart={flowChart}
-									{...(flowDefaultStartTimestamp !== undefined
-										? { defaultStartTimestamp: flowDefaultStartTimestamp }
-										: {})}
-									onVisibleRangeChange={handleFlowVisibleRangeChange}
-									onReady={handleMultiSeriesChartReady}
-								/>
-							</Suspense>
-						) : (
-							<ChartPanelBodyFallback className="body-sm text-secondary">
-								No flow data available.
-							</ChartPanelBodyFallback>
-						)
-					) : chartError ? (
-						<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-							{chartError}
-						</ChartPanelBodyFallback>
-					) : isChartLoading ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-							Loading
-							<LoadingDots />
-						</ChartPanelBodyFallback>
-					) : (
-						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<MultiSeriesChart
-								dataset={deferredSelectedTimeSeriesDataset}
-								charts={timeSeriesCharts}
-								hideDefaultLegend={false}
-								showTotalInTooltip={!deferredSelectedTimeSeriesDataset.dimensions.includes('Total')}
-								onReady={handleMultiSeriesChartReady}
-							/>
-						</Suspense>
-					)}
-				</ChartPanel>
-			) : null}
-			{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-				<ChartPanel className={chartView === 'treemap' ? undefined : 'min-h-[420px]'}>
-					<ChartPanelToolbar className="justify-end">
-						{chartTypeSwitchRow}
-						{chartViewSwitch}
-						{pieChartBreakdownSwitch}
-						{chartView === 'treemap' ? treemapNestedBySwitch : null}
-						{chartView === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
-						<ChartCsvExportButton
-							chartInstance={nonTimeSeriesChartInstance}
-							filename={nonTimeSeriesChartFilename}
-							source={
-								chartView === 'treemap'
-									? {
-											type: 'dataset',
-											prepare: () =>
-												buildTreemapCsvDataset(
-													buildCompleteRwaTreemapTreeData({
-														nestedTreeData: nestedTreemapTreeData,
-														completePieData: completePieChartData,
-														breakdownLabel: chartBreakdownLabel
-													})
-												)
-										}
-									: {
-											type: 'dataset',
-											prepare: () => ({
-												dimensions: ['Name', 'Value'],
-												source: completePieChartData.map(({ name, value }) => [name, value])
-											})
-										}
-							}
-						/>
-						<ChartPngExportButton
-							chartInstance={nonTimeSeriesChartInstance}
-							filename={nonTimeSeriesChartFilename}
-							title={exportChartTitle}
-						/>
-					</ChartPanelToolbar>
-					<Suspense fallback={chartView === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}>
-						{chartView === 'pie' ? (
-							<PieChart
-								chartData={deferredSelectedPieChartData}
-								stackColors={valueSortedPieChartStackColors}
-								radius={pieChartRadius}
-								legendPosition={pieChartLegendPosition}
-								legendTextStyle={pieChartLegendTextStyle}
-								onReady={handlePieChartReady}
-							/>
-						) : chartView === 'hbar' ? (
-							<HBarChart
-								categories={selectedBarChartPresentation.categories}
-								values={selectedBarChartPresentation.values}
-								colors={selectedBarChartPresentation.colors}
-								valueSymbol="$"
-								onReady={handleBarChartReady}
-							/>
-						) : (
-							<TreemapChart
-								treeData={treemapTreeData}
-								variant="rwa"
-								height="600px"
-								onReady={handleTreemapChartReady}
-								valueLabel={chartMetricLabel}
-							/>
-						)}
-					</Suspense>
-				</ChartPanel>
-			) : null}
-		</>
-	) : null
+	const chartSection = (
+		<RWAOverviewChartPanel
+			overview={props}
+			mode={mode}
+			selectedModeLabel={selectedModeLabel}
+			aggregateAssets={aggregateAssets}
+			view={tableView}
+			groupBy={tableGroupBy}
+			rankedFilterValues={rankedFilterValues}
+			selectedAssetNames={selectedAssetNames}
+			selectedCategories={selectedCategories}
+			includeStablecoins={includeStablecoins}
+			includeGovernance={includeGovernance}
+			includeCex={includeCex}
+			includeBridgeTvl={includeBridgeTvl}
+			activeFilters={activeFilters}
+			activeAttributeFilters={activeAttributeFilters}
+		/>
+	)
+
+	const filterProps = {
+		enabled: showFilters,
+		defaultInclusion: props.defaultInclusion,
+		modes: {
+			mode,
+			isChainMode,
+			isCategoryMode,
+			isPlatformMode,
+			isAssetGroupMode
+		},
+		options: {
+			assetNames: props.assetNames,
+			typeOptions: props.typeOptions,
+			categoriesOptions: props.categoriesOptions,
+			platforms: props.platforms,
+			assetGroups: props.assetGroups,
+			assetClassOptions: props.assetClassOptions,
+			rwaClassificationOptions: props.rwaClassificationOptions,
+			accessModelOptions: props.accessModelOptions,
+			issuers: props.issuers,
+			chainSlug: props.chainSlug,
+			categorySlug: props.categorySlug,
+			platformSlug: props.platformSlug,
+			assetGroupSlug: props.assetGroupSlug
+		},
+		selections: {
+			selectedAssetNames,
+			selectedTypes,
+			selectedCategories,
+			selectedPlatforms,
+			selectedAssetGroups,
+			selectedAssetClasses,
+			selectedRwaClassifications,
+			selectedAccessModels,
+			selectedIssuers,
+			selectedRedeemableStates,
+			selectedAttestationsStates,
+			selectedCexListedStates,
+			selectedKycForMintRedeemStates,
+			selectedKycAllowlistedWhitelistedToTransferHoldStates,
+			selectedTransferableStates,
+			selectedSelfCustodyStates,
+			minDefiActiveTvlToOnChainMcapPct,
+			maxDefiActiveTvlToOnChainMcapPct,
+			minActiveMcapToOnChainMcapPct,
+			maxActiveMcapToOnChainMcapPct,
+			minDefiActiveTvlToActiveMcapPct,
+			maxDefiActiveTvlToActiveMcapPct,
+			includeStablecoins,
+			includeGovernance,
+			includeBridgeTvl,
+			includeWrappers
+		},
+		actions: {
+			setDefiActiveTvlToOnChainMcapPctRange,
+			setActiveMcapToOnChainMcapPctRange,
+			setDefiActiveTvlToActiveMcapPctRange,
+			setRedeemableStates,
+			setAttestationsStates,
+			setCexListedStates,
+			setKycForMintRedeemStates,
+			setKycAllowlistedWhitelistedToTransferHoldStates,
+			setTransferableStates,
+			setSelfCustodyStates
+		}
+	}
+
+	const tableControls = (
+		<RWATableControls
+			view={tableView}
+			onViewChange={handleTableViewChange}
+			groupBy={tableGroupBy}
+			groupByScope={groupByScope}
+			onGroupByChange={handleGroupByChange}
+			includeCex={includeCex}
+			onIncludeCexChange={setIncludeCex}
+		/>
+	)
+
+	const tableProps = {
+		assets: filteredAssets,
+		view: tableView,
+		groupBy: tableGroupBy,
+		includeCex,
+		period: changePeriod,
+		onPeriodChange: handlePeriodChange,
+		selectedChain: props.selectedChain,
+		includeBridgeTvl,
+		platformLogos: props.platformLogos,
+		...(tableView === 'perps' && hasPerpsOverlayBlockingFilters
+			? { emptyMessage: 'Perps rows are hidden while asset-only filters are active. Clear them or switch to Assets.' }
+			: {})
+	}
 
 	return (
 		<>
@@ -1140,78 +377,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
 			{props.hideEntityNav ? null : <RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />}
-			<RWAOverviewFilters
-				enabled={showFilters}
-				defaultInclusion={props.defaultInclusion}
-				modes={{
-					mode,
-					isChainMode,
-					isCategoryMode,
-					isPlatformMode,
-					isAssetGroupMode
-				}}
-				options={{
-					assetNames: props.assetNames,
-					typeOptions: props.typeOptions,
-					categoriesOptions: props.categoriesOptions,
-					platforms: props.platforms,
-					assetGroups: props.assetGroups,
-					assetClassOptions: props.assetClassOptions,
-					rwaClassificationOptions: props.rwaClassificationOptions,
-					accessModelOptions: props.accessModelOptions,
-					issuers: props.issuers,
-					chainSlug: props.chainSlug,
-					categorySlug: props.categorySlug,
-					platformSlug: props.platformSlug,
-					assetGroupSlug: props.assetGroupSlug
-				}}
-				selections={{
-					selectedAssetNames,
-					selectedTypes,
-					selectedCategories,
-					selectedPlatforms,
-					selectedAssetGroups,
-					selectedAssetClasses,
-					selectedRwaClassifications,
-					selectedAccessModels,
-					selectedIssuers,
-					selectedRedeemableStates,
-					selectedAttestationsStates,
-					selectedCexListedStates,
-					selectedKycForMintRedeemStates,
-					selectedKycAllowlistedWhitelistedToTransferHoldStates,
-					selectedTransferableStates,
-					selectedSelfCustodyStates,
-					minDefiActiveTvlToOnChainMcapPct,
-					maxDefiActiveTvlToOnChainMcapPct,
-					minActiveMcapToOnChainMcapPct,
-					maxActiveMcapToOnChainMcapPct,
-					minDefiActiveTvlToActiveMcapPct,
-					maxDefiActiveTvlToActiveMcapPct,
-					includeStablecoins,
-					includeGovernance,
-					includeRwaPerps,
-					includeCex,
-					includeBridgeTvl
-				}}
-				actions={{
-					setDefiActiveTvlToOnChainMcapPctRange,
-					setActiveMcapToOnChainMcapPctRange,
-					setDefiActiveTvlToActiveMcapPctRange,
-					setIncludeStablecoins,
-					setIncludeGovernance,
-					setIncludeRwaPerps,
-					setIncludeCex,
-					setIncludeBridgeTvl,
-					setRedeemableStates,
-					setAttestationsStates,
-					setCexListedStates,
-					setKycForMintRedeemStates,
-					setKycAllowlistedWhitelistedToTransferHoldStates,
-					setTransferableStates,
-					setSelfCustodyStates
-				}}
-			/>
+			<RWAOverviewFilters {...filterProps} leading={tableControls} />
 			{props.platformPage ? (
 				<SummaryCardGrid>
 					<RWAPlatformHeader
@@ -1219,33 +385,26 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 						includeBridgeTvl={includeBridgeTvl}
 						listedTotals={platformListedTotals}
 					/>
-					{chartSection ? <div className="col-span-2 flex flex-col gap-2">{chartSection}</div> : null}
+					<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
 				</SummaryCardGrid>
 			) : (
 				<>
-					{summaryStatCards}
-					{chartSection}
+					<SummaryCardGrid>
+						{keyMetrics}
+						<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
+					</SummaryCardGrid>
+					{overviewCards}
 				</>
 			)}
 			{props.platformPage ? (
-				<RWAPlatformDataViews
-					data={props.platformPage}
-					renderAssetsTable={() => (
-						<RWAAssetsTable
-							assets={filteredAssets}
-							selectedChain={props.selectedChain}
-							includeRwaPerps={includeRwaPerps}
-							includeBridgeTvl={includeBridgeTvl}
-						/>
-					)}
-				/>
+				<RWAPlatformDataViews data={props.platformPage} renderAssetsTable={() => <RWATable {...tableProps} />} />
 			) : (
-				<RWAAssetsTable
-					assets={filteredAssets}
-					selectedChain={props.selectedChain}
-					includeRwaPerps={includeRwaPerps}
-					includeBridgeTvl={includeBridgeTvl}
-				/>
+				<>
+					<RWATable {...tableProps} />
+					{includeRwaPerps ? null : (
+						<RWAHighlights assets={aggregateAssets} seriesLatestTimestamp={props.seriesLatestTimestamp} />
+					)}
+				</>
 			)}
 		</>
 	)
@@ -1256,97 +415,6 @@ const getRWAOverviewMode = (props: IRWAAssetsOverview): RWAOverviewMode => {
 	if (props.categoryLinks.length > 0) return 'category'
 	if (props.platformLinks.length > 0) return 'platform'
 	return 'chain'
-}
-
-function assertNever(value: never): never {
-	throw new Error(`Unexpected value: ${String(value)}`)
-}
-
-export function buildRwaTimeSeriesCharts(dataset: RWAPositionalChartDataset): Array<MultiSeriesChartSeriesConfig> {
-	const seriesDimensions = sortRwaChartSeriesLabels(dataset.dimensions.filter((dimension) => dimension !== 'timestamp'))
-	const colorSlots = getRwaChartSeriesColorSlots(seriesDimensions)
-	const independentSeries = new Map(dataset.independentSeries?.map((series) => [series.name, series.data]) ?? [])
-
-	return seriesDimensions.map((name) => {
-		const reservedColorSlot = getRwaReservedSeriesColorSlot(name)
-		const colorSlot = colorSlots[name]
-		if (colorSlot === undefined) throw new Error(`Missing RWA chart color slot for "${name}"`)
-		const isReservedSeries = reservedColorSlot !== null
-		const isTotalSeries = isRwaTotalSeriesLabel(name)
-		const data = independentSeries.get(name)
-
-		return {
-			type: 'line',
-			name,
-			encode: data ? { x: 0, y: 1 } : { x: 'timestamp', y: name },
-			...(data ? { data } : {}),
-			color: CHART_COLORS[colorSlot % CHART_COLORS.length] ?? CHART_COLORS[0],
-			...(isReservedSeries
-				? {
-						hideAreaStyle: true,
-						...(isTotalSeries ? { excludeFromTooltipTotal: true } : {})
-					}
-				: {})
-		}
-	})
-}
-
-const getRwaChartAggregationMode = (state: RWAChartBreakdown | 'total'): RWAChartAggregationMode => {
-	switch (state) {
-		case 'total':
-			return state
-		case 'assetGroup':
-		case 'category':
-		case 'assetClass':
-		case 'assetName':
-		case 'platform':
-			return state
-		case 'chain':
-			throw new Error('Chain breakdown is not valid for time-series charts')
-		default:
-			return assertNever(state)
-	}
-}
-
-const getAssetChartTarget = (props: IRWAAssetsOverview): RWAAssetChartTarget => {
-	if (props.assetGroupSlug) return { kind: 'assetGroup', slug: props.assetGroupSlug }
-	if (props.categorySlug) return { kind: 'category', slug: props.categorySlug }
-	if (props.platformSlug) return { kind: 'platform', slug: props.platformSlug }
-	if (props.chainSlug) return { kind: 'chain', slug: props.chainSlug }
-	return { kind: 'all' }
-}
-
-const getRwaFlowScope = (target: RWAAssetChartTarget): RWAFlowScope => {
-	switch (target.kind) {
-		case 'all':
-			return { kind: 'overview' }
-		case 'assetGroup':
-			return { kind: 'assetGroup', slug: target.slug }
-		case 'category':
-			return { kind: 'category', slug: target.slug }
-		case 'platform':
-			return { kind: 'platform', slug: target.slug }
-		case 'chain':
-			return { kind: 'chain', slug: target.slug }
-		default:
-			return assertNever(target)
-	}
-}
-
-const getRwaTotalMetricByTimestamp = (
-	dataset: RWAPositionalChartDataset,
-	metric: RWAChartMetricKey
-): Map<number, number | null> => {
-	const totalLabel = getRwaChartTotalLabel(metric)
-	const totalIndex = dataset.dimensions.indexOf(totalLabel)
-	if (totalIndex === -1) return new Map()
-
-	const values = new Map<number, number | null>()
-	for (const row of dataset.source) {
-		const value = row[totalIndex]
-		values.set(row[0], value ?? null)
-	}
-	return values
 }
 
 const getModeLinks = (
@@ -1368,29 +436,3 @@ const getSelectedModeLabel = (mode: RWAOverviewMode, props: IRWAAssetsOverview) 
 	if (mode === 'platform') return props.selectedPlatform
 	return props.selectedChain
 }
-
-const getRwaExportChartTitle = ({
-	mode,
-	metricLabel,
-	selectedModeLabel
-}: {
-	mode: RWAOverviewMode
-	metricLabel: string
-	selectedModeLabel: string
-}) => {
-	if (mode === 'assetGroup') return `RWA ${metricLabel} in ${selectedModeLabel}`
-	if (mode === 'category') return `RWA ${metricLabel} by Category`
-	if (!selectedModeLabel || selectedModeLabel === 'All') return `RWA ${metricLabel}`
-	return `RWA ${metricLabel} on ${selectedModeLabel}`
-}
-
-const pieChartRadius = ['50%', '70%'] as [string, string]
-const pieChartLegendPosition = {
-	left: 'center',
-	top: 'bottom',
-	orient: 'horizontal',
-	formatter(name: string) {
-		return name
-	}
-} as const
-const pieChartLegendTextStyle = { fontSize: 14 }

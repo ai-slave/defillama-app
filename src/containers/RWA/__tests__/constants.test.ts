@@ -1,9 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	getDefaultRWAOverviewInclusion,
-	getDefaultSelectedTypes,
-	inferPlatformRWAOverviewInclusion
-} from '../constants'
+import { getDefaultRWAOverviewInclusion, inferPlatformRWAOverviewInclusion } from '../constants'
 
 describe('getDefaultRWAOverviewInclusion', () => {
 	test('enables stablecoins and governance by default for rwa-yield-wrapper category pages', () => {
@@ -11,7 +7,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 			includeStablecoins: true,
 			includeGovernance: true,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -21,7 +18,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 				includeStablecoins: true,
 				includeGovernance: false,
 				includeRwaPerps: false,
-				includeBridgeTvl: true
+				includeBridgeTvl: true,
+				includeWrappers: false
 			})
 		}
 	})
@@ -33,7 +31,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 			includeStablecoins: false,
 			includeGovernance: true,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: false
 		})
 	})
 
@@ -42,7 +41,8 @@ describe('getDefaultRWAOverviewInclusion', () => {
 			includeStablecoins: true,
 			includeGovernance: true,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -51,19 +51,22 @@ describe('getDefaultRWAOverviewInclusion', () => {
 			includeStablecoins: false,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: false
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug: 'other-platform' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 		expect(getDefaultRWAOverviewInclusion({ mode: 'chain' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: false
 		})
 	})
 })
@@ -76,7 +79,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 			includeStablecoins: true,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -132,7 +136,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 			includeStablecoins: false,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -146,7 +151,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 			includeStablecoins: true,
 			includeGovernance: false,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -158,7 +164,8 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 			includeStablecoins: false,
 			includeGovernance: true,
 			includeRwaPerps: false,
-			includeBridgeTvl: true
+			includeBridgeTvl: true,
+			includeWrappers: true
 		})
 	})
 
@@ -170,24 +177,5 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 				{ stablecoin: true, governance: true, onChainMcap: { total: 10 } }
 			])
 		).toMatchObject({ includeStablecoins: true, includeGovernance: false })
-	})
-})
-
-describe('getDefaultSelectedTypes', () => {
-	const allTypes = ['Asset', 'Platform', 'Wrapper', 'Perp', 'Unknown']
-
-	test('selects asset, platform, and wrapper types by default for other-rwas and rwa-wrappers category pages', () => {
-		for (const categorySlug of ['other-rwas', 'rwa-wrappers']) {
-			expect(getDefaultSelectedTypes(allTypes, 'category', categorySlug)).toEqual(['Asset', 'Platform', 'Wrapper'])
-		}
-	})
-
-	test('keeps wrapper type excluded by default for standard category pages', () => {
-		expect(getDefaultSelectedTypes(allTypes, 'category', 'private-credit')).toEqual([
-			'Asset',
-			'Platform',
-			'Perp',
-			'Unknown'
-		])
 	})
 })

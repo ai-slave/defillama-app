@@ -3,7 +3,6 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
-import { RWATabNav } from '~/containers/RWA/TabNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -54,7 +53,11 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/rwa/chain/${chainSlug}`)
 		}
 
-		const props = await getRWAAssetsOverview({ chain: chainSlug, rwaList })
+		const props = await getRWAAssetsOverview({
+			chain: chainSlug,
+			rwaList,
+			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
+		})
 
 		if (!props) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
@@ -77,7 +80,6 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 			pageName={pageName}
 			canonicalUrl={`/rwa/chain/${props.chainSlug}`}
 		>
-			<RWATabNav active="chains" />
 			<RWAOverview {...props} />
 		</Layout>
 	)

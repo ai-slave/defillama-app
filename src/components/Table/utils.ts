@@ -1,4 +1,4 @@
-import type { ColumnOrderState, RowData, Table } from '@tanstack/react-table'
+import type { ColumnOrderState, Row, RowData, Table } from '@tanstack/react-table'
 import {
 	column_getFilterValue,
 	column_setFilterValue,
@@ -219,11 +219,14 @@ export function useSortColumnOrders<F extends OrderingFeatures, T extends RowDat
 export function prepareTableCsv<F extends VisibilityFeatures, T extends RowData>({
 	instance,
 	filename,
-	includeHiddenColumns = false
+	includeHiddenColumns = false,
+	rows: rowsOverride
 }: {
 	instance: Table<F, T>
 	filename: string
 	includeHiddenColumns?: boolean
+	/** Rows to export instead of the expanded row model. */
+	rows?: Array<Row<F, T>>
 }): {
 	filename: string
 	rows: Array<Array<CsvCell>>
@@ -231,7 +234,7 @@ export function prepareTableCsv<F extends VisibilityFeatures, T extends RowData>
 	const columns = (includeHiddenColumns ? instance.getAllLeafColumns() : table_getVisibleLeafColumns(instance)).filter(
 		(column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly
 	)
-	const tableRows = instance.getPrePaginatedRowModel().rows
+	const tableRows = rowsOverride ?? instance.getPrePaginatedRowModel().rows
 	if (columns.length === 0) return { filename, rows: [] }
 
 	const headers = columns.map((column) => {
