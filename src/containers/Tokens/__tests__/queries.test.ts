@@ -469,7 +469,7 @@ describe('buildTokensSourceRows', () => {
 		expect(result.updatedAt).toBe('2026-06-29T01:00:00Z')
 		expect(result.stats).toMatchObject({
 			totalMarketCap: 1050,
-			marketCapWeightedChange24h: -2.5,
+			marketCapWeightedChange24h: expect.closeTo(-2.5, 10),
 			spotVolume24h: 100,
 			perpsVolume24h: 250,
 			openInterest24h: 325,
@@ -531,6 +531,45 @@ describe('buildTokensSourceRows', () => {
 			href: null,
 			rights: null
 		})
+	})
+
+	test('measures the aggregate market cap change so a repriced dust token cannot dominate it', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'bitcoin',
+					name: 'Bitcoin',
+					symbol: 'btc',
+					current_price: 1,
+					market_cap: 1000,
+					price_change_percentage_24h: 2
+				},
+				{
+					id: 'dust',
+					name: 'Dust',
+					symbol: 'dst',
+					current_price: 1,
+					market_cap: 10,
+					price_change_percentage_24h: 45_000_000_000
+				},
+				{ id: 'dead', name: 'Dead', symbol: 'ded', current_price: 0, market_cap: 0, price_change_percentage_24h: -100 }
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {},
+				tokenFilterMetadata: tokenFilterMetadata()
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.stats.marketCapWeightedChange24h).toBeCloseTo(3.02, 2)
 	})
 
 	test('uses the shared snapshot metrics even when local metadata would derive another value', () => {

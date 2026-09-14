@@ -380,8 +380,8 @@ export function buildTokensSourceRows({
 		unlock30dUsd: unlocks === null ? null : 0,
 		upcomingUnlockUsd: unlocks === null ? null : 0
 	}
-	let weightedChangeMarketCap = 0
-	let weightedChangeNumerator = 0
+	let marketCapNow = 0
+	let marketCapDayAgo = 0
 
 	let index = 0
 	for (const token of tokens) {
@@ -464,15 +464,15 @@ export function buildTokensSourceRows({
 			categories
 		}
 		addStats(stats, row)
-		if (row.marketCap != null && row.priceChange24h != null) {
-			weightedChangeMarketCap += row.marketCap
-			weightedChangeNumerator += row.marketCap * row.priceChange24h
+		if (row.marketCap != null && row.priceChange24h != null && row.priceChange24h > -100) {
+			marketCapNow += row.marketCap
+			marketCapDayAgo += row.marketCap / (1 + row.priceChange24h / 100)
 		}
 		rows.push(row)
 		index++
 	}
 
-	if (weightedChangeMarketCap > 0) stats.marketCapWeightedChange24h = weightedChangeNumerator / weightedChangeMarketCap
+	if (marketCapDayAgo > 0) stats.marketCapWeightedChange24h = ((marketCapNow - marketCapDayAgo) / marketCapDayAgo) * 100
 
 	const { chainOptions, categoryOptions } = buildTokenFilterOptions(rows, metadata)
 	return {
