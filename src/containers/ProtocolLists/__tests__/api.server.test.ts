@@ -1,0 +1,129 @@
+import { beforeEach, expect, test, vi } from 'vitest'
+import type { ApiQuery } from '~/server/api/types'
+import type { IRecentProtocolsPageData } from '../types'
+
+const mocks = vi.hoisted(() => ({
+	current: vi.fn(),
+	read: vi.fn(),
+	publish: vi.fn(),
+	recent: vi.fn(),
+	airdrops: vi.fn()
+}))
+vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
+	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
+	createRedisBlobStore: () => ({ readCurrent: mocks.current, readVersion: mocks.read, publish: mocks.publish })
+}))
+vi.mock('../queries', () => ({ getRecentProtocols: mocks.recent, getAirdropsProtocols: mocks.airdrops }))
+vi.mock('~/server/api/resultCache', () => ({
+	cachedResult: (_namespace: string, _key: string, _memory: unknown, build: () => unknown) => build()
+}))
+import { protocolListsApi } from '../server/api'
+import { getProtocolListInitialProps } from '../server/tableData.server'
+
+const source: IRecentProtocolsPageData = {
+	chainList: ['Ethereum'],
+	categories: ['Lending'],
+	forkedList: {},
+	protocols: Array.from({ length: 80 }, (_, i) => ({
+		defillamaId: String(i),
+		name: `Protocol ${i}`,
+		symbol: '-',
+		logo: null,
+		url: '',
+		category: 'Lending',
+		chains: ['Ethereum'],
+		listedAt: i,
+		mcap: null,
+		tvl: i,
+		tvlPrevDay: i,
+		tvlPrevWeek: i,
+		tvlPrevMonth: i,
+		chainTvls: { Ethereum: { tvl: i, tvlPrevDay: i, tvlPrevWeek: i, tvlPrevMonth: i } },
+		extraTvl: {}
+	}))
+}
+const request = (query: ApiQuery) => protocolListsApi.handle({ method: 'GET', url: '', headers: {}, query })
+beforeEach(() => {
+	vi.clearAllMocks()
+	mocks.current.mockResolvedValue(null)
+	mocks.publish.mockResolvedValue(true)
+	mocks.recent.mockResolvedValue(source)
+	mocks.airdrops.mockResolvedValue({
+		...source,
+		claimableAirdrops: [{ name: 'Claim', page: 'https://example.com/claim' }]
+	})
+	mocks.read.mockImplementation(
+		async (_kind, version) =>
+			mocks.publish.mock.calls.map(([snapshot]) => snapshot).find((snapshot) => snapshot.version === version) ?? null
+	)
+})
+test('initial props and subsequent pages share one eligible snapshot with compact initial rows', async () => {
+	const initial = await getProtocolListInitialProps('recent')
+	expect([
+		initial.protocols.length,
+		initial.protocols[0]?.name,
+		initial.protocols.at(-1)?.name,
+		initial.protocolList.total
+	]).toEqual([50, 'Protocol 79', 'Protocol 30', 80])
+	expect(initial.protocols[0]?.chainTvls).toEqual({})
+	expect(initial).not.toHaveProperty('forkedList')
+	const result = await request({
+		kind: 'recent',
+		snapshot: initial.protocolList.version,
+		cursor: initial.protocolList.nextCursor!
+	})
+	expect(result.status).toBe(200)
+	const page = (result as { body: { rows: Array<{ name: string }>; total: number; hasMore: boolean } }).body
+	expect([page.rows.length, page.rows[0]?.name, page.rows.at(-1)?.name, page.total, page.hasMore]).toEqual([
+		30,
+		'Protocol 29',
+		'Protocol 0',
+		80,
+		false
+	])
+	expect(mocks.recent).toHaveBeenCalledTimes(1)
+})
+test('API filtering and complete CSV export reuse the pinned population', async () => {
+	const initial = await getProtocolListInitialProps('airdrops')
+	expect(initial.claimableAirdrops).toEqual([{ name: 'Claim', page: 'https://example.com/claim' }])
+	const result = await request({ kind: 'airdrops', snapshot: initial.protocolList.version, minTvl: '78', csv: 'true' })
+	expect(result.status).toBe(200)
+	expect((result as { body: string }).body).toBe(
+		'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nProtocol 79,Lending,79,,,79,0,0,0\nProtocol 78,Lending,78,,,78,0,0,0'
+	)
+	expect(mocks.airdrops).toHaveBeenCalledTimes(1)
+})
+test('missing versions fail export and signal a page replacement instead of mixing rows', async () => {
+	const initial = await getProtocolListInitialProps('recent')
+	mocks.current.mockResolvedValue(mocks.publish.mock.calls[0]![0])
+	const old = 'abcdefghijklmnopqrst'
+	expect(await request({ kind: 'recent', snapshot: old })).toEqual({
+		status: 409,
+		body: { error: 'snapshot_mismatch', snapshot: initial.protocolList.version }
+	})
+	expect((await request({ kind: 'recent', snapshot: old, csv: 'true' })).status).toBe(503)
+})
+test('without Redis, a rebuild is accepted only when its content hash matches the pinned version', async () => {
+	mocks.publish.mockResolvedValue(false)
+	mocks.read.mockResolvedValue(null)
+	const initial = await getProtocolListInitialProps('recent')
+	expect(
+		(
+			await request({
+				kind: 'recent',
+				snapshot: initial.protocolList.version,
+				cursor: initial.protocolList.nextCursor!
+			})
+		).status
+	).toBe(200)
+	mocks.recent.mockResolvedValue({ ...source, protocols: [] })
+	expect((await request({ kind: 'recent', snapshot: initial.protocolList.version })).status).toBe(409)
+	expect((await request({ kind: 'recent', snapshot: initial.protocolList.version, csv: 'true' })).status).toBe(503)
+})
+test('rejects malformed query and cursor input', async () => {
+	expect((await request({ kind: 'unknown' })).status).toBe(400)
+	expect((await request({ kind: 'recent', snapshot: 'bad' })).status).toBe(400)
+	expect((await request({ kind: 'recent', sort: 'unsupported' })).status).toBe(400)
+	const initial = await getProtocolListInitialProps('recent')
+	expect((await request({ kind: 'recent', snapshot: initial.protocolList.version, cursor: 'bad' })).status).toBe(400)
+})

@@ -35,23 +35,42 @@ The `/protocol/[protocol]` entity page belongs to `ProtocolOverview`. The `/prot
 
 ## Data Flows
 
-Recent protocols:
+Recent protocols and airdrops:
 
 ```text
-src/pages/recent.tsx
-  -> getRecentProtocols()
-  -> RecentProtocols
-  -> RecentProtocolsTable
+src/pages/recent.tsx / src/pages/airdrops.tsx
+  -> getProtocolListInitialProps(kind)
+  -> Redis snapshot built by getRecentProtocols() / getAirdropsProtocols()
+  -> getProtocolListRows() -> cursorTablePage() -> 50 initial rows
+  -> RecentProtocols -> RecentlyListedProtocolsTable -> useTablePages()
+  -> /api/public/protocol-lists (75 rows per subsequent request)
 ```
 
-Airdrops:
+`tableQuery.ts` preserves the existing router parameter parsers and uses the shared
+canonical query signature. `pagination.server.ts` owns chain/category/fork filtering,
+exact TVL scope and settings, bounds, search and stable sorting. Initial data, later
+pages and CSV all use this preparation over the complete eligible population.
+Per-chain TVL sections and fork lookup maps stay on the server. Filter menus follow
+the page snapshot when an expired version triggers replacement.
 
-```text
-src/pages/airdrops.tsx
-  -> getAirdropsProtocols()
-  -> RecentProtocols
-  -> RecentProtocolsTable
-```
+The same endpoint with `csv=true` exports every matching row using `export.server.ts`.
+It requires the displayed snapshot to remain available; unlike page replacement,
+export never silently switches snapshots. The shared CSV button retains subscription,
+loading and failure behavior. The airdrop claim directory and address checker remain
+in `RecentProtocols`.
+
+Snapshots have a 55-minute freshness pointer and four-hour version retention, with
+bounded process caches for snapshots and prepared rows. Like the existing rankings
+snapshot, a healthy build remains usable if Redis publication fails (including
+`next dev`, where the cache client disables Redis). Its exact version is retained
+locally. Another worker can recover it only if its rebuilt content hash matches;
+otherwise pagination replaces at the latest version and export fails. No production
+configuration is changed here.
+
+Default listing order is newest first on both pages, matching the former table sort
+(including airdrops, whose source builder orders ascending). Equal values use protocol
+ID as a deterministic tie-breaker. Explicit empty category selections and the legacy
+`category=All` / `category=None` empty-result behavior remain unchanged.
 
 Token metric lists:
 

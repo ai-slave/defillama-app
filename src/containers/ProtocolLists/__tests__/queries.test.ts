@@ -19,7 +19,7 @@ vi.mock('~/containers/Chains/api', () => ({
 	fetchChainsByCategoryAll: mocks.fetchChainsByCategoryAll
 }))
 
-import { getAirdropsProtocols, getExtraTvlByChain, getProtocolsMarketCapsByChain } from '../queries'
+import { getAirdropsProtocols, getRecentProtocols, getExtraTvlByChain, getProtocolsMarketCapsByChain } from '../queries'
 
 const tvlEntry = (tvl: number | null, tvlPrevMonth: number | null = tvl) => ({
 	tvl,
@@ -99,6 +99,57 @@ beforeEach(() => {
 })
 
 describe('ProtocolLists queries', () => {
+	test('keeps tokenless children only when neither explicit nor parent-token exclusions apply', async () => {
+		const base = liteProtocol({ defillamaId: 'base', name: 'Eligible', mcap: null, borrowed: null })
+		mocks.fetchProtocols.mockResolvedValue(
+			response({
+				protocols: [
+					{ ...base, symbol: '-' },
+					{ ...base, name: 'Has Token', symbol: 'TOKEN' },
+					{ ...base, name: 'DeerFi', symbol: '-' },
+					{ ...base, name: 'Token Parent Child', symbol: '-', parentProtocol: 'parent#token' },
+					{ ...base, name: 'Tokenless Parent Child', defillamaId: 'child', symbol: '-', parentProtocol: 'parent#none' },
+					{
+						...base,
+						name: 'Unknown Parent Child',
+						defillamaId: 'unknown',
+						symbol: '-',
+						parentProtocol: 'parent#unknown'
+					}
+				],
+				parentProtocols: [
+					{ ...parentProtocol('parent#token', 'Token Parent', 1), gecko_id: 'token' },
+					parentProtocol('parent#none', 'Tokenless Parent', null)
+				]
+			})
+		)
+		const result = await getAirdropsProtocols()
+		expect(result.protocols.map((row) => row.name)).toEqual([
+			'Eligible',
+			'Tokenless Parent Child',
+			'Unknown Parent Child'
+		])
+	})
+	test('recent includes dated individual listings, preserving timestamps and newest-first order', async () => {
+		const base = liteProtocol({ defillamaId: 'base', name: 'Undated', mcap: null, borrowed: null })
+		mocks.fetchProtocols.mockResolvedValue(
+			response({
+				protocols: [
+					base,
+					{ ...base, name: 'Older', listedAt: 100 },
+					{ ...base, name: 'Newer Child', parentProtocol: 'parent#one', listedAt: 200 },
+					{ ...base, name: 'Epoch', listedAt: 0 }
+				],
+				parentProtocols: []
+			})
+		)
+		const result = await getRecentProtocols()
+		expect(result.protocols.map((row) => [row.name, row.listedAt])).toEqual([
+			['Newer Child', 200],
+			['Older', 100],
+			['Epoch', 0]
+		])
+	})
 	test.each([
 		['funding rounds', () => mocks.fetchRaises.mockRejectedValueOnce(new Error('raises unavailable'))],
 		['claimable airdrops', () => mocks.fetchAirdropsConfig.mockRejectedValueOnce(new Error('airdrops unavailable'))]

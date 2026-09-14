@@ -1,12 +1,12 @@
 import type { InferGetStaticPropsType } from 'next'
-import { getRecentProtocols } from '~/containers/ProtocolLists/queries'
 import { RecentProtocols } from '~/containers/ProtocolLists/RecentProtocols'
+import { getProtocolListInitialProps } from '~/containers/ProtocolLists/server/tableData.server'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('recent', async () => {
-	const data = await getRecentProtocols()
+	const data = await getProtocolListInitialProps('recent')
 
 	return {
 		props: data,

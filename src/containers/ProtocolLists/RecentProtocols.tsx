@@ -1,132 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useRouter } from 'next/router'
-import { useMemo } from 'react'
-import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
-import { parseNumberQueryParam, parseExcludeParam, getSelectedChainFilters } from '~/utils/routerQuery'
 import { airdropsEligibilityCheck } from './airdrops'
 import { RecentlyListedProtocolsTable } from './RecentProtocolsTable'
-import type { IRecentProtocol, IRecentProtocolsPageData } from './types'
-import { applyExtraTvl, scopeRecentProtocolToChains } from './utils'
+import type { ProtocolListInitialProps } from './tableQuery'
 
-export function RecentProtocols({
-	protocols,
-	chainList,
-	categories,
-	forkedList,
-	claimableAirdrops
-}: IRecentProtocolsPageData) {
-	const router = useRouter()
-	const {
-		chain,
-		excludeChain,
-		category,
-		excludeCategory,
-		hideForks,
-		minTvl: minTvlQuery,
-		maxTvl: maxTvlQuery
-	} = router.query
-
-	const minTvl = parseNumberQueryParam(minTvlQuery)
-	const maxTvl = parseNumberQueryParam(maxTvlQuery)
-
-	const toHideForkedProtocols = hideForks === 'true'
-	const hasCategoryParam = Object.hasOwn(router.query, 'category')
-
-	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
-
-	const { selectedChains, selectedCategories, data } = useMemo(() => {
-		const excludeChainSet = parseExcludeParam(excludeChain)
-		let selectedChains = getSelectedChainFilters(chain, chainList)
-		selectedChains = excludeChainSet.size > 0 ? selectedChains.filter((c) => !excludeChainSet.has(c)) : selectedChains
-
-		const excludeCategorySet = parseExcludeParam(excludeCategory)
-		let selectedCategories =
-			categories.length > 0 && hasCategoryParam && category === ''
-				? []
-				: category
-					? typeof category === 'string'
-						? [category]
-						: category
-					: categories
-
-		selectedCategories =
-			excludeCategorySet.size > 0
-				? selectedCategories.filter((selectedCategory) => !excludeCategorySet.has(selectedCategory))
-				: selectedCategories
-
-		const categoriesToFilterSet = new Set(
-			selectedCategories
-				.filter(
-					(selectedCategory) => selectedCategory.toLowerCase() !== 'all' && selectedCategory.toLowerCase() !== 'none'
-				)
-				.map((selectedCategory) => selectedCategory.toLowerCase())
-		)
-
-		const chainsToSelectSet = new Set(selectedChains.map((t) => t.toLowerCase()))
-
-		// TVL range should work with min-only, max-only, or both.
-		const isValidTvlRange = minTvl != null || maxTvl != null
-
-		const filteredProtocols: Array<IRecentProtocol> = []
-
-		for (const protocol of protocols) {
-			// filter out forked protocols
-			if (toHideForkedProtocols && forkedList?.[protocol.name]) continue
-
-			// filter out protocols by category
-			if (categories.length > 0) {
-				if (selectedCategories.length === 0) continue
-				if (categoriesToFilterSet.size > 0) {
-					const protocolCategory = protocol.category?.toLowerCase() ?? ''
-					if (!categoriesToFilterSet.has(protocolCategory)) continue
-				}
-			}
-
-			// filter if a protocol has at least one selected chain
-			let includesChain = false
-			for (const c of protocol.chains) {
-				if (chainsToSelectSet.has(c.toLowerCase())) {
-					includesChain = true
-					break
-				}
-			}
-			if (!includesChain) continue
-
-			filteredProtocols.push(scopeRecentProtocolToChains({ protocol, selectedChains: chainsToSelectSet }))
-		}
-
-		// Apply extraTvl toggles (staking/pool2/borrowed)
-		const withExtraTvl = applyExtraTvl(filteredProtocols, extraTvlsEnabled)
-
-		if (isValidTvlRange) {
-			const rangeFiltered = withExtraTvl.filter(
-				(p) => p.tvl != null && (minTvl != null ? p.tvl >= minTvl : true) && (maxTvl != null ? p.tvl <= maxTvl : true)
-			)
-			return { data: rangeFiltered, selectedChains, selectedCategories }
-		}
-
-		return { data: withExtraTvl, selectedChains, selectedCategories }
-	}, [
-		protocols,
-		chain,
-		excludeChain,
-		category,
-		excludeCategory,
-		hasCategoryParam,
-		chainList,
-		categories,
-		forkedList,
-		toHideForkedProtocols,
-		minTvl,
-		maxTvl,
-		extraTvlsEnabled
-	])
-
+export function RecentProtocols({ claimableAirdrops, ...props }: ProtocolListInitialProps) {
 	const {
 		data: eligibleAirdrops,
 		mutate: checkEligibleAirdrops,
@@ -311,14 +193,7 @@ export function RecentProtocols({
 				</span>
 			) : null}
 
-			<RecentlyListedProtocolsTable
-				data={data}
-				selectedChains={selectedChains}
-				selectedCategories={selectedCategories}
-				chainList={chainList}
-				categories={categories}
-				forkedList={forkedList}
-			/>
+			<RecentlyListedProtocolsTable {...props} />
 		</>
 	)
 }

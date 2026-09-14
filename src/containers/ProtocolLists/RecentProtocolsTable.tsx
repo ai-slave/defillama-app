@@ -1,10 +1,4 @@
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	type ExpandedState,
-	type SortingState,
-	useTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type ExpandedState, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
@@ -15,12 +9,15 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
-import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
+import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { useDebouncedValue } from '~/hooks/useDebounce'
+import { useTablePages } from '~/hooks/useTablePages'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
@@ -28,111 +25,92 @@ import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
+import { downloadBlob } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import type { IRecentProtocol } from './types'
+import { isProtocolListTvlKey } from './api.types'
+import type { ProtocolListInitialProps, ProtocolListPage, RecentProtocolTableRow } from './tableQuery'
+import {
+	protocolListQuery,
+	protocolListSelection,
+	protocolListSignature,
+	protocolListUrl,
+	PROTOCOL_LIST_SORT_KEYS
+} from './tableQuery'
 
-export const tableFeaturesConfig = expandedFilteredTableFeatures
+const tableFeaturesConfig = expandedFilteredTableFeatures
 
-/** Row type after applyExtraTvl adds change/mcaptvl fields. */
-type RecentProtocolTableRow = IRecentProtocol & {
-	change_1d: number | null
-	change_7d: number | null
-	change_1m: number | null
-	mcaptvl: number | null
-}
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, RecentProtocolTableRow>()
 
-function normaliseCategoryFilterValues(values: unknown): Array<string> {
-	if (Array.isArray(values)) {
-		return values.filter((value): value is string => typeof value === 'string')
-	}
-
-	if (typeof values === 'string') {
-		return [values]
-	}
-
-	return []
-}
-
-function areCategoryFiltersEqual(current: unknown, next: Array<string> | undefined): boolean {
-	const currentValues = normaliseCategoryFilterValues(current).map((value) => value.toLowerCase())
-	const nextValues = (next ?? []).map((value) => value.toLowerCase())
-
-	if (currentValues.length !== nextValues.length) return false
-
-	const currentSet = new Set(currentValues)
-	for (const value of nextValues) {
-		if (!currentSet.has(value)) return false
-	}
-
-	return true
-}
-
 export function RecentlyListedProtocolsTable({
-	data,
-	selectedChains,
-	selectedCategories,
+	protocols,
+	protocolList,
+	kind,
 	chainList,
-	categories,
-	forkedList
-}: {
-	data: Array<RecentProtocolTableRow>
-	selectedChains: Array<string>
-	selectedCategories: Array<string>
-	chainList: Array<string>
-	categories: Array<string>
-	forkedList?: Record<string, boolean>
-}) {
-	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'listedAt' }])
-	const [expanded, setExpanded] = React.useState<ExpandedState>({})
-	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-
+	categories
+}: Omit<ProtocolListInitialProps, 'claimableAirdrops'>) {
 	const router = useRouter()
-	const csvFileName = router.pathname === '/airdrops' ? 'airdrops' : 'protocols'
-
-	const columns = router.pathname === '/airdrops' ? airdropsColumns : recentlyListedProtocolsColumns
+	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
+	const [expanded, setExpanded] = React.useState<ExpandedState>({})
+	const sort =
+		typeof router.query.sort === 'string' && PROTOCOL_LIST_SORT_KEYS.includes(router.query.sort)
+			? router.query.sort
+			: 'listedAt'
+	const sorting: SortingState = [{ id: sort, desc: router.query.order !== 'asc' }]
+	const nameSearch = typeof router.query.search === 'string' ? router.query.search : ''
+	const search = useDebouncedValue(nameSearch, nameSearch ? 250 : 0)
+	const query = protocolListQuery({
+		...router.query,
+		sort,
+		search,
+		tvlKeys: Object.keys(extraTvlsEnabled).filter((key) => isProtocolListTvlKey(key) && extraTvlsEnabled[key])
+	})
+	const pages = useTablePages<RecentProtocolTableRow, ProtocolListPage>({
+		mode: 'cursor',
+		sourceKey: `${kind}:${protocolList.version}`,
+		initialRows: protocols,
+		initialPage: { ...protocolList, chainList, categories },
+		querySignature: protocolListSignature(query),
+		defaultQuerySignature: protocolListSignature({}),
+		getRowKey: (row: RecentProtocolTableRow) => row.defillamaId,
+		buildPageUrl: ({ version, cursor }) => protocolListUrl(kind, query, version, cursor)
+	})
+	const { selectedChains, selectedCategories } = protocolListSelection(query, pages.chainList, pages.categories)
+	const columns = kind === 'airdrops' ? airdropsColumns : recentlyListedProtocolsColumns
+	const downloadCsv = async () => {
+		const response = await fetch(protocolListUrl(kind, query, pages.version, null, true))
+		if (!response.ok) throw new Error('Unable to export protocol list')
+		downloadBlob(kind === 'airdrops' ? 'airdrops.csv' : 'protocols.csv', await response.blob())
+	}
 
 	const instance = useTable({
 		features: tableFeaturesConfig,
-		data,
+		data: pages.rows,
 		columns,
 		state: {
 			sorting,
-			expanded,
-			columnFilters
+			expanded
 		},
 		defaultColumn: {
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),
-		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
+		manualSorting: true,
+		manualFiltering: true,
+		onSortingChange: (updater) => {
+			const next = typeof updater === 'function' ? updater(sorting) : updater
+			void pushShallowQuery(router, {
+				sort: next[0]?.id ?? 'listedAt',
+				order: next[0]?.desc === false ? 'asc' : 'desc'
+			})
+		}
 	})
-
-	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
-
-	React.useEffect(() => {
-		const categoryColumn = instance.getColumn('category')
-		if (!categoryColumn || categories.length === 0) return
-
-		const categoryFilterValues = selectedCategories.filter((selectedCategory) => {
-			const lowerCategory = selectedCategory.toLowerCase()
-			return lowerCategory !== 'all' && lowerCategory !== 'none'
-		})
-		const nextFilterValue = categoryFilterValues.length === categories.length ? undefined : categoryFilterValues
-
-		if (areCategoryFiltersEqual(categoryColumn.getFilterValue(), nextFilterValue)) return
-
-		React.startTransition(() => {
-			categoryColumn.setFilterValue(nextFilterValue)
-		})
-	}, [instance, categories, selectedCategories])
 
 	return (
 		<Panel padding="none">
@@ -141,19 +119,20 @@ export function RecentlyListedProtocolsTable({
 					<span className="sr-only">Search protocols</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
-						onInput={(e) => setProjectName(e.currentTarget.value)}
+						value={nameSearch}
+						onChange={(e) => void pushShallowQuery(router, { search: e.currentTarget.value })}
 						placeholder="Search protocols..."
 						className={searchFieldInputStyles}
 					/>
 				</label>
 
 				<div className="flex items-start gap-1.5 max-sm:w-full max-sm:flex-col sm:items-center">
-					{forkedList ? <HideForkedProtocols /> : null}
+					<HideForkedProtocols />
 
 					<div className="flex w-full items-center gap-1.5 sm:w-auto">
 						<SelectWithCombobox
 							label="Chains"
-							allValues={chainList}
+							allValues={pages.chainList}
 							selectedValues={selectedChains}
 							includeQueryKey="chain"
 							excludeQueryKey="excludeChain"
@@ -161,10 +140,10 @@ export function RecentlyListedProtocolsTable({
 							variant="filter-responsive"
 							size="md"
 						/>
-						{categories.length > 0 ? (
+						{pages.categories.length > 0 ? (
 							<SelectWithCombobox
 								label="Category"
-								allValues={categories}
+								allValues={pages.categories}
 								selectedValues={selectedCategories}
 								includeQueryKey="category"
 								excludeQueryKey="excludeCategory"
@@ -176,10 +155,14 @@ export function RecentlyListedProtocolsTable({
 						<TVLRange size="md" />
 					</div>
 
-					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
+					<CSVDownloadButton onClick={downloadCsv} isLoading={false} smol size="md" />
 				</div>
 			</TableToolbar>
-			<VirtualTable table={instance} />
+			<div className="relative">
+				<VirtualTable table={instance} />
+				{pages.isReplacing ? <SurfaceLoadingOverlay label="Updating protocols…" /> : null}
+			</div>
+			<TablePagesStatus {...pages} rowCount={pages.rows.length} noun="protocols" />
 		</Panel>
 	)
 }
@@ -263,17 +246,6 @@ const protocolsColumns = columnHelper.columns([
 	}),
 	columnHelper.accessor('category', {
 		header: 'Category',
-		filterFn: (row, columnId, filterValue) => {
-			const selectedCategories = normaliseCategoryFilterValues(filterValue)
-			if (selectedCategories.length === 0) return false
-
-			const rowCategory = `${row.getValue(columnId) ?? ''}`.toLowerCase()
-			for (const selectedCategory of selectedCategories) {
-				if (rowCategory === selectedCategory.toLowerCase()) return true
-			}
-
-			return false
-		},
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return value ? (
@@ -415,22 +387,16 @@ const recentlyListedProtocolsColumns = [
 	...protocolsColumns.slice(3, -1)
 ]
 
-export const airdropsColumns = columnHelper.columns([
+const airdropsColumns = columnHelper.columns([
 	...protocolsColumns.slice(0, 3),
 	columnHelper.accessor((row) => row.raiseSummary?.totalUsd ?? undefined, {
 		id: 'totalRaised',
 		header: 'Total Money Raised',
 		cell: ({ row }) => (row.original.raiseSummary ? <RaisesTotal {...row.original.raiseSummary} /> : null),
 		meta: {
-			csvHeader: 'Disclosed Money Raised',
 			headerClassName: 'w-[168px]',
 			align: 'end'
 		}
-	}),
-	columnHelper.accessor((row) => row.raiseSummary?.undisclosedCount ?? undefined, {
-		id: 'undisclosedRounds',
-		header: 'Undisclosed Funding Rounds',
-		meta: { hidden: true, csvOnly: true }
 	}),
 	listedAtColumn,
 	...protocolsColumns.slice(3, -1)

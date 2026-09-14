@@ -1,23 +1,15 @@
 import type { InferGetStaticPropsType } from 'next'
 import { tvlOptions } from '~/components/Filters/options'
 import { isProtocolListTvlKey } from '~/containers/ProtocolLists/api.types'
+import { getProtocolRankingRows, paginateProtocolRankingRows } from '~/containers/ProtocolRankings/pagination.server'
 import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
-import { PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS } from '~/containers/ProtocolRankings/sortAccessors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
-import type { IChildProtocol, IProtocol } from '~/containers/ProtocolRankings/types'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_LIMITS } from '~/containers/ProtocolRankings/tableQuery'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 const protocolTvlOptions = tvlOptions.filter((option) => isProtocolListTvlKey(option.key))
-
-// The shared snapshot carries extended activity metrics this page's local-mode
-// table never renders; strip them so its already-large props payload doesn't grow.
-function toBaseRow<Row extends IChildProtocol>(row: Row): Row {
-	const base = { ...row }
-	for (const key of PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS) delete base[key]
-	return base
-}
 
 export const getStaticProps = withPerformanceLogging('protocols', async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
@@ -30,20 +22,23 @@ export const getStaticProps = withPerformanceLogging('protocols', async () => {
 		categoriesAndTagsMetadata: metadataCache.categoriesAndTags
 	})
 
-	const protocols: Array<IProtocol> = snapshot.protocols.map((protocol) => ({
-		...toBaseRow(protocol),
-		...(protocol.childProtocols ? { childProtocols: protocol.childProtocols.map(toBaseRow) } : {})
-	}))
+	const { rows: protocols, ...protocolRankings } = paginateProtocolRankingRows({
+		snapshot,
+		query: DEFAULT_PROTOCOL_RANKING_QUERY,
+		rows: getProtocolRankingRows(snapshot, DEFAULT_PROTOCOL_RANKING_QUERY),
+		limit: PROTOCOL_RANKINGS_LIMITS.initial
+	})
 
 	return {
 		props: {
-			protocols
+			protocols,
+			protocolRankings
 		},
 		revalidate: maxAgeForNext([22])
 	}
 })
 
-export default function Protocols({ protocols }: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function Protocols({ protocols, protocolRankings }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="DeFi Protocol Rankings - TVL & Revenue - DefiLlama"
@@ -51,7 +46,7 @@ export default function Protocols({ protocols }: InferGetStaticPropsType<typeof 
 			canonicalUrl="/protocols"
 			tvlOptions={protocolTvlOptions}
 		>
-			<ChainProtocolsTable protocols={protocols} headingAs="h1" />
+			<ChainProtocolsTable protocols={protocols} protocolRankings={protocolRankings} headingAs="h1" />
 		</Layout>
 	)
 }
