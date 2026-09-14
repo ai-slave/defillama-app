@@ -97,7 +97,7 @@ const META = {
 			name: 'Lido',
 			category: 'Liquid Staking',
 			has_audit: true,
-			has_token: true
+			potential_airdrop: false
 		}
 	],
 	categories: [{ slug: 'liquid-staking', name: 'Liquid Staking' }],

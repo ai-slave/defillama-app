@@ -98,10 +98,10 @@ const DEAD_ATTRIBUTE_VALUES = new Set([
 	'no_memecoins'
 ])
 
-// Renamed live v1 `attribute=` values: mapped onto their canonical v2 key instead of dropped.
-// v1's `airdrop` (token-less protocols) is the v2 `no_protocol_token` filter.
+// Renamed live `attribute=` values: mapped onto their canonical key instead of dropped.
+// `no_protocol_token` was the previous key for the airdrop filter.
 const LEGACY_ATTRIBUTE_ALIASES: Record<string, string> = {
-	airdrop: 'no_protocol_token'
+	no_protocol_token: 'airdrop'
 }
 
 // The three v1 column-visibility params that map onto a v2 `column=`; every other `show*`

@@ -156,7 +156,7 @@ async function buildPreparedEarn(
 	const singleAssetExposure = parseTriState(query, 'singleAssetExposure')
 	const noIlRisk = queryBoolean(query, 'noIlRisk')
 	const hasAudit = queryBoolean(query, 'hasAudit')
-	const protocolHasToken = parseTriState(query, 'protocolHasToken')
+	const potentialAirdrop = parseTriState(query, 'potentialAirdrop')
 	// Narrows to pools we measure on-chain. Coverage is sparse (~124 of 15k), so this is the
 	// only practical way to find them without scanning the whole table.
 	const verifiedOnly = queryBoolean(query, 'verified')
@@ -183,7 +183,7 @@ async function buildPreparedEarn(
 		if (noIlRisk && row.attributes.impermanent_loss_risk !== false) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (verifiedOnly && !row.verified) continue
-		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
+		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
 		if (minTvl != null && !(row.tvl_usd != null && row.tvl_usd >= minTvl)) continue
 		if (maxTvl != null && !(row.tvl_usd != null && row.tvl_usd <= maxTvl)) continue
 		if (!matchesToken(tokenFilterInput(row))) continue
@@ -277,7 +277,7 @@ function toEarnPageRow(
 	// stability tooltip matches the APY column.
 	const stabilityAvg30d = resolveApy(row.apy, row.intrinsic, 'avg_30d', stabilityComponents).total
 	// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
-	const airdrop = !row.protocolHasToken
+	const airdrop = row.potentialAirdrop
 	// Same lookup /token/[token] resolves with — untracked symbols get no link.
 	const referenceTokenRecord = row.reference_asset_symbol ? tokenDirectory[slug(row.reference_asset_symbol)] : undefined
 	return {

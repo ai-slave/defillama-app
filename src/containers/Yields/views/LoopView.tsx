@@ -53,7 +53,7 @@ function LoopView({
 		chain: selectedSubsetQuery(selectedChains, chainList),
 		protocol: selectedSubsetQuery(selectedProjects, projectList),
 		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
-		protocolHasToken: attributeSet.has('no_protocol_token') ? 'false' : undefined,
+		potentialAirdrop: attributeSet.has('airdrop') ? 'true' : undefined,
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
 	}
 

@@ -40,7 +40,7 @@ afterAll(() => warn.mockRestore())
 function validMeta() {
 	return {
 		chains: [{ slug: 'ethereum', name: 'Ethereum', is_evm: true }],
-		protocols: [{ slug: 'aave-v3', name: 'Aave V3', category: 'Lending', has_audit: true, has_token: true }],
+		protocols: [{ slug: 'aave-v3', name: 'Aave V3', category: 'Lending', has_audit: true, potential_airdrop: false }],
 		categories: [{ slug: 'lending', name: 'Lending' }],
 		tokens: { families: [{ value: 'family:eth', symbol: 'ETH' }], assets: [] },
 		halal: [],

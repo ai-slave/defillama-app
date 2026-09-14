@@ -111,7 +111,7 @@ function makeRow(id: string, keys: Partial<TokenKeys>): EnrichedEarnRow {
 		isEvm: true,
 		category: 'Dexs',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: { id, ...keys },
 		available_supply_usd: null

@@ -64,7 +64,7 @@ function row(id: string): EnrichedEarnRow {
 		isEvm: true,
 		category: 'Dexs',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: null
 	}

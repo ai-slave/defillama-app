@@ -71,7 +71,7 @@ function route(
 		isEvm: true,
 		category: null,
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		collateral: {
 			id: collateralId,
 			pool_key: collateralId,

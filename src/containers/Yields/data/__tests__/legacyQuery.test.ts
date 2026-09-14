@@ -51,9 +51,9 @@ describe('canonicalizeLegacyYieldsQuery', () => {
 		})
 	})
 
-	test('maps the renamed airdrop attribute to no_protocol_token', () => {
-		expect(earn({ attribute: 'airdrop' })).toEqual({ attribute: 'no_protocol_token' })
-		expect(earn({ attribute: ['airdrop', 'audited'] })).toEqual({ attribute: ['no_protocol_token', 'audited'] })
+	test('maps the interim no_protocol_token attribute back to airdrop', () => {
+		expect(earn({ attribute: 'no_protocol_token' })).toEqual({ attribute: 'airdrop' })
+		expect(earn({ attribute: ['no_protocol_token', 'audited'] })).toEqual({ attribute: ['airdrop', 'audited'] })
 	})
 
 	test('does not override an explicit minTvl when expanding million_dollar', () => {

@@ -60,7 +60,7 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 		single_exposure: 0,
 		multi_exposure: 0,
 		no_il: 0,
-		no_protocol_token: 0,
+		airdrop: 0,
 		audited: 0,
 		include_meme_tokens: 0,
 		halal: 0,
@@ -79,7 +79,7 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 			for (const key of row.tokenKeys?.borrow_token ?? []) borrowCounts.set(key, (borrowCounts.get(key) ?? 0) + 1)
 		}
 
-		if (!row.protocolHasToken) attributeCounts.no_protocol_token += 1
+		if (row.potentialAirdrop) attributeCounts.airdrop += 1
 		if (row.hasAudit) attributeCounts.audited += 1
 		if (memePoolIds.has(row.id)) attributeCounts.include_meme_tokens += 1
 	}

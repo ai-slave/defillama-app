@@ -216,7 +216,7 @@ function row(id: string, keys: Partial<TokenKeys>, over: Partial<EnrichedEarnRow
 		isEvm: true,
 		category: 'Dexs',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: { id, ...keys },
 		...over,

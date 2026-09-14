@@ -56,7 +56,7 @@ function pool(id: string, tvl: number): EnrichedEarnRow {
 		isEvm: true,
 		category: 'Lending',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: null,
 		available_supply_usd: null

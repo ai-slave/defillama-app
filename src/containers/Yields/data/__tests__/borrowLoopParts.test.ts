@@ -82,7 +82,7 @@ const ENTITY = {
 	isEvm: true,
 	category: null,
 	hasAudit: false,
-	protocolHasToken: false
+	potentialAirdrop: true
 } as const
 
 function loopRow(overrides: Partial<EnrichedLoopRow> = {}): EnrichedLoopRow {
@@ -284,7 +284,7 @@ describe('getBorrowRoutesPage per-leg components', () => {
 })
 
 describe('airdrop raise-valuation stamping', () => {
-	// ENTITY has protocolHasToken:false (airdrop) + protocolSlug:'aave-v3'.
+	// ENTITY has potentialAirdrop:true + protocolSlug:'aave-v3'.
 	test('stamps the valuation on an airdrop market/route/loop row', async () => {
 		raiseValuationsUsdMap.set('aave-v3', 25_000_000)
 		getEnrichedMarkets.mockResolvedValue([marketRow()])
@@ -304,7 +304,7 @@ describe('airdrop raise-valuation stamping', () => {
 
 	test('never stamps a valuation on a non-airdrop row (protocol has a token)', async () => {
 		raiseValuationsUsdMap.set('aave-v3', 25_000_000)
-		getEnrichedMarkets.mockResolvedValue([marketRow({ protocolHasToken: true })])
+		getEnrichedMarkets.mockResolvedValue([marketRow({ potentialAirdrop: false })])
 		const { rows } = await getBorrowMarketsPage({ pageSize: 'all' })
 		expect(rows[0]!.airdrop).toBe(false)
 		expect(rows[0]!.raiseValuationUsd ?? null).toBeNull()

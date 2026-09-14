@@ -69,7 +69,7 @@ function entityEnrichment(protocol: string, chain: string, maps: MetaMaps): Enti
 		isEvm: chainMeta?.is_evm ?? null,
 		category: protocolMeta?.category ?? null,
 		hasAudit: protocolMeta?.has_audit ?? false,
-		protocolHasToken: protocolMeta?.has_token ?? false
+		potentialAirdrop: protocolMeta?.potential_airdrop ?? false
 	}
 }
 

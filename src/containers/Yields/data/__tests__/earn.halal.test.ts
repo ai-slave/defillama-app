@@ -61,7 +61,7 @@ function row(id: string, protocolSlug: string | null, overrides: Partial<Enriche
 		isEvm: true,
 		category: 'Dexs',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: null,
 		...overrides,

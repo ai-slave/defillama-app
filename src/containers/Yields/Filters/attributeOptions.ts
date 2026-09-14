@@ -21,8 +21,8 @@ export const ATTRIBUTE_DEFS = {
 		name: 'No IL risk',
 		help: 'No impermanent loss risk'
 	},
-	no_protocol_token: {
-		key: 'no_protocol_token',
+	airdrop: {
+		key: 'airdrop',
 		name: 'Potential Airdrop',
 		help: 'Protocols with no token yet that might airdrop one to depositors in the future'
 	},
@@ -53,9 +53,9 @@ export const EARN_ATTRIBUTE_IDS: Array<AttributeId> = [
 	'no_il',
 	'single_exposure',
 	'multi_exposure',
-	'no_protocol_token',
+	'airdrop',
 	'halal',
 	'include_meme_tokens'
 ]
 
-export const BORROW_ATTRIBUTE_IDS: Array<AttributeId> = ['no_protocol_token', 'audited', 'include_meme_tokens']
+export const BORROW_ATTRIBUTE_IDS: Array<AttributeId> = ['airdrop', 'audited', 'include_meme_tokens']

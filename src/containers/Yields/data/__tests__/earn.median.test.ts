@@ -62,7 +62,7 @@ function row(id: string, apyTotal: number | null, overrides: Partial<EnrichedEar
 		isEvm: true,
 		category: 'Lending',
 		hasAudit: false,
-		protocolHasToken: false,
+		potentialAirdrop: true,
 		trend: null,
 		tokenKeys: null,
 		...overrides,

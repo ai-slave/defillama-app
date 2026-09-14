@@ -148,7 +148,7 @@ export interface MetaProtocol {
 	name: string
 	category: string | null
 	has_audit: boolean
-	has_token: boolean
+	potential_airdrop: boolean
 }
 
 export interface MetaCategory {
@@ -300,7 +300,7 @@ export interface EntityEnrichment {
 	isEvm: boolean | null
 	category: string | null
 	hasAudit: boolean
-	protocolHasToken: boolean
+	potentialAirdrop: boolean
 }
 
 export type EntityEarnRow = EarnRow & EntityEnrichment

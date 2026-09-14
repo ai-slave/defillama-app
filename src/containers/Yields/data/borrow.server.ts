@@ -63,7 +63,7 @@ function toMarketTableRow(row: EnrichedMarketRow, window: ApyWindow, components:
 		project: row.protocol,
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
-		airdrop: !row.protocolHasToken,
+		airdrop: row.potentialAirdrop,
 		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
@@ -110,7 +110,7 @@ function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: A
 		project: row.protocol,
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
-		airdrop: !row.protocolHasToken,
+		airdrop: row.potentialAirdrop,
 		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
@@ -211,7 +211,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 	const matchesCollateral = createTokensMatcher(pair.collateralTokens)
 	const matchesBorrow = createTokensMatcher(pair.borrowTokens)
 	const hasAudit = queryBoolean(query, 'hasAudit')
-	const protocolHasToken = parseTriState(query, 'protocolHasToken')
+	const potentialAirdrop = parseTriState(query, 'potentialAirdrop')
 	const minAvailable = parseNumber(query, 'minAvailable')
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
@@ -222,7 +222,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 		if (common.categories && !(row.category != null && common.categories.has(row.category))) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
-		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
+		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
 		if (minAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd >= minAvailable))
 			continue
 		if (maxAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd <= maxAvailable))
@@ -294,7 +294,7 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 	const matchesCollateral = createTokensMatcher(pair.collateralTokens)
 	const matchesBorrow = createTokensMatcher(pair.borrowTokens)
 	const hasAudit = queryBoolean(query, 'hasAudit')
-	const protocolHasToken = parseTriState(query, 'protocolHasToken')
+	const potentialAirdrop = parseTriState(query, 'potentialAirdrop')
 	const minAvailable = parseNumber(query, 'minAvailable')
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
@@ -305,7 +305,7 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 		if (common.categories && !(row.category != null && common.categories.has(row.category))) continue
 		if (memePoolIds && (memePoolIds.has(row.collateral.id) || memePoolIds.has(row.borrow.id))) continue
 		if (hasAudit && !row.hasAudit) continue
-		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
+		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
 		const available = row.borrow.available_borrow_usd
 		if (minAvailable != null && !(available != null && available >= minAvailable)) continue
 		if (maxAvailable != null && !(available != null && available <= maxAvailable)) continue

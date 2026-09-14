@@ -50,7 +50,7 @@ function toLoopTableRow(
 		project: row.protocol,
 		projectslug: row.protocolSlug ?? row.protocol,
 		// Token-less protocols get the "Potential Airdrop" marker (Fraxlend excluded at render).
-		airdrop: !row.protocolHasToken,
+		airdrop: row.potentialAirdrop,
 		raiseValuationUsd: null,
 		chain: row.chain,
 		chains: [row.chain],
@@ -104,7 +104,7 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 	const depegByPool = new Map(depegs.map((depeg) => [depeg.pool_id, depeg]))
 	const loopCount = queryIntClamped(query, 'loopCount', 5, 1, 10)
 	const hasAudit = queryBoolean(query, 'hasAudit')
-	const protocolHasToken = parseTriState(query, 'protocolHasToken')
+	const potentialAirdrop = parseTriState(query, 'potentialAirdrop')
 	const minAvailable = parseNumber(query, 'minAvailable')
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 	const matchesToken = createTokensMatcher(common.tokens)
@@ -115,7 +115,7 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 		if (common.projects && !common.projects.has(row.protocol)) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
-		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
+		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
 		if (minAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd >= minAvailable))
 			continue
 		if (maxAvailable != null && !(row.available_borrow_usd != null && row.available_borrow_usd <= maxAvailable))

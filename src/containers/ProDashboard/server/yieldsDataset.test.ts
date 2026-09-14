@@ -25,7 +25,7 @@ const earnRow = (chain: string): EntityEarnRow => ({
 	display: { label: 'USDC', detail: null },
 	category: 'Lending',
 	hasAudit: false,
-	protocolHasToken: false,
+	potentialAirdrop: true,
 	tvl_usd: 100,
 	apy: {
 		current: { base: 1, reward: 0, total: 1 },
