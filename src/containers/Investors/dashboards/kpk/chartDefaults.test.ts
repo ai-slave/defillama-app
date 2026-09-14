@@ -97,6 +97,14 @@ describe('KPK composition tooltip', () => {
 		expect(formatter([item('Morpho', 'Aug 26', 1234.5678, 1)])).toContain('$1.23k')
 	})
 
+	test('holds segments and the ruled Total to the same precision', () => {
+		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
+
+		expect(html).toContain('Morpho&nbsp;&nbsp;$34.65m')
+		expect(html).toContain('Gearbox&nbsp;&nbsp;$11.36m')
+		expect(html).toContain('Total&nbsp;&nbsp;$46.01m')
+	})
+
 	test('sums the overlay series like any other when no breakdown claims it', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Adjusted TVA', 'Aug 26', 40_000_000, 3)])
 

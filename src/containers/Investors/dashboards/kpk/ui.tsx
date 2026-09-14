@@ -3,7 +3,7 @@ import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { KpkExcessWindow, KpkMandateScope, KpkRef } from './api'
-import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT } from './chartDefaults'
+import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT, KPK_USD_OPTIONS } from './chartDefaults'
 import { MILLION } from './transform'
 
 /* ──────────────────────────── formatting ──────────────────────────── */
@@ -15,14 +15,19 @@ export const KPK_PERCENT_OPTIONS = {
 	useGrouping: false
 } as const
 
+/** Absolute USD, on the dashboard's one money format. See `KPK_USD_OPTIONS`. */
+export function usdCompact(value: number | null | undefined): string {
+	return value == null ? '—' : (formatUsd(value, KPK_USD_OPTIONS) ?? '—')
+}
+
 /** Upstream USD amounts are expressed in millions. */
 export function usdFromMillions(value: number | null | undefined): string {
-	return value == null ? '—' : (formatUsd(value * MILLION, { compact: true, compactSuffix: 'lowercase' }) ?? '—')
+	return value == null ? '—' : usdCompact(value * MILLION)
 }
 
 export function usdSignedFromMillions(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '—'
-	return `${value < 0 ? '−' : ''}${formatUsd(Math.abs(value) * MILLION, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}`
+	return `${value < 0 ? '−' : ''}${usdFromMillions(Math.abs(value))}`
 }
 
 /** Signed percentage points, for an APY spread over its benchmark. */
@@ -50,7 +55,7 @@ export function signedInt(value: number | null | undefined): string {
 export const signClass = (value: number | null | undefined) =>
 	value == null ? 'text-pro-text-secondary' : value >= 0 ? KPK_MINT_TEXT : 'text-error'
 
-const PROSE_DUST_M = 0.0005
+export const PROSE_DUST_M = 0.0005
 
 export function andList(names: ReadonlyArray<string>): string {
 	if (names.length < 2) return names[0] ?? ''
@@ -81,8 +86,7 @@ export function scopeLine(denom: string, scope: KpkMandateScope | undefined): st
 		scope.opsUsd > PROSE_DUST_M
 			? `${usdFromMillions(scope.opsUsd)} of ${denom} sits in ops positions or idle — ` +
 				`${andList(scope.opsBuckets.map((bucket) => `${opsBucketLabel(bucket.name)} ${usdFromMillions(bucket.usd)}`))} — ` +
-				`held for a purpose other than yield, so no benchmark applies. Excluded from the rate above, ` +
-				`not counted as earning nothing.`
+				`held for a purpose other than yield, so no benchmark applies. Excluded from the comparison above.`
 			: `No ${denom} is held in ops positions or idle.`
 
 	return `Rates cover ${usdFromMillions(scope.defiUsd)} of ${denom} defi positions. ${ops}`
@@ -163,6 +167,8 @@ export interface LedgerMetric {
 	value: string
 	label?: string
 	title?: string
+	/** The query behind this figure, linked from the end of the pair. */
+	ref?: KpkRef
 }
 
 export function LedgerTile({
@@ -177,6 +183,7 @@ export function LedgerTile({
 	metric,
 	metricLabel,
 	metricTitle,
+	metricRef,
 	metrics,
 	children
 }: {
@@ -200,11 +207,13 @@ export function LedgerTile({
 	metric?: string
 	metricLabel?: string
 	metricTitle?: string
+	/** The query behind the single `metric`, linked from the end of the pair. */
+	metricRef?: KpkRef
 	/** Several pairs on the divided row. Wins over the single `metric` triple. */
 	metrics?: Array<LedgerMetric>
 	children?: React.ReactNode
 }) {
-	const pairs = metrics ?? (metric ? [{ value: metric, label: metricLabel, title: metricTitle }] : [])
+	const pairs = metrics ?? (metric ? [{ value: metric, label: metricLabel, title: metricTitle, ref: metricRef }] : [])
 	return (
 		<div className="flex min-w-0 flex-col gap-2 border-t border-pro-cards-border p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
 			<span className="label-sm tracking-wider text-pro-text-label uppercase">{label}</span>
@@ -241,6 +250,12 @@ export function LedgerTile({
 						>
 							<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{pair.value}</b>
 							{pair.label ? ` ${pair.label}` : null}
+							{pair.ref && (
+								<>
+									{' '}
+									<RowLink href={pair.ref.url} label={pair.ref.label} size="sm" />
+								</>
+							)}
 						</span>
 					))}
 				</span>

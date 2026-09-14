@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { formatNumber } from '~/utils/numberFormat'
-import { useKpkOverview } from './api'
+import { useKpkOverview, type KpkRef } from './api'
 import { CompositionSection, type CompositionSubtotal } from './CompositionSection'
 import { MILLION } from './transform'
 import {
@@ -13,6 +13,11 @@ import {
 	usdFromMillions,
 	type LedgerMetric
 } from './ui'
+
+const HACKS_REF: KpkRef = {
+	label: 'Total value lost to hacks — DefiLlama',
+	url: 'https://defillama.com/hacks/total-value-lost'
+}
 
 const BOOK_TITLES = {
 	mandates: 'Treasury mandates, including the mandate assets held in KPK vaults',
@@ -78,6 +83,7 @@ export default function Overview() {
 					subRef={data?.deployedOnchain.ref}
 					metric={data ? (data.deployedOnchain.metric ?? '—') : undefined}
 					metricLabel={data?.deployedOnchain.metricLabel}
+					metricRef={data?.deployedOnchain.metricRef}
 				/>
 				<LedgerTile
 					label="Agent rebalancing volume"
@@ -96,6 +102,7 @@ export default function Overview() {
 					suffix={data ? 'since inception' : undefined}
 					suffixBelow
 					sub={data ? 'No funds lost on DeFi incidents' : undefined}
+					subRef={data ? HACKS_REF : undefined}
 				>
 					<ContinuityRule years={data?.fundsLost.years} />
 				</LedgerTile>

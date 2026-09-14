@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
-import { formatNumber, formatUsd, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
+import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import type { KpkVault } from './api'
 import { useKpkVaults } from './api'
 import { KPK_MINT_TEXT } from './chartDefaults'
@@ -23,6 +23,7 @@ import {
 	ToggleGroup,
 	signClass,
 	signedBps,
+	usdCompact,
 	usdFromMillions,
 	type FooterRow,
 	KPK_PERCENT_OPTIONS
@@ -75,8 +76,8 @@ export default function Vaults() {
 			{
 				cells: {
 					name: 'Total',
-					tva: formatUsd(totals.tvaUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
-					interest: formatUsd(totals.interestUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+					tva: usdCompact(totals.tvaUsd),
+					interest: usdCompact(totals.interestUsd)
 				}
 			}
 		]
@@ -86,8 +87,8 @@ export default function Vaults() {
 				title: doubleCountNote,
 				cells: {
 					name: `Adjusted, excl. ${andList(totals.duplicateVenues)}`,
-					tva: formatUsd(totals.tvaAdjustedUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
-					interest: formatUsd(totals.interestAdjustedUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+					tva: usdCompact(totals.tvaAdjustedUsd),
+					interest: usdCompact(totals.interestAdjustedUsd)
 				}
 			})
 		}

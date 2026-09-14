@@ -14,6 +14,7 @@ import {
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
+	PROSE_DUST_M,
 	QueryError,
 	RefLinks,
 	RowLink,
@@ -48,12 +49,14 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 
 function deployedTitle(client: KpkMandateClient): string | undefined {
 	if (client.deployedUsd == null || client.yieldAum == null) return undefined
+	const idle = client.idleUsd ?? 0
+	const workingOps = (client.opsUsd ?? 0) - idle
 	const legs: Array<string> = []
-	if (client.defiUsd) legs.push(`${usdFromMillions(client.defiUsd)} in defi positions`)
-	if (client.opsUsd) legs.push(`${usdFromMillions(client.opsUsd)} in ops positions`)
+	if ((client.defiUsd ?? 0) > PROSE_DUST_M) legs.push(`${usdFromMillions(client.defiUsd)} in defi positions`)
+	if (workingOps > PROSE_DUST_M) legs.push(`${usdFromMillions(workingOps)} in ops positions`)
 	let out = `${usdFromMillions(client.deployedUsd)} of ${usdFromMillions(client.yieldAum)} deployed`
 	if (legs.length > 0) out += ` — ${legs.join(' and ')}`
-	if (client.idleUsd) out += `, less the ${usdFromMillions(client.idleUsd)} sitting idle`
+	if (idle > PROSE_DUST_M) out += `, with ${usdFromMillions(idle)} sitting idle`
 	return out
 }
 
@@ -160,6 +163,9 @@ export default function Mandates() {
 					value={data ? (data.deployedOnchain ?? '—') : undefined}
 					sub="Cumulative across all mandates, since inception"
 					subRef={data?.deploymentRef}
+					metric={data?.deployedOnchainTxnsLabel}
+					metricLabel="onchain transactions"
+					metricRef={data?.deployedOnchainTxnsRef}
 				/>
 				{/* Dollars actually earned above benchmark, so it can be negative — and the
 				    caption has to say what window produced it. */}

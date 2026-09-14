@@ -118,8 +118,8 @@ export const useKpkMetadata = () => useTab<KpkMetadata>('metadata')
 /**
  * A ledger tile. `value` and `metric` are `null` where the query behind them
  * failed, and the tile reads `—` rather than dropping out of the strip. A metric
- * with no query behind it at all — the transaction count — is a brief-stated
- * fact and is always a string.
+ * the brief states outright rather than computing — the transaction count — never
+ * fails, so it is always a string; `metricRef` still points at the query it came from.
  */
 export interface KpkLedgerFact {
 	value: string | null
@@ -128,6 +128,8 @@ export interface KpkLedgerFact {
 	metric?: string | null
 	metricLabel?: string
 	ref?: KpkRef
+	/** The query behind `metric`, where it has one. */
+	metricRef?: KpkRef
 }
 
 export type KpkOverviewAsOf = {
@@ -343,6 +345,11 @@ export interface KpkMandates {
 	/** Pre-formatted cumulative deployment, e.g. `"$8.03bn"`. Absent on a Dune outage. */
 	deployedOnchain?: string
 	deployedOnchainUsd?: number
+	deployedOnchainTxns?: number
+	/** Pre-formatted transaction count behind the deployment, e.g. `"10,382"`. */
+	deployedOnchainTxnsLabel?: string
+	/** The query behind the transaction count. */
+	deployedOnchainTxnsRef?: KpkRef
 	/** The query behind the deployment figure. */
 	deploymentRef?: KpkRef
 	/** Empty when the positions report is unavailable, which hides the performance section. */

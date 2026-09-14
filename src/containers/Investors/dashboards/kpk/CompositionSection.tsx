@@ -1,7 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions, kpkLineStroke, kpkPalette } from './chartDefaults'
 import { asRanged, buildComposition, defaultRange, gapNote, rangeOptions, type CompositionPayload } from './transform'
@@ -13,6 +13,7 @@ import {
 	DuplicateMark,
 	SectionHeader,
 	ToggleGroup,
+	usdCompact,
 	type FooterRow,
 	KPK_PERCENT_OPTIONS
 } from './ui'
@@ -95,7 +96,7 @@ export function CompositionSection({
 				title: extra.title,
 				cells: {
 					name: extra.name,
-					valueUsd: formatUsd(extra.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+					valueUsd: usdCompact(extra.valueUsd),
 					share: model.totalUsd
 						? (formatPercent((extra.valueUsd / model.totalUsd) * 100, KPK_PERCENT_OPTIONS) ?? '—')
 						: '—'
@@ -105,7 +106,7 @@ export function CompositionSection({
 		rows.push({
 			cells: {
 				name: 'Total',
-				valueUsd: formatUsd(model.totalUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+				valueUsd: usdCompact(model.totalUsd),
 				share: formatPercent(100, KPK_PERCENT_OPTIONS) ?? '—'
 			}
 		})
@@ -120,7 +121,7 @@ export function CompositionSection({
 							{model.line.name}
 						</span>
 					),
-					valueUsd: formatUsd(model.line.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+					valueUsd: usdCompact(model.line.valueUsd)
 				}
 			})
 		}
@@ -195,7 +196,7 @@ export function CompositionSection({
 								key: 'valueUsd',
 								label: 'Value',
 								right: true,
-								render: (row) => formatUsd(row.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+								render: (row) => usdCompact(row.valueUsd)
 							},
 							{
 								key: 'share',

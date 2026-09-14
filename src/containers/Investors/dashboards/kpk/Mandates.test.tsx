@@ -21,6 +21,9 @@ const MANDATES: KpkMandates = {
 	clientCount: 4,
 	deployedOnchain: '$8.03bn',
 	deployedOnchainUsd: 8_030_000_000,
+	deployedOnchainTxns: 10_382,
+	deployedOnchainTxnsLabel: '10,382',
+	deployedOnchainTxnsRef: { label: 'KPK transaction count — Dune', url: 'https://dune.com/kpk/kpk-tx-count' },
 	deploymentRef: { label: 'KPK Moved Funds — Dune', url: 'https://dune.com/kpk/kpk-moved-funds' },
 	denominations: ['USD', 'EUR'],
 	comp: {
@@ -291,7 +294,7 @@ describe('kpk Treasury mandates tab', () => {
 
 		expect(container.textContent).toContain('Rates cover $62m of USD defi positions')
 		expect(container.textContent).toContain('market making')
-		expect(container.textContent).toContain('not counted as earning nothing')
+		expect(container.textContent).toContain('Excluded from the comparison above.')
 		// Benchmark coverage is on the payload and deliberately off the page.
 		expect(container.textContent).not.toContain('coverage')
 
@@ -417,13 +420,49 @@ describe('kpk Treasury mandates tab', () => {
 	test('names what the deployed share leaves out', async () => {
 		await renderTab()
 
-		expect(container.querySelector('[title*="less the $9.47m sitting idle"]')).not.toBeNull()
+		expect(container.querySelector('[title*="with $9.47m sitting idle"]')).not.toBeNull()
+	})
+
+	const deployedTitles = () =>
+		[...container.querySelectorAll('[title*="deployed"]')].map((node) => node.getAttribute('title'))
+
+	/** $5.02m defi + $10.61m ops holds the $9.47m idle inside it, leaving $6.16m deployed. */
+	test('breaks the deployed figure into legs that sum to it, idle taken out of ops', async () => {
+		await renderTab()
+
+		expect(deployedTitles()).toContain(
+			'$6.16m of $15.63m deployed — $5.02m in defi positions and $1.14m in ops positions, with $9.47m sitting idle'
+		)
+	})
+
+	test('drops the ops leg when every ops dollar is idle', async () => {
+		await renderTab()
+
+		expect(deployedTitles()).toContain(
+			'$90.77m of $91.15m deployed — $90.77m in defi positions, with $372k sitting idle'
+		)
 	})
 
 	test('links the Dune query behind the cumulative deployment', async () => {
 		await renderTab()
 
 		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-moved-funds"]')).not.toBeNull()
+	})
+
+	test('counts the transactions behind the deployment and links their query', async () => {
+		await renderTab()
+
+		const link = container.querySelector<HTMLAnchorElement>('a[href="https://dune.com/kpk/kpk-tx-count"]')
+		expect(link).not.toBeNull()
+		expect(link!.parentElement!.textContent).toContain('10,382 onchain transactions')
+	})
+
+	test('drops the transaction row rather than dashing it when Dune sends no count', async () => {
+		served = { ...MANDATES, deployedOnchainTxnsLabel: undefined, deployedOnchainTxnsRef: undefined }
+		await renderTab()
+
+		expect(container.textContent).not.toContain('onchain transactions')
+		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-tx-count"]')).toBeNull()
 	})
 
 	test('opens the composition on the widest span it was sent', async () => {

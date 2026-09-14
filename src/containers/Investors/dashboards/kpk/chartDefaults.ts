@@ -66,6 +66,15 @@ export const KPK_BENCH_BG = 'bg-sl-kpk-benchmark'
 const DUST_USD = 0.01
 
 /**
+ * Every dollar figure on the dashboard — tiles, table cells, chart tooltips and the
+ * totals under them alike — on the app's standard compact precision: two decimals for
+ * k/m, three for bn. Named once so the whole dashboard moves together.
+ *
+ * Lives here rather than in `ui`, which already imports this module.
+ */
+export const KPK_USD_OPTIONS = { compact: true, compactSuffix: 'lowercase' } as const
+
+/**
  * The category tooltip with a stacked total, as the mockup has it: one row per segment,
  * then a ruled Total. The renderer's own category formatter omits the total, and its
  * time-series formatter — which does add one — cannot label a month-string axis.
@@ -86,7 +95,7 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 		const raw = getTooltipRawYValue(item, name)
 		const value = typeof raw === 'number' ? raw : Number(raw)
 		if (!Number.isFinite(value) || Math.abs(value) < DUST_USD) continue
-		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatUsd(value, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}</li>`
+		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatUsd(value, KPK_USD_OPTIONS) ?? '—'}</li>`
 		if (name === overlaySeries) {
 			overlay = row
 			continue
@@ -97,7 +106,7 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 	}
 
 	if (counted > 1) {
-		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${formatUsd(total, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}</li>`
+		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${formatUsd(total, KPK_USD_OPTIONS) ?? '—'}</li>`
 	}
 	return out + overlay
 }
