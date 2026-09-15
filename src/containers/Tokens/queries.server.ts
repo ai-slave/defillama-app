@@ -19,10 +19,11 @@ import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/contai
 import { cachedResult } from '~/server/api/resultCache'
 import { contentHashVersion, createRedisBlobStore } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { slug } from '~/utils'
+import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
-import { TOKENS_SOURCE_CACHE_TTL_MS } from './cache.server'
+import { TOKENS_SOURCE_CACHE_TTL_MS, tokensCacheWindow } from './cache.server'
 import {
 	buildMarketsMap,
 	buildTokenDirectoryIndexes,
@@ -527,18 +528,47 @@ export function buildTokenFilterOptions(
 	}
 }
 
+type TokensSnapshot = Omit<TokensSourceData, 'sortIndexes'>
+
+const tokensSnapshotStore = createRedisBlobStore<TokensSnapshot>({
+	// Preserve the export key and payload format so existing pinned downloads remain readable.
+	prefix: 'tokens-export:v15',
+	versionTtlSeconds: 30 * 60,
+	pointerTtlSeconds: 5 * 60,
+	lastGoodTtlSeconds: 30 * 60,
+	getIdentity: (data) => ({ key: 'all', version: data.version })
+})
+
+async function readTokensSourceSnapshot(key: string): Promise<TokensSnapshot | null> {
+	// Browsing needs a market/metadata/window pointer; the store's all:latest cannot select that generation.
+	const pointer = await getObjectCache<{ version: string }>(key)
+	return pointer ? tokensSnapshotStore.readVersion('all', pointer.version) : null
+}
+
 export async function getTokensSourceData(): Promise<TokensSourceData> {
 	const marketSnapshot = await getTokensMarketSnapshot()
 	const metadataModule = await import('~/utils/metadata')
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
 	const metadata = metadataModule.default
 	const filterGeneration = metadata.tokenFilterMetadata.generatedAt
-	return cachedResult(
-		'tokens-source-rows',
-		`v15:${marketSnapshot.version}:${filterGeneration}`,
-		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
-		() => fetchTokensSourceRows(marketSnapshot, metadata)
-	)
+	// Keep the starting window even if enrichment crosses its boundary; do not carry that build into the next window.
+	const key = `tokens-source:v16:${marketSnapshot.version}:${filterGeneration}:${tokensCacheWindow(Date.now())}`
+	return cachedResult('tokens-source-rows', key, { ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 }, async () => {
+		const saved = await readTokensSourceSnapshot(key)
+		if (saved) {
+			return { ...saved, sortIndexes: buildTokensSortIndexes(saved.rows) }
+		}
+		// SSR and API runtimes share enrichment work; new searches only filter prepared rows.
+		const data = await fetchTokensSourceRows(marketSnapshot, metadata)
+		// Adopt a concurrent publication before writing another copy of the enriched dataset.
+		const winner = await readTokensSourceSnapshot(key)
+		if (winner) return { ...winner, sortIndexes: buildTokensSortIndexes(winner.rows) }
+		const { sortIndexes: _sortIndexes, ...payload } = data
+		if (await tokensSnapshotStore.retainVersion(payload, 10 * 60)) {
+			await setObjectCache(key, { version: data.version }, 5 * 60)
+		}
+		return data
+	})
 }
 
 export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<TokenOverviewCurrentSnapshot> {
@@ -628,16 +658,6 @@ function getTokensPageResponse(
 	})
 }
 
-type TokensExportSnapshot = Omit<TokensSourceData, 'sortIndexes'>
-
-const tokensExportStore = createRedisBlobStore<TokensExportSnapshot>({
-	prefix: 'tokens-export:v15',
-	versionTtlSeconds: 30 * 60,
-	pointerTtlSeconds: 5 * 60,
-	lastGoodTtlSeconds: 30 * 60,
-	getIdentity: (data) => ({ key: 'all', version: data.version })
-})
-
 export class TokensExportSnapshotUnavailableError extends Error {
 	constructor() {
 		super('Tokens export snapshot is unavailable. Please retry the export.')
@@ -650,7 +670,7 @@ export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise
 	let snapshotVersion: string | null = null
 	if (requestedSnapshot && requestedSnapshot !== 'latest') {
 		data = await cachedResult('tokens-export', requestedSnapshot, { ttlMs: 60_000, maxEntries: 2 }, async () => {
-			const saved = await tokensExportStore.readVersion('all', requestedSnapshot)
+			const saved = await tokensSnapshotStore.readVersion('all', requestedSnapshot)
 			if (!saved) throw new TokensExportSnapshotUnavailableError()
 			return { ...saved, sortIndexes: buildTokensSortIndexes(saved.rows) }
 		})
@@ -660,7 +680,8 @@ export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise
 		if (requestedSnapshot === 'latest') {
 			const { sortIndexes: _sortIndexes, ...payload } = data
 			await cachedResult('tokens-export-published', data.version, { ttlMs: 60_000, maxEntries: 2 }, async () => {
-				if (!(await tokensExportStore.publish(payload))) {
+				// The extra minute covers exports sharing this one-minute publication cache.
+				if (!(await tokensSnapshotStore.retainVersion(payload, 31 * 60))) {
 					throw new TokensExportSnapshotUnavailableError()
 				}
 				return true

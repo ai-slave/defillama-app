@@ -4,9 +4,8 @@ This file defines the commands and working conventions that all AI agents must f
 
 ## Package Manager
 
-- Use `bun` for all package management and project commands.
-- Use `bunx` instead of `npx` when you need to run a package binary.
-- Do not use `npm`, `npx`, `yarn`, or `pnpm`
+- Use `bun` for all package management and project commands, and `bunx` to run a package binary.
+- Do not use `npm`, `npx`, `yarn`, or `pnpm`.
 
 ## Approved Commands
 
@@ -19,8 +18,6 @@ This file defines the commands and working conventions that all AI agents must f
 
 - Do not run `bun run build` or any other build command. Builds are expected to fail because of API rate limits.
 - Do not use `bun test`. Use `bun run test` so tests run through the repo's Vitest script.
-- Do not use `npx tsc`, `npx eslint`, or any other `npx` command. Use `bunx` instead when you need to run a package binary.
-- Do not use `npm run lint`, `npm run typecheck`, or any other `npm` command.
 
 ## Verification
 
@@ -45,13 +42,11 @@ The full verification sequence is:
 
 `bun run format` must finish before the other checks because it writes files. After formatting completes, `bun run lint`, `bun run typecheck`, and `bun run test:typecheck` may be run in parallel.
 
-Do not run the full verification sequence for tasks that only inspect, explain, review, branch, or run explicitly requested commands without making code changes.
 Do not run the full verification sequence for documentation-only or instruction-only edits unless the user explicitly asks.
+
 If the user asks to run specific commands, run only those commands unless code changes are needed to complete the request.
 
 Before finalizing without full verification, state which targeted checks ran and which broader checks were skipped.
-
-Do not run `bun run build` as part of verification.
 
 ## Metric Semantics
 

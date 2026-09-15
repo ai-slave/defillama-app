@@ -90,6 +90,37 @@ export const setCache = async (payload: RedisCachePayload, ttl?: string | number
 	}
 }
 
+// Atomically retain an immutable blob without shortening an export's longer lease.
+const retainImmutableCacheScript = `
+local remaining = redis.call('PTTL', KEYS[1])
+local required = tonumber(ARGV[2]) * 1000
+if remaining == -2 then
+  redis.call('SET', KEYS[1], ARGV[1], 'PX', required)
+elseif remaining >= 0 and remaining < required then
+  redis.call('PEXPIRE', KEYS[1], required)
+end
+return 1
+`
+
+export const setImmutableCache = async (payload: RedisCachePayload, ttlSeconds: number): Promise<boolean> => {
+	const client = await getRedisClient()
+	if (!client) return false
+	try {
+		const cacheObject: RedisCacheObject = {
+			Body: payload.Body.toString('base64'),
+			ContentType: payload.ContentType,
+			...(payload.StatusCode ? { StatusCode: payload.StatusCode } : {}),
+			...(payload.StatusText ? { StatusText: payload.StatusText } : {})
+		}
+		await client.eval(retainImmutableCacheScript, 1, payload.Key, JSON.stringify(cacheObject), ttlSeconds)
+		return true
+	} catch (error) {
+		console.log('[error] [cache] [failed to retain]', payload.Key)
+		console.log(error)
+		return false
+	}
+}
+
 export const setPageBuildTimes = async (pageUrl: string, cacheObject: unknown) => {
 	const client = await getRedisClient()
 	if (!client) {

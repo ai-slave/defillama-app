@@ -498,6 +498,9 @@ availability to one immutable export snapshot. Its identity is computed once per
 The export fails if its snapshot cannot be saved or retrieved, rather than continuing on a new version.
 An unavailable snapshot returns HTTP 503: storage cannot distinguish expiry from an outage or unreadable data.
 Tokens page and chart clients check response schema versions and version their request URLs for deployment compatibility.
+Browsing and exports share one compressed blob per derived content hash. Source pointers are scoped to five-minute
+windows; browsing retains blobs for ten minutes. Export retention extends the same blob to 31 minutes, covering the
+one-minute export publication cache. Shorter browsing retention must never shorten an existing export lease.
 
 ### Token Classification And Narrative Tracker
 

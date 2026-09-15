@@ -2,27 +2,35 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
 	version: 'initial',
+	runtime: 0,
+	enrichmentCalls: 0,
 	order: ['a', 'b', 'c', 'd'],
 	price: 1,
 	publish: true,
 	feesAvailable: true,
 	fee: 10,
-	generatedAt: 1_800_000_000_000,
-	writes: 0
+	generatedAt: 1_800_000_000_000
 }))
 const cache = vi.hoisted(() => ({
 	blobs: new Map<string, { Key: string; Body: Buffer; ContentType: string }>(),
-	pointers: new Map<string, { version: string }>()
+	pointers: new Map<string, { version: string }>(),
+	expiresAt: new Map<string, number>()
 }))
 vi.mock('~/utils/cache-client', () => ({
-	getCache: async (key: string) => cache.blobs.get(key) ?? null,
+	getCache: async (key: string) =>
+		(cache.expiresAt.get(key) ?? Infinity) <= Date.now() ? null : (cache.blobs.get(key) ?? null),
+	setImmutableCache: vi.fn(async (value: { Key: string; Body: Buffer; ContentType: string }, ttlSeconds: number) => {
+		if (!state.publish) return false
+		cache.blobs.set(value.Key, value)
+		cache.expiresAt.set(value.Key, Math.max(cache.expiresAt.get(value.Key) ?? 0, Date.now() + ttlSeconds * 1000))
+		return true
+	}),
 	setCache: async (value: { Key: string; Body: Buffer; ContentType: string }) => {
-		state.writes++
 		if (!state.publish) return false
 		cache.blobs.set(value.Key, value)
 		return true
 	},
-	getObjectCache: async (key: string) => cache.pointers.get(key) ?? null,
+	getObjectCache: vi.fn(async (key: string) => cache.pointers.get(key) ?? null),
 	setObjectCache: async (key: string, value: { version: string }) => {
 		cache.pointers.set(key, value)
 		return true
@@ -31,6 +39,17 @@ vi.mock('~/utils/cache-client', () => ({
 vi.mock(import('~/server/datasetSnapshots/redisBlobStore.server'), async (importOriginal) => {
 	const actual = await importOriginal()
 	return { ...actual, contentHashVersion: vi.fn(actual.contentHashVersion) }
+})
+vi.mock(import('~/server/api/resultCache'), async (importOriginal) => {
+	const actual = await importOriginal()
+	return {
+		...actual,
+		cachedResult: ((namespace, ...args) =>
+			actual.cachedResult(
+				namespace === 'tokens-source-rows' ? `${namespace}:${state.runtime}` : namespace,
+				...args
+			)) as typeof actual.cachedResult
+	}
 })
 const metadata = await vi.hoisted(async () => {
 	const { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } = await import('~/utils/metadata/artifactContract')
@@ -58,6 +77,7 @@ vi.mock('../server/tableData.server', () => ({
 }))
 vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterChainMetrics: async () => {
+		state.enrichmentCalls++
 		if (!state.feesAvailable) throw new Error('Fees outage')
 		return { protocols: [{ defillamaId: 'a', total24h: state.fee }] }
 	}
@@ -66,6 +86,7 @@ vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRig
 vi.mock('~/containers/Unlocks/queries', () => ({ getAllProtocolEmissions: async () => [] }))
 
 import { contentHashVersion } from '~/server/datasetSnapshots/redisBlobStore.server'
+import { getObjectCache, setImmutableCache } from '~/utils/cache-client'
 import { TOKENS_SOURCE_CACHE_TTL_MS } from '../cache.server'
 import { getTokensPageSnapshot } from '../queries.server'
 import { tokensDataset } from '../server/api'
@@ -76,17 +97,63 @@ beforeEach(() => {
 	state.generatedAt = 1_800_000_000_000 + testNumber * 1000
 	state.order = ['a', 'b', 'c', 'd']
 	state.price = 1
+	state.runtime = 0
+	state.enrichmentCalls = 0
 	state.publish = true
 	state.feesAvailable = true
 	state.fee = 10
-	state.writes = 0
+	vi.mocked(setImmutableCache).mockClear()
+	vi.mocked(getObjectCache).mockClear()
 	vi.mocked(contentHashVersion).mockClear()
+	cache.expiresAt.clear()
 	cache.blobs.clear()
 	cache.pointers.clear()
 })
 afterEach(() => vi.useRealTimers())
 
 describe('Tokens CSV snapshots', () => {
+	test('reuses prepared rows across cold runtimes for search and clearing search', async () => {
+		state.order = ['dogwifhat', 'bitcoin', 'wif-second']
+		await getTokensPageSnapshot()
+		expect(state.enrichmentCalls).toBe(3)
+		state.runtime++
+		const search = await getTokensPageSnapshot({ search: ' WIF ' })
+		expect(search.data.rows.map((row) => row.id)).toEqual(['dogwifhat', 'wif-second'])
+		const cleared = await getTokensPageSnapshot()
+		expect(cleared.data.total).toBe(3)
+		expect(state.enrichmentCalls).toBe(3)
+	})
+
+	test('rebuilds shared rows in a new window on a cold runtime', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		await getTokensPageSnapshot()
+		state.runtime++
+		state.fee = 25
+		vi.setSystemTime(Date.now() + TOKENS_SOURCE_CACHE_TTL_MS + 1)
+		const refreshed = await getTokensPageSnapshot({ search: 'a' })
+		expect(refreshed.data.rows[0]?.fees24h).toBe(25)
+		expect(state.enrichmentCalls).toBe(6)
+	})
+
+	test('adopts a concurrent publication after enrichment without publishing again', async () => {
+		await getTokensPageSnapshot()
+		state.runtime++
+		state.fee = 25
+		// The first read misses; the published winner becomes visible on the post-build read.
+		vi.mocked(getObjectCache).mockResolvedValueOnce(null)
+		const result = await getTokensPageSnapshot({ search: 'a' })
+		expect(result.data.rows[0]?.fees24h).toBe(10)
+		expect(state.enrichmentCalls).toBe(6)
+		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60])
+	})
+
+	test('keeps browsing available when shared cache writes fail', async () => {
+		state.publish = false
+		const result = await getTokensPageSnapshot({ search: 'a' })
+		expect(result.data.rows.map((row) => row.id)).toEqual(['a'])
+		expect(cache.pointers.size).toBe(0)
+	})
+
 	test('preserves membership, ranking and values across pages while ordinary browsing refreshes', async () => {
 		const first = await getTokensPageSnapshot({ snapshot: 'latest', pageSize: '2' })
 		const snapshot = first.data.snapshotVersion
@@ -110,8 +177,41 @@ describe('Tokens CSV snapshots', () => {
 			expect(repeated.data.snapshotVersion).toBe(first.data.snapshotVersion)
 		}
 		expect(contentHashVersion).toHaveBeenCalledTimes(1)
-		expect(state.writes).toBe(1)
+		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60])
 	})
+	test('stores one blob for browsing and exports and preserves the export lease on later source writes', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(new Date('2027-01-01T10:00:00Z'))
+		await getTokensPageSnapshot()
+		expect(cache.blobs.size).toBe(1)
+		const [key] = cache.blobs.keys()
+		if (!key) throw new Error('Expected source blob')
+		expect(cache.expiresAt.get(key)).toBe(Date.now() + 10 * 60_000)
+
+		vi.setSystemTime(Date.now() + 4 * 60_000)
+		const exported = await getTokensPageSnapshot({ snapshot: 'latest' })
+		const snapshot = exported.data.snapshotVersion!
+		const exportExpiresAt = cache.expiresAt.get(key)!
+		expect(exportExpiresAt).toBe(Date.now() + 31 * 60_000)
+		expect(cache.blobs.size).toBe(1)
+
+		// An export inside the publication-cache minute still gets at least 30 minutes.
+		vi.setSystemTime(Date.now() + 59_000)
+		await getTokensPageSnapshot({ snapshot: 'latest' })
+		expect(exportExpiresAt - Date.now()).toBeGreaterThanOrEqual(30 * 60_000)
+		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60])
+
+		vi.setSystemTime(Date.now() + 1000)
+		state.runtime++
+		await getTokensPageSnapshot()
+		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60, 10 * 60])
+		expect(cache.blobs.size).toBe(1)
+		expect(cache.expiresAt.get(key)).toBe(exportExpiresAt)
+
+		vi.setSystemTime(exportExpiresAt - 1)
+		expect((await getTokensPageSnapshot({ snapshot })).data.rows).toEqual(exported.data.rows)
+	})
+
 	test('changes the export identity when enrichment or availability changes with identical market inputs', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })
 		const first = await getTokensPageSnapshot({ snapshot: 'latest' })
@@ -148,8 +248,9 @@ describe('Tokens CSV snapshots', () => {
 			'snapshot is unavailable'
 		)
 	})
-	test('does not start an export if saving its snapshot fails', async () => {
+	test('does not start an export if retaining the existing source blob fails', async () => {
 		state.price = 8
+		await getTokensPageSnapshot()
 		state.publish = false
 		await expect(getTokensPageSnapshot({ snapshot: 'latest' })).rejects.toThrow('snapshot is unavailable')
 	})

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { promisify } from 'node:util'
 import { gunzip, gzip } from 'node:zlib'
-import { getCache, getObjectCache, setCache, setObjectCache } from '~/utils/cache-client'
+import { getCache, getObjectCache, setCache, setImmutableCache, setObjectCache } from '~/utils/cache-client'
 import { recordRuntimeError } from '~/utils/telemetry'
 
 /**
@@ -44,6 +44,8 @@ export function isContentHashVersion(value: string): boolean {
 }
 
 export type RedisBlobStore<T> = {
+	/** Save or extend an immutable blob's retention without changing pointers or shortening its existing TTL. */
+	retainVersion: (payload: T, ttlSeconds: number) => Promise<boolean>
 	/** Read one immutable version. Null means missing, unreadable, or identity mismatch. */
 	readVersion: (key: string, version: string) => Promise<T | null>
 	/** Read the version named by `:latest`. Null means the pointer expired — rebuild. */
@@ -108,6 +110,16 @@ export function createRedisBlobStore<T>(config: {
 	}
 
 	return {
+		async retainVersion(payload, ttlSeconds) {
+			const { key, version } = config.getIdentity(payload)
+			const compressed = await gzipAsync(Buffer.from(JSON.stringify(payload)))
+			const stored = await setImmutableCache(
+				{ Key: versionKey(key, version), Body: compressed, ContentType: 'application/json+gzip' },
+				ttlSeconds
+			)
+			if (!stored) reportFailure('blob retention', key)
+			return stored
+		},
 		readVersion,
 		readCurrent: (key) => readPointer(latestKey(key), key),
 		readLastGood: (key) => readPointer(lastGoodKey(key), key),

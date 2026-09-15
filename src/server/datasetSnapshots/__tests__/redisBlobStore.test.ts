@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
 	setCache: vi.fn(),
+	setImmutableCache: vi.fn(),
 	getObjectCache: vi.fn(),
 	setObjectCache: vi.fn()
 }))
@@ -82,6 +83,25 @@ describe('createRedisBlobStore publish', () => {
 
 		expect(await store.publish(payload)).toBe(false)
 		expect(cacheMocks.setObjectCache).toHaveBeenCalledTimes(1)
+		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+	})
+})
+
+describe('createRedisBlobStore retention', () => {
+	test('retains the version with the requested minimum TTL without advancing pointers', async () => {
+		cacheMocks.setImmutableCache.mockResolvedValue(true)
+		expect(await store.retainVersion(payload, 1800)).toBe(true)
+		expect(cacheMocks.setImmutableCache).toHaveBeenCalledWith(
+			expect.objectContaining({ Key: `test-table:v1:ethereum:${payload.snapshot}` }),
+			1800
+		)
+		expect(cacheMocks.setCache).not.toHaveBeenCalled()
+		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
+	})
+
+	test('reports a failed retention', async () => {
+		cacheMocks.setImmutableCache.mockResolvedValue(false)
+		expect(await store.retainVersion(payload, 1800)).toBe(false)
 		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
 	})
 })
