@@ -995,16 +995,35 @@ export function buildDirectoryColumns(
 			cell: ({ getValue }) => (getValue() == null ? '–' : getValue() ? 'Yes' : 'No'),
 			meta: { headerClassName: 'w-[124px] min-w-[124px]', headerHelperText: definitions.fiatOnramp.description }
 		}),
-		columnHelper.accessor((row) => row.funding?.rampCost?.onRamp.totalUsd ?? undefined, {
-			id: 'rampCost',
-			header: definitions.rampCost.label,
-			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
-			meta: {
-				headerClassName: 'w-[155px] min-w-[155px]',
-				align: 'end',
-				headerHelperText: definitions.rampCost.description
+		// Region figure wins when a country is selected — it is priced off that
+		// region's own rails (US ACH, GB Faster Payments…) rather than the root
+		// block's EUR/SEPA path, which several venues do not even have.
+		columnHelper.accessor(
+			(row) => row.funding?.rampCostRegion?.onRampUsd ?? row.funding?.rampCost?.onRamp.totalUsd ?? undefined,
+			{
+				id: 'rampCost',
+				header: definitions.rampCost.label,
+				cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
+				meta: {
+					headerClassName: 'w-[155px] min-w-[155px]',
+					align: 'end',
+					headerHelperText: definitions.rampCost.description
+				}
 			}
-		}),
+		),
+		columnHelper.accessor(
+			(row) => row.funding?.rampCostRegion?.offRampUsd ?? row.funding?.rampCost?.offRamp.totalUsd ?? undefined,
+			{
+				id: 'offRampCost',
+				header: definitions.offRampCost.label,
+				cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
+				meta: {
+					headerClassName: 'w-[155px] min-w-[155px]',
+					align: 'end',
+					headerHelperText: definitions.offRampCost.description
+				}
+			}
+		),
 		columnHelper.accessor((row) => row.compliance?.headquarters, {
 			id: 'headquarters',
 			header: definitions.headquarters.label,

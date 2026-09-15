@@ -64,7 +64,10 @@ describe('country availability resolver', () => {
 			segments: ['spot', 'linear_perp'],
 			note: 'Derivatives are restricted.',
 			source: { url: 'https://example.com/de', asOf: '2026-07-01' },
-			usedFallback: false
+			usedFallback: false,
+			// Fixture variants carry no funding block; a cache without one degrades to
+			// null so callers fall back to the venue-level figures.
+			funding: null
 		})
 	})
 
@@ -85,6 +88,34 @@ describe('country availability resolver', () => {
 			segments: [],
 			note: 'Not offered.'
 		})
+	})
+
+	test('surfaces the region variant funding, and drops it when unavailable', () => {
+		const withFunding = {
+			variants: {
+				...manifest.variants,
+				eea: {
+					...manifest.variants.eea,
+					funding: {
+						has_fiat_onramp: true,
+						fiat_currency_count: 1,
+						ramp_cost_1k: {
+							on_ramp_usd: 12.5,
+							off_ramp_usd: 9.25,
+							currency: 'eur',
+							on_rail: 'SEPA Instant',
+							off_rail: 'SEPA'
+						}
+					}
+				}
+			}
+		} as unknown as MasterExchangeRegionManifestResponse
+		expect(resolveCountryAvailability(catalog, withFunding, 'DE').funding).toMatchObject({
+			has_fiat_onramp: true,
+			ramp_cost_1k: { on_ramp_usd: 12.5, off_ramp_usd: 9.25, on_rail: 'SEPA Instant' }
+		})
+		// An unavailable country has no rails to report, whatever the variant says.
+		expect(resolveCountryAvailability(catalog, withFunding, 'US').funding).toBeNull()
 	})
 
 	test('does not let a restricted override reopen an unavailable variant', () => {

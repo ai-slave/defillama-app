@@ -455,7 +455,9 @@ function mapDirectoryVenue(
 					fiatCurrencies: venue.funding.fiat_currencies,
 					fiatFees: mapFiatFees(venue.funding.fiat_fees),
 					hasFiatOnramp: venue.funding.has_fiat_onramp,
-					rampCost: venue.funding.ramp_cost_1k ? mapRampCost(venue.funding.ramp_cost_1k) : null
+					rampCost: venue.funding.ramp_cost_1k ? mapRampCost(venue.funding.ramp_cost_1k) : null,
+					// Filled in by filterDirectoryRows once a country is selected.
+					rampCostRegion: null
 				}
 			: null,
 		warnings: venue.warnings,

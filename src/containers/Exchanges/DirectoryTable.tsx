@@ -92,7 +92,7 @@ const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, Array<string>> = {
 		'reservesSource'
 	],
 	fees: ['spotFee', 'linearPerpFee', 'inversePerpFee', 'feeToken'],
-	funding: ['fiatCurrencies', 'fiatFees', 'fiatOnramp', 'rampCost'],
+	funding: ['fiatCurrencies', 'fiatFees', 'fiatOnramp', 'rampCost', 'offRampCost'],
 	compliance: ['headquarters', 'euStatus', 'mica', 'kyc']
 }
 

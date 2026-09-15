@@ -214,13 +214,13 @@ describe('mica table columns', () => {
 	})
 })
 
-describe('€1k ramp cost cells', () => {
+describe('$1k ramp cost cells', () => {
 	test('renders an em-dash when ramp cost data is absent', () => {
 		const html = renderToStaticMarkup(<RampCostValue row={micaVenue()} direction="onRamp" />)
 		expect(html).toContain('–')
 	})
 
-	test('renders the euro total badge with an accessible breakdown trigger when populated', () => {
+	test('renders the USD total badge with an accessible breakdown trigger when populated', () => {
 		const venue = micaVenue({
 			exchange: 'bybit-eu',
 			name: 'Bybit EU',
@@ -228,11 +228,13 @@ describe('€1k ramp cost cells', () => {
 		})
 
 		const onRamp = renderToStaticMarkup(<RampCostValue row={venue} direction="onRamp" />)
-		expect(onRamp).toContain('€3.90')
-		expect(onRamp).toContain('aria-label="Bybit EU €1,000 on-ramp cost breakdown"')
+		// USD, not EUR: every rampCost field on the model is already USD. The EUR SEPA
+		// rail is named in the step text, not in the amount's symbol.
+		expect(onRamp).toContain('$3.90')
+		expect(onRamp).toContain('aria-label="Bybit EU $1,000 on-ramp cost breakdown"')
 
 		const offRamp = renderToStaticMarkup(<RampCostValue row={venue} direction="offRamp" />)
-		expect(offRamp).toContain('€4.90')
-		expect(offRamp).toContain('aria-label="Bybit EU €1,000 off-ramp cost breakdown"')
+		expect(offRamp).toContain('$4.90')
+		expect(offRamp).toContain('aria-label="Bybit EU $1,000 off-ramp cost breakdown"')
 	})
 })

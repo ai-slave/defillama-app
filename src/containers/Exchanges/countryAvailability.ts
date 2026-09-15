@@ -26,6 +26,9 @@ export function resolveCountryAvailability(
 		segments: availability === 'unavailable' ? [] : variant.segments,
 		note: override?.note ?? variant.note ?? null,
 		source: override?.source ?? variant.source ?? null,
-		usedFallback: !exact
+		usedFallback: !exact,
+		// An unavailable country has no rails to speak of; otherwise surface the
+		// region's own funding so callers stop reading the venue's root block.
+		funding: availability === 'unavailable' ? null : (variant.funding ?? null)
 	}
 }

@@ -7,7 +7,13 @@ import type { ExchangePromotionModel, MicaProduct, MicaVenueModel } from './mode
 import { promotionLinks } from './promotions'
 import { btcAmount, Breakdown, CostBadge, LEG_TONE_LIMITS } from './RampCells'
 
-const EUR_FIXED_OPTIONS = { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
+// Every ramp-cost field on the model is USD (`totalUsd`, `fiatFeeUsd`, …): the
+// backend converts the EUR fiat leg at the build's EUR/USD rate and prices the
+// trade and transfer legs in USD from the start. This used to be `currency: 'EUR'`,
+// which stamped a € on USD figures and overstated them by the FX rate. The RAIL is
+// still EUR/SEPA — that belongs in the step text, not in the number's symbol.
+// Matches USD_FIXED_OPTIONS in RampCells.tsx, which formats the same fields.
+const USD_FIXED_OPTIONS = { currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
 
 export function supportsMicaProduct(row: MicaVenueModel, product: 'spot' | 'perp'): boolean {
 	return row.products.includes(product === 'perp' ? 'linear_perp' : product)
@@ -76,10 +82,13 @@ export const PERP_DEPTH_2_HELP =
 	'Bid plus ask depth within 2% of mid across the venue’s perpetual markets, from our own order-book snapshots, never venue-reported.'
 export const PERP_DEPTH_05_HELP =
 	'Bid plus ask depth within 0.5% of mid across the venue’s perpetual markets, from our own order-book snapshots. Closest to executable liquidity at the touch.'
+// Costs are USD. The notional is $1,000 and the fiat leg is the EUR SEPA rail,
+// converted at the build's EUR/USD rate — so the amount is dollars even though the
+// rail is euros. These read "€1,000" before, which described neither.
 export const ON_RAMP_COST_HELP =
-	'Total cost to turn €1,000 into BTC in your own wallet: SEPA deposit + taker fee + orderbook slippage + BTC withdrawal fee. Hover for the full breakdown.'
+	'Total cost to turn $1,000 into BTC in your own wallet, via a EUR SEPA deposit: SEPA deposit + taker fee + orderbook slippage + BTC withdrawal fee. Hover for the full breakdown.'
 export const OFF_RAMP_COST_HELP =
-	'Total cost to turn €1,000 of BTC into EUR in your bank account: BTC network fee + taker fee + orderbook slippage + SEPA withdrawal. Hover for the full breakdown.'
+	'Total cost to turn $1,000 of BTC into EUR in your bank account: BTC network fee + taker fee + orderbook slippage + SEPA withdrawal. Hover for the full breakdown.'
 
 function cleanPromotionSubtitle(promotion: ExchangePromotionModel) {
 	return promotion.subtitle?.replace(/\s*T&Cs apply\.?$/i, '').trim()
@@ -155,7 +164,9 @@ const RAMP_DIRECTION_STEPS: Record<RampDirection, string> = {
 	offRamp: 'Deposit BTC → sell → withdraw EUR (SEPA)'
 }
 
-/** Same badge and breakdown the /ramp table uses, priced in EUR on the SEPA rail. */
+/** Same badge and breakdown the /ramp table uses. Amounts are USD; the rail priced
+ *  is EUR SEPA (see RAMP_DIRECTION_STEPS) — /mica deliberately compares every venue
+ *  on that one rail, unlike /ramps and the directory which take the cheapest. */
 export function RampCostValue({ row, direction }: { row: MicaVenueModel; direction: RampDirection }) {
 	const cost = row.rampCost
 	if (!cost) return <span className="text-tertiary">–</span>
@@ -164,10 +175,10 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 	const transferBtc = btcAmount(
 		direction === 'onRamp' ? cost.assumptions.btcWithdrawalFeeBtc : cost.assumptions.btcNetworkFeeBtc
 	)
-	const notional = formatNumber(cost.notionalUsd, { currency: 'EUR', maximumFractionDigits: 0 })
+	const notional = formatNumber(cost.notionalUsd, { currency: 'USD', maximumFractionDigits: 0 })
 	return (
 		<CostBadge
-			label={formatNumber(leg.totalUsd, EUR_FIXED_OPTIONS) ?? '–'}
+			label={formatNumber(leg.totalUsd, USD_FIXED_OPTIONS) ?? '–'}
 			fraction={leg.totalFraction}
 			limits={LEG_TONE_LIMITS}
 			ariaLabel={`${row.name} ${notional} ${direction === 'onRamp' ? 'on-ramp' : 'off-ramp'} cost breakdown`}
@@ -178,25 +189,25 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 				rows={[
 					{
 						label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`,
-						value: formatNumber(leg.fiatFeeUsd, EUR_FIXED_OPTIONS)
+						value: formatNumber(leg.fiatFeeUsd, USD_FIXED_OPTIONS)
 					},
 					{
 						label:
 							cost.assumptions.takerFee == null
 								? 'Taker fee'
 								: `Taker fee (${formatPercent(cost.assumptions.takerFee, { input: 'fraction' })})`,
-						value: formatNumber(leg.tradeFeeUsd, EUR_FIXED_OPTIONS)
+						value: formatNumber(leg.tradeFeeUsd, USD_FIXED_OPTIONS)
 					},
-					{ label: 'Slippage vs mid price', value: formatNumber(leg.slippageUsd, EUR_FIXED_OPTIONS) },
+					{ label: 'Slippage vs mid price', value: formatNumber(leg.slippageUsd, USD_FIXED_OPTIONS) },
 					{
 						label:
 							direction === 'onRamp'
 								? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
 								: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
-						value: formatNumber(leg.transferFeeUsd, EUR_FIXED_OPTIONS)
+						value: formatNumber(leg.transferFeeUsd, USD_FIXED_OPTIONS)
 					}
 				]}
-				total={formatNumber(leg.totalUsd, EUR_FIXED_OPTIONS)}
+				total={formatNumber(leg.totalUsd, USD_FIXED_OPTIONS)}
 				totalFraction={leg.totalFraction}
 			/>
 		</CostBadge>

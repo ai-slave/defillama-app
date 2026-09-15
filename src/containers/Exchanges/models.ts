@@ -6,7 +6,7 @@
  * import orderbook-watch response types.
  */
 
-import type { MasterExchangeRegionManifestResponse } from './master.types'
+import type { MasterExchangeRegionManifestResponse, MasterExchangeRegionVariantFunding } from './master.types'
 
 export const EXCHANGE_SEGMENTS = ['spot', 'linear_perp', 'inverse_perp'] as const
 
@@ -182,7 +182,21 @@ export interface ExchangeDirectoryRowModel {
 		fiatCurrencies: Array<string> | null
 		fiatFees: ExchangeFiatFees | null
 		hasFiatOnramp: boolean | null
+		/** EUR/SEPA-only round trip from the venue's ROOT metadata. Kept for the
+		 * unfiltered directory; superseded by `rampCostRegion` whenever a country
+		 * is selected, since the root block is empty for region-authored venues. */
 		rampCost: MicaVenueModel['rampCost']
+		/** Cheapest on/off-ramp for the selected country's region, distilled from the
+		 * same RampMatrix /ramps publishes, using /ramps' own no-currency selection:
+		 * the cheapest round trip priced by ONE currency. Null until a country is
+		 * selected, or when the region publishes no funding. */
+		rampCostRegion: {
+			onRampUsd: number | null
+			offRampUsd: number | null
+			currency: string | null
+			onRail: string | null
+			offRail: string | null
+		} | null
 	} | null
 	warnings: Array<{ level: 'info' | 'caution' | 'danger'; text: string; expiry?: string }>
 	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
@@ -623,6 +637,11 @@ export interface ExchangeCountryAvailabilityModel {
 	note: string | null
 	source: ExchangeMetadataSource | null
 	usedFallback: boolean
+	/** Funding facts for the region this country resolves to. Null when the venue
+	 * publishes none for that region (older caches, or a venue with no fiat rails
+	 * there). Callers must fall back to the venue-level funding block, not assume
+	 * "no on-ramp". */
+	funding: MasterExchangeRegionVariantFunding | null
 }
 
 export type ExchangeRegionalMetadataModel =

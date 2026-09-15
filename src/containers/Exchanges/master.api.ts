@@ -53,7 +53,11 @@ export async function fetchExchangeRegionalMetadata(
 		segments: response.segments,
 		note: response.note,
 		source: response.source,
-		usedFallback: response.used_fallback
+		usedFallback: response.used_fallback,
+		// Variant funding is a directory-table concern (it drives the country-filtered
+		// on/off-ramp columns). This route already returns the region's full resolved
+		// metadata below, so the profile page reads rails from there instead.
+		funding: null
 	}
 	if (response.availability === 'unavailable') {
 		return { ...availability, availability: 'unavailable', segments: [] }

@@ -216,7 +216,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.rampCost?.onRamp.totalUsd ?? undefined, {
 		id: 'onRampCost',
-		header: '€1k on-ramp',
+		header: '$1k on-ramp',
 		cell: ({ row }) => <RampCostValue row={row.original} direction="onRamp" />,
 		meta: {
 			headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
@@ -226,7 +226,7 @@ export const MICA_COLUMNS = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.rampCost?.offRamp.totalUsd ?? undefined, {
 		id: 'offRampCost',
-		header: '€1k off-ramp',
+		header: '$1k off-ramp',
 		cell: ({ row }) => <RampCostValue row={row.original} direction="offRamp" />,
 		meta: {
 			headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',

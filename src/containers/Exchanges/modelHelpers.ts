@@ -104,8 +104,32 @@ export function filterDirectoryRows(
 		) {
 			continue
 		}
+		// Funding is authored per region for several venues (Coinbase and Gemini keep
+		// ALL their rails on regions.us/eea/gb and nothing at the root), so once a
+		// country is chosen the row's root-derived funding is the wrong answer — it
+		// reports "no fiat on-ramp" for exactly those venues. Prefer the region's own
+		// figures; fall back to the root block when the cache predates them, so an
+		// older cache degrades to today's behaviour rather than to blank cells.
+		const regionFunding = availability.funding
 		result.push({
 			...row,
+			funding:
+				row.funding && regionFunding
+					? {
+							...row.funding,
+							hasFiatOnramp: regionFunding.has_fiat_onramp,
+							fiatCurrencies: row.funding.fiatCurrencies,
+							rampCostRegion: regionFunding.ramp_cost_1k
+								? {
+										onRampUsd: regionFunding.ramp_cost_1k.on_ramp_usd,
+										offRampUsd: regionFunding.ramp_cost_1k.off_ramp_usd,
+										currency: regionFunding.ramp_cost_1k.currency,
+										onRail: regionFunding.ramp_cost_1k.on_rail,
+										offRail: regionFunding.ramp_cost_1k.off_rail
+									}
+								: null
+						}
+					: row.funding,
 			selectedCountry: filters.country,
 			selectedCountryStatus: availability.availability
 		})

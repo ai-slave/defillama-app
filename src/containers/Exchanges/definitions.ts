@@ -263,7 +263,12 @@ export const exchangeDefinitions = {
 		rampCost: {
 			label: '$1k on-ramp cost',
 			description:
-				'Estimated all-in USD cost of depositing the EUR equivalent of $1,000 by SEPA, buying BTC, and withdrawing it. Includes fiat, taker, slippage, and transfer fees.'
+				"Estimated all-in USD cost of depositing $1,000, buying BTC, and withdrawing it. Includes fiat, taker, slippage, and transfer fees. With a country selected this is priced on that country's cheapest rail; otherwise it is the EUR/SEPA path."
+		},
+		offRampCost: {
+			label: '$1k off-ramp cost',
+			description:
+				"Estimated all-in USD cost of depositing BTC, selling it, and withdrawing $1,000 of fiat. Includes fiat, taker, slippage, and transfer fees. With a country selected this is priced on that country's cheapest rail; otherwise it is the EUR/SEPA path."
 		},
 		headquarters: {
 			label: 'HQ',

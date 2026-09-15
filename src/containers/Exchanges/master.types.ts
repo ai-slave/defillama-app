@@ -651,10 +651,32 @@ type MasterExchangeCountryOverride = {
 	source?: MasterMetadataSource
 }
 
+/** Per-region funding facts. The venue-level `funding` block is derived from the
+ * exchange's ROOT metadata, which is empty for venues that author their rails
+ * regionally (Coinbase and Gemini keep everything on regions.us/eea/gb), so a
+ * country-filtered directory must read this instead — otherwise those venues
+ * report "no fiat on-ramp" in every country. `ramp_cost_1k` comes from the same
+ * RampMatrix the /ramps page publishes for this region, so the two agree. */
+export type MasterExchangeRegionVariantFunding = {
+	has_fiat_onramp: boolean
+	fiat_currency_count: number | null
+	ramp_cost_1k: {
+		on_ramp_usd: number | null
+		off_ramp_usd: number | null
+		/** The single currency both legs are priced in — same selection the /ramps
+		 * table makes with no currency chosen (cheapest round trip, one currency). */
+		currency: string | null
+		on_rail: string | null
+		off_rail: string | null
+	} | null
+}
+
 type MasterExchangeRegionVariantBase = {
 	note: string | null
 	source: MasterMetadataSource | null
 	country_overrides: Partial<Record<string, MasterExchangeCountryOverride>>
+	/** null when the venue has no fiat rails in this region at all. */
+	funding?: MasterExchangeRegionVariantFunding | null
 }
 
 export type MasterExchangeRegionVariant = MasterExchangeRegionVariantBase &
