@@ -9,10 +9,7 @@ export type ProtocolListQuery = Record<string, string | Array<string> | undefine
 export type RecentProtocolTableRow = ReturnType<typeof applyExtraTvl>[number]
 export type ProtocolListPage = CursorTablePage<RecentProtocolTableRow> &
 	Pick<IRecentProtocolsPageData, 'chainList' | 'categories'>
-export type ProtocolListInitialProps = Pick<
-	IRecentProtocolsPageData,
-	'chainList' | 'categories' | 'claimableAirdrops'
-> & {
+export type ProtocolListInitialProps = Pick<IRecentProtocolsPageData, 'chainList' | 'categories'> & {
 	protocols: Array<RecentProtocolTableRow>
 	protocolList: Omit<ProtocolListPage, 'rows' | 'chainList' | 'categories'>
 	kind: ProtocolListKind

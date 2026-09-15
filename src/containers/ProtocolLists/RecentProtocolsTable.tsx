@@ -53,7 +53,7 @@ export function RecentlyListedProtocolsTable({
 	kind,
 	chainList,
 	categories
-}: Omit<ProtocolListInitialProps, 'claimableAirdrops'>) {
+}: ProtocolListInitialProps) {
 	const router = useRouter()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})

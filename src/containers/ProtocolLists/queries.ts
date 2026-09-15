@@ -12,7 +12,7 @@ import { roundNumber } from '~/utils/numberFormat'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { getPrevTvlFromChart } from '~/utils/tvlChart'
 import { AIRDROP_EXCLUDE } from './airdrop-exclude'
-import { fetchAirdropsConfig, fetchProtocols } from './api'
+import { fetchProtocols } from './api'
 import {
 	isProtocolListTvlKey,
 	type ParentProtocolLite,
@@ -105,28 +105,8 @@ export async function getRecentProtocols(): Promise<IRecentProtocolsPageData> {
 	}
 }
 
-export async function getAirdropDirectoryData(): Promise<Array<{ name: string; page: string }>> {
-	const airdrops = await fetchAirdropsConfig()
-
-	const now = Date.now()
-	const result: Array<{ name: string; page: string }> = []
-	for (const key in airdrops) {
-		const i = airdrops[key]
-		if (i === undefined) continue
-		if (i.isActive === false || !i.page) continue
-		if (!i.endTime || (i.endTime < 1e12 ? i.endTime * 1000 > now : i.endTime > now)) {
-			result.push({ name: i.name ?? key, page: i.page })
-		}
-	}
-	return result
-}
-
 export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> {
-	const [{ protocols, chains, parentProtocols }, { raises }, claimableAirdrops] = await Promise.all([
-		fetchProtocols(),
-		fetchRaises(),
-		getAirdropDirectoryData()
-	])
+	const [{ protocols, chains, parentProtocols }, { raises }] = await Promise.all([fetchProtocols(), fetchRaises()])
 
 	const parents: Record<string, boolean> = {}
 	for (const p of parentProtocols) {
@@ -165,7 +145,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		if (protocol.category) {
 			categoryTvlMap.set(protocol.category, (categoryTvlMap.get(protocol.category) ?? 0) + (protocol.tvl ?? 0))
 		}
-		const raiseSummary = raisesById.get(protocol.defillamaId) ?? { totalUsd: 0, undisclosedCount: 0 }
+		const raiseSummary = raisesById.get(protocol.defillamaId)
 
 		airdropsProtocols.push({
 			name: protocol.name,
@@ -195,8 +175,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		protocols: airdropsProtocols,
 		chainList: chains,
 		categories: sortCategoriesByTvl(categoryTvlMap),
-		forkedList,
-		claimableAirdrops
+		forkedList
 	}
 }
 

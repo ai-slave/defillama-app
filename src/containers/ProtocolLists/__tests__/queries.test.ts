@@ -3,15 +3,13 @@ import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '../api
 
 const mocks = vi.hoisted(() => ({
 	fetchProtocols: vi.fn(),
-	fetchAirdropsConfig: vi.fn(),
 	fetchRaises: vi.fn(),
 	fetchChainChart: vi.fn(),
 	fetchChainsByCategoryAll: vi.fn()
 }))
 
 vi.mock('../api', () => ({
-	fetchProtocols: mocks.fetchProtocols,
-	fetchAirdropsConfig: mocks.fetchAirdropsConfig
+	fetchProtocols: mocks.fetchProtocols
 }))
 vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.fetchRaises }))
 vi.mock('~/containers/Chains/api', () => ({
@@ -82,7 +80,6 @@ const response = ({
 
 beforeEach(() => {
 	mocks.fetchRaises.mockResolvedValue({ raises: [] })
-	mocks.fetchAirdropsConfig.mockResolvedValue({})
 	mocks.fetchChainChart.mockResolvedValue({
 		borrowed: [
 			[1, 100],
@@ -150,15 +147,15 @@ describe('ProtocolLists queries', () => {
 			['Epoch', 0]
 		])
 	})
-	test.each([
-		['funding rounds', () => mocks.fetchRaises.mockRejectedValueOnce(new Error('raises unavailable'))],
-		['claimable airdrops', () => mocks.fetchAirdropsConfig.mockRejectedValueOnce(new Error('airdrops unavailable'))]
-	])('does not publish potential-airdrop membership when %s exclusions fail', async (_source, fail) => {
-		mocks.fetchProtocols.mockResolvedValue(response({ protocols: [], parentProtocols: [] }))
-		fail()
+	test.each([['funding rounds', () => mocks.fetchRaises.mockRejectedValueOnce(new Error('raises unavailable'))]])(
+		'does not publish potential-airdrop membership when %s exclusions fail',
+		async (_source, fail) => {
+			mocks.fetchProtocols.mockResolvedValue(response({ protocols: [], parentProtocols: [] }))
+			fail()
 
-		await expect(getAirdropsProtocols()).rejects.toThrow('unavailable')
-	})
+			await expect(getAirdropsProtocols()).rejects.toThrow('unavailable')
+		}
+	)
 
 	test.each([false, true])('sums disclosed rounds regardless of order (reversed: %s)', async (reversed) => {
 		mocks.fetchProtocols.mockResolvedValue(
@@ -186,7 +183,7 @@ describe('ProtocolLists queries', () => {
 			['Partial', { totalUsd: 10, undisclosedCount: 1 }],
 			['Unknown', { totalUsd: null, undisclosedCount: 1 }],
 			['Zero', { totalUsd: 0, undisclosedCount: 1 }],
-			['None', { totalUsd: 0, undisclosedCount: 0 }]
+			['None', undefined]
 		])
 	})
 

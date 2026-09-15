@@ -89,7 +89,6 @@ export async function getProtocolListInitialProps(kind: ProtocolListKind): Promi
 		protocolList,
 		kind,
 		chainList: snapshot.chainList,
-		categories: snapshot.categories,
-		...(snapshot.claimableAirdrops ? { claimableAirdrops: snapshot.claimableAirdrops } : {})
+		categories: snapshot.categories
 	}
 }

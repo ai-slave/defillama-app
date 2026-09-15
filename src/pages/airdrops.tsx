@@ -1,5 +1,5 @@
 import type { InferGetStaticPropsType } from 'next'
-import { RecentProtocols } from '~/containers/ProtocolLists/RecentProtocols'
+import { RecentlyListedProtocolsTable } from '~/containers/ProtocolLists/RecentProtocolsTable'
 import { getProtocolListInitialProps } from '~/containers/ProtocolLists/server/tableData.server'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -24,7 +24,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			canonicalUrl="/airdrops"
 			pageName={pageName}
 		>
-			<RecentProtocols {...props} />
+			<RecentlyListedProtocolsTable {...props} />
 		</Layout>
 	)
 }

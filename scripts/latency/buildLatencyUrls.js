@@ -28,7 +28,6 @@ const STANDALONE = [
 	'/',
 	'/about',
 	'/active-loans',
-	'/airdrop-directory',
 	'/airdrops',
 	'/app-fees/chains',
 	'/app-revenue/chains',

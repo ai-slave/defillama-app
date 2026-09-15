@@ -10,7 +10,6 @@ Common routes:
 
 - `/recent`
 - `/airdrops`
-- `/airdrop-directory`
 - `/mcaps` and `/mcaps/chain/[chain]`
 - `/fdv` and related token metric list pages
 - `/outstanding-fdv`
@@ -25,13 +24,12 @@ The `/protocol/[protocol]` entity page belongs to `ProtocolOverview`. The `/prot
 
 - `api.ts` and `api.types.ts`: protocol list API fetchers and DTO types.
 - `queries.ts`: page-data/read-model builders for recent, airdrops, token metrics, and extra-TVL pages.
-- `RecentProtocols.tsx`: recent and airdrop page container.
 - `RecentProtocolsTable.tsx`: recent/airdrop table rendering.
 - `ProtocolsWithTokens.tsx`: protocol token metric list UI.
 - `ExtraTvlByChain.tsx`: active loans, total staked, and pool2 chain views.
 - `utils.ts`: TVL toggle transforms and list filtering helpers.
 - `types.ts`: protocol-list read-model types.
-- `airdrop-exclude.ts`, `airdrops.ts`, `data.json`: airdrop-specific local data.
+- `airdrop-exclude.ts`, `data.json`: airdrop-specific local data.
 
 ## Data Flows
 
@@ -42,7 +40,7 @@ src/pages/recent.tsx / src/pages/airdrops.tsx
   -> getProtocolListInitialProps(kind)
   -> Redis snapshot built by getRecentProtocols() / getAirdropsProtocols()
   -> getProtocolListRows() -> cursorTablePage() -> 50 initial rows
-  -> RecentProtocols -> RecentlyListedProtocolsTable -> useTablePages()
+  -> RecentlyListedProtocolsTable -> useTablePages()
   -> /api/public/protocol-lists (75 rows per subsequent request)
 ```
 

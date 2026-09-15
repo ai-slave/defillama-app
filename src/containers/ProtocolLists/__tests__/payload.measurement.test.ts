@@ -4,8 +4,8 @@ import { expect, test, vi } from 'vitest'
 
 // Opt-in capture replay; never fetches network data or writes fixtures to the repository.
 const capture = process.env.PROTOCOL_LIST_MEASUREMENT_DIR
-const mocks = vi.hoisted(() => ({ lite: vi.fn(), raises: vi.fn(), claims: vi.fn(), rankings: vi.fn() }))
-vi.mock('../api', () => ({ fetchProtocols: mocks.lite, fetchAirdropsConfig: mocks.claims }))
+const mocks = vi.hoisted(() => ({ lite: vi.fn(), raises: vi.fn(), rankings: vi.fn() }))
+vi.mock('../api', () => ({ fetchProtocols: mocks.lite }))
 vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.raises }))
 vi.mock('~/api/pricing', () => ({ fetchCoinPrices: async () => ({}) }))
 vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterChainMetrics: async () => null }))
@@ -30,7 +30,6 @@ import { getAirdropsProtocols, getRecentProtocols } from '../queries'
 test.skipIf(!capture)('compares actual page-props builders over identical captured inputs', async () => {
 	const read = (file: string) => JSON.parse(readFileSync(join(capture!, file), 'utf8'))
 	mocks.lite.mockResolvedValue(read('lite.json'))
-	mocks.claims.mockResolvedValue(read('claims.json'))
 	mocks.raises.mockResolvedValue(normalizeRaisesApiResponse(read('raises.json')))
 	const rankings = await getProtocolsByChain({
 		chain: 'All',

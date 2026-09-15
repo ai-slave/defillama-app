@@ -48,10 +48,7 @@ beforeEach(() => {
 	mocks.current.mockResolvedValue(null)
 	mocks.publish.mockResolvedValue(true)
 	mocks.recent.mockResolvedValue(source)
-	mocks.airdrops.mockResolvedValue({
-		...source,
-		claimableAirdrops: [{ name: 'Claim', page: 'https://example.com/claim' }]
-	})
+	mocks.airdrops.mockResolvedValue(source)
 	mocks.read.mockImplementation(
 		async (_kind, version) =>
 			mocks.publish.mock.calls.map(([snapshot]) => snapshot).find((snapshot) => snapshot.version === version) ?? null
@@ -85,7 +82,6 @@ test('initial props and subsequent pages share one eligible snapshot with compac
 })
 test('API filtering and complete CSV export reuse the pinned population', async () => {
 	const initial = await getProtocolListInitialProps('airdrops')
-	expect(initial.claimableAirdrops).toEqual([{ name: 'Claim', page: 'https://example.com/claim' }])
 	const result = await request({ kind: 'airdrops', snapshot: initial.protocolList.version, minTvl: '78', csv: 'true' })
 	expect(result.status).toBe(200)
 	expect((result as { body: string }).body).toBe(

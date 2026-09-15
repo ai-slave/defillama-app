@@ -95,5 +95,4 @@ export interface IRecentProtocolsPageData {
 	chainList: Array<string>
 	categories: Array<string>
 	forkedList: Record<string, boolean>
-	claimableAirdrops?: Array<{ name: string; page: string; title?: string }>
 }

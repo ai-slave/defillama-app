@@ -234,11 +234,10 @@ Do not assume two routes use the same TVL model just because they share the same
 
 The `/protocol/active-loans/[protocol]` route is page-owned borrowed data. It always requests the borrowed breakdown and does not expose or consume protocol TVL toggles.
 
-Potential-airdrop membership requires the protocol listing, funding rounds, and active claimable-airdrop directory. Funding
-and claimability are exclusion sources; if either fails, the candidate list is unavailable rather than silently including
-protocols that should have been excluded. A protocol with no matched funding round has a zero raised total. If any matched
-round has an undisclosed amount, the protocol's total raised is unavailable; known rounds are not published as a complete
-subtotal.
+Potential-airdrop lists require the protocol listing and funding rounds. If either fetch fails, the list is unavailable.
+Candidate filtering excludes protocols with tokens, entries in the local exclusion list, and children of parents with tokens.
+A protocol with no matched funding round has an empty raised-total cell. All-undisclosed rounds display “Undisclosed”.
+Otherwise, the total sums disclosed amounts, including explicit zero, with a tooltip when undisclosed rounds are excluded.
 
 Exact protocol-list TVL snapshots preserve producer availability:
 
