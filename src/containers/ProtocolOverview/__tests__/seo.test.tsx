@@ -202,7 +202,7 @@ describe('ProtocolOverview final page SEO', () => {
 	})
 })
 
-function setupLayoutMocks() {
+function setupLayoutMocks(user: { flags: { is_llama: boolean } } | null) {
 	vi.doMock('next/head', () => ({
 		default: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 	}))
@@ -232,7 +232,7 @@ function setupLayoutMocks() {
 		TokenLogo: () => null
 	}))
 	vi.doMock('~/auth', () => ({
-		useAuthContext: () => ({ user: null })
+		useAuthContext: () => ({ user })
 	}))
 	vi.doMock('~/layout', async () => {
 		const { SEO } = await vi.importActual<typeof import('~/components/SEO')>('~/components/SEO')
@@ -270,7 +270,7 @@ function setupLayoutMocks() {
 
 describe('ProtocolOverviewLayout SEO', () => {
 	test('falls back when SEO producers pass empty strings', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -291,7 +291,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('keeps the information tab indexable with a canonical URL', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -305,7 +305,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('marks configured protocol overview pages as noindex while keeping the canonical URL', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -319,7 +319,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('marks a non-standalone tab as noindex without a canonical URL', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -333,7 +333,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('keeps the active loans tab indexable with the new canonical URL', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -347,7 +347,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('does not show TVL toggle instructions on the page-owned active loans tab', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const borrowedMarkup = renderToStaticMarkup(
@@ -373,7 +373,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	test.each(['Vesper', 'Metronome', 'Metronome Synth'])(
 		'shows the Odyssey enterprise dashboard announcement for %s',
 		async (name) => {
-			setupLayoutMocks()
+			setupLayoutMocks(null)
 
 			const { ProtocolOverviewLayout } = await import('../Layout')
 			const markup = renderToStaticMarkup(
@@ -390,7 +390,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	)
 
 	test('shows the in-page enterprise dashboard for Odyssey Finance without the external announcement', async () => {
-		setupLayoutMocks()
+		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -405,25 +405,25 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).not.toContain('Odyssey Enterprise')
 	})
 
-	test('hides the Uniswap dashboard tabs from users without the llama flag', async () => {
-		setupLayoutMocks()
+	test.each([null, { flags: { is_llama: false } }])(
+		'hides the Uniswap dashboard tabs from users without the llama flag (%j)',
+		async (user) => {
+			setupLayoutMocks(user)
 
-		const { ProtocolOverviewLayout } = await import('../Layout')
-		const markup = renderToStaticMarkup(
-			<ProtocolOverviewLayout name="Uniswap" category="Dexs" metrics={metrics} tab="information">
-				{null}
-			</ProtocolOverviewLayout>
-		)
+			const { ProtocolOverviewLayout } = await import('../Layout')
+			const markup = renderToStaticMarkup(
+				<ProtocolOverviewLayout name="Uniswap" category="Dexs" metrics={metrics} tab="information">
+					{null}
+				</ProtocolOverviewLayout>
+			)
 
-		expect(markup).not.toContain('/protocol/deep-dive/uniswap')
-		expect(markup).not.toContain('Deep Dive')
-	})
+			expect(markup).not.toContain('/protocol/deep-dive/uniswap')
+			expect(markup).not.toContain('Deep Dive')
+		}
+	)
 
 	test('shows the Uniswap dashboard as one menu tab listing every page for llama users', async () => {
-		setupLayoutMocks()
-		vi.doMock('~/auth', () => ({
-			useAuthContext: () => ({ user: { flags: { is_llama: true } } })
-		}))
+		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(
@@ -448,10 +448,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test('shows the parent dashboard tabs on a child protocol page for llama users', async () => {
-		setupLayoutMocks()
-		vi.doMock('~/auth', () => ({
-			useAuthContext: () => ({ user: { flags: { is_llama: true } } })
-		}))
+		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const markup = renderToStaticMarkup(

@@ -20,8 +20,8 @@ import { ProBadge, ProChip, ProMeta, proCardShellStyles, ProButton } from '../ui
 import { CardLikeButton } from './CardLikeButton'
 import { ConfirmationModal } from './ConfirmationModal'
 import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
-import { buildDashboardPreview } from './dashboardPreview'
 import { DashboardPreview } from './DashboardPreview'
+import { buildDashboardPreview } from './dashboardPreview.utils'
 
 interface DashboardCardProps {
 	fallbackFocus?: RefObject<HTMLElement | null>

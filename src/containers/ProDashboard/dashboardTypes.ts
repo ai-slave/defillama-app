@@ -1,5 +1,5 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
-import type { DashboardPreviewTile } from './components/dashboardPreview'
+import type { DashboardPreviewTile } from './components/dashboardPreview.utils'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 
 export type TimePeriod = '30d' | '90d' | '365d' | 'ytd' | '3y' | 'all' | 'custom'

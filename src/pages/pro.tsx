@@ -10,16 +10,16 @@ import type { ComparisonPreset } from '~/containers/ProDashboard/components/Comp
 import { DashboardDiscovery } from '~/containers/ProDashboard/components/DashboardDiscovery'
 import { DashboardList } from '~/containers/ProDashboard/components/DashboardList'
 import { DashboardPaywallModal, type PaywallReason } from '~/containers/ProDashboard/components/DashboardPaywallModal'
-import { buildDashboardPreview } from '~/containers/ProDashboard/components/dashboardPreview'
+import { buildDashboardPreview } from '~/containers/ProDashboard/components/dashboardPreview.utils'
 import { FollowingShelves } from '~/containers/ProDashboard/components/FollowingShelves'
 import { LikedDashboards } from '~/containers/ProDashboard/components/LikedDashboards'
+import { MyDashboardsControls } from '~/containers/ProDashboard/components/MyDashboardsControls'
 import {
 	areMyDashboardsControlsActive,
 	DEFAULT_MY_DASHBOARDS_CONTROLS,
 	filterAndSortMyDashboards,
 	MY_DASHBOARDS_FILTERED_PAGE_SIZE
-} from '~/containers/ProDashboard/components/myDashboardsControls'
-import { MyDashboardsControls } from '~/containers/ProDashboard/components/MyDashboardsControls'
+} from '~/containers/ProDashboard/components/myDashboardsControls.utils'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'

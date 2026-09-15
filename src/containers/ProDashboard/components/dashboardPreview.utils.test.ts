@@ -1,6 +1,11 @@
 import { expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import { buildDashboardPreview, DASHBOARD_PREVIEW_COLUMN_BUDGET, previewSeed, previewSeries } from './dashboardPreview'
+import {
+	buildDashboardPreview,
+	DASHBOARD_PREVIEW_COLUMN_BUDGET,
+	previewSeed,
+	previewSeries
+} from './dashboardPreview.utils'
 
 function chart(id: string, type: string): DashboardItemConfig {
 	return { id, kind: 'chart', type, subjectType: 'protocol', protocol: 'aave' } as unknown as DashboardItemConfig

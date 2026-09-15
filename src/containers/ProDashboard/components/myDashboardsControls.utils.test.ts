@@ -5,7 +5,7 @@ import {
 	DEFAULT_MY_DASHBOARDS_CONTROLS,
 	filterAndSortMyDashboards,
 	type MyDashboardsControlsState
-} from './myDashboardsControls'
+} from './myDashboardsControls.utils'
 
 function makeDashboard(dashboard: Partial<Dashboard> & { id: string; name: string }): Dashboard {
 	const { id, name, ...rest } = dashboard

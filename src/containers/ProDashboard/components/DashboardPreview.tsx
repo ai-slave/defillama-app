@@ -1,4 +1,4 @@
-import { type DashboardPreviewTile, previewSeries } from './dashboardPreview'
+import { type DashboardPreviewTile, previewSeries } from './dashboardPreview.utils'
 
 function svgCoordinate(value: number): number {
 	return Math.round(value * 100) / 100

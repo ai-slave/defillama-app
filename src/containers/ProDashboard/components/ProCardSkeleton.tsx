@@ -1,5 +1,5 @@
 import { tw } from '~/ui/tw'
-import { previewSeries } from './dashboardPreview'
+import { previewSeries } from './dashboardPreview.utils'
 
 export type ProCardSkeletonVariant = 'chart' | 'metric' | 'table' | 'text' | 'pie'
 

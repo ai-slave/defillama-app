@@ -8,7 +8,7 @@ import {
 	MY_DASHBOARDS_VISIBILITY_OPTIONS,
 	type MyDashboardsSort,
 	type MyDashboardsVisibility
-} from './myDashboardsControls'
+} from './myDashboardsControls.utils'
 
 const SEARCH_DEBOUNCE_MS = 200
 
