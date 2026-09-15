@@ -15,6 +15,7 @@ interface SectionConfig {
 	subtitle: string
 	seeAllHref: string
 	emptyMessage: string
+	keepDuplicates?: boolean
 }
 
 const EMPTY_DASHBOARDS: Array<Dashboard> = []
@@ -51,7 +52,8 @@ const SECTIONS: Array<SectionConfig> = [
 		title: 'Recently Created',
 		subtitle: 'Newest public dashboards',
 		seeAllHref: '/pro?tab=discover&sortBy=recent',
-		emptyMessage: 'No new dashboards yet'
+		emptyMessage: 'No new dashboards yet',
+		keepDuplicates: true
 	}
 ]
 
@@ -68,7 +70,8 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 			dedupeShelves(
 				SECTIONS.map((section) => ({
 					key: section.key,
-					dashboards: curateShelf(categories[section.key]?.dashboards ?? EMPTY_DASHBOARDS)
+					dashboards: curateShelf(categories[section.key]?.dashboards ?? EMPTY_DASHBOARDS),
+					...(section.keepDuplicates ? { keepDuplicates: true } : {})
 				})),
 				DISCOVERY_RAIL_SIZE
 			),

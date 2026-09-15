@@ -3,6 +3,7 @@ export const DISCOVERY_RAIL_SIZE = 8
 export interface DiscoveryShelf<T extends { id: string }> {
 	key: string
 	dashboards: ReadonlyArray<T>
+	keepDuplicates?: boolean
 }
 
 export function dedupeShelves<T extends { id: string }>(
@@ -14,7 +15,7 @@ export function dedupeShelves<T extends { id: string }>(
 		const dashboards: Array<T> = []
 		for (const dashboard of shelf.dashboards) {
 			if (dashboards.length >= railSize) break
-			if (taken.has(dashboard.id)) continue
+			if (!shelf.keepDuplicates && taken.has(dashboard.id)) continue
 			taken.add(dashboard.id)
 			dashboards.push(dashboard)
 		}
