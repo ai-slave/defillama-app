@@ -9,7 +9,8 @@ export type TokenDirectoryRecord = {
 	incomeStatement?: true
 	route?: string
 	tokenRights?: boolean
-	is_yields?: boolean
+	hasEarn?: boolean
+	hasBorrow?: boolean
 	mcap_rank?: number
 	logo?: string | null
 	website?: string

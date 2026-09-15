@@ -129,7 +129,9 @@ beforeEach(() => {
 			reference_asset_exact: ['asset:usd'],
 			pool_token: ['asset:doge']
 		}),
-		makeRow('meme', { reference_asset: ['asset:doge'], reference_asset_exact: ['asset:doge'], pool_token: [] })
+		makeRow('meme', { reference_asset: ['asset:doge'], reference_asset_exact: ['asset:doge'], pool_token: [] }),
+		makeRow('multi', { reference_asset: ['asset:doge', 'asset:usd'], reference_asset_exact: [], pool_token: [] }),
+		makeRow('unrelated', { reference_asset: ['asset:usd'], reference_asset_exact: ['asset:usd'], pool_token: [] })
 	]
 })
 afterEach(() => vi.unstubAllGlobals())
@@ -155,7 +157,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		}
 	}
 	const ssr = await getTokenEarnRows(snapshot, 'DOGE')
-	expect(ssr.rows.map((row) => row.id).sort()).toEqual(['direct', 'held', 'meme'])
+	expect(ssr.rows.map((row) => row.id).sort()).toEqual(['direct', 'held', 'meme', 'multi'])
 	const oldRequest = await getEarnPage(snapshot, { token: ssr.tokenKeys, pageSize: 'all' })
 	expect(oldRequest.rows.map((row) => row.id)).toEqual(['direct'])
 	const hydration = {
@@ -171,6 +173,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 		const url = new URL(String(input), 'http://localhost')
 		expect(url.pathname).toBe('/api/public/yields/earn')
 		expect(url.searchParams.getAll('token')).toEqual(ssr.tokenKeys)
+		expect(url.searchParams.get('tokenMatch')).toBe('contains')
 		expect(url.searchParams.get('tokenOn')).toBe('both')
 		expect(url.searchParams.get('includeMemeTokens')).toBe('true')
 		served.push(

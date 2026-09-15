@@ -190,7 +190,7 @@ export function getTokenPageSections({
 			resolvedUnlocksSlug
 		})
 	}
-	if (record.is_yields && yieldsSnapshot.rowCount > 0) {
+	if (record.hasEarn && yieldsSnapshot.rowCount > 0) {
 		sections.push({
 			id: 'token-yields',
 			label: 'Yields',
@@ -199,6 +199,7 @@ export function getTokenPageSections({
 		})
 	}
 	if (
+		record.hasBorrow &&
 		borrowRoutesSnapshot &&
 		(borrowRoutesSnapshot.counts.useAsCollateral > 0 || borrowRoutesSnapshot.counts.borrowThis > 0)
 	) {

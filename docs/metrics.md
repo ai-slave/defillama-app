@@ -564,11 +564,16 @@ Tokens dropdown, computed from the shared market snapshot and cached by market v
 
 ## Token detail Yields
 
-Token detail Yields uses the same population for SSR hydration and browser full-data requests: exact resolved asset
-keys, `tokenOn=both` (reference asset or pool-held token), and `includeMemeTokens=true`. A token-specific page includes
-its own meme-token pools. Browser pagination, sorting and filtering must not silently switch to the general Yields
-API defaults (`tokenOn=reference`, meme pools excluded). SSR earn and borrow construction share one immutable Yields
-handle; later browser refreshes acquire current data and are not pinned to the SSR generation.
+Token detail Yields uses the same population for SSR hydration and browser full-data requests: resolved asset
+keys, `tokenMatch=contains`, `tokenOn=both` (reference assets or pool token), and `includeMemeTokens=true`.
+A token-specific page includes multi-asset pools containing that asset and its own meme-token pools.
+Browser pagination, sorting and filtering must not silently switch to the general Yields API defaults
+(`tokenMatch=exact`, `tokenOn=reference`, meme pools excluded).
+
+The token directory's `hasEarn` and `hasBorrow` flags independently gate SSR lookups. Neither flag affects token
+page discovery. When neither is true, token detail does not acquire a Yields snapshot. When both are true,
+Earn and Borrow share one immutable handle. Sections still require matching rows; later browser refreshes
+acquire current data and are not pinned to the SSR generation.
 
 Token Borrow requests include meme pools on both collateral and debt legs, with net APY descending.
 Browser request settings and cache identities share the token-page policy used by SSR. Both Borrow responses

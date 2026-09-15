@@ -125,7 +125,8 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			{ acquireOptionalYieldsSnapshot },
 			{ getTokenBorrowRoutes, getTokenEarnRows }
 		]) => {
-			const yieldsDatasetSnapshotPromise = acquireOptionalYieldsSnapshot()
+			const yieldsDatasetSnapshotPromise =
+				record.hasEarn || record.hasBorrow ? acquireOptionalYieldsSnapshot() : Promise.resolve(null)
 			const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
 				downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
 			const marketSummaryPromise = geckoId
@@ -231,7 +232,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				: Promise.resolve(null)
 
 			const yieldsRowsPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
-				record.is_yields && snapshot
+				record.hasEarn && snapshot
 					? getTokenEarnRows(snapshot, record.symbol).catch((error) =>
 							downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, {
 								rows: [],
@@ -242,7 +243,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			)
 
 			const borrowRoutesPromise = yieldsDatasetSnapshotPromise.then((snapshot) =>
-				snapshot
+				record.hasBorrow && snapshot
 					? getTokenBorrowRoutes(snapshot, record.symbol).catch((error) =>
 							downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
 						)

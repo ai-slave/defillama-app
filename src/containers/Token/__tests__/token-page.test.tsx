@@ -690,6 +690,36 @@ describe('token page', () => {
 		}
 	)
 
+	test.each([
+		{ hasEarn: false, hasBorrow: false },
+		{ hasEarn: true, hasBorrow: false },
+		{ hasEarn: false, hasBorrow: true },
+		{ hasEarn: true, hasBorrow: true }
+	])('gates queries and sections independently with $hasEarn Earn and $hasBorrow Borrow', async (flags) => {
+		Object.assign(state.tokensJson.btc, flags)
+		state.initialYieldsRows = [makeYieldRow()]
+		state.initialTokenBorrowRoutesData = { useAsCollateral: [makeRouteRow()], borrowThis: [] }
+
+		const result = await runTokenPageRequest({ params: { token: 'BTC' } } as never)
+		if (!('props' in result)) throw new Error('expected props')
+
+		expect(acquireOptionalYieldsSnapshot).toHaveBeenCalledTimes(flags.hasEarn || flags.hasBorrow ? 1 : 0)
+		expect(getTokenEarnRows).toHaveBeenCalledTimes(flags.hasEarn ? 1 : 0)
+		expect(getTokenBorrowRoutes).toHaveBeenCalledTimes(flags.hasBorrow ? 1 : 0)
+		expect(Boolean(findTokenPageSection(result.props.sections, 'token-yields'))).toBe(flags.hasEarn)
+		expect(Boolean(findTokenPageSection(result.props.sections, 'token-borrow'))).toBe(flags.hasBorrow)
+	})
+
+	test('hides Earn and Borrow when enabled lookups return no rows', async () => {
+		Object.assign(state.tokensJson.btc, { hasEarn: true, hasBorrow: true })
+		const result = await runTokenPageRequest({ params: { token: 'BTC' } } as never)
+		if (!('props' in result)) throw new Error('expected props')
+		expect(getTokenEarnRows).toHaveBeenCalledOnce()
+		expect(getTokenBorrowRoutes).toHaveBeenCalledOnce()
+		expect(findTokenPageSection(result.props.sections, 'token-yields')).toBeUndefined()
+		expect(findTokenPageSection(result.props.sections, 'token-borrow')).toBeUndefined()
+	})
+
 	test('shares each request’s current snapshot and Yields handle across concurrent detail construction', async () => {
 		state.tokensJson = {
 			sdt: {
@@ -698,7 +728,8 @@ describe('token page', () => {
 				route: '/token/SDT',
 				protocolId: 'parent#stake-dao',
 				token_nk: 'coingecko:stake-dao',
-				is_yields: true
+				hasEarn: true,
+				hasBorrow: true
 			}
 		}
 		const snapshot = { generationId: 'test-detail', generatedAt: 1, readJson: vi.fn() }
@@ -734,6 +765,7 @@ describe('token page', () => {
 	})
 
 	test('propagates a core failure while optional Yields acquisition is pending', async () => {
+		state.tokensJson.btc.hasEarn = true
 		const pendingYields = Promise.withResolvers<Awaited<ReturnType<typeof acquireOptionalYieldsSnapshot>>>()
 		vi.mocked(acquireOptionalYieldsSnapshot).mockReturnValueOnce(pendingYields.promise)
 		const error = new Error('Current snapshot unavailable')
@@ -1625,7 +1657,8 @@ describe('token page', () => {
 				name: 'Chainlink',
 				symbol: 'LINK',
 				token_nk: 'coingecko:chainlink',
-				is_yields: true
+				hasEarn: true,
+				hasBorrow: true
 			}
 		}
 		state.tokenlist = {
@@ -1674,7 +1707,8 @@ describe('token page', () => {
 				name: 'Chainlink',
 				symbol: 'LINK',
 				token_nk: 'coingecko:chainlink',
-				is_yields: true
+				hasEarn: true,
+				hasBorrow: true
 			}
 		}
 		state.tokenlist = {
@@ -1732,7 +1766,8 @@ describe('token page', () => {
 				protocolId: 'parent#chainlink',
 				incomeStatement: true,
 				tokenRights: true,
-				is_yields: true
+				hasEarn: true,
+				hasBorrow: true
 			}
 		}
 		state.protocolMetadata = {
@@ -1793,7 +1828,8 @@ describe('token page', () => {
 				name: 'Chainlink',
 				symbol: 'LINK',
 				token_nk: 'coingecko:chainlink',
-				is_yields: true
+				hasEarn: true,
+				hasBorrow: true
 			}
 		}
 		vi.mocked(acquireOptionalYieldsSnapshot).mockResolvedValueOnce(null)
