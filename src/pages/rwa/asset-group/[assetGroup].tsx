@@ -77,7 +77,7 @@ export default function RWAAssetGroupPage(props: InferGetStaticPropsType<typeof 
 	return (
 		<Layout
 			title={`${props.assetGroupName} RWA Dashboard & Analytics - DefiLlama`}
-			description={`Track ${props.assetGroupName} RWA assets onchain. Compare Active Mcap, Onchain Mcap, DeFi Active TVL, and utilization.`}
+			description={`Track ${props.assetGroupName} RWA assets onchain. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.`}
 			pageName={pageName}
 			canonicalUrl={`/rwa/asset-group/${props.assetGroupSlug}`}
 		>

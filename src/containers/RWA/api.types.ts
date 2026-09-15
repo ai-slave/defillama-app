@@ -461,6 +461,8 @@ export type RWADefiTvlProtocolBreakdown = {
 
 export interface IRWAAssetData extends IRWAProject {
 	slug: string
+	/** The asset's own DeFiLlama protocol listing(s), resolved from projectId. */
+	protocolLinks: Array<{ name: string; slug: string }>
 	defiActiveTvlByProtocolChain: Array<RWADefiTvlProtocolBreakdown> | null
 	rwaClassificationDescription: string | null
 	accessModelDescription: string | null

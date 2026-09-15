@@ -53,7 +53,7 @@ describe('rankRwaChains', () => {
 
 describe('foldRwaChainSeries', () => {
 	const total = {
-		dimensions: ['timestamp', 'Total Active Mcap'] as ['timestamp', ...Array<string>],
+		dimensions: ['timestamp', 'Total Active AUM'] as ['timestamp', ...Array<string>],
 		source: [
 			[1, 1000],
 			[2, null],
@@ -83,7 +83,7 @@ describe('foldRwaChainSeries', () => {
 			assets: [usdy, buidl],
 			total
 		})
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Active Mcap', 'Ethereum', 'Avalanche', 'Others'])
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Active AUM', 'Ethereum', 'Avalanche', 'Others'])
 		expect(folded.source).toEqual([
 			[1, 1000, 700, 200, 100],
 			[2, null, 600, null, null],
@@ -105,7 +105,7 @@ describe('foldRwaChainSeries', () => {
 			assets: [usdy],
 			total
 		})
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Active Mcap', 'Ethereum'])
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Active AUM', 'Ethereum'])
 		expect(folded.source).toEqual([
 			[1, 1000, 1000],
 			[2, null, null],

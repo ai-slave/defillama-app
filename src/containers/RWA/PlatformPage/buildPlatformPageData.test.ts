@@ -219,6 +219,47 @@ describe('buildRWAPlatformPageData', () => {
 		expect(peers[1]?.holderTotalFeeBps).toBe(0)
 	})
 
+	test('ranks and reports active AUM, falling back to on-chain supply on pre-split artifacts', () => {
+		const treasuryHeavy = meta({ activeAum: 500, onchainAum: 5000 })
+		const legacy = meta({ pid: 2, name: 'Legacy', slug: 'legacy', onchainAum: 1000 })
+		const platformsIndex: RWAPlatformsIndex = {
+			generatedAt: 1,
+			byPid: { '1': 'selected', '2': 'legacy' },
+			platforms: { selected: treasuryHeavy, legacy }
+		}
+
+		const peers = buildRWAPlatformPeerRows(platformsIndex, {
+			byPlatform: { Selected: segmented(1, 0), Legacy: segmented(1, 0) }
+		})
+
+		expect(peers.map(({ rank, slug, aum }) => ({ rank, slug, aum }))).toEqual([
+			{ rank: 1, slug: 'legacy', aum: 1000 },
+			{ rank: 2, slug: 'selected', aum: 500 }
+		])
+	})
+
+	test('takes the DeFi TVL ratio off active AUM rather than raw on-chain supply', () => {
+		const assets: Array<RWAPlatformCurrentAsset> = [
+			{
+				parentPlatform: 'Selected',
+				governance: false,
+				attestations: true,
+				defiActiveTvl: { Ethereum: { Aave: 100 } },
+				category: ['Treasuries'],
+				assetClass: ['Debt'],
+				chain: ['Ethereum'],
+				accessModel: 'Permissioned'
+			}
+		]
+
+		const result = buildRWAPlatformPageData({
+			meta: meta({ activeAum: 500, onchainAum: 1000 }),
+			assetSummary: buildRWAPlatformAssetSummary(assets, 'selected')
+		})
+
+		expect(result.defiActiveTvlToAumPct).toBe(20)
+	})
+
 	test('excludes zero AUM platforms while retaining positive AUM peers', () => {
 		const positive = meta({ onchainAum: 0.01 })
 		const zero = meta({ pid: 2, name: 'Zero', slug: 'zero', onchainAum: 0 })
@@ -230,6 +271,24 @@ describe('buildRWAPlatformPageData', () => {
 
 		const peers = buildRWAPlatformPeerRows(platformsIndex, {
 			byPlatform: { Selected: segmented(1, 0), Zero: segmented(1, 0) }
+		})
+
+		expect(peers.map(({ rank, slug }) => ({ rank, slug }))).toEqual([{ rank: 1, slug: 'selected' }])
+	})
+
+	test('excludes a platform whose supply is entirely inert, rather than ranking it at $0', () => {
+		// Raw supply is what the gate used to read, so an all-treasury platform survived it and
+		// then rendered at the bottom showing the active AUM the row actually displays: $0.
+		const positive = meta({ onchainAum: 1000, activeAum: 1000 })
+		const inert = meta({ pid: 2, name: 'Inert', slug: 'inert', onchainAum: 5000, activeAum: 0 })
+		const platformsIndex: RWAPlatformsIndex = {
+			generatedAt: 1,
+			byPid: { '1': 'selected', '2': 'inert' },
+			platforms: { selected: positive, inert }
+		}
+
+		const peers = buildRWAPlatformPeerRows(platformsIndex, {
+			byPlatform: { Selected: segmented(1, 0), Inert: segmented(1, 0) }
 		})
 
 		expect(peers.map(({ rank, slug }) => ({ rank, slug }))).toEqual([{ rank: 1, slug: 'selected' }])

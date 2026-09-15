@@ -4,6 +4,13 @@ import { rwaSlug } from '../rwaSlug'
 import type { RWAPlatformsIndex, RWAPlatformMeta } from './api.types'
 import type { RWAPlatformAssetSummary, RWAPlatformMixRow, RWAPlatformPageData, RWAPlatformPeerRow } from './types'
 
+// The AUM every platform surface headlines. Falls back to raw on-chain supply for artifacts
+// published before the server split the two, so a stale metadata pull renders the old number
+// rather than NaN.
+export function rwaPlatformAum(meta: Pick<RWAPlatformMeta, 'onchainAum' | 'activeAum'>): number {
+	return meta.activeAum ?? meta.onchainAum
+}
+
 function increment(counts: Map<string, number>, value: string): void {
 	counts.set(value, (counts.get(value) ?? 0) + 1)
 }
@@ -43,9 +50,9 @@ export function buildRWAPlatformPeerRows(
 	const metas: Array<RWAPlatformMeta> = []
 	for (const slug in platformsIndex.platforms) {
 		const meta = platformsIndex.platforms[slug]
-		if (meta && meta.onchainAum > 0) metas.push(meta)
+		if (meta && rwaPlatformAum(meta) > 0) metas.push(meta)
 	}
-	metas.sort((a, b) => b.onchainAum - a.onchainAum || a.name.localeCompare(b.name))
+	metas.sort((a, b) => rwaPlatformAum(b) - rwaPlatformAum(a) || a.name.localeCompare(b.name))
 
 	const peers: Array<RWAPlatformPeerRow> = []
 	for (let index = 0; index < metas.length; index++) {
@@ -56,7 +63,7 @@ export function buildRWAPlatformPeerRows(
 			name: meta.name,
 			slug: meta.slug,
 			logo: meta.logo,
-			onchainAum: meta.onchainAum,
+			aum: rwaPlatformAum(meta),
 			assetCount: assetCountsBySlug.get(meta.slug) ?? 0,
 			holderTotalFeeBps: meta.holderTotalFeeBps,
 			mintFeeBps: meta.mintFeeBps,
@@ -73,10 +80,11 @@ export function buildRWAPlatformPageData({
 	meta: RWAPlatformMeta
 	assetSummary: RWAPlatformAssetSummary
 }): RWAPlatformPageData {
+	const aum = rwaPlatformAum(meta)
 	return {
 		meta,
 		...assetSummary,
-		defiActiveTvlToAumPct: meta.onchainAum > 0 ? (assetSummary.defiActiveTvl / meta.onchainAum) * 100 : null
+		defiActiveTvlToAumPct: aum > 0 ? (assetSummary.defiActiveTvl / aum) * 100 : null
 	}
 }
 

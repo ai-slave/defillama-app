@@ -30,7 +30,7 @@ export function RWAOverviewCards({ cards, includeBridgeTvl, includeCex }: RWAOve
 			</RWAOverviewCard>
 			<RWAOverviewCard
 				title="Change by Chain, 30d"
-				tooltip="Active mcap now against 30 days ago, in total and per chain."
+				tooltip="Active AUM now against 30 days ago, in total and per chain."
 				value={chain.changeUsd == null ? null : formatRwaSignedUsd(chain.changeUsd)}
 				change={chain.changePct == null ? null : formatPercentChange(chain.changePct)}
 				changeTone={getRwaChangeTone(chain.changeUsd)}

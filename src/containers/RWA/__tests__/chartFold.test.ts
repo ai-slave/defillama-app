@@ -9,7 +9,7 @@ describe('foldRwaTopSeries', () => {
 	test('keeps the largest series by latest value, in that order, and folds the rest into Others', () => {
 		const folded = foldRwaTopSeries(
 			dataset(
-				['timestamp', 'Total Active Mcap', 'A', 'B', 'C', 'D'],
+				['timestamp', 'Total Active AUM', 'A', 'B', 'C', 'D'],
 				[
 					[1, 10, 1, 2, 3, 4],
 					[2, 20, 9, 1, 5, 5]
@@ -17,7 +17,7 @@ describe('foldRwaTopSeries', () => {
 			),
 			{ max: 2 }
 		)
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Active Mcap', 'A', 'C', RWA_OTHERS_SERIES_LABEL])
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Active AUM', 'A', 'C', RWA_OTHERS_SERIES_LABEL])
 		expect(folded.source).toEqual([
 			[1, 10, 1, 3, 6],
 			[2, 20, 9, 5, 6]
@@ -68,17 +68,17 @@ describe('foldRwaTopSeries', () => {
 	})
 
 	test('keeps the Total line out of the ranking', () => {
-		const folded = foldRwaTopSeries(dataset(['timestamp', 'A', 'Total Onchain Mcap', 'B'], [[1, 1, 3, 2]]), { max: 1 })
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Onchain Mcap', 'B', RWA_OTHERS_SERIES_LABEL])
+		const folded = foldRwaTopSeries(dataset(['timestamp', 'A', 'Total Onchain AUM', 'B'], [[1, 1, 3, 2]]), { max: 1 })
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Onchain AUM', 'B', RWA_OTHERS_SERIES_LABEL])
 		expect(folded.source).toEqual([[1, 3, 2, 1]])
 	})
 
 	test('folds an existing Others series into the new one and keeps it last', () => {
 		const folded = foldRwaTopSeries(
-			dataset(['timestamp', 'Total Active Mcap', 'Others', 'A', 'B'], [[1, 10, 5, 1, 2]]),
+			dataset(['timestamp', 'Total Active AUM', 'Others', 'A', 'B'], [[1, 10, 5, 1, 2]]),
 			{ max: 1 }
 		)
-		expect(folded.dimensions).toEqual(['timestamp', 'Total Active Mcap', 'B', RWA_OTHERS_SERIES_LABEL])
+		expect(folded.dimensions).toEqual(['timestamp', 'Total Active AUM', 'B', RWA_OTHERS_SERIES_LABEL])
 		expect(folded.source).toEqual([[1, 10, 2, 6]])
 		const under = foldRwaTopSeries(dataset(['timestamp', 'Others', 'A'], [[1, 5, 1]]), { max: 3 })
 		expect(under.dimensions).toEqual(['timestamp', 'A', RWA_OTHERS_SERIES_LABEL])
@@ -100,7 +100,7 @@ describe('toRwaShareDataset', () => {
 	test('draws every row as percent of its total and drops the Total series', () => {
 		const share = toRwaShareDataset(
 			dataset(
-				['timestamp', 'Total Active Mcap', 'A', 'B'],
+				['timestamp', 'Total Active AUM', 'A', 'B'],
 				[
 					[1, 4, 1, 3],
 					[2, 10, 5, 5]
@@ -115,12 +115,12 @@ describe('toRwaShareDataset', () => {
 	})
 
 	test('sums the row from the series, not the Total column', () => {
-		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active Mcap', 'A', 'B'], [[1, 999, 2, 2]]))
+		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active AUM', 'A', 'B'], [[1, 999, 2, 2]]))
 		expect(share.source).toEqual([[1, 50, 50]])
 	})
 
 	test('keeps Others in the share and in its denominator', () => {
-		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active Mcap', 'A', 'Others'], [[1, 4, 1, 3]]))
+		const share = toRwaShareDataset(dataset(['timestamp', 'Total Active AUM', 'A', 'Others'], [[1, 4, 1, 3]]))
 		expect(share.dimensions).toEqual(['timestamp', 'A', 'Others'])
 		expect(share.source).toEqual([[1, 25, 75]])
 	})
@@ -155,9 +155,9 @@ describe('ensureRwaTotalSeries', () => {
 					[3, 4, null]
 				]
 			),
-			'Total Active Mcap'
+			'Total Active AUM'
 		)
-		expect(withTotal.dimensions).toEqual(['timestamp', 'Total Active Mcap', 'A', 'B'])
+		expect(withTotal.dimensions).toEqual(['timestamp', 'Total Active AUM', 'A', 'B'])
 		expect(withTotal.source).toEqual([
 			[1, 3, 1, 2],
 			[2, null, null, null],
@@ -166,12 +166,12 @@ describe('ensureRwaTotalSeries', () => {
 	})
 
 	test('counts Others in the Total it adds', () => {
-		const withTotal = ensureRwaTotalSeries(dataset(['timestamp', 'A', 'Others'], [[1, 1, 2]]), 'Total Active Mcap')
+		const withTotal = ensureRwaTotalSeries(dataset(['timestamp', 'A', 'Others'], [[1, 1, 2]]), 'Total Active AUM')
 		expect(withTotal.source).toEqual([[1, 3, 1, 2]])
 	})
 
 	test('returns the dataset as is when a Total series exists', () => {
-		const input = dataset(['timestamp', 'Total Active Mcap', 'A'], [[1, 1, 1]])
-		expect(ensureRwaTotalSeries(input, 'Total Active Mcap')).toBe(input)
+		const input = dataset(['timestamp', 'Total Active AUM', 'A'], [[1, 1, 1]])
+		expect(ensureRwaTotalSeries(input, 'Total Active AUM')).toBe(input)
 	})
 })

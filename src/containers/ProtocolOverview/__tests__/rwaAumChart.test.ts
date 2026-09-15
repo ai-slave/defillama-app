@@ -79,7 +79,8 @@ describe('RWA AUM as the headline metric', () => {
 			getProtocolPrimaryMetricOverride({ metrics: { tvl: false }, name: 'xStocks', rwaActiveAum: 810_544_611 })
 		).toMatchObject({
 			source: 'rwaActiveAum',
-			title: 'Active Marketcap',
+			// Same words as the chart it plots, so one page never names the number twice.
+			title: 'RWA AUM',
 			value: 810_544_611
 		})
 	})

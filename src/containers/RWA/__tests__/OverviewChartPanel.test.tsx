@@ -108,7 +108,7 @@ function render(query: Record<string, string | Array<string>>, props: Partial<RW
 describe('RWAOverviewChartPanel', () => {
 	test('offers the four asset metrics and the five views, with no breakdown dropdown', () => {
 		const markup = render({})
-		for (const label of ['Active Mcap', 'Onchain Mcap', 'DeFi Active TVL', 'Net Flows']) expect(markup).toContain(label)
+		for (const label of ['Active AUM', 'Onchain AUM', 'DeFi Active TVL', 'Net Flows']) expect(markup).toContain(label)
 		expect(markup).toContain('Time Series Chart')
 		expect(markup).not.toContain('Asset Platform')
 		expect(markup).not.toContain('>Chain<')
@@ -118,7 +118,7 @@ describe('RWAOverviewChartPanel', () => {
 		const oi = render({}, { view: 'perps', groupBy: 'platform' })
 		expect(oi).toContain('Open Interest')
 		expect(oi).toContain('Volume')
-		expect(oi).not.toContain('Active Mcap')
+		expect(oi).not.toContain('Active AUM')
 		expect(oi).not.toContain('Volume period')
 		const volume = render({ chartType: 'volume' }, { view: 'perps', groupBy: 'platform' })
 		expect(volume).toContain('Volume period')

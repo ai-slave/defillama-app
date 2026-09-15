@@ -68,7 +68,7 @@ export function inferPlatformRWAOverviewInclusion(
 	}
 	let includeStablecoins = stablecoinCount > assets.length / 2 || stablecoinMcap > totalMcap / 2
 	// A governance token is not an asset under management, so it never opens counted into a
-	// platform's mcap however much of the platform it is: Ondo's On-chain AUM headline excludes
+	// platform's AUM however much of the platform it is: Ondo's On-chain AUM headline excludes
 	// ONDO, and a majority rule here would have the chart under it plot nearly double.
 	let includeGovernance = false
 

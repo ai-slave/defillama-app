@@ -5,7 +5,7 @@ import type { IEquitiesCompanyRoute } from '~/containers/Equities/api.types'
 import { fetchEquitiesCompanyRouteMetadata } from '~/containers/Equities/server/metadata'
 import type { RawAllLiquidationsResponse } from '~/containers/LiquidationsV2/api.types'
 import { fetchPreIpoCompanyIds } from '~/containers/PreIPO/server/metadata'
-import type { RWAPlatformsIndex } from '~/containers/RWA/PlatformPage/api.types'
+import type { RWAPlatformsIndex, RWAProtocolMcapIndex } from '~/containers/RWA/PlatformPage/api.types'
 import { fetchEmissionsProtocolsList, normalizeProtocolEmissions } from '~/containers/Unlocks/api'
 import type {
 	ProtocolEmission,
@@ -37,6 +37,7 @@ export type CoreMetadataSources = {
 	cexsResponse: RawCexsResponse
 	rwaList: Omit<IRWAList, 'platformRoutes'>
 	rwaPlatformsIndex: RWAPlatformsIndex
+	rwaProtocolMcapIndex: RWAProtocolMcapIndex
 	rwaPerpsList: IRWAPerpsList
 	tokenlistArray: Array<RawTokenListItem>
 	tokenDirectory: TokenDirectory
@@ -72,6 +73,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		cexsResponse,
 		rwaList,
 		rwaPlatformsIndex,
+		rwaProtocolMcapIndex,
 		rwaPerpsList,
 		tokenlistArray,
 		tokenDirectory,
@@ -110,6 +112,10 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		fetchNamedMetadataSource(
 			'RWA platforms metadata API',
 			fetchMetadataJson<RWAPlatformsIndex>(`${getMetadataUpstreamBase('rwa')}/rwa/platforms`)
+		),
+		fetchNamedMetadataSource(
+			'RWA protocol mcap API',
+			fetchMetadataJson<RWAProtocolMcapIndex>(`${getMetadataUpstreamBase('rwa')}/protocol-mcap`)
 		),
 		fetchNamedMetadataSource(
 			'RWA perps metadata API',
@@ -156,6 +162,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		cexsResponse,
 		rwaList,
 		rwaPlatformsIndex,
+		rwaProtocolMcapIndex,
 		rwaPerpsList,
 		tokenlistArray,
 		tokenDirectory,

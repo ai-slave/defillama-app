@@ -5,7 +5,7 @@ import { ChangeCell, columnHelper, getLeafRow, numberColumnMeta, UsdBreakdownCel
 export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 	return columnHelper.group({
 		id: 'marketcap',
-		header: 'Marketcap',
+		header: 'AUM',
 		columns: [
 			columnHelper.accessor((row) => row.metrics.activeMcap ?? undefined, {
 				id: 'activeMcap',
@@ -43,8 +43,8 @@ export function createMarketcapColumnGroup(period: RWAChangePeriod) {
 					cell: ({ getValue }) => <ChangeCell value={getValue()} />,
 					meta: numberColumnMeta(
 						'w-[96px]',
-						`Change of Active Marketcap against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
-						`Active Marketcap ${period} change`
+						`Change of Active AUM against the value ${period} earlier, over the rows that have both. Under Group by Chain the prior is split by today's chain share.`,
+						`Active AUM ${period} change`
 					)
 				}
 			)

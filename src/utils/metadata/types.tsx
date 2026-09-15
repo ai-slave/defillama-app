@@ -84,6 +84,13 @@ export interface IProtocolMetadata {
 	// Derived at metadata-build time from the RWA platforms index, not published by the
 	// protocols API. Set when the RWA sheet declares this protocol via `*defillamaSlug`.
 	rwaPlatformSlug?: string
+	// Where a retired TVL page lands. Set for declared protocols AND the children of a declared
+	// parent, so retiring a child's adapter redirects instead of 404ing. Never gates the RWA tab.
+	rwaPlatformRedirectSlug?: string
+	// This protocol's OWN issued RWA mcap slug, when the RWA sheet attributes assets to it.
+	// Wins over rwaPlatformSlug for the AUM headline and chart: the platform aggregate covers
+	// the whole parent book, which is wrong on a single-product child page.
+	rwaProtocolMcapSlug?: string
 }
 
 export interface ICexItem {

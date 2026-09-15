@@ -151,7 +151,7 @@ describe('rwa queries', () => {
 				metric: 'activeMcap',
 				groupBy: 'platform',
 				dataset: {
-					dimensions: ['timestamp', 'Total Active Mcap', 'Unknown'],
+					dimensions: ['timestamp', 'Total Active AUM', 'Unknown'],
 					source: [[1000, 10, 10]]
 				}
 			},
@@ -159,7 +159,7 @@ describe('rwa queries', () => {
 				metric: 'activeMcap',
 				groupBy: 'chain',
 				dataset: {
-					dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum'],
+					dimensions: ['timestamp', 'Total Active AUM', 'Ethereum'],
 					source: [[1000, 10, 10]]
 				}
 			}
@@ -203,7 +203,7 @@ describe('rwa queries', () => {
 			metric: 'activeMcap',
 			groupBy: 'chain',
 			dataset: {
-				dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Others'],
+				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Others'],
 				source: [[1000, 15, 10, 5]]
 			}
 		})
@@ -306,8 +306,8 @@ describe('rwa queries', () => {
 		})
 		expect(result?.totals).toMatchObject({ onChainMcap: 12, activeMcap: 10 })
 		expect(result?.initialChartDatasets.map((initial) => initial.dataset)).toEqual([
-			{ dimensions: ['timestamp', 'Total Active Mcap', 'Unknown'], source: [[1000, 10, 10]] },
-			{ dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum'], source: [[1000, 10, 10]] }
+			{ dimensions: ['timestamp', 'Total Active AUM', 'Unknown'], source: [[1000, 10, 10]] },
+			{ dimensions: ['timestamp', 'Total Active AUM', 'Ethereum'], source: [[1000, 10, 10]] }
 		])
 	})
 
@@ -359,7 +359,7 @@ describe('rwa queries', () => {
 				metric: 'activeMcap',
 				groupBy: 'platform',
 				dataset: {
-					dimensions: ['timestamp', 'Total Active Mcap', 'Backed', 'Ondo'],
+					dimensions: ['timestamp', 'Total Active AUM', 'Backed', 'Ondo'],
 					source: [[1000, 30, 20, 10]]
 				}
 			}

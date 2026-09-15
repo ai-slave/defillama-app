@@ -16,6 +16,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAPlatformMeta } from './api.types'
+import { rwaPlatformAum } from './buildPlatformPageData'
 import { PeerRanking } from './PeerRanking'
 import type { RWAPlatformMixRow, RWAPlatformPageData } from './types'
 
@@ -211,7 +212,8 @@ export function RWAPlatformHeader({
 }) {
 	const { meta } = data
 	const displayedDefiActiveTvl = includeBridgeTvl ? data.defiActiveTvl : data.defiActiveTvl - data.bridgeTvl
-	const displayedDefiActiveTvlToAumPct = meta.onchainAum > 0 ? (displayedDefiActiveTvl / meta.onchainAum) * 100 : null
+	const aum = rwaPlatformAum(meta)
+	const displayedDefiActiveTvlToAumPct = aum > 0 ? (displayedDefiActiveTvl / aum) * 100 : null
 
 	return (
 		<SummaryStatsCard padding="sm">
@@ -233,7 +235,7 @@ export function RWAPlatformHeader({
 					</p>
 				) : null}
 			</div>
-			<StatItem label="On-chain AUM" value={formatUsd(meta.onchainAum, compactUsdOptions)} />
+			<StatItem label="On-chain AUM" value={formatUsd(aum, compactUsdOptions)} />
 			{/* Two groups, two scopes: the platform's own numbers, then the same
 			    kinds of number recomputed over whatever the filters currently
 			    select. Naming both scopes is what keeps "DeFi TVL" and "DeFi

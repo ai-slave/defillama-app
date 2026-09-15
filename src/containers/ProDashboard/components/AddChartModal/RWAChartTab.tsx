@@ -57,8 +57,8 @@ const BREAKDOWN_OPTIONS: Array<SelectOption<RWAOverviewChartBreakdown>> = [
 const ALL_METRICS: Array<RWAOverviewChartMetric> = ['activeMcap', 'onChainMcap', 'defiActiveTvl']
 
 const METRIC_LABELS: Record<RWAOverviewChartMetric, string> = {
-	activeMcap: 'Active Mcap',
-	onChainMcap: 'Onchain Mcap',
+	activeMcap: 'Active AUM',
+	onChainMcap: 'Onchain AUM',
 	defiActiveTvl: 'DeFi Active TVL'
 }
 

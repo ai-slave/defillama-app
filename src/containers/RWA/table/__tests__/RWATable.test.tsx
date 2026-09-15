@@ -84,8 +84,8 @@ describe('RWA table column set', () => {
 
 	test('names picker entries with their header group', () => {
 		const names = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.name)
-		expect(names).toContain('Marketcap: Active')
-		expect(names).toContain('Marketcap: 7d')
+		expect(names).toContain('AUM: Active')
+		expect(names).toContain('AUM: 7d')
 		expect(names).toContain('DeFi: 7d')
 		expect(names).toContain('Flows: 7d')
 		expect(names).not.toContain('Flows: 30d')
@@ -97,7 +97,7 @@ describe('RWA table column set', () => {
 		expect(names).not.toContain('Pricing: Price')
 	})
 
-	test('gives the perps view its own columns without chains or marketcap', () => {
+	test('gives the perps view its own columns without chains or AUM', () => {
 		const table = buildTable('perps', 'platform')
 		expect(paintedColumnIds(table)).toEqual([...RWA_DEFAULT_COLUMN_IDS.perps])
 		expect(table.getAllLeafColumns().map((column) => column.id)).not.toContain('chains')
@@ -265,9 +265,9 @@ describe('RWA table cells', () => {
 			'Name',
 			'Chains',
 			'Asset Group',
-			'Active Marketcap',
-			'Onchain Marketcap',
-			'Active Marketcap 7d change',
+			'Active AUM',
+			'Onchain AUM',
+			'Active AUM 7d change',
 			'DeFi Active TVL',
 			'DeFi Utilization',
 			'DeFi Active TVL 7d change',

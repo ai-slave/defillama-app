@@ -147,7 +147,10 @@ export function resolveProtocolFeatureRouteFromMetadata({
 	if (!hasMetric(protocolRoute.metadata)) {
 		// Retiring the TVL adapter (module: dummy.js) drops the metric, which would 404 every
 		// existing link. An RWA platform still has a page, so send them there instead.
-		const platformSlug = rwaPlatformRedirect ? protocolRoute.metadata.rwaPlatformSlug : null
+		// Falls back to the declared slug for index artifacts published before the redirect map existed.
+		const platformSlug = rwaPlatformRedirect
+			? (protocolRoute.metadata.rwaPlatformRedirectSlug ?? protocolRoute.metadata.rwaPlatformSlug)
+			: null
 		return platformSlug ? { type: 'redirect', destination: `/rwa/platform/${platformSlug}` } : null
 	}
 

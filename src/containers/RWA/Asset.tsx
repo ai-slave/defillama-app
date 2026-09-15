@@ -854,6 +854,15 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 										</ExternalLinkButton>
 									)
 								) : null}
+								{asset.protocolLinks.map((protocol) => (
+									<BasicLink
+										key={protocol.slug}
+										href={`/protocol/${protocol.slug}`}
+										className={assetHeaderLinkButtonStyles}
+									>
+										<span>{protocol.name}</span>
+									</BasicLink>
+								))}
 								{asset.linkedin ? (
 									<ExternalLinkButton href={asset.linkedin} icon="linkedin">
 										LinkedIn
@@ -1057,14 +1066,14 @@ const BASE_TIME_SERIES_CHARTS: Array<{
 	},
 	{
 		type: 'line',
-		name: 'Active Mcap',
-		encode: { x: 'timestamp', y: 'Active Mcap' },
+		name: 'Active AUM',
+		encode: { x: 'timestamp', y: 'Active AUM' },
 		color: CHART_COLORS[1]
 	},
 	{
 		type: 'line',
-		name: 'Onchain Mcap',
-		encode: { x: 'timestamp', y: 'Onchain Mcap' },
+		name: 'Onchain AUM',
+		encode: { x: 'timestamp', y: 'Onchain AUM' },
 		color: CHART_COLORS[2]
 	}
 ]

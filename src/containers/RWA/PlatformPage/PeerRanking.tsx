@@ -122,7 +122,7 @@ export function PeerRanking({
 											) : null}
 										</span>
 									</td>
-									<td className="p-3 text-right">{formatUsd(peer.onchainAum, compactUsdOptions)}</td>
+									<td className="p-3 text-right">{formatUsd(peer.aum ?? peer.onchainAum, compactUsdOptions)}</td>
 									<td className="p-3 text-right">{formatCompactNumber(peer.assetCount)}</td>
 									<td className="p-3 text-right">
 										{peer.holderTotalFeeBps == null ? '–' : formatBps(peer.holderTotalFeeBps)}

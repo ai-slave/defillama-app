@@ -172,7 +172,7 @@ export const datasets: Array<DatasetDefinition> = [
 	{
 		slug: 'rwa-assets',
 		name: 'RWA Assets',
-		description: 'All Real World Assets with on-chain market cap, categories, and chain distribution',
+		description: 'All Real World Assets with on-chain AUM, categories, and chain distribution',
 		category: 'RWA',
 		url: `${RWA_SERVER_URL}/current?z=0`,
 		defaultSortField: 'onChainMcap',
@@ -207,7 +207,7 @@ export const datasets: Array<DatasetDefinition> = [
 	{
 		slug: 'rwa-categories',
 		name: 'RWA by Category',
-		description: 'RWA aggregate on-chain market cap, asset count, and issuers by category',
+		description: 'RWA aggregate on-chain AUM, asset count, and issuers by category',
 		category: 'RWA',
 		url: `${RWA_SERVER_URL}/stats?z=0`,
 		defaultSortField: 'onChainMcap',
@@ -248,7 +248,7 @@ export const datasets: Array<DatasetDefinition> = [
 	{
 		slug: 'rwa-chains',
 		name: 'RWA by Chain',
-		description: 'RWA aggregate on-chain market cap, asset count, and issuers by chain',
+		description: 'RWA aggregate on-chain AUM, asset count, and issuers by chain',
 		category: 'RWA',
 		url: `${RWA_SERVER_URL}/stats?z=0`,
 		defaultSortField: 'onChainMcap',

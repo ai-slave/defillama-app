@@ -40,7 +40,7 @@ interface IBuildAvailableChartsParams {
 export function buildAvailableCharts(params: IBuildAvailableChartsParams): Array<ProtocolChartsLabels> {
 	const charts: Array<ProtocolChartsLabels> = []
 	if (params.hasTvlChart) charts.push(params.isCEX ? 'Total Assets' : 'TVL')
-	// Sits where TVL would: for an RWA platform, Active Marketcap is the equivalent stock metric.
+	// Sits where TVL would: for an RWA platform, Active AUM is the equivalent stock metric.
 	if (params.hasRwaAum) charts.push('RWA AUM')
 	if (params.hasTvsChart) charts.push('TVS')
 	if (params.hasGeckoId) {

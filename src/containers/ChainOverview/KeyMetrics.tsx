@@ -207,7 +207,7 @@ function RwaActiveMcap({ rwaActiveMcap }: { rwaActiveMcap: IChainOverviewData['r
 
 	return (
 		<ChainMetricRow
-			label="RWA Active Mcap"
+			label="RWA Active AUM"
 			tooltip={rwaDefinitions.activeMcap.description}
 			value={formatUsd(rwaActiveMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 		/>

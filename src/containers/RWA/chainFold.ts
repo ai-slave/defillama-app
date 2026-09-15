@@ -8,7 +8,7 @@ export type RWAChainHistory = { chain: string; rows: IRWAChartMetricRows }
 
 /**
  * The chains the chart draws: the largest by the assets' current per-chain value for the metric.
- * DeFi TVL reads the per-chain split; the two market caps carry their own chain breakdown.
+ * DeFi TVL reads the per-chain split; the two AUM series carry their own chain breakdown.
  */
 export function rankRwaChains(
 	assets: IRWAAssetsOverview['assets'],

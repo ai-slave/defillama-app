@@ -284,9 +284,17 @@ export const protocolCharts = defineApiRoute({
 			}
 
 			if (kind === 'rwa-aum') {
+				// A protocol issuing its own RWA assets reports those; the platform aggregate is the
+				// fallback. Mirrors the server-side seed in ProtocolOverview/queries.tsx.
+				const rwaProtocol = queryString(req.query, 'rwaProtocol')
+				if (rwaProtocol) {
+					const { fetchRWAProtocolMcapChart } = await import('~/containers/RWA/api')
+					return ok(await fetchRWAProtocolMcapChart(rwaProtocol))
+				}
+
 				const platform = queryString(req.query, 'platform')
 				if (!platform) {
-					return badRequest('platform parameter is required')
+					return badRequest('platform or rwaProtocol parameter is required')
 				}
 
 				const { fetchRWAPlatformAumChart } = await import('~/containers/RWA/api')

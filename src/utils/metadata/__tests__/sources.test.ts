@@ -72,6 +72,9 @@ function responseForUrl(rawUrl: string): unknown {
 	if (url.includes('/rwa/rwa/platforms') || url === 'https://rwa.example.com/rwa/platforms') {
 		return { generatedAt: 0, byPid: {}, platforms: {} }
 	}
+	if (url.includes('/protocol-mcap')) {
+		return { generatedAt: 0, protocols: [] }
+	}
 	if (url.includes('/rwa-perps/list') || url.startsWith('https://rwa-perps.example.com/list')) {
 		return {
 			contracts: [],
@@ -142,6 +145,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://api.llama.fi/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://api.llama.fi/rwa/list')
 		expectMetadataRequest('https://api.llama.fi/rwa/rwa/platforms')
+		expectMetadataRequest('https://api.llama.fi/rwa/protocol-mcap')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/filters.json')
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
@@ -200,6 +204,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://rwa.example.com/list')
 		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
+		expectMetadataRequest('https://rwa.example.com/protocol-mcap')
 		expectMetadataRequest('https://rwa-perps.example.com/list?includeCex=true')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/filters.json')

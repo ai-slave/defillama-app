@@ -26,7 +26,7 @@ function mockResults(make: (query: QueryOptions, index: number) => QueryResult) 
 }
 
 const total: RWAPositionalChartDataset = {
-	dimensions: ['timestamp', 'Total Active Mcap'],
+	dimensions: ['timestamp', 'Total Active AUM'],
 	source: [[1, 800_000]]
 }
 
@@ -91,7 +91,7 @@ describe('useRwaChainChartDataset', () => {
 		})
 		expect(result).toEqual({
 			chartDataset: {
-				dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Solana'],
+				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Solana'],
 				source: [[1, 800_000, 600_000, 200_000]]
 			},
 			isChartLoading: false,
@@ -131,7 +131,7 @@ describe('useRwaChainChartDataset', () => {
 		})
 		expect(oneFailed).toEqual({
 			chartDataset: {
-				dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Others'],
+				dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Others'],
 				source: [[1, 800_000, 600_000, 200_000]]
 			},
 			isChartLoading: false,

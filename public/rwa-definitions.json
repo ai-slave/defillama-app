@@ -119,11 +119,11 @@
 		"values": {}
 	},
 	"onChainMcap": {
-		"label": "Onchain Marketcap",
+		"label": "Onchain AUM",
 		"description": "Total USD value of token supply present onchain across tracked chains, including issuer, treasury, custodial, idle, and DeFi-held balances."
 	},
 	"activeMcap": {
-		"label": "Active Marketcap",
+		"label": "Active AUM",
 		"description": "Onchain value in user or protocol-controlled positions that can meaningfully gain, or lose, from market moves, excluding inert issuer, treasury, custodial, or team-controlled wallets, and excluding internal looping, or bookkeeping positions that do not add net market exposure."
 	},
 	"defiActiveTvl": {
@@ -131,12 +131,12 @@
 		"description": "Active TVL deployed into external, third-party DeFi apps tracked by DeFiLlama (lending, DEX LP, derivatives, vaults, etc.), rather than held in wallets, or in native protocol contracts."
 	},
 	"totalOnChainMcap": {
-		"label": "Total RWA Onchain Mcap",
-		"description": "Sum across assets of their Onchain Marketcap (the total USD value of each asset that exists Onchain across tracked chains)."
+		"label": "Total RWA Onchain AUM",
+		"description": "Sum across assets of their Onchain AUM (the total USD value of each asset that exists Onchain across tracked chains)."
 	},
 	"totalActiveMcap": {
-		"label": "Total RWA Active Mcap",
-		"description": "Sum across assets of their Active Marketcap (the portion of Onchain value taking real market risk in user or protocol hands)."
+		"label": "Total RWA Active AUM",
+		"description": "Sum across assets of their Active AUM (the portion of Onchain value taking real market risk in user or protocol hands)."
 	},
 	"totalDefiActiveTvl": {
 		"label": "DeFi Active TVL",
@@ -242,8 +242,8 @@
 			"description": "Adds each period's flow to a running total, so you can see how much capital has entered or left overall. Periods we could not measure do not move the line."
 		},
 		"marketcapOverlay": {
-			"label": "Marketcap overlay",
-			"description": "Draws the total marketcap as a line on top of the flow bars, so you can see how flows move the total."
+			"label": "AUM overlay",
+			"description": "Draws the total AUM as a line on top of the flow bars, so you can see how flows move the total."
 		},
 		"inflows": {
 			"label": "Inflows",
@@ -254,12 +254,12 @@
 			"description": "Periods when more money left than came in. Capital exited these assets."
 		},
 		"onchainMcap": {
-			"label": "Onchain Mcap",
+			"label": "Onchain AUM",
 			"description": "The total size of these assets, drawn as a line so you can compare the flows against it."
 		},
 		"activeMcap": {
-			"label": "Active Mcap",
-			"description": "Total active marketcap, drawn as a line so you can compare flows against it."
+			"label": "Active AUM",
+			"description": "Total Active AUM, drawn as a line so you can compare flows against it."
 		},
 		"defiActiveTvl": {
 			"label": "DeFi Active TVL",
@@ -287,10 +287,10 @@
 		},
 		"flowVsPrice": {
 			"label": "Flow vs price",
-			"description": "Answers one question: did this asset grow because new money came in, or because the price of what it holds went up? Splits each period's marketcap change into those two parts."
+			"description": "Answers one question: did this asset grow because new money came in, or because the price of what it holds went up? Splits each period's AUM change into those two parts."
 		},
 		"deltaMcap": {
-			"label": "Δ Onchain Mcap",
+			"label": "Δ Onchain AUM",
 			"description": "How much the total value of this asset changed over the selected period, from all causes combined."
 		},
 		"netFlowsStat": {
@@ -314,8 +314,8 @@
 			"description": "The part of the change that is not new money. Mostly price movement, plus days we could not measure."
 		},
 		"deltaMcapLegend": {
-			"label": "Delta Onchain Mcap",
-			"description": "The period's total marketcap change. It always equals the bars added together: money in, money out, and price movement."
+			"label": "Delta Onchain AUM",
+			"description": "The period's total AUM change. It always equals the bars added together: money in, money out, and price movement."
 		}
 	}
 }

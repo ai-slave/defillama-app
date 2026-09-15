@@ -5,7 +5,7 @@ import { buildProRwaAssetChartSeries, projectRwaAssetDatasetToMetrics } from './
 
 describe('Pro RWA asset chart series', () => {
 	const dataset: RWAPositionalChartDataset = {
-		dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'],
+		dimensions: ['timestamp', 'DeFi Active TVL', 'Active AUM', 'Onchain AUM'],
 		source: [[1, 2, 3, 4]]
 	}
 
@@ -21,13 +21,13 @@ describe('Pro RWA asset chart series', () => {
 			},
 			{
 				type: 'line',
-				name: 'Active Mcap',
+				name: 'Active AUM',
 				encode: { x: 0, y: 2 },
 				color: CHART_COLORS[1]
 			},
 			{
 				type: 'line',
-				name: 'Onchain Mcap',
+				name: 'Onchain AUM',
 				encode: { x: 0, y: 3 },
 				color: CHART_COLORS[2]
 			}
@@ -39,7 +39,7 @@ describe('Pro RWA asset chart series', () => {
 		expect(buildProRwaAssetChartSeries(dataset, ['activeMcap'])).toEqual([
 			{
 				type: 'line',
-				name: 'Active Mcap',
+				name: 'Active AUM',
 				encode: { x: 0, y: 2 },
 				color: CHART_COLORS[0]
 			}
@@ -53,7 +53,7 @@ describe('Pro RWA asset chart series', () => {
 			},
 			{
 				type: 'line',
-				name: 'Onchain Mcap',
+				name: 'Onchain AUM',
 				encode: { x: 0, y: 3 },
 				color: CHART_COLORS[1]
 			}
@@ -64,8 +64,8 @@ describe('Pro RWA asset chart series', () => {
 test('projects CSV rows in dataset order with timestamps', () => {
 	expect(
 		projectRwaAssetDatasetToMetrics(
-			{ dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'], source: [[1, 2, 3, 4]] },
+			{ dimensions: ['timestamp', 'DeFi Active TVL', 'Active AUM', 'Onchain AUM'], source: [[1, 2, 3, 4]] },
 			['onChainMcap', 'defiActiveTvl']
 		)
-	).toEqual({ dimensions: ['timestamp', 'DeFi Active TVL', 'Onchain Mcap'], source: [[1, 2, 4]] })
+	).toEqual({ dimensions: ['timestamp', 'DeFi Active TVL', 'Onchain AUM'], source: [[1, 2, 4]] })
 })

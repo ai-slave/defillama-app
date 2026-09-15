@@ -353,8 +353,8 @@ function getRwaRangeFilters({ selections, actions }: Pick<RWAOverviewFiltersProp
 			onSubmitRange: actions.setDefiActiveTvlToOnChainMcapPctRange
 		},
 		{
-			name: 'Active Marketcap / Onchain %',
-			label: 'Active Marketcap / Onchain',
+			name: 'Active AUM / Onchain %',
+			label: 'Active AUM / Onchain',
 			min: selections.minActiveMcapToOnChainMcapPct,
 			max: selections.maxActiveMcapToOnChainMcapPct,
 			minQueryKey: 'minActiveMcapToOnChainMcapPct',
@@ -362,8 +362,8 @@ function getRwaRangeFilters({ selections, actions }: Pick<RWAOverviewFiltersProp
 			onSubmitRange: actions.setActiveMcapToOnChainMcapPctRange
 		},
 		{
-			name: 'DeFi TVL / Active Marketcap %',
-			label: 'DeFi TVL / Active Marketcap',
+			name: 'DeFi TVL / Active AUM %',
+			label: 'DeFi TVL / Active AUM',
 			min: selections.minDefiActiveTvlToActiveMcapPct,
 			max: selections.maxDefiActiveTvlToActiveMcapPct,
 			minQueryKey: 'minDefiActiveTvlToActiveMcapPct',

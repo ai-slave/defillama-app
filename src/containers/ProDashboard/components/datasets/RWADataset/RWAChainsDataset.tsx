@@ -71,7 +71,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.totalActiveMcap ?? undefined, {
 		id: 'totalActiveMcap',
-		header: 'Active Mcap',
+		header: 'Active AUM',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
@@ -79,7 +79,7 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.totalOnChainMcap ?? undefined, {
 		id: 'totalOnChainMcap',
-		header: 'Onchain Mcap',
+		header: 'Onchain AUM',
 		cell: (info) =>
 			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
 		meta: { align: 'end' },
@@ -218,7 +218,7 @@ export function RWAChainsDataset() {
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
 								const csv: Array<Array<CsvCell>> = [
-									['Chain', 'Asset Issuers', 'Asset Count', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL']
+									['Chain', 'Asset Issuers', 'Asset Count', 'Active AUM', 'Onchain AUM', 'DeFi Active TVL']
 								]
 								for (const row of rows) {
 									const item = row.original

@@ -11,7 +11,7 @@ import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incen
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import { fetchRWAPlatformAumChart } from '~/containers/RWA/api'
+import { fetchRWAPlatformAumChart, fetchRWAProtocolMcapChart } from '~/containers/RWA/api'
 import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
@@ -259,8 +259,13 @@ export const getProtocolOverviewPageData = async ({
 					data: [],
 					failed: false
 				}),
-		currentProtocolMetadata.rwaPlatformSlug
-			? fetchRWAPlatformAumChart(currentProtocolMetadata.rwaPlatformSlug).catch((error) => {
+		currentProtocolMetadata.rwaProtocolMcapSlug || currentProtocolMetadata.rwaPlatformSlug
+			? // A protocol issuing its own assets headlines those; only fall back to the platform
+				// aggregate when the sheet credits it with none of its own.
+				(currentProtocolMetadata.rwaProtocolMcapSlug
+					? fetchRWAProtocolMcapChart(currentProtocolMetadata.rwaProtocolMcapSlug)
+					: fetchRWAPlatformAumChart(currentProtocolMetadata.rwaPlatformSlug as string)
+				).catch((error) => {
 					// Without TVL, this is the primary metric; preserve the previous page on failure.
 					if (!currentProtocolMetadata.tvl) throw error
 					console.log(
@@ -914,6 +919,7 @@ export const getProtocolOverviewPageData = async ({
 		chartColors,
 		initialMultiSeriesChartData,
 		rwaPlatformSlug: currentProtocolMetadata.rwaPlatformSlug ?? null,
+		rwaProtocolMcapSlug: currentProtocolMetadata.rwaProtocolMcapSlug ?? null,
 		rwaActiveAum: rwaAumChart.length > 0 ? (rwaAumChart[rwaAumChart.length - 1]?.[1] ?? null) : null,
 		hallmarks,
 		rangeHallmarks,

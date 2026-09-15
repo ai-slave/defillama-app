@@ -79,7 +79,7 @@ describe('ChainOverview KeyMetrics', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} rwaActiveMcap={123_000_000} />)
 		const text = textFromMarkup(markup)
 
-		expect(text).toContain('RWA Active Mcap')
+		expect(text).toContain('RWA Active AUM')
 		expect(text).toContain('$123m')
 	})
 
@@ -87,7 +87,7 @@ describe('ChainOverview KeyMetrics', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} rwaActiveMcap={0} />)
 		const text = textFromMarkup(markup)
 
-		expect(text).not.toContain('RWA Active Mcap')
+		expect(text).not.toContain('RWA Active AUM')
 	})
 
 	test('renders the fetched fee-family totals without client-side adjustments', () => {

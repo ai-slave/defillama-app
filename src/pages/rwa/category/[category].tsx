@@ -79,7 +79,7 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 	return (
 		<Layout
 			title={`${props.categoryName} RWA Dashboard & Analytics - DefiLlama`}
-			description={`Track ${props.categoryName} RWA assets onchain. Compare Active Mcap, Onchain Mcap, DeFi Active TVL, and utilization.`}
+			description={`Track ${props.categoryName} RWA assets onchain. Compare Active AUM, Onchain AUM, DeFi Active TVL, and utilization.`}
 			pageName={pageName}
 			canonicalUrl={`/rwa/category/${props.categorySlug}`}
 		>

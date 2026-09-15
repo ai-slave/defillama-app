@@ -611,7 +611,7 @@ export async function getChainOverviewData({
 		const rwaActiveMcap = shouldFetchRwaActiveMcap
 			? getRwaActiveMcapForChain(rwaStats, currentChainMetadata.name)
 			: null
-		const descriptionMetrics = rwaActiveMcap != null ? [...charts, 'RWA Active Mcap'] : charts
+		const descriptionMetrics = rwaActiveMcap != null ? [...charts, 'RWA Active AUM'] : charts
 		const isDataAvailable = charts.length > 0 || allProtocols.length > 0 || rwaActiveMcap != null
 		const chainGeckoId = currentChainMetadata.gecko_id
 

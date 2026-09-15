@@ -58,9 +58,9 @@ export function buildRwaKeyMetricsCsv({ metrics, perps, largestProtocol }: RWAKe
 		rows: [
 			['Metric', 'Value'],
 			[definitions.totalActiveMcap.label, metrics.activeMcap],
-			[`Active Mcap change (${PERIOD_LABEL}) %`, change(metrics.change[PERIOD].activeMcap)],
+			[`Active AUM change (${PERIOD_LABEL}) %`, change(metrics.change[PERIOD].activeMcap)],
 			[definitions.totalOnChainMcap.label, metrics.onChainMcap],
-			[`Onchain Mcap change (${PERIOD_LABEL}) %`, change(metrics.change[PERIOD].onChainMcap)],
+			[`Onchain AUM change (${PERIOD_LABEL}) %`, change(metrics.change[PERIOD].onChainMcap)],
 			['Active / Onchain %', getRwaRatio(metrics.activeMcap, metrics.onChainMcap)],
 			[definitions.totalDefiActiveTvl.label, metrics.defiActiveTvl],
 			[`DeFi Active TVL change (${PERIOD_LABEL}) %`, change(metrics.change[PERIOD].defiActiveTvl)],
@@ -117,7 +117,7 @@ export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 						/>
 						<SubMetricRow
 							label="Active / Onchain"
-							tooltip="Active mcap as a share of onchain mcap."
+							tooltip="Active AUM as a share of onchain AUM."
 							value={formatRatio(activeShare)}
 						/>
 					</MetricSection>
@@ -132,7 +132,7 @@ export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 						/>
 						<SubMetricRow
 							label="Utilization"
-							tooltip="DeFi Active TVL as a share of active mcap."
+							tooltip="DeFi Active TVL as a share of active AUM."
 							value={formatRatio(utilization)}
 						/>
 						<SubMetricRow

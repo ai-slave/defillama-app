@@ -66,7 +66,7 @@ const CATEGORY_CARDS: Array<CategoryCardData> = [
 		title: 'RWA',
 		description: 'Real World Assets by chain, category, or individual asset',
 		icon: 'landmark',
-		tags: ['Active Mcap', 'Onchain Mcap', 'DeFi TVL']
+		tags: ['Active AUM', 'Onchain AUM', 'DeFi TVL']
 	}
 ]
 

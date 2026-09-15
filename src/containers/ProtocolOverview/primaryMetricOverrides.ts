@@ -49,8 +49,8 @@ export function getProtocolPrimaryMetricOverride(
 	if (!protocol.metrics.tvl && protocol.rwaActiveAum != null) {
 		return {
 			source: 'rwaActiveAum',
-			title: 'Active Marketcap',
-			byChainTitle: 'Active Marketcap by chain',
+			title: 'RWA AUM',
+			byChainTitle: 'RWA AUM by chain',
 			value: protocol.rwaActiveAum,
 			valueByChain: []
 		}

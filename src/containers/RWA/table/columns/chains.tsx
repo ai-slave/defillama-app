@@ -4,7 +4,7 @@ import { rwaSlug } from '../../rwaSlug'
 import type { RWAChainShare } from '../chains'
 import { columnHelper } from './shared'
 
-export const CHAINS_COLUMN_HELP = 'Chains the asset has onchain marketcap on, largest first.'
+export const CHAINS_COLUMN_HELP = 'Chains the asset has onchain AUM on, largest first.'
 
 export const chainsColumn = columnHelper.accessor((row) => row.metrics.chains.map((share) => share.chain).join(', '), {
 	id: 'chains',

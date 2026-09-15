@@ -87,7 +87,25 @@ export interface RWAPlatformMeta {
 	revenueMix: string | null
 	marginSettlementAsset: Array<string> | null
 	onchainAum: number
+	// Active mcap: raw supply minus inert issuer/treasury/custodial balances. What every AUM
+	// surface shows. Optional: artifacts published before the field existed omit it.
+	activeAum?: number
 	estAnnualRevenueUsd: number | null
+}
+
+// Per-protocol issued RWA mcap, keyed by DefiLlama protocol slug. Distinct from the platform
+// aggregate: a child protocol issues only part of its parent platform's book (Circle USYC is
+// $2.6bn of Circle's $77bn), so its own page must not headline the platform number.
+export interface RWAProtocolMcapIndex {
+	generatedAt: number
+	protocols: Array<{
+		protocolId: string
+		slug: string
+		name: string
+		onChainMcap: number
+		activeMcap: number
+		assets: number
+	}>
 }
 
 export interface RWAPlatformsIndex {
@@ -96,5 +114,7 @@ export interface RWAPlatformsIndex {
 	// TVL protocol slug -> platform slug, RWA-category protocols only. Optional: artifacts
 	// published before the map existed omit it.
 	byProtocolSlug?: Record<string, string>
+	// Same map plus the children of a declared parent. Redirect targets only, never the RWA tab.
+	redirectByProtocolSlug?: Record<string, string>
 	platforms: Record<string, RWAPlatformMeta>
 }

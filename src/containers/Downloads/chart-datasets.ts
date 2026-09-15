@@ -512,7 +512,7 @@ export const chartDatasets: Array<ChartDatasetDefinition> = [
 	{
 		slug: 'rwa-chain-chart',
 		name: 'RWA by Chain',
-		description: 'Historical total RWA on-chain mcap for a specific chain',
+		description: 'Historical total RWA on-chain AUM for a specific chain',
 		category: 'RWA',
 		paramType: 'chain',
 		paramLabel: 'Chain',
@@ -555,7 +555,7 @@ export const chartDatasets: Array<ChartDatasetDefinition> = [
 	{
 		slug: 'rwa-asset-chart',
 		name: 'RWA by Asset',
-		description: 'Historical on-chain mcap time series for every Real World Asset in a selected category',
+		description: 'Historical on-chain AUM time series for every Real World Asset in a selected category',
 		category: 'RWA',
 		paramType: 'protocol',
 		paramLabel: 'Category',

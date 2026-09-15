@@ -70,6 +70,7 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 			cexsResponse,
 			rwaList,
 			rwaPlatformsIndex,
+			rwaProtocolMcapIndex,
 			rwaPerpsList,
 			tokenlistArray,
 			tokenDirectory,
@@ -150,11 +151,30 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	// Stamp the RWA platform onto the protocol it declares in the sheet, so every protocol
 	// route can offer the RWA tab without re-resolving the index.
 	const platformSlugByProtocolSlug = rwaPlatformsIndex.byProtocolSlug ?? {}
+	// Superset of the above, including children of a declared parent. Kept separate because the RWA
+	// tab renders the whole parent platform — a child may redirect there but must not host the tab.
+	const redirectSlugByProtocolSlug = rwaPlatformsIndex.redirectByProtocolSlug ?? {}
+	// Protocols credited with issuing RWA assets of their own. These headline that number instead
+	// of the platform aggregate, which on a single-product child is the whole parent book.
+	// Keyed by protocol id, NOT by a re-derived slug. The index slug is the server's
+	// `sluggifyString(protocol.name)`; deriving a key here from `displayName` only works while that
+	// field and the server's `name` agree AND the two slug helpers stay byte-identical across the
+	// repos. Both hold today (all 56 entries match), but either drifting would silently drop a
+	// protocol back onto the parent aggregate with no error. The stored value is the index's own
+	// slug because that is what the chart file is keyed on server-side.
+	const protocolMcapSlugById = new Map(
+		(rwaProtocolMcapIndex?.protocols ?? []).map((entry) => [String(entry.protocolId), entry.slug])
+	)
 	for (const protocolId in protocols) {
 		const protocol = protocols[protocolId]
 		if (!protocol) continue
-		const platformSlug = platformSlugByProtocolSlug[normalizeSlug(protocol.displayName || protocol.name)]
+		const protocolSlug = normalizeSlug(protocol.displayName || protocol.name)
+		const platformSlug = platformSlugByProtocolSlug[protocolSlug]
 		if (platformSlug) protocol.rwaPlatformSlug = platformSlug
+		const redirectSlug = redirectSlugByProtocolSlug[protocolSlug]
+		if (redirectSlug) protocol.rwaPlatformRedirectSlug = redirectSlug
+		const protocolMcapSlug = protocolMcapSlugById.get(protocolId)
+		if (protocolMcapSlug) protocol.rwaProtocolMcapSlug = protocolMcapSlug
 	}
 
 	return {

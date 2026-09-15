@@ -62,14 +62,14 @@ const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor((row) => row.activeMcap ?? undefined, {
 		id: 'activeMcap',
-		header: 'Active Mcap',
+		header: 'Active AUM',
 		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—',
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor((row) => row.onChainMcap ?? undefined, {
 		id: 'onChainMcap',
-		header: 'Onchain Mcap',
+		header: 'Onchain AUM',
 		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—',
 		meta: { align: 'end' },
 		size: 150

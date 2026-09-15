@@ -112,7 +112,7 @@ describe('RWA asset chart construction', () => {
 				}
 			])
 		).toEqual({
-			dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'],
+			dimensions: ['timestamp', 'DeFi Active TVL', 'Active AUM', 'Onchain AUM'],
 			source: [
 				[1_000_000, null, -2, 0],
 				[1_000_000, 3, 4, null]

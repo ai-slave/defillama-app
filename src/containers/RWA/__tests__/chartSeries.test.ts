@@ -5,11 +5,11 @@ import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts, RWA_PERPS_OI_TOTAL_
 
 describe('buildRwaTimeSeriesCharts', () => {
 	test('draws the Total line first without a fill or a tooltip sum, then the groups from the third colour', () => {
-		expect(buildRwaTimeSeriesCharts({ dimensions: ['timestamp', 'Bonds', 'Total Onchain Mcap'], source: [] })).toEqual([
+		expect(buildRwaTimeSeriesCharts({ dimensions: ['timestamp', 'Bonds', 'Total Onchain AUM'], source: [] })).toEqual([
 			{
-				name: 'Total Onchain Mcap',
+				name: 'Total Onchain AUM',
 				type: 'line',
-				encode: { x: 'timestamp', y: 'Total Onchain Mcap' },
+				encode: { x: 'timestamp', y: 'Total Onchain AUM' },
 				color: CHART_COLORS[0],
 				hideAreaStyle: true,
 				excludeFromTooltipTotal: true

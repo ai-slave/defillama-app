@@ -131,8 +131,8 @@ describe('RWA flow chart data', () => {
 		])
 		expect(chart.charts).toEqual(
 			expect.arrayContaining([
-				expect.objectContaining({ name: 'Onchain Mcap', yAxisIndex: 1 }),
-				expect.objectContaining({ name: 'Active Mcap', yAxisIndex: 1 }),
+				expect.objectContaining({ name: 'Onchain AUM', yAxisIndex: 1 }),
+				expect.objectContaining({ name: 'Active AUM', yAxisIndex: 1 }),
 				expect.objectContaining({ name: 'DeFi Active TVL', yAxisIndex: 1 })
 			])
 		)

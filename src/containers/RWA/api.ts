@@ -128,9 +128,19 @@ export async function fetchRWAFlowAssetBreakdown(
 	)
 }
 
-// Platform Active Marketcap history as a bare [unixSec, usd] series — the shape the protocol
+// This protocol's OWN issued RWA mcap history, same bare [unixSec, usd] shape. Server-side the
+// series is summed over the assets the protocol is credited with issuing, so a child reports its
+// own product rather than the parent platform's whole book.
+export async function fetchRWAProtocolMcapChart(protocolSlug: string): Promise<Array<[number, number]>> {
+	const rows = await fetchJson<Array<[number, number]>>(
+		`${RWA_SERVER_URL}/protocol/${encodeURIComponent(protocolSlug)}/mcap/chart`
+	)
+	return Array.isArray(rows) ? rows.filter((row) => Array.isArray(row) && row.length === 2) : []
+}
+
+// Platform Active AUM history as a bare [unixSec, usd] series — the shape the protocol
 // chart panel expects. Read off the platform breakdown rather than /chart/platform/:slug so
-// governance tokens are excluded and stablecoins kept, matching the platform page's onchainAum.
+// governance tokens are excluded and stablecoins kept, matching the platform page's active AUM.
 export async function fetchRWAPlatformAumChart(platformSlug: string): Promise<Array<[number, number]>> {
 	const rows = await fetchJson<IRWABreakdownChartResponse>(
 		`${RWA_SERVER_URL}/chart/platform-breakdown?key=activeMcap&includeStablecoin=true`
@@ -369,5 +379,5 @@ export function buildRWAAssetChartDataset(
 		item.activeMcap ?? null,
 		item.onChainMcap ?? null
 	])
-	return { source, dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'] }
+	return { source, dimensions: ['timestamp', 'DeFi Active TVL', 'Active AUM', 'Onchain AUM'] }
 }

@@ -40,6 +40,7 @@ function createCoreMetadataSources(overrides: Record<string, unknown> = {}) {
 		cexsResponse: { cexs: [], cg_volume_cexs: ['binance'] },
 		rwaList: { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} },
 		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
+		rwaProtocolMcapIndex: { generatedAt: 0, protocols: [] },
 		rwaPerpsList: { contracts: [], venues: [], categories: [], assets: [], assetGroups: [], total: 0 },
 		tokenlistArray: [
 			{
@@ -217,6 +218,94 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.protocols['6378'].rwaPlatformSlug).toBe('xstocks')
 		expect(payload.protocols['2272'].rwaPlatformSlug).toBe('okx')
 		expect(payload.protocols['4980'].rwaPlatformSlug).toBeUndefined()
+	})
+
+	test("gives a declared parent's children a redirect target without giving them the RWA tab", async () => {
+		// OpenEden declares only the parent. The three children carry the TVL adapters, so retiring
+		// those must redirect — but the tab renders the whole parent platform, so they must not host it.
+		fetchCoreMetadataSourcesMock.mockResolvedValue(
+			createCoreMetadataSources({
+				protocols: {
+					'parent#openeden': { name: 'openeden', displayName: 'OpenEden' },
+					'3057': { name: 'openeden-tbill', displayName: 'OpenEden TBILL', tvl: true },
+					'4980': { name: 'spiko', displayName: 'Spiko', tvl: true }
+				},
+				rwaPlatformsIndex: {
+					generatedAt: 1,
+					byPid: {},
+					byProtocolSlug: { openeden: 'openeden' },
+					redirectByProtocolSlug: { openeden: 'openeden', 'openeden-tbill': 'openeden' },
+					platforms: {}
+				}
+			})
+		)
+		const { fetchCoreMetadata } = await import('../fetch')
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.protocols['parent#openeden'].rwaPlatformSlug).toBe('openeden')
+		expect(payload.protocols['parent#openeden'].rwaPlatformRedirectSlug).toBe('openeden')
+
+		expect(payload.protocols['3057'].rwaPlatformSlug).toBeUndefined()
+		expect(payload.protocols['3057'].rwaPlatformRedirectSlug).toBe('openeden')
+
+		expect(payload.protocols['4980'].rwaPlatformRedirectSlug).toBeUndefined()
+	})
+
+	test('stamps the per-protocol RWA mcap slug only where the protocol issues its own assets', async () => {
+		fetchCoreMetadataSourcesMock.mockResolvedValue(
+			createCoreMetadataSources({
+				protocols: {
+					'3698': { name: 'circle-usyc', displayName: 'Circle USYC' },
+					'8111': { name: 'circle-gateway', displayName: 'Circle Gateway', tvl: true },
+					// displayName has drifted from the name the server slugged the index entry with
+					// (a rename landing in one repo first). Re-deriving the key from displayName
+					// would miss this and silently fall back to the parent platform aggregate.
+					'6033': { name: 'uranium-io', displayName: 'Uranium.io (Renamed)' }
+				},
+				rwaPlatformsIndex: {
+					generatedAt: 1,
+					byPid: {},
+					byProtocolSlug: { circle: 'circle' },
+					redirectByProtocolSlug: { circle: 'circle', 'circle-usyc': 'circle' },
+					platforms: {}
+				},
+				rwaProtocolMcapIndex: {
+					generatedAt: 1,
+					protocols: [
+						{
+							protocolId: '3698',
+							slug: 'circle-usyc',
+							name: 'Circle USYC',
+							onChainMcap: 2_604_139_337,
+							activeMcap: 2_604_139_337,
+							assets: 1
+						},
+						{
+							protocolId: '6033',
+							slug: 'uranium-io',
+							name: 'Uranium.io',
+							onChainMcap: 1000,
+							activeMcap: 1000,
+							assets: 1
+						}
+					]
+				}
+			})
+		)
+		const { fetchCoreMetadata } = await import('../fetch')
+
+		const payload = await fetchCoreMetadata()
+
+		// USYC headlines its own $2.6bn, not Circle's $77bn platform book — but it stays a child:
+		// no declared platform slug, so still no RWA tab of its own.
+		expect(payload.protocols['3698'].rwaProtocolMcapSlug).toBe('circle-usyc')
+		expect(payload.protocols['3698'].rwaPlatformSlug).toBeUndefined()
+		expect(payload.protocols['3698'].rwaPlatformRedirectSlug).toBe('circle')
+		expect(payload.protocols['8111'].rwaProtocolMcapSlug).toBeUndefined()
+		// Matched on protocol id despite the drifted display name, and stamped with the index's own
+		// slug — the one the chart file is keyed on server-side.
+		expect(payload.protocols['6033'].rwaProtocolMcapSlug).toBe('uranium-io')
 	})
 
 	test('precomputes emissions historical prices with a 6h POST', async () => {

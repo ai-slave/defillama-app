@@ -24,12 +24,12 @@ function props(overrides: Partial<RWAKeyMetricsProps> = {}): RWAKeyMetricsProps 
 describe('RWAKeyMetrics', () => {
 	test('shows the headline with its change and the three sections with their rows', () => {
 		const markup = renderToStaticMarkup(<RWAKeyMetrics {...props()} />)
-		expect(markup).toContain('Total RWA Active Mcap')
+		expect(markup).toContain('Total RWA Active AUM')
 		expect(markup).toContain('$800,000')
 		expect(markup).toContain('+1.27%')
 		expect(markup).toContain('24h')
 		expect(markup).toContain('Key Metrics')
-		expect(markup).toContain('Total RWA Onchain Mcap')
+		expect(markup).toContain('Total RWA Onchain AUM')
 		expect(markup).toContain('Change (24h)')
 		expect(markup).toContain('Active / Onchain')
 		expect(markup).toContain('80%')
@@ -79,7 +79,7 @@ describe('RWAKeyMetrics', () => {
 		const csv = buildRwaKeyMetricsCsv(props())
 		expect(csv.filename).toBe('rwa-key-metrics.csv')
 		expect(csv.rows[0]).toEqual(['Metric', 'Value'])
-		expect(csv.rows).toContainEqual(['Total RWA Active Mcap', 800_000])
+		expect(csv.rows).toContainEqual(['Total RWA Active AUM', 800_000])
 		expect(csv.rows).toContainEqual(['Utilization %', 12.5])
 		expect(csv.rows).toContainEqual(['Largest protocol', 'Aave'])
 		expect(csv.rows).toContainEqual(['DEX share %', 100])

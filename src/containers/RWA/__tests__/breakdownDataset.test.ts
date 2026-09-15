@@ -73,7 +73,7 @@ describe('rwa breakdownDataset', () => {
 			includeGovernance: false
 		})
 		expect(aggregate).toEqual({
-			dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Solana'],
+			dimensions: ['timestamp', 'Total Active AUM', 'Ethereum', 'Solana'],
 			source: [[1, 15, 10, 5]]
 		})
 

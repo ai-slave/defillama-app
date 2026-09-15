@@ -189,7 +189,7 @@ const TABLE_TYPE_CARDS: Array<{
 		label: 'RWA',
 		description: 'Real World Assets overview and chain breakdown',
 		icon: 'landmark',
-		tags: ['Active Mcap', 'Onchain Mcap', 'DeFi TVL']
+		tags: ['Active AUM', 'Onchain AUM', 'DeFi TVL']
 	},
 	{
 		value: 'equities',

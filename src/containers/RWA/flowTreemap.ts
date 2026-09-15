@@ -50,8 +50,8 @@ export const RWA_FLOW_TREEMAP_SIZE_OPTIONS: Array<{
 	name: string
 	help: string
 }> = [
-	{ key: 'onChainMcap', name: 'Onchain Mcap', help: 'Sizes each area by its total value represented onchain.' },
-	{ key: 'activeMcap', name: 'Active Mcap', help: 'Sizes each area by the value currently considered active.' },
+	{ key: 'onChainMcap', name: 'Onchain AUM', help: 'Sizes each area by its total value represented onchain.' },
+	{ key: 'activeMcap', name: 'Active AUM', help: 'Sizes each area by the value currently considered active.' },
 	{ key: 'defiActiveTvl', name: 'DeFi Active TVL', help: 'Sizes each area by how much of it is active in DeFi.' }
 ]
 

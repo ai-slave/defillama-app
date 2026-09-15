@@ -85,7 +85,8 @@ export const useFetchProtocolChartData = ({
 	chartDenominations,
 	tvlSettings,
 	isCEX,
-	rwaPlatformSlug
+	rwaPlatformSlug,
+	rwaProtocolMcapSlug
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartInterval
@@ -466,7 +467,7 @@ export const useFetchProtocolChartData = ({
 
 	const isRwaAumEnabled = !!(
 		toggledMetrics.rwaAum === 'true' &&
-		rwaPlatformSlug &&
+		(rwaProtocolMcapSlug || rwaPlatformSlug) &&
 		canFetchClientCharts &&
 		availableCharts.includes('RWA AUM')
 	)
@@ -477,7 +478,10 @@ export const useFetchProtocolChartData = ({
 		enabled: isRwaAumEnabled,
 		queryFn: () =>
 			fetchJson<Array<[number, number]>>(
-				buildProtocolChartApiUrl({ kind: 'rwa-aum', platform: rwaPlatformSlug ?? undefined })
+				buildProtocolChartApiUrl({
+					kind: 'rwa-aum',
+					...(rwaProtocolMcapSlug ? { rwaProtocol: rwaProtocolMcapSlug } : { platform: rwaPlatformSlug ?? undefined })
+				})
 			).then(normalizeSeriesToSeconds)
 	})
 

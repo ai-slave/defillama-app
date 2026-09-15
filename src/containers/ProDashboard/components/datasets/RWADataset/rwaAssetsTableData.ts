@@ -88,8 +88,8 @@ export function buildRWAAssetCsv(rows: Array<RWAAssetTableRow>, includeTicker: b
 	if (includeTicker) headers.push('Ticker')
 	headers.push(
 		'Asset Group',
-		'Active Mcap',
-		'Onchain Mcap',
+		'Active AUM',
+		'Onchain AUM',
 		'DeFi Active TVL',
 		'Category',
 		'Type',

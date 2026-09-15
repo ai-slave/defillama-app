@@ -61,7 +61,7 @@ export const getStaticProps = withPerformanceLogging(
 				metrics: getProtocolMetricFlags({ protocolData, metadata }),
 				warningBanners: getProtocolWarningBanners(protocolData),
 				seoTitle: `${protocolData.name} Real World Assets (RWA) - DefiLlama`,
-				seoDescription: `Track ${protocolData.name} tokenized real-world assets: on-chain market cap, asset breakdown, fees and issuer details on DefiLlama.`
+				seoDescription: `Track ${protocolData.name} tokenized real-world assets: on-chain AUM, asset breakdown, fees and issuer details on DefiLlama.`
 			},
 			revalidate: maxAgeForNext([22])
 		}

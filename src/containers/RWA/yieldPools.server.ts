@@ -22,21 +22,6 @@ export const emptyRWAYieldResult = (): RWAYieldResult => ({
 	nativeYieldCurrent: null
 })
 
-// Resolve the asset's issuer DeFiLlama protocol SLUG(s) from its projectId(s). Used only to
-// separate the asset's OWN (native-yield) pool from third-party DeFi opportunities. Note the
-// `protocolMetadata[id].name` field actually carries the protocol SLUG (a metadata
-// quirk), so these match the earn row's `projectslug`.
-async function resolveIssuerProtocolSlugs(asset: IFetchedRWAProject): Promise<Set<string>> {
-	const slugs = new Set<string>()
-	const ids = Array.isArray(asset.projectId) ? asset.projectId : asset.projectId != null ? [asset.projectId] : []
-	const metadataCache = await import('~/utils/metadata').then((module) => module.default)
-	for (const id of ids) {
-		const meta = metadataCache.protocolMetadata[id]
-		if (meta?.name) slugs.add(meta.name)
-	}
-	return slugs
-}
-
 // v2 RWA yield integration. The RWA page's meaning is "pools INVOLVING this asset" (presence,
 // not purity — e.g. a Balancer basket holding the asset must keep matching), so resolve the
 // asset's ticker to v2 ASSET option keys and query the earn dataset with CONTAINS semantics
@@ -46,7 +31,14 @@ async function resolveIssuerProtocolSlugs(asset: IFetchedRWAProject): Promise<Se
 //
 // The asset's own issuer pool (highest-TVL match on the issuer's protocol) is split out as
 // the native-yield source; every other match is a DeFi opportunity.
-export async function getRWAYieldPools(snapshot: YieldsSnapshot, asset: IFetchedRWAProject): Promise<RWAYieldResult> {
+// `issuerSlugs` are the asset's own DeFiLlama protocol slugs, resolved once by the caller — they
+// match the earn row's `projectslug` and are used only to separate the asset's OWN (native-yield)
+// pool from third-party DeFi opportunities.
+export async function getRWAYieldPools(
+	snapshot: YieldsSnapshot,
+	asset: IFetchedRWAProject,
+	issuerSlugs: Set<string>
+): Promise<RWAYieldResult> {
 	const ticker = asset.ticker?.trim()
 	if (!ticker) return emptyRWAYieldResult()
 
@@ -64,8 +56,6 @@ export async function getRWAYieldPools(snapshot: YieldsSnapshot, asset: IFetched
 	})
 	const rows = page.rows
 	if (rows.length === 0) return emptyRWAYieldResult()
-
-	const issuerSlugs = await resolveIssuerProtocolSlugs(asset)
 
 	// Rows arrive TVL-desc (getEarnPage default), so the first issuer-protocol match is the
 	// highest-TVL one. All issuer pools are kept out of the DeFi opportunities list; only the

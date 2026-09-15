@@ -25,9 +25,9 @@ function assertNever(value: never): never {
 export function getRwaChartTotalLabel(metric: RWAChartMetricKey): string {
 	switch (metric) {
 		case 'activeMcap':
-			return 'Total Active Mcap'
+			return 'Total Active AUM'
 		case 'onChainMcap':
-			return 'Total Onchain Mcap'
+			return 'Total Onchain AUM'
 		case 'defiActiveTvl':
 			return 'Total DeFi Active TVL'
 		default:

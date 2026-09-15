@@ -4,8 +4,8 @@ import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import type { RWAOverviewChartMetric } from '../types'
 
 export const RWA_ASSET_METRIC_DIMENSIONS: Record<RWAOverviewChartMetric, string> = {
-	activeMcap: 'Active Mcap',
-	onChainMcap: 'Onchain Mcap',
+	activeMcap: 'Active AUM',
+	onChainMcap: 'Onchain AUM',
 	defiActiveTvl: 'DeFi Active TVL'
 }
 

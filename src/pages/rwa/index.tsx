@@ -24,7 +24,7 @@ export default function RWAPage(props: InferGetStaticPropsType<typeof getStaticP
 	return (
 		<Layout
 			title="Real World Assets (RWA) Dashboard & Analytics - DefiLlama"
-			description="Track Real World Assets (RWA) tokenization on-chain. View tokenized treasuries, private credit, real estate, and commodities. RWA market cap, yields, and adoption analytics across all blockchains."
+			description="Track Real World Assets (RWA) tokenization on-chain. View tokenized treasuries, private credit, real estate, and commodities. RWA AUM, yields, and adoption analytics across all blockchains."
 			pageName={pageName}
 			canonicalUrl="/rwa"
 		>

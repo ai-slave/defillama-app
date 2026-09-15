@@ -10,7 +10,10 @@ export type RWAPlatformPeerRow = {
 	name: string
 	slug: string
 	logo: string | null
-	onchainAum: number
+	aum: number
+	// Pre-rename shape. /api/public/rwa/platform-peers is CDN-cached for up to 90min, so a body
+	// published by the previous deploy still carries this key and no `aum`. Drop after one release.
+	onchainAum?: number
 	assetCount: number
 	holderTotalFeeBps: number | null
 	mintFeeBps: number | null

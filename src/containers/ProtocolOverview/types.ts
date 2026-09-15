@@ -91,6 +91,9 @@ export interface IProtocolOverviewPageData {
 	tags?: Array<string> | null
 	// Set when the RWA sheet declares this protocol; drives the RWA AUM metric and chart.
 	rwaPlatformSlug?: string | null
+	// Set when this protocol issues RWA assets of its own; wins over rwaPlatformSlug for the AUM
+	// headline and chart so a child does not report its parent platform's whole book.
+	rwaProtocolMcapSlug?: string | null
 	rwaActiveAum?: number | null
 	otherProtocols?: Array<string> | null
 	childProtocols?: Array<{

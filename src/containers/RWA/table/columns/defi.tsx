@@ -42,7 +42,7 @@ export function createDefiColumnGroup(period: RWAChangePeriod) {
 				id: 'utilization',
 				header: 'Utilization',
 				cell: ({ getValue }) => (getValue() != null ? formatPercent(getValue(), { input: 'percent' }) : null),
-				meta: numberColumnMeta('w-[120px]', 'DeFi Active TVL / Active Marketcap', 'DeFi Utilization')
+				meta: numberColumnMeta('w-[120px]', 'DeFi Active TVL / Active AUM', 'DeFi Utilization')
 			}),
 			columnHelper.accessor(
 				(row) =>

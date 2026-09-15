@@ -26,7 +26,7 @@ describe('buildRwaCanonicalMetricDataset', () => {
 				false
 			)
 		).toEqual({
-			dimensions: ['timestamp', 'Total Active Mcap', 'Alpha', 'Beta'],
+			dimensions: ['timestamp', 'Total Active AUM', 'Alpha', 'Beta'],
 			source: [
 				[1, -4, 0, -4],
 				[2, 5, 5, null]
@@ -258,8 +258,8 @@ describe('mergeRwaChartDatasets', () => {
 		expect(
 			mergeRwaChartDatasets(
 				{
-					source: [{ timestamp: 1, 'Total Active Mcap': 100, Treasuries: 100 }],
-					dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries']
+					source: [{ timestamp: 1, 'Total Active AUM': 100, Treasuries: 100 }],
+					dimensions: ['timestamp', 'Total Active AUM', 'Treasuries']
 				},
 				{
 					source: [{ timestamp: 1, 'RWA Perps OI': 25 }],
@@ -267,16 +267,16 @@ describe('mergeRwaChartDatasets', () => {
 				}
 			)
 		).toEqual({
-			source: [{ timestamp: 1, 'Total Active Mcap': 100, Treasuries: 100, 'RWA Perps OI': 25 }],
-			dimensions: ['timestamp', 'Total Active Mcap', 'Treasuries', 'RWA Perps OI']
+			source: [{ timestamp: 1, 'Total Active AUM': 100, Treasuries: 100, 'RWA Perps OI': 25 }],
+			dimensions: ['timestamp', 'Total Active AUM', 'Treasuries', 'RWA Perps OI']
 		})
 	})
 })
 
 describe('RWA chart series color reservation', () => {
 	test('orders Total first and RWA Perps OI second', () => {
-		expect(sortRwaChartSeriesLabels(['Treasuries', 'RWA Perps OI', 'Total Active Mcap', 'Credit'])).toEqual([
-			'Total Active Mcap',
+		expect(sortRwaChartSeriesLabels(['Treasuries', 'RWA Perps OI', 'Total Active AUM', 'Credit'])).toEqual([
+			'Total Active AUM',
 			'RWA Perps OI',
 			'Treasuries',
 			'Credit'
@@ -284,7 +284,7 @@ describe('RWA chart series color reservation', () => {
 	})
 
 	test('keeps CHART_COLORS[0] and CHART_COLORS[1] reserved for Total and RWA Perps OI', () => {
-		expect(CHART_COLORS[getRwaReservedSeriesColorSlot('Total Active Mcap') ?? -1]).toBe(CHART_COLORS[0])
+		expect(CHART_COLORS[getRwaReservedSeriesColorSlot('Total Active AUM') ?? -1]).toBe(CHART_COLORS[0])
 		expect(CHART_COLORS[getRwaReservedSeriesColorSlot('RWA Perps OI') ?? -1]).toBe(CHART_COLORS[1])
 		expect(getRwaReservedSeriesColorSlot('Treasuries')).toBeNull()
 	})

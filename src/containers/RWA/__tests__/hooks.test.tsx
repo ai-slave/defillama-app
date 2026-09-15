@@ -307,9 +307,9 @@ describe('useRwaChartDataset', () => {
 		const platformMarkup = renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'platform' }))
 		const totalMarkup = renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'total' }))
 
-		expect(categoryMarkup).toContain('timestamp|Total Onchain Mcap|Treasuries|Private Credit')
-		expect(platformMarkup).toContain('timestamp|Total Onchain Mcap|Centrifuge|Maple')
-		expect(totalMarkup).toContain('timestamp|Total Onchain Mcap')
+		expect(categoryMarkup).toContain('timestamp|Total Onchain AUM|Treasuries|Private Credit')
+		expect(platformMarkup).toContain('timestamp|Total Onchain AUM|Centrifuge|Maple')
+		expect(totalMarkup).toContain('timestamp|Total Onchain AUM')
 		expect(useQueryMock).toHaveBeenCalledTimes(3)
 		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true)
@@ -349,7 +349,7 @@ describe('useRwaChartDataset', () => {
 			React.createElement(DatasetProbe, { mode: 'category', chartAssets: multiCategoryAssets })
 		)
 
-		expect(markup).toContain('timestamp|Total Onchain Mcap|Treasuries')
+		expect(markup).toContain('timestamp|Total Onchain AUM|Treasuries')
 		expect(markup).not.toContain('Private Credit')
 	})
 
@@ -394,13 +394,13 @@ describe('useRwaChartDataset', () => {
 				mode: 'category',
 				initialDataset: {
 					source: [[1, 100, 100]],
-					dimensions: ['timestamp', 'Total Onchain Mcap', 'Prerendered']
+					dimensions: ['timestamp', 'Total Onchain AUM', 'Prerendered']
 				},
 				useInitialDataset: true
 			})
 		)
 
-		expect(markup).toContain('timestamp|Total Onchain Mcap|Prerendered')
+		expect(markup).toContain('timestamp|Total Onchain AUM|Prerendered')
 		expect(useQueryMock).toHaveBeenCalledTimes(1)
 		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true),
@@ -420,13 +420,13 @@ describe('useRwaChartDataset', () => {
 				mode: 'total',
 				initialDataset: {
 					source: [[1, 100, 100]],
-					dimensions: ['timestamp', 'Total Onchain Mcap', 'Treasuries']
+					dimensions: ['timestamp', 'Total Onchain AUM', 'Treasuries']
 				},
 				useInitialDataset: true
 			})
 		)
 
-		expect(markup).toContain('timestamp|Total Onchain Mcap')
+		expect(markup).toContain('timestamp|Total Onchain AUM')
 		expect(useQueryMock).toHaveBeenCalledTimes(1)
 		expect(getUseQueryOptions(0)).toMatchObject({
 			queryKey: getRwaAssetChartQueryKey({ kind: 'all' }, 'onChainMcap', false, false, true),

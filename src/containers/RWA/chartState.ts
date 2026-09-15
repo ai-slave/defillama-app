@@ -25,8 +25,8 @@ const CHART_VIEW_OPTIONS: ReadonlyArray<RWAChartOption<RWAChartView>> = [
 ]
 
 const CHART_METRIC_OPTIONS: ReadonlyArray<{ key: RWAChartMetric; label: string }> = [
-	{ key: 'activeMcap', label: 'Active Mcap' },
-	{ key: 'onChainMcap', label: 'Onchain Mcap' },
+	{ key: 'activeMcap', label: 'Active AUM' },
+	{ key: 'onChainMcap', label: 'Onchain AUM' },
 	{ key: 'defiActiveTvl', label: 'DeFi Active TVL' }
 ]
 

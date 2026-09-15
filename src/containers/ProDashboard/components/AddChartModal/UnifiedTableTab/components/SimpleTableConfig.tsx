@@ -74,7 +74,7 @@ const tableTypeOptions: Array<{
 	{
 		value: 'rwa',
 		label: 'RWA Assets',
-		description: 'Real World Assets with active mcap, onchain mcap, and DeFi TVL',
+		description: 'Real World Assets with active AUM, onchain AUM, and DeFi TVL',
 		icon: '🏛️'
 	},
 	{

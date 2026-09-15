@@ -42,7 +42,7 @@ export type RWAPlatformLogos = Record<string, string>
 export type RWAGroupOptions = { platformLogos?: RWAPlatformLogos }
 
 const GROUP_BY_HELP: Partial<Record<RWAGroupBy, string>> = {
-	chain: 'An asset sits under every chain it has onchain marketcap on; unpriced rows sit under no chain.'
+	chain: 'An asset sits under every chain it has onchain AUM on; unpriced rows sit under no chain.'
 }
 
 export function getRwaGroupByOptions(

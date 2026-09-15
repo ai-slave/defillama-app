@@ -656,7 +656,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const defaultInclusion = selectedPlatform
 			? inferPlatformRWAOverviewInclusion(assets.filter((asset) => asset.kind === 'spot'))
 			: routeDefaultInclusion
-		// Only an explicit metadata opt-out removes Active Mcap. A tracked asset can have an empty current
+		// Only an explicit metadata opt-out removes Active AUM. A tracked asset can have an empty current
 		// breakdown while retaining valid history. Perps-only scopes keep the normal metric options.
 		const chartMetricAvailability = {
 			hasActiveMcapData: spotAssetCount === 0 || hasTrackedActiveMcapAsset
@@ -897,6 +897,24 @@ export async function getRWAAssetGroupsOverview(): Promise<IRWAAssetGroupsOvervi
 	}
 }
 
+// The asset's own DeFiLlama protocol listing(s), so the RWA page can link to the TVL page for the
+// same product. `protocolMetadata[id].name` carries the protocol SLUG (a metadata quirk), so
+// `displayName` is the only human-readable label available here. The slugs are also what the
+// yields path uses to tell the asset's own pool from third-party ones.
+async function resolveAssetProtocolLinks(asset: IFetchedRWAProject): Promise<Array<{ name: string; slug: string }>> {
+	const ids = Array.isArray(asset.projectId) ? asset.projectId : asset.projectId != null ? [asset.projectId] : []
+	if (ids.length === 0) return []
+	const metadataCache = await import('~/utils/metadata').then((module) => module.default)
+	const links: Array<{ name: string; slug: string }> = []
+	for (const id of ids) {
+		const meta = metadataCache.protocolMetadata[id]
+		if (!meta?.name) continue
+		if (links.some((link) => link.slug === meta.name)) continue
+		links.push({ name: meta.displayName || meta.name, slug: meta.name })
+	}
+	return links
+}
+
 /** Logo URL per platform slug, for the platforms in the rows only. */
 export function collectRwaPlatformLogos(
 	assets: IRWAAssetsOverview['assets'],
@@ -979,14 +997,16 @@ export async function getRWAAssetData({
 			const [timestampDimension, ...seriesDimensions] = chartDataset.dimensions
 			chartDataset.dimensions = [
 				timestampDimension,
-				...seriesDimensions.filter((dimension) => dimension !== 'Active Mcap')
+				...seriesDimensions.filter((dimension) => dimension !== 'Active AUM')
 			]
 		}
+
+		const protocolLinks = await resolveAssetProtocolLinks(data)
 
 		let yieldMatch = emptyRWAYieldResult()
 		if (yieldsSnapshot) {
 			try {
-				yieldMatch = await getRWAYieldPools(yieldsSnapshot, data)
+				yieldMatch = await getRWAYieldPools(yieldsSnapshot, data, new Set(protocolLinks.map((link) => link.slug)))
 			} catch (error) {
 				console.log('[HTTP]:[ERROR]:[RWA_YIELD]:', assetId, error instanceof Error ? error.message : '')
 			}
@@ -995,6 +1015,7 @@ export async function getRWAAssetData({
 		return {
 			...data,
 			slug: data.canonicalMarketId,
+			protocolLinks,
 			trueRWA: isTrueRWA,
 			rwaClassification: isTrueRWA ? 'RWA' : (data.rwaClassification ?? null),
 			rwaClassificationDescription,

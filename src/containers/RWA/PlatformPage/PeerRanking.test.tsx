@@ -34,7 +34,7 @@ const peers: Array<RWAPlatformPeerRow> = [
 		name: 'First',
 		slug: 'first',
 		logo: null,
-		onchainAum: 2000,
+		aum: 2000,
 		assetCount: 2,
 		holderTotalFeeBps: null,
 		mintFeeBps: null,
@@ -45,7 +45,7 @@ const peers: Array<RWAPlatformPeerRow> = [
 		name: 'Selected',
 		slug: 'selected',
 		logo: null,
-		onchainAum: 1000,
+		aum: 1000,
 		assetCount: 1,
 		holderTotalFeeBps: 0,
 		mintFeeBps: 5,
@@ -118,5 +118,33 @@ describe('RWA platform peer ranking', () => {
 		await act(async () => root.render(<PeerRanking selectedSlug="selected" />))
 
 		expect(container.querySelector<HTMLDivElement>('.overflow-auto')?.scrollTop).toBe(0)
+	})
+
+	test('renders AUM from a pre-rename cached body instead of a blank cell', async () => {
+		// The route is CDN-cached for up to 90min, so right after deploy this bundle can be handed
+		// a body the previous deploy published: `onchainAum`, no `aum`. Showing yesterday's on-chain
+		// number beats an empty column until the cache turns over.
+		const aumColumn = () => {
+			const columnIndex = [...container.querySelectorAll('thead th')].findIndex(
+				(header) => header.textContent === 'On-chain AUM'
+			)
+			expect(columnIndex).toBeGreaterThanOrEqual(0)
+			return [...container.querySelectorAll('tbody tr')].map(
+				(row) => row.querySelectorAll('td')[columnIndex]?.textContent
+			)
+		}
+
+		queryState = { data: peers, isLoading: false, error: null }
+		await act(async () => root.render(<PeerRanking selectedSlug="selected" />))
+		expect(aumColumn()).toEqual(['$2,000', '$1,000'])
+
+		queryState = {
+			data: peers.map(({ aum, ...rest }) => ({ ...rest, onchainAum: aum })) as unknown as Array<RWAPlatformPeerRow>,
+			isLoading: false,
+			error: null
+		}
+		await act(async () => root.render(<PeerRanking selectedSlug="selected" />))
+
+		expect(aumColumn()).toEqual(['$2,000', '$1,000'])
 	})
 })
