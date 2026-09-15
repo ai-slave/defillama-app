@@ -752,7 +752,9 @@ function TokenInformationCard({
 	chain: TokenIssuer | null
 }) {
 	const hasLinks = overview.website || overview.twitter || overview.telegram || overview.discord
-	if (!hasLinks && overview.categories.length === 0 && !issuer && !chain) return null
+	// Previously loaded page props can survive a client code update.
+	const categories = overview.categories ?? []
+	if (!hasLinks && categories.length === 0 && !issuer && !chain) return null
 
 	return (
 		<Card as="section" padding="sm" className="col-span-full flex flex-wrap items-center gap-x-6 gap-y-3 body-md">
@@ -809,10 +811,10 @@ function TokenInformationCard({
 					) : null}
 				</div>
 			) : null}
-			{overview.categories.length > 0 ? (
+			{categories.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">
-					<span className="label-md text-secondary">{overview.categories.length > 1 ? 'Categories' : 'Category'}:</span>
-					{overview.categories.map((category) => (
+					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
+					{categories.map((category) => (
 						<BasicLink
 							key={category.id}
 							href={`/tokens?categories=${encodeURIComponent(category.id)}`}

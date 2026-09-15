@@ -938,6 +938,21 @@ describe('TokenPageHero component', () => {
 })
 
 describe('TokenOverviewSection component', () => {
+	test('renders previously loaded page props without categories', () => {
+		const { categories: _categories, ...previousOverview } = overviewFixture
+		const overview = previousOverview as TokenOverviewData
+		const bare = renderTokenOverviewSection({ overview, geckoId: 'bitcoin' })
+		expect(bare).toContain('Bitcoin')
+		expect(bare).not.toContain('Token Information')
+
+		const withWebsite = renderTokenOverviewSection({
+			overview: { ...overview, website: 'https://project.example' },
+			geckoId: 'bitcoin'
+		})
+		expect(withWebsite).toContain('href="https://project.example"')
+		expect(withWebsite).not.toContain('/tokens?categories=')
+	})
+
 	test('renders token information links in a card below the hero, not in the hero', () => {
 		const categories = [
 			{ id: 'real-world-assets-rwa', label: 'RWA' },
