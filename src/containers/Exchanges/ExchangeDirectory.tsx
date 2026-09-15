@@ -45,6 +45,7 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				href={sponsorBannerHref(directory.rows)}
 				target="_blank"
 				rel="noopener noreferrer sponsored"
+				data-umami-event="bybit-banner-click"
 				className="relative mx-auto block w-full max-w-[1800px] overflow-hidden rounded-md"
 			>
 				{/* Colours are inline rather than classes: the badge sits on the banner art, which is
