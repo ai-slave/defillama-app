@@ -364,6 +364,7 @@ vi.mock('~/containers/Token/TokenMarketsSection', () => ({
 }))
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
+	getTokenMarketSummary: vi.fn(async () => null),
 	hasTokenMarkets: vi.fn((geckoId: string) => Promise.resolve(geckoId === 'bitcoin'))
 }))
 
@@ -1912,7 +1913,7 @@ async function overlapColdModuleLoad() {
 	vi.doMock('~/containers/Markets/server/dataset.server', async () => {
 		moduleStarted.resolve()
 		await moduleReady.promise
-		return { hasTokenMarkets: vi.fn(async () => false) }
+		return { getTokenMarketSummary: vi.fn(async () => null), hasTokenMarkets: vi.fn(async () => false) }
 	})
 	const { getTokenOverviewCurrentSnapshot: readCurrent } = await import('~/containers/Tokens/queries.server')
 	const current = Promise.withResolvers<Awaited<ReturnType<typeof readCurrent>>>()
@@ -1928,7 +1929,10 @@ async function overlapColdModuleLoad() {
 		await result
 		// A current-snapshot failure settles the request before its imports finish.
 		await vi.dynamicImportSettled()
-		vi.doMock('~/containers/Markets/server/dataset.server', () => ({ hasTokenMarkets: vi.fn(async () => false) }))
+		vi.doMock('~/containers/Markets/server/dataset.server', () => ({
+			getTokenMarketSummary: vi.fn(async () => null),
+			hasTokenMarkets: vi.fn(async () => false)
+		}))
 	}
 
 	// Settled on failure too, or a deferred import stays pending for the rest of the file.

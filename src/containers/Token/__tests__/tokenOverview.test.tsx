@@ -1114,3 +1114,19 @@ describe('TokenOverviewSection component', () => {
 		expect(html).toContain('Chart unavailable without CoinGecko market data.')
 	})
 })
+
+test('renders market OI in server HTML and omits absent or zero OI', () => {
+	const bucket = { pair_count: 1, total_volume_24h: 100, total_oi_usd: 250 }
+	const totals = {
+		cex: { spot: bucket, linear_perp: bucket, inverse_perp: bucket },
+		dex: { spot: bucket, linear_perp: bucket, inverse_perp: bucket }
+	}
+	for (const oi of [250, 0, null]) {
+		const html = renderTokenOverviewSection({
+			overview: { ...overviewFixture, marketSummary: { total_volume_24h: 100, total_oi_usd: oi, totals } },
+			geckoId: 'bitcoin'
+		})
+		expect(html.includes('Open Interest')).toBe(oi === 250)
+	}
+	expect(renderTokenOverviewSection({ overview: overviewFixture, geckoId: 'bitcoin' })).not.toContain('Open Interest')
+})

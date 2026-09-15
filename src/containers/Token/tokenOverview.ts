@@ -1,6 +1,7 @@
 import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinById } from '~/api/coingecko'
 import type { CgChartResponse, CoinGeckoCoinDetailResultForOptions } from '~/api/coingecko.types'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
+import type { TokenMarketSummary } from '~/containers/Markets/api.types'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
 import type { Raise } from '~/containers/Raises/model'
@@ -65,6 +66,7 @@ export type TokenOverviewRawChartData = Partial<Record<TokenOverviewChartLabel, 
 type CgChartTickers = NonNullable<NonNullable<CgChartResponse['data']>['coinData']>['tickers']
 
 export interface TokenOverviewData {
+	marketSummary?: TokenMarketSummary | null
 	name: string
 	displayName: string
 	symbol: string

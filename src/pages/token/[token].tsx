@@ -117,7 +117,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		async ([
 			{ isDatasetSnapshotIntegrityError },
 			{ hasTokenLiquidationsData },
-			{ hasTokenMarkets },
+			{ hasTokenMarkets, getTokenMarketSummary },
 			{ fetchRaisesByDefillamaId },
 			{ getIndexedTokenRiskBorrowCapacity },
 			{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
@@ -128,6 +128,11 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			const yieldsDatasetSnapshotPromise = acquireOptionalYieldsSnapshot()
 			const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
 				downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
+			const marketSummaryPromise = geckoId
+				? getTokenMarketSummary(geckoId).catch((error) =>
+						downgradeTokenPageError(error, `Failed to load token market summary for ${geckoId}`, null)
+					)
+				: Promise.resolve(null)
 			const marketsAvailablePromise = geckoId
 				? hasTokenMarkets(geckoId).catch((error) =>
 						downgradeTokenPageError(error, `Failed to load token markets index for ${geckoId}`, false)
@@ -253,6 +258,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				hasLiquidations,
 				tokenRiskData,
 				hasMarkets,
+				marketSummary,
 				currentSnapshot
 			] = await Promise.all([
 				overviewPromise,
@@ -263,8 +269,11 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				liquidationsPromise,
 				tokenRiskPromise,
 				marketsAvailablePromise,
+				marketSummaryPromise,
 				currentSnapshotPromise
 			])
+
+			overview.marketSummary = marketSummary
 
 			const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsData.rows, yieldsData.tokenKeys)
 			const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(

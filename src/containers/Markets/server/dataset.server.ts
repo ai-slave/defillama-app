@@ -1,6 +1,6 @@
 /** Typed Markets reads and pure lookups over the current immutable snapshot. */
 import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
-import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
+import type { TokenMarketsListResponse, TokenMarketSummary } from '~/containers/Markets/api.types'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
 import {
@@ -39,4 +39,12 @@ export async function resolveExchangeByDefillamaCexSlug(
 export async function hasTokenMarkets(geckoId: string): Promise<boolean> {
 	const index = await fetchTokenMarketsGeckoIdIndex()
 	return hasTokenMarketsGeckoId(index, geckoId)
+}
+
+export async function getTokenMarketSummary(geckoId: string): Promise<TokenMarketSummary | null> {
+	const index = await datasetSnapshotReader.readJson<Record<string, TokenMarketSummary>>(
+		'markets',
+		MARKET_FILES.tokenSummaries
+	)
+	return index[geckoId.toLowerCase()] ?? null
 }

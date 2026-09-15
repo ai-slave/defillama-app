@@ -1,5 +1,5 @@
 import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
-import type { TokenExchangeListingsResponse } from '~/containers/Markets/api.types'
+import type { TokenExchangeListingsResponse, TokenMarketSummary } from '~/containers/Markets/api.types'
 import { slug } from '~/utils'
 
 export type TokenMarketsGeckoIdIndex = Record<string, true>
@@ -33,4 +33,12 @@ export function resolveExchangeByDefillamaCexSlug(
 
 export function hasTokenMarketsGeckoId(index: TokenMarketsGeckoIdIndex, geckoId: string): boolean {
 	return Object.hasOwn(index, geckoId.toLowerCase())
+}
+
+export function buildTokenMarketSummaries(listings: TokenExchangeListingsResponse): Record<string, TokenMarketSummary> {
+	const index: Record<string, TokenMarketSummary> = Object.create(null)
+	for (const token of listings.tokens) {
+		if (token.summary) index[token.coingecko_id.toLowerCase()] = token.summary
+	}
+	return index
 }

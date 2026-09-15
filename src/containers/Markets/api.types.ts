@@ -54,7 +54,11 @@ export interface TokenExchangeListingVenue {
 	segments: Array<Segment>
 }
 
+export type TokenMarketSummary = Pick<TokenMarketsResponse, 'total_volume_24h' | 'total_oi_usd' | 'totals'>
+
 export interface TokenExchangeListing {
+	// Older backend snapshots do not include metric summaries.
+	summary?: TokenMarketSummary
 	coingecko_id: string
 	name: string
 	symbol: string

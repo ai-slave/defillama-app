@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import { skipToken, useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
@@ -9,7 +8,7 @@ import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
-import type { MarketTotalsBySegment, TokenMarketsResponse } from '~/containers/Markets/api.types'
+import type { MarketTotalsBySegment, TokenMarketSummary } from '~/containers/Markets/api.types'
 import type { Segment } from '~/containers/Markets/segments'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
@@ -45,7 +44,6 @@ import {
 	type PriceChartTimeframe
 } from '~/utils/priceChartTimeframes'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
-import { fetchTokenMarkets } from './api'
 import {
 	TOKEN_OVERVIEW_DEFAULT_CHARTS,
 	type TokenOverviewChartLabel,
@@ -343,7 +341,7 @@ function MarketsMetricSection({
 	label: string
 	tooltip: string
 	totalValue: number | null
-	markets: TokenMarketsResponse
+	markets: TokenMarketSummary
 	metric: 'volume' | 'oi'
 }) {
 	const cexValue = sumVenueMetric(markets.totals.cex, metric)
@@ -370,15 +368,8 @@ function MarketsMetricSection({
 	)
 }
 
-function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geckoId: string | null }) {
-	const { data: markets } = useQuery({
-		queryKey: ['token-markets', geckoId],
-		queryFn: geckoId ? () => fetchTokenMarkets(geckoId) : skipToken,
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: false,
-		enabled: Boolean(geckoId)
-	})
+function TokenMetrics({ overview }: { overview: TokenOverviewData }) {
+	const markets = overview.marketSummary
 	const marketsHasVolume = markets != null && (markets.total_volume_24h ?? 0) > 0
 	const marketsHasOi = markets != null && (markets.total_oi_usd ?? 0) > 0
 
@@ -864,7 +855,7 @@ export function TokenOverviewSection({
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 					<TokenPageHero overview={overview} logo={logo} geckoId={geckoId} />
-					<TokenMetrics overview={overview} geckoId={geckoId} />
+					<TokenMetrics overview={overview} />
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
 					<ChartPanel className="col-span-full">
