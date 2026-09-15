@@ -613,7 +613,7 @@ export const getProtocolOverviewPageData = async ({
 	)
 
 	const resolvedProtocolChains =
-		protocolData.chains.length > 0 ? protocolData.chains : (currentProtocolMetadata.chains ?? [])
+		currentProtocolMetadata.chains?.length > 0 ? currentProtocolMetadata.chains : protocolData.chains
 	const relationship = buildProtocolFaqRelationship({
 		protocolId,
 		protocolName: protocolData.name,

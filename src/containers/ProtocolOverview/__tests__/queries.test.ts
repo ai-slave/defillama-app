@@ -197,6 +197,31 @@ describe('getProtocolOverviewPageData', () => {
 	})
 
 	test.each([
+		{ chains: ['Ethereum', 'Base'], expected: ['Ethereum', 'Base'] },
+		{ chains: [], expected: ['Ethereum'] },
+		{ chains: undefined, expected: ['Ethereum'] }
+	])('uses metadata chains with protocol fallback: $chains', async ({ chains, expected }) => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol', chains },
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		})
+
+		expect(data.chains).toEqual(expected)
+		const answer = data.faqItems?.find((item) => item.id === 'chains')?.answer
+		expect(answer?.map((part) => part.text).join('')).toBe(
+			expected.length === 1
+				? 'Test Protocol operates on Ethereum.'
+				: 'Test Protocol operates on 2 chains: Ethereum and Base.'
+		)
+	})
+
+	test.each([
 		[
 			{ gasTokenGeckoId: 'ethereum', gasTokenSymbol: 'ETH' },
 			[
