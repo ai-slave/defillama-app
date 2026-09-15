@@ -347,7 +347,7 @@
       "name": "Open Interest by Protocol",
       "route": "/open-interest",
       "category": "Volume",
-      "description": "Total notional value of all outstanding perpetual futures positions",
+      "description": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
       "totalTrackedKey": "openInterest.protocols",
       "tab": "Protocols",
       "oldCategory": "Volume",

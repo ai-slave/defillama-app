@@ -379,8 +379,8 @@ export const definitions = {
     }
   },
   "openInterest": {
-    "common": "Total notional value of all outstanding perpetual futures positions",
-    "protocol": "Total notional value of all outstanding perpetual futures positions",
-    "chain": "Total notional value of all outstanding perpetual futures positions on all perp exchanges on the chain, updated daily at 00:00 UTC"
+    "common": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
+    "protocol": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
+    "chain": "USD notional value of outstanding perpetual futures positions across all perp exchanges on the chain, normalized to a single-sided basis rather than summing long and short open interest, updated daily at 00:00 UTC"
   }
 } as const

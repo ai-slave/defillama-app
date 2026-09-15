@@ -46,7 +46,7 @@ Common usage examples:
 ## Market activity dashboards
 
 - [Perps](https://defillama.com/perps): Notional volume of perpetual futures trades.
-- [Open interest](https://defillama.com/open-interest): Notional value of outstanding perpetual futures positions.
+- [Open interest](https://defillama.com/open-interest): USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest.
 - [Normalized volume](https://defillama.com/normalized-volume): Perp volume adjusted to exclude wash trading and non-economic volume.
 - [Options premium volume](https://defillama.com/options/premium-volume): Value paid buying and selling options.
 - [Options notional volume](https://defillama.com/options/notional-volume): Notional value of options traded.
@@ -152,7 +152,7 @@ Common usage examples:
 - [DEX Volume by Chain](https://defillama.com/dexs/chains): Sum of all volume of spot token swaps that go through all DEXs on the chain Category: Volume.
 - [DEX Aggregator Volume by Protocol](https://defillama.com/dex-aggregators): Volume of spot token swaps that go through a DEX aggregator Category: Volume.
 - [Perp Volume by Chain](https://defillama.com/perps/chains): Sum of notional volume of all trades in all perp exchanges on the chain, includes leverage Category: Volume.
-- [Open Interest by Protocol](https://defillama.com/open-interest): Total notional value of all outstanding perpetual futures positions Category: Volume.
+- [Open Interest by Protocol](https://defillama.com/open-interest): USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest Category: Volume.
 - [Perp Aggregator Volume by Protocol](https://defillama.com/perps-aggregators): Notional volume of all trades in a perp aggregator, includes leverage Category: Volume.
 - [Normalized Volume by Chain](https://defillama.com/normalized-volume/chains): Sum of genuine trading activity volume in perp exchanges on the chain, adjusted to exclude wash trading and non-economic volume Category: Volume.
 - [Normalized Volume by Protocol](https://defillama.com/normalized-volume): Volume of genuine trading activity in perp exchanges, adjusted to exclude wash trading and non-economic volume Category: Volume.

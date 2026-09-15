@@ -385,7 +385,8 @@ const FULL_EXTRA_SECTIONS: Array<LlmsSection> = [
 			{
 				title: 'Open interest',
 				url: '/open-interest',
-				description: 'Notional value of outstanding perpetual futures positions.'
+				description:
+					'USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest.'
 			},
 			{
 				title: 'Normalized volume',
