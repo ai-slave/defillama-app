@@ -104,7 +104,6 @@ export interface IChainOverviewData {
 	chainRaises: Array<Raise> | null
 	chainAssets: IFormattedChainAsset | null
 	devMetrics: null
-	nfts: { total24h: number | null } | null
 	etfs: Array<[number, number]> | null
 	allChains: Array<{ label: string; to: string }>
 	unlocks: HomepageUnlockSummary | null

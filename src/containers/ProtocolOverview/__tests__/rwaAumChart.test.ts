@@ -32,7 +32,6 @@ const noCharts = {
 	hasTreasury: false,
 	hasMedianApy: false,
 	hasGovernance: false,
-	hasNfts: false,
 	hasActiveAddresses: false,
 	hasNewAddresses: false,
 	hasTransactions: false,

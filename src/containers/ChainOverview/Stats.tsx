@@ -192,7 +192,6 @@ export function Stats(props: IStatsProps) {
 					users={props.users}
 					chainRaises={props.chainRaises}
 					chainAssets={props.chainAssets}
-					nfts={props.nfts}
 					chainTokenInfo={props.chainTokenInfo}
 					protocols={props.protocols}
 					totalValueUSD={totalValueUSD}

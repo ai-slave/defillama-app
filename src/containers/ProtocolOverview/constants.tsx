@@ -36,7 +36,6 @@ export const protocolCharts = {
 	Transactions: 'transactions',
 	'Gas Used': 'gasUsed',
 	Tweets: 'tweets',
-	'NFT Volume': 'nftVolume',
 	'Bridge Volume': 'bridgeVolume'
 } as const
 
@@ -83,7 +82,6 @@ export const yAxisByChart: {
 	'USD Inflows': 'USD Inflows',
 	Treasury: 'Treasury',
 	Tweets: 'Tweets',
-	'NFT Volume': 'NFT Volume',
 	'Bridge Volume': 'DEX Volume'
 }
 
@@ -101,7 +99,6 @@ export const protocolChartCategories = {
 		'Perp Aggregator Volume',
 		'Bridge Aggregator Volume',
 		'DEX Aggregator Volume',
-		'NFT Volume',
 		'Bridge Volume'
 	],
 	Liquidations: ['Liquidation Volume', 'Collateral Liquidated'],
@@ -141,7 +138,6 @@ export const BAR_CHARTS: Array<ProtocolChartsLabels> = [
 	'Bridge Withdrawals',
 	'Token Volume',
 	'Tweets',
-	'NFT Volume',
 	'DEX Aggregator Volume',
 	'DEX Notional Volume',
 	'Options Premium Volume',

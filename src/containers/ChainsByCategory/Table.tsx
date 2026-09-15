@@ -488,19 +488,6 @@ const columns = columnHelper.columns([
 			align: 'end',
 			headerHelperText: 'Market cap / DeFi TVL ratio'
 		}
-	}),
-	columnHelper.accessor((row) => row.nftVolume24h ?? undefined, {
-		id: 'nftVolume24h',
-		header: '24h NFT Volume',
-		cell: (info) =>
-			info.getValue() != null
-				? formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: null,
-		meta: {
-			headerClassName: 'w-[148px]',
-			align: 'end',
-			headerHelperText: 'Sum of 24h volume on all NFTs on the chain. Updated daily at 00:00UTC'
-		}
 	})
 ])
 

@@ -59,13 +59,11 @@ const CHAINS_COLUMN_IDS = new Set([
 	'totalRevenue30d',
 	'mcaptvl',
 	'mcap',
-	'nftVolume',
 	'tvl_share',
 	'stablesMcap_share',
 	'totalVolume24h_share',
 	'totalFees24h_share',
-	'totalAppRevenue24h_share',
-	'nftVolume_share'
+	'totalAppRevenue24h_share'
 ])
 
 function normalizedList(values: Array<string>): Array<string> {

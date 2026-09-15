@@ -40,7 +40,6 @@ const PUBLIC_SINGLEFLIGHT_HOSTS = new Set([
 	'coins.llama.fi',
 	'stablecoins.llama.fi',
 	'bridges.llama.fi',
-	'nft.llama.fi',
 	'fdv-server.llama.fi',
 	'etfs.llama.fi',
 	'risks.llama.fi',

@@ -190,9 +190,8 @@ describe('getChainOverviewData optional sections', () => {
 		).rejects.toThrow('Missing protocol aggregation for Ethereum')
 	})
 
-	test('retains an explicit zero NFT volume', async () => {
+	test('omits retired NFT data and its upstream request', async () => {
 		resetMocks()
-		mocks.fetchJson.mockResolvedValueOnce({ ethereum: 0 })
 		const { getChainOverviewData } = await import('../queries.server')
 
 		const data = await getChainOverviewData({
@@ -202,7 +201,8 @@ describe('getChainOverviewData optional sections', () => {
 			categoriesAndTagsMetadata
 		})
 
-		expect(data?.nfts).toEqual({ total24h: 0 })
+		expect(data).not.toHaveProperty('nfts')
+		expect(mocks.fetchJson).not.toHaveBeenCalledWith('https://defillama-datasets.llama.fi/temp/chainNfts')
 	})
 
 	test('keeps chain-native and app fee/revenue requests on their canonical endpoints', async () => {

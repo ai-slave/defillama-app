@@ -23,7 +23,6 @@ const metrics = {
 	fees: false,
 	revenue: false,
 	forks: false,
-	nfts: false,
 	dev: false,
 	inflows: true,
 	activeUsers: false,

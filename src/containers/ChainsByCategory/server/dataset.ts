@@ -51,7 +51,6 @@ export async function fetchChainsDatasetRows({
 		totalAppRevenue30d: chain.appRevenue30d ?? null,
 		bridgedTvl: chain.bridgedTvl ?? chain.chainAssets?.total?.total ?? null,
 		mcaptvl: chain.mcaptvl ?? null,
-		nftVolume: chain.nftVolume24h ?? null,
 		mcap: chain.mcap ?? null,
 		symbol: chain.symbol ?? null,
 		extraTvl: chain.extraTvl ?? null

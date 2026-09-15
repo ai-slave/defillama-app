@@ -18,6 +18,31 @@ afterEach(async () => {
 })
 
 describe('metadata page helpers', () => {
+	test('excludes retired NFT analytics URLs while preserving NFT taxonomy', () => {
+		const retiredRoutes = [
+			'/nfts',
+			'/nfts?sort=volume',
+			'/nfts/marketplaces',
+			'/nfts/chains',
+			'/nfts/earnings',
+			'/nfts/collection/example',
+			'/nfts/royalties/example'
+		]
+		const preservedRoutes = [
+			'/categories',
+			'/protocols/nft-marketplace',
+			'/protocols/nft-lending',
+			'/protocols/nft-launchpad',
+			'/protocol/opensea'
+		]
+		expect(
+			buildTrendingPages(
+				{},
+				[...retiredRoutes, ...preservedRoutes].map((route) => [route, 10])
+			).map((page) => page.route)
+		).toEqual(preservedRoutes)
+	})
+
 	test('excludes retired governance URLs while preserving related token and protocol pages', () => {
 		const retiredRoutes = [
 			'/governance',

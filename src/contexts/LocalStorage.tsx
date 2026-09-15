@@ -84,12 +84,6 @@ export const YIELDS_SETTINGS = {
 	NO_MEMECOINS: 'NO_MEMECOINS'
 } as const
 
-// NFT
-const NFT_SETTINGS = {
-	DISPLAY_USD: 'DISPLAY_USD',
-	HIDE_LAST_DAY: 'HIDE_LAST_DAY'
-} as const
-
 export const CHAINS_CATEGORY_GROUP_SETTINGS = [
 	{
 		name: 'L2',
@@ -118,21 +112,18 @@ const BRIDGES_SETTINGS = { BRIDGES_SHOWING_TXS, BRIDGES_SHOWING_ADDRESSES } as c
 
 export type TvlSettingsKey = (typeof TVL_SETTINGS)[keyof typeof TVL_SETTINGS]
 export type YieldsSettingKey = (typeof YIELDS_SETTINGS)[keyof typeof YIELDS_SETTINGS]
-type NftSettingKey = (typeof NFT_SETTINGS)[keyof typeof NFT_SETTINGS]
 type BridgesSettingKey = (typeof BRIDGES_SETTINGS)[keyof typeof BRIDGES_SETTINGS]
 type ChainsCategoryGroupKey = (typeof CHAINS_CATEGORY_GROUP_SETTINGS)[number]['key']
 
-type SettingKey = TvlSettingsKey | NftSettingKey | BridgesSettingKey | ChainsCategoryGroupKey
+type SettingKey = TvlSettingsKey | BridgesSettingKey | ChainsCategoryGroupKey
 
 type KeysFor<T extends TSETTINGTYPE> = T extends 'tvl'
 	? TvlSettingsKey
 	: T extends 'tvl_chains'
 		? ChainsCategoryGroupKey
-		: T extends 'nfts'
-			? NftSettingKey
-			: T extends 'bridges'
-				? BridgesSettingKey
-				: string
+		: T extends 'bridges'
+			? BridgesSettingKey
+			: string
 
 type YieldFilterValue = string | number | boolean
 type YieldSavedFilter = Record<string, YieldFilterValue>
@@ -218,7 +209,6 @@ const CHAINS_CATEGORY_GROUP_KEYS = CHAINS_CATEGORY_GROUP_SETTINGS.map((g) => g.k
 const CHAINS_CATEGORY_GROUP_KEYS_SET = new Set<string>(CHAINS_CATEGORY_GROUP_KEYS)
 export const TVL_SETTINGS_KEYS = valuesOf(TVL_SETTINGS)
 export const TVL_SETTINGS_KEYS_SET = new Set<string>(TVL_SETTINGS_KEYS)
-const NFT_SETTINGS_KEYS = valuesOf(NFT_SETTINGS)
 const BRIDGES_SETTINGS_KEYS = valuesOf(BRIDGES_SETTINGS)
 
 export const isTvlSettingsKey = (value: string): value is TvlSettingsKey => TVL_SETTINGS_KEYS_SET.has(value)
@@ -355,14 +345,7 @@ export const updateAllSettingsInLsAndUrl = (keys: Partial<Record<SettingKey, boo
 	notifyKeyChange(DEFILLAMA)
 }
 
-type TSETTINGTYPE =
-	| 'tvl'
-	| 'tvl_chains'
-	| 'stablecoins'
-	| 'nfts'
-	| 'bridges'
-	| 'dimension_chart_interval'
-	| 'compare_chains'
+type TSETTINGTYPE = 'tvl' | 'tvl_chains' | 'stablecoins' | 'bridges' | 'dimension_chart_interval' | 'compare_chains'
 
 function getSettingKeys<T extends TSETTINGTYPE>(type: T): Array<KeysFor<T>> {
 	switch (type) {
@@ -370,8 +353,6 @@ function getSettingKeys<T extends TSETTINGTYPE>(type: T): Array<KeysFor<T>> {
 			return TVL_SETTINGS_KEYS as Array<KeysFor<T>>
 		case 'tvl_chains':
 			return CHAINS_CATEGORY_GROUP_KEYS as Array<KeysFor<T>>
-		case 'nfts':
-			return NFT_SETTINGS_KEYS as Array<KeysFor<T>>
 		case 'bridges':
 			return BRIDGES_SETTINGS_KEYS as Array<KeysFor<T>>
 		default:

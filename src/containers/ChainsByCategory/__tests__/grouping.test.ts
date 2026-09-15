@@ -37,9 +37,6 @@ describe('chains by category grouping', () => {
 		activeUsers24h: 0,
 		activeUsers7d: 0,
 		activeUsers30d: 0,
-		nftVolume24h: 0,
-		nftVolume7d: 0,
-		nftVolume30d: 0,
 		chainAssets: {
 			total: { total: 0 },
 			canonical: { total: 0 },
@@ -125,8 +122,7 @@ describe('chains by category grouping', () => {
 		'dexVolume24h',
 		'fees24h',
 		'revenue24h',
-		'appRevenue24h',
-		'nftVolume24h'
+		'appRevenue24h'
 	] as const)('sums known grouped %s values when a child is unavailable', (field) => {
 		const parent = row('Parent')
 		parent[field] = 12

@@ -10,7 +10,6 @@ export enum ADAPTER_TYPES {
 	BRIDGE_AGGREGATORS = 'bridge-aggregators',
 	OPEN_INTEREST = 'open-interest',
 	NORMALIZED_VOLUME = 'normalized-volume',
-	NFT_VOLUME = 'nft-volume',
 	ACTIVE_USERS = 'active-users',
 	NEW_USERS = 'new-users',
 	LIQUIDATIONS = 'liquidations'

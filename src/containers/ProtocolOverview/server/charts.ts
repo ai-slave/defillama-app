@@ -5,7 +5,6 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
-import { fetchNftMarketplaceVolumes } from '~/containers/Nft/api'
 import { fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import type {
@@ -372,25 +371,6 @@ export const protocolCharts = defineApiRoute({
 				}
 
 				const data = await fetchOracleProtocolChart({ protocol: canonicalOracle })
-
-				return ok(data)
-			}
-
-			if (kind === 'nft-volume') {
-				// NFT volume matches marketplace exchange names from the NFT API, not
-				// protocol route metadata.
-				const protocol = queryString(req.query, 'protocol')
-				if (!protocol) {
-					return badRequest('protocol parameter is required')
-				}
-
-				const response = await fetchNftMarketplaceVolumes()
-				const data: Array<[number, number | null]> = []
-				const protocolSlug = slug(protocol)
-				for (const item of response) {
-					if (slug(item.exchangeName) !== protocolSlug) continue
-					data.push([new Date(item.day).getTime(), item.sumUsd])
-				}
 
 				return ok(data)
 			}

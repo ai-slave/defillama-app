@@ -466,10 +466,7 @@ export const useGroupAndFormatChains = ({
 				appRevenue7d,
 				appRevenue30d,
 				chainAssets,
-				protocols,
-				nftVolume24h,
-				nftVolume7d,
-				nftVolume30d
+				protocols
 			} = totals
 
 			const change_1d = getPercentChange(tvl, tvlPrevDay)
@@ -504,9 +501,6 @@ export const useGroupAndFormatChains = ({
 				appRevenue24h,
 				appRevenue7d,
 				appRevenue30d,
-				nftVolume24h,
-				nftVolume7d,
-				nftVolume30d,
 				chainAssets,
 				stablesMcap,
 				subRows

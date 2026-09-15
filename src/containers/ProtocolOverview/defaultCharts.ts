@@ -31,7 +31,6 @@ interface IBuildAvailableChartsParams {
 	hasUsdInflows: boolean
 	hasTreasury: boolean
 	hasMedianApy: boolean
-	hasNfts: boolean
 	hasActiveAddresses: boolean
 	hasNewAddresses: boolean
 	hasTransactions: boolean
@@ -70,7 +69,6 @@ export function buildAvailableCharts(params: IBuildAvailableChartsParams): Array
 	if (params.hasUsdInflows) charts.push('USD Inflows')
 	if (params.hasTreasury) charts.push('Treasury')
 	if (params.hasMedianApy) charts.push('Median APY')
-	if (params.hasNfts) charts.push('NFT Volume')
 	if (params.hasActiveAddresses) charts.push('Active Addresses')
 	if (params.hasNewAddresses) charts.push('New Addresses')
 	if (params.hasTransactions) charts.push('Transactions')

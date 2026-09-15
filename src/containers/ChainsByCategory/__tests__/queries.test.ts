@@ -383,9 +383,16 @@ describe('chains by category source availability', () => {
 				appRevenue24h: 0,
 				dexVolume24h: 0,
 				activeUsers24h: 0,
-				nftVolume24h: 0,
 				stablesMcap: 0
 			})
+		}
+		expect(fetchAdapterChainProtocolTotalsMock).not.toHaveBeenCalledWith(
+			expect.objectContaining({ adapterType: 'nft-volume' })
+		)
+		for (const chain of result.chains) {
+			expect(chain).not.toHaveProperty('nftVolume24h')
+			expect(chain).not.toHaveProperty('nftVolume7d')
+			expect(chain).not.toHaveProperty('nftVolume30d')
 		}
 	})
 

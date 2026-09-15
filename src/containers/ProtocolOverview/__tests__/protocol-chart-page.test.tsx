@@ -117,7 +117,6 @@ const metrics: IProtocolPageMetrics = {
 	fees: false,
 	revenue: false,
 	forks: false,
-	nfts: false,
 	dev: false,
 	inflows: false,
 	activeUsers: false,
@@ -200,6 +199,33 @@ describe('chart/protocol/[protocol]', () => {
 		})
 		mocks.getProtocolOverviewPageData.mockReset()
 		mocks.acquireOptionalYieldsSnapshot.mockReset()
+	})
+
+	test('ignores retired NFT selections on main and embedded charts while keeping TVL and fees', async () => {
+		const props: IProtocolOverviewPageData = {
+			...createProps(),
+			availableCharts: ['TVL', 'Fees'],
+			defaultToggledCharts: ['Fees']
+		}
+		mocks.routerState.asPath = '/protocol/test-protocol?nftVolume=true&tvl=true'
+		Object.defineProperty(globalThis, 'IS_REACT_ACT_ENVIRONMENT', { configurable: true, value: true })
+		const container = document.createElement('div')
+		document.body.appendChild(container)
+		const root = createRoot(container)
+		await act(async () => root.render(<ProtocolChartPanel {...props} />))
+		const mainRequest = getLastChartRequest()
+		expect(container.textContent).not.toContain('NFT Volume')
+		await act(async () => root.unmount())
+		container.remove()
+		Reflect.deleteProperty(globalThis, 'IS_REACT_ACT_ENVIRONMENT')
+
+		mocks.routerState.query = { nftVolume: 'true', tvl: 'true' }
+		renderToStaticMarkup(<ProtocolChartPage {...props} />)
+		const embedRequest = getLastChartRequest()
+		for (const request of [mainRequest, embedRequest]) {
+			expect(request.toggledMetrics).not.toHaveProperty('nftVolume')
+			expect(request.toggledMetrics).toMatchObject({ tvl: 'true', fees: 'true' })
+		}
 	})
 
 	test('keeps the protocol chart page when the optional Yields snapshot is unavailable', async () => {

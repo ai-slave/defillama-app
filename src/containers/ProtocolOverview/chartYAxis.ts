@@ -24,8 +24,7 @@ type AxisConfig = {
 const CUSTOM_OFFSETS: Record<string, number> = {
 	Contributors: 60,
 	'Contributors Commits': 80,
-	'Devs Commits': 70,
-	'NFT Volume': 65
+	'Devs Commits': 70
 }
 
 const DASHED_AXIS_LINE_STYLE = {
@@ -117,9 +116,6 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 	Tweets: {
 		formatter: (value) => `${value} tweets`,
 		resolveColor: ({ chartColors }) => chartColors['Tweets']
-	},
-	'NFT Volume': {
-		resolveColor: ({ chartColors }) => chartColors['NFT Volume']
 	}
 }
 

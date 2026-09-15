@@ -65,7 +65,6 @@ export interface IProtocolMetadata {
 	hacks?: boolean
 	expenses?: boolean
 	treasury?: boolean
-	nfts?: boolean
 	emissions?: boolean
 	incentives?: boolean
 	bridge?: boolean

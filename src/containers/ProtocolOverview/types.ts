@@ -31,7 +31,6 @@ export interface IProtocolPageMetrics {
 	fees: boolean
 	revenue: boolean
 	forks: boolean
-	nfts: boolean
 	dev: boolean
 	inflows: boolean
 	activeUsers: boolean
@@ -278,7 +277,6 @@ export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
 	transactions: 'false',
 	gasUsed: 'false',
 	tweets: 'false',
-	nftVolume: 'false',
 	bridgeVolume: 'false',
 	events: 'false',
 	denomination: null

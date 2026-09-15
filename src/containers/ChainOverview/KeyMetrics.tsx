@@ -43,7 +43,6 @@ interface KeyMetricsProps {
 	users: IChainOverviewData['users']
 	chainRaises: IChainOverviewData['chainRaises']
 	chainAssets: IChainOverviewData['chainAssets']
-	nfts: IChainOverviewData['nfts']
 	chainTokenInfo: IChainOverviewData['chainTokenInfo']
 	protocols: IChainOverviewData['protocols']
 	totalValueUSD: number | null
@@ -146,17 +145,6 @@ export function KeyMetrics(props: KeyMetricsProps) {
 				<ActiveAddresses users={props.users} />
 				<RaisesSection chainRaises={props.chainRaises} />
 				<BridgedTvlSection chainAssets={props.chainAssets} tvlSettingsGovtokens={props.tvlSettingsGovtokens} />
-				{props.nfts ? (
-					<ChainMetricRow
-						label="NFT Volume (24h)"
-						tooltip="Volume of Non Fungible Tokens traded in the last 24 hours"
-						value={formatUsd(props.nfts.total24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
 				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
 			</div>
 			<KeyMetricsFooter>

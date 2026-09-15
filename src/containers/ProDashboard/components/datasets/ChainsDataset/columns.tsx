@@ -205,16 +205,5 @@ export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, C
 				{formatUsd(row.original.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
 			</span>
 		)
-	},
-	{
-		header: 'NFT Volume',
-		id: 'nftVolume',
-		accessorFn: (row) => row.nftVolume ?? undefined,
-		size: 120,
-		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">
-				{formatUsd(row.original.nftVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
-			</span>
-		)
 	}
 ]

@@ -56,8 +56,7 @@ const CHAIN_COLUMN_PRESETS = {
 		'totalAppRevenue24h',
 		'totalAppRevenue30d',
 		'totalRevenue30d',
-		'users',
-		'nftVolume'
+		'users'
 	],
 	advanced: [
 		'name',
@@ -77,8 +76,7 @@ const CHAIN_COLUMN_PRESETS = {
 		'totalAppRevenue30d',
 		'totalRevenue30d',
 		'mcaptvl',
-		'mcap',
-		'nftVolume'
+		'mcap'
 	],
 	shares: [
 		'name',
@@ -273,8 +271,7 @@ export function ChainsDataset({
 				totalAppRevenue30d: 140,
 				totalRevenue30d: 140,
 				mcaptvl: 120,
-				mcap: 140,
-				nftVolume: 120
+				mcap: 140
 			}
 
 			instance.setColumnSizing(defaultSizing)

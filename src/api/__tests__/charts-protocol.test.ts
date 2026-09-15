@@ -12,7 +12,6 @@ const {
 	fetchAdapterProtocolChartDataByBreakdownTypeMock,
 	getCachedCgChartDataMock,
 	fetchBridgeVolumeBySlugMock,
-	fetchNftMarketplaceVolumesMock,
 	fetchOracleProtocolChartMock,
 	getProtocolEmissionsChartsMock,
 	fetchJsonMock
@@ -26,7 +25,6 @@ const {
 	fetchAdapterProtocolChartDataByBreakdownTypeMock: vi.fn(),
 	getCachedCgChartDataMock: vi.fn(),
 	fetchBridgeVolumeBySlugMock: vi.fn(),
-	fetchNftMarketplaceVolumesMock: vi.fn(),
 	fetchOracleProtocolChartMock: vi.fn(),
 	getProtocolEmissionsChartsMock: vi.fn(),
 	fetchJsonMock: vi.fn()
@@ -47,10 +45,6 @@ vi.mock('~/containers/Bridges/api', () => ({
 
 vi.mock('~/containers/Bridges/server/routes', () => ({
 	resolveBridgeProtocolParamFromMetadata: resolveBridgeProtocolParamMock
-}))
-
-vi.mock('~/containers/Nft/api', () => ({
-	fetchNftMarketplaceVolumes: fetchNftMarketplaceVolumesMock
 }))
 
 vi.mock('~/containers/Oracles/api', () => ({
@@ -108,7 +102,6 @@ beforeEach(() => {
 	fetchJsonMock.mockResolvedValue({ data: [] })
 	fetchBridgeVolumeBySlugMock.mockResolvedValue({ bridge: {}, dailyVolumes: [] })
 	fetchOracleProtocolChartMock.mockResolvedValue([])
-	fetchNftMarketplaceVolumesMock.mockResolvedValue([])
 })
 
 describe('/api/public/protocols/charts', () => {
@@ -284,29 +277,18 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([])
 	})
 
-	test('preserves nullable NFT marketplace volume without changing legitimate zeroes', async () => {
-		fetchNftMarketplaceVolumesMock.mockResolvedValue([
-			{ day: '2026-07-16', exchangeName: 'OpenSea', sumUsd: null },
-			{ day: '2026-07-17', exchangeName: 'OpenSea', sumUsd: 0 },
-			{ day: '2026-07-17', exchangeName: 'Blur', sumUsd: 10 }
-		])
-		const req = createRequest({ kind: 'nft-volume', protocol: 'OpenSea' })
+	test('rejects the retired NFT volume chart kind', async () => {
 		const res = createMockNextApiResponse()
-
-		await handler(req, res)
-
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith([
-			[Date.parse('2026-07-16'), null],
-			[Date.parse('2026-07-17'), 0]
-		])
+		await handler(createRequest({ kind: 'nft-volume', protocol: 'OpenSea' }), res)
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported kind: nft-volume' })
+		expect(fetchJsonMock).not.toHaveBeenCalled()
 	})
 
 	test.each([
 		['median-apy', 'aave-v3'],
 		['bridge-volume', 'Stargate'],
-		['oracle-chart', 'Chainlink'],
-		['nft-volume', 'OpenSea']
+		['oracle-chart', 'Chainlink']
 	])('keeps successful empty %s producer results as empty charts', async (kind, protocol) => {
 		const req = createRequest({ kind, protocol })
 		const res = createMockNextApiResponse()
@@ -320,8 +302,7 @@ describe('/api/public/protocols/charts', () => {
 	test.each([
 		['median-apy', 'aave-v3', () => fetchJsonMock.mockRejectedValueOnce(new Error('median failed'))],
 		['bridge-volume', 'Stargate', () => fetchBridgeVolumeBySlugMock.mockRejectedValueOnce(new Error('bridge failed'))],
-		['oracle-chart', 'Chainlink', () => fetchOracleProtocolChartMock.mockRejectedValueOnce(new Error('oracle failed'))],
-		['nft-volume', 'OpenSea', () => fetchNftMarketplaceVolumesMock.mockRejectedValueOnce(new Error('nft failed'))]
+		['oracle-chart', 'Chainlink', () => fetchOracleProtocolChartMock.mockRejectedValueOnce(new Error('oracle failed'))]
 	])('returns an error instead of a successful null %s chart when its producer fails', async (kind, protocol, fail) => {
 		fail()
 		const req = createRequest({ kind, protocol })

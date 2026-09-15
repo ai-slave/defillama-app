@@ -19,9 +19,6 @@ export interface IChain extends Omit<ChainsByCategoryChain, 'protocols'> {
 	activeUsers24h: number | null
 	activeUsers7d: number | null
 	activeUsers30d: number | null
-	nftVolume24h: number | null
-	nftVolume7d: number | null
-	nftVolume30d: number | null
 	chainAssets: ChainAssetTotals | null
 	bridgedTvl?: number | null
 	childGroups: Record<string, Array<string>> | null
@@ -71,9 +68,6 @@ export type IFormattedDataWithExtraTvlBase = {
 	activeUsers24h: IChain['activeUsers24h']
 	activeUsers7d: IChain['activeUsers7d']
 	activeUsers30d: IChain['activeUsers30d']
-	nftVolume24h: IChain['nftVolume24h']
-	nftVolume7d: IChain['nftVolume7d']
-	nftVolume30d: IChain['nftVolume30d']
 }
 
 export interface IFormattedDataWithExtraTvl extends IFormattedDataWithExtraTvlBase {
@@ -105,7 +99,6 @@ export interface ChainsDatasetRow {
 	totalAppRevenue30d: number | null
 	bridgedTvl: number | null
 	mcaptvl: number | null
-	nftVolume: number | null
 	mcap: number | null
 	symbol: string | null
 	extraTvl: IChain['extraTvl'] | null

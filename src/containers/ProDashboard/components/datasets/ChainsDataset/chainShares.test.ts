@@ -48,7 +48,6 @@ function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 		totalAppRevenue30d: null,
 		bridgedTvl: null,
 		mcaptvl: null,
-		nftVolume: null,
 		mcap: null,
 		symbol: null,
 		extraTvl: null

@@ -1,20 +1,13 @@
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 
-export type ChainShareMetricKey =
-	| 'tvl'
-	| 'stablesMcap'
-	| 'totalVolume24h'
-	| 'totalFees24h'
-	| 'totalAppRevenue24h'
-	| 'nftVolume'
+export type ChainShareMetricKey = 'tvl' | 'stablesMcap' | 'totalVolume24h' | 'totalFees24h' | 'totalAppRevenue24h'
 
 export const CHAIN_SHARE_METRICS: ReadonlyArray<{ key: ChainShareMetricKey; name: string }> = [
 	{ key: 'tvl', name: 'DeFi TVL % Share' },
 	{ key: 'stablesMcap', name: 'Stables % Share' },
 	{ key: 'totalVolume24h', name: '24h Volume % Share' },
 	{ key: 'totalFees24h', name: '24h Fees % Share' },
-	{ key: 'totalAppRevenue24h', name: '24h Revenue % Share' },
-	{ key: 'nftVolume', name: 'NFT Volume % Share' }
+	{ key: 'totalAppRevenue24h', name: '24h Revenue % Share' }
 ]
 
 export function buildChainShareTotals(rows: Array<ChainsDatasetRow> | undefined): Record<ChainShareMetricKey, number> {
@@ -23,8 +16,7 @@ export function buildChainShareTotals(rows: Array<ChainsDatasetRow> | undefined)
 		stablesMcap: 0,
 		totalVolume24h: 0,
 		totalFees24h: 0,
-		totalAppRevenue24h: 0,
-		nftVolume: 0
+		totalAppRevenue24h: 0
 	}
 	if (!rows) return totals
 

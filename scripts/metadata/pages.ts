@@ -100,6 +100,7 @@ function isExcludedTrendingRoute(route: string): boolean {
 		return true
 	}
 	// Retired routes can still appear in historical traffic data.
+	if (/^\/nfts(?:[/?#]|$)/.test(route)) return true
 	if (/^\/(?:protocol\/)?governance(?:[/?#]|$)/.test(route)) return true
 	return ['/chain/', '/metrics', '/tools', '/subscription'].some((page) => route.includes(page))
 }

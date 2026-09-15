@@ -41,10 +41,7 @@ const GROUPED_NUMBER_FIELDS = [
 	'revenue30d',
 	'appRevenue24h',
 	'appRevenue7d',
-	'appRevenue30d',
-	'nftVolume24h',
-	'nftVolume7d',
-	'nftVolume30d'
+	'appRevenue30d'
 ] as const satisfies ReadonlyArray<keyof IFormattedDataWithExtraTvlBase>
 
 type GroupedNumberField = (typeof GROUPED_NUMBER_FIELDS)[number]
@@ -115,9 +112,6 @@ export function aggregateGroupedChainRows(rows: ReadonlyArray<IFormattedDataWith
 		appRevenue24h: sumGroupedField(rows, 'appRevenue24h'),
 		appRevenue7d: sumGroupedField(rows, 'appRevenue7d'),
 		appRevenue30d: sumGroupedField(rows, 'appRevenue30d'),
-		nftVolume24h: sumGroupedField(rows, 'nftVolume24h'),
-		nftVolume7d: sumGroupedField(rows, 'nftVolume7d'),
-		nftVolume30d: sumGroupedField(rows, 'nftVolume30d'),
 		chainAssets
 	}
 }

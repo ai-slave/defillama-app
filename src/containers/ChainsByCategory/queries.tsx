@@ -217,42 +217,28 @@ export const getChainsByCategory = async ({
 	sampledChart?: boolean
 	includeChartData?: boolean
 }): Promise<IChainsByCategoryData> => {
-	const [
-		{ categories, chainTvls, ...rest },
-		dexs,
-		fees,
-		revenue,
-		stablecoins,
-		activeUsers,
-		chainsAssets,
-		chainNftsVolume,
-		appRevenue
-	] = await Promise.all([
-		fetchChainsByCategory(category),
-		getDimensionAdapterOverviewOfAllChains({ adapterType: 'dexs', dataType: 'dailyVolume', chainMetadata }),
-		fetchOptionalAdapterChainProtocolTotals({
-			adapterType: 'fees',
-			chain: 'All'
-		}),
-		fetchOptionalAdapterChainProtocolTotals({
-			adapterType: 'fees',
-			chain: 'All',
-			dataType: 'dailyRevenue'
-		}),
-		fetchStablecoinAssetsApi(),
-		fetchOptionalAdapterChainProtocolTotals({
-			adapterType: 'active-users',
-			chain: 'All',
-			dataType: 'dailyActiveUsers'
-		}),
-		fetchOptionalChainAssetTotals(),
-		fetchOptionalAdapterChainProtocolTotals({
-			adapterType: 'nft-volume',
-			chain: 'All',
-			dataType: 'dailyVolume'
-		}),
-		getDimensionAdapterOverviewOfAllChains({ adapterType: 'fees', dataType: 'dailyAppRevenue', chainMetadata })
-	])
+	const [{ categories, chainTvls, ...rest }, dexs, fees, revenue, stablecoins, activeUsers, chainsAssets, appRevenue] =
+		await Promise.all([
+			fetchChainsByCategory(category),
+			getDimensionAdapterOverviewOfAllChains({ adapterType: 'dexs', dataType: 'dailyVolume', chainMetadata }),
+			fetchOptionalAdapterChainProtocolTotals({
+				adapterType: 'fees',
+				chain: 'All'
+			}),
+			fetchOptionalAdapterChainProtocolTotals({
+				adapterType: 'fees',
+				chain: 'All',
+				dataType: 'dailyRevenue'
+			}),
+			fetchStablecoinAssetsApi(),
+			fetchOptionalAdapterChainProtocolTotals({
+				adapterType: 'active-users',
+				chain: 'All',
+				dataType: 'dailyActiveUsers'
+			}),
+			fetchOptionalChainAssetTotals(),
+			getDimensionAdapterOverviewOfAllChains({ adapterType: 'fees', dataType: 'dailyAppRevenue', chainMetadata })
+		])
 
 	const categoryLinks = [
 		{ label: 'All', to: '/chains' },
@@ -303,11 +289,6 @@ export const getChainsByCategory = async ({
 	const revenueByDisplayName = new Map<string, AdapterProtocol>()
 	for (const protocol of revenue?.protocols ?? []) {
 		if (!revenueByDisplayName.has(protocol.displayName)) revenueByDisplayName.set(protocol.displayName, protocol)
-	}
-
-	const nftVolumeByDisplayName = new Map<string, AdapterProtocol>()
-	for (const protocol of chainNftsVolume?.protocols ?? []) {
-		if (!nftVolumeByDisplayName.has(protocol.displayName)) nftVolumeByDisplayName.set(protocol.displayName, protocol)
 	}
 
 	const activeUsersByDisplayName = new Map<string, AdapterProtocol>()
@@ -391,10 +372,6 @@ export const getChainsByCategory = async ({
 					getChainSnapshotOverlapValues(extraTvl, 'tvlPrevMonth')
 				)
 
-				const chainNftVolume = nftVolumeByDisplayName.get(chain.name)
-				const nftVolume24h = chainNftsVolume === null ? null : (chainNftVolume?.total24h ?? 0)
-				const nftVolume7d = chainNftsVolume === null ? null : (chainNftVolume?.total7d ?? 0)
-				const nftVolume30d = chainNftsVolume === null ? null : (chainNftVolume?.total30d ?? 0)
 				const chainAssets = chainsAssets[chain.name]
 				const childGroups = rest.chainsGroupbyParent[chain.name] ?? null
 
@@ -425,10 +402,7 @@ export const getChainsByCategory = async ({
 					tvl,
 					tvlPrevDay,
 					tvlPrevWeek,
-					tvlPrevMonth,
-					nftVolume24h,
-					nftVolume7d,
-					nftVolume30d
+					tvlPrevMonth
 				}
 			})
 			.sort((a, b) => {

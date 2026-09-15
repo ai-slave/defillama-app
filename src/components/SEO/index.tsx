@@ -20,7 +20,6 @@ interface ILinkPreviewCardProps {
 	tvl?: string
 	volumeChange?: string
 	logo?: string
-	nftPage?: boolean
 	liqsPage?: boolean
 	stablePage?: boolean
 	unlockPage?: boolean
@@ -43,7 +42,6 @@ export function LinkPreviewCard({
 	tvl,
 	volumeChange,
 	logo,
-	nftPage = false,
 	liqsPage = false,
 	stablePage = false,
 	unlockPage = false,
@@ -73,8 +71,6 @@ export function LinkPreviewCard({
 		let resolvedValueHeader: string
 		if (valueHeader) {
 			resolvedValueHeader = valueHeader
-		} else if (nftPage) {
-			resolvedValueHeader = 'Total Volume'
 		} else if (liqsPage) {
 			resolvedValueHeader = 'Total Liquidatable Amount'
 		} else if (stablePage) {
@@ -106,9 +102,7 @@ export function LinkPreviewCard({
 		cardSrc.searchParams.append('footerURL', encodeURIComponent(windowURL))
 
 		// First url in images should always be the logo of defillama
-		let images = nftPage
-			? [`https://defillama.com/defillama-press-kit/nft/SVG/defillama-nft.svg`]
-			: [`https://defillama.com/defillama-press-kit/defi/SVG/defillama.svg`]
+		let images = [`https://defillama.com/defillama-press-kit/defi/SVG/defillama.svg`]
 
 		// chain and token props are used to get logo, if the logo url isn't available in the data of that page
 		if (logo) {

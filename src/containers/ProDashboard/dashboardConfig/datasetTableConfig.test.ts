@@ -3,6 +3,17 @@ import { createDatasetTableConfig } from './datasetTableConfig'
 import { migrateDashboardItemConfig } from './migrate'
 
 describe('dataset table runtime config', () => {
+	test('drops retired NFT volume columns from saved chain tables and keeps other selections', () => {
+		const config = createDatasetTableConfig({
+			id: 'chains',
+			datasetType: 'chains',
+			columnOrder: ['name', 'nftVolume', 'tvl', 'nftVolume_share', 'totalVolume24h'],
+			columnVisibility: { name: true, nftVolume: true, tvl: false, nftVolume_share: true, totalVolume24h: true }
+		})
+		expect(config.columnOrder).toEqual(['name', 'tvl', 'totalVolume24h'])
+		expect(config.columnVisibility).toEqual({ name: true, tvl: false, totalVolume24h: true })
+	})
+
 	test('canonicalizes duplicate chains and the All selection before source planning', () => {
 		expect(
 			createDatasetTableConfig({

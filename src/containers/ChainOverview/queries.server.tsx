@@ -282,7 +282,6 @@ export async function getChainOverviewData({
 			newUsers,
 			raisesData,
 			cgData,
-			nftVolumesData,
 			chainAssets,
 			appRevenue,
 			appFees,
@@ -362,14 +361,6 @@ export async function getChainOverviewData({
 				'coingecko',
 				() =>
 					currentChainMetadata.gecko_id ? fetchCoinGeckoCoinById(currentChainMetadata.gecko_id) : Promise.resolve(null),
-				{ fallback: null }
-			),
-			timePhase<Record<string, number> | null>(
-				'nft_volumes',
-				() =>
-					chain && chain !== 'All'
-						? fetchJson<Record<string, number>>(`https://defillama-datasets.llama.fi/temp/chainNfts`)
-						: Promise.resolve(null),
 				{ fallback: null }
 			),
 			timePhase(
@@ -623,7 +614,6 @@ export async function getChainOverviewData({
 		const descriptionMetrics = rwaActiveMcap != null ? [...charts, 'RWA Active Mcap'] : charts
 		const isDataAvailable = charts.length > 0 || allProtocols.length > 0 || rwaActiveMcap != null
 		const chainGeckoId = currentChainMetadata.gecko_id
-		const nftVolume = chain !== 'All' ? nftVolumesData?.[currentChainMetadata.name.toLowerCase()] : undefined
 
 		const result: IChainOverviewData = {
 			chain,
@@ -682,7 +672,6 @@ export async function getChainOverviewData({
 			chainRaises: chainRaises ?? null,
 			chainAssets: formatChainAssets(chainAssets),
 			devMetrics: null,
-			nfts: nftVolume !== undefined ? { total24h: nftVolume } : null,
 			etfs: etfData,
 			allChains: [{ label: 'All', to: '/' }].concat(chains.map((c) => ({ label: c, to: `/chain/${slug(c)}` }))),
 			unlocks: homepageUnlocks,

@@ -653,46 +653,6 @@
       "tab": "Protocols"
     },
     {
-      "name": "NFTs: Marketplaces",
-      "route": "/nfts/marketplaces",
-      "category": "NFTs",
-      "description": "Overview of all NFT marketplaces",
-      "totalTrackedKey": "nfts.marketplaces",
-      "oldCategory": "NFTs",
-      "oldName": "Marketplaces"
-    },
-    {
-      "name": "NFT Volume by Chain",
-      "route": "/nfts/chains",
-      "category": "NFTs",
-      "description": "Volume of all NFTs that are tracked by DefiLlama traded on the chain",
-      "totalTrackedKey": "nfts.chains",
-      "oldCategory": "NFTs",
-      "oldName": "Volume (Chains)"
-    },
-    {
-      "name": "NFTs: Collections",
-      "route": "/nfts",
-      "category": "NFTs",
-      "description": "Overview of all NFT collections",
-      "totalTrackedKey": "nfts.collections",
-      "oldCategory": "NFTs",
-      "oldName": "Collections",
-      "searchKeywords": [
-        "nft",
-        "nfts",
-        "nft collections"
-      ]
-    },
-    {
-      "name": "NFTs: Collection Earnings",
-      "route": "/nfts/earnings",
-      "category": "NFTs",
-      "description": "Earnings of all NFT collections that are tracked by DefiLlama",
-      "oldCategory": "NFTs",
-      "oldName": "Earnings"
-    },
-    {
       "name": "Bridges by Volume",
       "route": "/bridges",
       "category": "Bridge",

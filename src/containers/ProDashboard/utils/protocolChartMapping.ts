@@ -37,7 +37,6 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolCha
 	Transactions: 'txs',
 	'Gas Used': 'gasUsed',
 	Tweets: null,
-	'NFT Volume': null,
 	'Bridge Volume': null,
 	TVS: null
 }

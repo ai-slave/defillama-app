@@ -221,7 +221,6 @@ export const useFetchProtocolChartData = ({
 	const isIncentivesToggled = toggledMetrics.incentives === 'true'
 	const isStakingTvlToggled = toggledMetrics.staking_tvl === 'true'
 	const isBorrowedTvlToggled = toggledMetrics.borrowed_tvl === 'true'
-	const isNftVolumeToggled = toggledMetrics.nftVolume === 'true'
 	const isActiveAddressesToggled = toggledMetrics.activeAddresses === 'true'
 	const isNewAddressesToggled = toggledMetrics.newAddresses === 'true'
 	const isTransactionsToggled = toggledMetrics.transactions === 'true'
@@ -567,17 +566,6 @@ export const useFetchProtocolChartData = ({
 		dataType: 'dailyGasUsedUsd'
 	})
 
-	const isNftVolumeEnabled = !!(toggledMetrics.nftVolume === 'true' && metrics.nfts && canFetchClientCharts)
-	const { data: nftVolumeData = null, isLoading: fetchingNftVolume } = useQuery<Array<[number, number | null]>>({
-		queryKey: ['protocol-overview', protocolSlug, 'nft-volume'],
-		queryFn: () =>
-			fetchJson<Array<[number, number | null]>>(buildProtocolChartApiUrl({ kind: 'nft-volume', protocol: name })),
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 0,
-		enabled: isNftVolumeEnabled
-	})
-
 	const showNonUsdDenomination = !!(
 		selectedDenomination &&
 		selectedDenomination.symbol !== 'USD' &&
@@ -609,7 +597,6 @@ export const useFetchProtocolChartData = ({
 			{ isLoading: isTreasuryToggled && fetchingTreasury, label: 'Treasury' },
 			{ isLoading: isUsdInflowsToggled && fetchingUsdInflows, label: 'USD Inflows' },
 			{ isLoading: toggledMetrics.medianApy === 'true' && fetchingMedianAPY, label: 'Median APY' },
-			{ isLoading: isNftVolumeToggled && fetchingNftVolume, label: 'NFT Volume' },
 			{ isLoading: isActiveAddressesToggled && fetchingActiveAddresses, label: 'Active Addresses' },
 			{ isLoading: isNewAddressesToggled && fetchingNewAddresses, label: 'New Addresses' },
 			{ isLoading: isTransactionsToggled && fetchingTransactions, label: 'Transactions' },
@@ -741,13 +728,6 @@ export const useFetchProtocolChartData = ({
 			})
 		}
 
-		if (nftVolumeData && isNftVolumeToggled)
-			charts['NFT Volume'] = formatNullableBarChart({
-				data: nftVolumeData,
-				groupBy,
-				dateInMs: true,
-				denominationPriceHistory
-			})
 		if (activeAddressesData && isActiveAddressesToggled)
 			charts['Active Addresses'] = formatBarChart({
 				data: activeAddressesData,
@@ -841,8 +821,6 @@ export const useFetchProtocolChartData = ({
 		transactionsData,
 		fetchingGasUsed,
 		gasUsedData,
-		fetchingNftVolume,
-		nftVolumeData,
 		fetchingBridgeVolume,
 		bridgeVolumeData,
 		isTvlToggled,
@@ -857,7 +835,6 @@ export const useFetchProtocolChartData = ({
 		isIncentivesToggled,
 		isStakingTvlToggled,
 		isBorrowedTvlToggled,
-		isNftVolumeToggled,
 		isActiveAddressesToggled,
 		isNewAddressesToggled,
 		isTransactionsToggled,
