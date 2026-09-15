@@ -1,5 +1,4 @@
 import type { DepthCurveRow } from '~/containers/Exchanges/depthCurve'
-import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeResearch } from '~/containers/Exchanges/ExchangeResearch'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { fetchExchangeResearchReport } from '~/containers/Exchanges/master.api'
@@ -67,15 +66,13 @@ export default function ExchangeChartsPage({
 	btcExecutionRows: Array<BtcExecutionRowModel>
 }) {
 	return (
-		<ExchangeAccessGate>
-			<Layout {...EXCHANGE_RESEARCH_PAGE_METADATA}>
-				<ExchangesNav activePage="charts" />
-				<ExchangeResearch
-					loadReport={fetchExchangeResearchReport}
-					depthRows={depthRows}
-					btcExecutionRows={btcExecutionRows}
-				/>
-			</Layout>
-		</ExchangeAccessGate>
+		<Layout {...EXCHANGE_RESEARCH_PAGE_METADATA}>
+			<ExchangesNav activePage="charts" />
+			<ExchangeResearch
+				loadReport={fetchExchangeResearchReport}
+				depthRows={depthRows}
+				btcExecutionRows={btcExecutionRows}
+			/>
+		</Layout>
 	)
 }

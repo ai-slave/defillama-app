@@ -2,7 +2,6 @@ import type { GetStaticPropsContext } from 'next'
 import { fetchCoinsChart } from '~/api'
 import { fetchCoinPrices } from '~/api/pricing'
 import type { CoinsChartResponse, PriceObject } from '~/api/types'
-import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeProfile } from '~/containers/Exchanges/ExchangeProfile'
 import { fetchExchangeVenueSeries } from '~/containers/Exchanges/master.api'
 import type { ExchangeProfileModel } from '~/containers/Exchanges/models'
@@ -135,27 +134,20 @@ export const getStaticPaths = () => ({ paths: [], fallback: 'blocking' as const 
 export default function ExchangePage({ profile, asOfDate }: ExchangePageProps) {
 	const metadataOnly = profile.profileMode === 'metadata-only'
 	return (
-		<ExchangeAccessGate>
-			<Layout
-				title={
-					metadataOnly
-						? `${profile.name} Exchange Profile - DefiLlama`
-						: `${profile.name} Exchange Markets and Liquidity - DefiLlama`
-				}
-				description={
-					metadataOnly
-						? `Review ${profile.name} exchange identity, regulation, fees, funding options, promotions, and official links.`
-						: `Track ${profile.name} spot and perpetual volume, open interest, funding, order-book depth, fees, leverage, and market metadata.`
-				}
-				canonicalUrl={`/exchange/${encodeURIComponent(profile.slug)}`}
-			>
-				<ExchangeProfile
-					key={profile.slug}
-					profile={profile}
-					asOfDate={asOfDate}
-					loadSeries={fetchExchangeVenueSeries}
-				/>
-			</Layout>
-		</ExchangeAccessGate>
+		<Layout
+			title={
+				metadataOnly
+					? `${profile.name} Exchange Profile - DefiLlama`
+					: `${profile.name} Exchange Markets and Liquidity - DefiLlama`
+			}
+			description={
+				metadataOnly
+					? `Review ${profile.name} exchange identity, regulation, fees, funding options, promotions, and official links.`
+					: `Track ${profile.name} spot and perpetual volume, open interest, funding, order-book depth, fees, leverage, and market metadata.`
+			}
+			canonicalUrl={`/exchange/${encodeURIComponent(profile.slug)}`}
+		>
+			<ExchangeProfile key={profile.slug} profile={profile} asOfDate={asOfDate} loadSeries={fetchExchangeVenueSeries} />
+		</Layout>
 	)
 }

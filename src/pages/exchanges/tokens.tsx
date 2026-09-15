@@ -1,4 +1,3 @@
-import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { useExchangeCountry } from '~/containers/Exchanges/ExchangeCountrySelect'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { ExchangeTokenFinder } from '~/containers/Exchanges/ExchangeTokenFinder'
@@ -18,14 +17,6 @@ export const getStaticProps = withPerformanceLogging<ExchangeTokensPageProps>('e
 })
 
 export default function ExchangeTokensPage({ directory }: ExchangeTokensPageProps) {
-	return (
-		<ExchangeAccessGate>
-			<ExchangeTokensPageContent directory={directory} />
-		</ExchangeAccessGate>
-	)
-}
-
-function ExchangeTokensPageContent({ directory }: ExchangeTokensPageProps) {
 	const countryState = useExchangeCountry()
 	return (
 		<Layout

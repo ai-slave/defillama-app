@@ -158,23 +158,7 @@ describe('product column presets', () => {
 })
 
 describe('mica table columns', () => {
-	test('presents only the curated column set, in the legacy /mica order', () => {
-		const columns = MICA_COLUMNS
-		expect(columns.map((column) => column.id)).toEqual([
-			'name',
-			'venueActions',
-			'spotDepth2',
-			'spotDepth05',
-			'perpDepth2',
-			'perpDepth05',
-			'spotFee',
-			'perpFee',
-			'onRampCost',
-			'offRampCost',
-			'marketCount',
-			'kyc'
-		])
-
+	test('sorts ramp costs by their numeric totals', () => {
 		const venue = micaVenue({ rampCost: RAMP_COST })
 		expect(micaCell(venue, 'onRampCost').getValue()).toBe(3.9)
 		expect(micaCell(venue, 'offRampCost').getValue()).toBe(4.9)
@@ -193,13 +177,21 @@ describe('mica table columns', () => {
 		expect(promoted.indexOf('promotion')).toBeLessThan(promoted.indexOf('data-umami-event-placement="trade"'))
 	})
 
-	test('does not link exchange names to gated profile pages', () => {
+	test('keeps names without external destinations as plain text', () => {
 		const venue = micaVenue({ website: null, profileHref: '/exchange/venue' })
 		const html = renderMicaCell(venue, 'name')
 
 		expect(html).toContain('Venue')
 		expect(html).not.toContain('/exchange/venue')
 		expect(html).not.toContain('<a')
+	})
+
+	test('links to the exchange profile independently of the external destination', () => {
+		for (const website of [null, 'https://example.com']) {
+			const html = renderMicaCell(micaVenue({ website }), 'profile')
+			expect(html).toContain('href="/exchange/venue"')
+			expect(html).toContain('aria-label="View Venue exchange profile"')
+		}
 	})
 
 	test('keeps authored external exchange destinations', () => {

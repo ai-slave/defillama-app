@@ -54,7 +54,7 @@ describe('CEX routes', () => {
 		vi.clearAllMocks()
 	})
 
-	test('renders the legacy pages even when the venue has an exchange profile', async () => {
+	test('renders the legacy overview, assets, and stablecoin pages', async () => {
 		const overview = await getCexStaticProps({ params: { cex: 'crypto-com' } } as never)
 		expect(overview).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
 

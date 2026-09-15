@@ -1,4 +1,3 @@
-import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { useExchangeCountry } from '~/containers/Exchanges/ExchangeCountrySelect'
 import { ExchangeDirectory } from '~/containers/Exchanges/ExchangeDirectory'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
@@ -27,14 +26,6 @@ export const EXCHANGES_PAGE_METADATA = {
 }
 
 export default function ExchangesPage({ directory }: ExchangesPageProps) {
-	return (
-		<ExchangeAccessGate>
-			<ExchangesPageContent directory={directory} />
-		</ExchangeAccessGate>
-	)
-}
-
-function ExchangesPageContent({ directory }: ExchangesPageProps) {
 	const countryState = useExchangeCountry()
 	return (
 		<Layout {...EXCHANGES_PAGE_METADATA}>

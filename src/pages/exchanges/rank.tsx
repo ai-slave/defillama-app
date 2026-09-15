@@ -1,4 +1,3 @@
-import { ExchangeAccessGate } from '~/containers/Exchanges/ExchangeAccessGate'
 import { ExchangeRanking } from '~/containers/Exchanges/ExchangeRanking'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import type { ExchangeRankingModel } from '~/containers/Exchanges/models'
@@ -26,11 +25,9 @@ export const EXCHANGE_RANK_PAGE_METADATA = {
 
 export default function ExchangeRankPage({ ranking }: ExchangeRankPageProps) {
 	return (
-		<ExchangeAccessGate>
-			<Layout {...EXCHANGE_RANK_PAGE_METADATA}>
-				<ExchangesNav activePage="rank" />
-				<ExchangeRanking ranking={ranking} />
-			</Layout>
-		</ExchangeAccessGate>
+		<Layout {...EXCHANGE_RANK_PAGE_METADATA}>
+			<ExchangesNav activePage="rank" />
+			<ExchangeRanking ranking={ranking} />
+		</Layout>
 	)
 }

@@ -201,8 +201,10 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('static')).toEqual(expect.arrayContaining(['cexs', 'mica']))
 		// Pages kept out of the nav but still indexable are added to the static section.
 		expect(entriesBySection.get('static')).toContain('yields/stablecoins')
-		expect(entriesBySection.get('static')).not.toContain('exchanges')
-		expect(entriesBySection.get('static')).not.toContain('exchanges/charts')
+		expect(entriesBySection.get('static')).toEqual(
+			expect.arrayContaining(['exchanges', 'exchanges/rank', 'exchanges/tokens', 'ramp'])
+		)
+		expect(entriesBySection.get('static')).toContain('exchanges/charts')
 		expect(entriesBySection.get('static')).not.toContain('markets')
 		expect(entriesBySection.get('cexs')).toEqual(
 			expect.arrayContaining([

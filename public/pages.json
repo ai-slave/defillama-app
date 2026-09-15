@@ -501,7 +501,37 @@
       "tab": "Protocols"
     },
     {
-      "name": "MiCA Exchanges",
+      "name": "Exchanges: Overview",
+      "route": "/exchanges",
+      "category": "Exchanges",
+      "description": "Compare centralized and decentralized exchanges by volume, liquidity, fees, and reserves."
+    },
+    {
+      "name": "Exchanges: Ranking",
+      "route": "/exchanges/rank",
+      "category": "Exchanges",
+      "description": "REAL exchange scores for reserves, execution, activity, and liquidity."
+    },
+    {
+      "name": "Exchanges: Charts",
+      "route": "/exchanges/charts",
+      "category": "Exchanges",
+      "description": "Historical exchange volume, open interest, depth, and normalized volume."
+    },
+    {
+      "name": "Exchanges: Token Finder",
+      "route": "/exchanges/tokens",
+      "category": "Exchanges",
+      "description": "Find exchanges listing selected tokens across spot and perpetual markets."
+    },
+    {
+      "name": "Exchanges: Fiat Ramps",
+      "route": "/ramp",
+      "category": "Exchanges",
+      "description": "Compare fiat on-ramp and off-ramp costs by country and currency."
+    },
+    {
+      "name": "Exchanges: MiCA",
       "route": "/mica",
       "category": "Exchanges",
       "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
@@ -514,7 +544,7 @@
       ]
     },
     {
-      "name": "CEXs",
+      "name": "Exchanges: Reserves",
       "route": "/cexs",
       "category": "Exchanges",
       "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
@@ -1013,6 +1043,12 @@
         "real world asset",
         "real world assets"
       ]
+    },
+    {
+      "name": "Exchanges",
+      "route": "/exchanges",
+      "icon": "bar-chart-2",
+      "isNew": true
     },
     {
       "name": "MiCA",

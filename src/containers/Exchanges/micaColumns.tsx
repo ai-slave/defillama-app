@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
@@ -252,6 +253,25 @@ export const MICA_COLUMNS = columnHelper.columns([
 		meta: {
 			headerClassName: 'w-[240px] min-w-[200px]',
 			headerHelperText: 'Documents and verification steps required to use the exchange.'
+		}
+	}),
+	columnHelper.display({
+		id: 'profile',
+		header: 'Profile',
+		enableSorting: false,
+		cell: ({ row }) => (
+			<BasicLink
+				href={row.original.profileHref}
+				aria-label={`View ${row.original.name} exchange profile`}
+				className="label-sm text-link hover:underline"
+			>
+				View profile
+			</BasicLink>
+		),
+		meta: {
+			headerClassName: 'w-[110px] min-w-[110px]',
+			csvHeader: 'Exchange profile',
+			csvValue: (row) => row.profileHref
 		}
 	})
 ])

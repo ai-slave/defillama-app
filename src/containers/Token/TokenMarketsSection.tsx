@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { Suspense, useMemo, useReducer } from 'react'
-import { ExchangeFeatureGate, useExchangeAccessState } from '~/containers/Exchanges/ExchangeAccessGate'
 import { fetchExchangeExecutionSlippage } from '~/containers/Exchanges/master.api'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
 import type { PairTableRow } from '~/containers/Exchanges/PairTable'
@@ -273,16 +272,13 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	// Measured fills decide which venues the order-book chart may show, so a failure
 	// here means no chart rather than an unverified one. Fetched separately: it is a
-	// small shared payload and the table does not need it. Only fetched for llama
-	// users while the order-book chart itself is gated to them.
-	const exchangeAccess = useExchangeAccessState()
+	// small shared payload and the table does not need it.
 	const { data: slippageFeed } = useQuery({
 		queryKey: ['exchange-execution-slippage'],
 		queryFn: fetchExchangeExecutionSlippage,
 		staleTime: 6 * 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
-		retry: false,
-		enabled: exchangeAccess === 'authorized'
+		retry: false
 	})
 
 	const availableCategoriesByVenue = useMemo(() => {
@@ -399,11 +395,8 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 	const content = (
 		<>
 			{/* Above the tabs and independent of them: this is the venue comparison for the
-			    token, not a picture of whichever rows the table is filtered to. Gated to
-			    llama users like the exchanges pages until the orderbook data goes public. */}
-			<ExchangeFeatureGate>
-				<TokenDepthChart pairs={perpDepthPairs} slippage={tokenSlippage} symbol={tokenSymbol.toUpperCase()} />
-			</ExchangeFeatureGate>
+			    token, not a picture of whichever rows the table is filtered to. */}
+			<TokenDepthChart pairs={perpDepthPairs} slippage={tokenSlippage} symbol={tokenSymbol.toUpperCase()} />
 
 			<MarketFilter
 				options={visibleVenueTabs}

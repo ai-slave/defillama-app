@@ -12,10 +12,10 @@ import { fetchTokenMarkets } from '../api'
 import { TokenMarketsSection } from '../TokenMarketsSection'
 
 vi.mock('../api', () => ({ fetchTokenMarkets: vi.fn() }))
-vi.mock('~/containers/Exchanges/ExchangeAccessGate', () => ({
-	ExchangeFeatureGate: () => null,
-	useExchangeAccessState: () => 'unauthorized'
+vi.mock('~/containers/Exchanges/master.api', () => ({
+	fetchExchangeExecutionSlippage: vi.fn().mockResolvedValue({ venues: {} })
 }))
+vi.mock('~/containers/Exchanges/TokenDepthChart', () => ({ TokenDepthChart: () => null }))
 vi.mock('../deferred/DeferredTokenMarketsTable', async () => ({
 	DeferredTokenMarketsTable: (await import('../TokenMarketsTable')).TokenMarketsTable
 }))

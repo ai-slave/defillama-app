@@ -2,6 +2,7 @@ import { Cexs } from '~/containers/Cexs'
 import { attachExchangeProfileSlugs } from '~/containers/Cexs/exchangeProfile'
 import { getCexsPageData } from '~/containers/Cexs/queries'
 import type { ICex } from '~/containers/Cexs/types'
+import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -20,12 +21,13 @@ export const CEXS_PAGE_METADATA = {
 	description:
 		'Compare assets held in tracked centralized exchange wallets, clean reserves, and net inflows. Reserve assets do not include exchange liabilities.',
 	canonicalUrl: '/cexs',
-	pageName: ['CEXs']
+	pageName: ['Exchanges']
 }
 
 export default function CexsPage({ cexs }: { cexs: Array<ICex> }) {
 	return (
 		<Layout {...CEXS_PAGE_METADATA}>
+			<ExchangesNav activePage="reserves" />
 			<Cexs cexs={cexs} />
 		</Layout>
 	)

@@ -59,16 +59,4 @@ describe('exchange profile route slugs', () => {
 		})
 		expect(loadProfile).toHaveBeenCalledWith('coinbase')
 	})
-
-	test('gates the rendered exchange profile', async () => {
-		const { page } = setupPageModule()
-		const pageModule = await page
-		const { ExchangeAccessGate } = await import('../ExchangeAccessGate')
-		const renderedPage = pageModule.default({
-			profile: { slug: 'coinbase', profileMode: 'tracked' } as never,
-			asOfDate: '2026-07-22'
-		})
-
-		expect(renderedPage.type).toBe(ExchangeAccessGate)
-	})
 })
