@@ -102,7 +102,9 @@ export function VerifiedApyPanel({
 								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-data-up' : 'text-warning'}`}
 								style={{ backgroundColor: 'currentColor' }}
 							/>
-							<span className="capitalize">{confidence}</span> confidence
+							<span className="underline decoration-dotted">
+								<span className="capitalize">{confidence}</span> confidence
+							</span>
 						</span>
 					</Tooltip>
 				) : null}

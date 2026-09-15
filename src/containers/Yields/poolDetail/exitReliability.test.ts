@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { buildExitReliability, exitFailures, exitStripKind, isMeasuredKind } from './exitReliability'
+import { formatPercent } from '~/utils/numberFormat'
+import {
+	buildExitReliability,
+	type ExitIncident,
+	exitFailures,
+	exitStripKind,
+	incidentWithdrawableShare,
+	isMeasuredKind
+} from './exitReliability'
 import type { PoolHistoryPoint, VerifiedExitOutcome } from './types'
 
 const DAY_MS = 86_400_000
@@ -290,4 +298,43 @@ describe('the verdict cannot contradict its own ledger', () => {
 			expect(model.lastInterruptionDaysAgo).toBe(1)
 		}
 	)
+})
+
+describe('incidentWithdrawableShare', () => {
+	function incident(availableUsd: number | null, tvlUsd: number | null): ExitIncident {
+		return { from: '2026-01-01', days: 1, kind: 'partial', outcome: 'ok_partial', availableUsd, tvlUsd }
+	}
+
+	test('divides the lane by the deposits it was measured against', () => {
+		expect(incidentWithdrawableShare(incident(8650, 733_800_000))).toBeCloseTo(8650 / 733_800_000, 15)
+	})
+
+	test('keeps a measured zero, which is a finding rather than a missing number', () => {
+		expect(incidentWithdrawableShare(incident(0, 1_000_000))).toBe(0)
+	})
+
+	test('has no share to state without both figures, or without deposits to divide by', () => {
+		expect(incidentWithdrawableShare(incident(null, 1_000_000))).toBeNull()
+		expect(incidentWithdrawableShare(incident(1000, null))).toBeNull()
+		// Never Infinity.
+		expect(incidentWithdrawableShare(incident(1000, 0))).toBeNull()
+	})
+
+	test('renders a vanishing lane as one honest bucket, and holds two decimals for the column', () => {
+		const options = {
+			input: 'fraction',
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+			smallValueDisplay: 'threshold'
+		} as const
+
+		expect(formatPercent(incidentWithdrawableShare(incident(0.0000038, 889_680_000)), options)).toBe('<0.01%')
+		expect(formatPercent(incidentWithdrawableShare(incident(0, 889_680_000)), options)).toBe('0.00%')
+		// Trailing zeros kept so the column aligns.
+		expect(formatPercent(incidentWithdrawableShare(incident(13_000_000, 100_000_000)), options)).toBe('13.00%')
+		expect(formatPercent(incidentWithdrawableShare(incident(11_610_000, 100_000_000)), options)).toBe('11.61%')
+		// Widest the figure gets; the column is sized for it.
+		expect(formatPercent(incidentWithdrawableShare(incident(100, 100)), options)).toBe('100.00%')
+		expect(formatPercent(incidentWithdrawableShare(incident(null, null)), options)).toBeNull()
+	})
 })

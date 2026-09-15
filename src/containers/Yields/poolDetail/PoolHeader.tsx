@@ -77,7 +77,7 @@ export function PoolMetaInfo({
 				{poolTokenAddress ? (
 					<span className="inline-flex items-center gap-1.5">
 						<span className="text-secondary">Token:</span>
-						<Tooltip content={poolTokenAddress} className="mono-md text-primary">
+						<Tooltip content={poolTokenAddress} className="mono-md text-primary underline decoration-dotted">
 							<code>{shortAddress(poolTokenAddress)}</code>
 						</Tooltip>
 						<CopyHelper toCopy={poolTokenAddress} />

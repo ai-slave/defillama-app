@@ -237,7 +237,23 @@ describe('buildLiquidityBands', () => {
 		])
 	})
 
-	test('drops runs shorter than the legibility threshold', () => {
+	test('draws every run by default, down to a single day', () => {
+		const single = buildLiquidityChart(
+			[
+				day('2026-01-01', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' }),
+				day('2026-01-02', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_liquidity' }),
+				day('2026-01-03', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' })
+			],
+			USDC
+		) as LiquidityChartModel
+
+		// A day the key counts is a day the plot must show.
+		expect(buildLiquidityBands(single, 0, 3)).toEqual([
+			{ from: Date.UTC(2026, 0, 2), to: Date.UTC(2026, 0, 2), days: 1, kind: 'blocked' }
+		])
+	})
+
+	test('still honours a minimum a caller asks for explicitly', () => {
 		expect(buildLiquidityBands(model, 0, 8, 4)).toEqual([])
 		expect(buildLiquidityBands(model, 0, 8, 1)).toHaveLength(2)
 	})

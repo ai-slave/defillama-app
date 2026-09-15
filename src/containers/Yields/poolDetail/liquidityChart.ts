@@ -177,7 +177,8 @@ export function buildLiquidityBands(
 	model: LiquidityChartModel,
 	start: number,
 	end: number,
-	minDays = 3
+	/** Runs shorter than this are dropped. Default 1: visibility is the renderer's job, via the band outline. */
+	minDays = 1
 ): Array<LiquidityBand> {
 	const bands: Array<LiquidityBand> = []
 	let runStart = -1

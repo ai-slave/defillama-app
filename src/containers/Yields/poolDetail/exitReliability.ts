@@ -57,6 +57,13 @@ export interface ExitIncident {
 	tvlUsd: number | null
 }
 
+/** Withdrawable as a share of deposits. Null when unmeasured or there are no deposits; a measured 0 stays 0. */
+export function incidentWithdrawableShare(incident: ExitIncident): number | null {
+	const { availableUsd, tvlUsd } = incident
+	if (availableUsd == null || tvlUsd == null || tvlUsd <= 0) return null
+	return availableUsd / tvlUsd
+}
+
 export interface ExitReliabilityModel {
 	/** Days the withdrawal ran to a verdict. The denominator. */
 	measuredDays: number

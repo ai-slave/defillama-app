@@ -78,9 +78,16 @@ const SERIES_COLOR: Record<'available' | 'remainder', readonly [light: string, d
 
 // Background shading for the exit-health classes. Only these two are shaded: a working exit needs no
 // mark, and a day we failed to measure is our gap, not the pool's.
+// A revert outranks a partial however long each lasted, so blocked carries the heavier fill.
 const BAND_FILL: Record<ExitClass, readonly [light: string, dark: string]> = {
-	blocked: ['rgba(242, 54, 69, 0.16)', 'rgba(247, 82, 95, 0.26)'],
+	blocked: ['rgba(242, 54, 69, 0.22)', 'rgba(247, 82, 95, 0.38)'],
 	partial: ['rgba(245, 127, 23, 0.16)', 'rgba(255, 167, 38, 0.24)']
+}
+
+// Both classes get one, since the key counts every affected day. Severity lives in the opacity.
+const BAND_STROKE: Partial<Record<ExitClass, readonly [light: string, dark: string]>> = {
+	blocked: ['rgba(242, 54, 69, 0.85)', 'rgba(247, 82, 95, 0.9)'],
+	partial: ['rgba(245, 127, 23, 0.42)', 'rgba(255, 167, 38, 0.45)']
 }
 
 const SWATCH_FILL: Record<ExitClass, readonly [light: string, dark: string]> = {
@@ -139,7 +146,7 @@ function buildChartInputs(
 		else if (exitClass === 'partial') partialDays++
 	}
 
-	const markArea = buildBandMarkArea(bands, BAND_FILL, isDark)
+	const markArea = buildBandMarkArea(bands, BAND_FILL, isDark, BAND_STROKE)
 
 	// Stacked so the top of the stack IS measured deposits and the upper band is literally the gap
 	// the chart exists to show, rather than something the eye has to subtract. An uncapped queue has

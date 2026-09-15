@@ -13,24 +13,36 @@ export interface TimeBand<Kind extends string> {
 }
 
 type BandFill<Kind extends string> = Readonly<Record<Kind, readonly [light: string, dark: string]>>
-type MarkAreaPoint = { xAxis: number; itemStyle?: { color: string } }
+type BandStroke<Kind extends string> = Readonly<Partial<Record<Kind, readonly [light: string, dark: string]>>>
+type MarkAreaPoint = {
+	xAxis: number
+	itemStyle?: { color: string; borderColor?: string; borderWidth?: number }
+}
 
 /** ECharts shading shared by the measured growth and exit-liquidity timelines. */
 export function buildBandMarkArea<Kind extends string>(
 	bands: ReadonlyArray<TimeBand<Kind>>,
 	fills: BandFill<Kind>,
-	isDark: boolean
+	isDark: boolean,
+	/** Optional 1px outline per kind: constant width at any range, so a one-day band stays visible. */
+	strokes?: BandStroke<Kind>
 ): { silent: true; data: Array<[MarkAreaPoint, MarkAreaPoint]> } | undefined {
 	if (bands.length === 0) return undefined
 	return {
 		silent: true,
-		data: bands.map((band) => [
-			{
-				xAxis: band.from - DAY_MS / 2,
-				itemStyle: { color: fills[band.kind][isDark ? 1 : 0] }
-			},
-			{ xAxis: band.to + DAY_MS / 2 }
-		])
+		data: bands.map((band) => {
+			const stroke = strokes?.[band.kind]
+			return [
+				{
+					xAxis: band.from - DAY_MS / 2,
+					itemStyle: {
+						color: fills[band.kind][isDark ? 1 : 0],
+						...(stroke ? { borderColor: stroke[isDark ? 1 : 0], borderWidth: 1 } : {})
+					}
+				},
+				{ xAxis: band.to + DAY_MS / 2 }
+			]
+		})
 	}
 }
 

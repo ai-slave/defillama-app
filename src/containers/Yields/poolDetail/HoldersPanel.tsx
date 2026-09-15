@@ -349,7 +349,10 @@ function HoldersTable({
 													{shortAddr(holder.address)}
 												</Tooltip>
 											) : (
-												<Tooltip content={holder.address} className="mono-md text-secondary">
+												<Tooltip
+													content={holder.address}
+													className="mono-md text-secondary underline decoration-dotted"
+												>
 													{shortAddr(holder.address)}
 												</Tooltip>
 											)}

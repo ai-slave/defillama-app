@@ -2,14 +2,15 @@ import { type ReactNode, useState } from 'react'
 import { ChartPanel } from '~/ui/ChartPanel'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
-import { formatNumber, formatUsd } from '~/utils/numberFormat'
+import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { VerifiedBlock } from '../data/types'
 import {
 	EXIT_OUTCOME_LABELS,
 	type ExitIncident,
 	type ExitReliabilityModel,
 	type ExitStripKind,
-	exitFailures
+	exitFailures,
+	incidentWithdrawableShare
 } from './exitReliability'
 import type { DetailHolders } from './types'
 import { useAnchorScroll } from './useAnchorScroll'
@@ -20,6 +21,15 @@ export const EXIT_STATUS_ID = 'exit-status'
 // The crowding note shows raw dollar figures, small pools included, so the compact threshold sits
 // at 1k rather than the charts' 1m.
 const RECEIPT_USD = { compact: true, minimumCompactValue: 1000, compactSuffix: 'lowercase' } as const
+
+// Two decimals both ends so the column aligns; `smallValueDisplay` is explicit because a fixed
+// minimum would otherwise disable the "<0.01%" threshold these lanes need.
+const RECEIPT_SHARE = {
+	input: 'fraction',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	smallValueDisplay: 'threshold'
+} as const
 
 // A revert is a failure, a partial fill is a shortfall, and an unmeasured day is a hole in our own
 // coverage. Three different claims, so three different tones — never one "bad" red.
@@ -113,9 +123,7 @@ export function ExitReliabilityPanel({
 							content="What could have been withdrawn immediately, against total deposits, both measured on-chain at that day's block."
 							className="ml-auto"
 						>
-							<span className="body-sm text-tertiary underline decoration-dotted">
-								Withdrawable / deposits, measured at that block
-							</span>
+							<span className="body-sm text-tertiary underline decoration-dotted">Withdrawable / deposits</span>
 						</Tooltip>
 					</div>
 					<ul className="flex flex-col">
@@ -201,6 +209,8 @@ function IncidentRow({ incident }: { incident: ExitIncident }) {
 		incident.availableUsd == null || incident.tvlUsd == null
 			? null
 			: `${formatUsd(incident.availableUsd, RECEIPT_USD)} of ${formatUsd(incident.tvlUsd, RECEIPT_USD)}`
+	// The share takes the right edge: it is the column worth scanning.
+	const share = formatPercent(incidentWithdrawableShare(incident), RECEIPT_SHARE)
 	return (
 		<li className="grid grid-cols-[7px_auto_auto_1fr] items-baseline gap-x-3 gap-y-0.5 border-t border-subtle px-3 py-1.5 @min-[36rem]:grid-cols-[7px_6.5rem_4rem_1fr_auto]">
 			<span className={`size-[7px] shrink-0 self-center rounded-full ${INCIDENT_DOT[incident.kind]}`} aria-hidden />
@@ -212,8 +222,10 @@ function IncidentRow({ incident }: { incident: ExitIncident }) {
 				{incident.outcome ? EXIT_OUTCOME_LABELS[incident.outcome] : 'Not measured'}
 			</span>
 			{receipt ? (
-				<span className="col-start-2 mono-sm text-tertiary @min-[36rem]:col-start-5 @min-[36rem]:text-right">
-					{receipt}
+				<span className="col-start-2 flex flex-wrap items-baseline justify-end gap-x-2 @min-[36rem]:col-start-5">
+					<span className="mono-sm text-tertiary">{receipt}</span>
+					{/* Rendered even when empty so the column stays straight. 7ch fits "100.00%". */}
+					<span className="w-[7ch] shrink-0 text-right mono-sm text-primary">{share}</span>
 				</span>
 			) : null}
 		</li>
