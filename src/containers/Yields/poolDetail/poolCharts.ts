@@ -14,8 +14,9 @@ export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark:
 	chartFill: ['#c2c8cf', '#515c6b'],
 	warn: ['#f23645', '#f7525f'],
 	mag: ['#7e8aa0', '#7e8aa0'],
-	// Its own hue: intrinsic bars sit under the verified line, which owns the blue.
-	intrinsic: ['#7c3aed', '#a78bfa'],
+	// Its own hue: intrinsic sits under the verified line, which owns the blue. Dark step is
+	// violet-500; #a78bfa fell outside the dark lightness band (L 0.71 vs 0.48-0.67).
+	intrinsic: ['#7c3aed', '#8b5cf6'],
 	verified: ['#3b82f6', '#3b82f6']
 }
 

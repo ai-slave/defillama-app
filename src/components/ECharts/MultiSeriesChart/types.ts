@@ -39,6 +39,8 @@ export type MultiSeriesChartSeriesConfig = {
 	/** Stable display identity. `selectedCharts` entries must match this name exactly. */
 	name: string
 	stack?: string
+	/** ECharts defaults to 'samesign', which drops a segment whose sign opposes the stack. */
+	stackStrategy?: 'samesign' | 'all' | 'positive' | 'negative'
 	/** `encode.y` is the canonical dataset dimension and may differ from the display name. */
 	encode: {
 		x: number | Array<number> | string | Array<string>

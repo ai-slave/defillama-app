@@ -141,6 +141,7 @@ export function buildMultiSeries({
 			}
 		} else {
 			if (chart.stack != null) series.stack = chart.stack
+			if (chart.stackStrategy != null) series.stackStrategy = chart.stackStrategy
 			if (series.type === 'line') {
 				series.lineStyle = { color }
 				series.areaStyle =

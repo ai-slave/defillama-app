@@ -10,8 +10,7 @@ import type {
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
-import { ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar, CHART_FILL } from '~/ui/ChartPanel'
-import { inputStyles } from '~/ui/Input'
+import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPanel'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -43,6 +42,16 @@ import {
 	getPoolHistoryRange,
 	getPoolRangeQueryKey
 } from './queryState'
+import {
+	READOUT_ABSENT,
+	READOUT_KEYS_BACKDROP,
+	readoutBlockStyles,
+	readoutCellsStyles,
+	ReadoutCell,
+	readoutInputStyles,
+	readoutKeysStyles,
+	ReadoutKey
+} from './readout'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 import type { PoolHistoryRange } from './types'
 import { useQueryDraft } from './useQueryDraft'
@@ -268,12 +277,61 @@ function buildTooltipFormatter(
 	}
 }
 
+const POSITION_INPUT_ID = 'exit-position-size'
+
+/** The plot's own key, drawn over the plot. Every colour the chart uses is named here and nowhere else. */
+function LiquidityKey({
+	model,
+	blockedDays,
+	partialDays,
+	isDark
+}: {
+	model: LiquidityChartModel
+	blockedDays: number
+	partialDays: number
+	isDark: boolean
+}) {
+	return (
+		<div className={readoutKeysStyles} style={{ backgroundColor: READOUT_KEYS_BACKDROP }}>
+			{model.uncappedQueue ? null : (
+				<ReadoutKey color={SERIES_COLOR.available[isDark ? 1 : 0]}>{AVAILABLE_NAME}</ReadoutKey>
+			)}
+			<ReadoutKey
+				color={SERIES_COLOR.remainder[isDark ? 1 : 0]}
+				hint="The remaining deposits. For a pool whose exit is a withdrawal queue this is most of the pool and is normal: it means 'not immediate', not 'stuck'."
+			>
+				{REMAINDER_NAME}
+			</ReadoutKey>
+			{blockedDays ? (
+				<ReadoutKey color={SWATCH_FILL.blocked[isDark ? 1 : 0]}>
+					{formatNumber(blockedDays)} {blockedDays === 1 ? 'day' : 'days'} withdrawal reverted
+				</ReadoutKey>
+			) : null}
+			{partialDays ? (
+				<ReadoutKey color={SWATCH_FILL.partial[isDark ? 1 : 0]}>
+					{formatNumber(partialDays)} {partialDays === 1 ? 'day' : 'days'} partial exit only
+				</ReadoutKey>
+			) : null}
+		</div>
+	)
+}
+
+/**
+ * One row for everything the plot needs said: what the reader's size would have met, what each band
+ * and series means, and the controls. The key used to sit in its own strip below this one, which
+ * made two rhythms out of one question and cost the panel a row it does not have.
+ */
 function LiquidityReadout({
 	model,
 	unit,
 	capacity,
 	flow,
 	positionUsd,
+	summary,
+	blockedDays,
+	partialDays,
+	exitStatus,
+	isDark,
 	setQuery
 }: {
 	model: LiquidityChartModel
@@ -283,6 +341,11 @@ function LiquidityReadout({
 	/** The queued counterpart of `capacity`: null unless the pool's exit is a LIVE queue. */
 	flow: QueueFlowAnswer | null
 	positionUsd: number | null
+	summary: LiquiditySummary | null
+	blockedDays: number
+	partialDays: number
+	exitStatus: VerifiedExitStatus | null
+	isDark: boolean
 	setQuery: (next: Record<string, string | undefined>) => void
 }) {
 	const [positionText, setPositionText, positionFocus] = useQueryDraft(positionUsd ?? EXIT_SIZE_DEFAULT, getExitSize)
@@ -290,91 +353,119 @@ function LiquidityReadout({
 		(text: string) => setQuery({ exitSize: getExitSizeQueryValue(getExitSize(text)) }),
 		300
 	)
-	// Each row answers a question the key row below cannot: how the position fares against the
-	// instant lane, or how far deposits moved through a queue. The state itself ("no instant lane",
-	// "capacity unmeasured") is already named in that key, so with neither answer there is nothing
-	// left for this block to say.
-	const showCapacity = capacity != null && positionUsd != null
-	if (!showCapacity && !flow) return null
+	const percent = { input: 'percent', maximumFractionDigits: 1 } as const
+	const availablePct = summary?.availableFraction == null ? null : summary.availableFraction * 100
+	const showPosition = capacity != null && positionUsd != null
+
 	return (
-		<div className="flex flex-col gap-1 border-b border-subtle px-3 py-2">
-			{capacity && positionUsd != null ? (
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<label className="flex items-center gap-1.5 body-sm text-secondary">
-						Your position
-						<span className="relative">
-							<span className="pointer-events-none absolute top-0 bottom-0 left-2 my-auto flex items-center text-tertiary">
-								$
-							</span>
-							<input
-								type="number"
-								min={0}
-								step="any"
-								inputMode="decimal"
-								value={positionText}
-								onFocus={positionFocus.onFocus}
-								onBlur={() => {
-									commitPosition.flush()
-									positionFocus.onBlur()
-								}}
-								onChange={(event) => {
-									setPositionText(event.target.value)
-									commitPosition(event.target.value)
-								}}
-								className={`${inputStyles} w-32 pl-5`}
-								aria-label="Position size to test against measured exit capacity"
-							/>
+		<div className={`${readoutBlockStyles} ${readoutCellsStyles}`}>
+			{showPosition ? (
+				<ReadoutCell
+					label="At your size"
+					hint="Every measured day is checked against the position above: did the instant lane hold at least that much? Past capacity, never a guarantee about today."
+				>
+					{capacity.shortDays > 0 ? (
+						<span className="mono-md-bold text-(--yield-negative-text)">
+							{formatNumber(capacity.shortDays)} of {formatNumber(capacity.measuredDays)} fell short
 						</span>
-					</label>
-					<span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-						<span
-							className={`mono-md-bold ${capacity.shortDays > 0 ? 'text-(--yield-negative-text)' : 'text-(--yield-positive-text)'}`}
-						>
-							{capacity.shortDays > 0 ? `${capacity.shortDays} days` : 'Every day'}
+					) : (
+						<span className="mono-md-bold text-(--yield-positive-text)">
+							All {formatNumber(capacity.measuredDays)} days cleared
 						</span>
-						<span className="body-sm text-secondary">
-							{capacity.shortDays > 0 ? 'could not have exited in full' : 'could have exited in full'}
-						</span>
-						<span className="body-sm text-tertiary">{`of ${capacity.measuredDays} measured`}</span>
-					</span>
-					{/* A sizing rule, not a promise: the ceiling that held on nine days in ten. */}
-					{capacity.comfortableUsd != null ? (
-						<Tooltip
-							content="The tenth-percentile withdrawable figure: a position this size would have exited in full on nine measured days out of ten. Past capacity, never a guarantee."
-							className="ml-auto"
-						>
-							<span className="body-sm text-tertiary underline decoration-dotted">
-								{`${formatUsd(capacity.comfortableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)} clears 90% of days`}
-							</span>
-						</Tooltip>
-					) : null}
-				</div>
+					)}
+				</ReadoutCell>
 			) : null}
 
-			{/* A queue has no instant lane BY DESIGN, so it reports how far deposits actually moved instead. */}
+			{/* A queue has no instant lane BY DESIGN, so it reports how far deposits actually moved. */}
 			{flow ? (
-				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+				<ReadoutCell label={flow.to < flow.from ? 'Left the pool' : 'Joined the pool'}>
 					<span
 						className={`mono-md-bold ${flow.to < flow.from ? 'text-(--yield-negative-text)' : 'text-(--yield-positive-text)'}`}
 					>
 						{formatAmount(Math.abs(flow.to - flow.from), 'units', model.symbol)}
 					</span>
+					<span className="body-sm text-tertiary">over {formatNumber(flow.measuredDays)} days</span>
+				</ReadoutCell>
+			) : null}
+			{/* Deposits net off against withdrawals, so a fall is a FLOOR on what the queue cleared. */}
+			{flow && flow.worstWeek > 0 ? (
+				<ReadoutCell
+					label="Cleared in a week"
+					hint={`Largest fall in measured deposits across any seven days, ${isoDay(flow.worstWeekFrom)} to ${isoDay(
+						flow.worstWeekTo
+					)}. New deposits net against withdrawals, so the queue processed at least this much. A measured floor, never a promise.`}
+				>
+					<span className="mono-sm-bold text-primary">≥ {formatAmount(flow.worstWeek, 'units', model.symbol)}</span>
+				</ReadoutCell>
+			) : null}
+
+			{model.uncappedQueue ? (
+				<ReadoutCell
+					label="Exit"
+					hint={
+						exitStatus === 'queued'
+							? `No instant exit lane by design: withdrawals run through a queue that accepts any size. That is not the same as having no liquidity, so nothing is shown as withdrawable now.${
+									model.hasUnits
+										? ''
+										: ' Deposit flows need token units, which this pool does not report, so how far the queue has moved is not shown either.'
+								}`
+							: 'The exit-capacity probe returned nothing on this run, so the instant lane is unmeasured rather than absent. Withdrawals from this pool have succeeded; what is unknown is the ceiling.'
+					}
+				>
 					<span className="body-sm text-secondary">
-						{flow.to < flow.from ? 'left the pool' : 'joined the pool'} over {flow.measuredDays} measured days
+						{exitStatus === 'queued' ? 'Uncapped queue' : 'Capacity unmeasured'}
 					</span>
-					{/* Deposits net off against withdrawals, so a fall is a FLOOR on what the queue cleared. */}
-					{flow.worstWeek > 0 ? (
-						<Tooltip
-							content={`Largest fall in measured deposits across any seven days, ${isoDay(flow.worstWeekFrom)} to ${isoDay(
-								flow.worstWeekTo
-							)}. New deposits net against withdrawals, so the queue processed at least this much in a week. A measured floor, never a promise.`}
-						>
-							<span className="body-sm text-tertiary underline decoration-dotted">
-								{`queue cleared ≥ ${formatAmount(flow.worstWeek, 'units', model.symbol)} in a week`}
-							</span>
-						</Tooltip>
-					) : null}
-				</div>
+				</ReadoutCell>
+			) : (
+				<ReadoutCell
+					label={AVAILABLE_NAME}
+					hint="The most that could be withdrawn immediately, measured on-chain at that day's block. A binding constraint, not backing inventory."
+				>
+					<span className="mono-sm-bold text-primary">
+						{availablePct == null ? READOUT_ABSENT : formatPercent(availablePct, percent)}
+					</span>
+				</ReadoutCell>
+			)}
+
+			{/* A sizing rule, not a promise: the ceiling that held on nine days in ten. */}
+			{showPosition && capacity.comfortableUsd != null ? (
+				<ReadoutCell
+					label="Clears 90% of days"
+					hint="The tenth-percentile withdrawable figure: a position this size would have exited in full on nine measured days out of ten. Past capacity, never a guarantee."
+				>
+					<span className="mono-sm-bold text-primary">
+						{formatUsd(capacity.comfortableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
+					</span>
+				</ReadoutCell>
+			) : null}
+
+			{showPosition ? (
+				<ReadoutCell
+					className="ml-auto"
+					hint="A size to test against the measured instant lane. The days above are counted against it."
+					label={<label htmlFor={POSITION_INPUT_ID}>Your position</label>}
+				>
+					<span className="body-sm text-tertiary">$</span>
+					<input
+						id={POSITION_INPUT_ID}
+						type="number"
+						min={0}
+						step="any"
+						inputMode="decimal"
+						value={positionText}
+						onFocus={positionFocus.onFocus}
+						onBlur={() => {
+							commitPosition.flush()
+							positionFocus.onBlur()
+						}}
+						onChange={(event) => {
+							setPositionText(event.target.value)
+							commitPosition(event.target.value)
+						}}
+						className={`${readoutInputStyles} w-28`}
+						aria-label="Position size to test against measured exit capacity"
+					/>
+				</ReadoutCell>
 			) : null}
 		</div>
 	)
@@ -499,97 +590,29 @@ export function PoolLiquidityChart({
 				</div>
 			</PanelHeader>
 
-			{!loading && !error && summary ? (
+			{!loading && !error ? (
 				<LiquidityReadout
 					model={currentModel}
 					unit={unit}
 					capacity={capacity}
 					flow={flow}
 					positionUsd={positionUsd}
+					summary={summary}
+					blockedDays={blockedDays}
+					partialDays={partialDays}
+					exitStatus={exitStatus}
+					isDark={isDark}
 					setQuery={setQuery}
 				/>
 			) : null}
-
-			<ChartPanelToolbar>
-				{currentModel.uncappedQueue ? (
-					<Tooltip
-						content={
-							exitStatus === 'queued'
-								? `No instant exit lane by design: withdrawals run through a queue that accepts any size. That is not the same as having no liquidity, so nothing is shown as withdrawable now.${
-										// Flows are read in token units, so without them the queue's movement has no row above.
-										currentModel.hasUnits
-											? ''
-											: ' Deposit flows need token units, which this pool does not report, so how far the queue has moved is not shown either.'
-									}`
-								: 'The exit-capacity probe returned nothing on this run, so the instant lane is unmeasured rather than absent. Withdrawals from this pool have succeeded; what is unknown is the ceiling.'
-						}
-					>
-						<span className="body-sm text-secondary underline decoration-dotted">
-							{exitStatus === 'queued' ? 'Exit runs through an uncapped queue' : 'Exit capacity unmeasured'}
-						</span>
-					</Tooltip>
-				) : (
-					<Tooltip content="The most that could be withdrawn immediately, measured on-chain at that day's block. A binding constraint, not backing inventory.">
-						<span className="flex items-center gap-1.5 body-sm text-secondary">
-							<span
-								className="size-2 shrink-0 rounded-full"
-								style={{ backgroundColor: SERIES_COLOR.available[isDark ? 1 : 0] }}
-								aria-hidden
-							/>
-							<span className="underline decoration-dotted">{AVAILABLE_NAME}</span>
-							{summary?.availableFraction != null ? (
-								<>
-									<span className="text-tertiary" aria-hidden>
-										·
-									</span>
-									<span className="mono-md-bold text-primary">
-										{formatPercent(summary.availableFraction * 100, { input: 'percent', maximumFractionDigits: 1 })}
-									</span>
-								</>
-							) : null}
-						</span>
-					</Tooltip>
-				)}
-				<Tooltip content="The remaining deposits. For a pool whose exit is a withdrawal queue this is most of the pool and is normal: it means 'not immediate', not 'stuck'.">
-					<span className="flex items-center gap-1.5 body-sm text-secondary">
-						<span
-							className="size-2 shrink-0 rounded-full"
-							style={{ backgroundColor: SERIES_COLOR.remainder[isDark ? 1 : 0] }}
-							aria-hidden
-						/>
-						<span className="underline decoration-dotted">{REMAINDER_NAME}</span>
-					</span>
-				</Tooltip>
-				{blockedDays || partialDays ? (
-					<span className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 body-sm text-tertiary">
-						{blockedDays ? (
-							<span className="flex items-center gap-1.5">
-								<span
-									className="size-2 shrink-0 rounded-xs"
-									style={{ backgroundColor: SWATCH_FILL.blocked[isDark ? 1 : 0] }}
-									aria-hidden
-								/>
-								{blockedDays} {blockedDays === 1 ? 'day' : 'days'} withdrawal reverted
-							</span>
-						) : null}
-						{partialDays ? (
-							<span className="flex items-center gap-1.5">
-								<span
-									className="size-2 shrink-0 rounded-xs"
-									style={{ backgroundColor: SWATCH_FILL.partial[isDark ? 1 : 0] }}
-									aria-hidden
-								/>
-								{partialDays} {partialDays === 1 ? 'day' : 'days'} partial exit only
-							</span>
-						) : null}
-					</span>
-				) : null}
-			</ChartPanelToolbar>
 
 			{/* The panel gives this chart a fixed-height section, so the body fills whatever the readout and
 			    key leave; the lower floor lets those wrap onto a second line without pushing the chart out
 			    over the exit ledger below. */}
 			<ChartPanelBody size="compact">
+				{!loading && !error ? (
+					<LiquidityKey model={currentModel} blockedDays={blockedDays} partialDays={partialDays} isDark={isDark} />
+				) : null}
 				{loading ? (
 					<ChartPanelBodyFallback size="compact" role="status" aria-live="polite">
 						<LoadingIndicator label={`Loading ${range} history`} />

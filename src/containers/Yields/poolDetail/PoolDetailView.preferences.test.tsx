@@ -75,6 +75,7 @@ const props: PoolDetailViewProps = {
 	supplyChart: { title: 'Supply APY', net: false, dates: [], bars: [], lines: [], netLine: null },
 	borrowChart: { title: 'Borrow APY', net: false, dates: [], bars: [], lines: [], netLine: null },
 	growthChart: null,
+	intrinsicSeries: null,
 	liquidityChart: null,
 	exitReliability: null,
 	liquidityDecimals: null,

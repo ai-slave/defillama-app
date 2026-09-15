@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import {
+	buildCombinedSummary,
 	buildGrowthChart,
+	buildIntrinsicSeries,
 	buildGrowthGaps,
 	buildGrowthSeries,
 	buildGrowthSummary,
@@ -10,6 +12,7 @@ import {
 	growthOutcomeLabel,
 	growthReasonLabel,
 	resolveGrowthAnchor,
+	selectGrowthDrawdown,
 	type GrowthChartModel
 } from './growthChart'
 import type { PoolHistoryPoint, VerifiedExitOutcome } from './types'
@@ -506,5 +509,173 @@ describe('growthReasonLabel', () => {
 		expect(growthReasonLabel('no_executed_exit_path')).toBe('no exit path could be executed')
 		expect(growthReasonLabel('some_new_code')).toBe('some_new_code')
 		expect(growthReasonLabel(null)).toBeNull()
+	})
+})
+
+const D = (n: number) => `2026-01-0${n}`
+
+// The source pool's own measured rate, by date: the asset's growth is a ratio of two of these.
+const source = (...rates: Array<number | null>): Record<string, number> =>
+	Object.fromEntries(rates.flatMap((rate, i) => (rate == null ? [] : [[D(i + 1), rate]])))
+
+const flat = (n: number) => Array.from({ length: n }, (_, i) => day(D(i + 1), 5, { pps: 1 }))
+
+describe('buildIntrinsicSeries', () => {
+	test('keeps measured days and drops the rest', () => {
+		expect(
+			buildIntrinsicSeries([
+				day(D(1), 5, { pps: 1.2 }),
+				day(D(2), 5, { pps: null }),
+				day(D(3), 5, null),
+				day(D(4), 5, { pps: 1.3 })
+			])
+		).toEqual({ [D(1)]: 1.2, [D(4)]: 1.3 })
+	})
+
+	test('is null when the source pool was never measured', () => {
+		expect(buildIntrinsicSeries([day(D(1), 5, null)])).toBeNull()
+		expect(buildIntrinsicSeries(null)).toBeNull()
+	})
+})
+
+describe('intrinsic leg', () => {
+	test('joins the source rate by date and flags a pool that has one', () => {
+		const model = buildGrowthChart(flat(2), source(1, 1.1)) as GrowthChartModel
+
+		expect(model.sourcePps).toEqual([1, 1.1])
+		expect(model.hasIntrinsic).toBe(true)
+	})
+
+	test('flags a pool with no source, so the toggle never appears', () => {
+		const model = buildGrowthChart(flat(2)) as GrowthChartModel
+
+		expect(model.sourcePps).toEqual([null, null])
+		expect(model.hasIntrinsic).toBe(false)
+	})
+
+	test('rebases the asset on the deposit day and leaves it flat there', () => {
+		const model = buildGrowthChart(flat(3), source(1, 1.1, 1.21)) as GrowthChartModel
+		const { combined, asset, assetAnchor } = buildGrowthSeries(model, 0, 3)
+
+		expect(assetAnchor).toBe(0)
+		expect(combined).toEqual([1, 1.1, 1.21])
+		// Nothing earned at the deposit itself.
+		expect(asset[0]).toBe(0)
+		expect(asset[2]).toBeCloseTo(0.21, 12)
+	})
+
+	test('breaks on a day the source was not measured, and loses nothing to it', () => {
+		const model = buildGrowthChart(flat(3), source(1, null, 1.21)) as GrowthChartModel
+		const { combined } = buildGrowthSeries(model, 0, 3)
+
+		expect(combined[1]).toBeNull()
+		// A ratio, so the next measured day is exact: the gap costs nothing, where a compounded
+		// rate would have lost that day's yield for good.
+		expect(combined[2]).toBeCloseTo(1.21, 12)
+	})
+
+	test('draws no band at all when the source was not measured on the deposit day', () => {
+		const model = buildGrowthChart(flat(3), source(null, 1, 1.1)) as GrowthChartModel
+		const { combined, assetAnchor } = buildGrowthSeries(model, 0, 3)
+
+		// Starting it a day late would leave that day's asset growth out while still calling the
+		// result the whole deposit's, so the band waits for a basis on the deposit day itself.
+		expect(assetAnchor).toBe(-1)
+		expect(combined).toEqual([null, null, null])
+	})
+
+	test('subtracts from the pool line when the asset loses value', () => {
+		const model = buildGrowthChart(flat(2), source(1, 0.9)) as GrowthChartModel
+		const { measured, combined, asset } = buildGrowthSeries(model, 0, 2)
+
+		expect(asset[1]).toBeCloseTo(-0.1, 12)
+		expect(combined[1] as number).toBeLessThan(measured[1] as number)
+	})
+
+	test('draws nothing on a day the pool went unmeasured', () => {
+		const model = buildGrowthChart(
+			[day(D(1), 5, { pps: 1 }), day(D(2), 5, null), day(D(3), 5, { pps: 1 })],
+			source(1, 1.1, 1.21)
+		) as GrowthChartModel
+		const { combined } = buildGrowthSeries(model, 0, 3)
+
+		expect(combined[1]).toBeNull()
+		expect(combined[2]).toBeCloseTo(1.21, 12)
+	})
+})
+
+describe('buildCombinedSummary', () => {
+	test('splits the total exactly between the two legs', () => {
+		const history = [day(D(1), 5, { pps: 1 }), day(D(2), 5, { pps: 1 }), day(D(3), 5, { pps: 1.05 })]
+		const model = buildGrowthChart(history, source(1, 1, 1.1)) as GrowthChartModel
+		const growth = buildGrowthSeries(model, 0, 3)
+		const pool = buildGrowthSummary(model, growth.anchor, 3, 1)!
+		const combined = buildCombinedSummary(model, growth, 0, 3, 1)!
+
+		expect(pool.gain).toBeCloseTo(0.05, 12)
+		expect(combined.gain).toBeCloseTo(0.155, 12)
+		expect(pool.gain + combined.assetGain).toBeCloseTo(combined.gain, 12)
+	})
+
+	test("annualizes the asset over its own span, not the pool's", () => {
+		// Seven days of the asset compounding at 10% a year.
+		const model = buildGrowthChart(flat(8), source(1, 1, 1, 1, 1, 1, 1, 1.1 ** (7 / 365))) as GrowthChartModel
+		const combined = buildCombinedSummary(model, buildGrowthSeries(model, 0, 8), 0, 8, 1)!
+
+		expect(combined.assetAnnualizedPct).toBeCloseTo(10, 9)
+		expect(combined.days).toBe(7)
+	})
+
+	test('reads both legs at one endpoint, even when the source stops earlier', () => {
+		const history = [day(D(1), 5, { pps: 1 }), day(D(2), 5, { pps: 1.1 }), day(D(3), 5, { pps: 1.2 })]
+		const model = buildGrowthChart(history, source(1, 1.05, null)) as GrowthChartModel
+		const growth = buildGrowthSeries(model, 0, 3)
+		const pool = buildGrowthSummary(model, growth.anchor, 3, 10_000)!
+		const combined = buildCombinedSummary(model, growth, 0, 3, 10_000)!
+
+		// The pool's own summary runs to day three; the combined one must not mix that in.
+		expect(pool.gain).toBeCloseTo(2000, 6)
+		expect(combined.poolGain).toBeCloseTo(1000, 6)
+		expect(combined.poolGain + combined.assetGain).toBeCloseTo(combined.gain, 6)
+		expect(combined.asOf).toBe(Date.UTC(2026, 0, 2))
+	})
+
+	test('takes the drawdown from the combined series, not the pool alone', () => {
+		// The pool never falls; the asset does.
+		const model = buildGrowthChart(flat(3), source(1, 1.2, 1)) as GrowthChartModel
+		const growth = buildGrowthSeries(model, 0, 3)
+
+		expect(buildGrowthSummary(model, growth.anchor, 3, 1)!.drawdown).toBeNull()
+		expect(buildCombinedSummary(model, growth, 0, 3, 1)!.drawdown?.pct).toBeCloseTo(-16.6667, 4)
+	})
+
+	test('reports no drawdown when the asset carries the pool back over its dip', () => {
+		const history = [day(D(1), 5, { pps: 1 }), day(D(2), 5, { pps: 0.95 }), day(D(3), 5, { pps: 1.2 })]
+		const model = buildGrowthChart(history, source(1, 1.2, 1.1)) as GrowthChartModel
+		const growth = buildGrowthSeries(model, 0, 3)
+		const pool = buildGrowthSummary(model, growth.anchor, 3, 1)!
+		const combined = buildCombinedSummary(model, growth, 0, 3, 1)!
+
+		// 1 -> 1.14 -> 1.32 never falls, even though the pool's own line dipped 5%.
+		expect(pool.drawdown?.pct).toBeCloseTo(-5, 6)
+		expect(combined.drawdown).toBeNull()
+		// The readout must show nothing here. A `??` would reach past this null to the pool's 5% and
+		// badge a fall against a line that never fell.
+		expect(selectGrowthDrawdown(pool, combined)).toBeNull()
+	})
+
+	test('falls back to the pool dip only when the combined series is not shown', () => {
+		const model = buildGrowthChart(flat(3), source(1, 1.2, 1)) as GrowthChartModel
+		const growth = buildGrowthSeries(model, 0, 3)
+		const pool = buildGrowthSummary(model, growth.anchor, 3, 1)!
+
+		expect(selectGrowthDrawdown(pool, null)).toBe(pool.drawdown)
+		expect(selectGrowthDrawdown(pool, buildCombinedSummary(model, growth, 0, 3, 1)!)?.pct).toBeCloseTo(-16.6667, 4)
+	})
+
+	test('is null when the window holds no measured day to anchor to', () => {
+		const model = buildGrowthChart([day(D(1), 5, { pps: 1 }), day(D(2), 5, null)], source(1, 1.1)) as GrowthChartModel
+
+		expect(buildCombinedSummary(model, buildGrowthSeries(model, 1, 2), 1, 2, 1)).toBeNull()
 	})
 })

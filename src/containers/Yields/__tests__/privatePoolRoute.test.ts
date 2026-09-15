@@ -44,7 +44,8 @@ describe('/api/private/yields/pool/[id]', () => {
 			pool: expect.anything(),
 			history: history.slice(-30),
 			fullHistory: history,
-			sourceVerified: null
+			sourceVerified: null,
+			sourceHistory: null
 		})
 	})
 
@@ -65,5 +66,45 @@ describe('/api/private/yields/pool/[id]', () => {
 
 		expect(fetchPoolDetailCached).toHaveBeenCalledWith('source-id', true)
 		expect(buildPoolVerifiedProps).toHaveBeenCalledWith(expect.objectContaining({ sourceVerified }))
+	})
+
+	test("hands the source pool's measured history to the builder", async () => {
+		const sourceHistory = [{ date: '2026-01-01' }]
+		fetchPoolDetailCached.mockImplementation(async (id: string) =>
+			id === 'source-id'
+				? { verified: { apy: { avg_1d: 3.1 } } }
+				: {
+						verified: { apy: { avg_1d: 2.5 } },
+						intrinsic: { source_pool: { id: 'source-id' } },
+						available_history: { supply: false, borrow: false }
+					}
+		)
+		fetchPoolHistoryCached.mockResolvedValue(sourceHistory)
+		const res = createMockNextApiResponse()
+
+		await handler({ query: { id: 'pool-id', range: '30d' } } as never, res as never)
+
+		// Always max: the band rebases to whatever deposit day the reader picks.
+		expect(fetchPoolHistoryCached).toHaveBeenCalledWith('source-id', 'max', true)
+		expect(buildPoolVerifiedProps).toHaveBeenCalledWith(expect.objectContaining({ sourceHistory }))
+	})
+
+	test('survives a source pool whose history cannot be fetched', async () => {
+		fetchPoolDetailCached.mockImplementation(async (id: string) =>
+			id === 'source-id'
+				? { verified: { apy: { avg_1d: 3.1 } } }
+				: {
+						verified: { apy: { avg_1d: 2.5 } },
+						intrinsic: { source_pool: { id: 'source-id' } },
+						available_history: { supply: false, borrow: false }
+					}
+		)
+		fetchPoolHistoryCached.mockRejectedValue(new Error('upstream down'))
+		const res = createMockNextApiResponse()
+
+		await handler({ query: { id: 'pool-id' } } as never, res as never)
+
+		// The asset band is optional; losing it must not cost the reader the whole measured page.
+		expect(buildPoolVerifiedProps).toHaveBeenCalledWith(expect.objectContaining({ sourceHistory: null }))
 	})
 })

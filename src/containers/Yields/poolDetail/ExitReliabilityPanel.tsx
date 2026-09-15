@@ -104,7 +104,7 @@ export function ExitReliabilityPanel({
 	return (
 		<ChartPanel id={EXIT_STATUS_ID} className="@container scroll-mt-4">
 			{children ? (
-				<div className={`flex ${CHART_SECTION_HEIGHT} flex-col border-b border-subtle`}>{children}</div>
+				<div className={`flex ${CHART_SECTION_HEIGHT} flex-col overflow-hidden border-b border-subtle`}>{children}</div>
 			) : null}
 
 			<div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-3 pt-3">

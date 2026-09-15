@@ -74,8 +74,10 @@ export function VerifiedApyPanel({
 	return (
 		<ChartPanel id={HOW_WE_VERIFY_ID} className="scroll-mt-4">
 			{/* Fixed, not a floor, so the plot beside it in the exit card ends on the same line whatever
-			    rows each chart puts above it. */}
-			{children ? <div className={`flex ${CHART_SECTION_HEIGHT} flex-col`}>{children}</div> : null}
+			    rows each chart puts above it. Clipped because a chart body carries its own min-height:
+			    a row appearing above it (the pinned deposit day) pushes the total past this box, and
+			    without this the overflow lands on the section below rather than being absorbed. */}
+			{children ? <div className={`flex ${CHART_SECTION_HEIGHT} flex-col overflow-hidden`}>{children}</div> : null}
 
 			{/* The method in one line and the confidence, as the strip read before the card existed. */}
 			<div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-subtle px-4 py-3">

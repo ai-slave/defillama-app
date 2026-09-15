@@ -4,7 +4,12 @@
 import { applyMeasuredBase, applyMeasuredIntrinsic, type MeasuredApy, resolveApy } from '../data/apy'
 import type { ApyComponent, VerifiedBlock } from '../data/types'
 import { buildExitReliability, type ExitReliabilityModel } from './exitReliability'
-import { buildGrowthChart, type GrowthChartModel } from './growthChart'
+import {
+	buildGrowthChart,
+	buildIntrinsicSeries,
+	type GrowthChartModel,
+	type IntrinsicSourceSeries
+} from './growthChart'
 import { buildLiquidityChart, type LiquidityChartModel } from './liquidityChart'
 import { buildSupplyChart, type PoolChartModel } from './poolCharts'
 import type { PoolDetail, PoolHistory } from './types'
@@ -16,6 +21,8 @@ export interface PoolVerifiedProps {
 	apy: MeasuredApy | null
 	verifiedWindows: Array<VerifiedWindowRow>
 	growthChart: GrowthChartModel | null
+	/** The source pool's measured rates, so the client can rebuild the chart on a range change. */
+	intrinsicSeries: IntrinsicSourceSeries | null
 	liquidityChart: LiquidityChartModel | null
 	// Null when the pool carries no denomination; the chart then offers its USD view only.
 	liquidityDecimals: number | null
@@ -30,6 +37,7 @@ export const EMPTY_POOL_VERIFIED_PROPS: PoolVerifiedProps = {
 	apy: null,
 	verifiedWindows: [],
 	growthChart: null,
+	intrinsicSeries: null,
 	liquidityChart: null,
 	liquidityDecimals: null,
 	exitReliability: null,
@@ -74,7 +82,8 @@ export function buildPoolVerifiedProps({
 	pool,
 	history,
 	fullHistory,
-	sourceVerified = null
+	sourceVerified = null,
+	sourceHistory = null
 }: {
 	pool: PoolDetail
 	history: PoolHistory | null
@@ -82,12 +91,16 @@ export function buildPoolVerifiedProps({
 	fullHistory: PoolHistory | null
 	/** The intrinsic source pool's block, so its measured base can stand in for the intrinsic leg. */
 	sourceVerified?: VerifiedBlock | null
+	/** That pool's measured history, which the growth chart rebases the asset band on. */
+	sourceHistory?: PoolHistory | null
 }): PoolVerifiedProps {
+	const intrinsicSeries = buildIntrinsicSeries(sourceHistory)
 	return {
 		verified: pool.verified ?? null,
 		apy: buildMeasuredApy(pool, sourceVerified),
 		verifiedWindows: buildVerifiedWindows(pool),
-		growthChart: history?.length ? buildGrowthChart(history) : null,
+		growthChart: history?.length ? buildGrowthChart(history, intrinsicSeries) : null,
+		intrinsicSeries,
 		liquidityChart: history?.length ? buildLiquidityChart(history, verifiedDenomination(pool)) : null,
 		liquidityDecimals: pool.verified?.denomination?.decimals ?? null,
 		exitReliability: fullHistory?.length ? buildExitReliability(fullHistory) : null,

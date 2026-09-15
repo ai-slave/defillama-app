@@ -19,7 +19,7 @@ import { VerifiedApyAnnouncement } from '../VerifiedApyAnnouncement'
 import type { ExitReliabilityModel } from './exitReliability'
 import { ExitReliabilityPanel } from './ExitReliabilityPanel'
 import { scoreValue, YIELD_PERCENT_OPTIONS } from './format'
-import type { GrowthChartModel } from './growthChart'
+import type { GrowthChartModel, IntrinsicSourceSeries } from './growthChart'
 import { HoldersPanel } from './HoldersPanel'
 import type { LiquidityChartModel } from './liquidityChart'
 import { PoolApyChart } from './PoolApyChart'
@@ -93,6 +93,7 @@ export interface PoolDetailViewProps {
 	// Only present on pools with at least one measured redemption; unmeasured pools render no
 	// growth chart at all rather than an empty one.
 	growthChart: GrowthChartModel | null
+	intrinsicSeries: IntrinsicSourceSeries | null
 	// Null when the pool never reported withdrawable liquidity, or when its underlying tokens
 	// disagree on decimals so the raw amounts cannot be denominated.
 	liquidityChart: LiquidityChartModel | null
@@ -244,6 +245,7 @@ export function PoolDetailView({
 	supplyChart: supplyChartFromProps,
 	borrowChart,
 	growthChart: growthChartFromProps,
+	intrinsicSeries: intrinsicSeriesFromProps,
 	liquidityChart: liquidityChartFromProps,
 	liquidityDecimals: liquidityDecimalsFromProps,
 	exitReliability: exitReliabilityFromProps,
@@ -269,6 +271,7 @@ export function PoolDetailView({
 	const verifiedWindows =
 		seeded && verifiedWindowsFromProps.length > 0 ? verifiedWindowsFromProps : paid.verifiedWindows
 	const growthChart = (seeded ? growthChartFromProps : null) ?? paid.growthChart
+	const intrinsicSeries = (seeded ? intrinsicSeriesFromProps : null) ?? paid.intrinsicSeries
 	const liquidityChart = (seeded ? liquidityChartFromProps : null) ?? paid.liquidityChart
 	const liquidityDecimals = (seeded ? liquidityDecimalsFromProps : null) ?? paid.liquidityDecimals
 	const exitReliability = (seeded ? exitReliabilityFromProps : null) ?? paid.exitReliability
@@ -313,7 +316,14 @@ export function PoolDetailView({
 	}
 
 	const growthSection = growthChart ? (
-		<PoolGrowthChart key={`${poolId}:growth`} model={growthChart} poolId={poolId} initialRange={initialRange} />
+		<PoolGrowthChart
+			key={`${poolId}:growth`}
+			model={growthChart}
+			poolId={poolId}
+			initialRange={initialRange}
+			intrinsicSymbol={supply.apy.intrinsicSource}
+			intrinsicSeries={intrinsicSeries}
+		/>
 	) : null
 	const liquiditySection = liquidityChart ? (
 		<PoolLiquidityChart

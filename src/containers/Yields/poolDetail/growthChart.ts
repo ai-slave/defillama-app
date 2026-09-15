@@ -16,7 +16,21 @@
 // its own label, never spliced into the executed one — the quoted point is what the protocol said,
 // the executed point is what a holder got.
 
-import type { PoolHistoryPoint, VerifiedExitOutcome } from './types'
+import type { PoolHistory, PoolHistoryPoint, VerifiedExitOutcome } from './types'
+
+/** The intrinsic source pool's measured redemption rate, by day. */
+export type IntrinsicSourceSeries = Record<string, number>
+
+/** Measured days only: a source pool we never measured contributes nothing rather than a guess. */
+export function buildIntrinsicSeries(history: PoolHistory | null | undefined): IntrinsicSourceSeries | null {
+	if (!history?.length) return null
+	const series: IntrinsicSourceSeries = {}
+	for (const point of history) {
+		const rate = point.verified?.price_per_share ?? null
+		if (rate != null && rate > 0) series[point.date] = rate
+	}
+	return Object.keys(series).length > 0 ? series : null
+}
 
 function ms(date: string): number {
 	// Bare YYYY-MM-DD → pin to UTC midnight; anything else parse as-is.
@@ -33,6 +47,12 @@ export interface GrowthChartModel {
 	reasons: Array<string | null>
 	// That day's simulated-withdrawal outcome, for the tooltip.
 	outcomes: Array<VerifiedExitOutcome | null>
+	// The intrinsic source pool's MEASURED redemption rate, joined by date. Same quantity as `pps`,
+	// for the asset this pool holds, so the asset's growth is a ratio of two measurements rather
+	// than a compounded reported rate.
+	sourcePps: Array<number | null>
+	// Without one there is nothing to toggle.
+	hasIntrinsic: boolean
 }
 
 export interface GrowthSeries {
@@ -44,10 +64,21 @@ export interface GrowthSeries {
 	// The quoted continuation, rebased on the same basis, plus the executed point on either side of
 	// each quoted run so the dashed segment joins the solid line instead of floating beside it.
 	quoted: Array<number | null>
+	// `measured` times the compounded intrinsic index. Null where either leg is, so the line breaks.
+	combined: Array<number | null>
+	// `combined` minus `measured`: the token's contribution, stacked on the pool's so the two
+	// thicknesses are the split of the gain.
+	asset: Array<number | null>
+	// Model index the asset band is rebased to, or -1. Not always the deposit day: the source pool
+	// can have been measured later than this one.
+	assetAnchor: number
 }
 
 // Null unless at least one day carries a usable measured rate.
-export function buildGrowthChart(series: Array<PoolHistoryPoint>): GrowthChartModel | null {
+export function buildGrowthChart(
+	series: Array<PoolHistoryPoint>,
+	sourceSeries?: IntrinsicSourceSeries | null
+): GrowthChartModel | null {
 	if (series.length === 0) return null
 
 	const dates = new Array<number>(series.length)
@@ -55,7 +86,9 @@ export function buildGrowthChart(series: Array<PoolHistoryPoint>): GrowthChartMo
 	const quoted = new Array<number | null>(series.length)
 	const reasons = new Array<string | null>(series.length)
 	const outcomes = new Array<VerifiedExitOutcome | null>(series.length)
+	const sourcePps = new Array<number | null>(series.length)
 	let hasRate = false
+	let hasIntrinsic = false
 
 	for (let index = 0; index < series.length; index++) {
 		const point = series[index]
@@ -70,13 +103,16 @@ export function buildGrowthChart(series: Array<PoolHistoryPoint>): GrowthChartMo
 		quoted[index] = pps[index] == null && quote != null && quote > 0 ? quote : null
 		reasons[index] = pps[index] == null ? (verified?.reason ?? null) : null
 		outcomes[index] = verified?.exit?.outcome ?? null
+		// Joined by DATE, not position: the two pools' histories start on different days.
+		sourcePps[index] = sourceSeries?.[point.date] ?? null
 		hasRate ||= pps[index] != null
+		hasIntrinsic ||= sourcePps[index] != null
 	}
 
 	// Executed rates only: a pool with nothing but quotes has nothing verified to show.
 	if (!hasRate) return null
 
-	return { dates, pps, quoted, reasons, outcomes }
+	return { dates, pps, quoted, reasons, outcomes, sourcePps, hasIntrinsic }
 }
 
 // First day at or after `from` that carries a measured rate, or -1. Callers use it to begin the
@@ -97,9 +133,11 @@ export function buildGrowthSeries(model: GrowthChartModel, start: number, end: n
 	const length = Math.max(0, end - start)
 	const measured = new Array<number | null>(length).fill(null)
 	const quoted = new Array<number | null>(length).fill(null)
+	const combined = new Array<number | null>(length).fill(null)
+	const asset = new Array<number | null>(length).fill(null)
 
 	const anchor = firstMeasuredIndex(model, start, end)
-	if (anchor === -1) return { anchor, measured, quoted }
+	if (anchor === -1) return { anchor, measured, quoted, combined, asset, assetAnchor: -1 }
 
 	const basis = model.pps[anchor] as number
 	for (let index = anchor; index < end; index++) {
@@ -115,7 +153,26 @@ export function buildGrowthSeries(model: GrowthChartModel, start: number, end: n
 		if (index + 1 < end && measured[index + 1 - start] != null) quoted[index + 1 - start] = measured[index + 1 - start]
 	}
 
-	return { anchor, measured, quoted }
+	// The asset rebases on the SAME day the deposit was made, never on a later day of its own.
+	// Starting it late would omit the asset's growth over the opening stretch while still presenting
+	// the result as the whole deposit's, so without a source measurement on the deposit day the band
+	// is not drawn at all. Being a ratio, gaps AFTER that cost nothing: the next measured day is
+	// exact again, where a compounded rate loses a gap permanently.
+	const assetAnchor = model.sourcePps[anchor] != null ? anchor : -1
+	if (assetAnchor !== -1) {
+		const sourceBasis = model.sourcePps[anchor] as number
+		for (let day = anchor; day < end; day++) {
+			const rate = model.sourcePps[day]
+			const value = measured[day - start]
+			if (rate == null || value == null) continue
+			const scaled = value * (rate / sourceBasis)
+			combined[day - start] = scaled
+			// The cross term goes to the token: it earned on the whole balance.
+			asset[day - start] = scaled - value
+		}
+	}
+
+	return { anchor, measured, quoted, combined, asset, assetAnchor }
 }
 
 export interface GrowthDrawdown {
@@ -178,28 +235,6 @@ export function buildGrowthSummary(
 	const days = Math.round((model.dates[last] - model.dates[anchor]) / MS_PER_DAY)
 	const returnPct = (multiple - 1) * 100
 
-	// Deepest peak-to-trough fall over the measured days. Gap days are skipped rather than treated
-	// as zeroes, which would invent a total loss on every unmeasured day.
-	let peak = basis
-	let peakIndex = anchor
-	let worstPct = 0
-	let worstPeakIndex = anchor
-	let worstTroughIndex = anchor
-	for (let index = anchor; index <= last; index++) {
-		const rate = model.pps[index]
-		if (rate == null) continue
-		if (rate > peak) {
-			peak = rate
-			peakIndex = index
-		}
-		const fallPct = (rate / peak - 1) * 100
-		if (fallPct < worstPct) {
-			worstPct = fallPct
-			worstPeakIndex = peakIndex
-			worstTroughIndex = index
-		}
-	}
-
 	return {
 		from: model.dates[anchor],
 		to: model.dates[last],
@@ -208,17 +243,126 @@ export function buildGrowthSummary(
 		gain: endValue - deposit,
 		returnPct,
 		annualizedPct: days >= MIN_ANNUALIZE_DAYS ? (multiple ** (DAYS_PER_YEAR / days) - 1) * 100 : null,
-		drawdown:
-			worstPct < 0
-				? {
-						pct: worstPct,
-						peakDate: model.dates[worstPeakIndex],
-						troughDate: model.dates[worstTroughIndex],
-						// Made back once the last value is at or above the peak THIS drawdown fell from; a later,
-						// higher peak is a different question.
-						recovered: (model.pps[last] as number) >= (model.pps[worstPeakIndex] as number)
-					}
-				: null
+		drawdown: computeDrawdown(model.pps, (index) => model.dates[index], anchor, last)
+	}
+}
+
+/**
+ * The dip belonging to whichever series the headline reports. Deliberately not a `??` fallback: a
+ * null drawdown on the combined summary is a RESULT - that series never fell - and reaching past it
+ * to the pool's own dip would report a fall the reader is not being shown.
+ */
+export function selectGrowthDrawdown(
+	summary: GrowthSummary,
+	combined: GrowthCombinedSummary | null
+): GrowthDrawdown | null {
+	return combined ? combined.drawdown : summary.drawdown
+}
+
+// Deepest peak-to-trough fall across the non-null values in `[from, to]`. Gap days are skipped
+// rather than read as zeroes, which would invent a total loss on every unmeasured day. Scale-free,
+// so it takes raw rates or rebased multiples alike.
+function computeDrawdown(
+	values: ReadonlyArray<number | null>,
+	dateAt: (index: number) => number,
+	from: number,
+	to: number
+): GrowthDrawdown | null {
+	let peak: number | null = null
+	let peakIndex = from
+	let worstPct = 0
+	let worstPeakIndex = from
+	let worstTroughIndex = from
+	let lastValue: number | null = null
+	for (let index = from; index <= to; index++) {
+		const value = values[index]
+		if (value == null) continue
+		lastValue = value
+		if (peak == null || value > peak) {
+			peak = value
+			peakIndex = index
+		}
+		const fallPct = (value / (peak as number) - 1) * 100
+		if (fallPct < worstPct) {
+			worstPct = fallPct
+			worstPeakIndex = peakIndex
+			worstTroughIndex = index
+		}
+	}
+	if (worstPct >= 0 || lastValue == null) return null
+	return {
+		pct: worstPct,
+		peakDate: dateAt(worstPeakIndex),
+		troughDate: dateAt(worstTroughIndex),
+		// Made back once the last value is at or above the peak THIS drawdown fell from; a later,
+		// higher peak is a different question.
+		recovered: lastValue >= (values[worstPeakIndex] as number)
+	}
+}
+
+export interface GrowthCombinedSummary {
+	endValue: number
+	gain: number
+	returnPct: number
+	annualizedPct: number | null
+	// Days from the deposit to the last day BOTH were measured, which can trail the pool's own.
+	days: number
+	// That last day. Worth showing wherever it precedes the pool's own final measurement.
+	asOf: number
+	// The pool's leg read at the SAME day as the rest, so the two contributions add to `gain`. Not
+	// `GrowthSummary.gain`, which runs on to the pool's own last measured day.
+	poolGain: number
+	poolAnnualizedPct: number | null
+	// The token's share of `gain`.
+	assetGain: number
+	assetAnnualizedPct: number | null
+	// From the combined series, since that is what the headline reports.
+	drawdown: GrowthDrawdown | null
+}
+
+// Read off the window arrays `buildGrowthSeries` produced, so the readout matches the plot.
+export function buildCombinedSummary(
+	model: GrowthChartModel,
+	series: GrowthSeries,
+	start: number,
+	end: number,
+	deposit: number
+): GrowthCombinedSummary | null {
+	const anchor = series.anchor
+	if (anchor < 0 || anchor >= end) return null
+
+	// Walk back from the window end so a trailing gap doesn't hide the last drawn point.
+	let last = -1
+	for (let offset = series.combined.length - 1; offset >= 0; offset--) {
+		if (series.combined[offset] != null) {
+			last = offset
+			break
+		}
+	}
+	if (last < 0) return null
+
+	const multiple = series.combined[last] as number
+	// A combined point needs both legs, so the pool's multiple exists on this exact day. Both are
+	// read here and nowhere else, which is what makes the contributions add to the total.
+	const poolMultiple = series.measured[last] as number
+	const endValue = deposit * multiple
+	const lastIndex = start + last
+	const days = Math.round((model.dates[lastIndex] - model.dates[anchor]) / MS_PER_DAY)
+	const assetIndex = poolMultiple > 0 ? multiple / poolMultiple : null
+	const annualize = (value: number) => (days >= MIN_ANNUALIZE_DAYS ? (value ** (DAYS_PER_YEAR / days) - 1) * 100 : null)
+
+	return {
+		endValue,
+		gain: endValue - deposit,
+		returnPct: (multiple - 1) * 100,
+		annualizedPct: annualize(multiple),
+		days,
+		asOf: model.dates[lastIndex],
+		poolGain: deposit * (poolMultiple - 1),
+		poolAnnualizedPct: annualize(poolMultiple),
+		assetGain: deposit * (multiple - poolMultiple),
+		assetAnnualizedPct: assetIndex == null ? null : annualize(assetIndex),
+		drawdown: computeDrawdown(series.combined, (index) => model.dates[start + index], 0, last)
 	}
 }
 

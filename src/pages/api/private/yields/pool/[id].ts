@@ -32,7 +32,7 @@ export async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 	const available = pool.available_history ?? { supply: true, borrow: false }
 	const sourceId = pool.intrinsic?.source_pool.id
-	const [maxHistory, sourceVerified] = await Promise.all([
+	const [maxHistory, sourceVerified, sourceHistory] = await Promise.all([
 		available.supply ? fetchPoolHistoryCached(id, 'max', true) : null,
 		// A missing or unmeasured source pool leaves the intrinsic leg reported, as in the table.
 		sourceId
@@ -40,11 +40,16 @@ export async function handler(req: NextApiRequest, res: NextApiResponse) {
 					(source) => source.verified ?? null,
 					() => null
 				)
-			: null
+			: null,
+		// Always max: the asset band rebases to whatever day the reader picks, so a narrower fetch
+		// would lose its basis the moment they moved the deposit.
+		sourceId ? fetchPoolHistoryCached(sourceId, 'max', true).catch(() => null) : null
 	])
 	const history = maxHistory ? slicePoolHistory(maxHistory, range) : null
 
-	return res.status(200).json(buildPoolVerifiedProps({ pool, history, fullHistory: maxHistory, sourceVerified }))
+	return res
+		.status(200)
+		.json(buildPoolVerifiedProps({ pool, history, fullHistory: maxHistory, sourceVerified, sourceHistory }))
 }
 
 export default withSubscriptionJsonRoute({

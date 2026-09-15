@@ -154,6 +154,7 @@ async function buildBorrowOnlyProps(
 		borrowChart,
 		// Borrow-only markets have no earn row, so no simulated redemptions are measured for them.
 		growthChart: null,
+		intrinsicSeries: null,
 		liquidityChart: null,
 		liquidityDecimals: null,
 		exitReliability: null,
@@ -269,16 +270,30 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	// Empty on a redacted page; a subscriber's request carries the measured models from here.
 	const fullHistory = initialRange === 'max' ? history : maxHistory
 	const sourceId = pool.verified && pool.intrinsic ? pool.intrinsic.source_pool.id : null
-	const sourceVerified = sourceId
-		? ((await optionalResource(() => fetchPoolDetailCached(sourceId, true)))?.verified ?? null)
-		: null
-	const { verified, apy, verifiedWindows, growthChart, liquidityChart, liquidityDecimals, exitReliability } =
-		buildPoolVerifiedProps({
-			pool,
-			history,
-			fullHistory,
-			sourceVerified
-		})
+	// Only a subscriber sees the measured bands, so only their render pays for the source history.
+	const [sourceDetail, sourceHistory] = await Promise.all([
+		sourceId ? optionalResource(() => fetchPoolDetailCached(sourceId, true)) : Promise.resolve(null),
+		sourceId && includeVerifiedHistory
+			? optionalResource(() => fetchPoolHistoryCached(sourceId, 'max', true))
+			: Promise.resolve(null)
+	])
+	const sourceVerified = sourceDetail?.verified ?? null
+	const {
+		verified,
+		apy,
+		verifiedWindows,
+		growthChart,
+		intrinsicSeries,
+		liquidityChart,
+		liquidityDecimals,
+		exitReliability
+	} = buildPoolVerifiedProps({
+		pool,
+		history,
+		fullHistory,
+		sourceVerified,
+		sourceHistory
+	})
 
 	// When this pool is also a borrow market, surface the borrow side (APY + borrowed /
 	// available) from the borrow-markets dataset row (same id), resolved at current
@@ -350,6 +365,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			supplyChart,
 			borrowChart,
 			growthChart,
+			intrinsicSeries,
 			liquidityChart,
 			liquidityDecimals,
 			exitReliability,
