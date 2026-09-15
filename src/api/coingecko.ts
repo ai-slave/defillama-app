@@ -457,14 +457,14 @@ export async function fetchCoinGeckoChartByIdWithCacheFallback(
 			getCachedCgChartData(geckoId, timeframe),
 			includeCoinData ? getCachedCgCoinData(geckoId) : Promise.resolve(null)
 		])
-		return data ? { data: coinData ? { ...data, coinData } : data } : null
+		return coinData ? { data: { ...data, coinData } } : data ? { data } : null
 	}
 
 	const url = new URL(`${CG_CHART_LOCAL_API_PATH}/${encodeURIComponent(geckoId)}`, window.location.origin)
 	url.searchParams.set('timeframe', timeframe)
 	if (includeCoinData) url.searchParams.set('includeCoinData', 'true')
 	const chart = await fetchJson<CgChartResponse | null>(url.toString()).catch(() => null)
-	return chart?.data?.prices?.length ? chart : null
+	return chart?.data?.prices?.length || (includeCoinData && chart?.data?.coinData) ? chart : null
 }
 
 /**

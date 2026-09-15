@@ -29,6 +29,7 @@ import { acquireOptionalYieldsSnapshot } from '~/containers/Yields/server/datase
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import TokenPage, { getServerSideProps } from '~/pages/token/[token]'
 import { DatasetSnapshotIntegrityError } from '~/server/datasetSnapshots/errors'
+import { EMPTY_TOKEN_FILTER_METADATA, type TokenFilterMetadataArtifact } from '~/utils/metadata/tokenFilters'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 import type { TokenRiskResponse } from '../tokenRisk.types'
@@ -71,6 +72,11 @@ const tokenRightsEntryFixture: IRawTokenRightsEntry = {
 const tokenRightsFixture = parseTokenRightsEntry(tokenRightsEntryFixture)
 
 const overviewFixture: TokenOverviewData = {
+	categories: [],
+	website: null,
+	twitter: null,
+	telegram: null,
+	discord: null,
 	name: 'Bitcoin',
 	displayName: 'BTC',
 	symbol: 'BTC',
@@ -105,6 +111,7 @@ const overviewFixture: TokenOverviewData = {
 
 const state: {
 	tokensJson: TokenDirectory
+	tokenFilterMetadata: TokenFilterMetadataArtifact
 	tokenRightsEntries: Array<unknown>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	chainMetadata: Record<string, { name: string }>
@@ -120,6 +127,7 @@ const state: {
 	initialTokenBorrowRoutesData: unknown
 	tokenlist: Record<string, unknown>
 } = {
+	tokenFilterMetadata: EMPTY_TOKEN_FILTER_METADATA,
 	tokensJson: {
 		btc: { name: 'Bitcoin', symbol: 'BTC', token_nk: 'coingecko:bitcoin', route: '/token/BTC', mcap_rank: 1 },
 		eth: { name: 'Ethereum', symbol: 'ETH', token_nk: 'coingecko:ethereum', route: '/token/ETH', mcap_rank: 2 }
@@ -158,6 +166,7 @@ const state: {
 }
 
 function resetState() {
+	state.tokenFilterMetadata = EMPTY_TOKEN_FILTER_METADATA
 	state.tokensJson = {
 		btc: { name: 'Bitcoin', symbol: 'BTC', token_nk: 'coingecko:bitcoin', route: '/token/BTC', mcap_rank: 1 },
 		eth: { name: 'Ethereum', symbol: 'ETH', token_nk: 'coingecko:ethereum', route: '/token/ETH', mcap_rank: 2 }
@@ -290,6 +299,7 @@ function makeOverviewSection(overrides: Partial<Extract<TokenPageSection, { id: 
 		geckoId: 'bitcoin',
 		logo: null,
 		issuer: null,
+		chain: null,
 		...overrides
 	} satisfies TokenPageSection
 }
@@ -418,7 +428,7 @@ vi.mock('~/containers/Tokens/cache.server', () => ({
 }))
 
 vi.mock('~/containers/Tokens/queries.server', () => ({
-	getTokenOverviewCurrentSnapshot: vi.fn().mockResolvedValue({ generatedAt: 42, metrics: null })
+	getTokenOverviewCurrentSnapshot: vi.fn().mockResolvedValue({ generatedAt: 42, metrics: null, categories: [] })
 }))
 
 vi.mock('~/utils/telemetry', () => ({
@@ -454,6 +464,9 @@ vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
 vi.mock('~/utils/metadata', () => ({
 	__esModule: true,
 	default: {
+		get tokenFilterMetadata() {
+			return state.tokenFilterMetadata
+		},
 		get tokenDirectory() {
 			return state.tokensJson
 		},
@@ -549,6 +562,16 @@ afterEach(() => {
 })
 
 describe('token page', () => {
+	test('preserves the category order supplied by the shared market snapshot', async () => {
+		const categories = [
+			{ id: 'defi', label: 'DeFi' },
+			{ id: 'chain-tokens', label: 'Chain Tokens' }
+		]
+		vi.mocked(getTokenOverviewCurrentSnapshot).mockResolvedValueOnce({ generatedAt: 42, metrics: null, categories })
+		await runTokenPageRequest({ params: { token: 'ETH' } } as never)
+		expect(getTokenOverviewData).toHaveBeenLastCalledWith(expect.objectContaining({ categories }))
+	})
+
 	const raise: Raise = {
 		date: 1,
 		name: 'Stake DAO',
@@ -695,7 +718,7 @@ describe('token page', () => {
 				await vi.waitFor(() => expect(acquireOptionalYieldsSnapshot).toHaveBeenCalledTimes(count))
 			}
 		} finally {
-			current.resolve({ generatedAt: 42, metrics: null })
+			current.resolve({ generatedAt: 42, metrics: null, categories: [] })
 		}
 		const results = await Promise.all(requests)
 		for (const result of results) expect(result).toHaveProperty('props')
@@ -936,7 +959,11 @@ describe('token page', () => {
 			volume24h: 777,
 			outstandingFDV: 1200
 		}
-		vi.mocked(getTokenOverviewCurrentSnapshot).mockResolvedValueOnce({ generatedAt: 42, metrics: currentMetrics })
+		vi.mocked(getTokenOverviewCurrentSnapshot).mockResolvedValueOnce({
+			generatedAt: 42,
+			metrics: currentMetrics,
+			categories: []
+		})
 
 		await runTokenPageRequest({ params: { token: 'BTC' } } as never)
 
@@ -1896,7 +1923,7 @@ async function overlapColdModuleLoad() {
 		(caughtError: unknown) => ({ reason: caughtError })
 	)
 	const settle = async () => {
-		current.resolve({ generatedAt: 42, metrics: null })
+		current.resolve({ generatedAt: 42, metrics: null, categories: [] })
 		moduleReady.resolve()
 		await result
 		// A current-snapshot failure settles the request before its imports finish.
@@ -1926,7 +1953,7 @@ async function overlapColdModuleLoad() {
 test('overlaps a cold module load and a resolving current snapshot', async () => {
 	const overlap = await overlapColdModuleLoad()
 	try {
-		overlap.current.resolve({ generatedAt: 42, metrics: null })
+		overlap.current.resolve({ generatedAt: 42, metrics: null, categories: [] })
 		overlap.moduleReady.resolve()
 
 		expect(await overlap.result).toHaveProperty('value.props')

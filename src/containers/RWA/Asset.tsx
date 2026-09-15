@@ -850,7 +850,7 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 										<Menu name="Twitter" options={asset.twitter} isExternal className={assetHeaderLinkButtonStyles} />
 									) : (
 										<ExternalLinkButton key={asset.twitter[0]} href={asset.twitter[0]} icon="twitter">
-											Twitter
+											X/Twitter
 										</ExternalLinkButton>
 									)
 								) : null}

@@ -56,6 +56,7 @@ export type TokenPageSection =
 			geckoId: string | null
 			logo: string | null
 			issuer: TokenIssuer | null
+			chain: TokenIssuer | null
 	  }
 	| {
 			id: 'token-markets'

@@ -68,6 +68,11 @@ export interface TokenOverviewData {
 	name: string
 	displayName: string
 	symbol: string
+	website: string | null
+	twitter: string | null
+	telegram: string | null
+	discord: string | null
+	categories: Array<{ id: string; label: string }>
 	marketData: TokenOverviewMarketData
 	treasury: TokenOverviewTreasury | null
 	raises: Array<TokenOverviewRaise> | null
@@ -439,6 +444,7 @@ export function buildTokenOverviewRawChartData({
 
 export async function getTokenOverviewData({
 	record,
+	categories,
 	displayName,
 	geckoId,
 	tokenEntry,
@@ -450,6 +456,7 @@ export async function getTokenOverviewData({
 	prefetchedCharts = TOKEN_OVERVIEW_ALL_CHARTS
 }: {
 	record: TokenDirectoryRecord
+	categories: TokenOverviewData['categories']
 	displayName: string
 	geckoId: string | null
 	tokenEntry: ITokenListEntry | null
@@ -517,11 +524,24 @@ export async function getTokenOverviewData({
 	const treasury = shouldFetchTreasury ? buildTreasurySummary(treasuries) : null
 
 	const matchedRaises = raisesData ?? []
+	const links = cgChart?.data?.coinData?.links
+	const twitterHandle = links?.twitter_screen_name?.trim()
+	const telegramHandle = links?.telegram_channel_identifier?.trim()
 
 	return {
 		name: record.name,
 		displayName,
 		symbol: record.symbol,
+		categories,
+		website: record.website ?? links?.homepage?.find((url) => /^https?:\/\//i.test(url)) ?? null,
+		twitter: record.twitter ?? (twitterHandle ? `https://x.com/${encodeURIComponent(twitterHandle)}` : null),
+		telegram: record.telegram ?? (telegramHandle ? `https://t.me/${encodeURIComponent(telegramHandle)}` : null),
+		discord:
+			record.discord ??
+			links?.chat_url?.find((url) =>
+				/^https?:\/\/(?:www\.)?(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(url)
+			) ??
+			null,
 		marketData,
 		treasury,
 		raises: buildRaisesSummary(matchedRaises),

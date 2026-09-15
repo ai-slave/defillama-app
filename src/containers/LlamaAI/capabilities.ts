@@ -32,7 +32,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'x_data',
-		name: 'X / Twitter',
+		name: 'X/Twitter',
 		icon: 'twitter',
 		description: 'See what crypto Twitter is saying — track influencers, find project teams, and surface viral takes.',
 		prompts: [

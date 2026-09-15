@@ -81,10 +81,10 @@ export function ShareProfileButton({ slug, displayName }: { slug: string; displa
 								type="button"
 								onClick={() => handleShareTo('twitter')}
 								className="flex flex-1 items-center justify-center gap-2 rounded-md border border-medium px-3 py-2 text-xs text-secondary transition-colors hover:text-primary"
-								title="Share on Twitter/X"
+								title="Share on X/Twitter"
 							>
 								<Icon name="twitter" height={16} width={16} />
-								<span>Twitter</span>
+								<span>X/Twitter</span>
 							</button>
 							<button
 								type="button"

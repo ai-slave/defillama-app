@@ -51,7 +51,7 @@ function getSourceType(sourceType: string): string {
 		case 'filing':
 			return 'Filing'
 		case 'twitter':
-			return 'Twitter'
+			return 'X/Twitter'
 		case 'press-release':
 			return 'Press Release'
 		case 'site':

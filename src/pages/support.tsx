@@ -131,7 +131,7 @@ function Support() {
 	return (
 		<Layout
 			title="Help & Support - DefiLlama DeFi Analytics"
-			description="Get help with DefiLlama. Find answers to common questions, report issues, or reach the team via Discord and Twitter."
+			description="Get help with DefiLlama. Find answers to common questions, report issues, or reach the team via Discord and X/Twitter."
 			canonicalUrl="/support"
 		>
 			<div className="mx-auto flex w-full max-w-lg flex-col gap-4 lg:mt-4 xl:mt-11 xl:ml-[calc(228px-16px)]">

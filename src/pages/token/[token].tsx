@@ -159,6 +159,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 
 				return getTokenOverviewData({
 					record,
+					categories: currentSnapshot?.categories ?? [],
 					displayName,
 					geckoId,
 					tokenEntry,
@@ -273,6 +274,8 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			const issuerDisplayName = protocolMetadata?.displayName ?? protocolMetadata?.name ?? null
 			const issuer =
 				record.protocolId && issuerDisplayName ? { name: issuerDisplayName, slug: slug(issuerDisplayName) } : null
+			const chainDisplayName = record.chainId ? (metadataCache.chainDisplayNames.get(record.chainId) ?? null) : null
+			const chain = chainDisplayName ? { name: chainDisplayName, slug: slug(chainDisplayName) } : null
 			const sections = getTokenPageSections({
 				record,
 				geckoId,
@@ -285,6 +288,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				yieldsSnapshot,
 				borrowRoutesSnapshot,
 				issuer,
+				chain,
 				overview
 			})
 
@@ -320,6 +324,7 @@ const TOKEN_SECTION_RENDERERS = {
 			geckoId={section.geckoId}
 			logo={section.logo}
 			issuer={section.issuer}
+			chain={section.chain}
 		/>
 	),
 	'token-markets': ({ section }) => <TokenMarketsSection geckoId={section.geckoId} tokenSymbol={section.tokenSymbol} />,

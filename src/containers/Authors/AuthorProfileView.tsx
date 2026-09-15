@@ -75,7 +75,7 @@ function socialLabel(key: string): string {
 	switch (key) {
 		case 'twitter':
 		case 'x':
-			return 'Twitter / X'
+			return 'X/Twitter'
 		case 'github':
 			return 'GitHub'
 		case 'farcaster':

@@ -54,11 +54,16 @@ let routerState = {
 }
 let lastProtocolChartProps: any = null
 
-function renderTokenOverviewSection(props: Parameters<typeof TokenOverviewSection>[0]) {
+type TokenOverviewSectionProps = Parameters<typeof TokenOverviewSection>[0]
+
+function renderTokenOverviewSection(
+	props: Omit<TokenOverviewSectionProps, 'issuer' | 'chain'> &
+		Partial<Pick<TokenOverviewSectionProps, 'issuer' | 'chain'>>
+) {
 	const client = new QueryClient()
 	return renderToStaticMarkup(
 		<QueryClientProvider client={client}>
-			<TokenOverviewSection {...props} />
+			<TokenOverviewSection issuer={null} chain={null} {...props} />
 		</QueryClientProvider>
 	)
 }
@@ -220,6 +225,11 @@ const cgCoinDetailFixture = {
 }
 
 const overviewFixture: TokenOverviewData = {
+	categories: [],
+	website: null,
+	twitter: null,
+	telegram: null,
+	discord: null,
 	name: 'Bitcoin',
 	displayName: 'BTC',
 	symbol: 'BTC',
@@ -338,8 +348,84 @@ beforeEach(() => {
 })
 
 describe('tokenOverview helpers', () => {
+	test.each([true, false])('renders links without chart history, with social overrides: %s', async (hasOverrides) => {
+		mocks.fetchCoinGeckoChartByIdWithCacheFallback.mockResolvedValue({
+			data: {
+				coinData: {
+					links: {
+						homepage: ['', 'javascript:alert(1)', 'https://provider.example'],
+						twitter_screen_name: 'provider',
+						telegram_channel_identifier: 'providerchat',
+						chat_url: ['https://t.me/not-discord', 'https://discord.gg/provider']
+					}
+				}
+			}
+		})
+		const result = await getTokenOverviewData({
+			categories: [],
+			record: {
+				name: 'Example',
+				symbol: 'EX',
+				...(hasOverrides ? { twitter: 'https://x.com/curated', telegram: 'https://t.me/curated' } : {})
+			},
+			displayName: 'EX',
+			geckoId: 'example',
+			tokenEntry: tokenEntryFixture,
+			protocolMetadata: null,
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			source: { kind: 'prefetched', raises: null, treasury: null }
+		})
+		expect(result).toMatchObject({
+			website: 'https://provider.example',
+			twitter: hasOverrides ? 'https://x.com/curated' : 'https://x.com/provider',
+			telegram: hasOverrides ? 'https://t.me/curated' : 'https://t.me/providerchat',
+			discord: 'https://discord.gg/provider',
+			rawChartData: {}
+		})
+		const html = renderTokenOverviewSection({ overview: result, geckoId: 'example' })
+		for (const url of [result.website, result.twitter, result.telegram, result.discord]) {
+			expect(html).toContain(`href="${url}"`)
+		}
+		expect(html).not.toContain('javascript:')
+		expect(html).toContain('rel="noopener noreferrer"')
+	})
+
+	test.each([true, false])(
+		'keeps links serializable without a CoinGecko ID, with overrides: %s',
+		async (hasOverrides) => {
+			const overrides = hasOverrides
+				? { website: 'https://project.example', discord: 'https://project.example/discord' }
+				: {}
+			const result = await getTokenOverviewData({
+				categories: [],
+				record: { name: 'Example', symbol: 'EX', token_nk: 'ethereum:0x123', ...overrides },
+				displayName: 'EX',
+				geckoId: null,
+				tokenEntry: null,
+				protocolMetadata: null,
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				source: { kind: 'prefetched', raises: null, treasury: null }
+			})
+			expect(result).toMatchObject({
+				website: hasOverrides ? 'https://project.example' : null,
+				discord: hasOverrides ? 'https://project.example/discord' : null,
+				twitter: null,
+				telegram: null
+			})
+			expect(JSON.parse(JSON.stringify(result))).toEqual(result)
+			expect(mocks.fetchCoinGeckoChartByIdWithCacheFallback).not.toHaveBeenCalled()
+			const html = renderTokenOverviewSection({ overview: result, geckoId: null })
+			expect(html.includes('href="https://project.example"')).toBe(hasOverrides)
+			expect(html).not.toContain('>X/Twitter<')
+			expect(html).not.toContain('>Telegram<')
+		}
+	)
+
 	test('uses chain-based raises and skips treasury when chainId exists', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Xion',
 				symbol: 'XION',
@@ -374,6 +460,7 @@ describe('tokenOverview helpers', () => {
 
 	test('fetches treasury by protocol when protocolId exists without chainId', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Test Protocol',
 				symbol: 'TEST',
@@ -406,6 +493,7 @@ describe('tokenOverview helpers', () => {
 
 	test('uses prefetched raises and treasury without fetching them again', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Test Protocol',
 				symbol: 'TEST',
@@ -462,6 +550,7 @@ describe('tokenOverview helpers', () => {
 
 	test('prefers the protocol slug metadata and max supply when building overview data', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Test Protocol',
 				symbol: 'TEST',
@@ -492,6 +581,7 @@ describe('tokenOverview helpers', () => {
 
 	test('resolves numeric protocol IDs through metadata before reading emissions supply metrics', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Pudgy Penguins',
 				symbol: 'PENGU',
@@ -514,6 +604,7 @@ describe('tokenOverview helpers', () => {
 
 	test('skips emissions adjusted supply when the resolved slug is absent from the cached emissions list', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Missing Protocol',
 				symbol: 'MISS',
@@ -536,6 +627,7 @@ describe('tokenOverview helpers', () => {
 
 	test('does not resolve numeric protocol IDs without metadata', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Unknown Protocol',
 				symbol: 'MISS',
@@ -555,6 +647,7 @@ describe('tokenOverview helpers', () => {
 
 	test('can limit server-prefetched chart data to only the default price series', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Bitcoin',
 				symbol: 'BTC'
@@ -583,6 +676,7 @@ describe('tokenOverview helpers', () => {
 
 	test('returns token-only data when no protocol mapping is available', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Bitcoin',
 				symbol: 'BTC',
@@ -622,6 +716,7 @@ describe('tokenOverview helpers', () => {
 				outstandingFDV: value
 			}
 			const result = await getTokenOverviewData({
+				categories: [],
 				record: { name: 'Test Protocol', symbol: 'TEST', protocolId: 'parent#test-protocol' },
 				displayName: 'TEST',
 				geckoId: 'bitcoin',
@@ -657,6 +752,7 @@ describe('tokenOverview helpers', () => {
 
 	test('uses the rankings metrics verbatim without calling a second current-price source', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Bitcoin',
 				symbol: 'BTC'
@@ -698,6 +794,7 @@ describe('tokenOverview helpers', () => {
 
 	test('does not fetch CoinGecko coin detail when only max supply is missing from tokenlist data', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Ethereum',
 				symbol: 'ETH'
@@ -722,6 +819,7 @@ describe('tokenOverview helpers', () => {
 
 	test('uses the current price snapshot as ATH when it exceeds the stored all-time high', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Bitcoin',
 				symbol: 'BTC'
@@ -753,6 +851,7 @@ describe('tokenOverview helpers', () => {
 		})
 
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Bitcoin',
 				symbol: 'BTC'
@@ -777,6 +876,7 @@ describe('tokenOverview helpers', () => {
 
 	test('uses the single-price endpoint to derive price, market cap, and FDV', async () => {
 		const result = await getTokenOverviewData({
+			categories: [],
 			record: {
 				name: 'Wrapped stETH',
 				symbol: 'WSTETH'
@@ -838,6 +938,33 @@ describe('TokenPageHero component', () => {
 })
 
 describe('TokenOverviewSection component', () => {
+	test('renders token information links in a card below the hero, not in the hero', () => {
+		const categories = [
+			{ id: 'real-world-assets-rwa', label: 'RWA' },
+			{ id: 'stablecoins', label: 'Stablecoins' }
+		]
+		const overview = { ...overviewFixture, categories, website: 'https://project.example' }
+		const html = renderTokenOverviewSection({
+			geckoId: 'bitcoin',
+			overview,
+			issuer: { name: 'Circle', slug: 'circle' },
+			chain: { name: 'Ethereum', slug: 'ethereum' }
+		})
+		expect(html).toContain('Token Information')
+		expect(html).toContain('href="/tokens?categories=real-world-assets-rwa"')
+		expect(html).toContain('href="/tokens?categories=stablecoins"')
+		expect(html).toContain('Categories:')
+		expect(html).toContain('href="/protocol/circle"')
+		expect(html).toContain('href="/chain/ethereum"')
+		expect(html).toContain('>Website<')
+
+		const hero = renderToStaticMarkup(<TokenPageHero overview={overview} />)
+		expect(hero).not.toContain('/tokens?categories=')
+		expect(hero).not.toContain('Issued by')
+
+		const bare = renderTokenOverviewSection({ geckoId: 'bitcoin', overview: overviewFixture })
+		expect(bare).not.toContain('Token Information')
+	})
 	test('keeps zero funding and treasury visible alongside an undisclosed round', () => {
 		const html = renderTokenOverviewSection({
 			geckoId: 'bitcoin',

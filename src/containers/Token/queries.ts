@@ -107,6 +107,7 @@ export function getTokenPageSections({
 	yieldsSnapshot,
 	borrowRoutesSnapshot,
 	issuer,
+	chain,
 	overview
 }: {
 	record: TokenDirectoryRecord
@@ -120,6 +121,7 @@ export function getTokenPageSections({
 	yieldsSnapshot: ReturnType<typeof buildInitialYieldsSnapshot>
 	borrowRoutesSnapshot: ReturnType<typeof buildInitialBorrowRoutesSnapshot>
 	issuer: TokenIssuer | null
+	chain: TokenIssuer | null
 	overview: TokenOverviewData
 }): Array<TokenPageSection> {
 	const sections: Array<TokenPageSection> = [
@@ -129,7 +131,8 @@ export function getTokenPageSections({
 			overview,
 			geckoId,
 			logo: record.logo ?? null,
-			issuer
+			issuer,
+			chain
 		}
 	]
 

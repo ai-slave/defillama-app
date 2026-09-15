@@ -518,7 +518,8 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	const items: Array<InlineStatStripItem> = [
 		{
 			label: 'MCap',
-			tooltip: 'Total market capitalization of ranked tokens. Percentage shows the market-cap-weighted 24-hour change.',
+			tooltip:
+				'Total market capitalization excluding wrapped, staked and other receipt assets identified by CoinGecko. The 24-hour change estimates price-driven movement using current circulating supplies.',
 			value: stats.totalMarketCap,
 			change: stats.marketCapWeightedChange24h,
 			changeClassName: VALUE_TONE_CLASSES[stats.marketCapWeightedChange24hTone]

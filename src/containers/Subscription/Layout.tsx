@@ -95,7 +95,7 @@ export function SubscribeLayout({
 									Discord
 								</a>
 								<a href="https://x.com/DefiLlama" className="transition-colors hover:text-on-brand">
-									Twitter
+									X/Twitter
 								</a>
 								<a href="https://github.com/DefiLlama" className="transition-colors hover:text-on-brand">
 									GitHub

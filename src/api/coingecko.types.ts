@@ -110,6 +110,7 @@ export interface CgChartResponse {
 	data?: {
 		coinData?: {
 			symbol?: string
+			links?: CoinGeckoCoinLinks
 			market_data?: {
 				ath?: { usd?: number | null }
 				ath_date?: { usd?: string | null }
@@ -297,6 +298,7 @@ interface CoinGeckoCoinLinks {
 	announcement_url?: Array<string>
 	snapshot_url?: string
 	twitter_screen_name?: string
+	telegram_channel_identifier?: string
 	repos_url?: { github?: Array<string>; bitbucket?: Array<string> }
 	[key: string]: unknown
 }

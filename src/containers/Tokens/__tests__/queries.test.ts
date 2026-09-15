@@ -10,7 +10,8 @@ import {
 	buildTokenFilterOptions,
 	buildTokensChartDataset,
 	buildTokensSourceRows,
-	fetchTokensSourceRows
+	fetchTokensSourceRows,
+	getTokenOverviewCurrentSnapshot
 } from '../queries.server'
 import { buildTokenOverviewCurrentMetricsById } from '../readModel'
 import { buildTokensRowFilter } from '../utils'
@@ -21,6 +22,8 @@ const sourceMocks = vi.hoisted(() => ({
 	getAllProtocolEmissions: vi.fn(() => Promise.resolve([])),
 	refreshMetadataInBackgroundIfStale: vi.fn()
 }))
+
+vi.mock('../server/tableData.server', () => ({ getTokensMarketSnapshot: vi.fn() }))
 
 vi.mock('~/containers/AdapterMetrics/api', () => ({
 	fetchAdapterChainMetrics: sourceMocks.fetchAdapterChainMetrics
@@ -91,6 +94,44 @@ describe('fetchTokensSourceRows', () => {
 })
 
 describe('buildTokenFilterOptions', () => {
+	test('uses global category market caps for token pages and matches membership by ID, not symbol', async () => {
+		const metadata = (await import('~/utils/metadata')).default
+		const previousFilters = metadata.tokenFilterMetadata
+		const { getTokensMarketSnapshot } = await import('../server/tableData.server')
+		metadata.tokenFilterMetadata = {
+			...tokenFilterMetadata({
+				ethereum: { chains: [], primaryChain: null, categories: ['chain', 'defi'] },
+				other: { chains: [], primaryChain: null, categories: ['defi'] }
+			}),
+			generatedAt: 123,
+			categories: [
+				{ id: 'chain', label: 'Chain Tokens' },
+				{ id: 'defi', label: 'DeFi' }
+			]
+		}
+		vi.mocked(getTokensMarketSnapshot).mockResolvedValue({
+			version: 'category-order-test',
+			generatedAt: 42,
+			tokens: [
+				{ id: 'ethereum', name: 'Ethereum', symbol: 'ETH', market_cap: 100 },
+				{ id: 'other', name: 'Other', symbol: 'ETH', market_cap: 200 }
+			],
+			markets: null,
+			currentMetricsById: {},
+			tokenIndexById: new Map()
+		})
+		try {
+			expect((await getTokenOverviewCurrentSnapshot('ethereum')).categories).toEqual([
+				{ id: 'defi', label: 'DeFi' },
+				{ id: 'chain', label: 'Chain Tokens' }
+			])
+			expect((await getTokenOverviewCurrentSnapshot('other')).categories).toEqual([{ id: 'defi', label: 'DeFi' }])
+			expect((await getTokenOverviewCurrentSnapshot('missing')).categories).toEqual([])
+		} finally {
+			metadata.tokenFilterMetadata = previousFilters
+		}
+	})
+
 	test('orders options by aggregate token market cap with deterministic ties', () => {
 		const rows = [
 			{ marketCap: 100, chains: ['ethereum'], categories: ['stablecoins', 'rwa'] },
@@ -532,6 +573,73 @@ describe('buildTokensSourceRows', () => {
 			rights: null
 		})
 	})
+
+	test.each([
+		{ receiptsOnly: false, change: expect.closeTo(2, 10) },
+		{ receiptsOnly: true, change: null }
+	])(
+		'excludes receipt assets from headline MCap while retaining rows (receipts only: $receiptsOnly)',
+		({ receiptsOnly, change }) => {
+			const receipt = {
+				id: 'staked-ether',
+				name: 'Staked Ether',
+				symbol: 'steth',
+				market_cap: 600,
+				market_cap_rank: null,
+				market_cap_rank_with_rehypothecated: 9,
+				price_change_percentage_24h: 1000
+			}
+			const tokens = receiptsOnly
+				? [receipt]
+				: [
+						{
+							id: 'ethereum',
+							name: 'Ethereum',
+							symbol: 'eth',
+							market_cap: 1000,
+							market_cap_rank: 2,
+							market_cap_rank_with_rehypothecated: 2,
+							price_change_percentage_24h: 2
+						},
+						receipt,
+						{
+							id: 'unranked',
+							name: 'Unranked',
+							symbol: 'unk',
+							market_cap: 50,
+							market_cap_rank: null,
+							market_cap_rank_with_rehypothecated: null,
+							price_change_percentage_24h: 2
+						},
+						{ id: 'missing-change', name: 'Missing change', symbol: 'mc', market_cap: 100, market_cap_rank: 3 }
+					]
+			const result = buildTokensSourceRows({
+				tokens,
+				markets: { last_updated: '', tokens: [] },
+				tokenRightsEntries: [],
+				fees: [],
+				revenue: [],
+				holdersRevenue: [],
+				unlocks: [],
+				metadata: {
+					tokenDirectory: {},
+					protocolMetadata: {},
+					emissionsSupplyMetrics: {},
+					tokenFilterMetadata: tokenFilterMetadata()
+				} as unknown as MetadataCache,
+				nowSec: 1_800_000_000
+			})
+
+			expect(result.stats.totalMarketCap).toBe(receiptsOnly ? 0 : 1150)
+			expect(result.stats.marketCapWeightedChange24h).toEqual(change)
+			expect(result.rows).toHaveLength(tokens.length)
+			expect(result.rows.find((row) => row.id === receipt.id)).toMatchObject({
+				marketCap: 600,
+				priceChange24h: 1000,
+				rank: 9
+			})
+		}
+	)
 
 	test('measures the aggregate market cap change so a repriced dust token cannot dominate it', () => {
 		const result = buildTokensSourceRows({

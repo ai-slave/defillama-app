@@ -76,6 +76,7 @@ interface TokensSourceData extends TokensSourceRows {
 export interface TokenOverviewCurrentSnapshot {
 	generatedAt: number
 	metrics: TokenOverviewCurrentMetrics | null
+	categories: Array<{ id: string; label: string }>
 }
 
 export interface TokensPageSnapshot {
@@ -229,7 +230,6 @@ function getSearchKey(token: IResponseCGTokenRankingsDatasetItem, record: TokenD
 }
 
 function addStats(stats: TokensPageStats, row: TokensSourceRow): void {
-	stats.totalMarketCap += row.marketCap ?? 0
 	if (stats.spotVolume24h !== null) stats.spotVolume24h += row.spotVolume24h ?? 0
 	if (stats.perpsVolume24h !== null) stats.perpsVolume24h += row.perpsVolume24h ?? 0
 	if (stats.openInterest24h !== null) stats.openInterest24h += row.openInterest24h ?? 0
@@ -465,9 +465,14 @@ export function buildTokensSourceRows({
 			categories
 		}
 		addStats(stats, row)
-		if (row.marketCap != null && row.priceChange24h != null && row.priceChange24h > -100) {
-			marketCapNow += row.marketCap
-			marketCapDayAgo += row.marketCap / (1 + row.priceChange24h / 100)
+		// CoinGecko ranks receipt assets only in the inclusive ranking; their backing is already counted.
+		const isRehypothecated = token.market_cap_rank == null && token.market_cap_rank_with_rehypothecated != null
+		if (!isRehypothecated) {
+			stats.totalMarketCap += row.marketCap ?? 0
+			if (row.marketCap != null && row.priceChange24h != null && row.priceChange24h > -100) {
+				marketCapNow += row.marketCap
+				marketCapDayAgo += row.marketCap / (1 + row.priceChange24h / 100)
+			}
 		}
 		rows.push(row)
 		index++
@@ -573,9 +578,32 @@ export async function getTokensSourceData(): Promise<TokensSourceData> {
 
 export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<TokenOverviewCurrentSnapshot> {
 	const marketSnapshot = await getTokensMarketSnapshot()
+	const metadata = (await import('~/utils/metadata')).default
+	const filters = metadata.tokenFilterMetadata
+	const categoryOptions = await cachedResult(
+		'token-category-order',
+		`${marketSnapshot.version}:${filters.generatedAt}`,
+		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
+		async () => {
+			const rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>> = []
+			for (const token of marketSnapshot.tokens) {
+				const currentMetrics = marketSnapshot.currentMetricsById[token.id.toLowerCase()]
+				rows.push({
+					marketCap: currentMetrics ? currentMetrics.mcap : (token.market_cap ?? null),
+					chains: [],
+					categories: filters.tokens[token.id.toLowerCase()]?.categories ?? []
+				})
+			}
+			return buildTokenFilterOptions(rows, metadata).categoryOptions
+		}
+	)
+	const categoryIds = filters.tokens[geckoId.toLowerCase()]?.categories ?? []
 	return {
 		generatedAt: marketSnapshot.generatedAt,
-		metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null
+		metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null,
+		categories: categoryOptions
+			.filter((category) => categoryIds.includes(category.id))
+			.map(({ id, label }) => ({ id, label }))
 	}
 }
 

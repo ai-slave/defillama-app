@@ -12,6 +12,10 @@ export type TokenDirectoryRecord = {
 	is_yields?: boolean
 	mcap_rank?: number
 	logo?: string | null
+	website?: string
+	twitter?: string
+	telegram?: string
+	discord?: string
 }
 
 export type TokenDirectory = Record<string, TokenDirectoryRecord>

@@ -19,7 +19,7 @@ function SocialIcons({ size }: { size: number }) {
 				href="https://twitter.com/DefiLlama"
 				target="_blank"
 				rel="noopener noreferrer"
-				aria-label="Twitter"
+				aria-label="X/Twitter"
 				className="rounded-full p-1 text-sub-social-icon"
 			>
 				<Icon name="twitter" height={size} width={size} aria-hidden="true" />

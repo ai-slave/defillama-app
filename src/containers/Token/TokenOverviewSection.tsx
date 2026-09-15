@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
@@ -15,7 +16,7 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
-import { buttonStyles } from '~/ui/Button'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -52,6 +53,7 @@ import {
 	type TokenOverviewRawChartData
 } from './tokenOverview'
 import { roundToSignificantFigures } from './TokenOverviewSection.utils'
+import type { TokenIssuer } from './types'
 import { useFetchTokenOverviewChartData } from './useFetchTokenOverviewChartData'
 
 const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
@@ -126,11 +128,6 @@ function areTokenOverviewChartsEqual(a: Array<TokenOverviewChartLabel>, b: Array
 	return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
-export type TokenIssuer = {
-	name: string
-	slug: string
-}
-
 function TokenPriceAlertButton({
 	overview,
 	geckoId,
@@ -152,14 +149,14 @@ function TokenPriceAlertButton({
 	return (
 		<>
 			<Tooltip
-				content="Get pinged when the price moves"
+				content="Set a price alert"
 				render={
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="md"
+						square
 						aria-label="Set a price alert"
-						onClick={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
+						onClick={() => {
 							trackUmamiEvent('llamaai-alerts-open', { source: 'token-page' })
 							if (!isAuthenticated) {
 								signInDialogStore.show()
@@ -170,10 +167,8 @@ function TokenPriceAlertButton({
 						}}
 					/>
 				}
-				className="flex shrink-0 items-center gap-1.5 rounded-md bg-warning/12 px-2 py-1 text-xs font-medium text-warning hover:bg-warning hover:text-on-brand"
 			>
-				<Icon name="calendar-plus" height={14} width={14} />
-				<span>Set alert</span>
+				<Icon name="calendar-plus" className="size-4" />
 			</Tooltip>
 			{hasOpened ? (
 				<CreateAlertModal
@@ -200,13 +195,11 @@ function TokenPriceAlertButton({
 export function TokenPageHero({
 	overview,
 	logo,
-	issuer,
 	geckoId,
 	headingAs: Heading = 'h1'
 }: {
 	overview: TokenOverviewData
 	logo?: string | null | undefined
-	issuer?: TokenIssuer | null | undefined
 	geckoId?: string | null | undefined
 	headingAs?: 'h1' | 'div'
 }) {
@@ -229,15 +222,14 @@ export function TokenPageHero({
 					<span>{overview.name}</span>
 					{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
 				</Heading>
+				<span className="-m-2 ml-auto flex items-center justify-end gap-1">
+					<TokenPriceAlertButton
+						overview={overview}
+						geckoId={geckoId}
+						currentPrice={overview.marketData.currentPrice}
+					/>
+				</span>
 			</div>
-			{issuer ? (
-				<div className="-mt-3 flex flex-wrap items-baseline gap-1 body-sm text-secondary">
-					<span>Issued by</span>
-					<BasicLink href={`/protocol/${issuer.slug}`} className="label-sm text-link hover:underline">
-						{issuer.name}
-					</BasicLink>
-				</div>
-			) : null}
 			{hasPriceBreakdown ? (
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -245,11 +237,6 @@ export function TokenPageHero({
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 							{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 						</span>
-						<TokenPriceAlertButton
-							overview={overview}
-							geckoId={geckoId}
-							currentPrice={overview.marketData.currentPrice}
-						/>
 						<Icon
 							name="chevron-down"
 							height={18}
@@ -302,11 +289,6 @@ export function TokenPageHero({
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 						{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					</span>
-					<TokenPriceAlertButton
-						overview={overview}
-						geckoId={geckoId}
-						currentPrice={overview.marketData.currentPrice}
-					/>
 					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}
 				</div>
 			)}
@@ -760,23 +742,126 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	)
 }
 
+function TokenInformationCard({
+	overview,
+	issuer,
+	chain
+}: {
+	overview: TokenOverviewData
+	issuer: TokenIssuer | null
+	chain: TokenIssuer | null
+}) {
+	const hasLinks = overview.website || overview.twitter || overview.telegram || overview.discord
+	if (!hasLinks && overview.categories.length === 0 && !issuer && !chain) return null
+
+	return (
+		<Card as="section" padding="sm" className="col-span-full flex flex-wrap items-center gap-x-6 gap-y-3 body-md">
+			<h3 className="sr-only">Token Information</h3>
+			{hasLinks ? (
+				<div className="flex flex-wrap gap-2">
+					{overview.website ? (
+						<ExternalLinkButton
+							href={overview.website}
+							icon="globe"
+							data-umami-event="token-link-click"
+							data-umami-event-token={overview.symbol}
+							data-umami-event-link="website"
+							data-umami-event-url={overview.website}
+						>
+							Website
+						</ExternalLinkButton>
+					) : null}
+					{overview.twitter ? (
+						<ExternalLinkButton
+							href={overview.twitter}
+							icon="twitter"
+							data-umami-event="token-link-click"
+							data-umami-event-token={overview.symbol}
+							data-umami-event-link="twitter"
+							data-umami-event-url={overview.twitter}
+						>
+							X/Twitter
+						</ExternalLinkButton>
+					) : null}
+					{overview.telegram ? (
+						<ExternalLinkButton
+							href={overview.telegram}
+							icon="telegram"
+							data-umami-event="token-link-click"
+							data-umami-event-token={overview.symbol}
+							data-umami-event-link="telegram"
+							data-umami-event-url={overview.telegram}
+						>
+							Telegram
+						</ExternalLinkButton>
+					) : null}
+					{overview.discord ? (
+						<ExternalLinkButton
+							href={overview.discord}
+							icon="discord"
+							data-umami-event="token-link-click"
+							data-umami-event-token={overview.symbol}
+							data-umami-event-link="discord"
+							data-umami-event-url={overview.discord}
+						>
+							Discord
+						</ExternalLinkButton>
+					) : null}
+				</div>
+			) : null}
+			{overview.categories.length > 0 ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="label-md text-secondary">{overview.categories.length > 1 ? 'Categories' : 'Category'}:</span>
+					{overview.categories.map((category) => (
+						<BasicLink
+							key={category.id}
+							href={`/tokens?categories=${encodeURIComponent(category.id)}`}
+							className={buttonStyles({ size: 'md' })}
+						>
+							{category.label}
+						</BasicLink>
+					))}
+				</div>
+			) : null}
+			{issuer ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="label-md text-secondary">Issued by:</span>
+					<BasicLink href={`/protocol/${issuer.slug}`} className={buttonStyles({ size: 'md' })}>
+						{issuer.name}
+					</BasicLink>
+				</div>
+			) : null}
+			{chain ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="label-md text-secondary">Chain:</span>
+					<BasicLink href={`/chain/${chain.slug}`} className={buttonStyles({ size: 'md' })}>
+						{chain.name}
+					</BasicLink>
+				</div>
+			) : null}
+		</Card>
+	)
+}
+
 export function TokenOverviewSection({
 	overview,
 	geckoId,
 	logo,
-	issuer
+	issuer,
+	chain
 }: {
 	overview: TokenOverviewData
 	geckoId: string | null
 	logo?: string | null
-	issuer?: TokenIssuer | null
+	issuer: TokenIssuer | null
+	chain: TokenIssuer | null
 }) {
 	return (
 		<section className="scroll-mt-24" id="token-overview">
 			<h2 className="sr-only">Overview</h2>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
-					<TokenPageHero overview={overview} logo={logo} issuer={issuer} geckoId={geckoId} />
+					<TokenPageHero overview={overview} logo={logo} geckoId={geckoId} />
 					<TokenMetrics overview={overview} geckoId={geckoId} />
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
@@ -784,6 +869,7 @@ export function TokenOverviewSection({
 						<TokenChartPanel overview={overview} geckoId={geckoId} />
 					</ChartPanel>
 				</div>
+				<TokenInformationCard overview={overview} issuer={issuer} chain={chain} />
 			</div>
 		</section>
 	)

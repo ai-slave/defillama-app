@@ -501,6 +501,33 @@
       "tab": "Protocols"
     },
     {
+      "name": "MiCA Exchanges",
+      "route": "/mica",
+      "category": "Exchanges",
+      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
+      "searchKeywords": [
+        "mica",
+        "mica licensed exchanges",
+        "eu crypto exchanges",
+        "mica casp",
+        "regulated exchanges"
+      ]
+    },
+    {
+      "name": "CEXs",
+      "route": "/cexs",
+      "category": "Exchanges",
+      "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
+      "totalTrackedKey": "cexs.protocols",
+      "oldName": "CEX Transparency",
+      "searchKeywords": [
+        "cexs",
+        "cex reserves",
+        "exchange reserves",
+        "proof of reserves"
+      ]
+    },
+    {
       "name": "RWA: Overview",
       "route": "/rwa",
       "category": "RWA",
@@ -558,33 +585,6 @@
       ]
     },
     {
-      "name": "MiCA Exchanges",
-      "route": "/mica",
-      "category": "Exchanges",
-      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
-      "searchKeywords": [
-        "mica",
-        "mica licensed exchanges",
-        "eu crypto exchanges",
-        "mica casp",
-        "regulated exchanges"
-      ]
-    },
-    {
-      "name": "CEXs",
-      "route": "/cexs",
-      "category": "Exchanges",
-      "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
-      "totalTrackedKey": "cexs.protocols",
-      "oldName": "CEX Transparency",
-      "searchKeywords": [
-        "cexs",
-        "cex reserves",
-        "exchange reserves",
-        "proof of reserves"
-      ]
-    },
-    {
       "name": "Equities",
       "route": "/equities",
       "category": "Equities, ETFs & DATs",
@@ -612,6 +612,18 @@
       ]
     },
     {
+      "name": "Pre-IPO",
+      "route": "/pre-ipo",
+      "category": "Equities, ETFs & DATs",
+      "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
+      "searchKeywords": [
+        "pre ipo",
+        "pre-ipo",
+        "private companies",
+        "private company valuations"
+      ]
+    },
+    {
       "name": "Exchange Traded Funds (ETFs)",
       "route": "/etfs",
       "category": "Equities, ETFs & DATs",
@@ -622,18 +634,6 @@
         "etfs",
         "exchange traded fund",
         "exchange traded funds"
-      ]
-    },
-    {
-      "name": "Pre-IPO",
-      "route": "/pre-ipo",
-      "category": "Equities, ETFs & DATs",
-      "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
-      "searchKeywords": [
-        "pre ipo",
-        "pre-ipo",
-        "private companies",
-        "private company valuations"
       ]
     },
     {

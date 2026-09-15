@@ -591,7 +591,7 @@ export function PeggedAssetInfo({
 								) : null}
 								{twitter ? (
 									<ExternalLinkButton href={twitter} icon="twitter">
-										Twitter
+										X/Twitter
 									</ExternalLinkButton>
 								) : null}
 								{blockExplorerUrl ? (

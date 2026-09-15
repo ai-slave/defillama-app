@@ -490,6 +490,14 @@ A supported, priced schedule with no releases produces zero; an unsupported toke
 unavailable. Unknown event amounts are excluded; an all-unknown
 row window remains unavailable. Headline totals sum the ranked directory universe even when the table is filtered.
 
+Headline MCap and its 24-hour change exclude CoinGecko receipt assets: `market_cap_rank` is absent while
+`market_cap_rank_with_rehypothecated` is present. Both ranks absent does not establish a receipt asset.
+These exclusions apply only to the MCap headline; individual rows, charts, filters and other totals retain those assets.
+The change compares eligible current market caps with `marketCap / (1 + priceChange24h / 100)`, using the same
+tokens on both sides. It estimates price-driven movement at current circulating supplies, not measured historical
+market-cap growth. Missing changes and changes at or below -100% cannot supply a prior value and are excluded
+from both sides of the percentage calculation, but their current market caps remain in the headline total.
+
 Tokens source failures remain distinct from successful empty responses. Only the failed source's measurements
 are unavailable; successful measured zero and the established nullable activity aggregation rules are preserved.
 `OI` is current open interest, despite the legacy internal `openInterest24h` field name. Spot and perpetual
@@ -539,6 +547,20 @@ Examples:
 - `adapter-chain` routes should validate chain parameters through chain metadata.
 - Normal protocol routes should validate protocol parameters through protocol metadata.
 - Chain Fees and Chain Revenue use protocol-style upstream paths with chain-level IDs, so protocol metadata can miss for valid chains. Prefer explicit `entity=chain` from the client, then validate against chain metadata and the relevant `chainFees` or `chainRevenue` flag before fetching.
+
+## Token detail links
+
+Token pages resolve website, Twitter, Telegram and Discord links independently. A token directory
+URL takes precedence over the corresponding cached CoinGecko coin-detail value. CoinGecko social
+handles become full URLs; Discord uses a Discord invite from its chat links. Missing links are null
+in page props and are not rendered. Coin details remain available when chart history is missing;
+this does not change the sources or precedence of current market metrics.
+
+Category links use the same `tokenFilterMetadata` as `/tokens`, joined by exact CoinGecko ID.
+Show every assigned category label and link it to `/tokens?categories=<id>`. Tokens without
+category membership have no category row; protocol categories are not substituted.
+Token page categories use the same aggregate market-cap ordering and alphabetical tie-breaks as the
+Tokens dropdown, computed from the shared market snapshot and cached by market version and filter generation.
 
 ## Token detail Yields
 

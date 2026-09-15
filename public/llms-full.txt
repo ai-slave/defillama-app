@@ -165,17 +165,17 @@ Common usage examples:
 - [Protocols by Market Cap](https://defillama.com/mcaps): Token price multiplied by circulating supply of each protocol Category: Token.
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
+- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
+- [CEXs](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
 - [RWA: Overview](https://defillama.com/rwa): Overview of all Real World Assets (RWAs) Category: RWA.
 - [RWA: Perps](https://defillama.com/rwa/perps): Overview of all Real World Assets (RWAs) perps Category: RWA.
 - [RWA Perps by Venue](https://defillama.com/rwa/perps/venues): Overview of all Real World Assets (RWAs) perps by venue Category: RWA.
 - [RWA Perps by Asset](https://defillama.com/rwa/perps/assets): Compare RWA perpetual markets grouped by their underlying reference asset Category: RWA.
 - [RWA Perps by Asset Group](https://defillama.com/rwa/perps/asset-groups): Overview of all Real World Assets (RWAs) perps by asset group Category: RWA.
-- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
-- [CEXs](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
 - [Equities](https://defillama.com/equities): Live company rankings by market cap, price, volume, and price change Category: Equities, ETFs & DATs.
 - [Digital Asset Treasuries (DATs)](https://defillama.com/digital-asset-treasuries): Institutions that own cryptocurrencies as part of their corporate treasury Category: Equities, ETFs & DATs.
-- [Exchange Traded Funds (ETFs)](https://defillama.com/etfs): AUM, Flows, Volume metrics of all ETFs Category: Equities, ETFs & DATs.
 - [Pre-IPO](https://defillama.com/pre-ipo): Private-company valuations, funding rounds, and tradable pre-IPO markets Category: Equities, ETFs & DATs.
+- [Exchange Traded Funds (ETFs)](https://defillama.com/etfs): AUM, Flows, Volume metrics of all ETFs Category: Equities, ETFs & DATs.
 - [Hacks: Overview](https://defillama.com/hacks): Overview of all hacks that have happened in the ecosystem Category: Hacks.
 - [Total Value Lost in Hacks by Protocol](https://defillama.com/hacks/total-value-lost): Net user loss, total value lost in hacks by a protocol Category: Hacks.
 - [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.

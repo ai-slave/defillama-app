@@ -805,7 +805,7 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 				href={tweetUrl}
 				target="_blank"
 				rel="noreferrer noopener"
-				aria-label="Share on Twitter"
+				aria-label="Share on X/Twitter"
 				className={buttonClass}
 			>
 				<Icon name="twitter" className={iconDim} />

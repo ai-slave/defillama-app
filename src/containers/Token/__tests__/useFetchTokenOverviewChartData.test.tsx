@@ -11,6 +11,11 @@ const fetchJsonMock = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
 
 const overview: TokenOverviewData = {
+	categories: [],
+	website: null,
+	twitter: null,
+	telegram: null,
+	discord: null,
 	name: 'Bitcoin',
 	displayName: 'Bitcoin',
 	symbol: 'BTC',

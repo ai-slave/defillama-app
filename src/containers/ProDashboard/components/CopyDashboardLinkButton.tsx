@@ -220,10 +220,10 @@ export function CopyDashboardLinkButton({
 									variant="secondary"
 									onClick={() => handleShareTo('twitter')}
 									className="flex-1"
-									title="Share on Twitter/X"
+									title="Share on X/Twitter"
 								>
 									<Icon name="twitter" height={16} width={16} />
-									<span>Twitter</span>
+									<span>X/Twitter</span>
 								</ProButton>
 								<ProButton
 									type="button"

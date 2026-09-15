@@ -214,7 +214,7 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 					: null}
 				{props.twitter ? (
 					<ExternalLinkButton href={`https://x.com/${props.twitter}`} icon="twitter">
-						Twitter
+						X/Twitter
 					</ExternalLinkButton>
 				) : null}
 				{props.safeHarbor ? (
@@ -233,7 +233,6 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 							key={`${props.id}-category-${category}`}
 						>
 							{category}
-							<Icon name="arrow-up-right" className="size-3.5" />
 						</BasicLink>
 					))}
 				</div>

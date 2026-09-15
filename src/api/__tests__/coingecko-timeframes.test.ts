@@ -58,10 +58,10 @@ describe('CoinGecko chart timeframes', () => {
 		expect(chart?.data?.prices).toEqual([[1_000_000, 10]])
 	})
 
-	test('caches requested coin metadata separately from timeframe history', async () => {
+	test.each([true, false])('keeps coin metadata independently when chart availability is %s', async (hasChart) => {
 		mocks.fetchJson.mockImplementation(async (url: string) => {
-			if (url.includes('/market_chart')) return { prices: [[1000, 10]] }
-			if (url.includes('/coins/bitcoin')) return { symbol: 'btc', market_data: {} }
+			if (url.includes('/market_chart')) return hasChart ? { prices: [[1000, 10]] } : {}
+			if (url.includes('/coins/bitcoin')) return { symbol: 'btc', links: { homepage: ['https://bitcoin.org'] } }
 			return {}
 		})
 
@@ -77,7 +77,8 @@ describe('CoinGecko chart timeframes', () => {
 			expect.objectContaining({ symbol: 'btc' }),
 			expect.any(Number)
 		)
-		expect(chart?.data?.coinData?.symbol).toBe('btc')
+		expect(chart?.data?.coinData?.links?.homepage).toEqual(['https://bitcoin.org'])
+		expect(chart?.data?.prices).toEqual(hasChart ? [[1000, 10]] : undefined)
 	})
 
 	test('requests and returns only the current UTC year for YTD', async () => {
