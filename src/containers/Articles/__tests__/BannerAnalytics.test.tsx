@@ -89,6 +89,8 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	imageMobileUrl: null,
 	disclosureText: null,
 	disclosureUrl: null,
+	landingLinkUrl: null,
+	articleLinkUrl: null,
 	showOnLanding: true,
 	excludedArticleIds: [],
 	targetCountries: [],

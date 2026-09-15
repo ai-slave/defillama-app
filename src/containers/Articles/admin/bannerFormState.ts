@@ -32,6 +32,8 @@ export type BannerFormState = {
 	imageMobileUrl: string
 	disclosureText: string
 	disclosureUrl: string
+	landingLinkUrl: string
+	articleLinkUrl: string
 	showOnLanding: boolean
 	enabled: boolean
 }
@@ -57,6 +59,8 @@ export function bannerToForm(banner: Banner | null): BannerFormState {
 			imageMobileUrl: '',
 			disclosureText: '',
 			disclosureUrl: '',
+			landingLinkUrl: '',
+			articleLinkUrl: '',
 			showOnLanding: true,
 			enabled: true
 		}
@@ -81,6 +85,8 @@ export function bannerToForm(banner: Banner | null): BannerFormState {
 		imageMobileUrl: banner.imageMobileUrl ?? '',
 		disclosureText: banner.disclosureText ?? '',
 		disclosureUrl: banner.disclosureUrl ?? '',
+		landingLinkUrl: banner.landingLinkUrl ?? '',
+		articleLinkUrl: banner.articleLinkUrl ?? '',
 		showOnLanding: banner.showOnLanding !== false,
 		enabled: banner.enabled
 	}
@@ -109,6 +115,8 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 			imageMobileUrl: null,
 			disclosureText: null,
 			disclosureUrl: null,
+			landingLinkUrl: null,
+			articleLinkUrl: null,
 			showOnLanding: true
 		}
 	}
@@ -131,6 +139,8 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 			imageMobileUrl: state.imageMobileUrl.trim() || null,
 			disclosureText: state.disclosureText.trim() || null,
 			disclosureUrl: state.disclosureUrl.trim() || null,
+			landingLinkUrl: state.landingLinkUrl.trim() || null,
+			articleLinkUrl: state.articleLinkUrl.trim() || null,
 			showOnLanding: state.showOnLanding
 		}
 	}
@@ -142,6 +152,8 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 		excludedArticleIds: state.scope === 'all_articles' ? state.excludedArticleIds : [],
 		targetCountries,
 		linkUrl,
+		landingLinkUrl: null,
+		articleLinkUrl: null,
 		enabled: state.enabled
 	}
 	if (state.kind === 'text') {
@@ -169,6 +181,8 @@ export type BannerFormErrors = {
 	linkUrl?: string
 	imageUrl?: string
 	disclosureUrl?: string
+	landingLinkUrl?: string
+	articleLinkUrl?: string
 	audience?: string
 }
 
@@ -185,6 +199,14 @@ export function validateBannerForm(state: BannerFormState): BannerFormErrors {
 		const disclosure = state.disclosureUrl.trim()
 		if (disclosure && !/^(https?:\/\/|\/)/.test(disclosure)) {
 			errors.disclosureUrl = 'Must start with http://, https://, or /'
+		}
+		const landingLink = state.landingLinkUrl.trim()
+		if (landingLink && !/^(https?:\/\/|\/)/.test(landingLink)) {
+			errors.landingLinkUrl = 'Must start with http://, https://, or /'
+		}
+		const articleLink = state.articleLinkUrl.trim()
+		if (articleLink && !/^(https?:\/\/|\/)/.test(articleLink)) {
+			errors.articleLinkUrl = 'Must start with http://, https://, or /'
 		}
 	} else if (!state.imageUrl.trim()) {
 		errors.imageUrl = 'Image is required'

@@ -346,6 +346,8 @@ export type Banner = {
 	imageMobileUrl: string | null
 	disclosureText: string | null
 	disclosureUrl: string | null
+	landingLinkUrl: string | null
+	articleLinkUrl: string | null
 	showOnLanding: boolean
 	excludedArticleIds: Array<string>
 	targetCountries: Array<string>
@@ -370,6 +372,8 @@ export type BannerPayload = {
 	imageMobileUrl?: string | null
 	disclosureText?: string | null
 	disclosureUrl?: string | null
+	landingLinkUrl?: string | null
+	articleLinkUrl?: string | null
 	showOnLanding?: boolean
 	excludedArticleIds?: Array<string> | null
 	targetCountries?: Array<string> | null

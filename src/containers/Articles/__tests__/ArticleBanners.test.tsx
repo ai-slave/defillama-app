@@ -49,6 +49,8 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	imageMobileUrl: null,
 	disclosureText: null,
 	disclosureUrl: null,
+	landingLinkUrl: null,
+	articleLinkUrl: null,
 	showOnLanding: true,
 	excludedArticleIds: [],
 	targetCountries: [],
@@ -260,6 +262,79 @@ describe('article banners', () => {
 		expect(html).toContain('/uploads/promo/card')
 		expect(html).toContain('https://example.com/promo')
 		expect(html).toContain('Disclosure')
+	})
+
+	test('uses the landing page url on the landing promo banner when set', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({
+				landingLinkUrl: 'https://example.com/landing',
+				articleLinkUrl: 'https://example.com/article'
+			})
+		})
+
+		const html = renderToStaticMarkup(<ResearchPromoBanner />)
+
+		expect(html).toContain('href="https://example.com/landing"')
+		expect(html).not.toContain('href="https://example.com/promo"')
+		expect(html).not.toContain('https://example.com/article')
+	})
+
+	test('falls back to the link url on the landing promo banner when the landing url is blank', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({ landingLinkUrl: '   ', articleLinkUrl: 'https://example.com/article' })
+		})
+
+		const html = renderToStaticMarkup(<ResearchPromoBanner />)
+
+		expect(html).toContain('href="https://example.com/promo"')
+		expect(html).not.toContain('https://example.com/article')
+	})
+
+	test('uses the article page url on the article promo card and mobile banner when set', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
+			...emptyLookup(),
+			promo: promoBanner({
+				landingLinkUrl: 'https://example.com/landing',
+				articleLinkUrl: 'https://example.com/article'
+			})
+		})
+
+		const card = renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)
+		expect(card).toContain('href="https://example.com/article"')
+		expect(card).not.toContain('https://example.com/promo')
+		expect(card).not.toContain('https://example.com/landing')
+
+		const mobile = renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)
+		expect(mobile).toContain('href="https://example.com/article"')
+		expect(mobile).not.toContain('https://example.com/landing')
+	})
+
+	test('falls back to the link url on article pages when only the landing url is set', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
+			...emptyLookup(),
+			promo: promoBanner({ landingLinkUrl: 'https://example.com/landing' })
+		})
+
+		const card = renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)
+		expect(card).toContain('href="https://example.com/promo"')
+		expect(card).not.toContain('https://example.com/landing')
+	})
+
+	test('keeps the disclosure url independent from the placement urls', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({
+				landingLinkUrl: 'https://example.com/landing',
+				disclosureUrl: 'https://example.com/disclosure'
+			})
+		})
+
+		const html = renderToStaticMarkup(<ResearchPromoBanner />)
+
+		expect(html).toContain('href="https://example.com/landing"')
+		expect(html).toContain('href="https://example.com/disclosure"')
 	})
 
 	test('hides the article promo card without a card image', () => {

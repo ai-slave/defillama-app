@@ -5,6 +5,7 @@ import { getLandingBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
+import { landingPromoLinkUrl } from '~/containers/Articles/promoLinks'
 import type { BannerLookupResult } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 
@@ -30,7 +31,7 @@ export function ResearchPromoBanner({ initialData }: { initialData?: BannerLooku
 		// eslint-disable-next-line @next/next/no-img-element
 		<img src={imageUrl} alt={banner.imageAlt?.trim() ?? ''} className="block h-auto w-full" loading="lazy" />
 	)
-	const linkUrl = banner.linkUrl?.trim()
+	const linkUrl = landingPromoLinkUrl(banner)
 
 	return (
 		<div>

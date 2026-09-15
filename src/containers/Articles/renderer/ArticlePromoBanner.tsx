@@ -4,6 +4,7 @@ import { getAllArticlesBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
+import { articlePromoLinkUrl } from '~/containers/Articles/promoLinks'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
 
@@ -38,7 +39,7 @@ export function cardPromoImageUrl(banner: Banner | null): string | undefined {
 
 function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) {
 	const alt = banner.imageAlt?.trim() ?? ''
-	const linkUrl = banner.linkUrl?.trim() ?? ''
+	const linkUrl = articlePromoLinkUrl(banner)
 	const widgetLabel = 'DefiLlama Research article promo banner'
 	const trackClick = () => pushResearchAnalyticsEvent(null, 'widget_click', widgetLabel)
 

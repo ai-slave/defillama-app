@@ -26,6 +26,7 @@ import {
 	BANNER_COUNTRY_OPTIONS,
 	expandBannerCountrySelection
 } from '~/containers/Articles/bannerCountryGroups'
+import { articlePromoLinkUrl, landingPromoLinkUrl } from '~/containers/Articles/promoLinks'
 import type { ArticleSection, Banner, BannerKind } from '~/containers/Articles/types'
 import {
 	ARTICLE_SECTIONS,
@@ -163,6 +164,8 @@ export function BannerForm({ banner }: Props) {
 		imageMobileUrl: state.kind === 'promo' ? state.imageMobileUrl.trim() || null : null,
 		disclosureText: state.kind === 'promo' ? state.disclosureText.trim() || null : null,
 		disclosureUrl: state.kind === 'promo' ? state.disclosureUrl.trim() || null : null,
+		landingLinkUrl: state.kind === 'promo' ? state.landingLinkUrl.trim() || null : null,
+		articleLinkUrl: state.kind === 'promo' ? state.articleLinkUrl.trim() || null : null,
 		showOnLanding: state.kind === 'promo' ? state.showOnLanding : true,
 		enabled: true,
 		createdByPbUserId: banner?.createdByPbUserId ?? '',
@@ -486,7 +489,7 @@ export function BannerForm({ banner }: Props) {
 			) : state.kind === 'promo' ? (
 				<Section
 					title="Content"
-					description="Three renditions of the promo image, the click-through link, and an optional disclosure link. Placements without an uploaded image are hidden."
+					description="Three renditions of the promo image, the click-through link with optional per-placement overrides for the landing and article pages, and an optional disclosure link. Placements without an uploaded image are hidden."
 				>
 					<div className="grid gap-1.5">
 						<span className="text-sm font-medium text-primary">
@@ -551,7 +554,7 @@ export function BannerForm({ banner }: Props) {
 
 					<label className="grid gap-1.5">
 						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
-							Link URL
+							Link URL <span className="font-normal text-tertiary">(default for every placement)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
 						<input
@@ -563,6 +566,40 @@ export function BannerForm({ banner }: Props) {
 							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-error">{errors.linkUrl}</p> : null}
+					</label>
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+							Landing page URL{' '}
+							<span className="font-normal text-tertiary">(optional, overrides Link URL on /research)</span>
+							<CharCount value={state.landingLinkUrl} max={LINK_URL_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.landingLinkUrl}
+							onChange={(e) => update({ landingLinkUrl: e.target.value })}
+							maxLength={LINK_URL_MAX}
+							placeholder="https://…"
+							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+						/>
+						{errors.landingLinkUrl ? <p className="text-xs text-error">{errors.landingLinkUrl}</p> : null}
+					</label>
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-primary">
+							Article page URL{' '}
+							<span className="font-normal text-tertiary">(optional, overrides Link URL on article pages)</span>
+							<CharCount value={state.articleLinkUrl} max={LINK_URL_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.articleLinkUrl}
+							onChange={(e) => update({ articleLinkUrl: e.target.value })}
+							maxLength={LINK_URL_MAX}
+							placeholder="https://…"
+							className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary outline-hidden transition-colors focus:border-link/60"
+						/>
+						{errors.articleLinkUrl ? <p className="text-xs text-error">{errors.articleLinkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
@@ -731,10 +768,21 @@ function PromoPreview({ banner }: { banner: Banner }) {
 	const disclosure = banner.disclosureUrl ? (
 		<span className="text-xs text-secondary underline">{banner.disclosureText || 'Disclosure'}</span>
 	) : null
-	const slots: Array<{ label: string; imageUrl: string | null; widthClass: string; placeholder: string }> = [
+	const landingLink = landingPromoLinkUrl(banner)
+	const articleLink = articlePromoLinkUrl(banner)
+	const mobileLink =
+		landingLink === articleLink ? landingLink : `landing: ${landingLink || '—'} · article: ${articleLink || '—'}`
+	const slots: Array<{
+		label: string
+		imageUrl: string | null
+		linkUrl: string
+		widthClass: string
+		placeholder: string
+	}> = [
 		{
 			label: 'Landing (desktop)',
 			imageUrl: banner.showOnLanding ? banner.imageWideUrl : null,
+			linkUrl: landingLink,
 			widthClass: 'max-w-[640px]',
 			placeholder: banner.showOnLanding
 				? 'Upload a landing image to show the banner below Latest on /research'
@@ -743,12 +791,14 @@ function PromoPreview({ banner }: { banner: Banner }) {
 		{
 			label: 'Article card (desktop right rail)',
 			imageUrl: banner.imageCardUrl,
+			linkUrl: articleLink,
 			widthClass: 'max-w-[280px]',
 			placeholder: 'Upload a card image to show the banner on article pages'
 		},
 		{
-			label: 'Mobile',
+			label: 'Mobile (landing and article body)',
 			imageUrl: banner.imageMobileUrl ?? banner.imageCardUrl,
+			linkUrl: mobileLink,
 			widthClass: 'max-w-[360px]',
 			placeholder: 'Upload a mobile image (or a card image as fallback)'
 		}
@@ -764,6 +814,7 @@ function PromoPreview({ banner }: { banner: Banner }) {
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img src={slot.imageUrl} alt={banner.imageAlt ?? ''} className="block h-auto w-full" />
 							</div>
+							{slot.linkUrl ? <span className="truncate text-[10px] text-tertiary">→ {slot.linkUrl}</span> : null}
 							{disclosure}
 						</>
 					) : (

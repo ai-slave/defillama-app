@@ -36,3 +36,87 @@ describe('BannerForm regional targeting', () => {
 		}
 	})
 })
+
+describe('BannerForm promo placement urls', () => {
+	const promoState = () => ({
+		...bannerToForm(null),
+		kind: 'promo' as const,
+		imageWideUrl: '/uploads/banner-wide',
+		linkUrl: 'https://example.com'
+	})
+
+	test('defaults both placement urls to empty strings', () => {
+		const state = bannerToForm(null)
+		expect(state.landingLinkUrl).toBe('')
+		expect(state.articleLinkUrl).toBe('')
+	})
+
+	test('maps null placement urls from an existing banner to empty strings', () => {
+		const state = bannerToForm({
+			id: 'promo-id',
+			type: 'promo',
+			scope: 'landing',
+			section: null,
+			articleId: null,
+			text: null,
+			linkUrl: 'https://example.com',
+			linkLabel: null,
+			imageUrl: null,
+			imageAlt: null,
+			imageWideUrl: '/uploads/banner-wide',
+			imageCardUrl: null,
+			imageMobileUrl: null,
+			disclosureText: null,
+			disclosureUrl: null,
+			landingLinkUrl: null,
+			articleLinkUrl: 'https://example.com/article',
+			showOnLanding: true,
+			excludedArticleIds: [],
+			targetCountries: [],
+			enabled: true,
+			createdAt: '2026-05-14T00:00:00.000Z',
+			updatedAt: '2026-05-14T00:00:00.000Z'
+		})
+		expect(state.landingLinkUrl).toBe('')
+		expect(state.articleLinkUrl).toBe('https://example.com/article')
+	})
+
+	test('sends trimmed placement urls for promo banners and null when blank', () => {
+		const payload = buildPayload({
+			...promoState(),
+			landingLinkUrl: '  https://example.com/landing  ',
+			articleLinkUrl: '   '
+		})
+		expect(payload.landingLinkUrl).toBe('https://example.com/landing')
+		expect(payload.articleLinkUrl).toBeNull()
+	})
+
+	test('nulls placement urls for every non-promo kind', () => {
+		const base = {
+			...bannerToForm(null),
+			text: 'Banner',
+			imageUrl: '/uploads/banner',
+			linkUrl: 'https://example.com',
+			landingLinkUrl: 'https://example.com/landing',
+			articleLinkUrl: 'https://example.com/article'
+		}
+		const kinds: Array<BannerKind> = ['text', 'image', 'image-horizontal', 'image-square']
+		for (const kind of kinds) {
+			const payload = buildPayload({ ...base, kind })
+			expect(payload.landingLinkUrl).toBeNull()
+			expect(payload.articleLinkUrl).toBeNull()
+		}
+	})
+
+	test('validates placement url prefixes only when filled in', () => {
+		expect(validateBannerForm({ ...promoState(), landingLinkUrl: 'ftp://example.com' }).landingLinkUrl).toBe(
+			'Must start with http://, https://, or /'
+		)
+		expect(validateBannerForm({ ...promoState(), articleLinkUrl: 'example.com/article' }).articleLinkUrl).toBe(
+			'Must start with http://, https://, or /'
+		)
+		const errors = validateBannerForm({ ...promoState(), landingLinkUrl: '', articleLinkUrl: '/research' })
+		expect(errors.landingLinkUrl).toBeUndefined()
+		expect(errors.articleLinkUrl).toBeUndefined()
+	})
+})
