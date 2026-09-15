@@ -12,6 +12,7 @@ import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
+import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -21,6 +22,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { formatUsd } from '~/utils/numberFormat'
 
 /* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active. */
 export const SIDEBAR_ROW_SURFACE =
@@ -40,6 +42,8 @@ interface AgenticSidebarProps {
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
 	shouldAnimate?: boolean
 	onOpenSettings?: () => void
+	onOpenBalanceSettings?: () => void
+	showBalance?: boolean
 	hasCustomInstructions?: boolean
 	onBulkDelete?: (sessionIds: Array<string>) => Promise<void>
 	onSearchMatchClick?: (sessionId: string, messageId: string) => void
@@ -148,6 +152,8 @@ export function AgenticSidebar({
 	onDelete,
 	shouldAnimate = false,
 	onOpenSettings,
+	onOpenBalanceSettings,
+	showBalance = false,
 	hasCustomInstructions,
 	onBulkDelete,
 	onSearchMatchClick,
@@ -577,6 +583,8 @@ export function AgenticSidebar({
 					</nav>
 				</div>
 
+				{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
+
 				<DeleteSessionDialog
 					store={deleteStore}
 					title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
@@ -647,5 +655,26 @@ export function AgenticSidebar({
 				)}
 			</aside>
 		</SessionListFocusContext.Provider>
+	)
+}
+
+function SidebarBalance({ onOpen }: { onOpen: () => void }) {
+	const { balance, totalAvailable } = useAiBalance()
+	if (!balance) return null
+
+	return (
+		<Tooltip
+			content="Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more."
+			render={<button type="button" onClick={onOpen} />}
+			className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-subtle bg-surface px-4 py-3 body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+		>
+			<div className="flex min-w-0 items-center gap-1.5">
+				<Icon name="wallet" height={16} width={16} className="shrink-0 text-ai-research" />
+				<span>External Data Balance</span>
+			</div>
+			<span className={`shrink-0 mono-sm-bold ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}>
+				{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+			</span>
+		</Tooltip>
 	)
 }

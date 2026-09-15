@@ -90,6 +90,7 @@ const settings: LlamaAISettings = {
 	enableSoundNotifications: true,
 	enterToSend: true,
 	advancedProvenance: false,
+	showBalanceInSidebar: false,
 	spendCapPerMessage: 0.5
 }
 
@@ -155,6 +156,7 @@ describe('SettingsModal instructions', () => {
 			setEnableSoundNotifications: vi.fn(async () => true),
 			setEnterToSend: vi.fn(async () => true),
 			setAdvancedProvenance: vi.fn(async () => true),
+			setShowBalanceInSidebar: vi.fn(async () => true),
 			setSpendCapPerMessage: vi.fn(async () => true)
 		}
 		container = document.createElement('div')
@@ -492,6 +494,7 @@ describe('SettingsModal initial tab', () => {
 			setEnableSoundNotifications: vi.fn(async () => true),
 			setEnterToSend: vi.fn(async () => true),
 			setAdvancedProvenance: vi.fn(async () => true),
+			setShowBalanceInSidebar: vi.fn(async () => true),
 			setSpendCapPerMessage: vi.fn(async () => true)
 		} as LlamaAISettingsActions
 		container = document.createElement('div')
@@ -555,5 +558,14 @@ describe('SettingsModal initial tab', () => {
 		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
 		await act(async () => tab('App').click())
 		expect(openTabId()).toBe(tab('App').id)
+	})
+
+	test('Balance includes a default-off sidebar visibility toggle', async () => {
+		await render({ tab: 'balance' })
+		const toggle = document.querySelector<HTMLInputElement>('[aria-label="Show balance in sidebar"]')!
+		expect(toggle.checked).toBe(false)
+
+		await act(async () => toggle.click())
+		expect(actions.setShowBalanceInSidebar).toHaveBeenCalledWith(true)
 	})
 })

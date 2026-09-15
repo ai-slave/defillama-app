@@ -200,6 +200,11 @@ export const SettingsModal = memo(function SettingsModal({
 		void actions.setAdvancedProvenance(!settings.advancedProvenance)
 	}, [actions, settings.advancedProvenance])
 
+	const handleShowBalanceInSidebarToggle = useCallback(() => {
+		trackUmamiEvent('llamaai-sidebar-balance-toggle')
+		void actions.setShowBalanceInSidebar(!settings.showBalanceInSidebar)
+	}, [actions, settings.showBalanceInSidebar])
+
 	const [spendCapDraft, setSpendCapDraft] = useState<string>(() => formatFixedNumber(settings.spendCapPerMessage, 2))
 	const latestSpendCapRef = useRef(settings.spendCapPerMessage)
 	const lastSubmittedSpendCapRef = useRef(settings.spendCapPerMessage)
@@ -426,7 +431,19 @@ export const SettingsModal = memo(function SettingsModal({
 
 						<TabPanel value={activeTab} className="min-h-0 min-w-0 flex-1 overflow-y-auto">
 							<div className="p-5 sm:p-6">
-								{activeTab === 'balance' && <BalanceSettings result={appliedInitialState?.topupResult} />}
+								{activeTab === 'balance' && (
+									<div className="space-y-6">
+										<BalanceSettings result={appliedInitialState?.topupResult} />
+										<SettingsCard>
+											<ToggleRow
+												label="Show balance in sidebar"
+												description="Keep your external data balance visible below chat history."
+												checked={settings.showBalanceInSidebar}
+												onClick={handleShowBalanceInSidebarToggle}
+											/>
+										</SettingsCard>
+									</div>
+								)}
 								{activeTab === 'persona' && (
 									<div className="space-y-6">
 										<div>

@@ -16,6 +16,7 @@ export const LLAMA_AI_EFFORT_KEY = 'llamaai-effort'
 export const LLAMA_AI_ENABLE_SOUND_KEY = 'llamaai-enable-sound'
 export const LLAMA_AI_ENTER_TO_SEND_KEY = 'llamaai-enter-to-send'
 export const LLAMA_AI_ADVANCED_PROVENANCE_KEY = 'llamaai-advanced-provenance'
+export const LLAMA_AI_SHOW_BALANCE_IN_SIDEBAR_KEY = 'llamaai-show-balance-in-sidebar'
 export const LLAMA_AI_SPEND_CAP_KEY = 'llamaai-spend-cap-per-message'
 export const LLAMA_AI_SETTINGS_QUERY_KEY = ['llama-ai-settings'] as const
 
@@ -31,6 +32,7 @@ export interface LlamaAISettings {
 	enableSoundNotifications: boolean
 	enterToSend: boolean
 	advancedProvenance: boolean
+	showBalanceInSidebar: boolean
 	spendCapPerMessage: number
 }
 
@@ -44,6 +46,7 @@ export interface LlamaAISettingsActions {
 	setEnableSoundNotifications: (value: boolean) => Promise<boolean>
 	setEnterToSend: (value: boolean) => Promise<boolean>
 	setAdvancedProvenance: (value: boolean) => Promise<boolean>
+	setShowBalanceInSidebar: (value: boolean) => Promise<boolean>
 	setSpendCapPerMessage: (value: number) => Promise<boolean>
 }
 
@@ -95,6 +98,7 @@ const DEFAULT_SETTINGS: LlamaAISettings = {
 	enableSoundNotifications: true,
 	enterToSend: true,
 	advancedProvenance: false,
+	showBalanceInSidebar: false,
 	spendCapPerMessage: LLAMA_AI_SPEND_CAP_DEFAULT
 }
 
@@ -196,6 +200,12 @@ const SETTING_DEFINITIONS: LlamaAISettingDefinitions = {
 		parse: parseFalseByDefault,
 		write: (value) => setStorageItem(LLAMA_AI_ADVANCED_PROVENANCE_KEY, String(value))
 	},
+	showBalanceInSidebar: {
+		storageKey: LLAMA_AI_SHOW_BALANCE_IN_SIDEBAR_KEY,
+		fallback: String(DEFAULT_SETTINGS.showBalanceInSidebar),
+		parse: parseFalseByDefault,
+		write: (value) => setStorageItem(LLAMA_AI_SHOW_BALANCE_IN_SIDEBAR_KEY, String(value))
+	},
 	spendCapPerMessage: {
 		storageKey: LLAMA_AI_SPEND_CAP_KEY,
 		fallback: String(DEFAULT_SETTINGS.spendCapPerMessage),
@@ -222,6 +232,8 @@ function applyStoredSettings(update: LlamaAISettingsUpdate) {
 		SETTING_DEFINITIONS.enableSoundNotifications.write(update.enableSoundNotifications)
 	if (update.enterToSend !== undefined) SETTING_DEFINITIONS.enterToSend.write(update.enterToSend)
 	if (update.advancedProvenance !== undefined) SETTING_DEFINITIONS.advancedProvenance.write(update.advancedProvenance)
+	if (update.showBalanceInSidebar !== undefined)
+		SETTING_DEFINITIONS.showBalanceInSidebar.write(update.showBalanceInSidebar)
 	if (update.spendCapPerMessage !== undefined) SETTING_DEFINITIONS.spendCapPerMessage.write(update.spendCapPerMessage)
 }
 
@@ -237,6 +249,7 @@ function mergeDefinedSettings(base: StoredLlamaAISettings, incoming: LlamaAISett
 		merged.enableSoundNotifications = incoming.enableSoundNotifications
 	if (incoming.enterToSend !== undefined) merged.enterToSend = incoming.enterToSend
 	if (incoming.advancedProvenance !== undefined) merged.advancedProvenance = incoming.advancedProvenance
+	if (incoming.showBalanceInSidebar !== undefined) merged.showBalanceInSidebar = incoming.showBalanceInSidebar
 	if (incoming.spendCapPerMessage !== undefined) merged.spendCapPerMessage = incoming.spendCapPerMessage
 	return merged
 }
@@ -264,6 +277,8 @@ function getFailedSettingsRollback(
 		rollback.enterToSend = previous.enterToSend
 	if (attempted.advancedProvenance !== undefined && current?.advancedProvenance === attempted.advancedProvenance)
 		rollback.advancedProvenance = previous.advancedProvenance
+	if (attempted.showBalanceInSidebar !== undefined && current?.showBalanceInSidebar === attempted.showBalanceInSidebar)
+		rollback.showBalanceInSidebar = previous.showBalanceInSidebar
 	if (attempted.spendCapPerMessage !== undefined && current?.spendCapPerMessage === attempted.spendCapPerMessage)
 		rollback.spendCapPerMessage = previous.spendCapPerMessage
 	return rollback
@@ -303,6 +318,9 @@ function normalizeServerSettings(value: unknown): LlamaAISettingsUpdate {
 	}
 	if (typeof value.advancedProvenance === 'boolean') {
 		normalized.advancedProvenance = value.advancedProvenance
+	}
+	if (typeof value.showBalanceInSidebar === 'boolean') {
+		normalized.showBalanceInSidebar = value.showBalanceInSidebar
 	}
 	if (typeof value.spendCapPerMessage === 'number') {
 		normalized.spendCapPerMessage = normalizeSpendCap(value.spendCapPerMessage)
@@ -346,6 +364,7 @@ export function useLlamaAISettings() {
 	const effort = useLlamaAISetting('effort')
 	const enableSoundNotifications = useLlamaAISetting('enableSoundNotifications')
 	const enterToSend = useLlamaAISetting('enterToSend')
+	const showBalanceInSidebar = useLlamaAISetting('showBalanceInSidebar')
 	const spendCapPerMessage = useLlamaAISetting('spendCapPerMessage')
 
 	const advancedProvenance = useAdvancedProvenance()
@@ -359,6 +378,7 @@ export function useLlamaAISettings() {
 		enableSoundNotifications,
 		enterToSend,
 		advancedProvenance,
+		showBalanceInSidebar,
 		spendCapPerMessage
 	}
 	const settingsQuery = useQuery({
@@ -486,6 +506,7 @@ export function useLlamaAISettings() {
 			setEnableSoundNotifications: (value) => persistSettings({ enableSoundNotifications: value }),
 			setEnterToSend: (value) => persistSettings({ enterToSend: value }),
 			setAdvancedProvenance: (value) => persistSettings({ advancedProvenance: value }),
+			setShowBalanceInSidebar: (value) => persistSettings({ showBalanceInSidebar: value }),
 			setSpendCapPerMessage: (value) => persistSettings({ spendCapPerMessage: normalizeSpendCap(value) })
 		}),
 		[persistSettings]
@@ -512,6 +533,7 @@ export function useLlamaAISettings() {
 			enableSoundNotifications,
 			enterToSend,
 			advancedProvenance,
+			showBalanceInSidebar,
 			spendCapPerMessage
 		}
 	}, [
@@ -526,6 +548,7 @@ export function useLlamaAISettings() {
 		enableSoundNotifications,
 		enterToSend,
 		advancedProvenance,
+		showBalanceInSidebar,
 		spendCapPerMessage
 	])
 

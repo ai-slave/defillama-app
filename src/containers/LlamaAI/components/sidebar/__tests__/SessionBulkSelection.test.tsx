@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { AgenticSidebar } from '../AgenticSidebar'
-const api = vi.hoisted(() => ({ fetch: vi.fn(), bulk: vi.fn(), open: vi.fn() }))
+const api = vi.hoisted(() => ({ fetch: vi.fn(), bulk: vi.fn(), open: vi.fn(), balance: null as object | null }))
 const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
@@ -18,7 +18,9 @@ vi.mock('~/auth', () => ({
 vi.mock('~/containers/LlamaAI/chrome', () => ({
 	useLlamaAIChrome: () => ({ hideSidebar: vi.fn(), toggleSidebar: vi.fn() })
 }))
-vi.mock('~/containers/Subscription/useTopup', () => ({ useAiBalance: () => ({ balance: null, totalAvailable: 0 }) }))
+vi.mock('~/containers/Subscription/useTopup', () => ({
+	useAiBalance: () => ({ balance: api.balance, totalAvailable: 0.75 })
+}))
 vi.mock('~/containers/LlamaAI/projects/ProjectsSidebarSection', () => ({ ProjectsSidebarSection: () => null }))
 vi.mock('~/containers/LlamaAI/projects/MoveToProjectMenu', () => ({ MoveToProjectMenuItem: () => null }))
 vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
@@ -54,6 +56,7 @@ const sessions: Array<ChatSession> = ['Alpha', 'Beta', 'Gamma'].map((title) => (
 }))
 beforeEach(() => {
 	vi.resetAllMocks()
+	api.balance = null
 	api.fetch.mockResolvedValue(new Response(JSON.stringify({ results: [] })))
 	client = new QueryClient()
 	container = document.createElement('div')
@@ -66,7 +69,7 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 })
-async function render(items = sessions) {
+async function render(items = sessions, options: { showBalance?: boolean; onOpenBalanceSettings?: () => void } = {}) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
@@ -79,11 +82,29 @@ async function render(items = sessions) {
 					onNewChat={() => {}}
 					onDelete={async () => {}}
 					onBulkDelete={api.bulk}
+					showBalance={options.showBalance}
+					onOpenBalanceSettings={options.onOpenBalanceSettings}
 				/>
 			</QueryClientProvider>
 		)
 	)
 }
+
+test('shows an enabled balance below chat history and opens Balance settings', async () => {
+	api.balance = {}
+	const openBalance = vi.fn()
+	await render()
+	expect(document.body.textContent).not.toContain('External Data Balance')
+
+	await render(sessions, { showBalance: true, onOpenBalanceSettings: openBalance })
+
+	const balanceButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find((element) =>
+		element.textContent?.includes('External Data Balance')
+	)!
+	expect(balanceButton.textContent).toContain('$0.75')
+	await act(async () => balanceButton.click())
+	expect(openBalance).toHaveBeenCalledOnce()
+})
 function button(name: string) {
 	const scope = name === 'Cancel' ? (document.querySelector('[role=dialog]:not([hidden])') ?? document) : document
 	const element = [...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === name)

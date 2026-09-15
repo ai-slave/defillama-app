@@ -2686,6 +2686,8 @@ export function AgenticChat({
 										onDelete={handleDeleteSession}
 										shouldAnimate={shouldAnimateSidebar}
 										onOpenSettings={openSettings}
+										onOpenBalanceSettings={() => openSettingsAtTab('balance')}
+										showBalance={settings.showBalanceInSidebar}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										onBulkDelete={handleBulkDeleteSessions}
 										onSearchMatchClick={handleSearchMatchClick}
