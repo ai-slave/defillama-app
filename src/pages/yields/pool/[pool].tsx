@@ -13,7 +13,8 @@ import { lockPoolDetail, lockPoolHistory } from '~/containers/Yields/data/verifi
 import {
 	fetchBorrowMarketDetail,
 	fetchBorrowMarketDetailHistory,
-	isNotFoundError
+	isNotFoundError,
+	isPoolId
 } from '~/containers/Yields/poolDetail/fetch'
 import { fetchPoolDetailCached, fetchPoolHistoryCached } from '~/containers/Yields/poolDetail/fetch.server'
 import { buildBorrowChart, buildSupplyChart } from '~/containers/Yields/poolDetail/poolCharts'
@@ -179,7 +180,7 @@ const PRIVATE_POOL_CACHE_CONTROL = 'private, no-store'
 const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async ({ params, query, req, res }) => {
 	const poolParam = params?.pool
 	const id = typeof poolParam === 'string' ? poolParam : Array.isArray(poolParam) ? poolParam[0] : null
-	if (!id) return { notFound: true }
+	if (!id || !isPoolId(id)) return { notFound: true }
 
 	const token = getAuthTokenFromRequest(req)
 	const setCacheHeaders = () => {

@@ -56,7 +56,8 @@ class ApiError extends Error {
 	}
 }
 
-vi.mock('~/containers/Yields/poolDetail/fetch', () => ({
+vi.mock('~/containers/Yields/poolDetail/fetch', async (importOriginal) => ({
+	isPoolId: (await importOriginal<typeof import('~/containers/Yields/poolDetail/fetch')>()).isPoolId,
 	fetchPoolDetail: fetchPoolDetailMock,
 	fetchPoolDetailHistory: fetchPoolDetailHistoryMock,
 	fetchReportedPoolDetail: fetchPoolDetailMock,
@@ -234,8 +235,20 @@ describe('YieldPoolPage', () => {
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 
-	test('propagates an invalid-id 400 instead of classifying it as not found', async () => {
-		const poolId = 'invalid-id'
+	test('returns not found for a malformed pool id without calling upstream', async () => {
+		const res = { setHeader: vi.fn() }
+
+		const result = await getServerSideProps(pageContext('1:11', res))
+
+		expect(result).toEqual({ notFound: true })
+		expect(fetchPoolDetailMock).not.toHaveBeenCalled()
+		expect(fetchBorrowMarketDetailMock).not.toHaveBeenCalled()
+		expect(hasVaultRiskMock).not.toHaveBeenCalled()
+		expect(res.setHeader).not.toHaveBeenCalled()
+	})
+
+	test('propagates an upstream 400 for a well-formed id instead of classifying it as not found', async () => {
+		const poolId = '79e042b5-e55d-4a4e-b0b0-6661a570470b'
 		const error = new ApiError(400, `/v2/earn/${poolId}`)
 		fetchPoolDetailMock.mockRejectedValue(error)
 

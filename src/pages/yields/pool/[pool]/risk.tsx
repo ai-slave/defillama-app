@@ -2,7 +2,12 @@ import type { GetServerSideProps } from 'next'
 import { useBlockExplorers } from '~/api/client'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { fetchBorrowMarketDetail, fetchPoolDetail, isNotFoundError } from '~/containers/Yields/poolDetail/fetch'
+import {
+	fetchBorrowMarketDetail,
+	fetchPoolDetail,
+	isNotFoundError,
+	isPoolId
+} from '~/containers/Yields/poolDetail/fetch'
 import { explorerUrl } from '~/containers/Yields/VaultRisk/components/trustShared'
 import { AddressActions } from '~/containers/Yields/VaultRisk/primitives/AddressActions'
 import type { VaultRiskData } from '~/containers/Yields/VaultRisk/types'
@@ -24,7 +29,7 @@ const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ pa
 	const poolParam = params?.pool
 	const poolId = typeof poolParam === 'string' ? poolParam : Array.isArray(poolParam) ? poolParam[0] : null
 
-	if (!poolId) {
+	if (!poolId || !isPoolId(poolId)) {
 		return { notFound: true }
 	}
 

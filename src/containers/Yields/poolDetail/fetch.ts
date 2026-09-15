@@ -158,3 +158,10 @@ export function fetchBorrowMarketDetailHistory(
 export function isNotFoundError(error: unknown): boolean {
 	return error instanceof ApiError && error.status === 404
 }
+
+const POOL_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Pool ids are UUIDs upstream; anything else is rejected with a 400 there.
+export function isPoolId(id: string): boolean {
+	return POOL_ID_RE.test(id)
+}
