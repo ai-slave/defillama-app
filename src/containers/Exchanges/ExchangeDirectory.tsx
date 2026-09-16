@@ -10,7 +10,7 @@ import { selectVenueDestination } from './venueLinks'
 const SPONSOR_BANNER = {
 	slug: 'bybit',
 	imageUrl: '/assets/exchanges/bybit-banner.jpg',
-	alt: 'Bybit — a smarter way to trade',
+	alt: 'Bybit: a smarter way to trade',
 	// Only reached when the venue is missing from the directory payload.
 	fallbackUrl: 'https://www.bybit.com'
 }

@@ -137,7 +137,7 @@ export function ProfileMetrics({
 			{profile.quality ? (
 				<div className="flex flex-col gap-1.5">
 					<Tooltip
-						content="REAL score: Reserves, Execution, Activity, Liquidity. Full breakdown on the Information tab."
+						content="REAL score: Reserves, Execution, Activity, Liquidity. Breakdown on the Information tab."
 						className="w-full"
 					>
 						<span className="flex w-full items-center gap-2">
@@ -201,7 +201,7 @@ export function ProfileMetrics({
 				{profile.execution?.costToTradeBps != null ? (
 					<MetricRow
 						label="Cost to trade"
-						tooltip="Measured all-in cost of a $10k market order (base-tier taker fee plus half the effective spread), from tick-level fills on the perp basket. Details on the Execution tab."
+						tooltip="All-in cost of a $10k market order, from tick-level fills on the perp basket. Details on the Execution tab."
 						value={`${formatUsd(profile.execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /$10k`}
 					/>
 				) : null}

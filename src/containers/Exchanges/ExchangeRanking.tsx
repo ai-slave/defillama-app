@@ -174,7 +174,7 @@ function RankingRow({
 									row.execDelivery !== null ? (
 										<div className="flex items-center justify-between gap-3">
 											<Tooltip
-												content="Did fills pay what the venue's own book promised at that size? 100 means at or better than quoted; a shortfall cuts the Execution pillar by up to 12%."
+												content="Did fills pay what the book promised at that size? 100 means at or better than quoted; a shortfall cuts Execution by up to 12%."
 												className="min-w-0"
 											>
 												<span className="truncate body-sm underline decoration-dotted">Delivery vs quote</span>
@@ -291,17 +291,15 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					<p className="label-sm text-tertiary">Reserves · Execution · Activity · Liquidity</p>
 				</div>
 				<p className="body-md text-secondary">
-					One REAL score for every exchange, built only on what we can measure or independently verify: the reserves
-					behind the venue, execution quality from tick-level fills, volume and open interest that survive verification,
-					and order-book depth we snapshot ourselves. It is not a judgement of conduct or solvency; a low pillar means
-					weak measurable evidence, and where our measurement is the limit the venue is not penalized.
+					One score per exchange, built only on what we can measure or verify: reserves on chain or in filed accounts,
+					execution from tick-level fills, volume and open interest our own order-book snapshots could support, and
+					resting depth we observed. A low pillar means weak measurable evidence, not misconduct, and where our
+					measurement is the limit the venue is not penalized.
 				</p>
 				<p className="body-md text-secondary">
-					Why this design: the usual exchange ranking is a volume table, and volume is the one figure a venue reports
-					about itself and can inflate at no cost. Each pillar here is something a venue cannot print. Reserves must
-					show up on chain or in filed accounts, execution is measured from the fills that actually happened, activity
-					only counts volume and open interest that our own order-book snapshots could support, and liquidity is resting
-					depth we observed. The weights put half the score on those two hardest-to-fake pillars.
+					Most exchange rankings are volume tables, and volume is the one figure a venue reports about itself and can
+					inflate at no cost. Every pillar here is something it cannot print, and half the weight sits on the two
+					hardest to fake.
 				</p>
 				<div className="flex flex-wrap items-center gap-2">
 					{pillars.map((pillar) => (

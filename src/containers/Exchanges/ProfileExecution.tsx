@@ -121,7 +121,7 @@ function summarySentences(execution: ExchangeExecutionModel): Array<string> {
 	const sentences: Array<string> = []
 	if (execution.costToTradeBps != null) {
 		sentences.push(
-			`A $10k market order here costs about ${formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`
+			`A $10k market order here costs about ${formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} all-in: base-tier taker fee plus spread. VIP tiers lower the fee part; the slippage figures below exclude fees.`
 		)
 	}
 	const actual = execution.realizedSlippage10kBps
@@ -142,61 +142,61 @@ function summarySentences(execution: ExchangeExecutionModel): Array<string> {
 		)
 	}
 	sentences.push(
-		`Measured from ${execution.hoursCovered}h of tick-level fills across ${execution.pairs.length} pair${execution.pairs.length === 1 ? '' : 's'} (${execution.assets.join(', ')}): actual trades, not venue claims. USD perps only for now.`
+		`From ${execution.hoursCovered}h of tick-level fills across ${execution.pairs.length} pair${execution.pairs.length === 1 ? '' : 's'} (${execution.assets.join(', ')}): actual trades, not venue claims. USD perps only.`
 	)
 	return sentences
 }
 
 const HEADER_HELP: Array<{ label: string; help: string; align?: 'end' }> = [
-	{ label: 'Pair', help: 'Perpetual market on the shared measurement basket.' },
+	{ label: 'Pair', help: 'Perp market in the shared measurement basket.' },
 	{
 		label: 'Cost to trade',
-		help: 'All-in cost of a $10k market order: base-tier taker fee plus half the effective spread. VIP tiers can lower the fee part.',
+		help: 'All-in cost of a $10k market order: base-tier taker fee plus half the effective spread. VIP tiers lower the fee part.',
 		align: 'end'
 	},
 	{
 		label: 'Spread',
-		help: 'Effective spread as a percentage of price: twice the gap between fill price and the mid price at fill time. Hover a value for the quoted (displayed) spread.',
+		help: 'Twice the gap between fill price and mid at fill time, as a percentage of price. Hover a value for the quoted spread.',
 		align: 'end'
 	},
 	{
 		label: 'Slippage $10k',
-		help: 'Predicted first (what walking the pre-trade book for each fill’s own size promised), then what fills of at least $10k actually paid, in dollars for a $10k trade.',
+		help: 'What the pre-trade book promised, then what fills of $10k or more actually paid, in dollars per $10k.',
 		align: 'end'
 	},
 	{
 		label: 'Slippage $100k',
-		help: 'Same comparison for fills of at least $100k, in dollars for a $100k trade.',
+		help: 'Same, for fills of $100k or more, per $100k.',
 		align: 'end'
 	},
 	{
 		label: 'Slippage $1M',
-		help: 'Same comparison for fills of at least $1M, in dollars for a $1M trade. Fills this large are rare, so this is often not measured.',
+		help: 'Same, for fills of $1M or more, per $1M. Fills this large are rare, so often not measured.',
 		align: 'end'
 	},
 	{
 		label: 'Markout 1s',
-		help: 'Where the price went 1 second after a fill, in dollars per $10k. Lower is better; positive means the price kept moving against the taker.',
+		help: 'Where the price went 1 second after a fill, per $10k. Lower is better; positive means it kept moving against the taker.',
 		align: 'end'
 	},
 	{
 		label: 'Markout 15s',
-		help: 'Where the price went 15 seconds after a fill, in dollars per $10k. Lower is better.',
+		help: 'Where the price went 15 seconds after a fill, per $10k.',
 		align: 'end'
 	},
 	{
 		label: 'Markout 1m',
-		help: 'Where the price went 1 minute after a fill, in dollars per $10k. Lower is better.',
+		help: 'Where the price went 1 minute after a fill, per $10k.',
 		align: 'end'
 	},
 	{
 		label: 'Markout 5m',
-		help: 'Where the price went 5 minutes after a fill, in dollars per $10k. Lower is better.',
+		help: 'Where the price went 5 minutes after a fill, per $10k.',
 		align: 'end'
 	},
 	{
 		label: 'Measured',
-		help: 'Hours of tick coverage and number of fills behind this pair’s trailing window.',
+		help: 'Hours of tick coverage and fills behind this pair’s window.',
 		align: 'end'
 	}
 ]
@@ -276,7 +276,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 		{
 			label: 'Typical update gap',
 			value: `~${gapMs(feed.avgGapMs)}`,
-			help: 'Average time between order book updates on the BTC perp book: elapsed time divided by updates, so bursts of same-instant updates do not distort it.'
+			help: 'Elapsed time divided by book updates, so bursts of same-instant updates do not distort it.'
 		},
 		{
 			label: 'Slowest 1% of gaps',
@@ -291,7 +291,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 		{
 			label: 'Feed downtime',
 			value: feed.downtimeS > 0 ? `${Math.round(feed.downtimeS)}s` : 'none',
-			help: 'Total time the book feed went silent long enough to count as an outage rather than a quiet market.'
+			help: 'Time the feed went silent long enough to count as an outage, not a quiet market.'
 		}
 	]
 	return (
@@ -306,7 +306,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 				</Tooltip>
 				{feed.degraded ? (
 					<Tooltip
-						content="Outside the venue's normal range — which can also mean a capture problem on our side, one reason feed speed never affects the REAL score."
+						content="Outside the venue's normal range, which can also mean a capture problem on our side. Feed speed never affects the REAL score."
 						className="w-fit"
 					>
 						<span className="rounded-sm border border-current px-1.5 py-0.5 label-sm text-warning">degraded day</span>

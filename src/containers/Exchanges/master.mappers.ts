@@ -214,11 +214,31 @@ export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: Array<nu
 	}))
 }
 
-function median(values: Array<number>): number | null {
+/**
+ * Open-interest-weighted mean across basket assets, weights renormalized over the assets
+ * present. Mirrors `oiWeightedMean` upstream (lib/execution-metrics.ts), which aggregates
+ * the venue-level figures in the same file this reads — the display baskets here are
+ * narrower, so the average is retaken rather than read off.
+ *
+ * Was an equal-weight median. Over a basket ordered by depth a median is a selector, not
+ * a statistic: the middle value was ETH on 15 of 17 venues, so a column labelled as a
+ * basket published one asset's number and discarded the rest.
+ *
+ * All-or-nothing on the weights: an asset with no positive weight sends the whole average
+ * back to equal weight rather than being dropped, because dropping it would quietly
+ * average a narrower basket than the column's header claims.
+ */
+function oiWeightedMean(
+	values: Array<{ asset: string; value: number }>,
+	weights: Record<string, number> | undefined
+): number | null {
 	if (values.length === 0) return null
-	const sorted = [...values].sort((a, b) => a - b)
-	const middle = Math.floor(sorted.length / 2)
-	return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2
+	const applied = values.map((entry) => weights?.[entry.asset] ?? 0)
+	const total = applied.reduce((sum, weight) => sum + weight, 0)
+	if (!(total > 0) || applied.some((weight) => !(weight > 0))) {
+		return values.reduce((sum, entry) => sum + entry.value, 0) / values.length
+	}
+	return values.reduce((sum, entry, index) => sum + entry.value * applied[index], 0) / total
 }
 
 /**
@@ -248,7 +268,7 @@ const METRIC_BASKETS = {
 /**
  * The assets EVERY measured venue covers. The listing publishes cost, slippage and
  * markout side by side, and a venue's own basket is whatever the collector reached
- * for it — comparing a two-asset median against a five-asset one puts different
+ * for it — comparing a two-asset average against a five-asset one puts different
  * markets in the same column, which is how a venue's cost could read below its own
  * slippage. Restricting all of them to the shared basket costs coverage and buys
  * comparability, and it widens on its own as collection catches up.
@@ -270,12 +290,12 @@ export function commonExecutionBasket(execution: MasterExecutionQualityResponse 
 }
 
 /**
- * The assets a metric is actually medianed over: its configured basket, narrowed to
+ * The assets a metric is actually averaged over: its configured basket, narrowed to
  * what every measured venue covers.
  *
  * Both halves matter. The configured basket fixes the scope so it does not drift with
  * coverage; intersecting with the common set keeps venues comparable, because a venue
- * missing one of the five would otherwise be medianed over four while its peers use
+ * missing one of the five would otherwise be averaged over four while its peers use
  * five.
  */
 function basketFor(metric: keyof typeof METRIC_BASKETS, common: Array<string>): Array<string> {
@@ -285,7 +305,8 @@ function basketFor(metric: keyof typeof METRIC_BASKETS, common: Array<string>): 
 /** One row's displayed execution figures, each metric over its own stated basket. */
 function directoryExecution(
 	metrics: MasterExecutionVenueMetrics | null,
-	basket: Array<string>
+	basket: Array<string>,
+	oiWeights: Record<string, number> | undefined
 ): ExchangeDirectoryRowModel['execution'] {
 	if (!metrics) return null
 	if (basket.length === 0) {
@@ -313,7 +334,13 @@ function directoryExecution(
 
 	const over =
 		(pairs: Array<MasterExecutionPairMetrics>) => (pick: (pair: MasterExecutionPairMetrics) => number | null) =>
-			median(pairs.map(pick).filter((value): value is number => value != null))
+			oiWeightedMean(
+				pairs.flatMap((pair) => {
+					const value = pick(pair)
+					return value == null ? [] : [{ asset: pair.asset, value }]
+				}),
+				oiWeights
+			)
 	const overCost = over(costPairs)
 	// Slippage and markout share one basket: both are fill quality, and splitting them
 	// would put two scopes side by side for no gain.
@@ -324,7 +351,7 @@ function directoryExecution(
 		assets: fillPairs.map((pair) => pair.asset),
 		costAssets: costPairs.map((pair) => pair.asset),
 		// The weakest pair bounds the row: claiming the deepest pair's coverage for a
-		// basket median would overstate what the number rests on.
+		// basket average would overstate what the number rests on.
 		hoursCovered: allPairs.length > 0 ? Math.min(...allPairs.map((pair) => pair.hours_covered)) : 0,
 		costToTradeBps: overCost((pair) => pair.cost_to_trade_bps),
 		effectiveSpreadBps: overCost((pair) => pair.effective_spread_bps),
@@ -471,7 +498,7 @@ function mapDirectoryVenue(
 					inverse_perp: mapNormalizedVolume(venue.nvol.inverse_perp)
 				}
 			: null,
-		execution: directoryExecution(executionMetrics, executionBasket),
+		execution: directoryExecution(executionMetrics, executionBasket, execution?.oi_weights_usd),
 		quality: venue.rank ?? null
 	}
 }
@@ -545,7 +572,7 @@ export function mapMasterDirectory(
 
 /**
  * BTC execution + fee comparison, one row per venue that has a measured BTC pair —
- * unlike `directoryExecution`'s basket median, this reads `pairs.BTC` directly so
+ * unlike `directoryExecution`'s basket average, this reads `pairs.BTC` directly so
  * every figure is BTC specifically, not diluted by whatever else is in the basket.
  * `directoryRows` supplies the name/profile link/quality tier already computed for
  * the directory (same join key: venue slug), so this never re-derives that.

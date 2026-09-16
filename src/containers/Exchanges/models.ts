@@ -241,7 +241,7 @@ export interface ExchangeVenueRankModel {
 
 /**
  * One venue's measured BTC execution quality plus fee, restricted to the BTC pair
- * specifically (not the shared basket median `ExchangeDirectoryRowModel.execution`
+ * specifically (not the shared basket average `ExchangeDirectoryRowModel.execution`
  * mixes several assets into) — for the cross-venue BTC comparison table on the
  * research charts page. Null fields mean not measured for this venue, never zero.
  */

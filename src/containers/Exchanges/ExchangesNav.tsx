@@ -8,39 +8,37 @@ const EXCHANGES_PAGES = {
 		href: '/exchanges',
 		label: 'Exchanges',
 		heading: 'Exchanges',
-		description: 'Activity, liquidity, fees, and compliance across CEXs and DEXs.'
+		description: 'Activity, liquidity, fees and compliance across CEXs and DEXs.'
 	},
 	rank: {
 		href: '/exchanges/rank',
 		label: 'Ranking',
 		heading: 'REAL Ranking',
-		description:
-			'The REAL score — Reserves, Execution, Activity, Liquidity — for every exchange, and how each pillar is built.'
+		description: 'Every exchange scored on Reserves, Execution, Activity and Liquidity, with how each pillar is built.'
 	},
 	reserves: {
 		href: '/cexs',
 		label: 'Reserves',
 		heading: 'Exchange reserves',
-		description: 'Tracked CEX wallet assets, clean reserves, and net inflows.'
+		description: 'Tracked CEX wallet assets, clean reserves and net inflows.'
 	},
 	charts: {
 		href: '/exchanges/charts',
 		label: 'Charts',
 		heading: 'Exchange charts',
-		description: 'Historical volume, open interest, depth, and normalized volume across exchanges.'
+		description: 'Historical volume, open interest, depth and normalized volume.'
 	},
 	tokens: {
 		href: '/exchanges/tokens',
 		label: 'Token finder',
 		heading: 'Find exchanges by token',
-		description: 'Find exchanges and market segments listing all or any selected tokens.'
+		description: 'Exchanges and segments listing all or any of the tokens you pick.'
 	},
 	ramp: {
 		href: '/ramp',
 		label: 'Fiat ramps',
 		heading: 'Fiat on-ramp and off-ramp costs',
-		description:
-			'What a fiat round trip costs on each venue: rail fee, taker fee, slippage and the BTC transfer, per country and currency.'
+		description: 'What a fiat round trip costs per venue, country and currency: rail, taker fee, slippage and transfer.'
 	}
 } as const
 

@@ -12,14 +12,12 @@ import { selectVenueDestination } from './venueLinks'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, RampRowModel>()
 
-const ROUND_TRIP_HELP =
-	'Fiat in, then fiat out: deposit → buy BTC → withdraw to your own wallet, plus the same trip in reverse. The full cost of using the venue as a ramp.'
+const ROUND_TRIP_HELP = 'On-ramp plus off-ramp: what a full round trip through the venue costs.'
 const ON_RAMP_HELP =
-	'Fiat deposit fee + taker fee + BTC book slippage + the venue’s BTC withdrawal fee. Hover for the breakdown; a blank means one leg is unpublished, never zero.'
-const OFF_RAMP_HELP =
-	'BTC network fee (your wallet → the venue) + taker fee + BTC book slippage + fiat withdrawal fee. Hover for the breakdown.'
+	'Fiat deposit + taker fee + slippage + BTC withdrawal. Hover for the breakdown; a blank means a leg is unpublished, never zero.'
+const OFF_RAMP_HELP = 'BTC network fee in + taker fee + slippage + fiat withdrawal. Hover for the breakdown.'
 const TRADE_COST_HELP =
-	'Execution alone: taker fee + slippage walking the venue’s stored BTC book at this size. No fiat rail, no transfer.'
+	'Execution alone: taker fee + slippage on the venue’s BTC book at this size. No rail, no transfer.'
 /** Columns present but hidden by default — reachable from the column select, and still in
  *  the CSV. Regulator is parked until the licence data is filled in. Access is off because
  *  an "Available" chip beside a row with no published on/off-ramp fee reads as a promise the
@@ -133,8 +131,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 			meta: {
 				headerClassName: 'min-w-[110px] whitespace-nowrap',
 				align: 'end',
-				headerHelperText:
-					'Every authored deposit and withdrawal route for this region, with fees, minimums and processing times.',
+				headerHelperText: 'Deposit and withdrawal routes for this region, with fees, minimums and times.',
 				csvValue: (row) => (row.variant.rails ? fiatFeeSummary(row.variant.rails) : null)
 			}
 		}),
@@ -146,7 +143,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 				headerClassName: 'min-w-[116px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText:
-					'Deposit and withdrawal routes per asset and network (BTC, ETH and their L2s). Sparse today: most venues carry only the BTC withdrawal fee the on-ramp total already charges.',
+					'Routes per asset and network (BTC, ETH and their L2s). Sparse today: most venues publish only the BTC withdrawal fee.',
 				csvValue: (row) => (row.variant.cryptoRails ? cryptoRailSummary(row.variant.cryptoRails) : null)
 			}
 		}),

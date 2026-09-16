@@ -214,7 +214,7 @@ export function normalizedOrReported(
 }
 
 const REPORTED_NOTE =
-	'Reported volume, not liquidity-checked: no order book captured for this segment, so there is nothing to normalize against.'
+	'Not liquidity-checked: no order book captured for this segment, so there is nothing to normalize against.'
 
 /**
  * One segment-qualified money column for the merged view.
@@ -329,11 +329,11 @@ function perpColumn(spec: {
  * reader looks for what a number means.
  */
 function executionScopeNote(basket: Array<string>): string {
-	if (basket.length === 0) return 'Measured on each venue’s own covered perps.'
+	if (basket.length === 0) return 'Each venue’s own covered perps.'
 	if (basket.length === 1) {
-		return `Measured on the ${basket[0]} perp on every venue, so rows compare like for like.`
+		return `Measured on the ${basket[0]} perp.`
 	}
-	return `Median across the ${basket.join(', ')} perps on every venue, so rows compare like for like.`
+	return `OI-weighted across ${basket.join(', ')} perps.`
 }
 
 export function buildDirectoryColumns(
@@ -516,7 +516,7 @@ export function buildDirectoryColumns(
 				// tooltip, where it can say so.
 				return (
 					<Tooltip
-						content={`Base-tier taker fee plus half the effective spread of ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}. Median over ${execution?.hoursCovered ?? 'n/a'}h; VIP tiers lower the fee part.`}
+						content={`Taker fee plus half the ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} effective spread, from ${execution?.hoursCovered ?? 'n/a'}h of fills.`}
 						className="ms-auto w-fit"
 					>
 						<span className="underline decoration-dotted">

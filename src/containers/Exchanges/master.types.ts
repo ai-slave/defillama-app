@@ -323,6 +323,12 @@ export interface MasterExecutionQualityResponse {
 	basket: Array<string>
 	unit: string
 	unit_note: string
+	/** Cross-venue linear-perp open interest per basket asset, in USD — the weights every
+	 * venue's basket average is taken with, upstream and here. One set for every venue on
+	 * purpose: weighting a venue by its own OI split would compare a BTC-heavy venue's
+	 * near-BTC number against an alt-heavy venue's near-alt one. Absent on an older cache
+	 * build → equal weight. */
+	oi_weights_usd?: Record<string, number>
 	venues: Record<string, MasterExecutionVenueMetrics>
 }
 

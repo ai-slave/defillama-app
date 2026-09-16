@@ -195,7 +195,7 @@ export function ExchangeRegionalInformation({
 			if (metadataKeys.has(key) || (key !== 'funding' && !globalMetadataKeys.has(key))) continue
 			placeholders.push({
 				key,
-				message: `No ${countryLabel(view.country)}-specific details are published for this section. This does not necessarily mean the feature is unavailable.`
+				message: `Nothing ${countryLabel(view.country)}-specific is published here. That does not mean the feature is unavailable.`
 			})
 		}
 	}

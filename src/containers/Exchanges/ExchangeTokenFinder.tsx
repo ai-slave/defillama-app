@@ -213,8 +213,8 @@ export function ExchangeTokenFinder({
 					</div>
 				</div>
 				<p className="body-sm text-secondary">
-					“Must list all” requires every selected token; “Can list any” requires at least one. Country selection removes
-					unavailable market segments.
+					“Must list all” needs every selected token; “Can list any” needs at least one. Picking a country drops the
+					segments unavailable there.
 				</p>
 			</Card>
 

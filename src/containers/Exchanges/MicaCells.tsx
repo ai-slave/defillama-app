@@ -75,20 +75,20 @@ export function MicaDepthValue({
 }
 
 export const SPOT_DEPTH_2_HELP =
-	'Bid plus ask depth within 2% of mid across the venue’s spot markets, from our own order-book snapshots, never venue-reported.'
+	'Bid plus ask depth within 2% of mid across spot markets, from our own snapshots, never venue-reported.'
 export const SPOT_DEPTH_05_HELP =
-	'Bid plus ask depth within 0.5% of mid across the venue’s spot markets, from our own order-book snapshots. Closest to executable liquidity at the touch.'
+	'Same across spot markets, but within 0.5% of mid: closest to what is executable at the touch.'
 export const PERP_DEPTH_2_HELP =
-	'Bid plus ask depth within 2% of mid across the venue’s perpetual markets, from our own order-book snapshots, never venue-reported.'
+	'Bid plus ask depth within 2% of mid across perp markets, from our own snapshots, never venue-reported.'
 export const PERP_DEPTH_05_HELP =
-	'Bid plus ask depth within 0.5% of mid across the venue’s perpetual markets, from our own order-book snapshots. Closest to executable liquidity at the touch.'
+	'Same across perp markets, but within 0.5% of mid: closest to what is executable at the touch.'
 // Costs are USD. The notional is $1,000 and the fiat leg is the EUR SEPA rail,
 // converted at the build's EUR/USD rate — so the amount is dollars even though the
 // rail is euros. These read "€1,000" before, which described neither.
 export const ON_RAMP_COST_HELP =
-	'Total cost to turn $1,000 into BTC in your own wallet, via a EUR SEPA deposit: SEPA deposit + taker fee + orderbook slippage + BTC withdrawal fee. Hover for the full breakdown.'
+	'Cost of turning $1,000 into BTC in your own wallet via EUR SEPA: deposit + taker fee + slippage + BTC withdrawal. Hover for the breakdown.'
 export const OFF_RAMP_COST_HELP =
-	'Total cost to turn $1,000 of BTC into EUR in your bank account: BTC network fee + taker fee + orderbook slippage + SEPA withdrawal. Hover for the full breakdown.'
+	'Cost of turning $1,000 of BTC into EUR in your bank account: network fee + taker fee + slippage + SEPA withdrawal. Hover for the breakdown.'
 
 function cleanPromotionSubtitle(promotion: ExchangePromotionModel) {
 	return promotion.subtitle?.replace(/\s*T&Cs apply\.?$/i, '').trim()

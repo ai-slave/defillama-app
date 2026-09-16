@@ -62,7 +62,7 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 			</div>
 			<DepthCurveBody entries={entries} />
 			<p className="px-2 pb-2 body-sm text-tertiary">
-				{`Cumulative USD resting within each distance of mid across ${venues.length} books, each curve drawn on its own rather than stacked. Only books measured that far from mid are counted, so a curve can step down where a shallower book drops out. A venue trading on another venue's book is counted once, under that book.`}
+				{`Cumulative USD resting within each distance of mid across ${venues.length} books, unstacked. Only books measured that far out are counted, so a curve can step down where a shallower book drops out. A venue trading on another's book counts once, under that book.`}
 			</p>
 		</>
 	)

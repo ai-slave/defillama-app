@@ -3,160 +3,157 @@ export interface ExchangeDefinition {
 	description: string
 }
 
+// ponytail: descriptions stay one or two short sentences. Facts that hold for every
+// volume or fee column (one-sided counting, pre-discount fees) are stated once per
+// column in the shortest form, not re-explained in each.
 export const exchangeDefinitions = {
 	segments: {
 		spot: {
 			label: 'Spot',
-			description: 'Markets where the base asset itself is bought and sold for immediate settlement.'
+			description: 'Buying and selling the asset itself, settled immediately.'
 		},
 		linearPerps: {
 			label: 'USD Perps',
-			description: 'Perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
+			description: 'Perps margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerps: {
 			label: 'COIN Perps',
-			description:
-				'Perpetual contracts margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+			description: 'Perps margined and settled in the coin itself, so collateral and PnL are in that coin.'
 		}
 	},
 	summary: {
 		totalVolume24h: {
 			label: 'Total Trading Volume (24h)',
 			description:
-				"Spot plus perpetual USD volume across tracked venues over the latest 24h, valued at each day's own volume-weighted average price. One-sided: each trade counted once, and shared order books counted once."
+				'Spot plus perp USD volume across tracked venues, last 24h. One-sided; a shared order book counts once.'
 		},
 		cex: {
 			label: 'CEX',
-			description: 'Total spot and perpetual volume from centralized exchanges.'
+			description: 'Spot plus perp volume from centralized exchanges.'
 		},
 		dex: {
 			label: 'DEX',
-			description: 'Total spot and perpetual volume from decentralized exchanges.'
+			description: 'Spot plus perp volume from decentralized exchanges.'
 		},
 		spot: {
 			label: 'Spot',
-			description: 'USD spot-market volume over the latest 24h, counted one-sided (each trade once).'
+			description: 'Spot USD volume, last 24h. One-sided.'
 		},
 		linearPerp: {
 			label: 'USD Perps',
-			description:
-				'USD volume in perps margined and settled in a quote asset such as USDT or USDC, over the latest 24h, counted one-sided (each trade once).'
+			description: 'Volume in perps margined in a quote asset such as USDT or USDC, last 24h. One-sided.'
 		},
 		inversePerp: {
 			label: 'COIN Perps',
-			description:
-				'USD volume in perps margined and settled in the underlying coin (collateral and PnL in that coin), over the latest 24h, counted one-sided (each trade once).'
+			description: 'Volume in perps margined in the coin itself, last 24h. One-sided.'
 		},
 		spotVolume24h: {
 			label: 'Spot volume 24h',
-			description: 'Total USD spot volume across tracked venues, counted one-sided (each trade once).'
+			description: 'Spot USD volume across tracked venues. One-sided.'
 		},
 		linearPerpVolume24h: {
 			label: 'USD perp volume 24h',
-			description:
-				'Total USD volume in USD-margined perps across tracked venues, counted one-sided (each trade once). Margined and settled in a quote asset such as USDT or USDC.'
+			description: 'USD-margined perp volume across tracked venues. One-sided.'
 		},
 		inversePerpVolume24h: {
 			label: 'COIN perp volume 24h',
-			description:
-				'Total USD volume in coin-margined perps across tracked venues, counted one-sided (each trade once). Collateral and PnL are denominated in the underlying coin.'
+			description: 'Coin-margined perp volume across tracked venues. One-sided.'
 		},
 		linearPerpOpenInterest: {
 			label: 'USD perp open interest',
-			description: 'USD value of one side of open positions across tracked USD perp markets.'
+			description: 'USD value of one side of open positions in tracked USD perp markets.'
 		},
 		inversePerpOpenInterest: {
 			label: 'COIN perp open interest',
-			description: 'USD value of one side of open positions across tracked COIN perp markets.'
+			description: 'USD value of one side of open positions in tracked COIN perp markets.'
 		},
 		reserves: {
 			label: 'Reserves',
-			description: 'Assets held in tracked exchange reserve wallets. Assets only, not liabilities or solvency.'
+			description: 'Assets held in tracked exchange wallets. Assets only, not liabilities or solvency.'
 		},
 		venues: {
 			label: 'Venues',
-			description: 'Tracked venues have market activity data; listed also counts metadata-only entries.'
+			description: 'Tracked venues have activity data; listed also counts metadata-only entries.'
 		}
 	},
 	directory: {
 		name: {
 			label: 'Exchange',
 			description:
-				'Venue identity; sorts by the REAL ranking the table opens with. “Metadata only” means exchange information exists but market activity is not tracked.'
+				'Venue identity, sorted by the REAL ranking the table opens with. “Metadata only” means no market activity is tracked.'
 		},
 		venueLinks: {
 			label: 'Links',
-			description: 'Shortcuts to the venue’s reserves page, its DefiLlama profile, and its website.'
+			description: 'Reserves page, DefiLlama profile, and website.'
 		},
 		execCostToTrade: {
 			label: 'Cost to trade $10k',
-			description:
-				'What a $10k market order costs all in: taker fee plus half the spread you cross, measured from real fills. VIP tiers can lower the fee part. N/A until 72 measured hours.'
+			description: 'Taker fee plus half the spread crossed, from real fills. VIP tiers lower the fee part.'
 		},
 		execSlippage10k: {
 			label: 'Slippage',
 			description:
-				'What fills actually paid beyond the mid price at $10k and $100k, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land. N/A until 72 measured hours.'
+				'What fills paid beyond mid at $10k and $100k, the book’s prediction first. A wide gap means depth moves before fills land.'
 		},
 		execMarkout1m: {
 			label: 'Markout',
 			description:
-				'Where the price went one and five minutes after a fill, per $10k traded. Positive (red) means it kept moving against the taker, a sign of trading against faster flow. Lower is better.'
+				'Where price went 1 and 5 minutes after a fill, per $10k. Positive (red) is worse: price kept moving against the taker.'
 		},
 		kind: {
 			label: 'Type',
-			description: 'CEX means centralized exchange; DEX means decentralized exchange.'
+			description: 'Centralized (CEX) or decentralized (DEX).'
 		},
 		volume24h: {
 			label: '24h Volume',
 			description:
-				'USD volume over the latest 24h for the selected scope, counted one-sided (each trade once). A dotted value shares its order book with another venue that also counts it; brand rows add the parent plus each own-book entity.'
+				'USD volume over the last 24h for the selected scope. One-sided. A dotted value shares its order book with another venue that also counts it; brand rows add the parent plus each own-book entity.'
 		},
 		volumeChange24h: {
 			label: 'Volume Δ',
-			description: 'Percentage change in 24-hour volume versus the preceding 24-hour observation.'
+			description: 'Change versus the previous 24h.'
 		},
 		openInterestUsd: {
 			label: 'Open Interest',
 			description:
-				'USD value of one side of open perp positions at the latest snapshot. A dotted value shares its order book with another venue that also counts it; brand rows sum own-book children only.'
+				'USD value of one side of open perp positions, latest snapshot. A dotted value shares its order book with another venue that also counts it; brand rows sum own-book children only.'
 		},
 		volumeToOi: {
 			label: 'Vol / OI',
 			description:
-				'24h volume divided by open interest: how many times the open position base turned over in a day. Very high values suggest wash-like churn or a thin position base. Perp scopes only.'
+				'24h volume ÷ open interest: how many times the position base turned over in a day. Very high suggests wash-like churn or a thin base. Perp scopes only.'
 		},
 		volumeToDepth: {
 			label: 'Vol / Depth',
 			description:
-				'24h volume divided by the ±2% depth we snapshot: daily turnover against resting liquidity. Very high values mean volume dwarfs the visible book.'
+				'24h volume ÷ the ±2% depth we snapshot: daily turnover against resting liquidity. Very high means volume dwarfs the visible book.'
 		},
 		openInterestChange24h: {
 			label: 'OI Δ',
-			description: 'Percentage change in open interest versus 24 hours earlier.'
+			description: 'Change versus 24 hours earlier.'
 		},
 		marketCount: {
 			label: 'Markets',
-			description: 'Number of active trading markets in the selected market scope.'
+			description: 'Active trading markets in the selected scope.'
 		},
 		coinCount: {
 			label: 'Coins',
-			description: 'Number of distinct base assets represented by markets in the selected scope.'
+			description: 'Distinct base assets in the selected scope.'
 		},
 		normalizedVolume: {
 			label: 'Norm Volume',
 			description:
-				'Reported 24h volume (one-sided) capped at what the order book we snapshot could support, so never above reported. A * marks a market with no captured book. Brand rows sum the parent plus each own-book entity.'
+				'Reported 24h volume capped at what the book we snapshot could support, so never above reported. A * marks a market with no captured book. Brand rows sum the parent plus each own-book entity.'
 		},
 		activeLiquidity: {
 			label: 'Active liquidity',
 			description:
-				"Bid plus ask depth from our own order-book snapshots inside each market's own daily volatility band (floor 2%, ceiling 25%), instead of a fixed ±2%. Observed depth only, never extrapolated."
+				'Bid plus ask depth from our own snapshots inside each market’s daily volatility band (2% to 25%) instead of a fixed ±2%. Observed depth only, never extrapolated.'
 		},
 		depth2Usd: {
 			label: 'Depth ±2%',
 			description:
-				'Bid plus ask depth within 2% of mid, from our own snapshots, never venue-reported, and a floor: endpoint level caps can stop a book short. Active liquidity is the volatility-adjusted version.'
+				'Bid plus ask depth within 2% of mid, from our own snapshots. A floor: endpoint limits can cut a book short. Active liquidity is the volatility-adjusted version.'
 		},
 		spotActiveLiquidity: {
 			label: 'Spot liq.',
@@ -164,70 +161,67 @@ export const exchangeDefinitions = {
 		},
 		perpActiveLiquidity: {
 			label: 'USD perp liq.',
-			description: 'Active liquidity across the venue’s USD perpetual markets. COIN perps remain separate.'
+			description: 'Active liquidity across the venue’s USD perp markets. COIN perps are separate.'
 		},
 		perpOpenInterest: {
 			label: 'USD perp OI',
 			description:
-				'USD value of one side of open positions across the venue’s USD perpetual markets; where the venue publishes long plus short summed, we halve it. COIN perps remain separate.'
+				'USD value of one side of open USD perp positions; halved where the venue publishes long plus short. COIN perps are separate.'
 		},
 		spotNormalizedVolume: {
 			label: 'Spot n. vol',
 			description:
-				'24h spot volume capped at what the book we snapshot could plausibly support. Where no book was captured, reported volume is shown and marked with a * (not liquidity-checked).'
+				'24h spot volume capped at what the book we snapshot could support. A * means no book was captured, so reported volume is shown unchecked.'
 		},
 		perpNormalizedVolume: {
 			label: 'USD perp n. vol',
 			description:
-				'24h USD perpetual volume capped at what the book we snapshot could plausibly support. Where no book was captured, reported volume is shown and marked with a * (not liquidity-checked).'
+				'24h USD perp volume capped at what the book we snapshot could support. A * means no book was captured, so reported volume is shown unchecked.'
 		},
 		sparkline: {
 			label: 'Volume trend',
 			description:
-				'Up to 14 recent daily volume observations for the selected market scope. On a brand row the daily series sums the parent and each own-book regional entity.'
+				'Up to 14 recent daily volume points for the selected scope. Brand rows sum the parent and each own-book regional entity.'
 		},
 		reservesUsd: {
 			label: 'Reserves',
-			description:
-				'USD value of assets in tracked exchange wallets. This is an asset total, not proof of liabilities or solvency.'
+			description: 'USD value of assets in tracked exchange wallets. Assets only, not liabilities or solvency.'
 		},
 		cleanRatio: {
 			label: 'Clean Ratio',
-			description:
-				'Clean reserves divided by total reserves. Clean reserves exclude assets issued by the exchange itself.'
+			description: 'Clean reserves ÷ total reserves. Clean excludes assets the exchange issued itself.'
 		},
 		inflows24hUsd: {
 			label: '24h Inflows',
-			description: 'Net USD inflows to tracked exchange reserve wallets over the last 24 hours.'
+			description: 'Net USD flow into tracked reserve wallets over the last 24h.'
 		},
 		inflows7dUsd: {
 			label: '7d Inflows',
-			description: 'Net USD inflows to tracked exchange reserve wallets over the last seven days.'
+			description: 'Net USD flow into tracked reserve wallets over the last 7 days.'
 		},
 		inflows1mUsd: {
 			label: '1m Inflows',
-			description: 'Net USD inflows to tracked exchange reserve wallets over the last month.'
+			description: 'Net USD flow into tracked reserve wallets over the last month.'
 		},
 		ownTokenFraction: {
 			label: 'Own Token',
-			description: 'Share of tracked reserves held in assets issued by the exchange itself.'
+			description: 'Share of tracked reserves held in assets the exchange issued itself.'
 		},
 		auditor: {
 			label: 'Auditor',
-			description: 'Auditor or attestation provider recorded for the venue’s reserve disclosure.'
+			description: 'Auditor or attestation provider for the venue’s reserve disclosure.'
 		},
 		freshness: {
 			label: 'Volume as of',
-			description: 'Date of the volume observation used for this venue and market scope.'
+			description: 'Date of the volume observation used for this venue and scope.'
 		},
 		warnings: {
 			label: 'Warnings',
-			description:
-				'Number of current editorial or data-quality cautions recorded for the venue. Open the value to read them.'
+			description: 'Current editorial or data-quality cautions. Open the value to read them.'
 		},
 		reservesSource: {
 			label: 'Source',
-			description: 'Source page used to verify the venue’s reserve data.'
+			description: 'Page used to verify the venue’s reserve data.'
 		},
 		spotFee: {
 			label: 'Spot fees',
@@ -236,52 +230,50 @@ export const exchangeDefinitions = {
 		linearPerpFee: {
 			label: 'USD Perps fees',
 			description:
-				'Regular-tier USD perp maker and taker fees, before VIP or fee-token discounts. USD perps are margined and settled in a quote asset such as USDT or USDC.'
+				'Regular-tier maker and taker fees on perps margined in a quote asset such as USDT or USDC, before VIP or fee-token discounts.'
 		},
 		inversePerpFee: {
 			label: 'COIN Perps fees',
 			description:
-				'Regular-tier COIN perp maker and taker fees, before VIP or fee-token discounts. COIN perps are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+				'Regular-tier maker and taker fees on perps margined in the coin itself, before VIP or fee-token discounts.'
 		},
 		feeToken: {
 			label: 'Fee Token',
-			description: 'Venue token that can reduce trading fees, with the recorded discount when available.'
+			description: 'Venue token that cuts trading fees, with the recorded discount where available.'
 		},
 		fiatCurrencies: {
 			label: 'Fiat currencies',
-			description: 'Fiat currencies documented as supported by the venue’s funding rails.'
+			description: 'Fiat currencies documented on the venue’s funding rails.'
 		},
 		fiatFees: {
 			label: 'Fiat fees',
-			description:
-				'Documented on-ramp and off-ramp fee routes. Open the value for methods, fees, minimums, processing times, and sources.'
+			description: 'Documented on- and off-ramp routes. Open the value for methods, fees, minimums, times and sources.'
 		},
 		fiatOnramp: {
 			label: 'Fiat on-ramp',
-			description: 'Whether the venue has a documented route for moving fiat onto the platform.'
+			description: 'Whether the venue documents a route for moving fiat onto the platform.'
 		},
 		rampCost: {
 			label: '$1k on-ramp cost',
 			description:
-				"Estimated all-in USD cost of depositing $1,000, buying BTC, and withdrawing it. Includes fiat, taker, slippage, and transfer fees. With a country selected this is priced on that country's cheapest rail; otherwise it is the EUR/SEPA path."
+				'All-in cost of depositing $1,000, buying BTC and withdrawing it: fiat, taker, slippage and transfer fees. Priced on the selected country’s cheapest rail, otherwise EUR/SEPA.'
 		},
 		offRampCost: {
 			label: '$1k off-ramp cost',
 			description:
-				"Estimated all-in USD cost of depositing BTC, selling it, and withdrawing $1,000 of fiat. Includes fiat, taker, slippage, and transfer fees. With a country selected this is priced on that country's cheapest rail; otherwise it is the EUR/SEPA path."
+				'All-in cost of depositing BTC, selling it and withdrawing $1,000 of fiat: fiat, taker, slippage and transfer fees. Priced on the selected country’s cheapest rail, otherwise EUR/SEPA.'
 		},
 		headquarters: {
 			label: 'HQ',
-			description: 'Recorded headquarters of the legal or operating entity represented by this row.'
+			description: 'Recorded headquarters of the entity in this row.'
 		},
 		euStatus: {
 			label: 'EU availability',
-			description: 'Current usability for EU customers. This is separate from holding a MiCA authorization.'
+			description: 'Usability for EU customers today. Separate from holding a MiCA authorization.'
 		},
 		mica: {
 			label: 'MiCA',
-			description:
-				'Recorded MiCA Crypto-Asset Service Provider authorization. Authorization does not by itself imply current EU availability.'
+			description: 'Recorded MiCA authorization. It does not by itself imply current EU availability.'
 		},
 		kyc: {
 			label: 'KYC',
@@ -289,90 +281,88 @@ export const exchangeDefinitions = {
 		},
 		licenseCount: {
 			label: 'All licenses',
-			description: 'Count of recorded regulatory licenses across all jurisdictions, not only MiCA.'
+			description: 'Recorded regulatory licenses across all jurisdictions, not only MiCA.'
 		},
 		founded: {
 			label: 'Founded',
-			description: 'Year the exchange or represented venue entity was founded.'
+			description: 'Year the venue entity was founded.'
 		}
 	},
 	markets: {
 		venue: {
 			label: 'Venue',
-			description: 'Exchange or trading venue that lists this market.'
+			description: 'Exchange that lists this market.'
 		},
 		token: {
 			label: 'Token',
-			description: 'Base asset being traded in the market.'
+			description: 'Base asset being traded.'
 		},
 		pair: {
 			label: 'Pair',
-			description: 'Venue market symbol. Open the value to visit the market on the venue.'
+			description: 'Venue market symbol. Open it to visit the market on the venue.'
 		},
 		price: {
 			label: 'Price',
-			description: 'Latest recorded market price, denominated in the quote asset shown beside the value.'
+			description: 'Latest price, in the quote asset shown beside the value.'
 		},
 		priceChange24h: {
 			label: 'Price Δ',
-			description: 'Percentage change in price over the latest 24-hour observation.'
+			description: 'Change over the last 24h.'
 		},
 		volume24h: {
 			label: 'Volume',
-			description: 'USD volume for this market over the latest 24h, counted one-sided (each trade once).'
+			description: 'USD volume for this market over the last 24h. One-sided.'
 		},
 		volumeChange24h: {
 			label: 'Volume Δ',
-			description: 'Percentage change in 24-hour volume versus the preceding 24-hour observation.'
+			description: 'Change versus the previous 24h.'
 		},
 		normalizedVolume: {
 			label: 'Norm Volume',
 			description:
-				'Reported 24h volume (one-sided) capped at what the order book we snapshot could support, so never above reported. A * marks a market with no captured book, shown unchecked.'
+				'Reported 24h volume capped at what the book we snapshot could support, so never above reported. A * marks a market with no captured book, shown unchecked.'
 		},
 		activeLiquidity: {
 			label: 'Active liquidity',
 			description:
-				"Combined USD bid and ask depth from our own order-book snapshot inside this market's own volatility band rather than a fixed ±2%: the band is its typical daily range (floor 2%, ceiling 25%), so the figure covers the depth reachable on a day like today. Observed depth only, never extrapolated past what the snapshot captured. Hover for the band and how much of the market's visible book it spans."
+				'Bid plus ask depth from our own snapshot inside this market’s own volatility band (its typical daily range, 2% to 25%) instead of a fixed ±2%, so it covers the depth reachable on a day like today. Observed depth only. Hover for the band and how much of the visible book it spans.'
 		},
 		depth2Usd: {
 			label: 'Depth ±2%',
-			description:
-				'Combined USD bid and ask depth within a fixed 2% of the mid price, from our own order-book snapshot, never venue-reported.'
+			description: 'Bid plus ask depth within 2% of mid, from our own snapshot, never venue-reported.'
 		},
 		spreadFraction: {
 			label: 'Spread',
-			description: 'Difference between the best ask and best bid, expressed as a percentage of the mid price.'
+			description: 'Best ask minus best bid, as a percentage of mid.'
 		},
 		markPrice: {
 			label: 'Mark price',
-			description: 'Venue mark price used to value open positions and calculate unrealized profit and loss.'
+			description: 'Venue mark price, used to value open positions and unrealized PnL.'
 		},
 		indexPrice: {
 			label: 'Index price',
-			description: 'Reference asset price used by the venue to calculate the derivative contract’s mark price.'
+			description: 'Reference asset price the venue marks the contract against.'
 		},
 		basis: {
 			label: 'Basis',
-			description:
-				'Percentage premium or discount of the mark price to the index price, calculated as mark price divided by index price minus one.'
+			description: 'Mark price premium or discount to the index price (mark ÷ index − 1).'
 		},
 		openInterestUsd: {
 			label: 'Open Interest',
-			description: 'USD value of one side of open positions in this market at the latest snapshot.'
+			description: 'USD value of one side of open positions in this market, latest snapshot.'
 		},
 		openInterestChange24h: {
 			label: 'OI Δ',
-			description: 'Percentage change in this market’s open interest versus 24 hours earlier.'
+			description: 'Change versus 24 hours earlier.'
 		},
 		fundingRate8h: {
 			label: 'Funding 8h',
 			description:
-				'Periodic payment rate between long and short positions, normalized to an eight-hour period. Open a value to see the venue’s raw funding period.'
+				'Payment rate between longs and shorts, normalized to 8 hours. Open a value for the venue’s raw period.'
 		},
 		nextFundingAt: {
 			label: 'Next funding',
-			description: 'Next scheduled funding payment date for this market, in UTC.'
+			description: 'Next scheduled funding payment, in UTC.'
 		},
 		maxLeverage: {
 			label: 'Max Leverage',
@@ -380,19 +370,19 @@ export const exchangeDefinitions = {
 		},
 		volumeFreshness: {
 			label: 'Volume as of',
-			description: 'Date of the latest volume observation used for this market.'
+			description: 'Date of the latest volume observation for this market.'
 		},
 		makerFee: {
 			label: 'Maker Fee',
-			description: 'Fee charged on orders that add liquidity to this market, before VIP or fee-token discounts.'
+			description: 'Fee on orders that add liquidity, before VIP or fee-token discounts.'
 		},
 		takerFee: {
 			label: 'Taker Fee',
-			description: 'Fee charged on orders that remove liquidity from this market, before VIP or fee-token discounts.'
+			description: 'Fee on orders that remove liquidity, before VIP or fee-token discounts.'
 		},
 		listedAt: {
 			label: 'Listed',
-			description: 'Venue-reported date when this market was listed, when available.'
+			description: 'Venue-reported listing date, where available.'
 		}
 	}
 } as const satisfies {

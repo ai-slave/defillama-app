@@ -30,7 +30,7 @@ import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
 const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeTokenRow>()
 
 const REPORTED_NOTE =
-	'Reported volume, not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
+	'Not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
 
 function Volume({ value, reported }: { value: number | null; reported: boolean }) {
 	if (value == null) return <span className="text-tertiary">–</span>
@@ -83,7 +83,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 		},
 		meta: {
 			headerClassName: 'w-[152px]',
-			headerHelperText: 'Base asset, with the highest leverage its perps offer here. Hover for which segments trade it.'
+			headerHelperText: 'Base asset, with the highest leverage its perps offer here. Hover for the segments trading it.'
 		}
 	}),
 	// Cost, slippage and markout answer different questions, so they get a column
@@ -106,7 +106,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerClassName: 'w-[160px]',
 			align: 'end',
 			headerHelperText:
-				'All-in cost of a $10k market order on this token’s USD perp: base-tier taker fee plus half the effective spread.'
+				'All-in cost of a $10k market order on this token’s USD perp: taker fee plus half the effective spread.'
 		}
 	}),
 	columnHelper.accessor((row) => row.execution?.realizedSlippage10kBps ?? undefined, {
@@ -118,7 +118,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerClassName: 'w-[186px]',
 			align: 'end',
 			headerHelperText:
-				'Predicted first (what walking the pre-trade book promised), then what fills actually paid, in dollars at each order size. The Execution tab adds the $1M rung.'
+				'What the pre-trade book promised, then what fills actually paid, at each order size. The Execution tab adds $1M.'
 		}
 	}),
 	columnHelper.accessor((row) => row.execution?.markout1mBps ?? undefined, {
@@ -130,7 +130,7 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerClassName: 'w-[161px]',
 			align: 'end',
 			headerHelperText:
-				'Where the price went after a fill, in dollars per $10k, at one and five minutes. Lower is better; positive (red) means it kept moving against the taker. The Execution tab adds the 1s and 15s horizons.'
+				'Where the price went 1 and 5 minutes after a fill, per $10k. Lower is better; positive (red) means it kept moving against the taker. The Execution tab adds 1s and 15s.'
 		}
 	}),
 	columnHelper.accessor((row) => row.spotActiveLiquidity ?? undefined, {

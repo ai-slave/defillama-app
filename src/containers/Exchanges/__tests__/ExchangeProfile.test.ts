@@ -218,8 +218,8 @@ describe('regional information presentation', () => {
 		)
 
 		expect(html).toContain('Deposits &amp; withdrawals')
-		expect(html).toContain('No United States-specific details are published for this section.')
-		expect(html).toContain('does not necessarily mean the feature is unavailable')
+		expect(html).toContain('Nothing United States-specific is published here.')
+		expect(html).toContain('does not mean the feature is unavailable')
 	})
 
 	test('prompts for a country when global funding details are not published', () => {

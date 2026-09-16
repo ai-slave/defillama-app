@@ -1017,7 +1017,7 @@ describe('execution basket', () => {
 			pairs: Object.fromEntries(
 				assets.map((asset) => [
 					asset,
-					// SOL is deliberately worse: if it leaked into cost, the cost median moves.
+					// SOL is deliberately worse: if it leaked into cost, the cost average moves.
 					{
 						...btc,
 						asset,
@@ -1030,6 +1030,7 @@ describe('execution basket', () => {
 		const execution = {
 			...base,
 			basket: ['BTC', 'ETH', 'SOL'],
+			oi_weights_usd: { BTC: 60, ETH: 30, SOL: 10 },
 			venues: { a: withAssets(['BTC', 'ETH', 'SOL']), b: withAssets(['BTC', 'ETH', 'SOL']) }
 		}
 		const directory = mapMasterDirectory(
@@ -1042,9 +1043,40 @@ describe('execution basket', () => {
 		const row = required(directory.rows[0])
 		expect(row.execution?.costAssets).toEqual(['BTC', 'ETH'])
 		expect(row.execution?.assets).toEqual(['BTC', 'ETH', 'SOL'])
-		// Cost excludes SOL entirely; fill quality includes it.
+		// Cost excludes SOL entirely; fill quality includes it, at SOL's 10% of basket OI:
+		// (1·60 + 1·30 + 9·10) / 100. A median would have published BTC/ETH's 1 and hidden SOL.
 		expect(row.execution?.costToTradeBps).toBe(4)
-		expect(row.execution?.realizedSlippage10kBps).toBe(1)
+		expect(row.execution?.realizedSlippage10kBps).toBeCloseTo(1.8, 10)
+	})
+
+	// The reason the weights are published at all: the displayed baskets are narrower than
+	// the file's, so the average is retaken here and has to weight the way upstream did.
+	test('weights basket assets by open interest, and falls back to equal weight without it', () => {
+		const base = executionResponse()
+		const btc = required(required(base.venues.venue).pairs.BTC)
+		const venue = {
+			...required(base.venues.venue),
+			assets: ['BTC', 'ETH'],
+			pair_count: 2,
+			pairs: Object.fromEntries(
+				(['BTC', 'ETH'] as const).map((asset) => [
+					asset,
+					{ ...btc, asset, cost_to_trade_bps: asset === 'BTC' ? 1 : 11 }
+				])
+			)
+		}
+		const withWeights = (oi_weights_usd?: Record<string, number>) =>
+			mapMasterDirectory(directoryResponse([directoryVenue({ slug: 'a' })]), {
+				...base,
+				basket: ['BTC', 'ETH'],
+				...(oi_weights_usd ? { oi_weights_usd } : null),
+				venues: { a: venue }
+			}).rows[0]?.execution?.costToTradeBps
+
+		expect(withWeights({ BTC: 90, ETH: 10 })).toBeCloseTo(2, 10)
+		// ETH unweighted: equal weight for the whole basket beats silently averaging BTC alone.
+		expect(withWeights({ BTC: 90 })).toBe(6)
+		expect(withWeights()).toBe(6)
 	})
 
 	test('widens to the full shared basket once every venue covers it', () => {
@@ -1055,7 +1087,7 @@ describe('execution basket', () => {
 			execution
 		)
 		expect(directory.executionBasket).toEqual(['BTC', 'ETH'])
-		expect(directory.rows[0]?.execution?.costToTradeBps).toBe(22) // median(4, 40)
+		expect(directory.rows[0]?.execution?.costToTradeBps).toBe(22) // equal-weight mean(4, 40)
 	})
 
 	test('reports the weakest pair’s coverage, not the strongest', () => {
