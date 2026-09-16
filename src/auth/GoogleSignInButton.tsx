@@ -1,14 +1,12 @@
 import Script from 'next/script'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { authProviderButtonStyles } from '~/auth/AuthDialog'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { authProviderButtonStyles, LastUsedChip } from '~/auth/AuthDialog'
 import { GOOGLE_WEB_CLIENT_ID } from '~/constants'
-import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 
-type CredentialResponse = {
-	credential?: string
-	state?: string
-}
+type CodeResponse = { code?: string; error?: string }
+type CodeClient = { requestCode: () => void }
 
 type RevocationResponse = {
 	error?: string
@@ -18,20 +16,16 @@ type RevocationResponse = {
 type GoogleIdentity = {
 	accounts: {
 		id: {
-			initialize: (options: { callback: (response: CredentialResponse) => void; client_id: string }) => void
 			revoke: (loginHint: string, callback: (response: RevocationResponse) => void) => void
-			renderButton: (
-				parent: HTMLElement,
-				options: {
-					shape: 'rectangular'
-					logo_alignment: 'center'
-					size: 'large'
-					state: string
-					text: 'continue_with'
-					theme: 'outline' | 'outline_dark'
-					width: number
-				}
-			) => void
+		}
+		oauth2: {
+			initCodeClient: (options: {
+				client_id: string
+				scope: string
+				ux_mode: 'popup'
+				callback: (response: CodeResponse) => void
+				error_callback: (error: { type: string }) => void
+			}) => CodeClient
 		}
 	}
 }
@@ -42,10 +36,8 @@ declare global {
 	}
 }
 
-const credentialHandlers = new Map<string, (credential: string) => void>()
 const GOOGLE_IDENTITY_SCRIPT_URL = 'https://accounts.google.com/gsi/client'
 const GOOGLE_IDENTITY_TIMEOUT_MS = 10_000
-let initialized = false
 let googleIdentityLoadPromise: Promise<GoogleIdentity> | null = null
 
 function loadGoogleIdentity(): Promise<GoogleIdentity> {
@@ -115,137 +107,139 @@ export async function revokeGoogleCredentialSharing(loginHint: string): Promise<
 	})
 }
 
-function initializeGoogle() {
-	if (initialized || !window.google) return
-	window.google.accounts.id.initialize({
-		client_id: GOOGLE_WEB_CLIENT_ID,
-		callback: (response) => {
-			if (!response.state || !response.credential) return
-			credentialHandlers.get(response.state)?.(response.credential)
-		}
-	})
-	initialized = true
-}
-
 export function GoogleSignInButton({
 	loading,
 	disabled = false,
-	onCredential
+	lastUsed = false,
+	onStart,
+	onCode
 }: {
 	loading: boolean
 	disabled?: boolean
-	onCredential: (token: string) => void
+	lastUsed?: boolean
+	onStart: () => void
+	onCode: (code: string) => void
 }) {
-	const [isDark] = useDarkModeManager()
-	const containerRef = useRef<HTMLDivElement>(null)
-	const state = useId()
 	const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'failed'>('loading')
+	const [popupPending, setPopupPending] = useState(false)
+	const [error, setError] = useState<string | null>(null)
+	const clientRef = useRef<CodeClient | null>(null)
+	const latest = useRef({ loading, disabled, onCode })
+	if ((disabled || loading) && popupPending) setPopupPending(false)
+	useLayoutEffect(() => {
+		latest.current = { loading, disabled, onCode }
+		// A different method taking over permanently abandons this popup, even if that method later fails.
+		if (disabled || loading) clientRef.current = null
+	}, [loading, disabled, onCode])
+	useLayoutEffect(
+		() => () => {
+			clientRef.current = null
+		},
+		[]
+	)
 	useEffect(() => {
 		if (loadStatus !== 'loading') return
 		const timer = window.setTimeout(() => setLoadStatus('failed'), GOOGLE_IDENTITY_TIMEOUT_MS)
 		return () => window.clearTimeout(timer)
 	}, [loadStatus])
 
-	const renderButton = useCallback(() => {
-		const container = containerRef.current
-		if (!window.google || !container) return
-		setLoadStatus('ready')
-		initializeGoogle()
-		credentialHandlers.set(state, onCredential)
-		container.replaceChildren()
-		window.google.accounts.id.renderButton(container, {
-			shape: 'rectangular',
-			logo_alignment: 'center',
-			size: 'large',
-			state,
-			text: 'continue_with',
-			theme: isDark ? 'outline_dark' : 'outline',
-			width: Math.min(400, container.clientWidth)
+	const requestCode = () => {
+		if (!window.google || clientRef.current || loading || disabled) return
+		setError(null)
+		onStart()
+		const finish = () => {
+			if (clientRef.current !== client) return false
+			clientRef.current = null
+			setPopupPending(false)
+			return !latest.current.disabled && !latest.current.loading
+		}
+		const client = window.google.accounts.oauth2.initCodeClient({
+			client_id: GOOGLE_WEB_CLIENT_ID,
+			scope: 'openid email profile',
+			ux_mode: 'popup',
+			callback: (response) => {
+				if (!finish()) return
+				if (response.error || !response.code) {
+					setError('Google sign-in was not completed. Please try again.')
+					return
+				}
+				latest.current.onCode(response.code)
+			},
+			error_callback: (response) => {
+				if (!finish() || response.type === 'popup_closed') return
+				setError('Google could not open. Allow popups and try again.')
+			}
 		})
-	}, [isDark, onCredential, state])
-
-	const setContainer = useCallback(
-		(container: HTMLDivElement | null) => {
-			containerRef.current = container
-			if (container) renderButton()
-			else credentialHandlers.delete(state)
-		},
-		[renderButton, state]
-	)
-
-	useEffect(() => {
-		const container = containerRef.current
-		if (!container) return
-		let width = container.clientWidth
-		const observer = new ResizeObserver(() => {
-			if (container.clientWidth === width) return
-			width = container.clientWidth
-			renderButton()
-		})
-		observer.observe(container)
-		return () => observer.disconnect()
-	}, [renderButton])
+		clientRef.current = client
+		setPopupPending(true)
+		client.requestCode()
+	}
 
 	const retryLoad = async () => {
 		setLoadStatus('loading')
 		document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`)?.remove()
 		try {
 			await loadGoogleIdentity()
-			renderButton()
+			setLoadStatus('ready')
 		} catch {
 			setLoadStatus('failed')
 		}
 	}
 
+	const busy = loading || popupPending
 	return (
 		<>
 			<Script
 				id="google-identity-services"
 				src={GOOGLE_IDENTITY_SCRIPT_URL}
 				strategy="afterInteractive"
-				onReady={renderButton}
+				onReady={() => setLoadStatus('ready')}
 				onError={() => setLoadStatus('failed')}
 			/>
-			<div className="relative min-h-10">
-				{loadStatus === 'loading' ? (
-					<p role="status" className="flex h-10 items-center justify-center gap-2 text-sm text-tertiary">
-						<LoadingSpinner size={14} />
-						Loading Google...
-					</p>
+			<button
+				type="button"
+				className={`${authProviderButtonStyles} relative ${lastUsed ? 'max-[380px]:pr-19' : ''}`}
+				disabled={disabled || busy || loadStatus !== 'ready'}
+				aria-busy={busy}
+				onClick={requestCode}
+			>
+				{busy || loadStatus === 'loading' ? (
+					<LoadingSpinner size={14} />
+				) : (
+					<Icon name="google" height={18} width={18} className="shrink-0" />
+				)}
+				<span>
+					{loading
+						? 'Signing in...'
+						: popupPending
+							? 'Waiting for Google...'
+							: loadStatus === 'loading'
+								? 'Loading Google...'
+								: 'Continue with Google'}
+				</span>
+				{lastUsed ? (
+					<span className="pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2">
+						<LastUsedChip />
+					</span>
 				) : null}
-				{loadStatus === 'failed' ? (
-					<p role="alert" className="text-center text-xs text-error">
-						Google could not load.{' '}
-						<button
-							type="button"
-							disabled={loading || disabled}
-							onClick={() => void retryLoad()}
-							className="text-link disabled:opacity-60"
-						>
-							Try again
-						</button>
-					</p>
-				) : null}
-				<div
-					ref={setContainer}
-					inert={loading || disabled}
-					className={
-						loadStatus !== 'ready'
-							? 'invisible absolute inset-x-0 h-10'
-							: loading
-								? 'pointer-events-none h-10 opacity-0'
-								: disabled
-									? 'h-10 opacity-60'
-									: 'h-10'
-					}
-				/>
-				{loading ? (
-					<div role="status" className={`${authProviderButtonStyles} absolute inset-0`}>
-						<LoadingSpinner size={14} />
-						<span>Signing in...</span>
-					</div>
-				) : null}
-			</div>
+			</button>
+			{loadStatus === 'failed' ? (
+				<p role="alert" className="mt-2 text-center text-xs text-error">
+					Google could not load.{' '}
+					<button
+						type="button"
+						disabled={loading || disabled}
+						onClick={() => void retryLoad()}
+						className="text-link disabled:opacity-60"
+					>
+						Try again
+					</button>
+				</p>
+			) : error ? (
+				<p role="alert" className="mt-2 text-left text-xs text-error">
+					{error}
+				</p>
+			) : null}
 		</>
 	)
 }

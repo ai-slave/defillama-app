@@ -214,6 +214,7 @@ test('directs Apple reauthentication to the mobile app', async () => {
 })
 
 test('keeps the user signed in when deletion fails', async () => {
+	auth.user.authMethod = 'google'
 	deleteResponse = () => json({ error: 'Failed to remove external subscriptions' }, 500)
 	await openDialog()
 	await continueToConfirmation()
@@ -225,6 +226,8 @@ test('keeps the user signed in when deletion fails', async () => {
 	)
 	await waitFor(() => expect(document.body.textContent).toContain('Failed to remove external subscriptions'))
 
+	expect(toaster.success).not.toHaveBeenCalled()
+	expect(google.revokeCredentialSharing).not.toHaveBeenCalled()
 	expect(auth.logout).not.toHaveBeenCalled()
 	expect(router.replace).not.toHaveBeenCalled()
 })
@@ -249,7 +252,7 @@ test.each([
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
-test('revokes Google credential sharing once after confirmed deletion', async () => {
+test('confirms deletion without waiting for Google credential revocation', async () => {
 	const revocation = deferred<void>()
 	auth.user.authMethod = 'google'
 	google.revokeCredentialSharing.mockReturnValueOnce(revocation.promise)
@@ -265,11 +268,12 @@ test('revokes Google credential sharing once after confirmed deletion', async ()
 
 	expect(google.revokeCredentialSharing).toHaveBeenCalledOnce()
 	expect(google.revokeCredentialSharing).toHaveBeenCalledWith('a@example.com')
+	expect(toaster.success).toHaveBeenCalledWith('Your account has been deleted')
 	await act(async () => revocation.resolve())
-	await waitFor(() => expect(toaster.success).toHaveBeenCalledWith('Your account has been deleted'))
+	expect(toaster.success).toHaveBeenCalledOnce()
 })
 
-test('logs out after confirmed deletion when Google revocation fails', async () => {
+test('keeps deletion successful when Google revocation fails', async () => {
 	const revocationError = new Error('Google is unavailable')
 	vi.spyOn(console, 'error').mockImplementation(() => undefined)
 	auth.user.authMethod = 'google'
@@ -284,8 +288,11 @@ test('logs out after confirmed deletion when Google revocation fails', async () 
 	)
 	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
 
-	expect(toaster.error).toHaveBeenCalledWith(
-		'Your account was deleted, but Google sign-in access could not be revoked.'
+	expect(toaster.success).toHaveBeenCalledWith('Your account has been deleted')
+	expect(toaster.error).not.toHaveBeenCalled()
+	expect(console.error).toHaveBeenCalledWith(
+		'Account deleted, but Google credential revocation failed:',
+		revocationError
 	)
 	expect(router.replace).toHaveBeenCalledWith('/')
 })

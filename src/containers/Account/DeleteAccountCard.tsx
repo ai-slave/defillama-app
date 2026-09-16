@@ -504,18 +504,14 @@ export function DeleteAccountCard() {
 		setIsModalOpen(false)
 		logout()
 		void router.replace('/')
+		toast.success('Your account has been deleted')
 
-		if (!googleRevocation) {
-			toast.success('Your account has been deleted')
-			return
-		}
+		if (!googleRevocation) return
 
 		try {
 			await googleRevocation
-			toast.success('Your account has been deleted')
 		} catch (error) {
 			console.error('Account deleted, but Google credential revocation failed:', error)
-			toast.error('Your account was deleted, but Google sign-in access could not be revoked.')
 		}
 	}
 

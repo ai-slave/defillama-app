@@ -75,7 +75,7 @@ beforeEach(() => {
 			if (String(url).endsWith('/subscription/status')) {
 				return jsonResponse({ message: 'No active subscription' }, 404)
 			}
-			if (String(url).endsWith('/auth/google-signin')) {
+			if (String(url).endsWith('/auth/google-code-signin')) {
 				return jsonResponse({
 					isNew: true,
 					kind: 'authenticated',
@@ -221,7 +221,7 @@ test('accepts Google identity before one account refresh and keeps onboarding op
 
 	const signIn = act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'identity-token',
+			code: 'popup-code',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -229,6 +229,15 @@ test('accepts Google identity before one account refresh and keeps onboarding op
 	await settle()
 
 	await signIn
+	expect(fetch).toHaveBeenCalledWith(
+		expect.stringContaining('/auth/google-code-signin'),
+		expect.objectContaining({
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XmlHttpRequest' },
+			body: JSON.stringify({ code: 'popup-code', signupClient: 'web', source: 'subscription-page' })
+		})
+	)
+
 	expect(refreshCalls).toHaveLength(1)
 	expect(pb.authStore.record?.id).toBe('google-new')
 	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'google' })
@@ -245,7 +254,7 @@ test('closes the OAuth welcome dialog when a different account takes over the se
 
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'identity-token',
+			code: 'popup-code',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -505,7 +514,7 @@ test.each(['cancel', 'replace'] as const)('ignores a late Google session after %
 	const controller = new AbortController()
 	const onAuthenticated = vi.fn()
 	const result = sessionView.signInWithGoogle({
-		identityToken: 'fixture',
+		code: 'fixture',
 		onAuthenticated,
 		signal: controller.signal,
 		canAccept: () => true
@@ -574,7 +583,7 @@ test('blocks onboarding Continue if a replacement token arrives before its recor
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -601,7 +610,7 @@ test('ignores an onboarding save after the owning session is replaced', async ()
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -630,7 +639,7 @@ test('preserves a saved preference and loads the remaining account fields', asyn
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -673,7 +682,7 @@ test('accepts an onboarding save when the same account refreshes its token', asy
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -706,7 +715,7 @@ test('offers sign out from required OAuth onboarding', async () => {
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -754,7 +763,7 @@ test('reloads Google profile fields even when an earlier sign-in left a fresh ca
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -771,7 +780,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await render()
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -789,7 +798,7 @@ test('does not let an old save finish onboarding for a new login to the same acc
 	await act(async () => sessionView.logout())
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'second-login',
+			code: 'second-login',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})
@@ -827,7 +836,7 @@ test('remembers Google only after its linking challenge becomes an accepted sess
 	)
 	await act(async () => {
 		await sessionView.signInWithGoogle({
-			identityToken: 'fixture',
+			code: 'fixture',
 			signal: new AbortController().signal,
 			canAccept: () => true
 		})

@@ -85,7 +85,7 @@ interface AuthContextType {
 	signInWithGithub: (
 		request: AuthRequest & { popup: Window; suppressVerifyEmailPrompt?: boolean }
 	) => Promise<RecordAuthResponse['record'] | null>
-	signInWithGoogle: (request: AuthRequest & { identityToken: string }) => Promise<GoogleAuthResult | null>
+	signInWithGoogle: (request: AuthRequest & { code: string }) => Promise<GoogleAuthResult | null>
 	confirmGoogleLink: (
 		request: AuthRequest & { challengeToken: string; code: string }
 	) => Promise<GoogleAuthSession | null>
@@ -346,11 +346,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return runAuthRequest(
 			request,
 			async () => {
-				const response = await fetch(`${AUTH_SERVER}/auth/google-signin`, {
+				const response = await fetch(`${AUTH_SERVER}/auth/google-code-signin`, {
 					method: 'POST',
 					signal: request.signal,
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ identityToken: request.identityToken, signupClient: 'web', source })
+					headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XmlHttpRequest' },
+					body: JSON.stringify({ code: request.code, signupClient: 'web', source })
 				}).catch((error) => {
 					throw new Error('Could not sign in with Google. Check your connection.', { cause: error })
 				})

@@ -328,14 +328,14 @@ function AuthScreen({
 			.finally(() => popup.close())
 	}
 
-	const handleGoogleCredential = useCallback(
-		async (identityToken: string) => {
+	const handleGoogleCode = useCallback(
+		async (code: string) => {
 			if (isPending) return
 			store.dispatch({ kind: 'requestStarted' })
 			const signal = store.beginAuthRequest()
 			const result = await signInWithGoogleMutation
 				.mutateAsync({
-					identityToken,
+					code,
 					signal,
 					onAuthenticated,
 					canAccept: () => dialogStore.getState().open
@@ -555,7 +555,9 @@ function AuthScreen({
 					<GoogleSignInButton
 						loading={signInWithGoogleMutation.isPending}
 						disabled={isPending}
-						onCredential={handleGoogleCredential}
+						lastUsed={lastMethod === 'google'}
+						onStart={() => store.dispatch({ kind: 'requestStarted' })}
+						onCode={handleGoogleCode}
 					/>
 
 					{state.error?.method === 'google' ? (

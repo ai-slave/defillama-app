@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState, useSyncExternalStore } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LastUsedChip } from '~/auth/AuthDialog'
 import { signInWithPassword } from '~/auth/emailSignIn'
 import { signupWithEmail, type SignupRequest } from '~/auth/emailSignup'
 import { rememberSignIn } from '~/auth/lastSignIn'
@@ -26,16 +27,28 @@ vi.mock('~/auth', () => ({
 }))
 vi.mock('~/auth/GoogleSignInButton', () => ({
 	GoogleSignInButton: ({
-		onCredential,
+		onCode,
+		onStart,
 		loading,
-		disabled
+		disabled,
+		lastUsed
 	}: {
-		onCredential: (token: string) => void
+		onCode: (code: string) => void
+		onStart: () => void
+		lastUsed: boolean
 		loading: boolean
 		disabled: boolean
 	}) => (
-		<button type="button" disabled={loading || disabled} onClick={() => onCredential('fixture-token')}>
+		<button
+			type="button"
+			disabled={loading || disabled}
+			onClick={() => {
+				onStart()
+				onCode('fixture-code')
+			}}
+		>
 			Continue with Google
+			{lastUsed ? <LastUsedChip /> : null}
 		</button>
 	)
 }))
@@ -421,28 +434,22 @@ test.each([
 	{ method: 'github', label: 'Continue with GitHub' },
 	{ method: 'email', label: 'Sign in' },
 	{ method: 'wallet', connectorId: 'io.rabby', label: 'Sign in with a wallet' }
-] as const)(
-	'keeps the last successful $method usable and only badges methods outside the Google iframe',
-	async ({ label, ...method }) => {
-		await act(async () => rememberSignIn(method))
-		expect(container.textContent?.match(/Last used/g) ?? []).toHaveLength(method.method === 'google' ? 0 : 1)
-		const markedButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
-			button.textContent?.includes('Last used')
-		)
-		expect(markedButtons.map((button) => button.textContent?.includes(label))).toEqual(
-			method.method === 'google' ? [] : [true]
-		)
-		for (const text of ['Continue with Google', 'Continue with GitHub', 'Sign in', 'Sign in with a wallet']) {
-			expect(
-				Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.startsWith(text))
-					?.disabled
-			).toBe(false)
-		}
-		expect(requests).toHaveLength(0)
-		expect(input('email').value).toBe('')
-		expect(pb.authStore.token).toBe('')
+] as const)('badges the last successful $method without starting authentication', async ({ label, ...method }) => {
+	await act(async () => rememberSignIn(method))
+	expect(container.textContent?.match(/Last used/g) ?? []).toHaveLength(1)
+	const markedButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
+		button.textContent?.includes('Last used')
+	)
+	expect(markedButtons.map((button) => button.textContent?.includes(label))).toEqual([true])
+	for (const text of ['Continue with Google', 'Continue with GitHub', 'Sign in', 'Sign in with a wallet']) {
+		expect(
+			Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.startsWith(text))?.disabled
+		).toBe(false)
 	}
-)
+	expect(requests).toHaveLength(0)
+	expect(input('email').value).toBe('')
+	expect(pb.authStore.token).toBe('')
+})
 
 test.each(['not json', '{"method":"wallet"}', '{"method":"unknown"}', 'null'])(
 	'ignores an invalid remembered method: %s',
