@@ -156,7 +156,7 @@ export function VerifiedSection({
 
 			{/* Mid widths follow the reported stats below: two columns so a label and its figure stay within
 			    reading distance, back to one when the card is the narrow rail beside the charts. */}
-			<div className="grid grid-cols-1 items-start gap-x-6 @min-[40rem]:grid-cols-2 @min-[90rem]:grid-cols-1">
+			<div className="grid grid-cols-1 items-start gap-x-6 @min-[40rem]:grid-cols-2 @min-[64rem]:grid-cols-1">
 				<MeasuredMetric
 					label="APY"
 					value={
@@ -299,7 +299,7 @@ export function LockedVerifiedSection() {
 						PRO
 					</span>
 				</div>
-				<div className="grid grid-cols-1 items-start gap-x-6 @min-[40rem]:grid-cols-2 @min-[90rem]:grid-cols-1">
+				<div className="grid grid-cols-1 items-start gap-x-6 @min-[40rem]:grid-cols-2 @min-[64rem]:grid-cols-1">
 					<MetricRow
 						label="APY"
 						className="border-none"

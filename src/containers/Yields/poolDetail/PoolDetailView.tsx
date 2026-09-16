@@ -420,7 +420,7 @@ export function PoolDetailView({
 			    below can stay as short as the subscriber's and the chart beside it the same height. */}
 			{showOffer ? <VerifiedApyAnnouncement placement="pool-banner" /> : null}
 
-			<div className="grid grid-cols-1 gap-2 @min-[90rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
+			<div className="grid grid-cols-1 gap-2 @min-[64rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
 				<Card padding="sm" className="flex flex-col gap-3 self-start">
 					<PoolHeader symbol={symbol} name={name} protocol={protocol} chain={chain} />
 
@@ -438,7 +438,7 @@ export function PoolDetailView({
 					) : null}
 
 					{supply || borrow ? (
-						<div className="grid grid-cols-1 gap-x-6 border-t border-subtle pt-1 @min-[40rem]:grid-cols-2 @min-[80rem]:grid-cols-3 @min-[90rem]:grid-cols-1">
+						<div className="grid grid-cols-1 gap-x-6 border-t border-subtle pt-1 @min-[40rem]:grid-cols-2 @min-[64rem]:grid-cols-1">
 							{supply ? (
 								<SideBlock side={supply} kind="supply" hideApy={snapshot?.baseApy != null}>
 									{stabilityRow}
