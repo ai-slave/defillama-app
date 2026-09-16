@@ -45,7 +45,7 @@ function createEquitiesUrl(
 	if (params?.timeframe) {
 		url.searchParams.set('timeframe', params.timeframe)
 	}
-	url.searchParams.set('zz', '19')
+	url.searchParams.set('cachebust', '091626')
 
 	return url.toString()
 }

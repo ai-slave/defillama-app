@@ -12,11 +12,11 @@ import type {
 type LiquidationsFetch = (url: string) => Promise<Response | null>
 
 export async function fetchProtocolsList(): Promise<RawProtocolsResponse> {
-	return fetchJson<RawProtocolsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/protocols?zz=19`)
+	return fetchJson<RawProtocolsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/protocols?cachebust=091626`)
 }
 
 export async function fetchAllLiquidations(): Promise<RawAllLiquidationsResponse> {
-	return fetchJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?zz=19`)
+	return fetchJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?cachebust=091626`)
 }
 
 async function fetchLiquidationsClient<T>(url: string, fetchFn: LiquidationsFetch): Promise<T> {

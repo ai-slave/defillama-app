@@ -46,7 +46,7 @@ function jsonResponse(payload: unknown): Response {
 
 function withoutCacheVersion(url: string): string {
 	const parsed = new URL(url)
-	parsed.searchParams.delete('zz')
+	parsed.searchParams.delete('cachebust')
 	return parsed.toString()
 }
 

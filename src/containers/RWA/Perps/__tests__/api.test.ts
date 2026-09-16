@@ -23,7 +23,7 @@ describe('rwa perps api urls', () => {
 	function callsWithoutCacheVersion(): Array<Array<unknown>> {
 		return fetchJson.mock.calls.map(([url, ...args]) => {
 			const parsed = new URL(url)
-			parsed.searchParams.delete('zz')
+			parsed.searchParams.delete('cachebust')
 			return [parsed.toString(), ...args]
 		})
 	}

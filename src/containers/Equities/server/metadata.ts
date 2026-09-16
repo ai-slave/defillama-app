@@ -4,7 +4,7 @@ import { fetchMetadataJson } from '~/utils/metadata/http'
 
 export async function fetchEquitiesCompanyRouteMetadata(): Promise<Array<IEquitiesCompanyRoute>> {
 	const companies = await fetchMetadataJson<Array<IEquitiesCompanyListApiItem>>(
-		`${EQUITIES_SERVER_URL}/companies-list?zz=19`
+		`${EQUITIES_SERVER_URL}/companies-list?cachebust=091626`
 	)
 	return companies.map(({ ticker, country }) => ({ ticker, country }))
 }

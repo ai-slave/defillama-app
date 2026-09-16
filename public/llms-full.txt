@@ -165,8 +165,13 @@ Common usage examples:
 - [Protocols by Market Cap](https://defillama.com/mcaps): Token price multiplied by circulating supply of each protocol Category: Token.
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
-- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
-- [CEXs](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
+- [Exchanges: Overview](https://defillama.com/exchanges): Compare centralized and decentralized exchanges by volume, liquidity, fees, and reserves. Category: Exchanges.
+- [Exchanges: Ranking](https://defillama.com/exchanges/rank): REAL exchange scores for reserves, execution, activity, and liquidity. Category: Exchanges.
+- [Exchanges: Charts](https://defillama.com/exchanges/charts): Historical exchange volume, open interest, depth, and normalized volume. Category: Exchanges.
+- [Exchanges: Token Finder](https://defillama.com/exchanges/tokens): Find exchanges listing selected tokens across spot and perpetual markets. Category: Exchanges.
+- [Exchanges: Fiat Ramps](https://defillama.com/ramp): Compare fiat on-ramp and off-ramp costs by country and currency. Category: Exchanges.
+- [Exchanges: MiCA](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
+- [Exchanges: Reserves](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
 - [RWA: Overview](https://defillama.com/rwa): Overview of all Real World Assets (RWAs) Category: RWA.
 - [RWA: Perps](https://defillama.com/rwa/perps): Overview of all Real World Assets (RWAs) perps Category: RWA.
 - [RWA Perps by Venue](https://defillama.com/rwa/perps/venues): Overview of all Real World Assets (RWAs) perps by venue Category: RWA.
@@ -222,6 +227,7 @@ Common usage examples:
 - [Yields](https://defillama.com/yields)
 - [Stablecoins](https://defillama.com/stablecoins)
 - [RWA](https://defillama.com/rwa)
+- [Exchanges](https://defillama.com/exchanges)
 - [MiCA](https://defillama.com/mica)
 - [Market Makers](https://defillama.com/market-makers)
 - [Universal Token Rating](https://defillama.com/universal-token-rating)
