@@ -76,4 +76,4 @@ export function ReadoutCell({
 // An editable value wears no box at rest: it looks like the figures beside it and draws an underline
 // only when reached for. A box here is the heaviest object in the panel, sitting on the least
 // important thing in it.
-export const readoutInputStyles = tw`border-0 border-b border-b-transparent bg-transparent p-0 mono-sm text-primary transition-colors hover:border-b-(--border-strong) focus:border-b-(--yield-positive-text) focus:outline-none`
+export const readoutInputStyles = tw`border-0 border-b border-b-transparent bg-transparent p-0 mono-sm text-primary transition-colors hover:border-b-(--border-strong) focus:border-b-(--yield-positive-text) focus:outline-hidden`

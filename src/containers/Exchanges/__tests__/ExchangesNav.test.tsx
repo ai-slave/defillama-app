@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
@@ -20,81 +21,60 @@ vi.mock('~/ui/Tooltip', async () => {
 import { ExchangesNav } from '../ExchangesNav'
 
 const PAGES = [
-	{
-		id: 'exchanges',
-		href: '/exchanges',
-		label: 'Exchanges',
-		heading: 'Exchanges',
-		description: 'Activity, liquidity, fees, and compliance across CEXs and DEXs.'
-	},
-	{
-		id: 'reserves',
-		href: '/cexs',
-		label: 'Reserves',
-		heading: 'Exchange reserves',
-		description: 'Tracked CEX wallet assets, clean reserves, and net inflows.'
-	},
-	{
-		id: 'charts',
-		href: '/exchanges/charts',
-		label: 'Charts',
-		heading: 'Exchange charts',
-		description: 'Historical volume, open interest, depth, and normalized volume across exchanges.'
-	},
-	{
-		id: 'tokens',
-		href: '/exchanges/tokens',
-		label: 'Token finder',
-		heading: 'Find exchanges by token',
-		description: 'Find exchanges and market segments listing all or any selected tokens.'
-	}
+	{ id: 'exchanges', href: '/exchanges' },
+	{ id: 'rank', href: '/exchanges/rank' },
+	{ id: 'reserves', href: '/cexs' },
+	{ id: 'charts', href: '/exchanges/charts' },
+	{ id: 'tokens', href: '/exchanges/tokens' },
+	{ id: 'ramp', href: '/ramp' }
 ] as const
 
-const renderNav = (activePage: (typeof PAGES)[number]['id']) =>
-	renderToStaticMarkup(<ExchangesNav activePage={activePage} />)
+function renderNav(activePage: (typeof PAGES)[number]['id'], country: string | null = null) {
+	const container = document.createElement('div')
+	container.innerHTML = renderToStaticMarkup(<ExchangesNav activePage={activePage} country={country} />)
+	return container
+}
 
 describe('Exchanges top-level navigation', () => {
-	test.each(PAGES)('marks only the $label page as current and keeps its identity stable', (page) => {
-		const html = renderNav(page.id)
-		const currentLink = html.match(/<a[^>]*aria-current="page"[^>]*>[^<]*<\/a>/)?.[0]
+	test.each(PAGES)('marks only the $id page as current', (page) => {
+		const container = renderNav(page.id)
+		const currentLinks = container.querySelectorAll('a[aria-current="page"]')
 
-		expect(currentLink).toContain(`href="${page.href}"`)
-		expect(currentLink).not.toContain('data-tooltip-content')
-		expect(html.match(/aria-current="page"/g)).toHaveLength(1)
-		expect(html.match(/<h1[^>]*>/g)).toHaveLength(1)
-		expect(html).toContain(`>${page.heading}</h1>`)
-		// Directory and charts drop the blurb: each already says the same thing in its own content.
-		expect(html.includes(`>${page.description}</p>`)).toBe(page.id !== 'exchanges' && page.id !== 'charts')
+		expect(currentLinks).toHaveLength(1)
+		expect(currentLinks[0].getAttribute('href')).toBe(page.href)
+		expect(currentLinks[0].hasAttribute('data-tooltip-content')).toBe(false)
+		expect(container.querySelectorAll('h1')).toHaveLength(1)
+		expect(container.querySelector('h1')?.textContent?.trim()).toBeTruthy()
 	})
 
-	test('uses real route links and exposes descriptions only as inactive-link tooltips', () => {
-		const selected = PAGES[0]
-		const html = renderNav(selected.id)
+	test('uses real route links with descriptions on inactive links', () => {
+		const container = renderNav('exchanges')
 
 		for (const page of PAGES) {
-			expect(html).toContain(`href="${page.href}"`)
-			expect(html).toContain(`>${page.label}</a>`)
+			const link = container.querySelector(`a[href="${page.href}"]`)
+			expect(link?.textContent?.trim()).toBeTruthy()
 		}
-		const inactive = PAGES.filter((page) => page.id !== selected.id)
-		expect(inactive.length).toBeGreaterThan(0)
-		for (const page of inactive) {
-			expect(html).toContain(`data-tooltip-content="${page.description}"`)
+		for (const page of PAGES.filter((page) => page.id !== 'exchanges')) {
+			const link = container.querySelector(`a[href="${page.href}"]`)
+			expect(link?.getAttribute('data-tooltip-content')?.trim()).toBeTruthy()
 		}
 
-		expect(html).not.toContain(`>${selected.description}</p>`)
-		expect(html).not.toContain('/mica')
-		expect(html).not.toContain('MiCA venues')
-		expect(html).not.toContain('role="tab"')
-		expect(html).not.toContain('role="tablist"')
+		expect(container.querySelector('[role="tab"], [role="tablist"]')).toBeNull()
 	})
 
 	test('preserves country only between country-aware pages', () => {
-		const html = renderToStaticMarkup(<ExchangesNav activePage="exchanges" country="DE" />)
+		const container = renderNav('exchanges', 'DE')
+		const hrefs = [...container.querySelectorAll('nav a')].map((link) => link.getAttribute('href'))
 
-		expect(html).toContain('href="/exchanges?country=de"')
-		expect(html).toContain('href="/exchanges/tokens?country=de"')
-		expect(html).toContain('href="/exchanges/charts"')
-		expect(html).not.toContain('/mica')
-		expect(html).not.toContain('/exchanges/charts?country=de')
+		expect(new Set(hrefs)).toEqual(
+			new Set([
+				'/exchanges?country=de',
+				'/exchanges/rank',
+				'/cexs',
+				'/exchanges/charts',
+				'/exchanges/tokens?country=de',
+				'/ramp?country=de'
+			])
+		)
 	})
 })

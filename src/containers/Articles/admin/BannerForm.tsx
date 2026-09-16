@@ -814,7 +814,7 @@ function PromoPreview({ banner }: { banner: Banner }) {
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img src={slot.imageUrl} alt={banner.imageAlt ?? ''} className="block h-auto w-full" />
 							</div>
-							{slot.linkUrl ? <span className="truncate text-[10px] text-tertiary">→ {slot.linkUrl}</span> : null}
+							{slot.linkUrl ? <span className="truncate body-xs text-tertiary">→ {slot.linkUrl}</span> : null}
 							{disclosure}
 						</>
 					) : (

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { exchangeDefinitions } from '../definitions'
-import { byRealPillarOrder, buildDirectoryColumns, EXECUTION_COLUMN_IDS, REAL_PILLAR_ORDER } from '../directoryColumns'
+import { byRealPillarOrder, buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
 
 function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 	return Object.fromEntries(columns.map((column) => [column.id, column]))
@@ -55,7 +55,6 @@ describe('Exchanges definitions', () => {
 describe('REAL pillar order', () => {
 	test('orders pillars R, E, A, L whatever order the payload arrives in', () => {
 		expect(['L', 'A', 'E', 'R'].sort(byRealPillarOrder)).toEqual(['R', 'E', 'A', 'L'])
-		expect(REAL_PILLAR_ORDER).toEqual(['R', 'E', 'A', 'L'])
 	})
 
 	test('sorts a pillar key it does not know last, never first', () => {

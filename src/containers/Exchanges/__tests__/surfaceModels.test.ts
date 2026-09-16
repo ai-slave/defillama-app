@@ -5,12 +5,7 @@ import { micaDepthDetail, micaProductLabel } from '../MicaCells'
 import { prepareMicaVenues } from '../MicaTable'
 import type { MicaVenueModel } from '../models'
 import { selectActivePromotion } from '../promotions'
-import {
-	RESEARCH_SERIES_PALETTE,
-	researchChartAriaLabel,
-	researchChartDisplayValue,
-	researchSeriesColor
-} from '../ResearchChart'
+import { researchChartAriaLabel, researchChartDisplayValue, researchSeriesColor } from '../ResearchChart'
 import { hasObservedHistory } from '../VenueChart'
 
 function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
@@ -195,10 +190,11 @@ describe('surface model selection', () => {
 		expect(hasObservedHistory(undefined)).toBe(false)
 	})
 
-	test('provides eight distinct exchange colors plus a distinct neutral Other color', () => {
-		expect(RESEARCH_SERIES_PALETTE).toHaveLength(9)
-		expect(new Set(RESEARCH_SERIES_PALETTE).size).toBe(9)
-		expect(researchSeriesColor('other', 8)).toBe(RESEARCH_SERIES_PALETTE[8])
+	test('keeps named series colors stable when reordered and distinguishes unnamed venues from Other', () => {
+		expect(researchSeriesColor('binance', 0)).toBe(researchSeriesColor('binance', 3))
+		expect(researchSeriesColor('other', 0)).toBe(researchSeriesColor('other', 3))
+		expect(researchSeriesColor('unnamed-venue', 0)).not.toBe(researchSeriesColor('other', 0))
+		expect(researchSeriesColor('unnamed-venue', 0)).not.toBe(researchSeriesColor('another-venue', 1))
 	})
 
 	test('keeps observed one-sided zero depth visible in MiCA details', () => {

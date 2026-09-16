@@ -401,7 +401,7 @@ describe('parent/child directory nesting', () => {
 				kyc: null
 			},
 			profile: { founded: 2017, nativeToken: 'BNB' },
-			funding: { fiatCurrencies: ['USD'], fiatFees: null, hasFiatOnramp: true, rampCost: null },
+			funding: { fiatCurrencies: ['USD'], fiatFees: null, hasFiatOnramp: true, rampCost: null, rampCostRegion: null },
 			warnings: [{ level: 'caution', text: 'Parent-only warning' }],
 			normalizedVolume: {
 				spot: {

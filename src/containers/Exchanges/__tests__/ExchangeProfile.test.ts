@@ -106,7 +106,8 @@ describe('profile country view states', () => {
 			segments: availability === 'unavailable' ? ([] as []) : (['spot'] as Array<ExchangeSegment>),
 			note: null,
 			source: null,
-			usedFallback: false
+			usedFallback: false,
+			funding: null
 		}
 		if (availability === 'unavailable') return { ...base, availability, segments: [] }
 		return { ...base, availability, metadata: profile('regional', []).metadata }
@@ -174,7 +175,8 @@ describe('regional information presentation', () => {
 						segments: [],
 						note: 'Binance.com is blocked for US persons.',
 						source: null,
-						usedFallback: false
+						usedFallback: false,
+						funding: null
 					}
 				}
 			})
@@ -208,6 +210,7 @@ describe('regional information presentation', () => {
 						note: 'Spot only.',
 						source: null,
 						usedFallback: false,
+						funding: null,
 						metadata: regionalMetadata
 					}
 				}

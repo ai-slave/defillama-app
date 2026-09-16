@@ -230,7 +230,7 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 										onClick={() => void chooseWallet(connector)}
 									>
 										<span className="flex size-6 shrink-0 items-center justify-center" aria-hidden>
-											{icon ? <img src={icon} alt="" className="size-6 rounded" /> : null}
+											{icon ? <img src={icon} alt="" className="size-6 rounded-sm" /> : null}
 										</span>
 										<span className="min-w-0 flex-1 truncate" title={connector.name}>
 											{connector.id === 'injected' ? 'Browser wallet' : connector.name}
