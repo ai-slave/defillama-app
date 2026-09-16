@@ -8,10 +8,12 @@ import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
-import { YIELD_EARN_DATASET_API } from '../constants'
+import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '../constants'
+import { resolveEarnColumnAccess } from '../Filters/columnOptions'
 import { useYieldsPaginatedTable } from '../queries.client'
 import { PaginatedYieldsPoolTable } from '../Tables/Pools'
 import type { IYieldTableRow } from '../Tables/types'
+import { useVerifiedAccess } from '../useVerifiedAccess'
 import { WatchListTabs } from './WatchlistView'
 
 // /yields/watchlist. Uses useBookmarks('yields') over the shared portfolio localStorage
@@ -36,7 +38,14 @@ export function YieldsWatchlistContainer() {
 	const savedPoolIds = isClient ? Array.from(savedProtocols) : []
 	const queryString = buildEarnByIdQueryString(savedPoolIds)
 
-	const rowsQuery = useYieldsPaginatedTable<IYieldTableRow>(YIELD_EARN_DATASET_API, queryString)
+	const { hasAccess, isDenied } = useVerifiedAccess()
+	const { defaultColumns } = resolveEarnColumnAccess({ hasAccess, initialVerifiedAccess: false, isDenied })
+	const rowsQuery = useYieldsPaginatedTable<IYieldTableRow>(
+		YIELD_EARN_DATASET_API,
+		queryString,
+		undefined,
+		YIELD_EARN_PRIVATE_API
+	)
 	const rows = rowsQuery.data?.rows ?? []
 
 	const [open, setOpen] = React.useState(false)
@@ -85,10 +94,10 @@ export function YieldsWatchlistContainer() {
 					) : null}
 				</PanelHeader>
 
-				{!isClient || (savedPoolIds.length > 0 && rowsQuery.isLoading && !rowsQuery.data) ? (
+				{!isClient || (savedPoolIds.length > 0 && !rowsQuery.data && !rowsQuery.isError) ? (
 					<SurfaceBodyLoadingStatus label="Loading saved pools" />
 				) : rows.length > 0 ? (
-					<PaginatedYieldsPoolTable data={rows} appearance="embedded" />
+					<PaginatedYieldsPoolTable data={rows} appearance="embedded" defaultColumns={defaultColumns} />
 				) : (
 					<SurfaceBodyStatus variant="empty">You have not saved any pools.</SurfaceBodyStatus>
 				)}
