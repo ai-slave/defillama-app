@@ -4,6 +4,7 @@ import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { BasicLink } from '~/components/Link'
+import { NestedMenu } from '~/components/NestedMenu'
 import { useYieldFilters } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button, buttonStyles } from '~/ui/Button'
@@ -17,6 +18,7 @@ import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { shouldResetYieldsPoolPage } from '../queryState'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import { writeStickyPref, YIELDS_TABLE_PREFS } from '../stickyQueryPrefs'
+import { countActiveYieldFilters, yieldsRouteParams } from './activeFilters'
 import { YieldFilterDropdowns } from './Dropdowns'
 import { ResetAllYieldFilters } from './ResetAll'
 import type { IYieldFiltersProps } from './types'
@@ -179,13 +181,17 @@ export function YieldFilters({
 	tokenSearch,
 	apyControls,
 	curatedViews,
+	menuHeader,
+	mobileActions,
 	resetFilters,
 	resetFiltersLabel,
 	prepareCsv,
 	watchlist,
 	...props
 }: IYieldFiltersProps) {
-	const isSmall = useMedia(`(max-width: 639px)`)
+	// One tree per breakpoint; mounting both would double every popover store. False through
+	// SSR and hydration, so the desktop tree keeps its `sm:` guards — a phone paints it first.
+	const phone = useMedia(`(max-width: 639px)`)
 
 	const { pathname: routerPathname, query } = useRouter()
 	const pathname = pathnameProp ?? routerPathname
@@ -195,6 +201,7 @@ export function YieldFilters({
 		return filters
 	})()
 	const hasViewControls = Boolean(apyControls || saveView || prepareCsv || watchlist)
+	const activeFilterCount = countActiveYieldFilters(query, yieldsRouteParams(routerPathname))
 
 	const viewActions = (
 		<>
@@ -212,6 +219,34 @@ export function YieldFilters({
 			{(nestedMenu) => <YieldFilterDropdowns {...props} pathname={pathname} nestedMenu={nestedMenu} />}
 		</ResponsiveFilterLayout>
 	)
+	// The phone row drives its own menu: it needs the count on the trigger and the row's own
+	// 32px rhythm, neither of which is the shared layout's to give.
+	const filterMenu = (
+		<React.Suspense fallback={null}>
+			<NestedMenu
+				buttonVariant="filter"
+				label={
+					<span className="flex items-center gap-1.5">
+						Filters
+						{activeFilterCount > 0 ? (
+							<span className="rounded-full bg-brand-muted px-1.5 label-xs text-link-on-tint">{activeFilterCount}</span>
+						) : null}
+					</span>
+				}
+			>
+				{menuHeader}
+				<YieldFilterDropdowns
+					{...props}
+					pathname={pathname}
+					nestedMenu
+					{...(prepareCsv ? { prepareCsv } : {})}
+					{...(resetFilters ? { resetFilters } : {})}
+					{...(resetFiltersLabel ? { resetFiltersLabel } : {})}
+				/>
+			</NestedMenu>
+		</React.Suspense>
+	)
+	// Desktop only; the phone row's reset is the menu's own footer action.
 	const resetButton = resetFilters ? (
 		<ResetAllYieldFilters
 			pathname={pathname}
@@ -220,9 +255,30 @@ export function YieldFilters({
 		/>
 	) : null
 
+	// Phone: one row — view and filters left, icon actions right. Token search leads the right
+	// group so its selected-token label eats the gap. Presets, Verified, CSV and Clear go in
+	// the menu.
+	if (phone) {
+		return (
+			<Panel padding="none">
+				<TableToolbar className="gap-2">
+					{apyControls}
+					{showSearchOnMobile ? tokenSearch : null}
+					{filterMenu}
+					{mobileActions || watchlist ? (
+						<div className="ml-auto flex min-w-0 items-center gap-2">
+							{mobileActions}
+							{watchlist ? <WatchlistLink /> : null}
+						</div>
+					) : null}
+				</TableToolbar>
+			</Panel>
+		)
+	}
+
 	// Without token search or preset chips (protocol yields) the bar is light enough for one
 	// line: the APY view first, since it says what the numbers mean, a divider, then the filters
-	// that pick the rows, with actions right. Flex-wrap still stacks it on narrow screens.
+	// that pick the rows, with actions right.
 	if (!tokenSearch && !curatedViews) {
 		return (
 			<Panel padding="none">
@@ -231,7 +287,7 @@ export function YieldFilters({
 					{apyControls ? <span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden /> : null}
 					{filterDropdowns}
 					{hasViewControls || resetFilters ? (
-						<div className="ml-auto flex items-center gap-2">
+						<div className="ml-auto hidden items-center gap-2 sm:flex">
 							{viewActions}
 							{resetButton}
 						</div>
@@ -243,8 +299,7 @@ export function YieldFilters({
 
 	return (
 		<Panel padding="none">
-			{/* View row: APY composition + window dials, then preset chips, view actions right.
-			    One flex-wrap toolbar — two rows on narrow screens, one on wide. */}
+			{/* View row: APY composition + window dials, then preset chips, view actions right. */}
 			{hasViewControls || curatedViews ? (
 				<TableToolbar className="gap-2 border-b border-subtle">
 					{apyControls}
@@ -252,15 +307,15 @@ export function YieldFilters({
 						<span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
 					) : null}
 					{curatedViews ? <div className="hidden min-w-0 sm:block">{curatedViews}</div> : null}
-					<div className="ml-auto flex items-center gap-2">{viewActions}</div>
+					<div className="ml-auto hidden items-center gap-2 sm:flex">{viewActions}</div>
 				</TableToolbar>
 			) : null}
 
 			{/* Query controls stay together as the final row governing the table below. */}
 			<TableToolbar className="gap-2">
-				{tokenSearch && (showSearchOnMobile || !isSmall) ? tokenSearch : null}
+				{tokenSearch}
 				{filterDropdowns}
-				{resetButton ? <div className="ml-auto">{resetButton}</div> : null}
+				{resetButton ? <div className="ml-auto hidden sm:block">{resetButton}</div> : null}
 			</TableToolbar>
 		</Panel>
 	)

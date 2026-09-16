@@ -31,11 +31,14 @@ export function IncludeTokens({
 	tokens,
 	placeholder = 'Search tokens',
 	matchOn = false,
+	compact = false,
 	...props
 }: {
 	tokens: Array<TokenOption>
 	placeholder?: string
 	matchOn?: boolean
+	/** Fixed-width icon trigger; the pill, and any token label, would claim a whole phone row. */
+	compact?: boolean
 }) {
 	const router = useRouter()
 	const [open, setOpen] = useState(false)
@@ -102,6 +105,45 @@ export function IncludeTokens({
 	// Active-state label for the pill: the first selected token symbol (+n for the rest).
 	const clearable = hasSelection
 
+	const firstSelectedName = hasSelection ? (nameByValue.get(selectedValues[0]!) ?? selectedValues[0]!) : null
+
+	const dialog = open ? (
+		<TokenSearchDialog
+			open
+			onClose={() => setOpen(false)}
+			title="Search tokens"
+			options={tokens}
+			selectedValues={selectedValues}
+			multiple
+			onToggle={toggleToken}
+			onClear={clearAll}
+			placeholder={placeholder}
+			{...(match ? { match } : {})}
+		/>
+	) : null
+
+	if (compact) {
+		return (
+			<>
+				<Button
+					type="button"
+					variant={hasSelection ? 'outline' : 'secondary'}
+					size="md"
+					square
+					onClick={openDialog}
+					aria-label={
+						firstSelectedName
+							? `Tokens: ${firstSelectedName}${selectedValues.length > 1 ? ` and ${selectedValues.length - 1} more` : ''}`
+							: 'Filter by token'
+					}
+				>
+					<Icon name="search" height={14} width={14} className="shrink-0" />
+				</Button>
+				{dialog}
+			</>
+		)
+	}
+
 	return (
 		<>
 			<div
@@ -116,7 +158,7 @@ export function IncludeTokens({
 					<Icon name="search" height={16} width={16} />
 					{hasSelection ? (
 						<span className="flex min-w-0 flex-1 items-center gap-1 text-left text-primary">
-							<span className="truncate">{nameByValue.get(selectedValues[0]!) ?? selectedValues[0]!}</span>
+							<span className="truncate">{firstSelectedName}</span>
 							{selectedValues.length > 1 ? (
 								<span className="shrink-0 label-xs text-tertiary">+{selectedValues.length - 1}</span>
 							) : null}
@@ -140,20 +182,7 @@ export function IncludeTokens({
 				) : null}
 			</div>
 
-			{open ? (
-				<TokenSearchDialog
-					open
-					onClose={() => setOpen(false)}
-					title="Search tokens"
-					options={tokens}
-					selectedValues={selectedValues}
-					multiple
-					onToggle={toggleToken}
-					onClear={clearAll}
-					placeholder={placeholder}
-					{...(match ? { match } : {})}
-				/>
-			) : null}
+			{dialog}
 		</>
 	)
 }

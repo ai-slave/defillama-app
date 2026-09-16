@@ -207,6 +207,7 @@ function EarnView({
 
 			<YieldFilters
 				tokenSearch={<IncludeTokens tokens={tokens} matchOn data-alwaysdisplay={false} />}
+				mobileActions={<IncludeTokens tokens={tokens} matchOn compact />}
 				chainList={chainList}
 				selectedChains={selectedChains}
 				evmChains={evmChains}
@@ -222,11 +223,19 @@ function EarnView({
 				apyControls={
 					<>
 						<ApyViewControls ready={normalized} />
-						<span className="mx-0.5 h-5 w-px bg-border-medium" aria-hidden />
-						<VerifiedFilterToggle />
+						<span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
+						<span className="hidden sm:block">
+							<VerifiedFilterToggle />
+						</span>
 					</>
 				}
 				curatedViews={<CuratedViews />}
+				menuHeader={
+					<>
+						<CuratedViews nestedMenu />
+						<VerifiedFilterToggle nestedMenu />
+					</>
+				}
 				tvlRange
 				tvlRangeLabel="TVL"
 				apyRange

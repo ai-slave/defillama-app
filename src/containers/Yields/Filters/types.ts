@@ -45,5 +45,7 @@ export interface IYieldFiltersProps extends IDropdownMenusProps {
 	tokenSearch?: ReactNode
 	apyControls?: ReactNode
 	curatedViews?: ReactNode
+	menuHeader?: ReactNode
+	mobileActions?: ReactNode
 	watchlist?: boolean
 }

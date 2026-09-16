@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon, type IIcon } from '~/ui/Icon'
@@ -175,12 +176,14 @@ function isPresetActive(
 }
 
 export function CuratedViews({
+	nestedMenu = false,
 	presets = EARN_PRESETS,
 	attributeVocabulary = EARN_ATTRIBUTE_VOCABULARY,
 	clearedKeys = EARN_CLEARED_KEYS,
 	arrayCheckKeys = EARN_ARRAY_CHECK_KEYS,
 	numberCheckKeys = EARN_NUMBER_CHECK_KEYS
 }: {
+	nestedMenu?: boolean
 	presets?: Array<Preset>
 	attributeVocabulary?: Set<string>
 	clearedKeys?: ReadonlyArray<string>
@@ -190,6 +193,8 @@ export function CuratedViews({
 	const router = useRouter()
 	const query = router.query as Record<string, string | Array<string> | undefined>
 	const activeOptions = { attributeVocabulary, arrayCheckKeys, numberCheckKeys }
+	// Undefined outside a menu; the desktop chips are not in one.
+	const menu = Ariakit.useMenuContext()
 
 	function apply(preset: Preset) {
 		const active = isPresetActive(preset, query, activeOptions)
@@ -209,9 +214,46 @@ export function CuratedViews({
 		void pushYieldsQuery(router, updates)
 	}
 
+	// A preset replaces the whole selection, so it finishes the trip into the menu — unlike the
+	// toggles below it, which refine. Close so the rows it picked are visible.
+	// No hovercard: a tap fires mouseover, so the card would cover the chips it describes.
+	if (nestedMenu) {
+		return (
+			<div className="flex flex-col gap-2 border-b border-subtle px-4 py-3">
+				<span className="label-sm text-secondary uppercase">Quick views</span>
+				<div className="flex flex-wrap gap-1.5" role="group" aria-label="Curated views">
+					{presets.map((preset) => {
+						const active = isPresetActive(preset, query, activeOptions)
+						return (
+							<button
+								key={preset.id}
+								type="button"
+								aria-pressed={active}
+								aria-label={`${active ? 'Clear' : 'Apply'} ${preset.label}`}
+								onClick={() => {
+									apply(preset)
+									menu?.hideAll()
+								}}
+								className={metricOptionChipMdStyles}
+								data-active={active}
+							>
+								<Icon name={preset.icon} height={14} width={14} />
+								{preset.label}
+							</button>
+						)
+					})}
+				</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className="flex min-w-0 items-center gap-2">
-			<div className="flex items-center gap-1.5 overflow-x-auto" role="group" aria-label="Curated views">
+			<div
+				className="flex scrollbar-none touch-pan-x items-center gap-1.5 overflow-x-auto"
+				role="group"
+				aria-label="Curated views"
+			>
 				{presets.map((preset) => {
 					const active = isPresetActive(preset, query, activeOptions)
 					return (
