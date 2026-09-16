@@ -344,6 +344,7 @@ export type Banner = {
 	imageWideUrl: string | null
 	imageCardUrl: string | null
 	imageMobileUrl: string | null
+	imageLandingMobileUrl: string | null
 	disclosureText: string | null
 	disclosureUrl: string | null
 	landingLinkUrl: string | null
@@ -370,6 +371,7 @@ export type BannerPayload = {
 	imageWideUrl?: string | null
 	imageCardUrl?: string | null
 	imageMobileUrl?: string | null
+	imageLandingMobileUrl?: string | null
 	disclosureText?: string | null
 	disclosureUrl?: string | null
 	landingLinkUrl?: string | null

@@ -17,6 +17,12 @@ vi.mock('@tanstack/react-query', () => ({
 	}))
 }))
 
+const mediaState = vi.hoisted(() => ({ mobile: false }))
+
+vi.mock('~/hooks/useMedia', () => ({
+	useMedia: () => mediaState.mobile
+}))
+
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		authorizedFetch: vi.fn(),
@@ -47,6 +53,7 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	imageWideUrl: null,
 	imageCardUrl: null,
 	imageMobileUrl: null,
+	imageLandingMobileUrl: null,
 	disclosureText: null,
 	disclosureUrl: null,
 	landingLinkUrl: null,
@@ -76,6 +83,7 @@ const promoBanner = (overrides: Partial<Banner> = {}): Banner =>
 describe('article banners', () => {
 	beforeEach(() => {
 		queryState.lookups.clear()
+		mediaState.mobile = false
 	})
 
 	test('falls back from article text to section text to all-articles text', () => {
@@ -335,6 +343,51 @@ describe('article banners', () => {
 
 		expect(html).toContain('href="https://example.com/landing"')
 		expect(html).toContain('href="https://example.com/disclosure"')
+	})
+
+	test('uses the landing mobile image on the mobile landing page and falls back to the article mobile image', () => {
+		mediaState.mobile = true
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
+		})
+		let html = renderToStaticMarkup(<ResearchPromoBanner />)
+		expect(html).toContain('/uploads/promo/landing-mobile')
+		expect(html).not.toContain('/uploads/promo/mobile"')
+		expect(html).not.toContain('/uploads/promo/wide')
+
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner()
+		})
+		html = renderToStaticMarkup(<ResearchPromoBanner />)
+		expect(html).toContain('/uploads/promo/mobile')
+	})
+
+	test('hides the landing promo banner on mobile without a mobile image instead of showing the article card', () => {
+		mediaState.mobile = true
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({ imageMobileUrl: null })
+		})
+
+		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
+	})
+
+	test('ignores the landing mobile image on the desktop landing page and on article pages', () => {
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
+			...emptyLookup(),
+			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
+		})
+		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toContain('/uploads/promo/wide')
+
+		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
+			...emptyLookup(),
+			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
+		})
+		const mobile = renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)
+		expect(mobile).toContain('/uploads/promo/mobile')
+		expect(mobile).not.toContain('/uploads/promo/landing-mobile')
 	})
 
 	test('hides the article promo card without a card image', () => {

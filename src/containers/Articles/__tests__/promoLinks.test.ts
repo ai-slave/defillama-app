@@ -16,6 +16,7 @@ const promo = (overrides: Partial<Banner>): Banner => ({
 	imageWideUrl: '/uploads/promo/wide',
 	imageCardUrl: '/uploads/promo/card',
 	imageMobileUrl: null,
+	imageLandingMobileUrl: null,
 	disclosureText: null,
 	disclosureUrl: null,
 	landingLinkUrl: null,

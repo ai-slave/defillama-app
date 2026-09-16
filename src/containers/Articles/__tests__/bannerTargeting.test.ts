@@ -19,6 +19,7 @@ function banner(overrides: Partial<Banner> = {}): Banner {
 		imageWideUrl: null,
 		imageCardUrl: null,
 		imageMobileUrl: null,
+		imageLandingMobileUrl: null,
 		disclosureText: null,
 		disclosureUrl: null,
 		landingLinkUrl: null,

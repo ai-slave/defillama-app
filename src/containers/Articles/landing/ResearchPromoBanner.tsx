@@ -21,7 +21,7 @@ export function ResearchPromoBanner({ initialData }: { initialData?: BannerLooku
 	})
 
 	const banner = useEligibleBanner([data?.promo ?? null], data === undefined)
-	const imageUrl = (isMobile ? (banner?.imageMobileUrl ?? banner?.imageCardUrl) : banner?.imageWideUrl)?.trim()
+	const imageUrl = (isMobile ? (banner?.imageLandingMobileUrl ?? banner?.imageMobileUrl) : banner?.imageWideUrl)?.trim()
 
 	if (!banner || !banner.enabled || banner.showOnLanding === false || !imageUrl) {
 		return null

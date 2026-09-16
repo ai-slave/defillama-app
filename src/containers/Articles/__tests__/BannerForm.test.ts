@@ -37,6 +37,30 @@ describe('BannerForm regional targeting', () => {
 	})
 })
 
+describe('BannerForm promo landing mobile image', () => {
+	const promoState = () => ({ ...bannerToForm(null), kind: 'promo' as const, linkUrl: 'https://example.com' })
+
+	test('sends the landing mobile image for promo banners and nulls it for image-square', () => {
+		const promo = buildPayload({ ...promoState(), imageLandingMobileUrl: ' /uploads/landing-mobile ' })
+		expect(promo.imageLandingMobileUrl).toBe('/uploads/landing-mobile')
+		expect(buildPayload({ ...promoState(), imageLandingMobileUrl: '' }).imageLandingMobileUrl).toBeNull()
+		const square = buildPayload({
+			...promoState(),
+			kind: 'image-square',
+			imageUrl: '/uploads/square',
+			imageLandingMobileUrl: '/uploads/landing-mobile'
+		})
+		expect(square.imageLandingMobileUrl).toBeNull()
+	})
+
+	test('counts the landing mobile image as a promo image', () => {
+		expect(validateBannerForm(promoState()).imageUrl).toBe('Upload at least one image')
+		expect(
+			validateBannerForm({ ...promoState(), imageLandingMobileUrl: '/uploads/landing-mobile' }).imageUrl
+		).toBeUndefined()
+	})
+})
+
 describe('BannerForm promo placement urls', () => {
 	const promoState = () => ({
 		...bannerToForm(null),
@@ -66,6 +90,7 @@ describe('BannerForm promo placement urls', () => {
 			imageWideUrl: '/uploads/banner-wide',
 			imageCardUrl: null,
 			imageMobileUrl: null,
+			imageLandingMobileUrl: null,
 			disclosureText: null,
 			disclosureUrl: null,
 			landingLinkUrl: null,

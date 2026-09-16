@@ -30,6 +30,7 @@ export type BannerFormState = {
 	imageWideUrl: string
 	imageCardUrl: string
 	imageMobileUrl: string
+	imageLandingMobileUrl: string
 	disclosureText: string
 	disclosureUrl: string
 	landingLinkUrl: string
@@ -57,6 +58,7 @@ export function bannerToForm(banner: Banner | null): BannerFormState {
 			imageWideUrl: '',
 			imageCardUrl: '',
 			imageMobileUrl: '',
+			imageLandingMobileUrl: '',
 			disclosureText: '',
 			disclosureUrl: '',
 			landingLinkUrl: '',
@@ -83,6 +85,7 @@ export function bannerToForm(banner: Banner | null): BannerFormState {
 		imageWideUrl: banner.imageWideUrl ?? '',
 		imageCardUrl: banner.imageCardUrl ?? '',
 		imageMobileUrl: banner.imageMobileUrl ?? '',
+		imageLandingMobileUrl: banner.imageLandingMobileUrl ?? '',
 		disclosureText: banner.disclosureText ?? '',
 		disclosureUrl: banner.disclosureUrl ?? '',
 		landingLinkUrl: banner.landingLinkUrl ?? '',
@@ -113,6 +116,7 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 			imageWideUrl: null,
 			imageCardUrl: null,
 			imageMobileUrl: null,
+			imageLandingMobileUrl: null,
 			disclosureText: null,
 			disclosureUrl: null,
 			landingLinkUrl: null,
@@ -137,6 +141,7 @@ export function buildPayload(state: BannerFormState): BannerPayload {
 			imageWideUrl: state.imageWideUrl.trim() || null,
 			imageCardUrl: state.imageCardUrl.trim() || null,
 			imageMobileUrl: state.imageMobileUrl.trim() || null,
+			imageLandingMobileUrl: state.imageLandingMobileUrl.trim() || null,
 			disclosureText: state.disclosureText.trim() || null,
 			disclosureUrl: state.disclosureUrl.trim() || null,
 			landingLinkUrl: state.landingLinkUrl.trim() || null,
@@ -192,7 +197,12 @@ export function validateBannerForm(state: BannerFormState): BannerFormErrors {
 		if (!state.text.trim()) errors.text = 'Banner text is required'
 		else if (state.text.length > TEXT_MAX) errors.text = `Max ${TEXT_MAX} characters`
 	} else if (state.kind === 'promo') {
-		if (!state.imageWideUrl.trim() && !state.imageCardUrl.trim() && !state.imageMobileUrl.trim()) {
+		if (
+			!state.imageWideUrl.trim() &&
+			!state.imageCardUrl.trim() &&
+			!state.imageMobileUrl.trim() &&
+			!state.imageLandingMobileUrl.trim()
+		) {
 			errors.imageUrl = 'Upload at least one image'
 		}
 		if (!state.linkUrl.trim()) errors.linkUrl = 'Link URL is required'

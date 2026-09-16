@@ -162,6 +162,7 @@ export function BannerForm({ banner }: Props) {
 		imageWideUrl: state.kind === 'promo' ? state.imageWideUrl.trim() || null : null,
 		imageCardUrl: state.kind === 'promo' ? state.imageCardUrl.trim() || null : null,
 		imageMobileUrl: state.kind === 'promo' ? state.imageMobileUrl.trim() || null : null,
+		imageLandingMobileUrl: state.kind === 'promo' ? state.imageLandingMobileUrl.trim() || null : null,
 		disclosureText: state.kind === 'promo' ? state.disclosureText.trim() || null : null,
 		disclosureUrl: state.kind === 'promo' ? state.disclosureUrl.trim() || null : null,
 		landingLinkUrl: state.kind === 'promo' ? state.landingLinkUrl.trim() || null : null,
@@ -489,7 +490,7 @@ export function BannerForm({ banner }: Props) {
 			) : state.kind === 'promo' ? (
 				<Section
 					title="Content"
-					description="Three renditions of the promo image, the click-through link with optional per-placement overrides for the landing and article pages, and an optional disclosure link. Placements without an uploaded image are hidden."
+					description="Four renditions of the promo image, the click-through link with optional per-placement overrides for the landing and article pages, and an optional disclosure link. Placements without an uploaded image are hidden."
 				>
 					<div className="grid gap-1.5">
 						<span className="text-sm font-medium text-primary">
@@ -523,7 +524,22 @@ export function BannerForm({ banner }: Props) {
 
 					<div className="grid gap-1.5">
 						<span className="text-sm font-medium text-primary">
-							Mobile image <span className="font-normal text-tertiary">(landing and article body)</span>
+							Landing mobile image <span className="font-normal text-tertiary">(landing page on mobile)</span>
+						</span>
+						<ImageUploadButton
+							scope="banner-landing-mobile"
+							previewShape="wide"
+							currentUrl={state.imageLandingMobileUrl || null}
+							onUploaded={(result) => update({ imageLandingMobileUrl: result.url })}
+							onCleared={() => update({ imageLandingMobileUrl: '' })}
+							label="landing mobile promo image"
+							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article mobile image when empty; without either the banner is hidden on the mobile landing page."
+						/>
+					</div>
+
+					<div className="grid gap-1.5">
+						<span className="text-sm font-medium text-primary">
+							Article mobile image <span className="font-normal text-tertiary">(article body on mobile)</span>
 						</span>
 						<ImageUploadButton
 							scope="banner-landing-mobile"
@@ -531,7 +547,7 @@ export function BannerForm({ banner }: Props) {
 							currentUrl={state.imageMobileUrl || null}
 							onUploaded={(result) => update({ imageMobileUrl: result.url })}
 							onCleared={() => update({ imageMobileUrl: '' })}
-							label="mobile promo image"
+							label="article mobile promo image"
 							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article card image when empty."
 						/>
 					</div>
@@ -770,8 +786,6 @@ function PromoPreview({ banner }: { banner: Banner }) {
 	) : null
 	const landingLink = landingPromoLinkUrl(banner)
 	const articleLink = articlePromoLinkUrl(banner)
-	const mobileLink =
-		landingLink === articleLink ? landingLink : `landing: ${landingLink || '—'} · article: ${articleLink || '—'}`
 	const slots: Array<{
 		label: string
 		imageUrl: string | null
@@ -789,6 +803,15 @@ function PromoPreview({ banner }: { banner: Banner }) {
 				: 'Hidden on the landing page'
 		},
 		{
+			label: 'Landing (mobile)',
+			imageUrl: banner.showOnLanding ? (banner.imageLandingMobileUrl ?? banner.imageMobileUrl) : null,
+			linkUrl: landingLink,
+			widthClass: 'max-w-[360px]',
+			placeholder: banner.showOnLanding
+				? 'Upload a landing mobile image (or an article mobile image as fallback); hidden on mobile otherwise'
+				: 'Hidden on the landing page'
+		},
+		{
 			label: 'Article card (desktop right rail)',
 			imageUrl: banner.imageCardUrl,
 			linkUrl: articleLink,
@@ -796,11 +819,11 @@ function PromoPreview({ banner }: { banner: Banner }) {
 			placeholder: 'Upload a card image to show the banner on article pages'
 		},
 		{
-			label: 'Mobile (landing and article body)',
+			label: 'Article (mobile, in body)',
 			imageUrl: banner.imageMobileUrl ?? banner.imageCardUrl,
-			linkUrl: mobileLink,
+			linkUrl: articleLink,
 			widthClass: 'max-w-[360px]',
-			placeholder: 'Upload a mobile image (or a card image as fallback)'
+			placeholder: 'Upload an article mobile image (or a card image as fallback)'
 		}
 	]
 	return (

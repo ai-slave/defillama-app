@@ -150,14 +150,19 @@ export function BannersListView() {
 									</>
 								) : (
 									<div className="mt-1 flex items-center gap-3">
-										{(banner.imageUrl ?? banner.imageWideUrl ?? banner.imageCardUrl ?? banner.imageMobileUrl) ? (
+										{(banner.imageUrl ??
+										banner.imageWideUrl ??
+										banner.imageCardUrl ??
+										banner.imageMobileUrl ??
+										banner.imageLandingMobileUrl) ? (
 											// eslint-disable-next-line @next/next/no-img-element
 											<img
 												src={
 													(banner.imageUrl ??
 														banner.imageWideUrl ??
 														banner.imageCardUrl ??
-														banner.imageMobileUrl) as string
+														banner.imageMobileUrl ??
+														banner.imageLandingMobileUrl) as string
 												}
 												alt=""
 												className={`shrink-0 rounded-sm border border-medium object-cover ${
