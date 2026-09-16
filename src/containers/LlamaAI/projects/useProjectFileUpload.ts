@@ -61,6 +61,7 @@ const PROJECT_FILE_ACCEPT_TYPES = [
 const PROJECT_FILE_ACCEPT_EXTENSION_SET = new Set<string>(PROJECT_FILE_ACCEPT_EXTENSIONS)
 const PROJECT_FILE_ACCEPT_TYPE_SET = new Set<string>(PROJECT_FILE_ACCEPT_TYPES)
 const PROJECT_FILE_ACCEPT_FILENAMES = new Set(['dockerfile', 'makefile'])
+const PROJECT_MAX_FILE_BYTES = 100 * 1024 * 1024
 
 export const PROJECT_FILE_ACCEPT = [...PROJECT_FILE_ACCEPT_EXTENSIONS, ...PROJECT_FILE_ACCEPT_TYPES].join(',')
 
@@ -108,8 +109,10 @@ export function useProjectFileUpload(projectId: string) {
 
 			const archives = fileList.filter(isArchiveFile)
 			const nonArchiveFiles = fileList.filter((file) => !isArchiveFile(file))
-			const files = nonArchiveFiles.filter(isAcceptedProjectFile)
-			const unsupported = nonArchiveFiles.filter((file) => !isAcceptedProjectFile(file))
+			const oversized = nonArchiveFiles.filter((file) => file.size > PROJECT_MAX_FILE_BYTES)
+			const sizeAcceptedFiles = nonArchiveFiles.filter((file) => file.size <= PROJECT_MAX_FILE_BYTES)
+			const files = sizeAcceptedFiles.filter(isAcceptedProjectFile)
+			const unsupported = sizeAcceptedFiles.filter((file) => !isAcceptedProjectFile(file))
 
 			if (archives.length > 0) {
 				toast.error('Archive uploads are not supported. Unzip and drop the folder instead.')
@@ -121,6 +124,7 @@ export function useProjectFileUpload(projectId: string) {
 						: `Skipped ${unsupported.length} unsupported files`
 				)
 			}
+			reportSkipped(oversized.map((file) => ({ path: getProjectFileName(file), reason: 'file exceeds 100 MB' })))
 			if (files.length === 0) return
 
 			try {
