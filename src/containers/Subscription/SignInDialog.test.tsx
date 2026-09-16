@@ -3,7 +3,7 @@
 
 import * as Ariakit from '@ariakit/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, useSyncExternalStore } from 'react'
+import { act, useState, useSyncExternalStore } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { signInWithPassword } from '~/auth/emailSignIn'
@@ -41,11 +41,20 @@ vi.mock('~/auth/GoogleSignInButton', () => ({
 }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
 vi.mock('~/containers/Subscription/Turnstile', () => ({
-	Turnstile: ({ onVerify }: { onVerify: (token: string) => void }) => (
-		<button type="button" onClick={() => onVerify('test-captcha')}>
-			Test CAPTCHA
-		</button>
-	)
+	Turnstile: function TestTurnstile({ onVerify }: { onVerify: (token: string) => void }) {
+		const [complete, setComplete] = useState(false)
+		return (
+			<button
+				type="button"
+				onClick={() => {
+					setComplete(true)
+					onVerify('test-captcha')
+				}}
+			>
+				{complete ? 'CAPTCHA complete' : 'Test CAPTCHA'}
+			</button>
+		)
+	}
 }))
 
 let root: Root
@@ -186,6 +195,7 @@ test('preserves signup fields after failure and requires a fresh CAPTCHA for ret
 	)
 	await settle()
 	expect(input('email').disabled).toBe(true)
+	expect(container.textContent).toContain('CAPTCHA complete')
 	requests[0].resolve(new Response(JSON.stringify({ error: 'User with this email already exists' }), { status: 400 }))
 	await vi.waitFor(async () => {
 		await settle()
@@ -193,6 +203,7 @@ test('preserves signup fields after failure and requires a fresh CAPTCHA for ret
 	})
 	expect(input('email').value).toBe('new@example.com')
 	expect(input('passwordConfirm').value).toBe('password123')
+	expect(container.textContent).not.toContain('CAPTCHA complete')
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
@@ -204,6 +215,7 @@ test('preserves signup fields after failure and requires a fresh CAPTCHA for ret
 	)
 	await settle()
 	expect(requests).toHaveLength(2)
+	expect(container.textContent).toContain('CAPTCHA complete')
 	requests[1].resolve(
 		new Response(
 			JSON.stringify({ token: 'new-token', user: { id: 'new-user', email: 'new@example.com', verified: false } })

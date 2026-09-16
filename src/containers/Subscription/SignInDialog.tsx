@@ -227,6 +227,7 @@ function AuthScreen({
 	const loginMutation = useMutation({ mutationFn: login })
 	const formId = useId()
 	const turnstileToken = useRef('')
+	const [captchaRetry, setCaptchaRetry] = useState(0)
 	const signupMutation = useMutation({ mutationFn: signup })
 	const isSignup = state.kind === 'signup'
 	const lastSignIn = useLastSignIn()
@@ -271,7 +272,10 @@ function AuthScreen({
 				canAccept: () => dialogStore.getState().open
 			})
 			.catch((error: Error) => {
-				if (!signal.aborted && dialogStore.getState().open) store.dispatch({ error: error.message, kind: 'failed' })
+				if (!signal.aborted && dialogStore.getState().open) {
+					setCaptchaRetry((retry) => retry + 1)
+					store.dispatch({ error: error.message, kind: 'failed' })
+				}
 				return null
 			})
 	}
@@ -410,7 +414,7 @@ function AuthScreen({
 
 					<div inert={isPending}>
 						<Turnstile
-							key={signupMutation.submittedAt}
+							key={captchaRetry}
 							onVerify={(token) => {
 								turnstileToken.current = token
 							}}
