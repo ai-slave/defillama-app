@@ -33,7 +33,8 @@ export function CompositionSection({
 	subtitle,
 	comps,
 	initialKey,
-	subtotals
+	subtotals,
+	wideTable = false
 }: {
 	title: string
 	subtitle?: string
@@ -42,6 +43,7 @@ export function CompositionSection({
 	initialKey: string
 	/** Extra readings for the share table, per breakdown. */
 	subtotals?: (breakdown: string) => Array<CompositionSubtotal> | undefined
+	wideTable?: boolean
 }) {
 	const [picked, setPicked] = useState<string | null>(null)
 	const [pickedRange, setPickedRange] = useState<KpkRangeKey | null>(null)
@@ -144,7 +146,11 @@ export function CompositionSection({
 			{/* `minmax(0,…)` on both tracks: the default `auto` minimum is min-content, which lets
 			    the share table push the chart column off the page instead of scrolling itself.
 			    Splits at the mockup's own 900px-ish breakpoint rather than waiting for xl. */}
-			<div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
+			<div
+				className={`grid grid-cols-1 gap-3 ${
+					wideTable ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]' : 'lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]'
+				}`}
+			>
 				<Card>
 					{model ? (
 						<>
@@ -176,10 +182,12 @@ export function CompositionSection({
 					<DataTable
 						getOccurrenceKey={(row) => row.name}
 						rows={model?.rows}
+						fit={wideTable}
 						cols={[
 							{
 								key: 'name',
 								label: 'Segment',
+								wrap: wideTable,
 								render: (row) => (
 									<span className="flex items-center gap-2 text-pro-text-primary">
 										<span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: row.color }} />

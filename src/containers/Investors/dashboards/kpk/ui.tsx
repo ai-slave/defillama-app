@@ -6,6 +6,11 @@ import type { KpkExcessWindow, KpkMandateScope, KpkRef } from './api'
 import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT, KPK_USD_OPTIONS } from './chartDefaults'
 import { MILLION } from './transform'
 
+export const REBALANCING_REF: KpkRef = {
+	label: 'KPK Vaults Operations — Dune',
+	url: 'https://dune.com/kpk/kpk-vaults-operations'
+}
+
 /* ──────────────────────────── formatting ──────────────────────────── */
 
 export const KPK_PERCENT_OPTIONS = {
@@ -608,6 +613,7 @@ export function DataTable<Row extends object>({
 	rows,
 	cols,
 	footer,
+	fit = false,
 	empty = 'No data'
 }: {
 	rows: Array<Row> | undefined
@@ -617,6 +623,7 @@ export function DataTable<Row extends object>({
 	 * array where a total needs a second reading underneath it.
 	 */
 	footer?: FooterCells | Array<FooterRow>
+	fit?: boolean
 	empty?: string
 } & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
@@ -627,8 +634,9 @@ export function DataTable<Row extends object>({
 	return (
 		<div className="overflow-x-auto">
 			{/* Content-sized so `nowrap` columns keep their width and scroll, but never
-			    narrower than the card when there is room to spare. */}
-			<table className="w-max min-w-full text-xs">
+			    narrower than the card when there is room to spare. `fit` trades that for
+			    a table that never outgrows its card. */}
+			<table className={`text-xs ${fit ? 'w-full' : 'w-max min-w-full'}`}>
 				<thead>
 					<tr className="border-b border-pro-cards-border">
 						{cols.map((col) => (

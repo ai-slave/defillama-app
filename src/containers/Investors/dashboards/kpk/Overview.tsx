@@ -9,6 +9,7 @@ import {
 	LedgerStrip,
 	LedgerTile,
 	QueryError,
+	REBALANCING_REF,
 	RefLinks,
 	usdFromMillions,
 	type LedgerMetric
@@ -90,7 +91,7 @@ export default function Overview() {
 					value={data ? (data.rebalancing.value ?? '—') : undefined}
 					suffix={data?.rebalancing.suffix}
 					sub={data?.rebalancing.sub}
-					subRef={data?.rebalancing.ref}
+					subRef={data ? (data.rebalancing.ref ?? REBALANCING_REF) : undefined}
 					metric={data ? (data.rebalancing.metric ?? '—') : undefined}
 					metricLabel={data?.rebalancing.metricLabel}
 				/>
@@ -113,6 +114,7 @@ export default function Overview() {
 				comps={data?.comp}
 				initialKey="line"
 				subtotals={subtotals}
+				wideTable
 			/>
 
 			<RefLinks refs={data?.refs} />

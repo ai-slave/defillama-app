@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
-import type { KpkVault } from './api'
+import type { KpkRef, KpkVault } from './api'
 import { useKpkVaults } from './api'
 import { KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
@@ -16,6 +16,7 @@ import {
 	LedgerTile,
 	MeterBar,
 	QueryError,
+	REBALANCING_REF,
 	RefLinks,
 	RowLink,
 	SectionHeader,
@@ -32,6 +33,15 @@ import {
 const ALL_VENUES = 'all'
 
 const DOUBLE_COUNT_NOTE = 'Counted inside another vault on this table. Excluded from the adjusted totals.'
+
+const SYMBIOTIC_REF: KpkRef = { label: 'Symbiotic vaults', url: 'https://dune.com/kpk/kpk-usdc-rwa-liquidity' }
+
+const LEGAL_URL = 'https://docs.kpk.io/vaults/resources/legal'
+
+function endSentence(text: string) {
+	const trimmed = text.trim()
+	return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`
+}
 
 /**
  * Three distinct states, rendered as three distinct things: a count (`0` is a real
@@ -69,6 +79,12 @@ export default function Vaults() {
 		[data?.list]
 	)
 	const showAdjustedTva = data?.tvaAdjusted != null && adjustedVenues.length > 0
+
+	const refs = useMemo(() => {
+		const served = data?.refs
+		if (!served) return undefined
+		return served.some((ref) => ref.url === SYMBIOTIC_REF.url) ? served : [...served, SYMBIOTIC_REF]
+	}, [data?.refs])
 
 	const footer = useMemo<Array<FooterRow> | undefined>(() => {
 		if (!totals) return undefined
@@ -113,8 +129,8 @@ export default function Vaults() {
 				<LedgerTile
 					label="Agent rebalancing volume"
 					value={data?.rebalancingVolume}
-					sub="Executed by KPK's non-custodial rebalancing and exit agents"
-					subRef={data?.rebalancingRef}
+					sub="Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
+					subRef={data ? (data.rebalancingRef ?? REBALANCING_REF) : undefined}
 					metric={data?.rebalancingActionsLabel}
 					metricLabel="cumulative rebalancing actions"
 				/>
@@ -154,7 +170,8 @@ export default function Vaults() {
 									<span className="flex flex-col">
 										<span className="text-pro-text-primary">
 											{row.name}
-											{row.doubleCounted && <DuplicateMark note={doubleCountNote} />}
+											{row.doubleCounted && <DuplicateMark note={doubleCountNote} />}{' '}
+											<RowLink href={row.url} label={row.name} size="sm" />
 										</span>
 										<span className="body-sm text-pro-text-tertiary">
 											{row.venue} · {row.chain}
@@ -219,7 +236,6 @@ export default function Vaults() {
 									</span>
 								)
 							},
-							{ key: 'exposure', label: 'Collateral & market exposure', wrap: true },
 							{
 								key: 'rebalances30d',
 								label: 'Rebalances 30d',
@@ -235,20 +251,29 @@ export default function Vaults() {
 								render: (row) => formatNumber(row.deriskingAutomations, { maximumFractionDigits: 0 }) ?? '—'
 							},
 							{ key: 'losses', label: 'Incurred losses', render: () => 'None' },
-							{
-								key: 'url',
-								label: '',
-								render: (row) => <RowLink href={row.url} label={row.name} />
-							}
+							{ key: 'exposure', label: 'Collateral & market exposure', wrap: true }
 						]}
 						footer={footer}
 					/>
 				</Card>
 			</section>
 
-			<RefLinks refs={data?.refs} />
+			<RefLinks refs={refs} />
 
-			{data?.riskDisclaimer && <Disclaimer title="Risk disclaimer">{data.riskDisclaimer}</Disclaimer>}
+			{data?.riskDisclaimer && (
+				<Disclaimer title="Risk disclaimer">
+					{endSentence(data.riskDisclaimer)} See our full legal disclaimers at{' '}
+					<a
+						href={LEGAL_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="underline underline-offset-2 transition-colors hover:text-sl-accent"
+					>
+						docs.kpk.io/vaults/resources/legal
+					</a>
+					.
+				</Disclaimer>
+			)}
 		</div>
 	)
 }

@@ -97,7 +97,8 @@ const VAULTS: KpkVaults = {
 			bench: 3.71,
 			benchName: 'Gauntlet USDC Prime',
 			spreadBps: 19,
-			belowTarget: false
+			belowTarget: false,
+			url: 'https://app.morpho.org/vault/kpk-usdc-prime'
 		},
 		{
 			name: 'KPK wstETH Earn Pool',
@@ -296,9 +297,74 @@ describe('kpk Vaults tab', () => {
 		expect(container.querySelectorAll(`[title="${DOUBLE_COUNT_NOTE}"]`).length).toBeGreaterThan(1)
 	})
 
+	test('sits the vault link in the name cell, not a column of its own', async () => {
+		await renderTab()
+
+		const link = container.querySelector<HTMLAnchorElement>('a[href="https://app.morpho.org/vault/kpk-usdc-prime"]')
+		const cell = link?.closest('td')
+
+		expect(cell?.textContent).toContain('KPK USDC Prime Vault')
+		// The vaults that carry no destination get no stray link, and none is left in a column of its own.
+		expect(cell?.parentElement?.querySelectorAll('a').length).toBe(1)
+	})
+
+	test('closes the risk disclaimer with the legal link', async () => {
+		await renderTab()
+
+		const legal = container.querySelector<HTMLAnchorElement>('a[href="https://docs.kpk.io/vaults/resources/legal"]')
+
+		expect(legal?.closest('div')?.textContent).toContain(
+			'Curated vaults carry risk of loss. See our full legal disclaimers at docs.kpk.io/vaults/resources/legal.'
+		)
+	})
+
+	test('closes the served disclaimer copy before the legal line', async () => {
+		served = { ...VAULTS, riskDisclaimer: 'Curated vaults carry risk of loss' }
+		await renderTab()
+
+		expect(container.textContent).toContain('risk of loss. See our full legal disclaimers')
+	})
+
+	test('leaves its tables content-sized, scrolling rather than wrapping', async () => {
+		await renderTab()
+
+		for (const table of container.querySelectorAll('table')) {
+			expect(table.className).toContain('w-max')
+		}
+	})
+
 	test('links the Dune query behind the rebalancing figures', async () => {
 		await renderTab()
 
+		expect(container.textContent).toContain(
+			"Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
+		)
 		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).not.toBeNull()
+	})
+
+	test('keeps the operations link when the adapter names no ref', async () => {
+		served = { ...VAULTS, rebalancingRef: undefined }
+		await renderTab()
+
+		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).not.toBeNull()
+	})
+
+	test('carries the Symbiotic query alongside the refs the adapter serves', async () => {
+		await renderTab()
+
+		const link = container.querySelector<HTMLAnchorElement>('a[href="https://dune.com/kpk/kpk-usdc-rwa-liquidity"]')
+
+		expect(link?.textContent).toContain('Symbiotic vaults')
+		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-morpho-vaults"]')).not.toBeNull()
+	})
+
+	test('does not repeat the Symbiotic query once the adapter serves it', async () => {
+		served = {
+			...VAULTS,
+			refs: [...VAULTS.refs, { label: 'Symbiotic vaults', url: 'https://dune.com/kpk/kpk-usdc-rwa-liquidity' }]
+		}
+		await renderTab()
+
+		expect(container.querySelectorAll('a[href="https://dune.com/kpk/kpk-usdc-rwa-liquidity"]').length).toBe(1)
 	})
 })
