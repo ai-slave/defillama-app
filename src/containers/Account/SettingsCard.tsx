@@ -1,30 +1,12 @@
 import { useAuthContext } from '~/auth'
 import { PROMO_EMAILS_TEXT } from '~/containers/Subscription/constants'
-// import { useConnectModal } from '@rainbow-me/rainbowkit'
-// import { useAccount, useSignMessage } from 'wagmi'
 import { Icon } from '~/ui/Icon'
 import { ToggleSwitch } from './ToggleSwitch'
 
 export function SettingsCard() {
-	const {
-		user,
-		// addWallet,
-		setPromotionalEmails,
-		loaders
-	} = useAuthContext()
-	// const { address } = useAccount()
-	// const { signMessageAsync } = useSignMessage()
-	// const { openConnectModal } = useConnectModal()
+	const { user, setPromotionalEmails, loaders } = useAuthContext()
 
 	const promoEmailsOn = user?.promotionalEmails === 'on' || user?.promotionalEmails === 'initial'
-
-	// const handleConnectWallet = () => {
-	// 	if (!address) {
-	// 		openConnectModal?.()
-	// 		return
-	// 	}
-	// 	addWallet(address, signMessageAsync).catch(() => {})
-	// }
 
 	const handleTogglePromoEmails = () => {
 		if (loaders.setPromotionalEmails) return
@@ -39,25 +21,6 @@ export function SettingsCard() {
 			</div>
 
 			<div className="flex flex-col gap-4">
-				{/* Airdrop Eligibility — hidden for now, we don't want to force users to add wallets yet
-				<div className="flex flex-col gap-1">
-					<div className="flex items-center justify-between">
-						<span className="text-sm text-sub-dark-page dark:text-white">Airdrop Eligibility</span>
-						<button
-							onClick={handleConnectWallet}
-							disabled={loaders.addWallet}
-							className="rounded-lg border border-sub-border-muted px-3 py-2 text-xs font-medium text-sub-dark-page disabled:opacity-50 dark:border-sub-border-strong dark:text-white"
-						>
-							{loaders.addWallet ? 'Connecting...' : 'Connect Wallet'}
-						</button>
-					</div>
-					<p className="max-w-[400px] text-xs leading-4 text-sub-text-muted">
-						Connect your active wallets to track potential rewards from DeFi protocols. Please note that this
-						wallet will not work as an authentication method.
-					</p>
-				</div>
-				*/}
-
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center justify-between">
 						<span className="text-sm text-sub-text-primary">Receive promotional emails</span>

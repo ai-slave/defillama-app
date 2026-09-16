@@ -1460,7 +1460,7 @@ function RWAPerpsFiltersDialog({
 						<DialogHeading>Filters</DialogHeading>
 						<span className="label-sm text-tertiary">{draftSelectedCount} selected</span>
 					</div>
-					<DialogCloseButton className="-mr-1" />
+					<DialogCloseButton />
 				</div>
 
 				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">

@@ -6,7 +6,12 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
+import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
+import { authenticateGithub } from '~/auth/githubAuth'
+import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
+
+vi.mock('~/auth/githubAuth', () => ({ authenticateGithub: vi.fn() }))
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
@@ -24,13 +29,49 @@ function Probe() {
 let root: Root
 let client: QueryClient
 let container: HTMLDivElement
+let otpCalls: Array<{ path: string; authorization: string | null; resolve: (response: Response) => void }>
+let inviteView: ReturnType<typeof useTeam>
+function InviteProbe() {
+	inviteView = useTeam({ inviteToken: 'invite-token' })
+	return (
+		<output aria-label="Invite account">
+			{inviteView.inviteAccount.data?.verified ? 'Verified' : inviteView.inviteAccount.status}
+		</output>
+	)
+}
+let inviteCalls: Array<{ resolve: (response: Response) => void }>
+let signupCalls: Array<{ resolve: (response: Response) => void }>
+let loginVerified: boolean
 let refreshCalls: Array<{ authorization: string | null; resolve: (response: Response) => void }>
 
 beforeEach(() => {
 	refreshCalls = []
+	otpCalls = []
+	loginVerified = false
+	signupCalls = []
+	inviteCalls = []
 	vi.stubGlobal(
 		'fetch',
-		vi.fn((url: string | URL, config?: RequestInit) => {
+		vi.fn(async (url: string | URL, config?: RequestInit) => {
+			if (String(url).endsWith('/team/invite/accept'))
+				return new Promise<Response>((resolve) => inviteCalls.push({ resolve }))
+			if (String(url).endsWith('/team')) return jsonResponse({ team: null })
+			if (String(url).endsWith('/auth/signup')) return new Promise<Response>((resolve) => signupCalls.push({ resolve }))
+			if (String(url).endsWith('/auth-with-password')) {
+				return jsonResponse({
+					token: token('email-user'),
+					record: { ...record('email-user'), email: 'person@example.com', verified: loginVerified }
+				})
+			}
+			if (String(url).endsWith('/sendOtp') || String(url).endsWith('/verifyOtp')) {
+				return new Promise<Response>((resolve) =>
+					otpCalls.push({
+						path: String(url),
+						authorization: new Headers(config?.headers).get('Authorization'),
+						resolve
+					})
+				)
+			}
 			if (String(url).endsWith('/subscription/status')) {
 				return jsonResponse({ message: 'No active subscription' }, 404)
 			}
@@ -65,10 +106,12 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
+	vi.useRealTimers()
 	container.remove()
 	vi.unstubAllGlobals()
 	pb.authStore.clear()
 	localStorage.clear()
+	sessionStorage.clear()
 })
 
 async function render() {
@@ -173,23 +216,24 @@ test('clears the session when its own refresh fails with 401', async () => {
 	expect(sessionView.isAuthenticated).toBe(false)
 })
 
-test('keeps the OAuth welcome dialog open when the sign-in refresh is auto-cancelled', async () => {
+test('accepts Google identity before one account refresh and keeps onboarding open', async () => {
 	await render()
 
 	const signIn = act(async () => {
-		await sessionView.signInWithGoogleMutation.mutateAsync('identity-token')
+		await sessionView.signInWithGoogle({
+			identityToken: 'identity-token',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
 	})
 	await settle()
 
-	// The sign-in saved a token-only session and started a refresh; the auth
-	// status query started a second one, which auto-cancelled the first.
-	expect(refreshCalls).toHaveLength(2)
-	expect(refreshCalls.every((call) => call.authorization === token('google-new'))).toBe(true)
 	await signIn
-	expect(pb.authStore.record).toBeNull()
+	expect(refreshCalls).toHaveLength(1)
+	expect(pb.authStore.record?.id).toBe('google-new')
+	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'google' })
 	expect(document.body.textContent).toContain('Thanks for signing up!')
-
-	refreshCalls[1].resolve(jsonResponse({ token: token('google-rotated'), record: record('google-new') }))
+	refreshCalls[0].resolve(jsonResponse({ token: token('google-rotated'), record: record('google-new') }))
 	await settle()
 
 	expect(sessionView.user?.id).toBe('google-new')
@@ -200,7 +244,11 @@ test('closes the OAuth welcome dialog when a different account takes over the se
 	await render()
 
 	await act(async () => {
-		await sessionView.signInWithGoogleMutation.mutateAsync('identity-token')
+		await sessionView.signInWithGoogle({
+			identityToken: 'identity-token',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
 	})
 	await settle()
 	expect(document.body.textContent).toContain('Thanks for signing up!')
@@ -209,4 +257,598 @@ test('closes the OAuth welcome dialog when a different account takes over the se
 	await settle()
 
 	expect(document.body.textContent).not.toContain('Thanks for signing up!')
+})
+
+async function emailLogin(suppressVerifyEmailPrompt = false) {
+	await act(async () =>
+		sessionView.login({
+			email: 'person@example.com',
+			password: 'password',
+			signal: new AbortController().signal,
+			canAccept: () => true,
+			suppressVerifyEmailPrompt
+		})
+	)
+	await settle()
+}
+function button(label: string) {
+	return Array.from(document.querySelectorAll('button')).find((element) => element.textContent?.includes(label))!
+}
+
+test('continues unverified email sign-in in a dismissible sheet and retains the code on reopen', async () => {
+	await render()
+	await emailLogin()
+	expect(sessionView.isAuthenticated).toBe(true)
+	expect(document.body.textContent).toContain("You're signed in.")
+	expect(otpCalls).toHaveLength(1)
+	expect(otpCalls[0].authorization).toBe(`Bearer ${token('email-user')}`)
+	otpCalls[0].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	await act(async () => button('Verify later').click())
+	expect(sessionView.isAuthenticated).toBe(true)
+	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	await act(async () => sessionView.promptVerifyEmail('email-user'))
+	await settle()
+	expect(otpCalls).toHaveLength(1)
+	expect(button('Resend code').disabled).toBe(true)
+
+	const input = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '123456')
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await settle()
+	expect(otpCalls).toHaveLength(2)
+	otpCalls[1].resolve(jsonResponse({ verified: true }))
+	await settle()
+	expect(sessionView.user?.verified).toBe(true)
+	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	expect(sessionView.isAuthenticated).toBe(true)
+})
+
+test.each(['verified', 'invite'] as const)('does not interrupt the %s sign-in handoff with OTP', async (mode) => {
+	loginVerified = mode === 'verified'
+	await render()
+	await emailLogin(mode === 'invite')
+	expect(sessionView.isAuthenticated).toBe(true)
+	expect(otpCalls).toHaveLength(0)
+	expect(document.querySelector('[role="dialog"]')).toBeNull()
+})
+
+test('shows delivery failures inline and respects the server resend delay on retry', async () => {
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ error: 'Failed to send OTP' }, 500))
+	await settle()
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
+	})
+	expect(button('Try again').disabled).toBe(false)
+	await act(async () => button('Try again').click())
+	await settle()
+	otpCalls[1].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 120 } }, 429))
+	await settle()
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
+	})
+	expect(button('Resend code').disabled).toBe(true)
+	expect(button('Resend code').textContent).toContain('120s')
+})
+
+test('blocks verification for a replacement token-only session and ignores a late verification response', async () => {
+	pb.authStore.save(token('account-a'), { ...record('account-a'), verified: false })
+	await render()
+	const pending = verifyEmailCode('account-a', '123456')
+	expect(otpCalls).toHaveLength(1)
+	await act(async () => pb.authStore.save(token('account-b')))
+	await expect(verifyEmailCode('account-a', '123456')).rejects.toBeInstanceOf(OtpRequestError)
+	expect(otpCalls).toHaveLength(1)
+	otpCalls[0].resolve(jsonResponse({ verified: true }))
+	await expect(pending).rejects.toThrow('Your account changed')
+	expect(pb.authStore.token).toBe(token('account-b'))
+	expect(pb.authStore.record).toBeNull()
+})
+
+test.each([
+	{ body: 'Too many requests', header: null, seconds: 60 },
+	{ body: '{}', header: '90', seconds: 90 },
+	{ body: '{"details":{"retryAfterSeconds":"invalid"}}', header: 'invalid', seconds: 60 }
+])('keeps resend locked for $seconds seconds when a 429 lacks valid body timing', async ({ body, header, seconds }) => {
+	await render()
+	await emailLogin()
+	const headers = header ? { 'Retry-After': header } : undefined
+	otpCalls[0].resolve(new Response(body, { status: 429, headers }))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
+	})
+	expect(button('Resend code').disabled).toBe(true)
+	expect(button('Resend code').textContent).toContain(`${seconds}s`)
+})
+
+const signupRequest = (signal = new AbortController().signal) => ({
+	email: 'new@example.com',
+	password: 'password123',
+	passwordConfirm: 'password123',
+	turnstileToken: 'fixture-token',
+	promotionalEmails: 'off' as const,
+	signal,
+	canAccept: () => true
+})
+const signupResponse = () =>
+	jsonResponse(
+		{ token: token('signup-user'), user: { id: 'signup-user', email: 'new@example.com', verified: false } },
+		201
+	)
+
+test.each([false, true])(
+	'accepts signup identity before account loading and respects invite handoff=%s',
+	async (suppressVerifyEmailPrompt) => {
+		await render()
+		let pending: ReturnType<typeof sessionView.signup>
+		await act(async () => {
+			pending = sessionView.signup({ ...signupRequest(), suppressVerifyEmailPrompt })
+		})
+		expect(signupCalls).toHaveLength(1)
+		await act(async () => {
+			signupCalls[0].resolve(signupResponse())
+			await pending
+		})
+		await settle()
+		expect(sessionView.user?.id).toBe('signup-user')
+		expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'email' })
+		expect(sessionView.isAuthenticated).toBe(true)
+		expect(sessionView.isNewSignup).toBe(true)
+		expect(otpCalls).toHaveLength(suppressVerifyEmailPrompt ? 0 : 1)
+		// The normal status query owns the follow-up read; signup did not start a competing refresh.
+		expect(refreshCalls).toHaveLength(1)
+	}
+)
+
+test('does not accept a signup response after closing the attempt', async () => {
+	await render()
+	const controller = new AbortController()
+	const pending = sessionView.signup(signupRequest(controller.signal))
+	expect(signupCalls).toHaveLength(1)
+	controller.abort()
+	signupCalls[0].resolve(signupResponse())
+	await expect(pending).resolves.toBeNull()
+	expect(sessionView.isAuthenticated).toBe(false)
+	expect(sessionView.isNewSignup).toBe(false)
+	expect(localStorage.getItem('last-sign-in')).toBeNull()
+	expect(otpCalls).toHaveLength(0)
+})
+
+test('retries the account read after an accepted invite without repeating membership creation', async () => {
+	pb.authStore.save(token('invite-user'), { ...record('invite-user'), email: 'invite@example.com', verified: false })
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<AuthProvider>
+					<Probe />
+					<InviteProbe />
+				</AuthProvider>
+			</QueryClientProvider>
+		)
+	)
+	await vi.waitFor(() => expect(inviteCalls).toHaveLength(1))
+	inviteCalls[0].resolve(jsonResponse({ team: { id: 'team', name: 'Team' } }))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(refreshCalls).toHaveLength(2)
+	})
+	refreshCalls[1].resolve(jsonResponse({ error: 'Temporarily unavailable' }, 503))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(inviteView.inviteAccount.isError).toBe(true)
+	})
+	expect(inviteView.inviteAcceptance.isSuccess).toBe(true)
+	let retry: Promise<unknown>
+	await act(async () => {
+		retry = inviteView.inviteAccount.refetch()
+	})
+	await vi.waitFor(() => expect(refreshCalls).toHaveLength(3))
+	await act(async () => {
+		refreshCalls[2].resolve(
+			jsonResponse({
+				token: token('invite-user'),
+				record: { ...record('invite-user'), email: 'invite@example.com', verified: true }
+			})
+		)
+		await retry
+	})
+	await vi.waitFor(async () => {
+		await settle()
+		expect(container.querySelector('output[aria-label="Invite account"]')?.textContent).toBe('Verified')
+	})
+	expect(inviteCalls).toHaveLength(1)
+	expect(otpCalls).toHaveLength(0)
+})
+
+test.each([
+	{ status: 429, message: 'Please wait before requesting another code.', expires: true },
+	{ status: 500, message: 'Could not send a code.', expires: false }
+])('expires only timed resend errors after $status', async ({ status, message, expires }) => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ error: 'Send failed', details: { retryAfterSeconds: 8 } }, status))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe(message)
+	})
+	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
+	expect(document.activeElement).not.toBe(document.querySelector('[role="alert"]'))
+	const codeInput = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
+	codeInput.focus()
+	await act(async () => {
+		vi.advanceTimersByTime(8000)
+	})
+	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(false)
+	expect(document.activeElement).toBe(codeInput)
+	expect(document.querySelector('[role="alert"]')?.textContent ?? null).toBe(expires ? null : message)
+	expect(otpCalls).toHaveLength(1)
+})
+
+test.each(['cancel', 'replace'] as const)('ignores a late Google session after %s', async (action) => {
+	await render()
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	const controller = new AbortController()
+	const onAuthenticated = vi.fn()
+	const result = sessionView.signInWithGoogle({
+		identityToken: 'fixture',
+		onAuthenticated,
+		signal: controller.signal,
+		canAccept: () => true
+	})
+	await settle()
+	await act(async () => {
+		if (action === 'cancel') controller.abort()
+		else pb.authStore.save(token('replacement'))
+	})
+	finish(
+		jsonResponse({
+			kind: 'authenticated',
+			token: token('abandoned'),
+			isNew: true,
+			user: { id: 'abandoned', email: 'a@example.com', verified: true }
+		})
+	)
+	await act(async () => {
+		expect(await result).toBeNull()
+	})
+	expect(pb.authStore.token).toBe(action === 'cancel' ? '' : token('replacement'))
+	expect(localStorage.getItem('last-sign-in')).toBeNull()
+	expect(document.body.textContent).not.toContain('Thanks for signing up!')
+	expect(sessionView.isNewSignup).toBe(false)
+	expect(onAuthenticated).not.toHaveBeenCalled()
+})
+
+test.each(['confirm', 'resend'] as const)('ignores a cancelled Google link %s response', async (operation) => {
+	await render()
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	const controller = new AbortController()
+	const request = { challengeToken: 'challenge', code: '123456', signal: controller.signal, canAccept: () => true }
+	const result =
+		operation === 'confirm' ? sessionView.confirmGoogleLink(request) : sessionView.resendGoogleLink(request)
+	await settle()
+	controller.abort()
+	finish(
+		jsonResponse(
+			operation === 'confirm'
+				? {
+						kind: 'authenticated',
+						token: token('abandoned'),
+						user: { id: 'abandoned', email: 'a@example.com', verified: true }
+					}
+				: {
+						kind: 'link_verification_required',
+						challengeToken: 'resent',
+						expiresAt: new Date(Date.now() + 60_000).toISOString(),
+						resendAfter: new Date(Date.now() + 30_000).toISOString()
+					}
+		)
+	)
+	await act(async () => {
+		expect(await result).toBeNull()
+	})
+	expect(pb.authStore.token).toBe('')
+})
+
+test('blocks onboarding Continue if a replacement token arrives before its record', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	const continueButton = button('Continue')
+	const before = vi.mocked(fetch).mock.calls.length
+	await act(async () => {
+		pb.authStore.save(token('replacement'))
+		continueButton.click()
+	})
+	await settle()
+	expect(
+		vi
+			.mocked(fetch)
+			.mock.calls.slice(before)
+			.some(([url]) => String(url).endsWith('/user/promotional-emails'))
+	).toBe(false)
+	expect(pb.authStore.token).toBe(token('replacement'))
+	expect(document.body.textContent).not.toContain('Thanks for signing up!')
+})
+
+test('ignores an onboarding save after the owning session is replaced', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	await act(async () => button('Continue').click())
+	await settle()
+	await act(async () => pb.authStore.save(token('replacement')))
+	finish(jsonResponse({ success: true }))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.body.textContent).not.toContain('Thanks for signing up!')
+	})
+	expect(pb.authStore.token).toBe(token('replacement'))
+	expect(pb.authStore.record).toBeNull()
+})
+
+test('preserves a saved preference and loads the remaining account fields', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	await act(async () => button('Continue').click())
+	await settle()
+	finish(jsonResponse({ success: true }))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.body.textContent).not.toContain('Thanks for signing up!')
+	})
+
+	expect(pb.authStore.record?.promotionalEmails).toBe('on')
+	expect(refreshCalls).toHaveLength(2)
+	refreshCalls[0].resolve(
+		jsonResponse({ token: token('stale'), record: { ...record('google-new'), promotionalEmails: 'initial' } })
+	)
+	await settle()
+	expect(pb.authStore.record?.promotionalEmails).toBe('on')
+	refreshCalls[1].resolve(
+		jsonResponse({
+			token: token('fresh'),
+			record: { ...record('google-new'), promotionalEmails: 'on', address: '0xlinked' }
+		})
+	)
+	await settle()
+	expect(pb.authStore.record?.address).toBe('0xlinked')
+	expect(sessionView.user?.walletAddress).toBe('0xlinked')
+})
+
+test('accepts an onboarding save when the same account refreshes its token', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	await act(async () => button('Continue').click())
+	await settle()
+	refreshCalls[0].resolve(
+		jsonResponse({ token: token('rotated-google'), record: { ...record('google-new'), promotionalEmails: 'initial' } })
+	)
+	await settle()
+	expect(pb.authStore.token).toBe(token('rotated-google'))
+	finish(jsonResponse({ success: true }))
+	await vi.waitFor(async () => {
+		await settle()
+		expect(document.body.textContent).not.toContain('Thanks for signing up!')
+	})
+	expect(pb.authStore.token).toBe(token('rotated-google'))
+	expect(pb.authStore.record?.promotionalEmails).toBe('on')
+})
+
+test('offers sign out from required OAuth onboarding', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => button('Sign out').click())
+	expect(pb.authStore.token).toBe('')
+	expect(sessionView.isNewSignup).toBe(false)
+	expect(document.body.textContent).not.toContain('Thanks for signing up!')
+})
+
+test.each([false, true])(
+	'defers GitHub email verification to invitation acceptance when suppressed=%s',
+	async (suppressVerifyEmailPrompt) => {
+		vi.mocked(authenticateGithub).mockResolvedValue({
+			token: token('github-user'),
+			record: {
+				...record('github-user'),
+				email: 'github@example.com',
+				verified: false,
+				created: '2020-01-01',
+				updated: '2020-01-01',
+				flags: {},
+				has_active_subscription: false
+			}
+		})
+		await render()
+		await act(async () => {
+			await sessionView.signInWithGithub({
+				signal: new AbortController().signal,
+				canAccept: () => true,
+				popup: window,
+				suppressVerifyEmailPrompt
+			})
+		})
+		await settle()
+		expect(pb.authStore.record?.id).toBe('github-user')
+		expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'github' })
+		expect(otpCalls).toHaveLength(suppressVerifyEmailPrompt ? 0 : 1)
+		expect(sessionView.isNewSignup).toBe(false)
+	}
+)
+
+test('reloads Google profile fields even when an earlier sign-in left a fresh cache', async () => {
+	client.setQueryData(['auth', 'status', 'google-new'], { ...record('google-new'), address: '0xold' })
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	expect(refreshCalls).toHaveLength(1)
+	refreshCalls[0].resolve(
+		jsonResponse({ token: token('new-google'), record: { ...record('google-new'), address: '0xcurrent' } })
+	)
+	await settle()
+	expect(sessionView.user?.walletAddress).toBe('0xcurrent')
+})
+
+test('does not let an old save finish onboarding for a new login to the same account', async () => {
+	await render()
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finish = resolve
+			})
+	)
+	await act(async () => button('Continue').click())
+	await settle()
+	await act(async () => sessionView.logout())
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'second-login',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	finish(jsonResponse({ success: true }))
+	await settle()
+	expect(document.body.textContent).toContain('Thanks for signing up!')
+	expect(document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(false)
+	expect(button('Continue').disabled).toBe(true)
+})
+
+test('backs off a Google-link resend when the endpoint gives a 429 without timing', async () => {
+	vi.useFakeTimers({ toFake: ['Date'] })
+	await render()
+	vi.mocked(fetch).mockResolvedValueOnce(jsonResponse({ error: 'Please wait before requesting another code' }, 429))
+	await expect(
+		sessionView.resendGoogleLink({
+			challengeToken: 'challenge',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	).rejects.toMatchObject({ retryAt: Date.now() + 60_000 })
+})
+
+test('remembers Google only after its linking challenge becomes an accepted session', async () => {
+	await render()
+	localStorage.setItem('last-sign-in', JSON.stringify({ method: 'email' }))
+	vi.mocked(fetch).mockResolvedValueOnce(
+		jsonResponse({
+			kind: 'link_verification_required',
+			challengeToken: 'challenge',
+			expiresAt: new Date(Date.now() + 120_000).toISOString(),
+			resendAfter: new Date(Date.now() + 60_000).toISOString()
+		})
+	)
+	await act(async () => {
+		await sessionView.signInWithGoogle({
+			identityToken: 'fixture',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'email' })
+	expect(pb.authStore.token).toBe('')
+	vi.mocked(fetch).mockResolvedValueOnce(
+		jsonResponse({
+			kind: 'authenticated',
+			token: token('linked'),
+			user: { id: 'linked', email: 'linked@example.com', verified: true }
+		})
+	)
+	await act(async () => {
+		await sessionView.confirmGoogleLink({
+			challengeToken: 'challenge',
+			code: '123456',
+			signal: new AbortController().signal,
+			canAccept: () => true
+		})
+	})
+	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'google' })
+	expect(pb.authStore.record?.id).toBe('linked')
 })

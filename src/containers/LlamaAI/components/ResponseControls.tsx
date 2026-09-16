@@ -111,7 +111,7 @@ const FeedbackDialog = memo(function FeedbackDialog({
 			>
 				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>Provide Feedback</DialogHeading>
-					<DialogCloseButton className="-mr-1" ariaLabel="Close feedback dialog" />
+					<DialogCloseButton ariaLabel="Close feedback dialog" />
 				</div>
 				<FeedbackForm
 					messageId={messageId}

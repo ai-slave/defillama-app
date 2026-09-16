@@ -1,18 +1,21 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
+import { AuthDialogHeader, authDialogStyles, authBodyStyles, authPrimaryButtonStyles } from '~/auth/AuthDialog'
 import { BasicLink } from '~/components/Link'
-import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 export function OAuthWelcomeDialog({
 	isOpen,
 	isSaving = false,
 	error = null,
-	onContinue
+	onContinue,
+	onSignOut
 }: {
 	isOpen: boolean
 	isSaving?: boolean
 	error?: string | null
 	onContinue: (promotionalEmails: 'on' | 'off') => void
+	onSignOut: () => void
 }) {
 	const [acceptedTerms, setAcceptedTerms] = useState(false)
 	const [promotionalEmails, setPromotionalEmails] = useState(true)
@@ -21,24 +24,19 @@ export function OAuthWelcomeDialog({
 		<Ariakit.DialogProvider open={isOpen}>
 			<Ariakit.Dialog
 				backdrop={<div className="bg-screen-dim" />}
-				className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[360px] -translate-x-1/2 -translate-y-1/2 gap-0 overflow-y-auto rounded-2xl bg-signin-bg px-5 pt-6 pb-5 shadow-2xl"
+				className={authDialogStyles}
 				portal
 				unmountOnHide
 				hideOnEscape={false}
 				hideOnInteractOutside={false}
 			>
-				<div className="mb-6 flex flex-col items-center gap-3 text-center">
-					<div className="flex size-12 items-center justify-center rounded-full bg-brand/10">
-						<Icon name="check" height={24} width={24} className="text-brand" />
-					</div>
-					<h2 className="text-xl font-semibold text-primary">Thanks for signing up!</h2>
-					<p className="text-sm text-tertiary">Your account has been created.</p>
-				</div>
-
-				<div className="flex flex-col gap-4">
+				<AuthDialogHeader title="Thanks for signing up!" closeable={false} />
+				<div className={authBodyStyles}>
+					<p className="text-sm text-secondary">Your account has been created.</p>
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
+							disabled={isSaving}
 							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 							checked={acceptedTerms}
 							onChange={(e) => setAcceptedTerms(e.target.checked)}
@@ -58,6 +56,7 @@ export function OAuthWelcomeDialog({
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
+							disabled={isSaving}
 							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 							checked={promotionalEmails}
 							onChange={(e) => setPromotionalEmails(e.target.checked)}
@@ -70,12 +69,26 @@ export function OAuthWelcomeDialog({
 					<button
 						type="button"
 						disabled={!acceptedTerms || isSaving}
-						className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-signin-btn-disabled-bg disabled:text-signin-btn-disabled-text"
+						className={authPrimaryButtonStyles}
 						onClick={() => onContinue(promotionalEmails ? 'on' : 'off')}
 					>
-						{isSaving ? 'Saving...' : 'Continue'}
+						{isSaving ? (
+							<span className="inline-flex items-center gap-2">
+								<LoadingSpinner size={14} />
+								Saving...
+							</span>
+						) : (
+							'Continue'
+						)}
 					</button>
-					{error ? <p className="text-xs leading-4 text-error">{error}</p> : null}
+					{error ? (
+						<p role="alert" className="text-xs leading-4 text-error">
+							{error}
+						</p>
+					) : null}
+					<button type="button" className="text-sm text-link" onClick={onSignOut}>
+						Sign out
+					</button>
 				</div>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

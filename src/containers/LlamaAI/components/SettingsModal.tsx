@@ -395,7 +395,7 @@ export const SettingsModal = memo(function SettingsModal({
 						<DialogHeading>Settings</DialogHeading>
 						<p className="m-0 body-sm text-secondary">Tune how LlamaAI works for you</p>
 					</div>
-					<DialogCloseButton className="-mr-1" ariaLabel="Close settings" />
+					<DialogCloseButton ariaLabel="Close settings" />
 				</header>
 
 				<Tabs<TabId>

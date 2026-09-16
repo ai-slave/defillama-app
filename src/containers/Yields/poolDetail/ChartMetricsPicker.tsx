@@ -55,7 +55,7 @@ export function ChartMetricsPicker({
 								{selected.length}/{selectable.length}
 							</span>
 						</div>
-						<DialogCloseButton className="-mr-1" />
+						<DialogCloseButton />
 					</div>
 
 					<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">

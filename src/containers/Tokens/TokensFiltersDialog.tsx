@@ -204,7 +204,7 @@ export function TokensFiltersDialog({
 							{draftFilters.length}/{TOKENS_FILTER_CONFIGS.length}
 						</span>
 					</div>
-					<DialogCloseButton className="-mr-1" />
+					<DialogCloseButton />
 				</div>
 
 				<div className="border-b border-subtle px-4 py-3">

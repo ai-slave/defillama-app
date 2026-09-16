@@ -274,7 +274,7 @@ function AddToArticleForm({
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 				<DialogHeading>Add to article</DialogHeading>
-				<DialogCloseButton className="-mr-1" />
+				<DialogCloseButton />
 			</div>
 
 			<div className="flex min-h-0 flex-auto flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">

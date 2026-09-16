@@ -5,23 +5,25 @@ export type GoogleLinkChallenge = {
 	resendAfter: string
 }
 
-type StandardScreen = 'forgot' | 'signin' | 'signup' | 'wallet'
+type StandardScreen = 'signin' | 'signup' | 'wallet'
+type SignInError = { message: string; method: 'email' | 'google' | 'github' }
 
 type StandardState = {
-	error?: string
-	kind: StandardScreen
+	error?: SignInError
 	pendingGoogleLink?: GoogleLinkChallenge
-}
+} & ({ kind: 'signin' } | { kind: 'signup' } | { kind: 'wallet' } | { kind: 'forgot'; email: string })
 
-export type SignInFlowState = StandardState | { challenge: GoogleLinkChallenge; error?: string; kind: 'googleLink' }
+export type SignInFlowState =
+	| StandardState
+	| { challenge: GoogleLinkChallenge; error?: SignInError; kind: 'googleLink' }
 
 export type SignInFlowEvent =
 	| { kind: 'authenticated' }
-	| { error: string; kind: 'failed' }
+	| { error: string; kind: 'failed'; method?: SignInError['method'] }
 	| { kind: 'googleLinkExpired' }
 	| { challenge: GoogleLinkChallenge; kind: 'googleLinkRequired' }
 	| { challenge: GoogleLinkChallenge; kind: 'googleLinkUpdated' }
-	| { kind: 'navigate'; screen: StandardScreen }
+	| ({ kind: 'navigate' } & ({ screen: StandardScreen } | { screen: 'forgot'; email: string }))
 	| { kind: 'requestStarted' }
 	| { kind: 'resumeGoogleLink' }
 	| { kind: 'useAnotherMethod' }
@@ -85,10 +87,13 @@ function reduceSignInFlow(state: SignInFlowState, event: SignInFlowEvent): SignI
 		case 'authenticated':
 			return { kind: 'signin' }
 		case 'failed':
-			return { ...state, error: event.error }
+			return { ...state, error: event.error ? { message: event.error, method: event.method ?? 'email' } : undefined }
 		case 'googleLinkExpired':
 			return {
-				error: 'Verification code expired. Continue with Google again to request a new code.',
+				error: {
+					message: 'Verification code expired. Continue with Google again to request a new code.',
+					method: 'google'
+				},
 				kind: 'signin'
 			}
 		case 'googleLinkRequired':
@@ -96,7 +101,7 @@ function reduceSignInFlow(state: SignInFlowState, event: SignInFlowEvent): SignI
 			return { challenge: event.challenge, kind: 'googleLink' }
 		case 'navigate':
 			return {
-				kind: event.screen,
+				...(event.screen === 'forgot' ? { kind: event.screen, email: event.email } : { kind: event.screen }),
 				pendingGoogleLink: state.kind === 'googleLink' ? state.challenge : state.pendingGoogleLink
 			}
 		case 'requestStarted':
@@ -120,8 +125,19 @@ export function createSignInFlowStore(initialScreen: 'signin' | 'signup' = 'sign
 	const serverState: SignInFlowState = { kind: initialScreen }
 	const listeners = new Set<() => void>()
 
+	let authRequest: AbortController | undefined
+	const cancelAuthRequest = () => authRequest?.abort()
+
 	return {
+		beginAuthRequest() {
+			cancelAuthRequest()
+			authRequest = new AbortController()
+			return authRequest.signal
+		},
+		cancelAuthRequest,
 		dispatch(event: SignInFlowEvent) {
+			if (event.kind === 'navigate' && event.screen !== 'forgot' && event.screen === state.kind) return
+			cancelAuthRequest()
 			const nextState = reduceSignInFlow(state, event)
 			if (event.kind === 'googleLinkRequired' || event.kind === 'googleLinkUpdated') {
 				storeChallenge(event.challenge)

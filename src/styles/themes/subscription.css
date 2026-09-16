@@ -8,15 +8,6 @@
 ---------------------------------------------------------------------------- */
 
 @theme {
-	/* Sign-in modal roles */
-	--color-signin-bg: var(--signin-bg);
-	--color-signin-input-bg: var(--signin-input-bg);
-	--color-signin-divider: var(--signin-divider);
-	--color-signin-btn-disabled-bg: var(--signin-btn-disabled-bg);
-	--color-signin-btn-disabled-text: var(--signin-btn-disabled-text);
-	--color-signin-outline-hover-bg: var(--signin-outline-hover-bg);
-	--color-signin-tab-bg: var(--signin-tab-bg);
-
 	--shadow-sub-live: 0 0 6px rgb(74 222 128 / 0.55);
 	--shadow-sub-google: 0 4px 16px rgb(52 168 83 / 0.2);
 	--shadow-sub-google-deep: 0 4px 16px rgb(33 115 70 / 0.2);
@@ -172,15 +163,6 @@
 		--sub-chart-tooltip-bg: var(--sub-surface-dark);
 		--sub-chart-tooltip-border: var(--sub-border-strong);
 
-		/* Sign-in Modal */
-		--signin-bg: #ffffff;
-		--signin-input-bg: #ffffff;
-		--signin-divider: rgba(0, 0, 0, 0.08);
-		--signin-btn-disabled-bg: #d9d9d9;
-		--signin-btn-disabled-text: #999999;
-		--signin-outline-hover-bg: #f5f5f5;
-		--signin-tab-bg: #f0f0f0;
-
 		--sub-grid-image-light:
 			linear-gradient(to right, rgba(9, 11, 12, 0.14) 1px, transparent 1px),
 			linear-gradient(to bottom, rgba(9, 11, 12, 0.14) 1px, transparent 1px);
@@ -236,15 +218,6 @@
 		--sub-success: #65efa4;
 		--sub-border: #2f3336;
 		--sub-overlay: #090b0ccc;
-
-		/* Sign-in Modal */
-		--signin-bg: var(--sub-surface-dark-row);
-		--signin-input-bg: var(--sub-dark-page);
-		--signin-divider: rgba(255, 255, 255, 0.06);
-		--signin-btn-disabled-bg: rgba(31, 103, 210, 0.4);
-		--signin-btn-disabled-text: rgba(255, 255, 255, 0.4);
-		--signin-outline-hover-bg: rgba(255, 255, 255, 0.05);
-		--signin-tab-bg: rgba(255, 255, 255, 0.08);
 
 		--sub-chart-split: rgba(255, 255, 255, 0.06);
 		--sub-chart-axis: var(--sub-border-strong);

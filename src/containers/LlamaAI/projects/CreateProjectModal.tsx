@@ -117,7 +117,7 @@ function CreateProjectForm({
 					<DialogHeading>{mode === 'rename' ? 'Rename project' : 'New project'}</DialogHeading>
 					<p className="body-sm text-secondary">Group sessions and give them shared file knowledge.</p>
 				</div>
-				<DialogCloseButton className="-mr-1" disabled={isPending} ariaLabel="Close project dialog" />
+				<DialogCloseButton disabled={isPending} ariaLabel="Close project dialog" />
 			</header>
 
 			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>

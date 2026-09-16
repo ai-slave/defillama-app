@@ -1,7 +1,7 @@
 export function SubscriptionLoadError({
 	isRetrying,
 	onRetry,
-	message = "Couldn't load your subscription. Please try again."
+	message = "Couldn't load your subscription."
 }: {
 	isRetrying: boolean
 	onRetry: () => void

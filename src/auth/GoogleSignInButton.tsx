@@ -1,6 +1,8 @@
 import Script from 'next/script'
-import { useCallback, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { authProviderButtonStyles } from '~/auth/AuthDialog'
 import { GOOGLE_WEB_CLIENT_ID } from '~/constants'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 type CredentialResponse = {
@@ -22,10 +24,11 @@ type GoogleIdentity = {
 				parent: HTMLElement,
 				options: {
 					shape: 'rectangular'
+					logo_alignment: 'center'
 					size: 'large'
 					state: string
 					text: 'continue_with'
-					theme: 'outline'
+					theme: 'outline' | 'outline_dark'
 					width: number
 				}
 			) => void
@@ -126,29 +129,40 @@ function initializeGoogle() {
 
 export function GoogleSignInButton({
 	loading,
+	disabled = false,
 	onCredential
 }: {
 	loading: boolean
+	disabled?: boolean
 	onCredential: (token: string) => void
 }) {
+	const [isDark] = useDarkModeManager()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const state = useId()
+	const [loadStatus, setLoadStatus] = useState<'loading' | 'ready' | 'failed'>('loading')
+	useEffect(() => {
+		if (loadStatus !== 'loading') return
+		const timer = window.setTimeout(() => setLoadStatus('failed'), GOOGLE_IDENTITY_TIMEOUT_MS)
+		return () => window.clearTimeout(timer)
+	}, [loadStatus])
 
 	const renderButton = useCallback(() => {
 		const container = containerRef.current
 		if (!window.google || !container) return
+		setLoadStatus('ready')
 		initializeGoogle()
 		credentialHandlers.set(state, onCredential)
 		container.replaceChildren()
 		window.google.accounts.id.renderButton(container, {
 			shape: 'rectangular',
+			logo_alignment: 'center',
 			size: 'large',
 			state,
 			text: 'continue_with',
-			theme: 'outline',
+			theme: isDark ? 'outline_dark' : 'outline',
 			width: Math.min(400, container.clientWidth)
 		})
-	}, [onCredential, state])
+	}, [isDark, onCredential, state])
 
 	const setContainer = useCallback(
 		(container: HTMLDivElement | null) => {
@@ -159,6 +173,30 @@ export function GoogleSignInButton({
 		[renderButton, state]
 	)
 
+	useEffect(() => {
+		const container = containerRef.current
+		if (!container) return
+		let width = container.clientWidth
+		const observer = new ResizeObserver(() => {
+			if (container.clientWidth === width) return
+			width = container.clientWidth
+			renderButton()
+		})
+		observer.observe(container)
+		return () => observer.disconnect()
+	}, [renderButton])
+
+	const retryLoad = async () => {
+		setLoadStatus('loading')
+		document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`)?.remove()
+		try {
+			await loadGoogleIdentity()
+			renderButton()
+		} catch {
+			setLoadStatus('failed')
+		}
+	}
+
 	return (
 		<>
 			<Script
@@ -166,11 +204,43 @@ export function GoogleSignInButton({
 				src={GOOGLE_IDENTITY_SCRIPT_URL}
 				strategy="afterInteractive"
 				onReady={renderButton}
+				onError={() => setLoadStatus('failed')}
 			/>
-			<div className="relative h-10">
-				<div ref={setContainer} className={loading ? 'pointer-events-none h-10 opacity-0' : 'h-10'} />
+			<div className="relative min-h-10">
+				{loadStatus === 'loading' ? (
+					<p role="status" className="flex h-10 items-center justify-center gap-2 text-sm text-tertiary">
+						<LoadingSpinner size={14} />
+						Loading Google...
+					</p>
+				) : null}
+				{loadStatus === 'failed' ? (
+					<p role="alert" className="text-center text-xs text-error">
+						Google could not load.{' '}
+						<button
+							type="button"
+							disabled={loading || disabled}
+							onClick={() => void retryLoad()}
+							className="text-link disabled:opacity-60"
+						>
+							Try again
+						</button>
+					</p>
+				) : null}
+				<div
+					ref={setContainer}
+					inert={loading || disabled}
+					className={
+						loadStatus !== 'ready'
+							? 'invisible absolute inset-x-0 h-10'
+							: loading
+								? 'pointer-events-none h-10 opacity-0'
+								: disabled
+									? 'h-10 opacity-60'
+									: 'h-10'
+					}
+				/>
 				{loading ? (
-					<div className="absolute inset-0 flex items-center justify-center gap-2 rounded-sm border border-medium bg-signin-bg text-sm text-primary">
+					<div role="status" className={`${authProviderButtonStyles} absolute inset-0`}>
 						<LoadingSpinner size={14} />
 						<span>Signing in...</span>
 					</div>

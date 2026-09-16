@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import pb from '~/utils/pocketbase'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
 import { InviteMemberModal } from '../Team/InviteMemberModal'
 import { ManageSeatsModal } from '../Team/ManageSeatsModal'
@@ -13,11 +14,23 @@ import { TeamTab } from '../Team/TeamTab'
 import type { Team } from '../Team/types'
 import { useTeam } from '../Team/useTeam'
 
-const api = vi.hoisted(() => ({ fetch: vi.fn(), checkout: vi.fn() }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ user: { id: 'user' }, isAuthenticated: true, authorizedFetch: api.fetch })
+const api = vi.hoisted(() => ({ fetch: vi.fn(), checkout: vi.fn(), refresh: vi.fn(), prompt: vi.fn() }))
+const router = vi.hoisted(() => ({
+	isReady: true,
+	pathname: '/account',
+	query: {} as { token?: string },
+	replace: vi.fn()
 }))
-vi.mock('next/router', () => ({ useRouter: () => ({ isReady: true, query: {}, replace: vi.fn() }) }))
+vi.mock('~/auth/authStore', () => ({ refreshSession: api.refresh }))
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({
+		user: { id: 'user' },
+		isAuthenticated: true,
+		authorizedFetch: api.fetch,
+		promptVerifyEmail: api.prompt
+	})
+}))
+vi.mock('next/router', () => ({ useRouter: () => router }))
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('~/constants', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/constants')>()),
@@ -64,6 +77,7 @@ function Harness({ kind }: { kind: 'invite' | 'manage' | 'purchase' | 'assign' }
 }
 beforeEach(() => {
 	vi.resetAllMocks()
+	router.query = {}
 	client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 2 } } })
 	container = document.createElement('div')
 	document.body.append(container)
@@ -99,8 +113,10 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
+	pb.authStore.clear()
 	container.remove()
 	vi.restoreAllMocks()
+	vi.unstubAllGlobals()
 })
 async function mount(element: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
@@ -563,4 +579,85 @@ test.each(['assign', 'unassign'] as const)('successful %s focuses the replacemen
 		)
 	)
 	expect(posts()).toHaveLength(1)
+})
+
+test.each([true, false])(
+	'prompts for invite verification only after a fresh account read: verified=%s',
+	async (verified) => {
+		const account = {
+			id: 'user',
+			email: 'invite@example.com',
+			verified: false,
+			collectionId: '_pb_users_auth_',
+			collectionName: 'users'
+		}
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url: string) => {
+				if (String(url).endsWith('/subscription/past-due'))
+					return Response.json({ message: 'No past due subscription found' }, { status: 404 })
+				throw new Error(`Unexpected request: ${url}`)
+			})
+		)
+		pb.authStore.save('fixture-token', account)
+		router.query = { token: 'invite-token' }
+		const refresh = Promise.withResolvers<typeof account>()
+		api.refresh.mockReturnValue(refresh.promise)
+		await mount(<TeamTab />)
+		await act(async () => {
+			await vi.waitFor(() => expect(api.refresh).toHaveBeenCalledTimes(1))
+		})
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(document.body.textContent).toContain('Invite accepted. Loading your account')
+		expect(api.prompt).not.toHaveBeenCalled()
+		expect(router.replace).not.toHaveBeenCalled()
+		await act(async () => {
+			refresh.resolve({ ...account, verified })
+		})
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(router.replace).toHaveBeenCalled()
+		expect(api.prompt.mock.calls).toEqual(verified ? [] : [['user']])
+		expect(posts()).toHaveLength(1)
+	}
+)
+
+test.each([true, false])('recovers a lost invite response by reading membership: joined=%s', async (joined) => {
+	const account = {
+		id: 'user',
+		email: 'invite@example.com',
+		verified: false,
+		collectionId: '_pb_users_auth_',
+		collectionName: 'users'
+	}
+	pb.authStore.save('fixture-token', account)
+	router.query = { token: 'invite-token' }
+	client.removeQueries({ queryKey: ['team', 'user'] })
+	team.isAdmin = false
+	api.fetch.mockImplementation(async (_url, options) => {
+		if (options?.method === 'POST') throw new TypeError('Connection lost after acceptance')
+		return Response.json({ team: null })
+	})
+	api.refresh.mockResolvedValue(account)
+	await mount(<TeamTab />)
+	await vi.waitFor(async () => {
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(button('Check membership')).toBeDefined()
+	})
+	expect(api.refresh).not.toHaveBeenCalled()
+	api.fetch.mockRejectedValueOnce(new TypeError('Membership read failed'))
+	await click('Check membership')
+	await vi.waitFor(async () => {
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(container.textContent).toContain('Could not check membership')
+	})
+	api.fetch.mockImplementation(async () => Response.json({ team: joined ? team : null }))
+	await click('Check membership')
+	await vi.waitFor(async () => {
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(container.textContent?.includes('Could not check membership')).toBe(false)
+		expect(router.replace.mock.calls.length > 0).toBe(joined)
+	})
+	expect(posts()).toHaveLength(1)
+	expect(api.prompt.mock.calls).toEqual(joined ? [['user']] : [])
+	expect(api.refresh).toHaveBeenCalledTimes(joined ? 1 : 0)
 })

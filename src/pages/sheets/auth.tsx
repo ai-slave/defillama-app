@@ -7,7 +7,7 @@ import { AuthProvider, useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Toast } from '~/components/Toast'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
-import { WalletProvider } from '~/layout/WalletProvider'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -18,11 +18,11 @@ const SignInFlow = dynamic<{ dialogStore: Ariakit.DialogStore }>(
 
 export default function AuthPage() {
 	return (
-		<WalletProvider>
+		<ClientOnly>
 			<AuthProvider>
 				<AuthContent />
 			</AuthProvider>
-		</WalletProvider>
+		</ClientOnly>
 	)
 }
 
@@ -113,7 +113,7 @@ function AuthContent() {
 						</div>
 					</div>
 				) : (
-					<div className="w-full max-w-[331px] rounded-2xl bg-[#181a1b] px-5 pt-6 pb-5 shadow-2xl">
+					<div className="flex w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-medium bg-overlay shadow-dialog">
 						<SignInFlow dialogStore={dialogStore} />
 					</div>
 				)}

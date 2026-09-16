@@ -272,7 +272,7 @@ export function TokenSearchDialog({
 			>
 				<div className="flex items-center gap-2 border-b border-subtle p-3">
 					<DialogHeading>{title}</DialogHeading>
-					<DialogCloseButton className="-mr-1 ml-auto" />
+					<DialogCloseButton className="ml-auto" />
 				</div>
 
 				{match ? (

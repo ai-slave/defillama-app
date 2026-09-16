@@ -542,7 +542,7 @@ export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant
 						<DialogHeading>Search Research &amp; Newsletters</DialogHeading>
 						<p className="mt-0.5 body-sm text-tertiary">Find published analysis and Research Notes.</p>
 					</div>
-					<DialogCloseButton className="-mt-1 -mr-1 ml-auto" ariaLabel="Close Research search" />
+					<DialogCloseButton className="-mt-1 ml-auto" ariaLabel="Close Research search" />
 				</div>
 
 				<SearchField

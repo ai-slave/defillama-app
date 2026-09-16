@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { Icon } from '~/ui/Icon'
 import { EmailChangeModal } from './EmailChangeModal'
 import { PasswordResetModal } from './PasswordResetModal'
@@ -9,12 +8,11 @@ import { SwitchToEmailModal } from './SwitchToEmailModal'
 import { isWalletEmail, truncateAddress } from './utils'
 
 export function AuthenticationCard() {
-	const { user, resetPasswordMutation, sendOtp, verifyOtp, loaders } = useAuthContext()
+	const { user, resetPasswordMutation, promptVerifyEmail, loaders } = useAuthContext()
 
 	const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 	const [isSwitchToEmailModalOpen, setIsSwitchToEmailModalOpen] = useState(false)
-	const [isVerifyEmailModalOpen, setIsVerifyEmailModalOpen] = useState(false)
 	const [passwordCooldownMsg, setPasswordCooldownMsg] = useState('')
 	const passwordResetSentAt = useRef(0)
 	const PASSWORD_COOLDOWN_MS = 60_000
@@ -64,7 +62,7 @@ export function AuthenticationCard() {
 
 	const handleVerifyEmail = () => {
 		if (!user?.email) return
-		setIsVerifyEmailModalOpen(true)
+		promptVerifyEmail(user.id)
 	}
 
 	return (
@@ -161,7 +159,7 @@ export function AuthenticationCard() {
 								className="shrink-0 text-sub-warning-text-light dark:text-sub-warning-text-dark"
 							/>
 							<p className="text-xs leading-4 text-sub-warning-text-light dark:text-sub-warning-text-dark">
-								Your email is not verified. Enter the verification code sent to your email.
+								Your email isn&apos;t verified.
 							</p>
 						</div>
 						<button
@@ -190,15 +188,6 @@ export function AuthenticationCard() {
 				isOpen={isSwitchToEmailModalOpen}
 				onClose={() => setIsSwitchToEmailModalOpen(false)}
 				defaultEmail={user?.ethereum_email}
-			/>
-
-			<VerifyEmailDialog
-				isOpen={isVerifyEmailModalOpen}
-				email={user?.email ?? undefined}
-				sendOtp={sendOtp}
-				verifyOtp={verifyOtp}
-				loaders={loaders}
-				onClose={() => setIsVerifyEmailModalOpen(false)}
 			/>
 		</>
 	)

@@ -550,7 +550,7 @@ export function PortfolioNotifications({
 							Configure weekly email alerts for "{selectedPortfolio}" portfolio
 						</p>
 					</div>
-					<DialogCloseButton className="-mr-1 ml-auto" />
+					<DialogCloseButton className="ml-auto" />
 				</div>
 
 				<Ariakit.Form

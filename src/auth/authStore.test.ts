@@ -110,3 +110,14 @@ test('discards a refresh that resolves after switching to another account', asyn
 	expect(pb.authStore.token).toBe(token('account-b'))
 	expect(pb.authStore.record?.id).toBe('account-b')
 })
+
+test('does not undo verification when an older refresh returns with the same token', async () => {
+	pb.authStore.save(token('account-a'), { ...record('account-a'), verified: false })
+	const { pending } = stubRefreshEndpoint()
+	const refresh = refreshSession()
+	pb.authStore.save(token('account-a'), { ...record('account-a'), verified: true })
+	pending.resolve(jsonResponse({ token: token('rotated-a'), record: { ...record('account-a'), verified: false } }))
+	await refresh
+	expect(pb.authStore.record?.verified).toBe(true)
+	expect(pb.authStore.token).toBe(token('account-a'))
+})

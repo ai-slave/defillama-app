@@ -93,7 +93,7 @@ export function TokenSearchDialog({
 			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
 				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
 					<DialogHeading>Add Token</DialogHeading>
-					<DialogCloseButton className="-mr-1 ml-auto" />
+					<DialogCloseButton className="ml-auto" />
 				</div>
 				<div className="border-b border-subtle px-4 py-3">
 					<label className="relative block">

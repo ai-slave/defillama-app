@@ -70,7 +70,7 @@ function AddTextContentForm({
 					<DialogHeading>Add text content</DialogHeading>
 					<p className="body-sm text-secondary">Paste a note, prompt, or any plain-text content for this project.</p>
 				</div>
-				<DialogCloseButton className="-mr-1" ariaLabel="Close text content dialog" />
+				<DialogCloseButton ariaLabel="Close text content dialog" />
 			</header>
 
 			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>

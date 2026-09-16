@@ -44,11 +44,13 @@ export const getServerSnapshot = () => serverSnapshot
 // the current one.
 export async function refreshSession(sessionToken: string = pb.authStore.token): Promise<AuthModel | null> {
 	if (!sessionToken) return null
+	const initialSnapshot = snapshot
 	const result = await pb.send<{ token: string; record: AuthModel }>('/api/collections/users/auth-refresh', {
 		method: 'POST',
 		headers: { Authorization: sessionToken }
 	})
-	if (pb.authStore.token === sessionToken) {
+	// A verification or profile update can replace the record without rotating the token.
+	if (pb.authStore.token === sessionToken && snapshot === initialSnapshot) {
 		pb.authStore.save(result.token, result.record)
 	}
 	return result.record

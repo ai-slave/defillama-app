@@ -29,7 +29,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
 import { useSubscriptionPageState } from '~/containers/Subscription/usePageState'
 import { applySlackAcquisitionFromQuery } from '~/containers/Subscription/utils/slackAcquisition'
-import { WalletProvider } from '~/layout/WalletProvider'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { safeInternalPath } from '~/utils/routerQuery'
 
 const StripeCheckoutModal = lazy(() =>
@@ -40,7 +40,8 @@ const planKeyToSubType = (key: PlanKey): 'api' | 'llamafeed' => (key === 'api' ?
 
 function SubscriptionContent() {
 	const router = useRouter()
-	const returnUrl = safeInternalPath(router.query.returnUrl)
+	const { pathname, query, replace } = router
+	const returnUrl = safeInternalPath(query.returnUrl)
 
 	const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly')
 	const {
@@ -54,7 +55,7 @@ function SubscriptionContent() {
 		isSubscriptionError,
 		isLoading: isPageStateLoading
 	} = useSubscriptionPageState()
-	const { user, loaders, promptVerifyEmail } = useAuthContext()
+	const { user, loaders, promptVerifyEmail, isNewSignup, consumeSignupOutcome } = useAuthContext()
 	const {
 		handleSubscribe,
 		loading,
@@ -95,28 +96,24 @@ function SubscriptionContent() {
 	useEffect(() => {
 		let cancelled = false
 		if (isAuthenticated && returnUrl && handledReturnUrlRef.current !== returnUrl && !loaders.userLoading) {
-			const justSignedUp = sessionStorage.getItem('just_signed_up') === 'true'
-			const accountAge = user?.created ? Date.now() - new Date(user.created).getTime() : Infinity
-			const isRecentAccount = accountAge < 10_000
-
-			if (justSignedUp) {
-				sessionStorage.removeItem('just_signed_up')
-			}
-
-			if (!justSignedUp && !isRecentAccount) {
+			if (isNewSignup) {
+				handledReturnUrlRef.current = returnUrl
+				const { returnUrl: _ignoredReturnUrl, ...nextQuery } = query
+				void replace({ pathname, query: nextQuery }, undefined, { shallow: true })
+				consumeSignupOutcome()
+			} else {
 				queueMicrotask(() => {
 					if (cancelled) return
+					handledReturnUrlRef.current = returnUrl
 					setShowReturnModal(true)
 				})
 			}
-
-			handledReturnUrlRef.current = returnUrl
 		}
 
 		return () => {
 			cancelled = true
 		}
-	}, [isAuthenticated, returnUrl, loaders.userLoading, user?.created])
+	}, [isAuthenticated, returnUrl, loaders.userLoading, isNewSignup, consumeSignupOutcome, pathname, query, replace])
 
 	/* ── Helpers ───────────────────────────────────────────────────────── */
 	// Reverting a scheduled cancellation happens in the Stripe billing portal.
@@ -134,7 +131,7 @@ function SubscriptionContent() {
 
 	const requireVerified = (action: () => void) => {
 		if (!user?.verified && !user?.walletAddress) {
-			promptVerifyEmail(user?.email)
+			promptVerifyEmail(user?.id)
 			return
 		}
 		action()
@@ -336,9 +333,9 @@ export default function Subscription() {
 				description="Unlock LlamaAI, advanced DeFi analytics, custom dashboards, CSV downloads, and pro-level data with DefiLlama Pro."
 				canonicalUrl="/subscription"
 			/>
-			<WalletProvider>
+			<ClientOnly>
 				<SubscriptionContent />
-			</WalletProvider>
+			</ClientOnly>
 		</>
 	)
 }

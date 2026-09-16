@@ -35,8 +35,8 @@ export function PaymentButton({
 	}
 
 	const handleClick = () => {
-		if (!user?.verified && !user?.address) {
-			promptVerifyEmail(user?.email)
+		if (!user?.verified && !user?.walletAddress) {
+			promptVerifyEmail(user?.id)
 			return
 		}
 		// For Stripe, use embedded checkout modal

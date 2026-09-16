@@ -59,7 +59,7 @@ export function DeleteProjectModal({
 			>
 				<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>Delete project?</DialogHeading>
-					<DialogCloseButton className="-mr-1" disabled={remove.isPending} ariaLabel="Close delete project dialog" />
+					<DialogCloseButton disabled={remove.isPending} ariaLabel="Close delete project dialog" />
 				</header>
 				<div className={`${dialogScrollableBodyStyles} p-4`}>
 					<Ariakit.DialogDescription className="body-sm text-secondary">

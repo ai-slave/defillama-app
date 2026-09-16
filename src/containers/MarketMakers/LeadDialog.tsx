@@ -33,14 +33,14 @@ export function LeadDialogHeader({ title, hidden = false }: { title: ReactNode; 
 				<Ariakit.VisuallyHidden>
 					<DialogHeading>{title}</DialogHeading>
 				</Ariakit.VisuallyHidden>
-				<DialogCloseButton className="absolute top-3 right-3 z-10" />
+				<DialogCloseButton className="absolute top-3 right-5 z-10" />
 			</>
 		)
 	}
 	return (
 		<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
 			<DialogHeading>{title}</DialogHeading>
-			<DialogCloseButton className="-mr-1" />
+			<DialogCloseButton />
 		</div>
 	)
 }

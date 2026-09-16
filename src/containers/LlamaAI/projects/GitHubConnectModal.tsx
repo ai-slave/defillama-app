@@ -177,7 +177,7 @@ function GitHubConnectForm({
 						<p className="body-sm text-secondary">Read-only access. Files are fetched on demand, never written back.</p>
 					</div>
 				</div>
-				<DialogCloseButton className="-mr-1" ariaLabel="Close GitHub connection dialog" />
+				<DialogCloseButton ariaLabel="Close GitHub connection dialog" />
 			</header>
 			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
 				{connect.error ? (

@@ -7,7 +7,7 @@ import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { ManageAccount } from '~/containers/Account/ManageAccount'
 import Layout from '~/layout'
-import { WalletProvider } from '~/layout/WalletProvider'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { Icon } from '~/ui/Icon'
 
 export default function Account() {
@@ -95,7 +95,7 @@ export default function Account() {
 	}, [teamCheckout])
 
 	return (
-		<WalletProvider>
+		<ClientOnly>
 			<Layout
 				title="Manage Account - DefiLlama"
 				description="Manage your DefiLlama account settings and authentication."
@@ -129,6 +129,6 @@ export default function Account() {
 					</Ariakit.Dialog>
 				</Ariakit.DialogProvider>
 			</Layout>
-		</WalletProvider>
+		</ClientOnly>
 	)
 }

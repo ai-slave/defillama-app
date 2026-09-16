@@ -1,24 +1,22 @@
 import { useMutation, type UseMutationResult, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { RecordAuthResponse } from 'pocketbase'
-import {
-	createContext,
-	type ReactNode,
-	useCallback,
-	useContext,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-	useSyncExternalStore
-} from 'react'
+import type { AuthRecord, RecordAuthResponse } from 'pocketbase'
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState, useSyncExternalStore } from 'react'
 import toast from 'react-hot-toast'
+import { getAuthErrorMessageFromResponse } from '~/auth/authErrors'
+import { type AuthRequest, runAuthRequest } from '~/auth/authRequest'
 import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from '~/auth/authStore'
+import { signInWithPassword } from '~/auth/emailSignIn'
+import { signupWithEmail, type SignupRequest } from '~/auth/emailSignup'
+import { OtpRequestError } from '~/auth/emailVerification'
+import { authenticateGithub } from '~/auth/githubAuth'
+import { readGoogleAuthResult, type GoogleAuthResult, type GoogleAuthSession } from '~/auth/googleAuth'
+import { rememberSignIn } from '~/auth/lastSignIn'
 import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
+import { requestPasswordReset } from '~/auth/passwordRecovery'
 import { getReferrer } from '~/auth/referrer'
-import { isGoogleLinkChallenge, type GoogleLinkChallenge } from '~/auth/signInFlowStore'
+import type { GoogleLinkChallenge } from '~/auth/signInFlowStore'
 import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
 import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
-import { VerifyEmailConfirmDialog } from '~/auth/VerifyEmailConfirmDialog'
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
@@ -28,53 +26,8 @@ export type PromotionalEmailsValue = 'initial' | 'on' | 'off'
 
 export type { GoogleLinkChallenge } from '~/auth/signInFlowStore'
 
-type GoogleAuthSession = {
-	isNew: boolean
-	kind: 'authenticated'
-	token: string
-	user: {
-		email: string
-		id: string
-		verified: boolean
-	}
-}
-
-export type GoogleAuthResult = GoogleAuthSession | GoogleLinkChallenge
-
-export function readGoogleAuthResult(value: unknown): GoogleAuthResult {
-	if (!value || typeof value !== 'object' || !('kind' in value)) throw new Error('Invalid Google sign-in response')
-	if (value.kind === 'link_verification_required') {
-		if (!isGoogleLinkChallenge(value)) throw new Error('Invalid Google sign-in response')
-		return value
-	}
-	if (
-		value.kind !== 'authenticated' ||
-		!('token' in value) ||
-		typeof value.token !== 'string' ||
-		!('user' in value) ||
-		!value.user ||
-		typeof value.user !== 'object' ||
-		!('id' in value.user) ||
-		typeof value.user.id !== 'string' ||
-		!('email' in value.user) ||
-		typeof value.user.email !== 'string' ||
-		!('verified' in value.user) ||
-		typeof value.user.verified !== 'boolean' ||
-		('isNew' in value && typeof value.isNew !== 'boolean')
-	) {
-		throw new Error('Invalid Google sign-in response')
-	}
-	return {
-		isNew: 'isNew' in value && value.isNew === true,
-		kind: value.kind,
-		token: value.token,
-		user: {
-			email: value.user.email,
-			id: value.user.id,
-			verified: value.user.verified
-		}
-	}
-}
+export { readGoogleAuthResult } from '~/auth/googleAuth'
+export type { GoogleAuthResult } from '~/auth/googleAuth'
 
 interface FetchOptions extends RequestInit {
 	skipAuth?: boolean
@@ -112,31 +65,6 @@ const clearUserSession = () => {
 	}
 }
 
-const getAuthErrorMessageFromResponse = async (response: Response, fallbackMessage: string): Promise<string> => {
-	let parsed: unknown = null
-	try {
-		parsed = await response.json()
-	} catch {
-		return fallbackMessage
-	}
-
-	if (parsed == null || typeof parsed !== 'object') {
-		return fallbackMessage
-	}
-
-	const messageValue = (parsed as { message?: unknown }).message
-	if (typeof messageValue === 'string' && messageValue.length > 0) {
-		return messageValue
-	}
-
-	const errorValue = (parsed as { error?: unknown }).error
-	if (typeof errorValue === 'string' && errorValue.length > 0) {
-		return errorValue
-	}
-
-	return fallbackMessage
-}
-
 const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): string => {
 	if (!(error instanceof Error)) return fallbackMessage
 	const rawMessage = error.message || ''
@@ -148,54 +76,37 @@ const getUserFacingErrorMessage = (error: unknown, fallbackMessage: string): str
 }
 
 interface AuthContextType {
-	login: (email: string, password: string, onSuccess?: () => void) => Promise<void>
-	signup: (
-		email: string,
-		password: string,
-		passwordConfirm: string,
-		turnstileToken: string,
-		promotionalEmails?: PromotionalEmailsValue,
-		onSuccess?: () => void,
-		options?: { suppressVerifyEmailPrompt?: boolean }
-	) => Promise<void>
+	login: (
+		request: Parameters<typeof signInWithPassword>[0] & { suppressVerifyEmailPrompt?: boolean }
+	) => ReturnType<typeof signInWithPassword>
+	signup: (request: SignupRequest & { suppressVerifyEmailPrompt?: boolean }) => ReturnType<typeof signupWithEmail>
 	logout: () => void
 	authorizedFetch: (url: string, options?: FetchOptions, onlyToken?: boolean) => Promise<Response | null>
-	signInWithEthereumMutation: UseMutationResult<
-		{
-			address: string
-		},
-		Error,
-		{
-			address: string
-			signMessageFunction: any
-		},
-		unknown
-	>
-	signInWithGithubMutation: UseMutationResult<RecordAuthResponse, Error, void>
-	signInWithGoogleMutation: UseMutationResult<GoogleAuthResult, Error, string>
-	confirmGoogleLinkMutation: UseMutationResult<GoogleAuthSession, Error, { challengeToken: string; code: string }>
-	resendGoogleLinkMutation: UseMutationResult<GoogleLinkChallenge, Error, string>
+	signInWithGithub: (
+		request: AuthRequest & { popup: Window; suppressVerifyEmailPrompt?: boolean }
+	) => Promise<RecordAuthResponse['record'] | null>
+	signInWithGoogle: (request: AuthRequest & { identityToken: string }) => Promise<GoogleAuthResult | null>
+	confirmGoogleLink: (
+		request: AuthRequest & { challengeToken: string; code: string }
+	) => Promise<GoogleAuthSession | null>
+	resendGoogleLink: (request: AuthRequest & { challengeToken: string }) => Promise<GoogleLinkChallenge | null>
 	addWallet: (address: string, signMessageFunction: any, onSuccess?: () => void) => Promise<void>
 	resetPasswordMutation: UseMutationResult<void, Error, string>
 	changeEmail: (email: string) => void
-	sendOtp: () => Promise<void>
-	verifyOtp: (otp: string) => Promise<void>
 	addEmail: (email: string) => Promise<void>
 	setPromotionalEmails: (value: string) => void
-	promptVerifyEmail: (email?: string) => void
+	promptVerifyEmail: (accountId: string | undefined) => void
 	isAuthenticated: boolean
+	isNewSignup: boolean
+	consumeSignupOutcome: () => void
 	authToken: string | null
 	user: AuthModel
 	hasActiveSubscription: boolean
 	isTrial: boolean
 	loaders: {
-		login: boolean
-		signup: boolean
 		logout: boolean
 		addWallet: boolean
 		changeEmail: boolean
-		sendOtp: boolean
-		verifyOtp: boolean
 		addEmail: boolean
 		setPromotionalEmails: boolean
 		userLoading: boolean
@@ -211,36 +122,64 @@ function isNewOauthUser(authData: { meta?: { isNew?: boolean } }) {
 	return authData.meta?.isNew === true
 }
 
-const saveGoogleSession = async (session: GoogleAuthSession) => {
-	pb.authStore.save(session.token)
-	try {
-		await refreshSession()
-	} catch (error) {
-		console.log('Error refreshing auth after Google sign-in:', error)
-	}
+const attributeSignup = (
+	token: string,
+	provider: 'google' | 'github',
+	source: string | null,
+	referrer: string | null
+) => {
+	void fetch(`${AUTH_SERVER}/user/attribution`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+		body: JSON.stringify({ source, referrer, provider })
+	}).catch(() => {
+		/* Attribution must not block an accepted sign-in. */
+	})
 }
+
+const resendGoogleLink: AuthContextType['resendGoogleLink'] = (request) =>
+	runAuthRequest(
+		request,
+		async () => {
+			const response = await fetch(`${AUTH_SERVER}/auth/social-link/resend`, {
+				method: 'POST',
+				signal: request.signal,
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ challengeToken: request.challengeToken })
+			}).catch((error) => {
+				throw new Error('Could not send a code. Check your connection.', { cause: error })
+			})
+			// The linking endpoint enforces a minute between sends but returns no retry timestamp.
+			if (response.status === 429)
+				throw new OtpRequestError('Please wait before requesting another code.', Date.now() + 60_000)
+			if (!response.ok) throw new Error(await getAuthErrorMessageFromResponse(response, 'Could not resend the code.'))
+			const result = readGoogleAuthResult(await response.json())
+			if (result.kind !== 'link_verification_required') throw new Error('Invalid Google link response')
+			return result
+		},
+		() => {}
+	)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
 	// Use useSyncExternalStore to listen to authStore changes
 	const authStoreState = useSyncExternalStore(subscribeToAuthStore, getAuthStoreSnapshot, getServerSnapshot)
-	const [verifyEmailPrompt, setVerifyEmailPrompt] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
-	const [verifyEmailConfirm, setVerifyEmailConfirm] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })
-	const [oauthWelcomeOpen, setOauthWelcomeOpen] = useState(false)
-	// The undismissable welcome dialog must not outlive the session it was opened
-	// for (cross-tab logout or account switch), or its consent choices would write
-	// into whichever account is current when Continue is clicked.
-	// The user id comes from the sign-in response, not from pb.authStore.record:
-	// the Google flow saves the token before its record, and concurrent
-	// auth-refresh requests auto-cancel each other, so the store may still hold
-	// a null record when the dialog opens.
-	const oauthWelcomeUserRef = useRef<string | null>(null)
-	const openOauthWelcome = useCallback((userId: string) => {
-		oauthWelcomeUserRef.current = userId
-		setOauthWelcomeOpen(true)
-	}, [])
+	const [verifyEmailPrompt, setVerifyEmailPrompt] = useState<{
+		accountId: string
+		isOpen: boolean
+		email?: string
+	} | null>(null)
+	const [oauthWelcomeAccountId, setOauthWelcomeAccountId] = useState<string | null>(null)
+	const [signupAccountId, setSignupAccountId] = useState<string | null>(null)
+	const consumeSignupOutcome = useCallback(() => setSignupAccountId(null), [])
+	const openOauthWelcome = (accountId: string) => {
+		setPromotionalEmails.reset()
+		setOauthWelcomeAccountId(accountId)
+	}
 
-	const promptVerifyEmail = useCallback((email?: string) => {
-		setVerifyEmailConfirm({ isOpen: true, email })
+	const promptVerifyEmail = useCallback((accountId: string | undefined) => {
+		if (accountId && pb.authStore.record?.id === accountId) {
+			setVerifyEmailPrompt({ accountId, email: pb.authStore.record.email, isOpen: true })
+		}
 	}, [])
 
 	// Derive isAuthenticated from authStoreState
@@ -254,16 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[subscriptionUserId, subscriptionToken]
 	)
 	const subscriptionQuery = useQuery(subscriptionQueryOptions)
-	// Close on logout (no token) or account switch (a different record id). A
-	// record that has not loaded yet is not a switch, so a null record with a
-	// live token keeps the dialog open.
-	useEffect(() => {
-		if (!oauthWelcomeOpen) return
-		const currentId = authStoreState.record?.id ?? null
-		if (!authStoreState.token || (currentId !== null && currentId !== oauthWelcomeUserRef.current)) {
-			setOauthWelcomeOpen(false)
-		}
-	}, [oauthWelcomeOpen, authStoreState.token, authStoreState.record?.id])
+	// A token-only replacement cannot confirm ownership of onboarding.
+	if (oauthWelcomeAccountId && authStoreState.record?.id !== oauthWelcomeAccountId) setOauthWelcomeAccountId(null)
+	if (signupAccountId && authStoreState.record?.id !== signupAccountId) setSignupAccountId(null)
 
 	const { isLoading: userQueryIsLoading } = useQuery({
 		queryKey: ['auth', 'status', authStoreState?.record?.id ?? null],
@@ -298,127 +230,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000)
 	})
 
-	const loginMutation = useMutation({
-		mutationFn: async ({ email, password }: { email: string; password: string }) => {
-			try {
-				const res = await pb.collection('users').authWithPassword(email, password)
-
-				return res
-			} catch (error) {
-				console.log('Login error:', error)
-				throw new Error('Invalid credentials', { cause: error })
-			}
-		},
-		onError: () => {
-			toast.error('Invalid email or password')
-		}
-	})
-
-	const authUserLoading = !authStoreState.token || !authStoreState.record ? userQueryIsLoading : false
+	const authUserLoading = !authStoreState.record?.collectionId && userQueryIsLoading
 	const isSubscriptionPending = isAuthenticated && subscriptionUserId != null && subscriptionQuery.isPending
 	const userLoading = authUserLoading || (isAuthenticated && subscriptionQuery.data === undefined)
 	const sessionLoading = authUserLoading || isSubscriptionPending
 
 	const login = useCallback(
-		async (email: string, password: string, onSuccess?: () => void) => {
-			await loginMutation.mutateAsync({ email, password }).catch((error) => {
-				console.log('Login error:', error)
-				throw error
-			})
-			if (onSuccess) {
-				onSuccess()
+		async ({ suppressVerifyEmailPrompt, ...request }: Parameters<AuthContextType['login']>[0]) => {
+			const record = await signInWithPassword(request)
+			if (record) setSignupAccountId(null)
+			if (record && !record.verified && !suppressVerifyEmailPrompt && pb.authStore.record?.id === record.id) {
+				setVerifyEmailPrompt({ accountId: record.id, email: record.email, isOpen: true })
 			}
+			return record
 		},
-		[loginMutation]
+		[]
 	)
 
-	const signupMutation = useMutation({
-		mutationFn: async ({
-			email,
-			password,
-			passwordConfirm,
-			turnstileToken,
-			promotionalEmails
-		}: {
-			email: string
-			password: string
-			passwordConfirm: string
-			turnstileToken: string
-			promotionalEmails?: PromotionalEmailsValue
-			suppressVerifyEmailPrompt?: boolean
-		}) => {
-			const response = await fetch(`${AUTH_SERVER}/auth/signup`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					email,
-					password,
-					passwordConfirm,
-					auth_method: 'email',
-					source: getSignupSource(),
-					referrer: getReferrer(),
-					turnstile_token: turnstileToken,
-					promotionalEmails,
-					sendVerificationEmail: false
-				})
-			})
+	// Close when the owning account cannot be confirmed, including a token-only replacement.
+	// Refreshing the same account must not reopen a closed sheet.
+	if (
+		verifyEmailPrompt &&
+		(authStoreState.record?.id !== verifyEmailPrompt.accountId || authStoreState.record.verified)
+	) {
+		setVerifyEmailPrompt(null)
+	}
 
-			if (!response.ok) {
-				const errorData = await response.json()
-				throw errorData
-			}
-
-			const { token } = await response.json()
-			pb.authStore.save(token)
-			try {
-				await refreshSession()
-			} catch (error) {
-				console.log('Error refreshing auth after signup:', error)
-			}
-		},
-		onSuccess: (_data, variables) => {
+	const signup = useCallback(({ suppressVerifyEmailPrompt, ...request }: Parameters<AuthContextType['signup']>[0]) => {
+		return signupWithEmail(request, (record) => {
 			clearSignupSource()
-			sessionStorage.setItem('just_signed_up', 'true')
-			if (!variables.suppressVerifyEmailPrompt) {
-				setVerifyEmailPrompt({ isOpen: true, email: variables.email })
+			setSignupAccountId(record.id)
+			if (!record.verified && !suppressVerifyEmailPrompt) {
+				setVerifyEmailPrompt({ accountId: record.id, email: record.email, isOpen: true })
 			}
-		},
-		onError: (error: any) => {
-			if (error?.error === 'User with this email already exists') {
-				return
-			}
-			const message = error.error
-			if (message) {
-				toast.error(message)
-			} else {
-				toast.error('Failed to create account. Please try again.')
-			}
-		}
-	})
-
-	const signup = useCallback(
-		async (
-			email: string,
-			password: string,
-			passwordConfirm: string,
-			turnstileToken: string,
-			promotionalEmails?: PromotionalEmailsValue,
-			onSuccess?: () => void,
-			options?: { suppressVerifyEmailPrompt?: boolean }
-		) => {
-			const result = await signupMutation.mutateAsync({
-				email,
-				password,
-				passwordConfirm,
-				turnstileToken,
-				promotionalEmails,
-				suppressVerifyEmailPrompt: options?.suppressVerifyEmailPrompt
-			})
-			onSuccess?.()
-			return result
-		},
-		[signupMutation]
-	)
+		})
+	}, [])
 
 	const logoutMutation = useMutation({
 		mutationFn: () => {
@@ -471,172 +317,99 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		[logout]
 	)
 
-	const signInWithEthereumMutation = useMutation({
-		mutationFn: async ({ address, signMessageFunction }: { address: string; signMessageFunction: any }) => {
-			const [createSiweMessage, { nonce }] = await Promise.all([loadCreateSiweMessage(), getNonce(address)])
-			const issuedAt = new Date()
-			const message = createSiweMessage({
-				domain: window.location.host,
-				address: address as `0x${string}`,
-				statement: 'Sign in with Ethereum to the app.',
-				uri: window.location.origin,
-				version: '1',
-				chainId: 1,
-				nonce,
-				issuedAt
-			})
-
-			const signature = await signMessageFunction({
-				message,
-				account: address as `0x${string}`
-			})
-
-			const response = await fetch(`${AUTH_SERVER}/eth-auth`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					message,
-					signature,
-					address,
-					issuedAt: issuedAt.toISOString(),
-					source: getSignupSource(),
-					referrer: getReferrer()
-				})
-			})
-
-			if (!response.ok) {
-				const errorMessage = await getAuthErrorMessageFromResponse(response, 'Failed to sign in with Ethereum')
-				throw new Error(errorMessage)
-			}
-
-			const { password, identity, impersonate } = await response.json()
-
-			if (impersonate) {
-				pb.authStore.save(impersonate.token, impersonate.record)
-			} else {
-				await pb.collection('users').authWithPassword(identity, password)
-			}
-
-			clearSignupSource()
-
-			return { address }
-		}
-	})
-
-	const signInWithGithub = async () => {
-		try {
-			const authData = await pb.collection('users').authWithOAuth2({
-				provider: 'github',
-				redirectTo: `${window.location.origin}/subscription`
-			})
-
-			if (isNewOauthUser(authData)) {
-				openOauthWelcome(authData.record.id)
-				try {
-					await fetch(`${AUTH_SERVER}/user/attribution`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${pb.authStore.token}`
-						},
-						body: JSON.stringify({
-							source: getSignupSource(),
-							referrer: getReferrer(),
-							provider: 'github'
-						})
-					})
-				} catch {
-					// Attribution is best effort; sign-in must not fail because of it.
+	const signInWithGithub: AuthContextType['signInWithGithub'] = async (request) => {
+		const source = getSignupSource()
+		const referrer = getReferrer()
+		const result = await runAuthRequest(
+			request,
+			() => authenticateGithub(request),
+			(result) => {
+				setSignupAccountId(isNewOauthUser(result) ? result.record.id : null)
+				if (isNewOauthUser(result)) {
+					openOauthWelcome(result.record.id)
+					attributeSignup(result.token, 'github', source, referrer)
 				}
+				if (result.record.email && !result.record.verified && !request.suppressVerifyEmailPrompt)
+					setVerifyEmailPrompt({ accountId: result.record.id, email: result.record.email, isOpen: true })
+				clearSignupSource()
+				pb.authStore.save(result.token, result.record)
+				rememberSignIn({ method: 'github' })
+				request.onAuthenticated?.()
 			}
-
-			return authData
-		} catch (error) {
-			console.log('github sign-in error:', error)
-			throw new Error('Failed to sign in with GitHub', { cause: error })
-		}
+		)
+		return result?.record ?? null
 	}
 
-	const signInWithGithubMutation = useMutation({
-		mutationFn: signInWithGithub
-	})
-
-	const signInWithGoogleMutation = useMutation({
-		mutationFn: async (identityToken: string) => {
-			const source = getSignupSource()
-			const referrer = getReferrer()
-			const response = await fetch(`${AUTH_SERVER}/auth/google-signin`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					identityToken,
-					signupClient: 'web',
-					source
+	const signInWithGoogle: AuthContextType['signInWithGoogle'] = (request) => {
+		const source = getSignupSource()
+		const referrer = getReferrer()
+		return runAuthRequest(
+			request,
+			async () => {
+				const response = await fetch(`${AUTH_SERVER}/auth/google-signin`, {
+					method: 'POST',
+					signal: request.signal,
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ identityToken: request.identityToken, signupClient: 'web', source })
+				}).catch((error) => {
+					throw new Error('Could not sign in with Google. Check your connection.', { cause: error })
 				})
-			})
-			if (!response.ok) {
-				throw new Error(await getAuthErrorMessageFromResponse(response, 'Failed to sign in with Google'))
-			}
-			const result = readGoogleAuthResult(await response.json())
-			if (result.kind === 'link_verification_required') return result
-			await saveGoogleSession(result)
-			if (result.isNew) {
-				openOauthWelcome(result.user.id)
-				try {
-					await fetch(`${AUTH_SERVER}/user/attribution`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: `Bearer ${pb.authStore.token}`
-						},
-						body: JSON.stringify({
-							referrer,
-							source,
-							provider: 'google'
-						})
-					})
-				} catch {
-					// Attribution is best effort; sign-in must not fail because of it.
+				if (!response.ok)
+					throw new Error(await getAuthErrorMessageFromResponse(response, 'Could not sign in with Google.'))
+				return readGoogleAuthResult(await response.json())
+			},
+			(result) => {
+				if (result.kind !== 'authenticated') return
+				setSignupAccountId(result.isNew ? result.user.id : null)
+				if (result.isNew) {
+					openOauthWelcome(result.user.id)
+					attributeSignup(result.token, 'google', source, referrer)
 				}
+				clearSignupSource()
+				// This response has identity fields only, even if an earlier sign-in left a fresh profile cache.
+				void queryClient.invalidateQueries({
+					queryKey: ['auth', 'status', result.user.id],
+					exact: true,
+					refetchType: 'none'
+				})
+				pb.authStore.save(result.token, result.user as AuthRecord)
+				rememberSignIn({ method: 'google' })
+				request.onAuthenticated?.()
 			}
-			clearSignupSource()
-			return result
-		}
-	})
+		)
+	}
 
-	const confirmGoogleLinkMutation = useMutation({
-		mutationFn: async ({ challengeToken, code }: { challengeToken: string; code: string }) => {
-			const response = await fetch(`${AUTH_SERVER}/auth/social-link/confirm`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ challengeToken, code })
-			})
-			if (!response.ok) {
-				throw new Error(await getAuthErrorMessageFromResponse(response, 'Invalid or expired code'))
+	const confirmGoogleLink: AuthContextType['confirmGoogleLink'] = (request) =>
+		runAuthRequest(
+			request,
+			async () => {
+				const response = await fetch(`${AUTH_SERVER}/auth/social-link/confirm`, {
+					method: 'POST',
+					signal: request.signal,
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ challengeToken: request.challengeToken, code: request.code })
+				}).catch((error) => {
+					throw new Error('Could not verify the code. Check your connection.', { cause: error })
+				})
+				if (!response.ok) throw new Error(await getAuthErrorMessageFromResponse(response, 'Invalid or expired code.'))
+				const result = readGoogleAuthResult(await response.json())
+				if (result.kind !== 'authenticated') throw new Error('Invalid Google link response')
+				return result
+			},
+			(result) => {
+				setSignupAccountId(null)
+				clearSignupSource()
+				// This response has identity fields only, even if an earlier sign-in left a fresh profile cache.
+				void queryClient.invalidateQueries({
+					queryKey: ['auth', 'status', result.user.id],
+					exact: true,
+					refetchType: 'none'
+				})
+				pb.authStore.save(result.token, result.user as AuthRecord)
+				rememberSignIn({ method: 'google' })
+				request.onAuthenticated?.()
 			}
-			const result = readGoogleAuthResult(await response.json())
-			if (result.kind !== 'authenticated') throw new Error('Invalid Google link response')
-			await saveGoogleSession(result)
-			clearSignupSource()
-			return result
-		}
-	})
-
-	const resendGoogleLinkMutation = useMutation({
-		mutationFn: async (challengeToken: string) => {
-			const response = await fetch(`${AUTH_SERVER}/auth/social-link/resend`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ challengeToken })
-			})
-			if (!response.ok) {
-				throw new Error(await getAuthErrorMessageFromResponse(response, 'Failed to resend verification code'))
-			}
-			const result = readGoogleAuthResult(await response.json())
-			if (result.kind !== 'link_verification_required') throw new Error('Invalid Google link response')
-			return result
-		}
-	})
+		)
 
 	const addWalletMutation = useMutation({
 		mutationFn: async ({ address, signMessageFunction }: { address: string; signMessageFunction: any }) => {
@@ -710,7 +483,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const resetPasswordMutation = useMutation({
 		mutationFn: async (email: string) => {
-			await pb.collection('users').requestPasswordReset(email)
+			await requestPasswordReset(email)
 			toast.success('Password reset email sent')
 		}
 	})
@@ -723,60 +496,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			} catch {
 				toast.error('User with this email already exists')
 			}
-		}
-	})
-
-	const sendOtpMutation = useMutation({
-		mutationFn: async () => {
-			if (!pb.authStore.isValid) {
-				throw new Error('User not authenticated')
-			}
-			const response = await fetch(`${AUTH_SERVER}/sendOtp`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${pb.authStore.token}`
-				}
-			})
-			await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getUserFacingErrorMessage(error, 'Failed to send verification code'))
-			})
-		},
-		onSuccess: () => {
-			toast.success('Verification code sent')
-		},
-		onError: (error: any) => {
-			toast.error(getUserFacingErrorMessage(error, 'Failed to send verification code'))
-		}
-	})
-
-	const verifyOtpMutation = useMutation({
-		mutationFn: async (otp: string) => {
-			if (!pb.authStore.isValid) {
-				throw new Error('User not authenticated')
-			}
-			const response = await fetch(`${AUTH_SERVER}/verifyOtp`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${pb.authStore.token}`
-				},
-				body: JSON.stringify({ otp })
-			})
-			await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getUserFacingErrorMessage(error, 'Invalid or expired code'))
-			})
-		},
-		onSuccess: async () => {
-			try {
-				await refreshSession()
-			} catch (error) {
-				console.log('Error refreshing auth after OTP verification:', error)
-			}
-			toast.success('Email verified')
-		},
-		onError: (error: any) => {
-			toast.error(getUserFacingErrorMessage(error, 'Invalid or expired code'))
 		}
 	})
 
@@ -803,37 +522,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	})
 
 	const setPromotionalEmails = useMutation({
-		mutationFn: async (value: string) => {
-			const response = await fetch(`${AUTH_SERVER}/user/promotional-emails`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${pb.authStore.token}`
-				},
-				body: JSON.stringify({ value })
-			})
+		mutationFn: async ({ accountId, value }: { accountId: string; value: string }) => {
+			if (pb.authStore.record?.id !== accountId) throw new Error('Your account changed. Sign in again.')
+			const token = pb.authStore.token
+			let response: Response
+			try {
+				response = await fetch(`${AUTH_SERVER}/user/promotional-emails`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+					body: JSON.stringify({ value })
+				})
+			} catch (error) {
+				if (pb.authStore.record?.id !== accountId) return null
+				throw new Error('Could not save your preference. Check your connection.', { cause: error })
+			}
+			if (pb.authStore.record?.id !== accountId) return null
 			await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getUserFacingErrorMessage(error, 'Failed to update promotional emails preference'))
+				throw new Error(getUserFacingErrorMessage(error, 'Could not save your preference.'))
 			})
-
-			return { value }
+			if (pb.authStore.record?.id !== accountId) return null
+			// This write changes only the preference. Preserve the token and other account fields.
+			pb.authStore.save(pb.authStore.token, { ...pb.authStore.record, promotionalEmails: value })
+			return { accountId, value }
 		},
 		onSuccess: async (data) => {
-			queryClient.setQueryData(['auth', 'status', authStoreState?.record?.id ?? null], (oldData: any) => {
-				if (!oldData) return oldData
-				return {
-					...oldData,
-					promotionalEmails: data.value
-				}
-			})
-			try {
-				await refreshSession()
-			} catch (error) {
-				console.log('Error refreshing auth after promotional emails update:', error)
-			}
-		},
-		onError: (error: any) => {
-			console.log('Failed to update promotional emails preference:', error)
+			if (!data || pb.authStore.record?.id !== data.accountId) return
+			await queryClient.cancelQueries({ queryKey: ['auth', 'status', data.accountId], exact: true })
+			if (pb.authStore.record?.id !== data.accountId) return
+			queryClient.setQueryData<AuthModel>(['auth', 'status', data.accountId], (oldData) =>
+				oldData ? { ...oldData, promotionalEmails: data.value as PromotionalEmailsValue } : oldData
+			)
+			// The account query owns refreshes, including replacing a profile read started before this save.
+			void queryClient.invalidateQueries({ queryKey: ['auth', 'status', data.accountId], exact: true })
 		}
 	})
 
@@ -841,10 +561,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	// renders the same outcomes inline instead.
 	const setPromotionalEmailsFromSettings = useCallback(
 		(value: string) => {
-			setPromotionalEmails.mutate(value, {
-				onSuccess: () => toast.success('Email preferences updated successfully'),
-				onError: (error) => toast.error(getUserFacingErrorMessage(error, 'Failed to update email preferences'))
-			})
+			const accountId = pb.authStore.record?.id
+			if (!accountId) return
+			setPromotionalEmails.mutate(
+				{ accountId, value },
+				{
+					onSuccess: (data) => {
+						if (data) toast.success('Email preferences updated successfully')
+					},
+					onError: (error) => toast.error(getUserFacingErrorMessage(error, 'Failed to update email preferences'))
+				}
+			)
 		},
 		[setPromotionalEmails]
 	)
@@ -881,31 +608,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		signup,
 		logout,
 		authorizedFetch,
-		signInWithEthereumMutation,
-		signInWithGithubMutation,
-		signInWithGoogleMutation,
-		confirmGoogleLinkMutation,
-		resendGoogleLinkMutation,
+		signInWithGithub,
+		signInWithGoogle,
+		confirmGoogleLink,
+		resendGoogleLink,
 		addWallet,
 		resetPasswordMutation,
 		changeEmail: changeEmail.mutate,
-		sendOtp: sendOtpMutation.mutateAsync,
-		verifyOtp: verifyOtpMutation.mutateAsync,
 		addEmail: addEmail.mutateAsync,
 		setPromotionalEmails: setPromotionalEmailsFromSettings,
 		promptVerifyEmail,
 		isAuthenticated,
+		consumeSignupOutcome,
+		isNewSignup: signupAccountId !== null && signupAccountId === authStoreState.record?.id,
 		authToken: isAuthenticated ? authStoreState.token : null,
 		hasActiveSubscription: subscriptionQuery.data?.status === 'active',
 		isTrial: Boolean(userData?.flags?.is_trial),
 		loaders: {
-			login: loginMutation.isPending,
-			signup: signupMutation.isPending,
 			logout: logoutMutation.isPending,
 			addWallet: addWalletMutation.isPending,
 			changeEmail: changeEmail.isPending,
-			sendOtp: sendOtpMutation.isPending,
-			verifyOtp: verifyOtpMutation.isPending,
 			addEmail: addEmail.isPending,
 			setPromotionalEmails: setPromotionalEmails.isPending,
 			userLoading,
@@ -917,40 +639,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	return (
 		<AuthContext.Provider value={contextValue}>
 			{children}
-			<VerifyEmailConfirmDialog
-				isOpen={verifyEmailConfirm.isOpen}
-				onConfirm={() => {
-					const email = verifyEmailConfirm.email
-					setVerifyEmailConfirm({ isOpen: false })
-					setVerifyEmailPrompt({ isOpen: true, email })
-				}}
-				onClose={() => setVerifyEmailConfirm({ isOpen: false })}
-			/>
-			<VerifyEmailDialog
-				isOpen={verifyEmailPrompt.isOpen}
-				email={verifyEmailPrompt.email}
-				sendOtp={contextValue.sendOtp}
-				verifyOtp={contextValue.verifyOtp}
-				loaders={contextValue.loaders}
-				onClose={() => setVerifyEmailPrompt({ isOpen: false })}
-			/>
+
+			{verifyEmailPrompt && !oauthWelcomeAccountId ? (
+				<VerifyEmailDialog
+					key={verifyEmailPrompt.accountId}
+					accountId={verifyEmailPrompt.accountId}
+					isOpen={verifyEmailPrompt.isOpen}
+					email={verifyEmailPrompt.email}
+					onClose={() => setVerifyEmailPrompt((prompt) => (prompt ? { ...prompt, isOpen: false } : null))}
+				/>
+			) : null}
 			{/* Mount per onboarding instance so a later account can't inherit this one's
 			    consent choices. Close only after the preference write succeeds; on error
-			    the mutation toasts and the dialog stays open for a retry. */}
-			{oauthWelcomeOpen ? (
+			    the dialog shows an inline error and stays open for a retry. */}
+			{oauthWelcomeAccountId ? (
 				<OAuthWelcomeDialog
+					key={oauthWelcomeAccountId}
+					onSignOut={logout}
 					isOpen
 					isSaving={setPromotionalEmails.isPending}
 					error={
 						setPromotionalEmails.isError
-							? getUserFacingErrorMessage(
-									setPromotionalEmails.error,
-									'Failed to save your preference. Please try again.'
-								)
+							? getUserFacingErrorMessage(setPromotionalEmails.error, 'Could not save your preference.')
 							: null
 					}
 					onContinue={(value) => {
-						setPromotionalEmails.mutate(value, { onSuccess: () => setOauthWelcomeOpen(false) })
+						setPromotionalEmails.mutate(
+							{ accountId: oauthWelcomeAccountId, value },
+							{
+								onSuccess: (data) => {
+									if (data && pb.authStore.record?.id === data.accountId) setOauthWelcomeAccountId(null)
+								}
+							}
+						)
 					}}
 				/>
 			) : null}

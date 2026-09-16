@@ -1,8 +1,10 @@
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
+import pb from '~/utils/pocketbase'
 import type { PurchaseSeatsResponse, Team } from './types'
 
 const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
@@ -45,7 +47,8 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	const inviteAcceptance = useQuery({
 		queryKey: ['team-invite-accept', currentUserId, inviteToken],
 		queryFn: async () => {
-			if (!inviteToken || !currentUserId) throw new Error('Not authenticated')
+			if (!inviteToken || !currentUserId || pb.authStore.record?.id !== currentUserId)
+				throw new Error('Not authenticated')
 
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/accept`, {
 				method: 'POST',
@@ -58,9 +61,8 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			const data = await normalized.json()
 
-			toast.success('You have joined the team!')
+			if (pb.authStore.record?.id !== currentUserId) throw new Error('Your account changed. Open the invite again.')
 			await queryClient.invalidateQueries({ queryKey: teamQueryKey })
-			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 
 			return data
 		},
@@ -89,6 +91,29 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	})
 
 	const team = teamQuery.data ?? null
+
+	// Keep the accepted write separate from its follow-up read. Retrying account
+	// loading must never accept the invitation a second time.
+	const inviteAccount = useQuery({
+		queryKey: ['team-invite-account', currentUserId, inviteToken],
+		queryFn: async () => {
+			const queryKey = ['auth', 'status', currentUserId]
+			await queryClient.cancelQueries({ queryKey, exact: true })
+			const account = await refreshSession()
+			if (!account || pb.authStore.record?.id !== currentUserId)
+				throw new Error('Could not confirm your account. Please retry.')
+			queryClient.setQueryData(queryKey, account)
+			return account
+		},
+		enabled: Boolean(
+			currentUserId && inviteToken && (inviteAcceptance.isSuccess || (inviteAcceptance.isError && team != null))
+		),
+		retry: false,
+		refetchOnWindowFocus: false,
+		refetchOnReconnect: false,
+		staleTime: Infinity
+	})
+
 	const isTeamLoading = teamQuery.isLoading
 	// A refetch failure keeps showing the cached team; error means nothing is known.
 	const isTeamError = teamQuery.isError && teamQuery.data == null
@@ -415,6 +440,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		teamSubscriptions,
 		refetchTeam: teamQuery.refetch,
 		inviteAcceptance,
+		inviteAccount,
 
 		// Mutations
 		createTeamMutation,

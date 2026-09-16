@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
 import { SubscribeAPICard } from '~/containers/Subscription/shared/SubscribeCards/SubscribeAPICard'
-import { WalletProvider } from '~/layout/WalletProvider'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -583,7 +583,7 @@ export default function MCPContainer() {
 			</section>
 
 			{/* API Subscribe Modal */}
-			<WalletProvider>
+			<ClientOnly>
 				<Ariakit.DialogProvider store={dialog}>
 					<Ariakit.Dialog className={`${dialogSurfaceStyles} text-primary [--dialog-width:448px]`} portal unmountOnHide>
 						<div className="mx-auto flex size-full max-w-[440px] flex-col overflow-hidden p-3">
@@ -594,7 +594,7 @@ export default function MCPContainer() {
 						</div>
 					</Ariakit.Dialog>
 				</Ariakit.DialogProvider>
-			</WalletProvider>
+			</ClientOnly>
 		</>
 	)
 }

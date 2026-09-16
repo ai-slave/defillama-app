@@ -251,7 +251,7 @@ export function LlamaAIFloatingButton() {
 							<DialogHeading>Ask LlamaAI</DialogHeading>
 							<p className="body-sm text-secondary">AI-powered DeFi insights</p>
 						</div>
-						<DialogCloseButton className="-mr-1" />
+						<DialogCloseButton />
 					</div>
 
 					<div className="flex flex-1 flex-col overflow-hidden">

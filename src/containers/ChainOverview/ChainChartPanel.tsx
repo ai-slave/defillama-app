@@ -234,7 +234,7 @@ export function ChainChartPanel({
 										{selectedOptions.length}/{allMetricOptions.length}
 									</span>
 								</div>
-								<DialogCloseButton className="-mr-1" />
+								<DialogCloseButton />
 							</div>
 
 							<div className="border-b border-subtle px-4 py-3">

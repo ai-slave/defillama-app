@@ -53,7 +53,8 @@ export function DialogHeading({ className, ...props }: DialogHeadingProps) {
 }
 
 type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.DialogDismiss>, 'children' | 'render'> & {
-	/** Layout placement only, e.g. `ml-auto` or `-mr-1`. */
+	/** Layout placement only, e.g. `ml-auto`. The 16px icon sits 8px inside its 32px
+	    ghost button, so the default `-mr-2` puts the icon edge on the content edge. */
 	className?: string
 	ariaLabel?: string
 }
@@ -61,7 +62,7 @@ type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.Dialo
 export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...props }: DialogCloseButtonProps) {
 	return (
 		<Ariakit.DialogDismiss
-			render={<Button type="button" variant="ghost" size="md" square className={className} />}
+			render={<Button type="button" variant="ghost" size="md" square className={`-mr-2 ${className ?? ''}`.trim()} />}
 			aria-label={ariaLabel}
 			{...props}
 		>

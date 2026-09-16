@@ -7,7 +7,7 @@ import { BasicLink } from '~/components/Link'
 import { PricingCardContent } from '~/containers/Subscription/components'
 import { MONTHLY_PRICING_CARDS } from '~/containers/Subscription/data'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { WalletProvider } from '~/layout/WalletProvider'
+import { ClientOnly } from '~/layout/ClientOnly'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -34,7 +34,7 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 	}, [dialogStore, router?.asPath])
 
 	return (
-		<WalletProvider>
+		<ClientOnly>
 			<Ariakit.DialogProvider store={dialogStore}>
 				<Ariakit.Dialog
 					className="dialog flex max-h-[85dvh] max-w-md flex-col overflow-hidden rounded-xl border border-sub-border-slate-100 bg-white p-4 text-sub-text-primary shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6 dark:border-sub-border-strong dark:bg-sub-surface-dark"
@@ -74,6 +74,6 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
 			<SignInModal store={signInDialogStore} />
-		</WalletProvider>
+		</ClientOnly>
 	)
 }

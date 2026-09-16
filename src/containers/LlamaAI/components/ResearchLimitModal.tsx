@@ -73,7 +73,7 @@ export function ResearchLimitModal({
 			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:448px]`} portal unmountOnHide>
 				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>{COPY[feature].titleLimit}</DialogHeading>
-					<DialogCloseButton className="-mr-1" />
+					<DialogCloseButton />
 				</div>
 				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
 					<div className="flex justify-center">

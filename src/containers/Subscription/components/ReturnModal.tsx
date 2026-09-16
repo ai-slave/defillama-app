@@ -12,7 +12,7 @@ interface ReturnModalProps {
 export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 	const router = useRouter()
 
-	const handleStayOnPage = () => {
+	const handleClose = () => {
 		const { returnUrl: _ignoredReturnUrl, ...nextQuery } = router.query
 		void router.replace(
 			{
@@ -25,13 +25,16 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 		onClose()
 	}
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={() => onClose()}>
+		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
 			<Ariakit.Dialog
 				className="dialog gap-0 border border-[#4a4a50]/10 bg-[#131415] p-0 shadow-sub-purple-aura md:max-w-[400px]"
 				portal
 				unmountOnHide
 			>
-				<Ariakit.DialogDismiss className="absolute top-3 right-3 z-20 rounded-full p-1 text-tertiary transition-colors hover:bg-gray-700 hover:text-on-brand">
+				<Ariakit.DialogDismiss
+					aria-label="Close"
+					className="absolute top-3 right-3 z-20 rounded-full p-1 text-tertiary transition-colors hover:bg-gray-700 hover:text-on-brand"
+				>
 					<Icon name="x" className="size-6" />
 				</Ariakit.DialogDismiss>
 				<div className="mx-auto max-w-[400px] p-8">
@@ -48,7 +51,7 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 						</BasicLink>
 						<button
 							type="button"
-							onClick={handleStayOnPage}
+							onClick={handleClose}
 							className="w-full rounded-lg bg-[#22242930] px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-line"
 						>
 							Stay on this page

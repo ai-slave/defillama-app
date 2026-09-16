@@ -134,7 +134,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 				className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3"
 			>
 				<DialogHeading>Share conversation</DialogHeading>
-				<DialogCloseButton className="-mr-1" ariaLabel="Close share dialog" />
+				<DialogCloseButton ariaLabel="Close share dialog" />
 			</div>
 			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
 				<p role="status" className="m-0 body-sm text-secondary">
