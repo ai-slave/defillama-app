@@ -115,7 +115,13 @@ vi.mock('./components/SqlChart/sqlRefreshBus', () => ({
 	subscribeSqlRefreshProgress: () => () => {},
 	refreshAllSqlCharts: mocks.refresh
 }))
-vi.mock('./components/ChartGrid', () => ({ ChartGrid: () => null }))
+vi.mock('./components/ChartGrid', () => ({
+	ChartGrid: ({ onEditItem }: { onEditItem: (item: DashboardItemConfig) => void }) => (
+		<button type="button" onClick={() => onEditItem(mocks.items[0])}>
+			Edit first card
+		</button>
+	)
+}))
 vi.mock('./components/CopyDashboardLinkButton', () => ({
 	CopyDashboardLinkButton: ({
 		manageAction,
@@ -144,8 +150,22 @@ vi.mock('./components/DashboardSettingsModal', () => ({ DashboardSettingsModal: 
 vi.mock('./components/CreateDashboardPicker', () => ({ CreateDashboardPicker: () => null }))
 vi.mock('./components/GenerateDashboardModal', () => ({ GenerateDashboardModal: () => null }))
 vi.mock('./components/AddChartModal/AddChartModal', () => ({
-	AddChartModal: ({ draftItem }: { draftItem?: DashboardItemConfig }) => (
-		<p>{`add chart modal:${draftItem?.kind ?? 'none'}`}</p>
+	AddChartModal: ({
+		draftItem,
+		editItem,
+		onClose
+	}: {
+		draftItem?: DashboardItemConfig
+		editItem?: DashboardItemConfig | null
+		onClose: () => void
+	}) => (
+		<>
+			<p>{`add chart modal:${draftItem?.kind ?? 'none'}`}</p>
+			<p>{`editing:${editItem?.id ?? 'none'}`}</p>
+			<button type="button" onClick={onClose}>
+				Close card editor
+			</button>
+		</>
 	)
 }))
 vi.mock('./components/QuickAddPalette', () => ({
@@ -282,6 +302,24 @@ test('customizing a quick add row hands its draft to the full editor', async () 
 	await act(async () => button('Customize draft')?.click())
 
 	expect(document.body.textContent).toContain('add chart modal:text')
+})
+
+test('adding text after editing clears the edit target even before the previous sheet finishes closing', async () => {
+	mocks.items = [{ id: 'existing-text', kind: 'text', content: 'Keep this note' }]
+	mocks.mode = 'edit'
+	await renderDashboard()
+	await act(async () => button('Edit first card')!.click())
+	expect(document.body.textContent).toContain('editing:existing-text')
+	await act(async () => button('Close card editor')!.click())
+
+	await act(async () => {
+		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+	})
+	await act(async () => button('Customize draft')!.click())
+
+	expect(document.body.textContent).toContain('add chart modal:text')
+	expect(document.body.textContent).toContain('editing:none')
+	expect(document.body.textContent).not.toContain('editing:existing-text')
 })
 
 test('an empty editor keeps settings in the dashboard menu, its sheet and the empty state', async () => {

@@ -159,6 +159,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const inputRef = useRef<HTMLInputElement | null>(null)
 	const wasMountedRef = useRef(false)
+	const openingEditorRef = useRef(false)
 	const { protocols, chains, protocolsLoading, parentMapping } = useProDashboardCatalog()
 	const { loading, error, availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
 	const { handleAppendItems } = useProDashboardEditorActions()
@@ -212,11 +213,12 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	const grouped = isQuickAddQueryEmpty(query)
 	const activeIndex = suggestions.findIndex((_, index) => rowElementId(index) === activeId)
 
-	function editorOptions(draftItem: DashboardItemConfig | null) {
-		return {
+	function openFullEditor(draftItem: DashboardItemConfig | null) {
+		openingEditorRef.current = true
+		onOpenFullEditor({
 			...(placement === undefined ? {} : { placement }),
 			...(draftItem === null ? {} : { draftItem })
-		}
+		})
 	}
 
 	function showStatus(message: string) {
@@ -256,11 +258,11 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 
 	function selectSuggestion(suggestion: QuickAddSuggestion, closeAfter: boolean) {
 		if (suggestion.action === 'open-editor') {
-			onOpenFullEditor(editorOptions(null))
+			openFullEditor(null)
 			return
 		}
 		if (suggestion.action === 'open-editor-draft') {
-			onOpenFullEditor(editorOptions(suggestion.build([])[0] ?? null))
+			openFullEditor(suggestion.build([])[0] ?? null)
 			return
 		}
 		const addedIds = handleAppendItems(suggestion.build, placement)
@@ -274,7 +276,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	function customizeSuggestion(suggestion: QuickAddSuggestion) {
 		const draftItem = suggestionDraftItem(suggestion)
 		if (draftItem === null) return
-		onOpenFullEditor(editorOptions(draftItem))
+		openFullEditor(draftItem)
 	}
 
 	function handleKeyDownCapture(event: KeyboardEvent<HTMLInputElement>) {
@@ -318,6 +320,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		<Ariakit.DialogProvider store={dialogStore}>
 			<ProDialog
 				width="md"
+				autoFocusOnHide={() => !openingEditorRef.current}
 				bodyClassName="p-0"
 				closeButtonProps={{ ariaLabel: 'Close quick add' }}
 				leading={
@@ -346,7 +349,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 							variant="secondary"
 							size="md"
 							data-umami-event="dashboard-quick-add-open-editor"
-							onClick={() => onOpenFullEditor(editorOptions(null))}
+							onClick={() => openFullEditor(null)}
 						>
 							All card types…
 						</ProButton>

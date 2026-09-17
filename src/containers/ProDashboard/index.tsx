@@ -462,6 +462,7 @@ function ProDashboardContent() {
 		draftItem?: DashboardItemConfig
 	}) => {
 		closeQuickAdd()
+		setEditModalState({ item: null })
 		setAddPlacement(placement)
 		setAddDraftItem(draftItem ?? null)
 		startAddModalSession()
