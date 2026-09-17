@@ -236,3 +236,12 @@ export const assetDetailColumns = [
 ]
 
 export const perpsDetailColumns = [platformColumn, asCsvOnly(assetClassColumn)]
+
+/** The Compliance preset's own columns, painted; the rest of the asset details stay csv-only behind them. */
+export const complianceDetailColumns = [issuerColumn, accessModelColumn]
+export const complianceHiddenDetailColumns = [
+	platformColumn,
+	asCsvOnly(assetClassColumn),
+	asCsvOnly(categoryColumn),
+	asCsvOnly(rwaClassificationColumn)
+]

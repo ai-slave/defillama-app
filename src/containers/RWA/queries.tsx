@@ -41,6 +41,7 @@ import { foldRwaChainSeries, rankRwaChains } from './chainFold'
 import { aggregateRwaMetricData, applyDefaultAssetFilters, buildRwaCanonicalMetricDataset } from './chartAggregation'
 import { getRwaSpotChartSource } from './chartBreakdown'
 import type { RWAPositionalChartDataset } from './chartDataset'
+import { foldRwaTopSeries } from './chartFold'
 import { getDefaultChartMetric } from './chartState'
 import {
 	filterCategoriesForStandardRwaOverview,
@@ -57,7 +58,6 @@ import type { IRWAPerpsMarket } from './Perps/api.types'
 import { toRWAPerpsBreakdownChartDataset } from './Perps/breakdownDataset'
 import { buildRWAPerpsContractOverlayRows, getRealRwaPlatforms } from './perpsOverlay'
 import type { RWAPlatformsIndex } from './PlatformPage/api.types'
-import { buildRWAPlatformAssetSummary } from './PlatformPage/buildPlatformPageData'
 import { getRWAPlatformRoutes } from './platformRoutes'
 import { rwaSlug } from './rwaSlug'
 import { buildRwaPriorIndex } from './series/priorValues'
@@ -140,7 +140,11 @@ async function buildInitialChainChartDataset({
 			return data ? { chain, rows: normalizeRWAChartMetricRows(data, metric) } : null
 		})
 	)
-	return foldRwaChainSeries({ chains: histories.filter((history) => history != null), assets, total })
+	return foldRwaChainSeries({
+		chains: histories.filter((history) => history != null),
+		assets,
+		total
+	})
 }
 
 /**
@@ -216,7 +220,11 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			// Both scope flags on, or toggling stablecoins or governance in blanks every change.
 			selectedPlatform
 				? Promise.resolve(undefined)
-				: fetchRWAChartDataByAsset({ target, includeStablecoins: true, includeGovernance: true }).catch((error) => {
+				: fetchRWAChartDataByAsset({
+						target,
+						includeStablecoins: true,
+						includeGovernance: true
+					}).catch((error) => {
 						console.error('Failed to prefetch RWA chart data by asset:', error)
 						return null
 					})
@@ -225,7 +233,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		const filteredData = data.filter(
 			(item) => !(item.category ?? []).some((category) => !isCategoryIncludedInStandardRwaOverview(category))
 		)
-		const platformAssetSummary = selectedPlatform ? buildRWAPlatformAssetSummary(data, selectedPlatform) : null
 		const filteredPerpsMarkets = perpsMarkets.map((market) => ({
 			...market,
 			category: (market.category ?? []).filter((category) => isCategoryIncludedInStandardRwaOverview(category))
@@ -663,7 +670,11 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		}
 		const defaultChartMetric = getDefaultChartMetric(chartMetricAvailability)
 		const seriesByAsset = selectedPlatform
-			? await fetchRWAChartDataByAsset({ target, includeStablecoins: true, includeGovernance: true }).catch((error) => {
+			? await fetchRWAChartDataByAsset({
+					target,
+					includeStablecoins: true,
+					includeGovernance: true
+				}).catch((error) => {
 					console.error('Failed to fetch RWA platform chart data by asset:', error)
 					return null
 				})
@@ -675,7 +686,9 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			asset.priors = priorIndex.priors(asset.canonicalMarketId)
 			asset.firstSeen = priorIndex.firstSeenMs(asset.canonicalMarketId)
 		}
-		const defaultGroupBy = getRwaDefaultGroupBy('assets', { scope: target.kind })
+		const defaultGroupBy = getRwaDefaultGroupBy('assets', {
+			scope: target.kind
+		})
 		const defaultChartSource = getRwaSpotChartSource(defaultGroupBy)
 		const defaultFilteredAssets = applyDefaultAssetFilters(assets, {
 			includeStablecoins: defaultInclusion.includeStablecoins,
@@ -688,26 +701,38 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		   lines, ten upstream histories, so picking Chain costs nothing in the browser. Both wait beside the cards. */
 		const initialChartDatasets: Array<IRWAInitialChartDataset> = []
 		if (chartRows && defaultChartSource.kind === 'assets') {
+			/* The browser folds this to the same ten before drawing it, so ship only those; a platform page's asset fold is one series per asset. */
 			initialChartDatasets.push({
 				metric: defaultChartMetric,
 				groupBy: defaultGroupBy,
-				dataset: buildRwaCanonicalMetricDataset(
-					aggregateRwaMetricData(defaultAggregateAssets, chartRows, defaultChartSource.mode),
-					defaultChartMetric,
-					false
+				dataset: foldRwaTopSeries(
+					buildRwaCanonicalMetricDataset(
+						aggregateRwaMetricData(defaultAggregateAssets, chartRows, defaultChartSource.mode),
+						defaultChartMetric,
+						false
+					),
+					{}
 				)
 			})
 		}
 		const [chainDataset, cards] = await Promise.all([
 			chartRows && target.kind === 'all'
-				? buildInitialChainChartDataset({ assets: defaultAggregateAssets, chartRows, metric: defaultChartMetric })
+				? buildInitialChainChartDataset({
+						assets: defaultAggregateAssets,
+						chartRows,
+						metric: defaultChartMetric
+					})
 				: Promise.resolve(null),
 			target.kind === 'all' ? buildOverviewCards(defaultAggregateAssets) : Promise.resolve(null)
 		])
-		if (chainDataset) initialChartDatasets.push({ metric: defaultChartMetric, groupBy: 'chain', dataset: chainDataset })
+		if (chainDataset)
+			initialChartDatasets.push({
+				metric: defaultChartMetric,
+				groupBy: 'chain',
+				dataset: chainDataset
+			})
 		return {
 			platformPage: null,
-			platformAssetSummary,
 			assets: assets.sort((a, b) => (b.onChainMcap?.total ?? 0) - (a.onChainMcap?.total ?? 0)),
 			typeOptions: formattedTypes.map((type) => {
 				const help = definitions.type.values?.[type]
@@ -719,11 +744,19 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			}),
 			rwaClassificationOptions: formattedRwaClassifications.map((classification) => {
 				const help = definitions.rwaClassification.values?.[classification]
-				return { key: classification, name: classification, ...(help ? { help } : {}) }
+				return {
+					key: classification,
+					name: classification,
+					...(help ? { help } : {})
+				}
 			}),
 			accessModelOptions: formattedAccessModels.map((accessModel) => {
 				const help = definitions.accessModel.values?.[accessModel]
-				return { key: accessModel, name: accessModel, ...(help ? { help } : {}) }
+				return {
+					key: accessModel,
+					name: accessModel,
+					...(help ? { help } : {})
+				}
 			}),
 			categoriesOptions: formattedCategories.map((category) => {
 				const help = definitions.category.values?.[category]
@@ -824,7 +857,11 @@ export async function getRWAChainsOverview(): Promise<IRWAChainsOverview> {
 export async function getRWACategoriesOverview(): Promise<IRWACategoriesOverview> {
 	const [data, activeMcapRows] = await Promise.all([
 		fetchRWAStats(),
-		fetchRWACategoryBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
+		fetchRWACategoryBreakdownChartData({
+			key: 'activeMcap',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
 	])
 
 	const rows: Array<IRWACategoriesOverviewRow> = []
@@ -850,7 +887,11 @@ export async function getRWACategoriesOverview(): Promise<IRWACategoriesOverview
 export async function getRWAPlatformsOverview(): Promise<IRWAPlatformsOverview> {
 	const [data, activeMcapRows] = await Promise.all([
 		fetchRWAStats(),
-		fetchRWAPlatformBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
+		fetchRWAPlatformBreakdownChartData({
+			key: 'activeMcap',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
 	])
 
 	const rows: Array<IRWAPlatformsOverviewRow> = []
@@ -875,7 +916,11 @@ export async function getRWAPlatformsOverview(): Promise<IRWAPlatformsOverview> 
 export async function getRWAAssetGroupsOverview(): Promise<IRWAAssetGroupsOverview> {
 	const [data, activeMcapRows] = await Promise.all([
 		fetchRWAStats(),
-		fetchRWAAssetGroupBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
+		fetchRWAAssetGroupBreakdownChartData({
+			key: 'activeMcap',
+			includeStablecoin: false,
+			includeGovernance: false
+		})
 	])
 
 	const rows: Array<IRWAAssetGroupsOverviewRow> = []

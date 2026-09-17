@@ -30,7 +30,6 @@ function overviewProps(overrides: Partial<IRWAAssetsOverview> = {}): IRWAAssetsO
 	]
 	return {
 		platformPage: null,
-		platformAssetSummary: null,
 		assets,
 		typeOptions: [
 			{ key: 'Asset', name: 'Asset' },

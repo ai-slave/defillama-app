@@ -2,8 +2,15 @@ import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import type { RWAChangePeriod } from './change'
 import { chainsColumn } from './columns/chains'
 import { createDefiColumnGroup } from './columns/defi'
-import { assetDetailColumns, perpsDetailColumns, assetTypeColumn, suspiciousCsvColumns } from './columns/details'
-import { flagColumns } from './columns/flags'
+import {
+	assetDetailColumns,
+	assetTypeColumn,
+	complianceDetailColumns,
+	complianceHiddenDetailColumns,
+	perpsDetailColumns,
+	suspiciousCsvColumns
+} from './columns/details'
+import { flagColumns, pickerFlagColumns } from './columns/flags'
 import { createFlowsColumnGroup, type RWAFlowStatus } from './columns/flows'
 import { createMarketcapColumnGroup } from './columns/marketcap'
 import { nameColumn } from './columns/name'
@@ -32,6 +39,28 @@ export const RWA_DEFAULT_COLUMN_IDS: Record<RWATableView, ReadonlyArray<string>>
 	perps: ['name', 'venue', 'assetGroup', 'openInterest', 'volume24h', 'volume30d', 'fundingApr', 'premium']
 }
 
+/** A column set over the same rows: Assets is the money, Compliance the detail columns a platform page shows. */
+export type RWATablePreset = 'assets' | 'compliance'
+
+/** What a preset settles besides its columns: the table's title, its csv name, whether the expand-only columns paint. */
+export const RWA_TABLE_PRESETS: Record<
+	RWATablePreset,
+	{ title: string; csvName: string | null; paintsExpandOnly: boolean }
+> = {
+	assets: { title: 'Assets Rankings', csvName: null, paintsExpandOnly: true },
+	compliance: { title: 'Compliance', csvName: 'compliance', paintsExpandOnly: false }
+}
+
+/** The Compliance preset's painted ids, in table order, read from the columns so the two cannot drift. */
+export const RWA_COMPLIANCE_COLUMN_IDS: ReadonlyArray<string> = [
+	nameColumn,
+	...complianceDetailColumns,
+	...pickerFlagColumns
+].map((column) => {
+	if (!column.id) throw new Error('RWA compliance column is missing an id')
+	return column.id
+})
+
 /** Asset-row columns: shown while a group is open, until the reader picks them. */
 export const RWA_EXPANDED_COLUMN_IDS = ['assetGroup', 'price', 'priceChange24h'] as const
 
@@ -50,6 +79,7 @@ export function getRwaGroupingHiddenColumnIds(groupBy: RWAGroupBy): ReadonlyArra
 export type RWATableColumnOptions = {
 	/** Without CEX venues every row is a DEX. */
 	includeCex?: boolean
+	preset?: RWATablePreset
 }
 
 export function getRwaTableColumns(
@@ -67,6 +97,21 @@ export function getRwaTableColumns(
 			perpsPricingColumnGroup,
 			...perpsExtraColumns,
 			...perpsDetailColumns,
+			...suspiciousCsvColumns
+		]
+	}
+	if (options.preset === 'compliance') {
+		return [
+			nameColumn,
+			...complianceDetailColumns,
+			...pickerFlagColumns,
+			chainsColumn,
+			assetTypeColumn,
+			createMarketcapColumnGroup(period),
+			createDefiColumnGroup(period),
+			createFlowsColumnGroup(flowStatus, period),
+			priceColumn,
+			...complianceHiddenDetailColumns,
 			...suspiciousCsvColumns
 		]
 	}
@@ -90,9 +135,10 @@ export function getRwaDefaultSorting(view: RWATableView): SortingState {
 
 export function getRwaDefaultColumnVisibility(
 	view: RWATableView,
-	columns: Array<RWATableColumn>
+	columns: Array<RWATableColumn>,
+	preset: RWATablePreset = 'assets'
 ): Record<string, boolean> {
-	const defaults = new Set(RWA_DEFAULT_COLUMN_IDS[view])
+	const defaults = new Set(preset === 'compliance' ? RWA_COMPLIANCE_COLUMN_IDS : RWA_DEFAULT_COLUMN_IDS[view])
 	const visibility: Record<string, boolean> = {}
 	for (const leaf of leafColumns(columns)) {
 		visibility[leaf.id] = Boolean(leaf.meta?.csvOnly) || defaults.has(leaf.id)

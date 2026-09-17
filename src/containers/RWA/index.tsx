@@ -2,14 +2,13 @@ import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SummaryCardGrid } from '~/ui/SummaryStats'
-import { formatCompactNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import { foldRwaPerpsTotals, rankRwaDefiProtocols } from './cards/cardData'
 import { RWAOverviewCards } from './cards/OverviewCards'
 import type { RWAOverviewMode } from './constants'
-import { definitions } from './definitions'
 import { RWAOverviewFilters } from './Filters'
+import { useRWAFlowSummary } from './flows.hooks'
 import { RWAHighlights } from './highlights/Highlights'
 import {
 	useFilteredRwaAssets,
@@ -17,12 +16,15 @@ import {
 	hasActiveChartFilters,
 	hasActiveRwaAttributeFilters
 } from './hooks'
-import { formatRwaKpiUsd } from './kpi/format'
 import { RWAKeyMetrics } from './kpi/KeyMetrics'
 import { sumRwaKpiTotals } from './kpi/kpiTotals'
+import { RWAPlatformKeyMetrics } from './kpi/PlatformKeyMetrics'
+import { foldRwaPlatformKpi } from './kpi/platformKpi'
 import { getAssetChartTarget, RWAOverviewChartPanel } from './OverviewChartPanel'
-import { perpsDefinitions } from './Perps/definitions'
-import { RWAPlatformDataViews, RWAPlatformHeader, type RWAPlatformListedTotal } from './PlatformPage'
+import { RWAPlatformEntityChartPanel } from './platformChart/PlatformEntityChartPanel'
+import { RWAPlatformViews } from './PlatformPage/PlatformViews'
+import { RWAPlatformViewSwitch } from './PlatformPage/PlatformViewSwitch'
+import { getRwaPlatformViewQuery, parseRwaPlatformView, RWA_PLATFORM_VIEW_QUERY_KEY } from './PlatformPage/view'
 import { getRankedRwaFilterValues } from './rankedFilterValues'
 import {
 	getRwaChangePeriodQueryValue,
@@ -152,7 +154,8 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 
 	const activeFilters = hasActiveChartFilters(router.query, props.defaultInclusion)
 	const activeAttributeFilters = hasActiveRwaAttributeFilters(router.query)
-	const tableView: RWATableView = includeRwaPerps ? 'perps' : 'assets'
+	/* A platform page is spot only: its perps live on the venue page, whatever a shared link says. */
+	const tableView: RWATableView = includeRwaPerps && !props.platformPage ? 'perps' : 'assets'
 	const groupByScope: RWAGroupByScope = getAssetChartTarget(props).kind
 	const tableGroupBy = parseRwaGroupBy(router.query.groupBy, tableView, { scope: groupByScope })
 	const handleTableViewChange = useCallback(
@@ -215,67 +218,52 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		<RWAOverviewCards cards={props.cards} includeBridgeTvl={includeBridgeTvl} includeCex={panelIncludeCex} />
 	) : null
 
-	/* Platform pages already headline the platform's own AUM and DeFi TVL, so the
-	   same aggregates recomputed over the *filtered* asset set join the identity
-	   card as their own group rather than competing as a row of big cards. */
-	const platformListedTotals: Array<RWAPlatformListedTotal> = [
-		{
-			// Names the scope the money rows below are summed over: without it the
-			// group's numbers silently disagree with the platform's own asset count.
-			label: 'Assets shown',
-			tooltip: 'Assets matching the current filters, and the scope of the totals below.',
-			value: formatCompactNumber(filteredAssets.length)
-		},
-		{
-			label: definitions.totalActiveMcap.label,
-			tooltip: definitions.totalActiveMcap.description,
-			value: formatRwaKpiUsd(kpiTotals.activeMcap)
-		},
-		{
-			label: definitions.totalOnChainMcap.label,
-			tooltip: definitions.totalOnChainMcap.description,
-			value: formatRwaKpiUsd(kpiTotals.onChainMcap)
-		},
-		{
-			label: definitions.totalDefiActiveTvl.label,
-			tooltip: definitions.totalDefiActiveTvl.description,
-			value: formatRwaKpiUsd(kpiTotals.defiActiveTvl)
-		},
-		...(includeRwaPerps
-			? [
-					{
-						label: 'RWA Perps OI',
-						tooltip: perpsDefinitions.totalOpenInterest.description,
-						value: formatRwaKpiUsd(kpiTotals.openInterest)
-					}
-				]
-			: []),
-		{
-			label: definitions.totalAssetIssuers.label,
-			tooltip: definitions.totalAssetIssuers.description,
-			value: formatCompactNumber(kpiTotals.issuerCount, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		}
-	]
-
-	const chartSection = (
-		<RWAOverviewChartPanel
-			overview={props}
-			mode={mode}
-			selectedModeLabel={selectedModeLabel}
-			aggregateAssets={aggregateAssets}
-			view={tableView}
-			groupBy={tableGroupBy}
-			rankedFilterValues={rankedFilterValues}
-			selectedAssetNames={selectedAssetNames}
-			selectedCategories={selectedCategories}
-			includeStablecoins={includeStablecoins}
-			includeGovernance={includeGovernance}
-			includeCex={includeCex}
-			includeBridgeTvl={includeBridgeTvl}
-			activeFilters={activeFilters}
-			activeAttributeFilters={activeAttributeFilters}
-		/>
+	/* The platform header reads the same fold as the table's rows; nothing on it comes from the index's own totals. */
+	const { data: flowSummary } = useRWAFlowSummary()
+	const platformKpi = useMemo(
+		() => (props.platformPage ? foldRwaPlatformKpi(aggregateAssets, { includeBridgeTvl, flowSummary }) : null),
+		[aggregateAssets, flowSummary, includeBridgeTvl, props.platformPage]
 	)
+
+	/* A platform page has its own views in the strip and no Perps switch. */
+	const platformView = parseRwaPlatformView(router.query[RWA_PLATFORM_VIEW_QUERY_KEY])
+	const handlePlatformViewChange = useCallback(
+		(view: ReturnType<typeof parseRwaPlatformView>) => {
+			void pushShallowQuery(router, { [RWA_PLATFORM_VIEW_QUERY_KEY]: getRwaPlatformViewQuery(view) })
+		},
+		[router]
+	)
+	/* Under Information a platform page draws itself as one entity with Add Metrics; the table views keep the breakdown. */
+	const chartSection =
+		props.platformPage && platformView === 'information' ? (
+			<RWAPlatformEntityChartPanel
+				overview={props}
+				meta={props.platformPage.meta}
+				aggregateAssets={aggregateAssets}
+				includeStablecoins={includeStablecoins}
+				includeGovernance={includeGovernance}
+				includeBridgeTvl={includeBridgeTvl}
+				activeFilters={activeFilters}
+			/>
+		) : (
+			<RWAOverviewChartPanel
+				overview={props}
+				mode={mode}
+				selectedModeLabel={selectedModeLabel}
+				aggregateAssets={aggregateAssets}
+				view={tableView}
+				groupBy={tableGroupBy}
+				rankedFilterValues={rankedFilterValues}
+				selectedAssetNames={selectedAssetNames}
+				selectedCategories={selectedCategories}
+				includeStablecoins={includeStablecoins}
+				includeGovernance={includeGovernance}
+				includeCex={includeCex}
+				includeBridgeTvl={includeBridgeTvl}
+				activeFilters={activeFilters}
+				activeAttributeFilters={activeAttributeFilters}
+			/>
+		)
 
 	const filterProps = {
 		enabled: showFilters,
@@ -353,6 +341,13 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			onGroupByChange={handleGroupByChange}
 			includeCex={includeCex}
 			onIncludeCexChange={setIncludeCex}
+			{...(props.platformPage
+				? {
+						viewSwitch: <RWAPlatformViewSwitch value={platformView} onChange={handlePlatformViewChange} />,
+						showPerpsSwitch: false,
+						showGroupBy: platformView !== 'information'
+					}
+				: {})}
 		/>
 	)
 
@@ -378,13 +373,9 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			</Announcement> */}
 			{props.hideEntityNav ? null : <RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />}
 			<RWAOverviewFilters {...filterProps} leading={tableControls} />
-			{props.platformPage ? (
+			{props.platformPage && platformKpi ? (
 				<SummaryCardGrid>
-					<RWAPlatformHeader
-						data={props.platformPage}
-						includeBridgeTvl={includeBridgeTvl}
-						listedTotals={platformListedTotals}
-					/>
+					<RWAPlatformKeyMetrics meta={props.platformPage.meta} kpi={platformKpi} />
 					<div className="col-span-2 flex flex-col gap-2">{chartSection}</div>
 				</SummaryCardGrid>
 			) : (
@@ -396,8 +387,13 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 					{overviewCards}
 				</>
 			)}
-			{props.platformPage ? (
-				<RWAPlatformDataViews data={props.platformPage} renderAssetsTable={() => <RWATable {...tableProps} />} />
+			{props.platformPage && platformKpi ? (
+				<RWAPlatformViews
+					meta={props.platformPage.meta}
+					kpi={platformKpi}
+					view={platformView}
+					renderTable={(view) => <RWATable {...tableProps} preset={view} />}
+				/>
 			) : (
 				<>
 					<RWATable {...tableProps} />

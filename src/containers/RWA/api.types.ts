@@ -4,8 +4,13 @@ import type { RWAPositionalChartDataset } from './chartDataset'
 import type { RWAChartMetricAvailability } from './chartState'
 import type { RWAOverviewInclusionDefaults } from './constants'
 import type { RWAPerpsVenueType } from './Perps/api.types'
-import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
+import type { RWAPlatformMeta } from './PlatformPage/api.types'
 import type { RWAGroupBy } from './table/groupBy'
+
+/** The platform page's own data: the index entry. Every number on the page is a fold over the table's rows. */
+export type RWAPlatformPageData = {
+	meta: RWAPlatformMeta
+}
 
 type RWANumberMap = Record<string, number>
 type RWAContractsByChain = Record<string, Array<string>>
@@ -227,7 +232,6 @@ export type RWAOverviewAsset = RWAOverviewDisplayRow
 
 export interface IRWAAssetsOverview {
 	platformPage: RWAPlatformPageData | null
-	platformAssetSummary: RWAPlatformAssetSummary | null
 	assets: Array<RWAOverviewDisplayRow>
 	typeOptions: Array<{ key: string; name: string; help?: string }>
 	assetClassOptions: Array<{ key: string; name: string; help?: string }>

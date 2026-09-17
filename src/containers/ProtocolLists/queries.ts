@@ -165,7 +165,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 			...(protocol.deprecated !== undefined ? { deprecated: protocol.deprecated } : {}),
 			...(isForkedProtocol ? { forkedFrom: protocol.forkedFrom } : {}),
 			extraTvl: extractExtraTvl(protocol),
-			raiseSummary
+			...(raiseSummary ? { raiseSummary } : {})
 		})
 	}
 

@@ -12,9 +12,12 @@ export const RWA_GROUP_BY_QUERY_KEY = 'groupBy'
 export type RWAGroupByScope = 'all' | 'chain' | 'category' | 'platform' | 'assetGroup'
 export type RWAGroupByOptions = { scope?: RWAGroupByScope }
 
-/** Every page opens by platform. The Perps view calls it Venue. */
-export function getRwaDefaultGroupBy(_view: RWATableView, _options: RWAGroupByOptions = {}): RWAGroupBy {
-	return 'platform'
+/**
+ * Every page opens by platform; the Perps view calls it Venue. A platform page is one platform, so its Assets view
+ * opens flat: the assets are what the reader came for, and Platform would be one row.
+ */
+export function getRwaDefaultGroupBy(view: RWATableView, { scope = 'all' }: RWAGroupByOptions = {}): RWAGroupBy {
+	return view === 'assets' && scope === 'platform' ? 'none' : 'platform'
 }
 
 const GROUP_BY_LABELS: Record<RWAGroupBy, string> = {
@@ -145,11 +148,13 @@ function platformMembership(row: RWALeafRow, platformLogos: RWAPlatformLogos | u
 
 /**
  * Perps markets carry no chain and share one category, so both groupings are spot-only; a spot row is its own
- * asset, so Asset is perps-only. A chain page is one chain, so it has no Chain grouping.
+ * asset, so Asset is perps-only. A chain page is one chain, so it has no Chain grouping; a platform page is one
+ * platform, so its Assets view has no Platform grouping.
  */
 function isRwaGroupByAllowed(groupBy: RWAGroupBy, view: RWATableView, { scope = 'all' }: RWAGroupByOptions): boolean {
 	if (view === 'perps') return groupBy !== 'chain' && groupBy !== 'category'
 	if (scope === 'chain' && groupBy === 'chain') return false
+	if (scope === 'platform' && groupBy === 'platform') return false
 	return groupBy !== 'asset'
 }
 

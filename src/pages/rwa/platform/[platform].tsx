@@ -1,7 +1,6 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
-import { buildRWAPlatformPageData } from '~/containers/RWA/PlatformPage/buildPlatformPageData'
 import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
@@ -70,13 +69,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const meta = platformsIndex.platforms[platformSlug] ?? null
-		const platformPage =
-			meta && props.platformAssetSummary
-				? buildRWAPlatformPageData({
-						meta,
-						assetSummary: props.platformAssetSummary
-					})
-				: null
+		const platformPage = meta ? { meta } : null
 
 		return {
 			props: { ...props, platformPage, platformName },

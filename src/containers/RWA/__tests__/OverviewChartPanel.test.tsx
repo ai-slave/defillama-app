@@ -23,7 +23,6 @@ const assets = [
 function overview(overrides: Partial<IRWAAssetsOverview> = {}): IRWAAssetsOverview {
 	return {
 		platformPage: null,
-		platformAssetSummary: null,
 		assets,
 		typeOptions: [],
 		assetClassOptions: [],

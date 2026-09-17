@@ -5,7 +5,6 @@ import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { RWAOverview } from '~/containers/RWA'
-import { buildRWAPlatformPageData } from '~/containers/RWA/PlatformPage/buildPlatformPageData'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -47,10 +46,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const platformMeta = metadataCache.rwaPlatformsIndex.platforms[platformSlug] ?? null
-		const platformPage =
-			platformMeta && rwaOverview.platformAssetSummary
-				? buildRWAPlatformPageData({ meta: platformMeta, assetSummary: rwaOverview.platformAssetSummary })
-				: null
+		const platformPage = platformMeta ? { meta: platformMeta } : null
 
 		return {
 			props: {

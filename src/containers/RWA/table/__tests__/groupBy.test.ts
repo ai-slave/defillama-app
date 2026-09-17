@@ -45,13 +45,12 @@ describe('parseRwaGroupBy', () => {
 	})
 
 	test('opens every page by platform and hides Chain on a chain page', () => {
-		for (const scope of ['all', 'chain', 'category', 'assetGroup', 'platform'] as const) {
+		for (const scope of ['all', 'chain', 'category', 'assetGroup'] as const) {
 			expect(getRwaDefaultGroupBy('assets', { scope })).toBe('platform')
 		}
 		expect(getRwaDefaultGroupBy('perps', { scope: 'chain' })).toBe('platform')
 		expect(parseRwaGroupBy(undefined, 'assets', { scope: 'chain' })).toBe('platform')
 		expect(parseRwaGroupBy('chain', 'assets', { scope: 'chain' })).toBe('platform')
-		expect(parseRwaGroupBy('chain', 'assets', { scope: 'platform' })).toBe('chain')
 		expect(getRwaGroupByOptions('assets', { scope: 'chain' }).map((option) => option.key)).toEqual([
 			'platform',
 			'assetGroup',
@@ -59,7 +58,22 @@ describe('parseRwaGroupBy', () => {
 			'none'
 		])
 		expect(getRwaGroupByQueryValue('platform', 'assets', { scope: 'chain' })).toBeUndefined()
+	})
+
+	test('opens a platform page flat and never offers Platform there', () => {
+		expect(getRwaDefaultGroupBy('assets', { scope: 'platform' })).toBe('none')
+		expect(parseRwaGroupBy(undefined, 'assets', { scope: 'platform' })).toBe('none')
+		expect(parseRwaGroupBy('platform', 'assets', { scope: 'platform' })).toBe('none')
+		expect(parseRwaGroupBy('chain', 'assets', { scope: 'platform' })).toBe('chain')
+		expect(getRwaGroupByOptions('assets', { scope: 'platform' }).map((option) => option.key)).toEqual([
+			'chain',
+			'assetGroup',
+			'category',
+			'none'
+		])
+		expect(getRwaGroupByQueryValue('none', 'assets', { scope: 'platform' })).toBeUndefined()
 		expect(getRwaGroupByQueryValue('assetGroup', 'assets', { scope: 'platform' })).toBe('assetGroup')
+		expect(getRwaDefaultGroupBy('perps', { scope: 'platform' })).toBe('platform')
 	})
 })
 

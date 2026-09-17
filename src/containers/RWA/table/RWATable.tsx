@@ -11,7 +11,13 @@ import type { RWAOverviewDisplayRow } from '../api.types'
 import { useRWAFlowSummary } from '../flows.hooks'
 import type { RWAChangePeriod } from './change'
 import type { RWAFlowStatus } from './columns/flows'
-import { getRwaColumnOptions, getRwaColumnVisibilityForSelection, getRwaSelectedColumnIds } from './columnSets'
+import {
+	getRwaColumnOptions,
+	getRwaColumnVisibilityForSelection,
+	getRwaSelectedColumnIds,
+	RWA_TABLE_PRESETS,
+	type RWATablePreset
+} from './columnSets'
 import { getRwaCsvRows } from './csv'
 import type { RWAGroupBy, RWAPlatformLogos, RWATableView } from './groupBy'
 import { RWATablePeriodSwitch } from './toolbar/PeriodSwitch'
@@ -31,11 +37,13 @@ export type RWATableProps = {
 	headerSlot?: React.ReactNode
 	/** Shown when the view has no rows. */
 	emptyMessage?: string
+	/** The column set over the rows; a platform page's Compliance view shows the detail columns. */
+	preset?: RWATablePreset
 }
 
 export function RWATable(props: RWATableProps) {
-	// State restarts with the view; the two views share no column set.
-	return <RWATableView key={props.view} {...props} />
+	// State restarts with the view and the preset; they share no column set.
+	return <RWATableView key={`${props.view}-${props.preset ?? 'assets'}`} {...props} />
 }
 
 function RWATableView({
@@ -49,7 +57,8 @@ function RWATableView({
 	includeBridgeTvl,
 	platformLogos,
 	headerSlot,
-	emptyMessage
+	emptyMessage,
+	preset = 'assets'
 }: RWATableProps) {
 	const { data: flowSummary, isLoading, isError } = useRWAFlowSummary()
 	const flowStatus: RWAFlowStatus = isLoading ? 'loading' : isError && !flowSummary ? 'unavailable' : 'ready'
@@ -65,7 +74,8 @@ function RWATableView({
 		period,
 		includeBridgeTvl,
 		includeCex,
-		platformLogos
+		platformLogos,
+		preset
 	})
 
 	const columnOptions = getRwaColumnOptions(columns, groupBy)
@@ -75,7 +85,7 @@ function RWATableView({
 		const resolved = new Set(Array.isArray(next) ? next : next(selectedColumns))
 		instance.setColumnVisibility(getRwaColumnVisibilityForSelection(columns, resolved))
 	}
-	const csvFilename = getCsvFilename(view, selectedChain, includeBridgeTvl)
+	const csvFilename = getCsvFilename(view, selectedChain, includeBridgeTvl, preset)
 
 	return (
 		<Panel padding="none">
@@ -84,7 +94,7 @@ function RWATableView({
 				<TableToolbar className="justify-end">
 					{headerSlot ?? (
 						<h1 className="mr-auto flex w-full grow label-md md:w-auto">
-							{view === 'perps' ? 'Perps Rankings' : 'Assets Rankings'}
+							{view === 'perps' ? 'Perps Rankings' : RWA_TABLE_PRESETS[preset].title}
 						</h1>
 					)}
 					<TableToolbarControlGroup className="justify-end lg:flex-nowrap">
@@ -122,8 +132,13 @@ function RWATableView({
 	)
 }
 
-function getCsvFilename(view: RWATableView, selectedChain: string, includeBridgeTvl: boolean): string {
+function getCsvFilename(
+	view: RWATableView,
+	selectedChain: string,
+	includeBridgeTvl: boolean,
+	preset: RWATablePreset
+): string {
 	const chainSuffix = selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''
 	const bridgeSuffix = view === 'assets' && !includeBridgeTvl ? '-without-bridge-tvl' : ''
-	return `rwa-${view}${chainSuffix}${bridgeSuffix}`
+	return `rwa-${RWA_TABLE_PRESETS[preset].csvName ?? view}${chainSuffix}${bridgeSuffix}`
 }

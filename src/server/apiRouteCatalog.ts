@@ -193,7 +193,6 @@ export const allApiRoutePaths = [
 	'rwa/asset-breakdown',
 	'rwa/flows/[...path]',
 	'rwa/overview-breakdown',
-	'rwa/platform-peers',
 	'rwa/perps/contract-breakdown',
 	'rwa/perps/market-breakdown',
 	'rwa/perps/overview-breakdown',

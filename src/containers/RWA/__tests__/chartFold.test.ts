@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import type { RWAPositionalChartDataset } from '../chartDataset'
-import { ensureRwaTotalSeries, foldRwaTopSeries, RWA_OTHERS_SERIES_LABEL, toRwaShareDataset } from '../chartFold'
+import {
+	dropRwaRedundantTotal,
+	ensureRwaTotalSeries,
+	foldRwaTopSeries,
+	RWA_OTHERS_SERIES_LABEL,
+	toRwaShareDataset
+} from '../chartFold'
 
 const dataset = (dimensions: Array<string>, source: RWAPositionalChartDataset['source']): RWAPositionalChartDataset =>
 	({ dimensions, source }) as RWAPositionalChartDataset
@@ -173,5 +179,46 @@ describe('ensureRwaTotalSeries', () => {
 	test('returns the dataset as is when a Total series exists', () => {
 		const input = dataset(['timestamp', 'Total Active AUM', 'A'], [[1, 1, 1]])
 		expect(ensureRwaTotalSeries(input, 'Total Active AUM')).toBe(input)
+	})
+})
+
+describe('dropRwaRedundantTotal', () => {
+	test('drops the Total when one member equals it on every row, so a one-asset platform draws one line', () => {
+		const dropped = dropRwaRedundantTotal(
+			dataset(
+				['timestamp', 'Total Active AUM', 'Goldfish Gold'],
+				[
+					[0, 0, null],
+					[1, 10, 10],
+					[2, null, null],
+					[3, 12, 12]
+				]
+			)
+		)
+		expect(dropped.dimensions).toEqual(['timestamp', 'Goldfish Gold'])
+		expect(dropped.source).toEqual([
+			[0, null],
+			[1, 10],
+			[2, null],
+			[3, 12]
+		])
+	})
+
+	test('keeps the Total with two members, and with one member that differs on a row', () => {
+		const two = dataset(['timestamp', 'Total Active AUM', 'A', 'B'], [[1, 10, 4, 6]])
+		expect(dropRwaRedundantTotal(two)).toBe(two)
+		const differs = dataset(
+			['timestamp', 'Total Active AUM', 'A'],
+			[
+				[1, 10, 10],
+				[2, 12, 11]
+			]
+		)
+		expect(dropRwaRedundantTotal(differs)).toBe(differs)
+	})
+
+	test('leaves a dataset without a Total alone', () => {
+		const plain = dataset(['timestamp', 'A'], [[1, 10]])
+		expect(dropRwaRedundantTotal(plain)).toBe(plain)
 	})
 })

@@ -10,7 +10,9 @@ import {
 	getRwaTableColumns,
 	getRwaGroupingHiddenColumnIds,
 	RWA_EXPANDED_COLUMN_IDS,
-	type RWATableColumn
+	RWA_TABLE_PRESETS,
+	type RWATableColumn,
+	type RWATablePreset
 } from './columnSets'
 import { rwaTableFeatures } from './features'
 import type { RWAGroupBy, RWAPlatformLogos, RWATableView } from './groupBy'
@@ -28,6 +30,7 @@ export type RWATableInput = {
 	includeBridgeTvl: boolean
 	includeCex: boolean
 	platformLogos: RWAPlatformLogos
+	preset: RWATablePreset
 }
 
 const SEARCH_KEYS = ['asset.assetName', 'asset.ticker', 'asset.parentPlatform']
@@ -48,7 +51,8 @@ export function useRwaTable({
 	period,
 	includeBridgeTvl,
 	includeCex,
-	platformLogos
+	platformLogos,
+	preset
 }: RWATableInput) {
 	const kind = view === 'perps' ? 'perps' : 'spot'
 	// The period rides on the rows, so a period switch builds new rows and the table's cell cache starts over.
@@ -65,8 +69,8 @@ export function useRwaTable({
 		[leafRows, search, groupBy, platformLogos]
 	)
 	const columns = useMemo(
-		() => getRwaTableColumns(view, flowStatus, period, { includeCex }),
-		[view, flowStatus, period, includeCex]
+		() => getRwaTableColumns(view, flowStatus, period, { includeCex, preset }),
+		[view, flowStatus, period, includeCex, preset]
 	)
 
 	const [sorting, setSorting] = useState<SortingState>(() => getRwaDefaultSorting(view))
@@ -82,7 +86,7 @@ export function useRwaTable({
 			return { groupBy, expanded: typeof updater === 'function' ? updater(base) : updater }
 		})
 	const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() =>
-		getRwaDefaultColumnVisibility(view, columns)
+		getRwaDefaultColumnVisibility(view, columns, preset)
 	)
 	// Expand-only columns show while a group is open (always under Group by None) until the reader picks them;
 	// a column the grouping makes redundant stays off.
@@ -90,7 +94,9 @@ export function useRwaTable({
 	const isAnyExpanded = groupBy === 'none' || expanded === true || Object.values(expanded).some(Boolean)
 	const effectiveVisibility = {
 		...columnVisibility,
-		...(expandedColumnsChosenByReader ? {} : expandedVisibility(columns, isAnyExpanded)),
+		...(expandedColumnsChosenByReader || !RWA_TABLE_PRESETS[preset].paintsExpandOnly
+			? {}
+			: expandedVisibility(columns, isAnyExpanded)),
 		...Object.fromEntries(getRwaGroupingHiddenColumnIds(groupBy).map((id) => [id, false]))
 	}
 

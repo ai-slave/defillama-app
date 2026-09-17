@@ -6,7 +6,9 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import {
 	getRwaColumnOptions,
 	getRwaDefaultColumnVisibility,
+	getRwaDefaultSorting,
 	getRwaTableColumns,
+	RWA_COMPLIANCE_COLUMN_IDS,
 	RWA_DEFAULT_COLUMN_IDS
 } from '../columnSets'
 import { getRwaCsvRows } from '../csv'
@@ -139,6 +141,65 @@ describe('RWA table column set', () => {
 			.flatMap((c) => ('columns' in c && c.columns ? c.columns : [c]))
 			.map((c) => c.header)
 		expect(headers.filter((h) => h === '1m')).toHaveLength(3)
+	})
+})
+
+describe('RWA table compliance preset', () => {
+	const assets = [
+		spotAsset({ attestations: false, kycForMintRedeem: true, transferable: true, selfCustody: true, redeemable: null }),
+		spotAsset({
+			id: 'b',
+			canonicalMarketId: 'b',
+			ticker: 'B',
+			assetName: 'Beta',
+			accessModel: 'Permissionless',
+			attestations: true,
+			kycForMintRedeem: false,
+			activeMcap: { total: 900_000, breakdown: [['Ethereum', 900_000]] }
+		})
+	]
+
+	function buildCompliance(groupBy: RWAGroupBy): RwaTestTable {
+		const columns = getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' })
+		return constructTable({
+			features: headlessFeatures,
+			data: groupRwaRows(buildRwaLeafRows(assets, { includeBridgeTvl: true }), groupBy),
+			columns,
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns, 'compliance') }
+		})
+	}
+
+	test('shows the name, the issuer, the access model and the six flags, money hidden', () => {
+		const table = buildCompliance('none')
+		expect(paintedColumnIds(table)).toEqual([...RWA_COMPLIANCE_COLUMN_IDS])
+		expect(paintedColumnIds(table)).not.toContain('activeMcap')
+		expect(table.getAllLeafColumns().map((column) => column.id)).toContain('activeMcap')
+		expect(getRwaDefaultSorting('assets')).toEqual([{ id: 'activeMcap', desc: true }])
+	})
+
+	test('lists the flag columns in the picker under compliance and keeps them out of it under assets', () => {
+		const compliance = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' }))
+		expect(compliance.map((option) => option.key).slice(0, 9)).toEqual([...RWA_COMPLIANCE_COLUMN_IDS])
+		expect(compliance.map((option) => option.key)).not.toContain('rwaClassification')
+		expect(compliance.map((option) => option.key)).not.toContain('cexListed')
+		const assetsPicker = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.key)
+		expect(assetsPicker).not.toContain('kycForMintRedeem')
+		expect(assetsPicker).not.toContain('rwaClassification')
+	})
+
+	test('renders Yes and No in the flag tones on a leaf and the tallies on a group row', () => {
+		const flat = buildCompliance('none')
+		expect(cellMarkup(flat, 'usdy', 'attestations')).toContain('text-data-down')
+		expect(cellMarkup(flat, 'usdy', 'attestations')).toContain('No')
+		expect(cellMarkup(flat, 'usdy', 'kycForMintRedeem')).toContain('text-warning')
+		expect(cellMarkup(flat, 'b', 'attestations')).toContain('text-data-up')
+		expect(cellMarkup(flat, 'usdy', 'redeemable')).toBe('')
+		const grouped = buildCompliance('platform')
+		expect(cellMarkup(grouped, 'platform:Ondo', 'attestations')).toContain('1 / 2')
+		expect(cellMarkup(grouped, 'platform:Ondo', 'accessModel')).toContain('Permissioned')
+		expect(cellMarkup(grouped, 'platform:Ondo', 'accessModel')).toContain('Permissionless')
 	})
 })
 

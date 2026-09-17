@@ -117,3 +117,29 @@ export function ensureRwaTotalSeries(
 	})
 	return { ...dataset, dimensions, source }
 }
+
+/**
+ * Drops the Total line when the dataset has exactly one member and that member equals the Total on every row:
+ * a one-asset platform draws one line named after the asset, not two lines on one value.
+ */
+export function dropRwaRedundantTotal(dataset: RWAPositionalChartDataset): RWAPositionalChartDataset {
+	const { ranked, reserved, others } = getRankedColumns(dataset)
+	if (reserved.length !== 1 || ranked.length !== 1 || others) return dataset
+	const [total] = reserved
+	const [member] = ranked
+	if (!total || !member) return dataset
+	for (const row of dataset.source) {
+		const totalValue = row[total.index]
+		const memberValue = row[member.index]
+		/* The canonical builder writes a 0 total against a member with no value yet; that row is still one series. */
+		if (memberValue == null ? totalValue != null && totalValue !== 0 : totalValue !== memberValue) return dataset
+	}
+	const dimensions: RWAPositionalChartDataset['dimensions'] = [
+		'timestamp',
+		...dataset.dimensions.slice(1).filter((_, index) => index + 1 !== total.index)
+	]
+	const source = dataset.source.map(
+		(row) => row.filter((_, index) => index !== total.index) as RWAPositionalChartDataset['source'][number]
+	)
+	return { ...dataset, dimensions, source }
+}

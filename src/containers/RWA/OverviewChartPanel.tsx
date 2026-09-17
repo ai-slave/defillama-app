@@ -31,7 +31,13 @@ import {
 	type RwaChartAxis
 } from './chartBreakdown'
 import type { RWAPositionalChartDataset } from './chartDataset'
-import { ensureRwaTotalSeries, foldRwaTopSeries, RWA_MAX_CHART_SERIES, toRwaShareDataset } from './chartFold'
+import {
+	dropRwaRedundantTotal,
+	ensureRwaTotalSeries,
+	foldRwaTopSeries,
+	RWA_MAX_CHART_SERIES,
+	toRwaShareDataset
+} from './chartFold'
 import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts, RWA_PERPS_OI_TOTAL_LABEL } from './chartSeries'
 import {
 	getChartMetricLabel,
@@ -445,7 +451,8 @@ export function RWAOverviewChartPanel({
 		if (isFlowMetric || !isTimeSeriesView) return groupedChartDataset
 		/* Volume bars stack per group and carry no Total line; the tooltip sums them. */
 		const withTotal = isPerpsVolume ? groupedChartDataset : ensureRwaTotalSeries(groupedChartDataset, chartTotalLabel)
-		const folded = foldRwaTopSeries(withTotal, {})
+		/* One member equal to the Total is one line: a one-asset platform, or a scope with one group. */
+		const folded = foldRwaTopSeries(dropRwaRedundantTotal(withTotal), {})
 		if (chartView === 'share') return toRwaShareDataset(folded)
 		return isPerpsVolume ? groupMultiSeriesBarChartDataset({ dataset: folded, groupBy: chartPeriod }) : folded
 	}, [chartPeriod, chartTotalLabel, chartView, groupedChartDataset, isFlowMetric, isPerpsVolume, isTimeSeriesView])

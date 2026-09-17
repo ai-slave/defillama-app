@@ -133,7 +133,12 @@ describe('rwa queries', () => {
 		})
 
 		const result = await getRWAAssetsOverview({
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: [],
+				assetGroups: ['Treasuries']
+			} as never
 		})
 
 		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
@@ -182,9 +187,17 @@ describe('rwa queries', () => {
 		])
 		fetchRWAChartDataByAssetMock.mockImplementation(({ target }: { target: { kind: string; slug?: string } }) => {
 			if (target.kind === 'all')
-				return Promise.resolve({ activeMcap: [{ timestamp: 1, alpha: 15 }], onChainMcap: [], defiActiveTvl: [] })
+				return Promise.resolve({
+					activeMcap: [{ timestamp: 1, alpha: 15 }],
+					onChainMcap: [],
+					defiActiveTvl: []
+				})
 			if (target.slug === 'ethereum')
-				return Promise.resolve({ activeMcap: [{ timestamp: 1, alpha: 10 }], onChainMcap: [], defiActiveTvl: [] })
+				return Promise.resolve({
+					activeMcap: [{ timestamp: 1, alpha: 10 }],
+					onChainMcap: [],
+					defiActiveTvl: []
+				})
 			return Promise.reject(new Error('solana down'))
 		})
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -230,13 +243,26 @@ describe('rwa queries', () => {
 		])
 		fetchRWAPerpsOverviewBreakdownChartDataMock.mockImplementation(({ includeCex }: { includeCex: boolean }) =>
 			Promise.resolve([
-				{ timestamp: 1, Hyperliquid: 5, ...(includeCex ? { Binance: 20 } : {}) },
-				{ timestamp: 2, Hyperliquid: 6, ...(includeCex ? { Binance: 24 } : {}) }
+				{
+					timestamp: 1,
+					Hyperliquid: 5,
+					...(includeCex ? { Binance: 20 } : {})
+				},
+				{
+					timestamp: 2,
+					Hyperliquid: 6,
+					...(includeCex ? { Binance: 24 } : {})
+				}
 			])
 		)
 
 		const result = await getRWAAssetsOverview({
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: [],
+				assetGroups: ['Treasuries']
+			} as never
 		})
 		expect(fetchRWAPerpsOverviewBreakdownChartDataMock).toHaveBeenCalledWith({
 			breakdown: 'venue',
@@ -255,7 +281,12 @@ describe('rwa queries', () => {
 
 		const scoped = await getRWAAssetsOverview({
 			chain: 'ethereum',
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: [],
+				assetGroups: ['Treasuries']
+			} as never
 		})
 		expect(scoped).not.toBeNull()
 		expect(scoped?.cards).toBeNull()
@@ -295,7 +326,12 @@ describe('rwa queries', () => {
 		})
 
 		const result = await getRWAAssetsOverview({
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: [],
+				assetGroups: ['Treasuries']
+			} as never
 		})
 
 		expect(result?.assets).toHaveLength(2)
@@ -366,6 +402,117 @@ describe('rwa queries', () => {
 		])
 	})
 
+	test('folds a platform page initial chart by asset name, its default, with no Platform series', async () => {
+		fetchRWAActiveTVLsMock.mockResolvedValue([
+			{
+				id: 'alpha',
+				canonicalMarketId: 'alpha',
+				ticker: 'ALPHA',
+				assetName: 'Alpha',
+				assetGroup: 'Public Equities',
+				parentPlatform: 'Ondo',
+				category: ['Public Equities'],
+				onChainMcap: { Ethereum: 12 },
+				activeMcap: { Ethereum: 10 },
+				defiActiveTvl: {}
+			},
+			{
+				id: 'beta',
+				canonicalMarketId: 'beta',
+				ticker: 'BETA',
+				assetName: 'Beta',
+				assetGroup: 'Public Equities',
+				parentPlatform: 'Ondo',
+				category: ['Public Equities'],
+				onChainMcap: { Ethereum: 24 },
+				activeMcap: { Ethereum: 20 },
+				defiActiveTvl: {}
+			}
+		])
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
+			onChainMcap: [],
+			defiActiveTvl: []
+		})
+
+		const result = await getRWAAssetsOverview({
+			platform: 'ondo',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Public Equities'],
+				platforms: ['Ondo'],
+				assetGroups: ['Public Equities']
+			} as never
+		})
+
+		expect(result?.initialChartDatasets).toEqual([
+			{
+				metric: 'activeMcap',
+				groupBy: 'none',
+				dataset: {
+					dimensions: ['timestamp', 'Total Active AUM', 'Beta', 'Alpha'],
+					source: [[1000, 30, 20, 10]]
+				}
+			}
+		])
+	})
+
+	test('ships a platform page initial chart folded to the drawn ten with Others', async () => {
+		const assets = Array.from({ length: 12 }, (_, index) => ({
+			id: `asset-${index}`,
+			canonicalMarketId: `asset-${index}`,
+			ticker: `A${index}`,
+			assetName: `Asset ${index}`,
+			assetGroup: 'Treasuries',
+			parentPlatform: 'Ondo',
+			category: ['Treasuries'],
+			onChainMcap: { Ethereum: (index + 1) * 2 },
+			activeMcap: { Ethereum: index + 1 },
+			defiActiveTvl: {}
+		}))
+		fetchRWAActiveTVLsMock.mockResolvedValue(assets)
+		fetchRWAChartDataByAssetMock.mockResolvedValue({
+			activeMcap: [Object.fromEntries([['timestamp', 1], ...assets.map((asset, index) => [asset.id, index + 1])])],
+			onChainMcap: [],
+			defiActiveTvl: []
+		})
+
+		const result = await getRWAAssetsOverview({
+			platform: 'ondo',
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: ['Ondo'],
+				assetGroups: ['Treasuries']
+			} as never
+		})
+
+		expect(result?.initialChartDatasets).toEqual([
+			{
+				metric: 'activeMcap',
+				groupBy: 'none',
+				dataset: {
+					dimensions: [
+						'timestamp',
+						'Total Active AUM',
+						'Asset 11',
+						'Asset 10',
+						'Asset 9',
+						'Asset 8',
+						'Asset 7',
+						'Asset 6',
+						'Asset 5',
+						'Asset 4',
+						'Asset 3',
+						'Asset 2',
+						'Others'
+					],
+					source: [[1000, 78, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 3]]
+				}
+			}
+		])
+	})
+
 	test('keeps selected-chain table metric breakdowns filtered and sorted', async () => {
 		fetchRWAActiveTVLsMock.mockResolvedValue([
 			{
@@ -399,8 +546,14 @@ describe('rwa queries', () => {
 		const asset = result?.assets[0]
 		expect(asset?.kind).toBe('spot')
 		if (!asset || asset.kind !== 'spot') throw new Error('Expected a spot RWA asset')
-		expect(asset.onChainMcap).toEqual({ total: 100, breakdown: [['Ethereum', 100]] })
-		expect(asset.activeMcap).toEqual({ total: 90, breakdown: [['Ethereum', 90]] })
+		expect(asset.onChainMcap).toEqual({
+			total: 100,
+			breakdown: [['Ethereum', 100]]
+		})
+		expect(asset.activeMcap).toEqual({
+			total: 90,
+			breakdown: [['Ethereum', 90]]
+		})
 		expect(asset.defiActiveTvl).toEqual({
 			total: 25,
 			breakdown: [
@@ -408,10 +561,19 @@ describe('rwa queries', () => {
 				['Morpho', 5]
 			]
 		})
-		expect(asset.defiActiveTvlByChain).toEqual({ total: 25, breakdown: [['Ethereum', 25]] })
+		expect(asset.defiActiveTvlByChain).toEqual({
+			total: 25,
+			breakdown: [['Ethereum', 25]]
+		})
 		expect(asset.bridgeTvl).toBe(5)
-		expect(asset.bridgeTvlByChain).toEqual({ total: 5, breakdown: [['Ethereum', 5]] })
-		expect(asset.bridgeTvlByProtocol).toEqual({ total: 5, breakdown: [['Morpho', 5]] })
+		expect(asset.bridgeTvlByChain).toEqual({
+			total: 5,
+			breakdown: [['Ethereum', 5]]
+		})
+		expect(asset.bridgeTvlByProtocol).toEqual({
+			total: 5,
+			breakdown: [['Morpho', 5]]
+		})
 	})
 
 	test('merges perps contracts into the overview rows', async () => {
@@ -528,8 +690,14 @@ describe('rwa queries', () => {
 		expect(result?.assetGroups).toContain('Treasuries')
 		expect(fetchRWAPerpsCurrentMock).toHaveBeenLastCalledWith(true)
 		expect(fetchRWAPerpsContractBreakdownChartDataMock).not.toHaveBeenCalled()
-		expect(result?.assets[1]).toMatchObject({ venueType: 'DEX', attestations: null })
-		expect(result?.assets[2]).toMatchObject({ venueType: 'CEX', attestations: null })
+		expect(result?.assets[1]).toMatchObject({
+			venueType: 'DEX',
+			attestations: null
+		})
+		expect(result?.assets[2]).toMatchObject({
+			venueType: 'CEX',
+			attestations: null
+		})
 		expect(result?.platforms).toContain('Binance')
 		expect(result?.issuers).toContain('Unknown')
 
@@ -693,7 +861,12 @@ describe('rwa queries', () => {
 
 		const result = await getRWAAssetsOverview({
 			platform: 'mixed',
-			rwaList: { chains: ['Ethereum'], categories: [], platforms: ['Mixed'], assetGroups: [] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: [],
+				platforms: ['Mixed'],
+				assetGroups: []
+			} as never
 		})
 
 		expect(result?.defaultInclusion.includeStablecoins).toBe(false)
@@ -751,17 +924,37 @@ describe('rwa queries', () => {
 		})
 
 		const result = await getRWAAssetsOverview({
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: [] } as never
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: [],
+				assetGroups: []
+			} as never
 		})
 
 		const rows = new Map(result?.assets.map((asset) => [asset.id, asset]))
 		const alpha = rows.get('alpha')
 		const beta = rows.get('beta')
 		if (alpha?.kind !== 'spot' || beta?.kind !== 'spot') throw new Error('expected spot rows')
-		expect(alpha.priors?.['7d']).toEqual({ activeMcap: 80, onChainMcap: 95, defiActiveTvl: 8, bridgeTvl: 1 })
-		expect(alpha.priors?.['1d']).toEqual({ activeMcap: 85, onChainMcap: 99, defiActiveTvl: null, bridgeTvl: null })
+		expect(alpha.priors?.['7d']).toEqual({
+			activeMcap: 80,
+			onChainMcap: 95,
+			defiActiveTvl: 8,
+			bridgeTvl: 1
+		})
+		expect(alpha.priors?.['1d']).toEqual({
+			activeMcap: 85,
+			onChainMcap: 99,
+			defiActiveTvl: null,
+			bridgeTvl: null
+		})
 		expect(alpha.firstSeen).toBe((latest - 7 * day) * 1e3)
-		expect(beta.priors?.['7d']).toEqual({ activeMcap: 0, onChainMcap: 0, defiActiveTvl: 0, bridgeTvl: 0 })
+		expect(beta.priors?.['7d']).toEqual({
+			activeMcap: 0,
+			onChainMcap: 0,
+			defiActiveTvl: 0,
+			bridgeTvl: 0
+		})
 		expect(beta.firstSeen).toBe((latest - 2 * day) * 1e3)
 		expect(result?.seriesLatestTimestamp).toBe(latest * 1e3)
 		expect(result?.platformLogos).toEqual({})
@@ -1024,9 +1217,27 @@ describe('rwa queries', () => {
 		fetchRWAStatsMock.mockResolvedValue({
 			byCategory: {
 				Treasuries: {
-					base: { onChainMcap: 100, activeMcap: 90, defiActiveTvl: 10, assetCount: 1, assetIssuers: ['Issuer A'] },
-					stablecoinsOnly: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: [] },
-					governanceOnly: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: [] },
+					base: {
+						onChainMcap: 100,
+						activeMcap: 90,
+						defiActiveTvl: 10,
+						assetCount: 1,
+						assetIssuers: ['Issuer A']
+					},
+					stablecoinsOnly: {
+						onChainMcap: 0,
+						activeMcap: 0,
+						defiActiveTvl: 0,
+						assetCount: 0,
+						assetIssuers: []
+					},
+					governanceOnly: {
+						onChainMcap: 0,
+						activeMcap: 0,
+						defiActiveTvl: 0,
+						assetCount: 0,
+						assetIssuers: []
+					},
 					stablecoinsAndGovernance: {
 						onChainMcap: 0,
 						activeMcap: 0,
@@ -1036,9 +1247,27 @@ describe('rwa queries', () => {
 					}
 				},
 				'RWA Perps': {
-					base: { onChainMcap: 500, activeMcap: 450, defiActiveTvl: 0, assetCount: 2, assetIssuers: ['Issuer P'] },
-					stablecoinsOnly: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: [] },
-					governanceOnly: { onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: [] },
+					base: {
+						onChainMcap: 500,
+						activeMcap: 450,
+						defiActiveTvl: 0,
+						assetCount: 2,
+						assetIssuers: ['Issuer P']
+					},
+					stablecoinsOnly: {
+						onChainMcap: 0,
+						activeMcap: 0,
+						defiActiveTvl: 0,
+						assetCount: 0,
+						assetIssuers: []
+					},
+					governanceOnly: {
+						onChainMcap: 0,
+						activeMcap: 0,
+						defiActiveTvl: 0,
+						assetCount: 0,
+						assetIssuers: []
+					},
 					stablecoinsAndGovernance: {
 						onChainMcap: 0,
 						activeMcap: 0,
@@ -1072,9 +1301,17 @@ describe('rwa queries', () => {
 			}
 		])
 		const result = await getRWAAssetsOverview({
-			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: ['Ondo'], assetGroups: [] } as never,
+			rwaList: {
+				chains: ['Ethereum'],
+				categories: ['Treasuries'],
+				platforms: ['Ondo'],
+				assetGroups: []
+			} as never,
 			rwaPlatformsIndex: {
-				platforms: { ondo: { logo: 'https://icons/ondo.png' }, securitize: { logo: 'https://icons/securitize.png' } }
+				platforms: {
+					ondo: { logo: 'https://icons/ondo.png' },
+					securitize: { logo: 'https://icons/securitize.png' }
+				}
 			} as never
 		})
 		expect(result?.platformLogos).toEqual({ ondo: 'https://icons/ondo.png' })

@@ -131,6 +131,40 @@ describe('RWATable expansion', () => {
 		expect(headerIds()).toContain('chains')
 	})
 
+	test('paints the compliance preset without the expand-only columns under Group by None', async () => {
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
+		const headerIds = () => {
+			const first = container.querySelector('tbody tr')
+			return first
+				? [...first.querySelectorAll('td[data-column-id]')].map((td) => td.getAttribute('data-column-id'))
+				: []
+		}
+		await act(async () => {
+			root.render(
+				createElement(
+					QueryClientProvider,
+					{ client },
+					createElement(RWATable, { ...tableProps('7d'), groupBy: 'none', preset: 'compliance' })
+				)
+			)
+		})
+		// The mock table paints csv-only columns too, so only the painted prefix is asserted.
+		expect(headerIds().slice(0, 9)).toEqual([
+			'name',
+			'issuer',
+			'accessModel',
+			'attestations',
+			'kycForMintRedeem',
+			'kycAllowlistedWhitelistedToTransferHold',
+			'transferable',
+			'selfCustody',
+			'redeemable'
+		])
+		expect(headerIds()).not.toContain('assetGroup')
+		expect(headerIds()).not.toContain('price')
+		expect(headerIds()).not.toContain('activeMcap')
+	})
+
 	test('starts collapsed after a grouping switch, so Asset Type hides again', async () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
 		const columnIds = () => {

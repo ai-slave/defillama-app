@@ -71,3 +71,18 @@ function createFlagColumn({ key, width, yesIsWarning = false, csvOnly = false }:
 }
 
 export const flagColumns = FLAG_COLUMNS.map(createFlagColumn)
+/** The Compliance preset shows six flags in the reader's order: proof first, then the gates, then the exits. CEX
+    listing is known on a third of the assets and reads Yes wherever known, so it stays csv-only. */
+const COMPLIANCE_FLAG_ORDER: ReadonlyArray<FlagKey> = [
+	'attestations',
+	'kycForMintRedeem',
+	'kycAllowlistedWhitelistedToTransferHold',
+	'transferable',
+	'selfCustody',
+	'redeemable'
+]
+export const pickerFlagColumns = COMPLIANCE_FLAG_ORDER.map((key) => {
+	const column = FLAG_COLUMNS.find((candidate) => candidate.key === key)
+	if (!column) throw new Error(`flag column ${key} is not configured`)
+	return createFlagColumn({ ...column, csvOnly: false })
+})

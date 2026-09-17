@@ -12,10 +12,16 @@ export type RWATableControlsProps = {
 	onGroupByChange: (groupBy: RWAGroupBy) => void
 	includeCex: boolean
 	onIncludeCexChange: (value: boolean) => void
+	/** A platform page's own view switch, mounted first. */
+	viewSwitch?: React.ReactNode
+	/** A platform page without perps rows has no Perps view to switch to. */
+	showPerpsSwitch?: boolean
+	/** The Information view of a platform page has nothing to group. */
+	showGroupBy?: boolean
 }
 
 /**
- * The controls that set the page's axis and mode: the Group by, the Assets or Perps switch and, in the Perps
+ * The controls that set the page's axis and mode: the view switches first, then the Group by and, in the Perps
  * view, the CEX venues toggle. They drive the charts, the panel and the table, so they sit above the chart,
  * not in the table toolbar.
  */
@@ -26,12 +32,18 @@ export function RWATableControls({
 	groupByScope,
 	onGroupByChange,
 	includeCex,
-	onIncludeCexChange
+	onIncludeCexChange,
+	viewSwitch,
+	showPerpsSwitch = true,
+	showGroupBy = true
 }: RWATableControlsProps) {
 	return (
 		<>
-			<RWATableGroupBySelect view={view} scope={groupByScope} value={groupBy} onChange={onGroupByChange} />
-			<RWATableViewSwitch value={view} onChange={onViewChange} />
+			{viewSwitch}
+			{showPerpsSwitch ? <RWATableViewSwitch value={view} onChange={onViewChange} /> : null}
+			{showGroupBy ? (
+				<RWATableGroupBySelect view={view} scope={groupByScope} value={groupBy} onChange={onGroupByChange} />
+			) : null}
 			{view === 'perps' ? (
 				<Checkbox
 					variant="filter"
