@@ -48,11 +48,13 @@ export function useVariableOptions(kind: DashboardVariableKind): {
 				}))
 			]
 		}
-		return protocols.map((protocol) => ({
-			value: protocol.slug,
-			label: protocol.name,
-			logo: getItemIconUrl('protocol', protocol, protocol.slug)
-		}))
+		return protocols
+			.toSorted((a, b) => (b.tvl || 0) - (a.tvl || 0))
+			.map((protocol) => ({
+				value: protocol.slug,
+				label: protocol.name,
+				logo: getItemIconUrl('protocol', protocol, protocol.slug)
+			}))
 	}, [kind, chains, protocols])
 	return { options, isLoading: protocolsLoading }
 }
