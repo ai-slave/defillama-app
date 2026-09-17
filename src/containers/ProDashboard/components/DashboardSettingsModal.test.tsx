@@ -15,6 +15,7 @@ let client: QueryClient
 const save = vi.fn(async () => {})
 const close = vi.fn()
 const remove = vi.fn(async () => {})
+const move = vi.fn(async () => {})
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -32,7 +33,14 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function renderSettings(tags: Array<string> = []) {
+async function renderSettings(
+	tags: Array<string> = [],
+	teamProps: {
+		myTeam?: { id: string; name: string } | null
+		team?: { id: string; name: string } | null
+		canMove?: boolean
+	} = {}
+) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
@@ -45,10 +53,16 @@ async function renderSettings(tags: Array<string> = []) {
 					dashboardId="dashboard-1"
 					onSave={save}
 					onDelete={remove}
+					onMoveTeam={move}
+					{...teamProps}
 				/>
 			</QueryClientProvider>
 		)
 	)
+}
+
+function teamSwitch() {
+	return document.querySelector<HTMLInputElement>('input[type="checkbox"][id$="-share-team"]')
 }
 
 function button(label: string) {
@@ -100,4 +114,61 @@ test('deletion runs through the confirmation dialog and reports a failure there'
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
 	expect(remove).toHaveBeenCalledTimes(2)
 	expect(remove).toHaveBeenLastCalledWith('dashboard-1')
+})
+
+test('sharing with the team is a separate call that lands after the settings save', async () => {
+	await renderSettings([], { myTeam: { id: 'team-1', name: 'Growth' }, team: null, canMove: true })
+	const toggle = teamSwitch()!
+	expect(toggle.checked).toBe(false)
+	expect(document.body.textContent).toContain('Share with Growth')
+	await act(async () => toggle.click())
+	await submit()
+	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	expect(move).toHaveBeenCalledExactlyOnceWith('team-1')
+	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'public', tags: [] })
+	expect(save.mock.invocationCallOrder[0]).toBeLessThan(move.mock.invocationCallOrder[0])
+})
+
+test('an unchanged switch does not move, and unchecking moves the dashboard back to personal', async () => {
+	await renderSettings([], {
+		myTeam: { id: 'team-1', name: 'Growth' },
+		team: { id: 'team-1', name: 'Growth' },
+		canMove: true
+	})
+	const toggle = teamSwitch()!
+	expect(toggle.checked).toBe(true)
+	await submit()
+	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	expect(move).not.toHaveBeenCalled()
+
+	close.mockClear()
+	await act(async () => toggle.click())
+	await submit()
+	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	expect(move).toHaveBeenCalledExactlyOnceWith(null)
+})
+
+test('members see the sharing state but cannot change it, and users without a team see nothing', async () => {
+	await renderSettings([], {
+		myTeam: { id: 'team-1', name: 'Growth' },
+		team: { id: 'team-1', name: 'Growth' },
+		canMove: false
+	})
+	expect(teamSwitch()!.disabled).toBe(true)
+	expect(teamSwitch()!.checked).toBe(true)
+
+	await renderSettings([], { myTeam: null, team: null, canMove: true })
+	expect(teamSwitch()).toBeNull()
+})
+
+test('a failed move keeps the dialog open after the settings save', async () => {
+	move.mockRejectedValueOnce(new Error('Unauthorized'))
+	await renderSettings([], { myTeam: { id: 'team-1', name: 'Growth' }, team: null, canMove: true })
+	await act(async () => teamSwitch()!.click())
+	await submit()
+	await vi.waitFor(() =>
+		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
+	)
+	expect(save).toHaveBeenCalledOnce()
+	expect(close).not.toHaveBeenCalled()
 })

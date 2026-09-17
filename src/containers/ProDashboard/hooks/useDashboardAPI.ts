@@ -114,11 +114,36 @@ export function useDashboardAPI(dashboardId: string | null) {
 			)
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
 		}
 	})
 
 	const updateDashboardMutation = useUpdateDashboard(dashboardId, 'manual')
+
+	// Sharing with the team or taking it back is an access change, kept apart from document saves.
+	const moveDashboardTeamMutation = useMutation({
+		mutationFn: async ({ id, teamId }: { id: string; teamId: string | null }) => {
+			return await dashboardAPI.moveDashboardTeam(id, teamId, authorizedFetch)
+		},
+		onSuccess: (dashboard) => {
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
+			// An admin who moved a dashboard back to its creator can no longer open it.
+			if (dashboard.access?.role === 'none') {
+				queryClient.removeQueries({ queryKey: ['pro-dashboard', 'dashboard', dashboard.id] })
+				if (dashboard.slug) queryClient.removeQueries({ queryKey: ['pro-dashboard', 'dashboard', dashboard.slug] })
+				void router.push('/pro?tab=team')
+				return
+			}
+			queryClient.setQueriesData(
+				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
+				(oldData: Dashboard | undefined) => (oldData?.id === dashboard.id ? dashboard : oldData)
+			)
+		}
+	})
 
 	// Mutation to delete dashboard
 	const deleteDashboardMutation = useMutation({
@@ -141,6 +166,7 @@ export function useDashboardAPI(dashboardId: string | null) {
 			}
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
 			// Navigate away if current dashboard was deleted
 			const routeKey = router.query.dashboardId
@@ -191,6 +217,7 @@ export function useDashboardAPI(dashboardId: string | null) {
 		// Mutations
 		createDashboard: createDashboardMutation,
 		updateDashboard: updateDashboardMutation,
+		moveDashboardTeam: moveDashboardTeamMutation,
 		deleteDashboard: deleteDashboardWithConfirmation,
 		isDeleting: deleteDashboardMutation.isPending,
 
@@ -256,11 +283,18 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 					server.editedAt
 				)
 				if (items !== payload.items) {
-					toast('This dashboard was changed in another tab or session. Your edits were merged.', {
-						id: 'dashboard-merged',
-						duration: 8000,
-						ariaProps: { role: 'status', 'aria-live': 'polite' }
-					})
+					// On a team dashboard the last editor is most likely a teammate; personal ones are another tab.
+					const editor = server.team ? server.editedBy?.displayName : undefined
+					toast(
+						editor
+							? `${editor} changed this dashboard while you were editing. Your edits were merged.`
+							: 'This dashboard was changed in another tab or session. Your edits were merged.',
+						{
+							id: 'dashboard-merged',
+							duration: 8000,
+							ariaProps: { role: 'status', 'aria-live': 'polite' }
+						}
+					)
 				}
 				return merged
 			}
@@ -274,6 +308,7 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 			)
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'team-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
 		}
 	})

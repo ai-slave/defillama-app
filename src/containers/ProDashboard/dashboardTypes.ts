@@ -58,11 +58,29 @@ export interface DashboardCopySource {
 	name: string
 }
 
+export type DashboardRole = 'owner' | 'admin' | 'member' | 'viewer' | 'none'
+
+/** Server-resolved permissions for the authenticated viewer. Absent on public responses. */
+export interface DashboardAccess {
+	role: DashboardRole
+	canEdit: boolean
+	canDelete: boolean
+	canMove: boolean
+}
+
+export interface DashboardTeam {
+	id: string
+	name: string
+}
+
 export interface Dashboard {
 	copiedFrom?: DashboardCopySource
 	id: string
 	slug?: string
 	user?: string
+	team?: DashboardTeam | null
+	access?: DashboardAccess
+	editedBy?: PublicDashboardAuthor | null
 	data: {
 		items: Array<DashboardItemConfig>
 		dashboardName: string

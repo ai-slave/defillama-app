@@ -137,6 +137,8 @@ async function activateAddedLlamaAIChart(
 	authorizedFetch: ReturnType<typeof useAuthContext>['authorizedFetch'],
 	dashboard: Dashboard
 ): Promise<'active' | 'declined' | 'pending'> {
+	// Refresh policies belong to the creator; a teammate's chart is stored as a pinned snapshot by design.
+	if (dashboard.access && dashboard.access.role !== 'owner') return 'active'
 	const plan = prepareStoredDashboardActivation(dashboard.data.items)
 	if (plan.expectedItemIds.length === 0) return 'active'
 	const fetchAuthenticatedResponse = async (url: string, options?: RequestInit): Promise<Response> => {

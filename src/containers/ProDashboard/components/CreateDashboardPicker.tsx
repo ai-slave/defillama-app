@@ -13,6 +13,7 @@ import {
 	DASHBOARD_DESCRIPTION_MAX_LENGTH,
 	DASHBOARD_NAME_MAX_LENGTH,
 	type Dashboard,
+	type DashboardTeam,
 	type DashboardVariable
 } from '../dashboardTypes'
 import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
@@ -43,8 +44,11 @@ interface CreateDashboardPickerProps {
 		description: string
 		items?: Array<DashboardItemConfig>
 		variables?: Array<DashboardVariable>
+		teamId?: string
 	}) => Promise<Dashboard>
 	comparisonPreset?: ComparisonPreset | null
+	/** The viewer's team; enables "Create in" on the blank dashboard form. */
+	team?: DashboardTeam | null
 }
 
 export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
@@ -52,7 +56,7 @@ export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
 	return <CreateDashboardPickerInner key={open ? 'open' : 'closed'} {...props} />
 }
 
-function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }: CreateDashboardPickerProps) {
+function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, team }: CreateDashboardPickerProps) {
 	const router = useRouter()
 	const open = Ariakit.useStoreState(dialogStore, 'open')
 	const [mode, setMode] = useState<PickerMode>('picker')
@@ -135,7 +139,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 					</ProButton>
 				}
 			>
-				<CreateDashboardModalContent onCreate={submitCreation} status={creation.status} />
+				<CreateDashboardModalContent onCreate={submitCreation} status={creation.status} team={team ?? null} />
 				{creationFeedback}
 			</ProDialog>
 		)
@@ -368,7 +372,8 @@ function DashboardTemplates({
 
 function CreateDashboardModalContent({
 	onCreate,
-	status
+	status,
+	team
 }: {
 	status: MutationStatus
 	onCreate: (data: {
@@ -376,11 +381,15 @@ function CreateDashboardModalContent({
 		visibility: 'private' | 'public'
 		tags: Array<string>
 		description: string
+		teamId?: string
 	}) => void
+	team: DashboardTeam | null
 }) {
 	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
 	const [visibility, setVisibility] = useState<'private' | 'public'>(hasActiveSubscription ? 'private' : 'public')
+	const canCreateInTeam = !!team && hasActiveSubscription
+	const [createIn, setCreateIn] = useState<'personal' | 'team'>('personal')
 	const [tags, setTags] = useState<Array<string>>([])
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
@@ -402,7 +411,13 @@ function CreateDashboardModalContent({
 			return
 		}
 
-		onCreate({ dashboardName, visibility, tags, description })
+		onCreate({
+			dashboardName,
+			visibility,
+			tags,
+			description,
+			...(canCreateInTeam && createIn === 'team' && team ? { teamId: team.id } : {})
+		})
 	}
 
 	const handleAddTag = () => {
@@ -444,6 +459,39 @@ function CreateDashboardModalContent({
 						required
 					/>
 				</div>
+
+				{team ? (
+					<div>
+						<p id="create-dashboard-owner" className="mb-3 block text-sm font-medium text-pro-text-primary">
+							Create in
+						</p>
+						<Ariakit.RadioProvider value={createIn} setValue={(value) => setCreateIn(value as 'personal' | 'team')}>
+							<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="create-dashboard-owner">
+								<label htmlFor={`${id}-personal`} className={visibilityCardStyles(createIn === 'personal')}>
+									<Ariakit.Radio id={`${id}-personal`} value="personal" className="sr-only" />
+									<Icon name="user" height={16} width={16} className="mr-2 inline" />
+									My dashboards
+								</label>
+								<label
+									htmlFor={`${id}-team`}
+									className={`${visibilityCardStyles(createIn === 'team')} ${
+										!canCreateInTeam ? 'cursor-not-allowed opacity-50' : ''
+									}`}
+								>
+									<Ariakit.Radio id={`${id}-team`} value="team" disabled={!canCreateInTeam} className="sr-only" />
+									<Icon name="users" height={16} width={16} className="mr-2 inline" />
+									<span className="truncate">{team.name}</span>
+									{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
+								</label>
+							</Ariakit.RadioGroup>
+						</Ariakit.RadioProvider>
+						<p className="mt-2 text-sm text-pro-text-tertiary">
+							{createIn === 'team' && canCreateInTeam
+								? 'Teammates with a seat can edit it. It stays with the team if you leave.'
+								: 'Only you can edit it. You can share it with your team later from Settings.'}
+						</p>
+					</div>
+				) : null}
 
 				<div>
 					<p id="create-dashboard-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">

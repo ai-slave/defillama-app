@@ -11,6 +11,7 @@ import { getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults'
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
+import { useMyTeam } from '~/containers/ProDashboard/hooks/useMyTeam'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -269,7 +270,15 @@ function ProDashboardContent() {
 	const { items } = useProDashboardItemsState()
 	const { protocolsLoading } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod, setTimePeriod, setCustomTimePeriod } = useProDashboardTime()
-	const { isReadOnly, reason: readOnlyReason } = useProDashboardPermissions()
+	const {
+		isReadOnly,
+		reason: readOnlyReason,
+		canEdit: canEditDashboard,
+		canDelete: canDeleteDashboard,
+		canMove: canMoveDashboard,
+		team: dashboardTeam
+	} = useProDashboardPermissions()
+	const myTeam = useMyTeam()
 	const { handleAppendItems } = useProDashboardEditorActions()
 	const { canUndo: canUndoEdit, canRedo: canRedoEdit, undo: undoEdit, redo: redoEdit } = useProDashboardHistory()
 	const { variables } = useProDashboardVariables()
@@ -320,6 +329,7 @@ function ProDashboardContent() {
 		dashboardName,
 		dashboardId,
 		saveDashboard,
+		moveDashboardTeam,
 		publishDashboard,
 		copyDashboard,
 		dashboardVisibility,
@@ -636,7 +646,10 @@ function ProDashboardContent() {
 									}
 								}
 							: {})}
-						{...(isDashboardOwner && dashboardId ? { onDelete: () => deleteDashboard(dashboardId) } : {})}
+						{...(canDeleteDashboard && dashboardId ? { onDelete: () => deleteDashboard(dashboardId) } : {})}
+						{...(canMoveDashboard && myTeam && dashboardId
+							? { moveTeam: { team: dashboardTeam, myTeam, isCreator: isDashboardOwner, onMove: moveDashboardTeam } }
+							: {})}
 					/>
 					<DashboardActionsSheet actions={sheetActions} />
 					{isAuthenticated ? (
@@ -653,7 +666,7 @@ function ProDashboardContent() {
 									{doneStatusLabel}
 								</span>
 							) : null}
-							{mode === 'view' && dashboardId && currentDashboard?.user === user?.id ? (
+							{mode === 'view' && dashboardId && canEditDashboard ? (
 								<EditDashboardButton key={`edit-${dashboardId}`} href={dashboardModeHref('edit')} />
 							) : null}
 							{mode === 'edit' && dashboardId ? (
@@ -711,6 +724,11 @@ function ProDashboardContent() {
 						Private
 					</ProBadge>
 				)}
+				{dashboardTeam ? (
+					<ProBadge tone="info" icon={<Icon name="users" height={12} width={12} />}>
+						{dashboardTeam.name}
+					</ProBadge>
+				) : null}
 				{currentDashboard?.aiGenerated && Object.keys(currentDashboard.aiGenerated).length > 0 ? (
 					<ProBadge tone="info" icon={<Icon name="sparkles" height={12} width={12} />}>
 						AI Generated
@@ -901,7 +919,7 @@ function ProDashboardContent() {
 						hasActiveSubscription ? () => setShowIterateDashboardModal(true) : () => showPaywall('llamaai')
 					}
 					isReadOnly={isReadOnly}
-					{...(isReadOnly && isDashboardOwner && dashboardId ? { editHref: dashboardModeHref('edit') } : {})}
+					{...(isReadOnly && canEditDashboard && dashboardId ? { editHref: dashboardModeHref('edit') } : {})}
 				/>
 			) : null}
 
@@ -914,12 +932,20 @@ function ProDashboardContent() {
 					tags={dashboardTags}
 					dashboardId={dashboardId}
 					onSave={saveDashboard}
-					onDelete={deleteDashboard}
+					{...(canDeleteDashboard ? { onDelete: deleteDashboard } : {})}
+					myTeam={myTeam}
+					team={dashboardTeam}
+					canMove={canMoveDashboard}
+					onMoveTeam={moveDashboardTeam}
 				/>
 			</Suspense>
 
 			<Suspense fallback={createDashboardDialogOpen ? <ProDialogFallback width="sm" /> : null}>
-				<CreateDashboardPicker dialogStore={createDashboardDialogStore} onCreate={handleCreateDashboard} />
+				<CreateDashboardPicker
+					dialogStore={createDashboardDialogStore}
+					onCreate={handleCreateDashboard}
+					team={myTeam}
+				/>
 			</Suspense>
 
 			<Suspense fallback={showGenerateDashboardModal ? <ProDialogFallback width="md" /> : null}>

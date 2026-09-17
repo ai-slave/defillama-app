@@ -30,6 +30,8 @@ import {
 } from '~/containers/ProDashboard/discoveryCategories'
 import { useFreeTierStatus } from '~/containers/ProDashboard/hooks/useFreeTierStatus'
 import { useMyDashboards } from '~/containers/ProDashboard/hooks/useMyDashboards'
+import { useMyTeam } from '~/containers/ProDashboard/hooks/useMyTeam'
+import { useTeamDashboards } from '~/containers/ProDashboard/hooks/useTeamDashboards'
 import {
 	ProDashboardAPIProvider,
 	useProDashboardDashboard,
@@ -198,7 +200,7 @@ function ProPageContent({ initialDiscoveryCategories }: ProPageProps) {
 	)
 }
 
-const tabs = ['my-dashboards', 'discover', 'favorites', 'following', 'profile'] as const
+const tabs = ['my-dashboards', 'team', 'discover', 'favorites', 'following', 'profile'] as const
 const publicTabs = ['discover'] as const
 type ProTab = (typeof tabs)[number]
 
@@ -226,7 +228,8 @@ function ProContent({
 }) {
 	const router = useRouter()
 	const { tab } = router.query
-	const availableTabs = isAuthenticated ? tabs : publicTabs
+	const myTeam = useMyTeam()
+	const availableTabs = isAuthenticated ? (myTeam ? tabs : tabs.filter((value) => value !== 'team')) : publicTabs
 	const activeTab = availableTabs.find((value) => value === tab) ?? 'discover'
 
 	const switchTab = (nextTab: ProTab) => {
@@ -273,6 +276,17 @@ function ProContent({
 	const visibleMyDashboards = myDashboardsControlsActive
 		? filterAndSortMyDashboards(myDashboards, myDashboardsControls)
 		: myDashboards
+	const {
+		dashboards: teamDashboards,
+		isLoading: isLoadingTeamDashboards,
+		totalPages: teamDashboardsTotalPages,
+		totalItems: teamDashboardsTotalItems,
+		goToPage: goToTeamPage
+	} = useTeamDashboards({
+		page: activeTab === 'team' ? selectedPage : 1,
+		limit: 20,
+		enabled: isAuthenticated && !!myTeam
+	})
 
 	useEffect(() => {
 		if (createDialogOpen && !dialogWasOpenRef.current) {
@@ -339,6 +353,11 @@ function ProContent({
 								className={proTabStyles}
 							>
 								My Dashboards
+							</Tab>
+						) : null}
+						{isAuthenticated && myTeam ? (
+							<Tab type="button" value="team" data-umami-event="dashboard-open-team" className={proTabStyles}>
+								Team
 							</Tab>
 						) : null}
 						{isAuthenticated ? (
@@ -510,6 +529,46 @@ function ProContent({
 					</TabPanel>
 				) : null}
 
+				{isAuthenticated && myTeam ? (
+					<TabPanel value="team" className="flex flex-col gap-4">
+						{!isLoadingTeamDashboards ? (
+							<ProMeta
+								items={[
+									`Shared with ${myTeam.name}`,
+									`Showing ${teamDashboards.length} of ${teamDashboardsTotalItems} dashboards`
+								]}
+							/>
+						) : null}
+
+						<DashboardList
+							dashboards={teamDashboards}
+							isLoading={isLoadingTeamDashboards}
+							onCreateNew={() => createDashboardDialogStore.show()}
+							onDeleteDashboard={deleteDashboard}
+						/>
+
+						{teamDashboardsTotalPages > 1 ? (
+							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
+								{getDashboardPagesToShow(selectedPage, teamDashboardsTotalPages).map((pageNum) => {
+									const isActive = selectedPage === pageNum
+									return (
+										<ProButton
+											type="button"
+											square
+											variant={isActive ? 'primary' : 'ghost'}
+											key={`team-dashboard-page-${pageNum}`}
+											onClick={() => goToTeamPage(pageNum)}
+											{...(isActive ? { 'aria-current': 'page' as const } : {})}
+										>
+											{pageNum}
+										</ProButton>
+									)
+								})}
+							</div>
+						) : null}
+					</TabPanel>
+				) : null}
+
 				{isAuthenticated ? (
 					<TabPanel value="favorites" className="flex flex-col gap-4">
 						<LikedDashboards />
@@ -533,6 +592,7 @@ function ProContent({
 						dialogStore={createDashboardDialogStore}
 						onCreate={handleCreateDashboard}
 						comparisonPreset={comparisonPreset}
+						team={myTeam}
 					/>
 				</Suspense>
 

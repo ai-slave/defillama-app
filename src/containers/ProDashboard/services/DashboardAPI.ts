@@ -98,10 +98,12 @@ export type DashboardSavePayload = {
 	description?: string
 	aiGenerated?: AIGeneratedData | null
 	copySourceDashboardId?: string
+	/** Create inside the caller's team. Ignored on update; moves go through `moveDashboardTeam`. */
+	teamId?: string
 }
 
 function dashboardSaveBody(data: DashboardSavePayload, baseEditedAt?: string) {
-	const { visibility, tags, description, aiGenerated, copySourceDashboardId, ...dashboardData } = data
+	const { visibility, tags, description, aiGenerated, copySourceDashboardId, teamId, ...dashboardData } = data
 	return {
 		data: dashboardData,
 		visibility: visibility || 'private',
@@ -109,6 +111,7 @@ function dashboardSaveBody(data: DashboardSavePayload, baseEditedAt?: string) {
 		description: typeof description === 'string' ? description : '',
 		aiGenerated: aiGenerated || null,
 		...(copySourceDashboardId && { copySourceDashboardId }),
+		...(teamId && { teamId }),
 		...(baseEditedAt && { baseEditedAt })
 	}
 }
@@ -166,12 +169,13 @@ class DashboardAPIService {
 	}
 
 	async listDashboardsPaginated(
-		params: { page?: number; limit?: number },
+		params: { page?: number; limit?: number; scope?: 'personal' | 'team' },
 		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{ items: Array<Dashboard>; page: number; perPage: number; totalItems: number; totalPages: number }> {
 		const searchParams = new URLSearchParams()
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
+		if (params.scope === 'team') searchParams.append('scope', 'team')
 		searchParams.append('_', Date.now().toString())
 
 		const response = await requireAuthorizedResponse(
@@ -210,6 +214,19 @@ class DashboardAPIService {
 		} finally {
 			if (keepalive) dashboardKeepaliveBytes -= bytes
 		}
+	}
+
+	async moveDashboardTeam(
+		id: string,
+		teamId: string | null,
+		authorizedFetch: DashboardAuthorizedFetch
+	): Promise<Dashboard> {
+		const response = await requireAuthorizedResponse(
+			authorizedFetch,
+			`${FEATURES_SERVER}/dashboards/${encodeURIComponent(id)}/team`,
+			{ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId }) }
+		)
+		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
 	}
 
 	async deleteDashboard(id: string, authorizedFetch: DashboardAuthorizedFetch): Promise<{ message: string }> {

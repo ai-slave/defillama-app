@@ -9,7 +9,9 @@ import HomePage from '~/pages/pro'
 const mocks = vi.hoisted(() => ({
 	router: { pathname: '/pro', query: {} as Record<string, string | Array<string>>, replace: vi.fn(), isReady: true },
 	authenticated: true,
-	useMyDashboards: vi.fn(() => ({ dashboards: [], isLoading: false, totalPages: 0, totalItems: 0 }))
+	team: null as { id: string; name: string } | null,
+	useMyDashboards: vi.fn(() => ({ dashboards: [], isLoading: false, totalPages: 0, totalItems: 0 })),
+	useTeamDashboards: vi.fn(() => ({ dashboards: [], isLoading: false, totalPages: 0, totalItems: 0 }))
 }))
 vi.mock('next/router', () => ({ useRouter: () => mocks.router }))
 vi.mock('~/auth', () => ({
@@ -33,6 +35,10 @@ vi.mock('~/containers/ProDashboard/hooks/useFreeTierStatus', () => ({
 }))
 vi.mock('~/containers/ProDashboard/hooks/useMyDashboards', () => ({
 	useMyDashboards: mocks.useMyDashboards
+}))
+vi.mock('~/containers/ProDashboard/hooks/useMyTeam', () => ({ useMyTeam: () => mocks.team }))
+vi.mock('~/containers/ProDashboard/hooks/useTeamDashboards', () => ({
+	useTeamDashboards: mocks.useTeamDashboards
 }))
 vi.mock('~/containers/ProDashboard/components/DashboardDiscovery', () => ({
 	DashboardDiscovery: () => <input aria-label="Discovery filter" />
@@ -62,6 +68,7 @@ let container: HTMLDivElement
 beforeEach(() => {
 	vi.clearAllMocks()
 	mocks.authenticated = true
+	mocks.team = null
 	mocks.router.query = {}
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -188,4 +195,34 @@ test('typing a query switches the hook to a single 100-item page', async () => {
 	})
 	expect(mocks.useMyDashboards).toHaveBeenLastCalledWith({ page: 1, limit: 100, enabled: true })
 	expect(mocks.router.replace).not.toHaveBeenCalled()
+})
+
+test('the Team tab exists only for team members and lists the team scope', async () => {
+	mocks.router.query = { tab: 'team' }
+	await render()
+	expect(tabs().map((tab) => tab.textContent)).toEqual([
+		'Discover',
+		'My Dashboards',
+		'Favorites',
+		'Following',
+		'My Profile'
+	])
+	expect(container.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1)
+	expect(container.querySelector('[aria-label="Discovery filter"]')).not.toBeNull()
+	expect(mocks.useTeamDashboards).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false }))
+
+	mocks.team = { id: 'team-1', name: 'Growth' }
+	await render()
+	const team = tabs().find((tab) => tab.textContent === 'Team')!
+	expect(tabs().map((tab) => tab.textContent)).toEqual([
+		'Discover',
+		'My Dashboards',
+		'Team',
+		'Favorites',
+		'Following',
+		'My Profile'
+	])
+	expect(panel(team).hidden).toBe(false)
+	expect(panel(team).textContent).toContain('Shared with Growth')
+	expect(mocks.useTeamDashboards).toHaveBeenLastCalledWith({ page: 1, limit: 20, enabled: true })
 })

@@ -299,7 +299,11 @@ function DashboardPageContent({
 			void Router.replace(`/pro/${dashboardId}`, undefined, { shallow: true })
 			return
 		}
-		if (currentDashboard && user?.id && currentDashboard.user !== user.id && !hasRedirectedRef.current) {
+		// Server-resolved access covers team members; without it only the creator may stay in edit mode.
+		const cannotEdit = currentDashboard?.access
+			? !currentDashboard.access.canEdit && currentDashboard.access.role === 'none'
+			: !!currentDashboard && !!user?.id && currentDashboard.user !== user.id
+		if (currentDashboard && user?.id && cannotEdit && !hasRedirectedRef.current) {
 			hasRedirectedRef.current = true
 			void Router.replace(`/pro/${currentDashboard.slug ?? dashboardId}`, undefined, { shallow: true })
 		}
@@ -509,7 +513,9 @@ function DashboardPageContent({
 			)
 		}
 
-		if (!hasActiveSubscription && dashboardVisibility !== 'public') {
+		// Team viewers and admins without a seat may read private team dashboards; the server decided.
+		const hasServerAccess = !!currentDashboard?.access && currentDashboard.access.role !== 'none'
+		if (!hasActiveSubscription && dashboardVisibility !== 'public' && !hasServerAccess) {
 			return (
 				<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 					<h1 className="text-3xl font-bold">Pro Dashboard Access</h1>

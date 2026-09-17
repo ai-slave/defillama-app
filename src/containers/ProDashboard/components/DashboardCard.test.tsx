@@ -112,3 +112,37 @@ test('the card actions menu only exists when the card can be deleted', async () 
 	await render(makeDashboard({ visibility: 'private' }), async () => {})
 	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
 })
+
+test('a team dashboard names its last editor and hides delete for members who cannot delete', async () => {
+	const onDelete = vi.fn(async () => {})
+	await render(
+		makeDashboard({
+			visibility: 'private',
+			team: { id: 'team-1', name: 'Growth' },
+			editedBy: { slug: 'ana', displayName: 'Ana', socials: {}, createdAt: '', updatedAt: '' },
+			access: { role: 'member', canEdit: true, canDelete: false, canMove: false }
+		}),
+		onDelete
+	)
+	expect(container.textContent).toContain('Edited by Ana')
+	expect(container.querySelector('[aria-label="Dashboard card actions"]')).toBeNull()
+
+	await render(
+		makeDashboard({
+			visibility: 'private',
+			team: { id: 'team-1', name: 'Growth' },
+			access: { role: 'admin', canEdit: true, canDelete: true, canMove: true }
+		}),
+		onDelete
+	)
+	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
+})
+
+test('a personal dashboard keeps the delete control without server access', async () => {
+	await render(
+		makeDashboard({ visibility: 'private' }),
+		vi.fn(async () => {})
+	)
+	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
+	expect(container.textContent).toContain('Updated')
+})

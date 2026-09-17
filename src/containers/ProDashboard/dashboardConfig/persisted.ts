@@ -3,8 +3,10 @@ import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api
 import type {
 	AIGeneratedData,
 	CustomTimePeriod,
+	DashboardAccess,
 	DashboardAnnotation,
 	DashboardCopySource,
+	DashboardTeam,
 	DashboardVariable,
 	TimePeriod
 } from '../dashboardTypes'
@@ -644,6 +646,9 @@ export interface PersistedDashboard {
 	id: string
 	slug?: string
 	user?: string
+	team?: DashboardTeam | null
+	access?: DashboardAccess
+	editedBy?: PublicDashboardAuthor | null
 	data: {
 		items: Array<PersistedDashboardItemConfig>
 		dashboardName: string

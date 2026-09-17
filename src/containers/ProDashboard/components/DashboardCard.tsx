@@ -124,6 +124,9 @@ export function DashboardCard({
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
 	const updatedAt = dashboard.editedAt || dashboard.updated
 	const items = dashboard.data?.items
+	// A team list carries server-resolved access; a member who cannot delete gets no delete control.
+	const canDelete = !!onDelete && (dashboard.access ? dashboard.access.canDelete : true)
+	const editedBy = dashboard.team ? dashboard.editedBy?.displayName : undefined
 
 	const requestDelete = (trigger: HTMLElement) => {
 		returnFocus.current = trigger
@@ -161,7 +164,7 @@ export function DashboardCard({
 				<span key="views" className="tabular-nums">
 					{viewCountLabel}
 				</span>,
-				<RelativeTime key="updated" value={updatedAt} prefix="Updated" />
+				<RelativeTime key="updated" value={updatedAt} prefix={editedBy ? `Edited by ${editedBy}` : 'Updated'} />
 			]}
 		/>
 	)
@@ -218,7 +221,7 @@ export function DashboardCard({
 			{viewMode === 'grid' ? (
 				<div className="relative">
 					<DashboardPreview tiles={tiles} />
-					{onDelete ? <DashboardCardActionsMenu onDelete={requestDelete} disabled={deletion.isPending} /> : null}
+					{canDelete ? <DashboardCardActionsMenu onDelete={requestDelete} disabled={deletion.isPending} /> : null}
 				</div>
 			) : (
 				<DashboardCardGradientStrip />
@@ -241,7 +244,7 @@ export function DashboardCard({
 					</div>
 					{tagRow}
 					<div className="ml-auto shrink-0">{meta}</div>
-					{onDelete ? (
+					{canDelete ? (
 						<ProButton
 							type="button"
 							size="sm"

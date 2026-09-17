@@ -4,6 +4,7 @@ import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
+import type { DashboardTeam } from '../dashboardTypes'
 import { ProButton, ProDialog, proInputStyles } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
@@ -17,6 +18,13 @@ interface DashboardSettingsModalProps {
 	dashboardId: string | null
 	onSave: (overrides?: { visibility?: 'private' | 'public'; tags?: Array<string> }) => Promise<void>
 	onDelete?: (dashboardId: string) => Promise<void>
+	/** The viewer's team. The sharing switch renders only when present. */
+	myTeam?: DashboardTeam | null
+	/** The team this dashboard currently belongs to. */
+	team?: DashboardTeam | null
+	/** Creator or team admin. Others see the current state without a switch. */
+	canMove?: boolean
+	onMoveTeam?: (teamId: string | null) => Promise<void>
 }
 
 function visibilityCardStyles(selected: boolean) {
@@ -35,16 +43,29 @@ function DashboardSettingsModalInner({
 	tags,
 	dashboardId,
 	onSave,
-	onDelete
+	onDelete,
+	myTeam,
+	team,
+	canMove,
+	onMoveTeam
 }: DashboardSettingsModalProps) {
 	const id = useId()
 	const { hasActiveSubscription } = useAuthContext()
 	const [localVisibility, setLocalVisibility] = useState(visibility)
 	const [localTags, setLocalTags] = useState(tags)
+	const sharedWithTeam = !!team && (!myTeam || team.id === myTeam.id)
+	const [localSharedWithTeam, setLocalSharedWithTeam] = useState(sharedWithTeam)
+	const showTeamSwitch = !!myTeam && !!onMoveTeam && !!dashboardId && (canMove || sharedWithTeam)
 	// Each opening mounts a new form; late errors belong to the dismissed opening.
 	const formRef = useRef<HTMLFormElement>(null)
 	const save = useMutation({
-		mutationFn: (overrides: Parameters<typeof onSave>[0]) => onSave(overrides),
+		mutationFn: async (overrides: Parameters<typeof onSave>[0]) => {
+			// The document fields save first: an admin moving a dashboard out loses access to it afterwards.
+			await onSave(overrides)
+			if (showTeamSwitch && canMove && myTeam && onMoveTeam && localSharedWithTeam !== sharedWithTeam) {
+				await onMoveTeam(localSharedWithTeam ? myTeam.id : null)
+			}
+		},
 		onError: (error) => {
 			if (!formRef.current?.isConnected) toast.error(error.message)
 		}
@@ -183,6 +204,40 @@ function DashboardSettingsModalInner({
 									<p className="mt-2 text-xs text-pro-text-tertiary">Upgrade to Pro to make dashboards private</p>
 								) : null}
 							</div>
+
+							{showTeamSwitch && myTeam ? (
+								<div>
+									<label
+										htmlFor={`${id}-share-team`}
+										className={`flex items-start gap-3 rounded-md border px-4 py-3 text-sm transition-colors has-focus-visible:focus-ring ${
+											localSharedWithTeam ? 'border-brand bg-pro-info-100/60' : 'border-pro-cards-border'
+										} ${canMove && hasActiveSubscription ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+									>
+										<input
+											id={`${id}-share-team`}
+											type="checkbox"
+											className="mt-0.5 size-4 accent-brand"
+											checked={localSharedWithTeam}
+											disabled={!canMove || !hasActiveSubscription || save.isPending || deletion.isPending}
+											onChange={(event) => setLocalSharedWithTeam(event.target.checked)}
+										/>
+										<span className="flex min-w-0 flex-col gap-0.5">
+											<span className="font-medium text-pro-text-primary">
+												<Icon name="users" height={14} width={14} className="mr-1.5 inline" />
+												Share with {myTeam.name}
+											</span>
+											<span className="text-xs text-pro-text-tertiary">
+												{localSharedWithTeam
+													? 'Teammates with a seat can edit it. It stays with the team if you leave.'
+													: 'Only you can open it unless it is public.'}
+											</span>
+										</span>
+									</label>
+									{!hasActiveSubscription ? (
+										<p className="mt-2 text-xs text-pro-text-tertiary">A seat or Pro is required to share dashboards</p>
+									) : null}
+								</div>
+							) : null}
 
 							<div>
 								<label

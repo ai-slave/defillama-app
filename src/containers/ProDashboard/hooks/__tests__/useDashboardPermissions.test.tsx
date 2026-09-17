@@ -90,3 +90,49 @@ test('a failed subscription lookup still lets the owner edit a public dashboard'
 	await mount(ownPublicDashboard)
 	expect(permissions).toMatchObject({ isReadOnly: false, isOwner: true, reason: null })
 })
+
+const teamDashboard: Dashboard = {
+	...privateDashboard,
+	user: 'creator',
+	team: { id: 'team-1', name: 'Growth' }
+}
+
+test('server access decides team dashboards: a member with a seat edits but cannot delete', async () => {
+	auth.current.user = { id: 'member' }
+	await mount({ ...teamDashboard, access: { role: 'member', canEdit: true, canDelete: false, canMove: false } })
+	expect(permissions).toMatchObject({
+		isReadOnly: false,
+		isOwner: false,
+		reason: null,
+		role: 'member',
+		canEdit: true,
+		canDelete: false,
+		canMove: false,
+		team: { id: 'team-1', name: 'Growth' }
+	})
+})
+
+test('a team viewer without a seat is read-only for the subscription reason', async () => {
+	auth.current.user = { id: 'member' }
+	auth.current.hasActiveSubscription = false
+	await mount({ ...teamDashboard, access: { role: 'viewer', canEdit: false, canDelete: false, canMove: false } })
+	expect(permissions).toMatchObject({ isReadOnly: true, reason: 'subscription', role: 'viewer', canEdit: false })
+})
+
+test('the admin without a seat may delete and move but not edit', async () => {
+	auth.current.user = { id: 'admin' }
+	auth.current.hasActiveSubscription = false
+	await mount({ ...teamDashboard, access: { role: 'admin', canEdit: false, canDelete: true, canMove: true } })
+	expect(permissions).toMatchObject({ isReadOnly: true, role: 'admin', canDelete: true, canMove: true, isOwner: false })
+})
+
+test('server access wins over the client owner check', async () => {
+	auth.current.user = { id: 'creator' }
+	await mount({ ...teamDashboard, access: { role: 'none', canEdit: false, canDelete: false, canMove: false } })
+	expect(permissions).toMatchObject({ isReadOnly: true, isOwner: true, reason: 'not-owner', role: 'none' })
+})
+
+test('without server access the creator keeps the owner-only rules', async () => {
+	await mount(privateDashboard)
+	expect(permissions).toMatchObject({ role: 'owner', canEdit: true, canDelete: true, canMove: true, team: null })
+})

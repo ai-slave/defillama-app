@@ -45,7 +45,7 @@ vi.mock('../hooks/useAutoSave', () => ({ useAutoSave: () => ({}) }))
 vi.mock('../hooks/useDashboardAPI', () => ({
 	getUnsavedDashboardChanges: () => null,
 	wasDashboardDeleted: () => false,
-	useDashboardAPI: () => ({ createDashboard: {}, updateDashboard: {} })
+	useDashboardAPI: () => ({ createDashboard: {}, updateDashboard: {}, moveDashboardTeam: {} })
 }))
 vi.mock('~/containers/Chains/api', () => ({
 	fetchChainsList: mocks.fetchChains,

@@ -10,7 +10,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
-import type { Dashboard } from '../dashboardTypes'
+import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProButton } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
@@ -22,6 +22,14 @@ interface DashboardOverflowMenuProps {
 	onDuplicateBlocked?: (() => void) | undefined
 	onNewDashboard?: (() => void) | undefined
 	onDelete?: (() => Promise<void>) | undefined
+	/** Present only when the viewer may move the dashboard between personal and team. */
+	moveTeam?: {
+		team: DashboardTeam | null
+		myTeam: DashboardTeam
+		/** The creator gets the dashboard back; an admin only removes it from the team. */
+		isCreator: boolean
+		onMove: (teamId: string | null) => Promise<void>
+	}
 }
 
 export function DashboardOverflowMenu({
@@ -29,10 +37,24 @@ export function DashboardOverflowMenu({
 	onDuplicate,
 	onDuplicateBlocked,
 	onNewDashboard,
-	onDelete
+	onDelete,
+	moveTeam
 }: DashboardOverflowMenuProps) {
 	const router = useRouter()
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+	const move = useMutation({
+		mutationFn: (teamId: string | null) => moveTeam!.onMove(teamId),
+		onSuccess: (_result, teamId) =>
+			toast.success(
+				teamId
+					? `Shared with ${moveTeam!.myTeam.name}`
+					: moveTeam!.isCreator
+						? 'Moved to your dashboards'
+						: 'Removed from the team',
+				statusToastOptions('dashboard-move-team', TOAST_DURATION_SHORT)
+			),
+		onError: (error) => toast.error(error.message, { id: 'dashboard-move-team' })
+	})
 	const duplicate = useMutation({
 		mutationFn: () => onDuplicate!(),
 		onSuccess: (dashboard) => {
@@ -50,7 +72,7 @@ export function DashboardOverflowMenu({
 		onSuccess: () => setShowDeleteConfirm(false)
 	})
 
-	if (!onOpenSettings && !onDuplicate && !onNewDashboard && !onDelete) return null
+	if (!onOpenSettings && !onDuplicate && !onNewDashboard && !onDelete && !moveTeam) return null
 
 	return (
 		<>
@@ -101,6 +123,26 @@ export function DashboardOverflowMenu({
 						<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={onNewDashboard}>
 							<Icon name="plus" height={14} width={14} />
 							<span>New dashboard</span>
+						</Ariakit.MenuItem>
+					) : null}
+					{moveTeam ? (
+						<Ariakit.MenuItem
+							className={popoverMenuItemStyles}
+							disabled={move.isPending}
+							accessibleWhenDisabled
+							data-umami-event={moveTeam.team ? 'dashboard-move-personal' : 'dashboard-move-team'}
+							onClick={() => move.mutate(moveTeam.team ? null : moveTeam.myTeam.id)}
+						>
+							<Icon name="users" height={14} width={14} />
+							<span>
+								{move.isPending
+									? 'Moving…'
+									: !moveTeam.team
+										? `Share with ${moveTeam.myTeam.name}`
+										: moveTeam.isCreator
+											? 'Move to my dashboards'
+											: 'Remove from team'}
+							</span>
 						</Ariakit.MenuItem>
 					) : null}
 					{onDelete ? (

@@ -37,6 +37,8 @@ import type {
 	DashboardAnnotation,
 	DashboardMode,
 	DashboardRatingDecision,
+	DashboardRole,
+	DashboardTeam,
 	DashboardVariable,
 	TimePeriod
 } from './dashboardTypes'
@@ -142,6 +144,11 @@ interface ProDashboardPermissionsContextType {
 	dashboardOwnerId: string | null
 	hideDuplicateButton: boolean
 	reason: DashboardReadOnlyReason
+	role: DashboardRole
+	canEdit: boolean
+	canDelete: boolean
+	canMove: boolean
+	team: DashboardTeam | null
 }
 
 interface ProDashboardStreamProgressContextType {
@@ -182,6 +189,7 @@ interface ProDashboardDashboardContextType {
 		items?: Array<DashboardItemConfig>
 		aiUndoState?: AIUndoState | null
 	}) => Promise<void>
+	moveDashboardTeam: (teamId: string | null) => Promise<void>
 	publishDashboard: () => Promise<void>
 	copyDashboard: () => Promise<Dashboard>
 	handleCreateDashboard: (data: {
@@ -192,6 +200,7 @@ interface ProDashboardDashboardContextType {
 		items?: Array<DashboardItemConfig>
 		variables?: Array<DashboardVariable>
 		aiGenerated?: AIGeneratedData | null
+		teamId?: string
 	}) => Promise<Dashboard>
 	handleGenerateDashboard: (data: {
 		dashboardName: string
@@ -541,13 +550,23 @@ function ProDashboardAPIProviderInner({
 	const {
 		createDashboard: { mutateAsync: createDashboard },
 		updateDashboard: { mutateAsync: updateDashboard },
+		moveDashboardTeam: { mutateAsync: moveDashboardTeamRequest },
 		deleteDashboard: deleteDashboardWithConfirmation,
 		loadDashboard: loadDashboardData,
 		navigateToDashboard
 	} = useDashboardAPI(dashboardId)
 
 	// Use the permissions hook
-	const { isReadOnly: rawIsReadOnly, dashboardOwnerId, reason } = useDashboardPermissions(currentDashboard)
+	const {
+		isReadOnly: rawIsReadOnly,
+		dashboardOwnerId,
+		reason,
+		role: dashboardRole,
+		canEdit: canEditDashboard,
+		canDelete: canDeleteDashboard,
+		canMove: canMoveDashboard,
+		team: dashboardTeam
+	} = useDashboardPermissions(currentDashboard)
 	const isReadOnly = mode === 'view' ? true : rawIsReadOnly
 	const isReadOnlyUntilDashboardLoaded = isDashboardEditingLocked({
 		isReadOnly,
@@ -569,7 +588,7 @@ function ProDashboardAPIProviderInner({
 	const autosave = useAutoSave({
 		dashboard: currentDashboard,
 		isFreeUser,
-		enabled: !isReadOnlyUntilDashboardLoaded && isAuthenticated && !!user?.id && currentDashboard?.user === user.id,
+		enabled: !isReadOnlyUntilDashboardLoaded && isAuthenticated && !!user?.id && canEditDashboard,
 		timePeriod,
 		customTimePeriod,
 		variables,
@@ -843,6 +862,15 @@ function ProDashboardAPIProviderInner({
 		await saveDashboard({ visibility: 'public' }, { allowOwnerInViewMode: true })
 	}, [saveDashboard])
 
+	const moveDashboardTeam = useCallback(
+		async (teamId: string | null) => {
+			if (!dashboardId) throw new Error('Save the dashboard before sharing it with your team')
+			if (!canMoveDashboard) throw new Error('Only the dashboard creator or the team admin can change this')
+			await moveDashboardTeamRequest({ id: dashboardId, teamId })
+		},
+		[dashboardId, canMoveDashboard, moveDashboardTeamRequest]
+	)
+
 	const handleCreateDashboard = useCallback(
 		async (data: {
 			dashboardName: string
@@ -852,6 +880,7 @@ function ProDashboardAPIProviderInner({
 			items?: Array<DashboardItemConfig>
 			variables?: Array<DashboardVariable>
 			aiGenerated?: AIGeneratedData | null
+			teamId?: string
 		}) => {
 			if (!canCreateDashboard) {
 				throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
@@ -868,7 +897,8 @@ function ProDashboardAPIProviderInner({
 				visibility: isFreeUser ? ('public' as const) : data.visibility,
 				tags: data.tags,
 				description: data.description,
-				aiGenerated: data.aiGenerated ?? null
+				aiGenerated: data.aiGenerated ?? null,
+				...(data.teamId && !isFreeUser ? { teamId: data.teamId } : {})
 			}
 
 			return createDashboard(dashboardData)
@@ -1276,9 +1306,24 @@ function ProDashboardAPIProviderInner({
 			isReadOnly: isReadOnlyUntilDashboardLoaded,
 			dashboardOwnerId,
 			hideDuplicateButton,
-			reason: readOnlyReason
+			reason: readOnlyReason,
+			role: dashboardRole,
+			canEdit: canEditDashboard,
+			canDelete: canDeleteDashboard,
+			canMove: canMoveDashboard,
+			team: dashboardTeam
 		}),
-		[isReadOnlyUntilDashboardLoaded, dashboardOwnerId, hideDuplicateButton, readOnlyReason]
+		[
+			isReadOnlyUntilDashboardLoaded,
+			dashboardOwnerId,
+			hideDuplicateButton,
+			readOnlyReason,
+			dashboardRole,
+			canEditDashboard,
+			canDeleteDashboard,
+			canMoveDashboard,
+			dashboardTeam
+		]
 	)
 
 	const dashboardContextValue = useMemo(
@@ -1300,6 +1345,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			moveDashboardTeam,
 			publishDashboard,
 			copyDashboard,
 			handleCreateDashboard,
@@ -1327,6 +1373,7 @@ function ProDashboardAPIProviderInner({
 			setDashboardDescription,
 			deleteDashboard,
 			saveDashboard,
+			moveDashboardTeam,
 			publishDashboard,
 			copyDashboard,
 			handleCreateDashboard,

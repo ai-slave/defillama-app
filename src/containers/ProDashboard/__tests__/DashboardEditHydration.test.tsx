@@ -17,7 +17,8 @@ const mocks = vi.hoisted(() => {
 			query: { dashboardId: 'test-dashboard', mode: ['edit'] },
 			asPath: '/pro/test-dashboard/edit',
 			replace: vi.fn()
-		}
+		},
+		currentDashboard: { user: 'owner', slug: 'test-dashboard' } as Record<string, unknown>
 	}
 })
 vi.mock('next/router', () => ({ default: mocks.router, useRouter: () => mocks.router }))
@@ -39,7 +40,7 @@ vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
 	useProDashboardDashboard: () => ({
 		isLoadingDashboard: false,
 		streamHasResolved: true,
-		currentDashboard: { user: 'owner', slug: 'test-dashboard' },
+		currentDashboard: mocks.currentDashboard,
 		dashboardName: 'Test dashboard'
 	})
 }))
@@ -74,6 +75,7 @@ let container: HTMLDivElement
 beforeEach(() => {
 	vi.clearAllMocks()
 	mocks.session = { isAuthenticated: true, user: { id: 'owner' }, loaders: { userLoading: false } }
+	mocks.currentDashboard = { user: 'owner', slug: 'test-dashboard' }
 	container = document.createElement('div')
 	document.body.appendChild(container)
 })
@@ -138,5 +140,29 @@ test('still redirects when the owner signs out after hydration', async () => {
 		mocks.session = mocks.signedOut
 		for (const listener of mocks.listeners) listener()
 	})
+	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
+})
+
+test('a team member with server-resolved edit access stays in the editor', async () => {
+	mocks.session = { isAuthenticated: true, user: { id: 'member' }, loaders: { userLoading: false } }
+	mocks.currentDashboard = {
+		user: 'owner',
+		slug: 'test-dashboard',
+		team: { id: 'team-1', name: 'Growth' },
+		access: { role: 'member', canEdit: true, canDelete: false, canMove: false }
+	}
+	await hydrate()
+	expect(container.querySelector('[aria-label="Widget name"]')).not.toBeNull()
+	expect(mocks.router.replace).not.toHaveBeenCalled()
+})
+
+test('server access of none still redirects a non-member out of the editor', async () => {
+	mocks.session = { isAuthenticated: true, user: { id: 'stranger' }, loaders: { userLoading: false } }
+	mocks.currentDashboard = {
+		user: 'owner',
+		slug: 'test-dashboard',
+		access: { role: 'none', canEdit: false, canDelete: false, canMove: false }
+	}
+	await hydrate()
 	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
 })

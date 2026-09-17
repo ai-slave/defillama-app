@@ -34,7 +34,9 @@ let container: HTMLDivElement
 let client: QueryClient
 let store: Ariakit.DialogStore
 const create = vi.fn()
+let team: { id: string; name: string } | null = null
 beforeEach(() => {
+	team = null
 	vi.clearAllMocks()
 	auth.hasActiveSubscription = true
 	navigation.push.mockReset().mockResolvedValue(true)
@@ -58,6 +60,7 @@ async function mount(mode = 'From Scratch') {
 				dialogStore={store}
 				onCreate={create}
 				comparisonPreset={mode === 'Comparison' ? { comparisonType: 'chains', items: ['Ethereum'] } : null}
+				team={team}
 			/>
 		)
 	}
@@ -243,4 +246,40 @@ test('navigation completion cannot dismiss a newer picker opening', async () => 
 	await act(async () => route.resolve(true))
 	expect(store.getState().open).toBe(true)
 	expect(document.querySelector('a[href="/pro/created/edit"]')).toBeNull()
+})
+
+test('a team member can create the blank dashboard inside the team', async () => {
+	team = { id: 'team-1', name: 'Growth' }
+	create.mockResolvedValueOnce({ id: 'created', slug: 'team-dashboard' })
+	await mount()
+	expect(document.body.textContent).toContain('Create in')
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Growth metrics'
+	await act(async () => document.querySelector<HTMLInputElement>('input[value="team"]')!.click())
+	await click('Create Dashboard')
+	await waitFor(() => expect(create).toHaveBeenCalledOnce())
+	expect(create).toHaveBeenCalledWith({
+		dashboardName: 'Growth metrics',
+		visibility: 'private',
+		tags: [],
+		description: '',
+		teamId: 'team-1'
+	})
+})
+
+test('without a subscription the team option is disabled and no teamId is sent', async () => {
+	team = { id: 'team-1', name: 'Growth' }
+	auth.hasActiveSubscription = false
+	create.mockResolvedValueOnce({ id: 'created', slug: 'personal' })
+	await mount()
+	expect(document.querySelector<HTMLInputElement>('input[value="team"]')!.disabled).toBe(true)
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Personal'
+	await click('Create Dashboard')
+	await waitFor(() => expect(create).toHaveBeenCalledOnce())
+	expect(create.mock.calls[0][0]).not.toHaveProperty('teamId')
+})
+
+test('without a team the form has no owner choice', async () => {
+	await mount()
+	expect(document.body.textContent).not.toContain('Create in')
+	expect(document.querySelector('input[value="team"]')).toBeNull()
 })
