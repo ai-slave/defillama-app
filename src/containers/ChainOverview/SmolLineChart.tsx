@@ -3,9 +3,11 @@ import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formatCompactNumber } from '~/utils/numberFormat'
+import { getChainOverviewPaletteColor } from './constants'
 import { useSmolChartHover } from './useSmolChartHover'
 
 const COLOR_MAP = {
+	blue: { dark: getChainOverviewPaletteColor(0), light: getChainOverviewPaletteColor(0) },
 	green: { dark: '#3fb84f', light: '#008a13' },
 	red: { dark: '#e24a42', light: '#e60d02' }
 } as const
@@ -42,7 +44,7 @@ export function SmolLineChart({
 	className
 }: {
 	series: Array<[number, number]>
-	color: 'green' | 'red'
+	color: keyof typeof COLOR_MAP
 	className?: string
 }) {
 	const [isThemeDark] = useDarkModeManager()

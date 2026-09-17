@@ -19,6 +19,7 @@ import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_EXPERIMENT_ID,
+	AB_GROUP_ATTRIBUTE,
 	AB_GROUP_COOKIE_NAME,
 	AB_VISITOR_COOKIE_NAME,
 	getABClientAssignment,
@@ -47,15 +48,19 @@ function ensureClientABAssignment() {
 
 	try {
 		const assignment = getABClientAssignment(document.cookie, () => crypto.randomUUID())
-		if (!assignment) return
-
-		const attributes = `Max-Age=${AB_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${
-			window.location.protocol === 'https:' ? '; Secure' : ''
-		}`
-		if (assignment.shouldSetVisitorCookie) {
-			document.cookie = `${AB_VISITOR_COOKIE_NAME}=${assignment.visitorId}; ${attributes}`
+		if (assignment) {
+			const attributes = `Max-Age=${AB_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${
+				window.location.protocol === 'https:' ? '; Secure' : ''
+			}`
+			if (assignment.shouldSetVisitorCookie) {
+				document.cookie = `${AB_VISITOR_COOKIE_NAME}=${assignment.visitorId}; ${attributes}`
+			}
+			document.cookie = `${AB_GROUP_COOKIE_NAME}=${assignment.group}; ${attributes}`
 		}
-		document.cookie = `${AB_GROUP_COOKIE_NAME}=${assignment.group}; ${attributes}`
+
+		const group = getABGroupFromCookie(document.cookie)
+		if (group) document.documentElement.setAttribute(AB_GROUP_ATTRIBUTE, group)
+		else document.documentElement.removeAttribute(AB_GROUP_ATTRIBUTE)
 	} catch {
 		// A/B assignment must never prevent the app from loading.
 	}

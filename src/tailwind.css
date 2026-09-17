@@ -18,6 +18,18 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+[data-ab-variant='b'] {
+	display: none;
+}
+
+html[data-ab-group='b'] [data-ab-variant='a'] {
+	display: none;
+}
+
+html[data-ab-group='b'] [data-ab-variant='b'] {
+	display: flex;
+}
+
 .utr-nav-glint {
 	animation: utr-nav-glint-sweep 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }

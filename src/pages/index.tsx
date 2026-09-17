@@ -27,7 +27,8 @@ export const getStaticProps = withPerformanceLogging<IChainOverviewData>(
 					chainMetadata: metadataCache.chainMetadata,
 					protocolMetadata: metadataCache.protocolMetadata,
 					categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
-					phaseTimer
+					phaseTimer,
+					includeHomepageExperimentMetrics: true
 				})
 			)
 			if (!data) throw new Error('Missing homepage chain overview data')

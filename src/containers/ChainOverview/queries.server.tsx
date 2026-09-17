@@ -2,8 +2,13 @@ import { fetchLlamaConfig } from '~/api'
 import { fetchCoinGeckoCoinById } from '~/api/coingecko'
 import { tvlOptions } from '~/components/Filters/options'
 import { TRADFI_API } from '~/constants'
-import { fetchAdapterChainMetrics, fetchAdapterProtocolMetrics, fetchCexVolume } from '~/containers/AdapterMetrics/api'
-import { REV_PROTOCOLS } from '~/containers/AdapterMetrics/constants'
+import {
+	fetchAdapterChainChartData,
+	fetchAdapterChainMetrics,
+	fetchAdapterProtocolMetrics,
+	fetchCexVolume
+} from '~/containers/AdapterMetrics/api'
+import { ADAPTER_DATA_TYPES, ADAPTER_TYPES, REV_PROTOCOLS } from '~/containers/AdapterMetrics/constants'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchChainsAssetTotals } from '~/containers/BridgedTVL/api'
 import { getBridgeChainNetInflows } from '~/containers/Bridges/queries.server'
@@ -18,6 +23,7 @@ import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_LIMITS } from '~/cont
 import { fetchRaises } from '~/containers/Raises/api'
 import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
+import { getHomepageRwaActiveMcap } from '~/containers/RWA/homepageActiveMcap.server'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { getStablecoinChainMcapSummary } from '~/containers/Stablecoins/queries.server'
@@ -48,6 +54,23 @@ function emptyLiteChart(): ChainChartResponse {
 		doublecounted: [],
 		liquidstaking: [],
 		dcAndLsOverlap: []
+	}
+}
+
+async function getHomepageCombinedPerpsOpenInterest(): Promise<{
+	total: number | null
+	chart: Array<[number, number]>
+}> {
+	const request = {
+		adapterType: ADAPTER_TYPES.OPEN_INTEREST,
+		chain: 'All',
+		dataType: ADAPTER_DATA_TYPES.OPEN_INTEREST_AT_END
+	} as const
+	const [metrics, chart] = await Promise.all([fetchAdapterChainMetrics(request), fetchAdapterChainChartData(request)])
+
+	return {
+		total: metrics.total24h ?? null,
+		chart: chart.slice(-14).map(([timestamp, value]) => [timestamp * 1e3, value])
 	}
 }
 
@@ -199,7 +222,8 @@ export async function getChainOverviewData({
 	rwaChainsForActiveMcap = null,
 	tokenDirectory = null,
 	phaseTimer,
-	researchSponsorEntitySlug
+	researchSponsorEntitySlug,
+	includeHomepageExperimentMetrics = false
 }: {
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
@@ -209,6 +233,7 @@ export async function getChainOverviewData({
 	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
 	researchSponsorEntitySlug?: string
+	includeHomepageExperimentMetrics?: boolean
 }): Promise<IChainOverviewData | null> {
 	const resolvedChainMetadata =
 		chain === 'All'
@@ -295,6 +320,8 @@ export async function getChainOverviewData({
 			stablecoinsData,
 			chainConfig,
 			rwaStats,
+			homepageCombinedPerpsOpenInterest,
+			homepageRwaActiveMcap,
 			sponsoredResearchReports
 		] = await Promise.all([
 			timePhase('chain_chart', () => fetchChainChart(chain === 'All' ? undefined : currentChainMetadata.name), {
@@ -465,6 +492,16 @@ export async function getChainOverviewData({
 			timePhase('rwa_stats', () => (shouldFetchRwaActiveMcap ? fetchRWAStats() : Promise.resolve(null)), {
 				fallback: null
 			}),
+			timePhase(
+				'homepage_combined_perps_open_interest',
+				() => (includeHomepageExperimentMetrics ? getHomepageCombinedPerpsOpenInterest() : Promise.resolve(null)),
+				{ fallback: null }
+			),
+			timePhase(
+				'homepage_rwa_active_mcap',
+				() => (includeHomepageExperimentMetrics ? getHomepageRwaActiveMcap() : Promise.resolve(null)),
+				{ fallback: null }
+			),
 			sponsoredResearchReportsPromise
 		])
 		const { protocols: allProtocols, snapshot: rankingsSnapshot, availableActivityMetrics } = protocolRankingsSnapshot
@@ -694,6 +731,12 @@ export async function getChainOverviewData({
 								: `Comprehensive overview of all metrics tracked on ${currentChainMetadata.name}`,
 			isDataAvailable,
 			datInflows: datInflows ?? null,
+			homepageExperimentMetrics: includeHomepageExperimentMetrics
+				? {
+						combinedPerpsOpenInterest: homepageCombinedPerpsOpenInterest,
+						totalRwaActiveMcap: homepageRwaActiveMcap
+					}
+				: null,
 			chainStablecoins:
 				chainConfig?.stablecoins?.map((coin) => {
 					const coinData = stablecoinsData?.peggedAssets?.find((c) => c.gecko_id === coin)

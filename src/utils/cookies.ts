@@ -1,3 +1,5 @@
+import { AB_GROUP_ATTRIBUTE, AB_GROUP_COOKIE_NAME } from '~/utils/abTesting'
+
 export const THEME_COOKIE_NAME = 'defillama-theme'
 export const ANNOUNCEMENT_DISMISSALS_COOKIE_NAME = 'defillama-dismissed-announcements'
 export const ANNOUNCEMENT_DISMISSAL_STYLE_ATTRIBUTE = 'data-announcement-dismissals'
@@ -167,6 +169,13 @@ export const getHeadBootstrapScript = (): string => `
 
 		var root = document.documentElement;
 		var theme = sanitizeThemeValue(getCookieValue(document.cookie, '${THEME_COOKIE_NAME}'));
+		var abGroup = getCookieValue(document.cookie, '${AB_GROUP_COOKIE_NAME}');
+
+		if (abGroup === 'a' || abGroup === 'b') {
+			root.setAttribute('${AB_GROUP_ATTRIBUTE}', abGroup);
+		} else {
+			root.removeAttribute('${AB_GROUP_ATTRIBUTE}');
+		}
 
 		if (theme === 'light') {
 			root.classList.remove('dark');
