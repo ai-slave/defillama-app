@@ -15,6 +15,26 @@ import { UpcomingUnlocksChart } from './UpcomingUnlocksChart'
 
 const HOME_CHART_IMPRESSION_KEY = `ab-impression:${HOME_CHART_EXPERIMENT_ID}`
 
+// Keep guarded browser analytics outside the component so React Compiler can compile it.
+function trackHomepageImpression(hasHomepageVariantB: boolean) {
+	try {
+		if (!window.umami || sessionStorage.getItem(HOME_CHART_IMPRESSION_KEY)) return
+		const assignedGroup = getABGroupFromCookie(document.cookie)
+		if (!assignedGroup) return
+
+		const renderedGroup = assignedGroup === 'b' && hasHomepageVariantB ? 'b' : 'a'
+		sessionStorage.setItem(HOME_CHART_IMPRESSION_KEY, renderedGroup)
+		trackUmamiEvent('home-chart-impression', {
+			experiment: HOME_CHART_EXPERIMENT_ID,
+			assignedGroup,
+			renderedGroup,
+			fallback: assignedGroup !== renderedGroup
+		})
+	} catch {
+		// Analytics must never prevent the homepage from loading.
+	}
+}
+
 export function SmolStats(props: IChainOverviewData) {
 	const chainSlug = slug(props.metadata.name)
 	const unlocks = props.unlocks
@@ -40,24 +60,7 @@ export function SmolStats(props: IChainOverviewData) {
 	useEffect(() => {
 		if (!props.homepageExperimentMetrics) return
 
-		const trackImpression = () => {
-			try {
-				if (!window.umami || sessionStorage.getItem(HOME_CHART_IMPRESSION_KEY)) return
-				const assignedGroup = getABGroupFromCookie(document.cookie)
-				if (!assignedGroup) return
-
-				const renderedGroup = assignedGroup === 'b' && hasHomepageVariantB ? 'b' : 'a'
-				sessionStorage.setItem(HOME_CHART_IMPRESSION_KEY, renderedGroup)
-				trackUmamiEvent('home-chart-impression', {
-					experiment: HOME_CHART_EXPERIMENT_ID,
-					assignedGroup,
-					renderedGroup,
-					fallback: assignedGroup !== renderedGroup
-				})
-			} catch {
-				// Analytics must never prevent the homepage from loading.
-			}
-		}
+		const trackImpression = () => trackHomepageImpression(hasHomepageVariantB)
 
 		trackImpression()
 		window.addEventListener(UMAMI_READY_EVENT, trackImpression)
