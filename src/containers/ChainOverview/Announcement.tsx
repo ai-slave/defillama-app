@@ -74,24 +74,25 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 
 	return (
 		<Announcement
-			announcementId="defillama-mobile-app"
-			version="2026-08-03"
-			className="relative overflow-hidden border border-[#1a5cc4] bg-[linear-gradient(100deg,#1f67d2_0%,#2b7de9_45%,#4f9cf9_100%)] text-white shadow-[0_10px_30px_rgba(31,103,210,0.35)] dark:border-[#3d7fe0] dark:bg-[linear-gradient(100deg,#0d2a5c_0%,#154189_50%,#1d5cb8_100%)] dark:text-[#eaf3ff] dark:shadow-[0_10px_30px_rgba(13,42,92,0.5)]"
+			announcementId="universal-token-rating"
+			version="2026-09-18"
+			className="relative overflow-hidden border border-[#9ad9bb] bg-[linear-gradient(100deg,#eafaf1_0%,#d9f4e6_55%,#c9efdb_100%)] text-[#0b4d33] shadow-[0_10px_30px_rgba(17,147,95,0.18)] dark:border-[#1f6a48] dark:bg-[linear-gradient(100deg,#0d3324_0%,#12452f_55%,#155238_100%)] dark:text-[#cdf5e0] dark:shadow-[0_10px_30px_rgba(13,51,36,0.5)]"
 			contentClassName="text-center"
+			dismissButtonClassName="hover:bg-[#0b4d33]/10 dark:hover:bg-white/10"
 		>
-			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.18),transparent)]" />
+			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.35),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(141,242,192,0.12),transparent)]" />
 			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-0.5 text-xs font-bold tracking-wide text-[#1f67d2] shadow-sm dark:bg-white/15 dark:text-white dark:ring-1 dark:ring-white/25">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-[#0e7a4f] px-2.5 py-0.5 text-xs font-bold tracking-wide text-white shadow-sm dark:bg-[#1f5a40] dark:text-[#8df2c0] dark:ring-1 dark:ring-[#8df2c0]/30">
 					<Icon name="sparkles" height={12} width={12} />
-					NEW APP
+					NEW
 				</span>
-				<span className="font-medium">The DefiLlama App is here.</span>
+				<span className="font-medium">Universal Token Rating is live: data-driven scores for every token.</span>
 				<BasicLink
-					href="/app"
-					data-umami-event="mobile-app-announcement-click"
-					className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white ring-1 ring-white/40 transition-colors hover:bg-white/25 dark:bg-white/10 dark:ring-white/30 dark:hover:bg-white/20"
+					href="/universal-token-rating"
+					data-umami-event="utr-announcement-click"
+					className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold text-[#0b4d33] ring-1 ring-[#0e7a4f]/40 transition-colors hover:bg-white dark:bg-white/10 dark:text-[#cdf5e0] dark:ring-[#8df2c0]/30 dark:hover:bg-white/20"
 				>
-					Get extra free LlamaAI queries
+					See the ratings
 					<Icon name="arrow-right" height={12} width={12} />
 				</BasicLink>
 			</span>
