@@ -90,6 +90,7 @@ interface ProtocolDetailFixture {
 	token?: string
 	events?: Array<EmissionEvent>
 	notes?: Array<string>
+	total?: number
 	documentedData?: ProtocolEmissionChartData
 	realTimeData?: ProtocolEmissionChartData
 	categories?: Record<string, Array<string>>
@@ -102,6 +103,7 @@ function protocolDetail({
 	token = 'coingecko:test',
 	events = [],
 	notes = [],
+	total,
 	documentedData = chartData(),
 	realTimeData,
 	categories = {},
@@ -113,7 +115,7 @@ function protocolDetail({
 		pId: null,
 		defillamaIds: [],
 		chainName: 'Ethereum',
-		metadata: { token, protocolIds: [], events, unlockEvents: [], notes },
+		metadata: { token, protocolIds: [], events, unlockEvents: [], notes, ...(total === undefined ? {} : { total }) },
 		documentedData,
 		...(realTimeData === undefined ? {} : { realTimeData }),
 		unlockUsdChart: [],
@@ -435,11 +437,11 @@ describe('getProtocolEmissons', () => {
 				documentedData: chartData([
 					{
 						label: 'public sale',
-						data: [chartPoint(1000, 10), chartPoint(2000, 20), chartPoint(3000, 30)]
+						data: [chartPoint(1000, 10), chartPoint(2000, 20), chartPoint(3000, 70)]
 					},
 					{
 						label: 'ecosystem',
-						data: [chartPoint(1500, 5), chartPoint(4000, 15)]
+						data: [chartPoint(1500, 5), chartPoint(4000, 30)]
 					}
 				]),
 				supplyMetrics: {
@@ -467,6 +469,55 @@ describe('getProtocolEmissons', () => {
 			totalLocked: 75,
 			mcap: 50
 		})
+	})
+
+	test('prefers an explicit total over a lower raw supply max', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(2_500_000)
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Binance Smart Chain',
+				total: 200,
+				documentedData: chartData([{ label: 'validators', data: [chartPoint(1000, 134)] }]),
+				supplyMetrics: {
+					maxSupply: 134,
+					adjustedSupply: 134,
+					tbdAmount: 0,
+					incentiveAmount: 0,
+					nonIncentiveAmount: 134
+				}
+			})
+		)
+
+		const result = await getProtocolEmissons('binance-smart-chain', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
+
+		expect(result.meta).toMatchObject({ circSupply: 134, maxSupply: 200, totalLocked: 66 })
+	})
+
+	test('uses documented final supply instead of a TBD-inflated raw supply max', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(2_500_000)
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Nest',
+				documentedData: chartData([{ label: 'documented', data: [chartPoint(1000, 1004)] }]),
+				supplyMetrics: {
+					maxSupply: 1854,
+					adjustedSupply: 1854,
+					tbdAmount: 850,
+					incentiveAmount: 0,
+					nonIncentiveAmount: 1004
+				}
+			})
+		)
+
+		const result = await getProtocolEmissons('nest', {
+			skipAvailabilityCheck: true,
+			tokenlist: {}
+		})
+
+		expect(result.meta).toMatchObject({ circSupply: 1004, maxSupply: 1004, totalLocked: 0 })
 	})
 
 	test('keeps the earliest actionable next event regardless of source ordering', async () => {

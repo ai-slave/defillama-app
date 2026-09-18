@@ -126,7 +126,11 @@ function buildProtocolEmissionResultMeta(
 	nowSec: number,
 	tokenPrice: number | undefined
 ): ProtocolEmissionResultMeta | null {
-	const maxSupply = res.supplyMetrics?.maxSupply ?? res.metadata.total ?? getFinalSupply(res.documentedData)
+	const metadataTotal = res.metadata.total
+	const maxSupply =
+		typeof metadataTotal === 'number' && Number.isFinite(metadataTotal)
+			? metadataTotal
+			: getFinalSupply(res.documentedData)
 	if (!Number.isFinite(maxSupply) || maxSupply <= 0) return null
 
 	const circSupply = getTotalSupplyAtOrBefore(res.documentedData, nowSec)
