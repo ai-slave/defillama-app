@@ -1,6 +1,6 @@
 export type PlanKey = 'free' | 'pro' | 'api' | 'enterprise'
 export type BillingCycle = 'monthly' | 'yearly'
-export type Availability = 'check' | 'dash' | 'limited'
+export type Availability = 'check' | 'dash' | 'limited' | 'x'
 
 export interface FeatureItem {
 	label: string

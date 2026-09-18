@@ -76,6 +76,8 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 				<span className="shrink-0">
 					{item.availability === 'check' ? (
 						<Icon name="check" height={24} width={24} className="text-sub-brand-secondary sm:h-5 sm:w-5" />
+					) : item.availability === 'x' ? (
+						<Icon name="x" height={24} width={24} className="text-error sm:h-5 sm:w-5" />
 					) : (
 						<Icon
 							name="minus"
@@ -92,7 +94,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 				</span>
 			) : (
 				<span
-					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted'}`}
+					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' || item.availability === 'x' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted'}`}
 				>
 					<FeatureLabel item={item} />
 				</span>

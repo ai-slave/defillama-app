@@ -83,7 +83,8 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 						availability: 'check'
 					},
 					{ label: 'CSV data downloads', availability: 'check' },
-					{ label: 'Full access to LlamaFeed', availability: 'check' }
+					{ label: 'Full access to LlamaFeed', availability: 'check' },
+					{ label: 'API Access', availability: 'x' }
 				]
 			}
 		],
