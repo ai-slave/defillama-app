@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMemo, useRef } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
+import { letterLogoDataUri } from '~/utils/icons'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 
 const ICON_WIDTH = 24
@@ -13,6 +14,8 @@ export interface IconsRowItem {
 	href?: string
 	title?: string
 	size?: number
+	/** Explicit logo URL for items whose label can't resolve an icon by name; null falls back to a letter avatar. */
+	src?: string | null
 }
 
 interface IIconItemLogoProps {
@@ -21,14 +24,38 @@ interface IIconItemLogoProps {
 
 function IconItemLogo({ item }: IIconItemLogoProps) {
 	const title = item.title ?? item.label
+	const logoTitle = item.href ? undefined : title
+	const logo =
+		item.src !== undefined ? (
+			<TokenLogo
+				src={item.src}
+				fallbackSrc={letterLogoDataUri(item.label)}
+				alt={`Logo of ${item.label}`}
+				{...(logoTitle !== undefined ? { title: logoTitle } : {})}
+				{...(item.size !== undefined ? { size: item.size } : {})}
+			/>
+		) : (
+			<TokenLogo
+				name={item.label}
+				kind={item.kind}
+				alt={`Logo of ${item.label}`}
+				{...(logoTitle !== undefined ? { title: logoTitle } : {})}
+				{...(item.size !== undefined ? { size: item.size } : {})}
+			/>
+		)
 
-	if (!item.href) {
-		return <TokenLogo name={item.label} kind={item.kind} alt={`Logo of ${item.label}`} title={title} size={item.size} />
-	}
+	if (!item.href) return logo
 
 	return (
-		<a href={item.href} target="_blank" rel="noopener noreferrer" title={title} onClick={(e) => e.stopPropagation()}>
-			<TokenLogo name={item.label} kind={item.kind} alt={`Logo of ${item.label}`} size={item.size} />
+		<a
+			href={item.href}
+			target="_blank"
+			rel="noopener noreferrer"
+			title={title}
+			className="flex"
+			onClick={(e) => e.stopPropagation()}
+		>
+			{logo}
 		</a>
 	)
 }

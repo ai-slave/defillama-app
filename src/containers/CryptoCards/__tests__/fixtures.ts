@@ -1,0 +1,43 @@
+import type { CardTierRow } from '../models'
+
+export function cardTierRow(cardId: string, overrides: Partial<CardTierRow> = {}): CardTierRow {
+	return {
+		rowKind: 'tier',
+		cardId,
+		cardName: cardId,
+		parentId: cardId,
+		logo: null,
+		url: null,
+		countryCodes: [],
+		countryCount: 0,
+		availabilityUnknown: true,
+		tierCount: 1,
+		tierId: `${cardId}--standard`,
+		tierName: 'Standard',
+		region: 'Global',
+		cashbackRate: null,
+		cashbackCurrency: null,
+		maxCashbackPerMonth: null,
+		perks: [],
+		annualFee: null,
+		fxFee: null,
+		access: null,
+		supportedChains: [],
+		supportedCoins: [],
+		custodyType: null,
+		cardClassification: null,
+		network: null,
+		virtualPhysical: null,
+		issuer: null,
+		virtual: null,
+		physical: null,
+		applePay: null,
+		googlePay: null,
+		iban: null,
+		atmFee: null,
+		atmAllowance: null,
+		dailySpendingLimit: null,
+		monthlySpendingLimit: null,
+		...overrides
+	}
+}

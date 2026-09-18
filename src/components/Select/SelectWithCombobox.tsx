@@ -47,6 +47,7 @@ interface ISelectWithComboboxBase {
 	size: SelectTriggerSize
 	triggerProps?: Ariakit.ComboboxSelectProps
 	customFooter?: React.ReactNode
+	customHeader?: React.ReactNode
 	onEditCustomColumn?: (idx: number) => void
 	onDeleteCustomColumn?: (idx: number) => void
 	portal?: boolean
@@ -102,6 +103,7 @@ export function SelectWithCombobox({
 	size,
 	triggerProps,
 	customFooter,
+	customHeader,
 	onEditCustomColumn,
 	onDeleteCustomColumn,
 	portal,
@@ -136,6 +138,10 @@ export function SelectWithCombobox({
 	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
 	const nestedSeeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : nestedMenuSeeMoreStyles
 	const shouldPortalPopover = portal ?? true
+	const queryUpdateOptions = {
+		...(resetPageOnQueryChange !== undefined ? { resetPage: resetPageOnQueryChange } : {}),
+		...(pushQueryUpdates !== undefined ? { pushQueryUpdates } : {})
+	}
 
 	const isStringValue = React.useCallback((value: string | SelectOption): value is string => {
 		return typeof value === 'string'
@@ -162,17 +168,27 @@ export function SelectWithCombobox({
 	// If includeQueryKey is provided, use URL-based functions; otherwise derive from setSelectedValues
 	const setSelectedValues: (values: Array<string>) => void = includeQueryKey
 		? (values: Array<string>) =>
-				updateQueryFromSelected(router, includeQueryKey, excludeQueryKey, getAllKeys(), values, defaultSelectedValues, {
-					resetPage: resetPageOnQueryChange,
-					pushQueryUpdates
-				})
+				updateQueryFromSelected(
+					router,
+					includeQueryKey,
+					excludeQueryKey,
+					getAllKeys(),
+					values,
+					defaultSelectedValues,
+					queryUpdateOptions
+				)
 		: setSelectedValuesFromState
 	const clearAll = includeQueryKey
 		? () =>
-				updateQueryFromSelected(router, includeQueryKey, excludeQueryKey, getAllKeys(), 'None', defaultSelectedValues, {
-					resetPage: resetPageOnQueryChange,
-					pushQueryUpdates
-				})
+				updateQueryFromSelected(
+					router,
+					includeQueryKey,
+					excludeQueryKey,
+					getAllKeys(),
+					'None',
+					defaultSelectedValues,
+					queryUpdateOptions
+				)
 		: () => setSelectedValuesFromState([])
 	const selectOnlyOne = includeQueryKey
 		? (value: string) =>
@@ -183,13 +199,11 @@ export function SelectWithCombobox({
 					getAllKeys(),
 					[value],
 					defaultSelectedValues,
-					{
-						resetPage: resetPageOnQueryChange,
-						pushQueryUpdates
-					}
+					queryUpdateOptions
 				)
 		: (value: string) => setSelectedValuesFromState([value])
-	const providerValue = singleSelect ? (selectedValues[0] ?? '') : selectedValues
+	const firstSelectedValue = selectedValues[0]
+	const providerValue = singleSelect ? (firstSelectedValue ?? '') : selectedValues
 	const normalizeNextValues = React.useCallback(
 		(values: Array<string> | string) => {
 			if (singleSelect) {
@@ -256,10 +270,7 @@ export function SelectWithCombobox({
 					allKeys,
 					nextValues && nextValues.length === allKeys.length ? null : nextValues,
 					defaultSelectedValues,
-					{
-						resetPage: resetPageOnQueryChange,
-						pushQueryUpdates
-					}
+					queryUpdateOptions
 				)
 			}
 		: () => setSelectedValuesFromState(getSelectAllValues())
@@ -330,6 +341,7 @@ export function SelectWithCombobox({
 					<span className={nestedSearchWrapperStyles}>
 						<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 					</span>
+					{customHeader ? <>{customHeader}</> : null}
 					{showCheckboxes ? (
 						<span className={nestedActionBarStyles}>
 							<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
@@ -405,8 +417,8 @@ export function SelectWithCombobox({
 					<>
 						<span>{label}: </span>
 						<span className="text-link">
-							{singleSelect
-								? getSelectOptionLabel(allValues, selectedValues[0])
+							{singleSelect && firstSelectedValue !== undefined
+								? getSelectOptionLabel(allValues, firstSelectedValue)
 								: selectedValues.length > 2
 									? `${selectedValues[0]} + ${selectedValues.length - 1} others`
 									: selectedValues.join(', ')}
@@ -434,6 +446,7 @@ export function SelectWithCombobox({
 				<span className={searchWrapperStyles}>
 					<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 				</span>
+				{customHeader ? <>{customHeader}</> : null}
 				{matches.length > 0 ? (
 					<>
 						{showCheckboxes ? (
