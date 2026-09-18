@@ -9,6 +9,11 @@ import type {
 	TokenIncentiveChartPoint
 } from './api.types'
 
+export type ProtocolEmissionResultMeta = Pick<
+	ProtocolEmission,
+	'gecko_id' | 'circSupply' | 'maxSupply' | 'totalLocked' | 'mcap'
+>
+
 interface ProtocolEmissionResultFields {
 	chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
 	pieChartData: {
@@ -53,7 +58,7 @@ export interface EmptyProtocolEmissionResult extends ProtocolEmissionResultField
 }
 
 export interface ResolvedProtocolEmissionResult extends ProtocolEmissionResultFields {
-	meta: ProtocolEmission | null
+	meta: ProtocolEmissionResultMeta | null
 	name: string
 	token: string
 }

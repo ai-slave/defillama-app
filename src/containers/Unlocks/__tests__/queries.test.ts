@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { PriceObject } from '~/api/types'
 import type {
 	EmissionEvent,
+	EmissionSupplyMetrics,
 	EmissionSeries,
 	ProtocolEmission,
 	ProtocolEmissionChartData,
@@ -92,6 +93,7 @@ interface ProtocolDetailFixture {
 	documentedData?: ProtocolEmissionChartData
 	realTimeData?: ProtocolEmissionChartData
 	categories?: Record<string, Array<string>>
+	supplyMetrics?: EmissionSupplyMetrics
 }
 
 function protocolDetail({
@@ -102,7 +104,8 @@ function protocolDetail({
 	notes = [],
 	documentedData = chartData(),
 	realTimeData,
-	categories = {}
+	categories = {},
+	supplyMetrics
 }: ProtocolDetailFixture): ProtocolEmissionDetail {
 	return {
 		name,
@@ -114,7 +117,8 @@ function protocolDetail({
 		documentedData,
 		...(realTimeData === undefined ? {} : { realTimeData }),
 		unlockUsdChart: [],
-		categories
+		categories,
+		...(supplyMetrics === undefined ? {} : { supplyMetrics })
 	}
 }
 
@@ -419,6 +423,50 @@ describe('getProtocolEmissons', () => {
 
 		expect(fetchCoinPricesMock).not.toHaveBeenCalled()
 		expect(result.tokenPrice).toEqual({ price: 12.34, symbol: 'LINK' })
+	})
+
+	test('builds current supply metadata from protocol detail without fetching the aggregate index', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(2_500_000)
+		fetchProtocolEmissionMock.mockResolvedValue(
+			protocolDetail({
+				name: 'Plasma',
+				geckoId: 'plasma',
+				token: 'coingecko:plasma',
+				documentedData: chartData([
+					{
+						label: 'public sale',
+						data: [chartPoint(1000, 10), chartPoint(2000, 20), chartPoint(3000, 30)]
+					},
+					{
+						label: 'ecosystem',
+						data: [chartPoint(1500, 5), chartPoint(4000, 15)]
+					}
+				]),
+				supplyMetrics: {
+					maxSupply: 100,
+					adjustedSupply: 100,
+					tbdAmount: 0,
+					incentiveAmount: 0,
+					nonIncentiveAmount: 100
+				}
+			})
+		)
+
+		const result = await getProtocolEmissons('plasma', {
+			skipAvailabilityCheck: true,
+			tokenlist: {
+				plasma: { current_price: 2, symbol: 'xpl' }
+			}
+		})
+
+		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
+		expect(result.meta).toEqual({
+			gecko_id: 'plasma',
+			circSupply: 25,
+			maxSupply: 100,
+			totalLocked: 75,
+			mcap: 50
+		})
 	})
 
 	test('keeps the earliest actionable next event regardless of source ordering', async () => {

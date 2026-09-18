@@ -23,7 +23,7 @@ import type {
 import { isWeeklyRateCalendarEvent, type CalendarUnlockEvent } from './calendarTypes'
 import { buildEmissionProjectionModel } from './emissionsChartData'
 import { getEmissionAmountBreakdownOverInterval, getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
-import type { EmptyProtocolEmissionResult, ProtocolEmissionResult } from './types'
+import type { EmptyProtocolEmissionResult, ProtocolEmissionResult, ProtocolEmissionResultMeta } from './types'
 
 type UnlockTokenlistEntry = Pick<ITokenListEntry, 'current_price' | 'symbol'>
 type UnlockTokenlist = Record<string, UnlockTokenlistEntry | undefined>
@@ -80,6 +80,63 @@ const EMPTY_TOKEN_ALLOCATION_SPLIT: TokenAllocationSplit = {
 
 function getTokenAllocation(input: TokenAllocationSplit | undefined): TokenAllocationSplit {
 	return input ?? EMPTY_TOKEN_ALLOCATION_SPLIT
+}
+
+function getAllocationSupplyAtOrBefore(
+	points: ProtocolEmissionChartData['data'][number]['data'],
+	timestampSec: number
+): number {
+	let low = 0
+	let high = points.length - 1
+	let supply = 0
+
+	while (low <= high) {
+		const middle = Math.floor((low + high) / 2)
+		const point = points[middle]!
+		if (point.timestamp <= timestampSec) {
+			supply = point.unlocked
+			low = middle + 1
+		} else {
+			high = middle - 1
+		}
+	}
+
+	return supply
+}
+
+function getTotalSupplyAtOrBefore(data: ProtocolEmissionChartData, timestampSec: number): number {
+	let supply = 0
+	for (const allocation of data.data) {
+		supply += getAllocationSupplyAtOrBefore(allocation.data, timestampSec)
+	}
+	return supply
+}
+
+function getFinalSupply(data: ProtocolEmissionChartData): number {
+	let supply = 0
+	for (const allocation of data.data) {
+		const finalPoint = allocation.data[allocation.data.length - 1]
+		if (finalPoint) supply += finalPoint.unlocked
+	}
+	return supply
+}
+
+function buildProtocolEmissionResultMeta(
+	res: ProtocolEmissionDetail,
+	nowSec: number,
+	tokenPrice: number | undefined
+): ProtocolEmissionResultMeta | null {
+	const maxSupply = res.supplyMetrics?.maxSupply ?? res.metadata.total ?? getFinalSupply(res.documentedData)
+	if (!Number.isFinite(maxSupply) || maxSupply <= 0) return null
+
+	const circSupply = getTotalSupplyAtOrBefore(res.documentedData, nowSec)
+	return {
+		gecko_id: res.gecko_id,
+		circSupply,
+		maxSupply,
+		totalLocked: Math.max(maxSupply - circSupply, 0),
+		...(tokenPrice !== undefined ? { mcap: circSupply * tokenPrice } : {})
+	}
 }
 
 function isPositiveNumber(value: number | null | undefined): value is number {
@@ -901,10 +958,7 @@ export const getProtocolEmissons = async (
 		return emptyResult
 	}
 
-	const [res, allEmissions] = await Promise.all([
-		fetchProtocolEmission(protocolName),
-		fetchAllProtocolEmissions().catch(() => null)
-	])
+	const res = await fetchProtocolEmission(protocolName)
 	if (!res) return emptyResult
 
 	const { metadata, name, futures } = res
@@ -966,6 +1020,7 @@ export const getProtocolEmissons = async (
 	const tokenPrice: { price?: number; symbol?: string } = {}
 	if (isPositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
 	if (tokenPriceData?.symbol) tokenPrice.symbol = tokenPriceData.symbol
+	const meta = buildProtocolEmissionResultMeta(res, nowSec, tokenPrice.price)
 
 	const upcomingEvent: Array<EmissionEvent> = []
 	let upcomingTimestamp: number | null = null
@@ -1000,7 +1055,7 @@ export const getProtocolEmissons = async (
 		stackColors,
 		datasets,
 		chartsConfigs,
-		meta: allEmissions?.find((protocol) => protocol.token === metadata.token) ?? null,
+		meta,
 		notes: metadata.notes ?? [],
 		events,
 		token: metadata.token,
