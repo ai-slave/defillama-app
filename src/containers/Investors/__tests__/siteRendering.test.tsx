@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+import { readFileSync } from 'node:fs'
+import { runInNewContext } from 'node:vm'
 import type { AppProps } from 'next/app'
 import { act, type ReactNode } from 'react'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
@@ -13,9 +15,9 @@ const { checkParentAuth, renderedAnalyticsIds } = vi.hoisted(() => ({
 }))
 vi.mock('next/head', () => ({ default: () => null }))
 vi.mock('next/script', () => ({
-	default: (props: { 'data-website-id': string }) => {
+	default: (props: { 'data-website-id': string; 'data-domains': string; 'data-host-url': string }) => {
 		renderedAnalyticsIds.push(props['data-website-id'])
-		return <span data-website-id={props['data-website-id']} />
+		return <span {...props} />
 	}
 }))
 vi.mock('next/router', () => ({ default: { events: { on: vi.fn(), off: vi.fn() } } }))
@@ -125,9 +127,53 @@ describe('request-specific IR rendering and analytics', () => {
 			expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
 				INVESTORS_SITES[siteId].umamiWebsiteId
 			)
+			expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.domains).toBe(`${siteId}.defillama.com`)
 			expect(checkParentAuth).toHaveBeenCalledTimes(1)
 		}
 	)
+
+	test.each([
+		['defillama.com', true],
+		['investors.defillama.com', true],
+		['enterprise.defillama.com', true],
+		['ir-staging.llama.fi', false],
+		['localhost', false]
+	] as const)('gates tracker requests on %s while preserving site resolution', async (hostname, allowed) => {
+		window.location.href = `https://${hostname}/`
+		root = createRoot(container)
+		await act(async () => root?.render(app()))
+		const script = container.querySelector<HTMLElement>('[data-website-id]')!
+		const fetch = vi.fn(async () => ({ json: async () => ({}) }))
+		const trackerWindow = {
+			screen: { width: 1280, height: 720 },
+			navigator: { language: 'en' },
+			location: window.location,
+			localStorage: window.localStorage,
+			document: {
+				currentScript: script,
+				referrer: '',
+				title: 'Analytics test',
+				readyState: 'complete',
+				addEventListener: vi.fn()
+			},
+			history: { pushState: vi.fn(), replaceState: vi.fn() },
+			umami: undefined as typeof window.umami
+		}
+		runInNewContext(readFileSync('public/script2.js', 'utf8'), { window: trackerWindow, fetch })
+		await trackerWindow.umami!.track('test-click')
+		await trackerWindow.umami!.identify('test-user')
+		expect(fetch).toHaveBeenCalledTimes(allowed ? 3 : 0)
+	})
+
+	test('preserves Investors branding and website selection on staging', async () => {
+		window.location.href = 'https://ir-staging.llama.fi/'
+		root = createRoot(container)
+		await act(async () => root?.render(app()))
+		expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
+			INVESTORS_SITES.investors.umamiWebsiteId
+		)
+		expect(container.textContent).toContain('Investor Relations')
+	})
 
 	test('preserves each landing and its internal versus external links on the server', () => {
 		container.innerHTML = renderToString(app('investors', InvestorsPage))
