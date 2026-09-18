@@ -46,9 +46,9 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 						highlightText: false
 					},
 					{
-						label: 'Access to free API endpoints',
+						label: 'Free public API endpoints',
 						link: 'https://api-docs.defillama.com/',
-						linkText: 'API endpoints',
+						linkText: 'public API endpoints',
 						availability: 'check'
 					}
 				]
@@ -303,7 +303,7 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 		title: 'API Access',
 		rows: [
 			{
-				label: 'Access to free API endpoints',
+				label: 'Free public API endpoints',
 				link: 'https://api-docs.defillama.com/',
 				wrapLabel: true,
 				values: {
