@@ -73,10 +73,10 @@ export function PoolNameLockup({
 	// tallest cell so it fixes the whole row height across all yields tables.
 	//
 	// Layout: a single `items-center` flex row — bookmark, the truncating (min-w-0) two-line
-	// symbol/detail link and an optional exploit icon hugging the name. The external-link
+	// symbol/detail link and an optional depeg icon hugging the name. The external-link
 	// glyph sits centered right after the row number (main's anatomy): constant x on every
-	// row, vertically centered by the row's items-center. The risk-report shield sits at the
-	// trailing edge (ml-auto) so it aligns down the column.
+	// row, vertically centered by the row's items-center. The exploit triangle and the
+	// risk-report shield sit in a trailing group (ml-auto) so they align down the column.
 	return (
 		<span className="flex h-9 min-w-0 items-center gap-2">
 			{bookmark ? (
@@ -104,12 +104,16 @@ export function PoolNameLockup({
 				) : null}
 			</BasicLink>
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
-			{exploited ? (
-				<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
-					<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-data-down" />
-				</Tooltip>
+			{exploited || hasRiskData ? (
+				<span className="ml-auto flex shrink-0 items-center gap-2">
+					{exploited ? (
+						<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
+							<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-data-down" />
+						</Tooltip>
+					) : null}
+					{hasRiskData ? <RiskDataHint configID={configID} poolName={value} /> : null}
+				</span>
 			) : null}
-			{hasRiskData ? <RiskDataHint configID={configID} poolName={value} /> : null}
 		</span>
 	)
 }
@@ -152,7 +156,7 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 export function RiskDataHint({ configID, poolName }: { configID: string; poolName: string }) {
 	const label = `Open ${poolName} risk report`
 	return (
-		<Tooltip content={label} className="ml-auto">
+		<Tooltip content={label}>
 			<BasicLink
 				href={`/yields/pool/${configID}/risk`}
 				target="_blank"
