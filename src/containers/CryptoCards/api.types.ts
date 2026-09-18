@@ -121,7 +121,7 @@ export interface CardsTier {
 	availability: CardsAvailability
 	access: CardsAccess
 	gate?: CardsGate
-	/** Tier-specific availability, when the producer publishes it. */
+	/** Tier-specific country override; when absent, the card-level countries apply. */
 	countries?: Array<string>
 	cashback?: CardsTierCashback
 	fees: CardsTierFees

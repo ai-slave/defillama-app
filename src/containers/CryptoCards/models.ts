@@ -19,7 +19,7 @@ export interface CardTierRow {
 	parentId: string
 	logo: string | null
 	url: string | null
-	/** Tier-specific ISO alpha-2 codes; empty with availabilityUnknown when not disclosed. */
+	/** Effective ISO alpha-2 codes for this tier; empty with availabilityUnknown when not disclosed. */
 	countryCodes: Array<string>
 	countryCount: number
 	availabilityUnknown: boolean
@@ -116,6 +116,7 @@ function perkLabel(perk: CardsPerk): string {
 
 function mapTier(card: CardsIndexCard, tier: CardsTier): CardTierRow {
 	const forms = tier.type.forms ?? []
+	const countries = tier.countries ?? card.countries ?? []
 	return {
 		rowKind: 'tier',
 		cardId: card.id,
@@ -123,8 +124,8 @@ function mapTier(card: CardsIndexCard, tier: CardsTier): CardTierRow {
 		parentId: card.parent_id ?? card.id,
 		logo: card.logo ?? null,
 		url: card.url ?? null,
-		countryCodes: tier.countries ?? [],
-		countryCount: tier.countries?.length ?? 0,
+		countryCodes: countries,
+		countryCount: countries.length,
 		availabilityUnknown: tier.availability !== 'confirmed',
 		tierCount: card.tiers.length,
 		tierId: tier.id,
