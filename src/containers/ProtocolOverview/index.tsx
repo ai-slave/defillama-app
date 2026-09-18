@@ -85,7 +85,7 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 				{...(props.isCEX !== undefined ? { isCEX: props.isCEX } : {})}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-1 row-[2/3] hidden flex-col gap-6 xl:row-[1/2] xl:flex xl:min-h-[360px]">
+				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 					<ProtocolHeader
 						props={props}
 						hasTvlData={hasTvlData}
@@ -105,42 +105,16 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 						hasTvlData={hasTvlData}
 					/>
 				</Card>
-				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-2">
-						<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
-							<ProtocolHeader
-								props={props}
-								hasTvlData={hasTvlData}
-								oracleTvs={oracleTvs}
-								tvl={tvl}
-								tvlByChain={tvlByChain}
-								oracleTvsByChain={oracleTvsByChain}
-								formatPrice={formatPrice}
-								headingAs="div"
-							/>
-						</Card>
-						<Suspense
-							fallback={
-								<ChartPanel>
-									<ChartPanelExportShellFallback />
-								</ChartPanel>
-							}
-						>
-							<ProtocolChartPanel {...props} />
-						</Suspense>
-					</div>
-					{props.hasKeyMetrics ? (
-						<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
-							<KeyMetrics
-								{...props}
-								formatPrice={formatPrice}
-								tvl={tvl}
-								tvlByChain={tvlByChain}
-								computedOracleTvs={oracleTvs}
-								hasTvlData={hasTvlData}
-							/>
-						</Card>
-					) : null}
+				<div className="col-span-1 flex flex-col xl:col-[2/-1]">
+					<Suspense
+						fallback={
+							<ChartPanel>
+								<ChartPanelExportShellFallback />
+							</ChartPanel>
+						}
+					>
+						<ProtocolChartPanel {...props} />
+					</Suspense>
 				</div>
 				<AdditionalInfo {...props} />
 				{props.incomeStatement ? (
