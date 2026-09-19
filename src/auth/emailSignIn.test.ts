@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"url":"https://defillama.com"}
 
-import { BaseAuthStore } from 'pocketbase'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { signInWithPassword } from '~/auth/emailSignIn'
 import pb from '~/utils/pocketbase'
@@ -9,7 +8,13 @@ import pb from '~/utils/pocketbase'
 let requests: Array<{ signal: AbortSignal; resolve: (response: Response) => void }>
 const response = (id: string) => new Response(JSON.stringify({ token: `token-${id}`, record: { id } }))
 const attempt = (signal = new AbortController().signal, canAccept = () => true) =>
-	signInWithPassword({ email: 'person@example.com', password: 'password', signal, canAccept })
+	signInWithPassword({
+		email: 'person@example.com',
+		password: 'password',
+		turnstileToken: 'captcha-token',
+		signal,
+		canAccept
+	})
 
 beforeEach(() => {
 	pb.authStore.clear()
@@ -31,16 +36,21 @@ afterEach(() => {
 	pb.authStore.clear()
 })
 
-test('keeps the SDK write private after cancellation and preserves the caller abort signal', async () => {
-	const save = vi.spyOn(BaseAuthStore.prototype, 'save')
+test('sends the captcha token to the features server and preserves the caller abort signal', async () => {
 	const controller = new AbortController()
 	const result = attempt(controller.signal)
 	await vi.waitFor(() => expect(requests).toHaveLength(1))
 	expect(requests[0].signal).toBe(controller.signal)
+	const [url, options] = vi.mocked(fetch).mock.calls[0]
+	expect(String(url)).toMatch(/\/auth\/login$/)
+	expect(JSON.parse(String(options.body))).toEqual({
+		email: 'person@example.com',
+		password: 'password',
+		turnstile_token: 'captcha-token'
+	})
 	controller.abort()
 	requests[0].resolve(response('cancelled'))
 	expect(await result).toBeNull()
-	expect(save).toHaveBeenCalledWith('token-cancelled', expect.objectContaining({ id: 'cancelled' }))
 	expect(pb.authStore.token).toBe('')
 })
 
@@ -82,13 +92,14 @@ test('does not overwrite a replacement token-only session or resurrect it after 
 })
 
 test.each([
-	[400, 'Invalid email or password.'],
-	[429, 'Too many sign-in attempts. Please wait before trying again.'],
-	[503, 'Unable to sign in right now.']
-])('gives an actionable error for HTTP %s without changing the session', async (status, message) => {
+	[400, { message: 'Internal details must not leak' }, 'Invalid email or password.'],
+	[400, { error: 'Invalid captcha verification' }, 'Complete the CAPTCHA verification again.'],
+	[429, { error: 'Too many attempts' }, 'Too many sign-in attempts. Please wait before trying again.'],
+	[503, { error: 'Authentication service unavailable' }, 'Unable to sign in right now.']
+])('gives an actionable error for HTTP %s %j without changing the session', async (status, body, message) => {
 	const result = attempt()
 	await vi.waitFor(() => expect(requests).toHaveLength(1))
-	requests[0].resolve(new Response(JSON.stringify({ message: 'Internal details must not leak' }), { status }))
+	requests[0].resolve(new Response(JSON.stringify(body), { status }))
 	await expect(result).rejects.toThrow(message)
 	expect(pb.authStore.token).toBe('')
 })

@@ -1,14 +1,21 @@
-import PocketBase, { BaseAuthStore, ClientResponseError } from 'pocketbase'
-import { POCKETBASE_URL } from '~/constants'
+import { AUTH_SERVER } from '~/constants'
 
-export async function requestPasswordReset(email: string, signal?: AbortSignal) {
-	const client = new PocketBase(POCKETBASE_URL, new BaseAuthStore())
+export async function requestPasswordReset(email: string, turnstileToken: string, signal?: AbortSignal) {
+	let response: Response
 	try {
-		await client.collection('users').requestPasswordReset(email, { requestKey: null, signal })
+		response = await fetch(`${AUTH_SERVER}/auth/request-password-reset`, {
+			method: 'POST',
+			signal,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ email, turnstile_token: turnstileToken })
+		})
 	} catch (error) {
-		if (error instanceof ClientResponseError && error.status === 429) {
-			throw new Error('Too many reset requests. Please wait before trying again.', { cause: error })
-		}
 		throw new Error('Could not request a reset link. Check your connection.', { cause: error })
 	}
+	if (response.ok) return
+	const body: { error?: string } = await response.json().catch(() => ({}))
+	if (response.status === 429) throw new Error('Too many reset requests. Please wait before trying again.')
+	if (response.status === 400 && /captcha/i.test(body.error ?? ''))
+		throw new Error('Complete the CAPTCHA verification again.')
+	throw new Error('Could not request a reset link. Please try again.')
 }

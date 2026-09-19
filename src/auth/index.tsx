@@ -91,7 +91,7 @@ interface AuthContextType {
 	) => Promise<GoogleAuthSession | null>
 	resendGoogleLink: (request: AuthRequest & { challengeToken: string }) => Promise<GoogleLinkChallenge | null>
 	addWallet: (address: string, signMessageFunction: any, onSuccess?: () => void) => Promise<void>
-	resetPasswordMutation: UseMutationResult<void, Error, string>
+	resetPasswordMutation: UseMutationResult<void, Error, { email: string; turnstileToken: string }>
 	changeEmail: (email: string) => void
 	addEmail: (email: string) => Promise<void>
 	setPromotionalEmails: (value: string) => void
@@ -482,8 +482,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	)
 
 	const resetPasswordMutation = useMutation({
-		mutationFn: async (email: string) => {
-			await requestPasswordReset(email)
+		mutationFn: async ({ email, turnstileToken }: { email: string; turnstileToken: string }) => {
+			await requestPasswordReset(email, turnstileToken)
 			toast.success('Password reset email sent')
 		}
 	})

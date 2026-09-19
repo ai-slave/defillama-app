@@ -57,7 +57,7 @@ beforeEach(() => {
 				return new Promise<Response>((resolve) => inviteCalls.push({ resolve }))
 			if (String(url).endsWith('/team')) return jsonResponse({ team: null })
 			if (String(url).endsWith('/auth/signup')) return new Promise<Response>((resolve) => signupCalls.push({ resolve }))
-			if (String(url).endsWith('/auth-with-password')) {
+			if (String(url).endsWith('/auth/login')) {
 				return jsonResponse({
 					token: token('email-user'),
 					record: { ...record('email-user'), email: 'person@example.com', verified: loginVerified }
@@ -273,6 +273,7 @@ async function emailLogin(suppressVerifyEmailPrompt = false) {
 		sessionView.login({
 			email: 'person@example.com',
 			password: 'password',
+			turnstileToken: 'fixture-token',
 			signal: new AbortController().signal,
 			canAccept: () => true,
 			suppressVerifyEmailPrompt

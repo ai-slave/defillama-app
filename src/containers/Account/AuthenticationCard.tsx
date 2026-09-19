@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { EmailChangeModal } from './EmailChangeModal'
@@ -14,6 +13,7 @@ export function AuthenticationCard() {
 	const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
 	const [isSwitchToEmailModalOpen, setIsSwitchToEmailModalOpen] = useState(false)
 	const [passwordCooldownMsg, setPasswordCooldownMsg] = useState('')
+	const [isPasswordResetSent, setIsPasswordResetSent] = useState(false)
 	const passwordResetSentAt = useRef(0)
 	const PASSWORD_COOLDOWN_MS = 60_000
 
@@ -28,23 +28,12 @@ export function AuthenticationCard() {
 
 	const handleChangePassword = () => {
 		if (!user?.email) return
-		const elapsed = Date.now() - passwordResetSentAt.current
-		if (elapsed < PASSWORD_COOLDOWN_MS) {
-			const secondsLeft = Math.ceil((PASSWORD_COOLDOWN_MS - elapsed) / 1000)
-			toast.error(`Please wait ${secondsLeft}s before requesting another reset.`)
-			setIsPasswordModalOpen(true)
-			return
-		}
 		setPasswordCooldownMsg('')
 		setIsPasswordModalOpen(true)
-		resetPasswordMutation.mutate(user.email, {
-			onSuccess: () => {
-				passwordResetSentAt.current = Date.now()
-			}
-		})
 	}
 
-	const handleResendPasswordReset = () => {
+	// The modal collects the captcha token; the reset email goes through the features server.
+	const handleSendPasswordReset = (turnstileToken: string) => {
 		if (!user?.email) return
 		const elapsed = Date.now() - passwordResetSentAt.current
 		if (elapsed < PASSWORD_COOLDOWN_MS) {
@@ -53,11 +42,15 @@ export function AuthenticationCard() {
 			return
 		}
 		setPasswordCooldownMsg('')
-		resetPasswordMutation.mutate(user.email, {
-			onSuccess: () => {
-				passwordResetSentAt.current = Date.now()
+		resetPasswordMutation.mutate(
+			{ email: user.email, turnstileToken },
+			{
+				onSuccess: () => {
+					passwordResetSentAt.current = Date.now()
+					setIsPasswordResetSent(true)
+				}
 			}
-		})
+		)
 	}
 
 	const handleVerifyEmail = () => {
@@ -177,7 +170,8 @@ export function AuthenticationCard() {
 				isOpen={isPasswordModalOpen}
 				onClose={() => setIsPasswordModalOpen(false)}
 				email={user?.email ?? ''}
-				onResend={handleResendPasswordReset}
+				sent={isPasswordResetSent}
+				onSend={handleSendPasswordReset}
 				isPending={resetPasswordMutation.isPending}
 				cooldownMessage={passwordCooldownMsg}
 			/>

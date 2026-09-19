@@ -285,11 +285,19 @@ function AuthScreen({
 		if (isPending) return
 		const data = new FormData(event.currentTarget)
 		store.dispatch({ kind: 'requestStarted' })
+		if (!turnstileToken.current) {
+			store.dispatch({ error: 'Complete the CAPTCHA verification.', kind: 'failed' })
+			return
+		}
 		const signal = store.beginAuthRequest()
+		// Turnstile tokens are single-use; a failed attempt needs a fresh widget.
+		const token = turnstileToken.current
+		turnstileToken.current = ''
 		await loginMutation
 			.mutateAsync({
 				email: String(data.get('email')),
 				password: String(data.get('password')),
+				turnstileToken: token,
 				signal,
 				suppressVerifyEmailPrompt,
 				onAuthenticated,
@@ -297,6 +305,7 @@ function AuthScreen({
 			})
 			.catch((error: Error) => {
 				if (!signal.aborted && dialogStore.getState().open) {
+					setCaptchaRetry((retry) => retry + 1)
 					store.dispatch({ error: error.message, kind: 'failed' })
 				}
 				return null
@@ -524,6 +533,22 @@ function AuthScreen({
 						</button>
 					</p>
 
+					<div inert={isPending}>
+						<Turnstile
+							key={captchaRetry}
+							onVerify={(token) => {
+								turnstileToken.current = token
+							}}
+							onError={() => {
+								turnstileToken.current = ''
+							}}
+							onExpire={() => {
+								turnstileToken.current = ''
+							}}
+							className="flex justify-center"
+						/>
+					</div>
+
 					<div>
 						<button type="submit" disabled={isPending} className={`${primaryBtnCls} relative`}>
 							{loginMutation.isPending ? (
@@ -630,10 +655,17 @@ function ForgotPasswordScreen({
 	initialEmail: string
 }) {
 	const errorId = useId()
+	const turnstileToken = useRef('')
+	const [captchaRetry, setCaptchaRetry] = useState(0)
 	const reset = useMutation({
-		mutationFn: async ({ email, signal }: { email: string; signal: AbortSignal }) => {
-			await requestPasswordReset(email, signal)
+		mutationFn: async ({ email, signal, token }: { email: string; signal: AbortSignal; token: string }) => {
+			if (!token) throw new Error('Complete the CAPTCHA verification.')
+			await requestPasswordReset(email, token, signal)
 			return !signal.aborted && dialogStore.getState().open ? email : null
+		},
+		// A sent token is spent whatever the outcome; only then does the widget need a restart.
+		onSettled: (_data, _error, { token }) => {
+			if (token) setCaptchaRetry((retry) => retry + 1)
 		}
 	})
 	const handleSubmit = (event: FormSubmitEvent) => {
@@ -641,7 +673,9 @@ function ForgotPasswordScreen({
 		if (reset.isPending) return
 		const data = new FormData(event.currentTarget)
 		store.dispatch({ kind: 'requestStarted' })
-		reset.mutate({ email: String(data.get('email')), signal: store.beginAuthRequest() })
+		const token = turnstileToken.current
+		turnstileToken.current = ''
+		reset.mutate({ email: String(data.get('email')), signal: store.beginAuthRequest(), token })
 	}
 
 	return (
@@ -675,6 +709,21 @@ function ForgotPasswordScreen({
 							/>
 							<FieldError>Enter a valid email address.</FieldError>
 						</label>
+						<div inert={reset.isPending}>
+							<Turnstile
+								key={captchaRetry}
+								onVerify={(token) => {
+									turnstileToken.current = token
+								}}
+								onError={() => {
+									turnstileToken.current = ''
+								}}
+								onExpire={() => {
+									turnstileToken.current = ''
+								}}
+								className="flex justify-center"
+							/>
+						</div>
 						<button type="submit" disabled={reset.isPending} className={primaryBtnCls}>
 							{reset.isPending ? (
 								<span className="inline-flex items-center gap-2">

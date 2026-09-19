@@ -126,9 +126,16 @@ afterEach(async () => {
 	pb.authStore.clear()
 })
 const input = (name: string) => container.querySelector<HTMLInputElement>(`input[name="${name}"]`)!
+async function completeCaptcha() {
+	const captcha = Array.from(container.querySelectorAll('button')).find(
+		(button) => button.textContent === 'Test CAPTCHA'
+	)
+	if (captcha) await act(async () => captcha.click())
+}
 async function submit() {
 	input('email').value = 'person@example.com'
 	input('password').value = 'correct horse battery staple'
+	await completeCaptcha()
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
@@ -249,6 +256,13 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	await settle()
+	expect(requests).toHaveLength(0)
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain('CAPTCHA')
+	await completeCaptcha()
+	await act(async () =>
+		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	)
+	await settle()
 	expect(input('email').disabled).toBe(true)
 	requests[0].reject(new TypeError('Offline'))
 	await vi.waitFor(async () => {
@@ -256,11 +270,13 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Check your connection')
 	})
 	expect(input('email').value).toBe('person@example.com')
+	expect(container.textContent).not.toContain('CAPTCHA complete')
+	await completeCaptcha()
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	await settle()
-	requests[1].resolve(new Response(null, { status: 204 }))
+	requests[1].resolve(new Response(JSON.stringify({ ok: true })))
 	await vi.waitFor(async () => {
 		await settle()
 		expect(container.querySelector('[role="status"]')?.textContent).toContain('password reset link')
@@ -320,13 +336,15 @@ test.each(['person@example.com', ''])(
 		expect(input('email').value).toBe(email)
 		expect(requests).toHaveLength(0)
 		input('email').value = 'other@example.com'
+		await completeCaptcha()
 		await act(async () =>
 			container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 		)
 		await settle()
-		const [, options] = vi.mocked(fetch).mock.calls[0]
-		expect(JSON.parse(String(options?.body))).toEqual({ email: 'other@example.com' })
-		requests[0].resolve(new Response(null, { status: 204 }))
+		const [url, options] = vi.mocked(fetch).mock.calls[0]
+		expect(String(url)).toMatch(/\/auth\/request-password-reset$/)
+		expect(JSON.parse(String(options?.body))).toEqual({ email: 'other@example.com', turnstile_token: 'test-captcha' })
+		requests[0].resolve(new Response(JSON.stringify({ ok: true })))
 		await vi.waitFor(async () => {
 			await settle()
 			expect(container.querySelector('[role="status"]')?.textContent).toContain('other@example.com')

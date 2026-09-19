@@ -63,14 +63,17 @@ export async function signInWithWallet(request: WalletAuthRequest) {
 			})
 			if (!response.ok)
 				throw new Error(await getAuthErrorMessageFromResponse(response, 'Could not sign in with this wallet.'))
-			const { identity, password, impersonate } = (await response.json()) as {
+			const { identity, password, impersonate, auth } = (await response.json()) as {
 				identity: string
 				password: string
 				impersonate?: RecordAuthResponse
+				auth?: RecordAuthResponse
 			}
 			if (!isCurrent()) throw new Error('Your wallet changed. Review it before signing in.')
 			if (impersonate) return impersonate
-			// Legacy wallet accounts use a one-time password. The SDK's early store write stays private.
+			if (auth) return auth
+			// Older server responses leave the one-time password login to the client. Remove once the
+			// server always issues the session; direct PocketBase auth is being closed off.
 			return client.collection('users').authWithPassword(identity, password, { signal, requestKey: null })
 		},
 		() => {

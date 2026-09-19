@@ -60,29 +60,42 @@ async function approveNonce() {
 	await vi.waitFor(() => expect(signMessage).toHaveBeenCalledOnce())
 }
 
-test.each(['linked', 'legacy'])('accepts an existing %s account, preserving the server SIWE message', async (kind) => {
-	const result = signInWithWallet(request())
-	await approveNonce()
-	await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
-	const body = JSON.parse(vi.mocked(fetch).mock.calls[1][1]!.body as string)
-	expect(body.message).toBe(
-		createSiweMessage({
-			address,
-			domain: 'defillama.com',
-			uri: 'https://defillama.com',
-			statement: 'Sign in with Ethereum to the app.',
-			version: '1',
-			chainId: 1,
-			nonce: '12345678',
-			issuedAt: new Date(body.issuedAt)
-		})
-	)
-	resolveAuth(Response.json(kind === 'linked' ? { impersonate: session } : { identity: address, password: 'one-time' }))
-	expect(await result).toMatchObject({ id: 'wallet-user' })
-	expect(pb.authStore.token).toBe(session.token)
-	expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'wallet', connectorId: 'io.rabby' })
-	expect(onAuthenticated).toHaveBeenCalledOnce()
-})
+test.each(['linked', 'issued', 'legacy'])(
+	'accepts an existing %s account, preserving the server SIWE message',
+	async (kind) => {
+		const result = signInWithWallet(request())
+		await approveNonce()
+		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+		const body = JSON.parse(vi.mocked(fetch).mock.calls[1][1]!.body as string)
+		expect(body.message).toBe(
+			createSiweMessage({
+				address,
+				domain: 'defillama.com',
+				uri: 'https://defillama.com',
+				statement: 'Sign in with Ethereum to the app.',
+				version: '1',
+				chainId: 1,
+				nonce: '12345678',
+				issuedAt: new Date(body.issuedAt)
+			})
+		)
+		resolveAuth(
+			Response.json(
+				kind === 'linked'
+					? { impersonate: session }
+					: kind === 'issued'
+						? { identity: address, password: 'one-time', auth: session }
+						: { identity: address, password: 'one-time' }
+			)
+		)
+		expect(await result).toMatchObject({ id: 'wallet-user' })
+		expect(pb.authStore.token).toBe(session.token)
+		// Only the legacy response still finishes the login against PocketBase directly.
+		expect(fetch).toHaveBeenCalledTimes(kind === 'legacy' ? 3 : 2)
+		expect(JSON.parse(localStorage.getItem('last-sign-in')!)).toEqual({ method: 'wallet', connectorId: 'io.rabby' })
+		expect(onAuthenticated).toHaveBeenCalledOnce()
+	}
+)
 
 test.each(['closed', 'session replaced'])('never requests a signature after the attempt is %s', async (reason) => {
 	rememberSignIn({ method: 'email' })
