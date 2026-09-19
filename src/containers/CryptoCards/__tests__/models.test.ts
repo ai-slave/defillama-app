@@ -225,5 +225,11 @@ describe('mapCardsIndex', () => {
 				chainNames: { Ethereum: 'Ethereum' }
 			}
 		})
+
+		const responseWithoutLogo = structuredClone(response)
+		responseWithoutLogo.cards[0].logo = undefined
+		expect(mapCardsIndex(responseWithoutLogo).rows[0]?.logo).toBe(
+			'https://icons.llamao.fi/icons/crypto-cards/example-card?w=48&h=48'
+		)
 	})
 })

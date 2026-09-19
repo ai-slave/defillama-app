@@ -1,4 +1,4 @@
-import { tokenIconUrl } from '~/utils/icons'
+import { cryptoCardIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import type {
 	CardsAmount,
@@ -122,7 +122,7 @@ function mapTier(card: CardsIndexCard, tier: CardsTier): CardTierRow {
 		cardId: card.id,
 		cardName: card.name,
 		parentId: card.parent_id ?? card.id,
-		logo: card.logo ?? null,
+		logo: card.logo ?? cryptoCardIconUrl(card.id),
 		url: card.url ?? null,
 		countryCodes: countries,
 		countryCount: countries.length,

@@ -19,6 +19,10 @@ export function exchangeIconUrl(exchange: string, size = 48): string {
 	return `${ICONS_CDN}/exchanges/${encodeURIComponent(exchange.toLowerCase())}?w=${size}&h=${size}`
 }
 
+export function cryptoCardIconUrl(cardId: string, size = 48): string {
+	return `${ICONS_CDN}/crypto-cards/${encodeURIComponent(cardId.toLowerCase())}?w=${size}&h=${size}`
+}
+
 export function chainIconUrl(chain: string, size = 48): string {
 	return `${ICONS_CDN}/chains/rsz_${chain.toLowerCase()}?w=${size}&h=${size}`
 }
