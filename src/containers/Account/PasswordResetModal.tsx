@@ -88,7 +88,7 @@ export function PasswordResetModal({
 									type="button"
 									onClick={handleSend}
 									disabled={isPending || !turnstileToken}
-									className="flex h-10 items-center justify-center rounded-lg bg-sub-brand-secondary px-4 text-sm font-medium text-white disabled:opacity-50"
+									className="flex h-10 items-center justify-center rounded-lg bg-sub-brand-secondary px-4 text-sm font-medium text-on-brand disabled:opacity-50"
 								>
 									{isPending ? 'Sending...' : 'Send reset link'}
 								</button>

@@ -5,20 +5,23 @@ import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
-import { DragOverlay, ImageUpload } from '~/containers/LlamaAI/components/input/ImageUpload'
+import { ImageUpload } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
+import { UploadSelectionNotice } from '~/containers/LlamaAI/components/UploadSelectionNotice'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
-import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { toSubmittedAttachments, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { useFileDropTarget } from '../components/FileDrop'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -40,7 +43,7 @@ interface ProjectLandingProps {
 	onSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
-		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+		images?: Array<OutgoingAttachment>
 	) => void | Promise<void> | boolean
 	isStreaming: boolean
 	onPickSession: (sessionId: string) => void
@@ -72,6 +75,7 @@ export function ProjectLanding({
 	const [prompt, setPrompt] = usePromptDraft(`project:${projectId}`)
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
 	const imageUpload = useImageUpload()
+	useFileDropTarget('Attach files to message', imageUpload.addDroppedFiles, tab === 'chats' && !!project.data)
 	const shiftHeldRef = useRef(false)
 	const sessionById = useMemo(() => new Map(sessionList.map((session) => [session.sessionId, session])), [sessionList])
 	const sessions = useMemo(
@@ -155,19 +159,8 @@ export function ProjectLanding({
 		const trimmed = prompt.trim()
 		const imagesToSend = [...imageUpload.selectedImages]
 		if ((!trimmed && imagesToSend.length === 0) || isStreaming) return
-		const images =
-			imagesToSend.length > 0
-				? await Promise.all(
-						imagesToSend.map(({ file, isPasted }) =>
-							fileToBase64(file).then((data) => ({
-								data,
-								mimeType: file.type,
-								filename: file.name,
-								...(isPasted ? { isPasted: true } : {})
-							}))
-						)
-					)
-				: undefined
+		if (imageUpload.uploadMessage) return
+		const images = imagesToSend.length > 0 ? await toSubmittedAttachments(imagesToSend) : undefined
 		const accepted = await Promise.resolve(onSubmit(trimmed, undefined, images))
 		if (accepted === false) return
 		setPrompt('')
@@ -246,7 +239,11 @@ export function ProjectLanding({
 								>
 									<Icon name="ellipsis" height={16} width={16} />
 								</Ariakit.MenuButton>
-								<Ariakit.Menu gutter={6} className={`${menuSurfaceStyles} z-50 min-w-[200px]`}>
+								<Ariakit.Menu
+									gutter={6}
+									className={`${menuSurfaceStyles} z-50 w-52`}
+									wrapperProps={{ className: popoverMobileWrapperClassName }}
+								>
 									<Ariakit.MenuItem onClick={renameStore.show} className={popoverMenuItemStyles}>
 										Rename project
 									</Ariakit.MenuItem>
@@ -303,21 +300,21 @@ export function ProjectLanding({
 							) : null}
 						</TabPanel>
 						<TabPanel value="chats" hidden={tab !== 'chats'} className="pt-4">
-							{/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a drop target; attaching by keyboard goes through the attach button. */}
 							<form
 								onSubmit={(e) => {
 									e.preventDefault()
 									void handleSubmit()
 								}}
-								onDragEnter={imageUpload.handleDragEnter}
-								onDragLeave={imageUpload.handleDragLeave}
-								onDragOver={(e) => e.preventDefault()}
-								onDrop={imageUpload.handleDrop}
 								className="relative mb-4"
 							>
-								<DragOverlay isDragging={imageUpload.isDragging} />
 								<div className={imageUpload.selectedImages.length > 0 ? 'mb-2' : ''}>
+									<UploadSelectionNotice
+										feedback={imageUpload.selectionFeedback}
+										onDismiss={imageUpload.dismissSelectionFeedback}
+									/>
 									<ImageUpload
+										retryUpload={imageUpload.retryUpload}
+										uploadMessage={imageUpload.uploadMessage}
 										selectedImages={imageUpload.selectedImages}
 										previewImage={imageUpload.previewImage}
 										setPreviewImage={imageUpload.setPreviewImage}
@@ -342,7 +339,7 @@ export function ProjectLanding({
 												variant="ghost"
 												square
 												aria-label="Add files"
-												className="self-end"
+												className="self-end!"
 											>
 												<Icon name="plus" height={16} width={16} />
 											</Button>
@@ -356,12 +353,16 @@ export function ProjectLanding({
 										onPaste={handlePaste}
 										rows={1}
 										aria-label={`New chat in ${project.data.name}`}
-										placeholder={`New chat in ${project.data.name}`}
-										className="block min-w-0 flex-1 resize-none self-center bg-transparent text-base text-primary placeholder:text-tertiary focus:outline-hidden sm:body-md"
+										placeholder="New chat in this project…"
+										className="block min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1 text-base leading-6 text-primary placeholder:text-tertiary focus:outline-hidden"
 									/>
 									<button
 										type="submit"
-										disabled={(!prompt.trim() && imageUpload.selectedImages.length === 0) || isStreaming}
+										disabled={
+											!!imageUpload.uploadMessage ||
+											(!prompt.trim() && imageUpload.selectedImages.length === 0) ||
+											isStreaming
+										}
 										aria-label="Send message"
 										className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand focus-visible:focus-ring-on-brand enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
 									>

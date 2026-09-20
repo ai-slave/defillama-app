@@ -61,7 +61,6 @@ vi.mock('~/containers/LlamaAI/hooks/useImageUpload', () => ({
 	useImageUpload: () => ({ selectedImages: [], clearImages: mocks.clearImages })
 }))
 vi.mock('~/containers/LlamaAI/components/input/ImageUpload', () => ({
-	DragOverlay: () => null,
 	ImageUpload: () => null
 }))
 vi.mock('~/containers/LlamaAI/components/PastedContentModal', () => ({ PastedContentModal: () => null }))

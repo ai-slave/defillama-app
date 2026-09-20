@@ -30,6 +30,7 @@ import {
 	type ConversationViewModel
 } from '~/containers/LlamaAI/components/ConversationView'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
+import { FileDropOverlay, FileDropProvider } from '~/containers/LlamaAI/components/FileDrop'
 import { CitationDetailPanel } from '~/containers/LlamaAI/components/messages/CitationDetailPanel'
 import {
 	CitationSheetProvider,
@@ -42,6 +43,7 @@ import { AgenticSidebar } from '~/containers/LlamaAI/components/sidebar/AgenticS
 import { TextSelectionPopup } from '~/containers/LlamaAI/components/TextSelectionPopup'
 import { TipActionProvider } from '~/containers/LlamaAI/components/TipActionContext'
 import { TokenLimitModal } from '~/containers/LlamaAI/components/TokenLimitModal'
+import { UploadTargetProvider } from '~/containers/LlamaAI/components/UploadTarget'
 import { RECOVERY_MAX_MS } from '~/containers/LlamaAI/connectionErrors'
 import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containers/LlamaAI/dashboardPanelState'
 import { ExecutionCoordinator, type ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
@@ -76,6 +78,7 @@ import {
 	type SharedSession
 } from '~/containers/LlamaAI/messageMappers'
 import { AgenticMutationReconcileError, createAgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import { useProjectSessions } from '~/containers/LlamaAI/projects/hooks'
 import { ProjectLanding } from '~/containers/LlamaAI/projects/ProjectLanding'
 import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
@@ -1847,7 +1850,7 @@ export function AgenticChat({
 		(
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
-			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+			images?: Array<OutgoingAttachment>,
 			pageContext?: ChatPageContext,
 			options?: {
 				isSuggestedQuestion?: boolean
@@ -1943,7 +1946,7 @@ export function AgenticChat({
 		async (
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
-			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+			images?: Array<OutgoingAttachment>,
 			modeOverride?: AgenticAnswerMode,
 			quotedTextOverride?: string | null
 		) => {
@@ -2013,7 +2016,7 @@ export function AgenticChat({
 		(
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
-			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+			images?: Array<OutgoingAttachment>
 		) => {
 			const queueIsActive =
 				!queueAdmissionPaused &&
@@ -2469,7 +2472,7 @@ export function AgenticChat({
 		handleSubmit: (
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
-			images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+			images?: Array<OutgoingAttachment>,
 			pageContext?: ChatPageContext,
 			isSuggestedQuestion?: boolean
 		) => handleSubmit(prompt, entities, images, pageContext, { isSuggestedQuestion }),
@@ -2667,194 +2670,199 @@ export function AgenticChat({
 			<LlamaAIChromeContext.Provider value={chromeValue}>
 				<ArticleExportProvider sessionTitle={effectiveSessionTitle ?? undefined}>
 					<CitationSheetProvider value={citationSheet}>
-						<div
-							className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-72px)]"
-							style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
-						>
-							{!readOnly && sidebarVisible ? (
-								<>
-									<AgenticSidebar
-										sessions={sessions}
-										isLoading={isLoadingSessions}
-										loadError={sessionListError}
-										currentSessionId={routeSessionId ?? sessionId ?? null}
-										restoringSessionId={restoringSessionId}
-										onSessionSelect={(nextSessionId) => {
-											void router.push(`/ai/chat/${nextSessionId}`)
-										}}
-										onNewChat={handleNewChat}
-										onDelete={handleDeleteSession}
-										shouldAnimate={shouldAnimateSidebar}
-										onOpenSettings={openSettings}
-										onOpenBalanceSettings={() => openSettingsAtTab('balance')}
-										showBalance={settings.showBalanceInSidebar}
-										hasCustomInstructions={settings.customInstructions.trim().length > 0}
-										onBulkDelete={handleBulkDeleteSessions}
-										onSearchMatchClick={handleSearchMatchClick}
-										hasMoreSessions={hasMoreSessions}
-										isFetchingMoreSessions={isFetchingMoreSessions}
-										loadMoreSessionsError={loadMoreSessionsError}
-										onLoadMoreSessions={loadMoreSessions}
-										currentProjectId={routeProjectId}
-										currentSessionProjectId={effectiveSessionProjectId}
-										alertsCount={alertsUsage?.count ?? null}
-										onOpenAlerts={alertsModalStore.show}
-									/>
-									<div className="flex min-h-11 lg:hidden" />
-								</>
-							) : null}
-
-							<div
-								className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
-							>
-								{!readOnly && !sidebarVisible ? (
-									<ChatControls
-										handleNewChat={handleNewChat}
-										onOpenSettings={openSettings}
-										hasCustomInstructions={settings.customInstructions.trim().length > 0}
-										sessionTitle={effectiveSessionTitle}
-										canShare={!isSharedView && effectiveMessages.length > 0}
-										isSessionSaved={isSessionSaved}
-										onShare={() => openShareModal()}
-									/>
-								) : null}
-								{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
-									<Tooltip
-										content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
-										placement="bottom-end"
-										render={
-											<Ariakit.Button
-												type="button"
-												onClick={() => openShareModal()}
-												disabled={!isSessionSaved}
-												accessibleWhenDisabled
-												data-umami-event="llamaai-share-modal-open"
-												data-umami-event-source="header_controls"
+						<FileDropProvider>
+							<UploadTargetProvider sessionId={sessionId} projectId={currentSessionProjectId}>
+								<div
+									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-72px)]"
+									style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
+								>
+									{!readOnly && sidebarVisible ? (
+										<>
+											<AgenticSidebar
+												sessions={sessions}
+												isLoading={isLoadingSessions}
+												loadError={sessionListError}
+												currentSessionId={routeSessionId ?? sessionId ?? null}
+												restoringSessionId={restoringSessionId}
+												onSessionSelect={(nextSessionId) => {
+													void router.push(`/ai/chat/${nextSessionId}`)
+												}}
+												onNewChat={handleNewChat}
+												onDelete={handleDeleteSession}
+												shouldAnimate={shouldAnimateSidebar}
+												onOpenSettings={openSettings}
+												onOpenBalanceSettings={() => openSettingsAtTab('balance')}
+												showBalance={settings.showBalanceInSidebar}
+												hasCustomInstructions={settings.customInstructions.trim().length > 0}
+												onBulkDelete={handleBulkDeleteSessions}
+												onSearchMatchClick={handleSearchMatchClick}
+												hasMoreSessions={hasMoreSessions}
+												isFetchingMoreSessions={isFetchingMoreSessions}
+												loadMoreSessionsError={loadMoreSessionsError}
+												onLoadMoreSessions={loadMoreSessions}
+												currentProjectId={routeProjectId}
+												currentSessionProjectId={effectiveSessionProjectId}
+												alertsCount={alertsUsage?.count ?? null}
+												onOpenAlerts={alertsModalStore.show}
 											/>
-										}
-										className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
+											<div className="flex min-h-11 lg:hidden" />
+										</>
+									) : null}
+
+									<div
+										className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
 									>
-										<Icon name="share" height={14} width={14} />
-										<span className="sr-only">{SHARE_TOOLTIP}</span>
-									</Tooltip>
-								) : null}
-								{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
-									<LoadingConversationState />
-								) : !hasMessages && visibleError ? (
-									<EmptyConversationErrorState
-										onNewChat={() => void router.push('/ai/chat')}
-										message={visibleError}
-										onRetry={
-											isRouteSessionPending && routeSessionId
-												? () => void handleSessionSelect(routeSessionId)
-												: undefined
-										}
-									/>
-								) : (
-									<ChatSurface
-										showLanding={!hasMessages && !visibleError}
-										animateLandingTransition={shouldAnimateLandingTransition}
-										animateConversationTransition={shouldAnimateConversationTransition}
-										landingOverride={landingOverride}
-										landingProps={landingProps}
-										conversationViewModel={conversationViewModel}
-										conversationKey={`conversation-${conversationViewResetKey}`}
-									/>
-								)}
-							</div>
-							{!isRouteSessionPending && rightPanel ? (
-								<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-subtle bg-surface lg:ml-2 lg:flex">
-									{rightPanel}
-								</aside>
-							) : null}
-							{!isRouteSessionPending && citationSheet.isOpen ? (
-								<CitationDetailPanel
-									advancedProvenance={settings.advancedProvenance}
-									onBackToDashboard={
-										visibleDashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
-									}
-								/>
-							) : visibleDashboardVersions.length > 0 && visibleDashboardConfig ? (
-								<Suspense fallback={null}>
-									<DashboardPanel
-										config={visibleDashboardConfig}
-										isOpen={dashboardPanelIsOpen}
-										versions={visibleDashboardVersions}
-										versionIndex={dashboardVersionIndex}
-										onVersionChange={handleDashboardVersionChange}
-										onClose={handleDashboardClose}
-										onExited={handleDashboardExited}
-										sessionId={sessionId}
-									/>
-								</Suspense>
-							) : null}
-							{!readOnly ? (
-								<ArticleSelectionPopup
-									messages={messages}
-									onSelect={(text) => {
-										setQuotedText(text)
-										promptInputRef.current?.focus()
-									}}
-								/>
-							) : null}
-							{!readOnly && rateLimitDetails ? (
-								<ResearchLimitModal
-									dialogStore={researchModalStore}
-									period={rateLimitDetails.period}
-									limit={rateLimitDetails.limit}
-									resetTime={rateLimitDetails.resetTime}
-									feature={limitModalFeature}
-								/>
-							) : null}
-							{!readOnly ? (
-								<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
-							) : null}
-							{!readOnly && showShareModal ? (
-								<ShareModal
-									open
-									setOpen={setShareModalOpen}
-									sessionId={effectiveSessionId}
-									messageId={shareTargetMessageId}
-								/>
-							) : null}
-							{!readOnly ? (
-								<DeepLinkPromptModal
-									isOpen={!!deepLinkConfirmationPrompt}
-									prompt={deepLinkConfirmationPrompt}
-									onClose={handleCloseDeepLinkPrompt}
-									onConfirm={handleConfirmDeepLinkPrompt}
-								/>
-							) : null}
-							{!readOnly ? (
-								<AlertsModal
-									dialogStore={alertsModalStore}
-									alertsUsage={alertsUsage}
-									onPrefillPrompt={handleAlertPrefillPrompt}
-								/>
-							) : null}
-							{shouldRenderSubscribeModal ? (
-								<Suspense fallback={null}>
-									<SubscribeProModal dialogStore={subscribeModalStore} />
-								</Suspense>
-							) : null}
-							{!readOnly ? (
-								<SettingsModal
-									dialogStore={settingsModalStore}
-									settings={settings}
-									actions={actions}
-									availableModels={availableModels}
-									availableEfforts={availableEfforts}
-									telegramStatus={telegramStatus}
-									isSettingsLoading={
-										settingsQueryState.isLoading || (settingsQueryState.isFetching && !settingsQueryState.data)
-									}
-									initialState={initialIntegrationsState}
-									onInitialStateConsumed={() => setInitialIntegrationsState(null)}
-									mobileNotificationPreference={webMobilePreference}
-									setMobileNotificationEnabled={setWebMobilePushEnabled}
-								/>
-							) : null}
-						</div>
+										<FileDropOverlay />
+										{!readOnly && !sidebarVisible ? (
+											<ChatControls
+												handleNewChat={handleNewChat}
+												onOpenSettings={openSettings}
+												hasCustomInstructions={settings.customInstructions.trim().length > 0}
+												sessionTitle={effectiveSessionTitle}
+												canShare={!isSharedView && effectiveMessages.length > 0}
+												isSessionSaved={isSessionSaved}
+												onShare={() => openShareModal()}
+											/>
+										) : null}
+										{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
+											<Tooltip
+												content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
+												placement="bottom-end"
+												render={
+													<Ariakit.Button
+														type="button"
+														onClick={() => openShareModal()}
+														disabled={!isSessionSaved}
+														accessibleWhenDisabled
+														data-umami-event="llamaai-share-modal-open"
+														data-umami-event-source="header_controls"
+													/>
+												}
+												className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
+											>
+												<Icon name="share" height={14} width={14} />
+												<span className="sr-only">{SHARE_TOOLTIP}</span>
+											</Tooltip>
+										) : null}
+										{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
+											<LoadingConversationState />
+										) : !hasMessages && visibleError ? (
+											<EmptyConversationErrorState
+												onNewChat={() => void router.push('/ai/chat')}
+												message={visibleError}
+												onRetry={
+													isRouteSessionPending && routeSessionId
+														? () => void handleSessionSelect(routeSessionId)
+														: undefined
+												}
+											/>
+										) : (
+											<ChatSurface
+												showLanding={!hasMessages && !visibleError}
+												animateLandingTransition={shouldAnimateLandingTransition}
+												animateConversationTransition={shouldAnimateConversationTransition}
+												landingOverride={landingOverride}
+												landingProps={landingProps}
+												conversationViewModel={conversationViewModel}
+												conversationKey={`conversation-${conversationViewResetKey}`}
+											/>
+										)}
+									</div>
+									{!isRouteSessionPending && rightPanel ? (
+										<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-subtle bg-surface lg:ml-2 lg:flex">
+											{rightPanel}
+										</aside>
+									) : null}
+									{!isRouteSessionPending && citationSheet.isOpen ? (
+										<CitationDetailPanel
+											advancedProvenance={settings.advancedProvenance}
+											onBackToDashboard={
+												visibleDashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
+											}
+										/>
+									) : visibleDashboardVersions.length > 0 && visibleDashboardConfig ? (
+										<Suspense fallback={null}>
+											<DashboardPanel
+												config={visibleDashboardConfig}
+												isOpen={dashboardPanelIsOpen}
+												versions={visibleDashboardVersions}
+												versionIndex={dashboardVersionIndex}
+												onVersionChange={handleDashboardVersionChange}
+												onClose={handleDashboardClose}
+												onExited={handleDashboardExited}
+												sessionId={sessionId}
+											/>
+										</Suspense>
+									) : null}
+									{!readOnly ? (
+										<ArticleSelectionPopup
+											messages={messages}
+											onSelect={(text) => {
+												setQuotedText(text)
+												promptInputRef.current?.focus()
+											}}
+										/>
+									) : null}
+									{!readOnly && rateLimitDetails ? (
+										<ResearchLimitModal
+											dialogStore={researchModalStore}
+											period={rateLimitDetails.period}
+											limit={rateLimitDetails.limit}
+											resetTime={rateLimitDetails.resetTime}
+											feature={limitModalFeature}
+										/>
+									) : null}
+									{!readOnly ? (
+										<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
+									) : null}
+									{!readOnly && showShareModal ? (
+										<ShareModal
+											open
+											setOpen={setShareModalOpen}
+											sessionId={effectiveSessionId}
+											messageId={shareTargetMessageId}
+										/>
+									) : null}
+									{!readOnly ? (
+										<DeepLinkPromptModal
+											isOpen={!!deepLinkConfirmationPrompt}
+											prompt={deepLinkConfirmationPrompt}
+											onClose={handleCloseDeepLinkPrompt}
+											onConfirm={handleConfirmDeepLinkPrompt}
+										/>
+									) : null}
+									{!readOnly ? (
+										<AlertsModal
+											dialogStore={alertsModalStore}
+											alertsUsage={alertsUsage}
+											onPrefillPrompt={handleAlertPrefillPrompt}
+										/>
+									) : null}
+									{shouldRenderSubscribeModal ? (
+										<Suspense fallback={null}>
+											<SubscribeProModal dialogStore={subscribeModalStore} />
+										</Suspense>
+									) : null}
+									{!readOnly ? (
+										<SettingsModal
+											dialogStore={settingsModalStore}
+											settings={settings}
+											actions={actions}
+											availableModels={availableModels}
+											availableEfforts={availableEfforts}
+											telegramStatus={telegramStatus}
+											isSettingsLoading={
+												settingsQueryState.isLoading || (settingsQueryState.isFetching && !settingsQueryState.data)
+											}
+											initialState={initialIntegrationsState}
+											onInitialStateConsumed={() => setInitialIntegrationsState(null)}
+											mobileNotificationPreference={webMobilePreference}
+											setMobileNotificationEnabled={setWebMobilePushEnabled}
+										/>
+									) : null}
+								</div>
+							</UploadTargetProvider>
+						</FileDropProvider>
 					</CitationSheetProvider>
 				</ArticleExportProvider>
 			</LlamaAIChromeContext.Provider>

@@ -1,5 +1,5 @@
-import { useCallback } from 'react'
-import toast from 'react-hot-toast'
+import { useCallback, useState } from 'react'
+import type { UploadSelectionFeedback } from '../components/UploadSelectionNotice'
 import { useUploadProjectFiles } from './hooks'
 
 const PROJECT_FILE_ACCEPT_EXTENSIONS = [
@@ -85,56 +85,38 @@ function isAcceptedProjectFile(file: File): boolean {
 	return PROJECT_FILE_ACCEPT_EXTENSION_SET.has(name.slice(extensionStart))
 }
 
-// The compiler cannot lower a loop inside a try at all, so the reporting moves out. The call stays in
-// the try, so a throwing toast is still caught.
-function reportSkipped(skipped: Array<{ path: string; reason: string }>) {
-	for (const entry of skipped) toast.error(`Skipped ${entry.path}: ${entry.reason}`)
-}
-
-// Both are value blocks, which the compiler cannot lower inside the try or the catch.
-function fileCountLabel(count: number) {
-	return count === 1 ? `${count} file` : `${count} files`
-}
-
-function uploadErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : 'Upload failed'
-}
-
 export function useProjectFileUpload(projectId: string) {
 	const upload = useUploadProjectFiles(projectId)
+	const [feedback, setFeedback] = useState<UploadSelectionFeedback | null>(null)
 
 	const handleFiles = useCallback(
 		async (fileList: Array<File>) => {
 			if (fileList.length === 0) return
 
-			const archives = fileList.filter(isArchiveFile)
-			const nonArchiveFiles = fileList.filter((file) => !isArchiveFile(file))
-			const oversized = nonArchiveFiles.filter((file) => file.size > PROJECT_MAX_FILE_BYTES)
-			const sizeAcceptedFiles = nonArchiveFiles.filter((file) => file.size <= PROJECT_MAX_FILE_BYTES)
-			const files = sizeAcceptedFiles.filter(isAcceptedProjectFile)
-			const unsupported = sizeAcceptedFiles.filter((file) => !isAcceptedProjectFile(file))
-
-			if (archives.length > 0) {
-				toast.error('Archive uploads are not supported. Unzip and drop the folder instead.')
+			const files: Array<File> = []
+			const skipped: UploadSelectionFeedback['skipped'] = []
+			for (const file of fileList) {
+				let reason = ''
+				if (isArchiveFile(file)) reason = 'Unzip the archive and upload its files instead.'
+				else if (file.size > PROJECT_MAX_FILE_BYTES) reason = 'Exceeds the 100 MB per-file limit.'
+				else if (!isAcceptedProjectFile(file)) reason = 'Unsupported file type.'
+				if (reason) skipped.push({ filename: getProjectFileName(file), reason })
+				else files.push(file)
 			}
-			if (unsupported.length > 0) {
-				toast.error(
-					unsupported.length === 1
-						? `Unsupported file type: ${getProjectFileName(unsupported[0])}`
-						: `Skipped ${unsupported.length} unsupported files`
-				)
-			}
-			reportSkipped(oversized.map((file) => ({ path: getProjectFileName(file), reason: 'file exceeds 100 MB' })))
+			setFeedback(skipped.length > 0 ? { added: 0, skipped } : null)
 			if (files.length === 0) return
-
 			try {
 				const res = await upload.mutateAsync(files)
-				if (res.imported.length > 0) {
-					toast.success(`Uploaded ${fileCountLabel(res.imported.length)}`)
-				}
-				reportSkipped(res.skipped)
+				setFeedback({
+					added: res.imported.length,
+					skipped: [...skipped, ...res.skipped.map(({ path, reason }) => ({ filename: path, reason }))]
+				})
 			} catch (error) {
-				toast.error(uploadErrorMessage(error))
+				const reason = error instanceof Error ? error.message : 'Upload failed. Select the file again to retry.'
+				setFeedback({
+					added: 0,
+					skipped: [...skipped, ...files.map((file) => ({ filename: getProjectFileName(file), reason }))]
+				})
 			}
 		},
 		[upload]
@@ -142,6 +124,8 @@ export function useProjectFileUpload(projectId: string) {
 
 	return {
 		handleFiles,
+		feedback,
+		dismissFeedback: () => setFeedback(null),
 		isUploading: upload.isPending
 	}
 }

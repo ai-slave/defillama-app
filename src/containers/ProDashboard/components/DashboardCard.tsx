@@ -5,12 +5,7 @@ import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
@@ -89,9 +84,6 @@ function DashboardCardActionsMenu({
 				className={menuSurfaceStyles}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 			>
-				<Ariakit.PopoverDismiss aria-label="Close menu" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
 				<Ariakit.MenuItem
 					className={`${popoverMenuItemStyles} text-error`}
 					onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}

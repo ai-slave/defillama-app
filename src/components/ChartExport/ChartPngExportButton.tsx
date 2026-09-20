@@ -5,12 +5,7 @@ import toast from 'react-hot-toast'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import type { PngExportProfile } from './chartPngExport'
@@ -94,9 +89,6 @@ export function ChartPngExportButton({
 				className={`${menuSurfaceStyles} z-50`}
 				portal
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
 				{csvMenuItem ? (
 					<button
 						data-umami-event="export-csv"

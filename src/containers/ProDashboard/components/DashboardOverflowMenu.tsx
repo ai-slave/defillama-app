@@ -4,12 +4,7 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProButton } from '../ui'
@@ -92,9 +87,6 @@ export function DashboardOverflowMenu({
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 					aria-label="Dashboard actions"
 				>
-					<Ariakit.PopoverDismiss aria-label="Close menu" className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
 					{onOpenSettings ? (
 						<Ariakit.MenuItem
 							className={popoverMenuItemStyles}

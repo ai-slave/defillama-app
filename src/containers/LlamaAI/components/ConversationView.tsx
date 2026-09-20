@@ -21,6 +21,7 @@ import { SpawnProgressCard, TodoChecklistPanel } from '~/containers/LlamaAI/comp
 import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBanner'
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type { QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import type {
 	AgentStep,
@@ -92,7 +93,7 @@ export interface ConversationViewModel {
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
-		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+		images?: Array<OutgoingAttachment>,
 		pageContext?: {
 			entitySlug?: string
 			entityType?: 'protocol' | 'chain' | 'page'

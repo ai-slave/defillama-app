@@ -8,6 +8,7 @@ import { PromptInput } from '~/containers/LlamaAI/components/PromptInput'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBanner'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
@@ -30,7 +31,7 @@ export interface ChatLandingProps {
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
-		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+		images?: Array<OutgoingAttachment>,
 		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
 		isSuggestedQuestion?: boolean
 	) => void | Promise<void> | boolean

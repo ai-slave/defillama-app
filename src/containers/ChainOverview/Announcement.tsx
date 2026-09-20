@@ -1,11 +1,10 @@
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
-import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Icon } from '~/ui/Icon'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
+import { UniversalTokenRatingAnnouncement } from '../UniversalTokenRating/Announcement'
 
 const NEAR_CHAIN_ICON = chainIconUrl('near')
 
@@ -72,30 +71,5 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 		)
 	}
 
-	return (
-		<Announcement
-			announcementId="universal-token-rating"
-			version="2026-09-18"
-			className="relative overflow-hidden border border-[#9ad9bb] bg-[linear-gradient(100deg,#eafaf1_0%,#d9f4e6_55%,#c9efdb_100%)] text-[#0b4d33] shadow-[0_10px_30px_rgba(17,147,95,0.18)] dark:border-[#1f6a48] dark:bg-[linear-gradient(100deg,#0d3324_0%,#12452f_55%,#155238_100%)] dark:text-[#cdf5e0] dark:shadow-[0_10px_30px_rgba(13,51,36,0.5)]"
-			contentClassName="text-center"
-			dismissButtonClassName="hover:bg-[#0b4d33]/10 dark:hover:bg-white/10"
-		>
-			<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-[shimmer_6s_ease-in-out_infinite] bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.35),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(141,242,192,0.12),transparent)]" />
-			<span className="relative flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5">
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-[#0e7a4f] px-2.5 py-0.5 text-xs font-bold tracking-wide text-white shadow-sm dark:bg-[#1f5a40] dark:text-[#8df2c0] dark:ring-1 dark:ring-[#8df2c0]/30">
-					<Icon name="sparkles" height={12} width={12} />
-					NEW
-				</span>
-				<span className="font-medium">Universal Token Rating is live: data-driven scores for every token.</span>
-				<BasicLink
-					href="/universal-token-rating"
-					data-umami-event="utr-announcement-click"
-					className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-semibold text-[#0b4d33] ring-1 ring-[#0e7a4f]/40 transition-colors hover:bg-white dark:bg-white/10 dark:text-[#cdf5e0] dark:ring-[#8df2c0]/30 dark:hover:bg-white/20"
-				>
-					See the ratings
-					<Icon name="arrow-right" height={12} width={12} />
-				</BasicLink>
-			</span>
-		</Announcement>
-	)
+	return <UniversalTokenRatingAnnouncement />
 }

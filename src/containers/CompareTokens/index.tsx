@@ -9,12 +9,7 @@ import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import {
-	menuSurfaceStyles,
-	popoverRowWithBorderStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverRowWithBorderStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -178,10 +173,6 @@ export function CompareTokens({
 						className={menuSurfaceStyles}
 						portal
 					>
-						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-							<Icon name="x" className="size-5" />
-						</Ariakit.PopoverDismiss>
-
 						{compareTypes.map((item) => (
 							<Ariakit.MenuItem
 								key={item.value}

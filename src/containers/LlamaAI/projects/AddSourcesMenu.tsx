@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
@@ -25,7 +26,7 @@ export function AddSourcesMenu({
 	gutter = 6,
 	onAddPhotosFiles
 }: AddSourcesMenuProps) {
-	const { handleFiles } = useProjectFileUpload(projectId)
+	const { handleFiles, isUploading, feedback, dismissFeedback } = useProjectFileUpload(projectId)
 	const addTextStore = Ariakit.useDialogStore()
 	const githubStore = Ariakit.useDialogStore()
 	const fileInputRef = useRef<HTMLInputElement>(null)
@@ -34,14 +35,18 @@ export function AddSourcesMenu({
 	return (
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
-				<Ariakit.MenuButton render={trigger as React.ReactElement} />
-				<Ariakit.Menu gutter={gutter} className={menuClassName ?? `${menuSurfaceStyles} z-50 min-w-[240px]`}>
+				<Ariakit.MenuButton disabled={isUploading} render={trigger as React.ReactElement} />
+				<Ariakit.Menu
+					gutter={gutter}
+					className={menuClassName ?? `${menuSurfaceStyles} z-50 w-60`}
+					wrapperProps={{ className: popoverMobileWrapperClassName }}
+				>
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>
 							<Ariakit.MenuItem
 								onClick={onAddPhotosFiles}
-								className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
+								className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
 							>
 								<Icon name="image-plus" height={14} width={14} className="text-secondary" />
 								Add photos &amp; files
@@ -52,28 +57,28 @@ export function AddSourcesMenu({
 					) : null}
 					<Ariakit.MenuItem
 						onClick={() => fileInputRef.current?.click()}
-						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
+						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
 					>
 						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload files
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => folderInputRef.current?.click()}
-						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
+						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
 					>
 						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload folder
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => addTextStore.show()}
-						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
+						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
 					>
 						<Icon name="file-text" height={14} width={14} className="text-secondary" />
 						Add text content
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => githubStore.show()}
-						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
+						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
 					>
 						<Icon name="github" height={14} width={14} className="text-secondary" />
 						Connect GitHub repo
@@ -107,6 +112,18 @@ export function AddSourcesMenu({
 					if (folderInputRef.current) folderInputRef.current.value = ''
 				}}
 			/>
+			{isUploading || feedback ? (
+				<Ariakit.Portal>
+					<div className="fixed right-4 bottom-4 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg bg-surface shadow-lg">
+						{isUploading ? (
+							<p role="status" className="p-3 body-sm text-secondary">
+								Uploading project files…
+							</p>
+						) : null}
+						<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
+					</div>
+				</Ariakit.Portal>
+			) : null}
 			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} />
 			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} />
 		</>

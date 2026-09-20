@@ -5,12 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -60,10 +55,6 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 				className={`${menuSurfaceStyles} shadow-sm`}
 				portal
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
 				<Ariakit.MenuItem
 					render={
 						<a

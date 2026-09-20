@@ -1,15 +1,17 @@
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CapabilityChips } from '~/containers/LlamaAI/components/input/CapabilityChips'
 import { EntityComboboxPopover } from '~/containers/LlamaAI/components/input/EntityCombobox'
-import { DragOverlay, ImageUpload, ImageUploadButton } from '~/containers/LlamaAI/components/input/ImageUpload'
+import { ImageUpload, ImageUploadButton } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { InputTextarea } from '~/containers/LlamaAI/components/input/InputTextarea'
 import { MobileToolsPopover } from '~/containers/LlamaAI/components/input/MobileToolsPopover'
 import { ModeToggle } from '~/containers/LlamaAI/components/input/ModeToggle'
 import { SubmitButton } from '~/containers/LlamaAI/components/input/SubmitButton'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
+import { UploadSelectionNotice } from '~/containers/LlamaAI/components/UploadSelectionNotice'
 import { useEntityCombobox } from '~/containers/LlamaAI/hooks/useEntityCombobox'
-import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { toSubmittedAttachments, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { setInputSize, syncHighlightScroll } from '~/containers/LlamaAI/utils/scrollUtils'
 import { highlightWord } from '~/containers/LlamaAI/utils/textUtils'
@@ -19,6 +21,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { useFileDropTarget } from './FileDrop'
 
 const PASTE_TO_FILE_THRESHOLD = 1500
 
@@ -38,7 +41,7 @@ interface PromptInputProps {
 	handleSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
-		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
+		images?: Array<OutgoingAttachment>,
 		pageContext?: undefined,
 		isSuggestedQuestion?: boolean
 	) => void | Promise<void> | boolean | QueueSubmitResult | Promise<QueueSubmitResult>
@@ -59,9 +62,6 @@ interface PromptInputProps {
 	researchUsage?: ResearchUsage | null
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
-	droppedFiles?: Array<File> | null
-	clearDroppedFiles?: () => void
-	externalDragging?: boolean
 	onOpenAlerts?: () => void
 	quotedText?: string | null
 	onClearQuotedText?: () => void
@@ -111,9 +111,6 @@ export function PromptInput({
 	researchUsage,
 	factCheckedUsage,
 	onFactCheckedGated,
-	droppedFiles,
-	clearDroppedFiles,
-	externalDragging,
 	onOpenAlerts,
 	quotedText,
 	onClearQuotedText,
@@ -179,10 +176,7 @@ export function PromptInput({
 	)
 
 	// Image upload handling
-	const imageUpload = useImageUpload({ droppedFiles: isStopping ? null : droppedFiles, clearDroppedFiles })
-	useEffect(() => {
-		if (isStopping && droppedFiles?.length) clearDroppedFiles?.()
-	}, [isStopping, droppedFiles, clearDroppedFiles])
+	const imageUpload = useImageUpload()
 
 	// Entity combobox handling
 	const entityCombobox = useEntityCombobox({
@@ -269,13 +263,6 @@ export function PromptInput({
 		}
 	}, [restoreRequest, value, restoreEntities, clearSearch, applyPromptEdit, onRestoreConsumed])
 
-	// Focus input after external drop
-	useEffect(() => {
-		if (droppedFiles && droppedFiles.length > 0) {
-			promptInputRef.current?.focus()
-		}
-	}, [droppedFiles, promptInputRef])
-
 	const resetInput = (imagesToRevoke?: Array<{ url: string }>) => {
 		applyPromptEdit({
 			nextValue: '',
@@ -296,21 +283,7 @@ export function PromptInput({
 		setSubmitError((current) => (current ? null : current))
 	}, [])
 
-	const prepareImagesForSubmit = useCallback(async (imagesToSend: Array<{ file: File; isPasted?: boolean }>) => {
-		const imagePromises: Array<Promise<{ data: string; mimeType: string; filename: string; isPasted?: boolean }>> = []
-		for (const image of imagesToSend) {
-			const file = image.file
-			imagePromises.push(
-				fileToBase64(file).then((data) => ({
-					data,
-					mimeType: file.type,
-					filename: file.name,
-					...(image.isPasted ? { isPasted: true } : {})
-				}))
-			)
-		}
-		return Promise.all(imagePromises)
-	}, [])
+	const prepareImagesForSubmit = toSubmittedAttachments
 
 	const shouldResetSubmittedDraft = useCallback(
 		(promptValue: string, imagesToSend: Array<{ id: string }>) => {
@@ -327,6 +300,7 @@ export function PromptInput({
 		if (submitInFlightRef.current) return
 		if (isStopping) return
 		if (!promptValue.trim() && imageUpload.selectedImages.length === 0) return
+		if (imageUpload.uploadMessage) return
 		submitInFlightRef.current = true
 		// The finalizer guarded six early returns, so the body settles in its own function and the flag
 		// clears after it. Promise.finally keeps a throw propagating once it has, as the finalizer did.
@@ -461,7 +435,7 @@ export function PromptInput({
 	// Clicking empty space inside the composer should still focus the textarea.
 	const handleFormPointerDown = (event: React.PointerEvent<HTMLFormElement>) => {
 		const target = event.target as HTMLElement
-		if (target.closest('button, textarea, input, [role="option"]')) return
+		if (target.closest('button, textarea, input, summary, a, [role="option"]')) return
 		requestAnimationFrame(() => {
 			promptInputRef.current?.focus()
 		})
@@ -498,32 +472,29 @@ export function PromptInput({
 		}
 	}
 
-	const handleDrop = (event: React.DragEvent<HTMLFormElement>) => {
-		if (isStopping) {
-			event.preventDefault()
-			return
-		}
-		clearSubmitError()
-		imageUpload.handleDrop(event)
-	}
+	useFileDropTarget(
+		'Attach files to message',
+		(files) => {
+			clearSubmitError()
+			imageUpload.addDroppedFiles(files)
+			promptInputRef.current?.focus()
+		},
+		!isStopping
+	)
 
 	return (
-		// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a drop target; attaching by keyboard goes through the attach button.
 		<form
 			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand"
-			onDragEnter={isStopping ? undefined : imageUpload.handleDragEnter}
-			onDragLeave={imageUpload.handleDragLeave}
-			onDragOver={(e) => e.preventDefault()}
-			onDrop={handleDrop}
 			onSubmit={handleFormSubmit}
 			onPointerDown={handleFormPointerDown}
 		>
-			<DragOverlay
-				isDragging={!isStopping && imageUpload.isDragging}
-				externalDragging={!isStopping && externalDragging}
+			<UploadSelectionNotice
+				feedback={imageUpload.selectionFeedback}
+				onDismiss={imageUpload.dismissSelectionFeedback}
 			/>
-
 			<ImageUpload
+				retryUpload={imageUpload.retryUpload}
+				uploadMessage={imageUpload.uploadMessage}
 				disabled={isStopping}
 				selectedImages={imageUpload.selectedImages}
 				previewImage={imageUpload.previewImage}
@@ -671,18 +642,22 @@ export function PromptInput({
 											kind: 'streaming',
 											canQueue:
 												submitMode.kind === 'queue' &&
+												!imageUpload.uploadMessage &&
 												(value.trim().length > 0 || imageUpload.selectedImages.length > 0),
 											onStop: handleStopRequest
 										}
 									: submitMode.kind === 'queue'
 										? {
 												kind: 'queue',
-												disabled: value.trim().length === 0 && imageUpload.selectedImages.length === 0
+												disabled:
+													!!imageUpload.uploadMessage ||
+													(value.trim().length === 0 && imageUpload.selectedImages.length === 0)
 											}
 										: {
 												kind: 'send',
 												disabled:
 													isPending ||
+													!!imageUpload.uploadMessage ||
 													submitMode.kind === 'blocked' ||
 													(value.trim().length === 0 && imageUpload.selectedImages.length === 0)
 											}

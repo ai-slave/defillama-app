@@ -1,5 +1,16 @@
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 
+// A file either rides inside the message as base64 (`data`) or was uploaded on its own request and
+// is named by `workspacePath`, with its preview URL in `data`.
+export interface OutgoingAttachment {
+	data?: string
+	workspacePath?: string
+	mimeType: string
+	size?: number
+	filename?: string
+	isPasted?: boolean
+}
+
 export interface AgenticMutationEnvelope {
 	readonly blockedSkills?: ReadonlyArray<string>
 	readonly clientMutationId: string
@@ -8,7 +19,7 @@ export interface AgenticMutationEnvelope {
 	readonly effort?: string
 	readonly enablePremiumTools: boolean
 	readonly entities?: ReadonlyArray<{ term: string; slug: string; type?: string }>
-	readonly images?: ReadonlyArray<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+	readonly images?: ReadonlyArray<OutgoingAttachment>
 	readonly isSuggestedQuestion?: true
 	readonly message: string
 	readonly mode?: Exclude<AgenticAnswerMode, 'quick'>
@@ -55,7 +66,7 @@ export function createAgenticMutationEnvelope(args: {
 	effort?: string
 	enablePremiumTools: boolean
 	entities?: Array<{ term: string; slug: string; type?: string }>
-	images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+	images?: Array<OutgoingAttachment>
 	isSuggestedQuestion?: boolean
 	message: string
 	mode: AgenticAnswerMode

@@ -24,6 +24,7 @@ import {
 } from '~/containers/LlamaAI/renderModel'
 import type { DashboardArtifact, Message } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
+import { readFilePreview, readUrlPreview, type AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Button } from '~/ui/Button'
@@ -365,12 +366,6 @@ function InlineContent({
 	)
 }
 
-async function readPastedText(url: string) {
-	const res = await fetch(url)
-	if (!res.ok) throw new Error('Failed to load attachment')
-	return res.text()
-}
-
 export function MessageBubble(props: ComponentProps<typeof MessageBubbleContent>) {
 	if (props.message.role === 'user') return <MessageBubbleContent {...props} />
 	return (
@@ -425,11 +420,7 @@ function MessageBubbleContent({
 	enterToSend?: boolean
 }) {
 	const [previewImage, setPreviewImage] = useState<string | null>(null)
-	const [pastedPreview, setPastedPreview] = useState<{
-		content: string
-		filename: string
-		isPasted?: boolean
-	} | null>(null)
+	const [pastedPreview, setPastedPreview] = useState<AttachmentPreview | null>(null)
 	const [isEditing, setIsEditing] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [draftText, setDraftText] = useState(message.content || '')
@@ -499,17 +490,23 @@ function MessageBubbleContent({
 									normalizedMime === 'text/plain' || normalizedMime === 'text/markdown' || normalizedMime === 'text/csv'
 								if (isTextMime) {
 									const isPasted = !!image.originalFilename && /^Pasted-\d+/.test(image.originalFilename)
+									// The server stores 0 for workspace files whose size it does not retain.
+									const sizeBytes = image.size === 0 ? undefined : image.size
 									return (
 										<TextChip
 											key={`sent-file-${image.url}`}
 											name={displayName}
-											sizeBytes={image.size ?? 0}
+											sizeBytes={sizeBytes}
 											textContent={image.textContent ?? ''}
 											isPasted={isPasted}
 											onOpen={async () => {
-												const content =
-													typeof image.textContent === 'string' ? image.textContent : await readPastedText(image.url)
-												setPastedPreview({ content, filename: displayName, isPasted })
+												const preview =
+													typeof image.textContent === 'string'
+														? await readFilePreview(
+																new File([image.textContent], displayName, { type: image.mimeType })
+															)
+														: await readUrlPreview(image.url, displayName)
+												setPastedPreview({ ...preview, isPasted })
 											}}
 										/>
 									)

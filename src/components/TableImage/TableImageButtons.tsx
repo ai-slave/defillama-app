@@ -4,12 +4,7 @@ import toast from 'react-hot-toast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
 export type TableImageSource = () => Omit<TableImageInput, 'isDark'> | null
@@ -168,9 +163,6 @@ export function TableImageButtons({
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 					className={`${menuSurfaceStyles} z-50`}
 				>
-					<Ariakit.PopoverDismiss aria-label="Close export options" className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
 					{csvSlot ? <div className="contents">{csvSlot}</div> : null}
 					<button
 						type="button"

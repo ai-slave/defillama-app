@@ -65,12 +65,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileWrapperClassName,
-	popoverMobileDismissStyles
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
@@ -739,11 +734,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							portal
 							gutter={6}
 							wrapperProps={{ className: popoverMobileWrapperClassName }}
-							className={`${menuSurfaceStyles} z-50 max-sm:h-auto! max-sm:max-h-[calc(100dvh-80px)]`}
+							className={`${menuSurfaceStyles} z-50`}
 						>
-							<Ariakit.MenuDismiss aria-label="Close alert actions" className={popoverMobileDismissStyles}>
-								<Icon name="x" height={16} width={16} />
-							</Ariakit.MenuDismiss>
 							{isFiredOneTimePriceAlert(alert) ? (
 								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={handleRearm}>
 									<Icon name="repeat" height={14} width={14} />

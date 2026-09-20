@@ -86,6 +86,7 @@ export function materializeFailedPrompt(request: FailedRequest): Message {
 	const images = request.mutation.images?.map((image) => ({
 		url: image.data,
 		mimeType: image.mimeType,
+		size: image.size,
 		...(image.filename !== undefined ? { filename: image.filename } : {})
 	}))
 	return {

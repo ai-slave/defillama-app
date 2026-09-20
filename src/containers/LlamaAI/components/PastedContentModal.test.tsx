@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { downloadBlob } from '~/utils/download'
+import type { AttachmentPreview } from '../utils/attachmentPreview'
 import { TextChip } from './input/ImageUpload'
 import { PastedContentModal } from './PastedContentModal'
 
@@ -37,7 +38,7 @@ function button(name: string) {
 async function click(name: string) {
 	await act(async () => button(name).click())
 }
-async function mount(preview: { filename: string; content: string; isPasted?: boolean }) {
+async function mount(preview: AttachmentPreview) {
 	function Harness() {
 		const [open, setOpen] = useState(false)
 		return (
@@ -129,4 +130,14 @@ test('attachment loading blocks repeats and failed reads can retry', async () =>
 	expect(open).toHaveBeenCalledTimes(2)
 	expect(button('Open data.csv').getAttribute('aria-busy')).toBe('false')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
+test('labels a truncated preview and downloads the original bytes', async () => {
+	const original = new File(['complete file contents'], 'large.csv', { type: 'text/csv' })
+	await mount({ filename: 'large.csv', content: 'complete', truncated: true, original })
+	expect(document.body.textContent).toContain('Showing the first 64 KB')
+	await click('Copy preview')
+	expect(writeText).toHaveBeenCalledWith('complete')
+	await click('Download full file')
+	expect(downloadBlob).toHaveBeenCalledWith('large.csv', original)
 })

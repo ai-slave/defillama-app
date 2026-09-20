@@ -27,12 +27,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { getErrorMessage } from '~/utils/error'
@@ -332,9 +327,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						wrapperProps={{ className: popoverMobileWrapperClassName }}
 						className={`${menuSurfaceStyles} z-50`}
 					>
-						<Ariakit.PopoverDismiss aria-label="Close session menu" className={popoverMobileDismissStyles}>
-							<Icon name="x" className="size-4" />
-						</Ariakit.PopoverDismiss>
 						<Ariakit.MenuList store={menu} aria-label="Session actions" className="flex shrink-0 flex-col">
 							<Ariakit.MenuItem
 								disabled={pinSession.isPending}

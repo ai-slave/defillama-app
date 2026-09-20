@@ -9,7 +9,6 @@ import {
 	nestedMenuSurfaceStyles,
 	nestedPopoverMobileWrapperClassName,
 	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -85,14 +84,8 @@ export function MobileToolsPopover({
 				hideOnInteractOutside={!walkthroughActive}
 				gutter={8}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${menuSurfaceStyles} max-sm:h-auto! max-sm:max-h-[calc(100dvh-80px)]`}
+				className={menuSurfaceStyles}
 			>
-				<div className="flex items-center justify-between px-2 py-1 sm:hidden">
-					<Ariakit.MenuDismiss aria-label="Close mobile tools" className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-4" />
-					</Ariakit.MenuDismiss>
-				</div>
-
 				<Ariakit.MenuItem
 					data-walkthrough="mobile-upload-item"
 					className={itemClassName}

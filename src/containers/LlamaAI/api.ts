@@ -1,6 +1,7 @@
 import { AI_SERVER } from '~/constants'
 import type { AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
+import type { OutgoingAttachment } from '~/containers/LlamaAI/mutationProtocol'
 import { decodeQueueSnapshot, type QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import type { EntityQuestionsResponse } from '~/containers/LlamaAI/types'
 import { fetchJson } from '~/utils/async'
@@ -58,7 +59,7 @@ export interface QueueMessagePayload {
 	message: string
 	displayMessage?: string
 	entities?: Array<{ term: string; slug: string; type?: string }>
-	images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>
+	images?: Array<OutgoingAttachment>
 	researchMode: boolean
 	factCheckMode?: boolean
 	quotedText?: string

@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
+import { useFileDropTarget } from '../components/FileDrop'
+import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { formatProjectBytes } from './format'
 import { GitHubConnectModal } from './GitHubConnectModal'
@@ -39,7 +41,7 @@ export function ProjectFilesPanel({
 	const filesQuery = useProjectFiles(projectId)
 	const router = useRouter()
 	const sourcesQuery = useProjectSources(projectId)
-	const { handleFiles, isUploading } = useProjectFileUpload(projectId)
+	const { handleFiles, isUploading, feedback, dismissFeedback } = useProjectFileUpload(projectId)
 	const deleteFile = useDeleteProjectFile(projectId)
 	const disconnect = useDisconnectSource(projectId)
 
@@ -53,7 +55,6 @@ export function ProjectFilesPanel({
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const addTextStore = Ariakit.useDialogStore()
 	const githubStore = Ariakit.useDialogStore()
-	const [isDragging, setIsDragging] = useState(false)
 
 	useEffect(() => {
 		if (!autoOpenGitHub || !router.isReady) return
@@ -76,13 +77,7 @@ export function ProjectFilesPanel({
 			: Math.min(100, (projectBytesUsed / projectBytesLimit) * 100)
 
 	const onPick = () => fileInputRef.current?.click()
-	const onDropZoneDrop = (e: React.DragEvent) => {
-		e.preventDefault()
-		setIsDragging(false)
-		if (isUploading) return
-		const files = Array.from(e.dataTransfer.files)
-		void handleFiles(files)
-	}
+	useFileDropTarget('Add files to project', (files) => void handleFiles(files), !isUploading)
 
 	const files = filesQuery.data?.files ?? []
 	const githubSources = sources.filter((s) => s.adapter_type === 'github')
@@ -119,7 +114,11 @@ export function ProjectFilesPanel({
 						<Icon name="plus" height={14} width={14} />
 						Add sources
 					</Ariakit.MenuButton>
-					<Ariakit.Menu gutter={6} className={`${menuSurfaceStyles} z-50 min-w-[220px]`}>
+					<Ariakit.Menu
+						gutter={6}
+						className={`${menuSurfaceStyles} z-50 w-60`}
+						wrapperProps={{ className: popoverMobileWrapperClassName }}
+					>
 						<Ariakit.MenuItem onClick={onPick} className={popoverMenuItemStyles}>
 							<Icon name="file-plus" height={14} width={14} />
 							Upload from device
@@ -148,6 +147,7 @@ export function ProjectFilesPanel({
 				/>
 			</header>
 
+			<UploadSelectionNotice feedback={feedback} onDismiss={dismissFeedback} />
 			{sourcesQuery.error ? (
 				<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
 					<p>Couldn&apos;t load connected sources.</p>
@@ -198,11 +198,11 @@ export function ProjectFilesPanel({
 													trigger: event.currentTarget
 												})
 											}}
-											className="shrink-0 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+											className="shrink-0"
 										/>
 									}
 								>
-									<Icon name="trash-2" height={16} width={16} className="text-error" />
+									<Icon name="trash-2" height={14} width={14} className="text-error" />
 								</Tooltip>
 							</li>
 						)
@@ -211,17 +211,7 @@ export function ProjectFilesPanel({
 			) : null}
 
 			{files.length > 0 ? fileErrorNotice : null}
-			<div
-				onDragOver={(e) => {
-					e.preventDefault()
-					if (!isUploading) setIsDragging(true)
-				}}
-				onDragLeave={() => setIsDragging(false)}
-				onDrop={onDropZoneDrop}
-				className={`min-h-32 flex-1 overflow-auto rounded-md border border-dashed ${
-					isDragging ? 'border-brand bg-brand-muted' : 'border-medium'
-				}`}
-			>
+			<div className="min-h-32 flex-1 overflow-auto rounded-md border border-dashed border-medium">
 				{isInitialLoading || files.length === 0 ? (
 					<div className="relative">
 						{/* Keep the upload copy in layout so wrapping and zoom cannot move the storage row when feedback clears. */}
@@ -254,7 +244,9 @@ export function ProjectFilesPanel({
 									className="group flex items-center gap-2 border-b border-subtle px-2.5 py-1.5 body-sm text-primary last:border-b-0 not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
 									<Icon name="file-text" height={14} width={14} className="shrink-0 text-secondary" />
-									<span className="min-w-0 flex-1 truncate font-mono">{file.path}</span>
+									<span title={file.path} className="min-w-0 flex-1 truncate font-mono">
+										{file.path}
+									</span>
 									{source ? (
 										<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 body-sm text-secondary">
 											{source.adapter_type === 'github' ? 'GitHub' : 'Uploaded'}
@@ -280,11 +272,11 @@ export function ProjectFilesPanel({
 															trigger: event.currentTarget
 														})
 													}}
-													className="shrink-0 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+													className="shrink-0"
 												/>
 											}
 										>
-											<Icon name="trash-2" height={16} width={16} className="text-error" />
+											<Icon name="trash-2" height={14} width={14} className="text-error" />
 										</Tooltip>
 									) : null}
 								</li>

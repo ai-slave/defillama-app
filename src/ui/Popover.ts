@@ -8,10 +8,10 @@ import { tw } from './tw'
 ---------------------------------------------------------------------------- */
 
 const selectSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,var(--popover-available-height))]'
+	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(400px,var(--popover-available-height))]'
 
 const menuSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
+	'max-sm:max-h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
@@ -36,13 +36,13 @@ export const tooltipSurfaceStaticStyles = tw`z-50 max-h-[calc(100dvh-80px)] over
 
 export const tooltipSurfaceStyles = `${tooltipSurfaceStaticStyles} ${tooltipMotionStyles}`
 
-export const popoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const popoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11 max-sm:cv-auto-44`
 
 export const popoverRowWithBorderStyles = `${popoverRowStyles} border-b border-subtle last-of-type:border-b-0`
 
-export const popoverMenuItemStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const popoverMenuItemStyles = tw`flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
 
-export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row`
+export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row max-sm:min-h-11`
 
 export const popoverActionBarStyles = tw`grid w-full min-w-0 grid-cols-2 border-b border-subtle bg-overlay body-sm text-link`
 
@@ -52,9 +52,9 @@ export const popoverSearchBlockStyles = tw`relative p-3`
 
 export const popoverSearchBlockWithBottomPaddingStyles = popoverSearchBlockStyles
 
-export const popoverFooterActionStyles = tw`flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row`
+export const popoverFooterActionStyles = tw`flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row max-sm:min-h-11`
 
-export const popoverSeeMoreStyles = tw`w-full cursor-pointer px-3 py-2 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const popoverSeeMoreStyles = tw`w-full cursor-pointer px-3 py-2 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
 
 export const nestedMenuRootRowStyles = tw`grid min-h-10 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1rem] items-center overflow-hidden px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
@@ -86,7 +86,12 @@ export function popoverSingleSelectCheckStyles(selected: boolean) {
 	return `ml-auto grid size-3.5 shrink-0 place-items-center text-link ${selected ? '' : 'invisible'}`
 }
 
-export const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
+/* Mobile drawers dim the page behind them so a short sheet at the bottom is
+   still noticed. The scrim is a pseudo-element on the positioning wrapper:
+   Ariakit copies the surface z-index onto the wrapper, so the pseudo paints
+   under the surface, and a tap on it lands outside the surface and closes.
+   Hidden popovers keep their wrapper mounted, so only open scrims accept clicks. */
+export const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none! max-sm:before:pointer-events-none max-sm:before:fixed max-sm:before:inset-0 max-sm:before:bg-screen-dim max-sm:before:opacity-0 max-sm:before:transition-opacity max-sm:before:duration-200 max-sm:before:ease-out-quart max-sm:before:content-[''] max-sm:has-data-enter:before:pointer-events-auto max-sm:has-data-enter:before:opacity-100`
 
 export const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
 

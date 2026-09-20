@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMobileDismissStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { TabLink } from '~/ui/Tab'
 import { IrTabLabel } from './IrTabLabel'
 import { getMainSiteIrTabHref, type MainSiteIrDashboard } from './mainSiteDashboards'
@@ -61,9 +61,6 @@ export function IrTabMenu({
 						</span>
 						<span className="truncate label-xs text-tertiary">{dashboard.menuTagline}</span>
 					</div>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
 				</div>
 				<div className="flex flex-col gap-0.5 p-1.5">
 					{dashboard.menuTabs.map((tab) => {

@@ -1,6 +1,8 @@
+import * as Ariakit from '@ariakit/react'
 import { useId, useState, type RefObject } from 'react'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
-import { isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { type AttachmentUpload, CHAT_FILE_ACCEPT, isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { readFilePreview, type AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -13,12 +15,104 @@ interface SelectedImage {
 	url: string
 	isPasted?: boolean
 	textContent?: string
+	upload?: AttachmentUpload
 }
 
-interface TextPreview {
-	content: string
-	filename: string
-	isPasted?: boolean
+function UploadStatus({
+	name,
+	upload,
+	onRetry,
+	disabled
+}: {
+	name: string
+	upload: AttachmentUpload
+	onRetry: () => void
+	disabled: boolean
+}) {
+	const errorId = useId()
+	if (upload.status === 'error') {
+		return (
+			<Ariakit.PopoverProvider>
+				<div className="flex h-6 items-center justify-between gap-2 px-2.5">
+					<span id={errorId} role="alert" className="sr-only">
+						{name}: {upload.error}
+					</span>
+					<Ariakit.PopoverDisclosure
+						aria-label={`Upload error for ${name}`}
+						aria-describedby={errorId}
+						className="flex h-6 items-center gap-1 rounded-sm text-xs text-error hover:bg-error/10 focus-visible:focus-ring"
+					>
+						Failed <Icon name="help-circle" height={14} width={14} />
+					</Ariakit.PopoverDisclosure>
+					{upload.retryable !== false ? (
+						<button
+							type="button"
+							onClick={onRetry}
+							disabled={disabled}
+							aria-label={`Retry upload ${name}`}
+							aria-describedby={errorId}
+							className="flex h-6 items-center gap-1 rounded-sm px-1 text-xs text-brand hover:bg-brand/10 focus-visible:focus-ring disabled:opacity-50"
+						>
+							<Icon name="repeat" height={14} width={14} /> Retry
+						</button>
+					) : null}
+				</div>
+				<Ariakit.Popover
+					gutter={6}
+					portal
+					unmountOnHide
+					aria-label={`Upload error for ${name}`}
+					className="z-50 max-w-64 rounded-lg border border-medium bg-overlay p-3 text-xs leading-5 break-words text-primary shadow-overlay-sm"
+				>
+					{upload.error}
+				</Ariakit.Popover>
+			</Ariakit.PopoverProvider>
+		)
+	}
+	const finishing = upload.status === 'uploading' && upload.progress === 1
+	const label =
+		upload.status === 'pending'
+			? 'Waiting to upload'
+			: upload.status === 'done'
+				? 'Ready'
+				: finishing
+					? 'Finishing upload…'
+					: 'Uploading'
+	return (
+		<div className="flex h-6 flex-col px-2.5 pb-2">
+			<span role="status" className="sr-only">
+				{name}: {label}
+			</span>
+			<div aria-hidden="true" className="flex items-center gap-1.5 text-xs leading-4 text-secondary">
+				{upload.status === 'done' ? (
+					<Icon name="check" height={14} width={14} className="text-brand" />
+				) : upload.status === 'pending' ? (
+					<Icon name="clock" height={14} width={14} />
+				) : (
+					<LoadingSpinner size={14} />
+				)}
+				<span>
+					{label}
+					{upload.status === 'uploading' && !finishing ? ` · ${Math.round(upload.progress * 100)}%` : ''}
+				</span>
+			</div>
+			{upload.status === 'uploading' && !finishing ? (
+				<div
+					role="progressbar"
+					aria-label={`Uploading ${name}`}
+					aria-valuemin={0}
+					aria-valuemax={100}
+					aria-valuenow={Math.round(upload.progress * 100)}
+					className="absolute inset-x-0 bottom-0 h-0.5 overflow-hidden rounded-b-lg bg-surface-elevated-1"
+				>
+					<div
+						className="h-full bg-brand motion-safe:transition-[width]"
+						style={{ width: `${Math.round(upload.progress * 100)}%` }}
+					/>
+				</div>
+			) : null}
+		</div>
+	)
 }
 
 interface ImageUploadProps {
@@ -26,7 +120,9 @@ interface ImageUploadProps {
 	selectedImages: Array<SelectedImage>
 	previewImage: string | null
 	setPreviewImage: (url: string | null) => void
-	openPastedPreview?: (preview: TextPreview | null) => void
+	openPastedPreview?: (preview: AttachmentPreview | null) => void
+	retryUpload: (id: string) => void
+	uploadMessage: string | null
 	removeImage: (idx: number) => void
 	fileInputRef: RefObject<HTMLInputElement | null>
 	handleImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -54,18 +150,25 @@ export function TextChip({
 	textContent,
 	isPasted,
 	onOpen,
-	onRemove
+	onRemove,
+	upload,
+	onRetry,
+	disabled = false
 }: {
 	name: string
-	sizeBytes: number
+	sizeBytes: number | undefined
 	textContent: string
 	isPasted: boolean
-	onOpen: () => void | Promise<void>
+	onOpen?: () => void | Promise<void>
 	onRemove?: () => void
+	upload?: AttachmentUpload
+	onRetry?: () => void
+	disabled?: boolean
 }) {
 	const statusId = useId()
 	const [openStatus, setOpenStatus] = useState<'idle' | 'pending' | 'error'>('idle')
 	const handleOpen = async () => {
+		if (!onOpen) return
 		if (openStatus === 'pending') return
 		setOpenStatus('pending')
 		try {
@@ -79,40 +182,49 @@ export function TextChip({
 		? (textContent.split('\n').find((line) => line.trim().length > 0) ?? '').trim() || name
 		: name
 	const badgeLabel = isPasted ? 'Pasted' : fileExtensionLabel(name)
-	const size = formatBytes(sizeBytes)
-	const removeLabel = isPasted ? 'Remove pasted content' : 'Remove file'
+	const size = sizeBytes === undefined ? null : formatBytes(sizeBytes)
+	const removeLabel = isPasted ? 'Remove pasted content' : `Remove ${name}`
+	const Header = onOpen ? 'button' : 'div'
 	return (
-		<div className="group relative w-60 max-w-full min-w-0">
-			<button
-				type="button"
-				onClick={handleOpen}
-				aria-label={isPasted ? 'Open pasted content' : `Open ${name}`}
+		<div className="group relative w-56 max-w-full min-w-0 rounded-lg border border-medium bg-surface">
+			<Header
+				type={onOpen ? 'button' : undefined}
+				onClick={onOpen ? handleOpen : undefined}
+				aria-label={onOpen ? (isPasted ? 'Open pasted content' : `Open ${name}`) : undefined}
 				aria-disabled={openStatus === 'pending'}
 				aria-busy={openStatus === 'pending'}
 				aria-describedby={openStatus === 'error' ? statusId : undefined}
-				className="flex min-h-16 w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-medium bg-surface px-3 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-progress"
+				className={`flex min-h-14 w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left ${onOpen ? 'cursor-pointer hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-progress' : ''}`}
 			>
-				<p className={`line-clamp-2 w-full body-sm font-medium wrap-anywhere text-primary ${onRemove ? 'pr-5' : ''}`}>
-					{topLine}
-				</p>
-				<div className="flex items-center gap-1.5">
-					<span className="body-sm text-secondary">{badgeLabel}</span>
-					<span aria-hidden className="text-tertiary">
-						·
-					</span>
-					<span className="body-sm text-secondary">{size}</span>
-					{openStatus === 'pending' ? (
-						<span role="status" aria-label="Opening attachment">
-							<LoadingSpinner size={14} />
-						</span>
-					) : null}
+				<Icon name="file-text" height={16} width={16} className="shrink-0 text-secondary" />
+				<div className={`min-w-0 flex-1 ${onRemove ? 'pr-5' : ''}`}>
+					<p title={topLine} className="truncate label-sm text-primary">
+						{topLine}
+					</p>
+					<div className="flex items-center gap-1.5">
+						<span className="text-xs leading-4 text-secondary">{badgeLabel}</span>
+						{size ? (
+							<>
+								<span aria-hidden className="text-tertiary">
+									·
+								</span>
+								<span className="text-xs leading-4 text-secondary">{size}</span>
+							</>
+						) : null}
+						{openStatus === 'pending' ? (
+							<span role="status" aria-label="Opening attachment">
+								<LoadingSpinner size={14} />
+							</span>
+						) : null}
+					</div>
 				</div>
-			</button>
+			</Header>
 			{openStatus === 'error' ? (
 				<p id={statusId} role="alert" className="mt-1 body-sm text-error">
 					Couldn&apos;t open file. Select it to try again.
 				</p>
 			) : null}
+			{upload && onRetry ? <UploadStatus name={name} upload={upload} onRetry={onRetry} disabled={disabled} /> : null}
 			{onRemove ? (
 				<button type="button" onClick={onRemove} aria-label={removeLabel} className={ATTACHMENT_REMOVE_BUTTON}>
 					<Icon name="x" height={14} width={14} />
@@ -122,9 +234,8 @@ export function TextChip({
 	)
 }
 
-// Sits over the attachment thumbnail, so it is a dim chip rather than a themed button.
 const ATTACHMENT_REMOVE_BUTTON =
-	'absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-screen-dim text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-black/80'
+	'absolute top-1 right-1 flex size-6 items-center justify-center rounded-md bg-surface text-secondary hover:bg-hover-row hover:text-primary focus-visible:focus-ring'
 
 export function ImageUpload({
 	disabled = false,
@@ -133,6 +244,8 @@ export function ImageUpload({
 	setPreviewImage,
 	openPastedPreview,
 	removeImage,
+	retryUpload,
+	uploadMessage,
 	fileInputRef,
 	handleImageSelect
 }: ImageUploadProps) {
@@ -141,59 +254,60 @@ export function ImageUpload({
 			<input
 				ref={fileInputRef}
 				type="file"
-				accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/csv,.pdf,.csv,text/markdown,text/plain,.md,.txt,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,.docx,.doc,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.xlsx"
+				accept={CHAT_FILE_ACCEPT}
 				multiple
 				disabled={disabled}
 				onChange={handleImageSelect}
 				className="hidden"
 			/>
 			{selectedImages.length > 0 ? (
-				<div className="flex flex-wrap gap-2">
-					{selectedImages.map(({ id, file, url, isPasted, textContent }, idx) => {
+				<div className="flex flex-wrap items-start gap-2">
+					{selectedImages.map(({ id, file, url, isPasted, textContent, upload }, idx) => {
 						const isImage = file.type.startsWith('image/')
 						const isTextChip = !!isPasted || isReadableTextFile(file)
 
-						if (isTextChip) {
+						if (!isImage) {
 							return (
-								<TextChip
-									key={id}
-									name={file.name}
-									sizeBytes={file.size}
-									textContent={textContent ?? ''}
-									isPasted={!!isPasted}
-									onOpen={async () => {
-										let content = textContent
-										if (typeof content !== 'string') {
-											content = await file.text()
+								<div key={id} className="max-w-full">
+									<TextChip
+										upload={upload}
+										onRetry={() => retryUpload(id)}
+										disabled={disabled}
+										name={file.name}
+										sizeBytes={file.size}
+										textContent={textContent ?? ''}
+										isPasted={!!isPasted}
+										onOpen={
+											isTextChip
+												? async () => {
+														openPastedPreview?.({ ...(await readFilePreview(file)), isPasted: !!isPasted })
+													}
+												: undefined
 										}
-										openPastedPreview?.({
-											content,
-											filename: file.name,
-											isPasted: !!isPasted
-										})
-									}}
-									onRemove={disabled ? undefined : () => removeImage(idx)}
-								/>
+										onRemove={disabled ? undefined : () => removeImage(idx)}
+									/>
+								</div>
 							)
 						}
 
 						return (
-							<div key={id} className={`relative overflow-hidden rounded-lg ${isImage ? 'size-16' : 'h-16 w-auto'}`}>
-								{isImage ? (
-									<button type="button" onClick={() => setPreviewImage(url)} className="size-full cursor-pointer">
-										<img src={url} alt={file.name} className="size-full object-cover" />
-									</button>
-								) : (
-									<div className="flex h-full items-center gap-2 rounded-lg border border-medium bg-page px-3">
-										<Icon name="file-text" height={16} width={16} className="text-secondary" />
-										<span className="max-w-[120px] truncate body-sm text-primary">{file.name}</span>
-									</div>
-								)}
+							<div key={id} className="relative w-20 overflow-hidden rounded-lg">
+								<button
+									type="button"
+									aria-label={`Preview ${file.name}`}
+									onClick={() => setPreviewImage(url)}
+									className="size-20 cursor-pointer"
+								>
+									<img src={url} alt={file.name} className="size-full object-cover" />
+								</button>
+								{upload ? (
+									<UploadStatus name={file.name} upload={upload} onRetry={() => retryUpload(id)} disabled={disabled} />
+								) : null}
 								{disabled ? null : (
 									<button
 										type="button"
 										onClick={() => removeImage(idx)}
-										aria-label="Remove file"
+										aria-label={`Remove ${file.name}`}
 										className={ATTACHMENT_REMOVE_BUTTON}
 									>
 										<Icon name="x" height={14} width={14} />
@@ -203,6 +317,11 @@ export function ImageUpload({
 						)
 					})}
 				</div>
+			) : null}
+			{uploadMessage ? (
+				<p role="status" className="sr-only">
+					{uploadMessage}
+				</p>
 			) : null}
 			<ImagePreviewModal imageUrl={previewImage} onClose={() => setPreviewImage(null)} source="input-preview" />
 		</>
@@ -222,37 +341,5 @@ export function ImageUploadButton({ onClick, disabled = false }: ImageUploadButt
 		>
 			<Icon name="paperclip" height={16} width={16} />
 		</Tooltip>
-	)
-}
-
-interface DragOverlayProps {
-	isDragging: boolean
-	externalDragging?: boolean
-}
-
-export function DragOverlay({ isDragging, externalDragging }: DragOverlayProps) {
-	if (!isDragging && !externalDragging) return null
-
-	return (
-		<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-lg border-2 border-dashed border-brand bg-brand/10 backdrop-blur-[2px]">
-			<div className="flex items-center gap-2">
-				<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
-					<path
-						d="M6 18C6 24.6274 11.3726 30 18 30C24.6274 30 30 24.6274 30 18"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-					/>
-					<path
-						d="M18 6L18 21M18 21L22.5 16.5M18 21L13.5 16.5"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-				</svg>
-				<span className="body-md text-primary">Drop files here</span>
-			</div>
-		</div>
 	)
 }

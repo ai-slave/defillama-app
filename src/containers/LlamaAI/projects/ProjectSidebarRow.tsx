@@ -9,12 +9,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Skeleton } from '~/ui/Skeleton'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -138,9 +133,6 @@ export function ProjectSidebarRow({
 						wrapperProps={{ className: popoverMobileWrapperClassName }}
 						className={`${menuSurfaceStyles} z-50`}
 					>
-						<Ariakit.PopoverDismiss aria-label="Close project menu" className={popoverMobileDismissStyles}>
-							<Icon name="x" className="size-4" />
-						</Ariakit.PopoverDismiss>
 						<Ariakit.MenuItem onClick={renameStore.show} className={`${popoverMenuItemStyles} border-b border-subtle`}>
 							<Icon name="pencil" height={14} width={14} />
 							Rename project

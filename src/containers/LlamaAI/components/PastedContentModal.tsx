@@ -1,15 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useMemo, useState } from 'react'
 import { CODE_BLOCK } from '~/containers/LlamaAI/components/codeBlockStyles'
+import type { AttachmentPreview } from '~/containers/LlamaAI/utils/attachmentPreview'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadBlob } from '~/utils/download'
 import { formatNumber, formatFixedNumber } from '~/utils/numberFormat'
 
 interface PastedContentModalProps {
-	preview: { content: string; filename: string; isPasted?: boolean } | null
+	preview: AttachmentPreview | null
 	onClose: () => void
 }
 
@@ -60,7 +61,12 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 		const filename = preview.filename
 		const mimeType = isCsv ? 'text/csv' : filename.toLowerCase().endsWith('.md') ? 'text/markdown' : 'text/plain'
 		// Preserve the uploaded text, including CSV quoting and line endings.
-		downloadBlob(filename, new Blob([preview.content], { type: `${mimeType};charset=utf-8` }))
+		downloadBlob(
+			filename,
+			preview.original instanceof Blob
+				? preview.original
+				: new Blob([preview.content], { type: `${mimeType};charset=utf-8` })
+		)
 	}
 	const copyLabel =
 		copyStatus === 'pending'
@@ -69,24 +75,30 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 				? 'Copied'
 				: copyStatus === 'error'
 					? 'Retry copy'
-					: 'Copy'
+					: preview.truncated
+						? 'Copy preview'
+						: 'Copy'
 
 	return (
 		<>
-			<header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 border-b border-subtle p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+			<header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 border-b border-subtle p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
 				<div className="flex min-w-0 flex-col gap-0.5">
-					<DialogHeading className="break-all">{preview.isPasted ? 'Pasted content' : preview.filename}</DialogHeading>
+					<DialogHeading title={preview.filename} className="line-clamp-2 break-all">
+						{preview.isPasted ? 'Pasted content' : preview.filename}
+					</DialogHeading>
 					<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 body-sm text-secondary">
 						<span>{stats.size}</span>
 						<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-						<span>{formatNumber(stats.lines)} lines</span>
+						<span>
+							{formatNumber(stats.lines)} {preview.truncated ? 'preview lines' : 'lines'}
+						</span>
 					</div>
 				</div>
 				<div className="col-span-2 row-start-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
 					<Button
 						type="button"
 						size="md"
-						variant="ghost"
+						variant="secondary"
 						onClick={handleCopy}
 						aria-disabled={copyStatus === 'pending'}
 						aria-busy={copyStatus === 'pending'}
@@ -98,12 +110,34 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 						)}
 						{copyLabel}
 					</Button>
-					<Button type="button" size="md" onClick={handleDownload}>
-						<Icon name="download" height={14} width={14} />
-						Download
-					</Button>
+					{typeof preview.original === 'string' ? (
+						<Button
+							as="a"
+							href={preview.original}
+							download={preview.filename}
+							target="_blank"
+							rel="noopener noreferrer"
+							size="md"
+						>
+							<Icon name="download" height={14} width={14} /> Download full file
+						</Button>
+					) : (
+						<Button type="button" size="md" onClick={handleDownload}>
+							<Icon name="download" height={14} width={14} /> {preview.truncated ? 'Download full file' : 'Download'}
+						</Button>
+					)}
 				</div>
-				<DialogCloseButton className="col-start-2 row-start-1 sm:col-start-3" />
+				<Ariakit.DialogDismiss
+					className="col-start-2 row-start-1 flex size-8 items-center justify-center rounded-lg border border-medium text-secondary hover:bg-hover-row focus-visible:focus-ring sm:col-start-3"
+					aria-label="Close dialog"
+				>
+					<Icon name="x" height={14} width={14} />
+				</Ariakit.DialogDismiss>
+				{preview.truncated ? (
+					<p className="col-span-full body-sm text-secondary">
+						Showing the first 64 KB. Download the full file to view all content.
+					</p>
+				) : null}
 				{preview.isPasted ? (
 					<p className="col-span-full body-sm text-secondary">Plain text preview. Original formatting may differ.</p>
 				) : null}

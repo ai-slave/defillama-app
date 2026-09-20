@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -177,7 +177,13 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 				>
 					{isLoading ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
 				</Tooltip>
-				<Ariakit.Menu portal unmountOnHide gutter={8} className={`${menuSurfaceStyles} z-50 min-w-[160px]`}>
+				<Ariakit.Menu
+					portal
+					unmountOnHide
+					gutter={8}
+					className={`${menuSurfaceStyles} z-50 w-44`}
+					wrapperProps={{ className: popoverMobileWrapperClassName }}
+				>
 					<Ariakit.MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"

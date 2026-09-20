@@ -10,13 +10,24 @@ describe('maxSizeForFile', () => {
 		expect(maxSizeForFile(new File([''], 'dump.txt', { type: 'text/plain' }))).toBe(100 * MB)
 	})
 
-	test('keeps documents at 30MB because they are sent to the model as PDFs', () => {
+	test('keeps a PDF at 30MB because it is sent to the model as a document', () => {
 		expect(maxSizeForFile(new File([''], 'report.pdf', { type: 'application/pdf' }))).toBe(30 * MB)
+	})
+
+	test('allows workbooks and documents up to 100MB: the server converts them into the data and PDF lanes', () => {
 		expect(
 			maxSizeForFile(
 				new File([''], 'book.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
 			)
-		).toBe(30 * MB)
+		).toBe(100 * MB)
+		expect(
+			maxSizeForFile(
+				new File([''], 'notes.docx', {
+					type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+				})
+			)
+		).toBe(100 * MB)
+		expect(maxSizeForFile(new File([''], 'book.xlsx', { type: '' }))).toBe(100 * MB)
 	})
 
 	test('keeps images at 10MB', () => {

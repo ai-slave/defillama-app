@@ -1,6 +1,18 @@
-/* Universal Token Rating uses a fixed grade palette in both color modes. */
+/* Universal Token Rating keeps fixed grade colors and a theme-aware promotional palette. */
 @layer base {
 	:root {
+		--utr-announcement-border: #9ad9bb;
+		--utr-announcement-bg: linear-gradient(100deg, #eafaf1 0%, #d9f4e6 55%, #c9efdb 100%);
+		--utr-announcement-text: #0b4d33;
+		--utr-announcement-shadow: 0 10px 30px rgba(17, 147, 95, 0.18);
+		--utr-announcement-dismiss: rgb(11 77 51 / 10%);
+		--utr-announcement-shimmer: linear-gradient(99.97deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+		--utr-announcement-badge-bg: #0e7a4f;
+		--utr-announcement-badge-text: var(--text-on-brand);
+		--utr-announcement-ring: rgb(14 122 79 / 40%);
+		--utr-announcement-link: rgb(255 255 255 / 70%);
+		--utr-announcement-link-hover: #ffffff;
+
 		--utr-grade-aaa: #11935f;
 		--utr-grade-aa: #359b58;
 		--utr-grade-a: #58a351;
@@ -17,9 +29,31 @@
 		--utr-grade-b-tint: color-mix(in srgb, var(--utr-grade-b) 10%, transparent);
 		--utr-grade-ccc-tint: color-mix(in srgb, var(--utr-grade-ccc) 10%, transparent);
 	}
+	html.dark {
+		--utr-announcement-border: #1f6a48;
+		--utr-announcement-bg: linear-gradient(100deg, #0d3324 0%, #12452f 55%, #155238 100%);
+		--utr-announcement-text: #cdf5e0;
+		--utr-announcement-shadow: 0 10px 30px rgba(13, 51, 36, 0.5);
+		--utr-announcement-dismiss: rgb(255 255 255 / 10%);
+		--utr-announcement-shimmer: linear-gradient(99.97deg, transparent, rgba(141, 242, 192, 0.12), transparent);
+		--utr-announcement-badge-bg: #1f5a40;
+		--utr-announcement-badge-text: #8df2c0;
+		--utr-announcement-ring: rgb(141 242 192 / 30%);
+		--utr-announcement-link: rgb(255 255 255 / 10%);
+		--utr-announcement-link-hover: rgb(255 255 255 / 20%);
+	}
 }
 
 @theme inline {
+	--shadow-utr-announcement: var(--utr-announcement-shadow);
+	--color-utr-announcement-link-hover: var(--utr-announcement-link-hover);
+	--color-utr-announcement-link: var(--utr-announcement-link);
+	--color-utr-announcement-ring: var(--utr-announcement-ring);
+	--color-utr-announcement-badge-text: var(--utr-announcement-badge-text);
+	--color-utr-announcement-badge-bg: var(--utr-announcement-badge-bg);
+	--color-utr-announcement-dismiss: var(--utr-announcement-dismiss);
+	--color-utr-announcement-text: var(--utr-announcement-text);
+	--color-utr-announcement-border: var(--utr-announcement-border);
 	--color-utr-grade-aaa: var(--utr-grade-aaa);
 	--color-utr-grade-aa: var(--utr-grade-aa);
 	--color-utr-grade-a: var(--utr-grade-a);

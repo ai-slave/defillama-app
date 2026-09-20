@@ -15,12 +15,7 @@ import {
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverTreeRowStyles
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMobileWrapperClassName, popoverTreeRowStyles } from '~/ui/Popover'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
 import type { IProtocolPageMetrics } from './types'
@@ -329,10 +324,6 @@ export function ProtocolOverviewLayout({
 								className={menuSurfaceStyles}
 								portal
 							>
-								<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-									<Icon name="x" className="size-5" />
-								</Ariakit.PopoverDismiss>
-
 								{otherProtocols?.map((value, i) => (
 									<Ariakit.MenuItem
 										key={`navigate to /protocol/${slug(value)}`}

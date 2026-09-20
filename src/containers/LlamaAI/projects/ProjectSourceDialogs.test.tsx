@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FileDropProvider } from '../components/FileDrop'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { ProjectFilesPanel } from './ProjectFilesPanel'
@@ -218,14 +219,16 @@ async function mountFiles() {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<ProjectFilesPanel
-					projectId="qa"
-					projectBytesUsed={0}
-					projectBytesLimit={1000}
-					projectFileCount={0}
-					projectFileLimit={10}
-					tier="paid"
-				/>
+				<FileDropProvider>
+					<ProjectFilesPanel
+						projectId="qa"
+						projectBytesUsed={0}
+						projectBytesLimit={1000}
+						projectFileCount={0}
+						projectFileLimit={10}
+						tier="paid"
+					/>
+				</FileDropProvider>
 			</QueryClientProvider>
 		)
 	)
@@ -295,7 +298,9 @@ test('upload pending disables picking and ignores another drop until completion'
 	async function drop() {
 		await act(async () =>
 			target.dispatchEvent(
-				Object.assign(new Event('drop', { bubbles: true, cancelable: true }), { dataTransfer: { files: [file] } })
+				Object.assign(new Event('drop', { bubbles: true, cancelable: true }), {
+					dataTransfer: { files: [file], types: ['Files'] }
+				})
 			)
 		)
 	}

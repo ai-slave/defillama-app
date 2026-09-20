@@ -151,3 +151,15 @@ describe('promptFailures', () => {
 		).toBe('resume-recovery')
 	})
 })
+
+test('preserves attachment sizes in optimistic and failed messages', () => {
+	const pending = request('with-file')
+	const withFile = {
+		...pending,
+		mutation: {
+			...pending.mutation,
+			images: [{ data: 'https://files/demo.csv', mimeType: 'text/csv', filename: 'demo.csv', size: 72 * 1024 * 1024 }]
+		}
+	}
+	expect(materializeFailedPrompt(withFile).images![0].size).toBe(72 * 1024 * 1024)
+})

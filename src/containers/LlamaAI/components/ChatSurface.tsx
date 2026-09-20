@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from 'react'
 import { ChatLanding, type ChatLandingProps } from '~/containers/LlamaAI/components/ChatLanding'
 import { ConversationView, type ConversationViewModel } from '~/containers/LlamaAI/components/ConversationView'
+import { FileDropContext } from './FileDrop'
 
 export interface LandingOverrideApi {
 	handleSubmit: ChatLandingProps['handleSubmit']
@@ -52,7 +53,9 @@ export function ChatSurface({
 					aria-hidden="true"
 					className="pointer-events-none absolute inset-0 motion-safe:animate-ai-landing-exit motion-reduce:opacity-0"
 				>
-					{renderLanding(landingOverride, { ...landingProps, promptInputRef: exitLandingPromptInputRef })}
+					<FileDropContext.Provider value={null}>
+						{renderLanding(landingOverride, { ...landingProps, promptInputRef: exitLandingPromptInputRef })}
+					</FileDropContext.Provider>
 				</div>
 			) : null}
 			<div

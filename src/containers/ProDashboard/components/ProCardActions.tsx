@@ -13,12 +13,7 @@ import {
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	popoverMenuItemStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import { DASHBOARD_CARD_HEIGHT_LABELS, getEmbedCardHeight } from '../dashboardLayout/cardHeight'
@@ -179,9 +174,6 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 					className={menuSurfaceStyles}
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 				>
-					<Ariakit.PopoverDismiss aria-label="Close menu" className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
 					<Ariakit.MenuList store={menu} aria-label="Card actions">
 						{image ? (
 							<>

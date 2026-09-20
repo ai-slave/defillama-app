@@ -366,6 +366,13 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 	contain-intrinsic-size: auto 37px;
 }
 
+/* Phone drawer rows are 44px tall (min-h-11); keep the size hint honest so
+   long lists do not jitter as unrendered rows come into view. */
+@utility cv-auto-44 {
+	content-visibility: auto;
+	contain-intrinsic-size: auto 44px;
+}
+
 @utility cv-auto-30 {
 	content-visibility: auto;
 	contain-intrinsic-size: auto 30px;
