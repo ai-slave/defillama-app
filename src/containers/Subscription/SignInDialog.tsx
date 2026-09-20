@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
-import { type ReactNode, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { type ReactNode, useCallback, useEffect, useId, useState, useSyncExternalStore } from 'react'
 import { type PromotionalEmailsValue, useAuthContext } from '~/auth'
 import {
 	AuthDialogHeader,
@@ -226,7 +226,8 @@ function AuthScreen({
 	const errorId = useId()
 	const loginMutation = useMutation({ mutationFn: login })
 	const formId = useId()
-	const turnstileToken = useRef('')
+	// Submit stays disabled until Turnstile hands over a token.
+	const [turnstileToken, setTurnstileToken] = useState('')
 	const [captchaRetry, setCaptchaRetry] = useState(0)
 	const signupMutation = useMutation({ mutationFn: signup })
 	const isSignup = state.kind === 'signup'
@@ -239,7 +240,7 @@ function AuthScreen({
 		signInWithGoogleMutation.isPending
 	const handleSignUp = async (event: FormSubmitEvent) => {
 		event.preventDefault()
-		if (isPending) return
+		if (isPending || !turnstileToken) return
 		const form = event.currentTarget
 		const data = new FormData(form)
 		const password = String(data.get('password'))
@@ -251,14 +252,11 @@ function AuthScreen({
 			confirmInput.reportValidity()
 			return
 		}
-		if (!turnstileToken.current) {
-			store.dispatch({ error: 'Complete the CAPTCHA verification.', kind: 'failed' })
-			return
-		}
 		const promotionalEmails: PromotionalEmailsValue = data.has('promotionalEmails') ? 'on' : 'off'
 		const signal = store.beginAuthRequest()
-		const token = turnstileToken.current
-		turnstileToken.current = ''
+		// Turnstile tokens are single-use; a failed attempt needs a fresh widget.
+		const token = turnstileToken
+		setTurnstileToken('')
 		await signupMutation
 			.mutateAsync({
 				email: String(data.get('email')),
@@ -282,17 +280,12 @@ function AuthScreen({
 
 	const handleSignIn = async (event: FormSubmitEvent) => {
 		event.preventDefault()
-		if (isPending) return
+		if (isPending || !turnstileToken) return
 		const data = new FormData(event.currentTarget)
 		store.dispatch({ kind: 'requestStarted' })
-		if (!turnstileToken.current) {
-			store.dispatch({ error: 'Complete the CAPTCHA verification.', kind: 'failed' })
-			return
-		}
 		const signal = store.beginAuthRequest()
-		// Turnstile tokens are single-use; a failed attempt needs a fresh widget.
-		const token = turnstileToken.current
-		turnstileToken.current = ''
+		const token = turnstileToken
+		setTurnstileToken('')
 		await loginMutation
 			.mutateAsync({
 				email: String(data.get('email')),
@@ -424,16 +417,9 @@ function AuthScreen({
 					<div inert={isPending}>
 						<Turnstile
 							key={captchaRetry}
-							onVerify={(token) => {
-								turnstileToken.current = token
-							}}
-							onError={() => {
-								turnstileToken.current = ''
-							}}
-							onExpire={() => {
-								turnstileToken.current = ''
-							}}
-							className="flex justify-center"
+							onVerify={setTurnstileToken}
+							onError={() => setTurnstileToken('')}
+							onExpire={() => setTurnstileToken('')}
 						/>
 					</div>
 
@@ -469,7 +455,7 @@ function AuthScreen({
 						</span>
 					</label>
 
-					<button type="submit" disabled={isPending} className={primaryBtnCls}>
+					<button type="submit" disabled={isPending || !turnstileToken} className={primaryBtnCls}>
 						{signupMutation.isPending ? (
 							<span className="inline-flex items-center gap-2">
 								<span
@@ -536,21 +522,14 @@ function AuthScreen({
 					<div inert={isPending}>
 						<Turnstile
 							key={captchaRetry}
-							onVerify={(token) => {
-								turnstileToken.current = token
-							}}
-							onError={() => {
-								turnstileToken.current = ''
-							}}
-							onExpire={() => {
-								turnstileToken.current = ''
-							}}
-							className="flex justify-center"
+							onVerify={setTurnstileToken}
+							onError={() => setTurnstileToken('')}
+							onExpire={() => setTurnstileToken('')}
 						/>
 					</div>
 
 					<div>
-						<button type="submit" disabled={isPending} className={`${primaryBtnCls} relative`}>
+						<button type="submit" disabled={isPending || !turnstileToken} className={`${primaryBtnCls} relative`}>
 							{loginMutation.isPending ? (
 								<span className="inline-flex items-center gap-2">
 									<span
@@ -655,26 +634,23 @@ function ForgotPasswordScreen({
 	initialEmail: string
 }) {
 	const errorId = useId()
-	const turnstileToken = useRef('')
+	const [turnstileToken, setTurnstileToken] = useState('')
 	const [captchaRetry, setCaptchaRetry] = useState(0)
 	const reset = useMutation({
 		mutationFn: async ({ email, signal, token }: { email: string; signal: AbortSignal; token: string }) => {
-			if (!token) throw new Error('Complete the CAPTCHA verification.')
 			await requestPasswordReset(email, token, signal)
 			return !signal.aborted && dialogStore.getState().open ? email : null
 		},
-		// A sent token is spent whatever the outcome; only then does the widget need a restart.
-		onSettled: (_data, _error, { token }) => {
-			if (token) setCaptchaRetry((retry) => retry + 1)
-		}
+		// A sent token is spent whatever the outcome, so the widget restarts after every attempt.
+		onSettled: () => setCaptchaRetry((retry) => retry + 1)
 	})
 	const handleSubmit = (event: FormSubmitEvent) => {
 		event.preventDefault()
-		if (reset.isPending) return
+		if (reset.isPending || !turnstileToken) return
 		const data = new FormData(event.currentTarget)
 		store.dispatch({ kind: 'requestStarted' })
-		const token = turnstileToken.current
-		turnstileToken.current = ''
+		const token = turnstileToken
+		setTurnstileToken('')
 		reset.mutate({ email: String(data.get('email')), signal: store.beginAuthRequest(), token })
 	}
 
@@ -712,19 +688,12 @@ function ForgotPasswordScreen({
 						<div inert={reset.isPending}>
 							<Turnstile
 								key={captchaRetry}
-								onVerify={(token) => {
-									turnstileToken.current = token
-								}}
-								onError={() => {
-									turnstileToken.current = ''
-								}}
-								onExpire={() => {
-									turnstileToken.current = ''
-								}}
-								className="flex justify-center"
+								onVerify={setTurnstileToken}
+								onError={() => setTurnstileToken('')}
+								onExpire={() => setTurnstileToken('')}
 							/>
 						</div>
-						<button type="submit" disabled={reset.isPending} className={primaryBtnCls}>
+						<button type="submit" disabled={reset.isPending || !turnstileToken} className={primaryBtnCls}>
 							{reset.isPending ? (
 								<span className="inline-flex items-center gap-2">
 									<span

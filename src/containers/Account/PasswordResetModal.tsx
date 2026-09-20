@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import { Icon } from '~/ui/Icon'
 
@@ -22,19 +22,14 @@ export function PasswordResetModal({
 	isPending,
 	cooldownMessage
 }: PasswordResetModalProps) {
-	const turnstileToken = useRef('')
+	// The send button stays disabled until Turnstile hands over a token.
+	const [turnstileToken, setTurnstileToken] = useState('')
 	// Turnstile tokens are single-use; remount the widget after every send.
 	const [captchaRetry, setCaptchaRetry] = useState(0)
-	const [captchaMessage, setCaptchaMessage] = useState('')
 
 	const handleSend = () => {
-		const token = turnstileToken.current
-		if (!token) {
-			setCaptchaMessage('Complete the CAPTCHA verification.')
-			return
-		}
-		setCaptchaMessage('')
-		turnstileToken.current = ''
+		const token = turnstileToken
+		setTurnstileToken('')
 		setCaptchaRetry((retry) => retry + 1)
 		onSend(token)
 	}
@@ -71,16 +66,9 @@ export function PasswordResetModal({
 							<div inert={isPending}>
 								<Turnstile
 									key={captchaRetry}
-									onVerify={(token) => {
-										turnstileToken.current = token
-									}}
-									onError={() => {
-										turnstileToken.current = ''
-									}}
-									onExpire={() => {
-										turnstileToken.current = ''
-									}}
-									className="flex justify-center"
+									onVerify={setTurnstileToken}
+									onError={() => setTurnstileToken('')}
+									onExpire={() => setTurnstileToken('')}
 								/>
 							</div>
 							{sent ? (
@@ -89,7 +77,7 @@ export function PasswordResetModal({
 									<button
 										type="button"
 										onClick={handleSend}
-										disabled={isPending}
+										disabled={isPending || !turnstileToken}
 										className="text-sub-brand-secondary underline disabled:opacity-50"
 									>
 										Resend email
@@ -99,13 +87,12 @@ export function PasswordResetModal({
 								<button
 									type="button"
 									onClick={handleSend}
-									disabled={isPending}
+									disabled={isPending || !turnstileToken}
 									className="flex h-10 items-center justify-center rounded-lg bg-sub-brand-secondary px-4 text-sm font-medium text-white disabled:opacity-50"
 								>
 									{isPending ? 'Sending...' : 'Send reset link'}
 								</button>
 							)}
-							{captchaMessage && <p className="text-xs text-sub-warning-text-dark">{captchaMessage}</p>}
 							{cooldownMessage && <p className="text-xs text-sub-warning-text-dark">{cooldownMessage}</p>}
 						</div>
 					</div>

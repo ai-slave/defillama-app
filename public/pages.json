@@ -80,6 +80,15 @@
       "tab": "Protocols"
     },
     {
+      "name": "Top Protocols",
+      "route": "/top-protocols",
+      "category": "Total Value Locked",
+      "description": "Overview of top protocols with the highest TVL by chain on each category",
+      "tab": "Protocols",
+      "oldCategory": "Market Overview",
+      "oldName": "Top Protocols"
+    },
+    {
       "name": "Forks",
       "route": "/forks",
       "category": "Total Value Locked",
@@ -88,15 +97,6 @@
       "tab": "Protocols",
       "oldCategory": "Market Overview",
       "oldName": "Forks"
-    },
-    {
-      "name": "Top Protocols",
-      "route": "/top-protocols",
-      "category": "Total Value Locked",
-      "description": "Overview of top protocols with the highest TVL by chain on each category",
-      "tab": "Protocols",
-      "oldCategory": "Market Overview",
-      "oldName": "Top Protocols"
     },
     {
       "name": "Pool2 TVL by Protocol",
@@ -501,6 +501,33 @@
       "tab": "Protocols"
     },
     {
+      "name": "Exchanges: MiCA",
+      "route": "/mica",
+      "category": "Exchanges",
+      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
+      "searchKeywords": [
+        "mica",
+        "mica licensed exchanges",
+        "eu crypto exchanges",
+        "mica casp",
+        "regulated exchanges"
+      ]
+    },
+    {
+      "name": "Exchanges: Reserves",
+      "route": "/cexs",
+      "category": "Exchanges",
+      "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
+      "totalTrackedKey": "cexs.protocols",
+      "oldName": "CEX Transparency",
+      "searchKeywords": [
+        "cexs",
+        "cex reserves",
+        "exchange reserves",
+        "proof of reserves"
+      ]
+    },
+    {
       "name": "Exchanges: Overview",
       "route": "/exchanges",
       "category": "Exchanges",
@@ -529,33 +556,6 @@
       "route": "/ramp",
       "category": "Exchanges",
       "description": "Compare fiat on-ramp and off-ramp costs by country and currency."
-    },
-    {
-      "name": "Exchanges: MiCA",
-      "route": "/mica",
-      "category": "Exchanges",
-      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
-      "searchKeywords": [
-        "mica",
-        "mica licensed exchanges",
-        "eu crypto exchanges",
-        "mica casp",
-        "regulated exchanges"
-      ]
-    },
-    {
-      "name": "Exchanges: Reserves",
-      "route": "/cexs",
-      "category": "Exchanges",
-      "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
-      "totalTrackedKey": "cexs.protocols",
-      "oldName": "CEX Transparency",
-      "searchKeywords": [
-        "cexs",
-        "cex reserves",
-        "exchange reserves",
-        "proof of reserves"
-      ]
     },
     {
       "name": "RWA: Overview",
@@ -626,6 +626,18 @@
       ]
     },
     {
+      "name": "Pre-IPO",
+      "route": "/pre-ipo",
+      "category": "Equities, ETFs & DATs",
+      "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
+      "searchKeywords": [
+        "pre ipo",
+        "pre-ipo",
+        "private companies",
+        "private company valuations"
+      ]
+    },
+    {
       "name": "Digital Asset Treasuries (DATs)",
       "route": "/digital-asset-treasuries",
       "category": "Equities, ETFs & DATs",
@@ -639,18 +651,6 @@
         "crypto treasury",
         "crypto treasuries",
         "corporate treasury"
-      ]
-    },
-    {
-      "name": "Pre-IPO",
-      "route": "/pre-ipo",
-      "category": "Equities, ETFs & DATs",
-      "description": "Private-company valuations, funding rounds, and tradable pre-IPO markets",
-      "searchKeywords": [
-        "pre ipo",
-        "pre-ipo",
-        "private companies",
-        "private company valuations"
       ]
     },
     {

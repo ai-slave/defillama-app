@@ -5,21 +5,15 @@ interface TurnstileProps {
 	onVerify: (token: string) => void
 	onError?: () => void
 	onExpire?: () => void
-	className?: string
 }
 
-export function Turnstile({ onVerify, onError, onExpire, className }: TurnstileProps) {
+export function Turnstile({ onVerify, onError, onExpire }: TurnstileProps) {
 	const [isDarkMode] = useDarkModeManager()
 	const theme: 'light' | 'dark' = isDarkMode ? 'dark' : 'light'
 	const siteKey = '0x4AAAAAABjeuAHi7HNPyGmv'
 
-	if (!siteKey) {
-		console.log('Turnstile site key is not configured')
-		return null
-	}
-
 	return (
-		<div className={className}>
+		<div className="flex justify-center">
 			<TurnstileWidget
 				siteKey={siteKey}
 				onSuccess={onVerify}
@@ -27,7 +21,7 @@ export function Turnstile({ onVerify, onError, onExpire, className }: TurnstileP
 				onExpire={onExpire}
 				options={{
 					theme,
-					size: 'flexible',
+					size: 'normal',
 					appearance: 'always'
 				}}
 			/>

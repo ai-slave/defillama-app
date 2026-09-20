@@ -5,7 +5,6 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 interface ClaimTurnstileProps {
 	onVerify: (token: string) => void
 	onError: () => void
-	className?: string
 }
 
 export function isClaimTurnstileEnabled(): boolean {
@@ -15,7 +14,6 @@ export function isClaimTurnstileEnabled(): boolean {
 export function ClaimTurnstile({
 	onVerify,
 	onError,
-	className,
 	ref
 }: ClaimTurnstileProps & { ref?: Ref<TurnstileInstance | undefined> }) {
 	const [isDarkMode] = useDarkModeManager()
@@ -24,7 +22,7 @@ export function ClaimTurnstile({
 	if (!siteKey) return null
 
 	return (
-		<div className={className}>
+		<div className="flex justify-center">
 			<Turnstile
 				ref={ref}
 				siteKey={siteKey}
@@ -36,7 +34,7 @@ export function ClaimTurnstile({
 				options={{
 					action: 'claim',
 					theme: isDarkMode ? 'dark' : 'light',
-					size: 'flexible',
+					size: 'normal',
 					appearance: 'always',
 					responseField: false
 				}}

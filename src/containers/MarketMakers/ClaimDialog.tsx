@@ -265,12 +265,7 @@ function ClaimDialogForm({
 						</div>
 						<LeadHoneypot value={honeypot} onChange={setHoneypot} />
 						{captchaEnabled ? (
-							<ClaimTurnstile
-								ref={turnstileRef}
-								onVerify={setTurnstileToken}
-								onError={() => setTurnstileToken('')}
-								className="mx-auto w-full max-w-md"
-							/>
+							<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
 						) : null}
 						{submit.isError ? (
 							<LeadError

@@ -441,10 +441,7 @@ export function ClaimTokenProfile({
 		clickId
 	})
 	const validation = buildUtrClaimRequest(requestInput(null))
-	const errors = {
-		...validation.errors,
-		...(captchaEnabled && !turnstileToken ? { captcha: 'Complete the CAPTCHA verification' } : null)
-	}
+	const errors = validation.errors
 	const showError = (key: string) => (submitAttempted ? errors[key] : null)
 	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.pending)
 	const hasUploadError = Object.values(uploadStatuses).some((status) => status.error)
@@ -665,19 +662,7 @@ export function ClaimTokenProfile({
 							<span className="body-sm text-tertiary">*Mandatory fields</span>
 						</div>
 						{captchaEnabled ? (
-							<div className="flex flex-col items-center gap-1.5">
-								<ClaimTurnstile
-									ref={turnstileRef}
-									onVerify={setTurnstileToken}
-									onError={() => setTurnstileToken('')}
-									className="w-full max-w-md"
-								/>
-								{showError('captcha') ? (
-									<span data-utr-claim-error className="body-sm text-error">
-										{showError('captcha')}
-									</span>
-								) : null}
-							</div>
+							<ClaimTurnstile ref={turnstileRef} onVerify={setTurnstileToken} onError={() => setTurnstileToken('')} />
 						) : null}
 					</Card>
 

@@ -199,7 +199,7 @@ test('ignores the old request after switching screens, without contaminating a n
 	expect(onAuthenticated).toHaveBeenCalledOnce()
 })
 
-test('preserves signup fields after failure and requires a fresh CAPTCHA for retry', async () => {
+test('preserves signup fields after failure and disables submit until a fresh CAPTCHA token arrives', async () => {
 	const signupTab = Array.from(container.querySelectorAll('button')).find(
 		(button) => button.textContent === 'Create an account'
 	)!
@@ -228,8 +228,9 @@ test('preserves signup fields after failure and requires a fresh CAPTCHA for ret
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
 	expect(requests).toHaveLength(1)
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain('CAPTCHA')
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
 	await act(async () => captcha().click())
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false)
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
@@ -257,8 +258,9 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 	)
 	await settle()
 	expect(requests).toHaveLength(0)
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain('CAPTCHA')
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
 	await completeCaptcha()
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false)
 	await act(async () =>
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	)
@@ -453,6 +455,7 @@ test.each([
 	{ method: 'email', label: 'Sign in' },
 	{ method: 'wallet', connectorId: 'io.rabby', label: 'Sign in with a wallet' }
 ] as const)('badges the last successful $method without starting authentication', async ({ label, ...method }) => {
+	await completeCaptcha()
 	await act(async () => rememberSignIn(method))
 	expect(container.textContent?.match(/Last used/g) ?? []).toHaveLength(1)
 	const markedButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
@@ -492,6 +495,7 @@ test('unavailable remembered-method storage leaves every method usable without a
 		}
 	})
 	try {
+		await completeCaptcha()
 		await act(async () => {
 			rememberSignIn({ method: 'email' })
 			window.dispatchEvent(new Event('storage'))
