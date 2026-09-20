@@ -168,7 +168,7 @@ export function formatRelativeTime(value: DateValue, options?: RelativeTimeOptio
 		absoluteMs < 60_000
 			? ([1000, 's'] as const)
 			: absoluteMs < 3_600_000
-				? ([60_000, 'm'] as const)
+				? ([60_000, 'min'] as const)
 				: absoluteMs < 86_400_000
 					? ([3_600_000, 'h'] as const)
 					: ([86_400_000, 'd'] as const)

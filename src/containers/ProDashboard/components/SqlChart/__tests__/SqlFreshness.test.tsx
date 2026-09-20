@@ -39,7 +39,7 @@ test('updates an idle badge at minute, 24-hour, and 48-hour boundaries', async (
 	await render()
 	expectFreshness('just now', 'bg-success', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-12T00:01:00Z')
-	expectFreshness('1m ago', 'bg-success', 'Data is fresh (updated within 24h)')
+	expectFreshness('1min ago', 'bg-success', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-12T23:59:30Z')
 	expectFreshness('23h ago', 'bg-success', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-13T00:00:00Z')

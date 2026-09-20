@@ -65,7 +65,7 @@ describe('date formatters', () => {
 		expect(formatRelativeTime('2026-03-08T11:59:55.001Z', { now })).toBe('just now')
 		expect(formatRelativeTime('2026-03-08T11:59:55.000Z', { now })).toBe('5s ago')
 		expect(formatRelativeTime('2026-03-08T11:59:00.001Z', { now })).toBe('59s ago')
-		expect(formatRelativeTime('2026-03-08T11:59:00.000Z', { now })).toBe('1m ago')
+		expect(formatRelativeTime('2026-03-08T11:59:00.000Z', { now })).toBe('1min ago')
 		expect(formatRelativeTime('2026-03-07T12:00:00Z', { now })).toBe('1d ago')
 	})
 })
