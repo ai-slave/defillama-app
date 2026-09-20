@@ -6,6 +6,16 @@ import type { CoinsChartResponse, LlamaConfigResponse, SearchQuery, BlockExplore
 // DefiLlama multi-search API
 // ---------------------------------------------------------------------------
 
+let warnedSearchTokenMissing = false
+
+function warnSearchTokenMissing() {
+	if (warnedSearchTokenMissing) return
+	warnedSearchTokenMissing = true
+	console.warn(
+		'[search] NEXT_PUBLIC_SEARCH_API_TOKEN is not set, all search features, including global search, will return no results'
+	)
+}
+
 /** Generic search API helper for the DefiLlama multi-search endpoint. */
 export async function searchApi<T = Record<string, unknown>>(query: SearchQuery): Promise<Array<T>> {
 	return multiSearchApi<T>([query]).then((results) => results[0] ?? [])
@@ -15,6 +25,10 @@ export async function searchApi<T = Record<string, unknown>>(query: SearchQuery)
 export async function multiSearchApi<T = Record<string, unknown>>(
 	queries: Array<SearchQuery>
 ): Promise<Array<Array<T>>> {
+	if (!SEARCH_API_TOKEN?.trim()) {
+		warnSearchTokenMissing()
+		return queries.map(() => [])
+	}
 	return fetchJson(SEARCH_API_URL, {
 		method: 'POST',
 		headers: {

@@ -68,6 +68,28 @@ describe('deploy build pipeline', () => {
 		)
 	})
 
+	test('warns about missing optional build secrets and keeps building', async () => {
+		const logger = createMemoryLogger()
+		const runNextBuild = vi.fn().mockResolvedValue({ exitCode: 0, signal: null, stdoutTail: '' })
+
+		const result = await runDeployBuildTest({
+			env: testEnv({ API_KEY: 'test-api-key', NEXT_PUBLIC_SEARCH_API_TOKEN: 'search-token', ROUND_UP_BOT_TOKEN: ' ' }),
+			findBuildId: vi.fn().mockResolvedValue('build-id'),
+			logger,
+			now: createNow(),
+			notify: vi.fn(),
+			runNextBuild,
+			runPrepare: vi.fn().mockResolvedValue(0),
+			syncArtifacts: vi.fn()
+		})
+
+		const warnings = logger.output.join('')
+		expect(result.exitCode).toBe(0)
+		expect(runNextBuild).toHaveBeenCalled()
+		expect(warnings).toContain('[build:preflight] ROUND_UP_BOT_TOKEN is not set: /roundup will return 404')
+		expect(warnings).not.toContain('NEXT_PUBLIC_SEARCH_API_TOKEN')
+	})
+
 	test('stops before Next when preparation fails', async () => {
 		const runNextBuild = vi.fn()
 		const syncArtifacts = vi.fn()

@@ -46,6 +46,11 @@ export default function Roundup({ messages, date }: { messages: Array<string | A
 }
 
 export const getStaticProps = withPerformanceLogging('roundup', async () => {
+	if (!process.env.ROUND_UP_BOT_TOKEN?.trim()) {
+		console.warn('[build] ROUND_UP_BOT_TOKEN is not set, /roundup will return 404')
+		return { notFound: true, revalidate: maxAgeForNext([22]) }
+	}
+
 	const headers = new Headers()
 	headers.append('Authorization', `Bot ${process.env.ROUND_UP_BOT_TOKEN}`)
 

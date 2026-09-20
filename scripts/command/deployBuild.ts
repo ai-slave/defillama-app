@@ -27,12 +27,23 @@ type DeployBuildOptions = {
 	syncArtifacts?: (result: BuildResult) => Promise<unknown>
 }
 
-const REQUIRED_DEPLOY_BUILD_ENV = ['API_KEY'] as const
+// Every key the deploy build looks for. A missing optional key only costs the pages that need it.
+const DEPLOY_BUILD_ENV: Record<string, { optional: boolean; warning: string }> = {
+	API_KEY: { optional: false, warning: 'the build will stop' },
+	NEXT_PUBLIC_SEARCH_API_TOKEN: {
+		optional: true,
+		warning: 'all search features, including global search, will return no results'
+	},
+	ROUND_UP_BOT_TOKEN: { optional: true, warning: '/roundup will return 404' }
+}
 
-function getMissingDeployBuildEnv(env: NodeJS.ProcessEnv): Array<string> {
+/** Warns for every missing key and returns the required ones. */
+function getMissingDeployBuildEnv(env: NodeJS.ProcessEnv, logger: CommandLogger): Array<string> {
 	const missing: Array<string> = []
-	for (const key of REQUIRED_DEPLOY_BUILD_ENV) {
-		if (!env[key]?.trim()) missing.push(key)
+	for (const [key, { optional, warning }] of Object.entries(DEPLOY_BUILD_ENV)) {
+		if (env[key]?.trim()) continue
+		logger.log(`[build:preflight] ${key} is not set: ${warning}`)
+		if (!optional) missing.push(key)
 	}
 	return missing
 }
@@ -126,7 +137,7 @@ export async function runDeployBuild({
 	buildLogger.log('=======================')
 	buildLogger.log('')
 
-	const missingBuildEnv = getMissingDeployBuildEnv(buildEnv)
+	const missingBuildEnv = getMissingDeployBuildEnv(buildEnv, buildLogger)
 	let exitCode = 1
 	if (missingBuildEnv.length > 0) {
 		buildLogger.log(
