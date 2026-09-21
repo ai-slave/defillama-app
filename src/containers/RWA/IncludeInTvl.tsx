@@ -41,7 +41,6 @@ export function RWAIncludeInTvlSelect({
 			variant="filter"
 			size={size}
 			placement="bottom-end"
-			unmountOnHide={false}
 		/>
 	)
 }

@@ -1,5 +1,4 @@
-import * as Ariakit from '@ariakit/react'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { Hovercard } from '~/ui/Hovercard'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { ExchangeFiatFeeRow, ExchangeFiatFees } from './models'
 
@@ -70,27 +69,25 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 	if (fees === null) return <span className="text-tertiary">–</span>
 	const summary = fiatFeeSummary(fees)
 	return (
-		<Ariakit.PopoverProvider placement="left-start">
-			<Ariakit.PopoverDisclosure
-				type="button"
-				className="inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
-				aria-label={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
-			>
-				{summary}
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-[min(900px,calc(100vw-32px))] p-3`}
-				portal
-			>
+		<Hovercard
+			placement="left-start"
+			className="inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
+			render={
+				<button
+					type="button"
+					aria-label={`${name} fiat fee details: ${fees.onRamp.length} on-ramp routes and ${fees.offRamp.length} off-ramp routes`}
+				/>
+			}
+			contentClassName="w-[900px] p-3"
+			content={
 				<div className="flex flex-col gap-4">
 					<h3 className="heading-xs">{name} authored fiat fees</h3>
 					<FiatFeeTable label="On-ramp" rows={fees.onRamp} />
 					<FiatFeeTable label="Off-ramp" rows={fees.offRamp} />
 				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
+			}
+		>
+			{summary}
+		</Hovercard>
 	)
 }

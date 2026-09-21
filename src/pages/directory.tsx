@@ -10,7 +10,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
-import { popoverMenuItemStyles, popoverSearchResultsSurfaceStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -151,9 +151,11 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 				better access and security
 			</Announcement>
 			<Ariakit.ComboboxProvider
+				open
 				setInputValue={(value) => {
 					startTransition(() => {
 						setSearchValue(value)
+						setViewableMatches(20)
 					})
 				}}
 			>
@@ -187,56 +189,64 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 					</div>
 				) : null}
 
-				<span className="relative mx-auto my-8 w-full max-w-3xl">
-					<Ariakit.Combobox
-						placeholder="Search..."
-						autoSelect
-						className={`${inputStyles} w-full rounded-b-none pl-9`}
-					/>
-					<Icon name="search" height={18} width={18} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
-				</span>
-				<Ariakit.ComboboxPopover
-					sameWidth
-					open
-					className={`${popoverSearchResultsSurfaceStyles} top-1 h-full max-h-[320px]`}
-				>
-					{matches.length > 0 ? (
-						<Ariakit.ComboboxList ref={comboboxRef}>
-							{matches.slice(0, viewableMatches).map((option) => (
-								<Ariakit.ComboboxItem
-									key={option.name}
-									value={option.name}
-									onClick={() => {
-										if (typeof document !== 'undefined') {
-											window.open(option.route, '_blank')
-										}
-										saveRecent(option)
-									}}
-									focusOnHover
-									hideOnClick={false}
-									setValueOnClick={false}
-									className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-disabled:opacity-50 aria-selected:bg-hover-row`}
-								>
-									{option.logo ? <TokenLogo src={option.logo} alt={`Logo of ${option.name}`} /> : null}
-									<span>{option.name}</span>
-								</Ariakit.ComboboxItem>
-							))}
-							{matches.length > viewableMatches ? (
-								<Ariakit.ComboboxItem
-									value="__see_more__"
-									setValueOnClick={false}
-									hideOnClick={false}
-									className={popoverSeeMoreStyles}
-									onClick={handleSeeMore}
-								>
-									See more...
-								</Ariakit.ComboboxItem>
-							) : null}
-						</Ariakit.ComboboxList>
-					) : (
-						<NoResults />
-					)}
-				</Ariakit.ComboboxPopover>
+				<div className="mx-auto my-8 w-full max-w-3xl min-w-0">
+					<div className="relative">
+						<Ariakit.Combobox
+							aria-label="Search protocols"
+							placeholder="Search protocols..."
+							autoSelect
+							className={`${inputStyles} w-full rounded-b-none pl-9`}
+						/>
+						<Icon
+							name="search"
+							height={18}
+							width={18}
+							className="absolute top-0 bottom-0 left-3 my-auto text-tertiary"
+						/>
+					</div>
+					<Ariakit.ComboboxList
+						ref={comboboxRef}
+						alwaysVisible
+						className="h-80 overflow-y-auto overscroll-contain rounded-b-lg border border-t-0 border-medium bg-overlay"
+					>
+						{matches.length > 0 ? (
+							<>
+								{matches.slice(0, viewableMatches).map((option) => (
+									<Ariakit.ComboboxItem
+										key={option.name}
+										value={option.name}
+										onClick={() => {
+											if (typeof document !== 'undefined') {
+												window.open(option.route, '_blank')
+											}
+											saveRecent(option)
+										}}
+										focusOnHover
+										hideOnClick={false}
+										setValueOnClick={false}
+										className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-disabled:opacity-50 aria-selected:bg-hover-row`}
+									>
+										{option.logo ? <TokenLogo src={option.logo} alt={`Logo of ${option.name}`} /> : null}
+										<span>{option.name}</span>
+									</Ariakit.ComboboxItem>
+								))}
+								{matches.length > viewableMatches ? (
+									<Ariakit.ComboboxItem
+										value="__see_more__"
+										setValueOnClick={false}
+										hideOnClick={false}
+										className={popoverSeeMoreStyles}
+										onClick={handleSeeMore}
+									>
+										See more...
+									</Ariakit.ComboboxItem>
+								) : null}
+							</>
+						) : (
+							<NoResults />
+						)}
+					</Ariakit.ComboboxList>
+				</div>
 			</Ariakit.ComboboxProvider>
 		</Layout>
 	)

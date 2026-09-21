@@ -13,6 +13,7 @@ import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSur
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { fetchJson } from '~/utils/async'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
@@ -86,7 +87,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 					</Ariakit.DialogDisclosure>
 
 					<Ariakit.Dialog
-						unmountOnHide={false}
+						unmountOnHide
 						className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:640px]`}
 						hideOnInteractOutside
 						portal
@@ -270,12 +271,12 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						⌘K
 					</span>
 				</span>
-				<Ariakit.ComboboxPopover
-					unmountOnHide={false}
+				<ComboboxSurface
+					variant="search-results"
 					hideOnInteractOutside
 					gutter={6}
 					sameWidth
-					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
+					className="max-h-[min(var(--popover-available-height),60vh)]"
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>
@@ -329,7 +330,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 							</>
 						)}
 					</Ariakit.ComboboxList>
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 			{!hideLlamaAiCta ? (
 				<BasicLink

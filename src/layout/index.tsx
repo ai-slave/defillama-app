@@ -85,7 +85,6 @@ function TvlFilters({ options }: { options: Array<{ name: string; key: string }>
 				className: `${selectTriggerStyles('default', 'sm')} ml-auto whitespace-nowrap *:shrink-0`
 			}}
 			placement="bottom-end"
-			unmountOnHide={false}
 		/>
 	)
 }

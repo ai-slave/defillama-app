@@ -432,6 +432,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 			</div>
 			<Ariakit.Dialog
 				className={`${dialogCanvasSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:min(85vw,1280px)]`}
+				// Keep the selected tab, search query, and category scroll position when reopening.
 				unmountOnHide={false}
 				hideOnInteractOutside
 			>

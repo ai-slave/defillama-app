@@ -8,11 +8,11 @@ interface IHovercard {
 	className?: string
 	/** Custom anchor element, e.g. render={<button onClick={...} />}. */
 	render?: React.ReactElement
-	placement?: 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'right'
+	placement?: Ariakit.HovercardProviderProps['placement']
 	/** Classes for the card body; defaults to p-3. */
 	contentClassName?: string
 	/** Minimum space kept between the card and the viewport edge. */
-	overflowPadding?: number
+	overflowPadding?: Ariakit.HovercardProps['overflowPadding']
 	/** Tap/click on the anchor also opens the card (the touch path). Turn off
 	    ONLY when the anchor has its own click action (e.g. a real button). */
 	showOnClick?: boolean
@@ -50,7 +50,7 @@ export function Hovercard({
 			>
 				{children}
 			</Ariakit.HovercardAnchor>
-			<Ariakit.HovercardDisclosure />
+			<Ariakit.HovercardDisclosure aria-label="Show details" />
 			<Ariakit.Hovercard
 				className={`${popoverHovercardSurfaceStyles} ${contentClassName ?? 'p-3'}`}
 				gutter={6}

@@ -1,8 +1,7 @@
-import * as Ariakit from '@ariakit/react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -43,34 +42,36 @@ function SignersPopover({
 }) {
 	if (signers.length === 0) return <MofNPips m={m} n={n} />
 	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure
-				render={<Button type="button" variant="ghost" size="sm" />}
-				aria-label={`Show the ${signers.length} signers of this ${m}-of-${n} multisig`}
-			>
-				<MofNPips m={m} n={n} />
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} flex max-h-72 flex-col p-3 body-sm`}
-			>
-				<span className="label-sm text-primary">{`Signers (${signers.length})`}</span>
-				<span className="mt-0.5 text-secondary">{`any ${m} of them can execute`}</span>
-				<ul className="mt-1.5 flex flex-col divide-y divide-(--border-subtle)">
-					{signers.map((s) => (
-						<li key={s.address} className="flex items-center py-1.5">
-							<AddressActions
-								address={s.address}
-								url={explorerUrl(s.address, chain, explorers)}
-								label="signer address"
-							/>
-						</li>
-					))}
-				</ul>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
+		<Hovercard
+			render={
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					aria-label={`Show the ${signers.length} signers of this ${m}-of-${n} multisig`}
+				/>
+			}
+			contentClassName="flex max-h-72 flex-col p-3 body-sm"
+			content={
+				<>
+					<span className="label-sm text-primary">{`Signers (${signers.length})`}</span>
+					<span className="mt-0.5 text-secondary">{`any ${m} of them can execute`}</span>
+					<ul className="mt-1.5 flex flex-col divide-y divide-(--border-subtle)">
+						{signers.map((s) => (
+							<li key={s.address} className="flex items-center py-1.5">
+								<AddressActions
+									address={s.address}
+									url={explorerUrl(s.address, chain, explorers)}
+									label="signer address"
+								/>
+							</li>
+						))}
+					</ul>
+				</>
+			}
+		>
+			<MofNPips m={m} n={n} />
+		</Hovercard>
 	)
 }
 

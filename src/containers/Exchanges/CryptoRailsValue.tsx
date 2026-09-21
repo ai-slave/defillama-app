@@ -1,5 +1,4 @@
-import * as Ariakit from '@ariakit/react'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { Hovercard } from '~/ui/Hovercard'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { CryptoRailRowModel, CryptoRailsModel } from './models'
 
@@ -72,27 +71,25 @@ function CryptoRailTable({ label, rows }: { label: string; rows: Array<CryptoRai
 export function CryptoRailsValue({ name, rails }: { name: string; rails: CryptoRailsModel | null }) {
 	if (rails === null) return <span className="text-tertiary">–</span>
 	return (
-		<Ariakit.PopoverProvider placement="left-start">
-			<Ariakit.PopoverDisclosure
-				type="button"
-				className="inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
-				aria-label={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
-			>
-				{cryptoRailSummary(rails)}
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-[min(760px,calc(100vw-32px))] p-3`}
-				portal
-			>
+		<Hovercard
+			placement="left-start"
+			className="inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
+			render={
+				<button
+					type="button"
+					aria-label={`${name} crypto routes: ${rails.deposit.length} deposit and ${rails.withdraw.length} withdrawal`}
+				/>
+			}
+			contentClassName="w-[760px] p-3"
+			content={
 				<div className="flex flex-col gap-4">
 					<h3 className="heading-xs">{name} crypto deposit and withdrawal fees</h3>
 					<CryptoRailTable label="Deposit" rows={rails.deposit} />
 					<CryptoRailTable label="Withdraw" rows={rails.withdraw} />
 				</div>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
+			}
+		>
+			{cryptoRailSummary(rails)}
+		</Hovercard>
 	)
 }

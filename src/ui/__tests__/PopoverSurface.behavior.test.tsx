@@ -213,3 +213,28 @@ test('surfaces unmount their content while closed unless a caller opts out', asy
 	)
 	expect(document.querySelector('[role="option"]')).not.toBeNull()
 })
+
+test('search results stay attached to the input without drawer chrome and unmount on close', async () => {
+	let store: Ariakit.ComboboxStore
+	function Harness() {
+		store = Ariakit.useComboboxStore({ defaultOpen: true })
+		return (
+			<Ariakit.ComboboxProvider store={store}>
+				<Ariakit.Combobox aria-label="Search" />
+				<ComboboxSurface variant="search-results" sameWidth>
+					<Ariakit.ComboboxItem value="Ethereum" />
+				</ComboboxSurface>
+			</Ariakit.ComboboxProvider>
+		)
+	}
+	await act(async () => root.render(<Harness />))
+	const results = surfaceOf('listbox')
+	expect(results.className).not.toContain('drawer')
+	expect(results.parentElement!.className).not.toContain(DRAWER_WRAPPER)
+	expect(results.parentElement!.className).not.toContain(SCRIM)
+	expect(results.querySelector('button')).toBeNull()
+	await act(async () => store!.hide())
+	expect(document.querySelector('[role="option"]')).toBeNull()
+	await act(async () => store!.show())
+	expect(surfaceOf('listbox').textContent).toContain('Ethereum')
+})

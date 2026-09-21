@@ -24,6 +24,9 @@ import { tw } from './tw'
                scrim of its own and no close button: the caller renders the
                back/title/close header (see NestedMenu).
 
+   ComboboxSurface also supports `search-results`: input-anchored results at
+   every breakpoint, with no drawer, scrim, or dismiss button.
+
    `className` is for LAYOUT only — width (`w-72`), stacking (`z-50` when the
    trigger sits inside a dialog). Never override the surface colors/radius.
    `wrapperClassName` extends the positioning wrapper the same way, e.g.
@@ -157,8 +160,7 @@ export function PopoverSurface({
 	)
 }
 
-type ComboboxSurfaceProps = Partial<Pick<SurfaceOwnProps, 'variant'>> &
-	Omit<SurfaceOwnProps, 'variant'> &
+type ComboboxSurfaceProps = { variant?: PopoverSurfaceVariant | 'search-results' } & Omit<SurfaceOwnProps, 'variant'> &
 	Omit<Ariakit.ComboboxPopoverProps, 'className' | 'wrapperProps'>
 
 /** Combobox results are a list by nature, so `variant` defaults to `list`. */
@@ -180,9 +182,17 @@ export function ComboboxSurface({
 			gutter={gutter}
 			portal={portal}
 			unmountOnHide={unmountOnHide}
-			{...surfaceProps({ variant, className, wrapperClassName })}
+			{...(variant === 'search-results'
+				? {
+						className: join(
+							'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm',
+							className
+						),
+						wrapperProps: { className: wrapperClassName }
+					}
+				: surfaceProps({ variant, className, wrapperClassName }))}
 		>
-			{surfaceDismiss(variant, dismissLabel, dismiss)}
+			{variant === 'search-results' ? null : surfaceDismiss(variant, dismissLabel, dismiss)}
 			{children}
 		</Ariakit.ComboboxPopover>
 	)

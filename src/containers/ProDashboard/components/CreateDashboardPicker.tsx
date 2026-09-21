@@ -120,7 +120,6 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 			<ProDialog
 				ref={dialogRef}
 				store={dialogStore}
-				unmountOnHide={false}
 				width="sm"
 				heading="Create New Dashboard"
 				bodyClassName="p-0"
@@ -150,7 +149,6 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 			<ProDialog
 				ref={dialogRef}
 				store={dialogStore}
-				unmountOnHide={false}
 				width="lg"
 				heading="Create Comparison Dashboard"
 				bodyClassName="p-0"
@@ -197,7 +195,6 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		<ProDialog
 			ref={dialogRef}
 			store={dialogStore}
-			unmountOnHide={false}
 			width="md"
 			heading="Create New Dashboard"
 			closeButtonProps={{

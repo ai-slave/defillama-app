@@ -35,6 +35,7 @@ export function Menu({
 			</Ariakit.DialogDisclosure>
 
 			<Ariakit.Dialog
+				// Keep expanded navigation sections and the scroll position when reopening.
 				unmountOnHide={false}
 				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
 			>
