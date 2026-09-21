@@ -5,11 +5,9 @@ import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { MenuSurface } from '~/ui/MenuSurface'
 import { NoResults } from '~/ui/NoResults'
 import {
-	menuSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
 	popoverRowWithBorderStyles,
 	popoverSearchBlockWithBottomPaddingStyles,
 	popoverSeeMoreStyles
@@ -65,17 +63,8 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 					<Icon name="chevron-down" className="size-3 shrink-0 text-tertiary" />
 				</Ariakit.MenuButton>
 
-				<Ariakit.Menu
-					unmountOnHide={false}
-					hideOnInteractOutside
-					gutter={6}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					className={menuSurfaceStyles}
-					portal
-				>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
+				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
+				<MenuSurface variant="panel" unmountOnHide={false} gutter={6}>
 					<span className={popoverSearchBlockWithBottomPaddingStyles}>
 						<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />
 					</span>
@@ -99,7 +88,7 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 					) : (
 						<NoResults />
 					)}
-				</Ariakit.Menu>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
 		</Ariakit.ComboboxProvider>
 	)

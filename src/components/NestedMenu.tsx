@@ -1,19 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { MenuSurface } from '~/ui/MenuSurface'
 import {
-	legacyNestedMenuButtonStyles,
-	legacyNestedMenuRootButtonStyles,
-	legacyNestedMenuRootFilterButtonStyles,
-	legacyNestedMenuSurfaceStyles,
-	nestedPopoverMobileWrapperClassName,
-	nestedMenuSurfaceStyles,
 	nestedMenuDisclosureIconStyles,
 	nestedMenuHeaderIconButtonStyles,
 	nestedMenuRootFilterButtonStyles,
-	nestedMenuRootRowStyles,
-	popoverMobileDismissStyles
+	nestedMenuRootRowStyles
 } from '~/ui/Popover'
+import { DrawerDismiss } from '~/ui/PopoverSurface'
 
 interface NestedMenuItemProps extends Ariakit.MenuItemProps {
 	ref?: React.Ref<HTMLDivElement>
@@ -28,7 +23,6 @@ interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	portal?: boolean
 	combobox?: Ariakit.MenuStoreProps['combobox']
 	buttonVariant?: 'default' | 'filter'
-	popoverVariant?: 'default' | 'legacy'
 	ref?: React.Ref<HTMLDivElement>
 }
 
@@ -39,22 +33,13 @@ export function NestedMenu({
 	portal,
 	combobox,
 	buttonVariant = 'default',
-	popoverVariant = 'default',
 	...props
 }: NestedMenuProps) {
 	const menu = Ariakit.useMenuStore({ combobox })
 	const shouldPortalMenu = portal ?? true
 
-	const useLegacyPopover = popoverVariant === 'legacy'
-	const rootButtonClassName = useLegacyPopover
-		? buttonVariant === 'filter'
-			? legacyNestedMenuRootFilterButtonStyles
-			: legacyNestedMenuRootButtonStyles
-		: buttonVariant === 'filter'
-			? nestedMenuRootFilterButtonStyles
-			: buttonStyles({ size: 'md' })
-	const nestedButtonClassName = useLegacyPopover ? legacyNestedMenuButtonStyles : nestedMenuRootRowStyles
-	const surfaceStyles = useLegacyPopover ? legacyNestedMenuSurfaceStyles : nestedMenuSurfaceStyles
+	const rootButtonClassName =
+		buttonVariant === 'filter' ? nestedMenuRootFilterButtonStyles : buttonStyles({ size: 'md' })
 	const labelClassName = 'min-w-0 justify-self-start truncate text-left'
 
 	return (
@@ -62,7 +47,7 @@ export function NestedMenu({
 			<Ariakit.MenuButton
 				ref={ref}
 				{...props}
-				className={`${!menu.parent ? rootButtonClassName : nestedButtonClassName} ${props.className ?? ''}`}
+				className={`${!menu.parent ? rootButtonClassName : nestedMenuRootRowStyles} ${props.className ?? ''}`}
 				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : undefined}
 			>
 				<span className={labelClassName}>{label}</span>
@@ -74,18 +59,14 @@ export function NestedMenu({
 					</span>
 				)}
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				unmountOnHide
+			<MenuSurface
+				variant={menu.parent ? 'nested' : 'list'}
+				dismiss="own"
 				hideOnInteractOutside
 				gutter={menu.parent ? 4 : 8}
 				shift={menu.parent ? -9 : 0}
 				portal={shouldPortalMenu}
-				wrapperProps={{
-					className: nestedPopoverMobileWrapperClassName
-				}}
-				className={`${surfaceStyles} ${menu.parent ? 'z-20' : 'z-10'} ${
-					menu.parent ? 'max-sm:drawer-to-left' : 'max-sm:drawer'
-				}`}
+				className={menu.parent ? 'z-20' : 'z-10'}
 			>
 				{menu.parent ? (
 					<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 sm:hidden">
@@ -109,14 +90,11 @@ export function NestedMenu({
 					</div>
 				) : (
 					<div className="flex min-h-12 items-center justify-end px-2 py-1 sm:hidden">
-						<Ariakit.MenuDismiss className={popoverMobileDismissStyles}>
-							<Icon name="x" className="size-4" />
-							<span className="sr-only">Close menu</span>
-						</Ariakit.MenuDismiss>
+						<DrawerDismiss label="Close menu" />
 					</div>
 				)}
 				{children}
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

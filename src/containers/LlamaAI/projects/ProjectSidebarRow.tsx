@@ -9,7 +9,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { removeStorageItem, setStorageItem } from '~/contexts/localStorageStore'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Skeleton } from '~/ui/Skeleton'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
@@ -125,23 +125,16 @@ export function ProjectSidebarRow({
 					>
 						<Icon name="ellipsis" height={16} width={16} />
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						aria-label={`Actions for project ${project.name}`}
-						portal
-						unmountOnHide
-						gutter={8}
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-						className={`${menuSurfaceStyles} z-50`}
-					>
-						<Ariakit.MenuItem onClick={renameStore.show} className={`${popoverMenuItemStyles} border-b border-subtle`}>
+					<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`} className="z-50">
+						<MenuItem onClick={renameStore.show} className="border-b border-subtle">
 							<Icon name="pencil" height={14} width={14} />
 							Rename project
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem onClick={deleteStore.show} className={`${popoverMenuItemStyles} text-error!`}>
+						</MenuItem>
+						<MenuItem onClick={deleteStore.show} className="text-error!">
 							<Icon name="trash-2" height={14} width={14} />
 							Delete project
-						</Ariakit.MenuItem>
-					</Ariakit.Menu>
+						</MenuItem>
+					</MenuSurface>
 				</Ariakit.MenuProvider>
 			</div>
 			{isExpanded && projectSessions.error ? (

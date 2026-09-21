@@ -1,16 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
 import { buttonStyles } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
-import {
-	legacyMenuSurfaceStyles,
-	legacyPopoverExternalRowStyles,
-	legacyPopoverRowStyles,
-	menuSurfaceStyles,
-	popoverRowWithBorderStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { MenuSurface } from '~/ui/MenuSurface'
+import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { BasicLink } from './Link'
 
@@ -22,7 +14,6 @@ interface IMenuProps {
 	onItemClick?: (value: string) => void
 	className?: string
 	portal?: boolean
-	popoverVariant?: 'default' | 'legacy'
 }
 
 export function Menu({
@@ -33,7 +24,6 @@ export function Menu({
 	onItemClick,
 	className,
 	portal,
-	popoverVariant,
 	...props
 }: IMenuProps) {
 	const { _options } = useMemo(() => {
@@ -41,10 +31,7 @@ export function Menu({
 			_options: keyedOccurrences(typeof options === 'string' ? [options] : options, (value) => value)
 		}
 	}, [options])
-	const surfaceStyles = popoverVariant === 'legacy' ? legacyMenuSurfaceStyles : menuSurfaceStyles
-	const rowStyles = popoverVariant === 'legacy' ? legacyPopoverRowStyles : popoverRowWithBorderStyles
-	const externalRowStyles =
-		popoverVariant === 'legacy' ? legacyPopoverExternalRowStyles : `${popoverRowWithBorderStyles} block`
+	const externalRowStyles = `${popoverRowWithBorderStyles} block`
 	const shouldPortalMenu = portal ?? true
 
 	return (
@@ -56,24 +43,13 @@ export function Menu({
 				{name}
 				<Ariakit.MenuButtonArrow />
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={8}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={surfaceStyles}
-				portal={shouldPortalMenu}
-			>
-				<Ariakit.PopoverDismiss aria-label="Close menu" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			<MenuSurface variant="panel" hideOnInteractOutside portal={shouldPortalMenu}>
 				{_options.map(({ item: value, key }) =>
 					onItemClick ? (
 						<Ariakit.MenuItem
 							key={key}
 							onClick={() => onItemClick(value)}
-							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
+							className={`${popoverRowWithBorderStyles} text-ellipsis whitespace-nowrap`}
 						>
 							{value}
 						</Ariakit.MenuItem>
@@ -89,13 +65,13 @@ export function Menu({
 						<Ariakit.MenuItem
 							key={key}
 							render={<BasicLink href={value} />}
-							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
+							className={`${popoverRowWithBorderStyles} text-ellipsis whitespace-nowrap`}
 						>
 							{value}
 						</Ariakit.MenuItem>
 					)
 				)}
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

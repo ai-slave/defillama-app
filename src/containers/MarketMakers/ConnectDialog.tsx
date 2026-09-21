@@ -8,13 +8,8 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
-import {
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverRowWithBorderStyles,
-	popoverSingleSelectCheckStyles,
-	popoverSurfaceStyles
-} from '~/ui/Popover'
+import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { requestLeadClickId, useSubmitLead } from './client'
 import {
@@ -52,16 +47,7 @@ function InterestSelect({ value, onChange }: { value: string; onChange: (value: 
 				<span className={selected ? '' : 'text-tertiary'}>{selected?.label ?? 'Select an option'}</span>
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				gutter={6}
-				sameWidth
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} z-50`}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<ComboboxSurface variant="list" sameWidth className="z-50">
 				{INTEREST_OPTIONS.map((option) => (
 					<Ariakit.ComboboxItem key={option.value} value={option.value} className={popoverRowWithBorderStyles}>
 						<span>{option.label}</span>
@@ -74,7 +60,7 @@ function InterestSelect({ value, onChange }: { value: string; onChange: (value: 
 						</Ariakit.ComboboxItemSelected>
 					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }
@@ -98,12 +84,7 @@ function TokenCombobox({ onSelect, onManual }: { onSelect: (token: TokenSearchRe
 				autoSelect
 				className={`w-full ${inputStyles}`}
 			/>
-			<Ariakit.ComboboxPopover
-				gutter={6}
-				sameWidth
-				className={`${popoverSurfaceStyles} z-50 max-h-[320px] overflow-y-auto`}
-				portal
-			>
+			<ComboboxSurface variant="list" sameWidth className="z-50 max-h-[320px] overflow-y-auto">
 				{tokens.map((token) => (
 					<Ariakit.ComboboxItem
 						key={token.searchId}
@@ -135,7 +116,7 @@ function TokenCombobox({ onSelect, onManual }: { onSelect: (token: TokenSearchRe
 				>
 					My token does not appear in this list
 				</Ariakit.ComboboxItem>
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

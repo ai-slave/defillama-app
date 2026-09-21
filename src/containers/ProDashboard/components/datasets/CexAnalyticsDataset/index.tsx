@@ -475,7 +475,6 @@ function VenueMarketShareChart({
 							labelType="smol"
 							variant="filter"
 							size="sm"
-							popoverVariant="legacy"
 						/>
 					) : null}
 					<ChartExportButtons

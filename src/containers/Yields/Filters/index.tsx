@@ -11,7 +11,7 @@ import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
@@ -90,18 +90,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 				Save view
 				{count > 0 ? <span className="rounded-full bg-surface-elevated-1 px-1.5 label-xs">{count}</span> : null}
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				overflowPadding={16}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} w-72`}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<PopoverSurface variant="list" overflowPadding={16} className="w-72">
 				<div className="border-b border-subtle p-2">
 					<form onSubmit={handleSave} className="flex gap-1.5">
 						<input
@@ -151,7 +140,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 				) : (
 					<div className="px-3 py-6 text-center body-sm text-tertiary">No saved views yet</div>
 				)}
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

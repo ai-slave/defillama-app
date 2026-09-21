@@ -1,13 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { Icon } from '~/ui/Icon'
-import {
-	popoverSingleSelectCheckStyles,
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { popoverSingleSelectCheckStyles, popoverRowWithBorderStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/ui/SegmentedControl'
 import { DISPLAY_MODES, type DisplayMode } from '../constants'
 
@@ -45,15 +40,7 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 						{SHORT[mode]}
 						<Ariakit.ComboboxSelectArrow />
 					</Ariakit.ComboboxSelect>
-					<Ariakit.ComboboxPopover
-						gutter={6}
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-						className={`${popoverSurfaceStyles} z-50 min-w-[11rem]`}
-						portal
-					>
-						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-							<Icon name="x" className="size-5" />
-						</Ariakit.PopoverDismiss>
+					<ComboboxSurface variant="list" className="z-50 min-w-[11rem]">
 						{DISPLAY_MODES.map((option) => (
 							<Ariakit.ComboboxItem key={option} value={option} className={popoverRowWithBorderStyles}>
 								<span>{LABELS[option]}</span>
@@ -66,7 +53,7 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 								</Ariakit.ComboboxItemSelected>
 							</Ariakit.ComboboxItem>
 						))}
-					</Ariakit.ComboboxPopover>
+					</ComboboxSurface>
 				</Ariakit.ComboboxProvider>
 			</div>
 		</>

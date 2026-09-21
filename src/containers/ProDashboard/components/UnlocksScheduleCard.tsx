@@ -127,7 +127,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 							label="Category"
 							labelType="smol"
 							variant="filter"
-							popoverVariant="legacy"
 						/>
 					) : null
 				}

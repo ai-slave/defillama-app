@@ -8,13 +8,8 @@ import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
-import {
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverRowWithBorderStyles,
-	popoverSingleSelectCheckStyles,
-	popoverSurfaceStyles
-} from '~/ui/Popover'
+import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -100,16 +95,7 @@ function OperatorSelect({
 				<Ariakit.ComboboxSelectedValue />
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				portal
-				gutter={6}
-				sameWidth
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} z-100`}
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<ComboboxSurface variant="list" sameWidth className="z-100">
 				{OPERATOR_OPTIONS.map((operator) => (
 					<Ariakit.ComboboxItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
 						<span>{operator.label}</span>
@@ -122,7 +108,7 @@ function OperatorSelect({
 						</Ariakit.ComboboxItemSelected>
 					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

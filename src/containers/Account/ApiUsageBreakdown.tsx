@@ -303,7 +303,6 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 							labelType="smol"
 							variant="filter"
 							size="sm"
-							popoverVariant="legacy"
 						/>
 					) : null}
 					<div className="flex flex-col items-end">

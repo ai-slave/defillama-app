@@ -346,7 +346,6 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 								label="Chain"
 								labelType="smol"
 								variant="filter"
-								popoverVariant="legacy"
 							/>
 						) : selectableSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -357,7 +356,6 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 								label="Chain"
 								labelType="smol"
 								variant="filter"
-								popoverVariant="legacy"
 							/>
 						) : null
 					) : null

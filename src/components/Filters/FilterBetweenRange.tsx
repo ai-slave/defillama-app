@@ -4,9 +4,8 @@ import type { InputHTMLAttributes, ReactNode } from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 
 interface IFilterBetweenRange {
 	trigger: ReactNode
@@ -80,19 +79,11 @@ export function FilterBetweenRange({
 				<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
+			<PopoverSurface
+				variant="list"
+				dismissLabel="Close range filter"
 				overflowPadding={16} // distance from the boundary edges
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
 			>
-				<Ariakit.PopoverDismiss aria-label="Close range filter" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
 				<div className="mx-auto w-full sm:w-[260px]">
 					<Form
 						min={min}
@@ -111,7 +102,7 @@ export function FilterBetweenRange({
 						maxInputProps={maxInputProps}
 					/>
 				</div>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

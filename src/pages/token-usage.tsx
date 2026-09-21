@@ -35,12 +35,8 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
-import {
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles
-} from '~/ui/Popover'
+import { popoverRowWithBorderStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -394,18 +390,7 @@ export function TokenUsageSearch() {
 				/>
 			</span>
 
-			<Ariakit.ComboboxPopover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				sameWidth
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<ComboboxSurface variant="list" sameWidth>
 				{isLoading ? (
 					<p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p>
 				) : error ? (
@@ -436,7 +421,7 @@ export function TokenUsageSearch() {
 						))}
 					</Ariakit.ComboboxList>
 				)}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

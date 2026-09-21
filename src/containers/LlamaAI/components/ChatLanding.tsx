@@ -15,7 +15,8 @@ import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const FEATURED_KEYS = ['trade_thesis', 'x_data', 'tradfi', 'yields', 'onchain_analytics'] as const
@@ -285,22 +286,20 @@ function Capability({
 					</span>
 				) : null}
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
+			<PopoverSurface
+				variant="list"
 				modal={isMobile}
-				portal
 				getAnchorRect={getAnchorRect}
 				gutter={14}
 				flip={false}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} z-50 w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)`}
+				dismissLabel={`Close ${cap.name} prompts`}
+				className="z-50 w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
 					<Icon name={cap.icon} height={14} width={14} className="text-brand" />
 					<Ariakit.PopoverHeading className="label-md text-primary">{cap.name}</Ariakit.PopoverHeading>
 					<Ariakit.PopoverDismiss
-						render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
+						render={<Button type="button" variant="ghost" size="md" square className="ml-auto max-sm:hidden" />}
 						aria-label={`Close ${cap.name} prompts`}
 					>
 						<Icon name="x" className="size-4" />
@@ -326,7 +325,7 @@ function Capability({
 						</button>
 					))}
 				</div>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

@@ -3,7 +3,7 @@ import { type FormEvent, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariable, MAX_DASHBOARD_VARIABLES } from '../dashboardTypes'
@@ -97,38 +97,20 @@ function VariableChip({ variable }: { variable: DashboardVariable }) {
 					>
 						<Icon name="ellipsis" height={14} width={14} />
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						portal
-						unmountOnHide
-						gutter={6}
-						className={menuSurfaceStyles}
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-					>
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
-							data-umami-event="dashboard-variable-rename"
-							onClick={() => setRenameDraft(variable.label)}
-						>
+					<MenuSurface variant="actions" gutter={6}>
+						<MenuItem data-umami-event="dashboard-variable-rename" onClick={() => setRenameDraft(variable.label)}>
 							<Icon name="pencil" height={14} width={14} />
 							<span>Rename</span>
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
-							data-umami-event="dashboard-variable-unbind"
-							onClick={() => unbindVariable(variable.id)}
-						>
+						</MenuItem>
+						<MenuItem data-umami-event="dashboard-variable-unbind" onClick={() => unbindVariable(variable.id)}>
 							<Icon name="link" height={14} width={14} />
 							<span>Unbind all</span>
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
-							data-umami-event="dashboard-variable-remove"
-							onClick={() => removeVariable(variable.id)}
-						>
+						</MenuItem>
+						<MenuItem data-umami-event="dashboard-variable-remove" onClick={() => removeVariable(variable.id)}>
 							<Icon name="trash-2" height={14} width={14} />
 							<span>Delete</span>
-						</Ariakit.MenuItem>
-					</Ariakit.Menu>
+						</MenuItem>
+					</MenuSurface>
 				</Ariakit.MenuProvider>
 			) : null}
 		</div>

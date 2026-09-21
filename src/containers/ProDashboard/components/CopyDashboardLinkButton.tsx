@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-import { popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { ProButton } from '../ui'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
 import { buildEmbedIframeSnippet, dashboardEmbedPath, EMBED_ORIGIN } from './EmbedSnippetDialog'
@@ -108,14 +108,7 @@ export function CopyDashboardLinkButton({
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				gutter={8}
-				portal
-				unmountOnHide
-				className={popoverSurfaceStyles}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				style={{ minWidth: '280px' }}
-			>
+			<PopoverSurface variant="list" gutter={8} style={{ minWidth: '280px' }}>
 				{isPrivate ? (
 					<div className="flex flex-col gap-2 p-3">
 						<p className="text-xs text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>
@@ -242,7 +235,7 @@ export function CopyDashboardLinkButton({
 						</div>
 					</div>
 				)}
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

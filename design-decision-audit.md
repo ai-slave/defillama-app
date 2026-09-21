@@ -380,7 +380,7 @@ Reviewed classification:
 - Component/file: Checkbox indicator is rendered by shared select helpers in `src/components/Select/Select.tsx` / `src/components/Select/SelectWithCombobox.tsx`, styled through `popoverMultiSelectCheckStyles` / `popoverSingleSelectCheckStyles` in `src/ui/Popover.ts`.
 - Figma node(s): `6183:293491`; user screenshot shows selected row currently has a small check mark inside an outlined circle.
 - Current issue: Selected checkbox indicator should be filled with the primary/brand blue background and use a white check, rather than only an outlined indicator/check.
-- Shared usage/context: The compact popover check helpers are shared by default `Select` and `SelectWithCombobox` popover rows. Changing them affects Include-in-TVL filters, column selectors, calendar/type filters, token usage filters, bridge selectors, and other default select rows. Legacy/excluded variants use separate `legacyPopoverSelectCheckStyles`.
+- Shared usage/context: The compact popover check helpers are shared by default `Select` and `SelectWithCombobox` popover rows. Changing them affects Include-in-TVL filters, column selectors, calendar/type filters, token usage filters, bridge selectors, and other default select rows.
 - Special cases: Single-select rows also render `SelectItemCheck`, but they must remain check-only. Filled/empty checkbox treatment applies only to multi-select checkbox-style rows.
 - Surrounding layout impact: Filled indicator must preserve current row height and right alignment. Check icon should remain optically centered inside the indicator and not increase row min-height.
 - Grid/flex/layout notes: Indicator sizing should come from a fixed square size plus row padding/gap, not extra row height or margins.

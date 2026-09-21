@@ -3,17 +3,14 @@ import { matchSorter } from 'match-sorter'
 import * as React from 'react'
 import type { ISearchItem } from '~/components/Search/types'
 import { selectTriggerStyles } from '~/components/Select/types'
-import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import {
 	popoverRowWithBorderStyles,
 	popoverSearchBlockWithBottomPaddingStyles,
-	popoverSeeMoreStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverSeeMoreStyles
 } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 interface IProps {
 	options: Array<ISearchItem>
@@ -66,18 +63,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 				{currentChain}
 				<Ariakit.ComboboxSelectArrow className="ml-auto" />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			<ComboboxSurface variant="list">
 				<span className={popoverSearchBlockWithBottomPaddingStyles}>
 					<Ariakit.ComboboxInput placeholder="Search..." className={`${inputStyles} w-full`} />
 				</span>
@@ -108,7 +94,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 				) : (
 					<NoResults />
 				)}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

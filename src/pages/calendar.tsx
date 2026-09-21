@@ -20,12 +20,10 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import {
 	popoverActionBarStyles,
 	popoverActionButtonStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
 	popoverMultiSelectCheckStyles,
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles
+	popoverRowWithBorderStyles
 } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
@@ -208,18 +206,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 							)}
 							<Ariakit.ComboboxSelectArrow />
 						</Ariakit.ComboboxSelect>
-						<Ariakit.ComboboxPopover
-							unmountOnHide
-							gutter={6}
-							hideOnInteractOutside
-							wrapperProps={{ className: popoverMobileWrapperClassName }}
-							className={popoverSurfaceStyles}
-							portal
-						>
-							<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-								<Icon name="x" className="size-5" />
-							</Ariakit.PopoverDismiss>
-
+						<ComboboxSurface variant="list">
 							<span className={popoverActionBarStyles}>
 								<button
 									type="button"
@@ -257,7 +244,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 									</Ariakit.ComboboxItemSelected>
 								</Ariakit.ComboboxItem>
 							))}
-						</Ariakit.ComboboxPopover>
+						</ComboboxSurface>
 					</Ariakit.ComboboxProvider>
 
 					<label className={searchFieldInlineWrapperStyles}>

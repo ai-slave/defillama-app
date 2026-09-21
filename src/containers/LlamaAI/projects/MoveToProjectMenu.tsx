@@ -1,12 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import {
-	nestedPopoverMobileWrapperClassName,
-	nestedMenuSurfaceStyles,
-	nestedMenuHeaderIconButtonStyles,
-	popoverMenuItemStyles
-} from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { nestedMenuHeaderIconButtonStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import { useMoveSessionToProject, useProjectList } from './hooks'
 
 interface MoveToProjectMenuItemProps {
@@ -35,15 +31,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				<span className="flex-1 text-left">Move to project</span>
 				<Icon name="chevron-right" height={14} width={14} className="shrink-0 text-tertiary" />
 			</Ariakit.MenuItem>
-			<Ariakit.Menu
-				portal
-				composite={false}
-				aria-label="Move to project"
-				wrapperProps={{ className: nestedPopoverMobileWrapperClassName }}
-				unmountOnHide
-				gutter={4}
-				className={`z-50 ${nestedMenuSurfaceStyles} max-sm:drawer-to-left`}
-			>
+			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4} className="z-50">
 				<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 sm:hidden">
 					<button
 						type="button"
@@ -79,25 +67,24 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				) : null}
 				<Ariakit.MenuList store={menu} aria-label="Project destinations">
 					{projects.isError ? (
-						<Ariakit.MenuItem
+						<MenuItem
 							hideOnClick={false}
 							disabled={projects.isFetching}
 							accessibleWhenDisabled
 							onClick={() => void projects.refetch()}
-							className={popoverMenuItemStyles}
 						>
 							Retry
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : projects.data ? (
 						<>
 							{projects.data.map((p) => {
 								const isCurrentProject = p.id === currentProjectId
 								return (
-									<Ariakit.MenuItem
+									<MenuItem
 										key={p.id}
 										onClick={() => void onMove(p.id)}
 										disabled={isCurrentProject || move.isPending}
-										className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+										className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 									>
 										<Icon
 											name={isCurrentProject ? 'check' : 'folder'}
@@ -106,23 +93,23 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 											className="shrink-0 opacity-70"
 										/>
 										<span className="min-w-0 flex-1 truncate text-left">{p.name}</span>
-									</Ariakit.MenuItem>
+									</MenuItem>
 								)
 							})}
 							{currentProjectId ? (
-								<Ariakit.MenuItem
+								<MenuItem
 									onClick={() => void onMove(null)}
 									disabled={move.isPending}
-									className={`${popoverMenuItemStyles} border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+									className="border-t border-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 								>
 									<Icon name="x" height={14} width={14} className="shrink-0 opacity-70" />
 									<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>
-								</Ariakit.MenuItem>
+								</MenuItem>
 							) : null}
 						</>
 					) : null}
 				</Ariakit.MenuList>
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

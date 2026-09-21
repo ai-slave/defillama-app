@@ -27,7 +27,7 @@ import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { getErrorMessage } from '~/utils/error'
@@ -316,36 +316,32 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						<Icon name="ellipsis" height={16} width={16} className="shrink-0" />
 						<span className="sr-only">Open menu</span>
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
+					<MenuSurface
+						variant="actions"
 						ref={menuContentRef}
 						composite={false}
 						aria-label={`Actions for ${session.title}`}
-						portal
-						unmountOnHide
-						hideOnInteractOutside
-						gutter={8}
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-						className={`${menuSurfaceStyles} z-50`}
+						className="z-50"
 					>
 						<Ariakit.MenuList store={menu} aria-label="Session actions" className="flex shrink-0 flex-col">
-							<Ariakit.MenuItem
+							<MenuItem
 								disabled={pinSession.isPending}
 								onClick={() => {
 									pinSession.mutate()
 								}}
-								className={`${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0`}
+								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								<Icon name="pin" height={14} width={14} className="shrink-0" />
 								{session.isPinned ? 'Unpin' : 'Pin to Top'}
-							</Ariakit.MenuItem>
-							<Ariakit.MenuItem
+							</MenuItem>
+							<MenuItem
 								onClick={() => {
 									copyLink.mutate()
 								}}
 								hideOnClick={false}
 								accessibleWhenDisabled
 								disabled={!session.isPublic || !session.shareToken || visibility.isPending || copyLink.isPending}
-								className={`${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+								className="border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 							>
 								{copyLink.isSuccess ? (
 									<Icon name="check-circle" height={14} width={14} className="shrink-0" />
@@ -359,8 +355,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 										: copyLink.isSuccess
 											? 'Link copied'
 											: 'Copy Link'}
-							</Ariakit.MenuItem>
-							<Ariakit.MenuItem
+							</MenuItem>
+							<MenuItem
 								onClick={() => {
 									if (session.isPublic) {
 										visibility.reset()
@@ -372,7 +368,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								hideOnClick={false}
 								accessibleWhenDisabled
 								disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
-								className={`${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+								className="border-b border-subtle last-of-type:border-b-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 							>
 								{visibility.isPending ? (
 									<LoadingSpinner size={14} />
@@ -380,16 +376,16 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 									<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
 								)}
 								{session.isPublic ? 'Make Private' : 'Make Public'}
-							</Ariakit.MenuItem>
+							</MenuItem>
 							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
-							<Ariakit.MenuItem
+							<MenuItem
 								onClick={() => {
 									deletion.reset()
 									deleteStore.show()
 								}}
 								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
 								data-deleting={deletion.isPending}
-								className={`${popoverMenuItemStyles} border-b border-subtle text-error! last-of-type:border-b-0`}
+								className="border-b border-subtle text-error! last-of-type:border-b-0"
 							>
 								{deletion.isPending ? (
 									<LoadingSpinner size={14} />
@@ -397,7 +393,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 									<Icon name="trash-2" height={14} width={14} className="shrink-0" />
 								)}
 								Delete Session
-							</Ariakit.MenuItem>
+							</MenuItem>
 						</Ariakit.MenuList>
 						{copyLink.error ? (
 							<p role="alert" className="px-3 py-2 body-sm text-error">
@@ -409,7 +405,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								Failed to update visibility. Please try again.
 							</p>
 						) : null}
-					</Ariakit.Menu>
+					</MenuSurface>
 				</Ariakit.MenuProvider>
 			</div>
 			{confirmPrivate ? (

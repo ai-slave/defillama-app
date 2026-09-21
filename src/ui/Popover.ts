@@ -7,24 +7,9 @@ import { tw } from './tw'
    own all spacing.
 ---------------------------------------------------------------------------- */
 
-const selectSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(400px,var(--popover-available-height))]'
-
-const menuSurfaceHeightStyles =
-	'max-sm:max-h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:drawer max-sm:rounded-b-none max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[min(60dvh,var(--popover-available-height))]'
-
-const nestedMenuSurfaceHeightStyles =
-	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
-
-const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
+export const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
 
 const tooltipMotionStyles = tw`translate-y-1 opacity-0 transition-[opacity,translate] duration-120 ease-out-quart data-enter:translate-y-0 data-enter:opacity-100 data-leave:duration-100`
-
-export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
 
 export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-overlay-sm`
 
@@ -85,45 +70,3 @@ export function popoverMultiSelectCheckStyles(selected: boolean) {
 export function popoverSingleSelectCheckStyles(selected: boolean) {
 	return `ml-auto grid size-3.5 shrink-0 place-items-center text-link ${selected ? '' : 'invisible'}`
 }
-
-/* Mobile drawers dim the page behind them so a short sheet at the bottom is
-   still noticed. The scrim is a pseudo-element on the positioning wrapper:
-   Ariakit copies the surface z-index onto the wrapper, so the pseudo paints
-   under the surface, and a tap on it lands outside the surface and closes.
-   Hidden popovers keep their wrapper mounted, so only open scrims accept clicks. */
-export const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none! max-sm:before:pointer-events-none max-sm:before:fixed max-sm:before:inset-0 max-sm:before:bg-screen-dim max-sm:before:opacity-0 max-sm:before:transition-opacity max-sm:before:duration-200 max-sm:before:ease-out-quart max-sm:before:content-[''] max-sm:has-data-enter:before:pointer-events-auto max-sm:has-data-enter:before:opacity-100`
-
-export const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
-
-export const popoverMobileDismissStyles = tw`ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary sm:hidden`
-
-/* Compatibility styles for product surfaces that still consume shared menu/select components. */
-export const legacySelectPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const productSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const productSurfaceComboboxActionBarStyles = tw`sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link`
-
-export const legacyMenuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const legacyNestedMenuSurfaceStyles = `flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:p-2 sm:p-0 ${nestedMenuSurfaceHeightStyles} ${surfaceMotionStyles}`
-
-export const legacyNestedMenuRootFilterButtonStyles = tw`relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row`
-
-export const legacyNestedMenuRootButtonStyles = tw`flex items-center justify-between gap-3 rounded-md bg-surface-elevated-1 px-3 py-2 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2`
-
-export const legacyNestedMenuButtonStyles = tw`flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-export const legacyPopoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-medium px-3 py-2 text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-export const legacyPopoverExternalRowStyles = tw`shrink-0 cursor-pointer truncate border-b border-medium px-3 py-2 text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-export const legacySelectPopoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-medium px-3 py-2 text-primary cv-auto-37 last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-export const legacyPopoverActionBarStyles = tw`sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-medium bg-surface-elevated-1 text-xs text-link`
-
-export const legacyPopoverActionButtonStyles = 'p-3'
-
-export const legacyPopoverSeeMoreStyles = tw`w-full cursor-pointer px-3 py-4 text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row`
-
-export const legacyPopoverSelectCheckStyles = tw`ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-brand text-link`

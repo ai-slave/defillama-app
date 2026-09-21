@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMobileDismissStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { isValidAnnotationDate } from '../dashboardConfig/migrate'
 import {
 	DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH,
@@ -42,17 +42,7 @@ export function AnnotationsPopover() {
 				<span>Annotations</span>
 				{annotations.length > 0 ? <ProBadge tone="info">{annotations.length}</ProBadge> : null}
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				portal
-				unmountOnHide
-				gutter={8}
-				className={menuSurfaceStyles}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				aria-label="Dashboard annotations"
-			>
-				<Ariakit.PopoverDismiss aria-label="Close annotations" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<PopoverSurface variant="panel" gutter={8} dismissLabel="Close annotations" aria-label="Dashboard annotations">
 				<div className="flex w-[340px] max-w-full flex-col">
 					<div className="flex flex-col gap-0.5 border-b border-subtle px-3 py-2">
 						<p className="label-sm text-pro-text-primary">Annotations</p>
@@ -129,7 +119,7 @@ export function AnnotationsPopover() {
 						</div>
 					</form>
 				</div>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

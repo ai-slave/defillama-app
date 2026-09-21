@@ -7,11 +7,9 @@ import {
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
 	popoverSearchBlockWithBottomPaddingStyles,
-	popoverSeeMoreStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverSeeMoreStyles
 } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { MultiSelectOption } from './types'
@@ -121,20 +119,7 @@ export function MultiSelectCombobox({
 					<Icon name="chevron-down" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />
 				)}
 			</span>
-			<Ariakit.ComboboxPopover
-				unmountOnHide
-				hideOnInteractOutside
-				preventBodyScroll
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
-				sameWidth
-			>
-				<Ariakit.PopoverDismiss aria-label="Close options" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			<ComboboxSurface preventBodyScroll sameWidth>
 				<span className={popoverSearchBlockWithBottomPaddingStyles}>
 					<input
 						placeholder="Search..."
@@ -181,7 +166,7 @@ export function MultiSelectCombobox({
 						</Ariakit.ComboboxItem>
 					) : null}
 				</Ariakit.ComboboxList>
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

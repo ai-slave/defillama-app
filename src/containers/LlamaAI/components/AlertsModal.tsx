@@ -65,7 +65,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
@@ -730,39 +730,28 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						>
 							<Icon name="ellipsis" height={16} width={16} />
 						</Ariakit.MenuButton>
-						<Ariakit.Menu
-							portal
-							gutter={6}
-							wrapperProps={{ className: popoverMobileWrapperClassName }}
-							className={`${menuSurfaceStyles} z-50`}
-						>
+						<MenuSurface variant="actions" gutter={6} className="z-50">
 							{isFiredOneTimePriceAlert(alert) ? (
-								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={handleRearm}>
+								<MenuItem onClick={handleRearm}>
 									<Icon name="repeat" height={14} width={14} />
 									Re-arm alert
-								</Ariakit.MenuItem>
+								</MenuItem>
 							) : null}
 							{alert.run_count > 0 ? (
-								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={handleToggleExecutions}>
+								<MenuItem onClick={handleToggleExecutions}>
 									<Icon name="clock" height={14} width={14} />
 									{showExecutions ? 'Hide history' : 'View history'}
-								</Ariakit.MenuItem>
+								</MenuItem>
 							) : null}
-							<Ariakit.MenuItem
-								className={popoverMenuItemStyles}
-								onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
-							>
+							<MenuItem onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}>
 								<Icon name="pencil" height={14} width={14} />
 								{mode === 'editing' ? 'Cancel editing' : 'Edit alert'}
-							</Ariakit.MenuItem>
-							<Ariakit.MenuItem
-								className={`${popoverMenuItemStyles} text-error`}
-								onClick={() => switchMode('deleting')}
-							>
+							</MenuItem>
+							<MenuItem className="text-error" onClick={() => switchMode('deleting')}>
 								<Icon name="trash-2" height={14} width={14} />
 								Delete alert
-							</Ariakit.MenuItem>
-						</Ariakit.Menu>
+							</MenuItem>
+						</MenuSurface>
 					</Ariakit.MenuProvider>
 					<div className="ml-1.5">
 						<ToggleSwitch

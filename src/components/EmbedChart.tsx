@@ -5,7 +5,7 @@ import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/L
 import { buttonStyles } from '~/ui/Button'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 
 export function EmbedChart() {
 	const router = useRouter()
@@ -48,22 +48,12 @@ export function EmbedChart() {
 				<span className="sr-only">Embed Chart</span>
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4`}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
+			<PopoverSurface variant="list" className="mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4">
 				<span className="flex flex-col items-end gap-2 p-3">
 					<code className="block rounded-lg bg-page p-2 text-xs break-all">{url}</code>
 					<CopyHelper toCopy={url} />
 				</span>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

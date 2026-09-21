@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { UploadSelectionNotice } from '../components/UploadSelectionNotice'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
@@ -36,54 +36,35 @@ export function AddSourcesMenu({
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
 				<Ariakit.MenuButton disabled={isUploading} render={trigger as React.ReactElement} />
-				<Ariakit.Menu
-					gutter={gutter}
-					className={menuClassName ?? `${menuSurfaceStyles} z-50 w-60`}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-				>
+				<MenuSurface variant="actions" gutter={gutter} className={menuClassName ?? 'z-50 w-60'}>
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>
-							<Ariakit.MenuItem
-								onClick={onAddPhotosFiles}
-								className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
-							>
+							<MenuItem onClick={onAddPhotosFiles} className="w-full gap-2 text-left">
 								<Icon name="image-plus" height={14} width={14} className="text-secondary" />
 								Add photos &amp; files
-							</Ariakit.MenuItem>
+							</MenuItem>
 							<Ariakit.MenuSeparator className="my-1 border-t border-subtle" />
 							<div className={SECTION_LABEL_CLASS}>Add to project</div>
 						</>
 					) : null}
-					<Ariakit.MenuItem
-						onClick={() => fileInputRef.current?.click()}
-						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
-					>
+					<MenuItem onClick={() => fileInputRef.current?.click()} className="w-full gap-2 text-left">
 						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload files
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
-						onClick={() => folderInputRef.current?.click()}
-						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
-					>
+					</MenuItem>
+					<MenuItem onClick={() => folderInputRef.current?.click()} className="w-full gap-2 text-left">
 						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload folder
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
-						onClick={() => addTextStore.show()}
-						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
-					>
+					</MenuItem>
+					<MenuItem onClick={() => addTextStore.show()} className="w-full gap-2 text-left">
 						<Icon name="file-text" height={14} width={14} className="text-secondary" />
 						Add text content
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
-						onClick={() => githubStore.show()}
-						className={`${popoverMenuItemStyles} w-full gap-2 text-left`}
-					>
+					</MenuItem>
+					<MenuItem onClick={() => githubStore.show()} className="w-full gap-2 text-left">
 						<Icon name="github" height={14} width={14} className="text-secondary" />
 						Connect GitHub repo
-					</Ariakit.MenuItem>
-				</Ariakit.Menu>
+					</MenuItem>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
 			<input
 				ref={fileInputRef}

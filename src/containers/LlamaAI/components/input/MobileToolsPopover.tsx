@@ -3,14 +3,9 @@ import { BrowserContent } from '~/containers/LlamaAI/components/input/Capability
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import {
-	menuSurfaceStyles,
-	nestedMenuHeaderIconButtonStyles,
-	nestedMenuSurfaceStyles,
-	nestedPopoverMobileWrapperClassName,
-	popoverMenuItemStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { MenuSurface } from '~/ui/MenuSurface'
+import { nestedMenuHeaderIconButtonStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
@@ -77,14 +72,11 @@ export function MobileToolsPopover({
 				<Icon name="plus" height={16} width={16} />
 			</Ariakit.MenuButton>
 
-			<Ariakit.Menu
-				portal
+			<MenuSurface
+				variant="actions"
 				modal={!walkthroughActive}
 				unmountOnHide={!walkthroughActive}
 				hideOnInteractOutside={!walkthroughActive}
-				gutter={8}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={menuSurfaceStyles}
 			>
 				<Ariakit.MenuItem
 					data-walkthrough="mobile-upload-item"
@@ -174,13 +166,12 @@ export function MobileToolsPopover({
 						<span className="flex-1">Explore</span>
 						<Icon name="chevron-right" className="size-4" />
 					</Ariakit.PopoverDisclosure>
-					<Ariakit.Popover
+					<PopoverSurface
+						variant="nested"
+						gutter={4}
 						modal
-						portal
-						unmountOnHide
 						aria-label="Explore AI capabilities"
-						wrapperProps={{ className: nestedPopoverMobileWrapperClassName }}
-						className={`${nestedMenuSurfaceStyles} z-20 overflow-hidden max-sm:drawer-to-left sm:max-h-[min(420px,var(--popover-available-height))] sm:w-[600px] sm:max-w-[calc(100vw-2rem)]`}
+						className="z-20 overflow-hidden sm:max-h-[min(420px,var(--popover-available-height))] sm:w-[600px] sm:max-w-[calc(100vw-2rem)]"
 					>
 						<div className="grid min-h-12 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1">
 							<Ariakit.PopoverDismiss aria-label="Back to mobile tools" className={nestedMenuHeaderIconButtonStyles}>
@@ -196,7 +187,7 @@ export function MobileToolsPopover({
 							</Ariakit.PopoverDismiss>
 						</div>
 						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
-					</Ariakit.Popover>
+					</PopoverSurface>
 				</Ariakit.PopoverProvider>
 
 				{onOpenAlerts ? (
@@ -210,7 +201,7 @@ export function MobileToolsPopover({
 						<span>Alerts</span>
 					</Ariakit.MenuItem>
 				) : null}
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

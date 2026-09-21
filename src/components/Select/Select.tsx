@@ -4,12 +4,6 @@ import * as React from 'react'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import {
-	legacyPopoverActionButtonStyles,
-	legacyPopoverActionBarStyles,
-	legacyPopoverSeeMoreStyles,
-	legacyPopoverSelectCheckStyles,
-	legacySelectPopoverRowStyles,
-	legacySelectPopoverSurfaceStyles,
 	nestedMenuActionBarStyles,
 	nestedMenuActionButtonStyles,
 	nestedMenuSeeMoreStyles,
@@ -19,11 +13,9 @@ import {
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
 	popoverSeeMoreStyles,
-	popoverSingleSelectCheckStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverSingleSelectCheckStyles
 } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { updateQueryFromSelected } from './query'
@@ -44,7 +36,6 @@ interface ISelectBase {
 	placement?: Ariakit.ComboboxProviderProps['placement']
 	defaultSelectedValues?: Array<string>
 	unmountOnHide?: boolean
-	popoverVariant?: 'default' | 'legacy'
 }
 
 interface ISelectWithUrlParams extends ISelectBase {
@@ -90,8 +81,7 @@ export function Select(props: ISelect) {
 		triggerProps,
 		portal,
 		placement = 'bottom-start',
-		unmountOnHide = true,
-		popoverVariant = 'default'
+		unmountOnHide = true
 	} = props
 	const router = useRouter()
 	// Nested menus share their parent's values, so each select needs its own field.
@@ -190,33 +180,15 @@ export function Select(props: ISelect) {
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
-	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
-	const actionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : popoverActionBarStyles
-	const nestedActionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : nestedMenuActionBarStyles
-	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
-	const nestedActionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : nestedMenuActionButtonStyles
-	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
-	const nestedRowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : nestedMenuSelectRowStyles
-	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
-	const nestedSeeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : nestedMenuSeeMoreStyles
-	const surfaceStyles = useLegacyPopover ? legacySelectPopoverSurfaceStyles : popoverSurfaceStyles
 	const shouldPortalPopover = portal ?? true
 
 	const selectRef = React.useRef<HTMLDivElement>(null)
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
 
-	const ItemCheck = nestedMenu ? Ariakit.MenuItemCheck : Ariakit.ComboboxItemCheck
 	const NestedSelectItem = canSelectOnlyOne ? Ariakit.MenuItemRadio : Ariakit.MenuItemCheckbox
 
 	const renderCheck = (value: string) => {
 		const selected = typeof selectedValues === 'string' ? selectedValues === value : selectedValues.includes(value)
-		if (useLegacyPopover) {
-			return showCheckboxes ? (
-				<ItemCheck className={legacyPopoverSelectCheckStyles} />
-			) : (
-				<ItemCheck className="ml-auto" />
-			)
-		}
 
 		return (
 			<span
@@ -239,19 +211,14 @@ export function Select(props: ISelect) {
 
 	if (nestedMenu) {
 		return (
-			<NestedMenu
-				combobox={null}
-				label={label}
-				render={<button type="button" />}
-				popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
-			>
+			<NestedMenu combobox={null} label={label} render={<button type="button" />}>
 				<div ref={nestedMenuRef}>
 					{showCheckboxes ? (
-						<span className={nestedActionBarStyles}>
-							<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
+						<span className={nestedMenuActionBarStyles}>
+							<button type="button" onClick={clearAll} className={nestedMenuActionButtonStyles}>
 								Deselect All
 							</button>
-							<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
+							<button type="button" onClick={toggleAll} className={nestedMenuActionButtonStyles}>
 								Select All
 							</button>
 						</span>
@@ -277,7 +244,7 @@ export function Select(props: ISelect) {
 								)
 							}}
 							hideOnClick={false}
-							className={nestedRowStyles}
+							className={nestedMenuSelectRowStyles}
 						>
 							{typeof option === 'string' ? (
 								<span>{option}</span>
@@ -293,7 +260,7 @@ export function Select(props: ISelect) {
 						</NestedSelectItem>
 					))}
 					{allValues.length > viewableMatches ? (
-						<NestedMenuItem hideOnClick={false} className={nestedSeeMoreStyles} onClick={handleSeeMore}>
+						<NestedMenuItem hideOnClick={false} className={nestedMenuSeeMoreStyles} onClick={handleSeeMore}>
 							See more...
 						</NestedMenuItem>
 					) : null}
@@ -332,27 +299,15 @@ export function Select(props: ISelect) {
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				unmountOnHide={unmountOnHide}
-				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={surfaceStyles}
-				portal={shouldPortalPopover}
-				ref={selectRef}
-			>
-				<Ariakit.PopoverDismiss aria-label="Close options" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			<ComboboxSurface unmountOnHide={unmountOnHide} hideOnInteractOutside portal={shouldPortalPopover} ref={selectRef}>
 				{allValues.length > 0 ? (
 					<>
 						{showCheckboxes ? (
-							<span className={actionBarStyles}>
-								<button type="button" onClick={clearAll} className={actionButtonStyles}>
+							<span className={popoverActionBarStyles}>
+								<button type="button" onClick={clearAll} className={popoverActionButtonStyles}>
 									Deselect All
 								</button>
-								<button type="button" onClick={toggleAll} className={actionButtonStyles}>
+								<button type="button" onClick={toggleAll} className={popoverActionButtonStyles}>
 									Select All
 								</button>
 							</span>
@@ -362,7 +317,7 @@ export function Select(props: ISelect) {
 							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
 								value={getOptionKey(option)}
-								className={`${rowStyles} group justify-start ${useLegacyPopover ? 'gap-4' : 'gap-2'}`}
+								className={`${popoverRowWithBorderStyles} group justify-start gap-2`}
 							>
 								{typeof option === 'string' ? (
 									<span>{option}</span>
@@ -395,7 +350,7 @@ export function Select(props: ISelect) {
 								value="__see_more__"
 								selectValueOnClick={false}
 								hideOnClick={false}
-								className={seeMoreStyles}
+								className={popoverSeeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
@@ -407,7 +362,7 @@ export function Select(props: ISelect) {
 						No results found
 					</p>
 				)}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

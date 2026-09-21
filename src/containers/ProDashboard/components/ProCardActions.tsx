@@ -13,7 +13,8 @@ import {
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { popoverMenuItemStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import type { StoredColSpan } from '../dashboardConfig/colSpan'
 import { DASHBOARD_CARD_HEIGHT_LABELS, getEmbedCardHeight } from '../dashboardLayout/cardHeight'
@@ -166,40 +167,30 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 				>
 					<Icon name="ellipsis" height={16} width={16} />
 				</Tooltip>
-				<Ariakit.Menu
-					portal
-					composite={false}
-					unmountOnHide
-					gutter={8}
-					className={menuSurfaceStyles}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-				>
+				<MenuSurface variant="actions" composite={false}>
 					<Ariakit.MenuList store={menu} aria-label="Card actions">
 						{image ? (
 							<>
-								<Ariakit.MenuItem
-									className={popoverMenuItemStyles}
+								<MenuItem
 									disabled={busy}
 									onClick={downloadImage}
 									data-umami-event="export-image"
 									data-umami-event-page={router.pathname}
 								>
 									Download image
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									className={popoverMenuItemStyles}
+								</MenuItem>
+								<MenuItem
 									disabled={busy}
 									onClick={copyImage}
 									data-umami-event="copy-image"
 									data-umami-event-page={router.pathname}
 								>
 									Copy image
-								</Ariakit.MenuItem>
+								</MenuItem>
 							</>
 						) : null}
 						{csv ? (
-							<Ariakit.MenuItem
-								className={popoverMenuItemStyles}
+							<MenuItem
 								disabled={csvBusy}
 								accessibleWhenDisabled
 								hideOnClick={false}
@@ -208,12 +199,11 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								data-umami-event-page={router.pathname}
 							>
 								Download CSV
-							</Ariakit.MenuItem>
+							</MenuItem>
 						) : null}
 						{exportLevels.map((level) => (
-							<Ariakit.MenuItem
+							<MenuItem
 								key={level}
-								className={popoverMenuItemStyles}
 								disabled={csvBusy}
 								accessibleWhenDisabled
 								hideOnClick={false}
@@ -224,7 +214,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								data-umami-event-page={router.pathname}
 							>
 								Download CSV: {EXPORT_LEVEL_LABELS[level]}
-							</Ariakit.MenuItem>
+							</MenuItem>
 						))}
 						{layout ? (
 							<>
@@ -279,24 +269,22 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								) : null}
 								<Ariakit.MenuGroup>
 									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Move</Ariakit.MenuGroupLabel>
-									<Ariakit.MenuItem
-										className={popoverMenuItemStyles}
+									<MenuItem
 										disabled={!layout.canMoveUp}
 										accessibleWhenDisabled
 										hideOnClick={false}
 										onClick={() => layout.onMove(-1)}
 									>
 										Move up
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
-										className={popoverMenuItemStyles}
+									</MenuItem>
+									<MenuItem
 										disabled={!layout.canMoveDown}
 										accessibleWhenDisabled
 										hideOnClick={false}
 										onClick={() => layout.onMove(1)}
 									>
 										Move down
-									</Ariakit.MenuItem>
+									</MenuItem>
 								</Ariakit.MenuGroup>
 							</>
 						) : null}
@@ -306,15 +294,14 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 								<Ariakit.MenuGroup>
 									<Ariakit.MenuGroupLabel className={proMenuGroupLabelStyles}>Parameters</Ariakit.MenuGroupLabel>
 									{parameterActions.map((action) => (
-										<Ariakit.MenuItem
+										<MenuItem
 											key={action.key}
-											className={popoverMenuItemStyles}
 											onClick={action.onSelect}
 											data-umami-event="dashboard-card-bind"
 											data-umami-event-page={router.pathname}
 										>
 											{action.label}
-										</Ariakit.MenuItem>
+										</MenuItem>
 									))}
 								</Ariakit.MenuGroup>
 							</>
@@ -322,31 +309,27 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 						{shareableCard ? (
 							<>
 								{hasExports || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
-								<Ariakit.MenuItem
-									className={popoverMenuItemStyles}
+								<MenuItem
 									onClick={copyCardLink}
 									data-umami-event="copy-card-link"
 									data-umami-event-page={router.pathname}
 								>
 									Copy link to card
-								</Ariakit.MenuItem>
-								<Ariakit.MenuItem
-									className={popoverMenuItemStyles}
+								</MenuItem>
+								<MenuItem
 									onClick={() => setIsEmbedDialogOpen(true)}
 									data-umami-event="embed-card"
 									data-umami-event-page={router.pathname}
 								>
 									Embed card…
-								</Ariakit.MenuItem>
+								</MenuItem>
 							</>
 						) : null}
 						{canDuplicate ? (
 							<>
 								{hasExports || shareableCard || layout || hasParameterActions ? <Ariakit.MenuSeparator /> : null}
 								<Ariakit.MenuGroup>
-									<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={onDuplicate}>
-										Duplicate
-									</Ariakit.MenuItem>
+									<MenuItem onClick={onDuplicate}>Duplicate</MenuItem>
 								</Ariakit.MenuGroup>
 							</>
 						) : null}
@@ -356,14 +339,10 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 									<Ariakit.MenuSeparator />
 								) : null}
 								<Ariakit.MenuGroup>
-									<Ariakit.MenuItem
-										className={`${popoverMenuItemStyles} text-error`}
-										onClick={onRemove}
-										data-umami-event="dashboard-card-remove"
-									>
+									<MenuItem className="text-error" onClick={onRemove} data-umami-event="dashboard-card-remove">
 										<Icon name="trash-2" height={14} width={14} />
 										Remove card
-									</Ariakit.MenuItem>
+									</MenuItem>
 								</Ariakit.MenuGroup>
 							</>
 						) : null}
@@ -373,7 +352,7 @@ export function ProCardOverflowMenu({ image, csv, csvLevels, onDuplicate, disabl
 							{CSV_DOWNLOAD_ERROR}
 						</p>
 					) : null}
-				</Ariakit.Menu>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
 			<span role="status" className="sr-only">
 				{csvDownload.status === 'pending' ? 'Preparing CSV download' : ''}

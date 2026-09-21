@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatNumber } from '~/utils/numberFormat'
 import type { Dashboard } from '../dashboardTypes'
@@ -77,20 +77,14 @@ function DashboardCardActionsMenu({
 			>
 				<Icon name="ellipsis" height={16} width={16} />
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				portal
-				unmountOnHide
-				gutter={6}
-				className={menuSurfaceStyles}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-			>
-				<Ariakit.MenuItem
-					className={`${popoverMenuItemStyles} text-error`}
+			<MenuSurface variant="actions" gutter={6}>
+				<MenuItem
+					className="text-error"
 					onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}
 				>
 					Delete…
-				</Ariakit.MenuItem>
-			</Ariakit.Menu>
+				</MenuItem>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

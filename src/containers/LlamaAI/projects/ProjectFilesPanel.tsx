@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { useFileDropTarget } from '../components/FileDrop'
@@ -114,24 +114,20 @@ export function ProjectFilesPanel({
 						<Icon name="plus" height={14} width={14} />
 						Add sources
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						gutter={6}
-						className={`${menuSurfaceStyles} z-50 w-60`}
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-					>
-						<Ariakit.MenuItem onClick={onPick} className={popoverMenuItemStyles}>
+					<MenuSurface variant="actions" gutter={6} className="z-50 w-60">
+						<MenuItem onClick={onPick}>
 							<Icon name="file-plus" height={14} width={14} />
 							Upload from device
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem onClick={() => addTextStore.show()} className={popoverMenuItemStyles}>
+						</MenuItem>
+						<MenuItem onClick={() => addTextStore.show()}>
 							<Icon name="file-text" height={14} width={14} />
 							Add text content
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem onClick={() => githubStore.show()} className={popoverMenuItemStyles}>
+						</MenuItem>
+						<MenuItem onClick={() => githubStore.show()}>
 							<Icon name="github" height={14} width={14} />
 							Connect GitHub repo
-						</Ariakit.MenuItem>
-					</Ariakit.Menu>
+						</MenuItem>
+					</MenuSurface>
 				</Ariakit.MenuProvider>
 				<input
 					ref={fileInputRef}

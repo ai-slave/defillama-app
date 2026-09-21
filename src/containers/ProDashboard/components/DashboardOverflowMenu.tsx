@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProButton } from '../ui'
@@ -79,27 +79,15 @@ export function DashboardOverflowMenu({
 				>
 					<Icon name="ellipsis" height={16} width={16} />
 				</Ariakit.MenuButton>
-				<Ariakit.Menu
-					portal
-					unmountOnHide
-					gutter={8}
-					className={menuSurfaceStyles}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					aria-label="Dashboard actions"
-				>
+				<MenuSurface variant="actions" aria-label="Dashboard actions">
 					{onOpenSettings ? (
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
-							aria-label="Dashboard Settings"
-							onClick={onOpenSettings}
-						>
+						<MenuItem aria-label="Dashboard Settings" onClick={onOpenSettings}>
 							<Icon name="settings" height={14} width={14} />
 							<span>Settings</span>
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : null}
 					{onDuplicate ? (
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
+						<MenuItem
 							disabled={duplicate.isPending}
 							accessibleWhenDisabled
 							onClick={() => {
@@ -109,17 +97,16 @@ export function DashboardOverflowMenu({
 						>
 							<Icon name="copy" height={14} width={14} />
 							<span>{duplicate.isPending ? 'Duplicating…' : 'Duplicate'}</span>
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : null}
 					{onNewDashboard ? (
-						<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={onNewDashboard}>
+						<MenuItem onClick={onNewDashboard}>
 							<Icon name="plus" height={14} width={14} />
 							<span>New dashboard</span>
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : null}
 					{moveTeam ? (
-						<Ariakit.MenuItem
-							className={popoverMenuItemStyles}
+						<MenuItem
 							disabled={move.isPending}
 							accessibleWhenDisabled
 							data-umami-event={moveTeam.team ? 'dashboard-move-personal' : 'dashboard-move-team'}
@@ -135,13 +122,13 @@ export function DashboardOverflowMenu({
 											? 'Move to my dashboards'
 											: 'Remove from team'}
 							</span>
-						</Ariakit.MenuItem>
+						</MenuItem>
 					) : null}
 					{onDelete ? (
 						<>
 							<Ariakit.MenuSeparator className="my-1 border-pro-cards-border" />
-							<Ariakit.MenuItem
-								className={`${popoverMenuItemStyles} text-error`}
+							<MenuItem
+								className="text-error"
 								data-umami-event="dashboard-delete"
 								onClick={() => {
 									deletion.reset()
@@ -150,10 +137,10 @@ export function DashboardOverflowMenu({
 							>
 								<Icon name="trash-2" height={14} width={14} />
 								<span>Delete dashboard…</span>
-							</Ariakit.MenuItem>
+							</MenuItem>
 						</>
 					) : null}
-				</Ariakit.Menu>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
 			<ConfirmationModal
 				isOpen={showDeleteConfirm}

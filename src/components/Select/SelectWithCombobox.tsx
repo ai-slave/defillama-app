@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import clsx from 'clsx'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -7,12 +6,6 @@ import { NestedMenu } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import {
-	productSurfaceComboboxActionBarStyles,
-	productSurfaceComboboxPopoverSurfaceStyles,
-	legacyPopoverActionButtonStyles,
-	legacyPopoverSeeMoreStyles,
-	legacyPopoverSelectCheckStyles,
-	legacySelectPopoverRowStyles,
 	nestedMenuActionBarStyles,
 	nestedMenuActionButtonStyles,
 	nestedMenuSeeMoreStyles,
@@ -24,11 +17,9 @@ import {
 	popoverRowWithBorderStyles,
 	popoverSearchBlockStyles,
 	popoverSeeMoreStyles,
-	popoverSingleSelectCheckStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverSingleSelectCheckStyles
 } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { updateQueryFromSelected } from './query'
@@ -62,7 +53,6 @@ interface ISelectWithComboboxBase {
 	visibleOptionLimit?: number | null
 	selectAllScope?: 'all' | 'matches'
 	emptyLabel?: React.ReactNode
-	popoverVariant?: 'default' | 'legacy'
 }
 
 interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
@@ -119,24 +109,11 @@ export function SelectWithCombobox({
 	searchPlaceholder = 'Search...',
 	visibleOptionLimit = 20,
 	selectAllScope = 'all',
-	emptyLabel = 'No results found',
-	popoverVariant = 'default'
+	emptyLabel = 'No results found'
 }: ISelectWithCombobox) {
 	const router = useRouter()
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
-	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
-	const actionBarStyles = useLegacyPopover ? productSurfaceComboboxActionBarStyles : popoverActionBarStyles
-	const nestedActionBarStyles = useLegacyPopover ? productSurfaceComboboxActionBarStyles : nestedMenuActionBarStyles
-	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
-	const nestedActionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : nestedMenuActionButtonStyles
-	const searchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : popoverSearchBlockStyles
-	const nestedSearchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : nestedMenuSearchBlockStyles
-	const surfaceStyles = useLegacyPopover ? productSurfaceComboboxPopoverSurfaceStyles : popoverSurfaceStyles
-	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
-	const nestedRowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : nestedMenuSelectRowStyles
-	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
-	const nestedSeeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : nestedMenuSeeMoreStyles
 	const shouldPortalPopover = portal ?? true
 	const queryUpdateOptions = {
 		...(resetPageOnQueryChange !== undefined ? { resetPage: resetPageOnQueryChange } : {}),
@@ -281,14 +258,6 @@ export function SelectWithCombobox({
 	const comboboxRef = React.useRef<HTMLDivElement>(null)
 
 	const renderCheck = () => {
-		if (useLegacyPopover) {
-			return showCheckboxes ? (
-				<Ariakit.ComboboxItemCheck className={legacyPopoverSelectCheckStyles} />
-			) : (
-				<Ariakit.ComboboxItemCheck className="ml-auto" />
-			)
-		}
-
 		return (
 			<Ariakit.ComboboxItemSelected>
 				{(selected) => (
@@ -333,21 +302,17 @@ export function SelectWithCombobox({
 				selectedValue={providerValue}
 				setSelectedValue={setSelectedValue}
 			>
-				<NestedMenu
-					label={label}
-					render={<button type="button" />}
-					popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
-				>
-					<span className={nestedSearchWrapperStyles}>
+				<NestedMenu label={label} render={<button type="button" />}>
+					<span className={nestedMenuSearchBlockStyles}>
 						<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 					</span>
 					{customHeader ? <>{customHeader}</> : null}
 					{showCheckboxes ? (
-						<span className={nestedActionBarStyles}>
-							<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
+						<span className={nestedMenuActionBarStyles}>
+							<button type="button" onClick={clearAll} className={nestedMenuActionButtonStyles}>
 								Deselect All
 							</button>
-							<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
+							<button type="button" onClick={toggleAll} className={nestedMenuActionButtonStyles}>
 								{selectAllLabel}
 							</button>
 						</span>
@@ -359,7 +324,7 @@ export function SelectWithCombobox({
 								value={getOptionKey(option)}
 								resetValueOnSelect={false}
 								hideOnClick={false}
-								className={nestedRowStyles}
+								className={nestedMenuSelectRowStyles}
 							>
 								{isStringValue(option) ? (
 									<span>{option}</span>
@@ -382,7 +347,7 @@ export function SelectWithCombobox({
 								value="__see_more__"
 								selectValueOnClick={false}
 								hideOnClick={false}
-								className={nestedSeeMoreStyles}
+								className={nestedMenuSeeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
@@ -429,32 +394,25 @@ export function SelectWithCombobox({
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
+			<ComboboxSurface
 				unmountOnHide={unmountOnHide}
 				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{
-					className: clsx(popoverMobileWrapperClassName, popoverWrapperClassName)
-				}}
-				className={clsx(surfaceStyles, popoverClassName)}
+				className={popoverClassName}
+				wrapperClassName={popoverWrapperClassName}
 				portal={shouldPortalPopover}
 			>
-				<Ariakit.PopoverDismiss aria-label="Close options" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
-				<span className={searchWrapperStyles}>
+				<span className={popoverSearchBlockStyles}>
 					<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 				</span>
 				{customHeader ? <>{customHeader}</> : null}
 				{matches.length > 0 ? (
 					<>
 						{showCheckboxes ? (
-							<span className={actionBarStyles}>
-								<button type="button" onClick={clearAll} className={actionButtonStyles}>
+							<span className={popoverActionBarStyles}>
+								<button type="button" onClick={clearAll} className={popoverActionButtonStyles}>
 									Deselect All
 								</button>
-								<button type="button" onClick={toggleAll} className={actionButtonStyles}>
+								<button type="button" onClick={toggleAll} className={popoverActionButtonStyles}>
 									{selectAllLabel}
 								</button>
 							</span>
@@ -530,7 +488,7 @@ export function SelectWithCombobox({
 										key={`${label}-${optionKey}`}
 										value={optionKey}
 										resetValueOnSelect={false}
-										className={`${rowStyles} group gap-2`}
+										className={`${popoverRowWithBorderStyles} group gap-2`}
 									>
 										{optionContent}
 									</Ariakit.ComboboxItem>
@@ -550,7 +508,7 @@ export function SelectWithCombobox({
 									value="__see_more__"
 									selectValueOnClick={false}
 									hideOnClick={false}
-									className={seeMoreStyles}
+									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
 									See more...
@@ -560,17 +518,13 @@ export function SelectWithCombobox({
 						{customFooter ? <>{customFooter}</> : null}
 					</>
 				) : (
-					<p
-						role="status"
-						aria-live="polite"
-						className={`px-3 py-6 text-center body-sm ${useLegacyPopover ? 'text-primary' : 'text-tertiary'}`}
-					>
+					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
 						<Ariakit.ComboboxInputValue>
 							{(value) => (value && typeof emptyLabel === 'string' ? `${emptyLabel} for "${value}"` : emptyLabel)}
 						</Ariakit.ComboboxInputValue>
 					</p>
 				)}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

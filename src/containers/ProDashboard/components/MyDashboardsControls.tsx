@@ -115,7 +115,6 @@ export function MyDashboardsControls({
 					</>
 				}
 				labelType="none"
-				popoverVariant="legacy"
 				triggerProps={{ 'aria-label': 'Sort my dashboards' }}
 			/>
 		</div>

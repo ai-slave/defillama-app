@@ -3,13 +3,8 @@ import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterS
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
-import {
-	popoverMultiSelectCheckStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles
-} from '~/ui/Popover'
+import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 const EMPTY_FILTERS: Array<{ name: string; key: string }> = []
 
@@ -24,18 +19,8 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 				<span className="sr-only">Open Settings Menu</span>
 				<Icon name="settings" height={16} width={16} />
 			</Ariakit.ComboboxSelect>
-			<Ariakit.ComboboxPopover
-				unmountOnHide={false}
-				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
+			<ComboboxSurface unmountOnHide={false}>
 				<h2 className="px-3 py-2 label-sm text-secondary">Settings</h2>
 				{tvlOptions.map((option) => (
 					<Ariakit.ComboboxItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
@@ -60,7 +45,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 						{darkMode ? <SelectCheckIcon /> : null}
 					</span>
 				</Ariakit.ComboboxItem>
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

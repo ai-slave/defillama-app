@@ -1,13 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { selectTriggerStyles } from '~/components/Select/types'
-import { Icon } from '~/ui/Icon'
-import {
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
-} from '~/ui/Popover'
+import { popoverRowWithBorderStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 
 interface IProps {
 	options: Array<string>
@@ -23,24 +18,13 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
 
-			<Ariakit.ComboboxPopover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={popoverSurfaceStyles}
-				portal
-			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
-
+			<ComboboxSurface variant="list">
 				{options.map((option) => (
 					<Ariakit.ComboboxItem value={option} key={option} className={popoverRowWithBorderStyles}>
 						{option}
 					</Ariakit.ComboboxItem>
 				))}
-			</Ariakit.ComboboxPopover>
+			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)
 }

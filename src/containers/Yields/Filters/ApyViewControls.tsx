@@ -2,8 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { Icon } from '~/ui/Icon'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
@@ -186,21 +185,10 @@ function ApyViewSheet({
 				<span className="sr-only">view settings: {spoken}</span>
 				<Ariakit.PopoverDisclosureArrow className="size-4 shrink-0 text-tertiary" />
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				portal
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				overflowPadding={16}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} max-sm:h-auto! max-sm:max-h-[calc(100dvh-80px)] sm:w-80`}
-			>
+			<PopoverSurface variant="panel" dismiss="own" overflowPadding={16} className="sm:w-80">
 				<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-4">
 					<Ariakit.PopoverHeading className="label-md text-primary">APY view</Ariakit.PopoverHeading>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-4" />
-						<span className="sr-only">Close APY view</span>
-					</Ariakit.PopoverDismiss>
+					<DrawerDismiss label="Close APY view" />
 				</div>
 
 				<div className="flex flex-col gap-1 p-2">
@@ -238,7 +226,7 @@ function ApyViewSheet({
 					/>
 					<span className="px-1 body-sm text-secondary">{APY_DEFS.window}</span>
 				</div>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

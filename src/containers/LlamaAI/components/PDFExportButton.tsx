@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -177,38 +177,32 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 				>
 					{isLoading ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
 				</Tooltip>
-				<Ariakit.Menu
-					portal
-					unmountOnHide
-					gutter={8}
-					className={`${menuSurfaceStyles} z-50 w-44`}
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-				>
-					<Ariakit.MenuItem
+				<MenuSurface variant="actions" className="z-50 w-44">
+					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"
 						onClick={() => {
 							void handlePDFExport(false)
 						}}
 						disabled={loading}
-						className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="sun" height={14} width={14} className="shrink-0" />
 						Light Mode
-					</Ariakit.MenuItem>
-					<Ariakit.MenuItem
+					</MenuItem>
+					<MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="dark"
 						onClick={() => {
 							void handlePDFExport(true)
 						}}
 						disabled={loading}
-						className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="moon" height={14} width={14} className="shrink-0" />
 						Dark Mode
-					</Ariakit.MenuItem>
-				</Ariakit.Menu>
+					</MenuItem>
+				</MenuSurface>
 			</Ariakit.MenuProvider>
 			{shouldRenderModal ? (
 				<Suspense fallback={null}>

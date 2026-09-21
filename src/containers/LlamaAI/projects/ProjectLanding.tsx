@@ -17,7 +17,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
@@ -239,18 +239,12 @@ export function ProjectLanding({
 								>
 									<Icon name="ellipsis" height={16} width={16} />
 								</Ariakit.MenuButton>
-								<Ariakit.Menu
-									gutter={6}
-									className={`${menuSurfaceStyles} z-50 w-52`}
-									wrapperProps={{ className: popoverMobileWrapperClassName }}
-								>
-									<Ariakit.MenuItem onClick={renameStore.show} className={popoverMenuItemStyles}>
-										Rename project
-									</Ariakit.MenuItem>
-									<Ariakit.MenuItem onClick={deleteStore.show} className={`${popoverMenuItemStyles} text-error!`}>
+								<MenuSurface variant="actions" gutter={6} className="z-50 w-52">
+									<MenuItem onClick={renameStore.show}>Rename project</MenuItem>
+									<MenuItem onClick={deleteStore.show} className="text-error!">
 										Delete project
-									</Ariakit.MenuItem>
-								</Ariakit.Menu>
+									</MenuItem>
+								</MenuSurface>
 							</Ariakit.MenuProvider>
 						</div>
 					</header>

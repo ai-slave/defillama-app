@@ -15,6 +15,7 @@
 		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3,
 		"deprecated-tailwind-spelling": 0,
+		"raw-popover-surface": 5,
 		"conflicting-named-typography": 31
 	},
 	"product": {
@@ -33,6 +34,7 @@
 		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3,
 		"deprecated-tailwind-spelling": 0,
+		"raw-popover-surface": 48,
 		"conflicting-named-typography": 0
 	}
 }

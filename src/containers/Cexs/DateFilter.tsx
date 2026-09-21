@@ -9,7 +9,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 
 dayjs.extend(utc)
 
@@ -176,19 +176,10 @@ export function DateFilter({
 					) : null}
 					<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />
 				</Ariakit.PopoverDisclosure>
-				<Ariakit.Popover
-					unmountOnHide
-					hideOnInteractOutside
-					gutter={6}
+				<PopoverSurface
+					variant="list"
 					overflowPadding={16} // distance from the boundary edges
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					className={popoverSurfaceStyles}
-					portal
 				>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
-
 					<div className="mx-auto w-full sm:w-[260px]">
 						<form
 							onSubmit={(e) => {
@@ -304,7 +295,7 @@ export function DateFilter({
 							</div>
 						</form>
 					</div>
-				</Ariakit.Popover>
+				</PopoverSurface>
 			</Ariakit.PopoverProvider>
 			{shouldRenderModal ? (
 				<Suspense fallback={null}>

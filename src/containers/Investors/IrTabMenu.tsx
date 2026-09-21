@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuSurface } from '~/ui/MenuSurface'
 import { TabLink } from '~/ui/Tab'
 import { IrTabLabel } from './IrTabLabel'
 import { getMainSiteIrTabHref, type MainSiteIrDashboard } from './mainSiteDashboards'
@@ -45,14 +45,7 @@ export function IrTabMenu({
 					}
 				/>
 			</Ariakit.MenuButton>
-			<Ariakit.Menu
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={8}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${menuSurfaceStyles} sm:w-90`}
-				portal
-			>
+			<MenuSurface variant="actions" className="sm:w-90">
 				<div className="flex items-center gap-3 border-b border-subtle px-4 py-3">
 					<TokenLogo name={dashboard.entityName} kind="token" size={28} alt={`Logo of ${dashboard.entityName}`} />
 					<div className="flex min-w-0 flex-col">
@@ -98,7 +91,7 @@ export function IrTabMenu({
 						)
 					})}
 				</div>
-			</Ariakit.Menu>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

@@ -295,6 +295,14 @@ const RULES = [
 		match: matchDeprecatedTailwindSpelling
 	},
 	{
+		id: 'raw-popover-surface',
+		description:
+			'Ariakit.Menu/Popover/ComboboxPopover rendered directly — use MenuSurface, PopoverSurface or ComboboxSurface from src/ui, which wire the drawer wrapper, scrim and close button from one `variant`',
+		pattern: /<Ariakit\.(?:Menu|Popover|ComboboxPopover|SelectPopover)\b/g,
+		// src/ui owns the wrappers; NestedMenu and the legacy Select/Menu paths are the tracked exceptions.
+		uiOwned: true
+	},
+	{
 		id: 'conflicting-named-typography',
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
@@ -334,6 +342,7 @@ for (const file of files) {
 			].includes(rule.id)
 		)
 			continue
+		if (rule.uiOwned && file.startsWith('src/ui/')) continue
 		if (
 			rule.productLeak &&
 			(bucket === 'product' ||

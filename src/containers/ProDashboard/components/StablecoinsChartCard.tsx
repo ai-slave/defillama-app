@@ -207,7 +207,6 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 								label="Token"
 								labelType="smol"
 								variant="filter"
-								popoverVariant="legacy"
 							/>
 						) : SERIES_SELECTION_CHARTS.has(chartType) && selectableSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -218,7 +217,6 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 								label="Token"
 								labelType="smol"
 								variant="filter"
-								popoverVariant="legacy"
 							/>
 						) : null
 					) : null

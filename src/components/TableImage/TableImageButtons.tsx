@@ -4,7 +4,8 @@ import toast from 'react-hot-toast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
 export type TableImageSource = () => Omit<TableImageInput, 'isDark'> | null
@@ -155,14 +156,7 @@ export function TableImageButtons({
 					{triggerContent || iconOnly ? null : <span>{triggerLabel ?? '.png'}</span>}
 				</Ariakit.PopoverDisclosure>
 
-				<Ariakit.Popover
-					aria-label="Export table"
-					gutter={8}
-					unmountOnHide
-					portal
-					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					className={`${menuSurfaceStyles} z-50`}
-				>
+				<PopoverSurface variant="actions" aria-label="Export table" gutter={8} className="z-50">
 					{csvSlot ? <div className="contents">{csvSlot}</div> : null}
 					<button
 						type="button"
@@ -206,7 +200,7 @@ export function TableImageButtons({
 							<span>Include watermark</span>
 						</button>
 					) : null}
-				</Ariakit.Popover>
+				</PopoverSurface>
 			</Ariakit.PopoverProvider>
 		</div>
 	)

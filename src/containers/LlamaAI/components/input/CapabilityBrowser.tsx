@@ -4,7 +4,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
-import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const CATEGORY_OPTIONS = CAPABILITIES.map(({ key, name }) => ({ key, name }))
@@ -17,19 +17,17 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 	const isMobile = useMedia('(max-width: 639px)')
 
 	return (
-		<Ariakit.Popover
+		<PopoverSurface
+			variant="list"
 			aria-label="Explore AI capabilities"
-			portal
 			modal={isMobile}
-			unmountOnHide
-			hideOnInteractOutside
 			gutter={8}
 			flip
-			wrapperProps={{ className: popoverMobileWrapperClassName }}
-			className={`${popoverSurfaceStyles} z-50 w-[600px] overflow-hidden sm:max-h-[min(420px,50dvh,var(--popover-available-height))]! sm:capability-panel`}
+			dismiss="own"
+			className="z-50 w-[600px] overflow-hidden sm:max-h-[min(420px,50dvh,var(--popover-available-height))]! sm:capability-panel"
 		>
 			<BrowserContent onPromptSelect={onPromptSelect} />
-		</Ariakit.Popover>
+		</PopoverSurface>
 	)
 }
 
@@ -63,9 +61,7 @@ export function BrowserContent({
 			{!hideDragHandle ? (
 				<div className="flex shrink-0 items-center justify-between px-3 py-1 sm:hidden">
 					<span className="label-md text-primary">Explore</span>
-					<Ariakit.PopoverDismiss aria-label="Close Explore" className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-4" />
-					</Ariakit.PopoverDismiss>
+					<DrawerDismiss label="Close Explore" />
 				</div>
 			) : null}
 

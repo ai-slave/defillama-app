@@ -5,7 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -47,15 +47,8 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 		<Ariakit.MenuProvider>
 			{isProtocolPage ? <ProtocolPageButton /> : <RegularButton />}
 
-			<Ariakit.Menu
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={8}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${menuSurfaceStyles} shadow-sm`}
-				portal
-			>
-				<Ariakit.MenuItem
+			<MenuSurface variant="actions" className="shadow-sm">
+				<MenuItem
 					render={
 						<a
 							href={generateGoogleCalendarUrl(event, tokenName, tokenValue)}
@@ -63,13 +56,13 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 							rel="noopener noreferrer"
 						/>
 					}
-					className={`${popoverMenuItemStyles} border-b border-subtle`}
+					className="border-b border-subtle"
 				>
 					<Icon name="external-link" width={16} height={16} />
 					Google Calendar
-				</Ariakit.MenuItem>
+				</MenuItem>
 
-				<Ariakit.MenuItem
+				<MenuItem
 					render={
 						<a
 							href={`/api/dynamic/calendar/${encodeURIComponent(tokenName)}?${new URLSearchParams({
@@ -79,12 +72,11 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 							})}`}
 						/>
 					}
-					className={popoverMenuItemStyles}
 				>
 					<Icon name="download-cloud" width={16} height={16} />
 					Other Calendars Apps
-				</Ariakit.MenuItem>
-			</Ariakit.Menu>
+				</MenuItem>
+			</MenuSurface>
 		</Ariakit.MenuProvider>
 	)
 }

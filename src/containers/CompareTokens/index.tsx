@@ -9,7 +9,8 @@ import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { menuSurfaceStyles, popoverRowWithBorderStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { MenuSurface } from '~/ui/MenuSurface'
+import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { LoadingIndicator } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -165,14 +166,7 @@ export function CompareTokens({
 						<span>{compareType.label}</span>
 						<Ariakit.MenuButtonArrow />
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						unmountOnHide
-						hideOnInteractOutside
-						sameWidth
-						wrapperProps={{ className: popoverMobileWrapperClassName }}
-						className={menuSurfaceStyles}
-						portal
-					>
+					<MenuSurface variant="actions" sameWidth>
 						{compareTypes.map((item) => (
 							<Ariakit.MenuItem
 								key={item.value}
@@ -184,7 +178,7 @@ export function CompareTokens({
 								{item.label}
 							</Ariakit.MenuItem>
 						))}
-					</Ariakit.Menu>
+					</MenuSurface>
 				</Ariakit.MenuProvider>
 				{coins.length === 2 ? (
 					priceData == null ? (

@@ -3,7 +3,7 @@ import { type FormEvent, useId, useMemo, useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { menuSurfaceStyles, popoverMobileDismissStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import { tw } from '~/ui/tw'
 import { DASHBOARD_VARIABLE_LABEL_MAX_LENGTH, type DashboardVariableKind } from '../dashboardTypes'
 import {
@@ -108,17 +108,12 @@ export function AddVariablePopover() {
 				<Icon name="plus" height={14} width={14} />
 				<span>Parameter</span>
 			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				portal
-				unmountOnHide
+			<PopoverSurface
+				variant="panel"
 				gutter={8}
-				className={menuSurfaceStyles}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				dismissLabel="Close parameter form"
 				aria-label="Add a dashboard parameter"
 			>
-				<Ariakit.PopoverDismiss aria-label="Close parameter form" className={popoverMobileDismissStyles}>
-					<Icon name="x" className="size-5" />
-				</Ariakit.PopoverDismiss>
 				<form onSubmit={handleSubmit} className="flex w-[320px] max-w-full flex-col gap-3 p-3">
 					<p className="text-xs text-pro-text-tertiary">
 						A parameter lets viewers switch every bound card to another chain or protocol. Bind cards below or later
@@ -194,7 +189,7 @@ export function AddVariablePopover() {
 						<span>Add parameter</span>
 					</Button>
 				</form>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

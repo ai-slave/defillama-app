@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
-import { popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import type { CustomTimePeriod } from '../dashboardTypes'
 import { ProButton, ProSegmented } from '../ui'
 
@@ -124,14 +124,7 @@ export function CustomTimePeriodPicker({
 				</span>
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				gutter={8}
-				portal
-				unmountOnHide
-				className={popoverSurfaceStyles}
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				style={{ minWidth: '300px' }}
-			>
+			<PopoverSurface variant="list" gutter={8} style={{ minWidth: '300px' }}>
 				<form onSubmit={handleApply} className="flex flex-col gap-4 p-4">
 					<ProSegmented<'relative' | 'absolute'>
 						value={mode}
@@ -202,7 +195,7 @@ export function CustomTimePeriodPicker({
 						</ProButton>
 					</div>
 				</form>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }

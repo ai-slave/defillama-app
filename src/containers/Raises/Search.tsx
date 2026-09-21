@@ -6,13 +6,8 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
-import {
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName,
-	popoverMenuItemStyles,
-	popoverSeeMoreStyles,
-	popoverSurfaceStyles
-} from '~/ui/Popover'
+import { popoverMenuItemStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { slug } from '~/utils'
 
 export function RaisesSearch({ list }: { list?: Array<string> }) {
@@ -60,19 +55,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 			>
 				<Input placeholder="Search Investors..." open={open} setOpen={setOpen} />
 
-				<Ariakit.ComboboxPopover
-					unmountOnHide
-					hideOnInteractOutside
-					gutter={6}
-					wrapperProps={{
-						className: `${popoverMobileWrapperClassName} w-full!`
-					}}
-					className={popoverSurfaceStyles}
-					portal
-				>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
-						<Icon name="x" className="size-5" />
-					</Ariakit.PopoverDismiss>
+				<ComboboxSurface variant="list" wrapperClassName="w-full!">
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((option: string) => (
@@ -93,7 +76,7 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 					) : (
 						<NoResults />
 					)}
-				</Ariakit.ComboboxPopover>
+				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 		</div>
 	)

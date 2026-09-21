@@ -15,7 +15,7 @@ import {
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { menuSurfaceStyles, popoverMobileWrapperClassName, popoverTreeRowStyles } from '~/ui/Popover'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
 import type { IProtocolPageMetrics } from './types'
@@ -316,20 +316,14 @@ export function ProtocolOverviewLayout({
 								<span className="whitespace-nowrap">{name === otherProtocols?.[0] ? `${name} (Combined)` : name}</span>
 								<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 							</Ariakit.MenuButton>
-							<Ariakit.Menu
-								unmountOnHide
-								hideOnInteractOutside
-								gutter={8}
-								wrapperProps={{ className: popoverMobileWrapperClassName }}
-								className={menuSurfaceStyles}
-								portal
-							>
+							<MenuSurface variant="actions">
 								{otherProtocols?.map((value, i) => (
-									<Ariakit.MenuItem
+									<MenuItem
 										key={`navigate to /protocol/${slug(value)}`}
+										row="tree"
 										render={<BasicLink href={`/protocol/${slug(value)}`} />}
 										data-active={name === value}
-										className={`${popoverTreeRowStyles} ${i === 0 ? 'pl-3' : 'pl-8'}`}
+										className={i === 0 ? 'pl-3' : 'pl-8'}
 									>
 										{i !== 0 ? (
 											<>
@@ -346,9 +340,9 @@ export function ProtocolOverviewLayout({
 										) : (
 											<span>{value}</span>
 										)}
-									</Ariakit.MenuItem>
+									</MenuItem>
 								))}
-							</Ariakit.Menu>
+							</MenuSurface>
 						</Ariakit.MenuProvider>
 					) : null}
 

@@ -631,7 +631,6 @@ export function StablecoinsChartTab({
 							label="Token"
 							labelType="smol"
 							variant="filter"
-							popoverVariant="legacy"
 						/>
 					) : stablecoinMode === 'chain' && showsChainSeriesSelection && selectableChainSeries.length > 1 ? (
 						<SelectWithCombobox
@@ -642,7 +641,6 @@ export function StablecoinsChartTab({
 							label="Token"
 							labelType="smol"
 							variant="filter"
-							popoverVariant="legacy"
 						/>
 					) : stablecoinMode === 'asset' && assetChartType === 'chainPie' && assetPieSeriesNames.length > 1 ? (
 						<SelectWithCombobox
@@ -653,7 +651,6 @@ export function StablecoinsChartTab({
 							label="Chain"
 							labelType="smol"
 							variant="filter"
-							popoverVariant="legacy"
 						/>
 					) : stablecoinMode === 'asset' && showsAssetSeriesSelection && selectableAssetSeries.length > 1 ? (
 						<SelectWithCombobox
@@ -664,7 +661,6 @@ export function StablecoinsChartTab({
 							label="Chain"
 							labelType="smol"
 							variant="filter"
-							popoverVariant="legacy"
 						/>
 					) : null}
 				</div>

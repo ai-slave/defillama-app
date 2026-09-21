@@ -5,7 +5,8 @@ import toast from 'react-hot-toast'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileWrapperClassName } from '~/ui/Popover'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { PopoverSurface } from '~/ui/PopoverSurface'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import type { PngExportProfile } from './chartPngExport'
@@ -82,13 +83,7 @@ export function ChartPngExportButton({
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				gutter={8}
-				unmountOnHide
-				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${menuSurfaceStyles} z-50`}
-				portal
-			>
+			<PopoverSurface variant="actions" gutter={8} className="z-50">
 				{csvMenuItem ? (
 					<button
 						data-umami-event="export-csv"
@@ -132,7 +127,7 @@ export function ChartPngExportButton({
 					<Icon name="copy" height={14} width={14} />
 					<span>Copy to clipboard</span>
 				</button>
-			</Ariakit.Popover>
+			</PopoverSurface>
 		</Ariakit.PopoverProvider>
 	)
 }
