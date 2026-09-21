@@ -29,19 +29,9 @@ import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeTokenRow>()
 
-const REPORTED_NOTE =
-	'Not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
-
-function Volume({ value, reported }: { value: number | null; reported: boolean }) {
-	if (value == null) return <span className="text-tertiary">–</span>
-	if (!reported) return <>{formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</>
-	return (
-		<Tooltip content={REPORTED_NOTE} className="ms-auto w-fit underline decoration-dotted">
-			{`${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}*`}
-		</Tooltip>
-	)
-}
-
+// No normalized-volume columns here: a token row folds several markets (BTC/USDT,
+// BTC/USDC, …) and one without a captured book would flag the whole row as unchecked.
+// The per-segment tables carry normalized volume per market instead.
 const definitions = exchangeDefinitions.directory
 const TOKEN_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('token', {
@@ -161,30 +151,6 @@ const TOKEN_COLUMNS = columnHelper.columns([
 			headerClassName: 'w-[112px]',
 			align: 'end',
 			headerHelperText: definitions.perpOpenInterest.description
-		}
-	}),
-	columnHelper.accessor((row) => row.spotNormalizedVolume ?? undefined, {
-		id: 'spotNormalizedVolume',
-		header: definitions.spotNormalizedVolume.label,
-		cell: ({ row }) => (
-			<Volume value={row.original.spotNormalizedVolume} reported={row.original.spotVolumeIsReported} />
-		),
-		meta: {
-			headerClassName: 'w-[112px]',
-			align: 'end',
-			headerHelperText: definitions.spotNormalizedVolume.description
-		}
-	}),
-	columnHelper.accessor((row) => row.perpNormalizedVolume ?? undefined, {
-		id: 'perpNormalizedVolume',
-		header: definitions.perpNormalizedVolume.label,
-		cell: ({ row }) => (
-			<Volume value={row.original.perpNormalizedVolume} reported={row.original.perpVolumeIsReported} />
-		),
-		meta: {
-			headerClassName: 'w-[128px]',
-			align: 'end',
-			headerHelperText: definitions.perpNormalizedVolume.description
 		}
 	})
 ])

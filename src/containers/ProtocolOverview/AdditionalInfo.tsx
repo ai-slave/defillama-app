@@ -222,6 +222,11 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 						Safe Harbor Agreement
 					</ExternalLinkButton>
 				) : null}
+				{props.exchangeProfileRoute ? (
+					<BasicLink href={props.exchangeProfileRoute} className={INFO_ACTION_STYLES}>
+						Exchange profile
+					</BasicLink>
+				) : null}
 			</div>
 			{categories.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">

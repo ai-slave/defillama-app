@@ -85,6 +85,8 @@ function pairColumnVisibility(): ColumnVisibilityState {
 	}
 }
 
+const isOiColumn = (column: { id?: string }) => column.id === 'openInterestUsd' || column.id === 'openInterestChange24h'
+
 export function buildPairColumns(
 	segment: ExchangeSegment,
 	capabilities: { openInterest: boolean; funding: boolean; depth: boolean },
@@ -253,12 +255,20 @@ export function buildPairColumns(
 				const nvol = row.original.normalizedVolume
 				return nvol ? (
 					<Tooltip
-						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}`}
+						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}${
+							nvol.cap === 'oi' ? ' · capped by open interest' : nvol.cap === 'depth' ? ' · capped by book depth' : ''
+						}`}
 						className="ms-auto w-fit"
 					>
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 						</span>
+						{/* Unsigned gap to reported, outside the underline: normalized is never above it, the tooltip says "below". */}
+						{nvol.discountFraction > 0 ? (
+							<span className="ms-1 label-xs text-tertiary">
+								{formatPercent(nvol.discountFraction, PERCENT_OPTIONS)}
+							</span>
+						) : null}
 					</Tooltip>
 				) : (
 					'–'
@@ -338,7 +348,11 @@ export function buildPairColumns(
 								content={`Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
 								className="ms-auto w-fit"
 							>
-								<span className="underline decoration-dotted">
+								<span
+									className={`underline decoration-dotted ${
+										getValue()! > 0 ? 'text-data-up' : getValue()! < 0 ? 'text-data-down' : ''
+									}`.trim()}
+								>
 									{formatPercent(getValue(), {
 										input: 'fraction',
 										minimumFractionDigits: 4,
@@ -461,7 +475,17 @@ export function buildPairColumns(
 			])
 		: []
 
-	return [...venueColumns, ...baseColumns, ...perpColumns, ...trailingColumns]
+	// Open interest is the first thing to read on a perp market, so it sits right before
+	// volume; the other perp columns keep their place after the base set. Callers passing
+	// `columnOrder` (the token page) re-sort anyway.
+	const oiColumns = perpColumns.filter(isOiColumn)
+	const otherPerpColumns = perpColumns.filter((column) => !isOiColumn(column))
+	const volumeAt = baseColumns.findIndex((column) => column.id === 'volume24h')
+	const orderedBase =
+		volumeAt < 0
+			? [...baseColumns, ...oiColumns]
+			: [...baseColumns.slice(0, volumeAt), ...oiColumns, ...baseColumns.slice(volumeAt)]
+	return [...venueColumns, ...orderedBase, ...otherPerpColumns, ...trailingColumns]
 }
 
 export function resolvePairColumns({

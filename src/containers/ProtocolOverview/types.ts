@@ -87,6 +87,8 @@ export interface IProtocolOverviewPageData {
 		explorer_url: string | null
 		tokenPageRoute?: string | null
 	}
+	/** `/exchange/{slug}` when the markets directory lists this protocol/CEX as a tracked venue. */
+	exchangeProfileRoute?: string | null
 	category?: string | null
 	tags?: Array<string> | null
 	// Set when the RWA sheet declares this protocol; drives the RWA AUM metric and chart.

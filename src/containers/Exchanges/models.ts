@@ -348,6 +348,8 @@ export interface ExchangePairModel {
 		 *  the whole visible book. */
 		activeLiquidityShare: number | null
 		status: string
+		/** Which cap set `normalized`: the captured book, open interest, or neither (equals reported). */
+		cap: 'depth' | 'oi' | null
 	} | null
 	/** Cumulative depth per band for this pair — summed across a segment's pairs to
 	 *  draw the venue's book profile. */
@@ -619,6 +621,8 @@ export interface ExchangeProfileModel {
 	/** Reserve-chart availability, resolved against the protocol metadata cache at build time. */
 	reserves: ExchangeReservesModel | null
 	segments: Partial<Record<ExchangeSegment, ExchangeProfileSegmentModel>>
+	/** Venue-level normalized volume per segment (directory row); absent on metadata-only profiles and old fixtures. */
+	normalizedVolume?: Partial<Record<ExchangeSegment, ExchangeNormalizedVolume>>
 	metadata: {
 		website: string | null
 		referralUrl: string | null
@@ -693,7 +697,6 @@ export type ExchangeResearchView =
 	| 'normalized-segments'
 	| 'survival-spot-exchanges'
 	| 'survival-usd-exchanges'
-	| 'survival-coin-exchanges'
 	| 'depth-spot-exchanges'
 	| 'depth-usd-exchanges'
 	| 'depth-coin-exchanges'

@@ -7,6 +7,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
+import { EXCHANGES_METHODOLOGY_URL, ExchangeDocsLinks } from './docsLinks'
 import type {
 	ExchangeRankingModel,
 	ExchangeRankingPillarModel,
@@ -291,15 +292,10 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					<p className="label-sm text-tertiary">Reserves · Execution · Activity · Liquidity</p>
 				</div>
 				<p className="body-md text-secondary">
-					One score per exchange, built only on what we can measure or verify: reserves on chain or in filed accounts,
-					execution from tick-level fills, volume and open interest our own order-book snapshots could support, and
-					resting depth we observed. A low pillar means weak measurable evidence, not misconduct, and where our
-					measurement is the limit the venue is not penalized.
-				</p>
-				<p className="body-md text-secondary">
-					Most exchange rankings are volume tables, and volume is the one figure a venue reports about itself and can
-					inflate at no cost. Every pillar here is something it cannot print, and half the weight sits on the two
-					hardest to fake.
+					One score per exchange, built only on what we can measure or verify: reserves, execution from real fills,
+					volume and open interest the venue&apos;s own order book could support, and the depth we observed. Volume
+					alone is easy to inflate, so every pillar is something a venue cannot print. A low pillar means weak
+					measurable evidence, not misconduct.
 				</p>
 				<div className="flex flex-wrap items-center gap-2">
 					{pillars.map((pillar) => (
@@ -316,6 +312,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					<span className="body-sm text-tertiary">points out of 100 · weights redistribute over measured pillars</span>
 				</div>
 				<TierLegend />
+				<ExchangeDocsLinks />
 			</Card>
 
 			<Card padding="sm" className="flex flex-col gap-3">
@@ -385,45 +382,22 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			<h2 className="px-1 pt-2 text-xl font-semibold">How the REAL score is built</h2>
 			<Card padding="md" className="flex flex-col gap-2 body-md text-secondary">
 				<p>
-					REAL is a weighted mean of its four 0 to 100 pillars. Within each pillar, size is log-scaled: the largest
-					venue scores 100 and a venue a tenth its size still scores about 70, so a mid-sized honest venue is not
-					crushed by the giants. Every credibility check lives inside the pillar whose data it questions and lowers that
-					pillar; there is no separate penalty layer.
+					REAL is a weighted mean of four 0 to 100 pillars. Size is log-scaled, so a venue a tenth the size of the
+					leader still scores about 70. Each credibility check lowers the pillar whose data it questions, an input we
+					cannot measure hands its weight to the pillars we did, and CEX and DEX are ranked within their own type.
+					Nothing self-reported that we cannot check enters the score.
 				</p>
 				<p>
-					An input we do not have is not counted as zero: its weight redistributes over the pillars we did measure. An
-					input a venue does not publish where its peers do scores zero. Execution and open interest describe the perp
-					business, so in a venue-wide score their weight scales with the venue&apos;s share of verified volume that is
-					perps; a spot-first venue is judged on its spot business.
-				</p>
-				<p className="pt-1 label-md text-primary">The checks, and the pillar each one lowers</p>
-				<ul className="flex flex-col gap-1.5 border-l-2 border-subtle pl-4">
-					<li>
-						Open interest is credited at most <b>3&times; clean reserves</b>. Positions the venue margins are bounded by
-						what it custodies, so turnover the balance sheet cannot afford is discounted.
-					</li>
-					<li>
-						Depth is capped at clean reserves, and a CEX publishing none takes a <b>&times;0.6</b> haircut: nothing
-						reconciles its book.
-					</li>
-					<li>
-						A book that never moves is decoration. Near-zero 30-day depth variation discounts the Liquidity pillar by up
-						to <b>30%</b>.
-					</li>
-					<li>
-						Where our probes established a book is substantially decorative across the whole ladder, depth credit is
-						withheld rather than capped &mdash; whatever survives a cap is the cap, not measured liquidity.
-					</li>
-					<li>
-						Execution cannot out-credit measurement: a venue with no measured Execution pillar is capped at <b>66</b> on
-						it, so missing data never beats being measured.
-					</li>
-				</ul>
-				<p>
-					CEX and DEX are ranked within their own type, because the composite renormalizes reserves and regulatory
-					inputs away for DEXes and the raw scores stop being comparable across types. Nothing self-reported that we
-					cannot check enters the score &mdash; not reputation, age, brand, listing count or following. A venue&apos;s
-					score moves when its measured behaviour moves.
+					The full method, every check and its thresholds:{' '}
+					<a
+						href={EXCHANGES_METHODOLOGY_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-link hover:underline"
+					>
+						Exchanges methodology
+					</a>
+					.
 				</p>
 			</Card>
 			{pillars.map((pillar) => (
@@ -454,12 +428,12 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 				</p>
 			</Card>
 
-			<p className="px-1 pb-2 body-sm text-tertiary">
-				REAL scores are recomputed after listings or material data changes, reviewed, and published; there is no
-				unreviewed automatic re-ranking. Every venue&apos;s pillar breakdown is shown on its profile so the arithmetic
-				behind every tier is inspectable. The ranking, its pillars and their weights are subject to change as coverage
+			<p className="px-1 body-sm text-tertiary">
+				Scores are recomputed after listings or material data changes, reviewed, then published. Every venue&apos;s
+				pillar breakdown is on its profile. The ranking, its pillars and their weights are subject to change as coverage
 				improves.
 			</p>
+			<ExchangeDocsLinks className="px-1 pb-2" />
 		</div>
 	)
 }

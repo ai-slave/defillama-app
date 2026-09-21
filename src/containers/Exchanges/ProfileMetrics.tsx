@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -16,6 +16,7 @@ import {
 	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
 } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
+import { LearnMoreLink } from './docsLinks'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -47,6 +48,15 @@ interface SegmentValue {
 	label: string
 	tooltip: string
 	value: number
+}
+
+// The volume rows explain the number, not the segment (that is the (?) on the tabs).
+const VOLUME_TOOLTIPS: Record<ExchangeSegment, string> = {
+	spot: 'Last 24h rolling spot volume as reported. Single-counted: halved where the venue counts both sides of a trade.',
+	linear_perp:
+		'Last 24h rolling USD perp volume as reported. Single-counted: halved where the venue counts both sides of a trade.',
+	inverse_perp:
+		'Last 24h rolling COIN perp volume as reported. Single-counted: halved where the venue counts both sides of a trade.'
 }
 
 /** A metric that expands to an exact per-segment breakdown when more than one segment is present. */
@@ -123,6 +133,23 @@ export function ProfileMetrics({
 	const openInterestBySegment = segmentValues((segment) => segment.openInterestUsd, segmentVisible)
 	const depthBySegment = segmentValues((segment) => segment.depth2Usd, segmentVisible)
 	const marketsBySegment = segmentValues((segment) => segment.marketCount, segmentVisible)
+	// Normalized volume sits directly under its segment's reported volume, as a sub-row: the
+	// figure is shown like any other volume, and the percentage is worded as a discount
+	// against reported so it never reads as a change over time.
+	const nvolRow = (
+		segmentId: ExchangeSegment
+	): { normalized: number; discount: string | null; tooltip: string } | null => {
+		const nvol = profile.normalizedVolume?.[segmentId]
+		if (!nvol) return null
+		const discount = formatPercent(nvol.discountFraction, { input: 'fraction', maximumFractionDigits: 1 }) ?? '–'
+		const basis = segmentId === 'spot' ? 'order book' : 'order book and open interest'
+		return {
+			normalized: nvol.normalized,
+			// No gap → no annotation; the tooltip still states the 0%.
+			discount: nvol.discountFraction > 0 ? discount : null,
+			tooltip: `The part of the last 24h volume this venue's own ${basis} could support. ${discount} of the reported figure did not pass.${nvol.flag ? ` ${nvol.flag}` : ''}`
+		}
+	}
 
 	const totalDepth = sumNullable(segments.map((segment) => segment.depth2Usd))
 	const totalMarkets = sumNullable(segments.map((segment) => segment.marketCount))
@@ -166,14 +193,42 @@ export function ProfileMetrics({
 			</div>
 
 			<div className="flex flex-col">
-				{volumeBySegment.map((segment) => (
-					<MetricRow
-						key={segment.label}
-						label={`${segment.label} volume`}
-						tooltip={segment.tooltip}
-						value={formatUsd(segment.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-					/>
-				))}
+				{volumeBySegment.map((segment) => {
+					const nvol = nvolRow(segment.segment)
+					const value = formatUsd(segment.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'
+					// The normalized figure hangs off THIS segment's reported volume with the same
+					// tree connector the protocol parent/child switcher draws (vertical bar + tick).
+					return (
+						<Fragment key={segment.label}>
+							<MetricRow label={`${segment.label} volume`} tooltip={VOLUME_TOOLTIPS[segment.segment]} value={value} />
+							{nvol ? (
+								<SubMetricRow
+									className="relative pl-6"
+									label={
+										<>
+											<span aria-hidden className="absolute top-0 left-2 h-1/2 w-0.5 bg-border-medium" />
+											<span
+												aria-hidden
+												className="absolute top-1/2 left-2 h-0.5 w-3 -translate-y-1/2 bg-border-medium"
+											/>
+											Normalized
+										</>
+									}
+									tooltip={nvol.tooltip}
+									valueClassName="mono-sm ml-auto"
+									value={
+										<>
+											{formatUsd(nvol.normalized, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+											{nvol.discount ? (
+												<span className="ms-1.5 label-xs text-tertiary">{nvol.discount} below reported</span>
+											) : null}
+										</>
+									}
+								/>
+							) : null}
+						</Fragment>
+					)
+				})}
 				{supportsOpenInterest
 					? openInterestBySegment.map((segment) => (
 							<MetricRow
@@ -201,7 +256,12 @@ export function ProfileMetrics({
 				{profile.execution?.costToTradeBps != null ? (
 					<MetricRow
 						label="Cost to trade"
-						tooltip="All-in cost of a $10k market order, from tick-level fills on the perp basket. Details on the Execution tab."
+						tooltip={
+							<>
+								What a $10k market order really costs here: taker fee plus half the spread, measured from actual fills.
+								Details on the Execution tab. <LearnMoreLink />
+							</>
+						}
 						value={`${formatUsd(profile.execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /$10k`}
 					/>
 				) : null}

@@ -69,6 +69,10 @@ export const getStaticProps = withPerformanceLogging(
 					getTokenMarketSummary: (geckoId) =>
 						import('~/containers/Tokens/queries.server').then(({ getTokenMarketSummaryByGeckoId }) =>
 							getTokenMarketSummaryByGeckoId(geckoId)
+						),
+					resolveExchangeProfile: (defillamaSlug) =>
+						import('~/containers/Markets/server/dataset.server').then(({ resolveExchangeByDefillamaCexSlug }) =>
+							resolveExchangeByDefillamaCexSlug(defillamaSlug)
 						)
 				})
 			)

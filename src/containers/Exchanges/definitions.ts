@@ -86,19 +86,21 @@ export const exchangeDefinitions = {
 			label: 'Links',
 			description: 'Reserves page, DefiLlama profile, and website.'
 		},
+		// Header tooltips are plain strings, so the docs pointer is spelled out rather than linked.
 		execCostToTrade: {
 			label: 'Cost to trade $10k',
-			description: 'Taker fee plus half the spread crossed, from real fills. VIP tiers lower the fee part.'
+			description:
+				'What a $10k market order really costs: taker fee plus half the spread, measured from actual fills. Learn more at docs.llama.fi/exchanges/methodology'
 		},
 		execSlippage10k: {
 			label: 'Slippage',
 			description:
-				'What fills paid beyond mid at $10k and $100k, the book’s prediction first. A wide gap means depth moves before fills land.'
+				'How far fills moved the price at $10k and $100k, with what the order book predicted first. Learn more at docs.llama.fi/exchanges/methodology'
 		},
 		execMarkout1m: {
 			label: 'Markout',
 			description:
-				'Where price went 1 and 5 minutes after a fill, per $10k. Positive (red) is worse: price kept moving against the taker.'
+				'Where the price went 1 and 5 minutes after a fill, per $10k. Positive (red) means it kept moving against the buyer. Learn more at docs.llama.fi/exchanges/methodology'
 		},
 		kind: {
 			label: 'Type',

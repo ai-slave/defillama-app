@@ -197,6 +197,25 @@ function normalizedVolumeNote(nvol: ExchangeNormalizedVolume | null): string | u
 	return `${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported${nvol.flag ? ` · ${nvol.flag}` : ''}`
 }
 
+/** The gap to reported for the cell itself. Unsigned: normalized is never above reported,
+ *  so "below" is implied; the tooltip spells it out. */
+function normalizedVolumeGap(nvol: ExchangeNormalizedVolume | null | undefined): string | undefined {
+	if (!nvol || !(nvol.discountFraction > 0)) return undefined // no gap → no annotation
+	return formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? undefined
+}
+
+/** A money value with a muted annotation after it (e.g. the normalized-volume gap). */
+function annotatedMetric(value: string, annotation: string | undefined) {
+	return annotation ? (
+		<>
+			{value}
+			<span className="ms-1 label-xs text-tertiary">{annotation}</span>
+		</>
+	) : (
+		value
+	)
+}
+
 /**
  * Normalized volume for a segment, falling back to reported volume when there is no
  * book to normalize against (nvol is dropped entirely for a segment we captured no
@@ -231,6 +250,8 @@ function segmentColumn(spec: {
 	note?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
 	suffix?: (row: ExchangeDirectoryRowModel) => string
+	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
+	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
 	headerClassName?: string
 }) {
@@ -240,7 +261,10 @@ function segmentColumn(spec: {
 		cell: ({ row, getValue }) => {
 			if (!row.original.segments[spec.segment]) return <UnsupportedMetric />
 			return linkedMetric(
-				`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
+				annotatedMetric(
+					`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
+					spec.annotation?.(row.original)
+				),
 				spec.note?.(row.original)
 			)
 		},
@@ -280,6 +304,8 @@ function perpColumn(spec: {
 	extraNote?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** Marks a value that is not what the header says, e.g. a reported-volume fallback. */
 	suffix?: (row: ExchangeDirectoryRowModel) => string
+	/** Muted text after the value, e.g. the normalized-volume gap to reported. */
+	annotation?: (row: ExchangeDirectoryRowModel) => string | undefined
 	/** For labels wider than the default 112px column (see COLUMN_WIDTHS.md). */
 	headerClassName?: string
 }) {
@@ -307,7 +333,10 @@ function perpColumn(spec: {
 				)
 				.join(' · ')
 			return linkedMetric(
-				`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
+				annotatedMetric(
+					`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
+					spec.annotation?.(row.original)
+				),
 				[breakdown, spec.extraNote?.(row.original)].filter(Boolean).join(' · ')
 			)
 		},
@@ -591,6 +620,8 @@ export function buildDirectoryColumns(
 			definition: definitions.spotNormalizedVolume,
 			value: (row) => normalizedOrReported(row, 'spot').value ?? undefined,
 			suffix: (row) => (fellBackWithBook(row, ['spot']) ? '*' : ''),
+			annotation: (row) =>
+				normalizedOrReported(row, 'spot').reported ? undefined : normalizedVolumeGap(row.normalizedVolume?.spot),
 			note: (row) =>
 				normalizedOrReported(row, 'spot').reported
 					? REPORTED_NOTE
@@ -602,6 +633,8 @@ export function buildDirectoryColumns(
 			pick: (row, segment) => normalizedOrReported(row, segment).value,
 			headerClassName: 'w-[128px] min-w-[128px]',
 			suffix: (row) => (fellBackWithBook(row, ALL_PERP_SEGMENTS) ? '*' : ''),
+			annotation: (row) =>
+				fellBackWithBook(row, ALL_PERP_SEGMENTS) ? undefined : normalizedVolumeGap(row.normalizedVolume?.linear_perp),
 			extraNote: (row) =>
 				fellBackWithBook(row, ALL_PERP_SEGMENTS)
 					? REPORTED_NOTE
@@ -718,6 +751,7 @@ export function buildDirectoryColumns(
 						<span className="underline decoration-dotted">
 							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 						</span>
+						{annotatedMetric('', normalizedVolumeGap(nvol))}
 					</Tooltip>
 				) : (
 					'–'

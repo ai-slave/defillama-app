@@ -36,8 +36,7 @@ describe('research chart presentation', () => {
 			'normalized-types',
 			'normalized-segments',
 			'survival-spot-exchanges',
-			'survival-usd-exchanges',
-			'survival-coin-exchanges'
+			'survival-usd-exchanges'
 		])
 		expect(getResearchPresentation('nvol', 'survival-usd-exchanges')).toMatchObject({
 			metric: 'survival-ratio',
@@ -71,7 +70,7 @@ describe('research chart presentation', () => {
 
 	test('keeps URL-selected views within the metric that supports them', () => {
 		expect(resolveResearchView('depth', 'btc-depth')).toBe('btc-depth')
-		expect(resolveResearchView('nvol', 'survival-coin-exchanges')).toBe('survival-coin-exchanges')
+		expect(resolveResearchView('nvol', 'survival-usd-exchanges')).toBe('survival-usd-exchanges')
 		expect(resolveResearchView('volume', 'btc-depth')).toBe('spot-exchanges')
 		expect(resolveResearchView('oi', 'survival-spot-exchanges')).toBe('open-interest-base-share')
 	})

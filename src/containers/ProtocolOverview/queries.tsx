@@ -8,6 +8,7 @@ import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
+import type { CexExchangeSlugIndexEntry } from '~/containers/Markets/server/dataset.index'
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
@@ -141,6 +142,7 @@ export const getProtocolOverviewPageData = async ({
 	yieldsSnapshot,
 	includeFaq = true,
 	getTokenMarketSummary = null,
+	resolveExchangeProfile = null,
 	researchSponsorEntitySlug
 }: {
 	protocolId: string
@@ -154,6 +156,7 @@ export const getProtocolOverviewPageData = async ({
 	yieldsSnapshot: YieldsSnapshot | null
 	includeFaq?: boolean
 	getTokenMarketSummary?: ((geckoId: string) => Promise<TokenMarketSummary | null>) | null
+	resolveExchangeProfile?: ((defillamaSlug: string) => Promise<CexExchangeSlugIndexEntry | null>) | null
 	researchSponsorEntitySlug?: string
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
@@ -193,6 +196,23 @@ export const getProtocolOverviewPageData = async ({
 				return data
 			}
 		}
+	)
+	// Exchange profile for this protocol/CEX page, if the markets directory lists it (mirrors
+	// tokenPageRoute). The directory links a venue to ONE DefiLlama slug, usually the parent
+	// (reya), while the reader may be on a child page (reya-perps): try the page's own slug,
+	// then its parent's.
+	const exchangeProfileRoutePromise = optionalProtocolData<string | null>(
+		'exchange-profile',
+		async () => {
+			if (!resolveExchangeProfile) return null
+			const own = await resolveExchangeProfile(currentProtocolSlug)
+			if (own) return `/exchange/${own.exchange}`
+			const data = await protocolDataPromise
+			const parentName = data.parentProtocol ? data.otherProtocols?.[0] : null
+			const parent = parentName ? await resolveExchangeProfile(slug(parentName)) : null
+			return parent ? `/exchange/${parent.exchange}` : null
+		},
+		null
 	)
 	const tokenMarketSummaryPromise = protocolDataPromise.then((data) => {
 		const geckoId = data.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
@@ -827,6 +847,7 @@ export const getProtocolOverviewPageData = async ({
 		description: protocolData.description ?? '',
 		website: protocolData.referralUrl?.trim() || protocolData.url.trim() || null,
 		isWebsiteReferral: Boolean(protocolData.referralUrl?.trim()),
+		exchangeProfileRoute: await exchangeProfileRoutePromise,
 		twitter: protocolData.twitter ?? null,
 		safeHarbor: currentProtocolMetadata.safeHarbor ?? false,
 		github: protocolData.github ?? null,

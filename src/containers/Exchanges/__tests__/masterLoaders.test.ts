@@ -43,6 +43,8 @@ beforeEach(() => {
 	mocks.executionQuality.mockRejectedValue(new Error('unavailable'))
 	mocks.qualityRanks.mockRejectedValue(new Error('unavailable'))
 	mocks.rankMethodology.mockRejectedValue(new Error('unavailable'))
+	// the profile's directory read (venue-level nvol) is fail-soft too; directory tests override this
+	mocks.directory.mockRejectedValue(new Error('unavailable'))
 })
 
 describe('master page loaders', () => {
@@ -127,7 +129,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).toHaveBeenCalledWith(
 			{ exchange: 'venue' },
 			{ display_name: 'Venue', profile_mode: 'markets' },
-			{ execution: null, ranks: null, methodology: null }
+			{ execution: null, ranks: null, methodology: null, directory: null }
 		)
 	})
 
@@ -145,7 +147,12 @@ describe('master page loaders', () => {
 		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
 		await loadMasterExchangeProfile('venue')
 
-		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution, ranks, methodology: null })
+		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, {
+			execution,
+			ranks,
+			methodology: null,
+			directory: null
+		})
 	})
 
 	test('keeps ranking available when only execution fails', async () => {
@@ -162,7 +169,12 @@ describe('master page loaders', () => {
 		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
 		await loadMasterExchangeProfile('venue')
 
-		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution: null, ranks, methodology })
+		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, {
+			execution: null,
+			ranks,
+			methodology,
+			directory: null
+		})
 	})
 
 	test('maps a metadata-only profile without requesting its index', async () => {

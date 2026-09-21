@@ -703,7 +703,8 @@ export function mapExchangePair(
 							capturedBook != null && capturedBook > 0
 								? (pair.nvol.active_liquidity_measured ?? pair.nvol.active_liquidity) / capturedBook
 								: null,
-						status: pair.nvol.status
+						status: pair.nvol.status,
+						cap: pair.nvol.cap ?? null
 					}
 				: null
 	}
@@ -1021,6 +1022,24 @@ export interface MasterProfileExtras {
 	execution: MasterExecutionQualityResponse | null
 	ranks: MasterQualityRanksResponse | null
 	methodology: MasterRankMethodologyResponse | null
+	/** Directory row source for the venue-level normalized volume; index.json only carries it per pair. */
+	directory?: MasterDirectoryResponse | null
+}
+
+/** Venue-level normalized volume per segment (null segments are dropped). index.json carries it
+ *  since 2026-09-21; the directory row is the fallback for caches written before that. */
+function mapProfileNormalizedVolume(
+	index: MasterExchangeIndexResponse,
+	directory: MasterDirectoryResponse | null | undefined
+): ExchangeProfileModel['normalizedVolume'] {
+	const source = index.nvol ?? directory?.venues.find((candidate) => candidate.slug === index.slug)?.nvol
+	if (!source) return {}
+	const out: NonNullable<ExchangeProfileModel['normalizedVolume']> = {}
+	for (const segment of EXCHANGE_SEGMENTS) {
+		const nvol = mapNormalizedVolume(source[segment] ?? null)
+		if (nvol) out[segment] = nvol
+	}
+	return out
 }
 
 export function mapMasterProfile(
@@ -1082,6 +1101,7 @@ export function mapMasterProfile(
 		raises: [],
 		reserves: null,
 		segments,
+		normalizedVolume: mapProfileNormalizedVolume(index, extras.directory),
 		metadata: mapMasterProfileMetadata(metadata)
 	}
 }
@@ -1493,8 +1513,7 @@ export function mapMasterResearchReport(
 				chart: researchChart(part, response, 'normalized-segments', segmentLines(decoded, dayCount))
 			},
 			survivalView('survival-spot-exchanges', CHART_SEGMENTS[0]),
-			survivalView('survival-usd-exchanges', CHART_SEGMENTS[1]),
-			survivalView('survival-coin-exchanges', CHART_SEGMENTS[2])
+			survivalView('survival-usd-exchanges', CHART_SEGMENTS[1])
 		]
 	}
 }

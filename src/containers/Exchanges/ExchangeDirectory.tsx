@@ -1,6 +1,7 @@
 import { DirectoryHeader } from './DirectoryHeader'
 import { DirectoryOverview } from './DirectoryOverview'
 import { DirectoryTable } from './DirectoryTable'
+import { EXCHANGES_METHODOLOGY_URL, LIST_YOUR_EXCHANGE_URL } from './docsLinks'
 import type { useExchangeCountry } from './ExchangeCountrySelect'
 import type { ExchangeDirectoryModel, ExchangeDirectoryRowModel, ExchangeOverviewChartModel } from './models'
 import { selectVenueDestination } from './venueLinks'
@@ -76,6 +77,27 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				executionFillBasket={directory.executionFillBasket}
 				onCountryChange={countryState.setCountry}
 			/>
+			<p className="px-1 pb-2 body-sm text-tertiary">
+				Exchange missing?{' '}
+				<a
+					href={LIST_YOUR_EXCHANGE_URL}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-link hover:underline"
+				>
+					List your exchange
+				</a>
+				. How every number here is built:{' '}
+				<a
+					href={EXCHANGES_METHODOLOGY_URL}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-link hover:underline"
+				>
+					Methodology
+				</a>
+				.
+			</p>
 		</div>
 	)
 }

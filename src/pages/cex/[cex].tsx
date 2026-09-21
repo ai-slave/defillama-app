@@ -46,7 +46,11 @@ export const getStaticProps = withPerformanceLogging(
 			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
 			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
 			researchSponsorEntitySlug: cexRoute.canonicalSlug,
-			yieldsSnapshot
+			yieldsSnapshot,
+			resolveExchangeProfile: (defillamaSlug) =>
+				import('~/containers/Markets/server/dataset.server').then(({ resolveExchangeByDefillamaCexSlug }) =>
+					resolveExchangeByDefillamaCexSlug(defillamaSlug)
+				)
 		})
 
 		if (!data) {

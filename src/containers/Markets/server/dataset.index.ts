@@ -12,12 +12,15 @@ export function buildTokenMarketsGeckoIdIndex(listings: TokenExchangeListingsRes
 	return index
 }
 
+/** DefiLlama slug (cex or protocol page) → exchange profile slug. Regional arms
+ *  (`secondary`) never win the key; the first primary venue for a slug does. */
 export function buildCexExchangeSlugIndex(directory: MasterDirectoryResponse): CexExchangeSlugIndex {
 	const index = Object.create(null) as CexExchangeSlugIndex
 	for (const venue of directory.venues) {
 		const defillama = venue.links.defillama
-		if (venue.type !== 'cex' || !defillama || defillama.type !== 'cex') continue
+		if (!defillama || venue.secondary) continue
 		const key = slug(defillama.slug)
+		if (Object.hasOwn(index, key)) continue
 		index[key] = { exchange: venue.slug, defillama_slug: defillama.slug }
 	}
 	return index

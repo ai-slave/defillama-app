@@ -23,7 +23,7 @@ export type ExchangeResearchRange = (typeof RESEARCH_RANGES)[number]
 export type MicaFilter = 'all' | 'spot' | 'perp' | 'fiat'
 export type ProfileTab = 'markets' | 'execution' | 'reserves' | 'information' | 'history'
 export type ProfileReservesView = 'assets' | 'stablecoins'
-export type VenueHistoryMetric = 'volume' | 'oi' | 'depth' | 'nvol' | 'markets'
+export type VenueHistoryMetric = 'volume' | 'oi' | 'depth' | 'markets'
 export type TokenFinderMode = 'all' | 'any'
 
 export const EXCHANGES_QUERY_KEYS = {
@@ -189,9 +189,7 @@ export function withCountryParam(href: string, country: string | null): string {
 
 export function getVenueHistoryMetric(query: ParsedUrlQuery): VenueHistoryMetric | null {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.venueHistory])
-	return value === 'volume' || value === 'oi' || value === 'depth' || value === 'nvol' || value === 'markets'
-		? value
-		: null
+	return value === 'volume' || value === 'oi' || value === 'depth' || value === 'markets' ? value : null
 }
 
 const RESEARCH_VIEW_QUERY_KEYS: Record<ExchangeResearchPart, string> = {
@@ -221,7 +219,6 @@ const RESEARCH_VIEWS: ReadonlyArray<ExchangeResearchView> = [
 	'normalized-segments',
 	'survival-spot-exchanges',
 	'survival-usd-exchanges',
-	'survival-coin-exchanges',
 	'depth-spot-exchanges',
 	'depth-usd-exchanges',
 	'depth-coin-exchanges',

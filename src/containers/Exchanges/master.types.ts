@@ -476,6 +476,8 @@ export interface MasterPairNormalizedVolume {
 	daily_vol: number
 	coverage: number
 	status: 'covered' | 'estimated' | 'no_depth'
+	/** Which cap set `normalized`; absent on payloads written before 2026-09-21. */
+	cap?: 'depth' | 'oi' | null
 	category: string | null
 	flag: string | null
 }
@@ -547,6 +549,8 @@ export interface MasterExchangeIndexResponse {
 	freshness: MasterFreshness
 	depth_bands: Array<number>
 	last_updated: string
+	/** Venue-level normalized volume per segment, same shape as the directory row; absent on older files. */
+	nvol?: Record<MasterSegment, MasterSegmentNormalizedVolume | null>
 }
 
 // --- exchanges/{slug}/metadata.json -----------------------------------------------

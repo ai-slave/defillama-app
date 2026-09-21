@@ -19,6 +19,7 @@ import { hasExchangeInformation } from './MetadataGroups'
 import { EXCHANGE_SEGMENTS, type ExchangeOverviewChartModel, type ExchangeProfileModel } from './models'
 import { PairTable } from './PairTable'
 import { ProfileExecution } from './ProfileExecution'
+import { ProfileHighlights } from './ProfileHighlights'
 import { ProfileHistory } from './ProfileHistory'
 import { ProfileIdentity } from './ProfileIdentity'
 import { ProfileMetrics } from './ProfileMetrics'
@@ -171,12 +172,13 @@ function MarketsExchangeProfile({
 					countrySegments={countrySegments}
 					showGlobalLabel={countryView.status !== 'global'}
 				/>
-				<div className="xl:col-[2/-1]">
+				<div className="flex flex-col gap-2 xl:col-[2/-1]">
 					<VenueChart
 						exchange={profile.slug}
 						loadSeries={loadSeries}
 						showGlobalDataNotice={countryView.status !== 'global'}
 					/>
+					<ProfileHighlights profile={profile} />
 				</div>
 			</div>
 

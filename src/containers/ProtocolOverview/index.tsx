@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import { useGetTokenPrice } from '~/api/client'
 import { Bookmark } from '~/components/Bookmark'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
@@ -174,6 +175,13 @@ function ProtocolHeader({
 					<Bookmark size="md" readableName={props.name} />
 				</span>
 			</Tag>
+			{props.exchangeProfileRoute ? (
+				// Sits directly under the title, like the token page's issuer line: this protocol
+				// is a tracked venue, and its markets, liquidity and execution live on that page.
+				<BasicLink href={props.exchangeProfileRoute} className="-mt-4 w-fit label-md text-link hover:underline">
+					View exchange stats
+				</BasicLink>
+			) : null}
 			{primaryMetricOverride ? (
 				<PrimaryValue
 					hasTvl

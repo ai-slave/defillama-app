@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import { LearnMoreLink } from './docsLinks'
 import type { ExchangeExecutionFeedHealth, ExchangeExecutionModel, ExchangeExecutionPairModel } from './models'
 
 // Execution metrics are one-way bps figures; 1bp of $10k is exactly $1, so bps values
@@ -337,7 +338,9 @@ export function ProfileExecution({ execution }: { execution: ExchangeExecutionMo
 	return (
 		<div className="flex flex-col gap-2">
 			<Card padding="sm">
-				<p className="body-md">{summarySentences(execution).join(' ')}</p>
+				<p className="body-md">
+					{summarySentences(execution).join(' ')} <LearnMoreLink />
+				</p>
 			</Card>
 			<Card padding="none">
 				{/* Eleven columns of paired figures: a deliberate 12px compact recipe (headers and
@@ -378,7 +381,7 @@ export function ProfileExecution({ execution }: { execution: ExchangeExecutionMo
 				<p className="border-t border-subtle p-3 body-sm text-tertiary">
 					Slippage is in dollars at each trade size: predicted first (the book&rsquo;s promise), then what fills
 					actually cost. Markouts are dollars per $10k traded; lower is better. Fill prices exclude trading fees, which
-					venues charge separately after the fill. n/a means not measured, never zero.
+					venues charge separately after the fill. n/a means not measured, never zero. <LearnMoreLink />
 				</p>
 			</Card>
 			{execution.feed ? <FeedHealth feed={execution.feed} /> : null}

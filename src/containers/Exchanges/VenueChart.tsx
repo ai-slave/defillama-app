@@ -39,6 +39,8 @@ interface MetricSeriesSpec {
 	key: string
 	label: string
 	color: string
+	/** Overrides the tab's stack so two bar groups can sit side by side (reported vs normalized). */
+	stack?: string
 }
 
 interface MetricTab {
@@ -62,10 +64,20 @@ const VENUE_TABS: Array<MetricTab> = [
 		valueSymbol: '$',
 		type: 'bar',
 		stack: 'volume',
+		// Normalized volume rides beside reported as a lighter stack; its history is shorter,
+		// and a hallmark marks the first day it exists (see VenueChartView). COIN perps have
+		// no normalized-volume band, so no twin.
 		series: [
 			{ key: 'spot_volume', label: 'Spot', color: SEGMENT_COLORS.spot },
 			{ key: 'linear_perp_volume', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
+			{ key: 'inverse_perp_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse },
+			{ key: 'spot_normalized_volume', label: 'Spot normalized', color: `${SEGMENT_COLORS.spot}66`, stack: 'nvol' },
+			{
+				key: 'linear_perp_normalized_volume',
+				label: 'USD Perps normalized',
+				color: `${SEGMENT_COLORS.linear}66`,
+				stack: 'nvol'
+			}
 		]
 	},
 	{
@@ -87,18 +99,6 @@ const VENUE_TABS: Array<MetricTab> = [
 			{ key: 'spot_depth_2pct', label: 'Spot', color: SEGMENT_COLORS.spot },
 			{ key: 'linear_perp_depth_2pct', label: 'USD Perps', color: SEGMENT_COLORS.linear },
 			{ key: 'inverse_perp_depth_2pct', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
-		]
-	},
-	{
-		id: 'nvol',
-		label: 'Normalized vol',
-		valueSymbol: '$',
-		type: 'bar',
-		stack: 'nvol',
-		series: [
-			{ key: 'spot_normalized_volume', label: 'Spot', color: SEGMENT_COLORS.spot },
-			{ key: 'linear_perp_normalized_volume', label: 'USD Perps', color: SEGMENT_COLORS.linear },
-			{ key: 'inverse_perp_normalized_volume', label: 'COIN Perps', color: SEGMENT_COLORS.inverse }
 		]
 	},
 	{
@@ -189,10 +189,30 @@ function VenueChartView({
 	const active = tabs.find((tab) => tab.id === requestedMetric) ?? tabs[0]
 	// Same collection notes as the listing: a coverage step looks like a market move on
 	// a venue chart too.
-	const hallmarks = React.useMemo(
-		() => collectionHallmarks(hallmarkMetricsForKeys((active?.series ?? []).map(({ spec }) => spec.key))),
-		[active]
-	)
+	const hallmarks = React.useMemo(() => {
+		const series = active?.series ?? []
+		const marks = collectionHallmarks(hallmarkMetricsForKeys(series.map(({ spec }) => spec.key)))
+		// Normalized volume has a shorter history than reported volume: mark the first day it
+		// exists so the lighter bars appearing mid-chart read as our coverage, not a market move.
+		// Only when it starts strictly after reported — a venue listed mid-window has both
+		// series begin together, and that is a listing, not a coverage step.
+		const firstIndex = (values: ReadonlyArray<number | null>) => values.findIndex((value) => value !== null)
+		const firstReported = Math.min(
+			...series
+				.filter(({ spec }) => spec.key.endsWith('_volume') && !spec.key.includes('normalized'))
+				.map(({ values }) => firstIndex(values))
+				.filter((index) => index >= 0)
+		)
+		const firstNormalized = series
+			.filter(({ spec }) => spec.key.endsWith('_normalized_volume'))
+			.map(({ values }) => firstIndex(values))
+			.filter((index) => index > 0 && index > firstReported)
+		if (firstNormalized.length > 0) {
+			const day = chart.days[Math.min(...firstNormalized)]
+			if (day != null) marks.push([day, 'Normalized volume starts'])
+		}
+		return marks.sort((a, b) => a[0] - b[0])
+	}, [active, chart.days])
 	const chartModel = React.useMemo(
 		() =>
 			buildAlignedCartesianChartModel(
@@ -201,7 +221,7 @@ function VenueChartView({
 					name: spec.label,
 					type: active?.type ?? 'line',
 					color: spec.color,
-					...(active?.type === 'bar' && active.stack ? { stack: active.stack } : null),
+					...(active?.type === 'bar' && (spec.stack ?? active.stack) ? { stack: spec.stack ?? active.stack } : null),
 					values
 				}))
 			),

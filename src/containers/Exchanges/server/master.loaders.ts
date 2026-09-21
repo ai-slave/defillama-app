@@ -113,5 +113,8 @@ export async function loadMasterExchangeProfile(exchange: string): Promise<Excha
 		fetchMasterQualityRanksFromNetwork().catch(() => null),
 		fetchMasterRankMethodologyFromNetwork().catch(() => null)
 	])
-	return mapMasterProfile(index, metadata, { execution, ranks, methodology })
+	// Venue-level normalized volume ships on index.json since 2026-09-21; the directory row
+	// is the fallback for a cache written before that, fetched only when needed.
+	const directory = index.nvol ? null : await fetchMasterDirectoryFromNetwork().catch(() => null)
+	return mapMasterProfile(index, metadata, { execution, ranks, methodology, directory })
 }

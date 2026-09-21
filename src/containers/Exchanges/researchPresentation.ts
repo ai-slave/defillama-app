@@ -237,17 +237,8 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			title: 'Normalized / reported USD perp volume · Exchanges',
 			description: `Daily normalized USD perp volume divided by reported, by exchange. ${LINEAR_PERPS} ${SURVIVAL_OTHER}`,
 			valueSymbol: '%'
-		},
-		{
-			id: 'survival-coin-exchanges',
-			label: 'Survival · COIN Perps',
-			metric: 'survival-ratio',
-			segment: 'inverse_perp',
-			grouping: 'exchange',
-			title: 'Normalized / reported COIN perp volume · Exchanges',
-			description: `Daily normalized COIN perp volume divided by reported, by exchange. ${INVERSE_PERPS} ${SURVIVAL_OTHER}`,
-			valueSymbol: '%'
 		}
+		// No COIN-perp survival view: normalized volume is not computed for inverse perps.
 	]
 }
 

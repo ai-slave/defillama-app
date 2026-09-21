@@ -5,6 +5,7 @@ import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
+import { ExchangeDocsLinks } from './docsLinks'
 import type { ExchangeDirectorySummaryModel, ExchangeVolumeSplit } from './models'
 
 function VolumeKindSection({ label, tooltip, split }: { label: string; tooltip: string; split: ExchangeVolumeSplit }) {
@@ -117,6 +118,8 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 					value={`${summary.trackedVenueCount} tracked · ${summary.venueCount} listed`}
 				/>
 			</div>
+
+			<ExchangeDocsLinks className="mt-auto" />
 		</Card>
 	)
 }
