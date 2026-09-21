@@ -36,11 +36,13 @@ export function buildRewardsPageData(
 	entries: Array<RewardsApiRecord>,
 	metadata: Record<string, IProtocolMetadata>,
 	popularity: RewardsPopularity
-): Pick<RewardsPageProps, 'programs'> {
+): Pick<RewardsPageProps, 'programs' | 'popularityOrder' | 'featuredCardIds'> {
 	const programs: Array<RewardProgram> = []
 	const missingMetadata = new Set<string>()
 	const featuredRankByProgramId = new Map<string, number>()
 	const programIdByFeaturedRank = new Map<number, string>()
+	const cardRankByProgramId = new Map<string, number>()
+	const programIdByCardRank = new Map<number, string>()
 	for (const entry of entries) {
 		// The catalog and page deploy independently; omitted paths mean an old producer, not an unresolved project.
 		if (entry.project_path === undefined) {
@@ -50,19 +52,22 @@ export function buildRewardsPageData(
 		}
 		// Publication is independent of lifecycle: public ended programs remain searchable.
 		if (entry.publish_status !== 'Published' || entry.visibility !== 'Public') continue
-		if (entry.featured_rank !== undefined) {
-			const featuredRank = Number(entry.featured_rank)
-			if (!POSITIVE_INTEGER.test(entry.featured_rank) || !Number.isSafeInteger(featuredRank)) {
-				throw new Error(`Rewards program ${entry.program_id} has invalid featured_rank ${entry.featured_rank}`)
+		for (const [key, ranks, ids] of [
+			['featured_rank', featuredRankByProgramId, programIdByFeaturedRank],
+			['featured_rank_card', cardRankByProgramId, programIdByCardRank]
+		] as const) {
+			const value = entry[key]
+			if (value === undefined) continue
+			const rank = Number(value)
+			if (!POSITIVE_INTEGER.test(value) || !Number.isSafeInteger(rank)) {
+				throw new Error(`Rewards program ${entry.program_id} has invalid ${key} ${value}`)
 			}
-			const rankedProgramId = programIdByFeaturedRank.get(featuredRank)
+			const rankedProgramId = ids.get(rank)
 			if (rankedProgramId) {
-				throw new Error(
-					`Rewards programs ${rankedProgramId} and ${entry.program_id} share featured_rank ${featuredRank}`
-				)
+				throw new Error(`Rewards programs ${rankedProgramId} and ${entry.program_id} share ${key} ${rank}`)
 			}
-			featuredRankByProgramId.set(entry.program_id, featuredRank)
-			programIdByFeaturedRank.set(featuredRank, entry.program_id)
+			ranks.set(entry.program_id, rank)
+			ids.set(rank, entry.program_id)
 		}
 		const protocol = entry.defillama_id ? metadata[entry.defillama_id] : undefined
 		if (entry.defillama_id && !protocol) missingMetadata.add(entry.defillama_id)
@@ -98,13 +103,6 @@ export function buildRewardsPageData(
 	}
 	// Counts and editor ranks stay server-side. Unmeasured projects follow measured zeroes; ties are alphabetical.
 	programs.sort((a, b) => {
-		const aFeaturedRank = featuredRankByProgramId.get(a.programId)
-		const bFeaturedRank = featuredRankByProgramId.get(b.programId)
-		if (aFeaturedRank !== undefined || bFeaturedRank !== undefined) {
-			if (aFeaturedRank === undefined) return 1
-			if (bFeaturedRank === undefined) return -1
-			return aFeaturedRank - bFeaturedRank
-		}
 		const aViews = a.projectPath ? (popularity.viewsByPath[a.projectPath] ?? -1) : -1
 		const bViews = b.projectPath ? (popularity.viewsByPath[b.projectPath] ?? -1) : -1
 		return (
@@ -114,12 +112,29 @@ export function buildRewardsPageData(
 			a.programId.localeCompare(b.programId)
 		)
 	})
+	const popularityOrder = programs.map((program) => program.programId)
+	const featuredCardIds = programs
+		.filter((program) => cardRankByProgramId.has(program.programId))
+		.sort((a, b) => cardRankByProgramId.get(a.programId)! - cardRankByProgramId.get(b.programId)!)
+		.slice(0, 3)
+		.map((program) => program.programId)
+	programs.sort((a, b) => {
+		const aFeaturedRank = featuredRankByProgramId.get(a.programId)
+		const bFeaturedRank = featuredRankByProgramId.get(b.programId)
+		if (aFeaturedRank !== undefined || bFeaturedRank !== undefined) {
+			if (aFeaturedRank === undefined) return 1
+			if (bFeaturedRank === undefined) return -1
+			return aFeaturedRank - bFeaturedRank
+		}
+		return 0
+	})
+
 	if (missingMetadata.size > 0) {
 		recordDomainEvent('rewards.missing_metadata', 'warn', 'rewards', 'Rewards programs missing protocol metadata', {
 			defillama_ids: [...missingMetadata]
 		})
 	}
-	return { programs }
+	return { programs, popularityOrder, featuredCardIds }
 }
 
 export async function getRewardsPageData(): Promise<RewardsPageProps> {
@@ -128,9 +143,5 @@ export async function getRewardsPageData(): Promise<RewardsPageProps> {
 		import('~/utils/metadata'),
 		fetchJson<RewardsPopularity>(`${DATASETS_SERVER_URL}/rewards-popularity.json`)
 	])
-	const analyticsMode = process.env.REWARDS_ANALYTICS_MODE ?? 'off'
-	if (analyticsMode !== 'off' && analyticsMode !== 'test' && analyticsMode !== 'production') {
-		throw new Error('REWARDS_ANALYTICS_MODE must be off, test, or production')
-	}
-	return { ...buildRewardsPageData(entries, metadata.protocolMetadata, popularity), analyticsMode }
+	return buildRewardsPageData(entries, metadata.protocolMetadata, popularity)
 }

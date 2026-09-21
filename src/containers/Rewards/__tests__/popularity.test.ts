@@ -112,3 +112,70 @@ describe('Rewards popularity boundary', () => {
 		).toThrow('Rewards programs first and second share featured_rank 1')
 	})
 })
+
+describe('Rewards card experiment data', () => {
+	test('keeps both full table orders and selects at most three independent card ranks', () => {
+		const entries = [
+			apiRecord({
+				program_id: 'featured',
+				protocol: 'Featured',
+				featured_rank: '1',
+				featured_rank_card: '4',
+				project_path: null
+			}),
+			apiRecord({ program_id: 'card2', protocol: 'Card2', featured_rank_card: '2', project_path: '/protocol/zero' }),
+			apiRecord({
+				program_id: 'popular',
+				protocol: 'Popular',
+				featured_rank_card: '3',
+				project_path: '/protocol/popular'
+			}),
+			apiRecord({ program_id: 'card1', protocol: 'Card1', featured_rank_card: '1', project_path: null }),
+			apiRecord({ program_id: 'hidden', visibility: 'Hidden', featured_rank_card: '1' }),
+			apiRecord({ program_id: 'draft', publish_status: 'Draft', featured_rank_card: '1' })
+		]
+		const result = buildRewardsPageData(
+			entries,
+			{},
+			{ ...rankings, viewsByPath: { '/protocol/popular': 10, '/protocol/zero': 0 } }
+		)
+		expect(result.programs.map((p) => p.programId)).toEqual(['featured', 'popular', 'card2', 'card1'])
+		expect(result.popularityOrder).toEqual(['popular', 'card2', 'card1', 'featured'])
+		expect(result.featuredCardIds).toEqual(['card1', 'card2', 'popular'])
+	})
+
+	test('allows zero or fewer than three cards without changing either table', () => {
+		const entries = [apiRecord({ program_id: 'one' }), apiRecord({ program_id: 'two', featured_rank_card: '8' })]
+		expect(buildRewardsPageData(entries, {}, rankings).featuredCardIds).toEqual(['two'])
+		expect(buildRewardsPageData([entries[0]!], {}, rankings).featuredCardIds).toEqual([])
+	})
+
+	test.each(['0', '-1', '1.5', '', 'abc'])('rejects malformed editor card rank %j', (featured_rank_card) => {
+		expect(() => buildRewardsPageData([apiRecord({ featured_rank_card })], {}, rankings)).toThrow(
+			'invalid featured_rank_card'
+		)
+	})
+
+	test('rejects duplicate card ranks independently of table ranks', () => {
+		expect(() =>
+			buildRewardsPageData(
+				[
+					apiRecord({ program_id: 'one', featured_rank_card: '1' }),
+					apiRecord({ program_id: 'two', featured_rank_card: '1' })
+				],
+				{},
+				rankings
+			)
+		).toThrow('share featured_rank_card 1')
+		expect(
+			buildRewardsPageData(
+				[
+					apiRecord({ program_id: 'one', featured_rank: '1' }),
+					apiRecord({ program_id: 'two', featured_rank_card: '1' })
+				],
+				{},
+				rankings
+			).featuredCardIds
+		).toEqual(['two'])
+	})
+})

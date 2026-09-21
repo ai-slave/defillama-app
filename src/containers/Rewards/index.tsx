@@ -3,6 +3,8 @@ import {
 	columnVisibilityFeature,
 	createPaginatedRowModel,
 	createSortedRowModel,
+	functionalUpdate,
+	makeStateUpdater,
 	rowExpandingFeature,
 	rowPaginationFeature,
 	tableFeatures,
@@ -10,7 +12,7 @@ import {
 	type PaginationState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { useMemo, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useState, useSyncExternalStore } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -21,8 +23,11 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { NoResults } from '~/ui/NoResults'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
+import { getABGroupFromCookie } from '~/utils/abTesting'
+import { REWARDS_EVENTS, trackRewardsEvent } from '~/utils/analytics/rewards'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { columns, renderProgramDetails } from './columns'
+import { FeaturedCards } from './FeaturedCards'
 import { readRewardsQuery, serializeRewardsQuery } from './query'
 import { LIFECYCLES, REWARD_TYPES, type RewardsPageProps } from './types'
 import { useRewardsAnalytics } from './useRewardsAnalytics'
@@ -41,13 +46,40 @@ export const tableFeaturesConfig = tableFeatures({
 const PAGE_SIZES = [10, 25, 50, 100] as const
 const LIFECYCLE_OPTIONS = ['All', ...LIFECYCLES] as const
 
-export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
+// Assignment is established by _app before hydration and stays fixed for the visit.
+const subscribeToAssignment = () => () => {}
+const getAssignment = () => getABGroupFromCookie(document.cookie) ?? 'a'
+const getServerAssignment = () => null
+
+export default function Rewards({ programs, popularityOrder, featuredCardIds }: RewardsPageProps) {
+	const assignment = useSyncExternalStore(subscribeToAssignment, getAssignment, getServerAssignment)
+	const variant = assignment ?? 'a'
+	const programsById = useMemo(() => new Map(programs.map((program) => [program.programId, program])), [programs])
+	const orderedPrograms = useMemo(
+		() => (variant === 'b' ? popularityOrder.map((id) => programsById.get(id)!) : programs),
+		[variant, popularityOrder, programsById, programs]
+	)
 	const router = useRouter()
 	const query = useMemo(() => readRewardsQuery(router.query), [router.query])
 	const [search, setSearch] = useState('')
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 })
-	const view = useMemo(() => getRewardsView(programs, { ...query, search }), [programs, query, search])
+	const view = useMemo(() => getRewardsView(orderedPrograms, { ...query, search }), [orderedPrograms, query, search])
+	const searchTerm = search.trim().toLowerCase()
+	const trackSearch = useEffectEvent(() => {
+		trackRewardsEvent(REWARDS_EVENTS.SEARCH, { variant, term: searchTerm, results: view.rows.length })
+	})
+	useEffect(() => {
+		if (!search.trim()) return
+		const timer = setTimeout(trackSearch, 600)
+		return () => clearTimeout(timer)
+	}, [search])
 	function updateQuery(patch: Partial<typeof query>) {
+		if (patch.lifecycle !== undefined) {
+			trackRewardsEvent(REWARDS_EVENTS.FILTER_STATUS, { variant, value: patch.lifecycle })
+		}
+		if (patch.hideUnverified !== undefined) {
+			trackRewardsEvent(REWARDS_EVENTS.FILTER_HIDE_UNVERIFIED, { variant, value: patch.hideUnverified })
+		}
 		void pushShallowQuery(router, serializeRewardsQuery({ ...query, ...patch }))
 	}
 	const table = useTable({
@@ -58,11 +90,51 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 		getRowCanExpand: () => true,
 		state: { pagination },
 		enableMultiSort: false,
-		onPaginationChange: setPagination
+		onPaginationChange: setPagination,
+		onSortingChange: (updater) => {
+			const previous = table.atoms.sorting.get()
+			const next = functionalUpdate(updater, previous)
+			makeStateUpdater('sorting', table)(next)
+			const sorting = next[0] ?? previous[0]
+			if (sorting) {
+				trackRewardsEvent(REWARDS_EVENTS.TABLE_SORT, {
+					variant,
+					column: sorting.id,
+					direction: next.length === 0 ? 'none' : sorting.desc ? 'desc' : 'asc'
+				})
+			}
+		},
+		onExpandedChange: (updater) => {
+			const previous = table.atoms.expanded.get()
+			const next = functionalUpdate(updater, previous)
+			makeStateUpdater('expanded', table)(next)
+			for (const program of view.rows) {
+				const wasExpanded = previous === true || previous[program.programId]
+				const isExpanded = next === true || next[program.programId]
+				if (isExpanded && !wasExpanded) {
+					trackRewardsEvent(REWARDS_EVENTS.ROW_EXPAND, {
+						variant,
+						program_id: program.programId,
+						project_path: program.projectPath
+					})
+				}
+			}
+		}
 	})
-	const analyticsRef = useRewardsAnalytics(analyticsMode, table.getRowModel().rows)
+	const hasActiveFilters =
+		search.trim() !== '' || query.lifecycle !== 'All' || query.rewardTypes.length > 0 || query.hideUnverified
+	const cards = useMemo(
+		() => (variant === 'b' && !hasActiveFilters ? featuredCardIds.map((id) => programsById.get(id)!) : []),
+		[variant, hasActiveFilters, featuredCardIds, programsById]
+	)
+	const analyticsRef = useRewardsAnalytics(assignment, table.getRowModel().rows, cards)
 	return (
-		<div ref={analyticsRef} className="flex flex-col gap-2">
+		<div
+			ref={analyticsRef}
+			data-rewards-variant={variant}
+			data-ab-variant={assignment === null ? 'a' : undefined}
+			className="flex flex-col gap-2"
+		>
 			<Panel padding="none">
 				<PanelHeader>
 					<PanelTitle as="h1">Rewards</PanelTitle>
@@ -92,10 +164,11 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 						size="md"
 						onClick={() => {
 							setSearch('')
-							updateQuery(readRewardsQuery({}))
+							trackRewardsEvent(REWARDS_EVENTS.FILTER_RESET, { variant })
+							void pushShallowQuery(router, serializeRewardsQuery(readRewardsQuery({})))
 							setPagination({ pageIndex: 0, pageSize: 50 })
 							table.resetExpanded()
-							table.resetSorting()
+							makeStateUpdater('sorting', table)(table.initialState.sorting)
 						}}
 					>
 						Reset
@@ -103,6 +176,7 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 					<ExternalLinkButton
 						href="https://docs.google.com/forms/d/e/1FAIpQLSdx-uFrc7rWy7tIjjPCCbe3VXbcoWv4BFLH1DTDNrUj5fjK6Q/viewform?usp=dialog"
 						icon="plus"
+						data-reward-submit="true"
 					>
 						Add Your Rewards
 					</ExternalLinkButton>
@@ -120,7 +194,9 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 								variant="toggle"
 								data-active={query.lifecycle === value}
 								aria-pressed={query.lifecycle === value}
-								onClick={() => updateQuery({ lifecycle: value })}
+								onClick={() => {
+									if (value !== query.lifecycle) updateQuery({ lifecycle: value })
+								}}
 							>
 								{value}
 								<span className="body-xs text-tertiary">{view.lifecycleCounts[value]}</span>
@@ -128,6 +204,7 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 						))}
 					</div>
 				</TableToolbar>
+				<FeaturedCards programs={cards} />
 				<TableToolbar>
 					<div role="group" aria-label="Reward type" className="flex flex-wrap items-center gap-1.5">
 						<span className="mr-1 label-sm text-secondary">Reward</span>
@@ -137,7 +214,11 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 							variant="toggle"
 							data-active={query.rewardTypes.length === 0}
 							aria-pressed={query.rewardTypes.length === 0}
-							onClick={() => updateQuery({ rewardTypes: [] })}
+							onClick={() => {
+								if (query.rewardTypes.length === 0) return
+								trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value: 'All', selected: true })
+								updateQuery({ rewardTypes: [] })
+							}}
 						>
 							All
 						</Button>
@@ -153,13 +234,14 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 									variant="toggle"
 									data-active={active}
 									aria-pressed={active}
-									onClick={() =>
+									onClick={() => {
+										trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value, selected: !active })
 										updateQuery({
 											rewardTypes: active
 												? query.rewardTypes.filter((type) => type !== value)
 												: [...query.rewardTypes, value]
 										})
-									}
+									}}
 								>
 									{value}
 									<span className="body-xs text-tertiary">{view.rewardCounts[value]}</span>

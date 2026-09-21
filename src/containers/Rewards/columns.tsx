@@ -8,7 +8,7 @@ import { Tag } from '~/ui/Tag'
 import type { tableFeaturesConfig } from './index'
 import type { RewardLifecycle, RewardProgram } from './types'
 
-const lifecycleStyles: Record<RewardLifecycle, string> = {
+export const lifecycleStyles: Record<RewardLifecycle, string> = {
 	Live: 'text-data-up',
 	Upcoming: 'text-link',
 	'Season Gap': 'text-warning',
@@ -45,7 +45,12 @@ export const columns = helper.columns([
 				<TokenLogo src={row.original.logo} size={28} />
 				<div className="flex min-w-0 flex-col gap-0.5">
 					{row.original.protocolHref ? (
-						<Link href={row.original.protocolHref} className="label-md text-link">
+						<Link
+							href={row.original.protocolHref}
+							className="label-md text-link"
+							data-reward-protocol-id={row.original.programId}
+							data-reward-project-path={row.original.projectPath ?? undefined}
+						>
 							{row.original.protocol}
 						</Link>
 					) : (
@@ -122,6 +127,7 @@ export const columns = helper.columns([
 				<ExternalLinkButton
 					href={row.original.referralUrl}
 					data-reward-program-id={row.original.programId}
+					data-reward-placement="table"
 					data-reward-project-path={row.original.projectPath ?? undefined}
 					rel="noopener noreferrer sponsored"
 					aria-label={`Open ${row.original.protocol}${row.original.programName ? ` ${row.original.programName}` : ''} program`}

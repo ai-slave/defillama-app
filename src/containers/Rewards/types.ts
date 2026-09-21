@@ -49,10 +49,9 @@ export interface RewardProgram {
 
 export interface RewardsPageProps {
 	programs: Array<RewardProgram>
-	analyticsMode: RewardsAnalyticsMode
+	popularityOrder: Array<string>
+	featuredCardIds: Array<string>
 }
-
-export type RewardsAnalyticsMode = 'off' | 'test' | 'production'
 
 export interface RewardsFilters {
 	search: string

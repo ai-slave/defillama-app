@@ -14,6 +14,7 @@ export interface RewardsApiRecord {
 	publish_status: 'Draft' | 'Published' | 'Needs Review'
 	visibility?: 'Public' | 'Hidden'
 	featured_rank?: string
+	featured_rank_card?: string
 	start_date?: string
 	end_date?: string
 	last_verified?: string

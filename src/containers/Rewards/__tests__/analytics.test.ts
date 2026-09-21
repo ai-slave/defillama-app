@@ -47,7 +47,7 @@ class TestObserver implements IntersectionObserver {
 let observers: Array<TestObserver> = []
 const track = vi.fn()
 
-function createState(): Parameters<typeof observeRewardsLinks>[2] {
+function createState(): Parameters<typeof observeRewardsLinks>[1] {
 	return { seen: new Set<string>(), pending: [] }
 }
 
@@ -64,8 +64,10 @@ describe('Rewards link analytics', () => {
 		track.mockClear()
 		observers = []
 		container = document.createElement('div')
+		container.dataset.rewardsVariant = 'a'
 		button = document.createElement('a')
 		button.dataset.rewardProgramId = 'contest'
+		button.dataset.rewardPlacement = 'table'
 		button.dataset.rewardProjectPath = '/protocol/example'
 		container.appendChild(button)
 		document.body.appendChild(container)
@@ -86,130 +88,181 @@ describe('Rewards link analytics', () => {
 	function click(type = 'click', mouseButton = 0) {
 		button.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, button: mouseButton }))
 	}
-	const data = { program_id: 'contest', project_path: '/protocol/example' }
+	const data = {
+		program_id: 'contest',
+		project_path: '/protocol/example',
+		experiment: 'rewards-featured-cards-v1',
+		variant: 'a',
+		placement: 'table'
+	}
+	const linkEvents = () =>
+		track.mock.calls.filter(([event]) => event === 'rewards-program-impression' || event === 'rewards-outbound-click')
 
 	test('requires continuous half-visible exposure in the foreground and cleans up pending dwell', () => {
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		intersect(0.4)
 		vi.advanceTimersByTime(1500)
-		expect(track).not.toHaveBeenCalled()
+		expect(linkEvents()).toEqual([])
 		intersect(0.5)
 		vi.advanceTimersByTime(900)
 		vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
 		document.dispatchEvent(new Event('visibilitychange'))
 		vi.advanceTimersByTime(1500)
-		expect(track).not.toHaveBeenCalled()
+		expect(linkEvents()).toEqual([])
 		vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
 		document.dispatchEvent(new Event('visibilitychange'))
 		vi.advanceTimersByTime(999)
-		expect(track).not.toHaveBeenCalled()
+		expect(linkEvents()).toEqual([])
 		vi.advanceTimersByTime(1)
-		expect(track).toHaveBeenCalledExactlyOnceWith('rewards-test-program-impression', data)
+		expect(linkEvents()).toEqual([['rewards-program-impression', data]])
 		cleanup()
 		window.sessionStorage.clear()
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		intersect(1)
 		cleanup()
 		vi.advanceTimersByTime(1500)
-		expect(track).toHaveBeenCalledTimes(1)
+		expect(linkEvents()).toHaveLength(1)
 	})
 
 	test('records every click but one impression across remounts, including immediate and middle clicks', () => {
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		click()
 		click()
 		click('auxclick', 1)
 		click('auxclick', 2)
-		expect(track.mock.calls).toEqual([
-			['rewards-test-program-impression', data],
-			['rewards-test-outbound-click', data],
-			['rewards-test-outbound-click', data],
-			['rewards-test-outbound-click', data]
+		expect(linkEvents()).toEqual([
+			['rewards-program-impression', data],
+			['rewards-outbound-click', data],
+			['rewards-outbound-click', data],
+			['rewards-outbound-click', data]
 		])
 		cleanup()
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		intersect(1)
 		vi.advanceTimersByTime(1000)
 		click()
-		expect(track.mock.calls.filter(([event]) => event === 'rewards-test-program-impression')).toHaveLength(1)
-		expect(track.mock.calls.filter(([event]) => event === 'rewards-test-outbound-click')).toHaveLength(4)
+		expect(track.mock.calls.filter(([event]) => event === 'rewards-program-impression')).toHaveLength(1)
+		expect(track.mock.calls.filter(([event]) => event === 'rewards-outbound-click')).toHaveLength(4)
 	})
 
 	test('retains impressions across row changes when the tracker loads after ten seconds', () => {
 		delete window.umami
 		const state = createState()
-		cleanup = observeRewardsLinks(container, 'test', state)
+		cleanup = observeRewardsLinks(container, state)
 		intersect(1)
 		vi.advanceTimersByTime(15_000)
-		expect(track).not.toHaveBeenCalled()
-		expect(window.sessionStorage.getItem('rewards-test:impression:contest')).toBeNull()
+		expect(linkEvents()).toEqual([])
+		expect(window.sessionStorage.getItem('rewards:rewards-featured-cards-v1:a:impression:table:contest')).toBeNull()
 		cleanup()
-		cleanup = observeRewardsLinks(container, 'test', state)
+		cleanup = observeRewardsLinks(container, state)
 		window.umami = { track, identify: vi.fn() }
 		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
 		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
 		intersect(1)
 		vi.advanceTimersByTime(1000)
-		expect(track).toHaveBeenCalledExactlyOnceWith('rewards-test-program-impression', data)
-		expect(window.sessionStorage.getItem('rewards-test:impression:contest')).toBe('1')
+		expect(linkEvents()).toEqual([['rewards-program-impression', data]])
+		expect(window.sessionStorage.getItem('rewards:rewards-featured-cards-v1:a:impression:table:contest')).toBe('1')
 	})
 
 	test('flushes every early click once, even after the table replaces its observed rows', () => {
 		delete window.umami
 		const state = createState()
-		cleanup = observeRewardsLinks(container, 'test', state)
+		cleanup = observeRewardsLinks(container, state)
 		click()
 		click()
 		click('auxclick', 1)
 		cleanup()
-		cleanup = observeRewardsLinks(container, 'test', state)
+		cleanup = observeRewardsLinks(container, state)
 		vi.advanceTimersByTime(15_000)
-		expect(track).not.toHaveBeenCalled()
+		expect(linkEvents()).toEqual([])
 		window.umami = { track, identify: vi.fn() }
 		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
 		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
-		expect(track.mock.calls).toEqual([
-			['rewards-test-program-impression', data],
-			['rewards-test-outbound-click', data],
-			['rewards-test-outbound-click', data],
-			['rewards-test-outbound-click', data]
+		expect(linkEvents()).toEqual([
+			['rewards-program-impression', data],
+			['rewards-outbound-click', data],
+			['rewards-outbound-click', data],
+			['rewards-outbound-click', data]
 		])
 		click()
-		expect(track).toHaveBeenCalledTimes(5)
+		expect(linkEvents()).toHaveLength(5)
 	})
 
 	test('does not flush after unmount or permanently suppress an unsent impression', () => {
 		delete window.umami
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		click()
 		cleanup()
 		window.umami = { track, identify: vi.fn() }
 		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
-		expect(track).not.toHaveBeenCalled()
-		expect(window.sessionStorage.getItem('rewards-test:impression:contest')).toBeNull()
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		expect(linkEvents()).toEqual([])
+		expect(window.sessionStorage.getItem('rewards:rewards-featured-cards-v1:a:impression:table:contest')).toBeNull()
+		cleanup = observeRewardsLinks(container, createState())
 		intersect(1)
 		vi.advanceTimersByTime(1000)
-		expect(track).toHaveBeenCalledExactlyOnceWith('rewards-test-program-impression', data)
+		expect(linkEvents()).toEqual([['rewards-program-impression', data]])
 	})
 
 	test('ignores source links and cancelled navigation', () => {
-		cleanup = observeRewardsLinks(container, 'test', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		const source = document.createElement('a')
 		container.appendChild(source)
 		source.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 		button.addEventListener('click', (event) => event.preventDefault())
 		click()
-		expect(track).not.toHaveBeenCalled()
+		expect(linkEvents()).toEqual([])
 	})
 
-	test('does not send events when off or when production tracking runs on localhost', () => {
-		cleanup = observeRewardsLinks(container, 'off', createState())
+	test('separates card and table impressions but counts one conversion per variant session', () => {
+		container.dataset.rewardsVariant = 'b'
+		button.dataset.rewardPlacement = 'table'
+		const card = button.cloneNode(true) as HTMLAnchorElement
+		card.dataset.rewardPlacement = 'card'
+		container.appendChild(card)
+		cleanup = observeRewardsLinks(container, createState())
+		card.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+		click()
 		click()
 		cleanup()
-		cleanup = observeRewardsLinks(container, 'production', createState())
+		cleanup = observeRewardsLinks(container, createState())
 		click()
-		expect(observers).toHaveLength(0)
-		expect(track).not.toHaveBeenCalled()
+		const events = (name: string) => track.mock.calls.filter(([event]) => event === `rewards-${name}`)
+		expect(events('experiment-exposure')).toHaveLength(1)
+		expect(events('experiment-conversion')).toHaveLength(1)
+		expect(events('program-impression').map(([, eventData]) => eventData.placement)).toEqual(['card', 'table'])
+		expect(events('outbound-click').map(([, eventData]) => eventData.placement)).toEqual([
+			'card',
+			'table',
+			'table',
+			'table'
+		])
+		expect(events('experiment-conversion')[0]?.[1]).toEqual({
+			experiment: 'rewards-featured-cards-v1',
+			variant: 'b',
+			placement: 'card'
+		})
+	})
+
+	test('waits for foreground exposure and queues experiment events until Umami is ready', () => {
+		container.dataset.rewardsVariant = 'a'
+		delete window.umami
+		vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+		const state = createState()
+		cleanup = observeRewardsLinks(container, state)
+		expect(state.pending).toHaveLength(0)
+		vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+		document.dispatchEvent(new Event('visibilitychange'))
+		click()
+		cleanup()
+		cleanup = observeRewardsLinks(container, state)
+		window.umami = { track, identify: vi.fn() }
+		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
+		window.dispatchEvent(new Event(UMAMI_READY_EVENT))
+		expect(track.mock.calls.map(([name]) => name)).toEqual([
+			'rewards-experiment-exposure',
+			'rewards-program-impression',
+			'rewards-experiment-conversion',
+			'rewards-outbound-click'
+		])
 	})
 })
