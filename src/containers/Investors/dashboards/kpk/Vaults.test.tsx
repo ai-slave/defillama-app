@@ -367,4 +367,26 @@ describe('kpk Vaults tab', () => {
 
 		expect(container.querySelectorAll('a[href="https://dune.com/kpk/kpk-usdc-rwa-liquidity"]').length).toBe(1)
 	})
+
+	test('pins the header row and the vault column, and scrolls the table on both axes', async () => {
+		await renderTab()
+
+		const table = [...container.querySelectorAll('table')].find((element) =>
+			element.textContent?.includes('KPK USDC Prime Vault')
+		)!
+
+		expect(table.parentElement?.className).toContain('overflow-auto')
+
+		const [vaultHeader, tvaHeader] = table.querySelectorAll('thead th')
+		expect(vaultHeader.className).toContain('sticky')
+		expect(vaultHeader.className).toContain('top-0')
+		expect(vaultHeader.className).toContain('left-0')
+		expect(tvaHeader.className).toContain('top-0')
+		expect(tvaHeader.className).not.toContain('left-0')
+
+		const [vaultCell, tvaCell] = table.querySelectorAll('tbody tr:first-child td')
+		expect(vaultCell.className).toContain('sticky')
+		expect(vaultCell.className).toContain('left-0')
+		expect(tvaCell.className).not.toContain('sticky')
+	})
 })

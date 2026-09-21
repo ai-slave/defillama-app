@@ -178,6 +178,7 @@
 
 	--pro-app-bg: #f0f2f5;
 	--pro-cards-bg: #ffffff;
+	--pro-frozen-bg: var(--pro-cards-bg);
 	--pro-cards-border: rgba(0, 0, 0, 0.06);
 	--pro-form-control-border: rgba(0, 0, 0, 0.1);
 	--pro-accent: #2172e5;
@@ -261,6 +262,7 @@
 html.dark .investors-dashboard.investors-dashboard-embedded {
 	--pro-app-bg: inherit;
 	--pro-cards-bg: inherit;
+	--pro-frozen-bg: var(--bg-page);
 	--pro-cards-border: inherit;
 	--pro-form-control-border: inherit;
 	--pro-accent: inherit;
@@ -433,6 +435,7 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	--pro-text-label: var(--text-secondary);
 	--pro-app-bg: var(--bg-page);
 	--pro-cards-bg: var(--bg-surface);
+	--pro-frozen-bg: var(--bg-surface);
 	--pro-cards-border: var(--border-medium);
 	--pro-form-control-border: var(--border-medium);
 	--pro-accent: var(--bg-brand);

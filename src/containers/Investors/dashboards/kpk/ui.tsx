@@ -614,6 +614,7 @@ export function DataTable<Row extends object>({
 	cols,
 	footer,
 	fit = false,
+	freeze = false,
 	empty = 'No data'
 }: {
 	rows: Array<Row> | undefined
@@ -624,29 +625,46 @@ export function DataTable<Row extends object>({
 	 */
 	footer?: FooterCells | Array<FooterRow>
 	fit?: boolean
+	freeze?: boolean
 	empty?: string
 } & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
 	if (rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
 
 	const footerRows: Array<FooterRow> = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
+	const keyedRows = getRowKey
+		? rows.map((item) => ({ item, key: getRowKey(item) }))
+		: keyedOccurrences(rows, getOccurrenceKey)
+
+	const pinnedCol = 'sticky left-0 border-r border-pro-cards-border bg-(--pro-frozen-bg)'
+	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--sl-hover-bg),var(--sl-hover-bg))]'
+	const headCell = (first: boolean) =>
+		freeze
+			? `sticky top-0 border-b border-pro-cards-border bg-(--pro-frozen-bg) ${first ? `${pinnedCol} z-30` : 'z-20'}`
+			: ''
+	const bodyCell = (first: boolean, last: boolean) =>
+		freeze ? `${last ? '' : 'border-b border-pro-cards-border/60'} ${first ? `${pinnedCol} ${rowTint} z-10` : ''}` : ''
+	const footCell = (first: boolean, muted: boolean) =>
+		freeze ? `${muted ? '' : 'border-t border-pro-cards-border'} ${first ? `${pinnedCol} z-10` : ''}` : ''
 
 	return (
-		<div className="overflow-x-auto">
+		<div className={freeze ? 'max-h-[70vh] overflow-auto' : 'overflow-x-auto'}>
 			{/* Content-sized so `nowrap` columns keep their width and scroll, but never
 			    narrower than the card when there is room to spare. `fit` trades that for
 			    a table that never outgrows its card. */}
-			<table className={`text-xs ${fit ? 'w-full' : 'w-max min-w-full'}`}>
+			<table
+				className={`text-xs ${fit ? 'w-full' : 'w-max min-w-full'} ${freeze ? 'border-separate border-spacing-0' : ''}`}
+			>
 				<thead>
-					<tr className="border-b border-pro-cards-border">
-						{cols.map((col) => (
+					<tr className={freeze ? '' : 'border-b border-pro-cards-border'}>
+						{cols.map((col, index) => (
 							<th
 								key={col.key}
 								title={col.title}
 								style={col.width ? { width: col.width } : undefined}
 								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
 									col.right ? 'text-right' : 'text-left'
-								} ${col.title ? 'cursor-help' : ''}`}
+								} ${col.title ? 'cursor-help' : ''} ${headCell(index === 0)}`}
 							>
 								{col.label}
 							</th>
@@ -654,17 +672,19 @@ export function DataTable<Row extends object>({
 					</tr>
 				</thead>
 				<tbody>
-					{(getRowKey
-						? rows.map((item) => ({ item, key: getRowKey(item) }))
-						: keyedOccurrences(rows, getOccurrenceKey)
-					).map(({ item: row, key }) => (
-						<tr key={key} className="border-b border-pro-cards-border/60 last:border-0 hover:bg-sl-hover-bg">
-							{cols.map((col) => (
+					{keyedRows.map(({ item: row, key }, rowIndex) => (
+						<tr
+							key={key}
+							className={`hover:bg-sl-hover-bg ${
+								freeze ? 'group/row' : 'border-b border-pro-cards-border/60 last:border-0'
+							}`}
+						>
+							{cols.map((col, index) => (
 								<td
 									key={col.key}
 									className={`px-3 py-2.5 first:pl-0 last:pr-0 ${col.wrap ? 'min-w-[170px]' : 'whitespace-nowrap'} ${
 										col.right ? 'text-right font-mono text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'
-									}`}
+									} ${bodyCell(index === 0, rowIndex === keyedRows.length - 1)}`}
 								>
 									{cellValue(col.render ? col.render(row) : Reflect.get(row, col.key))}
 								</td>
@@ -682,15 +702,17 @@ export function DataTable<Row extends object>({
 								className={
 									row.muted
 										? `text-pro-text-secondary ${row.title ? 'cursor-help' : ''}`
-										: 'border-t border-pro-cards-border'
+										: freeze
+											? ''
+											: 'border-t border-pro-cards-border'
 								}
 							>
-								{cols.map((col) => (
+								{cols.map((col, index) => (
 									<td
 										key={col.key}
 										className={`px-3 first:pl-0 last:pr-0 ${
 											row.muted ? 'pt-1.5 font-normal' : 'pt-3 font-medium text-pro-text-primary'
-										} ${col.right ? 'text-right font-mono tabular-nums' : ''}`}
+										} ${col.right ? 'text-right font-mono tabular-nums' : ''} ${footCell(index === 0, !!row.muted)}`}
 									>
 										{row.cells[col.key] ?? ''}
 									</td>
