@@ -91,6 +91,25 @@ describe('MultiSeriesChart lifecycle', () => {
 		for (const [option] of mocks.instance.setOption.mock.calls) expect(option.graphic).toBeUndefined()
 	})
 
+	test('forwards a configured useUTC to ECharts and leaves the default alone otherwise', async () => {
+		await act(async () =>
+			root.render(
+				<MultiSeriesChart
+					dataset={INITIAL_DATASET}
+					charts={CHARTS}
+					chartOptions={{ useUTC: true }}
+					exportButtons="hidden"
+				/>
+			)
+		)
+		expect(mocks.instance.setOption.mock.lastCall?.[0]).toHaveProperty('useUTC', true)
+
+		await act(async () =>
+			root.render(<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />)
+		)
+		expect(mocks.instance.setOption.mock.lastCall?.[0]).not.toHaveProperty('useUTC')
+	})
+
 	test('draws itself in once under a draw-mode provider and never re-animates', async () => {
 		await act(async () =>
 			root.render(

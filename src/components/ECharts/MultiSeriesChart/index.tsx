@@ -136,6 +136,7 @@ function mergeChartOptions(
 		if (overrides.tooltip === undefined) delete merged.tooltip
 		else merged.tooltip = mergeOption(defaults.tooltip, overrides.tooltip)
 	}
+	if (Object.hasOwn(overrides, 'useUTC')) merged.useUTC = overrides.useUTC
 	if (Object.hasOwn(overrides, 'xAxis')) {
 		if (overrides.xAxis === undefined) delete merged.xAxis
 		else merged.xAxis = mergeOption(defaults.xAxis, overrides.xAxis)
@@ -692,7 +693,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			yAxis: _configuredYAxis,
 			grid: _configuredGrid,
 			tooltip: _configuredTooltip,
-			dataZoom
+			dataZoom,
+			useUTC
 		} = mergedChartSettings
 
 		const datasetLength = Math.max(renderedDatasetSource.length, directSeriesStats.pointCount)
@@ -917,6 +919,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
 		if (finalGraphic !== undefined) option.graphic = finalGraphic
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
+		if (useUTC !== undefined) option.useUTC = useUTC
 		if (!shouldHideDataZoom && dataZoom !== undefined) option.dataZoom = dataZoom
 		instance.setOption(option, { notMerge: true })
 		if (hasRenderableSeries) hasEnteredRef.current = true

@@ -1,21 +1,32 @@
-import { describe, expect, test } from 'vitest'
+import * as echarts from 'echarts'
+import { afterEach, describe, expect, test } from 'vitest'
 import { prepareMultiSeriesDataset } from '~/components/ECharts/MultiSeriesChart/datasetAdapter'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildUnlocksMultiSeriesChartForDateRange } from '../buildUnlocksMultiSeriesChart'
 import { calendarChartOptions } from '../calendarChartOptions'
 import type { CalendarUnlockEvent, UnlocksData } from '../calendarTypes'
 
+const TIME_ZONES = ['UTC', 'Asia/Tokyo', 'America/Los_Angeles'] as const
+const originalTimeZone = process.env.TZ
+
+afterEach(() => {
+	process.env.TZ = originalTimeZone
+})
+
 function unlockEvent(protocol: string, value: number): CalendarUnlockEvent {
 	return { protocol, value, details: `${protocol} unlock`, unlockType: 'Cliff' }
 }
 
+function buildChart(unlocksData: UnlocksData, dates: Array<string>) {
+	return buildUnlocksMultiSeriesChartForDateRange({ dates, unlocksData })
+}
+
 /**
- * Hover one day the way the calendar renders it: builder output, the selected-series cap,
- * the renderer's dataset preparation, then axis-trigger params shaped as ECharts sends them
- * for array rows (`value` is the whole row, `encode.y` is the series' column).
+ * Hover one day the way the calendar renders it: the selected-series cap, the renderer's
+ * dataset preparation, then axis-trigger params shaped as ECharts sends them for array rows
+ * (`value` is the whole row, `encode.y` is the series' column).
  */
-function hoverDay(unlocksData: UnlocksData, dates: Array<string>, day: string) {
-	const chart = buildUnlocksMultiSeriesChartForDateRange({ dates, unlocksData })
+function hoverDay(chart: ReturnType<typeof buildChart>, dayIndex: number) {
 	const names = chart.charts.map((series) => series.name)
 	const selected = buildSelectedAdditiveChart({
 		dataset: chart.dataset,
@@ -24,7 +35,7 @@ function hoverDay(unlocksData: UnlocksData, dates: Array<string>, day: string) {
 		selectedCharts: new Set(names)
 	})
 	const prepared = prepareMultiSeriesDataset(selected.dataset, selected.charts)
-	const row = prepared.source[dates.indexOf(day)]!
+	const row = prepared.source[dayIndex]!
 	const params = prepared.charts.map((series) => ({
 		seriesName: series.name,
 		marker: '',
@@ -35,6 +46,10 @@ function hoverDay(unlocksData: UnlocksData, dates: Array<string>, day: string) {
 		axisValue: row[0]
 	}))
 	return calendarChartOptions.tooltip.formatter(params)
+}
+
+function tooltipDate(html: string) {
+	return html.match(/<div class="font-semibold mb-1">([^<]*)<\/div>/)?.[1]
 }
 
 function rowValue(html: string, name: string) {
@@ -48,8 +63,7 @@ function totalValue(html: string) {
 
 describe('calendar chart tooltip', () => {
 	test('shows each protocol its own unlock value for the hovered day', () => {
-		const dates = ['2026-09-23', '2026-09-24']
-		const html = hoverDay(
+		const chart = buildChart(
 			{
 				'2026-09-23': { totalValue: 9_000_000, events: [unlockEvent('Beta', 9_000_000)] },
 				'2026-09-24': {
@@ -57,11 +71,10 @@ describe('calendar chart tooltip', () => {
 					events: [unlockEvent('Alpha', 177_370_000), unlockEvent('Beta', 5_000_000)]
 				}
 			},
-			dates,
-			'2026-09-24'
+			['2026-09-23', '2026-09-24']
 		)
+		const html = hoverDay(chart, 1)
 
-		expect(html).toContain('Sep 24, 2026')
 		expect(rowValue(html, 'Alpha')).toBe('$177.37m')
 		expect(rowValue(html, 'Beta')).toBe('$5m')
 		expect(totalValue(html)).toBe('$182.37m')
@@ -71,7 +84,7 @@ describe('calendar chart tooltip', () => {
 		// 32 protocols on one day: P1 = $32m down to P32 = $1m. The 30 largest stay named and
 		// P31 + P32 ($2m + $1m) collapse into Others, which remaps every dataset column.
 		const events = Array.from({ length: 32 }, (_, index) => unlockEvent(`P${index + 1}`, (32 - index) * 1_000_000))
-		const html = hoverDay({ '2026-09-24': { totalValue: 528_000_000, events } }, ['2026-09-24'], '2026-09-24')
+		const html = hoverDay(buildChart({ '2026-09-24': { totalValue: 528_000_000, events } }, ['2026-09-24']), 0)
 
 		expect(rowValue(html, 'P1')).toBe('$32m')
 		expect(rowValue(html, 'P2')).toBe('$31m')
@@ -80,5 +93,58 @@ describe('calendar chart tooltip', () => {
 		expect(rowValue(html, 'P31')).toBeUndefined()
 		// 1 + 2 + … + 32 = 528
 		expect(totalValue(html)).toBe('$528m')
+	})
+})
+
+describe('calendar chart dates', () => {
+	// Month/year boundaries, and 2026-11-01, when Los Angeles leaves daylight saving time.
+	const dates = ['2026-09-24', '2026-10-31', '2026-11-01', '2026-11-02', '2026-12-31', '2027-01-01']
+	const expectedLabels = ['Sep 24, 2026', 'Oct 31, 2026', 'Nov 1, 2026', 'Nov 2, 2026', 'Dec 31, 2026', 'Jan 1, 2027']
+	const unlocksData: UnlocksData = Object.fromEntries(
+		dates.map((date) => [date, { totalValue: 1_000_000, events: [unlockEvent('Alpha', 1_000_000)] }])
+	)
+
+	test.each(TIME_ZONES)('stamps every date key at UTC midnight when built in %s', (timeZone) => {
+		process.env.TZ = timeZone
+		const timestamps = buildChart(unlocksData, dates).dataset.source.map((row) => row[0])
+
+		expect(timestamps).toEqual(dates.map((date) => Date.parse(`${date}T00:00:00Z`)))
+	})
+
+	// The current week/month chart is precomputed on the server; other ranges and filtered views
+	// are built in the browser. Both must name the same day in every viewer timezone.
+	test.each(TIME_ZONES.flatMap((builtIn) => TIME_ZONES.map((viewedIn) => [builtIn, viewedIn] as const)))(
+		'labels each tooltip with its own date when built in %s and viewed in %s',
+		(builtIn, viewedIn) => {
+			process.env.TZ = builtIn
+			const chart = buildChart(unlocksData, dates)
+			process.env.TZ = viewedIn
+
+			expect(dates.map((_, index) => tooltipDate(hoverDay(chart, index)))).toEqual(expectedLabels)
+		}
+	)
+
+	test.each(TIME_ZONES)('places the time-axis day ticks on the UTC-midnight bars when viewed in %s', (timeZone) => {
+		process.env.TZ = timeZone
+		const week = ['2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26']
+		const chart = buildChart(
+			Object.fromEntries(week.map((date) => [date, { totalValue: 1, events: [unlockEvent('Alpha', 1)] }])),
+			week
+		)
+		const instance = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 800, height: 400 })
+		instance.setOption({
+			animation: false,
+			useUTC: calendarChartOptions.useUTC,
+			dataset: chart.dataset,
+			xAxis: { type: 'time' },
+			yAxis: {},
+			series: chart.charts.map((series) => ({ type: 'bar', encode: series.encode }))
+		})
+		// ECharts has no public tick API; the axis model is the only way to read tick instants.
+		const axis = (instance as unknown as { getModel(): any }).getModel().getComponent('xAxis').axis
+		const ticks: Array<number> = axis.scale.getTicks().map((tick: { value: number }) => tick.value)
+		instance.dispose()
+
+		expect(ticks).toEqual(week.map((date) => Date.parse(`${date}T00:00:00Z`)))
 	})
 })

@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import {
 	type EChartsTooltipItem,
@@ -6,6 +5,7 @@ import {
 	getTooltipRawYValue,
 	normalizeTooltipItems
 } from '~/components/ECharts/shared/tooltip'
+import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 
 const getValue = (param: EChartsTooltipItem) => {
@@ -15,6 +15,7 @@ const getValue = (param: EChartsTooltipItem) => {
 }
 
 export const calendarChartOptions = {
+	useUTC: true,
 	tooltip: {
 		trigger: 'axis',
 		formatter: (formatterParams: unknown) => {
@@ -22,7 +23,7 @@ export const calendarChartOptions = {
 			if (params.length === 0) return ''
 			const ts = getTooltipAxisValue(params[0])
 
-			const dateStr = Number.isFinite(ts) ? dayjs(ts).format('MMM D, YYYY') : ''
+			const dateStr = formatDate(ts, { input: 'milliseconds' }) ?? ''
 			let tooltipContent = `<div class="font-semibold mb-1">${dateStr}</div>`
 			let totalValue = 0
 

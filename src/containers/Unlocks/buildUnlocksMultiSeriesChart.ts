@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { isWeeklyRateCalendarEvent, type UnlocksData } from './calendarTypes'
 import { COLOR_PALETTE } from './constants'
@@ -41,9 +40,10 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 
 	const protocolIndex = new Map(seriesNames.map((name, index) => [name, index + 1]))
 	const source: MultiSeriesChartDataset['source'] = dates.map((dateStr) => {
-		const parsedDate = dayjs(dateStr)
 		const row = new Array<number>(seriesNames.length + 1).fill(0)
-		row[0] = parsedDate.unix() * 1e3
+		// Calendar days are UTC facts: the server-precomputed and browser-built charts must stamp the
+		// same instant for a date key, whatever timezone builds them.
+		row[0] = Date.parse(`${dateStr}T00:00:00Z`)
 
 		const events = unlocksData[dateStr]?.events
 		if (hasProtocolSeries && events) {
