@@ -16,7 +16,7 @@ const auth = {
 }
 vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 
-const route = { asPath: '/chain/ethereum' }
+const route = { asPath: '/chain/ethereum', pathname: '/chain/[chain]' }
 vi.mock('next/router', () => ({ useRouter: () => route }))
 
 const fetchUserInterests = vi.fn<(token: string) => Promise<UserInterestsResponse>>()
@@ -103,7 +103,25 @@ describe('TargetedAnnouncement', () => {
 		await render()
 		expect(container.textContent).toContain('Universal Token Rating')
 		expect(fetchUserInterests).not.toHaveBeenCalled()
-		expect(track).toHaveBeenCalledWith('announcement-impression', expect.objectContaining({ kind: 'fallback' }))
+		expect(track).toHaveBeenCalledWith(
+			'announcement-impression',
+			expect.objectContaining({ kind: 'fallback', page: '/chain/[chain]' })
+		)
+	})
+
+	test('clicking the CTA sends one click event with the page template', async () => {
+		await render()
+		track.mockClear()
+		const link = container.querySelector<HTMLAnchorElement>('a[href="/universal-token-rating"]')!
+		await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
+		expect(track).toHaveBeenCalledTimes(1)
+		expect(track).toHaveBeenCalledWith('announcement-click', {
+			id: 'universal-token-rating',
+			version: expect.any(String),
+			page: '/chain/[chain]',
+			kind: 'fallback'
+		})
+		expect(link.hasAttribute('data-umami-event')).toBe(false)
 	})
 
 	test('a signed-in yields reader swaps to Verified APY once interests load', async () => {

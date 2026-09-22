@@ -23,7 +23,6 @@ export function UniversalTokenRatingAnnouncement() {
 				<span className="font-medium">Universal Token Rating is live: data-driven scores for every token.</span>
 				<BasicLink
 					href="/universal-token-rating"
-					data-umami-event="utr-announcement-click"
 					className="inline-flex items-center gap-1 rounded-full bg-utr-announcement-link px-2.5 py-0.5 text-xs font-semibold text-utr-announcement-text ring-1 ring-utr-announcement-ring transition-colors hover:bg-utr-announcement-link-hover"
 				>
 					See the ratings

@@ -14,8 +14,8 @@ import { useUserInterests } from './useUserInterests'
  * and impression.
  */
 export function TargetedAnnouncement() {
-	const { asPath } = useRouter()
-	return <PageViewAnnouncement key={asPath} />
+	const { asPath, pathname } = useRouter()
+	return <PageViewAnnouncement key={asPath} page={pathname} />
 }
 
 /**
@@ -23,7 +23,7 @@ export function TargetedAnnouncement() {
  * for the signed-out majority. Once the reader's profile and subscription have settled, the slot
  * re-resolves and may swap to a targeted banner.
  */
-function PageViewAnnouncement() {
+function PageViewAnnouncement({ page }: { page: string }) {
 	const { hasActiveSubscription, loaders } = useAuthContext()
 	const isClient = useIsClient()
 	const interests = useUserInterests()
@@ -55,6 +55,7 @@ function PageViewAnnouncement() {
 		<AnnouncementSlot
 			key={resolved.banner.id}
 			resolved={resolved}
+			page={page}
 			trackImpressions={canTarget}
 			onDismiss={() => setDismissedThisView(true)}
 		/>
@@ -63,10 +64,13 @@ function PageViewAnnouncement() {
 
 function AnnouncementSlot({
 	resolved,
+	page,
 	trackImpressions,
 	onDismiss
 }: {
 	resolved: ResolvedAnnouncement
+	/** The route template (`/` or `/chain/[chain]`), so events group by page type rather than by chain. */
+	page: string
 	trackImpressions: boolean
 	onDismiss: () => void
 }) {
@@ -78,34 +82,34 @@ function AnnouncementSlot({
 		const send = () => {
 			if (sent || !window.umami) return
 			sent = true
-			trackUmamiEvent('announcement-impression', eventDataFor(resolved))
+			trackUmamiEvent('announcement-impression', eventDataFor(resolved, page))
 		}
 		send()
 		window.addEventListener(UMAMI_READY_EVENT, send)
 		return () => window.removeEventListener(UMAMI_READY_EVENT, send)
-	}, [trackImpressions, resolved])
+	}, [trackImpressions, resolved, page])
 
 	const onClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
 		const target = event.target as HTMLElement
 		if (target.closest('[data-announcement-dismiss]')) {
-			trackUmamiEvent('announcement-dismiss', eventDataFor(resolved))
+			trackUmamiEvent('announcement-dismiss', eventDataFor(resolved, page))
 			onDismiss()
 		} else if (target.closest('a, button')) {
-			trackUmamiEvent('announcement-click', eventDataFor(resolved))
+			trackUmamiEvent('announcement-click', eventDataFor(resolved, page))
 		}
 	}
 
 	return <div onClickCapture={onClickCapture}>{resolved.banner.render()}</div>
 }
 
-function eventDataFor(resolved: ResolvedAnnouncement) {
+function eventDataFor(resolved: ResolvedAnnouncement, page: string) {
 	const { id, version } = resolved.banner
 	switch (resolved.kind) {
 		case 'targeted':
-			return { id, version, kind: resolved.kind, category: resolved.category }
+			return { id, version, page, kind: resolved.kind, category: resolved.category }
 		case 'segment':
-			return { id, version, kind: resolved.kind, segment: resolved.segment }
+			return { id, version, page, kind: resolved.kind, segment: resolved.segment }
 		default:
-			return { id, version, kind: resolved.kind }
+			return { id, version, page, kind: resolved.kind }
 	}
 }
