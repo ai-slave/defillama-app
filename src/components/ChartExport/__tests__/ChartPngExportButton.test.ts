@@ -1,7 +1,14 @@
+import type { EChartsOption, LegendComponentOption } from 'echarts'
+import { LineChart, PieChart } from 'echarts/charts'
+import { GridComponent, LegendComponent } from 'echarts/components'
+import * as echarts from 'echarts/core'
+import { SVGRenderer } from 'echarts/renderers'
 import { describe, expect, test, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
+	buildCartesianExportLegendOption,
 	buildPieExportLegendOption,
+	collectLegendItems,
 	ensureExportWatermarkGraphic,
 	getTreemapTargetDataRoot,
 	mutateAndWaitForChartRender,
@@ -33,6 +40,89 @@ describe('pie PNG export legend', () => {
 			itemHeight: 20
 		})
 		expect(legend.formatter).toBe(formatter)
+	})
+})
+
+describe('PNG export legend selection', () => {
+	echarts.use([LineChart, PieChart, GridComponent, LegendComponent, SVGRenderer])
+	const lineSeries = (legend: LegendComponentOption | undefined): EChartsOption => ({
+		xAxis: { type: 'category', data: ['a', 'b'] },
+		yAxis: { type: 'value' },
+		legend,
+		series: [
+			{ type: 'line', name: 'Total', data: [10, 20] },
+			{ type: 'line', name: 'Binance', data: [1, 2] }
+		]
+	})
+	const pieSeries = (legend: LegendComponentOption | undefined): EChartsOption => ({
+		legend,
+		series: [
+			{
+				type: 'pie',
+				data: [
+					{ name: 'Tether', value: 3 },
+					{ name: 'Paxos', value: 2 }
+				]
+			}
+		]
+	})
+	const render = (option: EChartsOption) => {
+		const chart = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 400, height: 300 })
+		chart.setOption(option)
+		return chart
+	}
+	const legendOf = (chart: echarts.ECharts) =>
+		((chart.getOption() as EChartsOption).legend as Array<LegendComponentOption>)[0]
+	const exportLayout = (legendItems: Array<string>) =>
+		computeExportLayout({ title: 'OI', legendItems, shouldShowLegend: true, hasIcon: false, expandLegend: false })
+
+	test('greys out toggled-off series in the line legend and keeps them hidden', () => {
+		const live = render(lineSeries({}))
+		live.dispatchAction({ type: 'legendUnSelect', name: 'Total' })
+		const liveOption = live.getOption() as EChartsOption
+
+		const legendItems = collectLegendItems(liveOption, false)
+		const exported = render(
+			lineSeries(buildCartesianExportLegendOption(legendOf(live), legendItems, exportLayout(legendItems), false, false))
+		)
+
+		expect(legendOf(exported).data).toEqual(['Total', 'Binance'])
+		expect(legendOf(exported).selected).toEqual({ Total: false, Binance: true })
+	})
+
+	test('keeps the live legend order when it differs from series order', () => {
+		const legend = { data: ['Binance', 'Total'] }
+		const live = render(lineSeries(legend))
+
+		const legendItems = collectLegendItems(live.getOption() as EChartsOption, false)
+		const exported = render(
+			lineSeries(buildCartesianExportLegendOption(legendOf(live), legendItems, exportLayout(legendItems), false, false))
+		)
+
+		expect(legendOf(exported).data).toEqual(['Binance', 'Total'])
+	})
+
+	test('lists every line series when nothing was toggled off', () => {
+		const live = render(lineSeries({}))
+
+		const legendItems = collectLegendItems(live.getOption() as EChartsOption, false)
+		const exported = render(
+			lineSeries(buildCartesianExportLegendOption(legendOf(live), legendItems, exportLayout(legendItems), true, false))
+		)
+
+		expect(legendOf(exported).data).toEqual(['Total', 'Binance'])
+		expect(legendOf(exported).selected).toEqual({})
+	})
+
+	test('greys out toggled-off slices in the pie legend and keeps them hidden', () => {
+		// PieChart passes the slice names as legend data.
+		const live = render(pieSeries({ data: ['Tether', 'Paxos'] }))
+		live.dispatchAction({ type: 'legendUnSelect', name: 'Paxos' })
+
+		const exported = render(pieSeries(buildPieExportLegendOption(legendOf(live), 'RWA', false)))
+
+		expect(legendOf(exported).data).toEqual(['Tether', 'Paxos'])
+		expect(legendOf(exported).selected).toEqual({ Tether: true, Paxos: false })
 	})
 })
 

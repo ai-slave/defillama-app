@@ -922,7 +922,7 @@ export function ensureExportWatermarkGraphic(
 	]
 }
 
-function collectLegendItems(options: EChartsOption, isPieChart: boolean): Array<string> {
+export function collectLegendItems(options: EChartsOption, isPieChart: boolean): Array<string> {
 	const legendConfig = options.legend
 	const legendArray = Array.isArray(legendConfig) ? legendConfig : legendConfig ? [legendConfig] : []
 
@@ -979,6 +979,33 @@ export function buildPieExportLegendOption(
 		padding: [0, 0, 0, 0],
 		pageButtonPosition: 'end'
 	}
+}
+
+export function buildCartesianExportLegendOption(
+	sourceLegend: LegendComponentOption | undefined,
+	legendItems: Array<string>,
+	layout: ExportLayout,
+	expandLegend: boolean | undefined,
+	isDark: boolean
+): LegendComponentOption {
+	const legendBase: LegendComponentOption = {
+		show: true,
+		// Same item order as the live legend; toggled-off series stay hidden and greyed out.
+		data: legendItems,
+		selected: sourceLegend?.selected,
+		textStyle: {
+			fontSize: EXPORT_FONT_SIZE,
+			color: getChartTheme(isDark).text
+		},
+		itemHeight: 24,
+		itemWidth: 48,
+		itemGap: LEGEND_ITEM_GAP,
+		top: layout.legendTop,
+		right: 16
+	}
+	return expandLegend
+		? { ...legendBase, type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
+		: { ...legendBase, type: 'scroll', padding: [0, 0, 0, 18], pageButtonPosition: 'end' }
 }
 
 function adjustSeriesForExport(opts: {
@@ -1390,23 +1417,9 @@ export async function renderClonedChartExport(
 
 		if (layout.hasLegend) {
 			const sourceLegend = Array.isArray(currentOptions.legend) ? currentOptions.legend[0] : currentOptions.legend
-			const legendBase = {
-				show: true,
-				textStyle: {
-					fontSize: EXPORT_FONT_SIZE,
-					color: getChartTheme(isDark).text
-				},
-				itemHeight: 24,
-				itemWidth: 48,
-				itemGap: LEGEND_ITEM_GAP,
-				top: layout.legendTop,
-				right: 16
-			}
 			currentOptions.legend = flags.isPieChart
 				? buildPieExportLegendOption(sourceLegend, title, isDark)
-				: expandLegend
-					? { ...legendBase, type: 'plain', padding: [0, 0, 0, 0], ...(layout.canShareRow ? {} : { left: 16 }) }
-					: { ...legendBase, type: 'scroll', padding: [0, 0, 0, 18], pageButtonPosition: 'end' }
+				: buildCartesianExportLegendOption(sourceLegend, legendItems, layout, expandLegend, isDark)
 		}
 
 		await Promise.all(
