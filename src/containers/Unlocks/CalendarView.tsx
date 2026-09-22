@@ -6,6 +6,12 @@ import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import {
+	type EChartsTooltipItem,
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems
+} from '~/components/ECharts/shared/tooltip'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -353,13 +359,8 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 	)
 }
 
-const getValue = (param: { data?: unknown; value?: unknown; seriesName?: string }) => {
-	const dataObj =
-		param?.data && typeof param.data === 'object' && !Array.isArray(param.data)
-			? (param.data as Record<string, unknown>)
-			: null
-	const name = param?.seriesName
-	const raw = dataObj && name && name in dataObj ? dataObj[name] : Array.isArray(param?.value) ? param.value[1] : null
+const getValue = (param: EChartsTooltipItem) => {
+	const raw = getTooltipRawYValue(param, param.seriesName ?? '')
 	const v = typeof raw === 'number' ? raw : Number(raw)
 	return Number.isFinite(v) ? v : 0
 }
@@ -368,24 +369,9 @@ const chartOptions = {
 	tooltip: {
 		trigger: 'axis',
 		formatter: (formatterParams: unknown) => {
-			if (!Array.isArray(formatterParams) || formatterParams.length === 0) return ''
-			const params = formatterParams as Array<{
-				data?: unknown
-				value?: unknown
-				axisValue?: number | string
-				seriesName?: string
-				marker?: string
-			}>
-
-			const first = params[0]
-			const ts =
-				first?.data && typeof first.data === 'object' && !Array.isArray(first.data) && 'timestamp' in first.data
-					? Number((first.data as Record<string, unknown>).timestamp)
-					: Array.isArray(first?.value)
-						? Number(first.value[0])
-						: typeof first?.axisValue === 'number'
-							? first.axisValue
-							: Number.NaN
+			const params = normalizeTooltipItems(formatterParams)
+			if (params.length === 0) return ''
+			const ts = getTooltipAxisValue(params[0])
 
 			const dateStr = Number.isFinite(ts) ? dayjs(ts).format('MMM D, YYYY') : ''
 			let tooltipContent = `<div class="font-semibold mb-1">${dateStr}</div>`
