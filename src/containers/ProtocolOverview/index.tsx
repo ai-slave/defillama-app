@@ -10,11 +10,13 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { HeroMetric } from '~/ui/HeroMetric'
+import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { AdditionalInfo } from './AdditionalInfo'
 import { resolveProtocolChartDenomination } from './chartQuery'
 import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
+import { InviteBanner } from './InviteBanner'
 import { KeyMetrics } from './KeyMetrics'
 import { ProtocolOverviewLayout } from './Layout'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
@@ -85,6 +87,9 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 				{...(props.isOracleProtocol ? { valueHeader: 'Total Value Secured' } : {})}
 				{...(props.isCEX !== undefined ? { isCEX: props.isCEX } : {})}
 			/>
+			{props.hasInviteCodes ? (
+				<InviteBanner key={props.name} protocol={slug(props.name)} name={props.name} website={props.website} />
+			) : null}
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 					<ProtocolHeader

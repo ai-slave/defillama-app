@@ -828,6 +828,7 @@ export const getProtocolOverviewPageData = async ({
 	const pageData: IProtocolOverviewPageData = {
 		id: protocolData.id,
 		name,
+		hasInviteCodes: protocolData.hasInviteCodes ?? false,
 		category: resolvedCategory,
 		tags: protocolData.tags ?? null,
 		otherProtocols: protocolData.otherProtocols ?? null,

@@ -80,6 +80,7 @@ export interface IProtocolOverviewPageData {
 	initialMultiSeriesChartData: IProtocolOverviewInitialMultiSeriesChartData
 	id: string
 	name: string
+	hasInviteCodes?: boolean
 	token: {
 		symbol: string | null
 		gecko_id: string | null

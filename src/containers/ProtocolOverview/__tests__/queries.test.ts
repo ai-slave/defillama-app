@@ -121,6 +121,23 @@ vi.mock('../formatAdapterData', () => ({
 }))
 
 describe('getProtocolOverviewPageData', () => {
+	test('passes invite eligibility from protocol details into page props', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		const protocol = await fetchProtocolOverviewMetrics()
+		const options = {
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol' },
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		}
+		fetchProtocolOverviewMetrics.mockResolvedValueOnce(Object.assign({}, protocol, { hasInviteCodes: true }))
+		expect((await getProtocolOverviewPageData(options)).hasInviteCodes).toBe(true)
+		expect((await getProtocolOverviewPageData(options)).hasInviteCodes).toBe(false)
+	})
+
 	test('tolerates RWA upstream failure while TVL is live', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 		fetchRWAPlatformAumChart.mockRejectedValueOnce(new Error('RWA unavailable'))

@@ -12,6 +12,7 @@ export interface IProtocolWarningBanner {
 interface IProtocolMetricsV2Common {
 	id: string
 	name: string
+	hasInviteCodes?: boolean
 	address?: string | null
 	url: string
 	referralUrl?: string
