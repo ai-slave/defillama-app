@@ -52,6 +52,7 @@ export type EarnViewProps = EarnPageMeta & {
 
 function EarnView({
 	projectList,
+	projectGroups,
 	chainList,
 	categoryList,
 	evmChains,
@@ -212,6 +213,7 @@ function EarnView({
 				selectedChains={selectedChains}
 				evmChains={evmChains}
 				projectList={projectList}
+				projectGroups={projectGroups}
 				selectedProjects={selectedProjects}
 				projectsLabel="Protocols"
 				categoryList={categoryList}

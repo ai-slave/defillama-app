@@ -7,6 +7,8 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 type QueryUpdates = Record<string, string | Array<string> | undefined>
 
+const formatPresetLabel = (value: number) => (value >= 1_000_000 ? `$${value / 1_000_000}M` : `$${value / 1000}k`)
+
 export function TVLRange({
 	variant = 'primary',
 	size = 'sm',
@@ -15,7 +17,8 @@ export function TVLRange({
 	onValueChange,
 	resetPageOnChange,
 	pushQueryUpdates,
-	label = 'TVL Range'
+	label = 'TVL Range',
+	minPresets
 }: {
 	variant?: 'primary' | 'secondary'
 	size?: 'sm' | 'md'
@@ -25,6 +28,7 @@ export function TVLRange({
 	resetPageOnChange?: boolean
 	pushQueryUpdates?: (updates: QueryUpdates) => void
 	label?: string
+	minPresets?: ReadonlyArray<number>
 }) {
 	const router = useRouter()
 
@@ -67,6 +71,7 @@ export function TVLRange({
 
 	return (
 		<FilterBetweenRange
+			{...(minPresets ? { quickPicks: minPresets.map((value) => ({ label: formatPresetLabel(value), value })) } : {})}
 			trigger={
 				variant === 'secondary' ? (
 					<>

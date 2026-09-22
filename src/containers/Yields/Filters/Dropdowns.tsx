@@ -17,6 +17,7 @@ import type { IDropdownMenusProps } from './types'
 const EMPTY_CHAINS: Array<string> = []
 const EMPTY_PROJECTS: Array<string> = []
 const EMPTY_CATEGORIES: Array<string> = []
+const TVL_MIN_PRESETS = [100_000, 500_000, 1_000_000, 10_000_000]
 
 export function YieldFilterDropdowns({
 	pathname,
@@ -24,6 +25,7 @@ export function YieldFilterDropdowns({
 	selectedChains,
 	evmChains,
 	projectList,
+	projectGroups,
 	selectedProjects,
 	projectsLabel,
 	categoriesLabel,
@@ -58,6 +60,7 @@ export function YieldFilterDropdowns({
 			{projectList && projectList.length > 0 ? (
 				<YieldProjects
 					projectList={projectList}
+					{...(projectGroups ? { projectGroups } : {})}
 					selectedProjects={selectedProjects ?? EMPTY_PROJECTS}
 					label={projectsLabel ?? 'Projects'}
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
@@ -85,6 +88,7 @@ export function YieldFilterDropdowns({
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					variant="secondary"
 					placement="bottom-start"
+					minPresets={TVL_MIN_PRESETS}
 					pushQueryUpdates={(updates) => {
 						void pushYieldsQuery(router, updates, {
 							pathname: effectivePathname

@@ -139,9 +139,23 @@ export function buildReferralUrls(
 // (every earn/borrow/loop request) free of per-request external fetches.
 const CACHE_TTL_MS = 10 * 60_000
 
+function buildProtocolParents(
+	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
+): Map<string, string> {
+	const parentNameById = new Map<string, string>()
+	for (const pp of protocolsLite.parentProtocols) parentNameById.set(pp.id, pp.name)
+	const result = new Map<string, string>()
+	for (const p of protocolsLite.protocols) {
+		const parentName = p.parentProtocol ? parentNameById.get(p.parentProtocol) : undefined
+		if (parentName) result.set(p.name.toLowerCase(), parentName)
+	}
+	return result
+}
+
 interface ProtocolJoins {
 	raiseValuationsUsd: Map<string, number>
 	referralUrls: Map<string, string>
+	protocolParents: Map<string, string>
 }
 
 let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<ProtocolJoins> } | null = null
@@ -158,7 +172,8 @@ async function buildFromSources(meta: YieldsMeta): Promise<ProtocolJoins> {
 	])
 	return {
 		raiseValuationsUsd: buildRaiseValuationsUsd(raisesResponse.raises, meta.protocols, protocolsLite),
-		referralUrls: buildReferralUrls(meta.protocols, protocolsLite)
+		referralUrls: buildReferralUrls(meta.protocols, protocolsLite),
+		protocolParents: buildProtocolParents(protocolsLite)
 	}
 }
 
@@ -181,4 +196,8 @@ export async function getRaiseValuationsUsd(snapshot: YieldsSnapshot): Promise<M
 
 export async function getReferralUrls(snapshot: YieldsSnapshot): Promise<Map<string, string>> {
 	return (await getProtocolJoins(snapshot)).referralUrls
+}
+
+export async function getProtocolParents(snapshot: YieldsSnapshot): Promise<Map<string, string>> {
+	return (await getProtocolJoins(snapshot)).protocolParents
 }

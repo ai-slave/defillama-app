@@ -30,6 +30,8 @@ import { selectTriggerStyles } from './types'
 interface ISelectWithComboboxBase {
 	allValues: SelectValues
 	selectedValues: Array<string>
+	/** What the trigger lists instead of `selectedValues`, e.g. one group name for its selected members. */
+	selectedLabels?: Array<string>
 	label: string
 	singleSelect?: boolean
 	nestedMenu?: boolean
@@ -84,6 +86,7 @@ export function getSelectOptionLabel(allValues: SelectValues, selectedValue: str
 export function SelectWithCombobox({
 	allValues,
 	selectedValues,
+	selectedLabels = selectedValues,
 	setSelectedValues: setSelectedValuesProp,
 	label,
 	singleSelect = false,
@@ -374,19 +377,19 @@ export function SelectWithCombobox({
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
 						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
-							{selectedValues.length}
+							{selectedLabels.length}
 						</span>
 						<span>{label}</span>
 					</span>
-				) : labelType === 'regular' && selectedValues.length > 0 ? (
+				) : labelType === 'regular' && selectedLabels.length > 0 ? (
 					<>
 						<span>{label}: </span>
 						<span className="text-link">
 							{singleSelect && firstSelectedValue !== undefined
 								? getSelectOptionLabel(allValues, firstSelectedValue)
-								: selectedValues.length > 2
-									? `${selectedValues[0]} + ${selectedValues.length - 1} others`
-									: selectedValues.join(', ')}
+								: selectedLabels.length > 2
+									? `${selectedLabels[0]} + ${selectedLabels.length - 1} others`
+									: selectedLabels.join(', ')}
 						</span>
 					</>
 				) : (

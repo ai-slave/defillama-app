@@ -13,7 +13,15 @@ vi.mock('~/containers/Yields/server/dataset.server', () => ({
 }))
 vi.mock('~/containers/Yields/data/earnMeta.server', () => ({
 	getEarnPageMeta: () =>
-		Promise.resolve({ chainList: [], projectList: [], categoryList: [], evmChains: [], tokens: [], attributeIds: [] })
+		Promise.resolve({
+			chainList: [],
+			projectList: [],
+			projectGroups: [],
+			categoryList: [],
+			evmChains: [],
+			tokens: [],
+			attributeIds: []
+		})
 }))
 vi.mock('~/containers/Yields/data/earn.server', () => ({ getEarnPage: getEarnPageMock }))
 vi.mock('~/containers/LlamaAI/api', () => ({

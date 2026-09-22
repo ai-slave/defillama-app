@@ -1,11 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
-import type { InputHTMLAttributes, ReactNode } from 'react'
+import { useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Input } from '~/ui/Input'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+
+type RangeQuickPick = { label: string; value: number }
 
 interface IFilterBetweenRange {
 	trigger: ReactNode
@@ -21,6 +23,7 @@ interface IFilterBetweenRange {
 	maxLabel?: string
 	minInputProps?: InputHTMLAttributes<HTMLInputElement>
 	maxInputProps?: InputHTMLAttributes<HTMLInputElement>
+	quickPicks?: ReadonlyArray<RangeQuickPick>
 }
 
 export function FilterBetweenRange({
@@ -36,7 +39,8 @@ export function FilterBetweenRange({
 	minLabel = 'Min',
 	maxLabel = 'Max',
 	minInputProps,
-	maxInputProps
+	maxInputProps,
+	quickPicks
 }: IFilterBetweenRange) {
 	const popover = Ariakit.usePopoverStore({
 		placement
@@ -54,6 +58,7 @@ export function FilterBetweenRange({
 					maxLabel={maxLabel}
 					minInputProps={minInputProps}
 					maxInputProps={maxInputProps}
+					quickPicks={quickPicks}
 				/>
 			</NestedMenu>
 		)
@@ -100,6 +105,7 @@ export function FilterBetweenRange({
 						maxLabel={maxLabel}
 						minInputProps={minInputProps}
 						maxInputProps={maxInputProps}
+						quickPicks={quickPicks}
 					/>
 				</div>
 			</PopoverSurface>
@@ -115,7 +121,8 @@ function Form({
 	minLabel,
 	maxLabel,
 	minInputProps,
-	maxInputProps
+	maxInputProps,
+	quickPicks
 }: {
 	onSubmit: FormSubmitHandler
 	onClear: () => void
@@ -125,13 +132,55 @@ function Form({
 	maxLabel: string
 	minInputProps?: InputHTMLAttributes<HTMLInputElement>
 	maxInputProps?: InputHTMLAttributes<HTMLInputElement>
+	quickPicks?: ReadonlyArray<RangeQuickPick>
 }) {
+	const formRef = useRef<HTMLFormElement>(null)
+	const minRef = useRef<HTMLInputElement>(null)
+	const [minValue, setMinValue] = useState(String(min ?? ''))
+	const pickMin = (value: number) => {
+		if (minRef.current) minRef.current.value = String(value)
+		setMinValue(String(value))
+		formRef.current?.requestSubmit()
+	}
 	return (
-		<form onSubmit={onSubmit} onReset={onClear} className="flex flex-col gap-3 p-3">
-			<label className="flex flex-col gap-1">
-				<span className="label-sm text-secondary">{minLabel}</span>
-				<Input type="number" name="min" defaultValue={min ?? ''} {...minInputProps} className="w-full" />
-			</label>
+		<form
+			ref={formRef}
+			onSubmit={onSubmit}
+			onReset={() => {
+				setMinValue('')
+				onClear()
+			}}
+			className="flex flex-col gap-3 p-3"
+		>
+			<div className="flex flex-col gap-1.5">
+				<label className="flex flex-col gap-1">
+					<span className="label-sm text-secondary">{minLabel}</span>
+					<Input
+						ref={minRef}
+						type="number"
+						name="min"
+						defaultValue={min ?? ''}
+						{...minInputProps}
+						onInput={(e) => setMinValue(e.currentTarget.value)}
+						className="w-full"
+					/>
+				</label>
+				{quickPicks?.length ? (
+					<div className="flex flex-wrap gap-1.5">
+						{quickPicks.map((pick) => (
+							<button
+								key={pick.value}
+								type="button"
+								onClick={() => pickMin(pick.value)}
+								data-active={Number(minValue) === pick.value}
+								className="hover-wash rounded-full border border-medium px-2 py-0.5 label-sm text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint"
+							>
+								{pick.label}
+							</button>
+						))}
+					</div>
+				) : null}
+			</div>
 			<label className="flex flex-col gap-1">
 				<span className="label-sm text-secondary">{maxLabel}</span>
 				<Input type="number" name="max" defaultValue={max ?? ''} {...maxInputProps} className="w-full" />

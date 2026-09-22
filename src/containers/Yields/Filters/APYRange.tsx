@@ -7,6 +7,8 @@ import { formatNumber } from '~/utils/numberFormat'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
+const APY_MIN_PRESETS = [5, 10, 20, 50].map((value) => ({ label: `${value}%`, value }))
+
 interface IAPYRange {
 	nestedMenu?: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
@@ -64,6 +66,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 				</>
 			}
 			variant="secondary"
+			quickPicks={APY_MIN_PRESETS}
 			onSubmit={handleSubmit}
 			onClear={handleClear}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}

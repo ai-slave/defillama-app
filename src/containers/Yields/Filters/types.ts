@@ -7,12 +7,16 @@ type YieldCsvPayload = {
 }
 type PrepareYieldCsv = () => YieldCsvPayload | Promise<YieldCsvPayload>
 
+/** A parent protocol and the `projectList` entries under it, e.g. Uniswap → V2, V3, V4. */
+export type ProjectGroup = { name: string; projects: Array<string> }
+
 export interface IDropdownMenusProps {
 	pathname?: string
 	chainList?: Array<string>
 	selectedChains?: Array<string>
 	evmChains?: Array<string>
 	projectList?: Array<string>
+	projectGroups?: Array<ProjectGroup>
 	selectedProjects?: Array<string>
 	// Opt-in label override for the Projects dropdown (/yields uses "Protocols").
 	// Defaults to "Projects" — every other page keeps the shared label.

@@ -1,12 +1,18 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
+import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import type { ExcludeQueryKey, SelectOption } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
+import type { ProjectGroup } from './types'
+
+const EMPTY_GROUPS: Array<ProjectGroup> = []
+const GROUP_KEY_PREFIX = 'group:'
 
 interface IYieldProjectsProps {
 	projectList: Array<string>
+	projectGroups?: Array<ProjectGroup>
 	selectedProjects: Array<string>
 	label?: string
 	nestedMenu?: boolean
@@ -16,6 +22,7 @@ interface IYieldProjectsProps {
 
 export function YieldProjects({
 	projectList,
+	projectGroups = EMPTY_GROUPS,
 	selectedProjects,
 	label,
 	nestedMenu,
@@ -27,29 +34,89 @@ export function YieldProjects({
 	const selectedQueryValue = router.query[includeQueryKey]
 	const prevSelectionRef = useRef<Set<string>>(new Set(selectedProjects))
 
+	const selectedSet = new Set(selectedProjects)
+	const groupByFirstProject = new Map<string, ProjectGroup>()
+	const projectToGroup = new Map<string, ProjectGroup>()
+	for (const group of projectGroups) {
+		groupByFirstProject.set(group.projects[0]!, group)
+		for (const project of group.projects) projectToGroup.set(project, group)
+	}
+	const isGroupSelected = (group: ProjectGroup) => group.projects.every((project) => selectedSet.has(project))
+
+	const options: Array<SelectOption> = []
+	for (const project of projectList) {
+		const group = groupByFirstProject.get(project)
+		if (group) {
+			options.push({
+				key: `${GROUP_KEY_PREFIX}${group.name}`,
+				name: group.name,
+				icon: <span className="label-xs text-tertiary">Combined</span>
+			})
+		}
+		options.push({ key: project, name: project })
+	}
+
+	const displaySelected = [...selectedProjects]
+	const selectedLabels: Array<string> = []
+	for (const group of projectGroups) {
+		if (isGroupSelected(group)) {
+			displaySelected.push(`${GROUP_KEY_PREFIX}${group.name}`)
+			selectedLabels.push(group.name)
+		}
+	}
+	for (const project of selectedProjects) {
+		const group = projectToGroup.get(project)
+		if (!group || !isGroupSelected(group)) selectedLabels.push(project)
+	}
+
+	const handleValuesChange = (values: Array<string>) => {
+		const prev = new Set(displaySelected)
+		const next = new Set<string>()
+		for (const value of values) {
+			if (!value.startsWith(GROUP_KEY_PREFIX)) next.add(value)
+		}
+		const addedByGroup = new Set<string>()
+		for (const group of projectGroups) {
+			const key = `${GROUP_KEY_PREFIX}${group.name}`
+			const wasOn = prev.has(key)
+			const isOn = values.includes(key)
+			// A still-checked group with none of its versions left is "Only" on that group.
+			const onlyGroup = isOn && wasOn && !group.projects.some((project) => next.has(project))
+			if ((isOn && !wasOn) || onlyGroup) {
+				for (const project of group.projects) {
+					next.add(project)
+					addedByGroup.add(project)
+				}
+				trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project: group.name })
+			} else if (wasOn && !isOn && group.projects.every((project) => next.has(project))) {
+				for (const project of group.projects) next.delete(project)
+			}
+		}
+		const prevSet = prevSelectionRef.current
+		for (const project of next) {
+			if (!prevSet.has(project) && !addedByGroup.has(project)) {
+				trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project })
+			}
+		}
+		prevSelectionRef.current = next
+		updateQueryFromSelected(router, includeQueryKey, excludeQueryKey, projectList, [...next], undefined, {
+			pushQueryUpdates: (updates) => {
+				void pushYieldsQuery(router, updates)
+			}
+		})
+	}
+
 	return (
 		<SelectWithCombobox
 			variant="default"
 			size="sm"
-			allValues={projectList}
-			selectedValues={selectedProjects}
+			allValues={options}
+			selectedValues={displaySelected}
+			selectedLabels={selectedLabels}
+			setSelectedValues={handleValuesChange}
 			label={label ?? 'Projects'}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			labelType={!selectedQueryValue || selectedQueryValue === 'All' ? 'none' : 'regular'}
-			includeQueryKey={includeQueryKey}
-			excludeQueryKey={excludeQueryKey}
-			pushQueryUpdates={(updates) => {
-				void pushYieldsQuery(router, updates)
-			}}
-			onValuesChange={(values) => {
-				const prevSet = prevSelectionRef.current
-				for (const projectName of values) {
-					if (!prevSet.has(projectName)) {
-						trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project: projectName })
-					}
-				}
-				prevSelectionRef.current = new Set(values)
-			}}
 		/>
 	)
 }

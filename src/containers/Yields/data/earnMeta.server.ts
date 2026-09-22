@@ -1,11 +1,14 @@
 import { EARN_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
+import type { ProjectGroup } from '../Filters/types'
 import { getEarnWithTokenKeys } from './enrich.server'
+import { getProtocolParents } from './server/raiseValuations'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { TokenOption } from './types'
 
 export interface EarnPageMeta {
 	chainList: Array<string>
 	projectList: Array<string>
+	projectGroups: Array<ProjectGroup>
 	categoryList: Array<string>
 	evmChains: Array<string>
 	tokens: Array<TokenOption>
@@ -21,7 +24,11 @@ const byCountDesc = (counts: Map<string, number>) =>
 // option first — counts are not shipped); `tokens` are the family/asset option keys
 // that actually appear in the earn rows' reference assets.
 export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPageMeta> {
-	const [rows, meta] = await Promise.all([getEarnWithTokenKeys(snapshot), readYieldsMeta(snapshot)])
+	const [rows, meta, protocolParents] = await Promise.all([
+		getEarnWithTokenKeys(snapshot),
+		readYieldsMeta(snapshot),
+		getProtocolParents(snapshot)
+	])
 	const memePoolIds = new Set(meta.meme_pool_ids)
 	const chainIsEvm = new Map<string, boolean>()
 	for (const chain of meta.chains) chainIsEvm.set(chain.name, chain.is_evm)
@@ -59,10 +66,22 @@ export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPag
 	const attributeIds = [...EARN_ATTRIBUTE_IDS]
 
 	const chainList = byCountDesc(chainCounts)
+	const projectList = byCountDesc(projectCounts)
+
+	const groupsByParent = new Map<string, ProjectGroup>()
+	for (const project of projectList) {
+		const parent = protocolParents.get(project.toLowerCase())
+		if (!parent) continue
+		const group = groupsByParent.get(parent)
+		if (group) group.projects.push(project)
+		else groupsByParent.set(parent, { name: parent, projects: [project] })
+	}
+	const projectGroups = [...groupsByParent.values()].filter((group) => group.projects.length > 1)
 
 	return {
 		chainList,
-		projectList: byCountDesc(projectCounts),
+		projectList,
+		projectGroups,
 		categoryList: byCountDesc(categoryCounts),
 		evmChains: chainList.filter((chain) => chainIsEvm.get(chain)),
 		tokens,
