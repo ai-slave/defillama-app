@@ -5,6 +5,7 @@ type LlamaAIChrome = {
 	hideSidebar: () => void
 	toggleFullscreen: () => void
 	isFullscreen: boolean
+	fullscreenLocked: boolean
 	sidebarVisible: boolean
 	toggleDashboardPanel: () => void
 	isDashboardPanelOpen: boolean

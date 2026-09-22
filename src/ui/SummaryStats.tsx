@@ -96,6 +96,8 @@ export function StatItem({
 export interface InlineStatStripItem {
 	tooltip?: ReactNode
 	label: string
+	/** Keeps the label for screen readers only, for a self-describing value such as a market name. */
+	labelHidden?: boolean
 	value: ReactNode
 	/** Optional delta text rendered after the value. */
 	change?: ReactNode
@@ -106,8 +108,17 @@ export interface InlineStatStripItem {
 /** Inline stat strip (design.md → Summary metric cards, inline variant): a
     full-width Card of `label: value` pairs above a table or chart. One rhythm
     everywhere — strip padding, 14px pairs (body-md secondary labels, label-md
-    values), 24px item gaps. */
-export function InlineStatStrip({ items, className }: { items: Array<InlineStatStripItem>; className?: string }) {
+    values), 24px item gaps. `stacked` puts each label over its value for
+    dense one-row headers. */
+export function InlineStatStrip({
+	items,
+	stacked,
+	className
+}: {
+	items: Array<InlineStatStripItem>
+	stacked?: boolean
+	className?: string
+}) {
 	return (
 		<Card
 			as="dl"
@@ -115,8 +126,8 @@ export function InlineStatStrip({ items, className }: { items: Array<InlineStatS
 			className={`flex w-full flex-wrap items-center gap-x-6 gap-y-2 ${className ?? ''}`.trim()}
 		>
 			{items.map((item) => (
-				<div key={item.label} className="flex items-baseline gap-1.5">
-					<dt className="body-md text-secondary">
+				<div key={item.label} className={stacked ? 'flex flex-col' : 'flex items-baseline gap-1.5'}>
+					<dt className={item.labelHidden ? 'sr-only' : 'body-md text-secondary'}>
 						{item.tooltip ? (
 							<Tooltip
 								content={item.tooltip}

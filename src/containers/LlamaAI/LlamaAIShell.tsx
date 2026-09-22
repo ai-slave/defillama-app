@@ -1,5 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
 import { useAuthContext } from '~/auth'
+import { SiteSearchHotkey } from '~/components/Search'
 import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { LlamaAIMobileAppGate } from '~/containers/MobileApp/LlamaAIMobileAppGate'
@@ -54,7 +55,8 @@ export function LlamaAIShell({ children }: { children: ReactNode }) {
 	const shouldMountChat = !!user && !loaders.userLoading && route.kind !== 'unknown'
 
 	return (
-		<Layout {...seoFromRoute(route)} hideDesktopSearchLlamaAiButton>
+		<Layout {...seoFromRoute(route)} hideDesktopSearch>
+			<SiteSearchHotkey />
 			<LlamaAIMobileAppGate interactive>
 				<LlamaAIAnimationPreloads />
 				<SessionAliasProvider userId={userId}>

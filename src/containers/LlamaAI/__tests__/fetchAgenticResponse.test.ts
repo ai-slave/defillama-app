@@ -10,6 +10,8 @@ import {
 	type AgenticSSECallbacks
 } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { createAgenticMutationEnvelope } from '~/containers/LlamaAI/mutationProtocol'
+import { readTerminalContext } from '~/containers/LlamaAI/terminal/terminalOps'
+import { setTerminalWidget, type TerminalWidget } from '~/containers/LlamaAI/terminal/terminalViewStore'
 
 type MockFetch = (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => Promise<Response>
 type MockFetchSpy = ReturnType<typeof vi.fn<MockFetch>>
@@ -99,6 +101,8 @@ function callbacks(): AgenticSSECallbacks {
 		onMessageId: vi.fn(),
 		onUserMessageId: vi.fn(),
 		onQueueUpdated: vi.fn(),
+		onTerminalOps: vi.fn(),
+		onTerminalRequest: vi.fn(),
 		onSiblingInfo: vi.fn(),
 		onTokenLimit: vi.fn(),
 		onContextWarning: vi.fn(),
@@ -143,6 +147,48 @@ describe('parseSSEStream', () => {
 			expect.objectContaining({ id: 'dash-1', dashboardName: 'Dash', items: [] })
 		)
 		expect(cb.onDone).toHaveBeenCalledOnce()
+	})
+
+	test('routes terminal drawing ops and screenshot requests to the terminal callbacks', async () => {
+		const cb = callbacks()
+
+		await parseSSEStream(
+			sseReader(
+				JSON.stringify({
+					type: 'terminal_ops',
+					symbol: 'HYPE',
+					interval: '1D',
+					ops: [
+						{ type: 'hline', id: 'ai_1', number: 1, price: 42.5, text: 'support' },
+						{ type: 'label', id: 'ai_2', number: 2, time: 1_757_000_000, price: 44 },
+						{ type: 'clear', ids: ['ai_1'] }
+					]
+				}),
+				JSON.stringify({
+					type: 'terminal_request',
+					requestId: 'scr_abc12345_1',
+					kind: 'screenshot',
+					expiresAt: 1_757_000_025_000
+				}),
+				JSON.stringify({ type: 'done' })
+			),
+			cb
+		)
+
+		// A label without text is not drawable, so it never reaches the widget.
+		expect(cb.onTerminalOps).toHaveBeenCalledWith({
+			symbol: 'HYPE',
+			interval: '1D',
+			ops: [
+				{ type: 'hline', id: 'ai_1', number: 1, price: 42.5, text: 'support' },
+				{ type: 'clear', ids: ['ai_1'] }
+			]
+		})
+		expect(cb.onTerminalRequest).toHaveBeenCalledWith({
+			requestId: 'scr_abc12345_1',
+			kind: 'screenshot',
+			expiresAt: 1_757_000_025_000
+		})
 	})
 
 	test('reports streams that end without done', async () => {
@@ -766,6 +812,53 @@ describe('fetchAgenticResponse', () => {
 		expect(fetchFn).toHaveBeenCalledTimes(2)
 		expect(readRequestBody(fetchFn)).toMatchObject(mutation)
 		expect(fetchFn.mock.calls[1]?.[1]?.body).toBe(fetchFn.mock.calls[0]?.[1]?.body)
+	})
+
+	// The backend fingerprints the whole body except clientMutationId, stream and sessionId, so a
+	// retry that re-read the live chart would hash differently and come back as mutation_conflict.
+	test('replays the terminal snapshot verbatim after the chart moved under it', async () => {
+		setTerminalWidget({
+			activeChart: () => ({ getVisibleRange: () => ({ from: 100, to: 200 }), resolution: () => '60' })
+		} as unknown as TerminalWidget)
+		const mutation = createAgenticMutationEnvelope({
+			clientMutationId: 'mutation-terminal',
+			message: 'Mark the range high',
+			sessionId: 'session-1',
+			mode: 'quick',
+			enablePremiumTools: false,
+			terminalContext: readTerminalContext()
+		})
+
+		const fetchFn = vi
+			.fn<MockFetch>()
+			.mockImplementationOnce(async () => {
+				// The user pans while the first attempt is in flight.
+				setTerminalWidget({
+					activeChart: () => ({ getVisibleRange: () => ({ from: 900, to: 999 }), resolution: () => '1D' })
+				} as unknown as TerminalWidget)
+				return jsonResponse(
+					{ code: 'MUTATION_RECONCILE', status: 'pending', sessionId: 'session-1', retryAfterMs: 0 },
+					{ status: 409 }
+				)
+			})
+			.mockResolvedValueOnce(sseResponse([JSON.stringify({ type: 'done' })]))
+
+		await fetchAgenticResponse({
+			mutation,
+			callbacks: callbacks(),
+			fetchFn: fetchFn as unknown as typeof fetch
+		})
+
+		setTerminalWidget(null)
+		expect(fetchFn).toHaveBeenCalledTimes(2)
+		expect(fetchFn.mock.calls[1]?.[1]?.body).toBe(fetchFn.mock.calls[0]?.[1]?.body)
+		expect(readRequestBody(fetchFn).terminalContext).toEqual({
+			symbol: 'HYPE',
+			interval: '60',
+			from: 100,
+			to: 200,
+			drawings: []
+		})
 	})
 
 	test('returns pending to the UI when automatic reconciliation reaches its limit', async () => {

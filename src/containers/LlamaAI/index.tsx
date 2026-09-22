@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import {
+	type ComponentProps,
 	lazy,
 	memo,
 	Suspense,
@@ -127,12 +128,53 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { DuelPanel, type DuelChoice } from './components/DuelPanel'
 import { useDuelStream } from './hooks/useDuelStream'
+import {
+	bindTerminalChatSession,
+	loadTerminalChatState,
+	resetTerminalChat,
+	startTerminalChatSaving
+} from './terminal/terminalChatState'
+import { getCurrentTerminalEntity } from './terminal/terminalData'
+import { readTerminalContext, restoreTerminalDrawings } from './terminal/terminalOps'
+import { chatSessionUrl, isTerminalPath, terminalAccessRedirect, terminalEntryFromUrl } from './terminal/terminalRoutes'
+import { respondToTerminalRequest } from './terminal/terminalScreenshot'
+import { TerminalSplitter } from './terminal/TerminalSplitter'
+import {
+	getTerminalSymbol,
+	getTerminalViewOpen,
+	leaveTerminalForChatHome,
+	MIN_CHART_PX,
+	MIN_CHAT_PX,
+	openTerminalHome,
+	restoreTerminalView,
+	setTerminalChatCollapsed,
+	setTerminalViewOpen,
+	TERMINAL_RAIL_PX,
+	TERMINAL_SPLITTER_PX,
+	useTerminalChatCollapsed,
+	useTerminalChatRatio,
+	useTerminalViewOpen,
+	withTerminalView
+} from './terminal/terminalViewStore'
 
 const SubscribeProModal = lazy(() =>
 	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
 		default: m.SubscribeProModal
 	}))
 )
+
+const TerminalPanel = lazy(() => import('./terminal/TerminalPanel').then((m) => ({ default: m.TerminalPanel })))
+
+const CHAT_PANEL_LAYOUT = {
+	chat: 'flex-1',
+	terminal: 'lg:flex-none',
+	terminalCollapsed: 'hidden'
+} as const
+
+const SHRINK_TO_RIGHT_ANIMATION = 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]'
+
+const HEADER_ICON_BUTTON =
+	'flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white'
 
 const DashboardPanel = lazy(() =>
 	import('~/containers/LlamaAI/components/DashboardPanel').then((m) => ({ default: m.DashboardPanel }))
@@ -322,7 +364,8 @@ export function AgenticChat({
 		bulkDeleteSessions,
 		replaceOptimisticSessionId
 	} = useSessionMutations()
-	const { sidebarVisible, toggleSidebar, hideSidebar, isFullscreen, toggleFullscreen } = useSidebarVisibility()
+	const { sidebarVisible, toggleSidebar, hideSidebar, isFullscreen, fullscreenLocked, toggleFullscreen } =
+		useSidebarVisibility()
 	const enableSoundNotifications = useLlamaAISetting('enableSoundNotifications')
 	const alertsModalStore = Ariakit.useDialogStore()
 	const settingsModalStore = Ariakit.useDialogStore()
@@ -366,6 +409,38 @@ export function AgenticChat({
 	const [shareTargetMessageId, setShareTargetMessageId] = useState<string | null>(null)
 	const [initialIntegrationsState, setInitialIntegrationsState] = useState<SettingsInitialState | null>(null)
 	const router = useRouter()
+	const isTerminalOpen = useTerminalViewOpen()
+	const isTerminalView = isTerminalOpen && isLlama && !isMobileChatView && !readOnly && !sharedSession
+	const terminalChatRatio = useTerminalChatRatio()
+	const terminalChatCollapsed = useTerminalChatCollapsed()
+	const splitBoundsRef = useRef<HTMLDivElement>(null)
+	const [isHistoryDrawerOpen, setHistoryDrawerOpen] = useState(false)
+	if (isHistoryDrawerOpen && !isTerminalView) setHistoryDrawerOpen(false)
+	const [isSidebarSearchOpen, setSidebarSearchOpen] = useState(false)
+	if (isSidebarSearchOpen && !(isTerminalView ? isHistoryDrawerOpen : sidebarVisible)) setSidebarSearchOpen(false)
+	const isSharedPage = !!sharedSession
+	useEffect(() => {
+		if (isLlama) restoreTerminalView()
+	}, [isLlama])
+	useEffect(() => {
+		if (!isTerminalView) return
+		return startTerminalChatSaving(authorizedFetchCompat)
+	}, [isTerminalView, authorizedFetchCompat])
+	useEffect(() => {
+		if (sessionId) bindTerminalChatSession(sessionId)
+	}, [sessionId])
+	useEffect(() => {
+		if (!router.isReady) return
+		const redirect = terminalAccessRedirect(router.asPath, user)
+		if (redirect) void router.replace(redirect)
+	}, [router, user])
+	useEffect(() => {
+		if (!router.isReady) return
+		const open = isLlama && !isSharedPage && isTerminalPath(router.pathname)
+		const entry = terminalEntryFromUrl(router.asPath)
+		setTerminalViewOpen(open, open ? entry.symbol : undefined)
+		if (entry.cleanUrl) void router.replace(entry.cleanUrl, undefined, { shallow: true, scroll: false })
+	}, [router, isLlama, isSharedPage])
 	const submitPendingPromptRef = useRef<
 		(prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean) => void
 	>(() => {})
@@ -383,7 +458,7 @@ export function AgenticChat({
 		utmSource: deepLinkUtmSource,
 		utmCampaign: deepLinkUtmCampaign,
 		clearDeepLinkFromUrl: () => {
-			void router.replace('/ai/chat', undefined, { shallow: true })
+			void router.replace(withTerminalView('/ai/chat'), undefined, { shallow: true })
 		},
 		submitPrompt: (prompt, pageContext, isSuggestedQuestion) =>
 			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion)
@@ -943,6 +1018,7 @@ export function AgenticChat({
 			hideSidebar,
 			toggleFullscreen,
 			isFullscreen,
+			fullscreenLocked,
 			sidebarVisible,
 			toggleDashboardPanel,
 			isDashboardPanelOpen: dashboardPanelIsOpen
@@ -952,10 +1028,21 @@ export function AgenticChat({
 			hideSidebar,
 			toggleFullscreen,
 			isFullscreen,
+			fullscreenLocked,
 			sidebarVisible,
 			toggleDashboardPanel,
 			dashboardPanelIsOpen
 		]
+	)
+	const closeHistoryDrawer = useCallback(() => setHistoryDrawerOpen(false), [])
+	const historyDrawerChromeValue = useMemo(
+		() => ({
+			...chromeValue,
+			toggleSidebar: () => (isHistoryDrawerOpen ? closeHistoryDrawer() : setHistoryDrawerOpen(true)),
+			hideSidebar: closeHistoryDrawer,
+			sidebarVisible: isHistoryDrawerOpen
+		}),
+		[chromeValue, closeHistoryDrawer, isHistoryDrawerOpen]
 	)
 
 	// Append one message to the live conversation state.
@@ -1030,6 +1117,9 @@ export function AgenticChat({
 				onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
 				onTokenLimit: () => setShowTokenLimitModal(true),
 				onQueueUpdated: handleQueueUpdated,
+				onTerminalRequest: (request) => {
+					void respondToTerminalRequest(request, completionSessionId, authorizedFetchCompat)
+				},
 				onUserMessageIdObserved: onUserMessageId,
 				onSessionId: (observedSessionId) => {
 					completionSessionId = observedSessionId
@@ -1114,6 +1204,27 @@ export function AgenticChat({
 			}
 
 			setMessages(projected)
+			// A conversation that drew on a chart reopens with that chart, or its drawings and the
+			// "drawing #2" references in the answers point at nothing.
+			const match = sessions.find((session) => session.sessionId === targetSessionId)
+			if (isLlama) {
+				void loadTerminalChatState(
+					targetSessionId,
+					restored,
+					authorizedFetchCompat,
+					match?.terminalSymbol ?? null
+				).then((restoredSymbol) => {
+					if (!restoredSymbol) return
+					setTerminalViewOpen(getTerminalViewOpen(), restoredSymbol)
+					if (router.pathname === '/ai/chat/[sessionId]') {
+						void router.replace(chatSessionUrl(targetSessionId, restoredSymbol, window.location.hash), undefined, {
+							scroll: false
+						})
+					}
+				})
+			} else {
+				restoreTerminalDrawings(restored)
+			}
 			dispatchStream({ type: 'SET_TODOS', value: Array.isArray(result.todos) ? result.todos : [] })
 			const queueSnapshot = decodeQueueSnapshot({
 				sessionId: targetSessionId,
@@ -1128,7 +1239,6 @@ export function AgenticChat({
 			)
 			setConversationViewResetKey((current) => current + 1)
 			setSessionId(targetSessionId)
-			const match = sessions.find((session) => session.sessionId === targetSessionId)
 			setSessionTitle(match?.title || null)
 			setCurrentSessionProjectId(result.projectId ?? match?.projectId ?? null)
 
@@ -1152,7 +1262,7 @@ export function AgenticChat({
 
 			return { status: 'restored' }
 		},
-		[attach, restoreQueueSnapshot, restoreSession, sessions]
+		[attach, authorizedFetchCompat, isLlama, restoreQueueSnapshot, restoreSession, router, sessions]
 	)
 
 	const exhaustRecovery = useCallback(
@@ -1323,6 +1433,7 @@ export function AgenticChat({
 		abortActiveRequest()
 		abortQueueCommands()
 		clearConversationRuntimeState()
+		resetTerminalChat()
 		setMessages([])
 		setActiveLeafMessageId(null)
 		setQuotedText(null)
@@ -1355,7 +1466,7 @@ export function AgenticChat({
 			// Check the current view after the request; the reader may have switched chats while it ran.
 			if ((routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId) {
 				clearConversationState()
-				void router.push('/ai/chat')
+				void router.push(withTerminalView('/ai/chat'))
 			}
 		},
 		[clearConversationState, clearPromptFailure, deleteSession, forgetQueueSession, router]
@@ -1371,7 +1482,7 @@ export function AgenticChat({
 			const viewedSessionId = routeSessionIdRef.current ?? currentSessionIdRef.current
 			if (viewedSessionId && sessionIds.includes(viewedSessionId)) {
 				clearConversationState()
-				void router.push('/ai/chat')
+				void router.push(withTerminalView('/ai/chat'))
 			}
 		},
 		[bulkDeleteSessions, clearConversationState, clearPromptFailure, forgetQueueSession, router]
@@ -1405,7 +1516,7 @@ export function AgenticChat({
 			try {
 				await persistSession
 				if (currentSessionIdRef.current !== nextSessionId) return
-				void router.push(`/ai/chat/${nextSessionId}`)
+				void router.push(withTerminalView(`/ai/chat/${nextSessionId}`))
 			} catch (createSessionError) {
 				console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
 			}
@@ -1418,7 +1529,7 @@ export function AgenticChat({
 			promptInputRef.current?.focus()
 		}
 		// A first prompt may still be loading its session route while /ai/chat is visible.
-		void router.push('/ai/chat')
+		void router.push(withTerminalView('/ai/chat'))
 	}, [clearConversationState, createFakeSession, createSession, currentSessionProjectId, router, route, sharedSession])
 
 	// Restore a saved session, and resume any still-active server execution attached to it.
@@ -1478,11 +1589,21 @@ export function AgenticChat({
 		]
 	)
 
+	const chatHref = useCallback(
+		(targetSessionId: string, hash = '') =>
+			chatSessionUrl(
+				targetSessionId,
+				isLlama ? sessions.find((s) => s.sessionId === targetSessionId)?.terminalSymbol : null,
+				hash
+			),
+		[isLlama, sessions]
+	)
+
 	const handleSearchMatchClick = useCallback(
 		(targetSessionId: string, messageId: string) => {
-			void router.push(`/ai/chat/${targetSessionId}#msg-${messageId}`)
+			void router.push(chatHref(targetSessionId, `#msg-${messageId}`))
 		},
-		[router]
+		[router, chatHref]
 	)
 
 	useAgenticRouteTransition({
@@ -1570,11 +1691,11 @@ export function AgenticChat({
 				let ownsSessionNavigation = true
 				const onRouteChangeStart = (url: string) => {
 					// Yield URL ownership before the destination commits, while the stream is still current.
-					if (url !== `/ai/chat/${currentSessionId}`) ownsSessionNavigation = false
+					if (url.split(/[?#]/)[0] !== withTerminalView(`/ai/chat/${currentSessionId}`)) ownsSessionNavigation = false
 				}
 				router.events.on('routeChangeStart', onRouteChangeStart)
 				if (!sharedSession && routeSessionIdRef.current !== currentSessionId) {
-					void router.push(`/ai/chat/${currentSessionId}`, undefined, { scroll: false })
+					void router.push(withTerminalView(`/ai/chat/${currentSessionId}`), undefined, { scroll: false })
 				}
 
 				const buffer = createStreamBuffer()
@@ -1594,7 +1715,7 @@ export function AgenticChat({
 					replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					if (sharedSession) onSharedSessionFork?.(id)
 					else if (ownsSessionNavigation && previousSessionId !== id) {
-						void router.replace(`/ai/chat/${id}`, undefined, { scroll: false })
+						void router.replace(withTerminalView(`/ai/chat/${id}`), undefined, { scroll: false })
 					}
 					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
 						void createSession
@@ -1869,6 +1990,16 @@ export function AgenticChat({
 			}
 
 			const effectiveMode = options?.modeOverride ?? mode
+			const terminalSymbol = isTerminalView ? getTerminalSymbol() : null
+			const terminalEntity = terminalSymbol ? getCurrentTerminalEntity() : null
+			const submitPageContext: ChatPageContext | undefined =
+				pageContext ??
+				(terminalSymbol
+					? {
+							route: `/ai/terminal/${terminalSymbol}`,
+							...(terminalEntity ? { entitySlug: terminalEntity.slug, entityType: terminalEntity.kind } : {})
+						}
+					: undefined)
 			return startPromptSubmission(effectiveMode, () => {
 				const submitProjectId = routeProjectId ?? currentSessionProjectId
 				let currentSessionId = sessionId
@@ -1906,7 +2037,7 @@ export function AgenticChat({
 						mode: effectiveMode,
 						entities: entities?.length ? entities : undefined,
 						images: images?.length ? images : undefined,
-						pageContext,
+						pageContext: submitPageContext,
 						quotedText: currentQuotedText,
 						customInstructions: settings.customInstructions || undefined,
 						enablePremiumTools: settings.enablePremiumTools,
@@ -1915,7 +2046,8 @@ export function AgenticChat({
 						isSuggestedQuestion: options?.isSuggestedQuestion,
 						blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
 						shareToken: currentShareToken,
-						projectId: submitProjectId
+						projectId: submitProjectId,
+						terminalContext: isTerminalView ? readTerminalContext() : undefined
 					}),
 					optimisticMessageId: `local-${crypto.randomUUID()}`
 				}
@@ -1938,7 +2070,8 @@ export function AgenticChat({
 			settings.enablePremiumTools,
 			settings.model,
 			settings.effort,
-			isMobileChatView
+			isMobileChatView,
+			isTerminalView
 		]
 	)
 
@@ -2077,7 +2210,8 @@ export function AgenticChat({
 				model: settings.model || undefined,
 				effort: settings.effort || undefined,
 				blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
-				projectId: currentSessionProjectId
+				projectId: currentSessionProjectId,
+				terminalContext: isTerminalView ? readTerminalContext() : undefined
 			})
 			let shouldThrowEditError: UsageLimitError | null = null
 			let handedOffToResume = false
@@ -2227,6 +2361,7 @@ export function AgenticChat({
 			executionCoordinator,
 			finishDuel,
 			isMobileChatView,
+			isTerminalView,
 			mode,
 			messages,
 			researchModalStore,
@@ -2610,7 +2745,7 @@ export function AgenticChat({
 		onClearQuotedText: () => setQuotedText(null),
 		enterToSend: settings.enterToSend,
 		onTableFullscreenOpen: hideSidebar,
-		onShare: openShareModal,
+		onShare: isTerminalView ? undefined : openShareModal,
 		contextWarning,
 		onDismissContextWarning: () => dispatchStream({ type: 'SET_CONTEXT_WARNING', value: null }),
 		onStartNewChat: () => void handleNewChat()
@@ -2631,7 +2766,7 @@ export function AgenticChat({
 							isStreaming={api.isStreaming}
 							enterToSend={settings.enterToSend}
 							onPickSession={(nextSessionId) => {
-								void router.push(`/ai/chat/${nextSessionId}`)
+								void router.push(chatHref(nextSessionId))
 							}}
 						/>
 					)
@@ -2665,6 +2800,67 @@ export function AgenticChat({
 		)
 	}
 
+	const chatPanelLayout: keyof typeof CHAT_PANEL_LAYOUT = !isTerminalView
+		? 'chat'
+		: terminalChatCollapsed
+			? 'terminalCollapsed'
+			: 'terminal'
+	const chatPanelShrinkAnimation =
+		sidebarVisible && !isTerminalView && shouldAnimateSidebar ? SHRINK_TO_RIGHT_ANIMATION : ''
+	const sidebarProps: ComponentProps<typeof AgenticSidebar> = {
+		sessions,
+		isLoading: isLoadingSessions,
+		loadError: sessionListError,
+		currentSessionId: routeSessionId ?? sessionId ?? null,
+		restoringSessionId,
+		onSessionSelect: (nextSessionId) => {
+			void router.push(chatHref(nextSessionId))
+		},
+		onNewChat: handleNewChat,
+		onDelete: handleDeleteSession,
+		onOpenSettings: openSettings,
+		onOpenBalanceSettings: () => openSettingsAtTab('balance'),
+		showBalance: settings.showBalanceInSidebar,
+		hasCustomInstructions: settings.customInstructions.trim().length > 0,
+		onBulkDelete: handleBulkDeleteSessions,
+		onSearchMatchClick: handleSearchMatchClick,
+		hasMoreSessions,
+		isFetchingMoreSessions,
+		loadMoreSessionsError,
+		onLoadMoreSessions: loadMoreSessions,
+		currentProjectId: routeProjectId,
+		currentSessionProjectId: effectiveSessionProjectId,
+		alertsCount: alertsUsage?.count ?? null,
+		onOpenAlerts: alertsModalStore.show,
+		searchOpen: isSidebarSearchOpen,
+		onSearchOpenChange: setSidebarSearchOpen,
+		onSwitchPlace: () => {
+			if (route.kind === 'chat-new') clearConversationState()
+			openTerminalHome()
+		}
+	}
+	const terminalSidebarProps: ComponentProps<typeof AgenticSidebar> = {
+		...sidebarProps,
+		place: 'terminal',
+		onSessionSelect: (nextSessionId) => {
+			closeHistoryDrawer()
+			sidebarProps.onSessionSelect(nextSessionId)
+		},
+		onNewChat: () => {
+			closeHistoryDrawer()
+			void handleNewChat()
+		},
+		onSearchMatchClick: (targetSessionId, messageId) => {
+			closeHistoryDrawer()
+			handleSearchMatchClick(targetSessionId, messageId)
+		},
+		onSwitchPlace: () => {
+			closeHistoryDrawer()
+			if (route.kind === 'chat-new') clearConversationState()
+			leaveTerminalForChatHome()
+		}
+	}
+
 	return (
 		<TipActionProvider handlers={tipActionHandlers}>
 			<LlamaAIChromeContext.Provider value={chromeValue}>
@@ -2673,82 +2869,135 @@ export function AgenticChat({
 						<FileDropProvider>
 							<UploadTargetProvider sessionId={sessionId} projectId={currentSessionProjectId}>
 								<div
-									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-72px)]"
+									ref={splitBoundsRef}
+									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-32px)]"
 									style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
 								>
-									{!readOnly && sidebarVisible ? (
-										<>
-											<AgenticSidebar
-												sessions={sessions}
-												isLoading={isLoadingSessions}
-												loadError={sessionListError}
-												currentSessionId={routeSessionId ?? sessionId ?? null}
-												restoringSessionId={restoringSessionId}
-												onSessionSelect={(nextSessionId) => {
-													void router.push(`/ai/chat/${nextSessionId}`)
-												}}
-												onNewChat={handleNewChat}
-												onDelete={handleDeleteSession}
-												shouldAnimate={shouldAnimateSidebar}
-												onOpenSettings={openSettings}
-												onOpenBalanceSettings={() => openSettingsAtTab('balance')}
-												showBalance={settings.showBalanceInSidebar}
-												hasCustomInstructions={settings.customInstructions.trim().length > 0}
-												onBulkDelete={handleBulkDeleteSessions}
-												onSearchMatchClick={handleSearchMatchClick}
-												hasMoreSessions={hasMoreSessions}
-												isFetchingMoreSessions={isFetchingMoreSessions}
-												loadMoreSessionsError={loadMoreSessionsError}
-												onLoadMoreSessions={loadMoreSessions}
-												currentProjectId={routeProjectId}
-												currentSessionProjectId={effectiveSessionProjectId}
-												alertsCount={alertsUsage?.count ?? null}
-												onOpenAlerts={alertsModalStore.show}
-											/>
-											<div className="flex min-h-11 lg:hidden" />
-										</>
+									{!readOnly && !isTerminalView ? (
+										sidebarVisible ? (
+											<>
+												<AgenticSidebar {...sidebarProps} shouldAnimate={shouldAnimateSidebar} />
+												<div className="flex min-h-11 lg:hidden" />
+											</>
+										) : (
+											<AgenticSidebar {...sidebarProps} folded />
+										)
 									) : null}
 
+									{isTerminalView ? (
+										<>
+											<div className="relative hidden min-w-0 flex-1 lg:flex">
+												<LlamaAIChromeContext.Provider value={historyDrawerChromeValue}>
+													<AgenticSidebar {...terminalSidebarProps} folded />
+												</LlamaAIChromeContext.Provider>
+												{/* Holds the chart's share of the row while the panel loads: without it the chat
+										    paints at the left edge and jumps right when the terminal arrives. */}
+												<Suspense
+													fallback={
+														<div
+															aria-hidden="true"
+															className="hidden min-w-0 flex-1 rounded-lg border border-subtle bg-surface lg:block"
+														/>
+													}
+												>
+													<TerminalPanel />
+												</Suspense>
+												{isHistoryDrawerOpen ? (
+													<div
+														aria-hidden="true"
+														onClick={closeHistoryDrawer}
+														className="absolute inset-0 z-10 rounded-lg bg-screen-dim"
+													/>
+												) : null}
+												<Ariakit.Dialog
+													open={isHistoryDrawerOpen}
+													onClose={closeHistoryDrawer}
+													modal={false}
+													portal={false}
+													unmountOnHide
+													aria-label="LlamaAI sidebar"
+													className="absolute inset-y-0 left-0 z-20 flex w-[280px]"
+												>
+													<LlamaAIChromeContext.Provider value={historyDrawerChromeValue}>
+														<AgenticSidebar {...terminalSidebarProps} shouldAnimate />
+													</LlamaAIChromeContext.Provider>
+												</Ariakit.Dialog>
+											</div>
+											<TerminalSplitter
+												ratio={terminalChatRatio}
+												collapsed={terminalChatCollapsed}
+												boundsRef={splitBoundsRef}
+											/>
+										</>
+									) : null}
 									<div
-										className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
+										className={`llamaai-chat-panel relative isolate flex flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${CHAT_PANEL_LAYOUT[chatPanelLayout]} ${chatPanelShrinkAnimation}`}
+										style={
+											isTerminalView && !terminalChatCollapsed
+												? {
+														width: `${terminalChatRatio * 100}%`,
+														maxWidth: `calc(100% - ${MIN_CHART_PX + TERMINAL_SPLITTER_PX + TERMINAL_RAIL_PX}px)`,
+														minWidth: MIN_CHAT_PX
+													}
+												: undefined
+										}
 									>
 										<FileDropOverlay />
-										{!readOnly && !sidebarVisible ? (
+										{!readOnly && !sidebarVisible && !isTerminalView ? (
 											<ChatControls
 												handleNewChat={handleNewChat}
-												onOpenSettings={openSettings}
-												hasCustomInstructions={settings.customInstructions.trim().length > 0}
 												sessionTitle={effectiveSessionTitle}
 												canShare={!isSharedView && effectiveMessages.length > 0}
 												isSessionSaved={isSessionSaved}
 												onShare={() => openShareModal()}
 											/>
 										) : null}
-										{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
-											<Tooltip
-												content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
-												placement="bottom-end"
-												render={
-													<Ariakit.Button
-														type="button"
-														onClick={() => openShareModal()}
-														disabled={!isSessionSaved}
-														accessibleWhenDisabled
-														data-umami-event="llamaai-share-modal-open"
-														data-umami-event-source="header_controls"
-													/>
-												}
-												className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
-											>
-												<Icon name="share" height={14} width={14} />
-												<span className="sr-only">{SHARE_TOOLTIP}</span>
-											</Tooltip>
+										{!readOnly && !isSharedView ? (
+											<div className="hidden min-h-9 shrink-0 items-center justify-end gap-1.5 px-3 pt-3 lg:flex">
+												{isTerminalView ? (
+													<Tooltip
+														content="Hide chat"
+														placement="bottom-end"
+														render={
+															<Ariakit.Button
+																type="button"
+																onClick={() => setTerminalChatCollapsed(true)}
+																data-umami-event="llamaai-terminal-chat-collapse"
+																data-umami-event-action="collapse"
+															/>
+														}
+														className={HEADER_ICON_BUTTON}
+													>
+														<Icon name="chevrons-right" height={14} width={14} />
+														<span className="sr-only">Hide chat</span>
+													</Tooltip>
+												) : effectiveMessages.length > 0 ? (
+													<Tooltip
+														content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
+														placement="bottom-end"
+														render={
+															<Ariakit.Button
+																type="button"
+																onClick={() => openShareModal()}
+																disabled={!isSessionSaved}
+																accessibleWhenDisabled
+																data-umami-event="llamaai-share-modal-open"
+																data-umami-event-source="header_controls"
+															/>
+														}
+														className={`${HEADER_ICON_BUTTON} aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
+													>
+														<Icon name="share" height={14} width={14} />
+														<span className="sr-only">{SHARE_TOOLTIP}</span>
+													</Tooltip>
+												) : null}
+											</div>
 										) : null}
 										{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
 											<LoadingConversationState />
 										) : !hasMessages && visibleError ? (
 											<EmptyConversationErrorState
-												onNewChat={() => void router.push('/ai/chat')}
+												onNewChat={() => void router.push(withTerminalView('/ai/chat'))}
 												message={visibleError}
 												onRetry={
 													isRouteSessionPending && routeSessionId
@@ -2872,107 +3121,66 @@ export function AgenticChat({
 
 const ChatControls = memo(function ChatControls({
 	handleNewChat,
-	onOpenSettings,
-	hasCustomInstructions,
 	sessionTitle,
 	canShare,
 	isSessionSaved,
 	onShare
 }: {
 	handleNewChat: () => void
-	onOpenSettings: () => void
-	hasCustomInstructions: boolean
 	sessionTitle: string | null
 	canShare: boolean
 	isSessionSaved: boolean
 	onShare: () => void
 }) {
-	const isMobile = useMedia('(max-width: 1023px)')
-	const { isFullscreen, toggleFullscreen, toggleSidebar } = useLlamaAIChrome()
+	const { toggleSidebar } = useLlamaAIChrome()
 	const tooltipContent = sessionTitle ? `Open Chat History: ${sessionTitle}` : 'Open Chat History'
 
 	return (
-		<div className="llamaai-chat-controls">
-			<nav
-				className="flex gap-2 max-lg:flex-wrap max-lg:items-center max-lg:p-2.5 lg:absolute lg:top-2.5 lg:left-2.5 lg:z-10 lg:flex-col"
-				aria-label="Chat controls"
+		<nav className="flex flex-wrap items-center gap-2 p-2.5 lg:hidden" aria-label="Chat controls">
+			<Tooltip
+				content={tooltipContent}
+				render={
+					<button
+						type="button"
+						onClick={toggleSidebar}
+						data-umami-event="llamaai-sidebar-toggle"
+						data-umami-event-action="open"
+						data-umami-event-source="collapsed_controls"
+					/>
+				}
+				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 			>
+				<Icon name="panel-left-open" height={16} width={16} />
+				<span className="sr-only">Open Chat History</span>
+			</Tooltip>
+			<Tooltip
+				content="New chat"
+				render={<button type="button" onClick={handleNewChat} />}
+				className="ml-auto flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white not-disabled:not-aria-disabled:hover:bg-brand focus-visible:bg-brand"
+			>
+				<Icon name="square-pen" height={16} width={16} />
+				<span className="sr-only">New chat</span>
+			</Tooltip>
+			{canShare ? (
 				<Tooltip
-					content={tooltipContent}
+					content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
 					render={
-						<button
+						<Ariakit.Button
 							type="button"
-							onClick={toggleSidebar}
-							data-umami-event="llamaai-sidebar-toggle"
-							data-umami-event-action="open"
-							data-umami-event-source="collapsed_controls"
+							onClick={onShare}
+							disabled={!isSessionSaved}
+							accessibleWhenDisabled
+							data-umami-event="llamaai-share-modal-open"
+							data-umami-event-source="header_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+					className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
-					<Icon name="panel-left-open" height={16} width={16} />
-					<span className="sr-only">Open Chat History</span>
+					<Icon name="share" height={14} width={14} />
+					<span className="sr-only">{SHARE_TOOLTIP}</span>
 				</Tooltip>
-				<Tooltip
-					content="New Chat"
-					render={<button type="button" onClick={handleNewChat} />}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white not-disabled:not-aria-disabled:hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
-				>
-					<Icon name="square-pen" height={16} width={16} />
-					<span className="sr-only">New Chat</span>
-				</Tooltip>
-				{canShare ? (
-					<Tooltip
-						content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
-						render={
-							<Ariakit.Button
-								type="button"
-								onClick={onShare}
-								disabled={!isSessionSaved}
-								accessibleWhenDisabled
-								data-umami-event="llamaai-share-modal-open"
-								data-umami-event-source="header_controls"
-							/>
-						}
-						className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
-					>
-						<Icon name="share" height={14} width={14} />
-						<span className="sr-only">{SHARE_TOOLTIP}</span>
-					</Tooltip>
-				) : null}
-				{!isMobile ? (
-					<Tooltip
-						content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-						render={
-							<button
-								type="button"
-								onClick={toggleFullscreen}
-								data-umami-event="llamaai-fullscreen-toggle"
-								data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
-								data-umami-event-source="collapsed_controls"
-							/>
-						}
-						className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
-					>
-						<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
-						<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
-					</Tooltip>
-				) : null}
-			</nav>
-			<Tooltip
-				content="Settings"
-				render={<button type="button" onClick={onOpenSettings} />}
-				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white max-lg:hidden"
-			>
-				<div className="relative">
-					<Icon name="settings" height={16} width={16} />
-					{hasCustomInstructions ? (
-						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" />
-					) : null}
-				</div>
-				<span className="sr-only">Settings</span>
-			</Tooltip>
-		</div>
+			) : null}
+		</nav>
 	)
 })
 

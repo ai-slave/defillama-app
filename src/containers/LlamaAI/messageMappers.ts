@@ -1,5 +1,6 @@
 import type { ChartConfiguration, ChartDataByKey } from '~/containers/LlamaAI/chartTypes'
 import type { CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { normalizeTerminalOpsPayload } from '~/containers/LlamaAI/terminal/terminalOps'
 import type {
 	DashboardArtifact,
 	FactCheckReference,
@@ -47,6 +48,7 @@ export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 		references?: Array<unknown>
 	}
 	citations?: { schemaVersion?: number; citations?: Array<unknown> }
+	terminalOps?: unknown
 	chartSaveContext?: { artifactRefs?: unknown }
 }
 
@@ -271,6 +273,7 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	})
 	const mdExports = message.mdExports ?? message.metadata?.mdExports
 	const toolExecutions = message.metadata?.toolExecutions?.map(mapToolExecution)
+	const terminalOps = normalizeTerminalOpsPayload(message.metadata?.terminalOps)
 	const id = message.messageId ?? (index != null ? `persisted-${index}` : undefined)
 	const timestamp = mapPersistedTimestamp(message.timestamp)
 	const mapped: Message = { role: message.role }
@@ -288,6 +291,7 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	if (toolExecutions !== undefined) mapped.toolExecutions = toolExecutions
 	if (message.metadata?.thinking !== undefined) mapped.thinking = message.metadata.thinking
 	if (message.metadata?.thinkingSegments !== undefined) mapped.thinkingSegments = message.metadata.thinkingSegments
+	if (terminalOps) mapped.terminalOps = terminalOps
 	if (message.metadata?.quotedText !== undefined) mapped.quotedText = message.metadata.quotedText
 	if (message.messageMetadata !== undefined) mapped.messageMetadata = message.messageMetadata
 	if (id !== undefined) mapped.id = id

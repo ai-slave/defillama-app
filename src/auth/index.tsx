@@ -273,9 +273,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	})
 
+	const { mutate: runLogout } = logoutMutation
 	const logout = useCallback(() => {
-		logoutMutation.mutate()
-	}, [logoutMutation])
+		runLogout()
+	}, [runLogout])
 
 	const authorizedFetch = useCallback(
 		async (url: string, options: FetchOptions = {}, onlyToken = false) => {

@@ -84,6 +84,7 @@ async function render(items = sessions, options: { showBalance?: boolean; onOpen
 					onBulkDelete={api.bulk}
 					showBalance={options.showBalance}
 					onOpenBalanceSettings={options.onOpenBalanceSettings}
+					searchOpen
 				/>
 			</QueryClientProvider>
 		)

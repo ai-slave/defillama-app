@@ -51,3 +51,6 @@ next-env.d.ts
 
 .codex/
 .claude/
+
+# Local browser harness for the LlamaAI terminal — dev tooling, not product code.
+scripts/terminal-e2e/

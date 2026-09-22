@@ -274,3 +274,25 @@ describe('investors proxy routing', () => {
 		}
 	})
 })
+
+describe('old terminal links', () => {
+	test('redirect to the terminal path, keeping only an encoded entry coin', async () => {
+		const { proxy } = await loadProxy()
+
+		const newChat = proxy(pageRequest('https://defillama.com/ai/chat?view=terminal&symbol=xyz:TSLA'))
+		expect(newChat.status).toBe(307)
+		expect(newChat.headers.get('location')).toBe('https://defillama.com/ai/terminal?symbol=xyz%3ATSLA')
+
+		const session = proxy(pageRequest('https://defillama.com/ai/chat/abc?view=terminal&symbol=ETH'))
+		expect(session.headers.get('location')).toBe('https://defillama.com/ai/terminal/abc')
+	})
+
+	test('leave shared links and plain chat links alone', async () => {
+		const { proxy } = await loadProxy()
+
+		expect(
+			proxy(pageRequest('https://defillama.com/ai/chat/shared/tok?view=terminal')).headers.get('location')
+		).toBeNull()
+		expect(proxy(pageRequest('https://defillama.com/ai/chat/abc')).headers.get('location')).toBeNull()
+	})
+})

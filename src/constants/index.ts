@@ -15,7 +15,7 @@ export const GOOGLE_WEB_CLIENT_ID =
 
 // Base servers
 export const AUTH_SERVER = 'https://features.llama.fi'
-export const AI_SERVER = 'https://ai.llama.fi'
+export const AI_SERVER = process.env.NEXT_PUBLIC_AI_SERVER_URL ?? 'https://ai.llama.fi'
 export const FEATURES_SERVER = process.env.NEXT_PUBLIC_FEATURES_SERVER_URL ?? 'https://features.llama.fi'
 export const DATASETS_SERVER_URL =
 	getDirectUrlEnv('DATASETS_SERVER_URL') ??

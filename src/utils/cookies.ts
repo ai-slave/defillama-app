@@ -49,6 +49,8 @@ const isInteractiveLlamaAIPath = (pathname: string): boolean => {
 	return (
 		pathname === '/ai/chat' ||
 		pathname.startsWith('/ai/chat/') ||
+		pathname === '/ai/terminal' ||
+		pathname.startsWith('/ai/terminal/') ||
 		pathname === '/ai/projects' ||
 		pathname.startsWith('/ai/projects/')
 	)
@@ -160,6 +162,7 @@ export const getHeadBootstrapScript = (): string => `
 
 		function isInteractiveLlamaAIPath(pathname) {
 			return pathname === '/ai/chat' || pathname.startsWith('/ai/chat/')
+				|| pathname === '/ai/terminal' || pathname.startsWith('/ai/terminal/')
 				|| pathname === '/ai/projects' || pathname.startsWith('/ai/projects/');
 		}
 

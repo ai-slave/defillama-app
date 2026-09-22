@@ -1,3 +1,4 @@
+import type { TerminalContextPayload } from '~/containers/LlamaAI/terminal/terminalOps'
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 
 // A file either rides inside the message as base64 (`data`) or was uploaded on its own request and
@@ -29,6 +30,9 @@ export interface AgenticMutationEnvelope {
 	readonly quotedText?: string
 	readonly sessionId: string
 	readonly shareToken?: string
+	// Snapshotted when the envelope is built: the backend fingerprints the whole body, so a retry
+	// that regenerated this would look like a different mutation and be rejected as a conflict.
+	readonly terminalContext?: TerminalContextPayload
 	readonly timezone?: string
 }
 
@@ -76,6 +80,7 @@ export function createAgenticMutationEnvelope(args: {
 	quotedText?: string
 	sessionId: string
 	shareToken?: string
+	terminalContext?: TerminalContextPayload
 }): AgenticMutationEnvelope {
 	let timezone: string | undefined
 	try {
@@ -102,6 +107,7 @@ export function createAgenticMutationEnvelope(args: {
 		...(args.shareToken ? { shareToken: args.shareToken } : {}),
 		...(args.projectId ? { projectId: args.projectId } : {}),
 		...(args.editMessageId ? { editMessageId: args.editMessageId } : {}),
+		...(args.terminalContext ? { terminalContext: args.terminalContext } : {}),
 		...(timezone ? { timezone } : {})
 	}
 }

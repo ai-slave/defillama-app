@@ -46,6 +46,7 @@ let container: HTMLDivElement
 beforeEach(() => {
 	vi.clearAllMocks()
 	localStorage.clear()
+	localStorage.setItem('llamaai:sidebar-projects-open', 'true')
 	mocks.sessionsByProject = {}
 	mocks.isDrawer = false
 	mocks.projects.data = []
@@ -164,4 +165,27 @@ test('folders toggle independently of the active chat and session clicks still s
 	await waitFor(() => expect(container.textContent).not.toContain('Other conversation'))
 	await render('other')
 	await waitFor(() => expect(folder('Other project').getAttribute('aria-expanded')).toBe('true'))
+})
+
+test('projects fold into one counted row that stays folded across renders until opened', async () => {
+	localStorage.removeItem('llamaai:sidebar-projects-open')
+	mocks.projects.data = [
+		{ id: 'project', name: 'Research' } as ProjectWithStats,
+		{ id: 'b', name: 'Other' } as ProjectWithStats
+	]
+	await render()
+	const row = () => [...container.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Projects'))!
+	expect(row().getAttribute('aria-expanded')).toBe('false')
+	expect(row().textContent).toBe('Projects2')
+	expect(container.textContent).not.toContain('Research')
+	expect(container.textContent).not.toContain('New project')
+
+	await act(async () => row().click())
+	await waitFor(() => expect(container.textContent).toContain('Research'))
+	expect(container.textContent).toContain('New project')
+	await act(async () => root.unmount())
+	root = createRoot(container)
+	await render()
+	expect(row().getAttribute('aria-expanded')).toBe('true')
+	expect(container.textContent).toContain('Research')
 })

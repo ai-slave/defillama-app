@@ -55,16 +55,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
 
-	const [searchValue, setSearchValue] = useState('')
-	const [mounted, setMounted] = useState(false)
-	const dialogStore = Ariakit.useDialogStore({
-		setMounted(value) {
-			setMounted(value)
-			if (!value) {
-				setSearchValue('')
-			}
-		}
-	})
+	const siteSearch = useSiteSearchDialog()
 
 	return (
 		<>
@@ -80,45 +71,82 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
 			</BasicLink>
 			{searchTrigger ?? (
-				<Ariakit.DialogProvider store={dialogStore}>
+				<Ariakit.DialogProvider store={siteSearch.store}>
 					<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
 						<span className="sr-only">Search</span>
 						<Icon name="search" height={16} width={16} />
 					</Ariakit.DialogDisclosure>
 
-					<Ariakit.Dialog
-						unmountOnHide
-						className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:640px]`}
-						hideOnInteractOutside
-						portal
-					>
-						<Ariakit.ComboboxProvider
-							inputValue={searchValue}
-							setInputValue={(value) => {
-								startTransition(() => {
-									setSearchValue(value)
-								})
-							}}
-						>
-							<div className="flex min-h-0 flex-1 flex-col p-2">
-								<span className="relative isolate flex w-full items-center justify-between gap-2">
-									<DialogHeading className="sr-only">Search</DialogHeading>
-									<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
-									<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
-								</span>
-
-								<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
-									{mounted ? (
-										<MobileSearchResults searchValue={searchValue} onSelect={() => dialogStore.setOpen(false)} />
-									) : null}
-								</Ariakit.ComboboxList>
-							</div>
-						</Ariakit.ComboboxProvider>
-					</Ariakit.Dialog>
+					<SiteSearchDialog {...siteSearch} />
 				</Ariakit.DialogProvider>
 			)}
 		</>
 	)
+}
+
+function useSiteSearchDialog() {
+	const [searchValue, setSearchValue] = useState('')
+	const [mounted, setMounted] = useState(false)
+	const store = Ariakit.useDialogStore({
+		setMounted(value) {
+			setMounted(value)
+			if (!value) {
+				setSearchValue('')
+			}
+		}
+	})
+	return { store, searchValue, setSearchValue, mounted }
+}
+
+function SiteSearchDialog({ store, searchValue, setSearchValue, mounted }: ReturnType<typeof useSiteSearchDialog>) {
+	return (
+		<Ariakit.Dialog
+			store={store}
+			unmountOnHide
+			className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:640px]`}
+			hideOnInteractOutside
+			portal
+		>
+			<Ariakit.ComboboxProvider
+				inputValue={searchValue}
+				setInputValue={(value) => {
+					startTransition(() => {
+						setSearchValue(value)
+					})
+				}}
+			>
+				<div className="flex min-h-0 flex-1 flex-col p-2">
+					<span className="relative isolate flex w-full items-center justify-between gap-2">
+						<DialogHeading className="sr-only">Search</DialogHeading>
+						<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
+						<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
+					</span>
+
+					<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
+						{mounted ? <MobileSearchResults searchValue={searchValue} onSelect={() => store.setOpen(false)} /> : null}
+					</Ariakit.ComboboxList>
+				</div>
+			</Ariakit.ComboboxProvider>
+		</Ariakit.Dialog>
+	)
+}
+
+const isSearchHotkey = (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.code === 'KeyK'
+
+export function SiteSearchHotkey() {
+	const siteSearch = useSiteSearchDialog()
+	const { store } = siteSearch
+	useEffect(() => {
+		function openSearch(e: KeyboardEvent) {
+			if (!isSearchHotkey(e)) return
+			e.preventDefault()
+			store.show()
+		}
+		window.addEventListener('keydown', openSearch)
+		return () => window.removeEventListener('keydown', openSearch)
+	}, [store])
+
+	return <SiteSearchDialog {...siteSearch} />
 }
 
 function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; onSelect: () => void }) {
@@ -209,7 +237,7 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 	const [open, setOpen] = useState(() => searchValue.length > 0)
 	useEffect(() => {
 		function focusSearchBar(e: KeyboardEvent) {
-			if ((e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+			if (isSearchHotkey(e)) {
 				e.preventDefault()
 				inputField.current?.focus()
 				setOpen(true)

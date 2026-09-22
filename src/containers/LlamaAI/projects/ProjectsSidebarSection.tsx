@@ -7,7 +7,7 @@ import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { SIDEBAR_ROW } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import type { ChatSession } from '~/containers/LlamaAI/types'
-import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -20,6 +20,7 @@ import type { ProjectWithStats } from './types'
 
 const VISIBLE_LIMIT = 10
 const LAST_SELECTED_PROJECT_KEY_PREFIX = 'llamaai:last-selected-project-id'
+export const SIDEBAR_PROJECTS_OPEN_KEY = 'llamaai:sidebar-projects-open'
 const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
 interface ProjectsSidebarSectionProps {
@@ -44,6 +45,7 @@ export function ProjectsSidebarSection({
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
 	const storageKey = `${LAST_SELECTED_PROJECT_KEY_PREFIX}:${user?.id ?? 'anonymous'}`
 	const expandedProjectId = useStorageItem(storageKey, null)
+	const isOpen = useStorageItem(SIDEBAR_PROJECTS_OPEN_KEY, null) === 'true'
 	const tier = getProjectTier(user, hasActiveSubscription, isTrial)
 	const isLocked = tier === 'free'
 	const createStore = Ariakit.useDialogStore()
@@ -58,7 +60,6 @@ export function ProjectsSidebarSection({
 		if (next.length < VISIBLE_LIMIT) return [...next, activeProject]
 		return [...next.slice(0, VISIBLE_LIMIT - 1), activeProject]
 	}, [expandedProjectId, projects])
-	const hasOverflow = projects.length > VISIBLE_LIMIT
 	const sessionById = useMemo(() => new Map(sessions.map((session) => [session.sessionId, session])), [sessions])
 
 	const router = useRouter()
@@ -82,14 +83,29 @@ export function ProjectsSidebarSection({
 
 	return (
 		<div className="flex flex-col gap-1 px-4">
-			<div className="flex min-h-6 items-center justify-between pt-1">
-				<h2 className="label-sm text-secondary">Projects</h2>
-				<Button as={BasicLink} href="/ai/projects" size="sm" variant="ghost" onClick={onProjectClick} className="-mr-2">
-					View all
-				</Button>
-			</div>
+			<button
+				type="button"
+				aria-expanded={isOpen}
+				onClick={() =>
+					isOpen ? removeStorageItem(SIDEBAR_PROJECTS_OPEN_KEY) : setStorageItem(SIDEBAR_PROJECTS_OPEN_KEY, 'true')
+				}
+				className={`${SIDEBAR_ROW} -mx-2 text-left`}
+			>
+				<Icon name="folder" height={16} width={16} className="shrink-0" />
+				<span className="min-w-0 flex-1 truncate">Projects</span>
+				{!isLocked && projects.length > 0 ? (
+					<span className="shrink-0 body-sm text-tertiary tabular-nums">{projects.length}</span>
+				) : null}
+				<Icon
+					name={isOpen ? 'chevron-down' : 'chevron-right'}
+					height={14}
+					width={14}
+					aria-hidden="true"
+					className="shrink-0 text-tertiary"
+				/>
+			</button>
 
-			{isLocked ? (
+			{!isOpen ? null : isLocked ? (
 				<Button as={BasicLink} href="/subscription" size="md" className="w-full justify-between">
 					<span className="flex items-center gap-1">
 						<Icon name="folder-plus" height={14} width={14} />
@@ -148,7 +164,7 @@ export function ProjectsSidebarSection({
 						</ul>
 					)}
 
-					{hasOverflow ? (
+					{projects.length > 0 ? (
 						<Button
 							as={BasicLink}
 							href="/ai/projects"

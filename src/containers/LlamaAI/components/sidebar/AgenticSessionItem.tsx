@@ -19,6 +19,8 @@ import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUns
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
 import { MoveToProjectMenuItem } from '~/containers/LlamaAI/projects/MoveToProjectMenu'
+import { chatSessionUrl } from '~/containers/LlamaAI/terminal/terminalRoutes'
+import { useTerminalEnabled } from '~/containers/LlamaAI/terminal/terminalViewStore'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
@@ -61,6 +63,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const { hideSidebar } = useLlamaAIChrome()
 	const queryClient = useQueryClient()
 	const clearUnseenCompletion = useClearUnseenCompletion()
+	const terminalSymbol = useTerminalEnabled() ? session.terminalSymbol : null
 
 	const [isEditing, setIsEditing] = useState(false)
 	const formRef = useRef<HTMLFormElement>(null)
@@ -266,7 +269,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				onClick={(e) => {
 					if (e.metaKey || e.ctrlKey) {
 						trackUmamiEvent('llamaai-session-click')
-						window.open(`/ai/chat/${session.sessionId}`, '_blank')
+						window.open(chatSessionUrl(session.sessionId, terminalSymbol), '_blank')
 						return
 					}
 					handleSessionClick(session.sessionId)
@@ -275,6 +278,15 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				className="flex min-h-8 flex-1 items-center gap-1.5 overflow-hidden px-2 py-1.5 text-left group-focus-within:pr-16 group-hover:pr-16 aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={14} width={14} className="shrink-0 text-tertiary" /> : null}
+				{terminalSymbol ? (
+					<Tooltip
+						content={`Terminal chart · ${terminalSymbol}`}
+						render={<span aria-label={`Terminal chart, ${terminalSymbol}`} />}
+						className="flex shrink-0 items-center"
+					>
+						<Icon name="bar-chart" height={14} width={14} className="shrink-0 text-tertiary" />
+					</Tooltip>
+				) : null}
 				{session.hasUnseenCompletion ? (
 					<Tooltip
 						content="New response ready"

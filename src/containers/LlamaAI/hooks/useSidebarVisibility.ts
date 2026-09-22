@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { TERMINAL_SITE_NAV_MIN_VIEWPORT_PX, useTerminalViewOpen } from '~/containers/LlamaAI/terminal/terminalViewStore'
 import { useMedia } from '~/hooks/useMedia'
 import {
 	clearLlamaAIChromeAttributes,
@@ -11,6 +12,9 @@ import {
 
 export function useSidebarVisibility() {
 	const isMobile = useMedia('(max-width: 1023px)')
+	const isTerminalViewOpen = useTerminalViewOpen()
+	const isTooNarrowForTerminalSiteNav = useMedia(`(max-width: ${TERMINAL_SITE_NAV_MIN_VIEWPORT_PX - 1}px)`)
+	const fullscreenLocked = isTerminalViewOpen && !isMobile && isTooNarrowForTerminalSiteNav
 	const [sidebarHiddenDesktop, setSidebarHiddenDesktop] = useState(() => {
 		if (typeof document === 'undefined') return true
 		return getLlamaAIBooleanCookie(LLAMAAI_SIDEBAR_HIDDEN_COOKIE_NAME)
@@ -53,8 +57,8 @@ export function useSidebarVisibility() {
 	}, [])
 
 	useEffect(() => {
-		syncLlamaAIChromeAttributes(isFullscreen, sidebarHiddenDesktop)
-	}, [isFullscreen, sidebarHiddenDesktop])
+		syncLlamaAIChromeAttributes(isFullscreen || fullscreenLocked, sidebarHiddenDesktop)
+	}, [isFullscreen, fullscreenLocked, sidebarHiddenDesktop])
 
 	useEffect(() => {
 		return () => clearLlamaAIChromeAttributes()
@@ -65,6 +69,7 @@ export function useSidebarVisibility() {
 		toggleSidebar: isMobile ? toggleSidebarMobile : toggleSidebarDesktop,
 		hideSidebar,
 		isFullscreen,
+		fullscreenLocked,
 		toggleFullscreen
 	}
 }

@@ -1,6 +1,7 @@
 import type { Dispatch } from 'react'
 import { appendReasoning, completeToolStep, startToolStep } from '~/containers/LlamaAI/agentSteps'
 import type { ContextWarningPayload, CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
+import type { TerminalOpsPayload } from '~/containers/LlamaAI/terminal/terminalOps'
 import type {
 	AgentStep,
 	AlertProposedData,
@@ -90,6 +91,8 @@ export interface StreamAccumulator {
 	legacyUrlCitations: Array<string>
 	toolExecutions: Array<ToolExecution>
 	steps: Array<AgentStep>
+	/** Drawings the agent put on the terminal chart, in the shape the backend persists them. */
+	terminalOps: TerminalOpsPayload | null
 	error: string | null
 	hasStartedText: boolean
 	spawnStarted: boolean
@@ -197,6 +200,7 @@ export const createStreamAccumulator = (): StreamAccumulator => ({
 	legacyUrlCitations: [],
 	toolExecutions: [],
 	steps: [],
+	terminalOps: null,
 	error: null,
 	hasStartedText: false,
 	spawnStarted: false,
@@ -217,7 +221,8 @@ export function hasStreamBufferContent(buffer: StreamBuffer) {
 		buffer.citations.length > 0 ||
 		buffer.legacyUrlCitations.length > 0 ||
 		buffer.toolExecutions.length > 0 ||
-		buffer.steps.length > 0
+		buffer.steps.length > 0 ||
+		buffer.terminalOps !== null
 	)
 }
 
@@ -409,6 +414,7 @@ export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string):
 		legacyUrlCitations: nonEmpty(buffer.legacyUrlCitations),
 		toolExecutions: nonEmpty(buffer.toolExecutions),
 		steps: nonEmpty(buffer.steps),
+		terminalOps: buffer.terminalOps ?? undefined,
 		messageMetadata: buffer.messageMetadata,
 		timestamp: buffer.messageMetadata?.timestamp,
 		id: messageId

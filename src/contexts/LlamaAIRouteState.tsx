@@ -27,11 +27,11 @@ export function useLlamaAIRouteState(): LlamaAIRouteState {
 	return useMemo(() => {
 		if (!router.isReady) return { kind: 'unknown' }
 
-		if (router.pathname === '/ai/chat') {
+		if (router.pathname === '/ai/chat' || router.pathname === '/ai/terminal') {
 			return { kind: 'chat-new', initialPrompt: firstString(router.query.prompt) }
 		}
 
-		if (router.pathname === '/ai/chat/[sessionId]') {
+		if (router.pathname === '/ai/chat/[sessionId]' || router.pathname === '/ai/terminal/[sessionId]') {
 			const sessionId = firstString(router.query.sessionId)
 			if (!sessionId) return { kind: 'unknown' }
 

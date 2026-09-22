@@ -19,6 +19,8 @@ import {
 	type AgenticMutationEnvelope
 } from '~/containers/LlamaAI/mutationProtocol'
 import { decodeQueueSnapshot, type QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
+import { normalizeTerminalOpsPayload, type TerminalOpsPayload } from '~/containers/LlamaAI/terminal/terminalOps'
+import type { TerminalRequestPayload } from '~/containers/LlamaAI/terminal/terminalScreenshot'
 import type {
 	AlertProposedData,
 	ChartArtifactRefs,
@@ -107,6 +109,8 @@ export interface AgenticSSECallbacks {
 	onDuelReady?: () => void
 	onArmEvent?: (event: AgenticArmEvent) => void
 	onQueueUpdated?: (snapshot: QueueSnapshot) => void
+	onTerminalOps?: (payload: TerminalOpsPayload) => void
+	onTerminalRequest?: (request: TerminalRequestPayload) => void
 	onError: (content: string) => void
 	onDone: () => void
 }
@@ -302,6 +306,20 @@ interface MessageMetadataEvent {
 	content: MessageMetadata
 }
 
+interface TerminalOpsEvent {
+	type: 'terminal_ops'
+	symbol?: unknown
+	interval?: unknown
+	ops?: unknown
+}
+
+interface TerminalRequestEvent {
+	type: 'terminal_request'
+	requestId?: unknown
+	kind?: unknown
+	expiresAt?: unknown
+}
+
 interface QueueUpdatedEvent {
 	type: 'queue_updated'
 	queue?: unknown
@@ -342,6 +360,8 @@ type AgenticSSEPayload =
 	| UserMessageIdEvent
 	| SiblingInfoEvent
 	| MessageMetadataEvent
+	| TerminalOpsEvent
+	| TerminalRequestEvent
 	| QueueUpdatedEvent
 	| QueueWaitEndedEvent
 	| TokenLimitEvent
@@ -618,6 +638,20 @@ export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: 
 			break
 		case 'message_metadata':
 			callbacks.onMessageMetadata?.(data.content)
+			break
+		case 'terminal_ops': {
+			const payload = normalizeTerminalOpsPayload(data)
+			if (payload) callbacks.onTerminalOps?.(payload)
+			break
+		}
+		case 'terminal_request':
+			if (typeof data.requestId === 'string' && typeof data.kind === 'string') {
+				callbacks.onTerminalRequest?.({
+					requestId: data.requestId,
+					kind: data.kind,
+					...(typeof data.expiresAt === 'number' && { expiresAt: data.expiresAt })
+				})
+			}
 			break
 		case 'thinking':
 			if (typeof data.content === 'string') callbacks.onThinking?.(data.content)

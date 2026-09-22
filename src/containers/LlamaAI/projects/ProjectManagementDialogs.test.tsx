@@ -49,6 +49,7 @@ const project: Project = {
 beforeEach(() => {
 	vi.resetAllMocks()
 	localStorage.clear()
+	localStorage.setItem('llamaai:sidebar-projects-open', 'true')
 	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)

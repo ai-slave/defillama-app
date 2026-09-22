@@ -62,6 +62,34 @@ describe('createAgenticCallbacks', () => {
 		expect(onCompletion).toHaveBeenCalledWith('assistant-1')
 	})
 
+	test('accumulates terminal ops for the committed message and drops stale ones', () => {
+		const drawing = {
+			symbol: 'HYPE',
+			interval: '1D',
+			ops: [{ type: 'hline' as const, id: 'ai_1', number: 1, price: 42 }]
+		}
+		const live = setupCallbacks()
+
+		live.callbacks.onTerminalOps?.(drawing)
+		live.callbacks.onTerminalOps?.({ ...drawing, ops: [{ type: 'clear' as const, ids: ['ai_1'] }] })
+		live.callbacks.onDone()
+
+		expect(live.buffer.terminalOps).toEqual({
+			symbol: 'HYPE',
+			interval: '1D',
+			ops: [
+				{ type: 'hline', id: 'ai_1', number: 1, price: 42 },
+				{ type: 'clear', ids: ['ai_1'] }
+			]
+		})
+		expect(live.appendMessage).toHaveBeenCalledWith(expect.objectContaining({ terminalOps: live.buffer.terminalOps }))
+
+		const stale = setupCallbacks(false)
+		stale.callbacks.onTerminalOps?.(drawing)
+
+		expect(stale.buffer.terminalOps).toBeNull()
+	})
+
 	test('commits the assistant message only once when done fires twice', () => {
 		const { appendMessage, callbacks, notify, onCompletion } = setupCallbacks()
 

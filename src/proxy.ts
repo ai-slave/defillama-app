@@ -5,6 +5,7 @@ import {
 	getInvestorsSiteForRequest,
 	getInvestorsSiteWithPathFallback
 } from '~/containers/Investors/config'
+import { legacyTerminalRedirect } from '~/containers/LlamaAI/terminal/terminalRoutes'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
@@ -186,6 +187,11 @@ export function proxy(request: NextRequest) {
 	const investorsRewrite = getInvestorsRewrite(request)
 	if (investorsRewrite) {
 		return NextResponse.rewrite(investorsRewrite)
+	}
+
+	const terminalRedirect = legacyTerminalRedirect(request.nextUrl.pathname, request.nextUrl.searchParams)
+	if (terminalRedirect) {
+		return NextResponse.redirect(new URL(terminalRedirect, request.url))
 	}
 
 	const origin = request.headers.get('origin')

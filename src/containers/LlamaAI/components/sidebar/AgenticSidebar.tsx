@@ -1,7 +1,18 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import type { Virtualizer } from '@tanstack/react-virtual'
-import { type CSSProperties, memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import {
+	type CSSProperties,
+	memo,
+	type ReactNode,
+	type Ref,
+	useCallback,
+	useEffect,
+	useEffectEvent,
+	useMemo,
+	useRef,
+	useState
+} from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
@@ -9,10 +20,12 @@ import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/Llama
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchResults'
 import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
-import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
+import { ProjectsSidebarSection, SIDEBAR_PROJECTS_OPEN_KEY } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
+import { useTerminalEnabled } from '~/containers/LlamaAI/terminal/terminalViewStore'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
+import { setStorageItem } from '~/contexts/localStorageStore'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
@@ -55,6 +68,11 @@ interface AgenticSidebarProps {
 	currentSessionProjectId?: string | null
 	alertsCount?: number | null
 	onOpenAlerts?: () => void
+	folded?: boolean
+	place?: SidebarPlace
+	onSwitchPlace?: () => void
+	searchOpen?: boolean
+	onSearchOpenChange?: (open: boolean) => void
 }
 
 function getGroupName(lastActivity: string, now: number) {
@@ -141,7 +159,16 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	)
 })
 
-export function AgenticSidebar({
+export function AgenticSidebar(props: AgenticSidebarProps) {
+	const { folded = false, place = 'chat', alertsCount = null } = props
+	return folded ? (
+		<SidebarRail {...props} place={place} alertsCount={alertsCount} />
+	) : (
+		<SidebarPanel {...props} place={place} alertsCount={alertsCount} />
+	)
+}
+
+function SidebarPanel({
 	sessions,
 	isLoading,
 	loadError = null,
@@ -163,10 +190,15 @@ export function AgenticSidebar({
 	onLoadMoreSessions,
 	currentProjectId = null,
 	currentSessionProjectId = null,
-	alertsCount = null,
-	onOpenAlerts
-}: AgenticSidebarProps) {
-	const { hideSidebar, isFullscreen, toggleFullscreen, toggleSidebar } = useLlamaAIChrome()
+	alertsCount,
+	onOpenAlerts,
+	place,
+	onSwitchPlace,
+	searchOpen = false,
+	onSearchOpenChange
+}: AgenticSidebarProps & { place: SidebarPlace; alertsCount: number | null }) {
+	const { hideSidebar, isFullscreen, fullscreenLocked, toggleFullscreen } = useLlamaAIChrome()
+	const showsFullscreen = isFullscreen || fullscreenLocked
 	const newChatRef = useRef<HTMLButtonElement>(null)
 	const sidebarRef = useRef<HTMLDivElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -213,13 +245,20 @@ export function AgenticSidebar({
 	const [nowMs] = useState(() => Date.now())
 	const trimmedSearchQuery = searchQuery.trim()
 
-	const nonProjectSessions = useMemo(() => sessions.filter((s) => !s.projectId), [sessions])
-	const hasNonProjectSessions = nonProjectSessions.length > 0
+	const shownSessions = useMemo(() => sessions.filter((s) => !s.projectId), [sessions])
+	const hasShownSessions = shownSessions.length > 0
+	const isSearchShown = searchOpen || searchQuery !== ''
+	const openSearch = () => onSearchOpenChange?.(true)
+	const closeSearch = () => {
+		clearSearch()
+		setSelectedSessionIds(new Set())
+		onSearchOpenChange?.(false)
+	}
 
 	const filteredSessions = useMemo(() => {
-		if (!trimmedSearchQuery) return nonProjectSessions
-		return nonProjectSessions.filter((s) => s.title.toLowerCase().includes(trimmedSearchQuery.toLowerCase()))
-	}, [nonProjectSessions, trimmedSearchQuery])
+		if (!trimmedSearchQuery) return shownSessions
+		return shownSessions.filter((s) => s.title.toLowerCase().includes(trimmedSearchQuery.toLowerCase()))
+	}, [shownSessions, trimmedSearchQuery])
 
 	const selectedIds = useMemo(() => {
 		const ids: Array<string> = []
@@ -359,93 +398,66 @@ export function AgenticSidebar({
 				ref={sidebarRef}
 				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-subtle bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
 			>
-				<header className="flex flex-col gap-2 p-4 pb-2">
-					<div className="flex min-h-6 items-center">
-						{isLoading || hasNonProjectSessions ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								data-active={selectMode}
-								onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
-								disabled={isLoading && !hasNonProjectSessions}
-								className="-ml-2 disabled:invisible"
-							>
-								<Icon name={selectMode ? 'x' : 'check'} height={14} width={14} />
-								{selectMode ? 'Cancel' : 'Select'}
-							</Button>
-						) : null}
-						<div className="ml-auto flex items-center gap-1.5">
-							<Tooltip
-								content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-								render={
-									<Button
-										type="button"
-										size="sm"
-										variant="outline"
-										square
-										onClick={toggleFullscreen}
-										data-umami-event="llamaai-fullscreen-toggle"
-										data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
-										data-umami-event-source="sidebar_header"
-										className="max-lg:hidden"
-									/>
-								}
-							>
-								<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
-								<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
-							</Tooltip>
-
-							<Tooltip
-								content="Close Chat History"
-								render={
-									<Button
-										type="button"
-										size="sm"
-										variant="outline"
-										square
-										onClick={toggleSidebar}
-										data-umami-event="llamaai-sidebar-toggle"
-										data-umami-event-action="close"
-										data-umami-event-source="sidebar_header"
-									/>
-								}
-							>
-								<Icon name="panel-left-close" height={16} width={16} />
-								<span className="sr-only">Close Chat History</span>
-							</Tooltip>
-						</div>
+				<header className="flex flex-col gap-2 border-b border-subtle p-4 pb-2">
+					<div className="-mx-1.5 flex items-center gap-1">
+						<SidebarToggles
+							folded={false}
+							searchOpen={isSearchShown}
+							onSearch={isSearchShown ? closeSearch : openSearch}
+						/>
+						<Tooltip
+							content={
+								fullscreenLocked
+									? 'Needs a wider window to show the DefiLlama menu'
+									: showsFullscreen
+										? 'Exit Fullscreen'
+										: 'Enter Fullscreen'
+							}
+							render={
+								<Ariakit.Button
+									type="button"
+									accessibleWhenDisabled
+									disabled={fullscreenLocked}
+									onClick={toggleFullscreen}
+									data-umami-event="llamaai-fullscreen-toggle"
+									data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
+									data-umami-event-source="sidebar_header"
+									render={
+										<Button
+											size="md"
+											variant="ghost"
+											square
+											className="ml-auto aria-disabled:cursor-not-allowed aria-disabled:opacity-60 max-lg:hidden"
+										/>
+									}
+								/>
+							}
+						>
+							<Icon name={showsFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
+							<span className="sr-only">{showsFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+						</Tooltip>
 					</div>
 
-					<Button
-						ref={newChatRef}
-						type="button"
-						size="md"
-						variant="outline"
-						onClick={() => {
-							trackUmamiEvent('llamaai-new-chat')
-							onNewChat()
-						}}
-						className="w-full"
-					>
-						<Icon name="square-pen" height={14} width={14} />
-						New Chat
-					</Button>
-
-					{isLoading || hasNonProjectSessions ? (
+					{isSearchShown ? (
 						<div className="relative w-full min-w-0">
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<Input
 								type="text"
+								autoFocus
+								data-autofocus
 								value={searchQuery}
 								onChange={(e) => {
 									setSearchQuery(e.target.value)
 									setSelectedSessionIds(new Set())
 								}}
+								onKeyDown={(e) => {
+									if (e.key !== 'Escape') return
+									e.stopPropagation()
+									closeSearch()
+								}}
 								aria-label="Search sessions"
 								placeholder="Search"
-								disabled={isLoading && !hasNonProjectSessions}
-								className={`${searchFieldInputPlacementStyles} ${searchQuery || isSearching ? 'pr-9' : ''}`}
+								className={`${searchFieldInputPlacementStyles} pr-9`}
 							/>
 							<span className="absolute top-0 right-1 bottom-0 my-auto flex items-center gap-1">
 								{isSearching ? (
@@ -453,31 +465,40 @@ export function AgenticSidebar({
 										<LoadingSpinner size={12} />
 										<span className="sr-only">Searching</span>
 									</span>
-								) : searchQuery ? (
+								) : (
 									<Button
 										type="button"
 										variant="ghost"
 										size="sm"
 										square
 										aria-label="Clear session search"
-										onClick={() => {
-											clearSearch()
-											setSelectedSessionIds(new Set())
-										}}
+										onClick={closeSearch}
 									>
 										<Icon name="x" height={14} width={14} />
 									</Button>
-								) : null}
+								)}
 							</span>
 						</div>
 					) : null}
+
+					<nav aria-label="LlamaAI menu" className="flex flex-col gap-2 pb-1">
+						<SidebarDestinations
+							folded={false}
+							place={place}
+							onNewChat={onNewChat}
+							onSwitchPlace={onSwitchPlace}
+							alertsCount={alertsCount}
+							onOpenAlerts={onOpenAlerts}
+							newChatRef={newChatRef}
+						/>
+					</nav>
 				</header>
 
 				<div
 					ref={scrollContainerRef}
 					className="flex-1 [scrollbar-width:thin] [scrollbar-gutter:stable] overflow-auto overscroll-contain"
 				>
-					<div ref={projectsSectionRef} className="border-b border-subtle pb-3">
+					<div ref={projectsSectionRef} className="flex flex-col gap-3 pt-2">
 						<ProjectsSidebarSection
 							sessions={sessions}
 							currentProjectId={currentProjectId}
@@ -487,27 +508,26 @@ export function AgenticSidebar({
 							onSessionSelect={onSessionSelect}
 							onDelete={onDelete}
 						/>
-						{onOpenAlerts ? (
-							<div className="px-4 pt-1">
-								<button
+						<div className="flex min-h-6 items-center justify-between border-t border-subtle px-4 pt-3">
+							<h2 className="label-sm text-secondary">History</h2>
+							{isLoading || hasShownSessions ? (
+								<Button
 									type="button"
-									onClick={() => {
-										trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
-										onOpenAlerts()
-									}}
-									className={`${SIDEBAR_ROW} -mx-2 w-[calc(100%+1rem)] text-left`}
+									size="sm"
+									variant="ghost"
+									data-active={selectMode}
+									onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
+									disabled={isLoading && !hasShownSessions}
+									className="-mr-2 disabled:invisible"
 								>
-									<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-warning" />
-									<span className="min-w-0 flex-1 truncate">Alerts</span>
-									{typeof alertsCount === 'number' ? (
-										<span className="shrink-0 body-sm text-tertiary tabular-nums">{alertsCount}</span>
-									) : null}
-								</button>
-							</div>
-						) : null}
+									<Icon name={selectMode ? 'x' : 'check'} height={14} width={14} />
+									{selectMode ? 'Cancel' : 'Select'}
+								</Button>
+							) : null}
+						</div>
 					</div>
 
-					<nav className="px-4 pt-3 pb-4" aria-label="Chat history">
+					<nav className="px-4 pt-2 pb-4" aria-label="Chat history">
 						{isLoading ? (
 							<div role="status" aria-live="polite" className={SIDEBAR_WELL}>
 								<LoadingSpinner size={14} />
@@ -515,7 +535,7 @@ export function AgenticSidebar({
 							</div>
 						) : loadError ? (
 							<InlineStatus variant="error">{loadError}</InlineStatus>
-						) : nonProjectSessions.length === 0 ? (
+						) : shownSessions.length === 0 ? (
 							<p className={SIDEBAR_WELL}>You don&apos;t have any chats yet</p>
 						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching || searchFailed) ? (
 							<SearchResults
@@ -525,11 +545,11 @@ export function AgenticSidebar({
 								onRetry={retrySearch}
 								query={searchQuery}
 								onMatchClick={(sessionId, messageId) => {
-									clearSearch()
+									closeSearch()
 									onSearchMatchClick?.(sessionId, messageId)
 								}}
 								onSessionClick={(sessionId) => {
-									clearSearch()
+									closeSearch()
 									onSessionSelect(sessionId)
 								}}
 							/>
@@ -583,8 +603,6 @@ export function AgenticSidebar({
 					</nav>
 				</div>
 
-				{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
-
 				<DeleteSessionDialog
 					store={deleteStore}
 					title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
@@ -632,17 +650,13 @@ export function AgenticSidebar({
 								onClick={onOpenSettings}
 								className="flex min-w-0 flex-1 items-center gap-1.5 rounded-bl-lg px-4 py-3 text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 							>
-								<div className="relative">
-									<Icon name="settings" height={16} width={16} />
-									{hasCustomInstructions ? (
-										<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" />
-									) : null}
-								</div>
+								<SettingsIcon hasCustomInstructions={hasCustomInstructions} />
 								<span>Settings</span>
 							</button>
 						) : (
 							<span className="flex-1" />
 						)}
+						{showBalance && onOpenBalanceSettings ? <SidebarBalance onOpen={onOpenBalanceSettings} /> : null}
 						<Tooltip
 							content="Get the mobile app · iOS & Android"
 							render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
@@ -664,17 +678,295 @@ function SidebarBalance({ onOpen }: { onOpen: () => void }) {
 
 	return (
 		<Tooltip
-			content="Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more."
+			content="External Data Balance: credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more."
 			render={<button type="button" onClick={onOpen} />}
-			className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-subtle bg-surface px-4 py-3 body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
+			className={`flex shrink-0 items-center px-2 mono-sm-bold not-disabled:not-aria-disabled:hover:bg-hover-row ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}
 		>
-			<div className="flex min-w-0 items-center gap-1.5">
-				<Icon name="wallet" height={16} width={16} className="shrink-0 text-ai-research" />
-				<span>External Data Balance</span>
-			</div>
-			<span className={`shrink-0 mono-sm-bold ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}>
-				{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-			</span>
+			<span className="sr-only">External Data Balance</span>
+			{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 		</Tooltip>
+	)
+}
+
+function SettingsIcon({ hasCustomInstructions }: { hasCustomInstructions?: boolean }) {
+	return (
+		<span className="relative flex">
+			<Icon name="settings" height={16} width={16} />
+			{hasCustomInstructions ? <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" /> : null}
+		</span>
+	)
+}
+
+type SidebarPlace = 'chat' | 'terminal'
+
+function SidebarItem({
+	folded,
+	label,
+	tooltip,
+	icon,
+	trailing,
+	active,
+	onClick,
+	className = '',
+	...buttonProps
+}: {
+	folded: boolean
+	label: string
+	tooltip?: string
+	icon: ReactNode
+	trailing?: ReactNode
+	active?: boolean
+	onClick: () => void
+	className?: string
+	'aria-expanded'?: boolean
+	'data-umami-event'?: string
+	'data-umami-event-action'?: string
+	'data-umami-event-source'?: string
+}) {
+	const current = active ? ('page' as const) : undefined
+	if (folded) {
+		return (
+			<Tooltip
+				content={tooltip ?? label}
+				placement="right"
+				render={
+					<Button
+						type="button"
+						size="md"
+						variant="ghost"
+						square
+						data-active={active}
+						aria-current={current}
+						onClick={onClick}
+						className={className}
+						{...buttonProps}
+					/>
+				}
+			>
+				{icon}
+				<span className="sr-only">{label}</span>
+			</Tooltip>
+		)
+	}
+	return (
+		<button
+			type="button"
+			data-active={active}
+			aria-current={current}
+			onClick={onClick}
+			className={`${SIDEBAR_ROW} w-full text-left ${className}`}
+			{...buttonProps}
+		>
+			{icon}
+			<span className="min-w-0 flex-1 truncate">{label}</span>
+			{trailing}
+		</button>
+	)
+}
+
+function SidebarToggles({
+	folded,
+	searchOpen,
+	onSearch
+}: {
+	folded: boolean
+	searchOpen: boolean
+	onSearch: () => void
+}) {
+	const { toggleSidebar } = useLlamaAIChrome()
+	return (
+		<>
+			<SidebarItem
+				folded
+				label={folded ? 'Open sidebar' : 'Close sidebar'}
+				icon={<Icon name={folded ? 'panel-left-open' : 'panel-left-close'} height={16} width={16} />}
+				onClick={toggleSidebar}
+				aria-expanded={!folded}
+				data-umami-event="llamaai-sidebar-toggle"
+				data-umami-event-action={folded ? 'open' : 'close'}
+				data-umami-event-source={folded ? 'sidebar_rail' : 'sidebar_header'}
+			/>
+			<SidebarItem
+				folded
+				label="Search chats"
+				icon={<Icon name="search" height={16} width={16} />}
+				active={searchOpen}
+				onClick={onSearch}
+				aria-expanded={searchOpen}
+			/>
+		</>
+	)
+}
+
+function SidebarDestinations({
+	folded,
+	place,
+	onNewChat,
+	onSwitchPlace,
+	alertsCount,
+	onOpenAlerts,
+	newChatRef
+}: {
+	folded: boolean
+	place: SidebarPlace
+	onNewChat: () => void
+	onSwitchPlace?: () => void
+	alertsCount: number | null
+	onOpenAlerts?: () => void
+	newChatRef?: Ref<HTMLButtonElement>
+}) {
+	const terminalEnabled = useTerminalEnabled()
+	const source = folded ? 'sidebar_rail' : 'sidebar'
+	const newChat = () => {
+		trackUmamiEvent('llamaai-new-chat')
+		onNewChat()
+	}
+	const openAlerts = onOpenAlerts
+		? () => {
+				trackUmamiEvent('llamaai-alerts-open', { source })
+				onOpenAlerts()
+			}
+		: null
+	const places = (
+		<>
+			<SidebarItem
+				folded={folded}
+				label="Chat"
+				icon={<Icon name="chat" height={16} width={16} className="shrink-0" />}
+				active={place === 'chat'}
+				onClick={() => {
+					if (place === 'terminal') onSwitchPlace?.()
+				}}
+				data-umami-event={place === 'terminal' ? 'llamaai-terminal-open' : undefined}
+				data-umami-event-action={place === 'terminal' ? 'close' : undefined}
+				data-umami-event-source={place === 'terminal' ? source : undefined}
+			/>
+			{terminalEnabled ? (
+				<SidebarItem
+					folded={folded}
+					label="Terminal"
+					icon={<Icon name="bar-chart-2" height={16} width={16} className="shrink-0" />}
+					trailing={
+						<span className="shrink-0 rounded-full border border-ai-gold/30 bg-ai-gold-tint px-1.5 py-0.5 label-xs text-ai-bronze uppercase">
+							New
+						</span>
+					}
+					active={place === 'terminal'}
+					onClick={() => {
+						if (place === 'chat') onSwitchPlace?.()
+					}}
+					className="max-lg:hidden"
+					data-umami-event={place === 'chat' ? 'llamaai-terminal-open' : undefined}
+					data-umami-event-source={place === 'chat' ? source : undefined}
+				/>
+			) : null}
+			{openAlerts ? (
+				<SidebarItem
+					folded={folded}
+					label="Alerts"
+					tooltip={typeof alertsCount === 'number' ? `Alerts (${alertsCount})` : 'Alerts'}
+					icon={
+						<span className="relative flex shrink-0">
+							<Icon name="calendar-plus" height={16} width={16} className="text-warning" />
+							{folded && alertsCount ? (
+								<span className="absolute -top-1.5 -right-2 min-w-3.5 rounded-full bg-surface-elevated-2 px-0.5 text-center label-xs text-secondary">
+									{alertsCount}
+								</span>
+							) : null}
+						</span>
+					}
+					trailing={
+						typeof alertsCount === 'number' ? (
+							<span className="shrink-0 body-sm text-tertiary tabular-nums">{alertsCount}</span>
+						) : null
+					}
+					onClick={openAlerts}
+				/>
+			) : null}
+		</>
+	)
+
+	if (folded) {
+		return (
+			<>
+				<Tooltip
+					content="New chat"
+					placement="right"
+					render={<Button type="button" size="md" variant="outline" square onClick={newChat} />}
+				>
+					<Icon name="square-pen" height={16} width={16} />
+					<span className="sr-only">New chat</span>
+				</Tooltip>
+				{places}
+			</>
+		)
+	}
+	return (
+		<>
+			<Button ref={newChatRef} type="button" size="md" variant="outline" onClick={newChat} className="w-full">
+				<Icon name="square-pen" height={14} width={14} />
+				New chat
+			</Button>
+			<div className="-mx-2 flex flex-col">{places}</div>
+		</>
+	)
+}
+
+function SidebarRail({
+	place,
+	onNewChat,
+	onSwitchPlace,
+	alertsCount,
+	onOpenAlerts,
+	onOpenSettings,
+	hasCustomInstructions,
+	onSearchOpenChange
+}: Pick<
+	AgenticSidebarProps,
+	'onNewChat' | 'onSwitchPlace' | 'onOpenAlerts' | 'onOpenSettings' | 'hasCustomInstructions' | 'onSearchOpenChange'
+> & { place: SidebarPlace; alertsCount: number | null }) {
+	const { toggleSidebar } = useLlamaAIChrome()
+	return (
+		<nav
+			aria-label="LlamaAI"
+			className="mr-2 hidden w-11 flex-none flex-col items-center gap-1 rounded-lg border border-subtle bg-surface py-2 lg:flex"
+		>
+			<SidebarToggles
+				folded
+				searchOpen={false}
+				onSearch={() => {
+					onSearchOpenChange?.(true)
+					toggleSidebar()
+				}}
+			/>
+			<span aria-hidden="true" className="my-1 w-6 border-t border-subtle" />
+			<SidebarDestinations
+				folded
+				place={place}
+				onNewChat={onNewChat}
+				onSwitchPlace={onSwitchPlace}
+				alertsCount={alertsCount}
+				onOpenAlerts={onOpenAlerts}
+			/>
+			<SidebarItem
+				folded
+				label="Projects"
+				icon={<Icon name="folder" height={16} width={16} />}
+				onClick={() => {
+					setStorageItem(SIDEBAR_PROJECTS_OPEN_KEY, 'true')
+					toggleSidebar()
+				}}
+			/>
+			{onOpenSettings ? (
+				<div className="mt-auto flex">
+					<SidebarItem
+						folded
+						label="Settings"
+						icon={<SettingsIcon hasCustomInstructions={hasCustomInstructions} />}
+						onClick={onOpenSettings}
+					/>
+				</div>
+			) : null}
+		</nav>
 	)
 }

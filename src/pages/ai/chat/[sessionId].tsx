@@ -23,7 +23,7 @@ function SessionPage() {
 		const frameId = window.requestAnimationFrame(() => {
 			if (cancelled) return
 
-			void router.replace(`/ai/chat/${resolvedSessionId}`, undefined, { shallow: true })
+			void router.replace(router.asPath.split(/[?#]/)[0], undefined, { shallow: true })
 			clearFrameId = window.requestAnimationFrame(() => {})
 		})
 

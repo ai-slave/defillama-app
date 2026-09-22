@@ -8,6 +8,8 @@ import {
 	type StreamBuffer,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
+import { applyTerminalOps } from '~/containers/LlamaAI/terminal/terminalOps'
+import type { TerminalRequestPayload } from '~/containers/LlamaAI/terminal/terminalScreenshot'
 import type { DashboardArtifact, Message, TodoItem, UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { stripBeforeReportStart } from '~/containers/LlamaAI/utils/reportMarkers'
 
@@ -50,6 +52,7 @@ export function createAgenticCallbacks({
 	onDuelReady,
 	onArmEvent,
 	onQueueUpdated,
+	onTerminalRequest,
 	onMessageIdObserved,
 	onUserMessageIdObserved,
 	onCompletion,
@@ -73,6 +76,7 @@ export function createAgenticCallbacks({
 	onDuelReady?: () => void
 	onArmEvent?: (event: AgenticArmEvent) => void
 	onQueueUpdated?: (snapshot: QueueSnapshot) => void
+	onTerminalRequest?: (request: TerminalRequestPayload) => void
 	onMessageIdObserved?: (messageId: string) => void
 	onUserMessageIdObserved?: (messageId: string) => void
 	onCompletion?: (messageId: string) => void
@@ -240,6 +244,16 @@ export function createAgenticCallbacks({
 		}),
 		onQueueUpdated: guard((snapshot) => {
 			onQueueUpdated?.(snapshot)
+		}),
+		onTerminalOps: guard((payload) => {
+			// The backend persists one terminal_ops block per message: first symbol and interval, every op.
+			buffer.terminalOps = buffer.terminalOps
+				? { ...buffer.terminalOps, ops: [...buffer.terminalOps.ops, ...payload.ops] }
+				: payload
+			applyTerminalOps(payload)
+		}),
+		onTerminalRequest: guard((request) => {
+			onTerminalRequest?.(request)
 		}),
 		onError: guard((content) => {
 			buffer.error = content

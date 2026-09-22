@@ -11,6 +11,10 @@ git diff --cached --name-only -z --diff-filter=ACMR |
 	xargs -0 sh -c '
 		for file do
 			case "$file" in
+				public/charting_library/*|public/datafeeds/*)
+					# Vendored TradingView build. Formatting it rewrites a minified
+					# third-party bundle we do not own and must ship byte-for-byte.
+					;;
 				*.js|*.jsx|*.ts|*.tsx|*.mjs|*.cjs|*.json|*.jsonc|*.css)
 					printf "%s\0" "$file"
 					;;

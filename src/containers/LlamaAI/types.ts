@@ -1,4 +1,5 @@
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
+import type { TerminalOpsPayload } from '~/containers/LlamaAI/terminal/terminalOps'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import type { ChartConfiguration, ChartDataByKey, ChartDataSeries } from './chartTypes'
 
@@ -25,6 +26,8 @@ export interface ChatSession {
 	isOptimistic?: boolean
 	projectId?: string | null
 	hasUnseenCompletion?: boolean
+	// Set when the session drew on a terminal chart; the symbol of its most recent chart turn.
+	terminalSymbol?: string | null
 }
 
 export interface ResearchUsage {
@@ -236,6 +239,7 @@ export interface Message {
 	thinking?: string
 	thinkingSegments?: Array<ThinkingSegment>
 	steps?: Array<AgentStep>
+	terminalOps?: TerminalOpsPayload
 	quotedText?: string
 	messageMetadata?: MessageMetadata
 	freeLimitOffer?: FreeLimitOffer

@@ -105,37 +105,39 @@ export function ProjectSidebarRow({
 					/>
 					<span className="min-w-0 flex-1 truncate">{project.name}</span>
 				</button>
-				<Button
-					as={BasicLink}
-					href={`/ai/projects/${project.id}`}
-					onClick={onProjectClick}
-					aria-label={`New chat in ${project.name}`}
-					title={`New chat in ${project.name}`}
-					size="sm"
-					variant="ghost"
-					square
-				>
-					<Icon name="square-pen" height={16} width={16} aria-hidden="true" />
-				</Button>
-				<Ariakit.MenuProvider>
-					<Ariakit.MenuButton
-						aria-label={`Actions for project ${project.name}`}
-						ref={projectMenuRef}
-						render={<Button type="button" size="sm" variant="ghost" square />}
+				<span className="flex items-center has-aria-expanded:opacity-100 lg:opacity-0 lg:group-focus-within/project:opacity-100 lg:group-hover/project:opacity-100">
+					<Button
+						as={BasicLink}
+						href={`/ai/projects/${project.id}`}
+						onClick={onProjectClick}
+						aria-label={`New chat in ${project.name}`}
+						title={`New chat in ${project.name}`}
+						size="sm"
+						variant="ghost"
+						square
 					>
-						<Icon name="ellipsis" height={16} width={16} />
-					</Ariakit.MenuButton>
-					<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`} className="z-50">
-						<MenuItem onClick={renameStore.show} className="border-b border-subtle">
-							<Icon name="pencil" height={14} width={14} />
-							Rename project
-						</MenuItem>
-						<MenuItem onClick={deleteStore.show} className="text-error!">
-							<Icon name="trash-2" height={14} width={14} />
-							Delete project
-						</MenuItem>
-					</MenuSurface>
-				</Ariakit.MenuProvider>
+						<Icon name="square-pen" height={16} width={16} aria-hidden="true" />
+					</Button>
+					<Ariakit.MenuProvider>
+						<Ariakit.MenuButton
+							aria-label={`Actions for project ${project.name}`}
+							ref={projectMenuRef}
+							render={<Button type="button" size="sm" variant="ghost" square />}
+						>
+							<Icon name="ellipsis" height={16} width={16} />
+						</Ariakit.MenuButton>
+						<MenuSurface variant="actions" aria-label={`Actions for project ${project.name}`} className="z-50">
+							<MenuItem onClick={renameStore.show} className="border-b border-subtle">
+								<Icon name="pencil" height={14} width={14} />
+								Rename project
+							</MenuItem>
+							<MenuItem onClick={deleteStore.show} className="text-error!">
+								<Icon name="trash-2" height={14} width={14} />
+								Delete project
+							</MenuItem>
+						</MenuSurface>
+					</Ariakit.MenuProvider>
+				</span>
 			</div>
 			{isExpanded && projectSessions.error ? (
 				<RetryNotice
