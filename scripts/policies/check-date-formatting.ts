@@ -55,6 +55,7 @@ const dayjsFormatFiles = new Set([
 	'src/containers/ProDashboard/components/CustomTimePeriodPicker.tsx',
 	'src/containers/ProtocolOverview/AdditionalInfo.tsx',
 	'src/containers/RWA/Perps/contractPageUtils.ts',
+	'src/containers/Unlocks/calendarChartOptions.ts',
 	'src/containers/Unlocks/CalendarDayCell.tsx',
 	'src/containers/Unlocks/CalendarView.tsx',
 	'src/containers/Unlocks/PastUnlockPriceImpact.tsx',

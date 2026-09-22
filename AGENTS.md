@@ -54,6 +54,12 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 
 `public/pages.json` contains product-facing page definitions. `docs/metrics.md` documents implementation semantics and overloaded terminology that can affect code paths.
 
+## Chart Data Readers
+
+- ECharts tooltip formatters read series values and timestamps through `src/components/ECharts/shared/tooltip.ts` (`getTooltipRawYValue`, `getTooltipAxisValue`). Do not index `params.value` or `params.data` by position or by series name.
+- Formatter params are typed `unknown`, so type errors do not reveal readers that a chart data layout change breaks. Before changing a chart dataset's row layout, search for every reader of the old layout (for example `data[seriesName]`, `seriesName in data`, `.value[1]`). Migrate each reader or confirm it is unaffected before the change is done.
+- Test a custom formatter with real builder output that has at least two series with different values, and confirm the test fails without the fix.
+
 ## Local User Instructions
 
 If `.codex/local-instructions.md` exists, read and follow it before making code changes. It contains local user preferences and skill routing, and is intentionally gitignored.
