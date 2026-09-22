@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import * as realEcharts from 'echarts'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -91,24 +92,55 @@ describe('MultiSeriesChart lifecycle', () => {
 		for (const [option] of mocks.instance.setOption.mock.calls) expect(option.graphic).toBeUndefined()
 	})
 
-	test('forwards a configured useUTC to ECharts and leaves the default alone otherwise', async () => {
+	test.each([
+		['omitted', {}, true],
+		['explicitly undefined', { useUTC: undefined }, true],
+		['explicitly false', { useUTC: false }, false]
+	] as const)('sends useUTC to ECharts when it is %s', async (_label, chartOptions, expected) => {
 		await act(async () =>
 			root.render(
 				<MultiSeriesChart
 					dataset={INITIAL_DATASET}
 					charts={CHARTS}
-					chartOptions={{ useUTC: true }}
+					chartOptions={chartOptions}
 					exportButtons="hidden"
 				/>
 			)
 		)
-		expect(mocks.instance.setOption.mock.lastCall?.[0]).toHaveProperty('useUTC', true)
-
-		await act(async () =>
-			root.render(<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />)
-		)
-		expect(mocks.instance.setOption.mock.lastCall?.[0]).not.toHaveProperty('useUTC')
+		expect(mocks.instance.setOption.mock.lastCall?.[0]).toHaveProperty('useUTC', expected)
 	})
+
+	test.each(['America/Los_Angeles', 'Asia/Tokyo'])(
+		'places the daily ticks of the rendered option on UTC midnights in %s',
+		async (timeZone) => {
+			const originalTimeZone = process.env.TZ
+			process.env.TZ = timeZone
+			try {
+				const days = Array.from({ length: 7 }, (_, index) => Date.UTC(2026, 8, 20 + index))
+				await act(async () =>
+					root.render(
+						<MultiSeriesChart
+							dataset={{ dimensions: ['timestamp', 'Value'], source: days.map((day, index) => [day, index + 1]) }}
+							charts={[{ type: 'bar', name: 'Value', encode: { x: 0, y: 1 } }]}
+							exportButtons="hidden"
+						/>
+					)
+				)
+				// Render the option this component built in real ECharts. ECharts has no public tick
+				// API; the axis model is the only way to read tick instants.
+				const option = mocks.instance.setOption.mock.lastCall?.[0]
+				const chart = realEcharts.init(null, null, { renderer: 'svg', ssr: true, width: 800, height: 400 })
+				chart.setOption({ ...option, graphic: undefined, animation: false })
+				const axis = (chart as unknown as { getModel(): any }).getModel().getComponent('xAxis').axis
+				const ticks: Array<number> = axis.scale.getTicks().map((tick: { value: number }) => tick.value)
+				chart.dispose()
+
+				expect(ticks).toEqual(days)
+			} finally {
+				process.env.TZ = originalTimeZone
+			}
+		}
+	)
 
 	test('draws itself in once under a draw-mode provider and never re-animates', async () => {
 		await act(async () =>

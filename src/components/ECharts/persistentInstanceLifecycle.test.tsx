@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 
+import * as realEcharts from 'echarts'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -119,6 +120,32 @@ describe('persistent ECharts instances', () => {
 		expect(instance.dispose).toHaveBeenCalledOnce()
 		expect(onReady).toHaveBeenLastCalledWith(null)
 	})
+
+	test.each(['America/Los_Angeles', 'Asia/Tokyo'])(
+		'places the candlestick daily ticks on UTC midnights in %s',
+		async (timeZone) => {
+			const originalTimeZone = process.env.TZ
+			process.env.TZ = timeZone
+			try {
+				const days = Array.from({ length: 7 }, (_, index) => Date.UTC(2026, 8, 20 + index))
+				const data = days.map((day): [number, number, number, number, number, number] => [day, 10, 11, 9, 12, 100])
+				await act(async () => root.render(<CandlestickChart data={data} />))
+
+				// Render the option this component built in real ECharts. ECharts has no public tick
+				// API; the axis model is the only way to read tick instants.
+				const option = mocks.instances[0].setOption.mock.calls.at(-1)?.[0]
+				const chart = realEcharts.init(null, null, { renderer: 'svg', ssr: true, width: 800, height: 600 })
+				chart.setOption({ ...option, graphic: undefined, animation: false })
+				const axis = (chart as unknown as { getModel(): any }).getModel().getComponent('xAxis', 0).axis
+				const ticks: Array<number> = axis.scale.getTicks().map((tick: { value: number }) => tick.value)
+				chart.dispose()
+
+				expect(ticks).toEqual(days)
+			} finally {
+				process.env.TZ = originalTimeZone
+			}
+		}
+	)
 
 	test('keeps Bollinger helper series out of the candlestick legend', async () => {
 		await act(async () =>

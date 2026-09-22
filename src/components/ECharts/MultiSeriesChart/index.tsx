@@ -919,7 +919,9 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		if (!hideDefaultLegend && renderedLegend !== undefined) option.legend = renderedLegend
 		if (finalGraphic !== undefined) option.graphic = finalGraphic
 		if (finalXAxis !== undefined) option.xAxis = finalXAxis
-		if (useUTC !== undefined) option.useUTC = useUTC
+		// Time axes default to UTC so ticks agree with the UTC tooltip and zoom labels; only an explicit
+		// `false` opts a chart into local time.
+		option.useUTC = useUTC ?? true
 		if (!shouldHideDataZoom && dataZoom !== undefined) option.dataZoom = dataZoom
 		instance.setOption(option, { notMerge: true })
 		if (hasRenderableSeries) hasEnteredRef.current = true

@@ -14,6 +14,7 @@ import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeries
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { Table } from '~/components/Table/Table'
+import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
@@ -156,11 +157,11 @@ function PortfolioTrend({
 				/>
 			</Suspense>
 			<div className="mt-2 flex items-center justify-between text-xs text-pro-text-label">
-				<span>{new Date(points[0].time).toLocaleDateString()}</span>
+				<span>{formatDate(points[0].time, { input: 'milliseconds' })}</span>
 				<span>
 					Last: {formatUsd(last, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 				</span>
-				<span>{new Date(points[points.length - 1].time).toLocaleDateString()}</span>
+				<span>{formatDate(points[points.length - 1].time, { input: 'milliseconds' })}</span>
 			</div>
 		</div>
 	)

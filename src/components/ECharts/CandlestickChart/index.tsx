@@ -211,6 +211,8 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		}
 
 		return {
+			// Match the UTC tooltip and zoom labels: ticks sit on UTC-midnight candles in every timezone.
+			useUTC: true,
 			graphic: {
 				type: 'image',
 				z: 0,

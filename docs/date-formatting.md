@@ -48,6 +48,26 @@ provides a deterministic server fallback, updates after hydration, refreshes ove
 time, and exposes the exact UTC instant. Direct `formatRelativeTime` calls are reserved
 for client-clock owners that provide equivalent behavior.
 
+## Chart time axes
+
+ECharts time axes run in UTC. `MultiSeriesChart` sends `useUTC: true` unless a
+caller sets `chartOptions.useUTC: false`, and `CandlestickChart` always sets it. Tick
+placement and default tick labels then agree with the UTC tooltip, zoom, and hallmark
+labels, and daily points stamped at UTC midnight sit on their day's tick in every
+viewer timezone. Without it, ECharts places and labels ticks in the viewer's local
+time, so one chart would show two timezones.
+
+Chart timestamps for calendar dates must be UTC midnight, for example
+``Date.parse(`${date}T00:00:00Z`)``. Do not stamp a date key with local midnight
+(`dayjs(date)`, `new Date(y, m, d)`, an offsetless date-time string): a chart built
+on the server and one built in the browser would then disagree.
+
+A chart that deliberately shows the viewer's local time must opt out as a whole. Set
+`useUTC: false`, and replace the tooltip and zoom-label formatters with local ones.
+`useUTC` only changes ECharts' own time handling; the shared tooltip and zoom
+formatters stay UTC. Rendering local time must also follow the hydration rules for
+local exact instants above.
+
 ## Protected domain behavior
 
 The following behavior is intentionally not redefined by the generic policy:

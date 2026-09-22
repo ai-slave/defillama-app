@@ -106,7 +106,10 @@ export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic'
 	xAxis?: XAXisComponentOption
 	/** MultiSeriesChart owns a Cartesian numeric y scale; category/time y-axes are unsupported. */
 	yAxis?: MultiSeriesYAxisOverride | Array<MultiSeriesYAxisOverride>
-	/** Place and label time-axis ticks in UTC, matching the UTC tooltip and zoom labels. */
+	/**
+	 * Time-axis ticks and labels are UTC unless this is `false`. Opting out only changes ECharts'
+	 * own time handling: a local-time chart must also replace the UTC tooltip and zoom formatters.
+	 */
 	useUTC?: boolean
 }
 
