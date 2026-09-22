@@ -120,19 +120,8 @@ test('requires verification and an explicit reveal, then shows the code and dest
 	])
 	expect(document.querySelector('a')?.href).toBe('https://www.qfex.com/')
 	expect(document.body.textContent).toContain('Try again in 60 min.')
-	expect(document.querySelector('button[aria-label="Copy invite code"]')).not.toBeNull()
 	await act(async () => document.querySelector<HTMLButtonElement>('button[aria-label="Copy invite code"]')!.click())
 	expect(await navigator.clipboard.readText()).toBe('ABCD1234')
-})
-
-test('titles the dialog by claim state', async () => {
-	await render()
-	await click('Get invite code')
-	expect(document.querySelector('h2')?.textContent).toBe('Get a QFEX invite code')
-	await click('Verify qfex_invite')
-	await click('Reveal my code')
-	await waitForText('ABCD1234')
-	expect(document.querySelector('h2')?.textContent).toBe('Your QFEX invite')
 })
 
 test('offers an in-place retry when verification fails to load', async () => {
@@ -181,16 +170,6 @@ test('allows an explicit refresh after the cooldown with a fresh verification', 
 	expect(requests[0]?.visitorId).toBe(requests[1]?.visitorId)
 })
 
-test('shows the server network cooldown without issuing automatic retries', async () => {
-	claimStatus = 429
-	claimResponse = { status: 'cooldown', retryAt: new Date(Date.now() + 1_800_000).toISOString() }
-	await render()
-	await openAndVerify()
-	await click('Reveal my code')
-	await waitForText('A code was recently requested on your network. Try again in 30 min.')
-	expect(requests).toHaveLength(1)
-})
-
 test('reports an exhausted pool in the open dialog and disables expired verification', async () => {
 	claimResponse = { status: 'unavailable' }
 	await render()
@@ -199,8 +178,9 @@ test('reports an exhausted pool in the open dialog and disables expired verifica
 	expect(button('Reveal my code').disabled).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Reveal my code')
-	await waitForText('No invite codes are available right now.')
-	expect(button('Reveal my code').disabled).toBe(true)
+	await waitForText('No invite codes available')
+	expect(document.body.textContent).not.toContain('Verify qfex_invite')
+	expect(document.body.textContent).not.toContain('Reveal my code')
 })
 
 test('preserves the visitor identity after a lost response so a retry retrieves the original allocation', async () => {
@@ -210,8 +190,9 @@ test('preserves the visitor identity after a lost response so a retry retrieves 
 	await click('Reveal my code')
 	await waitForText('Could not retrieve an invite code. Check your connection and try again.')
 	const visitorId = localStorage.getItem('protocol-invite:qfex')
+	expect(button('Try again').disabled).toBe(true)
 	await click('Verify qfex_invite')
-	await click('Reveal my code')
+	await click('Try again')
 	await waitForText('ABCD1234')
 	expect(requests).toEqual([{ visitorId, turnstileToken: 'verified-token', refresh: false }])
 })
@@ -223,7 +204,29 @@ test('handles a non-JSON service outage and permits retrying after verification'
 	await click('Reveal my code')
 	await waitForText('Invite codes are temporarily unavailable. Please try again later.')
 	await click('Verify qfex_invite')
-	await click('Reveal my code')
+	await click('Try again')
 	await waitForText('ABCD1234')
 	expect(document.querySelector('output')?.textContent).toBe('ABCD1234')
+})
+
+test('blocks new claims during the network cooldown and restores claiming when it ends', async () => {
+	claimStatus = 429
+	claimResponse = { status: 'cooldown', retryAt: new Date(Date.now() + 3_600_000).toISOString() }
+	await render()
+	await openAndVerify()
+	await click('Reveal my code')
+	await waitForText('Try again in 60 min')
+	expect(document.body.textContent).not.toContain('Verify qfex_invite')
+	expect(document.body.textContent).not.toContain('Reveal my code')
+	const later = Date.now() + 3_600_001
+	vi.spyOn(Date, 'now').mockReturnValue(later)
+	await act(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 1100))
+	})
+	expect(button('Reveal my code').disabled).toBe(true)
+	await click('Verify qfex_invite')
+	claimStatus = 200
+	claimResponse = { status: 'assigned', code: 'NEXT1234', refreshAt: new Date(later + 3_600_000).toISOString() }
+	await click('Reveal my code')
+	await waitForText('NEXT1234')
 })

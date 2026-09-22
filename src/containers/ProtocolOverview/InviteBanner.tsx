@@ -101,7 +101,13 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 		<>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
 				<DialogHeading>
-					{result?.status === 'assigned' ? `Your ${name} invite` : `Get a ${name} invite code`}
+					{result?.status === 'assigned'
+						? `Your ${name} invite`
+						: result?.status === 'cooldown' && minutesLeft > 0
+							? `Try again in ${minutesLeft} min`
+							: result?.status === 'unavailable'
+								? 'No invite codes available'
+								: `Get a ${name} invite code`}
 				</DialogHeading>
 				<DialogCloseButton />
 			</div>
@@ -110,7 +116,7 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 					<>
 						<p className="body-md text-secondary">Copy your code, then enter it when joining {name}.</p>
 						<div className="flex items-center justify-between gap-4 rounded-lg border border-medium bg-surface p-4">
-							<output className="mono-xl tracking-widest text-primary" aria-label="Invite code">
+							<output className="min-w-0 mono-xl tracking-widest break-all text-primary" aria-label="Invite code">
 								{result.code}
 							</output>
 							<CopyHelper toCopy={result.code} size={20} aria-label="Copy invite code" />
@@ -127,25 +133,31 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 								: 'Code already used? You can try another.'}
 						</p>
 					</>
-				) : (
+				) : !result && !claim.isError ? (
 					<p className="body-md text-secondary">
 						Use an invite code to join {name}. Verify below, then reveal your code.
 					</p>
-				)}
+				) : null}
 				{result?.status === 'cooldown' ? (
 					<p role="status" className="body-md text-secondary">
 						{minutesLeft > 0
-							? `A code was recently requested on your network. Try again in ${minutesLeft} min.`
-							: 'You can request a code now.'}
+							? 'A code was recently requested on your network.'
+							: 'You can request a code now. Verify below to continue.'}
 					</p>
 				) : null}
 				{result?.status === 'unavailable' ? (
 					<p role="status" className="body-md text-secondary">
-						No invite codes are available right now. Please try again later.
+						Please check back later.
 					</p>
 				) : null}
-				{minutesLeft === 0 ? (
+				{claim.isError ? (
+					<p role="alert" className="body-sm text-data-down">
+						{claim.error.message}
+					</p>
+				) : null}
+				{minutesLeft === 0 && result?.status !== 'unavailable' ? (
 					<>
+						{claim.isError ? <p className="body-md text-secondary">Verify again, then retry your request.</p> : null}
 						<Turnstile
 							ref={turnstile}
 							action={`${protocol}_invite`}
@@ -188,15 +200,12 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 									? 'Getting your code…'
 									: result?.status === 'assigned'
 										? 'Try another code'
-										: 'Reveal my code'}
+										: claim.isError
+											? 'Try again'
+											: 'Reveal my code'}
 							</Button>
 						)}
 					</>
-				) : null}
-				{claim.isError ? (
-					<p role="alert" className="body-sm text-data-down">
-						{claim.error.message}
-					</p>
 				) : null}
 			</div>
 		</>
