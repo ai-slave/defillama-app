@@ -37,10 +37,7 @@ export function VerifiedApyAnnouncement({
 				dismissButtonClassName="hover:bg-verified-announcement-dismiss"
 				dismissLabel="Dismiss"
 			>
-				<SealGlyph size={16} className="text-verified-announcement-badge-bg" />
-				<span className="shrink-0 rounded-full bg-verified-announcement-badge-bg px-2.5 py-0.5 text-xs font-bold tracking-wide text-verified-announcement-badge-text">
-					NEW
-				</span>
+				<SealGlyph size={16} className="text-verified-announcement-seal" />
 				<span className="min-w-48 flex-1">
 					<strong className="font-semibold">Verified APY</strong>: what you would actually have earned.
 					<span className="hidden lg:inline">

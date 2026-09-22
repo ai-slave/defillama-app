@@ -19,7 +19,8 @@ export interface ResolveAnnouncementInput {
 
 /**
  * Picks the one banner for a page view. Order: page-wide launch, account segment, browsing interest,
- * fallback. Categories without a banner are skipped, so a reader whose interests are only protocols and
+ * fallback. A segment banner yields to the interests it lists in `deferTo` when the reader has them and
+ * their banner is eligible. Categories without a banner are skipped, so a reader whose interests are only protocols and
  * chains lands on the fallback. Dismissals are read once by the caller: the slot goes empty after a
  * dismiss instead of cascading to the next candidate.
  */
@@ -44,7 +45,14 @@ export function resolveAnnouncement({
 	if (profile) {
 		for (const segment of profile.segments) {
 			const banner = registry.segments[segment]
-			if (isEligible(banner)) return { kind: 'segment', banner, segment }
+			if (!isEligible(banner)) continue
+			for (const category of banner.deferTo ?? []) {
+				const deferred = registry.targeted[category]
+				if (profile.interests.some((interest) => interest.category === category) && isEligible(deferred)) {
+					return { kind: 'targeted', banner: deferred, category }
+				}
+			}
+			return { kind: 'segment', banner, segment }
 		}
 		for (const { category } of profile.interests) {
 			const banner = registry.targeted[category]

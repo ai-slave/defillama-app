@@ -1,5 +1,29 @@
 /* Home-slot announcement palettes. Each banner gets its own hue so a returning reader notices a
-   change: UTR is green (themes/utr.css), the DefiLlama app is blue, Verified APY is gold. */
+   change: UTR is green (themes/utr.css), the DefiLlama app is blue, Verified APY is gold, investor
+   relations is indigo, and API and enterprise data is teal.
+
+   Spare palettes for the next banner, reviewed with the owner. Comments are stripped from the
+   production build, so keeping them here costs nothing. Rename the prefix and add the @theme block.
+
+   Light sky (soft, same style as UTR and Verified APY)
+     light: border #8fd3e8; bg linear-gradient(100deg, #ecfaff 0%, #d9f3fb 55%, #c5ebf7 100%);
+            text #0b4a5c; shadow 0 10px 30px rgba(14, 116, 144, 0.15); dismiss rgb(11 74 92 / 10%);
+            badge-bg #0e7490; badge-text #ffffff; ring rgb(14 116 144 / 35%);
+            link rgb(14 116 144 / 12%); link-hover rgb(14 116 144 / 20%)
+     dark:  border #1b5e70; bg linear-gradient(100deg, #082a33 0%, #0c3a47 55%, #104a5a 100%);
+            text #d7f5fc; shadow 0 10px 30px rgba(8, 42, 51, 0.5); dismiss rgb(255 255 255 / 10%);
+            badge-bg #155e75; badge-text #a5f3fc; ring rgb(255 255 255 / 25%);
+            link rgb(255 255 255 / 10%); link-hover rgb(255 255 255 / 18%)
+
+   Coral (warm, strongest call to action; keep it away from the gold Verified APY banner)
+     light: border #ea580c; bg linear-gradient(100deg, #ea580c 0%, #f97316 50%, #fb923c 100%);
+            text #ffffff; shadow 0 10px 30px rgba(234, 88, 12, 0.3); dismiss rgb(255 255 255 / 15%);
+            badge-bg #ffffff; badge-text #c2410c; ring rgb(255 255 255 / 40%);
+            link rgb(255 255 255 / 15%); link-hover rgb(255 255 255 / 25%)
+     dark:  border #c2410c; bg linear-gradient(100deg, #431407 0%, #6b2410 50%, #8a3212 100%);
+            text #fff1e8; shadow 0 10px 30px rgba(67, 20, 7, 0.5); dismiss rgb(255 255 255 / 10%);
+            badge-bg rgb(255 255 255 / 15%); badge-text #ffffff; ring rgb(255 255 255 / 30%);
+            link rgb(255 255 255 / 10%); link-hover rgb(255 255 255 / 20%) */
 @layer base {
 	:root {
 		--app-announcement-border: #1a5cc4;
@@ -19,11 +43,32 @@
 		--verified-announcement-text: #5c4300;
 		--verified-announcement-shadow: 0 10px 30px rgba(214, 160, 20, 0.2);
 		--verified-announcement-dismiss: rgb(92 67 0 / 10%);
-		--verified-announcement-badge-bg: #a56f00;
-		--verified-announcement-badge-text: #ffffff;
+		--verified-announcement-seal: #a56f00;
 		--verified-announcement-button: #a56f00;
 		--verified-announcement-button-hover: #8f6000;
 		--verified-announcement-button-text: #ffffff;
+
+		--ir-announcement-border: #4338ca;
+		--ir-announcement-bg: linear-gradient(100deg, #4338ca 0%, #5b50e0 50%, #7c74f0 100%);
+		--ir-announcement-text: #ffffff;
+		--ir-announcement-shadow: 0 10px 30px rgba(67, 56, 202, 0.3);
+		--ir-announcement-dismiss: rgb(255 255 255 / 15%);
+		--ir-announcement-badge-bg: #ffffff;
+		--ir-announcement-badge-text: #4338ca;
+		--ir-announcement-ring: rgb(255 255 255 / 40%);
+		--ir-announcement-link: rgb(255 255 255 / 15%);
+		--ir-announcement-link-hover: rgb(255 255 255 / 25%);
+
+		--data-announcement-border: #0e7490;
+		--data-announcement-bg: linear-gradient(100deg, #0e7490 0%, #0891b2 50%, #22b8cf 100%);
+		--data-announcement-text: #ffffff;
+		--data-announcement-shadow: 0 10px 30px rgba(8, 145, 178, 0.3);
+		--data-announcement-dismiss: rgb(255 255 255 / 15%);
+		--data-announcement-badge-bg: #ffffff;
+		--data-announcement-badge-text: #0e7490;
+		--data-announcement-ring: rgb(255 255 255 / 40%);
+		--data-announcement-link: rgb(255 255 255 / 15%);
+		--data-announcement-link-hover: rgb(255 255 255 / 25%);
 	}
 	html.dark {
 		--app-announcement-border: #3d7fe0;
@@ -42,11 +87,32 @@
 		--verified-announcement-text: #ffe9a8;
 		--verified-announcement-shadow: 0 10px 30px rgba(51, 40, 10, 0.5);
 		--verified-announcement-dismiss: rgb(255 255 255 / 10%);
-		--verified-announcement-badge-bg: #5a4512;
-		--verified-announcement-badge-text: #ffd166;
+		--verified-announcement-seal: #d9a441;
 		--verified-announcement-button: #d9a441;
 		--verified-announcement-button-hover: #f0b94f;
 		--verified-announcement-button-text: #2b1f00;
+
+		--ir-announcement-border: #5b50e0;
+		--ir-announcement-bg: linear-gradient(100deg, #1e1b4b 0%, #2a2575 50%, #3730a3 100%);
+		--ir-announcement-text: #eef0ff;
+		--ir-announcement-shadow: 0 10px 30px rgba(30, 27, 75, 0.5);
+		--ir-announcement-dismiss: rgb(255 255 255 / 10%);
+		--ir-announcement-badge-bg: rgb(255 255 255 / 15%);
+		--ir-announcement-badge-text: #ffffff;
+		--ir-announcement-ring: rgb(255 255 255 / 30%);
+		--ir-announcement-link: rgb(255 255 255 / 10%);
+		--ir-announcement-link-hover: rgb(255 255 255 / 20%);
+
+		--data-announcement-border: #1596b3;
+		--data-announcement-bg: linear-gradient(100deg, #083344 0%, #0b4f63 50%, #0e6b82 100%);
+		--data-announcement-text: #e6fbff;
+		--data-announcement-shadow: 0 10px 30px rgba(8, 51, 68, 0.5);
+		--data-announcement-dismiss: rgb(255 255 255 / 10%);
+		--data-announcement-badge-bg: rgb(255 255 255 / 15%);
+		--data-announcement-badge-text: #ffffff;
+		--data-announcement-ring: rgb(255 255 255 / 30%);
+		--data-announcement-link: rgb(255 255 255 / 10%);
+		--data-announcement-link-hover: rgb(255 255 255 / 20%);
 	}
 }
 
@@ -65,9 +131,28 @@
 	--color-verified-announcement-border: var(--verified-announcement-border);
 	--color-verified-announcement-text: var(--verified-announcement-text);
 	--color-verified-announcement-dismiss: var(--verified-announcement-dismiss);
-	--color-verified-announcement-badge-bg: var(--verified-announcement-badge-bg);
-	--color-verified-announcement-badge-text: var(--verified-announcement-badge-text);
+	--color-verified-announcement-seal: var(--verified-announcement-seal);
 	--color-verified-announcement-button: var(--verified-announcement-button);
 	--color-verified-announcement-button-hover: var(--verified-announcement-button-hover);
 	--color-verified-announcement-button-text: var(--verified-announcement-button-text);
+
+	--shadow-ir-announcement: var(--ir-announcement-shadow);
+	--color-ir-announcement-border: var(--ir-announcement-border);
+	--color-ir-announcement-text: var(--ir-announcement-text);
+	--color-ir-announcement-dismiss: var(--ir-announcement-dismiss);
+	--color-ir-announcement-badge-bg: var(--ir-announcement-badge-bg);
+	--color-ir-announcement-badge-text: var(--ir-announcement-badge-text);
+	--color-ir-announcement-ring: var(--ir-announcement-ring);
+	--color-ir-announcement-link: var(--ir-announcement-link);
+	--color-ir-announcement-link-hover: var(--ir-announcement-link-hover);
+
+	--shadow-data-announcement: var(--data-announcement-shadow);
+	--color-data-announcement-border: var(--data-announcement-border);
+	--color-data-announcement-text: var(--data-announcement-text);
+	--color-data-announcement-dismiss: var(--data-announcement-dismiss);
+	--color-data-announcement-badge-bg: var(--data-announcement-badge-bg);
+	--color-data-announcement-badge-text: var(--data-announcement-badge-text);
+	--color-data-announcement-ring: var(--data-announcement-ring);
+	--color-data-announcement-link: var(--data-announcement-link);
+	--color-data-announcement-link-hover: var(--data-announcement-link-hover);
 }

@@ -66,6 +66,44 @@ describe('resolveAnnouncement', () => {
 		expect(resolve({ profile: { interests: [], segments: [] } })).toMatchObject({ kind: 'fallback' })
 	})
 
+	test('an account segment with a banner outranks browsing interests', () => {
+		const withSegment: AnnouncementRegistry = { ...registry, segments: { fund_institutional: banner('enterprise') } }
+		const result = resolve({
+			registry: withSegment,
+			profile: { ...profile('yields'), segments: ['fund_institutional'] }
+		})
+		expect(result).toMatchObject({ kind: 'segment', segment: 'fund_institutional', banner: { id: 'enterprise' } })
+	})
+
+	test('a segment banner defers to a listed interest the reader has', () => {
+		const withSegment: AnnouncementRegistry = {
+			...registry,
+			segments: { fund_institutional: { ...banner('enterprise'), deferTo: ['yields'] } }
+		}
+		const fund = (...categories: Array<'protocols' | 'yields'>) => ({
+			...profile(...categories),
+			segments: ['fund_institutional' as const]
+		})
+		expect(resolve({ registry: withSegment, profile: fund('protocols', 'yields') })).toMatchObject({
+			kind: 'targeted',
+			category: 'yields',
+			banner: { id: 'verified-apy' }
+		})
+		expect(resolve({ registry: withSegment, profile: fund('protocols') })).toMatchObject({
+			kind: 'segment',
+			banner: { id: 'enterprise' }
+		})
+		// Verified APY is hidden from subscribers, so a subscribed fund keeps the segment banner.
+		expect(
+			resolve({ registry: withSegment, profile: fund('protocols', 'yields'), hasActiveSubscription: true })
+		).toMatchObject({ kind: 'segment', banner: { id: 'enterprise' } })
+	})
+
+	test('a segment without a banner falls through to browsing interests', () => {
+		const result = resolve({ profile: { ...profile('yields'), segments: ['university'] } })
+		expect(result).toMatchObject({ kind: 'targeted', category: 'yields' })
+	})
+
 	test('a subscriber never sees an upsell they already own', () => {
 		const result = resolve({ profile: profile('yields', 'llamaai'), hasActiveSubscription: true })
 		expect(result).toMatchObject({ kind: 'targeted', category: 'llamaai' })

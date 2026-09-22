@@ -30,15 +30,15 @@ export interface InterestScore {
 }
 
 /**
- * Account-level segment name, such as an employer type derived from a work email. Reserved for
- * company-based targeting: no classifier populates it yet, so the API always returns an empty list.
- * Narrow this to a union once the first segment exists.
+ * Account-level segment: the organization type the analytics service derives from an email domain.
+ * The service withholds its retail classification, which covers every personal email provider, so
+ * most readers have no segment.
  */
-export type UserSegment = string
+export type UserSegment = 'fund_institutional' | 'exchange' | 'ai_llm' | 'crypto_project' | 'university'
 
 export interface UserInterestsResponse {
 	/** Every qualifying interest, ordered by descending score, then category. Empty means no qualifying profile. */
 	interests: Array<InterestScore>
-	/** Ranked above browsing interests when choosing a banner. Empty until a classifier exists. */
+	/** Ranked above browsing interests when choosing a banner. At most one today. */
 	segments: Array<UserSegment>
 }

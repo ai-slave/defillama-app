@@ -145,6 +145,64 @@ describe('TargetedAnnouncement', () => {
 		)
 	})
 
+	test('a fund reader gets the enterprise data banner over their browsing interests, even as a subscriber', async () => {
+		auth.authToken = 'token'
+		auth.user = { id: 'user-a' }
+		auth.hasActiveSubscription = true
+		fetchUserInterests.mockResolvedValue({
+			interests: [{ category: 'llamaai', score: 0.9 }],
+			segments: ['fund_institutional']
+		})
+		await render()
+		expect(container.textContent).toContain('Bring DefiLlama data into your models')
+		expect(container.querySelector('a[href="/subscription"]')).not.toBeNull()
+		expect(track).toHaveBeenCalledTimes(1)
+		expect(track).toHaveBeenCalledWith('announcement-impression', {
+			id: 'enterprise-data',
+			version: expect.any(String),
+			page: '/chain/[chain]',
+			kind: 'segment',
+			segment: 'fund_institutional'
+		})
+	})
+
+	test('a fund reading yields gets Verified APY instead of the enterprise data banner', async () => {
+		auth.authToken = 'token'
+		auth.user = { id: 'user-a' }
+		fetchUserInterests.mockResolvedValue({
+			interests: [
+				{ category: 'protocols', score: 0.9 },
+				{ category: 'yields', score: 0.4 }
+			],
+			segments: ['fund_institutional']
+		})
+		await render()
+		expect(container.textContent).toContain('VERIFIED-APY-MARKER')
+		expect(track).toHaveBeenCalledWith(
+			'announcement-impression',
+			expect.objectContaining({ kind: 'targeted', category: 'yields', id: 'verified-apy' })
+		)
+	})
+
+	test('a crypto project reader gets the investor relations banner with their referrer id', async () => {
+		auth.authToken = 'token'
+		auth.user = { id: 'user-a' }
+		fetchUserInterests.mockResolvedValue({ interests: [], segments: ['crypto_project'] })
+		await render()
+		expect(container.textContent).toContain('investor relations dashboard for your protocol')
+		const link = container.querySelector<HTMLAnchorElement>('a[href^="https://investors.defillama.com"]')!
+		expect(link.getAttribute('href')).toBe('https://investors.defillama.com?referrer=user-a')
+		expect(link.target).toBe('_blank')
+	})
+
+	test('a segment without a banner falls through to the reader interests', async () => {
+		auth.authToken = 'token'
+		auth.user = { id: 'user-a' }
+		fetchUserInterests.mockResolvedValue({ interests: [{ category: 'llamaai', score: 0.9 }], segments: ['university'] })
+		await render()
+		expect(container.textContent).toContain('Get the app')
+	})
+
 	test('a token whose record has not loaded shows the fallback without counting an impression', async () => {
 		auth.authToken = 'token'
 		auth.user = null
