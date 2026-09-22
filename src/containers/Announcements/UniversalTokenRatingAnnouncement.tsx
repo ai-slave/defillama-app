@@ -2,11 +2,14 @@ import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
 
+/** Shared with the announcement registry so the launch entry and this banner dismiss together. */
+export const UTR_ANNOUNCEMENT = { id: 'universal-token-rating', version: '2026-09-18' } as const
+
 export function UniversalTokenRatingAnnouncement() {
 	return (
 		<Announcement
-			announcementId="universal-token-rating"
-			version="2026-09-18"
+			announcementId={UTR_ANNOUNCEMENT.id}
+			version={UTR_ANNOUNCEMENT.version}
 			className="relative overflow-hidden border border-utr-announcement-border bg-(image:--utr-announcement-bg) text-utr-announcement-text shadow-utr-announcement"
 			contentClassName="text-center"
 			dismissButtonClassName="hover:bg-utr-announcement-dismiss"

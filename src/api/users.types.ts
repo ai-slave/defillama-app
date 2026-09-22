@@ -29,7 +29,16 @@ export interface InterestScore {
 	score: number
 }
 
+/**
+ * Account-level segment name, such as an employer type derived from a work email. Reserved for
+ * company-based targeting: no classifier populates it yet, so the API always returns an empty list.
+ * Narrow this to a union once the first segment exists.
+ */
+export type UserSegment = string
+
 export interface UserInterestsResponse {
-	/** Up to five interests, ordered by descending score, then category. Empty means no qualifying profile. */
+	/** Every qualifying interest, ordered by descending score, then category. Empty means no qualifying profile. */
 	interests: Array<InterestScore>
+	/** Ranked above browsing interests when choosing a banner. Empty until a classifier exists. */
+	segments: Array<UserSegment>
 }

@@ -85,6 +85,7 @@ export function Announcement(props: AnnouncementProps) {
 			{!notCancellable ? (
 				<button
 					type="button"
+					data-announcement-dismiss
 					className={clsx(
 						'flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1',
 						dismissButtonClassName

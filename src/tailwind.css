@@ -7,6 +7,7 @@
 @import './styles/themes/llamaai.css';
 @import './styles/themes/articles.css';
 @import './styles/themes/utr.css';
+@import './styles/themes/announcements.css';
 @import './styles/llamaai.css';
 @plugin '@tailwindcss/typography';
 

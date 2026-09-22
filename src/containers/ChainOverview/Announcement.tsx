@@ -3,8 +3,8 @@ import { Announcement } from '~/components/Announcement'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { TargetedAnnouncement } from '../Announcements/TargetedAnnouncement'
 import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
-import { UniversalTokenRatingAnnouncement } from '../UniversalTokenRating/Announcement'
 
 const NEAR_CHAIN_ICON = chainIconUrl('near')
 
@@ -71,5 +71,5 @@ export function ChainOverviewAnnouncement({ chainName }: { chainName?: string })
 		)
 	}
 
-	return <UniversalTokenRatingAnnouncement />
+	return <TargetedAnnouncement />
 }

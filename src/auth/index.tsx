@@ -19,6 +19,7 @@ import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
 import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
+import { clearPersistedUserInterests } from '~/containers/Announcements/userInterestsStorage'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 
@@ -54,6 +55,7 @@ const loadCreateSiweMessage = async (): Promise<CreateSiweMessage> => {
 
 const clearUserSession = () => {
 	clearPersistedSubscriptionStatus(pb.authStore.record?.id)
+	clearPersistedUserInterests()
 	pb.authStore.clear()
 	localStorage.removeItem('userHash')
 	localStorage.removeItem('lite-dashboards')

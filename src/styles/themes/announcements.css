@@ -1,0 +1,73 @@
+/* Home-slot announcement palettes. Each banner gets its own hue so a returning reader notices a
+   change: UTR is green (themes/utr.css), the DefiLlama app is blue, Verified APY is gold. */
+@layer base {
+	:root {
+		--app-announcement-border: #1a5cc4;
+		--app-announcement-bg: linear-gradient(100deg, #1f67d2 0%, #2b7de9 45%, #4f9cf9 100%);
+		--app-announcement-text: #ffffff;
+		--app-announcement-shadow: 0 10px 30px rgba(31, 103, 210, 0.35);
+		--app-announcement-dismiss: rgb(255 255 255 / 15%);
+		--app-announcement-shimmer: linear-gradient(99.97deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+		--app-announcement-badge-bg: #ffffff;
+		--app-announcement-badge-text: #1f67d2;
+		--app-announcement-ring: rgb(255 255 255 / 40%);
+		--app-announcement-link: rgb(255 255 255 / 15%);
+		--app-announcement-link-hover: rgb(255 255 255 / 25%);
+
+		--verified-announcement-border: #e6c86a;
+		--verified-announcement-bg: linear-gradient(100deg, #fff7dc 0%, #fdefc2 55%, #f9e5a8 100%);
+		--verified-announcement-text: #5c4300;
+		--verified-announcement-shadow: 0 10px 30px rgba(214, 160, 20, 0.2);
+		--verified-announcement-dismiss: rgb(92 67 0 / 10%);
+		--verified-announcement-badge-bg: #a56f00;
+		--verified-announcement-badge-text: #ffffff;
+		--verified-announcement-button: #a56f00;
+		--verified-announcement-button-hover: #8f6000;
+		--verified-announcement-button-text: #ffffff;
+	}
+	html.dark {
+		--app-announcement-border: #3d7fe0;
+		--app-announcement-bg: linear-gradient(100deg, #0d2a5c 0%, #154189 50%, #1d5cb8 100%);
+		--app-announcement-text: #eaf3ff;
+		--app-announcement-shadow: 0 10px 30px rgba(13, 42, 92, 0.5);
+		--app-announcement-dismiss: rgb(255 255 255 / 10%);
+		--app-announcement-badge-bg: rgb(255 255 255 / 15%);
+		--app-announcement-badge-text: #ffffff;
+		--app-announcement-ring: rgb(255 255 255 / 30%);
+		--app-announcement-link: rgb(255 255 255 / 10%);
+		--app-announcement-link-hover: rgb(255 255 255 / 20%);
+
+		--verified-announcement-border: #7a5a12;
+		--verified-announcement-bg: linear-gradient(100deg, #33280a 0%, #453610 55%, #574314 100%);
+		--verified-announcement-text: #ffe9a8;
+		--verified-announcement-shadow: 0 10px 30px rgba(51, 40, 10, 0.5);
+		--verified-announcement-dismiss: rgb(255 255 255 / 10%);
+		--verified-announcement-badge-bg: #5a4512;
+		--verified-announcement-badge-text: #ffd166;
+		--verified-announcement-button: #d9a441;
+		--verified-announcement-button-hover: #f0b94f;
+		--verified-announcement-button-text: #2b1f00;
+	}
+}
+
+@theme inline {
+	--shadow-app-announcement: var(--app-announcement-shadow);
+	--color-app-announcement-border: var(--app-announcement-border);
+	--color-app-announcement-text: var(--app-announcement-text);
+	--color-app-announcement-dismiss: var(--app-announcement-dismiss);
+	--color-app-announcement-badge-bg: var(--app-announcement-badge-bg);
+	--color-app-announcement-badge-text: var(--app-announcement-badge-text);
+	--color-app-announcement-ring: var(--app-announcement-ring);
+	--color-app-announcement-link: var(--app-announcement-link);
+	--color-app-announcement-link-hover: var(--app-announcement-link-hover);
+
+	--shadow-verified-announcement: var(--verified-announcement-shadow);
+	--color-verified-announcement-border: var(--verified-announcement-border);
+	--color-verified-announcement-text: var(--verified-announcement-text);
+	--color-verified-announcement-dismiss: var(--verified-announcement-dismiss);
+	--color-verified-announcement-badge-bg: var(--verified-announcement-badge-bg);
+	--color-verified-announcement-badge-text: var(--verified-announcement-badge-text);
+	--color-verified-announcement-button: var(--verified-announcement-button);
+	--color-verified-announcement-button-hover: var(--verified-announcement-button-hover);
+	--color-verified-announcement-button-text: var(--verified-announcement-button-text);
+}
