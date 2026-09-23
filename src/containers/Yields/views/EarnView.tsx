@@ -207,8 +207,8 @@ function EarnView({
 			{intro}
 
 			<YieldFilters
-				tokenSearch={<IncludeTokens tokens={tokens} matchOn data-alwaysdisplay={false} />}
-				mobileActions={<IncludeTokens tokens={tokens} matchOn compact />}
+				tokenSearch={<IncludeTokens tokens={tokens} matchOn resultCount={serverTotal} data-alwaysdisplay={false} />}
+				mobileActions={<IncludeTokens tokens={tokens} matchOn compact resultCount={serverTotal} />}
 				chainList={chainList}
 				selectedChains={selectedChains}
 				evmChains={evmChains}

@@ -162,10 +162,10 @@ export interface MetaTokenOption {
 }
 
 // Token option fed to the /yields token search, serialised as a compact
-// `[name, value]` tuple to shrink the static page props (~4k options): `name` is
+// `[name, value, geckoId?]` tuple to shrink the static page props (~4k options): `name` is
 // the display symbol, `value` is the option key sent to the earn route as
-// `token=<value>`.
-export type TokenOption = [name: string, value: string]
+// `token=<value>`, `geckoId` (assets with a token directory record) drives the logo.
+export type TokenOption = [name: string, value: string, geckoId?: string]
 
 export interface YieldsMeta {
 	chains: Array<MetaChain>

@@ -3,6 +3,7 @@ import type { ProjectGroup } from '../Filters/types'
 import { getEarnWithTokenKeys } from './enrich.server'
 import { getProtocolParents } from './server/raiseValuations'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
+import { getGeckoIdResolver } from './tokenIcons.server'
 import type { TokenOption } from './types'
 
 export interface EarnPageMeta {
@@ -24,10 +25,11 @@ const byCountDesc = (counts: Map<string, number>) =>
 // option first — counts are not shipped); `tokens` are the family/asset option keys
 // that actually appear in the earn rows' reference assets.
 export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPageMeta> {
-	const [rows, meta, protocolParents] = await Promise.all([
+	const [rows, meta, protocolParents, geckoIdOf] = await Promise.all([
 		getEarnWithTokenKeys(snapshot),
 		readYieldsMeta(snapshot),
-		getProtocolParents(snapshot)
+		getProtocolParents(snapshot),
+		getGeckoIdResolver()
 	])
 	const memePoolIds = new Set(meta.meme_pool_ids)
 	const chainIsEvm = new Map<string, boolean>()
@@ -59,7 +61,8 @@ export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPag
 		)
 		for (const option of present) {
 			seenTokenValues.add(option.value)
-			tokens.push([option.symbol, option.value])
+			const geckoId = group === meta.tokens.assets ? geckoIdOf(option.symbol) : undefined
+			tokens.push(geckoId ? [option.symbol, option.value, geckoId] : [option.symbol, option.value])
 		}
 	}
 

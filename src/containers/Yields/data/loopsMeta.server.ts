@@ -1,6 +1,7 @@
 import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import { getEnrichedLoops } from './enrich.server'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
+import { getGeckoIdResolver } from './tokenIcons.server'
 import type { TokenOption } from './types'
 
 export interface LoopsPageMeta {
@@ -21,7 +22,11 @@ const byCountDesc = (counts: Map<string, number>) =>
 // that appear in the loops' reference-asset keys (families before assets); `attributeIds`
 // is the attribute option order (most common first).
 export async function getLoopsPageMeta(snapshot: YieldsSnapshot): Promise<LoopsPageMeta> {
-	const [rows, meta] = await Promise.all([getEnrichedLoops(snapshot), readYieldsMeta(snapshot)])
+	const [rows, meta, geckoIdOf] = await Promise.all([
+		getEnrichedLoops(snapshot),
+		readYieldsMeta(snapshot),
+		getGeckoIdResolver()
+	])
 	const memePoolIds = new Set(meta.meme_pool_ids)
 
 	const chainIsEvm = new Map<string, boolean>()
@@ -69,7 +74,8 @@ export async function getLoopsPageMeta(snapshot: YieldsSnapshot): Promise<LoopsP
 		)
 		for (const option of present) {
 			seenTokenValues.add(option.value)
-			tokens.push([option.symbol, option.value])
+			const geckoId = group === meta.tokens.assets ? geckoIdOf(option.symbol) : undefined
+			tokens.push(geckoId ? [option.symbol, option.value, geckoId] : [option.symbol, option.value])
 		}
 	}
 

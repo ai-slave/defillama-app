@@ -1,6 +1,7 @@
 import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import { getEnrichedMarkets } from './enrich.server'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
+import { getGeckoIdResolver } from './tokenIcons.server'
 import type { MetaTokenOption, YieldsMeta, TokenOption } from './types'
 
 export interface BorrowPageMeta {
@@ -17,7 +18,11 @@ export interface BorrowPageMeta {
 }
 
 // Families before assets; within each group, occurrence-desc (markets matched), name tiebreak.
-function buildTokenOptions(meta: YieldsMeta, counts: Map<string, number>): Array<TokenOption> {
+function buildTokenOptions(
+	meta: YieldsMeta,
+	counts: Map<string, number>,
+	geckoIdOf: (symbol: string) => string | undefined
+): Array<TokenOption> {
 	const options: Array<TokenOption> = []
 	const seen = new Set<string>()
 	for (const group of [meta.tokens.families, meta.tokens.assets] as Array<Array<MetaTokenOption>>) {
@@ -25,7 +30,8 @@ function buildTokenOptions(meta: YieldsMeta, counts: Map<string, number>): Array
 		present.sort((a, b) => (counts.get(b.value) ?? 0) - (counts.get(a.value) ?? 0) || a.symbol.localeCompare(b.symbol))
 		for (const option of present) {
 			seen.add(option.value)
-			options.push([option.symbol, option.value])
+			const geckoId = group === meta.tokens.assets ? geckoIdOf(option.symbol) : undefined
+			options.push(geckoId ? [option.symbol, option.value, geckoId] : [option.symbol, option.value])
 		}
 	}
 	return options
@@ -41,7 +47,11 @@ const byCountDesc = (counts: Map<string, number>) =>
 // borrow-token keys (families before assets); `attributeIds` is the attribute option
 // order (most common first).
 export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<BorrowPageMeta> {
-	const [rows, meta] = await Promise.all([getEnrichedMarkets(snapshot), readYieldsMeta(snapshot)])
+	const [rows, meta, geckoIdOf] = await Promise.all([
+		getEnrichedMarkets(snapshot),
+		readYieldsMeta(snapshot),
+		getGeckoIdResolver()
+	])
 	const memePoolIds = new Set(meta.meme_pool_ids)
 
 	const chainIsEvm = new Map<string, boolean>()
@@ -94,8 +104,8 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 		projectList: byCountDesc(projectCounts),
 		categoryList: byCountDesc(categoryCounts),
 		evmChains: chainList.filter((chain) => chainIsEvm.get(chain)),
-		collateralTokens: buildTokenOptions(meta, collateralCounts),
-		borrowTokens: buildTokenOptions(meta, borrowCounts),
+		collateralTokens: buildTokenOptions(meta, collateralCounts, geckoIdOf),
+		borrowTokens: buildTokenOptions(meta, borrowCounts, geckoIdOf),
 		attributeIds
 	}
 }

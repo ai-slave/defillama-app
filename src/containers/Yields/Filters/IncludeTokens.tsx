@@ -32,11 +32,14 @@ export function IncludeTokens({
 	placeholder = 'Search tokens',
 	matchOn = false,
 	compact = false,
+	resultCount,
 	...props
 }: {
 	tokens: Array<TokenOption>
 	placeholder?: string
 	matchOn?: boolean
+	/** Pools matching the current query, shown live in the dialog footer. */
+	resultCount?: number
 	/** Fixed-width icon trigger; the pill, and any token label, would claim a whole phone row. */
 	compact?: boolean
 }) {
@@ -119,6 +122,7 @@ export function IncludeTokens({
 			onClear={clearAll}
 			placeholder={placeholder}
 			{...(match ? { match } : {})}
+			{...(resultCount != null ? { resultCount } : {})}
 		/>
 	) : null
 
