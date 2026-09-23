@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1.10
 
-FROM node:24-bookworm-slim AS node-base
+# Node and Bun are pinned so an upstream release (for example a new bundled OpenSSL) can't
+# change build behavior without a PR. Update the tag and digest together.
+FROM node:24.21.0-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS node-base
 
 WORKDIR /usr/src/app
 
@@ -10,13 +12,14 @@ RUN apt-get update \
 
 FROM node-base AS bun-base
 
+ARG BUN_VERSION=1.4.2
 ENV BUN_INSTALL=/usr/local/bun
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends unzip \
   && rm -rf /var/lib/apt/lists/* \
-  && curl -fsSL https://bun.sh/install | bash
+  && curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
 
 FROM bun-base AS install
 RUN mkdir -p /temp/dev
