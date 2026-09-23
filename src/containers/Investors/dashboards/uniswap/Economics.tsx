@@ -421,7 +421,10 @@ export default function Economics() {
 				) : (
 					<SeriesTrendChart
 						title="Protocol Fees by Pair Category"
-						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools)."
+						subtitle={
+							data.protocolFeesByCategory.note ??
+							'The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools).'
+						}
 						series={chartToTrendSeries(data.protocolFeesByCategory)}
 					/>
 				)}

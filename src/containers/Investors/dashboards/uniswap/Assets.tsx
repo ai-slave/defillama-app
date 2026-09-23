@@ -40,8 +40,21 @@ interface RwaRow {
 // because they trade as stablecoins and already count in the Stablecoins category.
 interface RwaData {
 	kpis: Record<string, KpiT | undefined>
+	/** Monthly, complete months only (the in-progress month is dropped server-side to avoid a
+	 *  misleading partial bar). Superseded as the sector chart's source by bySectorDaily below when
+	 *  present; kept as a fallback for older ir-server responses. */
 	bySector: Chart
+	/** Daily, including the in-progress month/week — feeds SeriesTrendChart's own day/week/month/
+	 *  quarter toggle (aggregated client-side), so this one chart replaces what bySector alone could
+	 *  show. Absent only if the ir-server cache has no rwa-volume partitions at all yet. */
+	bySectorDaily?: Chart
+	/** Monthly fallback for byChainDaily below, same relationship as bySector/bySectorDaily. */
 	byChain: Chart
+	/** Daily by-chain volume — same toggle treatment as bySectorDaily. Additive dollar amounts, so
+	 *  client-side week/month/quarter aggregation (sum) is valid here, unlike `share` below. */
+	byChainDaily?: Chart
+	/** Uniswap's % of all-DEX RWA volume — monthly only, no daily counterpart: summing a %-series
+	 *  client-side into a "weekly %" would not be a real ratio, so this always renders un-toggled. */
 	share: Chart | null
 	topTokens: { title?: string; rows: Array<RwaRow> }
 }
@@ -61,11 +74,16 @@ interface AssetsData {
 	cca: {
 		kpis: Record<string, KpiT | undefined>
 		raisedChart: Chart
-		auctions: { title?: string; note?: string; rows: Array<AuctionRow> }
+		/** Null when the ir-server's cca-auctions Dune query returned no rows this run. */
+		auctions: { title?: string; note?: string; rows: Array<AuctionRow> } | null
 	}
 }
 
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+export const partialPeriodNote = (dailyChart: Chart | undefined, today = new Date()): string =>
+	dailyChart?.dates.at(-1)?.startsWith(today.toISOString().slice(0, 7))
+		? ' The current month and quarter are still in progress; their totals are partial.'
+		: ''
 // Chain names arrive as Dune's lowercase `blockchain` values ("ethereum", "bnb"), including the
 // comma-joined list in the per-asset table.
 const capitalizeChains = (chains: string) => chains.split(', ').map(capitalize).join(', ')
@@ -102,7 +120,7 @@ export default function Assets() {
 				<SectionHeader>Volume Composition</SectionHeader>
 				<SeriesTrendChart
 					title={data.volumeByCategory.title ?? 'Volume by Asset Category'}
-					subtitle={defs.volumeByCategory}
+					subtitle={data.volumeByCategory.note ?? defs.volumeByCategory}
 					series={chartToTrendSeries(data.volumeByCategory)}
 				/>
 				<TimeAreaCard
@@ -128,16 +146,14 @@ export default function Assets() {
 						]}
 					/>
 					<SeriesTrendChart
-						title={data.rwa.bySector.title ?? 'Uniswap RWA Volume by Sector'}
-						subtitle={
-							data.rwa.bySector.note ?? 'Monthly Uniswap volume in tokenized real-world assets, split by sector.'
-						}
-						series={chartToTrendSeries(data.rwa.bySector)}
+						title="Uniswap RWA Volume by Sector"
+						subtitle={`Uniswap volume in tokenized real-world assets, split by sector.${partialPeriodNote(data.rwa.bySectorDaily)}`}
+						series={chartToTrendSeries(data.rwa.bySectorDaily ?? data.rwa.bySector)}
 					/>
 					<SeriesTrendChart
-						title={data.rwa.byChain.title ?? 'Uniswap RWA Volume by Chain'}
-						subtitle="Where the tracked RWAs actually trade: issuer-native chains alongside Ethereum, with everything outside the top 8 grouped as Other."
-						series={chartToTrendSeries(data.rwa.byChain).map((series) => ({
+						title="Uniswap RWA Volume by Chain"
+						subtitle={`Where the tracked RWAs actually trade: issuer-native chains alongside Ethereum, with everything outside the top 8 grouped as Other.${partialPeriodNote(data.rwa.byChainDaily)}`}
+						series={chartToTrendSeries(data.rwa.byChainDaily ?? data.rwa.byChain).map((series) => ({
 							...series,
 							name: capitalize(series.name)
 						}))}
@@ -226,37 +242,39 @@ export default function Assets() {
 					defaultView="month"
 					stacked={false}
 				/>
-				<ChartCard
-					title={data.cca.auctions.title ?? 'Graduated CCA Auctions'}
-					subtitle="Per graduated auction (finalized with swept proceeds and 10+ unique bidders): raised is settled proceeds, committed is total bids submitted."
-				>
-					<MiniTable
-						getOccurrenceKey={(row) => JSON.stringify([row[0], row[1], row[3]])}
-						grid="minmax(90px,1fr) minmax(90px,0.9fr) minmax(70px,0.6fr) minmax(95px,0.9fr) minmax(95px,0.9fr) minmax(90px,0.9fr) minmax(95px,0.9fr) minmax(70px,0.7fr) minmax(75px,0.7fr)"
-						headers={[
-							['Token', 'left'],
-							['Chain', 'left'],
-							['Currency', 'left'],
-							['Launch', 'left'],
-							['Ended', 'left'],
-							['Raised', 'right'],
-							['Committed', 'right'],
-							['Bids', 'right'],
-							['Bidders', 'right']
-						]}
-						rows={data.cca.auctions.rows.map((row) => [
-							row.token,
-							capitalize(row.chain),
-							row.currency,
-							row.launch,
-							row.ended,
-							row.raised,
-							row.committed,
-							formatCompactNumber(row.bids) ?? String(row.bids),
-							formatCompactNumber(row.bidders) ?? String(row.bidders)
-						])}
-					/>
-				</ChartCard>
+				{data.cca.auctions && (
+					<ChartCard
+						title={data.cca.auctions.title ?? 'Graduated CCA Auctions'}
+						subtitle="Per graduated auction (finalized with swept proceeds and 10+ unique bidders): raised is settled proceeds, committed is total bids submitted."
+					>
+						<MiniTable
+							getOccurrenceKey={(row) => JSON.stringify([row[0], row[1], row[3]])}
+							grid="minmax(90px,1fr) minmax(90px,0.9fr) minmax(70px,0.6fr) minmax(95px,0.9fr) minmax(95px,0.9fr) minmax(90px,0.9fr) minmax(95px,0.9fr) minmax(70px,0.7fr) minmax(75px,0.7fr)"
+							headers={[
+								['Token', 'left'],
+								['Chain', 'left'],
+								['Currency', 'left'],
+								['Launch', 'left'],
+								['Ended', 'left'],
+								['Raised', 'right'],
+								['Committed', 'right'],
+								['Bids', 'right'],
+								['Bidders', 'right']
+							]}
+							rows={data.cca.auctions.rows.map((row) => [
+								row.token,
+								capitalize(row.chain),
+								row.currency,
+								row.launch,
+								row.ended,
+								row.raised,
+								row.committed,
+								formatCompactNumber(row.bids) ?? String(row.bids),
+								formatCompactNumber(row.bidders) ?? String(row.bidders)
+							])}
+						/>
+					</ChartCard>
+				)}
 			</section>
 		</div>
 	)
