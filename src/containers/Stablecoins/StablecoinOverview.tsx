@@ -301,7 +301,13 @@ export function PeggedAssetInfo({
 		() => (volumeChartQuery.data ? groupStablecoinVolumeChartPayload(volumeChartQuery.data, volumeGroupBy) : null),
 		[volumeChartQuery.data, volumeGroupBy]
 	)
-	const selectedVolumeChartData = React.useDeferredValue(groupedVolumeChartData)
+	// Deferred with its grouping, so labels never pair old rows with a new grouping.
+	const volumeChartSnapshot = React.useMemo(
+		() => ({ data: groupedVolumeChartData, groupBy: volumeGroupBy }),
+		[groupedVolumeChartData, volumeGroupBy]
+	)
+	const deferredVolumeChart = React.useDeferredValue(volumeChartSnapshot)
+	const selectedVolumeChartData = deferredVolumeChart.data
 	const isSelectedChartLoading =
 		!usesDefaultChartData &&
 		selectedChartData == null &&
@@ -528,7 +534,7 @@ export function PeggedAssetInfo({
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={chartView !== 'byChain'}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
-							groupBy={volumeGroupBy}
+							groupBy={deferredVolumeChart.groupBy}
 							onReady={handleChartReady}
 						/>
 					) : (

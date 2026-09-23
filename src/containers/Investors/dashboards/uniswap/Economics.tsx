@@ -10,15 +10,8 @@ import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
 import type { UniswapUnlocks } from './serverData'
-import type { Chart, Kpi as KpiT } from './transform'
-import {
-	breakdownToSeries,
-	chartToTrendSeries,
-	groupTopN,
-	SeriesTrendChart,
-	trimLeadingZeros,
-	type TrendSeries
-} from './TrendChart'
+import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
+import { breakdownToSeries, chartToTrendSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
 import {
 	BarListCard,
 	ChartCard,

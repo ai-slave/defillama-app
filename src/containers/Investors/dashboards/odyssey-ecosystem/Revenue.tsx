@@ -284,6 +284,7 @@ export default function Revenue() {
 								dataset={holdersByMonthModel.dataset}
 								charts={holdersByMonthModel.charts}
 								valueSymbol="$"
+								groupBy="monthly"
 								height="300px"
 								hideDefaultLegend={false}
 								exportButtons="hidden"

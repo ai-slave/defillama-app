@@ -51,7 +51,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 				series.push({ name: item.name, color: item.color, points: item.points })
 			}
 			return {
-				chartData: buildTimeSeriesChart({ kind: 'cumulativeLines', series })
+				chartData: { ...buildTimeSeriesChart({ kind: 'cumulativeLines', series }), groupBy }
 			}
 		}
 
@@ -60,7 +60,8 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 			series.push(dailyFlowsByAsset[name])
 		}
 		return {
-			chartData: buildTimeSeriesChart({ kind: 'periodBars', groupBy, series })
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+			chartData: { ...buildTimeSeriesChart({ kind: 'periodBars', groupBy, series }), groupBy }
 		}
 	}, [dailyFlowsByAsset, groupBy])
 	const deferredChartData = useDeferredValue(chartData)
@@ -99,7 +100,10 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT Inflows by Asset"
-						csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({ ...deferredChartData.dataset, groupBy: deferredChartData.groupBy })
+						}}
 					/>
 				</ChartPanelToolbar>
 				<Suspense fallback={<ChartPanelBodyFallback />}>
@@ -107,7 +111,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
 						selectedCharts={selectedCharts}
-						groupBy={groupBy}
+						groupBy={deferredChartData.groupBy}
 						valueSymbol="$"
 						showTotalInTooltip
 						onReady={handleChartReady}

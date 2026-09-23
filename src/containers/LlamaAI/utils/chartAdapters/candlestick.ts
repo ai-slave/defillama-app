@@ -1,5 +1,6 @@
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
+import { parseChartDateMs } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 
 export function adaptCandlestickData(
 	config: ChartConfiguration,
@@ -25,7 +26,7 @@ export function adaptCandlestickData(
 			if (Number.isFinite(t)) {
 				return t < 1e12 ? t * 1000 : t
 			}
-			const d = new Date(String(raw)).getTime()
+			const d = parseChartDateMs(String(raw))
 			if (Number.isFinite(d)) return d
 		}
 		return NaN

@@ -6,6 +6,8 @@ type ProtocolTaxonomyCharts = IProtocolTaxonomyPageData['charts']
 type ProtocolTaxonomyGroupedChartsResult = {
 	charts: ProtocolTaxonomyCharts
 	hasBarCharts: boolean
+	/** The grouping the rows actually have: lines alone are never regrouped, so they stay daily. */
+	groupBy: ChartTimeGroupingWithCumulative
 }
 
 function createGroupedRow(timestamp: number, dimensionCount: number): ProtocolTaxonomyChartRow {
@@ -22,7 +24,7 @@ export function buildProtocolTaxonomyGroupedCharts({
 	groupBy: ChartTimeGroupingWithCumulative
 }): ProtocolTaxonomyGroupedChartsResult {
 	const chartSeries = charts.charts
-	if (!chartSeries.some((series) => series.type === 'bar')) return { charts, hasBarCharts: false }
+	if (!chartSeries.some((series) => series.type === 'bar')) return { charts, hasBarCharts: false, groupBy: 'daily' }
 
 	const dimensionCount = charts.dataset.dimensions.length
 	const isCumulative = groupBy === 'cumulative'
@@ -101,7 +103,7 @@ export function buildProtocolTaxonomyGroupedCharts({
 		}
 	}
 
-	if (!hasBarCharts) return { charts, hasBarCharts: false }
+	if (!hasBarCharts) return { charts, hasBarCharts: false, groupBy: 'daily' }
 
 	const source = Array.from(buckets.values())
 		.sort((a, b) => a.timestamp - b.timestamp)
@@ -135,6 +137,7 @@ export function buildProtocolTaxonomyGroupedCharts({
 				type: series.type === 'bar' && isCumulative ? 'line' : series.type
 			}))
 		},
-		hasBarCharts: true
+		hasBarCharts: true,
+		groupBy
 	}
 }

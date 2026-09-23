@@ -1,4 +1,8 @@
+// @vitest-environment happy-dom
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import type { IRWAAssetsOverview } from '../../api.types'
@@ -7,6 +11,14 @@ import { spotAsset } from '../../table/__tests__/fixtures'
 
 let routerQuery: Record<string, string | Array<string>> = {}
 const push = vi.fn()
+
+const chartRenders: Array<{ charts: unknown; groupBy: unknown }> = []
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
+	default: (props: { charts: unknown; groupBy: unknown }) => {
+		chartRenders.push({ charts: props.charts, groupBy: props.groupBy })
+		return null
+	}
+}))
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({
@@ -125,5 +137,41 @@ describe('RWAPlatformEntityChartPanel', () => {
 		for (const short of ['D', 'W', 'M', 'Q', 'Y']) expect(markup).toContain(`>${short}<`)
 		expect(markup).toContain('.csv')
 		expect(markup).toContain('.png')
+	})
+
+	test('never labels the series of one period with another while a period change is deferred', async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		const container = document.createElement('div')
+		const root = createRoot(container)
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
+		const page = overview()
+		const panel = () => (
+			<QueryClientProvider client={client}>
+				<RWAPlatformEntityChartPanel
+					overview={page}
+					meta={meta}
+					aggregateAssets={page.assets}
+					includeStablecoins={false}
+					includeGovernance={false}
+					includeBridgeTvl
+					activeFilters={false}
+				/>
+			</QueryClientProvider>
+		)
+		chartRenders.length = 0
+
+		routerQuery = { chartPeriod: 'weekly' }
+		await act(async () => root.render(panel()))
+		const weeklySeries = chartRenders.at(-1)?.charts
+		// A URL change re-renders urgently, so the deferred chart still holds the weekly series for one render.
+		routerQuery = { chartPeriod: 'monthly' }
+		await act(async () => root.render(panel()))
+
+		expect(chartRenders.at(-1)?.groupBy).toBe('monthly')
+		const weeklySeriesLabels = chartRenders
+			.filter((chartRender) => chartRender.charts === weeklySeries)
+			.map((chartRender) => chartRender.groupBy)
+		expect(new Set(weeklySeriesLabels)).toEqual(new Set(['weekly']))
+		await act(async () => root.unmount())
 	})
 })

@@ -345,8 +345,20 @@ export function StablecoinsByChain({
 		[chartType, selectedChartData, volumeGroupBy]
 	)
 
-	const deferredSelectedChartData = React.useDeferredValue(groupedSelectedChartData)
-	const deferredVolumeChartData = React.useDeferredValue(groupedVolumeChartData)
+	// Each grouping is deferred with its rows, so labels never pair old rows with a new grouping.
+	const selectedChartSnapshot = React.useMemo(
+		() => ({ data: groupedSelectedChartData, groupBy: chartType === 'inflows' ? volumeGroupBy : undefined }),
+		[chartType, groupedSelectedChartData, volumeGroupBy]
+	)
+	const volumeChartSnapshot = React.useMemo(
+		() => ({ data: groupedVolumeChartData, groupBy: volumeGroupBy }),
+		[groupedVolumeChartData, volumeGroupBy]
+	)
+	const deferredSelectedChart = React.useDeferredValue(selectedChartSnapshot)
+	const deferredVolumeChart = React.useDeferredValue(volumeChartSnapshot)
+	const deferredSelectedChartData = deferredSelectedChart.data
+	const deferredVolumeChartData = deferredVolumeChart.data
+	const renderedGroupBy = isVolumeChart ? deferredVolumeChart.groupBy : deferredSelectedChart.groupBy
 	const isVolumeChartLoading =
 		deferredVolumeChartData == null &&
 		(volumeChartQuery.isLoading || volumeChartQuery.isFetching || volumeChartQuery.data != null)
@@ -394,8 +406,8 @@ export function StablecoinsByChain({
 	const activeSelectedCharts =
 		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
 	const inflowsTooltipFormatter = React.useMemo(
-		() => createInflowsTooltipFormatter({ groupBy: volumeGroupBy, valueSymbol: '$' }),
-		[volumeGroupBy]
+		() => createInflowsTooltipFormatter({ groupBy: renderedGroupBy ?? 'daily', valueSymbol: '$' }),
+		[renderedGroupBy]
 	)
 	const chartOptions = React.useMemo<IMultiSeriesChartProps['chartOptions']>(
 		() =>
@@ -568,7 +580,7 @@ export function StablecoinsByChain({
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
 							{...(chartOptions === undefined ? {} : { chartOptions })}
 							hideDefaultLegend={!showDefaultLegend}
-							{...(isGroupedBarChart ? { groupBy: volumeGroupBy } : {})}
+							{...(renderedGroupBy ? { groupBy: renderedGroupBy } : {})}
 							onReady={handleChartReady}
 						/>
 					)}

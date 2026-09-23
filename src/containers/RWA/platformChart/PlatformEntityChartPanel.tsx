@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
-import { buildCsvFromDataset, ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
+import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import {
 	ChartGroupingSelector,
@@ -128,7 +128,7 @@ export function RWAPlatformEntityChartPanel({
 						containerClassName="flex-1 min-h-[360px]"
 						hideDefaultLegend={deferredChart.series.length < 2}
 						valueSymbol="$"
-						groupBy={period}
+						groupBy={deferredChart.period}
 						onReady={handleChartReady}
 					/>
 				</Suspense>
@@ -190,15 +190,9 @@ function EntityChartToolbar({
 					chartInstance={chartInstance}
 					filename={filename}
 					source={{
-						type: 'prepare-csv',
-						prepare: () => {
-							const dataset = buildRwaPlatformEntityCsvDataset(series)
-							return buildCsvFromDataset({
-								dimensions: dataset.dimensions,
-								source: dataset.source,
-								filenameBase: filename
-							})
-						}
+						type: 'dataset',
+						// Rows mix grouped flow bars with daily lines, so they keep their exact dates.
+						prepare: () => buildRwaPlatformEntityCsvDataset(series)
 					}}
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />

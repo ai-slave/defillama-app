@@ -18,7 +18,7 @@ const FLOW_METRICS: ReadonlyArray<RWAPlatformChartMetricKey> = ['netFlows', 'inf
 const PER_ASSET_METRICS: ReadonlyArray<RWAPlatformChartMetricKey> = ['liveAssets', 'topAssetShare']
 
 export type RWAPlatformEntityChartData = {
-	chart: RWAPlatformEntityChart
+	chart: RWAPlatformEntityChart & { period: RWAPlatformChartPeriod }
 	isLoading: boolean
 	error: string | null
 }
@@ -101,8 +101,8 @@ export function usePlatformEntityChart({
 	)
 
 	const chart = useMemo(
-		() =>
-			buildRwaPlatformEntityChart(selected, {
+		() => ({
+			...buildRwaPlatformEntityChart(selected, {
 				activeMcap: getRwaDatasetPoints(perAsset.chartDataset, getRwaChartTotalLabel('activeMcap')),
 				onChainMcap: getRwaDatasetPoints(onChain.chartDataset, getRwaChartTotalLabel('onChainMcap')),
 				defiActiveTvl: getRwaDatasetPoints(defi.chartDataset, getRwaChartTotalLabel('defiActiveTvl')),
@@ -111,6 +111,9 @@ export function usePlatformEntityChart({
 				milestones: meta.milestones,
 				period
 			}),
+			// Travels with the series, so a deferred render labels them by the period they were built with.
+			period
+		}),
 		[
 			selected,
 			perAsset.chartDataset,

@@ -37,6 +37,14 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.charts.map((series) => series.type)).toEqual(['bar', 'line'])
 	})
 
+	test('reports the grouping its rows actually have, so lines alone never get a period label', () => {
+		const lineOnly = makeCharts()
+		lineOnly.charts = [{ type: 'line', name: 'TVL', encode: { x: 0, y: 2 } }]
+
+		expect(buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'monthly' }).groupBy).toBe('monthly')
+		expect(buildProtocolTaxonomyGroupedCharts({ charts: lineOnly, groupBy: 'monthly' }).groupBy).toBe('daily')
+	})
+
 	test('returns original chart behavior and hasBarCharts false when no series started as bars', () => {
 		const charts = makeCharts()
 		charts.charts = [{ type: 'line', name: 'TVL', encode: { x: 0, y: 2 } }]

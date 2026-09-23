@@ -265,7 +265,10 @@ export function RWAPerpsOverviewChart({
 	const prepareCsvDataset = useCallback(() => {
 		const canonicalDataset = toRwaMultiSeriesChartDataset(ungroupedDataset)
 		return chartType === 'volume24h'
-			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
+			? {
+					...groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy }),
+					groupBy: volumeGroupBy
+				}
 			: canonicalDataset
 	}, [chartType, ungroupedDataset, volumeGroupBy])
 	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(selectedRawDataset), [selectedRawDataset])

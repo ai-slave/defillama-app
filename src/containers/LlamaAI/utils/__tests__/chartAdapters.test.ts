@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
@@ -582,5 +582,42 @@ describe('chart adapters', () => {
 		expect(result.data).toHaveLength(1)
 		expect(result.data[0]?.[0]).toBe(timestamp)
 		expect(result.indicators?.every((indicator) => indicator.data?.length === 1)).toBe(true)
+	})
+
+	describe.each(['UTC', 'Asia/Tokyo', 'America/Los_Angeles'])('zone-less date-times in %s', (timeZone) => {
+		const originalTimeZone = process.env.TZ
+		afterEach(() => {
+			process.env.TZ = originalTimeZone
+		})
+
+		test('reads them as UTC so a point never moves to another day or period', () => {
+			process.env.TZ = timeZone
+			const config = {
+				...baseConfig,
+				type: 'line',
+				axes: { ...baseConfig.axes, x: { field: 'date', label: 'Date', type: 'time' as const } },
+				series: [{ ...baseSeries, type: 'line' as const, dataMapping: { xField: 'date', yField: 'y' } }]
+			} satisfies ChartConfiguration
+			const candlestickConfig = {
+				...baseConfig,
+				type: 'candlestick',
+				axes: { ...baseConfig.axes, x: { field: 'timestamp', label: 'Date', type: 'time' as const } },
+				series: [
+					{ ...baseSeries, type: 'candlestick' as const, dataMapping: { xField: 'timestamp', yField: 'close' } }
+				],
+				dataTransformation: { timeField: 'timestamp', metrics: ['open', 'high', 'low', 'close'] }
+			} satisfies ChartConfiguration
+
+			const line = adaptCartesianChartData(config, [
+				{ date: '2026-09-01T00:00:00', y: 1 },
+				{ date: '2026-09-01T12:00:00+09:00', y: 2 }
+			])
+			const candles = adaptCandlestickData(candlestickConfig, [
+				{ timestamp: '2026-09-01T00:00:00', open: 1, high: 2, low: 0, close: 1 }
+			])
+
+			expect(line.props.dataset.source.map((row) => row[0])).toEqual([Date.UTC(2026, 8, 1), Date.UTC(2026, 8, 1, 3)])
+			expect(candles.data[0]?.[0]).toBe(Date.UTC(2026, 8, 1))
+		})
 	})
 })

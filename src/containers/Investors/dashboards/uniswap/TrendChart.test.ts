@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { aggregate, detectCadence, type TrendSeries, viewOptionsFor } from './TrendChart'
+import { detectCadence, type TrendSeries } from './transform'
+import { aggregate, viewOptionsFor } from './TrendChart'
 
 const DAY = 86_400
 // The ir-server keys weekly payloads to the week's first day; 2026-08-10 is a Monday.
@@ -58,14 +59,15 @@ describe('trend chart granularity options', () => {
 })
 
 describe('trend chart weekly bucketing', () => {
-	test('leaves an already-weekly payload on its own week-start timestamps', () => {
+	// Weeks are keyed by the Sunday that ends them, which the shared weekly tooltip reads as Mon-Sun.
+	test('keys an already-weekly Monday payload by the Sunday ending each week', () => {
 		expect(aggregate(points(7 * DAY, 2), 'week', false)[0]?.data).toEqual([
-			[MONDAY, 1],
-			[MONDAY + 7 * DAY, 1]
+			[MONDAY + 6 * DAY, 1],
+			[MONDAY + 13 * DAY, 1]
 		])
 	})
 
-	test('collapses a daily payload into the Monday of each week', () => {
-		expect(aggregate(points(DAY, 7), 'week', false)[0]?.data).toEqual([[MONDAY, 7]])
+	test('collapses a daily payload into the Sunday ending each week', () => {
+		expect(aggregate(points(DAY, 7), 'week', false)[0]?.data).toEqual([[MONDAY + 6 * DAY, 7]])
 	})
 })

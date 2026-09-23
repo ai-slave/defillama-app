@@ -1,8 +1,8 @@
+import { buildCsvRowsFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/adaptedChartTypes'
 import type { CsvCell } from '~/utils/csvCell'
-import { formatIsoDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface ChartExportModel {
@@ -16,13 +16,6 @@ function slugifyTitle(title: string) {
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '')
-}
-
-function normalizeTimestampToSeconds(value: unknown) {
-	if (typeof value !== 'number' && typeof value !== 'string') return null
-	const numeric = typeof value === 'number' ? value : Number(value)
-	if (!Number.isFinite(numeric)) return null
-	return numeric > 1e12 ? Math.floor(numeric / 1e3) : Math.floor(numeric)
 }
 
 function toCsvCell(value: unknown): CsvCell {
@@ -41,23 +34,11 @@ function buildCartesianCsvRows(
 ) {
 	const dims = adaptedChart.props.dataset.dimensions
 	const rows = adaptedChart.props.dataset.source
-	const xKey = adaptedChart.isTimeChart ? 'timestamp' : 'category'
-	const seriesKeys = dims.filter((dim) => dim !== xKey)
 
-	if (adaptedChart.isTimeChart) {
-		const csvRows: Array<Array<CsvCell>> = [['Timestamp', 'Date', ...seriesKeys]]
-		for (const row of rows) {
-			const timestamp = row[0]
-			const seconds = normalizeTimestampToSeconds(timestamp)
-			csvRows.push([
-				toCsvCell(timestamp),
-				seconds != null ? (formatIsoDate(seconds, { input: 'seconds' }) ?? '') : '',
-				...seriesKeys.map((_, index) => toCsvCell(row[index + 1]))
-			])
-		}
-		return csvRows
-	}
+	// Grouped rows name both ends of the period the tooltip labels them with.
+	if (adaptedChart.isTimeChart) return buildCsvRowsFromDataset(dims, rows, adaptedChart.props.groupBy ?? 'daily')
 
+	const seriesKeys = dims.filter((dim) => dim !== 'category')
 	const categoryHeader = config.axes.x.label || 'Category'
 	const csvRows: Array<Array<CsvCell>> = [[categoryHeader, ...seriesKeys]]
 	for (const row of rows) {

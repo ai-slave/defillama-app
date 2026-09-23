@@ -3,9 +3,10 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { type DashboardGrouping, getProDashboardChartTypeConfig } from '../../types'
+import { getProDashboardChartTypeConfig } from '../../types'
+import { DASHBOARD_CHART_GROUPING } from '../../utils'
 import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
-import { buildMultiChartSeriesView, type MultiChartInputSeries } from '../multiChartSeries'
+import { buildMultiChartSeriesView, getComposerGrouping, type MultiChartInputSeries } from '../multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -18,26 +19,8 @@ interface CombinedChartPreviewProps {
 	composerItems: Array<ChartRuntimeView>
 }
 
-const mapGroupingToGroupBy = (grouping: DashboardGrouping): 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' => {
-	if (grouping === 'week') return 'weekly'
-	if (grouping === 'month') return 'monthly'
-	if (grouping === 'quarter') return 'quarterly'
-	if (grouping === 'year') return 'yearly'
-	return 'daily'
-}
-
 export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProps) {
 	const { getProtocolInfo } = useProDashboardCatalog()
-
-	const previewGrouping = useMemo<DashboardGrouping>(() => {
-		let grouping: DashboardGrouping | undefined
-		for (const item of composerItems) {
-			if (item.grouping === undefined) continue
-			if (grouping === undefined) grouping = item.grouping
-			else if (grouping !== item.grouping) return 'day'
-		}
-		return grouping ?? 'day'
-	}, [composerItems])
 
 	const chartView = useMemo(() => {
 		const series: Array<MultiChartInputSeries> = []
@@ -71,6 +54,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		})
 	}, [getProtocolInfo, composerItems])
 
+	const previewGrouping = getComposerGrouping(composerItems)
 	const anyLoading = composerItems.some((item) => item.isLoading)
 
 	if (chartView.charts.length === 0 && composerItems.length > 0) {
@@ -116,7 +100,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 				<MultiSeriesChart
 					dataset={chartView.dataset}
 					charts={chartView.charts}
-					groupBy={mapGroupingToGroupBy(previewGrouping)}
+					groupBy={DASHBOARD_CHART_GROUPING[previewGrouping]}
 					hideDataZoom
 					hideDefaultLegend={false}
 					exportButtons="hidden"

@@ -112,6 +112,7 @@ export default function Volume() {
 						valueSymbol=""
 						subtitle="Distinct wallets transacting in each period. Every timeframe is its own distinct count."
 						control={walletToggle}
+						groupBy={walletView}
 					/>
 				)
 			) : (

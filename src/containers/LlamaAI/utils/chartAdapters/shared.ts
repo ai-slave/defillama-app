@@ -53,3 +53,8 @@ export const parseStringNumber = (value: unknown): number => {
 	}
 	return 0
 }
+
+// Query results send date-times without a zone (2026-09-01T00:00:00). Date.parse reads
+// those as viewer-local time, which moves points across days and periods; chart data is UTC.
+export const parseChartDateMs = (value: string): number =>
+	Date.parse(/^\d{4}-\d{2}-\d{2}T[\d:.]+$/.test(value) ? `${value}Z` : value)

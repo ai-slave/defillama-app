@@ -202,7 +202,13 @@ export function ChainsWithStablecoins({
 		() => (volumeChartQuery.data ? groupStablecoinVolumeChartPayload(volumeChartQuery.data, volumeGroupBy) : null),
 		[volumeChartQuery.data, volumeGroupBy]
 	)
-	const deferredVolumeChartData = React.useDeferredValue(groupedVolumeChartData)
+	// Deferred with its grouping, so labels never pair old rows with a new grouping.
+	const volumeChartSnapshot = React.useMemo(
+		() => ({ data: groupedVolumeChartData, groupBy: volumeGroupBy }),
+		[groupedVolumeChartData, volumeGroupBy]
+	)
+	const deferredVolumeChart = React.useDeferredValue(volumeChartSnapshot)
+	const deferredVolumeChartData = deferredVolumeChart.data
 	const isSelectedChartLoading =
 		deferredSelectedChartData == null &&
 		(chartSeriesQuery.isLoading || chartSeriesQuery.isFetching || chartSeriesQuery.data != null)
@@ -399,7 +405,7 @@ export function ChainsWithStablecoins({
 							isError={!isVolumeChartLoading && volumeChartQuery.error != null}
 							hideDefaultLegend={!showDefaultLegend}
 							{...(activeSelectedCharts === undefined ? {} : { selectedCharts: activeSelectedCharts })}
-							groupBy={volumeGroupBy}
+							groupBy={deferredVolumeChart.groupBy}
 							onReady={handleChartReady}
 						/>
 					) : (

@@ -11,7 +11,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
-import { chartToDataset, unitSymbol, type Chart, type Kpi as KpiT } from './transform'
+import { chartToPeriodDataset, unitSymbol, type Chart, type Kpi as KpiT } from './transform'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
@@ -456,14 +456,15 @@ export function TimeAreaCard({
 }) {
 	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
 	const multipleSeries = chart.series.length > 1
-	const { dataset, charts, chartOptions } = useMemo(() => {
-		const dataset = chartToDataset(chart)
+	const { dataset, groupBy, charts, chartOptions } = useMemo(() => {
+		const { dataset, groupBy } = chartToPeriodDataset(chart)
 		const zoom =
 			zoomLastPoints && dataset.source.length > zoomLastPoints
 				? { dataZoom: { start: ((dataset.source.length - zoomLastPoints) / dataset.source.length) * 100, end: 100 } }
 				: {}
 		return {
 			dataset,
+			groupBy,
 			charts: chart.series.map((series, index): MultiSeriesChartSeriesConfig => ({
 				type: 'line',
 				name: series.name,
@@ -499,6 +500,7 @@ export function TimeAreaCard({
 				title=""
 				height="360px"
 				hideDefaultLegend={!multipleSeries}
+				groupBy={groupBy}
 				exportButtons="hidden"
 				chartOptions={chartOptions}
 			/>

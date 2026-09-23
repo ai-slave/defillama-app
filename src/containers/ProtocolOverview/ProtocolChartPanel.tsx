@@ -115,9 +115,11 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 		() => ({
 			chartData: finalCharts,
 			valueSymbol,
-			gasUsedValueSymbol: valueSymbol
+			gasUsedValueSymbol: valueSymbol,
+			// Deferred together with the rows, so labels never pair old rows with a new grouping.
+			groupBy
 		}),
-		[finalCharts, valueSymbol]
+		[finalCharts, valueSymbol, groupBy]
 	)
 	const deferredChartRenderModel = useDeferredValue(chartRenderModel)
 	const loadingChartSet = useMemo(() => new Set(loadingCharts), [loadingCharts])
@@ -126,7 +128,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
 
-	const prepareCsv = () => prepareChartCsv(finalCharts, `${props.name}.csv`)
+	const prepareCsv = () => prepareChartCsv(finalCharts, `${props.name}.csv`, groupBy)
 
 	const { multiChart, unsupportedMetrics } = useMemo(() => {
 		return serializeProtocolChartToMultiChart({
@@ -484,7 +486,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						isThemeDark={isThemeDark}
 						valueSymbol={deferredChartRenderModel.valueSymbol}
 						gasUsedValueSymbol={deferredChartRenderModel.gasUsedValueSymbol}
-						groupBy={groupBy}
+						groupBy={deferredChartRenderModel.groupBy}
 						hallmarks={toggledMetrics.events === 'true' ? props.hallmarks : null}
 						rangeHallmarks={toggledMetrics.events === 'true' ? props.rangeHallmarks : null}
 						unlockTokenSymbol={props.token?.symbol}

@@ -24,6 +24,7 @@ import {
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
 import type { ChartBuilderConfig } from '../types'
 import { ProBadge, ProButton, ProMeta, ProSegmented } from '../ui'
+import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
@@ -33,7 +34,7 @@ import {
 	selectChartBuilderSeries,
 	withoutOthersSeries
 } from './chartBuilderSeries'
-import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
+import { createChartBuilderTooltipFormatter } from './chartBuilderTooltip'
 import { ConfirmationModal } from './ConfirmationModal'
 import { DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
 import { ProCardHeader } from './ProCardHeader'
@@ -242,7 +243,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 	const chartOptions = useMemo<MultiSeriesChartOptions>(() => {
 		const tooltipFormatter = createChartBuilderTooltipFormatter({
 			displayAs,
-			groupBy: dashboardGroupingToTooltipGroupBy(builder.grouping),
+			groupBy: DASHBOARD_CHART_GROUPING[builder.grouping ?? 'day'],
 			useTwoColumns: config.limit > 10
 		})
 
@@ -571,17 +572,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								dataset={chartView.dataset}
 								charts={chartView.charts}
 								valueSymbol={displayAs === 'percentage' ? '%' : '$'}
-								groupBy={
-									builder.grouping === 'week'
-										? 'weekly'
-										: builder.grouping === 'month'
-											? 'monthly'
-											: builder.grouping === 'quarter'
-												? 'quarterly'
-												: builder.grouping === 'year'
-													? 'yearly'
-													: 'daily'
-								}
+								groupBy={DASHBOARD_CHART_GROUPING[builder.grouping ?? 'day']}
 								hideDataZoom
 								hideDefaultLegend={false}
 								solidChartAreaStyle={config.chartType === 'stackedArea'}

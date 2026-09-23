@@ -287,10 +287,6 @@ export function LSTOverview({
 			}).chartData,
 		[includePieUpstreamOthers, pieSeries, selectedPieTokensSet]
 	)
-	const inflowsTooltipFormatter = React.useMemo(() => {
-		return createInflowsTooltipFormatter({ groupBy, valueSymbol: 'ETH' })
-	}, [groupBy])
-
 	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
 	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieReady } = useGetChartInstance()
@@ -308,8 +304,8 @@ export function LSTOverview({
 	const inflowsExportTitle = 'LST Inflows'
 
 	const activeChartData = React.useMemo(
-		() =>
-			buildActiveLstChartData({
+		() => ({
+			...buildActiveLstChartData({
 				view: tab === 'inflows' ? 'inflows' : 'breakdown',
 				areaChartData,
 				inflowsChartData,
@@ -318,11 +314,19 @@ export function LSTOverview({
 				lsdColors,
 				barChartStacks
 			}),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+			groupBy
+		}),
 		[areaChartData, barChartStacks, groupBy, inflowsChartData, lsdColors, tab, tokens]
 	)
 	const deferredPieChartData = React.useDeferredValue(visiblePieChartData)
 	const deferredActiveChartData = React.useDeferredValue(activeChartData)
 	const renderedActiveChartData = deferredActiveChartData.kind === tab ? deferredActiveChartData : activeChartData
+	const renderedGroupBy = renderedActiveChartData.groupBy
+	const inflowsTooltipFormatter = React.useMemo(
+		() => createInflowsTooltipFormatter({ groupBy: renderedGroupBy, valueSymbol: 'ETH' }),
+		[renderedGroupBy]
+	)
 	const selectedBreakdownPresentation = React.useMemo(
 		() =>
 			renderedActiveChartData.kind === 'breakdown'
@@ -341,14 +345,14 @@ export function LSTOverview({
 				? buildSelectedAdditiveChart({
 						dataset: renderedActiveChartData.data.dataset,
 						charts:
-							groupBy === 'cumulative'
+							renderedGroupBy === 'cumulative'
 								? renderedActiveChartData.data.cumulativeCharts
 								: renderedActiveChartData.data.barCharts,
 						seriesOrder: tokens,
 						selectedCharts: selectedInflowTokensSet
 					})
 				: null,
-		[groupBy, renderedActiveChartData, selectedInflowTokensSet, tokens]
+		[renderedActiveChartData, renderedGroupBy, selectedInflowTokensSet, tokens]
 	)
 
 	return (
@@ -482,7 +486,14 @@ export function LSTOverview({
 									chartInstance={inflowsChartInstance}
 									filename={inflowsExportFilenameBase}
 									title={inflowsExportTitle}
-									csvSource={selectedInflowsPresentation?.csvSource ?? null}
+									csvSource={
+										renderedActiveChartData.kind === 'inflows'
+											? {
+													type: 'dataset',
+													prepare: () => ({ ...renderedActiveChartData.data.dataset, groupBy: renderedGroupBy })
+												}
+											: null
+									}
 								/>
 							</div>
 
@@ -493,7 +504,7 @@ export function LSTOverview({
 										charts={selectedInflowsPresentation.charts}
 										csvSource={selectedInflowsPresentation.csvSource}
 										hideDefaultLegend
-										groupBy={groupBy}
+										groupBy={renderedGroupBy}
 										valueSymbol="ETH"
 										showTotalInTooltip
 										{...(selectedInflowTokens.length > 1

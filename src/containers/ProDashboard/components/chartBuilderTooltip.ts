@@ -5,27 +5,11 @@ import {
 	normalizeTooltipItems,
 	TOOLTIP_OTHERS_ROW_STYLE
 } from '~/components/ECharts/shared/tooltip'
-import type { DashboardGrouping } from '../types'
 
 type ChartBuilderTooltipRow = {
 	marker: string
 	name: string
 	value: number
-}
-
-export function dashboardGroupingToTooltipGroupBy(grouping?: DashboardGrouping): TooltipGroupBy {
-	switch (grouping) {
-		case 'week':
-			return 'weekly'
-		case 'month':
-			return 'monthly'
-		case 'quarter':
-			return 'quarterly'
-		case 'year':
-			return 'yearly'
-		default:
-			return 'daily'
-	}
 }
 
 function renderChartBuilderTooltipRow(

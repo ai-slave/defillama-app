@@ -971,7 +971,7 @@ function buildBarPresentation({
 		kind: 'bar',
 		csvSource: {
 			type: 'dataset',
-			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
+			prepare: () => ({ ...buildAdapterMetricsCsvDataset({ chartData, state }), groupBy: state.groupBy })
 		},
 		dataset: finalDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({
@@ -1017,7 +1017,7 @@ function buildDominancePresentation({
 		kind: 'dominance',
 		csvSource: {
 			type: 'dataset',
-			prepare: () => buildAdapterMetricsCsvDataset({ chartData, state })
+			prepare: () => ({ ...buildAdapterMetricsCsvDataset({ chartData, state }), groupBy: state.groupBy })
 		},
 		dataset: relativeDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({

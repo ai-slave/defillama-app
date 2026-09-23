@@ -5,18 +5,21 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
-import { carryForwardCumulative, parseDateToUnix, type Chart } from './transform'
+import {
+	BUCKET_DAYS,
+	type Bucket,
+	carryForwardCumulative,
+	detectCadence,
+	parseDateToUnix,
+	type Chart,
+	type TrendSeries
+} from './transform'
 import { ChartCard, SegToggle, seriesColor } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 type View = 'day' | 'week' | 'month' | 'quarter' | 'cumulative'
 type Pts = Array<[number, number]>
-
-export interface TrendSeries {
-	name: string
-	data: Pts
-}
 
 const VIEWS: Array<{ value: View; label: string }> = [
 	{ value: 'day', label: 'Daily' },
@@ -25,31 +28,6 @@ const VIEWS: Array<{ value: View; label: string }> = [
 	{ value: 'quarter', label: 'Quarterly' },
 	{ value: 'cumulative', label: 'Cumulative' }
 ]
-
-export type Bucket = Exclude<View, 'cumulative'>
-const BUCKET_DAYS: Record<Bucket, number> = { day: 1, week: 7, month: 28, quarter: 90 }
-
-function measureCadence(series: Array<TrendSeries>): Bucket {
-	const timestamps = [...new Set(series.flatMap((s) => s.data.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
-	if (timestamps.length < 2) return 'day'
-	// Median gap, so a single missing period or a partial first/last bucket can't shift the verdict.
-	const gaps = timestamps.slice(1).map((timestamp, index) => (timestamp - timestamps[index]!) / 86_400)
-	gaps.sort((a, b) => a - b)
-	const median = gaps[Math.floor(gaps.length / 2)]!
-	if (median > 45) return 'quarter'
-	if (median > 10) return 'month'
-	if (median > 1.5) return 'week'
-	return 'day'
-}
-
-// The finest bucket the payload actually supports, read off its own point spacing: an ir-server
-// series can arrive daily, weekly or monthly, and a coarser bucket than the data is a sum of real
-// periods while a finer one is a relabeled lie ("Daily" over monthly points). `minBucket` raises
-// that floor for series whose finest buckets are too noisy to be worth offering.
-export function detectCadence(series: Array<TrendSeries>, minBucket: Bucket = 'day'): Bucket {
-	const measured = measureCadence(series)
-	return BUCKET_DAYS[minBucket] > BUCKET_DAYS[measured] ? minBucket : measured
-}
 
 // Every bucket the data can honestly be shown at, coarsest-first from its own cadence.
 export function viewOptionsFor(cadence: Bucket, valueSymbol: string): typeof VIEWS {
@@ -201,9 +179,7 @@ export function SeriesTrendChart({
 	const wanted = picked ?? defaultView ?? cadence
 	const view = viewOptions.some((v) => v.value === wanted) ? wanted : (viewOptions[0]?.value ?? cadence)
 	const chartSeries = useMemo(() => aggregate(series ?? [], view, stacked), [series, view, stacked])
-	// 'week' keeps the daily tooltip date: these buckets are keyed to the week's first day, while
-	// the shared 'weekly' formatter labels a timestamp as the last day of its week.
-	const groupBy = view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
+	const groupBy = view === 'week' ? 'weekly' : view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
 	const chartOptions = useMemo(
 		() => ({

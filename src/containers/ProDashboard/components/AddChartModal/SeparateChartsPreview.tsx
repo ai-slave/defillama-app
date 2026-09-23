@@ -2,9 +2,10 @@ import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { type DashboardGrouping, getProDashboardChartTypeConfig } from '../../types'
+import { getProDashboardChartTypeConfig } from '../../types'
+import { DASHBOARD_CHART_GROUPING } from '../../utils'
 import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
-import { buildMultiChartSeriesView } from '../multiChartSeries'
+import { buildMultiChartSeriesView, getMultiChartGrouping } from '../multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -14,14 +15,6 @@ const CHART_OPTIONS = {
 	xAxis: { show: false },
 	yAxis: { show: false, min: undefined }
 } satisfies MultiSeriesChartOptions
-
-const mapGroupingToGroupBy = (grouping: DashboardGrouping): 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' => {
-	if (grouping === 'week') return 'weekly'
-	if (grouping === 'month') return 'monthly'
-	if (grouping === 'quarter') return 'quarterly'
-	if (grouping === 'year') return 'yearly'
-	return 'daily'
-}
 
 interface SeparateChartsPreviewProps {
 	composerItems: Array<ChartRuntimeView>
@@ -73,7 +66,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										<MultiSeriesChart
 											dataset={chartView.dataset}
 											charts={chartView.charts}
-											groupBy={mapGroupingToGroupBy(item.grouping ?? 'day')}
+											groupBy={DASHBOARD_CHART_GROUPING[getMultiChartGrouping([item], item.grouping) ?? 'day']}
 											hideDataZoom
 											hideDefaultLegend
 											exportButtons="hidden"

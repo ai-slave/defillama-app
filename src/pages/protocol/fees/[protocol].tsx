@@ -248,13 +248,17 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		return buildProtocolFeeChartPresentation({
-			fees: props.charts.fees,
-			revenue: props.charts.revenue,
-			holdersRevenue: props.charts.holdersRevenue,
-			selectedCharts: charts,
+		return {
+			...buildProtocolFeeChartPresentation({
+				fees: props.charts.fees,
+				revenue: props.charts.revenue,
+				holdersRevenue: props.charts.holdersRevenue,
+				selectedCharts: charts,
+				groupBy
+			}),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
 			groupBy
-		})
+		}
 	}, [props.charts, charts, groupBy])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 
@@ -304,14 +308,17 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							filename={`${props.name}-fees-revenue`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
-							csvSource={{ type: 'dataset', prepare: () => deferredFinalCharts.dataset }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({ ...deferredFinalCharts.dataset, groupBy: deferredFinalCharts.groupBy })
+							}}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
-							groupBy={groupBy}
+							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}

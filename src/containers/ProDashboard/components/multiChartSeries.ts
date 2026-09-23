@@ -5,6 +5,34 @@ import {
 	resolveSeriesAxisLayout
 } from '~/containers/ProDashboard/components/metricGroups'
 import type { CsvCell } from '~/utils/csvCell'
+import { type ChartConfig, type DashboardGrouping, getProDashboardChartTypeConfig } from '../types'
+import { getCsvPeriodCells, getCsvPeriodHeaders } from '../utils'
+
+/**
+ * The grouping a combined chart applies to every series. Returns null when one of its metrics cannot
+ * be grouped, because the card then hides its grouping control and every series stays daily.
+ */
+export function getMultiChartGrouping(
+	items: ReadonlyArray<Pick<ChartConfig, 'type'>>,
+	grouping: DashboardGrouping | undefined
+): DashboardGrouping | null {
+	for (const item of items) {
+		const chartType = getProDashboardChartTypeConfig(item.type)
+		if (chartType === undefined || !('groupable' in chartType) || chartType.groupable !== true) return null
+	}
+	return grouping ?? 'day'
+}
+
+/** The grouping all items of a combined preview share. Daily when they disagree or one cannot be grouped. */
+export function getComposerGrouping(items: ReadonlyArray<Pick<ChartConfig, 'type' | 'grouping'>>): DashboardGrouping {
+	let shared: DashboardGrouping | undefined
+	for (const item of items) {
+		if (item.grouping === undefined) continue
+		if (shared === undefined) shared = item.grouping
+		else if (shared !== item.grouping) return 'day'
+	}
+	return getMultiChartGrouping(items, shared) ?? 'day'
+}
 
 export type MultiChartInputSeries = {
 	name: string
@@ -29,17 +57,19 @@ function getSeriesMagnitude(data: MultiChartInputSeries['data']): number | undef
 	return magnitude > 0 ? magnitude : undefined
 }
 
-export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): Array<Array<CsvCell>> {
+export function buildMultiChartCsvRows(
+	{ dataset, charts }: MultiChartSeriesView,
+	grouping: DashboardGrouping
+): Array<Array<CsvCell>> {
 	const rows = new Array<Array<CsvCell>>(dataset.source.length + 1)
-	rows[0] = ['Date', ...charts.map((chart) => chart.name)]
+	rows[0] = [...getCsvPeriodHeaders(grouping), ...charts.map((chart) => chart.name)]
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const sourceRow = dataset.source[rowIndex]
-		const row = new Array<CsvCell>(charts.length + 1)
-		row[0] = new Date(sourceRow[0] as number).toISOString().slice(0, 10)
-		for (let chartIndex = 0; chartIndex < charts.length; chartIndex++) {
-			const dimension = charts[chartIndex].encode.y
+		const row: Array<CsvCell> = getCsvPeriodCells((sourceRow[0] as number) / 1e3, grouping)
+		for (const chart of charts) {
+			const dimension = chart.encode.y
 			const value = typeof dimension === 'number' ? sourceRow[dimension] : null
-			row[chartIndex + 1] = value ?? ''
+			row.push(value ?? '')
 		}
 		rows[rowIndex + 1] = row
 	}

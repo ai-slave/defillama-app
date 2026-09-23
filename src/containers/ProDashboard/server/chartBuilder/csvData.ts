@@ -101,5 +101,5 @@ export function buildChartBuilderCsvPayload(request: ChartBuilderCsvRequest, ser
 		chartType: config.chartType,
 		resolveColor: () => DEFAULT_SERIES_COLOR
 	})
-	return prepareProChartCsv(view.dataset, request.filename)
+	return prepareProChartCsv(view.dataset, request.filename, request.grouping)
 }

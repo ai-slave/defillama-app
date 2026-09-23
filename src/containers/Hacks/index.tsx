@@ -265,7 +265,10 @@ export function HacksContainer({
 							title="Total Value Hacked"
 							csvSource={
 								chartType === 'Monthly Sum'
-									? { type: 'dataset', prepare: () => deferredMonthlyHacksChartData.dataset }
+									? {
+											type: 'dataset',
+											prepare: () => ({ ...deferredMonthlyHacksChartData.dataset, groupBy: 'monthly' })
+										}
 									: {
 											type: 'dataset',
 											prepare: prepareCompleteTechniqueDataset

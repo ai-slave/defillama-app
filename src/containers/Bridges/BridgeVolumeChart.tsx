@@ -34,7 +34,8 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 	const [viewType, setViewType] = useState<BridgeVolumeViewType>('Split')
 
 	const volumeChartData = useMemo(() => {
-		return buildBridgeVolumeChartData({ data, timePeriod, metricType, viewType })
+		// Deferred together with the rows, so labels never pair old rows with a new grouping.
+		return { ...buildBridgeVolumeChartData({ data, timePeriod, metricType, viewType }), groupBy: timePeriod }
 	}, [data, metricType, timePeriod, viewType])
 	const deferredChartData = useDeferredValue(volumeChartData)
 	const staleDataTimestamp = useMemo(() => getStaleBridgeVolumeTimestamp(data), [data])
@@ -77,7 +78,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 					charts={deferredChartData.charts}
 					{...(height !== undefined ? { height } : {})}
 					hideDefaultLegend={false}
-					groupBy={timePeriod}
+					groupBy={deferredChartData.groupBy}
 					valueSymbol={deferredChartData.metricType === 'Volume' ? '$' : ''}
 					{...(onReady !== undefined ? { onReady } : {})}
 				/>

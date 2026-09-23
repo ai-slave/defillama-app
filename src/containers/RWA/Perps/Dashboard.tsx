@@ -2077,7 +2077,16 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		[isHBarView, isPieView, snapshotBreakdownRows]
 	)
 	const deferredPieChartData = useDeferredValue(pieChartData)
-	const deferredTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
+	// One deferred snapshot, so the chart never pairs old rows with new series or a new grouping.
+	const timeSeriesChart = useMemo(
+		() => ({
+			dataset: selectedTimeSeriesDataset,
+			charts: timeSeriesCharts,
+			groupBy: chartState.metric === 'volume24h' ? volumeGroupBy : undefined
+		}),
+		[chartState.metric, selectedTimeSeriesDataset, timeSeriesCharts, volumeGroupBy]
+	)
+	const deferredTimeSeriesChart = useDeferredValue(timeSeriesChart)
 	const hasTimeSeriesHistory = useMemo(
 		() => hasEnoughTimeSeriesHistory(ungroupedTimeSeriesDataset),
 		[ungroupedTimeSeriesDataset]
@@ -2367,7 +2376,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							filename={timeSeriesFilename}
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
-							csvSource={{ type: 'dataset', prepare: () => selectedTimeSeriesDataset }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									...selectedTimeSeriesDataset,
+									groupBy: chartState.metric === 'volume24h' ? volumeGroupBy : 'daily'
+								})
+							}}
 						/>
 					</ChartPanelToolbar>
 					{isTimeSeriesQueryEnabled && timeSeriesQuery.error ? (
@@ -2386,12 +2401,12 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					) : (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								dataset={deferredTimeSeriesDataset}
-								charts={timeSeriesCharts}
+								dataset={deferredTimeSeriesChart.dataset}
+								charts={deferredTimeSeriesChart.charts}
 								chartOptions={timeSeriesChartOptions}
 								hideDefaultLegend={false}
-								showTotalInTooltip={!deferredTimeSeriesDataset.dimensions.includes('Total')}
-								{...(chartState.metric === 'volume24h' ? { groupBy: volumeGroupBy } : {})}
+								showTotalInTooltip={!deferredTimeSeriesChart.dataset.dimensions.includes('Total')}
+								{...(deferredTimeSeriesChart.groupBy ? { groupBy: deferredTimeSeriesChart.groupBy } : {})}
 								valueSymbol={valueSymbol}
 								onReady={handleTimeSeriesChartReady}
 							/>

@@ -126,10 +126,10 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 		return buildProtocolTaxonomyGroupedCharts({ charts: activeCharts, groupBy })
 	}, [chartBreakdown, charts, groupBy, props.breakdownCharts])
 	const hasBarCharts = groupedChartResult.hasBarCharts
-	const groupedCharts = groupedChartResult.charts
-	const deferredGroupedCharts = useDeferredValue(groupedCharts)
-
-	const chartGroupBy = groupBy
+	// Deferred as one snapshot, so labels and exports never pair old rows with a new grouping.
+	const deferredGroupedChartResult = useDeferredValue(groupedChartResult)
+	const deferredGroupedCharts = deferredGroupedChartResult.charts
+	const chartGroupBy = deferredGroupedChartResult.groupBy
 
 	return (
 		<>
@@ -263,7 +263,10 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 									: `${categoryPresentation.headingLabel} on ${props.chain}`
 							}
 							iconUrl={props.chain && props.chain !== 'All' ? chainIconUrl(props.chain) : undefined}
-							csvSource={{ type: 'dataset', prepare: () => deferredGroupedCharts.dataset }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({ ...deferredGroupedCharts.dataset, groupBy: chartGroupBy })
+							}}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>

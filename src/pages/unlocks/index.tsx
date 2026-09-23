@@ -231,12 +231,10 @@ function UpcomingUnlockVolumeChart({ series }: { series: Array<UpcomingUnlockCha
 						chartInstance={exportChartInstance}
 						filename={`${unlockType}-upcoming-unlocks`}
 						title={unlockType === 'all' ? 'Upcoming Unlocks' : `Upcoming ${unlockTypeLabel}`}
-						csvSource={
-							selectedBreakdown?.csvSource ?? {
-								type: 'dataset',
-								prepare: () => deferredChartData.dataset
-							}
-						}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({ ...deferredChartData.dataset, groupBy: deferredTimePeriod })
+						}}
 					/>
 				) : null}
 			</ChartPanelToolbar>

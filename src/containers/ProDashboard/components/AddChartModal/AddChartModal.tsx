@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { getComposerGrouping } from '../multiChartSeries'
 import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
 import { ModalBindingsProvider } from './bindingContext'
 import { ChartTab } from './ChartTab'
@@ -51,7 +52,13 @@ export function AddChartModal({
 	const { state, actions, computed } = useModalActions(editItem, onClose, placement, draftItem)
 	const { isAllowed: isSqlAllowed, isUnknown: isSqlAccessUnknown, isRetrying, retry } = useIsSqlAllowed()
 
-	const composerItemsWithData = useComposerItemsData(state.composerItems, computed.timePeriod)
+	// A combined preview loads every series at one grouping, as the saved chart will.
+	const previewItems = useMemo(() => {
+		if (state.chartCreationMode !== 'combined') return state.composerItems
+		const grouping = getComposerGrouping(state.composerItems)
+		return state.composerItems.map((item) => ({ ...item, grouping }))
+	}, [state.chartCreationMode, state.composerItems])
+	const composerItemsWithData = useComposerItemsData(previewItems, computed.timePeriod)
 
 	const handleMetricChainChange = (opt: { value: string; label: string }) => actions.setMetricChain(opt?.value ?? null)
 	const handleMetricProtocolChange = (opt: { value: string; label: string }) =>

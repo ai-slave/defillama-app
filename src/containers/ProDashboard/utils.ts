@@ -1,4 +1,5 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
+import { getPeriodCsvCells, getPeriodCsvHeaders } from '~/components/ECharts/shared/csv'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { Chain, DashboardGrouping, Protocol } from './types'
@@ -61,25 +62,27 @@ export const normalizeHourlyToDaily = (
 	return dailyData
 }
 
-const GROUPING_TO_CHART_GROUP_BY: Record<Exclude<DashboardGrouping, 'day'>, Exclude<ChartTimeGrouping, 'daily'>> = {
+/** A dashboard grouping in the shared chart vocabulary that buckets, tooltips and CSVs use. */
+export const DASHBOARD_CHART_GROUPING: Record<DashboardGrouping, ChartTimeGrouping> = {
+	day: 'daily',
 	week: 'weekly',
 	month: 'monthly',
 	quarter: 'quarterly',
 	year: 'yearly'
 }
 
-export const getGroupedTimestampSec = (timestampSec: number, grouping: DashboardGrouping): number => {
-	if (grouping === 'day') return timestampSec
+// Weeks are keyed by their last day and other periods by their first, like every shared chart bucket.
+export const getGroupedTimestampSec = (timestampSec: number, grouping: DashboardGrouping): number =>
+	grouping === 'day' ? timestampSec : getBucketTimestampSec(timestampSec, DASHBOARD_CHART_GROUPING[grouping])
 
-	const groupedTimestampSec = getBucketTimestampSec(timestampSec, GROUPING_TO_CHART_GROUP_BY[grouping])
-	const groupKeyDate = new Date(groupedTimestampSec * 1000)
+/** CSV date columns for a dashboard grouping. Grouped rows get the start and end date of their period. */
+export function getCsvPeriodHeaders(grouping: DashboardGrouping): Array<string> {
+	return getPeriodCsvHeaders(DASHBOARD_CHART_GROUPING[grouping])
+}
 
-	if (grouping === 'week') {
-		groupKeyDate.setUTCDate(groupKeyDate.getUTCDate() - 6)
-	}
-
-	groupKeyDate.setUTCHours(0, 0, 0, 0)
-	return Math.floor(groupKeyDate.getTime() / 1000)
+/** ISO date cells for one row keyed by `getGroupedTimestampSec`, matching `getCsvPeriodHeaders`. */
+export function getCsvPeriodCells(groupedTimestampSec: number, grouping: DashboardGrouping): Array<string> {
+	return getPeriodCsvCells(groupedTimestampSec * 1e3, DASHBOARD_CHART_GROUPING[grouping])
 }
 
 export const groupData = (

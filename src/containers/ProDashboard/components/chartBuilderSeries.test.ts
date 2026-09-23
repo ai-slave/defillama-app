@@ -43,8 +43,9 @@ describe('buildChartBuilderSeriesView', () => {
 			resolveColor: color
 		})
 
-		expect(flow.dataset.source).toEqual([[Date.UTC(2024, 0, 1), 30]])
-		expect(snapshot.dataset.source).toEqual([[Date.UTC(2024, 0, 1), 20]])
+		// Mon Jan 1, 2024 falls in the week keyed by its Sunday, Jan 7.
+		expect(flow.dataset.source).toEqual([[Date.UTC(2024, 0, 7), 30]])
+		expect(snapshot.dataset.source).toEqual([[Date.UTC(2024, 0, 7), 20]])
 		expect(flow.charts[0]).toMatchObject({ type: 'bar', stack: 'total' })
 		expect(snapshot.charts[0]).toMatchObject({ type: 'line', stack: 'total' })
 	})

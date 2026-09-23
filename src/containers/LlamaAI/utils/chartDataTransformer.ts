@@ -6,6 +6,7 @@ import {
 	type AdaptedLlamaAICartesianChart,
 	type LlamaAICartesianDatasetRow
 } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
+import { parseChartDateMs } from '~/containers/LlamaAI/utils/chartAdapters/shared'
 import type { ChartCapabilities, ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 
 type GroupingInterval = 'day' | 'week' | 'month' | 'quarter' | 'year'
@@ -75,7 +76,7 @@ function readTimestampMs(row: LlamaAICartesianDatasetRow): number | null {
 	const parsedTimestamp = Number(legacyTimestamp)
 	if (Number.isFinite(parsedTimestamp)) return parsedTimestamp < 1e12 ? parsedTimestamp * 1e3 : parsedTimestamp
 
-	const parsedDate = Date.parse(legacyTimestamp)
+	const parsedDate = parseChartDateMs(legacyTimestamp)
 	return Number.isFinite(parsedDate) ? parsedDate : null
 }
 

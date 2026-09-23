@@ -14,14 +14,19 @@ import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTi
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../queries'
 import { getProDashboardChartTypeConfig, limitMultiChartItems, type MultiChartConfig } from '../types'
 import { ProMeta, ProSegmented } from '../ui'
-import { generateChartColor } from '../utils'
+import { DASHBOARD_CHART_GROUPING, generateChartColor } from '../utils'
 import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { ConfirmationModal } from './ConfirmationModal'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
-import { buildMultiChartCsvRows, buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
+import {
+	buildMultiChartCsvRows,
+	buildMultiChartSeriesView,
+	getMultiChartGrouping,
+	type MultiChartInputSeries
+} from './multiChartSeries'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice } from './ProCardStatus'
 import { useChartSyncGroup } from './useChartSyncGroup'
@@ -82,8 +87,14 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 	const showPercentage = multi.showPercentage || false
 	const showTreemap = multi.showTreemap || false
 	const limitedItems = useMemo(() => limitMultiChartItems(multi.items), [multi.items])
+	const groupableGrouping = getMultiChartGrouping(limitedItems, multi.grouping)
+	const allChartsGroupable = groupableGrouping !== null
+	// One grouping for the data, tooltip and CSV. Items keep their saved grouping, which can be stale
+	// once a non-groupable metric joins the chart.
+	const grouping = groupableGrouping ?? 'day'
+	const groupedItems = useMemo(() => limitedItems.map((item) => ({ ...item, grouping })), [limitedItems, grouping])
 	const chartQueries = useChartsData(
-		limitedItems,
+		groupedItems,
 		protocolCatalog,
 		protocolBySlug,
 		timePeriod,
@@ -94,14 +105,14 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 	const runtimeItems = useMemo<Array<ChartRuntimeView>>(
 		() =>
 			chartQueries.map((query, index) => {
-				const item = limitedItems[index]
+				const item = groupedItems[index]
 				if (!item) throw new Error(`Missing multi-chart config at index ${index}`)
 				return {
 					...item,
 					...toChartRuntimeState(query, streamDone, getChartDataPrerequisite(item, protocolCatalog, protocolBySlug))
 				}
 			}),
-		[chartQueries, limitedItems, protocolBySlug, protocolCatalog, streamDone]
+		[chartQueries, groupedItems, protocolBySlug, protocolCatalog, streamDone]
 	)
 
 	const { validItems, failedItems, loadingItems } = useMemo(() => {
@@ -238,17 +249,8 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			allBarType = false
 			allAreaType = false
 		}
-
-		let allChartsGroupable = true
-		for (const item of limitedItems) {
-			const chartType = getProDashboardChartTypeConfig(item.type)
-			if (chartType === undefined || !('groupable' in chartType) || chartType.groupable !== true) {
-				allChartsGroupable = false
-				break
-			}
-		}
-		return { allBarType, allAreaType, hasMultipleMetrics, allChartsGroupable }
-	}, [limitedItems, validItems])
+		return { allBarType, allAreaType, hasMultipleMetrics }
+	}, [validItems])
 
 	const treemapData = useMemo(() => {
 		if (!showTreemap) return []
@@ -268,10 +270,10 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 
 	const handleCsvExport = useCallback(() => {
 		if (chartView.charts.length === 0) return
-		const rows = buildMultiChartCsvRows(chartView)
+		const rows = buildMultiChartCsvRows(chartView, grouping)
 		const fileName = `${multi.name || 'multi_chart'}_${new Date().toISOString().split('T')[0]}.csv`
 		downloadCSV(fileName, rows)
-	}, [chartView, multi.name])
+	}, [chartView, grouping, multi.name])
 
 	const hasAnyData = validItems.length > 0
 	const isPrimaryLoading = !hasAnyData && loadingItems.length > 0
@@ -291,7 +293,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			hasMultipleUnitGroups
 		}
 	}, [baseSeries])
-	const { allChartsGroupable, hasMultipleMetrics, allBarType, allAreaType } = chartTypeInfo
+	const { hasMultipleMetrics, allBarType, allAreaType } = chartTypeInfo
 	const canStack = allBarType || allAreaType
 
 	const seriesCount = chartView.charts.length
@@ -511,17 +513,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 							valueSymbol={
 								showPercentage ? '%' : allPercentMetrics ? '%' : allCountMetrics || allRatioMetrics ? '' : '$'
 							}
-							groupBy={
-								multi.grouping === 'week'
-									? 'weekly'
-									: multi.grouping === 'month'
-										? 'monthly'
-										: multi.grouping === 'quarter'
-											? 'quarterly'
-											: multi.grouping === 'year'
-												? 'yearly'
-												: 'daily'
-							}
+							groupBy={DASHBOARD_CHART_GROUPING[grouping]}
 							hideDataZoom
 							hideDefaultLegend={false}
 							solidChartAreaStyle={chartView.solidChartAreaStyle}

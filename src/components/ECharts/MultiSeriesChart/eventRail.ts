@@ -3,7 +3,7 @@ import type * as echarts from 'echarts/core'
 import { CHART_INSET, CHART_ZOOM_RESERVE } from '../shared/chartSpacing'
 import { formatTooltipChartDate } from '../shared/formatters'
 import { asTooltipDataRecord } from '../shared/tooltip'
-import type { ChartTimeGrouping, MultiSeriesChartArrayRow, MultiSeriesYAxisOption } from './types'
+import type { MultiSeriesChartArrayRow, MultiSeriesYAxisOption } from './types'
 
 const EVENT_DOT_SIZE = 16
 const EVENT_DOT_FILL_POINTS = [
@@ -69,13 +69,6 @@ function isEventHoverDatum(value: unknown): value is Pick<EventRailDatum, 'event
 	return value !== null && typeof value === 'object' && 'eventDate' in value && typeof value.eventDate === 'number'
 }
 
-const RANGE_TOOLTIP_DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
-	year: 'numeric',
-	month: '2-digit',
-	day: '2-digit',
-	timeZone: 'UTC'
-})
-
 function isDangerLabel(label: string) {
 	const normalized = label.toLowerCase()
 	return DANGER_KEYWORDS.some((keyword) => normalized.includes(keyword))
@@ -125,10 +118,6 @@ function getEventDotPalette(label: string, isThemeDark: boolean, isRange = false
 				border: 'rgba(100, 116, 139, 1)',
 				icon: 'rgba(30, 41, 59, 1)'
 			}
-}
-
-function formatRangeTooltipDate(value: number) {
-	return RANGE_TOOLTIP_DATE_FORMATTER.format(new Date(value))
 }
 
 export function buildEventRailData({
@@ -285,14 +274,12 @@ export function createEventRailSeries({
 	eventRailData,
 	eventStripYAxisIndex,
 	hoverState,
-	shouldHideDataZoom,
-	tooltipGroupBy
+	shouldHideDataZoom
 }: {
 	eventRailData: Array<EventRailDatum>
 	eventStripYAxisIndex: number
 	hoverState: EventHoverState
 	shouldHideDataZoom: boolean
-	tooltipGroupBy: ChartTimeGrouping
 }): CustomSeriesOption {
 	return {
 		id: EVENT_RAIL_SERIES_ID,
@@ -378,13 +365,13 @@ export function createEventRailSeries({
 				const event = asTooltipDataRecord(params?.data)
 				if (typeof event?.eventDate !== 'number' || typeof event.fullText !== 'string') return ''
 
-				const header = formatTooltipChartDate(event.eventDate, tooltipGroupBy)
-				const rangeLine =
+				// Show the event's own date, or its date range, whatever grouping the chart uses.
+				const header =
 					typeof event.rangeStart === 'number' && typeof event.rangeEnd === 'number'
-						? `<li style="list-style:none;opacity:0.7;">${formatRangeTooltipDate(event.rangeStart)} - ${formatRangeTooltipDate(event.rangeEnd)}</li>`
-						: ''
+						? `${formatTooltipChartDate(event.rangeStart, 'daily')} - ${formatTooltipChartDate(event.rangeEnd, 'daily')}`
+						: formatTooltipChartDate(event.eventDate, 'daily')
 
-				return `${header}<li style="list-style:none;font-weight:600;">${event.fullText}</li>${rangeLine}`
+				return `${header}<li style="list-style:none;font-weight:600;">${event.fullText}</li>`
 			}
 		}
 	}

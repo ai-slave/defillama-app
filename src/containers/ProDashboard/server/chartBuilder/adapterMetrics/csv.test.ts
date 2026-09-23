@@ -83,7 +83,7 @@ describe('writeAdapterMetricProtocolCsv', () => {
 			}
 		)
 
-		expect(csv.split('\n')).toEqual(['Date,Protocol', '1970-01-01,8'])
+		expect(csv.split('\n')).toEqual(['Month start,Month end,Protocol', '1970-01-01,1970-01-31,8'])
 	})
 })
 
@@ -107,7 +107,7 @@ test.each([
 			}
 		)
 		expect(csv).toBe(
-			`Date,P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22,P23,P24,P25,P26,P27,P28,P29,P30,P31,P32\n1970-01-01,${values}`
+			`Month start,Month end,P01,P02,P03,P04,P05,P06,P07,P08,P09,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22,P23,P24,P25,P26,P27,P28,P29,P30,P31,P32\n1970-01-01,1970-01-31,${values}`
 		)
 	}
 )

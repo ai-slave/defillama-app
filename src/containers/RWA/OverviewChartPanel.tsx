@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
-import { buildCsvFromDataset, ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
+import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/MultiSeriesChart/groupDataset'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -465,7 +465,17 @@ export function RWAOverviewChartPanel({
 					: buildRwaTimeSeriesCharts(selectedTimeSeriesDataset),
 		[isPerpsView, isTimeSeriesView, perpsChartMetric, selectedTimeSeriesDataset]
 	)
-	const deferredSelectedTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
+	// One deferred snapshot, so the chart never pairs old rows with new series, share mode or grouping.
+	const timeSeriesChart = useMemo(
+		() => ({
+			dataset: selectedTimeSeriesDataset,
+			charts: timeSeriesCharts,
+			isShare: chartView === 'share',
+			groupBy: isPerpsVolume && chartView !== 'share' ? chartPeriod : undefined
+		}),
+		[chartPeriod, chartView, isPerpsVolume, selectedTimeSeriesDataset, timeSeriesCharts]
+	)
+	const deferredTimeSeriesChart = useDeferredValue(timeSeriesChart)
 
 	const chartTypeSwitch = (
 		<SegmentedControl<RWAOverviewChartMetric>
@@ -578,18 +588,19 @@ export function RWAOverviewChartPanel({
 							chartInstance={multiSeriesChart2Instance}
 							filename={timeSeriesChartFilename}
 							source={{
-								type: 'prepare-csv',
+								type: 'dataset',
 								prepare: () => {
 									const exportDataset = groupedFlowChart
 										? groupedFlowChart.dataset
 										: isFlowMetric && flowChart
 											? flowChart.dataset
-											: deferredSelectedTimeSeriesDataset
-									return buildCsvFromDataset({
-										dimensions: exportDataset.dimensions,
-										source: exportDataset.source,
-										filenameBase: timeSeriesChartFilename
-									})
+											: deferredTimeSeriesChart.dataset
+									const exportGroupBy = groupedFlowChart
+										? groupedFlowChart.groupBy
+										: isFlowMetric && flowChart
+											? flowChart.groupBy
+											: (deferredTimeSeriesChart.groupBy ?? 'daily')
+									return { ...exportDataset, groupBy: exportGroupBy }
 								}
 							}}
 						/>
@@ -625,6 +636,7 @@ export function RWAOverviewChartPanel({
 								<MultiSeriesChart
 									dataset={groupedFlowChart.dataset}
 									charts={groupedFlowChart.charts}
+									groupBy={groupedFlowChart.groupBy}
 									containerClassName="flex-1 min-h-[360px]"
 									hideDefaultLegend={false}
 									valueSymbol="$"
@@ -660,16 +672,16 @@ export function RWAOverviewChartPanel({
 					) : (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
-								dataset={deferredSelectedTimeSeriesDataset}
-								charts={timeSeriesCharts}
+								dataset={deferredTimeSeriesChart.dataset}
+								charts={deferredTimeSeriesChart.charts}
 								containerClassName="flex-1 min-h-[360px]"
 								hideDefaultLegend={false}
-								expandTo100Percent={chartView === 'share'}
+								expandTo100Percent={deferredTimeSeriesChart.isShare}
 								showTotalInTooltip={
-									chartView !== 'share' && !deferredSelectedTimeSeriesDataset.dimensions.includes('Total')
+									!deferredTimeSeriesChart.isShare && !deferredTimeSeriesChart.dataset.dimensions.includes('Total')
 								}
 								valueSymbol="$"
-								{...(isPerpsVolume && chartView !== 'share' ? { groupBy: chartPeriod } : {})}
+								{...(deferredTimeSeriesChart.groupBy ? { groupBy: deferredTimeSeriesChart.groupBy } : {})}
 								onReady={handleMultiSeriesChartReady}
 							/>
 						</Suspense>

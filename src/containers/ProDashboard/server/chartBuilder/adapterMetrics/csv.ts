@@ -4,8 +4,8 @@ import { getTimePeriodBounds } from '~/containers/ProDashboard/timePeriod'
 import { normalizeCacheList } from '~/server/api/cacheKey'
 import { toSlug } from '~/utils/breakdowns'
 import { serializeCsvRow } from '~/utils/csv'
-import { getGroupedTimestampSec } from '../../../utils'
-import { disambiguateCsvLabels, isoDateFromTimestamp, percentageValues, writeCsvChunk } from '../csvStream'
+import { getCsvPeriodCells, getCsvPeriodHeaders, getGroupedTimestampSec } from '../../../utils'
+import { disambiguateCsvLabels, percentageValues, writeCsvChunk } from '../csvStream'
 import { normalizeLegacyChartBuilderChains } from '../filters'
 import { parseAdapterChartBuilderMetric } from './breakdowns/config'
 import {
@@ -147,12 +147,18 @@ async function writeTimeSeries(
 	let groupTimestamp = -1
 	let groupValues = new Array<number>(entities.length).fill(0)
 	let rows = 0
-	await writeCsvChunk(output, `${serializeCsvRow(['Date', ...entities.map((entity) => entity.label)])}\n`)
+	await writeCsvChunk(
+		output,
+		`${serializeCsvRow([...getCsvPeriodHeaders(request.grouping), ...entities.map((entity) => entity.label)])}\n`
+	)
 
 	const flush = async () => {
 		if (groupTimestamp < 0) return
 		const values = request.config.displayAs === 'percentage' ? percentageValues(groupValues) : groupValues
-		await writeCsvChunk(output, `${serializeCsvRow([isoDateFromTimestamp(groupTimestamp), ...values])}\n`)
+		await writeCsvChunk(
+			output,
+			`${serializeCsvRow([...getCsvPeriodCells(groupTimestamp, request.grouping), ...values])}\n`
+		)
 		rows++
 	}
 

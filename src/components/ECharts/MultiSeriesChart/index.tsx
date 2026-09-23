@@ -20,7 +20,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
-import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { CHART_COLORS } from '~/constants/colors'
@@ -229,7 +229,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	useChartResize(chartRef, chartDomRef)
 
 	const groupBySafe: GroupBy = groupBy ?? 'daily'
-	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
 
 	const defaultChartSettings = useMemo<ResolvedMultiSeriesChartOptions>(() => {
 		const themeColor = chartTheme.text
@@ -546,9 +545,11 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
 	const defaultCsvSource = useMemo(() => {
-		if (!renderedCharts.some((chart) => chart.data)) return { type: 'dataset' as const, prepare: () => dataset }
+		if (!renderedCharts.some((chart) => chart.data)) {
+			return { type: 'dataset' as const, prepare: () => ({ ...dataset, groupBy: groupBySafe }) }
+		}
 		return {
-			type: 'prepare-csv' as const,
+			type: 'dataset' as const,
 			prepare: () => {
 				const independentSeries: Array<{
 					name: string
@@ -571,15 +572,16 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 					}
 					independentSeries.push({ name: chart.name, data })
 				}
-				const exportDataset = buildSparseTimeSeriesDataset(independentSeries)
-				return buildCsvFromDataset({
-					dimensions: exportDataset.dimensions,
-					source: exportDataset.source,
-					filenameBase: exportFilename
-				})
+				return { ...buildSparseTimeSeriesDataset(independentSeries), groupBy: groupBySafe }
 			}
 		}
-	}, [dataset, renderedCharts, renderedDatasetSource, exportFilename])
+	}, [dataset, renderedCharts, renderedDatasetSource, groupBySafe])
+	// A caller's dataset export takes this chart's grouping unless it names its own.
+	const exportCsvSource = useMemo<ChartCsvSource>(() => {
+		if (!csvSource) return defaultCsvSource
+		if (csvSource === 'rendered-chart' || csvSource.type !== 'dataset') return csvSource
+		return { type: 'dataset', prepare: async () => ({ groupBy: groupBySafe, ...(await csvSource.prepare()) }) }
+	}, [csvSource, defaultCsvSource, groupBySafe])
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
@@ -899,8 +901,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						eventRailData,
 						eventStripYAxisIndex,
 						hoverState: eventHoverStateRef.current,
-						shouldHideDataZoom,
-						tooltipGroupBy
+						shouldHideDataZoom
 					})
 				]
 			: series
@@ -976,7 +977,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		echartsDatasetDimensions,
 		tooltipFormatter,
 		eventRailData,
-		tooltipGroupBy,
 		isThemeDark,
 		chartTheme,
 		finalYAxisBase,
@@ -1031,7 +1031,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 								iconUrl={exportButtonsConfig?.pngIconUrl}
 								showCsv={shouldEnableCSVDownload}
 								showPng={shouldEnableImageExport}
-								csvSource={csvSource ?? defaultCsvSource}
+								csvSource={exportCsvSource}
 							/>
 						}
 					/>

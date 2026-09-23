@@ -323,14 +323,18 @@ export function AdapterByChainChart({
 
 	const combinedFinalCharts = React.useMemo(() => {
 		if (chartViewMode !== 'Combined') {
-			return EMPTY_COMBINED_CHART_PRESENTATION
+			return { ...EMPTY_COMBINED_CHART_PRESENTATION, groupBy: combinedChartInterval }
 		}
 
-		return buildAdapterByChainCombinedChartPresentation({
-			chartData: combinedChartData,
-			chartName,
+		return {
+			...buildAdapterByChainCombinedChartPresentation({
+				chartData: combinedChartData,
+				chartName,
+				groupBy: combinedChartInterval
+			}),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
 			groupBy: combinedChartInterval
-		})
+		}
 	}, [chartViewMode, combinedChartData, chartName, combinedChartInterval])
 	const deferredCombinedFinalCharts = React.useDeferredValue(combinedFinalCharts)
 
@@ -609,7 +613,13 @@ export function AdapterByChainChart({
 							filename={`${chain}-${adapterType}-${chartName}`}
 							title={chain === 'All' ? 'All Chains' : chain}
 							iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
-							csvSource={{ type: 'dataset', prepare: () => deferredCombinedFinalCharts.dataset }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									...deferredCombinedFinalCharts.dataset,
+									groupBy: deferredCombinedFinalCharts.groupBy
+								})
+							}}
 						/>
 					)}
 				</div>
@@ -675,9 +685,12 @@ export function AdapterByChainChart({
 					<MultiSeriesChart
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
-						csvSource={{ type: 'dataset', prepare: () => deferredCombinedFinalCharts.dataset }}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({ ...deferredCombinedFinalCharts.dataset, groupBy: deferredCombinedFinalCharts.groupBy })
+						}}
 						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
-						groupBy={combinedChartInterval}
+						groupBy={deferredCombinedFinalCharts.groupBy}
 						onReady={handleChartReady}
 					/>
 				</React.Suspense>

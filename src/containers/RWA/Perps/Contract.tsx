@@ -278,13 +278,16 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 	const enabledMetrics = useMemo(() => getRWAPerpsContractEnabledMetrics(searchParams), [searchParams])
 
 	const chartSpec = useMemo(
-		() =>
-			buildRWAPerpsContractChartSpec({
+		() => ({
+			...buildRWAPerpsContractChartSpec({
 				marketPoints: contract.marketChart,
 				fundingHistory: contract.fundingHistory,
 				groupBy,
 				enabledMetrics
 			}),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+			groupBy
+		}),
 		[contract.fundingHistory, contract.marketChart, enabledMetrics, groupBy]
 	)
 	const deferredChartSpec = useDeferredValue(chartSpec)
@@ -370,7 +373,10 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 						filename={`${contractSlugBase}-market-metrics`}
 						title={`${contract.contract.contract} Market Metrics`}
 						smol
-						csvSource={{ type: 'dataset', prepare: () => deferredChartSpec.dataset }}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({ ...deferredChartSpec.dataset, groupBy: deferredChartSpec.groupBy })
+						}}
 					/>
 				</div>
 			</ChartPanelToolbar>
@@ -381,7 +387,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
 						hideDefaultLegend={false}
-						groupBy={groupBy}
+						groupBy={deferredChartSpec.groupBy}
 						valueSymbol="$"
 						onReady={handleChartReady}
 					/>

@@ -4,6 +4,7 @@ import * as realEcharts from 'echarts'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import { EChartsRenderVisibilityProvider } from '../renderVisibility'
 import { ChartMotionContext } from '../shared/chartMotion'
 import { ChartWatermarkContext } from '../shared/watermark'
@@ -24,6 +25,7 @@ const mocks = vi.hoisted(() => {
 	}
 
 	return {
+		exportCsvSources: [] as Array<ChartCsvSource>,
 		connect: vi.fn(),
 		disconnect: vi.fn(),
 		init: vi.fn((_element: HTMLElement) => instance),
@@ -39,6 +41,13 @@ vi.mock('echarts/core', () => ({
 	graphic: { LinearGradient: class {} },
 	init: mocks.init,
 	use: mocks.use
+}))
+
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
+	ChartExportButtons: ({ csvSource }: { csvSource: ChartCsvSource | null }) => {
+		if (csvSource) mocks.exportCsvSources.push(csvSource)
+		return null
+	}
 }))
 
 vi.mock('~/contexts/LocalStorage', () => ({
@@ -108,6 +117,37 @@ describe('MultiSeriesChart lifecycle', () => {
 			)
 		)
 		expect(mocks.instance.setOption.mock.lastCall?.[0]).toHaveProperty('useUTC', expected)
+	})
+
+	test('exports a download in the grouping it started with when the chart regroups mid-download', async () => {
+		let finishFetch: (dataset: MultiSeriesChartDataset) => void = () => {}
+		const fetchDataset = new Promise<MultiSeriesChartDataset>((resolve) => {
+			finishFetch = resolve
+		})
+		const csvSource = { type: 'dataset' as const, prepare: () => fetchDataset }
+		const renderGrouped = (groupBy: 'weekly' | 'monthly') =>
+			act(async () =>
+				root.render(
+					<MultiSeriesChart
+						dataset={INITIAL_DATASET}
+						charts={CHARTS}
+						groupBy={groupBy}
+						csvSource={csvSource}
+						exportButtons={{ csv: true, png: false }}
+					/>
+				)
+			)
+
+		await renderGrouped('weekly')
+		const download = mocks.exportCsvSources.at(-1)
+		if (!download || download === 'rendered-chart' || download.type !== 'dataset') {
+			throw new Error('Expected a dataset CSV source')
+		}
+		const exported = download.prepare()
+		await renderGrouped('monthly')
+		finishFetch({ dimensions: ['timestamp', 'Value'], source: [[Date.UTC(2026, 8, 20), 10]] })
+
+		expect((await exported).groupBy).toBe('weekly')
 	})
 
 	test.each(['America/Los_Angeles', 'Asia/Tokyo'])(

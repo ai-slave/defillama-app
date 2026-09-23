@@ -308,12 +308,15 @@ function ChartByType({
 	}, [protocolName, adapterType, chartInterval, title, chartType])
 
 	const mainChartData = React.useMemo(
-		() =>
-			buildProtocolBreakdownChartPresentation({
+		() => ({
+			...buildProtocolBreakdownChartPresentation({
 				data,
 				seriesNames: uniqueBreakdownNames,
 				chartInterval
 			}),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+			groupBy: chartInterval
+		}),
 		[uniqueBreakdownNames, chartInterval, data]
 	)
 	const deferredMainChartData = React.useDeferredValue(mainChartData)
@@ -348,7 +351,10 @@ function ChartByType({
 					filename={exportFilename}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(exportProtocolName)}
-					csvSource={{ type: 'dataset', prepare: () => deferredMainChartData.dataset }}
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({ ...deferredMainChartData.dataset, groupBy: deferredMainChartData.groupBy })
+					}}
 				/>
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>
@@ -357,7 +363,7 @@ function ChartByType({
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}
 					selectedCharts={renderedCharts}
-					groupBy={chartInterval}
+					groupBy={deferredMainChartData.groupBy}
 					valueSymbol="$"
 					showTotalInTooltip
 					{...(hallmarks !== undefined ? { hallmarks } : {})}

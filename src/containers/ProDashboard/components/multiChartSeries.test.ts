@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { buildMultiChartCsvRows, buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
+import {
+	buildMultiChartCsvRows,
+	buildMultiChartSeriesView,
+	getComposerGrouping,
+	getMultiChartGrouping,
+	type MultiChartInputSeries
+} from './multiChartSeries'
 
 const FLOW: MultiChartInputSeries = {
 	name: 'Fees',
@@ -151,7 +157,7 @@ describe('buildMultiChartSeriesView', () => {
 			stackSeries: false
 		})
 
-		expect(buildMultiChartCsvRows(result)).toEqual([
+		expect(buildMultiChartCsvRows(result, 'day')).toEqual([
 			['Date', 'Small', 'Large'],
 			['1970-01-01', 25, 75]
 		])
@@ -168,11 +174,54 @@ describe('buildMultiChartSeriesView', () => {
 			stackSeries: false
 		})
 
-		expect(buildMultiChartCsvRows(result)).toEqual([
+		expect(buildMultiChartCsvRows(result, 'day')).toEqual([
 			['Date', 'TVL', 'Fees'],
 			['1970-01-01', 100, ''],
 			['1970-01-01', '', 0]
 		])
+	})
+
+	test('names both ends of each week in weekly exports', () => {
+		const result = buildMultiChartSeriesView({
+			series: [{ ...FLOW, data: [[Date.UTC(2026, 8, 20) / 1e3, 28]] }],
+			showCumulative: false,
+			showPercentage: false,
+			stackSeries: false
+		})
+
+		expect(buildMultiChartCsvRows(result, 'week')).toEqual([
+			['Week start', 'Week end', 'Fees'],
+			['2026-09-14', '2026-09-20', 28]
+		])
+	})
+
+	test('keeps a combined chart daily once a metric that cannot be grouped joins it', () => {
+		// TVL is not groupable, so weekly fees plus TVL exports real daily dates, never week columns.
+		expect(getMultiChartGrouping([{ type: 'fees' }, { type: 'tvl' }], 'week')).toBeNull()
+		expect(getMultiChartGrouping([{ type: 'fees' }, { type: 'volume' }], 'week')).toBe('week')
+		expect(getMultiChartGrouping([{ type: 'fees' }], undefined)).toBe('day')
+	})
+
+	test('previews a combined chart at the one grouping all its series can share', () => {
+		// New composer items inherit the chart's grouping even when their metric cannot be grouped.
+		expect(
+			getComposerGrouping([
+				{ type: 'fees', grouping: 'month' },
+				{ type: 'tvl', grouping: 'month' }
+			])
+		).toBe('day')
+		expect(
+			getComposerGrouping([
+				{ type: 'fees', grouping: 'month' },
+				{ type: 'volume', grouping: 'month' }
+			])
+		).toBe('month')
+		expect(
+			getComposerGrouping([
+				{ type: 'fees', grouping: 'month' },
+				{ type: 'volume', grouping: 'week' }
+			])
+		).toBe('day')
 	})
 
 	test('returns an empty canonical dataset when no source has data', () => {

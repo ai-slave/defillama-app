@@ -2,6 +2,8 @@ import type * as echarts from 'echarts/core'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	attachEventHoverHandlers,
+	buildEventRailData,
+	createEventRailSeries,
 	type EventHoverState,
 	type EventRailDatum,
 	getDatasetTimeBounds,
@@ -10,6 +12,32 @@ import {
 
 afterEach(() => {
 	vi.useRealTimers()
+})
+
+describe('hallmark event-rail tooltip', () => {
+	function hoverHeader(data: ReturnType<typeof buildEventRailData>['events'][number]) {
+		const series = createEventRailSeries({
+			eventRailData: [data],
+			eventStripYAxisIndex: 1,
+			hoverState: { hoveredEventDate: null },
+			shouldHideDataZoom: false
+		})
+		const formatter = (series.tooltip as { formatter: (params: unknown) => string }).formatter
+		return formatter({ data }).split('<li')[0]
+	}
+
+	test('names a point event by its own day and a range event by its span', () => {
+		const { events } = buildEventRailData({
+			hallmarks: [[Date.UTC(2026, 8, 14), 'Upgrade']],
+			rangeHallmarks: [[[Date.UTC(2026, 8, 1), Date.UTC(2026, 8, 4)], 'Incident']],
+			isThemeDark: false
+		})
+		const byText = Object.fromEntries(events.map((event) => [event.fullText, event]))
+
+		expect(hoverHeader(byText['Upgrade']!)).toBe('14 Sep 2026')
+		// The range's midpoint falls at noon on Sep 2; the header names the whole span instead.
+		expect(hoverHeader(byText['Incident']!)).toBe('01 Sep 2026 - 04 Sep 2026')
+	})
 })
 
 describe('hallmark event-rail time bounds', () => {

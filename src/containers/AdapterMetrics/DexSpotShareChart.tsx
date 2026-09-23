@@ -97,7 +97,7 @@ export function DexSpotShareChart({
 					chartInstance={chartInstance}
 					filename={`dex-share-of-spot-volume-${groupBy}`}
 					title={CHART_TITLE}
-					csvSource={hasData ? { type: 'dataset', prepare: () => dataset } : null}
+					csvSource={hasData ? { type: 'dataset', prepare: () => ({ ...dataset, groupBy }) } : null}
 				/>
 			</ChartPanelToolbar>
 			{hasData ? (

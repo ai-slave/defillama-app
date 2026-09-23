@@ -21,7 +21,6 @@ const canonicalExports = new Set([
 // docs/date-formatting.md. Keep this list narrow: a new raw formatter should fail CI.
 const intlDateFormatFiles = new Set([
 	canonicalFormatter,
-	'src/components/ECharts/MultiSeriesChart/eventRail.ts',
 	'src/containers/Exchanges/DirectoryChart.tsx',
 	'src/containers/Exchanges/ResearchChart.tsx',
 	'src/containers/Exchanges/VenueChart.tsx',

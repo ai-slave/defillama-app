@@ -1,4 +1,5 @@
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
+import { lastDayOfWeek } from '~/utils'
 
 // Shapes returned by /api/public/uniswap/<tab>. Everything is pre-computed and
 // pre-formatted server-side; the frontend renders `formatted` and only uses raw
@@ -77,6 +78,55 @@ export function carryForwardCumulative<T extends { points: Array<[number, number
 }
 
 // Time-chart callers share this broad API type with category charts, so keep date and length guards at this boundary.
+export interface TrendSeries {
+	name: string
+	data: Array<[number, number]>
+}
+
+export type Bucket = 'day' | 'week' | 'month' | 'quarter'
+export const BUCKET_DAYS: Record<Bucket, number> = { day: 1, week: 7, month: 28, quarter: 90 }
+
+function measureCadence(series: Array<TrendSeries>): Bucket {
+	const timestamps = [...new Set(series.flatMap((s) => s.data.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
+	if (timestamps.length < 2) return 'day'
+	// Median gap, so a single missing period or a partial first/last bucket can't shift the verdict.
+	const gaps = timestamps.slice(1).map((timestamp, index) => (timestamp - timestamps[index]!) / 86_400)
+	gaps.sort((a, b) => a - b)
+	const median = gaps[Math.floor(gaps.length / 2)]!
+	if (median > 45) return 'quarter'
+	if (median > 10) return 'month'
+	if (median > 1.5) return 'week'
+	return 'day'
+}
+
+// The finest bucket the payload actually supports, read off its own point spacing: an ir-server
+// series can arrive daily, weekly or monthly, and a coarser bucket than the data is a sum of real
+// periods while a finer one is a relabeled lie ("Daily" over monthly points). `minBucket` raises
+// that floor for series whose finest buckets are too noisy to be worth offering.
+export function detectCadence(series: Array<TrendSeries>, minBucket: Bucket = 'day'): Bucket {
+	const measured = measureCadence(series)
+	return BUCKET_DAYS[minBucket] > BUCKET_DAYS[measured] ? minBucket : measured
+}
+
+const CADENCE_GROUP_BY = { day: 'daily', week: 'weekly', month: 'monthly', quarter: 'quarterly' } as const
+
+/**
+ * A payload's dataset plus the tooltip grouping its own point spacing supports. Weekly payloads are
+ * stamped at the week's Monday (SQL `date_trunc('week')`); each point moves to the Sunday that ends
+ * its week, which is the day the shared weekly label reads. Values are never re-summed.
+ */
+export function chartToPeriodDataset(chart: Chart): {
+	dataset: TimestampDataset
+	groupBy: (typeof CADENCE_GROUP_BY)[Bucket]
+} {
+	const dataset = chartToDataset(chart)
+	const cadence = detectCadence([{ name: '', data: dataset.source.map((row) => [(row[0] as number) / 1e3, 0]) }])
+	if (cadence === 'week') {
+		for (const row of dataset.source) row[0] = lastDayOfWeek((row[0] as number) / 1e3) * 1e3
+	}
+	return { dataset, groupBy: CADENCE_GROUP_BY[cadence] }
+}
+
 export function chartToDataset(chart: Chart): TimestampDataset {
 	const source: TimestampDataset['source'] = []
 	for (const [index, date] of chart.dates.entries()) {

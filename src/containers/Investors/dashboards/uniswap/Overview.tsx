@@ -5,8 +5,8 @@ import {
 	fetchAdapterProtocolChartDataByBreakdownType
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import type { Chart, Kpi as KpiT } from './transform'
-import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros, type TrendSeries } from './TrendChart'
+import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
+import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
 import {
 	countKpi,
 	KpiGrid,

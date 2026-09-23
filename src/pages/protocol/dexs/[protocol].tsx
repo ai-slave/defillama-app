@@ -219,7 +219,11 @@ export default function Protocols(props: DexProtocolPageProps) {
 				points: notionalVolumePoints
 			})
 		}
-		return buildProtocolFlowChart({ groupBy, series })
+		return {
+			...buildProtocolFlowChart({ groupBy, series }),
+			// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+			groupBy
+		}
 	}, [charts, groupBy, props.charts])
 	const deferredFinalCharts = useDeferredValue(finalCharts)
 
@@ -270,14 +274,17 @@ export default function Protocols(props: DexProtocolPageProps) {
 							filename={`${props.name}-dex-volume`}
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
-							csvSource={{ type: 'dataset', prepare: () => deferredFinalCharts.dataset }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({ ...deferredFinalCharts.dataset, groupBy: deferredFinalCharts.groupBy })
+							}}
 						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
-							groupBy={groupBy}
+							groupBy={deferredFinalCharts.groupBy}
 							valueSymbol="$"
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
 							onReady={handleChartReady}

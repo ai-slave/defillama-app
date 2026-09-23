@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartDataTransformer } from '../chartDataTransformer'
+import { buildExportModel } from '../chartExportModel'
 
 const capabilities: ChartCapabilities = {
 	allowStack: true,
@@ -297,6 +299,19 @@ describe('ChartDataTransformer', () => {
 			Date.UTC(2026, 1, 1),
 			Date.UTC(2026, 2, 1)
 		])
+	})
+
+	test('exports grouped rows with the bounds of the period each one sums', () => {
+		const transformed = ChartDataTransformer.applyViewState(
+			makeAscendingBarChart(),
+			{ ...viewState, grouping: 'month', percentage: false },
+			{ ...capabilities, allowGrouping: true }
+		)
+		// Only the title is read for time-series exports.
+		const csvRows = buildExportModel({ title: 'Fees' } as ChartConfiguration, transformed)?.csvRows
+
+		expect(csvRows?.[0]?.slice(0, 3)).toEqual(['Timestamp', 'Month start', 'Month end'])
+		expect(csvRows?.[2]?.slice(0, 3)).toEqual([Date.UTC(2026, 1, 1), '2026-02-01', '2026-02-28'])
 	})
 
 	test('preserves chronological order while accumulating an ascending dataset', () => {

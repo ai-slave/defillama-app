@@ -6,7 +6,7 @@ import type { DashboardGrouping } from '~/containers/ProDashboard/types'
 import { llamaDb } from '~/server/db/llama'
 import { serializeCsvRow } from '~/utils/csv'
 import type { CsvCell } from '~/utils/csvCell'
-import { getGroupedTimestampSec } from '../../utils'
+import { getCsvPeriodCells, getCsvPeriodHeaders, getGroupedTimestampSec } from '../../utils'
 import { isoDateFromTimestamp, percentageValues, writeCsvChunk } from './csvStream'
 
 export type SnapshotCsvEntity = { key: string; label: string }
@@ -45,8 +45,8 @@ function timestampFromIsoDate(date: string): number {
 	return Math.floor(Date.parse(`${date}T00:00:00Z`) / 1000)
 }
 
-function csvRow(date: string, values: Array<number | undefined>, percentage: boolean): Array<CsvCell> {
-	return [date, ...(percentage ? percentageValues(values) : values)]
+function csvRow(periodCells: Array<string>, values: Array<number | undefined>, percentage: boolean): Array<CsvCell> {
+	return [...periodCells, ...(percentage ? percentageValues(values) : values)]
 }
 
 export async function streamSnapshotCsv<Row extends SnapshotValueRow>({
@@ -64,7 +64,10 @@ export async function streamSnapshotCsv<Row extends SnapshotValueRow>({
 	if (entities.length === 0) return 0
 	const entityIndex = new Map(entities.map((entity, index) => [entity.key, index]))
 	if (!treemap) {
-		await writeCsvChunk(output, `${serializeCsvRow(['Date', ...entities.map((entity) => entity.label)])}\n`)
+		await writeCsvChunk(
+			output,
+			`${serializeCsvRow([...getCsvPeriodHeaders(grouping), ...entities.map((entity) => entity.label)])}\n`
+		)
 	}
 
 	let currentDate: string | null = null
@@ -77,7 +80,7 @@ export async function streamSnapshotCsv<Row extends SnapshotValueRow>({
 	const writeTimeSeriesRow = async (timestamp: number, values: Array<number | undefined>) => {
 		await writeCsvChunk(
 			output,
-			`${serializeCsvRow(csvRow(isoDateFromTimestamp(timestamp), values, displayAs === 'percentage'))}\n`
+			`${serializeCsvRow(csvRow(getCsvPeriodCells(timestamp, grouping), values, displayAs === 'percentage'))}\n`
 		)
 		emittedRows++
 	}

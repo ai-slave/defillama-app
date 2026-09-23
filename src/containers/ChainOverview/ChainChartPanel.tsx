@@ -113,9 +113,11 @@ export function ChainChartPanel({
 	const chartRenderModel = useMemo(
 		() => ({
 			chartData: finalCharts,
-			valueSymbol
+			valueSymbol,
+			// Deferred together with the rows, so labels never pair old rows with a new grouping.
+			groupBy
 		}),
-		[finalCharts, valueSymbol]
+		[finalCharts, valueSymbol, groupBy]
 	)
 	const deferredChartRenderModel = useDeferredValue(chartRenderModel)
 
@@ -139,7 +141,7 @@ export function ChainChartPanel({
 	const metricsDialogStore = Ariakit.useDialogStore()
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
-	const prepareCsv = () => prepareChartCsv(chartRenderModel.chartData, `${chain}.csv`)
+	const prepareCsv = () => prepareChartCsv(chartRenderModel.chartData, `${chain}.csv`, groupBy)
 
 	const { chartInstance: chainChartInstance, handleChartReady } = useChartImageExport()
 	const imageExportFilename = slug(metadata.name)
@@ -413,7 +415,7 @@ export function ChainChartPanel({
 							chartData={deferredChartRenderModel.chartData}
 							valueSymbol={deferredChartRenderModel.valueSymbol}
 							isThemeDark={darkMode}
-							groupBy={groupBy}
+							groupBy={deferredChartRenderModel.groupBy}
 							onReady={handleChartReady}
 						/>
 					</Suspense>

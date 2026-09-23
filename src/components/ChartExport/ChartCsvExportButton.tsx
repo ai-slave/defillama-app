@@ -2,9 +2,10 @@ import type { DatasetComponentOption } from 'echarts'
 import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
 import { CSVDownloadButton, type CsvPayload, type PrepareCsv } from '~/components/CsvDownloadButton'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
+import { getPeriodCsvCells, getPeriodCsvHeaders } from '~/components/ECharts/shared/csv'
 import { buttonStyles } from '~/ui/Button'
 import type { CsvCell } from '~/utils/csvCell'
-import { formatIsoDate } from '~/utils/dateFormat'
 
 function isRecord(x: unknown): x is Record<string, unknown> {
 	return !!x && typeof x === 'object' && !Array.isArray(x)
@@ -70,7 +71,8 @@ function getDatasetFromOption(option: ReturnType<echarts.ECharts['getOption']>):
 
 export function buildCsvRowsFromDataset(
 	dimensions: Array<string> | null,
-	source: Array<unknown> | null
+	source: Array<unknown> | null,
+	groupBy: ChartTimeGroupingWithCumulative
 ): Array<Array<CsvCell>> {
 	if (!source || source.length === 0) return []
 
@@ -112,7 +114,8 @@ export function buildCsvRowsFromDataset(
 	const rows: Array<Array<CsvCell>> = []
 
 	if (hasTimestamp) {
-		rows.push(['Timestamp', 'Date', ...seriesDims])
+		const periodHeaders = getPeriodCsvHeaders(groupBy)
+		rows.push(['Timestamp', ...periodHeaders, ...seriesDims])
 		const tsIndex = dims.indexOf('timestamp')
 		const seriesIndexes = seriesDims.map((k) => dims.indexOf(k))
 
@@ -133,7 +136,7 @@ export function buildCsvRowsFromDataset(
 			const tsSeconds = normalizeEpochSeconds(tsRaw)
 			rows.push([
 				toChartCsvCell(tsRaw),
-				tsSeconds != null ? (formatIsoDate(tsSeconds, { input: 'seconds' }) ?? '') : '',
+				...(tsSeconds != null ? getPeriodCsvCells(tsSeconds * 1e3, groupBy) : periodHeaders.map(() => '')),
 				...values
 			])
 		}
@@ -154,16 +157,19 @@ export function buildCsvRowsFromDataset(
 	return rows
 }
 
-export function buildCsvFromDataset({
+function buildCsvFromDataset({
 	dimensions,
 	source,
+	groupBy,
 	filenameBase
 }: {
 	dimensions: Array<string> | null
 	source: Array<unknown> | null
+	/** The grouping the chart's tooltip labels rows by. */
+	groupBy: ChartTimeGroupingWithCumulative
 	filenameBase: string | undefined
 }): { filename: string; rows: Array<Array<CsvCell>> } {
-	const rows = buildCsvRowsFromDataset(dimensions, source)
+	const rows = buildCsvRowsFromDataset(dimensions, source, groupBy)
 	if (rows.length === 0) throw new Error('No chart data available for CSV export')
 
 	const base = filenameBase || 'chart'
@@ -171,7 +177,7 @@ export function buildCsvFromDataset({
 	return { filename: `${base}-${date}`, rows }
 }
 
-function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
+function buildCsvRowsFromSeriesFallback(option: any, groupBy: ChartTimeGroupingWithCumulative): Array<Array<CsvCell>> {
 	const seriesRaw = option?.series
 	const seriesArr: Array<any> = Array.isArray(seriesRaw) ? seriesRaw : seriesRaw ? [seriesRaw] : []
 	if (seriesArr.length === 0) return []
@@ -260,7 +266,10 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 
 	const includeDate = isTimeAxis
 	const headerLabel = xAxis?.type === 'category' || yAxis?.type === 'category' ? 'category' : 'x'
-	const header: Array<CsvCell> = includeDate ? [headerLabel, 'Date', ...seriesNames] : [headerLabel, ...seriesNames]
+	const periodHeaders = getPeriodCsvHeaders(groupBy)
+	const header: Array<CsvCell> = includeDate
+		? [headerLabel, ...periodHeaders, ...seriesNames]
+		: [headerLabel, ...seriesNames]
 	const rows: Array<Array<CsvCell>> = [header]
 
 	for (const xKey of sorted) {
@@ -268,7 +277,11 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 		const tsSeconds = includeDate ? normalizeEpochSeconds(xKey) : null
 		rows.push([
 			toChartCsvCell(xKey),
-			...(includeDate ? [tsSeconds != null ? (formatIsoDate(tsSeconds, { input: 'seconds' }) ?? '') : ''] : []),
+			...(includeDate
+				? tsSeconds != null
+					? getPeriodCsvCells(tsSeconds * 1e3, groupBy)
+					: periodHeaders.map(() => '')
+				: []),
 			...seriesNames.map((name) => toChartCsvCell(record[name]))
 		])
 	}
@@ -285,8 +298,9 @@ function buildCsvFromChart({
 }): { filename: string; rows: Array<Array<CsvCell>> } {
 	const option = instance.getOption()
 	const { dimensions, source } = getDatasetFromOption(option)
-	const rows = buildCsvRowsFromDataset(dimensions, source)
-	const rowsSafe = rows.length > 0 ? rows : buildCsvRowsFromSeriesFallback(option)
+	// A rendered chart does not say how its rows are grouped, so its dates stay daily.
+	const rows = buildCsvRowsFromDataset(dimensions, source, 'daily')
+	const rowsSafe = rows.length > 0 ? rows : buildCsvRowsFromSeriesFallback(option, 'daily')
 
 	if (rowsSafe.length === 0) {
 		throw new Error('No chart data available for CSV export')
@@ -300,6 +314,8 @@ function buildCsvFromChart({
 export interface ChartCsvDataset {
 	dimensions: Array<string> | null
 	source: Array<unknown> | null
+	/** How the rows are grouped, so the export names each row's period. Omitted means daily. */
+	groupBy?: ChartTimeGroupingWithCumulative
 }
 
 export type PrepareChartCsvDataset = () => ChartCsvDataset | Promise<ChartCsvDataset>
@@ -341,6 +357,7 @@ export function ChartCsvExportButton({
 			result = buildCsvFromDataset({
 				dimensions: dataset.dimensions,
 				source: dataset.source,
+				groupBy: dataset.groupBy ?? 'daily',
 				filenameBase: filename
 			})
 		} else {

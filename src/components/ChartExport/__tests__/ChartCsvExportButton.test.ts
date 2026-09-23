@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import type { PrepareCsv } from '~/components/CsvDownloadButton'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 
 const mocks = vi.hoisted(() => ({
 	prepareCsv: undefined as PrepareCsv | undefined
@@ -30,11 +31,12 @@ async function prepareCsv(instance: ECharts) {
 	return await mocks.prepareCsv()
 }
 
-async function prepareCsvFromDataset(instance: ECharts) {
+async function prepareCsvFromDataset(instance: ECharts, groupBy?: ChartTimeGroupingWithCumulative) {
 	mocks.prepareCsv = undefined
 	const prepareDataset = vi.fn(() => ({
 		dimensions: ['timestamp', 'Solana', 'Ethereum'],
-		source: [[Date.UTC(2024, 0, 1), 50, 100]]
+		source: [[Date.UTC(2024, 0, 1), 50, 100]],
+		...(groupBy ? { groupBy } : {})
 	}))
 	renderToStaticMarkup(
 		createElement(ChartCsvExportButton, {
@@ -54,6 +56,19 @@ async function prepareCsvFromDataset(instance: ECharts) {
 }
 
 describe('ChartCsvExportButton', () => {
+	test('names both ends of the period each row of a grouped dataset covers', async () => {
+		const instance = { getOption: vi.fn(() => ({})) } as unknown as ECharts
+
+		expect((await prepareCsvFromDataset(instance, 'monthly')).rows).toEqual([
+			['Timestamp', 'Month start', 'Month end', 'Solana', 'Ethereum'],
+			[Date.UTC(2024, 0, 1), '2024-01-01', '2024-01-31', 50, 100]
+		])
+		expect((await prepareCsvFromDataset(instance)).rows).toEqual([
+			['Timestamp', 'Date', 'Solana', 'Ethereum'],
+			[Date.UTC(2024, 0, 1), '2024-01-01', 50, 100]
+		])
+	})
+
 	test('uses logical display names from private ECharts dimensions', async () => {
 		const instance = {
 			getOption: vi.fn(() => ({

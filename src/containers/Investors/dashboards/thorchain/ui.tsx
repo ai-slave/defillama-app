@@ -422,13 +422,16 @@ export function TimeBarCard({
 	subtitle,
 	value,
 	valueSymbol,
-	control
+	control,
+	groupBy
 }: {
 	chart: Chart
 	subtitle?: string
 	value?: string
 	valueSymbol?: string
 	control?: React.ReactNode
+	/** The period each bar covers; defaults to one day. */
+	groupBy?: IMultiSeriesChartProps['groupBy']
 }) {
 	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
 	const { dataset, charts, chartOptions } = useMemo(() => {
@@ -462,6 +465,7 @@ export function TimeBarCard({
 				hideDefaultLegend={charts.length < 2}
 				exportButtons={CSV_ONLY_EXPORT}
 				chartOptions={chartOptions}
+				{...(groupBy ? { groupBy } : {})}
 			/>
 		</ChartCard>
 	)

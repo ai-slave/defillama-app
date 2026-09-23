@@ -6,7 +6,12 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatChartValue } from '~/components/ECharts/shared/formatters'
 import { isChartDataRow, type ChartConfiguration, type ChartDataSeries } from '~/containers/LlamaAI/chartTypes'
-import { buildLogoByCategory, getChartColor, parseStringNumber } from '~/containers/LlamaAI/utils/chartAdapters/shared'
+import {
+	buildLogoByCategory,
+	getChartColor,
+	parseChartDateMs,
+	parseStringNumber
+} from '~/containers/LlamaAI/utils/chartAdapters/shared'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 
 const normalizeHallmarks = (hallmarks?: Array<[number] | [number, string]>): Array<[number, string]> => {
@@ -141,8 +146,8 @@ const parseStrictDateLabelToMs = (timestamp: unknown): number | null => {
 	}
 
 	if (/^\d{4}-\d{2}-\d{2}T/.test(value)) {
-		const date = new Date(value)
-		return Number.isNaN(date.getTime()) ? null : date.getTime()
+		const date = parseChartDateMs(value)
+		return Number.isNaN(date) ? null : date
 	}
 
 	const monthNameMatch = value.match(/^([A-Za-z]+)\s+(\d{4})$/)

@@ -104,13 +104,13 @@ export function createCappedRemainderTooltipFormatter({
 }
 
 /** Compact formatter for charts whose only series label would repeat the chart title. */
-export function createSingleSeriesTooltipFormatter(valueSymbol: string) {
+export function createSingleSeriesTooltipFormatter(valueSymbol: string, groupBy: TooltipGroupBy = 'daily') {
 	return (params: unknown) => {
 		const items = normalizeTooltipItems(params)
 		if (items.length === 0) return ''
 
 		const axisValue = getTooltipAxisValue(items[0])
-		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, 'daily') : ''
+		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
 		for (const item of items) {
 			const name = item.seriesName
 			if (!name) continue

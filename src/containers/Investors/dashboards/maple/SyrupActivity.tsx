@@ -374,6 +374,7 @@ export default function SyrupActivity() {
 				<ChartCard title="Monthly stSyrup Deposits vs Withdrawals">
 					<MultiSeriesChart
 						dataset={monthlyChart}
+						groupBy="monthly"
 						charts={MONTHLY_ACTIVITY_CHARTS}
 						valueSymbol="$"
 						height="400px"
@@ -390,6 +391,7 @@ export default function SyrupActivity() {
 				<ChartCard title="Monthly Syrup Token Migrations">
 					<MultiSeriesChart
 						dataset={migrationChart}
+						groupBy="monthly"
 						charts={MIGRATIONS_CHART}
 						valueSymbol=""
 						height="400px"
@@ -425,6 +427,7 @@ export default function SyrupActivity() {
 					<ChartCard title="Monthly Drip Claims">
 						<MultiSeriesChart
 							dataset={dripMonthlyChart}
+							groupBy="monthly"
 							charts={DRIP_CLAIMS_CHART}
 							valueSymbol=""
 							height="400px"

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
+import { createChartBuilderTooltipFormatter } from './chartBuilderTooltip'
 
 describe('Pro chart builder tooltip', () => {
 	test('renders the total first and explicit Others last', () => {
@@ -47,11 +47,5 @@ describe('Pro chart builder tooltip', () => {
 		expect(single).not.toContain('Total')
 		expect(single).not.toContain('grid-template-columns')
 		expect(many).toContain('grid-template-columns:1fr 1fr')
-	})
-
-	test('maps dashboard groupings to the shared tooltip grouping names', () => {
-		expect(dashboardGroupingToTooltipGroupBy('day')).toBe('daily')
-		expect(dashboardGroupingToTooltipGroupBy('week')).toBe('weekly')
-		expect(dashboardGroupingToTooltipGroupBy('quarter')).toBe('quarterly')
 	})
 })

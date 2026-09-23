@@ -823,7 +823,11 @@ function ChartContainer({
 					]),
 		[unlockedPercent]
 	)
-	const scheduleChartData = useMemo(() => ({ dataset, charts }), [dataset, charts])
+	// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
+	const scheduleChartData = useMemo(
+		() => ({ dataset, charts, groupBy: CHART_GROUP_BY[timeGrouping] }),
+		[dataset, charts, timeGrouping]
+	)
 	const deferredScheduleChartData = useDeferredValue(scheduleChartData)
 	const deferredAllocationPieChartData = useDeferredValue(formattedPieChartDataAllocationMode)
 	const deferredUnlockedPieChartData = useDeferredValue(unlockedPieChartData)
@@ -975,7 +979,7 @@ function ChartContainer({
 								title={`${data.name} Unlock Schedule`}
 								csvSource={{
 									type: 'dataset',
-									prepare: () => deferredScheduleChartData.dataset
+									prepare: () => ({ ...deferredScheduleChartData.dataset, groupBy: deferredScheduleChartData.groupBy })
 								}}
 							/>
 						</ChartPanelToolbar>
@@ -994,7 +998,7 @@ function ChartContainer({
 									expandTo100Percent={chartType === 'bar'}
 									solidChartAreaStyle
 									valueSymbol={data.tokenPrice.symbol ?? ''}
-									groupBy={CHART_GROUP_BY[timeGrouping]}
+									groupBy={deferredScheduleChartData.groupBy}
 									showTotalInTooltip
 									onReady={handleChartReady}
 									hideDefaultLegend={false}

@@ -9,9 +9,21 @@ import { downloadCSV } from '~/utils/download'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
-import { type Chain, type ChartConfig, getProDashboardChartTypeConfig, type Protocol } from '../types'
+import {
+	type Chain,
+	type ChartConfig,
+	type DashboardGrouping,
+	getProDashboardChartTypeConfig,
+	type Protocol
+} from '../types'
 import { ProMeta, ProSegmented } from '../ui'
-import { generateChartColor, getItemIconUrl } from '../utils'
+import {
+	DASHBOARD_CHART_GROUPING,
+	generateChartColor,
+	getCsvPeriodCells,
+	getCsvPeriodHeaders,
+	getItemIconUrl
+} from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { useCardHeightScale, scaledPx } from './cardHeightContext'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
@@ -31,6 +43,7 @@ interface ChartCardProps {
 interface ChartRendererProps {
 	type: ChartConfig['type']
 	showCumulative: ChartConfig['showCumulative']
+	grouping: DashboardGrouping
 	dataset: MultiSeriesChartDataset
 	isLoading: boolean
 	hasError: boolean
@@ -50,6 +63,7 @@ const CUMULATIVE_DISPLAY_OPTIONS = [
 function ChartRenderer({
 	type,
 	showCumulative = false,
+	grouping,
 	dataset,
 	isLoading,
 	hasError,
@@ -62,7 +76,10 @@ function ChartRenderer({
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const valueSymbol =
 		userMetricTypes.has(type) || ratioMetricTypes.has(type) ? '' : percentMetricTypes.has(type) ? '%' : '$'
-	const chartOptions = useMemo(() => createSingleSeriesChartOptions(valueSymbol), [valueSymbol])
+	const chartOptions = useMemo(
+		() => createSingleSeriesChartOptions(valueSymbol, DASHBOARD_CHART_GROUPING[grouping]),
+		[valueSymbol, grouping]
+	)
 	const seriesName = dataset.dimensions[1]
 	if (!seriesName) throw new Error(`Missing series dimension for dashboard chart type: ${type}`)
 	const charts = useMemo<NonNullable<IMultiSeriesChartProps['charts']>>(() => {
@@ -188,6 +205,8 @@ export function ChartCard({ chart }: ChartCardProps) {
 			}
 		}, [chart, getChainInfo, getProtocolInfo])
 
+	// The grouping applied to the data. Metrics that cannot be grouped stay daily.
+	const grouping: DashboardGrouping = isGroupable ? (chart.grouping ?? 'day') : 'day'
 	const chartDataset = useMemo(
 		() => buildSingleMetricChartDataset(chartState.data, chartTypeDetails.title, showCumulative && isBarChart),
 		[chartState.data, chartTypeDetails.title, isBarChart, showCumulative]
@@ -195,11 +214,11 @@ export function ChartCard({ chart }: ChartCardProps) {
 
 	const handleCsvExport = () => {
 		if (chartDataset.source.length === 0) return
-		const headers = ['Date', `${itemName} ${chartTypeDetails.title}`]
+		const headers = [...getCsvPeriodHeaders(grouping), `${itemName} ${chartTypeDetails.title}`]
 		const rows = chartDataset.source.map((row, index) => {
 			const timestamp = row[0]
 			if (typeof timestamp !== 'number') throw new Error(`Invalid dashboard chart timestamp at index ${index}`)
-			return [new Date(timestamp).toISOString().slice(0, 10), row[1]]
+			return [...getCsvPeriodCells(timestamp / 1e3, grouping), row[1]]
 		})
 		const fileName = `${itemName}_${chartTypeDetails.title.replace(/\s+/g, '_')}_${
 			new Date().toISOString().split('T')[0]
@@ -263,6 +282,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 				<ChartRenderer
 					type={chart.type}
 					showCumulative={chart.showCumulative}
+					grouping={grouping}
 					dataset={chartDataset}
 					isLoading={chartState.isLoading}
 					hasError={chartState.hasError}
