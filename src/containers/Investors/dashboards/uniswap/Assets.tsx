@@ -39,7 +39,10 @@ interface RwaRow {
 // DefiLlama's RWA categories with Pre-Stocks split out; RWA Wrappers (sUSDe/sUSDS/sDAI) are excluded
 // because they trade as stablecoins and already count in the Stablecoins category.
 interface RwaData {
-	kpis: Record<string, KpiT | undefined>
+	/** Absent when the monthly rwa-volume partitions haven't been backfilled yet (only the
+	 *  in-progress month is cached) - buildRwa returns nothing to aggregate in that state, even
+	 *  though bySectorDaily/byChainDaily below are still populated. */
+	kpis?: Record<string, KpiT | undefined>
 	/** Monthly, complete months only (the in-progress month is dropped server-side to avoid a
 	 *  misleading partial bar). Superseded as the sector chart's source by bySectorDaily below when
 	 *  present; kept as a fallback for older ir-server responses. */
@@ -56,7 +59,8 @@ interface RwaData {
 	/** Uniswap's % of all-DEX RWA volume — monthly only, no daily counterpart: summing a %-series
 	 *  client-side into a "weekly %" would not be a real ratio, so this always renders un-toggled. */
 	share: Chart | null
-	topTokens: { title?: string; rows: Array<RwaRow> }
+	/** Same absence condition as kpis above - monthly-only, no daily equivalent. */
+	topTokens?: { title?: string; rows: Array<RwaRow> }
 }
 
 // All served by the ir-server: token breadth and categories from Dune dex.trades (with
@@ -137,7 +141,7 @@ export default function Assets() {
 				<section className="flex flex-col gap-6">
 					<SectionHeader>Real-World Assets</SectionHeader>
 					<KpiGrid
-						kpis={data.rwa.kpis}
+						kpis={data.rwa.kpis ?? {}}
 						items={[
 							['rwaVolume', 'RWA Volume (Latest Month)'],
 							['rwaShare', 'Uniswap Share of DEX RWA'],
@@ -168,7 +172,7 @@ export default function Assets() {
 							}
 						/>
 					)}
-					{data.rwa.topTokens.rows.length > 0 && (
+					{data.rwa.topTokens && data.rwa.topTokens.rows.length > 0 && (
 						<ChartCard
 							title={data.rwa.topTokens.title ?? 'Top RWA Assets by Uniswap Volume'}
 							subtitle="Latest complete month, all chains."
