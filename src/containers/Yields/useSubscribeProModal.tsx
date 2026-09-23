@@ -17,7 +17,13 @@ const SubscribeProModal = lazy(() =>
  */
 export function useSubscribeProModal(source: string, placement: string): { show: () => void; modal: ReactNode } {
 	const [open, setOpen] = useState(false)
-	const store = Ariakit.useDialogStore({ open, setOpen })
+	const store = Ariakit.useDialogStore({
+		open,
+		setOpen: (next) => {
+			if (open && !next) trackYieldsEvent(YIELDS_EVENTS.VERIFIED_MODAL_CLOSE, { source, placement })
+			setOpen(next)
+		}
+	})
 
 	const show = useCallback(() => {
 		trackYieldsEvent(YIELDS_EVENTS.VERIFIED_UNLOCK_CLICK, { source, placement })
@@ -29,7 +35,7 @@ export function useSubscribeProModal(source: string, placement: string): { show:
 		show,
 		modal: open ? (
 			<Suspense fallback={null}>
-				<SubscribeProModal dialogStore={store} />
+				<SubscribeProModal dialogStore={store} source={source} placement={placement} />
 			</Suspense>
 		) : null
 	}

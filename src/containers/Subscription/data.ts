@@ -83,6 +83,12 @@ const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'pri
 						availability: 'check'
 					},
 					{ label: 'CSV data downloads', availability: 'check' },
+					{
+						label: 'Verified APY on yield pools: what a real holder actually received',
+						link: '/yields',
+						linkText: 'Verified APY',
+						availability: 'check'
+					},
 					{ label: 'Full access to LlamaFeed', availability: 'check' },
 					{ label: 'API Access', availability: 'x' }
 				]
@@ -281,6 +287,16 @@ export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 			},
 			{
 				label: 'CSV data downloads',
+				values: {
+					free: 'dash',
+					pro: 'check',
+					api: 'check',
+					enterprise: 'check'
+				}
+			},
+			{
+				label: 'Verified APY on yield pools',
+				link: '/yields',
 				values: {
 					free: 'dash',
 					pro: 'check',

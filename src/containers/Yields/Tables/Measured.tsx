@@ -1,7 +1,7 @@
 // The seal, the padlock and the card behind them, all belonging to the earn table's APY cell.
 // Unmeasured pools get nothing: a missing measurement is not a negative claim about the pool.
 import { useRouter } from 'next/router'
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
@@ -88,11 +88,13 @@ export function MeasuredLock({
 
 interface MeasuredOfferContent {
 	headline: string
-	detail: string
+	detail: ReactNode
 	label: string
 	/** The provenance word beside the label, only where a reported counterpart exists to contrast with. */
 	qualifier?: string
 	redacted: string
+	/** Further withheld figures, one per line. */
+	extraRows?: Array<{ label: string; redacted: string }>
 	cta: string
 }
 
@@ -125,6 +127,14 @@ function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content:
 					<span aria-label="hidden">{content.redacted}</span>
 				</span>
 			</span>
+			{content.extraRows?.map((row) => (
+				<span key={row.label} className="flex items-baseline justify-between gap-6">
+					<span className="text-secondary">{row.label}</span>
+					<span className="shrink-0 text-primary" aria-label="hidden">
+						{row.redacted}
+					</span>
+				</span>
+			))}
 			<span className="text-secondary">{content.detail}</span>
 			<button
 				type="button"
@@ -161,9 +171,20 @@ export function MeasuredExitOffer({ poolName, onUpgrade }: { poolName: string; o
 			onUpgrade={onUpgrade}
 			content={{
 				headline: 'Verified Exit Status',
-				detail: `Whether a real holder could actually withdraw from ${poolName}, how long it took, and what it cost.`,
-				label: 'Latest result',
+				detail: (
+					<>
+						Whether a real holder could actually withdraw from {poolName}:{' '}
+						<span className="text-primary">instant, partial, queued or blocked</span>, how long it took, and what it
+						cost.
+					</>
+				),
+				label: 'Exit',
+				qualifier: 'verified',
 				redacted: '•••',
+				extraRows: [
+					{ label: 'Time to exit', redacted: '•••' },
+					{ label: 'Cost', redacted: '•••' }
+				],
 				cta: 'Unlock Verified Exit Status'
 			}}
 		/>

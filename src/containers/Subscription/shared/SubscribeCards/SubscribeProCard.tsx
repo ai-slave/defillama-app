@@ -15,9 +15,11 @@ const PRO_CARD = MONTHLY_PRICING_CARDS.find((c) => c.key === 'pro')!
 
 interface SubscribeProModalProps {
 	dialogStore: Ariakit.DialogStore
+	source?: string
+	placement?: string
 }
 
-export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
+export function SubscribeProModal({ dialogStore, source, placement }: SubscribeProModalProps) {
 	const router = useRouter()
 	const { isAuthenticated } = useAuthContext()
 	const { isTrialAvailable: isTrialAvailableFromApi } = useSubscribe()
@@ -28,10 +30,12 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 	useEffect(() => {
 		if (dialogStore?.getState()?.open) {
 			trackUmamiEvent('subscribe-modal-open', {
-				page: router?.asPath
+				page: router?.asPath,
+				...(source ? { source } : {}),
+				...(placement ? { placement } : {})
 			})
 		}
-	}, [dialogStore, router?.asPath])
+	}, [dialogStore, placement, router?.asPath, source])
 
 	return (
 		<ClientOnly>

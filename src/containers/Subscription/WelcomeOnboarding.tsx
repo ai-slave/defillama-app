@@ -41,6 +41,15 @@ const ONBOARDING_OPTIONS = [
 		destination: '/pro'
 	},
 	{
+		id: 'verified-yields',
+		label: 'Verified APY',
+		description: 'What yield pools actually paid',
+		iconType: 'icon' as const,
+		iconName: 'badge-check' as const,
+		color: '#3b82f6',
+		destination: '/yields'
+	},
+	{
 		id: 'llamafeed',
 		label: 'LlamaFeed',
 		description: 'Real-time premium insights',
@@ -69,7 +78,7 @@ const ONBOARDING_OPTIONS = [
 	}
 ] as const
 
-const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets'] as const
+const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets', 'verified-yields'] as const
 
 // `window.sessionStorage` throws by itself when browser policy denies storage, so the access has to be
 // guarded and not just the getItem call. Both effects below read through this.

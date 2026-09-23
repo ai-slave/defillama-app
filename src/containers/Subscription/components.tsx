@@ -186,6 +186,15 @@ function PricingCardCta({
 	/* ── Still loading auth/subscription data: hide CTAs ── */
 	if (isPageStateLoading) return null
 
+	const checkoutEvent = (provider: 'stripe' | 'llamapay') =>
+		card.key === 'pro' || card.key === 'api'
+			? {
+					'data-umami-event': 'subscribe-checkout',
+					'data-umami-event-plan': card.key,
+					'data-umami-event-provider': provider
+				}
+			: {}
+
 	/* ── Team-granted and team-seat plans aren't self-serve; Contact Us stays valid ── */
 	if (isManualSubscription || isTeamProvided) {
 		if (card.key === 'enterprise') {
@@ -297,6 +306,7 @@ function PricingCardCta({
 							type="button"
 							className="h-14 flex-1 rounded-xl bg-emerald-600 text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={onStartTrial}
+							data-umami-event="subscribe-trial-start"
 						>
 							Start Free Trial
 						</button>
@@ -305,6 +315,7 @@ function PricingCardCta({
 							className="h-14 flex-1 rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={() => onPrimaryCtaClick?.(card.key)}
 							disabled={loading === 'stripe'}
+							{...checkoutEvent('stripe')}
 						>
 							{loading === 'stripe' ? 'Processing...' : card.primaryCta}
 						</button>
@@ -326,6 +337,7 @@ function PricingCardCta({
 							className={outlineBtnCls}
 							onClick={() => onSecondaryCtaClick?.(card.key)}
 							disabled={loading === 'llamapay'}
+							{...checkoutEvent('llamapay')}
 						>
 							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
 						</button>
@@ -339,6 +351,7 @@ function PricingCardCta({
 							className={outlineBtnCls}
 							onClick={() => onSecondaryCtaClick?.(card.key)}
 							disabled={loading === 'llamapay'}
+							{...checkoutEvent('llamapay')}
 						>
 							{loading === 'llamapay' ? 'Processing...' : card.secondaryCta}
 						</button>
@@ -348,6 +361,7 @@ function PricingCardCta({
 						className={filledBtnCls}
 						onClick={() => onPrimaryCtaClick?.(card.key)}
 						disabled={loading === 'stripe'}
+						{...checkoutEvent('stripe')}
 					>
 						{loading === 'stripe' ? 'Processing...' : card.primaryCta}
 					</button>

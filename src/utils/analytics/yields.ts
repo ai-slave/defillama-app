@@ -29,7 +29,8 @@ export const YIELDS_EVENTS = {
 	POOL_EXTERNAL_LINK: 'yields-pool-external-link',
 	// Premium
 	YIELD_SCORE_CLICK: 'yields-yield-score-click',
-	VERIFIED_UNLOCK_CLICK: 'yields-verified-unlock-click'
+	VERIFIED_UNLOCK_CLICK: 'yields-verified-unlock-click',
+	VERIFIED_MODAL_CLOSE: 'yields-verified-modal-close'
 } as const
 
 type YieldsEventName = (typeof YIELDS_EVENTS)[keyof typeof YIELDS_EVENTS]
