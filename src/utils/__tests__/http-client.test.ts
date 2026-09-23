@@ -105,6 +105,63 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(url.searchParams.get('x-llama-pro-key')).toBeNull()
 	})
 
+	test('authenticates direct coins POST requests and preserves their body', async () => {
+		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
+			COINS_BACKEND_KEY: 'coins-secret',
+			COINS_SERVER_URL: 'https://coins.example.com'
+		})
+		const body = JSON.stringify({ coins: { 'coingecko:bitcoin': [1_700_000_000] }, searchWidth: '6h' })
+
+		await fetchWithPoolingOnServer(
+			'https://coins.example.com/pro/prices/historical?requestType=internal&x-coins-internal-key=old&x-coins-pro-key=old',
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body
+			}
+		)
+
+		const url = fetchedUrl(fetchMock)
+		expect(url.searchParams.get('x-coins-pro-key')).toBe('coins-secret')
+		expect(url.searchParams.get('requestType')).toBe('pro')
+		expect(url.searchParams.has('x-coins-internal-key')).toBe(false)
+		expect(fetchMock).toHaveBeenCalledWith(url.toString(), expect.objectContaining({ method: 'POST', body }))
+	})
+
+	test('does not attach coins credentials to Pro, unrelated hosts, or browser requests', async () => {
+		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
+			COINS_BACKEND_KEY: 'coins-secret',
+			COINS_SERVER_URL: 'https://coins.example.com'
+		})
+		await fetchWithPoolingOnServer('https://pro-api.llama.fi/key/coins/pro/prices/historical')
+		await fetchWithPoolingOnServer('https://other.example.com/pro/prices/historical')
+		vi.stubGlobal('window', {})
+		await fetchWithPoolingOnServer('https://coins.example.com/prices/current')
+
+		for (let index = 0; index < 3; index++) {
+			expect(fetchedUrl(fetchMock, index).searchParams.has('x-coins-pro-key')).toBe(false)
+			expect(fetchedUrl(fetchMock, index).searchParams.has('requestType')).toBe(false)
+		}
+	})
+
+	test('preserves secret base paths when routing direct services with a Pro key also set', async () => {
+		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
+			API_KEY: 'pro-key',
+			RWA_PERPS_SERVER_URL: 'https://rwa-perps.example.com/rwa-secret/',
+			YIELDS_V2_SERVER_URL: 'https://yields.example.com/yields-secret/',
+			VAULT_RISK_SERVER_URL: 'https://vault-risk.example.com/vault-secret/'
+		})
+		const { RWA_PERPS_SERVER_URL, YIELDS_V2_SERVER_URL, VAULT_RISK_API } = await import('~/constants')
+
+		await fetchWithPoolingOnServer(`${RWA_PERPS_SERVER_URL}/list?includeCex=true`)
+		await fetchWithPoolingOnServer(`${YIELDS_V2_SERVER_URL}/v2/pools`)
+		await fetchWithPoolingOnServer(VAULT_RISK_API)
+
+		expect(fetchedUrl(fetchMock, 0).toString()).toBe('https://rwa-perps.example.com/rwa-secret/list?includeCex=true')
+		expect(fetchedUrl(fetchMock, 1).toString()).toBe('https://yields.example.com/yields-secret/v2/pools')
+		expect(fetchedUrl(fetchMock, 2).toString()).toBe('https://vault-risk.example.com/vault-secret/v1/vault-risks')
+	})
+
 	test('does not append direct auth for pro fallback or unrelated direct server URLs', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',

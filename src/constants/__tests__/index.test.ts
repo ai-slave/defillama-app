@@ -109,6 +109,21 @@ describe('server URL constants', () => {
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields.example.com')
 	})
 
+	test('keeps non-overridden services on Pro and honors direct core metadata URLs', async () => {
+		const constants = await importConstantsWithEnv({
+			API_KEY: 'secret-api-key',
+			SERVER_URL: 'https://core.example.com/api/',
+			COINS_SERVER_URL: '   '
+		})
+
+		expect(constants.TOKEN_DIRECTORY_API).toBe('https://core.example.com/api/config/smol/token.json')
+		expect(constants.TOTAL_TRACKED_BY_METRIC_API).toBe(
+			'https://core.example.com/api/config/smol/appMetadata-totalTrackedByMetric.json'
+		)
+		expect(constants.COINS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/coins')
+		expect(constants.DATASETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/datasets')
+	})
+
 	test('uses an explicit V2 server URL override when provided', async () => {
 		const constants = await importConstantsWithEnv({
 			API_KEY: 'secret-api-key',

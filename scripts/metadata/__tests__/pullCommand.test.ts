@@ -155,6 +155,23 @@ describe('pull metadata command', () => {
 		expect((await readMetadataArtifactManifest(cacheDir))?.pulledAt).toBe(2000)
 	})
 
+	test('pulls metadata in local development with a direct URL and no API key', async () => {
+		const repoRoot = await createRepoRoot()
+		const fetchMetadata = vi.fn().mockResolvedValue(createPayload())
+
+		const result = await runPullMetadataCommand({
+			env: { API_KEY: '', NODE_ENV: 'development', SERVER_URL: 'https://core.example.com' },
+			fetchMetadata,
+			logger: { log: vi.fn() },
+			now: 3000,
+			repoRoot
+		})
+
+		expect(result.exitCode).toBe(0)
+		expect(fetchMetadata).toHaveBeenCalledTimes(1)
+		expect((await readMetadataArtifactManifest(getMetadataCacheDir(repoRoot)))?.status).toBe('ready')
+	})
+
 	test('writes stubs and exits successfully for local development without an API key', async () => {
 		const repoRoot = await createRepoRoot()
 		const fetchMetadata = vi.fn()

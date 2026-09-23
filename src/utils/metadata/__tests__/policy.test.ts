@@ -1,17 +1,19 @@
 import { describe, expect, test } from 'vitest'
-import { isLocalDevWithoutApiKey, shouldSkipMetadataRefresh, shouldWriteMetadataStubsOnFailure } from '../policy'
+import { DIRECT_URL_ENV_NAMES } from '../../directApi'
+import { shouldSkipMetadataRefresh, shouldWriteMetadataStubsOnFailure } from '../policy'
 
 describe('metadata stub policy', () => {
-	test('detects local development without an API key', () => {
-		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'development', API_KEY: '' })).toBe(true)
-		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'development', API_KEY: 'key' })).toBe(false)
-		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'production', API_KEY: '' })).toBe(false)
-	})
-
-	test('uses the same local-dev no-key condition for runtime refresh skips', () => {
+	test('skips unconfigured local development but allows keyed and production refreshes', () => {
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: '' })).toBe(true)
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: 'key' })).toBe(false)
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'production', API_KEY: '' })).toBe(false)
+	})
+
+	test.each(DIRECT_URL_ENV_NAMES)('allows refresh without an API key when %s is configured', (name) => {
+		expect(
+			shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: '', [name]: ' https://upstream.example.com/ ' })
+		).toBe(false)
+		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: '', [name]: '   ' })).toBe(true)
 	})
 
 	test('allows stub writes only in development', () => {

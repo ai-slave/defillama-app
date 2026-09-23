@@ -27,6 +27,11 @@ describe('secret redaction', () => {
 		)
 	})
 
+	test('redacts raw and URL-encoded coins backend keys', () => {
+		const redactor = createSecretRedactor(testEnv({ COINS_BACKEND_KEY: 'coins/secret+' }))
+		expect(redactor('key=coins/secret+ query=coins%2Fsecret%2B')).toBe('key=[REDACTED] query=[REDACTED]')
+	})
+
 	test('ignores inherited env values while collecting secrets', () => {
 		const env = Object.create({ API_KEY: 'inherited-secret' }) as NodeJS.ProcessEnv
 		env.LOGGER_API_KEY = 'own-secret'

@@ -25,13 +25,15 @@ export type DirectUrlEnvName = (typeof DIRECT_URL_ENV_NAMES)[number]
 
 export const DIRECT_AUTH_SECRET_ENV_NAMES = [
 	'API2_SECRET_KEY',
+	'COINS_BACKEND_KEY',
 	'EQUITIES_SECRET_KEY',
 	'LIQUIDATIONS_SECRET_KEY'
 ] as const
 
-type DirectAuthSecretKind = 'core' | 'equities' | 'liquidations'
+type DirectAuthSecretKind = 'core' | 'equities' | 'liquidations' | 'coins'
 
 const DIRECT_AUTH_CONFIGS = [
+	{ envName: 'COINS_SERVER_URL', queryParamName: 'x-coins-pro-key', secretKind: 'coins' },
 	{ envName: 'SERVER_URL', queryParamName: 'x-llama-pro-key', secretKind: 'core' },
 	{ envName: 'V2_SERVER_URL', queryParamName: 'x-llama-pro-key', secretKind: 'core' },
 	{ envName: 'EQUITIES_SERVER_URL', queryParamName: 'x-llama-equity-secret', secretKind: 'equities' },
@@ -58,6 +60,8 @@ function getCoreDirectAuthSecret(): string | undefined {
 
 function getDirectAuthSecret(kind: DirectAuthSecretKind): string | undefined {
 	switch (kind) {
+		case 'coins':
+			return normalizeDirectAuthSecret(process.env.COINS_BACKEND_KEY)
 		case 'core':
 			return getCoreDirectAuthSecret()
 		case 'equities':
@@ -159,7 +163,7 @@ function getDirectAuth(url: URL): { queryParamName: string; secret: string } | n
 		}
 	}
 
-	return bestMatch ? { queryParamName: bestMatch.queryParamName, secret: bestMatch.secret } : null
+	return bestMatch
 }
 
 export function withDirectApiAuth(url: RequestInfo | URL): RequestInfo | URL {
@@ -177,6 +181,11 @@ export function withDirectApiAuth(url: RequestInfo | URL): RequestInfo | URL {
 	if (!auth) return url
 
 	parsed.searchParams.set(auth.queryParamName, auth.secret)
+	if (auth.queryParamName === 'x-coins-pro-key') {
+		// Coins authorizes /pro/* using both the backend secret and the caller tier.
+		parsed.searchParams.delete('x-coins-internal-key')
+		parsed.searchParams.set('requestType', 'pro')
+	}
 
 	if (typeof url === 'string') return parsed.toString()
 	if (url instanceof URL) return parsed

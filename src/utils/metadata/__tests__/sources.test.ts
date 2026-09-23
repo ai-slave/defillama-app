@@ -202,6 +202,7 @@ describe('metadata source adapters', () => {
 		await fetchCoreMetadataSources()
 
 		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
+		expectMetadataRequest('https://core.example.com/api/config/smol/token.json')
 		expectMetadataRequest('https://rwa.example.com/list')
 		expectMetadataRequest('https://rwa.example.com/rwa/platforms')
 		expectMetadataRequest('https://rwa.example.com/protocol-mcap')

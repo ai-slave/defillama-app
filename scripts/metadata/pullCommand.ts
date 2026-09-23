@@ -9,7 +9,7 @@ import {
 import { getMetadataCacheDir } from '../../src/utils/metadata/config'
 import { fetchCoreMetadata } from '../../src/utils/metadata/fetch'
 import { isMetadataArtifactManifestFresh } from '../../src/utils/metadata/manifest'
-import { isLocalDevWithoutApiKey, shouldWriteMetadataStubsOnFailure } from '../../src/utils/metadata/policy'
+import { shouldSkipMetadataRefresh, shouldWriteMetadataStubsOnFailure } from '../../src/utils/metadata/policy'
 
 type PullMetadataCommandOptions = {
 	env?: NodeJS.ProcessEnv
@@ -36,17 +36,19 @@ export async function runPullMetadataCommand({
 	const missingArtifacts =
 		manifest && !hasCompleteArtifacts ? await getMissingMetadataArtifacts(cacheDir, manifest) : []
 
-	if (isLocalDevWithoutApiKey(env)) {
+	if (shouldSkipMetadataRefresh(env)) {
 		if (manifest?.status === 'ready' && hasCompleteArtifacts) {
-			logger.log('[dev:prepare] Metadata cache: no API_KEY in local development; using existing cache')
+			logger.log('[dev:prepare] Metadata cache: no API_KEY or direct URLs in local development; using existing cache')
 			return { exitCode: 0 }
 		}
 		if (manifest?.status === 'ready') {
 			logger.log(
-				`[dev:prepare] Metadata cache: no API_KEY and existing cache is missing ${missingArtifacts.join(', ')}; writing stubs for missing artifacts`
+				`[dev:prepare] Metadata cache: no API_KEY or direct URLs and existing cache is missing ${missingArtifacts.join(', ')}; writing stubs for missing artifacts`
 			)
 		}
-		logger.log('[dev:prepare] Metadata cache: no API_KEY in local development; using existing cache or empty stubs')
+		logger.log(
+			'[dev:prepare] Metadata cache: no API_KEY or direct URLs in local development; using existing cache or empty stubs'
+		)
 		await writeMissingMetadataStubArtifacts(cacheDir, now)
 		return { exitCode: 0 }
 	}

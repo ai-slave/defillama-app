@@ -83,9 +83,9 @@ export const CATEGORY_INFO_API = `${FDV_SERVER_URL}/info`
 
 // Static assets
 export const ICONS_CDN = 'https://icons.llamao.fi/icons'
-export const TOTAL_TRACKED_BY_METRIC_API = 'https://api.llama.fi/config/smol/appMetadata-totalTrackedByMetric.json'
-// The pro token-directory cache can serve truncated JSON; keep this endpoint on the public API for now.
-export const TOKEN_DIRECTORY_API = 'https://api.llama.fi/config/smol/token.json'
+export const TOTAL_TRACKED_BY_METRIC_API = `${getDirectUrlEnv('SERVER_URL') ?? 'https://api.llama.fi'}/config/smol/appMetadata-totalTrackedByMetric.json`
+// The pro token-directory cache can serve truncated JSON; use the public API unless explicitly overridden.
+export const TOKEN_DIRECTORY_API = `${getDirectUrlEnv('SERVER_URL') ?? 'https://api.llama.fi'}/config/smol/token.json`
 
 // External services
 export const POCKETBASE_URL = 'https://pb.llama.fi'
