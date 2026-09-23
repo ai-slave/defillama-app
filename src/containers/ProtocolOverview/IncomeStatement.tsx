@@ -18,6 +18,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatMonthYear } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { getOffchainCostDisclosure } from './offchainCosts'
 import type { IProtocolOverviewPageData } from './types'
 
 const SankeyChart = lazy(() => import('~/components/ECharts/SankeyChart'))
@@ -99,6 +100,7 @@ export function IncomeStatement({
 	const headerId = anchorId ?? 'income-statement'
 	const showTable = view === 'table' || view === 'both'
 	const showSankey = view === 'sankey' || view === 'both'
+	const offchainCosts = getOffchainCostDisclosure(name)
 
 	const {
 		tableHeaders,
@@ -487,6 +489,7 @@ export function IncomeStatement({
 	const hasAnyBreakdownRows = Boolean(
 		grossProtocolRevenueByLabels.length > 0 ||
 		costOfRevenueByLabels.length > 0 ||
+		offchainCosts != null ||
 		grossProfitByLabels.length > 0 ||
 		(hasIncentives && incentivesByLabels.length > 0) ||
 		(incomeStatement.hasTokenHolderNetIncome && tokenHolderNetIncomeByLabels.length > 0) ||
@@ -665,6 +668,7 @@ export function IncomeStatement({
 									breakdownMethodology={
 										incomeStatement.breakdownMethodology['Cost Of Revenue'] ?? EMPTY_BREAKDOWN_METHODOLOGY
 									}
+									unknownBreakdown={offchainCosts?.costOfRevenue}
 									alignWithBreakdownRows={hasAnyBreakdownRows}
 								/>
 								<IncomeStatementByLabel
@@ -703,7 +707,9 @@ export function IncomeStatement({
 									data={earningsData}
 									dataType="earnings"
 									label="Earnings"
-									methodology={incomeStatement.methodology['Earnings'] ?? ''}
+									methodology={[incomeStatement.methodology['Earnings'], offchainCosts?.earningsNote]
+										.filter(Boolean)
+										.join(' ')}
 									tableHeaders={tableHeaders}
 									breakdownByLabels={EMPTY_BREAKDOWN_LABELS}
 									breakdownMethodology={EMPTY_BREAKDOWN_METHODOLOGY}
@@ -818,6 +824,7 @@ function IncomeStatementByLabel({
 	tableHeaders,
 	breakdownByLabels,
 	breakdownMethodology,
+	unknownBreakdown,
 	alignWithBreakdownRows
 }: {
 	protocolName: string
@@ -829,10 +836,12 @@ function IncomeStatementByLabel({
 	tableHeaders: Array<[string, string, number]>
 	breakdownByLabels: Array<string>
 	breakdownMethodology: Record<string, string>
+	// label -> explanation, for costs we know exist but can't measure onchain
+	unknownBreakdown?: Record<string, string> | undefined
 	alignWithBreakdownRows: boolean
 }) {
 	const isEarnings = dataType === 'earnings'
-	const hasBreakdownRows = breakdownByLabels.length > 0
+	const hasBreakdownRows = breakdownByLabels.length > 0 || unknownBreakdown != null
 	const showComparison = groupBy !== 'Cumulative'
 	const [isExpanded, setIsExpanded] = useState(true)
 	const getBreakdownValue = (header: [string, string, number] | undefined, breakdownLabel: string) => {
@@ -958,6 +967,35 @@ function IncomeStatementByLabel({
 							))}
 						</tr>
 					))}
+					{unknownBreakdown
+						? Object.entries(unknownBreakdown).map(([unknownLabel, explanation]) => (
+								<tr
+									key={`${protocolName}-${groupBy}-${dataType}-unknown-${unknownLabel}`}
+									className="group text-secondary"
+								>
+									<TokenPageTableIncomeHeaderCell
+										sticky
+										className="w-[36%] pl-9 font-normal italic group-hover:bg-hover-row"
+									>
+										<Tooltip
+											content={explanation}
+											className="flex justify-start underline decoration-current decoration-dotted"
+										>
+											{unknownLabel}
+										</Tooltip>
+									</TokenPageTableIncomeHeaderCell>
+									{tableHeaders.map((header, i) => (
+										<TokenPageTableIncomeCell
+											key={`${protocolName}-${groupBy}-${dataType}-unknown-${unknownLabel}-${header[0]}`}
+											lastColumn={i === tableHeaders.length - 1}
+											className="font-normal text-tertiary group-hover:bg-hover-row"
+										>
+											Unknown
+										</TokenPageTableIncomeCell>
+									))}
+								</tr>
+							))
+						: null}
 				</>
 			) : null}
 		</>

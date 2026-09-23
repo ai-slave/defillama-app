@@ -118,4 +118,40 @@ describe('IncomeStatement presentation', () => {
 		expect(markup).toContain('$0')
 		expect(markup).toContain('compared to previous quarter total swap')
 	})
+
+	test('renders off-chain costs as Unknown rows only for protocols with a disclosure', () => {
+		const incomeStatement = {
+			data: {
+				monthly: {},
+				quarterly: {
+					'2026-Q1': {
+						timestamp: Date.parse('2026-01-01'),
+						values: { 'Gross Protocol Revenue': { value: 25 } }
+					}
+				},
+				yearly: {},
+				cumulative: {}
+			},
+			labelsByType: {},
+			methodology: {},
+			breakdownMethodology: {},
+			hasOtherTokenHolderFlows: false,
+			hasTokenHolderNetIncome: false
+		} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
+
+		const render = (name: string) =>
+			renderToStaticMarkup(
+				<IncomeStatement name={name} incomeStatement={incomeStatement} view="table" showTitles={false} />
+			)
+
+		const cash = render('EtherFi Cash Liquid')
+		expect(cash).toContain('FX &amp; cross-border costs')
+		expect(cash).toContain('Card issuer &amp; network costs')
+		expect(cash).toContain('Unknown')
+		expect(cash).toContain('actual earnings may be lower')
+
+		const aave = render('Aave')
+		expect(aave).not.toContain('FX &amp; cross-border costs')
+		expect(aave).not.toContain('Unknown')
+	})
 })

@@ -5,12 +5,14 @@ import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions } from '~/public/definitions'
+import { Icon } from '~/ui/Icon'
 import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { getProtocolBridgeVolumeMetrics } from './chartSeries.utils'
 import { getPrimaryValueLabelType } from './helpers'
+import { getOffchainCostDisclosure } from './offchainCosts'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import type { IProtocolOverviewPageData } from './types'
 
@@ -493,6 +495,7 @@ function Fees(props: IKeyMetricsProps) {
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Fees"
+			warning={getOffchainCostDisclosure(props.name)?.metricsWarning}
 		/>
 	)
 }
@@ -516,6 +519,7 @@ function Revenue(props: IKeyMetricsProps) {
 			formatPrice={props.formatPrice}
 			openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
 			dataType="Revenue"
+			warning={getOffchainCostDisclosure(props.name)?.metricsWarning}
 		/>
 	)
 }
@@ -673,7 +677,8 @@ function SmolStats({
 	data,
 	protocolName,
 	formatPrice,
-	openSmolStatsSummaryByDefault = false
+	openSmolStatsSummaryByDefault = false,
+	warning
 }: {
 	data: Array<{
 		name: string
@@ -685,16 +690,31 @@ function SmolStats({
 	formatPrice: (value: number | null) => string | number | null
 	openSmolStatsSummaryByDefault?: boolean | undefined
 	dataType: string
+	warning?: string | undefined
 }) {
 	const restOfData = useMemo(() => data.slice(1), [data])
 	const primary = data[0]
 	if (!primary) return null
+	// The summary row is the tooltip anchor, so the warning joins the tooltip text instead of a nested tooltip.
+	const tooltip = warning
+		? [primary.tooltipContent, `⚠ ${warning}`].filter(Boolean).join('\n\n')
+		: primary.tooltipContent
+	const extra = warning ? (
+		<Icon
+			name="alert-triangle"
+			height={14}
+			width={14}
+			className="relative top-0.5 shrink-0 text-warning"
+			aria-label={warning}
+		/>
+	) : undefined
 
 	if (data.length === 1 && !primary.chainBreakdown) {
 		return (
 			<MetricRow
 				label={primary.name}
-				{...(primary.tooltipContent != null ? { tooltip: primary.tooltipContent } : {})}
+				{...(tooltip != null ? { tooltip } : {})}
+				extra={extra}
 				value={formatPrice(primary.value)}
 			/>
 		)
@@ -703,7 +723,8 @@ function SmolStats({
 	return (
 		<MetricSection
 			label={primary.name}
-			{...(primary.tooltipContent != null ? { tooltip: primary.tooltipContent } : {})}
+			{...(tooltip != null ? { tooltip } : {})}
+			extra={extra}
 			value={formatPrice(primary.value)}
 			defaultOpen={openSmolStatsSummaryByDefault}
 		>
