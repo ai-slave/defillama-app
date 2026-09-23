@@ -112,6 +112,7 @@ export interface PoolDetailViewProps {
 	// Measured, but stripped server-side: every verified-derived model above arrives empty.
 	// Null means SSR could not establish entitlement; the data is still redacted.
 	verifiedLocked?: boolean | null
+	stepAccrual?: boolean
 	holders: DetailHolders | null
 	details: {
 		poolTokenAddress: string | null
@@ -253,6 +254,7 @@ export function PoolDetailView({
 	apy: apyFromProps,
 	verifiedWindows: verifiedWindowsFromProps,
 	verifiedLocked,
+	stepAccrual = false,
 	holders,
 	details
 }: PoolDetailViewProps) {
@@ -337,7 +339,11 @@ export function PoolDetailView({
 	) : null
 	// A chart without its product card (history without a current measurement) still gets a panel.
 	const apyCard = verified ? (
-		<VerifiedApyPanel verified={verified} measuredSince={exitReliability?.measuredSince ?? null}>
+		<VerifiedApyPanel
+			verified={verified}
+			stepAccrual={stepAccrual}
+			measuredSince={exitReliability?.measuredSince ?? null}
+		>
 			{growthSection}
 		</VerifiedApyPanel>
 	) : growthSection ? (

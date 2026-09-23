@@ -51,10 +51,12 @@ export function describeCall(method: string): { signature: string; executed: boo
 
 export function VerifiedApyPanel({
 	verified,
+	stepAccrual = false,
 	measuredSince = null,
 	children
 }: {
 	verified: VerifiedBlock
+	stepAccrual?: boolean
 	/** First day the exit ledger holds, when the page has it. */
 	measuredSince?: string | null
 	/** The growth chart, when the page has history for it. */
@@ -65,7 +67,7 @@ export function VerifiedApyPanel({
 	const confidence = verified.apy_confidence
 	const stamps: Array<[label: string, asOf: string]> = []
 	for (const [label, asOf] of [
-		['APY measured', verified.apy_as_of],
+		[stepAccrual ? 'Rate last changed' : 'APY measured', verified.apy_as_of],
 		['Exit measured', verified.exit?.as_of]
 	] as const) {
 		if (asOf) stamps.push([label, asOf])

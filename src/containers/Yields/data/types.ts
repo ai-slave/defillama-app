@@ -78,6 +78,8 @@ export interface VerifiedBlock {
 	// compare only against the reported `apy.*.base`. Negative allowed.
 	apy: { avg_1d: number | null; avg_7d: number | null; avg_30d: number | null }
 	apy_as_of: string | null
+	// Joined from `/v2/meta`: the rate moves in discrete steps, so `apy_as_of` is the last rate change.
+	step_accrual?: boolean
 	// Explains an absent or odd APY; render wherever the APY shows.
 	apy_note?: string | null
 	apy_confidence: VerifiedConfidence | null
@@ -177,6 +179,7 @@ export interface YieldsMeta {
 	// Pools involving warehouse-classified meme tokens — a UI-level classification
 	// (default-hidden noise), served once here instead of as a per-row flag.
 	meme_pool_ids: Array<string>
+	step_accrual_pool_ids?: Array<string>
 }
 
 export interface EarnAttributes {

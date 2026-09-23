@@ -21,7 +21,7 @@ describe('Yields v2 snapshot reader', () => {
 			generatedAt: 0,
 			async readJson<T>(path: string): Promise<T> {
 				readJson(path)
-				// `readEarn` joins two artifacts, so the handle has to return real collections.
+				// `readEarn` joins three artifacts, so the handle has to return real collections.
 				return [] as T
 			}
 		}
@@ -38,8 +38,10 @@ describe('Yields v2 snapshot reader', () => {
 			readYieldsExploits(snapshot)
 		])
 
-		// Order-independent: `readEarn` pulls its two artifacts in parallel.
-		expect(readJson.mock.calls.map(([path]) => path).sort()).toEqual(Object.values(YIELDS_SNAPSHOT_FILES).sort())
+		// Order-independent: `readEarn` pulls its artifacts in parallel (meta twice: once for its join).
+		expect([...new Set(readJson.mock.calls.map(([path]) => path))].sort()).toEqual(
+			Object.values(YIELDS_SNAPSHOT_FILES).sort()
+		)
 	})
 
 	// enrich.server.ts caches by the earn array's identity, so the join has to be stable per handle.
@@ -50,6 +52,7 @@ describe('Yields v2 snapshot reader', () => {
 			generationId: 'test-gen',
 			generatedAt: 0,
 			async readJson<T>(path: string): Promise<T> {
+				if (path === YIELDS_SNAPSHOT_FILES.meta) return { step_accrual_pool_ids: ['b'] } as T
 				return (path === YIELDS_SNAPSHOT_FILES.earn ? earn : verified) as T
 			}
 		}
@@ -59,6 +62,6 @@ describe('Yields v2 snapshot reader', () => {
 		expect(first).toBe(second)
 		expect(first).toBe(await readEarn(snapshot))
 		expect(first[0]).toBe(earn[0])
-		expect(first[1]).toMatchObject({ id: 'b', verified: { apy: { avg_1d: 1 } } })
+		expect(first[1]).toMatchObject({ id: 'b', verified: { apy: { avg_1d: 1 }, step_accrual: true } })
 	})
 })

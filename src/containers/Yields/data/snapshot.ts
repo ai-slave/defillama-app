@@ -27,14 +27,18 @@ const verifiedEarnIds = new WeakMap<Array<EarnRow>, Set<string>>()
 
 /** Earn rows with the measured block joined on by pool id, so `row.verified` stays the feature flag. */
 export async function readEarn(snapshot: YieldsSnapshot): Promise<Array<EarnRow>> {
-	const [rows, verified] = await Promise.all([
+	const [rows, verified, meta] = await Promise.all([
 		snapshot.readJson<Array<EarnRow>>(YIELDS_SNAPSHOT_FILES.earn),
-		snapshot.readJson<Array<VerifiedRow>>(YIELDS_SNAPSHOT_FILES.earnVerified)
+		snapshot.readJson<Array<VerifiedRow>>(YIELDS_SNAPSHOT_FILES.earnVerified),
+		readYieldsMeta(snapshot)
 	])
 	if (!Array.isArray(verified) || verified.length === 0) return rows
 	let joined = joinedEarn.get(rows)
 	if (!joined) {
-		const byId = new Map(verified.map(({ id, ...block }) => [id, block]))
+		const stepAccrual = new Set(meta.step_accrual_pool_ids ?? [])
+		const byId = new Map(
+			verified.map(({ id, ...block }) => [id, stepAccrual.has(id) ? { ...block, step_accrual: true } : block])
+		)
 		// Unmeasured rows pass through by reference.
 		joined = rows.map((row) => {
 			const block = byId.get(row.id)

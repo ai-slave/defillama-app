@@ -415,6 +415,7 @@ export function MeasuredCard({
 	// APY and exit are probed separately; date whichever leg the card is reporting.
 	const stamp = reportsApy ? verified.apy_as_of : (verified.exit?.as_of ?? verified.apy_as_of)
 	const stale = reportsApy ? apyStale : !isVerifiedCurrent(stamp)
+	const measuredLabel = verified.step_accrual ? 'rate last changed' : 'measured'
 	// The headline is the protocol's figure in two cases; each says which reading is missing and why.
 	const windowLabel = WINDOW_LABEL[window]
 	const pendingWindow =
@@ -439,7 +440,7 @@ export function MeasuredCard({
 				{stamp ? (
 					<RelativeTime
 						value={stamp}
-						prefix={reportsApy ? (stale ? 'last measured' : 'measured') : 'exit measured'}
+						prefix={reportsApy ? (stale ? 'last measured' : measuredLabel) : 'exit measured'}
 						className={`shrink-0 ${stale ? 'text-warning' : 'text-tertiary'}`}
 					/>
 				) : null}

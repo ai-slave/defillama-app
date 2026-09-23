@@ -343,6 +343,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		props: {
 			hasRisk,
 			verifiedLocked: verifiedLocked && subscription === null ? null : verifiedLocked,
+			stepAccrual: meta.step_accrual_pool_ids?.includes(id) ?? false,
 			exploited,
 			poolId: id,
 			mode: 'pool',
