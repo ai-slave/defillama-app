@@ -75,6 +75,7 @@ export function YieldProjects({
 		for (const value of values) {
 			if (!value.startsWith(GROUP_KEY_PREFIX)) next.add(value)
 		}
+		const selectedAll = values.length === options.length
 		const addedByGroup = new Set<string>()
 		for (const group of projectGroups) {
 			const key = `${GROUP_KEY_PREFIX}${group.name}`
@@ -87,14 +88,14 @@ export function YieldProjects({
 					next.add(project)
 					addedByGroup.add(project)
 				}
-				trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project: group.name })
+				if (!selectedAll) trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project: group.name })
 			} else if (wasOn && !isOn && group.projects.every((project) => next.has(project))) {
 				for (const project of group.projects) next.delete(project)
 			}
 		}
 		const prevSet = prevSelectionRef.current
 		for (const project of next) {
-			if (!prevSet.has(project) && !addedByGroup.has(project)) {
+			if (!selectedAll && !prevSet.has(project) && !addedByGroup.has(project)) {
 				trackYieldsEvent(YIELDS_EVENTS.FILTER_PROJECT, { project })
 			}
 		}
