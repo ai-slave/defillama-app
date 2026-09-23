@@ -99,7 +99,7 @@ export interface KpkRangedComposition {
 
 /* ──────────────────────────── metadata ──────────────────────────── */
 
-export type KpkLinkKey = 'website' | 'docs' | 'app' | 'x'
+export type KpkLinkKey = 'website' | 'docs' | 'app' | 'x' | 'github'
 
 export interface KpkMetadata {
 	projectId: number

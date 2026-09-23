@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { describe, expect, test } from 'vitest'
 import {
 	KPK_COMPOSITION_CHART_OPTIONS,
@@ -31,6 +33,17 @@ const formatterOf = (options: ReturnType<typeof kpkCompositionChartOptions>) =>
 	options?.tooltip?.formatter as (params: unknown) => string
 
 const formatter = formatterOf(KPK_COMPOSITION_CHART_OPTIONS)
+
+/** The tooltip as a reader sees it: one line per row, top to bottom, as [name, value]. */
+function readRows(html: string): Array<[string, string]> {
+	const host = document.createElement('div')
+	host.innerHTML = html
+	return [...host.querySelectorAll('li')].map((line) => {
+		const spans = [...line.querySelectorAll(':scope > span')]
+		const [name, value] = spans.slice(-2)
+		return [name?.textContent ?? '', value?.textContent ?? '']
+	})
+}
 
 describe('KPK composition tooltip', () => {
 	test('heads with the period label the payload sent, not a reconstructed date', () => {
@@ -66,8 +79,9 @@ describe('KPK composition tooltip', () => {
 			item('Adjusted TVA', 'Aug 26', 40_000_000, 3)
 		])
 
-		expect(html).toContain('Total&nbsp;&nbsp;$46.01m')
-		expect(html.indexOf('Adjusted TVA')).toBeGreaterThan(html.indexOf('Total'))
+		const rows = readRows(html)
+		expect(rows).toContainEqual(['Total', '$46.01m'])
+		expect(rows.at(-1)?.[0]).toBe('Adjusted TVA')
 	})
 
 	test('drops a sub-cent dust reading instead of spelling it out', () => {
@@ -79,13 +93,13 @@ describe('KPK composition tooltip', () => {
 
 		expect(html).not.toContain('Unallocated')
 		expect(html).not.toMatch(/\$0\.0{3,}/)
-		expect(html).toContain('Total&nbsp;&nbsp;$46.01m')
+		expect(readRows(html)).toContainEqual(['Total', '$46.01m'])
 	})
 
 	test('keeps a real reading of a few dollars', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 4.25, 1)])
 
-		expect(html).toContain('Morpho&nbsp;&nbsp;$4.25')
+		expect(readRows(html)).toEqual([['Morpho', '$4.25']])
 	})
 
 	test('holds a long fraction above a dollar to two decimals', () => {
@@ -100,15 +114,52 @@ describe('KPK composition tooltip', () => {
 	test('holds segments and the ruled Total to the same precision', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
 
-		expect(html).toContain('Morpho&nbsp;&nbsp;$34.65m')
-		expect(html).toContain('Gearbox&nbsp;&nbsp;$11.36m')
-		expect(html).toContain('Total&nbsp;&nbsp;$46.01m')
+		expect(readRows(html)).toEqual([
+			['Morpho', '$34.65m'],
+			['Gearbox', '$11.36m'],
+			['Total', '$46.01m']
+		])
 	})
 
 	test('sums the overlay series like any other when no breakdown claims it', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Adjusted TVA', 'Aug 26', 40_000_000, 3)])
 
-		expect(html).toContain('Total&nbsp;&nbsp;$74.65m')
+		expect(readRows(html)).toContainEqual(['Total', '$74.65m'])
+	})
+
+	test('lists the segments largest first, whatever order the series arrive in', () => {
+		const html = formatterOf(kpkCompositionChartOptions('Adjusted TVA'))([
+			item('Gearbox', 'Aug 26', 11_360_000, 2),
+			item('Adjusted TVA', 'Aug 26', 40_000_000, 3),
+			item('Morpho', 'Aug 26', 34_650_000, 1)
+		])
+
+		expect(readRows(html).map(([name]) => name)).toEqual(['Morpho', 'Gearbox', 'Total', 'Adjusted TVA'])
+	})
+
+	test('sets every figure flush right, in tabular digits', () => {
+		const host = document.createElement('div')
+		host.innerHTML = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
+		const lines = [...host.querySelectorAll('li')]
+
+		expect(lines).toHaveLength(3)
+		for (const line of lines) {
+			expect(line.style.display).toBe('flex')
+			const value = line.querySelector<HTMLElement>(':scope > span:last-child')!
+			expect(value.style.marginLeft).toBe('auto')
+			expect(value.style.fontVariantNumeric).toBe('tabular-nums')
+		}
+	})
+})
+
+describe('KPK composition range slider', () => {
+	// The chart's zoom defaults are [inside, slider]; ECharts hands a category slider the
+	// bar index and its label, and the index read as a date is 1 Jan 1970.
+	test('labels the slider handles with the period, not a date', () => {
+		for (const options of [KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions('Adjusted TVA')]) {
+			const zoom = options?.dataZoom as Array<{ labelFormatter?: (value: number, valueStr: string) => string }>
+			expect(zoom[1].labelFormatter?.(3, 'Sept 25')).toBe('Sept 25')
+		}
 	})
 })
 

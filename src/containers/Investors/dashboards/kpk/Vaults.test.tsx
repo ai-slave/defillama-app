@@ -209,27 +209,31 @@ describe('kpk Vaults tab', () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('n/a')
-		expect(container.querySelector('[title*="no rebalancing agent"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="no rebalancing agent"]')).not.toBeNull()
 	})
 
 	test('shows a derisking count where the venue reports one and a dash where it does not', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('1,710')
-		expect(container.querySelector('th[title*="agent-executed derisking rebalances"]')).not.toBeNull()
+		expect(container.querySelector('th [aria-label*="agent-executed derisking rebalances"]')).not.toBeNull()
 	})
 
 	test('states the gross TVA with the adjusted figure and the netting rule beneath it', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('adjusted, excluding Symbiotic')
-		expect(container.querySelector(`[title="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
+		expect(container.querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
 	})
 
 	test('marks the double-counted vault and nets it out of a second footer row', async () => {
 		await renderTab()
 
-		expect(container.textContent).toContain('†')
+		const nameCell = [...container.querySelectorAll('tbody td:first-child')].find((cell) =>
+			cell.textContent?.startsWith('KPK USDC RWA Liquidity')
+		)!
+		expect(nameCell.querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
+		expect(container.textContent).not.toContain('†')
 		expect(container.textContent).toContain('Adjusted, excl. Symbiotic')
 
 		expect(container.textContent).toContain('$30m')
@@ -294,7 +298,7 @@ describe('kpk Vaults tab', () => {
 	test('carries the per-band note on the double-counted segment', async () => {
 		await renderTab()
 
-		expect(container.querySelectorAll(`[title="${DOUBLE_COUNT_NOTE}"]`).length).toBeGreaterThan(1)
+		expect(container.querySelectorAll(`[aria-label="${DOUBLE_COUNT_NOTE}"]`).length).toBeGreaterThan(1)
 	})
 
 	test('sits the vault link in the name cell, not a column of its own', async () => {

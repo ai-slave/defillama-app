@@ -1,6 +1,7 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatDate } from '~/utils/dateFormat'
 import { KPK_RANGES, type KpkComposition, type KpkRangedComposition, type KpkRangeKey, type KpkVault } from './api'
+import { KPK_CATEGORY_SLOTS, type KpkChartColors } from './chartDefaults'
 
 /** Upstream monetary fields are in $m; charts and the USD formatters want absolute dollars. */
 export const MILLION = 1e6
@@ -12,24 +13,41 @@ export const MILLION = 1e6
  */
 export const PERIOD_DIMENSION = 'Period'
 
+/** The tail the payload folds past its top segments, e.g. `Other (15)`. */
+const OTHER_SEGMENT = /^other\b/i
+
 /**
  * Colour by segment name, not by position.
  *
  * `comp.segments` arrives sorted by current value, so indexing the palette by
- * position would repaint every band the moment two segments swap places. Sorting
- * the names first makes a segment's colour a function of the breakdown's
- * membership only.
+ * position would repaint every band the moment two segments swap places. A category
+ * that recurs across graphs takes its fixed slot, so it matches on every tab; the
+ * rest fill the free slots in name order, a function of the breakdown's membership
+ * only. The folded tail is always the neutral.
  */
 export function compositionColors(
 	names: ReadonlyArray<string>,
-	palette: ReadonlyArray<string>
+	colors: Pick<KpkChartColors, 'palette' | 'other'>,
+	pinned: Readonly<Record<string, number>> = KPK_CATEGORY_SLOTS
 ): Record<string, string> {
-	const colors: Record<string, string> = {}
-	const sorted = [...new Set(names)].sort()
-	for (let i = 0; i < sorted.length; i++) {
-		colors[sorted[i]] = palette[i % palette.length]
+	const { palette, other } = colors
+	const out: Record<string, string> = {}
+	const unpinned: Array<string> = []
+	const taken = new Set<number>()
+	for (const name of new Set(names)) {
+		if (OTHER_SEGMENT.test(name)) out[name] = other
+		else if (Object.hasOwn(pinned, name)) {
+			out[name] = palette[pinned[name] % palette.length]
+			taken.add(pinned[name] % palette.length)
+		} else unpinned.push(name)
 	}
-	return colors
+	// Past eight categories a repeat is unavoidable, so the leftovers cycle from the top.
+	const free = palette.map((_, slot) => slot).filter((slot) => !taken.has(slot))
+	unpinned.sort()
+	for (let i = 0; i < unpinned.length; i++) {
+		out[unpinned[i]] = palette[i < free.length ? free[i] : i % palette.length]
+	}
+	return out
 }
 
 export const RANGE_LABELS: Record<KpkRangeKey, string> = {
@@ -100,11 +118,10 @@ export interface CompositionModel {
 
 export function buildComposition(
 	comp: KpkComposition,
-	palette: ReadonlyArray<string>,
-	lineColor: string,
+	theme: KpkChartColors,
 	colorNames: ReadonlyArray<string> = comp.segments.map((segment) => segment.name)
 ): CompositionModel {
-	const colors = compositionColors(colorNames, palette)
+	const colors = compositionColors(colorNames, theme)
 	const line = comp.line
 	const lineFits = !!line && line.series.length === comp.months.length
 
@@ -141,7 +158,7 @@ export function buildComposition(
 							type: 'line' as const,
 							name: line!.name,
 							encode: { x: PERIOD_DIMENSION, y: line!.name },
-							color: lineColor,
+							color: theme.line,
 							hideAreaStyle: true,
 							lineStyle: { type: 'dashed' as const, width: 1.4 },
 							excludeFromTooltipTotal: true

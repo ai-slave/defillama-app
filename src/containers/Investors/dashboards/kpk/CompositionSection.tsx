@@ -3,14 +3,14 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
-import { KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions, kpkLineStroke, kpkPalette } from './chartDefaults'
+import { KPK_COMPOSITION_CHART_OPTIONS, kpkChartColors, kpkCompositionChartOptions } from './chartDefaults'
 import { asRanged, buildComposition, defaultRange, gapNote, rangeOptions, type CompositionPayload } from './transform'
 import {
 	Card,
 	ChartFootnote,
 	DashSwatch,
 	DataTable,
-	DuplicateMark,
+	InfoTip,
 	SectionHeader,
 	ToggleGroup,
 	usdCompact,
@@ -75,7 +75,7 @@ export function CompositionSection({
 	)
 
 	const model = useMemo(
-		() => (comp ? buildComposition(comp, kpkPalette(isDark), kpkLineStroke(isDark), colorNames) : null),
+		() => (comp ? buildComposition(comp, kpkChartColors(isDark), colorNames) : null),
 		[comp, isDark, colorNames]
 	)
 
@@ -160,9 +160,8 @@ export function CompositionSection({
 								chartOptions={chartOptions}
 								valueSymbol="$"
 								title=""
-								height="320px"
+								height="360px"
 								solidChartAreaStyle
-								hideDataZoom
 							/>
 							{/* A hole the line joins across, named under the chart rather than left to
 							    read as a measurement. */}
@@ -170,7 +169,7 @@ export function CompositionSection({
 							{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
 						</>
 					) : (
-						<div className="flex h-[320px] items-center justify-center">
+						<div className="flex h-[360px] items-center justify-center">
 							<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 						</div>
 					)}
@@ -193,8 +192,8 @@ export function CompositionSection({
 										<span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: row.color }} />
 										{row.name}
 										{row.duplicate && (
-											<DuplicateMark
-												note={row.note ?? model?.line?.note ?? 'Counted inside another band of this breakdown.'}
+											<InfoTip
+												text={row.note ?? model?.line?.note ?? 'Counted inside another band of this breakdown.'}
 											/>
 										)}
 									</span>

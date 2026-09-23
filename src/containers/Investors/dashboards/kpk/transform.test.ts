@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import type { KpkComposition, KpkRangedComposition, KpkVault } from './api'
-import { KPK_LINE_STROKE_DARK, KPK_PALETTE_DARK } from './chartDefaults'
+import {
+	KPK_CATEGORY_SLOTS,
+	KPK_LINE_STROKE_DARK,
+	KPK_OTHER_DARK,
+	KPK_PALETTE_DARK,
+	kpkChartColors
+} from './chartDefaults'
 import {
 	asRanged,
 	buildComposition as build,
@@ -14,7 +20,7 @@ import {
 } from './transform'
 
 const buildComposition = (comp: KpkComposition, colorNames?: ReadonlyArray<string>) =>
-	build(comp, KPK_PALETTE_DARK, KPK_LINE_STROKE_DARK, colorNames)
+	build(comp, kpkChartColors(true), colorNames)
 
 const comp: KpkComposition = {
 	title: 'By venue',
@@ -97,16 +103,18 @@ describe('buildComposition', () => {
 		}
 	})
 
+	// Names on a single graph take free slots in name order, so the union across ranges
+	// has to decide them — not whichever range happens to be on screen.
 	test('keeps a surviving segment colour when another range drops an earlier name', () => {
-		const colorNames = ['Aave', 'Morpho', 'Morpho']
+		const colorNames = ['Balancer', 'Euler', 'Euler']
 		const widest = buildComposition(
 			{
 				...comp,
-				segments: [{ name: 'Aave', value: 10, share: 33.3333, series: [5, 7.5, 10] }, comp.segments[0]]
+				segments: [{ name: 'Balancer', value: 10, share: 33.3333, series: [5, 7.5, 10] }, comp.segments[1]]
 			},
 			colorNames
 		)
-		const shortest = buildComposition({ ...comp, segments: [comp.segments[0]] }, colorNames)
+		const shortest = buildComposition({ ...comp, segments: [comp.segments[1]] }, colorNames)
 
 		expect(shortest.rows[0].color).toBe(widest.rows[1].color)
 		expect(shortest.rows[0].color).toBe(KPK_PALETTE_DARK[1])
@@ -240,11 +248,141 @@ describe('gapNote', () => {
 })
 
 describe('compositionColors', () => {
+	const theme = kpkChartColors(true)
+	const colorsOf = (names: ReadonlyArray<string>) => compositionColors(names, theme)
+
 	test('assigns one distinct colour per segment', () => {
-		const colors = compositionColors(['Morpho', 'Euler', 'Gearbox'], KPK_PALETTE_DARK)
+		const colors = colorsOf(['Morpho', 'Euler', 'Gearbox'])
 
 		expect(Object.keys(colors)).toHaveLength(3)
 		expect(new Set(Object.values(colors)).size).toBe(3)
+	})
+
+	test('paints a recurring category the same whatever else shares its graph', () => {
+		const vaultsChain = colorsOf(['Ethereum', 'Arbitrum'])
+		const overviewChain = colorsOf(['Ethereum', 'dYdX', 'Gnosis', 'Arbitrum', 'Base', 'Other (2)'])
+
+		expect(vaultsChain.Ethereum).toBe(overviewChain.Ethereum)
+		expect(vaultsChain.Arbitrum).toBe(overviewChain.Arbitrum)
+	})
+
+	test('keeps single-graph categories off the slots the recurring ones hold', () => {
+		const colors = colorsOf(['Morpho', 'Gearbox', 'Symbiotic', 'Euler'])
+
+		expect(new Set(Object.values(colors)).size).toBe(4)
+	})
+
+	test('paints every folded tail the neutral, whatever count it carries, and spends no slot on it', () => {
+		const colors = colorsOf(['Other (15)', 'Euler', 'Other (27)'])
+
+		expect(colors['Other (15)']).toBe(KPK_OTHER_DARK)
+		expect(colors['Other (27)']).toBe(KPK_OTHER_DARK)
+		expect(colors.Euler).toBe(KPK_PALETTE_DARK[0])
+	})
+
+	test('pins only slots the palette has', () => {
+		for (const slot of Object.values(KPK_CATEGORY_SLOTS)) {
+			expect(Number.isInteger(slot) && slot >= 0 && slot < KPK_PALETTE_DARK.length).toBe(true)
+		}
+	})
+
+	/** Every breakdown's membership as the payloads carried it in Sep 2026, union across ranges. */
+	const LIVE_BREAKDOWNS: Record<string, Array<string>> = {
+		'overview.line': ['Treasury mandates', 'Vaults', 'Mandates in KPK vaults/funds', 'Vaults in KPK vaults'],
+		'overview.denom': [
+			'ETH',
+			'USD',
+			'DYDX',
+			'COW',
+			'ARS',
+			'NXM',
+			'EUR',
+			'Other (5)',
+			'Other (8)',
+			'Other (9)',
+			'Other (68)'
+		],
+		'overview.chain': [
+			'Ethereum',
+			'dYdX',
+			'Gnosis',
+			'Arbitrum',
+			'Base',
+			'BNB Chain',
+			'Polygon',
+			'Avalanche',
+			'Other (2)'
+		],
+		'overview.protocol': [
+			'Morpho',
+			'Ether.fi',
+			'Fluid',
+			'Stakewise',
+			'Stader',
+			'Gearbox',
+			'Aave',
+			'Other (15)',
+			'Other (27)'
+		],
+		'mandates.client': [
+			'ENS DAO',
+			'CoW DAO',
+			'dYdX',
+			'Balancer DAO',
+			'Nexus Mutual DAO',
+			'Arbitrum DAO',
+			'Gnosis DAO',
+			'Aave DAO',
+			'Safe-Gnosis JT'
+		],
+		'mandates.denom': ['USD', 'ETH', 'DYDX', 'COW', 'NXM', 'EUR', 'STKAAVE', 'Other (4)', 'Other (67)'],
+		'mandates.protocol': ['Ether.fi', 'Fluid', 'Stakewise', 'Morpho', 'Stader', 'Aave', 'dYdX Staking', 'Other (14)'],
+		'mandates.chain': [
+			'Ethereum',
+			'dYdX',
+			'Gnosis',
+			'Arbitrum',
+			'Base',
+			'BNB Chain',
+			'Polygon',
+			'Avalanche',
+			'Optimism'
+		],
+		'vaults.venue': ['Morpho', 'Gearbox', 'Symbiotic', 'Euler'],
+		'vaults.chain': ['Ethereum', 'Arbitrum'],
+		'vaults.asset': ['USDC', 'wstETH', 'ETH', 'wARS', 'USDT', 'EURC', 'EURe'],
+		'vaults.collateral': [
+			'savETH',
+			'cbBTC',
+			'WBTC',
+			'wstETH',
+			'savUSD',
+			'wmooCurveETH+-WETH',
+			'Unallocated',
+			'Other (26)'
+		]
+	}
+
+	test('gives every category on a live graph its own colour, as far as eight slots allow', () => {
+		for (const names of Object.values(LIVE_BREAKDOWNS)) {
+			const colors = colorsOf(names)
+			const categories = names.filter((name) => !name.startsWith('Other ('))
+			const distinct = new Set(categories.map((name) => colors[name])).size
+
+			expect(distinct).toBe(Math.min(categories.length, KPK_PALETTE_DARK.length))
+		}
+	})
+
+	test('paints each category one colour across every live graph it appears on', () => {
+		const seen = new Map<string, Set<string>>()
+		for (const names of Object.values(LIVE_BREAKDOWNS)) {
+			for (const [name, color] of Object.entries(colorsOf(names))) {
+				seen.set(name, (seen.get(name) ?? new Set()).add(color))
+			}
+		}
+		const repainted = [...seen].filter(([, colors]) => colors.size > 1).map(([name]) => name)
+
+		expect(repainted).toEqual([])
 	})
 })
 

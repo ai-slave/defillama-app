@@ -53,6 +53,30 @@ describe('LedgerTile', () => {
 		expect(container.textContent).toContain('10,382 onchain transactions')
 	})
 
+	test('marks a caption or metric that has more to say with an info icon', async () => {
+		await renderTile(
+			<LedgerTile
+				label="Annual excess return"
+				value="$287k"
+				sub="Sum of balance × (rate − benchmark)"
+				subTitle="Window Sep 9, 2025 – Sep 8, 2026"
+				metric="$30m"
+				metricLabel="adjusted"
+				metricTitle="Counted inside another vault"
+			/>
+		)
+
+		expect(container.querySelector('[aria-label="Window Sep 9, 2025 – Sep 8, 2026"] svg')).not.toBeNull()
+		expect(container.querySelector('[aria-label="Counted inside another vault"] svg')).not.toBeNull()
+		expect(container.querySelector('[title]')).toBeNull()
+	})
+
+	test('shows no info icon where there is nothing to add', async () => {
+		await renderTile(<LedgerTile label="Deployed onchain" value="$8.03bn" sub="Cumulative" metric="10,382" />)
+
+		expect(container.querySelector('svg')).toBeNull()
+	})
+
 	test('links each pair of a multi-metric row on its own ref', async () => {
 		await renderTile(
 			<LedgerTile

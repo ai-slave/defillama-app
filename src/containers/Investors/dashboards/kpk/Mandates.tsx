@@ -11,6 +11,7 @@ import {
 	DataTable,
 	earnedTitle,
 	earnedWindowLine,
+	InfoTip,
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
@@ -210,14 +211,13 @@ export default function Mandates() {
 									title:
 										'Money-weighted over every priced position-day in the window, not a spot read on the latest balances',
 									right: true,
-									render: (row) => {
-										const basis = rateBasisTitle(row)
-										return (
-											<span title={basis} className={`${KPK_MINT_TEXT} ${basis ? 'cursor-help' : ''}`}>
-												{formatPercent(row.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}
-											</span>
-										)
-									}
+									// The mark leads the figure, so the percentages stay aligned down the column.
+									render: (row) => (
+										<span className={KPK_MINT_TEXT}>
+											<InfoTip text={rateBasisTitle(row)} className="mr-1" />
+											{formatPercent(row.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}
+										</span>
+									)
 								},
 								{
 									key: 'bench',
@@ -262,13 +262,11 @@ export default function Mandates() {
 						<div className="mt-4 flex flex-wrap gap-8 border-t border-pro-cards-border pt-4">
 							<div className="flex flex-col gap-1">
 								<span className="label-sm tracking-wider text-pro-text-label uppercase">Annual excess return</span>
-								<span
-									title={perfEarnedTitle}
-									className={`font-mono text-xl font-medium tabular-nums ${signClass(perf?.excess)} ${
-										perfEarnedTitle ? 'cursor-help' : ''
-									}`}
-								>
-									{perf ? usdSignedFromMillions(perf.excess) : '—'}
+								<span className="flex items-center gap-1.5">
+									<span className={`font-mono text-xl font-medium tabular-nums ${signClass(perf?.excess)}`}>
+										{perf ? usdSignedFromMillions(perf.excess) : '—'}
+									</span>
+									<InfoTip text={perfEarnedTitle} />
 								</span>
 								<span className="body-sm text-pro-text-secondary">
 									Earned above benchmark on the {activeDenom ?? '—'} book
@@ -321,8 +319,8 @@ export default function Mandates() {
 													)} during the earned-return window`
 												: undefined
 									return title ? (
-										<span className="cursor-help" title={title}>
-											—
+										<span>
+											<InfoTip text={title} className="mr-1" />—
 										</span>
 									) : (
 										'—'
@@ -341,10 +339,8 @@ export default function Mandates() {
 								title: 'Defi plus ops positions, less what sits idle in wallets',
 								right: true,
 								render: (row) => (
-									<span
-										title={deployedTitle(row)}
-										className={`flex items-center justify-end gap-2 ${deployedTitle(row) ? 'cursor-help' : ''}`}
-									>
+									<span className="flex items-center justify-end gap-2">
+										<InfoTip text={deployedTitle(row)} className="-mr-1" />
 										{formatPercent(row.deployedPct, KPK_PERCENT_OPTIONS) ?? '—'}
 										<MeterBar value={row.deployedPct} />
 									</span>

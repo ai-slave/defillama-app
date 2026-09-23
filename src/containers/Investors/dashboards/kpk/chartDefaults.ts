@@ -1,5 +1,6 @@
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 
@@ -52,6 +53,51 @@ export const KPK_LINE_STROKE_LIGHT = '#1f2330'
 
 export const kpkLineStroke = (isDark: boolean): string => (isDark ? KPK_LINE_STROKE_DARK : KPK_LINE_STROKE_LIGHT)
 
+export const KPK_OTHER_DARK = '#363b44'
+export const KPK_OTHER_LIGHT = '#b4b8c0'
+
+export interface KpkChartColors {
+	palette: ReadonlyArray<string>
+	/** The dashed overlay line, e.g. Adjusted TVA. */
+	line: string
+	/** The folded tail. */
+	other: string
+}
+
+export const kpkChartColors = (isDark: boolean): KpkChartColors => ({
+	palette: kpkPalette(isDark),
+	line: kpkLineStroke(isDark),
+	other: isDark ? KPK_OTHER_DARK : KPK_OTHER_LIGHT
+})
+
+export const KPK_CATEGORY_SLOTS: Readonly<Record<string, number>> = {
+	// Chains
+	Ethereum: 0,
+	dYdX: 1,
+	Arbitrum: 2,
+	Gnosis: 3,
+	Base: 4,
+	'BNB Chain': 5,
+	Polygon: 6,
+	Avalanche: 7,
+	// Denominations and supply assets. ETH matches Ethereum, and DYDX the dYdX chain.
+	ETH: 0,
+	DYDX: 1,
+	USD: 2,
+	COW: 3,
+	NXM: 4,
+	EUR: 5,
+	wstETH: 1,
+	// Protocols and venues
+	Morpho: 0,
+	'Ether.fi': 1,
+	Fluid: 2,
+	Stakewise: 3,
+	Gearbox: 4,
+	Stader: 5,
+	Aave: 6
+}
+
 /**
  * Brand accents as Tailwind class pairs rather than hex, so they follow `html.dark`
  * without a render-time theme read. Mint carries KPK's own figures, periwinkle the
@@ -74,20 +120,29 @@ const DUST_USD = 0.01
  */
 export const KPK_USD_OPTIONS = { compact: true, compactSuffix: 'lowercase' } as const
 
+const TOTAL_ROW_STYLE = 'border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px;'
+
+/** One tooltip line: marker and name on the left, the figure flush right in tabular digits. */
+function tooltipRow(name: string, value: number, marker = '', style = ''): string {
+	return (
+		`<li style="list-style:none;display:flex;align-items:center;${style}">${marker}` +
+		`<span style="margin-right:16px">${escapeHtml(name)}</span>` +
+		`<span style="margin-left:auto;font-variant-numeric:tabular-nums">${formatUsd(value, KPK_USD_OPTIONS) ?? '—'}</span></li>`
+	)
+}
+
 /**
  * The category tooltip with a stacked total, as the mockup has it: one row per segment,
- * then a ruled Total. The renderer's own category formatter omits the total, and its
- * time-series formatter — which does add one — cannot label a month-string axis.
+ * largest first, then a ruled Total. The renderer's own category formatter omits the
+ * total, and its time-series formatter — which does add one — cannot label a
+ * month-string axis.
  */
 function compositionTooltipFormatter(params: unknown, overlaySeries?: string): string {
 	const items = normalizeTooltipItems(params)
 	if (items.length === 0) return ''
 
-	const heading = items[0]?.axisValue ?? items[0]?.name
-	let out = heading == null ? '' : `<strong>${heading}</strong><br/>`
-	let overlay = ''
-	let total = 0
-	let counted = 0
+	const rows: Array<{ marker: string; name: string; value: number }> = []
+	let overlay: (typeof rows)[number] | null = null
 
 	for (const item of items) {
 		const name = item.seriesName
@@ -95,20 +150,25 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 		const raw = getTooltipRawYValue(item, name)
 		const value = typeof raw === 'number' ? raw : Number(raw)
 		if (!Number.isFinite(value) || Math.abs(value) < DUST_USD) continue
-		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatUsd(value, KPK_USD_OPTIONS) ?? '—'}</li>`
-		if (name === overlaySeries) {
-			overlay = row
-			continue
-		}
-		total += value
-		counted += 1
-		out += row
+		const row = { marker: item.marker ?? '', name, value }
+		if (name === overlaySeries) overlay = row
+		else rows.push(row)
 	}
+	rows.sort((a, b) => b.value - a.value)
 
-	if (counted > 1) {
-		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${formatUsd(total, KPK_USD_OPTIONS) ?? '—'}</li>`
+	const heading = items[0]?.axisValue ?? items[0]?.name
+	let out = heading == null ? '' : `<strong>${escapeHtml(String(heading))}</strong><br/>`
+	for (const row of rows) out += tooltipRow(row.name, row.value, row.marker)
+	if (rows.length > 1) {
+		out += tooltipRow(
+			'Total',
+			rows.reduce((sum, row) => sum + row.value, 0),
+			'',
+			TOTAL_ROW_STYLE
+		)
 	}
-	return out + overlay
+	if (overlay) out += tooltipRow(overlay.name, overlay.value, overlay.marker)
+	return out
 }
 
 /**
@@ -121,6 +181,7 @@ export function kpkCompositionChartOptions(overlaySeries?: string): IMultiSeries
 	return {
 		...base,
 		xAxis: { ...base.xAxis, axisLabel: { showMaxLabel: true, alignMaxLabel: 'right' } },
+		dataZoom: [{}, { labelFormatter: (_index: number, period: string) => period }],
 		tooltip: { formatter: (params: unknown) => compositionTooltipFormatter(params, overlaySeries) }
 	}
 }

@@ -11,7 +11,7 @@ import {
 	Card,
 	DataTable,
 	Disclaimer,
-	DuplicateMark,
+	InfoTip,
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
@@ -50,7 +50,8 @@ function endSentence(text: string) {
 function RebalanceCell({ value }: { value: KpkVault['rebalances30d'] }) {
 	if (value === 'NA') {
 		return (
-			<span className="text-pro-text-tertiary" title="Passive lending pool — no rebalancing agent to count">
+			<span className="text-pro-text-tertiary">
+				<InfoTip text="Passive lending pool — no rebalancing agent to count" className="mr-1" />
 				n/a
 			</span>
 		)
@@ -171,7 +172,7 @@ export default function Vaults() {
 									<span className="flex flex-col">
 										<span className="text-pro-text-primary">
 											{row.name}
-											{row.doubleCounted && <DuplicateMark note={doubleCountNote} />}{' '}
+											{row.doubleCounted && <InfoTip text={doubleCountNote} className="ml-1" />}{' '}
 											<RowLink href={row.url} label={row.name} size="sm" />
 										</span>
 										<span className="body-sm text-pro-text-tertiary">

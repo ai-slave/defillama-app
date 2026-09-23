@@ -278,8 +278,8 @@ describe('kpk Treasury mandates tab', () => {
 		// The excess return is dated on the legs store's own window, not the report's.
 		expect(container.textContent).toContain('over the 365 days to Sep 8, 2026')
 		expect(container.textContent).not.toContain("today's")
-		expect(container.querySelector('[title*="Window Sep 9, 2025 – Sep 8, 2026"]')).not.toBeNull()
-		expect(container.querySelector('[title*="2025-09-09"]')).toBeNull()
+		expect(container.querySelector('[aria-label*="Window Sep 9, 2025 – Sep 8, 2026"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="2025-09-09"]')).toBeNull()
 	})
 
 	test('renders each window against its own benchmark', async () => {
@@ -306,7 +306,7 @@ describe('kpk Treasury mandates tab', () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('Arbitrum DAO')
-		expect(container.querySelector('[title*="treasury snapshot yet"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="treasury snapshot yet"]')).not.toBeNull()
 	})
 
 	test('dashes a sleeve the client does not hold rather than reading it as 0%', async () => {
@@ -349,19 +349,22 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).toContain('over the trailing 365 days')
 		expect(container.textContent).toContain('1 day had no snapshot and accrued nothing')
 		expect(container.textContent).not.toContain('4 days had no snapshot and accrued nothing')
-		expect(container.querySelector('[title*="Rates found for 98.0% of balance-days"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="Rates found for 98.0% of balance-days"]')).not.toBeNull()
 	})
 
 	test('describes the excess return for the selected denomination', async () => {
 		await renderTab()
 
-		const usdTitle = container.querySelector('[title*="USD earned $2.61m against $2.47m"]')
-		expect(usdTitle?.textContent).toBe('$138k')
-		expect(usdTitle?.getAttribute('title')).not.toContain('$6.42m')
+		// The note's mark sits right after the figure it explains.
+		const noted = (note: Element | null) => note?.parentElement?.previousElementSibling?.textContent
+
+		const usdTitle = container.querySelector('[aria-label*="USD earned $2.61m against $2.47m"]')
+		expect(noted(usdTitle)).toBe('$138k')
+		expect(usdTitle?.getAttribute('aria-label')).not.toContain('$6.42m')
 
 		await clickChip('EUR')
-		const eurTitle = container.querySelector('[title*="EUR earned $201k against $202.8k"]')
-		expect(eurTitle?.textContent).toBe('−$1.8k')
+		const eurTitle = container.querySelector('[aria-label*="EUR earned $201k against $202.8k"]')
+		expect(noted(eurTitle)).toBe('−$1.8k')
 	})
 
 	test('signs a negative excess return ahead of the magnitude', async () => {
@@ -386,7 +389,7 @@ describe('kpk Treasury mandates tab', () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('Plus 1 mandate with no current balance')
-		expect(container.querySelector('[title*="Aave DAO"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="Aave DAO"]')).not.toBeNull()
 	})
 
 	test('drops the inactive row when every mandate holds a balance', async () => {
@@ -400,14 +403,14 @@ describe('kpk Treasury mandates tab', () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('Safe')
-		expect(container.querySelector('[title*="held a mean $2.4m"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="held a mean $2.4m"]')).not.toBeNull()
 	})
 
 	test('says whether a window rate was earned or read spot, and keeps the spot reading', async () => {
 		await renderTab()
 
-		expect(container.querySelector('[title*="spot reading on the latest balances is 4.51%"]')).not.toBeNull()
-		expect(container.querySelector('[title^="Spot reading:"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="spot reading on the latest balances is 4.51%"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label^="Spot reading:"]')).not.toBeNull()
 	})
 
 	test('keeps the run-rate off the page, so only the earned figure is shown', async () => {
@@ -420,11 +423,11 @@ describe('kpk Treasury mandates tab', () => {
 	test('names what the deployed share leaves out', async () => {
 		await renderTab()
 
-		expect(container.querySelector('[title*="with $9.47m sitting idle"]')).not.toBeNull()
+		expect(container.querySelector('[aria-label*="with $9.47m sitting idle"]')).not.toBeNull()
 	})
 
 	const deployedTitles = () =>
-		[...container.querySelectorAll('[title*="deployed"]')].map((node) => node.getAttribute('title'))
+		[...container.querySelectorAll('[aria-label*="deployed"]')].map((node) => node.getAttribute('aria-label'))
 
 	/** $5.02m defi + $10.61m ops holds the $9.47m idle inside it, leaving $6.16m deployed. */
 	test('breaks the deployed figure into legs that sum to it, idle taken out of ops', async () => {

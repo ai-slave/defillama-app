@@ -5,10 +5,11 @@ const LINK_LABELS: Record<KpkLinkKey, string> = {
 	website: 'kpk.io',
 	docs: 'Docs',
 	app: 'App',
-	x: 'X'
+	x: 'X',
+	github: 'GitHub'
 }
 
-const LINK_ORDER: Array<KpkLinkKey> = ['website', 'app', 'docs', 'x']
+const LINK_ORDER: Array<KpkLinkKey> = ['website', 'app', 'docs', 'x', 'github']
 
 export default function KpkHeader() {
 	const { data } = useKpkMetadata()

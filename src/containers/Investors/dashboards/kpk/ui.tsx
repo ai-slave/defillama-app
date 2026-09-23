@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
@@ -235,8 +236,9 @@ export function LedgerTile({
 				</span>
 			)}
 			{sub && (
-				<span title={subTitle} className={`body-sm text-pro-text-secondary ${subTitle ? 'cursor-help' : ''}`}>
+				<span className="body-sm text-pro-text-secondary">
 					{sub}
+					<InfoTip text={subTitle} className="ml-1" />
 					{subRef && (
 						<>
 							{' '}
@@ -248,13 +250,10 @@ export function LedgerTile({
 			{pairs.length > 0 && (
 				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
 					{pairs.map((pair) => (
-						<span
-							key={`${pair.value}${pair.label ?? ''}`}
-							title={pair.title}
-							className={pair.title ? 'cursor-help' : ''}
-						>
+						<span key={`${pair.value}${pair.label ?? ''}`}>
 							<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{pair.value}</b>
 							{pair.label ? ` ${pair.label}` : null}
+							<InfoTip text={pair.title} className="ml-1" />
 							{pair.ref && (
 								<>
 									{' '}
@@ -472,11 +471,37 @@ export function CompareBars({
 	)
 }
 
-export function DuplicateMark({ note }: { note: string }) {
+/**
+ * The circled "i" beside anything with more to say on hover. The shared Tooltip rather
+ * than a `title` attribute: `title` never opens on touch and gives no sign it is there.
+ * The padding buys a tap target; the negative margins keep the line height unchanged.
+ * The text rides on `aria-label` too, since the tooltip only mounts while open.
+ */
+export function InfoTip({ text, className = '' }: { text: string | undefined; className?: string }) {
+	if (!text) return null
 	return (
-		<abbr title={note} className="ml-1 cursor-help text-xs text-warning no-underline">
-			†
-		</abbr>
+		<span className={`inline-flex align-middle ${className}`}>
+			<Tooltip
+				content={text}
+				aria-label={text}
+				className="-m-1.5 cursor-help p-1.5 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
+			>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					className="size-3"
+					aria-hidden
+				>
+					<circle cx="12" cy="12" r="10" />
+					<path d="M12 16v-4" />
+					<path d="M12 8h.01" />
+				</svg>
+			</Tooltip>
+		</span>
 	)
 }
 
@@ -660,13 +685,13 @@ export function DataTable<Row extends object>({
 						{cols.map((col, index) => (
 							<th
 								key={col.key}
-								title={col.title}
 								style={col.width ? { width: col.width } : undefined}
 								className={`px-3 py-2.5 label-xs tracking-wider whitespace-nowrap text-pro-text-label uppercase first:pl-0 last:pr-0 ${
 									col.right ? 'text-right' : 'text-left'
-								} ${col.title ? 'cursor-help' : ''} ${headCell(index === 0)}`}
+								} ${headCell(index === 0)}`}
 							>
 								{col.label}
+								<InfoTip text={col.title} className="ml-1" />
 							</th>
 						))}
 					</tr>
@@ -698,14 +723,7 @@ export function DataTable<Row extends object>({
 							<tr
 								// oxlint-disable-next-line react/no-array-index-key -- Footer positions identify total and secondary-reading slots.
 								key={rowIndex}
-								title={row.title}
-								className={
-									row.muted
-										? `text-pro-text-secondary ${row.title ? 'cursor-help' : ''}`
-										: freeze
-											? ''
-											: 'border-t border-pro-cards-border'
-								}
+								className={row.muted ? 'text-pro-text-secondary' : freeze ? '' : 'border-t border-pro-cards-border'}
 							>
 								{cols.map((col, index) => (
 									<td
@@ -714,7 +732,15 @@ export function DataTable<Row extends object>({
 											row.muted ? 'pt-1.5 font-normal' : 'pt-3 font-medium text-pro-text-primary'
 										} ${col.right ? 'text-right font-mono tabular-nums' : ''} ${footCell(index === 0, !!row.muted)}`}
 									>
-										{row.cells[col.key] ?? ''}
+										{/* A row's note sits on its name, the one cell every footer row fills. */}
+										{index === 0 && row.title ? (
+											<span className="inline-flex items-center gap-1">
+												{row.cells[col.key] ?? ''}
+												<InfoTip text={row.title} />
+											</span>
+										) : (
+											(row.cells[col.key] ?? '')
+										)}
 									</td>
 								))}
 							</tr>
