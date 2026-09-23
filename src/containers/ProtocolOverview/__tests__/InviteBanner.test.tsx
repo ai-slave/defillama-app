@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act } from 'react'
+import { act, useImperativeHandle, useState, type Ref } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { InviteBanner } from '../InviteBanner'
@@ -10,25 +10,38 @@ vi.mock('@marsidev/react-turnstile', () => ({
 		onSuccess,
 		onExpire,
 		onError,
-		options
+		options,
+		ref
 	}: {
 		onSuccess: (token: string) => void
 		onExpire: () => void
 		onError: () => void
 		options: { action: string }
-	}) => (
-		<div>
-			<button type="button" onClick={onError}>
-				Fail verification
-			</button>
-			<button type="button" onClick={() => onSuccess('verified-token')}>
-				Verify {options.action}
-			</button>
-			<button type="button" onClick={onExpire}>
-				Expire verification
-			</button>
-		</div>
-	)
+		ref: Ref<{ reset: () => void }>
+	}) => {
+		const [verified, setVerified] = useState(false)
+		useImperativeHandle(ref, () => ({ reset: () => setVerified(false) }))
+		return (
+			<div>
+				<span role="status">{verified ? 'Verification complete' : 'Verification required'}</span>
+				<button type="button" onClick={onError}>
+					Fail verification
+				</button>
+				<button
+					type="button"
+					onClick={() => {
+						setVerified(true)
+						onSuccess('verified-token')
+					}}
+				>
+					Verify {options.action}
+				</button>
+				<button type="button" onClick={onExpire}>
+					Expire verification
+				</button>
+			</div>
+		)
+	}
 }))
 
 let root: Root
@@ -162,6 +175,7 @@ test('allows an explicit refresh after the cooldown with a fresh verification', 
 	await click('Reveal my code')
 	await waitForText('ABCD1234')
 	expect(button('Try another code').disabled).toBe(true)
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
 	await click('Verify qfex_invite')
 	claimResponse = { status: 'assigned', code: 'WXYZ5678', refreshAt: new Date(Date.now() + 3_600_000).toISOString() }
 	await click('Try another code')
@@ -203,6 +217,8 @@ test('handles a non-JSON service outage and permits retrying after verification'
 	vi.mocked(fetch).mockResolvedValueOnce(new Response('<html>Unavailable</html>', { status: 502 }))
 	await click('Reveal my code')
 	await waitForText('Invite codes are temporarily unavailable. Please try again later.')
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification required')
+	expect(button('Try again').disabled).toBe(true)
 	await click('Verify qfex_invite')
 	await click('Try again')
 	await waitForText('ABCD1234')
@@ -229,4 +245,22 @@ test('blocks new claims during the network cooldown and restores claiming when i
 	claimResponse = { status: 'assigned', code: 'NEXT1234', refreshAt: new Date(later + 3_600_000).toISOString() }
 	await click('Reveal my code')
 	await waitForText('NEXT1234')
+})
+
+test('keeps verification checked until a pending claim reveals the code', async () => {
+	await render()
+	await openAndVerify()
+	let finish!: (response: Response) => void
+	vi.mocked(fetch).mockImplementationOnce(
+		() =>
+			new Promise<Response>((resolve) => {
+				finish = resolve
+			})
+	)
+	await click('Reveal my code')
+	expect(button('Getting your code…').disabled).toBe(true)
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Verification complete')
+	await act(async () => finish(Response.json(claimResponse)))
+	await waitForText('ABCD1234')
+	expect(document.querySelector('output')?.textContent).toBe('ABCD1234')
 })

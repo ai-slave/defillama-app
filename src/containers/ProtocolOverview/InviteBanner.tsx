@@ -72,7 +72,14 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 		onSuccess: (result) => {
 			setToken('')
 			setNow(Date.now())
+			const nextAttemptAt =
+				result.status === 'assigned' ? result.refreshAt : result.status === 'cooldown' ? result.retryAt : null
+			// An existing assignment can already be eligible for refresh, leaving the widget mounted.
+			if (nextAttemptAt && Date.parse(nextAttemptAt) <= Date.now()) turnstile.current?.reset()
 			if (result.status === 'assigned') onAssigned()
+		},
+		onError: () => {
+			turnstile.current?.reset()
 		}
 	})
 	const result = claim.data
@@ -94,7 +101,6 @@ function InviteDialog({ protocol, name, website, onAssigned }: InviteBannerProps
 			refresh: result?.status === 'assigned' || claim.variables?.refresh === true
 		})
 		setToken('')
-		turnstile.current?.reset()
 	}
 
 	return (
