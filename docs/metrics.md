@@ -77,6 +77,8 @@ Interpret nullable adapter activity periods using source provenance rather than 
 - Selected-chain datasets that retain successful chains after another chain fails must carry explicit partial-coverage metadata through APIs, server-stream cache seeding, and consumers.
 - These activity rules do not apply to exact TVL snapshots, ratio denominators, required bridge legs, or chart points. Missing required values for those metrics remain unknown.
 - `dailyGasUsed` is measured in the chain's native gas token; `dailyGasUsedUsd` is the separately priced USD cost. Do not currency-format or relabel native gas usage as USD.
+- Active addresses (`active-users`) count distinct senders in one UTC day, so daily values do not add up: an address active on several days is one address. Grouped charts show the average of the observed days, labeled as a daily average, and cumulative mode is not offered. The API has no weekly or monthly unique counts.
+- New addresses (`new-users`) count each address at its first-ever interaction with the protocol or chain, so daily values add up across days and across grouped periods.
 
 Earnings additionally combines two authoritative sources:
 

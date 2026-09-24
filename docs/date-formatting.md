@@ -68,6 +68,31 @@ A chart that deliberately shows the viewer's local time must opt out as a whole.
 formatters stay UTC. Rendering local time must also follow the hydration rules for
 local exact instants above.
 
+## Grouped chart periods
+
+Weekly, monthly, quarterly, and yearly charts bucket daily points into UTC calendar
+periods. A week runs Monday to Sunday and is keyed by its Sunday; every other period
+is keyed by its first day (`getBucketTimestampSec`). The tooltip reads that key as
+the period it names, for example "14 - 20 Sep 2026" or "Sep 1 - 30, 2026", and CSV
+exports write the period's start and end dates.
+
+- Flows and counts that add up across days sum the period (`formatBarChart`).
+- Balances and running totals keep the period's last available value
+  (`formatLineChart`), on the same key as the bars, so one period label describes
+  every series in the chart.
+- Daily counts that do not add up across days, such as active addresses, average the
+  period's observed days (`formatDailyAverageChart`) and say so in their series name.
+  Cumulative mode leaves them out.
+- A grouped chart passes `groupBy` together with its rows, in the same memo or
+  deferred snapshot, so the tooltip and CSV never label one grouping's rows with
+  another.
+- An API payload that is already grouped keeps its values. A week the API stamps on
+  its Monday moves to that week's Sunday (`lastDayOfWeek`) instead of being summed
+  again.
+- Fiscal reporting periods, such as equities fundamentals, are the provider's periods,
+  not calendar buckets. Name them by their period end, for example "Quarter ending
+  Jul 2025".
+
 ## Protected domain behavior
 
 The following behavior is intentionally not redefined by the generic policy:
