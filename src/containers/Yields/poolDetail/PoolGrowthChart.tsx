@@ -439,7 +439,7 @@ function GrowthReadout({
 							setDepositText(event.target.value)
 							commitDeposit(event.target.value)
 						}}
-						className="w-24 bg-transparent p-0 mono-md text-primary outline-none"
+						className="w-24 bg-transparent p-0 mono-md text-primary outline-hidden"
 						aria-label="Hypothetical deposit amount in dollars"
 					/>
 				</span>

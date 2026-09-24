@@ -475,7 +475,7 @@ function WithdrawWhatIf({
 							commitPosition(event.target.value)
 						}}
 						disabled={sizeDisabled}
-						className="w-24 bg-transparent p-0 mono-md text-primary outline-none disabled:cursor-not-allowed"
+						className="w-24 bg-transparent p-0 mono-md text-primary outline-hidden disabled:cursor-not-allowed"
 					/>
 				</span>
 				{sizeDisabled ? (
