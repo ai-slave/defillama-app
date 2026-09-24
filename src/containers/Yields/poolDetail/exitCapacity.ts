@@ -14,14 +14,6 @@ export interface ExitCapacityAnswer {
 	clearedShare: number
 	/** Withdrawable on the worst measured day, for the "even at its thinnest" line. */
 	floorUsd: number
-	/** Position size that clears 90% of measured days — a sizing rule, not a promise. */
-	comfortableUsd: number | null
-}
-
-function percentile(sorted: Array<number>, p: number): number | null {
-	if (sorted.length === 0) return null
-	const at = Math.min(sorted.length - 1, Math.max(0, Math.floor(p * (sorted.length - 1))))
-	return sorted[at] ?? null
 }
 
 /**
@@ -52,9 +44,7 @@ export function answerExitCapacity(
 		measuredDays: available.length,
 		shortDays,
 		clearedShare: (available.length - shortDays) / available.length,
-		floorUsd: sorted[0] ?? 0,
-		// The 10th percentile: a size that would have cleared on nine days in ten.
-		comfortableUsd: percentile(sorted, 0.1)
+		floorUsd: sorted[0] ?? 0
 	}
 }
 

@@ -1,37 +1,31 @@
-// The strip between a chart panel's header and its plot. One rhythm for both measured charts: every
-// item is a label over a value, figures and controls alike, so the row reads as a single ledger
-// instead of a stat block with a form bolted to the end.
+// Shared pieces of the rows around a chart panel's plot: keys, cells and fields.
 
 import type { ReactNode } from 'react'
 import { Tooltip } from '~/ui/Tooltip'
 import { tw } from '~/ui/tw'
 
-export const readoutBlockStyles = tw`border-b border-subtle px-4 py-2.5`
-export const readoutCellsStyles = tw`flex flex-wrap items-baseline gap-x-7 gap-y-3`
-
-// A colour key belongs ON the plot, not in the strip above it: in the strip it describes something
-// it is not next to, and it has to take a tier of its own to do it. Over the plot it is read where
-// the colours are and costs no height. Only the keys themselves take pointer events, so the box
-// never swallows the chart's own hover.
-export const readoutKeysStyles = tw`pointer-events-none absolute top-1.5 right-3 z-10 flex flex-wrap justify-end gap-x-3.5 gap-y-1 rounded-md px-2 py-1 body-xs text-tertiary`
-
-/** Enough surface to stay legible over a dense plot without hiding it. */
-export const READOUT_KEYS_BACKDROP = 'color-mix(in srgb, var(--bg-surface) 82%, transparent)'
-
-/** Stands in for a figure a pool cannot state, so the row keeps its baseline. */
-export const READOUT_ABSENT = '—'
+export const readoutKeysStyles = tw`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 body-sm text-secondary`
 
 /**
  * A cell's mark when it names something plotted, matching how that series is drawn: a rule for a
  * line, a block for a fill. Keeping the key in the same object as the figure is what stops the two
  * drifting apart.
  */
-export function SeriesMark({ color, shape = 'line' }: { color: string; shape?: 'line' | 'block' }) {
+export function SeriesMark({
+	color,
+	shape = 'line',
+	opacity = shape === 'block' ? 0.5 : 1
+}: {
+	color: string
+	shape?: 'line' | 'block'
+	/** A block defaults to half strength to match a translucent band; a key passes 1 so it stays legible. */
+	opacity?: number
+}) {
 	return (
 		<span
 			aria-hidden
 			className={shape === 'line' ? 'h-0.5 w-2.5 shrink-0 rounded-full' : 'size-2.5 shrink-0 rounded-xs'}
-			style={{ backgroundColor: color, opacity: shape === 'block' ? 0.5 : 1 }}
+			style={{ backgroundColor: color, opacity }}
 		/>
 	)
 }
@@ -39,8 +33,8 @@ export function SeriesMark({ color, shape = 'line' }: { color: string; shape?: '
 /** One entry in the small-print key: a mark, what it means, and its count where it has one. */
 export function ReadoutKey({ color, children, hint }: { color: string; children: ReactNode; hint?: string }) {
 	const body = (
-		<span className={`pointer-events-auto flex items-center gap-1.5${hint ? ' underline decoration-dotted' : ''}`}>
-			<SeriesMark color={color} shape="block" />
+		<span className={`flex items-center gap-1.5${hint ? ' underline decoration-dotted' : ''}`}>
+			<SeriesMark color={color} shape="block" opacity={1} />
 			{children}
 		</span>
 	)
@@ -60,20 +54,18 @@ export function ReadoutCell({
 	children: ReactNode
 }) {
 	return (
-		<div className={`flex flex-col gap-1 ${className ?? ''}`.trim()}>
+		<div className={`flex min-w-0 flex-col gap-1 ${className ?? ''}`.trim()}>
 			{hint ? (
 				<Tooltip content={hint}>
-					<span className="flex items-center gap-1.5 label-sm text-tertiary underline decoration-dotted">{label}</span>
+					<span className="flex items-center gap-1.5 label-md text-secondary underline decoration-dotted">{label}</span>
 				</Tooltip>
 			) : (
-				<span className="flex items-center gap-1.5 label-sm text-tertiary">{label}</span>
+				<span className="flex items-center gap-1.5 label-md text-secondary">{label}</span>
 			)}
-			<span className="flex flex-wrap items-baseline gap-x-2">{children}</span>
+			{/* One value-line height for every cell, so the row cannot change height. */}
+			<span className="flex min-h-5 flex-wrap items-baseline gap-x-2">{children}</span>
 		</div>
 	)
 }
 
-// An editable value wears no box at rest: it looks like the figures beside it and draws an underline
-// only when reached for. A box here is the heaviest object in the panel, sitting on the least
-// important thing in it.
-export const readoutInputStyles = tw`border-0 border-b border-b-transparent bg-transparent p-0 mono-sm text-primary transition-colors hover:border-b-(--border-strong) focus:border-b-(--yield-positive-text) focus:outline-hidden`
+export const readoutFieldStyles = tw`h-8 rounded-md border border-medium bg-surface px-3 mono-md text-primary focus:border-brand focus:outline-hidden`

@@ -1,4 +1,10 @@
-import { type ReactNode, useState } from 'react'
+import { useState } from 'react'
+import {
+	TokenPageTable,
+	TokenPageTableBodyCell,
+	TokenPageTableHeaderCell,
+	TokenPageTableScroller
+} from '~/components/Table/helpers'
 import { ChartPanel } from '~/ui/ChartPanel'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
@@ -14,7 +20,6 @@ import {
 } from './exitReliability'
 import type { DetailHolders } from './types'
 import { useAnchorScroll } from './useAnchorScroll'
-import { CHART_SECTION_HEIGHT } from './VerifiedApyPanel'
 
 export const EXIT_STATUS_ID = 'exit-status'
 
@@ -53,12 +58,11 @@ const INCIDENT_DOT: Record<ExitStripKind, string> = {
 	unmeasured: 'bg-(--text-tertiary) opacity-60'
 }
 
-// Past ten rows the list stops being readable at a glance and starts being a log. The count in the
-// header stays honest either way, so nothing is hidden — only folded.
+// Past ten rows the table reads as a log, so the rest folds; the count stays visible.
 const VISIBLE_INCIDENTS = 10
 
 // Narrows to the specific claim when the history is homogeneous.
-function cleanClaim({ fullDays, queuedDays }: { fullDays: number; queuedDays: number }): string {
+export function cleanClaim({ fullDays, queuedDays }: { fullDays: number; queuedDays: number }): string {
 	if (!queuedDays) return 'went through in full'
 	if (!fullDays) return 'were accepted into the queue'
 	return "followed the pool's available exit path"
@@ -81,18 +85,32 @@ function count(value: number): string {
 export function ExitReliabilityPanel({
 	model,
 	verified,
-	holders,
-	children
+	holders
+}: {
+	model: ExitReliabilityModel
+	verified: VerifiedBlock | null
+	holders: DetailHolders | null
+}) {
+	useAnchorScroll(EXIT_STATUS_ID)
+	return (
+		<ChartPanel id={EXIT_STATUS_ID} className="@container scroll-mt-4">
+			<ExitLedger model={model} verified={verified} holders={holders} />
+		</ChartPanel>
+	)
+}
+
+/** The interruptions: the table, the coverage notes and the crowding line. */
+export function ExitLedger({
+	model,
+	verified,
+	holders
 }: {
 	model: ExitReliabilityModel
 	// Current-state block for the crowding note. Null hides it.
 	verified: VerifiedBlock | null
 	// Top-holder shares for the crowding note. Null hides it.
 	holders: DetailHolders | null
-	/** The exit history chart, when the page has history for it. */
-	children?: ReactNode
 }) {
-	useAnchorScroll(EXIT_STATUS_ID)
 	const [expanded, setExpanded] = useState(false)
 	// Failures only; coverage gaps and no-mechanism days are footnotes outside the ratio.
 	const failures = exitFailures(model.incidents)
@@ -102,52 +120,71 @@ export function ExitReliabilityPanel({
 	const folded = failures.length - shown.length
 
 	return (
-		<ChartPanel id={EXIT_STATUS_ID} className="@container scroll-mt-4">
-			{children ? (
-				<div className={`flex ${CHART_SECTION_HEIGHT} flex-col overflow-hidden border-b border-subtle`}>{children}</div>
-			) : null}
-
-			<div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-3 pt-3">
-				<h3 className="label-lg text-primary">Exit status</h3>
-				<span className="ml-auto mono-sm text-tertiary">Measured since {day(model.measuredSince)}</span>
+		<div className="flex min-w-0 flex-col">
+			<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 pt-3 pb-1">
+				<h3 className="label-lg text-primary">Withdrawal interruptions</h3>
+				{failures.length > 0 ? (
+					<span className="body-sm text-secondary">
+						{`${count(failures.length)} ${failures.length === 1 ? 'episode' : 'episodes'}`}
+					</span>
+				) : null}
 			</div>
-			<Verdict model={model} />
 
 			{failures.length > 0 ? (
 				<>
-					<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-subtle bg-surface-elevated-1 px-3 py-2">
-						<span className="label-sm text-primary">
-							{count(failures.length)} {failures.length === 1 ? 'interruption' : 'interruptions'}
-						</span>
-						<Tooltip
-							content="What could have been withdrawn immediately, against total deposits, both measured on-chain at that day's block."
-							className="ml-auto"
-						>
-							<span className="body-sm text-tertiary underline decoration-dotted">Withdrawable / deposits</span>
-						</Tooltip>
-					</div>
-					<ul className="flex flex-col">
-						{shown.map((incident) => (
-							<IncidentRow key={`${incident.from}-${incident.outcome}`} incident={incident} />
-						))}
-					</ul>
+					<TokenPageTableScroller>
+						<TokenPageTable className="min-w-[560px] table-fixed">
+							<colgroup>
+								<col style={{ width: '22%' }} />
+								<col style={{ width: '13%' }} />
+								<col style={{ width: '29%' }} />
+								<col style={{ width: '14%' }} />
+								<col style={{ width: '12%' }} />
+								<col style={{ width: '10%' }} />
+							</colgroup>
+							<thead>
+								<tr className="border-t border-b border-subtle bg-surface">
+									<TokenPageTableHeaderCell>Started</TokenPageTableHeaderCell>
+									<TokenPageTableHeaderCell textAlign="end">Lasted</TokenPageTableHeaderCell>
+									<TokenPageTableHeaderCell>Outcome</TokenPageTableHeaderCell>
+									<TokenPageTableHeaderCell textAlign="end">Withdrawable</TokenPageTableHeaderCell>
+									<TokenPageTableHeaderCell textAlign="end">Deposits</TokenPageTableHeaderCell>
+									<TokenPageTableHeaderCell textAlign="end">
+										<Tooltip
+											content="What could have been withdrawn immediately, against total deposits, both measured on-chain at that day's block."
+											className="ml-auto w-fit"
+										>
+											<span className="underline decoration-dotted">Share</span>
+										</Tooltip>
+									</TokenPageTableHeaderCell>
+								</tr>
+							</thead>
+							<tbody>
+								{shown.map((incident) => (
+									<IncidentRow key={`${incident.from}-${incident.outcome}`} incident={incident} />
+								))}
+							</tbody>
+						</TokenPageTable>
+					</TokenPageTableScroller>
 					{folded > 0 ? (
 						<button
 							type="button"
 							onClick={() => setExpanded(true)}
 							className="border-t border-subtle px-3 py-2 text-left body-sm text-link hover:underline focus-visible:focus-ring"
 						>
-							{`Show ${count(folded)} older ${folded === 1 ? 'interruption' : 'interruptions'}`}
+							{`Show ${count(folded)} older ${folded === 1 ? 'episode' : 'episodes'}`}
 						</button>
 					) : null}
 				</>
 			) : (
 				// The empty ledger IS the claim, so it gets the panel's one tinted block rather than
 				// the grey shrug an empty state usually earns.
-				<div className="flex flex-col gap-0.5 border-t border-subtle bg-(--yield-verified-badge) px-3 py-3">
-					<p className="label-sm text-(--yield-positive-text)">Nothing to report.</p>
+				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-t border-subtle bg-(--yield-verified-badge) px-3 py-3">
+					<p className="label-sm text-(--yield-positive-text)">
+						{`No interruptions in ${count(model.measuredDays)} measured days.`}
+					</p>
 					<p className="body-sm text-secondary">
-						{`We asked this contract for a withdrawal on all ${count(model.measuredDays)} measured days. All of them ${cleanClaim(model)}.`}
+						{`Every day we asked this contract for a withdrawal, and all of them ${cleanClaim(model)}.`}
 					</p>
 				</div>
 			)}
@@ -155,31 +192,6 @@ export function ExitReliabilityPanel({
 			{noExit.length > 0 ? <NoExitNote days={model.noExitDays} first={noExit[noExit.length - 1].from} /> : null}
 			{gaps.length > 0 ? <CoverageNote gaps={gaps} days={model.gapDays} /> : null}
 			{verified ? <CrowdingNote verified={verified} holders={holders} /> : null}
-		</ChartPanel>
-	)
-}
-
-function Verdict({
-	model
-}: {
-	model: Pick<ExitReliabilityModel, 'measuredDays' | 'fullDays' | 'queuedDays' | 'lastInterruptionDaysAgo'>
-}) {
-	const clean = model.fullDays + model.queuedDays
-	return (
-		<div className="flex flex-col gap-1 px-3 py-3">
-			<div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-				<span className="mono-xl text-(--yield-positive-text)">
-					{count(clean)} / {count(model.measuredDays)}
-				</span>
-				<span className="body-sm text-secondary">
-					withdrawals we simulated <strong className="font-semibold text-primary">{cleanClaim(model)}</strong>
-				</span>
-			</div>
-			<p className="body-sm text-tertiary">
-				{model.lastInterruptionDaysAgo == null
-					? 'No interruption has ever been measured on this pool.'
-					: `Last one that didn't: ${model.lastInterruptionDaysAgo} days ago.`}
-			</p>
 		</div>
 	)
 }
@@ -205,30 +217,37 @@ function CoverageNote({ gaps, days }: { gaps: Array<ExitIncident>; days: number 
 }
 
 function IncidentRow({ incident }: { incident: ExitIncident }) {
-	const receipt =
-		incident.availableUsd == null || incident.tvlUsd == null
-			? null
-			: `${formatUsd(incident.availableUsd, RECEIPT_USD)} of ${formatUsd(incident.tvlUsd, RECEIPT_USD)}`
-	// The share takes the right edge: it is the column worth scanning.
 	const share = formatPercent(incidentWithdrawableShare(incident), RECEIPT_SHARE)
 	return (
-		<li className="grid grid-cols-[7px_auto_auto_1fr] items-baseline gap-x-3 gap-y-0.5 border-t border-subtle px-3 py-1.5 @min-[36rem]:grid-cols-[7px_6.5rem_4rem_1fr_auto]">
-			<span className={`size-[7px] shrink-0 self-center rounded-full ${INCIDENT_DOT[incident.kind]}`} aria-hidden />
-			<span className="mono-sm text-primary">{day(incident.from)}</span>
-			<span className="mono-sm text-secondary">
-				{incident.days} {incident.days === 1 ? 'day' : 'days'}
-			</span>
-			<span className={`label-sm ${INCIDENT_TONE[incident.kind]}`}>
-				{incident.outcome ? EXIT_OUTCOME_LABELS[incident.outcome] : 'Not measured'}
-			</span>
-			{receipt ? (
-				<span className="col-start-2 flex flex-wrap items-baseline justify-end gap-x-2 @min-[36rem]:col-start-5">
-					<span className="mono-sm text-tertiary">{receipt}</span>
-					{/* Rendered even when empty so the column stays straight. 7ch fits "100.00%". */}
-					<span className="w-[7ch] shrink-0 text-right mono-sm text-primary">{share}</span>
+		<tr className="border-b border-subtle last:border-b-0">
+			<TokenPageTableBodyCell>
+				<span className="text-primary">{day(incident.from)}</span>
+			</TokenPageTableBodyCell>
+			<TokenPageTableBodyCell textAlign="end">
+				<span className="text-primary">
+					{incident.days} {incident.days === 1 ? 'day' : 'days'}
 				</span>
-			) : null}
-		</li>
+			</TokenPageTableBodyCell>
+			<TokenPageTableBodyCell>
+				<span className="flex items-center gap-2">
+					<span className={`size-[7px] shrink-0 rounded-full ${INCIDENT_DOT[incident.kind]}`} aria-hidden />
+					<span className={INCIDENT_TONE[incident.kind]}>
+						{incident.outcome ? EXIT_OUTCOME_LABELS[incident.outcome] : 'Not measured'}
+					</span>
+				</span>
+			</TokenPageTableBodyCell>
+			<TokenPageTableBodyCell textAlign="end">
+				<span className="text-primary">
+					{incident.availableUsd == null ? '—' : formatUsd(incident.availableUsd, RECEIPT_USD)}
+				</span>
+			</TokenPageTableBodyCell>
+			<TokenPageTableBodyCell textAlign="end">
+				<span className="text-primary">{incident.tvlUsd == null ? '—' : formatUsd(incident.tvlUsd, RECEIPT_USD)}</span>
+			</TokenPageTableBodyCell>
+			<TokenPageTableBodyCell textAlign="end">
+				<span className="text-primary">{share ?? '—'}</span>
+			</TokenPageTableBodyCell>
+		</tr>
 	)
 }
 

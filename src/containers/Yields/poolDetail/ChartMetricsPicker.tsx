@@ -5,6 +5,7 @@ import { Button, buttonStyles } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { SealGlyph } from '../Tables/Measured'
 
 export interface ChartMetricOption {
 	key: string
@@ -16,6 +17,8 @@ export interface ChartMetricOption {
 	defaultEnabled: boolean
 	/** Measured for this pool but withheld from this reader: listed greyed with a PRO badge, and a click opens the upgrade modal instead of toggling. */
 	locked?: boolean
+	/** Marks our own measurement with the seal. */
+	verified?: boolean
 }
 
 export interface ChartMetricGroup {
@@ -103,6 +106,7 @@ export function ChartMetricsPicker({
 													) : (
 														<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
 													)}
+													{option.verified ? <SealGlyph size={12} /> : null}
 													<span>{option.label}</span>
 													{option.active ? (
 														<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
@@ -131,6 +135,7 @@ export function ChartMetricsPicker({
 					className={metricChipStyles}
 					style={{ borderColor: option.color }}
 				>
+					{option.verified ? <SealGlyph size={14} className="mr-1 text-verified" /> : null}
 					<span>{option.label}</span>
 					<Icon name="x" className="size-4" />
 					<span className="sr-only">Remove {option.label}</span>

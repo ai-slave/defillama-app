@@ -66,6 +66,7 @@ import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes, getZeroBaselineYAxisMin, mergeYAxisOption } from './logScale'
 import { buildMultiYAxis, formatAxisLabel, normalizeSeriesYAxisIndices } from './multiYAxis'
 import { buildMultiSeries } from './series'
+import { createStateTimelineSeries, getStateTimelineGridBottom } from './stateTimeline'
 import { buildSparseTimeSeriesDataset } from './timeSeriesDataset'
 import { createTooltipFormatter } from './tooltip'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions, MultiSeriesYAxisOption } from './types'
@@ -167,6 +168,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		rangeHallmarks,
 		hallmarksInMs = false,
 		hallmarkStyle = 'event-rail',
+		stateTimeline,
 		expandTo100Percent,
 		valueSymbol = '$',
 		tooltipMaxItems,
@@ -702,6 +704,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const datasetLength = Math.max(renderedDatasetSource.length, directSeriesStats.pointCount)
 		const shouldHideDataZoom = hideDataZoom || (autoHideDataZoom && datasetLength < 2)
 		const shouldShowEventRail = eventRailData.length > 0
+		const shouldShowStateTimeline = !shouldShowEventRail && (stateTimeline?.points.length ?? 0) > 0
+		const gridBottom = shouldShowStateTimeline
+			? getStateTimelineGridBottom(shouldHideDataZoom)
+			: getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom })
+		// Both strips sit on one hidden y-axis and reserve the same x-range handling.
+		const shouldShowStrip = shouldShowEventRail || shouldShowStateTimeline
 
 		// Always use a scroll legend when the default legend is enabled. ECharts
 		// decides whether paging is needed; asymmetric padding supplies the left
@@ -836,7 +844,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		}
 
 		const baseGrid = chartGrid({
-			bottom: getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom }),
+			bottom: gridBottom,
 			top: Math.max(
 				hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE,
 				hallmarksMarkLine ? CHART_INSET + CHART_HALLMARK_LABEL_RESERVE : 0
@@ -845,7 +853,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const finalGrid = mergedChartSettings.grid ? mergeDeep(baseGrid, mergedChartSettings.grid) : baseGrid
 		const hasExplicitGridBottom = mergedChartSettings.grid?.bottom != null
 		if (!hasExplicitGridBottom) {
-			finalGrid.bottom = getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom })
+			finalGrid.bottom = gridBottom
 		}
 		if (hasCategoryLogos) {
 			finalGrid.bottom = Number(finalGrid.bottom ?? 12) + CATEGORY_LOGO_SIZE + CATEGORY_LOGO_BOTTOM_GAP
@@ -857,7 +865,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		}
 
 		const timestampIndex = renderedDatasetDimensions.indexOf('timestamp')
-		const datasetTimeBounds = shouldShowEventRail
+		const datasetTimeBounds = shouldShowStrip
 			? getDatasetTimeBounds(renderedDatasetSource, timestampIndex)
 			: { min: undefined, max: undefined }
 		const timeRangeMin =
@@ -879,7 +887,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			Number.isFinite(timeRangeMax) &&
 			timeRangeMin < timeRangeMax
 
-		let finalXAxis: XAXisComponentOption | undefined = shouldShowEventRail
+		let finalXAxis: XAXisComponentOption | undefined = shouldShowStrip
 			? {
 					...xAxis,
 					// The strip's hidden y-axis spans -1..1. By default the x-axis line sits on the first
@@ -893,7 +901,8 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			finalXAxis = mergeDeep(finalXAxis ?? {}, { axisLabel: { show: false }, axisTick: { show: false } })
 		}
 		const eventStripYAxisIndex = finalYAxisBase.length
-		const finalYAxisWithEvents = shouldShowEventRail ? [...finalYAxisBase, createEventStripYAxis()] : finalYAxisBase
+		const finalYAxisWithEvents = shouldShowStrip ? [...finalYAxisBase, createEventStripYAxis()] : finalYAxisBase
+		// Same reference when no strip is drawn, so unchanged inputs do not re-set ECharts.
 		const finalSeries = shouldShowEventRail
 			? [
 					...series,
@@ -904,7 +913,12 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						shouldHideDataZoom
 					})
 				]
-			: series
+			: shouldShowStateTimeline && stateTimeline
+				? [
+						...series,
+						createStateTimelineSeries({ timeline: stateTimeline, yAxisIndex: eventStripYAxisIndex, shouldHideDataZoom })
+					]
+				: series
 		const finalGraphic = shouldShowEventRail ? mergeGraphicWithEventMarkLinePlaceholder(graphic, isThemeDark) : graphic
 
 		const hasRenderableSeries = finalSeries.length > 0 && datasetLength > 0
@@ -977,6 +991,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		echartsDatasetDimensions,
 		tooltipFormatter,
 		eventRailData,
+		stateTimeline,
 		isThemeDark,
 		chartTheme,
 		finalYAxisBase,

@@ -69,6 +69,8 @@ export interface LiquidityChartModel {
 	// only the USD view is offered.
 	units: LiquiditySeries
 	classes: Array<ExitClass | null>
+	// The day's outcome as measured, for labels that must match the exit ledger word for word.
+	outcomes: Array<VerifiedExitOutcome | null>
 	// True on days the deposits are valued at the protocol's quoted rate because the exit could not
 	// price them (`tvl_quoted`): the same supply, a different valuation, so the tooltip says so.
 	quotedTotal: Array<boolean>
@@ -100,6 +102,7 @@ export function buildLiquidityChart(
 	const usd = emptySeries(series.length)
 	const units = emptySeries(series.length)
 	const classes = new Array<ExitClass | null>(series.length)
+	const outcomes = new Array<VerifiedExitOutcome | null>(series.length)
 	const quotedTotal = new Array<boolean>(series.length).fill(false)
 	let hasTotal = false
 	let hasUnits = false
@@ -110,6 +113,7 @@ export function buildLiquidityChart(
 		const verified = point.verified ?? null
 		dates[index] = ms(point.date)
 		classes[index] = exitClassOf(verified?.exit?.outcome)
+		outcomes[index] = verified?.exit?.outcome ?? null
 
 		const quoted = verified?.tvl_usd == null && verified?.tvl == null
 		const totalUsd = verified?.tvl_usd ?? (quoted ? (verified?.tvl_quoted_usd ?? null) : null)
@@ -134,7 +138,7 @@ export function buildLiquidityChart(
 
 	if (!hasTotal) return null
 
-	return { dates, usd, units, classes, quotedTotal, symbol, hasUnits, uncappedQueue: !hasAvailable }
+	return { dates, usd, units, classes, outcomes, quotedTotal, symbol, hasUnits, uncappedQueue: !hasAvailable }
 }
 
 // A live queue has no instant lane BY DESIGN, whatever the capacity probe returned on some days, so
@@ -161,52 +165,6 @@ export function firstLiquidityIndex(model: LiquidityChartModel, from: number, en
 		if (model.usd.total[index] != null || model.units.total[index] != null) return index
 	}
 	return -1
-}
-
-export interface LiquidityBand {
-	from: number
-	to: number
-	days: number
-	kind: ExitClass
-}
-
-// Contiguous runs of the same exit class. `minDays` drops runs too short to draw as a legible band:
-// across the dataset, runs of 3+ days hold the overwhelming majority of partial and blocked days,
-// while one-day runs render as hairlines that read as chart artefacts rather than as status.
-export function buildLiquidityBands(
-	model: LiquidityChartModel,
-	start: number,
-	end: number,
-	/** Runs shorter than this are dropped. Default 1: visibility is the renderer's job, via the band outline. */
-	minDays = 1
-): Array<LiquidityBand> {
-	const bands: Array<LiquidityBand> = []
-	let runStart = -1
-	let runKind: ExitClass | null = null
-
-	const flush = (endIndex: number) => {
-		if (runStart === -1 || runKind == null) return
-		const days = endIndex - runStart + 1
-		if (days >= minDays) {
-			bands.push({ from: model.dates[runStart], to: model.dates[endIndex], days, kind: runKind })
-		}
-		runStart = -1
-		runKind = null
-	}
-
-	for (let index = Math.max(0, start); index < end; index++) {
-		const kind = model.classes[index]
-		if (kind !== runKind) {
-			flush(index - 1)
-			if (kind) {
-				runStart = index
-				runKind = kind
-			}
-		}
-	}
-	flush(end - 1)
-
-	return bands
 }
 
 export interface LiquiditySummary {

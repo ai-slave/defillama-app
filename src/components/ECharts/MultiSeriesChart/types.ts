@@ -9,6 +9,7 @@ import type { LineSeriesOption } from 'echarts/charts'
 import type * as echarts from 'echarts/core'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { ChartExportButtonsMode } from '~/components/ChartExport/types'
+import type { StateTimelineOption } from './stateTimeline'
 
 export type ChartTimeGrouping = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
 export type ChartTimeGroupingWithCumulative = ChartTimeGrouping | 'cumulative'
@@ -123,6 +124,8 @@ export interface IMultiSeriesChartProps {
 	rangeHallmarks?: Array<[[number, number], string]> | null
 	hallmarksInMs?: boolean
 	hallmarkStyle?: 'event-rail' | 'mark-line'
+	/** A categorical state per period, drawn as a thin row under the plot. Not drawn beside an event rail. */
+	stateTimeline?: StateTimelineOption | null
 	expandTo100Percent?: boolean
 	valueSymbol?: string
 	alwaysShowTooltip?: boolean

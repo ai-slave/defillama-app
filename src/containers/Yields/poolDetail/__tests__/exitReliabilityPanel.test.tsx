@@ -39,15 +39,13 @@ const render = (outcomes: Array<VerifiedExitOutcome | null>) =>
 		/>
 	)
 
-describe('exit reliability verdict', () => {
-	// Scoring only the majority exit path drops real clean days out of the numerator while leaving
-	// them in the denominator, so the ratio stops reconciling with the ledger beside it.
-	test('counts instant and queued days together on a mixed history', () => {
+describe('exit interruptions ledger', () => {
+	test('lists a mixed history as table rows', () => {
 		const html = render(['ok_full', 'ok_full', 'delayed', 'ok_full', 'ok_partial', 'ok_full', 'delayed', 'ok_full'])
 
-		expect(html).toContain('7 / 8')
-		expect(html).toContain('followed the pool&#x27;s available exit path')
-		expect(html).toContain('1 interruption')
+		expect(html).toContain('1 episode')
+		expect(html).toContain('Partial exit only')
+		expect(html).not.toContain('Queued')
 	})
 
 	// The specific claim is stronger than the covering one, so a homogeneous history keeps it.
@@ -63,7 +61,7 @@ describe('exit reliability verdict', () => {
 		expect(html).toContain('No exit mechanism existed on 1 day')
 		expect(html).toContain('No measurement on 1 day')
 		// Neither is an interruption: the ledger is failures only.
-		expect(html).toContain('Nothing to report')
+		expect(html).toContain('No interruptions in')
 	})
 
 	test('omits the dollar pair when availability was not measured', () => {
@@ -75,8 +73,9 @@ describe('exit reliability verdict', () => {
 			<ExitReliabilityPanel model={buildExitReliability(history)!} verified={null} holders={null} />
 		)
 
+		// Separate columns: the unmeasured lane is a dash, never a zero, while deposits still print.
 		expect(html).toContain('Reverted, no liquidity')
-		expect(html).not.toContain('$0 of')
-		expect(html).not.toContain('$10m')
+		expect(html).not.toContain('>$0<')
+		expect(html).toContain('$10m')
 	})
 })

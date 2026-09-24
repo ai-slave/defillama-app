@@ -1,7 +1,8 @@
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useMemo, useRef } from 'react'
+import { lazy, type ReactNode, Suspense, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import type { StateTimelineOption, StateTimelinePoint } from '~/components/ECharts/MultiSeriesChart/stateTimeline'
 import type {
 	IMultiSeriesChartProps,
 	MultiSeriesChartDataset,
@@ -15,12 +16,14 @@ import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNumber, formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import type { VerifiedExitStatus } from '../data/types'
+import type { VerifiedBlock, VerifiedExitStatus } from '../data/types'
+import { exitCoverageLine, exitHeadline } from '../domain/exitPresentation'
 import { answerExitCapacity, answerQueueFlow, type ExitCapacityAnswer, type QueueFlowAnswer } from './exitCapacity'
+import { EXIT_OUTCOME_LABELS, exitFailures, type ExitReliabilityModel } from './exitReliability'
+import { cleanClaim } from './ExitReliabilityPanel'
 import {
-	buildLiquidityBands,
 	buildLiquidityChart,
 	buildLiquiditySummary,
 	depositsOnly,
@@ -31,7 +34,7 @@ import {
 	type LiquidityUnitKey
 } from './liquidityChart'
 import { CHART_PALETTE } from './poolCharts'
-import { buildBandMarkArea, isoDay, rangeCount } from './poolChartUtils'
+import { DAY_MS, isoDay, rangeCount } from './poolChartUtils'
 import { PoolRangeControl } from './PoolRangeControl'
 import {
 	EXIT_SIZE_DEFAULT,
@@ -42,16 +45,7 @@ import {
 	getPoolHistoryRange,
 	getPoolRangeQueryKey
 } from './queryState'
-import {
-	READOUT_ABSENT,
-	READOUT_KEYS_BACKDROP,
-	readoutBlockStyles,
-	readoutCellsStyles,
-	ReadoutCell,
-	readoutInputStyles,
-	readoutKeysStyles,
-	ReadoutKey
-} from './readout'
+import { ReadoutCell, readoutFieldStyles, readoutKeysStyles, ReadoutKey } from './readout'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 import type { PoolHistoryRange } from './types'
 import { useQueryDraft } from './useQueryDraft'
@@ -69,11 +63,8 @@ const valueOf = (item: ChartTooltipItem | undefined): number | null => {
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-// Named off the panel title so the legend, tooltip and readout speak one vocabulary: the stack
-// totals DEPOSITS, and the green band is the part that is WITHDRAWABLE. "now" carries the
-// instant-lane qualifier so the remainder never has to claim anything; calling it "not withdrawable"
-// would be false for a pool whose exit is a working queue.
-const AVAILABLE_NAME = 'Withdrawable now'
+// Named off the panel title: the stack totals deposits, and the green series is the withdrawable part.
+const AVAILABLE_NAME = 'Withdrawable'
 const REMAINDER_NAME = 'Rest of deposits'
 const TOTAL_NAME = 'Total deposits'
 
@@ -85,28 +76,12 @@ const SERIES_COLOR: Record<'available' | 'remainder', readonly [light: string, d
 	remainder: CHART_PALETTE.chartFill
 }
 
-// Background shading for the exit-health classes. Only these two are shaded: a working exit needs no
-// mark, and a day we failed to measure is our gap, not the pool's.
-// A revert outranks a partial however long each lasted, so blocked carries the heavier fill.
-const BAND_FILL: Record<ExitClass, readonly [light: string, dark: string]> = {
-	blocked: ['rgba(242, 54, 69, 0.22)', 'rgba(247, 82, 95, 0.38)'],
-	partial: ['rgba(245, 127, 23, 0.16)', 'rgba(255, 167, 38, 0.24)']
-}
-
-// Both classes get one, since the key counts every affected day. Severity lives in the opacity.
-const BAND_STROKE: Partial<Record<ExitClass, readonly [light: string, dark: string]>> = {
-	blocked: ['rgba(242, 54, 69, 0.85)', 'rgba(247, 82, 95, 0.9)'],
-	partial: ['rgba(245, 127, 23, 0.42)', 'rgba(255, 167, 38, 0.45)']
-}
+// The strip's cell for a day with nothing to report: present, quiet, so incidents read against it.
+const STRIP_BASE: readonly [light: string, dark: string] = ['rgba(9, 11, 12, 0.08)', 'rgba(255, 255, 255, 0.1)']
 
 const SWATCH_FILL: Record<ExitClass, readonly [light: string, dark: string]> = {
-	blocked: ['rgba(242, 54, 69, 0.55)', 'rgba(247, 82, 95, 0.65)'],
-	partial: ['rgba(245, 127, 23, 0.6)', 'rgba(255, 167, 38, 0.7)']
-}
-
-const BAND_LABEL: Record<ExitClass, string> = {
-	blocked: 'withdrawal reverted',
-	partial: 'partial exit only'
+	blocked: ['rgba(220, 38, 38, 0.95)', 'rgba(248, 81, 73, 1)'],
+	partial: ['rgba(245, 127, 23, 0.55)', 'rgba(255, 167, 38, 0.6)']
 }
 
 function unitLabel(symbol: string | null): string {
@@ -127,15 +102,14 @@ function buildChartInputs(
 	model: LiquidityChartModel,
 	range: PoolHistoryRange,
 	unit: LiquidityUnitKey,
-	isDark: boolean,
-	/** Drawn across the withdrawable series so the count in the readout has a picture. */
-	positionUsd: number | null
+	isDark: boolean
 ): {
 	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 	blockedDays: number
 	partialDays: number
 	summary: LiquiditySummary | null
+	timeline: StateTimelineOption
 } {
 	const shade = (key: 'available' | 'remainder') => SERIES_COLOR[key][isDark ? 1 : 0]
 	const series = unit === 'usd' ? model.usd : model.units
@@ -144,18 +118,28 @@ function buildChartInputs(
 	// Start where the measurement starts, not where the reported history does.
 	const firstMeasured = firstLiquidityIndex(model, windowStart, total)
 	const start = firstMeasured === -1 ? windowStart : firstMeasured
-	const bands = buildLiquidityBands(model, start, total)
-	// Counted per day over the plotted window, never summed from the bands: bands only draw runs
-	// long enough to see, while the key must agree with the exit ledger, which counts every day.
+	// The exit outcome per day as the strip under the plot; its counts agree with the exit ledger.
 	let blockedDays = 0
 	let partialDays = 0
+	const points: Array<StateTimelinePoint> = []
 	for (let index = start; index < total; index++) {
 		const exitClass = model.classes[index]
 		if (exitClass === 'blocked') blockedDays++
 		else if (exitClass === 'partial') partialDays++
+		const date = model.dates[index]
+		if (date == null) continue
+		const outcome = model.outcomes[index]
+		if (exitClass && outcome) {
+			points.push({
+				timestamp: date,
+				color: SWATCH_FILL[exitClass][isDark ? 1 : 0],
+				label: EXIT_OUTCOME_LABELS[outcome]
+			})
+		} else if (series.total[index] != null) {
+			points.push({ timestamp: date, color: STRIP_BASE[isDark ? 1 : 0], label: 'No interruption measured' })
+		}
 	}
-
-	const markArea = buildBandMarkArea(bands, BAND_FILL, isDark, BAND_STROKE)
+	const timeline: StateTimelineOption = { points, stepMs: DAY_MS }
 
 	// Stacked so the top of the stack IS measured deposits and the upper band is literally the gap
 	// the chart exists to show, rather than something the eye has to subtract. An uncapped queue has
@@ -169,19 +153,7 @@ function buildChartInputs(
 			name: AVAILABLE_NAME,
 			encode: { x: 0, y: dimensions.length - 1 },
 			stack: 'deposits',
-			color: shade('available'),
-			...(markArea ? { markArea } : {}),
-			...(positionUsd != null && unit === 'usd'
-				? {
-						markLine: {
-							silent: true,
-							symbol: 'none',
-							label: { show: false },
-							data: [{ yAxis: positionUsd }],
-							lineStyle: { color: CHART_PALETTE.warn[isDark ? 1 : 0], type: 'dashed', width: 1.25 }
-						}
-					}
-				: {})
+			color: shade('available')
 		})
 	}
 	dimensions.push(REMAINDER_NAME)
@@ -190,8 +162,7 @@ function buildChartInputs(
 		name: REMAINDER_NAME,
 		encode: { x: 0, y: dimensions.length - 1 },
 		stack: 'deposits',
-		color: shade('remainder'),
-		...(model.uncappedQueue && markArea ? { markArea } : {})
+		color: shade('remainder')
 	})
 
 	const rows = new Array<MultiSeriesChartDataset['source'][number]>(total - start)
@@ -207,20 +178,23 @@ function buildChartInputs(
 		charts,
 		blockedDays,
 		partialDays,
-		summary: buildLiquiditySummary(model, start, total, unit)
+		summary: buildLiquiditySummary(model, start, total, unit),
+		timeline
 	}
 }
 
 function buildTooltipFormatter(
 	model: LiquidityChartModel,
 	unit: LiquidityUnitKey,
-	exitStatus: VerifiedExitStatus | null
+	exitStatus: VerifiedExitStatus | null,
+	isDark: boolean
 ) {
-	const classByDate = new Map<number, ExitClass>()
+	const exitByDate = new Map<number, { kind: ExitClass; label: string }>()
 	const quotedDates = new Set<number>()
 	for (let index = 0; index < model.dates.length; index++) {
 		const kind = model.classes[index]
-		if (kind) classByDate.set(model.dates[index], kind)
+		const outcome = model.outcomes[index]
+		if (kind && outcome) exitByDate.set(model.dates[index], { kind, label: EXIT_OUTCOME_LABELS[outcome] })
 		if (model.quotedTotal[index]) quotedDates.add(model.dates[index])
 	}
 
@@ -270,8 +244,11 @@ function buildTooltipFormatter(
 			)
 		}
 
-		const kind = classByDate.get(timestamp)
-		if (kind) html += li(`<span style="opacity:0.7">Exit that day: ${BAND_LABEL[kind]}</span>`)
+		const exit = exitByDate.get(timestamp)
+		if (exit) {
+			const swatch = `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${SWATCH_FILL[exit.kind][isDark ? 1 : 0]};margin-right:6px;vertical-align:-1px"></span>`
+			html += li(`${swatch}Exit that day: ${exit.label}`)
+		}
 
 		return html
 	}
@@ -279,7 +256,7 @@ function buildTooltipFormatter(
 
 const POSITION_INPUT_ID = 'exit-position-size'
 
-/** The plot's own key, drawn over the plot. Every colour the chart uses is named here and nowhere else. */
+/** The plot's own key, the row above the plot. Every colour the chart uses is named here and nowhere else. */
 function LiquidityKey({
 	model,
 	blockedDays,
@@ -292,7 +269,7 @@ function LiquidityKey({
 	isDark: boolean
 }) {
 	return (
-		<div className={readoutKeysStyles} style={{ backgroundColor: READOUT_KEYS_BACKDROP }}>
+		<div className={readoutKeysStyles}>
 			{model.uncappedQueue ? null : (
 				<ReadoutKey color={SERIES_COLOR.available[isDark ? 1 : 0]}>{AVAILABLE_NAME}</ReadoutKey>
 			)}
@@ -304,7 +281,7 @@ function LiquidityKey({
 			</ReadoutKey>
 			{blockedDays ? (
 				<ReadoutKey color={SWATCH_FILL.blocked[isDark ? 1 : 0]}>
-					{formatNumber(blockedDays)} {blockedDays === 1 ? 'day' : 'days'} withdrawal reverted
+					{formatNumber(blockedDays)} {blockedDays === 1 ? 'day' : 'days'} reverted
 				</ReadoutKey>
 			) : null}
 			{partialDays ? (
@@ -316,36 +293,153 @@ function LiquidityKey({
 	)
 }
 
-/**
- * One row for everything the plot needs said: what the reader's size would have met, what each band
- * and series means, and the controls. The key used to sit in its own strip below this one, which
- * made two rhythms out of one question and cost the panel a row it does not have.
- */
+function describeExitMechanism(
+	uncappedQueue: boolean,
+	verified: VerifiedBlock | null
+): { title: string; detail: string } {
+	const status = verified?.exit?.status ?? null
+	// The category alone; the figure is the next cell's job. A queue keeps its ETA.
+	const headline = verified ? exitHeadline(verified) : null
+	const title = status === 'partial' ? 'Partial' : (headline ?? (uncappedQueue ? 'Not measured' : '—'))
+	// Blocked, unavailable, queued and unmeasured lead with the tile's line; lanes need no sentence.
+	const coverage =
+		verified && (status === 'blocked' || status === 'unavailable' || uncappedQueue) ? exitCoverageLine(verified) : null
+	const plot = uncappedQueue
+		? status === 'queued'
+			? ''
+			: 'Instant capacity was not measured, so this chart shows total deposits only.'
+		: status === 'blocked' || status === 'unavailable'
+			? 'This chart shows how much could be withdrawn instantly on earlier days.'
+			: ''
+	return { title, detail: coverage ? (plot ? `${coverage}. ${plot}` : coverage) : plot }
+}
+
+const CELL = 'border-t border-l border-subtle px-4 py-3'
+
+/** One row of equal stats summarising the plot, label over figure. */
 function LiquidityReadout({
 	model,
 	unit,
-	capacity,
 	flow,
-	positionUsd,
 	summary,
-	blockedDays,
-	partialDays,
-	exitStatus,
-	isDark,
-	setQuery
+	verified,
+	reliability
 }: {
 	model: LiquidityChartModel
 	unit: LiquidityUnitKey
-	/** Null on a queue, where size is not the constraint, and in the native-unit view. */
-	capacity: ExitCapacityAnswer | null
-	/** The queued counterpart of `capacity`: null unless the pool's exit is a LIVE queue. */
+	/** Null unless the pool's exit is a LIVE queue. */
 	flow: QueueFlowAnswer | null
-	positionUsd: number | null
 	summary: LiquiditySummary | null
-	blockedDays: number
-	partialDays: number
-	exitStatus: VerifiedExitStatus | null
-	isDark: boolean
+	/** The current measurement, whose exit wording the status cell reuses. */
+	verified: VerifiedBlock | null
+	/** The ledger over the whole history, for the simulated withdrawals' own count. */
+	reliability: ExitReliabilityModel | null
+}) {
+	const mechanism = describeExitMechanism(model.uncappedQueue, verified)
+	const status = verified?.exit?.status
+	// No lane today means no figure, whatever an earlier day held.
+	const lane = status === 'instant' || status === 'partial' || status === 'depleted'
+	const available = lane ? (summary?.available ?? null) : null
+	const availablePct = lane && summary?.availableFraction != null ? summary.availableFraction * 100 : null
+	const feeBps = verified?.exit?.fee_bps ?? 0
+	const failures = reliability ? exitFailures(reliability.incidents) : []
+	const partialDays = failures.filter((i) => i.kind === 'partial').reduce((sum, i) => sum + i.days, 0)
+	const revertedDays = failures.filter((i) => i.kind !== 'partial').reduce((sum, i) => sum + i.days, 0)
+	const cleanDays = reliability ? reliability.fullDays + reliability.queuedDays : 0
+	const cleanShare = reliability && reliability.measuredDays > 0 ? (cleanDays / reliability.measuredDays) * 100 : 0
+
+	const figure = model.uncappedQueue ? (
+		flow && flow.worstWeek > 0 ? (
+			<ReadoutCell
+				label="Queue paid out in one week"
+				className={CELL}
+				hint={`This pool has no instant lane, so the question is how much its queue actually moves. In the seven days from ${isoDay(
+					flow.worstWeekFrom
+				)} to ${isoDay(
+					flow.worstWeekTo
+				)} deposits fell by this much. New deposits net against withdrawals, so the queue paid out at least this amount in one week. A measured floor, never a promise.`}
+			>
+				<span className="mono-xl text-primary">≥ {formatAmount(flow.worstWeek, 'units', model.symbol)}</span>
+			</ReadoutCell>
+		) : null
+	) : (
+		<ReadoutCell
+			label="Withdrawable now"
+			hint="The most that could be withdrawn immediately, measured on-chain at that day's block. A binding constraint, not backing inventory."
+			className={CELL}
+		>
+			<span className="mono-xl text-primary">
+				{available == null ? '—' : formatAmount(available, unit, model.symbol)}
+			</span>
+			{availablePct != null ? (
+				<span className="body-sm text-secondary">
+					{formatPercent(availablePct, { input: 'percent', maximumFractionDigits: 1 })} of pool withdrawable at once
+				</span>
+			) : null}
+		</ReadoutCell>
+	)
+
+	return (
+		<div className="-mt-px -ml-px grid grid-cols-1 md:grid-cols-3">
+			<ReadoutCell label="Exit Status" className={CELL}>
+				<span className="mono-xl text-primary">{mechanism.title}</span>
+				{mechanism.detail ? <span className="basis-full body-sm text-secondary">{mechanism.detail}</span> : null}
+				{feeBps > 0 ? (
+					<span className="basis-full body-sm text-(--yield-warning-text)">
+						Exit fee {formatNumber(feeBps, { maximumFractionDigits: 2 })} bps
+					</span>
+				) : null}
+			</ReadoutCell>
+			{figure}
+
+			{reliability ? (
+				<ReadoutCell
+					label={`Withdrawals ${cleanClaim(reliability)}`}
+					hint="Every measured day we simulate a real holder withdrawing their whole position. This counts the days that withdrawal went through, over the full history."
+					className={CELL}
+				>
+					<span className="mono-xl text-primary">
+						{formatNumber(cleanDays)} / {formatNumber(reliability.measuredDays)}{' '}
+						<span className="body-md text-secondary">days</span>
+					</span>
+					<span className="body-sm text-secondary">
+						{formatPercent(cleanShare, { input: 'percent', maximumFractionDigits: 0 })}
+					</span>
+					<span className="flex basis-full flex-wrap gap-x-1.5 body-sm">
+						{failures.length > 0 ? (
+							<>
+								{partialDays > 0 ? (
+									<span className="text-warning">{formatNumber(partialDays)} days partial exit only</span>
+								) : null}
+								{partialDays > 0 && revertedDays > 0 ? (
+									<span aria-hidden className="text-secondary">
+										·
+									</span>
+								) : null}
+								{revertedDays > 0 ? (
+									<span className="text-(--yield-negative-text)">{formatNumber(revertedDays)} days reverted</span>
+								) : null}
+							</>
+						) : (
+							<span className="text-(--yield-positive-text)">No interruptions</span>
+						)}
+					</span>
+				</ReadoutCell>
+			) : null}
+		</div>
+	)
+}
+
+/** The one interactive line, above the plot: the reader's own amount against the measured lane. */
+function WithdrawWhatIf({
+	model,
+	capacity,
+	positionUsd,
+	setQuery
+}: {
+	model: LiquidityChartModel
+	capacity: ExitCapacityAnswer | null
+	positionUsd: number | null
 	setQuery: (next: Record<string, string | undefined>) => void
 }) {
 	const [positionText, setPositionText, positionFocus] = useQueryDraft(positionUsd ?? EXIT_SIZE_DEFAULT, getExitSize)
@@ -353,99 +447,17 @@ function LiquidityReadout({
 		(text: string) => setQuery({ exitSize: getExitSizeQueryValue(getExitSize(text)) }),
 		300
 	)
-	const percent = { input: 'percent', maximumFractionDigits: 1 } as const
-	const availablePct = summary?.availableFraction == null ? null : summary.availableFraction * 100
-	const showPosition = capacity != null && positionUsd != null
-
+	if (model.uncappedQueue) return null
+	// In token units the field stays, disabled, so the reader sees why the answer is missing.
+	const sizeDisabled = capacity == null || positionUsd == null
 	return (
-		<div className={`${readoutBlockStyles} ${readoutCellsStyles}`}>
-			{showPosition ? (
-				<ReadoutCell
-					label="At your size"
-					hint="Every measured day is checked against the position above: did the instant lane hold at least that much? Past capacity, never a guarantee about today."
+		<div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-4 py-2.5">
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-2 body-md text-secondary">
+				<label htmlFor={POSITION_INPUT_ID}>If you wanted to withdraw</label>
+				<span
+					className={`${readoutFieldStyles} inline-flex items-center gap-1 ${sizeDisabled ? 'opacity-60' : ''}`.trim()}
 				>
-					{capacity.shortDays > 0 ? (
-						<span className="mono-md-bold text-(--yield-negative-text)">
-							{formatNumber(capacity.shortDays)} of {formatNumber(capacity.measuredDays)} fell short
-						</span>
-					) : (
-						<span className="mono-md-bold text-(--yield-positive-text)">
-							All {formatNumber(capacity.measuredDays)} days cleared
-						</span>
-					)}
-				</ReadoutCell>
-			) : null}
-
-			{/* A queue has no instant lane BY DESIGN, so it reports how far deposits actually moved. */}
-			{flow ? (
-				<ReadoutCell label={flow.to < flow.from ? 'Left the pool' : 'Joined the pool'}>
-					<span
-						className={`mono-md-bold ${flow.to < flow.from ? 'text-(--yield-negative-text)' : 'text-(--yield-positive-text)'}`}
-					>
-						{formatAmount(Math.abs(flow.to - flow.from), 'units', model.symbol)}
-					</span>
-					<span className="body-sm text-tertiary">over {formatNumber(flow.measuredDays)} days</span>
-				</ReadoutCell>
-			) : null}
-			{/* Deposits net off against withdrawals, so a fall is a FLOOR on what the queue cleared. */}
-			{flow && flow.worstWeek > 0 ? (
-				<ReadoutCell
-					label="Cleared in a week"
-					hint={`Largest fall in measured deposits across any seven days, ${isoDay(flow.worstWeekFrom)} to ${isoDay(
-						flow.worstWeekTo
-					)}. New deposits net against withdrawals, so the queue processed at least this much. A measured floor, never a promise.`}
-				>
-					<span className="mono-sm-bold text-primary">≥ {formatAmount(flow.worstWeek, 'units', model.symbol)}</span>
-				</ReadoutCell>
-			) : null}
-
-			{model.uncappedQueue ? (
-				<ReadoutCell
-					label="Exit"
-					hint={
-						exitStatus === 'queued'
-							? `No instant exit lane by design: withdrawals run through a queue that accepts any size. That is not the same as having no liquidity, so nothing is shown as withdrawable now.${
-									model.hasUnits
-										? ''
-										: ' Deposit flows need token units, which this pool does not report, so how far the queue has moved is not shown either.'
-								}`
-							: 'The exit-capacity probe returned nothing on this run, so the instant lane is unmeasured rather than absent. Withdrawals from this pool have succeeded; what is unknown is the ceiling.'
-					}
-				>
-					<span className="body-sm text-secondary">
-						{exitStatus === 'queued' ? 'Uncapped queue' : 'Capacity unmeasured'}
-					</span>
-				</ReadoutCell>
-			) : (
-				<ReadoutCell
-					label={AVAILABLE_NAME}
-					hint="The most that could be withdrawn immediately, measured on-chain at that day's block. A binding constraint, not backing inventory."
-				>
-					<span className="mono-sm-bold text-primary">
-						{availablePct == null ? READOUT_ABSENT : formatPercent(availablePct, percent)}
-					</span>
-				</ReadoutCell>
-			)}
-
-			{/* A sizing rule, not a promise: the ceiling that held on nine days in ten. */}
-			{showPosition && capacity.comfortableUsd != null ? (
-				<ReadoutCell
-					label="Clears 90% of days"
-					hint="The tenth-percentile withdrawable figure: a position this size would have exited in full on nine measured days out of ten. Past capacity, never a guarantee."
-				>
-					<span className="mono-sm-bold text-primary">
-						{formatUsd(capacity.comfortableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
-					</span>
-				</ReadoutCell>
-			) : null}
-
-			{showPosition ? (
-				<ReadoutCell
-					className="ml-auto"
-					hint="A size to test against the measured instant lane. The days above are counted against it."
-					label={<label htmlFor={POSITION_INPUT_ID}>Your position</label>}
-				>
-					<span className="body-sm text-tertiary">$</span>
+					<span className="text-tertiary">$</span>
 					<input
 						id={POSITION_INPUT_ID}
 						type="number"
@@ -462,11 +474,22 @@ function LiquidityReadout({
 							setPositionText(event.target.value)
 							commitPosition(event.target.value)
 						}}
-						className={`${readoutInputStyles} w-28`}
-						aria-label="Position size to test against measured exit capacity"
+						disabled={sizeDisabled}
+						className="w-24 bg-transparent p-0 mono-md text-primary outline-none disabled:cursor-not-allowed"
 					/>
-				</ReadoutCell>
-			) : null}
+				</span>
+				{sizeDisabled ? (
+					<span className="body-sm text-tertiary">in USD only</span>
+				) : (
+					<>
+						<span>you could have on</span>
+						<span className="mono-md-bold text-primary">
+							{formatNumber(capacity.measuredDays - capacity.shortDays)} of {formatNumber(capacity.measuredDays)}
+						</span>
+						<span>days</span>
+					</>
+				)}
+			</div>
 		</div>
 	)
 }
@@ -476,6 +499,9 @@ export function PoolLiquidityChart({
 	poolId,
 	decimals,
 	exitStatus = null,
+	verified = null,
+	reliability = null,
+	ledger = null,
 	initialRange = 'max'
 }: {
 	model: LiquidityChartModel
@@ -484,6 +510,12 @@ export function PoolLiquidityChart({
 	decimals: number | null
 	// Current-state exit facts, which decide what an absent withdrawable figure MEANS.
 	exitStatus?: VerifiedExitStatus | null
+	/** The current measurement, for the headline's exit wording. */
+	verified?: VerifiedBlock | null
+	/** The whole ledger, for the record's own count beside today's figure. */
+	reliability?: ExitReliabilityModel | null
+	/** The interruptions block, rendered full width under the cells. */
+	ledger?: ReactNode
 	initialRange?: PoolHistoryRange
 }) {
 	const router = useRouter()
@@ -518,13 +550,13 @@ export function PoolLiquidityChart({
 		void pushShallowQuery(router, patch, router.pathname)
 	}
 	const positionUsd = currentModel.uncappedQueue || unit !== 'usd' ? null : getExitSize(router.query.exitSize)
-	const { dataset, charts, blockedDays, partialDays, summary } = useMemo(
-		() => buildChartInputs(currentModel, range, unit, isDark, positionUsd),
-		[currentModel, isDark, positionUsd, range, unit]
+	const { dataset, charts, blockedDays, partialDays, summary, timeline } = useMemo(
+		() => buildChartInputs(currentModel, range, unit, isDark),
+		[currentModel, isDark, range, unit]
 	)
 	const chartOptions = useMemo(
 		() => ({
-			tooltip: { formatter: buildTooltipFormatter(currentModel, unit, exitStatus) },
+			tooltip: { formatter: buildTooltipFormatter(currentModel, unit, exitStatus, isDark) },
 			yAxis: {
 				axisLabel: {
 					formatter: (value: number) =>
@@ -534,7 +566,7 @@ export function PoolLiquidityChart({
 				}
 			}
 		}),
-		[currentModel, exitStatus, unit]
+		[currentModel, exitStatus, isDark, unit]
 	)
 
 	// The position the capacity answer sizes against. USD only: the series it compares to is USD,
@@ -566,7 +598,7 @@ export function PoolLiquidityChart({
 	return (
 		<>
 			<PanelHeader>
-				<PanelTitle>{currentModel.uncappedQueue ? 'Deposits' : 'Exit history'}</PanelTitle>
+				<PanelTitle>Exit history</PanelTitle>
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{currentModel.hasUnits ? (
 						<Tooltip content="In dollars a fall can be an outflow OR the token's price dropping. Switch to token units to see deposit flows on their own.">
@@ -591,40 +623,26 @@ export function PoolLiquidityChart({
 			</PanelHeader>
 
 			{!loading && !error ? (
-				<LiquidityReadout
-					model={currentModel}
-					unit={unit}
-					capacity={capacity}
-					flow={flow}
-					positionUsd={positionUsd}
-					summary={summary}
-					blockedDays={blockedDays}
-					partialDays={partialDays}
-					exitStatus={exitStatus}
-					isDark={isDark}
-					setQuery={setQuery}
-				/>
+				<WithdrawWhatIf model={currentModel} capacity={capacity} positionUsd={positionUsd} setQuery={setQuery} />
 			) : null}
 
-			{/* The panel gives this chart a fixed-height section, so the body fills whatever the readout and
-			    key leave; the lower floor lets those wrap onto a second line without pushing the chart out
-			    over the exit ledger below. */}
-			<ChartPanelBody size="compact">
-				{!loading && !error ? (
-					<LiquidityKey model={currentModel} blockedDays={blockedDays} partialDays={partialDays} isDark={isDark} />
-				) : null}
+			{/* The key is its own row, so the body holds only the plot and stands as tall as the APY charts'. */}
+			{!loading && !error ? (
+				<LiquidityKey model={currentModel} blockedDays={blockedDays} partialDays={partialDays} isDark={isDark} />
+			) : null}
+			<ChartPanelBody>
 				{loading ? (
-					<ChartPanelBodyFallback size="compact" role="status" aria-live="polite">
+					<ChartPanelBodyFallback role="status" aria-live="polite">
 						<LoadingIndicator label={`Loading ${range} history`} />
 					</ChartPanelBodyFallback>
 				) : error ? (
-					<ChartPanelBodyFallback size="compact" role="alert" className="body-sm text-data-down">
+					<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 						Couldn&apos;t load {range} history.
 					</ChartPanelBodyFallback>
 				) : (
 					<Suspense
 						fallback={
-							<ChartPanelBodyFallback size="compact" role="status" aria-live="polite">
+							<ChartPanelBodyFallback role="status" aria-live="polite">
 								<LoadingIndicator label="Loading chart" />
 							</ChartPanelBodyFallback>
 						}
@@ -634,8 +652,9 @@ export function PoolLiquidityChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol={unit === 'usd' ? '$' : ''}
-							containerClassName={CHART_FILL.compact}
+							containerClassName={CHART_FILL.default}
 							stacked
+							stateTimeline={timeline}
 							hideDefaultLegend
 							exportButtons="hidden"
 							onReady={(inst) => {
@@ -645,6 +664,20 @@ export function PoolLiquidityChart({
 					</Suspense>
 				)}
 			</ChartPanelBody>
+
+			<div className="flex flex-col overflow-hidden border-t border-subtle">
+				{!loading && !error ? (
+					<LiquidityReadout
+						model={currentModel}
+						unit={unit}
+						flow={flow}
+						summary={summary}
+						verified={verified}
+						reliability={reliability}
+					/>
+				) : null}
+				{ledger ? <div className="border-t border-subtle">{ledger}</div> : null}
+			</div>
 		</>
 	)
 }

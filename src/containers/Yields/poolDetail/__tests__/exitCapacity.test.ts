@@ -35,12 +35,10 @@ describe('answerExitCapacity', () => {
 		expect(answerExitCapacity(model([100, 200]), 100, { start: 50, end: 60 })).toBeNull()
 	})
 
-	// The sizing rule: a position that would have cleared on nine days in ten.
-	test('reports the thinnest day and a size that clears 90% of them', () => {
+	test('reports the thinnest day', () => {
 		const answer = answerExitCapacity(model([10, 20, 30, 40, 50, 60, 70, 80, 90, 100]), 1, RANGE)
 
 		expect(answer!.floorUsd).toBe(10)
-		expect(answer!.comfortableUsd).toBe(10)
 	})
 })
 

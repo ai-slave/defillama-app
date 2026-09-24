@@ -378,7 +378,8 @@ export function PoolApyChart({
 			label: def.label,
 			color: resolve(def.colorKey),
 			active: enabled[def.key] === true,
-			defaultEnabled: def.defaultEnabled
+			defaultEnabled: def.defaultEnabled,
+			verified: def.colorKey === 'verified'
 		})
 		const apy = seriesDefs.filter((def) => def.group === 'apy').map(toOption)
 		if (lockedVerifiedApy && !apy.some((option) => option.key === VERIFIED_APY_SERIES.key)) {

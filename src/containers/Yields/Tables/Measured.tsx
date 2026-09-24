@@ -88,18 +88,20 @@ export function MeasuredLock({
 
 interface MeasuredOfferContent {
 	headline: string
-	detail: ReactNode
+	detail?: ReactNode
 	label: string
 	/** The provenance word beside the label, only where a reported counterpart exists to contrast with. */
 	qualifier?: string
 	redacted: string
+	/** Off where nothing beside the card carries the lock-leads-the-figure grammar. */
+	lock?: boolean
 	/** Further withheld figures, one per line. */
 	extraRows?: Array<{ label: string; redacted: string }>
 	cta: string
 }
 
 /** The claim, the shape of the withheld number, and one way to buy it, in its own tinted block. */
-function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content: MeasuredOfferContent }) {
+export function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content: MeasuredOfferContent }) {
 	// A neutral wash, not the brand tint, so the blue is only the seal, badge and button. The seal is brand
 	// here because this panel sells the tier; green is for the reader who already has it.
 	// Nothing tertiary inside it: grey over the wash measures 4.15:1 dark and 4.43:1 light, under AA.
@@ -123,7 +125,7 @@ function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content:
 					) : null}
 				</span>
 				<span className="flex shrink-0 items-center gap-1.5 text-primary">
-					<MeasuredLock tone="inherit" />
+					{content.lock === false ? null : <MeasuredLock tone="inherit" />}
 					<span aria-label="hidden">{content.redacted}</span>
 				</span>
 			</span>
@@ -135,7 +137,7 @@ function MeasuredOffer({ onUpgrade, content }: { onUpgrade: () => void; content:
 					</span>
 				</span>
 			))}
-			<span className="text-secondary">{content.detail}</span>
+			{content.detail ? <span className="text-secondary">{content.detail}</span> : null}
 			<button
 				type="button"
 				onClick={onUpgrade}

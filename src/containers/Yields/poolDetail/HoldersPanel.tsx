@@ -1,7 +1,8 @@
 import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import {
 	TokenPageTable,
@@ -12,6 +13,7 @@ import {
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
+import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
@@ -67,14 +69,6 @@ function fmtToken(balance: string | null, decimals: number | null): string {
 				...(value >= 1e3 ? { minimumFractionDigits: 1, maximumFractionDigits: 1 } : {})
 			})
 		: '—'
-}
-
-function signedCount(value: number): string {
-	return `${value > 0 ? '+' : ''}${formatNumber(value)}`
-}
-
-function changeColor(value: number): string {
-	return value > 0 ? 'text-(--yield-positive-text)' : value < 0 ? 'text-(--yield-negative-text)' : ''
 }
 
 function windowDelta(change: HolderChange, mode: HolderMode): { status: HolderStatus; value: number | null } {
@@ -140,20 +134,16 @@ function HolderDistribution({
 	list,
 	colors,
 	top10Pct,
-	poolId,
-	exportTitle,
 	onReady
 }: {
 	list: Array<Holder>
 	colors: Array<string>
 	top10Pct: number | null
-	poolId: string
-	exportTitle?: string
 	onReady: (instance: ECharts | null) => void
 }) {
 	const distribution = holderDistributionShares(list, top10Pct)
 	if (!distribution) {
-		return <div className="flex min-h-[360px] items-center justify-center body-sm text-tertiary">Unavailable</div>
+		return <div className="flex min-h-[300px] items-center justify-center body-sm text-tertiary">Unavailable</div>
 	}
 	const { shares, others } = distribution
 	const pieData = [
@@ -168,10 +158,10 @@ function HolderDistribution({
 	stackColors.Others = OTHERS_COLOR
 
 	return (
-		<div className="relative flex min-w-0 flex-col">
-			<Suspense fallback={<div className="min-h-[360px]" />}>
+		<div className="flex min-w-0 flex-col">
+			<Suspense fallback={<div className="min-h-[300px]" />}>
 				<PieChart
-					title="Holder Distribution"
+					height="300px"
 					chartData={pieData}
 					stackColors={stackColors}
 					radius={['48%', '82%']}
@@ -185,12 +175,7 @@ function HolderDistribution({
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
 						return `${item.marker}${item.name}: <b>${formatPercent(value, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}</b>`
 					}}
-					exportButtons={{
-						png: true,
-						csv: true,
-						filename: `${poolId}-top-10-holder-distribution`,
-						pngTitle: exportTitle ? `${exportTitle} Top 10 Holder Distribution` : 'Top 10 Holder Distribution'
-					}}
+					exportButtons="hidden"
 					onReady={onReady}
 				/>
 			</Suspense>
@@ -204,7 +189,6 @@ function HoldersTable({
 	colors,
 	chain,
 	mode,
-	onModeChange,
 	donutInstance,
 	active,
 	onActiveChange
@@ -214,66 +198,14 @@ function HoldersTable({
 	colors: Array<string>
 	chain?: string | null
 	mode: HolderMode
-	onModeChange: (mode: HolderMode) => void
 	donutInstance: ECharts | null
 	active: number | null
 	onActiveChange: (active: number | null) => void
 }) {
 	const { data: blockExplorers } = useBlockExplorers()
-	const flow = { up: 0, down: 0, entered: 0 }
-	for (const holder of list) {
-		const delta = windowDelta(holder.change_7d, mode)
-		if (delta?.status === 'up') flow.up += 1
-		else if (delta?.status === 'down') flow.down += 1
-		else if (delta?.status === 'entered_top_10') flow.entered += 1
-	}
-	const flowChips = [
-		{
-			n: flow.up,
-			label: mode === 'balance' ? 'Accumulating' : 'Share Up',
-			dot: 'bg-data-up',
-			pill: 'bg-surface-elevated-1 text-primary'
-		},
-		{
-			n: flow.entered,
-			label: 'Entered Top 10',
-			dot: 'bg-brand',
-			pill: 'bg-brand-muted text-link-on-tint'
-		},
-		{
-			n: flow.down,
-			label: mode === 'balance' ? 'Reducing' : 'Share Down',
-			dot: 'bg-data-down',
-			pill: 'bg-surface-elevated-1 text-primary'
-		}
-	].filter((chip) => chip.n > 0)
 
 	return (
 		<div className="min-w-0 border-t border-subtle p-2 lg:border-t-0 lg:border-l">
-			<div className="mb-1 flex flex-wrap items-center justify-between gap-2 border-b border-subtle px-1 pb-2">
-				<SegmentedControl<HolderMode>
-					value={mode}
-					options={[
-						{ value: 'share', label: 'Share' },
-						{ value: 'balance', label: 'Balance' }
-					]}
-					onValueChange={onModeChange}
-					label="Holder value mode"
-					variant="default"
-					size="md"
-				/>
-				<div className="flex flex-wrap items-center gap-1.5">
-					{flowChips.map((chip) => (
-						<span
-							key={chip.label}
-							className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 label-sm ${chip.pill}`}
-						>
-							<span className={`size-1.5 rounded-full ${chip.dot}`} />
-							{chip.n} {chip.label}
-						</span>
-					))}
-				</div>
-			</div>
 			<TokenPageTableScroller>
 				<TokenPageTable className="min-w-[480px] table-fixed">
 					<colgroup>
@@ -335,33 +267,24 @@ function HoldersTable({
 											/>
 											<span className="w-4 shrink-0 text-secondary">{i + 1}</span>
 											{url ? (
-												<Tooltip
-													content={`${holder.address} — view on explorer`}
-													render={
-														<a
-															className="mono-md text-link hover:underline"
-															href={url}
-															target="_blank"
-															rel="noopener noreferrer"
-														/>
-													}
+												<a
+													className="mono-md text-link hover:underline"
+													href={url}
+													target="_blank"
+													rel="noopener noreferrer"
 												>
 													{shortAddr(holder.address)}
-												</Tooltip>
+												</a>
 											) : (
-												<Tooltip
-													content={holder.address}
-													className="mono-md text-secondary underline decoration-dotted"
-												>
-													{shortAddr(holder.address)}
-												</Tooltip>
+												<span className="mono-md text-secondary">{shortAddr(holder.address)}</span>
 											)}
 											<CopyHelper toCopy={holder.address} />
 										</span>
 									</TokenPageTableBodyCell>
 									<TokenPageTableBodyCell textAlign="end">
+										{/* One 20px line whatever the cell holds, so switching mode cannot move the rows. */}
 										{mode === 'share' && holder.share_pct !== null ? (
-											<span className="flex items-center justify-end gap-2">
+											<span className="flex h-5 items-center justify-end gap-2">
 												<span className="text-primary">
 													{formatPercent(holder.share_pct, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 												</span>
@@ -376,16 +299,22 @@ function HoldersTable({
 												</span>
 											</span>
 										) : mode === 'balance' ? (
-											<span className="block text-right text-primary">{fmtToken(holder.balance, decimals)}</span>
+											<span className="flex h-5 items-center justify-end text-primary">
+												{fmtToken(holder.balance, decimals)}
+											</span>
 										) : (
-											<span className="text-secondary">—</span>
+											<span className="flex h-5 items-center justify-end text-secondary">—</span>
 										)}
 									</TokenPageTableBodyCell>
 									<TokenPageTableBodyCell textAlign="end">
-										<ChangeBadge delta={windowDelta(holder.change_7d, mode)} />
+										<span className="flex h-5 items-center justify-end">
+											<ChangeBadge delta={windowDelta(holder.change_7d, mode)} />
+										</span>
 									</TokenPageTableBodyCell>
 									<TokenPageTableBodyCell textAlign="end">
-										<ChangeBadge delta={windowDelta(holder.change_30d, mode)} />
+										<span className="flex h-5 items-center justify-end">
+											<ChangeBadge delta={windowDelta(holder.change_30d, mode)} />
+										</span>
 									</TokenPageTableBodyCell>
 								</tr>
 							)
@@ -397,86 +326,43 @@ function HoldersTable({
 	)
 }
 
-function HolderInsights({
-	holders,
-	list,
-	tvlUsd
-}: {
-	holders: DetailHolders
-	list: Array<Holder>
-	tvlUsd?: number | null
-}) {
+function HolderSummary({ holders, donut }: { holders: DetailHolders; donut: ReactNode }) {
 	const count = holders.count
-	const avg = holders.avg_position_usd
-	const countChange7d = holders.count_change_7d ?? null
 	const countChange30d = holders.count_change_30d ?? null
-	let knownShareTotal: number | null = 0
-	for (const holder of list) {
-		if (holder.share_pct === null) {
-			knownShareTotal = null
-			break
-		}
-		knownShareTotal += holder.share_pct
-	}
-	const top10 = holders.top_10_share_pct ?? knownShareTotal
-	const exposureTiers = [
-		{ label: 'Top 1', pct: list[0]?.share_pct ?? null },
-		{
-			label: 'Top 5',
-			pct: list.slice(0, 5).every((holder) => holder.share_pct !== null)
-				? list.slice(0, 5).reduce((total, holder) => total + holder.share_pct!, 0)
-				: null
-		},
-		{ label: 'Top 10', pct: top10 }
-	]
+	const avg = holders.avg_position_usd
 
 	return (
-		<div className="border-t border-subtle lg:col-span-full xl:col-span-1 xl:border-t-0 xl:border-l">
-			<div className="flex flex-col gap-3 p-3">
-				<h2 className="heading-xs">Holder Insights</h2>
+		<div className="flex flex-col gap-4 px-4 py-3">
+			<h3 className="label-md text-secondary">Distribution</h3>
+			{donut}
 
-				{tvlUsd != null ? (
-					<div className="flex flex-col gap-2">
-						<span className="label-md text-secondary">TVL Exposure</span>
-						{exposureTiers.map((tier) => (
-							<div key={tier.label} className="flex items-center justify-between body-md">
-								<span className="text-secondary">{tier.label}</span>
-								<span className="mono-md-bold text-primary">
-									{tier.pct == null ? '—' : formatUsd((tier.pct / 100) * tvlUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
+			{count != null || avg != null ? (
+				<div className="mt-auto flex flex-wrap justify-center gap-x-12 gap-y-4 border-t border-subtle pt-4">
+					{count != null ? (
+						<div className="flex flex-col gap-1">
+							<span className="label-md text-secondary">Total holders</span>
+							<span className="mono-xl text-primary">{formatNumber(count)}</span>
+							{countChange30d != null ? (
+								<span className="body-md text-tertiary">
+									<span
+										className={`mono-md-bold ${countChange30d > 0 ? 'text-(--yield-positive-text)' : countChange30d < 0 ? 'text-(--yield-negative-text)' : 'text-secondary'}`}
+									>
+										{countChange30d > 0 ? '+' : ''}
+										{formatNumber(countChange30d)}
+									</span>{' '}
+									30d
 								</span>
-							</div>
-						))}
-					</div>
-				) : null}
-
-				{count != null ? (
-					<div className="flex flex-col gap-2 rounded-md bg-surface-elevated-1 p-2">
-						<div className="flex items-center justify-between">
-							<span className="body-md text-secondary">Total Holders</span>
-							<span className="mono-md-bold text-primary">{formatNumber(count)}</span>
+							) : null}
 						</div>
-						{countChange7d != null ? (
-							<div className="flex items-center justify-between body-md">
-								<span className="text-secondary">7d change</span>
-								<span className={`mono-md-bold ${changeColor(countChange7d)}`}>{signedCount(countChange7d)}</span>
-							</div>
-						) : null}
-						{countChange30d != null ? (
-							<div className="flex items-center justify-between body-md">
-								<span className="text-secondary">30d change</span>
-								<span className={`mono-md-bold ${changeColor(countChange30d)}`}>{signedCount(countChange30d)}</span>
-							</div>
-						) : null}
-					</div>
-				) : null}
-
-				{avg != null ? (
-					<div className="flex flex-col gap-1 rounded-md bg-surface-elevated-1 p-2">
-						<span className="body-md text-secondary">Avg Position Size</span>
-						<span className="mono-md-bold text-primary">{formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
-					</div>
-				) : null}
-			</div>
+					) : null}
+					{avg != null ? (
+						<div className="flex flex-col gap-1">
+							<span className="label-md text-secondary">Avg holder amount</span>
+							<span className="mono-xl text-primary">{formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
+						</div>
+					) : null}
+				</div>
+			) : null}
 		</div>
 	)
 }
@@ -484,13 +370,11 @@ function HolderInsights({
 export function HoldersPanel({
 	holders,
 	chain,
-	tvlUsd,
 	poolId,
 	exportTitle
 }: {
 	holders: DetailHolders
 	chain?: string | null
-	tvlUsd?: number | null
 	poolId: string
 	exportTitle?: string
 }) {
@@ -544,29 +428,47 @@ export function HoldersPanel({
 
 	const colors = list.map((_, i) => (list.length > 1 ? lerpHex(RAMP_FROM, RAMP_TO, i / (list.length - 1)) : RAMP_FROM))
 	return (
-		<Card padding="none" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1fr_2fr_1fr]">
-			<HolderDistribution
-				list={list}
-				colors={colors}
-				top10Pct={top10Pct}
-				poolId={poolId}
-				{...(exportTitle ? { exportTitle } : {})}
-				onReady={setDonutInstance}
-			/>
-			<HoldersTable
-				list={list}
-				decimals={decimals}
-				colors={colors}
-				{...(chain !== undefined ? { chain } : {})}
-				mode={mode}
-				onModeChange={(next) =>
-					void pushShallowQuery(router, { holderMode: getHolderModeQueryValue(next) }, router.pathname)
-				}
-				donutInstance={donutInstance}
-				active={active}
-				onActiveChange={setActive}
-			/>
-			<HolderInsights holders={holders} list={list} {...(tvlUsd !== undefined ? { tvlUsd } : {})} />
+		<Card as="section" padding="none">
+			<PanelHeader>
+				<PanelTitle>Holders</PanelTitle>
+				<div className="ml-auto flex flex-wrap items-center gap-1.5">
+					<SegmentedControl<HolderMode>
+						value={mode}
+						options={[
+							{ value: 'share', label: 'Share' },
+							{ value: 'balance', label: 'Balance' }
+						]}
+						onValueChange={(next) =>
+							void pushShallowQuery(router, { holderMode: getHolderModeQueryValue(next) }, router.pathname)
+						}
+						label="Holder value mode"
+						variant="default"
+						size="md"
+					/>
+					<ChartExportButtons
+						chartInstance={() => donutInstance}
+						filename={`${poolId}-top-10-holder-distribution`}
+						title={exportTitle ? `${exportTitle} Top 10 Holder Distribution` : 'Top 10 Holder Distribution'}
+						csvSource="rendered-chart"
+					/>
+				</div>
+			</PanelHeader>
+			<div className="grid grid-cols-1 lg:grid-cols-[minmax(17rem,1fr)_minmax(0,3fr)]">
+				<HolderSummary
+					holders={holders}
+					donut={<HolderDistribution list={list} colors={colors} top10Pct={top10Pct} onReady={setDonutInstance} />}
+				/>
+				<HoldersTable
+					list={list}
+					decimals={decimals}
+					colors={colors}
+					{...(chain !== undefined ? { chain } : {})}
+					mode={mode}
+					donutInstance={donutInstance}
+					active={active}
+					onActiveChange={setActive}
+				/>
+			</div>
 		</Card>
 	)
 }

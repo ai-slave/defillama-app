@@ -1,19 +1,13 @@
-// The Verified APY as a product: the history behind it (the growth chart, passed in as
-// children), and the receipts — the method, the confidence and the exact calls. The summary card's
-// "How we verify" link lands here.
-import type { ReactNode } from 'react'
+// The receipts behind the Verified APY: the method, the confidence and the exact calls.
 import { ChartPanel } from '~/ui/ChartPanel'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import type { VerifiedBlock, VerifiedConfidence } from '../data/types'
-import { splitMethod } from '../Tables/Measured'
+import { SealGlyph, splitMethod } from '../Tables/Measured'
 import { useAnchorScroll } from './useAnchorScroll'
 
 export const HOW_WE_VERIFY_ID = 'how-we-verify'
-
-/** Shared by both product cards: their chart sections must end on the same line. */
-export const CHART_SECTION_HEIGHT = 'h-[480px]'
 
 /** The verified base APY for each window the API serves. */
 export interface VerifiedWindowRow {
@@ -28,7 +22,6 @@ const CONFIDENCE_HINT: Record<VerifiedConfidence, string> = {
 	low: 'Wide spread between holders, or no executable exit to measure that day.'
 }
 
-// A real sequence, so the numbering carries information: this is the order the measurement runs.
 const STEPS: ReadonlyArray<{ title: string; detail: string | null }> = [
 	{ title: 'Find real holders', detail: null },
 	{ title: 'Simulate their withdrawal', detail: 'at a fixed daily block' },
@@ -53,14 +46,14 @@ export function VerifiedApyPanel({
 	verified,
 	stepAccrual = false,
 	measuredSince = null,
-	children
+	symbol = 'this pool'
 }: {
 	verified: VerifiedBlock
 	stepAccrual?: boolean
 	/** First day the exit ledger holds, when the page has it. */
 	measuredSince?: string | null
-	/** The growth chart, when the page has history for it. */
-	children?: ReactNode
+	/** The pool, so the receipt names what it was run on. */
+	symbol?: string
 }) {
 	useAnchorScroll(HOW_WE_VERIFY_ID)
 
@@ -75,51 +68,34 @@ export function VerifiedApyPanel({
 
 	return (
 		<ChartPanel id={HOW_WE_VERIFY_ID} className="scroll-mt-4">
-			{/* Fixed, not a floor, so the plot beside it in the exit card ends on the same line whatever
-			    rows each chart puts above it. Clipped because a chart body carries its own min-height:
-			    a row appearing above it (the pinned deposit day) pushes the total past this box, and
-			    without this the overflow lands on the section below rather than being absorbed. */}
-			{children ? <div className={`flex ${CHART_SECTION_HEIGHT} flex-col overflow-hidden`}>{children}</div> : null}
-
-			{/* The method in one line and the confidence, as the strip read before the card existed. */}
-			<div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-subtle px-4 py-3">
-				<h3 className="label-lg text-primary">How we verify</h3>
-				<ol className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+			<div className="flex flex-col gap-2 border-t border-subtle px-4 py-3">
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+					<h3 className="flex items-center gap-1.5 label-lg text-primary">
+						<SealGlyph size={15} />
+						How we verify
+					</h3>
+					<span className="body-sm text-secondary">The receipt behind {symbol}'s Verified APY and Exit Status.</span>
+				</div>
+				<ol className="flex flex-wrap items-center gap-2">
 					{STEPS.map((step, index) => (
-						<li key={step.title} className="flex items-baseline gap-x-2">
+						<li key={step.title} className="flex items-center gap-2">
 							{index > 0 ? (
 								<span aria-hidden className="text-tertiary">
 									→
 								</span>
 							) : null}
-							<span className="mono-sm text-tertiary">{ordinal(index)}</span>
-							<span className="label-sm text-primary">{step.title}</span>
-							{step.detail ? <span className="body-sm text-secondary">{step.detail}</span> : null}
+							<span className="flex items-baseline gap-1 rounded-full border border-subtle px-2.5 py-0.5 label-sm text-primary">
+								{step.title}
+								{step.detail ? <span className="body-sm text-secondary">{step.detail}</span> : null}
+							</span>
 						</li>
 					))}
 				</ol>
-				{confidence ? (
-					<Tooltip content={CONFIDENCE_HINT[confidence]}>
-						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
-							<span
-								aria-hidden
-								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-data-up' : 'text-warning'}`}
-								style={{ backgroundColor: 'currentColor' }}
-							/>
-							<span className="underline decoration-dotted">
-								<span className="capitalize">{confidence}</span> confidence
-							</span>
-						</span>
-					</Tooltip>
-				) : null}
 			</div>
 
 			<div className="flex flex-col gap-3 px-4 pb-5">
 				{verified.apy_note ? <p className="body-sm text-secondary">{verified.apy_note}</p> : null}
-				<div className="flex items-baseline justify-between gap-3">
-					<span className="label-sm text-primary">Calls executed</span>
-					<span className="body-sm text-tertiary">In order, as the holder</span>
-				</div>
+				<span className="label-sm text-primary">Calls executed as the holder</span>
 				{verified.methods?.length ? (
 					<ol className="flex flex-col overflow-hidden rounded-md border border-subtle bg-surface-elevated-1">
 						{verified.methods.map((method, index) => {
@@ -129,11 +105,11 @@ export function VerifiedApyPanel({
 									key={method}
 									className="grid grid-cols-[1.75rem_1fr_auto] items-start gap-x-3 gap-y-0.5 border-t border-subtle px-3.5 py-2.5 first:border-t-0"
 								>
-									<span className="pt-0.5 mono-sm text-tertiary">{ordinal(index)}</span>
-									<span className="font-mono text-xs break-words text-primary">{call.signature}</span>
+									<span className="pt-0.5 mono-sm text-secondary">{ordinal(index)}</span>
+									<span className="mono-sm break-words text-primary">{call.signature}</span>
 									<span
 										className={`mt-px rounded-sm border border-medium px-1.5 label-xs tracking-widest uppercase ${
-											call.executed ? 'text-link' : 'text-tertiary'
+											call.executed ? 'text-link' : 'text-secondary'
 										}`}
 									>
 										{call.executed ? 'executed' : 'read'}
@@ -150,7 +126,7 @@ export function VerifiedApyPanel({
 				)}
 			</div>
 
-			<div className="mt-auto flex flex-wrap gap-x-5 gap-y-1.5 border-t border-subtle px-4 py-3 body-sm text-tertiary">
+			<div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-3 body-sm text-tertiary">
 				{stamps.map(([label, asOf]) => (
 					<span key={label} className="whitespace-nowrap">
 						<span className="font-medium text-secondary">{label}</span> <RelativeTime value={asOf} />
@@ -161,6 +137,20 @@ export function VerifiedApyPanel({
 						<span className="font-medium text-secondary">Measured since</span>{' '}
 						{formatDate(measuredSince) ?? measuredSince}
 					</span>
+				) : null}
+				{confidence ? (
+					<Tooltip content={CONFIDENCE_HINT[confidence]}>
+						<span className="flex items-center gap-1.5 rounded-full border border-medium px-2.5 py-0.5 label-sm text-secondary">
+							<span
+								aria-hidden
+								className={`size-1.5 rounded-full ${confidence === 'high' ? 'text-data-up' : 'text-warning'}`}
+								style={{ backgroundColor: 'currentColor' }}
+							/>
+							<span className="underline decoration-dotted">
+								<span className="capitalize">{confidence}</span> confidence
+							</span>
+						</span>
+					</Tooltip>
 				) : null}
 				<span className="ml-auto">Reproducible: the same call at the same block returns the same result.</span>
 			</div>

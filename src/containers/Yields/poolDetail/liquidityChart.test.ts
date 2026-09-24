@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import {
-	buildLiquidityBands,
 	buildLiquidityChart,
 	buildLiquiditySummary,
 	depositsOnly,
@@ -212,72 +211,6 @@ describe('firstLiquidityIndex', () => {
 
 	test('is -1 when the window holds no measured day', () => {
 		expect(firstLiquidityIndex(model, 0, 2)).toBe(-1)
-	})
-})
-
-describe('buildLiquidityBands', () => {
-	const model = buildLiquidityChart(
-		[
-			day('2026-01-01', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' }),
-			day('2026-01-02', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_liquidity' }),
-			day('2026-01-03', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_paused' }),
-			day('2026-01-04', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_unknown' }),
-			day('2026-01-05', { tvlUsd: 100, liqUsd: 50, outcome: 'ok_partial' }),
-			day('2026-01-06', { tvlUsd: 100, liqUsd: 50, outcome: 'ok_partial' }),
-			day('2026-01-07', { tvlUsd: 100, liqUsd: 50, outcome: 'ok_partial' }),
-			day('2026-01-08', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' })
-		],
-		USDC
-	) as LiquidityChartModel
-
-	test('groups contiguous days of the same class into one band', () => {
-		expect(buildLiquidityBands(model, 0, 8)).toEqual([
-			{ from: Date.UTC(2026, 0, 2), to: Date.UTC(2026, 0, 4), days: 3, kind: 'blocked' },
-			{ from: Date.UTC(2026, 0, 5), to: Date.UTC(2026, 0, 7), days: 3, kind: 'partial' }
-		])
-	})
-
-	test('draws every run by default, down to a single day', () => {
-		const single = buildLiquidityChart(
-			[
-				day('2026-01-01', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' }),
-				day('2026-01-02', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_liquidity' }),
-				day('2026-01-03', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' })
-			],
-			USDC
-		) as LiquidityChartModel
-
-		// A day the key counts is a day the plot must show.
-		expect(buildLiquidityBands(single, 0, 3)).toEqual([
-			{ from: Date.UTC(2026, 0, 2), to: Date.UTC(2026, 0, 2), days: 1, kind: 'blocked' }
-		])
-	})
-
-	test('still honours a minimum a caller asks for explicitly', () => {
-		expect(buildLiquidityBands(model, 0, 8, 4)).toEqual([])
-		expect(buildLiquidityBands(model, 0, 8, 1)).toHaveLength(2)
-	})
-
-	test('does not merge adjacent runs of different classes', () => {
-		expect(buildLiquidityBands(model, 0, 8, 1).map((b) => b.kind)).toEqual(['blocked', 'partial'])
-	})
-
-	test('closes a run that reaches the end of the window', () => {
-		const trailing = buildLiquidityChart(
-			[
-				day('2026-01-01', { tvlUsd: 100, liqUsd: 100, outcome: 'ok_full' }),
-				day('2026-01-02', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_paused' }),
-				day('2026-01-03', { tvlUsd: 100, liqUsd: 0, outcome: 'reverted_paused' })
-			],
-			USDC
-		) as LiquidityChartModel
-		expect(buildLiquidityBands(trailing, 0, 3, 2)).toEqual([
-			{ from: Date.UTC(2026, 0, 2), to: Date.UTC(2026, 0, 3), days: 2, kind: 'blocked' }
-		])
-	})
-
-	test('only considers the requested window', () => {
-		expect(buildLiquidityBands(model, 5, 8, 1).map((b) => b.kind)).toEqual(['partial'])
 	})
 })
 

@@ -1,24 +1,19 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import { BasicLink } from '~/components/Link'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
 import { LoadingIndicator } from '~/ui/Status'
-import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { MeasuredApy } from '../data/apy'
 import type { VerifiedBlock } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { useStickyPrefsOverlay, useStickyQueryReplace } from '../useStickyQueryReplace'
 import { useVerifiedAccess } from '../useVerifiedAccess'
-import { VerifiedApyAnnouncement } from '../VerifiedApyAnnouncement'
+import { AnswerStrip, apyParts } from './AnswerStrip'
 import type { ExitReliabilityModel } from './exitReliability'
-import { ExitReliabilityPanel } from './ExitReliabilityPanel'
-import { scoreValue, YIELD_PERCENT_OPTIONS } from './format'
+import { EXIT_STATUS_ID, ExitLedger, ExitReliabilityPanel } from './ExitReliabilityPanel'
 import type { GrowthChartModel, IntrinsicSourceSeries } from './growthChart'
 import { HoldersPanel } from './HoldersPanel'
 import type { LiquidityChartModel } from './liquidityChart'
@@ -31,14 +26,7 @@ import { POOL_CHART_PREFS } from './queryState'
 import type { DetailChain, DetailHolders, DetailProtocol, PoolHistoryRange } from './types'
 import { usePoolVerifiedProps } from './useVerifiedProps'
 import { VerifiedApyPanel, type VerifiedWindowRow } from './VerifiedApyPanel'
-import {
-	buildVerifiedSnapshot,
-	LockedVerifiedSection,
-	type MeasuredComposition,
-	VerifiedSection
-} from './VerifiedSnapshotCard'
-
-type ApyKind = 'supply' | 'borrow'
+import { buildVerifiedSnapshot, LockedVerifiedSection, type MeasuredComposition } from './VerifiedSnapshotCard'
 
 export interface ApyBreakdown {
 	total: number | null
@@ -73,7 +61,7 @@ export interface PoolDetailViewProps {
 	// 'pool' = earn pool (may also be a borrow market); 'borrow' = borrow-only market
 	// (no /v2/earn row) rendered from the borrow-markets detail endpoint.
 	mode: 'pool' | 'borrow'
-	// Whether a vault-risk entry exists for this pool (gates the "View risk data" link).
+	// Whether a vault-risk entry exists for this pool.
 	hasRisk: boolean
 	exploited: boolean
 	// The range the supply history was fetched at — the widest the APY, growth and deposits panels
@@ -102,7 +90,6 @@ export interface PoolDetailViewProps {
 	exitReliability: ExitReliabilityModel | null
 	// Needed by the chart to rebuild its model when a wider range is fetched client-side.
 	liquidityDecimals: number | null
-	// Underlying token symbol for the verdict card's native-unit line.
 	// The measured block from `/v2/earn/:id`. Null on unmeasured pools, which render no
 	// verification panel at all rather than an empty or greyed one.
 	verified: VerifiedBlock | null
@@ -120,93 +107,6 @@ export interface PoolDetailViewProps {
 		protocolName: string
 		assets: Array<string>
 	}
-}
-
-function apyParts(apy: ApyBreakdown, kind: ApyKind) {
-	const parts: Array<{ key: string; label: string; value: string; strong: boolean }> = []
-	if (apy.base != null) {
-		parts.push({
-			key: 'base',
-			label: kind === 'borrow' ? 'Base cost' : 'Base',
-			value: formatPercent(apy.base, YIELD_PERCENT_OPTIONS),
-			strong: false
-		})
-	}
-	if (hasPart(apy.reward)) {
-		const sign = kind === 'borrow' ? '−' : '+'
-		const syms = apy.rewardTokens.length > 0 ? ` · ${apy.rewardTokens.join(', ')}` : ''
-		parts.push({
-			key: 'reward',
-			label: `Reward${syms}`,
-			value: `${sign}${formatPercent(Math.abs(apy.reward), YIELD_PERCENT_OPTIONS)}`,
-			strong: true
-		})
-	}
-	if (hasPart(apy.intrinsic)) {
-		const src = apy.intrinsicSource ? ` · ${apy.intrinsicSource}` : ''
-		parts.push({
-			key: 'intrinsic',
-			label: `Intrinsic${src}`,
-			value: `+${formatPercent(Math.abs(apy.intrinsic), YIELD_PERCENT_OPTIONS)}`,
-			strong: false
-		})
-	}
-	return parts
-}
-
-const VALUE_CLS = 'ml-auto mono-md-bold'
-const SUB_VALUE_CLS = 'ml-auto mono-md'
-
-function SideBlock({
-	side,
-	kind,
-	children,
-	hideApy = false
-}: {
-	side: PoolSide
-	kind: ApyKind
-	children?: React.ReactNode
-	/** The verified section states the APY instead; showing both would say it twice. */
-	hideApy?: boolean
-}) {
-	const parts = hasPart(side.apy.reward) || hasPart(side.apy.intrinsic) ? apyParts(side.apy, kind) : []
-	const apyValue = side.apy.total == null ? '—' : formatPercent(side.apy.total, YIELD_PERCENT_OPTIONS)
-	return (
-		<>
-			{hideApy ? null : parts.length > 0 ? (
-				<MetricSection label={side.apyLabel} value={apyValue} valueClassName={VALUE_CLS}>
-					{parts.map((p) => (
-						<SubMetricRow
-							key={p.key}
-							label={p.label}
-							value={p.value}
-							valueClassName={`${SUB_VALUE_CLS}${p.strong ? ' text-(--yield-reward-text)' : ''}`}
-						/>
-					))}
-				</MetricSection>
-			) : (
-				<MetricRow label={side.apyLabel} value={apyValue} valueClassName={VALUE_CLS} />
-			)}
-			{side.metrics.map((m) => (
-				<MetricRow
-					key={m.label}
-					label={m.label}
-					value={
-						m.format === 'ltv'
-							? (formatPercent(m.value, {
-									input: 'fraction',
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								}) ?? '—')
-							: (formatUsd(m.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—')
-					}
-					valueClassName={VALUE_CLS}
-				/>
-			))}
-			{children}
-		</>
-	)
 }
 
 function PoolChartPlaceholder({ title }: { title: string }) {
@@ -231,7 +131,6 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 
 export function PoolDetailView({
 	poolId,
-	mode,
 	hasRisk,
 	exploited,
 	initialRange,
@@ -294,7 +193,6 @@ export function PoolDetailView({
 	}, [paid.supplyChart, seeded, supplyChartFromProps])
 	// Anonymous SSR keeps its offer; an unavailable server check must wait for a client verdict.
 	const showOffer = locked && verified == null && !paidLoading && !hasAccess && (verifiedLocked !== null || isDenied)
-	// Built once and shared: the section renders it, and the supply block hides the APY it covers.
 	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows) : null
 	// The table cell's split: only when a leg was substituted and there is more than the base to show.
 	const measuredApy = (seeded ? apyFromProps : null) ?? paid.apy
@@ -334,27 +232,27 @@ export function PoolDetailView({
 			poolId={poolId}
 			decimals={liquidityDecimals}
 			exitStatus={verified?.exit?.status ?? null}
+			verified={verified}
+			reliability={exitReliability}
+			ledger={exitReliability ? <ExitLedger model={exitReliability} verified={verified} holders={holders} /> : null}
 			initialRange={initialRange}
 		/>
 	) : null
-	// A chart without its product card (history without a current measurement) still gets a panel.
-	const apyCard = verified ? (
+	const apyCard = growthSection ? <ChartPanel>{growthSection}</ChartPanel> : null
+	const receipts = verified ? (
 		<VerifiedApyPanel
 			verified={verified}
 			stepAccrual={stepAccrual}
 			measuredSince={exitReliability?.measuredSince ?? null}
-		>
-			{growthSection}
-		</VerifiedApyPanel>
-	) : growthSection ? (
-		<ChartPanel>{growthSection}</ChartPanel>
+			symbol={symbol}
+		/>
 	) : null
-	const exitCard = exitReliability ? (
-		<ExitReliabilityPanel model={exitReliability} verified={verified} holders={holders}>
+	const exitCard = liquiditySection ? (
+		<ChartPanel id={EXIT_STATUS_ID} className="scroll-mt-4">
 			{liquiditySection}
-		</ExitReliabilityPanel>
-	) : liquiditySection ? (
-		<ChartPanel>{liquiditySection}</ChartPanel>
+		</ChartPanel>
+	) : exitReliability ? (
+		<ExitReliabilityPanel model={exitReliability} verified={verified} holders={holders} />
 	) : null
 
 	// Fill the APY charts' range / windows the URL lacks from the sticky per-browser preferences,
@@ -365,48 +263,15 @@ export function PoolDetailView({
 		useStickyPrefsOverlay(router.isReady ? router.query : null, POOL_CHART_PREFS)
 	)
 
-	const stabilityRating = stability?.rating ?? null
-	const stabilityScore = stability?.score ?? null
-	const stabilityColor =
-		stabilityRating === 'stable'
-			? ' text-(--yield-positive-text)'
-			: stabilityRating === 'volatile'
-				? ' text-(--yield-negative-text)'
-				: ''
-	const stabilityRow =
-		stabilityRating != null && stabilityScore != null ? (
-			<MetricRow
-				label="30d Stability"
-				tooltip="How consistent this pool's supply-side APY has been over the last 30 days. Higher score is more stable."
-				valueClassName={`${VALUE_CLS}${stabilityColor}`}
-				value={
-					<>
-						<span className="capitalize">{stabilityRating}</span>{' '}
-						<span className="text-secondary">{scoreValue(stabilityScore)}</span>
-					</>
-				}
-			/>
-		) : null
-
-	// A queued-exit pool has no instant lane to plot, so the panel would be a second deposits chart
-	// under an exit title. One flag drives both the count and the render, so a suppressed panel can
-	// never leave a lone chart in a half-width column beside an empty one.
-
-	// The donut needs the pool's headline dollar figure (TVL / Total supplied) to derive
-	// per-holder USD. Only earn pools carry that as their first supply metric; borrow-only
-	// markets have no pooled TVL (and don't carry holders), so pass null.
-	const tvlUsd = mode === 'pool' ? (supply?.metrics[0]?.value ?? null) : null
-
 	// Prefix for the holders donut's PNG/CSV export filename.
 	const exportTitle =
 		symbol && protocol.name
 			? `${symbol} - ${protocol.name}${chain.name ? ` (${chain.name})` : ''}`
 			: symbol || protocol.name || poolId
 
-	// Preserve the stacked summary at normal widths; only spend horizontal space
-	// on a summary rail once the pool content itself is wide enough for both regions.
+	// The page stops growing at 90rem rather than stretching across a wide monitor.
 	return (
-		<div className="@container flex w-full flex-col gap-2">
+		<div className="@container mx-auto flex w-full max-w-[90rem] flex-col gap-2">
 			{exploited ? (
 				<p
 					role="alert"
@@ -422,66 +287,37 @@ export function PoolDetailView({
 					</span>
 				</p>
 			) : null}
-			{/* The feature's one-sentence pitch lives here, spanning both columns, so the summary card
-			    below can stay as short as the subscriber's and the chart beside it the same height. */}
-			{showOffer ? <VerifiedApyAnnouncement placement="pool-banner" /> : null}
 
-			<div className="grid grid-cols-1 gap-2 @min-[64rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
-				<Card padding="sm" className="flex flex-col gap-3 self-start">
-					<PoolHeader symbol={symbol} name={name} protocol={protocol} chain={chain} />
+			<PoolHeader
+				symbol={symbol}
+				name={name}
+				protocol={protocol}
+				chain={chain}
+				poolTokenAddress={details.poolTokenAddress}
+				url={details.url}
+			/>
 
-					{/* Trial placement: straight under the identity, so the measured claim leads the card
-					    and the pool's own reported stats follow it. */}
-					{verified && snapshot ? (
-						<VerifiedSection verified={verified} snapshot={snapshot} composition={composition} />
-					) : null}
-					{/* One panel for every measured section: the rest render nothing without the data. */}
-					{showOffer ? <LockedVerifiedSection /> : null}
-					{verifiedLocked === null && verified == null && !paidLoading && !isDenied ? (
-						<p role="status" className="text-sm text-secondary">
-							Verified APY is temporarily unavailable.
-						</p>
-					) : null}
+			<AnswerStrip
+				supply={supply}
+				borrow={borrow}
+				stability={stability}
+				holders={holders}
+				snapshot={snapshot}
+				composition={composition}
+				verifiedAsOf={verified?.apy_as_of ?? null}
+				verifiedNote={verified?.apy_note ?? null}
+				hasRisk={hasRisk}
+				poolId={poolId}
+			/>
+			{showOffer ? <LockedVerifiedSection symbol={symbol} /> : null}
+			{verifiedLocked === null && verified == null && !paidLoading && !isDenied ? (
+				<p role="status" className="px-1 body-sm text-secondary">
+					Verified APY is temporarily unavailable.
+				</p>
+			) : null}
 
-					{supply || borrow ? (
-						<div className="grid grid-cols-1 gap-x-6 border-t border-subtle pt-1 @min-[40rem]:grid-cols-2 @min-[64rem]:grid-cols-1">
-							{supply ? (
-								<SideBlock side={supply} kind="supply" hideApy={snapshot?.baseApy != null}>
-									{stabilityRow}
-								</SideBlock>
-							) : null}
-							{borrow ? <SideBlock side={borrow} kind="borrow" /> : null}
-						</div>
-					) : null}
-
-					<PoolMetaInfo
-						protocol={protocol}
-						chain={chain}
-						poolTokenAddress={details.poolTokenAddress}
-						url={details.url}
-						assets={details.assets}
-						actions={
-							hasRisk ? (
-								<Button
-									as={BasicLink}
-									href={`/yields/pool/${poolId}/risk`}
-									variant="warning"
-									size="md"
-									className="group w-fit"
-								>
-									<Icon name="shield-check" className="size-3.5 text-warning" />
-									Open {symbol} risk report
-									<span className="transition-transform group-hover:translate-x-0.5">→</span>
-								</Button>
-							) : null
-						}
-					/>
-				</Card>
-
-				{/* Rhythm carries the hierarchy: the rate charts are the primary read and sit at full
-				    height, the measured pair below them runs compact and side by side. Each chart owns
-				    its range control and URL param, so one panel's window never moves another's. */}
-				<div className="flex min-w-0 flex-col gap-2">
+			<div className="flex min-w-0 flex-col gap-2">
+				<section aria-label="APY history" className="flex flex-col gap-2">
 					{supplyChart ? (
 						preferencesReady ? (
 							<PoolApyChart
@@ -514,29 +350,24 @@ export function PoolDetailView({
 							<p className="text-center body-sm text-tertiary">No history available for this pool yet.</p>
 						</Card>
 					) : null}
-				</div>
-			</div>
-
-			{apyCard || exitCard ? (
-				/* The conclusions already sit in the summary card. This band is the two products behind
-				   them, each with its answer, its history and its receipts: the yield down the left, the
-				   exit down the right, paired above 64rem and stacked below. */
-				<section
-					aria-label="Measured history"
-					className={
-						apyCard && exitCard
-							? 'grid grid-cols-1 items-start gap-2 @min-[64rem]:grid-cols-2'
-							: 'grid grid-cols-1 gap-2'
-					}
-				>
-					{apyCard}
-					{exitCard}
 				</section>
-			) : null}
 
-			{holders ? (
-				<HoldersPanel holders={holders} chain={chain.name} tvlUsd={tvlUsd} poolId={poolId} exportTitle={exportTitle} />
-			) : null}
+				{apyCard}
+				{exitCard}
+				{receipts}
+
+				{holders ? (
+					<HoldersPanel holders={holders} chain={chain.name} poolId={poolId} exportTitle={exportTitle} />
+				) : null}
+
+				<PoolMetaInfo
+					poolId={poolId}
+					protocol={protocol}
+					chain={chain}
+					poolTokenAddress={details.poolTokenAddress}
+					assets={details.assets}
+				/>
+			</div>
 		</div>
 	)
 }

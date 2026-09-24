@@ -68,7 +68,8 @@ describe('ExitReliabilityPanel hydration', () => {
 
 		// In the SERVER html, not added on the client.
 		expect(container.textContent).toContain('<0.01%')
-		expect(container.textContent).toContain('$8.65k of $733.8m')
+		expect(container.textContent).toContain('$8.65k')
+		expect(container.textContent).toContain('$733.8m')
 
 		act(() => {
 			root = hydrateRoot(container, element)

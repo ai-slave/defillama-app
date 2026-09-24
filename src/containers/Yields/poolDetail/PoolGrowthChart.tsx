@@ -1,6 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type {
 	IMultiSeriesChartProps,
@@ -14,15 +15,12 @@ import { ChartPanelBody, ChartPanelBodyFallback, CHART_FILL } from '~/ui/ChartPa
 import { Icon } from '~/ui/Icon'
 import { metricSeriesToggleStyles } from '~/ui/MetricChip'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
+import { popoverRowStyles } from '~/ui/Popover'
+import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
-import {
-	formatNumber,
-	formatPercent,
-	formatUsd,
-	type FormatPercentOptions,
-	type FormatUsdOptions
-} from '~/utils/numberFormat'
+import { formatDate } from '~/utils/dateFormat'
+import { formatPercent, formatUsd, type FormatPercentOptions, type FormatUsdOptions } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import {
 	buildCombinedSummary,
@@ -45,7 +43,6 @@ import {
 } from './growthChart'
 import { CHART_PALETTE } from './poolCharts'
 import { buildBandMarkArea, isoDay, rangeCount } from './poolChartUtils'
-import { PoolRangeControl } from './PoolRangeControl'
 import {
 	getBooleanOverride,
 	getGrowthAnchorDate,
@@ -54,10 +51,11 @@ import {
 	getPoolHistoryRange,
 	getPoolRangeQueryKey,
 	getPoolSeriesQueryKey,
+	getRangeQueryValue,
 	getSeriesVisibility,
 	GROWTH_MAX_DEPOSIT
 } from './queryState'
-import { readoutBlockStyles, readoutCellsStyles, ReadoutCell, readoutInputStyles, SeriesMark } from './readout'
+import { ReadoutCell, readoutFieldStyles, SeriesMark } from './readout'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
 import type { PoolHistoryRange } from './types'
 import { useQueryDraft } from './useQueryDraft'
@@ -140,6 +138,12 @@ function buildChartInputs(
 	const { anchor, measured, quoted, asset } = series
 	// No intrinsic leg means no toggle, so a stale `growthIntrinsic=true` draws nothing.
 	const showIntrinsic = withIntrinsic && model.hasIntrinsic
+	const summary = buildGrowthSummary(model, anchor, total, deposit)
+	const combinedSummary = showIntrinsic ? buildCombinedSummary(model, series, start, total, deposit) : null
+	// The answer, drawn where the line ends, so the plot and the sentence above it say one number.
+	const endValue = (combinedSummary ?? summary)?.endValue ?? null
+	const digits = growthFractionDigits(deposit)
+	const endLabel = { minimumFractionDigits: digits, maximumFractionDigits: digits }
 
 	// Shade the long breaks so a substantial dark stretch reads as "something happened here" instead
 	// of as a rendering glitch. The per-day tooltip supplies the detail on hover, so the band itself
@@ -163,7 +167,25 @@ function buildChartInputs(
 			// so the line breaks rather than drawing a straight guess across it.
 			connectNulls: false,
 			...(showIntrinsic ? { stack: GROWTH_STACK, stackStrategy: 'all' as const } : {}),
-			...(markArea ? { markArea } : {})
+			...(markArea ? { markArea } : {}),
+			...(endValue != null
+				? {
+						markLine: {
+							silent: true,
+							symbol: 'none',
+							lineStyle: { type: 'dotted', width: 1, color: shade('accent'), opacity: 0.7 },
+							label: {
+								show: true,
+								position: 'insideEndTop',
+								formatter: () => formatUsd(endValue, endLabel),
+								color: shade('accent'),
+								fontSize: 11,
+								fontWeight: 600
+							},
+							data: [{ yAxis: endValue }]
+						}
+					}
+				: {})
 		},
 		{
 			type: 'line',
@@ -229,8 +251,8 @@ function buildChartInputs(
 		dataset: { source: rows, dimensions },
 		charts,
 		anchoredOn: anchor === -1 ? null : isoDay(model.dates[anchor]),
-		summary: buildGrowthSummary(model, anchor, total, deposit),
-		combinedSummary: showIntrinsic ? buildCombinedSummary(model, series, start, total, deposit) : null,
+		summary,
+		combinedSummary,
 		axisMin,
 		axisDigits: growthAxisDigits(span)
 	}
@@ -330,8 +352,12 @@ function LedgerEntry({
 
 const DEPOSIT_INPUT_ID = 'growth-deposit-amount'
 
-// The answer to the question the chart asks, in words — so the user doesn't have to hover the last
-// point and do the arithmetic. A measured loss is stated as plainly as a gain.
+const SINCE_OPTIONS = [
+	{ value: '30d', label: '30 days ago' },
+	{ value: '90d', label: '90 days ago' },
+	{ value: 'max', label: 'First day measured' }
+] as const satisfies ReadonlyArray<{ value: PoolHistoryRange; label: string }>
+
 function GrowthReadout({
 	summary,
 	anchoredOn,
@@ -342,12 +368,16 @@ function GrowthReadout({
 	hasIntrinsic,
 	deposit,
 	digits,
+	range,
+	firstDay,
+	lastDay,
+	presetDays,
 	setQuery
 }: {
 	summary: GrowthSummary | null
 	/** The day the line is anchored to, after snapping to a measured day. */
 	anchoredOn: string | null
-	/** The day the reader pinned, if any. Only a pinned day can be cleared. */
+	/** The day the reader pinned, if any. */
 	anchorDate: string | null
 	/** Null when that line isn't drawn. */
 	combined: GrowthCombinedSummary | null
@@ -359,6 +389,12 @@ function GrowthReadout({
 	hasIntrinsic: boolean
 	deposit: number
 	digits: number
+	range: PoolHistoryRange
+	/** The days a deposit can be pinned to: first measured to last measured. */
+	firstDay: string | null
+	lastDay: string | null
+	/** The day each preset lands on, so the rows say what they will do. */
+	presetDays: Record<PoolHistoryRange, string | null>
 	setQuery: (next: Record<string, string | undefined>) => void
 }) {
 	const [depositText, setDepositText, depositFocus] = useQueryDraft(deposit, getGrowthDeposit)
@@ -366,19 +402,118 @@ function GrowthReadout({
 		(text: string) => setQuery({ deposit: getGrowthDepositQueryValue(getGrowthDeposit(text)) }),
 		300
 	)
-	const money = { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: digits } as const
+	// Full dollars: compacting past a million turns $1,163,213 into the $1M it started as.
+	const money = { minimumFractionDigits: digits, maximumFractionDigits: digits } as const
 	const percent = { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
+	const rangeKey = getPoolRangeQueryKey('growth')
 
 	// Whatever the chart is actually drawing.
 	const total = combined ?? summary
 	const toneClass = (total?.gain ?? 0) < 0 ? 'text-(--yield-negative-text)' : 'text-(--yield-positive-text)'
+	const annualized = combined == null ? summary?.annualizedPct : null
 
 	const drawdown = summary ? selectGrowthDrawdown(summary, combined) : null
 	// Dust is not a dip. Only a fall a holder would actually have felt earns a place here.
 	const showDrawdown = drawdown != null && drawdown.pct <= DRAWDOWN_DISPLAY_THRESHOLD_PCT
 
 	return (
-		<div className={`${readoutBlockStyles} ${readoutCellsStyles}`}>
+		<div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-4 py-2.5">
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-2 body-md text-secondary">
+				<label htmlFor={DEPOSIT_INPUT_ID}>If you had deposited</label>
+				<span className={`${readoutFieldStyles} inline-flex items-center gap-1`}>
+					<span className="text-tertiary">$</span>
+					<input
+						id={DEPOSIT_INPUT_ID}
+						type="number"
+						min={0}
+						max={GROWTH_MAX_DEPOSIT}
+						step="any"
+						inputMode="decimal"
+						value={depositText}
+						onFocus={depositFocus.onFocus}
+						onBlur={() => {
+							commitDeposit.flush()
+							depositFocus.onBlur()
+						}}
+						onChange={(event) => {
+							setDepositText(event.target.value)
+							commitDeposit(event.target.value)
+						}}
+						className="w-24 bg-transparent p-0 mono-md text-primary outline-none"
+						aria-label="Hypothetical deposit amount in dollars"
+					/>
+				</span>
+				<span>on</span>
+				<Ariakit.PopoverProvider placement="bottom-start">
+					<Ariakit.PopoverDisclosure className={`${readoutFieldStyles} inline-flex items-center gap-1.5`}>
+						{anchoredOn ? (formatDate(anchoredOn) ?? anchoredOn) : '—'}
+						<Ariakit.PopoverDisclosureArrow className="size-3.5 shrink-0 text-tertiary" />
+					</Ariakit.PopoverDisclosure>
+					<PopoverSurface variant="panel" dismiss="own" className="sm:w-72">
+						<div className="flex items-center justify-between gap-2 border-b border-subtle py-1 pr-1 pl-3">
+							<Ariakit.PopoverHeading className="label-md text-primary">Deposit day</Ariakit.PopoverHeading>
+							<DrawerDismiss label="Close deposit day" />
+						</div>
+						<div className="flex flex-col py-1">
+							{SINCE_OPTIONS.map((option) => {
+								const active = !anchorDate && range === option.value
+								const day = presetDays[option.value]
+								return (
+									<Ariakit.PopoverDismiss
+										key={option.value}
+										className={popoverRowStyles}
+										aria-current={active ? 'true' : undefined}
+										onClick={() => setQuery({ [rangeKey]: getRangeQueryValue(option.value), growthFrom: undefined })}
+									>
+										<span className="flex items-baseline gap-2">
+											<span className={active ? 'text-primary' : 'text-secondary'}>{option.label}</span>
+											{day ? <span className="mono-sm text-tertiary">{formatDate(day) ?? day}</span> : null}
+										</span>
+										{active ? <Icon name="check" className="size-3.5 shrink-0 text-primary" aria-hidden /> : null}
+									</Ariakit.PopoverDismiss>
+								)
+							})}
+						</div>
+						<label className="flex flex-col gap-1.5 border-t border-subtle px-3 py-3 body-sm text-secondary">
+							Or pick a day
+							<input
+								type="date"
+								value={anchoredOn ?? ''}
+								{...(firstDay ? { min: firstDay } : {})}
+								{...(lastDay ? { max: lastDay } : {})}
+								onChange={(event) => setQuery({ growthFrom: event.target.value || undefined, [rangeKey]: undefined })}
+								className={readoutFieldStyles}
+							/>
+						</label>
+					</PopoverSurface>
+				</Ariakit.PopoverProvider>
+			</div>
+
+			{total ? (
+				<ReadoutCell
+					label="You would have today"
+					hint={`Counting only the yield shown here. No price move is included, so this is not a portfolio value.${
+						combined && summary && combined.asOf < summary.to
+							? ` Taken at ${isoDay(combined.asOf)}, the last day both legs were measured.`
+							: ''
+					}`}
+				>
+					<span className={`mono-xl ${toneClass}`}>{formatUsd(total.endValue, money)}</span>
+				</ReadoutCell>
+			) : null}
+			{total ? (
+				<ReadoutCell label="Total return">
+					<span className={`mono-xl ${toneClass}`}>
+						{formatPercent(total.returnPct, { ...percent, signDisplay: 'exceptZero' })}
+					</span>
+				</ReadoutCell>
+			) : null}
+			{annualized != null ? (
+				<ReadoutCell label="Annualized">
+					<span className="mono-xl text-primary">{formatPercent(annualized, percent)}</span>
+				</ReadoutCell>
+			) : null}
+
 			{/* Also the chart's legend: the mark beside each figure is what names a band. */}
 			{combined ? (
 				<LedgerEntry
@@ -403,34 +538,6 @@ function GrowthReadout({
 					percent={percent}
 				/>
 			) : null}
-			{total ? (
-				<ReadoutCell
-					label="Became"
-					hint={`What the deposit grew to, counting only the yield shown here. No price move is included, so this is not a portfolio value.${
-						combined && summary && combined.asOf < summary.to
-							? ` Taken at ${isoDay(combined.asOf)}, the last day both legs were measured.`
-							: ''
-					}`}
-				>
-					<span className={`mono-md-bold ${toneClass}`}>{formatUsd(total.endValue, money)}</span>
-					<span className={`mono-sm ${toneClass}`}>
-						{formatPercent(total.returnPct, { ...percent, signDisplay: 'exceptZero' })}
-					</span>
-				</ReadoutCell>
-			) : null}
-			{/* One band: the split would repeat this figure, so the rate only gets its own cell here. */}
-			{total && combined == null && summary?.annualizedPct != null ? (
-				<ReadoutCell label="Annualized">
-					<span className="mono-sm-bold text-primary">{formatPercent(summary.annualizedPct, percent)}</span>
-				</ReadoutCell>
-			) : null}
-			{total ? (
-				<ReadoutCell label="Held">
-					<span className="mono-sm-bold text-primary">
-						{formatNumber(total.days)} {total.days === 1 ? 'day' : 'days'}
-					</span>
-				</ReadoutCell>
-			) : null}
 			{total && combined == null && hasIntrinsic ? (
 				<ReadoutCell label="Excludes">
 					<span className="body-sm text-tertiary">{assetName}&apos;s own yield</span>
@@ -450,82 +557,8 @@ function GrowthReadout({
 					{drawdown.recovered ? <span className="body-sm text-tertiary">recovered</span> : null}
 				</ReadoutCell>
 			) : null}
-
-			<ReadoutCell
-				className="ml-auto"
-				hint="A hypothetical size. It scales the figures; the percentages are the same at any amount."
-				label={<label htmlFor={DEPOSIT_INPUT_ID}>Deposit</label>}
-			>
-				<span className="body-sm text-tertiary">$</span>
-				<input
-					id={DEPOSIT_INPUT_ID}
-					type="number"
-					min={0}
-					max={GROWTH_MAX_DEPOSIT}
-					step="any"
-					inputMode="decimal"
-					value={depositText}
-					onFocus={depositFocus.onFocus}
-					onBlur={() => {
-						commitDeposit.flush()
-						depositFocus.onBlur()
-					}}
-					onChange={(event) => {
-						setDepositText(event.target.value)
-						commitDeposit(event.target.value)
-					}}
-					className={`${readoutInputStyles} w-24`}
-					aria-label="Hypothetical deposit amount in dollars"
-				/>
-			</ReadoutCell>
-			{/* Shown whether or not a day was picked: the line always starts on the first day actually
-			    measured, which a reader otherwise has no way of knowing. */}
-			{anchoredOn ? (
-				<ReadoutCell
-					label="Deposited"
-					hint="The day the line starts from. Click anywhere on the chart to move it, and it settles on the next day we measured."
-				>
-					<span className="mono-sm-bold text-primary">{anchoredOn}</span>
-					{anchorDate ? (
-						<Tooltip
-							content="Clear the chosen day and go back to the start of this range"
-							render={
-								<button
-									type="button"
-									aria-label="Clear the chosen deposit day"
-									onClick={() => setQuery({ growthFrom: undefined })}
-									className="flex items-center rounded-full p-0.5 text-tertiary hover:text-primary focus-visible:focus-ring"
-								/>
-							}
-						>
-							<Icon name="x" height={12} width={12} />
-						</Tooltip>
-					) : null}
-				</ReadoutCell>
-			) : null}
 		</div>
 	)
-}
-
-// Snaps a clicked pixel to the nearest day in the visible window. Clicking anywhere in the plot
-// works — requiring a hit on the 1px line itself would make rebasing feel broken.
-function nearestDate(instance: echarts.ECharts, offsetX: number, offsetY: number, dates: Array<number>): string | null {
-	if (dates.length === 0) return null
-	if (!instance.containPixel('grid', [offsetX, offsetY])) return null
-	const converted = instance.convertFromPixel({ gridIndex: 0 }, [offsetX, offsetY])
-	const target = Array.isArray(converted) ? Number(converted[0]) : Number(converted)
-	if (!Number.isFinite(target)) return null
-
-	let best = dates[0]
-	let bestDistance = Math.abs(dates[0] - target)
-	for (const date of dates) {
-		const distance = Math.abs(date - target)
-		if (distance < bestDistance) {
-			bestDistance = distance
-			best = date
-		}
-	}
-	return isoDay(best)
 }
 
 export function PoolGrowthChart({
@@ -565,6 +598,19 @@ export function PoolGrowthChart({
 	const withIntrinsic = getSeriesVisibility(router.query[INTRINSIC_QUERY_KEY], INTRINSIC_DEFAULT_ON)
 	const digits = growthFractionDigits(deposit)
 	const assetName = intrinsicSymbol ?? ASSET_FALLBACK_NAME
+	const firstMeasured = firstMeasuredIndex(currentModel, 0, currentModel.dates.length)
+	const firstDay = firstMeasured === -1 ? null : isoDay(currentModel.dates[firstMeasured])
+	const lastDay = currentModel.dates.length > 0 ? isoDay(currentModel.dates[currentModel.dates.length - 1]) : null
+	const presetDay = (preset: PoolHistoryRange): string | null => {
+		const total = currentModel.dates.length
+		const index = firstMeasuredIndex(currentModel, total - rangeCount(preset, total), total)
+		return index === -1 ? null : isoDay(currentModel.dates[index])
+	}
+	const presetDays: Record<PoolHistoryRange, string | null> = {
+		'30d': presetDay('30d'),
+		'90d': presetDay('90d'),
+		max: firstDay
+	}
 	// Shared by the plot and the legend so the two cannot disagree.
 	const colors = {
 		pool: CHART_PALETTE.accent[isDark ? 1 : 0],
@@ -587,7 +633,7 @@ export function PoolGrowthChart({
 				scale: true,
 				axisLabel: {
 					formatter: (value: number) =>
-						formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: axisDigits })
+						formatUsd(value, { minimumFractionDigits: axisDigits, maximumFractionDigits: axisDigits })
 				}
 			}
 		}),
@@ -597,32 +643,6 @@ export function PoolGrowthChart({
 	const setQuery = (patch: Record<string, string | undefined>) => {
 		void pushShallowQuery(router, patch, router.pathname)
 	}
-
-	// Kept in a ref so the zrender listener below is registered once per chart instance instead of
-	// re-bound on every render, while still pushing through the CURRENT router.
-	const rebase = useRef(setQuery)
-	useEffect(() => {
-		rebase.current = setQuery
-	})
-
-	// Clicking the plot rebases the deposit to that day. Registered on the zrender layer so the
-	// whole plot area is clickable, not just the 1px series line.
-	useEffect(() => {
-		// A range change that needs a fetch unmounts the chart in this same commit; the disposed
-		// instance is still in state until its `onReady(null)` lands, and its zrender is gone.
-		if (!instance || instance.isDisposed()) return
-		const dates = dataset.source.map((row) => Number(row[0]))
-		const zr = instance.getZr()
-		const onClick = (event: { offsetX?: number; offsetY?: number }) => {
-			if (event.offsetX == null || event.offsetY == null) return
-			const date = nearestDate(instance, event.offsetX, event.offsetY, dates)
-			if (date) rebase.current({ growthFrom: date })
-		}
-		zr.on('click', onClick)
-		return () => {
-			zr.off('click', onClick)
-		}
-	}, [dataset, instance])
 
 	return (
 		<>
@@ -650,7 +670,6 @@ export function PoolGrowthChart({
 							</button>
 						</Tooltip>
 					) : null}
-					<PoolRangeControl kind="growth" />
 					<ChartExportButtons
 						chartInstance={() => instance}
 						filename={`yields-${poolId}-growth`}
@@ -659,20 +678,22 @@ export function PoolGrowthChart({
 				</div>
 			</PanelHeader>
 
-			{!loading && !error ? (
-				<GrowthReadout
-					summary={summary}
-					anchoredOn={anchoredOn}
-					anchorDate={anchorDate}
-					combined={combinedSummary}
-					assetName={assetName}
-					colors={colors}
-					hasIntrinsic={currentModel.hasIntrinsic}
-					deposit={deposit}
-					digits={digits}
-					setQuery={setQuery}
-				/>
-			) : null}
+			<GrowthReadout
+				summary={summary}
+				anchoredOn={anchoredOn}
+				anchorDate={anchorDate}
+				combined={combinedSummary}
+				assetName={assetName}
+				colors={colors}
+				hasIntrinsic={currentModel.hasIntrinsic}
+				deposit={deposit}
+				digits={digits}
+				range={range}
+				firstDay={firstDay}
+				lastDay={lastDay}
+				presetDays={presetDays}
+				setQuery={setQuery}
+			/>
 
 			<ChartPanelBody>
 				{loading ? (
@@ -703,9 +724,7 @@ export function PoolGrowthChart({
 							containerClassName={CHART_FILL.default}
 							hideDefaultLegend
 							exportButtons="hidden"
-							// The slider only narrows the view: the line still rebases at the anchor and the
-							// readout follows the range control. Options apply with `notMerge`, so a rebase or
-							// a new deposit resets the zoom to the full window.
+							// The slider only narrows the view; options apply with `notMerge`, so a new day or deposit resets the zoom.
 							onReady={setInstance}
 						/>
 					</Suspense>
