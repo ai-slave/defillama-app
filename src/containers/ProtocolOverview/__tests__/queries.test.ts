@@ -34,7 +34,11 @@ const formatAdapterData = vi.hoisted(() =>
 	})
 )
 const fetchRWAPlatformAumChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
-vi.mock('~/containers/RWA/api', () => ({ fetchRWAPlatformAumChart }))
+const fetchRWAProtocolMcapChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+vi.mock('~/containers/RWA/api', () => ({ fetchRWAPlatformAumChart, fetchRWAProtocolMcapChart }))
+
+const rwaPlatformsIndex = vi.hoisted(() => ({ platforms: {} as Record<string, { activeAum?: number }> }))
+vi.mock('~/utils/metadata', () => ({ default: { rwaPlatformsIndex } }))
 
 const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
@@ -136,6 +140,87 @@ describe('getProtocolOverviewPageData', () => {
 		fetchProtocolOverviewMetrics.mockResolvedValueOnce(Object.assign({}, protocol, { hasInviteCodes: true }))
 		expect((await getProtocolOverviewPageData(options)).hasInviteCodes).toBe(true)
 		expect((await getProtocolOverviewPageData(options)).hasInviteCodes).toBe(false)
+	})
+
+	// The platform AUM chart's last point is a midnight snapshot of the daily backbone, while
+	// /rwa/platform/<slug> headlines platform-meta's live activeAum. Reading the chart here made the
+	// protocol page and the platform card disagree by construction — Centrifuge showed $1,008,557,369
+	// against a $928,552,482 card on 2026-09-22, because a stuck daily row never self-corrects.
+	test('headlines the platform card figure, not the chart tail', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		fetchRWAPlatformAumChart.mockResolvedValueOnce([
+			[1, 918_015_226],
+			[2, 1_008_557_369]
+		])
+		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
+		try {
+			const page = await getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
+				chainMetadata: {},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			expect(page.rwaActiveAum).toBe(928_552_482)
+		} finally {
+			delete rwaPlatformsIndex.platforms['test-platform']
+		}
+	})
+
+	// KeyMetrics returns null before it computes the primary metric, so hasKeyMetrics has to know about
+	// the headlined figure. A platform with live Active AUM but no chart history yet would otherwise set
+	// rwaActiveAum and still render nothing — the fix silently not applying in the case it matters most.
+	test('surfaces platform Active AUM even when the chart is empty', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		fetchRWAPlatformAumChart.mockResolvedValueOnce([])
+		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
+		try {
+			const page = await getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
+				chainMetadata: {},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			expect(page.rwaActiveAum).toBe(928_552_482)
+			expect(page.hasKeyMetrics).toBe(true)
+		} finally {
+			delete rwaPlatformsIndex.platforms['test-platform']
+		}
+	})
+
+	// A protocol credited with its own issued assets has no platform-meta row to read, so the chart
+	// tail stays the only source for it.
+	test('falls back to the chart tail on the protocol-mcap path', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		fetchRWAProtocolMcapChart.mockResolvedValueOnce([
+			[1, 10],
+			[2, 4242]
+		])
+		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
+		try {
+			const page = await getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: {
+					displayName: 'Test Protocol',
+					tvl: false,
+					rwaPlatformSlug: 'test-platform',
+					rwaProtocolMcapSlug: 'test-protocol'
+				},
+				chainMetadata: {},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			expect(page.rwaActiveAum).toBe(4242)
+		} finally {
+			delete rwaPlatformsIndex.platforms['test-platform']
+		}
 	})
 
 	test('tolerates RWA upstream failure while TVL is live', async () => {

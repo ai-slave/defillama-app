@@ -609,6 +609,32 @@ export const getProtocolOverviewPageData = async ({
 			incentives.emissions24h != null ||
 			incentives.emissionsAllTime != null)
 
+	// The chart's last point is a MIDNIGHT snapshot: aggregates are built from the daily backbone with
+	// intraday tips stripped, and storeHistoricalPG pins each day's row to the run nearest 00:00 and
+	// never revises it. platform-meta's activeAum is the live figure, and it is the same number
+	// /rwa/platform/<slug> headlines — so reading the chart here made the two disagree by a day's
+	// drift at best, and by a whole stuck daily row at worst (Centrifuge, 2026-09-22: $1,008,557,369
+	// against a $928,552,482 card). Fall back to the chart only where there is no platform to read:
+	// the rwaProtocolMcapSlug path is a per-protocol series with no platform-meta equivalent.
+	let rwaActiveAum: number | null = rwaAumChart.length > 0 ? (rwaAumChart[rwaAumChart.length - 1]?.[1] ?? null) : null
+	if (currentProtocolMetadata.rwaPlatformSlug && !currentProtocolMetadata.rwaProtocolMcapSlug) {
+		try {
+			const metadataCache = await import('~/utils/metadata').then((m) => m.default)
+			const platformActiveAum =
+				metadataCache.rwaPlatformsIndex?.platforms?.[currentProtocolMetadata.rwaPlatformSlug]?.activeAum
+			if (typeof platformActiveAum === 'number' && Number.isFinite(platformActiveAum)) {
+				rwaActiveAum = platformActiveAum
+			}
+		} catch (error) {
+			// Keep the chart-derived value rather than dropping the protocol's primary metric.
+			console.log(
+				'[HTTP]:[ERROR]:[PROTOCOL_RWA_PLATFORM_META]:',
+				currentProtocolSlug,
+				error instanceof Error ? error.message : error
+			)
+		}
+	}
+
 	const hasKeyMetrics = Boolean(
 		protocolData.currentChainTvls.staking != null ||
 		protocolData.currentChainTvls.borrowed != null ||
@@ -633,7 +659,11 @@ export const getProtocolOverviewPageData = async ({
 		bridgeVolumeData?.length ||
 		isOracleProtocol ||
 		protocolData.tokenCGData ||
-		rwaAumChart.length > 0
+		// Gate on the figure actually headlined, not on the chart: KeyMetrics returns null before it
+		// computes the primary metric, so a platform with live Active AUM but no chart history yet
+		// would set rwaActiveAum and still render nothing.
+		rwaAumChart.length > 0 ||
+		rwaActiveAum != null
 	)
 
 	const resolvedProtocolChains =
@@ -741,6 +771,7 @@ export const getProtocolOverviewPageData = async ({
 	if (rwaAumChart.length > 0) {
 		initialMultiSeriesChartData['RWA AUM'] = rwaAumChart
 	}
+
 	const availableChartSet = new Set(availableCharts)
 	const primaryTvlChartLabel = isCEX ? 'Total Assets' : ('TVL' as const)
 	const defaultToggledCharts = buildDefaultToggledCharts({
@@ -942,7 +973,7 @@ export const getProtocolOverviewPageData = async ({
 		initialMultiSeriesChartData,
 		rwaPlatformSlug: currentProtocolMetadata.rwaPlatformSlug ?? null,
 		rwaProtocolMcapSlug: currentProtocolMetadata.rwaProtocolMcapSlug ?? null,
-		rwaActiveAum: rwaAumChart.length > 0 ? (rwaAumChart[rwaAumChart.length - 1]?.[1] ?? null) : null,
+		rwaActiveAum,
 		hallmarks,
 		rangeHallmarks,
 		geckoId: tokenGeckoId,
