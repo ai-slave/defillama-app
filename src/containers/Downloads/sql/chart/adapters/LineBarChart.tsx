@@ -56,7 +56,11 @@ export function LineBarChart({
 }: LineBarChartProps) {
 	const xColumn = classified.find((c) => c.name === config.xCol) ?? null
 	const xAxisType: 'time' | 'category' = xColumn?.coarse === 'date' ? 'time' : 'category'
-	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
+	// 100% mode charts each value's share of its row, so every label is a percent whatever the column's format.
+	const formatter = useMemo(
+		() => makeValueFormatter(config.stackMode === 'expand' ? 'percent' : config.numberFormat),
+		[config.stackMode, config.numberFormat]
+	)
 
 	const { chartModel, truncatedCount } = useMemo(() => {
 		if (!xColumn)
@@ -208,7 +212,7 @@ function normalizeRowsToPercent(rows: Array<Array<number | string | null>>): Arr
 		const out = row.slice()
 		for (let index = 1; index < row.length; index++) {
 			const v = row[index]
-			out[index] = typeof v === 'number' && Number.isFinite(v) ? v / total : null
+			out[index] = typeof v === 'number' && Number.isFinite(v) ? (v / total) * 100 : null
 		}
 		return out
 	})
@@ -225,7 +229,7 @@ function normalizeWideRowsToPercent(rows: Array<Array<unknown>>, valueIndexes: A
 		const out = row.slice()
 		for (const index of valueIndexes) {
 			const n = toYValue(row[index])
-			out[index] = n == null ? null : n / total
+			out[index] = n == null ? null : (n / total) * 100
 		}
 		return out
 	})
@@ -252,7 +256,7 @@ function buildChartOptions(
 	const yAxisBase: MultiSeriesYAxisOption = { axisLabel: { formatter: (value: number) => formatter.axis(value) } }
 	const opts: MultiSeriesChartOptions = { yAxis: yAxisBase }
 	if (config.stackMode === 'expand') {
-		opts.yAxis = { ...yAxisBase, max: 1, axisLabel: { formatter: (v: number) => `${Math.round(v * 100)}%` } }
+		opts.yAxis = { ...yAxisBase, max: 100 }
 	}
 
 	if (xAxisType === 'category') {
