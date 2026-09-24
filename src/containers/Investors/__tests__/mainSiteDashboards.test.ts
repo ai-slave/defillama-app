@@ -88,15 +88,15 @@ describe('mainSiteDashboards', () => {
 		)
 	})
 
-	test('surfaces uniswap as a tab menu behind the llama flag', () => {
+	test('surfaces uniswap as a public tab menu', () => {
 		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')
 		expect(uniswap?.dashboardId).toBe('un1swapd4shb0rd')
 		expect(uniswap?.tabPlacement).toBe('menu')
 		expect(uniswap?.tabLabel).toBe('Deep Dive')
 		expect(getMainSiteIrRoutePrefix(uniswap!)).toBe('deep-dive')
 		expect(getMainSiteIrRoutePrefix(getMainSiteIrDashboard('protocol', 'spark')!)).toBe('investor-relations')
-		expect(uniswap?.llamaOnly).toBe(true)
-		expect(isMainSiteIrVisible(uniswap!, false)).toBe(false)
+		expect(uniswap?.llamaOnly).toBeUndefined()
+		expect(isMainSiteIrVisible(uniswap!, false)).toBe(true)
 		expect(isMainSiteIrVisible(uniswap!, true)).toBe(true)
 	})
 

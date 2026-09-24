@@ -184,7 +184,6 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 			},
 			{ id: 'security', label: 'Security', icon: 'shield-check', description: 'Audit reports by firm and product' }
 		],
-		llamaOnly: true,
 		routePrefix: 'deep-dive'
 	}
 ]
