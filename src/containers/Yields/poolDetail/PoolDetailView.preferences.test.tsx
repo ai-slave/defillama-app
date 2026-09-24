@@ -219,6 +219,7 @@ test('renders fetched liquidity with its denomination and replaces the public AP
 				usd: { total: [4000], available: [2000], remainder: [2000] },
 				units: { total: [2], available: [1], remainder: [1] },
 				classes: [null],
+				outcomes: [null],
 				quotedTotal: [false],
 				symbol: 'ETH',
 				hasUnits: true,
