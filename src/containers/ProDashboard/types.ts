@@ -551,6 +551,14 @@ export interface Protocol {
 	misrepresentedTokens?: boolean
 }
 
+const COUNT_CHART_TYPES: ReadonlySet<string> = new Set(['activeUsers', 'newUsers', 'txs', 'pfRatio', 'psRatio'])
+const PERCENT_CHART_TYPES: ReadonlySet<string> = new Set(['medianApy'])
+
+/** The unit a dashboard chart type is measured in: counts and ratios have none, APY is a percent, the rest are USD. */
+export function getDashboardChartValueSymbol(type: string): '' | '%' | '$' {
+	return COUNT_CHART_TYPES.has(type) ? '' : PERCENT_CHART_TYPES.has(type) ? '%' : '$'
+}
+
 export const CHART_TYPES = {
 	tvl: { id: 'tvl', title: 'TVL', chartType: 'area', color: dashboardBlue },
 	volume: {

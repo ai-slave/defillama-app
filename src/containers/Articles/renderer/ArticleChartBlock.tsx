@@ -1,8 +1,8 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
-import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
@@ -12,7 +12,7 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
-import { CHART_TYPES } from '~/containers/ProDashboard/types'
+import { CHART_TYPES, getDashboardChartValueSymbol } from '~/containers/ProDashboard/types'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
@@ -22,7 +22,6 @@ import type { ArticleChartConfig, ArticleChartEntityType, ArticleChartRange, Art
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
-const ARTICLE_TOOLTIP_FORMATTER = createCappedRemainderTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 
 function entityLogo(entity: { entityType: ArticleChartEntityType; slug: string }) {
 	return entity.entityType === 'chain' ? chainIconUrl(entity.slug) : tokenIconUrl(entity.slug)
@@ -119,6 +118,8 @@ export function ArticleChartBlock({
 				return {
 					name: seriesDisplayName(s),
 					type: seriesType,
+					// A chart can mix metrics, e.g. TVL next to transactions, so each series carries its own unit.
+					valueSymbol: getDashboardChartValueSymbol(s.chartType),
 					color: SERIES_COLORS[i % SERIES_COLORS.length]!,
 					data,
 					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
@@ -138,7 +139,14 @@ export function ArticleChartBlock({
 	const figureLabel = typeof index === 'number' ? `Fig. ${String(index).padStart(2, '0')}` : null
 	const primarySeries = series[0]
 	const route = primarySeries ? getArticleEntityRoute(primarySeries.entityType, primarySeries.slug) : '/'
-	const latestLabel = series.length === 1 ? formatUsd(primaryLatest, { compact: true }) : null
+	const primarySymbol = primarySeries ? getDashboardChartValueSymbol(primarySeries.chartType) : '$'
+	const latestLabel =
+		series.length === 1
+			? primarySymbol === '$'
+				? formatUsd(primaryLatest, { compact: true })
+				: formatTooltipValue(primaryLatest, primarySymbol)
+			: null
+	const isUsdDenominated = series.every((s) => getDashboardChartValueSymbol(s.chartType) === '$')
 	const rangeLabel = RANGE_LABEL[config.range ?? 'all']
 	const isMulti = series.length > 1
 
@@ -163,7 +171,6 @@ export function ArticleChartBlock({
 
 	const chartOptions = useMemo<MultiSeriesChartOptions>(
 		() => ({
-			tooltip: { formatter: ARTICLE_TOOLTIP_FORMATTER },
 			xAxis: { show: true },
 			yAxis: config.logScale ? { show: true, type: 'log' } : { show: true, type: 'value' }
 		}),
@@ -244,7 +251,7 @@ export function ArticleChartBlock({
 							<MultiSeriesChart
 								dataset={chartModel.dataset}
 								charts={charts}
-								valueSymbol="$"
+								valueSymbol={primarySymbol}
 								groupBy="daily"
 								hideDefaultLegend={false}
 								exportButtons="hidden"
@@ -265,7 +272,7 @@ export function ArticleChartBlock({
 					) : (
 						<span>
 							{config.caption ||
-								`${uniqueEntities.map((e) => e.name).join(' vs ')} ${chartLabel.toLowerCase()}, USD-denominated.`}
+								`${uniqueEntities.map((e) => e.name).join(' vs ')} ${chartLabel.toLowerCase()}${isUsdDenominated ? ', USD-denominated' : ''}.`}
 						</span>
 					)}
 					{config.logScale ? (

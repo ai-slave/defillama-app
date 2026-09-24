@@ -13,6 +13,7 @@ import {
 	type Chain,
 	type ChartConfig,
 	type DashboardGrouping,
+	getDashboardChartValueSymbol,
 	getProDashboardChartTypeConfig,
 	type Protocol
 } from '../types'
@@ -52,9 +53,6 @@ interface ChartRendererProps {
 	onChartReady: (instance: echarts.ECharts | null) => void
 }
 
-const userMetricTypes = new Set(['activeUsers', 'newUsers', 'txs'])
-const percentMetricTypes = new Set(['medianApy'])
-const ratioMetricTypes = new Set(['pfRatio', 'psRatio'])
 const CUMULATIVE_DISPLAY_OPTIONS = [
 	{ name: 'Show individual values', key: 'Individual' },
 	{ name: 'Show cumulative values', key: 'Cumulative' }
@@ -74,8 +72,7 @@ function ChartRenderer({
 	const chartType = getProDashboardChartTypeConfig(type)
 	if (!chartType) throw new Error(`Unsupported dashboard chart type: ${type}`)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
-	const valueSymbol =
-		userMetricTypes.has(type) || ratioMetricTypes.has(type) ? '' : percentMetricTypes.has(type) ? '%' : '$'
+	const valueSymbol = getDashboardChartValueSymbol(type)
 	const chartOptions = useMemo(
 		() => createSingleSeriesChartOptions(valueSymbol, DASHBOARD_CHART_GROUPING[grouping]),
 		[valueSymbol, grouping]
