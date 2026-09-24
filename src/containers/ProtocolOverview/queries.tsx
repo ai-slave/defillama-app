@@ -12,7 +12,6 @@ import type { CexExchangeSlugIndexEntry } from '~/containers/Markets/server/data
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import { fetchRWAPlatformAumChart, fetchRWAProtocolMcapChart } from '~/containers/RWA/api'
 import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
@@ -41,6 +40,7 @@ import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
+import { fetchProtocolRwaAumChart } from './rwa'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
 
@@ -133,6 +133,7 @@ const hasStandardAdapterMetrics = (data: Awaited<ReturnType<typeof formatAdapter
 export const getProtocolOverviewPageData = async ({
 	protocolId,
 	currentProtocolMetadata,
+	rwaPlatformActiveAum,
 	isCEX = false,
 	chainMetadata,
 	tokenlist,
@@ -147,6 +148,7 @@ export const getProtocolOverviewPageData = async ({
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
+	rwaPlatformActiveAum: number | null
 	isCEX?: boolean
 	chainMetadata: Record<string, IChainMetadata>
 	tokenlist: Record<string, ITokenListEntry>
@@ -279,23 +281,19 @@ export const getProtocolOverviewPageData = async ({
 					data: [],
 					failed: false
 				}),
-		currentProtocolMetadata.rwaProtocolMcapSlug || currentProtocolMetadata.rwaPlatformSlug
-			? // A protocol issuing its own assets headlines those; only fall back to the platform
-				// aggregate when the sheet credits it with none of its own.
-				(currentProtocolMetadata.rwaProtocolMcapSlug
-					? fetchRWAProtocolMcapChart(currentProtocolMetadata.rwaProtocolMcapSlug)
-					: fetchRWAPlatformAumChart(currentProtocolMetadata.rwaPlatformSlug as string)
-				).catch((error) => {
-					// Without TVL, this is the primary metric; preserve the previous page on failure.
-					if (!currentProtocolMetadata.tvl) throw error
-					console.log(
-						'[HTTP]:[ERROR]:[PROTOCOL_RWA_AUM_CHART]:',
-						currentProtocolSlug,
-						error instanceof Error ? error.message : error
-					)
-					return [] as Array<[number, number]>
-				})
-			: Promise.resolve<Array<[number, number]>>([]),
+		fetchProtocolRwaAumChart({
+			rwaProtocolMcapSlug: currentProtocolMetadata.rwaProtocolMcapSlug ?? null,
+			rwaPlatformSlug: currentProtocolMetadata.rwaPlatformSlug ?? null
+		}).catch((error) => {
+			// Without TVL, this is the primary metric; preserve the previous page on failure.
+			if (!currentProtocolMetadata.tvl) throw error
+			console.log(
+				'[HTTP]:[ERROR]:[PROTOCOL_RWA_AUM_CHART]:',
+				currentProtocolSlug,
+				error instanceof Error ? error.message : error
+			)
+			return [] as Array<[number, number]>
+		}),
 		currentProtocolMetadata.fees
 			? fetchAdapterProtocolMetrics({
 					adapterType: 'fees',
@@ -609,31 +607,9 @@ export const getProtocolOverviewPageData = async ({
 			incentives.emissions24h != null ||
 			incentives.emissionsAllTime != null)
 
-	// The chart's last point is a MIDNIGHT snapshot: aggregates are built from the daily backbone with
-	// intraday tips stripped, and storeHistoricalPG pins each day's row to the run nearest 00:00 and
-	// never revises it. platform-meta's activeAum is the live figure, and it is the same number
-	// /rwa/platform/<slug> headlines — so reading the chart here made the two disagree by a day's
-	// drift at best, and by a whole stuck daily row at worst (Centrifuge, 2026-09-22: $1,008,557,369
-	// against a $928,552,482 card). Fall back to the chart only where there is no platform to read:
-	// the rwaProtocolMcapSlug path is a per-protocol series with no platform-meta equivalent.
-	let rwaActiveAum: number | null = rwaAumChart.length > 0 ? (rwaAumChart[rwaAumChart.length - 1]?.[1] ?? null) : null
-	if (currentProtocolMetadata.rwaPlatformSlug && !currentProtocolMetadata.rwaProtocolMcapSlug) {
-		try {
-			const metadataCache = await import('~/utils/metadata').then((m) => m.default)
-			const platformActiveAum =
-				metadataCache.rwaPlatformsIndex?.platforms?.[currentProtocolMetadata.rwaPlatformSlug]?.activeAum
-			if (typeof platformActiveAum === 'number' && Number.isFinite(platformActiveAum)) {
-				rwaActiveAum = platformActiveAum
-			}
-		} catch (error) {
-			// Keep the chart-derived value rather than dropping the protocol's primary metric.
-			console.log(
-				'[HTTP]:[ERROR]:[PROTOCOL_RWA_PLATFORM_META]:',
-				currentProtocolSlug,
-				error instanceof Error ? error.message : error
-			)
-		}
-	}
+	// Platform metadata is current; chart points are historical daily snapshots.
+	const chartRwaAum = rwaAumChart.at(-1)?.[1] ?? null
+	const rwaActiveAum = currentProtocolMetadata.rwaProtocolMcapSlug ? chartRwaAum : (rwaPlatformActiveAum ?? chartRwaAum)
 
 	const hasKeyMetrics = Boolean(
 		protocolData.currentChainTvls.staking != null ||
@@ -659,9 +635,6 @@ export const getProtocolOverviewPageData = async ({
 		bridgeVolumeData?.length ||
 		isOracleProtocol ||
 		protocolData.tokenCGData ||
-		// Gate on the figure actually headlined, not on the chart: KeyMetrics returns null before it
-		// computes the primary metric, so a platform with live Active AUM but no chart history yet
-		// would set rwaActiveAum and still render nothing.
 		rwaAumChart.length > 0 ||
 		rwaActiveAum != null
 	)

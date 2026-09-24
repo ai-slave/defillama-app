@@ -43,6 +43,9 @@ export const getStaticProps = withPerformanceLogging(
 		const data = await getProtocolOverviewPageData({
 			protocolId: protocolRoute.id,
 			currentProtocolMetadata: protocolRoute.metadata,
+			rwaPlatformActiveAum: protocolRoute.metadata.rwaPlatformSlug
+				? (metadataCache.rwaPlatformsIndex.platforms[protocolRoute.metadata.rwaPlatformSlug]?.activeAum ?? null)
+				: null,
 			chainMetadata: metadataCache.chainMetadata,
 			tokenlist: metadataCache.tokenlist,
 			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,

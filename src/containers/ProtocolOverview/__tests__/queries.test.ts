@@ -37,9 +37,6 @@ const fetchRWAPlatformAumChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchRWAProtocolMcapChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 vi.mock('~/containers/RWA/api', () => ({ fetchRWAPlatformAumChart, fetchRWAProtocolMcapChart }))
 
-const rwaPlatformsIndex = vi.hoisted(() => ({ platforms: {} as Record<string, { activeAum?: number }> }))
-vi.mock('~/utils/metadata', () => ({ default: { rwaPlatformsIndex } }))
-
 const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const fetchOracleProtocolChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
@@ -135,6 +132,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		}
 		fetchProtocolOverviewMetrics.mockResolvedValueOnce(Object.assign({}, protocol, { hasInviteCodes: true }))
@@ -142,85 +140,53 @@ describe('getProtocolOverviewPageData', () => {
 		expect((await getProtocolOverviewPageData(options)).hasInviteCodes).toBe(false)
 	})
 
-	// The platform AUM chart's last point is a midnight snapshot of the daily backbone, while
-	// /rwa/platform/<slug> headlines platform-meta's live activeAum. Reading the chart here made the
-	// protocol page and the platform card disagree by construction — Centrifuge showed $1,008,557,369
-	// against a $928,552,482 card on 2026-09-22, because a stuck daily row never self-corrects.
-	test('headlines the platform card figure, not the chart tail', async () => {
+	test.each([
+		{ platformAum: 928_552_482, chart: [[1, 1_008_557_369]], expected: 928_552_482 },
+		{ platformAum: 0, chart: [[1, 1_008_557_369]], expected: 0 },
+		{ platformAum: null, chart: [[1, 1_008_557_369]], expected: 1_008_557_369 },
+		{ platformAum: 928_552_482, chart: [], expected: 928_552_482 },
+		{ platformAum: null, chart: [], expected: null }
+	])('resolves platform AUM from $platformAum with chart $chart', async ({ platformAum, chart, expected }) => {
 		const { getProtocolOverviewPageData } = await import('../queries')
-		fetchRWAPlatformAumChart.mockResolvedValueOnce([
-			[1, 918_015_226],
-			[2, 1_008_557_369]
-		])
-		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
-		try {
-			const page = await getProtocolOverviewPageData({
-				protocolId: 'test-protocol',
-				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
-				chainMetadata: {},
-				tokenlist: {},
-				cgExchangeIdentifiers: [],
-				emissionsSupplyMetrics: {},
-				yieldsSnapshot
-			})
-			expect(page.rwaActiveAum).toBe(928_552_482)
-		} finally {
-			delete rwaPlatformsIndex.platforms['test-platform']
-		}
+		fetchRWAPlatformAumChart.mockResolvedValueOnce(chart)
+		const page = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
+			rwaPlatformActiveAum: platformAum,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		})
+		expect(page.rwaActiveAum).toBe(expected)
+		expect(page.initialMultiSeriesChartData['RWA AUM'] ?? []).toEqual(chart)
+		expect(page.hasKeyMetrics).toBe(expected != null)
 	})
 
-	// KeyMetrics returns null before it computes the primary metric, so hasKeyMetrics has to know about
-	// the headlined figure. A platform with live Active AUM but no chart history yet would otherwise set
-	// rwaActiveAum and still render nothing — the fix silently not applying in the case it matters most.
-	test('surfaces platform Active AUM even when the chart is empty', async () => {
+	test.each([
+		{ chart: [[1, 4242]], expected: 4242 },
+		{ chart: [[1, 0]], expected: 0 },
+		{ chart: [], expected: null }
+	])('keeps protocol-issued AUM ahead of the parent platform figure: $expected', async ({ chart, expected }) => {
 		const { getProtocolOverviewPageData } = await import('../queries')
-		fetchRWAPlatformAumChart.mockResolvedValueOnce([])
-		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
-		try {
-			const page = await getProtocolOverviewPageData({
-				protocolId: 'test-protocol',
-				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
-				chainMetadata: {},
-				tokenlist: {},
-				cgExchangeIdentifiers: [],
-				emissionsSupplyMetrics: {},
-				yieldsSnapshot
-			})
-			expect(page.rwaActiveAum).toBe(928_552_482)
-			expect(page.hasKeyMetrics).toBe(true)
-		} finally {
-			delete rwaPlatformsIndex.platforms['test-platform']
-		}
-	})
-
-	// A protocol credited with its own issued assets has no platform-meta row to read, so the chart
-	// tail stays the only source for it.
-	test('falls back to the chart tail on the protocol-mcap path', async () => {
-		const { getProtocolOverviewPageData } = await import('../queries')
-		fetchRWAProtocolMcapChart.mockResolvedValueOnce([
-			[1, 10],
-			[2, 4242]
-		])
-		rwaPlatformsIndex.platforms['test-platform'] = { activeAum: 928_552_482 }
-		try {
-			const page = await getProtocolOverviewPageData({
-				protocolId: 'test-protocol',
-				currentProtocolMetadata: {
-					displayName: 'Test Protocol',
-					tvl: false,
-					rwaPlatformSlug: 'test-platform',
-					rwaProtocolMcapSlug: 'test-protocol'
-				},
-				chainMetadata: {},
-				tokenlist: {},
-				cgExchangeIdentifiers: [],
-				emissionsSupplyMetrics: {},
-				yieldsSnapshot
-			})
-			expect(page.rwaActiveAum).toBe(4242)
-		} finally {
-			delete rwaPlatformsIndex.platforms['test-platform']
-		}
+		fetchRWAProtocolMcapChart.mockResolvedValueOnce(chart)
+		const page = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				tvl: false,
+				rwaPlatformSlug: 'test-platform',
+				rwaProtocolMcapSlug: 'test-protocol'
+			},
+			rwaPlatformActiveAum: 928_552_482,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			yieldsSnapshot
+		})
+		expect(page.rwaActiveAum).toBe(expected)
 	})
 
 	test('tolerates RWA upstream failure while TVL is live', async () => {
@@ -235,6 +201,7 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
+				rwaPlatformActiveAum: null,
 				yieldsSnapshot
 			})
 			const page = await result
@@ -257,6 +224,7 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
+				rwaPlatformActiveAum: null,
 				yieldsSnapshot
 			})
 			await expect(result).rejects.toThrow('RWA unavailable')
@@ -311,6 +279,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -350,6 +319,7 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
+				rwaPlatformActiveAum: null,
 				yieldsSnapshot
 			})
 			expect(data.chartDenominations).toEqual(expected)
@@ -385,6 +355,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -451,6 +422,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -522,6 +494,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 		const faqPeers =
@@ -545,6 +518,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		}
 
@@ -606,6 +580,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		}
 
@@ -651,6 +626,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -681,6 +657,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -716,6 +693,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -742,6 +720,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -767,6 +746,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -786,6 +766,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -818,6 +799,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -845,6 +827,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -870,6 +853,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -890,6 +874,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -935,6 +920,7 @@ describe('getProtocolOverviewPageData', () => {
 			},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot,
 			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
 		})
@@ -959,6 +945,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot,
 			includeFaq: false,
 			getTokenMarketSummary: getTokenMarketSummaryByGeckoId
@@ -983,6 +970,7 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
+				rwaPlatformActiveAum: null,
 				yieldsSnapshot
 			})
 
@@ -1012,6 +1000,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -1044,6 +1033,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -1071,6 +1061,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -1100,6 +1091,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot
 		})
 
@@ -1120,6 +1112,7 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
+			rwaPlatformActiveAum: null,
 			yieldsSnapshot: null
 		})
 
@@ -1200,6 +1193,7 @@ describe('getProtocolOverviewPageData', () => {
 			},
 			cgExchangeIdentifiers: [],
 			yieldsSnapshot,
+			rwaPlatformActiveAum: null,
 			emissionsSupplyMetrics: {
 				'test-protocol': {
 					name: 'Test Protocol',
@@ -1250,6 +1244,7 @@ describe('getProtocolOverviewPageData', () => {
 			},
 			cgExchangeIdentifiers: [],
 			yieldsSnapshot,
+			rwaPlatformActiveAum: null,
 			emissionsSupplyMetrics: {
 				'test-protocol': {
 					name: 'Test Protocol',

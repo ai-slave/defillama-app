@@ -105,6 +105,21 @@ beforeEach(() => {
 })
 
 describe('/api/public/protocols/charts', () => {
+	test('prefers protocol-issued RWA assets when the parent platform is also supplied', async () => {
+		fetchJsonMock.mockResolvedValueOnce([[1, 42]])
+		const res = createMockNextApiResponse()
+		await handler(createRequest({ kind: 'rwa-aum', rwaProtocol: 'child', platform: 'parent' }), res)
+		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/protocol/child/mcap/chart'))
+		expect(res.json).toHaveBeenCalledWith([[1, 42]])
+	})
+
+	test('rejects an RWA chart request without either source', async () => {
+		const res = createMockNextApiResponse()
+		await handler(createRequest({ kind: 'rwa-aum' }), res)
+		expect(res.status).toHaveBeenCalledWith(400)
+		expect(fetchJsonMock).not.toHaveBeenCalled()
+	})
+
 	test('returns 500 when the RWA upstream fails', async () => {
 		fetchJsonMock.mockRejectedValueOnce(new Error('RWA unavailable'))
 		const res = createMockNextApiResponse()
