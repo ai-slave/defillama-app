@@ -47,7 +47,6 @@ const localeDateMethodFiles = new Set([
 
 const dayjsFormatFiles = new Set([
 	'src/containers/Cexs/DateFilter.tsx',
-	'src/containers/DAT/Company.tsx',
 	'src/containers/Downloads/DateRangePicker.tsx',
 	'src/containers/Downloads/csvDateFilter.ts',
 	'src/containers/Downloads/savedDownloads.ts',

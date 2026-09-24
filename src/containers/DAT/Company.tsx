@@ -1,5 +1,4 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import dayjs from 'dayjs'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
@@ -483,7 +482,7 @@ const chartOptions = {
 			const timestampNum =
 				typeof timestamp === 'number' ? timestamp : typeof timestamp === 'string' ? Number(timestamp) : undefined
 			let val =
-				`${dayjs(timestampNum).format('MMM D, YYYY')}<li style="list-style:none">${label}:&nbsp;&nbsp;` +
+				`${formatDate(timestampNum, { input: 'milliseconds' })}<li style="list-style:none">${label}:&nbsp;&nbsp;` +
 				`<span style="font-weight:600;">${formatCompactNumber(Math.abs(deltaValue), {
 					minimumCompactValue: 1_000_000,
 					compactSuffix: 'lowercase'
