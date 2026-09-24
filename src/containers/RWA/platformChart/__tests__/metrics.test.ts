@@ -118,12 +118,13 @@ describe('buildRwaPlatformEntityChart', () => {
 		])
 	})
 
-	test('sums the bars per period and leaves the lines daily', () => {
+	test('sums the bars per period and keeps the last line value of each, on the same period key', () => {
+		// day(0) to day(2) is Tue Nov 14 to Thu Nov 16, 2023: one week, keyed by its Sunday.
 		const weekly = buildRwaPlatformEntityChart(['activeMcap', 'netFlows'], { ...inputs, period: 'weekly' })
-		const bars = weekly.series.find((series) => series.name === 'Net Flows')
-		expect(bars?.data).toHaveLength(1)
-		expect(bars?.data?.[0]?.[1]).toBe(2)
-		expect(weekly.series.find((series) => series.name === 'Active AUM')?.data).toHaveLength(3)
+		const byName = Object.fromEntries(weekly.series.map((series) => [series.name, series]))
+		const sunday = Date.UTC(2023, 10, 19)
+		expect(byName['Net Flows']?.data).toEqual([[sunday, 2]])
+		expect(byName['Active AUM']?.data).toEqual([[sunday, 120]])
 	})
 
 	test('draws the ratios as percent lines on the percent axis, over the days both sides have a value', () => {
@@ -166,14 +167,24 @@ describe('buildRwaPlatformEntityChart', () => {
 		expect(chart.series).toHaveLength(1)
 	})
 
+	test('exports grouped series as one row per period, named by that period', () => {
+		const weekly = buildRwaPlatformEntityChart(['activeMcap', 'netFlows'], { ...inputs, period: 'weekly' })
+		expect(buildRwaPlatformEntityCsvDataset(weekly.series, 'weekly')).toEqual({
+			dimensions: ['timestamp', 'Active AUM', 'Net Flows'],
+			source: [[Date.UTC(2023, 10, 19), 120, 2]],
+			groupBy: 'weekly'
+		})
+	})
+
 	test('writes the csv as one wide table over the union of timestamps', () => {
 		const chart = buildRwaPlatformEntityChart(['defiActiveTvl', 'netFlows'], inputs)
-		expect(buildRwaPlatformEntityCsvDataset(chart.series)).toEqual({
+		expect(buildRwaPlatformEntityCsvDataset(chart.series, 'daily')).toEqual({
 			dimensions: ['timestamp', 'DeFi Active TVL', 'Net Flows'],
 			source: [
 				[day(0), 10, 5],
 				[day(2), 30, -3]
-			]
+			],
+			groupBy: 'daily'
 		})
 	})
 })

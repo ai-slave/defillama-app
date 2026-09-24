@@ -1,4 +1,6 @@
+import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
 import type { BreakdownChart, ChannelBreakdown, ChartData } from './ecosystemApi'
 
 export type Timeframe = '7d' | '30d' | 'ytd' | '1y' | 'all'
@@ -83,33 +85,96 @@ export function filterTimeSeries(
 	return result
 }
 
-export function aggregateTimeSeries(
-	dates: Array<string>,
-	series: Array<number>,
-	timeframe: Timeframe,
-	aggregation: Aggregation
-): Array<[number, number]> {
-	if (aggregation === 'daily') return filterTimeSeries(dates, series, timeframe)
+export type RevenueChartSeries = {
+	feesDates: Array<string>
+	cumulativeFees: Array<number>
+	protocolFeesSeries: Array<number>
+	intentFeesSeries: Array<number>
+	revenueDates: Array<string>
+	cumulativeRevenue: Array<number>
+	burnRevenueSeries: Array<number>
+	intentsRevenueSeries: Array<number>
+}
 
-	const start = timeframeStartIndex(dates, timeframe)
-	const result: Array<[number, number]> = []
-	for (let index = start; index < dates.length; index++) {
-		const date = new Date(`${dates[index]}T00:00:00Z`)
-		let key: string
-
-		if (aggregation === 'weekly') {
-			const day = date.getUTCDay()
-			const diff = date.getUTCDate() - day + (day === 0 ? -6 : 1)
-			key = new Date(date.setUTCDate(diff)).toISOString().slice(0, 10)
-		} else {
-			key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-01`
-		}
-
-		const timestamp = Math.floor(Date.parse(`${key}T00:00:00Z`) / 1000)
-		const previous = result[result.length - 1]
-		if (previous?.[0] === timestamp) previous[1] += series[index] ?? 0
-		else result.push([timestamp, series[index] ?? 0])
+/**
+ * The fees and revenue charts. Like the protocol and chain charts, bars sum each period and the cumulative line keeps
+ * its last value, both on the shared period key, so the chart's period label describes every series.
+ */
+export function buildRevenueChartModels(series: RevenueChartSeries, timeframe: Timeframe, aggregation: Aggregation) {
+	const periodTotals = (dates: Array<string>, values: Array<number>) =>
+		formatBarChart({
+			data: filterTimeSeries(dates, values, timeframe),
+			groupBy: aggregation,
+			denominationPriceHistory: null
+		})
+	const periodLevels = (dates: Array<string>, values: Array<number>) =>
+		formatLineChart({
+			data: filterTimeSeries(dates, values, timeframe),
+			groupBy: aggregation,
+			denominationPriceHistory: null
+		})
+	return {
+		feesModel: buildSparseCartesianChartModel(
+			[
+				{
+					name: 'Cumulative Fees',
+					type: 'line' as const,
+					color: '#00C1DE',
+					data: periodLevels(series.feesDates, series.cumulativeFees),
+					yAxisIndex: 0,
+					excludeFromTooltipTotal: true
+				},
+				{
+					name: 'Protocol Fees',
+					type: 'bar' as const,
+					color: '#4691ce',
+					data: periodTotals(series.feesDates, series.protocolFeesSeries),
+					yAxisIndex: 1,
+					stack: 'fees',
+					barMaxWidth: 40
+				},
+				{
+					name: 'Intent Fees',
+					type: 'bar' as const,
+					color: '#4cae4f',
+					data: periodTotals(series.feesDates, series.intentFeesSeries),
+					yAxisIndex: 1,
+					stack: 'fees',
+					barMaxWidth: 40
+				}
+			],
+			{ timestampMultiplier: 1 }
+		),
+		revenueModel: buildSparseCartesianChartModel(
+			[
+				{
+					name: 'Cumulative Revenue',
+					type: 'line' as const,
+					color: '#00C1DE',
+					data: periodLevels(series.revenueDates, series.cumulativeRevenue),
+					yAxisIndex: 0,
+					excludeFromTooltipTotal: true
+				},
+				{
+					name: 'Protocol Revenue',
+					type: 'bar' as const,
+					color: '#4691ce',
+					data: periodTotals(series.revenueDates, series.burnRevenueSeries),
+					yAxisIndex: 1,
+					stack: 'revenue',
+					barMaxWidth: 40
+				},
+				{
+					name: 'Intent Revenue',
+					type: 'bar' as const,
+					color: '#4cae4f',
+					data: periodTotals(series.revenueDates, series.intentsRevenueSeries),
+					yAxisIndex: 1,
+					stack: 'revenue',
+					barMaxWidth: 40
+				}
+			],
+			{ timestampMultiplier: 1 }
+		)
 	}
-
-	return result
 }

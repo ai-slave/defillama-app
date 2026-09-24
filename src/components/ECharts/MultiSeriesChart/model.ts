@@ -11,6 +11,7 @@ type CartesianSeriesSpec = {
 	areaStyle?: MultiSeriesChartSeriesConfig['areaStyle']
 	barMaxWidth?: number
 	connectNulls?: boolean
+	excludeFromTooltipTotal?: boolean
 }
 
 export type SparseCartesianSeries = CartesianSeriesSpec & {
@@ -41,6 +42,7 @@ function buildCharts(series: ReadonlyArray<CartesianSeriesSpec>): Array<MultiSer
 		if (item.areaStyle !== undefined) chart.areaStyle = item.areaStyle
 		if (item.barMaxWidth !== undefined) chart.barMaxWidth = item.barMaxWidth
 		if (item.connectNulls !== undefined) chart.connectNulls = item.connectNulls
+		if (item.excludeFromTooltipTotal !== undefined) chart.excludeFromTooltipTotal = item.excludeFromTooltipTotal
 		return chart
 	})
 }

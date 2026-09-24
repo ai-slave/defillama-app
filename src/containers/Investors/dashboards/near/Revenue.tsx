@@ -1,6 +1,5 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
-import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
@@ -9,13 +8,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/componen
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import {
-	aggregateTimeSeries,
-	filterTimeSeries,
-	timeframeStartIndex,
-	type Aggregation,
-	type Timeframe
-} from './chartData'
+import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
 
 const tableFeaturesConfig = displayTableFeatures
@@ -201,86 +194,10 @@ export default function Revenue() {
 		return { dimensions: ['timestamp', 'Cumulative Revenue', 'Cumulative Emissions'], source }
 	}, [data, emissionsView, globalTimeframe])
 
-	const chartView = useMemo(() => {
-		if (!data) return null
-
-		return {
-			feesModel: buildSparseCartesianChartModel([
-				{
-					name: 'Cumulative Fees',
-					type: 'line' as const,
-					color: '#00C1DE',
-					data: filterTimeSeries(data.rawData.feesDates, data.rawData.cumulativeFees, globalTimeframe),
-					yAxisIndex: 0
-				},
-				{
-					name: 'Protocol Fees',
-					type: 'bar' as const,
-					color: '#4691ce',
-					data: aggregateTimeSeries(
-						data.rawData.feesDates,
-						data.rawData.protocolFeesSeries,
-						globalTimeframe,
-						aggregation
-					),
-					yAxisIndex: 1,
-					stack: 'fees',
-					barMaxWidth: 40
-				},
-				{
-					name: 'Intent Fees',
-					type: 'bar' as const,
-					color: '#4cae4f',
-					data: aggregateTimeSeries(
-						data.rawData.feesDates,
-						data.rawData.intentFeesSeries,
-						globalTimeframe,
-						aggregation
-					),
-					yAxisIndex: 1,
-					stack: 'fees',
-					barMaxWidth: 40
-				}
-			]),
-			revenueModel: buildSparseCartesianChartModel([
-				{
-					name: 'Cumulative Revenue',
-					type: 'line' as const,
-					color: '#00C1DE',
-					data: filterTimeSeries(data.rawData.revenueDates, data.rawData.cumulativeRevenue, globalTimeframe),
-					yAxisIndex: 0
-				},
-				{
-					name: 'Protocol Revenue',
-					type: 'bar' as const,
-					color: '#4691ce',
-					data: aggregateTimeSeries(
-						data.rawData.revenueDates,
-						data.rawData.burnRevenueSeries,
-						globalTimeframe,
-						aggregation
-					),
-					yAxisIndex: 1,
-					stack: 'revenue',
-					barMaxWidth: 40
-				},
-				{
-					name: 'Intent Revenue',
-					type: 'bar' as const,
-					color: '#4cae4f',
-					data: aggregateTimeSeries(
-						data.rawData.revenueDates,
-						data.rawData.intentsRevenueSeries,
-						globalTimeframe,
-						aggregation
-					),
-					yAxisIndex: 1,
-					stack: 'revenue',
-					barMaxWidth: 40
-				}
-			])
-		}
-	}, [aggregation, data, globalTimeframe])
+	const chartView = useMemo(
+		() => (data ? buildRevenueChartModels(data.rawData, globalTimeframe, aggregation) : null),
+		[aggregation, data, globalTimeframe]
+	)
 
 	if (isLoading || !data || !chartView || !emissionsDataset) return null
 
@@ -398,6 +315,7 @@ export default function Revenue() {
 					<MultiSeriesChart
 						dataset={chartView.feesModel.dataset}
 						charts={chartView.feesModel.charts}
+						groupBy={aggregation}
 						valueSymbol=" NEAR"
 						height="400px"
 						showTotalInTooltip
@@ -416,6 +334,7 @@ export default function Revenue() {
 					<MultiSeriesChart
 						dataset={chartView.revenueModel.dataset}
 						charts={chartView.revenueModel.charts}
+						groupBy={aggregation}
 						valueSymbol=" NEAR"
 						height="400px"
 						showTotalInTooltip

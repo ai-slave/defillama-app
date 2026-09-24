@@ -28,10 +28,9 @@ import {
 	RWA_PLATFORM_CHART_METRICS_QUERY_KEY,
 	type RWAPlatformChartGroup,
 	type RWAPlatformChartMetricKey,
-	type RWAPlatformChartPeriod,
-	type RWAPlatformEntityChart
+	type RWAPlatformChartPeriod
 } from './metrics'
-import { usePlatformEntityChart } from './usePlatformEntityChart'
+import { usePlatformEntityChart, type RWAPlatformEntityChartData } from './usePlatformEntityChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -99,7 +98,7 @@ export function RWAPlatformEntityChartPanel({
 			<EntityChartToolbar
 				selected={selected}
 				period={period}
-				series={chart.series}
+				chart={deferredChart}
 				filename={filename}
 				title={meta.name}
 				chartInstance={chartInstance}
@@ -141,7 +140,7 @@ export function RWAPlatformEntityChartPanel({
 function EntityChartToolbar({
 	selected,
 	period,
-	series,
+	chart,
 	filename,
 	title,
 	chartInstance,
@@ -151,7 +150,8 @@ function EntityChartToolbar({
 }: {
 	selected: ReadonlyArray<RWAPlatformChartMetricKey>
 	period: RWAPlatformChartPeriod
-	series: RWAPlatformEntityChart['series']
+	/** The rendered chart, so the chips and the export describe what is on screen while a new period renders. */
+	chart: RWAPlatformEntityChartData['chart']
 	filename: string
 	title: string
 	chartInstance: () => echarts.ECharts | null
@@ -159,7 +159,7 @@ function EntityChartToolbar({
 	onClear: () => void
 	onPeriodChange: (period: RWAPlatformChartPeriod) => void
 }) {
-	const colorByName = new Map(series.map((entry) => [entry.name, entry.color]))
+	const colorByName = new Map(chart.series.map((entry) => [entry.name, entry.color]))
 	return (
 		<ChartPanelToolbar>
 			<MetricsDialog selected={selected} onToggle={onToggle} onClear={onClear} />
@@ -191,8 +191,7 @@ function EntityChartToolbar({
 					filename={filename}
 					source={{
 						type: 'dataset',
-						// Rows mix grouped flow bars with daily lines, so they keep their exact dates.
-						prepare: () => buildRwaPlatformEntityCsvDataset(series)
+						prepare: () => buildRwaPlatformEntityCsvDataset(chart.series, chart.period)
 					}}
 				/>
 				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />

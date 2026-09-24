@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
 	aggregateBreakdown,
-	aggregateTimeSeries,
+	buildRevenueChartModels,
 	channelsToBars,
 	filterTimeSeries,
 	lastSeriesValue,
@@ -54,20 +54,58 @@ describe('NEAR chart data', () => {
 		expect(lastSeriesValue({ ...breakdown, series: [{ name: 'A', data: [1, Number.NaN, 4] }] }, 'A')).toBe(4)
 	})
 
-	test('filters daily values and aggregates weekly values in seconds', () => {
+	test('filters daily values in seconds', () => {
 		const dates = ['2026-01-05', '2026-01-06', '2026-01-12']
 		const values = [1, 2, 4]
 		expect(filterTimeSeries(dates, values, '7d')).toEqual(
 			dates.map((date, i) => [Date.parse(`${date}T00:00:00Z`) / 1e3, values[i]])
 		)
-		expect(aggregateTimeSeries(dates, values, 'all', 'weekly')).toEqual([
-			[Date.parse('2026-01-05T00:00:00Z') / 1e3, 3],
-			[Date.parse('2026-01-12T00:00:00Z') / 1e3, 4]
-		])
 	})
 
 	test('starts YTD at January 1 instead of estimating a trailing day count', () => {
 		const year = new Date().getUTCFullYear()
 		expect(timeframeStartIndex([`${year - 1}-12-31`, `${year}-01-01`, `${year}-01-02`], 'ytd')).toBe(1)
+	})
+})
+
+describe('NEAR revenue charts', () => {
+	// Mon Sep 14 to Tue Sep 22, 2026: one full week and two days of the next.
+	const dates = Array.from({ length: 9 }, (_, index) => `2026-09-${String(14 + index).padStart(2, '0')}`)
+	const series = {
+		feesDates: dates,
+		cumulativeFees: dates.map((_, index) => 100 + index),
+		protocolFeesSeries: dates.map(() => 1),
+		intentFeesSeries: dates.map(() => 2),
+		revenueDates: dates,
+		cumulativeRevenue: dates.map((_, index) => 10 + index),
+		burnRevenueSeries: dates.map(() => 3),
+		intentsRevenueSeries: dates.map(() => 4)
+	}
+
+	test('sums each week into its Sunday and keeps the cumulative value at the end of that week', () => {
+		const { feesModel } = buildRevenueChartModels(series, 'all', 'weekly')
+
+		expect(feesModel.dataset.dimensions).toEqual(['timestamp', 'Cumulative Fees', 'Protocol Fees', 'Intent Fees'])
+		expect(feesModel.dataset.source).toEqual([
+			[Date.UTC(2026, 8, 20), 106, 7, 14],
+			// The current week so far: two days, and the latest cumulative value.
+			[Date.UTC(2026, 8, 27), 108, 2, 4]
+		])
+	})
+
+	test('keeps the cumulative line out of the tooltip total of the fee sources', () => {
+		const { feesModel, revenueModel } = buildRevenueChartModels(series, 'all', 'weekly')
+		const excluded = [...feesModel.charts, ...revenueModel.charts]
+			.filter((chart) => chart.excludeFromTooltipTotal)
+			.map((chart) => chart.name)
+
+		expect(excluded).toEqual(['Cumulative Fees', 'Cumulative Revenue'])
+	})
+
+	test('leaves daily values as they are', () => {
+		const { revenueModel } = buildRevenueChartModels(series, 'all', 'daily')
+
+		expect(revenueModel.dataset.source).toHaveLength(9)
+		expect(revenueModel.dataset.source[0]).toEqual([Date.UTC(2026, 8, 14), 10, 3, 4])
 	})
 })

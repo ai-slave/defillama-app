@@ -1,5 +1,5 @@
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
+import { formatLineChart, getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { CHART_COLORS } from '~/constants/colors'
 import type { IRWAFlowAggregatePoint } from '../api.types'
 import { isRwaTotalSeriesLabel, type RWAPositionalChartDataset } from '../chartDataset'
@@ -238,7 +238,7 @@ export function getRwaMilestoneHallmarks(milestones: Array<RWAPlatformMilestone>
 
 function line(
 	name: string,
-	data: Array<[number, number]>,
+	data: Array<[number, number | null]>,
 	{ axis, color, symbol, fill }: { axis: number; color: string; symbol: string; fill?: boolean }
 ): MultiSeriesChartSeriesConfig {
 	return {
@@ -273,6 +273,9 @@ export function buildRwaPlatformEntityChart(
 ): RWAPlatformEntityChart {
 	const series: Array<MultiSeriesChartSeriesConfig> = []
 	const flows = flowPoints(inputs.flows)
+	// Like the protocol and chain charts: bars sum each period and lines keep its last value, on the same period key.
+	const levels = (points: Array<[number, number]>) =>
+		formatLineChart({ data: points, groupBy: inputs.period, dateInMs: true, denominationPriceHistory: null })
 	const label = (key: RWAPlatformChartMetricKey) =>
 		RWA_PLATFORM_CHART_METRICS.find((metric) => metric.key === key)!.label
 	for (const key of METRIC_KEYS) {
@@ -280,7 +283,7 @@ export function buildRwaPlatformEntityChart(
 		switch (key) {
 			case 'activeMcap':
 				series.push(
-					line(label(key), definedPoints(inputs.activeMcap), {
+					line(label(key), levels(definedPoints(inputs.activeMcap)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[0],
 						symbol: '$',
@@ -290,7 +293,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'onChainMcap':
 				series.push(
-					line(label(key), definedPoints(inputs.onChainMcap), {
+					line(label(key), levels(definedPoints(inputs.onChainMcap)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[6] ?? CHART_COLORS[1],
 						symbol: '$'
@@ -299,7 +302,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'defiActiveTvl':
 				series.push(
-					line(label(key), definedPoints(inputs.defiActiveTvl), {
+					line(label(key), levels(definedPoints(inputs.defiActiveTvl)), {
 						axis: MONEY_AXIS,
 						color: CHART_COLORS[3],
 						symbol: '$'
@@ -334,11 +337,13 @@ export function buildRwaPlatformEntityChart(
 				)
 				break
 			case 'cumulativeNetFlows':
-				series.push(line(label(key), cumulative(flows), { axis: FLOW_AXIS, color: CHART_COLORS[1], symbol: '$' }))
+				series.push(
+					line(label(key), levels(cumulative(flows)), { axis: FLOW_AXIS, color: CHART_COLORS[1], symbol: '$' })
+				)
 				break
 			case 'utilization':
 				series.push(
-					line(label(key), ratio(inputs.defiActiveTvl, inputs.activeMcap), {
+					line(label(key), levels(ratio(inputs.defiActiveTvl, inputs.activeMcap)), {
 						axis: PERCENT_AXIS,
 						color: CHART_COLORS[2],
 						symbol: '%'
@@ -347,7 +352,7 @@ export function buildRwaPlatformEntityChart(
 				break
 			case 'activeShare':
 				series.push(
-					line(label(key), ratio(inputs.activeMcap, inputs.onChainMcap), {
+					line(label(key), levels(ratio(inputs.activeMcap, inputs.onChainMcap)), {
 						axis: PERCENT_AXIS,
 						color: CHART_COLORS[5],
 						symbol: '%'
@@ -357,7 +362,7 @@ export function buildRwaPlatformEntityChart(
 			case 'liveAssets':
 				if (inputs.perAsset)
 					series.push(
-						line(label(key), liveAssets(inputs.perAsset), {
+						line(label(key), levels(liveAssets(inputs.perAsset)), {
 							axis: COUNT_AXIS,
 							color: CHART_COLORS[7] ?? CHART_COLORS[2],
 							symbol: ''
@@ -367,7 +372,7 @@ export function buildRwaPlatformEntityChart(
 			case 'topAssetShare':
 				if (inputs.perAsset)
 					series.push(
-						line(label(key), topAssetShare(inputs.perAsset), {
+						line(label(key), levels(topAssetShare(inputs.perAsset)), {
 							axis: PERCENT_AXIS,
 							color: CHART_COLORS[8] ?? CHART_COLORS[1],
 							symbol: '%'
@@ -387,10 +392,17 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected metric ${String(value)}`)
 }
 
-/** The series as one wide table for the csv: a row per timestamp any series has, blanks where a series has none. */
-export function buildRwaPlatformEntityCsvDataset(series: Array<MultiSeriesChartSeriesConfig>): {
+/**
+ * The series as one wide table for the csv: a row per timestamp any series has, blanks where a series has none.
+ * Every series shares the period keys, so the export names each row's period.
+ */
+export function buildRwaPlatformEntityCsvDataset(
+	series: Array<MultiSeriesChartSeriesConfig>,
+	period: RWAPlatformChartPeriod
+): {
 	dimensions: Array<string>
 	source: Array<Array<number | null>>
+	groupBy: RWAPlatformChartPeriod
 } {
 	const timestamps = new Set<number>()
 	const columns = series.map((entry) => new Map((entry.data ?? []).map(([timestamp, value]) => [timestamp, value])))
@@ -398,5 +410,5 @@ export function buildRwaPlatformEntityCsvDataset(series: Array<MultiSeriesChartS
 	const source = Array.from(timestamps)
 		.sort((a, b) => a - b)
 		.map((timestamp) => [timestamp, ...columns.map((column) => column.get(timestamp) ?? null)])
-	return { dimensions: ['timestamp', ...series.map((entry) => entry.name)], source }
+	return { dimensions: ['timestamp', ...series.map((entry) => entry.name)], source, groupBy: period }
 }

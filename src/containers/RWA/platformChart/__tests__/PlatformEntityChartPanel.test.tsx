@@ -20,6 +20,15 @@ vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 	}
 }))
 
+type CsvSource = { prepare: () => { groupBy: unknown } }
+const csvRenders: Array<CsvSource> = []
+vi.mock('~/components/ChartExport/ChartCsvExportButton', () => ({
+	ChartCsvExportButton: (props: { source: CsvSource }) => {
+		csvRenders.push(props.source)
+		return <span>.csv</span>
+	}
+}))
+
 vi.mock('next/router', () => ({
 	useRouter: () => ({
 		query: routerQuery,
@@ -159,6 +168,7 @@ describe('RWAPlatformEntityChartPanel', () => {
 			</QueryClientProvider>
 		)
 		chartRenders.length = 0
+		csvRenders.length = 0
 
 		routerQuery = { chartPeriod: 'weekly' }
 		await act(async () => root.render(panel()))
@@ -172,6 +182,10 @@ describe('RWAPlatformEntityChartPanel', () => {
 			.filter((chartRender) => chartRender.charts === weeklySeries)
 			.map((chartRender) => chartRender.groupBy)
 		expect(new Set(weeklySeriesLabels)).toEqual(new Set(['weekly']))
+		// The export follows the same snapshot: every render exports the grouping it draws.
+		expect(csvRenders.map((source) => source.prepare().groupBy)).toEqual(
+			chartRenders.map((chartRender) => chartRender.groupBy)
+		)
 		await act(async () => root.unmount())
 	})
 })
