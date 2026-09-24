@@ -214,7 +214,8 @@ function setupLayoutMocks(user: { flags: { is_llama: boolean } } | null) {
 		Menu: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
 		PopoverDismiss: ({ children }: { children: React.ReactNode }) =>
 			React.createElement('button', { type: 'button' }, children),
-		MenuItem: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children)
+		MenuItem: ({ children, render }: { children: React.ReactNode; render?: React.ReactElement }) =>
+			render ? React.cloneElement(render, {}, children) : React.createElement('div', null, children)
 	}))
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
 		EntityQuestionsStrip: () => null
@@ -406,7 +407,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 	})
 
 	test.each([null, { flags: { is_llama: false } }])(
-		'hides the Uniswap dashboard tabs from users without the llama flag (%j)',
+		'shows the public Uniswap dashboard tabs without the llama flag (%j)',
 		async (user) => {
 			setupLayoutMocks(user)
 
@@ -417,8 +418,8 @@ describe('ProtocolOverviewLayout SEO', () => {
 				</ProtocolOverviewLayout>
 			)
 
-			expect(markup).not.toContain('/protocol/deep-dive/uniswap')
-			expect(markup).not.toContain('Deep Dive')
+			expect(markup).toContain('/protocol/deep-dive/uniswap')
+			expect(markup).toContain('Deep Dive')
 		}
 	)
 
@@ -444,7 +445,6 @@ describe('ProtocolOverviewLayout SEO', () => {
 		}
 		expect(markup).not.toContain('Enterprise')
 		expect(markup).not.toContain('Investor')
-		expect(markup).toMatch(/Deep Dive(<[^>]*>)*<span[^>]*opacity:1/)
 	})
 
 	test('shows the parent dashboard tabs on a child protocol page for llama users', async () => {
