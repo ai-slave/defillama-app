@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import type { IEquitiesDimensionsResponse } from '../api.types'
-import { buildEquitiesDimensionsChart, buildIntradayPriceHistoryChart, buildPriceHistoryChart } from '../chartData'
+import {
+	buildEquitiesDimensionsChart,
+	buildEquitiesDimensionsCsvRows,
+	buildIntradayPriceHistoryChart,
+	buildPriceHistoryChart,
+	createReportingPeriodTooltipFormatter
+} from '../chartData'
 
 const dimensions: IEquitiesDimensionsResponse = {
 	revenue: {
@@ -113,6 +119,46 @@ describe('intraday price history', () => {
 			[Date.parse('2026-08-26T19:55:00Z'), 210],
 			[Date.parse('2026-08-27T13:30:00Z'), 222],
 			[Date.parse('2026-08-27T13:35:00Z'), 223]
+		])
+	})
+})
+
+describe('fundamentals reporting periods', () => {
+	// Nvidia's fiscal quarters end Jan, Apr, Jul and Oct; its fiscal year ends in January.
+	const nvidia = {
+		...dimensions,
+		revenue: {
+			annual: [['2026-01-31', 130]],
+			quarterly: [
+				['2025-07-31', 46],
+				['2025-04-30', 44]
+			]
+		}
+	} as IEquitiesDimensionsResponse
+	const hover = (chart: ReturnType<typeof buildEquitiesDimensionsChart>, index: number) => [
+		{ seriesName: 'Revenue', marker: '', value: chart.dataset.source[index], encode: { x: [0], y: [1] } }
+	]
+
+	test('names each fiscal period by its ending month, never a calendar quarter', () => {
+		const quarterly = buildEquitiesDimensionsChart(nvidia, 'revenue', 'quarterly')
+		const annual = buildEquitiesDimensionsChart(nvidia, 'revenue', 'annual')
+		const originalTimeZone = process.env.TZ
+		process.env.TZ = 'America/Los_Angeles'
+		try {
+			const quarter = createReportingPeriodTooltipFormatter('quarterly', '$')(hover(quarterly, 1))
+			expect(quarter).toContain('Quarter ending Jul 2025')
+			expect(quarter).not.toContain('Sep')
+			expect(createReportingPeriodTooltipFormatter('annual', '$')(hover(annual, 0))).toContain('Year ending Jan 2026')
+		} finally {
+			process.env.TZ = originalTimeZone
+		}
+	})
+
+	test('exports the full period-ending date the provider reports', () => {
+		expect(buildEquitiesDimensionsCsvRows(buildEquitiesDimensionsChart(nvidia, 'revenue', 'quarterly'))).toEqual([
+			['Period ending', 'Revenue'],
+			['2025-04-30', 44],
+			['2025-07-31', 46]
 		])
 	})
 })

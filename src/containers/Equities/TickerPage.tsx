@@ -28,6 +28,8 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EquitiesDimensionMetric, EquitiesDimensionPeriod, IEquitiesSummaryResponse } from './api.types'
 import {
 	buildEquitiesDimensionsChart,
+	buildEquitiesDimensionsCsvRows,
+	createReportingPeriodTooltipFormatter,
 	buildIntradayPriceHistoryChart,
 	buildPriceHistoryChart,
 	formatIntradayAxisTimeOnly,
@@ -298,6 +300,18 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			EQUITY_DIMENSION_PERIOD_API_KEYS[activeDimensionPeriod]
 		)
 	}, [activeDimensionPeriod, activeFundamentalMetric, props.dimensions])
+	const fundamentalsChartOptions = useMemo(
+		() => ({
+			yAxis: SCALED_Y_AXIS_CHART_OPTIONS.yAxis,
+			tooltip: {
+				formatter: createReportingPeriodTooltipFormatter(
+					EQUITY_DIMENSION_PERIOD_API_KEYS[activeDimensionPeriod],
+					FUNDAMENTAL_CHART_VALUE_SYMBOLS[activeFundamentalMetric]
+				)
+			}
+		}),
+		[activeDimensionPeriod, activeFundamentalMetric]
+	)
 
 	const setActiveTab = (tab: EquityTab) => {
 		void pushShallowQuery(router, { tab: tab === 'financials' ? undefined : tab })
@@ -438,7 +452,13 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								chartInstance={fundamentalsChartInstance}
 								filename={fundamentalsExportFilename}
 								title={fundamentalsExportTitle}
-								csvSource={{ type: 'dataset', prepare: () => activeFundamentalsChart.dataset }}
+								csvSource={{
+									type: 'prepare-csv',
+									prepare: () => ({
+										filename: `${fundamentalsExportFilename}.csv`,
+										rows: buildEquitiesDimensionsCsvRows(activeFundamentalsChart)
+									})
+								}}
 							/>
 						</div>
 					</ChartPanelToolbar>
@@ -446,7 +466,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						<MultiSeriesChart
 							dataset={activeFundamentalsChart.dataset}
 							charts={activeFundamentalsChart.charts}
-							chartOptions={SCALED_Y_AXIS_CHART_OPTIONS}
+							chartOptions={fundamentalsChartOptions}
 							valueSymbol={FUNDAMENTAL_CHART_VALUE_SYMBOLS[activeFundamentalMetric]}
 							title=""
 							hideDataZoom={activeFundamentalsChart.dataset.source.length < 2}
