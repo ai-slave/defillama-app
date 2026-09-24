@@ -114,7 +114,6 @@ export default function Overview() {
 				comps={data?.comp}
 				initialKey="line"
 				subtotals={subtotals}
-				wideTable
 			/>
 
 			<RefLinks refs={data?.refs} />

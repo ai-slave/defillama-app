@@ -329,10 +329,17 @@ describe('kpk Vaults tab', () => {
 		expect(container.textContent).toContain('risk of loss. See our full legal disclaimers')
 	})
 
-	test('leaves its tables content-sized, scrolling rather than wrapping', async () => {
+	test('sizes the share table like every other tab and leaves the vault table content-sized', async () => {
 		await renderTab()
 
-		for (const table of container.querySelectorAll('table')) {
+		const split = [...container.querySelectorAll('div.grid')].find((el) => el.className.includes('minmax('))!
+		expect(split.className).toContain('minmax(0,420px)')
+		expect(split.querySelector('table')?.className).toContain('w-full')
+
+		// The vault list scrolls rather than wrapping.
+		const others = [...container.querySelectorAll('table')].filter((table) => !split.contains(table))
+		expect(others.length).toBeGreaterThan(0)
+		for (const table of others) {
 			expect(table.className).toContain('w-max')
 		}
 	})

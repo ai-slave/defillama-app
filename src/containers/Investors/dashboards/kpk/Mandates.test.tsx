@@ -468,6 +468,56 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-tx-count"]')).toBeNull()
 	})
 
+	test('pins the client column of the per-client table, leaving the page to scroll it', async () => {
+		await renderTab()
+
+		const table = [...container.querySelectorAll('table')].find((element) =>
+			element.querySelector('thead')?.textContent?.includes('Managed since')
+		)!
+
+		// Scrolls sideways only: no height cap, so no inner vertical scroll.
+		expect(table.parentElement?.className).toContain('overflow-x-auto')
+		expect(table.parentElement?.className).not.toContain('max-h-')
+
+		const [clientHeader, aumHeader] = table.querySelectorAll('thead th')
+		expect(clientHeader.textContent).toBe('Client')
+		expect(clientHeader.className).toContain('sticky')
+		expect(clientHeader.className).toContain('left-0')
+		expect(clientHeader.className).not.toContain('top-0')
+		expect(aumHeader.className).not.toContain('sticky')
+
+		const [clientCell, aumCell] = table.querySelectorAll('tbody tr:first-child td')
+		expect(clientCell.className).toContain('sticky')
+		expect(clientCell.className).toContain('left-0')
+		expect(aumCell.className).not.toContain('sticky')
+
+		const [inactiveCell] = table.querySelector('tfoot tr')!.querySelectorAll('td')
+		const [totalCell] = [...table.querySelectorAll('tfoot tr')].at(-1)!.querySelectorAll('td')
+		expect(totalCell.textContent).toBe('Total')
+		expect(totalCell.className).toContain('sticky')
+		// The long inactive line wraps on a phone rather than widening the pinned column:
+		// capped, free to break, and with its info icon held at full size beside it.
+		// happy-dom has no layout; the wrap itself was measured in a browser.
+		expect(inactiveCell.textContent).toContain('no current balance')
+		const capped = inactiveCell.querySelector('.max-w-40')!
+		const label = capped.querySelector('.inline-flex')!
+		expect(label.textContent).toContain('no current balance')
+		expect(inactiveCell.className).not.toContain('whitespace-nowrap')
+		expect(capped.querySelector('.whitespace-nowrap, .text-nowrap')).toBeNull()
+		// The icon's own box is the flex item the row squeezes, not the tooltip anchor inside it.
+		const icon = label.lastElementChild!
+		expect(icon.querySelector('[aria-label*="held nothing"]')).not.toBeNull()
+		expect(icon.className).toContain('shrink-0')
+	})
+
+	test('gives the share table the same column as every other tab', async () => {
+		await renderTab()
+
+		const split = [...container.querySelectorAll('div.grid')].find((el) => el.className.includes('minmax('))!
+		expect(split.className).toContain('minmax(0,420px)')
+		expect(split.querySelector('table')?.className).toContain('w-full')
+	})
+
 	test('opens the composition on the widest span it was sent', async () => {
 		await renderTab()
 

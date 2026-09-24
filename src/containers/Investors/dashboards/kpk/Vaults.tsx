@@ -161,7 +161,7 @@ export default function Vaults() {
 				<Card>
 					<DataTable<KpkVault>
 						getOccurrenceKey={(row) => JSON.stringify([row.chain, row.venue, row.name, row.asset])}
-						freeze
+						freeze="panes"
 						rows={rows}
 						empty={`No ${venue === ALL_VENUES ? '' : `${venue} `}vaults`}
 						cols={[

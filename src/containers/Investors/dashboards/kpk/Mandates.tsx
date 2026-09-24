@@ -290,8 +290,11 @@ export default function Mandates() {
 			<section className="flex flex-col gap-3">
 				<SectionHeader title="Per-client breakdown" />
 				<Card>
+					{/* The client column stays put, so a narrow screen scrolling through the
+					    sleeve columns still shows whose row it is reading. */}
 					<DataTable<KpkMandateClient>
 						getOccurrenceKey={(row) => row.name}
+						freeze="column"
 						rows={data?.clients}
 						cols={[
 							{

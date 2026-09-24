@@ -610,7 +610,8 @@ export interface Col<Row> {
 	/**
 	 * Allow the cell to wrap, for prose-ish columns like collateral exposure. Carries a
 	 * min-width so the column takes its share of the row instead of collapsing to a
-	 * word per line once the rest of the table claims its `nowrap` width.
+	 * word per line once the rest of the table claims its `nowrap` width. A `fit` table
+	 * drops it: the card caps the row, so the floor could only push the table out.
 	 */
 	wrap?: boolean
 	/** CSS width for the column, e.g. `'30%'` for the comparison-bar column. */
@@ -639,7 +640,7 @@ export function DataTable<Row extends object>({
 	cols,
 	footer,
 	fit = false,
-	freeze = false,
+	freeze,
 	empty = 'No data'
 }: {
 	rows: Array<Row> | undefined
@@ -649,8 +650,18 @@ export function DataTable<Row extends object>({
 	 * array where a total needs a second reading underneath it.
 	 */
 	footer?: FooterCells | Array<FooterRow>
+	/**
+	 * Size the table to its card, wrapping the `wrap` columns, and never scroll. It
+	 * gets no scroll container at all: an info icon's tap target overhangs the last
+	 * row, and inside one that overhang alone raised a scrollbar on both axes.
+	 */
 	fit?: boolean
-	freeze?: boolean
+	/**
+	 * Pin the first column while the rest scrolls sideways under it. `panes` also pins
+	 * the header row, capping the table's height so there is something to scroll
+	 * beneath it; `column` leaves the height alone and lets the page scroll.
+	 */
+	freeze?: 'column' | 'panes'
 	empty?: string
 } & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
@@ -664,16 +675,34 @@ export function DataTable<Row extends object>({
 	const pinnedCol = 'sticky left-0 border-r border-pro-cards-border bg-(--pro-frozen-bg)'
 	const rowTint = 'group-hover/row:bg-[linear-gradient(var(--sl-hover-bg),var(--sl-hover-bg))]'
 	const headCell = (first: boolean) =>
-		freeze
+		freeze === 'panes'
 			? `sticky top-0 border-b border-pro-cards-border bg-(--pro-frozen-bg) ${first ? `${pinnedCol} z-30` : 'z-20'}`
-			: ''
+			: freeze
+				? `border-b border-pro-cards-border ${first ? `${pinnedCol} z-10` : ''}`
+				: ''
 	const bodyCell = (first: boolean, last: boolean) =>
 		freeze ? `${last ? '' : 'border-b border-pro-cards-border/60'} ${first ? `${pinnedCol} ${rowTint} z-10` : ''}` : ''
 	const footCell = (first: boolean, muted: boolean) =>
 		freeze ? `${muted ? '' : 'border-t border-pro-cards-border'} ${first ? `${pinnedCol} z-10` : ''}` : ''
+	const footContent = (row: FooterRow, key: string, first: boolean) => {
+		// A row's note sits on its name, the one cell every footer row fills. When the
+		// name wraps, the flex row squeezes its items, so the icon is kept at full size.
+		const content =
+			first && row.title ? (
+				<span className="inline-flex items-center gap-1">
+					{row.cells[key] ?? ''}
+					<InfoTip text={row.title} className="shrink-0" />
+				</span>
+			) : (
+				(row.cells[key] ?? '')
+			)
+		// Pinned, a long footer name wraps on a narrow screen rather than widening the
+		// column that stays put over the ones scrolling past it.
+		return first && freeze ? <span className="block max-w-40 md:max-w-none">{content}</span> : content
+	}
 
 	return (
-		<div className={freeze ? 'max-h-[70vh] overflow-auto' : 'overflow-x-auto'}>
+		<div className={freeze === 'panes' ? 'max-h-[70vh] overflow-auto' : fit ? '' : 'overflow-x-auto'}>
 			{/* Content-sized so `nowrap` columns keep their width and scroll, but never
 			    narrower than the card when there is room to spare. `fit` trades that for
 			    a table that never outgrows its card. */}
@@ -707,7 +736,7 @@ export function DataTable<Row extends object>({
 							{cols.map((col, index) => (
 								<td
 									key={col.key}
-									className={`px-3 py-2.5 first:pl-0 last:pr-0 ${col.wrap ? 'min-w-[170px]' : 'whitespace-nowrap'} ${
+									className={`px-3 py-2.5 first:pl-0 last:pr-0 ${col.wrap ? (fit ? '' : 'min-w-[170px]') : 'whitespace-nowrap'} ${
 										col.right ? 'text-right font-mono text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'
 									} ${bodyCell(index === 0, rowIndex === keyedRows.length - 1)}`}
 								>
@@ -732,15 +761,7 @@ export function DataTable<Row extends object>({
 											row.muted ? 'pt-1.5 font-normal' : 'pt-3 font-medium text-pro-text-primary'
 										} ${col.right ? 'text-right font-mono tabular-nums' : ''} ${footCell(index === 0, !!row.muted)}`}
 									>
-										{/* A row's note sits on its name, the one cell every footer row fills. */}
-										{index === 0 && row.title ? (
-											<span className="inline-flex items-center gap-1">
-												{row.cells[col.key] ?? ''}
-												<InfoTip text={row.title} />
-											</span>
-										) : (
-											(row.cells[col.key] ?? '')
-										)}
+										{footContent(row, col.key, index === 0)}
 									</td>
 								))}
 							</tr>
