@@ -3,7 +3,7 @@ import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { getProDashboardChartTypeConfig } from '../../types'
-import { DASHBOARD_CHART_GROUPING } from '../../utils'
+import { DASHBOARD_CHART_GROUPING, getGroupedMetricTitle } from '../../utils'
 import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
 import { buildMultiChartSeriesView, getMultiChartGrouping } from '../multiChartSeries'
 
@@ -30,6 +30,8 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 			<div className="grid grid-cols-2 gap-2">
 				{visibleItems.map((item, index) => {
 					const meta = getProDashboardChartTypeConfig(item.type)
+					const grouping = getMultiChartGrouping([item], item.grouping) ?? 'day'
+					const title = getGroupedMetricTitle(item.type, meta?.title || item.type, grouping)
 					const subject =
 						item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
 					const chartView = buildMultiChartSeriesView({
@@ -37,7 +39,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 							item.data.length > 0
 								? [
 										{
-											name: `${subject} ${meta?.title || item.type}`,
+											name: `${subject} ${title}`,
 											baseType:
 												meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
 													? meta.chartType
@@ -58,7 +60,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 							className="flex flex-col gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2"
 						>
 							<span className="truncate text-xs text-pro-text-secondary">
-								{subject} {meta?.title || item.type}
+								{subject} {title}
 							</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
@@ -66,7 +68,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 										<MultiSeriesChart
 											dataset={chartView.dataset}
 											charts={chartView.charts}
-											groupBy={DASHBOARD_CHART_GROUPING[getMultiChartGrouping([item], item.grouping) ?? 'day']}
+											groupBy={DASHBOARD_CHART_GROUPING[grouping]}
 											hideDataZoom
 											hideDefaultLegend
 											exportButtons="hidden"

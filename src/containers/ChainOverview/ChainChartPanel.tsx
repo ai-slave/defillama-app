@@ -11,6 +11,7 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { prepareChartCsv } from '~/components/ECharts/shared/csv'
+import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -27,6 +28,7 @@ import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { getChainSeriesName } from './chartPresentation'
 import { type ChainChartLabels, chainCharts, chainOverviewChartColors } from './constants'
 import type { ChainOverviewChartData, IChainOverviewData } from './types'
 
@@ -141,7 +143,14 @@ export function ChainChartPanel({
 	const metricsDialogStore = Ariakit.useDialogStore()
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
-	const prepareCsv = () => prepareChartCsv(chartRenderModel.chartData, `${chain}.csv`, groupBy)
+	const prepareCsv = () => {
+		const csvCharts: Record<string, Array<[number, number | null]>> = {}
+		for (const [label, data] of Object.entries(chartRenderModel.chartData))
+			csvCharts[getChainSeriesName(label, groupBy)] = data
+		return prepareChartCsv(csvCharts, `${chain}.csv`, groupBy)
+	}
+	// The toggle stays on, so switching back from cumulative restores the series.
+	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledCharts.includes('Active Addresses')
 
 	const { chartInstance: chainChartInstance, handleChartReady } = useChartImageExport()
 	const imageExportFilename = slug(metadata.name)
@@ -409,8 +418,17 @@ export function ChainChartPanel({
 					<ChartPanelBodyFallback role="status" aria-live="polite">
 						<LoadingIndicator />
 					</ChartPanelBodyFallback>
+				) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
+					<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={() => updateGroupBy('daily')} />
 				) : (
 					<Suspense fallback={<ChartPanelBodyFallback />}>
+						{isActiveAddressesHidden ? (
+							<CumulativeUnavailableNotice
+								metric="Active Addresses"
+								fill={false}
+								onShowDaily={() => updateGroupBy('daily')}
+							/>
+						) : null}
 						<ChainCoreChart
 							chartData={deferredChartRenderModel.chartData}
 							valueSymbol={deferredChartRenderModel.valueSymbol}

@@ -45,10 +45,9 @@ export default function ChainCoreChart({
 	groupBy,
 	onReady
 }: ChainCoreChartProps) {
-	const isCumulative = groupBy === 'cumulative'
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
 	const chartTheme = useChartTheme(isThemeDark)
-	const presentation = useMemo(() => buildChainChartPresentation(chartData, isCumulative), [chartData, isCumulative])
+	const presentation = useMemo(() => buildChainChartPresentation(chartData, groupBy ?? 'daily'), [chartData, groupBy])
 	const finalChartOptions = useMemo(() => {
 		const domainAxes = buildChainYAxis({
 			allYAxis: presentation.allYAxis,

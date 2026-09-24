@@ -1,4 +1,8 @@
-import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getDailyAverageLabel } from '~/components/ECharts/shared/timeSeries'
 import {
 	BAR_CHARTS,
 	type ChainChartLabels,
@@ -18,7 +22,16 @@ function isChainChartLabel(value: string): value is ChainChartLabels {
 	return Object.hasOwn(chainCharts, value)
 }
 
-export function buildChainChartPresentation(chartData: ChainOverviewChartData, isCumulative: boolean) {
+/** Grouped active addresses are a daily average, and their name says so in the legend, tooltip and CSV. */
+export function getChainSeriesName(label: string, groupBy: ChartTimeGroupingWithCumulative) {
+	return label === 'Active Addresses' && groupBy !== 'daily' ? getDailyAverageLabel(label) : label
+}
+
+export function buildChainChartPresentation(
+	chartData: ChainOverviewChartData,
+	groupBy: ChartTimeGroupingWithCumulative
+) {
+	const isCumulative = groupBy === 'cumulative'
 	const axisIndexByType = new Map<ChainChartLabels, number>()
 	const allYAxis: Array<[ChainChartLabels, number | undefined]> = []
 	const chartsInSeries = new Set<ChainChartLabels>()
@@ -43,7 +56,7 @@ export function buildChainChartPresentation(chartData: ChainOverviewChartData, i
 		if (seriesValueSymbol !== undefined) seriesValueSymbols.set(label, seriesValueSymbol)
 		charts.push({
 			type,
-			name: label,
+			name: getChainSeriesName(label, groupBy),
 			encode: { x: 0, y: 1 },
 			data,
 			color: chainOverviewChartColors[label],

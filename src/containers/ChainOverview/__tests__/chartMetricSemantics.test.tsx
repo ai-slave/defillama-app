@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChainChartLabels } from '../constants'
 
 const mocks = vi.hoisted(() => ({
@@ -69,13 +70,15 @@ function Probe({
 	denomination = 'USD',
 	chainGeckoId = null,
 	gasTokenGeckoId = chainGeckoId,
-	tvlChart = []
+	tvlChart = [],
+	groupBy = 'daily'
 }: {
 	toggledCharts: Array<ChainChartLabels>
 	denomination?: string
 	chainGeckoId?: string | null
 	gasTokenGeckoId?: string | null
 	tvlChart?: Array<[number, number]>
+	groupBy?: ChartTimeGroupingWithCumulative
 }) {
 	mocks.lastResult = useFetchChainChartData({
 		denomination,
@@ -92,7 +95,7 @@ function Probe({
 		chainGeckoId,
 		gasTokenGeckoId,
 		toggledCharts,
-		groupBy: 'daily'
+		groupBy
 	})
 
 	return null
@@ -122,6 +125,35 @@ describe('ChainOverview chart metric semantics', () => {
 
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
 		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
+	})
+
+	test('averages grouped active addresses, leaves them out of cumulative, and keeps daily values', () => {
+		// Mon Sep 14, 2026 in seconds; Sep 15 has no observation and Sep 16 is a real zero.
+		const day = (offset: number) => Date.UTC(2026, 8, 14 + offset) / 1e3
+		const activeAddresses: Array<[number, number]> = [
+			[day(0), 90],
+			[day(2), 0],
+			[day(3), 30],
+			[day(7), 50]
+		]
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => ({
+			data: options.queryKey[1] === 'active-addresses' ? activeAddresses : null,
+			isLoading: false
+		}))
+
+		renderToStaticMarkup(<Probe toggledCharts={['Active Addresses']} groupBy="weekly" />)
+		expect(mocks.lastResult?.finalCharts['Active Addresses']).toEqual([
+			[Date.UTC(2026, 8, 20), 40],
+			[Date.UTC(2026, 8, 27), 50]
+		])
+
+		renderToStaticMarkup(<Probe toggledCharts={['Active Addresses']} groupBy="cumulative" />)
+		expect(mocks.lastResult?.finalCharts['Active Addresses']).toBeUndefined()
+
+		renderToStaticMarkup(<Probe toggledCharts={['Active Addresses']} />)
+		expect(mocks.lastResult?.finalCharts['Active Addresses']).toEqual(
+			activeAddresses.map(([timestamp, value]) => [timestamp * 1e3, value])
+		)
 	})
 
 	test('uses the chain fee series directly', () => {

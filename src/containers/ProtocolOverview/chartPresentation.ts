@@ -1,5 +1,9 @@
 import type { LineSeriesOption } from 'echarts'
-import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import type {
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChartSeriesConfig
+} from '~/components/ECharts/MultiSeriesChart/types'
+import { getDailyAverageLabel } from '~/components/ECharts/shared/timeSeries'
 import { BAR_CHARTS, type ProtocolChartsLabels, yAxisByChart } from './constants'
 
 const BAR_CHARTS_SET = new Set<ProtocolChartsLabels>(BAR_CHARTS)
@@ -7,17 +11,22 @@ const EMPTY_DATASET = { dimensions: ['timestamp'], source: [] }
 
 const isProtocolChartLabel = (label: string): label is ProtocolChartsLabels => Object.hasOwn(yAxisByChart, label)
 
+/** Grouped active addresses are a daily average, and their name says so in the legend, tooltip and CSV. */
+export function getProtocolSeriesName(label: string, groupBy: ChartTimeGroupingWithCumulative) {
+	return label === 'Active Addresses' && groupBy !== 'daily' ? getDailyAverageLabel(label) : label
+}
+
 export function buildProtocolChartPresentation({
 	chartData,
 	chartColors,
-	isCumulative,
+	groupBy,
 	rangeHallmarks,
 	isThemeDark,
 	themeText
 }: {
 	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>
 	chartColors: Partial<Record<ProtocolChartsLabels, string>>
-	isCumulative: boolean
+	groupBy: ChartTimeGroupingWithCumulative
 	rangeHallmarks: Array<[[number, number], string]> | null
 	isThemeDark: boolean
 	themeText: string
@@ -46,11 +55,11 @@ export function buildProtocolChartPresentation({
 			allYAxis.push([axisType, yAxisIndex === 0 ? undefined : yAxisIndex])
 		}
 		chartsInSeries.add(label)
-		const type = BAR_CHARTS_SET.has(label) && !isCumulative ? 'bar' : 'line'
+		const type = BAR_CHARTS_SET.has(label) && groupBy !== 'cumulative' ? 'bar' : 'line'
 		const color = chartColors[label]
 		charts.push({
 			type,
-			name: label,
+			name: getProtocolSeriesName(label, groupBy),
 			encode: { x: 0, y: 1 },
 			data,
 			...(color ? { color } : {}),

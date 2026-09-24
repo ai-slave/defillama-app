@@ -46,7 +46,7 @@ export default function ProtocolChart({
 			buildProtocolChartPresentation({
 				chartData,
 				chartColors,
-				isCumulative: groupBy === 'cumulative',
+				groupBy: groupBy ?? 'daily',
 				rangeHallmarks,
 				isThemeDark,
 				themeText: chartTheme.text

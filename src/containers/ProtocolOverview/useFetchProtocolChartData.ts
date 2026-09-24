@@ -3,7 +3,12 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
+import {
+	formatBarChart,
+	formatDailyAverageChart,
+	formatLineChart,
+	formatNullableBarChart
+} from '~/components/ECharts/shared/timeSeries'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolMedianAPY,
@@ -732,13 +737,12 @@ export const useFetchProtocolChartData = ({
 			})
 		}
 
-		if (activeAddressesData && isActiveAddressesToggled)
-			charts['Active Addresses'] = formatBarChart({
-				data: activeAddressesData,
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: true
-			})
+		// Daily active addresses don't add up across days, so grouped views average them and cumulative leaves them out.
+		if (activeAddressesData && isActiveAddressesToggled && groupBy !== 'cumulative')
+			charts['Active Addresses'] =
+				groupBy === 'daily'
+					? formatBarChart({ data: activeAddressesData, groupBy, denominationPriceHistory: null, dateInMs: true })
+					: formatDailyAverageChart({ data: activeAddressesData, groupBy, dateInMs: true })
 		if (newAddressesData && isNewAddressesToggled)
 			charts['New Addresses'] = formatBarChart({
 				data: newAddressesData,

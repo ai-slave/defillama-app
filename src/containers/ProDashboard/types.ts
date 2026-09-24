@@ -554,6 +554,14 @@ export interface Protocol {
 const COUNT_CHART_TYPES: ReadonlySet<string> = new Set(['activeUsers', 'newUsers', 'txs', 'pfRatio', 'psRatio'])
 const PERCENT_CHART_TYPES: ReadonlySet<string> = new Set(['medianApy'])
 
+/**
+ * Daily counts that don't add up across days: the same address active on several days is one address. Grouped
+ * charts average the observed days, and cumulative is not offered.
+ */
+export function isDailyAverageChartType(type: string): boolean {
+	return type === 'activeUsers'
+}
+
 /** The unit a dashboard chart type is measured in: counts and ratios have none, APY is a percent, the rest are USD. */
 export function getDashboardChartValueSymbol(type: string): '' | '%' | '$' {
 	return COUNT_CHART_TYPES.has(type) ? '' : PERCENT_CHART_TYPES.has(type) ? '%' : '$'

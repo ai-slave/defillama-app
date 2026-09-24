@@ -4,7 +4,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { getProDashboardChartTypeConfig } from '../../types'
-import { DASHBOARD_CHART_GROUPING } from '../../utils'
+import { DASHBOARD_CHART_GROUPING, getGroupedMetricTitle } from '../../utils'
 import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
 import { buildMultiChartSeriesView, getComposerGrouping, type MultiChartInputSeries } from '../multiChartSeries'
 
@@ -22,6 +22,7 @@ interface CombinedChartPreviewProps {
 export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProps) {
 	const { getProtocolInfo } = useProDashboardCatalog()
 
+	const previewGrouping = getComposerGrouping(composerItems)
 	const chartView = useMemo(() => {
 		const series: Array<MultiChartInputSeries> = []
 		let colorIndex = 0
@@ -33,7 +34,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 					item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
 
 				series.push({
-					name: `${displayName} ${meta?.title || item.type}`,
+					name: `${displayName} ${getGroupedMetricTitle(item.type, meta?.title || item.type, previewGrouping)}`,
 					baseType:
 						meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
 							? meta.chartType
@@ -52,9 +53,8 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 			showPercentage: false,
 			stackSeries: false
 		})
-	}, [getProtocolInfo, composerItems])
+	}, [getProtocolInfo, composerItems, previewGrouping])
 
-	const previewGrouping = getComposerGrouping(composerItems)
 	const anyLoading = composerItems.some((item) => item.isLoading)
 
 	if (chartView.charts.length === 0 && composerItems.length > 0) {

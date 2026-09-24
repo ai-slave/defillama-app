@@ -151,6 +151,41 @@ export const formatBarChart = ({
 }: FormatterInput): Array<[number, number | null]> =>
 	formatGroupedChart({ data, groupBy, dateInMs, denominationPriceHistory, mode: 'sum' })
 
+/**
+ * Average of the observed daily values in each period, for daily counts that do not add up across days: the same
+ * address active on several days is one address, so a weekly sum overcounts. Days without a value are left out of
+ * the average; zeros count. The current, partial period averages the days it has.
+ */
+/** The name a daily-average series shows once grouped, so it never reads as a period total. */
+export const getDailyAverageLabel = (label: string) => `${label} (daily average)`
+
+export function formatDailyAverageChart({
+	data,
+	groupBy,
+	dateInMs = false
+}: {
+	data: ReadonlyArray<[string | number, number]>
+	groupBy: ChartTimeGrouping
+	dateInMs?: boolean
+}): Array<[number, number]> {
+	const averages: Array<[number, number]> = []
+	let sum = 0
+	let days = 0
+	for (const [date, value] of data) {
+		const bucketMs = getBucketTimestampSec(dateInMs ? +date / 1e3 : +date, groupBy) * 1e3
+		const current = averages[averages.length - 1]
+		if (current?.[0] !== bucketMs) {
+			sum = 0
+			days = 0
+			averages.push([bucketMs, 0])
+		}
+		sum += value
+		days += 1
+		averages[averages.length - 1]![1] = sum / days
+	}
+	return averages
+}
+
 /** Sum a nullable flow series without converting unknown observations into zero. */
 export function formatNullableBarChart({
 	data,

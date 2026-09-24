@@ -5,6 +5,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { BAR_CHARTS, type ChainChartLabels, chainCharts } from '~/containers/ChainOverview/constants'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
@@ -17,7 +18,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
-import { isTruthyQueryParam } from '~/utils/routerQuery'
+import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 
 const ChainCoreChart: any = lazy(() => import('~/containers/ChainOverview/Chart'))
 
@@ -166,6 +167,10 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		}
 	}, [isThemeDark])
 
+	// The toggle stays on, so switching back from cumulative restores the series.
+	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledCharts.includes('Active Addresses')
+	const showDaily = () => void pushShallowQuery(router, { groupBy: 'daily' })
+
 	return (
 		<div className="col-span-full flex min-h-[360px] flex-col">
 			{isFetchingChartData || !router.isReady || !isClient ? (
@@ -173,8 +178,13 @@ export default function ChainChartPage(props: IChainOverviewData) {
 					<LocalLoader />
 					<span className="sr-only">Loading chart data</span>
 				</div>
+			) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
+				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
+					{isActiveAddressesHidden ? (
+						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />
+					) : null}
 					<ChainCoreChart
 						chartData={finalCharts}
 						valueSymbol={valueSymbol}

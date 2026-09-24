@@ -15,6 +15,7 @@ import {
 	type DashboardGrouping,
 	getDashboardChartValueSymbol,
 	getProDashboardChartTypeConfig,
+	isDailyAverageChartType,
 	type Protocol
 } from '../types'
 import { ProMeta, ProSegmented } from '../ui'
@@ -23,6 +24,7 @@ import {
 	generateChartColor,
 	getCsvPeriodCells,
 	getCsvPeriodHeaders,
+	getGroupedMetricTitle,
 	getItemIconUrl
 } from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
@@ -169,7 +171,8 @@ export function ChartCard({ chart }: ChartCardProps) {
 			if (!chartTypeDetails) throw new Error(`Unsupported dashboard chart type: ${chart.type}`)
 			const isGroupable = 'groupable' in chartTypeDetails && chartTypeDetails.groupable
 			const isBarChart = chartTypeDetails.chartType === 'bar'
-			const showCumulative = chart.showCumulative || false
+			// A saved cumulative setting stays in the config but never applies to a daily-average metric.
+			const showCumulative = (chart.showCumulative || false) && !isDailyAverageChartType(chart.type)
 
 			let itemName: string
 			let itemIconUrl: string | undefined
@@ -204,14 +207,15 @@ export function ChartCard({ chart }: ChartCardProps) {
 
 	// The grouping applied to the data. Metrics that cannot be grouped stay daily.
 	const grouping: DashboardGrouping = isGroupable ? (chart.grouping ?? 'day') : 'day'
+	const metricTitle = getGroupedMetricTitle(chart.type, chartTypeDetails.title, grouping)
 	const chartDataset = useMemo(
-		() => buildSingleMetricChartDataset(chartState.data, chartTypeDetails.title, showCumulative && isBarChart),
-		[chartState.data, chartTypeDetails.title, isBarChart, showCumulative]
+		() => buildSingleMetricChartDataset(chartState.data, metricTitle, showCumulative && isBarChart),
+		[chartState.data, metricTitle, isBarChart, showCumulative]
 	)
 
 	const handleCsvExport = () => {
 		if (chartDataset.source.length === 0) return
-		const headers = [...getCsvPeriodHeaders(grouping), `${itemName} ${chartTypeDetails.title}`]
+		const headers = [...getCsvPeriodHeaders(grouping), `${itemName} ${metricTitle}`]
 		const rows = chartDataset.source.map((row, index) => {
 			const timestamp = row[0]
 			if (typeof timestamp !== 'number') throw new Error(`Invalid dashboard chart timestamp at index ${index}`)
@@ -232,7 +236,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 	return (
 		<div className="flex min-h-[calc(344px*var(--card-scale,1))] flex-col p-0 md:min-h-[calc(360px*var(--card-scale,1))]">
 			<ProCardHeader
-				title={`${itemName} ${chartTypeDetails.title}`}
+				title={`${itemName} ${metricTitle}`}
 				icon={
 					chart.subjectType === 'protocol' || chart.chain !== 'All' ? (
 						<EntityIcon src={itemIconUrl} name={itemName} />
@@ -251,7 +255,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 								onValueChange={(value) => handleGroupingChange(chart.id, value)}
 							/>
 						) : null}
-						{isBarChart ? (
+						{isBarChart && !isDailyAverageChartType(chart.type) ? (
 							<Select
 								size="sm"
 								allValues={CUMULATIVE_DISPLAY_OPTIONS}
@@ -278,7 +282,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				<ChartRenderer
 					type={chart.type}
-					showCumulative={chart.showCumulative}
+					showCumulative={showCumulative}
 					grouping={grouping}
 					dataset={chartDataset}
 					isLoading={chartState.isLoading}

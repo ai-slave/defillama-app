@@ -10,10 +10,16 @@ import { ProtocolChartPanel } from '../ProtocolChartPanel'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '../types'
 
 const mocks = vi.hoisted(() => {
-	const routerState: { query: Record<string, string | Array<string>>; asPath: string } = { query: {}, asPath: '' }
+	const routerState: {
+		query: Record<string, string | Array<string>>
+		asPath: string
+		pathname: string
+		push: (...args: Array<unknown>) => Promise<boolean>
+	} = { query: {}, asPath: '', pathname: '/protocol/[protocol]', push: async () => true }
 	return {
 		routerState,
 		useFetchProtocolChartData: vi.fn(),
+		csvSource: null as null | { prepare: () => { rows: Array<Array<unknown>> } },
 		getProtocolOverviewPageData: vi.fn(),
 		acquireOptionalYieldsSnapshot: vi.fn()
 	}
@@ -32,7 +38,12 @@ vi.mock('@ariakit/react', async (importOriginal) => ({
 }))
 
 vi.mock('~/components/AddToDashboard/AddToDashboardButton', () => ({ AddToDashboardButton: () => null }))
-vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
+	ChartExportButtons: ({ csvSource }: { csvSource: NonNullable<typeof mocks.csvSource> }) => {
+		mocks.csvSource = csvSource
+		return null
+	}
+}))
 vi.mock('~/components/EmbedChart', () => ({ EmbedChart: () => null }))
 
 vi.mock('~/contexts/LocalStorage', () => ({
@@ -57,7 +68,7 @@ vi.mock('~/ui/Loaders', () => ({
 }))
 
 vi.mock('~/containers/ProtocolOverview/Chart', () => ({
-	default: () => null
+	default: () => <div data-protocol-chart />
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries', () => ({
@@ -347,5 +358,86 @@ describe('chart/protocol/[protocol]', () => {
 		const result = await getStaticProps({ params: { protocol: 'test-protocol' } })
 
 		expect(JSON.parse(JSON.stringify(result))).toStrictEqual(result)
+	})
+
+	describe('active addresses', () => {
+		const props = (): IProtocolOverviewPageData => ({
+			...createProps(),
+			metrics: { ...metrics, activeUsers: true, newUsers: true },
+			availableCharts: ['Active Addresses', 'New Addresses']
+		})
+
+		async function renderPanel(asPath: string) {
+			mocks.routerState.asPath = asPath
+			Object.defineProperty(globalThis, 'IS_REACT_ACT_ENVIRONMENT', { configurable: true, value: true })
+			const container = document.createElement('div')
+			const root = createRoot(container)
+			await act(async () => root.render(<ProtocolChartPanel {...props()} />))
+			return {
+				container,
+				unmount: async () => {
+					await act(async () => root.unmount())
+					Reflect.deleteProperty(globalThis, 'IS_REACT_ACT_ENVIRONMENT')
+				}
+			}
+		}
+
+		test('explains a cumulative chart with only active addresses and keeps them selected', async () => {
+			const push = vi.fn(async () => true)
+			mocks.routerState.push = push
+			const { container, unmount } = await renderPanel(
+				'/protocol/test-protocol?activeAddresses=true&groupBy=cumulative'
+			)
+
+			expect(container.textContent).toContain("Cumulative isn't available for Active Addresses.")
+			expect(container.querySelector('[data-protocol-chart]')).toBeNull()
+			expect(getLastChartRequest().toggledMetrics).toMatchObject({ activeAddresses: 'true' })
+
+			const showDaily = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Show daily')!
+			await act(async () => showDaily.click())
+			expect(push).toHaveBeenCalledWith(
+				expect.objectContaining({ query: expect.objectContaining({ groupBy: 'daily' }) }),
+				undefined,
+				{ shallow: true }
+			)
+			await unmount()
+		})
+
+		test('explains an embedded cumulative chart with only active addresses', () => {
+			mocks.routerState.query = { activeAddresses: 'true', groupBy: 'cumulative' }
+
+			expect(renderToStaticMarkup(<ProtocolChartPage {...props()} />)).toContain(
+				'Cumulative isn&#x27;t available for Active Addresses.'
+			)
+		})
+
+		test('keeps charting the other metrics with the explanation above them', async () => {
+			const { container, unmount } = await renderPanel(
+				'/protocol/test-protocol?activeAddresses=true&newAddresses=true&groupBy=cumulative'
+			)
+
+			expect(container.textContent).toContain("Cumulative isn't available for Active Addresses.")
+			expect(container.querySelector('[data-protocol-chart]')).not.toBeNull()
+			await unmount()
+		})
+
+		test('names grouped active addresses as a daily average in the CSV', async () => {
+			mocks.useFetchProtocolChartData.mockReturnValue({
+				finalCharts: { 'Active Addresses': [[Date.UTC(2026, 8, 20), 40]] },
+				valueSymbol: '$',
+				loadingCharts: [],
+				failedMetrics: []
+			})
+			const { container, unmount } = await renderPanel('/protocol/test-protocol?activeAddresses=true&groupBy=weekly')
+
+			expect(container.textContent).not.toContain('Cumulative')
+			expect(mocks.csvSource!.prepare().rows[0]).toEqual([
+				'Timestamp',
+				'Week start',
+				'Week end',
+				'Active Addresses (daily average)'
+			])
+			await unmount()
+		})
 	})
 })

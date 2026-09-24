@@ -1,8 +1,12 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/MultiSeriesChart/types'
 import { getPeriodCsvCells, getPeriodCsvHeaders } from '~/components/ECharts/shared/csv'
-import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
+import {
+	formatDailyAverageChart,
+	getBucketTimestampSec,
+	getDailyAverageLabel
+} from '~/components/ECharts/shared/timeSeries'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
-import type { Chain, DashboardGrouping, Protocol } from './types'
+import { isDailyAverageChartType, type Chain, type DashboardGrouping, type Protocol } from './types'
 import { generateConsistentChartColor } from './utils/colorManager'
 
 type NumericChartTuple = readonly [timestamp: string | number, value: string | number]
@@ -83,6 +87,19 @@ export function getCsvPeriodHeaders(grouping: DashboardGrouping): Array<string> 
 /** ISO date cells for one row keyed by `getGroupedTimestampSec`, matching `getCsvPeriodHeaders`. */
 export function getCsvPeriodCells(groupedTimestampSec: number, grouping: DashboardGrouping): Array<string> {
 	return getPeriodCsvCells(groupedTimestampSec * 1e3, DASHBOARD_CHART_GROUPING[grouping])
+}
+
+/** A metric title as a grouped chart shows it: a daily-average metric says so, so it never reads as a period total. */
+export function getGroupedMetricTitle(type: string, title: string, grouping: DashboardGrouping): string {
+	return isDailyAverageChartType(type) && grouping !== 'day' ? getDailyAverageLabel(title) : title
+}
+
+/** Like `groupData`, but each period is the average of its observed days instead of their sum. */
+export function averageDailyData(data: Array<[number, number]>, grouping: DashboardGrouping): Array<[number, number]> {
+	if (grouping === 'day') return data
+	const averages = formatDailyAverageChart({ data, groupBy: DASHBOARD_CHART_GROUPING[grouping] })
+	for (const point of averages) point[0] /= 1e3
+	return averages
 }
 
 export const groupData = (

@@ -12,9 +12,14 @@ import { getChartDataPrerequisite, toChartRuntimeState, type ChartRuntimeView } 
 import { requestDashboardItemReveal } from '../hooks/useDashboardItemDeepLink'
 import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../queries'
-import { getProDashboardChartTypeConfig, limitMultiChartItems, type MultiChartConfig } from '../types'
+import {
+	getProDashboardChartTypeConfig,
+	isDailyAverageChartType,
+	limitMultiChartItems,
+	type MultiChartConfig
+} from '../types'
 import { ProMeta, ProSegmented } from '../ui'
-import { DASHBOARD_CHART_GROUPING, generateChartColor } from '../utils'
+import { DASHBOARD_CHART_GROUPING, generateChartColor, getGroupedMetricTitle } from '../utils'
 import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
@@ -198,7 +203,9 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			return `${item.subjectType}_${subject}_${item.type}`
 		}
 
-		const series: Array<MultiChartInputSeries> = validItems.map((cfg, index) => {
+		// A running total of daily averages is meaningless, so cumulative leaves those series out and says so below.
+		const chartedItems = showCumulative ? validItems.filter((cfg) => !isDailyAverageChartType(cfg.type)) : validItems
+		const series: Array<MultiChartInputSeries> = chartedItems.map((cfg, index) => {
 			const data = cfg.data
 			const meta = getProDashboardChartTypeConfig(cfg.type)
 			const name = cfg.subjectType === 'protocol' ? getProtocolInfo(cfg.protocol)?.name || cfg.protocol : cfg.chain
@@ -223,7 +230,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			}
 
 			return {
-				name: `${name} ${meta?.title || capitalizeFirstLetter(cfg.type)}`,
+				name: `${name} ${getGroupedMetricTitle(cfg.type, meta?.title || capitalizeFirstLetter(cfg.type), grouping)}`,
 				baseType: normalizeBaseType(meta?.chartType),
 				data,
 				color,
@@ -231,7 +238,8 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			}
 		})
 		return series
-	}, [validItems, colorContext, getProtocolInfo])
+	}, [validItems, colorContext, getProtocolInfo, showCumulative, grouping])
+	const hidesDailyAverage = showCumulative && validItems.some((cfg) => isDailyAverageChartType(cfg.type))
 
 	const chartTypeInfo = useMemo(() => {
 		let firstMetricType: string | undefined
@@ -485,6 +493,15 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					</ProCardNotice>
 				) : null}
 
+				{hidesDailyAverage ? (
+					<ProCardNotice
+						tone="warning"
+						action={{ label: 'Show individual values', onClick: () => handleCumulativeChange(multi.id, false) }}
+					>
+						Cumulative isn&apos;t available for Active Addresses.
+					</ProCardNotice>
+				) : null}
+
 				{isPrimaryLoading ? (
 					<ProCardLoading label="Loading charts…" />
 				) : !hasAnyData ? (
@@ -497,7 +514,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 					) : (
 						<ProCardEmpty message="No chart data available" />
 					)
-				) : showTreemap && treemapData.length > 0 ? (
+				) : hidesDailyAverage && chartView.charts.length === 0 ? null : showTreemap && treemapData.length > 0 ? (
 					<Suspense fallback={<div className="min-h-[calc(360px*var(--card-scale,1))]" />}>
 						<BuilderTreemapChart key={multi.id} data={treemapData} height={chartHeight} onReady={handleChartReady} />
 					</Suspense>

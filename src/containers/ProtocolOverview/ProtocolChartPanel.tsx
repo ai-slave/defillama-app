@@ -9,6 +9,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { prepareChartCsv } from '~/components/ECharts/shared/csv'
+import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { EmbedChart } from '~/components/EmbedChart'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -27,6 +28,7 @@ import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { getProtocolSeriesName } from './chartPresentation'
 import { resolveProtocolChartQuery } from './chartQuery'
 import {
 	protocolChartCategories,
@@ -128,7 +130,14 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
 
-	const prepareCsv = () => prepareChartCsv(finalCharts, `${props.name}.csv`, groupBy)
+	const prepareCsv = () => {
+		const csvCharts: Record<string, Array<[number, number | null]>> = {}
+		for (const [label, data] of Object.entries(finalCharts)) csvCharts[getProtocolSeriesName(label, groupBy)] = data
+		return prepareChartCsv(csvCharts, `${props.name}.csv`, groupBy)
+	}
+	// The toggle stays on, so switching back from cumulative restores the series.
+	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledCharts.includes('Active Addresses')
+	const showDaily = () => void pushShallowQuery(router, { groupBy: 'daily' })
 
 	const { multiChart, unsupportedMetrics } = useMemo(() => {
 		return serializeProtocolChartToMultiChart({
@@ -473,26 +482,35 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				<Suspense
-					fallback={
-						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<LoadingIndicator />
-						</ChartPanelBodyFallback>
-					}
-				>
-					<ProtocolChart
-						chartData={deferredChartRenderModel.chartData}
-						chartColors={props.chartColors}
-						isThemeDark={isThemeDark}
-						valueSymbol={deferredChartRenderModel.valueSymbol}
-						gasUsedValueSymbol={deferredChartRenderModel.gasUsedValueSymbol}
-						groupBy={deferredChartRenderModel.groupBy}
-						hallmarks={toggledMetrics.events === 'true' ? props.hallmarks : null}
-						rangeHallmarks={toggledMetrics.events === 'true' ? props.rangeHallmarks : null}
-						unlockTokenSymbol={props.token?.symbol}
-						onReady={handleOverviewChartReady}
+				{isActiveAddressesHidden ? (
+					<CumulativeUnavailableNotice
+						metric="Active Addresses"
+						fill={toggledCharts.length === 1}
+						onShowDaily={showDaily}
 					/>
-				</Suspense>
+				) : null}
+				{isActiveAddressesHidden && toggledCharts.length === 1 ? null : (
+					<Suspense
+						fallback={
+							<ChartPanelBodyFallback role="status" aria-live="polite">
+								<LoadingIndicator />
+							</ChartPanelBodyFallback>
+						}
+					>
+						<ProtocolChart
+							chartData={deferredChartRenderModel.chartData}
+							chartColors={props.chartColors}
+							isThemeDark={isThemeDark}
+							valueSymbol={deferredChartRenderModel.valueSymbol}
+							gasUsedValueSymbol={deferredChartRenderModel.gasUsedValueSymbol}
+							groupBy={deferredChartRenderModel.groupBy}
+							hallmarks={toggledMetrics.events === 'true' ? props.hallmarks : null}
+							rangeHallmarks={toggledMetrics.events === 'true' ? props.rangeHallmarks : null}
+							unlockTokenSymbol={props.token?.symbol}
+							onReady={handleOverviewChartReady}
+						/>
+					</Suspense>
+				)}
 				{isClient ? (
 					<FailedDataPopover
 						items={failedMetrics}

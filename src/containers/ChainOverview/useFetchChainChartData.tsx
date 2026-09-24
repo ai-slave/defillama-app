@@ -2,7 +2,12 @@ import { skipToken, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatBarChart, formatLineChart, formatNullableBarChart } from '~/components/ECharts/shared/timeSeries'
+import {
+	formatBarChart,
+	formatDailyAverageChart,
+	formatLineChart,
+	formatNullableBarChart
+} from '~/components/ECharts/shared/timeSeries'
 import type { ChainAssetsChartDataPoint, ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
 import { getBridgeNetFlow } from '~/containers/Bridges/bridgeOverviewVolumeData'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
@@ -567,14 +572,13 @@ export const useFetchChainChartData = ({
 			})
 		}
 
-		if (isActiveAddressesEnabled && activeAddressesData) {
+		// Daily active addresses don't add up across days, so grouped views average them and cumulative leaves them out.
+		if (isActiveAddressesEnabled && activeAddressesData && groupBy !== 'cumulative') {
 			const chartName: ChainChartLabels = 'Active Addresses'
-			charts[chartName] = formatBarChart({
-				data: activeAddressesData,
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: false
-			})
+			charts[chartName] =
+				groupBy === 'daily'
+					? formatBarChart({ data: activeAddressesData, groupBy, denominationPriceHistory: null, dateInMs: false })
+					: formatDailyAverageChart({ data: activeAddressesData, groupBy, dateInMs: false })
 		}
 
 		if (isNewAddressesEnabled && newAddressesData) {

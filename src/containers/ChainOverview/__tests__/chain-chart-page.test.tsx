@@ -150,4 +150,13 @@ describe('chart/chain/[chain]', () => {
 			})
 		)
 	})
+
+	test('explains an embedded cumulative chart with only active addresses', () => {
+		mocks.routerState.query = { groupBy: 'cumulative' }
+		const props = { ...createProps(makeExtraTvlCharts()), charts: ['Active Addresses'] } as IChainOverviewData
+
+		expect(renderToStaticMarkup(<ChainChartPage {...props} />)).toContain(
+			'Cumulative isn&#x27;t available for Active Addresses.'
+		)
+	})
 })

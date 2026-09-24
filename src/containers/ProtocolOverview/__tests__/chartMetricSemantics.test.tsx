@@ -32,6 +32,10 @@ const mocks = vi.hoisted(() => ({
 		data: null,
 		isLoading: false
 	})),
+	activity: vi.fn((_options: { adapterType: string; protocol: string | null }) => ({
+		data: null as Array<[number, number]> | null,
+		isLoading: false
+	})),
 	isClient: true,
 	lastResult: null as ReturnType<typeof import('../useFetchProtocolChartData').useFetchProtocolChartData> | null
 }))
@@ -51,7 +55,7 @@ vi.mock('~/hooks/useIsClient', () => ({
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries.client', () => ({
-	useFetchProtocolActivityChart: () => ({ data: null, isLoading: false }),
+	useFetchProtocolActivityChart: mocks.activity,
 	useFetchProtocolMedianAPY: mocks.useFetchProtocolMedianAPY,
 	useFetchProtocolTVLChart: mocks.useFetchProtocolTVLChart
 }))
@@ -602,5 +606,58 @@ describe('ProtocolOverview chart metric semantics', () => {
 			[timestampMs, 3],
 			[secondTimestampMs, 5]
 		])
+	})
+
+	describe('active addresses', () => {
+		// Mon Sep 14, 2026 to Mon Sep 21: a full week, then the next week's first day.
+		const day = (offset: number) => Date.UTC(2026, 8, 14 + offset)
+		const activeAddresses: Array<[number, number]> = [
+			[day(0), 90],
+			// Sep 15 has no observation; Sep 16 is a real zero.
+			[day(2), 0],
+			[day(3), 30],
+			[day(7), 50]
+		]
+		const newAddresses: Array<[number, number]> = activeAddresses.map(([observedAt]) => [observedAt, 10])
+
+		function renderActivity(groupBy: ChartTimeGroupingWithCumulative) {
+			mocks.activity.mockImplementation(({ adapterType, protocol }) => ({
+				data: protocol == null ? null : adapterType === 'active-users' ? activeAddresses : newAddresses,
+				isLoading: false
+			}))
+			probeProps = {
+				...feeProps,
+				metrics: { ...baseMetrics, activeUsers: true, newUsers: true },
+				toggledMetrics: makeToggledMetrics({ activeAddresses: 'true', newAddresses: 'true' }),
+				availableCharts: ['Active Addresses', 'New Addresses'],
+				groupBy
+			}
+			renderToStaticMarkup(<Probe />)
+			return mocks.lastResult!.finalCharts
+		}
+
+		test('averages the observed days of each period, while new addresses still sum', () => {
+			const charts = renderActivity('weekly')
+
+			expect(charts['Active Addresses']).toEqual([
+				[Date.UTC(2026, 8, 20), 40],
+				[Date.UTC(2026, 8, 27), 50]
+			])
+			expect(charts['New Addresses']).toEqual([
+				[Date.UTC(2026, 8, 20), 30],
+				[Date.UTC(2026, 8, 27), 10]
+			])
+		})
+
+		test('leaves active addresses out of a cumulative chart and keeps daily values as they are', () => {
+			expect(renderActivity('cumulative')['Active Addresses']).toBeUndefined()
+			expect(renderActivity('cumulative')['New Addresses']).toEqual([
+				[day(0), 10],
+				[day(2), 20],
+				[day(3), 30],
+				[day(7), 40]
+			])
+			expect(renderActivity('daily')['Active Addresses']).toEqual(activeAddresses)
+		})
 	})
 })

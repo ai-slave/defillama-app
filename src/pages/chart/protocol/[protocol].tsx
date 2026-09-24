@@ -1,6 +1,7 @@
 import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
+import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { resolveProtocolChartQuery } from '~/containers/ProtocolOverview/chartQuery'
 import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queries'
@@ -11,7 +12,7 @@ import { LocalLoader } from '~/ui/Loaders'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
-import { isTruthyQueryParam } from '~/utils/routerQuery'
+import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 
 const ProtocolCoreChart = lazy(() => import('~/containers/ProtocolOverview/Chart'))
 
@@ -132,16 +133,24 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 		tvlSettings
 	})
 	const hasVisibleCharts = Object.keys(finalCharts).length > 0
+	// The toggle stays on, so switching back from cumulative restores the series.
+	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledMetrics.activeAddresses === 'true'
+	const showDaily = () => void pushShallowQuery(router, { groupBy: 'daily' })
 
 	return (
 		<div className="col-span-full flex min-h-[360px] flex-col">
-			{!hasVisibleCharts && loadingCharts.length > 0 ? (
+			{isActiveAddressesHidden && !hasVisibleCharts && loadingCharts.length === 0 ? (
+				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
+			) : !hasVisibleCharts && loadingCharts.length > 0 ? (
 				<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center">
 					<LocalLoader />
 					<span className="sr-only">Loading chart data</span>
 				</div>
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
+					{isActiveAddressesHidden ? (
+						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />
+					) : null}
 					<ProtocolCoreChart
 						chartData={finalCharts}
 						chartColors={props.chartColors}

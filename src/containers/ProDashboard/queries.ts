@@ -20,11 +20,12 @@ import { ORACLE_MEMBERSHIP_QUERY_KEY } from './tableQueryKeys'
 import { filterDataByTimePeriod } from './timePeriod'
 import {
 	getProDashboardChartTypeConfig,
+	isDailyAverageChartType,
 	isProDashboardChartType,
 	type ChartConfig,
 	type DashboardGrouping
 } from './types'
-import { groupData } from './utils'
+import { averageDailyData, groupData } from './utils'
 
 /**
  * When false, query hooks skip their own client-side fetches (the stream is providing data).
@@ -211,11 +212,13 @@ function projectChartData(
 	timePeriod: TimePeriod,
 	customPeriod: CustomTimePeriod | null | undefined,
 	grouping: DashboardGrouping | null,
-	now: dayjs.Dayjs
+	now: dayjs.Dayjs,
+	chartType: string
 ): Array<[number, number]> {
 	const relevantCustomPeriod = timePeriod === 'custom' ? customPeriod : null
 	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod, now)
-	return grouping ? groupData(filtered, grouping) : filtered
+	if (!grouping) return filtered
+	return isDailyAverageChartType(chartType) ? averageDailyData(filtered, grouping) : groupData(filtered, grouping)
 }
 
 function getChartSourceQueryOptions(
@@ -276,7 +279,7 @@ export function useChartData(
 			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
 			const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
 			const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
-			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, dayjs())
+			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, dayjs(), chart.type)
 		},
 		[chart.grouping, chart.type, customPeriod, projectionTimePeriod]
 	)
@@ -325,7 +328,7 @@ export function useChartsData(
 				const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
 				return {
 					...query,
-					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, now)
+					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, now, chart.type)
 				}
 			})
 		},

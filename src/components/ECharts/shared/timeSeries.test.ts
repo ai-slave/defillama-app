@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+	formatDailyAverageChart,
 	formatBarChart,
 	formatLineChart,
 	formatNullableBarChart,
@@ -549,5 +550,34 @@ describe('formatLineChart', () => {
 				denominationPriceHistory: null
 			})
 		).toEqual([[toMs(2024, 1, 1), 400]])
+	})
+})
+
+describe('formatDailyAverageChart', () => {
+	// Mon Sep 14, 2026 in seconds.
+	const MON = Date.UTC(2026, 8, 14) / 1e3
+	const day = (offset: number, value: number): [number, number] => [MON + offset * 86_400, value]
+
+	test('averages a full week instead of summing it', () => {
+		const week = Array.from({ length: 7 }, (_, offset) => day(offset, 100))
+		expect(formatDailyAverageChart({ data: week, groupBy: 'weekly' })).toEqual([[Date.UTC(2026, 8, 20), 100]])
+	})
+
+	test('averages only the observed days, counts zeros, and keeps a partial period', () => {
+		// Tue is missing, Wed is a real zero; the next week has only Monday so far.
+		const data = [day(0, 90), day(2, 0), day(3, 30), day(7, 50)]
+		expect(formatDailyAverageChart({ data, groupBy: 'weekly' })).toEqual([
+			[Date.UTC(2026, 8, 20), 40],
+			[Date.UTC(2026, 8, 27), 50]
+		])
+	})
+
+	test('keys months and years like the other grouped charts', () => {
+		const data = [day(0, 10), day(20, 20)]
+		expect(formatDailyAverageChart({ data, groupBy: 'monthly' })).toEqual([
+			[Date.UTC(2026, 8, 1), 10],
+			[Date.UTC(2026, 9, 1), 20]
+		])
+		expect(formatDailyAverageChart({ data, groupBy: 'yearly' })).toEqual([[Date.UTC(2026, 0, 1), 15]])
 	})
 })
