@@ -199,7 +199,7 @@ These are owner decisions, not extraction mistakes:
 - Titled `PanelHeader` remains the taller titled-panel recipe. Inline chart/table toolbars use the compact toolbar recipe instead of forcing every chart control row into `PanelHeader`.
 - Anchored-surface gutters: menus use `gutter={8}`, anchored selects/popovers/hovercards/failed-data popovers use `gutter={6}`, nested submenu flyouts use `gutter={4}`; text tooltips keep the Ariakit default.
 - Popover/menu surfaces own background, border, radius, and overflow only. Search blocks, action rows, footers, and list rows own vertical spacing.
-- Cartesian ECharts geometry uses the shared [`chartSpacing.ts`](src/components/ECharts/chartSpacing.ts) recipes. `chartGrid()` treats 8px as the visual outer bound through ECharts `outerBounds`; legends, scroll paging, and dataZoom use the documented optical compensation in that module. Do not recreate those values at call sites or add DOM body padding around cartesian charts.
+- Cartesian ECharts geometry uses the shared [`chartSpacing.ts`](src/components/ECharts/shared/chartSpacing.ts) recipes. `chartGrid()` treats 8px as the visual outer bound through ECharts `outerBounds`; legends, scroll paging, and dataZoom use the documented optical compensation in that module. Do not recreate those values at call sites or add DOM body padding around cartesian charts.
 
 | Radius | Tailwind       | Use                                           |
 | ------ | -------------- | --------------------------------------------- |
@@ -264,11 +264,11 @@ Chart **series** colors come from `CHART_COLORS` + `getNDistinctColors` (golden-
 
 Chart **canvas chrome** (axis labels, gridlines, legends, dataZoom, PNG-export framing, and candlestick direction colors) uses the `--chart-*` tokens in `semantics.css`. The chart-theme pass established these as the current visual baseline: axis labels use the tertiary tier, gridlines share the low-alpha chart stroke, and candlesticks use the chart direction tokens. ECharts HTML tooltips are DOM surfaces instead: options set transparent native chrome and the shared `.defillama-echarts-tooltip` recipe in `tailwind.css` applies the overlay, border, text, radius, and shadow tokens. Chart tokens remain separate from series palettes so later semantic-token changes cannot silently recolor chart data.
 
-Chart **geometry** uses [`src/components/ECharts/chartSpacing.ts`](src/components/ECharts/chartSpacing.ts). Standard cartesian grids have an 8px visual inset on every side via `outerBoundsMode: 'same'` and `outerBoundsContain: 'axisLabel'`; a default legend starts 8px from the top and reserves 40px before the plot; scroll legends reserve a 16px right gutter and use the same active/inactive color hierarchy as table sort carets. Slider dataZoom uses a fixed height and compensates for ECharts handle overflow so its visible left/right inset is 8px and its visible bottom inset is 12px. Consume the exported recipes/constants instead of copying raw grid, legend, or slider offsets.
+Chart **geometry** uses [`src/components/ECharts/shared/chartSpacing.ts`](src/components/ECharts/shared/chartSpacing.ts). Standard cartesian grids have an 8px visual inset on every side via `outerBoundsMode: 'same'` and `outerBoundsContain: 'axisLabel'`; a default legend starts 8px from the top and reserves 40px before the plot; scroll legends reserve a 16px right gutter and use the same active/inactive color hierarchy as table sort carets. Slider dataZoom uses a fixed height and compensates for ECharts handle overflow so its visible left/right inset is 8px and its visible bottom inset is 12px. Consume the exported recipes/constants instead of copying raw grid, legend, or slider offsets.
 
 Non-cartesian and alignment-sensitive charts keep explicit exceptions. Treemaps use an 8px **canvas-wrapper** inset because ECharts zoom clips to the canvas rather than the series rectangle; do not replace it with series offsets or remove it after checking only the unzoomed state. Legend-based pies stay vertically centered and reserve their measured legend region; external-label pies may pass an explicit `centerY` (the bridged composition uses `44%`) so the complete pie-plus-label composition is centered without changing every pie. Stacked candlestick grids keep one fixed left edge across panels. Scatter labels remain inside their plot; logo HBars reserve a measured left overlay region; Sankey owns node layout rather than cartesian grid geometry. New exceptions require route-level visual verification in both themes.
 
-ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--chart-*` by hand and never reintroduce `isDark ? literal : literal` chrome forks. HTML tooltip options should use the shared tooltip class rather than resolved canvas colors. Remaining hardcoded colors should be data/series colors or documented product-specific exceptions, not axis, grid, legend, dataZoom, or tooltip chrome.
+ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through [`src/components/ECharts/shared/chartTheme.ts`](src/components/ECharts/shared/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--chart-*` by hand and never reintroduce `isDark ? literal : literal` chrome forks. HTML tooltip options should use the shared tooltip class rather than resolved canvas colors. Remaining hardcoded colors should be data/series colors or documented product-specific exceptions, not axis, grid, legend, dataZoom, or tooltip chrome.
 
 ## Utility & reuse policy
 
@@ -291,9 +291,8 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 ## Status
 
 This file is the standing design-system rulebook. The design-token policy check enforces the mechanical
-boundaries, and [design-decision-audit.md](design-decision-audit.md) records the rationale
-behind established decisions and exceptions. Historical migration plans are not evidence
-of current behavior; verify current source before proposing a visual change.
+boundaries. Historical migration plans are not evidence of current behavior; verify current source
+before proposing a visual change.
 
 **Product surfaces adopting the design system is a design question, not a code phase.** No Figma designs exist for
 account/subscription, ProDashboard, Downloads, Articles/research, investor dashboards, or Sheets.
