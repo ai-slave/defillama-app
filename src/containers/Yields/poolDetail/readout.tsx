@@ -14,18 +14,19 @@ export const readoutKeysStyles = tw`flex flex-wrap items-center gap-x-4 gap-y-1 
 export function SeriesMark({
 	color,
 	shape = 'line',
-	opacity = shape === 'block' ? 0.5 : 1
+	opacity
 }: {
 	color: string
 	shape?: 'line' | 'block'
 	/** A block defaults to half strength to match a translucent band; a key passes 1 so it stays legible. */
 	opacity?: number
 }) {
+	const resolvedOpacity = opacity === undefined ? (shape === 'block' ? 0.5 : 1) : opacity
 	return (
 		<span
 			aria-hidden
 			className={shape === 'line' ? 'h-0.5 w-2.5 shrink-0 rounded-full' : 'size-2.5 shrink-0 rounded-xs'}
-			style={{ backgroundColor: color, opacity }}
+			style={{ backgroundColor: color, opacity: resolvedOpacity }}
 		/>
 	)
 }
