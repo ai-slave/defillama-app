@@ -12,6 +12,8 @@ const POINTS: Array<[number, number]> = [
 	[1_767_225_600 + DAY, 1500]
 ]
 
+let pending = false
+
 type ChartProps = { valueSymbol: string; charts: Array<{ name: string; valueSymbol?: string }> }
 const chartRenders: Array<ChartProps> = []
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
@@ -23,7 +25,7 @@ vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 vi.mock('~/containers/ProDashboard/queries', () => ({
 	ProxyAuthTokenContext: createContext<string | null>(null),
 	useProtocolsAndChains: () => ({ data: undefined }),
-	getChartQueryFn: () => async () => POINTS,
+	getChartQueryFn: () => () => (pending ? new Promise(() => {}) : Promise.resolve(POINTS)),
 	filterDataByTimePeriod: (data: Array<[number, number]>) => data
 }))
 
@@ -77,4 +79,17 @@ test('keeps dollar labels for a USD metric', async () => {
 	expect(container.textContent).toContain('Latest$1.5K')
 	expect(container.textContent).toContain('USD-denominated')
 	await unmount()
+})
+
+test('shows no latest value while a percent chart is still loading', async () => {
+	pending = true
+	try {
+		const { container, unmount } = await render({ series: [series('medianApy')], entities: [], chartType: 'medianApy' })
+
+		expect(container.textContent).toContain('Loading chart')
+		expect(container.textContent).not.toContain('Latest')
+		await unmount()
+	} finally {
+		pending = false
+	}
 })

@@ -21,14 +21,18 @@ vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
 }))
 
 // Fees of 25 and 75 in one row: a 25% and a 75% share.
-function render(xType: 'TIMESTAMP' | 'VARCHAR', stackMode: ChartConfig['stackMode']) {
+function render(
+	xType: 'TIMESTAMP' | 'VARCHAR',
+	stackMode: ChartConfig['stackMode'],
+	values: [number, number] = [25, 75]
+) {
 	const result: QueryResult = {
 		columns: [
 			{ name: 'x', type: xType },
 			{ name: 'a', type: 'DOUBLE' },
 			{ name: 'b', type: 'DOUBLE' }
 		],
-		rows: [[xType === 'TIMESTAMP' ? 1_767_225_600_000 : 'Ethereum', 25, 75]]
+		rows: [[xType === 'TIMESTAMP' ? 1_767_225_600_000 : 'Ethereum', ...values]]
 	}
 	const config: ChartConfig = {
 		chartType: 'bar',
@@ -73,3 +77,15 @@ test('keeps the column format when the series stack normally', async () => {
 
 	expect(hoverFirstSeries(rendered.at(-1)!)).toContain('$25')
 })
+
+test.each(['TIMESTAMP', 'VARCHAR'] as const)(
+	'leaves a row without a positive total empty on a %s axis',
+	async (xType) => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		rendered.length = 0
+		// 200 and -200 total zero: neither has a share of the row.
+		await render(xType, 'expand', [200, -200])
+
+		expect(rendered.at(-1)!.dataset.source[0]!.slice(1)).toEqual([null, null])
+	}
+)

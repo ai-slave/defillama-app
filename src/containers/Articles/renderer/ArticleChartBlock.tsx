@@ -141,7 +141,7 @@ export function ArticleChartBlock({
 	const route = primarySeries ? getArticleEntityRoute(primarySeries.entityType, primarySeries.slug) : '/'
 	const primarySymbol = primarySeries ? getDashboardChartValueSymbol(primarySeries.chartType) : '$'
 	const latestLabel =
-		series.length === 1
+		series.length === 1 && primaryLatest != null
 			? primarySymbol === '$'
 				? formatUsd(primaryLatest, { compact: true })
 				: formatTooltipValue(primaryLatest, primarySymbol)

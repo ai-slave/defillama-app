@@ -208,11 +208,11 @@ function normalizeRowsToPercent(rows: Array<Array<number | string | null>>): Arr
 			const v = row[index]
 			if (typeof v === 'number' && Number.isFinite(v)) total += v
 		}
-		if (total <= 0) return row
 		const out = row.slice()
 		for (let index = 1; index < row.length; index++) {
 			const v = row[index]
-			out[index] = typeof v === 'number' && Number.isFinite(v) ? (v / total) * 100 : null
+			// A row totalling zero or less has no shares, so it charts as empty rather than raw amounts shown as percents.
+			out[index] = total > 0 && typeof v === 'number' && Number.isFinite(v) ? (v / total) * 100 : null
 		}
 		return out
 	})
@@ -225,11 +225,10 @@ function normalizeWideRowsToPercent(rows: Array<Array<unknown>>, valueIndexes: A
 			const n = toYValue(row[index])
 			if (n != null) total += n
 		}
-		if (total <= 0) return row
 		const out = row.slice()
 		for (const index of valueIndexes) {
 			const n = toYValue(row[index])
-			out[index] = n == null ? null : (n / total) * 100
+			out[index] = total > 0 && n != null ? (n / total) * 100 : null
 		}
 		return out
 	})
