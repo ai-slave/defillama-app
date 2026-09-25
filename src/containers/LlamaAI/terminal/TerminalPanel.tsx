@@ -48,7 +48,7 @@ import {
 	type TerminalWidget
 } from './terminalViewStore'
 
-const LIBRARY_PATH = '/charting_library/'
+const LIBRARY_PATH = '/assets/charting_library/'
 const LIBRARY_SCRIPT = `${LIBRARY_PATH}charting_library.standalone.js`
 
 declare global {
@@ -263,7 +263,7 @@ export function TerminalPanel() {
 			<ChartPanel className="min-h-0 flex-1 overflow-hidden">
 				{status === 'missing' ? (
 					<SurfaceBodyStatus variant="error">
-						The charting library could not be loaded from public/charting_library and public/datafeeds.
+						The charting library could not be loaded from public/assets/charting_library and public/assets/datafeeds.
 					</SurfaceBodyStatus>
 				) : (
 					<div ref={containerRef} className="min-h-0 flex-1 bg-surface" />

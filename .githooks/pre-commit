@@ -11,7 +11,7 @@ git diff --cached --name-only -z --diff-filter=ACMR |
 	xargs -0 sh -c '
 		for file do
 			case "$file" in
-				public/charting_library/*|public/datafeeds/*)
+				public/assets/charting_library/*|public/assets/datafeeds/*)
 					# Vendored TradingView build. Formatting it rewrites a minified
 					# third-party bundle we do not own and must ship byte-for-byte.
 					;;

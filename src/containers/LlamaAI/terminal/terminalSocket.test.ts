@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import pb from '~/utils/pocketbase'
 import {
 	closeTerminalSocket,
 	releaseTerminalBars,
-	setTerminalTicketFetch,
 	subscribeTerminalBars,
 	subscribeTerminalStats,
 	unsubscribeTerminalListener
@@ -60,15 +60,22 @@ const ops = (socket: FakeSocket) =>
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 let ticketRequests = 0
+let fetchCalls = 0
+const TOKEN = `e30.${btoa(JSON.stringify({ id: 'user', exp: 4_102_444_800 }))}.signature`
 
 beforeEach(() => {
 	FakeSocket.instances = []
 	ticketRequests = 0
+	fetchCalls = 0
 	vi.stubGlobal('WebSocket', FakeSocket)
-	setTerminalTicketFetch((() => {
+	pb.authStore.save(TOKEN, null)
+	vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+		fetchCalls += 1
+		if (new Headers(init?.headers).get('Authorization') !== `Bearer ${TOKEN}`)
+			return Promise.resolve({ ok: false, status: 401 })
 		ticketRequests += 1
 		return Promise.resolve({ ok: true, json: () => Promise.resolve({ ticket: `ticket-${ticketRequests}` }) })
-	}) as unknown as typeof fetch)
+	})
 })
 
 afterEach(() => {
@@ -309,4 +316,107 @@ describe('terminal socket market stats', () => {
 		expect(socket.readyState).toBe(3)
 		expect(socket.sent.at(-1)).toEqual({ op: 'unsub', channel: 'stats', symbol: 'HYPE' })
 	})
+})
+
+test('the ticket request carries the signed-in token, so a strip that subscribes first still connects', async () => {
+	subscribeTerminalStats('strip', 'HYPE', () => {})
+	await flush()
+	expect(FakeSocket.instances[0].url).toContain('ticket=ticket-1')
+})
+
+test('a signed-out page never asks for a ticket', async () => {
+	pb.authStore.clear()
+	subscribeTerminalStats('strip', 'HYPE', () => {})
+	await flush()
+	expect(fetchCalls).toBe(0)
+	expect(FakeSocket.instances).toHaveLength(0)
+})
+
+test('a socket that goes silent is replaced, while one that keeps hearing the heartbeat is kept', async () => {
+	vi.useFakeTimers()
+	try {
+		subscribeTerminalStats('strip', 'HYPE', () => {})
+		await vi.advanceTimersByTimeAsync(0)
+		const first = FakeSocket.instances[0]
+		first.open()
+
+		await vi.advanceTimersByTimeAsync(50_000)
+		first.emit('message', { data: JSON.stringify({ type: 'heartbeat' }) })
+		await vi.advanceTimersByTimeAsync(50_000)
+		expect(FakeSocket.instances).toHaveLength(1)
+
+		await vi.advanceTimersByTimeAsync(11_000)
+		expect(first.readyState).toBe(3)
+		expect(FakeSocket.instances).toHaveLength(2)
+		const second = FakeSocket.instances[1]
+		second.open()
+		expect(second.sent).toEqual([{ op: 'sub', channel: 'stats', symbol: 'HYPE' }])
+	} finally {
+		vi.useRealTimers()
+	}
+})
+
+test('signing in while the terminal is open connects without waiting for another subscription', async () => {
+	pb.authStore.clear()
+	subscribeTerminalStats('strip', 'HYPE', () => {})
+	await flush()
+	expect(FakeSocket.instances).toHaveLength(0)
+
+	pb.authStore.save(TOKEN, null)
+	await flush()
+	expect(FakeSocket.instances).toHaveLength(1)
+})
+
+test('signing out closes the active socket before its old account can receive more data', async () => {
+	const onStats = vi.fn()
+	subscribeTerminalStats('strip', 'HYPE', onStats)
+	await flush()
+	const active = FakeSocket.instances[0]
+	active.open()
+
+	pb.authStore.clear()
+	expect(active.readyState).toBe(3)
+	active.emit('message', { data: JSON.stringify({ type: 'stats', symbol: 'HYPE', stats: { markPx: 1 } }) })
+	expect(onStats).not.toHaveBeenCalled()
+})
+
+test('refreshing a token for the same user keeps the active socket and its subscriptions', async () => {
+	const record = { id: 'user', collectionId: '_pb_users_auth_', collectionName: 'users' }
+	const refreshedToken = `e30.${btoa(JSON.stringify({ id: 'user', exp: 4_102_444_801 }))}.signature`
+	pb.authStore.save(TOKEN, record)
+	const onStats = vi.fn()
+	subscribeTerminalStats('strip', 'HYPE', onStats)
+	await flush()
+	const active = FakeSocket.instances[0]
+	active.open()
+	const requestsBeforeRefresh = ticketRequests
+
+	pb.authStore.save(refreshedToken, record)
+	await flush()
+	active.emit('message', { data: JSON.stringify({ type: 'stats', symbol: 'HYPE', stats: { markPx: 1 } }) })
+
+	expect(active.readyState).toBe(1)
+	expect(FakeSocket.instances).toHaveLength(1)
+	expect(ticketRequests).toBe(requestsBeforeRefresh)
+	expect(onStats).toHaveBeenCalledWith({ markPx: 1 })
+})
+
+test('an old ticket response cannot open a socket after the account changes', async () => {
+	const nextToken = `e30.${btoa(JSON.stringify({ id: 'next-user', exp: 4_102_444_800 }))}.signature`
+	let resolveOldTicket: (response: Response) => void = () => {}
+	const oldTicket = new Promise<Response>((resolve) => {
+		resolveOldTicket = resolve
+	})
+	vi.stubGlobal('fetch', (_url: string, init?: RequestInit) => {
+		const token = new Headers(init?.headers).get('Authorization')
+		return token === `Bearer ${TOKEN}` ? oldTicket : Promise.resolve(Response.json({ ticket: 'new-ticket' }))
+	})
+
+	subscribeTerminalStats('strip', 'HYPE', () => {})
+	pb.authStore.save(nextToken, null)
+	resolveOldTicket(Response.json({ ticket: 'old-ticket' }))
+	await flush()
+
+	expect(FakeSocket.instances).toHaveLength(1)
+	expect(FakeSocket.instances[0].url).toContain('ticket=new-ticket')
 })

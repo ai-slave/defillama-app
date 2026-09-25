@@ -1,4 +1,5 @@
 import { AI_SERVER } from '~/constants'
+import pb from '~/utils/pocketbase'
 
 export interface TerminalBar {
 	time: number
@@ -31,18 +32,18 @@ interface TerminalListener {
 const TICKET_URL = `${AI_SERVER}/terminal/ws-ticket`
 const SOCKET_URL = `${AI_SERVER.replace(/^http/, 'ws')}/terminal/ws`
 const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10_000, 30_000]
+const STALE_AFTER_MS = 60_000
 
 const listeners = new Map<string, TerminalListener>()
 
-let ticketFetch: typeof fetch = (input, init) => fetch(input, init)
 let socket: WebSocket | null = null
 let isConnecting = false
 let reconnectAttempt = 0
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-
-export function setTerminalTicketFetch(fetchFn: typeof fetch) {
-	ticketFetch = fetchFn
-}
+let staleTimer: ReturnType<typeof setTimeout> | null = null
+const currentSession = () => (pb.authStore.isValid ? (pb.authStore.record?.id ?? pb.authStore.token) : null)
+let authSession = currentSession()
+let sessionVersion = 0
 
 const barsKey = (symbol: string, resolution: string) => JSON.stringify(['bars', symbol, resolution])
 const statsKey = (symbol: string) => JSON.stringify(['stats', symbol])
@@ -67,19 +68,41 @@ function scheduleReconnect() {
 	}, delay)
 }
 
+function clearStale() {
+	if (staleTimer) clearTimeout(staleTimer)
+	staleTimer = null
+}
+
+function armStale(current: WebSocket) {
+	clearStale()
+	staleTimer = setTimeout(() => drop(current), STALE_AFTER_MS)
+}
+
+function drop(current: WebSocket) {
+	if (socket !== current) return
+	socket = null
+	clearStale()
+	current.close()
+	scheduleReconnect()
+}
+
 async function connect() {
-	if (socket || isConnecting || listeners.size === 0) return
+	if (socket || isConnecting || listeners.size === 0 || !pb.authStore.isValid) return
 	isConnecting = true
+	const token = pb.authStore.token
+	const version = sessionVersion
 	try {
-		const response = await ticketFetch(TICKET_URL)
+		const response = await fetch(TICKET_URL, { headers: { Authorization: `Bearer ${token}` } })
 		if (!response.ok) throw new Error(`Terminal ticket ${response.status}`)
 		const { ticket } = (await response.json()) as { ticket: string }
-		if (listeners.size === 0) return
+		if (listeners.size === 0 || version !== sessionVersion || !pb.authStore.isValid) return
 
 		const next = new WebSocket(`${SOCKET_URL}?ticket=${encodeURIComponent(ticket)}`)
 		socket = next
+		armStale(next)
 
 		next.addEventListener('open', () => {
+			if (socket !== next) return
 			reconnectAttempt = 0
 			const sent = new Set<string>()
 			for (const listener of listeners.values()) {
@@ -90,6 +113,8 @@ async function connect() {
 		})
 
 		next.addEventListener('message', (event) => {
+			if (socket !== next) return
+			armStale(next)
 			let payload: { type?: string; symbol?: string; resolution?: string; bar?: unknown; stats?: unknown }
 			try {
 				payload = JSON.parse(event.data)
@@ -110,15 +135,12 @@ async function connect() {
 
 		next.addEventListener('error', () => next.close())
 
-		next.addEventListener('close', () => {
-			if (socket !== next) return
-			socket = null
-			scheduleReconnect()
-		})
+		next.addEventListener('close', () => drop(next))
 	} catch {
-		scheduleReconnect()
+		if (version === sessionVersion) scheduleReconnect()
 	} finally {
 		isConnecting = false
+		if (version !== sessionVersion) void connect()
 	}
 }
 
@@ -191,7 +213,25 @@ export function closeTerminalSocket() {
 	if (reconnectTimer) clearTimeout(reconnectTimer)
 	reconnectTimer = null
 	reconnectAttempt = 0
+	clearStale()
 	const current = socket
 	socket = null
 	current?.close()
 }
+
+if (typeof window !== 'undefined')
+	pb.authStore.onChange(() => {
+		const nextSession = currentSession()
+		if (authSession !== nextSession) {
+			authSession = nextSession
+			sessionVersion += 1
+			if (reconnectTimer) clearTimeout(reconnectTimer)
+			reconnectTimer = null
+			reconnectAttempt = 0
+			clearStale()
+			const current = socket
+			socket = null
+			current?.close()
+		}
+		void connect()
+	})

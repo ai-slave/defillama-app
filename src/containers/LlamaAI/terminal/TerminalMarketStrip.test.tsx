@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import pb from '~/utils/pocketbase'
 import {
 	formatCountdown,
 	formatDayChange,
@@ -14,7 +15,7 @@ import {
 	secondsToNextFunding,
 	TerminalMarketStrip
 } from './TerminalMarketStrip'
-import { closeTerminalSocket, setTerminalTicketFetch } from './terminalSocket'
+import { closeTerminalSocket } from './terminalSocket'
 
 /**
  * Hyperliquid pays funding at every UTC top of the hour. A countdown that shows 60:00 or a
@@ -84,7 +85,8 @@ async function renderStrip(symbol: string, fetchFn: typeof fetch, until: (text: 
 beforeEach(() => {
 	FakeSocket.instances = []
 	vi.stubGlobal('WebSocket', FakeSocket)
-	setTerminalTicketFetch((async () => Response.json({ ticket: 't' })) as typeof fetch)
+	pb.authStore.save(`e30.${btoa(JSON.stringify({ id: 'user', exp: 4_102_444_800 }))}.signature`, null)
+	vi.stubGlobal('fetch', async () => Response.json({ ticket: 't' }))
 })
 
 afterEach(() => {

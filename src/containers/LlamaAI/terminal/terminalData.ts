@@ -1,15 +1,10 @@
 import { AI_SERVER } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
-import {
-	setTerminalTicketFetch,
-	subscribeTerminalBars,
-	type TerminalBar,
-	unsubscribeTerminalListener
-} from './terminalSocket'
+import { subscribeTerminalBars, type TerminalBar, unsubscribeTerminalListener } from './terminalSocket'
 import type { TerminalWidget } from './terminalViewStore'
 
 const TERMINAL_API = `${AI_SERVER}/terminal`
-const UDF_BUNDLE_SRC = '/datafeeds/bundle.js'
+const UDF_BUNDLE_SRC = '/assets/datafeeds/bundle.js'
 const CACHE_TTL_MS = 600_000
 
 export const FUNDAMENTAL_PREFIX = 'DEFILLAMA:'
@@ -474,7 +469,6 @@ export async function createTerminalDatafeed(options: { fetchFn: typeof fetch })
 	// requester. The base class it extends is the one that accepts an IRequester.
 	const DatafeedBase = Object.getPrototypeOf(udfDatafeed) as TerminalDatafeedBase
 
-	setTerminalTicketFetch(options.fetchFn)
 	void reloadTerminalLayers(options.fetchFn)
 
 	class LlamaTerminalDatafeed extends DatafeedBase {
