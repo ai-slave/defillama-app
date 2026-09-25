@@ -64,11 +64,13 @@ export const getStaticProps = withPerformanceLogging(
 			rwaPlatformsIndex: metadataCache.rwaPlatformsIndex
 		})
 
-		if (!props) {
+		const meta = platformsIndex.platforms[platformSlug] ?? null
+
+		// Platforms-sheet rows with no spot assets and no live perps markets (e.g. an unpublished perps adapter) render blank.
+		// isPerpsVenue comes from the index so a failed perps fetch can't 404 a live venue.
+		if (!props || (props.assets.length === 0 && !meta?.isPerpsVenue)) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
-
-		const meta = platformsIndex.platforms[platformSlug] ?? null
 		const platformPage = meta ? { meta } : null
 
 		return {

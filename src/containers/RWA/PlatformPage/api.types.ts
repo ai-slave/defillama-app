@@ -91,6 +91,8 @@ export interface RWAPlatformMeta {
 	// surface shows. Optional: artifacts published before the field existed omit it.
 	activeAum?: number
 	estAnnualRevenueUsd: number | null
+	// Derived server-side from live perps markets. Optional: older artifacts omit it.
+	isPerpsVenue?: boolean
 }
 
 // Per-protocol issued RWA mcap, keyed by DefiLlama protocol slug. Distinct from the platform
