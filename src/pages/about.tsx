@@ -93,6 +93,20 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 			) : null}
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
+				<h2 className="heading-xs">For university students</h2>
+				<hr className="border-subtle" />
+				<p>
+					University students who need DefiLlama for their coursework or research can request free access to our Pro and
+					API plans. To request access, email{' '}
+					<a className="text-link hover:underline" href="mailto:support@defillama.com">
+						support@defillama.com
+					</a>{' '}
+					from your university-issued .edu address, with a brief description of what you’re working on and the name of
+					your university.
+				</p>
+			</Card>
+
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Contact</h2>
 				<hr className="border-subtle" />
 				<p>
