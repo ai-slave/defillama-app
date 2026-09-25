@@ -21,7 +21,6 @@ export const feeRevenueMetrics = {
 			name: 'Fees by Chain',
 			tab: 'Chains',
 			totalTrackedKey: 'chainFees.chains',
-			descriptionIncludes: ['using the chain'],
 			builder: 'chain-native',
 			dataType: 'dailyFees'
 		},
@@ -47,7 +46,6 @@ export const feeRevenueMetrics = {
 			name: 'Revenue by Chain',
 			tab: 'Chains',
 			totalTrackedKey: 'chainRevenue.chains',
-			descriptionIncludes: ['chain collects for itself'],
 			builder: 'chain-native',
 			dataType: 'dailyRevenue'
 		},
@@ -74,7 +72,6 @@ export const feeRevenueMetrics = {
 			name: 'App Fees by Chain',
 			tab: 'Chains',
 			totalTrackedKey: 'fees.chains',
-			descriptionIncludes: ['apps on the chain', 'Excludes', 'gas fees'],
 			builder: 'app-aggregation',
 			dataType: 'dailyAppFees'
 		},
@@ -100,7 +97,6 @@ export const feeRevenueMetrics = {
 			name: 'App Revenue by Chain',
 			tab: 'Chains',
 			totalTrackedKey: 'revenue.chains',
-			descriptionIncludes: ['apps on the chain', 'Excludes', 'gas fees'],
 			builder: 'app-aggregation',
 			dataType: 'dailyAppRevenue'
 		},
@@ -126,7 +122,6 @@ export const feeRevenueMetrics = {
 			name: 'REV by Chain',
 			tab: 'Chains',
 			totalTrackedKey: 'chainFees.chains',
-			descriptionIncludes: ['chain fees and MEV tips'],
 			builder: 'rev'
 		}
 	}

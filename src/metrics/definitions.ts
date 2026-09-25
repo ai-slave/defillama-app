@@ -21,7 +21,6 @@ type FeeRevenueRankingBase = {
 	name: string
 	tab: 'Chains'
 	totalTrackedKey: string
-	descriptionIncludes: ReadonlyArray<string>
 }
 
 export type FeeRevenueRankingSemantics =
