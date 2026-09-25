@@ -11,6 +11,8 @@ import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
+import { disclosedVestingDurationMonths } from './disclosedVesting'
+import { DisclosedVestingChart, formatDisclosedMonths } from './DisclosureDetails'
 import { GradeBadge, GradeChip, ScoreBar } from './grades'
 import { MarketMakerPerformance } from './MarketMakerPerformance'
 import { PerformanceMatrix } from './PerformanceMatrix'
@@ -40,6 +42,7 @@ import type {
 	UtrAssetResponse,
 	UtrChartSummary,
 	UtrCriterionBreakdown,
+	UtrDisclosures,
 	UtrExchangesResponse,
 	UtrLeaderboardRow,
 	UtrScoringConfig
@@ -335,7 +338,8 @@ export function TokenPageLive({
 	exchanges,
 	scoringConfig,
 	iconDataUrl,
-	defillamaDescription
+	defillamaDescription,
+	disclosures
 }: {
 	asset: UtrAssetResponse
 	legacy?: UtrAssetMetrics | null
@@ -343,6 +347,7 @@ export function TokenPageLive({
 	scoringConfig?: UtrScoringConfig | null
 	iconDataUrl?: string | null
 	defillamaDescription?: string | null
+	disclosures?: UtrDisclosures | null
 }) {
 	const axisColor = useChartAxisColor()
 	const [criteriaDrawer, setCriteriaDrawer] = useState<CriteriaDrawerState | null>(null)
@@ -438,7 +443,11 @@ export function TokenPageLive({
 		}
 	]
 	const visibleTokenomicsCards = tokenomicsCards.filter((card) => card.hasData)
+	const disclosedGroups = disclosures?.tokenomicsGroups ?? []
+	const vestingCommentary = disclosures?.vestingActualCommentary ?? null
 	const hasVestingData = hasAnyValue(
+		vestingCommentary,
+		disclosedGroups.length > 0 ? disclosedGroups : null,
 		vestingCriterion?.raw,
 		metrics?.vestingAmountVariancePct,
 		metrics?.vestingTimingVarianceDays,
@@ -1152,8 +1161,14 @@ export function TokenPageLive({
 												{(
 													[
 														['Disclosed TGE Date', 'N/A'],
-														['Disclosed Duration', 'N/A'],
-														['Disclosed Total Groups', 'N/A'],
+														[
+															'Disclosed Duration',
+															formatDisclosedMonths(disclosedVestingDurationMonths(disclosedGroups))
+														],
+														[
+															'Disclosed Total Groups',
+															disclosedGroups.length > 0 ? String(disclosedGroups.length) : 'N/A'
+														],
 														[
 															'Disclosed Max. Supply',
 															legacy?.tokenomics.maxSupply == null
@@ -1168,11 +1183,22 @@ export function TokenPageLive({
 													</div>
 												))}
 											</div>
+											{disclosedGroups.length > 0 ? (
+												<div className="p-4">
+													<DisclosedVestingChart groups={disclosedGroups} />
+												</div>
+											) : null}
 										</div>
 										<div className="flex flex-col border-t border-subtle lg:w-[460px] lg:shrink-0 lg:border-t-0 lg:border-l">
 											<div className="flex flex-1 flex-col gap-2 p-4">
 												<p className="body-sm text-tertiary">Commentary versus actual token vesting</p>
-												<p className="text-xl leading-relaxed text-tertiary">N/A</p>
+												{vestingCommentary ? (
+													<p className="max-h-64 overflow-y-auto body-lg whitespace-pre-line text-secondary">
+														{vestingCommentary}
+													</p>
+												) : (
+													<p className="text-xl leading-relaxed text-tertiary">N/A</p>
+												)}
 												{vestingCriterion ? (
 													<Button
 														type="button"
@@ -1270,6 +1296,7 @@ export function TokenPageLive({
 				state={criteriaDrawer}
 				assetLabel={`${asset.projectName} (${asset.symbol.toUpperCase()})`}
 				lastEditedAt={asset.lastEditedAt}
+				disclosures={disclosures}
 				grading={scoringConfig?.grading}
 				onSelect={(key) => setCriteriaDrawer((current) => (current ? { ...current, activeKey: key } : current))}
 				onClose={() => setCriteriaDrawer(null)}

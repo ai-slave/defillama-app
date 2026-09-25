@@ -3,8 +3,9 @@ import { Drawer } from '~/containers/MarketMakers/Drawer'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { getCriterionDrawerCopy, MARKET_MAKER_MATURITY_EXCEPTION } from './criterionDrawerCopy'
+import { DisclosureDetails } from './DisclosureDetails'
 import { GradeBadge, ScoreBar } from './grades'
-import type { UtrCriterionBreakdown, UtrCriterionDoc, UtrGradingConfig } from './types'
+import type { UtrCriterionBreakdown, UtrCriterionDoc, UtrDisclosures, UtrGradingConfig } from './types'
 
 export type CriteriaDrawerState = {
 	title: string
@@ -43,6 +44,7 @@ export function CriteriaDrawer({
 	state,
 	assetLabel,
 	lastEditedAt,
+	disclosures,
 	grading,
 	onSelect,
 	onClose
@@ -50,6 +52,7 @@ export function CriteriaDrawer({
 	state: CriteriaDrawerState | null
 	assetLabel?: string
 	lastEditedAt?: string | null
+	disclosures?: UtrDisclosures | null
 	grading?: UtrGradingConfig | null
 	onSelect: (key: string) => void
 	onClose: () => void
@@ -166,6 +169,9 @@ export function CriteriaDrawer({
 						</span>
 					</div>
 					{active.note ? <p className="body-lg text-secondary">{active.note}</p> : null}
+					{state.axis === 'disclosure' && disclosures ? (
+						<DisclosureDetails criterionKey={active.key} disclosures={disclosures} />
+					) : null}
 					{doc?.rubric.length ? (
 						<div className="flex flex-col gap-2">
 							<h4 className="label-lg">Scoring Rubric</h4>

@@ -1,5 +1,5 @@
 import type { EChartsOption } from 'echarts'
-import { BarChart, CandlestickChart, LineChart } from 'echarts/charts'
+import { BarChart, CandlestickChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -9,7 +9,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
-echarts.use([LineChart, BarChart, CandlestickChart, GridComponent, TooltipComponent, CanvasRenderer])
+echarts.use([LineChart, BarChart, CandlestickChart, PieChart, GridComponent, TooltipComponent, CanvasRenderer])
 
 export type SimpleSeriesPoint = [number, number]
 

@@ -5,6 +5,7 @@ import {
 	fetchUtrAssetExchanges,
 	fetchUtrAssetResponse,
 	fetchUtrBatchMetrics,
+	fetchUtrDisclosures,
 	fetchUtrScoringConfig
 } from '~/containers/UniversalTokenRating/server'
 import { TokenPageLive } from '~/containers/UniversalTokenRating/TokenPageLive'
@@ -32,16 +33,17 @@ export const getStaticProps = withPerformanceLogging(
 		if (!asset || !/^[a-z0-9-]{1,64}$/.test(asset)) return { notFound: true, revalidate: maxAgeForNext([22]) }
 		const live = await fetchUtrAssetResponse(asset)
 		if (!live) return { notFound: true, revalidate: maxAgeForNext([22]) }
-		const [batch, exchanges, scoringConfig, iconDataUrl, defillamaDescription] = await Promise.all([
+		const [batch, exchanges, scoringConfig, iconDataUrl, defillamaDescription, disclosures] = await Promise.all([
 			live.coingeckoId ? fetchUtrBatchMetrics([live.coingeckoId]) : null,
 			fetchUtrAssetExchanges(asset),
 			fetchUtrScoringConfig(),
 			live.coingeckoId ? fetchIconDataUrl(live.coingeckoId) : null,
-			fetchDefillamaDescription(live.defillamaId)
+			fetchDefillamaDescription(live.defillamaId),
+			fetchUtrDisclosures(live.arcticId)
 		])
 		const legacy = batch?.assets[0] ?? null
 		return {
-			props: { live, legacy, exchanges, scoringConfig, iconDataUrl, defillamaDescription },
+			props: { live, legacy, exchanges, scoringConfig, iconDataUrl, defillamaDescription, disclosures },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -53,7 +55,8 @@ export default function UniversalTokenRatingTokenPage({
 	exchanges,
 	scoringConfig,
 	iconDataUrl,
-	defillamaDescription
+	defillamaDescription,
+	disclosures
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	const name = live.projectName
 	const asset = live.coingeckoId ?? live.arcticId
@@ -71,6 +74,7 @@ export default function UniversalTokenRatingTokenPage({
 				scoringConfig={scoringConfig}
 				iconDataUrl={iconDataUrl}
 				defillamaDescription={defillamaDescription}
+				disclosures={disclosures}
 			/>
 		</Layout>
 	)
