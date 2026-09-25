@@ -118,7 +118,7 @@ import { materializePersistedUserMessage } from '~/containers/LlamaAI/utils/mate
 import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { AI_BALANCE_QUERY_KEY } from '~/containers/Subscription/useTopup'
-import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
+import { isLlamaAIConversationPage, useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
@@ -1216,7 +1216,7 @@ export function AgenticChat({
 				).then((restoredSymbol) => {
 					if (!restoredSymbol) return
 					setTerminalViewOpen(getTerminalViewOpen(), restoredSymbol)
-					if (router.pathname === '/ai/chat/[sessionId]') {
+					if (router.pathname === '/ai/chat/[[...sessionId]]') {
 						void router.replace(chatSessionUrl(targetSessionId, restoredSymbol, window.location.hash), undefined, {
 							scroll: false
 						})
@@ -1695,7 +1695,10 @@ export function AgenticChat({
 				}
 				router.events.on('routeChangeStart', onRouteChangeStart)
 				if (!sharedSession && routeSessionIdRef.current !== currentSessionId) {
-					void router.push(withTerminalView(`/ai/chat/${currentSessionId}`), undefined, { scroll: false })
+					void router.push(withTerminalView(`/ai/chat/${currentSessionId}`), undefined, {
+						shallow: isLlamaAIConversationPage(router.pathname),
+						scroll: false
+					})
 				}
 
 				const buffer = createStreamBuffer()
@@ -1715,7 +1718,10 @@ export function AgenticChat({
 					replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					if (sharedSession) onSharedSessionFork?.(id)
 					else if (ownsSessionNavigation && previousSessionId !== id) {
-						void router.replace(withTerminalView(`/ai/chat/${id}`), undefined, { scroll: false })
+						void router.replace(withTerminalView(`/ai/chat/${id}`), undefined, {
+							shallow: isLlamaAIConversationPage(router.pathname),
+							scroll: false
+						})
 					}
 					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
 						void createSession

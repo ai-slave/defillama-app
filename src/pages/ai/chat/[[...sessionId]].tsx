@@ -1,37 +1,41 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
+import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { setPendingPrompt } from '~/components/LlamaAIFloatingButton'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { withPerformanceLogging } from '~/utils/perf'
 
-export const getStaticProps = withPerformanceLogging('LlamaAi', () => {
-	return {
-		props: {},
-		revalidate: maxAgeForNext([22])
-	}
-})
+export { getServerSideProps } from '~/containers/LlamaAI/server/conversationPage'
 
 function LlamaAIPage() {
 	const router = useRouter()
 	const { user, loaders } = useAuthContext()
 	const signInDialogStore = Ariakit.useDialogStore()
 	const promptParam = typeof router.query.prompt === 'string' ? router.query.prompt.trim() : ''
+	const isSession = Array.isArray(router.query.sessionId) && router.query.sessionId.length === 1
+	const cleanUrl = router.asPath.split(/[?#]/)[0]
+
+	useEffect(() => {
+		if (!router.isReady || !isSession || (!router.query.prompt && !router.query.shareToken)) return
+		const frameId = window.requestAnimationFrame(() => {
+			void router.replace(cleanUrl, undefined, { shallow: true, scroll: false })
+		})
+		return () => window.cancelAnimationFrame(frameId)
+	}, [router, isSession, cleanUrl])
 
 	if (loaders.userLoading || user) return null
 
 	const handleConfirmDeepLinkPrompt = () => {
 		if (!promptParam) return
 		setPendingPrompt(promptParam)
-		void router.replace('/ai/chat', undefined, { shallow: true })
+		void router.replace(cleanUrl, undefined, { shallow: true, scroll: false })
 		signInDialogStore.show()
 	}
 
 	const handleCloseDeepLinkPrompt = () => {
-		void router.replace('/ai/chat', undefined, { shallow: true })
+		void router.replace(cleanUrl, undefined, { shallow: true, scroll: false })
 	}
 
 	return (
@@ -47,7 +51,7 @@ function LlamaAIPage() {
 			</div>
 			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
 			<DeepLinkPromptModal
-				isOpen={!!promptParam}
+				isOpen={!isSession && !!promptParam}
 				prompt={promptParam}
 				onClose={handleCloseDeepLinkPrompt}
 				onConfirm={handleConfirmDeepLinkPrompt}

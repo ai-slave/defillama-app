@@ -11,7 +11,7 @@ const api = vi.hoisted(() => ({
 	copy: vi.fn(),
 	router: {
 		query: {},
-		pathname: '/ai/chat',
+		pathname: '/ai/chat/[[...sessionId]]',
 		asPath: '/ai/chat',
 		isReady: true,
 		push: vi.fn(),
@@ -72,6 +72,7 @@ function startNavigation(url: string) {
 }
 
 async function mount(route: LlamaAIRouteState = { kind: 'chat-new' }) {
+	api.router.pathname = route.kind === 'project' ? '/ai/projects/[id]' : '/ai/chat/[[...sessionId]]'
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -250,7 +251,10 @@ test.each(['chat-new', 'project'] as const)(
 			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
 		)
 		await waitFor(() =>
-			expect(api.router.push).toHaveBeenCalledWith(`/ai/chat/${submittedId()}`, undefined, { scroll: false })
+			expect(api.router.push).toHaveBeenCalledWith(`/ai/chat/${submittedId()}`, undefined, {
+				shallow: kind !== 'project',
+				scroll: false
+			})
 		)
 		await mount({ kind: 'chat-session', sessionId: submittedId() })
 		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('true')
@@ -269,7 +273,10 @@ test.each(['chat-new', 'project'] as const)(
 			)
 		)
 		await waitFor(() =>
-			expect(api.router.replace).toHaveBeenCalledWith('/ai/chat/server-session', undefined, { scroll: false })
+			expect(api.router.replace).toHaveBeenCalledWith('/ai/chat/server-session', undefined, {
+				shallow: true,
+				scroll: false
+			})
 		)
 		expect(api.router.push).toHaveBeenCalledTimes(1)
 	}

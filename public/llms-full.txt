@@ -185,11 +185,11 @@ Common usage examples:
 - [Total Value Lost in Hacks by Protocol](https://defillama.com/hacks/total-value-lost): Net user loss, total value lost in hacks by a protocol Category: Hacks.
 - [Bridges by Volume](https://defillama.com/bridges): Sum of the value of all assets that were bridged through the protocol Category: Bridge.
 - [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
+- [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
+- [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
 - [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
 - [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
 - [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
-- [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
-- [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
 - [Unlocks: Overview](https://defillama.com/unlocks): Overview of token emissions by protocol Category: Unlocks.
 - [Unlocks: Calendar](https://defillama.com/unlocks/calendar): Upcoming total token emissions by date Category: Unlocks.
 - [Recently Listed Protocols](https://defillama.com/recent): List of recently listed protocols Category: Others.

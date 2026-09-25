@@ -84,7 +84,8 @@ export function RouteProgressIndicator() {
 			startTrickleTimer()
 		}
 
-		const startProgress = () => {
+		const startProgress = (_url: string, { shallow }: { shallow: boolean }) => {
+			if (shallow) return
 			pendingRoutesRef.current += 1
 			clearCompleteTimers()
 
@@ -100,7 +101,8 @@ export function RouteProgressIndicator() {
 			}
 		}
 
-		const completeProgress = () => {
+		const completeProgress = (_url: string, { shallow }: { shallow: boolean }) => {
+			if (shallow) return
 			pendingRoutesRef.current = Math.max(0, pendingRoutesRef.current - 1)
 			if (pendingRoutesRef.current > 0) return
 
@@ -121,6 +123,10 @@ export function RouteProgressIndicator() {
 			}, COMPLETE_HOLD_MS)
 		}
 
+		const handleRouteError = (_error: Error, url: string, options: { shallow: boolean }) => {
+			completeProgress(url, options)
+		}
+
 		const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 		const applyMotionPreference = () => {
 			reduceMotionRef.current = mediaQuery.matches
@@ -136,7 +142,7 @@ export function RouteProgressIndicator() {
 		mediaQuery.addEventListener('change', applyMotionPreference)
 		Router.events.on('routeChangeStart', startProgress)
 		Router.events.on('routeChangeComplete', completeProgress)
-		Router.events.on('routeChangeError', completeProgress)
+		Router.events.on('routeChangeError', handleRouteError)
 
 		return () => {
 			mediaQuery.removeEventListener('change', applyMotionPreference)
@@ -145,7 +151,7 @@ export function RouteProgressIndicator() {
 			clearTrickleTimer()
 			Router.events.off('routeChangeStart', startProgress)
 			Router.events.off('routeChangeComplete', completeProgress)
-			Router.events.off('routeChangeError', completeProgress)
+			Router.events.off('routeChangeError', handleRouteError)
 		}
 	}, [])
 

@@ -13,7 +13,13 @@ vi.mock('~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads', () =>
 	LlamaAIAnimationPreloads: () => null
 }))
 vi.mock('next/router', () => ({
-	useRouter: () => ({ isReady: true, pathname: '/ai/chat', asPath: '/ai/chat', query: {}, push: vi.fn() })
+	useRouter: () => ({
+		isReady: true,
+		pathname: '/ai/chat/[[...sessionId]]',
+		asPath: '/ai/chat',
+		query: {},
+		push: vi.fn()
+	})
 }))
 vi.mock('~/utils/async', () => ({ fetchJson: () => new Promise(() => {}) }))
 

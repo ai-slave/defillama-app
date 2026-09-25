@@ -708,6 +708,24 @@
       "oldName": "Chains"
     },
     {
+      "name": "Raises: Overview",
+      "route": "/raises",
+      "category": "Raises",
+      "description": "Total amount of capital raised by a project",
+      "totalTrackedKey": "raises.total",
+      "oldCategory": "Raises",
+      "oldName": "Overview"
+    },
+    {
+      "name": "Investors",
+      "route": "/raises/investors",
+      "category": "Raises",
+      "description": "List of investors that have invested in a project",
+      "totalTrackedKey": "raises.investors",
+      "oldCategory": "Raises",
+      "oldName": "Investors"
+    },
+    {
       "name": "Treasuries",
       "route": "/treasuries",
       "category": "Treasury",
@@ -730,24 +748,6 @@
       "description": "Value of tokens owned by a protocol, excluding its own token",
       "totalTrackedKey": "treasury.protocols",
       "tab": "Protocols"
-    },
-    {
-      "name": "Raises: Overview",
-      "route": "/raises",
-      "category": "Raises",
-      "description": "Total amount of capital raised by a project",
-      "totalTrackedKey": "raises.total",
-      "oldCategory": "Raises",
-      "oldName": "Overview"
-    },
-    {
-      "name": "Investors",
-      "route": "/raises/investors",
-      "category": "Raises",
-      "description": "List of investors that have invested in a project",
-      "totalTrackedKey": "raises.investors",
-      "oldCategory": "Raises",
-      "oldName": "Investors"
     },
     {
       "name": "Unlocks: Overview",
