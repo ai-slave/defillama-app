@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
@@ -28,21 +28,17 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		return migrateChartConfig(chartConfig, classified)
 	}, [chartConfig, classified])
 
-	// Read by the migration effect below, which must run for a new result without re-running when the
-	// config or callback identity changes.
-	const migrationCtxRef = useRef({ chartConfig, classified, onChartConfigChange })
-	useLayoutEffect(() => {
-		migrationCtxRef.current = { chartConfig, classified, onChartConfigChange }
-	})
-	useEffect(() => {
-		const ctx = migrationCtxRef.current
-		if (!ctx.chartConfig) {
-			ctx.onChartConfigChange(defaultChartConfig(ctx.classified))
+	const migrateResultConfig = useEffectEvent(() => {
+		if (!chartConfig) {
+			onChartConfigChange(defaultChartConfig(classified))
 			return
 		}
-		const migrated = migrateChartConfig(ctx.chartConfig, ctx.classified)
-		if (migrated !== ctx.chartConfig) ctx.onChartConfigChange(migrated)
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- resultKey is the trigger: the stored config is migrated once per new result set.
+		const migrated = migrateChartConfig(chartConfig, classified)
+		if (migrated !== chartConfig) onChartConfigChange(migrated)
+	})
+	useEffect(() => {
+		migrateResultConfig()
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- resultKey intentionally triggers migration on column-signature changes without being read here.
 	}, [resultKey])
 
 	const hasNumeric = classified.some((c) => c.coarse === 'number')

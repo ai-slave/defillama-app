@@ -69,7 +69,7 @@ const EMPTY_ITEMS: Array<IconsRowItem> = []
 
 export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps) {
 	const mainWrapEl = useRef<HTMLDivElement>(null)
-	const { width: mainWrapWidth } = useResize(mainWrapEl)
+	const { width: mainWrapWidth, ref: measureRow } = useResize(mainWrapEl)
 
 	const { visibleItems, hiddenItems } = useMemo(() => {
 		const keyedItems = keyedOccurrences(items, (item) => JSON.stringify([item.kind, item.label, item.href]))
@@ -94,7 +94,7 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 	return (
 		<div
 			className={`flex items-center ${align === 'start' ? 'justify-start' : 'justify-end'} overflow-hidden bg-none`}
-			ref={mainWrapEl}
+			ref={measureRow}
 		>
 			{visibleItems.map(({ item, key }) => (
 				<IconItemLogo key={key} item={item} />

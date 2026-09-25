@@ -143,7 +143,7 @@ function PerkChips({ perks }: { perks: Array<string> }) {
 
 function PerksValue({ perks }: { perks: Array<string> }) {
 	const rowRef = useRef<HTMLDivElement>(null)
-	const { width } = useResize(rowRef)
+	const { width, ref: measureRow } = useResize(rowRef)
 	// One chip until the row has been measured, which is also what SSR renders.
 	const [visible, setVisible] = useState(1)
 
@@ -167,7 +167,7 @@ function PerksValue({ perks }: { perks: Array<string> }) {
 	if (perks.length === 0) return <EmptyValue />
 	const hidden = perks.slice(visible)
 	return (
-		<div ref={rowRef} className="flex flex-nowrap items-center gap-1 overflow-hidden">
+		<div ref={measureRow} className="flex flex-nowrap items-center gap-1 overflow-hidden">
 			<PerkChips perks={perks.slice(0, visible)} />
 			{hidden.length > 0 ? (
 				<Hovercard

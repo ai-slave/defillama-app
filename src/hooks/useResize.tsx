@@ -1,26 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
-export const useResize = (myRef: React.RefObject<HTMLDivElement | null>) => {
-	const [width, setWidth] = useState<number>(0)
-	const [height, setHeight] = useState<number>(0)
+export const useResize = (elementRef: React.RefObject<HTMLDivElement | null>) => {
+	const [width, setWidth] = useState(0)
+	const ref = useCallback(
+		(element: HTMLDivElement | null) => {
+			elementRef.current = element
+			if (!element) return
 
-	useEffect(() => {
-		const handleResize = () => {
-			// Ref objects are stable - reading .current always gets the latest value
-			if (myRef.current) {
-				setWidth(myRef.current.offsetWidth)
-				setHeight(myRef.current.offsetHeight)
+			const measure = () => setWidth(element.offsetWidth)
+			measure()
+			const observer = new ResizeObserver(measure)
+			observer.observe(element, { box: 'border-box' })
+			return () => {
+				observer.disconnect()
+				elementRef.current = null
 			}
-		}
+		},
+		[elementRef]
+	)
 
-		handleResize()
-
-		window.addEventListener('resize', handleResize)
-
-		return () => {
-			window.removeEventListener('resize', handleResize)
-		}
-	}, [myRef])
-
-	return { width, height }
+	return { width, ref }
 }

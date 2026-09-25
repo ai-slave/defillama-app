@@ -3,8 +3,7 @@ import { useMedia } from './useMedia'
 /**
  * Returns a width value that only changes when crossing breakpoint boundaries.
  *
- * Unlike useWindowSize which re-renders on every (debounced) pixel change,
- * this hook only triggers re-renders when the viewport crosses a breakpoint threshold.
+ * Pixel changes within the same breakpoint do not trigger re-renders.
  *
  * Returns the minimum width of the current breakpoint range:
  * - 1536 for 2xl (>= 1536px)
@@ -17,11 +16,6 @@ import { useMedia } from './useMedia'
  *
  * @example
  * ```tsx
- * // Before (re-renders on every debounced resize)
- * const windowSize = useWindowSize()
- * const order = windowSize.width > 1024 ? desktopOrder : mobileOrder
- *
- * // After (re-renders only when crossing 1024px boundary)
  * const width = useBreakpointWidth()
  * const order = width > 1024 ? desktopOrder : mobileOrder
  * ```
