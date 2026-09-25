@@ -141,8 +141,10 @@ test('a failed toggle preserves other alert changes and allows retry without dup
 		first.focus()
 		first.click()
 	})
-	await settle(() => expect(first.getAttribute('aria-disabled')).toBe('true'))
-	expect(first.getAttribute('aria-checked')).toBe('false')
+	await settle(() => {
+		expect(first.getAttribute('aria-disabled')).toBe('true')
+		expect(first.getAttribute('aria-checked')).toBe('false')
+	})
 	expect(document.activeElement).toBe(first)
 	await act(async () => first.click())
 	expect(patchCount).toBe(1)
