@@ -122,7 +122,9 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			className={clsx(
 				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-research-heading/95 p-3.75 text-on-brand transition-transform duration-500 ease-in-out',
 				'translate-y-full',
-				!isMobile && 'md:group-hover:translate-y-0'
+				!isMobile && 'md:group-hover:translate-y-0',
+				// Clicks fall through to the sibling slide link; only the PDF link opts back in.
+				addOverlayLink && 'pointer-events-none'
 			)}
 		>
 			<p className="my-3 line-clamp-4 text-[11px] leading-[150%] font-normal lg:text-[11px]">
@@ -139,7 +141,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="w-full rounded-sm bg-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-research-heading transition-opacity hover:opacity-90"
+							className="pointer-events-auto w-full rounded-sm bg-research-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-research-heading transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -189,15 +191,6 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 		</>
 	)
 
-	const inner = (
-		<>
-			{fades}
-			{imageBlock}
-			{sponsorBadge}
-			{overlay}
-		</>
-	)
-
 	return (
 		<div
 			className={clsx(
@@ -205,13 +198,12 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				'rounded-xl'
 			)}
 		>
-			{addOverlayLink ? (
-				<Link href={href} className="block size-full">
-					{inner}
-				</Link>
-			) : (
-				inner
-			)}
+			{fades}
+			{imageBlock}
+			{sponsorBadge}
+			{/* Sibling of the overlay, not its parent, so the PDF anchor is never nested inside another anchor. */}
+			{addOverlayLink ? <Link href={href} aria-label={article.title} className="absolute inset-0" /> : null}
+			{overlay}
 		</div>
 	)
 }
