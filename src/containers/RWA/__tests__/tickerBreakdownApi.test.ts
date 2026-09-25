@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { rwaAssetBreakdown } from '~/containers/RWA/server/api'
-import {
-	buildAssetBreakdownUrl,
-	normalizeAssetBreakdownRows,
-	parseAssetBreakdownRequest
-} from '~/pages/api/public/rwa/asset-breakdown'
+import { parseAssetBreakdownRequest, rwaAssetBreakdown } from '~/containers/RWA/server/api'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const mocks = vi.hoisted(() => ({
@@ -135,12 +130,10 @@ describe('parseAssetBreakdownRequest', () => {
 
 describe('rwaAssetBreakdown', () => {
 	test('returns serialized normalized rows for the requested metric', async () => {
-		mocks.fetchJson.mockResolvedValue({
-			onChainMcap: [
-				{ timestamp: 1, Alpha: 10 },
-				{ timestamp: 2, Alpha: 20 }
-			]
-		})
+		mocks.fetchJson.mockResolvedValue([
+			{ timestamp: 1, Alpha: 10 },
+			{ timestamp: 2, Alpha: 20 }
+		])
 
 		const result = await rwaAssetBreakdown.handle({
 			method: 'GET',
@@ -166,10 +159,11 @@ describe('rwaAssetBreakdown', () => {
 	})
 
 	test('subtracts bridge rows for the excluded DeFi TVL cache variant', async () => {
-		mocks.fetchJson.mockResolvedValue({
-			defiActiveTvl: [{ timestamp: 3, Alpha: 20, Beta: 5 }],
-			bridgeTvl: [{ timestamp: 3, Alpha: 7 }]
-		})
+		mocks.fetchJson.mockImplementation((url: string) =>
+			Promise.resolve(
+				url.endsWith('key=bridgeTvl') ? [{ timestamp: 3, Alpha: 7 }] : [{ timestamp: 3, Alpha: 20, Beta: 5 }]
+			)
+		)
 
 		const result = await rwaAssetBreakdown.handle({
 			method: 'GET',
@@ -184,45 +178,5 @@ describe('rwaAssetBreakdown', () => {
 		})
 
 		expect(resultBody(result)).toEqual([{ timestamp: 3000, Alpha: 13, Beta: 5 }])
-	})
-})
-
-describe('buildAssetBreakdownUrl', () => {
-	test('forwards both inclusion flags to the upstream asset-breakdown endpoint', () => {
-		expect(
-			buildAssetBreakdownUrl({
-				target: { kind: 'category', slug: 'rwa-yield-wrapper' },
-				key: 'defiActiveTvl',
-				includeStablecoin: false,
-				includeGovernance: true,
-				includeBridgeTvl: true
-			})
-		).toContain('/chart/category/rwa-yield-wrapper/asset-breakdown?includeStablecoin=false&includeGovernance=true')
-	})
-
-	test('uses the category asset-breakdown endpoint for other-rwas category data', () => {
-		expect(
-			buildAssetBreakdownUrl({
-				target: { kind: 'category', slug: 'other-rwas' },
-				key: 'activeMcap',
-				includeStablecoin: true,
-				includeGovernance: true,
-				includeBridgeTvl: true
-			})
-		).toContain('/chart/category/other-rwas/asset-breakdown?includeStablecoin=true&includeGovernance=true')
-	})
-})
-
-describe('normalizeAssetBreakdownRows', () => {
-	test('normalizes timestamps from the ascending API response', () => {
-		expect(
-			normalizeAssetBreakdownRows([
-				{ timestamp: 1, alpha: 10 },
-				{ timestamp: 2, alpha: 20 }
-			])
-		).toEqual([
-			{ timestamp: 1000, alpha: 10 },
-			{ timestamp: 2000, alpha: 20 }
-		])
 	})
 })

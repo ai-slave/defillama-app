@@ -11,7 +11,6 @@ import type {
 	IRWABreakdownChartResponse,
 	IRWAFlowGroupAggregateResponse,
 	IRWAFlowOverviewAggregateResponse,
-	IRWAFlowAssetBreakdownRow,
 	IRWAFlowOverviewRequest,
 	IRWAFlowOverviewSplitPoint,
 	IRWAFlowSummaryResponse,
@@ -27,15 +26,22 @@ export function rwaUnixSecondsToMilliseconds(ts: number): number {
 	return ts * 1e3
 }
 
-function assertNever(value: never): never {
-	throw new Error(`Unexpected value: ${String(value)}`)
-}
-
 /**
  * Fetch current active TVL values for RWA projects.
  */
 export async function fetchRWAActiveTVLs(): Promise<Array<IFetchedRWAProject>> {
 	return fetchJson<Array<IFetchedRWAProject>>(`${RWA_SERVER_URL}/current`)
+}
+
+/**
+ * Fetch the listing view of the current RWA rows, the fields the RWA pages read.
+ * ProDashboard keeps fetchRWAActiveTVLs: its asset picker reads coingeckoId, which the listing leaves out.
+ */
+export async function fetchRWACurrentListing(): Promise<Array<IFetchedRWAProject>> {
+	const rows = await fetchJson<Array<IFetchedRWAProject>>(`${RWA_SERVER_URL}/current?lite=true`)
+	// The listing leaves out empty values. The row type requires the first three, and the pages read
+	// a missing bridgeTvlBreakdown as an unknown bridge split rather than none.
+	return rows.map((row) => ({ price: null, onChainMcap: {}, defiActiveTvl: {}, bridgeTvlBreakdown: {}, ...row }))
 }
 
 /**
@@ -117,17 +123,6 @@ export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowGroupAg
 	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
 }
 
-export async function fetchRWAFlowAssetBreakdown(
-	target: RWAAssetChartTarget
-): Promise<Array<IRWAFlowAssetBreakdownRow>> {
-	if (target.kind === 'all') {
-		return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(`${RWA_SERVER_URL}/flows/asset-breakdown`)
-	}
-	return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(
-		`${RWA_SERVER_URL}/flows/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
-	)
-}
-
 // This protocol's OWN issued RWA mcap history, same bare [unixSec, usd] shape. Server-side the
 // series is summed over the assets the protocol is credited with issuing, so a child reports its
 // own product rather than the parent platform's whole book.
@@ -144,7 +139,7 @@ export async function fetchRWAProtocolMcapChart(protocolSlug: string): Promise<A
 export async function fetchRWAPlatformAumChart(platformSlug: string): Promise<Array<[number, number]>> {
 	const rows = await fetchJson<IRWABreakdownChartResponse>(
 		`${RWA_SERVER_URL}/chart/platform-breakdown?key=activeMcap&includeStablecoin=true`
-	).then(normalizeRWABreakdownChartRows)
+	).then(rwaRowsInMilliseconds)
 	const wantedSlug = rwaSlug(platformSlug)
 	// Breakdown columns are platform display names, so cache the slug test per column.
 	const columnMatches = new Map<string, boolean>()
@@ -177,40 +172,69 @@ export async function fetchRWAPlatformAumChart(platformSlug: string): Promise<Ar
 	return firstNonZero > 0 ? series.slice(firstNonZero) : series
 }
 
-export async function fetchRWAChartDataByAsset({
-	target,
-	includeStablecoins,
-	includeGovernance
-}: {
+type RWAAssetBreakdownScope = {
 	target: RWAAssetChartTarget
 	includeStablecoins: boolean
 	includeGovernance: boolean
-}): Promise<IRWAChartDataByAsset> {
-	let chartUrl = `${RWA_SERVER_URL}/chart/chain/all`
-	switch (target.kind) {
-		case 'all':
-			break
-		case 'chain':
-			chartUrl = `${RWA_SERVER_URL}/chart/chain/${target.slug}`
-			break
-		case 'category':
-			chartUrl = `${RWA_SERVER_URL}/chart/category/${target.slug}`
-			break
-		case 'platform':
-			chartUrl = `${RWA_SERVER_URL}/chart/platform/${target.slug}`
-			break
-		case 'assetGroup':
-			chartUrl = `${RWA_SERVER_URL}/chart/assetGroup/${target.slug}`
-			break
-		default:
-			assertNever(target)
-	}
+}
 
+/**
+ * The route of a scope's per-asset history, relative to RWA_SERVER_URL. Every asset is the all-chains file.
+ */
+export function buildRWAAssetBreakdownPath({
+	target,
+	includeStablecoins,
+	includeGovernance
+}: RWAAssetBreakdownScope): string {
+	const scope = target.kind === 'all' ? 'chain/all' : `${target.kind}/${encodeURIComponent(rwaSlug(target.slug))}`
 	const searchParams = new URLSearchParams({
 		includeStablecoin: String(includeStablecoins),
 		includeGovernance: String(includeGovernance)
 	})
-	return fetchJson<IRWAChartDataByAsset>(`${chartUrl}/asset-breakdown?${searchParams.toString()}`)
+	return `/chart/${scope}/asset-breakdown?${searchParams.toString()}`
+}
+
+/**
+ * Fetch a scope's per-asset history for all four metrics at once.
+ */
+export async function fetchRWAChartDataByAsset(scope: RWAAssetBreakdownScope): Promise<IRWAChartDataByAsset> {
+	return fetchJson<IRWAChartDataByAsset>(`${RWA_SERVER_URL}${buildRWAAssetBreakdownPath(scope)}`)
+}
+
+function fetchRWAAssetBreakdownMetric(
+	path: string,
+	metric: RWAChartMetricKey | 'bridgeTvl',
+	timeout?: number
+): Promise<IRWAChartMetricRows> {
+	return fetchJson<IRWAChartMetricRows>(`${RWA_SERVER_URL}${path}&key=${metric}`, { timeout })
+}
+
+// DeFi TVL without its bridge part is the only metric read as two series and subtracted.
+export function leavesOutBridge(metric: RWAChartMetricKey, includeBridgeTvl: boolean): boolean {
+	return metric === 'defiActiveTvl' && !includeBridgeTvl
+}
+
+/**
+ * Fetch one metric of a scope's per-asset history, timestamps in unix seconds as served.
+ * With bridge TVL left out, DeFi TVL is read with its bridge portion and the two are subtracted.
+ */
+export async function fetchRWAAssetBreakdownRows({
+	metric,
+	includeBridgeTvl = true,
+	timeout,
+	...scope
+}: RWAAssetBreakdownScope & {
+	metric: RWAChartMetricKey
+	includeBridgeTvl?: boolean
+	timeout?: number
+}): Promise<IRWAChartMetricRows> {
+	const path = buildRWAAssetBreakdownPath(scope)
+	if (!leavesOutBridge(metric, includeBridgeTvl)) return fetchRWAAssetBreakdownMetric(path, metric, timeout)
+	const [defiRows, bridgeRows] = await Promise.all([
+		fetchRWAAssetBreakdownMetric(path, 'defiActiveTvl', timeout),
+		fetchRWAAssetBreakdownMetric(path, 'bridgeTvl', timeout)
+	])
+	return subtractBridgeFromMetricRows(defiRows, bridgeRows)
 }
 
 export async function fetchRWAChartMetricDataByAsset({
@@ -226,10 +250,11 @@ export async function fetchRWAChartMetricDataByAsset({
 	includeGovernance: boolean
 	includeBridgeTvl?: boolean
 }): Promise<IRWAChartMetricRows | null> {
-	return fetchRWAChartDataByAsset({ target, includeStablecoins, includeGovernance })
-		.then((data) => normalizeRWAChartMetricRows(data, metric, includeBridgeTvl))
+	return fetchRWAAssetBreakdownRows({ target, metric, includeStablecoins, includeGovernance, includeBridgeTvl })
+		.then(rwaRowsInMilliseconds)
 		.catch((error) => {
-			console.error(`Failed to fetch RWA ${metric} chart data by asset:`, error)
+			const scope = target.kind === 'all' ? 'every asset' : `${target.kind} ${target.slug}`
+			console.error(`Failed to fetch the RWA ${metric} history of ${scope}:`, error)
 			return null
 		})
 }
@@ -266,14 +291,14 @@ export function normalizeRWAChartMetricRows(
 	metric: RWAChartMetricKey,
 	includeBridgeTvl = true
 ): IRWAChartMetricRows {
-	const rows =
-		metric === 'defiActiveTvl' && !includeBridgeTvl
-			? subtractBridgeFromMetricRows(data.defiActiveTvl, data.bridgeTvl)
-			: data[metric]
-	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
+	const rows = leavesOutBridge(metric, includeBridgeTvl)
+		? subtractBridgeFromMetricRows(data.defiActiveTvl, data.bridgeTvl)
+		: data[metric]
+	return rwaRowsInMilliseconds(rows)
 }
 
-function normalizeRWABreakdownChartRows(rows: IRWABreakdownChartResponse): IRWABreakdownChartResponse {
+/** Chart rows with the API's unix-second timestamps turned into milliseconds. */
+export function rwaRowsInMilliseconds<T extends { timestamp: number }>(rows: Array<T>): Array<T> {
 	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
 }
 
@@ -290,7 +315,7 @@ export async function fetchRWAChainBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/chain-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then(normalizeRWABreakdownChartRows)
+		.then(rwaRowsInMilliseconds)
 		.catch((error) => {
 			console.error('Failed to fetch RWA chain breakdown chart data:', error)
 			return null
@@ -310,7 +335,7 @@ export async function fetchRWACategoryBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/category-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then(normalizeRWABreakdownChartRows)
+		.then(rwaRowsInMilliseconds)
 		.catch((error) => {
 			console.error('Failed to fetch RWA category breakdown chart data:', error)
 			return null
@@ -330,7 +355,7 @@ export async function fetchRWAPlatformBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/platform-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then(normalizeRWABreakdownChartRows)
+		.then(rwaRowsInMilliseconds)
 		.catch((error) => {
 			console.error('Failed to fetch RWA platform breakdown chart data:', error)
 			return null
@@ -350,7 +375,7 @@ export async function fetchRWAAssetGroupBreakdownChartData(
 	const qs = searchParams.toString()
 	const url = `${RWA_SERVER_URL}/chart/assetGroup-breakdown${qs ? `?${qs}` : ''}`
 	return fetchJson<IRWABreakdownChartResponse>(url)
-		.then(normalizeRWABreakdownChartRows)
+		.then(rwaRowsInMilliseconds)
 		.catch((error) => {
 			console.error('Failed to fetch RWA asset-group breakdown chart data:', error)
 			return null
@@ -362,7 +387,7 @@ export async function fetchRWAAssetGroupBreakdownChartData(
  */
 export async function fetchRWAAssetChartData(assetId: string): Promise<IRWAAssetData['chartDataset']> {
 	const encodedAssetId = encodeURIComponent(assetId)
-	return fetchJson<Array<IRWAAssetChartApiRow>>(`${RWA_SERVER_URL}/chart/asset/${encodedAssetId}`)
+	return fetchJson<Array<IRWAAssetChartApiRow>>(`${RWA_SERVER_URL}/chart/asset/${encodedAssetId}?excludeChains=true`)
 		.then(buildRWAAssetChartDataset)
 		.catch((error) => {
 			console.error('Failed to fetch RWA asset chart data:', error)

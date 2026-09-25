@@ -3,15 +3,16 @@ import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { IRWAList } from '~/utils/metadata/types'
 import {
-	fetchRWAActiveTVLs,
 	fetchRWAAssetGroupBreakdownChartData,
 	fetchRWAChainBreakdownChartData,
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
 	fetchRWAStats,
 	fetchRWAChartDataByAsset,
+	fetchRWAChartMetricDataByAsset,
 	fetchRWAAssetDataById,
 	fetchRWAAssetChartData,
+	fetchRWACurrentListing,
 	normalizeRWAChartMetricRows
 } from './api'
 import type {
@@ -129,15 +130,13 @@ async function buildInitialChainChartDataset({
 	const chains = rankRwaChains(assets, metric)
 	const histories = await Promise.all(
 		chains.map(async (chain) => {
-			const data = await fetchRWAChartDataByAsset({
+			const rows = await fetchRWAChartMetricDataByAsset({
 				target: { kind: 'chain', slug: rwaSlug(chain) },
+				metric,
 				includeStablecoins: true,
 				includeGovernance: true
-			}).catch((error) => {
-				console.error(`Failed to prefetch RWA chart data for chain ${chain}:`, error)
-				return null
 			})
-			return data ? { chain, rows: normalizeRWAChartMetricRows(data, metric) } : null
+			return rows ? { chain, rows } : null
 		})
 	)
 	return foldRwaChainSeries({
@@ -215,7 +214,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			Array<IRWAPerpsMarket>,
 			IRWAChartDataByAsset | null | undefined
 		] = await Promise.all([
-			fetchRWAActiveTVLs(),
+			fetchRWACurrentListing(),
 			fetchRWAPerpsCurrent(true).catch(() => []),
 			// Both scope flags on, or toggling stablecoins or governance in blanks every change.
 			selectedPlatform

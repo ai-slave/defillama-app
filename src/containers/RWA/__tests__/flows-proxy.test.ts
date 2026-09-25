@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { fetchRWAFlowAssetBreakdown, fetchRWAFlowsAssetGroup, fetchRWAFlowsOverview } from '../api'
+import { fetchRWAFlowsAssetGroup, fetchRWAFlowsOverview } from '../api'
 import {
 	useRWAAssetFlows,
 	useRWAFlowAssetBreakdown,
@@ -216,23 +216,19 @@ describe('RWA flow proxy mapping', () => {
 })
 
 describe('RWA flow server fetchers', () => {
-	test('matches the retained aggregate and asset-breakdown API routes', async () => {
+	test('matches the retained aggregate API routes', async () => {
 		await fetchRWAFlowsOverview({
 			splitBy: 'assetGroup',
 			includeStablecoin: false,
 			includeGovernance: true
 		})
 		await fetchRWAFlowsAssetGroup('Treasury Funds')
-		await fetchRWAFlowAssetBreakdown({ kind: 'all' })
-		await fetchRWAFlowAssetBreakdown({ kind: 'assetGroup', slug: 'Treasury Funds' })
 
 		expect(fetchJsonMock.mock.calls.map(([url]) => url)).toEqual([
 			expect.stringMatching(
 				/\/rwa\/flows\/overview\?splitBy=assetGroup&includeStablecoin=false&includeGovernance=true$/
 			),
-			expect.stringMatching(/\/rwa\/flows\/assetGroup\/Treasury%20Funds$/),
-			expect.stringMatching(/\/rwa\/flows\/asset-breakdown$/),
-			expect.stringMatching(/\/rwa\/flows\/asset-breakdown\/assetGroup\/Treasury%20Funds$/)
+			expect.stringMatching(/\/rwa\/flows\/assetGroup\/Treasury%20Funds$/)
 		])
 	})
 })

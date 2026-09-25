@@ -1,4 +1,4 @@
-import { fetchRWAActiveTVLs, fetchRWAChartMetricDataByAsset } from './api'
+import { fetchRWAChartMetricDataByAsset, fetchRWACurrentListing } from './api'
 import type { IFetchedRWAProject, IRWAChartMetricRows } from './api.types'
 import { isCategoryIncludedInStandardRwaOverview } from './constants'
 import { RWA_WRAPPER_TYPE } from './wrappers'
@@ -52,7 +52,7 @@ export function buildHomepageRwaActiveMcap(
 
 export async function getHomepageRwaActiveMcap(): Promise<HomepageRwaActiveMcap> {
 	const [assets, rows] = await Promise.all([
-		fetchRWAActiveTVLs(),
+		fetchRWACurrentListing(),
 		fetchRWAChartMetricDataByAsset({
 			target: { kind: 'all' },
 			metric: 'activeMcap',

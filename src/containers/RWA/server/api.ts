@@ -1,15 +1,13 @@
-import { RWA_SERVER_URL } from '~/constants'
 import {
+	fetchRWAAssetBreakdownRows,
 	fetchRWAAssetGroupBreakdownChartData,
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAChainBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
-	rwaUnixSecondsToMilliseconds,
+	rwaRowsInMilliseconds,
 	subtractBridgeFromMetricRows
 } from '~/containers/RWA/api'
 import type {
-	IRWAChartDataByAsset,
-	IRWAChartMetricRows,
 	RWAChartMetricKey,
 	RWAAssetChartTarget,
 	RWAOverviewBreakdownRouteRequest
@@ -43,7 +41,6 @@ import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { notFound, okSerializedJson, badRequest, upstreamError } from '~/server/api/respond'
 import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute, type ApiQuery } from '~/server/api/types'
-import { fetchJson } from '~/utils/async'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 type RWAAssetBreakdownRequest = {
@@ -56,41 +53,6 @@ type RWAAssetBreakdownRequest = {
 }
 
 const RWA_CHART_METRIC_KEYS = ['onChainMcap', 'activeMcap', 'defiActiveTvl'] as const
-
-export function buildAssetBreakdownUrl(request: RWAAssetBreakdownRequest): string {
-	let pathname: string
-
-	switch (request.target.kind) {
-		case 'all':
-			pathname = `${RWA_SERVER_URL}/chart/chain/all/asset-breakdown`
-			break
-		case 'chain':
-			pathname = `${RWA_SERVER_URL}/chart/chain/${encodeURIComponent(rwaSlug(request.target.slug))}/asset-breakdown`
-			break
-		case 'category':
-			pathname = `${RWA_SERVER_URL}/chart/category/${encodeURIComponent(rwaSlug(request.target.slug))}/asset-breakdown`
-			break
-		case 'platform':
-			pathname = `${RWA_SERVER_URL}/chart/platform/${encodeURIComponent(rwaSlug(request.target.slug))}/asset-breakdown`
-			break
-		case 'assetGroup':
-			pathname = `${RWA_SERVER_URL}/chart/assetGroup/${encodeURIComponent(rwaSlug(request.target.slug))}/asset-breakdown`
-			break
-		default:
-			return assertNever(request.target)
-	}
-
-	const searchParams = new URLSearchParams({
-		includeStablecoin: String(request.includeStablecoin),
-		includeGovernance: String(request.includeGovernance)
-	})
-
-	return `${pathname}?${searchParams.toString()}`
-}
-
-export function normalizeAssetBreakdownRows(rows: IRWAChartMetricRows): IRWAChartMetricRows {
-	return rows.map((row) => ({ ...row, timestamp: rwaUnixSecondsToMilliseconds(row.timestamp) }))
-}
 
 function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
@@ -532,14 +494,15 @@ export const rwaAssetBreakdown = defineApiRoute({
 				cacheKey,
 				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2, maxEntries: 192 },
 				async () => {
-					const raw = await fetchJson<IRWAChartDataByAsset>(buildAssetBreakdownUrl(request), {
+					const rows = await fetchRWAAssetBreakdownRows({
+						target: request.target,
+						metric: request.key,
+						includeStablecoins: request.includeStablecoin,
+						includeGovernance: request.includeGovernance,
+						includeBridgeTvl: request.includeBridgeTvl,
 						timeout: 30_000
 					})
-					const rows =
-						request.key === 'defiActiveTvl' && !request.includeBridgeTvl
-							? subtractBridgeFromMetricRows(raw.defiActiveTvl, raw.bridgeTvl)
-							: raw[request.key]
-					return normalizeAssetBreakdownRows(rows)
+					return rwaRowsInMilliseconds(rows)
 				}
 			)
 			return okSerializedJson(result)

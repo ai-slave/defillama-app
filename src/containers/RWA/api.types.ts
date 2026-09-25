@@ -329,15 +329,6 @@ export type IRWAAssetChartApiRow = {
 	activeMcap: number | null
 	defiActiveTvl: number | null
 	totalSupply: number | null
-	chains: Record<
-		string,
-		{
-			onChainMcap: number
-			activeMcap: number
-			defiActiveTvl: number
-			totalSupply: number | null
-		}
-	>
 }
 
 export type IRWAFlowsRequest = {
