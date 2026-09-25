@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { fetchTrendsFromNetwork } from '../fetchers'
 
 const http = installFixtureFetch()

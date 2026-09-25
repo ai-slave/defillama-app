@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 import { getTopProtocolsByFeesChart, runChainOverviewPhase } from '../queries.server'
 
 const telemetry = installTelemetrySink()

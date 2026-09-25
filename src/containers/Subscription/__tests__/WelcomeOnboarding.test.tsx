@@ -3,9 +3,9 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { readAppStorage } from '~/contexts/LocalStorage'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 const session = installSubscriberSession('welcome-user')
-import { installUmamiSink } from '~/utils/test/umamiSink'
+import { installUmamiSink } from '~/utils/testing/umamiSink'
 const track = installUmamiSink()
 import { WelcomeOnboarding } from '../WelcomeOnboarding'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))

@@ -1,7 +1,7 @@
 import type { NextApiRequest } from 'next'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { researchLandingRevalidateHandler } from '~/pages/api/private/research/revalidate-landing'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 function request(overrides: Partial<NextApiRequest> = {}): NextApiRequest {
 	return {

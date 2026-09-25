@@ -4,7 +4,7 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult } from 'next'
 import { describe, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { getDashboardEmbedPageProps } from '../server/embedPageProps'
 
 // Dashboard queries open a database client at import; embed props never query it.

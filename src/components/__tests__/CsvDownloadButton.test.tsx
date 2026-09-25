@@ -7,8 +7,8 @@ import { ProCardOverflowMenu } from '~/containers/ProDashboard/components/ProCar
 import { UnifiedTableHeader } from '~/containers/ProDashboard/components/UnifiedTable/core/UnifiedTableHeader'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import pb from '~/utils/pocketbase'
-import { installDownloadSink } from '~/utils/test/downloadSink'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { CSVDownloadButton, type CsvPayload } from '../CsvDownloadButton'
 // Warm the lazily loaded access dialog; a cold import under full-suite load outlasts waitFor.
 import '~/containers/Subscription/shared/SubscribeCards/SubscribeProCard'

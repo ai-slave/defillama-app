@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { ProtocolOverviewLayout } from '../Layout'
 import type { IProtocolPageMetrics } from '../types'
 

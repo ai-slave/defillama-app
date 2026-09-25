@@ -2,9 +2,9 @@ import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { parseLimit, parseSeriesSelectionIntent } from '~/containers/Stablecoins/server/api'
 import handler from '~/pages/api/public/stablecoins/chart-series'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 // Any upstream request fails the test: every case here is answered before the data is fetched.
 installFixtureFetch()

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { SERVER_URL } from '~/constants'
-import { installYieldsFixtures, yieldsMeta, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { installYieldsFixtures, yieldsMeta, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 import { getBorrowMarketsPage, getBorrowRoutesForTokenKeys, getBorrowRoutesPage } from '../borrow.server'
 import { getLoopsPage } from '../loops.server'
 import type {

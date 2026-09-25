@@ -1,6 +1,6 @@
 import type { GetStaticPropsContext } from 'next'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 

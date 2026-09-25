@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { yieldsMeta, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { yieldsMeta, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 import { resolveTokenOptionKeys as resolveTokenOptionKeysFromSnapshot } from '../tokenPage'
 
 const snapshot = yieldsSnapshot({

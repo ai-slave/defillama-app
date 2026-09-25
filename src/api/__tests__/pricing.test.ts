@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 
 const http = installTelemetrySink()
 const publicPrices = 'https://coins.llama.fi/prices/current/'

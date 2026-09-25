@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useResearchSectionEngagement } from '~/containers/Articles/landing/Analytics'
-import { installUmamiSink } from '~/utils/test/umamiSink'
+import { installUmamiSink } from '~/utils/testing/umamiSink'
 
 const track = installUmamiSink()
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { withRouteTelemetry } from '~/utils/telemetry'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 import {
 	fetchAdapterChainChartData,
 	fetchAdapterChainMetrics,

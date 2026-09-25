@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { PRE_IPO_SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { PreIpoCompanyListItem, PreIpoCompanySummary, PreIpoIntegrations } from '../api.types'
 import { getPreIpoCompanyPageData, getPreIpoOverviewPageData } from '../queries'
 const http = installFixtureFetch()

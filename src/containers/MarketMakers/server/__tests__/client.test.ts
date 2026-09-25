@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 
 import { buildForgdUrl, forgdFetch } from '../client'

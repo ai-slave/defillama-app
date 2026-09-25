@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { MARKETS_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { tokenMarketsList } from '../server/api'
 const http = installFixtureFetch()
 

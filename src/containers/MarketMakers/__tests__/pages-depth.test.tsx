@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { getStaticProps } from '~/pages/market-makers/depth'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 const ROUTE = '/api/v1/public/market-maker/leaderboard/depth'

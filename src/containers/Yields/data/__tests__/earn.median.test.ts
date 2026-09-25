@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { installYieldsFixtures } from '~/utils/test/yieldsSnapshotFixture'
+import { installYieldsFixtures } from '~/utils/testing/yieldsSnapshotFixture'
 import { apyOf, earnPage, pool } from './earnSnapshot'
 
 installYieldsFixtures()

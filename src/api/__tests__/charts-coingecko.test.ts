@@ -2,8 +2,8 @@ import type { NextApiRequest } from 'next'
 import { describe, expect, test } from 'vitest'
 import { COINS_CHART_API } from '~/constants'
 import handler from '~/pages/api/public/tokens/charts/coingecko/[geckoId]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const { serve, urls } = installFixtureFetch()
 

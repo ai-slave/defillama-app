@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { incomeStatement } from '../server/api'
 
 const http = installFixtureFetch()

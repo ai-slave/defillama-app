@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 
 // In-memory Redis stand-in: `entries` is what readers would observe, `failing` makes one key's write fail.
 const redis = vi.hoisted(() => {

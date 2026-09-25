@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { DATASETS_SERVER_URL, LIQUIDATIONS_SERVER_URL_V2 } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/testing/snapshotDirectory'
 const http = installFixtureFetch()
 installSnapshotDirectory('liquidations-index-test')
 

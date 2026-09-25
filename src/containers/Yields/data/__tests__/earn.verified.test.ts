@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
 import type { ApyWindows, EarnRow, VerifiedBlock } from '../types'
 import { NULL_TRIPLE, pool } from './earnSnapshot'

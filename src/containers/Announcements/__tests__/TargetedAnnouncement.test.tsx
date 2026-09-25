@@ -7,9 +7,9 @@ import type { UserInterestsResponse } from '~/api/users.types'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { ANNOUNCEMENT_DISMISSALS_COOKIE_NAME } from '~/utils/cookies'
 import pb from '~/utils/pocketbase'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
-import { installUmamiSink } from '~/utils/test/umamiSink'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { TargetedAnnouncement } from '../TargetedAnnouncement'
 
 const route = { asPath: '/chain/ethereum', pathname: '/chain/[chain]' }

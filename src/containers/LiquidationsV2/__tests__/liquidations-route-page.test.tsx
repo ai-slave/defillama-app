@@ -33,7 +33,7 @@ import {
 import * as chainPage from '~/pages/liquidations/[protocol]/[chain]'
 import * as protocolPage from '~/pages/liquidations/[protocol]/index'
 import * as overviewPage from '~/pages/liquidations/index'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const { seed } = installMetadataSeeder()
 

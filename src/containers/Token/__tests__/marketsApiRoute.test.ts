@@ -1,9 +1,9 @@
 import type { NextApiRequest } from 'next'
 import { describe, expect, test } from 'vitest'
 import { MARKETS_SERVER_URL } from '~/constants'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 const http = installTelemetrySink()
 
 import handler from '~/pages/api/public/markets/[token]'

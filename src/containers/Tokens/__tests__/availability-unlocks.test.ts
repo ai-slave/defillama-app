@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { EmissionEvent, KnownEmissionEvent, RawProtocolEmission } from '~/containers/Unlocks/api.types'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { buildTokensSourceRows, fetchTokensSourceRows } from '../queries.server'
 import { getTokensPageFromRows } from '../utils'
 

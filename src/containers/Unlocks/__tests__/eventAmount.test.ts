@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import intervalFixtures from '../__fixtures__/intervalFixtures.json'
 import { normalizeEmissionEvents } from '../api'
 import type { EmissionEvent, RawEmissionEvent } from '../api.types'
 import {
@@ -10,6 +9,7 @@ import {
 	getLinearEmissionRateDelta,
 	getLinearEmissionWeeklyRate
 } from '../eventAmount'
+import intervalFixtures from './intervalFixtures.json'
 
 function event(overrides: EmissionEvent): EmissionEvent {
 	return overrides

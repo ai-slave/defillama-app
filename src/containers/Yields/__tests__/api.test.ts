@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { VerifiedRow } from '~/containers/Yields/data/types'
-import { earnRow } from '~/utils/test/yieldsEarnFixture'
-import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { earnRow } from '~/utils/testing/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 
 const acquireYieldsSnapshot = vi.hoisted(() => vi.fn())
 vi.mock('../server/dataset.server', () => ({ acquireYieldsSnapshot }))

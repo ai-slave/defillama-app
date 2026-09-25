@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
-import { installUmamiSink } from '~/utils/test/umamiSink'
+import { installUmamiSink } from '~/utils/testing/umamiSink'
 
 const track = installUmamiSink()
 

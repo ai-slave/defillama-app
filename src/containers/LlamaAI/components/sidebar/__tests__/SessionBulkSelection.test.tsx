@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import type { ChatSession } from '~/containers/LlamaAI/types'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { AgenticSidebar } from '../AgenticSidebar'
 const api = vi.hoisted(() => ({ bulk: vi.fn(), open: vi.fn() }))
 const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))

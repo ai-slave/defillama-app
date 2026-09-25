@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { VerifiedRow } from '~/containers/Yields/data/types'
-import { earnRow } from '~/utils/test/yieldsEarnFixture'
-import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { earnRow } from '~/utils/testing/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 
 const { acquireYieldsSnapshot, validateSubscription } = vi.hoisted(() => ({
 	acquireYieldsSnapshot: vi.fn(),

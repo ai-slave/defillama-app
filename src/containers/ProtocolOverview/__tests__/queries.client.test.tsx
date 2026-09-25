@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolChartsByKeys,

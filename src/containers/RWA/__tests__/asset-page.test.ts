@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { resolveRWAAssetRoute } from '../assetRoute'
 
 vi.mock('~/utils/async', async (importOriginal) => ({

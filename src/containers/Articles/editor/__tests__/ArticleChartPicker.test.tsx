@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { ArticleChartConfig } from '../../types'
 import { ArticleChartPickerDialog } from '../ArticleChartPicker'
 const http = installFixtureFetch()

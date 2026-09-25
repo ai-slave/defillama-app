@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { CATEGORY_INFO_API, V2_SERVER_URL, TRADFI_API, STABLECOINS_SERVER_URL } from '~/constants'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 
 function createDATResponse() {

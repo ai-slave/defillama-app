@@ -3,7 +3,7 @@
 import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ArticleMultiPicker } from '../admin/ArticleMultiPicker'
 import { ArticlePicker } from '../admin/ArticlePicker'
 import type { ArticleDocument } from '../types'

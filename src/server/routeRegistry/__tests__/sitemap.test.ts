@@ -5,7 +5,7 @@ import {
 	getStandaloneProtocolSitemapRoutes
 } from '~/containers/ProtocolOverview/server/routes'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const METADATA: MetadataCache = {
 	chainMetadata: {

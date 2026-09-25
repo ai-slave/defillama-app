@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { fetchForkProtocolChart } from '../api'
 const http = installFixtureFetch()
 describe('Fork API routes', () => {

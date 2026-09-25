@@ -2,7 +2,7 @@ import type { NextApiRequest } from 'next'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { researchPublishHandler } from '~/pages/api/private/research/articles/[id]/publish'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 function request(overrides: Partial<NextApiRequest> = {}): NextApiRequest {
 	return {

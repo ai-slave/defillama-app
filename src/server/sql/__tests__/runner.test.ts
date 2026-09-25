@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { SqlPolicyError } from '../policy'
 import { runServerSql, SqlRunTimeoutError } from '../runner'
 import { clearCsvCacheForTests } from '../tableLoader'

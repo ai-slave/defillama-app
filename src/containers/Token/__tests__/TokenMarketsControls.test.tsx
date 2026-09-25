@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { MarketPair, TokenMarketsResponse } from '~/containers/Markets/api.types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { TokenMarketsSection } from '../TokenMarketsSection'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/token/[token]', push: vi.fn() }) }))

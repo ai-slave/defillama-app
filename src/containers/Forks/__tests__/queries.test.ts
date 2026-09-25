@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { getForksByProtocolPageData, getForksListPageData } from '../queries'
 
 const unmeasuredFork = {

@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import ArticlesPage, { getServerSideProps as getResearchServerSideProps } from '~/pages/research'

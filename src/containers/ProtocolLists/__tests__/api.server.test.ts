@@ -1,6 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import type { ApiQuery } from '~/server/api/types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { ProtocolLite } from '../api.types'
 
 const mocks = vi.hoisted(() => ({

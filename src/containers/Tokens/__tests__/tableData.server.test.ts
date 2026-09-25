@@ -1,8 +1,8 @@
 import { promisify } from 'node:util'
 import { gzip, gunzip } from 'node:zlib'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import type { SharedTokensMarketSnapshot } from '../server/tableData.server'
 
 const cacheMocks = vi.hoisted(() => ({

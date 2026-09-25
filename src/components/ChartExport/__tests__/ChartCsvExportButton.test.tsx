@@ -3,8 +3,8 @@ import type { ECharts } from 'echarts'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { installDownloadSink } from '~/utils/test/downloadSink'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ChartCsvExportButton } from '../ChartCsvExportButton'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/charts' }) }))

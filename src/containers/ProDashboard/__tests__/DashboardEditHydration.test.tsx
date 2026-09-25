@@ -8,7 +8,7 @@ import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import type { DashboardInitialRenderPayload } from '~/containers/ProDashboard/initialDashboard'
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
 import pb from '~/utils/pocketbase'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 
 const router = vi.hoisted(() => ({
 	query: { dashboardId: 'test-dashboard', mode: ['edit'] },

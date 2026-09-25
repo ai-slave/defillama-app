@@ -2,7 +2,7 @@
 
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import type { IChainOverviewData } from '../types'
 const session = installSubscriberSession('chain-header')
 vi.mock('next/router', () => ({

@@ -12,7 +12,7 @@ const { writeText, nativeShare, toastError } = vi.hoisted(() => ({
 // The toast library is the app's notification boundary; its calls are what a user would see.
 vi.mock('react-hot-toast', () => ({ toast: { error: toastError } }))
 
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ShareModal } from '../ShareModal'
 
 const session = installSubscriberSession('reader')

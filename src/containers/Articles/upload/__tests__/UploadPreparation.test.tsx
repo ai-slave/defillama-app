@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 // @vitest-environment happy-dom
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { useImageUpload } from '../useImageUpload'
 import { usePdfUpload } from '../usePdfUpload'
 const session = installSubscriberSession('article-editor')

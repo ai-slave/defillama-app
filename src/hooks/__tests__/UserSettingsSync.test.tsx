@@ -7,7 +7,7 @@ import { AUTH_SERVER } from '~/constants'
 import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
 import { notifyKeyChange } from '~/contexts/localStorageStore'
 import pb from '~/utils/pocketbase'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { useBookmarks } from '../useBookmarks'
 import { USER_CONFIG_QUERY_KEY } from '../useUserConfig'
 

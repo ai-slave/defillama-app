@@ -10,7 +10,7 @@ import { protocolTvlByChainBreakdown } from '~/containers/ProDashboard/server/ch
 import { stablecoinByChainBreakdown } from '~/containers/ProDashboard/server/chartBuilder/stablecoins'
 import { getProtocolChainBreakdownRoute } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { resultBody } from '~/server/api/__tests__/resultBody'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 // The TVL route module opens a database pool at import; these tests never reach it.
 vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))

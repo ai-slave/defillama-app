@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { TokenOverviewData } from '../tokenOverview'
 import { useFetchTokenOverviewChartData } from '../useFetchTokenOverviewChartData'
 const http = installFixtureFetch()

@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
 import type { VerifiedBlock, YieldsMeta } from '~/containers/Yields/data/types'
 import type { BorrowMarketDetail, PoolDetail } from '~/containers/Yields/poolDetail/types'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { earnRow } from '~/utils/test/yieldsEarnFixture'
-import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { earnRow } from '~/utils/testing/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 
 const { acquireYieldsSnapshot, validateSubscription } = vi.hoisted(() => ({
 	acquireYieldsSnapshot: vi.fn(),

@@ -7,7 +7,7 @@ import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
 const toastError = vi.hoisted(() => vi.fn())

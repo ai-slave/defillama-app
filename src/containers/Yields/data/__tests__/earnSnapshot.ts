@@ -1,4 +1,4 @@
-import { yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 import { getEarnPage, type EarnPageAccess } from '../earn.server'
 import type { ApyTriple, ApyWindows, EarnAttributes, EarnRow } from '../types'
 

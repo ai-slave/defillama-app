@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { company } from './companyFixture'
 const http = installFixtureFetch()
 beforeEach(() => {

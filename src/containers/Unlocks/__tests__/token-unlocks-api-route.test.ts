@@ -2,9 +2,9 @@ import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AUTH_SERVER, DATASETS_SERVER_URL, POCKETBASE_URL, SERVER_URL } from '~/constants'
 import handler from '~/pages/api/private/token-unlocks/[protocol]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const { serve } = installFixtureFetch()
 const { seed } = installMetadataSeeder()

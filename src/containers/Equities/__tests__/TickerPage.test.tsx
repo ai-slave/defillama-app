@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { installDownloadSink } from '~/utils/test/downloadSink'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 const session = installSubscriberSession('equity-ticker')
 const downloads = installDownloadSink()
 import type { EquitiesPriceHistory } from '../api.types'

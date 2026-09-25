@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 
 vi.mock('next/router', () => ({ default: { pathname: '/dexs', push }, useRouter: () => ({ pathname: '/dexs', push }) }))
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 const session = installSubscriberSession('u1')
 const saved = {
 	id: 'd1',

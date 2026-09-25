@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
 	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
 	createRedisBlobStore: () => ({

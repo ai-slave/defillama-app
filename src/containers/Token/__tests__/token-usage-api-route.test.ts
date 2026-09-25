@@ -1,7 +1,7 @@
 import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 
 const { validateSubscriptionMock } = vi.hoisted(() => ({
 	validateSubscriptionMock: vi.fn()

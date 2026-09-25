@@ -7,7 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import pb from '~/utils/pocketbase'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { LiquidationsChainRouteContent } from '../RouteContent'
 
 vi.mock('next/router', () => ({

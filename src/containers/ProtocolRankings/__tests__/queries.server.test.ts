@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { COINS_SERVER_URL, SERVER_URL, V2_SERVER_URL } from '~/constants'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { getProtocolsByChain } from '../queries.server'
 
 const http = installFixtureFetch()

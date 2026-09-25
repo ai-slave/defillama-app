@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import type { ProtocolRankingsCanonicalSnapshot } from '../server/tableData.server'
 import type { IProtocol } from '../types'
 

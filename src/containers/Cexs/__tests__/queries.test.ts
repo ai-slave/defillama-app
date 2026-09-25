@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import type { RawCexsResponse } from '../api.types'
 import { getCexsPageData } from '../queries'
 import { binanceCexMetadataCache } from './metadataFixture'

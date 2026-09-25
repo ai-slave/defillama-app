@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { BRIDGES_SERVER_URL, CONFIG_API } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { BridgeDayStats, RawBridgesWithChainsResponse } from '../api.types'
 import { getBridgeOverviewSummaryTotals } from '../bridgeOverviewChartData'
 import {

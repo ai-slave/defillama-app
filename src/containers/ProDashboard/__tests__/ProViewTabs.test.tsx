@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import HomePage from '~/pages/pro'
 import pb from '~/utils/pocketbase'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 
 const router = vi.hoisted(() => ({
 	pathname: '/pro',

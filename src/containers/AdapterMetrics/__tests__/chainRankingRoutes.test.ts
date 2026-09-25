@@ -8,8 +8,8 @@ import { getStaticProps as notionalProps } from '~/pages/options/notional-volume
 import { getStaticProps as premiumProps } from '~/pages/options/premium-volume/chains'
 import { getStaticProps as perpsAggregatorProps } from '~/pages/perps-aggregators/chains'
 import { getStaticProps as perpsProps } from '~/pages/perps/chains'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const { serve } = installFixtureFetch()

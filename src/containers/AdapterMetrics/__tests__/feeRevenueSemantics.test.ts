@@ -1,6 +1,6 @@
 import type { GetStaticPropsContext } from 'next'
 import { describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 // Chain-native rankings read the fees overview's chain rows; app-aggregation rankings read chain metadata totals.
 // The fixture gives each source different numbers so the returned rows show which builder a page uses.

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { RISK_SERVER_URL } from '~/constants'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { earnPageRow } from '~/utils/test/yieldsEarnFixture'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { earnPageRow } from '~/utils/testing/yieldsEarnFixture'
 import {
 	buildInitialBorrowRoutesSnapshot,
 	buildInitialYieldsSnapshot,

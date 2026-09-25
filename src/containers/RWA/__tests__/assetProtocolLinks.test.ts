@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { getRWAAssetData } from '../queries'
 
 const upstream = vi.hoisted(() => ({ asset: {} as Record<string, unknown> }))

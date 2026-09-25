@@ -4,7 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { TokenBorrowSection } from '../TokenBorrowSection'
 import type { TokenBorrowRoutesHydration } from '../types'
 

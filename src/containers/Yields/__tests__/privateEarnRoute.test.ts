@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { VerifiedRow } from '~/containers/Yields/data/types'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-import { earnRow } from '~/utils/test/yieldsEarnFixture'
-import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { earnRow } from '~/utils/testing/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 
 const { acquireYieldsSnapshot, validateSubscription } = vi.hoisted(() => ({
 	acquireYieldsSnapshot: vi.fn(),

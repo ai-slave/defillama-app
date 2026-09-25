@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext } from 'next'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { getStaticProps } from '~/pages/equities/[ticker]'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { installEquitiesPageNetwork } from './pageFixture'
 
 const http = installEquitiesPageNetwork()

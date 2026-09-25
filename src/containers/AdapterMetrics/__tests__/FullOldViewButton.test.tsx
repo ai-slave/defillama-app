@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { useAuthContext } from '~/auth'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { FullOldViewButton } from '../FullOldViewButton'
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))

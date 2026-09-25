@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 const protocolsUrl = '/lite/protocols2'

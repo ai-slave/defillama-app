@@ -2,9 +2,9 @@ import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { BRIDGES_SERVER_URL, RWA_SERVER_URL, V2_SERVER_URL, YIELDS_V2_SERVER_URL } from '~/constants'
 import handler from '~/pages/api/public/protocols/charts'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const { serve, urls } = installFixtureFetch()
 const { seed } = installMetadataSeeder()

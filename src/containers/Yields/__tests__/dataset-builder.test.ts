@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 import { buildYieldsSnapshotCandidate } from '../server/dataset.builder.server'
 

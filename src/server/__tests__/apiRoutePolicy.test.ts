@@ -9,7 +9,7 @@ const srcDir = join(process.cwd(), 'src')
 function isProductionSourceFile(filePath: string) {
 	if (!/\.(ts|tsx)$/.test(filePath)) return false
 	if (filePath.includes(`${sep}__tests__${sep}`)) return false
-	if (filePath.includes(`${sep}utils${sep}test${sep}`)) return false
+	if (filePath.includes(`${sep}utils${sep}testing${sep}`)) return false
 	if (/\.(test|spec)\.(ts|tsx)$/.test(filePath)) return false
 	return true
 }

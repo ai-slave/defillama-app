@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 beforeEach(() => http.serve({ [EQUITIES_SERVER_URL]: null }))
 

@@ -10,8 +10,8 @@ import * as assetPage from '~/pages/rwa/perps/asset/[asset]'
 import * as contractPage from '~/pages/rwa/perps/contract/[contract]'
 import * as overviewPage from '~/pages/rwa/perps/index'
 import * as venuePage from '~/pages/rwa/perps/venue/[venue]'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import type { IRWAPerpsMarket } from '../api.types'
 
 vi.hoisted(() => vi.stubEnv('SKIP_BUILD_STATIC_GENERATION', 'false'))

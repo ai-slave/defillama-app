@@ -2,10 +2,10 @@ import { expect, test } from 'vitest'
 import categoriesHandler from '~/pages/api/public/page-data/categories/charts'
 import chainsHandler from '~/pages/api/public/page-data/chains/charts'
 import adaptersHandler from '~/pages/api/public/page-data/dimension-adapters/chains-chart'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 const http = installTelemetrySink()
 const metadata = installMetadataSeeder()
 

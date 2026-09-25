@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RWA_SERVER_URL, V2_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { clearCsvCacheForTests, fetchCsvForSource } from '../tableLoader'
 
 const http = installFixtureFetch()

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 // Dimensions chain names -> internal chain keys. The server module caches this map for the process, so it stays fixed.
 const CHAIN_NAME_MAP = {

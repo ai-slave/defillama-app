@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { MARKETS_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/testing/snapshotDirectory'
 const http = installFixtureFetch()
 installSnapshotDirectory('markets-index-test')
 

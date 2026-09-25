@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/testing/snapshotDirectory'
 import type { IRawTokenRightsEntry } from '../api.types'
 
 const http = installFixtureFetch()

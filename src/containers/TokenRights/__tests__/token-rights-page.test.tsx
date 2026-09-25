@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { filterTokenRightsRows, getStaticProps, getTokenRightsStats } from '~/pages/token-rights'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const dataset = vi.hoisted(() => ({ entries: [] as Array<unknown> }))
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({

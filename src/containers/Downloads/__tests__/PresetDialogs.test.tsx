@@ -3,7 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { DownloadsCatalog } from '../DownloadsCatalog'
 
 // Heavy dialogs the preset list can open; these tests assert nothing about them.

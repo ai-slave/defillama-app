@@ -3,9 +3,9 @@ import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import handler from '~/pages/api/public/tokens'
 import marketMapHandler from '~/pages/api/public/tokens/market-map'
 import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	fetchTokenMarketsList: async () => ({ last_updated: '', tokens: [] })

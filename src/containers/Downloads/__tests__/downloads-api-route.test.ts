@@ -4,8 +4,8 @@ import { AUTH_SERVER, POCKETBASE_URL, SERVER_URL, V2_SERVER_URL } from '~/consta
 import datasetHandler from '~/pages/api/private/downloads/[dataset]'
 import breakdownHandler from '~/pages/api/private/downloads/chart-breakdown/[slug]'
 import chartHandler from '~/pages/api/private/downloads/chart/[dataset]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 vi.mock('~/server/db/llama', () => ({ llamaDb: { query: async () => [], any: async () => [] } }))
 const { serve } = installFixtureFetch()

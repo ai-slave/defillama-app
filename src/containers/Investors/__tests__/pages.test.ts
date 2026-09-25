@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext } from 'next'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DATASETS_SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const network = installFixtureFetch()
 

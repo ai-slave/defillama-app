@@ -1,0 +1,440 @@
+// @vitest-environment happy-dom
+
+import * as Ariakit from '@ariakit/react'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
+
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
+vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
+	ChartPngExportButton: () => <button type="button" data-testid="chart-export" />
+}))
+// Drawn output is covered with the real chart in ChartRendererDrawn.test.tsx; these tests exercise the controls.
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => <div data-testid="cartesian" /> }))
+vi.mock('~/components/ECharts/CandlestickChart', () => ({ default: () => <div data-testid="candlestick" /> }))
+
+import { ChartRenderer } from '../ChartRenderer'
+
+function makeChart(id: string): ChartConfiguration {
+	return {
+		id,
+		type: 'candlestick',
+		title: id.toUpperCase(),
+		description: '',
+		axes: {
+			x: { field: 'timestamp', label: 'Date', type: 'time' },
+			yAxes: [{ id: 'price', fields: ['price'], label: 'Price', position: 'left' }]
+		},
+		series: [
+			{
+				name: 'Price',
+				type: 'candlestick',
+				yAxisId: 'price',
+				metricClass: 'stock',
+				dataMapping: { xField: 'timestamp', yField: 'price' },
+				styling: {}
+			}
+		],
+		dataTransformation: { timeField: 'timestamp', metrics: ['open', 'high', 'low', 'close'] }
+	}
+}
+
+function makeCartesianChart(title = 'Protocol Revenue'): ChartConfiguration {
+	return {
+		id: 'revenue',
+		type: 'combo',
+		title,
+		description: '',
+		axes: {
+			x: { field: 'timestamp', label: 'Date', type: 'time' },
+			yAxes: [{ id: 'value', fields: ['fees', 'revenue'], label: 'USD', position: 'left', valueSymbol: '$' }]
+		},
+		series: [
+			{
+				name: 'Fees',
+				type: 'bar',
+				yAxisId: 'value',
+				metricClass: 'flow',
+				dataMapping: { xField: 'timestamp', yField: 'fees' },
+				styling: {}
+			},
+			{
+				name: 'Revenue',
+				type: 'bar',
+				yAxisId: 'value',
+				metricClass: 'flow',
+				dataMapping: { xField: 'timestamp', yField: 'revenue' },
+				styling: {}
+			}
+		],
+		dataTransformation: { timeField: 'timestamp', metrics: ['fees', 'revenue'] },
+		displayOptions: {
+			canStack: true,
+			canShowPercentage: true,
+			canShowCumulative: true,
+			supportsGrouping: true
+		}
+	}
+}
+
+function makeCategoryChart(): ChartConfiguration {
+	return {
+		...makeCartesianChart('Protocol Revenue by Chain'),
+		type: 'bar',
+		axes: {
+			x: {
+				field: 'chain',
+				label: 'Chain',
+				type: 'category',
+				entityType: 'chain',
+				logoCategories: ['Ethereum', 'Solana']
+			},
+			yAxes: [{ id: 'value', fields: ['revenue'], label: 'USD', position: 'left', valueSymbol: '$' }]
+		},
+		series: [
+			{
+				name: 'Revenue',
+				type: 'bar',
+				yAxisId: 'value',
+				metricClass: 'flow',
+				dataMapping: { xField: 'chain', yField: 'revenue' },
+				styling: {}
+			}
+		],
+		dataTransformation: { timeField: 'chain', metrics: ['revenue'] }
+	}
+}
+
+const chartData = [
+	{ timestamp: 1_767_225_600, chain: 'Ethereum', fees: 10, revenue: 4 },
+	{ timestamp: 1_767_312_000, chain: 'Solana', fees: 12, revenue: 5 }
+]
+
+// The applied chart's view controls as a reader sees them; the style editor's preview renders in a portal.
+const viewLabels = (scope: ParentNode) =>
+	[...scope.querySelectorAll<HTMLButtonElement>('button[role="combobox"]')].map((button) => button.textContent?.trim())
+const grouping = (scope: ParentNode) =>
+	scope.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.getAttribute('aria-label')
+
+async function press(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+	})
+}
+
+async function chooseView(scope: ParentNode, current: string, option: string) {
+	const trigger = [...scope.querySelectorAll<HTMLButtonElement>('button[role="combobox"]')].find(
+		(candidate) => candidate.textContent?.trim() === current
+	)
+	if (!trigger) throw new Error(`Expected ${current} control`)
+	await press(trigger)
+	const find = () =>
+		[...document.querySelectorAll<HTMLElement>('[role="option"]')].find((candidate) =>
+			candidate.textContent?.includes(option)
+		)
+	await vi.waitFor(() => expect(find()?.textContent).toContain(option))
+	await press(find()!)
+}
+
+async function chooseGrouping(scope: ParentNode, interval: string) {
+	const radio = scope.querySelector<HTMLInputElement>(`input[type="radio"][aria-label="${interval}"]`)
+	if (!radio) throw new Error(`Expected ${interval} grouping`)
+	await act(async () => radio.click())
+}
+
+async function click(scope: ParentNode, selector: string) {
+	const button = scope.querySelector<HTMLButtonElement>(selector)
+	if (!button) throw new Error(`Expected button ${selector}`)
+	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+}
+
+async function clickButton(scope: ParentNode, text: string) {
+	const button = [...scope.querySelectorAll<HTMLButtonElement>('button')].find(
+		(candidate) => candidate.textContent?.trim() === text
+	)
+	if (!button) throw new Error(`Expected ${text} button`)
+	await act(async () => button.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+}
+
+async function setInputValue(input: HTMLInputElement, value: string) {
+	const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+	if (!setter) throw new Error('Expected native input value setter')
+	await act(async () => {
+		setter.call(input, value)
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+async function setSelectValue(select: HTMLSelectElement, value: string) {
+	const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+	if (!setter) throw new Error('Expected native select value setter')
+	await act(async () => {
+		setter.call(select, value)
+		select.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+}
+
+function getCheckbox(scope: ParentNode, label: string) {
+	const input = [...scope.querySelectorAll<HTMLLabelElement>('label')]
+		.find((candidate) => candidate.textContent?.trim() === label)
+		?.querySelector<HTMLInputElement>('input[type="checkbox"]')
+	if (!input) throw new Error(`Expected ${label} checkbox`)
+	return input
+}
+
+async function toggleCheckbox(scope: ParentNode, label: string) {
+	const input = getCheckbox(scope, label)
+	await act(async () => input.click())
+}
+
+describe('ChartRenderer', () => {
+	let container: HTMLDivElement
+	let root: Root
+
+	beforeEach(() => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.stubGlobal(
+			'ResizeObserver',
+			class {
+				disconnect() {}
+				observe() {}
+			}
+		)
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		// Dialogs render through portals, so an empty container can still have a mounted root.
+		await act(async () => root.unmount())
+		// oxlint-disable-next-line vitest/no-standalone-expect -- Verify portal cleanup after every test, including roots with empty containers.
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		container.remove()
+		vi.unstubAllGlobals()
+	})
+
+	test('preserves selection intent while deriving a fallback for missing charts', async () => {
+		const chartA = makeChart('a')
+		const chartB = makeChart('b')
+		const chartC = makeChart('c')
+		const getActiveChartId = () => container.querySelector('[data-chart-id]')?.getAttribute('data-chart-id')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB, chartC]} chartData={[]} />))
+		const chartCButton = [...container.querySelectorAll('button')].find((button) => button.textContent === 'C')
+		if (!chartCButton) throw new Error('Expected chart C tab')
+		await act(async () => chartCButton.dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+		expect(getActiveChartId()).toBe('c')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartC, chartA, chartB]} chartData={[]} />))
+		expect(getActiveChartId()).toBe('c')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={[]} />))
+		expect(getActiveChartId()).toBe('a')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartB, chartA]} chartData={[]} />))
+		expect(getActiveChartId()).toBe('b')
+
+		await act(async () => root.render(<ChartRenderer charts={[chartB, chartC, chartA]} chartData={[]} />))
+		expect(getActiveChartId()).toBe('c')
+	})
+
+	test("switching tabs keeps each chart's view controls", async () => {
+		const chartA = { ...makeCartesianChart('A'), id: 'a' }
+		const chartB = { ...makeCartesianChart('B'), id: 'b' }
+		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={chartData} />))
+		await chooseView(container, 'Scale: Linear', 'Log scale')
+		expect(viewLabels(container)).toContain('Scale: Log')
+
+		await clickButton(container, 'B')
+		expect(viewLabels(container)).toContain('Scale: Linear')
+		await clickButton(container, 'A')
+		expect(viewLabels(container)).toContain('Scale: Log')
+	})
+
+	test('malformed rows stay inside the chart and a data update recovers it', async () => {
+		const config = makeCartesianChart()
+		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={[null as never]} />))
+		expect(container.querySelector('[data-testid="cartesian"]')).toBeNull()
+		expect(container.textContent).toContain('No data available for chart')
+
+		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={chartData} />))
+		expect(container.querySelector('[data-testid="cartesian"]')).not.toBeNull()
+	})
+
+	test('lets promoted date categories resolve aggregation and retain it after save and reset', async () => {
+		const config = makeCartesianChart()
+		config.axes.x.type = 'category'
+		config.series[0].metricClass = 'unknown'
+		const rows = chartData.map((row) => ({ ...row, timestamp: new Date(row.timestamp * 1000).toISOString() }))
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={rows} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		const select = document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')
+		if (!select) throw new Error('Expected aggregation select for promoted dates')
+		expect(select.value).toBe('unknown')
+		await setSelectValue(select, 'flow')
+		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		await clickButton(document, 'Save')
+
+		await click(container, '[title="Edit chart style"]')
+		await clickButton(document, 'Reset')
+		expect(document.querySelector<HTMLSelectElement>('[aria-label="Series 1 aggregation"]')?.value).toBe('flow')
+		await clickButton(document, 'Save')
+		await chooseGrouping(container, 'Month')
+		expect(grouping(container)).toBe('Month')
+	})
+
+	test.each(['category', 'time'] as const)('hides aggregation for a non-groupable %s chart', async (axisType) => {
+		const config = axisType === 'category' ? makeCategoryChart() : makeCartesianChart()
+		if (axisType === 'time') config.displayOptions.supportsGrouping = false
+		config.series[0].metricClass = 'unknown'
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+		expect(document.querySelector('[aria-label$="aggregation"]')).toBeNull()
+	})
+
+	test('keeps editor drafts out of the applied chart and discards them on cancel', async () => {
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		await chooseView(container, 'Separate', 'Show stacked')
+		expect(viewLabels(container)).toContain('Stacked')
+
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await toggleCheckbox(document, 'Stacked')
+		expect(viewLabels(container)).toContain('Stacked')
+
+		await clickButton(document, 'Cancel')
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(viewLabels(container)).toContain('Stacked')
+
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+	})
+
+	test('keeps reset local until save applies the original defaults', async () => {
+		const config = makeCartesianChart()
+		config.displayOptions = { ...config.displayOptions!, defaultStacked: true }
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
+		)
+		expect(viewLabels(container)).toContain('Stacked')
+
+		await chooseView(container, 'Stacked', 'Show separate')
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await clickButton(document, 'Reset')
+
+		expect(viewLabels(container)).toContain('Separate')
+		expect(getCheckbox(document, 'Stacked').checked).toBe(true)
+		await clickButton(document, 'Save')
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(viewLabels(container)).toContain('Stacked')
+	})
+
+	test('keeps saved configuration and view changes when the editor closes', async () => {
+		const onLocalStyleSave = vi.fn()
+		const config = makeCartesianChart()
+		await act(async () =>
+			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />)
+		)
+
+		await chooseGrouping(container, 'Month')
+		await click(container, '[title="Edit chart style"]')
+		const titleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!titleInput) throw new Error('Expected chart title input')
+		await setInputValue(titleInput, 'Unsaved Draft')
+		await toggleCheckbox(document, 'Stacked')
+		await clickButton(document, 'Save')
+
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(viewLabels(container)).toContain('Stacked')
+		expect(grouping(container)).toBe('Month')
+		expect(onLocalStyleSave).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: 'Unsaved Draft',
+				displayOptions: expect.objectContaining({ defaultStacked: true })
+			})
+		)
+
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
+		const reopenedTitleInput = document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')
+		if (!reopenedTitleInput) throw new Error('Expected chart title input')
+		await setInputValue(reopenedTitleInput, 'Discarded Draft')
+		await clickButton(document, 'Cancel')
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe('Unsaved Draft')
+		await clickButton(document, 'Cancel')
+
+		const externallyUpdated = {
+			...config,
+			axes: {
+				...config.axes,
+				yAxes: [
+					{
+						id: 'value',
+						fields: ['fees', 'revenue'],
+						label: 'Revenue (USD)',
+						position: 'left',
+						valueSymbol: '$'
+					}
+				]
+			}
+		} satisfies ChartConfiguration
+		await act(async () =>
+			root.render(
+				<ChartRenderer charts={[externallyUpdated]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
+			)
+		)
+		await click(container, '[title="Edit chart style"]')
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
+	})
+
+	test('nested style editor owns Escape and returns focus without saving its draft', async () => {
+		const onLocalStyleSave = vi.fn()
+		const onParentClose = vi.fn()
+		await act(async () =>
+			root.render(
+				<Ariakit.Dialog open onClose={onParentClose} aria-label="Article editor">
+					<ChartRenderer charts={[makeCartesianChart()]} chartData={chartData} onLocalStyleSave={onLocalStyleSave} />
+				</Ariakit.Dialog>
+			)
+		)
+		const trigger = document.querySelector<HTMLButtonElement>('[title="Edit chart style"]')!
+		await act(async () => {
+			trigger.focus()
+			trigger.click()
+		})
+		const editor = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Edit chart: Protocol Revenue"]')!
+		await vi.waitFor(() => expect(editor.contains(document.activeElement)).toBe(true))
+		const title = editor.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
+		await setInputValue(title, 'Discard this title')
+		await act(async () => {
+			title.focus()
+			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+		})
+		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		expect(onParentClose).not.toHaveBeenCalled()
+		expect(document.querySelector('[aria-label="Article editor"]')).not.toBeNull()
+		expect(document.querySelector('[aria-label="Edit chart: Protocol Revenue"]')).toBeNull()
+		expect(onLocalStyleSave).not.toHaveBeenCalled()
+		await act(async () => trigger.click())
+		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!.value).toBe('Protocol Revenue')
+	})
+})

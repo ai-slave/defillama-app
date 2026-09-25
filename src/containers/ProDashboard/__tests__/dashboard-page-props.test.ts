@@ -3,7 +3,7 @@ import { Socket } from 'node:net'
 import type { GetServerSidePropsContext } from 'next'
 import { describe, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER, POCKETBASE_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { getDashboardPageProps } from '../server/dashboardPageProps'
 
 // Dashboard queries open a database client at import; page props never query it.

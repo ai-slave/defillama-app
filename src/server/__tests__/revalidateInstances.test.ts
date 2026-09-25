@@ -17,7 +17,7 @@ import {
 	normalizeCachePaths,
 	revalidateInstancesFromEnv
 } from '~/server/revalidateInstances'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const baseEnv = {
 	...process.env,

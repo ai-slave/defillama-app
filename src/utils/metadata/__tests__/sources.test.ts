@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PreIpoCompanyListItem, PreIpoSnapshot } from '~/containers/PreIPO/api.types'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 
 const preIpoCompaniesSnapshot = {

@@ -2,8 +2,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { DashboardAuthorProfileCard } from '../DashboardAuthorProfileCard'
 import type { PublicDashboardAuthor } from '../types'
 

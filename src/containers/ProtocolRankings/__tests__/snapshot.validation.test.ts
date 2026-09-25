@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),

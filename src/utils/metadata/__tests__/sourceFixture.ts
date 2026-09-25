@@ -12,7 +12,7 @@ import {
 	EQUITIES_SERVER_URL,
 	PRE_IPO_SERVER_URL
 } from '~/constants'
-import type { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import type { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 export function serveCoreMetadata(
 	http: Pick<ReturnType<typeof installFixtureFetch>, 'serve'>,
 	overrides: Record<string, unknown> = {}

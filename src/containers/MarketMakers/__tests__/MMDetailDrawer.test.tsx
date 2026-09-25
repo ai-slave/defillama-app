@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { installChartCanvas } from '~/utils/test/chartCanvas'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installChartCanvas } from '~/utils/testing/chartCanvas'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { MMDetailDrawer } from '../MMDetailDrawer'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers', push: vi.fn() }) }))

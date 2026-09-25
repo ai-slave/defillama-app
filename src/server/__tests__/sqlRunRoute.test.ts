@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 // The runner spawns a DuckDB worker (the database boundary); runner.test covers it for real.
 const runServerSql = vi.hoisted(() => vi.fn())

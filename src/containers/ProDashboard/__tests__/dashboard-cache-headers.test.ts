@@ -13,9 +13,9 @@ import {
 import type { DashboardVariable } from '~/containers/ProDashboard/dashboardTypes'
 import { createVariableCatalog, resolveDashboardItems } from '~/containers/ProDashboard/dashboardVariables/resolve'
 import type { ChartBuilderConfig, ChartConfig } from '~/containers/ProDashboard/types'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { createMockNextApiResponse, type MockNextApiResponse } from '~/utils/test/nextApiMocks'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiResponse, type MockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 
 const { fetchChartBuilderServerDataMock, fetchProtocolsTableMock } = vi.hoisted(() => ({
 	fetchChartBuilderServerDataMock: vi.fn(),

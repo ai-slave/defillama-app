@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 // Heavy page chrome; these tests only read getStaticProps output.
 vi.mock('~/layout', () => ({ default: () => null }))

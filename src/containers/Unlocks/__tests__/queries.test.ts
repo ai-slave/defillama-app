@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { COINS_SERVER_URL, DATASETS_SERVER_URL, SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { buildUnlocksHistoricalPriceRequests } from '~/utils/unlocks/historicalPriceRequests'
 import type {
 	EmissionEvent,

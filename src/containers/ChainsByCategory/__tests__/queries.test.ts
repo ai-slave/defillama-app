@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { SERVER_URL, V2_SERVER_URL } from '~/constants'
 import type { RawChainsAssetsResponse } from '~/containers/BridgedTVL/api.types'
 import type { ChainsByCategoryResponse } from '~/containers/Chains/api.types'
-import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { getChainsByCategory, getChainsByCategoryChartData } from '../queries'
 
 const http = installFixtureFetch()

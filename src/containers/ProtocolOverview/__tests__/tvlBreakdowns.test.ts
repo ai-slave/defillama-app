@@ -3,7 +3,7 @@ import {
 	protocolTvlBreakdown,
 	protocolTvlByChainBreakdown
 } from '~/containers/ProDashboard/server/chartBuilder/protocols'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 vi.mock('~/server/db/llama', () => ({
 	llamaDb: {

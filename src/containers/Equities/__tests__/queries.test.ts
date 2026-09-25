@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import type { EquitiesPriceHistory, IEquitiesOnchainResponse } from '../api.types'
 import { getEquitiesTickerPageData } from '../queries'
 import { installEquitiesPageNetwork } from './pageFixture'

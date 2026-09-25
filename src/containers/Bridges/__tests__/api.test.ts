@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { BRIDGES_SERVER_URL } from '~/constants'
 import type { ApiRequest } from '~/server/api/types'
-import { installTelemetrySink } from '~/utils/test/telemetry'
+import { installTelemetrySink } from '~/utils/testing/telemetry'
 import {
 	fetchBridgeDayStats,
 	fetchBridgeNetflows,

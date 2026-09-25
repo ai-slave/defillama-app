@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { DATASETS_SERVER_URL } from '~/constants'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { calculateTotalUnlockValue, getProtocolUnlocksStaticPropsData } from '../protocolUnlocksStaticProps'
 
 const http = installFixtureFetch()

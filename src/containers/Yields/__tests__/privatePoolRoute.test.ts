@@ -3,8 +3,8 @@ import { YIELDS_V2_SERVER_URL } from '~/constants'
 import type { VerifiedBlock } from '~/containers/Yields/data/types'
 import type { PoolDetail } from '~/containers/Yields/poolDetail/types'
 import { handler } from '~/pages/api/private/yields/pool/[id]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const http = installFixtureFetch()
 

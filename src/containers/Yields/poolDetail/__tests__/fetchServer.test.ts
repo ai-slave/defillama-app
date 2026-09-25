@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { fetchPoolDetailCached, fetchPoolHistoryCached } from '../fetch.server'
 
 const http = installFixtureFetch()

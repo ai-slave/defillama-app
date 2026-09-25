@@ -12,7 +12,7 @@ vi.hoisted(() => {
 
 import { SEARCH_API_URL } from '~/constants'
 import { TokenUsageSearch } from '~/pages/token-usage'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 

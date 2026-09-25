@@ -5,7 +5,7 @@ import {
 	createMockNextApiRequest,
 	createMockNextApiResponse,
 	type MockNextApiRequestOptions
-} from '~/utils/test/nextApiMocks'
+} from '~/utils/testing/nextApiMocks'
 
 function request(options: MockNextApiRequestOptions = {}) {
 	return createMockNextApiRequest({

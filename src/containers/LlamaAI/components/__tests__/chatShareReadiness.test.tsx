@@ -53,7 +53,7 @@ vi.mock('../AddToArticle/ArticleExportContext', () => ({
 }))
 vi.mock('~/containers/LlamaAI/projects/ProjectLanding', () => ({ ProjectLanding: () => null }))
 vi.mock('~/containers/LlamaAI/projects/ProjectsGrid', () => ({ ProjectsGrid: () => null }))
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { AgenticChat } from '../..'
 
 const session = installSubscriberSession('reader')

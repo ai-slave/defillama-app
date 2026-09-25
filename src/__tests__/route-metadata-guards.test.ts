@@ -16,9 +16,9 @@ import * as protocolPage from '~/pages/protocol/[protocol]'
 import * as stablecoinPage from '~/pages/stablecoin/[peggedasset]'
 import metadataCache from '~/utils/metadata'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 vi.hoisted(() => vi.stubEnv('SKIP_BUILD_STATIC_GENERATION', 'false'))
 afterAll(() => vi.unstubAllEnvs())

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { MARKETS_SERVER_URL } from '~/constants'
 import { getStaticProps } from '~/pages/exchange/[slug]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { matchesDefillamaCex, nativeTokenChange24h } from '../profileEnrichment'
 
 const http = installFixtureFetch()

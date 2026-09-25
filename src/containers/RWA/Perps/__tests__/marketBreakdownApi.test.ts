@@ -3,7 +3,7 @@ import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { rwaPerpsMarketBreakdown } from '~/containers/RWA/server/api'
 import { parseMarketBreakdownRequest } from '~/pages/api/public/rwa/perps/market-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 

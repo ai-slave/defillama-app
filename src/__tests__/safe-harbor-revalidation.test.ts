@@ -1,8 +1,8 @@
 import { assert, expect, test, vi } from 'vitest'
 import type { ProtocolRankingsCanonicalSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const storage = vi.hoisted(() => ({ readCurrent: vi.fn() }))
 vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({

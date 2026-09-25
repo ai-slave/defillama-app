@@ -4,8 +4,8 @@ import { getStaticProps as getProtocolStaticProps } from '~/pages/protocol/[prot
 import { getStaticProps as getProtocolActiveLoansStaticProps } from '~/pages/protocol/active-loans/[protocol]'
 import { getStaticProps as getProtocolFeesStaticProps } from '~/pages/protocol/fees/[protocol]'
 import { getStaticProps as getProtocolTvlStaticProps } from '~/pages/protocol/tvl/[protocol]'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const http = installFixtureFetch()
 const metadata = installMetadataSeeder()

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { requireSubscription } from '../requireSubscription'
 
 const http = installFixtureFetch()

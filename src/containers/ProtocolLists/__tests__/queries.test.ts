@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '../api.types'
 
 const http = installFixtureFetch()

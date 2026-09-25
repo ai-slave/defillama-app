@@ -7,7 +7,7 @@ import { renderToString } from 'react-dom/server'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import type { InvestorsSiteId } from '../config'
 
 // next/script keeps a loaded src in module state for the rest of the file, so later tests would get

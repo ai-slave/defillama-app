@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { SERVER_URL, STABLECOINS_SERVER_URL } from '~/constants'
 import type { StablecoinChartPoint } from '~/containers/Stablecoins/api.types'
 import { resultBody } from '~/server/api/__tests__/resultBody'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 
 const http = installFixtureFetch()
 const AGGREGATE_URL = `${STABLECOINS_SERVER_URL}/stablecoincharts2/all`

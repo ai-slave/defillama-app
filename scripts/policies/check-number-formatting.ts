@@ -17,7 +17,7 @@ const dateIdentifierFiles = new Set([
 // geometry/CSS, byte and duration labels, and editable numeric input drafts.
 const fixedFormattingFiles = new Set([
 	canonicalFormatter,
-	'src/utils/numberFormat.test.ts',
+	'src/utils/__tests__/numberFormat.test.ts',
 	'src/utils/index.tsx',
 	'src/containers/Account/ApiAccessCard.tsx',
 	'src/containers/AdapterMetrics/utils.ts',

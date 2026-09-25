@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
-import { earnPageRow } from '~/utils/test/yieldsEarnFixture'
+import { earnPageRow } from '~/utils/testing/yieldsEarnFixture'
 import {
 	filterTokenYieldPools,
 	formatTokenYieldsSummary,

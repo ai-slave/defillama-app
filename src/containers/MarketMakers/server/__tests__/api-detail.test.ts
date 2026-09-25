@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 const http = installFixtureFetch()
 
 import { marketMakerBreakdown } from '../api'

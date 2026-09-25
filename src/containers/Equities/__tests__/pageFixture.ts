@@ -1,6 +1,6 @@
 import { beforeEach } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import type { IEquitiesDimensionsResponse, IEquitiesStatementsResponse, IEquitiesSummaryResponse } from '../api.types'
 const emptyDimensions: IEquitiesDimensionsResponse = {
 	revenue: { annual: [], quarterly: [] },

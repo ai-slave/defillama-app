@@ -6,8 +6,8 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchSponsorsAdminView'
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
-import { fixtureStatus } from '~/utils/test/fixtureFetch'
-import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ApiAccessCard } from '../ApiAccessCard'
 
 const session = installSubscriberSession('admin')

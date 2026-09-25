@@ -1,0 +1,80 @@
+import { describe, expect, test } from 'vitest'
+import {
+	chartBuilderHasExactRemainder,
+	chartBuilderScopeHidesOthers,
+	normalizeChartBuilderConfig
+} from '../chartBuilderCapabilities'
+import type { ChartBuilderConfig } from '../types'
+
+const baseConfig = (overrides: Partial<ChartBuilderConfig['config']> = {}): ChartBuilderConfig['config'] => ({
+	metric: 'tvl',
+	mode: 'protocol',
+	chainFilterMode: 'include',
+	categoryFilterMode: 'include',
+	chainCategoryFilterMode: 'include',
+	protocolCategoryFilterMode: 'include',
+	chains: [],
+	categories: [],
+	groupBy: 'protocol',
+	limit: 10,
+	chartType: 'stackedArea',
+	displayAs: 'timeSeries',
+	...overrides
+})
+
+describe('Chart Builder series capabilities', () => {
+	test('marks all-protocol adapter chain series as exact Top N only', () => {
+		expect(chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'fees', chains: [] })).toBe(false)
+		expect(chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'chain-fees', protocol: 'All', chains: [] })).toBe(
+			false
+		)
+	})
+
+	test('keeps exact remainder controls for canonical totals and selected protocols', () => {
+		expect(chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'tvl', chains: [] })).toBe(true)
+		expect(
+			chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'stablecoins', protocol: 'All', chains: ['Base'] })
+		).toBe(true)
+		expect(
+			chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'fees', protocol: 'aave', chains: ['Base'] })
+		).toBe(true)
+		expect(chartBuilderHasExactRemainder({ mode: 'chains', metric: 'fees', chains: [] })).toBe(true)
+	})
+
+	test('marks filtered all-protocol TVL chain series as exact Top N only', () => {
+		expect(chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'tvl', chains: ['Base'] })).toBe(false)
+		expect(
+			chartBuilderHasExactRemainder({ mode: 'protocol', metric: 'tvl', chains: [], chainCategories: ['Rollup'] })
+		).toBe(false)
+	})
+
+	test('preserves the Others and percentage choices when the producer has an exact remainder', () => {
+		for (const hideOthers of [true, false]) {
+			expect(
+				normalizeChartBuilderConfig(
+					baseConfig({ protocol: 'aave', metric: 'fees', hideOthers, displayAs: 'percentage' })
+				)
+			).toMatchObject({ hideOthers, displayAs: 'percentage' })
+		}
+	})
+
+	test('forces Top N and time-series display when no exact remainder exists', () => {
+		expect(
+			normalizeChartBuilderConfig(baseConfig({ metric: 'fees', hideOthers: false, displayAs: 'percentage' }))
+		).toMatchObject({ hideOthers: true, displayAs: 'timeSeries' })
+	})
+
+	test('normalizes metrics that the selected mode cannot produce', () => {
+		expect(
+			normalizeChartBuilderConfig(baseConfig({ mode: 'chains', metric: 'stablecoins', chartType: 'line' }))
+		).toMatchObject({ metric: 'tvl', chartType: 'stackedArea' })
+		expect(normalizeChartBuilderConfig(baseConfig({ metric: 'chain-fees', protocol: 'aave' })).protocol).toBeUndefined()
+	})
+})
+
+test('scope hides Others only for supported category dimensions', () => {
+	expect(chartBuilderScopeHidesOthers(baseConfig())).toBe(false)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ protocolCategories: ['Dexs'] }))).toBe(true)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ mode: 'chains', protocolCategories: ['Dexs'] }))).toBe(false)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ mode: 'chains', chainCategories: ['Rollup'] }))).toBe(true)
+})

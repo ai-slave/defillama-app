@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { EQUITIES_SERVER_URL } from '~/constants'
 import handler from '~/pages/api/public/equities/price-history'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { fetchEquitiesPriceHistoryFromProxy } from '../priceHistoryClient'
 import { buildEquitiesPriceHistoryUpstreamUrl } from '../server/priceHistory.api'
 

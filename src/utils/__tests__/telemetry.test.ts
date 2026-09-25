@@ -1,6 +1,6 @@
 import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { fetchJson } from '../async'
 import { fetchWithPoolingOnServer } from '../http-client'
 import {

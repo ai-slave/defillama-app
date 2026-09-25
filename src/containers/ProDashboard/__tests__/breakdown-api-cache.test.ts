@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 const database = vi.hoisted(() => ({ any: vi.fn() }))
 vi.mock('~/server/db/llama', () => ({ llamaDb: database }))
 const http = installFixtureFetch()

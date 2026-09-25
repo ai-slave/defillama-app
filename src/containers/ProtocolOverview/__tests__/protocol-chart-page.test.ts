@@ -1,7 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import { getStaticProps } from '~/pages/chart/protocol/[protocol]'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 
 const { acquireOptionalYieldsSnapshot } = vi.hoisted(() => ({ acquireOptionalYieldsSnapshot: vi.fn() }))
 vi.mock('~/containers/Yields/server/dataset.server', () => ({ acquireOptionalYieldsSnapshot }))

@@ -1,8 +1,8 @@
 import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test } from 'vitest'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 const http = installFixtureFetch()
 const seed = installMetadataSeeder()
 import handler from '~/pages/api/public/stablecoins/volume-chart'

@@ -4,8 +4,8 @@ import type { IProtocolMetricsV2Api } from '~/containers/ProtocolOverview/api.ty
 import { getStaticProps as getCexStaticProps } from '~/pages/cex/[cex]'
 import { getStaticProps as getCexAssetsStaticProps } from '~/pages/cex/assets/[cex]'
 import { getStaticProps as getCexStablecoinsStaticProps } from '~/pages/cex/stablecoins/[cex]'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { resolveCexParamFromMetadata } from '../server/routes'
 import { cryptoComCexMetadataCache } from './metadataFixture'
 

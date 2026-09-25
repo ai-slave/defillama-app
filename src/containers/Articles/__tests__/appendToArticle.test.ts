@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { createEmptyLocalArticle } from '../document'
 import { appendBlocksToArticle, createArticleWithBlocks } from '../import/appendToArticle'
 

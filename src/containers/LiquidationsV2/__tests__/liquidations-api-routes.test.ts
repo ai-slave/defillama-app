@@ -1,6 +1,6 @@
 import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 
 const {
 	getLiquidationsOverviewPageDataMock,
@@ -26,8 +26,8 @@ import chainHandler from '~/pages/api/private/liquidations/[protocol]/[chain]'
 import protocolHandler from '~/pages/api/private/liquidations/[protocol]/index'
 import overviewHandler from '~/pages/api/private/liquidations/index'
 import tokenHandler from '~/pages/api/private/token-liquidations/[symbol]'
-import { installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 const { serve } = installFixtureFetch()
 const { seed } = installMetadataSeeder()
 

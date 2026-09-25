@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, test } from 'vitest'
 import { AUTH_SERVER, POCKETBASE_URL, SERVER_URL } from '~/constants'
 import inflowsHandler from '~/pages/api/private/cex/inflows'
 import batchHandler from '~/pages/api/private/cex/inflows/batch'
-import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
-import { installMetadataSeeder } from '~/utils/test/metadataCache'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/testing/metadataCache'
+import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
 import { binanceCexMetadataCache } from './metadataFixture'
 
 const { serve, requests } = installFixtureFetch()
