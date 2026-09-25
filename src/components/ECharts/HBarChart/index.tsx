@@ -39,6 +39,8 @@ function measureLabelWidth(text: string): number {
 	return Math.ceil(_measureCtx.measureText(text).width)
 }
 
+const VALUE_LABEL_RESERVE = 64
+
 function HBarChart({
 	categories,
 	values,
@@ -52,6 +54,7 @@ function HBarChart({
 	valueAxisMin,
 	valueAxisMax,
 	valueAxisInterval,
+	showValueLabels = false,
 	onReady
 }: IHBarChartProps) {
 	const grouped = series != null && series.length > 1
@@ -233,7 +236,18 @@ function HBarChart({
 							if (barColor) item.itemStyle = { color: barColor }
 							return item
 						}),
-						emphasis: { focus: 'series' as const }
+						emphasis: { focus: 'series' as const },
+						...(showValueLabels
+							? {
+									label: {
+										show: true,
+										position: 'right' as const,
+										color: textColor,
+										fontSize: 11,
+										formatter: ({ value }: { value: unknown }) => formatTooltipValue(Number(value), valueSymbol)
+									}
+								}
+							: {})
 					}
 				]
 
@@ -255,7 +269,8 @@ function HBarChart({
 				: {}),
 			grid: {
 				left: leftGridWidth,
-				right: CHART_INSET,
+				// Bar-end labels sit outside the plot; reserve room so the longest bar's label isn't clipped.
+				right: showValueLabels && !grouped ? VALUE_LABEL_RESERVE : CHART_INSET,
 				top: grouped ? CHART_LEGEND_RESERVE : CHART_INSET,
 				bottom: CHART_INSET,
 				outerBoundsMode: 'same',
@@ -340,6 +355,7 @@ function HBarChart({
 		valueAxisMin,
 		valueAxisMax,
 		valueAxisInterval,
+		showValueLabels,
 		hasLogos,
 		isThemeDark,
 		chartTheme,

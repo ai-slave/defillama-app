@@ -11,7 +11,14 @@ import { chainIconUrl } from '~/utils/icons'
 import { formatPercent } from '~/utils/numberFormat'
 import type { UniswapUnlocks } from './serverData'
 import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
-import { breakdownToSeries, chartToTrendSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
+import {
+	breakdownToSeries,
+	chartToTrendSeries,
+	groupTopN,
+	SeriesTrendChart,
+	TOP_CHAINS,
+	trimLeadingZeros
+} from './TrendChart'
 import {
 	BarListCard,
 	ChartCard,
@@ -309,7 +316,7 @@ export default function Economics() {
 				for (const [chain, value] of Object.entries(values)) row[chain] = value - (buyback[chain] ?? 0)
 				return [timestamp, row]
 			})
-			return groupTopN(breakdownToSeries(net), 12)
+			return groupTopN(breakdownToSeries(net), TOP_CHAINS)
 		},
 		...QUERY_OPTS
 	})
@@ -328,7 +335,7 @@ export default function Economics() {
 						})
 					)
 				),
-				12
+				TOP_CHAINS
 			),
 		...QUERY_OPTS
 	})

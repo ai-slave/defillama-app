@@ -1,6 +1,5 @@
 import { lazy, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel, type SparseCartesianSeries } from '~/components/ECharts/MultiSeriesChart/model'
-import { createCappedRemainderTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
@@ -14,7 +13,7 @@ import {
 	type Chart,
 	type TrendSeries
 } from './transform'
-import { ChartCard, SegToggle, seriesColor } from './ui'
+import { ChartCard, createStackTooltipFormatter, SegToggle, seriesColor, useTooltipMaxItems } from './ui'
 
 const MultiSeriesChart: React.FC<IMultiSeriesChartProps> = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -89,6 +88,10 @@ export function trimLeadingZeros(series: Array<TrendSeries>): Array<TrendSeries>
 	if (!Number.isFinite(start)) return series
 	return series.map((s) => ({ ...s, data: s.data.filter(([timestamp]) => timestamp >= start) }))
 }
+
+// Chain breakdowns keep this many chains before folding the rest into Others (matches the
+// desktop tooltip's 20 rows).
+export const TOP_CHAINS = 20
 
 // Keep the n largest series by lifetime total (all-zero series dropped), summing the
 // rest into an Others bucket. For raw DefiLlama breakdowns that list every chain.
@@ -181,12 +184,21 @@ export function SeriesTrendChart({
 	const chartSeries = useMemo(() => aggregate(series ?? [], view, stacked), [series, view, stacked])
 	const groupBy = view === 'week' ? 'weekly' : view === 'month' ? 'monthly' : view === 'quarter' ? 'quarterly' : 'daily'
 	const model = useMemo(() => buildSparseCartesianChartModel(chartSeries), [chartSeries])
+	const maxItems = useTooltipMaxItems()
 	const chartOptions = useMemo(
 		() => ({
 			...CHART_OPTIONS,
-			tooltip: { formatter: createCappedRemainderTooltipFormatter({ groupBy, valueSymbol }) }
+			tooltip: {
+				formatter: createStackTooltipFormatter({
+					groupBy,
+					valueSymbol,
+					maxItems,
+					// A Total only reads as one for stacked parts of a whole, never for overlaid lines or shares.
+					showTotal: stacked && valueSymbol !== '%'
+				})
+			}
 		}),
-		[groupBy, valueSymbol]
+		[groupBy, valueSymbol, maxItems, stacked]
 	)
 	return (
 		<ChartCard

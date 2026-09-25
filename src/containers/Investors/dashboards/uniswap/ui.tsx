@@ -4,8 +4,17 @@ import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { escapeHtml } from '~/components/ECharts/shared/escapeHtml'
+import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '~/components/ECharts/shared/formatters'
+import {
+	getTooltipAxisValue,
+	getTooltipRawYValue,
+	normalizeTooltipItems,
+	TOOLTIP_OTHERS_ROW_STYLE
+} from '~/components/ECharts/shared/tooltip'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
@@ -65,8 +74,9 @@ export function useUniswapDefs(): Record<string, string> {
 	return data?.definitions ?? {}
 }
 
-// Uniswap pink first, then an ordered set of distinct hues. 13 entries so the widest
-// charts (volume by chain: 12 + Other) never wrap back to a repeated color.
+// Uniswap pink first, then an ordered set of distinct hues. 20 entries so the widest
+// charts (the by-chain charts: top 20 + Others) never wrap back to a repeated color; gray is
+// left out because seriesColor reserves it for the catch-all bucket.
 export const UNI_PINK = '#FF007A'
 export const PALETTE = [
 	'#FF007A',
@@ -81,7 +91,14 @@ export const PALETTE = [
 	'#F97316',
 	'#0EA5E9',
 	'#84CC16',
-	'#94A3B8'
+	'#B45309',
+	'#0D9488',
+	'#7C3AED',
+	'#BE185D',
+	'#1D4ED8',
+	'#C026D3',
+	'#A16207',
+	'#DC2626'
 ]
 
 // Catch-all buckets ("Other", "Others") always render slate gray, so they never
@@ -153,6 +170,61 @@ export function seriesColor(name: string, index: number): string {
 	if (fixed) return fixed
 	if (/^others?\b/i.test(name) || /^(direct \/ other|non-uniswap routers \/ direct)$/i.test(name)) return OTHERS_GRAY
 	return paletteColor(index)
+}
+
+const isCatchAll = (name: string) => /^others?$/i.test(name)
+
+// Hover rows: largest first with the catch-all bucket as the last row, the tail past `maxItems`
+// folded into it, and (for stacked parts of a whole) the Total under a divider.
+export function createStackTooltipFormatter({
+	groupBy,
+	valueSymbol,
+	maxItems,
+	showTotal
+}: {
+	groupBy: TooltipGroupBy
+	valueSymbol: string
+	maxItems: number
+	showTotal: boolean
+}) {
+	return (params: unknown) => {
+		const items = normalizeTooltipItems(params)
+		if (items.length === 0) return ''
+		const axisValue = getTooltipAxisValue(items[0])
+		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
+		const rows: Array<{ marker: string; name: string; value: number }> = []
+		let catchAll: (typeof rows)[number] | null = null
+		let total = 0
+		for (const item of items) {
+			const name = item.seriesName
+			if (!name) continue
+			const raw = getTooltipRawYValue(item, name)
+			const value = raw === '-' ? Number.NaN : typeof raw === 'number' ? raw : Number(raw)
+			if (!Number.isFinite(value) || value === 0) continue
+			total += value
+			const row = { marker: item.marker ?? '', name, value }
+			if (isCatchAll(name)) catchAll = row
+			else rows.push(row)
+		}
+		rows.sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+		const hasTail = rows.length > maxItems - (catchAll ? 1 : 0)
+		const visible = catchAll || hasTail ? rows.slice(0, maxItems - 1) : rows
+		let tail = catchAll?.value ?? 0
+		for (const row of rows.slice(visible.length)) tail += row.value
+		const line = (marker: string, name: string, value: number, style = 'list-style:none') =>
+			`<li style="${style}">${marker}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
+		for (const row of visible) output += line(row.marker, row.name, row.value)
+		if (catchAll || hasTail)
+			output += line(catchAll?.marker ?? rows[visible.length]?.marker ?? '', catchAll?.name ?? 'Others', tail)
+		if (showTotal && rows.length + (catchAll ? 1 : 0) > 1)
+			output += line('', 'Total', total, `${TOOLTIP_OTHERS_ROW_STYLE}font-weight:600;`)
+		return output
+	}
+}
+
+// Twice the rows on desktop; phones keep 10 so the tooltip never covers the whole chart.
+export function useTooltipMaxItems() {
+	return useMedia('(max-width: 37.5rem)') ? 10 : 20
 }
 
 // ---------------------------------------------------------------- KPI + layout
@@ -275,7 +347,7 @@ export function ChartCard({
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
-				<div className="min-w-0 flex-1">
+				<div className="min-w-0 flex-1 basis-60">
 					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
 					{variants ? (
 						<div className="mt-0.5 grid">
@@ -399,12 +471,15 @@ export function BarListCard({
 	title,
 	subtitle,
 	items,
-	valueSymbol = ''
+	valueSymbol = '',
+	showValues = false
 }: {
 	title: string
 	subtitle?: string
 	items: Array<{ name: string; value: number }>
 	valueSymbol?: string
+	/** Print each value at its bar's end, for lists whose small bars vanish next to the largest. */
+	showValues?: boolean
 }) {
 	return (
 		<ChartCard title={title} subtitle={subtitle}>
@@ -414,6 +489,7 @@ export function BarListCard({
 				colors={items.map((item, index) => seriesColor(item.name, index))}
 				valueSymbol={valueSymbol}
 				height="360px"
+				showValueLabels={showValues}
 			/>
 		</ChartCard>
 	)
@@ -456,6 +532,7 @@ export function TimeAreaCard({
 }) {
 	const resolvedValueSymbol = valueSymbol ?? unitSymbol(chart.unit)
 	const multipleSeries = chart.series.length > 1
+	const tooltipMaxItems = useTooltipMaxItems()
 	const { dataset, groupBy, charts, chartOptions } = useMemo(() => {
 		const { dataset, groupBy } = chartToPeriodDataset(chart)
 		const zoom =
@@ -479,10 +556,23 @@ export function TimeAreaCard({
 					? { legend: { type: 'scroll' as const, top: CHART_INSET }, grid: { top: CHART_LEGEND_RESERVE } }
 					: {}),
 				...(level ? { yAxis: { scale: true as const } } : {}),
+				// Stacked parts of a whole get the capped rows + Total; overlaid lines keep the default.
+				...(stacked && multipleSeries
+					? {
+							tooltip: {
+								formatter: createStackTooltipFormatter({
+									groupBy,
+									valueSymbol: resolvedValueSymbol,
+									maxItems: tooltipMaxItems,
+									showTotal: resolvedValueSymbol !== '%'
+								})
+							}
+						}
+					: {}),
 				...zoom
 			}
 		}
-	}, [chart, stacked, level, multipleSeries, resolvedValueSymbol, zoomLastPoints])
+	}, [chart, stacked, level, multipleSeries, resolvedValueSymbol, zoomLastPoints, tooltipMaxItems])
 	if (chart.series.length === 0)
 		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (

@@ -274,6 +274,7 @@ export default function Liquidity() {
 						subtitle="Latest daily snapshot of core-pool TVL by token segment (same series as the chart over time)."
 						items={segmentSnapshot}
 						valueSymbol="$"
+						showValues
 					/>
 					{segmentsOverTime && (
 						<TimeAreaCard

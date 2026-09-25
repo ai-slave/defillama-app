@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { KpiGrid } from './ui'
+import { createStackTooltipFormatter, KpiGrid } from './ui'
 
 const NOTE = 'Distinct wallets with a trade of $100 or more.'
 const DEF = 'Definition from ir-server metadata.'
@@ -42,5 +42,41 @@ describe('uniswap KPI definition tooltip', () => {
 		)
 
 		expect(container.querySelector('[aria-label]')?.getAttribute('aria-label')).toBe(DEF)
+	})
+})
+
+describe('uniswap stack tooltip', () => {
+	const item = (name: string, value: number) => ({
+		seriesName: name,
+		marker: '',
+		data: { timestamp: 0, [name]: value }
+	})
+
+	test('keeps Others in the list, folds the tail into it and puts Total under the divider', () => {
+		const html = createStackTooltipFormatter({ groupBy: 'daily', valueSymbol: '$', maxItems: 3, showTotal: true })([
+			item('Others', 5),
+			item('A', 40),
+			item('B', 30),
+			item('C', 20)
+		])
+		const rows = [...html.matchAll(/<li style="([^"]*)">([^&]*)&nbsp;&nbsp;([^<]*)<\/li>/g)].map((m) => [
+			m[2],
+			m[3],
+			m[1].includes('border-top')
+		])
+		expect(rows).toEqual([
+			['A', '$40', false],
+			['B', '$30', false],
+			['Others', '$25', false],
+			['Total', '$95', true]
+		])
+	})
+
+	test('omits Total for overlaid series', () => {
+		const html = createStackTooltipFormatter({ groupBy: 'daily', valueSymbol: '$', maxItems: 20, showTotal: false })([
+			item('A', 1),
+			item('B', 2)
+		])
+		expect(html).not.toContain('Total')
 	})
 })

@@ -6,7 +6,7 @@ import {
 } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { Chart, Kpi as KpiT, TrendSeries } from './transform'
-import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
+import { breakdownToSeries, groupTopN, SeriesTrendChart, TOP_CHAINS, trimLeadingZeros } from './TrendChart'
 import {
 	countKpi,
 	KpiGrid,
@@ -42,7 +42,7 @@ export default function Overview() {
 
 	// Straight from the DefiLlama chain-breakdown endpoint (the internal pro-dashboard
 	// by-chain route is a server-side proxy this dashboard doesn't need), grouped to the
-	// top 12 chains plus Others client-side.
+	// top chains plus Others client-side.
 	const volumeByChain = useQuery({
 		queryKey: ['uniswap-breakdown', 'volume-by-chain'],
 		queryFn: async () =>
@@ -54,7 +54,7 @@ export default function Overview() {
 						type: 'chain'
 					})
 				),
-				12
+				TOP_CHAINS
 			),
 		...QUERY_OPTS
 	})
