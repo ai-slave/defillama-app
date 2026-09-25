@@ -615,3 +615,49 @@ export type UtrAssetResponse = {
 	performanceBreakdown?: UtrMarketMakerPerformanceBreakdown | null
 	uptimeCalculations?: Array<UtrMarketMakerUptime>
 }
+
+export type UtrDisclosedAllocation = number | string | null
+
+export type UtrDisclosedTokenomicsGroup = {
+	groupName: string
+	allocationPct: number
+	groupCategory: string
+	tgeUnlockPct: number
+	lockUpDurationMonths: number
+	cliffUnlockPct: number
+	unlockDurationMonths: number
+	unlockFrequency: string
+}
+
+export type UtrDisclosures = {
+	updatedAt: string | null
+	insiderIdentities: Array<{ name: string; role: string; profileUrl: string | null; description: string | null }>
+	organizationalStructure: Array<{ companyName: string; jurisdiction: string; description: string }>
+	insiderWallets: Array<{ walletAddress: string; allocationPct: UtrDisclosedAllocation; ownerType: string }>
+	tokenomicsGroups: Array<UtrDisclosedTokenomicsGroup>
+	externalAllocations: Array<{
+		counterpartyName: string
+		allocationPct: UtrDisclosedAllocation
+		categorization: string
+	}>
+	multisigWallets: Array<{ walletAddress: string; thresholdRequired: number | null; thresholdTotal: number | null }>
+	licenses: Array<{ name: string; link: string | null; description: string }>
+	marketMakerEngagements: Array<{
+		marketMakerName: string
+		logoUrl: string | null
+		allocationPct: UtrDisclosedAllocation
+		engagementType: string
+	}>
+	verifyMmEngagements: boolean | null
+	exchangeEngagements: Array<{
+		exchangeName: string
+		logoUrl: string | null
+		commercialCommitment: boolean | null
+		details: string | null
+	}>
+	auditors: Array<{ name: string; type: string; link: string | null }>
+	roleDescriptionsCommentary: string | null
+	treasuryReportingCommentary: string | null
+	cashFlowCommentary: string | null
+	vestingActualCommentary: string | null
+}

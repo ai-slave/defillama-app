@@ -5,6 +5,7 @@ vi.mock('~/utils/async', () => ({ fetchJson: (...args: Array<unknown>) => fetchJ
 
 import {
 	exchangeOptionsFromScoringConfig,
+	fetchUtrDisclosures,
 	fetchUtrDisclosureScoreSummaries,
 	fetchUtrLeaderboardStrict,
 	fetchUtrProjects,
@@ -145,5 +146,94 @@ describe('UTR project API', () => {
 
 		fetchJson.mockRejectedValueOnce(new Error('upstream failed'))
 		await expect(fetchUtrLeaderboardStrict()).rejects.toThrow('upstream failed')
+	})
+
+	test('normalizes disclosed records from the Forgd disclosures endpoint', async () => {
+		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
+		fetchJson.mockResolvedValueOnce({
+			arcticId: 'arctic-1',
+			updatedAt: '2026-08-21T08:51:21.248Z',
+			disclosures: {
+				insiderIdentities: [
+					{ name: 'Amir Haleem', role: 'Founder', profileUrl: 'https://x.com/amirhaleem', description: '' }
+				],
+				multisigWallets: [
+					{
+						walletAddress: '0x7951c7ef839e26F63DA87a42C9a87986507f1c07',
+						thresholdRequired: '7',
+						thresholdTotal: '12',
+						signerNames: 'N/A'
+					},
+					{ walletAddress: 'N/A', thresholdRequired: '-', thresholdTotal: '-', signerNames: 'Unknown' }
+				],
+				externalAllocations: [
+					{ counterpartyName: 'A16Z', allocationPct: 'Not Disclosed', categorization: 'Investor' },
+					{ counterpartyName: 'Binance', allocationPct: '15.85%', categorization: 'Service Provider' },
+					{ counterpartyName: 'Advisors', allocationPct: 'Share of 2.25% aggregate', categorization: 'Advisor' }
+				],
+				exchangeEngagements: [
+					{
+						exchangeName: 'Binance',
+						exchangeLogoUrl: 'https://cdn/binance.png',
+						commercialCommitment: true,
+						details: '',
+						commentary: 'hidden'
+					}
+				],
+				tokenomicsGroups: [
+					{
+						groupName: 'Core Contributors',
+						allocationPct: 20,
+						groupCategory: 'Airdrop',
+						tgeUnlockPct: 0,
+						lockUpDurationMonths: 12,
+						cliffUnlockPct: 4.16,
+						unlockDurationMonths: 24,
+						unlockFrequency: 'Monthly'
+					}
+				],
+				vestingActualCommentary: ' Matches the schedule. ',
+				cashFlowCommentary: 'N/A'
+			}
+		})
+
+		const disclosures = await fetchUtrDisclosures('arctic-1')
+		expect(fetchJson).toHaveBeenCalledWith(
+			'https://quant.forgd.com/api/v1/public/utr/disclosures/arctic-1',
+			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
+		)
+		expect(disclosures?.insiderIdentities).toEqual([
+			{ name: 'Amir Haleem', role: 'Founder', profileUrl: 'https://x.com/amirhaleem', description: null }
+		])
+		expect(disclosures?.multisigWallets).toEqual([
+			{ walletAddress: '0x7951c7ef839e26F63DA87a42C9a87986507f1c07', thresholdRequired: 7, thresholdTotal: 12 }
+		])
+		expect(disclosures?.externalAllocations.map((row) => row.allocationPct)).toEqual([
+			null,
+			15.85,
+			'Share of 2.25% aggregate'
+		])
+		expect(disclosures?.exchangeEngagements).toEqual([
+			{ exchangeName: 'Binance', logoUrl: 'https://cdn/binance.png', commercialCommitment: true, details: null }
+		])
+		expect(disclosures?.tokenomicsGroups[0].groupCategory).toBe('Airdrop')
+		expect(disclosures?.vestingActualCommentary).toBe('Matches the schedule.')
+		expect(disclosures?.cashFlowCommentary).toBeNull()
+	})
+
+	test('treats a missing disclosure record as nothing disclosed and a failed request as unknown', async () => {
+		fetchJson.mockResolvedValueOnce({
+			arcticId: 'arctic-2',
+			disclosures: null,
+			updatedAt: null,
+			warning: 'No disclosure data has been submitted for this asset yet.'
+		})
+		const missing = await fetchUtrDisclosures('arctic-2')
+		expect(missing?.insiderIdentities).toEqual([])
+		expect(missing?.tokenomicsGroups).toEqual([])
+		expect(missing?.vestingActualCommentary).toBeNull()
+
+		fetchJson.mockRejectedValueOnce(new Error('[503]'))
+		await expect(fetchUtrDisclosures('arctic-2')).resolves.toBeNull()
 	})
 })

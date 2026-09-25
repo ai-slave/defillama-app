@@ -15,6 +15,7 @@ import type {
 	UtrUniverse,
 	UtrExchangesResponse,
 	UtrDisclosureScoreSummary,
+	UtrDisclosures,
 	UtrClaimExchangeOption,
 	UtrClaimMarketMakerOption
 } from './types'
@@ -200,6 +201,160 @@ export async function fetchUtrScoringConfig(): Promise<UtrScoringConfig | null> 
 			headers: forgdUtrHeaders()
 		})
 		return normalizeUtrScoringConfig(response)
+	} catch {
+		return null
+	}
+}
+
+const DISCLOSURE_PLACEHOLDER = /^(n\/?a|-+|none|unknown( details)?|not (disclosed|published)|to be confirmed|tb[cd])$/i
+const NUMERIC_TEXT = /^-?\d+(\.\d+)?\s*%?$/
+
+function disclosedText(value: unknown): string | null {
+	const text = typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : ''
+	return text && !DISCLOSURE_PLACEHOLDER.test(text) ? text : null
+}
+
+function disclosedNumber(value: unknown): number | null {
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null
+	const text = disclosedText(value)
+	return text && NUMERIC_TEXT.test(text) ? Number.parseFloat(text) : null
+}
+
+function disclosedAllocation(value: unknown): number | string | null {
+	return disclosedNumber(value) ?? disclosedText(value)
+}
+
+function disclosedBoolean(value: unknown): boolean | null {
+	return typeof value === 'boolean' ? value : null
+}
+
+function disclosureRows<T>(value: unknown, mapRow: (row: Record<string, unknown>) => T | null): Array<T> {
+	if (!Array.isArray(value)) return []
+	return value.flatMap((row) => {
+		if (!isRecord(row)) return []
+		const mapped = mapRow(row)
+		return mapped ? [mapped] : []
+	})
+}
+
+export function normalizeUtrDisclosures(value: unknown): UtrDisclosures | null {
+	if (!isRecord(value)) return null
+	const raw = isRecord(value.disclosures) ? value.disclosures : {}
+	return {
+		updatedAt: nullableString(value.updatedAt),
+		insiderIdentities: disclosureRows(raw.insiderIdentities, (row) => {
+			const name = disclosedText(row.name)
+			return name
+				? {
+						name,
+						role: disclosedText(row.role) ?? '',
+						profileUrl: disclosedText(row.profileUrl),
+						description: disclosedText(row.description)
+					}
+				: null
+		}),
+		organizationalStructure: disclosureRows(raw.organizationalStructure, (row) => {
+			const companyName = disclosedText(row.companyName)
+			return companyName
+				? {
+						companyName,
+						jurisdiction: disclosedText(row.jurisdiction) ?? '',
+						description: disclosedText(row.description) ?? ''
+					}
+				: null
+		}),
+		insiderWallets: disclosureRows(raw.insiderWallets, (row) => {
+			const walletAddress = disclosedText(row.walletAddress)
+			return walletAddress
+				? {
+						walletAddress,
+						allocationPct: disclosedAllocation(row.allocationPct),
+						ownerType: disclosedText(row.ownerType) ?? ''
+					}
+				: null
+		}),
+		tokenomicsGroups: disclosureRows(raw.tokenomicsGroups, (row) => {
+			const groupName = disclosedText(row.groupName)
+			const allocationPct = disclosedNumber(row.allocationPct)
+			return groupName && allocationPct != null
+				? {
+						groupName,
+						allocationPct,
+						groupCategory: disclosedText(row.groupCategory) ?? '',
+						tgeUnlockPct: disclosedNumber(row.tgeUnlockPct) ?? 0,
+						lockUpDurationMonths: disclosedNumber(row.lockUpDurationMonths) ?? 0,
+						cliffUnlockPct: disclosedNumber(row.cliffUnlockPct) ?? 0,
+						unlockDurationMonths: disclosedNumber(row.unlockDurationMonths) ?? 0,
+						unlockFrequency: disclosedText(row.unlockFrequency) ?? ''
+					}
+				: null
+		}),
+		externalAllocations: disclosureRows(raw.externalAllocations, (row) => {
+			const counterpartyName = disclosedText(row.counterpartyName)
+			return counterpartyName
+				? {
+						counterpartyName,
+						allocationPct: disclosedAllocation(row.allocationPct),
+						categorization: disclosedText(row.categorization) ?? ''
+					}
+				: null
+		}),
+		multisigWallets: disclosureRows(raw.multisigWallets, (row) => {
+			const walletAddress = disclosedText(row.walletAddress)
+			return walletAddress
+				? {
+						walletAddress,
+						thresholdRequired: disclosedNumber(row.thresholdRequired),
+						thresholdTotal: disclosedNumber(row.thresholdTotal)
+					}
+				: null
+		}),
+		licenses: disclosureRows(raw.licenses, (row) => {
+			const name = disclosedText(row.name)
+			return name ? { name, link: disclosedText(row.link), description: disclosedText(row.description) ?? '' } : null
+		}),
+		marketMakerEngagements: disclosureRows(raw.marketMakerEngagements, (row) => {
+			const marketMakerName = disclosedText(row.marketMakerName)
+			return marketMakerName
+				? {
+						marketMakerName,
+						logoUrl: disclosedText(row.marketMakerLogoUrl),
+						allocationPct: disclosedAllocation(row.allocationPct),
+						engagementType: disclosedText(row.engagementType) ?? ''
+					}
+				: null
+		}),
+		verifyMmEngagements: disclosedBoolean(raw.verifyMmEngagements),
+		exchangeEngagements: disclosureRows(raw.exchangeEngagements, (row) => {
+			const exchangeName = disclosedText(row.exchangeName)
+			return exchangeName
+				? {
+						exchangeName,
+						logoUrl: disclosedText(row.exchangeLogoUrl),
+						commercialCommitment: disclosedBoolean(row.commercialCommitment),
+						details: disclosedText(row.details)
+					}
+				: null
+		}),
+		auditors: disclosureRows(raw.auditors, (row) => {
+			const name = disclosedText(row.name)
+			return name ? { name, type: disclosedText(row.type) ?? '', link: disclosedText(row.link) } : null
+		}),
+		roleDescriptionsCommentary: disclosedText(raw.roleDescriptionsCommentary),
+		treasuryReportingCommentary: disclosedText(raw.treasuryReportingCommentary),
+		cashFlowCommentary: disclosedText(raw.cashFlowCommentary),
+		vestingActualCommentary: disclosedText(raw.vestingActualCommentary)
+	}
+}
+
+export async function fetchUtrDisclosures(arcticId: string): Promise<UtrDisclosures | null> {
+	try {
+		return normalizeUtrDisclosures(
+			await fetchJson<unknown>(`${FORGD_HOST}/api/v1/public/utr/disclosures/${encodeURIComponent(arcticId)}`, {
+				timeout: 30_000,
+				headers: forgdUtrHeaders()
+			})
+		)
 	} catch {
 		return null
 	}
