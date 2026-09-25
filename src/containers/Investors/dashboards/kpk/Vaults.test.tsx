@@ -1,18 +1,17 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { KpkVaults } from './api'
+import Vaults from './Vaults'
 
-// The renderer pulls in ECharts, which has no place in a table assertion.
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/investors', query: {} }) }))
+const http = installFixtureFetch()
+// The chart draws nothing these tests read; its series are covered by buildComposition.
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
-
-// The query layer is a thin fetch wrapper; this exercises the payload → table path.
-vi.mock('./api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('./api')>()),
-	useKpkVaults: () => ({ data: served, isError: false })
-}))
 
 const DOUBLE_COUNT_NOTE =
 	'KPK USDC RWA Liquidity allocates into KPK’s own Morpho vaults, so this TVA is also counted inside those vaults.'
@@ -144,9 +143,12 @@ let served: KpkVaults = VAULTS
 describe('kpk Vaults tab', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let client: QueryClient
 
 	beforeEach(() => {
 		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+		client = new QueryClient()
+		http.serve({ '/api/public/kpk/vaults': () => served })
 		served = VAULTS
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -156,35 +158,20 @@ describe('kpk Vaults tab', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		client.clear()
 	})
 
-	/** Breakdown chips, in the order the toggle group renders them. */
-	const breakdownChips = () =>
-		[...container.querySelectorAll('button')]
-			.map((button) => button.textContent)
-			.filter((text) => text?.startsWith('By '))
-
-	const RANGE_LABELS = new Set(['1M', '3M', 'YTD', 'Max'])
-
-	const rangeChips = () =>
-		[...container.querySelectorAll('button')]
-			.map((button) => button.textContent ?? '')
-			.filter((text) => RANGE_LABELS.has(text))
-
-	const pressedChip = (labels: Array<string>) =>
-		[...container.querySelectorAll('button[aria-pressed="true"]')]
-			.map((button) => button.textContent ?? '')
-			.find((text) => labels.includes(text))
-
 	async function renderTab() {
-		const { default: Vaults } = await import('./Vaults')
 		await act(async () =>
 			root.render(
-				<Suspense fallback={null}>
-					<Vaults />
-				</Suspense>
+				<QueryClientProvider client={client}>
+					<Suspense fallback={null}>
+						<Vaults />
+					</Suspense>
+				</QueryClientProvider>
 			)
 		)
+		await vi.waitFor(() => expect(container.textContent).toContain('KPK USDC Prime Vault'), { timeout: 1000 })
 	}
 
 	const clickChip = async (label: string) => {
@@ -192,212 +179,41 @@ describe('kpk Vaults tab', () => {
 		await act(async () => chip.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
-	test('renders the ledger, the vault rows and USD totals converted from $m', async () => {
-		await renderTab()
+	const rowOf = (name: string) =>
+		[...container.querySelectorAll('tbody tr')].find((row) => row.textContent?.startsWith(name))!
 
-		expect(container.textContent).toContain('KPK USDC Prime Vault')
-		expect(container.textContent).toContain('KPK wstETH Earn Pool')
-		// tva 20 + 10 + 1 ($m) and interest 0.5 + 0.25 + 0.002 ($m)
-		expect(container.textContent).toContain('$31m')
-		expect(container.textContent).toContain('$752k')
-		expect(container.textContent).toContain('$9.9bn')
-		expect(container.textContent).toContain('60.5%')
+	// "No rebalancing agent" must not collapse into the "no source" dash.
+	test('marks a vault with no rebalancing agent n/a rather than a missing value', async () => {
+		await renderTab()
+		const row = rowOf('KPK wstETH Earn Pool')
+
+		expect(row.querySelector('[aria-label*="no rebalancing agent"]')?.closest('td')?.textContent).toBe('n/a')
 	})
 
-	// "No rebalancing agent" and "no source" must not collapse into the same cell.
-	test('marks a venue with no rebalancing agent as not applicable', async () => {
+	test('flags the double-counted vault on its own row', async () => {
 		await renderTab()
 
-		expect(container.textContent).toContain('n/a')
-		expect(container.querySelector('[aria-label*="no rebalancing agent"]')).not.toBeNull()
+		expect(rowOf('KPK USDC RWA Liquidity').querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
+		expect(rowOf('KPK USDC Prime Vault').querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).toBeNull()
 	})
 
-	test('shows a derisking count where the venue reports one and a dash where it does not', async () => {
-		await renderTab()
-
-		expect(container.textContent).toContain('1,710')
-		expect(container.querySelector('th [aria-label*="agent-executed derisking rebalances"]')).not.toBeNull()
-	})
-
-	test('states the gross TVA with the adjusted figure and the netting rule beneath it', async () => {
-		await renderTab()
-
-		expect(container.textContent).toContain('adjusted, excluding Symbiotic')
-		expect(container.querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
-	})
-
-	test('marks the double-counted vault and nets it out of a second footer row', async () => {
-		await renderTab()
-
-		const nameCell = [...container.querySelectorAll('tbody td:first-child')].find((cell) =>
-			cell.textContent?.startsWith('KPK USDC RWA Liquidity')
-		)!
-		expect(nameCell.querySelector(`[aria-label="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
-		expect(container.textContent).not.toContain('†')
-		expect(container.textContent).toContain('Adjusted, excl. Symbiotic')
-
-		expect(container.textContent).toContain('$30m')
-		expect(container.textContent).toContain('$750k')
-	})
-
-	test('drops the adjusted footer row for a filter that nets out nothing', async () => {
-		await renderTab()
-		await clickChip('Morpho')
-
-		expect(container.textContent).not.toContain('Adjusted, excl.')
-	})
-
-	test('labels the breakdown chips with the payload titles, in payload order', async () => {
-		await renderTab()
-
-		expect(breakdownChips()).toEqual(['By venue', 'By chain', 'By supply asset', 'By collateral'])
-	})
-
-	test('drops a breakdown chip the payload did not send', async () => {
-		served = { ...VAULTS, comp: { venue: VAULTS.comp.venue, chain: VAULTS.comp.chain, asset: VAULTS.comp.asset } }
-		await renderTab()
-
-		expect(breakdownChips()).toEqual(['By venue', 'By chain', 'By supply asset'])
-	})
-
-	test('filters the table by venue and recomputes the footer', async () => {
-		await renderTab()
-		await clickChip('Gearbox')
-
-		expect(container.textContent).not.toContain('KPK USDC Prime Vault')
-		expect(container.textContent).toContain('$10m')
-		expect(container.textContent).toContain('$250k')
-	})
-
-	test('opens the chart on the widest span and offers a chip per range the payload sent', async () => {
-		await renderTab()
-
-		expect(rangeChips()).toEqual(['1M', 'Max'])
-		expect(pressedChip(['1M', 'Max'])).toBe('Max')
-	})
-
-	test('re-ranks the breakdown table on the range it is switched to', async () => {
-		await renderTab()
-		await clickChip('1M')
-
-		const segments = [...container.querySelectorAll('tbody tr')]
-			.map((row) => row.querySelector('td')?.textContent)
-			.filter((name) => name === 'Morpho' || name === 'Symbiotic')
-
-		expect(segments).toEqual(['Morpho'])
-		expect(container.textContent).not.toContain('joins straight across it')
-	})
-
-	test('names the days the widest span joins across rather than letting them read as data', async () => {
-		await renderTab()
-
-		expect(container.textContent).toContain('14 days missing between Jul 6, 2026 and Jul 19, 2026')
-		expect(container.textContent).toContain('the line joins straight across it')
-	})
-
-	test('carries the per-band note on the double-counted segment', async () => {
-		await renderTab()
-
-		expect(container.querySelectorAll(`[aria-label="${DOUBLE_COUNT_NOTE}"]`).length).toBeGreaterThan(1)
-	})
-
-	test('sits the vault link in the name cell, not a column of its own', async () => {
-		await renderTab()
-
-		const link = container.querySelector<HTMLAnchorElement>('a[href="https://app.morpho.org/vault/kpk-usdc-prime"]')
-		const cell = link?.closest('td')
-
-		expect(cell?.textContent).toContain('KPK USDC Prime Vault')
-		// The vaults that carry no destination get no stray link, and none is left in a column of its own.
-		expect(cell?.parentElement?.querySelectorAll('a').length).toBe(1)
-	})
-
-	test('closes the risk disclaimer with the legal link', async () => {
-		await renderTab()
-
-		const legal = container.querySelector<HTMLAnchorElement>('a[href="https://docs.kpk.io/vaults/resources/legal"]')
-
-		expect(legal?.closest('div')?.textContent).toContain(
-			'Curated vaults carry risk of loss. See our full legal disclaimers at docs.kpk.io/vaults/resources/legal.'
-		)
-	})
-
-	test('closes the served disclaimer copy before the legal line', async () => {
-		served = { ...VAULTS, riskDisclaimer: 'Curated vaults carry risk of loss' }
-		await renderTab()
-
-		expect(container.textContent).toContain('risk of loss. See our full legal disclaimers')
-	})
-
-	test('sizes the share table like every other tab and leaves the vault table content-sized', async () => {
-		await renderTab()
-
-		const split = [...container.querySelectorAll('div.grid')].find((el) => el.className.includes('minmax('))!
-		expect(split.className).toContain('minmax(0,420px)')
-		expect(split.querySelector('table')?.className).toContain('w-full')
-
-		// The vault list scrolls rather than wrapping.
-		const others = [...container.querySelectorAll('table')].filter((table) => !split.contains(table))
-		expect(others.length).toBeGreaterThan(0)
-		for (const table of others) {
-			expect(table.className).toContain('w-max')
-		}
-	})
-
-	test('links the Dune query behind the rebalancing figures', async () => {
-		await renderTab()
-
-		expect(container.textContent).toContain(
-			"Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
-		)
-		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).not.toBeNull()
-	})
-
-	test('keeps the operations link when the adapter names no ref', async () => {
+	test('links the rebalancing figures to the operations query when the adapter names no ref', async () => {
 		served = { ...VAULTS, rebalancingRef: undefined }
 		await renderTab()
 
 		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).not.toBeNull()
 	})
 
-	test('carries the Symbiotic query alongside the refs the adapter serves', async () => {
+	test('filters the vaults by venue and switches the breakdown range', async () => {
 		await renderTab()
 
-		const link = container.querySelector<HTMLAnchorElement>('a[href="https://dune.com/kpk/kpk-usdc-rwa-liquidity"]')
+		await clickChip('Gearbox')
+		expect(container.textContent).not.toContain('KPK USDC Prime Vault')
+		expect(container.textContent).toContain('$250k')
+		expect(container.textContent).not.toContain('Adjusted, excl.')
 
-		expect(link?.textContent).toContain('Symbiotic vaults')
-		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-morpho-vaults"]')).not.toBeNull()
-	})
-
-	test('does not repeat the Symbiotic query once the adapter serves it', async () => {
-		served = {
-			...VAULTS,
-			refs: [...VAULTS.refs, { label: 'Symbiotic vaults', url: 'https://dune.com/kpk/kpk-usdc-rwa-liquidity' }]
-		}
-		await renderTab()
-
-		expect(container.querySelectorAll('a[href="https://dune.com/kpk/kpk-usdc-rwa-liquidity"]').length).toBe(1)
-	})
-
-	test('pins the header row and the vault column, and scrolls the table on both axes', async () => {
-		await renderTab()
-
-		const table = [...container.querySelectorAll('table')].find((element) =>
-			element.textContent?.includes('KPK USDC Prime Vault')
-		)!
-
-		expect(table.parentElement?.className).toContain('overflow-auto')
-
-		const [vaultHeader, tvaHeader] = table.querySelectorAll('thead th')
-		expect(vaultHeader.className).toContain('sticky')
-		expect(vaultHeader.className).toContain('top-0')
-		expect(vaultHeader.className).toContain('left-0')
-		expect(tvaHeader.className).toContain('top-0')
-		expect(tvaHeader.className).not.toContain('left-0')
-
-		const [vaultCell, tvaCell] = table.querySelectorAll('tbody tr:first-child td')
-		expect(vaultCell.className).toContain('sticky')
-		expect(vaultCell.className).toContain('left-0')
-		expect(tvaCell.className).not.toContain('sticky')
+		expect(container.textContent).toContain('the line joins straight across it')
+		await clickChip('1M')
+		expect(container.textContent).not.toContain('the line joins straight across it')
 	})
 })

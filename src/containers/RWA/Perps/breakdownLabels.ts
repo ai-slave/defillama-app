@@ -1,9 +1,7 @@
 import type { IRWAPerpsMarket } from './api.types'
 import type {
-	RWAPerpsOverviewBreakdown,
 	RWAPerpsOverviewSnapshotBreakdown,
 	RWAPerpsOverviewTreemapBreakdown,
-	RWAPerpsVenueBreakdown,
 	RWAPerpsVenueSnapshotBreakdown,
 	RWAPerpsVenueTreemapBreakdown
 } from './types'
@@ -26,11 +24,11 @@ export function getRWAPerpsBaseAssetBreakdownLabel(
 	return normalizeRWAPerpsBreakdownLabel(row.referenceAsset ?? row.contract.split(':')[1] ?? row.contract)
 }
 
-export function getRWAPerpsContractBreakdownLabel(row: Pick<SharedBreakdownRow, 'contract'>): string {
+function getRWAPerpsContractBreakdownLabel(row: Pick<SharedBreakdownRow, 'contract'>): string {
 	return normalizeRWAPerpsBreakdownLabel(row.contract)
 }
 
-export function getRWAPerpsAssetClassBreakdownLabel(row: Pick<SharedBreakdownRow, 'assetClass'>): string {
+function getRWAPerpsAssetClassBreakdownLabel(row: Pick<SharedBreakdownRow, 'assetClass'>): string {
 	return normalizeRWAPerpsBreakdownLabel(row.assetClass?.[0])
 }
 
@@ -53,17 +51,6 @@ export function getRWAPerpsSharedBreakdownLabel(row: SharedBreakdownRow, breakdo
 		default:
 			return assertNever(breakdown)
 	}
-}
-
-export function getRWAPerpsOverviewBreakdownLabel(
-	row: SharedBreakdownRow,
-	breakdown: RWAPerpsOverviewBreakdown
-): string {
-	return getRWAPerpsSharedBreakdownLabel(row, breakdown)
-}
-
-export function getRWAPerpsVenueBreakdownLabel(row: SharedBreakdownRow, breakdown: RWAPerpsVenueBreakdown): string {
-	return getRWAPerpsSharedBreakdownLabel(row, breakdown)
 }
 
 export function getRWAPerpsOverviewSnapshotBreakdownLabel(

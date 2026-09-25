@@ -4,14 +4,12 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useResearchSectionEngagement } from '~/containers/Articles/landing/Analytics'
+import { installUmamiSink } from '~/utils/test/umamiSink'
+
+const track = installUmamiSink()
 
 const mocks = vi.hoisted(() => ({
-	trackUmamiEvent: vi.fn(),
 	routerHandlers: new Map<string, Set<() => void>>()
-}))
-
-vi.mock('~/utils/analytics/umami', () => ({
-	trackUmamiEvent: mocks.trackUmamiEvent
 }))
 
 vi.mock('next/router', () => ({
@@ -42,7 +40,7 @@ describe('research section engagement', () => {
 
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.trackUmamiEvent.mockReset()
+		track.mockReset()
 		mocks.routerHandlers.clear()
 		section = 'report'
 		now = 1000
@@ -70,8 +68,8 @@ describe('research section engagement', () => {
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
 		for (const handler of mocks.routerHandlers.get('beforeHistoryChange') ?? []) handler()
 
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
+		expect(track).toHaveBeenCalledOnce()
+		expect(track).toHaveBeenCalledWith('research-section-engagement', {
 			page_type: 'research',
 			section: 'report',
 			max_scroll_percent: 50,
@@ -84,7 +82,7 @@ describe('research section engagement', () => {
 		const cachedPageHide = new Event('pagehide')
 		Object.defineProperty(cachedPageHide, 'persisted', { value: true })
 		await act(async () => window.dispatchEvent(cachedPageHide))
-		expect(mocks.trackUmamiEvent).not.toHaveBeenCalled()
+		expect(track).not.toHaveBeenCalled()
 
 		now = 5000
 		const cachedPageShow = new Event('pageshow')
@@ -93,7 +91,7 @@ describe('research section engagement', () => {
 
 		now = 8000
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
+		expect(track).toHaveBeenCalledWith('research-section-engagement', {
 			page_type: 'research',
 			section: 'report',
 			max_scroll_percent: 0,
@@ -101,13 +99,14 @@ describe('research section engagement', () => {
 		})
 	})
 
-	test('subscribes only to the committed history change, not to routeChangeStart', () => {
-		expect([...mocks.routerHandlers.keys()]).toEqual(['beforeHistoryChange'])
-
+	test('sends engagement when the router commits a navigation, not when one merely starts', () => {
 		now = 5000
+		// A started navigation can still be cancelled, so it must not end the visit.
+		for (const handler of mocks.routerHandlers.get('routeChangeStart') ?? []) handler()
+		expect(track).not.toHaveBeenCalled()
 		for (const handler of mocks.routerHandlers.get('beforeHistoryChange') ?? []) handler()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
+		expect(track).toHaveBeenCalledOnce()
+		expect(track).toHaveBeenCalledWith('research-section-engagement', {
 			page_type: 'research',
 			section: 'report',
 			max_scroll_percent: 0,
@@ -115,11 +114,14 @@ describe('research section engagement', () => {
 		})
 	})
 
-	test('does not track engagement for other research sections', async () => {
+	test('tracks engagement for the report section only', async () => {
+		await act(async () => window.dispatchEvent(new Event('pagehide')))
+		expect(track).toHaveBeenCalledOnce()
+
 		section = 'interview'
 		await act(async () => root.render(<Harness />))
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
 
-		expect(mocks.trackUmamiEvent).not.toHaveBeenCalled()
+		expect(track.mock.calls.map(([, data]) => data?.section)).toEqual(['report'])
 	})
 })

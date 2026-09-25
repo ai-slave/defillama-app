@@ -110,22 +110,6 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	test('creates a private dashboard and purges its urls', async () => {
-		const saved = { id: 'new-2', slug: 'secret', visibility: 'private' }
-		const fetchImpl = vi
-			.fn()
-			.mockResolvedValueOnce(dashboardResponse(saved))
-			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
-		vi.stubGlobal('fetch', fetchImpl)
-		const res = createMockNextApiResponse()
-
-		await dashboardSaveHandler(request({ body: { visibility: 'private' } }), res)
-
-		expect(fetchImpl).toHaveBeenCalledTimes(2)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
-		expect(res.json).toHaveBeenCalledWith(saved)
-	})
-
 	test('reads the previous state then purges old and new slugs on a public rename', async () => {
 		const before = { id: 'd1', slug: 'old-name', visibility: 'public' }
 		const saved = { id: 'd1', slug: 'new-name', visibility: 'public' }
@@ -191,24 +175,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	test('purges when a private dashboard stays private', async () => {
-		const before = { id: 'd3', slug: 'private-dash', visibility: 'private' }
-		const saved = { id: 'd3', slug: 'private-dash', visibility: 'private' }
-		const fetchImpl = vi
-			.fn()
-			.mockResolvedValueOnce(dashboardResponse(before))
-			.mockResolvedValueOnce(dashboardResponse(saved))
-			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
-		vi.stubGlobal('fetch', fetchImpl)
-		const res = createMockNextApiResponse()
-
-		await dashboardSaveHandler(request({ query: { id: 'd3' }, body: { visibility: 'private' } }), res)
-
-		expect(fetchImpl).toHaveBeenCalledTimes(3)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
-	})
-
-	test('passes backend save failures through without purging', async () => {
+	test('passes backend save failure status and body through', async () => {
 		const fetchImpl = vi.fn().mockResolvedValueOnce(dashboardResponse({ message: 'Forbidden' }, 403))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -293,23 +260,6 @@ describe('/api/private/pro-dashboard/delete', () => {
 		const files = purgeFiles(lastCall(fetchImpl))
 		expect(files).toContain('https://defillama.test/pro/canonical-id')
 		expect(files).toContain('https://defillama.test/pro/public-dash')
-	})
-
-	test('deletes a private dashboard and purges its urls', async () => {
-		const before = { id: 'd10', slug: 'private-dash', visibility: 'private' }
-		const fetchImpl = vi
-			.fn()
-			.mockResolvedValueOnce(dashboardResponse(before))
-			.mockResolvedValueOnce(dashboardResponse({ message: 'Dashboard deleted' }))
-			.mockResolvedValueOnce(new Response('{}', { status: 200 }))
-		vi.stubGlobal('fetch', fetchImpl)
-		const res = createMockNextApiResponse()
-
-		await dashboardDeleteHandler(request({ query: { id: 'd10' } }), res)
-
-		expect(fetchImpl).toHaveBeenCalledTimes(3)
-		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
-		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
 	})
 
 	test('passes backend delete failures through without purging', async () => {

@@ -1,10 +1,19 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { getTokenRiskBorrowCapacity } from '../api'
-import { getTokenRiskData, resetTokenRiskBorrowRoutesCache } from '../queries'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { RISK_SERVER_URL } from '~/constants'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { earnPageRow } from '~/utils/test/yieldsEarnFixture'
+import {
+	buildInitialBorrowRoutesSnapshot,
+	buildInitialYieldsSnapshot,
+	getTokenPageSections,
+	getTokenRiskData,
+	resetTokenRiskBorrowRoutesCache
+} from '../queries'
+import type { TokenOverviewData } from '../tokenOverview'
 
-vi.mock('../api', () => ({
-	getTokenRiskBorrowCapacity: vi.fn()
-}))
+const http = installFixtureFetch()
+const BORROW_CAPACITY_URL = `${RISK_SERVER_URL}/get-borrow-capacity-by-asset`
 
 function createBorrowCapacityResponse() {
 	return {
@@ -111,15 +120,12 @@ const displayLookups = {
 	])
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
-	resetTokenRiskBorrowRoutesCache()
-})
+// The borrow capacity payload is cached per process; each test serves its own.
+beforeEach(() => resetTokenRiskBorrowRoutesCache())
 
 describe('getTokenRiskData', () => {
 	test('builds token risk exposure data from the borrow capacity payload', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
+		http.serve({ [BORROW_CAPACITY_URL]: createBorrowCapacityResponse() })
 
 		const payload = await getTokenRiskData({
 			tokenSymbol: 'USDC',
@@ -198,127 +204,128 @@ describe('getTokenRiskData', () => {
 	})
 
 	test('groups native and wrapped symbol aliases across chains', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue({
-			...createBorrowCapacityResponse(),
-			tokens: [
-				{
-					asset: {
-						symbol: 'ETH',
-						address: '0x0000000000000000000000000000000000000000',
-						priceUsd: 3000
-					},
-					chain: 'ethereum',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 100,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 10
-					},
-					byProtocol: [
-						{
-							protocol: 'sparklend',
+		http.serve({
+			[BORROW_CAPACITY_URL]: {
+				...createBorrowCapacityResponse(),
+				tokens: [
+					{
+						asset: {
+							symbol: 'ETH',
+							address: '0x0000000000000000000000000000000000000000',
+							priceUsd: 3000
+						},
+						chain: 'ethereum',
+						totals: {
 							collateralMaxBorrowUsdGovernance: null,
 							collateralMaxBorrowUsdLiquidity: 100,
 							collateralBorrowedDebtUsd: null,
 							minBadDebtAtPriceZeroUsd: 10
-						}
-					]
-				},
-				{
-					asset: {
-						symbol: 'ETH',
-						address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-						priceUsd: 3000
+						},
+						byProtocol: [
+							{
+								protocol: 'sparklend',
+								collateralMaxBorrowUsdGovernance: null,
+								collateralMaxBorrowUsdLiquidity: 100,
+								collateralBorrowedDebtUsd: null,
+								minBadDebtAtPriceZeroUsd: 10
+							}
+						]
 					},
-					chain: 'ethereum',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 25,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 5
-					},
-					byProtocol: [
-						{
-							protocol: 'fluid',
+					{
+						asset: {
+							symbol: 'ETH',
+							address: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+							priceUsd: 3000
+						},
+						chain: 'ethereum',
+						totals: {
 							collateralMaxBorrowUsdGovernance: null,
 							collateralMaxBorrowUsdLiquidity: 25,
 							collateralBorrowedDebtUsd: null,
 							minBadDebtAtPriceZeroUsd: 5
-						}
-					]
-				},
-				{
-					asset: {
-						symbol: 'ETH',
-						address: '0x0000000000000000000000000000000000000000',
-						priceUsd: 3000
+						},
+						byProtocol: [
+							{
+								protocol: 'fluid',
+								collateralMaxBorrowUsdGovernance: null,
+								collateralMaxBorrowUsdLiquidity: 25,
+								collateralBorrowedDebtUsd: null,
+								minBadDebtAtPriceZeroUsd: 5
+							}
+						]
 					},
-					chain: 'optimism',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 50,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 15
-					},
-					byProtocol: [
-						{
-							protocol: 'aave-v3',
+					{
+						asset: {
+							symbol: 'ETH',
+							address: '0x0000000000000000000000000000000000000000',
+							priceUsd: 3000
+						},
+						chain: 'optimism',
+						totals: {
 							collateralMaxBorrowUsdGovernance: null,
 							collateralMaxBorrowUsdLiquidity: 50,
 							collateralBorrowedDebtUsd: null,
 							minBadDebtAtPriceZeroUsd: 15
-						}
-					]
-				},
-				{
-					asset: {
-						symbol: 'WETH',
-						address: '0xWethBsc',
-						priceUsd: 3000
+						},
+						byProtocol: [
+							{
+								protocol: 'aave-v3',
+								collateralMaxBorrowUsdGovernance: null,
+								collateralMaxBorrowUsdLiquidity: 50,
+								collateralBorrowedDebtUsd: null,
+								minBadDebtAtPriceZeroUsd: 15
+							}
+						]
 					},
-					chain: 'bsc',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 200,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 20
-					},
-					byProtocol: [
-						{
-							protocol: 'venus-core-pool',
+					{
+						asset: {
+							symbol: 'WETH',
+							address: '0xWethBsc',
+							priceUsd: 3000
+						},
+						chain: 'bsc',
+						totals: {
 							collateralMaxBorrowUsdGovernance: null,
 							collateralMaxBorrowUsdLiquidity: 200,
 							collateralBorrowedDebtUsd: null,
 							minBadDebtAtPriceZeroUsd: 20
-						}
-					]
-				},
-				{
-					asset: {
-						symbol: 'WBTC',
-						address: '0xBtc',
-						priceUsd: 100_000
+						},
+						byProtocol: [
+							{
+								protocol: 'venus-core-pool',
+								collateralMaxBorrowUsdGovernance: null,
+								collateralMaxBorrowUsdLiquidity: 200,
+								collateralBorrowedDebtUsd: null,
+								minBadDebtAtPriceZeroUsd: 20
+							}
+						]
 					},
-					chain: 'ethereum',
-					totals: {
-						collateralMaxBorrowUsdGovernance: null,
-						collateralMaxBorrowUsdLiquidity: 1000,
-						collateralBorrowedDebtUsd: null,
-						minBadDebtAtPriceZeroUsd: 1000
-					},
-					byProtocol: [
-						{
-							protocol: 'aave-v3',
+					{
+						asset: {
+							symbol: 'WBTC',
+							address: '0xBtc',
+							priceUsd: 100_000
+						},
+						chain: 'ethereum',
+						totals: {
 							collateralMaxBorrowUsdGovernance: null,
 							collateralMaxBorrowUsdLiquidity: 1000,
 							collateralBorrowedDebtUsd: null,
 							minBadDebtAtPriceZeroUsd: 1000
-						}
-					]
-				}
-			]
-		} as never)
+						},
+						byProtocol: [
+							{
+								protocol: 'aave-v3',
+								collateralMaxBorrowUsdGovernance: null,
+								collateralMaxBorrowUsdLiquidity: 1000,
+								collateralBorrowedDebtUsd: null,
+								minBadDebtAtPriceZeroUsd: 1000
+							}
+						]
+					}
+				]
+			}
+		})
 
 		const payload = await getTokenRiskData({
 			tokenSymbol: 'ETH',
@@ -352,8 +359,7 @@ describe('getTokenRiskData', () => {
 	})
 
 	test('infers token candidates from borrow capacity symbols', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
+		http.serve({ [BORROW_CAPACITY_URL]: createBorrowCapacityResponse() })
 
 		const payload = await getTokenRiskData({
 			tokenSymbol: 'WSTETH',
@@ -375,8 +381,7 @@ describe('getTokenRiskData', () => {
 	})
 
 	test('returns null when the token symbol has no borrow capacity rows', async () => {
-		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
-		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
+		http.serve({ [BORROW_CAPACITY_URL]: createBorrowCapacityResponse() })
 
 		const payload = await getTokenRiskData({
 			tokenSymbol: 'MISSING',
@@ -384,6 +389,126 @@ describe('getTokenRiskData', () => {
 		})
 
 		expect(payload).toBeNull()
-		expect(mockedGetTokenRiskBorrowCapacity.mock.calls).toHaveLength(1)
+		expect(http.urls()).toEqual([BORROW_CAPACITY_URL])
+	})
+})
+
+function pool(id: string, chain: string) {
+	return earnPageRow(id, { chains: [chain] })
+}
+function route(id: string, chain: string) {
+	return { id, chains: [chain] } as RouteTableRow
+}
+
+describe('token page hydration snapshots', () => {
+	test('hydrates only the first yields page while keeping the full count and chain list', () => {
+		const rows = Array.from({ length: 12 }, (_, index) => pool(`pool-${index}`, index % 2 ? 'Base' : 'Ethereum'))
+
+		const snapshot = buildInitialYieldsSnapshot(rows, ['asset:btc'])
+
+		expect(snapshot.rows.map((row) => row.id)).toEqual(rows.slice(0, 10).map((row) => row.id))
+		expect(snapshot).toMatchObject({
+			rowCount: 12,
+			pageSize: 10,
+			chainList: ['Base', 'Ethereum'],
+			tokenKeys: ['asset:btc']
+		})
+	})
+
+	test('hydrates the first page of each borrow leg with its own count and chains', () => {
+		const useAsCollateral = Array.from({ length: 13 }, (_, index) => route(`use-${index}`, 'Ethereum'))
+		const borrowThis = [route('borrow-0', 'Base')]
+
+		const snapshot = buildInitialBorrowRoutesSnapshot({ useAsCollateral, borrowThis }, ['asset:btc'])
+
+		expect(snapshot?.data.useAsCollateral).toHaveLength(10)
+		expect(snapshot).toMatchObject({
+			counts: { useAsCollateral: 13, borrowThis: 1 },
+			chainLists: { useAsCollateral: ['Ethereum'], borrowThis: ['Base'] }
+		})
+		expect(buildInitialBorrowRoutesSnapshot(null, [])).toBeNull()
+	})
+})
+
+describe('getTokenPageSections', () => {
+	const overview = { symbol: 'BTC' } as TokenOverviewData
+	const yieldsWithRows = buildInitialYieldsSnapshot([pool('pool-1', 'Ethereum')], ['asset:btc'])
+	const routesWithRows = buildInitialBorrowRoutesSnapshot(
+		{ useAsCollateral: [route('r', 'Ethereum')], borrowThis: [] },
+		['asset:btc']
+	)
+	const none = {
+		geckoId: 'bitcoin' as string | null,
+		tokenRightsData: null,
+		incomeStatement: null,
+		tokenRiskData: null,
+		hasLiquidations: false,
+		hasMarkets: false,
+		resolvedUnlocksSlug: null as string | null,
+		yieldsSnapshot: yieldsWithRows,
+		borrowRoutesSnapshot: routesWithRows,
+		issuer: null,
+		chain: null,
+		overview
+	}
+	const ids = (flags: { hasEarn?: boolean; hasBorrow?: boolean }, overrides: Partial<typeof none> = {}) =>
+		getTokenPageSections({ record: { name: 'Bitcoin', symbol: 'BTC', ...flags }, ...none, ...overrides }).map(
+			(section) => section.id
+		)
+
+	test('always shows overview and usage', () => {
+		expect(ids({})).toEqual(['token-overview', 'token-usage'])
+	})
+
+	test.each([
+		{ hasEarn: true, hasBorrow: false, expected: ['token-yields'] },
+		{ hasEarn: false, hasBorrow: true, expected: ['token-borrow'] },
+		{ hasEarn: true, hasBorrow: true, expected: ['token-yields', 'token-borrow'] }
+	])('gates Earn ($hasEarn) and Borrow ($hasBorrow) independently', ({ expected, ...flags }) => {
+		expect(ids(flags).slice(2)).toEqual(expected)
+	})
+
+	test('hides Earn and Borrow when their lookups found no rows', () => {
+		expect(
+			ids(
+				{ hasEarn: true, hasBorrow: true },
+				{
+					yieldsSnapshot: buildInitialYieldsSnapshot([], []),
+					borrowRoutesSnapshot: buildInitialBorrowRoutesSnapshot({ useAsCollateral: [], borrowThis: [] }, [])
+				}
+			)
+		).toEqual(['token-overview', 'token-usage'])
+	})
+
+	test('lists every available section in page order', () => {
+		expect(
+			ids(
+				{ hasEarn: true, hasBorrow: true },
+				{
+					incomeStatement: {} as never,
+					tokenRiskData: {} as never,
+					hasMarkets: true,
+					tokenRightsData: {} as never,
+					hasLiquidations: true,
+					resolvedUnlocksSlug: 'bitcoin'
+				}
+			)
+		).toEqual([
+			'token-overview',
+			'token-income-statement',
+			'token-risks',
+			'token-markets',
+			'token-rights-and-value-accrual',
+			'token-usage',
+			'token-liquidations',
+			'token-unlocks',
+			'token-yields',
+			'token-borrow'
+		])
+	})
+
+	test('shows markets only for a CoinGecko token whose markets index has pairs', () => {
+		expect(ids({}, { hasMarkets: true, geckoId: null })).toEqual(['token-overview', 'token-usage'])
+		expect(ids({}, { hasMarkets: true })).toContain('token-markets')
 	})
 })

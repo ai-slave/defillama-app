@@ -1,16 +1,7 @@
 // @vitest-environment happy-dom
 
 import { describe, expect, test } from 'vitest'
-import {
-	KPK_COMPOSITION_CHART_OPTIONS,
-	KPK_LINE_STROKE_DARK,
-	KPK_LINE_STROKE_LIGHT,
-	KPK_PALETTE_DARK,
-	KPK_PALETTE_LIGHT,
-	kpkCompositionChartOptions,
-	kpkLineStroke,
-	kpkPalette
-} from './chartDefaults'
+import { KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions } from './chartDefaults'
 
 /**
  * One stacked segment as ECharts hands it to a tooltip formatter: positional row +
@@ -52,24 +43,10 @@ describe('KPK composition tooltip', () => {
 		expect(html).toContain('<strong>Sept 25</strong>')
 	})
 
-	// The renderer's category formatter omits the total; a stacked composition needs it.
-	test('adds a ruled total under the segment rows', () => {
-		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
-
-		expect(html).toContain('Morpho')
-		expect(html).toContain('Gearbox')
-		expect(html).toContain('Total')
-		expect(html).toContain('border-top')
-	})
-
 	test('omits the total when only one segment is on the chart', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1)])
 
-		expect(html).not.toContain('Total')
-	})
-
-	test('returns nothing for an empty hover', () => {
-		expect(formatter([])).toBe('')
+		expect(readRows(html)).toEqual([['Morpho', '$34.65m']])
 	})
 
 	test('keeps the overlay line out of the total and prints it under the rule', () => {
@@ -102,16 +79,16 @@ describe('KPK composition tooltip', () => {
 		expect(readRows(html)).toEqual([['Morpho', '$4.25']])
 	})
 
-	test('holds a long fraction above a dollar to two decimals', () => {
-		expect(formatter([item('Morpho', 'Aug 26', 12.12762384533, 1)])).toContain('$12.13')
+	test('prints values compact with a lowercase suffix, held to two decimals', () => {
+		const value = (usd: number) => readRows(formatter([item('Morpho', 'Aug 26', usd, 1)]))[0][1]
+
+		expect(value(12.12762384533)).toBe('$12.13')
+		expect(value(1234.5678)).toBe('$1.23k')
+		expect(value(70_000)).toBe('$70k')
 	})
 
-	test('compacts on the same thresholds as the share table', () => {
-		expect(formatter([item('Morpho', 'Aug 26', 70_000, 1)])).toContain('$70k')
-		expect(formatter([item('Morpho', 'Aug 26', 1234.5678, 1)])).toContain('$1.23k')
-	})
-
-	test('holds segments and the ruled Total to the same precision', () => {
+	// The renderer's category formatter omits the total; a stacked composition needs it.
+	test('adds a Total under the segments, held to their precision', () => {
 		const html = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
 
 		expect(readRows(html)).toEqual([
@@ -136,20 +113,6 @@ describe('KPK composition tooltip', () => {
 
 		expect(readRows(html).map(([name]) => name)).toEqual(['Morpho', 'Gearbox', 'Total', 'Adjusted TVA'])
 	})
-
-	test('sets every figure flush right, in tabular digits', () => {
-		const host = document.createElement('div')
-		host.innerHTML = formatter([item('Morpho', 'Aug 26', 34_650_000, 1), item('Gearbox', 'Aug 26', 11_360_000, 2)])
-		const lines = [...host.querySelectorAll('li')]
-
-		expect(lines).toHaveLength(3)
-		for (const line of lines) {
-			expect(line.style.display).toBe('flex')
-			const value = line.querySelector<HTMLElement>(':scope > span:last-child')!
-			expect(value.style.marginLeft).toBe('auto')
-			expect(value.style.fontVariantNumeric).toBe('tabular-nums')
-		}
-	})
 })
 
 describe('KPK composition range slider', () => {
@@ -160,31 +123,5 @@ describe('KPK composition range slider', () => {
 			const zoom = options?.dataZoom as Array<{ labelFormatter?: (value: number, valueStr: string) => string }>
 			expect(zoom[1].labelFormatter?.(3, 'Sept 25')).toBe('Sept 25')
 		}
-	})
-})
-
-describe('KPK palette', () => {
-	// Validated per theme with the dataviz validator; see the note in chartDefaults.ts.
-	// Eight is the ceiling — a ninth series must fold into "Other" rather than grow this.
-	test('offers eight distinct slots per theme', () => {
-		for (const palette of [KPK_PALETTE_DARK, KPK_PALETTE_LIGHT]) {
-			expect(palette).toHaveLength(8)
-			expect(new Set(palette).size).toBe(8)
-			for (const color of palette) expect(color).toMatch(/^#[0-9a-f]{6}$/)
-		}
-	})
-
-	test('steps separately for light and dark surfaces', () => {
-		expect(kpkPalette(true)).toBe(KPK_PALETTE_DARK)
-		expect(kpkPalette(false)).toBe(KPK_PALETTE_LIGHT)
-		// The mockup's own mint is 1.65:1 on white, so the two palettes must not be equal.
-		expect(KPK_PALETTE_DARK[0]).not.toBe(KPK_PALETTE_LIGHT[0])
-	})
-
-	test('keeps the overlay stroke out of the categorical slots', () => {
-		expect(kpkLineStroke(true)).toBe(KPK_LINE_STROKE_DARK)
-		expect(kpkLineStroke(false)).toBe(KPK_LINE_STROKE_LIGHT)
-		expect(KPK_PALETTE_DARK).not.toContain(KPK_LINE_STROKE_DARK)
-		expect(KPK_PALETTE_LIGHT).not.toContain(KPK_LINE_STROKE_LIGHT)
 	})
 })

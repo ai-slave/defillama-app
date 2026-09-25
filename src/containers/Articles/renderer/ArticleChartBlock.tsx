@@ -1,8 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
-import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatTooltipValue } from '~/components/ECharts/shared/formatters'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
 import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
@@ -12,16 +10,21 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
-import { CHART_TYPES, getDashboardChartValueSymbol } from '~/containers/ProDashboard/types'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
-import { formatUsd } from '~/utils/numberFormat'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { getArticleEntityRoute } from '../entityLinks'
 import type { ArticleChartConfig, ArticleChartEntityType, ArticleChartRange, ArticleChartSeries } from '../types'
+import {
+	articleChartDefaultCaption,
+	articleChartLatestLabel,
+	articleChartValueSymbol,
+	buildArticleChartModel,
+	SERIES_COLORS,
+	seriesDisplayName,
+	uniqueChartTypeTitles
+} from './articleChartModel'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-
-const SERIES_COLORS = ['#3e6dcc', '#e07b39', '#16a34a', '#a855f7']
 
 function entityLogo(entity: { entityType: ArticleChartEntityType; slug: string }) {
 	return entity.entityType === 'chain' ? chainIconUrl(entity.slug) : tokenIconUrl(entity.slug)
@@ -36,29 +39,6 @@ const RANGE_LABEL: Record<ArticleChartRange, string> = {
 	'90d': 'Past 90 days',
 	'365d': 'Past year',
 	all: 'All time'
-}
-
-function lastValue(data: Array<[number, number]> | undefined): number | null {
-	if (!data || data.length === 0) return null
-	const last = data[data.length - 1]
-	return Array.isArray(last) ? last[1] : null
-}
-
-function seriesDisplayName(s: ArticleChartSeries) {
-	const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
-	return meta?.title ? `${s.name} ${meta.title}` : s.name
-}
-
-function uniqueChartTypeTitles(series: Array<ArticleChartSeries>) {
-	const seen = new Set<string>()
-	const out: Array<string> = []
-	for (const s of series) {
-		if (seen.has(s.chartType)) continue
-		seen.add(s.chartType)
-		const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
-		out.push(meta?.title || s.chartType)
-	}
-	return out
 }
 
 export function ArticleChartBlock({
@@ -108,45 +88,20 @@ export function ArticleChartBlock({
 	const isLoading = queries.some((q) => q.isLoading)
 	const isError = queries.length > 0 && queries.every((q) => q.isError)
 
-	const chartModel = useMemo(() => {
-		const chartSeries = series
-			.map((s, i) => {
-				const data = queries[i]?.data as Array<[number, number]> | undefined
-				if (!data || data.length === 0) return null
-				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
-				const seriesType: 'line' | 'bar' = meta?.chartType === 'bar' ? 'bar' : 'line'
-				return {
-					name: seriesDisplayName(s),
-					type: seriesType,
-					// A chart can mix metrics, e.g. TVL next to transactions, so each series carries its own unit.
-					valueSymbol: getDashboardChartValueSymbol(s.chartType),
-					color: SERIES_COLORS[i % SERIES_COLORS.length]!,
-					data,
-					// Each API series owns its calendar; connect across union rows belonging only to sibling series.
-					...(seriesType === 'line' ? { connectNulls: true } : {}),
-					...(meta?.chartType === 'area' && series.length === 1 ? { areaStyle: {} } : {})
-				}
-			})
-			.filter(<T,>(v: T | null): v is T => v !== null)
-		return buildSparseCartesianChartModel(chartSeries)
-	}, [queries, series])
-
-	const primaryLatest = useMemo(() => {
-		const data = queries[0]?.data as Array<[number, number]> | undefined
-		return lastValue(data)
-	}, [queries])
+	const chartModel = useMemo(
+		() =>
+			buildArticleChartModel(
+				series,
+				queries.map((q) => q.data as Array<[number, number]> | undefined)
+			),
+		[queries, series]
+	)
 
 	const figureLabel = typeof index === 'number' ? `Fig. ${String(index).padStart(2, '0')}` : null
 	const primarySeries = series[0]
 	const route = primarySeries ? getArticleEntityRoute(primarySeries.entityType, primarySeries.slug) : '/'
-	const primarySymbol = primarySeries ? getDashboardChartValueSymbol(primarySeries.chartType) : '$'
-	const latestLabel =
-		series.length === 1 && primaryLatest != null
-			? primarySymbol === '$'
-				? formatUsd(primaryLatest, { compact: true })
-				: formatTooltipValue(primaryLatest, primarySymbol)
-			: null
-	const isUsdDenominated = series.every((s) => getDashboardChartValueSymbol(s.chartType) === '$')
+	const primarySymbol = articleChartValueSymbol(series)
+	const latestLabel = articleChartLatestLabel(series, queries[0]?.data as Array<[number, number]> | undefined)
 	const rangeLabel = RANGE_LABEL[config.range ?? 'all']
 	const isMulti = series.length > 1
 
@@ -272,7 +227,10 @@ export function ArticleChartBlock({
 					) : (
 						<span>
 							{config.caption ||
-								`${uniqueEntities.map((e) => e.name).join(' vs ')} ${chartLabel.toLowerCase()}${isUsdDenominated ? ', USD-denominated' : ''}.`}
+								articleChartDefaultCaption(
+									series,
+									uniqueEntities.map((e) => e.name)
+								)}
 						</span>
 					)}
 					{config.logScale ? (

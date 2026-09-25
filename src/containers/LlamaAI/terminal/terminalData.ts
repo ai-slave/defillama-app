@@ -693,12 +693,21 @@ export interface TerminalPineJs {
 	Std: Record<'open' | 'high' | 'low' | 'close', (context: unknown) => number>
 }
 
+/**
+ * The period a study binds its ticker at. A series carries one point a day, so it asks for the daily
+ * grid whatever the chart shows. Trades follow the chart: on a fixed daily period every fill inside
+ * one UTC day is folded into one bar, and only the last one written survives.
+ */
+export function studyBindPeriod(study: 'series' | 'trades', chartPeriod: string): string {
+	return study === 'trades' ? chartPeriod : '1D'
+}
+
 const studyConstructor = (PineJS: TerminalPineJs) =>
 	function DefiLlamaStudy(this: StudyInstance) {
 		this.init = (context, inputs) => {
 			const ticker = readSymbolInput(inputs(0))
 			this._bound = !!ticker
-			if (ticker) context.new_sym(ticker, '1D')
+			if (ticker) context.new_sym(ticker, studyBindPeriod('series', context.symbol.period))
 		}
 		this.main = (context) => {
 			if (!this._bound) return [NaN]
@@ -730,28 +739,37 @@ const TRADE_PLOTS: Array<{ kind: TradeFillKind; title: string } & typeof BUY> = 
 
 const tradePlotId = (index: number) => `plot_${index}`
 
+const OHLC_FIELDS = ['open', 'high', 'low', 'close'] as const
+
+/**
+ * One value per trade plot for a chart bar: the fill price read from that kind's OHLC field, or
+ * NaN where no fill of that kind landed. A study with no bound ticker passes null and plots nothing.
+ */
+export function tradeMarkers(bar: Pick<AgentBar, (typeof OHLC_FIELDS)[number]> | null): Array<number> {
+	return TRADE_PLOTS.map((plot) => {
+		const price = bar ? bar[FILL_FIELD[plot.kind]] : NO_FILL
+		return price > NO_FILL ? price : NaN
+	})
+}
+
 const tradesConstructor = (PineJS: TerminalPineJs) =>
 	function DefiLlamaTradesStudy(this: StudyInstance) {
-		// Bound at the chart's own resolution: on a fixed daily period every fill inside one UTC
-		// day is folded into one bar, and only the last one written survives.
 		this.init = (context, inputs) => {
 			const ticker = readSymbolInput(inputs(0))
 			this._bound = !!ticker
-			if (ticker) context.new_sym(ticker, context.symbol.period)
+			if (ticker) context.new_sym(ticker, studyBindPeriod('trades', context.symbol.period))
 		}
 		this.main = (context) => {
-			if (!this._bound) return TRADE_PLOTS.map(() => NaN)
+			if (!this._bound) return tradeMarkers(null)
 			const mainTimes = context.new_unlimited_var(context.symbol.time)
 			context.select_sym(1)
 			const fillTimes = context.new_unlimited_var(context.symbol.time)
-			const fills = TRADE_PLOTS.map((plot) => context.new_unlimited_var(PineJS.Std[FILL_FIELD[plot.kind]](context)))
+			const fields = OHLC_FIELDS.map((field) => context.new_unlimited_var(PineJS.Std[field](context)))
 			context.select_sym(0)
 			// Precise mode puts a fill on the bar it filled on and leaves every other bar empty;
 			// continuous mode would repeat the last fill across the bars after it.
-			return fills.map((fill) => {
-				const price = fill.adopt(fillTimes, mainTimes, 1)
-				return price > NO_FILL ? price : NaN
-			})
+			const [open, high, low, close] = fields.map((field) => field.adopt(fillTimes, mainTimes, 1))
+			return tradeMarkers({ open, high, low, close })
 		}
 	}
 

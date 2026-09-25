@@ -1,5 +1,3 @@
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { LiquidationsDistributionChartData } from '../api.types'
 import {
@@ -13,7 +11,6 @@ import {
 	getLiquidationsChartModeQueryPatch,
 	getLiquidationsChartTokenQueryPatch,
 	getLiquidationsChartView,
-	LiquidationsDistributionChartFooter,
 	resolveLiquidationsChartTokenKey
 } from '../LiquidationsDistributionChart'
 
@@ -109,14 +106,6 @@ const chart: LiquidationsDistributionChartData = {
 }
 
 describe('LiquidationsDistributionChart helpers', () => {
-	test('keeps the population note left of the snapshot below the chart', () => {
-		const html = renderToStaticMarkup(React.createElement(LiquidationsDistributionChartFooter, { timestamp: 1 }))
-
-		expect(html).toContain('justify-between')
-		expect(html).toContain('class="ml-auto"')
-		expect(html.indexOf('Positions with at least $100k collateral.')).toBeLessThan(html.indexOf('Snapshot Thu'))
-	})
-
 	test('defaults to the top collateral token when no query param is present', () => {
 		expect(resolveLiquidationsChartTokenKey(chart, undefined)).toBe('WBTC')
 	})

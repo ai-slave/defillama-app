@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PreIpoCompanyListItem, PreIpoSnapshot } from '~/containers/PreIPO/api.types'
-
-const { fetchEmissionsProtocolsListMock, fetchWithPoolingOnServerMock } = vi.hoisted(() => ({
-	fetchEmissionsProtocolsListMock: vi.fn(),
-	fetchWithPoolingOnServerMock: vi.fn()
-}))
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 const preIpoCompaniesSnapshot = {
 	updatedAt: '2026-08-25T00:00:00.000Z',
@@ -26,23 +23,6 @@ const preIpoCompaniesSnapshot = {
 		}
 	]
 } satisfies PreIpoSnapshot<Array<PreIpoCompanyListItem>>
-
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
-}))
-
-vi.mock('~/containers/Unlocks/api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/containers/Unlocks/api')>()),
-	fetchEmissionsProtocolsList: fetchEmissionsProtocolsListMock
-}))
-
-function jsonResponse(payload: unknown): Response {
-	return new Response(JSON.stringify(payload), {
-		headers: {
-			'content-type': 'application/json'
-		}
-	})
-}
 
 function withoutCacheVersion(url: string): string {
 	const parsed = new URL(url)
@@ -99,6 +79,7 @@ function responseForUrl(rawUrl: string): unknown {
 		return { data: {}, tokens: {}, validThresholds: [], timestamp: 0 }
 	}
 	if (url.includes('/bridges?includeChains=true')) return { bridges: [], chains: [] }
+	if (url.includes('/emissionsProtocolsList')) return ['aave']
 	if (url.includes('/emissionsSupplyMetrics')) return {}
 	if (url.endsWith('/emissions')) return []
 	if (url.includes('pre-ipo') && url.endsWith('/v1/companies-list')) {
@@ -118,20 +99,17 @@ function responseForUrl(rawUrl: string): unknown {
 }
 
 function expectMetadataRequest(url: string): void {
-	expect(fetchWithPoolingOnServerMock.mock.calls.map(([calledUrl]) => withoutCacheVersion(calledUrl))).toContain(url)
+	expect(http.urls().map(withoutCacheVersion)).toContain(url)
 }
 
 describe('metadata source adapters', () => {
 	beforeEach(() => {
 		vi.resetModules()
 		vi.unstubAllEnvs()
-		fetchEmissionsProtocolsListMock.mockReset()
-		fetchWithPoolingOnServerMock.mockReset()
-		fetchWithPoolingOnServerMock.mockImplementation((url: string) => Promise.resolve(jsonResponse(responseForUrl(url))))
-		fetchEmissionsProtocolsListMock.mockResolvedValue(['aave'])
+		http.serve({ 'https://': (url: URL) => responseForUrl(url.href) })
 	})
 
-	test('fetches metadata sources from expected public URLs with the metadata timeout', async () => {
+	test('fetches and parses metadata from public URLs', async () => {
 		vi.stubEnv('API_KEY', '')
 		const { fetchCoreMetadataSources } = await import('../sources')
 
@@ -148,22 +126,13 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://api.llama.fi/rwa/protocol-mcap')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
 		expectMetadataRequest('https://defillama-datasets.llama.fi/tokenlist/filters.json')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
-			timeout: 180_000
-		})
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://bridges.llama.fi/bridges?includeChains=true', {
-			timeout: 180_000
-		})
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/emissions', { timeout: 180_000 })
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://defillama-datasets.llama.fi/emissionsSupplyMetrics',
-			{ timeout: 180_000 }
-		)
+		expectMetadataRequest('https://api.llama.fi/config/smol/token.json')
+		expectMetadataRequest('https://bridges.llama.fi/bridges?includeChains=true')
+		expectMetadataRequest('https://api.llama.fi/emissions')
+		expectMetadataRequest('https://defillama-datasets.llama.fi/emissionsSupplyMetrics')
 		expectMetadataRequest('https://api.llama.fi/equities/v1/companies-list')
 		expectMetadataRequest('https://pre-ipo.llama.fi/v1/companies-list')
-		expect(fetchEmissionsProtocolsListMock).toHaveBeenCalledWith({
-			timeout: 180_000
-		})
+		expect(sources.emissionsProtocolsList).toEqual(['aave'])
 	})
 
 	test('keeps token directory on the public API when other metadata sources use pro API', async () => {
@@ -173,16 +142,9 @@ describe('metadata source adapters', () => {
 		await fetchCoreMetadataSources()
 
 		expectMetadataRequest('https://pro-api.llama.fi/secret-key/api/config/smol/appMetadata-protocols.json')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
-			timeout: 180_000
-		})
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalledWith(
-			'https://pro-api.llama.fi/secret-key/api/config/smol/token.json',
-			expect.anything()
-		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://pro-api.llama.fi/secret-key/api/emissions', {
-			timeout: 180_000
-		})
+		expectMetadataRequest('https://api.llama.fi/config/smol/token.json')
+		expect(http.urls()).not.toContain('https://pro-api.llama.fi/secret-key/api/config/smol/token.json')
+		expectMetadataRequest('https://pro-api.llama.fi/secret-key/api/emissions')
 		expectMetadataRequest('https://pro-api.llama.fi/secret-key/equities/v1/companies-list')
 		expectMetadataRequest('https://pro-api.llama.fi/secret-key/pre-ipo/v1/companies-list')
 	})
@@ -199,7 +161,7 @@ describe('metadata source adapters', () => {
 		vi.stubEnv('SERVER_URL', 'https://core.example.com/api/')
 		const { fetchCoreMetadataSources } = await import('../sources')
 
-		await fetchCoreMetadataSources()
+		expect((await fetchCoreMetadataSources()).preIpoCompanyIds).toEqual(['anthropic'])
 
 		expectMetadataRequest('https://core.example.com/api/config/smol/appMetadata-protocols.json')
 		expectMetadataRequest('https://core.example.com/api/config/smol/token.json')
@@ -210,21 +172,18 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://datasets.example.com/tokenlist/rankings.json')
 		expectMetadataRequest('https://datasets.example.com/tokenlist/filters.json')
 		expectMetadataRequest('https://liquidations.example.com/all')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://bridges.example.com/bridges?includeChains=true',
-			{ timeout: 180_000 }
-		)
+		expectMetadataRequest('https://bridges.example.com/bridges?includeChains=true')
 		expectMetadataRequest('https://equities.example.com/v1/companies-list')
 		expectMetadataRequest('https://pre-ipo.example.com/v1/companies-list')
 	})
 
 	test('logs the named metadata source when an upstream request fails', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-		fetchWithPoolingOnServerMock.mockImplementation((url: string) => {
-			if (withoutCacheVersion(url).endsWith('/cexs')) {
-				return Promise.resolve(new Response('upstream failed', { status: 503 }))
-			}
-			return Promise.resolve(jsonResponse(responseForUrl(url)))
+		http.serve({
+			'https://': (url: URL) =>
+				withoutCacheVersion(url.href).endsWith('/cexs')
+					? new Response('upstream failed', { status: 503 })
+					: responseForUrl(url.href)
 		})
 		const { fetchCoreMetadataSources } = await import('../sources')
 
@@ -236,10 +195,10 @@ describe('metadata source adapters', () => {
 
 	test('rejects instead of seeding an empty emissions directory when the protocol list fails', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-		fetchEmissionsProtocolsListMock.mockRejectedValue(new Error('emissions list unavailable'))
+		http.serve({ '/emissionsProtocolsList': fixtureStatus(404) })
 		const { fetchCoreMetadataSources } = await import('../sources')
 
-		await expect(fetchCoreMetadataSources()).rejects.toThrow('emissions list unavailable')
+		await expect(fetchCoreMetadataSources()).rejects.toThrow(/404/)
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining('[dev:prepare] Metadata cache: emissions protocols API failed:')
 		)

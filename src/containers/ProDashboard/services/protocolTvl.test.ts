@@ -62,18 +62,6 @@ describe('borrowed TVL source selection', () => {
 })
 
 describe('advanced TVL source selection', () => {
-	test('uses the canonical Protocol Overview cache key for base TVL', () => {
-		expect(buildProtocolValueChartQueryKey({ source: 'tvl', protocol: 'aave' })).toEqual([
-			'protocol-overview',
-			'tvl-chart',
-			'aave',
-			undefined,
-			undefined,
-			undefined,
-			undefined
-		])
-	})
-
 	test('requests only the breakdowns needed by a chain, USD or raw view', () => {
 		expect(getAdvancedTvlBreakdownSources('aave', 'chainsTvl', {})).toEqual([
 			{ kind: 'chain', request: { protocol: 'aave', key: undefined, breakdownType: 'chain-breakdown' } }

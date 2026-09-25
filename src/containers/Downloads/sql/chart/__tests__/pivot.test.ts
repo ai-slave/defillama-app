@@ -30,23 +30,12 @@ describe('pivotRowsForSplit', () => {
 
 	test('folds beyond top-N into Other', () => {
 		const rows: Array<Array<unknown>> = []
-		for (let i = 0; i < 25; i++) rows.push([1, 10 - i / 100, `k${i}`])
+		for (let i = 0; i < 25; i++) rows.push([1, 100 - i, `k${i}`])
 		const result = pivotRowsForSplit(rows, 0, 1, 2, { topN: 5 })
-		expect(result.keys).toHaveLength(6) // 5 + Other
-		expect(result.keys[5]).toBe('Other')
+		expect(result.keys).toEqual(['k0', 'k1', 'k2', 'k3', 'k4', 'Other'])
 		expect(result.truncatedCount).toBe(20)
-		const otherValue = result.rows[0][6] as number
-		expect(otherValue).toBeGreaterThan(0)
-	})
-
-	test('handles all-in-one bucket', () => {
-		const rows = [
-			[1, 5, 'only'],
-			[2, 6, 'only']
-		]
-		const result = pivotRowsForSplit(rows, 0, 1, 2)
-		expect(result.keys).toEqual(['only'])
-		expect(result.truncatedCount).toBe(0)
+		// Other holds the sum of k5..k24: 95 + 94 + ... + 76.
+		expect(result.rows[0]).toEqual([1, 100, 99, 98, 97, 96, 1710])
 	})
 
 	test('preserves numeric X sort order', () => {

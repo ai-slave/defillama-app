@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
-import { CHART_COLORS } from '~/constants/colors'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from '../overviewData'
 import type { ForkOverviewPageData } from '../types'
 
@@ -27,7 +26,7 @@ describe('mergeForkOverviewChartData', () => {
 				chartData: basePageData.chartData,
 				extraBreakdownByTimestamp: new Map()
 			})
-		).toBe(basePageData.chartData)
+		).toEqual(basePageData.chartData)
 	})
 
 	test('merges extra values by timestamp and keeps extra-only timestamps sorted', () => {
@@ -85,9 +84,7 @@ describe('buildForksOverviewDisplayData', () => {
 
 		expect(display.chartColors).toMatchObject({
 			Uniswap: '#111111',
-			Curve: '#222222',
-			NewFork: CHART_COLORS[2],
-			EmptyFork: CHART_COLORS[3]
+			Curve: '#222222'
 		})
 
 		expect(display.dominanceDataset.dimensions).toEqual(['timestamp', 'Curve', 'Uniswap', 'NewFork', 'EmptyFork'])

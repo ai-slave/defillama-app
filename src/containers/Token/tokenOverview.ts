@@ -1,6 +1,7 @@
 import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinById } from '~/api/coingecko'
 import type { CgChartResponse, CoinGeckoCoinDetailResultForOptions } from '~/api/coingecko.types'
 import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
+import type { PriceObject } from '~/api/types'
 import type { TokenMarketSummary } from '~/containers/Markets/api.types'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
@@ -444,19 +445,7 @@ export function buildTokenOverviewRawChartData({
 	}
 }
 
-export async function getTokenOverviewData({
-	record,
-	categories,
-	displayName,
-	geckoId,
-	tokenEntry,
-	protocolMetadata,
-	cgExchangeIdentifiers,
-	emissionsSupplyMetrics,
-	currentMetrics = null,
-	source,
-	prefetchedCharts = TOKEN_OVERVIEW_ALL_CHARTS
-}: {
+export interface TokenOverviewInput {
 	record: TokenDirectoryRecord
 	categories: TokenOverviewData['categories']
 	displayName: string
@@ -468,9 +457,55 @@ export async function getTokenOverviewData({
 	currentMetrics?: TokenOverviewCurrentMetrics | null
 	source: TokenOverviewDataSource
 	prefetchedCharts?: Array<TokenOverviewChartLabel>
-}): Promise<TokenOverviewData> {
+}
+
+/** What each upstream returned for one token; a source that was not requested or failed is null. */
+export interface TokenOverviewSources {
+	cgChart: CgChartResponse | null
+	coinDetail: TokenOverviewCoinDetail | null
+	currentPriceViaLlama: PriceObject | null
+	raises: Array<Raise> | null
+	treasury: RawTreasuriesResponse[number] | null
+}
+
+function resolveTokenOverviewEntities({ record, protocolMetadata }: TokenOverviewInput) {
 	const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 	const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
+	// A chain token's treasury is not the protocol's, so only protocol tokens show one.
+	const hasTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
+	return { chainDefiLlamaId, protocolDefiLlamaId, hasTreasury }
+}
+
+/**
+ * Which upstreams to ask. Rankings metrics already carry the current market snapshot, and prefetched
+ * funding already carries raises and treasury, so neither is fetched again.
+ */
+export function planTokenOverviewRequests(input: TokenOverviewInput) {
+	const { geckoId, tokenEntry, currentMetrics = null, source } = input
+	const { chainDefiLlamaId, protocolDefiLlamaId, hasTreasury } = resolveTokenOverviewEntities(input)
+	return {
+		coinDetailGeckoId: geckoId && currentMetrics == null && needsCoinDetailFallback(tokenEntry) ? geckoId : null,
+		llamaPriceGeckoId: geckoId && currentMetrics == null ? geckoId : null,
+		raisesDefillamaId: source.kind === 'prefetched' ? null : (chainDefiLlamaId ?? protocolDefiLlamaId),
+		treasuryId: source.kind === 'prefetched' || !hasTreasury ? null : `${protocolDefiLlamaId}-treasury`
+	}
+}
+
+export function buildTokenOverviewData(input: TokenOverviewInput, sources: TokenOverviewSources): TokenOverviewData {
+	const {
+		record,
+		categories,
+		displayName,
+		geckoId,
+		tokenEntry,
+		protocolMetadata,
+		cgExchangeIdentifiers,
+		emissionsSupplyMetrics,
+		currentMetrics = null,
+		prefetchedCharts = TOKEN_OVERVIEW_ALL_CHARTS
+	} = input
+	const { cgChart, coinDetail, currentPriceViaLlama } = sources
+	const { protocolDefiLlamaId, hasTreasury } = resolveTokenOverviewEntities(input)
 	const protocolSlug = resolveTokenProtocolSlug(protocolDefiLlamaId, protocolMetadata)
 	const emissionsProtocolSlug = resolveEmissionsProtocolSlug({
 		protocolSlug,
@@ -481,37 +516,9 @@ export async function getTokenOverviewData({
 	const adjustedSupply = emissionsProtocolSlug
 		? (emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics?.adjustedSupply ?? null)
 		: null
-
-	const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
-	const raisesDefiLlamaId = chainDefiLlamaId ?? protocolDefiLlamaId
 	const totalSupply = currentMetrics
 		? (currentMetrics.maxSupply ?? currentMetrics.totalSupply)
 		: (tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null)
-
-	const [cgChart, coinDetail, currentPriceViaLlama, raisesData, treasuries] = await Promise.all([
-		geckoId
-			? fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
-					timeframe: DEFAULT_PRICE_CHART_TIMEFRAME,
-					includeCoinData: true
-				}).catch(() => null)
-			: Promise.resolve(null),
-		geckoId && currentMetrics == null && needsCoinDetailFallback(tokenEntry)
-			? fetchTokenOverviewCoinDetail(geckoId)
-			: Promise.resolve(null),
-		geckoId && currentMetrics == null
-			? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null)
-			: Promise.resolve(null),
-		source.kind === 'prefetched'
-			? Promise.resolve(source.raises)
-			: raisesDefiLlamaId
-				? fetchRaisesByDefillamaId(raisesDefiLlamaId).catch((): Array<Raise> => [])
-				: Promise.resolve(null),
-		source.kind === 'prefetched'
-			? Promise.resolve(source.treasury)
-			: shouldFetchTreasury
-				? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch(() => null)
-				: Promise.resolve(null)
-	])
 
 	const marketDataFallback = buildTokenMarketDataFallback(coinDetail, currentPriceViaLlama, geckoId)
 	const marketData = buildTokenMarketData(
@@ -523,9 +530,9 @@ export async function getTokenOverviewData({
 		currentPriceViaLlama?.timestamp ?? null,
 		geckoId
 	)
-	const treasury = shouldFetchTreasury ? buildTreasurySummary(treasuries) : null
+	const treasury = hasTreasury ? buildTreasurySummary(sources.treasury) : null
 
-	const matchedRaises = raisesData ?? []
+	const matchedRaises = sources.raises ?? []
 	const links = cgChart?.data?.coinData?.links
 	const twitterHandle = links?.twitter_screen_name?.trim()
 	const telegramHandle = links?.telegram_channel_identifier?.trim()
@@ -558,4 +565,33 @@ export async function getTokenOverviewData({
 			includeCharts: prefetchedCharts
 		})
 	}
+}
+
+export async function getTokenOverviewData(input: TokenOverviewInput): Promise<TokenOverviewData> {
+	const { geckoId, source } = input
+	const plan = planTokenOverviewRequests(input)
+	const [cgChart, coinDetail, currentPriceViaLlama, raises, treasury] = await Promise.all([
+		geckoId
+			? fetchCoinGeckoChartByIdWithCacheFallback(geckoId, {
+					timeframe: DEFAULT_PRICE_CHART_TIMEFRAME,
+					includeCoinData: true
+				}).catch(() => null)
+			: Promise.resolve(null),
+		plan.coinDetailGeckoId ? fetchTokenOverviewCoinDetail(plan.coinDetailGeckoId) : Promise.resolve(null),
+		plan.llamaPriceGeckoId
+			? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(plan.llamaPriceGeckoId).catch(() => null)
+			: Promise.resolve(null),
+		source.kind === 'prefetched'
+			? Promise.resolve(source.raises)
+			: plan.raisesDefillamaId
+				? fetchRaisesByDefillamaId(plan.raisesDefillamaId).catch((): Array<Raise> => [])
+				: Promise.resolve(null),
+		source.kind === 'prefetched'
+			? Promise.resolve(source.treasury)
+			: plan.treasuryId
+				? fetchTreasuryById(plan.treasuryId).catch(() => null)
+				: Promise.resolve(null)
+	])
+
+	return buildTokenOverviewData(input, { cgChart, coinDetail, currentPriceViaLlama, raises, treasury })
 }

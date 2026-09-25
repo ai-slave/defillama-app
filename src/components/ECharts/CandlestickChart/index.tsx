@@ -39,6 +39,7 @@ import {
 import { useChartTheme } from '../shared/chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../shared/formatters'
 import { normalizeTooltipItems } from '../shared/tooltip'
+import { candlestickLegendData } from './legend'
 import type { ICandlestickChartProps } from './types'
 
 echarts.use([
@@ -201,14 +202,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		}
 
 		const allAxisIndices = Array.from({ length: grids.length }, (_, i) => i)
-		const legendData = ['Volume']
-		for (const overlay of overlays) legendData.push(overlay.name)
-		for (const panel of panels) {
-			const panelName = panel.name.toLowerCase()
-			if (panel.values && panelName.includes('macd')) legendData.push('MACD', 'Signal', 'MACD Line')
-			else if (panel.values && panelName.includes('stoch')) legendData.push('%K', '%D')
-			else legendData.push(panel.name)
-		}
+		const legendData = candlestickLegendData(overlays, panels)
 
 		return {
 			// Match the UTC tooltip and zoom labels: ticks sit on UTC-midnight candles in every timezone.
@@ -226,7 +220,6 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 			},
 			legend: {
 				show: showLegend,
-				// Bollinger upper/lower series shape the band but are controlled by the middle-series legend item.
 				data: legendData,
 				top: CHART_INSET,
 				right: CHART_INSET,

@@ -1,38 +1,28 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { SERVER_URL, V2_SERVER_URL } from '~/constants'
 import {
-	CHAIN_NATIVE_BREAKDOWN_METRICS,
-	getProtocolChainBreakdownRoute,
-	NON_ADAPTER_BY_CHAIN_BREAKDOWN_METRICS,
-	PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS,
-	STREAM_PROTOCOL_SERIES_SKIP_METRICS
-} from '~/containers/ProDashboard/utils/breakdownMetrics'
+	adapterMetricBreakdown,
+	adapterMetricByChainBreakdown
+} from '~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes'
+import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
+import { chainNativeByChainBreakdown } from '~/containers/ProDashboard/server/chartBuilder/chains'
+import { protocolTvlByChainBreakdown } from '~/containers/ProDashboard/server/chartBuilder/protocols'
+import { stablecoinByChainBreakdown } from '~/containers/ProDashboard/server/chartBuilder/stablecoins'
+import { getProtocolChainBreakdownRoute } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { resultBody } from '~/server/api/__tests__/resultBody'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	fetchChainsByCategory: vi.fn(),
-	fetchAdapterChainMetrics: vi.fn(),
-	fetchAdapterProtocolChartData: vi.fn()
-}))
+// The TVL route module opens a database pool at import; these tests never reach it.
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
 
-vi.mock('~/containers/Chains/api', () => ({
-	fetchChainsByCategory: mocks.fetchChainsByCategory
-}))
+const http = installFixtureFetch()
 
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
-	fetchAdapterProtocolChartData: mocks.fetchAdapterProtocolChartData
-}))
-
-beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [], allChains: [] })
-	mocks.fetchAdapterProtocolChartData.mockResolvedValue([])
-})
+function serveChainFees(protocols: Array<{ name: string; slug: string; protocolType: string; total24h: number }>) {
+	http.serve({ [`${V2_SERVER_URL}/metrics/fees`]: { protocols, allChains: [] } })
+}
 
 describe('breakdown route partitioning', () => {
 	test('rejects oversized chart-builder fan-out before fetching upstream data', async () => {
-		const { adapterMetricBreakdown } =
-			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
 		const chains = Array.from({ length: 51 }, (_, index) => `Chain ${index}`).join(',')
 
 		await expect(
@@ -46,65 +36,31 @@ describe('breakdown route partitioning', () => {
 			status: 400,
 			body: { error: 'chains supports at most 50 values' }
 		})
-		expect(mocks.fetchAdapterChainMetrics).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 
 	test('rejects category resolution when any requested category is incomplete', async () => {
-		mocks.fetchChainsByCategory.mockImplementation(async (category: string) => {
-			if (category === 'EVM') return { chainsUnique: ['Ethereum'] }
-			throw new Error('category source failed')
+		http.serve({
+			[`${SERVER_URL}/chains2/EVM`]: { chainsUnique: ['Ethereum'] },
+			[`${SERVER_URL}/chains2/Rollups`]: fixtureStatus(404)
 		})
-		const { resolveAllowedChainNamesFromCategories } =
-			await import('~/containers/ProDashboard/server/chartBuilder/breakdownChains')
 
-		await expect(resolveAllowedChainNamesFromCategories(['EVM', 'Rollups'])).rejects.toThrow('category source failed')
+		await expect(resolveAllowedChainNamesFromCategories(['EVM', 'Rollups'])).rejects.toThrow(/404/)
 	})
 
-	test('routes by-chain metrics to their owning domains', () => {
-		expect(getProtocolChainBreakdownRoute('tvl')).toBe(
-			'/api/public/pro-dashboard/chart-builder/protocols/breakdowns/by-chain/tvl'
-		)
-		expect(getProtocolChainBreakdownRoute('stablecoins')).toBe(
-			'/api/public/pro-dashboard/chart-builder/stablecoins/breakdowns/by-chain'
-		)
-		expect(getProtocolChainBreakdownRoute('chain-fees')).toBe(
-			'/api/public/pro-dashboard/chart-builder/chains/breakdowns/by-chain/chain-fees'
-		)
-		expect(getProtocolChainBreakdownRoute('chain-revenue')).toBe(
-			'/api/public/pro-dashboard/chart-builder/chains/breakdowns/by-chain/chain-revenue'
-		)
-		expect(getProtocolChainBreakdownRoute('fees')).toBe(
-			'/api/public/pro-dashboard/chart-builder/adapter-metrics/breakdowns/by-chain/fees'
-		)
-		expect(getProtocolChainBreakdownRoute('dex-aggregators')).toBe(
-			'/api/public/pro-dashboard/chart-builder/adapter-metrics/breakdowns/by-chain/dex-aggregators'
-		)
-	})
-
-	test('keeps by-chain metric sets explicit by purpose', () => {
-		expect(Array.from(CHAIN_NATIVE_BREAKDOWN_METRICS).toSorted()).toEqual(['chain-fees', 'chain-revenue'])
-		expect(Array.from(PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS).toSorted()).toEqual([
-			'chain-fees',
-			'chain-revenue',
-			'stablecoins'
-		])
-		expect(Array.from(NON_ADAPTER_BY_CHAIN_BREAKDOWN_METRICS).toSorted()).toEqual([
-			'chain-fees',
-			'chain-revenue',
-			'stablecoins',
-			'tvl'
-		])
-		expect(Array.from(STREAM_PROTOCOL_SERIES_SKIP_METRICS).toSorted()).toEqual([
-			'chain-fees',
-			'chain-revenue',
-			'stablecoins',
-			'tvl'
-		])
+	test('routes by-chain metrics to the registered route of their owning domain', () => {
+		const withMetric = (route: string, metric: string) => route.replace('[metric]', metric)
+		expect(getProtocolChainBreakdownRoute('tvl')).toBe(protocolTvlByChainBreakdown.route)
+		expect(getProtocolChainBreakdownRoute('stablecoins')).toBe(stablecoinByChainBreakdown.route)
+		for (const metric of ['chain-fees', 'chain-revenue']) {
+			expect(getProtocolChainBreakdownRoute(metric)).toBe(withMetric(chainNativeByChainBreakdown.route, metric))
+		}
+		for (const metric of ['fees', 'dex-aggregators']) {
+			expect(getProtocolChainBreakdownRoute(metric)).toBe(withMetric(adapterMetricByChainBreakdown.route, metric))
+		}
 	})
 
 	test('rejects concrete protocols for chain-native by-chain breakdowns', async () => {
-		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
-
 		await expect(
 			chainNativeByChainBreakdown.handle({
 				method: 'GET',
@@ -119,8 +75,6 @@ describe('breakdown route partitioning', () => {
 	})
 
 	test('rejects concrete protocols for stablecoin by-chain breakdowns', async () => {
-		const { stablecoinByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/stablecoins')
-
 		await expect(
 			stablecoinByChainBreakdown.handle({
 				method: 'GET',
@@ -135,20 +89,18 @@ describe('breakdown route partitioning', () => {
 	})
 
 	test('filters chain-native breakdown categories against overview row slugs, not Dimensions aliases', async () => {
-		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['OP Mainnet'] })
-		mocks.fetchAdapterChainMetrics.mockResolvedValue({
-			protocols: [
-				{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
-				{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
-				{ name: 'Aave', slug: 'aave', protocolType: 'protocol', total24h: 100 }
-			],
-			allChains: []
+		http.serve({
+			[`${SERVER_URL}/chains2/EVM`]: { chainsUnique: ['OP Mainnet'] },
+			[`${V2_SERVER_URL}/chart/fees/protocol/op-mainnet`]: [
+				[1, 10],
+				[2, 30]
+			]
 		})
-		mocks.fetchAdapterProtocolChartData.mockResolvedValue([
-			[1, 10],
-			[2, 30]
+		serveChainFees([
+			{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
+			{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
+			{ name: 'Aave', slug: 'aave', protocolType: 'protocol', total24h: 100 }
 		])
-		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({
 			method: 'GET',
@@ -167,26 +119,21 @@ describe('breakdown route partitioning', () => {
 	})
 
 	test('normalizes saved legacy chain aliases for chain-native breakdown filters', async () => {
-		mocks.fetchAdapterChainMetrics.mockResolvedValue({
-			protocols: [
-				{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
-				{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
-				{ name: 'BSC', slug: 'bsc', protocolType: 'chain', total24h: 10 }
+		serveChainFees([
+			{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
+			{ name: 'Gnosis', slug: 'gnosis', protocolType: 'chain', total24h: 20 },
+			{ name: 'BSC', slug: 'bsc', protocolType: 'chain', total24h: 10 }
+		])
+		http.serve({
+			[`${V2_SERVER_URL}/chart/fees/protocol/op-mainnet`]: [
+				[1, 10],
+				[2, 30]
 			],
-			allChains: []
+			[`${V2_SERVER_URL}/chart/fees/protocol/gnosis`]: [
+				[1, 5],
+				[2, 20]
+			]
 		})
-		mocks.fetchAdapterProtocolChartData.mockImplementation(async ({ protocol }: { protocol: string }) =>
-			protocol === 'op-mainnet'
-				? [
-						[1, 10],
-						[2, 30]
-					]
-				: [
-						[1, 5],
-						[2, 20]
-					]
-		)
-		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({
 			method: 'GET',
@@ -205,19 +152,17 @@ describe('breakdown route partitioning', () => {
 	})
 
 	test('matches chain-native category filters by overview row names when slugs differ', async () => {
-		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['Abbrev Chain'] })
-		mocks.fetchAdapterChainMetrics.mockResolvedValue({
-			protocols: [
-				{ name: 'Abbrev Chain', slug: 'ac', protocolType: 'chain', total24h: 40 },
-				{ name: 'Other Chain', slug: 'other-chain', protocolType: 'chain', total24h: 30 }
-			],
-			allChains: []
+		http.serve({
+			[`${SERVER_URL}/chains2/Custom`]: { chainsUnique: ['Abbrev Chain'] },
+			[`${V2_SERVER_URL}/chart/fees/protocol/ac`]: [
+				[1, 20],
+				[2, 40]
+			]
 		})
-		mocks.fetchAdapterProtocolChartData.mockResolvedValue([
-			[1, 20],
-			[2, 40]
+		serveChainFees([
+			{ name: 'Abbrev Chain', slug: 'ac', protocolType: 'chain', total24h: 40 },
+			{ name: 'Other Chain', slug: 'other-chain', protocolType: 'chain', total24h: 30 }
 		])
-		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		const result = await chainNativeByChainBreakdown.handle({
 			method: 'GET',

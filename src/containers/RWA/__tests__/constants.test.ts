@@ -1,48 +1,27 @@
 import { describe, expect, test } from 'vitest'
-import { getDefaultRWAOverviewInclusion, inferPlatformRWAOverviewInclusion } from '../constants'
+import {
+	filterCategoriesForStandardRwaOverview,
+	getDefaultRWAOverviewInclusion,
+	inferPlatformRWAOverviewInclusion
+} from '../constants'
 
 describe('getDefaultRWAOverviewInclusion', () => {
-	test('enables stablecoins and governance by default for rwa-yield-wrapper category pages', () => {
-		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'rwa-yield-wrapper' })).toEqual({
-			includeStablecoins: true,
-			includeGovernance: true,
+	// These categories hold only stablecoin, governance or wrapper assets, so the
+	// page would render empty with those toggles off.
+	test.each([
+		['rwa-yield-wrapper', true, true, true],
+		['rwa-stablecoins', true, false, false],
+		['non-rwa-stablecoins', true, false, false],
+		['fiat-stablecoins', true, false, false],
+		['governance-tokens', false, true, false],
+		['other-rwas', true, true, true]
+	])('opens the %s category page with its assets included', (categorySlug, stablecoins, governance, wrappers) => {
+		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug })).toEqual({
+			includeStablecoins: stablecoins,
+			includeGovernance: governance,
 			includeRwaPerps: false,
 			includeBridgeTvl: true,
-			includeWrappers: true
-		})
-	})
-
-	test('enables stablecoins by default for stablecoin category pages', () => {
-		for (const categorySlug of ['rwa-stablecoins', 'non-rwa-stablecoins', 'fiat-stablecoins']) {
-			expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug })).toEqual({
-				includeStablecoins: true,
-				includeGovernance: false,
-				includeRwaPerps: false,
-				includeBridgeTvl: true,
-				includeWrappers: false
-			})
-		}
-	})
-
-	test('enables governance by default for the governance-tokens category page', () => {
-		// every asset in this category is governance-classified, so the page
-		// would render empty with the toggle off
-		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'governance-tokens' })).toEqual({
-			includeStablecoins: false,
-			includeGovernance: true,
-			includeRwaPerps: false,
-			includeBridgeTvl: true,
-			includeWrappers: false
-		})
-	})
-
-	test('enables stablecoins and governance by default for other-rwas category pages', () => {
-		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'other-rwas' })).toEqual({
-			includeStablecoins: true,
-			includeGovernance: true,
-			includeRwaPerps: false,
-			includeBridgeTvl: true,
-			includeWrappers: true
+			includeWrappers: wrappers
 		})
 	})
 
@@ -177,5 +156,14 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 				{ stablecoin: true, governance: true, onChainMcap: { total: 10 } }
 			])
 		).toMatchObject({ includeStablecoins: true, includeGovernance: false })
+	})
+})
+
+describe('filterCategoriesForStandardRwaOverview', () => {
+	test('drops RWA Perps from the standard overview categories', () => {
+		expect(filterCategoriesForStandardRwaOverview(['Treasuries', 'RWA Perps', 'Private Credit'])).toEqual([
+			'Treasuries',
+			'Private Credit'
+		])
 	})
 })

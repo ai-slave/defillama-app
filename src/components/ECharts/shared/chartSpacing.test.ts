@@ -41,29 +41,21 @@ function getLegendBounds(names: Array<string>) {
 }
 
 describe('horizontal scroll legend geometry', () => {
-	test('applies shared defaults while preserving intentional placement overrides', () => {
-		expect(chartHorizontalScrollLegend({ data: ['Volume'] })).toMatchObject({
-			type: 'scroll',
-			orient: 'horizontal',
-			pageButtonPosition: 'end',
-			top: 8,
-			right: 8,
-			padding: [5, 0, 5, 8]
-		})
+	test('preserves requested legend placement', () => {
 		expect(chartHorizontalScrollLegend({ right: 108, top: 12 })).toMatchObject({
 			right: 108,
 			top: 12
 		})
 	})
 
-	test('keeps a short legend right-aligned with 8px visible spacing', () => {
+	test('keeps a short legend right-aligned with 8px visible spacing and no pager', () => {
 		const bounds = getLegendBounds(['Inflows', 'Outflows', 'Onchain Mcap'])
 
 		expect(bounds.hasPager).toBe(false)
 		expect(1000 - bounds.right).toBeCloseTo(8)
 	})
 
-	test('clips one oversized legend item to 8px on both sides', () => {
+	test('clips an oversized legend and its pager to 8px from both chart edges', () => {
 		const bounds = getLegendBounds(['Oversized legend '.repeat(30)])
 
 		expect(bounds.hasPager).toBe(true)

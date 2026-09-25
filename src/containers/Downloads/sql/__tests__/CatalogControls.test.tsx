@@ -2,18 +2,14 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { chartDatasets } from '../../chart-datasets'
+import { datasets } from '../../datasets'
 import { SchemaBrowser } from '../SchemaBrowser'
 import { UpsellGate } from '../UpsellGate'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/downloads?mode=sql' }) }))
-vi.mock('../../datasets', () => ({
-	datasetCategories: ['Test'],
-	datasets: [{ slug: 'balances', category: 'Test', description: 'Current balances', fields: ['value'] }]
-}))
-vi.mock('../../chart-datasets', () => ({
-	chartDatasetCategories: ['Test'],
-	chartDatasets: [{ slug: 'tvl', category: 'Test', description: 'Historical TVL', paramLabel: 'Protocol', columns: [] }]
-}))
+const flatDescription = datasets.find((dataset) => dataset.slug === 'hacks')!.description
+const chartDescription = chartDatasets.find((dataset) => dataset.slug === 'protocol-tvl-chart')!.description
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
@@ -48,15 +44,15 @@ test('schema radio filtering is reversible and retains search without loading a 
 	)
 	const [all, flat, timeseries] = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
 	expect(all.checked).toBe(true)
-	expect(container.textContent).toContain('Current balances')
-	expect(container.textContent).toContain('Historical TVL')
+	expect(container.textContent).toContain(flatDescription)
+	expect(container.textContent).toContain(chartDescription)
 	await act(async () => all.focus())
 	await press(all, 'ArrowRight')
 	await vi.waitFor(() => expect(flat.checked).toBe(true))
-	expect(container.textContent).not.toContain('Historical TVL')
+	expect(container.textContent).not.toContain(chartDescription)
 	const search = container.querySelector<HTMLInputElement>('input[type="text"]')!
 	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'balances')
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'hacks')
 		search.dispatchEvent(new Event('input', { bubbles: true }))
 		flat.focus()
 	})
@@ -65,8 +61,8 @@ test('schema radio filtering is reversible and retains search without loading a 
 	expect(container.textContent).toContain('No tables match')
 	await press(timeseries, 'ArrowRight')
 	await vi.waitFor(() => expect(all.checked).toBe(true))
-	expect(search.value).toBe('balances')
-	expect(container.textContent).toContain('Current balances')
+	expect(search.value).toBe('hacks')
+	expect(container.textContent).toContain(flatDescription)
 	expect(load).not.toHaveBeenCalled()
 })
 test('SQL sample focus preserves the current query until activation', async () => {

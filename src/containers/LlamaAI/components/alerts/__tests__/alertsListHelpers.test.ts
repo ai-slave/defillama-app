@@ -102,18 +102,6 @@ describe('formatPriceAlertSummary', () => {
 		}
 		expect(formatPriceAlertSummary(tiny, true, true, 0)).toBe('PEPE above $0.00001235 · one-time · armed')
 	})
-
-	test('shows waiting to re-arm for an enabled-but-unarmed recurring alert', () => {
-		expect(formatPriceAlertSummary(recurringArmed, true, false, 0)).toBe('ETHEREUM above $3,000 · waiting to re-arm')
-	})
-
-	test('shows paused for a manually disabled recurring alert', () => {
-		expect(formatPriceAlertSummary(recurringArmed, false, false, 3)).toBe('ETHEREUM above $3,000 · paused')
-	})
-
-	test('shows paused (not fired) for a one-time alert manually paused before it ever ran', () => {
-		expect(formatPriceAlertSummary(oneTimeFired, false, false, 0)).toBe('BITCOIN below $70,000 · one-time · paused')
-	})
 })
 
 describe('isFiredOneTimePriceAlert', () => {

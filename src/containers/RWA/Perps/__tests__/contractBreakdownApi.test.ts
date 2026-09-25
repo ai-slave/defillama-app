@@ -1,23 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { rwaPerpsContractBreakdown } from '~/containers/RWA/server/api'
 import { parseContractBreakdownRequest } from '~/pages/api/public/rwa/perps/contract-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	fetchRWAPerpsContractBreakdownChartData: vi.fn()
-}))
-
-vi.mock('~/containers/RWA/Perps/api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/containers/RWA/Perps/api')>()
-	return {
-		...actual,
-		fetchRWAPerpsContractBreakdownChartData: mocks.fetchRWAPerpsContractBreakdownChartData
-	}
-})
-
-beforeEach(() => {
-	vi.clearAllMocks()
-})
+const http = installFixtureFetch()
 
 describe('parseContractBreakdownRequest', () => {
 	test('accepts overview contract requests', () => {
@@ -161,7 +149,9 @@ describe('parseContractBreakdownRequest', () => {
 
 describe('rwaPerpsContractBreakdown', () => {
 	test('returns serialized transformed contract breakdown data', async () => {
-		mocks.fetchRWAPerpsContractBreakdownChartData.mockResolvedValue([{ timestamp: 1, 'KALSHI:SPY': 4, 'HL:AAPL': 9 }])
+		http.serve({
+			[`${RWA_PERPS_SERVER_URL}/chart/contract-breakdown`]: [{ timestamp: 1, 'KALSHI:SPY': 4, 'HL:AAPL': 9 }]
+		})
 
 		const result = await rwaPerpsContractBreakdown.handle({
 			method: 'GET',

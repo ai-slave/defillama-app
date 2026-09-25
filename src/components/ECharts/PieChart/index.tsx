@@ -20,6 +20,7 @@ import { enterAnimationOptions, useChartMotion } from '../shared/chartMotion'
 import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { formatTooltipValue } from '../shared/formatters'
+import { buildPieLayoutOption } from './data'
 import type { IPieChartProps, PieTooltipParams } from './types'
 
 echarts.use([
@@ -405,47 +406,16 @@ function PieChart({
 	const syncLayout = useStableCallback(() => {
 		const instance = chartRef.current
 		if (!instance || isChartDisposed(instance)) return
-		const w = instance.getWidth()
-		const h = instance.getHeight()
-		const availableW = Math.max(1, w - reservedRight)
-		const cx = Math.round(availableW / 2)
-		const cy = Math.round((Number.parseFloat(centerY) / 100) * h)
-		const minDim = Math.max(1, Math.min(h, w - reservedRight))
-		let watermarkHeight = 40
-		let watermarkWidth = Math.round(watermarkHeight * (389 / 133))
-		const maxWidth = minDim * 0.6
-		if (watermarkWidth > maxWidth) {
-			const scale = maxWidth / watermarkWidth
-			watermarkWidth = Math.round(watermarkWidth * scale)
-			watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
-		}
-
-		const option: EChartsOption = {
-			series: {
-				center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
-			},
-			...(canvasWatermarkEnabled
-				? {
-						graphic: [
-							{
-								id: 'defillama-watermark',
-								type: 'image',
-								zlevel: 10,
-								z: 999,
-								silent: true,
-								left: Math.round(cx - watermarkWidth / 2),
-								top: Math.round(cy - watermarkHeight / 2),
-								style: {
-									image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-									width: watermarkWidth,
-									height: watermarkHeight,
-									opacity: 0.3
-								}
-							}
-						]
-					}
-				: {})
-		}
+		const option: EChartsOption = buildPieLayoutOption({
+			width: instance.getWidth(),
+			height: instance.getHeight(),
+			reservedRight,
+			centerY,
+			showLegend,
+			isSmall,
+			canvasWatermarkEnabled,
+			isDark
+		})
 		instance.setOption(option, { lazyUpdate: true })
 	})
 

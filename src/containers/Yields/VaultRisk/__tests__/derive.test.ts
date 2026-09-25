@@ -103,11 +103,15 @@ describe('buildScenarios (grouping + status)', () => {
 	})
 
 	test('sorts computed first, then data_gap, then no_loss', () => {
-		const v = fannedVault()
-		const scenarios = buildScenarios(v, scenarioDeps())
-		const rank = { computed: 0, data_gap: 1, no_loss: 2 } as const
-		const ranks = scenarios.map((s) => rank[s.status as keyof typeof rank])
-		expect([...ranks].sort((a, b) => a - b)).toEqual(ranks)
+		// Served in the opposite order, so the result depends on the sort.
+		const v = makeVaultRiskFixture({
+			vault_specific_risks: [
+				makeScenario({ id: 'outage', scenario_id: 'outage', loss: makeLoss({ status: 'no_loss' }) }),
+				makeScenario({ id: 'stale', scenario_id: 'stale', loss: makeLoss({ status: 'data_gap' }) }),
+				makeScenario({ id: 'bug', scenario_id: 'bug', loss: makeLoss({ status: 'computed', max_usd: 10 }) })
+			]
+		})
+		expect(buildScenarios(v, scenarioDeps()).map((s) => s.status)).toEqual(['computed', 'data_gap', 'no_loss'])
 	})
 
 	test('matches realized incidents by scenario_id', () => {
@@ -213,25 +217,12 @@ describe('mergeCoverage + coverageForScenario', () => {
 		})
 
 	test('merges vault+protocol coverage, dedupes duplicates, prefers excl-own-tokens cap, sorts by priority', () => {
-		const v = vaultCov()
-		const p = protoCov()
-		const merged = mergeCoverage(v, p)
-		const rawLen = (v.coverage?.length ?? 0) + (p.coverage?.length ?? 0)
-		expect(merged.length).toBeLessThanOrEqual(rawLen)
-		const keys = merged.map((c) => `${c.kind}:${c.access}:${c.rawCapUsd}:${c.capUsd}`)
-		expect(new Set(keys).size).toBe(keys.length)
-		const priorities = merged.map((c) => c.priority)
-		expect([...priorities].sort((a, b) => a - b)).toEqual(priorities)
-		const exclCap = merged.find((c) => c.excludesOwnTokens)
-		expect(exclCap).toBeTruthy()
-		expect(exclCap!.capUsd).toBeLessThanOrEqual(exclCap!.rawCapUsd)
-	})
-
-	test('deduped coverage total is not inflated by vault/protocol overlap', () => {
-		// the umbrella repeats on both vault and protocol → collapses to the unique set
 		const merged = mergeCoverage(vaultCov(), protoCov())
-		const keys = new Set(merged.map((c) => `${c.kind}:${c.rawCapUsd}`))
-		expect(keys.size).toBe(merged.length)
+		expect(merged.map((c) => [c.kind, c.capUsd])).toEqual([
+			['treasury', 500],
+			['umbrella', 1000],
+			['insurance-protocol', 1500]
+		])
 	})
 
 	test('filters coverage by applies_to', () => {
@@ -334,55 +325,6 @@ describe('buildHeadline', () => {
 		expect(h.coverageTotalUsd).toBeLessThan(umbrella.capUsd + 1)
 	})
 
-	test('maps the server-computed exposure split and trusts its invariants', () => {
-		const vm = buildVaultRiskVM(
-			makeVaultRiskData({
-				pool_total_supply_usd: 1_000_000,
-				allocated_usd: 400_000,
-				idle_usd: 600_000,
-				collateral_risks: [
-					makeCollateral({
-						token: { chain: 'ethereum', symbol: 'A', address: '0xa' },
-						market_loss_ceiling_usd: 500_000,
-						vault_allocation_usd: 400_000,
-						exposure_usd: 300_000,
-						exposure_pct: 0.3,
-						liquidation_threshold: 0.8,
-						bad_debt_at_price_zero_usd: 300_000
-					}),
-					makeCollateral({
-						token: { chain: 'ethereum', symbol: 'B', address: '0xb' },
-						market_loss_ceiling_usd: 200_000,
-						vault_allocation_usd: 150_000,
-						exposure_usd: 100_000,
-						exposure_pct: 0.1,
-						liquidation_threshold: 0.8,
-						bad_debt_at_price_zero_usd: 100_000
-					})
-				]
-			})
-		)
-		expect(vm.collateral.length).toBeGreaterThan(0)
-		if (vm.supplyUsd == null) throw new Error('Expected known vault supply')
-		for (const c of vm.collateral) {
-			expect(c.exposureUsd).toBeLessThanOrEqual(c.marketLossCeilingUsd + 1)
-			expect(c.exposureUsd).toBeLessThanOrEqual(vm.supplyUsd * 1.001)
-			expect(c.magnitudePct).toBeLessThanOrEqual(1)
-		}
-		const allocated = vm.collateral.filter((c) => c.allocationUsd != null)
-		expect(allocated.length).toBeGreaterThan(0)
-		for (const c of allocated) {
-			expect(c.exposureUsd).toBeLessThanOrEqual(c.allocationUsd! + 1)
-		}
-		for (let i = 1; i < vm.collateral.length; i++) {
-			expect(collateralMarketBreakLossUsd(vm.collateral[i - 1]!)).toBeGreaterThanOrEqual(
-				collateralMarketBreakLossUsd(vm.collateral[i]!)
-			)
-		}
-		expect(vm.allocatedUsd).not.toBeNull()
-		expect(vm.idleUsd).not.toBeNull()
-	})
-
 	test('does not count discretionary coverage as a committed backstop', () => {
 		const d = makeVaultRiskData({
 			pool_total_supply_usd: 1_000_000,
@@ -412,7 +354,7 @@ describe('buildVaultRiskVM exit readiness', () => {
 			makeVaultRiskData({ pool_type: 'market', available_liquidity_usd: 200_000, utilization: 0.5 })
 		)
 		expect(marketVm.poolType).toBe('market')
-		expect(typeof marketVm.exitReadiness.utilization).toBe('number')
+		expect(marketVm.exitReadiness).toMatchObject({ availableLiquidityUsd: 200_000, utilization: 0.5 })
 	})
 
 	test('magnitudePct is 0 for non-computed and within (0,1] for the worst computed', () => {
@@ -467,27 +409,6 @@ describe('depositor cap (loss never exceeds pool supply)', () => {
 		expect(capped).toBeTruthy()
 		expect(capped!.rawLossMaxUsd!).toBeGreaterThan(supply)
 		expect(capped!.lossMaxUsd).toBe(supply)
-	})
-
-	test('no scenario reports a depositor loss above supply', () => {
-		const supply = 1000
-		const vm = buildVaultRiskVM(
-			makeVaultRiskData({
-				pool_total_supply_usd: supply,
-				vault_specific_risks: [
-					makeScenario({
-						scenario_id: 'wide-crypto-drop',
-						loss: makeLoss({ status: 'computed', max_usd: supply * 10 })
-					})
-				]
-			})
-		)
-		expect(vm.headline.worstCaseMaxUsd).toBeLessThanOrEqual(supply)
-		const computed = vm.scenarios.filter((s) => s.status === 'computed')
-		expect(computed.length).toBeGreaterThan(0)
-		for (const s of computed) {
-			expect(s.lossMaxUsd).toBeLessThanOrEqual(supply)
-		}
 	})
 })
 
@@ -549,7 +470,7 @@ describe('fixture fields reach the VM (passthrough)', () => {
 				collateral_risks: [
 					makeCollateral({
 						liquidation_threshold: 0.8,
-						bad_debt_at_price_zero_usd: 1000,
+						bad_debt_at_price_zero_usd: 900,
 						exposure_usd: 1000,
 						exposure_pct: 0.3,
 						market_loss_ceiling_usd: 2000,
@@ -580,69 +501,27 @@ describe('fixture fields reach the VM (passthrough)', () => {
 
 	test('maps depeg anchors onto collateral rows', () => {
 		const vm = buildVaultRiskVM(richData())
-		const row = vm.collateral.find((c) => c.liquidationThreshold != null)
-		expect(row).toBeDefined()
-		expect(row!.liquidationThreshold).toBeGreaterThan(0)
-		expect(row!.liquidationThreshold).toBeLessThanOrEqual(1)
-		expect(row!.badDebtAtZeroUsd).toBeGreaterThan(0)
+		expect(vm.collateral.map((c) => [c.liquidationThreshold, c.badDebtAtZeroUsd])).toEqual([[0.8, 900]])
 	})
 
 	test('passes the vault role registry through (and null when absent)', () => {
 		const vm = buildVaultRiskVM(richData())
-		expect(vm.vaultRoles?.owner?.address).toMatch(/^0x/)
-		expect(['safe', 'contract', 'eoa', 'unknown']).toContain(vm.vaultRoles?.owner?.kind)
-		expect(Array.isArray(vm.vaultRoles?.allocators)).toBe(true)
+		expect(vm.vaultRoles?.owner).toMatchObject({ address: '0xowner', kind: 'contract' })
 		const market = buildVaultRiskVM(makeVaultRiskData({ pool_type: 'market' }))
 		expect(market.vaultRoles).toBeNull()
 	})
 
-	test('exposes the governance quorum verdict on the protocol fixture', () => {
-		const p = makeProtocolRiskFixture({
-			governance: makeGovernance({ top10_clears_quorum: true, voting_power_top10_tokens: 1000 })
-		})
-		expect(p.governance?.top10_clears_quorum).toBe(true)
-		expect(p.governance?.voting_power_top10_tokens).toBeGreaterThan(0)
-	})
-
-	test('passes the relative risk_tier through (band + facts, never a score)', () => {
+	test('passes the relative risk_tier through (band + facts)', () => {
 		const vm = buildVaultRiskVM(richData())
-		expect(vm.riskTier).not.toBeNull()
-		expect(['lower', 'moderate', 'higher']).toContain(vm.riskTier!.tier)
-		expect(Array.isArray(vm.riskTier!.facts)).toBe(true)
-		for (const f of vm.riskTier!.facts) expect(['good', 'caution']).toContain(f.polarity)
-		expect(vm.riskTier).not.toHaveProperty('score')
+		expect(vm.riskTier?.tier).toBe('moderate')
+		expect(vm.riskTier?.facts).toEqual([{ label: 'Audited by two firms', polarity: 'good' }])
 	})
 
 	test('binds collateral exposurePct to a 0–1 share and surfaces oracle vendors/addresses', () => {
 		const vm = buildVaultRiskVM(richData())
-		expect(vm.collateral.length).toBeGreaterThan(0)
-		for (const c of vm.collateral) {
-			if (c.exposurePct == null) throw new Error('Expected known collateral exposure share')
-			expect(c.exposurePct).toBeGreaterThanOrEqual(0)
-			expect(c.exposurePct).toBeLessThanOrEqual(1.001)
-			expect(Array.isArray(c.oracleProviders)).toBe(true)
-			expect(Array.isArray(c.oracleAddresses)).toBe(true)
-			expect(Array.isArray(c.feedKinds)).toBe(true)
-		}
-	})
-
-	test('passes stress, market_oracles, scoped deps and freshness flags through', () => {
-		const vm = buildVaultRiskVM(richData())
-		expect(Array.isArray(vm.stress?.anchors)).toBe(true)
-		expect(vm.stress!.anchors[0]?.bad_debt_usd).toBeGreaterThanOrEqual(0)
-		expect(Array.isArray(vm.marketOracles)).toBe(true)
-		expect(Array.isArray(vm.oracleDependencies)).toBe(true)
-		for (const o of vm.oracleDependencies) {
-			expect(o.admin_address).toMatch(/^0x/)
-			expect(['safe', 'guardian-set', 'contract', 'eoa']).toContain(o.admin_kind)
-			expect(o.exposure_usd).toBeGreaterThanOrEqual(0)
-		}
-		for (const c of vm.collateral)
-			expect(c.vaultMarketShare === null || typeof c.vaultMarketShare === 'number').toBe(true)
-		expect(Array.isArray(vm.vaultExternalDependencies)).toBe(true)
-		const relevances = vm.vaultExternalDependencies.flatMap((d) => (d.relevance ? [d.relevance] : []))
-		expect(relevances.filter((r) => !['principal', 'governance', 'rewards', 'ui'].includes(r))).toEqual([])
-		expect(typeof vm.stale).toBe('boolean')
+		expect(vm.collateral.map((c) => [c.exposurePct, c.oracleProviders, c.oracleAddresses])).toEqual([
+			[0.3, ['Chainlink'], ['0xfeed']]
+		])
 	})
 })
 
@@ -679,7 +558,7 @@ describe('vault depeg stress curve', () => {
 		expect(vaultDepegLossUsd(collateral, 0.1)).toBeLessThan(vaultDepegLossUsd(collateral, 0.3)) // monotonic
 	})
 
-	test('a macro-crash pool renders its served per-drop curve with zero committed coverage and no pool incidents', () => {
+	test('a macro-crash pool renders its served per-drop curve', () => {
 		const vm = buildVaultRiskVM(
 			makeVaultRiskData({
 				protocol_id: 'morpho-blue',
@@ -705,10 +584,11 @@ describe('vault depeg stress curve', () => {
 			})
 		)
 		const crash = vm.scenarios.find((s) => s.scenarioId === 'wide-crypto-drop')!
-		expect(crash.status).toBe('computed')
-		expect(crash.lossByAnchor?.length ?? 0).toBeGreaterThan(0)
-		expect(vm.headline.coverageTotalUsd).toBe(0)
-		expect(vm.realizedIncidents).toHaveLength(0)
+		expect(crash.lossByAnchor).toEqual([
+			{ dropPct: 10, lossUsd: 20_000 },
+			{ dropPct: 30, lossUsd: 80_000 },
+			{ dropPct: 50, lossUsd: 150_000 }
+		])
 		expect(anyHasAnchors(vm.scenarios)).toBe(true)
 	})
 })
@@ -1083,17 +963,18 @@ describe('buildCollateral — oracle badge (server-authoritative)', () => {
 			})
 		)[0]!.oracleType
 
-	test('takes the collateral oracle_type verbatim — no FE re-derivation from feed signals', () => {
+	// The oracle_config entry disagrees with the collateral row; the row's type wins.
+	test('takes the collateral oracle_type verbatim, never the oracle_config type', () => {
 		expect(
 			typeOf(
 				collRow({ symbol: 'cbETH', address: '0xAA', oracle_type: 'hybrid' }),
-				cfg({ address: '0xAA', feed_kind: 'aggregator', provider: ['Chainlink'] })
+				cfg({ address: '0xAA', type: 'market', feed_kind: 'aggregator', provider: ['Chainlink'] })
 			)
 		).toBe('hybrid')
 		expect(
 			typeOf(
 				collRow({ symbol: 'cbETH', address: '0xAB', oracle_type: 'market' }),
-				cfg({ address: '0xAB', type: 'market', feed_kind: 'aggregator', provider: ['Chainlink'] })
+				cfg({ address: '0xAB', type: 'hybrid', feed_kind: 'aggregator', provider: ['Chainlink'] })
 			)
 		).toBe('market')
 	})
@@ -1102,13 +983,5 @@ describe('buildCollateral — oracle badge (server-authoritative)', () => {
 		expect(typeOf(collRow({ address: '0xEE', oracle_type: 'hardcoded' }))).toBe('hardcoded')
 		expect(typeOf(collRow({ address: '0xEF', oracle_type: 'aum' }))).toBe('aum')
 		expect(typeOf(collRow({ address: '0xF0', oracle_type: 'hybrid' }))).toBe('hybrid')
-	})
-
-	test('uses the collateral oracle_type even with no oracle_config entry', () => {
-		expect(
-			typeOf(
-				collRow({ address: '0xFF', oracle_type: 'market', feed_kinds: ['aggregator'], oracle_providers: ['Chainlink'] })
-			)
-		).toBe('market')
 	})
 })

@@ -1,78 +1,41 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { fetchAdapterProtocolChartData, fetchProtocolTvlChart } = vi.hoisted(() => ({
-	fetchAdapterProtocolChartData: vi.fn(),
-	fetchProtocolTvlChart: vi.fn()
-}))
-
-vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterProtocolChartData }))
-
-vi.mock('~/containers/ProtocolOverview/api', () => ({
-	fetchProtocolTreasuryChart: vi.fn(),
-	fetchProtocolTvlChart
-}))
-
+import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchProProtocolChartData } from './ProtocolCharts'
 
-describe('fetchProProtocolChartData focused TVL sources', () => {
-	beforeEach(() => {
-		fetchProtocolTvlChart.mockReset()
-		fetchAdapterProtocolChartData.mockReset()
+const http = installFixtureFetch()
+describe('Pro protocol chart sources', () => {
+	test.each([
+		['activeUsers', 'active-users', undefined, 11],
+		['newUsers', 'new-users', undefined, 22],
+		['txs', 'active-users', 'dailyTransactionsCount', 33],
+		['gasUsed', 'active-users', 'dailyGasUsedUsd', 44]
+	] as const)('fetches the selected %s activity data', async (type, adapter, dataType, value) => {
+		const url = new URL(`${V2_SERVER_URL}/chart/${adapter}/protocol/compound-v2`)
+		if (dataType) url.searchParams.set('dataType', dataType)
+		http.serve({ [url.href]: [[1_700_000_000, value]] })
+		await expect(fetchProProtocolChartData(type, 'compound-v2')).resolves.toEqual([[1_700_000_000, value]])
+		expect(http.urls()).toEqual([url.href])
 	})
 
-	test('uses typed adapter contracts for protocol activity charts', async () => {
-		fetchAdapterProtocolChartData.mockResolvedValue([[1_700_000_000, 10]])
-
-		await expect(fetchProProtocolChartData('activeUsers', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(fetchProProtocolChartData('newUsers', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(fetchProProtocolChartData('txs', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-		await expect(fetchProProtocolChartData('gasUsed', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
-
-		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(1, {
-			adapterType: 'active-users',
-			protocol: 'compound-v2',
-			dataType: undefined
+	test('returns V2 TVL timestamps in Pro seconds after canonical normalization', async () => {
+		http.serve({
+			[`${V2_SERVER_URL}/chart/tvl/protocol/aave`]: [
+				[1_700_000_000, 10],
+				[1_700_086_400, 20]
+			]
 		})
-		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(2, {
-			adapterType: 'new-users',
-			protocol: 'compound-v2',
-			dataType: undefined
-		})
-		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(3, {
-			adapterType: 'active-users',
-			protocol: 'compound-v2',
-			dataType: 'dailyTransactionsCount'
-		})
-		expect(fetchAdapterProtocolChartData).toHaveBeenNthCalledWith(4, {
-			adapterType: 'active-users',
-			protocol: 'compound-v2',
-			dataType: 'dailyGasUsedUsd'
-		})
-	})
-
-	test('fetches total TVL from V2 and preserves the Pro seconds contract', async () => {
-		fetchProtocolTvlChart.mockResolvedValue([
-			[1000, 10],
-			[2000, 20]
-		])
-
 		await expect(fetchProProtocolChartData('tvl', 'aave')).resolves.toEqual([
-			[1, 10],
-			[2, 20]
+			[1_700_000_000, 10],
+			[1_700_086_400, 20]
 		])
-		expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'aave' })
 	})
 
-	test('requests the focused borrowed value series instead of reconstructing V1 chain TVLs', async () => {
-		fetchProtocolTvlChart.mockResolvedValue([[3000, 30]])
-
-		await expect(fetchProProtocolChartData('borrowed', 'aave')).resolves.toEqual([[3, 30]])
-		expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'aave', key: 'borrowed' })
-	})
-
-	test('returns no points when the focused endpoint has no series', async () => {
-		fetchProtocolTvlChart.mockResolvedValue(null)
-
-		await expect(fetchProProtocolChartData('tvl', 'missing')).resolves.toEqual([])
+	test('fetches the borrowed series independently of total TVL', async () => {
+		http.serve({
+			[`${V2_SERVER_URL}/chart/tvl/protocol/aave?key=borrowed`]: [[1_700_000_000, 30]],
+			[`${V2_SERVER_URL}/chart/tvl/protocol/aave`]: [[1_700_000_000, 100]]
+		})
+		await expect(fetchProProtocolChartData('borrowed', 'aave')).resolves.toEqual([[1_700_000_000, 30]])
 	})
 })

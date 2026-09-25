@@ -347,7 +347,6 @@ describe('ChartStyleEditor', () => {
 		await clickButton('Save')
 		expect(onSave).toHaveBeenCalledOnce()
 		const call = onSave.mock.calls[0]
-		expect(call).toBeDefined()
 		if (!call) throw new Error('Missing save call')
 		const patch = call[1]
 		expect(patch.order).toEqual([1, 0, 2, 3])
@@ -363,7 +362,6 @@ describe('ChartStyleEditor', () => {
 
 		await clickButton('Save')
 		const call = onSave.mock.calls[0]
-		expect(call).toBeDefined()
 		if (!call) throw new Error('Missing save call')
 		const patch = call[1]
 		expect(patch.order).toEqual([3, 1, 2, 0])
@@ -375,7 +373,6 @@ describe('ChartStyleEditor', () => {
 
 		await clickButton('Save')
 		const call = onSave.mock.calls[0]
-		expect(call).toBeDefined()
 		if (!call) throw new Error('Missing save call')
 		const patch = call[1]
 		expect(patch.order).toBeUndefined()
@@ -414,7 +411,6 @@ describe('ChartStyleEditor', () => {
 
 		await clickButton('Save')
 		const call = onSave.mock.calls[0]
-		expect(call).toBeDefined()
 		if (!call) throw new Error('Missing save call')
 		const patch = call[1]
 		expect(patch.order).toEqual([1, 0])

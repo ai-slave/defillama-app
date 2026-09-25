@@ -369,6 +369,24 @@ export async function getDimensionAdapterChainEarningsOverview({
 		fetchEmissionsBreakdownAggregated(),
 		isChainSpecific ? getDimensionChainNameMap() : Promise.resolve<Record<string, string>>({})
 	])
+	return buildDimensionEarningsOverview({ chain, overviewData, totalDataChart, emissionsData, chainNameMap })
+}
+
+/** A null emissions response or chain map means a source failed, so earnings are unavailable rather than zero. */
+export function buildDimensionEarningsOverview({
+	chain,
+	overviewData,
+	totalDataChart,
+	emissionsData,
+	chainNameMap
+}: {
+	chain: string
+	overviewData: IAdapterChainMetrics
+	totalDataChart: Array<[number, number]>
+	emissionsData: EmissionsBreakdownAggregatedResponse | null
+	chainNameMap: Record<string, string> | null
+}): DimensionEarningsOverviewResult {
+	const isChainSpecific = chain !== '' && chain !== 'All'
 	if (emissionsData === null || chainNameMap === null) return { status: 'unavailable' }
 
 	const earningsData = buildDimensionEarningsProtocols(overviewData, emissionsData)

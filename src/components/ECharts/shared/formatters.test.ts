@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, onTestFinished, test } from 'vitest'
 import { formatChartEmphasisDate, formatChartValue, formatTooltipChartDate, formatTooltipValue } from './formatters'
 
 describe('shared ECharts value formatters', () => {
@@ -23,6 +23,13 @@ describe('shared ECharts value formatters', () => {
 	})
 
 	test('keeps non-midnight chart timestamps and emphasis labels in UTC without fixing the viewer locale', () => {
+		// Tokyo puts 16:30 UTC on the next day, so a label in the viewer's zone shows a different date and hour.
+		const originalTimeZone = process.env.TZ
+		process.env.TZ = 'Asia/Tokyo'
+		onTestFinished(() => {
+			if (originalTimeZone === undefined) delete process.env.TZ
+			else process.env.TZ = originalTimeZone
+		})
 		const intraday = Date.UTC(2026, 6, 24, 16, 30)
 		const midnightHour = Date.UTC(2026, 6, 24, 0, 30)
 		const date = new Date(intraday)

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { DASHBOARD_HISTORY_LIMIT, dashboardReducer, historySnapshot, initDashboardState } from './dashboardReducer'
+import { DASHBOARD_HISTORY_LIMIT, dashboardReducer, initDashboardState } from './dashboardReducer'
 import type { Dashboard } from './dashboardTypes'
 const original: Dashboard = {
 	id: 'dashboard',
@@ -145,16 +145,14 @@ test('skipHistory applies items and variables without recording a snapshot', () 
 	expect(state.history).toEqual({ past: [], future: [] })
 })
 
-test('snapshots capture the current items and variables by reference', () => {
+test('setting identical items or variables adds no undo entry', () => {
 	let state = initDashboardState({ dashboard: original })
 	state = dashboardReducer(state, { type: 'SET_VARIABLES', payload: [chainVariable('Ethereum')] })
-	const { items, variables } = state
-	expect(historySnapshot(state)).toEqual({ items, variables })
 	state = dashboardReducer(state, { type: 'SET_ITEMS', payload: [text('a')] })
-	expect(state.history.past.at(-1)!.items).toBe(items)
-	expect(state.history.past.at(-1)!.variables).toBe(variables)
-	expect(dashboardReducer(state, { type: 'SET_ITEMS', payload: state.items })).toBe(state)
-	expect(dashboardReducer(state, { type: 'SET_VARIABLES', payload: state.variables })).toBe(state)
+	const pastLength = state.history.past.length
+	state = dashboardReducer(state, { type: 'SET_ITEMS', payload: state.items })
+	state = dashboardReducer(state, { type: 'SET_VARIABLES', payload: state.variables })
+	expect(state.history.past).toHaveLength(pastLength)
 })
 
 test('after a merged save acknowledgement, UNDO restores the snapshot taken before the local edit', () => {

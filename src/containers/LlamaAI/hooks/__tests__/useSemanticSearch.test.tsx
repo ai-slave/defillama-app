@@ -3,15 +3,15 @@
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { useSemanticSearch } from '../useSemanticSearch'
 
-const mocks = vi.hoisted(() => ({ authorizedFetch: vi.fn(), isAuthenticated: true }))
+const session = installSubscriberSession('reader')
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ authorizedFetch: mocks.authorizedFetch, isAuthenticated: mocks.isAuthenticated })
-}))
-
-const respond = (results: Array<{ id: string }>) => ({ ok: true, json: async () => ({ results }) })
+let answer: Array<{ id: string }> | 'fail' = []
+const searches = () => session.requests.filter((request) => request.url.pathname === '/search')
 
 let container: HTMLDivElement
 let root: Root
@@ -28,14 +28,24 @@ function Harness() {
 }
 
 async function render() {
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Harness />
+			</session.Wrapper>
+		)
+	)
 }
 
 beforeEach(async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.useFakeTimers()
-	mocks.authorizedFetch.mockReset()
-	mocks.isAuthenticated = true
+	answer = []
+	session.serve({
+		[`${AI_SERVER}/search`]: () =>
+			// A real outage still answers with a JSON error body, so only the status marks the failure.
+			answer === 'fail' ? Response.json({ error: 'Search unavailable' }, { status: 500 }) : { results: answer }
+	})
 	enabled = true
 	commits = []
 	container = document.createElement('div')
@@ -56,16 +66,20 @@ async function type(text: string) {
 const settle = async (ms = 300) => act(async () => vi.advanceTimersByTimeAsync(ms))
 
 test('debounces to one request for rapid keystrokes and reports the results', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
+	// Each pause is shorter than the 300ms debounce, so only the last query is ever sent.
 	await type('a')
+	await settle(250)
 	await type('ab')
+	await settle(250)
 	await type('abc')
-	expect(mocks.authorizedFetch).not.toHaveBeenCalled()
+	await settle(250)
+	expect(searches()).toHaveLength(0)
 	expect(api.isSearching).toBe(true)
 
-	await settle()
-	expect(mocks.authorizedFetch).toHaveBeenCalledOnce()
-	expect(mocks.authorizedFetch.mock.calls[0][0]).toContain('q=abc')
+	await settle(50)
+	expect(searches()).toHaveLength(1)
+	expect(searches()[0]!.url.searchParams.get('q')).toBe('abc')
 	expect(api.results.map((r: any) => r.id)).toEqual(['r1'])
 	expect(api.isSearching).toBe(false)
 })
@@ -73,19 +87,19 @@ test('debounces to one request for rapid keystrokes and reports the results', as
 // The spinner used to be set inside the effect, so a keystroke committed twice: once for the query,
 // then again once the effect turned the spinner on.
 test('a keystroke commits one render with the spinner already on', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	commits = []
 	await type('abc')
 	expect(commits).toEqual([{ searching: true, ids: [] }])
 })
 
 test('keeps the previous results visible while the next query runs', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'first' }]))
+	answer = [{ id: 'first' }]
 	await type('one')
 	await settle()
 	expect(api.results.map((r: any) => r.id)).toEqual(['first'])
 
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'second' }]))
+	answer = [{ id: 'second' }]
 	await type('two')
 	expect(api.isSearching).toBe(true)
 	expect(api.results.map((r: any) => r.id)).toEqual(['first'])
@@ -95,17 +109,17 @@ test('keeps the previous results visible while the next query runs', async () =>
 })
 
 test('an emptied query hides results without a request', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await type('abc')
 	await settle()
 	await type('')
 	expect(api.results).toEqual([])
 	expect(api.isSearching).toBe(false)
-	expect(mocks.authorizedFetch).toHaveBeenCalledOnce()
+	expect(searches()).toHaveLength(1)
 })
 
 test('clear resets the query and its results', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await type('abc')
 	await settle()
 	await act(async () => api.clear())
@@ -116,7 +130,7 @@ test('clear resets the query and its results', async () => {
 
 // The opposite edge: returning to a query already settled must not leave the spinner on forever.
 test('retyping a settled query serves it without a spinner or a request', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await type('abc')
 	await settle()
 	await type('ab')
@@ -124,15 +138,15 @@ test('retyping a settled query serves it without a spinner or a request', async 
 	await settle()
 	expect(api.isSearching).toBe(false)
 	expect(api.results.map((r: any) => r.id)).toEqual(['r1'])
-	expect(mocks.authorizedFetch).toHaveBeenCalledOnce()
+	expect(searches()).toHaveLength(1)
 })
 
 test('a failed response clears the results for that query and reports the failure', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await type('abc')
 	await settle()
 	expect(api.failed).toBe(false)
-	mocks.authorizedFetch.mockResolvedValue({ ok: false })
+	answer = 'fail'
 	await type('abcd')
 	await settle()
 	expect(api.results).toEqual([])
@@ -142,7 +156,7 @@ test('a failed response clears the results for that query and reports the failur
 
 // The opposite edge: a server that answers with no matches is an empty result, not a failure.
 test('an empty answer is not reported as a failure', async () => {
-	mocks.authorizedFetch.mockResolvedValue(respond([]))
+	answer = []
 	await type('abc')
 	await settle()
 	expect(api.results).toEqual([])
@@ -150,17 +164,17 @@ test('an empty answer is not reported as a failure', async () => {
 })
 
 test('retry reruns the failed query without retyping', async () => {
-	mocks.authorizedFetch.mockResolvedValue({ ok: false })
+	answer = 'fail'
 	await type('abc')
 	await settle()
 	expect(api.failed).toBe(true)
 
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await act(async () => api.retry())
 	expect(api.isSearching).toBe(true)
 	expect(api.failed).toBe(false)
 	await settle()
-	expect(mocks.authorizedFetch).toHaveBeenCalledTimes(2)
+	expect(searches()).toHaveLength(2)
 	expect(api.results.map((r: any) => r.id)).toEqual(['r1'])
 })
 
@@ -169,30 +183,30 @@ test('no request runs while the hook is disabled or signed out', async () => {
 	await render()
 	await type('abc')
 	await settle()
-	expect(mocks.authorizedFetch).not.toHaveBeenCalled()
+	expect(searches()).toHaveLength(0)
 	expect(api.isSearching).toBe(false)
 
 	enabled = true
-	mocks.isAuthenticated = false
+	await act(async () => pb.authStore.clear())
 	await render()
 	await settle()
-	expect(mocks.authorizedFetch).not.toHaveBeenCalled()
+	expect(searches()).toHaveLength(0)
 	expect(api.isSearching).toBe(false)
 })
 
 test('a failed search can be retried by clearing and retyping', async () => {
-	mocks.authorizedFetch.mockResolvedValue({ ok: false })
+	answer = 'fail'
 	await type('abc')
 	await settle()
 	expect(api.results).toEqual([])
 	expect(api.isSearching).toBe(false)
-	expect(mocks.authorizedFetch).toHaveBeenCalledOnce()
+	expect(searches()).toHaveLength(1)
 
-	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	answer = [{ id: 'r1' }]
 	await type('')
 	await type('abc')
 	await settle()
 
-	expect(mocks.authorizedFetch).toHaveBeenCalledTimes(2)
+	expect(searches()).toHaveLength(2)
 	expect(api.results.map((r: any) => r.id)).toEqual(['r1'])
 })

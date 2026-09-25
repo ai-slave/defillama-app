@@ -1,34 +1,24 @@
 import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
-import {
-	DWMC_GROUPING_OPTIONS_LOWERCASE,
-	type LowercaseDwmcGrouping
-} from '~/components/ECharts/shared/ChartGroupingSelector'
 import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { BAR_CHARTS, type ChainChartLabels, chainCharts } from '~/containers/ChainOverview/constants'
+import {
+	getActiveAddressesCumulativeNotice,
+	getEmbeddedChainChartSettings
+} from '~/containers/ChainOverview/embeddedChartSettings'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useFetchChainChartData } from '~/containers/ChainOverview/useFetchChainChartData'
-import { TVL_SETTINGS } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { LocalLoader } from '~/ui/Loaders'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
-import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery } from '~/utils/routerQuery'
 
 const ChainCoreChart: any = lazy(() => import('~/containers/ChainOverview/Chart'))
 
-const normalizeChartInterval = (value: string | null | undefined): LowercaseDwmcGrouping | null => {
-	const normalizedValue = value?.toLowerCase() ?? null
-	if (DWMC_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
-		return normalizedValue as LowercaseDwmcGrouping
-	}
-	return null
-}
 export const getStaticProps = withPerformanceLogging(
 	'chart/chain/[chain]',
 	async ({ params }: GetStaticPropsContext<{ chain: string }>) => {
@@ -101,43 +91,15 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		)
 	}, [router.query, props.metadata.id])
 
-	const { toggledCharts, chainGeckoId, groupBy, denomination, tvlSettings, isThemeDark } = useMemo(() => {
-		const queryParams = JSON.parse(queryParamsString)
-
-		const chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
-
-		const tvlSettings = {}
-
-		for (const setting in TVL_SETTINGS) {
-			tvlSettings[TVL_SETTINGS[setting]] = isTruthyQueryParam(queryParams[`include_${TVL_SETTINGS[setting]}_in_tvl`])
-		}
-
-		const toggledCharts = props.charts.filter((tchart, index) =>
-			index === 0 ? queryParams[chainCharts[tchart]] !== 'false' : queryParams[chainCharts[tchart]] === 'true'
-		) as Array<ChainChartLabels>
-
-		const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
-
-		const groupBy =
-			hasAtleasOneBarChart && queryParams?.groupBy ? (normalizeChartInterval(queryParams.groupBy) ?? 'daily') : 'daily'
-
-		const denomination =
-			getChainDenominations(props.metadata).find(
-				({ symbol }) =>
-					typeof queryParams.currency === 'string' && symbol.toLowerCase() === queryParams.currency.toLowerCase()
-			)?.symbol ?? 'USD'
-
-		const isThemeDark = queryParams.theme === 'dark'
-
-		return {
-			chainGeckoId,
-			toggledCharts,
-			groupBy,
-			denomination,
-			tvlSettings,
-			isThemeDark
-		}
-	}, [queryParamsString, props.charts, props.chainTokenInfo?.gecko_id, props.metadata])
+	const { toggledCharts, chainGeckoId, groupBy, denomination, tvlSettings, isThemeDark } = useMemo(
+		() =>
+			getEmbeddedChainChartSettings(JSON.parse(queryParamsString), {
+				charts: props.charts,
+				chainTokenInfo: props.chainTokenInfo,
+				metadata: props.metadata
+			}),
+		[queryParamsString, props.charts, props.chainTokenInfo, props.metadata]
+	)
 
 	const { finalCharts, valueSymbol, isFetchingChartData } = useFetchChainChartData({
 		denomination,
@@ -167,8 +129,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		}
 	}, [isThemeDark])
 
-	// The toggle stays on, so switching back from cumulative restores the series.
-	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledCharts.includes('Active Addresses')
+	const activeAddressesNotice = getActiveAddressesCumulativeNotice(groupBy, toggledCharts)
 	const showDaily = () => void pushShallowQuery(router, { groupBy: 'daily' })
 
 	return (
@@ -178,11 +139,11 @@ export default function ChainChartPage(props: IChainOverviewData) {
 					<LocalLoader />
 					<span className="sr-only">Loading chart data</span>
 				</div>
-			) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
+			) : activeAddressesNotice === 'fill' ? (
 				<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={showDaily} />
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>
-					{isActiveAddressesHidden ? (
+					{activeAddressesNotice === 'inline' ? (
 						<CumulativeUnavailableNotice metric="Active Addresses" fill={false} onShowDaily={showDaily} />
 					) : null}
 					<ChainCoreChart

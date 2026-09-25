@@ -34,22 +34,27 @@ function shortAddress(address: string): string {
 	return EVM_ADDRESS.test(address) ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
 }
 
+/** Disclosed URLs are issuer-submitted text; only http(s) ones become links or images. */
+export function httpHref(url: string | null): string | null {
+	return url && HTTP_URL.test(url) ? url : null
+}
+
 function ExternalLink({ href }: { href: string | null }) {
 	if (!href) return <span className="text-tertiary">N/A</span>
-	if (!HTTP_URL.test(href)) return <span className="break-all">{href}</span>
+	const link = httpHref(href)
+	if (!link) return <span className="break-all">{href}</span>
 	return (
-		<a href={href} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-link hover:underline">
-			{href}
+		<a href={link} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-link hover:underline">
+			{link}
 		</a>
 	)
 }
 
 function NamedLogo({ name, logoUrl }: { name: string; logoUrl: string | null }) {
+	const logo = httpHref(logoUrl)
 	return (
 		<span className="flex items-center gap-1.5">
-			{logoUrl && HTTP_URL.test(logoUrl) ? (
-				<img src={logoUrl} alt="" width={16} height={16} className="shrink-0 rounded-full" />
-			) : null}
+			{logo ? <img src={logo} alt="" width={16} height={16} className="shrink-0 rounded-full" /> : null}
 			{name}
 		</span>
 	)
@@ -62,7 +67,7 @@ function DisclosureTable({ columns, rows }: { columns: Array<string>; rows: Arra
 				<thead>
 					<tr>
 						{columns.map((column) => (
-							<th key={column} className="px-4 py-2 body-sm font-normal text-tertiary">
+							<th key={column} className="px-4 py-2 body-sm text-tertiary">
 								{column}
 							</th>
 						))}

@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { buildSqlChartModel } from './LineBarChart'
+import type { ChartConfig } from '../../chartConfig'
+import { classifyColumns } from '../../columnKind'
+import type { QueryResult } from '../../exportResults'
+import { buildLineBarChart, buildSqlChartModel } from './LineBarChart'
 
 function series(name: string, sourceIndex = 1) {
 	return {
@@ -23,10 +26,61 @@ describe('SQL line/bar chart model', () => {
 			encode: { x: 0, y: 1 }
 		})
 	})
+})
 
-	test('retains the split-chart null category as the legacy blank bucket', () => {
-		const model = buildSqlChartModel([[null, 5]], 0, 'category', [series('A')], true)
+// One day of fees split by chain; returns the visible tooltip text for that day.
+function hoverSplitDay(fees: Array<[chain: string, fee: number]>) {
+	const result: QueryResult = {
+		columns: [
+			{ name: 'day', type: 'TIMESTAMP' },
+			{ name: 'chain', type: 'VARCHAR' },
+			{ name: 'fee', type: 'DOUBLE' }
+		],
+		rows: fees.map(([chain, fee]) => [1_767_225_600_000, chain, fee])
+	}
+	const config: ChartConfig = {
+		chartType: 'line',
+		xCol: 'day',
+		yCols: ['fee'],
+		splitByCol: 'chain',
+		stackMode: 'off',
+		rightAxisCols: [],
+		seriesKinds: {},
+		seriesColors: {},
+		numberFormat: 'currency'
+	}
+	const { chartModel, chartOptions, truncatedCount } = buildLineBarChart(config, result, classifyColumns(result), {})
+	const row = chartModel.dataset.source[0]!
+	const formatter = (chartOptions.tooltip as unknown as { formatter: (params: unknown) => string }).formatter
+	const html = formatter(
+		chartModel.charts.map((chart) => ({
+			seriesName: chart.name,
+			marker: '',
+			axisValue: row[0],
+			value: row,
+			encode: { x: [0], y: [chart.encode.y] }
+		}))
+	)
+	return { truncatedCount, text: html.replace(/<[^>]+>/g, '|').replaceAll('&nbsp;', ' ') }
+}
 
-		expect(model.dataset.source).toEqual([['', 5]])
-	})
+test('folds the pivot remainder into the tooltip Others row when a split has more than 20 series', () => {
+	// 22 chains of $10: two are folded into a $20 "Other" series, which must not show as the largest row.
+	const { truncatedCount, text } = hoverSplitDay(Array.from({ length: 22 }, (_, i) => [`chain-${i}`, 10]))
+
+	expect(truncatedCount).toBe(2)
+	expect(text).toContain('|Others  $130|')
+	expect(text).not.toContain('|Other  $20|')
+})
+
+test('shows a user series named Other as an ordinary row when nothing was folded', () => {
+	const { truncatedCount, text } = hoverSplitDay([
+		['Other', 30],
+		['Base', 10]
+	])
+
+	expect(truncatedCount).toBe(0)
+	expect(text).toContain('|Other  $30|')
+	expect(text).toContain('|Base  $10|')
+	expect(text).not.toContain('Others')
 })

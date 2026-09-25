@@ -133,7 +133,7 @@ const POINT_SQL_DEFINITIONS: Readonly<
 	}
 }
 
-function pointColumns(metrics: Array<ProtocolPointMetric>, chain: boolean): string {
+export function pointColumns(metrics: Array<ProtocolPointMetric>, chain: boolean): string {
 	const columns: Array<string> = []
 	for (const metric of metrics) {
 		const definition = POINT_SQL_DEFINITIONS[metric]

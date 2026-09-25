@@ -1,24 +1,19 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
-
-const forgdFetch = vi.fn()
-vi.mock('~/containers/MarketMakers/server/client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
-
+import { expect, test } from 'vitest'
 import { getStaticProps } from '~/pages/market-makers/volume'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-afterEach(() => forgdFetch.mockReset())
+const http = installFixtureFetch()
+const ROUTE = '/api/v1/public/market-maker/leaderboard/volume'
 
-describe('volume page getStaticProps', () => {
-	test('returns rows keyed by market maker', async () => {
-		forgdFetch.mockResolvedValue([
-			{
-				marketMakerId: 'lhava',
-				marketMakerName: 'Lhava',
-				marketMakerImageUrl: null,
-				rank: { value: 1, percentile: 100 },
-				orderFillVolumeTotal: { value: 1_744_638, percentile: 100, rank: 1 }
-			}
-		])
-		const res = (await (getStaticProps as any)({})) as { props: { rows: Array<{ marketMakerId: string }> } }
-		expect(res.props.rows[0].marketMakerId).toBe('lhava')
-	})
+test('passes the volume rows through', async () => {
+	const rows = [{ marketMakerId: 'lhava', marketMakerName: 'Lhava', rank: { value: 1, percentile: 100 } }]
+	http.serve({ [ROUTE]: rows })
+	const res = (await getStaticProps({})) as { props: unknown }
+	expect(res.props).toEqual({ rows })
+})
+
+test('renders the page with no rows when the leaderboard request fails', async () => {
+	http.serve({ [ROUTE]: fixtureStatus(404) })
+	const res = (await getStaticProps({})) as { props: unknown }
+	expect(res.props).toEqual({ rows: null })
 })

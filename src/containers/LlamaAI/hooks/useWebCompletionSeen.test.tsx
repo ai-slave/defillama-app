@@ -3,308 +3,260 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { useWebCompletionSeen } from '~/containers/LlamaAI/hooks/useWebCompletionSeen'
+import { AI_SERVER } from '~/constants'
+import type { ChatAttention } from '~/containers/LlamaAI/chatAttention'
+import { canMarkSeen, useWebCompletionSeen, type PendingSeen } from '~/containers/LlamaAI/hooks/useWebCompletionSeen'
 import type { WebMobilePreference } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 
-const mocks = vi.hoisted(() => ({
-	markSeen: vi.fn(),
-	authorizedFetch: vi.fn(),
-	userId: 'user-1' as string | null,
-	visibilityState: 'visible' as DocumentVisibilityState,
-	hasFocus: true,
-	sessionId: 'session-1' as string | null,
-	uncovered: true,
-	visibleMessageIds: new Set(['message-1']) as ReadonlySet<string>,
-	preference: { kind: 'known', available: true, enabled: true } as WebMobilePreference
-}))
+const session = installSubscriberSession('user-1')
+const SEEN_PATH = '/mobile-push/completions/'
+const ENABLED: WebMobilePreference = { kind: 'known', available: true, enabled: true }
+const DISABLED: WebMobilePreference = { kind: 'known', available: true, enabled: false }
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: mocks.authorizedFetch,
-		isAuthenticated: !!mocks.userId,
-		user: mocks.userId ? { id: mocks.userId } : null
+let visibility: DocumentVisibilityState = 'visible'
+let focused = true
+
+beforeEach(() => {
+	visibility = 'visible'
+	focused = true
+	Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => visibility })
+	vi.spyOn(document, 'hasFocus').mockImplementation(() => focused)
+})
+
+afterEach(() => {
+	vi.restoreAllMocks()
+	vi.useRealTimers()
+})
+
+describe('which pending completion may be marked seen', () => {
+	const pending = (patch: Partial<PendingSeen> = {}): PendingSeen => ({
+		sessionId: 'session-1',
+		messageId: 'message-1',
+		attempts: 0,
+		expiresAt: Date.now() + 10_000,
+		...patch
 	})
-}))
+	const attention = (patch: Partial<ChatAttention> = {}): ChatAttention => ({
+		uncovered: true,
+		sessionId: 'session-1',
+		visibleMessageIds: new Set(['message-1']),
+		...patch
+	})
 
-vi.mock('~/containers/LlamaAI/api/mobilePush', () => ({
-	COMPLETION_SEEN_REQUEST_TIMEOUT_MS: 2000,
-	markWebCompletionSeen: mocks.markSeen
-}))
+	test('only the visible message of the active, uncovered, focused chat', () => {
+		expect(canMarkSeen(pending(), attention(), ENABLED)).toBe(true)
+		expect(canMarkSeen(pending(), attention({ uncovered: false }), ENABLED)).toBe(false)
+		expect(canMarkSeen(pending(), attention({ sessionId: 'session-2' }), ENABLED)).toBe(false)
+		expect(canMarkSeen(pending(), attention({ visibleMessageIds: new Set(['other']) }), ENABLED)).toBe(false)
+		expect(canMarkSeen(pending({ expiresAt: Date.now() }), attention(), ENABLED)).toBe(false)
+		focused = false
+		expect(canMarkSeen(pending(), attention(), ENABLED)).toBe(false)
+	})
+
+	test('only while the preference is known to be enabled, even when push is unavailable', () => {
+		expect(canMarkSeen(pending(), attention(), { kind: 'known', available: false, enabled: true })).toBe(true)
+		expect(canMarkSeen(pending(), attention(), DISABLED)).toBe(false)
+		expect(canMarkSeen(pending(), attention(), { kind: 'loading' })).toBe(false)
+		expect(canMarkSeen(pending(), attention(), { kind: 'signed-out' })).toBe(false)
+	})
+})
 
 describe('useWebCompletionSeen', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let result: ReturnType<typeof useWebCompletionSeen>
+	let props: { attention: ChatAttention; preference: WebMobilePreference }
+	let failures: Array<Error | number>
+	const seenRequests = () => session.requests.filter((request) => request.url.pathname.startsWith(SEEN_PATH))
 
 	function Harness() {
-		result = useWebCompletionSeen({
-			attention: {
-				uncovered: mocks.uncovered,
-				sessionId: mocks.sessionId,
-				visibleMessageIds: mocks.visibleMessageIds
-			},
-			preference: mocks.preference
-		})
+		result = useWebCompletionSeen(props)
 		return null
+	}
+
+	async function render(patch: Partial<ChatAttention> & { preference?: WebMobilePreference } = {}) {
+		const { preference = props.preference, ...attention } = patch
+		props = { attention: { ...props.attention, ...attention }, preference }
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<Harness />
+				</session.Wrapper>
+			)
+		)
+	}
+
+	async function mark(sessionId = 'session-1', messageId = 'message-1') {
+		await act(async () => result.markCompletionSeen(sessionId, messageId))
 	}
 
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.clearAllMocks()
-		mocks.userId = 'user-1'
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
-		mocks.sessionId = 'session-1'
-		mocks.uncovered = true
-		mocks.visibleMessageIds = new Set(['message-1'])
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		Object.defineProperty(document, 'visibilityState', {
-			configurable: true,
-			get: () => mocks.visibilityState
+		vi.spyOn(console, 'error').mockImplementation(() => undefined)
+		failures = []
+		session.serve({
+			[`${AI_SERVER}${SEEN_PATH}`]: () => {
+				const failure = failures.shift()
+				if (failure === undefined) return { ok: true, seen: true }
+				if (typeof failure === 'number') return Response.json({ error: 'down' }, { status: failure })
+				throw failure
+			}
 		})
-		vi.spyOn(document, 'hasFocus').mockImplementation(() => mocks.hasFocus)
-		mocks.markSeen.mockResolvedValue(true)
+		props = {
+			attention: { uncovered: true, sessionId: 'session-1', visibleMessageIds: new Set(['message-1']) },
+			preference: ENABLED
+		}
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		await renderHook()
+		await render()
 	})
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
-		vi.useRealTimers()
-		vi.restoreAllMocks()
 	})
 
-	async function renderHook() {
-		await act(async () => root.render(<Harness />))
-	}
+	test('marks the attended completion seen on the server', async () => {
+		await mark()
 
-	test('marks seen while attending the active visible message', async () => {
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-		expect(mocks.markSeen).toHaveBeenCalledWith(mocks.authorizedFetch, 'session-1', 'message-1')
+		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		expect(seenRequests()[0]!.url.pathname).toBe('/mobile-push/completions/session-1/messages/message-1/seen')
+		expect(seenRequests()[0]!.init?.method).toBe('POST')
 	})
 
 	test('waits for focus after the tab was hidden', async () => {
-		mocks.visibilityState = 'hidden'
-		mocks.hasFocus = false
-		await renderHook()
+		visibility = 'hidden'
+		focused = false
+		await mark()
+		expect(seenRequests()).toHaveLength(0)
 
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
+		visibility = 'visible'
+		focused = true
 		await act(async () => window.dispatchEvent(new Event('focus')))
 
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
+		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
 	})
 
-	test('waits until the chat is uncovered', async () => {
-		mocks.uncovered = false
-		await renderHook()
+	test('waits until the message scrolls into view', async () => {
+		await render({ visibleMessageIds: new Set() })
+		await mark()
+		expect(seenRequests()).toHaveLength(0)
 
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-		expect(mocks.markSeen).not.toHaveBeenCalled()
+		await render({ visibleMessageIds: new Set(['message-1']) })
 
-		mocks.uncovered = true
-		await renderHook()
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
+		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
 	})
 
-	test('waits until the message is in visibleMessageIds', async () => {
-		mocks.visibleMessageIds = new Set()
-		await renderHook()
-
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-
-		mocks.visibleMessageIds = new Set(['message-1'])
-		await renderHook()
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-	})
-
-	test('does not let another-session pending completion block the active session', async () => {
-		act(() => {
+	test('does not let another session’s pending completion block the active one', async () => {
+		await act(async () => {
 			result.markCompletionSeen('session-2', 'message-2')
 			result.markCompletionSeen('session-1', 'message-1')
 		})
 
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-		expect(mocks.markSeen).toHaveBeenCalledWith(mocks.authorizedFetch, 'session-1', 'message-1')
+		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		expect(seenRequests()[0]!.url.pathname).toContain('/session-1/messages/message-1/')
 	})
 
-	test('retries a transient failure within the ten-second grace period', async () => {
-		vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		mocks.markSeen.mockRejectedValueOnce(new TypeError('network unavailable')).mockResolvedValueOnce(true)
+	test('holds a completion while the preference loads and sends it once enabled', async () => {
+		await render({ preference: { kind: 'loading' } })
+		await mark()
+		await render({ visibleMessageIds: new Set(['message-1', 'other-message']) })
+		expect(seenRequests()).toHaveLength(0)
 
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
+		await render({ preference: ENABLED })
 
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledTimes(2), { timeout: 2000 })
+		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
 	})
 
-	test('walks the whole retry ladder and then gives up', async () => {
+	test.each([
+		['marked while disabled', { kind: 'known', available: true, enabled: false }],
+		['marked while unavailable and disabled', { kind: 'known', available: false, enabled: false }]
+	] as const)('never sends a completion %s', async (_name, preference) => {
+		await render({ preference })
+		await mark()
+		await render({ preference: ENABLED })
+
+		expect(seenRequests()).toHaveLength(0)
+	})
+
+	test('drops held completions when the preference turns off or loading resolves to off', async () => {
+		await render({ preference: { kind: 'loading' } })
+		await mark()
+		await render({ preference: DISABLED })
+		await render({ preference: ENABLED })
+
+		expect(seenRequests()).toHaveLength(0)
+	})
+
+	test('drops held completions when a different account signs in', async () => {
+		visibility = 'hidden'
+		focused = false
+		await mark()
+
+		const token = `e30.${btoa(JSON.stringify({ id: 'user-2', exp: 4_102_444_800 }))}.signature`
+		session.serve({
+			'/api/collections/users/auth-refresh': {
+				token,
+				record: { id: 'user-2', collectionId: 'u', collectionName: 'users' }
+			}
+		})
+		await act(async () => pb.authStore.save(token, { id: 'user-2', collectionId: 'u', collectionName: 'users' }))
+		visibility = 'visible'
+		focused = true
+		await act(async () => window.dispatchEvent(new Event('focus')))
+
+		expect(seenRequests()).toHaveLength(0)
+	})
+
+	test('retries a transient failure on the 750ms and 2s ladder, then gives up', async () => {
 		vi.useFakeTimers()
-		vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		mocks.markSeen.mockRejectedValue(new TypeError('network unavailable'))
+		failures = [new TypeError('network unavailable'), 503, 503]
 
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
+		await mark()
 		await act(async () => vi.advanceTimersByTimeAsync(0))
-		expect(mocks.markSeen).toHaveBeenCalledOnce()
+		expect(seenRequests()).toHaveLength(1)
 
 		await act(async () => vi.advanceTimersByTimeAsync(750))
-		expect(mocks.markSeen).toHaveBeenCalledTimes(2)
+		expect(seenRequests()).toHaveLength(2)
 
 		await act(async () => vi.advanceTimersByTimeAsync(2000))
-		expect(mocks.markSeen).toHaveBeenCalledTimes(3)
+		expect(seenRequests()).toHaveLength(3)
 
 		await act(async () => vi.advanceTimersByTimeAsync(10_000))
-		expect(mocks.markSeen).toHaveBeenCalledTimes(3)
-		expect(vi.getTimerCount()).toBe(0)
+		expect(seenRequests()).toHaveLength(3)
 	})
 
-	test('does not POST while the preference is disabled', async () => {
-		mocks.preference = { kind: 'known', available: true, enabled: false }
-		await renderHook()
-
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('holds a pending completion while the preference is loading', async () => {
-		mocks.preference = { kind: 'loading' }
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-
-		mocks.visibleMessageIds = new Set(['message-1', 'other-message'])
-		await renderHook()
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		await renderHook()
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-	})
-
-	test('marks seen when the preference is unavailable but still enabled', async () => {
-		mocks.preference = { kind: 'known', available: false, enabled: true }
-		await renderHook()
-
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-	})
-
-	test('does not enqueue when the preference is unavailable and disabled', async () => {
-		mocks.preference = { kind: 'known', available: false, enabled: false }
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		await renderHook()
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('does not enqueue a completion marked while the preference is disabled', async () => {
-		mocks.preference = { kind: 'known', available: true, enabled: false }
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		await renderHook()
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('clears pending completions when the preference becomes disabled', async () => {
-		mocks.visibilityState = 'hidden'
-		mocks.hasFocus = false
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		mocks.preference = { kind: 'known', available: true, enabled: false }
-		await renderHook()
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
-		await renderHook()
-		await act(async () => window.dispatchEvent(new Event('focus')))
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('drops a held completion when loading resolves to disabled', async () => {
-		mocks.preference = { kind: 'loading' }
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		mocks.preference = { kind: 'known', available: true, enabled: false }
-		await renderHook()
-		mocks.preference = { kind: 'known', available: true, enabled: true }
-		await renderHook()
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('clears pending completions when the authenticated user changes', async () => {
-		mocks.visibilityState = 'hidden'
-		mocks.hasFocus = false
-		await renderHook()
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-
-		mocks.userId = 'user-2'
-		await renderHook()
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
-		await renderHook()
-		await act(async () => window.dispatchEvent(new Event('focus')))
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('marks a live completion when its streaming draft id is visible', async () => {
-		mocks.visibleMessageIds = new Set(['streaming-message-1'])
-		await renderHook()
-
-		act(() => result.markCompletionSeen('session-1', 'streaming-message-1'))
-
-		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledOnce())
-	})
-
-	test('does not POST an around-restore completion outside the loaded window', async () => {
-		mocks.visibleMessageIds = new Set(['different-message'])
-		await renderHook()
-
-		act(() => result.markCompletionSeen('session-1', 'restored-message'))
-
-		expect(mocks.markSeen).not.toHaveBeenCalled()
-	})
-
-	test('does not schedule a retry whose request timeout would cross expiresAt', async () => {
+	test('does not retry a client error', async () => {
 		vi.useFakeTimers()
-		vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		let rejectRequest: ((error: Error) => void) | null = null
-		mocks.markSeen.mockImplementationOnce(() => new Promise<boolean>((_resolve, reject) => (rejectRequest = reject)))
+		failures = [400]
 
-		act(() => result.markCompletionSeen('session-1', 'message-1'))
-		await act(async () => Promise.resolve())
-		expect(mocks.markSeen).toHaveBeenCalledOnce()
+		await mark()
+		await act(async () => vi.advanceTimersByTimeAsync(10_000))
+
+		expect(seenRequests()).toHaveLength(1)
+	})
+
+	test('does not schedule a retry whose request timeout would cross the grace period', async () => {
+		vi.useFakeTimers()
+		let failLate: (() => void) | null = null
+		session.serve({
+			[`${AI_SERVER}${SEEN_PATH}`]: () =>
+				new Promise<Response>((_resolve, reject) => (failLate = () => reject(new TypeError('late failure'))))
+		})
+
+		await mark()
+		await act(async () => vi.advanceTimersByTimeAsync(0))
+		expect(seenRequests()).toHaveLength(1)
 
 		await act(async () => {
 			await vi.advanceTimersByTimeAsync(7500)
-			rejectRequest?.(new TypeError('late network failure'))
-			await Promise.resolve()
+			failLate!()
 		})
-		expect(vi.getTimerCount()).toBe(0)
 		await act(async () => vi.advanceTimersByTimeAsync(10_000))
-		expect(mocks.markSeen).toHaveBeenCalledOnce()
+
+		expect(seenRequests()).toHaveLength(1)
 	})
 })

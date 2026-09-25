@@ -49,8 +49,9 @@ describe('streamReducer', () => {
 		expect(state.pendingQueueItemId).toBe('q1')
 	})
 
-	test('shows activity immediately for a direct stream', () => {
-		const state = streamReducer(createInitialStreamState(), { type: 'START_STREAM' })
+	test('a direct stream does not inherit the previous queued handoff', () => {
+		const queued = streamReducer(createInitialStreamState(), { type: 'START_QUEUED_STREAM', queueItemId: 'q1' })
+		const state = streamReducer(queued, { type: 'START_STREAM' })
 
 		expect(state.isStreaming).toBe(true)
 		expect(state.pendingQueueItemId).toBeNull()

@@ -1,42 +1,21 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { ResearchPromoBanner } from '../landing/ResearchPromoBanner'
+import { describe, expect, test } from 'vitest'
+import { selectBannerForCountry } from '../bannerTargeting'
+import { landingPromoImageUrl, ResearchPromoBanner } from '../landing/ResearchPromoBanner'
 import { ArticleBannerStrip } from '../renderer/ArticleBannerStrip'
-import { ArticleImageBanner } from '../renderer/ArticleImageBanner'
-import { ArticlePromoBannerMobile, ArticlePromoCard } from '../renderer/ArticlePromoBanner'
+import { cardPromoImageUrl, mobilePromoImageUrl } from '../renderer/ArticlePromoBanner'
+import { articleBannerCandidates } from '../renderer/bannerExclusion'
 import type { Banner, BannerLookupResult } from '../types'
 
-const queryState = vi.hoisted(() => ({
-	lookups: new Map<string, BannerLookupResult>()
-}))
-
-vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: Array<unknown>; enabled?: boolean }) => ({
-		data: enabled ? queryState.lookups.get(JSON.stringify(queryKey)) : undefined,
-		isLoading: false
-	}))
-}))
-
-const mediaState = vi.hoisted(() => ({ mobile: false }))
-
-vi.mock('~/hooks/useMedia', () => ({
-	useMedia: () => mediaState.mobile
-}))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: vi.fn(),
-		isAuthenticated: true,
-		loaders: { userLoading: false }
-	})
-}))
-
-const emptyLookup = (): BannerLookupResult => ({
+const lookup = (overrides: Partial<BannerLookupResult> = {}): BannerLookupResult => ({
 	text: null,
 	image: null,
 	imageHorizontal: null,
 	promo: null,
-	imageSquare: null
+	imageSquare: null,
+	...overrides
 })
 
 const banner = (overrides: Partial<Banner>): Banner => ({
@@ -68,7 +47,7 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	...overrides
 })
 
-const promoBanner = (overrides: Partial<Banner> = {}): Banner =>
+const promo = (overrides: Partial<Banner> = {}): Banner =>
 	banner({
 		id: 'promo-id',
 		type: 'promo',
@@ -80,353 +59,108 @@ const promoBanner = (overrides: Partial<Banner> = {}): Banner =>
 		...overrides
 	})
 
-describe('article banners', () => {
-	beforeEach(() => {
-		queryState.lookups.clear()
-		mediaState.mobile = false
-	})
+// The banner an article placement shows to a visitor whose country is known and untargeted.
+function articleBanner(
+	kind: 'text' | 'image',
+	lookups: Parameters<typeof articleBannerCandidates>[1],
+	articleId: string
+) {
+	return selectBannerForCountry(articleBannerCandidates(kind, lookups, articleId), null, true)?.id ?? null
+}
 
-	test('falls back from article text to section text to all-articles text', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			text: banner({ id: 'global-text', text: 'Global strip' })
-		})
+describe('article banner placement', () => {
+	const global = { text: banner({ id: 'global' }), image: banner({ id: 'global', type: 'image' }) }
+	const section = { text: banner({ id: 'section' }), image: banner({ id: 'section', type: 'image' }) }
+	const article = { text: banner({ id: 'article' }), image: banner({ id: 'article', type: 'image' }) }
 
+	test.each(['text', 'image'] as const)('%s banners prefer article, then section, then all articles', (kind) => {
+		const allArticles = lookup({ [kind]: global[kind] })
+		expect(articleBanner(kind, { article: lookup(), section: lookup(), allArticles }, 'a1')).toBe('global')
 		expect(
-			renderToStaticMarkup(<ArticleBannerStrip scope="article" articleId="article-id" section="report" />)
-		).toContain('Global strip')
+			articleBanner(kind, { article: lookup(), section: lookup({ [kind]: section[kind] }), allArticles }, 'a1')
+		).toBe('section')
+		expect(
+			articleBanner(
+				kind,
+				{ article: lookup({ [kind]: article[kind] }), section: lookup({ [kind]: section[kind] }), allArticles },
+				'a1'
+			)
+		).toBe('article')
+	})
 
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), {
-			...emptyLookup(),
-			text: banner({ id: 'section-text', scope: 'section', text: 'Section strip' })
-		})
+	test.each(['text', 'image'] as const)('an all-articles %s banner skips excluded articles only', (kind) => {
+		const allArticles = lookup({ [kind]: { ...global[kind], excludedArticleIds: ['a1'] } })
+		expect(articleBanner(kind, { allArticles }, 'a1')).toBeNull()
+		expect(articleBanner(kind, { allArticles }, 'a2')).toBe('global')
+	})
+})
 
-		const sectionHtml = renderToStaticMarkup(
-			<ArticleBannerStrip scope="article" articleId="article-id" section="report" />
+describe('promo images', () => {
+	test('the landing promo uses the wide image on desktop and the landing mobile image on mobile', () => {
+		const withLandingMobile = promo({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
+		expect(landingPromoImageUrl(withLandingMobile, false)).toBe('/uploads/promo/wide')
+		expect(landingPromoImageUrl(withLandingMobile, true)).toBe('/uploads/promo/landing-mobile')
+		expect(landingPromoImageUrl(promo(), true)).toBe('/uploads/promo/mobile')
+	})
+
+	test('the landing promo hides without an image for the viewport, or when kept off the landing page', () => {
+		expect(landingPromoImageUrl(promo({ imageWideUrl: null }), false)).toBeUndefined()
+		expect(landingPromoImageUrl(promo({ imageMobileUrl: null }), true)).toBeUndefined()
+		expect(landingPromoImageUrl(promo({ showOnLanding: false }), false)).toBeUndefined()
+		expect(landingPromoImageUrl(promo({ enabled: false }), false)).toBeUndefined()
+	})
+
+	test('article promos ignore the landing mobile image and fall back from mobile to card', () => {
+		expect(mobilePromoImageUrl(promo({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' }))).toBe(
+			'/uploads/promo/mobile'
 		)
-		expect(sectionHtml).toContain('Section strip')
-		expect(sectionHtml).not.toContain('Global strip')
+		expect(mobilePromoImageUrl(promo({ imageMobileUrl: null }))).toBe('/uploads/promo/card')
+		expect(mobilePromoImageUrl(promo({ imageMobileUrl: null, imageCardUrl: null }))).toBeUndefined()
+		expect(cardPromoImageUrl(promo({ imageCardUrl: null }))).toBeUndefined()
+	})
+})
 
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), {
-			...emptyLookup(),
-			text: banner({ id: 'article-text', scope: 'article', text: 'Article strip' })
-		})
+// Server render with lookups already cached, as the page's prefetched data would be.
+function render(lookups: Record<string, BannerLookupResult>, node: ReactNode) {
+	const client = new QueryClient()
+	for (const key in lookups) client.setQueryData(['research', 'banner', ...key.split('/')], lookups[key])
+	return renderToStaticMarkup(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
+}
 
-		const articleHtml = renderToStaticMarkup(
-			<ArticleBannerStrip scope="article" articleId="article-id" section="report" />
+describe('server-rendered banners', () => {
+	test('editing a text banner changes its dismissal key so dismissed visitors see the new version', () => {
+		const strip = (updatedAt: string) =>
+			render(
+				{ landing: lookup({ text: banner({ id: 'landing-text', text: 'Landing strip', updatedAt }) }) },
+				<ArticleBannerStrip scope="landing" />
+			)
+		expect(strip('2026-05-14T00:00:00.000Z')).toContain('research-banner-landing-text--2026-05-14t00-00-00-000z')
+		expect(strip('2026-08-14T12:34:56.000Z')).toContain('research-banner-landing-text--2026-08-14t12-34-56-000z')
+	})
+
+	test('the landing promo links to its landing url and shows its disclosure link', () => {
+		const html = render(
+			{
+				landing: lookup({
+					promo: promo({
+						landingLinkUrl: 'https://example.com/landing',
+						disclosureUrl: 'https://example.com/disclosure',
+						disclosureText: 'Ad disclosure'
+					})
+				})
+			},
+			<ResearchPromoBanner />
 		)
-		expect(articleHtml).toContain('Article strip')
-		expect(articleHtml).not.toContain('Section strip')
-	})
-
-	test('changes the text banner dismissal key only when the banner is edited', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			text: banner({ id: 'landing-text', scope: 'landing', text: 'Landing strip' })
-		})
-
-		const originalHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
-		expect(originalHtml).toContain('announcement-token--research-banner-landing-text--2026-05-14t00-00-00-000z')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			text: banner({
-				id: 'landing-text',
-				scope: 'landing',
-				text: 'Updated landing strip',
-				updatedAt: '2026-08-14T12:34:56.000Z'
-			})
-		})
-
-		const updatedHtml = renderToStaticMarkup(<ArticleBannerStrip scope="landing" />)
-		expect(updatedHtml).toContain('announcement-token--research-banner-landing-text--2026-08-14t12-34-56-000z')
-		expect(updatedHtml).not.toContain('announcement-token--research-banner-landing-text--2026-05-14')
-	})
-
-	test('falls back to all-articles image banners when article and section images are absent', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			image: banner({
-				id: 'global-image',
-				type: 'image',
-				imageUrl: '/uploads/image/global',
-				imageAlt: 'Global image'
-			})
-		})
-
-		const html = renderToStaticMarkup(<ArticleImageBanner articleId="article-id" section="report" />)
-
-		expect(html).toContain('/uploads/image/global')
-		expect(html).toContain('Global image')
-	})
-
-	test('hides the all-articles text banner on an excluded article but shows it elsewhere', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			text: banner({ id: 'global-text', text: 'Global strip', excludedArticleIds: ['article-id'] })
-		})
-
-		const excludedHtml = renderToStaticMarkup(
-			<ArticleBannerStrip scope="article" articleId="article-id" section="report" />
-		)
-		expect(excludedHtml).not.toContain('Global strip')
-
-		const otherHtml = renderToStaticMarkup(
-			<ArticleBannerStrip scope="article" articleId="other-article" section="report" />
-		)
-		expect(otherHtml).toContain('Global strip')
-	})
-
-	test('hides the all-articles image banner on an excluded article but shows it elsewhere', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			image: banner({
-				id: 'global-image',
-				type: 'image',
-				imageUrl: '/uploads/image/global',
-				imageAlt: 'Global image',
-				excludedArticleIds: ['article-id']
-			})
-		})
-
-		const excludedHtml = renderToStaticMarkup(<ArticleImageBanner articleId="article-id" section="report" />)
-		expect(excludedHtml).not.toContain('/uploads/image/global')
-
-		const otherHtml = renderToStaticMarkup(<ArticleImageBanner articleId="other-article" section="report" />)
-		expect(otherHtml).toContain('/uploads/image/global')
-	})
-
-	test('renders the landing promo banner with a disclosure link', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure' })
-		})
-
-		const html = renderToStaticMarkup(<ResearchPromoBanner />)
-
-		expect(html).toContain('/uploads/promo/wide')
-		expect(html).toContain('https://example.com/promo')
-		expect(html).toContain('https://example.com/disclosure')
-		expect(html).toContain('Disclosure')
-	})
-
-	test('uses a custom disclosure label when configured', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure', disclosureText: 'Ad disclosure' })
-		})
-
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toContain('Ad disclosure')
-	})
-
-	test('hides the disclosure link when no disclosure URL is configured', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner()
-		})
-
-		const html = renderToStaticMarkup(<ResearchPromoBanner />)
-
-		expect(html).toContain('/uploads/promo/wide')
-		expect(html).not.toContain('Disclosure')
-	})
-
-	test('hides the landing promo banner when no promo is configured or no wide image exists', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), emptyLookup())
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageWideUrl: null })
-		})
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
-	})
-
-	test('does not server-render a restricted promo before visitor country resolves', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ targetCountries: ['FI'] })
-		})
-
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
-	})
-
-	test('renders the article promo card from the all-articles lookup', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure' })
-		})
-
-		const html = renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)
-
-		expect(html).toContain('/uploads/promo/card')
-		expect(html).toContain('https://example.com/promo')
-		expect(html).toContain('Disclosure')
-	})
-
-	test('uses the landing page url on the landing promo banner when set', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({
-				landingLinkUrl: 'https://example.com/landing',
-				articleLinkUrl: 'https://example.com/article'
-			})
-		})
-
-		const html = renderToStaticMarkup(<ResearchPromoBanner />)
-
-		expect(html).toContain('href="https://example.com/landing"')
-		expect(html).not.toContain('href="https://example.com/promo"')
-		expect(html).not.toContain('https://example.com/article')
-	})
-
-	test('falls back to the link url on the landing promo banner when the landing url is blank', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ landingLinkUrl: '   ', articleLinkUrl: 'https://example.com/article' })
-		})
-
-		const html = renderToStaticMarkup(<ResearchPromoBanner />)
-
-		expect(html).toContain('href="https://example.com/promo"')
-		expect(html).not.toContain('https://example.com/article')
-	})
-
-	test('uses the article page url on the article promo card and mobile banner when set', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({
-				landingLinkUrl: 'https://example.com/landing',
-				articleLinkUrl: 'https://example.com/article'
-			})
-		})
-
-		const card = renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)
-		expect(card).toContain('href="https://example.com/article"')
-		expect(card).not.toContain('https://example.com/promo')
-		expect(card).not.toContain('https://example.com/landing')
-
-		const mobile = renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)
-		expect(mobile).toContain('href="https://example.com/article"')
-		expect(mobile).not.toContain('https://example.com/landing')
-	})
-
-	test('falls back to the link url on article pages when only the landing url is set', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ landingLinkUrl: 'https://example.com/landing' })
-		})
-
-		const card = renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)
-		expect(card).toContain('href="https://example.com/promo"')
-		expect(card).not.toContain('https://example.com/landing')
-	})
-
-	test('keeps the disclosure url independent from the placement urls', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({
-				landingLinkUrl: 'https://example.com/landing',
-				disclosureUrl: 'https://example.com/disclosure'
-			})
-		})
-
-		const html = renderToStaticMarkup(<ResearchPromoBanner />)
-
+		expect(html).toContain('src="/uploads/promo/wide"')
 		expect(html).toContain('href="https://example.com/landing"')
 		expect(html).toContain('href="https://example.com/disclosure"')
+		expect(html).toContain('Ad disclosure')
 	})
 
-	test('uses the landing mobile image on the mobile landing page and falls back to the article mobile image', () => {
-		mediaState.mobile = true
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
-		})
-		let html = renderToStaticMarkup(<ResearchPromoBanner />)
-		expect(html).toContain('/uploads/promo/landing-mobile')
-		expect(html).not.toContain('/uploads/promo/mobile"')
-		expect(html).not.toContain('/uploads/promo/wide')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner()
-		})
-		html = renderToStaticMarkup(<ResearchPromoBanner />)
-		expect(html).toContain('/uploads/promo/mobile')
-	})
-
-	test('hides the landing promo banner on mobile without a mobile image instead of showing the article card', () => {
-		mediaState.mobile = true
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageMobileUrl: null })
-		})
-
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
-	})
-
-	test('ignores the landing mobile image on the desktop landing page and on article pages', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
-		})
-		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toContain('/uploads/promo/wide')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageLandingMobileUrl: '/uploads/promo/landing-mobile' })
-		})
-		const mobile = renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)
-		expect(mobile).toContain('/uploads/promo/mobile')
-		expect(mobile).not.toContain('/uploads/promo/landing-mobile')
-	})
-
-	test('hides the article promo card without a card image', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageCardUrl: null })
-		})
-
-		expect(renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)).toBe('')
-	})
-
-	test('hides the promo card on an excluded article but shows it elsewhere', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ excludedArticleIds: ['article-id'] })
-		})
-
-		expect(renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)).toBe('')
-		expect(renderToStaticMarkup(<ArticlePromoCard articleId="other-article" />)).toContain('/uploads/promo/card')
-		expect(renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)).toBe('')
-	})
-
-	test('falls back from the mobile promo image to the card image', () => {
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner()
-		})
-		expect(renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)).toContain('/uploads/promo/mobile')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageMobileUrl: null })
-		})
-		expect(renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)).toContain('/uploads/promo/card')
-
-		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
-			...emptyLookup(),
-			promo: promoBanner({ imageMobileUrl: null, imageCardUrl: null })
-		})
-		expect(renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)).toBe('')
+	test('a country-restricted promo is not server-rendered before the visitor country resolves', () => {
+		const html = (targetCountries: Array<string>) =>
+			render({ landing: lookup({ promo: promo({ targetCountries }) }) }, <ResearchPromoBanner />)
+		expect(html([])).toContain('href="https://example.com/promo"')
+		expect(html(['FI'])).toBe('')
 	})
 })

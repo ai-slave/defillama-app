@@ -19,18 +19,17 @@ import {
 	type MultiChartConfig
 } from '../types'
 import { ProMeta, ProSegmented } from '../ui'
-import { DASHBOARD_CHART_GROUPING, generateChartColor, getGroupedMetricTitle } from '../utils'
-import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
+import { DASHBOARD_CHART_GROUPING } from '../utils'
 import { buildProTreemapData } from '../utils/treemap'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { scaledPx, useCardHeightScale } from './cardHeightContext'
 import { ConfirmationModal } from './ConfirmationModal'
 import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashboardGroupingSegments'
 import {
+	buildMultiChartCardSeries,
 	buildMultiChartCsvRows,
 	buildMultiChartSeriesView,
-	getMultiChartGrouping,
-	type MultiChartInputSeries
+	getMultiChartGrouping
 } from './multiChartSeries'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading, ProCardNotice } from './ProCardStatus'
@@ -66,11 +65,6 @@ interface MultiChartCardProps {
 
 const isLoadedMultiChartItem = (item: ChartRuntimeView): boolean =>
 	!item.isLoading && !item.hasError && item.data.length > 0
-
-const normalizeBaseType = (chartType: string | undefined): MultiChartInputSeries['baseType'] => {
-	if (chartType === 'bar' || chartType === 'area' || chartType === 'line') return chartType
-	return undefined
-}
 
 function MultiChartCard({ multi }: MultiChartCardProps) {
 	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
@@ -140,105 +134,15 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		for (const retry of failedItemRetries) retry()
 	}, [failedItemRetries])
 
-	const colorContext = useMemo(() => {
-		const uniqueChains = new Set<string>()
-		const uniqueProtocols = new Set<string>()
-		const itemIdsByProtocol = new Map<string, Array<string>>()
-		const itemIdsByChain = new Map<string, Array<string>>()
-		let onlyChains = true
-		let onlyProtocols = true
-
-		for (const item of validItems) {
-			if (item.subjectType === 'protocol') {
-				onlyChains = false
-				uniqueProtocols.add(item.protocol)
-				const ids = itemIdsByProtocol.get(item.protocol)
-				if (ids) ids.push(item.id)
-				else itemIdsByProtocol.set(item.protocol, [item.id])
-			} else {
-				onlyProtocols = false
-				uniqueChains.add(item.chain)
-				const ids = itemIdsByChain.get(item.chain)
-				if (ids) ids.push(item.id)
-				else itemIdsByChain.set(item.chain, [item.id])
-			}
-		}
-		const isSingleChain = onlyChains && uniqueChains.size === 1
-		const isSingleProtocol = onlyProtocols && uniqueProtocols.size === 1
-		const colorItemIds = new Set<string>()
-
-		for (const [item, ids] of itemIdsByProtocol) {
-			if (ids.length > 1) {
-				for (const id of ids) colorItemIds.add(id)
-			} else {
-				colorItemIds.add(item)
-			}
-		}
-
-		for (const [item, ids] of itemIdsByChain) {
-			if (ids.length > 1) {
-				for (const id of ids) colorItemIds.add(id)
-			} else {
-				colorItemIds.add(item)
-			}
-		}
-
-		const colorIndexByItemId = new Map<string, number>()
-		const sortedItemIds = Array.from(colorItemIds).sort()
-		for (let index = 0; index < sortedItemIds.length; index++) {
-			const itemId = sortedItemIds[index]
-			if (itemId) colorIndexByItemId.set(itemId, index)
-		}
-
-		return { isSingleChain, isSingleProtocol, colorIndexByItemId }
-	}, [validItems])
-
-	const baseSeries = useMemo(() => {
-		const { isSingleChain, isSingleProtocol, colorIndexByItemId } = colorContext
-		const colorIndexesTaken = new Set<number>()
-
-		const getColorItemId = (item: (typeof validItems)[0]) => {
-			if (isSingleProtocol || isSingleChain) return item.type
-			const subject = item.subjectType === 'protocol' ? item.protocol : item.chain
-			return `${item.subjectType}_${subject}_${item.type}`
-		}
-
-		// A running total of daily averages is meaningless, so cumulative leaves those series out and says so below.
-		const chartedItems = showCumulative ? validItems.filter((cfg) => !isDailyAverageChartType(cfg.type)) : validItems
-		const series: Array<MultiChartInputSeries> = chartedItems.map((cfg, index) => {
-			const data = cfg.data
-			const meta = getProDashboardChartTypeConfig(cfg.type)
-			const name = cfg.subjectType === 'protocol' ? getProtocolInfo(cfg.protocol)?.name || cfg.protocol : cfg.chain
-
-			const itemIdentifier = cfg.subjectType === 'protocol' ? cfg.protocol : cfg.chain
-			const colorItemId = getColorItemId(cfg)
-
-			let color =
-				cfg.color ||
-				(isSingleChain || isSingleProtocol
-					? getPaletteColor(EXTENDED_COLOR_PALETTE, index)
-					: generateChartColor(colorItemId, meta?.color || '#8884d8'))
-
-			let colorIndex = colorIndexByItemId.get(itemIdentifier) ?? -1
-			if (colorIndexesTaken.has(colorIndex)) {
-				colorIndex = colorIndexByItemId.get(cfg.id) ?? -1
-			}
-
-			if (!cfg.color && colorIndex !== -1) {
-				color = getPaletteColor(COLOR_PALETTE_2, colorIndex)
-				colorIndexesTaken.add(colorIndex)
-			}
-
-			return {
-				name: `${name} ${getGroupedMetricTitle(cfg.type, meta?.title || capitalizeFirstLetter(cfg.type), grouping)}`,
-				baseType: normalizeBaseType(meta?.chartType),
-				data,
-				color,
-				metricType: cfg.type
-			}
-		})
-		return series
-	}, [validItems, colorContext, getProtocolInfo, showCumulative, grouping])
+	const baseSeries = useMemo(
+		() =>
+			buildMultiChartCardSeries(validItems, {
+				showCumulative,
+				grouping,
+				getProtocolName: (protocol) => getProtocolInfo(protocol)?.name
+			}),
+		[validItems, getProtocolInfo, showCumulative, grouping]
+	)
 	const hidesDailyAverage = showCumulative && validItems.some((cfg) => isDailyAverageChartType(cfg.type))
 
 	const chartTypeInfo = useMemo(() => {

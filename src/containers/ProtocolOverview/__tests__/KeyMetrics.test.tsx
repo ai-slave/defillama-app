@@ -1,16 +1,16 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import type { IKeyMetricsProps } from '../KeyMetrics'
+import { definitions } from '~/public/definitions'
+import {
+	buildEarningsMetrics,
+	buildMetrics,
+	buildStandardMetricSections,
+	getSharePercent,
+	type IKeyMetricsProps,
+	KeyMetrics
+} from '../KeyMetrics'
 import type { IProtocolPageMetrics } from '../types'
-
-vi.mock('~/ui/Icon', () => ({
-	Icon: () => null
-}))
-
-vi.mock('~/ui/Tooltip', () => ({
-	Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
-}))
 
 vi.mock('~/components/ReportIncorrectData', () => ({
 	ReportIncorrectData: () => null
@@ -53,11 +53,18 @@ const metrics: IProtocolPageMetrics = {
 	rwa: false
 }
 
-const renderKeyMetrics = async (props: IKeyMetricsProps) => {
-	const { KeyMetrics } = await import('../KeyMetrics')
-
-	return renderToStaticMarkup(<KeyMetrics {...props} />)
-}
+const renderKeyMetrics = async (props: IKeyMetricsProps) => renderToStaticMarkup(<KeyMetrics {...props} />)
+const visibleText = (markup: string) =>
+	markup
+		.replace(/<[^>]*>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+const rows = (built: ReturnType<typeof buildMetrics>) =>
+	built.map(({ name, value, chainBreakdown }) => ({
+		name,
+		value,
+		chains: chainBreakdown ? Object.entries(chainBreakdown) : null
+	}))
 
 const baseProps = {
 	name: 'Gauntlet',
@@ -71,102 +78,78 @@ const baseProps = {
 }
 
 describe('KeyMetrics', () => {
-	test('renders chain rows for fee breakdown metrics', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			fees: {
-				total24h: 12,
-				total7d: 70,
-				total30d: 300,
-				total1y: 3500,
-				annualized1y: 3500,
-				totalAllTime: 1500,
-				chainBreakdown: {
-					Ethereum: {
-						total24h: 4,
-						total7d: 28,
-						total30d: 120,
-						totalAllTime: 700
-					},
-					Base: {
-						total24h: 8,
-						total7d: 42,
-						total30d: 180,
-						totalAllTime: 800
-					}
-				}
+	test('builds fee rows with chain values sorted by size', () => {
+		const fees = {
+			total24h: null,
+			total7d: null,
+			total30d: 300,
+			total1y: null,
+			annualized1y: null,
+			totalAllTime: null,
+			chainBreakdown: {
+				Ethereum: { total24h: 4, total7d: 28, total30d: 120, totalAllTime: 700 },
+				Base: { total24h: 8, total7d: 42, total30d: 180, totalAllTime: 800 }
 			}
-		})
+		}
 
-		expect(markup).toContain('Fees 30d')
-		expect(markup).toContain('Ethereum')
-		expect(markup).toContain('Base')
-		expect(markup).toContain('$120')
-		expect(markup).toContain('$180')
-		expect(markup.indexOf('Base')).toBeLessThan(markup.indexOf('Ethereum'))
+		expect(rows(buildMetrics(fees, definitions.fees.protocol, 'Fees', false, fees.chainBreakdown))).toEqual([
+			{
+				name: 'Fees 30d',
+				value: 300,
+				chains: [
+					['Base', 180],
+					['Ethereum', 120]
+				]
+			}
+		])
 	})
 
 	test('does not repeat StableJack perp volume after promoting it to the primary metric', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			name: 'StableJack',
-			perpVolume: {
-				total24h: 2000,
-				total7d: 14_000,
-				total30d: 68_290,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: 100_000,
-				chainBreakdown: null
-			}
-		})
+		const perpVolume = {
+			total24h: 2000,
+			total7d: 14_000,
+			total30d: 68_290,
+			total1y: null,
+			annualized1y: null,
+			totalAllTime: 100_000,
+			chainBreakdown: null
+		}
 
-		expect(markup).not.toContain('Perp Volume 30d')
+		expect(await renderKeyMetrics({ ...baseProps, name: 'Gauntlet', perpVolume })).toContain('Perp Volume 30d')
+		expect(await renderKeyMetrics({ ...baseProps, name: 'StableJack', perpVolume })).not.toContain('Perp Volume 30d')
 	})
 
-	test('renders liquidation adapter summaries like other standard adapter metrics', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			liquidationVolume: {
-				total24h: 12,
-				total7d: 70,
-				total30d: 300,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: 1500,
-				chainBreakdown: null
-			},
-			collateralLiquidated: {
-				total24h: 4,
-				total7d: 28,
-				total30d: 120,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: 700,
-				chainBreakdown: {
-					Ethereum: {
-						total24h: 1,
-						total7d: 8,
-						total30d: 20,
-						totalAllTime: 100
-					},
-					Base: {
-						total24h: 3,
-						total7d: 20,
-						total30d: 100,
-						totalAllTime: 600
-					}
-				}
-			}
+	test('builds liquidation sections like other standard adapter metrics', () => {
+		const summary = (total30d: number, totalAllTime: number) => ({
+			total24h: null,
+			total7d: null,
+			total30d,
+			total1y: null,
+			annualized1y: null,
+			totalAllTime,
+			chainBreakdown: null
 		})
+		const sections = buildStandardMetricSections(
+			{ ...baseProps, liquidationVolume: summary(300, 1500), collateralLiquidated: summary(120, 700) },
+			undefined
+		)
 
-		expect(markup).toContain('Liquidation Volume 30d')
-		expect(markup).toContain('Collateral Liquidated 30d')
-		expect(markup).toContain('Cumulative Collateral Liquidated')
-		expect(markup).toContain('Base')
-		expect(markup).toContain('Ethereum')
-		expect(markup).toContain('$100')
-		expect(markup).toContain('$20')
+		expect(sections.map((section) => ({ dataType: section.dataType, rows: rows(section.metrics) }))).toEqual([
+			{
+				dataType: 'Liquidation Volume',
+				rows: [
+					{ name: 'Liquidation Volume 30d', value: 300, chains: null },
+					{ name: 'Cumulative Liquidation Volume', value: 1500, chains: null }
+				]
+			},
+			{
+				dataType: 'Collateral Liquidated',
+				rows: [
+					{ name: 'Collateral Liquidated 30d', value: 120, chains: null },
+					{ name: 'Cumulative Collateral Liquidated', value: 700, chains: null }
+				]
+			}
+		])
 	})
 
 	test('renders a zero outstanding FDV instead of treating it as unavailable', async () => {
@@ -183,42 +166,14 @@ describe('KeyMetrics', () => {
 			}
 		})
 
-		expect(markup).toContain('Outstanding FDV')
-		expect(markup).toContain('$0')
+		expect(visibleText(markup)).toBe('Key Metrics Outstanding FDV $0')
 	})
 
-	test('shows measured zero metrics without invalid percentages and retains valid positive shares', async () => {
-		const tokenCGData = {
-			price: { current: null, ath: null, athDate: null, atl: null, atlDate: null },
-			marketCap: { current: 0 },
-			totalSupply: null,
-			fdv: { current: null },
-			volume24h: { total: 0, cex: 0, dex: 10 },
-			symbol: 'TEST'
-		}
-		const zeroMarkup = await renderKeyMetrics({
-			...baseProps,
-			currentTvlByChain: { staking: 10 },
-			tokenCGData
-		})
-
-		expect(zeroMarkup).toContain('Staked')
-		expect(zeroMarkup).toContain('Token Volume 24h')
-		expect(zeroMarkup).not.toContain('of mcap')
-		expect(zeroMarkup).not.toContain('of total')
-		expect(zeroMarkup).not.toMatch(/Infinity|NaN/)
-
-		const positiveMarkup = await renderKeyMetrics({
-			...baseProps,
-			currentTvlByChain: { staking: 10 },
-			tokenCGData: {
-				...tokenCGData,
-				marketCap: { current: 100 },
-				volume24h: { total: 100, cex: 90, dex: 10 }
-			}
-		})
-		expect(positiveMarkup).toContain('10% of mcap')
-		expect(positiveMarkup).toContain('10% of total')
+	test('omits shares of a zero or missing total instead of showing Infinity% or NaN%', () => {
+		expect(getSharePercent(10, 0)).toBeNull()
+		expect(getSharePercent(10, null)).toBeNull()
+		expect(getSharePercent(null, 100)).toBeNull()
+		expect(getSharePercent(10, 100)).toBe(10)
 	})
 
 	test('shows the disclosed subtotal with mixed funding amounts and preserves the explicit-zero round', async () => {
@@ -241,9 +196,9 @@ describe('KeyMetrics', () => {
 			raises: [raise(1_700_000_000, 10_000_000), raise(1_700_086_400, null), raise(1_700_172_800, 0)]
 		})
 
-		expect(markup).toContain('Total Raised')
-		expect(markup.match(/\$10m/g)).toHaveLength(2)
-		expect(markup).toContain('$0')
+		expect(visibleText(markup)).toBe(
+			'Key Metrics Total Raised $10m Nov 14, 2023 $10m Round: Seed Nov 15, 2023 Round: Seed Nov 16, 2023 $0 Round: Seed'
+		)
 	})
 
 	test('uses canonical TVL availability for an Oracle secondary zero TVL row', async () => {
@@ -273,135 +228,47 @@ describe('KeyMetrics', () => {
 		expect(unavailableMarkup).not.toContain('Total Value Locked')
 	})
 
-	test('shows actual 30d fees and revenue when annualized values are available', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			fees: {
-				total24h: null,
-				total7d: null,
-				total30d: 100,
-				total1y: 3500,
-				annualized1y: 3500,
-				totalAllTime: null,
-				chainBreakdown: null
-			},
-			revenue: {
-				total24h: null,
-				total7d: null,
-				total30d: 40,
-				total1y: 500,
-				annualized1y: 500,
-				totalAllTime: null,
-				chainBreakdown: null
-			}
-		})
+	test('does not build fee rows for unavailable base periods', () => {
+		const fees = {
+			total24h: null,
+			total7d: 70,
+			total30d: null,
+			total1y: null,
+			annualized1y: null,
+			totalAllTime: null,
+			chainBreakdown: null
+		}
 
-		expect(markup).toContain('Fees 30d')
-		expect(markup).toContain('$100')
-		expect(markup).toContain('Revenue 30d')
-		expect(markup).toContain('$40')
-		expect(markup).not.toContain('Fees (Annualized)')
-		expect(markup).not.toContain('Revenue (Annualized)')
-		expect(markup).not.toContain('$3500')
-		expect(markup).not.toContain('$500')
+		expect(rows(buildMetrics(fees, definitions.fees.protocol, 'Fees'))).toEqual([
+			{ name: 'Fees 7d', value: 70, chains: null }
+		])
 	})
 
-	test('does not use an annualized fee value when observed periods are missing', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			fees: {
-				total24h: null,
-				total7d: null,
-				total30d: null,
-				total1y: 3500,
-				annualized1y: 3500,
-				totalAllTime: null,
-				chainBreakdown: null
-			}
+	test('labels incentives as observed 1y, or a 30d run rate when 1y is missing', () => {
+		const incentives = (emissions1y: number | null) => ({
+			emissions24h: null,
+			emissions7d: null,
+			emissions30d: 100,
+			emissions1y,
+			emissionsAllTime: null,
+			emissionsMonthlyAverage1y: null
 		})
+		const build = (emissions1y: number | null) =>
+			rows(buildMetrics(incentives(emissions1y), definitions.incentives.protocol, 'Incentives', true))
 
-		expect(markup).not.toContain('Fees')
-		expect(markup).not.toContain('$3500')
+		expect(build(1400)).toEqual([
+			{ name: 'Incentives 1y', value: 1400, chains: null },
+			{ name: 'Incentives 30d', value: 100, chains: null }
+		])
+		expect(build(null)).toEqual([
+			{ name: 'Incentives (30d Run Rate)', value: 100 * 12.2, chains: null },
+			{ name: 'Incentives 30d', value: 100, chains: null }
+		])
 	})
 
-	test('does not annualize 30d fees when no annualized value is available', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			fees: {
-				total24h: null,
-				total7d: null,
-				total30d: 100,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: null,
-				chainBreakdown: null
-			}
-		})
-
-		expect(markup).toContain('Fees 30d')
-		expect(markup).toContain('$100')
-		expect(markup).not.toContain('Fees (30d Run Rate)')
-		expect(markup).not.toContain('$1220')
-	})
-
-	test('does not render fee rows for unavailable base periods', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			fees: {
-				total24h: null,
-				total7d: 70,
-				total30d: null,
-				total1y: null,
-				annualized1y: null,
-				totalAllTime: null,
-				chainBreakdown: null
-			}
-		})
-
-		expect(markup).toContain('Fees 7d')
-		expect(markup).toContain('$70')
-		expect(markup).not.toContain('Fees 24h')
-		expect(markup).not.toContain('Fees 30d')
-		expect(markup).not.toContain('Cumulative Fees')
-		expect(markup).not.toContain('$0')
-	})
-
-	test('labels incentives as observed 1y or 30d run-rate, not annualized', async () => {
-		const oneYearMarkup = await renderKeyMetrics({
-			...baseProps,
-			incentives: {
-				emissions24h: null,
-				emissions7d: null,
-				emissions30d: 100,
-				emissions1y: 1400,
-				emissionsAllTime: null,
-				emissionsMonthlyAverage1y: null
-			}
-		})
-
-		expect(oneYearMarkup).toContain('Incentives 1y')
-		expect(oneYearMarkup).not.toContain('Incentives (Annualized)')
-
-		const runRateMarkup = await renderKeyMetrics({
-			...baseProps,
-			incentives: {
-				emissions24h: null,
-				emissions7d: null,
-				emissions30d: 100,
-				emissions1y: null,
-				emissionsAllTime: null,
-				emissionsMonthlyAverage1y: null
-			}
-		})
-
-		expect(runRateMarkup).toContain('Incentives (30d Run Rate)')
-		expect(runRateMarkup).not.toContain('Incentives (Annualized)')
-	})
-
-	test('calculates and labels annualized earnings', async () => {
-		const markup = await renderKeyMetrics({
-			...baseProps,
-			revenue: {
+	test('annualizes earnings from observed 1y incentives, not the 30d run rate', () => {
+		const earnings = buildEarningsMetrics(
+			{
 				total24h: null,
 				total7d: null,
 				total30d: 400,
@@ -410,7 +277,7 @@ describe('KeyMetrics', () => {
 				totalAllTime: null,
 				chainBreakdown: null
 			},
-			incentives: {
+			{
 				emissions24h: 0,
 				emissions7d: 0,
 				emissions30d: 100,
@@ -418,10 +285,11 @@ describe('KeyMetrics', () => {
 				emissionsAllTime: 0,
 				emissionsMonthlyAverage1y: 0
 			}
-		})
+		)
 
-		expect(markup).toContain('Earnings (Annualized)')
-		expect(markup).toContain('$3600')
-		expect(markup).not.toContain('$3660')
+		expect(rows(earnings)).toEqual([
+			{ name: 'Earnings (Annualized)', value: 3600, chains: null },
+			{ name: 'Earnings 30d', value: 300, chains: null }
+		])
 	})
 })

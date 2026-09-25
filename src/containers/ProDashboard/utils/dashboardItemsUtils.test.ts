@@ -1,13 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { Dashboard } from '../dashboardTypes'
-import { DashboardError } from '../services/DashboardAPI'
+import type { DashboardAuthorizedFetch } from '../services/DashboardAPI'
 import { addItemToDashboard, moveDashboardItem, replaceDashboardItem } from './dashboardItemsUtils'
-
-const api = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }))
-vi.mock('../services/DashboardAPI', async (original) => ({
-	...(await original<typeof import('../services/DashboardAPI')>()),
-	dashboardAPI: { updateDashboard: api.update, getDashboard: api.get }
-}))
 
 describe('replaceDashboardItem', () => {
 	test('replaces one broken chart while preserving its durable slot identity and layout', () => {
@@ -75,46 +69,48 @@ describe('addItemToDashboard', () => {
 		editedAt: 'v1'
 	}
 	const second: Dashboard = { ...first, data: { ...first.data, items: [a, b] }, editedAt: 'v2' }
-	const conflict = () => new DashboardError('Dashboard was modified elsewhere', 409)
-	const authorizedFetch = vi.fn()
 
-	beforeEach(() => {
-		api.update.mockReset().mockImplementation(async (id, data, _fetch, baseEditedAt) => ({
-			...first,
-			id,
-			data,
-			editedAt: `after ${baseEditedAt}`
-		}))
-		api.get.mockReset().mockResolvedValueOnce(first).mockResolvedValueOnce(second)
-	})
+	/** The features server: reads return the queued revisions, saves answer with the queued statuses. */
+	function server(saveStatuses: Array<number>) {
+		const reads = [first, second]
+		const saves: Array<{ items: Array<unknown>; baseEditedAt: string }> = []
+		const authorizedFetch = (async (url: string, init?: RequestInit) => {
+			if (!init) return Response.json(reads.shift())
+			const body = JSON.parse(String(init.body))
+			saves.push({ items: body.data.items, baseEditedAt: body.baseEditedAt })
+			const status = saveStatuses.shift() ?? 200
+			if (status !== 200) return Response.json({ message: 'Save failed' }, { status })
+			return Response.json({ ...first, data: body.data, editedAt: `after ${body.baseEditedAt}` })
+		}) as DashboardAuthorizedFetch
+		return { authorizedFetch, saves, reads }
+	}
 
 	test('appends to the freshly read items and sends that revision as the conflict baseline', async () => {
+		const { authorizedFetch, saves } = server([])
 		await addItemToDashboard('dashboard', c, authorizedFetch)
-		expect(api.update).toHaveBeenCalledOnce()
-		expect(api.update.mock.calls[0][1].items).toEqual([a, c])
-		expect(api.update.mock.calls[0][3]).toBe('v1')
+		expect(saves).toEqual([{ items: [a, c], baseEditedAt: 'v1' }])
 	})
 
 	test('a conflict re-reads and appends once more against the fresh revision', async () => {
-		api.update.mockRejectedValueOnce(conflict())
+		const { authorizedFetch, saves } = server([409])
 		const result = await addItemToDashboard('dashboard', c, authorizedFetch)
-		expect(api.get).toHaveBeenCalledTimes(2)
-		expect(api.update).toHaveBeenCalledTimes(2)
-		expect(api.update.mock.calls[1][1].items).toEqual([a, b, c])
-		expect(api.update.mock.calls[1][3]).toBe('v2')
+		expect(saves).toEqual([
+			{ items: [a, c], baseEditedAt: 'v1' },
+			{ items: [a, b, c], baseEditedAt: 'v2' }
+		])
 		expect(result.data.items).toEqual([a, b, c])
 	})
 
 	test('a second conflict propagates', async () => {
-		api.update.mockRejectedValueOnce(conflict()).mockRejectedValueOnce(conflict())
+		const { authorizedFetch, saves } = server([409, 409])
 		await expect(addItemToDashboard('dashboard', c, authorizedFetch)).rejects.toMatchObject({ status: 409 })
-		expect(api.update).toHaveBeenCalledTimes(2)
+		expect(saves).toHaveLength(2)
 	})
 
 	test('other failures propagate without a re-read', async () => {
-		api.update.mockRejectedValueOnce(new DashboardError('Server error', 500))
+		const { authorizedFetch, saves, reads } = server([500])
 		await expect(addItemToDashboard('dashboard', c, authorizedFetch)).rejects.toMatchObject({ status: 500 })
-		expect(api.get).toHaveBeenCalledOnce()
-		expect(api.update).toHaveBeenCalledOnce()
+		expect(saves).toHaveLength(1)
+		expect(reads).toEqual([second])
 	})
 })

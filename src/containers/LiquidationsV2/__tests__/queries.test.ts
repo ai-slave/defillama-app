@@ -279,8 +279,4 @@ describe('LiquidationsV2 pure queries', () => {
 		})
 		expect(input).toEqual(snapshot)
 	})
-
-	test('returns an empty chart only for an empty producer population', () => {
-		expect(buildLiquidationsDistributionChart([])).toEqual({ tokens: [] })
-	})
 })

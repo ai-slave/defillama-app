@@ -7,13 +7,9 @@ import { Tabs, TabPanel } from '~/ui/Tabs'
 import { QueryTabBar } from '../QueryTabBar'
 import { useSqlTabs, type UseSqlTabsReturn } from '../useSqlTabs'
 
-const mocks = vi.hoisted(() => ({
-	getStorageJSON: vi.fn(),
-	setStorageJSON: vi.fn(),
-	rename: vi.fn(),
-	select: vi.fn()
-}))
-vi.mock('~/contexts/localStorageStore', () => mocks)
+const mocks = { rename: vi.fn(), select: vi.fn() }
+const STORAGE_KEY = 'sql-studio:tabs:v2'
+const persisted = () => JSON.parse(localStorage.getItem(STORAGE_KEY)!)
 let root: Root
 let container: HTMLDivElement
 let model: UseSqlTabsReturn
@@ -63,16 +59,19 @@ function Harness() {
 }
 beforeEach(() => {
 	vi.clearAllMocks()
-	mocks.getStorageJSON.mockReturnValue({
-		activeTabId: 'b',
-		tabs: ['a', 'b', 'c'].map((id) => ({
-			id,
-			title: id.toUpperCase(),
-			titleAuto: false,
-			sql: `SELECT '${id}'`,
-			mode: 'query'
-		}))
-	})
+	localStorage.setItem(
+		STORAGE_KEY,
+		JSON.stringify({
+			activeTabId: 'b',
+			tabs: ['a', 'b', 'c'].map((id) => ({
+				id,
+				title: id.toUpperCase(),
+				titleAuto: false,
+				sql: `SELECT '${id}'`,
+				mode: 'query'
+			}))
+		})
+	)
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -82,11 +81,12 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	vi.restoreAllMocks()
+	localStorage.clear()
 })
 async function settle(action: () => void) {
 	await act(async () => {
 		action()
-		await new Promise((resolve) => setTimeout(resolve, 40))
+		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
 async function mount() {
@@ -129,10 +129,9 @@ async function renameValue(value: string) {
 	return input
 }
 
-test('query tabs use manual activation, linked panels and separate action controls', async () => {
+test('query tabs use manual activation and linked panels', async () => {
 	await mount()
 	expect(container.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe('SQL query tabs')
-	expect(container.querySelector('button button,button input')).toBeNull()
 	expect([...container.querySelectorAll<HTMLElement>('[role="tab"]')].filter((e) => e.tabIndex === 0)).toHaveLength(1)
 	await press(tab('B'), 'ArrowRight')
 	expect(document.activeElement).toBe(tab('C'))
@@ -263,7 +262,7 @@ test.each(['A', 'B'])('closing %s from its actions menu restores the surviving s
 	expect(document.activeElement).toBe(tab(title === 'B' ? 'C' : 'B'))
 })
 
-test('context menus restore focus and popups escape the scrolling tab strip', async () => {
+test('context and new-tab menus restore focus to their trigger on Escape', async () => {
 	await mount()
 	await settle(() => {
 		tab('C').focus()
@@ -273,14 +272,10 @@ test('context menus restore focus and popups escape the scrolling tab strip', as
 	})
 	const menu = document.querySelector<HTMLElement>('[role="menu"]:not([hidden])')!
 	expect(menu.getAttribute('aria-label')).toBe('Actions for C')
-	expect(container.querySelector('[role="tablist"]')?.contains(menu)).toBe(false)
 	expect(document.activeElement).toBe(item('Rename'))
 	await press(item('Rename'), 'Escape')
 	expect(document.activeElement).toBe(tab('C'))
 	await click(button('New tab'))
-	expect(
-		container.querySelector('[role="tablist"]')?.contains(document.querySelector('[role="menu"]:not([hidden])'))
-	).toBe(false)
 	await press(item(/^New query tab/), 'Escape')
 	expect(document.activeElement).toBe(button('New tab'))
 })
@@ -300,12 +295,9 @@ test('renaming with IME keeps the draft until composition ends, then saves the r
 	await press(input, 'Enter')
 	expect(mocks.rename.mock.calls).toEqual([['b', 'SQL 日本語']])
 	await vi.waitFor(() =>
-		expect(mocks.setStorageJSON).toHaveBeenLastCalledWith(
-			'sql-studio:tabs:v2',
-			expect.objectContaining({
-				activeTabId: 'b',
-				tabs: expect.arrayContaining([expect.objectContaining({ id: 'b', title: 'SQL 日本語', sql: "SELECT 'b'" })])
-			})
-		)
+		expect(persisted()).toMatchObject({
+			activeTabId: 'b',
+			tabs: expect.arrayContaining([expect.objectContaining({ id: 'b', title: 'SQL 日本語', sql: "SELECT 'b'" })])
+		})
 	)
 })

@@ -5,7 +5,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 import { buildScatterPresentation, type ScatterPresentationInput } from './scatterPresentation'
@@ -20,16 +19,10 @@ interface BubbleChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
-export function BubbleChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: BubbleChartAdapterProps) {
+export function BubbleChartAdapter({ config, result, classified, onReady, height }: BubbleChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const numericCols = classified.filter((c) => c.coarse === 'number')
 	const xCol = numericCols.find((column) => column.name === config.xCol) ?? numericCols[0] ?? null

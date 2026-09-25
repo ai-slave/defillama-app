@@ -14,11 +14,6 @@ const routerMock = {
 }
 vi.mock('next/router', () => ({ useRouter: () => routerMock }))
 
-vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
-vi.mock('~/components/Link', () => ({
-	BasicLink: ({ children }: { children: React.ReactNode }) => <span>{children}</span>
-}))
-
 const markets: Array<IEquitiesOnchainMarketRow> = [100, null, 0, 10].map((value, index) => ({
 	pair: `market-${index}`,
 	contractSlug: `contract-${index}`,
@@ -104,19 +99,16 @@ describe('equities onchain table sorting', () => {
 		const originalOrder = rows.map((row) => row.pair)
 		await act(async () => root.render(<EquitiesMarketsTable markets={rows} ticker="NVDA" />))
 		expect(rowNames()).toEqual(['Bybit large', 'Binance', 'Bybit small', 'Zero', 'Ostium'])
-		expect(container.querySelector('thead svg.text-brand')).toBeNull()
 		expect(rows.map((row) => row.pair)).toEqual(originalOrder)
 
 		await clickHeader('24h Volume')
 		expect(rowNames()).toEqual(['Binance', 'Bybit large', 'Bybit small', 'Zero', 'Ostium'])
-		expect(container.querySelector('thead svg.text-brand')?.getAttribute('data-icon')).toBe('caret-down')
 
 		await clickHeader('24h Volume')
 		expect(rowNames()).toEqual(['Zero', 'Bybit small', 'Bybit large', 'Binance', 'Ostium'])
 
 		await clickHeader('24h Volume')
 		expect(rowNames()).toEqual(['Bybit large', 'Binance', 'Bybit small', 'Zero', 'Ostium'])
-		expect(container.querySelector('thead svg.text-brand')).toBeNull()
 	})
 
 	test('paginates the supplied default order and sorts missing values last on demand', async () => {

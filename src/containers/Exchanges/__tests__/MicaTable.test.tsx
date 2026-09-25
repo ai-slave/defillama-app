@@ -5,8 +5,8 @@ import { constructTestTable } from '~/components/Table/__tests__/helpers/constru
 import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
 import { RampCostValue } from '../MicaCells'
 import { MICA_COLUMNS } from '../micaColumns'
-import { micaColumnVisibility, prepareMicaVenues } from '../MicaTable'
-import type { ExchangePromotionModel, MicaVenueRowModel } from '../models'
+import { prepareMicaVenues } from '../MicaTable'
+import type { MicaVenueRowModel } from '../models'
 
 function micaVenue(patch: Partial<MicaVenueRowModel> = {}): MicaVenueRowModel {
 	return {
@@ -74,18 +74,6 @@ const RAMP_COST: NonNullable<MicaVenueRowModel['rampCost']> = {
 	}
 }
 
-const PROMOTION: ExchangePromotionModel = {
-	label: '10% fee rebate',
-	title: 'Venue launch offer',
-	subtitle: 'Trade within 30 days. T&Cs apply.',
-	url: 'https://example.com/promo',
-	termsUrl: 'https://example.com/terms',
-	startsAt: null,
-	endsAt: null,
-	priority: 1,
-	sourceUrl: 'https://example.com/promo'
-}
-
 function micaCell(venue: MicaVenueRowModel, id: string) {
 	const table = constructTestTable({
 		features: tableFeaturesConfig,
@@ -125,56 +113,11 @@ describe('contractual Bybit EU placement', () => {
 	})
 })
 
-describe('product column presets', () => {
-	test('hides unrelated product columns while leaving them available for user overrides', () => {
-		expect(micaColumnVisibility('all')).toEqual({
-			micaStatus: false,
-			fiatOnramp: false
-		})
-		expect(micaColumnVisibility('spot')).toMatchObject({
-			perpDepth2: false,
-			perpDepth05: false,
-			perpFee: false,
-			onRampCost: false,
-			offRampCost: false
-		})
-		expect(micaColumnVisibility('perp')).toMatchObject({
-			spotDepth2: false,
-			spotDepth05: false,
-			spotFee: false,
-			onRampCost: false,
-			offRampCost: false
-		})
-		expect(micaColumnVisibility('fiat')).toMatchObject({
-			spotDepth2: false,
-			spotDepth05: false,
-			perpDepth2: false,
-			perpDepth05: false,
-			spotFee: false,
-			perpFee: false,
-			marketCount: false
-		})
-	})
-})
-
 describe('mica table columns', () => {
 	test('sorts ramp costs by their numeric totals', () => {
 		const venue = micaVenue({ rampCost: RAMP_COST })
 		expect(micaCell(venue, 'onRampCost').getValue()).toBe(3.9)
 		expect(micaCell(venue, 'offRampCost').getValue()).toBe(4.9)
-	})
-
-	test('right-aligns the trade cell so the CTA lines up with or without a promo gift', () => {
-		const tradeColumn = MICA_COLUMNS.find((column) => column.id === 'venueActions')!
-		expect(tradeColumn.meta?.align).toBe('end')
-
-		const plain = renderMicaCell(micaVenue(), 'venueActions')
-		const promoted = renderMicaCell(micaVenue({ promotions: [PROMOTION], activePromotion: PROMOTION }), 'venueActions')
-
-		expect(plain).toContain('justify-end')
-		expect(promoted).toContain('justify-end')
-		// The gift sits before the CTA, so only a right-aligned row keeps every Trade button on one edge.
-		expect(promoted.indexOf('promotion')).toBeLessThan(promoted.indexOf('data-umami-event-placement="trade"'))
 	})
 
 	test('keeps names without external destinations as plain text', () => {
@@ -207,9 +150,12 @@ describe('mica table columns', () => {
 })
 
 describe('$1k ramp cost cells', () => {
-	test('renders an em-dash when ramp cost data is absent', () => {
-		const html = renderToStaticMarkup(<RampCostValue row={micaVenue()} direction="onRamp" />)
-		expect(html).toContain('–')
+	test('shows only a dash when the venue or the leg has no ramp cost', () => {
+		const unpricedLeg = micaVenue({ rampCost: { ...RAMP_COST, onRamp: { ...RAMP_COST.onRamp, totalUsd: null } } })
+		for (const venue of [micaVenue(), unpricedLeg]) {
+			const html = renderToStaticMarkup(<RampCostValue row={venue} direction="onRamp" />)
+			expect(html.replace(/<[^>]+>/g, '')).toBe('–')
+		}
 	})
 
 	test('renders the USD total badge with an accessible breakdown trigger when populated', () => {

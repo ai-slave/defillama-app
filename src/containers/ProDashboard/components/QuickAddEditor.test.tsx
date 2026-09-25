@@ -2,34 +2,17 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { appMetadataFixtures } from '~/utils/test/appMetadata'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { AppMetadataProvider } from '../AppMetadataContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { AddChartModal } from './AddChartModal/AddChartModal'
 import { QuickAddPalette } from './QuickAddPalette'
 
 const mocks = vi.hoisted(() => ({ closeEditor: vi.fn() }))
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({
-		protocols: [{ id: 'uniswap', name: 'Uniswap', slug: 'uniswap', tvl: 1, chains: [], symbol: 'UNI' }],
-		chains: [],
-		protocolsLoading: false,
-		parentMapping: new Map()
-	}),
-	useProDashboardTime: () => ({ timePeriod: '365d', customTimePeriod: null }),
-	useProDashboardEditorActions: () => ({ handleAppendItems: () => ['text-new'], handleEditItem: () => true }),
-	useProDashboardItemsState: () => ({ items: [] }),
-	useProDashboardVariables: () => ({ variables: [] })
-}))
-vi.mock('../AppMetadataContext', () => ({
-	useAppMetadata: () => ({
-		loading: false,
-		availableProtocolChartTypes: () => ['tvl', 'fees'],
-		availableChainChartTypes: () => []
-	})
-}))
-vi.mock('../hooks/useIsSqlAllowed', () => ({
-	useIsSqlAllowed: () => ({ isAllowed: false, isUnknown: false, isRetrying: false, retry: vi.fn() })
-}))
-vi.mock('./AddChartModal/useComposerItemsData', () => ({ useComposerItemsData: () => [] }))
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn() }) }))
+const session = installSubscriberSession('u1', { account: 'free', resolved: true })
 vi.mock('./AddChartModal/ChartTab', () => ({ ChartTab: () => null }))
 vi.mock('./AddChartModal/MetricTab', () => ({ MetricTab: () => null }))
 vi.mock('./AddChartModal/UnifiedTableTab', () => ({ UnifiedTableTab: () => null }))
@@ -76,6 +59,10 @@ let container: HTMLDivElement
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
+	session.serve({
+		'/subscription/trial-available': { trialAvailable: false },
+		...appMetadataFixtures({ protocols: { '1': { name: 'uniswap', tvl: true, fees: true } } })
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -85,8 +72,27 @@ afterEach(async () => {
 	container.remove()
 })
 
+function editorDialog() {
+	return document.querySelector('[role="tablist"][aria-label="Card type"]')?.closest('[role="dialog"]') ?? null
+}
+
 async function openPalette() {
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<AppMetadataProvider>
+					<DashboardTestProvider
+						catalog={{
+							protocols: [{ id: 'uniswap', name: 'Uniswap', slug: 'uniswap', tvl: 1, chains: [], symbol: 'UNI' }]
+						}}
+						editorActions={{ handleAppendItems: () => ['text-new'], handleEditItem: () => true }}
+					>
+						<Harness />
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</session.Wrapper>
+		)
+	)
 	const trigger = container.querySelector('button')!
 	await act(async () => {
 		trigger.focus()
@@ -127,13 +133,9 @@ test.each(['click', 'Enter', 'Tab', 'all card types'])(
 				}
 			})
 		}
-		await act(async () => {
-			await new Promise((resolve) => setTimeout(resolve, 100))
-		})
+		await vi.waitFor(() => expect(editorDialog()?.contains(document.activeElement)).toBe(true))
 		expect(restoreFocus).not.toHaveBeenCalled()
 		expect(mocks.closeEditor).not.toHaveBeenCalled()
-		expect(document.querySelector('.add-chart-dialog')).not.toBeNull()
-		expect(document.querySelector('.add-chart-dialog')!.contains(document.activeElement)).toBe(true)
 	}
 )
 

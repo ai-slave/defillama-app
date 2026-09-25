@@ -214,6 +214,49 @@ export function getChainOverviewTvlOptions(chartData: ChainChartResponse | null 
 	return tvlOptions.filter((option) => chartData?.[option.key]?.length)
 }
 
+/** A failing optional phase records the failure and yields its fallback; a phase without one fails the page. */
+export async function runChainOverviewPhase<T>({
+	chainName,
+	phaseTimer,
+	label,
+	run,
+	options
+}: {
+	chainName: string
+	phaseTimer: RoutePhaseTimer | undefined
+	label: string
+	run: () => T | Promise<T>
+	options: { fallback: Awaited<T> } | undefined
+}): Promise<Awaited<T>> {
+	try {
+		if (phaseTimer) return await phaseTimer.time(label, run)
+		return await Promise.resolve().then(run)
+	} catch (error) {
+		if (!options) throw error
+		recordOptionalPageDataFailure(`chain:${chainName}:${label}`, error)
+		return options.fallback
+	}
+}
+
+/** The 14 protocols with the highest positive 24h fees, only when the chain reports fee protocols. */
+export function getTopProtocolsByFeesChart(
+	protocols: ReadonlyArray<{ name: string; fees?: { total24h?: number | null } | null }>,
+	feeProtocols: ReadonlyArray<unknown> | null | undefined
+): Array<[string, number, string]> | null {
+	if (!feeProtocols?.length) return null
+	const protocolsByFees: Array<{ name: string; total24h: number }> = []
+	for (const protocol of protocols) {
+		protocolsByFees.push({ name: protocol.name, total24h: protocol.fees?.total24h ?? 0 })
+	}
+	protocolsByFees.sort((a, b) => b.total24h - a.total24h)
+	const chart: Array<[string, number, string]> = []
+	for (const { name, total24h } of protocolsByFees) {
+		if (!total24h || chart.length === 14) continue
+		chart.push([name, total24h, tokenIconUrl(name)])
+	}
+	return chart.length > 0 ? chart : null
+}
+
 export async function getChainOverviewData({
 	chain,
 	chainMetadata,
@@ -247,20 +290,8 @@ export async function getChainOverviewData({
 	const shouldFetchPerps = shouldFetchChainPerps({ chain, currentChainMetadata, categoriesAndTagsMetadata })
 	const shouldFetchRwaActiveMcap =
 		chain !== 'All' && hasRwaActiveMcapChain(rwaChainsForActiveMcap, currentChainMetadata.name)
-	async function timePhase<T>(
-		label: string,
-		run: () => T | Promise<T>,
-		options?: { fallback: Awaited<T> }
-	): Promise<Awaited<T>> {
-		try {
-			if (phaseTimer) return await phaseTimer.time(label, run)
-			return await Promise.resolve().then(run)
-		} catch (error) {
-			if (!options) throw error
-			recordOptionalPageDataFailure(`chain:${currentChainMetadata.name}:${label}`, error)
-			return options.fallback
-		}
-	}
+	const timePhase = <T,>(label: string, run: () => T | Promise<T>, options?: { fallback: Awaited<T> }) =>
+		runChainOverviewPhase({ chainName: currentChainMetadata.name, phaseTimer, label, run, options })
 
 	const chainFeesMetric = feeRevenueMetrics.chainFees
 	const chainRevenueMetric = feeRevenueMetrics.chainRevenue
@@ -559,20 +590,6 @@ export async function getChainOverviewData({
 		const chainRaises =
 			raisesData?.raises?.filter((r) => r.defillamaId === `chain#${currentChainMetadata.name.toLowerCase()}`) ?? null
 
-		let topProtocolsByFeesChart: Array<[string, number, string]> | null = null
-		if (feeProtocols?.length) {
-			const protocolsByFees: Array<{ protocol: (typeof allProtocols)[number]; total24h: number }> = []
-			for (const protocol of allProtocols) {
-				protocolsByFees.push({ protocol, total24h: protocol.fees?.total24h ?? 0 })
-			}
-			protocolsByFees.sort((a, b) => b.total24h - a.total24h)
-			topProtocolsByFeesChart = []
-			for (const { protocol, total24h } of protocolsByFees) {
-				if (!total24h || topProtocolsByFeesChart.length === 14) continue
-				topProtocolsByFeesChart.push([protocol.name, total24h, tokenIconUrl(protocol.name)])
-			}
-		}
-
 		const feesGenerated24h = sumAdapterProtocol24h(feeProtocols)
 
 		const chainREV = getChainRev24h({
@@ -685,8 +702,7 @@ export async function getChainOverviewData({
 			chainFees: {
 				total24h: chainFees?.total24h ?? null,
 				feesGenerated24h,
-				topProtocolsChart:
-					topProtocolsByFeesChart && topProtocolsByFeesChart.length > 0 ? topProtocolsByFeesChart : null,
+				topProtocolsChart: getTopProtocolsByFeesChart(allProtocols, feeProtocols),
 				totalREV24h: chainREV
 			},
 			chainRevenue: { total24h: chainRevenue?.total24h ?? null },

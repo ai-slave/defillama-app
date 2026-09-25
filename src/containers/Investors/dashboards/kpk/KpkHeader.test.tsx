@@ -1,15 +1,14 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { KpkMetadata } from './api'
 import KpkHeader from './KpkHeader'
 
-vi.mock('./api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('./api')>()),
-	useKpkMetadata: () => ({ data: served })
-}))
+const http = installFixtureFetch()
 
 const METADATA: KpkMetadata = {
 	projectId: 8,
@@ -32,10 +31,13 @@ let served: KpkMetadata = METADATA
 describe('KpkHeader', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let client: QueryClient
 
 	beforeEach(() => {
 		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 		served = METADATA
+		client = new QueryClient()
+		http.serve({ '/api/public/kpk/metadata': () => served })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -44,13 +46,25 @@ describe('KpkHeader', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		client.clear()
 	})
+
+	const renderHeader = async () => {
+		await act(async () =>
+			root.render(
+				<QueryClientProvider client={client}>
+					<KpkHeader />
+				</QueryClientProvider>
+			)
+		)
+		await vi.waitFor(() => expect(container.textContent).toContain('Data as of'), { timeout: 1000 })
+	}
 
 	const links = () =>
 		[...container.querySelectorAll<HTMLAnchorElement>('nav a')].map((link) => [link.textContent, link.href])
 
 	test('links GitHub after X', async () => {
-		await act(async () => root.render(<KpkHeader />))
+		await renderHeader()
 
 		expect(links().map(([label]) => label)).toEqual(['kpk.io', 'App', 'Docs', 'X', 'GitHub'])
 		expect(links().at(-1)?.[1]).toBe('https://github.com/karpatkey')
@@ -58,8 +72,8 @@ describe('KpkHeader', () => {
 
 	test('drops a link the backend does not send', async () => {
 		served = { ...METADATA, links: { ...METADATA.links, github: undefined } }
-		await act(async () => root.render(<KpkHeader />))
+		await renderHeader()
 
-		expect(links().map(([label]) => label)).not.toContain('GitHub')
+		expect(links().map(([label]) => label)).toEqual(['kpk.io', 'App', 'Docs', 'X'])
 	})
 })

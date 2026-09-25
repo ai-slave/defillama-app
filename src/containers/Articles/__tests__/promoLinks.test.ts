@@ -54,12 +54,9 @@ describe('promo link resolution', () => {
 		)
 	})
 
-	test('treats whitespace-only overrides as missing', () => {
+	test('treats whitespace-only urls as missing, down to an empty string', () => {
 		expect(landingPromoLinkUrl(promo({ landingLinkUrl: '   ' }))).toBe('https://example.com/promo')
 		expect(articlePromoLinkUrl(promo({ articleLinkUrl: '' }))).toBe('https://example.com/promo')
-	})
-
-	test('returns an empty string when nothing is configured', () => {
 		expect(landingPromoLinkUrl(promo({ linkUrl: null }))).toBe('')
 		expect(articlePromoLinkUrl(promo({ linkUrl: '  ' }))).toBe('')
 	})

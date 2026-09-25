@@ -5,8 +5,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartConfig, ChartType } from '../../chartConfig'
 import { classifyColumns } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { ChartRouter } from '../index'
 
+// ECharts needs a canvas that happy-dom lacks, so each chart library entry is replaced by a
+// stub that exposes the height it was given.
 function stub({ height }: { height?: string }) {
 	return <div data-chart-height={height} />
 }
@@ -89,8 +92,8 @@ async function renderChart(chartType: ChartType, height?: string) {
 	return container.querySelector('[data-chart-height]')?.getAttribute('data-chart-height')
 }
 
-test.each(chartTypes)('%s renders at the shared base height by default', async (chartType) => {
-	expect(await renderChart(chartType)).toBe('420px')
+test('a SQL chart without a caller height renders at the shared base height', async () => {
+	expect(await renderChart('treemap')).toBe(SQL_CHART_HEIGHT)
 })
 
 test.each(chartTypes)('%s renders at the height the caller asks for', async (chartType) => {

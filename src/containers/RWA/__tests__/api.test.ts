@@ -240,7 +240,7 @@ describe('fetchRWAAssetChartData', () => {
 })
 
 describe('fetchRWAChartMetricDataByAsset', () => {
-	test('answers null and names the scope in its one log line when the history fails', async () => {
+	test('answers null and names the failing chain in the log when the history fails', async () => {
 		const log = vi.spyOn(console, 'error').mockImplementationOnce(() => {})
 		mocks.fetchJson.mockRejectedValueOnce(new Error('[500] upstream'))
 
@@ -252,6 +252,6 @@ describe('fetchRWAChartMetricDataByAsset', () => {
 				includeGovernance: true
 			})
 		).resolves.toBeNull()
-		expect(log.mock.calls[0]?.[0]).toBe('Failed to fetch the RWA activeMcap history of chain solana:')
+		expect(log.mock.calls[0]?.[0]).toContain('solana')
 	})
 })

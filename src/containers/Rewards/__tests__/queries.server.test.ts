@@ -1,9 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RewardsPopularity } from '../api.types'
 import { buildRewardsPageData } from '../queries.server'
 import { apiRecord } from './fixtures'
-
-vi.mock('~/utils/telemetry', () => ({ recordDomainEvent: vi.fn() }))
 const rankings: RewardsPopularity = { version: 1, startAt: 0, endAt: 0, viewsByPath: {} }
 
 describe('rewards public page boundary', () => {
@@ -38,7 +36,7 @@ describe('rewards public page boundary', () => {
 					source_url:
 						' https://example.com/terms | https://www.docs.example.com/announcement | https://example.com/terms '
 				}),
-				apiRecord({ program_id: 'referral' })
+				apiRecord({ program_id: 'referral', benefit_audience: 'Referrer only' })
 			],
 			{ '1': { name: 'example-protocol', displayName: 'Example Protocol', category: 'Derivatives' } },
 			rankings
@@ -49,7 +47,10 @@ describe('rewards public page boundary', () => {
 			defillamaId: '1',
 			protocol: 'Example Protocol',
 			protocolHref: '/protocol/example-protocol',
-			category: 'Derivatives'
+			category: 'Derivatives',
+			benefitAudience: 'Referrer only',
+			visitorBenefit: 'Earn points on deposits.',
+			referrerBenefit: 'Referrers earn 5% of referred deposits.'
 		})
 		expect(programs[1]).toMatchObject({
 			programId: 'contest',
@@ -160,16 +161,6 @@ describe('rewards public page boundary', () => {
 
 		expect(programs[0].referrerBenefit).toBeNull()
 		expect(JSON.parse(JSON.stringify(programs))).toEqual(programs)
-	})
-
-	test('preserves the benefit audience used to choose the primary table benefit', () => {
-		expect(
-			buildRewardsPageData([apiRecord({ benefit_audience: 'Referrer only' })], {}, rankings).programs[0]
-		).toMatchObject({
-			benefitAudience: 'Referrer only',
-			visitorBenefit: 'Earn points on deposits.',
-			referrerBenefit: 'Referrers earn 5% of referred deposits.'
-		})
 	})
 
 	test('does not expose executable or hostless editor-entered links', () => {

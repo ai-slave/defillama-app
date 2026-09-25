@@ -1,49 +1,37 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
-import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { readAppStorage } from '~/contexts/LocalStorage'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+const session = installSubscriberSession('welcome-user')
+import { installUmamiSink } from '~/utils/test/umamiSink'
+const track = installUmamiSink()
 import { WelcomeOnboarding } from '../WelcomeOnboarding'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 vi.mock('next/router', () => ({ default: { push }, useRouter: () => ({ push }) }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: true,
-		hasActiveSubscription: true,
-		loaders: { userLoading: false },
-		authorizedFetch: vi.fn()
-	})
-}))
-vi.mock('~/contexts/LocalStorage', () => ({
-	readAppStorage: vi.fn(() => ({})),
-	writeAppStorage: vi.fn(),
-	setLlamaAIWalkthroughState: vi.fn()
-}))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(async () => {
 	vi.clearAllMocks()
 	sessionStorage.clear()
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	client = new QueryClient()
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<WelcomeOnboarding />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
+	await vi.waitFor(() => {
+		if (!container.textContent?.includes('Pick all that apply')) throw new Error('Onboarding choices have not loaded')
+	})
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	client.clear()
 	sessionStorage.clear()
 })
 function choice(name: string) {
@@ -85,15 +73,15 @@ test('multi-select, exclusive exploring and deselection to empty work with Space
 	expect(selected()).toHaveLength(0)
 	expect(document.activeElement).toBe(choice('CSV Downloads'))
 	expect(push).not.toHaveBeenCalled()
-	expect(writeAppStorage).not.toHaveBeenCalled()
-	expect(setLlamaAIWalkthroughState).not.toHaveBeenCalled()
+	expect(readAppStorage().ONBOARDING_INTENT).toBeUndefined()
+	expect(readAppStorage().LLAMA_AI_WALKTHROUGH_STATE).toBeUndefined()
 })
 
 test('CSV-only intent preserves the return URL and writes once on continue', async () => {
 	sessionStorage.setItem('onboarding_returnUrl', '/downloads?mode=sql')
 	await space(choice('CSV Downloads'))
 	await act(async () => continueButton().click())
-	expect(writeAppStorage).toHaveBeenCalledExactlyOnceWith({ ONBOARDING_INTENT: ['csv'] })
+	expect(readAppStorage().ONBOARDING_INTENT).toEqual(['csv'])
 	expect(push).toHaveBeenCalledExactlyOnceWith('/downloads?mode=sql')
 	expect(sessionStorage.getItem('onboarding_returnUrl')).toBeNull()
 })
@@ -101,10 +89,9 @@ test('CSV-only intent preserves the return URL and writes once on continue', asy
 test('multiple features keep routing priority and arm LlamaAI only on continue', async () => {
 	await space(choice('CSV Downloads'))
 	await space(choice('LlamaAI'))
-	expect(setLlamaAIWalkthroughState).not.toHaveBeenCalled()
+	expect(readAppStorage().LLAMA_AI_WALKTHROUGH_STATE).toBeUndefined()
 	await act(async () => continueButton().click())
-	expect(setLlamaAIWalkthroughState).toHaveBeenCalledExactlyOnceWith('armed', { ONBOARDING_INTENT: ['csv', 'llamaai'] })
-	expect(writeAppStorage).not.toHaveBeenCalled()
+	expect(readAppStorage()).toMatchObject({ LLAMA_AI_WALKTHROUGH_STATE: 'armed', ONBOARDING_INTENT: ['csv', 'llamaai'] })
 	expect(push).toHaveBeenCalledExactlyOnceWith('/ai/chat')
 })
 
@@ -116,7 +103,7 @@ test('exploring routes home; deselecting it blocks continue', async () => {
 	await space(choice('Just exploring'))
 	await act(async () => continueButton().click())
 	expect(push).toHaveBeenCalledExactlyOnceWith('/')
-	expect(writeAppStorage).toHaveBeenCalledExactlyOnceWith({ ONBOARDING_INTENT: ['exploring'] })
+	expect(readAppStorage().ONBOARDING_INTENT).toEqual(['exploring'])
 })
 
 test('onboarding still renders when browser policy denies session storage', async () => {
@@ -134,13 +121,13 @@ test('onboarding still renders when browser policy denies session storage', asyn
 	try {
 		await act(async () =>
 			deniedRoot.render(
-				<QueryClientProvider client={client}>
+				<session.Wrapper>
 					<WelcomeOnboarding />
-				</QueryClientProvider>
+				</session.Wrapper>
 			)
 		)
 		expect(deniedContainer.querySelectorAll('button').length).toBeGreaterThan(0)
-		expect(vi.mocked(trackUmamiEvent)).not.toHaveBeenCalledWith('llamaai-trial-activated', expect.anything())
+		expect(track).not.toHaveBeenCalledWith('llamaai-trial-activated', expect.anything())
 	} finally {
 		await act(async () => deniedRoot.unmount())
 		deniedContainer.remove()

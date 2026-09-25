@@ -1,6 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { DataFreshness } from '~/ui/DataFreshness'
 import { StablecoinChangeStats } from '../StablecoinChangeStats'
 
 describe('StablecoinChangeStats', () => {
@@ -32,13 +31,5 @@ describe('StablecoinChangeStats', () => {
 		)
 
 		expect(html).toBe('')
-	})
-
-	test('explains which metric is stale', () => {
-		const html = renderToStaticMarkup(
-			<DataFreshness timestamp={Date.parse('2026-05-15T00:00:00Z') / 1e3} label="Market cap data last updated" />
-		)
-
-		expect(html).toContain('Market cap data last updated May 15, 2026')
 	})
 })

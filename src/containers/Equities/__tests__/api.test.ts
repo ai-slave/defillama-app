@@ -1,25 +1,8 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const fetchJson = vi.fn()
-
-vi.mock('~/constants', () => ({
-	EQUITIES_SERVER_URL: 'https://example.com/equities/v1'
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson
-}))
-
-beforeEach(() => {
-	fetchJson.mockReset()
-	fetchJson.mockResolvedValue(null)
-})
-
-function getCalledUrl(index: number): URL {
-	const call = fetchJson.mock.calls[index]
-	if (!call) throw new Error(`Missing fetchJson call ${index}`)
-	return new URL(call[0])
-}
+import { beforeEach, describe, expect, test } from 'vitest'
+import { EQUITIES_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
+beforeEach(() => http.serve({ [EQUITIES_SERVER_URL]: null }))
 
 describe('equities api urls', () => {
 	test('adds ticker and country to ticker-specific endpoints', async () => {
@@ -34,12 +17,12 @@ describe('equities api urls', () => {
 
 		const paths = ['/summary', '/metadata', '/price-history', '/statements', '/dimensions', '/filings']
 		for (let index = 0; index < paths.length; index++) {
-			const url = getCalledUrl(index)
+			const url = http.requests[index].url
 			expect(url.pathname).toBe(`/equities/v1${paths[index]}`)
 			expect(url.searchParams.get('ticker')).toBe('AAPL')
 			expect(url.searchParams.get('country')).toBe('US')
 		}
-		expect(getCalledUrl(2).searchParams.get('timeframe')).toBe('1M')
+		expect(http.requests[2].url.searchParams.get('timeframe')).toBe('1M')
 	})
 
 	test('adds canonical ticker and country to the on-chain endpoint', async () => {
@@ -47,7 +30,7 @@ describe('equities api urls', () => {
 
 		await api.fetchEquitiesOnchain('AAPL', 'US')
 
-		const onchainUrl = getCalledUrl(0)
+		const onchainUrl = http.requests[0].url
 		expect(onchainUrl.pathname).toBe('/equities/v1/onchain')
 		expect(onchainUrl.searchParams.get('ticker')).toBe('AAPL')
 		expect(onchainUrl.searchParams.get('country')).toBe('US')
@@ -58,7 +41,7 @@ describe('equities api urls', () => {
 
 		await api.fetchEquitiesCompanies()
 
-		const url = getCalledUrl(0)
+		const url = http.requests[0].url
 		expect(url.pathname).toBe('/equities/v1/companies')
 		expect(url.searchParams.get('countries')).toBe('US')
 		expect(url.searchParams.has('ticker')).toBe(false)
@@ -70,7 +53,7 @@ describe('equities api urls', () => {
 
 		await api.fetchEquitiesCompaniesList()
 
-		const url = getCalledUrl(0)
+		const url = http.requests[0].url
 		expect(url.pathname).toBe('/equities/v1/companies-list')
 		expect(url.searchParams.get('countries')).toBe('US')
 		expect(url.searchParams.has('ticker')).toBe(false)

@@ -1,12 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => ({
-	fetchChainAssetsDetail: vi.fn(),
-	fetchChainsAssetTotals: vi.fn(),
-	fetchChainAssetsFlows1d: vi.fn()
-}))
-
-vi.mock('./api', () => mocks)
+import { describe, expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { reconcileChainAssetFlowKeys } from './flowKeys'
 import { getBridgedTVLByChain, getBridgedTVLChains } from './queries'
@@ -18,15 +13,8 @@ const asset = (total: number) => ({
 })
 
 describe('getBridgedTVLByChain', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
 	test('preserves integer presentation ordering ties without loading list-only flows', async () => {
-		mocks.fetchChainAssetsDetail.mockResolvedValue({
-			chainData: asset(10.2),
-			totals: { Alpha: asset(10.2), Beta: asset(10.9) }
-		})
+		http.serve({ [`${SERVER_URL}/chain-assets/chains`]: { Alpha: asset(10.2), Beta: asset(10.9) } })
 
 		const result = await getBridgedTVLByChain({
 			chain: 'Alpha',
@@ -42,13 +30,13 @@ describe('getBridgedTVLByChain', () => {
 			{ label: 'Beta', to: '/bridged/beta' }
 		])
 		expect(result.chainData?.total.total).toBe(10.2)
-		expect(mocks.fetchChainAssetsFlows1d).not.toHaveBeenCalled()
+		expect(http.urls()).toEqual([`${SERVER_URL}/chain-assets/chains`])
 		expect(result).not.toHaveProperty('assets')
 	})
 
 	test('keeps required list data when the optional flow request fails', async () => {
-		mocks.fetchChainsAssetTotals.mockResolvedValue({ Alpha: asset(10) })
-		mocks.fetchChainAssetsFlows1d.mockRejectedValue(new Error('invalid 24-hour flow payload'))
+		http.serve({ [`${SERVER_URL}/chain-assets/chains`]: { Alpha: asset(10) } })
+		http.serve({ [`${SERVER_URL}/chain-assets/flows/24h`]: fixtureStatus(404) })
 
 		const result = await getBridgedTVLChains({
 			chainMetadata: { alpha: { id: 'alpha', name: 'Alpha', chainAssets: true } }
@@ -56,7 +44,6 @@ describe('getBridgedTVLByChain', () => {
 
 		expect(result.assets.Alpha?.total.total).toBe(10)
 		expect(result.flows1d).toBeNull()
-		expect(mocks.fetchChainAssetsDetail).not.toHaveBeenCalled()
 	})
 })
 

@@ -1,3 +1,4 @@
+import type { DetachedWindowAPI } from 'happy-dom'
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -6,14 +7,17 @@ import { CAPABILITIES } from '../../capabilities'
 import { CapabilityChips } from '../input/CapabilityChips'
 import { MobileToolsPopover } from '../input/MobileToolsPopover'
 
-const viewport = vi.hoisted(() => ({ mobile: false }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => viewport.mobile }))
+declare global {
+	interface Window {
+		happyDOM: DetachedWindowAPI
+	}
+}
+
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/ai/chat', query: {}, push: vi.fn() }) }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
-	viewport.mobile = false
+	window.happyDOM.setViewport({ width: 1024, height: 768 })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -59,7 +63,7 @@ test('category navigation updates one panel and selecting a prompt closes Explor
 	expect(document.querySelector('[role="tabpanel"]')).toBeNull()
 })
 test('mobile Explore returns to its parent tools on Escape and closes both after a prompt', async () => {
-	viewport.mobile = true
+	window.happyDOM.setViewport({ width: 375, height: 812 })
 	const select = vi.fn()
 	await act(async () =>
 		root.render(

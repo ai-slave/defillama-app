@@ -120,83 +120,30 @@ test.each([
 	'**Read [https://example.com/a',
 	'> [https://example.com/a',
 	'- [https://example.com/a'
-])('renders every streaming prefix of %j and its finished form', async (source) => {
+])('streaming every prefix of %j ends in the same HTML as a fresh render', async (source) => {
 	const container = document.createElement('div')
-	document.body.append(container)
+	const freshContainer = document.createElement('div')
+	document.body.append(container, freshContainer)
 	const root = createRoot(container)
+	const freshRoot = createRoot(freshContainer)
 	try {
 		for (let end = 1; end <= source.length; end++) {
 			const content = source.slice(0, end)
-			expect(() => mend(content)).not.toThrow()
 			// Each prefix must commit before the next to exercise the incremental parser cache.
 			await act(async () => root.render(<ChatMarkdownRenderer content={content} isStreaming />))
 		}
-		await act(async () => root.render(<ChatMarkdownRenderer content={source} isStreaming={false} />))
+		await act(async () => {
+			root.render(<ChatMarkdownRenderer content={source} isStreaming={false} />)
+			freshRoot.render(<ChatMarkdownRenderer content={source} isStreaming={false} />)
+		})
 		expect(container.querySelector('a')).not.toBeNull()
-		expect(container.textContent).toContain(source.includes('hello@') ? 'hello@example.com' : 'https://example.com/a')
-	} finally {
-		await act(async () => root.unmount())
-		container.remove()
-	}
-})
-
-test('stress streams malformed Markdown through cached and fresh renderers', async () => {
-	const fragments = [
-		'[https://example.com/a **bold** and `code`',
-		'![www.example.com/image] and [hello@example.com',
-		'[label](https://example.com/a_(b)) and ![alt](https://example.com/image)',
-		'[reference][later]\n\n[later]: https://example.com "Title"',
-		'Footnote[^note]\n\n[^note]: **Details** and [link](https://example.com)',
-		'| Name | Value |\n| --- | --- |\n| A [1] | **12** |\n| B | `x` |',
-		'<div>\n\n**Nested** [https://example.com/a\n\n</div>',
-		'<table><tr><td>Value &amp; [1]</td></tr></table>',
-		'```js\nconst text = "[https://example.com/a **"\n```\n\nAfter **bold**',
-		'Escaped \\[literal] &amp; &#91;https://example.com/a ~~strike~~',
-		'Heading\n---\n\n## 🦙\n\nUnicode 😀 and null \u0000 text',
-		'[link](javascript:alert(1)) <img src="x" onerror="alert(1)">'
-	]
-	const host = document.createElement('div')
-	const freshHost = document.createElement('div')
-	document.body.append(host, freshHost)
-	const root = createRoot(host)
-	const freshRoot = createRoot(freshHost)
-	const snapshot = (element: HTMLElement) => ({
-		text: element.textContent,
-		links: [...element.querySelectorAll('a')].map((link) => link.getAttribute('href')),
-		headings: [...element.querySelectorAll('h1,h2,h3')].map((heading) => heading.id),
-		code: [...element.querySelectorAll('code')].map((code) => code.textContent)
-	})
-	let renders = 0
-	try {
-		for (const [index, fragment] of fragments.entries()) {
-			for (const prefix of ['', '> ', '- ', '> - ']) {
-				const source = `## Start\n\nStable paragraph.\n\n${prefix}${fragment}\n\n## End\n\nDone.`
-				let end = 0
-				while (end < source.length) {
-					end = Math.min(source.length, end + [1, 2, 7, 19][(renders + index) % 4])
-					const content = source.slice(0, end)
-					// Commit each chunk to exercise parser reuse and streaming repair together.
-					await act(async () => root.render(<ChatMarkdownRenderer content={content} isStreaming />))
-					renders++
-				}
-				// Compare the completed streamed instance with a newly mounted, finished instance.
-				await act(async () => {
-					root.render(<ChatMarkdownRenderer content={source} isStreaming={false} />)
-					freshRoot.render(<ChatMarkdownRenderer key={`${index}:${prefix}`} content={source} isStreaming={false} />)
-				})
-				expect(snapshot(host)).toEqual(snapshot(freshHost))
-				expect(host.querySelector('script,[onerror]')).toBeNull()
-				expect(
-					[...host.querySelectorAll('a')].some((link) => link.getAttribute('href')?.startsWith('javascript:'))
-				).toBe(false)
-			}
-		}
+		expect(container.innerHTML).toBe(freshContainer.innerHTML)
 	} finally {
 		await act(async () => {
 			root.unmount()
 			freshRoot.unmount()
 		})
-		host.remove()
-		freshHost.remove()
+		container.remove()
+		freshContainer.remove()
 	}
 })

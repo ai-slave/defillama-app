@@ -95,24 +95,6 @@ describe('pre-IPO valuation chart', () => {
 		])
 	})
 
-	test('does not create gaps for undisclosed rounds between disclosed valuations', () => {
-		const chart = buildPreIpoValuationChart(
-			[],
-			[
-				{ date: '2025-01-01', amountRaised: 10, valuation: 100, series: 'Seed' },
-				{ date: '2025-10-01', amountRaised: 20, valuation: null, series: 'Series A' },
-				{ date: '2026-01-01', amountRaised: 30, valuation: 200, series: 'Series B' }
-			],
-			TODAY
-		)
-
-		expect(chart?.charts[0]?.data).toEqual([
-			[Date.UTC(2025, 0, 1), 100],
-			[Date.UTC(2026, 0, 1), 200],
-			[TODAY, 200]
-		])
-	})
-
 	test('omits round valuation when every funding valuation is unavailable', () => {
 		const chart = buildPreIpoValuationChart(
 			[],

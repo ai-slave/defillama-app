@@ -1,48 +1,22 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-type FetchWithPoolingOnServer = (typeof import('~/utils/http-client'))['fetchWithPoolingOnServer']
-
-const { pooledFetchMock } = vi.hoisted(() => ({ pooledFetchMock: vi.fn<FetchWithPoolingOnServer>() }))
-
-vi.mock('~/utils/http-client', () => ({ fetchWithPoolingOnServer: pooledFetchMock }))
-
+import { expect, test } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchProDashboardProxy } from './fetchViaProxy'
 
-describe('fetchProDashboardProxy', () => {
-	beforeEach(() => {
-		pooledFetchMock.mockReset()
+const http = installFixtureFetch()
+test('serializes one exact request parameter and sends bearer auth', async () => {
+	http.serve({ '/api/private/pro-dashboard/fetch': { data: { name: 'USD Coin' } } })
+	await expect(fetchProDashboardProxy('stablecoinAsset', { slug: 'usd coin/€' }, 'secret-token')).resolves.toEqual({
+		name: 'USD Coin'
 	})
-
-	test('serializes one exact request parameter and forwards bearer auth', async () => {
-		pooledFetchMock.mockResolvedValue(
-			new Response(JSON.stringify({ data: { name: 'USD Coin' } }), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			})
-		)
-
-		await fetchProDashboardProxy('stablecoinAsset', { slug: 'usd coin/€' }, 'secret-token')
-
-		const call = pooledFetchMock.mock.calls[0]
-		if (!call) throw new Error('Expected a proxy request')
-		const [requestInput, requestOptions] = call
-		const requestUrl = requestInput instanceof Request ? requestInput.url : requestInput
-		const url = new URL(requestUrl, 'https://defillama.test')
-		expect(Array.from(url.searchParams.keys())).toEqual(['request'])
-		expect(JSON.parse(url.searchParams.get('request') ?? '')).toEqual({
-			type: 'stablecoinAsset',
-			params: { slug: 'usd coin/€' }
-		})
-		expect(requestOptions).toEqual({
-			headers: { Authorization: 'Bearer secret-token' }
-		})
+	const { url, init } = http.requests[0]
+	expect([...url.searchParams.keys()]).toEqual(['request'])
+	expect(JSON.parse(url.searchParams.get('request')!)).toEqual({
+		type: 'stablecoinAsset',
+		params: { slug: 'usd coin/€' }
 	})
-
-	test('rejects non-success proxy responses without accepting an error body as data', async () => {
-		pooledFetchMock.mockResolvedValue(
-			new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 })
-		)
-
-		await expect(fetchProDashboardProxy('rwaStats', {}, 'expired-token')).rejects.toThrow('Proxy fetch failed: 401')
-	})
+	expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer secret-token')
+})
+test('rejects a failed proxy response without accepting its error body as data', async () => {
+	http.serve({ '/api/private/pro-dashboard/fetch': fixtureStatus(401, { error: 'Authentication required' }) })
+	await expect(fetchProDashboardProxy('rwaStats', {}, 'expired-token')).rejects.toThrow('Proxy fetch failed: 401')
 })

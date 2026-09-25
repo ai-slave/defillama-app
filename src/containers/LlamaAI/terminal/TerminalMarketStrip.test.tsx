@@ -3,7 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import {
 	formatCountdown,
 	formatDayChange,
@@ -63,6 +65,8 @@ test('a market is named as the USDC pair it settles in, without a HIP-3 dex pref
 	expect(pairName('xyz:TSLA')).toBe('TSLA-USDC')
 })
 
+const fixtures = installFixtureFetch()
+
 let root: ReturnType<typeof createRoot> | null = null
 
 async function renderStrip(symbol: string, fetchFn: typeof fetch, until: (text: string) => boolean) {
@@ -86,7 +90,7 @@ beforeEach(() => {
 	FakeSocket.instances = []
 	vi.stubGlobal('WebSocket', FakeSocket)
 	pb.authStore.save(`e30.${btoa(JSON.stringify({ id: 'user', exp: 4_102_444_800 }))}.signature`, null)
-	vi.stubGlobal('fetch', async () => Response.json({ ticket: 't' }))
+	fixtures.serve({ [`${AI_SERVER}/terminal/ws-ticket`]: { ticket: 't' } })
 })
 
 afterEach(() => {

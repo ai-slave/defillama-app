@@ -1,19 +1,25 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const fetchCsvMock = vi.fn()
-
-vi.mock('../tableLoader', () => ({
-	fetchCsvForSource: (...args: Array<unknown>) => fetchCsvMock(...args)
-}))
-
+import { beforeEach, describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { SqlPolicyError } from '../policy'
 import { runServerSql, SqlRunTimeoutError } from '../runner'
+import { clearCsvCacheForTests } from '../tableLoader'
 
-const RECIPE_SOURCES = [{ kind: 'dataset', slug: 'test-protocols' } as const]
+const http = installFixtureFetch()
+
+const RECIPE_SOURCES = [{ kind: 'dataset', slug: 'chains' } as const]
+// Tests that reach the engine spawn a real DuckDB worker; its cold start on a loaded machine can pass the
+// default timeout, so those tests set 30s. Runs normally finish in well under a second.
 
 beforeEach(() => {
-	fetchCsvMock.mockReset()
-	fetchCsvMock.mockResolvedValue('name,tvl\r\nAave,100\r\nUniswap,200\r\nCurve,50')
+	clearCsvCacheForTests()
+	http.serve({
+		[`${V2_SERVER_URL}/chains`]: [
+			{ name: 'Aave', tvl: 100 },
+			{ name: 'Uniswap', tvl: 200 },
+			{ name: 'Curve', tvl: 50 }
+		]
+	})
 })
 
 describe('runServerSql', () => {
@@ -26,7 +32,7 @@ describe('runServerSql', () => {
 					tableSources: [...RECIPE_SOURCES]
 				})
 			).rejects.toThrow('Something went wrong')
-			expect(fetchCsvMock).not.toHaveBeenCalled()
+			expect(http.requests).toEqual([])
 		}
 	)
 
@@ -36,7 +42,7 @@ describe('runServerSql', () => {
 
 	test('executes sql over loaded csv tables', async () => {
 		const result = await runServerSql({
-			sql: 'SELECT name, tvl FROM test_protocols WHERE tvl > 60 ORDER BY tvl DESC',
+			sql: 'SELECT name, tvl FROM chains WHERE tvl > 60 ORDER BY tvl DESC',
 			tableSources: [...RECIPE_SOURCES]
 		})
 		expect(result.columns.map((c) => c.name)).toEqual(['name', 'tvl'])
@@ -44,26 +50,25 @@ describe('runServerSql', () => {
 			{ name: 'Uniswap', tvl: 200 },
 			{ name: 'Aave', tvl: 100 }
 		])
-		expect(fetchCsvMock).toHaveBeenCalledWith({ kind: 'dataset', slug: 'test-protocols' })
 	}, 30_000)
 
 	test('supports aggregates and preserves duckdb types', async () => {
 		const result = await runServerSql({
-			sql: 'SELECT count(*) AS n, sum(tvl) AS total FROM test_protocols',
+			sql: 'SELECT count(*) AS n, sum(tvl) AS total FROM chains',
 			tableSources: [...RECIPE_SOURCES]
 		})
 		expect(result.rows).toEqual([{ n: 3, total: 350 }])
 	}, 30_000)
 
 	test('rejects on sql errors with the engine message', async () => {
-		await expect(
-			runServerSql({ sql: 'SELECT nope FROM test_protocols', tableSources: [...RECIPE_SOURCES] })
-		).rejects.toThrow(/nope/i)
+		await expect(runServerSql({ sql: 'SELECT nope FROM chains', tableSources: [...RECIPE_SOURCES] })).rejects.toThrow(
+			/nope/i
+		)
 	}, 30_000)
 
 	test('rejects empty queries without spawning', async () => {
 		await expect(runServerSql({ sql: '   ', tableSources: [] })).rejects.toThrow('Empty query.')
-		expect(fetchCsvMock).not.toHaveBeenCalled()
+		expect(http.requests).toEqual([])
 	})
 
 	test('blocks filesystem access from user sql', async () => {
@@ -73,14 +78,14 @@ describe('runServerSql', () => {
 				tableSources: [...RECIPE_SOURCES]
 			})
 		).rejects.toThrow(SqlPolicyError)
-		expect(fetchCsvMock).not.toHaveBeenCalled()
+		expect(http.requests).toEqual([])
 	}, 30_000)
 
 	test('rejects administrative SQL before fetching data', async () => {
 		await expect(
 			runServerSql({ sql: 'SELECT 1; CREATE TABLE x AS SELECT 2', tableSources: [...RECIPE_SOURCES] })
 		).rejects.toThrow(SqlPolicyError)
-		expect(fetchCsvMock).not.toHaveBeenCalled()
+		expect(http.requests).toEqual([])
 	})
 
 	test('still denies filesystem shorthand at the engine boundary', async () => {
@@ -91,13 +96,13 @@ describe('runServerSql', () => {
 
 	test('executes WITH queries through the SELECT-only prepared statement', async () => {
 		const result = await runServerSql({
-			sql: 'WITH x AS (SELECT tvl FROM test_protocols) SELECT sum(tvl) AS total FROM x',
+			sql: 'WITH x AS (SELECT tvl FROM chains) SELECT sum(tvl) AS total FROM x',
 			tableSources: [...RECIPE_SOURCES]
 		})
 		expect(result.rows).toEqual([{ total: 350 }])
 	}, 30_000)
 
-	test('kills runs that exceed the timeout', async () => {
+	test('rejects runs that exceed the timeout', async () => {
 		await expect(
 			runServerSql(
 				{

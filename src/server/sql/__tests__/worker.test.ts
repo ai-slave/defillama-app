@@ -16,12 +16,17 @@ function runWorker(sql: string) {
 }
 
 describe('SQL worker isolation without the application keyword filter', () => {
-	test.each(['SELECT 1; SELECT 2', 'CREATE TABLE x AS SELECT 1', 'SET threads=1'])(
-		'rejects non-SELECT or multiple statements: %s',
-		(sql) => {
-			expect(runWorker(sql).ok).toBe(false)
-		}
-	)
+	test('runs a single SELECT', () => {
+		expect(runWorker('SELECT 1 AS n')).toMatchObject({ ok: true, rows: [{ n: 1 }] })
+	})
+
+	test.each([
+		['SELECT 1; SELECT 2', 'Only a single SELECT query is allowed.'],
+		['CREATE TABLE x AS SELECT 1', 'Only a SELECT query is allowed.'],
+		['SET threads=1', 'Only a SELECT query is allowed.']
+	])('rejects non-SELECT or multiple statements: %s', (sql, error) => {
+		expect(runWorker(sql)).toEqual({ ok: false, error, policyViolation: true })
+	})
 
 	test('denies reading an existing file or unlocking external access', () => {
 		const dir = mkdtempSync(join(tmpdir(), 'sql-worker-test-'))

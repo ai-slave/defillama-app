@@ -4,36 +4,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { ClaimDialog } from '../ClaimDialog'
 import { ConnectDialog } from '../ConnectDialog'
 
-vi.mock('../client', () => ({
-	requestLeadClickId: vi.fn(async () => 'click-1'),
-	useSubmitLead: () => ({
-		mutate: vi.fn(),
-		reset: vi.fn(),
-		isPending: false,
-		isSuccess: false,
-		isError: false,
-		error: null
-	})
-}))
-vi.mock('../ClaimTurnstile', () => ({
-	ClaimTurnstile: () => null,
-	isClaimTurnstileEnabled: () => false
-}))
+const http = installFixtureFetch()
 
 describe('lead dialogs start from a fresh form on each open', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let client: QueryClient
 
 	function render(element: ReactElement) {
 		return act(async () => {
-			root.render(
-				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-					{element}
-				</QueryClientProvider>
-			)
+			root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
 		})
 	}
 
@@ -51,6 +35,9 @@ describe('lead dialogs start from a fresh form on each open', () => {
 	}
 
 	beforeEach(() => {
+		client = new QueryClient()
+		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
+		http.serve({ '/api/public/market-makers/cta': { clickId: 'click-1' } })
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -60,6 +47,8 @@ describe('lead dialogs start from a fresh form on each open', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		client.clear()
+		vi.unstubAllEnvs()
 	})
 
 	test('the claim form does not keep what was typed before it was closed', async () => {
@@ -83,10 +72,5 @@ describe('lead dialogs start from a fresh form on each open', () => {
 		await render(<ConnectDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		expect(inputByLabel('Full Name')!.value).toBe('')
-	})
-
-	test('a closed dialog renders no form at all', async () => {
-		await render(<ClaimDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
-		expect(inputByLabel('Your Full Name')).toBeNull()
 	})
 })

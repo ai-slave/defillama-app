@@ -6,7 +6,6 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import {
 	getRwaColumnOptions,
 	getRwaDefaultColumnVisibility,
-	getRwaDefaultSorting,
 	getRwaTableColumns,
 	RWA_COMPLIANCE_COLUMN_IDS,
 	RWA_DEFAULT_COLUMN_IDS
@@ -53,28 +52,20 @@ function cellMarkup(table: RwaTestTable, rowId: string, columnId: string): strin
 	return renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext()))
 }
 
+const cellText = (table: RwaTestTable, rowId: string, columnId: string) =>
+	cellMarkup(table, rowId, columnId).replace(/<[^>]+>/g, '')
+
 describe('RWA table column set', () => {
-	test('shows the nine default columns for assets and only those', () => {
+	test('paints the default columns and keeps csv-only columns out of the table and the picker', () => {
 		const table = buildTable('assets', 'platform')
-		expect(paintedColumnIds(table)).toEqual([...RWA_DEFAULT_COLUMN_IDS.assets])
-		expect(getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.key)).toEqual([
-			'name',
-			'chains',
-			'assetGroup',
-			'activeMcap',
-			'onChainMcap',
-			'activeMcapChange',
-			'defiActiveTvl',
-			'utilization',
-			'defiActiveTvlChange',
-			'netFlow',
-			'price',
-			'platform',
-			'issuer',
-			'accessModel',
-			'redeemable',
-			'attestations'
-		])
+		expect(paintedColumnIds(table)).toEqual(RWA_DEFAULT_COLUMN_IDS.assets)
+		const csvOnly = table
+			.getAllLeafColumns()
+			.filter((column) => column.columnDef.meta?.csvOnly)
+			.map((column) => column.id)
+		expect(csvOnly).toContain('kycForMintRedeem')
+		const pickerKeys = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.key)
+		for (const id of csvOnly) expect(pickerKeys).not.toContain(id)
 	})
 
 	test('drops the column a grouping makes redundant from the picker', () => {
@@ -84,63 +75,35 @@ describe('RWA table column set', () => {
 		expect(getRwaColumnOptions(columns, 'assetGroup').map((option) => option.key)).toContain('chains')
 	})
 
-	test('names picker entries with their header group', () => {
+	test('names picker entries with their header group so the period columns stay distinguishable', () => {
 		const names = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.name)
-		expect(names).toContain('AUM: Active')
-		expect(names).toContain('AUM: 7d')
-		expect(names).toContain('DeFi: 7d')
-		expect(names).toContain('Flows: 7d')
-		expect(names).not.toContain('Flows: 30d')
-		expect(names).toContain('Asset Type')
-		expect(names).not.toContain('Asset Class')
-		expect(names).not.toContain('Type')
-		expect(names).not.toContain('Category')
-		expect(names).toContain('Price')
-		expect(names).not.toContain('Pricing: Price')
+		expect(new Set(names).size).toBe(names.length)
+		expect(names.filter((name) => name.endsWith('7d'))).toEqual(['AUM: 7d', 'DeFi: 7d', 'Flows: 7d'])
 	})
 
 	test('gives the perps view its own columns without chains or AUM', () => {
+		const ids = buildTable('perps', 'platform')
+			.getAllLeafColumns()
+			.map((column) => column.id)
+		expect(ids).not.toContain('chains')
+		expect(ids).not.toContain('activeMcap')
+	})
+
+	test('offers the venue column only when CEX venues are included', () => {
+		expect(getRwaTableColumns('perps', 'ready', '7d', { includeCex: true }).map((column) => column.id)).toContain(
+			'venue'
+		)
+		expect(getRwaTableColumns('perps', 'ready', '7d').map((column) => column.id)).not.toContain('venue')
+	})
+
+	test('renders the perps cells with an annualised funding rate', () => {
 		const table = buildTable('perps', 'platform')
-		expect(paintedColumnIds(table)).toEqual([...RWA_DEFAULT_COLUMN_IDS.perps])
-		expect(table.getAllLeafColumns().map((column) => column.id)).not.toContain('chains')
-		expect(table.getAllLeafColumns().map((column) => column.id)).not.toContain('activeMcap')
-		expect(cellMarkup(table, 'perps-usdy', 'openInterest')).toBe('$5,000')
-		expect(cellMarkup(table, 'perps-usdy', 'venue')).toContain('<span class="text-data-up">DEX</span>')
-		expect(cellMarkup(table, 'platform:Hyperliquid', 'venue')).toContain('text-data-up')
-		const dexOnly = getRwaTableColumns('perps', 'ready', '7d').map((column) => column.id)
-		expect(dexOnly).not.toContain('venue')
-		expect(table.getAllLeafColumns().map((column) => column.id)).not.toContain('assetCount')
-		expect(
-			getRwaColumnOptions(getRwaTableColumns('perps', 'ready', '7d', { includeCex: true })).map((o) => o.key)
-		).toEqual([
-			'name',
-			'venue',
-			'assetGroup',
-			'openInterest',
-			'volume24h',
-			'volume30d',
-			'fundingApr',
-			'premium',
-			'price',
-			'priceChange24h',
-			'openInterestChange24h',
-			'volume7d',
-			'maxLeverage',
-			'protocolFees24h',
-			'platform'
-		])
-		expect(cellMarkup(table, 'perps-usdy', 'fundingApr')).toContain('+10.95%')
-		expect(cellMarkup(table, 'perps-usdy', 'fundingApr')).toContain('text-data-down')
-		expect(cellMarkup(table, 'platform:Hyperliquid', 'premium')).toContain('+0.2%')
-		expect(cellMarkup(table, 'platform:Hyperliquid', 'premium')).toContain('text-data-down')
-		expect(cellMarkup(table, 'perps-usdy', 'maxLeverage')).toBe('50x')
-		const perpsOptions = getRwaColumnOptions(getRwaTableColumns('perps', 'ready', '7d'))
-		expect(perpsOptions.find((option) => option.key === 'priceChange24h')?.name).toBe('Price: 24h')
+		expect(cellText(table, 'perps-usdy', 'openInterest')).toBe('$5,000')
+		expect(cellText(table, 'perps-usdy', 'venue')).toBe('DEX')
+		expect(cellText(table, 'perps-usdy', 'fundingApr')).toContain('+10.95%')
+		expect(cellText(table, 'platform:Hyperliquid', 'premium')).toContain('+0.2%')
+		expect(cellText(table, 'perps-usdy', 'maxLeverage')).toBe('50x')
 		expect(cellMarkup(table, 'perps-usdy', 'priceChange24h')).toContain('+2.50%')
-		const headers = getRwaTableColumns('assets', 'ready', '1m')
-			.flatMap((c) => ('columns' in c && c.columns ? c.columns : [c]))
-			.map((c) => c.header)
-		expect(headers.filter((h) => h === '1m')).toHaveLength(3)
 	})
 })
 
@@ -171,31 +134,22 @@ describe('RWA table compliance preset', () => {
 		})
 	}
 
-	test('shows the name, the issuer, the access model and the six flags, money hidden', () => {
+	test('paints and offers only the compliance columns, money kept for the export', () => {
 		const table = buildCompliance('none')
-		expect(paintedColumnIds(table)).toEqual([...RWA_COMPLIANCE_COLUMN_IDS])
-		expect(paintedColumnIds(table)).not.toContain('activeMcap')
+		expect(paintedColumnIds(table)).toEqual(RWA_COMPLIANCE_COLUMN_IDS)
 		expect(table.getAllLeafColumns().map((column) => column.id)).toContain('activeMcap')
-		expect(getRwaDefaultSorting('assets')).toEqual([{ id: 'activeMcap', desc: true }])
+		const picker = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' }))
+		expect(picker.map((option) => option.key).slice(0, RWA_COMPLIANCE_COLUMN_IDS.length)).toEqual(
+			RWA_COMPLIANCE_COLUMN_IDS
+		)
 	})
 
-	test('lists the flag columns in the picker under compliance and keeps them out of it under assets', () => {
-		const compliance = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d', { preset: 'compliance' }))
-		expect(compliance.map((option) => option.key).slice(0, 9)).toEqual([...RWA_COMPLIANCE_COLUMN_IDS])
-		expect(compliance.map((option) => option.key)).not.toContain('rwaClassification')
-		expect(compliance.map((option) => option.key)).not.toContain('cexListed')
-		const assetsPicker = getRwaColumnOptions(getRwaTableColumns('assets', 'ready', '7d')).map((option) => option.key)
-		expect(assetsPicker).not.toContain('kycForMintRedeem')
-		expect(assetsPicker).not.toContain('rwaClassification')
-	})
-
-	test('renders Yes and No in the flag tones on a leaf and the tallies on a group row', () => {
+	test('renders Yes and No on a leaf, blank for unknown, and the tallies on a group row', () => {
 		const flat = buildCompliance('none')
-		expect(cellMarkup(flat, 'usdy', 'attestations')).toContain('text-data-down')
-		expect(cellMarkup(flat, 'usdy', 'attestations')).toContain('No')
-		expect(cellMarkup(flat, 'usdy', 'kycForMintRedeem')).toContain('text-warning')
-		expect(cellMarkup(flat, 'b', 'attestations')).toContain('text-data-up')
-		expect(cellMarkup(flat, 'usdy', 'redeemable')).toBe('')
+		expect(cellText(flat, 'usdy', 'attestations')).toBe('No')
+		expect(cellText(flat, 'usdy', 'kycForMintRedeem')).toBe('Yes')
+		expect(cellText(flat, 'b', 'attestations')).toBe('Yes')
+		expect(cellText(flat, 'usdy', 'redeemable')).toBe('')
 		const grouped = buildCompliance('platform')
 		expect(cellMarkup(grouped, 'platform:Ondo', 'attestations')).toContain('1 / 2')
 		expect(cellMarkup(grouped, 'platform:Ondo', 'accessModel')).toContain('Permissioned')
@@ -228,9 +182,7 @@ describe('RWA table cells', () => {
 			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
 			state: { expanded: {} }
 		})
-		expect(mixed.getRowModel().rows[0].getValue('assetGroup')).toBe(
-			'Bonds, Private Equity &amp; Venture'.replace('&amp;', '&')
-		)
+		expect(mixed.getRowModel().rows[0].getValue('assetGroup')).toBe('Bonds, Private Equity & Venture')
 	})
 
 	test('lists distinct details and a Yes tally on a group row instead of leaving them blank', () => {
@@ -270,20 +222,34 @@ describe('RWA table cells', () => {
 
 	test('renders the leaf under its parent with the ticker line', () => {
 		const markup = cellMarkup(table, 'usdy', 'name')
-		expect(markup).toContain('pl-12')
 		expect(markup).toContain('href="/rwa/asset/ondo%2Fusdy"')
 		expect(markup).toContain('USDY')
 	})
 
-	test('shows the group sum as plain text and the leaf value with a breakdown', () => {
-		expect(cellMarkup(table, 'platform:Ondo', 'activeMcap')).toBe('$800,000')
-		expect(cellMarkup(table, 'usdy', 'activeMcap')).toContain('$800,000')
-		expect(cellMarkup(table, 'usdy', 'activeMcap')).toContain('decoration-dotted')
+	test('shows the summed active AUM on the group row and each leaf on its own row', () => {
+		const columns = getRwaTableColumns('assets', 'ready', '7d')
+		const twoAssets = constructTable({
+			features: headlessFeatures,
+			data: groupRwaRows(
+				buildRwaLeafRows(
+					[spotAsset(), spotAsset({ id: 'b', activeMcap: { total: 900_000, breakdown: [['Ethereum', 900_000]] } })],
+					{ includeBridgeTvl: true }
+				),
+				'platform'
+			),
+			columns,
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns) }
+		})
+		expect(cellText(twoAssets, 'platform:Ondo', 'activeMcap')).toBe('$1.7m')
+		expect(cellText(twoAssets, 'usdy', 'activeMcap')).toContain('$800,000')
+		expect(cellText(twoAssets, 'b', 'activeMcap')).toContain('$900,000')
 	})
 
 	test('shows the seven day change with its direction', () => {
-		expect(cellMarkup(table, 'usdy', 'activeMcapChange')).toBe('<span class="text-data-up">+14.29%</span>')
-		expect(cellMarkup(table, 'usdy', 'defiActiveTvlChange')).toBe('<span class="text-data-up">+25.00%</span>')
+		expect(cellText(table, 'usdy', 'activeMcapChange')).toBe('+14.29%')
+		expect(cellText(table, 'usdy', 'defiActiveTvlChange')).toBe('+25.00%')
 	})
 
 	test('renders the chains as an icon row with links', () => {
@@ -319,37 +285,40 @@ describe('RWA table cells', () => {
 		expect(csv.slice(1).map((row) => row[0])).toEqual(['Ondo', 'Ondo USDY'])
 	})
 
-	test('exports self describing headers and chain names', () => {
+	test('exports the csv-only columns and the chains as names', () => {
 		const flat = buildTable('assets', 'none')
 		const csv = prepareTableCsv({ instance: flat, filename: 'rwa-assets' }).rows
-		expect(csv[0].slice(0, 10)).toEqual([
-			'Name',
-			'Chains',
-			'Asset Group',
-			'Active AUM',
-			'Onchain AUM',
-			'Active AUM 7d change',
-			'DeFi Active TVL',
-			'DeFi Utilization',
-			'DeFi Active TVL 7d change',
-			'Net Flow 7d'
-		])
 		// Category, Classification and the five attribute flags ride along in every export without being painted.
 		expect(csv[0]).toContain('Category')
 		expect(csv[0]).toContain('Transferable')
 		expect(csv[0]).toContain('Asset Class')
-		expect(csv[0]).toHaveLength(20)
-		expect(csv[0].slice(-2)).toEqual(['Suspicious', 'Suspicious reason'])
-		expect(csv[1][1]).toBe('Ethereum, Solana, Mantle')
+		expect(csv[0]).toContain('Active AUM')
+		expect(csv[1][csv[0].indexOf('Chains')]).toBe('Ethereum, Solana, Mantle')
 		expect(csv[1][csv[0].indexOf('Suspicious')]).toBe(false)
 	})
 
 	test('exports the stored flag for spot rows and the tally for groups', () => {
-		const grouped = buildTable('assets', 'platform')
+		const columns = getRwaTableColumns('assets', 'ready', '7d')
+		const grouped = constructTable({
+			features: headlessFeatures,
+			data: groupRwaRows(
+				buildRwaLeafRows(
+					[
+						spotAsset({ attestations: true }),
+						spotAsset({ id: 'b', attestations: false }),
+						spotAsset({ id: 'c', attestations: null })
+					],
+					{ includeBridgeTvl: true }
+				),
+				'platform'
+			),
+			columns,
+			getRowId: (row) => row.id,
+			getSubRows: (row) => (row.kind === 'group' ? row.children : undefined),
+			state: { expanded: true, columnVisibility: getRwaDefaultColumnVisibility('assets', columns) }
+		})
 		const csv = prepareTableCsv({ instance: grouped, filename: 'rwa-assets', includeHiddenColumns: true }).rows
 		const column = csv[0].indexOf('Attestations')
-		expect(column).toBeGreaterThan(0)
-		expect(csv[1][column]).toBe('')
-		expect(csv[2][column]).toBe('')
+		expect(csv.slice(1).map((row) => row[column])).toEqual(['1/2', true, false, ''])
 	})
 })

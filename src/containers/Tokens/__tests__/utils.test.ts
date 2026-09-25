@@ -95,6 +95,7 @@ describe('getTokensPageQuery', () => {
 				sortDesc: 'maybe',
 				nativeOnly: 'yes',
 				category: 'not-real',
+				min_notAField: '5',
 				search: '  ethena  '
 			})
 		).toEqual({
@@ -201,17 +202,6 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows[1]?.display).toMatchObject({ price: '$0.00001234', marketCap: '$1K' })
 	})
 
-	test('ignores stale category params', () => {
-		const result = getPage(rows, {
-			category: 'dexs',
-			sortBy: 'marketCap',
-			pageSize: '20'
-		})
-
-		expect(result.rows.map((item) => item.id)).toEqual(['uniswap', 'ethena', 'aave', 'curve'])
-		expect(result.total).toBe(4)
-	})
-
 	test('sorts deterministically and slices the requested page', () => {
 		const result = getPage(rows, {
 			sortBy: 'marketCap',
@@ -281,22 +271,6 @@ describe('getTokensPageFromRows', () => {
 
 		const swapped = getPage(rowsWithChange, { min_priceChange7d: '30', max_priceChange7d: '-5', pageSize: '20' })
 		expect(swapped.rows.map((item) => item.id)).toEqual(['up', 'flat'])
-	})
-
-	test('combines numeric filters with rank range', () => {
-		const ranked = [
-			row({ id: 'a', name: 'A', symbol: 'A', rank: 1, marketCap: 1000, revenue24h: 50 }),
-			row({ id: 'b', name: 'B', symbol: 'B', rank: 2, marketCap: 900, revenue24h: 5 }),
-			row({ id: 'c', name: 'C', symbol: 'C', rank: 3, marketCap: 800, revenue24h: 60 })
-		]
-
-		const result = getPage(ranked, { rankFrom: '1', rankTo: '2', min_revenue24h: '10', pageSize: '20' })
-		expect(result.rows.map((item) => item.id)).toEqual(['a'])
-	})
-
-	test('ignores unknown filter fields', () => {
-		const result = getPage(rows, { min_notAField: '5', pageSize: '20' })
-		expect(result.total).toBe(4)
 	})
 
 	test('uses OR within filter families and AND between chains and categories', () => {

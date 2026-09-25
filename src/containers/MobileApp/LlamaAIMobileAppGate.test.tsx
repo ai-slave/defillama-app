@@ -5,18 +5,21 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ANNOUNCEMENT_DISMISSALS_COOKIE_NAME } from '~/utils/cookies'
 import { LlamaAIMobileAppGate } from './LlamaAIMobileAppGate'
 
-const viewport = vi.hoisted(() => ({ mobile: true }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => viewport.mobile }))
-vi.mock('~/containers/MobileApp', () => ({
-	StoreButtons: () => <button type="button">Get app</button>
-}))
+const viewport = { mobile: true }
 
 let host: HTMLDivElement
 let root: Root
 const render = () => act(async () => root.render(<LlamaAIMobileAppGate interactive>Chat content</LlamaAIMobileAppGate>))
 
 beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	viewport.mobile = true
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: viewport.mobile,
+		media: query,
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	}))
 	document.cookie = `${ANNOUNCEMENT_DISMISSALS_COOKIE_NAME}=; Max-Age=0; path=/`
 	host = document.createElement('div')
 	document.body.append(host)
@@ -26,18 +29,26 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	host.remove()
+	vi.unstubAllGlobals()
 	document.cookie = `${ANNOUNCEMENT_DISMISSALS_COOKIE_NAME}=; Max-Age=0; path=/`
 })
 
-test.each(['Close', 'Continue on the web', 'Get app'])(
+// Store links leave the site; the click is what dismisses, not where it goes.
+function clickControl(label: string) {
+	const control = [...document.querySelectorAll<HTMLElement>('button, a')].find(
+		(element) => element.textContent === label || element.querySelector('img')?.alt === label
+	)!
+	if (control instanceof HTMLAnchorElement) control.addEventListener('click', (event) => event.preventDefault())
+	control.click()
+}
+
+test.each(['Close', 'Continue on the web', 'Download on the App Store'])(
 	'%s remembers dismissal after a new tab session',
 	async (label) => {
 		await render()
 		expect(document.body.textContent).toContain('DefiLlama App')
 		expect(host.textContent).not.toContain('Chat content')
-		await act(async () => {
-			;[...document.querySelectorAll('button')].find((button) => button.textContent === label)!.click()
-		})
+		await act(async () => clickControl(label))
 		expect(host.textContent).toContain('Chat content')
 		expect(document.cookie).toContain('llamaai-mobile-app-promotion--2026-08-03')
 		await act(async () => root.unmount())

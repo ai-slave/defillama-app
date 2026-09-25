@@ -4,6 +4,13 @@ import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatNumber } from '~/utils/numberFormat'
 import { useUpdateProject } from './hooks'
+import {
+	getInstructionsBlurAction,
+	getInstructionsSaveStatus,
+	type InstructionsDraft,
+	isInstructionsDraftDirty,
+	reconcileInstructionsDraft
+} from './instructionsDraft'
 
 interface ProjectInstructionsEditorProps {
 	projectId: string
@@ -20,31 +27,28 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 	const update = useUpdateProject(projectId)
 	const inputId = useId()
 	const incomingValue = value ?? ''
-	const [draft, setDraft] = useState(() => ({ value: incomingValue, savedValue: incomingValue, edited: false }))
+	const [draft, setDraft] = useState<InstructionsDraft>(() => ({
+		value: incomingValue,
+		savedValue: incomingValue,
+		edited: false
+	}))
 
-	if (incomingValue !== draft.savedValue) {
-		const wasDirty = draft.value.trim() !== draft.savedValue.trim()
-		const preserveDraft = wasDirty || draft.edited || update.isPending
-		setDraft({ value: preserveDraft ? draft.value : incomingValue, savedValue: incomingValue, edited: draft.edited })
-	}
+	const reconciled = reconcileInstructionsDraft(draft, incomingValue, update.isPending)
+	if (reconciled !== draft) setDraft(reconciled)
 
-	const dirty = draft.value.trim() !== draft.savedValue.trim()
+	const dirty = isInstructionsDraftDirty(draft)
+	const status = getInstructionsSaveStatus({ isPending: update.isPending, hasError: !!update.error, dirty })
 
 	// The mutation owns the outcome: `update.error` is the inline message, and the next save clears it.
-	const saveDraft = (nextDraft: string) => {
+	const saveDraft = (instructions: string | null) => {
 		setDraft((current) => ({ ...current, edited: false }))
-		update.mutate({ custom_instructions: nextDraft || null })
+		update.mutate({ custom_instructions: instructions })
 	}
 
 	const onBlur = () => {
-		// A failed save is retried explicitly, so focusing Retry cannot submit twice.
-		if (update.error) return
-		const shouldSave = dirty || (draft.edited && update.isPending)
-		if (!shouldSave) {
-			if (draft.edited) setDraft((current) => ({ ...current, edited: false }))
-			return
-		}
-		saveDraft(draft.value.trim())
+		const action = getInstructionsBlurAction(draft, { isPending: update.isPending, hasError: !!update.error })
+		if (action.type === 'save') saveDraft(action.value)
+		else if (action.type === 'clear-edited') setDraft((current) => ({ ...current, edited: false }))
 	}
 
 	return (
@@ -54,13 +58,13 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 					Instructions
 				</label>
 				<span role="status" className="flex items-center gap-1 body-sm text-secondary">
-					{update.isPending ? (
+					{status === 'saving' ? (
 						<>
 							<LoadingSpinner size={12} /> Saving…
 						</>
-					) : update.error ? (
+					) : status === 'failed' ? (
 						'Not saved'
-					) : dirty ? (
+					) : status === 'unsaved' ? (
 						'Unsaved'
 					) : (
 						'Saved'
@@ -84,7 +88,12 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 			{update.error ? (
 				<div role="alert" id={`${inputId}-error`} className="flex flex-wrap items-center gap-2 body-sm text-error">
 					<p>{saveInstructionsError(update.error)}</p>
-					<Button type="button" size="sm" onClick={() => saveDraft(draft.value.trim())} disabled={update.isPending}>
+					<Button
+						type="button"
+						size="sm"
+						onClick={() => saveDraft(draft.value.trim() || null)}
+						disabled={update.isPending}
+					>
 						Retry save
 					</Button>
 				</div>

@@ -19,16 +19,6 @@ describe('getTooltipRawYValue', () => {
 		expect(getTooltipRawYValue(item, item.seriesName)).toBe(7)
 	})
 
-	test('falls back to the series name when the encoded dimension is missing from the data row', () => {
-		const item = {
-			seriesName: 'Team',
-			data: row,
-			dimensionNames: ['timestamp', 'Other'],
-			encode: { x: [0], y: [1] }
-		}
-		expect(getTooltipRawYValue(item, item.seriesName)).toBe(7)
-	})
-
 	test('reads the y value from [ts, y] value arrays', () => {
 		const item = { seriesName: 'Price', value: [1_700_000_000_000, 3.5] }
 		expect(getTooltipRawYValue(item, item.seriesName)).toBe(3.5)

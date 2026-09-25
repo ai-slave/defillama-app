@@ -11,10 +11,15 @@ import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import { formatUsd } from '~/utils/numberFormat'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
-import { formatFeeSwitchStatus, getEquityPieTone, getTokenRightsPrimaryValueLabel } from './utils'
+import {
+	formatFeeSwitchStatus,
+	formatTokenRightsRaiseUsd,
+	getTokenRightsPieSegments,
+	hasTokenRightsPrimaryValueAccrual,
+	hasTokenRightsValueAccrual
+} from './utils'
 
 const TOOLTIPS = {
 	'Governance Decisions':
@@ -87,8 +92,7 @@ export function TokenRightsByProtocol({
 		alignment.domain !== null ||
 		alignment.links.length > 0
 
-	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
-	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
+	const hasPrimaryValueAccrual = hasTokenRightsPrimaryValueAccrual(tokenRightsData)
 	const hasEquityStatement = alignment.equityStatement !== null
 	// On the dedicated protocol page the header already states "$SYMBOL Token Rights", so the
 	// overview card shouldn't repeat the name; surface the token-variant pills in the header instead.
@@ -222,7 +226,9 @@ export function TokenRightsByProtocol({
 							title="Primary Value Accrual"
 							tooltip="The main mechanism by which value accrues to token holders"
 						>
-							{primaryValueLabel !== null ? <span className="label-sm uppercase">{primaryValueLabel}</span> : null}
+							{valueAccrual.primary !== null ? (
+								<span className="label-sm uppercase">{valueAccrual.primary}</span>
+							) : null}
 							{valueAccrual.details !== null ? <p className="body-sm">{valueAccrual.details}</p> : null}
 						</GreenCard>
 					) : null}
@@ -375,18 +381,9 @@ function TokenRightsOverviewView({
 }) {
 	const { overview, governance, decisions, economic, valueAccrual, alignment } = tokenRightsData
 	const displayName = overview.protocolName || name
-	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
-	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
-	const hasValueAccrual =
-		valueAccrual.dividends.displayTokens.length > 0 || valueAccrual.buybacks.displayTokens.length > 0
-	const pieSegments: Parameters<typeof TokenRightsPieChart>[0]['segments'] = [
-		{ label: 'Treasury', tone: decisions.treasury.displayTokens.length > 0 ? 'positive' : 'negative' },
-		{ label: 'Revenue', tone: decisions.revenue.displayTokens.length > 0 ? 'positive' : 'negative' },
-		{ label: 'Burns', tone: valueAccrual.burns.isActive ? 'positive' : 'negative' },
-		{ label: 'Equity', tone: getEquityPieTone(alignment.fundraising, alignment.equityRevenueCapture) },
-		{ label: 'Value Accrual', tone: hasValueAccrual ? 'positive' : 'negative' },
-		{ label: 'Governance', tone: governance.decisionTokenDisplay.displayTokens.length > 0 ? 'positive' : 'negative' }
-	]
+	const hasPrimaryValueAccrual = hasTokenRightsPrimaryValueAccrual(tokenRightsData)
+	const hasValueAccrual = hasTokenRightsValueAccrual(tokenRightsData)
+	const pieSegments = getTokenRightsPieSegments(tokenRightsData)
 	const rightsFields = [
 		{
 			label: 'Governance',
@@ -465,8 +462,8 @@ function TokenRightsOverviewView({
 					{hasPrimaryValueAccrual ? (
 						<div className="rounded-lg border border-success/30 bg-success/10 p-2">
 							<div className="label-sm text-secondary uppercase">Primary Value Accrual</div>
-							{primaryValueLabel !== null ? (
-								<div className="mt-1.5 label-lg text-success">{primaryValueLabel}</div>
+							{valueAccrual.primary !== null ? (
+								<div className="mt-1.5 label-lg text-success">{valueAccrual.primary}</div>
 							) : null}
 							{valueAccrual.details !== null ? <p className="mt-1.5 body-md">{valueAccrual.details}</p> : null}
 						</div>
@@ -745,24 +742,10 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 									<td className="py-2.5 pr-4 whitespace-nowrap">
 										{r.date ? (formatDate(r.date, { input: 'seconds' }) ?? '—') : '—'}
 									</td>
-									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
-										{r.amountUsd !== null
-											? formatUsd(r.amountUsd, {
-													compact: true,
-													minimumCompactValue: 1_000_000,
-													compactSuffix: 'lowercase'
-												})
-											: '—'}
-									</td>
+									<td className="py-2.5 pr-4 text-right whitespace-nowrap">{formatTokenRightsRaiseUsd(r.amountUsd)}</td>
 									<td className="py-2.5 pr-4 whitespace-nowrap">{r.round || '—'}</td>
 									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
-										{r.valuationUsd != null
-											? formatUsd(r.valuationUsd, {
-													compact: true,
-													minimumCompactValue: 1_000_000,
-													compactSuffix: 'lowercase'
-												})
-											: '—'}
+										{formatTokenRightsRaiseUsd(r.valuationUsd)}
 									</td>
 									<td className="py-2.5">
 										{r.source ? (

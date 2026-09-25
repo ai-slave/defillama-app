@@ -1,35 +1,8 @@
-import type { ColumnDef } from '@tanstack/react-table'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
-import type { SearchTableFeatures } from '~/components/Table/features/search'
+import { describe, expect, test } from 'vitest'
 import type { RawTreasuryProtocol } from './api.types'
-import { Treasuries } from './index'
+import { treasuryTableColumns } from './index'
 import { buildNetProjectTreasuryRows, buildTreasuryRows } from './queries'
 import type { ITreasuryRow } from './types'
-
-const renderTable = vi.hoisted(() => vi.fn())
-const renderCsv = vi.hoisted(() => vi.fn())
-
-vi.mock('~/components/Table/search/SearchTableProvider', () => ({
-	SearchTableProvider: ({
-		options,
-		children
-	}: {
-		options: { columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>; data: Array<ITreasuryRow> }
-		children: React.ReactNode
-	}) => {
-		renderTable(options)
-		return children
-	}
-}))
-vi.mock('~/components/Table/search/TableCsvExport', () => ({
-	TableCsvExport: ({ filename }: { filename: string }) => {
-		renderCsv(filename)
-		return null
-	}
-}))
-vi.mock('~/components/Table/search/TableSearchInput', () => ({ TableSearchInput: () => null }))
-vi.mock('~/components/Table/search/VirtualSearchTableView', () => ({ VirtualSearchTableView: () => null }))
 
 const row: ITreasuryRow = {
 	name: 'Example',
@@ -56,35 +29,23 @@ function treasury(overrides: Partial<RawTreasuryProtocol> = {}): RawTreasuryProt
 }
 
 describe('treasury table columns', () => {
-	test('keeps protocol-only metrics out of entity treasuries after switching to accessor functions', () => {
-		renderToStaticMarkup(<Treasuries data={[{ ...row, protocolHref: null }]} entity />)
-		const entityTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
-			csvFileName: string
-		}
-		renderToStaticMarkup(<Treasuries data={[row]} entity={false} />)
-		const protocolTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
-			csvFileName: string
-		}
-		const columnIds = (columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>) =>
-			columns.map((column) => column.id ?? ('accessorKey' in column ? column.accessorKey : ''))
-		const entityColumnIds = columnIds(entityTable.columns)
-		const protocolColumnIds = columnIds(protocolTable.columns)
-		for (const id of ['ownTokens', 'coreTvl', 'mcap']) {
-			expect(entityColumnIds).not.toContain(id)
-			expect(protocolColumnIds).toContain(id)
-		}
-		expect(entityColumnIds).toContain('tvl')
-		expect(renderCsv.mock.calls.at(-2)?.[0]).toBe('entities')
-		expect(renderCsv.mock.calls.at(-1)?.[0]).toBe('treasuries')
+	const columnIds = (entity: boolean) =>
+		treasuryTableColumns(entity).map((column) => column.id ?? ('accessorKey' in column ? column.accessorKey : ''))
 
-		const mcapColumn = protocolTable.columns.find((column) => column.id === 'mcap')
-		if (!mcapColumn || !('accessorFn' in mcapColumn) || !mcapColumn.accessorFn) {
-			throw new Error('Missing Mcap accessor')
+	test('keeps protocol-only metrics out of entity treasuries', () => {
+		for (const id of ['ownTokens', 'coreTvl', 'mcap']) {
+			expect(columnIds(true)).not.toContain(id)
+			expect(columnIds(false)).toContain(id)
 		}
-		expect(mcapColumn.accessorFn(row, 0)).toBeUndefined()
-		expect(mcapColumn.accessorFn({ ...row, mcap: 5 }, 0)).toBe(5)
+		expect(columnIds(true)).toContain('tvl')
+	})
+
+	test('leaves a zero market cap blank rather than showing $0', () => {
+		const mcap = treasuryTableColumns(false).find((column) => column.id === 'mcap')
+		if (!mcap || !('accessorFn' in mcap) || !mcap.accessorFn) throw new Error('Missing Mcap accessor')
+
+		expect(mcap.accessorFn(row, 0)).toBeUndefined()
+		expect(mcap.accessorFn({ ...row, mcap: 5 }, 0)).toBe(5)
 	})
 })
 

@@ -1,120 +1,129 @@
-import type { ReactNode } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
-
-vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers', push: () => {} }) }))
-vi.mock('../Drawer', () => ({
-	Drawer: ({ title, children }: { title: string; children: ReactNode }) => (
-		<div>
-			<span>title:{title}</span>
-			{children}
-		</div>
-	)
-}))
-vi.mock('../RadarChart', () => ({ RadarChart: () => <div>radar</div> }))
-vi.mock('~/components/Link', () => ({
-	BasicLink: ({ href, children }: { href: string; children: ReactNode }) => <a href={href}>{children}</a>
-}))
-vi.mock('../client', () => ({
-	requestLeadClickId: () => Promise.resolve(null),
-	useSubmitLead: () => ({
-		isPending: false,
-		isSuccess: false,
-		isError: false,
-		reset: () => {},
-		mutate: () => {}
-	}),
-	useMarketMakerDetail: () => ({
-		isPending: false,
-		data: {
-			id: 'lhava',
-			name: 'Lhava',
-			description: 'A liquidity provider',
-			countryCode: 'SG',
-			website: 'https://lhava.io',
-			imageUrl: 'https://img.example/lhava.png',
-			activeEngagementsCount: 12,
-			averageFDV: 250_000_000,
-			engagementOptions: ['loan_call_option', 'retainer_working_capital'],
-			services: ['Treasury Management', 'OTC Liquidation'],
-			supportedCEX: [
-				{ label: 'Binance', value: 'binance', url: 'https://img.example/binance.png', order: 1, type: 'CEX' }
-			],
-			supportedDEX: [
-				{ label: 'Uniswap V3', value: 'uniswap-v3', url: 'https://img.example/uni.png', order: 2, type: 'DEX' }
-			]
-		}
-	}),
-	useMarketMakerBreakdown: () => ({
-		isPending: false,
-		data: {
-			aggregatedRank: { value: 1, percentile: 99 },
-			depthRank: { value: 2, percentile: 95 },
-			volumeRank: { value: 3, percentile: 90 },
-			spreadRank: { value: 4, percentile: 85 },
-			kpiRank: { value: 5, percentile: 80 }
-		}
-	}),
-	useMarketMakerPerformance: () => ({
-		isPending: false,
-		data: {
-			composite: 9.5,
-			tradingKpis: 8.25,
-			trustIntegration: 7,
-			coverageCapabilities: 6,
-			uptime: 5,
-			integrationLevel: 4,
-			integrationStatus: 'full'
-		}
-	})
-}))
-
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/test/chartCanvas'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { MMDetailDrawer } from '../MMDetailDrawer'
 
-describe('MMDetailDrawer', () => {
-	test('renders the about section, a per-board card label and a score from the hook data', () => {
-		const html = renderToStaticMarkup(
-			<MMDetailDrawer open onClose={() => {}} marketMakerId="lhava" range={{}} badge="Last 30-day" />
-		)
-
-		expect(html).toContain('About Lhava')
-		expect(html).toContain('A liquidity provider')
-		expect(html).toContain('Fully Integrated')
-		expect(html).toContain('Singapore')
-		expect(html).toContain('KPI Adherence Leaderboard')
-		expect(html).toContain('9.50/10.00')
-		expect(html).toContain('Outperformed 99% of their peers across all major KPIs.')
-		expect(html).toContain('Active Engagements in Forgd')
-		expect(html).toContain('Loan + Call Option')
-		expect(html).toContain('Retainer + Working Capital')
-		expect(html).toContain('Major CEXs Supported')
-		expect(html).toContain('Binance')
-		expect(html).toContain('Uniswap V3')
-		expect(html).toContain('Treasury Management')
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers', push: vi.fn() }) }))
+const http = installFixtureFetch()
+const detail = {
+	id: 'lhava',
+	name: 'Lhava',
+	description: 'A liquidity provider',
+	countryCode: 'SG',
+	website: 'https://lhava.io',
+	imageUrl: 'https://img.example/lhava.png',
+	activeEngagementsCount: 12,
+	averageFDV: 250_000_000,
+	engagementOptions: ['loan_call_option', 'retainer_working_capital'],
+	services: ['Treasury Management', 'OTC Liquidation'],
+	supportedCEX: [{ label: 'Binance', value: 'binance', url: 'https://img.example/binance.png', order: 1, type: 'CEX' }],
+	supportedDEX: [
+		{ label: 'Uniswap V3', value: 'uniswap-v3', url: 'https://img.example/uni.png', order: 2, type: 'DEX' }
+	]
+}
+const performance = {
+	marketMakerId: 'lhava',
+	composite: 9.5,
+	tradingKpis: 8.25,
+	trustIntegration: 7,
+	coverageCapabilities: 6,
+	uptime: 5,
+	integrationLevel: 4,
+	integrationStatus: 'full'
+}
+let root: Root
+let container: HTMLDivElement
+let client: QueryClient
+beforeEach(() => {
+	installChartCanvas()
+	client = new QueryClient()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+	http.serve({
+		'/api/public/market-makers/details': [detail],
+		'/api/public/market-makers/performance': [performance],
+		'/api/public/market-makers/aggregated': [{ marketMakerId: 'lhava', rank: { value: 1, percentile: 99 } }],
+		'/api/public/market-makers/depth': { depth200: [{ marketMakerId: 'lhava', rank: { value: 2, percentile: 95 } }] },
+		'/api/public/market-makers/volume': [
+			{
+				marketMakerId: 'lhava',
+				rank: { value: 3, percentile: 90 },
+				orderFillVolumeTotal: { value: 1234, percentile: 90, rank: 3 }
+			}
+		],
+		'/api/public/market-makers/spread': [{ marketMakerId: 'lhava', rank: { value: 4, percentile: 85 } }],
+		'/api/public/market-makers/kpi': [{ marketMakerId: 'lhava', rank: { value: 5, percentile: 80 } }]
 	})
-
-	test('labels the trustIntegration score row as Trust', () => {
-		const html = renderToStaticMarkup(
-			<MMDetailDrawer open onClose={() => {}} marketMakerId="lhava" range={{}} badge="Last 30-day" />
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	client.clear()
+	container.remove()
+	vi.restoreAllMocks()
+})
+async function mount(focusSection?: 'volume') {
+	const close = vi.fn()
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<MMDetailDrawer
+					open
+					onClose={close}
+					marketMakerId="lhava"
+					range={{}}
+					badge="Last 30-day"
+					focusSection={focusSection}
+				/>
+			</QueryClientProvider>
 		)
-		expect(html).toContain('>Trust<')
-		expect(html).not.toContain('Trust &amp; Integration')
-	})
+	)
+	return close
+}
 
-	test('marks each breakdown table with a data-breakdown-section anchor for focus scrolling', () => {
-		const html = renderToStaticMarkup(
-			<MMDetailDrawer
-				open
-				onClose={() => {}}
-				marketMakerId="lhava"
-				range={{}}
-				badge="Last 30-day"
-				focusSection="volume"
-			/>
-		)
-		expect(html).toContain('data-breakdown-section="depth"')
-		expect(html).toContain('data-breakdown-section="volume"')
-		expect(html).toContain('data-breakdown-section="spread"')
-		expect(html).toContain('data-breakdown-section="kpi"')
+test('loads the selected market maker and renders its scores, services and venue names', async () => {
+	const close = await mount()
+	await vi.waitFor(async () => {
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 10))
+		})
+		// Description, scores and rank come from separate requests; wait for all three.
+		const text = document.querySelector('[role="dialog"]')?.textContent
+		expect(text).toContain('A liquidity provider')
+		expect(text).toContain('9.50/10.00')
+		expect(text).toContain('Outperformed 99%')
 	})
+	const dialog = document.querySelector('[role="dialog"]')!
+	expect(dialog.textContent).toContain('Singapore')
+	expect(dialog.textContent).toContain('Fully Integrated')
+	expect(dialog.textContent).toContain('Loan + Call Option')
+	expect(dialog.textContent).toContain('Retainer + Working Capital')
+	expect(dialog.textContent).toContain('Binance')
+	expect(dialog.textContent).toContain('Uniswap V3')
+	expect(dialog.textContent).toContain('Treasury Management')
+	await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click())
+	expect(close).toHaveBeenCalledOnce()
+})
+
+test('scrolls to the requested volume breakdown after its data loads', async () => {
+	const targets: Array<HTMLElement> = []
+	const scroll = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(function () {
+		targets.push(this)
+	})
+	try {
+		await mount('volume')
+		await vi.waitFor(async () => {
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 20))
+			})
+			expect(targets.at(-1)?.textContent).toContain('Volume KPIs')
+		})
+		expect(targets.at(-1)?.textContent).toContain('$1.23K')
+	} finally {
+		scroll.mockRestore()
+	}
 })

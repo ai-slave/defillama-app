@@ -1,22 +1,20 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ArticleMultiPicker } from '../admin/ArticleMultiPicker'
 import { ArticlePicker } from '../admin/ArticlePicker'
 import type { ArticleDocument } from '../types'
 
-const listArticles = vi.fn()
+const session = installSubscriberSession('editor-1')
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ authorizedFetch: vi.fn() })
-}))
-
-vi.mock('~/containers/Articles/api', () => ({
-	listArticles: (...args: Array<unknown>) => listArticles(...args)
-}))
+// Each /articles request takes the next queued answer; the last one repeats. An Error answers with a 503.
+let answers: Array<{ items: Array<ArticleDocument> } | Error | ((query: string | null) => Array<ArticleDocument>)> = []
+function answerArticles(...next: typeof answers) {
+	answers = next
+}
 
 function article(id: string, title: string) {
 	return { id, title, slug: id, section: null } as unknown as ArticleDocument
@@ -35,11 +33,9 @@ async function flush() {
 describe('article pickers keep known titles', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let queryClient: QueryClient
-
 	function render(element: ReactElement) {
 		return act(async () => {
-			root.render(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
+			root.render(<session.Wrapper>{element}</session.Wrapper>)
 		})
 	}
 
@@ -48,24 +44,30 @@ describe('article pickers keep known titles', () => {
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-		listArticles.mockReset()
+		answers = []
+		session.serve({
+			'/articles': (url: URL) => {
+				const answer = answers.length > 1 ? answers.shift()! : answers[0]
+				if (answer instanceof Error) return new Response(answer.message, { status: 503 })
+				const items = typeof answer === 'function' ? answer(url.searchParams.get('query')) : answer.items
+				return { items, nextCursor: null }
+			}
+		})
 	})
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
-		queryClient.clear()
 	})
 
 	test('multi picker keeps a resolved title when another selection is removed and the new lookup fails', async () => {
-		listArticles.mockResolvedValueOnce({ items: [alpha, beta], nextCursor: null })
+		answerArticles({ items: [alpha, beta] })
 		await render(<ArticleMultiPicker value={['article-a', 'article-b']} onChange={vi.fn()} />)
 		await flush()
 		expect(container.textContent).toContain('Alpha report')
 		expect(container.textContent).toContain('Beta report')
 
-		listArticles.mockRejectedValue(new Error('offline'))
+		answerArticles(new Error('offline'))
 		await render(<ArticleMultiPicker value={['article-a']} onChange={vi.fn()} />)
 		await flush()
 		expect(container.textContent).toContain('Alpha report')
@@ -73,13 +75,13 @@ describe('article pickers keep known titles', () => {
 	})
 
 	test('multi picker adopts a fresh title when a later lookup succeeds', async () => {
-		listArticles.mockResolvedValueOnce({ items: [alpha], nextCursor: null })
+		answerArticles({ items: [alpha] })
 		await render(<ArticleMultiPicker value={['article-a']} onChange={vi.fn()} />)
 		await flush()
 		expect(container.textContent).toContain('Alpha report')
 		expect(container.textContent).not.toContain('Beta report')
 
-		listArticles.mockResolvedValueOnce({ items: [article('article-a', 'Alpha report v2'), beta], nextCursor: null })
+		answerArticles({ items: [article('article-a', 'Alpha report v2'), beta] })
 		await render(<ArticleMultiPicker value={['article-a', 'article-b']} onChange={vi.fn()} />)
 		await flush()
 		expect(container.textContent).toContain('Alpha report v2')
@@ -91,10 +93,7 @@ describe('article pickers keep known titles', () => {
 	}
 
 	test('single picker keeps the selected title when its search results move on', async () => {
-		listArticles.mockImplementation(async ({ query }) => ({
-			items: query === 'Beta' ? [beta] : [alpha],
-			nextCursor: null
-		}))
+		answerArticles((query) => (query === 'Beta' ? [beta] : [alpha]))
 		await render(<ArticlePicker value="article-a" onChange={vi.fn()} />)
 		await flush()
 		expect(selectedLabel()).toBe('Alpha report')
@@ -118,12 +117,12 @@ describe('article pickers keep known titles', () => {
 	})
 
 	test('single picker never shows another article title when the new selection fails to resolve', async () => {
-		listArticles.mockResolvedValueOnce({ items: [alpha], nextCursor: null })
+		answerArticles({ items: [alpha] })
 		await render(<ArticlePicker value="article-a" onChange={vi.fn()} />)
 		await flush()
 		expect(selectedLabel()).toBe('Alpha report')
 
-		listArticles.mockRejectedValue(new Error('offline'))
+		answerArticles(new Error('offline'))
 		await render(<ArticlePicker value="article-b" onChange={vi.fn()} />)
 		await flush()
 		expect(selectedLabel()).toBe('Search articles by title…')

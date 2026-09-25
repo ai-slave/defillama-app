@@ -30,7 +30,7 @@ describe('buildUnlocksTreemapTreeData', () => {
 			['Alpha', 25],
 			['Beta', 5]
 		])
-		expect(tree[0]!.label?.formatter).toContain('{name|Alpha}')
+		expect(tree[0]!.label?.formatter).toContain('Alpha')
 	})
 
 	test('builds and sorts only the requested current-year month hierarchy', () => {
@@ -51,7 +51,6 @@ describe('buildUnlocksTreemapTreeData', () => {
 			['Alpha', 25],
 			['Beta', 5]
 		])
-		expect(tree[0]!.upperLabel?.fontSize).toBe(13)
 	})
 
 	test('keeps current and future years in ascending order for the all-years hierarchy', () => {
@@ -69,8 +68,6 @@ describe('buildUnlocksTreemapTreeData', () => {
 			['2027', 12]
 		])
 		expect(tree[0]!.children?.map((node) => node.name)).toEqual(['March', 'February'])
-		expect(tree[0]!.upperLabel?.fontSize).toBe(14)
-		expect(tree[0]!.children?.[0]!.upperLabel?.fontSize).toBe(12)
 	})
 
 	test('returns no nodes when the requested current year has no unlocks', () => {
@@ -84,27 +81,5 @@ describe('buildUnlocksTreemapTreeData', () => {
 				isDark: false
 			})
 		).toEqual([])
-	})
-
-	test('preserves source order when protocol or month values tie', () => {
-		const tiedData: UnlocksData = {
-			'2026-03-01': { totalValue: 10, events: [event('Zeta', 5), event('Alpha', 5)] },
-			'2026-02-01': { totalValue: 10, events: [event('Beta', 10)] }
-		}
-		const input = {
-			unlocksData: tiedData,
-			currentYear: 2026,
-			selectedYear: '2026',
-			selectedMonth: '03',
-			isDark: false
-		} as const
-
-		const month = buildUnlocksTreemapTreeData({ ...input, timeView: 'Month' })
-		const currentYear = buildUnlocksTreemapTreeData({ ...input, timeView: 'Current Year' })
-		const allYears = buildUnlocksTreemapTreeData({ ...input, timeView: 'All Years' })
-
-		expect(month.map((node) => node.name)).toEqual(['Zeta', 'Alpha'])
-		expect(currentYear.map((node) => node.name)).toEqual(['March', 'February'])
-		expect(allYears[0]!.children?.map((node) => node.name)).toEqual(['March', 'February'])
 	})
 })

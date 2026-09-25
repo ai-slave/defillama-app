@@ -7,7 +7,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
-import { ReturnModal } from '~/containers/Subscription/components/ReturnModal'
+import { getReturnIntentAction, ReturnModal, withoutReturnUrl } from '~/containers/Subscription/components/ReturnModal'
 import {
 	COMPARISON_SECTIONS,
 	FAQ_ITEMS,
@@ -95,19 +95,23 @@ function SubscriptionContent() {
 
 	useEffect(() => {
 		let cancelled = false
-		if (isAuthenticated && returnUrl && handledReturnUrlRef.current !== returnUrl && !loaders.userLoading) {
-			if (isNewSignup) {
+		const action = getReturnIntentAction({
+			isAuthenticated,
+			userLoading: loaders.userLoading,
+			isNewSignup,
+			returnUrl,
+			handledReturnUrl: handledReturnUrlRef.current
+		})
+		if (action === 'consume') {
+			handledReturnUrlRef.current = returnUrl
+			void replace({ pathname, query: withoutReturnUrl(query) }, undefined, { shallow: true })
+			consumeSignupOutcome()
+		} else if (action === 'prompt') {
+			queueMicrotask(() => {
+				if (cancelled) return
 				handledReturnUrlRef.current = returnUrl
-				const { returnUrl: _ignoredReturnUrl, ...nextQuery } = query
-				void replace({ pathname, query: nextQuery }, undefined, { shallow: true })
-				consumeSignupOutcome()
-			} else {
-				queueMicrotask(() => {
-					if (cancelled) return
-					handledReturnUrlRef.current = returnUrl
-					setShowReturnModal(true)
-				})
-			}
+				setShowReturnModal(true)
+			})
 		}
 
 		return () => {

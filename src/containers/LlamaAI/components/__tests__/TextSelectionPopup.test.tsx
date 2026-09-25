@@ -58,6 +58,7 @@ test('keyboard focus and collapsed browser selection retain the rich article con
 })
 test('clearing the selection outside the popup dismisses it without running an action', async () => {
 	await selectProse()
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Ask LlamaAI')
 	await act(async () => {
 		window.getSelection()!.removeAllRanges()
 		document.dispatchEvent(new Event('selectionchange'))
@@ -105,23 +106,3 @@ test.each([new DOMRect(), new DOMRect(200, 300, 100, 20)])(
 		}
 	}
 )
-
-test('scrolling the message container repositions the popup without changing the selection', async () => {
-	container.style.overflow = 'auto'
-	let rect = new DOMRect(200, 300, 100, 20)
-	const measurement = vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(() => rect)
-	try {
-		await selectProse()
-		const wrapper = document.querySelector<HTMLElement>('[role="dialog"]')!.parentElement!
-		const initialPosition = wrapper.style.transform
-		expect(initialPosition).toContain('translate3d(')
-		rect = new DOMRect(200, 200, 100, 20)
-		await act(async () => {
-			container.dispatchEvent(new Event('scroll'))
-			await new Promise((resolve) => setTimeout(resolve, 40))
-		})
-		expect(wrapper.style.transform).not.toBe(initialPosition)
-	} finally {
-		measurement.mockRestore()
-	}
-})

@@ -4,7 +4,6 @@ import {
 	buildRwaPlatformEntityCsvDataset,
 	getRwaPlatformChartMetricsQuery,
 	parseRwaPlatformChartMetrics,
-	RWA_PLATFORM_CHART_METRICS,
 	type RWAPlatformChartInputs
 } from '../metrics'
 
@@ -63,17 +62,6 @@ describe('the metrics query', () => {
 		expect(getRwaPlatformChartMetricsQuery(['activeMcap'])).toBeUndefined()
 		expect(getRwaPlatformChartMetricsQuery([])).toBeUndefined()
 		expect(getRwaPlatformChartMetricsQuery(['activeMcap', 'netFlows'])).toBe('activeMcap,netFlows')
-	})
-
-	test('lists twelve metrics in five groups', () => {
-		expect(RWA_PLATFORM_CHART_METRICS).toHaveLength(12)
-		expect([...new Set(RWA_PLATFORM_CHART_METRICS.map((metric) => metric.group))]).toEqual([
-			'Core',
-			'Flows',
-			'Ratios',
-			'Assets',
-			'Annotations'
-		])
 	})
 })
 
@@ -177,11 +165,18 @@ describe('buildRwaPlatformEntityChart', () => {
 	})
 
 	test('writes the csv as one wide table over the union of timestamps', () => {
-		const chart = buildRwaPlatformEntityChart(['defiActiveTvl', 'netFlows'], inputs)
+		// DeFi Active TVL has no day(1) point while Net Flows does, so day(1) only exists in the second column.
+		const flows = [
+			{ timestamp: day(0) / 1000, netFlowUsd: 5, coverage: 1 },
+			{ timestamp: day(1) / 1000, netFlowUsd: 7, coverage: 1 },
+			{ timestamp: day(2) / 1000, netFlowUsd: -3, coverage: 1 }
+		]
+		const chart = buildRwaPlatformEntityChart(['defiActiveTvl', 'netFlows'], { ...inputs, flows })
 		expect(buildRwaPlatformEntityCsvDataset(chart.series, 'daily')).toEqual({
 			dimensions: ['timestamp', 'DeFi Active TVL', 'Net Flows'],
 			source: [
 				[day(0), 10, 5],
+				[day(1), null, 7],
 				[day(2), 30, -3]
 			],
 			groupBy: 'daily'

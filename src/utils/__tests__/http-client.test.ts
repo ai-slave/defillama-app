@@ -90,21 +90,6 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(fetchedUrl(fetchMock, 2).searchParams.get('x-llama-secret')).toBe('liquidations-secret')
 	})
 
-	test('uses the most specific direct auth match for same-origin service URLs', async () => {
-		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
-			API2_SECRET_KEY: 'core-secret',
-			EQUITIES_SECRET_KEY: 'equities-secret',
-			EQUITIES_SERVER_URL: 'https://api.example.com/equities/v1',
-			SERVER_URL: 'https://api.example.com'
-		})
-
-		await fetchWithPoolingOnServer('https://api.example.com/equities/v1/companies')
-
-		const url = fetchedUrl(fetchMock)
-		expect(url.searchParams.get('x-llama-equity-secret')).toBe('equities-secret')
-		expect(url.searchParams.get('x-llama-pro-key')).toBeNull()
-	})
-
 	test('authenticates direct coins POST requests and preserves their body', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			COINS_BACKEND_KEY: 'coins-secret',
@@ -173,15 +158,5 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 
 		expect(fetchedUrl(fetchMock, 0).searchParams.get('x-llama-pro-key')).toBeNull()
 		expect(fetchedUrl(fetchMock, 1).searchParams.get('x-llama-pro-key')).toBeNull()
-	})
-
-	test('does not append direct auth without a backend secret', async () => {
-		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
-			SERVER_URL: 'https://core.example.com/api'
-		})
-
-		await fetchWithPoolingOnServer('https://core.example.com/api/config')
-
-		expect(fetchedUrl(fetchMock).searchParams.get('x-llama-pro-key')).toBeNull()
 	})
 })

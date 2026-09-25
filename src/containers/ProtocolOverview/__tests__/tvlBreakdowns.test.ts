@@ -1,63 +1,62 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+	protocolTvlBreakdown,
+	protocolTvlByChainBreakdown
+} from '~/containers/ProDashboard/server/chartBuilder/protocols'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	getProtocolChainBreakdownData: vi.fn(),
-	getTvlBreakdownData: vi.fn()
+vi.mock('~/server/db/llama', () => ({
+	llamaDb: {
+		any: async () => [
+			{
+				protocol_slug: 'aave',
+				parent_protocol_slug: null,
+				category: 'Lending',
+				tvl: 60,
+				exclude_tvl_from_parent: false
+			}
+		]
+	}
 }))
-
-vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/byChain', () => ({
-	getProtocolChainBreakdownData: mocks.getProtocolChainBreakdownData
-}))
-
-vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/tvl', () => ({
-	getTvlBreakdownData: mocks.getTvlBreakdownData
-}))
-
+const http = installFixtureFetch()
 beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.getProtocolChainBreakdownData.mockResolvedValue({ series: [], metadata: { metric: 'TVL' } })
-	mocks.getTvlBreakdownData.mockResolvedValue({ series: [], metadata: { metric: 'TVL' } })
+	http.serve({
+		'/lite/protocols2': { protocols: [], parentProtocols: [], chains: [], protocolCategories: [] },
+		'/v2/chart/tvl/protocol/aave/chain-breakdown': [
+			[86_400, { Gnosis: 10, 'OP Mainnet': 20, 'ZKsync Era': 30, Ethereum: 1000 }]
+		],
+		'/lite/charts/Gnosis': { tvl: [[86_400, 10]] },
+		'/lite/charts/OP%20Mainnet': { tvl: [[86_400, 20]] },
+		'/lite/charts/ZKsync%20Era': { tvl: [[86_400, 30]] }
+	})
 })
-
-describe('ProtocolOverview TVL chart-builder breakdown routes', () => {
-	test('normalizes saved legacy chain aliases for protocol TVL breakdowns', async () => {
-		const { protocolTvlBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/protocols')
-
-		await protocolTvlBreakdown.handle({
+describe('saved legacy chain aliases in TVL breakdown routes', () => {
+	test('includes only the canonical chains in the protocol total', async () => {
+		const result = await protocolTvlBreakdown.handle({
 			method: 'GET',
 			url: '',
 			headers: {},
 			query: { chains: 'xdai,optimism,era', limit: '5' }
 		})
-
-		expect(mocks.getTvlBreakdownData).toHaveBeenCalledWith(
-			['Gnosis', 'OP Mainnet', 'ZKsync Era'],
-			[],
-			5,
-			false,
-			'include',
-			'include'
-		)
+		expect(result.status).toBe(200)
+		expect('serializedJson' in result ? JSON.parse(result.serializedJson) : result.body).toMatchObject({
+			series: [{ name: 'aave', data: [[86_400, 60]] }]
+		})
 	})
-
-	test('normalizes saved legacy chain aliases for protocol TVL by-chain breakdowns', async () => {
-		const { protocolTvlByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/protocols')
-
-		await protocolTvlByChainBreakdown.handle({
+	test('includes canonical chains and excludes unrelated chains in the chain breakdown', async () => {
+		const result = await protocolTvlByChainBreakdown.handle({
 			method: 'GET',
 			url: '',
 			headers: {},
 			query: { protocol: 'aave', chains: 'xdai,optimism,era', limit: '3' }
 		})
-
-		expect(mocks.getProtocolChainBreakdownData).toHaveBeenCalledWith({
-			protocol: 'aave',
-			metric: 'tvl',
-			chains: ['Gnosis', 'OP Mainnet', 'ZKsync Era'],
-			topN: 3,
-			chainFilterMode: 'include',
-			chainCategoryFilterMode: 'include',
-			chainCategories: []
+		expect(result.status).toBe(200)
+		expect('serializedJson' in result ? JSON.parse(result.serializedJson) : result.body).toMatchObject({
+			series: [
+				{ name: 'ZKsync Era', data: [[86_400, 30]] },
+				{ name: 'OP Mainnet', data: [[86_400, 20]] },
+				{ name: 'Gnosis', data: [[86_400, 10]] }
+			]
 		})
 	})
 })

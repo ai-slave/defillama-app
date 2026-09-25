@@ -143,3 +143,68 @@ export function buildRuntimePieChartPresentation({
 	}
 	return { chartData, stackColors }
 }
+
+/**
+ * Pixel layout for a pie beside a right-side legend: the pie centers in the width the legend leaves, and
+ * the watermark sits on that center, shrunk to fit small pies. Without a reserved legend the pie centers
+ * in the whole canvas.
+ */
+export function buildPieLayoutOption({
+	width,
+	height,
+	reservedRight,
+	centerY,
+	showLegend,
+	isSmall,
+	canvasWatermarkEnabled,
+	isDark
+}: {
+	width: number
+	height: number
+	reservedRight: number
+	centerY: string
+	showLegend: boolean
+	isSmall: boolean
+	canvasWatermarkEnabled: boolean
+	isDark: boolean
+}) {
+	const availableW = Math.max(1, width - reservedRight)
+	const cx = Math.round(availableW / 2)
+	const cy = Math.round((Number.parseFloat(centerY) / 100) * height)
+	const minDim = Math.max(1, Math.min(height, width - reservedRight))
+	let watermarkHeight = 40
+	let watermarkWidth = Math.round(watermarkHeight * (389 / 133))
+	const maxWidth = minDim * 0.6
+	if (watermarkWidth > maxWidth) {
+		const scale = maxWidth / watermarkWidth
+		watermarkWidth = Math.round(watermarkWidth * scale)
+		watermarkHeight = Math.max(20, Math.round(watermarkHeight * scale))
+	}
+
+	return {
+		series: {
+			center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
+		},
+		...(canvasWatermarkEnabled
+			? {
+					graphic: [
+						{
+							id: 'defillama-watermark',
+							type: 'image' as const,
+							zlevel: 10,
+							z: 999,
+							silent: true,
+							left: Math.round(cx - watermarkWidth / 2),
+							top: Math.round(cy - watermarkHeight / 2),
+							style: {
+								image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+								width: watermarkWidth,
+								height: watermarkHeight,
+								opacity: 0.3
+							}
+						}
+					]
+				}
+			: {})
+	}
+}

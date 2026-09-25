@@ -16,6 +16,7 @@ import {
 	type ProtocolRankingQuery
 } from './tableQuery'
 import type { IProtocol } from './types'
+import { getSearchExpandedRows } from './utils'
 
 type ExportColumn = { key: string; name: string; formula?: string }
 
@@ -175,18 +176,10 @@ export function useRemoteProtocolRankingsTable({
 			return { ...page, version: page.snapshot }
 		}
 	})
-	const searchExpanded = useMemo<ExpandedState | null>(() => {
-		const normalizedQuery = search.trim().toLowerCase()
-		if (!enabled || !normalizedQuery || pages.loadedQuerySignature !== querySignature) return null
-		const expanded: Record<string, boolean> = {}
-		for (let index = 0; index < pages.rows.length; index++) {
-			const row = pages.rows[index]
-			if (row?.childProtocols?.length && !row.name.toLowerCase().includes(normalizedQuery)) {
-				expanded[row.id ?? `root:${row.slug || index}`] = true
-			}
-		}
-		return expanded
-	}, [enabled, pages.loadedQuerySignature, pages.rows, querySignature, search])
+	const searchExpanded = useMemo<ExpandedState | null>(
+		() => (enabled && pages.loadedQuerySignature === querySignature ? getSearchExpandedRows(pages.rows, search) : null),
+		[enabled, pages.loadedQuerySignature, pages.rows, querySignature, search]
+	)
 
 	const [csvLoading, setCsvLoading] = useState(false)
 	const csvPendingRef = useRef(false)

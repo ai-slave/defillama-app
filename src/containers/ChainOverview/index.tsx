@@ -8,7 +8,6 @@ import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredRes
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
-import { getMainSiteIrDashboard, isMainSiteIrVisible } from '~/containers/Investors/mainSiteDashboards'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
@@ -16,6 +15,7 @@ import { Icon } from '~/ui/Icon'
 import { PanelStatus } from '~/ui/Status'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
+import { getChainInvestorRelationsTab } from './investorRelationsTab'
 import { SmolStats } from './SmolStats'
 import { Stats } from './Stats'
 import type { IChainOverviewData } from './types'
@@ -29,9 +29,12 @@ export function ChainOverview(props: IChainOverviewData) {
 	const entitySlug = slug(props.metadata.name)
 	const researchSponsorEntitySlug = props.researchSponsorEntitySlug ?? entitySlug
 	const { user } = useAuthContext()
-	const irDashboard = getMainSiteIrDashboard('chain', entitySlug)
-	const showInvestorRelations = !!irDashboard && isMainSiteIrVisible(irDashboard, user?.flags?.is_llama === true)
-	const irActive = showInvestorRelations && router.query.tab === 'investor-relations'
+	const investorRelations = getChainInvestorRelationsTab(
+		props.metadata.name,
+		router.query.tab,
+		user?.flags?.is_llama === true
+	)
+	const irActive = investorRelations?.active === true
 
 	const goToTab = (tab?: string) => {
 		const query = { ...router.query }
@@ -47,7 +50,7 @@ export function ChainOverview(props: IChainOverviewData) {
 		<>
 			<RowLinksWithDropdown links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
-				{showInvestorRelations && irDashboard ? (
+				{investorRelations ? (
 					<nav className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}>
 						<TabLink
 							as="button"
@@ -66,10 +69,14 @@ export function ChainOverview(props: IChainOverviewData) {
 							data-umami-event="investor-relations-tab-click"
 							data-umami-event-entity-type="chain"
 							data-umami-event-entity={entitySlug}
-							data-umami-event-dashboard-id={irDashboard.dashboardId}
+							data-umami-event-dashboard-id={investorRelations.dashboard.dashboardId}
 							className="flex items-center gap-1.5"
 						>
-							<IrTabLabel label={irDashboard.tabLabel} gradient={irDashboard.brandGradient} active={irActive} />
+							<IrTabLabel
+								label={investorRelations.dashboard.tabLabel}
+								gradient={investorRelations.dashboard.brandGradient}
+								active={irActive}
+							/>
 						</TabLink>
 					</nav>
 				) : null}
@@ -81,11 +88,11 @@ export function ChainOverview(props: IChainOverviewData) {
 						entityName={props.metadata.name}
 					/>
 				) : null}
-				{irActive && irDashboard ? (
+				{investorRelations?.active ? (
 					<Suspense fallback={null}>
 						<InvestorRelationsView
-							dashboardId={irDashboard.dashboardId}
-							customOnly={irDashboard.customOnly}
+							dashboardId={investorRelations.dashboard.dashboardId}
+							customOnly={investorRelations.dashboard.customOnly}
 							entityName={props.metadata.name}
 							customServerData={props.customServerData}
 						/>

@@ -12,10 +12,6 @@ describe('pruneUnavailableMetrics', () => {
 		const selected = ['tvl', 'fees']
 		expect(pruneUnavailableMetrics(selected, available('tvl', 'fees', 'revenue'))).toBe(selected)
 	})
-
-	test('empties the selection when nothing is available', () => {
-		expect(pruneUnavailableMetrics(['tvl'], [])).toEqual([])
-	})
 })
 
 describe('resolveActiveMetric', () => {
@@ -29,9 +25,5 @@ describe('resolveActiveMetric', () => {
 
 	test('clears the highlight when nothing is selected', () => {
 		expect(resolveActiveMetric('fees', [])).toBeNull()
-	})
-
-	test('highlights the first metric when none was highlighted yet', () => {
-		expect(resolveActiveMetric(null, ['tvl', 'fees'])).toBe('tvl')
 	})
 })

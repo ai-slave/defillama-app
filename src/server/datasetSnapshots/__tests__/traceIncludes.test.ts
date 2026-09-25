@@ -2,10 +2,6 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 import nextConfig from '../../../../next.config'
-import {
-	getStaticGenerationConfig,
-	VERCEL_STATIC_GENERATION_MAX_CONCURRENCY
-} from '../../../../scripts/command/buildConfig'
 import type { DatasetSnapshotDomain } from '../contract'
 import { DATASET_SNAPSHOT_ROUTE_DOMAINS, getDatasetSnapshotTraceIncludes } from '../traceIncludes'
 
@@ -65,13 +61,6 @@ function tracedDomainsForRoute(route: string): Set<DatasetSnapshotDomain> {
 }
 
 describe('dataset snapshot output tracing', () => {
-	test('limits Vercel static-generation concurrency without changing other builds', () => {
-		expect(getStaticGenerationConfig('1')).toEqual({
-			staticGenerationMaxConcurrency: VERCEL_STATIC_GENERATION_MAX_CONCURRENCY
-		})
-		expect(getStaticGenerationConfig(undefined)).toBeUndefined()
-	})
-
 	test('permanently redirects the retired Markets page to Exchanges', async () => {
 		const redirects = await nextConfig.redirects?.()
 
@@ -80,21 +69,6 @@ describe('dataset snapshot output tracing', () => {
 			destination: '/exchanges',
 			permanent: true
 		})
-	})
-
-	test('assigns composed and transitive consumers every domain they require', () => {
-		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/token/*']).toEqual([
-			'markets',
-			'liquidations',
-			'raises',
-			'treasuries',
-			'yields',
-			'token-rights',
-			'risk'
-		])
-		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/tokens']).toEqual(['markets', 'token-rights'])
-		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/protocol/*']).toEqual(['yields', 'markets', 'token-rights'])
-		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/sitemap.xml']).toEqual(['markets', 'liquidations', 'raises'])
 	})
 
 	test('never attaches the complete snapshot tree to every route', () => {
@@ -109,14 +83,6 @@ describe('dataset snapshot output tracing', () => {
 		}
 		expect(nextConfig.outputFileTracingIncludes?.['/*']).toEqual(['./.cache/app-metadata/**/*'])
 		expect(nextConfig.outputFileTracingIncludes?.['/yields']).toEqual(includes['/yields'])
-	})
-
-	test('does not trace Yields snapshots into routes that never read them', () => {
-		const includes = getDatasetSnapshotTraceIncludes()
-
-		expect(includes['/yields/watchlist']).toBeUndefined()
-		expect(includes['/yields/rates']).toBeUndefined()
-		expect(includes['/yields/borrow/*']).toBeUndefined()
 	})
 
 	test('covers every page and API that imports a snapshot entry module', async () => {

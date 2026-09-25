@@ -75,21 +75,6 @@ function buildResponse(): BlockchainAPIResponse {
 }
 
 describe('buildBlockchainViewModel', () => {
-	test('builds the chart datasets once and excludes raw chart payloads from the cached model', () => {
-		const response = buildResponse()
-		const result = buildBlockchainViewModel(response)
-
-		expect(result.metadata).toBe(response.metadata)
-		expect(result.activityKpis).toBe(response.blockchain.activityKpis)
-		expect(result.gasKpis).toBe(response.blockchain.gasKpis)
-		expect(result.topTokens).toBe(response.blockchain.topTokens)
-		expect(result).not.toHaveProperty('chainActivity')
-		expect(result).not.toHaveProperty('gasFees')
-		expect(result).not.toHaveProperty('blockUtilization')
-		expect(result).not.toHaveProperty('contractDeployments')
-		expect(result).not.toHaveProperty('tokenTransfers')
-	})
-
 	test('preserves the selected series, UTC dates, zero-fill, and shared activity source', () => {
 		const result = buildBlockchainViewModel(buildResponse())
 		const { chartDatasets } = result

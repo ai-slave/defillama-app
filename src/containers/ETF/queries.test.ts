@@ -1,59 +1,54 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { ETF_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { IETFFlowApiItem, IETFSnapshotApiItem } from './api.types'
 import { buildETFChartSpec } from './chartData'
 import { getETFData } from './queries'
-
-const mocks = vi.hoisted(() => ({
-	fetchETFSnapshot: vi.fn<() => Promise<Array<IETFSnapshotApiItem>>>(),
-	fetchETFFlows: vi.fn<() => Promise<Array<IETFFlowApiItem>>>()
-}))
-
-vi.mock('./api', () => ({
-	fetchETFSnapshot: mocks.fetchETFSnapshot,
-	fetchETFFlows: mocks.fetchETFFlows
-}))
+const http = installFixtureFetch()
 
 describe('ETF API response to chart contract', () => {
-	beforeEach(() => vi.clearAllMocks())
-
 	test('normalizes raw snake-case responses and feeds the actual chart builder', async () => {
-		mocks.fetchETFSnapshot.mockResolvedValue([
-			{
-				ticker: 'ETHA',
-				issuer: 'BlackRock',
-				etf_name: 'iShares Ethereum Trust',
-				custodian: 'Coinbase',
-				pct_fee: 0.25,
-				url: 'https://example.com/etha',
-				price: 30,
-				volume: 2000,
-				aum: 400,
-				shares: 10,
-				btc: 0,
-				flows: 20,
-				asset: 'ethereum'
-			},
-			{
-				ticker: 'IBIT',
-				issuer: 'BlackRock',
-				etf_name: 'iShares Bitcoin Trust',
-				custodian: 'Coinbase',
-				pct_fee: 0.25,
-				url: 'https://example.com/ibit',
-				price: 60,
-				volume: 3000,
-				aum: 600,
-				shares: 10,
-				btc: 5,
-				flows: 30,
-				asset: 'bitcoin'
-			}
-		] satisfies Array<IETFSnapshotApiItem>)
-		mocks.fetchETFFlows.mockResolvedValue([
-			{ gecko_id: 'bitcoin', day: '2026-07-16', total_flow_usd: 100 },
-			{ gecko_id: 'ethereum', day: '2026-07-16', total_flow_usd: 25 },
-			{ gecko_id: 'bitcoin', day: '2026-07-17', total_flow_usd: -10 }
-		] satisfies Array<IETFFlowApiItem>)
+		http.serve({
+			[`${ETF_SERVER_URL}/snapshot`]: [
+				{
+					ticker: 'ETHA',
+					issuer: 'BlackRock',
+					etf_name: 'iShares Ethereum Trust',
+					custodian: 'Coinbase',
+					pct_fee: 0.25,
+					url: 'https://example.com/etha',
+					price: 30,
+					volume: 2000,
+					aum: 400,
+					shares: 10,
+					btc: 0,
+					flows: 20,
+					asset: 'ethereum'
+				},
+				{
+					ticker: 'IBIT',
+					issuer: 'BlackRock',
+					etf_name: 'iShares Bitcoin Trust',
+					custodian: 'Coinbase',
+					pct_fee: 0.25,
+					url: 'https://example.com/ibit',
+					price: 60,
+					volume: 3000,
+					aum: 600,
+					shares: 10,
+					btc: 5,
+					flows: 30,
+					asset: 'bitcoin'
+				}
+			] satisfies Array<IETFSnapshotApiItem>
+		})
+		http.serve({
+			[`${ETF_SERVER_URL}/flows`]: [
+				{ gecko_id: 'bitcoin', day: '2026-07-16', total_flow_usd: 100 },
+				{ gecko_id: 'ethereum', day: '2026-07-16', total_flow_usd: 25 },
+				{ gecko_id: 'bitcoin', day: '2026-07-17', total_flow_usd: -10 }
+			] satisfies Array<IETFFlowApiItem>
+		})
 
 		const result = await getETFData()
 		const chart = buildETFChartSpec({
@@ -85,8 +80,8 @@ describe('ETF API response to chart contract', () => {
 	})
 
 	test('keeps snapshot data usable when the optional flows request fails', async () => {
-		mocks.fetchETFSnapshot.mockResolvedValue([])
-		mocks.fetchETFFlows.mockRejectedValue(new Error('unavailable'))
+		http.serve({ [`${ETF_SERVER_URL}/snapshot`]: [] })
+		http.serve({ [`${ETF_SERVER_URL}/flows`]: fixtureStatus(404) })
 
 		await expect(getETFData()).resolves.toEqual({
 			snapshot: [],

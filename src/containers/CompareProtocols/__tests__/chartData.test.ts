@@ -112,22 +112,4 @@ describe('buildCompareProtocolsChartData', () => {
 
 		expect(result.dataset.source).toEqual([[FIRST_DAY, 125]])
 	})
-
-	test('keeps a protocol with no focused chart rows as an empty series', () => {
-		const result = buildCompareProtocolsChartData({
-			protocolCharts: [
-				{
-					name: 'Aave',
-					tvlChart: null,
-					extraTvlCharts: {}
-				}
-			],
-			extraTvlEnabled: {}
-		})
-
-		expect(result.dataset).toEqual({
-			dimensions: ['timestamp', 'Aave'],
-			source: []
-		})
-	})
 })

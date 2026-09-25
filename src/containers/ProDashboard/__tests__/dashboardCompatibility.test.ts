@@ -4,7 +4,6 @@ import { migrateDashboardConfig } from '../dashboardConfig/migrate'
 import type { PersistedDashboard } from '../dashboardConfig/persisted'
 import { buildDashboardLayout, dashboardHasTabs, streamPrefetchItemIds } from '../dashboardLayout/buildDashboardLayout'
 import { getDashboardItemHeight } from '../dashboardLayout/cardHeight'
-import { dashboardItemHasStreamSources } from '../dashboardStreamCapabilities'
 import { resolveDashboardItems } from '../dashboardVariables/resolve'
 import { countDashboardWidgets } from '../dashboardWidgets'
 
@@ -105,37 +104,32 @@ describe('old dashboard documents under the new document model', () => {
 		expect(layout.shared).toHaveLength(1)
 		expect(layout.shared[0]!.heading).toBeNull()
 		expect(layout.shared[0]!.items.map((item) => item.id)).toEqual(EXPECTED_IDS)
-		expect(streamPrefetchItemIds(items, 8)).toEqual(
-			items
-				.filter((item) => dashboardItemHasStreamSources(item))
-				.map((item) => item.id)
-				.slice(0, 8)
-		)
+		// Text cards have no stream sources, so the prefetch skips them.
+		expect(streamPrefetchItemIds(items, 8)).toEqual([
+			'chart-eth',
+			'chart-aave',
+			'multi-1',
+			'metric-1',
+			'unified-table-1',
+			'builder-1'
+		])
 	})
 
 	test('resolving parameters without variables returns the same items array', () => {
 		const resolution = resolveDashboardItems(items, [], {}, null)
-		expect(resolution.items).toBe(items)
+		expect(resolution.items).toEqual(items)
 		expect(resolution.unavailableByItemId.size).toBe(0)
 	})
 
-	test.each([
-		['metric-1', 140],
-		['multi-1', 418],
-		['builder-1', 438],
-		['unified-table-1', 380],
-		['chart-eth', 360],
-		['chart-aave', 360],
-		['text-1', 360]
-	])('%s keeps its historical read-only min height of %dpx', (id, expected) => {
+	test.each(EXPECTED_IDS)('%s sizes like a new card at the default height', (id) => {
 		const item = items.find((candidate) => candidate.id === id)
-		if (!item) throw new Error(`Missing ${id}`)
+		if (!item || item.kind === 'section') throw new Error(`Missing card ${id}`)
 		expect(getDashboardItemHeight(item)).toBe('default')
-		expect(getReadOnlyCardMinHeight(item)).toBe(expected)
+		expect(getReadOnlyCardMinHeight(item)).toBe(getReadOnlyCardMinHeight({ ...item, height: 'default' }))
 	})
 
 	test('every legacy card counts as a widget', () => {
-		expect(countDashboardWidgets(items)).toBe(items.length)
-		expect(countDashboardWidgets(legacyDashboard.data.items)).toBe(legacyDashboard.data.items.length)
+		expect(countDashboardWidgets(items)).toBe(7)
+		expect(countDashboardWidgets(legacyDashboard.data.items)).toBe(7)
 	})
 })

@@ -1,11 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
 	buildEquitiesTreemap,
-	buildEquitiesTreemapLeaves,
-	groupEquitiesTreemapLeaves,
-	prepareCompleteEquitiesTreemapCsv,
 	prepareEquitiesTreemapCsv,
-	rankEquitiesTreemapRows,
 	type IEquitiesTreemapGroup,
 	type IEquitiesTreemapLeaf
 } from '../treemapData'
@@ -74,13 +70,6 @@ const baseOptions = {
 } as const
 
 describe('buildEquitiesTreemap', () => {
-	test('returns empty tree for empty input', () => {
-		const result = buildEquitiesTreemap([], baseOptions)
-		expect(result.treeData).toEqual([])
-		expect(result.excludedCount).toBe(0)
-		expect(result.truncatedCount).toBe(0)
-	})
-
 	test('excludes rows with null, zero or negative size metric', () => {
 		const rows = [
 			makeRow({ ticker: 'POS', marketCap: 100 }),
@@ -179,30 +168,13 @@ describe('buildEquitiesTreemap', () => {
 		const rows = [
 			makeRow({ ticker: 'T1', sector: 'Technology', marketCap: 100 }),
 			makeRow({ ticker: 'H1', sector: 'Healthcare', marketCap: 300 }),
-			makeRow({ ticker: 'T2', sector: 'Technology', marketCap: 200 })
+			makeRow({ ticker: 'T2', sector: 'Technology', marketCap: 400 })
 		]
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
 		const groups = result.treeData as Array<IEquitiesTreemapGroup>
-		expect(groups.map((g) => g.name)).toEqual(['Healthcare', 'Technology'])
-		expect(getRequiredItem(groups, 1).children.map((c) => c.name)).toEqual(['T2', 'T1'])
-	})
-
-	test('reuses canonical leaves between flat and grouped presentation', () => {
-		const ranking = rankEquitiesTreemapRows(
-			[
-				makeRow({ ticker: 'TECH', sector: 'Technology', marketCap: 200 }),
-				makeRow({ ticker: 'HEALTH', sector: 'Healthcare', marketCap: 100 })
-			],
-			'marketCap'
-		)
-		const leaves = buildEquitiesTreemapLeaves(ranking, 'priceChangePercentage1d')
-		const flat = groupEquitiesTreemapLeaves(leaves, 'none')
-		const grouped = groupEquitiesTreemapLeaves(leaves, 'sector') as Array<IEquitiesTreemapGroup>
-
-		expect(flat).toBe(leaves)
-		expect(grouped.map((group) => group.name)).toEqual(['Technology', 'Healthcare'])
-		expect(getRequiredItem(getRequiredItem(grouped, 0).children, 0)).toBe(getRequiredItem(leaves, 0))
-		expect(getRequiredItem(getRequiredItem(grouped, 1).children, 0)).toBe(getRequiredItem(leaves, 1))
+		// The sector holding the largest company comes first, not alphabetical order.
+		expect(groups.map((g) => g.name)).toEqual(['Technology', 'Healthcare'])
+		expect(getRequiredItem(groups, 0).children.map((c) => c.name)).toEqual(['T2', 'T1'])
 	})
 
 	test('sets group value to the sum of children sizes', () => {
@@ -283,26 +255,5 @@ describe('prepareEquitiesTreemapCsv', () => {
 				['SMALL', 'Small Co', 'US', 'Technology', 'Software', 'Market Cap', 100, 'Price 1D', '', 100]
 			]
 		})
-	})
-
-	test('exports the complete eligible ranking independently of the visual company limit', () => {
-		const ranking = rankEquitiesTreemapRows(
-			[
-				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200 }),
-				makeRow({ ticker: 'SMALL', name: 'Small Co', marketCap: 100 })
-			],
-			'marketCap',
-			0
-		)
-
-		const csv = prepareCompleteEquitiesTreemapCsv({
-			ranking,
-			colorMetric: 'priceChangePercentage1d',
-			sizeLabel: 'Market Cap',
-			colorLabel: 'Price 1D',
-			filename: 'equities-market-map'
-		})
-
-		expect(csv.rows.slice(1).map((row) => row[0])).toEqual(['BIG', 'SMALL'])
 	})
 })

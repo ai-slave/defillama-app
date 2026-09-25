@@ -1,4 +1,6 @@
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
+import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { slug } from '~/utils'
 import type { IProtocolMetricsV2 } from './api.types'
 
 export function resolveProtocolCategory({
@@ -32,4 +34,19 @@ export function resolveProtocolCategory({
 	}
 
 	return topChildCategory
+}
+
+// Parent protocols spread across categories: the protocol's own category leads, children add the rest.
+export function getProtocolInfoCategories(
+	category: string | null | undefined,
+	childProtocols: ReadonlyArray<{ category?: string | null }>
+): Array<{ label: string; href: string }> {
+	const categories: Array<{ label: string; href: string }> = []
+	const seen = new Set<string>()
+	for (const label of [category, ...childProtocols.map((child) => child.category)]) {
+		if (!label || seen.has(label)) continue
+		seen.add(label)
+		categories.push({ label, href: getCategoryRoute(slug(label)) })
+	}
+	return categories
 }

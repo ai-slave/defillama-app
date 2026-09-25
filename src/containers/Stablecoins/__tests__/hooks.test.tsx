@@ -1,18 +1,5 @@
-import { flexRender, type Table } from '@tanstack/react-table'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { calcCirculating, groupBridgeData, groupChainsPegged } from '../hooks'
-import type { tableFeaturesConfig } from '../StablecoinUsageByChainTable'
-import { StablecoinByChainUsageTable } from '../StablecoinUsageByChainTable'
-
-type BridgeRow = ReturnType<typeof groupBridgeData>[number]
-const captured = vi.hoisted(() => ({ table: null as Table<typeof tableFeaturesConfig, BridgeRow> | null }))
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({ table: instance }: { table: Table<typeof tableFeaturesConfig, BridgeRow> }) => {
-		captured.table = instance
-		return null
-	}
-}))
 
 let chainGroupSettings: Record<string, boolean> = {}
 
@@ -327,33 +314,5 @@ describe('useGroupBridgeData', () => {
 			bridgedPercent: 100,
 			bridgeInfo: { name: name === 'Natively Issued' ? '-' : name }
 		})
-	})
-
-	test('sorts actual table percentages in both directions and formats only the cell', () => {
-		const data = groupBridgeData(
-			[100, null, 9.1234, 0, 50].map((bridgedAmount, index) => ({
-				...baseChain,
-				name: `chain-${index}`,
-				bridgedAmount,
-				bridges: index === 0 ? { bridge: [{ amount: 100, sourceChain: 'ethereum' }] } : {}
-			})),
-			{ bridge: { name: 'Bridge' } }
-		)
-		renderToStaticMarkup(<StablecoinByChainUsageTable data={data} />)
-		const table = captured.table!
-		for (const desc of [false, true]) {
-			table.setOptions((options) => ({
-				...options,
-				state: { ...options.state, sorting: [{ id: 'bridgedAmount', desc }] }
-			}))
-			expect(table.getSortedRowModel().rows.map((row) => row.getValue('bridgedAmount'))).toEqual(
-				desc ? [100, 50, 9.1234, 0, undefined] : [0, 9.1234, 50, 100, undefined]
-			)
-		}
-		const rendered = table.getSortedRowModel().rows.map((row) => {
-			const cell = row.getAllCells().find((cell) => cell.column.id === 'bridgedAmount')!
-			return renderToStaticMarkup(<>{flexRender(cell.column.columnDef.cell, cell.getContext())}</>)
-		})
-		expect(rendered).toEqual(['100%', '50.00%', '9.12%', '0.00%', ''])
 	})
 })

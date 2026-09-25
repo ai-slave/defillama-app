@@ -1,18 +1,27 @@
-import type * as echarts from 'echarts/core'
+import * as echarts from 'echarts'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
 	createEventRailSeries,
+	createEventStripYAxis,
 	type EventHoverState,
-	type EventRailDatum,
 	getDatasetTimeBounds,
-	getSeriesTimeBounds
+	getSeriesTimeBounds,
+	mergeGraphicWithEventMarkLinePlaceholder
 } from './eventRail'
 
+let chart: echarts.ECharts | undefined
+
 afterEach(() => {
+	chart?.dispose()
+	chart = undefined
 	vi.useRealTimers()
 })
+
+// Pointer events reach listeners through the instance's event bus; an SSR chart has no pointer.
+const emit = (event: string, params?: unknown) =>
+	(chart as unknown as { trigger(event: string, params?: unknown): void }).trigger(event, params)
 
 describe('hallmark event-rail tooltip', () => {
 	function hoverHeader(data: ReturnType<typeof buildEventRailData>['events'][number]) {
@@ -82,75 +91,48 @@ describe('hallmark event-rail time bounds', () => {
 		expect(series).toEqual([undefined, ['100', 1], [200, 2], null])
 	})
 
-	test('replaces hover listeners, repositions an active mark line, and cancels pending cleanup', () => {
+	test('draws the hovered event mark line, follows it on redraw, and hides it once the pointer leaves', () => {
 		vi.useFakeTimers()
-		const handlers = new Map<string, (...args: Array<any>) => void>()
-		const on = vi.fn((event: string, handler: (...args: Array<any>) => void) => handlers.set(event, handler))
-		const off = vi.fn((event: string, handler: (...args: Array<any>) => void) => {
-			if (handlers.get(event) === handler) handlers.delete(event)
-		})
-		const setOption = vi.fn()
-		const instance = {
-			isDisposed: () => false,
-			on,
-			off,
-			setOption
-		} as unknown as echarts.ECharts
-		const event = {
-			value: [100, 0],
-			eventDate: 100,
-			fullText: 'Upgrade',
-			iconPath: '',
-			iconSize: 1,
-			iconOffsetY: 0,
-			iconColor: '#fff',
-			itemStyle: { color: '#fff', borderColor: '#fff', borderWidth: 1 }
-		} satisfies EventRailDatum
+		const { events } = buildEventRailData({ hallmarks: [[Date.UTC(2026, 8, 14), 'Upgrade']], isThemeDark: false })
+		const event = events[0]!
 		const hoverState: EventHoverState = { hoveredEventDate: null }
+		chart = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 600, height: 300 })
+		chart.setOption({
+			xAxis: { type: 'time' },
+			yAxis: [{}, createEventStripYAxis()],
+			graphic: mergeGraphicWithEventMarkLinePlaceholder(undefined, false),
+			series: [
+				createEventRailSeries({ eventRailData: events, eventStripYAxisIndex: 1, hoverState, shouldHideDataZoom: false })
+			]
+		})
 		let x = 10
-
-		const cleanupFirst = attachEventHoverHandlers({
-			instance,
-			eventRailData: [event],
+		const detach = attachEventHoverHandlers({
+			instance: chart,
+			eventRailData: events,
 			hoverState,
 			getEventMarkLineShape: () => ({ x1: x, y1: 1, x2: x, y2: 2 })
 		})
-		handlers.get('mouseover')?.({ seriesName: 'Events', data: event })
-		expect(setOption).toHaveBeenLastCalledWith({
-			graphic: [{ id: 'echarts-hallmark-markline', shape: { x1: 10, y1: 1, x2: 10, y2: 2 }, invisible: false }]
-		})
+		const markLine = () => {
+			const line = (chart.getOption() as any).graphic[0].elements.find(
+				(element: { id: string }) => element.id === 'echarts-hallmark-markline'
+			)
+			return { shape: line.shape, invisible: line.invisible }
+		}
+
+		emit('mouseover', { seriesName: 'Events', data: event })
+		expect(markLine()).toEqual({ shape: { x1: 10, y1: 1, x2: 10, y2: 2 }, invisible: false })
 
 		x = 20
-		handlers.get('finished')?.()
-		expect(setOption).toHaveBeenLastCalledWith({
-			graphic: [{ id: 'echarts-hallmark-markline', shape: { x1: 20, y1: 1, x2: 20, y2: 2 }, invisible: false }]
-		})
+		emit('finished')
+		expect(markLine()).toEqual({ shape: { x1: 20, y1: 1, x2: 20, y2: 2 }, invisible: false })
 
-		handlers.get('mouseout')?.({ seriesName: 'Events' })
-		cleanupFirst()
-		const callsAfterCleanup = setOption.mock.calls.length
+		emit('mouseout', { seriesName: 'Events' })
 		vi.advanceTimersByTime(40)
-		expect(setOption).toHaveBeenCalledTimes(callsAfterCleanup)
-		expect(handlers.size).toBe(0)
+		expect(markLine().invisible).toBe(true)
+		expect(hoverState.hoveredEventDate).toBeNull()
 
-		const cleanupSecond = attachEventHoverHandlers({
-			instance,
-			eventRailData: [{ ...event, eventDate: 200, value: [200, 0] }],
-			hoverState,
-			getEventMarkLineShape: () => ({ x1: 30, y1: 1, x2: 30, y2: 2 })
-		})
-		cleanupSecond()
-
-		expect(on.mock.calls.map(([name]) => name)).toEqual([
-			'mouseover',
-			'mouseout',
-			'datazoom',
-			'finished',
-			'mouseover',
-			'mouseout',
-			'datazoom',
-			'finished'
-		])
-		expect(off.mock.calls.map(([name]) => name)).toEqual(on.mock.calls.map(([name]) => name))
+		detach()
+		emit('mouseover', { seriesName: 'Events', data: event })
+		expect(markLine().invisible).toBe(true)
 	})
 })

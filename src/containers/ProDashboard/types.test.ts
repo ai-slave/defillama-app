@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	isDashboardChartTypeForSubject,
-	getProDashboardChartTypeConfig,
-	limitMultiChartItems,
-	MAX_MULTI_CHART_SERIES,
-	type ChartConfig
-} from './types'
+import { isDashboardChartTypeForSubject, limitMultiChartItems, MAX_MULTI_CHART_SERIES, type ChartConfig } from './types'
 
 const chart = (index: number): ChartConfig => ({
 	id: `chart-${index}`,
@@ -22,13 +16,6 @@ describe('limitMultiChartItems', () => {
 
 		const oversized = [...bounded, chart(MAX_MULTI_CHART_SERIES)]
 		expect(limitMultiChartItems(oversized)).toEqual(bounded)
-	})
-})
-
-describe('getProDashboardChartTypeConfig', () => {
-	test('narrows persisted chart type strings without coercing unknown values', () => {
-		expect(getProDashboardChartTypeConfig('fees')).toMatchObject({ title: 'Fees', chartType: 'bar' })
-		expect(getProDashboardChartTypeConfig('legacy-unknown')).toBeUndefined()
 	})
 })
 

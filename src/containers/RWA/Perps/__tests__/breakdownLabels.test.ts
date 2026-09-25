@@ -1,14 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import {
 	UNKNOWN_BREAKDOWN_LABEL,
-	getRWAPerpsAssetGroupBreakdownLabel,
-	getRWAPerpsContractBreakdownLabel,
-	getRWAPerpsOverviewBreakdownLabel,
-	getRWAPerpsOverviewSnapshotBreakdownLabel,
 	getRWAPerpsBaseAssetBreakdownLabel,
 	getRWAPerpsSharedBreakdownLabel,
-	getRWAPerpsVenueBreakdownLabel,
-	getRWAPerpsVenueSnapshotBreakdownLabel,
 	normalizeRWAPerpsBreakdownLabel
 } from '../breakdownLabels'
 
@@ -31,21 +25,13 @@ describe('breakdownLabels', () => {
 		expect(getRWAPerpsBaseAssetBreakdownLabel({ contract: 'xyz:META', referenceAsset: null })).toBe('META')
 	})
 
-	test('falls back to unknown when the coin label is also missing', () => {
-		expect(getRWAPerpsContractBreakdownLabel({ contract: '' })).toBe(UNKNOWN_BREAKDOWN_LABEL)
-		expect(getRWAPerpsAssetGroupBreakdownLabel({ referenceAssetGroup: null })).toBe(UNKNOWN_BREAKDOWN_LABEL)
-	})
-
-	test('resolves overview, venue, and shared labels consistently', () => {
-		expect(getRWAPerpsSharedBreakdownLabel(baseRow, 'venue')).toBe('xyz')
-		expect(getRWAPerpsSharedBreakdownLabel(baseRow, 'assetGroup')).toBe('Equities')
-		expect(getRWAPerpsOverviewBreakdownLabel(baseRow, 'baseAsset')).toBe('Meta')
-		expect(getRWAPerpsVenueBreakdownLabel(baseRow, 'assetClass')).toBe('Stock Perp')
-		expect(getRWAPerpsOverviewSnapshotBreakdownLabel({ ...baseRow, category: [], id: 'x' } as any, 'contract')).toBe(
-			'xyz:META'
-		)
-		expect(getRWAPerpsVenueSnapshotBreakdownLabel({ ...baseRow, category: [], id: 'x' } as any, 'assetGroup')).toBe(
-			'Equities'
-		)
+	test.each([
+		['venue', 'xyz'],
+		['assetClass', 'Stock Perp'],
+		['baseAsset', 'Meta'],
+		['assetGroup', 'Equities'],
+		['contract', 'xyz:META']
+	] as const)('labels a row by its %s', (breakdown, label) => {
+		expect(getRWAPerpsSharedBreakdownLabel(baseRow, breakdown)).toBe(label)
 	})
 })

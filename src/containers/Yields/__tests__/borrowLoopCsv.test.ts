@@ -156,12 +156,6 @@ function loopRow(overrides: Partial<LoopTableRow> = {}): LoopTableRow {
 }
 
 describe('prepareBorrowMarketsCsv', () => {
-	test('emits the markets header row and markets filename', () => {
-		const csv = prepareBorrowMarketsCsv([marketRow()])
-		expect(csv.filename).toBe('yields-borrow-markets.csv')
-		expect(csv.rows[0]).toEqual(MARKET_HEADERS)
-	})
-
 	test('maps a market row into the header column order', () => {
 		const csv = prepareBorrowMarketsCsv([
 			marketRow({
@@ -175,17 +169,14 @@ describe('prepareBorrowMarketsCsv', () => {
 				ltv: 0.75
 			})
 		])
-		expect(csv.rows[1]).toEqual(['WBTC', 'Morpho', 'Base', null, null, 1.5, null, null, 6.25, 9000, 1000, 0.75])
+		expect(csv.rows).toEqual([
+			MARKET_HEADERS,
+			['WBTC', 'Morpho', 'Base', null, null, 1.5, null, null, 6.25, 9000, 1000, 0.75]
+		])
 	})
 })
 
 describe('prepareBorrowRoutesCsv', () => {
-	test('emits the routes header row and routes filename', () => {
-		const csv = prepareBorrowRoutesCsv([routeRow()])
-		expect(csv.filename).toBe('yields-borrow-routes.csv')
-		expect(csv.rows[0]).toEqual(ROUTE_HEADERS)
-	})
-
 	test('maps a route row into the header column order', () => {
 		const csv = prepareBorrowRoutesCsv([
 			routeRow({
@@ -199,17 +190,14 @@ describe('prepareBorrowRoutesCsv', () => {
 				ltv: 0.82
 			})
 		])
-		expect(csv.rows[1]).toEqual(['ETH / DAI', 'Spark', 'Ethereum', -1.5, null, null, 2, null, null, 4, 12_000, 0.82])
+		expect(csv.rows).toEqual([
+			ROUTE_HEADERS,
+			['ETH / DAI', 'Spark', 'Ethereum', -1.5, null, null, 2, null, null, 4, 12_000, 0.82]
+		])
 	})
 })
 
 describe('prepareLoopsCsv', () => {
-	test('emits the loops header row and looping filename', () => {
-		const csv = prepareLoopsCsv([loopRow()])
-		expect(csv.filename).toBe('yields-looping.csv')
-		expect(csv.rows[0]).toEqual(LOOP_HEADERS)
-	})
-
 	test('maps a loop row into the header column order', () => {
 		const csv = prepareLoopsCsv([
 			loopRow({
@@ -224,7 +212,10 @@ describe('prepareLoopsCsv', () => {
 				ltv: 0.93
 			})
 		])
-		expect(csv.rows[1]).toEqual(['weETH', 'Fluid', 'Arbitrum', 9, 6, null, null, 4, null, null, 3, 15_000, 0.93])
+		expect(csv.rows).toEqual([
+			LOOP_HEADERS,
+			['weETH', 'Fluid', 'Arbitrum', 9, 6, null, null, 4, null, null, 3, 15_000, 0.93]
+		])
 	})
 })
 

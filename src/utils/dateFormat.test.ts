@@ -45,8 +45,11 @@ describe('date formatters', () => {
 	})
 
 	test('formats months and machine dates in UTC', () => {
-		expect(formatMonthYear('2026-07-24')).toBe('Jul 2026')
-		expect(formatIsoDate('2026-07-24T00:30:00+14:00')).toBe('2026-07-23')
+		// Instants on both sides of UTC midnight fail a local-time formatter in both western and eastern zones.
+		expect(formatMonthYear('2026-07-01T00:30:00Z')).toBe('Jul 2026')
+		expect(formatMonthYear('2026-07-31T23:30:00Z')).toBe('Jul 2026')
+		expect(formatIsoDate('2026-07-24T00:30:00Z')).toBe('2026-07-24')
+		expect(formatIsoDate('2026-07-23T23:30:00Z')).toBe('2026-07-23')
 	})
 
 	test('formats recent instants relative to a supplied clock and older instants as dates', () => {

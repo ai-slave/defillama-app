@@ -1,9 +1,4 @@
-import type {
-	GetServerSideProps,
-	GetServerSidePropsContext,
-	GetServerSidePropsResult,
-	InferGetServerSidePropsType
-} from 'next'
+import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import Router, { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
@@ -12,192 +7,27 @@ import { BasicLink } from '~/components/Link'
 import ProDashboard from '~/containers/ProDashboard'
 import { DashboardSeoSummary } from '~/containers/ProDashboard/components/DashboardSeoSummary'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
+import { getEditorExitPath } from '~/containers/ProDashboard/editorAccess'
 import { useDashboardEngagement } from '~/containers/ProDashboard/hooks/useDashboardEngagement'
 import {
 	type DashboardInitialRenderPayload,
 	hydrateDashboardInitialRenderPayload,
-	toOwnerDashboardInitialRenderPayload,
-	toPublicDashboardInitialRenderPayload,
 	type PublicDashboardInitialRenderPayload
 } from '~/containers/ProDashboard/initialDashboard'
 import { ProDashboardAPIProvider, useProDashboardDashboard } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import { fetchDashboardConfig, fetchDashboardConfigWithStatus } from '~/containers/ProDashboard/queries.server'
-import { fetchAuthenticatedUserId, getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
+import { type DashboardPageMode, getDashboardPageProps } from '~/containers/ProDashboard/server/dashboardPageProps'
 import { ProButton } from '~/containers/ProDashboard/ui'
-import { buildDashboardSeo, type DashboardSeo } from '~/containers/ProDashboard/utils/seo'
+import type { DashboardSeo } from '~/containers/ProDashboard/utils/seo'
 import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
-const SITE_ORIGIN = 'https://defillama.com'
-const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=60'
-const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
 const GENERIC_TITLE = 'DefiLlama Pro - Custom DeFi Dashboard'
 const GENERIC_DESCRIPTION =
 	'Custom DeFi analytics dashboard on DefiLlama Pro. No-code dashboards with TVL, fees, volume, and protocol metrics.'
 const EDIT_TITLE = 'DefiLlama Pro - Edit Dashboard'
 const EDIT_DESCRIPTION = 'Edit your custom DeFi analytics dashboard on DefiLlama Pro.'
-
-export type DashboardPageMode = 'view' | 'edit'
-
-type DashboardPageProps = {
-	dashboardId: string
-	mode: DashboardPageMode
-	initialDashboard: DashboardInitialRenderPayload | null
-	seo: DashboardSeo | null
-	ogImage: string | null
-	noIndex: boolean
-	status: number
-}
-
-function withResolvedQuery(destination: string, resolvedUrl: string): string {
-	const queryIndex = resolvedUrl.indexOf('?')
-	return queryIndex === -1 ? destination : `${destination}${resolvedUrl.slice(queryIndex)}`
-}
-
-function noIndexProps(dashboardId: string, mode: DashboardPageMode, status: number): DashboardPageProps {
-	return {
-		dashboardId,
-		mode,
-		initialDashboard: null,
-		seo: null,
-		ogImage: null,
-		noIndex: true,
-		status
-	}
-}
-
-async function getViewServerSideProps(
-	context: GetServerSidePropsContext,
-	dashboardId: string
-): Promise<GetServerSidePropsResult<DashboardPageProps>> {
-	const authToken = getAuthTokenFromRequest(context.req)
-	const isAuthenticatedRequest = !!authToken
-
-	if (dashboardId === 'new') {
-		context.res.setHeader('Cache-Control', 'private, no-store')
-		if (isAuthenticatedRequest) {
-			context.res.setHeader('Vary', 'Cookie, Authorization')
-		}
-		return { props: noIndexProps(dashboardId, 'view', 200) }
-	}
-
-	context.res.setHeader('Vary', 'Cookie, Authorization')
-	if (isAuthenticatedRequest) {
-		context.res.setHeader('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-	}
-
-	let { dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, authToken)
-	if (!dashboard && isAuthenticatedRequest) {
-		;({ dashboard, status } = await fetchDashboardConfigWithStatus(dashboardId, null))
-	}
-
-	if (dashboard?.slug && dashboard.slug !== dashboardId) {
-		return {
-			redirect: {
-				destination: withResolvedQuery(`/pro/${encodeURIComponent(dashboard.slug)}`, context.resolvedUrl),
-				permanent: true
-			}
-		}
-	}
-
-	if (dashboard?.visibility === 'public') {
-		if (!isAuthenticatedRequest) {
-			context.res.setHeader('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
-		}
-		const seo = buildDashboardSeo(dashboard)
-		return {
-			props: {
-				dashboardId,
-				mode: 'view',
-				initialDashboard: toPublicDashboardInitialRenderPayload(dashboard),
-				seo,
-				ogImage: `${SITE_ORIGIN}/api/og/pro/${encodeURIComponent(dashboard.slug || dashboard.id)}`,
-				noIndex: false,
-				status: 200
-			}
-		}
-	}
-
-	if (isAuthenticatedRequest) {
-		if (dashboard) {
-			return {
-				props: {
-					dashboardId,
-					mode: 'view',
-					initialDashboard: toOwnerDashboardInitialRenderPayload(dashboard),
-					seo: null,
-					ogImage: null,
-					noIndex: true,
-					status: 200
-				}
-			}
-		}
-		return { props: noIndexProps(dashboardId, 'view', 200) }
-	}
-
-	const responseStatus = status === 404 ? 404 : status === 401 || status === 403 ? status : 500
-	context.res.statusCode = responseStatus
-	context.res.setHeader('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-	return { props: noIndexProps(dashboardId, 'view', responseStatus) }
-}
-
-async function getEditServerSideProps(
-	context: GetServerSidePropsContext,
-	dashboardId: string
-): Promise<GetServerSidePropsResult<DashboardPageProps>> {
-	context.res.setHeader('Cache-Control', 'private, no-store')
-
-	const authToken = getAuthTokenFromRequest(context.req)
-	if (!authToken) {
-		context.res.statusCode = 401
-		return { props: noIndexProps(dashboardId, 'edit', 401) }
-	}
-
-	try {
-		const [dashboard, authenticatedUserId] = await Promise.all([
-			fetchDashboardConfig(dashboardId, authToken),
-			fetchAuthenticatedUserId(authToken)
-		])
-		if (!dashboard) {
-			return { notFound: true }
-		}
-		if (dashboard.slug && dashboard.slug !== dashboardId) {
-			return {
-				redirect: {
-					destination: withResolvedQuery(`/pro/${encodeURIComponent(dashboard.slug)}/edit`, context.resolvedUrl),
-					permanent: true
-				}
-			}
-		}
-		return {
-			props: {
-				...noIndexProps(dashboardId, 'edit', 200),
-				initialDashboard:
-					authenticatedUserId === dashboard.user ? toOwnerDashboardInitialRenderPayload(dashboard) : null
-			}
-		}
-	} catch {
-		// Fall through; client will surface error
-	}
-
-	return { props: noIndexProps(dashboardId, 'edit', 200) }
-}
-
-const getServerSidePropsHandler: GetServerSideProps<DashboardPageProps> = async (context) => {
-	const dashboardId = context.params?.dashboardId as string
-	const modeSegments = context.params?.mode
-	const segments = Array.isArray(modeSegments) ? modeSegments : modeSegments ? [modeSegments] : []
-
-	if (segments.length === 0) {
-		return getViewServerSideProps(context, dashboardId)
-	}
-	if (segments.length > 1 || segments[0] !== 'edit') {
-		return { notFound: true }
-	}
-	return getEditServerSideProps(context, dashboardId)
-}
 
 function useRouteMode(initialMode: DashboardPageMode): DashboardPageMode {
 	const router = useRouter()
@@ -293,19 +123,11 @@ function DashboardPageContent({
 
 	useEffect(() => {
 		// The server auth snapshot is signed out until the browser restores its session.
-		if (!isEditing || !isClient || loaders.userLoading) return
-		if (!isAuthenticated && !hasRedirectedRef.current) {
+		if (!isEditing || !isClient || loaders.userLoading || hasRedirectedRef.current) return
+		const exitPath = getEditorExitPath({ dashboardId, isAuthenticated, userId: user?.id, dashboard: currentDashboard })
+		if (exitPath) {
 			hasRedirectedRef.current = true
-			void Router.replace(`/pro/${dashboardId}`, undefined, { shallow: true })
-			return
-		}
-		// Server-resolved access covers team members; without it only the creator may stay in edit mode.
-		const cannotEdit = currentDashboard?.access
-			? !currentDashboard.access.canEdit && currentDashboard.access.role === 'none'
-			: !!currentDashboard && !!user?.id && currentDashboard.user !== user.id
-		if (currentDashboard && user?.id && cannotEdit && !hasRedirectedRef.current) {
-			hasRedirectedRef.current = true
-			void Router.replace(`/pro/${currentDashboard.slug ?? dashboardId}`, undefined, { shallow: true })
+			void Router.replace(exitPath, undefined, { shallow: true })
 		}
 	}, [isEditing, isClient, isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId])
 
@@ -571,7 +393,4 @@ function DashboardPageContent({
 	)
 }
 
-export const getServerSideProps = withServerSidePropsTelemetry(
-	'/pro/[dashboardId]/[[...mode]]',
-	getServerSidePropsHandler
-)
+export const getServerSideProps = withServerSidePropsTelemetry('/pro/[dashboardId]/[[...mode]]', getDashboardPageProps)

@@ -79,7 +79,7 @@ describe('dashboard hydration state', () => {
 		).toBe(false)
 	})
 
-	test('opens the trusted config fallback query for a no-seed failure instead of blocking', () => {
+	test('makes a no-seed page ready on the normal config query instead of the seeded fallback', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,

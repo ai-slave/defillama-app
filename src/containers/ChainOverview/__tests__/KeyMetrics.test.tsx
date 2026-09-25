@@ -4,14 +4,6 @@ import { describe, expect, test, vi } from 'vitest'
 import { KeyMetrics } from '../KeyMetrics'
 import type { IChainOverviewData } from '../types'
 
-vi.mock('~/ui/Icon', () => ({
-	Icon: () => null
-}))
-
-vi.mock('~/ui/Tooltip', () => ({
-	Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
-}))
-
 vi.mock('~/components/KeyMetricsPngExport/KeyMetricsPngExportButton', () => ({
 	KeyMetricsPngExportButton: () => null
 }))
@@ -87,6 +79,7 @@ describe('ChainOverview KeyMetrics', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} rwaActiveMcap={0} />)
 		const text = textFromMarkup(markup)
 
+		expect(text).toContain('$MEGA Price')
 		expect(text).not.toContain('RWA Active AUM')
 	})
 

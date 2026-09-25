@@ -1,22 +1,17 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { fetchAdapterChainChartDataByChainBreakdown } from '~/containers/AdapterMetrics/api'
+import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { getCompleteAdapterMetricChainSeries } from './chainSeries'
-
-vi.mock('~/containers/AdapterMetrics/api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/containers/AdapterMetrics/api')>()),
-	fetchAdapterChainChartDataByChainBreakdown: vi.fn()
-}))
+const http = installFixtureFetch()
 
 describe('getCompleteAdapterMetricChainSeries', () => {
-	beforeEach(() => {
-		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockReset()
-	})
-
 	test('aligns sparse historical chain series before returning the complete export universe', async () => {
-		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockResolvedValue([
-			[86_400, { Ethereum: 5 }],
-			[172_800, { Solana: 7 }]
-		])
+		http.serve({
+			[`${V2_SERVER_URL}/chart/derivatives/chain-breakdown`]: [
+				[86_400, { Ethereum: 5 }],
+				[172_800, { Solana: 7 }]
+			]
+		})
 
 		const result = await getCompleteAdapterMetricChainSeries({
 			metric: 'perps',
@@ -50,10 +45,12 @@ describe('getCompleteAdapterMetricChainSeries', () => {
 		['perps', 14],
 		['open-interest', 9]
 	] as const)('uses the %s metric daily aggregation contract', async (metric, expected) => {
-		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockResolvedValue([
-			[86_400 + 60, { Ethereum: 5 }],
-			[86_400 + 120, { Ethereum: 9 }]
-		])
+		http.serve({
+			[`${V2_SERVER_URL}/chart/${metric === 'perps' ? 'derivatives' : 'open-interest'}/chain-breakdown`]: [
+				[86_400 + 60, { Ethereum: 5 }],
+				[86_400 + 120, { Ethereum: 9 }]
+			]
+		})
 
 		const result = await getCompleteAdapterMetricChainSeries({
 			metric,

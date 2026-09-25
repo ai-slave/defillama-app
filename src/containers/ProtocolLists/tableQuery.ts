@@ -1,6 +1,7 @@
 import { canonicalQuerySignature } from '~/server/tablePages/tableQuery'
 import type { CursorTablePage } from '~/server/tablePages/types'
 import { parseExcludeParam, getSelectedChainFilters } from '~/utils/routerQuery'
+import { isProtocolListTvlKey } from './api.types'
 import type { IRecentProtocolsPageData } from './types'
 import type { applyExtraTvl } from './utils'
 
@@ -46,6 +47,30 @@ export function protocolListQuery(raw: ProtocolListQuery): ProtocolListQuery {
 	if (query.search === '') delete query.search
 	if (Array.isArray(query.tvlKeys) && query.tvlKeys.length === 0) delete query.tvlKeys
 	return query
+}
+/** Unknown sort keys fall back to newest listings; any order other than `asc` is descending. */
+export function protocolListSort(routerQuery: ProtocolListQuery): { id: string; desc: boolean } {
+	const sort = routerQuery.sort
+	return {
+		id: typeof sort === 'string' && PROTOCOL_LIST_SORT_KEYS.includes(sort) ? sort : 'listedAt',
+		desc: routerQuery.order !== 'asc'
+	}
+}
+export function protocolListSortQuery(sorting: Array<{ id: string; desc: boolean }>) {
+	return { sort: sorting[0]?.id ?? 'listedAt', order: sorting[0]?.desc === false ? 'asc' : 'desc' }
+}
+/** The page query: URL filters, the debounced search, and the extra TVL keys enabled in settings. */
+export function protocolListRequestQuery(
+	routerQuery: ProtocolListQuery,
+	tvlSettings: Record<string, boolean>,
+	search: string
+): ProtocolListQuery {
+	return protocolListQuery({
+		...routerQuery,
+		sort: protocolListSort(routerQuery).id,
+		search,
+		tvlKeys: Object.keys(tvlSettings).filter((key) => isProtocolListTvlKey(key) && tvlSettings[key])
+	})
 }
 export function protocolListSignature(query: ProtocolListQuery): string {
 	return canonicalQuerySignature(protocolListQuery(query), { exclude: [] })

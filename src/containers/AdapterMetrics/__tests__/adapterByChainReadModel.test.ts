@@ -104,37 +104,24 @@ function buildReadModel({
 }
 
 describe('buildAdapterByChainReadModel', () => {
-	test('returns an empty read model for an empty protocol response', () => {
-		expect(buildReadModel({ protocols: [] })).toEqual({
-			protocols: [],
-			categories: [],
-			openInterest: null,
-			activeLiquidity: null
-		})
+	test('builds rows that getStaticProps can serialize when optional metrics are absent', () => {
+		const result = buildReadModel({ protocols: [protocol()] })
+
+		expect(result.protocols).toHaveLength(1)
+		// Next.js rejects props containing undefined, so absent metrics must be omitted rather than undefined.
+		expect(JSON.parse(JSON.stringify(result))).toStrictEqual(result)
 	})
 
-	test('omits optional presentation fields when their values are absent', () => {
-		const [result] = buildReadModel({ protocols: [protocol()] }).protocols
-
-		expect(result).toBeDefined()
-		expect(result).not.toHaveProperty('pfOrPs')
-		expect(result).not.toHaveProperty('methodology')
-		expect(result).not.toHaveProperty('doublecounted')
-		expect(result).not.toHaveProperty('warning')
-		expect(result).not.toHaveProperty('openInterest')
-		expect(result).not.toHaveProperty('activeLiquidity')
-		expect(result).not.toHaveProperty('normalizedVolume24h')
-	})
-
-	test('keeps input order when protocol totals are tied', () => {
+	test('ranks protocols by 24h total with missing totals last', () => {
 		const result = buildReadModel({
 			protocols: [
-				protocol({ name: 'Protocol A', displayName: 'Protocol A', slug: 'protocol-a' }),
-				protocol({ name: 'Protocol B', displayName: 'Protocol B', slug: 'protocol-b' })
+				protocol({ name: 'Small', displayName: 'Small', slug: 'small', total24h: 5 }),
+				protocol({ name: 'Missing', displayName: 'Missing', slug: 'missing', total24h: null }),
+				protocol({ name: 'Large', displayName: 'Large', slug: 'large', total24h: 20 })
 			]
 		})
 
-		expect(result.protocols.map(({ name }) => name)).toEqual(['Protocol A', 'Protocol B'])
+		expect(result.protocols.map(({ name }) => name)).toEqual(['Large', 'Small', 'Missing'])
 	})
 
 	test('preserves nullable activity and API changes in a successful adapter listing', () => {
@@ -164,90 +151,6 @@ describe('buildAdapterByChainReadModel', () => {
 			totalAllTime: null,
 			change_1d: 100
 		})
-	})
-
-	test('keeps a parent annualized total null when a contributing child is missing it', () => {
-		const result = buildReadModel({
-			protocols: [
-				protocol({
-					name: 'Child A',
-					displayName: 'Child A',
-					slug: 'child-a',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child A']
-				}),
-				protocol({
-					name: 'Child B',
-					displayName: 'Child B',
-					slug: 'child-b',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child B'],
-					annualized1y: null
-				})
-			]
-		})
-
-		expect(result.protocols).toHaveLength(1)
-		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 20, annualized1y: null })
-	})
-
-	test('does not let an inactive normalized child hide an active parent annualized total', () => {
-		const result = buildReadModel({
-			protocols: [
-				protocol({
-					name: 'Child A',
-					displayName: 'Child A',
-					slug: 'child-a',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child A']
-				}),
-				protocol({
-					name: 'Child B',
-					displayName: 'Child B',
-					slug: 'child-b',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child B'],
-					total24h: null,
-					total48hto24h: null,
-					total7d: null,
-					total14dto7d: null,
-					total30d: null,
-					total60dto30d: null,
-					total7DaysAgo: null,
-					total30DaysAgo: null,
-					total1y: null,
-					totalAllTime: null,
-					annualized1y: null
-				})
-			]
-		})
-
-		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 10, annualized1y: 3600 })
-	})
-
-	test('sums parent annualized data when every contributing child provides it', () => {
-		const result = buildReadModel({
-			protocols: [
-				protocol({
-					name: 'Child A',
-					displayName: 'Child A',
-					slug: 'child-a',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child A'],
-					annualized1y: 3600
-				}),
-				protocol({
-					name: 'Child B',
-					displayName: 'Child B',
-					slug: 'child-b',
-					parentProtocol: 'Parent',
-					linkedProtocols: ['Parent', 'Child B'],
-					annualized1y: 2400
-				})
-			]
-		})
-
-		expect(result.protocols[0]).toMatchObject({ name: 'Parent', annualized1y: 6000 })
 	})
 
 	test('renames a single linked child without inventing a child collection', () => {

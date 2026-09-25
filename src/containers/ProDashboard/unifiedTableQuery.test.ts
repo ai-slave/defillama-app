@@ -12,18 +12,18 @@ const createConfig = (chains: Array<string>, category?: string): UnifiedTableCon
 })
 
 describe('getUnifiedTableQueryIdentity', () => {
-	test('uses one identity for equivalent all-chain configurations', () => {
-		const empty = getUnifiedTableQueryIdentity(createConfig([]), ['protocol'])
+	test('treats an All chain selection as the aggregate all-chain source', () => {
 		const all = getUnifiedTableQueryIdentity(createConfig(['All']), ['protocol'])
 
-		expect(all).toEqual(empty)
+		expect(all.paramsKey).toBe('{"chains":[],"category":null}')
+		expect(all.sourceGranularity).toBe('aggregate')
 	})
 
 	test('deduplicates, normalizes and sorts chain aliases', () => {
-		const first = getUnifiedTableQueryIdentity(createConfig(['Optimism', 'Ethereum', 'OP Mainnet']), ['protocol'])
-		const second = getUnifiedTableQueryIdentity(createConfig(['ethereum', 'op-mainnet']), ['protocol'])
+		const identity = getUnifiedTableQueryIdentity(createConfig(['Optimism', 'Ethereum', 'OP Mainnet']), ['protocol'])
 
-		expect(first).toEqual(second)
+		expect(identity.paramsKey).toBe('{"chains":["ethereum","op-mainnet"],"category":null}')
+		expect(identity.sourceGranularity).toBe('chain')
 	})
 
 	test('keys source identity by category and aggregate-versus-chain granularity', () => {

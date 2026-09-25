@@ -1,55 +1,47 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-
-const { validateSubscriptionMock } = vi.hoisted(() => ({
-	validateSubscriptionMock: vi.fn()
-}))
-
-vi.mock('~/utils/apiAuth', () => ({
-	validateSubscription: validateSubscriptionMock
-}))
-
 import { requireSubscription } from '../requireSubscription'
 
+const http = installFixtureFetch()
 beforeEach(() => {
-	vi.clearAllMocks()
+	http.serve({
+		'/subscription/status': { subscription: { status: 'active' } },
+		'/api/collections/users/auth-refresh': { record: { flags: { is_trial: false } } }
+	})
 })
 
 describe('requireSubscription', () => {
-	test('returns valid subscription auth without writing a response', async () => {
-		const auth = { valid: true, isTrial: false }
+	test.each([false, true])('returns active access with trial=%s without writing a response', async (isTrial) => {
+		http.serve({ '/api/collections/users/auth-refresh': { record: { flags: { is_trial: isTrial } } } })
 		const res = createMockNextApiResponse()
-		validateSubscriptionMock.mockResolvedValue(auth)
-
-		await expect(requireSubscription('Bearer ok', res)).resolves.toBe(auth)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
+		await expect(requireSubscription('Bearer ok', res)).resolves.toEqual({ valid: true, isTrial })
 		expect(res.status).not.toHaveBeenCalled()
 		expect(res.json).not.toHaveBeenCalled()
 	})
-
-	test('sends the subscription failure response and returns null', async () => {
+	test('sends the inactive subscription response and returns null', async () => {
+		http.serve({ '/subscription/status': { subscription: { status: 'expired' } } })
 		const res = createMockNextApiResponse()
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 403,
-			error: 'Active subscription required'
-		})
-
-		await expect(requireSubscription('Bearer bad', res)).resolves.toBeNull()
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
+		await expect(requireSubscription('Bearer expired', res)).resolves.toBeNull()
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
 	})
-
-	test('lets validation errors bubble to the caller', async () => {
-		const error = new Error('Auth service unavailable')
+	test('rejects missing authorization without contacting the auth service', async () => {
 		const res = createMockNextApiResponse()
-		validateSubscriptionMock.mockRejectedValue(error)
-
-		await expect(requireSubscription(undefined, res)).rejects.toBe(error)
-
+		await expect(requireSubscription(undefined, res)).resolves.toBeNull()
+		expect(res.status).toHaveBeenCalledWith(401)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
+		expect(http.requests).toHaveLength(0)
+	})
+	test('lets an auth service outage reach the caller without sending an access denial', async () => {
+		const error = new Error('Auth service unavailable')
+		http.serve({
+			'/subscription/status': () => {
+				throw error
+			}
+		})
+		const res = createMockNextApiResponse()
+		await expect(requireSubscription('Bearer ok', res)).rejects.toBe(error)
 		expect(res.status).not.toHaveBeenCalled()
 		expect(res.json).not.toHaveBeenCalled()
 	})

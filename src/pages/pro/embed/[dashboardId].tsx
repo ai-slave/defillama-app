@@ -1,4 +1,4 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
+import type { InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import { useEffect, useMemo } from 'react'
 import { ChartWatermarkContext } from '~/components/ECharts/shared/watermark'
@@ -9,7 +9,6 @@ import {
 	DashboardItemRenderer
 } from '~/containers/ProDashboard/components/ChartGrid'
 import { DashboardCardContext } from '~/containers/ProDashboard/components/DashboardCardContext'
-import { EMBED_THEMES, type EmbedTheme } from '~/containers/ProDashboard/components/EmbedSnippetDialog'
 import { ParameterUnavailableCard } from '~/containers/ProDashboard/components/ParameterUnavailableCard'
 import {
 	cardScaleStyle,
@@ -17,56 +16,18 @@ import {
 	getDashboardItemHeight
 } from '~/containers/ProDashboard/dashboardLayout/cardHeight'
 import { dashboardItemElementId } from '~/containers/ProDashboard/hooks/useDashboardItemDeepLink'
-import {
-	hydrateDashboardInitialRenderPayload,
-	type PublicDashboardInitialRenderPayload,
-	toPublicDashboardInitialRenderPayload
-} from '~/containers/ProDashboard/initialDashboard'
+import { hydrateDashboardInitialRenderPayload } from '~/containers/ProDashboard/initialDashboard'
 import {
 	ProDashboardAPIProvider,
 	useProDashboardItemsState,
 	useProDashboardVariables
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import { fetchDashboardConfigWithStatus } from '~/containers/ProDashboard/queries.server'
+import { getDashboardEmbedPageProps } from '~/containers/ProDashboard/server/embedPageProps'
 import { dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
-const EMBED_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=60'
-const DEFAULT_EMBED_THEME: EmbedTheme = 'dark'
-
-type DashboardEmbedPageProps = {
-	initialDashboard: PublicDashboardInitialRenderPayload
-	itemId: string | null
-	theme: EmbedTheme
-}
-
-function firstQueryValue(value: string | Array<string> | undefined): string | null {
-	const single = Array.isArray(value) ? value[0] : value
-	return typeof single === 'string' && single.length > 0 ? single : null
-}
-
-function parseEmbedTheme(value: string | null): EmbedTheme {
-	return EMBED_THEMES.find((theme) => theme === value) ?? DEFAULT_EMBED_THEME
-}
-
-const getServerSidePropsHandler: GetServerSideProps<DashboardEmbedPageProps> = async (context) => {
-	const dashboardId = context.params?.dashboardId as string
-	const { dashboard } = await fetchDashboardConfigWithStatus(dashboardId, null)
-	if (!dashboard || dashboard.visibility !== 'public') {
-		return { notFound: true }
-	}
-	context.res.setHeader('Cache-Control', EMBED_CACHE_CONTROL)
-	return {
-		props: {
-			initialDashboard: toPublicDashboardInitialRenderPayload(dashboard),
-			itemId: firstQueryValue(context.query.item),
-			theme: parseEmbedTheme(firstQueryValue(context.query.theme))
-		}
-	}
-}
-
-export const getServerSideProps = withServerSidePropsTelemetry('/pro/embed/[dashboardId]', getServerSidePropsHandler)
+export const getServerSideProps = withServerSidePropsTelemetry('/pro/embed/[dashboardId]', getDashboardEmbedPageProps)
 
 const noop = () => {}
 

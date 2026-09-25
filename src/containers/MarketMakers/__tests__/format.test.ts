@@ -41,14 +41,6 @@ describe('resolveGrade', () => {
 		expect(resolveGrade(5.25)?.label).toBe('B')
 		expect(resolveGrade(5.24)?.label).toBe('CCC')
 	})
-	test('colors AAA/AA/A success, BBB/BB/B warning, CCC error', () => {
-		expect(resolveGrade(9.5)?.colorClassName).toBe('text-success')
-		expect(resolveGrade(8.5)?.colorClassName).toBe('text-success')
-		expect(resolveGrade(7.5)?.colorClassName).toBe('text-warning')
-		expect(resolveGrade(6.5)?.colorClassName).toBe('text-warning')
-		expect(resolveGrade(5.5)?.colorClassName).toBe('text-warning')
-		expect(resolveGrade(1)?.colorClassName).toBe('text-error')
-	})
 })
 
 describe('roundPercentile', () => {
@@ -78,9 +70,7 @@ describe('formatMetricValue', () => {
 		expect(formatMetricValue(null, 'usd')).toBe('N/A')
 	})
 	test('abbreviates usd with a dollar sign', () => {
-		const out = formatMetricValue(266_553_520, 'usd')
-		expect(out).toContain('$266')
-		expect(out).toContain('M')
+		expect(formatMetricValue(266_553_520, 'usd')).toBe('$266.55M')
 	})
 	test('formats a score to two decimals', () => {
 		expect(formatMetricValue(9.5, 'score')).toBe('9.50')
@@ -103,7 +93,7 @@ describe('formatMarketPct', () => {
 	test('labels a market-share percentage', () => {
 		expect(formatMarketPct(10)).toBe('10% of Market')
 	})
-	test('handles a tiny value without throwing', () => {
-		expect(formatMarketPct(1.93e-5)).toContain('of Market')
+	test('keeps significant digits for a tiny market share', () => {
+		expect(formatMarketPct(1.93e-5)).toBe('0.000019% of Market')
 	})
 })

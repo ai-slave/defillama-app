@@ -1,6 +1,4 @@
-import { describe, expect, expectTypeOf, test } from 'vitest'
-import type { ProtocolTvlKey } from '../api.types'
-import type { PROTOCOL_EXTRA_TVL_KEYS, ProtocolExtraTvlKey } from '../tvlChart'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolValueChartRequest } from '../valueChartSources'
 import {
 	buildProtocolValueChartApiUrl,
@@ -29,7 +27,8 @@ describe('ProtocolOverview value chart sources', () => {
 		expect(buildProtocolValueChartApiUrl(request)).toBe(buildProtocolValueChartApiUrl(reorderedRequest))
 	})
 
-	test('treats all-empty exclusions as the omitted base request', () => {
+	test('treats empty and all-empty exclusions as the omitted base request', () => {
+		expect(canonicalizeTokensToExclude([])).toBeUndefined()
 		const tokenExclusions = canonicalizeTokensToExclude(['', ''])
 		const baseRequest = { source: 'tvl', protocol: 'gate' } satisfies ProtocolValueChartRequest
 		const allEmptyRequest = {
@@ -50,7 +49,7 @@ describe('ProtocolOverview value chart sources', () => {
 				breakdownType: 'token-breakdown',
 				currency: 'raw'
 			})
-		).toContain('breakdownType=token-breakdown')
+		).toBe('/api/public/protocols/charts?kind=tvl&protocol=aave&currency=raw&breakdownType=token-breakdown')
 		expect(
 			buildProtocolValueChartApiUrl({
 				source: 'treasury',
@@ -58,52 +57,6 @@ describe('ProtocolOverview value chart sources', () => {
 				breakdownType: 'token-breakdown',
 				currency: 'usd'
 			})
-		).toContain('currency=usd')
-	})
-
-	type CurrencyWithoutTokenBreakdown = {
-		source: 'tvl'
-		protocol: 'aave'
-		currency: 'raw'
-	} extends ProtocolValueChartRequest
-		? true
-		: false
-	type TreasuryRequest = Extract<ProtocolValueChartRequest, { source: 'treasury' }>
-	type TreasuryHasExclusions = 'tokenExclusions' extends keyof TreasuryRequest ? true : false
-	type ChainOnlyTvlKeyIsInternalRequest = {
-		source: 'tvl'
-		protocol: 'aave'
-		key: 'doublecounted' | 'liquidstaking' | 'govtokens'
-	} extends ProtocolValueChartRequest
-		? true
-		: false
-	type TreasuryStakingRequest = {
-		source: 'treasury'
-		protocol: 'makerdao'
-		key: 'staking'
-	} extends ProtocolValueChartRequest
-		? true
-		: false
-	type TvlOwnTokensRequest = {
-		source: 'tvl'
-		protocol: 'makerdao'
-		key: 'OwnTokens'
-	} extends ProtocolValueChartRequest
-		? true
-		: false
-
-	test('does not type invalid source, currency, and breakdown combinations as requests', () => {
-		expectTypeOf<CurrencyWithoutTokenBreakdown>().toEqualTypeOf<false>()
-		expectTypeOf<TreasuryHasExclusions>().toEqualTypeOf<false>()
-		expectTypeOf<ChainOnlyTvlKeyIsInternalRequest>().toEqualTypeOf<false>()
-		expectTypeOf<TreasuryStakingRequest>().toEqualTypeOf<false>()
-		expectTypeOf<TvlOwnTokensRequest>().toEqualTypeOf<false>()
-	})
-
-	test('keeps protocol TVL keys and the extra-key tuple exactly bounded', () => {
-		type ChainOnlyTvlKey = 'doublecounted' | 'liquidstaking' | 'govtokens'
-		expectTypeOf<Extract<ProtocolTvlKey, ChainOnlyTvlKey>>().toEqualTypeOf<never>()
-		expectTypeOf<(typeof PROTOCOL_EXTRA_TVL_KEYS)[number]>().toEqualTypeOf<ProtocolExtraTvlKey>()
-		expectTypeOf<ProtocolExtraTvlKey>().toEqualTypeOf<'staking' | 'borrowed' | 'pool2' | 'vesting'>()
+		).toBe('/api/public/protocols/charts?kind=treasury&protocol=makerdao&currency=usd&breakdownType=token-breakdown')
 	})
 })

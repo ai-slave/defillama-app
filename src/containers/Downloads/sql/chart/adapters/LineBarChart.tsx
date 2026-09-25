@@ -14,7 +14,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { pivotRowsForSplit } from '../pivot'
 import { escapeSqlChartHtml, readSqlNumber, readSqlTimestampMs } from '../rowValues'
 import { makeValueFormatter, type ValueFormatter } from '../valueFormatters'
@@ -38,7 +37,7 @@ interface LineBarChartProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 	forceType?: 'line' | 'bar'
 	forceArea?: boolean
 	forceStack?: string
@@ -49,20 +48,61 @@ export function LineBarChart({
 	result,
 	classified,
 	onReady,
-	height = SQL_CHART_HEIGHT,
+	height,
 	forceType,
 	forceArea,
 	forceStack
 }: LineBarChartProps) {
+	const { xColumn, chartModel, truncatedCount, valueSymbol, chartOptions } = useMemo(
+		() => buildLineBarChart(config, result, classified, { forceType, forceArea, forceStack }),
+		[config, result, classified, forceType, forceArea, forceStack]
+	)
+
+	if (!xColumn) return null
+
+	return (
+		<div className="relative">
+			<Suspense
+				fallback={
+					<div className="flex items-center justify-center" style={{ height }}>
+						<LoadingSpinner size={18} />
+					</div>
+				}
+			>
+				<MultiSeriesChart
+					dataset={chartModel.dataset}
+					charts={chartModel.charts}
+					height={height}
+					valueSymbol={valueSymbol}
+					hideDataZoom={chartModel.dataset.source.length < 2}
+					chartOptions={chartOptions}
+					onReady={onReady}
+					hideDefaultLegend={false}
+					exportButtons="hidden"
+				/>
+			</Suspense>
+			{truncatedCount > 0 ? (
+				<p className="mt-1.5 text-[11px] text-pro-text-tertiary">
+					Showing top {SPLIT_TOP_N} series by magnitude. {truncatedCount} folded into <em>Other</em>.
+				</p>
+			) : null}
+		</div>
+	)
+}
+
+/** Dataset, series and options the SQL line/bar chart hands to MultiSeriesChart. */
+export function buildLineBarChart(
+	config: ChartConfig,
+	result: QueryResult,
+	classified: Array<ClassifiedColumn>,
+	{ forceType, forceArea, forceStack }: Pick<LineBarChartProps, 'forceType' | 'forceArea' | 'forceStack'>
+) {
 	const xColumn = classified.find((c) => c.name === config.xCol) ?? null
 	const xAxisType: 'time' | 'category' = xColumn?.coarse === 'date' ? 'time' : 'category'
 	// 100% mode charts each value's share of its row, so every label is a percent whatever the column's format.
-	const formatter = useMemo(
-		() => makeValueFormatter(config.stackMode === 'expand' ? 'percent' : config.numberFormat),
-		[config.stackMode, config.numberFormat]
-	)
+	const formatter = makeValueFormatter(config.stackMode === 'expand' ? 'percent' : config.numberFormat)
 
-	const { chartModel, truncatedCount } = useMemo(() => {
+	const buildModel = () => {
 		if (!xColumn)
 			return {
 				chartModel: { dataset: { dimensions: [], source: [] }, charts: [] },
@@ -119,43 +159,15 @@ export function LineBarChart({
 			chartModel: buildSqlChartModel(rawRows, xColumn.index, xAxisType, specs),
 			truncatedCount: 0
 		}
-	}, [result, config, classified, xColumn, xAxisType, forceType, forceArea, forceStack])
-
-	const chartOptions = useMemo(
-		() => buildChartOptions(config, xAxisType, formatter, truncatedCount > 0 ? 'Other' : null),
-		[config, xAxisType, formatter, truncatedCount]
-	)
-
-	if (!xColumn) return null
-
-	return (
-		<div className="relative">
-			<Suspense
-				fallback={
-					<div className="flex items-center justify-center" style={{ height }}>
-						<LoadingSpinner size={18} />
-					</div>
-				}
-			>
-				<MultiSeriesChart
-					dataset={chartModel.dataset}
-					charts={chartModel.charts}
-					height={height}
-					valueSymbol={formatter.valueSymbol}
-					hideDataZoom={chartModel.dataset.source.length < 2}
-					chartOptions={chartOptions}
-					onReady={onReady}
-					hideDefaultLegend={false}
-					exportButtons="hidden"
-				/>
-			</Suspense>
-			{truncatedCount > 0 ? (
-				<p className="mt-1.5 text-[11px] text-pro-text-tertiary">
-					Showing top {SPLIT_TOP_N} series by magnitude. {truncatedCount} folded into <em>Other</em>.
-				</p>
-			) : null}
-		</div>
-	)
+	}
+	const { chartModel, truncatedCount } = buildModel()
+	return {
+		xColumn,
+		chartModel,
+		truncatedCount,
+		valueSymbol: formatter.valueSymbol,
+		chartOptions: buildChartOptions(config, xAxisType, formatter, truncatedCount > 0 ? 'Other' : null)
+	}
 }
 
 export function buildSqlChartModel(

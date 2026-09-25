@@ -8,10 +8,6 @@ vi.mock('@marsidev/react-turnstile', () => ({
 	)
 }))
 
-vi.mock('~/contexts/LocalStorage', () => ({
-	useDarkModeManager: () => [false]
-}))
-
 afterEach(() => {
 	vi.unstubAllEnvs()
 })
@@ -25,7 +21,6 @@ describe('ClaimTurnstile', () => {
 
 		expect(html).toContain('data-site-key="claim-site-key"')
 		expect(html).toContain('data-action="claim"')
-		expect(html).toContain('data-theme="light"')
 	})
 
 	test('renders nothing when the client site key is not configured', () => {

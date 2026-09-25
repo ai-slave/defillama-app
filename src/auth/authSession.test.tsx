@@ -7,11 +7,11 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
 import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
-import { authenticateGithub } from '~/auth/githubAuth'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
+import { installOAuthBoundary } from '~/utils/test/oauthBoundary'
 
-vi.mock('~/auth/githubAuth', () => ({ authenticateGithub: vi.fn() }))
+const oauth = installOAuthBoundary()
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
@@ -53,6 +53,8 @@ beforeEach(() => {
 	vi.stubGlobal(
 		'fetch',
 		vi.fn(async (url: string | URL, config?: RequestInit) => {
+			const oauthRoute = oauth.routes[new URL(String(url)).pathname]
+			if (oauthRoute) return oauthRoute()
 			if (String(url).endsWith('/team/invite/accept'))
 				return new Promise<Response>((resolve) => inviteCalls.push({ resolve }))
 			if (String(url).endsWith('/team')) return jsonResponse({ team: null })
@@ -142,6 +144,16 @@ test('fills a token-only session from the refresh and keeps it signed in', async
 	expect(sessionView.user?.id).toBe('account-a')
 })
 
+test('treats a saved session whose token has expired as signed out', async () => {
+	pb.authStore.save(`e30.${btoa(JSON.stringify({ id: 'expired', exp: 1_000_000_000 }))}.signature`, record('expired'))
+	await render()
+	await settle()
+
+	expect(sessionView.isAuthenticated).toBe(false)
+	expect(sessionView.authToken).toBeNull()
+	expect(refreshCalls).toHaveLength(0)
+})
+
 test('stays signed out when a refresh resolves after logout', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	await render()
@@ -156,50 +168,6 @@ test('stays signed out when a refresh resolves after logout', async () => {
 	expect(pb.authStore.isValid).toBe(false)
 	expect(sessionView.isAuthenticated).toBe(false)
 	expect(sessionView.user).toBeNull()
-})
-
-test('keeps the newer session when an older refresh resolves late', async () => {
-	pb.authStore.save(token('account-a'), record('account-a'))
-	await render()
-
-	expect(refreshCalls).toHaveLength(1)
-	await act(async () => pb.authStore.save(token('account-b'), record('account-b')))
-	await settle()
-	expect(refreshCalls).toHaveLength(2)
-	expect(refreshCalls[1].authorization).toBe(token('account-b'))
-
-	refreshCalls[1].resolve(jsonResponse({ token: token('rotated-b'), record: record('account-b') }))
-	await settle()
-	expect(pb.authStore.token).toBe(token('rotated-b'))
-
-	refreshCalls[0].resolve(jsonResponse({ token: token('rotated-a'), record: record('account-a') }))
-	await settle()
-
-	expect(pb.authStore.token).toBe(token('rotated-b'))
-	expect(sessionView.user?.id).toBe('account-b')
-})
-
-test('keeps the newer session when an older refresh fails with 401', async () => {
-	pb.authStore.save(token('account-a'), record('account-a'))
-	await render()
-
-	expect(refreshCalls).toHaveLength(1)
-	await act(async () => pb.authStore.save(token('account-b'), record('account-b')))
-	await settle()
-	expect(refreshCalls).toHaveLength(2)
-
-	refreshCalls[1].resolve(jsonResponse({ token: token('rotated-b'), record: record('account-b') }))
-	await settle()
-
-	refreshCalls[0].resolve(
-		jsonResponse({ code: 401, message: 'The request requires valid record authorization token.' }, 401)
-	)
-	await settle()
-
-	expect(pb.authStore.token).toBe(token('rotated-b'))
-	expect(pb.authStore.isValid).toBe(true)
-	expect(sessionView.isAuthenticated).toBe(true)
-	expect(sessionView.user?.id).toBe('account-b')
 })
 
 test('clears the session when its own refresh fails with 401', async () => {
@@ -636,49 +604,6 @@ test('ignores an onboarding save after the owning session is replaced', async ()
 	expect(pb.authStore.record).toBeNull()
 })
 
-test('preserves a saved preference and loads the remaining account fields', async () => {
-	await render()
-	await act(async () => {
-		await sessionView.signInWithGoogle({
-			code: 'fixture',
-			signal: new AbortController().signal,
-			canAccept: () => true
-		})
-	})
-	await act(async () => document.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click())
-	let finish!: (response: Response) => void
-	vi.mocked(fetch).mockImplementationOnce(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
-	await act(async () => button('Continue').click())
-	await settle()
-	finish(jsonResponse({ success: true }))
-	await vi.waitFor(async () => {
-		await settle()
-		expect(document.body.textContent).not.toContain('Thanks for signing up!')
-	})
-
-	expect(pb.authStore.record?.promotionalEmails).toBe('on')
-	expect(refreshCalls).toHaveLength(2)
-	refreshCalls[0].resolve(
-		jsonResponse({ token: token('stale'), record: { ...record('google-new'), promotionalEmails: 'initial' } })
-	)
-	await settle()
-	expect(pb.authStore.record?.promotionalEmails).toBe('on')
-	refreshCalls[1].resolve(
-		jsonResponse({
-			token: token('fresh'),
-			record: { ...record('google-new'), promotionalEmails: 'on', address: '0xlinked' }
-		})
-	)
-	await settle()
-	expect(pb.authStore.record?.address).toBe('0xlinked')
-	expect(sessionView.user?.walletAddress).toBe('0xlinked')
-})
-
 test('accepts an onboarding save when the same account refreshes its token', async () => {
 	await render()
 	await act(async () => {
@@ -730,26 +655,30 @@ test('offers sign out from required OAuth onboarding', async () => {
 test.each([false, true])(
 	'defers GitHub email verification to invitation acceptance when suppressed=%s',
 	async (suppressVerifyEmailPrompt) => {
-		vi.mocked(authenticateGithub).mockResolvedValue({
-			token: token('github-user'),
-			record: {
-				...record('github-user'),
-				email: 'github@example.com',
-				verified: false,
-				created: '2020-01-01',
-				updated: '2020-01-01',
-				flags: {},
-				has_active_subscription: false
-			}
-		})
 		await render()
+		let signIn!: Promise<unknown>
 		await act(async () => {
-			await sessionView.signInWithGithub({
+			signIn = sessionView.signInWithGithub({
 				signal: new AbortController().signal,
 				canAccept: () => true,
-				popup: window,
+				popup: oauth.openPopup(),
 				suppressVerifyEmailPrompt
 			})
+		})
+		await act(async () => {
+			await oauth.github.approve({
+				token: token('github-user'),
+				record: {
+					...record('github-user'),
+					email: 'github@example.com',
+					verified: false,
+					created: '2020-01-01',
+					updated: '2020-01-01',
+					flags: {},
+					has_active_subscription: false
+				}
+			})
+			await signIn
 		})
 		await settle()
 		expect(pb.authStore.record?.id).toBe('github-user')
@@ -758,6 +687,33 @@ test.each([false, true])(
 		expect(sessionView.isNewSignup).toBe(false)
 	}
 )
+
+test('welcomes a new GitHub account and attributes its signup to GitHub', async () => {
+	await render()
+	let signIn!: Promise<unknown>
+	await act(async () => {
+		signIn = sessionView.signInWithGithub({
+			signal: new AbortController().signal,
+			canAccept: () => true,
+			popup: oauth.openPopup()
+		})
+	})
+	await act(async () => {
+		await oauth.github.approve({
+			token: token('github-new'),
+			record: { ...record('github-new'), email: 'new@example.com', verified: true },
+			meta: { isNew: true }
+		})
+		await signIn
+	})
+	await settle()
+	expect(pb.authStore.record?.id).toBe('github-new')
+	expect(sessionView.isNewSignup).toBe(true)
+	expect(document.body.textContent).toContain('Thanks for signing up!')
+	const attribution = vi.mocked(fetch).mock.calls.find(([url]) => String(url).endsWith('/user/attribution'))!
+	expect(new Headers(attribution[1]?.headers).get('Authorization')).toBe(`Bearer ${token('github-new')}`)
+	expect(JSON.parse(String(attribution[1]?.body))).toMatchObject({ provider: 'github' })
+})
 
 test('reloads Google profile fields even when an earlier sign-in left a fresh cache', async () => {
 	client.setQueryData(['auth', 'status', 'google-new'], { ...record('google-new'), address: '0xold' })

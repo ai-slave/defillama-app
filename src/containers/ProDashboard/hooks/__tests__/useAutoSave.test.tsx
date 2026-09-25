@@ -1,27 +1,27 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { Dashboard } from '../../dashboardTypes'
 import type { SqlChartConfig } from '../../types'
 import { useAutoSave } from '../useAutoSave'
 
-const api = vi.hoisted(() => ({ update: vi.fn() }))
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: true, user: { id: 'owner' }, authorizedFetch: vi.fn() })
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), query: {} }) }))
-vi.mock('../../services/DashboardAPI', async (original) => ({
-	...(await original<typeof import('../../services/DashboardAPI')>()),
-	dashboardAPI: { updateDashboard: api.update }
-}))
+
+const session = installSubscriberSession('owner')
+// Each save request takes the next queued reply; without one the server echoes the saved dashboard.
+let replies: Array<Promise<Response> | Response>
+const offline = () => Response.json({ message: 'Offline' }, { status: 503 })
+const saves = () =>
+	session.requests
+		.filter(({ url }) => url.pathname === '/api/private/pro-dashboard/save')
+		.map(({ url, init }) => ({ id: url.searchParams.get('id'), body: JSON.parse(init!.body as string) }))
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let autosave: ReturnType<typeof useAutoSave>
 const saved: Dashboard = {
 	id: 'dashboard',
@@ -57,10 +57,10 @@ function Harness({
 async function mount(dashboard = saved, enabled = true, delay = 100, isFreeUser = false) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<DashboardSaveGuard />
 				<Harness key={dashboard.id} dashboard={dashboard} enabled={enabled} delay={delay} isFreeUser={isFreeUser} />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -76,15 +76,17 @@ beforeEach(() => {
 	vi.useFakeTimers()
 	vi.clearAllMocks()
 	window.sessionStorage.clear()
-	api.update.mockReset().mockImplementation(async (id, data) => ({ ...saved, id, data }))
-	client = new QueryClient()
+	replies = []
+	session.serve({
+		'/api/private/pro-dashboard/save': (url: URL, init?: RequestInit) =>
+			replies.shift() ?? { ...saved, id: url.searchParams.get('id'), data: JSON.parse(init!.body as string).data }
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 	vi.useRealTimers()
 })
@@ -94,14 +96,14 @@ test('rapid edits coalesce into one save containing the latest items', async () 
 	await advance(50)
 	await act(async () => autosave.autoSave(items('Latest')))
 	await advance(99)
-	expect(api.update).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(0)
 	await advance(1)
-	expect(api.update).toHaveBeenCalledOnce()
-	expect(api.update.mock.calls[0][1].items).toEqual(items('Latest'))
+	expect(saves()).toHaveLength(1)
+	expect(saves()[0].body.data.items).toEqual(items('Latest'))
 })
 test('pagehide queues newer edits behind an in-flight save without a separate write', async () => {
-	const first = Promise.withResolvers<Dashboard>()
-	api.update.mockReturnValueOnce(first.promise)
+	const first = Promise.withResolvers<Response>()
+	replies.push(first.promise)
 	await mount()
 	await act(async () => autosave.autoSave(items('First')))
 	await advance()
@@ -111,11 +113,11 @@ test('pagehide queues newer edits behind an in-flight save without a separate wr
 		window.dispatchEvent(new Event('pagehide'))
 	})
 	await advance()
-	expect(api.update).toHaveBeenCalledOnce()
-	await act(async () => first.resolve(saved))
+	expect(saves()).toHaveLength(1)
+	await act(async () => first.resolve(Response.json(saved)))
 	await advance()
-	expect(api.update).toHaveBeenCalledTimes(2)
-	expect(api.update.mock.calls[1][1].items).toEqual(items('Newer'))
+	expect(saves()).toHaveLength(2)
+	expect(saves()[1].body.data.items).toEqual(items('Newer'))
 })
 test('a completed save is not sent again or warned about when leaving', async () => {
 	await mount()
@@ -125,10 +127,10 @@ test('a completed save is not sent again or warned about when leaving', async ()
 		window.dispatchEvent(new Event('pagehide'))
 		expect(leaving()).toBe(false)
 	})
-	expect(api.update).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(1)
 })
 test('failed saves retain the draft for retry and warn before leaving until success', async () => {
-	api.update.mockRejectedValueOnce(new Error('Offline'))
+	replies.push(offline())
 	await mount()
 	await act(async () => autosave.autoSave(items('Keep this edit')))
 	await advance()
@@ -136,28 +138,28 @@ test('failed saves retain the draft for retry and warn before leaving until succ
 	await act(async () => {
 		await vi.waitFor(() => expect(leaving()).toBe(true))
 	})
-	expect(api.update).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(1)
 	await act(async () => autosave.retry())
 	await advance()
-	expect(api.update.mock.calls[1][1].items).toEqual(items('Keep this edit'))
+	expect(saves()[1].body.data.items).toEqual(items('Keep this edit'))
 	expect(autosave.state?.status).toBe('success')
 	expect(leaving()).toBe(false)
 })
 test.each(['success', 'failure'] as const)(
 	'switching dashboards flushes A and keeps its late %s separate from B',
 	async (outcome) => {
-		const pending = Promise.withResolvers<Dashboard>()
-		api.update.mockReturnValueOnce(pending.promise)
+		const pending = Promise.withResolvers<Response>()
+		replies.push(pending.promise)
 		await mount()
 		await act(async () => autosave.autoSave(items('A edit')))
 		await mount({ ...saved, id: 'other', data: { ...saved.data, dashboardName: 'Other' } })
 		await advance()
-		expect(api.update.mock.calls[0][0]).toBe('dashboard')
+		expect(saves()[0].id).toBe('dashboard')
 		expect(autosave.state).toBeUndefined()
 		await act(async () => autosave.autoSave(items('B edit')))
 		await advance()
-		expect(api.update.mock.calls[1][0]).toBe('other')
-		await act(async () => (outcome === 'success' ? pending.resolve(saved) : pending.reject(new Error('Offline'))))
+		expect(saves()[1].id).toBe('other')
+		await act(async () => pending.resolve(outcome === 'success' ? Response.json(saved) : offline()))
 		await advance()
 		expect(autosave.state?.status).toBe('success')
 		expect(autosave.state?.data?.id).toBe('other')
@@ -170,12 +172,12 @@ test('view or read-only mode cannot schedule a write', async () => {
 	await mount(saved, false)
 	await act(async () => autosave.autoSave(items('Read only')))
 	await advance()
-	expect(api.update).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(0)
 	expect(leaving()).toBe(false)
 })
 
 test('a failed draft remains retryable after leaving longer than the default mutation cache lifetime', async () => {
-	api.update.mockRejectedValueOnce(new Error('Offline'))
+	replies.push(offline())
 	await mount()
 	await act(async () => autosave.autoSave(items('Keep this edit')))
 	await advance()
@@ -183,22 +185,22 @@ test('a failed draft remains retryable after leaving longer than the default mut
 	await advance(10 * 60 * 1000)
 	await mount()
 	expect(autosave.state?.status).toBe('error')
-	expect(api.update).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(1)
 	await act(async () => autosave.retry())
 	await advance()
-	expect(api.update.mock.calls[1][1].items).toEqual(items('Keep this edit'))
+	expect(saves()[1].body.data.items).toEqual(items('Keep this edit'))
 })
 
 test('unsaved writes still warn when the editor route has unmounted, and stop after recovery', async () => {
-	api.update.mockRejectedValueOnce(new Error('Offline'))
+	replies.push(offline())
 	await mount()
 	await act(async () => autosave.autoSave(items('Route draft')))
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<DashboardSaveGuard />
 				<p>Another page</p>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 	await advance()
@@ -241,7 +243,7 @@ test('an autosave strips SQL snapshots at the request boundary without mutating 
 	await mount()
 	await act(async () => autosave.autoSave([sqlItem]))
 	await advance()
-	const sent = api.update.mock.calls[0][1].items[0]
+	const sent = saves()[0].body.data.items[0]
 	expect(sent.snapshot).toBeUndefined()
 	expect(sent.query).toEqual(sqlItem.query)
 	expect(sqlItem.snapshot?.rows).toEqual([{ x: 1 }])
@@ -253,13 +255,13 @@ test('saves period overrides while retaining the autosave queue and retry contra
 	await act(async () => autosave.autoSave(items('Period'), { timePeriod: '30d', customTimePeriod: null }))
 	expect(autosave.hasPendingSave()).toBe(true)
 	await advance()
-	expect(api.update.mock.calls[0][1]).toMatchObject({ timePeriod: '30d', customTimePeriod: null })
+	expect(saves()[0].body.data).toMatchObject({ timePeriod: '30d', customTimePeriod: null })
 	expect(autosave.hasPendingSave()).toBe(false)
 	const customTimePeriod = { type: 'relative', relativeDays: 14 } as const
-	api.update.mockRejectedValueOnce(new Error('Offline'))
+	replies.push(offline())
 	await act(async () => autosave.autoSave(items('Custom'), { timePeriod: 'custom', customTimePeriod }))
 	await advance()
-	expect(api.update.mock.calls[1][1]).toMatchObject({ timePeriod: 'custom', customTimePeriod })
+	expect(saves()[1].body.data).toMatchObject({ timePeriod: 'custom', customTimePeriod })
 	expect(autosave.hasPendingSave()).toBe(true)
 	await act(async () => autosave.retry())
 	await advance()
@@ -267,19 +269,19 @@ test('saves period overrides while retaining the autosave queue and retry contra
 })
 
 test('finishing an older save cannot clear the newer queued draft', async () => {
-	const first = Promise.withResolvers<Dashboard>()
-	const second = Promise.withResolvers<Dashboard>()
-	api.update.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+	const first = Promise.withResolvers<Response>()
+	const second = Promise.withResolvers<Response>()
+	replies.push(first.promise, second.promise)
 	await mount()
 	await act(async () => autosave.autoSave(items('First'), { timePeriod: '30d' }))
 	await advance()
 	await act(async () => autosave.autoSave(items('Second'), { timePeriod: '90d' }))
-	await act(async () => first.resolve(saved))
+	await act(async () => first.resolve(Response.json(saved)))
 	expect(autosave.hasPendingSave()).toBe(true)
 	await advance()
 	expect(autosave.hasPendingSave()).toBe(true)
-	expect(api.update.mock.calls[1][1].timePeriod).toBe('90d')
-	await act(async () => second.resolve(saved))
+	expect(saves()[1].body.data.timePeriod).toBe('90d')
+	await act(async () => second.resolve(Response.json(saved)))
 	await advance()
 	expect(autosave.hasPendingSave()).toBe(false)
 })
@@ -288,9 +290,9 @@ test('a document above 48 KiB flushes after 300ms while small documents keep the
 	await mount(saved, true, 800)
 	await act(async () => autosave.autoSave(items('Small')))
 	await advance(300)
-	expect(api.update).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(0)
 	await advance(500)
-	expect(api.update).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(1)
 
 	const largeItems = Array.from({ length: 60 }, (_, index) => ({
 		id: `text-${index}`,
@@ -300,22 +302,22 @@ test('a document above 48 KiB flushes after 300ms while small documents keep the
 	expect(JSON.stringify(largeItems).length).toBeGreaterThan(48 * 1024)
 	await act(async () => autosave.autoSave(largeItems))
 	await advance(299)
-	expect(api.update).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(1)
 	await advance(1)
-	expect(api.update).toHaveBeenCalledTimes(2)
-	expect(api.update.mock.calls[1][1].items).toHaveLength(60)
+	expect(saves()).toHaveLength(2)
+	expect(saves()[1].body.data.items).toHaveLength(60)
 })
 
 test('sends variables and annotations with every autosave, preferring explicit overrides', async () => {
 	await mount()
 	await act(async () => autosave.autoSave(items('Defaults')))
 	await advance()
-	expect(api.update.mock.calls[0][1]).toMatchObject({ variables: [], annotations: [] })
+	expect(saves()[0].body.data).toMatchObject({ variables: [], annotations: [] })
 	const variables = [{ id: 'chain', kind: 'chain' as const, label: 'Chain', value: 'Ethereum' }]
 	const annotations = [{ id: 'launch', date: '2026-03-01', label: 'Launch' }]
 	await act(async () => autosave.autoSave(items('Overrides'), { variables, annotations }))
 	await advance()
-	expect(api.update.mock.calls[1][1]).toMatchObject({ variables, annotations })
+	expect(saves()[1].body.data).toMatchObject({ variables, annotations })
 })
 
 test('a free user autosaves as public and leaves the notice to the save paths', async () => {
@@ -323,6 +325,6 @@ test('a free user autosaves as public and leaves the notice to the save paths', 
 	await mount(privateDashboard, true, 100, true)
 	await act(async () => autosave.autoSave(items('First')))
 	await advance()
-	expect(api.update.mock.calls[0][1]).toMatchObject({ visibility: 'public' })
+	expect(saves()[0].body.visibility).toBe('public')
 	expect(toastMock).not.toHaveBeenCalled()
 })

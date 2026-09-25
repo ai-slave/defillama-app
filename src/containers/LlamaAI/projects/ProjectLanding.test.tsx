@@ -1,83 +1,50 @@
 // @vitest-environment happy-dom
 
-import { act, useState } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ProjectLanding } from './ProjectLanding'
 
-const mocks = vi.hoisted(() => ({
-	projectError: null as Error | null,
-	refetchProject: vi.fn(),
-	router: { pathname: '/ai/projects/[id]', query: { id: 'project-1' } as Record<string, string>, replace: vi.fn() },
-	updateProject: vi.fn(),
-	filesRendered: vi.fn(),
-	instructions: 'Saved instructions',
-	sessions: { data: [], isLoading: false, isFetching: false, error: null as Error | null, refetch: vi.fn() },
-	isStreaming: false,
-	onSubmit: vi.fn(),
-	clearImages: vi.fn()
+const router = vi.hoisted(() => ({
+	pathname: '/ai/projects/[id]',
+	query: {} as Record<string, string>,
+	replace: vi.fn()
 }))
-vi.mock('next/router', () => ({ useRouter: () => mocks.router, default: {} }))
-
-// react-query replaces a result object when its state changes, so `setSessions` does too. Mutating one
-// in place leaves the identity untouched, which a memo cannot see.
-function setSessions(patch: Partial<typeof mocks.sessions>): void {
-	mocks.sessions = { ...mocks.sessions, ...patch }
-}
-vi.mock('./hooks', () => ({
-	useProjectUsage: () => ({ data: { limits: { project_bytes: 1000, project_files: 10 } } }),
-	useProjectDetail: () => ({
-		data: mocks.projectError
-			? undefined
-			: { name: 'Research', custom_instructions: mocks.instructions, file_count: 2, total_bytes: 100 },
-		error: mocks.projectError,
-		refetch: mocks.refetchProject
-	}),
-	useProjectSessions: () => ({ ...mocks.sessions }),
-	useUpdateProject: () => ({ isPending: false, error: null, mutate: mocks.updateProject })
-}))
-vi.mock('./ProjectFilesPanel', () => ({
-	ProjectFilesPanel: (props: object) => {
-		mocks.filesRendered(props)
-		return <input aria-label="Files search" />
-	}
-}))
+vi.mock('next/router', () => ({ useRouter: () => router, default: {} }))
+// Heavy dialogs and menus this suite never opens.
 vi.mock('./CreateProjectModal', () => ({ CreateProjectModal: () => null }))
 vi.mock('./DeleteProjectModal', () => ({ DeleteProjectModal: () => null }))
 vi.mock('./AddSourcesMenu', () => ({ AddSourcesMenu: () => null }))
-vi.mock('~/containers/LlamaAI/hooks/useClearUnseenCompletion', () => ({ useClearUnseenCompletion: () => vi.fn() }))
-vi.mock('~/containers/LlamaAI/hooks/useDeleteSession', () => ({ useDeleteSession: () => ({ isPending: false }) }))
-vi.mock('~/containers/LlamaAI/hooks/useUpdateSessionTitle', () => ({
-	useUpdateSessionTitle: () => ({ isPending: false })
-}))
-vi.mock('~/containers/LlamaAI/hooks/usePromptDraft', () => ({
-	usePromptDraft: () => {
-		const [prompt, setPrompt] = useState('')
-		return [prompt, setPrompt] as const
-	}
-}))
-vi.mock('~/containers/LlamaAI/hooks/useImageUpload', () => ({
-	useImageUpload: () => ({ selectedImages: [], clearImages: mocks.clearImages })
-}))
-vi.mock('~/containers/LlamaAI/components/input/ImageUpload', () => ({
-	ImageUpload: () => null
-}))
-vi.mock('~/containers/LlamaAI/components/PastedContentModal', () => ({ PastedContentModal: () => null }))
-vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }))
+
+const session = installSubscriberSession('owner')
+const project = (id: string, name: string, instructions: string) => ({
+	project: { id, name, custom_instructions: instructions, file_count: 2, total_bytes: 100 }
+})
+let sessionsReply: () => unknown
+let detailReply: () => unknown
+const onSubmit = vi.fn()
 
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.projectError = null
-	mocks.router.query = { id: 'project-1', connectGithub: '1' }
-	mocks.instructions = 'Saved instructions'
-	setSessions({ isLoading: false })
-	setSessions({ isFetching: false })
-	setSessions({ error: null })
-	mocks.isStreaming = false
-	mocks.updateProject.mockResolvedValue(undefined)
+	router.query = { id: 'project-1', connectGithub: '1' }
+	router.replace.mockReset()
+	onSubmit.mockReset()
+	sessionsReply = () => ({ sessions: [] })
+	detailReply = () => project('project-1', 'Research', 'Saved instructions')
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({
+		[`${AI_SERVER}/projects/usage`]: { limits: { project_bytes: 1000, project_files: 10 } },
+		[`${AI_SERVER}/projects/project-1`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'PATCH' ? project('project-1', 'Research', JSON.parse(init.body as string)) : detailReply(),
+		[`${AI_SERVER}/projects/project-2`]: project('project-2', 'Other', 'Another project'),
+		[`${AI_SERVER}/projects/project-1/sessions`]: () => sessionsReply(),
+		[`${AI_SERVER}/projects/project-2/sessions`]: { sessions: [] },
+		[`${AI_SERVER}/projects/project-1/files`]: { files: [], limit: 500, offset: 0 },
+		[`${AI_SERVER}/projects/project-1/sources`]: { sources: [] }
+	})
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -86,26 +53,46 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
-async function render() {
+
+async function render(isStreaming = false) {
 	await act(async () =>
 		root.render(
-			<ProjectLanding
-				projectId={mocks.router.query.id}
-				tier="paid"
-				initialTab={mocks.router.query.tab === 'sources' ? 'sources' : 'chats'}
-				onSubmit={mocks.onSubmit}
-				onPickSession={vi.fn()}
-				isStreaming={mocks.isStreaming}
-				enterToSend
-			/>
+			<session.Wrapper>
+				<ProjectLanding
+					projectId={router.query.id}
+					tier="paid"
+					initialTab={router.query.tab === 'sources' ? 'sources' : 'chats'}
+					onSubmit={onSubmit}
+					onPickSession={vi.fn()}
+					isStreaming={isStreaming}
+					enterToSend
+				/>
+			</session.Wrapper>
 		)
 	)
 }
-function tabs() {
-	return [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+const until = (assertion: () => void) => vi.waitFor(assertion, { timeout: 1000 })
+async function renderLoaded() {
+	await render()
+	await until(() => expect(tabs()).toHaveLength(2))
 }
-function editor() {
-	return container.querySelector<HTMLTextAreaElement>('[role="tabpanel"] textarea')!
+const tabs = () => [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+// The instructions textarea is the one its "Instructions" label points at.
+const editor = () => {
+	const label = [...container.querySelectorAll('label')].find((l) => l.textContent === 'Instructions')!
+	return document.getElementById(label.htmlFor) as HTMLTextAreaElement
+}
+const composer = () => container.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
+const panelOf = (element: HTMLElement) => element.closest<HTMLElement>('[role="tabpanel"]')!
+const visiblePanels = () => [...container.querySelectorAll<HTMLElement>('[role="tabpanel"]')].filter((p) => !p.hidden)
+const button = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent?.includes(text))!
+const requested = (path: string) => session.requests.some(({ url }) => url.pathname === path)
+const patches = () =>
+	session.requests.filter(({ init }) => init?.method === 'PATCH').map(({ init }) => JSON.parse(init!.body as string))
+
+function type(textarea: HTMLTextAreaElement, value: string) {
+	Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, value)
+	textarea.dispatchEvent(new Event('input', { bubbles: true }))
 }
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
@@ -117,177 +104,127 @@ async function press(element: HTMLElement, key: string) {
 }
 
 test('focus does not load Sources; activation preserves project and GitHub query parameters', async () => {
-	await render()
+	await renderLoaded()
 	const [chats, sources] = tabs()
-	expect(editor()).not.toBeNull()
-	expect(editor().closest('[role="tabpanel"]')!.hasAttribute('hidden')).toBe(true)
+	expect(panelOf(editor()).hidden).toBe(true)
 	await press(chats, 'ArrowRight')
 	expect(document.activeElement).toBe(sources)
-	expect(mocks.filesRendered).not.toHaveBeenCalled()
-	expect(mocks.router.replace).not.toHaveBeenCalled()
+	expect(requested('/projects/project-1/files')).toBe(false)
+	expect(router.replace).not.toHaveBeenCalled()
 	await press(sources, 'Enter')
-	expect(mocks.router.replace.mock.calls).toEqual([
+	expect(router.replace.mock.calls).toEqual([
 		[
 			{ pathname: '/ai/projects/[id]', query: { id: 'project-1', connectGithub: '1', tab: 'sources' } },
 			undefined,
 			{ shallow: true }
 		]
 	])
-	mocks.router.query.tab = 'sources'
+	router.query.tab = 'sources'
 	await render()
 	const panel = document.getElementById(sources.getAttribute('aria-controls')!)!
 	expect(panel.getAttribute('aria-labelledby')).toBe(sources.id)
 	expect(panel.hidden).toBe(false)
-	expect(mocks.filesRendered).toHaveBeenLastCalledWith(
-		expect.objectContaining({ autoOpenGitHub: true, projectId: 'project-1', projectFileCount: 2 })
-	)
+	await until(() => expect(requested('/projects/project-1/files')).toBe(true))
 	expect(document.activeElement).toBe(sources)
-	mocks.router.replace.mockClear()
+	router.replace.mockClear()
 	await press(sources, 'Home')
 	expect(document.activeElement).toBe(chats)
 	await press(chats, ' ')
-	expect(mocks.router.replace.mock.calls).toEqual([
+	expect(router.replace.mock.calls).toEqual([
 		[{ pathname: '/ai/projects/[id]', query: { id: 'project-1', connectGithub: '1' } }, undefined, { shallow: true }]
 	])
 })
 
-test('tab changes preserve drafts and show the composer only on Chats', async () => {
-	function chatInput() {
-		return container.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
-	}
+test('tab changes preserve both drafts and show the composer only on Chats', async () => {
+	await renderLoaded()
+	expect(panelOf(composer()).hidden).toBe(false)
+	await act(async () => type(composer(), 'Unsent question'))
+	router.query.tab = 'sources'
 	await render()
-	expect(chatInput().closest<HTMLElement>('[role="tabpanel"]')!.hidden).toBe(false)
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(chatInput(), 'Unsent question')
-		chatInput().dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	mocks.router.query.tab = 'sources'
-	await render()
-	expect(chatInput().closest<HTMLElement>('[role="tabpanel"]')!.hidden).toBe(true)
-	const instructions = editor()
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
-			instructions,
-			'Unsaved local draft'
-		)
-		instructions.dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	expect(container.textContent).toContain('Unsaved')
-	delete mocks.router.query.tab
+	expect(panelOf(composer()).hidden).toBe(true)
+	await act(async () => type(editor(), 'Unsaved local draft'))
+	delete router.query.tab
 	await render()
 	expect(editor().value).toBe('Unsaved local draft')
-	expect(chatInput().closest<HTMLElement>('[role="tabpanel"]')!.hidden).toBe(false)
-	expect(chatInput().value).toBe('Unsent question')
-	expect(container.querySelector('[aria-label="Files search"]')).toBeNull()
-	mocks.instructions = 'Server refresh'
-	mocks.router.query.tab = 'sources'
+	expect(panelOf(composer()).hidden).toBe(false)
+	expect(composer().value).toBe('Unsent question')
+	router.query.tab = 'sources'
 	await render()
-	expect(editor().value).toBe('Unsaved local draft')
-	expect(chatInput().closest<HTMLElement>('[role="tabpanel"]')!.hidden).toBe(true)
-	expect(chatInput().value).toBe('Unsent question')
-	expect(container.querySelector('[aria-label="Files search"]')).not.toBeNull()
-	expect(container.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1)
-	expect(mocks.router.replace).not.toHaveBeenCalled()
-	expect(mocks.updateProject).not.toHaveBeenCalled()
+	expect(visiblePanels()).toHaveLength(1)
+	expect(router.replace).not.toHaveBeenCalled()
+	expect(patches()).toEqual([])
 	await act(async () => editor().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-	expect(mocks.updateProject).toHaveBeenCalledExactlyOnceWith({ custom_instructions: 'Unsaved local draft' })
-	mocks.router.query.id = 'project-2'
-	mocks.instructions = 'Another project'
+	await until(() => expect(patches()).toEqual([{ custom_instructions: 'Unsaved local draft' }]))
+	router.query.id = 'project-2'
 	await render()
-	expect(editor().value).toBe('Another project')
+	await until(() => expect(editor().value).toBe('Another project'))
 })
 
 test('chat loading, failure and retry never present a false empty state', async () => {
-	setSessions({ isLoading: true })
-	await render()
+	let finishLoading = () => {}
+	sessionsReply = () => new Promise((resolve) => (finishLoading = () => resolve(Response.json({}, { status: 500 }))))
+	await renderLoaded()
 	expect(container.textContent).toContain('Loading chats')
 	expect(container.textContent).not.toContain('No chats yet')
-	setSessions({ isLoading: false })
-	setSessions({ error: new Error('Unavailable') })
-	await render()
-	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats.")
+	await act(async () => finishLoading())
+	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats."))
 	expect(container.textContent).not.toContain('No chats yet')
-	await act(async () =>
-		[...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Retry chats'))!.click()
-	)
-	expect(mocks.sessions.refetch).toHaveBeenCalledOnce()
-	setSessions({ isFetching: true })
-	await render()
-	const retry = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Retrying…'))!
-	expect(retry.disabled).toBe(true)
-	setSessions({ error: null })
-	setSessions({ isFetching: false })
-	await render()
+
+	let finishRetry = () => {}
+	sessionsReply = () => new Promise((resolve) => (finishRetry = () => resolve({ sessions: [] })))
+	await act(async () => button('Retry chats').click())
+	await until(() => expect(container.textContent).toContain('Loading chats'))
+	expect(container.textContent).not.toContain('No chats yet')
+	await act(async () => finishRetry())
+	await until(() => expect(container.textContent).toContain('No chats yet'))
 	expect(container.querySelector('[role="alert"]')).toBeNull()
-	expect(container.textContent).toContain('No chats yet')
 })
 
 test('blank and streaming submissions are disabled; rejected submissions keep the draft', async () => {
-	await render()
-	const composer = container.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
+	await renderLoaded()
 	const submit = container.querySelector<HTMLButtonElement>('[aria-label="Send message"]')!
 	expect(submit.disabled).toBe(true)
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(composer, 'Question')
-		composer.dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	mocks.isStreaming = true
-	await render()
+	await act(async () => type(composer(), 'Question'))
+	await render(true)
 	expect(submit.disabled).toBe(true)
-	await act(async () => composer.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
-	expect(mocks.onSubmit).not.toHaveBeenCalled()
-	mocks.isStreaming = false
-	mocks.onSubmit.mockReturnValue(false)
+	await act(async () => composer().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+	expect(onSubmit).not.toHaveBeenCalled()
+	onSubmit.mockReturnValue(false)
 	await render()
 	expect(submit.disabled).toBe(false)
 	await act(async () => submit.click())
-	expect(composer.value).toBe('Question')
-	expect(mocks.clearImages).not.toHaveBeenCalled()
-	mocks.onSubmit.mockReturnValue(true)
+	expect(onSubmit).toHaveBeenLastCalledWith('Question', undefined, undefined)
+	expect(composer().value).toBe('Question')
+	onSubmit.mockReturnValue(true)
 	await act(async () => submit.click())
-	expect(composer.value).toBe('')
-	expect(mocks.clearImages).toHaveBeenCalledOnce()
+	expect(composer().value).toBe('')
 })
 
 test('only the route-selected panel is visible while tab navigation is pending', async () => {
-	await render()
-	mocks.router.replace.mockImplementation(() => new Promise(() => {}))
+	await renderLoaded()
+	router.replace.mockImplementation(() => new Promise(() => {}))
 	await act(async () => tabs()[1].click())
-	expect(
-		[...container.querySelectorAll<HTMLElement>('[role="tabpanel"]')].filter((panel) => !panel.hidden)
-	).toHaveLength(1)
-	expect(
-		container
-			.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
-			.closest<HTMLElement>('[role="tabpanel"]')!.hidden
-	).toBe(false)
-	mocks.router.query.tab = 'sources'
+	expect(visiblePanels()).toEqual([panelOf(composer())])
+	router.query.tab = 'sources'
 	await render()
-	expect(
-		[...container.querySelectorAll<HTMLElement>('[role="tabpanel"]')].filter((panel) => !panel.hidden)
-	).toHaveLength(1)
-	expect(
-		container
-			.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
-			.closest<HTMLElement>('[role="tabpanel"]')!.hidden
-	).toBe(true)
+	expect(visiblePanels()).toHaveLength(1)
+	expect(panelOf(composer()).hidden).toBe(true)
 })
 
 test.each([403, 404])('shows the same not-found page for inaccessible or missing projects (%s)', async (status) => {
-	mocks.projectError = new LlamaAITransportError('Private server detail', status, {})
+	detailReply = () => Response.json({ error: 'Private server detail' }, { status })
 	await render()
-	expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project not found')
+	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project not found'))
 	expect(container.textContent).not.toContain('Private server detail')
 	expect(container.querySelector('a[href="/ai/projects"]')).not.toBeNull()
 	expect(container.textContent).not.toContain('Try again')
 })
 
 test('keeps retry available for temporary project failures', async () => {
-	mocks.projectError = new LlamaAITransportError('Service unavailable', 503, {})
+	detailReply = () => Response.json({ error: 'Service unavailable' }, { status: 503 })
 	await render()
-	expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project unavailable')
-	await act(async () =>
-		[...container.querySelectorAll('button')].find((button) => button.textContent === 'Try again')!.click()
-	)
-	expect(mocks.refetchProject).toHaveBeenCalledOnce()
+	await until(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project unavailable'))
+	detailReply = () => project('project-1', 'Research', 'Saved instructions')
+	await act(async () => button('Try again').click())
+	await until(() => expect(tabs()).toHaveLength(2))
 })

@@ -89,10 +89,8 @@ export function appendRwaChartDatasetTotal(dataset: RWAChartDataset): RWAChartDa
 
 export function limitRwaHorizontalBarData(
 	items: ReadonlyArray<RwaNamedValue>,
-	{ maxBars = RWA_MAX_HORIZONTAL_BARS, sort = false }: { maxBars?: number; sort?: boolean } = {}
+	{ sort = false }: { sort?: boolean } = {}
 ): Array<RwaNamedValue> {
-	const normalizedMaxBars = Number.isFinite(maxBars) ? Math.floor(maxBars) : RWA_MAX_HORIZONTAL_BARS
-	const effectiveMaxBars = Math.max(1, normalizedMaxBars)
 	let othersValue = 0
 	const withoutOthers: Array<RwaNamedValue> = []
 	for (const item of items) {
@@ -109,13 +107,13 @@ export function limitRwaHorizontalBarData(
 		withoutOthers.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name))
 	}
 
-	if (withoutOthers.length <= effectiveMaxBars - (othersValue > 0 ? 1 : 0)) {
+	if (withoutOthers.length <= RWA_MAX_HORIZONTAL_BARS - (othersValue > 0 ? 1 : 0)) {
 		return othersValue > 0 ? [...withoutOthers, { name: 'Others', value: othersValue }] : withoutOthers
 	}
 
-	const limited = withoutOthers.slice(0, effectiveMaxBars - 1)
+	const limited = withoutOthers.slice(0, RWA_MAX_HORIZONTAL_BARS - 1)
 	let overflowValue = othersValue
-	for (const item of withoutOthers.slice(effectiveMaxBars - 1)) {
+	for (const item of withoutOthers.slice(RWA_MAX_HORIZONTAL_BARS - 1)) {
 		overflowValue += item.value
 	}
 	return overflowValue > 0 ? [...limited, { name: 'Others', value: overflowValue }] : limited

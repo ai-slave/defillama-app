@@ -21,7 +21,7 @@ const assets = [
 			'1m': { activeMcap: 200_000, onChainMcap: 500_000, defiActiveTvl: 50_000, bridgeTvl: 0 }
 		}
 	}),
-	spotAsset({ id: 'c', canonicalMarketId: 'c', issuer: null, accessModel: 'Permissioned', attestations: null })
+	spotAsset({ id: 'c', canonicalMarketId: 'c', issuer: null, accessModel: 'Unknown', attestations: null })
 ]
 
 describe('foldRwaPlatformKpi', () => {

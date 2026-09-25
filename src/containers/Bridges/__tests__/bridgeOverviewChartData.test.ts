@@ -242,26 +242,4 @@ describe('buildBridgeOverviewActiveChart', () => {
 			{ name: 'Others', value: 20 }
 		])
 	})
-
-	test('preserves integer-like symbol ordering when values tie', () => {
-		const result = buildBridgeOverviewActiveChart({
-			selectedChain: 'Ethereum',
-			chartType: '24h Tokens Deposited',
-			chainVolumeData,
-			bridgeStatsCurrentDay: {
-				totalTokensDeposited: {
-					first: { symbol: '10', usdValue: 5 },
-					second: { symbol: '2', usdValue: 5 }
-				},
-				totalTokensWithdrawn: {}
-			}
-		})
-
-		expect(result?.kind).toBe('24h Tokens Deposited')
-		if (result?.kind !== '24h Tokens Deposited') return
-		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([
-			{ name: '2', value: 5 },
-			{ name: '10', value: 5 }
-		])
-	})
 })

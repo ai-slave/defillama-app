@@ -30,7 +30,7 @@ const jsonBackedSqlValue = (value: unknown) =>
 
 describe('captureSnapshot', () => {
 	test('keeps all rows and omits the truncated flag when under the cap', () => {
-		const snap = captureSnapshot(resultWithRows(3), 'browser', AT)
+		const snap = captureSnapshot(resultWithRows(3), 'server', AT)
 		expect(snap.rows).toHaveLength(3)
 		expect(snap.rowCount).toBe(3)
 		expect(snap.truncated).toBeUndefined()
@@ -38,7 +38,7 @@ describe('captureSnapshot', () => {
 			{ name: 'ts', type: 'VARCHAR' },
 			{ name: 'value', type: 'DOUBLE' }
 		])
-		expect(snap.engine).toBe('browser')
+		expect(snap.engine).toBe('server')
 		expect(snap.computedAt).toBe(AT)
 	})
 
@@ -54,10 +54,6 @@ describe('captureSnapshot', () => {
 		expect(snap.rows).toHaveLength(SQL_SNAPSHOT_ROW_CAP)
 		expect(snap.truncated).toBeUndefined()
 		expect(snap.rowCount).toBe(SQL_SNAPSHOT_ROW_CAP)
-	})
-
-	test('records the engine that produced the snapshot', () => {
-		expect(captureSnapshot(resultWithRows(1), 'server', AT).engine).toBe('server')
 	})
 
 	test('honors a custom row cap and clamps it to the allowed range', () => {
@@ -125,10 +121,23 @@ describe('captureSnapshot', () => {
 })
 
 describe('snapshotToResult', () => {
-	test('round-trips columns and rows back into a QueryResult', () => {
-		const snap = captureSnapshot(resultWithRows(2), 'browser', AT)
-		const result = snapshotToResult(snap)
-		expect(result.columns).toEqual(snap.columns)
-		expect(result.rows).toEqual(snap.rows)
+	test('reads legacy object rows back as column-ordered array rows', () => {
+		const result = snapshotToResult({
+			columns: [
+				{ name: 'chain', type: 'VARCHAR' },
+				{ name: 'value', type: 'DOUBLE' }
+			],
+			rows: [
+				{ value: 1, chain: 'Ethereum' },
+				{ chain: 'Base', value: 2 }
+			],
+			computedAt: AT,
+			rowCount: 2,
+			engine: 'browser'
+		})
+		expect(result.rows).toEqual([
+			['Ethereum', 1],
+			['Base', 2]
+		])
 	})
 })

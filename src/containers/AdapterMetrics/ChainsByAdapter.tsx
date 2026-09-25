@@ -24,6 +24,7 @@ import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { ChainsByAdapterChart } from './ChainChart'
 import type { IChainsByAdapterPageData } from './types'
+import { showsChainsByAdapterChart } from './utils'
 
 const tableFeaturesConfig = searchTableFeatures
 
@@ -45,8 +46,6 @@ type TPageType =
 interface IProps extends IChainsByAdapterPageData {
 	type: TPageType
 }
-
-const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Holders Revenue', 'App Fees', 'App Revenue'])
 
 export function ChainsByAdapter(props: IProps) {
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'total24h' }])
@@ -76,8 +75,6 @@ export function ChainsByAdapter(props: IProps) {
 	useSortColumnOrders({
 		instance
 	})
-	const showChartPanel = props.adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(props.type)
-
 	return (
 		<>
 			{props.type === 'Fees' ? (
@@ -93,7 +90,7 @@ export function ChainsByAdapter(props: IProps) {
 					</a>
 				</Announcement>
 			) : null}
-			{showChartPanel ? (
+			{showsChainsByAdapterChart(props.adapterType, props.type) ? (
 				<ChainsByAdapterChart
 					adapterType={props.adapterType}
 					dataType={props.dataType}

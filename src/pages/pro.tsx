@@ -18,6 +18,7 @@ import {
 	areMyDashboardsControlsActive,
 	DEFAULT_MY_DASHBOARDS_CONTROLS,
 	filterAndSortMyDashboards,
+	getMyDashboardsRequest,
 	MY_DASHBOARDS_FILTERED_PAGE_SIZE
 } from '~/containers/ProDashboard/components/myDashboardsControls.utils'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
@@ -269,8 +270,7 @@ function ProContent({
 		totalItems: myDashboardsTotalItems,
 		goToPage
 	} = useMyDashboards({
-		page: myDashboardsControlsActive ? 1 : selectedPage,
-		limit: myDashboardsControlsActive ? MY_DASHBOARDS_FILTERED_PAGE_SIZE : 20,
+		...getMyDashboardsRequest(myDashboardsControls, selectedPage),
 		enabled: isAuthenticated
 	})
 	const visibleMyDashboards = myDashboardsControlsActive

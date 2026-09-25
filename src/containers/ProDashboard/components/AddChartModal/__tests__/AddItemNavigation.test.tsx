@@ -1,54 +1,40 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installSubscriberSession, type SessionOptions } from '~/utils/test/subscriberSession'
 import { DASHBOARD_ITEM_REVEAL_EVENT } from '../../../hooks/useDashboardItemDeepLink'
 import { AddChartModal } from '../AddChartModal'
 import { CHART_MODE_STORAGE_KEY } from '../chartModePreference'
 
-const { sqlAccess, openSql, appendItems, builderMounted, builderUnmounted } = vi.hoisted(() => ({
-	sqlAccess: { isAllowed: false, isUnknown: false, isRetrying: false, retry: vi.fn() },
+const { openSql, appendItems } = vi.hoisted(() => ({
 	openSql: vi.fn(),
-	appendItems: vi.fn(),
-	builderMounted: vi.fn(),
-	builderUnmounted: vi.fn()
+	appendItems: vi.fn()
 }))
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
-vi.mock('../../../hooks/useIsSqlAllowed', () => ({ useIsSqlAllowed: () => sqlAccess }))
-vi.mock('../../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ protocols: [], chains: [], protocolsLoading: false }),
-	useProDashboardTime: () => ({ timePeriod: '365d', customTimePeriod: null }),
-	useProDashboardEditorActions: () => ({ handleAppendItems: appendItems, handleEditItem: vi.fn() }),
-	useProDashboardVariables: () => ({ variables: [] })
-}))
-vi.mock('../useComposerItemsData', () => ({ useComposerItemsData: () => [] }))
-vi.mock('../ChartBuilderTab', async () => {
-	const { useEffect } = await import('react')
-	return {
-		ChartBuilderTab: () => {
-			useEffect(() => {
-				builderMounted()
-				return () => {
-					builderUnmounted()
-				}
-			}, [])
-			return <p>Chart builder preview</p>
-		}
-	}
-})
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {}, push: vi.fn() }) }))
+vi.mock('../ChartBuilderTab', () => ({ ChartBuilderTab: () => <p>Chart builder preview</p> }))
 vi.mock('../UnifiedChartTab', () => ({ UnifiedChartTab: () => <p>Manual charts</p> }))
 vi.mock('../MetricTab', () => ({ MetricTab: () => <p>Metric configuration</p> }))
 vi.mock('../UnifiedTableTab', () => ({ UnifiedTableTab: () => null }))
 vi.mock('../LlamaAITab', () => ({ LlamaAITab: () => null }))
-vi.mock('../../SqlChart/SqlChartUpsell', () => ({ SqlChartUpsell: () => <p>SQL subscription required</p> }))
+
+let session: ReturnType<typeof installSubscriberSession>
+function signInAs(options: SessionOptions) {
+	const installed = installSubscriberSession('u1', { ...options, resolved: true })
+	beforeEach(() => {
+		session = installed
+		session.serve({ '/subscription/trial-available': { trialAvailable: false } })
+	})
+}
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
 	localStorage.removeItem(CHART_MODE_STORAGE_KEY)
-	sqlAccess.isAllowed = false
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -72,68 +58,68 @@ async function pressKey(element: HTMLElement, key: string) {
 		element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 	})
 }
-async function renderModal() {
-	await act(async () => root.render(<AddChartModal isOpen onClose={vi.fn()} onOpenSqlModal={openSql} />))
-}
-
-test('nested navigation unmounts inactive previews while text drafts survive section changes', async () => {
-	await renderModal()
-	const dialog = document.querySelector('[role="dialog"]')!
-	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Add card')
-	expect(tab('manual').getAttribute('aria-selected')).toBe('true')
-	expect(builderMounted).not.toHaveBeenCalled()
-	await click(tab('builder'))
-	expect(builderMounted).toHaveBeenCalledTimes(1)
-	await pressKey(tab('builder'), 'ArrowRight')
-	await vi.waitFor(() => expect(document.activeElement).toBe(tab('manual')))
-	expect(builderUnmounted).not.toHaveBeenCalled()
-	expect(tab('builder').getAttribute('aria-selected')).toBe('true')
-	await click(tab('manual'))
-	expect(builderUnmounted).toHaveBeenCalledTimes(1)
-	expect(document.body.textContent).toContain('Manual charts')
-	expect(document.body.textContent).not.toContain('Chart builder preview')
-	const manualPanel = document.getElementById(tab('manual').getAttribute('aria-controls')!)!
-	expect(manualPanel.getAttribute('aria-labelledby')).toBe(tab('manual').id)
-
-	await click(tab('text'))
-	const content = document.querySelector<HTMLTextAreaElement>('textarea')!
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, 'Keep this draft')
-		content.dispatchEvent(new Event('input', { bubbles: true }))
-	})
-	await click(tab('metric'))
-	expect(document.querySelector('textarea')).toBeNull()
-	await click(tab('text'))
-	expect(document.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('Keep this draft')
-	expect(appendItems).not.toHaveBeenCalled()
-})
-
-test('the SQL tab shows a hand-off panel and opens the editor only from its button', async () => {
-	await renderModal()
-	await pressKey(tab('charts'), 'End')
-	await vi.waitFor(() => expect(document.activeElement).toBe(tab('sql')))
-	expect(openSql).not.toHaveBeenCalled()
-	expect(tab('charts').getAttribute('aria-selected')).toBe('true')
-	await click(tab('sql'))
-	expect(document.body.textContent).toContain('SQL subscription required')
-	expect(openSql).not.toHaveBeenCalled()
-
-	sqlAccess.isAllowed = true
-	await renderModal()
-	await click(tab('sql'))
-	expect(openSql).not.toHaveBeenCalled()
-	expect(document.body.textContent).toContain('SQL cards are built in the SQL editor')
-	const openEditor = Array.from(document.querySelectorAll('button')).find(
-		(button) => button.textContent?.trim() === 'Open SQL editor'
-	)!
-	await click(openEditor)
-	expect(openSql).toHaveBeenCalledTimes(1)
-	expect(document.querySelector('[role="tablist"][aria-label="Card type"]')).not.toBeNull()
-})
-
-test('editing hides the tab list and shows the card type in the header', async () => {
+async function show(modal: React.ReactElement) {
 	await act(async () =>
 		root.render(
+			<session.Wrapper>
+				<DashboardTestProvider editorActions={{ handleAppendItems: appendItems, handleEditItem: vi.fn() }}>
+					{modal}
+				</DashboardTestProvider>
+			</session.Wrapper>
+		)
+	)
+}
+async function renderModal() {
+	await show(<AddChartModal isOpen onClose={vi.fn()} onOpenSqlModal={openSql} />)
+}
+
+describe('a subscriber without SQL access', () => {
+	signInAs({})
+
+	test('the SQL tab shows a subscription hand-off without opening the editor', async () => {
+		await renderModal()
+		await pressKey(tab('charts'), 'End')
+		await vi.waitFor(() => expect(document.activeElement).toBe(tab('sql')))
+		expect(openSql).not.toHaveBeenCalled()
+		expect(tab('charts').getAttribute('aria-selected')).toBe('true')
+		await click(tab('sql'))
+		expect(document.body.textContent).toContain('Author charts from SQL')
+		expect(openSql).not.toHaveBeenCalled()
+	})
+
+	test('nested navigation unmounts inactive previews while text drafts survive section changes', async () => {
+		await renderModal()
+		const dialog = document.querySelector('[role="dialog"]')!
+		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Add card')
+		expect(tab('manual').getAttribute('aria-selected')).toBe('true')
+		expect(document.body.textContent).not.toContain('Chart builder preview')
+		await click(tab('builder'))
+		expect(document.body.textContent).toContain('Chart builder preview')
+		await pressKey(tab('builder'), 'ArrowRight')
+		await vi.waitFor(() => expect(document.activeElement).toBe(tab('manual')))
+		expect(document.body.textContent).toContain('Chart builder preview')
+		expect(tab('builder').getAttribute('aria-selected')).toBe('true')
+		await click(tab('manual'))
+		expect(document.body.textContent).toContain('Manual charts')
+		expect(document.body.textContent).not.toContain('Chart builder preview')
+		const manualPanel = document.getElementById(tab('manual').getAttribute('aria-controls')!)!
+		expect(manualPanel.getAttribute('aria-labelledby')).toBe(tab('manual').id)
+
+		await click(tab('text'))
+		const content = document.querySelector<HTMLTextAreaElement>('textarea')!
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, 'Keep this draft')
+			content.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		await click(tab('metric'))
+		expect(document.querySelector('textarea')).toBeNull()
+		await click(tab('text'))
+		expect(document.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('Keep this draft')
+		expect(appendItems).not.toHaveBeenCalled()
+	})
+
+	test('editing hides the tab list and shows the card type in the header', async () => {
+		await show(
 			<AddChartModal
 				key="edit"
 				isOpen
@@ -141,48 +127,17 @@ test('editing hides the tab list and shows the card type in the header', async (
 				editItem={{ id: 'text', kind: 'text', title: 'Title', content: 'Existing content' }}
 			/>
 		)
-	)
-	expect(document.querySelector('[role="tablist"][aria-label="Card type"]')).toBeNull()
-	const dialog = document.querySelector('[role="dialog"]')!
-	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Edit card \u00b7 Text')
-	expect(document.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('Existing content')
-	expect(appendItems).not.toHaveBeenCalled()
-})
-
-test('a dropped edit keeps the modal open and says the dashboard is still loading', async () => {
-	appendItems.mockReturnValue(false)
-	const onClose = vi.fn()
-	await act(async () => root.render(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />))
-	await click(tab('text'))
-	const content = document.querySelector<HTMLTextAreaElement>('textarea')!
-	await act(async () => {
-		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, 'A note')
-		content.dispatchEvent(new Event('input', { bubbles: true }))
+		expect(document.querySelector('[role="tablist"][aria-label="Card type"]')).toBeNull()
+		const dialog = document.querySelector('[role="dialog"]')!
+		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Edit card \u00b7 Text')
+		expect(document.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('Existing content')
+		expect(appendItems).not.toHaveBeenCalled()
 	})
-	const submit = Array.from(document.querySelectorAll('button')).find(
-		(button) => button.textContent?.trim() === 'Add card'
-	)!
-	await click(submit)
 
-	expect(appendItems).toHaveBeenCalledTimes(1)
-	expect(onClose).not.toHaveBeenCalled()
-	expect(toastMock.error).toHaveBeenCalledWith(
-		'The dashboard is still loading. Try again in a moment.',
-		expect.objectContaining({ id: 'dashboard-not-ready' })
-	)
-})
-
-test('a submitted card asks the dashboard to reveal it once the modal has closed', async () => {
-	appendItems.mockReturnValue(['text-new'])
-	const onClose = vi.fn()
-	const reveals: Array<{ itemId: string; closedFirst: boolean }> = []
-	const listener = (event: Event) => {
-		const detail = (event as CustomEvent<{ itemId: string }>).detail
-		reveals.push({ itemId: detail.itemId, closedFirst: onClose.mock.calls.length > 0 })
-	}
-	window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, listener)
-	try {
-		await act(async () => root.render(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />))
+	test('a dropped edit keeps the modal open and says the dashboard is still loading', async () => {
+		appendItems.mockReturnValue(false)
+		const onClose = vi.fn()
+		await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} />)
 		await click(tab('text'))
 		const content = document.querySelector<HTMLTextAreaElement>('textarea')!
 		await act(async () => {
@@ -193,8 +148,76 @@ test('a submitted card asks the dashboard to reveal it once the modal has closed
 			(button) => button.textContent?.trim() === 'Add card'
 		)!
 		await click(submit)
-		expect(reveals).toEqual([{ itemId: 'text-new', closedFirst: true }])
-	} finally {
-		window.removeEventListener(DASHBOARD_ITEM_REVEAL_EVENT, listener)
-	}
+
+		expect(appendItems).toHaveBeenCalledTimes(1)
+		expect(onClose).not.toHaveBeenCalled()
+		expect(toastMock.error).toHaveBeenCalledWith(
+			'The dashboard is still loading. Try again in a moment.',
+			expect.objectContaining({ id: 'dashboard-not-ready' })
+		)
+	})
+
+	test.each([
+		['a new card', undefined],
+		['a quick add draft', { id: 'quick-add-draft', kind: 'text', title: '', content: 'A note' } as const]
+	])('submitting %s appends it and reveals it once the modal has closed', async (_label, draftItem) => {
+		appendItems.mockReturnValue(['text-new'])
+		const onClose = vi.fn()
+		const reveals: Array<{ itemId: string; closedFirst: boolean }> = []
+		const listener = (event: Event) => {
+			const detail = (event as CustomEvent<{ itemId: string }>).detail
+			reveals.push({ itemId: detail.itemId, closedFirst: onClose.mock.calls.length > 0 })
+		}
+		window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, listener)
+		try {
+			await show(<AddChartModal isOpen onClose={onClose} onOpenSqlModal={openSql} draftItem={draftItem} />)
+			if (!draftItem) {
+				await click(tab('text'))
+				const content = document.querySelector<HTMLTextAreaElement>('textarea')!
+				await act(async () => {
+					Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(content, 'A note')
+					content.dispatchEvent(new Event('input', { bubbles: true }))
+				})
+			}
+			expect(document.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('A note')
+			const submit = Array.from(document.querySelectorAll('button')).find(
+				(button) => button.textContent?.trim() === 'Add card'
+			)!
+			await click(submit)
+			expect(reveals).toEqual([{ itemId: 'text-new', closedFirst: true }])
+		} finally {
+			window.removeEventListener(DASHBOARD_ITEM_REVEAL_EVENT, listener)
+		}
+	})
+
+	test('the sheet reports it has finished leaving only after it was open', async () => {
+		const onClosed = vi.fn()
+		await show(<AddChartModal isOpen={false} onClose={vi.fn()} onClosed={onClosed} />)
+		expect(onClosed).not.toHaveBeenCalled()
+
+		await show(<AddChartModal isOpen onClose={vi.fn()} onClosed={onClosed} />)
+		expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+		expect(onClosed).not.toHaveBeenCalled()
+
+		await show(<AddChartModal isOpen={false} onClose={vi.fn()} onClosed={onClosed} />)
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
+		expect(onClosed).toHaveBeenCalledOnce()
+	})
+})
+
+describe('a reader with SQL access', () => {
+	signInAs({ record: { flags: { is_llama: true } } })
+
+	test('the SQL tab opens the editor only from its button', async () => {
+		await renderModal()
+		await click(tab('sql'))
+		expect(openSql).not.toHaveBeenCalled()
+		expect(document.body.textContent).toContain('SQL cards are built in the SQL editor')
+		const openEditor = Array.from(document.querySelectorAll('button')).find(
+			(button) => button.textContent?.trim() === 'Open SQL editor'
+		)!
+		await click(openEditor)
+		expect(openSql).toHaveBeenCalledTimes(1)
+		expect(document.querySelector('[role="tablist"][aria-label="Card type"]')).not.toBeNull()
+	})
 })

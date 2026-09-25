@@ -1,27 +1,25 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const fetchJson = vi.hoisted(() => vi.fn())
-
-vi.mock('~/constants', () => ({ YIELDS_V2_SERVER_URL: 'https://yields.example' }))
-vi.mock('~/utils/async', () => ({ fetchJson }))
-
+import { describe, expect, test } from 'vitest'
+import { YIELDS_V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchTrendsFromNetwork } from '../fetchers'
 
-beforeEach(() => {
-	vi.clearAllMocks()
-	fetchJson.mockResolvedValue({ data: [{ pool: 'pool-1' }] })
-})
+const http = installFixtureFetch()
+const TRENDS = `${YIELDS_V2_SERVER_URL}/v2/earn/trends`
+const unavailable = () => new Response('busy', { status: 503 })
 
 describe('Yields v2 network fetchers', () => {
-	test('uses the standard retry count by default', async () => {
-		await fetchTrendsFromNetwork({ timeout: 1000 })
+	test('unwraps the data envelope', async () => {
+		http.serve({ [TRENDS]: { data: [{ pool: 'pool-1' }] } })
 
-		expect(fetchJson).toHaveBeenCalledWith('https://yields.example/v2/earn/trends', { timeout: 1000 }, false)
+		await expect(fetchTrendsFromNetwork({ timeout: 1000 })).resolves.toEqual([{ pool: 'pool-1' }])
 	})
 
-	test('passes the snapshot extra-retry option separately from request options', async () => {
-		await fetchTrendsFromNetwork({ extraRetry: true, timeout: 1000 })
+	// The snapshot build asks for one more attempt so two upstream blips do not fail a page build.
+	test('survives two failed attempts only with the snapshot extra retry', async () => {
+		http.serveInOrder(TRENDS, [unavailable, unavailable], { data: [{ pool: 'pool-1' }] })
+		await expect(fetchTrendsFromNetwork({ extraRetry: true, timeout: 1000 })).resolves.toEqual([{ pool: 'pool-1' }])
 
-		expect(fetchJson).toHaveBeenCalledWith('https://yields.example/v2/earn/trends', { timeout: 1000 }, true)
+		http.serveInOrder(TRENDS, [unavailable, unavailable], { data: [{ pool: 'pool-1' }] })
+		await expect(fetchTrendsFromNetwork({ timeout: 1000 })).rejects.toThrow('[503]')
 	})
 })

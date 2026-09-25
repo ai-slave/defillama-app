@@ -1,234 +1,96 @@
 import type { GetStaticPropsContext } from 'next'
-import { createElement, type ComponentType } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { feeRevenueMetrics } from '~/metrics/feesRevenue'
-import defillamaPages from '~/public/pages.json'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
+import { describe, expect, test, vi } from 'vitest'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 
-type CapturedLayoutProps = {
-	canonicalUrl?: string
-	tvlOptions?: unknown
-}
+// Chain-native rankings read the fees overview's chain rows; app-aggregation rankings read chain metadata totals.
+// The fixture gives each source different numbers so the returned rows show which builder a page uses.
+const chainRow = (name: string, total24h: number) => ({
+	name,
+	displayName: name,
+	slug: name.toLowerCase(),
+	protocolType: 'chain',
+	total24h,
+	total7d: null,
+	total30d: total24h * 10
+})
 
-const mocks = vi.hoisted(() => ({
-	chainMetadata: {
-		ethereum: {
-			id: 'ethereum',
-			name: 'Ethereum'
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: async (url: string) => {
+		const { pathname, searchParams } = new URL(url)
+		if (pathname.endsWith('/metrics/fees/chain/base')) return { protocols: [] }
+		if (pathname.endsWith('/metrics/fees')) {
+			const dataType = searchParams.get('dataType')
+			if (dataType === 'dailyFees') return { protocols: [chainRow('Base', 100)] }
+			if (dataType === 'dailyRevenue') return { protocols: [chainRow('Base', 40)] }
+			if (dataType === null) return { protocols: [chainRow('Base', 70)] }
 		}
-	},
-	getChainsByAdapterPageData: vi.fn(),
-	getChainsByChainNativeFeeRevenuePageData: vi.fn(),
-	getChainsByREVPageData: vi.fn(),
-	layoutProps: [] as Array<CapturedLayoutProps>,
-	maxAgeForNext: vi.fn(() => 22)
-}))
-
-vi.mock('~/containers/AdapterMetrics/ChainsByAdapter', () => ({
-	ChainsByAdapter: () => null
-}))
-
-vi.mock('~/components/DeprecatedEntityMarker', () => ({
-	DeprecatedEntityMarker: () => null
-}))
-
-vi.mock('~/components/Link', () => ({
-	BasicLink: () => null
-}))
-
-vi.mock('~/components/Table/search/SearchTableProvider', () => ({
-	SearchTableProvider: () => null
-}))
-
-vi.mock('~/components/TokenLogo', () => ({
-	TokenLogo: () => null
-}))
-
-vi.mock('~/containers/AdapterMetrics/queries', () => ({
-	getChainsByAdapterPageData: mocks.getChainsByAdapterPageData,
-	getChainsByChainNativeFeeRevenuePageData: mocks.getChainsByChainNativeFeeRevenuePageData,
-	getChainsByREVPageData: mocks.getChainsByREVPageData
-}))
-
-vi.mock('~/layout', () => ({
-	default: (props: CapturedLayoutProps) => {
-		mocks.layoutProps.push(props)
-		return null
+		throw new Error(`Unrouted upstream request: ${url}`)
 	}
 }))
 
-vi.mock('~/utils/maxAgeForNext', () => ({
-	maxAgeForNext: mocks.maxAgeForNext
-}))
+// Heavy page chrome; these tests only read getStaticProps output.
+vi.mock('~/layout', () => ({ default: () => null }))
+vi.mock('~/containers/AdapterMetrics/ChainsByAdapter', () => ({ ChainsByAdapter: () => null }))
 
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		chainMetadata: mocks.chainMetadata
+const metadata = installMetadataSeeder()
+
+const chainMetadata = {
+	base: {
+		id: 'base',
+		name: 'Base',
+		chainFees: true,
+		chainRevenue: true,
+		fees: true,
+		revenue: true,
+		dimAgg: { fees: { daf: { '24h': 5 }, dar: { '24h': 6 }, dhr: { '24h': 7 } } }
+	},
+	appchain: {
+		id: 'appchain',
+		name: 'Appchain',
+		fees: true,
+		revenue: true,
+		dimAgg: { fees: { daf: { '24h': 1 }, dar: { '24h': 2 }, dhr: { '24h': 3 } } }
 	}
-}))
-
-vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: <T extends (...args: Array<unknown>) => unknown>(_name: string, fn: T) => fn
-}))
-
-const feeRevenueMetricRegistry = Object.values(feeRevenueMetrics)
-
-const rankingPageRows = [
-	{
-		route: feeRevenueMetrics.chainFees.ranking.route,
-		metric: feeRevenueMetrics.chainFees,
-		loadPage: () => import('~/pages/fees/chains')
-	},
-	{
-		route: feeRevenueMetrics.chainRevenue.ranking.route,
-		metric: feeRevenueMetrics.chainRevenue,
-		loadPage: () => import('~/pages/revenue/chains')
-	},
-	{
-		route: feeRevenueMetrics.appFees.ranking.route,
-		metric: feeRevenueMetrics.appFees,
-		loadPage: () => import('~/pages/app-fees/chains')
-	},
-	{
-		route: feeRevenueMetrics.appRevenue.ranking.route,
-		metric: feeRevenueMetrics.appRevenue,
-		loadPage: () => import('~/pages/app-revenue/chains')
-	},
-	{
-		route: feeRevenueMetrics.rev.ranking.route,
-		metric: feeRevenueMetrics.rev,
-		loadPage: () => import('~/pages/rev/chains')
-	}
-] as const
-
-const staticPropsContext = {} as GetStaticPropsContext
-const chainRankingPageProps = {
-	adapterType: ADAPTER_TYPES.FEES,
-	chartData: { dimensions: ['timestamp'], source: [] },
-	chains: [],
-	allChains: []
 }
+
+const rankingPages = [
+	{ route: '/fees/chains', loadPage: () => import('~/pages/fees/chains'), rows: [['Base', 100]] },
+	{ route: '/revenue/chains', loadPage: () => import('~/pages/revenue/chains'), rows: [['Base', 40]] },
+	{
+		route: '/app-fees/chains',
+		loadPage: () => import('~/pages/app-fees/chains'),
+		rows: [
+			['Base', 5],
+			['Appchain', 1]
+		]
+	},
+	{
+		route: '/app-revenue/chains',
+		loadPage: () => import('~/pages/app-revenue/chains'),
+		rows: [
+			['Base', 6],
+			['Appchain', 2]
+		]
+	},
+	{
+		route: '/holders-revenue/chains',
+		loadPage: () => import('~/pages/holders-revenue/chains'),
+		rows: [
+			['Base', 7],
+			['Appchain', 3]
+		]
+	},
+	{ route: '/rev/chains', loadPage: () => import('~/pages/rev/chains'), rows: [['Base', 70]] }
+]
 
 describe('fees and revenue page semantics', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		mocks.layoutProps = []
-		mocks.getChainsByAdapterPageData.mockResolvedValue({ chains: [] })
-		mocks.getChainsByChainNativeFeeRevenuePageData.mockResolvedValue({ chains: [] })
-		mocks.getChainsByREVPageData.mockResolvedValue({ chains: [] })
-	})
+	test.each(rankingPages)('$route ranks chains from its own fee/revenue source', async ({ loadPage, rows }) => {
+		metadata.seed({ chainMetadata })
+		const page = await loadPage()
 
-	test('keeps every fees/revenue chain ranking page represented in the registry', () => {
-		const pagesJsonRoutes = defillamaPages.Metrics.filter(
-			(page) => page.category === 'Fees & Revenue' && page.tab === 'Chains'
-		).map((page) => page.route)
-		const registryRoutes = feeRevenueMetricRegistry.map((metric) => metric.ranking.route)
+		const result = await page.getStaticProps({} as GetStaticPropsContext)
 
-		expect([...pagesJsonRoutes].sort()).toEqual([...registryRoutes].sort())
-	})
-
-	test.each(feeRevenueMetricRegistry)('pins public page glossary semantics for $label', (metric) => {
-		const matchingPages = defillamaPages.Metrics.filter((page) => page.route === metric.ranking.route)
-
-		expect(matchingPages).toHaveLength(1)
-		expect(matchingPages[0]).toMatchObject({
-			name: metric.ranking.name,
-			category: 'Fees & Revenue',
-			tab: metric.ranking.tab,
-			totalTrackedKey: metric.ranking.totalTrackedKey
-		})
-
-		for (const expectedText of metric.ranking.descriptionIncludes) {
-			expect(matchingPages[0].description).toContain(expectedText)
-		}
-	})
-
-	// Every builder a ranking page can dispatch to, so the unselected ones can be asserted untouched.
-	const builders = [
-		mocks.getChainsByChainNativeFeeRevenuePageData,
-		mocks.getChainsByAdapterPageData,
-		mocks.getChainsByREVPageData
-	]
-
-	test.each(rankingPageRows)('pins $route ranking page data builder semantics', async (row) => {
-		const page = await row.loadPage()
-		const ranking = row.metric.ranking
-
-		await page.getStaticProps(staticPropsContext)
-
-		// The switch picks the builder's expected call; the assertions run outside it, so a builder whose
-		// case stopped matching fails rather than asserting nothing. The `never` default keeps it exhaustive.
-		const expected = ((): { builder: (typeof builders)[number]; args: unknown } => {
-			switch (ranking.builder) {
-				case 'chain-native':
-					return {
-						builder: mocks.getChainsByChainNativeFeeRevenuePageData,
-						args: {
-							adapterType: ADAPTER_TYPES.FEES,
-							dataType: ranking.dataType,
-							chainMetadata: mocks.chainMetadata
-						}
-					}
-				case 'app-aggregation':
-					return {
-						builder: mocks.getChainsByAdapterPageData,
-						args: {
-							adapterType: ADAPTER_TYPES.FEES,
-							dataType: ranking.dataType,
-							chainMetadata: mocks.chainMetadata,
-							includeChartData: false
-						}
-					}
-				case 'rev':
-					return { builder: mocks.getChainsByREVPageData, args: { chainMetadata: mocks.chainMetadata } }
-				default: {
-					const exhaustiveCheck: never = ranking
-					throw new Error(`Unhandled fee/revenue ranking builder: ${exhaustiveCheck}`)
-				}
-			}
-		})()
-
-		expect(expected.builder).toHaveBeenCalledWith(expected.args)
-		for (const builder of builders.filter((candidate) => candidate !== expected.builder)) {
-			expect(builder).not.toHaveBeenCalled()
-		}
-	})
-
-	test('keeps fee/revenue ranking layouts free of metric filter controls', async () => {
-		for (const row of rankingPageRows) {
-			const page = await row.loadPage()
-			const Page = page.default as unknown as ComponentType<Record<string, unknown>>
-
-			mocks.layoutProps = []
-			renderToStaticMarkup(
-				createElement(
-					Page,
-					row.metric.ranking.builder === 'rev'
-						? { chains: [] }
-						: { ...chainRankingPageProps, dataType: row.metric.ranking.dataType }
-				)
-			)
-
-			expect(mocks.layoutProps).toHaveLength(1)
-			expect(mocks.layoutProps[0]).toMatchObject({ canonicalUrl: row.route })
-			expect(mocks.layoutProps[0].tvlOptions).toBeUndefined()
-		}
-	})
-
-	test('keeps holders revenue ranking layouts free of TVL filters', async () => {
-		const page = await import('~/pages/holders-revenue/chains')
-		const Page = page.default as unknown as ComponentType<Record<string, unknown>>
-
-		renderToStaticMarkup(
-			createElement(Page, {
-				...chainRankingPageProps,
-				dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
-			})
-		)
-
-		expect(mocks.layoutProps).toHaveLength(1)
-		expect(mocks.layoutProps[0]).toMatchObject({ canonicalUrl: '/holders-revenue/chains' })
-		expect(mocks.layoutProps[0].tvlOptions).toBeUndefined()
+		expect('props' in result && result.props.chains.map((chain) => [chain.name, chain.total24h])).toEqual(rows)
 	})
 })

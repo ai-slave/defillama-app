@@ -1,8 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { ClaimTokenProfile } from '../ClaimTokenProfile'
-import { resolveRequestedProjectId } from '../navigation'
+import { formatClaimProjectStatus, resolveRequestedProjectId } from '../navigation'
 
 const projects = [
 	{
@@ -27,15 +24,6 @@ const projects = [
 	}
 ]
 
-function renderClaim(props: Parameters<typeof ClaimTokenProfile>[0]) {
-	const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
-	return renderToStaticMarkup(
-		<QueryClientProvider client={queryClient}>
-			<ClaimTokenProfile {...props} />
-		</QueryClientProvider>
-	)
-}
-
 describe('ClaimTokenProfile', () => {
 	test('resolves claim links by Arctic id, CoinGecko id, name, or ticker', () => {
 		expect(resolveRequestedProjectId(projects, 'ethereum')).toBe(projects[0].arcticId)
@@ -44,45 +32,9 @@ describe('ClaimTokenProfile', () => {
 		expect(resolveRequestedProjectId(projects, 'missing')).toBeNull()
 	})
 
-	test('renders live project options and disclosure coverage', () => {
-		const html = renderClaim({
-			projects,
-			exchangeOptions: [
-				{ id: 'binance', displayName: 'Binance' },
-				{ id: 'kraken', displayName: 'Kraken' }
-			],
-			marketMakerOptions: [{ marketMakerId: 'keyrock', marketMakerName: 'Keyrock' }]
-		})
-
-		expect(html).toContain('Ethereum (ETH)')
-		expect(html).toContain('Upcoming (UP)')
-		expect(html).toContain('13/13 criteria scored')
-		expect(html).toContain('Disclosure 8.72/10')
-		expect(html).toContain('Submit Disclosure Details')
-		expect(html).toContain('Attach Documents')
-		expect(html).toContain('Disclosures Details')
-		expect(html).toContain('Distribution &amp; Vesting Schedule')
-		expect(html).toContain('Market Maker Engagements')
-		expect(html).toContain('Add More')
-		expect(html).not.toContain('<table')
-		expect(html).not.toContain('Do you have direct contact with a Forgd team member?')
-		expect(html).not.toContain('NO DATA YET')
-		expect(html).not.toContain('Fableborne (FAB)')
-		expect(html).not.toContain('Alice Adams')
-		expect(html).not.toContain('Selini')
-	})
-
-	test('renders an unavailable state without falling back to mock tokens', () => {
-		const html = renderClaim({ projects: [] })
-
-		expect(html).toContain('Token list unavailable')
-		expect(html).not.toContain('Abeezee (ABC)')
-	})
-
-	test('uses the Forgd reference language for the join variant', () => {
-		const html = renderClaim({ variant: 'join' })
-
-		expect(html).toContain('Join the Universal Token Rating profile')
-		expect(html).toContain('Token to claim*')
+	test('labels each claimable project with its listing and disclosure coverage', () => {
+		expect(formatClaimProjectStatus(projects[0])).toBe('Listed · 13/13 criteria scored · Disclosure 8.72/10')
+		expect(formatClaimProjectStatus(projects[1])).toBe('Pre-TGE · 0/13 criteria scored')
+		expect(formatClaimProjectStatus({ ...projects[1], criteriaCount: 0 })).toBe('Pre-TGE · Not scored')
 	})
 })

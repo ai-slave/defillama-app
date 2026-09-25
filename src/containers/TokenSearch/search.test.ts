@@ -1,16 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
-const searchApiMock = vi.hoisted(() => vi.fn())
+// constants read the search token at import time; without it searchApi skips the request.
+vi.hoisted(() => {
+	process.env.NEXT_PUBLIC_SEARCH_API_TOKEN = 'test-token'
+})
 
-vi.mock('~/api', () => ({
-	searchApi: searchApiMock
-}))
+import { SEARCH_API_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { getGeckoIdFromSearchId, getTokenSearchFallback, hydrateTokenSearchOptionsByIds } from './search'
-
-beforeEach(() => {
-	searchApiMock.mockReset()
-})
 
 describe('token search id normalization', () => {
 	test('converts Meili token ids to bare CoinGecko ids', () => {
@@ -30,24 +29,23 @@ describe('token search id normalization', () => {
 	})
 
 	test('uses aliases only to search display metadata for legacy CoinGecko ids', async () => {
-		searchApiMock.mockResolvedValueOnce([
-			{
-				id: 'coingecko_binancecoin_token',
-				name: 'BNB',
-				symbol: 'BNB',
-				logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/binancecoin?w=48&h=48'
-			}
-		])
+		const bnbHit = {
+			id: 'coingecko_binancecoin_token',
+			name: 'BNB',
+			symbol: 'BNB',
+			logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/binancecoin?w=48&h=48'
+		}
+		// Meili only finds BNB by its display symbol, not by the legacy CoinGecko id.
+		http.serve({
+			[SEARCH_API_URL]: (_url: URL, init?: RequestInit) => ({
+				results: JSON.parse(init!.body as string).queries.map(({ q }: { q: string }) => ({
+					hits: q === 'bnb' ? [bnbHit] : []
+				}))
+			})
+		})
 
 		const [token] = await hydrateTokenSearchOptionsByIds(['binancecoin'])
 
-		expect(searchApiMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				q: 'bnb',
-				limit: 10,
-				filter: [['type = "Token"']]
-			})
-		)
 		expect(token).toMatchObject({
 			id: 'binancecoin',
 			name: 'BNB',

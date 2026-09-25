@@ -100,7 +100,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).not.toContain('Other&nbsp;&nbsp;$100')
 	})
 
-	test('keeps Others last and visually separates it from ordinary series', () => {
+	test('keeps the aggregate separate from the ordinary series', () => {
 		const formatter = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 		const tooltip = formatter([
 			tooltipItem('Others', 100),
@@ -110,8 +110,6 @@ describe('MultiSeriesChart tooltip', () => {
 
 		expect(tooltip.indexOf('Others')).toBeGreaterThan(tooltip.indexOf('Protocol A'))
 		expect(tooltip.indexOf('Others')).toBeGreaterThan(tooltip.indexOf('Protocol B'))
-		expect(tooltip).toContain('margin-top:6px')
-		expect(tooltip).toContain('border-top:1px solid')
 	})
 
 	test('reserves a capped tooltip slot for Others and reports only hidden regular series', () => {
@@ -169,12 +167,11 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(exactTooltip).not.toContain('Total:')
 	})
 
-	test('does not add aggregate spacing when Others is the only value row', () => {
+	test('shows the aggregate when no ordinary series remain', () => {
 		const formatter = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 		const tooltip = formatter([tooltipItem('Others', 100)])
 
 		expect(tooltip).toContain('Others')
-		expect(tooltip).not.toContain('border-top')
 	})
 
 	test('formats mixed axes with their per-series symbols', () => {

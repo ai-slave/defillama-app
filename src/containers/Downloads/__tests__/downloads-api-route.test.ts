@@ -1,430 +1,111 @@
 import type { NextApiHandler, NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-
-const {
-	extractItemsMock,
-	extractRowsMock,
-	fetchWithPoolingOnServerMock,
-	getYieldsExportRowsMock,
-	recordRouteRuntimeErrorMock,
-	streamProtocolTvlCsvMock,
-	validateSubscriptionMock
-} = vi.hoisted(() => ({
-	extractItemsMock: vi.fn(),
-	extractRowsMock: vi.fn(),
-	fetchWithPoolingOnServerMock: vi.fn(),
-	getYieldsExportRowsMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn(),
-	streamProtocolTvlCsvMock: vi.fn(),
-	validateSubscriptionMock: vi.fn()
-}))
-
-vi.mock('~/containers/Downloads/datasets', () => ({
-	datasetsBySlug: new Map([
-		[
-			'protocols',
-			{
-				slug: 'protocols',
-				name: 'Protocols',
-				description: 'Protocol dataset',
-				category: 'Protocol',
-				url: 'https://datasets.example/protocols',
-				fields: ['name', 'tvl'],
-				chainFilterType: 'protocols',
-				extractItems: extractItemsMock
-			}
-		],
-		[
-			'yields',
-			{
-				slug: 'yields',
-				name: 'Yield Pools',
-				description: 'Yields dataset',
-				category: 'Yields',
-				url: '',
-				fields: ['name', 'tvl'],
-				extractItems: extractItemsMock
-			}
-		],
-		[
-			'perp-funding',
-			{
-				slug: 'perp-funding',
-				name: 'Perp Funding Rates',
-				description: 'Perp funding dataset',
-				category: 'Yields',
-				url: '',
-				fields: ['marketplace', 'openInterest'],
-				extractItems: extractItemsMock
-			}
-		],
-		[
-			'lsd-rates',
-			{
-				slug: 'lsd-rates',
-				name: 'LSD Rates',
-				description: 'LSD rates dataset',
-				category: 'Yields',
-				url: '',
-				extractItems: extractItemsMock
-			}
-		]
-	])
-}))
-
-vi.mock('~/constants', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/constants')>()),
-	YIELDS_SERVER_URL: 'https://legacy-yields.example',
-	SERVER_URL: 'https://server.example'
-}))
-
-vi.mock('~/containers/Downloads/yields.server', () => ({
-	getYieldsExportRows: getYieldsExportRowsMock
-}))
-
-vi.mock('~/containers/Yields/server/dataset.server', () => ({
-	acquireYieldsSnapshot: vi.fn().mockResolvedValue({ readJson: vi.fn() })
-}))
-
-vi.mock('~/containers/ProDashboard/server/chartBuilder/protocolTvlCsv', () => ({
-	streamProtocolTvlCsv: streamProtocolTvlCsvMock
-}))
-
-vi.mock('~/containers/Downloads/chart-datasets', () => ({
-	chartDatasetsBySlug: new Map([
-		[
-			'protocol-tvl-chart',
-			{
-				slug: 'protocol-tvl-chart',
-				name: 'Protocol TVL',
-				description: 'Protocol TVL chart',
-				category: 'TVL',
-				paramType: 'protocol',
-				paramLabel: 'Protocol',
-				optionsUrl: 'https://datasets.example/options',
-				buildUrl: (param: string) => `https://charts.example/${param}`,
-				extractRows: extractRowsMock,
-				categoryBreakdown: { kind: 'tvl' }
-			}
-		]
-	])
-}))
-
-vi.mock('~/utils/apiAuth', () => ({
-	validateSubscription: validateSubscriptionMock
-}))
-
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: NextApiHandler) => handler
-}))
-
+import { AUTH_SERVER, POCKETBASE_URL, SERVER_URL, V2_SERVER_URL } from '~/constants'
 import datasetHandler from '~/pages/api/private/downloads/[dataset]'
-import chartBreakdownHandler from '~/pages/api/private/downloads/chart-breakdown/[slug]'
+import breakdownHandler from '~/pages/api/private/downloads/chart-breakdown/[slug]'
 import chartHandler from '~/pages/api/private/downloads/chart/[dataset]'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const datasetRows = Array.from({ length: 11 }, (_, index) => ({
-	name: `item-${index + 1}`,
-	tvl: index + 1,
-	chains: index % 2 === 0 ? ['Ethereum'] : ['Arbitrum'],
-	chainTvls: {
-		Ethereum: { tvl: index % 2 === 0 ? index + 1 : 0 },
-		Arbitrum: { tvl: index % 2 === 0 ? 0 : index + 1 }
-	}
+vi.mock('~/server/db/llama', () => ({ llamaDb: { query: async () => [], any: async () => [] } }))
+const { serve } = installFixtureFetch()
+const protocols = Array.from({ length: 11 }, (_, i) => ({
+	name: `item-${i + 1}`,
+	tvl: 11 - i,
+	chains: ['Ethereum'],
+	chainTvls: { Ethereum: { tvl: 11 - i } }
 }))
-
-const chartRows = Array.from({ length: 11 }, (_, index) => ({
-	date: `day-${index + 1}`,
-	value: index + 1
-}))
-
-function request({
-	method = 'GET',
-	query,
-	auth
-}: {
-	method?: string
-	query: Record<string, string>
-	auth?: string
-}): NextApiRequest {
+const chart = Array.from({ length: 11 }, (_, i) => [1_700_000_000 + i * 86_400, i + 1])
+beforeEach(() =>
+	serve({
+		[`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'active' } },
+		[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: { record: { flags: { is_trial: false } } },
+		[`${SERVER_URL}/lite/protocols2`]: { protocols },
+		[`${V2_SERVER_URL}/chart/tvl/protocol/aave`]: chart
+	})
+)
+async function run(handler: NextApiHandler, query: NextApiRequest['query'], auth: string | undefined, method = 'GET') {
+	const res = createMockNextApiResponse()
+	await handler(createMockNextApiRequest({ method, query, headers: { authorization: auth } }), res)
+	expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
 	return {
-		method,
-		headers: auth ? { authorization: auth } : {},
-		query
-	} as unknown as NextApiRequest
+		status: res.statusCode,
+		csv: res.send.mock.lastCall?.[0] as string,
+		body: res.json.mock.lastCall?.[0],
+		preview: res.setHeader.mock.calls.find(([name]) => name === 'X-Preview')?.[1]
+	}
 }
 
-function mockSuccessfulFetch() {
-	fetchWithPoolingOnServerMock.mockResolvedValue({
-		ok: true,
-		status: 200,
-		json: vi.fn().mockResolvedValue({ items: datasetRows, rows: chartRows })
+describe('download access and CSV output', () => {
+	test('rejects unsupported methods', async () => {
+		expect((await run(datasetHandler, { dataset: 'protocols' }, undefined, 'POST')).status).toBe(405)
 	})
-}
-
-beforeEach(() => {
-	vi.clearAllMocks()
-	validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: false })
-	extractItemsMock.mockImplementation((json) => json.items)
-	extractRowsMock.mockImplementation((json) => json.rows)
-	mockSuccessfulFetch()
-	getYieldsExportRowsMock.mockResolvedValue(datasetRows)
-	streamProtocolTvlCsvMock.mockResolvedValue(10)
-})
-
-describe('/api/private/downloads/[dataset]', () => {
-	test('returns 405 with private no-store for non-GET requests', async () => {
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ method: 'POST', query: { dataset: 'protocols' } }), res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['GET'])
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
+	test('limits anonymous and inactive subscribers to ten preview rows', async () => {
+		const anonymous = await run(datasetHandler, { dataset: 'protocols' }, undefined)
+		expect(anonymous).toMatchObject({ status: 200, preview: 'true' })
+		expect(anonymous.csv).toContain('item-10')
+		expect(anonymous.csv).not.toContain('item-11')
+		serve({ [`${AUTH_SERVER}/subscription/status`]: fixtureStatus(403) })
+		expect((await run(datasetHandler, { dataset: 'protocols' }, 'Bearer invalid')).csv).toBe(anonymous.csv)
 	})
-
-	test('returns preview CSV rows without auth', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
-		})
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols' } }), res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith(undefined)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://datasets.example/protocols')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-10'))
-		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
+	test('includes every row for paid subscribers', async () => {
+		const response = await run(datasetHandler, { dataset: 'protocols' }, 'Bearer paid')
+		expect(response).toMatchObject({ status: 200, preview: undefined })
+		expect(response.csv).toContain('item-11')
+		expect(response.csv.split('\n')).toHaveLength(12)
 	})
-
-	test('treats invalid subscriptions as preview access', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
+	test('allows trial chain options but rejects trial CSV downloads', async () => {
+		serve({ [`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: { record: { flags: { is_trial: true } } } })
+		const query = { dataset: 'protocols' }
+		expect(await run(datasetHandler, query, 'Bearer trial')).toMatchObject({
 			status: 403,
-			error: 'Invalid subscription'
+			body: { error: 'CSV downloads are available only for paid users.' }
 		})
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols' }, auth: 'Bearer bad' }), res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
-		expect(res.setHeader).toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
-	})
-
-	test('returns full CSV rows for paid auth', async () => {
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols' }, auth: 'Bearer paid' }), res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer paid')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://datasets.example/protocols')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).not.toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-11'))
-	})
-
-	test('loads Yields rows only through the server export builder', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
+		expect(await run(datasetHandler, { ...query, mode: 'chains' }, 'Bearer trial')).toMatchObject({
+			status: 200,
+			body: { chains: ['Ethereum'] }
 		})
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'yields' } }), res)
-
-		expect(getYieldsExportRowsMock).toHaveBeenCalledOnce()
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(extractItemsMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-10'))
-		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
+		expect((await run(chartHandler, { dataset: 'protocol-tvl-chart', param: 'aave' }, 'Bearer trial')).status).toBe(403)
+		expect(
+			(await run(breakdownHandler, { slug: 'protocol-tvl-chart', category: 'Lending' }, 'Bearer trial')).status
+		).toBe(403)
 	})
-
-	test.each([
-		['perp-funding', 'https://legacy-yields.example/perps'],
-		['lsd-rates', 'https://server.example/lstRates']
-	])('loads the %s feed only inside the API route', async (dataset, upstreamUrl) => {
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset }, auth: 'Bearer paid' }), res)
-
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(upstreamUrl)
-		expect(extractItemsMock).toHaveBeenCalledOnce()
-		expect(res.status).toHaveBeenCalledWith(200)
+	test('previews the latest ten chart rows and exports full paid history', async () => {
+		const query = { dataset: 'protocol-tvl-chart', param: 'aave' }
+		const preview = await run(chartHandler, query, undefined)
+		expect(preview).toMatchObject({ status: 200, preview: 'true' })
+		expect(preview.csv).not.toContain('2023-11-14,1\r')
+		expect(preview.csv).toContain('2023-11-24,11')
+		const full = await run(chartHandler, query, 'Bearer paid')
+		expect(full.csv).toContain('2023-11-14,1')
+		expect(full.csv.split('\n')).toHaveLength(12)
 	})
-
-	test('rejects trial full CSV downloads before fetching data', async () => {
-		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols' }, auth: 'Bearer trial' }), res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer trial')
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })
-	})
-
-	test('allows trial users to fetch chain filter options', async () => {
-		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols', mode: 'chains' }, auth: 'Bearer trial' }), res)
-
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://datasets.example/protocols')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ chains: ['Ethereum', 'Arbitrum'] })
-	})
-
-	test('returns 500 with private no-store when auth validation throws', async () => {
-		const error = new Error('auth unavailable')
-		validateSubscriptionMock.mockRejectedValue(error)
-		const res = createMockNextApiResponse()
-
-		await datasetHandler(request({ query: { dataset: 'protocols' }, auth: 'Bearer paid' }), res)
-
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
-	})
-})
-
-describe('/api/private/downloads/chart/[dataset]', () => {
-	test('returns preview chart CSV rows without auth', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
+	test('validates the chart parameter before authentication', async () => {
+		expect(await run(chartHandler, { dataset: 'protocol-tvl-chart' }, 'Bearer paid')).toMatchObject({
+			status: 400,
+			body: { error: 'Missing required "param" query parameter' }
 		})
-		const res = createMockNextApiResponse()
-
-		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart', param: 'aave' } }), res)
-
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://charts.example/aave')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('day-1,1'))
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('day-11'))
 	})
-
-	test('returns full chart CSV rows for paid auth', async () => {
-		const res = createMockNextApiResponse()
-
-		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart', param: 'aave' }, auth: 'Bearer paid' }), res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer paid')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).not.toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('day-1,1'))
-		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('day-11'))
-	})
-
-	test('rejects trial chart CSV downloads before fetching data', async () => {
-		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
-		const res = createMockNextApiResponse()
-
-		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart', param: 'aave' }, auth: 'Bearer trial' }), res)
-
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })
-	})
-
-	test('returns missing param errors before auth validation', async () => {
-		const res = createMockNextApiResponse()
-
-		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart' } }), res)
-
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing required "param" query parameter' })
-	})
-})
-
-describe('/api/private/downloads/chart-breakdown/[slug]', () => {
-	test('returns preview breakdown CSV rows without auth', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
+	test('reports authentication service failures', async () => {
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: () => {
+				throw new Error('Auth unavailable')
+			}
 		})
-		const res = createMockNextApiResponse()
-
-		await chartBreakdownHandler(request({ query: { slug: 'protocol-tvl-chart', category: 'Lending' } }), res)
-
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(streamProtocolTvlCsvMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				config: expect.objectContaining({ categories: ['Lending'] }),
-				timePeriod: 'custom',
-				customTimePeriod: { type: 'relative', relativeDays: 10 }
-			}),
-			res
-		)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.end).toHaveBeenCalledOnce()
+		expect((await run(datasetHandler, { dataset: 'protocols' }, 'Bearer paid')).status).toBe(500)
 	})
-
-	test('returns full breakdown CSV rows for paid auth', async () => {
-		const res = createMockNextApiResponse()
-
-		await chartBreakdownHandler(
-			request({ query: { slug: 'protocol-tvl-chart', category: 'Lending' }, auth: 'Bearer paid' }),
-			res
-		)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer paid')
-		expect(streamProtocolTvlCsvMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				config: expect.objectContaining({ categories: ['Lending'] }),
-				timePeriod: 'all',
-				customTimePeriod: null
-			}),
-			res
-		)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).not.toHaveBeenCalledWith('X-Preview', 'true')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.end).toHaveBeenCalledOnce()
-	})
-
-	test('rejects trial breakdown CSV downloads before fetching data', async () => {
-		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
-		const res = createMockNextApiResponse()
-
-		await chartBreakdownHandler(
-			request({ query: { slug: 'protocol-tvl-chart', category: 'Lending' }, auth: 'Bearer trial' }),
-			res
-		)
-
-		expect(streamProtocolTvlCsvMock).not.toHaveBeenCalled()
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })
+	test('builds category breakdown CSV from matching upstream protocols', async () => {
+		serve({
+			[`${V2_SERVER_URL}/chart/fees/protocol-breakdown`]: [[1_700_000_000, { Aave: 12, Uniswap: 99 }]],
+			[`${SERVER_URL}/overview/fees`]: {
+				protocols: [
+					{ name: 'Aave', category: 'Lending' },
+					{ name: 'Uniswap', category: 'Dexs' }
+				]
+			}
+		})
+		const response = await run(breakdownHandler, { slug: 'protocol-fees-chart', category: 'Lending' }, undefined)
+		expect(response.status).toBe(200)
+		expect(response.csv).toBe('date,Aave\r\n2023-11-14,12')
 	})
 })

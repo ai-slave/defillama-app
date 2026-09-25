@@ -1,48 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { DATASETS_SERVER_URL, SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { ProtocolEmission, RawProtocolEmission, RawProtocolEmissionDetail } from '../api.types'
 
-const mocks = vi.hoisted(() => ({
-	fetchJson: vi.fn(),
-	fetchWithPoolingOnServer: vi.fn(),
-	datasetsServerUrl: 'https://datasets.example.com',
-	serverUrl: 'https://api.example.com'
-}))
-
-vi.mock('~/constants', () => ({
-	get DATASETS_SERVER_URL() {
-		return mocks.datasetsServerUrl
-	},
-	get SERVER_URL() {
-		return mocks.serverUrl
-	}
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson,
-	getSlowJsonTimeoutMs: () => 45_000,
-	handleFetchResponse: async (response: Response) => {
-		throw new Error(`request failed: ${response.status}`)
-	}
-}))
-
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: mocks.fetchWithPoolingOnServer
-}))
-
-function jsonResponse(status: number, body: object): Response {
-	return new Response(JSON.stringify(body), {
-		status,
-		headers: { 'Content-Type': 'application/json' }
-	})
-}
-
-beforeEach(() => {
-	vi.resetModules()
-	mocks.fetchJson.mockReset()
-	mocks.fetchWithPoolingOnServer.mockReset()
-	mocks.datasetsServerUrl = 'https://datasets.example.com'
-	mocks.serverUrl = 'https://api.example.com'
-})
+const http = installFixtureFetch()
 
 describe('unlocks api', () => {
 	test('fetches protocol emission details from the datasets endpoint', async () => {
@@ -111,15 +72,12 @@ describe('unlocks api', () => {
 			}
 		} satisfies RawProtocolEmissionDetail
 
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(200, rawDetail))
+		http.serve({ [`${DATASETS_SERVER_URL}/emissions/chain%2Flink`]: rawDetail })
 
 		const api = await import('../api')
 		const result = await api.fetchProtocolEmission('chain/link')
 
-		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledWith('https://datasets.example.com/emissions/chain%2Flink', {
-			timeout: 45_000
-		})
-		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledTimes(1)
+		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/chain%2Flink`])
 		expect(result).not.toBeNull()
 		if (!result) throw new Error('Expected protocol detail')
 		expect(result.name).toBe('Chainlink')
@@ -154,16 +112,20 @@ describe('unlocks api', () => {
 
 	test('preserves a failed detail request as a failure', async () => {
 		const error = new Error('upstream unavailable')
-		mocks.fetchWithPoolingOnServer.mockRejectedValue(error)
+		http.serve({
+			[DATASETS_SERVER_URL]: () => {
+				throw error
+			}
+		})
 
 		const api = await import('../api')
 
 		await expect(api.fetchProtocolEmission('chainlink')).rejects.toBe(error)
-		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledTimes(1)
+		expect(http.requests).toHaveLength(1)
 	})
 
 	test('returns null only for a missing protocol detail', async () => {
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(404, {}))
+		http.serve({ [DATASETS_SERVER_URL]: fixtureStatus(404) })
 
 		const api = await import('../api')
 
@@ -171,11 +133,11 @@ describe('unlocks api', () => {
 	})
 
 	test('throws for a non-not-found HTTP response', async () => {
-		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(503, {}))
+		http.serve({ [DATASETS_SERVER_URL]: fixtureStatus(503) })
 
 		const api = await import('../api')
 
-		await expect(api.fetchProtocolEmission('chainlink')).rejects.toThrow('request failed: 503')
+		await expect(api.fetchProtocolEmission('chainlink')).rejects.toThrow('[503]')
 	})
 
 	test('normalizes numeric-string event timestamps once at the list API boundary', async () => {
@@ -252,7 +214,7 @@ describe('unlocks api', () => {
 				}
 			]
 		} satisfies RawProtocolEmission
-		mocks.fetchJson.mockResolvedValue([rawProtocol, normalizedProtocol])
+		http.serve({ [`${SERVER_URL}/emissions`]: [rawProtocol, normalizedProtocol] })
 
 		const api = await import('../api')
 		const result = await api.fetchAllProtocolEmissions()
@@ -283,22 +245,28 @@ describe('unlocks api', () => {
 				rateDurationDays: 7
 			}
 		])
-		expect(result[1]).toBe(normalizedProtocol)
-		expect(result[1]?.events).toBe(normalizedProtocol.events)
+		expect(result[1]).toEqual(normalizedProtocol)
 		expect(result[0]?.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(400)
 	})
 
 	test('preserves a failed aggregate request as a failure', async () => {
 		const error = new Error('Failed to fetch')
-		mocks.fetchJson.mockRejectedValue(error)
+		http.serve({
+			[SERVER_URL]: () => {
+				throw error
+			},
+			[DATASETS_SERVER_URL]: () => {
+				throw error
+			}
+		})
 
 		const api = await import('../api')
 
-		await expect(api.fetchAllProtocolEmissions()).rejects.toBe(error)
+		await expect(api.fetchAllProtocolEmissions()).rejects.toThrow(error.message)
 	})
 
 	test('keeps a successful empty aggregate distinct from failure', async () => {
-		mocks.fetchJson.mockResolvedValue([])
+		http.serve({ [`${SERVER_URL}/emissions`]: [] })
 
 		const api = await import('../api')
 
@@ -307,10 +275,17 @@ describe('unlocks api', () => {
 
 	test('preserves a failed protocol-list request as a failure', async () => {
 		const error = new Error('metadata unavailable')
-		mocks.fetchJson.mockRejectedValue(error)
+		http.serve({
+			[SERVER_URL]: () => {
+				throw error
+			},
+			[DATASETS_SERVER_URL]: () => {
+				throw error
+			}
+		})
 
 		const api = await import('../api')
 
-		await expect(api.fetchEmissionsProtocolsList()).rejects.toBe(error)
+		await expect(api.fetchEmissionsProtocolsList()).rejects.toThrow(error.message)
 	})
 })

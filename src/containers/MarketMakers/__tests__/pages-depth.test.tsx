@@ -1,27 +1,25 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
-
-const forgdFetch = vi.fn()
-vi.mock('~/containers/MarketMakers/server/client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
-
+import { expect, test } from 'vitest'
 import { getStaticProps } from '~/pages/market-makers/depth'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-afterEach(() => forgdFetch.mockReset())
+const http = installFixtureFetch()
+const ROUTE = '/api/v1/public/market-maker/leaderboard/depth'
 
-describe('depth page getStaticProps', () => {
-	test('returns the bucketed payload untransformed', async () => {
-		forgdFetch.mockResolvedValue({
-			depth50: [],
-			depth100: [],
-			depth200: [
-				{
-					marketMakerId: 'amber',
-					marketMakerName: 'Amber',
-					marketMakerImageUrl: null,
-					rank: { value: 1, percentile: 100 }
-				}
-			]
-		})
-		const res = (await (getStaticProps as any)({})) as { props: { payload: { depth200: Array<unknown> } } }
-		expect(res.props.payload.depth200).toHaveLength(1)
-	})
+test('passes the bucketed depth payload through for the default 30-day range', async () => {
+	const payload = {
+		depth50: [],
+		depth100: [],
+		depth200: [{ marketMakerId: 'amber', marketMakerName: 'Amber', marketMakerImageUrl: null, rank: { value: 1 } }]
+	}
+	http.serve({ [ROUTE]: payload })
+	const res = (await getStaticProps({})) as { props: unknown }
+	expect(res.props).toEqual({ payload })
+	const range = http.requests[0].url.searchParams
+	expect([range.has('start_date'), range.has('end_date')]).toEqual([true, true])
+})
+
+test('renders the page with no payload when the leaderboard request fails', async () => {
+	http.serve({ [ROUTE]: fixtureStatus(404) })
+	const res = (await getStaticProps({})) as { props: unknown }
+	expect(res.props).toEqual({ payload: null })
 })

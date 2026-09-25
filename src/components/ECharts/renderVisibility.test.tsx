@@ -1,120 +1,95 @@
 // @vitest-environment happy-dom
 
-import type { ECharts, EChartsOption } from 'echarts'
-import { act, useEffect } from 'react'
+import * as echarts from 'echarts'
+import { act, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/test/chartCanvas'
 import {
 	EChartsRenderVisibilityProvider,
+	interactiveStateFromOption,
 	usePersistentEChartsLifecycle,
 	withEChartsRenderVisibility
 } from './renderVisibility'
 
-describe('ECharts render visibility', () => {
-	afterEach(() => {
-		vi.unstubAllGlobals()
-		document.body.replaceChildren()
-	})
+afterEach(() => {
+	vi.restoreAllMocks()
+	document.body.replaceChildren()
+})
 
-	test('restores only legend and data zoom interaction state after remounting', async () => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-			callback(0)
-			return 1
+const Renderer = withEChartsRenderVisibility(function Renderer({ values }: { values: Array<number> }) {
+	const ref = useRef<HTMLDivElement>(null)
+	const lifecycle = usePersistentEChartsLifecycle()
+	useEffect(() => {
+		const instance = echarts.init(ref.current!)
+		instance.setOption({
+			legend: {},
+			dataZoom: [{ type: 'inside', start: 0, end: 100 }],
+			xAxis: { type: 'category', data: values.map(String) },
+			yAxis: {},
+			series: [
+				{ name: 'TVL', type: 'line', data: values },
+				{ name: 'Fees', type: 'line', data: values }
+			]
 		})
-		const setOption = vi.fn()
-		let currentOption: EChartsOption = {
-			legend: [{ selected: { TVL: false } }],
-			dataZoom: [{ start: 20, end: 80 }],
-			series: [{ data: [1, 2, 3] }]
+		lifecycle.restore(instance)
+		return () => {
+			lifecycle.capture(instance)
+			instance.dispose()
 		}
-		const instance = {
-			isDisposed: () => false,
-			getOption: () => currentOption,
-			setOption
-		} as unknown as ECharts
+	}, [lifecycle, values])
+	return <div ref={ref} />
+})
 
-		const Renderer = withEChartsRenderVisibility(function Renderer() {
-			const lifecycle = usePersistentEChartsLifecycle()
-			useEffect(() => {
-				lifecycle.restore(instance)
-				return () => lifecycle.capture(instance)
-			}, [lifecycle])
-			return <canvas />
+test('brings back the legend selection and zoom range, but not stale data, after a scroll-away remount', async () => {
+	installChartCanvas()
+	const container = document.createElement('div')
+	document.body.appendChild(container)
+	const root = createRoot(container)
+	const render = (visible: boolean, values: Array<number>) =>
+		act(async () =>
+			root.render(
+				<EChartsRenderVisibilityProvider visible={visible}>
+					<Renderer values={values} />
+				</EChartsRenderVisibilityProvider>
+			)
+		)
+	const option = () =>
+		echarts.getInstanceByDom(container.querySelector<HTMLElement>('[_echarts_instance_]')!)!.getOption() as Record<
+			string,
+			any
+		>
+
+	const initial = [1, 2, 3, 4]
+	await render(true, initial)
+	const instance = echarts.getInstanceByDom(container.querySelector<HTMLElement>('[_echarts_instance_]')!)!
+	instance.dispatchAction({ type: 'legendUnSelect', name: 'Fees' })
+	instance.dispatchAction({ type: 'dataZoom', start: 25, end: 75 })
+
+	await render(false, initial)
+	await render(true, [5, 6, 7, 8])
+	await act(() => new Promise((resolve) => requestAnimationFrame(resolve)))
+
+	expect(option().legend[0].selected).toEqual({ TVL: true, Fees: false })
+	expect(option().dataZoom[0]).toMatchObject({ start: 25, end: 75 })
+	expect(option().series[0].data).toEqual([5, 6, 7, 8])
+	await act(async () => root.unmount())
+})
+
+test('keeps only the legend selection and zoom range from a live chart option', () => {
+	expect(
+		interactiveStateFromOption({
+			legend: [{ selected: { TVL: true, Fees: false } }],
+			dataZoom: [{ type: 'inside', start: 25, end: 75 }],
+			xAxis: { type: 'category', data: ['1', '2'] },
+			series: [{ name: 'TVL', type: 'line', data: [1, 2] }]
 		})
-		const container = document.createElement('div')
-		document.body.appendChild(container)
-		const root = createRoot(container)
-
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		expect(setOption).not.toHaveBeenCalled()
-
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible={false}>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-
-		expect(setOption).toHaveBeenCalledWith({
-			legend: [{ selected: { TVL: false } }],
-			dataZoom: [{ start: 20, end: 80 }]
-		})
-		expect(setOption.mock.calls[0][0]).not.toHaveProperty('series')
-
-		currentOption = {
-			legend: [{ selected: { TVL: true } }],
-			series: [{ data: [4, 5, 6] }]
-		}
-		setOption.mockClear()
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible={false}>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		expect(setOption).toHaveBeenCalledWith({ legend: [{ selected: { TVL: true } }] })
-		expect(setOption.mock.calls[0][0]).not.toHaveProperty('dataZoom')
-
-		currentOption = { series: [{ data: [7, 8, 9] }] }
-		setOption.mockClear()
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible={false}>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		await act(async () =>
-			root.render(
-				<EChartsRenderVisibilityProvider visible>
-					<Renderer />
-				</EChartsRenderVisibilityProvider>
-			)
-		)
-		expect(setOption).not.toHaveBeenCalled()
-		await act(async () => root.unmount())
+	).toEqual({
+		legend: [{ selected: { TVL: true, Fees: false } }],
+		dataZoom: [{ type: 'inside', start: 25, end: 75 }]
 	})
+})
+
+test('a chart without legend or zoom keeps no interactive state', () => {
+	expect(interactiveStateFromOption({ series: [{ type: 'pie', data: [1] }] })).toEqual({})
 })

@@ -7,7 +7,7 @@ import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
 const SRC_DIR = path.join(process.cwd(), 'src')
 const TABLE_USAGE_PATTERN =
-	/components\/Table\/(Table|VirtualTable)['"]|<VirtualTable\b|<SearchTableProvider\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
+	/components\/Table\/(Table|VirtualTable)['"]|<VirtualTable\b|<SearchTableProvider\b|\wTableWrapper\b/
 
 function sourceFiles(): Array<string> {
 	return collectSourceFiles(SRC_DIR, ['.ts', '.tsx']).filter(
@@ -94,6 +94,7 @@ describe('VirtualTable column sizing', () => {
 		}
 
 		expect(failures).toEqual([])
+		// Reads every source file under src/, which exceeds the default budget on a loaded machine.
 	}, 30_000)
 })
 

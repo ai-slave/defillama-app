@@ -9,11 +9,11 @@ import type { BridgeNetflowChartData } from '~/containers/Bridges/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { TagGroup } from '~/ui/SegmentedControl'
-import { capitalizeFirstLetter } from '~/utils'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { chartGrid } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
 import { normalizeTooltipItems } from '../shared/tooltip'
+import { buildNetflowBars } from './data'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, DatasetComponent, GraphicComponent, CanvasRenderer])
 
@@ -37,33 +37,10 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
 
-	const { positiveData, negativeData, chains, csvSource } = useMemo(() => {
-		const data = allData[period]
-
-		const positive: Array<number> = []
-		const negative: Array<number> = []
-		const chainNames: Array<string> = []
-		const csvRows: Array<{ Chain: string; Inflow: number; Outflow: number; 'Net Flow': number }> = []
-		for (const item of data) {
-			const chain = capitalizeFirstLetter(item.chain)
-			chainNames.push(chain)
-			positive.push(item.value > 0 ? item.value : 0)
-			negative.push(item.value < 0 ? item.value : 0)
-			csvRows.push({
-				Chain: chain,
-				Inflow: item.value > 0 ? item.value : 0,
-				Outflow: item.value < 0 ? Math.abs(item.value) : 0,
-				'Net Flow': item.value
-			})
-		}
-
-		return {
-			positiveData: positive,
-			negativeData: negative,
-			chains: chainNames,
-			csvSource: csvRows
-		}
-	}, [allData, period])
+	const { positiveData, negativeData, chains, csvSource } = useMemo(
+		() => buildNetflowBars(allData[period]),
+		[allData, period]
+	)
 
 	useEffect(() => {
 		const el = containerRef.current

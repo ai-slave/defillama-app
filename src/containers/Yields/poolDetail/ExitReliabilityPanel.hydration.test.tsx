@@ -80,9 +80,10 @@ describe('ExitReliabilityPanel hydration', () => {
 	})
 
 	test('leaves a row with no receipt free of a share', () => {
-		const html = renderToString(<ExitReliabilityPanel model={model()} verified={null} holders={null} />)
+		container.innerHTML = renderToString(<ExitReliabilityPanel model={model()} verified={null} holders={null} />)
 
-		// Three incidents; only two carry both figures.
-		expect(html.split('&lt;0.01%').length - 1).toBe(2)
+		// Three incidents; only the first and last carry both figures.
+		const shares = [...container.querySelectorAll('tbody tr')].map((row) => row.lastElementChild!.textContent)
+		expect(shares).toEqual(['<0.01%', '—', '<0.01%'])
 	})
 })

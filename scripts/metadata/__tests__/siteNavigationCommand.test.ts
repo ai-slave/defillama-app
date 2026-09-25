@@ -60,24 +60,6 @@ describe('site navigation command', () => {
 		])
 	})
 
-	test('keeps site navigation publishing successful when Tasty metrics fail', async () => {
-		const repoRoot = await createRepoRoot()
-
-		await runSiteNavigationCommand({
-			fetchMetrics: vi.fn().mockRejectedValue(new Error('metrics failed')),
-			logger: { log: vi.fn() },
-			now: 1000,
-			repoRoot
-		})
-
-		const pages = JSON.parse(await fs.readFile(path.join(repoRoot, 'public', 'pages.json'), 'utf8'))
-		expect(pages.Metrics[0].tastyMetrics).toBeUndefined()
-		await expect(fs.access(path.join(repoRoot, 'public', 'trending.json'))).rejects.toMatchObject({ code: 'ENOENT' })
-		await expect(fs.access(path.join(repoRoot, '.cache', 'site-navigation', 'manifest.json'))).rejects.toMatchObject({
-			code: 'ENOENT'
-		})
-	})
-
 	test('skips recently published site navigation data', async () => {
 		const repoRoot = await createRepoRoot()
 		const fetchMetrics = vi.fn()

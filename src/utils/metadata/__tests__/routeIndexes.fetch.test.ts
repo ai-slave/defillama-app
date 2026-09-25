@@ -1,32 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { fetchMetadataJsonMock, fetchOracleMetricsMock, fetchDATInstitutionsMock, fetchStablecoinPeggedConfigApiMock } =
-	vi.hoisted(() => ({
-		fetchMetadataJsonMock: vi.fn(),
-		fetchOracleMetricsMock: vi.fn(),
-		fetchDATInstitutionsMock: vi.fn(),
-		fetchStablecoinPeggedConfigApiMock: vi.fn()
-	}))
-
-vi.mock('~/constants', () => ({
-	CATEGORY_INFO_API: 'category-info-api'
-}))
-
-vi.mock('../http', () => ({
-	fetchMetadataJson: fetchMetadataJsonMock
-}))
-
-vi.mock('~/containers/Oracles/api', () => ({
-	fetchOracleMetrics: fetchOracleMetricsMock
-}))
-
-vi.mock('~/containers/DAT/api', () => ({
-	fetchDATInstitutions: fetchDATInstitutionsMock
-}))
-
-vi.mock('~/containers/Stablecoins/api', () => ({
-	fetchStablecoinPeggedConfigApi: fetchStablecoinPeggedConfigApiMock
-}))
+import { beforeEach, describe, expect, test } from 'vitest'
+import { CATEGORY_INFO_API, V2_SERVER_URL, TRADFI_API, STABLECOINS_SERVER_URL } from '~/constants'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 function createDATResponse() {
 	return {
@@ -71,16 +46,17 @@ function createDATResponse() {
 
 describe('fetchMetadataRouteIndexes', () => {
 	beforeEach(() => {
-		vi.clearAllMocks()
-		fetchMetadataJsonMock.mockResolvedValue([{ id: 'ai', name: 'AI', mcap: 1, volume1D: null, nbCoins: 1 }])
-		fetchOracleMetricsMock.mockResolvedValue({
-			oracles: { Chainlink: ['Aave'] },
-			oraclesTVS: { Chainlink: {} },
-			chainsByOracle: { Chainlink: ['Ethereum'] },
-			protocolsByOracleChain: { Chainlink: { Ethereum: ['Aave'] } }
+		http.serve({
+			[CATEGORY_INFO_API]: [{ id: 'ai', name: 'AI', mcap: 1, volume1D: null, nbCoins: 1 }],
+			[`${V2_SERVER_URL}/metrics/oracle`]: {
+				oracles: { Chainlink: ['Aave'] },
+				oraclesTVS: { Chainlink: {} },
+				chainsByOracle: { Chainlink: ['Ethereum'] },
+				protocolsByOracleChain: { Chainlink: { Ethereum: ['Aave'] } }
+			},
+			[`${TRADFI_API}/institutions`]: createDATResponse(),
+			[`${STABLECOINS_SERVER_URL}/config`]: { Tether: 'pegged-1' }
 		})
-		fetchDATInstitutionsMock.mockResolvedValue(createDATResponse())
-		fetchStablecoinPeggedConfigApiMock.mockResolvedValue({ Tether: 'pegged-1' })
 	})
 
 	test('fetches and builds all optional route indexes when upstreams are available', async () => {
@@ -98,13 +74,18 @@ describe('fetchMetadataRouteIndexes', () => {
 		})
 	})
 
-	test('rejects when route index upstreams fail', async () => {
-		fetchMetadataJsonMock.mockRejectedValue(new Error('narrative unavailable'))
-		fetchOracleMetricsMock.mockRejectedValue(new Error('oracle unavailable'))
-		fetchDATInstitutionsMock.mockRejectedValue(new Error('DAT unavailable'))
-		fetchStablecoinPeggedConfigApiMock.mockRejectedValue(new Error('stablecoin unavailable'))
-		const { fetchMetadataRouteIndexes } = await import('../routeIndexes')
-
-		await expect(fetchMetadataRouteIndexes()).rejects.toThrow('narrative unavailable')
-	})
+	test.each(['narrative', 'oracle', 'DAT', 'stablecoin'] as const)(
+		'rejects rather than publishing incomplete routes when %s fails',
+		async (source) => {
+			const endpoints = {
+				narrative: CATEGORY_INFO_API,
+				oracle: `${V2_SERVER_URL}/metrics/oracle`,
+				DAT: `${TRADFI_API}/institutions`,
+				stablecoin: `${STABLECOINS_SERVER_URL}/config`
+			}
+			http.serve({ [endpoints[source]]: fixtureStatus(404) })
+			const { fetchMetadataRouteIndexes } = await import('../routeIndexes')
+			await expect(fetchMetadataRouteIndexes()).rejects.toThrow(/404/)
+		}
+	)
 })

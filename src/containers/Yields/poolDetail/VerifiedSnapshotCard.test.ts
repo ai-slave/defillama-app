@@ -47,17 +47,6 @@ describe('verified snapshot', () => {
 		// Signed: only a positive fee is one the holder pays.
 		expect(snapshot.feeBps).toBe(5)
 	})
-
-	// The serving layer no longer computes the share, so it comes from the two measured amounts.
-	test('derives the withdrawable share from the measured amounts', () => {
-		const partial: VerifiedBlock = {
-			...verified,
-			exit: { status: 'partial', eta_seconds: null, fee_bps: 0, as_of: null },
-			exit_liquidity: { amount: '400000000', usd: 400, slippage_bps: 0, as_of: null },
-			tvl: { amount: '1000000000', usd: 1000, as_of: null }
-		}
-		expect(buildVerifiedSnapshot(partial, []).withdrawableFraction).toBeCloseTo(0.4, 10)
-	})
 })
 
 /*

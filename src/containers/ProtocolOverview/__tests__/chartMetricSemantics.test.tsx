@@ -1,97 +1,44 @@
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
-import type { IProtocolMedianApyChart } from '../api.types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { protocolCharts } from '../constants'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics, IToggledMetrics } from '../types'
+import { useFetchProtocolChartData } from '../useFetchProtocolChartData'
+
+vi.mock('next/router', () => ({ useRouter: () => ({ isReady: true }) }))
 
 type ProbeProps = IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartTimeGroupingWithCumulative
 	tvlSettings: Record<string, boolean>
 }
+type HookResult = ReturnType<typeof useFetchProtocolChartData>
 
-type QueryOptions = { queryKey: Array<string | null> }
-type TvlChartOptions = {
-	protocol: string
-	key?: 'pool2' | 'staking' | 'borrowed' | 'vesting'
-	enabled: boolean
-}
-type TvlQueryResult = {
-	data: Array<[number, number]> | undefined
-	isLoading: boolean
-	isError: boolean
-}
-type QueryHookResult<T> = { data: T | null; isLoading: boolean }
-
-const mocks = vi.hoisted(() => ({
-	useQuery: vi.fn(),
-	useQueries: vi.fn(),
-	useFetchProtocolTVLChart: vi.fn<(options: TvlChartOptions) => TvlQueryResult>(),
-	useFetchProtocolMedianAPY: vi.fn((_protocol: string | null): QueryHookResult<IProtocolMedianApyChart> => ({
-		data: null,
-		isLoading: false
-	})),
-	activity: vi.fn((_options: { adapterType: string; protocol: string | null }) => ({
-		data: null as Array<[number, number]> | null,
-		isLoading: false
-	})),
-	isClient: true,
-	lastResult: null as ReturnType<typeof import('../useFetchProtocolChartData').useFetchProtocolChartData> | null
-}))
-
-vi.mock('@tanstack/react-query', () => ({
-	skipToken: Symbol('skipToken'),
-	useQuery: mocks.useQuery,
-	useQueries: mocks.useQueries
-}))
-
-vi.mock('next/router', () => ({
-	useRouter: () => ({ isReady: true })
-}))
-
-vi.mock('~/hooks/useIsClient', () => ({
-	useIsClient: () => mocks.isClient
-}))
-
-vi.mock('~/containers/ProtocolOverview/queries.client', () => ({
-	useFetchProtocolActivityChart: mocks.activity,
-	useFetchProtocolMedianAPY: mocks.useFetchProtocolMedianAPY,
-	useFetchProtocolTVLChart: mocks.useFetchProtocolTVLChart
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: vi.fn()
-}))
-
-import { useFetchProtocolChartData } from '../useFetchProtocolChartData'
-
+const http = installFixtureFetch()
 const timestamp = Date.UTC(2024, 0, 1) / 1e3
 const timestampMs = Date.UTC(2024, 0, 1)
-const DISABLED_TVL_QUERY: TvlQueryResult = { data: undefined, isLoading: false, isError: false }
-type TvlQueryKey = 'base' | 'pool2' | 'staking' | 'borrowed' | 'vesting'
-let tvlQueryResults: Partial<Record<TvlQueryKey, TvlQueryResult>> = {}
+const DAY = 86_400
 
-function setTvlQueries(queries: Partial<Record<TvlQueryKey, TvlQueryResult>>) {
-	tvlQueryResults = queries
-}
+/**
+ * Chart API responses keyed by query string. A request for a chart without a response fails the
+ * test; `pending` never answers, which keeps that chart loading.
+ */
+const pending = Symbol('pending')
+let chartResponses: Record<string, unknown> = {}
+let missing: Array<string> = []
 
 function makeToggledMetrics(overrides: Partial<IToggledMetrics>): IToggledMetrics {
-	const toggles = {
-		events: 'false',
-		denomination: null
-	} as IToggledMetrics
-	for (const queryParam of Object.values(protocolCharts)) {
-		toggles[queryParam] = 'false'
-	}
+	const toggles = { events: 'false', denomination: null } as IToggledMetrics
+	for (const queryParam of Object.values(protocolCharts)) toggles[queryParam] = 'false'
 	return { ...toggles, ...overrides }
 }
 
-const toggledMetrics = makeToggledMetrics({
-	fees: 'true',
-	revenue: 'true',
-	holdersRevenue: 'true'
-})
+const toggledMetrics = makeToggledMetrics({ fees: 'true', revenue: 'true', holdersRevenue: 'true' })
 
 const baseMetrics: IProtocolPageMetrics = {
 	tvl: false,
@@ -127,8 +74,8 @@ const baseMetrics: IProtocolPageMetrics = {
 }
 
 const feeProps: ProbeProps = {
-	name: 'Test Protocol',
-	id: 'test-protocol',
+	name: 'Test',
+	id: 'test',
 	token: { symbol: null, gecko_id: null, gecko_url: null, explorer_url: null },
 	chains: [],
 	geckoId: null,
@@ -179,485 +126,439 @@ const feeProps: ProbeProps = {
 	defaultToggledCharts: []
 }
 
-let probeProps = feeProps
+let client: QueryClient
+let root: Root
+let container: HTMLDivElement
+let result: HookResult | null
 
-function Probe() {
-	mocks.lastResult = useFetchProtocolChartData(probeProps)
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	chartResponses = {}
+	missing = []
+	result = null
+	client = new QueryClient()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+	const answer = (url: URL) => {
+		const response = chartResponses[url.search.slice(1)]
+		if (response === pending) return new Promise(() => {})
+		if (response === undefined) {
+			missing.push(url.search)
+			return new Response(null, { status: 404 })
+		}
+		return response
+	}
+	http.serve({
+		'/api/public/protocols/charts': answer,
+		'http://localhost:3000/api/public/tokens/charts/coingecko/': answer
+	})
+})
+
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	client.clear()
+	if (missing.length > 0) throw new Error(`Chart requests without a response: ${missing.join(', ')}`)
+})
+
+function Probe(props: ProbeProps) {
+	result = useFetchProtocolChartData(props)
 	return null
 }
 
-describe('ProtocolOverview chart metric semantics', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		mocks.isClient = true
-		probeProps = feeProps
-		tvlQueryResults = {}
-		mocks.useFetchProtocolTVLChart.mockImplementation(
-			(options) => tvlQueryResults[options.key ?? 'base'] ?? DISABLED_TVL_QUERY
+async function mount(props: ProbeProps) {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<Probe {...props} />
+			</QueryClientProvider>
 		)
-		mocks.useQueries.mockImplementation(({ queries }: { queries: Array<QueryOptions> }) =>
-			queries.map((options) => mocks.useQuery(options))
+	)
+}
+
+// Lets fetches resolve inside act, so their renders are flushed, until the assertion holds.
+function until(assertion: () => void) {
+	return vi.waitFor(async () => {
+		await act(() => new Promise((resolve) => setTimeout(resolve, 5)))
+		assertion()
+	})
+}
+
+// Waits until no chart is loading, so each assertion sees settled data.
+async function settle(props: ProbeProps) {
+	await mount(props)
+	await until(() => expect(result?.loadingCharts).toEqual([]))
+	return result!
+}
+
+const tvl = (query = '') => `kind=tvl&protocol=test${query}`
+const adapter = (adapterType: string, dataType?: string) =>
+	`kind=adapter&adapterType=${adapterType}&protocol=Test${dataType ? `&dataType=${dataType}` : ''}`
+
+const tvlProps = (overrides: Partial<ProbeProps>): ProbeProps => ({
+	...feeProps,
+	metrics: { ...baseMetrics, tvl: true },
+	toggledMetrics: makeToggledMetrics({ tvl: 'true' }),
+	availableCharts: ['TVL'],
+	...overrides
+})
+
+describe('server render', () => {
+	test('shows prefetched charts and requests nothing before hydration', () => {
+		let serverResult: HookResult | null = null
+		function ServerProbe() {
+			serverResult = useFetchProtocolChartData({
+				...feeProps,
+				initialMultiSeriesChartData: { 'Perp Volume': [[timestamp, 42]] },
+				metrics: { ...baseMetrics, perps: true },
+				toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
+				availableCharts: ['Perp Volume']
+			})
+			return null
+		}
+		renderToStaticMarkup(
+			<QueryClientProvider client={client}>
+				<ServerProbe />
+			</QueryClientProvider>
 		)
-		mocks.useQuery.mockImplementation((options: QueryOptions) => {
-			if (options.queryKey[2] === 'fees') return { data: [[timestamp, 100]], isLoading: false }
-			if (options.queryKey[2] === 'revenue') return { data: [[timestamp, 50]], isLoading: false }
-			if (options.queryKey[2] === 'holders-revenue') return { data: [[timestamp, 25]], isLoading: false }
-			return { data: null, isLoading: false }
-		})
+		expect(serverResult!.finalCharts['Perp Volume']).toEqual([[timestampMs, 42]])
+		expect(serverResult!.loadingCharts).toEqual([])
+		expect(http.requests).toEqual([])
 	})
+})
 
-	test('keeps client-only chart queries disabled during SSR hydration', () => {
-		mocks.isClient = false
-		probeProps = {
-			...feeProps,
-			metrics: { ...baseMetrics, perps: true },
-			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
-			availableCharts: ['Perp Volume']
+describe('TVL', () => {
+	const baseChart: Array<[number, number]> = [
+		[timestamp, 100],
+		[timestamp + DAY, 110]
+	]
+
+	test('requests the base chart and only the extra keys the protocol reports', async () => {
+		chartResponses = {
+			[tvl()]: baseChart,
+			[tvl('&key=staking')]: [],
+			[tvl('&key=borrowed')]: [],
+			[tvl('&key=pool2')]: []
 		}
-
-		renderToStaticMarkup(<Probe />)
-
-		const perpVolumeQuery = mocks.useQuery.mock.calls
-			.map(([options]) => options)
-			.find((options) => options.queryKey[2] === 'perp-volume')
-		expect(perpVolumeQuery.enabled).toBe(false)
-	})
-
-	test('keeps prefetched chart data visible during SSR hydration', () => {
-		mocks.isClient = false
-		probeProps = {
-			...feeProps,
-			initialMultiSeriesChartData: { 'Perp Volume': [[timestamp, 42]] },
-			metrics: { ...baseMetrics, perps: true },
-			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
-			availableCharts: ['Perp Volume']
-		}
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts['Perp Volume']).toEqual([[timestampMs, 42]])
-		expect(mocks.lastResult?.loadingCharts).toEqual([])
-	})
-
-	test('creates protocol TVL observers only for the base chart and protocol-valid extra keys', () => {
-		probeProps = {
-			...feeProps,
-			currentTvlByChain: {
-				staking: 10,
-				borrowed: 20,
-				pool2: 30,
-				vesting: 40
-			},
-			metrics: { ...baseMetrics, tvl: true },
-			toggledMetrics: makeToggledMetrics({ tvl: 'true' }),
-			availableCharts: ['TVL'],
-			tvlSettings: {
-				staking: true,
-				borrowed: true,
-				pool2: true,
-				vesting: true,
-				doublecounted: true,
-				liquidstaking: true,
-				govtokens: true
-			}
-		}
-
-		renderToStaticMarkup(<Probe />)
-
-		const observers = mocks.useFetchProtocolTVLChart.mock.calls.map(([options]) => ({
-			key: options.key ?? 'base',
-			enabled: options.enabled
-		}))
-		expect(observers).toHaveLength(5)
-		expect(observers).toEqual(
-			expect.arrayContaining([
-				{ key: 'base', enabled: true },
-				{ key: 'pool2', enabled: true },
-				{ key: 'staking', enabled: true },
-				{ key: 'borrowed', enabled: true },
-				{ key: 'vesting', enabled: true }
-			])
+		await settle(
+			tvlProps({
+				currentTvlByChain: { staking: 10, borrowed: 20, pool2: 30 },
+				tvlSettings: { staking: true, borrowed: true, pool2: true, vesting: true, doublecounted: true }
+			})
 		)
+		expect(http.requests.map(({ url }) => url.searchParams.get('key') ?? 'base').toSorted()).toEqual([
+			'base',
+			'borrowed',
+			'pool2',
+			'staking'
+		])
 	})
 
-	test('distinguishes a cold extra error from successful empty and cached-error composite TVL data', () => {
-		const baseChart: Array<[number, number]> = [
-			[timestamp, 100],
-			[timestamp + 86_400, 110]
-		]
-		probeProps = {
-			...feeProps,
+	test('reports TVL and USD inflows as failed when a required extra fails before returning data', async () => {
+		chartResponses = { [tvl()]: baseChart }
+		missing = []
+		const settled = await settle(
+			tvlProps({
+				currentTvlByChain: { pool2: 1 },
+				metrics: { ...baseMetrics, tvl: true, inflows: true },
+				toggledMetrics: makeToggledMetrics({ tvl: 'true', usdInflows: 'true' }),
+				availableCharts: ['TVL', 'USD Inflows'],
+				tvlSettings: { pool2: true }
+			})
+		)
+		expect(settled.finalCharts).toEqual({})
+		expect(settled.failedMetrics).toEqual(['TVL', 'USD Inflows'])
+		expect(missing).toEqual(['?kind=tvl&protocol=test&key=pool2'])
+		missing = []
+	})
+
+	test('adds a successful extra, empty or not, and keeps it through a failed refetch', async () => {
+		const props = tvlProps({
 			currentTvlByChain: { pool2: 1 },
 			metrics: { ...baseMetrics, tvl: true, inflows: true },
 			toggledMetrics: makeToggledMetrics({ tvl: 'true', usdInflows: 'true' }),
 			availableCharts: ['TVL', 'USD Inflows'],
 			tvlSettings: { pool2: true }
-		}
-
-		setTvlQueries({
-			base: { data: baseChart, isLoading: false, isError: false },
-			pool2: { data: undefined, isLoading: false, isError: true }
 		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.TVL).toBeUndefined()
-		expect(mocks.lastResult?.finalCharts['USD Inflows']).toBeUndefined()
-		expect(mocks.lastResult?.failedMetrics).toEqual(['TVL', 'USD Inflows'])
-
-		setTvlQueries({
-			base: { data: baseChart, isLoading: false, isError: false },
-			pool2: { data: [], isLoading: false, isError: false }
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([
-			[timestampMs, 100],
-			[timestampMs + 86_400_000, 110]
-		])
-		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([[timestampMs + 86_400_000, 10]])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-
-		setTvlQueries({
-			base: { data: baseChart, isLoading: false, isError: false },
-			pool2: {
-				data: [
-					[timestamp, 5],
-					[timestamp + 86_400, 6]
+		chartResponses = { [tvl()]: baseChart, [tvl('&key=pool2')]: [] }
+		expect(await settle(props)).toMatchObject({
+			finalCharts: {
+				TVL: [
+					[timestampMs, 100],
+					[timestampMs + DAY * 1e3, 110]
 				],
-				isLoading: false,
-				isError: true
-			}
+				'USD Inflows': [[timestampMs + DAY * 1e3, 10]]
+			},
+			failedMetrics: []
 		})
 
-		renderToStaticMarkup(<Probe />)
+		client.clear()
+		chartResponses[tvl('&key=pool2')] = [
+			[timestamp, 5],
+			[timestamp + DAY, 6]
+		]
+		await settle(props)
+		await until(() => expect(result!.finalCharts['USD Inflows']).toEqual([[timestampMs + DAY * 1e3, 11]]))
 
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([
+		delete chartResponses[tvl('&key=pool2')]
+		await act(async () => client.refetchQueries())
+		// Query observers are notified on a later tick; wait for the failed refetch to render first.
+		await until(() =>
+			expect(client.getQueryCache().findAll({ predicate: (query) => query.state.status === 'error' })).toHaveLength(1)
+		)
+		await act(() => new Promise((resolve) => setTimeout(resolve, 5)))
+		expect(missing).toEqual(['?kind=tvl&protocol=test&key=pool2'])
+		expect(result!.finalCharts.TVL).toEqual([
 			[timestampMs, 105],
-			[timestampMs + 86_400_000, 116]
+			[timestampMs + DAY * 1e3, 116]
 		])
-		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([[timestampMs + 86_400_000, 11]])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
+		expect(result!.failedMetrics).toEqual([])
+		missing = []
 	})
 
-	test('registers successful empty TVL-family charts without reporting them as failures', () => {
-		probeProps = {
-			...feeProps,
-			currentTvlByChain: { staking: 1, borrowed: 1 },
-			metrics: { ...baseMetrics, tvl: true, inflows: true },
-			toggledMetrics: makeToggledMetrics({
-				tvl: 'true',
-				usdInflows: 'true',
-				staking_tvl: 'true',
-				borrowed_tvl: 'true'
-			}),
-			availableCharts: ['TVL', 'USD Inflows', 'Staking', 'Active Loans']
-		}
-		setTvlQueries({
-			base: { data: [], isLoading: false, isError: false },
-			staking: { data: [], isLoading: false, isError: false },
-			borrowed: { data: [], isLoading: false, isError: false }
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([])
-		expect(mocks.lastResult?.finalCharts['USD Inflows']).toEqual([])
-		expect(mocks.lastResult?.finalCharts.Staking).toEqual([])
-		expect(mocks.lastResult?.finalCharts['Active Loans']).toEqual([])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
-
-	test('distinguishes successful empty, cold failure, and retained cached TVS data', () => {
-		probeProps = {
-			...feeProps,
-			toggledMetrics: makeToggledMetrics({ tvs: 'true' }),
-			availableCharts: ['TVS']
-		}
-		mocks.useQuery.mockImplementation((options: QueryOptions) =>
-			options.queryKey[2] === 'tvs' ? { data: [], isLoading: false } : { data: null, isLoading: false }
+	test('shows successful empty TVL-family charts without reporting failures', async () => {
+		chartResponses = { [tvl()]: [], [tvl('&key=staking')]: [], [tvl('&key=borrowed')]: [] }
+		const settled = await settle(
+			tvlProps({
+				currentTvlByChain: { staking: 1, borrowed: 1 },
+				metrics: { ...baseMetrics, tvl: true, inflows: true },
+				toggledMetrics: makeToggledMetrics({
+					tvl: 'true',
+					usdInflows: 'true',
+					staking_tvl: 'true',
+					borrowed_tvl: 'true'
+				}),
+				availableCharts: ['TVL', 'USD Inflows', 'Staking', 'Active Loans']
+			})
 		)
+		expect(settled.finalCharts).toEqual({ TVL: [], 'USD Inflows': [], Staking: [], 'Active Loans': [] })
+		expect(settled.failedMetrics).toEqual([])
+	})
 
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.TVS).toEqual([])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-
-		mocks.useQuery.mockImplementation(() => ({ data: null, isLoading: false }))
-		renderToStaticMarkup(<Probe />)
-		expect(mocks.lastResult?.finalCharts.TVS).toBeUndefined()
-		expect(mocks.lastResult?.failedMetrics).toEqual(['TVS'])
-
-		mocks.useQuery.mockImplementation((options: QueryOptions) =>
-			options.queryKey[2] === 'tvs' ? { data: [[timestamp, 42]], isLoading: false } : { data: null, isLoading: false }
+	test('keeps TVL and USD inflows loading while a required source loads', async () => {
+		chartResponses = { [tvl()]: pending }
+		await mount(
+			tvlProps({
+				metrics: { ...baseMetrics, tvl: true, inflows: true },
+				toggledMetrics: makeToggledMetrics({ usdInflows: 'true' }),
+				availableCharts: ['TVL', 'USD Inflows']
+			})
 		)
-		renderToStaticMarkup(<Probe />)
-		expect(mocks.lastResult?.finalCharts.TVS).toEqual([[timestampMs, 42]])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
+		expect(result!.loadingCharts).toEqual(['USD Inflows'])
+		expect(result!.failedMetrics).toEqual([])
 
-	test('keeps USD Inflows loading while its required composite TVL source loads', () => {
-		probeProps = {
-			...feeProps,
-			metrics: { ...baseMetrics, tvl: true, inflows: true },
-			toggledMetrics: makeToggledMetrics({ usdInflows: 'true' }),
-			availableCharts: ['TVL', 'USD Inflows']
+		await act(async () => root.unmount())
+		root = createRoot(container)
+		client.clear()
+		chartResponses = { [tvl('&key=staking')]: pending }
+		await mount(
+			tvlProps({
+				initialMultiSeriesChartData: { TVL: [[timestamp, 100]] },
+				currentTvlByChain: { staking: 1 },
+				tvlSettings: { staking: true }
+			})
+		)
+		expect(result!.loadingCharts).toEqual(['TVL'])
+		expect(result!.failedMetrics).toEqual([])
+	})
+})
+
+test('distinguishes a successful empty TVS chart from a failed one', async () => {
+	const props = {
+		...feeProps,
+		toggledMetrics: makeToggledMetrics({ tvs: 'true' }),
+		availableCharts: ['TVS']
+	} as ProbeProps
+	chartResponses = { 'kind=oracle-chart&protocol=Test': [] }
+	expect(await settle(props)).toMatchObject({ finalCharts: { TVS: [] }, failedMetrics: [] })
+
+	client.clear()
+	chartResponses = {}
+	await settle(props)
+	await until(() => expect(result!.failedMetrics).toEqual(['TVS']))
+	expect(result!.finalCharts).toEqual({})
+	missing = []
+})
+
+test('shows fee-family charts from their adapter charts', async () => {
+	chartResponses = {
+		[adapter('fees')]: [[timestamp, 100]],
+		[adapter('fees', 'dailyRevenue')]: [[timestamp, 50]],
+		[adapter('fees', 'dailyHoldersRevenue')]: [[timestamp, 25]]
+	}
+	const settled = await settle(feeProps)
+	expect(settled.finalCharts).toEqual({
+		Fees: [[timestampMs, 100]],
+		Revenue: [[timestampMs, 50]],
+		'Holders Revenue': [[timestampMs, 25]]
+	})
+	expect(settled.failedMetrics).toEqual([])
+})
+
+test('converts cumulative fee-family charts into the selected denomination', async () => {
+	chartResponses = {
+		'timeframe=MAX': {
+			data: {
+				prices: [
+					[timestampMs, 10],
+					[timestampMs + DAY * 1e3, 20]
+				]
+			}
+		},
+		[adapter('fees')]: [
+			[timestamp, 100],
+			[timestamp + DAY, 200]
+		],
+		[adapter('fees', 'dailyRevenue')]: [
+			[timestamp, 50],
+			[timestamp + DAY, 100]
+		],
+		[adapter('fees', 'dailyHoldersRevenue')]: [
+			[timestamp, 30],
+			[timestamp + DAY, 40]
+		]
+	}
+	await settle({
+		...feeProps,
+		groupBy: 'cumulative',
+		chartDenominations: [{ symbol: 'ETH', geckoId: 'ethereum' }],
+		toggledMetrics: { ...feeProps.toggledMetrics, denomination: 'ETH' }
+	})
+	await until(() => expect(result!.valueSymbol).toBe('ETH'))
+	expect(result!.finalCharts).toEqual({
+		Fees: [
+			[timestampMs, 10],
+			[timestampMs + DAY * 1e3, 20]
+		],
+		Revenue: [
+			[timestampMs, 5],
+			[timestampMs + DAY * 1e3, 10]
+		],
+		'Holders Revenue': [
+			[timestampMs, 3],
+			[timestampMs + DAY * 1e3, 5]
+		]
+	})
+})
+
+describe('token charts', () => {
+	test('builds FDV by applying the token supply to its price history', async () => {
+		chartResponses = {
+			'timeframe=MAX': {
+				data: {
+					prices: [
+						[timestampMs, 2],
+						[timestampMs + DAY * 1e3, 3]
+					],
+					mcaps: [],
+					volumes: []
+				}
+			},
+			'kind=supply': { totalSupply: 100 }
 		}
-		setTvlQueries({ base: { data: undefined, isLoading: true, isError: false } })
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.loadingCharts).toEqual(['USD Inflows'])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
-
-	test('keeps primary TVL loading while an enabled composite-only staking source loads', () => {
-		probeProps = {
-			...feeProps,
-			currentTvlByChain: { staking: 1 },
-			metrics: { ...baseMetrics, tvl: true },
-			toggledMetrics: makeToggledMetrics({ tvl: 'true' }),
-			availableCharts: ['TVL'],
-			tvlSettings: { staking: true }
-		}
-		setTvlQueries({
-			base: { data: [[timestamp, 100]], isLoading: false, isError: false },
-			staking: { data: undefined, isLoading: true, isError: false }
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.loadingCharts).toEqual(['TVL'])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
-
-	test('keeps fee-family charts visible from their base queries', () => {
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.Fees).toEqual([[timestampMs, 100]])
-		expect(mocks.lastResult?.finalCharts.Revenue).toEqual([[timestampMs, 50]])
-		expect(mocks.lastResult?.finalCharts['Holders Revenue']).toEqual([[timestampMs, 25]])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
-
-	test('builds FDV chart points by applying token supply to price history', () => {
-		probeProps = {
+		const settled = await settle({
 			...feeProps,
 			geckoId: 'test-token',
 			metrics: baseMetrics,
-			toggledMetrics: { fdv: 'true' } as IToggledMetrics,
+			toggledMetrics: makeToggledMetrics({ fdv: 'true' }),
 			availableCharts: ['FDV']
-		}
-
-		mocks.useQuery.mockImplementation((options: QueryOptions) => {
-			if (options.queryKey[2] === 'token-price-history') {
-				return {
-					data: {
-						prices: [
-							[timestampMs, 2],
-							[timestampMs + 86_400_000, 3]
-						],
-						mcaps: [],
-						volumes: []
-					},
-					isLoading: false
-				}
-			}
-			if (options.queryKey[2] === 'token-supply') return { data: 100, isLoading: false }
-			return { data: null, isLoading: false }
 		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts.FDV).toEqual([
+		expect(settled.finalCharts.FDV).toEqual([
 			[timestampMs, 200],
-			[timestampMs + 86_400_000, 300]
+			[timestampMs + DAY * 1e3, 300]
 		])
 	})
 
-	test('keeps absent optional CoinGecko series unavailable when prices exist', () => {
-		probeProps = {
+	test('reports token series CoinGecko omits as failed while prices show', async () => {
+		chartResponses = { 'timeframe=MAX': { data: { prices: [[timestampMs, 2]] } } }
+		const settled = await settle({
 			...feeProps,
 			geckoId: 'test-token',
 			metrics: baseMetrics,
 			toggledMetrics: makeToggledMetrics({ mcap: 'true', tokenPrice: 'true', tokenVolume: 'true' }),
 			availableCharts: ['Mcap', 'Token Price', 'Token Volume']
-		}
-
-		mocks.useQuery.mockImplementation((options: QueryOptions) => {
-			if (options.queryKey[2] === 'token-price-history') {
-				return { data: { prices: [[timestampMs, 2]] }, isLoading: false }
-			}
-			return { data: null, isLoading: false }
 		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts['Token Price']).toEqual([[timestampMs, 2]])
-		expect(mocks.lastResult?.finalCharts.Mcap).toBeUndefined()
-		expect(mocks.lastResult?.finalCharts['Token Volume']).toBeUndefined()
-		expect(mocks.lastResult?.failedMetrics).toEqual(['Mcap', 'Token Volume'])
+		expect(settled.finalCharts).toEqual({ 'Token Price': [[timestampMs, 2]] })
+		expect(settled.failedMetrics).toEqual(['Mcap', 'Token Volume'])
 	})
+})
 
-	test('fetches descriptor-driven liquidation charts', () => {
-		probeProps = {
-			...feeProps,
-			metrics: { ...baseMetrics, collateralLiquidated: true },
-			toggledMetrics: makeToggledMetrics({ collateralLiquidated: 'true' }),
-			availableCharts: ['Collateral Liquidated']
+test('shows descriptor-driven liquidation charts', async () => {
+	chartResponses = { [adapter('liquidations', 'dailyCollateralLiquidated')]: [[timestamp, 123]] }
+	const settled = await settle({
+		...feeProps,
+		metrics: { ...baseMetrics, collateralLiquidated: true },
+		toggledMetrics: makeToggledMetrics({ collateralLiquidated: 'true' }),
+		availableCharts: ['Collateral Liquidated']
+	})
+	expect(settled.finalCharts).toEqual({ 'Collateral Liquidated': [[timestampMs, 123]] })
+	expect(settled.failedMetrics).toEqual([])
+})
+
+test('keeps a negative median APY as reported', async () => {
+	chartResponses = { 'kind=median-apy&protocol=test': [{ date: timestamp, medianAPY: -2.5 }] }
+	const settled = await settle({
+		...feeProps,
+		metrics: { ...baseMetrics, yields: true },
+		toggledMetrics: makeToggledMetrics({ medianApy: 'true' }),
+		availableCharts: ['Median APY']
+	})
+	expect(settled.finalCharts['Median APY']).toEqual([[timestampMs, -2.5]])
+})
+
+describe('active addresses', () => {
+	// Mon Sep 14, 2026 to Mon Sep 21: a full week, then the next week's first day.
+	const day = (offset: number) => Date.UTC(2026, 8, 14 + offset) / 1e3
+	const activeAddresses: Array<[number, number]> = [
+		[day(0), 90],
+		// Sep 15 has no observation; Sep 16 is a real zero.
+		[day(2), 0],
+		[day(3), 30],
+		[day(7), 50]
+	]
+
+	async function activityCharts(groupBy: ChartTimeGroupingWithCumulative) {
+		client.clear()
+		chartResponses = {
+			[adapter('active-users')]: activeAddresses,
+			[adapter('new-users')]: activeAddresses.map(([observedAt]) => [observedAt, 10])
 		}
-
-		mocks.useQuery.mockImplementation((options: QueryOptions) => {
-			if (options.queryKey[2] === 'collateral-liquidated') {
-				return { data: [[timestamp, 123]], isLoading: false }
-			}
-			return { data: null, isLoading: false }
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts['Collateral Liquidated']).toEqual([[timestampMs, 123]])
-		expect(mocks.lastResult?.failedMetrics).toEqual([])
-	})
-
-	test('preserves numeric median APY without parsing or zero fallback', () => {
-		probeProps = {
-			...feeProps,
-			metrics: { ...baseMetrics, yields: true },
-			toggledMetrics: makeToggledMetrics({ medianApy: 'true' }),
-			availableCharts: ['Median APY']
-		}
-		mocks.useFetchProtocolMedianAPY.mockReturnValueOnce({
-			data: [{ date: timestamp, medianAPY: -2.5 }],
-			isLoading: false
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.finalCharts['Median APY']).toEqual([[timestampMs, -2.5]])
-	})
-
-	test('keeps cumulative fee-family charts in selected denomination units', () => {
-		const secondTimestamp = timestamp + 86_400
-		const secondTimestampMs = timestampMs + 86_400_000
-		probeProps = {
-			...feeProps,
-			groupBy: 'cumulative',
-			chartDenominations: [{ symbol: 'ETH', geckoId: 'ethereum' }],
-			toggledMetrics: {
-				...toggledMetrics,
-				denomination: 'ETH'
-			}
-		}
-
-		mocks.useQuery.mockImplementation((options: QueryOptions) => {
-			if (options.queryKey[2] === 'denomination-price-history') {
-				return {
-					data: {
-						[String(timestamp)]: 10,
-						[String(secondTimestamp)]: 20
-					},
-					isLoading: false
-				}
-			}
-			if (options.queryKey[2] === 'fees') {
-				return {
-					data: [
-						[timestamp, 100],
-						[secondTimestamp, 200]
-					],
-					isLoading: false
-				}
-			}
-			if (options.queryKey[2] === 'revenue') {
-				return {
-					data: [
-						[timestamp, 50],
-						[secondTimestamp, 100]
-					],
-					isLoading: false
-				}
-			}
-			if (options.queryKey[2] === 'holders-revenue') {
-				return {
-					data: [
-						[timestamp, 30],
-						[secondTimestamp, 40]
-					],
-					isLoading: false
-				}
-			}
-			return { data: null, isLoading: false }
-		})
-
-		renderToStaticMarkup(<Probe />)
-
-		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
-		expect(mocks.lastResult?.finalCharts.Fees).toEqual([
-			[timestampMs, 10],
-			[secondTimestampMs, 20]
-		])
-		expect(mocks.lastResult?.finalCharts.Revenue).toEqual([
-			[timestampMs, 5],
-			[secondTimestampMs, 10]
-		])
-		expect(mocks.lastResult?.finalCharts['Holders Revenue']).toEqual([
-			[timestampMs, 3],
-			[secondTimestampMs, 5]
-		])
-	})
-
-	describe('active addresses', () => {
-		// Mon Sep 14, 2026 to Mon Sep 21: a full week, then the next week's first day.
-		const day = (offset: number) => Date.UTC(2026, 8, 14 + offset)
-		const activeAddresses: Array<[number, number]> = [
-			[day(0), 90],
-			// Sep 15 has no observation; Sep 16 is a real zero.
-			[day(2), 0],
-			[day(3), 30],
-			[day(7), 50]
-		]
-		const newAddresses: Array<[number, number]> = activeAddresses.map(([observedAt]) => [observedAt, 10])
-
-		function renderActivity(groupBy: ChartTimeGroupingWithCumulative) {
-			mocks.activity.mockImplementation(({ adapterType, protocol }) => ({
-				data: protocol == null ? null : adapterType === 'active-users' ? activeAddresses : newAddresses,
-				isLoading: false
-			}))
-			probeProps = {
+		return (
+			await settle({
 				...feeProps,
 				metrics: { ...baseMetrics, activeUsers: true, newUsers: true },
 				toggledMetrics: makeToggledMetrics({ activeAddresses: 'true', newAddresses: 'true' }),
 				availableCharts: ['Active Addresses', 'New Addresses'],
 				groupBy
-			}
-			renderToStaticMarkup(<Probe />)
-			return mocks.lastResult!.finalCharts
-		}
+			})
+		).finalCharts
+	}
 
-		test('averages the observed days of each period, while new addresses still sum', () => {
-			const charts = renderActivity('weekly')
-
-			expect(charts['Active Addresses']).toEqual([
+	test('averages the observed days of each period, while new addresses still sum', async () => {
+		expect(await activityCharts('weekly')).toEqual({
+			'Active Addresses': [
 				[Date.UTC(2026, 8, 20), 40],
 				[Date.UTC(2026, 8, 27), 50]
-			])
-			expect(charts['New Addresses']).toEqual([
+			],
+			'New Addresses': [
 				[Date.UTC(2026, 8, 20), 30],
 				[Date.UTC(2026, 8, 27), 10]
-			])
+			]
 		})
+	})
 
-		test('leaves active addresses out of a cumulative chart and keeps daily values as they are', () => {
-			expect(renderActivity('cumulative')['Active Addresses']).toBeUndefined()
-			expect(renderActivity('cumulative')['New Addresses']).toEqual([
-				[day(0), 10],
-				[day(2), 20],
-				[day(3), 30],
-				[day(7), 40]
-			])
-			expect(renderActivity('daily')['Active Addresses']).toEqual(activeAddresses)
-		})
+	test('leaves active addresses out of a cumulative chart and keeps daily values as they are', async () => {
+		const cumulative = await activityCharts('cumulative')
+		expect(cumulative['Active Addresses']).toBeUndefined()
+		expect(cumulative['New Addresses']).toEqual([
+			[day(0) * 1e3, 10],
+			[day(2) * 1e3, 20],
+			[day(3) * 1e3, 30],
+			[day(7) * 1e3, 40]
+		])
+		expect((await activityCharts('daily'))['Active Addresses']).toEqual(
+			activeAddresses.map(([observedAt, value]) => [observedAt * 1e3, value])
+		)
 	})
 })

@@ -10,7 +10,6 @@ import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredResearchReportsCard'
 import { TokenLogo } from '~/components/TokenLogo'
-import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -20,6 +19,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { getProtocolInfoCategories } from './category'
 import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
@@ -168,18 +168,7 @@ export function UserActivity({
 
 export function ProtocolInfo(props: IProtocolOverviewPageData) {
 	const childProtocols = props.childProtocols ?? []
-	// Parent protocols spread across categories: the protocol's own category leads, children add the rest.
-	const categories: Array<string> = []
-	const seenCategories = new Set<string>()
-	if (props.category) {
-		categories.push(props.category)
-		seenCategories.add(props.category)
-	}
-	for (const child of childProtocols) {
-		if (!child.category || seenCategories.has(child.category)) continue
-		seenCategories.add(child.category)
-		categories.push(child.category)
-	}
+	const categories = getProtocolInfoCategories(props.category, childProtocols)
 
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
@@ -233,11 +222,11 @@ export function ProtocolInfo(props: IProtocolOverviewPageData) {
 					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
 					{categories.map((category) => (
 						<BasicLink
-							href={getCategoryRoute(slug(category))}
+							href={category.href}
 							className={INFO_ACTION_STYLES}
-							key={`${props.id}-category-${category}`}
+							key={`${props.id}-category-${category.label}`}
 						>
-							{category}
+							{category.label}
 						</BasicLink>
 					))}
 				</div>

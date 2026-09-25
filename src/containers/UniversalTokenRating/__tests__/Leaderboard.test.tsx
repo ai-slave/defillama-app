@@ -1,15 +1,10 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
-
-vi.mock('../PerformanceMatrix', () => ({
-	PerformanceMatrix: () => <div>Matrix</div>
-}))
-
+import { afterEach, describe, expect, test } from 'vitest'
 import { Leaderboard } from '../Leaderboard'
-import { pageForUtrAsset } from '../navigation'
+import { pageForUtrAsset, type UtrFocusRequest } from '../navigation'
+import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
 
 const grading: UtrGradingConfig = {
 	overall: {
@@ -73,7 +68,7 @@ describe('Leaderboard', () => {
 		expect(pageForUtrAsset(rows, 'missing')).toBeNull()
 	})
 
-	test('uses the API grade and spans every column when a row expands', async () => {
+	test('uses the API grade and reveals the score breakdown on expansion', async () => {
 		container = document.createElement('div')
 		document.body.append(container)
 		root = createRoot(container)
@@ -95,14 +90,47 @@ describe('Leaderboard', () => {
 		const labels = headers.map((header) => header.textContent?.trim())
 		const gradeIndex = labels.indexOf('Grade')
 		expect(gradeIndex).toBeGreaterThan(-1)
-		expect(labels[gradeIndex - 1]).toBe('Protocol')
 		// The score maps to AAA; the API's explicit CCC grade must take precedence.
 		expect(container.querySelector('tbody tr')!.children[gradeIndex].textContent).toBe('CCC')
-		expect(labels).not.toContain('Status')
-		expect(container.textContent).not.toContain('Pin My Token')
 		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Expand row"]')!.click())
-		expect(container.querySelector<HTMLTableCellElement>('td[colspan]')!.colSpan).toBe(headers.length)
+		expect(container.textContent).toContain('Disclosures: Breakdown by Category')
 		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Collapse row"]')!.click())
-		expect(container.querySelector('td[colspan]')).toBeNull()
+		expect(container.textContent).not.toContain('Disclosures: Breakdown by Category')
+	})
+
+	test('pages to a searched token and lets the reader page onward', async () => {
+		container = document.createElement('div')
+		document.body.append(container)
+		root = createRoot(container)
+		const rows = Array.from({ length: 205 }, (_, index) => ({
+			...row,
+			asset: `asset-${index}`,
+			name: `Protocol ${index}`,
+			scores: { ...row.scores, rank: index }
+		}))
+		const render = (focusRequest?: UtrFocusRequest) =>
+			act(async () =>
+				root!.render(
+					<Leaderboard
+						rows={rows}
+						sort={{ key: 'rank', desc: false }}
+						setSort={() => undefined}
+						fdvRanges={[]}
+						sectors={[]}
+						listingStatuses={[]}
+						focusRequest={focusRequest}
+					/>
+				)
+			)
+		const onPage = (asset: string) => document.getElementById(`utr-row-${asset}`) != null
+
+		await render()
+		expect(onPage('asset-0')).toBe(true)
+		await render({ asset: 'asset-150', nonce: 1 })
+		expect(onPage('asset-150')).toBe(true)
+		expect(onPage('asset-0')).toBe(false)
+		await act(async () => container!.querySelector<HTMLButtonElement>('[aria-label="Next page"]')!.click())
+		expect(onPage('asset-204')).toBe(true)
+		expect(container.textContent).toContain('Page 3 of 3')
 	})
 })

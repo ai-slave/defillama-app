@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import {
@@ -8,34 +8,38 @@ import {
 	generatePresetId,
 	type QuerySavedConfig
 } from '~/containers/Downloads/savedDownloads'
-import { defaultChartConfig, migrateChartConfig, type ChartConfig } from '~/containers/Downloads/sql/chartConfig'
-import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
+import type { ChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { Editor, type EditorHandle } from '~/containers/Downloads/sql/Editor'
 import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
-import { runSql } from '~/containers/Downloads/sql/executor'
+import { runSql, type ExecutorCtx } from '~/containers/Downloads/sql/executor'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { Keycap } from '~/containers/Downloads/sql/primitives'
 import { ResultsPanel } from '~/containers/Downloads/sql/ResultsPanel'
 import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
-import {
-	tableNameFor,
-	useTableRegistry,
-	type RegisteredTable,
-	type TableSource
-} from '~/containers/Downloads/sql/useTableRegistry'
+import { useTableRegistry, type RegisteredTable, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatNumber } from '~/utils/numberFormat'
 import { requestDashboardItemReveal } from '../../hooks/useDashboardItemDeepLink'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
-import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from '../../sqlSnapshot'
+import { clampRowCap, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
 import { ProButton } from '../../ui'
 import type { DashboardItemPlacement } from '../../useDashboardActions'
 import { buildSqlChartConfig } from './buildSqlChartConfig'
 import { loadChartOptions } from './chartOptions'
 import { SqlChartModalSidebar } from './SqlChartModalSidebar'
+import {
+	collectLoadedTables,
+	initialSqlChartModalState,
+	prepareSources,
+	reusableResult,
+	settleRun,
+	sqlChartModalControls,
+	sqlChartModalReducer,
+	type RunResponse
+} from './sqlChartModalState'
 
 interface SqlChartModalProps {
 	editItem?: SqlChartConfig | null
@@ -47,27 +51,15 @@ interface SqlChartModalProps {
 }
 
 type RunOutcome = { result: QueryResult; chartConfig: ChartConfig; tables: Array<RegisteredTable> }
-type Execution = { saving: boolean; taskId: string | null; stage: string | null; stopping?: boolean }
 
 async function runWithSources(
-	context: Parameters<typeof runSql>[0],
+	context: ExecutorCtx,
 	sql: string,
 	sources: Array<TableSource>,
 	options: Parameters<typeof runSql>[2],
 	signal: AbortSignal
-) {
-	const loadedNames = new Set(context.loadedTables.map((table) => table.name))
-	for (const source of sources) {
-		if (signal.aborted) return { ok: false, cancelled: true } as const
-		if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
-			const loaded = await context.loadSource(source, signal)
-			if (signal.aborted) return { ok: false, cancelled: true } as const
-			if (!loaded) return { ok: false, error: `Could not load table "${tableNameFor(source)}".` } as const
-			loadedNames.add(loaded.name)
-		}
-	}
-	if (signal.aborted) return { ok: false, cancelled: true } as const
-	return runSql(context, sql, options, undefined, signal)
+): Promise<RunResponse> {
+	return (await prepareSources(context, sources, signal)) ?? runSql(context, sql, options, undefined, signal)
 }
 
 export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onClosed, onSaved }: SqlChartModalProps) {
@@ -89,20 +81,10 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	const [chartOptionsMap, setChartOptionsMap] = useState<ChartOptionsMap>({})
 	const [sql, setSql] = useState(editItem?.query.sql ?? '')
 	const [name, setName] = useState(editItem?.name ?? '')
-	const [result, setResult] = useState<QueryResult | null>(
-		editItem?.snapshot ? snapshotToResult(editItem.snapshot) : null
-	)
-	const [resultSql, setResultSql] = useState(editItem?.query.sql ?? '')
-	const [ranFresh, setRanFresh] = useState(false)
-	const [chartConfig, setChartConfig] = useState<ChartConfig | undefined>(editItem?.chart)
 	const [displayMode, setDisplayMode] = useState<'chart' | 'table'>(editItem?.displayMode ?? 'chart')
 	const [rowCap, setRowCap] = useState(clampRowCap(editItem?.rowCap))
-	const [execution, setExecution] = useState<Execution | null>(null)
-	const running = execution !== null
-	const savePending = execution?.saving ?? false
-	const loadingStage = execution?.stage ?? null
-	const [queryError, setQueryError] = useState<string | null>(null)
-	const [durationMs, setDurationMs] = useState<number | null>(null)
+	const [state, dispatch] = useReducer(sqlChartModalReducer, editItem, initialSqlChartModalState)
+	const { result, chartConfig, queryError, durationMs } = state
 
 	const editorRef = useRef<EditorHandle | null>(null)
 	const runControllerRef = useRef<AbortController | null>(null)
@@ -132,7 +114,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	const stopQuery = () => {
 		const controller = runControllerRef.current
 		if (!controller || controller.signal.aborted) return
-		setExecution((current) => (current ? { ...current, stopping: true } : current))
+		dispatch({ type: 'stopRequested' })
 		controller.abort()
 	}
 
@@ -155,15 +137,8 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 			if (!trimmed) return null
 			const controller = new AbortController()
 			runControllerRef.current = controller
-			setExecution({ saving, taskId, stage: null })
-			setQueryError(null)
-			// React's registry snapshot predates auto-loading. Carry the loaded sources with this result.
-			const tables = [...loadedTables]
-			const loadSource = async (source: TableSource, signal?: AbortSignal) => {
-				const table = await loadTable(source, signal)
-				if (table) tables.push(table)
-				return table
-			}
+			dispatch({ type: 'runStarted', saving, taskId })
+			const { tables, loadSource } = collectLoadedTables(loadedTables, loadTable)
 			const res = await runWithSources(
 				{ conn: duckdb.conn, loadedTables: tables, loadSource, chartOptionsMap },
 				trimmed,
@@ -171,34 +146,27 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 				{
 					onLoadingStage: (stage) => {
 						if (runControllerRef.current === controller && !controller.signal.aborted)
-							setExecution({ saving, taskId, stage })
+							dispatch({ type: 'stageChanged', stage })
 					}
 				},
 				controller.signal
-			).catch((error: unknown) => ({
-				ok: false as const,
+			).catch((error: unknown): RunResponse => ({
+				ok: false,
 				cancelled: false,
 				error: error instanceof Error ? error.message : 'Could not load query sources'
 			}))
 			if (runControllerRef.current !== controller) return null
 			// A mounted editor must unlock after Stop, but an aborted result must never reach Save.
 			runControllerRef.current = null
-			setExecution(null)
-			if (controller.signal.aborted) return null
-			if (res.ok) {
-				const classified = classifyColumns(res.result)
-				const nextChartConfig = chartConfigRef.current
-					? migrateChartConfig(chartConfigRef.current, classified)
-					: defaultChartConfig(classified)
-				setResult(res.result)
-				setResultSql(trimmed)
-				setRanFresh(true)
-				setDurationMs(res.durationMs)
-				setChartConfig(nextChartConfig)
-				return { result: res.result, chartConfig: nextChartConfig, tables }
-			}
-			if ('error' in res && !res.cancelled) setQueryError(res.error)
-			return null
+			const settlement = settleRun(res, {
+				aborted: controller.signal.aborted,
+				sql: trimmed,
+				chartConfig: chartConfigRef.current
+			})
+			dispatch({ type: 'runSettled', settlement })
+			return settlement.kind === 'completed'
+				? { result: settlement.result, chartConfig: settlement.chartConfig, tables }
+				: null
 		},
 		[duckdb.conn, loadedTables, loadTable, schemaLoading, chartOptionsMap]
 	)
@@ -239,17 +207,21 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 	const editorLineCount = sql.split('\n').length
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
 
-	const isDirty = sql.trim() !== resultSql
 	const resultRowCount = result?.rows.length ?? null
-	const needsRun = isDirty || !result || !chartConfig
 	const engineLoading = duckdb.status === 'loading'
 	const engineError = duckdb.status === 'error'
-	const canSave = !!sql.trim() && !running && !schemaLoading && !(needsRun && (engineLoading || engineError))
+	const controls = sqlChartModalControls(state, {
+		sql,
+		engine: duckdb.status,
+		schemaLoading: !!schemaLoading,
+		editing: !!editItem
+	})
+	const { running, locked: savePending, stage: loadingStage, canSave } = controls
 
 	const handleSave = useCallback(async () => {
 		if (!canSave || runControllerRef.current) return
-		let outcome: RunOutcome | null =
-			!needsRun && result && chartConfig ? { result, chartConfig, tables: loadedTables } : null
+		const reusable = reusableResult(state, sql)
+		let outcome: RunOutcome | null = reusable ? { ...reusable, tables: loadedTables } : null
 		let ranForSave = false
 		if (!outcome) {
 			outcome = await run(sql, { saving: true })
@@ -261,7 +233,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 			name,
 			sql,
 			result: outcome.result,
-			ranFresh: ranForSave || ranFresh,
+			ranFresh: ranForSave || state.ranFresh,
 			chartConfig: outcome.chartConfig,
 			displayMode,
 			rowCap,
@@ -292,14 +264,11 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 		if (addedId) requestDashboardItemReveal(addedId)
 	}, [
 		canSave,
-		needsRun,
-		result,
-		chartConfig,
+		state,
 		run,
 		editItem,
 		name,
 		sql,
-		ranFresh,
 		displayMode,
 		rowCap,
 		loadedTables,
@@ -362,10 +331,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 							<Ariakit.Button
 								type="button"
 								onClick={() => (running ? stopQuery() : void run(sql))}
-								disabled={
-									savePending ||
-									(running ? execution.stopping : !!schemaLoading || engineLoading || engineError || !sql.trim())
-								}
+								disabled={controls.run.disabled}
 								accessibleWhenDisabled
 								{...(engineLoading
 									? { title: 'The in-browser SQL engine is still loading, this takes a few seconds the first time.' }
@@ -385,7 +351,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 									/>
 								}
 							>
-								{savePending ? 'Running…' : execution?.stopping ? 'Stopping…' : running ? 'Stop query' : 'Run query'}
+								{controls.run.label}
 								{!running ? (
 									<span aria-hidden className="flex items-center gap-0.5">
 										<Keycap muted>⌘</Keycap>
@@ -404,7 +370,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 								</span>
 							) : null}
-							{isDirty && result ? (
+							{controls.queryChanged ? (
 								<span className="text-xs text-pro-text-tertiary">Query changed — Save will run it again.</span>
 							) : null}
 						</div>
@@ -430,7 +396,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 							running={running}
 							busyLabel={loadingStage}
 							chartConfig={chartConfig}
-							onChartConfigChange={(next) => setChartConfig(next ?? undefined)}
+							onChartConfigChange={(next) => dispatch({ type: 'chartConfigChanged', chartConfig: next ?? undefined })}
 							durationMs={durationMs}
 							view={displayMode}
 							onViewChange={setDisplayMode}
@@ -443,7 +409,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						loadedTables={loadedTables}
 						onLoadTable={async (source) => {
 							if (runControllerRef.current) return null
-							setQueryError(null)
+							dispatch({ type: 'sourceLoadStarted' })
 							const controller = new AbortController()
 							runControllerRef.current = controller
 							return loadTable(source, controller.signal).finally(() => {
@@ -452,7 +418,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 						}}
 						schemaLoading={schemaLoading}
 						schemaError={schemaError}
-						busyTaskId={execution?.taskId ?? null}
+						busyTaskId={state.execution?.taskId ?? null}
 						savedQueries={savedQueries}
 						onApplyExample={(example: ExampleQuery) =>
 							applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
@@ -471,13 +437,7 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 				</div>
 
 				<span role="status" className="text-xs text-pro-text-tertiary">
-					{execution?.stopping
-						? 'Stopping query…'
-						: savePending
-							? 'Running query before saving. Stop query keeps your draft; Cancel closes the editor.'
-							: running
-								? (loadingStage ?? 'Running query…')
-								: ''}
+					{controls.status}
 				</span>
 				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-pro-cards-border pt-3">
 					<div className="flex flex-wrap items-center gap-4">
@@ -511,16 +471,10 @@ export function SqlChartModal({ editItem, placement, isOpen = true, onClose, onC
 							type="button"
 							onClick={() => (savePending ? stopQuery() : void handleSave())}
 							accessibleWhenDisabled
-							disabled={savePending ? execution?.stopping : !canSave}
+							disabled={controls.save.disabled}
 							render={<ProButton variant="primary" {...(savePending ? { icon: <LoadingSpinner size={14} /> } : {})} />}
 						>
-							{savePending
-								? execution?.stopping
-									? 'Stopping…'
-									: 'Stop query'
-								: editItem
-									? 'Save changes'
-									: 'Add to dashboard'}
+							{controls.save.label}
 						</Ariakit.Button>
 					</div>
 				</div>

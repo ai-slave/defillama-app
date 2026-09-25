@@ -7,6 +7,7 @@ import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
+import { getTokenPrivateSectionView } from './TokenPrivateSectionGate.utils'
 
 export function useTokenPrivateSectionAccess() {
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -47,9 +48,14 @@ export function TokenPrivateSectionGate({
 }) {
 	const router = useRouter()
 	const { hasActiveSubscription, isAuthenticated, loaders, signInDialogStore } = access
-	const isGateLoading = loaders.userLoading || Boolean(isLoading)
-	const hasPlaceholderState =
-		isGateLoading || !isAuthenticated || !hasActiveSubscription || error != null || emptyMessage != null
+	const view = getTokenPrivateSectionView({
+		isAuthenticated,
+		hasActiveSubscription,
+		isLoading: loaders.userLoading || Boolean(isLoading),
+		hasError: error != null,
+		hasEmptyMessage: emptyMessage != null
+	})
+	const hasPlaceholderState = view !== 'content'
 	const sectionBodyClassName = hasPlaceholderState ? `${bodyClassName} flex-1` : bodyClassName
 
 	return (
@@ -71,13 +77,13 @@ export function TokenPrivateSectionGate({
 				</PanelHeader>
 
 				<div className={sectionBodyClassName}>
-					{isGateLoading ? (
+					{view === 'loading' ? (
 						<div className="flex flex-1 items-center justify-center">
 							<LoadingIndicator />
 						</div>
-					) : !isAuthenticated || !hasActiveSubscription ? (
+					) : view === 'sign-in' || view === 'subscribe' ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							{!isAuthenticated ? (
+							{view === 'sign-in' ? (
 								<p className="body-sm text-secondary">
 									An{' '}
 									<button type="button" onClick={signInDialogStore.show} className="underline">
@@ -98,11 +104,11 @@ export function TokenPrivateSectionGate({
 								</p>
 							)}
 						</div>
-					) : error != null ? (
+					) : view === 'error' ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="max-w-md body-sm text-secondary">{error.message || errorMessage}</p>
+							<p className="max-w-md body-sm text-secondary">{error?.message || errorMessage}</p>
 						</div>
-					) : emptyMessage != null ? (
+					) : view === 'empty' ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
 							<p className="body-sm text-secondary">{emptyMessage}</p>
 						</div>

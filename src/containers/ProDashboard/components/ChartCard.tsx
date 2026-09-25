@@ -14,8 +14,6 @@ import {
 	type ChartConfig,
 	type DashboardGrouping,
 	getDashboardChartValueSymbol,
-	getProDashboardChartTypeConfig,
-	isDailyAverageChartType,
 	type Protocol
 } from '../types'
 import { ProMeta, ProSegmented } from '../ui'
@@ -24,7 +22,6 @@ import {
 	generateChartColor,
 	getCsvPeriodCells,
 	getCsvPeriodHeaders,
-	getGroupedMetricTitle,
 	getItemIconUrl
 } from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
@@ -33,7 +30,7 @@ import { DASHBOARD_GROUPING_LABELS, DASHBOARD_GROUPING_SEGMENTS } from './dashbo
 import { EntityIcon } from './EntityIcon'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardEmpty, ProCardError, ProCardLoading } from './ProCardStatus'
-import { buildSingleMetricChartDataset } from './singleMetricChart'
+import { buildSingleMetricChartDataset, getSingleMetricPresentation } from './singleMetricChart'
 import { useChartSyncGroup } from './useChartSyncGroup'
 import { useDashboardAnnotationHallmarks } from './useDashboardAnnotationHallmarks'
 
@@ -45,7 +42,7 @@ interface ChartCardProps {
 
 interface ChartRendererProps {
 	type: ChartConfig['type']
-	showCumulative: ChartConfig['showCumulative']
+	seriesType: 'bar' | 'line'
 	grouping: DashboardGrouping
 	dataset: MultiSeriesChartDataset
 	isLoading: boolean
@@ -62,7 +59,7 @@ const CUMULATIVE_DISPLAY_OPTIONS = [
 
 function ChartRenderer({
 	type,
-	showCumulative = false,
+	seriesType,
 	grouping,
 	dataset,
 	isLoading,
@@ -71,8 +68,6 @@ function ChartRenderer({
 	color,
 	onChartReady
 }: ChartRendererProps) {
-	const chartType = getProDashboardChartTypeConfig(type)
-	if (!chartType) throw new Error(`Unsupported dashboard chart type: ${type}`)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const valueSymbol = getDashboardChartValueSymbol(type)
 	const chartOptions = useMemo(
@@ -84,14 +79,14 @@ function ChartRenderer({
 	const charts = useMemo<NonNullable<IMultiSeriesChartProps['charts']>>(() => {
 		return [
 			{
-				type: chartType.chartType === 'bar' && !showCumulative ? 'bar' : 'line',
+				type: seriesType,
 				name: seriesName,
 				encode: { x: 'timestamp', y: seriesName },
 				color,
 				stack: 'value'
 			}
 		]
-	}, [chartType.chartType, color, seriesName, showCumulative])
+	}, [color, seriesName, seriesType])
 
 	const todayHallmarks = useMemo<Array<[number, string]> | undefined>(
 		() => (type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined),
@@ -165,52 +160,33 @@ export function ChartCard({ chart }: ChartCardProps) {
 		getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
 	)
 
-	const { itemName, itemIconUrl, chartTypeDetails, isGroupable, isBarChart, showCumulative, chartColor } =
-		useMemo(() => {
-			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
-			if (!chartTypeDetails) throw new Error(`Unsupported dashboard chart type: ${chart.type}`)
-			const isGroupable = 'groupable' in chartTypeDetails && chartTypeDetails.groupable
-			const isBarChart = chartTypeDetails.chartType === 'bar'
-			// A saved cumulative setting stays in the config but never applies to a daily-average metric.
-			const showCumulative = (chart.showCumulative || false) && !isDailyAverageChartType(chart.type)
+	const presentation = getSingleMetricPresentation(chart)
+	const { details: chartTypeDetails, isGroupable, grouping, metricTitle } = presentation
+	const { itemName, itemIconUrl, chartColor } = useMemo(() => {
+		let itemName: string
+		let itemIconUrl: string | undefined
+		let itemInfo: Chain | Protocol | undefined
+		let itemIdentifier: string
+		if (chart.subjectType === 'protocol') {
+			itemInfo = getProtocolInfo(chart.protocol)
+			itemName = itemInfo?.name || chart.protocol
+			itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
+			itemIdentifier = chart.protocol
+		} else {
+			itemInfo = getChainInfo(chart.chain)
+			itemName = chart.chain
+			itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
+			itemIdentifier = chart.chain
+		}
 
-			let itemName: string
-			let itemIconUrl: string | undefined
-			let itemInfo: Chain | Protocol | undefined
-			let itemIdentifier: string
-			if (chart.subjectType === 'protocol') {
-				itemInfo = getProtocolInfo(chart.protocol)
-				itemName = itemInfo?.name || chart.protocol
-				itemIconUrl = getItemIconUrl('protocol', itemInfo, chart.protocol)
-				itemIdentifier = chart.protocol
-			} else {
-				itemInfo = getChainInfo(chart.chain)
-				itemName = chart.chain
-				itemIconUrl = getItemIconUrl('chain', itemInfo, chart.chain)
-				itemIdentifier = chart.chain
-			}
+		const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails.color)
 
-			const chartColor = chart.color || generateChartColor(itemIdentifier, chartTypeDetails?.color)
+		return { itemName, itemIconUrl, chartColor }
+	}, [chart, chartTypeDetails, getChainInfo, getProtocolInfo])
 
-			return {
-				itemName,
-				itemIconUrl,
-				itemInfo,
-				itemIdentifier,
-				chartColor,
-				chartTypeDetails,
-				isGroupable,
-				isBarChart,
-				showCumulative
-			}
-		}, [chart, getChainInfo, getProtocolInfo])
-
-	// The grouping applied to the data. Metrics that cannot be grouped stay daily.
-	const grouping: DashboardGrouping = isGroupable ? (chart.grouping ?? 'day') : 'day'
-	const metricTitle = getGroupedMetricTitle(chart.type, chartTypeDetails.title, grouping)
 	const chartDataset = useMemo(
-		() => buildSingleMetricChartDataset(chartState.data, metricTitle, showCumulative && isBarChart),
-		[chartState.data, metricTitle, isBarChart, showCumulative]
+		() => buildSingleMetricChartDataset(chartState.data, metricTitle, presentation.cumulative),
+		[chartState.data, metricTitle, presentation.cumulative]
 	)
 
 	const handleCsvExport = () => {
@@ -255,15 +231,15 @@ export function ChartCard({ chart }: ChartCardProps) {
 								onValueChange={(value) => handleGroupingChange(chart.id, value)}
 							/>
 						) : null}
-						{isBarChart && !isDailyAverageChartType(chart.type) ? (
+						{presentation.offersCumulative ? (
 							<Select
 								size="sm"
 								allValues={CUMULATIVE_DISPLAY_OPTIONS}
-								selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
+								selectedValues={presentation.cumulative ? 'Cumulative' : 'Individual'}
 								setSelectedValues={(value: string) => {
 									handleCumulativeChange(chart.id, value === 'Cumulative')
 								}}
-								label={showCumulative ? 'Cumulative' : 'Individual'}
+								label={presentation.cumulative ? 'Cumulative' : 'Individual'}
 								labelType="none"
 								variant="pro"
 							/>
@@ -282,7 +258,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				<ChartRenderer
 					type={chart.type}
-					showCumulative={showCumulative}
+					seriesType={presentation.seriesType}
 					grouping={grouping}
 					dataset={chartDataset}
 					isLoading={chartState.isLoading}

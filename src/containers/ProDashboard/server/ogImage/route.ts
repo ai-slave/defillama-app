@@ -6,7 +6,7 @@ import { buildSingleMetricChartDataset } from '~/containers/ProDashboard/compone
 import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import { createVariableCatalog, resolveDashboardItems } from '~/containers/ProDashboard/dashboardVariables/resolve'
-import { countDashboardWidgets, isDashboardWidget } from '~/containers/ProDashboard/dashboardWidgets'
+import { isDashboardWidget } from '~/containers/ProDashboard/dashboardWidgets'
 import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	fetchAppMetadata,
@@ -18,7 +18,6 @@ import {
 import { createBoundedTaskScheduler } from '~/containers/ProDashboard/server/stream/taskScheduler'
 import type { ChartConfig } from '~/containers/ProDashboard/types'
 import { summarizeDashboardItems } from '~/containers/ProDashboard/utils/seo'
-import { formatDate } from '~/utils/dateFormat'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import {
 	buildDashboardOgCard,
@@ -27,6 +26,7 @@ import {
 	OG_CARD_MAX_CHARTS,
 	type DashboardOgCardChart
 } from './card'
+import { buildDashboardOgCardProps } from './cardProps'
 import { renderChartSvgDataUri } from './renderChartSvg'
 
 const OG_IMAGE_VARIANT_SIZES = {
@@ -42,8 +42,6 @@ const OG_IMAGE_CACHE_MAX_ENTRIES = 200
 const OG_IMAGE_CACHE_TTL_MS = 60 * 60 * 1000
 const OG_IMAGE_DATA_TIMEOUT_MS = 5000
 const OG_IMAGE_RENDER_CONCURRENCY = 2
-const OG_IMAGE_SUMMARY_LINE_COUNT = 3
-const DEFAULT_DASHBOARD_NAME = 'Untitled Dashboard'
 
 const renderedImages = new Map<string, { buffer: Buffer; expiresAt: number }>()
 const renderScheduler = createBoundedTaskScheduler(OG_IMAGE_RENDER_CONCURRENCY, () => false)
@@ -161,34 +159,12 @@ async function buildChartTiles(dashboard: Dashboard, size: OgImageSize): Promise
 	return tiles.filter((tile): tile is DashboardOgCardChart => tile !== null)
 }
 
-function formatUpdatedLabel(dashboard: Dashboard): string {
-	return formatDate(dashboard.editedAt || dashboard.updated) ?? ''
-}
-
-function buildMetaLine(dashboard: Dashboard): string {
-	const cardCount = countDashboardWidgets(dashboard.data?.items ?? [])
-	const cards = `${cardCount} ${cardCount === 1 ? 'card' : 'cards'}`
-	const updated = formatUpdatedLabel(dashboard)
-	return updated ? `${cards} · updated ${updated}` : cards
-}
-
 async function buildPublicCard(
 	dashboard: Dashboard,
 	size: OgImageSize
 ): Promise<{ element: ReactElement; cacheable: boolean }> {
 	const charts = await withTimeout(buildChartTiles(dashboard, size), OG_IMAGE_DATA_TIMEOUT_MS).catch((): null => null)
-	const element = buildDashboardOgCard({
-		width: size.width,
-		height: size.height,
-		title: dashboard.data?.dashboardName || DEFAULT_DASHBOARD_NAME,
-		authorName: dashboard.author?.displayName || null,
-		metaLine: buildMetaLine(dashboard),
-		charts: charts ?? [],
-		summaryLines: summarizeDashboardItems(dashboard.data?.items ?? [])
-			.slice(0, OG_IMAGE_SUMMARY_LINE_COUNT)
-			.map((summary) => summary.label)
-			.filter(Boolean)
-	})
+	const element = buildDashboardOgCard(buildDashboardOgCardProps(dashboard, size, charts ?? []))
 	return { element, cacheable: charts !== null }
 }
 

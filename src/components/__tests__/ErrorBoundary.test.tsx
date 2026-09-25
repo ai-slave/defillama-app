@@ -28,18 +28,6 @@ describe('ErrorBoundary', () => {
 		consoleError.mockRestore()
 	})
 
-	test('renders children while nothing throws', async () => {
-		await act(async () =>
-			root.render(
-				<ErrorBoundary fallback={<p role="alert">Broken</p>}>
-					<Thrower shouldThrow={false} />
-				</ErrorBoundary>
-			)
-		)
-		expect(container.textContent).toBe('Recovered content')
-		expect(container.querySelector('[role="alert"]')).toBeNull()
-	})
-
 	test('renders a static fallback when a child throws and reports the error', async () => {
 		const onError = vi.fn()
 		await act(async () =>

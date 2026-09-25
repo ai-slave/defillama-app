@@ -13,24 +13,28 @@ const blockExplorers = [
 		llamaChainId: 'ethereum',
 		evmChainId: 1,
 		blockExplorers: [{ name: 'Etherscan', url: 'https://etherscan.io' }]
+	},
+	{
+		displayName: 'Arbitrum Nova',
+		llamaChainId: 'nova',
+		evmChainId: 42_170,
+		blockExplorers: [{ name: 'Nova Explorer', url: 'https://nova.arbiscan.io' }]
 	}
 ]
 
 describe('findBlockExplorerChain', () => {
 	test('prefers llama chain id matches before falling back to display name', () => {
-		expect(
-			findBlockExplorerChain(blockExplorers, { chainId: 'arbitrum', chainName: 'Arbitrum One' })?.llamaChainId
-		).toBe('arbitrum')
+		expect(findBlockExplorerChain(blockExplorers, { chainId: 'arbitrum', chainName: 'Ethereum' })?.llamaChainId).toBe(
+			'arbitrum'
+		)
 	})
 
 	test('falls back to the display name when no chain id match exists', () => {
 		expect(findBlockExplorerChain(blockExplorers, { chainName: 'Ethereum' })?.llamaChainId).toBe('ethereum')
 	})
 
-	test('normalizes whitespace and underscores in chain identifiers', () => {
-		expect(
-			findBlockExplorerChain(blockExplorers, { chainId: 'arbitrum', chainName: 'Arbitrum_One' })?.llamaChainId
-		).toBe('arbitrum')
+	test('matches a display name written with underscores instead of spaces', () => {
+		expect(findBlockExplorerChain(blockExplorers, { chainName: 'Arbitrum_Nova' })?.llamaChainId).toBe('nova')
 	})
 })
 

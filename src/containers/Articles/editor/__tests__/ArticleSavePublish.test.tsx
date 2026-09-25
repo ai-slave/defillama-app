@@ -1,15 +1,16 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import StarterKit from '@tiptap/starter-kit'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
+import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, LocalArticleDocument } from '../../types'
 import { ArticleEditorClient } from '../ArticleEditorClient'
 
-const api = vi.hoisted(() => ({ get: vi.fn(), save: vi.fn(), publish: vi.fn(), error: vi.fn(), upload: vi.fn() }))
+const api = vi.hoisted(() => ({ save: vi.fn(), publish: vi.fn(), error: vi.fn(), upload: vi.fn() }))
 const router = {
 	query: {},
 	asPath: '/research/edit/test-article',
@@ -17,31 +18,14 @@ const router = {
 	events: { on: vi.fn(), off: vi.fn() }
 }
 vi.mock('next/router', () => ({ useRouter: () => router }))
-vi.mock('next/link', () => ({ default: ({ children }: { children: React.ReactNode }) => <span>{children}</span> }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ isAuthenticated: true, loaders: { userLoading: false } }) }))
-vi.mock('react-hot-toast', () => ({ default: { error: api.error, success: vi.fn() } }))
-vi.mock('../../api', async (original) => ({
-	...(await original<typeof import('../../api')>()),
-	getOwnedArticle: api.get,
-	updateArticle: api.save,
-	publishArticle: api.publish,
-	listCollaborators: async () => [],
-	revalidateResearchLanding: async () => {}
+vi.mock('react-hot-toast', () => ({
+	default: { error: api.error, success: vi.fn(), promise: (pending: Promise<unknown>) => pending }
 }))
-vi.mock('../extensions', () => ({ createArticleEditorExtensions: () => [StarterKit] }))
-vi.mock('../../upload/useImageUpload', () => ({
-	useImageUpload: () => ({ uploadWithToast: api.upload, isUploading: false })
-}))
-vi.mock('../ArticlePageAssetPicker', () => ({ ArticlePageAssetPicker: () => null }))
-vi.mock('../ArticleEditorPreview', () => ({ ArticleEditorPreview: () => null }))
-vi.mock('../ArticleChartPicker', () => ({ ArticleChartPickerDialog: () => null }))
-vi.mock('../LlamaAIChartPicker', () => ({ LlamaAIChartPickerDialog: () => null }))
-vi.mock('~/containers/Subscription/SignInModal', () => ({ SignInModal: () => null }))
+const session = installSubscriberSession('article-editor')
 
 let article: ArticleDocument
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(() => {
 	vi.resetAllMocks()
 	article = {
@@ -56,8 +40,8 @@ beforeEach(() => {
 		coverImage: { url: '/cover.png', caption: 'Cover', copyright: 'Author', credit: 'Author' },
 		authorProfile: { slug: 'author', displayName: 'Author', socials: {}, createdAt: '', updatedAt: '' }
 	}
-	api.get.mockImplementation(async () => article)
-	api.save.mockImplementation(async (_id: string, payload: LocalArticleDocument) => {
+	api.save.mockImplementation(async (_url: URL, init: RequestInit) => {
+		const payload = JSON.parse(init.body as string) as LocalArticleDocument
 		article = { ...article, ...payload, updatedAt: new Date().toISOString() }
 		return article
 	})
@@ -65,27 +49,40 @@ beforeEach(() => {
 		article = { ...article, status: 'published' }
 		return article
 	})
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({
+		[`${FEATURES_SERVER}/articles/`]: async (url: URL, init?: RequestInit) => {
+			if (url.pathname.endsWith('/edit')) return { article }
+			if (url.pathname.endsWith('/collaborators')) return { collaborators: [] }
+			return { article: await api.save(url, init) }
+		},
+		'http://localhost:3000/api/private/research/articles/': async (url: URL, init?: RequestInit) => ({
+			article: await api.publish(url, init)
+		}),
+		'/api/private/research/revalidate-landing': {},
+		'/uploads/image': (url: URL, init?: RequestInit) => api.upload(url, init)
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 async function settle() {
 	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 30))
+		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
 async function mount(articleId = 'test-article') {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<ArticleEditorClient articleId={articleId} />
-			</QueryClientProvider>
+			<session.Wrapper>
+				<AppMetadataProvider>
+					<ArticleEditorClient articleId={articleId} />
+				</AppMetadataProvider>
+			</session.Wrapper>
 		)
 	)
 	await settle()
@@ -149,6 +146,7 @@ test('keeps the saved draft and review available after a publish failure', async
 	expect(article.title).toBe('Draft survives publish failure')
 	expect(article.status).toBe('draft')
 	expect(title().value).toBe('Draft survives publish failure')
+	expect(button('Publish now').closest<HTMLElement>('[role="dialog"]')!.hidden).toBe(false)
 	expect(button('Publish now').disabled).toBe(false)
 	await click('Publish now')
 	expect(api.publish).toHaveBeenCalledTimes(2)
@@ -162,7 +160,7 @@ test('does not overwrite newer typing or start overlapping saves while a request
 	api.save.mockReturnValueOnce(pending.promise)
 	await typeTitle('In-flight headline')
 	await save()
-	const savedPayload = api.save.mock.calls[0][1] as LocalArticleDocument
+	const savedPayload = JSON.parse(api.save.mock.calls[0][1].body as string) as LocalArticleDocument
 	await typeTitle('Newer headline')
 	await save()
 	expect(api.save).toHaveBeenCalledOnce()
@@ -210,9 +208,10 @@ test('retains the listing dialog when its save fails', async () => {
 	)
 	await settle()
 	await click('Save changes')
+	const review = button('Save changes').closest<HTMLElement>('[role="dialog"]')!
+	expect(review.hidden).toBe(false)
 	expect(button('Save changes').disabled).toBe(false)
 	expect(api.error).toHaveBeenCalledWith('Save unavailable')
-	const review = button('Save changes').closest<HTMLElement>('[role="dialog"]')!
 	await click('Save changes')
 	expect(review.hidden).toBe(true)
 })
@@ -256,7 +255,7 @@ test('preserves cover metadata edited while its replacement uploads', async () =
 	await click('Done')
 	await act(async () => pending.resolve({ url: '/replacement.png' }))
 	await save()
-	expect(api.save.mock.calls.at(-1)![1].coverImage).toMatchObject({
+	expect(JSON.parse(api.save.mock.calls.at(-1)![1].body as string).coverImage).toMatchObject({
 		url: '/replacement.png',
 		credit: 'Updated photographer'
 	})
@@ -296,5 +295,5 @@ test('does not apply an old cover upload to a different article', async () => {
 	await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })))
 	expect(api.upload).toHaveBeenCalledTimes(2)
 	await save()
-	expect(api.save.mock.calls.at(-1)![1].coverImage.url).toBe('/retry.png')
+	expect(JSON.parse(api.save.mock.calls.at(-1)![1].body as string).coverImage.url).toBe('/retry.png')
 })

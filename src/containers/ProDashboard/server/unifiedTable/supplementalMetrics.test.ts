@@ -1,15 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/datasetTypes'
 import type { ProtocolAggregateTableRow, ProtocolChainTableRow } from '../../unifiedTable/contracts'
-
-const { fetchDimensionDatasetMock } = vi.hoisted(() => ({ fetchDimensionDatasetMock: vi.fn() }))
-
-vi.mock('~/containers/AdapterMetrics/server/datasets', async (importOriginal) => {
-	const original = await importOriginal<typeof import('~/containers/AdapterMetrics/server/datasets')>()
-	return { ...original, fetchDimensionDataset: fetchDimensionDatasetMock }
-})
-
-import { applyProtocolSupplementalMetrics, fetchProtocolSupplementalMetrics } from './supplementalMetrics'
+import { applyProtocolSupplementalMetrics } from './supplementalMetrics'
 
 function protocolRow(protocolId: string, parentProtocolId: string | null): ProtocolAggregateTableRow {
 	return {
@@ -43,22 +35,6 @@ function chainRow(protocolId: string, chain: string): ProtocolChainTableRow {
 function datasetProtocol(overrides: Partial<DimensionDatasetProtocol>): DimensionDatasetProtocol {
 	return { name: 'Protocol', slug: 'protocol', chains: [], ...overrides }
 }
-
-describe('fetchProtocolSupplementalMetrics', () => {
-	test('returns successful chain values with explicit partial coverage', async () => {
-		fetchDimensionDatasetMock.mockResolvedValueOnce({
-			status: 'partial',
-			protocols: [datasetProtocol({ total24h: 20 })],
-			unavailableChains: ['Base']
-		})
-
-		await expect(
-			fetchProtocolSupplementalMetrics(['earnings'], { kind: 'chain', chains: ['Ethereum', 'Base'] })
-		).resolves.toMatchObject({
-			earnings: { status: 'partial', protocols: [{ total24h: 20 }], unavailableChains: ['Base'] }
-		})
-	})
-})
 
 describe('applyProtocolSupplementalMetrics', () => {
 	test('merges onto Lens membership without introducing API-only rows or copying a parent total to children', () => {

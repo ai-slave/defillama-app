@@ -416,7 +416,7 @@ describe('Flare query data builders', () => {
 		])
 	})
 
-	test('preserves network first-series bars and staking legend/config order', () => {
+	test('plots only the first network series and stacks stake with delegation', () => {
 		const network = buildFlareNetworkData({
 			transactionsChart: chart(
 				['2026-01-02'],
@@ -453,18 +453,11 @@ describe('Flare query data builders', () => {
 			}
 		} satisfies StakingAPIResponse)
 
-		expect(network.charts.transactions.dataset.dimensions).toEqual(['timestamp', 'Transactions API'])
-		expect(network.charts.transactions.charts[0]).toMatchObject({
-			type: 'bar',
-			name: 'Transactions API',
-			stack: 'a'
+		expect(network.charts.transactions.dataset).toEqual({
+			dimensions: ['timestamp', 'Transactions API'],
+			source: [[Date.UTC(2026, 0, 2), 5]]
 		})
-		expect(staking.chart?.seriesNames).toEqual(['P-Chain Stake', 'FTSO Delegation'])
-		expect(staking.chart?.charts).toMatchObject([
-			{ name: 'P-Chain Stake', color: '#FF7A1A', stack: 'total' },
-			{ name: 'FTSO Delegation', color: '#2D63F6', stack: 'total' }
-		])
-		expect(staking.pctChart?.dataset.source).toEqual([[Date.UTC(2026, 0, 2), 15]])
-		expect(staking.kpis.totalStakedOrDelegated).toBe('formatted:15')
+		expect(network.charts.transactions.charts.map((series) => series.name)).toEqual(['Transactions API'])
+		expect(staking.chart?.charts.map((series) => series.stack)).toEqual(['total', 'total'])
 	})
 })

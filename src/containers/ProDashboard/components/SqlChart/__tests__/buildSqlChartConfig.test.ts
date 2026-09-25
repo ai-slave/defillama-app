@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { ChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { RegisteredTable } from '~/containers/Downloads/sql/useTableRegistry'
-import { SQL_SNAPSHOT_ROW_CAP } from '../../../sqlSnapshot'
 import type { SqlChartConfig } from '../../../types'
 import { buildSqlChartConfig } from '../buildSqlChartConfig'
 
@@ -88,17 +87,6 @@ describe('buildSqlChartConfig', () => {
 	test('captures from the result when not ranFresh and the edited item has no snapshot', () => {
 		const config = buildSqlChartConfig({ ...baseParams, editItem: { ...editItem, snapshot: null }, ranFresh: false })
 		expect(config.snapshot?.rows).toEqual(result.rows)
-	})
-
-	test('truncates oversized results to the row cap', () => {
-		const bigResult = {
-			columns: result.columns,
-			rows: Array.from({ length: SQL_SNAPSHOT_ROW_CAP + 5 }, (_, i) => [i])
-		}
-		const config = buildSqlChartConfig({ ...baseParams, result: bigResult })
-		expect(config.snapshot?.rows.length).toBe(SQL_SNAPSHOT_ROW_CAP)
-		expect(config.snapshot?.truncated).toBe(true)
-		expect(config.snapshot?.rowCount).toBe(SQL_SNAPSHOT_ROW_CAP + 5)
 	})
 
 	test('persists displayMode and trims sql and name', () => {

@@ -2,45 +2,56 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { DashboardVariable } from '../dashboardTypes'
 import type { ParameterCandidate } from '../dashboardVariables/resolve'
+import type { Chain } from '../types'
 import { DashboardVariablesBar } from './DashboardVariablesBar'
 import { ParameterHint } from './ParameterHint'
 
-const mocks = vi.hoisted(() => ({
-	variables: [] as Array<DashboardVariable>,
-	values: {} as Record<string, string>,
-	candidates: [] as Array<ParameterCandidate>,
-	items: [] as Array<DashboardItemConfig>,
-	canEditVariables: false,
+const mocks = {
 	setVariableValue: vi.fn(),
-	addVariable: vi.fn(),
-	renameVariable: vi.fn(),
-	removeVariable: vi.fn(),
-	unbindVariable: vi.fn()
-}))
+	addVariable: vi.fn()
+}
 
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardVariables: () => ({
-		variables: mocks.variables,
-		values: mocks.values,
-		candidates: mocks.candidates,
-		canEditVariables: mocks.canEditVariables,
-		setVariableValue: mocks.setVariableValue,
-		addVariable: mocks.addVariable,
-		renameVariable: mocks.renameVariable,
-		removeVariable: mocks.removeVariable,
-		unbindVariable: mocks.unbindVariable
-	}),
-	useProDashboardItemsState: () => ({ items: mocks.items }),
-	useProDashboardCatalog: () => ({
-		chains: [{ name: 'Ethereum' }, { name: 'Solana' }],
-		protocols: [],
-		protocolsLoading: false,
-		protocolBySlug: new Map()
-	})
-}))
+const chains = [
+	{ name: 'Ethereum', gecko_id: null, tvl: 2, tokenSymbol: 'ETH', chainId: 1, cmcId: null },
+	{ name: 'Solana', gecko_id: null, tvl: 1, tokenSymbol: 'SOL', chainId: null, cmcId: null }
+] satisfies Array<Chain>
+
+type BarState = {
+	variables?: Array<DashboardVariable>
+	candidates?: Array<ParameterCandidate>
+	items?: Array<DashboardItemConfig>
+	canEditVariables?: boolean
+}
+
+function show(
+	element: React.ReactElement,
+	{ variables = [], candidates = [], items = [], canEditVariables = false }: BarState = {}
+) {
+	return act(async () =>
+		root.render(
+			<DashboardTestProvider
+				items={items}
+				catalog={{ chains }}
+				variables={{
+					variables,
+					candidates,
+					canEditVariables,
+					setVariableValue: mocks.setVariableValue,
+					addVariable: mocks.addVariable,
+					renameVariable: vi.fn(),
+					removeVariable: vi.fn(),
+					unbindVariable: vi.fn()
+				}}
+			>
+				{element}
+			</DashboardTestProvider>
+		)
+	)
+}
 
 vi.mock('@tanstack/react-virtual', () => ({
 	useVirtualizer: ({ count }: { count: number }) => ({
@@ -64,11 +75,6 @@ let container: HTMLDivElement
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.variables = []
-	mocks.values = {}
-	mocks.candidates = []
-	mocks.items = []
-	mocks.canEditVariables = false
 	mocks.setVariableValue.mockClear()
 	mocks.addVariable.mockClear()
 	container = document.createElement('div')
@@ -98,53 +104,55 @@ const chainVariable: DashboardVariable = {
 }
 
 test('an owner editing the dashboard saves the picked value as the default', async () => {
-	mocks.variables = [chainVariable]
-	mocks.canEditVariables = true
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, { variables: [chainVariable], canEditVariables: true })
 	await pickChain('Solana')
 	expect(mocks.setVariableValue).toHaveBeenCalledExactlyOnceWith('chain', 'Solana', { persist: true })
 })
 
 test('a viewer picking a value only overrides it for their own visit', async () => {
-	mocks.variables = [chainVariable]
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, { variables: [chainVariable] })
 	await pickChain('Solana')
 	expect(mocks.setVariableValue).toHaveBeenCalledExactlyOnceWith('chain', 'Solana')
 })
 
 test('the bar stays out of a viewer without parameters and offers no editing menu', async () => {
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />)
 	expect(container.textContent).toBe('')
-	mocks.variables = [chainVariable]
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, { variables: [chainVariable] })
+	expect(container.textContent).toContain('Chain')
+	expect(container.textContent).toContain('Ethereum')
 	expect(buttons('Parameter')).toHaveLength(0)
 	expect(container.querySelector('[aria-label="Parameter options for Chain"]')).toBeNull()
 })
 
 test('adding a parameter stops at the documented cap', async () => {
-	mocks.canEditVariables = true
-	mocks.variables = [chainVariable, { id: 'chain-2', kind: 'chain', label: 'Chain 2', value: 'Solana' }]
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, {
+		canEditVariables: true,
+		variables: [chainVariable, { id: 'chain-2', kind: 'chain', label: 'Chain 2', value: 'Solana' }]
+	})
 	expect(buttons('Parameter')).toHaveLength(1)
 	expect(container.querySelector('[aria-label="Parameter options for Chain"]')).not.toBeNull()
-	mocks.variables = [
-		chainVariable,
-		{ id: 'chain-2', kind: 'chain', label: 'Chain 2', value: 'Solana' },
-		{ id: 'chain-3', kind: 'chain', label: 'Chain 3', value: 'Ethereum' },
-		{ id: 'chain-4', kind: 'chain', label: 'Chain 4', value: 'Solana' }
-	]
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, {
+		canEditVariables: true,
+		variables: [
+			chainVariable,
+			{ id: 'chain-2', kind: 'chain', label: 'Chain 2', value: 'Solana' },
+			{ id: 'chain-3', kind: 'chain', label: 'Chain 3', value: 'Ethereum' },
+			{ id: 'chain-4', kind: 'chain', label: 'Chain 4', value: 'Solana' }
+		]
+	})
 	expect(buttons('Parameter')).toHaveLength(0)
 })
 
 test('the hint turns a value two cards share into a bound parameter', async () => {
-	mocks.canEditVariables = true
-	mocks.candidates = [{ kind: 'chain', value: 'Ethereum', count: 2 }]
-	mocks.items = [
-		{ id: 'a', kind: 'stablecoins', chain: 'Ethereum' },
-		{ id: 'b', kind: 'stablecoins', chain: 'Ethereum' }
-	] as unknown as Array<DashboardItemConfig>
-	await act(async () => root.render(<ParameterHint />))
+	await show(<ParameterHint />, {
+		canEditVariables: true,
+		candidates: [{ kind: 'chain', value: 'Ethereum', count: 2 }],
+		items: [
+			{ id: 'a', kind: 'stablecoins', chain: 'Ethereum' },
+			{ id: 'b', kind: 'stablecoins', chain: 'Ethereum' }
+		] as unknown as Array<DashboardItemConfig>
+	})
 	const hint = buttons('Make Ethereum a parameter')
 	expect(hint).toHaveLength(1)
 	await act(async () => hint[0]!.click())
@@ -158,21 +166,23 @@ test('the hint turns a value two cards share into a bound parameter', async () =
 })
 
 test('the hint keeps quiet once the dashboard already has a parameter', async () => {
-	mocks.canEditVariables = true
-	mocks.candidates = [{ kind: 'chain', value: 'Ethereum', count: 2 }]
-	mocks.variables = [chainVariable]
-	await act(async () => root.render(<ParameterHint />))
-	expect(container.textContent).toBe('')
+	const candidates: Array<ParameterCandidate> = [{ kind: 'chain', value: 'Ethereum', count: 2 }]
+	await show(<ParameterHint />, { canEditVariables: true, candidates })
+	expect(buttons('Make Ethereum a parameter')).toHaveLength(1)
+
+	await show(<ParameterHint />, { canEditVariables: true, candidates, variables: [chainVariable] })
+	expect(buttons('Make Ethereum a parameter')).toHaveLength(0)
 })
 
 test('a viewer chip explains how many cards the parameter switches', async () => {
-	mocks.variables = [chainVariable]
-	mocks.items = [
-		{ id: 'a', kind: 'stablecoins', chain: 'Ethereum', bindings: { chain: 'chain' } },
-		{ id: 'b', kind: 'stablecoins', chain: 'Ethereum', bindings: { chain: 'chain' } },
-		{ id: 'c', kind: 'stablecoins', chain: 'Solana' }
-	] as unknown as Array<DashboardItemConfig>
-	await act(async () => root.render(<DashboardVariablesBar />))
+	await show(<DashboardVariablesBar />, {
+		variables: [chainVariable],
+		items: [
+			{ id: 'a', kind: 'stablecoins', chain: 'Ethereum', bindings: { chain: 'chain' } },
+			{ id: 'b', kind: 'stablecoins', chain: 'Ethereum', bindings: { chain: 'chain' } },
+			{ id: 'c', kind: 'stablecoins', chain: 'Solana' }
+		] as unknown as Array<DashboardItemConfig>
+	})
 	await act(async () => {
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
 		container.querySelector<HTMLElement>('span[tabindex="0"]')!.focus()

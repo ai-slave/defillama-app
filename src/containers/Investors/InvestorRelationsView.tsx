@@ -2,7 +2,8 @@ import { Suspense, useEffect, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
+import { resolveEmbeddedDashboardTabs } from './dashboardTabs'
+import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { getDashboardModule, isDashboardRegistered } from './registry'
 
@@ -100,14 +101,14 @@ export function InvestorRelationsView({
 		setSelectedTab(null)
 	}
 	const isControlled = activeTab !== undefined
-	const loadedForDashboard = loaded?.dashboardId === dashboardId ? loaded : null
-	const dashboardModule = loadedForDashboard?.dashboardModule ?? null
-	const tabs = !isDashboardRegistered(dashboardId)
-		? DEFAULT_TABS
-		: loadedForDashboard
-			? (dashboardModule?.tabs ?? DEFAULT_TABS)
-			: null
-	const HeaderComponent = dashboardModule?.header ?? null
+	const loadedModule = loaded?.dashboardId === dashboardId ? loaded.dashboardModule : undefined
+	const { tabs, activeTab: resolvedTab } = resolveEmbeddedDashboardTabs({
+		registered: isDashboardRegistered(dashboardId),
+		loadedModule,
+		selectedTab,
+		controlledTab: activeTab
+	})
+	const HeaderComponent = loadedModule?.header ?? null
 
 	useEffect(() => {
 		const loader = getDashboardModule(dashboardId)
@@ -120,13 +121,6 @@ export function InvestorRelationsView({
 			cancelled = true
 		}
 	}, [dashboardId])
-
-	const resolvedTabs = tabs ?? DEFAULT_TABS
-	const resolvedTab = isControlled
-		? activeTab
-		: selectedTab && resolvedTabs.some((t) => t.id === selectedTab)
-			? selectedTab
-			: (resolvedTabs[0]?.id ?? 'dashboard')
 
 	return (
 		<AppMetadataProvider>
@@ -142,12 +136,10 @@ export function InvestorRelationsView({
 							<SkeletonTable />
 						) : (
 							<>
-								{isControlled ? null : (
-									<PillStrip tabs={resolvedTabs} activeTab={resolvedTab} onSelect={setSelectedTab} />
-								)}
+								{isControlled ? null : <PillStrip tabs={tabs} activeTab={resolvedTab} onSelect={setSelectedTab} />}
 								{customOnly ? (
 									<CustomOnlyContent
-										tabs={resolvedTabs}
+										tabs={tabs}
 										activeTab={resolvedTab}
 										displayName={entityName}
 										hasCustomHeader={!!HeaderComponent}
@@ -155,7 +147,7 @@ export function InvestorRelationsView({
 									/>
 								) : (
 									<InvestorsContent
-										tabs={resolvedTabs}
+										tabs={tabs}
 										activeTab={resolvedTab}
 										displayName={entityName}
 										dashboardId={dashboardId}

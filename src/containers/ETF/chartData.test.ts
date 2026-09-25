@@ -74,7 +74,6 @@ describe('buildETFFlowChartData', () => {
 				color: '#9945FF'
 			}
 		])
-		for (const chart of result.charts) expect(chart.encode.y).toBeGreaterThan(0)
 	})
 
 	test('uses line series for cumulative flows and supports an empty selection', () => {

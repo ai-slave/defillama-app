@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { resolvePairColumns, resolvePairColumnVisibility } from '~/containers/Exchanges/PairTable'
-import type { MarketPair } from '~/containers/Markets/api.types'
+import type { MarketPair, TokenMarketsResponse } from '~/containers/Markets/api.types'
 import {
+	getAvailableCategoriesByVenue,
+	getCategoryRows,
 	rankRowsBybitFirst,
-	TOKEN_PAGE_COLUMN_ORDER,
-	TOKEN_PAGE_VISIBLE_COLUMNS,
+	resolveTokenMarketsSelection,
 	toPairTableRow
 } from '../TokenMarketsSection'
 
@@ -72,78 +72,6 @@ function marketPair(slug: string, displayName: string, volume24h: number): Marke
 }
 
 describe('token markets rows', () => {
-	test.each([
-		[
-			'spot',
-			[
-				'venue',
-				'pair',
-				'price',
-				'priceChange24h',
-				'depth2Usd',
-				'volume24h',
-				'volumeChange24h',
-				'normalizedVolume',
-				'makerFee',
-				'takerFee'
-			]
-		],
-		[
-			'linear_perp',
-			[
-				'venue',
-				'pair',
-				'price',
-				'priceChange24h',
-				'depth2Usd',
-				'volume24h',
-				'volumeChange24h',
-				'normalizedVolume',
-				'openInterestUsd',
-				'openInterestChange24h',
-				'fundingRate8h',
-				'makerFee',
-				'takerFee'
-			]
-		],
-		[
-			'inverse_perp',
-			[
-				'venue',
-				'pair',
-				'price',
-				'priceChange24h',
-				'depth2Usd',
-				'volume24h',
-				'volumeChange24h',
-				'openInterestUsd',
-				'openInterestChange24h',
-				'fundingRate8h',
-				'makerFee',
-				'takerFee'
-			]
-		]
-	] as const)('resolves the %s table to the requested visible column order', (segment, expected) => {
-		const columns = resolvePairColumns({
-			segment,
-			capabilities: {
-				openInterest: segment !== 'spot',
-				funding: segment !== 'spot',
-				depth: true
-			},
-			showVenue: true,
-			omitColumns: ['token'],
-			columnOrder: TOKEN_PAGE_COLUMN_ORDER
-		})
-		const visibility = resolvePairColumnVisibility(columns, TOKEN_PAGE_VISIBLE_COLUMNS[segment])
-		const visibleColumnIds = columns
-			.filter((column) => !column.meta?.hidden && visibility[column.id as string] !== false)
-			.map((column) => column.id)
-
-		expect(visibleColumnIds).toEqual(expected)
-		expect(visibleColumnIds).not.toContain('maxLeverage')
-	})
-
 	test('maps the curated exchange name and derives its canonical profile route', () => {
 		expect(toPairTableRow(marketPair('binance-us', 'Binance.US', 100), DEPTH_BANDS, 'spot')).toMatchObject({
 			baseGeckoId: 'bitcoin',
@@ -188,5 +116,81 @@ describe('token markets rows', () => {
 		const larger = marketPair('binance', 'Binance', 300)
 
 		expect(rankRowsBybitFirst([smaller, larger])).toEqual([larger, smaller])
+	})
+})
+
+const totals = {
+	spot: { pair_count: 2, total_volume_24h: 110, total_oi_usd: null },
+	linear_perp: { pair_count: 1, total_volume_24h: 100, total_oi_usd: 100 },
+	inverse_perp: { pair_count: 1, total_volume_24h: 50, total_oi_usd: 100 }
+}
+const NO_PAIRS = { spot: [], linear_perp: [], inverse_perp: [] }
+const markets: TokenMarketsResponse = {
+	symbol: 'BTC',
+	last_updated: '',
+	depth_bands: DEPTH_BANDS,
+	exchange_count: 4,
+	market_count: 6,
+	segments: {},
+	tags: [],
+	total_oi_usd: 200,
+	total_volume_24h: 370,
+	cex: {
+		spot: [marketPair('binance', 'Binance', 100), marketPair('bybit', 'Bybit', 10)],
+		linear_perp: [marketPair('bybit', 'Bybit', 100)],
+		inverse_perp: [marketPair('bybit', 'Bybit', 50)]
+	},
+	dex: {
+		spot: [
+			{ ...marketPair('uniswap', 'Uniswap', 20), type: 'dex' },
+			{ ...marketPair('curve', 'Curve', 90), type: 'dex' }
+		],
+		linear_perp: [],
+		inverse_perp: []
+	},
+	totals: { cex: totals, dex: totals }
+}
+
+function select(
+	data: TokenMarketsResponse,
+	venue: 'all' | 'cex' | 'dex',
+	category: 'spot' | 'linear_perp' | 'inverse_perp'
+) {
+	const selection = resolveTokenMarketsSelection(getAvailableCategoriesByVenue(data), venue, category)
+	return {
+		venues: selection.visibleVenueTabs.map((tab) => tab.id),
+		venue: selection.selectedVenueTab,
+		categories: selection.visibleCategoryTabs.map((tab) => tab.id),
+		category: selection.selectedCategoryTab,
+		sorting: selection.sorting
+	}
+}
+
+describe('token markets venue and category tabs', () => {
+	test('All and CEX lead with the top Bybit pair unsorted; DEX sorts by volume', () => {
+		const names = (venue: 'all' | 'cex' | 'dex') =>
+			getCategoryRows(markets, venue, 'spot').map((row) => row.display_name)
+
+		expect(names('all')).toEqual(['Bybit', 'Binance', 'Curve', 'Uniswap'])
+		expect(names('cex')).toEqual(['Bybit', 'Binance'])
+		expect(select(markets, 'all', 'spot').sorting).toEqual([])
+		expect(select(markets, 'dex', 'spot').sorting).toEqual([{ id: 'volume24h', desc: true }])
+	})
+
+	test('shows only categories the venue has, and restores the preferred one when it has rows again', () => {
+		expect(select(markets, 'dex', 'inverse_perp')).toMatchObject({ categories: ['spot'], category: 'spot' })
+		expect(select(markets, 'all', 'inverse_perp')).toMatchObject({
+			categories: ['spot', 'linear_perp', 'inverse_perp'],
+			category: 'inverse_perp'
+		})
+		expect(select({ ...markets, cex: { ...markets.cex, inverse_perp: [] } }, 'all', 'inverse_perp').category).toBe(
+			'spot'
+		)
+	})
+
+	test('falls back to the first venue with rows and recovers the requested venue after an empty refresh', () => {
+		expect(select({ ...markets, dex: NO_PAIRS }, 'dex', 'spot')).toMatchObject({ venues: ['all', 'cex'], venue: 'all' })
+		expect(select({ ...markets, cex: NO_PAIRS, dex: NO_PAIRS }, 'dex', 'spot').venues).toEqual([])
+		expect(select(markets, 'dex', 'spot')).toMatchObject({ venues: ['all', 'cex', 'dex'], venue: 'dex' })
 	})
 })

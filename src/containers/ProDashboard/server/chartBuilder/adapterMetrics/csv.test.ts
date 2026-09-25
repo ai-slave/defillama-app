@@ -60,8 +60,6 @@ describe('writeAdapterMetricProtocolCsv', () => {
 			]
 		})
 
-		expect(csv.split('\n')[0]).toBe('Date,Current Protocol,Ended Protocol')
-		expect(csv).not.toContain('Others')
 		expect(csv.split('\n')).toEqual(['Date,Current Protocol,Ended Protocol', '1970-01-02,0,5', '1970-01-03,10,0'])
 	})
 

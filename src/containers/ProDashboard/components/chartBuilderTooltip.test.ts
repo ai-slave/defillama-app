@@ -32,11 +32,10 @@ describe('Pro chart builder tooltip', () => {
 		expect(output.indexOf('Total')).toBeLessThan(output.indexOf('Large'))
 		expect(output.indexOf('Large')).toBeLessThan(output.indexOf('Small'))
 		expect(output.indexOf('Others')).toBeGreaterThan(output.indexOf('Small'))
-		expect(output).toContain('margin-top:6px')
 		expect(output).toContain('$100')
 	})
 
-	test('keeps a single series compact and uses two columns only for more than ten regular rows', () => {
+	test('omits a redundant total for one series and retains all values for a large tooltip', () => {
 		const single = createChartBuilderTooltipFormatter({ displayAs: 'percentage', useTwoColumns: true })([
 			{ seriesName: 'Only', value: [1_767_225_600_000, 100] }
 		])
@@ -45,7 +44,8 @@ describe('Pro chart builder tooltip', () => {
 		)
 
 		expect(single).not.toContain('Total')
-		expect(single).not.toContain('grid-template-columns')
-		expect(many).toContain('grid-template-columns:1fr 1fr')
+		expect(single).toMatch(/100\s*%/)
+		for (let i = 0; i < 11; i++) expect(many).toContain(`Series ${i}`)
+		expect(many).toContain('$55')
 	})
 })

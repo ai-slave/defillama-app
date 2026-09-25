@@ -37,15 +37,6 @@ describe('routeTransition', () => {
 		expect(isSameAgenticRouteTransition({ kind: 'new-chat' }, { kind: 'project', projectId: 'project-1' })).toBe(false)
 	})
 
-	test('treats different route transition kinds as different', () => {
-		expect(
-			isSameAgenticRouteTransition(
-				{ kind: 'session', sessionId: 'session-1' },
-				{ kind: 'project', projectId: 'project-1' }
-			)
-		).toBe(false)
-	})
-
 	test('treats message anchors as part of session route identity', () => {
 		expect(
 			isSameAgenticRouteTransition(

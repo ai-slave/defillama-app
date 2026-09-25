@@ -1,12 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
+import { formatRwaTreemapTooltip } from './rwaFormatting'
 
 describe('rwa treemap formatting', () => {
-	test('keeps flat box and upper labels name-only', () => {
-		expect(formatRwaTreemapBoxLabel({ name: 'Tesla' })).toBe('Tesla')
-		expect(formatRwaUpperLabel({ name: 'Tesla' })).toBe('Tesla')
-	})
-
 	test('formats flat-node tooltips with share of total only', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: {
@@ -42,13 +37,13 @@ describe('rwa treemap formatting', () => {
 		expect(tooltip).toContain('Share of Total: 44.44%<br>')
 	})
 
-	test('keeps the canonical tuple fallback for incomplete ECharts events', () => {
+	test('labels the root node tooltip with the root name and total metric', () => {
 		const tooltip = formatRwaTreemapTooltip({
-			info: { name: 'RWA' },
-			valueLabel: 'Market Cap',
+			info: { name: 'Base Asset', value: [9, 100, 100], treePathInfo: [{ name: 'Base Asset' }] },
+			valueLabel: 'Markets',
 			formatMetricValue: (value) => String(value)
 		})
 
-		expect(tooltip).toBe('RWA<br>Market Cap: 0<br>')
+		expect(tooltip).toBe('Base Asset<br>Markets: 9<br>')
 	})
 })

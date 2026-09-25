@@ -21,8 +21,9 @@ const row = (overrides: Partial<YieldPoolTableRow> = {}): YieldPoolTableRow =>
 
 describe('prepareYieldPoolsCsv', () => {
 	test('default view mirrors the earn table with base+reward split', () => {
-		const csv = prepareYieldPoolsCsv([row()])
-		expect(csv.filename).toBe('yield-pools.csv')
+		const csv = prepareYieldPoolsCsv([
+			row({ apyBase: 2, apyReward: 0.24, stabilityRating: 'stable', stabilityScore: 91, poolMeta: 'Staked' })
+		])
 		expect(csv.rows[0]).toEqual([
 			'Pool',
 			'Reference',
@@ -37,8 +38,20 @@ describe('prepareYieldPoolsCsv', () => {
 			'Holders',
 			'Pool Meta'
 		])
-		expect(csv.rows[1]?.[0]).toBe('stETH')
-		expect(csv.rows[1]?.[2]).toBe('Lido')
+		expect(csv.rows[1]).toEqual([
+			'stETH',
+			'ETH',
+			'Lido',
+			'Ethereum',
+			2,
+			0.24,
+			2.24,
+			'stable',
+			91,
+			16_000_000_000,
+			615_498,
+			'Staked'
+		])
 	})
 
 	test('base-only view collapses to a single APY column', () => {

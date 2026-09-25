@@ -29,12 +29,6 @@ afterEach(() => {
 })
 
 describe('PRO_API_BASE_URL', () => {
-	test('is the fixed pro API host', async () => {
-		const constants = await importConstantsWithEnv({})
-
-		expect(constants.PRO_API_BASE_URL).toBe('https://pro-api.llama.fi')
-	})
-
 	test('routes server URLs through the pro API when an API key is set', async () => {
 		const constants = await importConstantsWithEnv({ API_KEY: 'secret-api-key' })
 
@@ -42,6 +36,7 @@ describe('PRO_API_BASE_URL', () => {
 		expect(constants.DATASETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/datasets')
 		expect(constants.YIELDS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
+		expect(constants.MARKETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/markets')
 	})
 })
 
@@ -51,22 +46,10 @@ describe('server URL constants', () => {
 
 		expect(constants.SERVER_URL).toBe('https://api.llama.fi')
 		expect(constants.V2_SERVER_URL).toBe('https://api.llama.fi/v2')
-		expect(constants.DATASETS_SERVER_URL).toBe('https://defillama-datasets.llama.fi')
-		expect(constants.BRIDGES_SERVER_URL).toBe('https://bridges.llama.fi')
 		expect(constants.COINS_SERVER_URL).toBe('https://coins.llama.fi')
-		expect(constants.EQUITIES_SERVER_URL).toBe('https://api.llama.fi/equities/v1')
-		expect(constants.PRE_IPO_SERVER_URL).toBe('https://pre-ipo.llama.fi/v1')
-		expect(constants.ETF_SERVER_URL).toBe('https://etfs.llama.fi')
-		expect(constants.FDV_SERVER_URL).toBe('https://fdv-server.llama.fi')
-		expect(constants.RWA_SERVER_URL).toBe('https://api.llama.fi/rwa')
-		expect(constants.RWA_PERPS_SERVER_URL).toBe('https://api.llama.fi/rwa-perps')
-		expect(constants.STABLECOINS_SERVER_URL).toBe('https://stablecoins.llama.fi')
-		expect(constants.TRADFI_API).toBe('https://api.llama.fi/dat')
-		expect(constants.LIQUIDATIONS_SERVER_URL_V2).toBe('https://api.llama.fi/liquidations')
-		expect(constants.RISK_SERVER_URL).toBe('https://risks.llama.fi')
-		expect(constants.MARKETS_SERVER_URL).toBe('https://markets.llama.fi')
-		expect(constants.YIELDS_SERVER_URL).toBe('https://yields.llama.fi')
-		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields-v2.llama.fi')
+		// A keyless build that falls through to the pro API requests `pro-api.llama.fi/undefined/...`.
+		const keylessUrls = Object.entries(constants).filter(([, value]) => String(value).includes('/undefined'))
+		expect(keylessUrls).toEqual([])
 	})
 
 	test('uses direct URL overrides before pro API fallbacks', async () => {
@@ -133,19 +116,5 @@ describe('server URL constants', () => {
 
 		expect(constants.SERVER_URL).toBe('https://core.example.com/api')
 		expect(constants.V2_SERVER_URL).toBe('https://core-v2.example.com')
-	})
-})
-
-describe('MARKETS_SERVER_URL', () => {
-	test('derives from the pro API key', async () => {
-		const constants = await importConstantsWithEnv({ API_KEY: 'secret-api-key' })
-
-		expect(constants.MARKETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/markets')
-	})
-
-	test('uses the public markets URL without an API key', async () => {
-		const constants = await importConstantsWithEnv({})
-
-		expect(constants.MARKETS_SERVER_URL).toBe('https://markets.llama.fi')
 	})
 })

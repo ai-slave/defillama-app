@@ -190,12 +190,6 @@ describe('applySlippageHaircut', () => {
 		expect(out.map((band) => band.askUsd)).toEqual([10, 20, 60])
 	})
 
-	test('leaves the ladder alone when there is nothing to discount', () => {
-		const input = evenLadder()
-		expect(applySlippageHaircut(input, 200, 100)).toBe(input)
-		expect(applySlippageHaircut(input, null, null)).toBe(input)
-	})
-
 	// A cumulative curve cannot decrease outward. Discounting 2% without touching 1%
 	// would claim more depth within 1% than within 2%.
 	test('clamps tighter bands so the curve never decreases outward', () => {

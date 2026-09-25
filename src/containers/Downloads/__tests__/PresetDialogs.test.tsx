@@ -1,42 +1,38 @@
 // @vitest-environment happy-dom
-import { act, useState } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { DownloadsCatalog } from '../DownloadsCatalog'
-import type { SavedDownload } from '../savedDownloads'
-const { deleted, renamed } = vi.hoisted(() => ({ deleted: vi.fn(), renamed: vi.fn() }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: true, hasActiveSubscription: true, loaders: {} })
-}))
-vi.mock('~/contexts/LocalStorage', () => ({
-	useRecentDownloads: () => ({ recentDownloads: [], clearRecents: vi.fn() }),
-	useSavedDownloads: () => {
-		const [savedDownloads, setSavedDownloads] = useState<Array<SavedDownload>>([
-			{ id: 'one', name: 'First preset', kind: 'dataset', slug: 'protocols', columns: [], createdAt: 1 },
-			{ id: 'two', name: 'Second preset', kind: 'dataset', slug: 'protocols', columns: [], createdAt: 2 }
-		])
-		return {
-			savedDownloads,
-			deleteDownload: (id: string) => {
-				deleted(id)
-				setSavedDownloads((items) => items.filter((item) => item.id !== id))
-			},
-			renameDownload: renamed
-		}
-	}
-}))
+
+// Heavy dialogs the preset list can open; these tests assert nothing about them.
 vi.mock('../DatasetPreviewModal', () => ({ DatasetPreviewModal: () => null }))
 vi.mock('../ChartDatasetModal', () => ({ ChartDatasetModal: () => null }))
 vi.mock('../MultiMetricModal', () => ({ MultiMetricModal: () => null }))
 vi.mock('~/containers/Subscription/shared/TrialCsvLimitModal', () => ({ TrialCsvLimitModal: () => null }))
+
+const session = installSubscriberSession('downloader')
+const savedNames = () => (readAppStorage().SAVED_DOWNLOADS ?? []).map((preset) => preset.name)
+const catalog = () => (
+	<session.Wrapper>
+		<DownloadsCatalog chartOptionsMap={{}} />
+	</session.Wrapper>
+)
+
 let root: Root
 let container: HTMLDivElement
 beforeEach(async () => {
-	vi.clearAllMocks()
+	writeAppStorage({
+		SAVED_DOWNLOADS: [
+			{ id: 'one', name: 'First preset', kind: 'dataset', slug: 'protocols', columns: [], createdAt: 1 },
+			{ id: 'two', name: 'Second preset', kind: 'dataset', slug: 'protocols', columns: [], createdAt: 2 }
+		]
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	await act(async () => root.render(<DownloadsCatalog chartOptionsMap={{}} />))
+	await act(async () => root.render(catalog()))
 	await click(button('Saved'))
 })
 afterEach(async () => {
@@ -70,18 +66,17 @@ test('delete cancellation returns focus; confirming returns to Saved even after 
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
 	await escape()
 	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
-	expect(deleted).not.toHaveBeenCalled()
-	const deletePreset = async (name: string, id: string) => {
+	expect(savedNames()).toEqual(['First preset', 'Second preset'])
+	const deletePreset = async (name: string, remaining: Array<string>) => {
 		await click(button(`Delete ${name}`))
 		await click(button('Delete'))
 		await vi.waitFor(() => expect(document.activeElement).toBe(button('Saved')))
-		expect(deleted).toHaveBeenLastCalledWith(id)
+		expect(savedNames()).toEqual(remaining)
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	}
-	await deletePreset('First preset', 'one')
-	await deletePreset('Second preset', 'two')
-	expect(deleted).toHaveBeenCalledTimes(2)
-	expect(container.textContent).toContain('Pin your first preset')
+	await deletePreset('First preset', ['Second preset'])
+	await deletePreset('Second preset', [])
+	await vi.waitFor(() => expect(container.textContent).toContain('Pin your first preset'))
 })
 
 test('rename starts in the named input, retains edits through rerender, and cancels without saving', async () => {
@@ -95,11 +90,11 @@ test('rename starts in the named input, retains edits through rerender, and canc
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Unsubmitted draft')
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	await act(async () => root.render(<DownloadsCatalog chartOptionsMap={{}} />))
+	await act(async () => root.render(catalog()))
 	expect(input.value).toBe('Unsubmitted draft')
 	await escape()
 	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
-	expect(renamed).not.toHaveBeenCalled()
+	expect(savedNames()).toEqual(['First preset', 'Second preset'])
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')!.value).toBe('First preset')
 })
@@ -148,13 +143,13 @@ test.each([
 	['Rename First preset', ' '],
 	['Delete First preset', 'Enter'],
 	['Delete First preset', ' ']
-])('%s retains native %j activation instead of running the preset', async (name, key) => {
+])('%s keeps native %j activation so the key opens its dialog', async (name, key) => {
+	// happy-dom does not turn Enter/Space into a button click, so the row handler cancelling
+	// the keydown (which blocks that click in browsers) is the observable failure.
 	const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
 	await act(async () => {
 		button(name).focus()
 		button(name).dispatchEvent(event)
 	})
 	expect(event.defaultPrevented).toBe(false)
-	expect(deleted).not.toHaveBeenCalled()
-	expect(renamed).not.toHaveBeenCalled()
 })

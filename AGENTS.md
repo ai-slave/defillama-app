@@ -48,6 +48,26 @@ If the user asks to run specific commands, run only those commands unless code c
 
 Before finalizing without full verification, state which targeted checks ran and which broader checks were skipped.
 
+## Testing Policy
+
+A test calls the code the way its users do and asserts what they observe against a literal expected value. It fails when a user-visible or data-visible behavior breaks and stays green through refactors that keep that behavior.
+
+The check: would the test still pass if every function it imports returned `undefined`? If yes, it observes no behavior. Rewrite the assertion or delete the test. Shapes that fail the check: no assertion or only `toBeDefined`/`toBeTruthy`/`not.toThrow`; only mock-call or absence assertions; an expected value computed by the code under test; restating a constant, config default, or prompt string; asserting data the test built itself.
+
+Where to test:
+
+- Decision logic lives in pure functions and is tested there: real input in, literal output out. When logic that needs a test is buried in a component, hook, or route, move it into a pure function first. This is the default and the fastest test.
+- Render a component only for interaction contracts: focus, dialogs, keyboard, races, cancellation, access gating, what a user sees after acting. Use the real component tree and act as a user would.
+- Route contracts: run the real `getServerSideProps` or API handler against `fetch` fixtures and assert status, headers, redirect, and returned data.
+
+Mock only at boundaries: `fetch` (`installFixtureFetch` from `src/utils/test/fixtureFetch.ts`), dataset snapshot store adapters (`*/server/dataset.server.ts`), database clients, `~/utils/cache-client`, `~/utils/http-client`, `~/utils/async` (`fetchJson`), `~/utils/apiAuth`, clocks, `next/router`, and browser or third-party APIs that cannot run in Node. Seed metadata with `installMetadataSeeder` from `src/utils/test/metadataCache.ts` instead of mocking `~/utils/metadata`. A test may stub a heavy child component when it asserts nothing about that child's output. Do not `vi.mock` any other module under `src/`. A test that needs a hand-written fake of a library (ECharts, an editor) to reach its assertion is testing logic that belongs in a pure function; extract it.
+
+Do not assert calls between internal modules, class names, inline styles, wrapper nesting, exact HTML, snapshots, or "renders without crashing". Call assertions are allowed only for `fetch`, navigation, emitted events, and callbacks the test supplies. Accessibility semantics (labels, roles, focus, expanded state) are behavior.
+
+One test per behavior, named in user or data terms. No characterization tests that freeze current output, bugs included. When a change breaks a test without changing behavior, rewrite or delete the test instead of patching the assertion. When deleting a test file, account for each behavior it asserted: where it is now covered, or why it is intentionally untested.
+
+Keep every test under two seconds and every file under five. A test that needs longer sets its own timeout in the `test()` call and says why. Never wait on a promise a mock is expected to resolve without bounding it; a lost mock registration must fail fast, not hang.
+
 ## Metric Semantics
 
 Before changing metric routes, chart queries, metadata flags, public API validation, or adapter data types, read `docs/metrics.md`.

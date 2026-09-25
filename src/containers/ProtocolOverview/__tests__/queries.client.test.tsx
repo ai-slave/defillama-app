@@ -1,280 +1,181 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { ProtocolTvlKey } from '../api.types'
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolChartsByKeys,
 	useFetchProtocolMedianAPY,
 	useFetchProtocolTVLChart
 } from '../queries.client'
-import type { IFetchProtocolChartsByKeysParams } from '../queries.client'
 
-type CapturedQueryOptions = {
-	queryKey: Array<unknown>
-	queryFn: () => unknown
-	enabled?: boolean
-}
+const http = installFixtureFetch()
+const CHARTS = '/api/public/protocols/charts'
 
-const mocks = vi.hoisted(() => ({
-	fetchJson: vi.fn(),
-	queryGroups: [] as Array<Array<CapturedQueryOptions>>,
-	queryOptions: [] as Array<CapturedQueryOptions>
-}))
+let client: QueryClient
+let root: Root
+let container: HTMLDivElement
 
-vi.mock('@tanstack/react-query', () => {
-	const runQuery = (options: CapturedQueryOptions) => {
-		if (options.enabled !== false) {
-			Promise.resolve(options.queryFn()).catch(() => undefined)
-		}
-
-		return {
-			data: null,
-			dataUpdatedAt: 0,
-			error: null,
-			isError: false,
-			isLoading: false
-		}
-	}
-
-	return {
-		useQuery: (options: CapturedQueryOptions) => {
-			mocks.queryOptions.push(options)
-			return runQuery(options)
-		},
-		useQueries: ({ queries }: { queries: Array<CapturedQueryOptions> }) => {
-			mocks.queryGroups.push(queries)
-			return queries.map(runQuery)
-		}
-	}
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	client = new QueryClient()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+	http.serve({ [CHARTS]: [] })
 })
 
-vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson
-}))
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	client.clear()
+})
 
-function TVLChartProbe({
-	protocol,
-	chartKey,
-	tokensToExclude,
-	enabled
-}: {
-	protocol: string | null
-	chartKey?: ProtocolTvlKey
-	tokensToExclude?: Array<string>
-	enabled?: boolean
-}) {
-	useFetchProtocolTVLChart({
-		protocol,
-		...(chartKey ? { key: chartKey } : {}),
-		...(tokensToExclude ? { tokensToExclude } : {}),
-		...(enabled === undefined ? {} : { enabled })
-	})
-
-	return null
+async function render(Probe: () => null) {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<Probe />
+			</QueryClientProvider>
+		)
+	)
 }
 
-function ChartBatchProbe(props: IFetchProtocolChartsByKeysParams) {
-	useFetchProtocolChartsByKeys(props)
+// Relative chart URLs resolve against the fixture base, so compare path and query only.
+const requested = () => http.requests.map(({ url }) => `${url.pathname}${url.search}`)
 
-	return null
-}
-
-function ActivityChartProbe({
-	protocol,
-	queryKey = 'active-users',
-	dataType
-}: {
-	protocol: string | null
-	queryKey?: string
-	dataType?: 'dailyGasUsedUsd'
-}) {
-	useFetchProtocolActivityChart({
-		queryKey,
-		protocol,
-		adapterType: 'active-users',
-		...(dataType ? { dataType } : {})
+test('adds own-token exclusions to every TVL batch request', async () => {
+	await render(() => {
+		useFetchProtocolChartsByKeys({ protocol: 'gate', keys: [], source: 'tvl', tokensToExclude: ['GT'] })
+		return null
 	})
-
-	return null
-}
-
-function MedianApyProbe({ protocol }: { protocol: string | null }) {
-	useFetchProtocolMedianAPY(protocol)
-	return null
-}
-
-describe('ProtocolOverview client chart queries', () => {
-	const getOnlyQueryOption = () => {
-		const option = mocks.queryOptions[0]
-		if (!option) throw new Error('Expected one query option')
-		return option
-	}
-
-	const getFirstQueryGroup = () => {
-		const group = mocks.queryGroups[0]
-		if (!group) throw new Error('Expected a query group')
-		return group
-	}
-
-	beforeEach(() => {
-		vi.clearAllMocks()
-		mocks.fetchJson.mockResolvedValue(null)
-		mocks.queryGroups = []
-		mocks.queryOptions = []
-	})
-
-	test('builds the current protocol TVL value chart query', () => {
-		renderToStaticMarkup(<TVLChartProbe protocol="curve-dex" chartKey="pool2" />)
-
-		expect(mocks.queryOptions).toHaveLength(1)
-		expect(getOnlyQueryOption().queryKey).toEqual([
-			'protocol-overview',
-			'tvl-chart',
-			'curve-dex',
-			'pool2',
-			undefined,
-			undefined,
-			undefined
+	await vi.waitFor(() =>
+		expect(requested().toSorted()).toEqual([
+			`${CHARTS}?kind=tvl&protocol=gate&breakdownType=chain-breakdown&tokensToExclude=GT`,
+			`${CHARTS}?kind=tvl&protocol=gate&breakdownType=token-breakdown&tokensToExclude=GT`,
+			`${CHARTS}?kind=tvl&protocol=gate&currency=token&breakdownType=token-breakdown&tokensToExclude=GT`,
+			`${CHARTS}?kind=tvl&protocol=gate&tokensToExclude=GT`
 		])
-		expect(mocks.fetchJson).toHaveBeenCalledWith('/api/public/protocols/charts?kind=tvl&protocol=curve-dex&key=pool2')
+	)
+})
+
+test('shares one cached request between duplicate or reordered exclusion lists', async () => {
+	let data: unknown
+	await render(() => {
+		data = useFetchProtocolTVLChart({ protocol: 'gate', tokensToExclude: ['MNT', 'GT', 'MNT'] }).data
+		useFetchProtocolTVLChart({ protocol: 'gate', tokensToExclude: ['GT', 'MNT'] })
+		return null
 	})
+	await vi.waitFor(() => expect(data).toEqual([]))
+	expect(requested()).toEqual([`${CHARTS}?kind=tvl&protocol=gate&tokensToExclude=GT%2CMNT`])
+})
 
-	test('adds own-token exclusions to every TVL batch query and cache key', () => {
-		renderToStaticMarkup(<ChartBatchProbe protocol="gate" keys={[]} source="tvl" tokensToExclude={['GT']} />)
+test('requests value, chain and token breakdowns for the base chart and every TVL key', async () => {
+	await render(() => {
+		useFetchProtocolChartsByKeys({ protocol: 'aave', keys: ['pool2', 'staking'], source: 'tvl' })
+		return null
+	})
+	await vi.waitFor(() => expect(requested()).toHaveLength(12))
+	expect(requested().toSorted()).toEqual(
+		['', '&key=pool2', '&key=staking']
+			.flatMap((key) => [
+				`${CHARTS}?kind=tvl&protocol=aave${key}`,
+				`${CHARTS}?kind=tvl&protocol=aave${key}&breakdownType=chain-breakdown`,
+				`${CHARTS}?kind=tvl&protocol=aave${key}&breakdownType=token-breakdown`,
+				`${CHARTS}?kind=tvl&protocol=aave${key}&currency=token&breakdownType=token-breakdown`
+			])
+			.toSorted()
+	)
+})
 
-		expect(mocks.queryGroups.flat().map((query) => query.queryKey.at(-1))).toEqual(['GT', 'GT', 'GT', 'GT'])
-		expect(mocks.fetchJson.mock.calls.map(([url]) => url)).toEqual([
-			'/api/public/protocols/charts?kind=tvl&protocol=gate&tokensToExclude=GT',
-			'/api/public/protocols/charts?kind=tvl&protocol=gate&breakdownType=chain-breakdown&tokensToExclude=GT',
-			'/api/public/protocols/charts?kind=tvl&protocol=gate&breakdownType=token-breakdown&tokensToExclude=GT',
-			'/api/public/protocols/charts?kind=tvl&protocol=gate&currency=token&breakdownType=token-breakdown&tokensToExclude=GT'
+test('keeps treasury batch requests on the treasury source', async () => {
+	await render(() => {
+		useFetchProtocolChartsByKeys({
+			protocol: 'makerdao',
+			keys: ['OwnTokens'],
+			includeBase: false,
+			source: 'treasury',
+			inflows: false
+		})
+		return null
+	})
+	await vi.waitFor(() =>
+		expect(requested().toSorted()).toEqual([
+			`${CHARTS}?kind=treasury&protocol=makerdao&key=OwnTokens`,
+			`${CHARTS}?kind=treasury&protocol=makerdao&key=OwnTokens&breakdownType=chain-breakdown`
 		])
+	)
+})
+
+test('does not request a chart without a protocol', async () => {
+	let statuses: Array<string> = []
+	await render(() => {
+		statuses = [
+			useFetchProtocolTVLChart({ protocol: null }).fetchStatus,
+			useFetchProtocolTVLChart({ protocol: '' }).fetchStatus
+		]
+		return null
 	})
+	expect(statuses).toEqual(['idle', 'idle'])
+	expect(requested()).toEqual([])
+})
 
-	test('canonicalizes duplicate and reordered exclusions for both cache identity and URLs', () => {
-		renderToStaticMarkup(<TVLChartProbe protocol="gate" tokensToExclude={['MNT', 'GT', 'MNT']} />)
-		const first = getOnlyQueryOption()
-
-		mocks.queryOptions = []
-		mocks.fetchJson.mockClear()
-		renderToStaticMarkup(<TVLChartProbe protocol="gate" tokensToExclude={['GT', 'MNT']} />)
-		const second = getOnlyQueryOption()
-
-		expect(first.queryKey).toEqual(second.queryKey)
-		expect(first.queryKey.at(-1)).toBe('GT,MNT')
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/protocols/charts?kind=tvl&protocol=gate&tokensToExclude=GT%2CMNT'
-		)
+test('returns activity rows in milliseconds and keeps sub-dollar gas costs', async () => {
+	http.serve({ [CHARTS]: [[1_700_000_000, 0.01]] })
+	let data: unknown
+	await render(() => {
+		data = useFetchProtocolActivityChart({
+			queryKey: 'gas-used-usd',
+			protocol: 'pangolin-v2',
+			adapterType: 'active-users',
+			dataType: 'dailyGasUsedUsd'
+		}).data
+		return null
 	})
+	await vi.waitFor(() => expect(data).toEqual([[1_700_000_000_000, 0.01]]))
+	expect(requested()).toEqual([
+		`${CHARTS}?kind=adapter&adapterType=active-users&protocol=pangolin-v2&dataType=dailyGasUsedUsd`
+	])
+})
 
-	test('treats an empty exclusion list as the unfiltered own-token state', () => {
-		renderToStaticMarkup(<TVLChartProbe protocol="gate" tokensToExclude={[]} />)
-
-		expect(getOnlyQueryOption().queryKey.at(-1)).toBeUndefined()
-		expect(mocks.fetchJson).toHaveBeenCalledWith('/api/public/protocols/charts?kind=tvl&protocol=gate')
+test('keeps successful empty activity and median responses distinct from failures', async () => {
+	const results: Record<string, { data: unknown; isError: boolean }> = {}
+	await render(() => {
+		const activity = useFetchProtocolActivityChart({
+			queryKey: 'active-users',
+			protocol: 'curve-dex',
+			adapterType: 'active-users'
+		})
+		const median = useFetchProtocolMedianAPY('curve-dex')
+		results.activity = { data: activity.data, isError: activity.isError }
+		results.median = { data: median.data, isError: median.isError }
+		return null
 	})
+	await vi.waitFor(() =>
+		expect(results).toEqual({ activity: { data: [], isError: false }, median: { data: [], isError: false } })
+	)
 
-	test('builds the current protocol TVL batch queries for value and breakdown charts', () => {
-		renderToStaticMarkup(<ChartBatchProbe protocol="aave" keys={['pool2', 'staking']} source="tvl" />)
-
-		expect(mocks.queryGroups.map((group) => group.map((query) => query.queryKey[1]))).toEqual([
-			['tvl-chart', 'tvl-chart', 'tvl-chart'],
-			['tvl-chart', 'tvl-chart', 'tvl-chart'],
-			['tvl-chart', 'tvl-chart', 'tvl-chart'],
-			['tvl-chart', 'tvl-chart', 'tvl-chart']
-		])
-		expect(mocks.fetchJson.mock.calls.map(([url]) => url)).toEqual([
-			'/api/public/protocols/charts?kind=tvl&protocol=aave',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=pool2',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=staking',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&breakdownType=chain-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=pool2&breakdownType=chain-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=staking&breakdownType=chain-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&breakdownType=token-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=pool2&breakdownType=token-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=staking&breakdownType=token-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&currency=token&breakdownType=token-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=pool2&currency=token&breakdownType=token-breakdown',
-			'/api/public/protocols/charts?kind=tvl&protocol=aave&key=staking&currency=token&breakdownType=token-breakdown'
-		])
+	client.clear()
+	http.serve({ [CHARTS]: fixtureStatus(400) })
+	await act(async () => root.unmount())
+	root = createRoot(container)
+	await render(() => {
+		const activity = useFetchProtocolActivityChart({
+			queryKey: 'active-users',
+			protocol: 'curve-dex',
+			adapterType: 'active-users'
+		})
+		const median = useFetchProtocolMedianAPY('curve-dex')
+		results.activity = { data: activity.data, isError: activity.isError }
+		results.median = { data: median.data, isError: median.isError }
+		return null
 	})
-
-	test('keeps treasury batch queries on the treasury source', () => {
-		renderToStaticMarkup(
-			<ChartBatchProbe protocol="makerdao" keys={['OwnTokens']} includeBase={false} source="treasury" inflows={false} />
-		)
-
-		expect(mocks.queryGroups).toHaveLength(4)
-		expect(getFirstQueryGroup().map((query) => query.queryKey)).toEqual([
-			['protocol-overview', 'treasury-chart', 'makerdao', 'OwnTokens', undefined, undefined, undefined]
-		])
-		expect(mocks.fetchJson.mock.calls.map(([url]) => url)).toEqual([
-			'/api/public/protocols/charts?kind=treasury&protocol=makerdao&key=OwnTokens',
-			'/api/public/protocols/charts?kind=treasury&protocol=makerdao&key=OwnTokens&breakdownType=chain-breakdown'
-		])
-	})
-
-	test('does not fetch protocol chart data without a protocol', () => {
-		renderToStaticMarkup(<TVLChartProbe protocol={null} />)
-
-		expect(mocks.queryOptions).toHaveLength(1)
-		expect(getOnlyQueryOption().enabled).toBe(false)
-		expect(mocks.fetchJson).not.toHaveBeenCalled()
-	})
-
-	test('does not fetch protocol chart data for an empty protocol', () => {
-		renderToStaticMarkup(<TVLChartProbe protocol="" />)
-
-		expect(getOnlyQueryOption().enabled).toBe(false)
-		expect(mocks.fetchJson).not.toHaveBeenCalled()
-	})
-
-	test('normalizes protocol activity chart rows to millisecond timestamps', async () => {
-		mocks.fetchJson.mockResolvedValue([
-			[1_700_000_000, 1],
-			[1_700_000_100, 2]
-		])
-
-		renderToStaticMarkup(<ActivityChartProbe protocol="curve-dex" />)
-
-		expect(getOnlyQueryOption().queryKey).toEqual(['protocol-overview', 'active-users', 'curve-dex'])
-		await expect(getOnlyQueryOption().queryFn()).resolves.toEqual([
-			[1_700_000_000_000, 1],
-			[1_700_000_100_000, 2]
-		])
-	})
-
-	test('requests the USD gas series without dropping sub-dollar values', async () => {
-		mocks.fetchJson.mockResolvedValue([[1_700_000_000, 0.01]])
-
-		renderToStaticMarkup(
-			<ActivityChartProbe protocol="pangolin-v2" queryKey="gas-used-usd" dataType="dailyGasUsedUsd" />
-		)
-
-		expect(getOnlyQueryOption().queryKey).toEqual(['protocol-overview', 'gas-used-usd', 'pangolin-v2'])
-		expect(mocks.fetchJson).toHaveBeenCalledWith(
-			'/api/public/protocols/charts?kind=adapter&adapterType=active-users&protocol=pangolin-v2&dataType=dailyGasUsedUsd'
-		)
-		await expect(getOnlyQueryOption().queryFn()).resolves.toEqual([[1_700_000_000_000, 0.01]])
-	})
-
-	test('keeps successful empty activity and median responses distinct from failures', async () => {
-		mocks.fetchJson.mockResolvedValue([])
-		renderToStaticMarkup(<ActivityChartProbe protocol="curve-dex" />)
-		await expect(getOnlyQueryOption().queryFn()).resolves.toEqual([])
-
-		mocks.queryOptions = []
-		renderToStaticMarkup(<MedianApyProbe protocol="curve-dex" />)
-		await expect(getOnlyQueryOption().queryFn()).resolves.toEqual([])
-
-		const upstreamError = new Error('upstream failed')
-		mocks.fetchJson.mockRejectedValue(upstreamError)
-		mocks.queryOptions = []
-		renderToStaticMarkup(<ActivityChartProbe protocol="curve-dex" />)
-		await expect(getOnlyQueryOption().queryFn()).rejects.toBe(upstreamError)
-
-		mocks.queryOptions = []
-		renderToStaticMarkup(<MedianApyProbe protocol="curve-dex" />)
-		await expect(getOnlyQueryOption().queryFn()).rejects.toBe(upstreamError)
-	})
+	await vi.waitFor(() =>
+		expect(results).toEqual({
+			activity: { data: undefined, isError: true },
+			median: { data: undefined, isError: true }
+		})
+	)
 })

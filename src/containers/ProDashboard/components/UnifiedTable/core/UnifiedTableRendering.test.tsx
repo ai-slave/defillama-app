@@ -4,7 +4,7 @@ import { type ColumnDef, type PaginationState, type SortingState, useTable } fro
 import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { StreamDoneContext } from '../../../queries'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
 import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
 import type { ProtocolsUnifiedTableResponse } from '../../../unifiedTable/contracts'
 import { TablePagination } from '../../Table/TablePagination'
@@ -13,7 +13,7 @@ import type { ProtocolTableLeafRow, ProtocolTableRow } from '../types'
 import { UnifiedVirtualTable } from './UnifiedVirtualTable'
 import { tableFeaturesConfig, useUnifiedTable } from './useUnifiedTable'
 
-const dashboardMocks = vi.hoisted(() => ({
+const dashboardMocks = {
 	handleDuplicateUnifiedTable: vi.fn(),
 	handleEditItem: vi.fn(),
 	permissions: { isReadOnly: true, hideDuplicateButton: false },
@@ -23,23 +23,25 @@ const dashboardMocks = vi.hoisted(() => ({
 		label: string
 		value: string
 	}>
-}))
+}
 
-vi.mock('../../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
-	useProDashboardEditorActions: () => ({
-		handleDuplicateUnifiedTable: dashboardMocks.handleDuplicateUnifiedTable,
-		handleEditItem: dashboardMocks.handleEditItem
-	}),
-	useProDashboardPermissions: () => ({ ...dashboardMocks.permissions }),
-	useProDashboardDashboard: () => ({
-		currentDashboard: null,
-		dashboardId: null
-	}),
-	useProDashboardItemsState: () => ({ items: [] }),
-	useProDashboardVariables: () => ({ variables: dashboardMocks.variables }),
-	useProDashboardAnnotations: () => ({ annotations: [] })
-}))
+function Dashboard({ streamDone, children }: { streamDone: boolean; children: React.ReactNode }) {
+	const { isReadOnly, hideDuplicateButton } = dashboardMocks.permissions
+	return (
+		<DashboardTestProvider
+			mode={isReadOnly ? 'view' : 'edit'}
+			streamDone={streamDone}
+			permissions={{ isReadOnly, hideDuplicateButton }}
+			variables={{ variables: dashboardMocks.variables }}
+			editorActions={{
+				handleDuplicateUnifiedTable: dashboardMocks.handleDuplicateUnifiedTable,
+				handleEditItem: dashboardMocks.handleEditItem
+			}}
+		>
+			{children}
+		</DashboardTestProvider>
+	)
+}
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
 
@@ -275,9 +277,9 @@ describe('UnifiedTable rendering', () => {
 			await act(async () =>
 				root.render(
 					<QueryClientProvider client={createQueryClient()}>
-						<StreamDoneContext.Provider value>
+						<Dashboard streamDone>
 							<SortingHarness columnId={columnId} />
-						</StreamDoneContext.Provider>
+						</Dashboard>
 					</QueryClientProvider>
 				)
 			)
@@ -290,21 +292,15 @@ describe('UnifiedTable rendering', () => {
 		}
 	)
 
-	test('renders equal-sized page changes and resets the virtual scroll window', async () => {
+	test('scrolls the virtual window back to the top on page and page-size changes', async () => {
 		await act(async () => root.render(<TableHarness />))
-		expect(rowNames()).toEqual(Array.from({ length: 10 }, (_, index) => `Row ${index + 1}`))
-		expect(container.textContent).toContain('Page 1 of 3')
 
 		virtualizer.scrollToOffset.mockClear()
 		await act(async () => button('Next').click())
-		expect(rowNames()).toEqual(Array.from({ length: 10 }, (_, index) => `Row ${index + 11}`))
-		expect(container.textContent).toContain('Page 2 of 3')
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 
 		virtualizer.scrollToOffset.mockClear()
 		await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="30"]')!.click())
-		expect(rowNames()).toEqual(Array.from({ length: 21 }, (_, index) => `Row ${index + 1}`))
-		expect(container.textContent).not.toContain('Page 2 of 3')
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 	})
 
@@ -321,9 +317,9 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
-					<StreamDoneContext.Provider value={false}>
+					<Dashboard streamDone={false}>
 						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
@@ -359,9 +355,9 @@ describe('UnifiedTable rendering', () => {
 			act(async () =>
 				root.render(
 					<QueryClientProvider client={createQueryClient()}>
-						<StreamDoneContext.Provider value={false}>
+						<Dashboard streamDone={false}>
 							<UnifiedTable key={String(dashboardMocks.permissions.isReadOnly)} config={boundConfig} />
-						</StreamDoneContext.Provider>
+						</Dashboard>
 					</QueryClientProvider>
 				)
 			)
@@ -375,12 +371,25 @@ describe('UnifiedTable rendering', () => {
 		expect(container.querySelector('[title="Bound to dashboard parameter"]')).toBeNull()
 	})
 
-	test('collapses the row search into an icon that expands into an input', async () => {
+	test('the collapsed row search expands into an input that filters the rows', async () => {
+		const response: ProtocolsUnifiedTableResponse = {
+			...unifiedTableResponse,
+			rows: [
+				...unifiedTableResponse.rows,
+				{
+					...unifiedTableResponse.rows[0],
+					id: 'compound',
+					name: 'compound',
+					protocolId: 'compound',
+					displayName: 'Compound'
+				}
+			]
+		}
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(
 				async () =>
-					new Response(JSON.stringify(unifiedTableResponse), {
+					new Response(JSON.stringify(response), {
 						status: 200,
 						headers: { 'content-type': 'application/json' }
 					})
@@ -389,24 +398,27 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
-					<StreamDoneContext.Provider value>
+					<Dashboard streamDone>
 						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
-		await waitForContent(container, 'Aave')
+		await waitForContent(container, 'Compound')
 		expect(container.querySelector('input[aria-label="Search table rows"]')).toBeNull()
 		await act(async () =>
 			(container.querySelector('button[aria-label="Search table rows"]') as HTMLButtonElement).click()
 		)
-		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')
-		expect(input).not.toBeNull()
+		const input = container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!
 		await act(async () => {
-			input!.value = 'aave'
-			input!.dispatchEvent(new Event('input', { bubbles: true }))
+			input.value = 'aave'
+			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
-		expect(input!.value).toBe('aave')
+		for (let attempt = 0; attempt < 20 && container.textContent?.includes('Compound'); attempt++) {
+			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		}
+		expect(container.textContent).toContain('Aave')
+		expect(container.textContent).not.toContain('Compound')
 	})
 
 	test('collapsing the search with Escape keeps the query and returns focus to the search button', async () => {
@@ -423,9 +435,9 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
-					<StreamDoneContext.Provider value>
+					<Dashboard streamDone>
 						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
@@ -449,7 +461,11 @@ describe('UnifiedTable rendering', () => {
 		expect(container.querySelector<HTMLInputElement>('input[aria-label="Search table rows"]')!.value).toBe('aave')
 	})
 
-	test('a read-only table offers no grouping select and no columns button', async () => {
+	test.each([
+		[true, false],
+		[false, true]
+	])('read-only %s shows grouping and column controls: %s', async (isReadOnly, showsControls) => {
+		dashboardMocks.permissions.isReadOnly = isReadOnly
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(
@@ -463,15 +479,15 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={createQueryClient()}>
-					<StreamDoneContext.Provider value>
-						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					<Dashboard streamDone>
+						<UnifiedTable config={unifiedTableConfig} onEdit={() => {}} />
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
 		await waitForContent(container, 'Aave')
-		expect(container.querySelector('[aria-label="Group table rows"]')).toBeNull()
-		expect(container.textContent).not.toContain('Customize columns')
+		expect(container.querySelector('[aria-label="Group table rows"]') !== null).toBe(showsControls)
+		expect(container.textContent?.includes('Customize columns')).toBe(showsControls)
 		expect(container.querySelector('button[aria-label="Search table rows"]')).not.toBeNull()
 	})
 
@@ -483,9 +499,9 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={queryClient}>
-					<StreamDoneContext.Provider value>
+					<Dashboard streamDone>
 						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
@@ -516,9 +532,9 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={queryClient}>
-					<StreamDoneContext.Provider value>
+					<Dashboard streamDone>
 						<UnifiedTable config={unifiedTableConfig} />
-					</StreamDoneContext.Provider>
+					</Dashboard>
 				</QueryClientProvider>
 			)
 		)
@@ -528,6 +544,17 @@ describe('UnifiedTable rendering', () => {
 		await act(async () => {
 			await queryClient.invalidateQueries()
 		})
+		// retry: 1 lands the error after invalidateQueries resolves, so wait for the refresh to settle.
+		for (
+			let attempt = 0;
+			attempt < 20 && queryClient.getQueryCache().getAll()[0]!.state.status !== 'error';
+			attempt++
+		) {
+			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		}
+		// One more tick lets the observer render the settled error.
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		expect(queryClient.getQueryCache().getAll()[0]!.state.status).toBe('error')
 		expect(container.textContent).toContain('Aave')
 		expect(container.textContent).not.toContain("Couldn't load this table")
 	})

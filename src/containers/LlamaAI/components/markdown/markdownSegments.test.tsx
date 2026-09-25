@@ -71,44 +71,17 @@ test.each(fixtures)(
 	}
 )
 
-test('finished blocks keep their React elements while the answer grows', () => {
+test('streaming rebuilds the growing block, not every finished block before it', () => {
+	let builds = 0
+	const countBuilds = () => () => {
+		builds += 1
+	}
 	const { render } = createSegmentRenderer({})
-	const processors = createSegmentProcessors(rehype(false), rehype(true))
-	const first = render('## Revenue\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing', processors)
-	const second = render(
-		'## Revenue\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing text grows',
-		processors
-	)
-	// Segments sit at even indexes; the odd ones are the newline separators between blocks.
-	expect(second.slice(0, 5)).toEqual(first.slice(0, 5))
-	expect(second[0]).toBe(first[0])
-	expect(second[4]).toBe(first[4])
-	expect(second[6]).not.toBe(first[6])
+	const processors = createSegmentProcessors([...rehype(false), countBuilds], [...rehype(true), countBuilds])
+	const source =
+		'## Revenue\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n- first\n- second\n\n## Fees\n\nTrailing text grows here.\n'
+	for (let end = 1; end <= source.length; end++) render(source.slice(0, end), processors)
 
-	// Once a new block starts, the previous last block leaves the caret position and renders again.
-	const third = render(
-		'## Revenue\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing text grows\n\nNext',
-		processors
-	)
-	expect(third.slice(0, 5)).toEqual(second.slice(0, 5))
-	expect(third[6]).not.toBe(second[6])
-
-	// Rendering identical input again is free.
-	expect(
-		render('## Revenue\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing text grows\n\nNext', processors)
-	).toEqual(third)
-
-	// A change to an earlier block invalidates it and everything after it.
-	const rewritten = render(
-		'## Fees\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing text grows\n\nNext',
-		processors
-	)
-	expect(rewritten[0]).not.toBe(third[0])
-	expect(rewritten[2]).not.toBe(third[2])
-
-	// New processors (citations landed, streaming ended) rebuild every segment.
-	const next = createSegmentProcessors(rehype(false), rehype(false))
-	expect(
-		render('## Fees\n\nOne paragraph.\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\nTrailing text grows\n\nNext', next)[0]
-	).not.toBe(rewritten[0])
+	// Rebuilding every block on every prefix costs several builds per prefix; caching costs about one.
+	expect(builds).toBeLessThan(source.length * 1.5)
 })

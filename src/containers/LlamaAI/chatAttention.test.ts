@@ -27,8 +27,8 @@ describe('chatAttention', () => {
 	})
 
 	test('is absent when the tab is hidden', () => {
+		// Focus stays true: a hidden tab can still report document focus.
 		visibilityState = 'hidden'
-		hasFocus = false
 		expect(hasWebChatAttention()).toBe(false)
 		expect(isChatSurfaceAttended({ uncovered: true })).toBe(false)
 	})

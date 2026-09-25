@@ -1,9 +1,15 @@
-import type { List, Root } from 'mdast'
+import type { Root } from 'mdast'
+import { createElement, Fragment } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
 import { expect, test } from 'vitest'
+import { createSegmentProcessors, createSegmentRenderer } from './markdownSegments'
+import { mendStreamingMarkdown } from './mendStreamingMarkdown'
 import { detachOrderedLists, nestIndentedLists } from './repairLists'
+import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
 
 const parser = unified().use(remarkParse).use(remarkGfm, { singleTilde: false })
 const parse = (source: string) => parser.parse(source) as Root
@@ -30,14 +36,6 @@ test.each([
 	expect(detach(source)).toBe(expected)
 })
 
-test('the detached source parses as a header paragraph followed by a list starting at 4', () => {
-	const fixed = detach('**Product**\n4. a\n5. b')!
-	const tree = parse(fixed)
-	expect(tree.children.map((c) => c.type)).toEqual(['paragraph', 'list'])
-	expect((tree.children[1] as List).start).toBe(4)
-	expect((tree.children[1] as List).spread).toBe(false)
-})
-
 const nest = (source: string) => nestIndentedLists(source, parse(source))
 
 test.each([
@@ -58,10 +56,44 @@ test.each([
 	expect(nest(source)).toBe(expected)
 })
 
-test('the nested source parses as one numbered list with the bullets inside item 2', () => {
-	const tree = parse(nest('1. a\n2. b\n - x\n - y\n3. c')!)
-	expect(tree.children.map((c) => c.type)).toEqual(['list'])
-	const list = tree.children[0] as List
-	expect(list.children).toHaveLength(3)
-	expect(list.children[1].children.map((c) => c.type)).toEqual(['paragraph', 'list'])
-})
+const detached = 'Intro:\n2. two\n3. three\n\n'
+const nested = '1. one\n - nested\n2. two\n\n'
+const both = 'Intro:\n2. two\n3. three\n - nested\n4. four\n\n'
+const repairStages = [detachOrderedLists, nestIndentedLists]
+
+test.each([
+	'**Contagion**\n1. a\n2. b\n\n**Product**\n4. c\n5. d\n\n',
+	both,
+	`${detached}\`\`\`\nText\n4. literal\n - literal\n\`\`\`\n\n`,
+	`${nested}[link][ref]\n\n[ref]: https://example.com\n\n`,
+	`${both}\uFEFFtext\n\n`
+])(
+	'cached segment rendering matches repairing and rendering the whole prefix, through growth, rewinds and completion: %j',
+	(head) => {
+		const renderer = createSegmentRenderer({})
+		const processors = createSegmentProcessors(SANITIZE_REHYPE_PLUGINS, SANITIZE_REHYPE_PLUGINS)
+		const source = `${head}First paragraph.\n\nSecond paragraph.\n\nTrailing **bold** and [link](https://example.com).`
+		const prefixes: Array<string> = []
+		for (let end = 1; end <= source.length; end++) prefixes.push(source.slice(0, end))
+		// Revisit earlier cache stages and replace the repaired prefix with well-formed input.
+		prefixes.push(source.slice(0, 8), source, 'Intro:\n\n2. two\n3. three\n\nFinished.', source, '')
+		// One renderer instance across every prefix is what exercises the segment and parser caches.
+		for (const content of prefixes) {
+			for (const mend of [true, false]) {
+				let repaired = content
+				for (const repair of mend ? [...repairStages, mendStreamingMarkdown] : repairStages) {
+					repaired = repair(repaired, parse(repaired)) ?? repaired
+				}
+				const expected = renderToStaticMarkup(
+					createElement(
+						ReactMarkdown,
+						{ remarkPlugins: [[remarkGfm, { singleTilde: false }]], rehypePlugins: SANITIZE_REHYPE_PLUGINS },
+						repaired
+					)
+				)
+				const actual = renderToStaticMarkup(createElement(Fragment, null, renderer.render(content, processors, mend)))
+				expect(actual, `${JSON.stringify(content)}, mend=${mend}`).toBe(expected)
+			}
+		}
+	}
+)

@@ -11,8 +11,4 @@ describe('SelectWithCombobox trigger values', () => {
 	test('shows the authored option label for a single selection', () => {
 		expect(getSelectOptionLabel(OPTIONS, 'all')).toBe('All')
 	})
-
-	test('keeps string option labels unchanged', () => {
-		expect(getSelectOptionLabel(['All', 'CEX'], 'CEX')).toBe('CEX')
-	})
 })

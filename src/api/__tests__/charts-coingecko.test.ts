@@ -1,196 +1,144 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { COINS_CHART_API } from '~/constants'
+import handler from '~/pages/api/public/tokens/charts/coingecko/[geckoId]'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { fetchCoinGeckoChartByIdWithCacheFallbackMock, fetchCoinGeckoCoinByIdOrThrowMock, recordRouteRuntimeErrorMock } =
-	vi.hoisted(() => ({
-		fetchCoinGeckoChartByIdWithCacheFallbackMock: vi.fn(),
-		fetchCoinGeckoCoinByIdOrThrowMock: vi.fn(),
-		recordRouteRuntimeErrorMock: vi.fn()
-	}))
+const { serve, urls } = installFixtureFetch()
 
-vi.mock('~/api/coingecko', () => ({
-	fetchCoinGeckoChartByIdWithCacheFallback: fetchCoinGeckoChartByIdWithCacheFallbackMock,
-	fetchCoinGeckoCoinByIdOrThrow: fetchCoinGeckoCoinByIdOrThrowMock
-}))
+const CG = '/api/v3/coins'
 
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
-
-import handler from '~/pages/api/public/tokens/charts/coingecko/[geckoId]'
-
-function request(query: NextApiRequest['query'], url: string): NextApiRequest {
+async function run(query: NextApiRequest['query']) {
 	const req = createMockNextApiRequest({ method: 'GET', query })
-	req.url = url
-	return req
+	req.url = `/api/public/tokens/charts/coingecko/${query.geckoId}`
+	const res = createMockNextApiResponse()
+	await handler(req, res)
+	return {
+		status: res.statusCode,
+		body: res.json.mock.calls[0]?.[0],
+		cacheControl: res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1] as string
+	}
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
-})
-
 describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
-	test('returns cached chart data for valid CoinGecko ids with allowed punctuation', async () => {
-		fetchCoinGeckoChartByIdWithCacheFallbackMock.mockResolvedValueOnce({ data: { prices: [[1, 2]] } })
-		const res = createMockNextApiResponse()
-
-		await handler(
-			request(
-				{ geckoId: 'wrapped-bitcoin_2.test-token', timeframe: 'MAX' },
-				'/api/public/tokens/charts/coingecko/wrapped-bitcoin_2.test-token?timeframe=MAX'
-			),
-			res
-		)
-
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).toHaveBeenCalledWith('wrapped-bitcoin_2.test-token', {
-			timeframe: 'MAX',
-			includeCoinData: false
+	test('returns the CoinGecko market chart for the requested timeframe', async () => {
+		serve({
+			[`${CG}/wrapped-bitcoin_2.test-token/market_chart`]: {
+				prices: [[1, 2]],
+				market_caps: [[1, 3]],
+				total_volumes: [[1, 4]]
+			}
 		})
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ data: { prices: [[1, 2]] } })
+
+		const response = await run({ geckoId: 'wrapped-bitcoin_2.test-token', timeframe: 'MAX' })
+
+		expect(response.status).toBe(200)
+		expect(response.body).toEqual({ data: { prices: [[1, 2]], mcaps: [[1, 3]], volumes: [[1, 4]] } })
+		expect(response.cacheControl).toContain('s-maxage=')
+		expect(urls()).toEqual([
+			'https://api.coingecko.com/api/v3/coins/wrapped-bitcoin_2.test-token/market_chart?vs_currency=usd&days=max'
+		])
 	})
 
-	test.each(['24H', '7D'])('loads the canonical %s timeframe', async (timeframe) => {
-		fetchCoinGeckoChartByIdWithCacheFallbackMock.mockResolvedValueOnce({ data: { prices: [[1, 2]] } })
-		const res = createMockNextApiResponse()
+	test('maps the 24H timeframe to a one day CoinGecko window', async () => {
+		serve({ [`${CG}/bitcoin/market_chart`]: { prices: [[1, 2]] } })
 
-		await handler(
-			request({ geckoId: 'bitcoin', timeframe }, `/api/public/tokens/charts/coingecko/bitcoin?timeframe=${timeframe}`),
-			res
-		)
+		const response = await run({ geckoId: 'bitcoin', timeframe: '24H' })
 
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).toHaveBeenCalledWith('bitcoin', {
-			timeframe,
-			includeCoinData: false
+		expect(response.status).toBe(200)
+		expect(urls()[0]).toContain('/coins/bitcoin/market_chart?vs_currency=usd&days=1')
+	})
+
+	test('attaches coin metadata only when the caller asks for it', async () => {
+		serve({
+			[`${CG}/bitcoin/market_chart`]: { prices: [[1, 2]] },
+			[`${CG}/bitcoin`]: { id: 'bitcoin', symbol: 'btc', market_data: { current_price: { usd: 2 } } }
 		})
-		expect(res.status).toHaveBeenCalledWith(200)
-	})
 
-	test('loads chart metadata only when the caller requests it', async () => {
-		fetchCoinGeckoChartByIdWithCacheFallbackMock.mockResolvedValueOnce({ data: { prices: [[1, 2]] } })
-		const res = createMockNextApiResponse()
+		const response = await run({ geckoId: 'bitcoin', timeframe: 'MAX', includeCoinData: 'true' })
 
-		await handler(
-			request(
-				{ geckoId: 'bitcoin', timeframe: 'MAX', includeCoinData: 'true' },
-				'/api/public/tokens/charts/coingecko/bitcoin?timeframe=MAX&includeCoinData=true'
-			),
-			res
-		)
-
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).toHaveBeenCalledWith('bitcoin', {
-			timeframe: 'MAX',
-			includeCoinData: true
+		expect(response.status).toBe(200)
+		expect(response.body).toEqual({
+			data: { prices: [[1, 2]], coinData: { id: 'bitcoin', symbol: 'btc', market_data: { current_price: { usd: 2 } } } }
 		})
-		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	test('requires a canonical timeframe for chart requests', async () => {
-		const res = createMockNextApiResponse()
+	test('falls back to DefiLlama price history when CoinGecko has no chart', async () => {
+		serve({
+			[`${CG}/newcoin/market_chart`]: fixtureStatus(404, { error: 'coin not found' }),
+			[`${COINS_CHART_API}/coingecko:newcoin`]: {
+				coins: { 'coingecko:newcoin': { prices: [{ timestamp: 1_700_000_000, price: 1.5 }] } }
+			}
+		})
 
-		await handler(request({ geckoId: 'bitcoin' }, '/api/public/tokens/charts/coingecko/bitcoin'), res)
+		const response = await run({ geckoId: 'newcoin', timeframe: '7D' })
 
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Invalid timeframe parameter' })
+		expect(response.status).toBe(200)
+		expect(response.body).toEqual({ data: { prices: [[1_700_000_000_000, 1.5]] } })
 	})
 
-	test.each(['10Y', '1D', '1W'])('rejects unsupported %s timeframes before fetching chart data', async (timeframe) => {
-		const res = createMockNextApiResponse()
+	test('returns an uncacheable null chart when neither source has prices', async () => {
+		serve({
+			[`${CG}/ghost/market_chart`]: { prices: [] },
+			[`${COINS_CHART_API}/coingecko:ghost`]: { coins: {} }
+		})
 
-		await handler(
-			request({ geckoId: 'bitcoin', timeframe }, `/api/public/tokens/charts/coingecko/bitcoin?timeframe=${timeframe}`),
-			res
-		)
+		const response = await run({ geckoId: 'ghost', timeframe: 'MAX' })
 
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Invalid timeframe parameter' })
+		expect(response.status).toBe(200)
+		expect(response.body).toBeNull()
+		expect(response.cacheControl).toBe('no-store')
 	})
 
-	test('rejects invalid CoinGecko ids before fetching upstream data', async () => {
-		const res = createMockNextApiResponse()
+	test.each([undefined, '10Y', '1D'])('rejects the %s timeframe without contacting CoinGecko', async (timeframe) => {
+		const response = await run({ geckoId: 'bitcoin', timeframe })
 
-		await handler(request({ geckoId: 'bad id' }, '/api/public/tokens/charts/coingecko/bad%20id'), res)
-
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).not.toHaveBeenCalled()
-		expect(fetchCoinGeckoCoinByIdOrThrowMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Invalid geckoId parameter' })
+		expect(response.status).toBe(400)
+		expect(response.body).toEqual({ error: 'Invalid timeframe parameter' })
+		expect(urls()).toEqual([])
 	})
 
-	test('normalizes finite supply values from the CoinGecko coin detail', async () => {
-		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: { total_supply: 123 } })
-		const res = createMockNextApiResponse()
+	test('rejects CoinGecko ids with characters outside the id alphabet', async () => {
+		const response = await run({ geckoId: 'bad id', timeframe: 'MAX' })
 
-		await handler(request({ geckoId: 'aave', kind: 'supply' }, '/api/public/tokens/charts/coingecko/aave'), res)
-
-		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ totalSupply: 123 })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('s-maxage='))
+		expect(response.status).toBe(400)
+		expect(response.body).toEqual({ error: 'Invalid geckoId parameter' })
+		expect(urls()).toEqual([])
 	})
 
-	test('returns null supply when the coin detail has no supply value', async () => {
-		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: {} })
-		const res = createMockNextApiResponse()
+	test('returns the total supply from the CoinGecko coin detail', async () => {
+		serve({ [`${CG}/aave`]: { market_data: { total_supply: 123 } } })
 
-		await handler(request({ geckoId: 'aave', kind: 'supply' }, '/api/public/tokens/charts/coingecko/aave'), res)
+		const response = await run({ geckoId: 'aave', kind: 'supply' })
 
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ totalSupply: null })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
+		expect(response.status).toBe(200)
+		expect(response.body).toEqual({ totalSupply: 123 })
+		expect(response.cacheControl).toContain('s-maxage=')
+		expect(urls()[0]).toContain('/coins/aave?localization=false&tickers=false&market_data=true')
 	})
 
-	test('returns null supply when the coin detail returns a non-finite supply value', async () => {
-		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: { total_supply: Infinity } })
-		const res = createMockNextApiResponse()
+	test.each([
+		['has no supply value', { market_data: {} }],
+		['has no market data', {}],
+		['is not a CoinGecko coin', fixtureStatus(404, { error: 'coin not found' })]
+	])('returns an uncacheable null supply when the coin %s', async (_label, detail) => {
+		serve({ [`${CG}/aave`]: detail })
 
-		await handler(request({ geckoId: 'aave', kind: 'supply' }, '/api/public/tokens/charts/coingecko/aave'), res)
+		const response = await run({ geckoId: 'aave', kind: 'supply' })
 
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ totalSupply: null })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
+		expect(response.status).toBe(200)
+		expect(response.body).toEqual({ totalSupply: null })
+		expect(response.cacheControl).toBe('no-store')
 	})
 
-	test('returns null supply when the coin detail has no market data', async () => {
-		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({})
-		const res = createMockNextApiResponse()
+	test('reports a failure when CoinGecko cannot serve the coin detail', async () => {
+		serve({ [`${CG}/aave`]: fixtureStatus(400, { error: 'upstream unavailable' }) })
 
-		await handler(request({ geckoId: 'missing', kind: 'supply' }, '/api/public/tokens/charts/coingecko/missing'), res)
+		const response = await run({ geckoId: 'aave', kind: 'supply' })
 
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ totalSupply: null })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
-		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
-	})
-
-	test('returns null supply when CoinGecko has no coin record', async () => {
-		fetchCoinGeckoCoinByIdOrThrowMock.mockRejectedValueOnce(
-			new Error('https://api.coingecko.com/api/v3/coins/missing: [404] Not Found')
-		)
-		const res = createMockNextApiResponse()
-
-		await handler(request({ geckoId: 'missing', kind: 'supply' }, '/api/public/tokens/charts/coingecko/missing'), res)
-
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ totalSupply: null })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
-		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
-	})
-
-	test('reports CoinGecko failures when loading supply fails', async () => {
-		const error = new Error('https://api.coingecko.com/api/v3/coins/aave: [500] Upstream unavailable')
-		fetchCoinGeckoCoinByIdOrThrowMock.mockRejectedValueOnce(error)
-		const res = createMockNextApiResponse()
-
-		await handler(request({ geckoId: 'aave', kind: 'supply' }, '/api/public/tokens/charts/coingecko/aave'), res)
-
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load coingecko chart data' })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
+		expect(response.status).toBe(500)
+		expect(response.body).toEqual({ error: 'Failed to load coingecko chart data' })
+		expect(response.cacheControl).toBe('no-store')
 	})
 })

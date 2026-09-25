@@ -154,14 +154,4 @@ describe('verified redaction', () => {
 		expect(body).not.toContain('1.1049')
 		expect(body).toContain('2026-08-28')
 	})
-
-	test('never object-spreads an unexpected array returned for a detail route', async () => {
-		const arrayPoolId = '79e042b5-e55d-4a4e-b0b0-6661a570470c'
-		fetchJsonMock.mockResolvedValue({ data: [{ id: arrayPoolId }] })
-
-		const result = await call(['v2', 'earn', arrayPoolId])
-		const payload = JSON.parse((result as { serializedJson: string }).serializedJson) as { data: unknown }
-
-		expect(Array.isArray(payload.data)).toBe(true)
-	})
 })

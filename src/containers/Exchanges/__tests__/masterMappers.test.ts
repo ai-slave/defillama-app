@@ -875,10 +875,10 @@ describe('master directory mapper', () => {
 		expect(inverseOnly?.fees).toMatchObject({ linearPerp: null, inversePerp: inverseFee })
 	})
 
-	test('requires a capability block for every present segment', () => {
-		expect(() => mapMasterDirectory(directoryResponse([directoryVenue({ capabilities: {} })]))).toThrow(
-			'Missing spot capabilities for venue'
-		)
+	// A segment without capabilities cannot say which metrics it measures, so the build
+	// fails rather than guessing them, and the log names the segment to fix upstream.
+	test('fails the build for a segment the producer sent without capabilities', () => {
+		expect(() => mapMasterDirectory(directoryResponse([directoryVenue({ capabilities: {} })]))).toThrow(/spot/)
 	})
 
 	test('produces directory props accepted by the Pages Router serializer', () => {
@@ -928,7 +928,10 @@ describe('BTC execution table mapper', () => {
 			])
 		).rows
 
-		const table = mapBtcExecutionTable(rows, executionResponse())
+		// The venue-level figure is a basket median; the BTC table must not show it.
+		const execution = executionResponse()
+		execution.venues.venue = { ...required(execution.venues.venue), cost_to_trade_bps: 9 }
+		const table = mapBtcExecutionTable(rows, execution)
 
 		expect(table).toHaveLength(1)
 		expect(table[0]).toMatchObject({
@@ -962,7 +965,11 @@ describe('BTC execution table mapper', () => {
 				directoryVenue({ slug: 'second', rank: { score: 90, rank: 1, tier: 'A', segments: {}, components: {} } })
 			])
 		).rows
-		expect(mapBtcExecutionTable(ranked, execution).map((row) => row.exchange)).toEqual(['second', 'venue'])
+		// Passed worst-first so the order comes from the rank, not the input.
+		expect(mapBtcExecutionTable([...ranked].reverse(), execution).map((row) => row.exchange)).toEqual([
+			'second',
+			'venue'
+		])
 	})
 })
 
@@ -1172,7 +1179,10 @@ describe('depth ladders', () => {
 
 describe('master profile mapper', () => {
 	test('keeps per-segment capabilities, canonical links, null volume, and pair reference prices', () => {
-		const profile = mapMasterProfile(indexResponse(), metadataResponse())
+		// Open interest without funding, so each capability has to come from its own flag.
+		const index = indexResponse()
+		index.capabilities.inverse_perp = { oi: true, funding: false, depth: false }
+		const profile = mapMasterProfile(index, metadataResponse())
 		const linear = profile.segments.linear_perp!
 		const inverse = profile.segments.inverse_perp!
 		const mappedPair = required(linear.pairs[0])
@@ -1198,7 +1208,7 @@ describe('master profile mapper', () => {
 			volume24h: null,
 			capabilities: { openInterest: true, funding: true, depth: true }
 		})
-		expect(inverse.capabilities).toEqual({ openInterest: false, funding: false, depth: true })
+		expect(inverse.capabilities).toEqual({ openInterest: true, funding: false, depth: false })
 		expect(mappedPair).toMatchObject({
 			baseGeckoId: 'bitcoin',
 			quoteGeckoId: 'tether',
@@ -1333,13 +1343,14 @@ describe('master profile mapper', () => {
 		metadata.profile_mode = 'metadata-only'
 		metadata.links.profile = '/exchange/bitpanda'
 
-		expect(mapMasterMetadataOnlyProfile(metadata)).toMatchObject({
+		const profile = mapMasterMetadataOnlyProfile(metadata)
+		expect(profile).toMatchObject({
 			slug: 'bitpanda',
 			name: 'Bitpanda',
 			profileMode: 'metadata-only',
-			segments: {},
 			metadata: { groups: [{ key: 'identity' }] }
 		})
+		expect(profile.segments).toEqual({})
 	})
 
 	test('promotes the primary Twitter link without selecting staff accounts', () => {

@@ -6,8 +6,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { AgenticAnswerMode } from '../../types'
 import { ModeToggle } from '../input/ModeToggle'
 import { OnboardingWalkthrough } from '../OnboardingWalkthrough'
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: null, hasActiveSubscription: true }) }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
 const complete = vi.fn()
 const submit = vi.fn()
 let root: Root
@@ -67,20 +65,19 @@ afterEach(async () => {
 function button(text: string) {
 	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => e.textContent?.trim() === text)!
 }
+const frame = () => new Promise((resolve) => setTimeout(resolve, 20))
+// Waits for the control instead of a fixed delay: only the intro's exit animation (250ms) takes real time.
 async function click(text: string) {
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 40))
-	})
-	await vi.waitFor(() => expect(button(text)).toBeDefined())
+	await vi.waitFor(() => expect(button(text)).toBeDefined(), { interval: 10 })
 	await act(async () => {
 		button(text).click()
-		await new Promise((resolve) => setTimeout(resolve, 300))
+		await frame()
 	})
 }
 async function escape(el: HTMLElement) {
 	await act(async () => {
 		el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
-		await new Promise((resolve) => setTimeout(resolve, 40))
+		await frame()
 	})
 }
 test('Escape skips the named intro without submitting and returns focus to the prompt', async () => {

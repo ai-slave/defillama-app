@@ -43,14 +43,14 @@ import {
 	PRICE_CHART_TIMEFRAMES,
 	type PriceChartTimeframe
 } from '~/utils/priceChartTimeframes'
-import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import type { TokenOverviewChartLabel, TokenOverviewData, TokenOverviewRawChartData } from './tokenOverview'
 import {
-	TOKEN_OVERVIEW_DEFAULT_CHARTS,
-	type TokenOverviewChartLabel,
-	type TokenOverviewData,
-	type TokenOverviewRawChartData
-} from './tokenOverview'
-import { roundToSignificantFigures } from './TokenOverviewSection.utils'
+	getTokenOverviewChartBody,
+	getTokenOverviewChartQuery,
+	resolveTokenOverviewCharts,
+	roundToSignificantFigures
+} from './TokenOverviewSection.utils'
 import type { TokenIssuer } from './types'
 import { useFetchTokenOverviewChartData } from './useFetchTokenOverviewChartData'
 
@@ -61,13 +61,6 @@ const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
 	FDV: '#0f766e'
 }
 
-const TOKEN_OVERVIEW_CHART_ORDER = [
-	'Token Price',
-	'Token Volume',
-	'Mcap',
-	'FDV'
-] as const satisfies ReadonlyArray<TokenOverviewChartLabel>
-const TOKEN_OVERVIEW_CHART_LABELS: ReadonlySet<string> = new Set(TOKEN_OVERVIEW_CHART_ORDER)
 const FDV_TOOLTIP =
 	"Fully Diluted Valuation, this is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating."
 const OUTSTANDING_FDV_TOOLTIP =
@@ -116,14 +109,6 @@ function getChartLabel(label: TokenOverviewChartLabel, symbol: string) {
 	}
 
 	return label
-}
-
-function isTokenOverviewChartLabel(value: string): value is TokenOverviewChartLabel {
-	return TOKEN_OVERVIEW_CHART_LABELS.has(value)
-}
-
-function areTokenOverviewChartsEqual(a: Array<TokenOverviewChartLabel>, b: Array<TokenOverviewChartLabel>) {
-	return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
 function TokenPriceAlertButton({
@@ -510,39 +495,12 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	const router = useRouter()
 	const [isThemeDark] = useDarkModeManager()
 	const isClient = useIsClient()
-	const availableCharts = useMemo(
-		() =>
-			TOKEN_OVERVIEW_CHART_ORDER.filter((label) =>
-				geckoId
-					? label !== 'Token Price' || (overview.rawChartData[label]?.length ?? 0) > 0
-					: (overview.rawChartData[label]?.length ?? 0) > 0
-			),
-		[geckoId, overview.rawChartData]
-	)
-	const defaultCharts = useMemo(() => {
-		const defaultCharts = TOKEN_OVERVIEW_DEFAULT_CHARTS.filter(
-			(label) => (overview.rawChartData[label]?.length ?? 0) > 0
-		)
-		return defaultCharts.length > 0 ? defaultCharts : availableCharts.slice(0, 1)
-	}, [availableCharts, overview.rawChartData])
 	const activeTimeframe = getPriceChartTimeframe(readSingleQueryValue(router.query[TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY]))
 	const selectedChartsQuery = router.query[TOKEN_OVERVIEW_CHART_QUERY_KEY]
-	const activeCharts = useMemo(() => {
-		if (selectedChartsQuery === 'None') {
-			return []
-		}
-
-		const availableChartsSet = new Set(availableCharts)
-		const queryCharts = toNonEmptyArrayParam(selectedChartsQuery).filter(
-			(chart): chart is TokenOverviewChartLabel => isTokenOverviewChartLabel(chart) && availableChartsSet.has(chart)
-		)
-
-		if (selectedChartsQuery != null) {
-			return queryCharts.length > 0 ? queryCharts : defaultCharts
-		}
-
-		return defaultCharts
-	}, [availableCharts, defaultCharts, selectedChartsQuery])
+	const { availableCharts, defaultCharts, activeCharts } = useMemo(
+		() => resolveTokenOverviewCharts({ geckoId, rawChartData: overview.rawChartData, chartQuery: selectedChartsQuery }),
+		[geckoId, overview.rawChartData, selectedChartsQuery]
+	)
 	const metricsDialogStore = Ariakit.useDialogStore()
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
@@ -570,8 +528,14 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		hasChartData = true
 		break
 	}
-	const shouldWaitForClient = !isClient && geckoId != null && pendingCharts.length > 0
-	const showLoadingState = isClient && geckoId != null && pendingCharts.length > 0 && isLoading
+	const chartBody = getTokenOverviewChartBody({
+		isClient,
+		geckoId,
+		pendingChartCount: pendingCharts.length,
+		isLoading,
+		hasChartData,
+		activeChartCount: activeCharts.length
+	})
 	const [pendingChart] = pendingCharts
 	const loadingLabel = pendingChart ? getChartLabel(pendingChart, overview.symbol) : `${pendingCharts.length} metrics`
 	const filteredMetricOptions = useMemo(() => {
@@ -596,18 +560,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	}
 
 	const setActiveCharts = (nextCharts: Array<TokenOverviewChartLabel>) => {
-		const availableChartsSet = new Set(availableCharts)
-		const normalizedCharts = nextCharts.filter(
-			(chart, index, charts) => availableChartsSet.has(chart) && charts.indexOf(chart) === index
-		)
-
 		void pushShallowQuery(router, {
-			[TOKEN_OVERVIEW_CHART_QUERY_KEY]:
-				normalizedCharts.length === 0
-					? 'None'
-					: areTokenOverviewChartsEqual(normalizedCharts, defaultCharts)
-						? undefined
-						: normalizedCharts
+			[TOKEN_OVERVIEW_CHART_QUERY_KEY]: getTokenOverviewChartQuery(nextCharts, availableCharts, defaultCharts)
 		})
 	}
 
@@ -699,12 +653,12 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 				</div>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
-				{shouldWaitForClient ? null : showLoadingState ? (
+				{chartBody === 'wait-for-client' ? null : chartBody === 'loading' ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 text-center body-sm text-tertiary">
 						fetching {loadingLabel}
 						<LoadingDots />
 					</ChartPanelBodyFallback>
-				) : hasChartData ? (
+				) : chartBody === 'chart' ? (
 					<DeferredProtocolChart
 						key={`${activeTimeframe}:${activeCharts.join('|')}`}
 						chartData={displayedChartData}
@@ -721,11 +675,11 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						aria-live="polite"
 						className="max-w-sm text-center body-sm text-tertiary"
 					>
-						{geckoId
-							? activeCharts.length > 0
-								? 'Chart unavailable for this token right now.'
-								: 'Select metrics to chart.'
-							: 'Chart unavailable without CoinGecko market data.'}
+						{chartBody === 'unavailable'
+							? 'Chart unavailable for this token right now.'
+							: chartBody === 'select-metrics'
+								? 'Select metrics to chart.'
+								: 'Chart unavailable without CoinGecko market data.'}
 					</ChartPanelBodyFallback>
 				)}
 			</ChartPanelBody>

@@ -5,7 +5,6 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { EquitiesFiltersDialog } from '../EquityFiltersDialog'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/equities', query: {} }) }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
 let root: Root
 let container: HTMLDivElement
 afterEach(async () => {

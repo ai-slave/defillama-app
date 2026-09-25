@@ -1,91 +1,62 @@
 // @vitest-environment happy-dom
 
-import { readFileSync } from 'node:fs'
-import { runInNewContext } from 'node:vm'
 import type { AppProps } from 'next/app'
-import { act, type ReactNode } from 'react'
+import { act } from 'react'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AUTH_SERVER } from '~/constants'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { InvestorsSiteId } from '../config'
 
-const { checkParentAuth, renderedAnalyticsIds } = vi.hoisted(() => ({
-	checkParentAuth: vi.fn(async () => null),
-	renderedAnalyticsIds: [] as Array<string>
-}))
-vi.mock('next/head', () => ({ default: () => null }))
+// next/script keeps a loaded src in module state for the rest of the file, so later tests would get
+// no tag. The stub renders a tag with the attributes the tracker reads and records every website id it was
+// rendered with, so a main-site id rendered before the host resolved cannot hide behind a later render.
+const { renderedWebsiteIds } = vi.hoisted(() => ({ renderedWebsiteIds: [] as Array<string> }))
 vi.mock('next/script', () => ({
-	default: (props: { 'data-website-id': string; 'data-domains': string; 'data-host-url': string }) => {
-		renderedAnalyticsIds.push(props['data-website-id'])
+	default: ({ onReady: _onReady, strategy: _strategy, ...props }: Record<string, string>) => {
+		renderedWebsiteIds.push(props['data-website-id'])
+		// A <script> element would be hoisted by React and loaded by happy-dom.
 		return <span {...props} />
 	}
 }))
-vi.mock('next/router', () => ({ default: { events: { on: vi.fn(), off: vi.fn() } } }))
-vi.mock('~/auth', () => ({ AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</> }))
-vi.mock('@tanstack/react-query-devtools', () => ({ ReactQueryDevtools: () => null }))
-vi.mock('~/components/DashboardSaveGuard', () => ({ DashboardSaveGuard: () => null }))
-vi.mock('~/components/RouteProgressIndicator', () => ({ RouteProgressIndicator: () => null }))
-vi.mock('~/components/UserSettingsSync', () => ({ UserSettingsSync: () => null }))
-vi.mock('~/hooks/useReferrer', () => ({ useReferrer: () => {} }))
-vi.mock('~/hooks/useUmamiIdentityTracker', () => ({ useUmamiIdentityTracker: () => {} }))
-vi.mock('~/utils/checkParentAuth', () => ({ checkParentAuth }))
-vi.mock('~/components/SEO', () => ({ SEO: () => null }))
-vi.mock('~/components/Nav/ThemeSwitch', () => ({ ThemeSwitch: () => null }))
-vi.mock('~/components/Link', () => ({
-	BasicLink: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{props.children}</a>
-}))
-vi.mock('~/contexts/LocalStorage', () => ({ useDarkModeManager: () => [false, () => {}] }))
-vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
-	AppMetadataProvider: ({ children }: { children: ReactNode }) => <>{children}</>
-}))
-vi.mock('../registry', () => ({
-	getDashboardModule: async () => ({
-		tabs: [
-			{ id: 'overview', label: 'Overview' },
-			{ id: 'metrics', label: 'Metrics' }
-		]
-	})
-}))
-vi.mock('../DashboardTabsContent', () => ({
-	DEFAULT_TABS: [{ id: 'overview', label: 'Overview' }],
-	SkeletonTable: () => null,
-	TabLabel: ({ tab }: { tab: { label: string } }) => <>{tab.label}</>,
-	CustomOnlyContent: ({ displayName, activeTab }: { displayName: string; activeTab: string }) => (
-		<div data-content>
-			{displayName}:{activeTab}
-		</div>
-	),
-	InvestorsContent: ({ displayName, activeTab }: { displayName: string; activeTab: string }) => (
-		<div data-content>
-			{displayName}:{activeTab}
-		</div>
-	)
-}))
+vi.mock('next/router', () => {
+	const events = { on: () => {}, off: () => {} }
+	const router = { pathname: '/', asPath: '/', query: {}, events, push: async () => true }
+	return { default: router, useRouter: () => router }
+})
 
 import App from '~/pages/_app'
-import InvestorsPage from '~/pages/investors'
-import { INVESTORS_SITES } from '../config'
-import InvestorsDashboard from '../index'
-import { Logo, TextLoader } from '../Logo'
+import { Logo } from '../Logo'
 
-function Branding() {
+const PARENT_BRIDGE = 'iframe[src="https://defillama.com/auth-bridge"]'
+const session = installSubscriberSession('investor', { account: 'signed-out' })
+
+function app(siteId?: InvestorsSiteId) {
 	return (
-		<>
-			<Logo />
-			<TextLoader />
-		</>
+		<App Component={Logo} pageProps={siteId ? { investorsSiteId: siteId } : {}} router={{} as AppProps['router']} />
 	)
 }
 
-function app(siteId?: InvestorsSiteId, Component: AppProps['Component'] = Branding) {
-	return (
-		<App
-			Component={Component}
-			pageProps={siteId ? { investorsSiteId: siteId } : {}}
-			router={{} as AppProps['router']}
-		/>
-	)
+function trackerScript() {
+	const scripts = document.querySelectorAll<HTMLElement>('[src="/script2.js"]')
+	expect(scripts).toHaveLength(1)
+	return { websiteId: scripts[0].dataset.websiteId, domains: scripts[0].dataset.domains }
 }
+
+beforeAll(() => {
+	// happy-dom loads iframe pages with its own fetch. Answer the parent's auth bridge page with a blank
+	// page that never reports ready, as an unreachable parent would, instead of going to the network.
+	const { settings } = (
+		window as unknown as {
+			happyDOM: { settings: { fetch: { interceptor: { beforeAsyncRequest: () => Promise<Response> } | null } } }
+		}
+	).happyDOM
+	settings.fetch.interceptor = {
+		beforeAsyncRequest: async () => new window.Response('<!doctype html>', { headers: { 'content-type': 'text/html' } })
+	}
+})
 
 describe('request-specific IR rendering and analytics', () => {
 	let container: HTMLDivElement
@@ -95,161 +66,84 @@ describe('request-specific IR rendering and analytics', () => {
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		window.location.href = 'https://defillama.com/'
-		localStorage.clear()
 		sessionStorage.clear()
-		checkParentAuth.mockClear()
-		renderedAnalyticsIds.length = 0
+		renderedWebsiteIds.length = 0
 		vi.spyOn(console, 'log').mockImplementation(() => {})
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		vi.spyOn(console, 'error').mockImplementation(() => {})
 	})
 
 	afterEach(async () => {
 		if (root) await act(async () => root?.unmount())
 		root = undefined
-		container.remove()
+		document.body.innerHTML = ''
 		vi.restoreAllMocks()
 	})
 
-	test.each(['enterprise', 'investors'] as const)(
-		'hydrates %s with server-provided branding and analytics',
-		async (siteId) => {
-			window.location.href = `https://${siteId}.defillama.com/`
-			const view = app(siteId)
-			const errors = vi.fn()
-			container.innerHTML = renderToString(view)
-			expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
-				INVESTORS_SITES[siteId].umamiWebsiteId
-			)
-			expect(container.textContent).toContain(siteId === 'enterprise' ? 'Enterprise' : 'Investor Relations')
-			await act(async () => {
-				root = hydrateRoot(container, view, { onRecoverableError: errors })
-			})
-			expect(errors).not.toHaveBeenCalled()
-			expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
-				INVESTORS_SITES[siteId].umamiWebsiteId
-			)
-			expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.domains).toBe(`${siteId}.defillama.com`)
-			expect(checkParentAuth).toHaveBeenCalledTimes(1)
-		}
-	)
-
 	test.each([
-		['defillama.com', true],
-		['investors.defillama.com', true],
-		['enterprise.defillama.com', true],
-		['ir-staging.llama.fi', false],
-		['localhost', false]
-	] as const)('gates tracker requests on %s while preserving site resolution', async (hostname, allowed) => {
-		window.location.href = `https://${hostname}/`
-		root = createRoot(container)
-		await act(async () => root?.render(app()))
-		const script = container.querySelector<HTMLElement>('[data-website-id]')!
-		const fetch = vi.fn(async () => ({ json: async () => ({}) }))
-		const trackerWindow = {
-			screen: { width: 1280, height: 720 },
-			navigator: { language: 'en' },
-			location: window.location,
-			localStorage: window.localStorage,
-			document: {
-				currentScript: script,
-				referrer: '',
-				title: 'Analytics test',
-				readyState: 'complete',
-				addEventListener: vi.fn()
-			},
-			history: { pushState: vi.fn(), replaceState: vi.fn() },
-			umami: undefined as typeof window.umami
-		}
-		runInNewContext(readFileSync('public/script2.js', 'utf8'), { window: trackerWindow, fetch })
-		await trackerWindow.umami!.track('test-click')
-		await trackerWindow.umami!.identify('test-user')
-		expect(fetch).toHaveBeenCalledTimes(allowed ? 3 : 0)
+		['enterprise', 'Enterprise', '1c194e22-d31d-4816-b803-8074419f1b3e'],
+		['investors', 'Investor Relations', '11de15eb-61d0-41c5-9e73-0bf496cc653c']
+	] as const)('hydrates %s with server-provided branding and its own analytics', async (siteId, brand, websiteId) => {
+		window.location.href = `https://${siteId}.defillama.com/`
+		const view = app(siteId)
+		const errors = vi.fn()
+		container.innerHTML = renderToString(view)
+		expect(container.textContent).toContain(brand)
+		await act(async () => {
+			root = hydrateRoot(container, view, { onRecoverableError: errors })
+		})
+		expect(errors).not.toHaveBeenCalled()
+		expect(container.textContent).toContain(brand)
+		expect(trackerScript()).toEqual({ websiteId, domains: `${siteId}.defillama.com` })
+		// IR sites ask the parent site whether the visitor is signed in.
+		expect(document.querySelectorAll(PARENT_BRIDGE)).toHaveLength(1)
 	})
 
-	test('preserves Investors branding and website selection on staging', async () => {
-		window.location.href = 'https://ir-staging.llama.fi/'
-		root = createRoot(container)
-		await act(async () => root?.render(app()))
-		expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
-			INVESTORS_SITES.investors.umamiWebsiteId
-		)
-		expect(container.textContent).toContain('Investor Relations')
-	})
-
-	test('preserves each landing and its internal versus external links on the server', () => {
-		container.innerHTML = renderToString(app('investors', InvestorsPage))
-		expect(container.querySelector('a[href="/spark"]')).not.toBeNull()
-		expect(container.querySelector('a[href="/odyssey-ecosystem"]')).toBeNull()
-		expect(container.querySelector('a[href="/kpk"]')).toBeNull()
-		expect(container.textContent).toContain('KPK')
-		container.innerHTML = renderToString(app('enterprise', InvestorsPage))
-		expect(container.querySelector('a[href="/odyssey-ecosystem"]')).not.toBeNull()
-		expect(container.querySelector('a[href="https://investors.defillama.com/spark"]')?.getAttribute('target')).toBe(
-			'_blank'
-		)
-		expect(container.textContent).not.toContain('KPK')
-	})
-
-	test('resolves an IR host on pages without site props before loading analytics', async () => {
+	test('an IR host without site props never loads the main-site tracker', async () => {
 		window.location.href = 'https://enterprise.defillama.com/404'
 		const view = app()
 		container.innerHTML = renderToString(view)
-		expect(renderedAnalyticsIds).toEqual([])
+		expect(container.querySelector('[data-website-id]')).toBeNull()
 		await act(async () => {
 			root = hydrateRoot(container, view)
 		})
-		expect(renderedAnalyticsIds.length).toBeGreaterThan(0)
-		expect(new Set(renderedAnalyticsIds)).toEqual(new Set([INVESTORS_SITES.enterprise.umamiWebsiteId]))
-		expect(checkParentAuth).toHaveBeenCalledTimes(1)
+		expect(new Set(renderedWebsiteIds)).toEqual(new Set(['1c194e22-d31d-4816-b803-8074419f1b3e']))
+		expect(trackerScript()).toEqual({
+			websiteId: '1c194e22-d31d-4816-b803-8074419f1b3e',
+			domains: 'enterprise.defillama.com'
+		})
+		expect(document.querySelectorAll(PARENT_BRIDGE)).toHaveLength(1)
 	})
 
-	test('keeps the shell projects, navigation and scroll behavior specific to each site', async () => {
-		const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
-		root = createRoot(container)
-		await act(async () => root?.render(app('investors', InvestorsDashboard)))
-		const click = async (label: string) => {
-			const button = Array.from(container.querySelectorAll('nav button')).find((node) => node.textContent === label)
-			expect(button).toBeDefined()
-			await act(async () => button?.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-		}
-		expect(container.querySelector('nav')?.textContent).toContain('Spark')
-		expect(container.querySelector('nav')?.textContent).not.toContain('Odyssey')
-		await click('Metrics')
-		expect(container.querySelector('[data-content]')?.textContent).toBe('Spark:metrics')
-		await click('NEAR')
-		expect(container.querySelector('[data-content]')?.textContent).toBe('NEAR:overview')
-		expect(scroll).toHaveBeenCalledTimes(2)
-		await act(async () => root?.render(app('enterprise', InvestorsDashboard)))
-		expect(container.querySelector('nav')?.textContent).toContain('Odyssey Ecosystem')
-		expect(container.querySelector('nav')?.textContent).not.toContain('Spark')
-		expect(container.querySelector('[data-content]')?.textContent).toBe('Odyssey Ecosystem:overview')
-	})
-
-	test('keeps the parent auth bridge on the main site and off both IR sites', async () => {
+	test('the main site answers IR auth checks for a signed-in visitor and the IR sites do not', async () => {
+		// A signed-in visitor's saved settings load too; an empty config keeps them out of the way.
+		session.serve({ [`${AUTH_SERVER}/user/config`]: {} })
+		pb.authStore.save(session.token, session.record)
 		const postMessage = vi.fn()
-		const message = () =>
-			new MessageEvent('message', {
-				origin: 'https://investors.defillama.com',
-				data: { type: 'auth-check' },
-				source: { postMessage } as unknown as Window
-			})
-		localStorage.setItem('pocketbase_auth', JSON.stringify({ token: 'test-only', record: { id: 'test-user' } }))
+		const authCheck = () =>
+			window.dispatchEvent(
+				new MessageEvent('message', {
+					origin: 'https://investors.defillama.com',
+					data: { type: 'auth-check' },
+					source: { postMessage } as unknown as Window
+				})
+			)
 		root = createRoot(container)
 		await act(async () => root?.render(app()))
-		window.dispatchEvent(message())
+		authCheck()
 		expect(postMessage).toHaveBeenCalledWith(
-			{ type: 'auth-response', user: { id: 'test-user' } },
+			{ type: 'auth-response', user: { id: 'investor' } },
 			{ targetOrigin: 'https://investors.defillama.com' }
 		)
-		expect(checkParentAuth).not.toHaveBeenCalled()
-		expect(container.querySelector<HTMLElement>('[data-website-id]')?.dataset.websiteId).toBe(
-			'ca346731-f7ec-437f-9727-162f29bb67ae'
-		)
+		expect(trackerScript()).toEqual({ websiteId: 'ca346731-f7ec-437f-9727-162f29bb67ae', domains: 'defillama.com' })
+		// The main site is the parent, so it never opens a bridge to itself.
+		expect(document.querySelector(PARENT_BRIDGE)).toBeNull()
+
 		postMessage.mockClear()
 		await act(async () => root?.render(app('investors')))
-		window.dispatchEvent(message())
-		expect(postMessage).not.toHaveBeenCalled()
+		authCheck()
 		await act(async () => root?.render(app('enterprise')))
-		window.dispatchEvent(message())
+		authCheck()
 		expect(postMessage).not.toHaveBeenCalled()
 	})
 })

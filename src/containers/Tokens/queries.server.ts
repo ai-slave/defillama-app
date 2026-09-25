@@ -8,12 +8,7 @@ import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOvervi
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
-import {
-	formatFeeSwitchStatus,
-	getEquityPieTone,
-	getTokenRightsPrimaryValueLabel,
-	parseTokenRightsEntry
-} from '~/containers/TokenRights/utils'
+import { formatFeeSwitchStatus, getEquityPieTone, parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import { getEmissionAmountBreakdownOverInterval } from '~/containers/Unlocks/eventAmount'
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { cachedResult } from '~/server/api/resultCache'
@@ -129,7 +124,7 @@ function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 		protocolName: parsed.overview.protocolName,
 		identityTokens: parsed.overview.identityTokens,
 		utilityItems: parsed.overview.utilityItems,
-		primaryValue: getTokenRightsPrimaryValueLabel(parsed.valueAccrual.primary),
+		primaryValue: parsed.valueAccrual.primary,
 		primaryDetails: parsed.valueAccrual.details,
 		governance,
 		governanceTokens: parsed.governance.decisionTokenDisplay.displayTokens,
@@ -576,6 +571,24 @@ export async function getTokensSourceData(): Promise<TokensSourceData> {
 	})
 }
 
+/** Categories ordered by the summed market cap of every token in them, the order token pages list them in. */
+export function rankTokenCategoriesByMarketCap(
+	marketSnapshot: Pick<TokensMarketSnapshot, 'tokens' | 'currentMetricsById'>,
+	metadata: Pick<MetadataCache, 'tokenFilterMetadata'>
+): Array<TokensFilterOption> {
+	const filters = metadata.tokenFilterMetadata
+	const rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>> = []
+	for (const token of marketSnapshot.tokens) {
+		const currentMetrics = marketSnapshot.currentMetricsById[token.id.toLowerCase()]
+		rows.push({
+			marketCap: currentMetrics ? currentMetrics.mcap : (token.market_cap ?? null),
+			chains: [],
+			categories: filters.tokens[token.id.toLowerCase()]?.categories ?? []
+		})
+	}
+	return buildTokenFilterOptions(rows, metadata).categoryOptions
+}
+
 export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<TokenOverviewCurrentSnapshot> {
 	const marketSnapshot = await getTokensMarketSnapshot()
 	const metadata = (await import('~/utils/metadata')).default
@@ -584,18 +597,7 @@ export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<
 		'token-category-order',
 		`${marketSnapshot.version}:${filters.generatedAt}`,
 		{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 2 },
-		async () => {
-			const rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>> = []
-			for (const token of marketSnapshot.tokens) {
-				const currentMetrics = marketSnapshot.currentMetricsById[token.id.toLowerCase()]
-				rows.push({
-					marketCap: currentMetrics ? currentMetrics.mcap : (token.market_cap ?? null),
-					chains: [],
-					categories: filters.tokens[token.id.toLowerCase()]?.categories ?? []
-				})
-			}
-			return buildTokenFilterOptions(rows, metadata).categoryOptions
-		}
+		async () => rankTokenCategoriesByMarketCap(marketSnapshot, metadata)
 	)
 	const categoryIds = filters.tokens[geckoId.toLowerCase()]?.categories ?? []
 	return {

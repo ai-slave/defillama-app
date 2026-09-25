@@ -1,42 +1,41 @@
-import type { GetStaticProps } from 'next'
 import { afterEach, expect, test, vi } from 'vitest'
+import { fetchRoundup } from '~/containers/Roundup/api'
 
 const fetchWithPoolingOnServer = vi.hoisted(() => vi.fn())
-
 vi.mock('~/utils/http-client', () => ({ fetchWithPoolingOnServer }))
-vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: (_label: string, fn: GetStaticProps) => fn
-}))
-vi.mock('~/utils/maxAgeForNext', () => ({ maxAgeForNext: () => 123 }))
-vi.mock('~/components/Announcement', () => ({ Announcement: () => null }))
-vi.mock('~/layout', () => ({ default: () => null }))
-vi.mock('~/ui/Card', () => ({ Card: () => null }))
-
-import { getStaticProps } from '~/pages/roundup'
 
 afterEach(() => {
-	vi.unstubAllEnvs()
 	vi.restoreAllMocks()
 	fetchWithPoolingOnServer.mockReset()
 })
 
-test.each([undefined, '', ' ', '\t\n'])('returns a revalidating 404 for missing or blank token %j', async (token) => {
-	vi.stubEnv('ROUND_UP_BOT_TOKEN', token)
-	vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-	await expect(getStaticProps({})).resolves.toEqual({ notFound: true, revalidate: 123 })
-	expect(fetchWithPoolingOnServer).not.toHaveBeenCalled()
-})
+test.each([undefined, '', ' ', '\t\n'])(
+	'skips the roundup without fetching for missing or blank token %j',
+	async (token) => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+		await expect(fetchRoundup(token)).resolves.toBeNull()
+		expect(fetchWithPoolingOnServer).not.toHaveBeenCalled()
+	}
+)
 
-test('fetches roundup with a configured token', async () => {
-	vi.stubEnv('ROUND_UP_BOT_TOKEN', 'token')
-	fetchWithPoolingOnServer.mockResolvedValue(new Response('[]'))
-	await expect(getStaticProps({})).resolves.toEqual({ props: { messages: [], date: '' }, revalidate: 123 })
+test('parses the latest roundup into section headers and linked titles', async () => {
+	// Discord returns newest first; the roundup title message is the oldest part of the latest post.
+	const messages = [
+		{ content: '→ Aave ships V4 [2]\n[1]: https://a.example\n[2]: https://b.example' },
+		{ content: '🦙 Llama News Round-Up | Sep 24\n📰 News\n→ Uniswap fee switch [1]\n1/2' },
+		{ content: '🦙 Llama News Round-Up | Sep 23\nOlder post' }
+	]
+	fetchWithPoolingOnServer.mockResolvedValue(Response.json(messages))
+
+	await expect(fetchRoundup('token')).resolves.toEqual({
+		date: 'Sep 24',
+		messages: ['📰 News', ['Uniswap fee switch', 'https://a.example'], ['Aave ships V4', 'https://b.example']]
+	})
 	const headers = fetchWithPoolingOnServer.mock.calls[0][1].headers as Headers
 	expect(headers.get('Authorization')).toBe('Bot token')
 })
 
-test('propagates upstream failures with a configured token', async () => {
-	vi.stubEnv('ROUND_UP_BOT_TOKEN', 'token')
+test('propagates upstream failures', async () => {
 	fetchWithPoolingOnServer.mockResolvedValue(new Response(null, { status: 401, statusText: 'Unauthorized' }))
-	await expect(getStaticProps({})).rejects.toThrow('Failed to fetch roundup messages: 401 Unauthorized')
+	await expect(fetchRoundup('token')).rejects.toThrow('Failed to fetch roundup messages: 401 Unauthorized')
 })

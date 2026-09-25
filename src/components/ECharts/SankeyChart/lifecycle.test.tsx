@@ -1,166 +1,99 @@
 // @vitest-environment happy-dom
 
+import * as echarts from 'echarts/core'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => {
-	const instance = {
-		dispose: vi.fn(),
-		getOption: vi.fn(() => ({})),
-		isDisposed: vi.fn(() => false),
-		resize: vi.fn(),
-		setOption: vi.fn()
-	}
-
-	return {
-		init: vi.fn(() => instance),
-		instance,
-		onElementResize: undefined as ((isVisible: boolean) => void) | undefined,
-		use: vi.fn()
-	}
-})
-
-vi.mock('echarts/core', () => ({
-	init: mocks.init,
-	use: mocks.use
-}))
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	useDarkModeManager: () => [false]
-}))
-
-vi.mock('~/hooks/useChartResize', () => ({
-	useChartResize: (
-		_instanceRef: unknown,
-		_elementRef: unknown,
-		options?: { onVisibilityChange?: (isVisible: boolean) => void }
-	) => {
-		mocks.onElementResize = options?.onVisibilityChange
-	}
-}))
-
-vi.mock('~/hooks/useMedia', () => ({
-	useMedia: () => false
-}))
-
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/test/chartCanvas'
 import SankeyChart from '.'
 
-describe('SankeyChart lifecycle', () => {
-	let container: HTMLDivElement
-	let root: Root
-	let width: number
-	let height: number
+let container: HTMLDivElement
+let root: Root
+let size = { width: 0, height: 0 }
+let notifyResize: () => void = () => {}
 
-	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		width = 0
-		height = 0
-		mocks.onElementResize = undefined
-		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-			() =>
-				({
-					bottom: height,
-					height,
-					left: 0,
-					right: width,
-					top: 0,
-					width,
-					x: 0,
-					y: 0,
-					toJSON: () => ({})
-				}) as DOMRect
-		)
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-		vi.clearAllMocks()
-	})
+beforeEach(() => {
+	installChartCanvas({ width: 640, height: 360 })
+	// happy-dom lays nothing out: the element reports the size a test sets, and the observer fires when told.
+	size = { width: 0, height: 0 }
+	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+		() => new DOMRect(0, 0, size.width, size.height)
+	)
+	vi.stubGlobal(
+		'ResizeObserver',
+		class {
+			private targets = new Set<Element>()
+			constructor(private callback: ResizeObserverCallback) {
+				notifyResize = () =>
+					this.callback(
+						[...this.targets].map(
+							(target) => ({ target, contentRect: target.getBoundingClientRect() }) as ResizeObserverEntry
+						),
+						this as unknown as ResizeObserver
+					)
+			}
+			observe(target: Element) {
+				this.targets.add(target)
+			}
+			unobserve(target: Element) {
+				this.targets.delete(target)
+			}
+			disconnect() {
+				this.targets.clear()
+			}
+		}
+	)
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
 
-	afterEach(async () => {
-		if (container.childNodes.length > 0) await act(async () => root.unmount())
-		container.remove()
-		vi.restoreAllMocks()
-	})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	vi.unstubAllGlobals()
+	vi.restoreAllMocks()
+})
 
-	test('defers initialization until a hidden tab becomes visible and uses the latest data', async () => {
-		const onReady = vi.fn()
-		const initialNodes = [{ name: 'Revenue' }, { name: 'Protocol' }]
+const flow = (target: string, value: number) => ({
+	nodes: [{ name: 'Revenue' }, { name: target }],
+	links: [{ source: 'Revenue', target, value }]
+})
 
-		await act(async () =>
-			root.render(
-				<SankeyChart
-					nodes={initialNodes}
-					links={[{ source: 'Revenue', target: 'Protocol', value: 10 }]}
-					onReady={onReady}
-				/>
-			)
-		)
+function shownLinks() {
+	const element = container.querySelector<HTMLElement>('[_echarts_instance_]')
+	if (!element) return null
+	return (echarts.getInstanceByDom(element)!.getOption() as Record<string, any>).series[0].links
+}
 
-		expect(mocks.init).not.toHaveBeenCalled()
-		expect(mocks.instance.setOption).not.toHaveBeenCalled()
-		expect(onReady).not.toHaveBeenCalled()
+test('waits for a hidden tab to become visible, then draws the latest flow once', async () => {
+	const onReady = vi.fn()
+	await act(async () => root.render(<SankeyChart {...flow('Protocol', 10)} onReady={onReady} />))
+	await act(async () => root.render(<SankeyChart {...flow('Treasury', 20)} onReady={onReady} />))
 
-		await act(async () =>
-			root.render(
-				<SankeyChart
-					nodes={[{ name: 'Revenue' }, { name: 'Treasury' }]}
-					links={[{ source: 'Revenue', target: 'Treasury', value: 20 }]}
-					onReady={onReady}
-				/>
-			)
-		)
+	expect(shownLinks()).toBeNull()
+	expect(onReady).not.toHaveBeenCalled()
 
-		width = 640
-		height = 360
-		await act(async () => mocks.onElementResize?.(true))
+	size = { width: 640, height: 360 }
+	await act(async () => notifyResize())
 
-		expect(mocks.init).toHaveBeenCalledOnce()
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-		expect(mocks.instance.setOption.mock.calls[0][0].series.links).toEqual([
-			{ source: 'Revenue', target: 'Treasury', value: 20 }
-		])
-		expect(onReady).toHaveBeenCalledOnce()
-		expect(onReady).toHaveBeenCalledWith(mocks.instance)
+	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Treasury', value: 20 }])
+	expect(onReady).toHaveBeenCalledOnce()
+})
 
-		await act(async () => mocks.onElementResize?.(true))
+test('holds updates while an initialized chart is hidden and applies the latest one when shown again', async () => {
+	size = { width: 640, height: 360 }
+	await act(async () => root.render(<SankeyChart {...flow('Protocol', 10)} />))
+	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Protocol', value: 10 }])
 
-		expect(mocks.init).toHaveBeenCalledOnce()
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-	})
+	size = { width: 640, height: 0 }
+	await act(async () => notifyResize())
+	await act(async () => root.render(<SankeyChart {...flow('Treasury', 20)} />))
 
-	test('defers option updates while an initialized chart is hidden', async () => {
-		width = 640
-		height = 360
+	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Protocol', value: 10 }])
 
-		await act(async () =>
-			root.render(
-				<SankeyChart
-					nodes={[{ name: 'Revenue' }, { name: 'Protocol' }]}
-					links={[{ source: 'Revenue', target: 'Protocol', value: 10 }]}
-				/>
-			)
-		)
+	size = { width: 640, height: 360 }
+	await act(async () => notifyResize())
 
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-
-		await act(async () => mocks.onElementResize?.(false))
-		await act(async () =>
-			root.render(
-				<SankeyChart
-					nodes={[{ name: 'Revenue' }, { name: 'Treasury' }]}
-					links={[{ source: 'Revenue', target: 'Treasury', value: 20 }]}
-				/>
-			)
-		)
-
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-
-		await act(async () => mocks.onElementResize?.(true))
-
-		expect(mocks.instance.setOption).toHaveBeenCalledTimes(2)
-		expect(mocks.instance.setOption.mock.calls[1][0].series.links).toEqual([
-			{ source: 'Revenue', target: 'Treasury', value: 20 }
-		])
-	})
+	expect(shownLinks()).toEqual([{ source: 'Revenue', target: 'Treasury', value: 20 }])
 })

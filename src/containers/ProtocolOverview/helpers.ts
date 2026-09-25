@@ -72,37 +72,46 @@ const getSortedChainValues = (valuesByChain: Record<string, number>): Array<[str
 export const useFinalTVL = (props: Pick<IProtocolOverviewPageData, 'currentTvlByChain' | 'oracleTvs'>) => {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
-	return useMemo(() => {
-		const tvlByChainMap: Record<string, number> = {}
-		const toggleOptions: Array<ToggleOption> = []
-		const oracleTvsByChainMap: Record<string, number> = {}
+	return useMemo(
+		() => computeFinalTVL(props.currentTvlByChain, props.oracleTvs, extraTvlsEnabled),
+		[extraTvlsEnabled, props.currentTvlByChain, props.oracleTvs]
+	)
+}
 
-		const tvl = props.currentTvlByChain
-			? aggregateTvlByChain({
-					source: props.currentTvlByChain,
-					destination: tvlByChainMap,
-					extraTvlsEnabled,
-					toggleOptions
-				})
-			: 0
+export function computeFinalTVL(
+	currentTvlByChain: IProtocolOverviewPageData['currentTvlByChain'],
+	oracleTvsSource: IProtocolOverviewPageData['oracleTvs'],
+	extraTvlsEnabled: Record<string, boolean>
+) {
+	const tvlByChainMap: Record<string, number> = {}
+	const toggleOptions: Array<ToggleOption> = []
+	const oracleTvsByChainMap: Record<string, number> = {}
 
-		const oracleTvs = props.oracleTvs
-			? aggregateTvlByChain({
-					source: props.oracleTvs,
-					destination: oracleTvsByChainMap,
-					extraTvlsEnabled,
-					toggleOptions
-				})
-			: null
+	const tvl = currentTvlByChain
+		? aggregateTvlByChain({
+				source: currentTvlByChain,
+				destination: tvlByChainMap,
+				extraTvlsEnabled,
+				toggleOptions
+			})
+		: 0
 
-		return {
-			tvl,
-			tvlByChain: getSortedChainValues(tvlByChainMap),
-			oracleTvs,
-			oracleTvsByChain: getSortedChainValues(oracleTvsByChainMap),
-			toggleOptions
-		}
-	}, [extraTvlsEnabled, props.currentTvlByChain, props.oracleTvs])
+	const oracleTvs = oracleTvsSource
+		? aggregateTvlByChain({
+				source: oracleTvsSource,
+				destination: oracleTvsByChainMap,
+				extraTvlsEnabled,
+				toggleOptions
+			})
+		: null
+
+	return {
+		tvl,
+		tvlByChain: getSortedChainValues(tvlByChainMap),
+		oracleTvs,
+		oracleTvsByChain: getSortedChainValues(oracleTvsByChainMap),
+		toggleOptions
+	}
 }
 
 export const getPrimaryValueLabelType = (category: string | null | undefined) => {

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
 	getUpcomingUnlockGroupByQueryValue,
-	getUpcomingUnlockTypeLabel,
 	getUpcomingUnlockTypeQueryValue,
 	getUpcomingUnlockViewModeQueryValue,
 	parseUpcomingUnlockChartState
@@ -37,9 +36,5 @@ describe('upcoming unlock chart URL state', () => {
 		expect(getUpcomingUnlockTypeQueryValue('cliff')).toBe('cliff')
 		expect(getUpcomingUnlockGroupByQueryValue('monthly')).toBe('monthly')
 		expect(getUpcomingUnlockViewModeQueryValue('Breakdown View')).toBe('breakdown')
-	})
-
-	test('labels the combined view as all unlocks', () => {
-		expect(getUpcomingUnlockTypeLabel('all')).toBe('All Unlocks')
 	})
 })

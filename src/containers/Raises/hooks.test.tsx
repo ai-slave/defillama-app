@@ -1,15 +1,10 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { serializeCsv } from '~/utils/csv'
-import { useRaisesData } from './hooks'
+import { buildRaisesData } from './hooks'
 import type { Raise } from './model'
-import { summarizeRaises } from './summary'
 import { prepareRaisesCsv, raisesColumns, tableFeaturesConfig } from './Table'
 import { getRaisesFiltersList } from './utils'
-
-const router = vi.hoisted(() => ({ query: {} as Record<string, string | Array<string>> }))
-vi.mock('next/router', () => ({ useRouter: () => router }))
 
 function raise(name: string, amountUsd: number | null, overrides: Partial<Raise> = {}): Raise {
 	return {
@@ -30,34 +25,31 @@ function raise(name: string, amountUsd: number | null, overrides: Partial<Raise>
 }
 
 function transform(raises: Array<Raise>, query: Record<string, string | Array<string>> = {}) {
-	router.query = query
-	let result!: ReturnType<typeof useRaisesData>
-	function Probe() {
-		result = useRaisesData({ raises, ...getRaisesFiltersList({ raises }) })
-		return null
-	}
-	renderToStaticMarkup(<Probe />)
-	return result
+	return buildRaisesData({ raises, ...getRaisesFiltersList({ raises }) }, query)
 }
 
 describe('Raises filters and chart population', () => {
 	const rows = [raise('Unknown', null), raise('Zero', 0), raise('Small', 500_000), raise('Large', 2_000_000)]
 
 	test.each([
-		{ query: {}, names: ['Unknown', 'Zero', 'Small', 'Large'] },
-		{ query: { maxRaised: '1000000' }, names: ['Zero', 'Small'] },
-		{ query: { minRaised: '500000' }, names: ['Small', 'Large'] },
-		{ query: { minRaised: '500000', maxRaised: '1000000' }, names: ['Small'] },
-		{ query: { maxRaised: '0' }, names: ['Zero'] },
-		{ query: { minRaised: '0' }, names: ['Zero', 'Small', 'Large'] },
-		{ query: { minRaised: 'invalid', maxRaised: '' }, names: ['Unknown', 'Zero', 'Small', 'Large'] }
-	])('keeps row, chart and CSV populations consistent for $query', ({ query, names }) => {
+		{ query: {}, names: ['Unknown', 'Zero', 'Small', 'Large'], total: 2_500_000, undisclosed: 1 },
+		{ query: { maxRaised: '1000000' }, names: ['Zero', 'Small'], total: 500_000, undisclosed: 0 },
+		{ query: { minRaised: '500000' }, names: ['Small', 'Large'], total: 2_500_000, undisclosed: 0 },
+		{ query: { minRaised: '500000', maxRaised: '1000000' }, names: ['Small'], total: 500_000, undisclosed: 0 },
+		{ query: { maxRaised: '0' }, names: ['Zero'], total: 0, undisclosed: 0 },
+		{ query: { minRaised: '0' }, names: ['Zero', 'Small', 'Large'], total: 2_500_000, undisclosed: 0 },
+		{
+			query: { minRaised: 'invalid', maxRaised: '' },
+			names: ['Unknown', 'Zero', 'Small', 'Large'],
+			total: 2_500_000,
+			undisclosed: 1
+		}
+	])('keeps row, chart and CSV populations consistent for $query', ({ query, names, total, undisclosed }) => {
 		const data = transform(rows, query)
 		expect(data.filteredRaisesList.map((row) => row.name)).toEqual(names)
-		const expectedTotal = data.filteredRaisesList.reduce((sum, row) => sum + (row.amountUsd ?? 0), 0)
-		expect(data.totalAmountRaised).toBe(expectedTotal)
-		expect(data.fundingSummary).toEqual(summarizeRaises(data.filteredRaisesList))
-		expect(data.monthlyInvestmentChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), expectedTotal]])
+		expect(data.totalAmountRaised).toBe(total)
+		expect(data.fundingSummary).toEqual({ totalUsd: total, undisclosedCount: undisclosed })
+		expect(data.monthlyInvestmentChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), total]])
 		expect(data.fundingRoundsByMonthChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), names.length]])
 		const table = constructTestTable({
 			features: tableFeaturesConfig,

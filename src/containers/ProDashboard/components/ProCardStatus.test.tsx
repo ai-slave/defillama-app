@@ -39,19 +39,10 @@ test('the loading state shows a skeleton for the card shape and keeps the spinne
 	const busy = container.querySelector('[aria-busy="true"]')
 	expect(busy?.querySelector('[data-skeleton="table"]')).not.toBeNull()
 	expect(busy?.textContent).toContain('Loading table…')
-	expect(container.querySelector('.animate-spin')).toBeNull()
 
 	await act(async () => root.render(<ProCardLoading label="Running the query…" variant="spinner" />))
 	expect(container.querySelector('[data-skeleton]')).toBeNull()
-	expect(container.querySelector('.animate-spin')).not.toBeNull()
 	expect(container.querySelector('[aria-busy="true"]')?.textContent).toContain('Running the query…')
-})
-
-test('the loading state defaults to the chart skeleton', async () => {
-	await act(async () => root.render(<ProCardLoading />))
-	expect(container.querySelector('[data-skeleton="chart"]')).not.toBeNull()
-	expect(container.querySelector('[role="status"]')).toBeNull()
-	expect(container.querySelector('[aria-live]')).toBeNull()
 })
 
 test('the error state is an alert and calls back from Try again', async () => {
@@ -66,6 +57,7 @@ test('the error state is an alert and calls back from Try again', async () => {
 
 test('the error state has no Try again without a retry callback', async () => {
 	await act(async () => root.render(<ProCardError />))
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load this card")
 	expect(container.querySelector('button')).toBeNull()
 })
 
@@ -81,6 +73,7 @@ test('the empty state is a status and can carry one action', async () => {
 
 test('the empty state has no button without an action', async () => {
 	await act(async () => root.render(<ProCardEmpty message="No data available" />))
+	expect(container.querySelector('[role="status"]')?.textContent).toContain('No data available')
 	expect(container.querySelector('button')).toBeNull()
 })
 

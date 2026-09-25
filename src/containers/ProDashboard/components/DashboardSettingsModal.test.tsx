@@ -1,17 +1,15 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { DashboardSettingsModal } from './DashboardSettingsModal'
 
-const auth = vi.hoisted(() => ({ hasActiveSubscription: true }))
-vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 
+const session = installSubscriberSession('owner', { resolved: true })
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 const save = vi.fn(async () => {})
 const close = vi.fn()
 const remove = vi.fn(async () => {})
@@ -19,9 +17,7 @@ const move = vi.fn(async () => {})
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	auth.hasActiveSubscription = true
 	vi.clearAllMocks()
-	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -29,7 +25,6 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 
@@ -43,7 +38,7 @@ async function renderSettings(
 ) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<DashboardSettingsModal
 					isOpen
 					onClose={close}
@@ -56,7 +51,7 @@ async function renderSettings(
 					onMoveTeam={move}
 					{...teamProps}
 				/>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }

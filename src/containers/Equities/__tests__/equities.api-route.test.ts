@@ -1,69 +1,39 @@
-import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-
-const { getEquitiesSnapshotMock, getEquitiesTablePageMock, getEquitiesTreemapPageMock } = vi.hoisted(() => ({
-	getEquitiesSnapshotMock: vi.fn(),
-	getEquitiesTablePageMock: vi.fn(),
-	getEquitiesTreemapPageMock: vi.fn()
-}))
-
-vi.mock('~/containers/Equities/server/tableData.server', () => ({
-	getEquitiesSnapshot: getEquitiesSnapshotMock,
-	getEquitiesTablePage: getEquitiesTablePageMock,
-	getEquitiesTreemapPage: getEquitiesTreemapPageMock
-}))
-
-import tableHandler from '~/pages/api/public/equities'
-import marketMapHandler from '~/pages/api/public/equities/market-map'
-
-const snapshot = { version: 'v1' }
-
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { EQUITIES_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { company } from './companyFixture'
+const http = installFixtureFetch()
 beforeEach(() => {
-	vi.clearAllMocks()
-	getEquitiesSnapshotMock.mockResolvedValue(snapshot)
-	getEquitiesTablePageMock.mockResolvedValue({ rows: [1] })
-	getEquitiesTreemapPageMock.mockResolvedValue({ rows: [2] })
+	vi.resetModules()
+	vi.stubEnv('REDIS_URL', '')
+})
+afterEach(() => vi.unstubAllEnvs())
+
+test('filters and pages actual upstream companies through the public route', async () => {
+	http.serve({
+		[`${EQUITIES_SERVER_URL}/companies`]: [
+			company({ ticker: 'AAPL', name: 'Apple', marketCap: 300 }),
+			company({ ticker: 'OTHER', name: 'Another Company', marketCap: 200 }),
+			company({ ticker: 'APLE', name: 'Apple Hospitality', marketCap: 100 })
+		]
+	})
+	const { default: handler } = await import('~/pages/api/public/equities')
+	const res = createMockNextApiResponse()
+	await handler(createMockNextApiRequest({ method: 'GET', query: { page: '2', pageSize: '1', search: 'apple' } }), res)
+	expect(res.statusCode).toBe(200)
+	expect(res.json.mock.calls.at(-1)?.[0]).toMatchObject({
+		rows: [expect.objectContaining({ ticker: 'APLE', marketCap: 100 })],
+		total: 2
+	})
 })
 
-describe('equities api routes', () => {
-	test('serves a table page against the shared snapshot', async () => {
-		const req = {
-			method: 'GET',
-			url: '/api/public/equities?page=2&search=apple',
-			query: { page: '2', search: 'apple' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tableHandler(req, res)
-
-		expect(getEquitiesTablePageMock).toHaveBeenCalledWith(snapshot, { page: '2', search: 'apple' })
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ rows: [1] })
-	})
-
-	test('serves the market map dataset from its own route', async () => {
-		const req = {
-			method: 'GET',
-			url: '/api/public/equities/market-map?sizeMetric=revenueTTM',
-			query: { sizeMetric: 'revenueTTM' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await marketMapHandler(req, res)
-
-		expect(getEquitiesTreemapPageMock).toHaveBeenCalledWith(snapshot, { sizeMetric: 'revenueTTM' })
-		expect(getEquitiesTablePageMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ rows: [2] })
-	})
-
-	test('answers 502 when the snapshot cannot be built', async () => {
-		getEquitiesSnapshotMock.mockRejectedValue(new Error('upstream down'))
-		const res = createMockNextApiResponse()
-
-		await tableHandler({ method: 'GET', url: '/api/public/equities', query: {} } as unknown as NextApiRequest, res)
-
-		expect(res.status).toHaveBeenCalledWith(502)
-	})
+test('answers 502 when neither the producer nor a saved snapshot is available', async () => {
+	// A non-retryable failure keeps the test off the retry backoff; any producer failure takes this path.
+	http.serve({ [`${EQUITIES_SERVER_URL}/companies`]: fixtureStatus(404) })
+	const { default: handler } = await import('~/pages/api/public/equities')
+	const res = createMockNextApiResponse()
+	await handler(createMockNextApiRequest({ method: 'GET' }), res)
+	expect(res.statusCode).toBe(502)
+	expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch equities data' })
 })

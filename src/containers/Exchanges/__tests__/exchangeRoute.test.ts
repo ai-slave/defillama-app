@@ -1,38 +1,19 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { MARKETS_SERVER_URL } from '~/constants'
+import { getStaticProps } from '~/pages/exchange/[slug]'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { matchesDefillamaCex, nativeTokenChange24h } from '../profileEnrichment'
 
-afterEach(() => {
-	vi.clearAllMocks()
-	vi.resetModules()
-})
+const http = installFixtureFetch()
 
-function setupPageModule() {
-	const loadProfile = vi.fn().mockResolvedValue({ slug: 'coinbase' })
-	vi.doMock('~/containers/Exchanges/ExchangeProfile', () => ({ ExchangeProfile: () => null }))
-	vi.doMock('~/containers/Exchanges/master.api', () => ({ fetchExchangeVenueSeries: vi.fn() }))
-	vi.doMock('~/containers/Exchanges/server/master.loaders', () => ({
-		loadMasterExchangeProfile: loadProfile,
-		MasterExchangeNotFoundError: class extends Error {}
-	}))
-	vi.doMock('~/layout', () => ({ default: () => null }))
-	vi.doMock('~/utils/maxAgeForNext', () => ({ maxAgeForNext: () => 123 }))
-	vi.doMock('~/utils/perf', () => ({ withPerformanceLogging: (_label: string, fn: unknown) => fn }))
-	return { loadProfile, page: import('~/pages/exchange/[slug]') }
-}
-
-describe('exchange profile route slugs', () => {
-	test('matches event names only through the canonical DefiLlama CEX slug', async () => {
-		const { page } = setupPageModule()
-		const { matchesDefillamaCex } = await page
-
+describe('exchange profile enrichment', () => {
+	test('matches hack and raise names only through the canonical DefiLlama CEX slug', () => {
 		expect(matchesDefillamaCex('Binance', 'binance-cex')).toBe(true)
 		expect(matchesDefillamaCex('Crypto.com', 'crypto-com')).toBe(true)
 		expect(matchesDefillamaCex('Coinbase Pro', 'coinbase')).toBe(false)
 	})
 
-	test('derives the native token 24h change from canonical price history', async () => {
-		const { page } = setupPageModule()
-		const { nativeTokenChange24h } = await page
-
+	test('derives the native token 24h change from canonical price history', () => {
 		expect(
 			nativeTokenChange24h(110, 'coingecko:venue', {
 				coins: { 'coingecko:venue': { prices: [{ timestamp: 1, price: 100 }] } }
@@ -40,23 +21,19 @@ describe('exchange profile route slugs', () => {
 		).toBeCloseTo(10)
 		expect(nativeTokenChange24h(110, null, { coins: {} })).toBeNull()
 	})
+})
 
-	test('returns notFound for a noncanonical slug without loading a profile', async () => {
-		const { loadProfile, page } = setupPageModule()
-
-		await expect((await page).getStaticProps({ params: { slug: 'coinbase.eu' } } as never)).resolves.toEqual({
-			notFound: true
-		})
-		expect(loadProfile).not.toHaveBeenCalled()
+describe('exchange profile route', () => {
+	test('returns notFound for a noncanonical slug without fetching', async () => {
+		expect(await getStaticProps({ params: { slug: 'coinbase.eu' } })).toEqual({ notFound: true })
+		expect(http.requests).toHaveLength(0)
 	})
 
-	test('loads an exact canonical lowercase slug unchanged', async () => {
-		const { loadProfile, page } = setupPageModule()
-
-		await expect((await page).getStaticProps({ params: { slug: 'coinbase' } } as never)).resolves.toMatchObject({
-			props: { profile: { slug: 'coinbase' } },
-			revalidate: 123
+	test('returns notFound for a venue the markets server does not publish', async () => {
+		http.serve({
+			[`${MARKETS_SERVER_URL}/exchanges/unknown/metadata.json`]: fixtureStatus(404, { error: 'Not Found' })
 		})
-		expect(loadProfile).toHaveBeenCalledWith('coinbase')
+
+		expect(await getStaticProps({ params: { slug: 'unknown' } })).toEqual({ notFound: true })
 	})
 })

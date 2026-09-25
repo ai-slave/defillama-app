@@ -230,14 +230,14 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	test('clears arm errors before the next duel starts', () => {
+	test('clears arm errors when the next duel starts', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
 		act(() => duel.current.handleArmEvent({ type: 'error', content: 'arm failed', arm: 'a' }))
 		expect(duel.current.a.error).toBe('arm failed')
 
-		act(() => duel.current.reset())
+		// The server can open the next duel without the page resetting first.
 		act(() => duel.current.start('pair-2'))
 
 		expect(duel.current.a.error).toBeNull()

@@ -1,124 +1,55 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow } from '../types'
-
-// getEarnPage pulls its rows from getEnrichedEarn; mock it so the test controls the dataset.
-const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
-vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
-vi.mock('../snapshot', async (importOriginal) => ({
-	...(await importOriginal<typeof import('../snapshot')>()),
-	readYieldsMeta: () => Promise.resolve({ halal: [], meme_pool_ids: [] }),
-	readYieldsDepegs: () => Promise.resolve([]),
-	readYieldsExploits: () => Promise.resolve([])
-}))
-vi.mock('../server/raiseValuations', () => ({
-	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
-	getReferralUrls: () => Promise.resolve(new Map<string, string>())
-}))
-vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
-	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
-}))
-
+import { describe, expect, test } from 'vitest'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
 import { getEarnPage } from '../earn.server'
+import { apyOf, pool } from './earnSnapshot'
 
-const NULL_TRIPLE: ApyTriple = { base: null, reward: null, total: null }
-const ATTRIBUTES: EarnAttributes = {
-	stablecoin_only: false,
-	single_asset_exposure: false,
-	impermanent_loss_risk: false
-}
+installYieldsFixtures()
 
-function apyOf(total: number | null): ApyWindows {
-	return { current: { base: total, reward: null, total }, avg_7d: NULL_TRIPLE, avg_30d: NULL_TRIPLE }
-}
+const withTvl = (id: string, tvl: number) => pool(id, { tvl_usd: tvl, apy: apyOf(1) })
 
-function pool(id: string, tvl: number): EnrichedEarnRow {
-	return {
-		id,
-		pool_key: id,
-		pool_token: null,
-		display: { label: id, detail: null },
-		reference_asset_symbol: null,
-		url: null,
-		protocol: 'Aave',
-		chain: 'Ethereum',
-		underlying_tokens: [],
-		reward_tokens: [],
-		tvl_usd: tvl,
-		apy: apyOf(1),
-		intrinsic: null,
-		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
-		holders: { count: null, avg_position_usd: null, top_10_share_pct: null },
-		price_per_share: null,
-		volume_1d_usd: null,
-		attributes: ATTRIBUTES,
-		protocolSlug: 'aave',
-		chainSlug: 'ethereum',
-		isEvm: true,
-		category: 'Lending',
-		hasAudit: false,
-		potentialAirdrop: true,
-		trend: null,
-		tokenKeys: null,
-		available_supply_usd: null
-	}
-}
-
-const snapshotOf = (generationId: string) => ({ generationId }) as never
-
-beforeEach(() => {
-	getEnrichedEarn.mockReset()
-})
-
+// Page rows are built once per prepared table, so the same row object across calls means the
+// second call sliced the memoized table instead of preparing it again.
 describe('getEarnPage prepared-rows memoization', () => {
 	test('prepares once per (generation, filters) and slices every page from it', async () => {
-		const rows = Array.from({ length: 120 }, (_, index) => pool(`p${index}`, 1000 - index))
-		getEnrichedEarn.mockResolvedValue(rows)
-		const snapshot = snapshotOf('gen-slices')
+		const snapshot = yieldsSnapshot({
+			earn: Array.from({ length: 120 }, (_, index) => withTvl(`p${index}`, 1000 - index))
+		})
 
 		const first = await getEarnPage(snapshot, { pageSize: '50' })
 		const second = await getEarnPage(snapshot, { page: '2', pageSize: '50' })
+		const firstAgain = await getEarnPage(snapshot, { pageSize: '50' })
 
-		expect(getEnrichedEarn).toHaveBeenCalledTimes(1)
-		expect(first.rows).toHaveLength(50)
-		expect(second.rows).toHaveLength(50)
-		const firstRow = first.rows[0]
-		const secondRow = second.rows[0]
-		expect(firstRow).toBeDefined()
-		expect(secondRow).toBeDefined()
-		if (!firstRow || !secondRow) throw new Error('Missing prepared page row')
-		expect(firstRow.id).toBe('p0')
-		expect(secondRow.id).toBe('p50')
+		expect(first.rows.map((row) => row.id).slice(0, 2)).toEqual(['p0', 'p1'])
+		expect(second.rows.map((row) => row.id).slice(0, 2)).toEqual(['p50', 'p51'])
 		expect(new Set([...first.rows, ...second.rows].map((row) => row.id)).size).toBe(100)
-		expect(second.medianApy).toBe(first.medianApy)
+		expect(firstAgain.rows[0]).toBe(first.rows[0])
 	})
 
 	test('re-prepares when filters change and when the generation changes', async () => {
-		getEnrichedEarn.mockResolvedValue([pool('a', 10), pool('b', 5)])
-		const snapshot = snapshotOf('gen-filters')
+		const earn = [withTvl('a', 10), withTvl('b', 5)]
+		const snapshot = yieldsSnapshot({ earn })
 
-		await getEarnPage(snapshot, {})
-		await getEarnPage(snapshot, { minTvl: '7' })
-		expect(getEnrichedEarn).toHaveBeenCalledTimes(2)
+		const all = await getEarnPage(snapshot, {})
+		const filtered = await getEarnPage(snapshot, { minTvl: '7' })
+		const nextGeneration = await getEarnPage(yieldsSnapshot({ earn }), {})
 
-		await getEarnPage(snapshotOf('gen-filters-2'), {})
-		expect(getEnrichedEarn).toHaveBeenCalledTimes(3)
+		expect(filtered.rows.map((row) => row.id)).toEqual(['a'])
+		expect(filtered.rows[0]).not.toBe(all.rows[0])
+		expect(nextGeneration.rows[0]).not.toBe(all.rows[0])
 	})
 
 	test('signs page/pageSize out but sort in', async () => {
-		getEnrichedEarn.mockResolvedValue([pool('a', 10), pool('b', 5)])
-		const snapshot = snapshotOf('gen-sort')
+		const snapshot = yieldsSnapshot({ earn: [withTvl('a', 10), withTvl('b', 5)] })
 
 		const desc = await getEarnPage(snapshot, {})
 		const asc = await getEarnPage(snapshot, { sortBy: 'tvl', sortDesc: 'false' })
 
-		expect(getEnrichedEarn).toHaveBeenCalledTimes(2)
 		expect(desc.rows.map((row) => row.id)).toEqual(['a', 'b'])
 		expect(asc.rows.map((row) => row.id)).toEqual(['b', 'a'])
 	})
 
 	test('keeps the wire contract for clamped pages and pageSize=all', async () => {
-		getEnrichedEarn.mockResolvedValue(Array.from({ length: 7 }, (_, index) => pool(`p${index}`, 7 - index)))
-		const snapshot = snapshotOf('gen-wire')
+		const snapshot = yieldsSnapshot({ earn: Array.from({ length: 7 }, (_, index) => withTvl(`p${index}`, 7 - index)) })
 
 		const clamped = await getEarnPage(snapshot, { page: '99', pageSize: '3' })
 		expect(clamped).toMatchObject({ page: 3, pageSize: 3, total: 7, hasMore: false })

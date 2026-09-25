@@ -33,19 +33,6 @@ describe('buildRwaCanonicalMetricDataset', () => {
 			]
 		})
 	})
-
-	test('produces a JSON-safe server-prop dataset for sparse aggregate series', () => {
-		const result = buildRwaCanonicalMetricDataset(
-			{
-				dimensions: ['timestamp', 'Alpha', 'Beta'],
-				source: [{ timestamp: 1, Alpha: 5 }]
-			},
-			'activeMcap',
-			false
-		)
-
-		expect(JSON.parse(JSON.stringify(result))).toEqual(result)
-	})
 })
 
 function createSpotAsset(

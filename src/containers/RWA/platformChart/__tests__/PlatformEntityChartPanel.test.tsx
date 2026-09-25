@@ -3,31 +3,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAAssetsOverview } from '../../api.types'
 import type { RWAPlatformMeta } from '../../PlatformPage/api.types'
 import { spotAsset } from '../../table/__tests__/fixtures'
 
 let routerQuery: Record<string, string | Array<string>> = {}
-const push = vi.fn()
+const push = vi.fn().mockResolvedValue(true)
 
-const chartRenders: Array<{ charts: unknown; groupBy: unknown }> = []
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: (props: { charts: unknown; groupBy: unknown }) => {
-		chartRenders.push({ charts: props.charts, groupBy: props.groupBy })
-		return null
-	}
-}))
-
-type CsvSource = { prepare: () => { groupBy: unknown } }
-const csvRenders: Array<CsvSource> = []
-vi.mock('~/components/ChartExport/ChartCsvExportButton', () => ({
-	ChartCsvExportButton: (props: { source: CsvSource }) => {
-		csvRenders.push(props.source)
-		return <span>.csv</span>
-	}
-}))
+// ECharts cannot draw in happy-dom; these tests assert nothing about the chart itself.
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({
@@ -106,55 +91,26 @@ function overview(): IRWAAssetsOverview {
 	}
 }
 
-function render(query: Record<string, string | Array<string>>) {
+let container: HTMLDivElement
+let root: ReturnType<typeof createRoot>
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	push.mockClear()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+
+async function render(query: Record<string, string | Array<string>>) {
 	routerQuery = query
 	const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
 	const page = overview()
-	return renderToStaticMarkup(
-		<QueryClientProvider client={client}>
-			<RWAPlatformEntityChartPanel
-				overview={page}
-				meta={meta}
-				aggregateAssets={page.assets}
-				includeStablecoins={false}
-				includeGovernance={false}
-				includeBridgeTvl
-				activeFilters={false}
-			/>
-		</QueryClientProvider>
-	)
-}
-
-describe('RWAPlatformEntityChartPanel', () => {
-	test('opens with one chip, Active AUM, and the Add Metrics button', () => {
-		const markup = render({})
-		expect(markup).toContain('Add Metrics')
-		expect(markup.match(/type="checkbox"/g)).toHaveLength(1)
-		expect(markup).toContain('Active AUM')
-		expect(markup).not.toContain('Net Flows')
-	})
-
-	test('reads the selection from ?metrics= and shows a chip per metric', () => {
-		const markup = render({ metrics: 'activeMcap,netFlows,events' })
-		expect(markup.match(/type="checkbox"/g)).toHaveLength(3)
-		expect(markup).toContain('Net Flows')
-		expect(markup).toContain('Events')
-	})
-
-	test('offers the daily to yearly period control and the exports', () => {
-		const markup = render({})
-		for (const short of ['D', 'W', 'M', 'Q', 'Y']) expect(markup).toContain(`>${short}<`)
-		expect(markup).toContain('.csv')
-		expect(markup).toContain('.png')
-	})
-
-	test('never labels the series of one period with another while a period change is deferred', async () => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		const container = document.createElement('div')
-		const root = createRoot(container)
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		const page = overview()
-		const panel = () => (
+	await act(async () =>
+		root.render(
 			<QueryClientProvider client={client}>
 				<RWAPlatformEntityChartPanel
 					overview={page}
@@ -167,25 +123,44 @@ describe('RWAPlatformEntityChartPanel', () => {
 				/>
 			</QueryClientProvider>
 		)
-		chartRenders.length = 0
-		csvRenders.length = 0
+	)
+}
 
-		routerQuery = { chartPeriod: 'weekly' }
-		await act(async () => root.render(panel()))
-		const weeklySeries = chartRenders.at(-1)?.charts
-		// A URL change re-renders urgently, so the deferred chart still holds the weekly series for one render.
-		routerQuery = { chartPeriod: 'monthly' }
-		await act(async () => root.render(panel()))
+const chips = () =>
+	[...container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map((input) => input.value)
+const shallowPush = (query: Record<string, string>) => [
+	{ pathname: '/rwa/platform/ondo', query },
+	undefined,
+	{ shallow: true }
+]
 
-		expect(chartRenders.at(-1)?.groupBy).toBe('monthly')
-		const weeklySeriesLabels = chartRenders
-			.filter((chartRender) => chartRender.charts === weeklySeries)
-			.map((chartRender) => chartRender.groupBy)
-		expect(new Set(weeklySeriesLabels)).toEqual(new Set(['weekly']))
-		// The export follows the same snapshot: every render exports the grouping it draws.
-		expect(csvRenders.map((source) => source.prepare().groupBy)).toEqual(
-			chartRenders.map((chartRender) => chartRender.groupBy)
-		)
-		await act(async () => root.unmount())
+describe('RWAPlatformEntityChartPanel', () => {
+	test('shows a chip per metric in ?metrics= and removing one writes the rest to the URL', async () => {
+		await render({ metrics: 'activeMcap,liveAssets,events' })
+		expect(chips()).toEqual(['activeMcap', 'liveAssets', 'events'])
+
+		await act(async () => container.querySelector<HTMLInputElement>('input[value="liveAssets"]')!.click())
+		expect(push.mock.calls).toEqual([shallowPush({ metrics: 'activeMcap,events' })])
+	})
+
+	test('adds a metric from the Add Metrics dialog', async () => {
+		await render({})
+		expect(chips()).toEqual(['activeMcap'])
+
+		const disclosure = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Add Metrics')!
+		await act(async () => disclosure.click())
+		const option = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(
+			(button) => button.textContent === 'Net Flows'
+		)!
+		await act(async () => option.click())
+		expect(push.mock.calls).toEqual([shallowPush({ metrics: 'activeMcap,netFlows' })])
+	})
+
+	test('choosing a period writes it to the URL and daily leaves the URL clean', async () => {
+		await render({ chartPeriod: 'weekly' })
+		const periodButton = (label: string) => container.querySelector<HTMLElement>(`[aria-label="${label}"]`)!
+		await act(async () => periodButton('Monthly').click())
+		await act(async () => periodButton('Daily').click())
+		expect(push.mock.calls).toEqual([shallowPush({ chartPeriod: 'monthly' }), shallowPush({})])
 	})
 })

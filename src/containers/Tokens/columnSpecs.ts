@@ -1,4 +1,4 @@
-import type { TokensTableRow } from './types'
+import type { TokensNumericFilterField, TokensTableRow } from './types'
 
 export const TOKENS_FILTER_CATEGORIES = [
 	{ key: 'market', label: 'Market' },
@@ -12,15 +12,21 @@ export const TOKENS_FILTER_CATEGORIES = [
 export type TokensFilterCategory = (typeof TOKENS_FILTER_CATEGORIES)[number]['key']
 export type TokensFilterFormat = 'currency' | 'percent' | 'number'
 
-export interface TokensColumnSpec {
-	id: string
+interface TokensColumnSpecBase {
 	header: string
 	width: number
 	csvValue: (row: TokensTableRow) => string | number
-	format?: TokensFilterFormat
-	filterLabel?: string
-	filterCategory?: TokensFilterCategory
 }
+
+// Every numeric column is a server-side filter field, so a spec cannot offer a filter the server drops.
+export type TokensColumnSpec =
+	| (TokensColumnSpecBase & {
+			id: TokensNumericFilterField
+			format: TokensFilterFormat
+			filterCategory: TokensFilterCategory
+			filterLabel?: string
+	  })
+	| (TokensColumnSpecBase & { id: 'rights' })
 
 export const NAME_COLUMN_WIDTH = 184
 

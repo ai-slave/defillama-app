@@ -5,7 +5,7 @@ const sectors = ['Artificial Intelligence', 'Clean Technology', 'Financial Servi
 
 describe('pre-IPO overview query state', () => {
 	test('uses every sector when the URL has no filter', () => {
-		expect(getSelectedPreIpoSectors({}, sectors)).toBe(sectors)
+		expect(getSelectedPreIpoSectors({}, sectors)).toEqual(sectors)
 	})
 
 	test('resolves explicit includes, exclusions, and deselect all', () => {

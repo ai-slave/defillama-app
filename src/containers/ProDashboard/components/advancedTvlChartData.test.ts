@@ -15,16 +15,22 @@ const rawBreakdown: IProtocolChainBreakdownChart = [
 	[1_681_516_800_000, { USDC: 135, ETH: 1 }],
 	[1_681_603_200_000, { USDC: 145, ETH: 1 }]
 ]
+const ethWhaleRawBreakdown: IProtocolChainBreakdownChart = rawBreakdown.map(([timestamp, values]) => [
+	timestamp,
+	{ ...values, ETH: 1_000_000 }
+])
 
 describe('buildAdvancedTvlChartData', () => {
-	test('builds only the selected chain presentation', () => {
+	test('orders chain series by their latest value', () => {
+		const chainBreakdown: IProtocolChainBreakdownChart = [
+			[1000, { Ethereum: 100, Arbitrum: 10 }],
+			[2000, { Ethereum: 10, Arbitrum: 200 }]
+		]
 		const sources = getAdvancedTvlBreakdownSources('aave', 'chainsTvl', {})
-		const result = buildAdvancedTvlChartData('chainsTvl', sources, [usdBreakdown], 'Aave')
+		const result = buildAdvancedTvlChartData('chainsTvl', sources, [chainBreakdown], 'Aave')
 
-		expect(result.seriesNames).toEqual(['USDC', 'ETH'])
-		expect(result.dataset).toBeNull()
-		expect(result.breakdown).toEqual(usdBreakdown)
-		expect(result.pieSeries.peers).toEqual([])
+		expect(result.seriesNames).toEqual(['Arbitrum', 'Ethereum'])
+		expect(result.breakdown).toEqual(chainBreakdown)
 	})
 
 	test('uses the same USD source for token lines and the latest-value pie', () => {
@@ -43,10 +49,9 @@ describe('buildAdvancedTvlChartData', () => {
 
 	test('selects raw token series using their USD values', () => {
 		const sources = getAdvancedTvlBreakdownSources('aave', 'tokenBalances', {})
-		const result = buildAdvancedTvlChartData('tokenBalances', sources, [usdBreakdown, rawBreakdown], 'Aave')
+		const result = buildAdvancedTvlChartData('tokenBalances', sources, [usdBreakdown, ethWhaleRawBreakdown], 'Aave')
 
-		expect(result.seriesNames).toEqual(['USDC', 'ETH'])
-		expect(result.breakdown?.at(-1)).toEqual([1_681_603_200_000, { USDC: 145, ETH: 1 }])
+		expect(result.breakdown?.at(-1)).toEqual([1_681_603_200_000, { USDC: 145, ETH: 1_000_000 }])
 		expect(result.defaultSeriesNames).toEqual(['USDC', 'ETH'])
 	})
 
@@ -54,8 +59,7 @@ describe('buildAdvancedTvlChartData', () => {
 		const sources = getAdvancedTvlBreakdownSources('binance-cex', 'usdInflows', {})
 		const result = buildAdvancedTvlChartData('usdInflows', sources, [usdBreakdown, rawBreakdown], 'Binance CEX')
 
-		expect(result.dataset?.source.map((row) => row[0])).not.toContain(1_681_430_400_000)
-		expect(result.dataset?.source.map((row) => row[0])).not.toContain(1_681_516_800_000)
+		expect(result.dataset?.source).toEqual([[1_681_603_200_000, 10]])
 	})
 
 	test('retains the full token pie universe and isolates backend Others', () => {

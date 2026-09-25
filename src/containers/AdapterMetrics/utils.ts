@@ -321,6 +321,13 @@ export function normalizeProtocolBreakdownChartData({
 	}
 }
 
+// Chain-native fee and revenue rankings have no chart panel; the app-level fee rankings do.
+const FEES_CHART_PAGE_TYPES = new Set(['Holders Revenue', 'App Fees', 'App Revenue'])
+
+export function showsChainsByAdapterChart(adapterType: `${ADAPTER_TYPES}`, pageType: string): boolean {
+	return adapterType !== 'fees' || FEES_CHART_PAGE_TYPES.has(pageType)
+}
+
 export type ChainsByAdapterChartKind = 'bar' | 'dominance' | 'treemap' | 'hbar'
 export type ChainsByAdapterValueMode = 'absolute' | 'relative'
 export type ChainsByAdapterBarLayout = 'stacked' | 'separate'

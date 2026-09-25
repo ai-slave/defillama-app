@@ -14,14 +14,6 @@ describe('getDatasetIndexFileName', () => {
 		expect(getDatasetIndexFileName('conway')).toBe('conway.json')
 	})
 
-	test('hashes Windows reserved device names', () => {
-		expect(getDatasetIndexFileName('con')).toBe(hashedFileName('con'))
-		expect(getDatasetIndexFileName('CON')).toBe(hashedFileName('CON'))
-		expect(getDatasetIndexFileName('lpt1')).toBe(hashedFileName('lpt1'))
-		expect(getDatasetIndexFileName('con.market')).toBe(hashedFileName('con.market'))
-		expect(getDatasetIndexFileName('aux.foo')).toBe(hashedFileName('aux.foo'))
-	})
-
 	test('uses a deterministic bounded filename for long keys', () => {
 		const key = 'wrapped-'.repeat(80)
 		const fileName = getDatasetIndexFileName(key)

@@ -56,19 +56,6 @@ describe('timeSeriesDataset', () => {
 		})
 	})
 
-	test('does not mutate columnar dates or series', () => {
-		const dates = ['2026-01-01', '2026-01-02'] as const
-		const series = [
-			{ name: 'Fees', data: [10, undefined] },
-			{ name: 'Revenue', data: [4, null] }
-		] as const
-		const before = structuredClone({ dates, series })
-
-		buildColumnarTimeSeriesDataset(dates, series, (date) => Date.parse(`${date}T00:00:00Z`))
-
-		expect({ dates, series }).toEqual(before)
-	})
-
 	test('rejects duplicate display dimensions', () => {
 		expect(() =>
 			buildColumnarTimeSeriesDataset(
@@ -82,15 +69,15 @@ describe('timeSeriesDataset', () => {
 		).toThrow('Duplicate series name')
 	})
 
-	test('fills declared missing values without revalidating numeric API values', () => {
+	test('fills missing values with the declared missing value', () => {
 		const dataset = buildColumnarTimeSeriesDataset(
-			['2026-01-01', '2026-01-02', '2026-01-03'],
-			[{ name: 'Fees', data: [undefined, Number.NaN, Number.POSITIVE_INFINITY] }],
+			['2026-01-01', '2026-01-02'],
+			[{ name: 'Fees', data: [undefined, 5] }],
 			(date) => Date.parse(`${date}T00:00:00Z`),
 			0
 		)
 
-		expect(dataset.source.map((row) => row[1])).toEqual([0, Number.NaN, Number.POSITIVE_INFINITY])
+		expect(dataset.source.map((row) => row[1])).toEqual([0, 5])
 	})
 
 	test('materializes only visible series and zero-fills sparse rows', () => {

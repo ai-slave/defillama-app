@@ -41,7 +41,7 @@ describe('advanced TVL presentation', () => {
 			{ name: 'USDC', type: 'bar', stack: 'stackA' },
 			{ name: 'USDT', type: 'bar', stack: 'stackA' }
 		])
-		expect(presentation.stackColors.USDC).toBeTruthy()
+		expect(Object.keys(presentation.stackColors)).toEqual(['USDC', 'USDT'])
 	})
 
 	test('keeps raw token balances unitless', () => {
@@ -63,7 +63,8 @@ describe('advanced TVL presentation', () => {
 			tokenNames: ['USDC']
 		})
 
-		expect(presentation.stackColors.USDC).toBeTruthy()
-		expect(presentation.stackColors.Others).toBeTruthy()
+		expect(Object.keys(presentation.stackColors)).toEqual(['USDC', 'Others'])
+		expect(presentation.stackColors.Others).toMatch(/^#[0-9a-f]{6}$/i)
+		expect(presentation.stackColors.Others).not.toBe(presentation.stackColors.USDC)
 	})
 })

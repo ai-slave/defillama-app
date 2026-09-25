@@ -9,7 +9,10 @@ import type { Hack } from './model'
 import type { IHacksPageData, IHackRow, IProtocolTotalValueLostInHacksByProtocol } from './types'
 
 export async function getHacksPageData(): Promise<IHacksPageData> {
-	const hacks = await fetchHacks()
+	return buildHacksPageData(await fetchHacks())
+}
+
+export function buildHacksPageData(hacks: Array<Hack>): IHacksPageData {
 	const data: Array<IHackRow> = []
 
 	for (const hack of hacks) {
@@ -104,7 +107,13 @@ export async function getTotalValueLostInHacksByProtocol({
 }: {
 	metadataCache: MetadataCache
 }): Promise<IProtocolTotalValueLostInHacksByProtocol> {
-	const hacks = await fetchHacks()
+	return buildTotalValueLostInHacksByProtocol(await fetchHacks(), metadataCache)
+}
+
+export function buildTotalValueLostInHacksByProtocol(
+	hacks: Array<Hack>,
+	metadataCache: MetadataCache
+): IProtocolTotalValueLostInHacksByProtocol {
 	const totalLostByProtocol = new Map<string, ProtocolHackRow>()
 
 	for (const hack of hacks) {

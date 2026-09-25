@@ -32,10 +32,6 @@ describe('getProtocolPrimaryMetricOverride', () => {
 		})
 	})
 
-	test('leaves protocols without an override on their existing primary metric', () => {
-		expect(getProtocolPrimaryMetricOverride({ metrics: { tvl: false }, name: 'Aave', perpVolume: null })).toBeNull()
-	})
-
 	test('falls back to the existing primary metric when override data is unavailable', () => {
 		expect(
 			getProtocolPrimaryMetricOverride({

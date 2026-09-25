@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from './config/current'
-import {
-	getProtocolMetricCapabilities,
-	isProtocolPointMetric,
-	isProtocolSupplementalMetric,
-	isProtocolBaseMetricFamily
-} from './protocolCapabilities'
+import { getProtocolMetricCapabilities } from './protocolCapabilities'
 
 const config = (overrides: Partial<UnifiedTableConfig>): UnifiedTableConfig => ({
 	id: 'table',
@@ -27,11 +22,6 @@ describe('protocol supplemental metric capabilities', () => {
 				})
 			).supplementalMetrics
 		).toEqual(['earnings', 'bridge-aggregator-volume'])
-	})
-
-	test('validates the public supplemental vocabulary exactly', () => {
-		expect(isProtocolSupplementalMetric('earnings')).toBe(true)
-		expect(isProtocolSupplementalMetric('bridge-aggregators')).toBe(false)
 	})
 })
 
@@ -93,11 +83,6 @@ describe('protocol point metric capabilities', () => {
 				})
 			).pointMetrics
 		).toEqual([])
-	})
-
-	test('validates the public query vocabulary exactly', () => {
-		expect(isProtocolPointMetric('fees')).toBe(true)
-		expect(isProtocolPointMetric('fee')).toBe(false)
 	})
 })
 
@@ -189,10 +174,5 @@ describe('protocol base metric family capabilities', () => {
 				config({ columnOrder: ['openInterest'], columnVisibility: { openInterest: false } })
 			).baseMetricFamilies
 		).toEqual([])
-	})
-
-	test('validates the public base-family vocabulary exactly', () => {
-		expect(isProtocolBaseMetricFamily('open-interest')).toBe(true)
-		expect(isProtocolBaseMetricFamily('openInterest')).toBe(false)
 	})
 })

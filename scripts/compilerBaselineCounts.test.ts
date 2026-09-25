@@ -16,19 +16,18 @@ describe('findGrowth', () => {
 		expect(findGrowth(base, head)).toEqual([])
 	})
 
-	test('rejects a new rule/file pair', () => {
-		const head: Counts = { ...base, 'react/refs': { ...base['react/refs'], 'src/new.tsx': 1 } }
-		expect(findGrowth(base, head)).toEqual(['react/refs  src/new.tsx  0 -> 1'])
+	test('rejects a new rule/file pair and a new rule', () => {
+		const head: Counts = {
+			...base,
+			'react/refs': { ...base['react/refs'], 'src/new.tsx': 1 },
+			'no-var': { 'src/d.ts': 1 }
+		}
+		expect(findGrowth(base, head)).toEqual(['no-var  src/d.ts  0 -> 1', 'react/refs  src/new.tsx  0 -> 1'])
 	})
 
 	test('rejects a higher count in a file the rule is already suppressed in', () => {
 		const head: Counts = { ...base, 'react/refs': { ...base['react/refs'], 'src/a.tsx': 3 } }
 		expect(findGrowth(base, head)).toEqual(['react/refs  src/a.tsx  2 -> 3'])
-	})
-
-	test('rejects a new rule', () => {
-		const head: Counts = { ...base, 'no-var': { 'src/d.ts': 1 } }
-		expect(findGrowth(base, head)).toEqual(['no-var  src/d.ts  0 -> 1'])
 	})
 })
 
@@ -54,16 +53,12 @@ describe('rendering', () => {
 	})
 
 	test('counts are file-major with one line per file, so fixing a file touches one line', () => {
-		expect(renderCounts(base)).toBe(
-			[
-				'{',
-				'\t"src/a.tsx": {"react/refs":2},',
-				'\t"src/b.tsx": {"react/refs":1},',
-				'\t"src/c.ts": {"no-empty":1}',
-				'}',
-				''
-			].join('\n')
-		)
+		const lines = renderCounts(base).split('\n').slice(1, -2)
+		expect(lines.map((line) => JSON.parse(`{${line.replace(/,$/, '')}}`))).toEqual([
+			{ 'src/a.tsx': { 'react/refs': 2 } },
+			{ 'src/b.tsx': { 'react/refs': 1 } },
+			{ 'src/c.ts': { 'no-empty': 1 } }
+		])
 	})
 })
 

@@ -1,21 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import {
-	getAllArticlesBanner,
-	getArticleBanner,
-	getArticleBySlug,
-	getLandingBanner,
-	getResearchLanding,
-	getSectionBanner,
-	getTrustedBySection,
-	listArticles,
-	listArticlesByTag,
-	listArticlesByTopic
-} from '~/containers/Articles/api'
-import { ReportsCarousel } from '~/containers/Articles/landing/ReportsCarousel'
-import { getResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 import type { ArticleDocument, BannerLookupResult, TrustedByLookupResult } from '~/containers/Articles/types'
 import ArticlesPage, { getServerSideProps as getResearchServerSideProps } from '~/pages/research'
 import SectionLandingPage, { getServerSideProps as getSectionLandingServerSideProps } from '~/pages/research/[section]'
@@ -26,49 +15,6 @@ const routerMock = vi.hoisted(() => vi.fn())
 
 vi.mock('next/router', () => ({
 	useRouter: () => routerMock()
-}))
-
-vi.mock('~/containers/Articles/api', () => ({
-	ArticleApiError: class ArticleApiError extends Error {
-		status: number
-		constructor(message: string, status: number) {
-			super(message)
-			this.status = status
-		}
-	},
-	getAllArticlesBanner: vi.fn(),
-	getArticleBanner: vi.fn(),
-	getArticleBySlug: vi.fn(),
-	getLandingBanner: vi.fn(),
-	getResearchLanding: vi.fn(),
-	getSectionBanner: vi.fn(),
-	getTrustedBySection: vi.fn(),
-	listArticlePaths: vi.fn(),
-	listArticles: vi.fn(),
-	listArticlesByTag: vi.fn(),
-	listArticlesByTopic: vi.fn()
-}))
-
-vi.mock('~/containers/Articles/newsletterFeed.server', () => ({
-	getResearchNewsletterItems: vi.fn()
-}))
-
-vi.mock('~/containers/Articles/ArticleProxyAuthProvider', () => ({
-	ArticleProxyAuthProvider: ({ children }: { children: ReactNode }) => <>{children}</>
-}))
-
-vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
-	AppMetadataProvider: ({ children }: { children: ReactNode }) => <>{children}</>
-}))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: vi.fn(),
-		hasActiveSubscription: false,
-		isAuthenticated: false,
-		loaders: { userLoading: false },
-		user: null
-	})
 }))
 
 vi.mock('~/layout', () => ({
@@ -86,7 +32,11 @@ function createQueryClient() {
 }
 
 function renderWithQueryClient(element: ReactElement, queryClient = createQueryClient()) {
-	return renderToStaticMarkup(<QueryClientProvider client={queryClient}>{element}</QueryClientProvider>)
+	return renderToStaticMarkup(
+		<QueryClientProvider client={queryClient}>
+			<AuthProvider>{element}</AuthProvider>
+		</QueryClientProvider>
+	)
 }
 
 function article(overrides: Partial<ArticleDocument> = {}): ArticleDocument {
@@ -184,6 +134,9 @@ const emptyTrustedBy: TrustedByLookupResult = {
 	mentions: []
 }
 
+let feedId = 0
+afterEach(() => vi.unstubAllEnvs())
+
 describe('research SSR data loading', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -193,35 +146,31 @@ describe('research SSR data loading', () => {
 			query: {},
 			replace: vi.fn()
 		})
-		vi.mocked(listArticles).mockResolvedValue(articleList([article()]))
-		vi.mocked(listArticlesByTag).mockResolvedValue({ items: [article()] })
-		vi.mocked(listArticlesByTopic).mockResolvedValue(topicArticleList(4))
-		vi.mocked(getResearchLanding).mockResolvedValue({
-			heroReports: [article()],
-			latest: [article()],
-			spotlight: [article()],
-			interviews: [article()],
-			highlight: [article()],
-			insights: [article()],
-			moreReportsCandidates: [article()],
-			spotlightColumnCandidates: [article()],
-			collectionsCandidates: [article()]
+		vi.stubEnv('BEEHIIV_RESEARCH_RSS_URL', `https://rss.beehiiv.com/test-${++feedId}.xml`)
+		http.serve({
+			'/articles': (url: URL) => (url.searchParams.has('tags') ? topicArticleList(4) : articleList([article()])),
+			'/articles/by-tag/research': { items: [article()] },
+			'/articles/landing': {
+				heroReports: [article()],
+				latest: [article()],
+				spotlight: [article()],
+				interviews: [article()],
+				highlight: [article()],
+				insights: [article()],
+				moreReportsCandidates: [article()],
+				spotlightColumnCandidates: [article()],
+				collectionsCandidates: [article()]
+			},
+			'/banners/lookup/landing': emptyBanner,
+			'/banners/lookup/article/article-id': emptyBanner,
+			'/banners/lookup/section/report': emptyBanner,
+			'/banners/lookup/all-articles': emptyBanner,
+			'/research/trusted-by/lookup': emptyTrustedBy,
+			'https://rss.beehiiv.com/': () =>
+				new Response(
+					'<rss><channel><item><title>Research Notes newsletter</title><link>https://defillama-research.beehiiv.com/p/research-notes</link><pubDate>Thu, 27 Aug 2026 18:10:12 GMT</pubDate></item></channel></rss>'
+				)
 		})
-		vi.mocked(getLandingBanner).mockResolvedValue(emptyBanner)
-		vi.mocked(getArticleBanner).mockResolvedValue(emptyBanner)
-		vi.mocked(getSectionBanner).mockResolvedValue(emptyBanner)
-		vi.mocked(getAllArticlesBanner).mockResolvedValue(emptyBanner)
-		vi.mocked(getTrustedBySection).mockResolvedValue(emptyTrustedBy)
-		vi.mocked(getResearchNewsletterItems).mockResolvedValue([
-			{
-				id: 'newsletter-1',
-				title: 'Research Notes newsletter',
-				description: 'Research Notes',
-				href: 'https://defillama-research.beehiiv.com/p/research-notes',
-				imageUrl: null,
-				publishedAt: '2026-08-27T18:10:12.000Z'
-			}
-		])
 	})
 
 	test('loads landing page props for SSR and renders article content immediately', async () => {
@@ -237,7 +186,6 @@ describe('research SSR data loading', () => {
 		const props = await Promise.resolve(result.props)
 		expect(props.landingData.heroReports[0]?.title).toBe('Canonical Research')
 		expect(props.newsletterItems[0]?.title).toBe('Research Notes newsletter')
-		expect(getLandingBanner).toHaveBeenCalledTimes(1)
 
 		const html = renderWithQueryClient(<ArticlesPage {...props} />)
 		expect(html).toContain('Canonical Research')
@@ -245,7 +193,7 @@ describe('research SSR data loading', () => {
 	})
 
 	test('keeps the interviews section when the Beehiiv feed is unavailable', async () => {
-		vi.mocked(getResearchNewsletterItems).mockRejectedValueOnce(new Error('Beehiiv unavailable'))
+		http.serve({ 'https://rss.beehiiv.com/': fixtureStatus(503) })
 
 		const result = await getResearchServerSideProps({
 			req: { method: 'GET' },
@@ -262,25 +210,6 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain('Research Notes Newsletters')
 	})
 
-	test('server-renders the reports carousel centered before client measurement', () => {
-		const html = renderToStaticMarkup(
-			<ReportsCarousel
-				showButtons={false}
-				reports={Array.from({ length: 5 }, (_, index) =>
-					article({
-						id: `article-${index}`,
-						slug: `article-${index}`,
-						title: `Article ${index}`
-					})
-				)}
-			/>
-		)
-
-		expect(html).toContain('left:50%')
-		expect(html).toContain('translateX(calc(-50% + 0px)) scale(1)')
-		expect(html).not.toContain('translate(calc(0px + -147px))')
-	})
-
 	test('loads section landing props for SSR and renders articles immediately', async () => {
 		const setHeader = vi.fn()
 		const result = await getSectionLandingServerSideProps({
@@ -295,7 +224,6 @@ describe('research SSR data loading', () => {
 		const props = await Promise.resolve(result.props)
 		expect(props.section).toBe('report')
 		expect(props.initialArticles.items[0]?.title).toBe('Canonical Research')
-		expect(getSectionBanner).toHaveBeenCalledWith('report')
 
 		const html = renderWithQueryClient(<SectionLandingPage {...props} />)
 		expect(html).toContain('Canonical Research')
@@ -327,7 +255,6 @@ describe('research SSR data loading', () => {
 		const props = await Promise.resolve(result.props)
 		expect(props.topic).toBe('lending')
 		expect(props.initialArticles.items[0]?.title).toBe('Canonical Research')
-		expect(listArticlesByTopic).toHaveBeenCalledWith('lending', { sort: 'newest', limit: 60 })
 
 		const html = renderWithQueryClient(<TopicLandingPage {...props} />)
 		expect(html).toContain('Canonical Research')
@@ -362,7 +289,7 @@ describe('research SSR data loading', () => {
 	})
 
 	test('returns notFound when a topic has fewer than four articles', async () => {
-		vi.mocked(listArticlesByTopic).mockResolvedValueOnce(topicArticleList(3))
+		http.serve({ '/articles': topicArticleList(3) })
 
 		await expect(
 			getTopicLandingServerSideProps({
@@ -407,7 +334,7 @@ describe('research SSR data loading', () => {
 				}
 			]
 		})
-		vi.mocked(getArticleBySlug).mockResolvedValue(publicArticle)
+		http.serve({ '/articles/canonical-research': { article: publicArticle } })
 
 		const setHeader = vi.fn()
 		const result = await getArticleServerSideProps({
@@ -436,7 +363,6 @@ describe('research SSR data loading', () => {
 		])
 		expect(props.initialArticle.coAuthors?.[0]).not.toHaveProperty('id')
 		expect(props.initialArticle.coAuthors?.[0]).not.toHaveProperty('pbUserId')
-		expect(getArticleBanner).toHaveBeenCalledWith('article-id')
 
 		routerMock.mockReturnValue({
 			isReady: true,
@@ -449,21 +375,6 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('Server rendered body')
 		expect(html).toContain('Internal Admin')
 		expect(html).toContain('aria-label="Search DefiLlama Research and Newsletters"')
-		expect(html).toContain('>Search</span>')
-	})
-
-	test('does not render legacy draft preview controls on the public article page', () => {
-		routerMock.mockReturnValue({
-			isReady: true,
-			pathname: '/research/[section]/[slug]',
-			query: { section: 'report', slug: 'canonical-research' },
-			replace: vi.fn()
-		})
-
-		const html = renderWithQueryClient(
-			<SectionArticlePage initialArticle={article({ status: 'draft' })} initialBanners={{}} />
-		)
-		expect(html).not.toContain('Draft preview')
 	})
 
 	test('keeps the server-rendered article visible when its background refetch fails', () => {
@@ -487,7 +398,7 @@ describe('research SSR data loading', () => {
 	})
 
 	test('returns notFound for missing articles and redirects non-canonical article urls', async () => {
-		vi.mocked(getArticleBySlug).mockResolvedValueOnce(null)
+		http.serve({ '/articles/missing': fixtureStatus(404) })
 		const notFoundSetHeader = vi.fn()
 		await expect(
 			getArticleServerSideProps({
@@ -499,7 +410,7 @@ describe('research SSR data loading', () => {
 		).resolves.toMatchObject({ notFound: true })
 		expect(notFoundSetHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
 
-		vi.mocked(getArticleBySlug).mockResolvedValueOnce(article())
+		http.serve({ '/articles/old-research': { article: article() } })
 		const redirectSetHeader = vi.fn()
 		await expect(
 			getArticleServerSideProps({

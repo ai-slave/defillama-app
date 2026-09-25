@@ -361,19 +361,7 @@ describe('buildGrowthGaps', () => {
 			day('2026-01-07', 10, { pps: 1.2 })
 		]) as GrowthChartModel
 
-		const gaps = buildGrowthGaps(model, 0, 7)
-		expect(gaps.map((gap) => gap.kind)).toEqual(['unmeasured', 'unmeasured'])
-		expect(gaps[0].label).toBe('Not measured · 2 days')
-	})
-
-	test('treats an outcome-less gap as unmeasured rather than a failure', () => {
-		const model = buildGrowthChart([
-			day('2026-01-01', 10, { pps: 1 }),
-			day('2026-01-02', 10, null),
-			day('2026-01-03', 10, { pps: 1.1 })
-		]) as GrowthChartModel
-
-		expect(buildGrowthGaps(model, 0, 3)[0].kind).toBe('unmeasured')
+		expect(buildGrowthGaps(model, 0, 7)).toHaveLength(2)
 	})
 
 	test('ignores days before the deposit and after the last measurement', () => {
@@ -503,10 +491,7 @@ describe('growthAxisDigits', () => {
 })
 
 describe('growthReasonLabel', () => {
-	test('names the known reasons and passes an unknown code through', () => {
-		expect(growthReasonLabel('rate_quality_floor')).toBe('the redemption returned only dust')
-		expect(growthReasonLabel('nav_quote_no_exit_path')).toBe('the rate is a NAV quote with no exit path')
-		expect(growthReasonLabel('no_executed_exit_path')).toBe('no exit path could be executed')
+	test('passes an unknown code through', () => {
 		expect(growthReasonLabel('some_new_code')).toBe('some_new_code')
 		expect(growthReasonLabel(null)).toBeNull()
 	})

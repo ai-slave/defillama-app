@@ -1,11 +1,17 @@
 import { describe, expect, test } from 'vitest'
-import { EQUITIES_TREEMAP_DEFAULTS, getEquitiesTreemapQueryValue, parseEquitiesTreemapState } from '../treemapState'
+import { getEquitiesTreemapQueryValue, parseEquitiesTreemapState } from '../treemapState'
 
 describe('parseEquitiesTreemapState', () => {
 	test('defaults to the table view and market-cap sector map', () => {
-		expect(parseEquitiesTreemapState({})).toEqual(EQUITIES_TREEMAP_DEFAULTS)
+		const defaults = {
+			view: 'table',
+			groupBy: 'sector',
+			sizeMetric: 'marketCap',
+			colorMetric: 'priceChangePercentage1d'
+		}
+		expect(parseEquitiesTreemapState({})).toEqual(defaults)
 		expect(parseEquitiesTreemapState({ view: 'movers', mapGroup: 'x', mapSize: 'nope', mapColor: '1y' })).toEqual(
-			EQUITIES_TREEMAP_DEFAULTS
+			defaults
 		)
 	})
 

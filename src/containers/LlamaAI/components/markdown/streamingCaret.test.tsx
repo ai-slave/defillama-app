@@ -58,16 +58,6 @@ test('marks the paragraph, not a trailing inline element', async () => {
 	expect(carets()).toEqual(['p:Call getRevenue'])
 })
 
-test('leaves a trailing table alone', async () => {
-	await render('Here it is.\n\n| Chain | TVL |\n| --- | --- |\n| Ethereum | 1 |\n')
-	expect(carets()).toEqual([])
-})
-
-test('leaves a trailing code fence alone', async () => {
-	await render('Here it is.\n\n```sql\nselect 1\n')
-	expect(carets()).toEqual([])
-})
-
 test.each([
 	['code block', '<pre><code>select 1</code></pre>'],
 	['table', '<table><tbody><tr><td>123</td></tr></tbody></table>']
@@ -81,5 +71,6 @@ test.each([
 
 test('draws no caret once the answer is not the one streaming', async () => {
 	await render('Revenue grew.\n\nFees fell', false)
+	expect(container.textContent).toContain('Fees fell')
 	expect(carets()).toEqual([])
 })

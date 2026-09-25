@@ -6,8 +6,14 @@ import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import { landingPromoLinkUrl } from '~/containers/Articles/promoLinks'
-import type { BannerLookupResult } from '~/containers/Articles/types'
+import type { Banner, BannerLookupResult } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
+
+/** Landing promos show their wide image on desktop and prefer the landing-specific mobile image on mobile. */
+export function landingPromoImageUrl(banner: Banner | null, isMobile: boolean): string | undefined {
+	if (!banner || !banner.enabled || banner.showOnLanding === false) return undefined
+	return (isMobile ? (banner.imageLandingMobileUrl ?? banner.imageMobileUrl) : banner.imageWideUrl)?.trim() || undefined
+}
 
 export function ResearchPromoBanner({ initialData }: { initialData?: BannerLookupResult | null }) {
 	const isMobile = useMedia('(max-width: 768px)')
@@ -21,11 +27,9 @@ export function ResearchPromoBanner({ initialData }: { initialData?: BannerLooku
 	})
 
 	const banner = useEligibleBanner([data?.promo ?? null], data === undefined)
-	const imageUrl = (isMobile ? (banner?.imageLandingMobileUrl ?? banner?.imageMobileUrl) : banner?.imageWideUrl)?.trim()
+	const imageUrl = landingPromoImageUrl(banner, isMobile)
 
-	if (!banner || !banner.enabled || banner.showOnLanding === false || !imageUrl) {
-		return null
-	}
+	if (!banner || !imageUrl) return null
 
 	const content = (
 		// eslint-disable-next-line @next/next/no-img-element

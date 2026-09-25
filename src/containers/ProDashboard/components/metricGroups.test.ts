@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getMetricUnitGroup, METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from './metricGroups'
+import { getMetricUnitGroup, resolveSeriesAxisLayout } from './metricGroups'
 
 describe('getMetricUnitGroup', () => {
 	test('treats dollar metrics as the usd group', () => {
@@ -116,12 +116,5 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.needMultipleAxes).toBe(true)
 		expect(layout.axisUnitGroups).toEqual(['usd', 'usd'])
 		expect(layout.seriesAxisIndexes).toEqual([0, 1])
-	})
-
-	test('maps unit groups to display symbols', () => {
-		expect(METRIC_UNIT_GROUP_SYMBOL.usd).toBe('$')
-		expect(METRIC_UNIT_GROUP_SYMBOL.percent).toBe('%')
-		expect(METRIC_UNIT_GROUP_SYMBOL.count).toBe('')
-		expect(METRIC_UNIT_GROUP_SYMBOL.ratio).toBe('')
 	})
 })

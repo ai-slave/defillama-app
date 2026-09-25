@@ -103,6 +103,7 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await act(async () => root.unmount())
+	vi.useRealTimers()
 	client.clear()
 	container.remove()
 	pb.authStore.clear()
@@ -129,6 +130,10 @@ async function renderSession(id: string, hasActiveSubscription: boolean, hydrate
 	}
 	expect(onRecoverableError).not.toHaveBeenCalled()
 }
+
+// The canonical status query retries at 250ms and 500ms; fake timers skip those delays.
+const useRetryClock = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+const passRetries = () => act(() => vi.advanceTimersByTimeAsync(800))
 
 async function waitFor(assertion: () => void) {
 	await vi.waitFor(async () => {
@@ -166,9 +171,10 @@ test('uses a canonical 404 when the PocketBase projection is stale true', async 
 
 test('shows retryable unknown access after a canonical request failure', async () => {
 	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
+	useRetryClock()
 	await renderSession('account-a', false)
 
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 800)))
+	await passRetries()
 	expect(document.body.textContent).toContain('Subscription unavailable')
 	expect(document.body.textContent).not.toContain('No Subscription')
 	expect(document.body.textContent).not.toContain('Upgrade to Pro')
@@ -180,24 +186,19 @@ test('keeps the public tier while a failed entitlement lookup retries', async ()
 	statusHandler = () =>
 		// The initial request and its two retries fail; the later refetch then hangs in flight.
 		++statusCalls <= 3 ? jsonResponse({ message: 'Internal error' }, 500) : new Promise<Response>(() => {})
+	useRetryClock()
 	await renderSession('account-a', false)
 
-	// Two retries at 250ms and 500ms run before the lookup settles into its error state.
-	await vi.waitFor(
-		async () => {
-			await act(async () => {})
-			expect(verifiedStatuses.at(-1)).toBe('denied')
-		},
-		{ timeout: 3000 }
-	)
+	await passRetries()
+	expect(verifiedStatuses.at(-1)).toBe('denied')
 	expect(sessionView.loaders.userLoading).toBe(true)
 	expect(sessionView.loaders.subscriptionInitialCheck).toBe(false)
 
 	// The retry has no data to keep, so React Query drops back to pending while it is in flight.
 	void client.refetchQueries({ predicate: (query) => query.state.status === 'error' })
-	await waitFor(() => expect(statusCalls).toBe(4))
 	// React Query notifies observers on a macrotask, so let the fetching state reach the render.
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	await act(() => vi.advanceTimersByTimeAsync(50))
+	expect(statusCalls).toBe(4)
 	expect(sessionView.loaders.userLoading).toBe(true)
 	expect(sessionView.loaders.subscriptionInitialCheck).toBe(false)
 	expect(verifiedStatuses.at(-1)).toBe('denied')
@@ -267,11 +268,13 @@ test.each([true, false])('checks a persisted denial only for verified yields (ac
 test('settles a persisted denial after a failed initial check without flashing on retry', async () => {
 	persistSubscription('account-a', null)
 	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
+	useRetryClock()
 	await renderSession('account-a', false)
 	expect(sessionView.loaders.userLoading).toBe(false)
 	expect(verifiedStatuses.at(-1)).toBe('pending')
 
-	await waitFor(() => expect(sessionView.loaders.subscriptionInitialCheck).toBe(false))
+	await passRetries()
+	expect(sessionView.loaders.subscriptionInitialCheck).toBe(false)
 	expect(verifiedStatuses.at(-1)).toBe('denied')
 	expect(document.body.textContent).toContain('Subscription unavailable')
 
@@ -287,12 +290,13 @@ test('settles a persisted denial after a failed initial check without flashing o
 test('keeps cached access visible and warns when background revalidation fails', async () => {
 	persistSubscription('account-a', activeSubscription('account-a'))
 	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
+	useRetryClock()
 
 	await renderSession('account-a', false)
 	expect(document.body.textContent).toContain('Active Subscription')
 	expect(document.body.textContent).toContain('Pro content')
 
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 800)))
+	await passRetries()
 	expect(document.body.textContent).toContain('Active Subscription')
 	expect(document.body.textContent).toContain('Subscription unavailable · Retry')
 	expect(document.body.textContent).not.toContain('Upgrade to Pro')
@@ -365,21 +369,6 @@ test('refetches the shared canonical query after cancellation', async () => {
 	expect(calls).toBe(1)
 
 	await act(async () => subscribeView.cancelSubscriptionMutation.mutateAsync(undefined))
-
-	await waitFor(() => expect(calls).toBe(2))
-})
-
-test("refetches the canonical query through checkout's subscription-key invalidation", async () => {
-	let calls = 0
-	statusHandler = () => {
-		calls += 1
-		return jsonResponse({ subscription: activeSubscription('account-a') })
-	}
-	await renderSession('account-a', false)
-	await waitFor(() => expect(sessionView.hasActiveSubscription).toBe(true))
-	expect(calls).toBe(1)
-
-	await act(async () => client.invalidateQueries({ queryKey: ['subscription'] }))
 
 	await waitFor(() => expect(calls).toBe(2))
 })

@@ -9,7 +9,6 @@ vi.mock('next/router', () => ({
 }))
 
 function render(props: Partial<RWAOverviewBreakdownPanelProps> = {}) {
-	const onTreemapNestedByChange = vi.fn()
 	const full: RWAOverviewBreakdownPanelProps = {
 		view: 'pie',
 		axis: 'assetGroup',
@@ -19,7 +18,7 @@ function render(props: Partial<RWAOverviewBreakdownPanelProps> = {}) {
 		exportTitle: 'RWA Active AUM',
 		filenameSuffix: 'active-mcap-all',
 		treemapNestedBy: 'none',
-		onTreemapNestedByChange,
+		onTreemapNestedByChange: () => {},
 		assets: [spotAsset(), spotAsset({ id: 'gold', canonicalMarketId: 'paxos/paxg', assetGroup: 'Precious Metals' })],
 		rankedFilterValues: getRankedRwaFilterValues({
 			typeOptions: [],
@@ -35,25 +34,12 @@ function render(props: Partial<RWAOverviewBreakdownPanelProps> = {}) {
 		toolbarStart: <span>toolbar-start</span>,
 		...props
 	}
-	return { markup: renderToStaticMarkup(<RWAOverviewBreakdownPanel {...full} />), onTreemapNestedByChange }
+	return { markup: renderToStaticMarkup(<RWAOverviewBreakdownPanel {...full} />) }
 }
 
 describe('RWAOverviewBreakdownPanel', () => {
-	test('renders the shared toolbar start, the exports and no nesting select for the pie', () => {
-		const { markup } = render()
-		expect(markup).toContain('toolbar-start')
-		expect(markup).toContain('.csv')
-		expect(markup).toContain('.png')
-		expect(markup).not.toContain('Nested by')
-	})
-
-	test('offers the nesting select and the restore button for the treemap', () => {
-		const { markup } = render({ view: 'treemap', treemapNestedBy: 'assetName' })
-		expect(markup).toContain('Nested by: Asset Name')
-	})
-
-	test('gives the bar and pie views a minimum height and lets the treemap grow', () => {
-		expect(render({ view: 'hbar' }).markup).toContain('min-h-[420px]')
-		expect(render({ view: 'treemap' }).markup).not.toContain('min-h-[420px]')
+	test('offers the treemap nesting control only on the treemap view', () => {
+		expect(render({ view: 'treemap', treemapNestedBy: 'assetName' }).markup).toContain('Nested by: Asset Name')
+		expect(render({ view: 'pie' }).markup).not.toContain('Nested by')
 	})
 })

@@ -32,8 +32,14 @@ export function micaProductLabel(products: Array<MicaProduct>): string {
 	return products.map((product) => MICA_PRODUCT_LABELS[product]).join(' · ')
 }
 
-export function micaDepthDetail(bid: number | null, ask: number | null, partialCoverage: boolean): string | null {
+export function micaDepthDetail(
+	row: MicaVenueModel,
+	product: 'spot' | 'perp',
+	bid: number | null,
+	ask: number | null
+): string | null {
 	if (bid == null || ask == null) return null
+	const partialCoverage = product === 'spot' ? row.depth.spotPartialCoverage : row.depth.perpPartialCoverage
 	return [
 		`${formatUsd(bid, { compact: true }) ?? '–'} bid`,
 		`${formatUsd(ask, { compact: true }) ?? '–'} ask`,
@@ -60,8 +66,7 @@ export function MicaDepthValue({
 }) {
 	if (!supportsMicaProduct(row, product)) return <span className="text-tertiary">N/A</span>
 	if (value == null || bid == null || ask == null) return <span className="text-tertiary">–</span>
-	const partialCoverage = product === 'spot' ? row.depth.spotPartialCoverage : row.depth.perpPartialCoverage
-	const detail = micaDepthDetail(bid, ask, partialCoverage)
+	const detail = micaDepthDetail(row, product, bid, ask)
 	return (
 		<span className="inline-flex items-center justify-end gap-1.5">
 			<Tooltip content={detail} className="justify-end whitespace-nowrap">

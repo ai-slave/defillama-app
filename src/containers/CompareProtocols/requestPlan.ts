@@ -1,4 +1,5 @@
 import { PROTOCOL_LIST_ADDITIVE_TVL_KEYS, type ProtocolListAdditiveTvlKey } from '~/containers/ProtocolLists/api.types'
+import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import { slug } from '~/utils'
@@ -39,14 +40,14 @@ export function normalizeCompareProtocolSelection(
 	return selected
 }
 
-export function buildCompareProtocolTvlRequestPlan(protocol: string, key?: ProtocolListAdditiveTvlKey) {
+export function buildCompareProtocolTvlQuery(protocol: string, key?: ProtocolListAdditiveTvlKey) {
 	const protocolSlug = slug(protocol)
 	return {
-		protocolSlug,
 		queryKey: buildProtocolValueChartQueryKey({
 			source: 'tvl',
 			protocol: protocolSlug,
 			...(key ? { key } : {})
-		})
+		}),
+		queryFn: () => fetchProtocolTvlChart({ protocol: protocolSlug, ...(key ? { key } : {}) })
 	}
 }

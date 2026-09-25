@@ -5,7 +5,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 import { buildScatterPresentation, type ScatterPresentationInput } from './scatterPresentation'
@@ -17,16 +16,10 @@ interface ScatterChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
-export function ScatterChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: ScatterChartAdapterProps) {
+export function ScatterChartAdapter({ config, result, classified, onReady, height }: ScatterChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const numericCols = classified.filter((c) => c.coarse === 'number')

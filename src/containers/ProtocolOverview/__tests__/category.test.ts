@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { resolveProtocolCategory } from '../category'
+import { getProtocolInfoCategories, resolveProtocolCategory } from '../category'
 
 describe('resolveProtocolCategory', () => {
 	test('keeps the explicit protocol category when present', () => {
@@ -49,6 +49,12 @@ describe('resolveProtocolCategory', () => {
 				]
 			})
 		).toBe('DEX Aggregator')
+		expect(
+			resolveProtocolCategory({
+				protocolData: { id: 'parent#interface', category: null, isParentProtocol: true },
+				liteProtocols: [{ parentProtocol: 'parent#interface', category: '', tvl: 500 }]
+			})
+		).toBeNull()
 	})
 
 	test('treats a nullable lite TVL as zero when ranking child categories', () => {
@@ -66,17 +72,25 @@ describe('resolveProtocolCategory', () => {
 			})
 		).toBe('Known TVL')
 	})
+})
 
-	test('returns null when no eligible child category exists', () => {
+describe('getProtocolInfoCategories', () => {
+	test('links the own category first, then each new child category, with routes outside /protocols, and uses child categories alone when the protocol has none', () => {
 		expect(
-			resolveProtocolCategory({
-				protocolData: {
-					id: 'parent#interface',
-					category: null,
-					isParentProtocol: true
-				},
-				liteProtocols: [{ parentProtocol: 'parent#interface', category: '', tvl: 120 }]
-			})
-		).toBeNull()
+			getProtocolInfoCategories('Interest Rate Derivatives', [
+				{ category: 'Interest Rate Derivatives' },
+				{ category: 'Yield' },
+				{ category: null },
+				{ category: 'Dexs' },
+				{ category: 'Yield' }
+			])
+		).toEqual([
+			{ label: 'Interest Rate Derivatives', href: '/protocols/interest-rate-derivatives' },
+			{ label: 'Yield', href: '/protocols/yield' },
+			{ label: 'Dexs', href: '/dexs' }
+		])
+		expect(getProtocolInfoCategories(null, [{ category: 'Prediction Market' }])).toEqual([
+			{ label: 'Prediction Market', href: '/protocols/prediction-market' }
+		])
 	})
 })

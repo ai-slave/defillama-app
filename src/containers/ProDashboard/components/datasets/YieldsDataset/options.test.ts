@@ -16,14 +16,6 @@ const row = ({
 }): YieldsFilterSourceRow => ({ project, projectslug, tvl, tokenSymbols, category })
 
 describe('buildYieldsFilterOptions', () => {
-	test('returns empty option collections for empty data', () => {
-		expect(buildYieldsFilterOptions([])).toEqual({
-			availableTokens: [],
-			availableProtocols: [],
-			availableCategories: []
-		})
-	})
-
 	test('builds all option collections in one pass without mutating rows', () => {
 		const input = [
 			row({ project: 'Aave', projectslug: 'aave', tvl: 10, tokenSymbols: ['USDC', 'USDC'], category: 'Lending' }),

@@ -1,22 +1,15 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { appMetadataFixtures } from '~/utils/test/appMetadata'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { AppMetadataProvider } from '../../../AppMetadataContext'
 import type { MetricChartType } from '../../../types'
 import { MetricSentenceBuilder } from '../MetricSentenceBuilder'
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
-vi.mock('../../../AppMetadataContext', () => ({
-	useAppMetadata: () => ({ availableProtocolChartTypes: () => [], availableChainChartTypes: () => [] })
-}))
-vi.mock('../bindingContext', () => ({
-	useModalFieldBinding: () => ({
-		options: [],
-		boundVariable: null,
-		bind: () => {},
-		unbind: () => {},
-		resolveSelection: () => null
-	})
-}))
+const http = installFixtureFetch()
 let root: Root
 let container: HTMLDivElement
 afterEach(async () => {
@@ -27,6 +20,7 @@ test('chart type arrows update the draft once and None remains a selectable valu
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
+	http.serve(appMetadataFixtures())
 	const change = vi.fn()
 	function Harness() {
 		const [type, setType] = useState<MetricChartType>('sparkline')
@@ -55,7 +49,17 @@ test('chart type arrows update the draft once and None remains a selectable valu
 			/>
 		)
 	}
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={new QueryClient()}>
+				<AppMetadataProvider>
+					<DashboardTestProvider>
+						<Harness />
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</QueryClientProvider>
+		)
+	)
 	expect(change).not.toHaveBeenCalled()
 	const radio = (value: string) => container.querySelector<HTMLInputElement>(`input[value="${value}"]`)!
 	async function arrow(value: string, key: string) {

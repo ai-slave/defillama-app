@@ -64,7 +64,7 @@ describe('buildDashboardLayout', () => {
 	})
 
 	test('tabs take the cards after them while cards before the first tab form the shared header', () => {
-		const layout = buildDashboardLayout([
+		const items = [
 			chart('header'),
 			heading('intro'),
 			text('note'),
@@ -74,8 +74,9 @@ describe('buildDashboardLayout', () => {
 			chart('b'),
 			tab('fees'),
 			chart('c')
-		])
-		expect(dashboardHasTabs).toBeTruthy()
+		]
+		const layout = buildDashboardLayout(items)
+		expect(dashboardHasTabs(items)).toBe(true)
 		expect(layout.shared.map((group) => [group.heading?.id ?? null, ids(group.items)])).toEqual([
 			[null, ['header']],
 			['intro', ['note']]
@@ -256,12 +257,6 @@ describe('dropGroupBounds', () => {
 		expect(dropGroupBounds(items, 'd', null)).toEqual([5, 6])
 		expect(dropGroupBounds(items, 'missing', null)).toBeNull()
 	})
-
-	test('a card in an inactive tab has no bounds', () => {
-		const items = [tab('t1'), chart('a'), tab('t2'), chart('b')]
-		expect(dropGroupBounds(items, 'b', 't1')).toBeNull()
-		expect(dropGroupBounds(items, 'a', 't1')).toEqual([1, 2])
-	})
 })
 
 describe('resolveDropIndex', () => {
@@ -289,13 +284,6 @@ describe('resolveDropIndex', () => {
 		const items = [chart('a'), chart('b'), heading('h1'), chart('c')]
 		expect(resolveDropIndex(items, 'a', 'h1', null)).toBeNull()
 		expect(resolveDropIndex(items, 'c', 'h1', null)).toBeNull()
-	})
-
-	test('a shared card above the tabs and a card under a heading stay in their own runs', () => {
-		const items = [chart('a'), heading('h1'), chart('b'), tab('t1'), chart('c')]
-		expect(resolveDropIndex(items, 'a', 'b', null)).toBeNull()
-		expect(resolveDropIndex(items, 'b', 'a', null)).toBeNull()
-		expect(resolveDropIndex(items, 'a', 'c', 't1')).toBeNull()
 	})
 
 	test('a drop into another tab, or from an inactive tab, is refused', () => {

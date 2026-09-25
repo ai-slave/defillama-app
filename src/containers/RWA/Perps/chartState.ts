@@ -337,6 +337,16 @@ export function getRWAPerpsTreemapNestedByOptions(
 	}))
 }
 
+/** The toolbar controls that apply to a chart state: nesting and zoom reset on a treemap, date grouping on volume history. */
+export function getRWAPerpsChartControls(state: RWAPerpsChartState) {
+	if (state.view === 'treemap') {
+		const nestedByOptions = TREEMAP_NESTED_BY_OPTIONS[state.mode][state.breakdown]
+		assert(nestedByOptions, `Missing RWA perps treemap nested-by options for ${state.mode}/${state.breakdown}`)
+		return { nestedBy: nestedByOptions.length > 1, restore: true, dateGrouping: false }
+	}
+	return { nestedBy: false, restore: false, dateGrouping: state.view === 'timeSeries' && state.metric === 'volume24h' }
+}
+
 export function parseRWAPerpsChartState(
 	query: ParsedUrlQuery,
 	mode: RWAPerpsChartMode,

@@ -7,7 +7,7 @@ import { MAX_TOKENS_TABLE_PAGE_SIZE } from './utils'
 export const TOKENS_API = '/api/public/tokens'
 export const TOKENS_MARKET_MAP_API = '/api/public/tokens/market-map'
 
-async function fetchTokensResponse<T extends TokensPageResponse | TokensChartResponse>(
+export async function fetchTokensResponse<T extends TokensPageResponse | TokensChartResponse>(
 	url: string,
 	signal: AbortSignal
 ) {

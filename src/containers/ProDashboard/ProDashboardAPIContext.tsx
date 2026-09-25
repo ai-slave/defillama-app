@@ -1560,3 +1560,20 @@ export function useProDashboardSave() {
 	if (!context) throw new Error('useProDashboardSave requires ProDashboardAPIProvider')
 	return context
 }
+
+/** The raw contexts, so tests can render consumers with plain dashboard state instead of the loading provider. */
+export const ProDashboardContexts = {
+	Save: ProDashboardSaveContext,
+	Time: ProDashboardTimeContext,
+	Catalog: ProDashboardCatalogContext,
+	Permissions: ProDashboardPermissionsContext,
+	Mode: ProDashboardModeContext,
+	Dashboard: ProDashboardDashboardContext,
+	EditorActions: ProDashboardEditorActionsContext,
+	ItemsState: ProDashboardItemsStateContext,
+	StreamProgress: ProDashboardStreamProgressContext,
+	Variables: ProDashboardVariablesContext,
+	Annotations: ProDashboardAnnotationsContext,
+	History: ProDashboardHistoryContext,
+	UI: ProDashboardUIContext
+}

@@ -1,23 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { rwaPerpsMarketBreakdown } from '~/containers/RWA/server/api'
 import { parseMarketBreakdownRequest } from '~/pages/api/public/rwa/perps/market-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	fetchRWAPerpsMarketBreakdownChartData: vi.fn()
-}))
-
-vi.mock('~/containers/RWA/Perps/api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/containers/RWA/Perps/api')>()
-	return {
-		...actual,
-		fetchRWAPerpsMarketBreakdownChartData: mocks.fetchRWAPerpsMarketBreakdownChartData
-	}
-})
-
-beforeEach(() => {
-	vi.clearAllMocks()
-})
+const http = installFixtureFetch()
 
 describe('parseMarketBreakdownRequest', () => {
 	test('accepts every bounded backend target', () => {
@@ -154,7 +142,9 @@ describe('parseMarketBreakdownRequest', () => {
 
 describe('rwaPerpsMarketBreakdown', () => {
 	test('returns serialized transformed market breakdown data', async () => {
-		mocks.fetchRWAPerpsMarketBreakdownChartData.mockResolvedValue([{ timestamp: 1, 'alpha:aapl': 4, 'beta:aapl': 9 }])
+		http.serve({
+			[`${RWA_PERPS_SERVER_URL}/chart/market-breakdown`]: [{ timestamp: 1, 'alpha:aapl': 4, 'beta:aapl': 9 }]
+		})
 
 		const result = await rwaPerpsMarketBreakdown.handle({
 			method: 'GET',

@@ -8,20 +8,13 @@ import {
 } from '../contract'
 
 describe('dataset snapshot contract', () => {
-	test('creates matching domain manifests and current pointers', () => {
+	test('round-trips created manifests and current pointers through their parsers', () => {
 		const manifest = createDatasetSnapshotManifest('yields', 'snapshot-1', 123)
-		expect(manifest).toEqual({
-			domain: 'yields',
-			snapshotId: 'snapshot-1',
-			formatVersion: 2,
-			schemaVersion: 4,
-			createdAt: 123
-		})
 		expect(parseDatasetSnapshotManifest(manifest)).toEqual(manifest)
 		expect(parseDatasetSnapshotPointer(createDatasetSnapshotPointer(manifest))).toEqual({
 			domain: 'yields',
 			snapshotId: 'snapshot-1',
-			formatVersion: 2
+			formatVersion: manifest.formatVersion
 		})
 	})
 

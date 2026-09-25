@@ -83,17 +83,18 @@ describe('buildRwaTreemapTreeData', () => {
 		])
 	})
 
-	test('uses every filtered group when a nested presentation falls back to flat data', () => {
-		const tree = buildCompleteRwaTreemapTreeData({
-			nestedTreeData: [],
-			completePieData: [
-				{ name: 'Visible', value: 100 },
-				{ name: 'Outside visual limit', value: 25 }
-			],
-			breakdownLabel: 'Asset Group'
-		})
+	test('draws every flat group when there is no nested tree, and the nested tree when there is one', () => {
+		const completePieData = [
+			{ name: 'Visible', value: 100 },
+			{ name: 'Outside visual limit', value: 25 }
+		]
+		const flat = buildCompleteRwaTreemapTreeData({ nestedTreeData: [], completePieData, breakdownLabel: 'Asset Group' })
+		expect(flat.map((node) => node.name)).toEqual(['Visible', 'Outside visual limit'])
 
-		expect(tree.map((node) => node.name)).toEqual(['Visible', 'Outside visual limit'])
+		const nested = buildRwaTreemapTreeData([{ name: 'Nested', value: 1 }], 'Asset Group')
+		expect(
+			buildCompleteRwaTreemapTreeData({ nestedTreeData: nested, completePieData, breakdownLabel: 'Asset Group' })
+		).toBe(nested)
 	})
 })
 
@@ -106,8 +107,9 @@ describe('buildRwaNestedTreemapTreeData', () => {
 					onChainMcap: {
 						total: 100,
 						breakdown: [
-							['Ethereum', 100],
-							['Base', 0]
+							['Ethereum', 60],
+							['Base', 40],
+							['Arbitrum', 0]
 						]
 					}
 				},
@@ -140,24 +142,39 @@ describe('buildRwaNestedTreemapTreeData', () => {
 			childGrouping: 'assetName'
 		})
 
+		// Alpha is split across two chains, so its per-chain values differ from its total.
 		expect(tree).toEqual([
 			{
 				name: 'Ethereum',
 				path: 'Chain/Ethereum',
-				value: [150, 100, 100],
+				value: [110, 73.33, 73.33],
 				itemStyle: { color: '#2b7aca' },
 				children: [
 					{
 						name: 'Alpha',
 						path: 'Chain/Ethereum/Alpha',
-						value: [100, 66.67, 66.67],
+						value: [60, 54.55, 40],
 						itemStyle: { color: '#163f69' }
 					},
 					{
 						name: 'Beta',
 						path: 'Chain/Ethereum/Beta',
-						value: [50, 33.33, 33.33],
+						value: [50, 45.45, 33.33],
 						itemStyle: { color: '#6ca5e0' }
+					}
+				]
+			},
+			{
+				name: 'Base',
+				path: 'Chain/Base',
+				value: [40, 26.67, 26.67],
+				itemStyle: { color: '#ca2b4c' },
+				children: [
+					{
+						name: 'Alpha',
+						path: 'Chain/Base/Alpha',
+						value: [40, 100, 26.67],
+						itemStyle: { color: '#ca2b4c' }
 					}
 				]
 			}

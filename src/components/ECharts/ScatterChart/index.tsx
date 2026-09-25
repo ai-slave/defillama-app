@@ -27,9 +27,9 @@ import type {
 	ScatterChartDatum,
 	ScatterChartPoint,
 	ScatterChartValue,
-	ScatterTooltipParams,
-	YieldScatterChartPoint
+	ScatterTooltipParams
 } from './types'
+import { groupYieldScatterPoints, isYieldScatterChartPoint } from './yieldPoints'
 
 echarts.use([
 	CanvasRenderer,
@@ -52,10 +52,6 @@ const getEntityIcon = (type: string, slug: string) => {
 
 function isScatterChartPoint(point: ScatterChartDatum): point is ScatterChartPoint {
 	return !Array.isArray(point) && 'value' in point
-}
-
-function isYieldScatterChartPoint(point: ScatterChartDatum): point is YieldScatterChartPoint {
-	return !Array.isArray(point) && 'projectName' in point
 }
 
 function getPointValue(point: ScatterChartDatum): ScatterChartValue {
@@ -164,26 +160,7 @@ function ScatterChart({
 		}
 
 		if (isYieldData) {
-			const pointsByProject = new Map<string, Array<ScatterChartValue>>()
-			for (const point of chartData) {
-				if (!isYieldScatterChartPoint(point)) continue
-				if (typeof point.sigma !== 'number' || typeof point.mu !== 'number') continue
-				let points = pointsByProject.get(point.projectName)
-				if (!points) {
-					points = []
-					pointsByProject.set(point.projectName, points)
-				}
-				points.push([
-					point.sigma,
-					point.mu,
-					point.count,
-					point.symbol,
-					point.pool,
-					point.tvlUsd,
-					point.apy,
-					point.chain
-				])
-			}
+			const pointsByProject = groupYieldScatterPoints(chartData)
 			for (const [project, data] of pointsByProject) {
 				series.push({
 					name: project,

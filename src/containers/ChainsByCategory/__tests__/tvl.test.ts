@@ -178,26 +178,25 @@ describe('chains by category tvl helpers', () => {
 	})
 
 	test('preserves non-chart extra tvl entries while sanitizing stale chart-backed entries', () => {
+		const latestBaseTimestamp = 1_800_000_000_000
 		const sanitized = removeStaleChainExtraTvlEntries({
 			chainName: 'Ethereum',
 			extraTvl: {
-				excludeparent: {
-					tvl: 123,
-					tvlPrevDay: 120,
-					tvlPrevWeek: 110,
-					tvlPrevMonth: 100
-				}
+				excludeparent: { tvl: 123, tvlPrevDay: 120, tvlPrevWeek: 110, tvlPrevMonth: 100 },
+				offers: { tvl: 7, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null },
+				staking: { tvl: 5, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null }
 			},
 			tvlChartsByChain: {
-				tvl: {
-					Ethereum: {
-						1_776_643_200_000: 106_854_312_810
-					}
-				}
+				tvl: { Ethereum: { [latestBaseTimestamp]: 100 } },
+				offers: { Ethereum: { [latestBaseTimestamp]: 7 } },
+				staking: { Ethereum: { 1_700_000_000_000: 5 } }
 			}
 		})
 
-		expect(sanitized.excludeparent?.tvl).toBe(123)
+		expect(sanitized).toEqual({
+			excludeparent: { tvl: 123, tvlPrevDay: 120, tvlPrevWeek: 110, tvlPrevMonth: 100 },
+			offers: { tvl: 7, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null }
+		})
 	})
 
 	test('keeps an extra TVL snapshot at the exact stale tolerance boundary', () => {
@@ -215,26 +214,6 @@ describe('chains by category tvl helpers', () => {
 		})
 
 		expect(sanitized.staking?.tvl).toBe(5)
-	})
-
-	test('preserves dynamic keys while filtering only chart-backed families', () => {
-		const latestBaseTimestamp = 1_800_000_000_000
-		const extraTvl = {
-			offers: { tvl: 7, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null },
-			custom: { tvl: 8, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null }
-		}
-
-		const sanitized = removeStaleChainExtraTvlEntries({
-			chainName: 'Special',
-			extraTvl,
-			tvlChartsByChain: {
-				tvl: { Special: { [latestBaseTimestamp]: 100 } },
-				offers: { Special: { [latestBaseTimestamp]: 7 } }
-			}
-		})
-
-		expect(sanitized.offers?.tvl).toBe(7)
-		expect(sanitized.custom?.tvl).toBe(8)
 	})
 
 	test('drops overlap when either required chart-backed snapshot is stale', () => {

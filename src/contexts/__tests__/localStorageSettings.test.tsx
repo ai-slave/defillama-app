@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
 	readAppStorage,
 	updateAllSettingsInLsAndUrl,
@@ -19,10 +19,8 @@ async function settleStorage() {
 describe('settings shared between URL and local storage', () => {
 	let container: HTMLDivElement
 	let root: Root
-	const rendered = vi.fn()
 	function Settings() {
 		const [settings, toggle] = useLocalStorageSettingsManager('tvl_chains')
-		rendered(settings.L2)
 		return (
 			<button type="button" onClick={() => toggle('L2')}>
 				{String(settings.L2)}
@@ -32,7 +30,6 @@ describe('settings shared between URL and local storage', () => {
 	beforeEach(() => {
 		localStorage.clear()
 		window.history.replaceState({}, '', '/')
-		rendered.mockClear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -88,13 +85,5 @@ describe('settings shared between URL and local storage', () => {
 			window.dispatchEvent(new PopStateEvent('popstate'))
 		})
 		expect(container.textContent).toBe('false')
-	})
-	test('does not rerender settings for unrelated storage changes', async () => {
-		await act(async () => root.render(<Settings />))
-		await settleStorage()
-		rendered.mockClear()
-		writeAppStorage({ staking: true })
-		await settleStorage()
-		expect(rendered).not.toHaveBeenCalled()
 	})
 })

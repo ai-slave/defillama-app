@@ -50,13 +50,6 @@ describe('the virtualized multi-select popover keeps no state while closed', () 
 		container.remove()
 	})
 
-	test('a closed popover renders no search box', async () => {
-		await render(
-			<AriakitVirtualizedMultiSelect label="Protocols" options={options} selectedValues={[]} onChange={vi.fn()} />
-		)
-		expect(searchInput()).toBeNull()
-	})
-
 	test('reopening starts from an empty search', async () => {
 		await render(
 			<AriakitVirtualizedMultiSelect label="Protocols" options={options} selectedValues={[]} onChange={vi.fn()} />

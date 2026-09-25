@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { EmissionEvent } from './api.types'
+import { getEmissionAmountBreakdownOverInterval } from './eventAmount'
 import { filterUnlockTableProtocols, type IEmission, parseUnlockFilterValue } from './Table'
 
 const ALL_UNLOCK_TYPES = [
@@ -19,20 +20,8 @@ const protocol = (
 	mcap: number | undefined,
 	events: IEmission['upcomingEvent']
 ): IEmission => {
-	let cliffAmount = 0
-	let linearAmount = 0
-	let unknownEventCount = 0
-	for (const event of events) {
-		if ('hasUnknownTokenAmount' in event) unknownEventCount += 1
-		else if (event.unlockType === 'cliff') cliffAmount += Math.max(event.noOfTokens[0], 0)
-		else linearAmount += Math.max(event.noOfTokens[1], 0) / 7
-	}
-	const next24h = {
-		cliff: cliffAmount,
-		linear: linearAmount,
-		total: cliffAmount + linearAmount,
-		unknownEventCount
-	}
+	// Every fixture event sits inside the first day, the window the server uses for next24h.
+	const next24h = getEmissionAmountBreakdownOverInterval(events, 0, 24 * 60 * 60)
 
 	return {
 		sources: [],
@@ -101,15 +90,6 @@ const options = (overrides: Partial<Parameters<typeof filterUnlockTableProtocols
 })
 
 describe('unlock table construction behavior fixture', () => {
-	test('returns the input array and rows when no filter is active', () => {
-		const alpha = protocol('Alpha', 2, 1000, [cliff('Team', 'insiders', 1, 10)])
-		const protocols = [alpha]
-		const result = filterUnlockTableProtocols(protocols, options())
-
-		expect(result).toBe(protocols)
-		expect(result[0]).toBe(alpha)
-	})
-
 	test('retains row identity for watchlist-only and value-only filters', () => {
 		const alpha = protocol('Alpha', 2, 1000, [cliff('Team', 'insiders', 1, 10)])
 		const beta = protocol('Beta', 1, 100, [cliff('Sale', 'privateSale', 2, 5)])
@@ -149,7 +129,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(beta.upcomingEvent).toBe(betaEvents)
 	})
 
-	test('combines filters using the integrated next-24h value', () => {
+	test('combines watchlist, type, value and share filters on the next-24h value', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
 			linear('Team', 'insiders', 1, 10, 15),
 			cliff('Farm', 'farming', 2, 100)

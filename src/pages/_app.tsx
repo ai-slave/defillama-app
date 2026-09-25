@@ -12,6 +12,7 @@ import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
 import { InvestorsSiteProvider, useInvestorsSite } from '~/containers/Investors/SiteContext'
+import { getUmamiScriptAttributes } from '~/containers/Investors/umamiScript'
 import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
@@ -37,8 +38,6 @@ type AppPropsWithLayout = AppProps & {
 
 const CHUNK_LOAD_ERROR_KEY = 'chunk-load-error-reload'
 const AB_EXPOSURE_SESSION_KEY = `ab-exposure:${AB_EXPERIMENT_ID}`
-const MAIN_UMAMI_WEBSITE_ID = 'ca346731-f7ec-437f-9727-162f29bb67ae'
-const MAIN_UMAMI_DOMAINS = 'defillama.com'
 
 function ensureClientABAssignment() {
 	const hostname = window.location.hostname
@@ -86,10 +85,7 @@ const isChunkLoadError = (error: unknown) => {
 
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
-	const site = useInvestorsSite()
-	const umamiWebsiteId = site === undefined ? null : (site?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID)
-	// Only send from the site's real hosts, so localhost and preview deployments stay out of tasty.
-	const umamiDomains = site?.umamiDomains.join(',') ?? MAIN_UMAMI_DOMAINS
+	const umamiScriptAttributes = getUmamiScriptAttributes(useInvestorsSite())
 
 	useEffect(() => {
 		const trackExposure = () => {
@@ -174,17 +170,14 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 					content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
 				/>
 			</Head>
-			{umamiWebsiteId ? (
+			{umamiScriptAttributes ? (
 				<Script
 					src="/script2.js"
 					strategy="lazyOnload"
 					onReady={() => {
 						window.dispatchEvent(new Event(UMAMI_READY_EVENT))
 					}}
-					data-website-id={umamiWebsiteId}
-					data-host-url="https://tasty.defillama.com"
-					data-domains={umamiDomains}
-					data-before-send="umamiABBeforeSend"
+					{...umamiScriptAttributes}
 				/>
 			) : null}
 

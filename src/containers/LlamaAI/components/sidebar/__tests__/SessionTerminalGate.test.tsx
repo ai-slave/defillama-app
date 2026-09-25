@@ -1,15 +1,23 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { AgenticSessionItem } from '../AgenticSessionItem'
 
-const auth = vi.hoisted(() => ({ user: { id: 'user', flags: { is_llama: false } } }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: auth.user, authorizedFetch: vi.fn() }) }))
-vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
-vi.mock('~/containers/LlamaAI/hooks/useClearUnseenCompletion', () => ({ useClearUnseenCompletion: () => vi.fn() }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
+const session = installSubscriberSession('user')
+const chrome = {
+	toggleSidebar: () => {},
+	hideSidebar: () => {},
+	toggleFullscreen: () => {},
+	isFullscreen: false,
+	fullscreenLocked: false,
+	sidebarVisible: true,
+	toggleDashboardPanel: () => {},
+	isDashboardPanelOpen: false
+}
 
 let root: Root
 let container: HTMLDivElement
@@ -25,26 +33,33 @@ afterEach(async () => {
 })
 
 async function renderChartChat(isLlama: boolean) {
-	auth.user = { id: 'user', flags: { is_llama: isLlama } }
+	const record = { ...pb.authStore.record!, flags: { is_llama: isLlama } }
+	pb.authStore.save(pb.authStore.token, record)
+	session.serve({
+		'/api/collections/users/auth-refresh': { token: pb.authStore.token, record },
+		'https://ai.llama.fi/projects': { projects: [] }
+	})
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={new QueryClient()}>
-				<AgenticSessionItem
-					session={{
-						sessionId: 'abc',
-						title: 'HYPE levels',
-						createdAt: '2026-09-21',
-						lastActivity: '2026-09-21',
-						isActive: false,
-						isPinned: false,
-						terminalSymbol: 'HYPE'
-					}}
-					isActive={false}
-					onSessionSelect={vi.fn()}
-					onDelete={vi.fn()}
-					isRestoring={false}
-				/>
-			</QueryClientProvider>
+			<session.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					<AgenticSessionItem
+						session={{
+							sessionId: 'abc',
+							title: 'HYPE levels',
+							createdAt: '2026-09-21',
+							lastActivity: '2026-09-21',
+							isActive: false,
+							isPinned: false,
+							terminalSymbol: 'HYPE'
+						}}
+						isActive={false}
+						onSessionSelect={vi.fn()}
+						onDelete={vi.fn()}
+						isRestoring={false}
+					/>
+				</LlamaAIChromeContext.Provider>
+			</session.Wrapper>
 		)
 	)
 	const open = vi.spyOn(window, 'open').mockImplementation(() => null)

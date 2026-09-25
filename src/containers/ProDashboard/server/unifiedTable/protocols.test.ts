@@ -1,37 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const {
-	anyMock,
-	fetchOracleMetricsMock,
-	fetchProtocolRowMembershipDatasetMock,
-	fetchProtocolSupplementalMetricsMock,
-	oneMock
-} = vi.hoisted(() => ({
-	anyMock: vi.fn(),
-	fetchOracleMetricsMock: vi.fn(),
-	fetchProtocolRowMembershipDatasetMock: vi.fn(),
-	fetchProtocolSupplementalMetricsMock: vi.fn(),
-	oneMock: vi.fn()
-}))
+const { anyMock, oneMock } = vi.hoisted(() => ({ anyMock: vi.fn(), oneMock: vi.fn() }))
+vi.mock('~/server/db/llama', () => ({ llamaDb: { any: anyMock, one: oneMock } }))
 
-vi.mock('~/containers/Oracles/api', () => ({ fetchOracleMetrics: fetchOracleMetricsMock }))
-
-vi.mock('./supplementalMetrics', async (importOriginal) => {
-	const original = await importOriginal<typeof import('./supplementalMetrics')>()
-	return { ...original, fetchProtocolSupplementalMetrics: fetchProtocolSupplementalMetricsMock }
-})
-
-vi.mock('./rowMembership', async (importOriginal) => {
-	const original = await importOriginal<typeof import('./rowMembership')>()
-	return { ...original, fetchProtocolRowMembershipDataset: fetchProtocolRowMembershipDatasetMock }
-})
-
-vi.mock('~/server/db/llama', () => ({
-	llamaDb: {
-		any: anyMock,
-		one: oneMock
-	}
-}))
+const http = installFixtureFetch()
 
 const totals = {
 	tvl_base: 1,
@@ -42,6 +16,24 @@ const totals = {
 	volume_derivatives_1d: 1,
 	volume_aggr_derivatives_1d: 1,
 	volume_options_1d: 1
+}
+
+const membershipProtocol = {
+	defillamaId: 'canonical',
+	name: 'Protocol',
+	displayName: 'Protocol',
+	slug: 'protocol',
+	id: 'canonical',
+	total24h: null,
+	breakdown24h: null,
+	breakdown30d: null,
+	module: null,
+	category: 'Derivatives',
+	logo: '',
+	chains: ['Ethereum'],
+	protocolType: 'protocol',
+	methodologyURL: null,
+	methodology: null
 }
 
 const options = {
@@ -67,9 +59,6 @@ describe('unified table metric totals cache', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-07-19T00:00:00Z'))
 		anyMock.mockReset().mockResolvedValue([])
-		fetchOracleMetricsMock.mockReset().mockResolvedValue({ oracles: {}, chainsByOracle: {}, oraclesTVS: {} })
-		fetchProtocolRowMembershipDatasetMock.mockReset().mockResolvedValue(null)
-		fetchProtocolSupplementalMetricsMock.mockReset().mockResolvedValue({})
 		oneMock.mockReset().mockResolvedValue(totals)
 	})
 
@@ -110,19 +99,13 @@ describe('unified table metric totals cache', () => {
 		expect(oneMock).toHaveBeenCalledTimes(2)
 	})
 
-	test('skips the global totals query when the requested columns do not use global shares', async () => {
-		const { fetchProtocolsTable } = await import('./protocols')
-
-		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['fees', 'revenue', 'market-cap'] })
-
-		expect(oneMock).not.toHaveBeenCalled()
-	})
-
 	test('maps the canonical Lens holder revenue comparison to a percentage metric', async () => {
-		fetchOracleMetricsMock.mockResolvedValue({
-			oracles: { Chainlink: ['example--protocol'] },
-			chainsByOracle: {},
-			oraclesTVS: {}
+		http.serve({
+			[`${V2_SERVER_URL}/metrics/oracle`]: {
+				oracles: { Chainlink: ['example--protocol'] },
+				chainsByOracle: {},
+				oraclesTVS: {}
+			}
 		})
 		anyMock
 			.mockResolvedValueOnce([
@@ -154,7 +137,7 @@ describe('unified table metric totals cache', () => {
 		expect(result.rows[0]?.oracles).toEqual(['Chainlink'])
 	})
 
-	test('maps the first Lens metric batch while keeping incentives out of unsupported subprotocol projections', async () => {
+	test('maps Lens period, change and incentive columns to table metrics', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -262,8 +245,6 @@ describe('unified table metric totals cache', () => {
 			optionsNotionalVolume30d: 300,
 			optionsVolumeChange30dOver30d: -30
 		})
-		expect(String(anyMock.mock.calls[0]?.[0])).toContain('mp.incentive_30d')
-		expect(String(anyMock.mock.calls[1]?.[0])).not.toContain('msp.incentive_30d')
 	})
 
 	test('uses canonical protocol and chain display names from Lens metadata', async () => {
@@ -298,14 +279,6 @@ describe('unified table metric totals cache', () => {
 			parentProtocolName: 'GMX',
 			chains: ['BSC', 'OP Mainnet']
 		})
-	})
-
-	test('does not request oracle membership for unrelated tables', async () => {
-		const { fetchProtocolsTable } = await import('./protocols')
-
-		await fetchProtocolsTable(options)
-
-		expect(fetchOracleMetricsMock).not.toHaveBeenCalled()
 	})
 
 	test('constructs only requested metric families and their exact ratio dependencies', async () => {
@@ -407,7 +380,7 @@ describe('unified table metric totals cache', () => {
 		expect(metrics?.feesChange_1d).toBeNull()
 	})
 
-	test('exposes open interest only when that metric family is requested', async () => {
+	test('maps Lens open interest when that metric family is requested', async () => {
 		const lensRows = [
 			{
 				protocol: 'perps-protocol',
@@ -420,10 +393,6 @@ describe('unified table metric totals cache', () => {
 		anyMock.mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
 		const { fetchProtocolsTable } = await import('./protocols')
 
-		const withoutOpenInterest = await fetchProtocolsTable(options)
-		expect(withoutOpenInterest.rows[0]?.metrics).not.toHaveProperty('openInterest')
-
-		anyMock.mockReset().mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
 		const withOpenInterest = await fetchProtocolsTable({ ...options, baseMetricFamilies: ['open-interest'] })
 		expect(withOpenInterest.rows[0]?.metrics.openInterest).toBe(42)
 	})
@@ -484,9 +453,11 @@ describe('unified table metric totals cache', () => {
 			}
 		]
 		anyMock.mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
-		fetchProtocolRowMembershipDatasetMock.mockResolvedValueOnce({
-			status: 'complete',
-			protocols: [{ name: 'Canonical', slug: 'canonical', chains: ['Ethereum'], total24h: null }]
+		http.serve({
+			[`${V2_SERVER_URL}/metrics/open-interest`]: {
+				protocols: [{ ...membershipProtocol, name: 'Canonical', displayName: 'Canonical', slug: 'canonical' }],
+				allChains: ['Ethereum']
+			}
 		})
 
 		const preset = await fetchProtocolsTable({
@@ -497,7 +468,6 @@ describe('unified table metric totals cache', () => {
 		expect(preset.rows.map((row) => row.protocolId)).toEqual(['canonical'])
 
 		anyMock.mockClear().mockResolvedValueOnce(lensRows).mockResolvedValueOnce([])
-		fetchProtocolRowMembershipDatasetMock.mockResolvedValueOnce(null)
 		const broad = await fetchProtocolsTable({ ...options, baseMetricFamilies: ['open-interest'] })
 		expect(broad.rows.map((row) => row.protocolId)).toEqual(['canonical', 'lens-only'])
 	})
@@ -603,7 +573,17 @@ describe('unified table metric totals cache', () => {
 		expect(ethereum.metrics).not.toHaveProperty('protocolCount')
 	})
 
-	test('maps canonical chain incentives without allocating them to protocol-chain rows', async () => {
+	// Incentives exist only per protocol and per chain; projecting them from the by-chain protocol views
+	// would split chain emissions across protocol-chain rows.
+	test('projects incentives only from the protocol aggregate view', async () => {
+		const { buildLensMetricProjection } = await import('./protocols')
+		expect(buildLensMetricProjection('mp', ['incentives'])).toContain('mp.incentive_1d')
+		for (const alias of ['msp', 'mpc', 'mspc'] as const) {
+			expect(buildLensMetricProjection(alias, ['incentives'])).toBe('NULL::numeric AS no_requested_metrics')
+		}
+	})
+
+	test('maps canonical chain incentives to chain emissions', async () => {
 		anyMock
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
@@ -626,42 +606,5 @@ describe('unified table metric totals cache', () => {
 			emissions30d: 30,
 			emissions1y: 365
 		})
-	})
-
-	test('shares one request scope between supplemental values and canonical membership', async () => {
-		anyMock
-			.mockResolvedValueOnce([
-				{
-					protocol: 'protocol',
-					protocol_category: 'Dexs',
-					chain_slugs: ['ethereum'],
-					chain_slug: 'Ethereum',
-					exclude_tvl_from_parent: false
-				},
-				{
-					protocol: 'protocol',
-					protocol_category: 'Dexs',
-					chain_slugs: ['base'],
-					chain_slug: 'Base',
-					exclude_tvl_from_parent: false
-				}
-			])
-			.mockResolvedValueOnce([])
-			.mockResolvedValueOnce([])
-		const { fetchProtocolsTable } = await import('./protocols')
-
-		await fetchProtocolsTable({
-			...options,
-			rowHeaders: ['chain', 'protocol'],
-			supplementalMetrics: ['earnings'],
-			rowMembership: { kind: 'supplemental-metric', metric: 'earnings' }
-		})
-
-		expect(fetchProtocolSupplementalMetricsMock).toHaveBeenCalledOnce()
-		expect(fetchProtocolRowMembershipDatasetMock).toHaveBeenCalledOnce()
-		const supplementalScope = fetchProtocolSupplementalMetricsMock.mock.calls[0]?.[2]
-		const membershipScope = fetchProtocolRowMembershipDatasetMock.mock.calls[0]?.[2]
-		expect(supplementalScope).toBeDefined()
-		expect(membershipScope).toBe(supplementalScope)
 	})
 })

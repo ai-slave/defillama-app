@@ -4,23 +4,16 @@
    - the table mounts under Assets and Compliance with the view it is for, never under Information
    - the panels stay in the document under a table view, hidden, and show under Information
    - About and Compliance render on a bare meta; Fees, Entity, Regulation and Milestones only with content
-   - the Website button prefers the referral link */
+   The Website link choice is covered by getRwaPlatformLinks in panels/__tests__/panelData.test.ts. */
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { foldRwaPlatformKpi } from '../../kpi/platformKpi'
 import { spotAsset } from '../../table/__tests__/fixtures'
 import type { RWAPlatformMeta } from '../api.types'
-import type { RWAPlatformView } from '../view'
-
-vi.mock('~/components/Link', () => ({
-	BasicLink: ({ children }: { children: React.ReactNode }) => <span>{children}</span>
-}))
-vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => <span /> }))
-vi.mock('~/components/Menu', () => ({ Menu: ({ name }: { name: string }) => <span>{name}</span> }))
-
-import { foldRwaPlatformKpi } from '../../kpi/platformKpi'
 import { RWAPlatformViews } from '../PlatformViews'
+import type { RWAPlatformView } from '../view'
 
 const PROFILE_COPY = 'Ondo Finance is the largest pure-play RWA platform.'
 
@@ -100,33 +93,9 @@ describe('RWA platform views', () => {
 		expect(container.textContent).toContain(PROFILE_COPY)
 	})
 
-	test('renders About and Compliance on a bare meta, the other four only with content', async () => {
+	test('hides the panels a bare meta has nothing to say in', async () => {
 		await render('information')
-		const headings = () => [...container.querySelectorAll('h2')].map((heading) => heading.textContent)
-		expect(headings()).toEqual(['About Ondo', 'Compliance'])
-		expect(container.textContent).toContain('Issuers on the platform')
-		expect(container.textContent).toContain('Apollo')
-		await render('information', {
-			...bare,
-			revenueModel: 'Management Fee',
-			headquarters: 'New York',
-			regulatoryStatus: 'SEC-registered transfer agent.',
-			milestones: [{ date: '2026-05', event: 'FINRA approval' }]
-		})
-		expect(headings()).toEqual(['About Ondo', 'Entity', 'Regulation', 'Compliance', 'Fees & revenue', 'Milestones'])
-		expect(container.textContent).toContain('FINRA approval')
-	})
-
-	test('uses a referral link for Website when available, the official one otherwise', async () => {
-		await render('information', {
-			...bare,
-			website: ['https://official.example'],
-			refLinks: ['https://referral.example']
-		})
-		let website = [...container.querySelectorAll('a')].find((link) => link.textContent === 'Website')
-		expect(website?.getAttribute('href')).toBe('https://referral.example')
-		await render('information', { ...bare, website: ['https://official.example'], refLinks: null })
-		website = [...container.querySelectorAll('a')].find((link) => link.textContent === 'Website')
-		expect(website?.getAttribute('href')).toBe('https://official.example')
+		const headings = [...container.querySelectorAll('h2')].map((heading) => heading.textContent)
+		expect(headings).toEqual(['About Ondo', 'Compliance'])
 	})
 })

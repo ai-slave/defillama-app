@@ -24,7 +24,7 @@ export function inferFineKindFromArrowType(typeString: string | undefined): Fine
 	return 'other'
 }
 
-export function coarsen(fine: FineKind): CoarseKind {
+function coarsen(fine: FineKind): CoarseKind {
 	if (fine === 'date') return 'date'
 	if (fine === 'int' || fine === 'float') return 'number'
 	if (fine === 'text' || fine === 'bool') return 'category'

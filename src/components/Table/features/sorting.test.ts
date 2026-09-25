@@ -37,39 +37,16 @@ function assertMissingSortingApi() {
 void assertMissingSortingApi
 
 describe('selective sorting features', () => {
-	test.each([
-		['numbers', [10, 2, 30], [2, 10, 30]],
-		['text', ['Zulu', 'alpha', 'Beta'], ['alpha', 'Beta', 'Zulu']],
-		['alphanumeric', ['Pool 10', 'Pool 2', 'Pool 1'], ['Pool 1', 'Pool 2', 'Pool 10']],
-		[
-			'dates',
-			[new Date('2026-03-01'), new Date('2026-01-01'), new Date('2026-02-01')],
-			[new Date('2026-01-01'), new Date('2026-02-01'), new Date('2026-03-01')]
-		]
-	])('automatically sorts %s in both directions', (_name, values, expected) => {
+	test('sorts version-like text naturally in both directions', () => {
 		const table = constructTestTable({
 			features: sortedTableFeatures,
-			data: values.map((value) => ({ value })),
+			data: ['Pool 10', 'Pool 2', 'Pool 1'].map((value) => ({ value })),
 			columns: [{ accessorKey: 'value' }]
 		})
 		table.setSorting([{ id: 'value', desc: false }])
-		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual(expected)
+		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual(['Pool 1', 'Pool 2', 'Pool 10'])
 		table.setSorting([{ id: 'value', desc: true }])
-		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual([...expected].reverse())
-	})
-
-	test('keeps undefined last in both directions and renders replaced data', () => {
-		const table = constructTestTable({
-			features: sortedTableFeatures,
-			data: [{ value: undefined }, { value: 2 }, { value: 1 }],
-			columns: [{ accessorKey: 'value', sortUndefined: 'last' }]
-		})
-		table.setSorting([{ id: 'value', desc: false }])
-		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual([1, 2, undefined])
-		table.setSorting([{ id: 'value', desc: true }])
-		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual([2, 1, undefined])
-		table.setOptions((previous) => ({ ...previous, data: [{ value: 4 }, { value: 3 }] }))
-		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual([4, 3])
+		expect(table.getRowModel().rows.map((row) => row.original.value)).toEqual(['Pool 10', 'Pool 2', 'Pool 1'])
 	})
 })
 

@@ -17,10 +17,10 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { shouldResetYieldsPoolPage } from '../queryState'
 import { pushYieldsQuery } from '../queryUpdates.client'
-import { writeStickyPref, YIELDS_TABLE_PREFS } from '../stickyQueryPrefs'
 import { countActiveYieldFilters, yieldsRouteParams } from './activeFilters'
 import { YieldFilterDropdowns } from './Dropdowns'
 import { ResetAllYieldFilters } from './ResetAll'
+import { loadSavedView } from './savedView'
 import type { IYieldFiltersProps } from './types'
 
 // Deterministic key for a filter selection so it can be compared regardless of
@@ -67,19 +67,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 		const filters = savedFilters[viewName]
 		if (!filters) return
 		trackYieldsEvent(YIELDS_EVENTS.SAVED_FILTER_LOAD, { filter: viewName })
-		const updates: Record<string, string | number | boolean | Array<string | number | boolean> | undefined> = {
-			...filters
-		}
-		for (const key of Object.keys(router.query)) {
-			if (!(key in filters)) updates[key] = undefined
-		}
-		// Sync saved choices (including omitted defaults) before restoration can run.
-		for (const pref of YIELDS_TABLE_PREFS) {
-			const raw = filters[pref.queryKey]
-			const value = Array.isArray(raw) ? raw[0] : raw
-			writeStickyPref(pref, typeof value === 'string' || typeof value === 'number' ? String(value) : undefined)
-		}
-		void pushYieldsQuery(router, updates)
+		void pushYieldsQuery(router, loadSavedView(filters, router.query))
 		popover.hide()
 	}
 

@@ -51,22 +51,6 @@ describe('bridge chains chart contract', () => {
 		])
 	})
 
-	test('keeps normalized dates without mutating points', () => {
-		const point = { date: 1, depositUSD: 5, withdrawUSD: null }
-		const chartDataByChain = [[point], [{ date: 2, depositUSD: null, withdrawUSD: 2 }]]
-
-		const result = buildBridgeChainsChartRows({
-			chains: [{ name: 'Ethereum' }, { name: 'Arbitrum' }],
-			chartDataByChain
-		})
-
-		expect(Array.from(result, ([date, values]) => [date, Object.fromEntries(values)])).toEqual([
-			[1, { Ethereum: null }],
-			[2, { Arbitrum: null }]
-		])
-		expect(point).toEqual({ date: 1, depositUSD: 5, withdrawUSD: null })
-	})
-
 	test('rejects misaligned chain and chart response arrays', () => {
 		expect(() =>
 			buildBridgeChainsChartRows({

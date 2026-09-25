@@ -3,10 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { downloadCSV } from '~/utils/download'
+import { installDownloadSink } from '~/utils/test/downloadSink'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+const session = installSubscriberSession('equity-ticker')
+const downloads = installDownloadSink()
 import type { EquitiesPriceHistory } from '../api.types'
-import { fetchEquitiesPriceHistoryFromProxy } from '../priceHistoryClient'
 import { EquityTickerPage } from '../TickerPage'
 import { getAvailableEquityTabs } from '../tickerPageState'
 import type { IEquityTickerPageProps } from '../types'
@@ -19,22 +20,11 @@ const router = {
 }
 
 vi.mock('next/router', () => ({ useRouter: () => router }))
-vi.mock('../priceHistoryClient', () => ({ fetchEquitiesPriceHistoryFromProxy: vi.fn() }))
-vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => null }))
-vi.mock('~/components/WebsiteGlobeLink', () => ({ WebsiteGlobeLink: () => null }))
 vi.mock('../FinancialsTable', () => ({ EquitiesFinancialsTable: () => null }))
 vi.mock('../FilingsTable', () => ({ EquitiesFilingsTable: () => null }))
 vi.mock('../OnchainTables', () => ({ EquitiesMarketsTable: () => null, EquitiesTokensTable: () => null }))
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: ({ dataset }: { dataset: MultiSeriesChartDataset }) => (
-		<output data-chart={dataset.dimensions[1]}>{JSON.stringify(dataset.source.map((point) => point[1]))}</output>
-	)
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: true, hasActiveSubscription: true })
-}))
-vi.mock('~/contexts/LocalStorage', () => ({ useDarkModeManager: () => [false] }))
-vi.mock('~/utils/download', () => ({ downloadCSV: vi.fn(), downloadDataURL: vi.fn() }))
+// The chart renderer is a heavy child; the exported CSV shows which prices the page charts.
+vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
 
 const defaultHistory: EquitiesPriceHistory = [
 	['2026-08-27T13:35:00Z', 223],
@@ -144,14 +134,11 @@ describe('EquityTickerPage price history', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let client: QueryClient
-	const fetchHistory = vi.mocked(fetchEquitiesPriceHistoryFromProxy)
 
 	beforeEach(() => {
 		router.query = {}
 		router.push.mockReset()
-		fetchHistory.mockReset()
-		vi.mocked(downloadCSV).mockClear()
-		fetchHistory.mockResolvedValue(dailyHistory)
+		session.serve({ '/api/public/equities/price-history': dailyHistory })
 		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -167,26 +154,35 @@ describe('EquityTickerPage price history', () => {
 	async function render(props = pageProps) {
 		await act(async () =>
 			root.render(
-				<QueryClientProvider client={client}>
-					<EquityTickerPage {...props} />
-				</QueryClientProvider>
+				<session.Wrapper>
+					<QueryClientProvider client={client}>
+						<EquityTickerPage {...props} />
+					</QueryClientProvider>
+				</session.Wrapper>
 			)
 		)
-	}
-
-	function chart() {
-		return container.querySelector('[data-chart="Close"]')
 	}
 
 	function button(label: string) {
 		return [...container.querySelectorAll('button')].find((element) => element.textContent === label)!
 	}
 
-	async function waitForPrices(values: Array<number>) {
+	const DAILY_CSV = 'Timestamp,Date,Close\n1787702400000,2026-08-26,220\n1787788800000,2026-08-27,225'
+	const DEFAULT_CSV = 'Timestamp,Date,Close\n1787837400000,2026-08-27,222\n1787837700000,2026-08-27,223'
+
+	async function waitForExportedCsv(expected: string) {
 		await vi.waitFor(async () => {
 			await act(async () => {})
-			expect(JSON.parse(chart()?.textContent ?? 'null')).toEqual(values)
+			expect(button('.csv').disabled).toBe(false)
 		})
+		await act(async () => button('.csv').click())
+		expect(await downloads.at(-1)!.blob.text()).toContain(expected)
+	}
+
+	function priceHistoryRequests() {
+		return session.requests
+			.filter((request) => request.url.pathname === '/api/public/equities/price-history')
+			.map((request) => request.url.searchParams.get('timeframe'))
 	}
 
 	test('section focus does not navigate; URL changes select the panel without another route write', async () => {
@@ -226,34 +222,18 @@ describe('EquityTickerPage price history', () => {
 	test.each(['7D', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
 		router.query = { timeframe }
 		await render()
-		await waitForPrices([220, 225])
+		await waitForExportedCsv(DAILY_CSV)
 
-		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', timeframe)
+		expect(priceHistoryRequests()).toEqual([timeframe])
 	})
 
 	test('uses generated default prices and fetches other ranges without mixing cached data', async () => {
 		const pending = Promise.withResolvers<EquitiesPriceHistory>()
-		fetchHistory.mockReturnValue(pending.promise)
+		session.serve({ '/api/public/equities/price-history': () => pending.promise })
 		await render()
-		await waitForPrices([222, 223])
-		expect(fetchHistory).not.toHaveBeenCalled()
-		const csvButton = button('.csv')
-		const pngButton = button('.png')
-		await act(async () => csvButton.click())
-		expect(downloadCSV).toHaveBeenLastCalledWith(
-			expect.stringContaining('nvda-price-history-24h'),
-			[
-				['Timestamp', 'Date', 'Close'],
-				[Date.parse('2026-08-27T13:30:00Z'), '2026-08-27', 222],
-				[Date.parse('2026-08-27T13:35:00Z'), '2026-08-27', 223]
-			],
-			{ addTimestamp: false }
-		)
-		await act(async () => pngButton.click())
-		await vi.waitFor(async () => {
-			await act(async () => {})
-			expect(document.querySelector('[data-umami-event="export-image"]')).not.toBeNull()
-		})
+		await waitForExportedCsv(DEFAULT_CSV)
+		expect(downloads.at(-1)?.filename).toContain('nvda-price-history-24h')
+		expect(priceHistoryRequests()).toEqual([])
 
 		await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="1M"]')!.click())
 		expect(router.push).toHaveBeenCalledWith({ pathname: '/equities/NVDA:US', query: { timeframe: '1M' } }, undefined, {
@@ -262,45 +242,31 @@ describe('EquityTickerPage price history', () => {
 		router.query = { timeframe: '1M' }
 		await render()
 		expect(container.querySelector('[aria-label="Loading price history"]')).not.toBeNull()
-		expect(chart()).toBeNull()
-		expect(button('.csv')).toBe(csvButton)
-		expect(button('.png')).toBe(pngButton)
-		expect(csvButton.disabled).toBe(true)
-		expect(pngButton.disabled).toBe(true)
-		expect(document.querySelector<HTMLButtonElement>('[data-umami-event="export-image"]')!.disabled).toBe(true)
-		expect(document.querySelector<HTMLButtonElement>('[data-umami-event="copy-image"]')!.disabled).toBe(true)
-		await act(async () => csvButton.click())
-		expect(downloadCSV).toHaveBeenCalledTimes(1)
+		expect(button('.csv').disabled).toBe(true)
+		expect(button('.png').disabled).toBe(true)
+		await act(async () => button('.csv').click())
+		expect(downloads).toHaveLength(1)
 
 		await act(async () => pending.resolve(dailyHistory))
-		await waitForPrices([220, 225])
-		expect(csvButton.disabled).toBe(false)
-		expect(pngButton.disabled).toBe(false)
-		await act(async () => button('.csv').click())
-		expect(downloadCSV).toHaveBeenLastCalledWith(
-			expect.stringContaining('nvda-price-history-1m'),
-			[
-				['Timestamp', 'Date', 'Close'],
-				[Date.parse('2026-08-26'), '2026-08-26', 220],
-				[Date.parse('2026-08-27'), '2026-08-27', 225]
-			],
-			{ addTimestamp: false }
-		)
+		await waitForExportedCsv(DAILY_CSV)
+		expect(downloads.at(-1)?.filename).toContain('nvda-price-history-1m')
+
 		router.query = {}
 		await render()
-		await waitForPrices([222, 223])
+		await waitForExportedCsv(DEFAULT_CSV)
 		router.query = { timeframe: '1M' }
 		await render()
-		await waitForPrices([220, 225])
-		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1M')
+		await waitForExportedCsv(DAILY_CSV)
+		expect(priceHistoryRequests()).toEqual(['1M'])
 	})
 
 	test.each(['empty', 'error'])(
 		'keeps timeframe controls after an %s response without showing default data',
 		async (result) => {
 			router.query = { timeframe: 'MAX' }
-			if (result === 'empty') fetchHistory.mockResolvedValue([])
-			else fetchHistory.mockRejectedValue(new Error('upstream unavailable'))
+			session.serve({
+				'/api/public/equities/price-history': () => (result === 'empty' ? [] : new Response(null, { status: 404 }))
+			})
 			await render()
 			await vi.waitFor(async () => {
 				await act(async () => {})
@@ -308,33 +274,29 @@ describe('EquityTickerPage price history', () => {
 					result === 'empty' ? 'No price history available' : 'Failed to load price history'
 				)
 			})
-			expect(chart()).toBeNull()
 			expect(container.querySelector('[aria-label="Loading price history"]')).toBeNull()
 			expect(container.textContent).toContain('24H')
 			expect(button('.csv').disabled).toBe(true)
-			expect(button('.png').disabled).toBe(true)
 			router.query = {}
 			await render()
-			await waitForPrices([222, 223])
-			expect(button('.csv').disabled).toBe(false)
-			expect(button('.png').disabled).toBe(false)
+			await waitForExportedCsv(DEFAULT_CSV)
 		}
 	)
 
 	test('recovers through the proxy when the default history failed during page generation', async () => {
-		fetchHistory.mockResolvedValue(defaultHistory)
+		session.serve({ '/api/public/equities/price-history': defaultHistory })
 		await render({ ...pageProps, priceHistory: null })
-		await waitForPrices([222, 223])
-		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '24H')
+		await waitForExportedCsv(DEFAULT_CSV)
+		expect(priceHistoryRequests()).toEqual(['24H'])
 	})
 
 	test('keeps a successful empty default response without refetching and allows another timeframe', async () => {
 		await render({ ...pageProps, priceHistory: [] })
 		expect(container.textContent).toContain('No price history available')
-		expect(fetchHistory).not.toHaveBeenCalled()
+		expect(priceHistoryRequests()).toEqual([])
 		router.query = { timeframe: '1M' }
 		await render({ ...pageProps, priceHistory: [] })
-		await waitForPrices([220, 225])
-		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1M')
+		await waitForExportedCsv(DAILY_CSV)
+		expect(priceHistoryRequests()).toEqual(['1M'])
 	})
 })

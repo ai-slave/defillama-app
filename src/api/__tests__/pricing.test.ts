@@ -1,197 +1,109 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, expect, test, vi } from 'vitest'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-const recordRuntimeErrorMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: fetchJsonMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRuntimeError: recordRuntimeErrorMock
-}))
-
+const http = installTelemetrySink()
+const publicPrices = 'https://coins.llama.fi/prices/current/'
+const proPrices = 'https://pro-api.llama.fi/pro-secret/coins/'
 function priceFor(coin: string) {
-	return {
-		confidence: 0.99,
-		price: coin.length,
-		symbol: coin.toUpperCase(),
-		timestamp: 1
-	}
+	return { confidence: 0.99, price: coin.length, symbol: coin.toUpperCase(), timestamp: 1 }
 }
+function priceResponse(url: URL, init?: RequestInit) {
+	const coins: Array<string> =
+		init?.method === 'POST' ? JSON.parse(init.body as string).coins : url.pathname.split('/current/')[1].split(',')
+	return { coins: Object.fromEntries(coins.map((coin) => [coin, priceFor(coin)])) }
+}
+beforeEach(() => {
+	vi.resetModules()
+	vi.stubEnv('API_KEY', '')
+	http.serve({ [publicPrices]: priceResponse, [proPrices]: priceResponse })
+})
+const priceRequests = () => http.requests.filter((request) => request.url.hostname !== 'telemetry.test')
 
-describe('fetchCoinPrices', () => {
-	afterEach(() => {
-		fetchJsonMock.mockReset()
-		recordRuntimeErrorMock.mockReset()
-		vi.resetModules()
-		vi.unstubAllEnvs()
-		vi.unstubAllGlobals()
-	})
-
-	test('uses legacy GET chunks without a server API key', async () => {
-		fetchJsonMock.mockImplementation(async (url: string) => {
-			const coinList = url.match(/\/current\/([^?]+)/)?.[1]?.split(',') ?? []
-			return {
-				coins: Object.fromEntries(coinList.map((coin) => [coin, priceFor(coin)]))
-			}
-		})
-		const { fetchCoinPrices } = await import('../pricing')
-		const coins = Array.from({ length: 11 }, (_, i) => `coingecko:get-${i}`)
-
-		const prices = await fetchCoinPrices(coins, { searchWidth: '4h' })
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(2)
-		expect(fetchJsonMock).toHaveBeenNthCalledWith(
-			1,
-			`https://coins.llama.fi/prices/current/${coins.slice(0, 10).join(',')}?searchWidth=4h`
-		)
-		expect(fetchJsonMock).toHaveBeenNthCalledWith(
-			2,
-			`https://coins.llama.fi/prices/current/${coins.slice(10).join(',')}?searchWidth=4h`
-		)
-		expect(Object.keys(prices)).toEqual(coins)
-	})
-
-	test('uses legacy GET chunks in browser runtime even when an API key is present', async () => {
-		vi.stubEnv('API_KEY', 'pro-secret')
-		vi.stubGlobal('window', {})
-		fetchJsonMock.mockImplementation(async (url: string) => {
-			const coinList = url.match(/\/current\/([^?]+)/)?.[1]?.split(',') ?? []
-			return {
-				coins: Object.fromEntries(coinList.map((coin) => [coin, priceFor(coin)]))
-			}
-		})
-		const { fetchCoinPrices } = await import('../pricing')
-		const coins = ['coingecko:browser-0']
-
-		const prices = await fetchCoinPrices(coins)
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://coins.llama.fi/prices/current/coingecko:browser-0')
-		expect(Object.keys(prices)).toEqual(coins)
-	})
-
-	test('uses server POST batches of 100000 when an API key is available', async () => {
-		vi.stubEnv('API_KEY', 'pro-secret')
-		fetchJsonMock.mockImplementation(async (_url: string, options?: RequestInit) => {
-			const body = JSON.parse(String(options?.body))
-			return {
-				coins: Object.fromEntries(body.coins.map((coin: string) => [coin, priceFor(coin)]))
-			}
-		})
-		const { fetchCoinPrices } = await import('../pricing')
-		const coins = Array.from({ length: 100_001 }, (_, i) => `coingecko:token-${i}`)
-
-		const prices = await fetchCoinPrices(coins, { searchWidth: '4h' })
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(2)
-		expect(fetchJsonMock).toHaveBeenNthCalledWith(
-			1,
-			'https://pro-api.llama.fi/pro-secret/coins/pro/prices/current',
-			expect.objectContaining({
-				method: 'POST',
-				body: JSON.stringify({ coins: coins.slice(0, 100_000), searchWidth: '4h' })
-			})
-		)
-		expect(fetchJsonMock).toHaveBeenNthCalledWith(
-			2,
-			'https://pro-api.llama.fi/pro-secret/coins/pro/prices/current',
-			expect.objectContaining({
-				method: 'POST',
-				body: JSON.stringify({ coins: coins.slice(100_000), searchWidth: '4h' })
-			})
-		)
-		expect(Object.keys(prices)).toEqual(coins)
-		expect(prices['coingecko:token-100000']).toEqual(priceFor('coingecko:token-100000'))
-	})
-
-	test('falls back to legacy GET chunks only for missing POST endpoint errors', async () => {
-		vi.stubEnv('API_KEY', 'pro-secret')
-		fetchJsonMock
-			.mockRejectedValueOnce(new Error('https://pro-api.llama.fi/pro-secret/coins/pro/prices/current: [404] Not Found'))
-			.mockImplementation(async (url: string) => {
-				const coinList = url.match(/\/current\/([^?]+)/)?.[1]?.split(',') ?? []
-				return {
-					coins: Object.fromEntries(coinList.map((coin) => [coin, priceFor(coin)]))
-				}
-			})
-		const { fetchCoinPrices } = await import('../pricing')
-		const coins = Array.from({ length: 11 }, (_, i) => `coingecko:fallback-${i}`)
-
-		const prices = await fetchCoinPrices(coins)
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(3)
-		expect(String(fetchJsonMock.mock.calls[1][0])).toContain('/prices/current/')
-		expect(String(fetchJsonMock.mock.calls[2][0])).toContain('/prices/current/')
-		expect(Object.keys(prices)).toEqual(coins)
-	})
-
-	test('keeps legacy GET fallback partial results when one chunk fails', async () => {
-		vi.stubEnv('API_KEY', 'pro-secret')
-		fetchJsonMock
-			.mockRejectedValueOnce(new Error('https://pro-api.llama.fi/pro-secret/coins/pro/prices/current: [404] Not Found'))
-			.mockImplementation(async (url: string) => {
-				const coinList = url.match(/\/current\/([^?]+)/)?.[1]?.split(',') ?? []
-				if (coinList.includes('coingecko:fallback-0')) {
-					throw new Error('legacy chunk failed')
-				}
-				return {
-					coins: Object.fromEntries(coinList.map((coin) => [coin, priceFor(coin)]))
-				}
-			})
-		const { fetchCoinPrices } = await import('../pricing')
-		const coins = Array.from({ length: 11 }, (_, i) => `coingecko:fallback-${i}`)
-
-		const prices = await fetchCoinPrices(coins)
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(3)
-		expect(Object.keys(prices)).toEqual(['coingecko:fallback-10'])
-		expect(recordRuntimeErrorMock).toHaveBeenCalledWith(
-			expect.any(Error),
-			'outboundFetch',
-			expect.objectContaining({
-				target: 'https://pro-api.llama.fi/pro-secret/coins/prices/current',
-				coin_count: 10,
-				first_coin: 'coingecko:fallback-0'
-			})
-		)
-	})
-
-	test('does not fall back to legacy GET for server failures', async () => {
-		vi.stubEnv('API_KEY', 'pro-secret')
-		fetchJsonMock.mockRejectedValue(
-			new Error('https://pro-api.llama.fi/pro-secret/coins/pro/prices/current: [500] Internal Error')
-		)
-		const { fetchCoinPrices } = await import('../pricing')
-
-		await expect(fetchCoinPrices(['coingecko:ethereum'])).resolves.toEqual({})
-
-		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
-		expect(recordRuntimeErrorMock).toHaveBeenCalled()
-	})
+test('uses public GET batches of ten without a server key', async () => {
+	const { fetchCoinPrices } = await import('../pricing')
+	const coins = Array.from({ length: 11 }, (_, i) => `coingecko:get-${i}`)
+	const prices = await fetchCoinPrices(coins, { searchWidth: '4h' })
+	expect(priceRequests().map((request) => request.url.href)).toEqual([
+		`${publicPrices}${coins.slice(0, 10).join(',')}?searchWidth=4h`,
+		`${publicPrices}${coins[10]}?searchWidth=4h`
+	])
+	expect(prices).toEqual(Object.fromEntries(coins.map((coin) => [coin, priceFor(coin)])))
 })
 
-describe('fetchCoinPriceByCoinGeckoIdViaLlamaPrices', () => {
-	afterEach(() => {
-		fetchJsonMock.mockReset()
-		recordRuntimeErrorMock.mockReset()
-		vi.resetModules()
-		vi.unstubAllEnvs()
-		vi.unstubAllGlobals()
+test('keeps the server key out of browser requests', async () => {
+	vi.stubEnv('API_KEY', 'pro-secret')
+	vi.stubGlobal('window', {})
+	const { fetchCoinPrices } = await import('../pricing')
+	const prices = await fetchCoinPrices(['coingecko:browser'])
+	expect(priceRequests().map((request) => request.url.href)).toEqual([`${publicPrices}coingecko:browser`])
+	expect(prices['coingecko:browser']).toEqual(priceFor('coingecko:browser'))
+})
+
+test('posts server batches of 100000 and preserves the trailing batch', async () => {
+	vi.stubEnv('API_KEY', 'pro-secret')
+	const { fetchCoinPrices } = await import('../pricing')
+	const coins = Array.from({ length: 100_001 }, (_, i) => `coingecko:token-${i}`)
+	const prices = await fetchCoinPrices(coins, { searchWidth: '4h' })
+	expect(priceRequests().map((request) => request.url.href)).toEqual([
+		`${proPrices}pro/prices/current`,
+		`${proPrices}pro/prices/current`
+	])
+	expect(priceRequests().map((request) => request.init?.method)).toEqual(['POST', 'POST'])
+	expect(priceRequests().map((request) => JSON.parse(request.init!.body as string))).toEqual([
+		{ coins: coins.slice(0, 100_000), searchWidth: '4h' },
+		{ coins: coins.slice(100_000), searchWidth: '4h' }
+	])
+	expect(Object.keys(prices)).toEqual(coins)
+	expect(prices[coins[100_000]]).toEqual(priceFor(coins[100_000]))
+})
+
+test.each([404, 405])('falls back to GET when the producer rejects POST with %s', async (status) => {
+	vi.stubEnv('API_KEY', 'pro-secret')
+	http.serve({ [`${proPrices}pro/prices/current`]: fixtureStatus(status) })
+	const { fetchCoinPrices } = await import('../pricing')
+	const coins = Array.from({ length: 11 }, (_, i) => `coingecko:fallback-${i}`)
+	expect(Object.keys(await fetchCoinPrices(coins))).toEqual(coins)
+	expect(priceRequests().map((request) => request.url.pathname)).toEqual([
+		'/pro-secret/coins/pro/prices/current',
+		`/pro-secret/coins/prices/current/${coins.slice(0, 10).join(',')}`,
+		`/pro-secret/coins/prices/current/${coins[10]}`
+	])
+})
+
+test('preserves successful GET chunks and reports a failed chunk', async () => {
+	vi.stubEnv('API_KEY', 'pro-secret')
+	const coins = Array.from({ length: 11 }, (_, i) => `coingecko:fallback-${i}`)
+	http.serve({
+		[`${proPrices}pro/prices/current`]: fixtureStatus(404),
+		[`${proPrices}prices/current/${coins.slice(0, 10).join(',')}`]: fixtureStatus(500)
 	})
+	const { fetchCoinPrices } = await import('../pricing')
+	expect(await fetchCoinPrices(coins)).toEqual({ [coins[10]]: priceFor(coins[10]) })
+	expect(await http.events()).toEqual(
+		expect.arrayContaining([
+			expect.objectContaining({
+				type: 'runtime_error',
+				phase: 'outboundFetch',
+				attributes: expect.objectContaining({ coin_count: 10, first_coin: coins[0] })
+			})
+		])
+	)
+})
 
-	test('maps CoinGecko ids to DefiLlama coingecko coin keys', async () => {
-		fetchJsonMock.mockResolvedValue({
-			coins: {
-				'coingecko:bitcoin': priceFor('coingecko:bitcoin')
-			}
-		})
-		const { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } = await import('../pricing')
+test('does not retry a failed server POST through the GET fallback', async () => {
+	vi.stubEnv('API_KEY', 'pro-secret')
+	http.serve({ [`${proPrices}pro/prices/current`]: fixtureStatus(500) })
+	const { fetchCoinPrices } = await import('../pricing')
+	expect(await fetchCoinPrices(['coingecko:ethereum'])).toEqual({})
+	expect(priceRequests().length).toBeGreaterThan(0)
+	expect(priceRequests().every((request) => request.init?.method === 'POST')).toBe(true)
+	expect(await http.events()).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'runtime_error' })]))
+})
 
-		const price = await fetchCoinPriceByCoinGeckoIdViaLlamaPrices('bitcoin')
-
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://coins.llama.fi/prices/current/coingecko:bitcoin')
-		expect(price).toEqual(priceFor('coingecko:bitcoin'))
-	})
+test('maps a CoinGecko id to the price key and returns null for an absent price', async () => {
+	const { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } = await import('../pricing')
+	expect(await fetchCoinPriceByCoinGeckoIdViaLlamaPrices('bitcoin')).toEqual(priceFor('coingecko:bitcoin'))
+	http.serve({ [publicPrices]: { coins: {} } })
+	expect(await fetchCoinPriceByCoinGeckoIdViaLlamaPrices('missing')).toBeNull()
 })

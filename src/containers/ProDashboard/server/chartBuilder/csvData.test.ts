@@ -73,16 +73,17 @@ describe('buildChartBuilderCsvPayload', () => {
 			customTimePeriod: null,
 			filename: 'perps.csv'
 		}
-		const day = 86_400
+		// Nine daily points, so the last 7 days (3..9 = 42) differ from the latest day (9) and the full sum (45).
+		const nineDays = Array.from({ length: 9 }, (_, index) => (index + 1) * 86_400)
 		const payload = buildChartBuilderCsvPayload(request, [
-			{ name: 'Ethereum', data: [[day, 2]], color: '#000' },
-			{ name: 'Solana', data: [[day, 3]], color: '#000' }
+			{ name: 'Ethereum', data: nineDays.map((day, index): [number, number] => [day, index + 1]), color: '#000' },
+			{ name: 'Solana', data: nineDays.map((day): [number, number] => [day, 1]), color: '#000' }
 		])
 
 		expect(payload.rows).toEqual([
 			['Name', 'Sum 7d'],
-			['Ethereum', 2],
-			['Solana', 3]
+			['Ethereum', 42],
+			['Solana', 7]
 		])
 	})
 })

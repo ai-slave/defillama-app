@@ -1,32 +1,30 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchHacks } from './api'
 
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
+const http = installFixtureFetch()
 
 describe('Hacks API', () => {
-	beforeEach(() => {
-		fetchJsonMock.mockReset()
-	})
-
 	test('keeps amounts in whole USD and gives them explicit domain names', async () => {
-		fetchJsonMock.mockResolvedValue([
-			{
-				date: 1_740_096_000,
-				name: 'Bybit',
-				classification: 'Infrastructure',
-				technique: null,
-				amount: 1_400_000_000,
-				chain: ['Ethereum'],
-				bridgeHack: false,
-				targetType: 'CEX',
-				returnedFunds: 1_400_000_000,
-				defillamaId: '2286',
-				language: null,
-				source: ''
-			}
-		])
+		http.serve({
+			[`${SERVER_URL}/hacks`]: [
+				{
+					date: 1_740_096_000,
+					name: 'Bybit',
+					classification: 'Infrastructure',
+					technique: null,
+					amount: 1_400_000_000,
+					chain: ['Ethereum'],
+					bridgeHack: false,
+					targetType: 'CEX',
+					returnedFunds: 1_400_000_000,
+					defillamaId: '2286',
+					language: null,
+					source: ''
+				}
+			]
+		})
 
 		const result = await fetchHacks()
 

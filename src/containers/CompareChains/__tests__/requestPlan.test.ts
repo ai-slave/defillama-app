@@ -1,55 +1,35 @@
 import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import {
-	buildCompareChainAdapterQueryKey,
-	buildCompareChainAdapterRequest,
-	buildCompareChainOverviewQueryKey,
+	fetchCompareChainAdapterMetric,
+	getCompareChainAdapterMetrics,
 	getCompareChainFailedSources,
-	hasPendingCompareChainSources,
-	mergeCompareChainSources,
-	getCompareChainAdapterMetrics
+	mergeCompareChainSources
 } from '../requestPlan'
 
+const fixtureFetch = installFixtureFetch()
+
 describe('CompareChains request planning', () => {
-	test('keeps the overview identity stable as selected metrics change', () => {
-		expect(buildCompareChainOverviewQueryKey('Ethereum')).toEqual(['compare-chains', 'overview', 'Ethereum'])
-		expect(buildCompareChainOverviewQueryKey('Ethereum')).toEqual(['compare-chains', 'overview', 'Ethereum'])
-	})
+	test('fetches each selected adapter metric from its own endpoint and never requests TVL there', async () => {
+		const dexChart = [[1_700_000_000, 1]]
+		const feesChart = [[1_700_000_000, 2]]
+		const revenueChart = [[1_700_000_000, 3]]
+		fixtureFetch.serve({
+			[`${V2_SERVER_URL}/chart/dexs/chain/arbitrum-one`]: dexChart,
+			[`${V2_SERVER_URL}/chart/fees/protocol/arbitrum-one`]: feesChart,
+			[`${V2_SERVER_URL}/chart/fees/protocol/arbitrum-one?dataType=dailyRevenue`]: revenueChart
+		})
 
-	test('uses one canonical source identity for every selected metric', () => {
-		expect(getCompareChainAdapterMetrics(['chainRevenueChart', 'tvlChart', 'dexVolumeChart'])).toEqual([
-			'dexVolumeChart',
-			'chainRevenueChart'
-		])
-		expect(buildCompareChainAdapterQueryKey('Arbitrum One', 'dexVolumeChart')).toEqual([
-			'compare-chains',
-			'adapter',
-			'Arbitrum One',
-			'dexVolumeChart'
-		])
-		expect(buildCompareChainAdapterQueryKey('Arbitrum One', 'chainRevenueChart')).toEqual([
-			'compare-chains',
-			'adapter',
-			'Arbitrum One',
-			'chainRevenueChart'
-		])
-	})
+		const metrics = getCompareChainAdapterMetrics(['chainRevenueChart', 'tvlChart', 'dexVolumeChart', 'chainFeesChart'])
+		const data = await Promise.all(metrics.map((metric) => fetchCompareChainAdapterMetric('Arbitrum One', metric)))
 
-	test('maps each metric to its only compatible endpoint contract', () => {
-		expect(buildCompareChainAdapterRequest('Arbitrum One', 'dexVolumeChart')).toEqual({
-			metric: 'dexVolumeChart',
-			endpoint: 'chain',
-			params: { adapterType: 'dexs', chain: 'Arbitrum One' }
-		})
-		expect(buildCompareChainAdapterRequest('Arbitrum One', 'chainFeesChart')).toEqual({
-			metric: 'chainFeesChart',
-			endpoint: 'protocol',
-			params: { adapterType: 'fees', protocol: 'Arbitrum One' }
-		})
-		expect(buildCompareChainAdapterRequest('Arbitrum One', 'chainRevenueChart')).toEqual({
-			metric: 'chainRevenueChart',
-			endpoint: 'protocol',
-			params: { adapterType: 'fees', protocol: 'Arbitrum One', dataType: 'dailyRevenue' }
-		})
+		expect(data).toEqual([dexChart, feesChart, revenueChart])
+		expect(fixtureFetch.urls()).toEqual([
+			`${V2_SERVER_URL}/chart/dexs/chain/arbitrum-one`,
+			`${V2_SERVER_URL}/chart/fees/protocol/arbitrum-one`,
+			`${V2_SERVER_URL}/chart/fees/protocol/arbitrum-one?dataType=dailyRevenue`
+		])
 	})
 
 	test('preserves overview data when one adapter source fails', () => {
@@ -71,26 +51,19 @@ describe('CompareChains request planning', () => {
 			...overview,
 			dexVolumeChart: [[1_700_000_000, 5]]
 		})
+		// Errors are flattened chain-major: [Ethereum dex, Ethereum fees, Solana dex, Solana fees].
 		expect(
 			getCompareChainFailedSources({
-				chains: ['Ethereum'],
+				chains: ['Ethereum', 'Solana'],
 				adapterMetrics,
-				overviewErrors: [null],
-				metricErrors: [null, new Error('fees failed')],
+				overviewErrors: [null, null],
+				metricErrors: [null, null, null, new Error('fees failed')],
 				metricLabels: {
 					dexVolumeChart: 'DEXs Volume',
 					chainFeesChart: 'Chain Fees',
 					chainRevenueChart: 'Chain Revenue'
 				}
 			})
-		).toEqual(['Ethereum - Chain Fees'])
-	})
-
-	test('stays loading while any selected metric or fee detail source is pending', () => {
-		const completedOverview = [{ isLoading: false }, { isLoading: false }]
-
-		expect(hasPendingCompareChainSources(completedOverview, [{ isLoading: true }], [])).toBe(true)
-		expect(hasPendingCompareChainSources(completedOverview, [{ isLoading: false }], [{ isLoading: true }])).toBe(true)
-		expect(hasPendingCompareChainSources(completedOverview, [{ isLoading: false }], [{ isLoading: false }])).toBe(false)
+		).toEqual(['Solana - Chain Fees'])
 	})
 })

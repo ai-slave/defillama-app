@@ -4,27 +4,30 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+
+// constants read the search token at import time; without it searchApi skips the request.
+vi.hoisted(() => {
+	process.env.NEXT_PUBLIC_SEARCH_API_TOKEN = 'test-token'
+})
+
+import { SEARCH_API_URL } from '~/constants'
 import { TokenUsageSearch } from '~/pages/token-usage'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+
+const http = installFixtureFetch()
 
 const mocks = vi.hoisted(() => ({
 	router: {
 		isReady: false,
-		query: { token: 'ETH' } as { token?: string | Array<string> }
-	},
-	searchTokens: vi.fn().mockResolvedValue([]),
-	pushShallowQuery: vi.fn().mockResolvedValue(undefined)
+		pathname: '/token-usage',
+		asPath: '/token-usage',
+		query: { token: 'ETH' } as { token?: string | Array<string> },
+		push: vi.fn().mockResolvedValue(true)
+	}
 }))
 
 vi.mock('next/router', () => ({
 	useRouter: () => mocks.router
-}))
-
-vi.mock('~/containers/TokenSearch/search', () => ({
-	searchTokens: mocks.searchTokens
-}))
-
-vi.mock('~/utils/routerQuery', () => ({
-	pushShallowQuery: mocks.pushShallowQuery
 }))
 
 describe('TokenUsageSearch', () => {
@@ -36,11 +39,11 @@ describe('TokenUsageSearch', () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		mocks.router.isReady = false
 		mocks.router.query = { token: 'ETH' }
-		mocks.searchTokens.mockClear()
-		mocks.pushShallowQuery.mockClear()
+		mocks.router.push.mockClear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		http.serve({ [SEARCH_API_URL]: { results: [{ hits: [] }] } })
 	})
 
 	afterEach(async () => {
@@ -88,29 +91,22 @@ describe('TokenUsageSearch', () => {
 		mocks.router.isReady = true
 		mocks.router.query = {}
 		container.innerHTML = '<input id="token-usage-search-input" value="ethereum" />'
-		queryClient.setQueryData(
-			['token-usage', 'search-tokens', 'ethereum'],
-			[
-				{
-					id: 'ethereum',
-					searchId: 'coingecko:ethereum:token',
-					coinKey: 'coingecko:ethereum',
-					name: 'Ethereum',
-					symbol: 'ETH',
-					logo: 'https://example.com/eth.png',
-					rank: 2
-				}
-			]
-		)
+		http.serve({
+			[SEARCH_API_URL]: {
+				results: [{ hits: [{ id: 'coingecko_ethereum_token', name: 'Ethereum', symbol: 'eth', mcapRank: 2 }] }]
+			}
+		})
 		root = createRoot(container)
 		await renderSearch()
 
 		await act(async () => container.querySelector('button')?.click())
+		await vi.waitFor(() => expect(document.querySelector('[role="option"]')?.textContent).toContain('Ethereum'))
 		const option = document.querySelector<HTMLElement>('[role="option"]')
-		expect(option?.textContent).toContain('Ethereum')
 
 		await act(async () => option?.click())
 
-		expect(mocks.pushShallowQuery).toHaveBeenCalledWith(mocks.router, { token: 'ETH' })
+		expect(mocks.router.push).toHaveBeenCalledWith({ pathname: '/token-usage', query: { token: 'ETH' } }, undefined, {
+			shallow: true
+		})
 	})
 })

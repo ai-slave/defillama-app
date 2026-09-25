@@ -443,7 +443,7 @@ describe('buildNewDashboardItems', () => {
 		expect(unlocks).toMatchObject({ id: 'unlocks:aave', kind: 'chart', dataType: 'documented', geckoId: 'aave' })
 	})
 
-	test('constructs every special manual card with its persisted identity and width semantics', () => {
+	test('constructs every special manual card with its subject and width', () => {
 		const base = { ...initializeFromEditItem(null), chartMode: 'manual' } satisfies ModalState
 		const states: Array<ModalState> = [
 			{
@@ -508,17 +508,17 @@ describe('buildNewDashboardItems', () => {
 		]
 
 		expect(states.map((state) => buildNew(state)[0])).toMatchObject([
-			{ id: 'yields:pool', kind: 'yields', colSpan: 1 },
-			{ id: 'stablecoins:Ethereum-totalMcap', kind: 'stablecoins', colSpan: 1 },
-			{ id: 'stablecoin-asset:USDC-totalCirc', kind: 'stablecoin-asset', colSpan: 1 },
-			{ id: 'rwa-overview:Ethereum-activeMcap-timeSeries-chain', kind: 'rwa-overview', chain: 'Ethereum', colSpan: 1 },
-			{ id: 'rwa-asset:asset-activeMcap-onChainMcap-defiActiveTvl', kind: 'rwa-asset', colSpan: 1 },
-			{ id: 'unlocks:aave', kind: 'chart', dataType: 'documented', colSpan: 1 },
-			{ id: 'unlocks-schedule:aave', kind: 'unlocks-schedule', dataType: 'documented', colSpan: 2 },
-			{ id: 'unlocks-pie:aave-allocation', kind: 'unlocks-pie', chartType: 'allocation', colSpan: 1 },
-			{ id: 'advanced-tvl:aave-tvl', kind: 'advanced-tvl', colSpan: 1 },
-			{ id: 'advanced-borrowed:aave-chainsBorrowed', kind: 'advanced-borrowed', colSpan: 1 },
-			{ id: 'income-statement:aave', kind: 'income-statement', colSpan: 2 }
+			{ kind: 'yields', poolConfigId: 'pool', chain: 'Ethereum', colSpan: 1 },
+			{ kind: 'stablecoins', chain: 'Ethereum', chartType: 'totalMcap', colSpan: 1 },
+			{ kind: 'stablecoin-asset', stablecoin: 'USDC', stablecoinId: '1', colSpan: 1 },
+			{ kind: 'rwa-overview', chain: 'Ethereum', metric: 'activeMcap', colSpan: 1 },
+			{ kind: 'rwa-asset', assetId: 'asset', colSpan: 1 },
+			{ kind: 'chart', subjectType: 'protocol', protocol: 'aave', type: 'unlocks', dataType: 'documented', colSpan: 1 },
+			{ kind: 'unlocks-schedule', protocol: 'aave', dataType: 'documented', colSpan: 2 },
+			{ kind: 'unlocks-pie', protocol: 'aave', chartType: 'allocation', colSpan: 1 },
+			{ kind: 'advanced-tvl', protocol: 'aave', chartType: 'tvl', colSpan: 1 },
+			{ kind: 'advanced-borrowed', protocol: 'aave', chartType: 'chainsBorrowed', colSpan: 1 },
+			{ kind: 'income-statement', protocol: 'aave', colSpan: 2 }
 		])
 	})
 

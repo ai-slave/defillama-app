@@ -1,18 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ResearchLatest } from '../landing/ResearchLatest'
 import type { ArticleDocument, Banner, BannerLookupResult } from '../types'
-
-const queryState = vi.hoisted(() => ({
-	lookups: new Map<string, BannerLookupResult>()
-}))
-
-vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: Array<unknown>; enabled?: boolean }) => ({
-		data: enabled ? queryState.lookups.get(JSON.stringify(queryKey)) : undefined,
-		isLoading: false
-	}))
-}))
 
 const emptyLookup = (): BannerLookupResult => ({
 	text: null,
@@ -98,17 +88,18 @@ function article(index: number): ArticleDocument {
 
 const articles = () => Array.from({ length: 6 }, (_, index) => article(index + 1))
 
-const landingKey = JSON.stringify(['research', 'banner', 'landing'])
+function renderLatest(lookup: BannerLookupResult = emptyLookup()) {
+	const client = new QueryClient()
+	return renderToStaticMarkup(
+		<QueryClientProvider client={client}>
+			<ResearchLatest articles={articles()} initialData={lookup} />
+		</QueryClientProvider>
+	)
+}
 
 describe('ResearchLatest', () => {
-	beforeEach(() => {
-		queryState.lookups.clear()
-	})
-
 	test('renders all six articles in order when no square banner is configured', () => {
-		queryState.lookups.set(landingKey, emptyLookup())
-
-		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		const html = renderLatest()
 
 		const positions = [1, 2, 3, 4, 5, 6].map((index) => html.indexOf(`/research/report/latest-article-${index}`))
 		for (const position of positions) {
@@ -118,23 +109,8 @@ describe('ResearchLatest', () => {
 		expect(html).not.toContain('/uploads/square/banner')
 	})
 
-	test('renders the Figma navigation order before the latest articles', () => {
-		queryState.lookups.set(landingKey, emptyLookup())
-
-		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
-		const anchors = ['#spotlight', '#reports', '#insights', '#interviews', '#collections', '#clients']
-		const positions = anchors.map((anchor) => html.indexOf(`href="${anchor}"`))
-
-		expect(positions.every((position) => position >= 0)).toBe(true)
-		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
-		expect(html).toContain('>Spotlights</a>')
-		expect(positions[5]).toBeLessThan(html.indexOf('Latest from DefiLlama Research'))
-	})
-
 	test('replaces articles 4-6 with the square banner when configured', () => {
-		queryState.lookups.set(landingKey, { ...emptyLookup(), imageSquare: squareBanner() })
-
-		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		const html = renderLatest({ ...emptyLookup(), imageSquare: squareBanner() })
 
 		expect(html).toContain('/research/report/latest-article-1')
 		expect(html).toContain('/research/report/latest-article-2')
@@ -147,36 +123,28 @@ describe('ResearchLatest', () => {
 	})
 
 	test('keeps six articles when the square banner has no image or is disabled', () => {
-		queryState.lookups.set(landingKey, { ...emptyLookup(), imageSquare: squareBanner({ imageUrl: '  ' }) })
-
-		let html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		let html = renderLatest({ ...emptyLookup(), imageSquare: squareBanner({ imageUrl: '  ' }) })
 		expect(html).toContain('/research/report/latest-article-6')
 		expect(html).not.toContain('https://example.com/square')
 
-		queryState.lookups.set(landingKey, { ...emptyLookup(), imageSquare: squareBanner({ enabled: false }) })
-
-		html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		html = renderLatest({ ...emptyLookup(), imageSquare: squareBanner({ enabled: false }) })
 		expect(html).toContain('/research/report/latest-article-6')
 		expect(html).not.toContain('/uploads/square/banner')
 		expect(html).not.toContain('https://example.com/square')
 	})
 
 	test('keeps six articles while a restricted square banner has no resolved visitor country', () => {
-		queryState.lookups.set(landingKey, {
+		const html = renderLatest({
 			...emptyLookup(),
 			imageSquare: squareBanner({ targetCountries: ['FI'] })
 		})
-
-		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
 
 		expect(html).toContain('/research/report/latest-article-6')
 		expect(html).not.toContain('/uploads/square/banner')
 	})
 
 	test('renders the square banner without a link when linkUrl is empty', () => {
-		queryState.lookups.set(landingKey, { ...emptyLookup(), imageSquare: squareBanner({ linkUrl: null }) })
-
-		const html = renderToStaticMarkup(<ResearchLatest articles={articles()} />)
+		const html = renderLatest({ ...emptyLookup(), imageSquare: squareBanner({ linkUrl: null }) })
 
 		expect(html).toContain('/uploads/square/banner')
 		expect(html).not.toContain('target="_blank"')

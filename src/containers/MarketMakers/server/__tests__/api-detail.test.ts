@@ -1,15 +1,12 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
-
-const forgdFetch = vi.fn()
-vi.mock('../client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
+import { describe, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { marketMakerBreakdown } from '../api'
 
-afterEach(() => forgdFetch.mockReset())
-
 describe('marketMakerBreakdown route', () => {
 	test('forwards the id and dates and reuses the serialized detail payload', async () => {
-		forgdFetch.mockResolvedValue({ marketMakerId: 'lhava' })
+		http.serve({ '/api/v1/public/market-maker/leaderboard/breakdown/lhava': { marketMakerId: 'lhava' } })
 		const request = {
 			method: 'GET',
 			url: '/api/public/market-makers/breakdown/lhava?start_date=2026-05-30&end_date=2026-06-29',
@@ -21,11 +18,12 @@ describe('marketMakerBreakdown route', () => {
 
 		expect(first).toMatchObject({ status: 200, serializedJson: JSON.stringify({ marketMakerId: 'lhava' }) })
 		expect(second).toEqual(first)
-		expect(forgdFetch).toHaveBeenCalledWith('/market-maker/leaderboard/breakdown/lhava', {
+		expect(http.requests[0].url.pathname).toBe('/api/v1/public/market-maker/leaderboard/breakdown/lhava')
+		expect(Object.fromEntries(http.requests[0].url.searchParams)).toEqual({
 			start_date: '2026-05-30',
 			end_date: '2026-06-29'
 		})
-		expect(forgdFetch).toHaveBeenCalledTimes(1)
+		expect(http.requests).toHaveLength(1)
 	})
 
 	test('rejects an invalid market maker id with 400 and never calls forgd', async () => {
@@ -36,6 +34,6 @@ describe('marketMakerBreakdown route', () => {
 			headers: {}
 		})
 		expect(res.status).toBe(400)
-		expect(forgdFetch).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 })

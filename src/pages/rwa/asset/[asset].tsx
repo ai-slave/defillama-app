@@ -1,42 +1,12 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAAssetPage } from '~/containers/RWA/Asset'
+import { resolveRWAAssetRoute } from '~/containers/RWA/assetRoute'
 import { getRWAAssetData } from '~/containers/RWA/queries'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import type { IRWAList } from '~/utils/metadata/types'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect, safeDecodeURIComponent } from '~/utils/route'
-
-type RWAAssetRoute = {
-	assetId: string
-	canonicalMarketId: string
-}
-
-function resolveRWAAssetRoute(assetParam: string, rwaList: IRWAList): RWAAssetRoute | null {
-	const normalizedAssetParam = assetParam.toLowerCase()
-
-	for (const canonicalMarketId of rwaList.canonicalMarketIds) {
-		if (canonicalMarketId.toLowerCase() === normalizedAssetParam) {
-			const assetId = getRWAAssetId(canonicalMarketId, rwaList.idMap)
-			return assetId ? { assetId, canonicalMarketId } : null
-		}
-	}
-
-	return null
-}
-
-function getRWAAssetId(canonicalMarketId: string, idMap: Record<string, string>): string | null {
-	const exactAssetId = idMap[canonicalMarketId]
-	if (exactAssetId) return exactAssetId
-
-	const normalizedMarketId = canonicalMarketId.toLowerCase()
-	for (const marketId in idMap) {
-		if (marketId.toLowerCase() === normalizedMarketId) return idMap[marketId] ?? null
-	}
-
-	return null
-}
 
 export async function getStaticPaths() {
 	// When this is true (in preview environments) don't

@@ -8,49 +8,18 @@ import { TotalValueLostContainer } from '~/containers/Hacks/TotalValueLost'
 import { usePaginatedTable } from '../features/pagination'
 import type { searchTableFeatures } from '../features/search'
 import { useSearchTableContext } from '../search/context'
-import { SearchTableProvider, type SearchTableOptions } from '../search/SearchTableProvider'
+import { SearchTableProvider } from '../search/SearchTableProvider'
 import { SearchTableView } from '../search/SearchTableView'
-import { TableColumnSelect } from '../search/TableColumnSelect'
 import { TableCsvExport } from '../search/TableCsvExport'
 import { TableSearchInput } from '../search/TableSearchInput'
 import { VirtualSearchTableView } from '../search/VirtualSearchTableView'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/mica' }) }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
-vi.mock('~/components/TokenLogo', () => ({ TokenLogo: () => null }))
-vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
-vi.mock('~/ui/Tooltip', () => ({ Tooltip: ({ children }: { children: React.ReactNode }) => children }))
 const { csvRows } = vi.hoisted(() => ({ csvRows: vi.fn() }))
 vi.mock('~/components/CsvDownloadButton', () => ({
 	CSVDownloadButton: ({ prepareCsv }: { prepareCsv: () => { rows: unknown } }) => (
 		<button type="button" onClick={() => csvRows(prepareCsv().rows)}>
 			Export
-		</button>
-	)
-}))
-vi.mock('~/components/Select/SelectWithCombobox', () => ({
-	SelectWithCombobox: ({
-		selectedValues,
-		setSelectedValues
-	}: {
-		selectedValues: Array<string>
-		setSelectedValues: (values: Array<string>) => void
-	}) => (
-		<button
-			type="button"
-			onClick={() =>
-				setSelectedValues(
-					selectedValues.includes('Net User Loss')
-						? selectedValues.includes('Name')
-							? selectedValues.filter((id) => id !== 'Name')
-							: ['Name', ...selectedValues]
-						: selectedValues.includes('value')
-							? ['name']
-							: ['name', 'value']
-				)
-			}
-		>
-			Columns
 		</button>
 	)
 }))
@@ -78,6 +47,9 @@ function ResetSearch() {
 			<button type="button" onClick={() => table.getColumn('name')!.toggleVisibility(false)}>
 				Hide name
 			</button>
+			<button type="button" onClick={() => table.getColumn('value')!.toggleVisibility()}>
+				Toggle value
+			</button>
 		</>
 	)
 }
@@ -98,7 +70,6 @@ function Fixture({
 			options={{ data: rows, columns: definitions, initialState: { sorting: [{ id: 'value', desc: false }] } }}
 		>
 			<TableSearchInput columnId="name" placeholder="Search assets" />
-			<TableColumnSelect />
 			<TableCsvExport filename="assets" includeHiddenColumns={exportAll} />
 			<ResetSearch />
 			{virtual ? <VirtualSearchTableView /> : <SearchTableView />}
@@ -124,7 +95,7 @@ test('composes search, visibility, sorting, reset, and CSV without rerendering t
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
-		await click(container, 'Columns')
+		await click(container, 'Toggle value')
 		expect(container.querySelectorAll('thead th')).toHaveLength(1)
 		expect(container.querySelector('tbody')?.textContent).toBe('Beta')
 		await click(container, 'Export')
@@ -132,7 +103,7 @@ test('composes search, visibility, sorting, reset, and CSV without rerendering t
 		await click(container, 'Reset')
 		expect(input.value).toBe('')
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(2)
-		await click(container, 'Columns')
+		await click(container, 'Toggle value')
 		await click(container, 'Value')
 		expect(container.querySelector('tbody tr')?.textContent).toBe('Beta2')
 		expect(renderOwner).toHaveBeenCalledTimes(1)
@@ -195,14 +166,6 @@ test('does not bind searchable controls to a different preset provider', async (
 		await act(async () => root.unmount())
 	}
 })
-test('infers rows from native options and rejects incompatible data', () => {
-	const options: SearchTableOptions<Asset> = { data, columns }
-	expect(options.columns).toBe(columns)
-	// @ts-expect-error A provider must receive rows matching its column definitions.
-	const invalid: SearchTableOptions<Asset> = { data: [{ name: 'Bad', value: 'not a number' }], columns }
-	void invalid
-})
-
 test('keeps nested searchable tables independent', async () => {
 	const container = document.createElement('div')
 	const root = createRoot(container)
@@ -231,23 +194,6 @@ test('keeps nested searchable tables independent', async () => {
 		const sections = container.querySelectorAll('section')
 		expect(sections[0].querySelectorAll('tbody tr')).toHaveLength(2)
 		expect(sections[1].querySelectorAll('tbody tr')).toHaveLength(1)
-	} finally {
-		await act(async () => root.unmount())
-	}
-})
-
-test('rejects controls without a searchable provider, even inside another preset', async () => {
-	const root = createRoot(document.createElement('div'))
-	try {
-		await expect(
-			act(async () =>
-				root.render(
-					<NestedPagination>
-						<TableSearchInput columnId="name" placeholder="Search" />
-					</NestedPagination>
-				)
-			)
-		).rejects.toThrow('inside <SearchTableProvider>')
 	} finally {
 		await act(async () => root.unmount())
 	}
@@ -282,13 +228,12 @@ test('commits urgent input before filtering and applies the latest rapid input',
 	}
 })
 
-test.each(['', 'Beta'])('cancels pending text when resetting an applied filter of %j', async (initial) => {
+test('cancels pending text when the filter is reset', async () => {
 	const container = document.createElement('div')
 	const root = createRoot(container)
 	try {
 		await act(async () => root.render(<Fixture />))
 		const input = container.querySelector('input')!
-		await act(async () => typeImmediately(input, initial))
 		await act(async () => {
 			typeImmediately(input, 'Alpha')
 			Array.from(container.querySelectorAll('button'))
@@ -366,6 +311,26 @@ test('requests a controlled filter once while its owner has not applied it', asy
 	}
 })
 
+const columnOption = (name: string) =>
+	Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(
+		(element) => element.firstElementChild?.textContent === name
+	)
+
+// Ariakit opens and selects on the full pointer sequence, not on click alone.
+async function press(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+	})
+}
+
+// The multi-select stays open after a toggle, so only open it when the option is not shown.
+async function toggleColumnFromSelect(name: string) {
+	if (!columnOption(name)) await press(document.querySelector<HTMLElement>('[aria-label="Columns dropdown"]')!)
+	await press(columnOption(name)!)
+}
+
 test('Hacks keeps search and CSV working when Name is hidden and restored', async () => {
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -381,7 +346,7 @@ test('Hacks keeps search and CSV working when Name is hidden and restored', asyn
 				/>
 			)
 		)
-		await click(container, 'Columns')
+		await toggleColumnFromSelect('Name')
 		expect(container.querySelector('thead')?.textContent).not.toContain('Name')
 		const input = container.querySelector('input')!
 		await act(async () => {
@@ -394,7 +359,7 @@ test('Hacks keeps search and CSV working when Name is hidden and restored', asyn
 			['Total Hacked', 'Returned Funds', 'Net User Loss'],
 			[10, 2, 8]
 		])
-		await click(container, 'Columns')
+		await toggleColumnFromSelect('Name')
 		expect(container.querySelector('tbody')?.textContent).toContain('Beta')
 		await act(async () => {
 			input.value = ''

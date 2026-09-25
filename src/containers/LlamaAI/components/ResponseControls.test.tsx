@@ -4,17 +4,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ResponseControls } from './ResponseControls'
 
-vi.mock('~/containers/LlamaAI/components/AddToArticle/useArticleExport', () => ({ useArticleExport: () => vi.fn() }))
+// Heavy children whose output these tests do not read.
 vi.mock('~/containers/LlamaAI/components/FeedbackForm', () => ({ FeedbackForm: () => null }))
 vi.mock('~/containers/LlamaAI/components/PDFExportButton', () => ({ PDFExportButton: () => null }))
-vi.mock('~/contexts/LocalStorage', () => ({ useDarkModeManager: () => [false] }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
-vi.mock('~/containers/LlamaAI/utils/copyChartCapture', () => ({ captureChartImage: vi.fn() }))
-vi.mock('~/containers/LlamaAI/utils/copyMessage', () => ({
-	buildCopyMarkdown: vi.fn(async () => 'Markdown'),
-	buildCopyHtml: vi.fn(async () => '<p>HTML</p>'),
-	withFetchCache: (fn: object) => fn
-}))
 let root: Root
 let container: HTMLDivElement
 const writeText = vi.fn<(text: string) => Promise<void>>()
@@ -53,7 +45,7 @@ test('pending copy is named, announced and blocks duplicate clicks until success
 	expect(button.getAttribute('aria-label')).toBe('Copying…')
 	expect(container.querySelector('[role="status"]')?.textContent).toBe('Copying response…')
 	await act(async () => button.click())
-	expect(writeText).toHaveBeenCalledExactlyOnceWith('Markdown')
+	expect(writeText).toHaveBeenCalledExactlyOnceWith('Response')
 	await act(async () => finish())
 	expect(button.disabled).toBe(false)
 	expect(button.getAttribute('aria-label')).toBe('Copied')
@@ -79,7 +71,7 @@ test('a rejected rich clipboard write falls back to plain text without reporting
 	writeText.mockResolvedValue(undefined)
 	await act(async () => copyButton().click())
 	expect(write).toHaveBeenCalledTimes(1)
-	expect(writeText).toHaveBeenCalledExactlyOnceWith('Markdown')
+	expect(writeText).toHaveBeenCalledExactlyOnceWith('Response')
 	expect(copyButton().getAttribute('aria-label')).toBe('Copied')
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 })

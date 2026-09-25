@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
@@ -10,54 +10,10 @@ import {
 	buildTokenFilterOptions,
 	buildTokensChartDataset,
 	buildTokensSourceRows,
-	fetchTokensSourceRows,
-	getTokenOverviewCurrentSnapshot
+	rankTokenCategoriesByMarketCap
 } from '../queries.server'
 import { buildTokenOverviewCurrentMetricsById } from '../readModel'
 import { buildTokensRowFilter } from '../utils'
-
-const sourceMocks = vi.hoisted(() => ({
-	fetchAdapterChainMetrics: vi.fn(() => Promise.resolve({ protocols: [] })),
-	fetchTokenRightsEntries: vi.fn(() => Promise.resolve([])),
-	getAllProtocolEmissions: vi.fn(() => Promise.resolve([])),
-	refreshMetadataInBackgroundIfStale: vi.fn()
-}))
-
-vi.mock('../server/tableData.server', () => ({ getTokensMarketSnapshot: vi.fn() }))
-
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: sourceMocks.fetchAdapterChainMetrics
-}))
-
-vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
-	fetchTokenRightsEntries: sourceMocks.fetchTokenRightsEntries
-}))
-
-vi.mock('~/containers/Unlocks/queries', () => ({
-	getAllProtocolEmissions: sourceMocks.getAllProtocolEmissions
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		tokenlist: {},
-		tokenDirectory: {},
-		protocolMetadata: {},
-		emissionsSupplyMetrics: {},
-		tokenFilterMetadata: {
-			schemaVersion: 2,
-			generatedAt: 0,
-			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
-			tokens: {},
-			categories: []
-		}
-	},
-	refreshMetadataInBackgroundIfStale: sourceMocks.refreshMetadataInBackgroundIfStale
-}))
-
-afterEach(() => {
-	vi.useRealTimers()
-	sourceMocks.getAllProtocolEmissions.mockClear()
-})
 
 function tokenFilterMetadata(
 	tokens: MetadataCache['tokenFilterMetadata']['tokens'] = {}
@@ -71,65 +27,33 @@ function tokenFilterMetadata(
 	}
 }
 
-describe('fetchTokensSourceRows', () => {
-	test('retains complete schedules including earlier-starting linear emissions', async () => {
-		vi.useFakeTimers()
-		vi.setSystemTime(new Date('2026-08-23T12:00:00Z'))
-		const nowSec = Math.floor(Date.now() / 1000)
-
-		await fetchTokensSourceRows({
-			tokens: [],
-			markets: { last_updated: '', tokens: [] },
-			currentMetricsById: {},
-			tokenIndexById: new Map(),
-			version: 'test',
-			generatedAt: nowSec
-		})
-
-		expect(sourceMocks.getAllProtocolEmissions).toHaveBeenCalledWith({
-			getHistoricalPrices: false,
-			tokenlist: {}
-		})
-	})
-})
-
 describe('buildTokenFilterOptions', () => {
-	test('uses global category market caps for token pages and matches membership by ID, not symbol', async () => {
-		const metadata = (await import('~/utils/metadata')).default
-		const previousFilters = metadata.tokenFilterMetadata
-		const { getTokensMarketSnapshot } = await import('../server/tableData.server')
-		metadata.tokenFilterMetadata = {
-			...tokenFilterMetadata({
-				ethereum: { chains: [], primaryChain: null, categories: ['chain', 'defi'] },
-				other: { chains: [], primaryChain: null, categories: ['defi'] }
-			}),
-			generatedAt: 123,
-			categories: [
-				{ id: 'chain', label: 'Chain Tokens' },
-				{ id: 'defi', label: 'DeFi' }
-			]
-		}
-		vi.mocked(getTokensMarketSnapshot).mockResolvedValue({
-			version: 'category-order-test',
-			generatedAt: 42,
-			tokens: [
-				{ id: 'ethereum', name: 'Ethereum', symbol: 'ETH', market_cap: 100 },
-				{ id: 'other', name: 'Other', symbol: 'ETH', market_cap: 200 }
-			],
-			markets: null,
-			currentMetricsById: {},
-			tokenIndexById: new Map()
-		})
-		try {
-			expect((await getTokenOverviewCurrentSnapshot('ethereum')).categories).toEqual([
-				{ id: 'defi', label: 'DeFi' },
-				{ id: 'chain', label: 'Chain Tokens' }
-			])
-			expect((await getTokenOverviewCurrentSnapshot('other')).categories).toEqual([{ id: 'defi', label: 'DeFi' }])
-			expect((await getTokenOverviewCurrentSnapshot('missing')).categories).toEqual([])
-		} finally {
-			metadata.tokenFilterMetadata = previousFilters
-		}
+	test('ranks token-page categories by the market cap of every token in them', () => {
+		const ranked = rankTokenCategoriesByMarketCap(
+			{
+				tokens: [
+					{ id: 'ethereum', name: 'Ethereum', symbol: 'ETH', market_cap: 100 },
+					{ id: 'other', name: 'Other', symbol: 'ETH', market_cap: 200 }
+				],
+				currentMetricsById: {}
+			},
+			{
+				tokenFilterMetadata: {
+					...tokenFilterMetadata({
+						ethereum: { chains: [], primaryChain: null, categories: ['chain', 'defi'] },
+						other: { chains: [], primaryChain: null, categories: ['defi'] }
+					}),
+					categories: [
+						{ id: 'chain', label: 'Chain Tokens' },
+						{ id: 'defi', label: 'DeFi' }
+					]
+				}
+			}
+		)
+		expect(ranked).toEqual([
+			{ id: 'defi', label: 'DeFi' },
+			{ id: 'chain', label: 'Chain Tokens' }
+		])
 	})
 
 	test('orders options by aggregate token market cap with deterministic ties', () => {

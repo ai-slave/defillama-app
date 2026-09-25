@@ -26,6 +26,26 @@ interface SqlChartCardProps {
 	config: SqlChartConfig
 }
 
+type SqlCardBody = 'loading' | 'not-run' | 'owner-not-run' | 'table' | 'no-numeric' | 'chart'
+
+export function sqlCardBody({
+	hasResult,
+	isRefreshing,
+	canRefresh,
+	displayMode,
+	hasNumeric
+}: {
+	hasResult: boolean
+	isRefreshing: boolean
+	canRefresh: boolean
+	displayMode: 'chart' | 'table'
+	hasNumeric: boolean
+}): SqlCardBody {
+	if (!hasResult) return isRefreshing ? 'loading' : canRefresh ? 'not-run' : 'owner-not-run'
+	if (displayMode === 'table') return 'table'
+	return hasNumeric ? 'chart' : 'no-numeric'
+}
+
 export function SqlChartCard({ config }: SqlChartCardProps) {
 	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot ?? null)
 	const [cardView, setCardView] = useState<'output' | 'query'>('output')
@@ -62,6 +82,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	const displayMode = config.displayMode ?? 'chart'
 	const canExportPng = displayMode === 'chart' && !!result && hasNumeric
 	const canExportCsv = !!result
+	const body = sqlCardBody({ hasResult: !!result, isRefreshing, canRefresh, displayMode, hasNumeric })
 
 	return (
 		<div className="flex h-full flex-col p-0">
@@ -134,19 +155,17 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 
 				{cardView === 'query' ? (
 					<SqlQueryView config={config} snapshot={snapshot} />
-				) : !snapshot || !result ? (
-					isRefreshing ? (
-						<ProCardLoading label="Running the query…" />
-					) : canRefresh ? (
-						<ProCardEmpty message="This query hasn't run yet." action={{ label: 'Run query', onClick: refresh }} />
-					) : (
-						<ProCardEmpty message="The owner hasn't run this query yet." />
-					)
-				) : displayMode === 'table' ? (
+				) : body === 'loading' ? (
+					<ProCardLoading label="Running the query…" />
+				) : body === 'not-run' ? (
+					<ProCardEmpty message="This query hasn't run yet." action={{ label: 'Run query', onClick: refresh }} />
+				) : body === 'owner-not-run' || !result ? (
+					<ProCardEmpty message="The owner hasn't run this query yet." />
+				) : body === 'table' ? (
 					<div className="min-h-0 flex-1">
 						<ResultsGrid result={result} />
 					</div>
-				) : !hasNumeric ? (
+				) : body === 'no-numeric' ? (
 					<ProCardEmpty message="No numeric columns in this result to chart." />
 				) : (
 					<ChartRouter

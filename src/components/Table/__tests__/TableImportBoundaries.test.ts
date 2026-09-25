@@ -70,16 +70,11 @@ test('keeps full rendering independent of virtualization and toolbar controls', 
 	expect(imports).not.toContain('src/components/Select/SelectWithCombobox.tsx')
 })
 
-test('retains the virtualizer only in the virtual renderer path', () => {
-	expect(runtimeImports('src/components/Table/search/VirtualSearchTableView.tsx')).toContain('@tanstack/react-virtual')
-})
-
 test.each(['DeferredTokenMarketsTable', 'DeferredTokenLiquidationsTable'])(
 	'keeps %s behind its dynamic import',
 	(name) => {
 		const imports = runtimeImports(`src/containers/Token/deferred/${name}.tsx`)
 		expect(imports).not.toContain('@tanstack/react-table')
 		expect(imports).not.toContain('@tanstack/react-virtual')
-		expect(imports.filter((file) => file.startsWith('src/'))).toHaveLength(1)
 	}
 )

@@ -2,32 +2,34 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AUTH_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { TopupModal } from './TopupModal'
 
-const payment = vi.hoisted(() => ({
-	mutateAsync: vi.fn(),
-	reset: vi.fn(),
-	load: vi.fn(),
-	resolve: () => {},
-	error: null as Error | null
-}))
-vi.mock('../useTopup', () => ({
-	TOPUP_CONFIG: { minAmount: 1, maxAmount: 500, quickAmounts: [5, 10, 25, 50] },
-	useCreateTopup: () => ({ ...payment, isPending: false })
-}))
+// The card step lazy-loads Stripe; this stub holds the import open so the cold-load state is observable.
+const cardCheckout = vi.hoisted(() => ({ load: vi.fn(), resolve: () => {} }))
 vi.mock('./TopupStripeCheckout', async () => {
-	payment.load()
+	cardCheckout.load()
 	await new Promise<void>((resolve) => {
-		payment.resolve = resolve
+		cardCheckout.resolve = resolve
 	})
 	return { default: () => <div>Card checkout</div> }
 })
+
+const session = installSubscriberSession('buyer')
+let topupReplies: Array<Promise<Response> | Response>
+const topups = () =>
+	session.requests
+		.filter(({ url }) => url.pathname === '/topup/create')
+		.map(({ init }) => JSON.parse(init!.body as string))
+const unavailable = () => Response.json({ error: 'Checkout unavailable' }, { status: 503 })
 
 let host: HTMLDivElement
 let root: Root
 beforeEach(() => {
 	vi.clearAllMocks()
-	payment.error = null
+	topupReplies = []
+	session.serve({ [`${AUTH_SERVER}/topup/create`]: () => topupReplies.shift()! })
 	host = document.createElement('div')
 	document.body.append(host)
 	root = createRoot(host)
@@ -64,46 +66,53 @@ async function mount() {
 			</>
 		)
 	}
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Harness />
+			</session.Wrapper>
+		)
+	)
 	await click('Open balance')
 }
 
-test('opens the amount form without loading Stripe or creating a payment', async () => {
+test('opens the amount form on the default amount without creating a payment', async () => {
 	await mount()
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Top Up Balance')
 	expect(document.querySelector('input')?.value).toBe('10')
-	expect(payment.load).not.toHaveBeenCalled()
-	expect(payment.mutateAsync).not.toHaveBeenCalled()
+	expect(topups()).toEqual([])
 })
 
 test('keeps back and close available during a cold checkout load, and does not reopen after it finishes', async () => {
 	await mount()
 	await click('$25')
 	await click('Pay with Card')
-	await vi.waitFor(() => expect(payment.load).toHaveBeenCalledOnce())
+	await vi.waitFor(() => expect(cardCheckout.load).toHaveBeenCalledOnce())
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Loading card payments…')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Complete Payment')
 	await click('Back to amount')
 	expect(document.querySelector('input')?.value).toBe('25')
 	await click('Pay with Card')
 	await click('Close balance dialog')
-	await act(async () => payment.resolve())
+	await act(async () => cardCheckout.resolve())
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 	await click('Open balance')
 	expect(document.querySelector('input')?.value).toBe('10')
 	await click('Pay with Card')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Card checkout')
 	expect(document.querySelector('[role="status"]')).toBeNull()
-	expect(payment.mutateAsync).not.toHaveBeenCalled()
+	expect(topups()).toEqual([])
 })
 
-test('keeps the existing payment error visible with a route back to the amount', async () => {
+test('keeps a failed payment error visible on the card step with a route back to the amount', async () => {
+	topupReplies.push(unavailable())
 	await mount()
-	payment.error = new Error('Could not create checkout')
+	await click('Pay with Crypto')
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	await click('Pay with Card')
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not create checkout')
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Checkout unavailable')
 	await click('Back to amount')
-	expect(payment.reset).toHaveBeenCalledOnce()
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(document.querySelector('input')?.value).toBe('10')
 })
 
@@ -145,8 +154,8 @@ test.each([
 })
 
 test('pending crypto checkout blocks duplicate actions and failure allows retry with a different amount', async () => {
-	const request = Promise.withResolvers<never>()
-	payment.mutateAsync.mockReturnValueOnce(request.promise)
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise, unavailable())
 	await mount()
 	await click('$25')
 	await click('Pay with Crypto')
@@ -157,19 +166,17 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	expect(button('Pay with Card').disabled).toBe(true)
 	await click('Redirecting…')
 	await click('Pay with Card')
-	expect(payment.mutateAsync).toHaveBeenCalledExactlyOnceWith(
-		expect.objectContaining({ amount: 25, provider: 'llamapay' })
-	)
-	payment.error = new Error('Checkout unavailable')
-	await act(async () => request.reject(payment.error))
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable')
+	await vi.waitFor(() => expect(topups()).toHaveLength(1))
+	expect(topups()[0]).toMatchObject({ amount: 25, provider: 'llamapay' })
+	await act(async () => request.resolve(unavailable()))
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	expect(input.value).toBe('25')
 	expect(input.disabled).toBe(false)
 	expect(button('Pay with Card').disabled).toBe(false)
 	await click('$5')
-	payment.mutateAsync.mockRejectedValueOnce(new Error('Checkout unavailable'))
 	await click('Pay with Crypto')
-	expect(payment.mutateAsync).toHaveBeenLastCalledWith(expect.objectContaining({ amount: 5, provider: 'llamapay' }))
+	await vi.waitFor(() => expect(button('Pay with Crypto').disabled).toBe(false))
+	expect(topups()).toHaveLength(2)
+	expect(topups()[1]).toMatchObject({ amount: 5, provider: 'llamapay' })
 	expect(input.value).toBe('5')
-	expect(button('Pay with Crypto').disabled).toBe(false)
 })

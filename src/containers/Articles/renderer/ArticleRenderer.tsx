@@ -40,6 +40,7 @@ import {
 	usePromoBanner
 } from './ArticlePromoBanner'
 import { ArticleQAAnswer, ArticleQABlock, ArticleQAQuestion } from './ArticleQABlock'
+import { hasStoredColumnWidths, tableCellAttrs } from './articleTable'
 import { ArticleTableFrame } from './ArticleTableFrame'
 import { EntityPreviewLink } from './EntityPreviewLink'
 import { LlamaAIChartBlock } from './LlamaAIChartBlock'
@@ -52,21 +53,6 @@ type RenderContext = {
 
 function isPdfLink(href: string) {
 	return /\.pdf($|[?#])/i.test(href)
-}
-
-function tableCellAttrs(node: TiptapJson) {
-	const colspan = Number(node.attrs?.colspan)
-	const rowspan = Number(node.attrs?.rowspan)
-	const colwidthRaw = node.attrs?.colwidth
-	const colwidth = Array.isArray(colwidthRaw)
-		? colwidthRaw.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
-		: null
-	const style = colwidth && colwidth.length > 0 ? { width: `${colwidth[0]}px` } : undefined
-	return {
-		colSpan: Number.isFinite(colspan) && colspan > 1 ? colspan : undefined,
-		rowSpan: Number.isFinite(rowspan) && rowspan > 1 ? rowspan : undefined,
-		style
-	}
 }
 
 function stringAttr(attrs: Record<string, unknown> | null | undefined, key: string) {
@@ -432,12 +418,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 			bodyRows.push(row)
 		}
 	}
-	const hasColWidths = rows.some((row) =>
-		(row.content ?? []).some((cell) => {
-			const raw = cell.attrs?.colwidth
-			return Array.isArray(raw) && raw.some((v) => typeof v === 'number' && Number.isFinite(v))
-		})
-	)
+	const hasColWidths = hasStoredColumnWidths(node)
 
 	return (
 		<ArticleTableFrame key={key}>

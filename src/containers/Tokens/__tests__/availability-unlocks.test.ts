@@ -1,14 +1,15 @@
-import { describe, expect, test, vi } from 'vitest'
-import type { EmissionEvent } from '~/containers/Unlocks/api.types'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import type { EmissionEvent, KnownEmissionEvent, RawProtocolEmission } from '~/containers/Unlocks/api.types'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
 import { buildTokensSourceRows, fetchTokensSourceRows } from '../queries.server'
 import { getTokensPageFromRows } from '../utils'
 
-const mocks = vi.hoisted(() => ({ fees: vi.fn(), rights: vi.fn(), unlocks: vi.fn() }))
-vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterChainMetrics: mocks.fees }))
+const mocks = vi.hoisted(() => ({ rights: vi.fn() }))
+const http = installFixtureFetch()
+afterEach(() => vi.useRealTimers())
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRightsEntries: mocks.rights }))
-vi.mock('~/containers/Unlocks/queries', () => ({ getAllProtocolEmissions: mocks.unlocks }))
 
 const day = 86_400
 const nowSec = 1_800_000_000
@@ -52,7 +53,7 @@ function emission(events: Array<EmissionEvent>, tPrice: number | null = 2): Enri
 		next24h: { cliff: 0, linear: 0, total: 0, unknownEventCount: 0 }
 	}
 }
-function cliff(timestamp: number, amount: number): EmissionEvent {
+function cliff(timestamp: number, amount: number): Extract<KnownEmissionEvent, { unlockType: 'cliff' }> {
 	return { description: 'Cliff', category: 'insiders', unlockType: 'cliff', timestamp, noOfTokens: [amount] }
 }
 
@@ -101,6 +102,51 @@ describe('Tokens rolling unlock windows', () => {
 })
 
 describe('Tokens source availability', () => {
+	test('retains earlier linear schedules through the real emissions loader', async () => {
+		vi.useFakeTimers()
+		vi.setSystemTime(nowSec * 1000)
+		const raw: RawProtocolEmission = {
+			tokenPrice: [{ symbol: 'S', price: 2, timestamp: nowSec, confidence: 1 }],
+			name: 'Sample',
+			token: 'S',
+			protocolId: null,
+			gecko_id: 'sample',
+			sources: [],
+			circSupply: 50,
+			circSupply30d: 40,
+			totalLocked: 50,
+			maxSupply: 100,
+			unlocksPerDay: null,
+			unlockEvents: [],
+			events: [
+				{
+					description: 'Linear',
+					category: 'farming',
+					unlockType: 'linear',
+					timestamp: nowSec - 60 * day,
+					noOfTokens: [0, 7],
+					rateDurationDays: 120
+				},
+				cliff(nowSec + 10 * day, 5)
+			]
+		}
+		http.serve({ '/v2/metrics/fees': { protocols: [] }, '/emissions': [raw] })
+		mocks.rights.mockResolvedValue([])
+		const result = await fetchTokensSourceRows(
+			{
+				tokens,
+				markets: base.markets,
+				currentMetricsById: {},
+				tokenIndexById: new Map(),
+				version: 'schedule',
+				generatedAt: nowSec * 1000
+			},
+			metadata
+		)
+		expect(result.rows[0]).toMatchObject({ unlock30dUsd: 60, upcomingUnlockUsd: 70 })
+		expect(result.unavailableSources).toEqual([])
+	})
+
 	test('keeps optional outages distinct from successful empty responses without losing core rows', async () => {
 		const snapshot = {
 			tokens,
@@ -110,15 +156,13 @@ describe('Tokens source availability', () => {
 			version: 'test',
 			generatedAt: nowSec * 1000
 		}
-		mocks.fees.mockResolvedValue({ protocols: [] })
+		http.serve({ '/v2/metrics/fees': { protocols: [] }, '/emissions': [] })
 		mocks.rights.mockResolvedValue([])
-		mocks.unlocks.mockResolvedValue([])
 		const empty = await fetchTokensSourceRows(snapshot, metadata)
 		expect(empty.unavailableSources).toEqual([])
 		expect(empty.stats).toMatchObject({ spotVolume24h: 0, unlock30dUsd: 0 })
-		mocks.fees.mockRejectedValue(new Error('outage'))
+		http.serve({ '/v2/metrics/fees': fixtureStatus(503), '/emissions': fixtureStatus(503) })
 		mocks.rights.mockRejectedValue(new Error('outage'))
-		mocks.unlocks.mockRejectedValue(new Error('outage'))
 		const failed = await fetchTokensSourceRows({ ...snapshot, markets: null }, metadata)
 		expect(failed.unavailableSources).toEqual(['markets', 'rights', 'fees', 'revenue', 'holdersRevenue', 'unlocks'])
 		expect(failed.stats).toMatchObject({

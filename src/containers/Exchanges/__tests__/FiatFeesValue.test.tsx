@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { FiatFeesValue, fiatFeeSummary } from '../FiatFeesValue'
@@ -23,12 +24,14 @@ describe('FiatFeesValue', () => {
 		expect(fiatFeeSummary(FEES)).toBe('1 in · 0 out')
 	})
 
-	test('renders an accessible compact disclosure and an unavailable state', () => {
-		const available = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={FEES} />)
-		const missing = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={null} />)
+	test('names the route counts on the disclosure and shows a dash when fees are unknown', () => {
+		const container = document.createElement('div')
+		container.innerHTML = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={FEES} />)
+		const button = container.querySelector('button')
+		expect(button?.getAttribute('aria-label')).toBe('Venue fiat fee details: 1 on-ramp routes and 0 off-ramp routes')
+		expect(button?.textContent).toBe('1 in · 0 out')
 
-		expect(available).toContain('aria-label="Venue fiat fee details: 1 on-ramp routes and 0 off-ramp routes"')
-		expect(available).toContain('1 in · 0 out')
-		expect(missing).toContain('–')
+		container.innerHTML = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={null} />)
+		expect(container.textContent).toBe('–')
 	})
 })

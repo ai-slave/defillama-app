@@ -89,3 +89,42 @@ export function buildProtocolFeeChartPresentation({
 		charts
 	}
 }
+
+/** Each breakdown panel appears on its own once it has more than one chain or version to split by. */
+export function getProtocolFeeBreakdownPanels({
+	protocolChains,
+	protocolFeesVersions,
+	protocolRevenueChains,
+	protocolRevenueVersions
+}: {
+	protocolChains: Array<string>
+	protocolFeesVersions: Array<string>
+	protocolRevenueChains: Array<string>
+	protocolRevenueVersions: Array<string>
+}): Array<{
+	title: string
+	chartType: 'chain' | 'version'
+	dataType?: 'dailyRevenue'
+	breakdownNames: Array<string>
+}> {
+	const panels: ReturnType<typeof getProtocolFeeBreakdownPanels> = []
+	if (protocolChains.length > 1)
+		panels.push({ title: 'Fees by chain', chartType: 'chain', breakdownNames: protocolChains })
+	if (protocolFeesVersions.length > 1)
+		panels.push({ title: 'Fees by protocol version', chartType: 'version', breakdownNames: protocolFeesVersions })
+	if (protocolRevenueChains.length > 1)
+		panels.push({
+			title: 'Revenue by chain',
+			chartType: 'chain',
+			dataType: 'dailyRevenue',
+			breakdownNames: protocolRevenueChains
+		})
+	if (protocolRevenueVersions.length > 1)
+		panels.push({
+			title: 'Revenue by protocol version',
+			chartType: 'version',
+			dataType: 'dailyRevenue',
+			breakdownNames: protocolRevenueVersions
+		})
+	return panels
+}

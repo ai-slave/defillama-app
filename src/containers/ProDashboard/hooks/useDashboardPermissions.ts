@@ -55,39 +55,53 @@ function ownerOnly(
 	}
 }
 
+export type DashboardViewer = {
+	userId: string | undefined
+	isAuthenticated: boolean
+	hasActiveSubscription: boolean
+	sessionLoading: boolean
+}
+
+export function getDashboardPermissions(dashboard: Dashboard | null, viewer: DashboardViewer): DashboardPermissions {
+	const { userId, isAuthenticated, hasActiveSubscription } = viewer
+	if (viewer.sessionLoading) {
+		return ownerOnly(dashboard, false, true, 'loading')
+	}
+
+	// New dashboard (no existing dashboard loaded)
+	if (!dashboard) {
+		return ownerOnly(null, isAuthenticated, !isAuthenticated, isAuthenticated ? null : 'not-owner')
+	}
+
+	const isCreator = isAuthenticated && userId === dashboard.user
+
+	// The server resolves team membership and seats; its answer wins whenever it is present.
+	if (dashboard.access && isAuthenticated) {
+		return fromServerAccess(dashboard, dashboard.access, isCreator)
+	}
+
+	// Public dashboards: any authenticated owner can edit (free or subscribed)
+	if (dashboard.visibility === 'public') {
+		return ownerOnly(dashboard, isCreator, !isCreator, isCreator ? null : 'not-owner')
+	}
+
+	// Private dashboards: still require subscription for edit access
+	const permissions = ownerOnly(
+		dashboard,
+		isCreator && hasActiveSubscription,
+		!isCreator || !hasActiveSubscription,
+		!isCreator ? 'not-owner' : hasActiveSubscription ? null : 'subscription'
+	)
+	return { ...permissions, canDelete: isCreator, canMove: isCreator }
+}
+
 export function useDashboardPermissions(dashboard: Dashboard | null): DashboardPermissions {
 	const { user, isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
-	const userLoading = loaders.sessionLoading
+	const userId = user?.id
+	const sessionLoading = loaders.sessionLoading
 
-	return useMemo<DashboardPermissions>(() => {
-		if (userLoading) {
-			return ownerOnly(dashboard, false, true, 'loading')
-		}
-
-		// New dashboard (no existing dashboard loaded)
-		if (!dashboard) {
-			return ownerOnly(null, isAuthenticated, !isAuthenticated, isAuthenticated ? null : 'not-owner')
-		}
-
-		const isCreator = isAuthenticated && user?.id === dashboard.user
-
-		// The server resolves team membership and seats; its answer wins whenever it is present.
-		if (dashboard.access && isAuthenticated) {
-			return fromServerAccess(dashboard, dashboard.access, isCreator)
-		}
-
-		// Public dashboards: any authenticated owner can edit (free or subscribed)
-		if (dashboard.visibility === 'public') {
-			return ownerOnly(dashboard, isCreator, !isCreator, isCreator ? null : 'not-owner')
-		}
-
-		// Private dashboards: still require subscription for edit access
-		const permissions = ownerOnly(
-			dashboard,
-			isCreator && hasActiveSubscription,
-			!isCreator || !hasActiveSubscription,
-			!isCreator ? 'not-owner' : hasActiveSubscription ? null : 'subscription'
-		)
-		return { ...permissions, canDelete: isCreator, canMove: isCreator }
-	}, [dashboard, user?.id, hasActiveSubscription, isAuthenticated, userLoading])
+	return useMemo<DashboardPermissions>(
+		() => getDashboardPermissions(dashboard, { userId, isAuthenticated, hasActiveSubscription, sessionLoading }),
+		[dashboard, userId, hasActiveSubscription, isAuthenticated, sessionLoading]
+	)
 }

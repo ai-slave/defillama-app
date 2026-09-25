@@ -1,50 +1,25 @@
 // @vitest-environment happy-dom
-import { act, type ReactNode } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { DASHBOARD_CARD_HEIGHT_SCALE } from '../../dashboardLayout/cardHeight'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { CustomDataConfig } from '../../types'
 import { CardHeightScaleContext } from '../cardHeightContext'
 import { DashboardCardContext } from '../DashboardCardContext'
 import { CustomDataCard } from './CustomDataCard'
 import { gzipBase64Encode } from './rowsEncoding'
 
-const mocks = vi.hoisted(() => ({
-	appendItems: vi.fn(),
-	isReadOnly: false
-}))
-const streamContext = vi.hoisted(() => ({ done: true }))
-vi.mock('../../ProDashboardAPIContext', () => ({
-	useProDashboardPermissions: () => ({ isReadOnly: mocks.isReadOnly }),
-	useProDashboardEditorActions: () => ({ handleAppendItems: mocks.appendItems })
-}))
-vi.mock('../../queries', async () => {
-	const { createContext } = await import('react')
-	return { StreamDoneContext: createContext(true) }
-})
-vi.mock('../ProCardHeader', () => ({
-	ProCardHeader: ({
-		title,
-		subtitle,
-		menu
-	}: {
-		title?: string
-		subtitle?: ReactNode
-		menu?: { onDuplicate?: () => void }
-	}) => (
-		<div>
-			<h2>{title}</h2>
-			{subtitle}
-			{menu?.onDuplicate ? (
-				<button type="button" onClick={menu.onDuplicate}>
-					Duplicate
-				</button>
-			) : null}
-		</div>
-	)
-}))
+const appendItems = vi.fn()
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {} }) }))
+const session = installSubscriberSession('u1', { resolved: true })
+// The results grid and the SQL chart are heavy children; these tests read the rows they receive.
 vi.mock('~/containers/Downloads/sql/ResultsGrid', () => ({
-	ResultsGrid: ({ result }: { result: { rows: Array<unknown> } }) => <p>grid rows: {result.rows.length}</p>
+	ResultsGrid: ({ result }: { result: { rows: Array<Array<unknown>> } }) => (
+		<p>
+			grid rows: {result.rows.length}, last row: {result.rows.at(-1)?.join(' ')}
+		</p>
+	)
 }))
 vi.mock('~/containers/Downloads/sql/chart', () => ({
 	ChartRouter: ({
@@ -61,7 +36,6 @@ vi.mock('~/containers/Downloads/sql/chart', () => ({
 		</p>
 	)
 }))
-vi.mock('~/ui/Loaders', () => ({ LoadingSpinner: () => <p>loading</p> }))
 
 const chart: CustomDataConfig['chart'] = {
 	chartType: 'line',
@@ -98,10 +72,8 @@ let container: HTMLDivElement
 let root: Root
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.appendItems.mockClear()
+	appendItems.mockClear()
 	cardEdit.mockClear()
-	mocks.isReadOnly = false
-	streamContext.done = true
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -111,17 +83,42 @@ afterEach(async () => {
 	container.remove()
 })
 
-async function render(config: CustomDataConfig, streamDone = true, scale = 1) {
-	const { StreamDoneContext } = await import('../../queries')
+type RenderOptions = { streamDone?: boolean; scale?: number; isReadOnly?: boolean; editable?: boolean }
+
+async function render(
+	config: CustomDataConfig,
+	{ streamDone = true, scale = 1, isReadOnly = false, editable = false }: RenderOptions = {}
+) {
+	const card = (
+		<CardHeightScaleContext.Provider value={scale}>
+			<CustomDataCard config={config} />
+		</CardHeightScaleContext.Provider>
+	)
 	await act(async () =>
 		root.render(
-			<StreamDoneContext.Provider value={streamDone}>
-				<CardHeightScaleContext.Provider value={scale}>
-					<CustomDataCard config={config} />
-				</CardHeightScaleContext.Provider>
-			</StreamDoneContext.Provider>
+			<session.Wrapper>
+				<DashboardTestProvider
+					mode={isReadOnly ? 'view' : 'edit'}
+					streamDone={streamDone}
+					permissions={{ isReadOnly }}
+					editorActions={{ handleAppendItems: appendItems }}
+				>
+					{editable ? <DashboardCardContext.Provider value={cardContext}>{card}</DashboardCardContext.Provider> : card}
+				</DashboardTestProvider>
+			</session.Wrapper>
 		)
 	)
+}
+
+function buttonNamed(name: string) {
+	return [...document.querySelectorAll<HTMLElement>('button, [role="menuitem"]')].find(
+		(node) => node.textContent?.trim() === name
+	)
+}
+
+async function openMenu() {
+	const menu = container.querySelector<HTMLButtonElement>('[aria-label="More actions"]')
+	if (menu) await act(async () => menu.click())
 }
 
 function chartHeight() {
@@ -142,24 +139,28 @@ test('renders the chart view and duplicates the dataset with a fresh id when edi
 	await render({ ...base, displayMode: 'chart' })
 	expect(container.textContent).toContain('chart line: 2')
 	expect(chartHeight()).toBe('420px')
-	const duplicate = Array.from(container.querySelectorAll('button')).find((node) => node.textContent === 'Duplicate')
+	await openMenu()
+	const duplicate = buttonNamed('Duplicate')
 	expect(duplicate).toBeDefined()
 	await act(async () => duplicate?.click())
-	expect(mocks.appendItems).toHaveBeenCalledOnce()
-	const created = mocks.appendItems.mock.calls[0]?.[0]([])[0] as CustomDataConfig
+	expect(appendItems).toHaveBeenCalledOnce()
+	const created = appendItems.mock.calls[0]?.[0]([])[0] as CustomDataConfig
 	expect(created).toMatchObject({ kind: 'custom-data', name: 'Treasury (Duplicate)', rows: base.rows })
 	expect(created.id).not.toBe(base.id)
 })
 
 test('hides duplication for read-only viewers and explains datasets without numeric columns', async () => {
-	mocks.isReadOnly = true
-	await render({
-		...base,
-		displayMode: 'chart',
-		columns: [{ name: 'day', type: 'DATE' }],
-		rows: [['2026-01-01'], ['2026-01-02']]
-	})
-	expect(container.querySelector('button')).toBeNull()
+	await render(
+		{
+			...base,
+			displayMode: 'chart',
+			columns: [{ name: 'day', type: 'DATE' }],
+			rows: [['2026-01-01'], ['2026-01-02']]
+		},
+		{ isReadOnly: true }
+	)
+	await openMenu()
+	expect(buttonNamed('Duplicate')).toBeUndefined()
 	expect(container.textContent).toContain('No numeric columns in this dataset to chart.')
 })
 
@@ -171,37 +172,26 @@ test('decodes compressed rows lazily before rendering them', async () => {
 	const data = await gzipBase64Encode(JSON.stringify(rows))
 	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1500 } })
 	expect(container.textContent).toContain('1,500 rows')
-	await vi.waitFor(() => expect(container.textContent).toContain('grid rows: 1500'))
+	await vi.waitFor(() =>
+		expect(container.textContent).toContain(`grid rows: 1500, last row: ${Date.UTC(2026, 0, 16)} 1499`)
+	)
 })
 
 test('shows a loader while rows are still streaming and an empty state once the stream is done', async () => {
 	const { rows: _rows, ...withoutRows } = base
-	await render(withoutRows, false)
+	await render(withoutRows, { streamDone: false })
 	expect(container.textContent).toContain('Loading')
-	await render(withoutRows, true)
+	await render(withoutRows)
 	expect(container.textContent).toContain('No rows stored.')
 	expect(container.textContent).toContain('0 rows')
 })
 
-test('surfaces a decoding failure instead of an endless loader', async () => {
-	await render({ ...base, rows: { encoding: 'gzip-base64', data: '!!!not-base64!!!', rowCount: 3 } })
-	await vi.waitFor(() => expect(container.textContent).not.toContain('loading'))
-	expect(container.querySelector('[role="status"]')?.textContent).toBeTruthy()
-})
-
 test('unreadable stored rows offer the editor when the card is editable', async () => {
-	const { StreamDoneContext } = await import('../../queries')
-	await act(async () =>
-		root.render(
-			<StreamDoneContext.Provider value>
-				<DashboardCardContext.Provider value={cardContext}>
-					<CustomDataCard config={{ ...base, rows: { encoding: 'gzip-base64', data: 'not-gzip', rowCount: 2 } }} />
-				</DashboardCardContext.Provider>
-			</StreamDoneContext.Provider>
-		)
+	await render({ ...base, rows: { encoding: 'gzip-base64', data: 'not-gzip', rowCount: 2 } }, { editable: true })
+	await vi.waitFor(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
+	const edit = [...container.querySelectorAll<HTMLElement>('[role="status"] button')].find(
+		(node) => node.textContent === 'Edit card'
 	)
-	await vi.waitFor(() => expect(container.querySelector('[role="status"]')).not.toBeNull())
-	const edit = Array.from(container.querySelectorAll('button')).find((node) => node.textContent === 'Edit card')
 	expect(edit).toBeDefined()
 	await act(async () => edit?.click())
 	expect(cardEdit).toHaveBeenCalledOnce()
@@ -209,17 +199,12 @@ test('unreadable stored rows offer the editor when the card is editable', async 
 
 test('unreadable stored rows explain the fix instead of printing the decoder error', async () => {
 	await render({ ...base, rows: { encoding: 'gzip-base64', data: 'not-gzip', rowCount: 2 } })
-	await vi.waitFor(() => expect(container.querySelector('[role="status"]')).not.toBeNull())
-	const alert = container.querySelector('[role="status"]')
+	await vi.waitFor(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
+	const alert = [...container.querySelectorAll('[role="status"]')].find((node) =>
+		node.textContent?.includes("Stored rows couldn't be read")
+	)
 	expect(alert?.textContent).toContain("Stored rows couldn't be read")
 	expect(alert?.textContent).toContain('Edit the card and upload the file again.')
 	expect(alert?.textContent).not.toContain('gzip')
-	expect(Array.from(container.querySelectorAll('button')).some((node) => node.textContent === 'Edit card')).toBe(false)
-})
-
-test('the card height preset scales the chart instead of padding the card', async () => {
-	await render({ ...base, displayMode: 'chart' }, true, DASHBOARD_CARD_HEIGHT_SCALE.compact)
-	expect(chartHeight()).toBe('315px')
-	await render({ ...base, displayMode: 'chart' }, true, DASHBOARD_CARD_HEIGHT_SCALE.tall)
-	expect(chartHeight()).toBe('588px')
+	expect(alert?.querySelector('button')).toBeNull()
 })

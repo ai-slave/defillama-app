@@ -194,11 +194,16 @@ describe('/api/private/research/articles/[id]/publish', () => {
 
 		await researchPublishHandler(request({ headers: { authorization: 'Bearer user-token' } }), res)
 
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.status).not.toHaveBeenCalledWith(500)
-		await vi.waitFor(() => {
-			expect(logger).toHaveBeenCalledWith('Research cache: Cloudflare purge failed: cloudflare is down')
+		expect(res.status).toHaveBeenCalledExactlyOnceWith(200)
+		expect(res.json).toHaveBeenCalledExactlyOnceWith({
+			article: after,
+			cache: {
+				purgePaths: ['/research', '/research/feed.xml', '/research/report/old-story', '/research/report'],
+				status: 'scheduled'
+			}
 		})
+		// Let the rejected purge settle inside the test so an unhandled rejection fails it.
+		await vi.waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(3))
 		logger.mockRestore()
 	})
 

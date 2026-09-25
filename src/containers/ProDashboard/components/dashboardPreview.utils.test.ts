@@ -72,10 +72,12 @@ test('previewSeed is deterministic and separates ids', () => {
 	expect(previewSeed('dash-1')).toBeLessThan(2 ** 31)
 })
 
-test('previewSeries stays inside the unit range', () => {
+test('previewSeries draws a varying line inside the unit range that differs per dashboard', () => {
 	const series = previewSeries(previewSeed('dash-1'))
 	expect(series).toHaveLength(24)
 	expect(series.every((value) => value >= 0 && value <= 1)).toBe(true)
+	expect(new Set(series).size).toBeGreaterThan(1)
+	expect(previewSeries(previewSeed('dash-2'))).not.toEqual(series)
 	expect(previewSeries(12_345)).toEqual(previewSeries(12_345))
 })
 

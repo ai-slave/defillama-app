@@ -4,20 +4,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
+import { CONFIG_API, SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { AppMetadataProvider } from '../AppMetadataContext'
+import {
+	ComparisonWizardProvider,
+	useComparisonWizardContext
+} from '../components/ComparisonWizard/ComparisonWizardContext'
 import { SelectItemsStep } from '../components/ComparisonWizard/steps/SelectItemsStep'
 import { ProDashboardAPIProvider, useProDashboardUI } from '../ProDashboardAPIContext'
 
-const mocks = vi.hoisted(() => ({
-	fetchChains: vi.fn(),
-	fetchCategories: vi.fn(),
-	fetchCategoryChains: vi.fn(),
-	toggleItem: vi.fn(),
-	comparisonType: 'chains' as 'chains' | 'protocols'
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: false, loaders: { userLoading: false } })
-}))
-vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
 const router = vi.hoisted(() => ({
 	push: vi.fn(),
 	replace: vi.fn(),
@@ -26,45 +23,6 @@ const router = vi.hoisted(() => ({
 	query: {}
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
-vi.mock('../hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({
-		isDone: true,
-		isStreaming: false,
-		readyItemIds: new Set<string>(),
-		dashboard: null,
-		error: null
-	})
-}))
-vi.mock('../hooks/useFreeTierStatus', () => ({
-	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: true })
-}))
-vi.mock('../hooks/useDashboardPermissions', () => ({
-	useDashboardPermissions: () => ({ isReadOnly: true, dashboardOwnerId: null })
-}))
-vi.mock('../hooks/useAutoSave', () => ({ useAutoSave: () => ({}) }))
-vi.mock('../hooks/useDashboardAPI', () => ({
-	getUnsavedDashboardChanges: () => null,
-	wasDashboardDeleted: () => false,
-	useDashboardAPI: () => ({ createDashboard: {}, updateDashboard: {}, moveDashboardTeam: {} })
-}))
-vi.mock('~/containers/Chains/api', () => ({
-	fetchChainsList: mocks.fetchChains,
-	fetchChainsCategories: mocks.fetchCategories,
-	fetchChainsByCategory: mocks.fetchCategoryChains
-}))
-vi.mock('~/containers/ProtocolLists/api', () => ({
-	fetchProtocols: async () => ({ protocols: [], parentProtocols: [] })
-}))
-vi.mock('~/utils/async', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/utils/async')>()),
-	fetchJson: async () => [{ slug: 'aave', parentSlug: 'aave', name: 'Aave', tvl: 100 }]
-}))
-vi.mock('../components/ComparisonWizard/ComparisonWizardContext', () => ({
-	useComparisonWizardContext: () => ({
-		state: { comparisonType: mocks.comparisonType, selectedItems: [] },
-		actions: { toggleSelectedItem: mocks.toggleItem }
-	})
-}))
 // happy-dom has no layout measurements; expose the virtual rows for interaction checks.
 vi.mock('@tanstack/react-virtual', () => ({
 	useVirtualizer: ({ count }: { count: number }) => ({
@@ -73,19 +31,30 @@ vi.mock('@tanstack/react-virtual', () => ({
 	})
 }))
 
+const http = installFixtureFetch()
+
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
 
+const CHAINS_URL = `${SERVER_URL}/chains`
+const chainListReads = () => http.urls().filter((url) => url === CHAINS_URL).length
+
 beforeEach(() => {
 	vi.clearAllMocks()
-	mocks.comparisonType = 'chains'
-	mocks.fetchCategories.mockReset().mockResolvedValue({ categories: [] })
-	mocks.fetchCategoryChains.mockReset()
-	mocks.fetchChains.mockReset().mockResolvedValue([
-		{ name: 'Base', tvl: 100 },
-		{ name: 'Ethereum', tvl: 200 }
-	])
+	http.serve({
+		[CHAINS_URL]: [
+			{ name: 'Base', tvl: 100 },
+			{ name: 'Ethereum', tvl: 200 }
+		],
+		[`${SERVER_URL}/chains2`]: { categories: [] },
+		[`${SERVER_URL}/lite/protocols2`]: { protocols: [], parentProtocols: [] },
+		// Metric availability reads app metadata once items are selectable.
+		[`${CONFIG_API}/smol/appMetadata-chains.json`]: {},
+		[`${CONFIG_API}/smol/appMetadata-protocols.json`]: {},
+		'/api/public/pro-dashboard/pf-ps-protocols': { pf: [], ps: [] },
+		'/api/dynamic/pro-dashboard/protocol-catalog-source': [{ slug: 'aave', parentSlug: 'aave', name: 'Aave', tvl: 100 }]
+	})
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
@@ -99,12 +68,19 @@ afterEach(async () => {
 
 function Harness() {
 	const { createDashboardDialogStore } = useProDashboardUI()
+	const { state, actions } = useComparisonWizardContext()
 	return (
 		<>
 			<button type="button" onClick={() => createDashboardDialogStore.show()}>
 				Create comparison
 			</button>
-			<SelectItemsStep />
+			<button type="button" onClick={() => actions.setComparisonType('chains')}>
+				Compare chains
+			</button>
+			<button type="button" onClick={() => actions.setComparisonType('protocols')}>
+				Compare protocols
+			</button>
+			{state.comparisonType ? <SelectItemsStep /> : null}
 		</>
 	)
 }
@@ -113,9 +89,15 @@ async function mount() {
 	await act(async () => {
 		root.render(
 			<QueryClientProvider client={client}>
-				<ProDashboardAPIProvider>
-					<Harness />
-				</ProDashboardAPIProvider>
+				<AuthProvider>
+					<ProDashboardAPIProvider>
+						<AppMetadataProvider>
+							<ComparisonWizardProvider>
+								<Harness />
+							</ComparisonWizardProvider>
+						</AppMetadataProvider>
+					</ProDashboardAPIProvider>
+				</AuthProvider>
 			</QueryClientProvider>
 		)
 	})
@@ -139,39 +121,47 @@ async function waitForText(text: string) {
 test.each(['chains', 'protocols'] as const)(
 	'opening creation loads selectable %s from a cold view-mode catalog',
 	async (type) => {
-		mocks.comparisonType = type
 		await mount()
-		expect(mocks.fetchChains).not.toHaveBeenCalled()
+		await click(type === 'chains' ? 'Compare chains' : 'Compare protocols')
+		expect(chainListReads()).toBe(0)
 		await click('Create comparison')
 		const label = type === 'chains' ? 'Base' : 'Aave'
 		await waitForText(label)
-		expect(mocks.fetchChains).toHaveBeenCalledTimes(1)
+		expect(chainListReads()).toBe(1)
 		const search = container.querySelector<HTMLInputElement>('input[type="text"]')!
 		await act(async () => {
 			search.value = label
 			search.dispatchEvent(new Event('input', { bubbles: true }))
 		})
 		await click(label)
-		expect(mocks.toggleItem).toHaveBeenCalledWith(type === 'chains' ? 'Base' : 'aave', 10)
+		expect(container.querySelector(`[aria-label="${label}"]`)?.getAttribute('aria-checked')).toBe('true')
+		expect(container.textContent).toContain('Selected (1/10)')
 	}
 )
 
 test('a catalog failure shows an error and Retry recovers the chain list', async () => {
-	mocks.fetchChains.mockRejectedValueOnce(new Error('Unavailable'))
+	let chainReads = 0
+	http.serve({
+		[CHAINS_URL]: () => (++chainReads === 1 ? fixtureStatus(404)() : [{ name: 'Base', tvl: 100 }])
+	})
 	await mount()
+	await click('Compare chains')
 	await click('Create comparison')
 	await waitForText('Failed to load chains')
 	expect(container.textContent).not.toContain('No chains found')
 	await click('Retry')
 	await waitForText('Base')
 	expect(container.querySelector('[role="alert"]')).toBeNull()
-	expect(mocks.fetchChains).toHaveBeenCalledTimes(2)
+	expect(chainListReads()).toBe(2)
 })
 
 test('changing comparison type clears category filters and preserves search', async () => {
-	mocks.fetchCategories.mockResolvedValue({ categories: ['Rollup'] })
-	mocks.fetchCategoryChains.mockResolvedValue({ chainsUnique: ['Base'] })
+	http.serve({
+		[`${SERVER_URL}/chains2`]: { categories: ['Rollup'] },
+		[`${SERVER_URL}/chains2/Rollup`]: { chainsUnique: ['Base'] }
+	})
 	await mount()
+	await click('Compare chains')
 	await click('Create comparison')
 	await waitForText('Base')
 	await click('All categories')
@@ -184,12 +174,10 @@ test('changing comparison type clears category filters and preserves search', as
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Base')
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	mocks.comparisonType = 'protocols'
-	await mount()
+	await click('Compare protocols')
 	expect(container.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('Base')
 	expect(container.textContent).toContain('All categories')
-	mocks.comparisonType = 'chains'
-	await mount()
+	await click('Compare chains')
 	expect(container.textContent).toContain('All categories')
 	expect(container.querySelector<HTMLInputElement>('input[type="text"]')!.value).toBe('Base')
 })

@@ -29,13 +29,9 @@ function isDomainDatasetModule(filePath: string): boolean {
 
 describe('dataset snapshot reader boundary', () => {
 	test('allows filesystem reads only in typed domain dataset modules', async () => {
-		const errors: Array<string> = []
-		for (const filePath of await collectSourceFiles('src/containers')) {
-			const source = await fs.readFile(filePath, 'utf8')
-			if (source.includes(SNAPSHOT_READER) && !isDomainDatasetModule(filePath)) {
-				errors.push(relativePath(filePath))
-			}
-		}
+		const files = (await collectSourceFiles('src/containers')).filter((filePath) => !isDomainDatasetModule(filePath))
+		const sources = await Promise.all(files.map((filePath) => fs.readFile(filePath, 'utf8')))
+		const errors = files.filter((_, i) => sources[i].includes(SNAPSHOT_READER)).map(relativePath)
 		expect(errors).toEqual([])
 	})
 })

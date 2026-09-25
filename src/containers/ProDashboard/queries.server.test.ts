@@ -1,16 +1,13 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { buildProDashboardProtocolRelations, type ProDashboardProtocolCatalog } from './protocolCatalog'
-
-const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
-
-vi.mock('./services/ProtocolCharts', () => ({ fetchProProtocolChartData: getProtocolDataMock }))
-vi.mock('./services/ChainCharts', () => ({ fetchProChainChartData: vi.fn() }))
-vi.mock('./server/pfPsQueries', () => ({
-	fetchPfPsChartData: vi.fn().mockResolvedValue([]),
-	fetchPfPsProtocols: vi.fn().mockResolvedValue({ pf: [], ps: [] })
-}))
-
 import { fetchSingleChartData } from './queries.server'
+
+// The database client connects at import; these charts never read it.
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
+const http = installFixtureFetch()
+const feesChart = (slug: string) => `${V2_SERVER_URL}/chart/fees/protocol/${slug}`
 
 const catalog: ProDashboardProtocolCatalog = {
 	protocols: [
@@ -39,16 +36,11 @@ const catalog: ProDashboardProtocolCatalog = {
 const protocolRelations = buildProDashboardProtocolRelations(catalog)
 
 describe('fetchSingleChartData parent fallback', () => {
-	beforeEach(() => {
-		getProtocolDataMock.mockReset()
-		getProtocolDataMock.mockResolvedValue([])
-	})
-
 	test('sums child series when a parent has no direct adapter chart', async () => {
-		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
-			if (protocol === 'aave') return []
-			if (protocol === 'aave-v2') return [[1, 10]]
-			return [
+		http.serve({
+			[feesChart('aave')]: [],
+			[feesChart('aave-v2')]: [[1, 10]],
+			[feesChart('aave-v3')]: [
 				[1, 20],
 				[2, 5]
 			]
@@ -63,19 +55,19 @@ describe('fetchSingleChartData parent fallback', () => {
 	})
 
 	test('rejects a partial child set instead of caching an understated parent total', async () => {
-		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
-			if (protocol === 'aave') return []
-			if (protocol === 'aave-v2') return [[1, 10]]
-			throw new Error('child source failed')
+		http.serve({
+			[feesChart('aave')]: [],
+			[feesChart('aave-v2')]: [[1, 10]],
+			[feesChart('aave-v3')]: fixtureStatus(404)
 		})
 
 		await expect(
 			fetchSingleChartData({ type: 'fees', subjectType: 'protocol', protocol: 'aave' }, 'all', null, protocolRelations)
-		).rejects.toThrow('child source failed')
+		).rejects.toThrow(/404/)
 	})
 
 	test('does not turn a standalone source failure into a successful empty result', async () => {
-		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
+		http.serve({ [feesChart('standalone')]: fixtureStatus(404) })
 
 		await expect(
 			fetchSingleChartData(
@@ -84,10 +76,10 @@ describe('fetchSingleChartData parent fallback', () => {
 				null,
 				protocolRelations
 			)
-		).rejects.toThrow('upstream failed')
+		).rejects.toThrow(/404/)
 	})
 
-	test('rejects unknown saved chart types without invoking a chart service', async () => {
+	test('returns no data for unknown saved chart types without fetching a chart', async () => {
 		await expect(
 			fetchSingleChartData(
 				{ type: 'legacy-unknown', subjectType: 'protocol', protocol: 'aave' },
@@ -97,6 +89,6 @@ describe('fetchSingleChartData parent fallback', () => {
 			)
 		).resolves.toEqual([])
 
-		expect(getProtocolDataMock).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 })

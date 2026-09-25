@@ -2,23 +2,32 @@ import { describe, expect, test, vi } from 'vitest'
 import { fetchTastyMetrics } from '../tastyMetrics'
 
 describe('fetchTastyMetrics', () => {
-	test('passes an abort signal to the Tasty request', async () => {
-		const fetchFn = vi.fn().mockResolvedValue(new Response(JSON.stringify([])))
+	test('gives up on a stalled Tasty request after 15 seconds', async () => {
+		vi.useFakeTimers()
+		const requestedUrls: Array<string> = []
+		const fetchFn = (url: RequestInfo | URL, init?: RequestInit) => {
+			requestedUrls.push(String(url))
+			return new Promise<Response>((_, reject) =>
+				init?.signal?.addEventListener('abort', () => reject(new Error('aborted')))
+			)
+		}
+		let settled = false
 
-		await fetchTastyMetrics({
+		const result = fetchTastyMetrics({
 			endAt: 2,
 			env: { TASTY_API_URL: 'https://tasty.test' },
 			fetchFn,
 			logger: { log: vi.fn() },
 			startAt: 1
+		}).finally(() => {
+			settled = true
 		})
+		await vi.advanceTimersByTimeAsync(15_000)
+		vi.useRealTimers()
 
-		expect(fetchFn).toHaveBeenCalledWith(
-			'https://tasty.test/metrics?startAt=1&endAt=2&unit=day&type=url',
-			expect.objectContaining({
-				signal: expect.any(AbortSignal)
-			})
-		)
+		expect(settled).toBe(true)
+		expect(await result).toEqual({ tastyMetrics: {}, trendingRoutes: [] })
+		expect(requestedUrls).toEqual(['https://tasty.test/metrics?startAt=1&endAt=2&unit=day&type=url'])
 	})
 
 	test('returns empty metrics when the Tasty response is not ok', async () => {

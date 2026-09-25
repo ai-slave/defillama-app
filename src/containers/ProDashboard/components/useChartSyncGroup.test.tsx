@@ -1,13 +1,9 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
 import { CHART_SYNC_STORAGE_KEY, useChartSyncGroup, useChartSyncPreference } from './useChartSyncGroup'
-
-const mocks = vi.hoisted(() => ({ dashboardId: 'dash-1' as string | null }))
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardDashboard: () => ({ dashboardId: mocks.dashboardId })
-}))
 
 let container: HTMLDivElement
 let root: Root
@@ -19,13 +15,19 @@ function Harness() {
 	return null
 }
 
-const render = () => act(async () => root.render(<Harness />))
+const render = (dashboardId: string | null = 'dash-1') =>
+	act(async () =>
+		root.render(
+			<DashboardTestProvider dashboard={{ dashboardId }}>
+				<Harness />
+			</DashboardTestProvider>
+		)
+	)
 const flushStorageNotifications = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	window.localStorage.clear()
-	mocks.dashboardId = 'dash-1'
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -50,8 +52,7 @@ test('returns undefined when the stored preference is off', async () => {
 })
 
 test('returns undefined without a dashboard id even when enabled', async () => {
-	mocks.dashboardId = null
-	await render()
+	await render(null)
 	expect(latest.enabled).toBe(true)
 	expect(latest.syncGroup).toBeUndefined()
 })

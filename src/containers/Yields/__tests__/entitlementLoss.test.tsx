@@ -4,209 +4,114 @@
 // `enabled: false` only stops refetching — it keeps handing back whatever is cached — so a gate
 // built on `enabled` alone leaves paid data on screen after logout or expiry.
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-const auth = vi.hoisted(() => ({
-	authorizedFetch: vi.fn(),
-	hasActiveSubscription: true,
-	isAuthenticated: true,
-	loaders: { userLoading: false }
-}))
-vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
-
-const fetchJson = vi.hoisted(() => vi.fn())
-vi.mock('~/utils/async', () => ({
-	fetchJson,
-	handleSimpleFetchResponse: async (res: any) => res
-}))
-
-const routerMock = vi.hoisted(() => ({
-	isReady: true,
-	query: {},
-	push: vi.fn(),
-	replace: vi.fn(),
-	pathname: '/yields'
-}))
-vi.mock('next/router', () => ({ useRouter: () => routerMock }))
-
-import { usePoolVerifiedProps } from '../poolDetail/useVerifiedProps'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { useYieldsPaginatedTable } from '../queries.client'
 import { useYieldsServerTable } from '../useYieldsServerTable'
 
-const MEASURED = { verified: { apy: { avg_1d: 2.58 } }, verifiedWindows: [], supplyChart: null }
+vi.mock('next/router', () => ({
+	useRouter: () => ({ isReady: true, query: {}, push: vi.fn(), replace: vi.fn(), pathname: '/yields' })
+}))
+
+const session = installSubscriberSession('subscriber-1')
+
+const PAID_PAGE = { rows: [{ id: 'measured', verifiedApy: 2.58 }], total: 1, page: 1, pageSize: 50, hasMore: false }
+const never = () => new Promise<never>(() => {})
+const requestedPaths = () => session.requests.map((request) => request.url.pathname)
+
+let container: HTMLDivElement
+let root: Root
+
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
+
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+
+/** Renders `useHook` inside the real auth provider and returns a reader for its latest result. */
+async function mount<T>(useHook: () => T) {
+	let latest: T
+	function Harness() {
+		latest = useHook()
+		return null
+	}
+	await act(async () => {
+		root.render(
+			<session.Wrapper>
+				<Harness />
+			</session.Wrapper>
+		)
+	})
+	return () => latest
+}
+
+const signOut = () => act(async () => pb.authStore.clear())
+const settle = (check: () => void) => vi.waitFor(check, { timeout: 1000, interval: 5 })
 
 describe('measured data after entitlement loss', () => {
-	let container: HTMLDivElement
-	let root: Root
-	let client: QueryClient
+	test('the paid page is never painted as a placeholder while the public one loads', async () => {
+		// The public request is held open, so only a placeholder could render.
+		session.serve({ '/private': { rows: [{ id: 'measured' }], total: 1 }, '/public': never })
+		const latest = await mount(() => useYieldsPaginatedTable('/public', '?page=1', undefined, '/private'))
+		await settle(() => expect(latest().data?.rows).toEqual([{ id: 'measured' }]))
 
-	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-		auth.hasActiveSubscription = true
-		auth.isAuthenticated = true
-		auth.loaders.userLoading = false
-		auth.authorizedFetch.mockReset()
-		fetchJson.mockReset()
-	})
+		await signOut()
+		await settle(() => expect(requestedPaths()).toContain('/public'))
 
-	afterEach(async () => {
-		await act(async () => root.unmount())
-		container.remove()
-	})
-
-	/**
-	 * React Query settles asynchronously and then notifies subscribers, so the harness has to yield
-	 * a macrotask before the captured render reflects the result.
-	 */
-	const tick = () =>
-		act(async () => {
-			await new Promise((resolve) => setTimeout(resolve, 0))
-		})
-	const flush = async () => {
-		await tick()
-		await tick()
-		await tick()
-	}
-
-	test('drops the pool page measured props the moment the subscription lapses', async () => {
-		auth.authorizedFetch.mockResolvedValue({ json: async () => MEASURED })
-		let latest: ReturnType<typeof usePoolVerifiedProps>
-		function Harness() {
-			latest = usePoolVerifiedProps({ poolId: 'p', range: 'max', locked: true })
-			return null
-		}
-		const render = async () => {
-			await act(async () => {
-				root.render(
-					<QueryClientProvider client={client}>
-						<Harness />
-					</QueryClientProvider>
-				)
-			})
-		}
-
-		await render()
-		await flush()
-		expect(latest!.props.verified).not.toBeNull()
-
-		// Subscription lapses. The result is still in the cache under the paid key.
-		auth.hasActiveSubscription = false
-		await render()
-		await flush()
-
-		expect(latest!.props.verified).toBeNull()
-		expect(latest!.props.verifiedWindows).toEqual([])
-		expect(JSON.stringify(latest!.props)).not.toContain('2.58')
-	})
-
-	test('never paints the paid page as a placeholder while switching to the public one', async () => {
-		auth.authorizedFetch.mockResolvedValue({ json: async () => ({ rows: [{ id: 'measured' }], total: 1 }) })
-		let latest: any
-		function Harness() {
-			latest = useYieldsPaginatedTable('/public', '?page=1', undefined, '/private')
-			return null
-		}
-		const render = async () => {
-			await act(async () => {
-				root.render(
-					<QueryClientProvider client={client}>
-						<Harness />
-					</QueryClientProvider>
-				)
-			})
-		}
-
-		await render()
-		await flush()
-		expect(latest.data?.rows).toEqual([{ id: 'measured' }])
-
-		// Log out, and hold the public request open so only the placeholder could render.
-		auth.hasActiveSubscription = false
-		fetchJson.mockImplementation(() => new Promise(() => {}))
-		await render()
-		await flush()
-
-		expect(latest.data).toBeUndefined()
-		expect(JSON.stringify(latest.data ?? null)).not.toContain('measured')
+		expect(latest().data).toBeUndefined()
 	})
 
 	// The server may have seeded the page with the paid rows. Once the client knows access is gone,
 	// they must leave before the public request answers, not linger as a placeholder.
-	test('drops a paid seed from the server table the moment the subscription lapses', async () => {
-		fetchJson.mockImplementation(() => new Promise(() => {}))
-		const paidPage = { rows: [{ id: 'measured', verifiedApy: 2.58 }], total: 1, page: 1, pageSize: 50, hasMore: false }
-		let latest: ReturnType<typeof useYieldsServerTable<{ id: string }>>
-		function Harness() {
-			latest = useYieldsServerTable<{ id: string }>({
+	test('a paid server seed leaves the table the moment the reader signs out', async () => {
+		session.serve({ '/public': never })
+		const latest = await mount(() =>
+			useYieldsServerTable<{ id: string }>({
 				endpoint: '/public',
 				privateEndpoint: '/private',
-				initialSeed: { initialData: paidPage, initialDataUpdatedAt: Date.now(), verifiedAccess: true }
+				initialSeed: { initialData: PAID_PAGE, initialDataUpdatedAt: Date.now(), verifiedAccess: true }
 			})
-			return null
-		}
-		const render = async () => {
-			await act(async () => {
-				root.render(
-					<QueryClientProvider client={client}>
-						<Harness />
-					</QueryClientProvider>
-				)
-			})
-		}
+		)
+		await settle(() => expect(latest().rows.map((row) => row.id)).toEqual(['measured']))
 
-		await render()
-		expect(latest!.rows.map((row) => row.id)).toEqual(['measured'])
+		await signOut()
 
-		auth.hasActiveSubscription = false
-		await render()
-		await flush()
-
-		expect(latest!.rows).toEqual([])
-		expect(latest!.isLoading).toBe(true)
-		expect(JSON.stringify(latest!.rows)).not.toContain('2.58')
+		expect(latest().rows).toEqual([])
+		expect(latest().isLoading).toBe(true)
 	})
 
-	test('keeps a paid SSR seed and holds network fetches while entitlement is unknown', async () => {
-		auth.loaders.userLoading = true
-		const paidPage = { rows: [{ id: 'measured', verifiedApy: 2.58 }], total: 1, page: 1, pageSize: 50, hasMore: false }
-		let latest: ReturnType<typeof useYieldsServerTable<{ id: string }>>
-		function Harness() {
-			latest = useYieldsServerTable<{ id: string }>({
+	test('while the entitlement lookup is in flight, a paid seed stays and no rows are fetched', async () => {
+		let answerStatus!: (response: Response) => void
+		session.serve({
+			'/subscription/status': () => new Promise<Response>((resolve) => (answerStatus = resolve))
+		})
+		const latest = await mount(() =>
+			useYieldsServerTable<{ id: string }>({
 				endpoint: '/public',
 				privateEndpoint: '/private',
-				initialSeed: { initialData: paidPage, initialDataUpdatedAt: Date.now(), verifiedAccess: true }
+				initialSeed: { initialData: PAID_PAGE, initialDataUpdatedAt: Date.now(), verifiedAccess: true }
 			})
-			return null
-		}
-		const render = async () => {
-			await act(async () => {
-				root.render(
-					<QueryClientProvider client={client}>
-						<Harness />
-					</QueryClientProvider>
-				)
-			})
-		}
+		)
+		await settle(() => expect(requestedPaths()).toContain('/subscription/status'))
 
-		await render()
+		expect(latest().rows.map((row) => row.id)).toEqual(['measured'])
 
-		expect(latest!.rows.map((row) => row.id)).toEqual(['measured'])
-		expect(fetchJson).not.toHaveBeenCalled()
-		expect(auth.authorizedFetch).not.toHaveBeenCalled()
+		await act(async () =>
+			answerStatus(Response.json({ subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }))
+		)
+		await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 
-		auth.loaders.userLoading = false
-		await render()
-		await flush()
-
-		expect(latest!.rows.map((row) => row.id)).toEqual(['measured'])
-		expect(fetchJson).not.toHaveBeenCalled()
-		expect(auth.authorizedFetch).not.toHaveBeenCalled()
+		// The seed matches the tier that resolved, so it is still fresh and nothing is refetched.
+		expect(latest().rows.map((row) => row.id)).toEqual(['measured'])
+		expect(requestedPaths().filter((path) => path === '/public' || path === '/private')).toEqual([])
 	})
 })

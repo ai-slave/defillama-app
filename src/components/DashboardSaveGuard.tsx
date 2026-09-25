@@ -8,6 +8,7 @@ import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import type { DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { Button } from '~/ui/Button'
 import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { getDashboardRecovery, type DashboardSaveAttempt } from './dashboardRecovery'
 
 // Writes and recoverable drafts outlive the Pro route. Keep the warning and recovery UI with them.
 export function DashboardSaveGuard() {
@@ -16,31 +17,12 @@ export function DashboardSaveGuard() {
 	const router = useRouter()
 	const attempts = useMutationState({
 		filters: { mutationKey: ['pro-dashboard-update'] },
-		select: (mutation) => ({
+		select: (mutation): DashboardSaveAttempt => ({
 			userId: mutation.options.mutationKey?.[2],
 			status: mutation.state.status,
 			request: mutation.state.variables as DashboardUpdate
 		})
 	})
-	const pending = new Set<string>()
-	const latest = new Map<string, (typeof attempts)[number]>()
-	for (const attempt of attempts) {
-		// Filter snapshots during render: changing useMutationState's filters alone does not refresh them.
-		if (attempt.userId !== user?.id) continue
-		if (attempt.status === 'pending') pending.add(attempt.request.id)
-		if (attempt.request?.source === 'autosave') latest.set(attempt.request.id, attempt)
-	}
-	const failures = [...latest.values()].filter((attempt) => attempt.status === 'error')
-	const unsaved = pending.size > 0 || failures.length > 0
-	useEffect(() => {
-		if (!unsaved) return
-		const warn = (event: BeforeUnloadEvent) => {
-			event.preventDefault()
-			event.returnValue = ''
-		}
-		window.addEventListener('beforeunload', warn)
-		return () => window.removeEventListener('beforeunload', warn)
-	}, [unsaved])
 	const routeKey = router.query.dashboardId
 	const routeMode = Array.isArray(router.query.mode) ? router.query.mode[0] : router.query.mode
 	const onDashboardEditRoute = router.pathname === '/pro/[dashboardId]/[[...mode]]' && routeMode === 'edit'
@@ -51,17 +33,29 @@ export function DashboardSaveGuard() {
 		isAuthenticated,
 		user?.id
 	])
+	// Filter snapshots during render: changing useMutationState's filters alone does not refresh them.
+	const { unsaved, notices } = getDashboardRecovery(
+		attempts,
+		user?.id,
+		onDashboardEditRoute ? { routeKey, dashboardId: routeDashboard?.id } : null
+	)
+	useEffect(() => {
+		if (!unsaved) return
+		const warn = (event: BeforeUnloadEvent) => {
+			event.preventDefault()
+			event.returnValue = ''
+		}
+		window.addEventListener('beforeunload', warn)
+		return () => window.removeEventListener('beforeunload', warn)
+	}, [unsaved])
 	return (
 		<div
 			aria-live="polite"
 			className="fixed right-3 bottom-3 left-3 z-40 flex max-h-[40dvh] flex-col gap-2 overflow-y-auto sm:left-auto sm:w-96"
 		>
-			{failures.map(({ request }) =>
-				pending.has(request.id) ||
-				(onDashboardEditRoute && (routeKey === request.id || routeDashboard?.id === request.id)) ? null : (
-					<FailedDashboardDraft key={request.id} request={request} userId={user?.id} />
-				)
-			)}
+			{notices.map((request) => (
+				<FailedDashboardDraft key={request.id} request={request} userId={user?.id} />
+			))}
 		</div>
 	)
 }

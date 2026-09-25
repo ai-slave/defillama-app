@@ -1,53 +1,105 @@
-import { expect, test, vi } from 'vitest'
+import { assert, expect, test, vi } from 'vitest'
+import type { ProtocolRankingsCanonicalSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
+import type { IProtocol } from '~/containers/ProtocolRankings/types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 
-vi.mock('~/utils/maxAgeForNext', () => ({
-	maxAgeForNext: () => 123
+const storage = vi.hoisted(() => ({ readCurrent: vi.fn() }))
+vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
+	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
+	createRedisBlobStore: () => storage
 }))
 
-vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: (_label: string, fn: any) => fn
-}))
+import { getStaticProps } from '~/pages/safe-harbor-agreements'
 
-vi.mock('~/utils/async', () => ({
-	fetchJson: vi.fn().mockResolvedValue({ protocol: true })
-}))
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
 
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: {
-		chainMetadata: {},
-		protocolMetadata: {
-			protocol: { displayName: 'Protocol', chains: ['Ethereum'] }
-		}
+function protocol(name: string, tvl: number | null): IProtocol {
+	return {
+		name,
+		slug: name.toLowerCase(),
+		category: null,
+		chains: ['Ethereum'],
+		tvl: { default: { tvl, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null } },
+		tvlChange: null,
+		mcap: null,
+		tokenPrice: null,
+		mcaptvl: null,
+		strikeTvl: false
 	}
-}))
+}
 
-vi.mock('~/containers/ProtocolRankings/server/tableData.server', () => ({
-	getProtocolRankingsSnapshot: vi.fn().mockResolvedValue({
+test('lists only enrolled projects with metadata, sorts missing TVL last, and preserves zero metrics', async () => {
+	metadata.seed({
+		protocolMetadata: {
+			missing: { name: 'missing', displayName: 'Missing', chains: ['Ethereum'] },
+			zero: { name: 'zero', displayName: 'Zero', chains: ['Ethereum'] },
+			funded: { name: 'funded', displayName: 'Funded', chains: ['Ethereum'] },
+			unenrolled: { name: 'unenrolled', displayName: 'Unenrolled', chains: ['Ethereum'] }
+		}
+	})
+	http.serve({
+		'/_fe/static/safe-harbor-projects': {
+			missing: true,
+			zero: true,
+			funded: true,
+			unenrolled: false,
+			unknown: true
+		}
+	})
+	storage.readCurrent.mockResolvedValue({
 		chain: 'All',
-		createdAt: 1,
+		createdAt: Date.now(),
 		snapshot: 'aK3f9Qm2xLpR7Bn0Wc-T',
 		availableActivityMetrics: [],
 		source: { chains: ['Ethereum'], feeProtocols: null, dexs: null, perps: null },
 		protocols: [
 			{
-				name: 'Protocol',
-				tvl: { default: { tvl: 100 } },
-				fees: { total24h: 10 },
-				revenue: { total24h: 5 },
-				dexs: { total24h: 20 }
-			}
+				...protocol('Funded', 100),
+				fees: {
+					total24h: 10,
+					total7d: null,
+					total30d: null,
+					total1y: null,
+					annualized1y: null,
+					monthlyAverage1y: null,
+					totalAllTime: null,
+					pf: null
+				},
+				revenue: {
+					total24h: 5,
+					total7d: null,
+					total30d: null,
+					total1y: null,
+					annualized1y: null,
+					monthlyAverage1y: null,
+					totalAllTime: null,
+					ps: null
+				},
+				dexs: { total24h: 20, total7d: null, total30d: null, totalAllTime: null, change_7dover7d: null }
+			},
+			{
+				...protocol('Zero', 0),
+				dexs: { total24h: 0, total7d: null, total30d: null, totalAllTime: null, change_7dover7d: null }
+			},
+			protocol('Unenrolled', 1000)
 		]
-	})
-}))
+	} satisfies ProtocolRankingsCanonicalSnapshot)
 
-import { getStaticProps } from '~/pages/safe-harbor-agreements'
-
-test('revalidates changing Safe Harbor rankings hourly', async () => {
-	await expect(getStaticProps({} as never)).resolves.toMatchObject({
-		props: {
-			protocols: [{ name: 'Protocol', tvl: 100, fees: 10, revenue: 5, dexVolume: 20 }]
+	const result = await getStaticProps({} as never)
+	assert('props' in result)
+	expect(result.props.protocols).toMatchObject([
+		{
+			name: 'Funded',
+			tvl: 100,
+			fees: 10,
+			revenue: 5,
+			dexVolume: 20,
+			url: 'https://safeharbor.securityalliance.org/database/funded'
 		},
-		revalidate: 123
-	})
+		{ name: 'Zero', tvl: 0, fees: null, revenue: null, dexVolume: 0 },
+		{ name: 'Missing', tvl: null, fees: null, revenue: null, dexVolume: null }
+	])
+	expect(result.revalidate).toBeGreaterThan(0)
 })

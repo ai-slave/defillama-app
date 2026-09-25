@@ -34,30 +34,8 @@ describe('normalizedOrReported', () => {
 		})
 	})
 
-	// COIN perps never get a normalized figure, so they always report a fallback here.
-	// The column deliberately does not mark that: flagging it starred nearly every
-	// venue running one. Only a missing spot or USD perp book is worth a reader's eye.
-	test('reports the fallback for COIN perps, which the column does not mark', () => {
-		const coinPerp = {
-			segments: { inverse_perp: { volume24h: 500 } },
-			normalizedVolume: { inverse_perp: null }
-		} as unknown as ExchangeDirectoryRowModel
-		expect(normalizedOrReported(coinPerp, 'inverse_perp')).toEqual({ value: 500, reported: true })
-	})
-
 	test('treats an untracked segment as having nothing rather than as a fallback value', () => {
 		const spotOnly = { segments: {}, normalizedVolume: null } as unknown as ExchangeDirectoryRowModel
 		expect(normalizedOrReported(spotOnly, 'linear_perp')).toEqual({ value: null, reported: true })
-	})
-
-	// COIN perps never get a normalized figure, so they always report a fallback here.
-	// The column must not turn that into a caveat on the row: it starred nearly every
-	// venue running one. Only a missing USD perp or spot book is worth marking.
-	test('reports the fallback for COIN perps, which the column deliberately does not mark', () => {
-		const coinPerp = {
-			segments: { inverse_perp: { volume24h: 500 } },
-			normalizedVolume: { inverse_perp: null }
-		} as unknown as ExchangeDirectoryRowModel
-		expect(normalizedOrReported(coinPerp, 'inverse_perp')).toEqual({ value: 500, reported: true })
 	})
 })

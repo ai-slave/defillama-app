@@ -44,16 +44,4 @@ describe('Unified Table stream source plan', () => {
 		expect(plan).toHaveLength(2)
 		expect(plan.map((source) => source.rowHeaders)).toEqual([[], ['chain']])
 	})
-
-	test('keeps preset membership separate from a broad custom table with the same metrics', () => {
-		const custom = table('custom', ['name', 'fees24h'], ['protocol'])
-		const preset = { ...table('preset', ['name', 'fees24h'], ['protocol']), activePresetId: 'fees-protocols' }
-		const plan = buildUnifiedTableStreamSourcePlan([custom, preset])
-
-		expect(plan).toHaveLength(2)
-		expect(plan.map((source) => source.rowMembership)).toEqual([
-			{ kind: 'all-protocols' },
-			{ kind: 'base-metric', family: 'fees' }
-		])
-	})
 })

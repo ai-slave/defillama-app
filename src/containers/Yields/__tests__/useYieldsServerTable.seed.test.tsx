@@ -2,10 +2,11 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Storage } from 'happy-dom'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 
 const routerMock = vi.hoisted(() => ({
@@ -18,15 +19,6 @@ const routerMock = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => routerMock }))
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: vi.fn(),
-		hasActiveSubscription: false,
-		isAuthenticated: false,
-		loaders: { userLoading: false }
-	})
-}))
-
 const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
 
@@ -34,6 +26,15 @@ import { ApyViewControls } from '../Filters/ApyViewControls'
 import { APY_COMPONENTS_PREF, APY_WINDOW_PREF, TABLE_PAGE_SIZE_PREF } from '../stickyQueryPrefs'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
+
+// A signed-out reader, through the real auth provider.
+function Providers({ client, children }: { client: QueryClient; children: ReactNode }) {
+	return (
+		<QueryClientProvider client={client}>
+			<AuthProvider>{children}</AuthProvider>
+		</QueryClientProvider>
+	)
+}
 
 type Row = { id: string; tvl: number }
 
@@ -87,9 +88,9 @@ describe('useYieldsServerTable ISR seed', () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		await act(async () => {
 			root.render(
-				<QueryClientProvider client={client}>
+				<Providers client={client}>
 					<Component onRender={(result) => (latest = result)} />
-				</QueryClientProvider>
+				</Providers>
 			)
 		})
 	}
@@ -142,9 +143,9 @@ describe('useYieldsServerTable ISR seed', () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		const renders: Array<HookResult> = []
 		const element = () => (
-			<QueryClientProvider client={client}>
+			<Providers client={client}>
 				<StickyHarness onRender={(value) => renders.push(value)} />
-			</QueryClientProvider>
+			</Providers>
 		)
 		const html = renderToString(element())
 		expect(html).toContain('Loading pools')
@@ -274,16 +275,17 @@ describe('useYieldsServerTable ISR seed', () => {
 		routerMock.query = { minApy: '5' }
 		fetchJson.mockRejectedValue(new Error('upstream down'))
 
-		await render()
-		// The query retries once with backoff before erroring.
-		await vi.waitFor(
-			async () => {
-				await act(async () => {})
-				expect(latest.rowsQuery.isError).toBe(true)
-			},
-			{ timeout: 5000 }
-		)
+		// The query retries once after a one-second backoff before erroring; the clock skips it.
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+		try {
+			await render()
+			expect(latest.rows).toEqual([])
+			for (let i = 0; i < 3; i++) await act(() => vi.advanceTimersByTimeAsync(1000))
+		} finally {
+			vi.useRealTimers()
+		}
 
+		expect(latest.rowsQuery.isError).toBe(true)
 		expect(latest.rows).toEqual([])
 		expect(latest.total).toBe(0)
 		// Errors surface through rowsQuery.isError, not the loading state.
@@ -302,9 +304,9 @@ describe('useYieldsServerTable ISR seed', () => {
 		}
 		await act(async () => {
 			root.render(
-				<QueryClientProvider client={client}>
+				<Providers client={client}>
 					<StaleHarness />
-				</QueryClientProvider>
+				</Providers>
 			)
 		})
 
@@ -353,9 +355,9 @@ describe('useYieldsServerTable hydration', () => {
 		fetchJson.mockImplementation(() => new Promise(() => {}))
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		const element = (
-			<QueryClientProvider client={client}>
+			<Providers client={client}>
 				<HydrationHarness initialDataUpdatedAt={staleAt} />
-			</QueryClientProvider>
+			</Providers>
 		)
 
 		// Server pass: router not ready, query disabled, seeded rows in the HTML.

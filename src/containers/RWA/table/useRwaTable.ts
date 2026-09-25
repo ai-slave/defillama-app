@@ -88,17 +88,15 @@ export function useRwaTable({
 	const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() =>
 		getRwaDefaultColumnVisibility(view, columns, preset)
 	)
-	// Expand-only columns show while a group is open (always under Group by None) until the reader picks them;
-	// a column the grouping makes redundant stays off.
 	const [expandedColumnsChosenByReader, setExpandedColumnsChosenByReader] = useState(false)
-	const isAnyExpanded = groupBy === 'none' || expanded === true || Object.values(expanded).some(Boolean)
-	const effectiveVisibility = {
-		...columnVisibility,
-		...(expandedColumnsChosenByReader || !RWA_TABLE_PRESETS[preset].paintsExpandOnly
-			? {}
-			: expandedVisibility(columns, isAnyExpanded)),
-		...Object.fromEntries(getRwaGroupingHiddenColumnIds(groupBy).map((id) => [id, false]))
-	}
+	const effectiveVisibility = getRwaEffectiveColumnVisibility({
+		columnVisibility,
+		columns,
+		preset,
+		groupBy,
+		expanded,
+		expandedColumnsChosenByReader
+	})
 
 	const instance = useTable({
 		features: rwaTableFeatures,
@@ -126,6 +124,35 @@ export function useRwaTable({
 	})
 
 	return { instance, columns, columnVisibility: effectiveVisibility, rowCount: rows.length }
+}
+
+/**
+ * Expand-only columns show while a group is open (always under Group by None) until the reader picks them;
+ * a column the grouping makes redundant stays off.
+ */
+export function getRwaEffectiveColumnVisibility({
+	columnVisibility,
+	columns,
+	preset,
+	groupBy,
+	expanded,
+	expandedColumnsChosenByReader
+}: {
+	columnVisibility: ColumnVisibilityState
+	columns: Array<RWATableColumn>
+	preset: RWATablePreset
+	groupBy: RWAGroupBy
+	expanded: ExpandedState
+	expandedColumnsChosenByReader: boolean
+}): ColumnVisibilityState {
+	const isAnyExpanded = groupBy === 'none' || expanded === true || Object.values(expanded).some(Boolean)
+	return {
+		...columnVisibility,
+		...(expandedColumnsChosenByReader || !RWA_TABLE_PRESETS[preset].paintsExpandOnly
+			? {}
+			: expandedVisibility(columns, isAnyExpanded)),
+		...Object.fromEntries(getRwaGroupingHiddenColumnIds(groupBy).map((id) => [id, false]))
+	}
 }
 
 function expandedVisibility(columns: Array<RWATableColumn>, visible: boolean): ColumnVisibilityState {

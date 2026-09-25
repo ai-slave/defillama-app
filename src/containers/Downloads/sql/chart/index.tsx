@@ -13,6 +13,7 @@ import { LineBarChart } from './adapters/LineBarChart'
 import { PieChartAdapter } from './adapters/PieChartAdapter'
 import { ScatterChartAdapter } from './adapters/ScatterChartAdapter'
 import { TreemapChartAdapter } from './adapters/TreemapChartAdapter'
+import { SQL_CHART_HEIGHT } from './chartLayout'
 
 interface ChartRouterProps {
 	config: ChartConfig
@@ -22,8 +23,8 @@ interface ChartRouterProps {
 	height?: string
 }
 
-export function ChartRouter({ config, result, classified, onReady, height }: ChartRouterProps) {
-	const common = { config, result, classified, onReady, ...(height === undefined ? {} : { height }) }
+export function ChartRouter({ config, result, classified, onReady, height = SQL_CHART_HEIGHT }: ChartRouterProps) {
+	const common = { config, result, classified, onReady, height }
 	switch (config.chartType) {
 		case 'line':
 			return <LineBarChart {...common} forceType="line" />

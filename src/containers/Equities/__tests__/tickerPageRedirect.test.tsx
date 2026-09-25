@@ -1,163 +1,62 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { getStaticProps } from '~/pages/equities/[ticker]'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { installEquitiesPageNetwork } from './pageFixture'
 
-afterEach(() => {
-	vi.clearAllMocks()
-	vi.resetModules()
-})
+const http = installEquitiesPageNetwork()
+const metadata = installMetadataSeeder()
 
-function setupPageModule({
-	routes = [{ ticker: 'NVDA', country: 'US' }],
-	redirectSlug = 'NVDA:US',
-	pageData = { ticker: 'NVDA', country: 'US', slug: 'NVDA:US', name: 'NVIDIA Corporation', unlocksSlug: 'nvda' }
-}: {
-	routes?: Array<{ ticker: string; country: string }>
-	redirectSlug?: string | null
-	pageData?: unknown
-}) {
-	const getEquitiesTickerPageData = vi.fn().mockResolvedValue(pageData)
-	const getEquitiesTickerRedirectSlug = vi.fn().mockResolvedValue(redirectSlug)
-	const metadataCache = {
-		protocolDisplayNames: new Map([['hyperliquid-perps', 'Hyperliquid Perps']]),
-		rwaList: {
-			platforms: ['Felix', 'Robinhood']
-		},
-		emissionsProtocolBySlug: { nvda: 'nvda' },
-		equitiesCompanyRoutes: routes,
-		equitiesCompanySlugsSet: new Set(routes.map((route) => `${route.ticker}:${route.country}`)),
-		preIpoCompanyIds: [],
-		preIpoCompanyIdsSet: new Set()
-	}
-
-	vi.doMock('~/constants', () => ({
-		SKIP_BUILD_STATIC_GENERATION: true
-	}))
-	vi.doMock('~/utils/metadata', () => ({
-		default: metadataCache
-	}))
-	vi.doMock('~/containers/Equities/queries', () => ({
-		getEquitiesTickerPageData,
-		getEquitiesTickerPaths: vi.fn().mockResolvedValue([]),
-		getEquitiesTickerRedirectSlug
-	}))
-	vi.doMock('~/containers/Equities/TickerPage', () => ({
-		EquityTickerPage: () => null
-	}))
-	vi.doMock('~/layout', () => ({
-		default: () => null
-	}))
-	vi.doMock('~/utils/maxAgeForNext', () => ({
-		maxAgeForNext: () => 123
-	}))
-	vi.doMock('~/utils/perf', () => ({
-		withPerformanceLogging: (_label: string, fn: any) => fn
-	}))
-
-	return {
-		getEquitiesTickerPageData,
-		getEquitiesTickerRedirectSlug,
-		page: import('~/pages/equities/[ticker]')
-	}
+function routes(companies: Array<{ ticker: string; country: string }>) {
+	metadata.seed({
+		equitiesCompanyRoutes: companies,
+		equitiesCompanySlugsSet: new Set(companies.map(({ ticker, country }) => `${ticker}:${country}`)),
+		emissionsProtocolBySlug: { nvda: 'nvda' }
+	})
 }
 
+function load(ticker: string) {
+	return getStaticProps({ params: { ticker } } as GetStaticPropsContext<{ ticker: string }>)
+}
+
+beforeEach(() => routes([{ ticker: 'NVDA', country: 'US' }]))
+
 describe('equities ticker page routing', () => {
-	test('loads canonical ticker-country slugs', async () => {
-		const setup = setupPageModule({})
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'NVDA:US' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({
-			props: {
-				ticker: 'NVDA',
-				country: 'US',
-				slug: 'NVDA:US',
-				name: 'NVIDIA Corporation',
-				unlocksSlug: 'nvda'
-			},
-			revalidate: 123
+	test('loads canonical ticker-country slugs through the real page loader', async () => {
+		await expect(load('NVDA:US')).resolves.toMatchObject({
+			props: { ticker: 'NVDA', country: 'US', slug: 'NVDA:US', name: 'NVIDIA Corporation', unlocksSlug: 'nvda' },
+			revalidate: expect.any(Number)
 		})
-		expect(setup.getEquitiesTickerPageData).toHaveBeenCalledWith('NVDA', 'US', {
-			protocolDisplayNames: new Map([['hyperliquid-perps', 'Hyperliquid Perps']]),
-			rwaPlatforms: ['Felix', 'Robinhood'],
-			emissionsProtocolBySlug: { nvda: 'nvda' }
-		})
-		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
+		expect(http.requests.length).toBeGreaterThan(0)
+		for (const { url } of http.requests) {
+			expect(url.searchParams.get('ticker')).toBe('NVDA')
+			expect(url.searchParams.get('country')).toBe('US')
+		}
 	})
 
-	test('redirects noncanonical ticker-country slugs to backend-provided casing', async () => {
-		const setup = setupPageModule({})
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'nvda:us' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({
-			redirect: {
-				destination: '/equities/NVDA:US',
-				permanent: false
-			}
+	test.each([
+		['nvda:us', 'NVDA'],
+		['brk.a:us', 'BRK.A'],
+		['nvda', 'NVDA']
+	])('redirects %s to the canonical ticker-country route without loading page data', async (alias, ticker) => {
+		routes([{ ticker, country: 'US' }])
+		await expect(load(alias)).resolves.toEqual({
+			redirect: { destination: `/equities/${ticker}:US`, permanent: false }
 		})
-		expect(setup.getEquitiesTickerPageData).not.toHaveBeenCalled()
-		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 
-	test('redirects lowercase dotted ticker aliases to backend-provided ticker-country casing', async () => {
-		const setup = setupPageModule({
-			routes: [{ ticker: 'BRK.A', country: 'US' }],
-			pageData: { ticker: 'BRK.A', country: 'US', slug: 'BRK.A:US', name: 'Berkshire Hathaway Inc.' }
-		})
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'brk.a:us' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({
-			redirect: {
-				destination: '/equities/BRK.A:US',
-				permanent: false
-			}
-		})
-		expect(setup.getEquitiesTickerPageData).not.toHaveBeenCalled()
-		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
-	})
-
-	test('redirects old ticker-only slugs when uniquely resolvable', async () => {
-		const setup = setupPageModule({ redirectSlug: 'NVDA:US' })
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'nvda' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({
-			redirect: {
-				destination: '/equities/NVDA:US',
-				permanent: false
-			}
-		})
-		expect(setup.getEquitiesTickerRedirectSlug).toHaveBeenCalledWith('nvda', [
-			{
-				ticker: 'NVDA',
-				country: 'US'
-			}
+	test('404s a ticker-only alias with two countries instead of choosing one', async () => {
+		routes([
+			{ ticker: 'META', country: 'US' },
+			{ ticker: 'META', country: 'CA' }
 		])
-		expect(setup.getEquitiesTickerPageData).not.toHaveBeenCalled()
+		await expect(load('meta')).resolves.toEqual({ notFound: true })
+		expect(http.requests).toHaveLength(0)
 	})
 
-	test('404s old ticker-only slugs when they are ambiguous or unknown', async () => {
-		const setup = setupPageModule({ redirectSlug: null })
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'meta' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({ notFound: true })
-	})
-
-	test('404s unknown ticker-country slugs before loading page data', async () => {
-		const setup = setupPageModule({})
-		const page = await setup.page
-
-		await expect(
-			page.getStaticProps({ params: { ticker: 'tsla:us' } } as GetStaticPropsContext<{ ticker: string }>)
-		).resolves.toEqual({ notFound: true })
-		expect(setup.getEquitiesTickerPageData).not.toHaveBeenCalled()
-		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
+	test.each(['unknown', 'tsla:us'])('404s unknown %s before loading page data', async (ticker) => {
+		await expect(load(ticker)).resolves.toEqual({ notFound: true })
+		expect(http.requests).toHaveLength(0)
 	})
 })

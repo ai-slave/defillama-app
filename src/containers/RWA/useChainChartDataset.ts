@@ -21,7 +21,7 @@ export type RwaChainChartDatasetRequest = {
 	enabled: boolean
 }
 
-type ChainQueries = {
+export type ChainQueries = {
 	/** One entry per chain, in ranking order; undefined until that history has loaded. */
 	rows: Array<IRWAChartMetricRows | undefined>
 	/** Every history has loaded or failed. */
@@ -32,7 +32,9 @@ type ChainQueries = {
 }
 
 /** A stable reference so React Query reuses the combined result while the histories do not change. */
-function combineChainQueries(results: Array<UseQueryResult<IRWAChartMetricRows>>): ChainQueries {
+export function combineChainQueries(
+	results: Array<Pick<UseQueryResult<IRWAChartMetricRows>, 'data' | 'error' | 'isLoading'>>
+): ChainQueries {
 	return {
 		rows: results.map((result) => result.data),
 		settled: results.every((result) => result.data !== undefined || result.error != null),
@@ -76,26 +78,41 @@ export function useRwaChainChartDataset({
 		}),
 		combine: combineChainQueries
 	})
-	const { rows, settled, isLoading, failed, firstError } = queries
-	const histories = useMemo<Array<RWAChainHistory> | null>(() => {
-		if (!settled) return null
-		const loaded: Array<RWAChainHistory> = []
-		for (const [index, chain] of chains.entries()) {
-			const chainRows = rows[index]
-			if (chainRows !== undefined) loaded.push({ chain, rows: chainRows })
-		}
-		return loaded
-	}, [chains, rows, settled])
-	const allFailed = enabled && settled && chains.length > 0 && failed === chains.length
-	const chartDataset = useMemo(
-		() =>
-			enabled && histories && !allFailed ? foldRwaChainSeries({ chains: histories, assets, total }) : EMPTY_DATASET,
-		[allFailed, assets, enabled, histories, total]
+	return useMemo(
+		() => buildRwaChainChartDataset({ enabled, chains, queries, assets, total }),
+		[assets, chains, enabled, queries, total]
 	)
-	const chartError = allFailed
-		? firstError instanceof Error
-			? firstError.message
-			: 'Failed to load chain data.'
-		: null
-	return { chartDataset, isChartLoading: enabled && isLoading, chartError }
+}
+
+/** Folds the per-chain histories once all have settled; a failed chain lands in Others, and all failing is an error. */
+export function buildRwaChainChartDataset({
+	enabled,
+	chains,
+	queries,
+	assets,
+	total
+}: {
+	enabled: boolean
+	chains: Array<string>
+	queries: ChainQueries
+	assets: IRWAAssetsOverview['assets']
+	total: RWAPositionalChartDataset
+}): {
+	chartDataset: RWAPositionalChartDataset
+	isChartLoading: boolean
+	chartError: string | null
+} {
+	const { rows, settled, isLoading, failed, firstError } = queries
+	const isChartLoading = enabled && isLoading
+	if (!enabled || !settled) return { chartDataset: EMPTY_DATASET, isChartLoading, chartError: null }
+	if (chains.length > 0 && failed === chains.length) {
+		const chartError = firstError instanceof Error ? firstError.message : 'Failed to load chain data.'
+		return { chartDataset: EMPTY_DATASET, isChartLoading, chartError }
+	}
+	const histories: Array<RWAChainHistory> = []
+	for (const [index, chain] of chains.entries()) {
+		const chainRows = rows[index]
+		if (chainRows !== undefined) histories.push({ chain, rows: chainRows })
+	}
+	return { chartDataset: foldRwaChainSeries({ chains: histories, assets, total }), isChartLoading, chartError: null }
 }

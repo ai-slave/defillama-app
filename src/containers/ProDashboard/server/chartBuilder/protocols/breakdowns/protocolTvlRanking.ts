@@ -26,11 +26,17 @@ type ProtocolTvlRankingSourceRow = {
 
 type RankingScope = 'global' | 'include' | 'exclude'
 
-function resolveRankingScope(chains: Array<string>, chainFilterMode: 'include' | 'exclude'): RankingScope {
-	const hasAll = chains.length === 0 || chains.some((chain) => chain.toLowerCase() === 'all')
-	const hasSelectedChains = chains.some((chain) => chain.toLowerCase() !== 'all')
-	if (chainFilterMode === 'exclude' && hasSelectedChains) return 'exclude'
-	return hasAll ? 'global' : 'include'
+export function resolveRankingFilter(
+	chains: Array<string>,
+	chainFilterMode: 'include' | 'exclude'
+): { scope: RankingScope; chains: Array<string> } {
+	const selectedChains: Array<string> = []
+	for (const chain of chains) {
+		if (chain.toLowerCase() !== 'all') selectedChains.push(toInternalSlug(chain))
+	}
+	if (chainFilterMode === 'exclude' && selectedChains.length > 0) return { scope: 'exclude', chains: selectedChains }
+	const hasAll = selectedChains.length < chains.length || chains.length === 0
+	return hasAll ? { scope: 'global', chains: [] } : { scope: 'include', chains: selectedChains }
 }
 
 function globalRankingQuery() {
@@ -140,14 +146,10 @@ export async function fetchProtocolTvlRankingRows({
 	chains: Array<string>
 	chainFilterMode: 'include' | 'exclude'
 }): Promise<Array<ProtocolTvlRankingRow>> {
-	const scope = resolveRankingScope(chains, chainFilterMode)
-	const selectedChains: Array<string> = []
-	for (const chain of chains) {
-		if (chain.toLowerCase() !== 'all') selectedChains.push(toInternalSlug(chain))
-	}
+	const filter = resolveRankingFilter(chains, chainFilterMode)
 	const rows = await llamaDb.any<ProtocolTvlRankingSourceRow>(
-		scope === 'global' ? globalRankingQuery() : filteredRankingQuery(scope),
-		scope === 'global' ? [] : [selectedChains]
+		filter.scope === 'global' ? globalRankingQuery() : filteredRankingQuery(filter.scope),
+		filter.scope === 'global' ? [] : [filter.chains]
 	)
 	return rows.map((row) => ({
 		protocolSlug: row.protocol_slug,

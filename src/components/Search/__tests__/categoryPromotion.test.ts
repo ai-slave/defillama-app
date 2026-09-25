@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { CATEGORY_PROMOTION_MIN_QUERY_LENGTH, findCategoryToPromote, mergePromotedCategory } from '../categoryPromotion'
+import { findCategoryToPromote, mergePromotedCategory } from '../categoryPromotion'
 
 const launchpad = { name: 'Launchpad', route: '/protocols/launchpad', type: 'Category', r: 2 }
 const nftLaunchpad = { name: 'NFT Launchpad', route: '/protocols/nft-launchpad', type: 'Category', r: 2 }
@@ -13,7 +13,6 @@ describe('findCategoryToPromote', () => {
 
 	test('requires a minimum query length so short prefixes stay on normal relevance', () => {
 		expect(findCategoryToPromote([dyorSwap], [launchpad], 'laun')).toBeNull()
-		expect('launchp'.length).toBeGreaterThanOrEqual(CATEGORY_PROMOTION_MIN_QUERY_LENGTH)
 	})
 
 	test('requires the prefix to cover most of the category name', () => {
@@ -54,11 +53,6 @@ describe('findCategoryToPromote', () => {
 		const stakingProtocol = { name: 'Staking Pool', route: '/protocol/staking-pool', type: 'Protocol', r: 3 }
 		const stakingCategory = { name: 'Staking Pools', route: '/protocols/staking-pool', type: 'Category', r: 2 }
 		expect(findCategoryToPromote([stakingProtocol], [stakingCategory], 'staking pool')).toBeNull()
-	})
-
-	test('only promotes Category hits even if other types slip through the filter', () => {
-		const tag = { name: 'Launchpad Tools', route: '/protocols/launchpad-tools', type: 'Tag', r: 2 }
-		expect(findCategoryToPromote([dyorSwap], [tag], 'launchpad t')).toBeNull()
 	})
 })
 

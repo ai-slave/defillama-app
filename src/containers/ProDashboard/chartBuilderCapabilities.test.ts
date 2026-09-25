@@ -48,9 +48,14 @@ describe('Chart Builder series capabilities', () => {
 		).toBe(false)
 	})
 
-	test('preserves a user-selected Top N view when the producer has an exact remainder', () => {
-		const config = baseConfig({ protocol: 'aave', metric: 'fees', hideOthers: true })
-		expect(normalizeChartBuilderConfig(config)).toBe(config)
+	test('preserves the Others and percentage choices when the producer has an exact remainder', () => {
+		for (const hideOthers of [true, false]) {
+			expect(
+				normalizeChartBuilderConfig(
+					baseConfig({ protocol: 'aave', metric: 'fees', hideOthers, displayAs: 'percentage' })
+				)
+			).toMatchObject({ hideOthers, displayAs: 'percentage' })
+		}
 	})
 
 	test('forces Top N and time-series display when no exact remainder exists', () => {

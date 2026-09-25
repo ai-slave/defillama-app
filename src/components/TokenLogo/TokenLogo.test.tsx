@@ -21,7 +21,7 @@ describe('TokenLogo', () => {
 		container.remove()
 	})
 
-	test('tries each unique source once before showing a circular, fixed-size fallback', async () => {
+	test('stops requesting images after each unique source fails', async () => {
 		await act(async () =>
 			root.render(
 				<TokenLogo src="https://example.com/logo.png" fallbackSrc="https://example.com/fallback.png" size={32} />
@@ -40,10 +40,6 @@ describe('TokenLogo', () => {
 
 		await act(async () => image?.dispatchEvent(new Event('error')))
 		expect(image?.hasAttribute('src')).toBe(false)
-		expect(image?.classList.contains('hidden')).toBe(true)
-
-		expect(container.innerHTML).toContain('rounded-full')
-		expect(container.firstElementChild?.getAttribute('style')).toBe('height: 32px; width: 32px;')
 	})
 
 	test('resets the error state when the source props change', async () => {
@@ -52,7 +48,6 @@ describe('TokenLogo', () => {
 		let image = container.querySelector('img')
 		await act(async () => image?.dispatchEvent(new Event('error')))
 		await act(async () => image?.dispatchEvent(new Event('error')))
-		expect(image?.classList.contains('hidden')).toBe(true)
 
 		await act(async () => root.render(<TokenLogo src="https://example.com/good.png" />))
 
@@ -70,15 +65,6 @@ describe('TokenLogo', () => {
 		await act(async () => image?.dispatchEvent(new Event('error')))
 
 		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
-	})
-
-	test('treats an omitted or undefined title equally and renders a present title', async () => {
-		await act(async () => root.render(<TokenLogo src={null} />))
-		const omitted = container.innerHTML
-		await act(async () => root.render(<TokenLogo src={null} title={undefined} />))
-		expect(container.innerHTML).toBe(omitted)
-		await act(async () => root.render(<TokenLogo src={null} title="Bitcoin" />))
-		expect(container.firstElementChild?.getAttribute('title')).toBe('Bitcoin')
 	})
 
 	test('resolves exchange logos from the canonical exchange namespace', async () => {

@@ -1,31 +1,20 @@
 import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import {
-	buildCompareProtocolTvlRequestPlan,
-	getCompareProtocolExtraTvlKeys,
+	buildCompareProtocolTvlQuery,
 	getCompareProtocolTvlSettings,
 	normalizeCompareProtocolSelection
 } from '../requestPlan'
 
-describe('CompareProtocols request planning', () => {
-	test('uses the focused V2 TVL route inputs instead of the full protocol payload', () => {
-		expect(buildCompareProtocolTvlRequestPlan('Aave V3', 'borrowed')).toEqual({
-			protocolSlug: 'aave-v3',
-			queryKey: ['protocol-overview', 'tvl-chart', 'aave-v3', 'borrowed', undefined, undefined, undefined]
-		})
-	})
+const fixtureFetch = installFixtureFetch()
 
-	test('only plans additive individual-protocol TVL sections', () => {
-		expect(
-			getCompareProtocolExtraTvlKeys({
-				borrowed: true,
-				doublecounted: true,
-				govtokens: true,
-				liquidstaking: true,
-				pool2: true,
-				staking: true,
-				vesting: true
-			})
-		).toEqual(['pool2', 'staking', 'borrowed', 'vesting'])
+describe('CompareProtocols request planning', () => {
+	test('requests the focused V2 TVL section chart by protocol slug', async () => {
+		fixtureFetch.serve({ [`${V2_SERVER_URL}/chart/tvl/protocol/aave-v3?key=borrowed`]: [[1_700_000_000, 25]] })
+
+		expect(await buildCompareProtocolTvlQuery('Aave V3', 'borrowed').queryFn()).toEqual([[1_700_000_000_000, 25]])
+		expect(fixtureFetch.urls()).toEqual([`${V2_SERVER_URL}/chart/tvl/protocol/aave-v3?key=borrowed`])
 	})
 
 	test('scopes global TVL settings to the supported comparison sections', () => {

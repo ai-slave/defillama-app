@@ -1,22 +1,34 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { type QueryClient, useQuery } from '@tanstack/react-query'
 import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
-const api = vi.hoisted(() => ({ request: vi.fn(), authorizedFetch: vi.fn(), toastError: vi.fn() }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ user: { id: 'user' }, isAuthenticated: false, authorizedFetch: api.authorizedFetch })
-}))
-vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
-vi.mock('react-hot-toast', () => ({ default: { error: api.toastError } }))
-vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
-vi.mock('~/containers/LlamaAI/hooks/useClearUnseenCompletion', () => ({ useClearUnseenCompletion: () => vi.fn() }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
+const toastError = vi.hoisted(() => vi.fn())
+// The toast library is the app's notification boundary; its calls are what a user would see.
+vi.mock('react-hot-toast', () => ({ default: { error: toastError } }))
+
+const auth = installSubscriberSession('user')
+const AI = 'https://ai.llama.fi'
+const chrome = {
+	toggleSidebar: () => {},
+	hideSidebar: () => {},
+	toggleFullscreen: () => {},
+	isFullscreen: false,
+	fullscreenLocked: false,
+	sidebarVisible: true,
+	toggleDashboardPanel: () => {},
+	isDashboardPanelOpen: false
+}
+const failure = (message: string) => Response.json({ error: message }, { status: 503 })
+const requestsTo = (path: string, method: string) =>
+	auth.requests.filter((request) => request.url.href === `${AI}${path}` && request.init?.method === method)
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
@@ -42,16 +54,17 @@ const initial: SessionListInfiniteData = {
 	pageParams: [0]
 }
 beforeEach(() => {
-	vi.resetAllMocks()
-	client = new QueryClient()
+	toastError.mockReset()
+	client = auth.client
+	client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
 	client.setQueryData(key, initial)
+	auth.serve({ [`${AI}/projects`]: { projects: [] } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 	vi.restoreAllMocks()
 	vi.useRealTimers()
@@ -59,18 +72,20 @@ afterEach(async () => {
 async function render() {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				{initial.pages[0].sessions.map((item) => (
-					<AgenticSessionItem
-						key={item.sessionId}
-						session={item}
-						isActive={false}
-						onSessionSelect={vi.fn()}
-						onDelete={vi.fn()}
-						isRestoring={false}
-					/>
-				))}
-			</QueryClientProvider>
+			<auth.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					{initial.pages[0].sessions.map((item) => (
+						<AgenticSessionItem
+							key={item.sessionId}
+							session={item}
+							isActive={false}
+							onSessionSelect={vi.fn()}
+							onDelete={vi.fn()}
+							isRestoring={false}
+						/>
+					))}
+				</LlamaAIChromeContext.Provider>
+			</auth.Wrapper>
 		)
 	)
 }
@@ -88,21 +103,14 @@ const isPinned = (sessionId: string) =>
 		.isPinned
 
 test('a failed pin restores the cached session, reports the failure, and can retry', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockResolvedValueOnce({})
+	const first = Promise.withResolvers<Response>()
+	auth.serveInOrder(`${AI}/user/sessions/chat/pin`, [() => first.promise], {})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
-	await act(async () => reject(new Error('Unavailable')))
+	await act(async () => first.resolve(failure('Unavailable')))
 	await vi.waitFor(() => expect(client.getQueryData(key)).toEqual(initial))
-	expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
+	expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
 	const retry = await pinItem('chat')
 	await vi.waitFor(() => expect(retry.getAttribute('aria-disabled')).not.toBe('true'))
 	await act(async () => retry.click())
@@ -110,29 +118,23 @@ test('a failed pin restores the cached session, reports the failure, and can ret
 })
 
 test('a pending pin prevents duplicate requests without blocking another session', async () => {
-	let finish!: () => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise<void>((resolve) => {
-					finish = resolve
-				})
-		)
-		.mockResolvedValueOnce({})
+	const first = Promise.withResolvers<Response>()
+	auth.serve({
+		[`${AI}/user/sessions/chat/pin`]: () => first.promise,
+		[`${AI}/user/sessions/other/pin`]: {}
+	})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
-	await vi.waitFor(() => expect(api.request).toHaveBeenCalledOnce())
+	await vi.waitFor(() => expect(requestsTo('/user/sessions/chat/pin', 'PUT')).toHaveLength(1))
 	const pendingItem = await pinItem('chat')
 	await vi.waitFor(() => expect(pendingItem.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => pendingItem.click())
-	expect(api.request).toHaveBeenCalledTimes(1)
+	expect(requestsTo('/user/sessions/chat/pin', 'PUT')).toHaveLength(1)
 	await act(async () => pendingItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	await act(async () => (await pinItem('other')).click())
-	await vi.waitFor(() =>
-		expect(api.request).toHaveBeenLastCalledWith(expect.any(Function), '/user/sessions/other/pin', { method: 'PUT' })
-	)
+	await vi.waitFor(() => expect(requestsTo('/user/sessions/other/pin', 'PUT')).toHaveLength(1))
 	expect(isPinned('other')).toBe(true)
-	await act(async () => finish())
+	await act(async () => first.resolve(Response.json({})))
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
 })
 
@@ -166,9 +168,11 @@ function ManagedRows() {
 async function mountManaged() {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<ManagedRows />
-			</QueryClientProvider>
+			<auth.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					<ManagedRows />
+				</LlamaAIChromeContext.Provider>
+			</auth.Wrapper>
 		)
 	)
 }
@@ -197,28 +201,21 @@ test('session confirmation cancels without a request and returns focus to its me
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Delete “chat”?')
 	await click('Cancel')
-	expect(api.request).not.toHaveBeenCalled()
+	expect(requestsTo('/user/sessions/chat', 'DELETE')).toEqual([])
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Actions for chat')))
 })
 
 test('deletion keeps feedback mounted, prevents duplicates, retries, and completes after row removal', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockResolvedValue({})
+	const first = Promise.withResolvers<Response>()
+	auth.serveInOrder(`${AI}/user/sessions/chat`, [() => first.promise], {})
 	await mountManaged()
 	await openDelete()
 	await click('Delete')
 	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
-	expect(api.request).toHaveBeenCalledTimes(1)
+	expect(requestsTo('/user/sessions/chat', 'DELETE')).toHaveLength(1)
 	expect(button('Actions for chat')).toBeDefined()
-	await act(async () => reject(new Error('Offline')))
+	await act(async () => first.resolve(failure('Offline')))
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	await click('Retry deletion')
@@ -228,7 +225,7 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 })
 
 test('failed rename preserves the entered title for retry', async () => {
-	api.request.mockRejectedValueOnce(new Error('Offline')).mockResolvedValue({})
+	auth.serveInOrder(`${AI}/user/sessions/chat/title`, [() => failure('Offline')], {})
 	await mountManaged()
 	await click('Rename chat')
 	const input = document.querySelector<HTMLInputElement>('input[name="newTitle"]')!
@@ -243,21 +240,17 @@ test('failed rename preserves the entered title for retry', async () => {
 })
 
 test('a failed pin does not undo another row pin that has succeeded', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockResolvedValue({})
+	const first = Promise.withResolvers<Response>()
+	auth.serve({
+		[`${AI}/user/sessions/chat/pin`]: () => first.promise,
+		[`${AI}/user/sessions/other/pin`]: {}
+	})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
 	await act(async () => (await pinItem('other')).click())
 	await vi.waitFor(() => expect(isPinned('other')).toBe(true))
-	await act(async () => reject(new Error('Offline')))
+	await act(async () => first.resolve(failure('Offline')))
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(false))
 	expect(isPinned('other')).toBe(true)
 })
@@ -265,15 +258,17 @@ test('a failed pin does not undo another row pin that has succeeded', async () =
 async function openShareMenu(isPublic: boolean) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<AgenticSessionItem
-					session={{ ...session('chat'), isPublic, shareToken: 'test-share' }}
-					isActive={false}
-					onSessionSelect={vi.fn()}
-					onDelete={vi.fn()}
-					isRestoring={false}
-				/>
-			</QueryClientProvider>
+			<auth.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					<AgenticSessionItem
+						session={{ ...session('chat'), isPublic, shareToken: 'test-share' }}
+						isActive={false}
+						onSessionSelect={vi.fn()}
+						onDelete={vi.fn()}
+						isRestoring={false}
+					/>
+				</LlamaAIChromeContext.Provider>
+			</auth.Wrapper>
 		)
 	)
 	const trigger = button('Actions for chat')
@@ -287,12 +282,12 @@ const namedButton = (name: string) =>
 
 test('making a chat private confirms first, keeps failures retryable, and restores menu focus', async () => {
 	const request = Promise.withResolvers<Response>()
-	api.authorizedFetch.mockReturnValueOnce(request.promise).mockResolvedValueOnce(Response.json({ isPublic: false }))
+	auth.serveInOrder(`${AI}/user/sessions/chat/share`, [() => request.promise], { isPublic: false })
 	const trigger = await openShareMenu(true)
 	await act(async () => namedButton('Make Private').click())
 	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Cancel'))
 	await act(async () => namedButton('Cancel').click())
-	expect(api.authorizedFetch).not.toHaveBeenCalled()
+	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toEqual([])
 	await act(async () => namedButton('Make Private').click())
 	const confirm = document.querySelector<HTMLElement>('[role="alertdialog"]')!
 	await act(async () =>
@@ -301,19 +296,25 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	await vi.waitFor(() => expect(confirm.textContent).toContain('Updating…'))
 	await act(async () => request.resolve(Response.json({ message: 'Not available' }, { status: 503 })))
 	await vi.waitFor(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
-	expect(api.toastError).not.toHaveBeenCalled()
+	expect(toastError).not.toHaveBeenCalled()
 	await act(async () =>
 		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
 	)
 	await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
-	expect(api.authorizedFetch).toHaveBeenCalledTimes(2)
+	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
 
 test('making a chat public reports failure in the menu without adding a private-action confirmation', async () => {
-	api.authorizedFetch
-		.mockRejectedValueOnce(new Error('Offline'))
-		.mockResolvedValueOnce(Response.json({ isPublic: true }))
+	auth.serveInOrder(
+		`${AI}/user/sessions/chat/share`,
+		[
+			() => {
+				throw new TypeError('Failed to fetch')
+			}
+		],
+		{ isPublic: true }
+	)
 	const trigger = await openShareMenu(false)
 	await act(async () => namedButton('Make Public').click())
 	await vi.waitFor(() =>
@@ -324,7 +325,7 @@ test('making a chat public reports failure in the menu without adding a private-
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Make Public').click())
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).toBeNull())
-	expect(api.authorizedFetch).toHaveBeenCalledTimes(2)
+	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
 
 test('copy failures stay inline while the menu is open and remain visible if it closes during a request', async () => {
@@ -339,7 +340,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	await vi.waitFor(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
 	)
-	expect(api.toastError).not.toHaveBeenCalled()
+	expect(toastError).not.toHaveBeenCalled()
 	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
 	await reopenMenu(trigger)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -351,7 +352,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	)
 	await vi.waitFor(() => expect(document.querySelector('[role="menu"]')).toBeNull())
 	await act(async () => request.reject(new Error('Clipboard blocked')))
-	await vi.waitFor(() => expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
+	await vi.waitFor(() => expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
 	await act(async () => trigger.click())
 	await act(async () => namedButton('Copy Link').click())
 	await vi.waitFor(() => expect(namedButton('Link copied')).toBeDefined())
@@ -416,7 +417,7 @@ test.each(['copy', 'visibility'] as const)(
 		const copyRequest = Promise.withResolvers<void>()
 		const visibilityRequest = Promise.withResolvers<Response>()
 		const copy = vi.spyOn(navigator.clipboard, 'writeText').mockReturnValue(copyRequest.promise)
-		api.authorizedFetch.mockReturnValue(visibilityRequest.promise)
+		auth.serve({ [`${AI}/user/sessions/chat/share`]: () => visibilityRequest.promise })
 		const trigger = await openShareMenu(action === 'copy')
 		await act(async () => namedButton(action === 'copy' ? 'Copy Link' : 'Make Public').click())
 		await reopenMenu(trigger)
@@ -424,8 +425,7 @@ test.each(['copy', 'visibility'] as const)(
 		expect(pendingItem.getAttribute('aria-disabled')).toBe('true')
 		await act(async () => pendingItem.click())
 		expect(copy.mock.calls).toEqual(action === 'copy' ? [[`${window.location.origin}/ai/chat/shared/test-share`]] : [])
-		const visibilityCall = [expect.stringContaining('/user/sessions/chat/share'), { method: 'PUT' }]
-		expect(api.authorizedFetch.mock.calls).toEqual(action === 'visibility' ? [visibilityCall] : [])
+		expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(action === 'visibility' ? 1 : 0)
 		await act(async () => {
 			if (action === 'copy') copyRequest.reject(new Error('Denied'))
 			else visibilityRequest.reject(new Error('Offline'))

@@ -1,11 +1,12 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { EQUITIES_SERVER_URL } from '~/constants'
+import handler from '~/pages/api/public/equities/price-history'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 import { fetchEquitiesPriceHistoryFromProxy } from '../priceHistoryClient'
 import { buildEquitiesPriceHistoryUpstreamUrl } from '../server/priceHistory.api'
 
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-vi.mock('~/utils/async', () => ({
-	fetchJson: fetchJsonMock
-}))
+const http = installFixtureFetch()
 
 function upstreamUrl(query: Parameters<typeof buildEquitiesPriceHistoryUpstreamUrl>[0]): URL {
 	const url = buildEquitiesPriceHistoryUpstreamUrl(query)
@@ -16,17 +17,28 @@ function upstreamUrl(query: Parameters<typeof buildEquitiesPriceHistoryUpstreamU
 describe('equities price history proxy mapping', () => {
 	test('preserves the requested identity and timeframe through both proxy URL builders', async () => {
 		const query = { ticker: 'BRK.B', country: 'US', timeframe: 'MAX' } as const
-		fetchJsonMock.mockResolvedValue([])
-		await fetchEquitiesPriceHistoryFromProxy(query.ticker, query.country, query.timeframe)
+		const chart = { data: [[1_700_000_000, 123]], updatedAt: '2026-09-01' }
+		http.serve({
+			[`${EQUITIES_SERVER_URL}/price-history`]: chart,
+			'/api/public/equities/price-history': async (url: URL) => {
+				const res = createMockNextApiResponse()
+				await handler(createMockNextApiRequest({ method: 'GET', query: Object.fromEntries(url.searchParams) }), res)
+				return new Response(res.send.mock.calls.at(-1)![0], {
+					status: res.statusCode,
+					headers: { 'content-type': 'application/json' }
+				})
+			}
+		})
+		expect(await fetchEquitiesPriceHistoryFromProxy(query.ticker, query.country, query.timeframe)).toEqual(chart)
 
-		const proxyUrl = fetchJsonMock.mock.lastCall?.[0]
+		const proxyUrl = http.urls()[0]
 		if (typeof proxyUrl !== 'string') throw new Error('Missing equities price history proxy request')
 		const proxy = new URL(proxyUrl, 'https://defillama.com')
 		expect(proxy.pathname).toBe('/api/public/equities/price-history')
 		const forwarded = Object.fromEntries(proxy.searchParams)
 		expect(forwarded).toEqual(query)
 
-		const upstream = upstreamUrl(forwarded)
+		const upstream = http.requests[1].url
 		expect(upstream.pathname).toMatch(/\/price-history$/)
 		expect(Object.fromEntries(upstream.searchParams)).toMatchObject(query)
 	})

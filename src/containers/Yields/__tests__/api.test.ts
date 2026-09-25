@@ -1,64 +1,57 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { VerifiedRow } from '~/containers/Yields/data/types'
+import { earnRow } from '~/utils/test/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
 
-const mocks = vi.hoisted(() => ({
-	acquire: vi.fn(),
-	getEarnPage: vi.fn(),
-	recordError: vi.fn()
-}))
-
-vi.mock('../server/dataset.server', () => ({ acquireYieldsSnapshot: mocks.acquire }))
-vi.mock('../data/earn.server', () => ({ getEarnPage: mocks.getEarnPage }))
-vi.mock('~/utils/telemetry', () => ({ recordRouteRuntimeError: mocks.recordError }))
+const acquireYieldsSnapshot = vi.hoisted(() => vi.fn())
+vi.mock('../server/dataset.server', () => ({ acquireYieldsSnapshot }))
 
 import { yieldsEarnDataset } from '../server/api'
 
-const request = {
-	method: 'GET',
-	url: '/api/public/yields/earn?page=2',
-	query: { page: '2' },
-	headers: {}
+installYieldsFixtures()
+
+const verified: VerifiedRow = {
+	id: 'pool-a',
+	apy: { avg_1d: 2.58, avg_7d: 2.5, avg_30d: 2.4 },
+	apy_as_of: new Date().toISOString(),
+	apy_confidence: 'high',
+	exit: null,
+	exit_liquidity: null,
+	tvl: null
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
+const snapshotWithVerifiedPool = () => yieldsSnapshot({ earn: [earnRow('pool-a', 1000)], earnVerified: [verified] })
+
+const request = (headers: Record<string, string> = {}) => ({
+	method: 'GET',
+	url: '/api/public/yields/earn?page=1',
+	query: { page: '1' },
+	headers
 })
 
-describe('Yields v2 public API', () => {
-	test('acquires one background-refreshable snapshot for the request', async () => {
-		const snapshot = { readJson: vi.fn() }
-		const response = { rows: [], total: 0, page: 2, pageSize: 10 }
-		mocks.acquire.mockResolvedValue(snapshot)
-		mocks.getEarnPage.mockResolvedValue(response)
+beforeEach(() => {
+	acquireYieldsSnapshot.mockReset()
+})
 
-		await expect(yieldsEarnDataset.handle(request)).resolves.toMatchObject({ status: 200, body: response })
-		expect(mocks.acquire).toHaveBeenCalledOnce()
-		expect(mocks.acquire).toHaveBeenCalledWith('background')
-		// No access argument: `getEarnPage` defaults to locked, which is what keeps this shared,
-		// CDN-cached document free of measured figures. Subscribers read /api/private/yields/earn-verified.
-		expect(mocks.getEarnPage).toHaveBeenCalledWith(snapshot, request.query)
-	})
+describe('/api/public/yields/earn', () => {
+	// One CDN-cached body serves everyone, so it can never carry the measurement. Subscribers read
+	// /api/private/yields/earn-verified.
+	test('serves the page with measured figures locked, even to a caller presenting a subscriber token', async () => {
+		acquireYieldsSnapshot.mockResolvedValue(snapshotWithVerifiedPool())
 
-	// The route file is checked by apiRouteCatalog's "keeps auth-sensitive reads out of public
-	// routes" rule; this covers the container module behind it, which is where the temptation to
-	// vary a public response by subscriber lives.
-	test('never inspects the caller, so one cached body is correct for everyone', async () => {
-		mocks.acquire.mockResolvedValue({ readJson: vi.fn() })
-		mocks.getEarnPage.mockResolvedValue({ rows: [], total: 0, page: 1, pageSize: 10 })
+		const result = await yieldsEarnDataset.handle(request({ authorization: 'Bearer subscriber-token' }))
 
-		const result = await yieldsEarnDataset.handle({
-			...request,
-			headers: { authorization: 'Bearer subscriber-token' }
+		expect(result).toMatchObject({
+			status: 200,
+			body: { total: 1, rows: [{ id: 'pool-a', verified: null, verifiedApy: null, verifiedLocked: true }] }
 		})
-
-		expect(mocks.getEarnPage).toHaveBeenCalledWith(expect.anything(), request.query)
 		expect(result.headers).toBeUndefined()
 	})
 
-	test('returns an upstream error when no valid snapshot can be acquired', async () => {
-		mocks.acquire.mockRejectedValue(new Error('refresh failed'))
+	test('a snapshot that cannot be acquired is a 502', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		acquireYieldsSnapshot.mockRejectedValue(new Error('refresh failed'))
 
-		await expect(yieldsEarnDataset.handle(request)).resolves.toMatchObject({ status: 502 })
-		expect(mocks.getEarnPage).not.toHaveBeenCalled()
-		expect(mocks.recordError).toHaveBeenCalledOnce()
+		expect(await yieldsEarnDataset.handle(request())).toMatchObject({ status: 502 })
 	})
 })

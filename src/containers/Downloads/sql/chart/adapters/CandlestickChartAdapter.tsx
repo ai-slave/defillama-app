@@ -5,7 +5,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { readSqlNumber, readSqlTimestampMs } from '../rowValues'
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
@@ -15,16 +14,10 @@ interface CandlestickChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
-export function CandlestickChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: CandlestickChartAdapterProps) {
+export function CandlestickChartAdapter({ config, result, classified, onReady, height }: CandlestickChartAdapterProps) {
 	const mapping = config.candlestick
 	const data = useMemo(() => {
 		if (!mapping) return []

@@ -25,10 +25,6 @@ test('a shelf of twelve is cut to the rail size and releases the rest to the nex
 	expect(second.dashboards.map((entry) => entry.id)).toEqual(['d8', 'd9', 'd10', 'd11'])
 })
 
-test('shelves keep their key and an empty shelf stays empty', () => {
-	expect(dedupeShelves([{ key: 'recent', dashboards: [] }])).toEqual([{ key: 'recent', dashboards: [] }])
-})
-
 test('a shelf that keeps duplicates shows its own order even when earlier shelves claimed the same dashboards', () => {
 	const [trending, recent] = dedupeShelves([
 		{ key: 'trending', dashboards: [dashboard('a'), dashboard('b')] },

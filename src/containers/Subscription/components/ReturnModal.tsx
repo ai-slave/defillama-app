@@ -1,7 +1,34 @@
 import * as Ariakit from '@ariakit/react'
-import { useRouter } from 'next/router'
+import { type NextRouter, useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
+
+/** The subscription page query once the post-sign-in return intent is consumed. */
+export function withoutReturnUrl(query: NextRouter['query']): NextRouter['query'] {
+	const { returnUrl: _ignoredReturnUrl, ...nextQuery } = query
+	return nextQuery
+}
+
+/**
+ * A signed-in visitor with an unhandled return destination is asked whether to go back, except
+ * right after signup, where onboarding takes over and the destination is dropped silently.
+ */
+export function getReturnIntentAction({
+	isAuthenticated,
+	userLoading,
+	isNewSignup,
+	returnUrl,
+	handledReturnUrl
+}: {
+	isAuthenticated: boolean
+	userLoading: boolean
+	isNewSignup: boolean
+	returnUrl: string | undefined
+	handledReturnUrl: string | undefined
+}): 'none' | 'consume' | 'prompt' {
+	if (!isAuthenticated || !returnUrl || handledReturnUrl === returnUrl || userLoading) return 'none'
+	return isNewSignup ? 'consume' : 'prompt'
+}
 
 interface ReturnModalProps {
 	isOpen: boolean
@@ -13,11 +40,10 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 	const router = useRouter()
 
 	const handleClose = () => {
-		const { returnUrl: _ignoredReturnUrl, ...nextQuery } = router.query
 		void router.replace(
 			{
 				pathname: router.pathname,
-				query: nextQuery
+				query: withoutReturnUrl(router.query)
 			},
 			undefined,
 			{ shallow: true }

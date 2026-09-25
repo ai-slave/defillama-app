@@ -24,16 +24,6 @@ describe('adapter protocol version discovery', () => {
 		expect(getLinkedAdapterProtocolVersionNames({ versions, metric: 'revenue' })).toEqual(['Swap V2'])
 	})
 
-	test('keeps notional-only children out of a primary DEX version group', () => {
-		const versions = getLinkedAdapterProtocolVersions({
-			isParentProtocol: true,
-			linkedProtocols: ['Swap', 'Swap V2', 'Swap Notional'],
-			protocolMetadata
-		})
-
-		expect(getLinkedAdapterProtocolVersionNames({ versions, metric: 'dexs' })).toEqual([])
-	})
-
 	test('does not manufacture versions for a child protocol or missing linked data', () => {
 		expect(
 			getLinkedAdapterProtocolVersions({

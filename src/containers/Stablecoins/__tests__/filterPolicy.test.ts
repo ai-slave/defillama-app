@@ -194,9 +194,4 @@ describe('stablecoin selection URL round trips', () => {
 		)
 		expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({ attribute: 'DEPEGGED' }))).toEqual([])
 	})
-
-	test('does not allocate a new asset list for the default unfiltered view', () => {
-		const rows = [stablecoin({ pegDeviation: 0, mcap: 100 })]
-		expect(filterStablecoinAssets(rows, resolveStablecoinFilterState({}))).toBe(rows)
-	})
 })

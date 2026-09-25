@@ -8,6 +8,7 @@ import { act, type ComponentProps, type ReactNode } from 'react'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
 import ProtocolPage from '~/pages/protocol/yields/[protocol]'
 import { APY_COMPONENTS_PREF, APY_WINDOW_PREF, TABLE_PAGE_SIZE_PREF } from '../stickyQueryPrefs'
 
@@ -23,20 +24,11 @@ const mocks = vi.hoisted(() => ({
 	},
 	fetchJson: vi.fn()
 }))
-vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
-// A signed-out reader: the table hook resolves its tier without an AuthProvider.
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: vi.fn(),
-		hasActiveSubscription: false,
-		isAuthenticated: false,
-		loaders: { userLoading: false }
-	})
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: mocks.fetchJson
 }))
-vi.mock('~/utils/perf', () => ({ withPerformanceLogging: (_name: string, handler: unknown) => handler }))
-vi.mock('~/containers/ProtocolOverview/api', () => ({ fetchProtocolOverviewMetrics: vi.fn() }))
-vi.mock('~/containers/ProtocolOverview/queries', () => ({ getProtocolMetricFlags: vi.fn() }))
-vi.mock('~/containers/ProtocolOverview/utils', () => ({ getProtocolWarningBanners: vi.fn() }))
+// Heavy children this test asserts nothing about.
 vi.mock('~/containers/ProtocolOverview/Layout', () => ({
 	ProtocolOverviewLayout: ({ children }: { children: ReactNode }) => children
 }))
@@ -48,8 +40,6 @@ vi.mock('~/containers/Yields/Tables/Pools', () => ({
 vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({ ResponsiveFilterLayout: () => null }))
 vi.mock('../Filters/Dropdowns', () => ({ YieldFilterDropdowns: () => null }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
-vi.mock('~/utils/analytics/yields', () => ({ trackYieldsEvent: vi.fn(), YIELDS_EVENTS: {} }))
 
 const props = {
 	name: 'Aave',
@@ -70,7 +60,10 @@ let container: HTMLDivElement
 const element = (pageProps = props) => (
 	<QueryClientProvider client={client}>
 		<RouterContext.Provider value={mocks.router as unknown as NextRouter}>
-			<ProtocolPage {...pageProps} />
+			{/* A signed-out reader. */}
+			<AuthProvider>
+				<ProtocolPage {...pageProps} />
+			</AuthProvider>
 		</RouterContext.Provider>
 	</QueryClientProvider>
 )

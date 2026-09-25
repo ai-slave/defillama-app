@@ -44,30 +44,33 @@ async function render(dashboards: Array<Dashboard>, isLoading = false) {
 	)
 }
 
-test('an empty shelf keeps its heading and explains the gap', async () => {
+test('only a populated shelf links to see all; empty and loading shelves keep the heading', async () => {
 	await render([])
 	expect(container.querySelector('h3')?.textContent).toBe('Trending Today')
 	expect(container.textContent).toContain('Nothing trending yet')
 	expect(container.querySelector('a')).toBeNull()
-})
 
-test('the heading carries the title, subtitle and a see all link', async () => {
-	await render([makeDashboard('a')])
-	expect(container.querySelector('h3')?.textContent).toBe('Trending Today')
-	expect(container.textContent).toContain('Most viewed in the last 24 hours')
-	const seeAll = container.querySelector('a')
-	expect(seeAll?.getAttribute('href')).toBe('/pro?tab=discover&sortBy=trending')
-	expect(seeAll?.textContent).toContain('See all')
-})
-
-test('a loading shelf shows the heading without a see all link', async () => {
 	await render([], true)
 	expect(container.querySelector('h3')?.textContent).toBe('Trending Today')
+	expect(container.textContent).not.toContain('Nothing trending yet')
 	expect(container.querySelector('a')).toBeNull()
+
+	await render([makeDashboard('a')])
+	expect(container.querySelector('a')?.getAttribute('href')).toBe('/pro?tab=discover&sortBy=trending')
 })
 
-test('three cards fit the rail, so no scroll button is rendered', async () => {
-	await render([makeDashboard('a'), makeDashboard('b'), makeDashboard('c')])
-	expect(container.querySelectorAll('button')).toHaveLength(0)
-	expect(container.textContent).toContain('Board c')
+test('an overflowing rail offers a scroll button only once it holds more than three cards', async () => {
+	vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(1200)
+	vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600)
+	try {
+		await render([makeDashboard('a'), makeDashboard('b'), makeDashboard('c')])
+		await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
+		expect(container.textContent).toContain('Board c')
+		expect(container.querySelectorAll('button')).toHaveLength(0)
+
+		await render([makeDashboard('a'), makeDashboard('b'), makeDashboard('c'), makeDashboard('d')])
+		await vi.waitFor(() => expect(container.querySelector('[aria-label="Scroll Trending Today right"]')).not.toBeNull())
+	} finally {
+		vi.restoreAllMocks()
+	}
 })

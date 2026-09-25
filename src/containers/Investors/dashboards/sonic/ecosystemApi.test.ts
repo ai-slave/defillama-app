@@ -88,28 +88,14 @@ function buildResponse(): EcosystemAPIResponse {
 }
 
 describe('buildEcosystemViewModel', () => {
-	test('caches render-ready datasets, configs, KPIs, and tables without the raw chart payloads', () => {
-		const response = buildResponse()
-		const result = buildEcosystemViewModel(response)
-
-		expect(result.fees.kpis).toBe(response.fees.kpis)
-		expect(result.fees.topProtocols).toBe(response.fees.topProtocols)
-		expect(result.dexVolume.topDexes).toBe(response.dexVolume.topDexes)
-		expect(result.tvl.dataset).toEqual({
+	test('zero-fills a shorter TVL series on the shared date axis', () => {
+		expect(buildEcosystemViewModel(buildResponse()).tvl.dataset).toEqual({
 			dimensions: ['timestamp', 'Sonic TVL', 'Short TVL'],
 			source: [
 				[Date.UTC(2026, 6, 16), 10, 4],
 				[Date.UTC(2026, 6, 17), 20, 0]
 			]
 		})
-		expect(result.fees.charts[0]).toMatchObject({
-			name: 'Protocol Fees',
-			type: 'bar',
-			stack: 'a',
-			encode: { x: 0, y: 1 }
-		})
-		expect(result).not.toHaveProperty('stablecoinChart')
-		expect(result).not.toHaveProperty('assetBreakdown')
 	})
 
 	test('excludes aggregate and empty stablecoin slices while reusing enriched pie rows', () => {

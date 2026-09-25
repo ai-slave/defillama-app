@@ -55,8 +55,7 @@ describe('getLlamaAIChartSource', () => {
 			'dashboard-1',
 			'https://ai.test'
 		)
-		expect(source?.url).not.toContain('artifact-secret')
-		expect(source?.url).not.toContain('version-secret')
+		expect(source?.url).toBe('https://ai.test/chart-artifacts/dashboards/dashboard-1/items/item-1')
 	})
 
 	test('keeps legacy chart reads on the frozen legacy endpoint', () => {

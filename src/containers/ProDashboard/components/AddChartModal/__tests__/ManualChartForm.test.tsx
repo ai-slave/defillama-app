@@ -1,28 +1,23 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { appMetadataFixtures } from '~/utils/test/appMetadata'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { AppMetadataProvider } from '../../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../../chartRuntime'
+import type { Chain } from '../../../types'
 import { UnifiedChartTab } from '../UnifiedChartTab'
 
-vi.mock('../../../AppMetadataContext', () => ({
-	useAppMetadata: () => ({
-		loading: false,
-		availableChainChartTypes: () => ['tvl', 'fees'],
-		availableProtocolChartTypes: () => ['tvl', 'fees']
-	})
-}))
-vi.mock('../../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({
-		protocols: [],
-		chains: [
-			{ name: 'Ethereum', gecko_id: 'ethereum' },
-			{ name: 'Solana', gecko_id: 'solana' }
-		],
-		getProtocolInfo: () => null
-	}),
-	useProDashboardVariables: () => ({ variables: [] })
-}))
+const chains: Array<Chain> = [
+	{ name: 'Ethereum', gecko_id: 'ethereum', tvl: 2, tokenSymbol: 'ETH', chainId: 1, cmcId: null },
+	{ name: 'Solana', gecko_id: 'solana', tvl: 1, tokenSymbol: 'SOL', chainId: null, cmcId: null }
+]
+
+const http = installFixtureFetch()
+// The previews draw charts from fetched series; these tests only read which preview the form shows.
 vi.mock('../CombinedChartPreview', () => ({ CombinedChartPreview: () => <p>combined chart</p> }))
 vi.mock('../SeparateChartsPreview', () => ({ SeparateChartsPreview: () => <p>separate charts</p> }))
 
@@ -54,39 +49,55 @@ function renderForm(overrides: {
 }) {
 	return act(async () =>
 		root.render(
-			<UnifiedChartTab
-				selectedChartTab="chain"
-				selectedChartTypes={['tvl']}
-				chainOptions={[
-					{ value: 'Ethereum', label: 'Ethereum' },
-					{ value: 'Solana', label: 'Solana' }
-				]}
-				protocolOptions={[]}
-				protocolsLoading={false}
-				unifiedChartName=""
-				chartCreationMode={overrides.chartCreationMode}
-				composerItems={overrides.composerItems}
-				manualFormOpen={overrides.manualFormOpen ?? true}
-				isEditingItem={overrides.isEditingItem ?? false}
-				onSelectCategory={vi.fn()}
-				onBackToCategories={vi.fn()}
-				onChartTabChange={vi.fn()}
-				onChartTypesChange={vi.fn()}
-				onBulkChartTypeChange={vi.fn()}
-				onUnifiedChartNameChange={vi.fn()}
-				onChartCreationModeChange={onChartCreationModeChange}
-				onComposerItemColorChange={vi.fn()}
-				onAddToComposer={vi.fn()}
-				onRemoveFromComposer={vi.fn()}
-			/>
+			<QueryClientProvider client={client}>
+				<AppMetadataProvider>
+					<DashboardTestProvider catalog={{ chains }}>
+						<UnifiedChartTab
+							selectedChartTab="chain"
+							selectedChartTypes={['tvl']}
+							chainOptions={[
+								{ value: 'Ethereum', label: 'Ethereum' },
+								{ value: 'Solana', label: 'Solana' }
+							]}
+							protocolOptions={[]}
+							protocolsLoading={false}
+							unifiedChartName=""
+							chartCreationMode={overrides.chartCreationMode}
+							composerItems={overrides.composerItems}
+							manualFormOpen={overrides.manualFormOpen ?? true}
+							isEditingItem={overrides.isEditingItem ?? false}
+							onSelectCategory={vi.fn()}
+							onBackToCategories={vi.fn()}
+							onChartTabChange={vi.fn()}
+							onChartTypesChange={vi.fn()}
+							onBulkChartTypeChange={vi.fn()}
+							onUnifiedChartNameChange={vi.fn()}
+							onChartCreationModeChange={onChartCreationModeChange}
+							onComposerItemColorChange={vi.fn()}
+							onAddToComposer={vi.fn()}
+							onRemoveFromComposer={vi.fn()}
+						/>
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</QueryClientProvider>
 		)
 	)
 }
 
 let root: Root
 let container: HTMLDivElement
+let client: QueryClient
 beforeEach(() => {
 	vi.clearAllMocks()
+	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	http.serve(
+		appMetadataFixtures({
+			chains: {
+				ethereum: { name: 'Ethereum', id: 'ethereum', fees: true },
+				solana: { name: 'Solana', id: 'solana', fees: true }
+			}
+		})
+	)
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)

@@ -45,6 +45,18 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		})
 	])
 
+	return {
+		coinsData: coinsData.map((coin) => ({ ...coin, label: coin.symbol.toUpperCase(), value: coin.id })),
+		protocols: buildCompareTokenProtocols(tvlProtocols, feesData, revenueData)
+	}
+}
+
+/** A null fees/revenue response means the source failed, so rows show it unavailable instead of zero. */
+export function buildCompareTokenProtocols(
+	tvlProtocols: ProtocolsResponse,
+	feesData: IAdapterChainMetrics | null,
+	revenueData: IAdapterChainMetrics | null
+): Array<CompareTokenProtocol> {
 	type ParentProtocolAccumulator = CompareTokenProtocol & { hasChild: boolean; hasMeasuredTvl: boolean }
 	const parentProtocols: Record<string, ParentProtocolAccumulator> = {}
 
@@ -110,8 +122,5 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		})
 	}
 
-	return {
-		coinsData: coinsData.map((coin) => ({ ...coin, label: coin.symbol.toUpperCase(), value: coin.id })),
-		protocols: llamaProtocols.concat(parentRows)
-	}
+	return llamaProtocols.concat(parentRows)
 }

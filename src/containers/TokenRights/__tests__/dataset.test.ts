@@ -1,24 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
 import type { IRawTokenRightsEntry } from '../api.types'
 
-const mocks = vi.hoisted(() => ({
-	fetchJson: vi.fn(),
-	readJson: vi.fn(),
-	writeJson: vi.fn()
-}))
-
-vi.mock('~/constants', () => ({ SERVER_URL: 'https://api.example' }))
-vi.mock('~/server/datasetSnapshots/reader.server', () => ({
-	datasetSnapshotReader: { readJson: mocks.readJson }
-}))
-vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
-
-import { buildTokenRightsDomain } from '../server/dataset.builder.server'
-import {
-	fetchTokenRightsEntries,
-	fetchTokenRightsEntryByDefillamaId,
-	fetchTokenRightsEntryByName
-} from '../server/dataset.server'
+const http = installFixtureFetch()
+installSnapshotDirectory('token-rights-test')
 
 const entry: IRawTokenRightsEntry = {
 	'Protocol Name': "Aave DAO's",
@@ -33,45 +20,16 @@ const entry: IRawTokenRightsEntry = {
 	'DefiLlama ID': 'parent#aave'
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
-})
-
-describe('token rights dataset snapshot', () => {
-	test('reads the full dataset and indexes from their registered files', async () => {
-		mocks.readJson
-			.mockResolvedValueOnce([entry])
-			.mockResolvedValueOnce({ 'parent#aave': entry })
-			.mockResolvedValueOnce({ 'aave-daos': entry })
-
-		await expect(fetchTokenRightsEntries()).resolves.toEqual([entry])
-		await expect(fetchTokenRightsEntryByDefillamaId('parent#aave')).resolves.toBe(entry)
-		await expect(fetchTokenRightsEntryByName("Aave DAO's")).resolves.toBe(entry)
-
-		expect(mocks.readJson.mock.calls).toEqual([
-			['token-rights', 'full.json'],
-			['token-rights', 'by-defillama-id.json'],
-			['token-rights', 'by-protocol-name.json']
-		])
-	})
-
-	test('returns null for empty lookup keys without reading a snapshot', async () => {
-		await expect(fetchTokenRightsEntryByDefillamaId('')).resolves.toBeNull()
-		await expect(fetchTokenRightsEntryByName('')).resolves.toBeNull()
-		expect(mocks.readJson).not.toHaveBeenCalled()
-	})
-
-	test('writes the full dataset and both pure indexes', async () => {
-		mocks.fetchJson.mockResolvedValue([entry])
-		mocks.writeJson.mockResolvedValue(undefined)
-
-		await expect(buildTokenRightsDomain({ writeJson: mocks.writeJson })).resolves.toBeUndefined()
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://api.example/token-rights')
-		expect(mocks.writeJson.mock.calls).toEqual([
-			['full.json', [entry]],
-			['by-defillama-id.json', { 'parent#aave': entry }],
-			['by-protocol-name.json', { 'aave-daos': entry }]
-		])
-	})
+test('publishes and reads entries through both on-disk indexes', async () => {
+	http.serve({ [`${SERVER_URL}/token-rights`]: [entry] })
+	const { fileDatasetSnapshotStore } = await import('~/server/datasetSnapshots/fileStore.server')
+	const { buildTokenRightsDomain } = await import('../server/dataset.builder.server')
+	await fileDatasetSnapshotStore.publish('token-rights', buildTokenRightsDomain)
+	const api = await import('../server/dataset.server')
+	expect(await api.fetchTokenRightsEntries()).toEqual([entry])
+	expect(await api.fetchTokenRightsEntryByDefillamaId('parent#aave')).toEqual(entry)
+	expect(await api.fetchTokenRightsEntryByName("Aave DAO's")).toEqual(entry)
+	expect(await api.fetchTokenRightsEntryByName('missing')).toBeNull()
+	expect(await api.fetchTokenRightsEntryByDefillamaId('missing')).toBeNull()
+	expect(http.urls()).toEqual([`${SERVER_URL}/token-rights`])
 })

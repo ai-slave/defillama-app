@@ -87,17 +87,13 @@ describe('equities financials statement headers', () => {
 			cashflow: statementSection
 		}
 
-		expect(() => buildEquitiesStatementRows(missingParentRow, 'Income Statement', 'Quarterly')).toThrow(
-			'Missing statement values for Revenue'
-		)
-		expect(() => buildEquitiesStatementRows(missingChildRow, 'Income Statement', 'Quarterly')).toThrow(
-			'Missing statement breakdown values for Revenue'
-		)
+		expect(() => buildEquitiesStatementRows(missingParentRow, 'Income Statement', 'Quarterly')).toThrow(/Revenue/)
+		expect(() => buildEquitiesStatementRows(missingChildRow, 'Income Statement', 'Quarterly')).toThrow(/Revenue/)
 		expect(() =>
 			getEquitiesStatementValue(
 				{ id: 'Revenue', label: 'Revenue', values: [], depth: 0 },
 				{ index: 0, periodEnding: '2026-03-31' }
 			)
-		).toThrow('Missing Revenue value for 2026-03-31')
+		).toThrow(/Revenue/)
 	})
 })

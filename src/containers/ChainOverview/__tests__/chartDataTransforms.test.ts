@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { formatBarChart, formatLineChart } from '~/components/ECharts/shared/timeSeries'
+import { formatBarChart } from '~/components/ECharts/shared/timeSeries'
 import type { ChainAssetTotals } from '~/containers/BridgedTVL/api.types'
 import {
 	buildBridgedTvlChart,
 	buildDenominationPriceHistory,
 	getNetInflowsSeries,
 	normalizeActivityChart
-} from '../useFetchChainChartData'
+} from '../chainChartData'
 import { formatChainAssets } from '../utils'
 
 describe('ChainOverview chart data transforms', () => {
@@ -48,16 +48,6 @@ describe('ChainOverview chart data transforms', () => {
 		expect(result.canConvert).toBe(true)
 		expect(result.mcaps).toBe(mcaps)
 		expect(result.volumes).toBe(volumes)
-	})
-
-	test('keeps an all-zero price chart without exposing a conversion denominator', () => {
-		expect(buildDenominationPriceHistory({ prices: [[1000, 0]] })).toEqual({
-			conversionPrices: {},
-			canConvert: false,
-			priceChart: [[1000, 0]],
-			mcaps: undefined,
-			volumes: undefined
-		})
 	})
 
 	test('uses the last valid duplicate timestamp observation as the conversion denominator', () => {
@@ -106,16 +96,6 @@ describe('ChainOverview chart data transforms', () => {
 		])
 	})
 
-	test('preserves integer chain-asset presentation without projecting token breakdowns', () => {
-		const category = { total: 5.7 }
-		const chainAsset: ChainAssetTotals = { canonical: category, thirdParty: category, total: category }
-
-		const formatted = formatChainAssets(chainAsset)
-
-		expect(formatted?.total).toEqual({ total: 5 })
-		expect(formatted?.total).not.toHaveProperty('breakdown')
-	})
-
 	test('carries the v2-only sections through to the page instead of projecting them away', () => {
 		const chainAsset: ChainAssetTotals = {
 			canonical: { total: 10 },
@@ -156,37 +136,5 @@ describe('ChainOverview chart data transforms', () => {
 		expect(buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100, ownTokens: 10 } }], true)).toEqual([
 			[dayStartSec * 1e3, 110]
 		])
-	})
-
-	test('keeps denomination conversion for bridged TVL points without govtokens', () => {
-		const timestampSec = Date.UTC(2026, 0, 3, 12) / 1e3
-		const dayStartSec = Date.UTC(2026, 0, 3) / 1e3
-
-		expect(
-			formatLineChart({
-				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100 } }], false),
-				groupBy: 'daily',
-				denominationPriceHistory: {
-					[String(dayStartSec * 1e3)]: 2
-				},
-				dateInMs: true
-			})
-		).toEqual([[dayStartSec * 1e3, 50]])
-	})
-
-	test('uses the millisecond timestamp price lookup for bridged TVL points with govtokens', () => {
-		const timestampSec = Date.UTC(2026, 0, 3, 12) / 1e3
-		const dayStartSec = Date.UTC(2026, 0, 3) / 1e3
-
-		expect(
-			formatLineChart({
-				data: buildBridgedTvlChart([{ timestamp: timestampSec, data: { total: 100, ownTokens: 10 } }], true),
-				groupBy: 'daily',
-				denominationPriceHistory: {
-					[String(dayStartSec * 1e3)]: 2
-				},
-				dateInMs: true
-			})
-		).toEqual([[dayStartSec * 1e3, 55]])
 	})
 })

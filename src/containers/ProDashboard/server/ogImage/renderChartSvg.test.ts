@@ -12,13 +12,13 @@ function seriesData(points: number): Array<[number, number]> {
 }
 
 describe('dashboard og chart svg', () => {
-	test('renders a filled line as svg paths', () => {
-		const svg = renderChartSvg(buildSingleMetricChartDataset(seriesData(30), 'Aave TVL', false), 346, 190)
+	test('draws the series as a brand-blue line at the requested size', () => {
+		const svg = renderChartSvg(buildSingleMetricChartDataset(seriesData(30), 'Aave TVL', false), 346, 190)!
 
-		expect(svg).toContain('<svg')
-		expect(svg).toContain('<path')
-		const [lineCommands] = [...svg!.matchAll(/<path d="([^"]+)"/g)].map((match) => match[1])
-		expect(lineCommands.length).toBeGreaterThan(50)
+		expect(svg).toMatch(/<svg[^>]*width="346"[^>]*height="190"/)
+		const line = svg.match(/<path d="([^"]+)"[^>]*stroke="#326abd"/)
+		// One move plus a line command per remaining point.
+		expect(line?.[1].match(/L/g)).toHaveLength(29)
 	})
 
 	test('returns null for an empty dataset', () => {
@@ -26,11 +26,12 @@ describe('dashboard og chart svg', () => {
 		expect(renderChartSvgDataUri(buildSingleMetricChartDataset([], 'Aave TVL', false), 346, 190)).toBe(null)
 	})
 
-	test('encodes the svg as a base64 data uri', () => {
-		const dataUri = renderChartSvgDataUri(buildSingleMetricChartDataset(seriesData(12), 'Fees', false), 346, 190)
+	test('encodes the rendered svg as a base64 data uri', () => {
+		const dataset = buildSingleMetricChartDataset(seriesData(12), 'Fees', false)
+		const dataUri = renderChartSvgDataUri(dataset, 346, 190)!
 
-		expect(dataUri).toMatch(/^data:image\/svg\+xml;base64,/)
-		const decoded = Buffer.from(dataUri!.replace('data:image/svg+xml;base64,', ''), 'base64').toString('utf8')
-		expect(decoded).toContain('<path')
+		expect(dataUri.startsWith('data:image/svg+xml;base64,')).toBe(true)
+		const decoded = Buffer.from(dataUri.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8')
+		expect(decoded).toMatch(/^<svg width="346" height="190"[\s\S]*stroke="#326abd"[\s\S]*<\/svg>$/)
 	})
 })

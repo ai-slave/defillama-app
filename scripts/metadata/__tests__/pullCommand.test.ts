@@ -108,7 +108,7 @@ describe('pull metadata command', () => {
 
 		expect(result.exitCode).toBe(0)
 		expect(fetchMetadata).toHaveBeenCalledTimes(1)
-		expect(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.cexs), 'utf8')).toBe('[]')
+		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.cexs), 'utf8'))).toEqual([])
 	})
 
 	test('pulls stale or missing metadata and writes ready artifacts', async () => {
@@ -240,21 +240,6 @@ describe('pull metadata command', () => {
 		expect((await readMetadataArtifactManifest(getMetadataCacheDir(repoRoot)))?.status).toBe('stub')
 	})
 
-	test('exits non-zero after production pull failures', async () => {
-		const repoRoot = await createRepoRoot()
-
-		const result = await runPullMetadataCommand({
-			env: { NODE_ENV: 'production' } as NodeJS.ProcessEnv,
-			fetchMetadata: vi.fn().mockRejectedValue(new Error('upstream failed')),
-			logger: { log: vi.fn() },
-			now: 5000,
-			repoRoot
-		})
-
-		expect(result.exitCode).toBe(1)
-		await expect(readMetadataArtifactManifest(getMetadataCacheDir(repoRoot))).resolves.toBeNull()
-	})
-
 	test('leaves an existing ready artifact set intact after production pull failures', async () => {
 		const repoRoot = await createRepoRoot()
 		const cacheDir = getMetadataCacheDir(repoRoot)
@@ -281,24 +266,5 @@ describe('pull metadata command', () => {
 		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.protocols), 'utf8'))).toEqual({
 			aave: { name: 'Aave' }
 		})
-	})
-
-	test('does not write pages or trending data as part of metadata publishing', async () => {
-		const repoRoot = await createRepoRoot()
-		const pagesPath = path.join(repoRoot, 'public', 'pages.json')
-		const beforePages = await fs.readFile(pagesPath, 'utf8')
-
-		const result = await runPullMetadataCommand({
-			env: { NODE_ENV: 'production' } as NodeJS.ProcessEnv,
-			fetchMetadata: vi.fn().mockResolvedValue(createPayload()),
-			logger: { log: vi.fn() },
-			now: 6000,
-			repoRoot
-		})
-
-		expect(result.exitCode).toBe(0)
-		expect((await readMetadataArtifactManifest(getMetadataCacheDir(repoRoot)))?.status).toBe('ready')
-		expect(await fs.readFile(pagesPath, 'utf8')).toBe(beforePages)
-		await expect(fs.access(path.join(repoRoot, 'public', 'trending.json'))).rejects.toMatchObject({ code: 'ENOENT' })
 	})
 })

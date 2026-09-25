@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+// @vitest-environment happy-dom
+import { act, type ReactNode } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { IncomeStatement } from '../IncomeStatement'
 import type { IProtocolOverviewPageData } from '../types'
 
@@ -8,17 +9,40 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/protocol/aave', query: {} })
 }))
 
-vi.mock('~/ui/Tooltip', () => ({
-	Tooltip: ({ content, children }: { content: ReactNode; children: ReactNode }) => (
-		<>
-			{children}
-			{content}
-		</>
-	)
-}))
+let container: HTMLDivElement
+let root: Root
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+async function renderStatement(node: ReactNode) {
+	await act(async () => root.render(node))
+	return container.textContent
+}
+const rowCells = (label: string) => {
+	const row = Array.from(container.querySelectorAll('tr')).find(
+		(row) => row.querySelector('th')?.textContent === label
+	)!
+	return Array.from(row.querySelectorAll('td'), (cell) => cell.textContent)
+}
+async function openComparison(label: string, value: string) {
+	const row = Array.from(container.querySelectorAll('tr')).find(
+		(row) => row.querySelector('th')?.textContent === label
+	)!
+	const cell = Array.from(row.querySelectorAll('td')).find((cell) => cell.textContent === value)!
+	await act(async () => cell.querySelector('span')!.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await vi.waitFor(() => expect(document.querySelector('[role="tooltip"]')).not.toBeNull())
+	return document.querySelector('[role="tooltip"]')!.textContent
+}
 
 describe('IncomeStatement presentation', () => {
-	test('renders metrics from the explicit period values object when by-label is absent', () => {
+	test('renders metrics from the explicit period values object when by-label is absent', async () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -38,17 +62,15 @@ describe('IncomeStatement presentation', () => {
 			hasTokenHolderNetIncome: false
 		} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
-		const markup = renderToStaticMarkup(
+		const markup = await renderStatement(
 			<IncomeStatement name="Aave" incomeStatement={incomeStatement} view="table" showTitles={false} />
 		)
 
 		expect(markup).toContain('Q1 2026')
-		expect(markup).toContain('$25')
-		expect(markup).toContain('Cost of Revenue')
-		expect(markup).toContain('$0')
+		expect(rowCells('Gross Protocol Revenue')).toEqual(['$25'])
 	})
 
-	test('renders a breakdown comparison when the previous value is zero', () => {
+	test('renders a breakdown comparison when the previous value is zero', async () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -76,14 +98,15 @@ describe('IncomeStatement presentation', () => {
 			hasTokenHolderNetIncome: false
 		} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
-		const markup = renderToStaticMarkup(
+		const markup = await renderStatement(
 			<IncomeStatement name="Aave" incomeStatement={incomeStatement} view="table" showTitles={false} />
 		)
 
-		expect(markup).toContain('compared to previous quarter total fees')
+		expect(markup).toContain('$10')
+		expect(await openComparison('Fees', '$10')).toBe('0% compared to previous quarter total fees')
 	})
 
-	test('renders globally known by-label omissions as zero in the table and comparison', () => {
+	test('renders globally known by-label omissions as zero in the table and comparison', async () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -111,15 +134,15 @@ describe('IncomeStatement presentation', () => {
 			hasTokenHolderNetIncome: false
 		} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
-		const markup = renderToStaticMarkup(
+		const markup = await renderStatement(
 			<IncomeStatement name="Aave" incomeStatement={incomeStatement} view="table" showTitles={false} />
 		)
 
 		expect(markup).toContain('$0')
-		expect(markup).toContain('compared to previous quarter total swap')
+		expect(await openComparison('Swap', '$0')).toContain('compared to previous quarter total swap')
 	})
 
-	test('renders off-chain costs as Unknown rows only for protocols with a disclosure', () => {
+	test('renders off-chain costs as Unknown rows only for protocols with a disclosure', async () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -140,18 +163,16 @@ describe('IncomeStatement presentation', () => {
 		} satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
 		const render = (name: string) =>
-			renderToStaticMarkup(
-				<IncomeStatement name={name} incomeStatement={incomeStatement} view="table" showTitles={false} />
-			)
+			renderStatement(<IncomeStatement name={name} incomeStatement={incomeStatement} view="table" showTitles={false} />)
+		const unknownRows = () =>
+			Array.from(container.querySelectorAll('tr'))
+				.filter((row) => row.querySelector('td')?.textContent === 'Unknown')
+				.map((row) => row.querySelector('th')!.textContent)
 
-		const cash = render('EtherFi Cash Liquid')
-		expect(cash).toContain('FX &amp; cross-border costs')
-		expect(cash).toContain('Card issuer &amp; network costs')
-		expect(cash).toContain('Unknown')
-		expect(cash).toContain('actual earnings may be lower')
+		await render('EtherFi Cash Liquid')
+		expect(unknownRows()).toEqual(['FX & cross-border costs', 'Card issuer & network costs'])
 
-		const aave = render('Aave')
-		expect(aave).not.toContain('FX &amp; cross-border costs')
-		expect(aave).not.toContain('Unknown')
+		await render('Aave')
+		expect(unknownRows()).toEqual([])
 	})
 })

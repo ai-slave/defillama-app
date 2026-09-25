@@ -2,7 +2,6 @@ import { expect, test } from 'vitest'
 import {
 	desktopDashboardToolbarActions,
 	type DashboardToolbarActionState,
-	DESKTOP_TOOLBAR_ORDER,
 	visibleDashboardToolbarActions
 } from './dashboardToolbarActions'
 
@@ -46,6 +45,12 @@ test('an empty dashboard offers only the card and settings entry points', () => 
 	).toEqual(['add-card', 'settings'])
 })
 
+test('an unsaved dashboard has no settings to open yet', () => {
+	expect(
+		visibleDashboardToolbarActions({ ...editorWithEverything, hasAnyItems: false, hasDashboardId: false })
+	).toEqual(['add-card', 'refresh-sql'])
+})
+
 test('a dashboard still loading its edits keeps the card actions reachable while read-only', () => {
 	expect(
 		visibleDashboardToolbarActions({
@@ -67,19 +72,6 @@ test('history actions appear only once their direction is available', () => {
 			showSqlRefresh: false
 		})
 	).toEqual(['add-card', 'add-section', 'edit-with-ai', 'settings'])
-})
-
-test('the desktop row orders the same actions and leaves settings to the dashboard menu', () => {
-	expect(DESKTOP_TOOLBAR_ORDER).toEqual([
-		'refresh-sql',
-		'undo',
-		'redo',
-		'undo-ai',
-		'edit-with-ai',
-		'add-section',
-		'add-card'
-	])
-	expect(DESKTOP_TOOLBAR_ORDER).not.toContain('settings')
 })
 
 test('the desktop row keeps undo and redo mounted and disables the unavailable direction', () => {

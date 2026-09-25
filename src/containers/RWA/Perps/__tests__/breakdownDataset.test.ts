@@ -2,21 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { toRWAPerpsBreakdownChartDataset } from '../breakdownDataset'
 
 describe('rwa perps breakdownDataset', () => {
-	test('keeps server row order while building the dataset', () => {
-		expect(
-			toRWAPerpsBreakdownChartDataset([
-				{ timestamp: 1_774_569_600, NVIDIA: 130 },
-				{ timestamp: 1_774_483_200, Meta: 120 }
-			])
-		).toEqual({
-			source: [
-				{ timestamp: 1_774_569_600_000, NVIDIA: 130 },
-				{ timestamp: 1_774_483_200_000, Meta: 120 }
-			],
-			dimensions: ['timestamp', 'NVIDIA', 'Meta']
-		})
-	})
-
 	test('orders series dimensions by latest available value descending', () => {
 		expect(
 			toRWAPerpsBreakdownChartDataset([

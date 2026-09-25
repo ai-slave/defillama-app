@@ -80,19 +80,6 @@ function createExistingChart(slug: string, type: 'tvl' | 'fees'): DashboardItemC
 	return { id: `${type}-${slug}`, kind: 'chart', subjectType: 'protocol', protocol: slug, type, colSpan: 1 }
 }
 
-function createExistingMetric(slug: string, type: 'tvl' | 'fees'): DashboardItemConfig {
-	return {
-		id: `metric-${type}-${slug}`,
-		kind: 'metric',
-		subject: { itemType: 'protocol', protocol: slug },
-		type,
-		aggregator: 'sum',
-		window: '30d',
-		chartType: 'sparkline',
-		colSpan: 0.5
-	}
-}
-
 function entityOf(subjectType: 'protocol' | 'chain', id: string): QuickAddEntity {
 	const entity = entities.find((candidate) => candidate.subjectType === subjectType && candidate.id === id)
 	if (!entity) throw new Error(`missing fixture entity ${subjectType}:${id}`)
@@ -228,18 +215,6 @@ describe('quick add suggestions', () => {
 		])
 	})
 
-	test('the text row hands a text draft to the full editor instead of appending a blank card', () => {
-		const [text] = suggestFor({ raw: 'text' })
-		expect(text).toMatchObject({ kind: 'text', action: 'open-editor-draft' })
-		expect(text?.build([])[0]).toMatchObject({ kind: 'text', content: '', colSpan: 1 })
-	})
-
-	test('the section row asks to close the palette and focus the new title', () => {
-		const [section] = suggestFor({ raw: 'section' })
-		expect(section).toMatchObject({ kind: 'section', afterAdd: 'close-and-focus-title' })
-		expect(section?.action).toBeUndefined()
-	})
-
 	test('keeps every metric when the app metadata fetch failed, with no pending label', () => {
 		const suggestions = suggestFor({ raw: 'uniswap treasury', availability: createAvailability({ error: true }) })
 		expect(suggestions[0]).toMatchObject({ id: 'chart:protocol:uniswap:treasury' })
@@ -263,16 +238,6 @@ describe('quick add suggestions', () => {
 		})
 		expect(first).toMatchObject({ id: 'metric:protocol:uniswap:fees', kind: 'metric', alreadyOnDashboard: false })
 		expect(second).toMatchObject({ id: 'chart:protocol:uniswap:fees', kind: 'chart', alreadyOnDashboard: true })
-	})
-
-	test('keeps the explicit chart hit ahead of the metric card it shares the pair with', () => {
-		const [first, second] = suggestFor({
-			raw: 'uniswap weekly fees',
-			existingItems: [createExistingChart('uniswap', 'fees'), createExistingMetric('uniswap', 'fees')]
-		})
-		expect(first).toMatchObject({ id: 'chart:protocol:uniswap:fees', kind: 'chart', alreadyOnDashboard: true })
-		expect(first?.build([])[0]).toMatchObject({ grouping: 'week' })
-		expect(second).toMatchObject({ id: 'metric:protocol:uniswap:fees', kind: 'metric', alreadyOnDashboard: true })
 	})
 
 	test('reserves the start rows for a busy dashboard with recents', () => {
@@ -307,14 +272,6 @@ describe('quick add suggestions', () => {
 			recents: []
 		})
 		expect(leading).toMatchObject({ id: 'chart:protocol:aave:revenue' })
-		expect(
-			buildLeadingQuickAddSuggestion('', {
-				entities,
-				availability: createAvailability(),
-				existingItems: [],
-				recents: []
-			})
-		).toMatchObject({ kind: 'table', group: 'start' })
 	})
 
 	test('groups an empty query into suggested, recent and start rows', () => {

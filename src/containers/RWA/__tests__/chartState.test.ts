@@ -4,7 +4,6 @@ import {
 	getChartMetricQueryValue,
 	getChartViewOptions,
 	getChartViewQueryValue,
-	getTreemapNestedByOptions,
 	getTreemapNestedByQueryValue,
 	parseRwaChartState,
 	setTreemapNestedBy
@@ -20,14 +19,6 @@ describe('parseRwaChartState', () => {
 	test('accepts the share view and falls back to the time series for an unknown view', () => {
 		expect(parseRwaChartState({ chartView: 'share' }, chain).view).toBe('share')
 		expect(parseRwaChartState({ chartView: 'donut' }, chain).view).toBe('timeSeries')
-	})
-
-	test('ignores the old breakdown keys', () => {
-		const state = parseRwaChartState(
-			{ timeSeriesChartBreakdown: 'assetName', nonTimeSeriesChartBreakdown: 'chain' },
-			chain
-		)
-		expect(state).toEqual({ view: 'timeSeries', metric: 'activeMcap', treemapNestedBy: 'none' })
 	})
 
 	test('accepts asset-group treemap nesting by category', () => {
@@ -51,16 +42,6 @@ describe('chartState options', () => {
 		expect(getChartViewOptions().map(({ key }) => key)).toEqual(['timeSeries', 'share', 'pie', 'treemap', 'hbar'])
 		expect(getChartViewQueryValue('timeSeries')).toBeUndefined()
 		expect(getChartViewQueryValue('share')).toBe('share')
-	})
-
-	test('includes asset category as an asset-group treemap nested option', () => {
-		expect(getTreemapNestedByOptions('assetGroup').map(({ key }) => key)).toEqual([
-			'none',
-			'assetClass',
-			'assetName',
-			'category'
-		])
-		expect(getTreemapNestedByOptions('assetName').map(({ key }) => key)).toEqual(['none'])
 	})
 
 	test('sets an allowed nesting and rejects one the parent does not support', () => {

@@ -1,54 +1,76 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query'
+import { QueryObserver } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '../sessionListCache'
 import { useSessionMutations } from '../useSessionMutations'
 import { useUpdateSessionTitle } from '../useUpdateSessionTitle'
-const api = vi.hoisted(() => ({ request: vi.fn(), toastError: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: vi.fn() }) }))
-vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
-vi.mock('react-hot-toast', () => ({ default: { error: api.toastError } }))
+
+const session = installSubscriberSession('user')
+
+/** Server replies, taken in the order LlamaAI requests arrive. A rejection stands for a network failure. */
+let replies: Array<() => unknown>
+const ok = () => new Response(null, { status: 204 })
+const offline = (message: string) => () => Promise.reject(new TypeError(message))
+/** A reply the test settles later. */
+function held() {
+	const reply = {
+		arrived: false,
+		resolve: () => {},
+		reject: (_error: Error) => {},
+		respond: () => {
+			reply.arrived = true
+			return new Promise<Response>((resolve, reject) => {
+				reply.resolve = () => resolve(ok())
+				reply.reject = reject
+			})
+		}
+	}
+	return reply
+}
+const titleWrites = () => session.requests.filter((request) => request.url.pathname.endsWith('/title')).length
+
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let rename: ReturnType<typeof useUpdateSessionTitle>
 let mutations: ReturnType<typeof useSessionMutations>
 const key = [SESSIONS_QUERY_KEY, 'user']
-const initial: SessionListInfiniteData = {
-	pages: [
-		{
-			sessions: [
-				{
-					sessionId: 'chat',
-					title: 'Chat',
-					createdAt: '2026-09-06',
-					lastActivity: '2026-09-06',
-					isActive: true,
-					isPinned: false
-				}
-			],
-			usage: null,
-			factCheckedUsage: null,
-			alertsUsage: null,
-			hasMore: false
-		}
-	],
-	pageParams: [0]
+const chat = {
+	sessionId: 'chat',
+	title: 'Chat',
+	createdAt: '2026-09-06',
+	lastActivity: '2026-09-06',
+	isActive: true,
+	isPinned: false
 }
+function listOf(sessions: Array<typeof chat>): SessionListInfiniteData {
+	return {
+		pages: [{ sessions, usage: null, factCheckedUsage: null, alertsUsage: null, hasMore: false }],
+		pageParams: [0]
+	}
+}
+const sessions = () => session.client.getQueryData<SessionListInfiniteData>(key)?.pages[0]?.sessions ?? []
+
 beforeEach(() => {
-	vi.resetAllMocks()
 	vi.spyOn(console, 'error').mockImplementation(() => {})
-	client = new QueryClient()
-	client.setQueryData(key, initial)
+	replies = []
+	session.serve({
+		[`${AI_SERVER}/`]: (url: URL) => {
+			const next = replies.shift()
+			if (!next) throw new Error(`No reply queued for ${url.pathname}`)
+			return next()
+		}
+	})
+	session.client.setQueryData(key, listOf([chat]))
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 	vi.restoreAllMocks()
 })
@@ -60,16 +82,15 @@ async function mount() {
 	}
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
-test('branch switching still rejects malformed successful responses and accepts valid responses', async () => {
-	api.request
-		.mockResolvedValueOnce({ messages: [] })
-		.mockResolvedValueOnce({ activeLeafMessageId: 'leaf', messages: [] })
+
+test('branch switching rejects a successful response without an active leaf and accepts a valid one', async () => {
+	replies = [() => ({ messages: [] }), () => ({ activeLeafMessageId: 'leaf', messages: [] })]
 	await mount()
 	await act(async () => {
 		await expect(mutations.switchActiveLeaf.mutateAsync({ sessionId: 'chat', leafMessageId: 'leaf' })).rejects.toThrow(
@@ -82,10 +103,9 @@ test('branch switching still rejects malformed successful responses and accepts 
 		)
 	})
 })
+
 test('restore keeps legacy message payloads and rejects request failures', async () => {
-	api.request
-		.mockResolvedValueOnce({ conversationHistory: [{ id: 'message' }], hasMore: true, nextCursor: 5 })
-		.mockRejectedValueOnce(new Error('Offline'))
+	replies = [() => ({ conversationHistory: [{ id: 'message' }], hasMore: true, nextCursor: 5 }), offline('Offline')]
 	await mount()
 	await act(async () => {
 		await expect(mutations.restoreSession('chat')).resolves.toMatchObject({
@@ -97,144 +117,94 @@ test('restore keeps legacy message payloads and rejects request failures', async
 })
 
 test('a failed delete does not overwrite another session rename', async () => {
-	const other = { ...initial.pages[0].sessions[0], sessionId: 'other', title: 'Original' }
-	client.setQueryData(key, {
-		...initial,
-		pages: [{ ...initial.pages[0], sessions: [...initial.pages[0].sessions, other] }]
-	})
-	let rejectDelete!: (error: Error) => void
-	api.request.mockImplementation((_auth: unknown, path: string) =>
-		path.endsWith('/title')
-			? Promise.resolve()
-			: new Promise((_, reject) => {
-					rejectDelete = reject
-				})
-	)
+	session.client.setQueryData(key, listOf([chat, { ...chat, sessionId: 'other', title: 'Original' }]))
+	const deletion = held()
+	replies = [deletion.respond, ok]
 	await mount()
-	let deletion!: Promise<unknown>
+	let deleting!: Promise<unknown>
 	await act(async () => {
-		deletion = mutations.deleteSession.mutateAsync({ sessionId: 'chat' }).catch(() => {})
+		deleting = mutations.deleteSession.mutateAsync({ sessionId: 'chat' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(rejectDelete).toBeTypeOf('function'))
+	await vi.waitFor(() => expect(deletion.arrived).toBe(true))
 	await act(async () => {
 		await rename.mutateAsync({ sessionId: 'other', title: 'Renamed' })
 	})
 	await act(async () => {
-		rejectDelete(new Error('Offline'))
-		await deletion
+		deletion.reject(new TypeError('Offline'))
+		await deleting
 	})
-	expect(
-		client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions.find((s) => s.sessionId === 'other')?.title
-	).toBe('Renamed')
-	expect(client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions.some((s) => s.sessionId === 'chat')).toBe(
-		true
-	)
+	expect(sessions().map((s) => [s.sessionId, s.title])).toEqual([
+		['chat', 'Chat'],
+		['other', 'Renamed']
+	])
 })
 
 test('bulk deletion keeps its rows until success and preserves another renamed row', async () => {
-	client.setQueryData(key, {
-		...initial,
-		pages: [
-			{
-				...initial.pages[0],
-				sessions: [
-					...initial.pages[0].sessions,
-					{ ...initial.pages[0].sessions[0], sessionId: 'other', title: 'Other' }
-				]
-			}
-		]
-	})
-	let finish!: () => void
-	api.request.mockImplementation((_auth: unknown, path: string) =>
-		path.endsWith('/title')
-			? Promise.resolve()
-			: new Promise<void>((resolve) => {
-					finish = resolve
-				})
-	)
+	session.client.setQueryData(key, listOf([chat, { ...chat, sessionId: 'other', title: 'Other' }]))
+	const deletion = held()
+	replies = [deletion.respond, ok]
 	await mount()
-	let deletion!: Promise<unknown>
+	let deleting!: Promise<unknown>
 	await act(async () => {
-		deletion = mutations.bulkDeleteSessions.mutateAsync(['chat'])
+		deleting = mutations.bulkDeleteSessions.mutateAsync(['chat'])
 	})
-	await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
-	expect(client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions.map((s) => s.sessionId)).toEqual([
-		'chat',
-		'other'
-	])
+	await vi.waitFor(() => expect(deletion.arrived).toBe(true))
+	expect(sessions().map((s) => s.sessionId)).toEqual(['chat', 'other'])
 	await act(async () => {
 		await rename.mutateAsync({ sessionId: 'other', title: 'Renamed' })
 	})
 	await act(async () => {
-		finish()
-		await deletion
+		deletion.resolve()
+		await deleting
 	})
-	expect(
-		client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions.map((s) => [s.sessionId, s.title])
-	).toEqual([['other', 'Renamed']])
+	expect(sessions().map((s) => [s.sessionId, s.title])).toEqual([['other', 'Renamed']])
 })
 
 test('a failed rename does not overwrite the next queued title', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockResolvedValue({})
+	const first = held()
+	replies = [first.respond, ok]
 	await mount()
-	let first!: Promise<unknown>
+	let firstRename!: Promise<unknown>
 	await act(async () => {
-		first = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
+		firstRename = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(reject).toBeTypeOf('function'))
+	await vi.waitFor(() => expect(first.arrived).toBe(true))
 	let newer!: Promise<unknown>
 	await act(async () => {
 		newer = rename.mutateAsync({ sessionId: 'chat', title: 'Newer' })
 	})
-	expect(api.request).toHaveBeenCalledTimes(1)
+	// Title writes to one session are queued, never sent side by side.
+	expect(titleWrites()).toBe(1)
 	await act(async () => {
-		reject(new Error('Offline'))
-		await first
+		first.reject(new TypeError('Offline'))
+		await firstRename
 		await newer
 	})
-	expect(client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions[0].title).toBe('Newer')
+	expect(sessions()[0]?.title).toBe('Newer')
 })
 
 test('a settled rename waits for an overlapping write before refetching', async () => {
-	let finish!: () => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise<void>((resolve) => {
-					finish = resolve
-				})
-		)
-		.mockResolvedValue({})
+	const deletion = held()
+	replies = [deletion.respond, ok]
 	await mount()
-	const refreshed = {
-		...initial,
-		pages: [{ ...initial.pages[0], sessions: [{ ...initial.pages[0].sessions[0], title: 'Renamed' }] }]
-	}
+	const refreshed = listOf([{ ...chat, title: 'Renamed' }])
 	const fetchSessions = vi.fn().mockResolvedValue(refreshed)
-	const observer = new QueryObserver(client, { queryKey: key, queryFn: fetchSessions, staleTime: Infinity })
+	const observer = new QueryObserver(session.client, { queryKey: key, queryFn: fetchSessions, staleTime: Infinity })
 	const unsubscribe = observer.subscribe(() => {})
 	try {
-		let deletion!: Promise<unknown>
+		let deleting!: Promise<unknown>
 		await act(async () => {
-			deletion = mutations.deleteSession.mutateAsync({ sessionId: 'other' })
+			deleting = mutations.deleteSession.mutateAsync({ sessionId: 'other' })
 		})
-		await vi.waitFor(() => expect(finish).toBeTypeOf('function'))
+		await vi.waitFor(() => expect(deletion.arrived).toBe(true))
 		await act(async () => {
 			await rename.mutateAsync({ sessionId: 'chat', title: 'Renamed' })
 		})
 		expect(fetchSessions).not.toHaveBeenCalled()
-		expect(client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions[0].title).toBe('Renamed')
+		expect(sessions()[0]?.title).toBe('Renamed')
 		await act(async () => {
-			finish()
-			await deletion
+			deletion.resolve()
+			await deleting
 		})
 		await vi.waitFor(() => expect(fetchSessions).toHaveBeenCalledTimes(1))
 		await vi.waitFor(() => expect(observer.getCurrentResult().isFetching).toBe(false))
@@ -245,30 +215,23 @@ test('a settled rename waits for an overlapping write before refetching', async 
 })
 
 test('two failed edits of the same session restore its confirmed title', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockRejectedValue(new Error('Offline again'))
+	const first = held()
+	replies = [first.respond, offline('Offline again')]
 	await mount()
-	let first!: Promise<unknown>
-	let second!: Promise<unknown>
+	let firstRename!: Promise<unknown>
+	let secondRename!: Promise<unknown>
 	await act(async () => {
-		first = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
+		firstRename = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(reject).toBeTypeOf('function'))
+	await vi.waitFor(() => expect(first.arrived).toBe(true))
 	await act(async () => {
-		second = rename.mutateAsync({ sessionId: 'chat', title: 'Second' }).catch(() => {})
+		secondRename = rename.mutateAsync({ sessionId: 'chat', title: 'Second' }).catch(() => {})
 	})
-	expect(api.request).toHaveBeenCalledTimes(1)
+	expect(titleWrites()).toBe(1)
 	await act(async () => {
-		reject(new Error('Offline'))
-		await first
-		await second
+		first.reject(new TypeError('Offline'))
+		await firstRename
+		await secondRename
 	})
-	expect(client.getQueryData<SessionListInfiniteData>(key)?.pages[0].sessions[0].title).toBe('Chat')
+	expect(sessions()[0]?.title).toBe('Chat')
 })

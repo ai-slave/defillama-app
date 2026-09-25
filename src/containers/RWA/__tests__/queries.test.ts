@@ -1,76 +1,61 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { RWA_PERPS_SERVER_URL, RWA_SERVER_URL } from '~/constants'
 import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
 
-const fetchRWACurrentListingMock = vi.fn()
-const fetchRWAChartDataByAssetMock = vi.fn()
-const fetchRWAChartMetricDataByAssetMock = vi.fn()
-const fetchRWAChainBreakdownChartDataMock = vi.fn()
-const fetchRWAStatsMock = vi.fn()
-const fetchRWACategoryBreakdownChartDataMock = vi.fn()
-const fetchRWAPlatformBreakdownChartDataMock = vi.fn()
-const fetchRWAAssetGroupBreakdownChartDataMock = vi.fn()
-const fetchRWAAssetDataByIdMock = vi.fn()
-const fetchRWAAssetChartDataMock = vi.fn()
-const fetchRWAPerpsCurrentMock = vi.fn()
-const fetchRWAPerpsContractBreakdownChartDataMock = vi.fn()
-const fetchRWAPerpsOverviewBreakdownChartDataMock = vi.fn()
+const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 
-vi.mock('../api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('../api')>()
-	return {
-		...actual,
-		fetchRWACurrentListing: (...args: Array<unknown>) => fetchRWACurrentListingMock(...args),
-		fetchRWAChartDataByAsset: (...args: Array<unknown>) => fetchRWAChartDataByAssetMock(...args),
-		fetchRWAChartMetricDataByAsset: (...args: Array<unknown>) => fetchRWAChartMetricDataByAssetMock(...args),
-		fetchRWAChainBreakdownChartData: (...args: Array<unknown>) => fetchRWAChainBreakdownChartDataMock(...args),
-		fetchRWAStats: (...args: Array<unknown>) => fetchRWAStatsMock(...args),
-		fetchRWACategoryBreakdownChartData: (...args: Array<unknown>) => fetchRWACategoryBreakdownChartDataMock(...args),
-		fetchRWAPlatformBreakdownChartData: (...args: Array<unknown>) => fetchRWAPlatformBreakdownChartDataMock(...args),
-		fetchRWAAssetGroupBreakdownChartData: (...args: Array<unknown>) =>
-			fetchRWAAssetGroupBreakdownChartDataMock(...args),
-		fetchRWAAssetDataById: (...args: Array<unknown>) => fetchRWAAssetDataByIdMock(...args),
-		fetchRWAAssetChartData: (...args: Array<unknown>) => fetchRWAAssetChartDataMock(...args)
-	}
+vi.mock('~/utils/async', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/utils/async')>()
+	return { ...actual, fetchJson: mocks.fetchJson }
 })
 
-vi.mock('../Perps/api', () => ({
-	fetchRWAPerpsCurrent: (...args: Array<unknown>) => fetchRWAPerpsCurrentMock(...args),
-	fetchRWAPerpsContractBreakdownChartData: (...args: Array<unknown>) =>
-		fetchRWAPerpsContractBreakdownChartDataMock(...args),
-	fetchRWAPerpsOverviewBreakdownChartData: (...args: Array<unknown>) =>
-		fetchRWAPerpsOverviewBreakdownChartDataMock(...args)
-}))
+// Upstream routes, answered by URL. An Error fixture is a failed upstream request.
+const LISTING = `${RWA_SERVER_URL}/current?lite=true`
+const STATS = `${RWA_SERVER_URL}/stats`
+const CHAIN_SPLIT = `${RWA_SERVER_URL}/chart/chain-breakdown?key=activeMcap`
+const PERPS_CURRENT = `${RWA_PERPS_SERVER_URL}/current?cachebust=091626&includeCex=true`
+const assetBreakdown = (scope: string) =>
+	`${RWA_SERVER_URL}/chart/${scope}/asset-breakdown?includeStablecoin=true&includeGovernance=true`
+const chainHistory = (chain: string, metric: string) => `${assetBreakdown(`chain/${chain}`)}&key=${metric}`
+const venueSplit = (includeCex: boolean) =>
+	`${RWA_PERPS_SERVER_URL}/chart/overview-breakdown?breakdown=venue&key=openInterest${includeCex ? '&includeCex=true' : ''}`
+
+let routes: Record<string, unknown> = {}
+let unfixtured: Array<string> = []
+const serve = (next: Record<string, unknown>) => Object.assign(routes, next)
+const serveListing = (rows: Array<unknown>) => serve({ [LISTING]: rows })
+// A scope whose per-asset history fails to load; the page still renders from the listing.
+const NO_HISTORY = new Error('[500] upstream')
+const serveBreakdown = (scope: string, body: unknown) => serve({ [assetBreakdown(scope)]: body })
+const requestedUrls = () => mocks.fetchJson.mock.calls.map(([url]) => url)
 
 describe('rwa queries', () => {
 	beforeEach(() => {
-		fetchRWACurrentListingMock.mockReset()
-		fetchRWAChartDataByAssetMock.mockReset()
-		fetchRWAChartMetricDataByAssetMock.mockReset()
-		fetchRWAChainBreakdownChartDataMock.mockReset()
-		fetchRWAStatsMock.mockReset()
-		fetchRWACategoryBreakdownChartDataMock.mockReset()
-		fetchRWAPlatformBreakdownChartDataMock.mockReset()
-		fetchRWAAssetGroupBreakdownChartDataMock.mockReset()
-		fetchRWAAssetDataByIdMock.mockReset()
-		fetchRWAAssetChartDataMock.mockReset()
-		fetchRWAPerpsCurrentMock.mockReset()
-		fetchRWAPerpsContractBreakdownChartDataMock.mockReset()
-		fetchRWAChartDataByAssetMock.mockResolvedValue(null)
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue(null)
-		fetchRWAChainBreakdownChartDataMock.mockResolvedValue([])
-		fetchRWACategoryBreakdownChartDataMock.mockResolvedValue([])
-		fetchRWAPlatformBreakdownChartDataMock.mockResolvedValue([])
-		fetchRWAAssetGroupBreakdownChartDataMock.mockResolvedValue([])
-		fetchRWAAssetDataByIdMock.mockResolvedValue(null)
-		fetchRWAAssetChartDataMock.mockResolvedValue(null)
-		fetchRWAPerpsCurrentMock.mockResolvedValue([])
-		fetchRWAPerpsContractBreakdownChartDataMock.mockResolvedValue([])
-		fetchRWAPerpsOverviewBreakdownChartDataMock.mockReset()
-		fetchRWAPerpsOverviewBreakdownChartDataMock.mockResolvedValue([])
+		unfixtured = []
+		// The front page cards read these three splits; an empty split leaves its card empty.
+		routes = { [PERPS_CURRENT]: [], [CHAIN_SPLIT]: [], [venueSplit(true)]: [], [venueSplit(false)]: [] }
+		mocks.fetchJson.mockReset()
+		mocks.fetchJson.mockImplementation(async (url: string) => {
+			if (!(url in routes)) {
+				unfixtured.push(url)
+				throw new Error(`Unfixtured request: ${url}`)
+			}
+			const body = routes[url]
+			if (body instanceof Error) throw body
+			return structuredClone(body)
+		})
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+		// The overview swallows most upstream failures, so an unfixtured route must fail here.
+		if (unfixtured.length > 0) throw new Error(`Requests without a fixture:\n${unfixtured.join('\n')}`)
 	})
 
 	test('excludes assets tagged as RWA Perps from the standard rwa overview', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/all', NO_HISTORY)
+		serveListing([
 			{
 				id: 'treasury-1',
 				ticker: 'T1',
@@ -117,7 +102,7 @@ describe('rwa queries', () => {
 	})
 
 	test('serializes one canonical active-mcap history for the initial regular-page chart', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -130,12 +115,12 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('chain/all', {
 			activeMcap: [{ timestamp: 1, alpha: 10 }],
 			onChainMcap: [],
 			defiActiveTvl: []
 		})
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1000, alpha: 10 }])
+		serve({ [chainHistory('ethereum', 'activeMcap')]: [{ timestamp: 1, alpha: 10 }] })
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -146,17 +131,6 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'all' },
-			includeStablecoins: true,
-			includeGovernance: true
-		})
-		expect(fetchRWAChartMetricDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'chain', slug: 'ethereum' },
-			metric: 'activeMcap',
-			includeStablecoins: true,
-			includeGovernance: true
-		})
 		expect(result?.initialChartDatasets).toEqual([
 			{
 				metric: 'activeMcap',
@@ -178,7 +152,7 @@ describe('rwa queries', () => {
 	})
 
 	test('folds the front page chain lines at build time and leaves a failed chain in Others', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -191,14 +165,15 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('chain/all', {
 			activeMcap: [{ timestamp: 1, alpha: 15 }],
 			onChainMcap: [],
 			defiActiveTvl: []
 		})
-		fetchRWAChartMetricDataByAssetMock.mockImplementation(({ target }: { target: { slug: string } }) =>
-			Promise.resolve(target.slug === 'ethereum' ? [{ timestamp: 1000, alpha: 10 }] : null)
-		)
+		serve({
+			[chainHistory('ethereum', 'activeMcap')]: [{ timestamp: 1, alpha: 10 }],
+			[chainHistory('solana', 'activeMcap')]: new Error('[500] upstream')
+		})
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -220,7 +195,9 @@ describe('rwa queries', () => {
 	})
 
 	test('ships the front page cards from the chain split and the perps venue split, and none on a scoped page', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/all', NO_HISTORY)
+		serveBreakdown('chain/ethereum', NO_HISTORY)
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -234,24 +211,20 @@ describe('rwa queries', () => {
 				defiActiveTvl: { Ethereum: { Aave: 4 } }
 			}
 		])
-		fetchRWAChainBreakdownChartDataMock.mockResolvedValue([
-			{ timestamp: 0, Ethereum: 8 },
-			{ timestamp: 31 * 24 * 60 * 60 * 1000, Ethereum: 10 }
-		])
-		fetchRWAPerpsOverviewBreakdownChartDataMock.mockImplementation(({ includeCex }: { includeCex: boolean }) =>
-			Promise.resolve([
-				{
-					timestamp: 1,
-					Hyperliquid: 5,
-					...(includeCex ? { Binance: 20 } : {})
-				},
-				{
-					timestamp: 2,
-					Hyperliquid: 6,
-					...(includeCex ? { Binance: 24 } : {})
-				}
-			])
-		)
+		serve({
+			[CHAIN_SPLIT]: [
+				{ timestamp: 0, Ethereum: 8 },
+				{ timestamp: 31 * 24 * 60 * 60, Ethereum: 10 }
+			],
+			[venueSplit(true)]: [
+				{ timestamp: 1, Hyperliquid: 5, Binance: 20 },
+				{ timestamp: 2, Hyperliquid: 6, Binance: 24 }
+			],
+			[venueSplit(false)]: [
+				{ timestamp: 1, Hyperliquid: 5 },
+				{ timestamp: 2, Hyperliquid: 6 }
+			]
+		})
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -260,12 +233,6 @@ describe('rwa queries', () => {
 				platforms: [],
 				assetGroups: ['Treasuries']
 			} as never
-		})
-		expect(fetchRWAPerpsOverviewBreakdownChartDataMock).toHaveBeenCalledWith({
-			breakdown: 'venue',
-			key: 'openInterest',
-			target: { kind: 'all' },
-			includeCex: true
 		})
 		expect(result?.cards?.chainChange.bars).toEqual([{ name: 'Ethereum', changeUsd: 2, changePct: 25 }])
 		expect(result?.cards?.defiByProtocol.withBridges.bars).toEqual([{ name: 'Aave', value: 4 }])
@@ -290,7 +257,7 @@ describe('rwa queries', () => {
 	})
 
 	test('keeps suspicious assets visible while excluding them from initial totals and charts', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -316,12 +283,12 @@ describe('rwa queries', () => {
 				suspiciousReason: 'Unverified valuation source'
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('chain/all', {
 			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
 			onChainMcap: [],
 			defiActiveTvl: []
 		})
-		fetchRWAChartMetricDataByAssetMock.mockResolvedValue([{ timestamp: 1000, alpha: 10, beta: 20 }])
+		serve({ [chainHistory('ethereum', 'activeMcap')]: [{ timestamp: 1, alpha: 10, beta: 20 }] })
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -346,7 +313,7 @@ describe('rwa queries', () => {
 	})
 
 	test('groups an asset group page initial chart by platform, its default, with no chain fold', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -372,7 +339,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('assetGroup/public-equities', {
 			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
 			onChainMcap: [],
 			defiActiveTvl: []
@@ -401,7 +368,7 @@ describe('rwa queries', () => {
 	})
 
 	test('folds a platform page initial chart by asset name, its default, with no Platform series', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -427,7 +394,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('platform/ondo', {
 			activeMcap: [{ timestamp: 1, alpha: 10, beta: 20 }],
 			onChainMcap: [],
 			defiActiveTvl: []
@@ -468,8 +435,8 @@ describe('rwa queries', () => {
 			activeMcap: { Ethereum: index + 1 },
 			defiActiveTvl: {}
 		}))
-		fetchRWACurrentListingMock.mockResolvedValue(assets)
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveListing(assets)
+		serveBreakdown('platform/ondo', {
 			activeMcap: [Object.fromEntries([['timestamp', 1], ...assets.map((asset, index) => [asset.id, index + 1])])],
 			onChainMcap: [],
 			defiActiveTvl: []
@@ -512,7 +479,8 @@ describe('rwa queries', () => {
 	})
 
 	test('keeps selected-chain table metric breakdowns filtered and sorted', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/ethereum', NO_HISTORY)
+		serveListing([
 			{
 				id: 'multi-chain-1',
 				ticker: 'MC1',
@@ -575,7 +543,9 @@ describe('rwa queries', () => {
 	})
 
 	test('merges perps contracts into the overview rows', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/all', NO_HISTORY)
+		serveBreakdown('chain/ethereum', NO_HISTORY)
+		serveListing([
 			{
 				id: 'treasury-1',
 				canonicalMarketId: 'ondo/usdy',
@@ -638,19 +608,21 @@ describe('rwa queries', () => {
 			estimatedProtocolFeesAllTime: 0,
 			suspicious: false
 		}
-		fetchRWAPerpsCurrentMock.mockResolvedValue([
-			dexMarket,
-			{
-				...dexMarket,
-				id: 'binance:usdy',
-				contract: 'binance:USDY',
-				venue: 'Binance',
-				venueType: 'CEX',
-				parentPlatform: 'Binance',
-				issuer: null,
-				openInterest: 200
-			}
-		])
+		serve({
+			[PERPS_CURRENT]: [
+				dexMarket,
+				{
+					...dexMarket,
+					id: 'binance:usdy',
+					contract: 'binance:USDY',
+					venue: 'Binance',
+					venueType: 'CEX',
+					parentPlatform: 'Binance',
+					issuer: null,
+					openInterest: 200
+				}
+			]
+		})
 		const result = await getRWAAssetsOverview({
 			rwaList: {
 				chains: ['Ethereum'],
@@ -686,8 +658,6 @@ describe('rwa queries', () => {
 		expect(result?.typeOptions.map((option) => option.key)).not.toContain('Perp')
 		expect(result?.platforms).toContain('Ondo')
 		expect(result?.assetGroups).toContain('Treasuries')
-		expect(fetchRWAPerpsCurrentMock).toHaveBeenLastCalledWith(true)
-		expect(fetchRWAPerpsContractBreakdownChartDataMock).not.toHaveBeenCalled()
 		expect(result?.assets[1]).toMatchObject({
 			venueType: 'DEX',
 			attestations: null
@@ -712,7 +682,8 @@ describe('rwa queries', () => {
 	})
 
 	test('falls back to the spot overview when the perps markets request fails', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/all', NO_HISTORY)
+		serveListing([
 			{
 				id: 'treasury-1',
 				canonicalMarketId: 'ondo/usdy',
@@ -726,7 +697,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: { Ethereum: { Aave: 20 } }
 			}
 		])
-		fetchRWAPerpsCurrentMock.mockRejectedValue(new Error('temporary outage'))
+		serve({ [PERPS_CURRENT]: new Error('temporary outage') })
 
 		const result = await getRWAAssetsOverview({
 			rwaList: {
@@ -742,7 +713,7 @@ describe('rwa queries', () => {
 	})
 
 	test('requests initial category chart data with stablecoins enabled for stablecoin categories', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([])
+		serveListing([])
 
 		const stablecoinCategories = [
 			{ label: 'RWA Stablecoins', slug: 'rwa-stablecoins' },
@@ -751,8 +722,7 @@ describe('rwa queries', () => {
 		]
 
 		for (const category of stablecoinCategories) {
-			fetchRWAChartDataByAssetMock.mockClear()
-
+			serveBreakdown(`category/${category.slug}`, null)
 			await getRWAAssetsOverview({
 				category: category.slug,
 				rwaList: {
@@ -762,17 +732,16 @@ describe('rwa queries', () => {
 					assetGroups: []
 				} as never
 			})
-
-			expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-				target: { kind: 'category', slug: category.slug },
-				includeStablecoins: true,
-				includeGovernance: true
-			})
 		}
+
+		expect(requestedUrls()).toEqual(
+			expect.arrayContaining(stablecoinCategories.map(({ slug }) => assetBreakdown(`category/${slug}`)))
+		)
 	})
 
 	test('requests initial other-rwas category chart data with stablecoins and governance enabled', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([])
+		serveListing([])
+		serveBreakdown('category/other-rwas', null)
 
 		await getRWAAssetsOverview({
 			category: 'other-rwas',
@@ -784,15 +753,12 @@ describe('rwa queries', () => {
 			} as never
 		})
 
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'category', slug: 'other-rwas' },
-			includeStablecoins: true,
-			includeGovernance: true
-		})
+		expect(requestedUrls()).toContain(assetBreakdown('category/other-rwas'))
 	})
 
 	test('infers stablecoin inclusion for a platform whose only spot asset is a stablecoin', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('platform/curve', NO_HISTORY)
+		serveListing([
 			{
 				id: 'curve-usd',
 				ticker: 'crvUSD',
@@ -824,15 +790,12 @@ describe('rwa queries', () => {
 			includeRwaPerps: false,
 			includeBridgeTvl: true
 		})
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'platform', slug: 'curve' },
-			includeStablecoins: true,
-			includeGovernance: true
-		})
+		expect(requestedUrls()).toContain(assetBreakdown('platform/curve'))
 	})
 
 	test('keeps stablecoins off when a platform has as many base assets as stablecoins', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('platform/mixed', NO_HISTORY)
+		serveListing([
 			{
 				id: 'base',
 				ticker: 'BASE',
@@ -871,9 +834,10 @@ describe('rwa queries', () => {
 	})
 
 	test('attaches seven day prior values and first seen from the prefetched series', async () => {
+		serve({ [chainHistory('ethereum', 'activeMcap')]: NO_HISTORY })
 		const day = 86_400
 		const latest = 1_800_000_000
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'alpha',
 				canonicalMarketId: 'alpha',
@@ -900,7 +864,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('chain/all', {
 			activeMcap: [
 				{ timestamp: latest - 7 * day, alpha: 80 },
 				{ timestamp: latest - 2 * day, alpha: 85, beta: 40 },
@@ -959,7 +923,8 @@ describe('rwa queries', () => {
 	})
 
 	test('preserves original category order when filtering by a secondary category', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('category/other-rwas', NO_HISTORY)
+		serveListing([
 			{
 				id: 'stablecoin-1',
 				ticker: 'RUSD',
@@ -1006,57 +971,60 @@ describe('rwa queries', () => {
 	})
 
 	test('resolves perps-only platform slugs on platform overview routes', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([])
-		fetchRWAPerpsCurrentMock.mockResolvedValue([
-			{
-				id: 'perps-1',
-				timestamp: 1,
-				contract: 'xyz:gold',
-				venue: 'xyz',
-				venueType: 'DEX',
-				openInterest: 10,
-				openInterestChange24h: null,
-				volume24h: 20,
-				volume24hChange24h: null,
-				price: 1.01,
-				priceChange24h: 0,
-				fundingRate: 0,
-				premium: 0,
-				cumulativeFunding: 0,
-				referenceAsset: 'Gold',
-				referenceAssetGroup: 'Commodities',
-				assetClass: ['Commodities'],
-				parentPlatform: 'Trade[XYZ]',
-				pair: null,
-				marginAsset: null,
-				settlementAsset: null,
-				category: ['Commodities'],
-				issuer: 'XYZ',
-				website: null,
-				link: null,
-				oracleProvider: null,
-				description: null,
-				accessModel: 'Permissionless',
-				rwaClassification: 'RWA',
-				makerFeeRate: 0,
-				takerFeeRate: 0,
-				deployerFeeShare: 0,
-				oraclePx: 0,
-				midPx: 0,
-				prevDayPx: 0,
-				maxLeverage: 0,
-				szDecimals: 0,
-				fundingIntervalHours: 1,
-				volume7d: 0,
-				volume30d: 0,
-				volumeAllTime: 0,
-				estimatedProtocolFees24h: 0,
-				estimatedProtocolFees7d: 0,
-				estimatedProtocolFees30d: 0,
-				estimatedProtocolFeesAllTime: 0,
-				suspicious: false
-			}
-		])
+		serveBreakdown('platform/trade-xyz', NO_HISTORY)
+		serveListing([])
+		serve({
+			[PERPS_CURRENT]: [
+				{
+					id: 'perps-1',
+					timestamp: 1,
+					contract: 'xyz:gold',
+					venue: 'xyz',
+					venueType: 'DEX',
+					openInterest: 10,
+					openInterestChange24h: null,
+					volume24h: 20,
+					volume24hChange24h: null,
+					price: 1.01,
+					priceChange24h: 0,
+					fundingRate: 0,
+					premium: 0,
+					cumulativeFunding: 0,
+					referenceAsset: 'Gold',
+					referenceAssetGroup: 'Commodities',
+					assetClass: ['Commodities'],
+					parentPlatform: 'Trade[XYZ]',
+					pair: null,
+					marginAsset: null,
+					settlementAsset: null,
+					category: ['Commodities'],
+					issuer: 'XYZ',
+					website: null,
+					link: null,
+					oracleProvider: null,
+					description: null,
+					accessModel: 'Permissionless',
+					rwaClassification: 'RWA',
+					makerFeeRate: 0,
+					takerFeeRate: 0,
+					deployerFeeShare: 0,
+					oraclePx: 0,
+					midPx: 0,
+					prevDayPx: 0,
+					maxLeverage: 0,
+					szDecimals: 0,
+					fundingIntervalHours: 1,
+					volume7d: 0,
+					volume30d: 0,
+					volumeAllTime: 0,
+					estimatedProtocolFees24h: 0,
+					estimatedProtocolFees7d: 0,
+					estimatedProtocolFees30d: 0,
+					estimatedProtocolFeesAllTime: 0,
+					suspicious: false
+				}
+			]
+		})
 
 		const result = await getRWAAssetsOverview({
 			platform: 'trade-xyz',
@@ -1074,7 +1042,7 @@ describe('rwa queries', () => {
 
 	test('drops the active mcap chart metric for a platform whose whole supply is excluded', async () => {
 		// Crypto.com shape: onChainMcap is tracked but activeMcapData is off, so the API omits activeMcap.
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'cdc-nvda',
 				ticker: 'NVDA',
@@ -1088,7 +1056,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('platform/crypto-com', {
 			activeMcap: [],
 			onChainMcap: [{ timestamp: 1_787_702_400, 'cdc-nvda': 249_813 }],
 			defiActiveTvl: []
@@ -1106,15 +1074,11 @@ describe('rwa queries', () => {
 
 		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(false)
 		expect(result?.initialChartDatasets[0]?.metric).toBe('onChainMcap')
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'platform', slug: 'crypto-com' },
-			includeStablecoins: true,
-			includeGovernance: true
-		})
 	})
 
 	test('preloads the onchain fallback for an untracked regular-page scope', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serve({ [chainHistory('cronos', 'onChainMcap')]: NO_HISTORY })
+		serveListing([
 			{
 				id: 'cdc-nvda',
 				canonicalMarketId: 'cdc-nvda',
@@ -1129,7 +1093,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('chain/all', {
 			activeMcap: [],
 			onChainMcap: [{ timestamp: 1, 'cdc-nvda': 249_813 }],
 			defiActiveTvl: []
@@ -1150,7 +1114,7 @@ describe('rwa queries', () => {
 	})
 
 	test('keeps active mcap when configured even if the current breakdown is empty', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveListing([
 			{
 				id: 'rh-nvda',
 				ticker: 'NVDA',
@@ -1164,7 +1128,7 @@ describe('rwa queries', () => {
 				defiActiveTvl: {}
 			}
 		])
-		fetchRWAChartDataByAssetMock.mockResolvedValue({
+		serveBreakdown('platform/robinhood', {
 			activeMcap: [{ timestamp: 1_787_702_400, 'rh-nvda': 7_379_058 }],
 			onChainMcap: [],
 			defiActiveTvl: []
@@ -1182,15 +1146,11 @@ describe('rwa queries', () => {
 
 		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(true)
 		expect(result?.initialChartDatasets[0]?.metric).toBe('activeMcap')
-		expect(fetchRWAChartDataByAssetMock).toHaveBeenCalledWith({
-			target: { kind: 'platform', slug: 'robinhood' },
-			includeStablecoins: true,
-			includeGovernance: true
-		})
 	})
 
 	test('resolves active metadata-only platforms without inventing assets', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([])
+		serveBreakdown('platform/metadata-only', NO_HISTORY)
+		serveListing([])
 
 		const result = await getRWAAssetsOverview({
 			platform: 'metadata-only',
@@ -1212,66 +1172,69 @@ describe('rwa queries', () => {
 	})
 
 	test('excludes the RWA Perps bucket from category overview rows', async () => {
-		fetchRWAStatsMock.mockResolvedValue({
-			byCategory: {
-				Treasuries: {
-					base: {
-						onChainMcap: 100,
-						activeMcap: 90,
-						defiActiveTvl: 10,
-						assetCount: 1,
-						assetIssuers: ['Issuer A']
+		serve({ [`${RWA_SERVER_URL}/chart/category-breakdown?key=activeMcap`]: [] })
+		serve({
+			[STATS]: {
+				byCategory: {
+					Treasuries: {
+						base: {
+							onChainMcap: 100,
+							activeMcap: 90,
+							defiActiveTvl: 10,
+							assetCount: 1,
+							assetIssuers: ['Issuer A']
+						},
+						stablecoinsOnly: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						},
+						governanceOnly: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						},
+						stablecoinsAndGovernance: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						}
 					},
-					stablecoinsOnly: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
-					},
-					governanceOnly: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
-					},
-					stablecoinsAndGovernance: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
-					}
-				},
-				'RWA Perps': {
-					base: {
-						onChainMcap: 500,
-						activeMcap: 450,
-						defiActiveTvl: 0,
-						assetCount: 2,
-						assetIssuers: ['Issuer P']
-					},
-					stablecoinsOnly: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
-					},
-					governanceOnly: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
-					},
-					stablecoinsAndGovernance: {
-						onChainMcap: 0,
-						activeMcap: 0,
-						defiActiveTvl: 0,
-						assetCount: 0,
-						assetIssuers: []
+					'RWA Perps': {
+						base: {
+							onChainMcap: 500,
+							activeMcap: 450,
+							defiActiveTvl: 0,
+							assetCount: 2,
+							assetIssuers: ['Issuer P']
+						},
+						stablecoinsOnly: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						},
+						governanceOnly: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						},
+						stablecoinsAndGovernance: {
+							onChainMcap: 0,
+							activeMcap: 0,
+							defiActiveTvl: 0,
+							assetCount: 0,
+							assetIssuers: []
+						}
 					}
 				}
 			}
@@ -1283,7 +1246,8 @@ describe('rwa queries', () => {
 	})
 
 	test('ships only the logos of platforms present in the rows', async () => {
-		fetchRWACurrentListingMock.mockResolvedValue([
+		serveBreakdown('chain/all', NO_HISTORY)
+		serveListing([
 			{
 				id: 'usdy',
 				canonicalMarketId: 'ondo/usdy',

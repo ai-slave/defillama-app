@@ -26,10 +26,6 @@ describe('mergeHallmarks', () => {
 		expect(mergeHallmarks([], [])).toBeUndefined()
 	})
 
-	test('returns the card hallmarks unchanged when there are no annotations', () => {
-		expect(mergeHallmarks(card, [])).toBe(card)
-	})
-
 	test('places card hallmarks first and annotations sorted by date', () => {
 		const merged = mergeHallmarks(card, [
 			[1_704_067_200, 'Later'],

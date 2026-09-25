@@ -4,11 +4,10 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { TokenOverviewData } from '../tokenOverview'
 import { useFetchTokenOverviewChartData } from '../useFetchTokenOverviewChartData'
-
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
+const http = installFixtureFetch()
 
 const overview: TokenOverviewData = {
 	categories: [],
@@ -57,7 +56,6 @@ describe('useFetchTokenOverviewChartData', () => {
 	let client: QueryClient
 
 	beforeEach(() => {
-		fetchJsonMock.mockReset()
 		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -82,15 +80,17 @@ describe('useFetchTokenOverviewChartData', () => {
 
 	test('uses only 24H page data and isolates proxy results by timeframe', async () => {
 		const rangeRequest = Promise.withResolvers<{ data: { prices: Array<[number, number]> } }>()
-		fetchJsonMock.mockReturnValue(rangeRequest.promise)
+		http.serve({ '/api/public/tokens/charts/coingecko/bitcoin': () => rangeRequest.promise })
 
 		await render('24H')
 		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1000, 100]] })
-		expect(fetchJsonMock).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 
 		await render('7D')
 		expect(JSON.parse(container.textContent ?? '')).toEqual({})
-		expect(fetchJsonMock).toHaveBeenCalledExactlyOnceWith('/api/public/tokens/charts/coingecko/bitcoin?timeframe=7D')
+		expect(http.requests.map(({ url }) => url.pathname + url.search)).toEqual([
+			'/api/public/tokens/charts/coingecko/bitcoin?timeframe=7D'
+		])
 
 		await act(async () => rangeRequest.resolve({ data: { prices: [[2_000_000_000_000, 200]] } }))
 		await vi.waitFor(async () => {
@@ -100,6 +100,6 @@ describe('useFetchTokenOverviewChartData', () => {
 
 		await render('24H')
 		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1000, 100]] })
-		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
+		expect(http.requests).toHaveLength(1)
 	})
 })

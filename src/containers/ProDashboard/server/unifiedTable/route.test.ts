@@ -1,18 +1,45 @@
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { createLegacyProtocolsUnifiedTableResponse } from '~/containers/ProDashboard/unifiedTable/contracts'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const { fetchProtocolsTableMock } = vi.hoisted(() => ({ fetchProtocolsTableMock: vi.fn() }))
-
-vi.mock('./protocols', () => ({ fetchProtocolsTable: fetchProtocolsTableMock }))
-vi.mock('~/containers/Oracles/api', () => ({ fetchOracleMetrics: vi.fn() }))
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: vi.fn(),
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
+const { anyMock } = vi.hoisted(() => ({ anyMock: vi.fn() }))
+vi.mock('~/server/db/llama', () => ({ llamaDb: { any: anyMock } }))
 
 import { PROTOCOL_BASE_METRIC_FAMILIES } from '../../unifiedTable/protocolCapabilities'
 import { buildUnifiedTableQueryString } from '../../unifiedTableQuery'
 import { parseUnifiedTableQuery, unifiedTableHandler } from './route'
+
+installTelemetrySink()
+beforeEach(() => {
+	anyMock.mockReset().mockResolvedValue([])
+})
+
+describe('/api/public/pro-dashboard/unified-table/[strategy]', () => {
+	const feesQuery = { strategy: 'protocols', 'baseMetricFamilies[]': 'fees' }
+	const cacheControl = (res: ReturnType<typeof createMockNextApiResponse>) =>
+		res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]
+
+	test('serves a table publicly cached', async () => {
+		const res = createMockNextApiResponse()
+		await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: feesQuery }), res)
+		expect(res.statusCode).toBe(200)
+		expect(cacheControl(res)).toBe('public, max-age=300, s-maxage=300, stale-while-revalidate=60')
+	})
+
+	test('does not cache an invalid request or a source failure', async () => {
+		const invalid = createMockNextApiResponse()
+		await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: { strategy: 'chains' } }), invalid)
+		expect(invalid.statusCode).toBe(400)
+		expect(cacheControl(invalid)).toBeUndefined()
+
+		anyMock.mockRejectedValue(new Error('source unavailable'))
+		const failed = createMockNextApiResponse()
+		await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: feesQuery }), failed)
+		expect(failed.statusCode).toBe(500)
+		expect(cacheControl(failed)).toBeUndefined()
+	})
+})
 
 describe('parseUnifiedTableQuery', () => {
 	test('accepts, validates, and deduplicates canonical base metric families', () => {
@@ -54,6 +81,19 @@ describe('parseUnifiedTableQuery', () => {
 		).toBeNull()
 	})
 
+	test('accepts known point and supplemental metrics and rejects unknown ones', () => {
+		expect(parseUnifiedTableQuery({ strategy: 'protocols', 'pointMetrics[]': ['fees'] })?.pointMetrics).toEqual([
+			'fees'
+		])
+		expect(parseUnifiedTableQuery({ strategy: 'protocols', 'pointMetrics[]': ['fees', 'fee'] })).toBeNull()
+		expect(
+			parseUnifiedTableQuery({ strategy: 'protocols', 'supplementalMetrics[]': ['earnings'] })?.supplementalMetrics
+		).toEqual(['earnings'])
+		expect(
+			parseUnifiedTableQuery({ strategy: 'protocols', 'supplementalMetrics[]': ['bridge-aggregators'] })
+		).toBeNull()
+	})
+
 	test('parses validated semantic row membership and rejects unknown values', () => {
 		expect(
 			parseUnifiedTableQuery({ strategy: 'protocols', rowMembership: 'supplemental:earnings' })?.rowMembership
@@ -87,9 +127,8 @@ describe('parseUnifiedTableQuery', () => {
 	})
 
 	test('returns legacy chain metrics without the new availability envelope', async () => {
-		fetchProtocolsTableMock.mockResolvedValueOnce({
+		const result = createLegacyProtocolsUnifiedTableResponse({
 			rows: [],
-			parentMetrics: {},
 			chainMetrics: {
 				ethereum: {
 					availability: 'available',
@@ -104,26 +143,7 @@ describe('parseUnifiedTableQuery', () => {
 				}
 			}
 		})
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: { strategy: 'protocols', 'rowHeaders[]': ['protocol', 'chain'], 'chains[]': 'Ethereum' }
-		})
-		const res = createMockNextApiResponse()
-
-		await unifiedTableHandler(req, res)
-
-		expect(fetchProtocolsTableMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				baseMetricFamilies: [...PROTOCOL_BASE_METRIC_FAMILIES],
-				needsOracleMembership: true,
-				rowMembership: { kind: 'all-protocols' }
-			})
-		)
-		expect(res.setHeader).toHaveBeenCalledWith(
-			'Cache-Control',
-			'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
-		)
-		expect(res.json).toHaveBeenCalledWith({
+		expect(result).toEqual({
 			rows: [],
 			chainMetrics: {
 				ethereum: {
@@ -137,16 +157,4 @@ describe('parseUnifiedTableQuery', () => {
 			}
 		})
 	})
-})
-
-test('does not cache invalid requests or source failures', async () => {
-	const invalid = createMockNextApiResponse()
-	await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: { strategy: 'chains' } }), invalid)
-	expect(invalid.status).toHaveBeenCalledWith(400)
-	expect(invalid.setHeader.mock.calls.some(([name]) => name === 'Cache-Control')).toBe(false)
-	fetchProtocolsTableMock.mockRejectedValueOnce(new Error('source unavailable'))
-	const failed = createMockNextApiResponse()
-	await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: { strategy: 'protocols' } }), failed)
-	expect(failed.status).toHaveBeenCalledWith(500)
-	expect(failed.setHeader.mock.calls.some(([name]) => name === 'Cache-Control')).toBe(false)
 })

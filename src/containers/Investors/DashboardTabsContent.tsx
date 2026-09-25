@@ -70,8 +70,6 @@ function ComingSoonSection({ label }: { label: string }) {
 	)
 }
 
-export const DEFAULT_TABS: Array<DashboardTabConfig> = [{ id: 'dashboard', label: 'Overview' }]
-
 export function TabLabel({ tab }: { tab: DashboardTabConfig }) {
 	if (!tab.comingSoon) return <>{tab.label}</>
 	return (

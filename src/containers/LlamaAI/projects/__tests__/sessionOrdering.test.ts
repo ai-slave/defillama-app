@@ -145,7 +145,9 @@ describe('bumpProjectSessionActivity', () => {
 
 	test('leaves the list untouched when the session is not in it', () => {
 		const sessions = [session({ sessionId: 'a' })]
-		expect(bumpProjectSessionActivity(sessions, 'missing', '2026-08-09T00:00:00Z')).toBe(sessions)
+		expect(bumpProjectSessionActivity(sessions, 'missing', '2026-08-09T00:00:00Z')).toEqual([
+			session({ sessionId: 'a' })
+		])
 	})
 
 	test('returns undefined when there is no cached list', () => {

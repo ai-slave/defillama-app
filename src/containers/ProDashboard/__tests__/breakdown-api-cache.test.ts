@@ -1,52 +1,50 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => ({
-	getTvlBreakdownData: vi.fn(),
-	getProtocolChainBreakdownData: vi.fn(),
-	fetchAdapterChainMetrics: vi.fn(),
-	fetchAdapterProtocolChartData: vi.fn()
-}))
-
-vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/tvl', () => ({
-	getTvlBreakdownData: mocks.getTvlBreakdownData
-}))
-
-vi.mock('~/containers/ProDashboard/server/chartBuilder/protocols/breakdowns/byChain', () => ({
-	getProtocolChainBreakdownData: mocks.getProtocolChainBreakdownData
-}))
-
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
-	fetchAdapterProtocolChartData: mocks.fetchAdapterProtocolChartData
-}))
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const database = vi.hoisted(() => ({ any: vi.fn() }))
+vi.mock('~/server/db/llama', () => ({ llamaDb: database }))
+const http = installFixtureFetch()
 
 import { chainNativeByChainBreakdown } from '../server/chartBuilder/chains'
 import { protocolTvlBreakdown, protocolTvlByChainBreakdown } from '../server/chartBuilder/protocols'
 
 beforeEach(() => {
-	vi.clearAllMocks()
+	database.any
+		.mockReset()
+		.mockResolvedValue([
+			{ protocol_slug: 'aave', parent_protocol_slug: null, category: 'Lending', tvl: 2, exclude_tvl_from_parent: false }
+		])
 })
 
 describe('Pro Dashboard final breakdown response caches', () => {
 	test('serializes and reuses the protocol TVL breakdown', async () => {
-		mocks.getTvlBreakdownData.mockResolvedValue({ series: [{ name: 'Aave', data: [[1, 2]] }] })
+		http.serve({
+			'/lite/protocols2': { protocols: [], parentProtocols: [], chains: [], protocolCategories: [] },
+			'/v2/chart/tvl/protocol/aave/chain-breakdown': [[86_400, { Gnosis: 2 }]],
+			'/lite/charts/Gnosis': { tvl: [[86_400, 2]] }
+		})
 		const request = {
 			method: 'GET',
-			url: '/api/public/pro-dashboard/chart-builder/protocols/breakdowns/tvl?categories=serialized-cache',
-			query: { categories: 'serialized-cache' },
+			url: '/api/public/pro-dashboard/chart-builder/protocols/breakdowns/tvl?chains=Gnosis',
+			query: { chains: 'Gnosis' },
 			headers: {}
 		}
 
 		const first = await protocolTvlBreakdown.handle(request)
+		const sourceRequests = http.requests.length
 		const second = await protocolTvlBreakdown.handle(request)
 
 		expect(first).toMatchObject({ status: 200, serializedJson: expect.any(String) })
+		expect('serializedJson' in first ? JSON.parse(first.serializedJson) : first.body).toMatchObject({
+			series: [{ data: [[86_400, 2]] }]
+		})
+		expect(sourceRequests).toBeGreaterThan(0)
+		expect(http.requests).toHaveLength(sourceRequests)
 		expect(second).toEqual(first)
-		expect(mocks.getTvlBreakdownData).toHaveBeenCalledTimes(1)
+		expect(database.any).toHaveBeenCalledOnce()
 	})
 
 	test('serializes and reuses the protocol TVL by-chain breakdown', async () => {
-		mocks.getProtocolChainBreakdownData.mockResolvedValue({ series: [{ name: 'Ethereum', data: [[1, 2]] }] })
+		http.serve({ '/v2/chart/tvl/protocol/serialized-cache/chain-breakdown': [[86_400, { Ethereum: 2 }]] })
 		const request = {
 			method: 'GET',
 			url: '/api/public/pro-dashboard/chart-builder/protocols/breakdowns/by-chain/tvl?protocol=serialized-cache',
@@ -55,26 +53,33 @@ describe('Pro Dashboard final breakdown response caches', () => {
 		}
 
 		const first = await protocolTvlByChainBreakdown.handle(request)
+		const sourceRequests = http.requests.length
 		const second = await protocolTvlByChainBreakdown.handle(request)
 
 		expect(first).toMatchObject({ status: 200, serializedJson: expect.any(String) })
+		expect('serializedJson' in first ? JSON.parse(first.serializedJson) : first.body).toMatchObject({
+			series: [{ data: [[86_400, 2]] }]
+		})
+		expect(sourceRequests).toBeGreaterThan(0)
+		expect(http.requests).toHaveLength(sourceRequests)
 		expect(second).toEqual(first)
-		expect(mocks.getProtocolChainBreakdownData).toHaveBeenCalledTimes(1)
 	})
 
 	test('serializes and reuses the chain-native by-chain breakdown', async () => {
-		mocks.fetchAdapterChainMetrics.mockResolvedValue({
-			protocols: [
-				{
-					name: 'Serialized Cache Chain',
-					slug: 'serialized-cache-chain',
-					protocolType: 'chain',
-					total24h: 2
-				}
-			],
-			allChains: []
+		http.serve({
+			'/v2/metrics/fees': {
+				protocols: [
+					{
+						name: 'Serialized Cache Chain',
+						slug: 'serialized-cache-chain',
+						protocolType: 'chain',
+						total24h: 2
+					}
+				],
+				allChains: []
+			}
 		})
-		mocks.fetchAdapterProtocolChartData.mockResolvedValue([[1, 2]])
+		http.serve({ '/v2/chart/fees/protocol/serialized-cache-chain': [[86_400, 2]] })
 		const request = {
 			method: 'GET',
 			url: '/api/public/pro-dashboard/chart-builder/chains/breakdowns/by-chain/chain-fees?chains=Serialized%20Cache%20Chain',
@@ -83,11 +88,15 @@ describe('Pro Dashboard final breakdown response caches', () => {
 		}
 
 		const first = await chainNativeByChainBreakdown.handle(request)
+		const sourceRequests = http.requests.length
 		const second = await chainNativeByChainBreakdown.handle(request)
 
 		expect(first).toMatchObject({ status: 200, serializedJson: expect.any(String) })
+		expect('serializedJson' in first ? JSON.parse(first.serializedJson) : first.body).toMatchObject({
+			series: [{ data: [[86_400, 2]] }]
+		})
+		expect(sourceRequests).toBeGreaterThan(0)
+		expect(http.requests).toHaveLength(sourceRequests)
 		expect(second).toEqual(first)
-		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledTimes(1)
-		expect(mocks.fetchAdapterProtocolChartData).toHaveBeenCalledTimes(1)
 	})
 })

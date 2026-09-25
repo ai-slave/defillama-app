@@ -1,9 +1,7 @@
-import type { ECharts } from 'echarts'
-import * as echarts from 'echarts/core'
 import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import { getChartTheme } from '../shared/chartTheme'
-import { buildMultiSeries } from './series'
+import { buildMultiSeries, projectionLabelFits } from './series'
 
 const chartTheme = getChartTheme(false)
 const NO_ICONS: ReadonlySet<string> = new Set()
@@ -32,27 +30,10 @@ describe('MultiSeriesChart series construction', () => {
 			chartTheme
 		})
 
-		expect(series[0]?.emphasis).toEqual({ itemStyle: { color: echarts.color.lift(CHART_COLORS[0]!, 0.25) } })
-		expect(series[1]?.emphasis).toEqual({ itemStyle: { color: echarts.color.lift(CHART_COLORS[1]!, 0.25) } })
+		expect(series[0]?.emphasis).toEqual({ itemStyle: { color: 'rgba(87,141,221,1)' } })
+		expect(series[1]?.emphasis).toEqual({ itemStyle: { color: 'rgba(238,86,138,1)' } })
 		expect(series[0]?.blur).toBeUndefined()
 		expect(series[1]?.blur).toBeUndefined()
-	})
-
-	test('keeps line emphasis local to visible point symbols', () => {
-		const series = requireLineSeries(
-			buildMultiSeries({
-				charts: [{ name: 'Line', type: 'line', encode: { x: 'timestamp', y: 'Line' } }],
-				selectedCharts: undefined,
-				expandTo100Percent: false,
-				solidChartAreaStyle: false,
-				validLegendIcons: NO_ICONS,
-				chartTheme
-			})[0]
-		)
-
-		const emphasisColor = echarts.color.lift(CHART_COLORS[0]!, 0.25)
-		expect(series.emphasis).toEqual({ itemStyle: { color: emphasisColor } })
-		expect(series.blur).toBeUndefined()
 	})
 
 	test('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
@@ -95,38 +76,12 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series.endLabel).toMatchObject({ formatter: 'TBD', offset: [-40, 10] })
 	})
 
-	test('styles forecast series and hides only end labels that are too short to fit', () => {
-		const instance = {
-			isDisposed: () => false,
-			convertToPixel: (_finder: unknown, value: number) => value * 2
-		} as unknown as ECharts
-		const getChart = () => instance
-		const series = requireLineSeries(
-			buildMultiSeries({
-				charts: [
-					{
-						name: 'Forecast',
-						type: 'line',
-						encode: { x: 0, y: 1 },
-						isForecast: true
-					}
-				],
-				selectedCharts: undefined,
-				expandTo100Percent: false,
-				solidChartAreaStyle: false,
-				validLegendIcons: NO_ICONS,
-				chartTheme,
-				getChart
-			})[0]
-		)
-
-		expect(series.itemStyle).toMatchObject({ opacity: 0.5 })
-		expect(series.lineStyle).toMatchObject({ type: 'dashed', opacity: 0.5 })
-		expect(series.endLabel).toMatchObject({ offset: [-80, 15] })
-		const formatter = series.endLabel?.formatter
-		if (typeof formatter !== 'function') throw new Error('Expected a projection label formatter')
-		expect(formatter({ value: [0, 7] } as never)).toBe('')
-		expect(formatter({ value: [0, 8] } as never)).toBe('Forecast')
+	test('hides a projection end label only when its segment is too short to fit it', () => {
+		expect(projectionLabelFits(100, 84)).toBe(true)
+		expect(projectionLabelFits(84, 100)).toBe(true)
+		expect(projectionLabelFits(100, 85)).toBe(false)
+		// Log axes project zero to NaN; the label stays rather than disappearing.
+		expect(projectionLabelFits(100, Number.NaN)).toBe(true)
 	})
 
 	test('keeps fallback colors stable when an earlier series is filtered out', () => {
@@ -163,6 +118,19 @@ describe('MultiSeriesChart series construction', () => {
 
 		expect(series[0]).toMatchObject({ legendIcon: 'image://https://icons/probed.png' })
 		expect(series[1]).not.toHaveProperty('legendIcon')
+	})
+
+	test('connects line gaps when the chart asks for it', () => {
+		const [line] = buildMultiSeries({
+			charts: [{ type: 'line', name: 'Value', encode: { x: 0, y: 1 }, connectNulls: true }],
+			selectedCharts: undefined,
+			expandTo100Percent: false,
+			solidChartAreaStyle: false,
+			validLegendIcons: NO_ICONS,
+			chartTheme
+		})
+
+		expect(line).toMatchObject({ type: 'line', connectNulls: true })
 	})
 
 	test('passes a typed step mode to line series', () => {

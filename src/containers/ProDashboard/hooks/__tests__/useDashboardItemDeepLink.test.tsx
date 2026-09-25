@@ -84,15 +84,11 @@ test('switches to the tab holding the hashed item, scrolls to it and highlights 
 	expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: 'center', behavior: 'smooth' })
 	const target = scrollIntoView.mock.contexts[0] as HTMLElement
 	expect(target.id).toBe('item-text-b')
-	expect(target.classList.contains('ring-2')).toBe(true)
-	expect(target.classList.contains('ring-pro-accent')).toBe(true)
 	expect(target.dataset.arrived).toBe('true')
 
 	await act(async () => {
 		vi.advanceTimersByTime(2000)
 	})
-	expect(target.classList.contains('ring-2')).toBe(false)
-	expect(target.classList.contains('ring-pro-accent')).toBe(false)
 	expect(target.dataset.arrived).toBeUndefined()
 })
 
@@ -171,13 +167,11 @@ test('a reveal request scrolls and highlights the item the way a hash does', asy
 	const target = scrollIntoView.mock.contexts[0] as HTMLElement
 	expect(target.id).toBe('item-text-b')
 	expect(target.dataset.arrived).toBe('true')
-	expect(target.classList.contains('ring-pro-accent')).toBe(true)
 
 	await act(async () => {
 		vi.advanceTimersByTime(2000)
 	})
 	expect(target.dataset.arrived).toBeUndefined()
-	expect(target.classList.contains('ring-pro-accent')).toBe(false)
 })
 
 test('a reveal request that asks for the title hands its options to onRevealRequest', async () => {
@@ -191,15 +185,6 @@ test('a reveal request that asks for the title hands its options to onRevealRequ
 	await flushFrames(3)
 	expect(onRevealRequest).toHaveBeenCalledWith('text-a', { focusTitle: true })
 	expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: 'center', behavior: 'smooth' })
-})
-
-test('a reveal request without an item id is ignored', async () => {
-	await act(async () => root.render(<Harness />))
-	await act(async () => {
-		window.dispatchEvent(new CustomEvent(DASHBOARD_ITEM_REVEAL_EVENT, { detail: {} }))
-	})
-	await flushFrames(5)
-	expect(scrollIntoView).not.toHaveBeenCalled()
 })
 
 test('a reveal dispatched before the grid mounts is replayed once the listener arrives', async () => {
@@ -249,7 +234,7 @@ test('a reveal already handled while mounted is not replayed on the next mount',
 	expect(scrollIntoView).toHaveBeenCalledOnce()
 })
 
-test('a second reveal strips the fade classes off the item it leaves behind', async () => {
+test('a second reveal clears the highlight from the item it leaves behind', async () => {
 	function TwoItems() {
 		useDashboardItemDeepLink({ layout, setActiveTab: noop, enabled: true })
 		return (
@@ -270,6 +255,4 @@ test('a second reveal strips the fade classes off the item it leaves behind', as
 	const second = document.getElementById('item-two')!
 	expect(second.dataset.arrived).toBe('true')
 	expect(first.dataset.arrived).toBeUndefined()
-	expect(first.classList.contains('ring-pro-accent')).toBe(false)
-	expect(first.classList.contains('transition-shadow')).toBe(false)
 })

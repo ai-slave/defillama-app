@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -5,6 +7,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ query: {}, pathname: '/rwa', asPath: '/rwa', push: vi.fn(), replace: vi.fn() })
 }))
 
+import { METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
 import { foldRwaPerpsTotals } from '../../cards/cardData'
 import { perpsAsset, spotAsset } from '../../table/__tests__/fixtures'
 import { buildRwaKeyMetricsCsv, RWAKeyMetrics, type RWAKeyMetricsProps } from '../KeyMetrics'
@@ -21,51 +24,46 @@ function props(overrides: Partial<RWAKeyMetricsProps> = {}): RWAKeyMetricsProps 
 	}
 }
 
+function render(overrides: Partial<RWAKeyMetricsProps> = {}) {
+	const root = document.createElement('div')
+	root.innerHTML = renderToStaticMarkup(<RWAKeyMetrics {...props(overrides)} />)
+	return root
+}
+
+/* Every section and row value in panel order: onchain AUM, its change, active / onchain, DeFi TVL, its change,
+utilization, largest protocol, perps OI, its change, DEX share, perps volume. */
+function rowValues(root: HTMLElement) {
+	return Array.from(root.querySelectorAll(METRIC_VALUE_SELECTOR), (value) => value.textContent)
+}
+
 describe('RWAKeyMetrics', () => {
-	test('shows the headline with its change and the three sections with their rows', () => {
-		const markup = renderToStaticMarkup(<RWAKeyMetrics {...props()} />)
-		expect(markup).toContain('Total RWA Active AUM')
-		expect(markup).toContain('$800,000')
-		expect(markup).toContain('+1.27%')
-		expect(markup).toContain('24h')
-		expect(markup).toContain('Key Metrics')
-		expect(markup).toContain('Total RWA Onchain AUM')
-		expect(markup).toContain('Change (24h)')
-		expect(markup).toContain('Active / Onchain')
-		expect(markup).toContain('80%')
-		expect(markup).toContain('DeFi Active TVL')
-		expect(markup).toContain('Utilization')
-		expect(markup).toContain('12.5%')
-		expect(markup).toContain('Largest protocol')
-		expect(markup).toContain('Aave')
-		expect(markup).toContain('RWA Perps OI')
-		expect(markup).toContain('Change (24h)')
-		expect(markup).toContain('+25.00%')
-		expect(markup).toContain('DEX share')
-		expect(markup).toContain('100%')
-		expect(markup).toContain('Volume (24h)')
-		expect(markup).not.toContain('Total Asset Issuers')
-		expect(markup).not.toContain('Live Assets')
+	test('shows the headline with its change and every section and row value', () => {
+		const root = render()
+		expect(root.textContent).toContain('$800,000+1.27%24h')
+		expect(rowValues(root)).toEqual([
+			'$1m',
+			'+1.01%',
+			'80%',
+			'$100,000',
+			'+1.01%',
+			'12.5%',
+			'Aave$100,000',
+			'$5,000',
+			'+25.00%',
+			'100%',
+			'$1,000'
+		])
 	})
 
 	test('opens with every section collapsed, like the home page', () => {
-		const markup = renderToStaticMarkup(<RWAKeyMetrics {...props()} />)
-		expect(markup.split('<details').length - 1).toBe(3)
-		expect(markup).not.toContain('open=""')
-	})
-
-	test('reads 24h on every change, whatever the table period', () => {
-		const markup = renderToStaticMarkup(<RWAKeyMetrics {...props()} />)
-		expect(markup).toContain('Change (24h)')
-		expect(markup).not.toContain('Change (7d)')
-		expect(markup).not.toContain('30d')
+		const sections = Array.from(render().querySelectorAll('details'))
+		expect(sections).toHaveLength(3)
+		expect(sections.map((section) => section.open)).toEqual([false, false, false])
 	})
 
 	test('shows gaps as N/A, never as zero', () => {
-		const markup = renderToStaticMarkup(
-			<RWAKeyMetrics {...props({ perps: foldRwaPerpsTotals([spotAsset()], true), largestProtocol: null })} />
-		)
-		expect(markup.split('N/A').length - 1).toBeGreaterThanOrEqual(4)
+		const root = render({ perps: foldRwaPerpsTotals([spotAsset()], true), largestProtocol: null })
+		expect(rowValues(root).slice(6)).toEqual(['N/A', 'N/A', 'N/A', 'N/A', 'N/A'])
 	})
 
 	test('shows a missing money value as a gap, never as zero', () => {

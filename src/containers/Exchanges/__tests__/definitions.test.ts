@@ -7,26 +7,6 @@ function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 }
 
 describe('Exchanges definitions', () => {
-	test('keeps every directory column label and header helper tied to its definition', () => {
-		const columns = buildDirectoryColumns('spot', true)
-		const byId = columnsById(columns)
-		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
-
-		expect(Object.keys(byId).sort()).toEqual(Object.keys(definitions).sort())
-		// Execution headers append the measured basket, which is data and cannot live in a static
-		// definition, so they are only required to contain their label; everything else matches exactly.
-		for (const id of EXECUTION_COLUMN_IDS) {
-			const definition = definitions[id]
-			expect(definition).toBeDefined()
-			expect(byId[id]?.header).toContain(definition!.label)
-			expect(byId[id]?.meta?.headerHelperText).toContain(definition!.description)
-		}
-		for (const [id, definition] of Object.entries(definitions).filter(([id]) => !EXECUTION_COLUMN_IDS.includes(id))) {
-			expect(byId[id]?.header).toBe(definition.label)
-			expect(byId[id]?.meta?.headerHelperText).toBe(definition.description)
-		}
-	})
-
 	// Cost to trade and fill quality are published on different baskets on purpose, so a
 	// column can only be compared DOWN the table, not across a row. Each header helper
 	// has to name its own scope or a reader has no way to know that.

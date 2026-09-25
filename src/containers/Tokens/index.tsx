@@ -29,7 +29,12 @@ import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
-import { NAME_COLUMN_WIDTH, TOKENS_HIDEABLE_COLUMN_SPECS, TOKENS_HIDEABLE_COLUMNS_WIDTH } from './columnSpecs'
+import {
+	NAME_COLUMN_WIDTH,
+	TOKENS_HIDEABLE_COLUMN_SPECS,
+	TOKENS_HIDEABLE_COLUMNS_WIDTH,
+	type TokensColumnSpec
+} from './columnSpecs'
 import { prepareTokensCsv } from './csv'
 import {
 	buildTokensFiltersQueryUpdate,
@@ -253,6 +258,13 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 	)
 }
 
+const SPEC_HEADERS = new Map(TOKENS_HIDEABLE_COLUMN_SPECS.map((spec) => [spec.id, spec.header]))
+
+// The column picker and CSV read headers from the specs, so the table header comes from the same place.
+function specColumn(id: TokensColumnSpec['id']) {
+	return { id, header: SPEC_HEADERS.get(id)! }
+}
+
 export const TOKENS_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
@@ -279,8 +291,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.price ?? undefined, {
-		id: 'price',
-		header: 'Price',
+		...specColumn('price'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.price} />,
 		meta: {
 			headerClassName: 'w-[140px] min-w-[140px]',
@@ -289,8 +300,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.priceChange24h ?? undefined, {
-		id: 'priceChange24h',
-		header: '24H',
+		...specColumn('priceChange24h'),
 		cell: ({ row }) => (
 			<PercentValue value={row.original.display.priceChange24h} tone={row.original.display.priceChange24hTone} />
 		),
@@ -301,8 +311,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.priceChange7d ?? undefined, {
-		id: 'priceChange7d',
-		header: '7D',
+		...specColumn('priceChange7d'),
 		cell: ({ row }) => (
 			<PercentValue value={row.original.display.priceChange7d} tone={row.original.display.priceChange7dTone} />
 		),
@@ -313,8 +322,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.priceChange30d ?? undefined, {
-		id: 'priceChange30d',
-		header: '30D',
+		...specColumn('priceChange30d'),
 		cell: ({ row }) => (
 			<PercentValue value={row.original.display.priceChange30d} tone={row.original.display.priceChange30dTone} />
 		),
@@ -325,8 +333,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.marketCap ?? undefined, {
-		id: 'marketCap',
-		header: 'MCap',
+		...specColumn('marketCap'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.marketCap} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -335,8 +342,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.fdv ?? undefined, {
-		id: 'fdv',
-		header: 'FDV',
+		...specColumn('fdv'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fdv} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -345,8 +351,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.outstandingFdv ?? undefined, {
-		id: 'outstandingFdv',
-		header: 'OFDV',
+		...specColumn('outstandingFdv'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.outstandingFdv} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -355,8 +360,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.unlockedPercent ?? undefined, {
-		id: 'unlockedPercent',
-		header: '% Unlocked',
+		...specColumn('unlockedPercent'),
 		cell: ({ row }) => (
 			<ProgressPercentValue
 				value={row.original.display.unlockedPercent}
@@ -370,8 +374,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.spotVolume24h ?? undefined, {
-		id: 'spotVolume24h',
-		header: '24H Spot Vol',
+		...specColumn('spotVolume24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.spotVolume24h} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -380,8 +383,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.perpsVolume24h ?? undefined, {
-		id: 'perpsVolume24h',
-		header: '24H Perps Vol',
+		...specColumn('perpsVolume24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.perpsVolume24h} />,
 		meta: {
 			headerClassName: 'w-[120px] min-w-[120px]',
@@ -390,8 +392,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.openInterest24h ?? undefined, {
-		id: 'openInterest24h',
-		header: 'OI',
+		...specColumn('openInterest24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.openInterest24h} />,
 		meta: {
 			headerClassName: 'w-[110px] min-w-[110px]',
@@ -400,8 +401,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.fees24h ?? undefined, {
-		id: 'fees24h',
-		header: '24H Fees',
+		...specColumn('fees24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fees24h} />,
 		meta: {
 			headerClassName: 'w-[110px] min-w-[110px]',
@@ -410,8 +410,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.revenue24h ?? undefined, {
-		id: 'revenue24h',
-		header: '24H Rev',
+		...specColumn('revenue24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.revenue24h} />,
 		meta: {
 			headerClassName: 'w-[110px] min-w-[110px]',
@@ -420,8 +419,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.holdersRevenue24h ?? undefined, {
-		id: 'holdersRevenue24h',
-		header: '24H Holders Rev',
+		...specColumn('holdersRevenue24h'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.holdersRevenue24h} />,
 		meta: {
 			headerClassName: 'w-[150px] min-w-[150px]',
@@ -430,8 +428,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.trsPercent ?? undefined, {
-		id: 'trsPercent',
-		header: 'TRS %',
+		...specColumn('trsPercent'),
 		cell: ({ row }) => (
 			<ProgressPercentValue
 				value={row.original.display.trsPercent}
@@ -446,8 +443,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.rights ?? undefined, {
-		id: 'rights',
-		header: 'Rights',
+		...specColumn('rights'),
 		cell: ({ getValue, row }) => (
 			<RightsPie rights={getValue() ?? null} fullRightsHref={row.original.tokenRightsHref} />
 		),
@@ -459,8 +455,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.unlock30dUsd ?? undefined, {
-		id: 'unlock30dUsd',
-		header: 'Past 30D Unlocks',
+		...specColumn('unlock30dUsd'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.unlock30dUsd} />,
 		meta: {
 			headerClassName: 'w-[160px] min-w-[160px]',
@@ -470,8 +465,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 		}
 	}),
 	columnHelper.accessor((row) => row.upcomingUnlockUsd ?? undefined, {
-		id: 'upcomingUnlockUsd',
-		header: 'Next 30D Unlocks',
+		...specColumn('upcomingUnlockUsd'),
 		cell: ({ row }) => <CurrencyValue value={row.original.display.upcomingUnlockUsd} />,
 		meta: {
 			headerClassName: 'w-[160px] min-w-[160px]',

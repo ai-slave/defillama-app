@@ -1,73 +1,67 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import type { IProtocolMetricsV2Api } from '~/containers/ProtocolOverview/api.types'
 import { getStaticProps as getCexStaticProps } from '~/pages/cex/[cex]'
 import { getStaticProps as getCexAssetsStaticProps } from '~/pages/cex/assets/[cex]'
 import { getStaticProps as getCexStablecoinsStaticProps } from '~/pages/cex/stablecoins/[cex]'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { resolveCexParamFromMetadata } from '../server/routes'
 import { cryptoComCexMetadataCache } from './metadataFixture'
 
-vi.mock('~/constants', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/constants')>()
-	return {
-		...actual,
-		SKIP_BUILD_STATIC_GENERATION: false
-	}
-})
-
-vi.mock('~/utils/maxAgeForNext', () => ({
-	maxAgeForNext: () => 123
+vi.mock('~/containers/Markets/server/dataset.server', () => ({
+	resolveExchangeByDefillamaCexSlug: async () => null
 }))
 
-vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: (_label: string, fn: any) => fn
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: cryptoComCexMetadataCache,
-	refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
-}))
-
-vi.mock('~/containers/ProtocolOverview/queries', () => ({
-	getProtocolOverviewPageData: vi.fn(({ protocolId }: { protocolId: string }) =>
-		Promise.resolve({
-			name: protocolId,
-			category: 'CEX',
-			metrics: { tvl: true, stablecoins: true },
-			seoTitle: protocolId,
-			seoDescription: 'CEX overview'
-		})
-	)
-}))
-
-vi.mock('~/containers/ProtocolOverview/api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/containers/ProtocolOverview/api')>()
-	return {
-		...actual,
-		fetchProtocolOverviewMetrics: vi.fn((slug: string) =>
-			Promise.resolve({ name: slug, parentProtocol: null, otherProtocols: [], category: 'CEX' })
-		)
-	}
-})
+const metadata = installMetadataSeeder()
+const http = installFixtureFetch()
+const metrics: IProtocolMetricsV2Api = {
+	id: 'crypto-com',
+	name: 'Crypto.com',
+	symbol: '-',
+	url: 'https://crypto.com',
+	description: null,
+	logo: null,
+	gecko_id: null,
+	cmcId: null,
+	chains: ['Ethereum'],
+	currentChainTvls: { Ethereum: 100 },
+	mcap: null,
+	category: 'CEX',
+	tags: ['CEX'],
+	chain: 'Ethereum',
+	module: 'crypto-com/index.js',
+	hacks: [],
+	raises: []
+}
 
 describe('CEX routes', () => {
 	beforeEach(() => {
-		vi.clearAllMocks()
+		metadata.seed({ ...cryptoComCexMetadataCache, emissionsSupplyMetrics: {} })
+		http.serve({
+			[`${V2_SERVER_URL}/metrics/tvl/protocol/crypto-com`]: metrics,
+			[`${V2_SERVER_URL}/metrics/tvl/protocol/crypto.com`]: metrics,
+			[`${V2_SERVER_URL}/chart/tvl/protocol/crypto.com`]: [[1, 100]],
+			'/lite/protocols2': { protocols: [], chains: [], parentProtocols: [], protocolCategories: [] },
+			'/blockExplorers.json': [],
+			'/research/sponsors/lookup/cex/crypto-com': { reports: [] }
+		})
 	})
 
 	test('renders the legacy overview, assets, and stablecoin pages', async () => {
 		const overview = await getCexStaticProps({ params: { cex: 'crypto-com' } } as never)
-		expect(overview).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
+		expect(overview).toMatchObject({ props: { name: 'Crypto.com' }, revalidate: expect.any(Number) })
 
 		const assets = await getCexAssetsStaticProps({ params: { cex: 'crypto-com' } } as never)
 		expect(assets).toMatchObject({
-			props: { name: 'crypto-com', metrics: { tvl: true, stablecoins: true } },
-			revalidate: 123
+			props: { name: 'Crypto.com', metrics: { tvl: true, stablecoins: true } },
+			revalidate: expect.any(Number)
 		})
 
 		const stablecoins = await getCexStablecoinsStaticProps({ params: { cex: 'crypto-com' } } as never)
 		expect(stablecoins).toMatchObject({
-			props: { name: 'crypto-com', metrics: { tvl: true, stablecoins: true } },
-			revalidate: 123
+			props: { name: 'Crypto.com', metrics: { tvl: true, stablecoins: true } },
+			revalidate: expect.any(Number)
 		})
 	})
 

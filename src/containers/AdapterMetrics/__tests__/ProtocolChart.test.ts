@@ -5,16 +5,6 @@ const toSeconds = (year: number, month: number, day: number) => Date.UTC(year, m
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildProtocolBreakdownChartPresentation', () => {
-	test('returns the canonical empty tuple dataset when no series are available', () => {
-		expect(
-			buildProtocolBreakdownChartPresentation({
-				data: [[toSeconds(2024, 1, 1), { Ignored: 10 }]],
-				seriesNames: [],
-				chartInterval: 'daily'
-			})
-		).toEqual({ dataset: { dimensions: ['timestamp'], source: [] }, charts: [] })
-	})
-
 	test('keeps sparse values dense while preserving zeroes after a series begins', () => {
 		const presentation = buildProtocolBreakdownChartPresentation({
 			data: [

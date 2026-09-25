@@ -5,19 +5,18 @@ import { auditProDashboardTableSources } from './proDashboardTableAudit'
 import { buildProDashboardTableSourcePlan, type ProDashboardTableSource } from './proDashboardTableSourcePlan'
 
 describe('buildProDashboardTableSourcePlan', () => {
-	test('shares one RWA asset source across global and selected-chain tables', () => {
+	test('expects the single RWA asset chunk the stream sends for global and selected-chain tables', () => {
 		const items: Array<DashboardItemConfig> = [
 			{ id: 'all-assets', kind: 'dataset-table', datasetType: 'rwa' },
 			{ id: 'ethereum-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Ethereum' },
 			{ id: 'base-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Base' }
 		]
+		const chunks: Array<DashboardStreamChunk> = [{ type: 'rwaAssetsTableData', data: [] }]
 
-		expect(buildProDashboardTableSourcePlan(items).streamSources).toEqual([
-			{
-				chunkType: 'rwaAssetsTableData',
-				key: '["pro-dashboard","rwa-assets-table"]'
-			}
-		])
+		const result = auditProDashboardTableSources(buildProDashboardTableSourcePlan(items).streamSources, chunks)
+
+		expect(result.missing).toEqual([])
+		expect(result.unexpected).toEqual([])
 	})
 })
 

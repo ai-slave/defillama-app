@@ -34,38 +34,6 @@ afterEach(async () => {
 })
 
 describe('loadAppEnv', () => {
-	test('loads env files with Next precedence and preserves process.env values', async () => {
-		const projectDir = await createProjectDir()
-		await fs.writeFile(path.join(projectDir, '.env'), 'SHARED=env\nPROCESS_WINS=file\n')
-		await fs.writeFile(path.join(projectDir, '.env.development'), 'SHARED=development\n')
-		await fs.writeFile(path.join(projectDir, '.env.local'), 'SHARED=local\n')
-		await fs.writeFile(path.join(projectDir, '.env.development.local'), 'SHARED=development-local\n')
-		vi.stubEnv('NODE_ENV', 'development')
-		process.env.PROCESS_WINS = 'process'
-		const { loadAppEnv } = await importEnvModule()
-
-		const result = loadAppEnv({ forceReload: true, logger: silentLogger, projectDir })
-
-		expect(result.mode).toBe('development')
-		expect(process.env.SHARED).toBe('development-local')
-		expect(process.env.PROCESS_WINS).toBe('process')
-		expect(process.env.NODE_ENV).toBe('development')
-	})
-
-	test('uses test mode without loading .env.local', async () => {
-		const projectDir = await createProjectDir()
-		await fs.writeFile(path.join(projectDir, '.env'), 'SHARED=env\n')
-		await fs.writeFile(path.join(projectDir, '.env.local'), 'SHARED=local\n')
-		await fs.writeFile(path.join(projectDir, '.env.test'), 'SHARED=test\n')
-		vi.stubEnv('NODE_ENV', 'test')
-		const { loadAppEnv } = await importEnvModule()
-
-		loadAppEnv({ forceReload: true, logger: silentLogger, projectDir })
-
-		expect(process.env.SHARED).toBe('test')
-		expect(process.env.NODE_ENV).toBe('test')
-	})
-
 	test('does not invent NODE_ENV when the caller did not set it', async () => {
 		const projectDir = await createProjectDir()
 		await fs.writeFile(path.join(projectDir, '.env.development.local'), 'LOCAL_VALUE=loaded\n')

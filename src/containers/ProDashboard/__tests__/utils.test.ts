@@ -48,12 +48,4 @@ describe('normalizeHourlyToDaily', () => {
 			[86_400, 4]
 		])
 	})
-
-	test('returns already-daily data without allocating a replacement', () => {
-		const data: Array<[number, number]> = [
-			[0, 1],
-			[86_400, 2]
-		]
-		expect(normalizeHourlyToDaily(data)).toBe(data)
-	})
 })

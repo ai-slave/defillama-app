@@ -1,42 +1,78 @@
-import { useQuery } from '@tanstack/react-query'
-import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
-import { TOKEN_PAGE_BORROW_QUERY } from '~/containers/Yields/data/tokenPageQuery'
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { useTokenBorrowRoutes } from '../useTokenBorrowRoutes'
 
-vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(() => ({ data: null, error: null, isLoading: false }))
-}))
-
-function Probe({ tokenKeys }: { tokenKeys: Array<string> }) {
-	useTokenBorrowRoutes(tokenKeys)
-	return <div>probe</div>
+const http = installFixtureFetch()
+let root: Root
+let container: HTMLDivElement
+let client: QueryClient
+function Probe({ tokenKeys, enabled = true }: { tokenKeys: Array<string>; enabled?: boolean }) {
+	const result = useTokenBorrowRoutes(tokenKeys, { enabled })
+	return <output>{JSON.stringify(result.data ?? null)}</output>
 }
-
-describe('useTokenBorrowRoutes', () => {
-	test('keys the query by the resolved token option keys with shared cache settings', () => {
-		renderToStaticMarkup(<Probe tokenKeys={['family:btc']} />)
-
-		expect(useQuery).toHaveBeenCalledWith(
-			expect.objectContaining({
-				queryKey: ['token-borrow-routes', 'token-page', TOKEN_PAGE_BORROW_QUERY, 'family:btc'],
-				staleTime: 60 * 60 * 1000,
-				refetchOnWindowFocus: false,
-				retry: false,
-				enabled: true
-			})
+async function render(tokenKeys: Array<string>, enabled = true) {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<Probe tokenKeys={tokenKeys} enabled={enabled} />
+			</QueryClientProvider>
 		)
-	})
-
-	test('disables the query when no token keys resolve', () => {
-		renderToStaticMarkup(<Probe tokenKeys={[]} />)
-
-		expect(useQuery).toHaveBeenCalledWith(
-			expect.objectContaining({
-				queryKey: ['token-borrow-routes', 'token-page', TOKEN_PAGE_BORROW_QUERY],
-				enabled: false
-			})
-		)
-	})
+	)
+}
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	client = new QueryClient()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
 })
+afterEach(async () => {
+	await act(async () => root.unmount())
+	client.clear()
+	container.remove()
+})
+test('keeps collateral and borrowing results separate when the selected token changes', async () => {
+	http.serve({
+		'/api/public/yields/borrow-routes': (url: URL) => {
+			const params = url.searchParams
+			expect(params.get('pageSize')).toBe('all')
+			expect(params.get('includeMemeTokens')).toBe('true')
+			const leg = params.has('collateralToken') ? 'collateralToken' : 'borrowToken'
+			return { rows: [{ route: `${leg}:${params.getAll(leg).join(',')}` }] }
+		}
+	})
+	async function selectToken(token: string) {
+		await render([token])
+		await vi.waitFor(() =>
+			expect(JSON.parse(container.textContent!)).toEqual({
+				useAsCollateral: [{ route: `collateralToken:${token}` }],
+				borrowThis: [{ route: `borrowToken:${token}` }]
+			})
+		)
+	}
+	await selectToken('family:btc')
+	await selectToken('asset:eth')
+})
+test.each([
+	{ keys: [], enabled: true },
+	{ keys: ['family:btc'], enabled: false }
+])(
+	'waits for a resolved token with fetching enabled before requesting each leg once (%j)',
+	async ({ keys, enabled }) => {
+		http.serve({ '/api/public/yields/borrow-routes': { rows: [] } })
+		await render(keys, enabled)
+		expect(container.textContent).toBe('null')
+		expect(http.requests).toHaveLength(0)
+
+		await render(['family:btc'])
+		await vi.waitFor(() => expect(JSON.parse(container.textContent!)).toEqual({ useAsCollateral: [], borrowThis: [] }))
+		const legs = http.requests.map((request) =>
+			request.url.searchParams.has('collateralToken') ? 'collateral' : 'borrow'
+		)
+		expect(legs.toSorted()).toEqual(['borrow', 'collateral'])
+	}
+)

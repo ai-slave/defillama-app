@@ -20,14 +20,6 @@ function getName(value: unknown): string {
 	return typeof value === 'string' ? value : typeof value === 'number' ? String(value) : ''
 }
 
-export function formatRwaUpperLabel(params: { name?: unknown }) {
-	return getName(params?.name)
-}
-
-export function formatRwaTreemapBoxLabel(params: { name?: unknown }) {
-	return getName(params?.name)
-}
-
 export function formatRwaTreemapTooltip({
 	info,
 	valueLabel,

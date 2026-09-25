@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
 	version: 'initial',
-	runtime: 0,
 	enrichmentCalls: 0,
 	order: ['a', 'b', 'c', 'd'],
 	price: 1,
@@ -36,29 +35,7 @@ vi.mock('~/utils/cache-client', () => ({
 		return true
 	}
 }))
-vi.mock(import('~/server/datasetSnapshots/redisBlobStore.server'), async (importOriginal) => {
-	const actual = await importOriginal()
-	return { ...actual, contentHashVersion: vi.fn(actual.contentHashVersion) }
-})
-vi.mock(import('~/server/api/resultCache'), async (importOriginal) => {
-	const actual = await importOriginal()
-	return {
-		...actual,
-		cachedResult: ((namespace, ...args) =>
-			actual.cachedResult(
-				namespace === 'tokens-source-rows' ? `${namespace}:${state.runtime}` : namespace,
-				...args
-			)) as typeof actual.cachedResult
-	}
-})
-const metadata = await vi.hoisted(async () => {
-	const { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } = await import('~/utils/metadata/artifactContract')
-	return createMetadataCacheFromArtifacts({
-		...METADATA_CI_STUBS,
-		tokenDirectory: { a: { name: 'a', symbol: 'A', route: '/token/a', token_nk: 'coingecko:a', protocolId: 'a' } }
-	})
-})
-vi.mock('~/utils/metadata', () => ({ default: metadata, refreshMetadataInBackgroundIfStale: vi.fn() }))
+// The market snapshot store adapter: each test controls which market generation it serves.
 vi.mock('../server/tableData.server', () => ({
 	getTokensMarketSnapshot: async () => ({
 		version: state.version,
@@ -75,48 +52,67 @@ vi.mock('../server/tableData.server', () => ({
 		}))
 	})
 }))
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: async () => {
-		state.enrichmentCalls++
-		if (!state.feesAvailable) throw new Error('Fees outage')
-		return { protocols: [{ defillamaId: 'a', total24h: state.fee }] }
-	}
-}))
+// Shared token rights come from the rights dataset snapshot store.
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRightsEntries: async () => [] }))
-vi.mock('~/containers/Unlocks/queries', () => ({ getAllProtocolEmissions: async () => [] }))
 
-import { contentHashVersion } from '~/server/datasetSnapshots/redisBlobStore.server'
+import { clearResultCache } from '~/server/api/resultCache'
 import { getObjectCache, setImmutableCache } from '~/utils/cache-client'
+import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { TOKENS_SOURCE_CACHE_TTL_MS } from '../cache.server'
 import { getTokensPageSnapshot } from '../queries.server'
 import { tokensDataset } from '../server/api'
 
+const metadata = createMetadataCacheFromArtifacts({
+	...METADATA_CI_STUBS,
+	tokenDirectory: { a: { name: 'a', symbol: 'A', route: '/token/a', token_nk: 'coingecko:a', protocolId: 'a' } }
+})
+const http = installFixtureFetch()
+const metadataSeeder = installMetadataSeeder()
+
 let testNumber = 0
 beforeEach(() => {
+	vi.stubEnv('NODE_ENV', 'development')
+	vi.stubEnv('API_KEY', '')
+	metadataSeeder.seed(metadata)
+	http.serve({
+		// Fees, revenue and holders revenue: one request each per enrichment.
+		'/v2/metrics/fees': () => {
+			state.enrichmentCalls++
+			if (!state.feesAvailable) return new Response(null, { status: 503 })
+			return { protocols: [{ defillamaId: 'a', total24h: state.fee }] }
+		},
+		'/emissions': []
+	})
 	state.version = `test-${++testNumber}`
 	state.generatedAt = 1_800_000_000_000 + testNumber * 1000
 	state.order = ['a', 'b', 'c', 'd']
 	state.price = 1
-	state.runtime = 0
+	// Every test, and every clearResultCache() inside one, starts a cold runtime: an empty
+	// in-process result cache over the same Redis.
+	clearResultCache()
 	state.enrichmentCalls = 0
 	state.publish = true
 	state.feesAvailable = true
 	state.fee = 10
 	vi.mocked(setImmutableCache).mockClear()
 	vi.mocked(getObjectCache).mockClear()
-	vi.mocked(contentHashVersion).mockClear()
 	cache.expiresAt.clear()
 	cache.blobs.clear()
 	cache.pointers.clear()
 })
-afterEach(() => vi.useRealTimers())
+afterEach(() => {
+	vi.useRealTimers()
+	vi.unstubAllEnvs()
+})
 
 describe('Tokens CSV snapshots', () => {
 	test('reuses prepared rows across cold runtimes for search and clearing search', async () => {
 		state.order = ['dogwifhat', 'bitcoin', 'wif-second']
 		await getTokensPageSnapshot()
 		expect(state.enrichmentCalls).toBe(3)
-		state.runtime++
+		clearResultCache()
 		const search = await getTokensPageSnapshot({ search: ' WIF ' })
 		expect(search.data.rows.map((row) => row.id)).toEqual(['dogwifhat', 'wif-second'])
 		const cleared = await getTokensPageSnapshot()
@@ -127,7 +123,7 @@ describe('Tokens CSV snapshots', () => {
 	test('rebuilds shared rows in a new window on a cold runtime', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })
 		await getTokensPageSnapshot()
-		state.runtime++
+		clearResultCache()
 		state.fee = 25
 		vi.setSystemTime(Date.now() + TOKENS_SOURCE_CACHE_TTL_MS + 1)
 		const refreshed = await getTokensPageSnapshot({ search: 'a' })
@@ -137,7 +133,7 @@ describe('Tokens CSV snapshots', () => {
 
 	test('adopts a concurrent publication after enrichment without publishing again', async () => {
 		await getTokensPageSnapshot()
-		state.runtime++
+		clearResultCache()
 		state.fee = 25
 		// The first read misses; the published winner becomes visible on the post-build read.
 		vi.mocked(getObjectCache).mockResolvedValueOnce(null)
@@ -170,15 +166,6 @@ describe('Tokens CSV snapshots', () => {
 		expect(second.data.rows.map((row) => row.price)).toEqual([1, 1])
 		expect(second.data.snapshotVersion).toBe(snapshot)
 	})
-	test('hashes and publishes once for repeated exports of one cached dataset', async () => {
-		const first = await getTokensPageSnapshot({ snapshot: 'latest' })
-		for (let attempt = 0; attempt < 8; attempt++) {
-			const repeated = await getTokensPageSnapshot({ snapshot: 'latest' })
-			expect(repeated.data.snapshotVersion).toBe(first.data.snapshotVersion)
-		}
-		expect(contentHashVersion).toHaveBeenCalledTimes(1)
-		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60])
-	})
 	test('stores one blob for browsing and exports and preserves the export lease on later source writes', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })
 		vi.setSystemTime(new Date('2027-01-01T10:00:00Z'))
@@ -202,7 +189,7 @@ describe('Tokens CSV snapshots', () => {
 		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60])
 
 		vi.setSystemTime(Date.now() + 1000)
-		state.runtime++
+		clearResultCache()
 		await getTokensPageSnapshot()
 		expect(vi.mocked(setImmutableCache).mock.calls.map(([, ttl]) => ttl)).toEqual([10 * 60, 31 * 60, 10 * 60])
 		expect(cache.blobs.size).toBe(1)

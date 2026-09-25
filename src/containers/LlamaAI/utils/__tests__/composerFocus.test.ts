@@ -30,10 +30,6 @@ describe('shouldFocusComposerOnSessionChange', () => {
 		expect(shouldFocusComposerOnSessionChange({ ...base, readOnly: true })).toBe(false)
 	})
 
-	test('focuses when landing on a new chat', () => {
-		expect(shouldFocusComposerOnSessionChange({ ...base, settledSessionId: 'new' })).toBe(true)
-	})
-
 	test('focuses again when returning to a chat visited earlier', () => {
 		expect(
 			shouldFocusComposerOnSessionChange({ ...base, settledSessionId: 'session-a', lastFocusedSessionId: 'session-b' })

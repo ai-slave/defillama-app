@@ -1,40 +1,32 @@
+import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { expect, test } from 'vitest'
 import { MetricCell } from '../MetricCell'
 
-const metric = { value: 266_553_520, percentile: 42, rank: 3 }
+const metric = { value: 266_553_520, percentile: 42.6, rank: 3 }
 const market = { value: 25, percentile: 25, rank: 2 }
 
-describe('MetricCell', () => {
-	test('shows abbreviated value and market share with no heatmap background in value mode', () => {
-		const html = renderToStaticMarkup(
-			<MetricCell metric={metric} market={market} mode="value" kind="usd" rowCount={20} />
-		)
-		expect(html).toContain('$266')
-		expect(html).toContain('25% of Market')
-		expect(html).not.toContain('171, 206, 192')
-	})
-	test('shows the rounded percentile and market share in percentile mode', () => {
-		const html = renderToStaticMarkup(
-			<MetricCell
-				metric={{ value: 1, percentile: 42.6, rank: 3 }}
-				market={market}
-				mode="percentile"
-				kind="usd"
-				rowCount={20}
-			/>
-		)
-		expect(html).toContain('43%')
-		expect(html).toContain('% of Market: 25%')
-	})
-	test('shows ranks and market rank in rank mode', () => {
-		const html = renderToStaticMarkup(
-			<MetricCell metric={metric} market={market} mode="rank" kind="usd" rowCount={20} />
-		)
-		expect(html).toContain('% of Market: 2')
-	})
-	test('renders N/A for a null metric', () => {
-		const html = renderToStaticMarkup(<MetricCell metric={null} mode="value" kind="usd" rowCount={20} />)
-		expect(html).toContain('N/A')
-	})
+function text(element: ReactElement) {
+	return renderToStaticMarkup(element)
+		.replace(/<[^>]*>/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+}
+
+test('shows the value, percentile or rank for the active mode with its market-share twin', () => {
+	expect(text(<MetricCell metric={metric} market={market} mode="value" kind="usd" rowCount={20} />)).toBe(
+		'$266.55M 25% of Market'
+	)
+	expect(text(<MetricCell metric={metric} market={market} mode="percentile" kind="usd" rowCount={20} />)).toBe(
+		'Value: 43% % of Market: 25%'
+	)
+	expect(text(<MetricCell metric={metric} market={market} mode="rank" kind="usd" rowCount={20} />)).toBe(
+		'Value Rank: 3 % of Market: 2'
+	)
+})
+
+test('shows the bare metric without a twin and N/A without a metric', () => {
+	expect(text(<MetricCell metric={metric} mode="rank" kind="usd" rowCount={20} />)).toBe('3')
+	expect(text(<MetricCell metric={{ ...metric, rank: null }} mode="rank" kind="usd" rowCount={20} />)).toBe('N/A')
+	expect(text(<MetricCell metric={null} mode="value" kind="usd" rowCount={20} />)).toBe('N/A')
 })

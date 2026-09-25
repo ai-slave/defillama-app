@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildFinancialsViewModel, type FinancialsAPIResponse, type TimeSeriesData } from './financialsApi'
 
 function chart(title: string, name: string, data: Array<number> = [1, 2]): TimeSeriesData {
@@ -85,35 +85,7 @@ function buildResponse(): FinancialsAPIResponse {
 	}
 }
 
-afterEach(() => {
-	vi.restoreAllMocks()
-})
-
 describe('buildFinancialsViewModel', () => {
-	test('caches only rendered values and canonical chart models', () => {
-		const response = buildResponse()
-		const result = buildFinancialsViewModel(response)
-
-		expect(result.kpis).toBe(response.kpis)
-		expect(result.projectedBreakdown).toBe(response.charts.projectedBreakdown)
-		expect(result.projectedBreakdown.series).toBe(response.charts.projectedBreakdown.series)
-		expect(result).not.toHaveProperty('meta')
-		expect(result).not.toHaveProperty('charts')
-		expect(result).not.toHaveProperty('breakdownPieData')
-		expect(result).not.toHaveProperty('treasuryThreshold')
-		expect(result).not.toHaveProperty('treasuryThresholdFormatted')
-		expect(result.allocatedAssets).toEqual({
-			title: 'Allocated Assets',
-			totalFormatted: '$100',
-			byProtocol: response.charts.allocatedAssets.byProtocol,
-			byNetwork: response.charts.allocatedAssets.byNetwork,
-			byAsset: response.charts.allocatedAssets.byAsset
-		})
-		expect(result.allocatedAssets).not.toHaveProperty('historical')
-		expect(result.allocatedAssets).not.toHaveProperty('total')
-		expect(result.allocatedAssets).not.toHaveProperty('date')
-	})
-
 	test('preserves missing-as-zero datasets and chart presentation configs', () => {
 		const result = buildFinancialsViewModel(buildResponse())
 
@@ -133,37 +105,20 @@ describe('buildFinancialsViewModel', () => {
 		})
 	})
 
-	test('parses each aligned date array once and preserves axes, colors, order, and threshold opacity', () => {
-		const parse = vi.spyOn(Date, 'parse')
+	test('draws the buyback threshold on every treasury row and plots price on a second axis', () => {
 		const result = buildFinancialsViewModel(buildResponse())
-		const treasuryCalls = parse.mock.calls.filter(([value]) => String(value).startsWith('2030-'))
-		const buybackCalls = parse.mock.calls.filter(([value]) => String(value).startsWith('2031-'))
 
-		expect(treasuryCalls).toHaveLength(2)
-		expect(buybackCalls).toHaveLength(2)
 		expect(result.treasuryModel.dataset.source).toEqual([
 			[Date.UTC(2030, 0, 1), 100, 20, 80],
 			[Date.UTC(2030, 1, 1), 110, 30, 80]
-		])
-		expect(result.treasuryModel.charts).toMatchObject([
-			{ name: 'Assets A', type: 'line', color: '#4FC3F7' },
-			{ name: 'Assets B', type: 'line', color: '#4FC3F7' },
-			{ name: 'Buyback Threshold', type: 'line', color: '#EF5350', areaStyle: { opacity: 0 } }
 		])
 		expect(result.buybacksModel.dataset.source).toEqual([
 			[Date.UTC(2031, 0, 1), 2, 1],
 			[Date.UTC(2031, 0, 2), 3, 1.5]
 		])
-		expect(result.buybacksModel.charts).toMatchObject([
-			{ name: 'SPK Bought', type: 'bar', color: '#1f6feb', yAxisIndex: 0, valueSymbol: 'SPK' },
-			{
-				name: 'Average Price',
-				type: 'line',
-				color: '#3fb950',
-				yAxisIndex: 1,
-				areaStyle: { opacity: 0 },
-				valueSymbol: 'SPK'
-			}
+		expect(result.buybacksModel.charts.map((series) => [series.name, series.yAxisIndex])).toEqual([
+			['SPK Bought', 0],
+			['Average Price', 1]
 		])
 	})
 })

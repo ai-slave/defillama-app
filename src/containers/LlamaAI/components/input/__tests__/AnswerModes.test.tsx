@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { AgenticAnswerMode } from '../../../types'
 import { MobileToolsPopover } from '../MobileToolsPopover'
 import { ModeToggle } from '../ModeToggle'
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: null }) }))
+// Heavy child; these tests only use the mode controls.
 vi.mock('../CapabilityBrowser', () => ({ BrowserContent: () => <button type="button">Example prompt</button> }))
 let root: Root
 let container: HTMLDivElement

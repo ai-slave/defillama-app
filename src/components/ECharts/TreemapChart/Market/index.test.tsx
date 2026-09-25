@@ -1,184 +1,83 @@
 // @vitest-environment happy-dom
 
+import * as echarts from 'echarts/core'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { EquitiesTreemapNode, IEquitiesTreemapLeaf } from '~/containers/Equities/treemapData'
-
-const mocks = vi.hoisted(() => {
-	const instance = {
-		dispatchAction: vi.fn(),
-		dispose: vi.fn(),
-		off: vi.fn(),
-		on: vi.fn(),
-		getModel: vi.fn(() => ({
-			getSeriesByIndex: () => ({
-				getData: () => ({ getItemLayout: () => ({ width: 200, height: 200 }) })
-			})
-		})),
-		isDisposed: vi.fn(() => false),
-		resize: vi.fn(),
-		setOption: vi.fn()
-	}
-	return {
-		init: vi.fn(() => instance),
-		instance,
-		use: vi.fn()
-	}
-})
-
-vi.mock('echarts/core', () => ({
-	init: mocks.init,
-	use: mocks.use
-}))
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	useDarkModeManager: () => [false]
-}))
-
-vi.mock('~/hooks/useChartResize', () => ({
-	useChartResize: () => undefined
-}))
-
-vi.mock('~/utils', () => ({
-	formatPercentChange: () => '+1.50%',
-	formatUsd: (value: number) => String(value)
-}))
-
-vi.mock('~/utils/icons', () => ({
-	equityIconUrl: (name: string, country: string) => `${country}:${name}`
-}))
-
+import { installChartCanvas } from '~/utils/test/chartCanvas'
 import MarketTreemapChart from '.'
 
-function makeTreeData(size: number): Array<EquitiesTreemapNode> {
-	return [
-		{
-			name: 'TEST',
-			value: [size, 1.5],
-			iconKey: 0,
-			iconUrl: 'US:TEST',
-			itemStyle: { color: 'rgb(104, 165, 115)' },
-			companyName: 'Test Company',
-			country: 'US',
-			sector: 'Technology',
-			industry: 'Software',
-			marketCap: 100
-		}
-	]
+function leaf(marketCap: number): IEquitiesTreemapLeaf {
+	return {
+		name: 'TEST',
+		value: [marketCap, 1.5],
+		iconKey: 0,
+		iconUrl: 'US:TEST',
+		itemStyle: { color: 'rgb(104, 165, 115)' },
+		companyName: 'Test Company',
+		country: 'US',
+		sector: 'Technology',
+		industry: 'Software',
+		marketCap
+	} as IEquitiesTreemapLeaf
 }
 
-describe('MarketTreemapChart lifecycle', () => {
-	let container: HTMLDivElement
-	let root: Root
+let container: HTMLDivElement
+let root: Root
 
-	beforeEach(() => {
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-		vi.clearAllMocks()
+beforeEach(() => {
+	installChartCanvas()
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
+
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	vi.restoreAllMocks()
+})
+
+function chart() {
+	return echarts.getInstanceByDom(container.querySelector<HTMLElement>('[_echarts_instance_]')!)!
+}
+
+const render = (treeData: Array<EquitiesTreemapNode>, leaves: Array<IEquitiesTreemapLeaf>, onReady = vi.fn()) =>
+	act(async () =>
+		root.render(
+			<MarketTreemapChart
+				treeData={treeData}
+				leaves={leaves}
+				sizeLabel="Market Cap"
+				colorLabel="Price 1D"
+				onReady={onReady}
+			/>
+		)
+	)
+
+test('keeps one chart through data and grouping changes, dropping a stale drill-down, and releases it on unmount', async () => {
+	const onReady = vi.fn()
+	const leaves = [leaf(100)]
+	await render(leaves, leaves, onReady)
+	const instance = chart()
+	;(instance as unknown as { trigger(event: string, params: unknown): void }).trigger('click', {
+		seriesType: 'treemap',
+		seriesIndex: 0,
+		dataIndex: 1
 	})
+	expect(instance).toHaveProperty('__llamaTreemapFocusNode')
 
-	afterEach(async () => {
-		if (container.childNodes.length > 0) await act(async () => root.unmount())
-		container.remove()
-	})
+	const grouped = [leaf(200)]
+	await render([{ name: 'Technology', value: [200, null], children: grouped }], grouped, onReady)
 
-	test('reuses the existing ECharts instance across prop updates', async () => {
-		const onReady = vi.fn()
-		const firstTreeData = makeTreeData(100)
-		await act(async () => {
-			root.render(
-				<MarketTreemapChart
-					treeData={firstTreeData}
-					leaves={firstTreeData as Array<IEquitiesTreemapLeaf>}
-					sizeLabel="Market Cap"
-					colorLabel="Price 1D"
-					onReady={onReady}
-				/>
-			)
-		})
+	expect(chart()).toBe(instance)
+	expect(instance).not.toHaveProperty('__llamaTreemapFocusNode')
+	const [group] = (instance.getOption() as Record<string, any>).series[0].data
+	expect(group.name).toBe('Technology')
+	expect(group.children.map((child: IEquitiesTreemapLeaf) => child.value)).toEqual([[200, 1.5]])
 
-		expect(mocks.init).toHaveBeenCalledOnce()
-		expect(mocks.instance.dispose).not.toHaveBeenCalled()
-		expect(onReady).toHaveBeenLastCalledWith(mocks.instance)
-		const firstOption = mocks.instance.setOption.mock.calls.at(-1)?.[0]
-		const canonicalLeaf = firstTreeData[0] as IEquitiesTreemapLeaf
-		const chartLeaf = firstOption.series[0].data[0]
-		expect(chartLeaf.value).toBe(canonicalLeaf.value)
-		expect(chartLeaf.itemStyle).toBe(canonicalLeaf.itemStyle)
-		expect(firstTreeData[0]).not.toHaveProperty('label')
-		expect(
-			firstOption.series[0].label.formatter({
-				data: chartLeaf,
-				name: 'TEST',
-				value: [100, 1.5],
-				seriesIndex: 0,
-				dataIndex: 0
-			})
-		).toBe('{icon48|}\n{ticker18|TEST}\n{chg15|+1.50%}')
-
-		const nextTreeData = makeTreeData(200)
-		Object.assign(mocks.instance, {
-			__llamaTreemapFocusNode: { id: 'technology/test', path: ['Technology', 'TEST'] },
-			__llamaTreemapFocusNodeId: 'technology/test'
-		})
-		await act(async () => {
-			root.render(
-				<MarketTreemapChart
-					treeData={nextTreeData}
-					leaves={nextTreeData as Array<IEquitiesTreemapLeaf>}
-					sizeLabel="Revenue"
-					colorLabel="Price 7D"
-					onReady={onReady}
-				/>
-			)
-		})
-
-		expect(mocks.init).toHaveBeenCalledOnce()
-		expect(mocks.instance.dispose).not.toHaveBeenCalled()
-		expect(mocks.instance).not.toHaveProperty('__llamaTreemapFocusNode')
-		expect(mocks.instance).not.toHaveProperty('__llamaTreemapFocusNodeId')
-		expect(mocks.instance.setOption.mock.calls.at(-1)?.[1]).toEqual({ notMerge: true })
-	})
-
-	test('reuses canvas-decorated leaves when only the grouping changes', async () => {
-		const leaves = makeTreeData(100) as Array<IEquitiesTreemapLeaf>
-		await act(async () => {
-			root.render(<MarketTreemapChart treeData={leaves} leaves={leaves} sizeLabel="Market Cap" colorLabel="Price 1D" />)
-		})
-		const flatLeaf = mocks.instance.setOption.mock.calls.at(-1)?.[0].series[0].data[0]
-		const groupedTree: Array<EquitiesTreemapNode> = [{ name: 'Technology', value: [100, null], children: leaves }]
-
-		await act(async () => {
-			root.render(
-				<MarketTreemapChart treeData={groupedTree} leaves={leaves} sizeLabel="Market Cap" colorLabel="Price 1D" />
-			)
-		})
-
-		const groupedLeaf = mocks.instance.setOption.mock.calls.at(-1)?.[0].series[0].data[0].children[0]
-		expect(groupedLeaf).toBe(flatLeaf)
-		expect(mocks.init).toHaveBeenCalledOnce()
-	})
-
-	test('keeps the opposite edge: it releases the chart and ready callback on unmount', async () => {
-		const onReady = vi.fn()
-		const treeData = makeTreeData(100)
-		await act(async () => {
-			root.render(
-				<MarketTreemapChart
-					treeData={treeData}
-					leaves={treeData as Array<IEquitiesTreemapLeaf>}
-					sizeLabel="Market Cap"
-					colorLabel="Price 1D"
-					onReady={onReady}
-				/>
-			)
-		})
-
-		await act(async () => root.unmount())
-
-		expect(mocks.instance.dispose).toHaveBeenCalledOnce()
-		expect(onReady).toHaveBeenLastCalledWith(null)
-	})
+	await act(async () => root.unmount())
+	expect(instance.isDisposed()).toBe(true)
+	expect(onReady.mock.calls).toEqual([[instance], [null]])
 })

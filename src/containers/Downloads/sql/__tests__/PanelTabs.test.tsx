@@ -10,8 +10,7 @@ import { SchemaDrawer } from '../SchemaDrawer'
 const mocks = vi.hoisted(() => ({
 	router: { pathname: '/downloads', query: {} as Record<string, string>, replace: vi.fn() },
 	sqlMount: vi.fn(),
-	schemaMount: vi.fn(),
-	cookbookMount: vi.fn()
+	schemaMount: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => mocks.router }))
 vi.mock('next/dynamic', () => ({
@@ -28,10 +27,7 @@ vi.mock('../SchemaBrowser', () => ({
 	}
 }))
 vi.mock('../DocsPanel', () => ({
-	CookbookTab: () => {
-		mocks.cookbookMount()
-		return <div>Cookbook content</div>
-	},
+	CookbookTab: () => <div>Cookbook content</div>,
 	ShortcutsTab: () => <div>Shortcuts content</div>
 }))
 vi.mock('../ExamplesPanel', () => ({ ExamplesPanel: () => <div>Examples content</div> }))
@@ -128,7 +124,6 @@ test('SQL reference arrows preserve its content until explicit activation', asyn
 	await press(schema, 'ArrowRight')
 	expect(document.activeElement).toBe(cookbook)
 	expectPanel(schema, 'Schema content')
-	expect(mocks.cookbookMount).not.toHaveBeenCalled()
 	await press(cookbook, 'Enter')
 	expectPanel(cookbook, 'Cookbook content')
 	expect(document.activeElement).toBe(cookbook)

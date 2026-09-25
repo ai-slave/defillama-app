@@ -2,12 +2,9 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { useImageUpload } from '../../hooks/useImageUpload'
 import { FileDropOverlay, FileDropProvider, useFileDropTarget } from '../FileDrop'
-
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
-vi.mock('~/components/Toast/notifications', () => ({ errorToast: vi.fn() }))
 
 let container: HTMLDivElement
 let root: Root

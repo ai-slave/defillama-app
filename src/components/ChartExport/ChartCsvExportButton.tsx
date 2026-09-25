@@ -289,6 +289,14 @@ function buildCsvRowsFromSeriesFallback(option: any, groupBy: ChartTimeGroupingW
 	return rows
 }
 
+/** CSV rows for a rendered chart: its dataset when it has one, else its series. */
+export function buildCsvRowsFromChartOption(option: ReturnType<echarts.ECharts['getOption']>): Array<Array<CsvCell>> {
+	const { dimensions, source } = getDatasetFromOption(option)
+	// A rendered chart does not say how its rows are grouped, so its dates stay daily.
+	const rows = buildCsvRowsFromDataset(dimensions, source, 'daily')
+	return rows.length > 0 ? rows : buildCsvRowsFromSeriesFallback(option, 'daily')
+}
+
 function buildCsvFromChart({
 	instance,
 	filenameBase
@@ -296,11 +304,7 @@ function buildCsvFromChart({
 	instance: echarts.ECharts
 	filenameBase: string | undefined
 }): { filename: string; rows: Array<Array<CsvCell>> } {
-	const option = instance.getOption()
-	const { dimensions, source } = getDatasetFromOption(option)
-	// A rendered chart does not say how its rows are grouped, so its dates stay daily.
-	const rows = buildCsvRowsFromDataset(dimensions, source, 'daily')
-	const rowsSafe = rows.length > 0 ? rows : buildCsvRowsFromSeriesFallback(option, 'daily')
+	const rowsSafe = buildCsvRowsFromChartOption(instance.getOption())
 
 	if (rowsSafe.length === 0) {
 		throw new Error('No chart data available for CSV export')

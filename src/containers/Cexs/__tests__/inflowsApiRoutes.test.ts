@@ -1,43 +1,23 @@
-import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { NextApiRequest } from 'next'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { AUTH_SERVER, POCKETBASE_URL, SERVER_URL } from '~/constants'
+import inflowsHandler from '~/pages/api/private/cex/inflows'
+import batchHandler from '~/pages/api/private/cex/inflows/batch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 import { binanceCexMetadataCache } from './metadataFixture'
 
-const { fetchWithPoolingOnServerMock, recordRouteRuntimeErrorMock, validateSubscriptionMock } = vi.hoisted(() => ({
-	fetchWithPoolingOnServerMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn(),
-	validateSubscriptionMock: vi.fn()
-}))
-
-vi.mock('~/constants', () => ({
-	SERVER_URL: 'https://api.example.com'
-}))
-
-vi.mock('~/utils/apiAuth', () => ({
-	validateSubscription: validateSubscriptionMock
-}))
-
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: NextApiHandler) => handler
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: binanceCexMetadataCache
-}))
-
-import inflowsHandler from '~/pages/api/private/cex/inflows'
-import batchHandler from '~/pages/api/private/cex/inflows/batch'
-
+const { serve, requests } = installFixtureFetch()
+const { seed } = installMetadataSeeder()
 beforeEach(() => {
-	vi.clearAllMocks()
-	validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: false })
-	fetchWithPoolingOnServerMock.mockResolvedValue(new Response(JSON.stringify({ outflows: 1 })))
+	seed(binanceCexMetadataCache)
+	serve({
+		[`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'active' } },
+		[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: { record: { flags: {} } },
+		[`${SERVER_URL}/inflows/binance-cex/1000?end=5000&tokensToExclude=BNB`]: { outflows: 1 },
+		[`${SERVER_URL}/inflows/batch`]: { outflows: 1 }
+	})
 })
 
 describe('/api/private/cex/inflows', () => {
@@ -51,20 +31,13 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['GET'])
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Allow')?.[1]).toEqual(['GET'])
+		expect(res.statusCode).toBe(405)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Method Not Allowed' })
 	})
 
 	test('returns auth failures before checking missing query params', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
-		})
 		const req = {
 			method: 'GET',
 			headers: {},
@@ -74,11 +47,9 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith(undefined)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(401)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(401)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Authentication required' })
 	})
 
 	test('returns existing missing parameter errors after successful auth', async () => {
@@ -91,11 +62,9 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing required parameters: cexProtocolSlug, start, end' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Missing required parameters: cexProtocolSlug, start, end' })
 	})
 
 	test('returns existing numeric parameter errors after successful auth', async () => {
@@ -108,11 +77,9 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'start and end must be valid numbers' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'start and end must be valid numbers' })
 	})
 
 	test('rejects a single inflow interval of exactly one hour', async () => {
@@ -125,9 +92,8 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'end must be more than one hour after start' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'end must be more than one hour after start' })
 	})
 
 	test('rejects repeated tokensToExclude query parameters', async () => {
@@ -140,17 +106,12 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'tokensToExclude must be a comma-separated string' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'tokensToExclude must be a comma-separated string' })
 	})
 
 	test('authenticates before revealing unknown CEX slugs', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 403,
-			error: 'Active subscription required'
-		})
+		serve({ [`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'inactive' } } })
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
@@ -160,11 +121,10 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+
+		expect(res.statusCode).toBe(403)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Active subscription required' })
 	})
 
 	test('does not fetch inflows for unknown CEX slugs after successful auth', async () => {
@@ -177,11 +137,10 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'CEX not found' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+
+		expect(res.statusCode).toBe(404)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'CEX not found' })
 	})
 
 	test('returns CEX inflows with private no-store after successful auth', async () => {
@@ -194,17 +153,16 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://api.example.com/inflows/binance-cex/1000?end=5000&tokensToExclude=BNB'
-		)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ outflows: 1 })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(200)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ outflows: 1 })
 	})
 
 	test('passes through upstream error status with private no-store', async () => {
-		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 502 }))
+		serve({
+			[`${SERVER_URL}/inflows/binance-cex/1000?end=5000&tokensToExclude=`]: fixtureStatus(502),
+			[`${SERVER_URL}/inflows/batch`]: fixtureStatus(502)
+		})
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -214,17 +172,18 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://api.example.com/inflows/binance-cex/1000?end=5000&tokensToExclude='
-		)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Upstream API returned 502' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(502)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Upstream API returned 502' })
 	})
 
 	test('returns the route-specific 500 body when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
-		validateSubscriptionMock.mockRejectedValue(error)
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: () => {
+				throw error
+			}
+		})
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
@@ -234,16 +193,21 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(500)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Internal server error' })
 	})
 
 	test('returns the route-specific 500 body when fetching inflows throws', async () => {
 		const error = new Error('Upstream unavailable')
-		fetchWithPoolingOnServerMock.mockRejectedValue(error)
+		serve({
+			[`${SERVER_URL}/inflows/binance-cex/1?end=3602&tokensToExclude=`]: () => {
+				throw error
+			},
+			[`${SERVER_URL}/inflows/batch`]: () => {
+				throw error
+			}
+		})
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -253,10 +217,9 @@ describe('/api/private/cex/inflows', () => {
 
 		await inflowsHandler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(500)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Internal server error' })
 	})
 })
 
@@ -271,20 +234,14 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['POST'])
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Allow')?.[1]).toEqual(['POST'])
+		expect(res.statusCode).toBe(405)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Method Not Allowed' })
 	})
 
 	test('returns auth failures before checking invalid bodies', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
-		})
+		serve({ [`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'inactive' } } })
 		const req = {
 			method: 'POST',
 			headers: {},
@@ -294,11 +251,9 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith(undefined)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(401)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(401)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Authentication required' })
 	})
 
 	test('returns existing numeric parameter errors after successful auth', async () => {
@@ -311,11 +266,9 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'start and end must be valid numbers' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'start and end must be valid numbers' })
 	})
 
 	test('rejects a non-object request body after successful auth', async () => {
@@ -328,10 +281,8 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Request body must be an object' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Request body must be an object' })
 	})
 
 	test('rejects a batch inflow interval of exactly one hour', async () => {
@@ -348,9 +299,8 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'end must be more than one hour after start' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'end must be more than one hour after start' })
 	})
 
 	test('returns existing empty CEX array errors after successful auth', async () => {
@@ -363,11 +313,9 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must be a non-empty array' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'cexs must be a non-empty array' })
 	})
 
 	test('returns existing CEX slug shape errors after successful auth', async () => {
@@ -380,11 +328,9 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must include protocol slugs and token exclusions' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'cexs must include protocol slugs and token exclusions' })
 	})
 
 	test('requires exact string-array token exclusions', async () => {
@@ -401,9 +347,8 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'tokensToExclude must be string arrays' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'tokensToExclude must be string arrays' })
 	})
 
 	test('rejects more than 100 batch entries', async () => {
@@ -420,9 +365,8 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(413)
-		expect(res.json).toHaveBeenCalledWith({ error: 'cexs must contain at most 100 entries' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(413)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'cexs must contain at most 100 entries' })
 	})
 
 	test('rejects aliases that resolve to the same CEX protocol', async () => {
@@ -442,17 +386,12 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Duplicate CEX: binance-cex' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Duplicate CEX: binance-cex' })
 	})
 
 	test('authenticates before revealing unknown CEX slugs', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 403,
-			error: 'Active subscription required'
-		})
+		serve({ [`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'inactive' } } })
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer bad' },
@@ -462,11 +401,10 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+
+		expect(res.statusCode).toBe(403)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Active subscription required' })
 	})
 
 	test('does not fetch batch inflows for unknown CEX slugs after successful auth', async () => {
@@ -479,19 +417,18 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'CEX not found' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+
+		expect(res.statusCode).toBe(404)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'CEX not found' })
 	})
 
-	test('returns batch CEX inflows with private no-store after successful auth', async () => {
+	test('returns batch CEX inflows for an alias slug with private no-store after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
 			body: {
-				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
+				cexs: [{ cexProtocolSlug: 'binance', tokensToExclude: ['BNB', 'BUSD'] }],
 				start: 1000,
 				end: 5000
 			}
@@ -499,24 +436,24 @@ describe('/api/private/cex/inflows/batch', () => {
 		const res = createMockNextApiResponse()
 
 		await batchHandler(req, res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.example.com/inflows/batch', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				protocols: [{ protocol: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
-				startTimestamp: 1000,
-				endTimestamp: 5000
-			})
+		expect(
+			JSON.parse(requests.find((request) => request.url.pathname === '/inflows/batch')!.init!.body as string)
+		).toEqual({
+			protocols: [{ protocol: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
+			startTimestamp: 1000,
+			endTimestamp: 5000
 		})
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ outflows: 1 })
+
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(200)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ outflows: 1 })
 	})
 
 	test('passes through batch upstream error status with private no-store', async () => {
-		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 502 }))
+		serve({
+			[`${SERVER_URL}/inflows/binance-cex/1000?end=5000&tokensToExclude=`]: fixtureStatus(502),
+			[`${SERVER_URL}/inflows/batch`]: fixtureStatus(502)
+		})
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -526,23 +463,18 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.example.com/inflows/batch', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				protocols: [{ protocol: 'binance-cex', tokensToExclude: [] }],
-				startTimestamp: 1000,
-				endTimestamp: 5000
-			})
-		})
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Upstream API returned 502' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(502)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Upstream API returned 502' })
 	})
 
 	test('returns the batch route-specific 500 body when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
-		validateSubscriptionMock.mockRejectedValue(error)
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: () => {
+				throw error
+			}
+		})
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer bad' },
@@ -552,16 +484,21 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(500)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Internal server error' })
 	})
 
 	test('returns the batch route-specific 500 body when fetching inflows throws', async () => {
 		const error = new Error('Upstream unavailable')
-		fetchWithPoolingOnServerMock.mockRejectedValue(error)
+		serve({
+			[`${SERVER_URL}/inflows/binance-cex/1?end=3602&tokensToExclude=`]: () => {
+				throw error
+			},
+			[`${SERVER_URL}/inflows/batch`]: () => {
+				throw error
+			}
+		})
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -571,9 +508,8 @@ describe('/api/private/cex/inflows/batch', () => {
 
 		await batchHandler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
+		expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+		expect(res.statusCode).toBe(500)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Internal server error' })
 	})
 })

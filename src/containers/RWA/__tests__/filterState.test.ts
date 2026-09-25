@@ -158,6 +158,14 @@ describe('RWA filter state', () => {
 		}
 	})
 
+	test('applies shared category filters to perps overlay rows', () => {
+		const commoditiesPerp = { ...dexPerp, id: 'xyz:gold', contract: 'xyz:GOLD', category: ['Commodities'] }
+
+		const result = filterRwaOverviewDisplayRows([baseAsset, dexPerp, commoditiesPerp], baseFilterState)
+
+		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1', 'xyz:usdy'])
+	})
+
 	test('excludes both kinds of perps when filtering for attested assets', () => {
 		const result = filterRwaOverviewDisplayRows([{ ...baseAsset, attestations: true }, dexPerp, cexPerp], {
 			...baseFilterState,
@@ -188,12 +196,6 @@ describe('RWA filter state', () => {
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' })).toBe(false)
-	})
-
-	test('allows stablecoins and governance tokens alongside perps', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' })).toBe(false)
 	})
 
 	test('does not include ratio-filtered rows with a zero denominator', () => {

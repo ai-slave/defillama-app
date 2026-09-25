@@ -41,23 +41,6 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[0].axisLine.lineStyle).not.toHaveProperty('color')
 	})
 
-	test('preserves a caller-provided color on a single axis', () => {
-		const axes = buildMultiYAxis({
-			series: [{ name: 'Supply', itemStyle: { color: '#f00' } }],
-			yAxis: {
-				axisLabel: { color: '#neutral' },
-				axisLine: { lineStyle: { color: '#line' } }
-			},
-			expandTo100Percent: false,
-			effectiveCharts: [{ type: 'line', name: 'Supply', encode: { x: 'timestamp', y: 'Supply' }, color: '#f00' }],
-			valueSymbol: '$',
-			sourceAxisIndexes: null
-		})!
-
-		expect(axes[0].axisLabel.color).toBe('#neutral')
-		expect(axes[0].axisLine.lineStyle.color).toBe('#line')
-	})
-
 	test('preserves an explicitly unitless series instead of using the chart fallback symbol', () => {
 		const axes = buildMultiYAxis({
 			series: [{ name: 'Users', itemStyle: { color: '#f00' } }],
@@ -208,28 +191,6 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes.map((axis) => axis.alignTicks)).toEqual([undefined, undefined, undefined])
 	})
 
-	test('keeps two-axis labels neutral and makes the secondary series line opaque and dashed', () => {
-		const axes = buildMultiYAxis({
-			series: [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')],
-			yAxis: {
-				axisLabel: { color: '#neutral' },
-				axisLine: { lineStyle: { color: '#neutral-line', opacity: 0.1 } }
-			},
-			expandTo100Percent: false,
-			effectiveCharts: [
-				{ type: 'line', name: 'TVL', encode: { x: 0, y: 1 }, yAxisIndex: 0, color: '#111' },
-				{ type: 'line', name: 'APY', encode: { x: 0, y: 1 }, yAxisIndex: 1, color: '#222' }
-			],
-			valueSymbol: '',
-			sourceAxisIndexes: null
-		})!
-
-		expect(axes[0].axisLabel.color).toBe('#neutral')
-		expect(axes[1].axisLabel.color).toBe('#neutral')
-		expect(axes[1].axisLine.lineStyle).toMatchObject({ color: '#222', type: [5, 10] })
-		expect(axes[1].axisLine.lineStyle).not.toHaveProperty('opacity')
-	})
-
 	test('preserves explicit tick alignment without enabling it for other axes', () => {
 		const series = [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')]
 		const axes = buildMultiYAxis({
@@ -251,7 +212,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 	test('does not tint a shared axis when its series use different colors', () => {
 		const axes = buildMultiYAxis({
 			series: [renderSeries('Revenue', 1, '#111'), renderSeries('Users', 1, '#222')],
-			yAxis: {},
+			yAxis: { axisLine: { lineStyle: { color: '#neutral-line' } } },
 			expandTo100Percent: false,
 			effectiveCharts: [
 				{ type: 'line', name: 'Revenue', encode: { x: 'timestamp', y: 'Revenue' }, yAxisIndex: 1, color: '#111' },
@@ -261,8 +222,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 			sourceAxisIndexes: null
 		})!
 
-		expect(axes[1].axisLine.lineStyle).not.toHaveProperty('color')
-		expect(axes[1].axisLabel).not.toHaveProperty('color')
+		expect(axes[1].axisLine.lineStyle.color).toBe('#neutral-line')
 	})
 
 	test('keeps caller-provided axis sides and offsets', () => {

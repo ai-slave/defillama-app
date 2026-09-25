@@ -5,37 +5,18 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { DashboardCardContext, type DashboardCardContextValue } from './DashboardCardContext'
 import { ProCardHeader } from './ProCardHeader'
 
-const mocks = vi.hoisted(() => ({
-	permissions: { isReadOnly: false, hideDuplicateButton: false }
-}))
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardPermissions: () => mocks.permissions,
-	useProDashboardDashboard: () => ({ currentDashboard: null }),
-	useProDashboardItemsState: () => ({ items: [] }),
-	useProDashboardVariables: () => ({ variables: [], canEditVariables: false, bindItemField: () => {} })
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: true,
-		hasActiveSubscription: true,
-		isTrial: false,
-		loaders: { userLoading: false }
-	})
-}))
+const session = installSubscriberSession('u1', { resolved: true })
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
-vi.mock('~/components/ChartExport/useChartPngExport', () => ({
-	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
-}))
-
 let container: HTMLDivElement
 let root: Root
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.permissions.isReadOnly = false
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -46,19 +27,23 @@ afterEach(async () => {
 	container.remove()
 })
 
-function renderInCard(children: ReactNode, context: DashboardCardContextValue) {
+function renderInCard(children: ReactNode, context: DashboardCardContextValue, isReadOnly = false) {
 	return (
-		<DndContext>
-			<SortableContext items={['card-1']}>
-				<SortableItem
-					id="card-1"
-					className="group/dashboard-card"
-					{...(mocks.permissions.isReadOnly ? { disabled: { draggable: true, droppable: true } } : {})}
-				>
-					<DashboardCardContext.Provider value={context}>{children}</DashboardCardContext.Provider>
-				</SortableItem>
-			</SortableContext>
-		</DndContext>
+		<session.Wrapper>
+			<DashboardTestProvider mode={isReadOnly ? 'view' : 'edit'} permissions={{ isReadOnly }}>
+				<DndContext>
+					<SortableContext items={['card-1']}>
+						<SortableItem
+							id="card-1"
+							className="group/dashboard-card"
+							{...(isReadOnly ? { disabled: { draggable: true, droppable: true } } : {})}
+						>
+							<DashboardCardContext.Provider value={context}>{children}</DashboardCardContext.Provider>
+						</SortableItem>
+					</SortableContext>
+				</DndContext>
+			</DashboardTestProvider>
+		</session.Wrapper>
 	)
 }
 
@@ -87,31 +72,31 @@ test('an editable card header carries the grip, the pencil and the overflow menu
 	expect(container.querySelector('h2')?.textContent).toBe('Aave TVL')
 	expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull()
 
+	expect(container.textContent).toContain('Grouping')
+	expect(container.textContent).toContain('Series')
 	const pencil = buttons().find((node) => node.textContent?.trim() === 'Edit card')!
-	const controls = pencil.parentElement!
-	expect(controls.getAttribute('role')).toBe('presentation')
-	expect(controls.textContent).toContain('Grouping')
-	expect(controls.textContent).not.toContain('Series')
 	await act(async () => pencil.click())
 	expect(onEdit).toHaveBeenCalledOnce()
 })
 
 test('a read-only card header drops the grip and the pencil but keeps the menu', async () => {
-	mocks.permissions.isReadOnly = true
 	await act(async () =>
 		root.render(
 			renderInCard(
 				<ProCardHeader
 					title="Aave TVL"
+					controls={<button type="button">Grouping</button>}
 					viewerControls={<button type="button">Series</button>}
 					menu={{ csv: { onClick: vi.fn() } }}
 				/>,
-				{ itemId: 'card-1', onEdit: vi.fn(), onRemove: vi.fn() }
+				{ itemId: 'card-1', onEdit: vi.fn(), onRemove: vi.fn() },
+				true
 			)
 		)
 	)
 	expect(container.querySelector('[aria-label="Drag to reorder this card"]')).toBeNull()
 	expect(buttons().some((node) => node.textContent?.trim() === 'Edit card')).toBe(false)
+	expect(container.textContent).not.toContain('Grouping')
 	expect(container.textContent).toContain('Series')
 	expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull()
 })

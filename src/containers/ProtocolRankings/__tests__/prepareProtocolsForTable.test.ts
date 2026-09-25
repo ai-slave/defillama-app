@@ -62,7 +62,6 @@ describe('prepareProtocolsForTable', () => {
 			suppressTvlStrike: true
 		})
 
-		expect(prepared).toBeDefined()
 		if (!prepared) throw new Error('Expected the protocol to remain after applying table filters')
 		const preparedChild = prepared.childProtocols?.at(0)
 		expect(prepared.tvl?.default.tvl).toBe(110)

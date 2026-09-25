@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { CHART_DRAW_DURATION, CHART_DRAW_THRESHOLD, enterAnimationOptions } from './chartMotion'
+import { enterAnimationOptions } from './chartMotion'
 
 test('the default mode leaves every animation option to echarts', () => {
 	expect(enterAnimationOptions('default', false, false)).toEqual({})
@@ -10,8 +10,8 @@ test('the default mode leaves every animation option to echarts', () => {
 test('draw mode animates the first render past the point threshold', () => {
 	expect(enterAnimationOptions('draw', false, false)).toEqual({
 		animation: true,
-		animationThreshold: CHART_DRAW_THRESHOLD,
-		animationDuration: CHART_DRAW_DURATION,
+		animationThreshold: 200_000,
+		animationDuration: 700,
 		animationEasing: 'quarticOut'
 	})
 })

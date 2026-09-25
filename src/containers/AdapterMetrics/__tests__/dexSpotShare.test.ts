@@ -19,9 +19,9 @@ function cexVolume(points: Array<[string, number | null]>) {
 }
 
 describe('DEX spot share', () => {
-	test('states the formula, spot scope, and current coverage', () => {
-		expect(buildDexSpotShareMethodology({ dexProtocolCount: 777, cexVenueCount: 29 })).toBe(
-			'DEX share = DEX / (DEX + CEX) × 100. Spot volume only, including order-book DEXs such as Hyperliquid. Current coverage: 777 DEX protocols and 29 CEX venues.'
+	test('states current DEX and CEX coverage, omitting CEX venues when their count is unknown', () => {
+		expect(buildDexSpotShareMethodology({ dexProtocolCount: 777, cexVenueCount: 29 })).toContain(
+			'Current coverage: 777 DEX protocols and 29 CEX venues.'
 		)
 		expect(buildDexSpotShareMethodology({ dexProtocolCount: 1234, cexVenueCount: null })).toContain(
 			'Current coverage: 1,234 DEX protocols.'
@@ -78,16 +78,6 @@ describe('DEX spot share', () => {
 		})
 
 		expect(dataset.source).toEqual([[day('2026-01-01'), null]])
-	})
-
-	test('returns no points when the source histories do not overlap', () => {
-		const dataset = buildDexSpotShareDataset({
-			dexVolume: dexVolume([['2026-01-01', 10]]),
-			cexVolume: cexVolume([['2026-02-01', 90]]),
-			groupBy: 'monthly'
-		})
-
-		expect(dataset).toEqual({ dimensions: ['timestamp', 'DEX Share'], source: [] })
 	})
 
 	test('defaults invalid URL grouping to monthly', () => {

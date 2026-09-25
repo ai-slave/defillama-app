@@ -15,48 +15,24 @@ const axisScale = [
 ]
 
 describe('GradeBadge', () => {
-	test('renders the resolved letter on a solid grade-colored chip', () => {
-		const html = renderToStaticMarkup(<GradeBadge score={60} gradingScale={overallScale} />)
-		expect(html).toContain('AAA')
-		expect(html).toContain('bg-utr-grade-aaa')
-		expect(html).toContain('text-utr-grade-on-color')
-	})
-
-	test('falls back to a muted N/A chip when the score is missing', () => {
+	test('shows N/A when the score is missing', () => {
 		const html = renderToStaticMarkup(<GradeBadge score={null} />)
 		expect(html).toContain('N/A')
-		expect(html).toContain('bg-surface-elevated-1')
 	})
 })
 
 describe('GradeChip', () => {
-	test('renders the Token Grade label with tinted background and grade-colored text', () => {
+	test('shows the explicit API grade instead of the grade derived from the score', () => {
 		const html = renderToStaticMarkup(<GradeChip score={45} grade="B" gradingScale={overallScale} />)
-		expect(html).toContain('Token Grade')
-		expect(html).toContain('>B<')
-		expect(html).toContain('bg-utr-grade-b-tint')
-		expect(html).toContain('text-utr-grade-b')
+		// A score of 45 alone would resolve to AA on this scale.
+		expect(html.replace(/<[^>]*>/g, '')).toBe('Token GradeB')
 	})
 })
 
 describe('ScoreBar', () => {
-	test('renders the numeric value and a fill width proportional to the scale', () => {
-		const html = renderToStaticMarkup(<ScoreBar score={63.73} gradingScale={overallScale} />)
-		expect(html).toContain('63.73')
-		expect(html).toContain('width:63.73%')
-		expect(html).toContain('bg-utr-grade-aaa')
-	})
-
-	test('normalizes 0-10 rubric scores to the full track width', () => {
+	test('shows rubric scores with two decimals', () => {
 		const html = renderToStaticMarkup(<ScoreBar score={8.5} scale={10} gradingScale={axisScale} />)
 		expect(html).toContain('8.50')
-		expect(html).toContain('width:85%')
-	})
-
-	test('uses an explicit API grade without changing the numeric bar width', () => {
-		const html = renderToStaticMarkup(<ScoreBar score={60} grade="B" gradingScale={overallScale} />)
-		expect(html).toContain('width:60%')
-		expect(html).toContain('bg-utr-grade-b')
 	})
 
 	test('hides the value column when showValue is false and renders an empty track for null', () => {

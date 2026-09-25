@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { ExecutionCoordinator } from '~/containers/LlamaAI/executionCoordinator'
 import type { AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
-import { runAgenticRequest } from '~/containers/LlamaAI/runAgenticRequest'
+import { classifyAgenticRequestError, runAgenticRequest } from '~/containers/LlamaAI/runAgenticRequest'
 
 function callbacks(): AgenticSSECallbacks {
 	return {
@@ -17,57 +17,14 @@ function callbacks(): AgenticSSECallbacks {
 }
 
 describe('runAgenticRequest', () => {
-	test('uses the coordinator operation for callbacks and request execution', async () => {
-		const coordinator = new ExecutionCoordinator()
-		const onToken = vi.fn()
-		const onFinally = vi.fn()
-
-		await coordinator.run('session-1', 'prompt', async (operation) => {
-			const context = await runAgenticRequest({
-				mode: 'prompt',
-				operation,
-				initialEventCount: 4,
-				createCallbacks: ({ isCurrent }) => ({ ...callbacks(), onToken: isCurrent() ? onToken : vi.fn() }),
-				execute: async ({ callbacks: requestCallbacks }) => requestCallbacks.onToken('hello'),
-				onFinally
-			})
-
-			expect(context.requestId).toBe(operation.id)
-			expect(context.signal).toBe(operation.signal)
-			expect(context.eventCounter.count).toBe(4)
-		})
-
-		expect(onToken).toHaveBeenCalledWith('hello')
-		expect(onFinally).toHaveBeenCalledOnce()
-	})
-
-	test('classifies request failures', async () => {
-		const cases = [
-			{ error: Object.assign(new Error('aborted'), { name: 'AbortError' }), kind: 'abort' },
-			{ error: Object.assign(new Error('upgrade'), { code: 'FREE_DAILY_LIMIT' }), kind: 'free-limit' },
-			{ error: Object.assign(new Error('usage'), { code: 'USAGE_LIMIT_EXCEEDED' }), kind: 'usage-limit' },
-			{ error: new Error('Stream ended without done event'), kind: 'temporary-connectivity' },
-			{ error: new Error('other'), kind: 'failure' }
-		] as const
-
-		for (const testCase of cases) {
-			const coordinator = new ExecutionCoordinator()
-			const onError = vi.fn()
-
-			await coordinator.run('session-1', 'prompt', (operation) =>
-				runAgenticRequest({
-					mode: 'prompt',
-					operation,
-					createCallbacks: callbacks,
-					execute: async () => {
-						throw testCase.error
-					},
-					onError
-				})
-			)
-
-			expect(onError).toHaveBeenCalledWith(expect.objectContaining({ kind: testCase.kind }), expect.any(Object))
-		}
+	test.each([
+		{ error: Object.assign(new Error('aborted'), { name: 'AbortError' }), kind: 'abort' },
+		{ error: Object.assign(new Error('upgrade'), { code: 'FREE_DAILY_LIMIT' }), kind: 'free-limit' },
+		{ error: Object.assign(new Error('usage'), { code: 'USAGE_LIMIT_EXCEEDED' }), kind: 'usage-limit' },
+		{ error: new Error('Stream ended without done event'), kind: 'temporary-connectivity' },
+		{ error: new Error('other'), kind: 'failure' }
+	])('classifies $error.message as $kind', ({ error, kind }) => {
+		expect(classifyAgenticRequestError(error, new AbortController().signal)).toEqual({ kind, error })
 	})
 
 	test('classifies coordinator cancellation as an abort', async () => {

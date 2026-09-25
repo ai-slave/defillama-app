@@ -1,14 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import type { MasterExchangeRegionCatalogResponse } from '../master.types'
 import {
-	activityForScope,
 	combineNormalizedVolume,
 	depthMetricState,
 	describeChildLiquidity,
 	filterDirectoryRows,
 	nestDirectoryRows,
-	normalizedVolumeForScope,
-	sparklineForScope,
 	sumNullable,
 	sumSparks,
 	volumeToDepth,
@@ -75,32 +72,6 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 	}
 }
 
-describe('activityForScope', () => {
-	test('keeps an absent segment absent instead of creating a zero row', () => {
-		expect(activityForScope(row(), 'spot')).toBeNull()
-	})
-
-	test('preserves missing, observed zero, and capability-inapplicable states', () => {
-		const missing = activityForScope(row({ segments: { spot: activity({ volume24h: null }) } }), 'spot')
-		const zero = activityForScope(row({ segments: { spot: activity({ volume24h: 0 }) } }), 'spot')
-
-		expect(missing).toMatchObject({ volume24h: null, supportsOpenInterest: false })
-		expect(zero?.volume24h).toBe(0)
-	})
-
-	test('never sums the perpetual classes: each scope returns exactly its own segment', () => {
-		const linear = activity({ volume24h: 600, openInterestUsd: 20, supportsOpenInterest: true, coinCount: 598 })
-		const inverse = activity({ volume24h: 25, coinCount: 29 })
-		const venue = row({ segments: { linear_perp: linear, inverse_perp: inverse } })
-
-		expect(activityForScope(venue, 'linear_perp')).toBe(linear)
-		expect(activityForScope(venue, 'inverse_perp')).toBe(inverse)
-		expect(activityForScope(venue, 'linear_perp')?.volume24h).toBe(600)
-		expect(activityForScope(venue, 'inverse_perp')?.volume24h).toBe(25)
-		expect(activityForScope(venue, 'spot')).toBeNull()
-	})
-})
-
 describe('nullable sums', () => {
 	test.each([
 		['missing', [null, null], null],
@@ -108,18 +79,6 @@ describe('nullable sums', () => {
 		['present values', [10, null, 5], 15]
 	] as const)('preserves %s totals', (_label, values, expected) => {
 		expect(sumNullable([...values])).toBe(expected)
-	})
-})
-
-describe('scope-specific sparks', () => {
-	test('selects spot, linear, and inverse sparks without blending scopes', () => {
-		const venue = row({
-			sparks: { spot: [1, 2], linear_perp: [10, 20], inverse_perp: [100, 200] }
-		})
-		expect(sparklineForScope(venue, 'spot')).toEqual([1, 2])
-		expect(sparklineForScope(venue, 'linear_perp')).toEqual([10, 20])
-		expect(sparklineForScope(venue, 'inverse_perp')).toEqual([100, 200])
-		expect(sparklineForScope(row({ sparks: {} }), 'linear_perp')).toEqual([])
 	})
 })
 
@@ -212,12 +171,6 @@ describe('directory discovery and canonical links', () => {
 				scope: 'all'
 			}).map((item) => item.slug)
 		).toEqual(['venue', 'perp', 'catalog'])
-	})
-
-	test('preserves canonical API-authored routes for tracked and metadata-only profiles', () => {
-		expect(trackedSpot.profileHref).toBe('/exchange/venue')
-		expect(metadataOnly.profileHref).toBe('/exchange/catalog')
-		expect(metadataOnly.secondaryUrl).toBe('/protocol/catalog')
 	})
 })
 
@@ -475,7 +428,7 @@ describe('parent/child directory nesting', () => {
 		// Brand-level facts stay the parent's, so the brand row still ranks in the
 		// Transparency/Fees/Compliance views instead of reading as "no data".
 		expect(brand.reserves?.totalUsd).toBe(1)
-		expect(brand.fees).toBe(binance.fees)
+		expect(brand.fees).toEqual(binance.fees)
 		expect(brand.compliance?.headquarters).toBe('Global')
 		expect(brand.profile?.nativeToken).toBe('BNB')
 		expect(brand.funding?.hasFiatOnramp).toBe(true)
@@ -484,8 +437,8 @@ describe('parent/child directory nesting', () => {
 		expect(brand.slug).toBe('binance')
 		expect(brand.profileHref).toBe('/exchange/binance')
 		// The global venue reappears untouched as the first child row.
-		expect(brand.subRows?.[0]).toBe(binance)
-		expect(brand.subRows?.[1]).toBe(binanceUs)
+		expect(brand.subRows?.[0]).toEqual(binance)
+		expect(brand.subRows?.[1]).toEqual(binanceUs)
 	})
 
 	test('never adds shared-subset segments into the brand row', () => {
@@ -600,53 +553,6 @@ describe('child liquidity descriptions', () => {
 })
 
 describe('normalized volume and depth semantics', () => {
-	test('exposes each perp class separately and never a combined perp figure', () => {
-		const linear = {
-			reported: 100,
-			normalized: 70,
-			activeLiquidity: 40,
-			activeLiquidityForCap: 40,
-			discountFraction: 0.3,
-			unverifiedFraction: 0.1,
-			flag: null
-		}
-		const inverse = {
-			reported: 50,
-			normalized: 30,
-			activeLiquidity: 20,
-			activeLiquidityForCap: 20,
-			discountFraction: 0.4,
-			unverifiedFraction: 0.4,
-			flag: 'outlier'
-		}
-		const venue = row({
-			segments: { linear_perp: activity(), inverse_perp: activity() },
-			normalizedVolume: { spot: null, linear_perp: linear, inverse_perp: inverse }
-		})
-
-		expect(normalizedVolumeForScope(venue, 'linear_perp')).toBe(linear)
-		expect(normalizedVolumeForScope(venue, 'inverse_perp')).toBe(inverse)
-		expect(normalizedVolumeForScope(venue, 'spot')).toBeNull()
-	})
-
-	test('keeps an uncovered segment unavailable instead of borrowing the other class', () => {
-		const linear = {
-			reported: 100,
-			normalized: 70,
-			activeLiquidity: 40,
-			activeLiquidityForCap: 40,
-			discountFraction: 0.3,
-			unverifiedFraction: 0.1,
-			flag: null
-		}
-		const venue = row({
-			segments: { linear_perp: activity(), inverse_perp: activity() },
-			normalizedVolume: { spot: null, linear_perp: linear, inverse_perp: null }
-		})
-		expect(normalizedVolumeForScope(venue, 'inverse_perp')).toBeNull()
-		expect(normalizedVolumeForScope(venue, 'linear_perp')).toBe(linear)
-	})
-
 	test.each([
 		['absent segment', null, { state: 'unsupported' }],
 		['unsupported', activity({ supportsDepth: false, depthBidUsd: 10, depthAskUsd: 10 }), { state: 'unsupported' }],

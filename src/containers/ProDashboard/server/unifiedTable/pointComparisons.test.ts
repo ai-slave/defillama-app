@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
-const llamaAny = vi.hoisted(() => vi.fn())
-vi.mock('~/server/db/llama', () => ({ llamaDb: { any: llamaAny } }))
+// The module opens a DB pool on import; these tests only use its pure helpers.
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
 
 import { aggregateMetrics } from '../../components/UnifiedTable/utils/aggregation'
 import type { ProtocolTableSourceRow } from '../../unifiedTable/contracts'
@@ -9,8 +9,8 @@ import { EMPTY_CANONICAL_CHAIN_METRICS } from '../../unifiedTable/contracts'
 import {
 	applyChainPointComparisons,
 	applyProtocolPointComparisons,
-	fetchProtocolPointComparisons,
 	type PointComparisonRow,
+	pointColumns,
 	type ProtocolPointComparisonData
 } from './pointComparisons'
 
@@ -52,8 +52,6 @@ const protocolRow = (protocolId: string, perpsVolume24h: number): ProtocolTableS
 })
 
 describe('protocol point comparisons', () => {
-	beforeEach(() => llamaAny.mockReset().mockResolvedValue([]))
-
 	test('retains raw comparison values so grouped -100% changes remain exact', () => {
 		const first = comparison({ entity_id: 'first', perps_volume_7d_ago: 100, perps_volume_30d_ago: 50 })
 		const second = comparison({ entity_id: 'second', perps_volume_7d_ago: 100, perps_volume_30d_ago: 200 })
@@ -158,26 +156,12 @@ describe('protocol point comparisons', () => {
 		})
 	})
 
-	test('projects only the requested aggregate comparison family', async () => {
-		await fetchProtocolPointComparisons({ chainFilters: [], byChain: false, metrics: ['fees'] })
-
-		expect(llamaAny).toHaveBeenCalledOnce()
-		const query = llamaAny.mock.calls[0]?.[0]
-		expect(query).toContain('seven_days_ago.fees_1d AS fees_7d_ago')
-		expect(query).toContain('thirty_days_ago.fees_1d AS fees_30d_ago')
-		expect(query).not.toContain('volume_dexs_1d')
-		expect(query).not.toContain('revenue_1d')
-		expect(query).not.toContain('volume_derivatives_1d')
-	})
-
-	test('uses the chain-specific column only for requested chain comparisons', async () => {
-		await fetchProtocolPointComparisons({ chainFilters: ['base'], byChain: true, metrics: ['fees'] })
-
-		expect(llamaAny).toHaveBeenCalledTimes(2)
-		const protocolQuery = llamaAny.mock.calls[0]?.[0]
-		const chainQuery = llamaAny.mock.calls[1]?.[0]
-		expect(protocolQuery).toContain('seven_days_ago.fees_1d AS fees_7d_ago')
-		expect(chainQuery).toContain('seven_days_ago.app_fees_1d AS fees_7d_ago')
-		expect(chainQuery).not.toContain('app_revenue_1d')
+	test('chain comparisons read the chain app fee column while protocol comparisons read protocol fees', () => {
+		expect(pointColumns(['fees'], true)).toBe(
+			'seven_days_ago.app_fees_1d AS fees_7d_ago,\n\t\t\tthirty_days_ago.app_fees_1d AS fees_30d_ago'
+		)
+		expect(pointColumns(['fees'], false)).toBe(
+			'seven_days_ago.fees_1d AS fees_7d_ago,\n\t\t\tthirty_days_ago.fees_1d AS fees_30d_ago'
+		)
 	})
 })

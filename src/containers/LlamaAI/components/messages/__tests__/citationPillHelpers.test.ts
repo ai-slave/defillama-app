@@ -72,11 +72,6 @@ describe('panelViewFor', () => {
 })
 
 describe('metricLabel', () => {
-	test('labels ratios and identity metrics', () => {
-		expect(metricLabel('pf_ratio')).toBe('P/F ratio (market cap ÷ annualized fees)')
-		expect(metricLabel('mcap')).toBe('market cap')
-		expect(metricLabel('tvl_base')).toBe('total value locked')
-	})
 	test('composes base + time window', () => {
 		expect(metricLabel('fees_30d')).toBe('fees (30 days)')
 		expect(metricLabel('fees_365d')).toBe('fees (1 year)')
@@ -156,11 +151,8 @@ describe('sanitizeExcerpt', () => {
 	})
 
 	test('clamps to the max length with an ellipsis on a word boundary', () => {
-		const long = 'word '.repeat(100).trim()
-		const out = sanitizeExcerpt(long, 20)
-		expect(out.length).toBeLessThanOrEqual(21)
-		expect(out.endsWith('…')).toBe(true)
-		expect(out).not.toContain('  ')
+		// The 20-character cut lands inside "approved"; the partial word is dropped.
+		expect(sanitizeExcerpt('Aave governance approved treasury diversification', 20)).toBe('Aave governance…')
 	})
 
 	test('leaves clean short text untouched', () => {

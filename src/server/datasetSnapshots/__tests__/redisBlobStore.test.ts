@@ -1,185 +1,153 @@
-import { promisify } from 'node:util'
-import { gzip } from 'node:zlib'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const cacheMocks = vi.hoisted(() => ({
-	getCache: vi.fn(),
-	setCache: vi.fn(),
-	setImmutableCache: vi.fn(),
-	getObjectCache: vi.fn(),
-	setObjectCache: vi.fn()
-}))
-const telemetryMocks = vi.hoisted(() => ({ recordRuntimeError: vi.fn() }))
-
-vi.mock('~/utils/cache-client', () => cacheMocks)
-vi.mock('~/utils/telemetry', () => telemetryMocks)
+// In-memory Redis stand-in: `entries` is what readers would observe, `failing` makes one key's write fail.
+const redis = vi.hoisted(() => {
+	const entries = new Map<string, { value: unknown; ttl: number }>()
+	const failing = new Set<string>()
+	const write = (key: string, value: unknown, ttl: number) => {
+		if (failing.has(key)) return false
+		entries.set(key, { value, ttl })
+		return true
+	}
+	return {
+		entries,
+		failing,
+		module: {
+			getCache: async (key: string) => entries.get(key)?.value ?? null,
+			setCache: async (blob: { Key: string }, ttl: number) => write(blob.Key, blob, ttl),
+			setImmutableCache: async (blob: { Key: string }, ttl: number) =>
+				write(blob.Key, blob, Math.max(ttl, entries.get(blob.Key)?.ttl ?? 0)),
+			getObjectCache: async (key: string) => entries.get(key)?.value ?? null,
+			setObjectCache: async (key: string, value: unknown, ttl: number) => write(key, value, ttl)
+		}
+	}
+})
+vi.mock('~/utils/cache-client', () => redis.module)
 
 import { contentHashVersion, createRedisBlobStore, isContentHashVersion } from '../redisBlobStore.server'
 
-const gzipAsync = promisify(gzip)
+const telemetry = installTelemetrySink()
 
-type Payload = { chain: string; snapshot: string; rows: Array<string> }
+type Payload = { chain: string; snapshot: string; rows: Array<string>; builtAt?: number }
 
-const store = createRedisBlobStore<Payload>({
+const config = {
 	prefix: 'test-table:v1',
 	versionTtlSeconds: 14_400,
 	pointerTtlSeconds: 3300,
 	lastGoodTtlSeconds: 86_400,
-	getIdentity: (payload) => ({ key: payload.chain, version: payload.snapshot })
-})
+	getIdentity: (payload: Payload) => ({ key: payload.chain, version: payload.snapshot })
+}
+const store = createRedisBlobStore<Payload>(config)
+const datedStore = createRedisBlobStore<Payload>({ ...config, getPublishedAt: (payload) => payload.builtAt! })
 
-const payload: Payload = { chain: 'ethereum', snapshot: 'aK3f9Qm2xLpR7Bn0Wc-T', rows: ['a'] }
+const v1: Payload = { chain: 'ethereum', snapshot: 'aK3f9Qm2xLpR7Bn0Wc-T', rows: ['a'] }
+const v2: Payload = { chain: 'ethereum', snapshot: 'bK3f9Qm2xLpR7Bn0Wc-T', rows: ['b'] }
 
-async function blobFor(value: unknown) {
-	return {
-		Key: 'unused',
-		Body: await gzipAsync(Buffer.from(JSON.stringify(value))),
-		ContentType: 'application/json+gzip'
-	}
+async function runtimeErrors() {
+	return (await telemetry.events()).filter((event) => event.type === 'runtime_error').length
 }
 
 beforeEach(() => {
-	vi.resetAllMocks()
+	redis.entries.clear()
+	redis.failing.clear()
 })
 
-describe('createRedisBlobStore publish', () => {
-	test('writes blob first, then :latest, then :last-good', async () => {
-		const order: Array<string> = []
-		cacheMocks.setCache.mockImplementation(async ({ Key }: { Key: string }) => (order.push(Key), true))
-		cacheMocks.setObjectCache.mockImplementation(async (key: string) => (order.push(key), true))
-
-		expect(await store.publish(payload)).toBe(true)
-		expect(order).toEqual([
-			'test-table:v1:ethereum:aK3f9Qm2xLpR7Bn0Wc-T',
-			'test-table:v1:ethereum:latest',
-			'test-table:v1:ethereum:last-good'
+describe('publish', () => {
+	test('makes the payload readable as current and last-good with each key’s TTL', async () => {
+		expect(await store.publish(v1)).toBe(true)
+		expect(await store.readCurrent('ethereum')).toEqual(v1)
+		expect(await store.readLastGood('ethereum')).toEqual(v1)
+		expect([...redis.entries].map(([key, entry]) => [key, entry.ttl])).toEqual([
+			['test-table:v1:ethereum:aK3f9Qm2xLpR7Bn0Wc-T', 14_400],
+			['test-table:v1:ethereum:latest', 3300],
+			['test-table:v1:ethereum:last-good', 86_400]
 		])
-		expect(cacheMocks.setCache).toHaveBeenCalledWith(expect.anything(), 14_400)
-		expect(cacheMocks.setObjectCache).toHaveBeenNthCalledWith(
-			1,
-			'test-table:v1:ethereum:latest',
-			{ version: payload.snapshot },
-			3300
-		)
-		expect(cacheMocks.setObjectCache).toHaveBeenNthCalledWith(
-			2,
-			'test-table:v1:ethereum:last-good',
-			{ version: payload.snapshot },
-			86_400
-		)
 	})
 
-	test('touches no pointer when the blob write fails, and records the failure', async () => {
-		cacheMocks.setCache.mockResolvedValue(false)
+	test('a failed blob write leaves both pointers on the previous version', async () => {
+		await store.publish(v1)
+		redis.failing.add('test-table:v1:ethereum:bK3f9Qm2xLpR7Bn0Wc-T')
 
-		expect(await store.publish(payload)).toBe(false)
-		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
-		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+		expect(await store.publish(v2)).toBe(false)
+		expect(await store.readCurrent('ethereum')).toEqual(v1)
+		expect(await store.readLastGood('ethereum')).toEqual(v1)
+		expect(await runtimeErrors()).toBe(1)
 	})
 
-	test('stops after a failed :latest write so :last-good is never rolled forward past it', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValueOnce(false)
+	test('a failed :latest write never rolls :last-good forward', async () => {
+		await store.publish(v1)
+		redis.failing.add('test-table:v1:ethereum:latest')
 
-		expect(await store.publish(payload)).toBe(false)
-		expect(cacheMocks.setObjectCache).toHaveBeenCalledTimes(1)
-		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+		expect(await store.publish(v2)).toBe(false)
+		expect(await store.readLastGood('ethereum')).toEqual(v1)
+		expect(await store.readVersion('ethereum', v2.snapshot)).toEqual(v2)
+		expect(await runtimeErrors()).toBe(1)
+	})
+
+	test('an older build keeps readers on the newer one but stays readable by version', async () => {
+		await datedStore.publish({ ...v2, builtAt: 2000 })
+
+		expect(await datedStore.publish({ ...v1, builtAt: 1000 })).toBe(true)
+		expect(await datedStore.readCurrent('ethereum')).toEqual({ ...v2, builtAt: 2000 })
+		expect(await datedStore.readVersion('ethereum', v1.snapshot)).toEqual({ ...v1, builtAt: 1000 })
+	})
+
+	test('a newer build advances readers, and a build older than it cannot replace it', async () => {
+		await datedStore.publish({ ...v1, builtAt: 500 })
+
+		expect(await datedStore.publish({ ...v2, builtAt: 1000 })).toBe(true)
+		expect(await datedStore.readCurrent('ethereum')).toEqual({ ...v2, builtAt: 1000 })
+		await datedStore.publish({ ...v1, builtAt: 750 })
+		expect(await datedStore.readCurrent('ethereum')).toEqual({ ...v2, builtAt: 1000 })
 	})
 })
 
-describe('createRedisBlobStore retention', () => {
-	test('retains the version with the requested minimum TTL without advancing pointers', async () => {
-		cacheMocks.setImmutableCache.mockResolvedValue(true)
-		expect(await store.retainVersion(payload, 1800)).toBe(true)
-		expect(cacheMocks.setImmutableCache).toHaveBeenCalledWith(
-			expect.objectContaining({ Key: `test-table:v1:ethereum:${payload.snapshot}` }),
-			1800
-		)
-		expect(cacheMocks.setCache).not.toHaveBeenCalled()
-		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
+describe('retainVersion', () => {
+	test('stores the version with at least the requested TTL without moving pointers', async () => {
+		await store.publish(v1)
+
+		expect(await store.retainVersion(v2, 1800)).toBe(true)
+		expect(await store.readVersion('ethereum', v2.snapshot)).toEqual(v2)
+		expect(redis.entries.get(`test-table:v1:ethereum:${v2.snapshot}`)?.ttl).toBe(1800)
+		expect(await store.readCurrent('ethereum')).toEqual(v1)
 	})
 
 	test('reports a failed retention', async () => {
-		cacheMocks.setImmutableCache.mockResolvedValue(false)
-		expect(await store.retainVersion(payload, 1800)).toBe(false)
-		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+		redis.failing.add(`test-table:v1:ethereum:${v1.snapshot}`)
+		expect(await store.retainVersion(v1, 1800)).toBe(false)
+		expect(await runtimeErrors()).toBe(1)
 	})
 })
 
-describe('createRedisBlobStore reads', () => {
-	test('reads a version and verifies the payload claims the identity it was filed under', async () => {
-		cacheMocks.getCache.mockResolvedValueOnce(await blobFor(payload))
-		expect(await store.readVersion('ethereum', payload.snapshot)).toEqual(payload)
+describe('reads', () => {
+	test('rejects a blob whose payload claims a different identity, and unreadable bytes', async () => {
+		await store.publish({ ...v1, chain: 'base' })
+		const baseBlob = redis.entries.get(`test-table:v1:base:${v1.snapshot}`)!
+		redis.entries.set(`test-table:v1:ethereum:${v1.snapshot}`, baseBlob)
+		expect(await store.readVersion('ethereum', v1.snapshot)).toBeNull()
 
-		cacheMocks.getCache.mockResolvedValueOnce(await blobFor({ ...payload, chain: 'base' }))
-		expect(await store.readVersion('ethereum', payload.snapshot)).toBeNull()
-
-		cacheMocks.getCache.mockResolvedValueOnce({ Key: 'k', Body: Buffer.from('not gzip'), ContentType: 'x' })
-		expect(await store.readVersion('ethereum', payload.snapshot)).toBeNull()
+		redis.entries.set(`test-table:v1:ethereum:${v2.snapshot}`, {
+			value: { Key: 'k', Body: Buffer.from('not gzip'), ContentType: 'x' },
+			ttl: 1
+		})
+		expect(await store.readVersion('ethereum', v2.snapshot)).toBeNull()
 	})
 
-	test('resolves readCurrent through :latest and readLastGood through :last-good', async () => {
-		cacheMocks.getObjectCache.mockResolvedValueOnce({ version: payload.snapshot })
-		cacheMocks.getCache.mockResolvedValueOnce(await blobFor(payload))
-		expect(await store.readCurrent('ethereum')).toEqual(payload)
-		expect(cacheMocks.getObjectCache).toHaveBeenCalledWith('test-table:v1:ethereum:latest')
-
-		cacheMocks.getObjectCache.mockResolvedValueOnce({ version: payload.snapshot })
-		cacheMocks.getCache.mockResolvedValueOnce(await blobFor(payload))
-		expect(await store.readLastGood('ethereum')).toEqual(payload)
-		expect(cacheMocks.getObjectCache).toHaveBeenLastCalledWith('test-table:v1:ethereum:last-good')
-	})
-
-	test('treats an expired pointer as a miss', async () => {
-		cacheMocks.getObjectCache.mockResolvedValue(null)
+	test('an expired :latest pointer is a miss even when the blob remains', async () => {
+		await store.publish(v1)
+		redis.entries.delete('test-table:v1:ethereum:latest')
 		expect(await store.readCurrent('ethereum')).toBeNull()
-		expect(cacheMocks.getCache).not.toHaveBeenCalled()
+		expect(await store.readLastGood('ethereum')).toEqual(v1)
 	})
 })
 
-describe('createRedisBlobStore monotonic pointers', () => {
-	const datedStore = createRedisBlobStore<Payload & { builtAt: number }>({
-		prefix: 'test-table:v1',
-		versionTtlSeconds: 14_400,
-		pointerTtlSeconds: 3300,
-		lastGoodTtlSeconds: 86_400,
-		getIdentity: (value) => ({ key: value.chain, version: value.snapshot }),
-		getPublishedAt: (value) => value.builtAt
-	})
-
-	test('never moves the pointer back to an older build', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
-		cacheMocks.getObjectCache.mockResolvedValue({ version: 'newer-version-000000n', publishedAt: 2000 })
-
-		expect(await datedStore.publish({ ...payload, builtAt: 1000 })).toBe(true)
-		// blob still stored (readable by version), pointers untouched
-		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
-		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
-	})
-
-	test('advances the pointer for a newer build and stamps publishedAt', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
-		cacheMocks.getObjectCache.mockResolvedValue({ version: 'older-version-000000o', publishedAt: 500 })
-
-		expect(await datedStore.publish({ ...payload, builtAt: 1000 })).toBe(true)
-		expect(cacheMocks.setObjectCache).toHaveBeenCalledWith(
-			'test-table:v1:ethereum:latest',
-			{ version: payload.snapshot, publishedAt: 1000 },
-			3300
-		)
-	})
-})
-
-describe('contentHashVersion', () => {
-	test('is deterministic, 20 chars, url-safe, and validated by isContentHashVersion', () => {
-		const version = contentHashVersion(JSON.stringify([{ id: 'aave' }]))
-		expect(version).toHaveLength(20)
-		expect(isContentHashVersion(version)).toBe(true)
-		expect(contentHashVersion(JSON.stringify([{ id: 'aave' }]))).toBe(version)
-		expect(contentHashVersion('other')).not.toBe(version)
-		expect(isContentHashVersion('short')).toBe(false)
-		expect(isContentHashVersion('has spaces in it....')).toBe(false)
-	})
+test('contentHashVersion is a deterministic 20-char url-safe token that isContentHashVersion accepts', () => {
+	const version = contentHashVersion(JSON.stringify([{ id: 'aave' }]))
+	expect(version).toMatch(/^[A-Za-z0-9_-]{20}$/)
+	expect(isContentHashVersion(version)).toBe(true)
+	expect(contentHashVersion(JSON.stringify([{ id: 'aave' }]))).toBe(version)
+	expect(contentHashVersion('other')).not.toBe(version)
+	expect(isContentHashVersion('short')).toBe(false)
+	expect(isContentHashVersion('has spaces in it....')).toBe(false)
 })

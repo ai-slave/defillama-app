@@ -15,16 +15,13 @@ function chartDataset(slug: string) {
 }
 
 describe('strict download dataset extractors', () => {
-	test('exposes legacy funding and LSD rate datasets with their original contracts', () => {
-		const perpFunding = dataset('perp-funding')
-		const lsdRates = dataset('lsd-rates')
-
-		expect(perpFunding.url).toBe('')
-		expect(perpFunding.defaultSortField).toBe('openInterest')
-		expect(perpFunding.fields).toContain('fundingRate30dSum')
-		expect(perpFunding.extractItems({ data: [{ marketplace: 'Binance' }] })).toEqual([{ marketplace: 'Binance' }])
-		expect(lsdRates.url).toBe('')
-		expect(lsdRates.extractItems([{ name: 'Lido', symbol: 'stETH' }])).toEqual([{ name: 'Lido', symbol: 'stETH' }])
+	test('unwraps legacy funding and LSD rate payloads into rows', () => {
+		expect(dataset('perp-funding').extractItems({ data: [{ marketplace: 'Binance' }] })).toEqual([
+			{ marketplace: 'Binance' }
+		])
+		expect(dataset('lsd-rates').extractItems([{ name: 'Lido', symbol: 'stETH' }])).toEqual([
+			{ name: 'Lido', symbol: 'stETH' }
+		])
 	})
 
 	test('preserves protocol percentage calculations and chain data', () => {

@@ -1,26 +1,11 @@
 import { Readable } from 'node:stream'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import uploadHandler from '~/pages/api/public/utr/claim/documents'
-import {
-	getUtrClaimUpstreamConfig,
-	mapUtrClaimUpstreamResponse,
-	proxyUtrClaim,
-	utrClaimSubmit
-} from '../server/claimProxy'
+import { mapUtrClaimUpstreamResponse, proxyUtrClaim, utrClaimSubmit } from '../server/claimProxy'
 
 afterEach(() => {
 	vi.unstubAllEnvs()
 	vi.unstubAllGlobals()
-})
-
-describe('UTR claim upstream selection', () => {
-	test('uses the existing production key and host', () => {
-		vi.stubEnv('API_KEY_FORGD', 'prod-key')
-		expect(getUtrClaimUpstreamConfig()).toEqual({
-			baseUrl: 'https://quant.forgd.com/api/v1/public',
-			apiKey: 'prod-key'
-		})
-	})
 })
 
 describe('proxyUtrClaim', () => {
@@ -103,23 +88,32 @@ describe('proxyUtrClaim', () => {
 			position: 'CEO',
 			email: 'test@example.com'
 		}
-		const fetchMock = vi.fn().mockImplementation((url: string | URL) => {
+		let releaseDiscord: () => void = () => undefined
+		let discordBody = ''
+		const fetchMock = vi.fn().mockImplementation((url: string | URL, init?: RequestInit) => {
 			if (String(url).startsWith('https://discord.com/api/webhooks/')) {
-				return Promise.resolve(new Response('{}', { status: 200 }))
+				discordBody = init?.body as string
+				return new Promise<Response>((resolve) => {
+					releaseDiscord = () => resolve(new Response('{}', { status: 200 }))
+				})
 			}
 			return Promise.resolve(new Response(JSON.stringify({ id: 'claim-id' }), { status: 201 }))
 		})
 		vi.stubGlobal('fetch', fetchMock)
 
-		await expect(
-			utrClaimSubmit.handle({ method: 'POST', url: '', query: {}, headers: {}, body: payload })
-		).resolves.toEqual({ status: 201, body: { id: 'claim-id' } })
+		let settled = false
+		const response = utrClaimSubmit
+			.handle({ method: 'POST', url: '', query: {}, headers: {}, body: payload })
+			.finally(() => {
+				settled = true
+			})
+		await vi.waitFor(() => expect(discordBody).not.toBe(''))
+		await new Promise((resolve) => setTimeout(resolve, 10))
+		expect(settled).toBe(false)
 
-		const discordCall = fetchMock.mock.calls.find(([url]) =>
-			String(url).startsWith('https://discord.com/api/webhooks/')
-		)
-		expect(discordCall).toBeDefined()
-		const webhookBody = JSON.parse(discordCall?.[1]?.body as string)
+		releaseDiscord()
+		await expect(response).resolves.toEqual({ status: 201, body: { id: 'claim-id' } })
+		const webhookBody = JSON.parse(discordBody)
 		expect(webhookBody.embeds[0].fields).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ name: 'Project', value: 'Test Token' }),

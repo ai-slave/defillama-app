@@ -2,30 +2,17 @@
 // @vitest-environment-options {"url":"http://localhost/ai/chat"}
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { setTerminalViewOpen, TERMINAL_SITE_NAV_MIN_VIEWPORT_PX } from '../terminal/terminalViewStore'
 import { useSidebarVisibility } from './useSidebarVisibility'
 
-const viewport = vi.hoisted(() => ({ width: 1680, listeners: new Set<() => void>() }))
-vi.mock('~/hooks/useMedia', async () => {
-	const { useSyncExternalStore } = await import('react')
-	const matches = (query: string) => viewport.width <= Number(/max-width: (\d+)px/.exec(query)![1])
-	return {
-		useMedia: (query: string) =>
-			useSyncExternalStore(
-				(listener) => {
-					viewport.listeners.add(listener)
-					return () => viewport.listeners.delete(listener)
-				},
-				() => matches(query)
-			)
-	}
-})
+// happy-dom evaluates media queries against its viewport and fires their change events on resize.
+const setViewport = (width: number) =>
+	(
+		window as unknown as { happyDOM: { setViewport: (size: { width: number; height: number }) => void } }
+	).happyDOM.setViewport({ width, height: 900 })
 const resize = async (width: number) => {
-	viewport.width = width
-	await act(async () => {
-		for (const listener of viewport.listeners) listener()
-	})
+	await act(async () => setViewport(width))
 }
 const siteNavHidden = () => document.documentElement.getAttribute('data-llamaai-fullscreen') === 'true'
 
@@ -43,7 +30,7 @@ const mount = async () => {
 beforeEach(() => {
 	document.cookie = 'llamaai-sidebar-hidden=; max-age=0; path=/'
 	document.cookie = 'llamaai-fullscreen=; max-age=0; path=/'
-	viewport.width = 1680
+	setViewport(1680)
 	container = document.createElement('div')
 	document.body.append(container)
 })

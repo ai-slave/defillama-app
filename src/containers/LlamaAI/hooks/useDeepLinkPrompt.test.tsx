@@ -3,43 +3,11 @@
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { setPendingPageContext, setPendingPrompt, setPendingSuggestedFlag } from '~/components/LlamaAIFloatingButton'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
+import { installUmamiSink } from '~/utils/test/umamiSink'
 
-const pending = vi.hoisted(() => ({
-	listeners: new Set<() => void>(),
-	prompt: null as string | null,
-	pageContext: null as { route: string } | null,
-	suggested: false
-}))
-
-vi.mock('~/components/LlamaAIFloatingButton', () => ({
-	hasPendingPrompt: () => pending.prompt !== null,
-	hasNoPendingPrompt: () => false,
-	subscribeToPendingPrompt: (callback: () => void) => {
-		pending.listeners.add(callback)
-		return () => pending.listeners.delete(callback)
-	},
-	consumePendingPrompt: () => {
-		const prompt = pending.prompt
-		pending.prompt = null
-		if (prompt) for (const listener of pending.listeners) listener()
-		return prompt
-	},
-	consumePendingPageContext: () => {
-		const context = pending.pageContext
-		pending.pageContext = null
-		return context
-	},
-	consumePendingSuggestedFlag: () => {
-		const suggested = pending.suggested
-		pending.suggested = false
-		return suggested
-	}
-}))
-
-vi.mock('~/utils/analytics/umami', () => ({
-	trackUmamiEvent: vi.fn()
-}))
+const track = installUmamiSink()
 
 const options = vi.hoisted(() => ({
 	isNewChat: true,
@@ -78,9 +46,7 @@ describe('useDeepLinkPrompt', () => {
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		pending.prompt = null
-		pending.pageContext = null
-		pending.suggested = false
+		localStorage.clear()
 		options.isNewChat = true
 		options.sharedSession = false
 		options.deepLinkPrompt = undefined
@@ -89,7 +55,6 @@ describe('useDeepLinkPrompt', () => {
 		options.clearDeepLinkFromUrl.mockReset()
 		options.submitPrompt.mockReset()
 		committed.length = 0
-		pending.listeners.clear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -105,9 +70,9 @@ describe('useDeepLinkPrompt', () => {
 	}
 
 	test('submits a pending floating-button prompt without opening the modal', async () => {
-		pending.prompt = 'from floating button'
-		pending.pageContext = { route: '/protocol/aave' }
-		pending.suggested = true
+		setPendingPrompt('from floating button')
+		setPendingPageContext({ route: '/protocol/aave' })
+		setPendingSuggestedFlag()
 		await mount()
 
 		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', { route: '/protocol/aave' }, true)
@@ -126,12 +91,13 @@ describe('useDeepLinkPrompt', () => {
 		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl')
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
 		expect(api.confirmationPrompt).toBeNull()
+		expect(track.mock.calls.map(([event]) => event)).toEqual(['llamaai-deeplink-view', 'llamaai-deeplink-run'])
 	})
 
 	// A pending prompt outranks the link, and the banner must not flash over the answer while the url
 	// change lands.
 	test('a pending prompt supersedes a deep link without showing its banner', async () => {
-		pending.prompt = 'from floating button'
+		setPendingPrompt('from floating button')
 		options.deepLinkPrompt = 'what is tvl'
 		await mount()
 
@@ -150,7 +116,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(api.confirmationPrompt).toBeNull()
 		committed.length = 0
 
-		pending.prompt = 'from floating button'
+		setPendingPrompt('from floating button')
 		options.deepLinkPrompt = 'later url'
 		await mount()
 
@@ -191,5 +157,10 @@ describe('useDeepLinkPrompt', () => {
 		expect(options.submitPrompt).not.toHaveBeenCalled()
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
 		expect(api.confirmationPrompt).toBeNull()
+		expect(track).toHaveBeenLastCalledWith('llamaai-deeplink-dismiss', {
+			source: null,
+			campaign: null,
+			prompt: 'what is tvl'
+		})
 	})
 })

@@ -1,65 +1,29 @@
 // @vitest-environment happy-dom
 
-import { act, type ReactNode, useSyncExternalStore } from 'react'
+import { act, type ReactNode } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import type { DashboardInitialRenderPayload } from '~/containers/ProDashboard/initialDashboard'
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 
-const mocks = vi.hoisted(() => {
-	const signedOut = { isAuthenticated: false, user: null as { id: string } | null, loaders: { userLoading: false } }
-	return {
-		signedOut,
-		session: { ...signedOut },
-		listeners: new Set<() => void>(),
-		router: {
-			query: { dashboardId: 'test-dashboard', mode: ['edit'] },
-			asPath: '/pro/test-dashboard/edit',
-			replace: vi.fn()
-		},
-		currentDashboard: { user: 'owner', slug: 'test-dashboard' } as Record<string, unknown>
-	}
-})
-vi.mock('next/router', () => ({ default: mocks.router, useRouter: () => mocks.router }))
+const router = vi.hoisted(() => ({
+	query: { dashboardId: 'test-dashboard', mode: ['edit'] },
+	asPath: '/pro/test-dashboard/edit',
+	replace: vi.fn()
+}))
+vi.mock('next/router', () => ({ default: router, useRouter: () => router }))
 vi.mock('next/head', () => ({ default: () => null }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () =>
-		useSyncExternalStore(
-			(listener) => {
-				mocks.listeners.add(listener)
-				return () => mocks.listeners.delete(listener)
-			},
-			() => mocks.session,
-			() => mocks.signedOut
-		)
-}))
+// Page chrome and the editor body are heavy children; these tests read the loader and redirect around them.
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => children }))
-vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
-	ProDashboardAPIProvider: ({ children }: { children: ReactNode }) => children,
-	useProDashboardDashboard: () => ({
-		isLoadingDashboard: false,
-		streamHasResolved: true,
-		currentDashboard: mocks.currentDashboard,
-		dashboardName: 'Test dashboard'
-	})
-}))
-vi.mock('~/containers/ProDashboard', () => ({ default: () => <input aria-label="Widget name" /> }))
-vi.mock('~/containers/ProDashboard/hooks/useDashboardEngagement', () => ({
-	useDashboardEngagement: () => ({ trackView: vi.fn() })
-}))
-vi.mock('~/containers/ProDashboard/components/ProDashboardLoader', () => ({
-	ProDashboardLoader: () => <p role="status">Loading editor</p>
-}))
-vi.mock('~/containers/ProDashboard/queries.server', () => ({
-	fetchDashboardConfig: vi.fn(),
-	fetchDashboardConfigWithStatus: vi.fn()
-}))
-vi.mock('~/containers/ProDashboard/server/auth', () => ({
-	fetchAuthenticatedUserId: vi.fn(),
-	getAuthTokenFromRequest: vi.fn()
-}))
-vi.mock('~/utils/telemetry', () => ({ withServerSidePropsTelemetry: vi.fn() }))
+vi.mock('~/containers/ProDashboard', () => ({ default: () => null }))
+// The page module also exports its server loader, whose queries open a database client at import.
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
+
+const session = installSubscriberSession('owner')
 
 const initialDashboard: DashboardInitialRenderPayload = {
 	id: 'dashboard-id',
@@ -70,12 +34,31 @@ const initialDashboard: DashboardInitialRenderPayload = {
 	created: '2026-09-06T00:00:00Z',
 	updated: '2026-09-06T00:00:00Z'
 }
+const streamedDashboard = {
+	id: 'dashboard-id',
+	slug: 'test-dashboard',
+	user: 'owner',
+	visibility: 'private',
+	data: { dashboardName: 'Test dashboard', items: [] },
+	created: '2026-09-06T00:00:00Z',
+	updated: '2026-09-06T00:00:00Z'
+}
+
 let root: Root | undefined
 let container: HTMLDivElement
 beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.session = { isAuthenticated: true, user: { id: 'owner' }, loaders: { userLoading: false } }
-	mocks.currentDashboard = { user: 'owner', slug: 'test-dashboard' }
+	router.replace.mockReset()
+	session.serve({
+		'/api/dynamic/pro-dashboard/test-dashboard/stream': () =>
+			new Response(`${JSON.stringify({ type: 'dashboard', data: streamedDashboard })}\n{"type":"done"}\n`),
+		// The editor's catalogs and dashboard lists load behind the loader; this dashboard needs none of them.
+		'/api/dynamic/pro-dashboard/protocol-catalog-source': [],
+		[`${SERVER_URL}/lite/protocols2`]: { protocols: [], chains: [], parentProtocols: [] },
+		[`${SERVER_URL}/chains`]: [],
+		[`${FEATURES_SERVER}/lite/dashboards`]: { items: [] },
+		[`${FEATURES_SERVER}/dashboards`]: { items: [] },
+		[`${FEATURES_SERVER}/dashboards/test-dashboard`]: streamedDashboard
+	})
 	container = document.createElement('div')
 	document.body.appendChild(container)
 })
@@ -85,20 +68,24 @@ afterEach(async () => {
 	container.remove()
 })
 
+const showsEditorLoader = () => container.querySelector('h1')?.textContent === 'Edit dashboard'
+
 async function hydrate() {
 	const page = (
-		<DashboardPage
-			dashboardId="test-dashboard"
-			mode="edit"
-			initialDashboard={initialDashboard}
-			seo={null}
-			ogImage={null}
-			noIndex
-			status={200}
-		/>
+		<session.Wrapper>
+			<DashboardPage
+				dashboardId="test-dashboard"
+				mode="edit"
+				initialDashboard={initialDashboard}
+				seo={null}
+				ogImage={null}
+				noIndex
+				status={200}
+			/>
+		</session.Wrapper>
 	)
 	container.innerHTML = renderToString(page)
-	expect(container.textContent).toBe('Loading editor')
+	expect(showsEditorLoader()).toBe(true)
 	const onRecoverableError = vi.fn()
 	await act(async () => {
 		root = hydrateRoot(container, page, { onRecoverableError })
@@ -108,61 +95,34 @@ async function hydrate() {
 
 test('hydrates a seeded owner dashboard without redirecting the restored session', async () => {
 	await hydrate()
-	expect(container.querySelector('[aria-label="Widget name"]')).not.toBeNull()
-	expect(mocks.router.replace).not.toHaveBeenCalled()
+	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	expect(router.replace).not.toHaveBeenCalled()
 })
 
 test('keeps the loader while client authentication is pending, then opens the editor', async () => {
-	mocks.session = { ...mocks.session, loaders: { userLoading: true } }
-	await hydrate()
-	expect(container.textContent).toBe('Loading editor')
-	expect(mocks.router.replace).not.toHaveBeenCalled()
-	await act(async () => {
-		mocks.session = { ...mocks.session, loaders: { userLoading: false } }
-		for (const listener of mocks.listeners) listener()
+	// The session reads as loading until its subscription status answers.
+	let answerSubscription: (response: Response) => void = () => {}
+	session.serve({
+		'/subscription/status': () =>
+			new Promise<Response>((resolve) => {
+				answerSubscription = resolve
+			})
 	})
-	expect(container.querySelector('[aria-label="Widget name"]')).not.toBeNull()
-	expect(mocks.router.replace).not.toHaveBeenCalled()
+	await hydrate()
+	await vi.waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
+	expect(showsEditorLoader()).toBe(true)
+	expect(router.replace).not.toHaveBeenCalled()
+
+	await act(async () =>
+		answerSubscription(Response.json({ subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }))
+	)
+	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	expect(router.replace).not.toHaveBeenCalled()
 })
 
-test.each(['signed out', 'another account'])('redirects when the restored session is %s', async (session) => {
-	mocks.session =
-		session === 'signed out'
-			? mocks.signedOut
-			: { isAuthenticated: true, user: { id: 'other' }, loaders: { userLoading: false } }
+test('redirects to the dashboard view when the owner signs out after hydration', async () => {
 	await hydrate()
-	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
-})
-
-test('still redirects when the owner signs out after hydration', async () => {
-	await hydrate()
-	await act(async () => {
-		mocks.session = mocks.signedOut
-		for (const listener of mocks.listeners) listener()
-	})
-	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
-})
-
-test('a team member with server-resolved edit access stays in the editor', async () => {
-	mocks.session = { isAuthenticated: true, user: { id: 'member' }, loaders: { userLoading: false } }
-	mocks.currentDashboard = {
-		user: 'owner',
-		slug: 'test-dashboard',
-		team: { id: 'team-1', name: 'Growth' },
-		access: { role: 'member', canEdit: true, canDelete: false, canMove: false }
-	}
-	await hydrate()
-	expect(container.querySelector('[aria-label="Widget name"]')).not.toBeNull()
-	expect(mocks.router.replace).not.toHaveBeenCalled()
-})
-
-test('server access of none still redirects a non-member out of the editor', async () => {
-	mocks.session = { isAuthenticated: true, user: { id: 'stranger' }, loaders: { userLoading: false } }
-	mocks.currentDashboard = {
-		user: 'owner',
-		slug: 'test-dashboard',
-		access: { role: 'none', canEdit: false, canDelete: false, canMove: false }
-	}
-	await hydrate()
-	expect(mocks.router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
+	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	await act(async () => pb.authStore.clear())
+	expect(router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
 })

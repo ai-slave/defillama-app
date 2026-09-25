@@ -1,17 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { PRE_IPO_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { PreIpoCompanyListItem, PreIpoCompanySummary, PreIpoIntegrations } from '../api.types'
-
-type PreIpoApi = typeof import('../api')
-
-const api = vi.hoisted(() => ({
-	fetchPreIpoCompanies: vi.fn<PreIpoApi['fetchPreIpoCompanies']>(),
-	fetchPreIpoCompanySummary: vi.fn<PreIpoApi['fetchPreIpoCompanySummary']>(),
-	fetchPreIpoValuations: vi.fn<PreIpoApi['fetchPreIpoValuations']>(),
-	fetchPreIpoRaises: vi.fn<PreIpoApi['fetchPreIpoRaises']>(),
-	fetchPreIpoIntegrations: vi.fn<PreIpoApi['fetchPreIpoIntegrations']>()
-}))
-
-vi.mock('../api', () => api)
+import { getPreIpoCompanyPageData, getPreIpoOverviewPageData } from '../queries'
+const http = installFixtureFetch()
 
 const valuationDataUpdatedAt = '2026-08-25T00:00:00.000Z'
 const marketDataUpdatedAt = '2026-08-25T00:05:00.000Z'
@@ -60,54 +52,58 @@ const integrations = {
 } satisfies PreIpoIntegrations
 
 beforeEach(() => {
-	vi.clearAllMocks()
-	api.fetchPreIpoCompanies.mockResolvedValue({
-		updatedAt: valuationDataUpdatedAt,
-		data: []
+	http.serve({
+		[`${PRE_IPO_SERVER_URL}/companies-list`]: {
+			updatedAt: valuationDataUpdatedAt,
+			data: []
+		}
 	})
-	api.fetchPreIpoCompanySummary.mockResolvedValue({
-		updatedAt: valuationDataUpdatedAt,
-		data: summary
+	http.serve({
+		[`${PRE_IPO_SERVER_URL}/summary?company=anthropic`]: {
+			updatedAt: valuationDataUpdatedAt,
+			data: summary
+		}
 	})
-	api.fetchPreIpoValuations.mockResolvedValue({
-		updatedAt: valuationDataUpdatedAt,
-		data: []
+	http.serve({
+		[`${PRE_IPO_SERVER_URL}/valuations?company=anthropic`]: {
+			updatedAt: valuationDataUpdatedAt,
+			data: []
+		}
 	})
-	api.fetchPreIpoRaises.mockResolvedValue({
-		updatedAt: valuationDataUpdatedAt,
-		data: []
+	http.serve({
+		[`${PRE_IPO_SERVER_URL}/raises?company=anthropic`]: {
+			updatedAt: valuationDataUpdatedAt,
+			data: []
+		}
 	})
-	api.fetchPreIpoIntegrations.mockResolvedValue({
-		updatedAt: marketDataUpdatedAt,
-		data: integrations
+	http.serve({
+		[`${PRE_IPO_SERVER_URL}/integrations?company=anthropic`]: {
+			updatedAt: marketDataUpdatedAt,
+			data: integrations
+		}
 	})
 })
 
 describe('pre-IPO page queries', () => {
-	test('passes the producer directory through without per-row copies', async () => {
+	test('preserves the company directory and its publication time', async () => {
 		const companies = [company]
-		api.fetchPreIpoCompanies.mockResolvedValue({
-			updatedAt: valuationDataUpdatedAt,
-			data: companies
+		http.serve({
+			[`${PRE_IPO_SERVER_URL}/companies-list`]: {
+				updatedAt: valuationDataUpdatedAt,
+				data: companies
+			}
 		})
-		const { getPreIpoOverviewPageData } = await import('../queries')
-
 		const page = await getPreIpoOverviewPageData()
 
-		expect(page.companies).toBe(companies)
+		expect(page.companies).toEqual(companies)
 		expect(page.updatedAt).toBe(valuationDataUpdatedAt)
 	})
 
 	test('requests every required company snapshot and preserves independent freshness', async () => {
-		const { getPreIpoCompanyPageData } = await import('../queries')
 		const page = await getPreIpoCompanyPageData('anthropic')
 
-		expect(api.fetchPreIpoCompanySummary).toHaveBeenCalledWith('anthropic')
-		expect(api.fetchPreIpoValuations).toHaveBeenCalledWith('anthropic')
-		expect(api.fetchPreIpoRaises).toHaveBeenCalledWith('anthropic')
-		expect(api.fetchPreIpoIntegrations).toHaveBeenCalledWith('anthropic')
 		expect(page.chart).toBeNull()
-		expect(page.integrations).toBe(integrations)
+		expect(page.integrations).toEqual(integrations)
 		expect(page.integrations.perps[0]?.volume).toBe(0)
 		expect(page.integrations.perps[0]?.annualizedFundingRate).toBe(0)
 		expect(page.valuationDataUpdatedAt).toBe(valuationDataUpdatedAt)
@@ -115,9 +111,11 @@ describe('pre-IPO page queries', () => {
 	})
 
 	test('rejects the page when any required snapshot fails', async () => {
-		api.fetchPreIpoIntegrations.mockRejectedValue(new Error('integrations unavailable'))
-		const { getPreIpoCompanyPageData } = await import('../queries')
-
+		http.serve({
+			[`${PRE_IPO_SERVER_URL}/integrations?company=anthropic`]: fixtureStatus(404, {
+				error: 'integrations unavailable'
+			})
+		})
 		await expect(getPreIpoCompanyPageData('anthropic')).rejects.toThrow('integrations unavailable')
 	})
 })

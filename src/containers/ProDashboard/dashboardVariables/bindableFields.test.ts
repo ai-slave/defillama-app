@@ -1,39 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { migrateDashboardItemConfig } from '../dashboardConfig/migrate'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import type { ChartBuilderConfig, DashboardBindableField, DashboardItemBindings } from '../types'
+import type { ChartBuilderConfig } from '../types'
 import {
-	DASHBOARD_ITEM_BINDABLE_FIELDS,
 	getBindableFieldVariableKind,
 	getBindableFields,
 	getDashboardItemBindings,
-	isBindableDashboardItem,
 	sanitizeDashboardItemBindings
 } from './bindableFields'
-
-const ALL_KINDS: Array<DashboardItemConfig['kind']> = [
-	'chart',
-	'multi',
-	'metric',
-	'unified-table',
-	'builder',
-	'stablecoins',
-	'advanced-tvl',
-	'advanced-borrowed',
-	'income-statement',
-	'unlocks-schedule',
-	'unlocks-pie',
-	'dataset-table',
-	'text',
-	'yields',
-	'stablecoin-asset',
-	'llamaai-chart',
-	'rwa-overview',
-	'rwa-asset',
-	'sql',
-	'section',
-	'custom-data'
-]
 
 function builder(mode: ChartBuilderConfig['config']['mode']): ChartBuilderConfig {
 	return {
@@ -91,83 +65,19 @@ const table: DashboardItemConfig = {
 	rowHeaders: ['protocol']
 }
 const stablecoins: DashboardItemConfig = { id: 's', kind: 'stablecoins', chain: 'Ethereum', chartType: 'totalMcap' }
-const protocolCards: Array<DashboardItemConfig> = [
-	{ id: 'a', kind: 'advanced-tvl', protocol: 'aave', protocolName: 'Aave', chartType: 'tvl' },
-	{ id: 'b', kind: 'advanced-borrowed', protocol: 'aave', protocolName: 'Aave', chartType: 'chainsBorrowed' },
-	{ id: 'i', kind: 'income-statement', protocol: 'aave', protocolName: 'Aave' },
-	{ id: 'u', kind: 'unlocks-schedule', protocol: 'aave', protocolName: 'Aave', dataType: 'documented' },
-	{ id: 'up', kind: 'unlocks-pie', protocol: 'aave', protocolName: 'Aave', chartType: 'allocation' }
-]
-const unbindable: Array<DashboardItemConfig> = [
-	{ id: 'text', kind: 'text', content: 'hello' },
-	{ id: 'section', kind: 'section', title: 'Section', displayAs: 'heading' },
-	{ id: 'multi', kind: 'multi', items: [] },
-	{
-		id: 'custom',
-		kind: 'custom-data',
-		name: 'Uploaded',
-		columns: [],
-		chart: {
-			chartType: 'bar',
-			xCol: null,
-			yCols: [],
-			splitByCol: null,
-			stackMode: 'off',
-			rightAxisCols: [],
-			seriesKinds: {},
-			seriesColors: {},
-			numberFormat: 'auto'
-		},
-		displayMode: 'table'
-	}
-]
-
-describe('DASHBOARD_ITEM_BINDABLE_FIELDS', () => {
-	test('has an entry for every dashboard item kind', () => {
-		expect(Object.keys(DASHBOARD_ITEM_BINDABLE_FIELDS).sort()).toEqual([...ALL_KINDS].sort())
-	})
-
-	test('only the documented kinds expose fields', () => {
-		const bindable = Object.entries(DASHBOARD_ITEM_BINDABLE_FIELDS)
-			.filter(([, fields]) => Object.keys(fields).length > 0)
-			.map(([kind]) => kind)
-			.sort()
-		expect(bindable).toEqual(
-			[
-				'chart',
-				'metric',
-				'unified-table',
-				'builder',
-				'stablecoins',
-				'advanced-tvl',
-				'advanced-borrowed',
-				'income-statement',
-				'unlocks-schedule',
-				'unlocks-pie'
-			].sort()
-		)
-	})
-})
+const advancedTvl: DashboardItemConfig = {
+	id: 'a',
+	kind: 'advanced-tvl',
+	protocol: 'aave',
+	protocolName: 'Aave',
+	chartType: 'tvl'
+}
+const textCard: DashboardItemConfig = { id: 'text', kind: 'text', content: 'hello' }
 
 describe('getBindableFields', () => {
-	test.each<[string, DashboardItemConfig, Array<DashboardBindableField>]>([
-		['chain chart', chainChart, ['subject']],
-		['protocol chart', protocolChart, ['subject']],
-		['chain metric', chainMetric, ['subject']],
-		['protocol metric', protocolMetric, ['subject']],
-		['unified-table', table, ['chains']],
-		['builder in chains mode', builder('chains'), ['chains']],
-		['builder in protocol mode', builder('protocol'), ['chains', 'protocol']],
-		['stablecoins', stablecoins, ['chain']],
-		...protocolCards.map((card): [string, DashboardItemConfig, Array<DashboardBindableField>] => [
-			card.kind,
-			card,
-			['protocol']
-		]),
-		...unbindable.map((item): [string, DashboardItemConfig, Array<DashboardBindableField>] => [item.kind, item, []])
-	])('%s', (_label, item, fields) => {
-		expect(getBindableFields(item)).toEqual(fields)
-		expect(isBindableDashboardItem(item)).toBe(Object.keys(DASHBOARD_ITEM_BINDABLE_FIELDS[item.kind]).length > 0)
+	test('a builder binds its protocol only in protocol mode', () => {
+		expect(getBindableFields(builder('chains'))).toEqual(['chains'])
+		expect(getBindableFields(builder('protocol'))).toEqual(['chains', 'protocol'])
 	})
 })
 
@@ -179,13 +89,8 @@ describe('getBindableFieldVariableKind', () => {
 		expect(getBindableFieldVariableKind(protocolMetric, 'subject')).toBe('protocol')
 	})
 
-	test('fixed-kind fields report their kind and unknown fields are null', () => {
-		expect(getBindableFieldVariableKind(table, 'chains')).toBe('chain')
-		expect(getBindableFieldVariableKind(table, 'subject')).toBeNull()
-		expect(getBindableFieldVariableKind(stablecoins, 'chain')).toBe('chain')
-		expect(getBindableFieldVariableKind(protocolCards[0]!, 'protocol')).toBe('protocol')
-		expect(getBindableFieldVariableKind(protocolCards[0]!, 'chain')).toBeNull()
-		expect(getBindableFieldVariableKind(unbindable[0]!, 'subject')).toBeNull()
+	test('a field the card cannot bind has no variable kind', () => {
+		expect(getBindableFieldVariableKind(advancedTvl, 'chain')).toBeNull()
 	})
 
 	test('builder protocol is bindable only in protocol mode', () => {
@@ -210,24 +115,11 @@ describe('sanitizeDashboardItemBindings', () => {
 		expect(sanitizeDashboardItemBindings(chainChart, null)).toBeUndefined()
 		expect(sanitizeDashboardItemBindings(chainChart, ['subject'])).toBeUndefined()
 		expect(sanitizeDashboardItemBindings(chainChart, 'subject')).toBeUndefined()
-		expect(sanitizeDashboardItemBindings(unbindable[0]!, { subject: 'chain' })).toBeUndefined()
-	})
-
-	test('sanitized output is assignable to DashboardItemBindings', () => {
-		const bindings: DashboardItemBindings | undefined = sanitizeDashboardItemBindings(protocolCards[2]!, {
-			protocol: 'protocol'
-		})
-		expect(bindings).toEqual({ protocol: 'protocol' })
+		expect(sanitizeDashboardItemBindings(textCard, { subject: 'chain' })).toBeUndefined()
 	})
 })
 
 describe('getDashboardItemBindings', () => {
-	test('returns the card own bindings or an empty object', () => {
-		expect(getDashboardItemBindings(chainChart)).toEqual({})
-		expect(getDashboardItemBindings({ ...chainChart, bindings: { subject: 'chain' } })).toEqual({ subject: 'chain' })
-		expect(getDashboardItemBindings(unbindable[0]!)).toEqual({})
-	})
-
 	test('unions the sub-chart bindings of a multi card', () => {
 		expect(
 			getDashboardItemBindings({
@@ -247,6 +139,8 @@ describe('getDashboardItemBindings', () => {
 			})
 		).toEqual({ subject: 'protocol' })
 		expect(getDashboardItemBindings({ id: 'multi', kind: 'multi', items: [] })).toEqual({})
+		expect(getDashboardItemBindings(chainChart)).toEqual({})
+		expect(getDashboardItemBindings({ ...chainChart, bindings: { subject: 'chain' } })).toEqual({ subject: 'chain' })
 	})
 
 	test('migration keeps multi sub-chart bindings and drops unknown fields', () => {

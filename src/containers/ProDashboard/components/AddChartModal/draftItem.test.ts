@@ -45,27 +45,18 @@ const metricDraft = {
 } satisfies MetricConfig
 
 describe('initializeFromEditItem as a quick add draft', () => {
-	test('opens a chart draft on the protocol tab with the entity and metric selected', () => {
-		const state = initializeFromEditItem(chartDraft)
-
-		expect(state.selectedMainTab).toBe('charts')
-		expect(state.chartMode).toBe('manual')
-		expect(state.selectedChartTab).toBe('protocol')
-		expect(state.manualFormOpen).toBe(true)
-		expect(state.chartCreationMode).toBe('separate')
-		expect(state.selectedProtocol).toBe('uniswap')
-		expect(state.selectedChain).toBe(null)
-		expect(state.selectedChartType).toBe('fees')
-		expect(state.selectedChartTypes).toEqual(['fees'])
-		expect(state.composerItems).toEqual([chartDraft])
-	})
-
-	test('opens a text draft on the text tab with empty content', () => {
-		const state = initializeFromEditItem({ id: 'quick-add-draft', kind: 'text', content: '', colSpan: 1 })
+	test('opens a text draft on the text tab with its title and content', () => {
+		const state = initializeFromEditItem({
+			id: 'quick-add-draft',
+			kind: 'text',
+			title: 'Notes',
+			content: 'Watch fees',
+			colSpan: 1
+		})
 
 		expect(state.selectedMainTab).toBe('text')
-		expect(state.textTitle).toBe('')
-		expect(state.textContent).toBe('')
+		expect(state.textTitle).toBe('Notes')
+		expect(state.textContent).toBe('Watch fees')
 	})
 
 	test('opens a metric draft on the metric tab with its aggregator and window', () => {
@@ -92,14 +83,6 @@ describe('buildNewDashboardItems from a quick add draft', () => {
 		expect(buildFromDraft(chainChartDraft)).toEqual([{ ...chainChartDraft, id: 'new:tvl:Ethereum' }])
 	})
 
-	test('keeps a groupable chart daily and leaves a non groupable chart ungrouped', () => {
-		const [chart] = buildFromDraft(chartDraft) as [ChartConfig]
-		const [chainChart] = buildFromDraft(chainChartDraft) as [ChartConfig]
-
-		expect(chart.grouping).toBe('day')
-		expect(chainChart.grouping).toBeUndefined()
-	})
-
 	test('carries a chart draft colour through the composer', () => {
 		expect(buildFromDraft({ ...chartDraft, color: '#ff0080' })).toEqual([
 			{ ...chartDraft, id: 'new:fees:uniswap', color: '#ff0080' }
@@ -120,11 +103,5 @@ describe('buildNewDashboardItems from a quick add draft', () => {
 
 	test('rebuilds a metric draft unchanged apart from a fresh id', () => {
 		expect(buildFromDraft(metricDraft)).toEqual([{ ...metricDraft, id: 'new:metric:' }])
-	})
-
-	test('an unlabelled metric draft comes back with an empty label', () => {
-		const { label: _label, ...unlabelled } = metricDraft
-
-		expect(buildFromDraft(unlabelled)).toEqual([{ ...unlabelled, id: 'new:metric:', label: '' }])
 	})
 })

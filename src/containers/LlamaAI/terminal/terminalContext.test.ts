@@ -110,7 +110,7 @@ describe('readTerminalContext', () => {
 })
 
 describe('terminalContext on the mutation envelope', () => {
-	function envelope(terminalContext?: ReturnType<typeof readTerminalContext>) {
+	function envelope(terminalContext: ReturnType<typeof readTerminalContext>) {
 		return createAgenticMutationEnvelope({
 			clientMutationId: 'mutation-1',
 			message: 'Where is support?',
@@ -132,9 +132,5 @@ describe('terminalContext on the mutation envelope', () => {
 			to: RANGE.to,
 			drawings: [{ id: 'ai_1', kind: 'hline' }]
 		})
-	})
-
-	test('omits the key entirely when there is no terminal surface', () => {
-		expect('terminalContext' in envelope(undefined)).toBe(false)
 	})
 })

@@ -5,16 +5,6 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { SubmitButton } from '~/containers/LlamaAI/components/input/SubmitButton'
 
-vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
-vi.mock('~/ui/Tooltip', () => ({
-	Tooltip: ({ children, render }: { children: React.ReactNode; render: React.ReactNode }) => (
-		<>
-			{render}
-			{children}
-		</>
-	)
-}))
-
 describe('SubmitButton streaming affordances', () => {
 	let container: HTMLDivElement
 	let root: Root

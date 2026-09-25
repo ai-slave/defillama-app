@@ -4,9 +4,13 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { getProDashboardChartTypeConfig } from '../../types'
-import { DASHBOARD_CHART_GROUPING, getGroupedMetricTitle } from '../../utils'
-import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
-import { buildMultiChartSeriesView, getComposerGrouping, type MultiChartInputSeries } from '../multiChartSeries'
+import { DASHBOARD_CHART_GROUPING } from '../../utils'
+import {
+	buildComposerPreviewSeries,
+	buildMultiChartSeriesView,
+	getComposerGrouping,
+	type MultiChartInputSeries
+} from '../multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -29,20 +33,9 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 
 		for (const item of composerItems) {
 			if (item.data.length > 0) {
-				const meta = getProDashboardChartTypeConfig(item.type)
 				const displayName =
 					item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
-
-				series.push({
-					name: `${displayName} ${getGroupedMetricTitle(item.type, meta?.title || item.type, previewGrouping)}`,
-					baseType:
-						meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
-							? meta.chartType
-							: undefined,
-					data: item.data,
-					color: item.color || getPaletteColor(EXTENDED_COLOR_PALETTE, colorIndex),
-					metricType: item.type
-				})
+				series.push(buildComposerPreviewSeries(item, previewGrouping, displayName, colorIndex))
 				colorIndex++
 			}
 		}

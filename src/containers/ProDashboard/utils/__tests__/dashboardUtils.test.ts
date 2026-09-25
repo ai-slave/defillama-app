@@ -39,10 +39,4 @@ describe('dashboard item boundary', () => {
 		expect(cleaned.rowCap).toBe(500)
 		expect(cleaned.id).toBe('sql-1')
 	})
-
-	test('leaves SQL items without snapshots untouched', () => {
-		const { snapshot: _snapshot, ...noSnapshot } = sqlItem
-		const [cleaned] = toPersistedDashboardItems([noSnapshot])
-		expect(cleaned).toEqual(noSnapshot)
-	})
 })

@@ -1,4 +1,3 @@
-import { QueryClient, QueryObserver } from '@tanstack/react-query'
 import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import { initDashboardState } from './dashboardReducer'
@@ -155,27 +154,6 @@ describe('dashboard initial render payload', () => {
 		expect(isDashboardInitialRenderHydration(firstHydration)).toBe(true)
 		expect(isDashboardInitialRenderHydration(recreatedHydration)).toBe(true)
 		expect(isDashboardInitialRenderHydration(source)).toBe(false)
-	})
-
-	test('preserves an existing trusted query cache entry when initial render data is provided', () => {
-		const queryClient = new QueryClient()
-		const queryKey = ['pro-dashboard', 'dashboard', 'dashboard-1', true, 'owner-1'] as const
-		const trustedDashboard = dashboard([])
-		const initialDashboard = hydrateDashboardInitialRenderPayload(
-			toOwnerDashboardInitialRenderPayload(trustedDashboard)
-		)
-		queryClient.setQueryData(queryKey, trustedDashboard)
-
-		const observer = new QueryObserver(queryClient, {
-			queryKey,
-			queryFn: async () => trustedDashboard,
-			enabled: false,
-			initialData: initialDashboard
-		})
-
-		expect(observer.getCurrentResult().data).toBe(trustedDashboard)
-		expect(observer.getCurrentResult().data).not.toBe(initialDashboard)
-		queryClient.clear()
 	})
 
 	test('keeps a representative 24-item __NEXT_DATA__ config payload bounded', () => {

@@ -1,23 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { rwaPerpsOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/perps/overview-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	fetchRWAPerpsOverviewBreakdownChartData: vi.fn()
-}))
-
-vi.mock('~/containers/RWA/Perps/api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/containers/RWA/Perps/api')>()
-	return {
-		...actual,
-		fetchRWAPerpsOverviewBreakdownChartData: mocks.fetchRWAPerpsOverviewBreakdownChartData
-	}
-})
-
-beforeEach(() => {
-	vi.clearAllMocks()
-})
+const http = installFixtureFetch()
 
 describe('parseOverviewBreakdownRequest', () => {
 	test('accepts overview requests without a target', () => {
@@ -36,74 +24,17 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	test('accepts venue-targeted requests', () => {
+	test.each([
+		{ query: { venue: ' xyz ' }, target: { kind: 'venue', slug: 'xyz' } },
+		{ query: { assetGroup: 'US Equities' }, target: { kind: 'assetGroup', slug: 'US Equities' } },
+		{ query: { assetClass: 'Forex Perps' }, target: { kind: 'assetClass', slug: 'Forex Perps' } },
+		{ query: { excludeAssetClass: 'Forex Perps' }, target: { kind: 'excludeAssetClass', slug: 'Forex Perps' } }
+	])('accepts $target.kind-targeted requests', ({ query, target }) => {
 		expect(
 			parseOverviewBreakdownRequest({
-				query: {
-					venue: ' xyz ',
-					breakdown: 'baseAsset',
-					key: 'volume24h'
-				}
+				query: { ...query, includeCex: 'true', breakdown: 'baseAsset', key: 'volume24h' }
 			})
-		).toEqual({
-			breakdown: 'baseAsset',
-			key: 'volume24h',
-			target: { kind: 'venue', slug: 'xyz' },
-			includeCex: false
-		})
-	})
-
-	test('accepts asset-group-targeted requests', () => {
-		expect(
-			parseOverviewBreakdownRequest({
-				query: {
-					assetGroup: 'US Equities',
-					includeCex: 'true',
-					breakdown: 'venue',
-					key: 'markets'
-				}
-			})
-		).toEqual({
-			breakdown: 'venue',
-			key: 'markets',
-			target: { kind: 'assetGroup', slug: 'US Equities' },
-			includeCex: true
-		})
-	})
-
-	test('accepts asset-class-targeted requests', () => {
-		expect(
-			parseOverviewBreakdownRequest({
-				query: {
-					assetClass: 'Forex Perps',
-					includeCex: 'true',
-					breakdown: 'assetGroup',
-					key: 'openInterest'
-				}
-			})
-		).toEqual({
-			breakdown: 'assetGroup',
-			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' },
-			includeCex: true
-		})
-	})
-
-	test('accepts asset-class exclusion requests', () => {
-		expect(
-			parseOverviewBreakdownRequest({
-				query: {
-					excludeAssetClass: 'Forex Perps',
-					breakdown: 'assetGroup',
-					key: 'openInterest'
-				}
-			})
-		).toEqual({
-			breakdown: 'assetGroup',
-			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
-			includeCex: false
-		})
+		).toEqual({ breakdown: 'baseAsset', key: 'volume24h', target, includeCex: true })
 	})
 
 	test('rejects the retired venueType query', () => {
@@ -216,7 +147,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 describe('rwaPerpsOverviewBreakdown', () => {
 	test('returns serialized transformed breakdown data', async () => {
-		mocks.fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValue([{ timestamp: 1, Hyperliquid: 3, GMX: 5 }])
+		http.serve({ [`${RWA_PERPS_SERVER_URL}/chart/overview-breakdown`]: [{ timestamp: 1, Hyperliquid: 3, GMX: 5 }] })
 
 		const result = await rwaPerpsOverviewBreakdown.handle({
 			method: 'GET',

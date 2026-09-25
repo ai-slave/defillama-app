@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { parseMessageToRenderModel } from '~/containers/LlamaAI/renderModel'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
 import type { Message } from '../types'
+import { canVoteOnDuel, hasDuelAnswer, hasDuelProgress } from './duelVoting'
 import { MessageBubble } from './messages/MessageBubble'
 
 export type DuelChoice = 'a' | 'b' | 'tie' | 'both_bad'
@@ -17,28 +17,6 @@ interface DuelPanelProps {
 	/** The server confirmed both answers are persisted; until then neither can be resolved. */
 	canResolve: boolean
 	onVote: (choice: DuelChoice) => void
-}
-
-// A tool call alone is progress, not an answer; prose or reasoning is. Saved messages carry reasoning
-// as `thinking`, live and committed ones as steps. Artifacts that MessageBubble can render without
-// prose are answers once their arm has settled.
-function hasTextAnswer(message: Message | null) {
-	if (!message) return false
-	if (message.content?.trim() || message.thinking?.trim()) return true
-	return (message.steps ?? []).some((step) => step.kind === 'reasoning' && step.text.trim())
-}
-
-// Progress worth showing instead of the loading placeholder while an arm streams.
-function hasProgress(message: Message | null) {
-	return hasTextAnswer(message) || (message?.steps?.length ?? 0) > 0
-}
-
-function hasRenderableAnswer(message: Message | null) {
-	if (!message) return false
-	if (hasTextAnswer(message)) return true
-	// Match the read-only MessageBubble below: alerts are intentionally hidden, while
-	// out-of-band artifacts and legacy sources receive fallback render blocks.
-	return parseMessageToRenderModel({ ...message, content: undefined, alerts: undefined }).blocks.length > 0
 }
 
 function AnswerColumn({
@@ -61,7 +39,7 @@ function AnswerColumn({
 	onChoose: () => void
 }) {
 	// Out-of-band artifacts receive fallback blocks only after streaming settles.
-	const hasVisibleContent = isStreaming ? hasProgress(message) : hasAnswer
+	const hasVisibleContent = isStreaming ? hasDuelProgress(message) : hasAnswer
 
 	return (
 		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-lg border border-subtle bg-surface">
@@ -105,13 +83,9 @@ function AnswerColumn({
 
 export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: DuelPanelProps) {
 	const [voted, setVoted] = useState(false)
-	const aHasAnswer = hasRenderableAnswer(a.message)
-	const bHasAnswer = hasRenderableAnswer(b.message)
-
-	// Choosing an answer switches the thread onto that sibling, and the branch loader
-	// refuses to run mid-turn, so the vote opens only once the turn has settled. Both answers
-	// must exist for a preference to mean anything — an arm that failed is not a comparison.
-	const canVote = canResolve && !isStreaming && !a.error && !b.error && aHasAnswer && bHasAnswer
+	const aHasAnswer = hasDuelAnswer(a.message)
+	const bHasAnswer = hasDuelAnswer(b.message)
+	const canVote = canVoteOnDuel(a, b, isStreaming, canResolve)
 
 	const handleVote = (choice: DuelChoice) => {
 		if (voted) return

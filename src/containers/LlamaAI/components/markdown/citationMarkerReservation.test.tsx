@@ -1,14 +1,9 @@
 // @vitest-environment happy-dom
-//
-// Layout is not observable here, so these assert the property the stability depends on: a marker's
-// box is the same before and after its reference resolves. The pixel measurement lives in the
-// browser check on the PR.
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { readTableRows } from '~/components/TableImage/TableImageButtons'
-import { CITATION_MARKER_BOX } from '~/containers/LlamaAI/components/messages/CitationPill'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { ChatMarkdownRenderer } from './ChatMarkdownRenderer'
 
@@ -48,22 +43,15 @@ async function render(content: string, citations: Array<UnifiedCitationReference
 }
 
 const marker = () => container.querySelector('[data-citation-pending], button[aria-label^="Source"]')
-// The shared class list is what makes the two markers the same size; colour and hover classes differ
-// by design and cannot change the box.
-const hasMarkerBox = () => {
-	const node = marker()
-	if (!node) return false
-	return CITATION_MARKER_BOX.split(' ').every((className) => node.classList.contains(className))
-}
 
-test('a pending marker in a cell occupies the resolved pill box', async () => {
+// The pending marker reserves the text the resolved pill shows, so the cell does not change width.
+test('a pending marker in a cell reserves the number its resolved pill shows', async () => {
 	await render(TABLE, undefined)
 	expect(marker()?.textContent).toBe('1')
-	expect(hasMarkerBox()).toBe(true)
 
 	await render(TABLE, [DATA_REF])
-	expect(marker()?.textContent).toBe('1')
-	expect(hasMarkerBox()).toBe(true)
+	expect(container.querySelector('[data-citation-pending]')).toBeNull()
+	expect(container.querySelector('td button[aria-label^="Source"]')?.textContent).toBe('1')
 })
 
 // A domain is wider than the number the marker reserved, so in a cell the number stays.
@@ -118,11 +106,13 @@ test('a multi-digit reference reserves its own digits', async () => {
 test('does not reserve a slot for a zero marker', async () => {
 	await render(TABLE.replace('[1]', '[0]'), undefined)
 	expect(container.querySelector('[data-citation-pending]')).toBeNull()
+	expect(container.querySelector('td')?.textContent).toMatch(/^Aave/)
 })
 
 test('a settled answer keeps no pending markers', async () => {
 	await render(TABLE, undefined, false)
 	expect(container.querySelector('[data-citation-pending]')).toBeNull()
+	expect(container.querySelector('td')?.textContent?.trim()).toBe('Aave')
 })
 
 // Punctuation cleanup runs on the markdown string, so a marker that is removed during rendering
@@ -140,9 +130,8 @@ test('a resolved marker in prose keeps one space before the pill', async () => {
 // Substitution must not reach inside code: a fenced example is text a reader copies.
 test('leaves array syntax in a fenced code block alone', async () => {
 	await render('```js\nconst first = arr[1]\n```\n', [DATA_REF])
-	const code = container.querySelector('pre')?.textContent ?? ''
-	expect(code).toContain('arr[1]')
-	expect(code).not.toContain('fact-check-pill')
+	expect(container.querySelector('pre')?.textContent).toContain('const first = arr[1]')
+	expect(container.querySelector('button[aria-label^="Source"]')).toBeNull()
 })
 
 test('leaves array syntax in an inline code span alone', async () => {

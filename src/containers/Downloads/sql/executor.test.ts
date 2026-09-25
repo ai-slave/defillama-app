@@ -4,7 +4,6 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { queryDuckDB } from './duckdb/query'
 import { runSql, type ExecutorCtx } from './executor'
 
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 afterEach(() => vi.useRealTimers())
 
 function reader(table: Table) {
@@ -101,12 +100,16 @@ test('a fresh-load signature failure retries once and keeps the successful resul
 	expect(loadSource).toHaveBeenCalledOnce()
 })
 
-test('ordinary query failures remain visible without retrying', async () => {
+test.each([
+	['an ordinary failure after a fresh load', 'SELECT missing FROM protocols', 'Column does not exist'],
+	['a signature mismatch without a fresh load', 'SELECT 1', 'function signature mismatch']
+])('%s stays visible without retrying', async (_case, sql, message) => {
 	const { context, send } = setup()
-	send.mockRejectedValue(new Error('Column does not exist'))
-	expect(await runSql(context, 'SELECT missing', {}, undefined, new AbortController().signal)).toMatchObject({
+	context.loadSource = async (source) => ({ name: 'protocols', source, columns: [], rowCount: 0, loadedAt: 0 })
+	send.mockRejectedValue(new Error(message))
+	expect(await runSql(context, sql, {}, undefined, new AbortController().signal)).toMatchObject({
 		ok: false,
-		error: 'Column does not exist'
+		error: message
 	})
 	expect(send).toHaveBeenCalledOnce()
 })

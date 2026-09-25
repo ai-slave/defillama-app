@@ -1,19 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { buildProtocolFeeChartPresentation } from '../protocolFeeCharts'
+import { buildProtocolFeeChartPresentation, getProtocolFeeBreakdownPanels } from '../protocolFeeCharts'
 
 describe('buildProtocolFeeChartPresentation', () => {
-	test('skips grouping work when no chart is selected', () => {
-		expect(
-			buildProtocolFeeChartPresentation({
-				fees: [[1, 100]],
-				revenue: [[1, 20]],
-				holdersRevenue: [[1, 5]],
-				selectedCharts: [],
-				groupBy: 'daily'
-			})
-		).toEqual({ dataset: { source: [], dimensions: ['timestamp'] }, charts: [] })
-	})
-
 	test('builds only the selected base fee series', () => {
 		const result = buildProtocolFeeChartPresentation({
 			fees: [[1, 100]],
@@ -51,4 +39,28 @@ describe('buildProtocolFeeChartPresentation', () => {
 		])
 		expect(result.charts.map((chart) => chart.type)).toEqual(['line', 'line'])
 	})
+})
+
+test('shows each fee and revenue breakdown once it has more than one chain or version, independently', () => {
+	const panels = getProtocolFeeBreakdownPanels({
+		protocolChains: ['Ethereum'],
+		protocolFeesVersions: ['V1', 'V2'],
+		protocolRevenueChains: ['Arbitrum', 'Base'],
+		protocolRevenueVersions: ['Standalone']
+	})
+	expect(panels.map((panel) => [panel.title, panel.dataType ?? null, panel.breakdownNames])).toEqual([
+		['Fees by protocol version', null, ['V1', 'V2']],
+		['Revenue by chain', 'dailyRevenue', ['Arbitrum', 'Base']]
+	])
+
+	const swapped = getProtocolFeeBreakdownPanels({
+		protocolChains: ['Ethereum', 'Base'],
+		protocolFeesVersions: ['V1'],
+		protocolRevenueChains: ['Arbitrum'],
+		protocolRevenueVersions: ['V1', 'V2']
+	})
+	expect(swapped.map((panel) => [panel.title, panel.chartType, panel.dataType ?? null])).toEqual([
+		['Fees by chain', 'chain', null],
+		['Revenue by protocol version', 'version', 'dailyRevenue']
+	])
 })

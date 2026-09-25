@@ -4,6 +4,7 @@ import {
 	areMyDashboardsControlsActive,
 	DEFAULT_MY_DASHBOARDS_CONTROLS,
 	filterAndSortMyDashboards,
+	getMyDashboardsRequest,
 	type MyDashboardsControlsState
 } from './myDashboardsControls.utils'
 
@@ -103,4 +104,22 @@ test('the defaults are not an active control set', () => {
 	expect(areMyDashboardsControlsActive(controls({ query: 'a' }))).toBe(true)
 	expect(areMyDashboardsControlsActive(controls({ sort: 'name' }))).toBe(true)
 	expect(areMyDashboardsControlsActive(controls({ visibility: 'private' }))).toBe(true)
+})
+
+test('browsing requests the selected page of 20, while any active control requests the first 100', () => {
+	expect(getMyDashboardsRequest(DEFAULT_MY_DASHBOARDS_CONTROLS, 3)).toEqual({ page: 3, limit: 20 })
+	// Whitespace alone is not a search.
+	expect(getMyDashboardsRequest({ ...DEFAULT_MY_DASHBOARDS_CONTROLS, query: '  ' }, 3)).toEqual({ page: 3, limit: 20 })
+	expect(getMyDashboardsRequest({ ...DEFAULT_MY_DASHBOARDS_CONTROLS, query: 'fees' }, 3)).toEqual({
+		page: 1,
+		limit: 100
+	})
+	expect(getMyDashboardsRequest({ ...DEFAULT_MY_DASHBOARDS_CONTROLS, sort: 'views' }, 3)).toEqual({
+		page: 1,
+		limit: 100
+	})
+	expect(getMyDashboardsRequest({ ...DEFAULT_MY_DASHBOARDS_CONTROLS, visibility: 'private' }, 3)).toEqual({
+		page: 1,
+		limit: 100
+	})
 })

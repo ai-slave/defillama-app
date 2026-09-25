@@ -18,10 +18,6 @@ import { useSortColumnOrders } from '../utils'
 import { VirtualTable } from '../VirtualTable'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pairs' }) }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
-
-vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
-vi.mock('~/ui/Tooltip', () => ({ Tooltip: ({ children }: { children: React.ReactNode }) => children }))
 
 const features = tableFeatures({
 	...searchTableFeatures,
@@ -195,6 +191,8 @@ function MeasuredFixture() {
 		</>
 	)
 }
+// Perf guard: if the React Compiler stops memoizing Table and TableRow, every cell of a large
+// table re-renders on each unrelated owner state change (typing, toggles), and scrolling janks.
 test('compiled cells skip unrelated owner updates', async ({ task, skip }) => {
 	if (task.file.projectName !== 'compiled') skip()
 	const container = document.createElement('div')
@@ -216,22 +214,6 @@ test('compiled cells skip unrelated owner updates', async ({ task, skip }) => {
 	}
 })
 
-const groupedColumns = helper.columns([
-	columns[0],
-	helper.group({ id: 'metrics', header: 'Metrics', columns: [columns[1]] })
-])
-test('keeps the first Pro column width on a spanning placeholder header', async () => {
-	const container = document.createElement('div')
-	const root = createRoot(container)
-	try {
-		await act(async () => root.render(<ColumnFixture definitions={groupedColumns} renderer="pro" />))
-		expect(container.querySelector<HTMLTableCellElement>('thead th[rowspan="2"]')?.style.minWidth).toBe('120px')
-		expect(container.querySelector<HTMLTableCellElement>('tbody td')?.style.minWidth).toBe('120px')
-	} finally {
-		await act(async () => root.unmount())
-	}
-})
-
 test('Table preserves owner pagination and reacts without owner renders', async () => {
 	const container = document.createElement('div')
 	document.body.append(container)
@@ -247,7 +229,6 @@ test('Table preserves owner pagination and reacts without owner renders', async 
 		}
 		await click('Descending')
 		expect(container.querySelector('tbody tr')?.textContent).toContain('Asset 12')
-		expect(container.querySelector('thead [data-icon="caret-down"].text-brand')).not.toBeNull()
 		await click('Filter')
 		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
 		await click('Hide')

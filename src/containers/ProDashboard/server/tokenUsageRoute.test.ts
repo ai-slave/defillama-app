@@ -1,127 +1,96 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { fetchDashboardConfigMock, llamaQueryMock, requireSubscriptionMock } = vi.hoisted(() => ({
-	fetchDashboardConfigMock: vi.fn(),
-	llamaQueryMock: vi.fn(),
-	requireSubscriptionMock: vi.fn()
+const { llamaQuery, validateSubscription } = vi.hoisted(() => ({
+	llamaQuery: vi.fn(),
+	validateSubscription: vi.fn()
 }))
-
-vi.mock('~/server/db/llama', () => ({ llamaDb: { query: llamaQueryMock } }))
-vi.mock('~/server/api/requireSubscription', () => ({ requireSubscription: requireSubscriptionMock }))
-vi.mock('~/containers/ProDashboard/queries.server', () => ({ fetchDashboardConfig: fetchDashboardConfigMock }))
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: vi.fn(),
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
+vi.mock('~/server/db/llama', () => ({ llamaDb: { query: llamaQuery } }))
+vi.mock('~/utils/apiAuth', () => ({ validateSubscription }))
 
 import { parseTokenUsageQuery, publicDashboardTokenUsageHandler, tokenUsageApiHandler } from './tokenUsageRoute'
 
+const http = installFixtureFetch()
+
+const usageRows = [
+	{ protocol: 'aave', name: 'Aave', category: 'lending', symbol: 'USDC', amount_usd: 10 },
+	{ protocol: 'aave', name: 'Aave', category: 'lending', symbol: 'USDT', amount_usd: 5 }
+]
+const aaveUsage = {
+	name: 'Aave',
+	category: 'Lending',
+	amountUsd: 15,
+	logo: expect.stringContaining('aave'),
+	tokens: { USDC: 10, USDT: 5 }
+}
+
+function serveDashboard(visibility: 'public' | 'private', tokenSymbols: Array<string>) {
+	http.serve({
+		'/dashboards/saved': {
+			id: 'saved',
+			created: '2026-01-01T00:00:00Z',
+			updated: '2026-01-01T00:00:00Z',
+			visibility,
+			data: {
+				items: [{ id: 'usage', kind: 'dataset-table', datasetType: 'token-usage', tokenSymbols, includeCex: false }]
+			}
+		}
+	})
+}
+
+function publicRequest(symbols: string | Array<string>, includeCex: string) {
+	return createMockNextApiRequest({
+		method: 'GET',
+		query: { dashboardId: 'saved', 'symbols[]': symbols, includeCex }
+	})
+}
+
 beforeEach(() => {
-	llamaQueryMock.mockReset()
-	requireSubscriptionMock.mockReset()
-	fetchDashboardConfigMock.mockReset()
+	llamaQuery.mockReset().mockResolvedValue(usageRows)
+	validateSubscription.mockReset()
 })
 
 describe('/api/public/pro-dashboard/dashboard-token-usage', () => {
-	test('allows only the exact Token Usage capability saved in a public dashboard', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			visibility: 'public',
-			data: {
-				items: [
-					{
-						id: 'token-usage',
-						kind: 'dataset-table',
-						datasetType: 'token-usage',
-						tokenSymbols: ['USDC', 'USDT'],
-						includeCex: false
-					}
-				]
-			}
-		})
-		llamaQueryMock.mockResolvedValue([])
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: {
-				dashboardId: 'public-dashboard',
-				'symbols[]': ['USDT', 'USDC'],
-				includeCex: 'false'
-			}
-		})
+	test('serves the exact Token Usage query saved in a public dashboard, publicly cached', async () => {
+		serveDashboard('public', ['USDC', 'USDT'])
 		const res = createMockNextApiResponse()
 
-		await publicDashboardTokenUsageHandler(req, res)
+		await publicDashboardTokenUsageHandler(publicRequest(['USDT', 'USDC'], 'false'), res)
 
-		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('public-dashboard', null)
-		expect(llamaQueryMock).toHaveBeenCalledOnce()
 		expect(res.setHeader).toHaveBeenLastCalledWith('Cache-Control', 'public, max-age=300')
 		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([aaveUsage])
 	})
 
-	test('rejects arbitrary symbols that are not configured by the public dashboard', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			visibility: 'public',
-			data: {
-				items: [
-					{
-						id: 'token-usage',
-						kind: 'dataset-table',
-						datasetType: 'token-usage',
-						tokenSymbols: ['USDC'],
-						includeCex: false
-					}
-				]
-			}
-		})
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: { dashboardId: 'public-dashboard', 'symbols[]': 'USDT', includeCex: 'true' }
-		})
+	test('rejects symbols or CEX policy the public dashboard did not save', async () => {
+		serveDashboard('public', ['USDC'])
 		const res = createMockNextApiResponse()
 
-		await publicDashboardTokenUsageHandler(req, res)
+		await publicDashboardTokenUsageHandler(publicRequest('USDT', 'true'), res)
 
-		expect(llamaQueryMock).not.toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(403)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
+		expect(llamaQuery).not.toHaveBeenCalled()
 	})
 
 	test('does not turn a private dashboard config into an anonymous capability', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			visibility: 'private',
-			data: {
-				items: [
-					{
-						id: 'token-usage',
-						kind: 'dataset-table',
-						datasetType: 'token-usage',
-						tokenSymbols: ['USDC'],
-						includeCex: false
-					}
-				]
-			}
-		})
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: { dashboardId: 'private-dashboard', 'symbols[]': 'USDC', includeCex: 'false' }
-		})
+		serveDashboard('private', ['USDC'])
 		const res = createMockNextApiResponse()
 
-		await publicDashboardTokenUsageHandler(req, res)
+		await publicDashboardTokenUsageHandler(publicRequest('USDC', 'false'), res)
 
-		expect(llamaQueryMock).not.toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(403)
+		expect(llamaQuery).not.toHaveBeenCalled()
 	})
 })
 
 describe('parseTokenUsageQuery', () => {
-	test('normalizes symbols and parses the CEX policy once at the Lens boundary', () => {
-		expect(
-			parseTokenUsageQuery({
-				'symbols[]': [' usdc ', 'USDC', 'usdt'],
-				includeCex: 'true'
-			})
-		).toEqual({ tokenSymbols: ['USDC', 'USDT'], includeCex: true })
+	test('normalizes symbols and parses the CEX policy', () => {
+		expect(parseTokenUsageQuery({ 'symbols[]': [' usdc ', 'USDC', 'usdt'], includeCex: 'true' })).toEqual({
+			tokenSymbols: ['USDC', 'USDT'],
+			includeCex: true
+		})
 	})
 
 	test('rejects missing symbols and ambiguous boolean values', () => {
@@ -132,40 +101,38 @@ describe('parseTokenUsageQuery', () => {
 })
 
 describe('/api/dynamic/pro-dashboard/token-usage', () => {
-	test('rejects an anonymous arbitrary query before touching the warehouse', async () => {
-		requireSubscriptionMock.mockImplementation(async (_header, res) => {
-			res.status(401).json({ error: 'Authentication required' })
-			return null
-		})
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: { 'symbols[]': 'USDC', includeCex: 'true' }
-		})
-		const res = createMockNextApiResponse()
-
-		await tokenUsageApiHandler(req, res)
-
-		expect(requireSubscriptionMock).toHaveBeenCalledWith(undefined, res)
-		expect(llamaQueryMock).not.toHaveBeenCalled()
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(401)
+	beforeEach(() => {
+		validateSubscription.mockImplementation(async (header: string | undefined) =>
+			header === 'Bearer pro-token' ? { valid: true } : { valid: false, status: 401, error: 'Authentication required' }
+		)
 	})
 
-	test('serves a valid request only after subscription validation', async () => {
-		requireSubscriptionMock.mockResolvedValue({ valid: true })
-		llamaQueryMock.mockResolvedValue([])
-		const req = createMockNextApiRequest({
-			method: 'GET',
-			query: { 'symbols[]': 'USDC', includeCex: 'false' },
-			headers: { authorization: 'Bearer pro-token' }
-		})
+	test('rejects an anonymous arbitrary query', async () => {
 		const res = createMockNextApiResponse()
 
-		await tokenUsageApiHandler(req, res)
+		await tokenUsageApiHandler(
+			createMockNextApiRequest({ method: 'GET', query: { 'symbols[]': 'USDC', includeCex: 'true' } }),
+			res
+		)
 
-		expect(requireSubscriptionMock).toHaveBeenCalledWith('Bearer pro-token', res)
-		expect(llamaQueryMock).toHaveBeenCalledOnce()
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
+		expect(res.status).toHaveBeenCalledWith(401)
+		expect(llamaQuery).not.toHaveBeenCalled()
+	})
+
+	test('serves protocols summed across the requested tokens for a subscribed caller', async () => {
+		const res = createMockNextApiResponse()
+
+		await tokenUsageApiHandler(
+			createMockNextApiRequest({
+				method: 'GET',
+				query: { 'symbols[]': ['USDC', 'USDT'], includeCex: 'false' },
+				headers: { authorization: 'Bearer pro-token' }
+			}),
+			res
+		)
+
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith([])
+		expect(res.json).toHaveBeenCalledWith([aaveUsage])
 	})
 })

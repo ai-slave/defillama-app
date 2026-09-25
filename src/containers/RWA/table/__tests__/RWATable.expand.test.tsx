@@ -1,66 +1,74 @@
 // @vitest-environment happy-dom
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { Table } from '@tanstack/react-table'
-import { act, createElement } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { RwaTableFeatures } from '../features'
-import type { RWATableRow } from '../rows'
+import { getRwaDefaultColumnVisibility, getRwaTableColumns, type RWATablePreset } from '../columnSets'
+import type { RWAGroupBy } from '../groupBy'
+import { RWATable } from '../RWATable'
+import { getRwaEffectiveColumnVisibility } from '../useRwaTable'
 import { spotAsset } from './fixtures'
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ query: {}, pathname: '/rwa', asPath: '/rwa', push: vi.fn() })
 }))
 
-// The real table virtualizes against window layout, which happy-dom does not measure; render plain rows.
-// This covers the toggle wiring; the React Compiler opt-out in RWATable.tsx only shows in the built app.
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({ table: instance }: { table: Table<RwaTableFeatures, RWATableRow> }) => {
-		return createElement(
-			'table',
-			null,
-			createElement(
-				'tbody',
-				null,
-				instance.getRowModel().rows.map((row) =>
-					createElement(
-						'tr',
-						{ key: row.id, 'data-depth': row.depth },
-						row.getVisibleCells().map((cell) => {
-							const { flexRender } = require('@tanstack/react-table')
-							return createElement(
-								'td',
-								{ key: cell.id, 'data-column-id': cell.column.id },
-								flexRender(cell.column.columnDef.cell, cell.getContext())
-							)
-						})
-					)
-				)
-			)
-		)
-	}
-}))
-
-import { RWATable } from '../RWATable'
-
-function tableProps(period: '1d' | '7d' | '1m') {
-	return {
-		assets: [spotAsset(), spotAsset({ id: 'ousg', canonicalMarketId: 'ondo/ousg', assetName: 'Ondo OUSG' })],
-		view: 'assets' as const,
-		groupBy: 'platform' as const,
-		includeCex: false,
-		period,
-		onPeriodChange: () => {},
-		selectedChain: 'All',
-		includeBridgeTvl: true,
-		platformLogos: {}
-	}
+function visibility(
+	groupBy: RWAGroupBy,
+	{
+		preset = 'assets',
+		expanded = {},
+		chosenByReader = false
+	}: { preset?: RWATablePreset; expanded?: Record<string, boolean>; chosenByReader?: boolean } = {}
+) {
+	const columns = getRwaTableColumns('assets', 'ready', '7d', { preset })
+	const result = getRwaEffectiveColumnVisibility({
+		columnVisibility: getRwaDefaultColumnVisibility('assets', columns, preset),
+		columns,
+		preset,
+		groupBy,
+		expanded,
+		expandedColumnsChosenByReader: chosenByReader
+	})
+	return { assetGroup: result.assetGroup, price: result.price, chains: result.chains, activeMcap: result.activeMcap }
 }
+
+describe('RWA column visibility', () => {
+	test('shows the asset-row columns only while a platform group is open', () => {
+		expect(visibility('platform')).toEqual({ assetGroup: false, price: false, chains: true, activeMcap: true })
+		expect(visibility('platform', { expanded: { 'platform:ondo': true } })).toEqual({
+			assetGroup: true,
+			price: true,
+			chains: true,
+			activeMcap: true
+		})
+	})
+
+	test('always shows the asset-row columns under Group by None and hides Chains under Group by Chain', () => {
+		expect(visibility('none')).toEqual({ assetGroup: true, price: true, chains: true, activeMcap: true })
+		expect(visibility('chain').chains).toBe(false)
+	})
+
+	test('keeps the compliance preset free of the expand-only and money columns', () => {
+		expect(visibility('none', { preset: 'compliance' })).toEqual({
+			assetGroup: false,
+			price: false,
+			chains: false,
+			activeMcap: false
+		})
+	})
+
+	test('stops painting the asset-row columns once the reader picks columns', () => {
+		expect(visibility('none', { chosenByReader: true })).toMatchObject({ assetGroup: true, price: false })
+	})
+})
 
 describe('RWATable expansion', () => {
 	let container: HTMLDivElement
 	let root: Root
+	const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
+	const assets = [spotAsset(), spotAsset({ id: 'ousg', canonicalMarketId: 'ondo/ousg', assetName: 'Ondo OUSG' })]
 
 	beforeEach(() => {
 		container = document.createElement('div')
@@ -73,119 +81,48 @@ describe('RWATable expansion', () => {
 		container.remove()
 	})
 
-	test('opens a platform group when its chevron is clicked', async () => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		await act(async () => {
-			root.render(createElement(QueryClientProvider, { client }, createElement(RWATable, tableProps('7d'))))
-		})
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
-		const chevron = container.querySelector<HTMLButtonElement>('tbody tr button[aria-expanded]')!
-		expect(chevron.getAttribute('aria-expanded')).toBe('false')
-		await act(async () => {
-			chevron.click()
-		})
-		expect(container.querySelector('tbody tr button[aria-expanded]')!.getAttribute('aria-expanded')).toBe('true')
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
-	})
-
-	test('recomputes the change columns when the period switches and keeps the group open', async () => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		const render = (period: '7d' | '1m') =>
-			act(async () => {
-				root.render(createElement(QueryClientProvider, { client }, createElement(RWATable, tableProps(period))))
-			})
-		await render('7d')
-		await act(async () => {
-			container.querySelector<HTMLButtonElement>('tbody tr button[aria-expanded]')!.click()
-		})
-		// Name, Chains, Asset Type, Active, Onchain, change
-		const changeCell = () => container.querySelectorAll('tbody tr[data-depth="1"] td')[5]?.textContent
-		expect(changeCell()).toBe('+14.29%')
-		await render('1m')
-		expect(changeCell()).toBe('+60.00%')
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(3)
-	})
-
-	test('hides Chains under Group by Chain and shows the expand-only columns under Group by None', async () => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		// The mock table has no header row; the first body row carries the visible column ids.
-		const headerIds = () => {
-			const first = container.querySelector('tbody tr')
-			return first
-				? [...first.querySelectorAll('td[data-column-id]')].map((td) => td.getAttribute('data-column-id'))
-				: []
-		}
-		const render = (groupBy: 'chain' | 'none') =>
-			act(async () => {
-				root.render(
-					createElement(QueryClientProvider, { client }, createElement(RWATable, { ...tableProps('7d'), groupBy }))
-				)
-			})
-		await render('chain')
-		expect(headerIds()).toContain('activeMcap')
-		expect(headerIds()).not.toContain('chains')
-		expect(headerIds()).not.toContain('assetGroup')
-		await render('none')
-		expect(headerIds()).toContain('assetGroup')
-		expect(headerIds()).toContain('price')
-		expect(headerIds()).toContain('chains')
-	})
-
-	test('paints the compliance preset without the expand-only columns under Group by None', async () => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		const headerIds = () => {
-			const first = container.querySelector('tbody tr')
-			return first
-				? [...first.querySelectorAll('td[data-column-id]')].map((td) => td.getAttribute('data-column-id'))
-				: []
-		}
-		await act(async () => {
+	const render = (period: '7d' | '1m', groupBy: RWAGroupBy = 'platform') =>
+		act(async () => {
 			root.render(
-				createElement(
-					QueryClientProvider,
-					{ client },
-					createElement(RWATable, { ...tableProps('7d'), groupBy: 'none', preset: 'compliance' })
-				)
+				<QueryClientProvider client={client}>
+					<RWATable
+						assets={assets}
+						view="assets"
+						groupBy={groupBy}
+						includeCex={false}
+						period={period}
+						onPeriodChange={() => {}}
+						selectedChain="All"
+						includeBridgeTvl
+						platformLogos={{}}
+					/>
+				</QueryClientProvider>
 			)
 		})
-		// The mock table paints csv-only columns too, so only the painted prefix is asserted.
-		expect(headerIds().slice(0, 9)).toEqual([
-			'name',
-			'issuer',
-			'accessModel',
-			'attestations',
-			'kycForMintRedeem',
-			'kycAllowlistedWhitelistedToTransferHold',
-			'transferable',
-			'selfCustody',
-			'redeemable'
-		])
-		expect(headerIds()).not.toContain('assetGroup')
-		expect(headerIds()).not.toContain('price')
-		expect(headerIds()).not.toContain('activeMcap')
+	const rows = () => container.querySelectorAll('tbody tr:not([aria-hidden="true"])')
+	const chevron = () => container.querySelector<HTMLButtonElement>('tbody button[aria-expanded]')!
+
+	test('opens a platform group from its chevron and keeps it open when the period switches', async () => {
+		await render('7d')
+		expect(rows()).toHaveLength(1)
+		expect(chevron().getAttribute('aria-expanded')).toBe('false')
+		await act(async () => chevron().click())
+		expect(chevron().getAttribute('aria-expanded')).toBe('true')
+		expect(rows()).toHaveLength(3)
+		expect(rows()[1].textContent).toContain('+14.29%')
+
+		await render('1m')
+		expect(rows()).toHaveLength(3)
+		expect(rows()[1].textContent).toContain('+60.00%')
 	})
 
-	test('starts collapsed after a grouping switch, so Asset Type hides again', async () => {
-		const client = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
-		const columnIds = () => {
-			const first = container.querySelector('tbody tr')
-			return first
-				? [...first.querySelectorAll('td[data-column-id]')].map((td) => td.getAttribute('data-column-id'))
-				: []
-		}
-		const render = (groupBy: 'platform' | 'assetGroup') =>
-			act(async () => {
-				root.render(
-					createElement(QueryClientProvider, { client }, createElement(RWATable, { ...tableProps('7d'), groupBy }))
-				)
-			})
-		await render('platform')
-		await act(async () => {
-			container.querySelector<HTMLButtonElement>('tbody tr button[aria-expanded]')!.click()
-		})
-		expect(columnIds()).toContain('assetGroup')
-		await render('assetGroup')
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
-		expect(columnIds()).not.toContain('assetGroup')
+	test('stops painting the asset-row columns after a grouping switch collapses the groups', async () => {
+		const headers = () => [...container.querySelectorAll('thead th')].map((header) => header.textContent?.trim())
+		await render('7d', 'platform')
+		await act(async () => chevron().click())
+		expect(headers()).toContain('Price')
+		await render('7d', 'assetGroup')
+		expect(rows()).toHaveLength(1)
+		expect(headers()).not.toContain('Price')
 	})
 })

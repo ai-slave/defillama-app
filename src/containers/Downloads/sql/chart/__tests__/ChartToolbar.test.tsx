@@ -79,7 +79,7 @@ afterEach(async () => {
 async function settle(action: () => void) {
 	await act(async () => {
 		action()
-		await new Promise((resolve) => setTimeout(resolve, 40))
+		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
 async function render(children: ReactNode) {

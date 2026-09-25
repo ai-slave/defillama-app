@@ -1,6 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
-import { createStreamBuffer, type StreamDispatch } from '~/containers/LlamaAI/streamState'
+import {
+	createInitialStreamState,
+	createStreamBuffer,
+	streamReducer,
+	type StreamDispatch
+} from '~/containers/LlamaAI/streamState'
 
 function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 	const buffer = createStreamBuffer()
@@ -147,32 +152,23 @@ describe('createAgenticCallbacks', () => {
 		expect(onCompletion).not.toHaveBeenCalled()
 	})
 
-	test('reports the canonical user message id after materializing it', () => {
-		const replaceLocalUserMessageId = vi.fn()
-		const onUserMessageIdObserved = vi.fn()
+	test('the spawn timer starts at the server start time, not when the event arrives', () => {
+		let state = createInitialStreamState()
 		const callbacks = createAgenticCallbacks({
 			isCurrent: () => true,
 			buffer: createStreamBuffer(),
-			dispatch: vi.fn() as unknown as StreamDispatch,
+			dispatch: (action) => {
+				state = streamReducer(state, action)
+			},
 			currentMessageIdRef: { current: null },
 			appendMessage: vi.fn(),
-			replaceLocalUserMessageId,
-			onUserMessageIdObserved,
 			notify: vi.fn()
 		})
 
-		callbacks.onUserMessageId?.('user-message-1')
+		callbacks.onSpawnProgress({ agentId: 'agent-1', status: 'started', startedAt: 1_700_000_000_000 })
+		callbacks.onSpawnProgress({ agentId: 'agent-2', status: 'started', startedAt: 1_700_000_005_000 })
 
-		expect(replaceLocalUserMessageId).toHaveBeenCalledWith('user-message-1', undefined)
-		expect(onUserMessageIdObserved).toHaveBeenCalledWith('user-message-1')
-	})
-
-	test('preserves explicit zero spawn start timestamps', () => {
-		const { callbacks, dispatch } = setupCallbacks()
-
-		callbacks.onSpawnProgress({ agentId: 'agent-1', status: 'started', startedAt: 0 })
-
-		expect(dispatch).toHaveBeenCalledWith({ type: 'SET_SPAWN_START_TIME', value: 0 })
+		expect(state.spawnStartTime).toBe(1_700_000_000_000)
 	})
 
 	test('turns a tool_call into a running step with its arguments, completed in place by its result', () => {

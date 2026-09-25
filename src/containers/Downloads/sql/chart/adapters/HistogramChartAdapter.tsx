@@ -9,7 +9,6 @@ import { formatNumber } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 
@@ -20,16 +19,10 @@ interface HistogramChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
-export function HistogramChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: HistogramChartAdapterProps) {
+export function HistogramChartAdapter({ config, result, classified, onReady, height }: HistogramChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const valueColName =
 		config.histogram?.valueCol ?? config.yCols[0] ?? classified.find((c) => c.coarse === 'number')?.name ?? null

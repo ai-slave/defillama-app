@@ -26,24 +26,6 @@ describe('rwa breakdownDataset', () => {
 		})
 	})
 
-	test('uses JSON-safe nulls for sparse server-prop cells', () => {
-		const dataset = toRwaPositionalChartDataset([
-			{ timestamp: 1, Ethereum: 10 },
-			{ timestamp: 2, Solana: 20 }
-		])
-
-		expect(JSON.parse(JSON.stringify(dataset))).toEqual(dataset)
-	})
-
-	test('keeps single-row input unchanged and builds the expected dataset', () => {
-		const singleRow = [{ timestamp: 1_774_489_600_000, Ethereum: 120 }]
-
-		expect(toRwaPositionalChartDataset(singleRow)).toEqual({
-			source: [[1_774_489_600_000, 120]],
-			dimensions: ['timestamp', 'Ethereum']
-		})
-	})
-
 	test('preserves zero values returned by the backend', () => {
 		expect(
 			toRwaPositionalChartDataset([

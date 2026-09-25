@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { RelativeTime } from './RelativeTime'
@@ -10,11 +12,12 @@ describe('RelativeTime', () => {
 
 		expect(html).toContain('Updated Jul 24, 2026')
 		expect(html).toContain('title="Jul 24, 2026, 4:30 PM UTC"')
-		expect(html).toContain('class="freshness"')
 	})
 
 	test('requires an explicit unit before formatting numeric timestamps', () => {
-		expect(renderToStaticMarkup(<RelativeTime value={1_753_371_000_000} />)).toBe('<span>-</span>')
+		const output = document.createElement('div')
+		output.innerHTML = renderToStaticMarkup(<RelativeTime value={1_753_371_000_000} />)
+		expect(output.textContent).toBe('-')
 		expect(renderToStaticMarkup(<RelativeTime value={1_753_371_000_000} input="milliseconds" />)).toContain(
 			'Jul 24, 2025'
 		)

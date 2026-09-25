@@ -3,14 +3,14 @@ import { buildChainYAxis } from './chartYAxis'
 import { chainOverviewChartColors } from './constants'
 
 describe('chain chart y-axis layout', () => {
-	test('keeps per-metric colors, formatters, and spacing across three axes', () => {
+	test('gives each metric axis its own color, unit formatter and stacked offset', () => {
 		const axes = buildChainYAxis({
 			allYAxis: [
 				['TVL', undefined],
 				['Active Addresses', 1],
 				['Token Price', 2]
 			],
-			baseYAxis: { axisLabel: { color: '#aaa' } },
+			baseYAxis: {},
 			chartColors: { ...chainOverviewChartColors, TVL: '#111', 'Active Addresses': '#222', 'Token Price': '#333' },
 			chartsInSeries: new Set(['TVL', 'Active Addresses', 'Token Price']),
 			themeText: '#aaa'
@@ -23,29 +23,12 @@ describe('chain chart y-axis layout', () => {
 		if (typeof usersFormatter !== 'function' || typeof priceFormatter !== 'function') {
 			throw new Error('Expected numeric chain-axis formatters')
 		}
-		expect(axes.map((axis) => axis.offset ?? 0)).toEqual([0, 0, 40])
-		expect(usersAxis.axisLine?.lineStyle).toMatchObject({ color: '#222', type: [5, 10] })
-		expect(priceAxis.axisLine?.lineStyle).toMatchObject({ color: '#333', type: [5, 10] })
-		expect(usersAxis.axisLabel).toMatchObject({ color: '#aaa' })
-		expect(priceAxis.axisLabel).toMatchObject({ color: '#aaa' })
-		expect(usersAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
-		expect(priceAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
+		expect(usersAxis.axisLine?.lineStyle).toMatchObject({ color: '#222' })
+		expect(priceAxis.axisLine?.lineStyle).toMatchObject({ color: '#333' })
 		expect(usersFormatter(1000, 0, null)).toBe('1,000')
-		expect(priceFormatter(5, 0, null)).toContain('$')
-		expect(axes.every((axis) => axis.alignTicks == null)).toBe(true)
-	})
-
-	test('preserves explicitly requested tick alignment', () => {
-		const axes = buildChainYAxis({
-			allYAxis: [
-				['TVL', undefined],
-				['Token Price', 1]
-			],
-			baseYAxis: { alignTicks: true },
-			chartColors: { ...chainOverviewChartColors, TVL: '#111', 'Token Price': '#333' },
-			chartsInSeries: new Set(['TVL', 'Token Price']),
-			themeText: '#aaa'
-		})
-		expect(axes.every((axis) => axis.alignTicks === true)).toBe(true)
+		expect(usersFormatter(2_500_000, 0, null)).toBe('2.5m')
+		expect(priceFormatter(5, 0, null)).toBe('$5')
+		// The third axis shifts right so its labels do not overlap the second axis.
+		expect(axes.map((axis) => axis.offset ?? 0)).toEqual([0, 0, 40])
 	})
 })

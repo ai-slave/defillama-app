@@ -9,12 +9,7 @@ const columns = helper.columns([
 	helper.accessor('amount', { filterFn: 'inNumberRange' })
 ])
 
-test.each([
-	{ label: 'case-insensitive substring', column: 'name', filter: 'ALP', expected: ['Alpha'] },
-	{ label: 'unmatched text', column: 'name', filter: 'missing', expected: [] },
-	{ label: 'inclusive numeric boundaries', column: 'amount', filter: [10, 20], expected: ['Beta', 'Gamma'] },
-	{ label: 'outside numeric range', column: 'amount', filter: [11, 19], expected: [] }
-])('applies the registered filter: $label', ({ column, filter, expected }) => {
+test('applies and clears the registered text and range filters', () => {
 	const table = constructTestTable({
 		features: filteredTableFeatures,
 		columns,
@@ -24,8 +19,13 @@ test.each([
 			{ name: 'Gamma', amount: 20 }
 		]
 	})
-	table.getColumn(column)!.setFilterValue(filter)
-	expect(table.getRowModel().rows.map((row) => row.original.name)).toEqual(expected)
-	table.getColumn(column)!.setFilterValue(undefined)
-	expect(table.getRowModel().rows.map((row) => row.original.name)).toEqual(['Alpha', 'Beta', 'Gamma'])
+	const visibleNames = () => table.getRowModel().rows.map((row) => row.original.name)
+
+	table.getColumn('name')!.setFilterValue('ALP')
+	expect(visibleNames()).toEqual(['Alpha'])
+	table.getColumn('name')!.setFilterValue(undefined)
+	table.getColumn('amount')!.setFilterValue([10, 20])
+	expect(visibleNames()).toEqual(['Beta', 'Gamma'])
+	table.getColumn('amount')!.setFilterValue(undefined)
+	expect(visibleNames()).toEqual(['Alpha', 'Beta', 'Gamma'])
 })

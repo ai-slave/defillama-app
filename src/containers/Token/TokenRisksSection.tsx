@@ -11,13 +11,15 @@ import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
-import type {
-	TokenRiskChainExposureSummary,
-	TokenRiskCoverageStatus,
-	TokenRiskExposureRow,
-	TokenRiskProtocolSummary,
-	TokenRiskResponse
-} from './tokenRisk.types'
+import type { TokenRiskChainExposureSummary, TokenRiskExposureRow, TokenRiskResponse } from './tokenRisk.types'
+import {
+	formatExposureBreakdown,
+	formatMinBadDebtValue,
+	formatProtocolChains,
+	formatProtocolExposureSummary,
+	getAtRiskExposureUsd,
+	getTokenRiskScopeLabel
+} from './TokenRisksSection.utils'
 
 const tableFeaturesConfig = paginatedTableFeatures
 
@@ -44,37 +46,6 @@ function TableEntityCell({
 	)
 }
 
-function formatProtocolChains(chainBreakdowns: Array<TokenRiskChainExposureSummary>) {
-	if (chainBreakdowns.length === 0) return ''
-	if (chainBreakdowns.length === 1) return chainBreakdowns[0]!.chainDisplayName
-	return `${chainBreakdowns.length} chains`
-}
-
-function formatMinBadDebtValue(value: number | null | undefined, coverage: TokenRiskCoverageStatus) {
-	if (coverage === 'unavailable' || value == null) return '—'
-	if (coverage === 'partial') return `${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} (partial)`
-	return formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)
-}
-
-function ProtocolExposureSummaryText({
-	summary,
-	tokenSymbol
-}: {
-	summary: TokenRiskProtocolSummary
-	tokenSymbol: string
-}) {
-	const totalAtRiskUsd = summary.totalCurrentMaxBorrowUsd + (summary.totalMinBadDebtAtPriceZeroUsd ?? 0)
-
-	return (
-		<>
-			{formatUsd(totalAtRiskUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'} at-risk exposure ={' '}
-			{formatUsd(summary.totalMinBadDebtAtPriceZeroUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '--'} bad debt if hacked +{' '}
-			{formatUsd(summary.totalCurrentMaxBorrowUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'} additional
-			borrowable against {tokenSymbol}
-		</>
-	)
-}
-
 function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: Array<TokenRiskChainExposureSummary> }) {
 	return (
 		<div className="w-80 max-w-(--popover-available-width) space-y-2 body-sm">
@@ -98,10 +69,7 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: Ar
 							</span>
 						</span>
 						<span className="text-right text-primary">
-							{formatUsd(
-								chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0),
-								USD_LOWERCASE_MILLIONS_OPTIONS
-							) ?? 'Unavailable'}
+							{formatUsd(getAtRiskExposureUsd(chain), USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}
 						</span>
 						<span className="text-secondary">Bad debt if hacked</span>
 						<span className="text-right text-secondary">
@@ -220,11 +188,6 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 		onPaginationChange: (updater) => startTransition(() => setPagination(resolveUpdater(updater, pagination)))
 	})
 
-	const selectedCandidateDisplayName = scopeCandidates.length === 1 ? scopeCandidates[0]!.displayName : 'onchain'
-
-	const totalMaxExposureUsd =
-		exposures.summary.totalCurrentMaxBorrowUsd + (exposures.summary.totalMinBadDebtAtPriceZeroUsd ?? 0)
-
 	if (exposures.rows.length === 0) {
 		return null
 	}
@@ -256,21 +219,9 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 				<Card padding="md">
 					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
 					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">
-						{formatUsd(totalMaxExposureUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}
+						{formatUsd(getAtRiskExposureUsd(exposures.summary), USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}
 					</p>
-					<p className="mt-1 body-md text-secondary">
-						{formatUsd(exposures.summary.totalCurrentMaxBorrowUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}{' '}
-						(max additional borrows against {tokenSymbol})
-						{exposures.summary.totalMinBadDebtAtPriceZeroUsd == null ? null : (
-							<>
-								{' '}
-								+{' '}
-								{formatUsd(exposures.summary.totalMinBadDebtAtPriceZeroUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ??
-									'Unavailable'}{' '}
-								(bad debt if {tokenSymbol} was hacked now)
-							</>
-						)}
-					</p>
+					<p className="mt-1 body-md text-secondary">{formatExposureBreakdown(exposures.summary, tokenSymbol)}</p>
 				</Card>
 
 				<Card padding="sm">
@@ -291,9 +242,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 										/>
 										<p className="label-md text-primary">{summary.protocolDisplayName}</p>
 									</div>
-									<p className="mt-1 body-md text-secondary">
-										<ProtocolExposureSummaryText summary={summary} tokenSymbol={tokenSymbol} />
-									</p>
+									<p className="mt-1 body-md text-secondary">{formatProtocolExposureSummary(summary, tokenSymbol)}</p>
 									<div className="mt-1">
 										<ProtocolChainsLabel chainBreakdowns={summary.chainBreakdowns} />
 									</div>
@@ -315,7 +264,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</summary>
 					<p className="mt-2 body-md">
 						Showing collateral exposure for {tokenSymbol} on{' '}
-						<span className="font-medium">{selectedCandidateDisplayName}</span>.{' '}
+						<span className="font-medium">{getTokenRiskScopeLabel(scopeCandidates)}</span>.{' '}
 						<span className="font-medium">Max Borrowable</span> uses the backend&apos;s liquidity-bounded
 						borrow-capacity metric (`collateralMaxBorrowUsdLiquidity`) for the maximum additional USD debt that can be
 						issued against the asset right now. <span className="font-medium">Bad Debt at $0</span> is the minimum known

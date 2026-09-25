@@ -147,7 +147,7 @@ export function getKycRequirementIndicators(kycShort: string): Array<KycRequirem
 	return indicators
 }
 
-function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | null): string | null {
+export function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | null): string | null {
 	if (ownership === null) return null
 	if (ownership.mode === 'own') return 'Uses dedicated regional orderbooks.'
 	if (ownership.mode === 'shared') return 'Shares the global orderbook.'

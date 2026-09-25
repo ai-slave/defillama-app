@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
-const { fetchJsonMock, fetchProtocolsMock } = vi.hoisted(() => ({
-	fetchJsonMock: vi.fn(),
-	fetchProtocolsMock: vi.fn()
-}))
+const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 
-vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
-vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: fetchProtocolsMock }))
+// The protocol list is page context, not the metric under test; answer it outside the asserted mock.
+vi.mock('~/utils/async', () => ({
+	fetchJson: (url: string, ...rest: Array<unknown>) =>
+		url.includes('/lite/protocols2')
+			? Promise.resolve({ protocols: [], parentProtocols: [] })
+			: fetchJsonMock(url, ...rest)
+}))
 
 import {
 	getAdapterByChainPageData,
@@ -124,8 +126,6 @@ const adapterMetricsResponse = (overrides: Record<string, unknown> = {}) => ({
 describe('chains by adapter page data', () => {
 	beforeEach(() => {
 		fetchJsonMock.mockReset()
-		fetchProtocolsMock.mockReset()
-		fetchProtocolsMock.mockResolvedValue({ protocols: [], parentProtocols: [] })
 	})
 
 	test('builds chain rankings from the requested base metric only', async () => {

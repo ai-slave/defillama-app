@@ -16,7 +16,7 @@ interface CsvCacheEntry {
 const csvCache = new Map<string, CsvCacheEntry>()
 const inFlight = new Map<string, Promise<string>>()
 
-export function cacheKeyForSource(source: TableSource): string {
+function cacheKeyForSource(source: TableSource): string {
 	if (source.kind === 'dataset') return `dataset:${source.slug}`
 	return `chart:${source.slug}:${source.param}`
 }

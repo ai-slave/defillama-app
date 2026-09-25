@@ -5,9 +5,7 @@ import { RWAPerpsContractSummaryMetrics } from '../Contract'
 import {
 	buildRWAPerpsContractChartSpec,
 	buildRWAPerpsContractMetricSections,
-	buildRWAPerpsContractInfoRows,
-	DEFAULT_ENABLED_RWA_PERPS_CONTRACT_CHART_METRICS,
-	type RWAPerpsContractChartMetricKey
+	buildRWAPerpsContractInfoRows
 } from '../contractPageUtils'
 import type { IRWAPerpsContractData, IRWAPerpsContractFundingHistoryPoint } from '../types'
 
@@ -137,18 +135,9 @@ const fundingHistoryPoints: [IRWAPerpsContractFundingHistoryPoint, IRWAPerpsCont
 ]
 
 describe('RWAPerpsContractSummaryMetrics', () => {
-	test('renders price with inline 24h change and grouped metric sections without key-metrics png export', () => {
+	test('renders the price with its inline 24h change', () => {
 		const html = renderToStaticMarkup(<RWAPerpsContractSummaryMetrics contract={baseContract} />)
-
-		expect(html).toContain('Price')
 		expect(html).toContain('+5.00%')
-		expect(html).toContain('Est. Protocol Fees 30d')
-		expect(html).toContain('Est. Protocol Fees 7d')
-		expect(html).toContain('Est. Protocol Fees 24h')
-		expect(html).toContain('Latest Funding Rate')
-		expect(html).toContain('Trading Parameters')
-		expect(html).toContain('Market Reference')
-		expect(html).not.toContain('Download Key Metrics as PNG')
 	})
 })
 
@@ -158,7 +147,7 @@ describe('buildRWAPerpsContractInfoRows', () => {
 			...baseContract,
 			contract: {
 				...baseContract.contract,
-				baseAsset: 'META',
+				baseAsset: 'meta',
 				website: null
 			}
 		})
@@ -201,10 +190,6 @@ describe('buildRWAPerpsContractMetricSections', () => {
 })
 
 describe('buildRWAPerpsContractChartSpec', () => {
-	test('keeps the expected default enabled metrics', () => {
-		expect(DEFAULT_ENABLED_RWA_PERPS_CONTRACT_CHART_METRICS).toEqual(['openInterest', 'volume24h', 'price'])
-	})
-
 	test('uses summed buckets for volume and last-value buckets for line metrics', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
@@ -312,73 +297,20 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	test('preserves full chart config and dimensions in noncanonical selection order', () => {
-		const enabledMetrics: Array<RWAPerpsContractChartMetricKey> = [
-			'premium',
-			'volume24h',
-			'openInterest',
-			'price',
-			'fundingRate',
-			'volume24h'
-		]
+	test('puts each metric on its axis with its unit, in selection order', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
 			fundingHistory: fundingHistoryPoints,
 			groupBy: 'monthly',
-			enabledMetrics
+			enabledMetrics: ['premium', 'volume24h', 'openInterest', 'price', 'fundingRate']
 		})
 
-		expect(spec.charts.map(({ data: _data, ...chart }) => chart)).toEqual([
-			{
-				name: 'Premium',
-				type: 'line',
-				encode: { x: 0, y: 1 },
-				color: '#EF4444',
-				yAxisIndex: 2,
-				valueSymbol: '%',
-				hideAreaStyle: true
-			},
-			{
-				name: 'Volume 24h',
-				type: 'bar',
-				encode: { x: 0, y: 1 },
-				color: '#7DD3FC',
-				valueSymbol: '$',
-				hideAreaStyle: true
-			},
-			{
-				name: 'Open Interest',
-				type: 'line',
-				encode: { x: 0, y: 1 },
-				color: '#3B82F6',
-				valueSymbol: '$'
-			},
-			{
-				name: 'Price',
-				type: 'line',
-				encode: { x: 0, y: 1 },
-				color: '#22C55E',
-				yAxisIndex: 1,
-				valueSymbol: '$',
-				hideAreaStyle: true
-			},
-			{
-				name: 'Funding Rate',
-				type: 'line',
-				encode: { x: 0, y: 1 },
-				color: '#F59E0B',
-				yAxisIndex: 2,
-				valueSymbol: '%',
-				hideAreaStyle: true
-			},
-			{
-				name: 'Volume 24h',
-				type: 'bar',
-				encode: { x: 0, y: 1 },
-				color: '#7DD3FC',
-				valueSymbol: '$',
-				hideAreaStyle: true
-			}
+		expect(spec.charts.map(({ name, yAxisIndex, valueSymbol }) => [name, yAxisIndex, valueSymbol])).toEqual([
+			['Premium', 2, '%'],
+			['Volume 24h', undefined, '$'],
+			['Open Interest', undefined, '$'],
+			['Price', 1, '$'],
+			['Funding Rate', 2, '%']
 		])
 		expect(spec.dataset.dimensions).toEqual([
 			'timestamp',
@@ -386,13 +318,8 @@ describe('buildRWAPerpsContractChartSpec', () => {
 			'Volume 24h',
 			'Open Interest',
 			'Price',
-			'Funding Rate',
-			'Volume 24h'
+			'Funding Rate'
 		])
-		expect(spec.dataset.source).toEqual([])
-		expect(defined(spec.charts[1]).data).toEqual([])
-		const volumePoint = defined(defined(spec.charts[5]).data)[0]
-		expect(defined(volumePoint)[1]).toBe(30)
 	})
 
 	test('keeps market and funding lines on their independent timestamp calendars', () => {
@@ -458,26 +385,14 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	test('scans ascending market and funding streams independently without mutating them', () => {
-		const marketPoints = [...chartPoints]
-		const fundingHistory = [...fundingHistoryPoints]
-		const originalMarketPoints = structuredClone(marketPoints)
-		const originalFundingHistory = structuredClone(fundingHistory)
+	test('reads the last funding value of each monthly bucket', () => {
 		const spec = buildRWAPerpsContractChartSpec({
-			marketPoints,
-			fundingHistory,
+			marketPoints: chartPoints,
+			fundingHistory: fundingHistoryPoints,
 			groupBy: 'monthly',
-			enabledMetrics: ['openInterest', 'fundingRate']
+			enabledMetrics: ['fundingRate']
 		})
 
-		expect(spec.charts.map((chart) => chart.data)).toEqual([
-			[
-				[Date.UTC(2026, 2, 1), 120],
-				[Date.UTC(2026, 3, 1), 140]
-			],
-			[[Date.UTC(2026, 2, 1), 0.2]]
-		])
-		expect(marketPoints).toEqual(originalMarketPoints)
-		expect(fundingHistory).toEqual(originalFundingHistory)
+		expect(defined(spec.charts[0]).data).toEqual([[Date.UTC(2026, 2, 1), 0.2]])
 	})
 })

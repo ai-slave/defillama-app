@@ -1,221 +1,91 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, type ReactNode } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AUTH_SERVER } from '~/constants'
+import { DashboardTestProvider, type DashboardTestState } from '~/utils/test/dashboardContext'
+import { installSubscriberSession, type SessionAccount } from '~/utils/test/subscriberSession'
 import ProDashboard from '.'
+import { subscribeSqlRefreshAll } from './components/SqlChart/sqlRefreshBus'
 import type { DashboardItemConfig } from './dashboardItemConfig'
+import type { Dashboard } from './dashboardTypes'
 
-const mocks = vi.hoisted(() => ({
-	items: [] as Array<DashboardItemConfig>,
-	mode: 'view' as 'view' | 'edit',
-	readOnlyReason: null as null | 'dashboard-loading',
-	tags: [] as Array<string>,
-	auth: { isAuthenticated: false, user: undefined as { id: string } | undefined },
-	currentDashboard: null as { id: string; user: string; slug?: string } | null,
-	publishDashboard: vi.fn(async () => {}),
-	saveDashboard: vi.fn(async () => {}),
-	showCreateDialog: vi.fn(),
-	push: vi.fn(),
-	undo: vi.fn(),
-	undoEdit: vi.fn(() => true),
-	appendItems: vi.fn(),
-	flush: vi.fn(),
-	retry: vi.fn(),
-	saving: false,
-	saveState: undefined as undefined | { status: 'success' | 'error' },
-	refresh: vi.fn(),
-	progress: { active: 0, failed: 0, total: 0, bulk: false }
-}))
-const { useDialogStore } = await vi.hoisted(async () => await import('@ariakit/react'))
+const mocks = vi.hoisted(() => ({ push: vi.fn() }))
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock, Toaster: () => null }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: mocks.auth.isAuthenticated,
-		user: mocks.auth.user,
-		hasActiveSubscription: false,
-		authorizedFetch: vi.fn()
-	})
-}))
-vi.mock('~/containers/Authors/api', () => ({ getMyDashboardAuthorProfile: vi.fn(async () => null) }))
 vi.mock('next/router', () => ({
-	useRouter: () => ({ events: { on: vi.fn(), off: vi.fn() }, query: {}, push: mocks.push })
+	useRouter: () => ({ events: { on: vi.fn(), off: vi.fn() }, query: {}, push: mocks.push, pathname: '/pro/[id]' })
 }))
-vi.mock('./hooks/useFreeTierStatus', () => ({ useFreeTierStatus: () => ({ canCreateDashboard: true }) }))
-vi.mock('./AppMetadataContext', () => ({
-	AppMetadataProvider: ({ children }: { children: ReactNode }) => children,
-	useAppMetadata: () => ({
-		loading: false,
-		availableProtocolChartTypes: () => [],
-		availableChainChartTypes: () => []
-	})
-}))
-vi.mock('./ProDashboardAPIContext', () => ({
-	useDashboardMode: () => mocks.mode,
-	useProDashboardItemsState: () => ({ items: mocks.items }),
-	useProDashboardCatalog: () => ({ protocolsLoading: false, chains: [], protocols: [], protocolBySlug: new Map() }),
-	useProDashboardPermissions: () => ({
-		isReadOnly: mocks.mode === 'view' || mocks.readOnlyReason !== null,
-		reason: mocks.readOnlyReason
-	}),
-	useDashboardStreamProgress: () => ({
-		readyCount: 0,
-		totalCount: 0,
-		isStreaming: false,
-		isDone: true,
-		error: null
-	}),
-	useProDashboardSave: () => ({
-		queued: null,
-		state: mocks.saveState,
-		saving: mocks.saving,
-		retry: mocks.retry,
-		flush: mocks.flush
-	}),
-	useProDashboardTime: () => ({ timePeriod: '365d', customTimePeriod: null }),
-	useProDashboardDashboard: () => ({
-		dashboardName: 'Fixture',
-		dashboardId: 'fixture',
-		dashboardVisibility: 'public',
-		dashboardTags: mocks.tags,
-		dashboardDescription: '',
-		currentDashboard: mocks.currentDashboard,
-		publishDashboard: mocks.publishDashboard,
-		saveDashboard: mocks.saveDashboard,
-		copyDashboard: vi.fn(),
-		deleteDashboard: vi.fn(),
-		getCurrentRatingSession: () => null,
-		canUndo: true,
-		undoAIGeneration: mocks.undo
-	}),
-	useProDashboardUI: () => {
-		const createDashboardDialogStore = useDialogStore()
-		createDashboardDialogStore.show = mocks.showCreateDialog
-		return { createDashboardDialogStore }
-	},
-	useProDashboardEditorActions: () => ({ handleAppendItems: mocks.appendItems }),
-	useProDashboardHistory: () => ({ canUndo: false, canRedo: false, undo: mocks.undoEdit, redo: vi.fn(() => false) }),
-	useProDashboardVariables: () => ({
-		variables: [],
-		values: {},
-		candidates: [],
-		canEditVariables: mocks.mode === 'edit',
-		setVariableValue: vi.fn(),
-		addVariable: vi.fn(),
-		renameVariable: vi.fn(),
-		removeVariable: vi.fn(),
-		unbindVariable: vi.fn()
-	}),
-	useProDashboardAnnotations: () => ({ annotations: [], setAnnotations: vi.fn() })
-}))
-vi.mock('./components/SqlChart/sqlRefreshBus', () => ({
-	getInitialSqlRefreshProgress: () => mocks.progress,
-	getSqlRefreshProgress: () => mocks.progress,
-	subscribeSqlRefreshProgress: () => () => {},
-	refreshAllSqlCharts: mocks.refresh
-}))
-vi.mock('./components/ChartGrid', () => ({
-	ChartGrid: ({ onEditItem }: { onEditItem: (item: DashboardItemConfig) => void }) => (
-		<button type="button" onClick={() => onEditItem(mocks.items[0])}>
-			Edit first card
-		</button>
-	)
-}))
-vi.mock('./components/CopyDashboardLinkButton', () => ({
-	CopyDashboardLinkButton: ({
-		manageAction,
-		onMakePublic
-	}: {
-		manageAction?: { label: string; onSelect: () => void }
-		onMakePublic?: () => Promise<void>
-	}) => (
-		<>
-			{onMakePublic ? (
-				<button type="button" onClick={() => void onMakePublic()}>
-					Make public
-				</button>
-			) : null}
-			{manageAction ? (
-				<button type="button" onClick={manageAction.onSelect}>
-					{manageAction.label}
-				</button>
-			) : null}
-		</>
-	)
-}))
+// Cards and dialogs that load their own data; these tests assert nothing about what they render.
+vi.mock('./components/SqlChart/SqlChartCard', () => ({ SqlChartCard: () => null }))
+vi.mock('./components/IncomeStatementCard', () => ({ IncomeStatementCard: () => null }))
+vi.mock('./components/UnlocksPieCard', () => ({ UnlocksPieCard: () => null }))
 vi.mock('./components/LikeDashboardButton', () => ({ LikeDashboardButton: () => null }))
-vi.mock('./components/CustomTimePeriodPicker', () => ({ CustomTimePeriodPicker: () => null }))
-vi.mock('./components/DashboardSettingsModal', () => ({ DashboardSettingsModal: () => null }))
 vi.mock('./components/CreateDashboardPicker', () => ({ CreateDashboardPicker: () => null }))
-vi.mock('./components/GenerateDashboardModal', () => ({ GenerateDashboardModal: () => null }))
-vi.mock('./components/AddChartModal/AddChartModal', () => ({
-	AddChartModal: ({
-		draftItem,
-		editItem,
-		onClose
-	}: {
-		draftItem?: DashboardItemConfig
-		editItem?: DashboardItemConfig | null
-		onClose: () => void
-	}) => (
-		<>
-			<p>{`add chart modal:${draftItem?.kind ?? 'none'}`}</p>
-			<p>{`editing:${editItem?.id ?? 'none'}`}</p>
-			<button type="button" onClick={onClose}>
-				Close card editor
-			</button>
-		</>
-	)
-}))
-vi.mock('./components/QuickAddPalette', () => ({
-	QuickAddPalette: ({
-		open,
-		onOpenFullEditor
-	}: {
-		open: boolean
-		onOpenFullEditor: (options: { draftItem?: DashboardItemConfig }) => void
-	}) =>
-		open ? (
-			<div>
-				<p>quick add palette</p>
-				<button
-					type="button"
-					onClick={() => onOpenFullEditor({ draftItem: { id: 'draft', kind: 'text', content: '' } })}
-				>
-					Customize draft
-				</button>
-			</div>
-		) : null
-}))
-vi.mock('./components/DashboardPaywallModal', () => ({ DashboardPaywallModal: () => null }))
-vi.mock('./components/SimilarDashboards', () => ({
-	SimilarDashboards: ({ tags }: { tags: ReadonlyArray<string> }) => <p>{`similar:${tags.join(',')}`}</p>
-}))
+
+const note: DashboardItemConfig = { id: 'text', kind: 'text', content: 'Note' }
+const actions = {
+	saveDashboard: vi.fn(async () => {}),
+	publishDashboard: vi.fn(async () => {}),
+	undoAIGeneration: vi.fn()
+}
+const undoEdit = vi.fn(() => true)
+const flush = vi.fn()
+const appendItems = vi.fn()
+
+let session: ReturnType<typeof installSubscriberSession>
+function signInAs(account: SessionAccount) {
+	const installed = installSubscriberSession('owner', { account, resolved: true })
+	beforeEach(() => {
+		session = installed
+		session.serve({
+			'/lite/dashboards': { items: [] },
+			'/subscription/trial-available': { trialAvailable: false },
+			[`${AUTH_SERVER}/team`]: { team: null },
+			'/authors/me': { author: null },
+			'/dashboards/search': { items: [], page: 1, perPage: 9, totalItems: 0, totalPages: 0, searchParams: {} },
+			'https://api.llama.fi/config/smol/appMetadata-protocols.json': {},
+			'https://api.llama.fi/config/smol/appMetadata-chains.json': {},
+			'/api/public/pro-dashboard/pf-ps-protocols': { pf: [], ps: [] }
+		})
+	})
+}
+
+type ViewState = {
+	items: Array<DashboardItemConfig>
+	mode?: 'view' | 'edit'
+	loading?: boolean
+	tags?: Array<string>
+	owned?: { slug?: string; visibility?: 'private' | 'public' }
+	save?: DashboardTestState['save']
+	createDialog?: Ariakit.DialogStore
+}
+
 let root: Root
 let container: HTMLDivElement
+let createDialog: Ariakit.DialogStore | undefined
+
+function CreateDialogOwner({ children }: { children: (store: Ariakit.DialogStore) => React.ReactNode }) {
+	const store = Ariakit.useDialogStore()
+	createDialog = store
+	return children(store)
+}
+
+// The editor dialogs load lazily; loading them once up front keeps the first open inside a test's wait.
+beforeAll(async () => {
+	await Promise.all([
+		import('./components/AddChartModal/AddChartModal'),
+		import('./components/QuickAddPalette'),
+		import('./components/SqlChart/SqlChartModal'),
+		import('./components/DashboardSettingsModal')
+	])
+})
+
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.mode = 'view'
-	mocks.readOnlyReason = null
-	mocks.tags = []
-	mocks.auth = { isAuthenticated: false, user: undefined }
-	mocks.currentDashboard = null
-	mocks.publishDashboard.mockClear()
-	mocks.saveDashboard.mockClear()
-	mocks.showCreateDialog.mockClear()
-	mocks.push.mockClear()
-	mocks.undo.mockClear()
-	mocks.undoEdit.mockClear()
-	mocks.appendItems.mockClear()
-	mocks.flush.mockClear()
-	mocks.retry.mockClear()
-	toastMock.mockClear()
-	toastMock.error.mockClear()
-	toastMock.success.mockClear()
-	mocks.saving = false
-	mocks.saveState = undefined
-	mocks.refresh.mockClear()
+	vi.clearAllMocks()
+	createDialog = undefined
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -224,299 +94,311 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
-async function renderDashboard() {
+
+async function renderDashboard({ items, mode = 'view', loading = false, tags = [], owned, save }: ViewState) {
+	const currentDashboard = owned
+		? ({
+				id: 'fixture',
+				user: 'owner',
+				data: { items, dashboardName: 'Fixture' },
+				created: '',
+				updated: '',
+				...(owned.slug ? { slug: owned.slug } : {})
+			} as Dashboard)
+		: null
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-				<ProDashboard />
-			</QueryClientProvider>
+			<session.Wrapper>
+				<CreateDialogOwner>
+					{(store) => (
+						<DashboardTestProvider
+							mode={mode}
+							items={items}
+							permissions={{
+								canEdit: !!owned,
+								canDelete: !!owned,
+								canMove: !!owned,
+								isReadOnly: mode === 'view' || loading,
+								reason: loading ? 'dashboard-loading' : mode === 'view' ? 'view-mode' : null
+							}}
+							dashboard={{
+								dashboardName: 'Fixture',
+								dashboardId: 'fixture',
+								dashboardVisibility: owned?.visibility ?? 'public',
+								dashboardTags: tags,
+								currentDashboard,
+								getCurrentRatingSession: () => null,
+								canUndo: true,
+								copyDashboard: vi.fn(),
+								deleteDashboard: vi.fn(),
+								...actions
+							}}
+							editorActions={{ handleAppendItems: appendItems, handleEditItem: vi.fn() }}
+							history={{ undo: undoEdit }}
+							variables={{ canEditVariables: mode === 'edit' }}
+							ui={{ createDashboardDialogStore: store }}
+							save={{ queued: null, state: undefined, saving: false, retry: vi.fn(), flush, ...save }}
+						>
+							<ProDashboard />
+						</DashboardTestProvider>
+					)}
+				</CreateDialogOwner>
+			</session.Wrapper>
 		)
 	)
+	await act(async () => {})
 }
 function button(label: string) {
 	return Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
 }
 function menuItem(label: string) {
-	return Array.from(document.body.querySelectorAll('[role="menuitem"]')).find(
+	return Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
 		(node) => node.textContent?.trim() === label
 	)
 }
 async function openDashboardMenu() {
 	await act(async () => document.body.querySelector<HTMLButtonElement>('[aria-label="Dashboard actions"]')!.click())
 }
+async function pressKey(target: EventTarget, key: string, init: KeyboardEventInit = {}) {
+	await act(async () => {
+		target.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }))
+	})
+}
 function typeInto(field: HTMLInputElement | HTMLTextAreaElement, value: string) {
 	const prototype = field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
 	Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(field, value)
 	field.dispatchEvent(new Event('input', { bubbles: true }))
 }
+/** The open card editor, found by its heading so a closing quick add dialog is not mistaken for it. */
+function cardEditor() {
+	return Array.from(document.querySelectorAll('[role="dialog"]')).find((dialog) =>
+		/^(Add card|Edit card)/.test(dialog.querySelector('h2')?.textContent ?? '')
+	)
+}
+function dialogTitle() {
+	return cardEditor()?.querySelector('h2')?.textContent
+}
+async function openQuickAddTextDraft() {
+	await pressKey(window, 'k', { ctrlKey: true })
+	const input = await vi.waitFor(() => {
+		const field = document.querySelector<HTMLInputElement>('input[aria-label="Quick add"]')
+		if (!field) throw new Error('Expected quick add')
+		return field
+	})
+	await act(async () => typeInto(input, 'text'))
+	await pressKey(input, 'Enter')
+	await vi.waitFor(() => expect(dialogTitle()).toBe('Add card'))
+}
 
-test.each(['income-statement', 'unlocks-pie'] as const)(
-	'refreshes SQL alongside %s without an irrelevant period strip',
-	async (kind) => {
-		mocks.items = [{ kind: 'sql' }, { kind }] as Array<DashboardItemConfig>
-		await renderDashboard()
+describe('a visitor', () => {
+	signInAs('signed-out')
+
+	test.each(['income-statement', 'unlocks-pie'] as const)(
+		'refreshes SQL alongside %s without an irrelevant period strip',
+		async (kind) => {
+			const refreshed = vi.fn()
+			const unsubscribe = subscribeSqlRefreshAll(refreshed)
+			try {
+				await renderDashboard({
+					items: [
+						{ id: 'sql', kind: 'sql' },
+						{ id: kind, kind }
+					] as Array<DashboardItemConfig>
+				})
+				expect(button('30d')).toBeUndefined()
+				expect(button('Actions')).toBeUndefined()
+				await act(async () => button('Refresh all SQL')!.click())
+				expect(refreshed).toHaveBeenCalledOnce()
+			} finally {
+				unsubscribe()
+			}
+		}
+	)
+
+	test('a view without SQL or period charts has no toolbar', async () => {
+		await renderDashboard({ items: [note] })
+		expect(container.textContent).toContain('Note')
+		expect(button('Refresh all SQL')).toBeUndefined()
 		expect(button('30d')).toBeUndefined()
 		expect(button('Actions')).toBeUndefined()
-		expect(button('Refresh all SQL')).toBeDefined()
-		await act(async () => button('Refresh all SQL')!.click())
-		expect(mocks.refresh).toHaveBeenCalledOnce()
-	}
-)
-test('a view without SQL or period charts has no toolbar', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	await renderDashboard()
-	expect(button('Refresh all SQL')).toBeUndefined()
-	expect(button('30d')).toBeUndefined()
-	expect(button('Actions')).toBeUndefined()
-})
-test('the editor toolbar reaches parameters and annotations and answers the undo hotkey', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	expect(button('Parameter')).toBeDefined()
-	expect(button('Annotations')).toBeDefined()
-	await act(async () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true }))
 	})
-	expect(mocks.undoEdit).toHaveBeenCalledOnce()
-})
-test('the editor opens quick add from the toolbar and from the Ctrl+K hotkey', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	expect(document.body.textContent).not.toContain('quick add palette')
-	await act(async () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+
+	test('an empty dashboard offers no editor hints', async () => {
+		await renderDashboard({ items: [] })
+		expect(container.textContent).toContain('This dashboard is empty')
+		expect(button('Actions')).toBeUndefined()
+		expect(document.body.querySelector('[aria-label="Dashboard actions"]')).toBeNull()
+		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
+		expect(document.body.querySelector('[aria-label="What you can add next"]')).toBeNull()
 	})
-	expect(document.body.textContent).toContain('quick add palette')
-	expect(document.body.textContent).not.toContain('add chart modal')
-})
 
-test('customizing a quick add row hands its draft to the full editor', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	await act(async () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
-	})
-	await act(async () => button('Customize draft')?.click())
-
-	expect(document.body.textContent).toContain('add chart modal:text')
-})
-
-test('adding text after editing clears the edit target even before the previous sheet finishes closing', async () => {
-	mocks.items = [{ id: 'existing-text', kind: 'text', content: 'Keep this note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	await act(async () => button('Edit first card')!.click())
-	expect(document.body.textContent).toContain('editing:existing-text')
-	await act(async () => button('Close card editor')!.click())
-
-	await act(async () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
-	})
-	await act(async () => button('Customize draft')!.click())
-
-	expect(document.body.textContent).toContain('add chart modal:text')
-	expect(document.body.textContent).toContain('editing:none')
-	expect(document.body.textContent).not.toContain('editing:existing-text')
-})
-
-test('an empty editor keeps settings in the dashboard menu, its sheet and the empty state', async () => {
-	mocks.items = []
-	mocks.mode = 'edit'
-	await renderDashboard()
-	expect(button('Parameter')).toBeUndefined()
-	expect(button('Annotations')).toBeUndefined()
-	expect(button('Add card')).toBeUndefined()
-	expect(button('Add section')).toBeUndefined()
-	expect(button('30d')).toBeUndefined()
-	expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
-	await openDashboardMenu()
-	expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).not.toBeNull()
-	expect(button('Add your first card')).toBeDefined()
-	expect(document.body.querySelectorAll('[aria-label="What you can add next"] li')).toHaveLength(3)
-	await act(async () => button('Actions')!.click())
-	const dialog = document.body.querySelector('[role="dialog"]')!
-	expect(
-		Array.from(dialog.querySelectorAll('button'))
-			.map((node) => node.textContent?.trim())
-			.filter(Boolean)
-	).toEqual(['Add card', 'Settings'])
-})
-test('an empty dashboard read by a visitor offers no editor hints', async () => {
-	mocks.items = []
-	await renderDashboard()
-	expect(container.textContent).toContain('This dashboard is empty')
-	expect(button('Actions')).toBeUndefined()
-	expect(document.body.querySelector('[aria-label="Dashboard actions"]')).toBeNull()
-	expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
-	expect(document.body.querySelector('[aria-label="What you can add next"]')).toBeNull()
-})
-test('a tagged public dashboard suggests similar dashboards below the grid', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.tags = ['lending', 'l2']
-	await renderDashboard()
-	expect(container.textContent).toContain('similar:lending,l2')
-	mocks.mode = 'edit'
-	await renderDashboard()
-	expect(container.textContent).not.toContain('similar:')
-})
-test('mobile editor actions close the sheet and run the selected action', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	await act(async () => button('Actions')!.click())
-	const dialog = document.body.querySelector('[role="dialog"]')!
-	expect(
-		Array.from(dialog.querySelectorAll('button'))
-			.map((node) => node.textContent?.trim())
-			.filter(Boolean)
-	).toEqual(['Add card', 'Add section', 'Edit with LlamaAI', 'Undo AI changes', 'Settings'])
-	await act(async () =>
-		Array.from(dialog.querySelectorAll('button'))
-			.find((node) => node.textContent?.trim() === 'Undo AI changes')!
-			.click()
-	)
-	expect(mocks.undo).toHaveBeenCalledOnce()
-	expect(document.body.querySelector('[role="dialog"]')).toBeNull()
-})
-
-test('a loading editor lists the card actions in the sheet but refuses them', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	mocks.readOnlyReason = 'dashboard-loading'
-	await renderDashboard()
-	await act(async () => button('Actions')!.click())
-	const dialog = document.body.querySelector('[role="dialog"]')!
-	const rows = Array.from(dialog.querySelectorAll('button')).filter((node) =>
-		['Add card', 'Add section'].includes(node.textContent?.trim() ?? '')
-	)
-	expect(rows.map((node) => node.textContent?.trim())).toEqual(['Add card', 'Add section'])
-	expect(rows.map((node) => node.getAttribute('aria-disabled'))).toEqual(['true', 'true'])
-	await act(async () => rows[0]!.click())
-	await act(async () => rows[1]!.click())
-	expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
-	expect(mocks.appendItems).not.toHaveBeenCalled()
-})
-
-test('a viewing owner publishes from the share popover and is sent to the editor to change settings', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.auth = { isAuthenticated: true, user: { id: 'owner' } }
-	mocks.currentDashboard = { id: 'fixture', user: 'owner', slug: 'fixture-slug' }
-	await renderDashboard()
-	await act(async () => button('Make public')!.click())
-	expect(mocks.publishDashboard).toHaveBeenCalledOnce()
-	await act(async () => button('Edit dashboard')!.click())
-	expect(mocks.push).toHaveBeenCalledWith('/pro/fixture-slug/edit', undefined, { shallow: true })
-	expect(button('Open settings')).toBeUndefined()
-})
-
-test('an editing owner reaches dashboard settings from the share popover', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	mocks.auth = { isAuthenticated: true, user: { id: 'owner' } }
-	mocks.currentDashboard = { id: 'fixture', user: 'owner', slug: 'fixture-slug' }
-	await renderDashboard()
-	expect(button('Edit dashboard')).toBeUndefined()
-	expect(button('Open settings')).toBeDefined()
-	expect(mocks.push).not.toHaveBeenCalled()
-})
-
-test('creating a dashboard moved from the header into the dashboard menu', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.auth = { isAuthenticated: true, user: { id: 'owner' } }
-	mocks.currentDashboard = { id: 'fixture', user: 'owner', slug: 'fixture-slug' }
-	await renderDashboard()
-	expect(button('New Dashboard')).toBeUndefined()
-	await openDashboardMenu()
-	await act(async () => (menuItem('New dashboard') as HTMLElement).click())
-	expect(mocks.showCreateDialog).toHaveBeenCalledOnce()
-})
-
-test('the editor renames the dashboard from its heading', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	await renderDashboard()
-	const heading = container.querySelector('h1')!
-	await act(async () => heading.querySelector('button')!.click())
-	const field = heading.querySelector('input')!
-	await act(async () => typeInto(field, 'Renamed'))
-	await act(async () => field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
-	expect(mocks.saveDashboard).toHaveBeenCalledExactlyOnceWith({ dashboardName: 'Renamed' })
-})
-
-test('a viewed dashboard shows its name as plain heading text', async () => {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	await renderDashboard()
-	const heading = container.querySelector('h1')!
-	expect(heading.textContent).toBe('Fixture')
-	expect(heading.querySelector('button')).toBeNull()
-})
-
-function statusText() {
-	return Array.from(document.body.querySelectorAll('[role="status"]'))
-		.map((node) => node.textContent?.trim())
-		.join('|')
-}
-
-function asOwnerEditing() {
-	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
-	mocks.mode = 'edit'
-	mocks.auth = { isAuthenticated: true, user: { id: 'owner' } }
-	mocks.currentDashboard = { id: 'fixture', user: 'owner' }
-}
-
-test('Done waits for the flush to land before it claims the dashboard is saved', async () => {
-	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-	try {
-		asOwnerEditing()
-		await renderDashboard()
-		await act(async () => button('Done')!.click())
-		expect(mocks.flush).toHaveBeenCalledOnce()
-		expect(mocks.push).toHaveBeenCalledOnce()
-
-		mocks.mode = 'view'
-		mocks.saving = true
-		await renderDashboard()
-		expect(statusText()).toContain('Saving…')
-		expect(statusText()).not.toContain('Saved')
-
-		mocks.saving = false
-		mocks.saveState = { status: 'success' }
-		await renderDashboard()
-		expect(statusText()).toContain('Saved')
-
-		await act(async () => {
-			vi.advanceTimersByTime(1500)
+	test('a tagged public dashboard suggests similar dashboards below the grid, but not while editing', async () => {
+		const similar = {
+			id: 'other',
+			tags: ['lending'],
+			data: { items: [], dashboardName: 'Other lending' },
+			created: '',
+			updated: ''
+		}
+		session.serve({
+			'/dashboards/search': { items: [similar], page: 1, perPage: 9, totalItems: 1, totalPages: 1, searchParams: {} }
 		})
-		expect(statusText()).not.toContain('Saved')
-	} finally {
-		vi.useRealTimers()
-	}
+		await renderDashboard({ items: [note], tags: ['lending', 'l2'] })
+		await vi.waitFor(() => expect(container.textContent).toContain('Similar dashboards'))
+		expect(container.textContent).toContain('Other lending')
+		expect(
+			session.requests.find((request) => request.url.pathname === '/dashboards/search')?.url.searchParams.get('tags')
+		).toBe('lending,l2')
+
+		await renderDashboard({ items: [note], tags: ['lending', 'l2'], mode: 'edit' })
+		expect(container.textContent).not.toContain('Similar dashboards')
+	})
+
+	test('a viewed dashboard shows its name as plain heading text', async () => {
+		await renderDashboard({ items: [note] })
+		const heading = container.querySelector('h1')!
+		expect(heading.textContent).toBe('Fixture')
+		expect(heading.querySelector('button')).toBeNull()
+	})
 })
 
-test('Done refuses to leave the editor while the last save is in error', async () => {
-	asOwnerEditing()
-	mocks.saveState = { status: 'error' }
-	await renderDashboard()
-	await act(async () => button('Done')!.click())
-	expect(mocks.flush).not.toHaveBeenCalled()
-	expect(mocks.push).not.toHaveBeenCalled()
-	expect(toastMock.error).toHaveBeenCalledWith(
-		'Changes could not be saved. Retry the save first.',
-		expect.objectContaining({ id: 'dashboard-done-blocked' })
-	)
-})
+describe('an editor', () => {
+	signInAs('subscriber')
 
-test('a save that fails after Done keeps the retry affordance in view mode', async () => {
-	asOwnerEditing()
-	await renderDashboard()
-	await act(async () => button('Done')!.click())
+	test('the editor toolbar reaches parameters and annotations and answers the undo hotkey', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		expect(button('Parameter')).toBeDefined()
+		expect(button('Annotations')).toBeDefined()
+		await pressKey(window, 'z', { ctrlKey: true })
+		expect(undoEdit).toHaveBeenCalledOnce()
+	})
 
-	mocks.mode = 'view'
-	mocks.saveState = { status: 'error' }
-	await renderDashboard()
-	expect(button('Retry save')).toBeDefined()
-	expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Changes couldn')
+	test('Ctrl+K opens quick add, and a quick add row it customizes opens the full editor with its draft', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		expect(document.querySelector('input[aria-label="Quick add"]')).toBeNull()
+		await openQuickAddTextDraft()
+		expect(document.querySelector('input[aria-label="Quick add"]')).toBeNull()
+		expect(cardEditor()?.querySelector('textarea')?.value).toBe('')
+	})
+
+	test('adding text after editing a card starts from an empty draft, not the edited card', async () => {
+		await renderDashboard({ items: [{ id: 'existing-text', kind: 'text', content: 'Keep this note' }], mode: 'edit' })
+		await act(async () => button('Edit card')!.click())
+		await vi.waitFor(() => expect(dialogTitle()).toBe('Edit card · Text'))
+		expect(cardEditor()?.querySelector('textarea')?.value).toBe('Keep this note')
+		await pressKey(cardEditor()!, 'Escape')
+
+		await openQuickAddTextDraft()
+		expect(cardEditor()?.querySelector('textarea')?.value).toBe('')
+	})
+
+	test('an empty editor keeps settings in the dashboard menu, its sheet and the empty state', async () => {
+		await renderDashboard({ items: [], mode: 'edit' })
+		expect(button('Parameter')).toBeUndefined()
+		expect(button('Annotations')).toBeUndefined()
+		expect(button('Add card')).toBeUndefined()
+		expect(button('Add section')).toBeUndefined()
+		expect(button('30d')).toBeUndefined()
+		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).toBeNull()
+		await openDashboardMenu()
+		expect(document.body.querySelector('[aria-label="Dashboard Settings"]')).not.toBeNull()
+		expect(button('Add your first card')).toBeDefined()
+		expect(document.body.querySelectorAll('[aria-label="What you can add next"] li')).toHaveLength(3)
+		await act(async () => button('Actions')!.click())
+		const dialog = document.body.querySelector('[role="dialog"]')!
+		expect(
+			Array.from(dialog.querySelectorAll('button'))
+				.map((node) => node.textContent?.trim())
+				.filter(Boolean)
+		).toEqual(['Add card', 'Settings'])
+	})
+
+	test('mobile editor actions close the sheet and run the selected action', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		await act(async () => button('Actions')!.click())
+		const dialog = document.body.querySelector('[role="dialog"]')!
+		expect(
+			Array.from(dialog.querySelectorAll('button'))
+				.map((node) => node.textContent?.trim())
+				.filter(Boolean)
+		).toEqual(['Add card', 'Add section', 'Edit with LlamaAI', 'Undo AI changes', 'Settings'])
+		await act(async () =>
+			Array.from(dialog.querySelectorAll('button'))
+				.find((node) => node.textContent?.trim() === 'Undo AI changes')!
+				.click()
+		)
+		expect(actions.undoAIGeneration).toHaveBeenCalledOnce()
+		expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+	})
+
+	test('a loading editor lists the card actions in the sheet but refuses them', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', loading: true })
+		await act(async () => button('Actions')!.click())
+		const dialog = document.body.querySelector('[role="dialog"]')!
+		const rows = Array.from(dialog.querySelectorAll('button')).filter((node) =>
+			['Add card', 'Add section'].includes(node.textContent?.trim() ?? '')
+		)
+		expect(rows.map((node) => node.textContent?.trim())).toEqual(['Add card', 'Add section'])
+		expect(rows.map((node) => node.getAttribute('aria-disabled'))).toEqual(['true', 'true'])
+		await act(async () => rows[0]!.click())
+		await act(async () => rows[1]!.click())
+		expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
+		expect(appendItems).not.toHaveBeenCalled()
+	})
+
+	test('a viewing owner publishes from the share popover and is sent to the editor to change settings', async () => {
+		await renderDashboard({ items: [note], owned: { slug: 'fixture-slug', visibility: 'private' } })
+		await act(async () => button('Share')!.click())
+		await act(async () => button('Make public')!.click())
+		expect(actions.publishDashboard).toHaveBeenCalledOnce()
+		await act(async () => button('Edit dashboard')!.click())
+		expect(mocks.push).toHaveBeenCalledWith('/pro/fixture-slug/edit', undefined, { shallow: true })
+		expect(button('Open settings')).toBeUndefined()
+	})
+
+	test('an editing owner reaches dashboard settings from the share popover', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', owned: { slug: 'fixture-slug', visibility: 'private' } })
+		await act(async () => button('Share')!.click())
+		expect(button('Edit dashboard')).toBeUndefined()
+		expect(button('Open settings')).toBeDefined()
+		expect(mocks.push).not.toHaveBeenCalled()
+	})
+
+	test('creating a dashboard moved from the header into the dashboard menu', async () => {
+		await renderDashboard({ items: [note], owned: { slug: 'fixture-slug' } })
+		expect(button('New Dashboard')).toBeUndefined()
+		await openDashboardMenu()
+		await act(async () => menuItem('New dashboard')!.click())
+		expect(createDialog?.getState().open).toBe(true)
+	})
+
+	test('the editor renames the dashboard from its heading', async () => {
+		await renderDashboard({ items: [note], mode: 'edit' })
+		const heading = container.querySelector('h1')!
+		await act(async () => heading.querySelector('button')!.click())
+		const field = heading.querySelector('input')!
+		await act(async () => typeInto(field, 'Renamed'))
+		await pressKey(field, 'Enter')
+		expect(actions.saveDashboard).toHaveBeenCalledExactlyOnceWith({ dashboardName: 'Renamed' })
+	})
+
+	test('Done refuses to leave the editor while the last save is in error', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', owned: {}, save: { state: { status: 'error' } as never } })
+		await act(async () => button('Done')!.click())
+		expect(flush).not.toHaveBeenCalled()
+		expect(mocks.push).not.toHaveBeenCalled()
+		expect(toastMock.error).toHaveBeenCalledWith(
+			'Changes could not be saved. Retry the save first.',
+			expect.objectContaining({ id: 'dashboard-done-blocked' })
+		)
+	})
+
+	test('a save that fails after Done keeps the retry affordance in view mode', async () => {
+		await renderDashboard({ items: [note], mode: 'edit', owned: {} })
+		await act(async () => button('Done')!.click())
+
+		await renderDashboard({ items: [note], owned: {}, save: { state: { status: 'error' } as never } })
+		expect(button('Retry save')).toBeDefined()
+		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Changes couldn')
+	})
 })

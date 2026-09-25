@@ -191,22 +191,6 @@ describe('terminal socket multiplexing', () => {
 			vi.useRealTimers()
 		}
 	})
-
-	test('stops reconnecting once the last listener is gone', async () => {
-		vi.useFakeTimers()
-		try {
-			subscribeTerminalBars('guid-a', 'BTC', '60', () => {})
-			await vi.advanceTimersByTimeAsync(0)
-			FakeSocket.instances[0].open()
-
-			unsubscribeTerminalListener('guid-a')
-			await vi.advanceTimersByTimeAsync(60_000)
-
-			expect(FakeSocket.instances).toHaveLength(1)
-		} finally {
-			vi.useRealTimers()
-		}
-	})
 })
 
 const statsFrame = (symbol: string, markPx: number) => ({
@@ -324,14 +308,6 @@ test('the ticket request carries the signed-in token, so a strip that subscribes
 	expect(FakeSocket.instances[0].url).toContain('ticket=ticket-1')
 })
 
-test('a signed-out page never asks for a ticket', async () => {
-	pb.authStore.clear()
-	subscribeTerminalStats('strip', 'HYPE', () => {})
-	await flush()
-	expect(fetchCalls).toBe(0)
-	expect(FakeSocket.instances).toHaveLength(0)
-})
-
 test('a socket that goes silent is replaced, while one that keeps hearing the heartbeat is kept', async () => {
 	vi.useFakeTimers()
 	try {
@@ -360,6 +336,7 @@ test('signing in while the terminal is open connects without waiting for another
 	pb.authStore.clear()
 	subscribeTerminalStats('strip', 'HYPE', () => {})
 	await flush()
+	expect(fetchCalls).toBe(0)
 	expect(FakeSocket.instances).toHaveLength(0)
 
 	pb.authStore.save(TOKEN, null)

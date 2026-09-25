@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { RevisionHistoryDrawer } from '../editor/RevisionHistoryDrawer'
 import type { ArticleRevision, ArticleRevisionEventType } from '../types'
 
@@ -22,16 +23,11 @@ const revisions: Array<ArticleRevision> = EVENTS.map((eventType, i) => {
 	} as unknown as ArticleRevision
 })
 
-const getArticleRevision = vi.fn(async (_articleId: string, id: string) => revisions.find((r) => r.id === id)!)
-
-vi.mock('~/containers/Articles/api', () => ({
-	listArticleRevisions: async () => ({ items: revisions, nextCursor: null }),
-	getArticleRevision: (...args: [string, string]) => getArticleRevision(...args),
-	restoreArticleRevisionToPending: vi.fn(),
-	deleteArticleRevision: vi.fn()
-}))
-
-vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }))
+const http = installFixtureFetch()
+// The drawer receives authorizedFetch as a prop; plain fetch reaches the same fixtures.
+const authorizedFetch = (url: string, init?: RequestInit) => fetch(url, init)
+const revisionRequests = () =>
+	http.requests.map((request) => request.url.pathname).filter((path) => /\/revisions\/rev-/.test(path))
 
 async function flush() {
 	await act(async () => {
@@ -48,7 +44,12 @@ describe('RevisionHistoryDrawer diff base', () => {
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		getArticleRevision.mockClear()
+		http.serve({
+			'/articles/article-1/revisions': { items: revisions, nextCursor: null },
+			// The rendered revision preview shows the article's promo placements.
+			'/banners/lookup/all-articles': {}
+		})
+		for (const revision of revisions) http.serve({ [`/articles/article-1/revisions/${revision.id}`]: { revision } })
 	})
 
 	afterEach(async () => {
@@ -88,7 +89,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 					<RevisionHistoryDrawer
 						onClose={vi.fn()}
 						articleId="article-1"
-						authorizedFetch={vi.fn()}
+						authorizedFetch={authorizedFetch}
 						onRestored={vi.fn()}
 					/>
 				</QueryClientProvider>
@@ -119,7 +120,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 					<RevisionHistoryDrawer
 						onClose={vi.fn()}
 						articleId="article-1"
-						authorizedFetch={vi.fn()}
+						authorizedFetch={authorizedFetch}
 						onRestored={vi.fn()}
 					/>
 				</QueryClientProvider>
@@ -145,7 +146,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 					{open && (
 						<RevisionHistoryDrawer
 							articleId="article-1"
-							authorizedFetch={vi.fn()}
+							authorizedFetch={authorizedFetch}
 							onRestored={vi.fn()}
 							onClose={() => {
 								onClose()
@@ -173,7 +174,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 			await flush()
 		}
 		await press(drawer, 'j')
-		expect(getArticleRevision).toHaveBeenLastCalledWith('article-1', 'rev-3', expect.any(Function))
+		expect(revisionRequests().at(-1)).toBe('/articles/article-1/revisions/rev-3')
 		await press(drawer, 'k')
 		expect(drawer.textContent).toContain('Revision 4')
 		await press(drawer, 'r')

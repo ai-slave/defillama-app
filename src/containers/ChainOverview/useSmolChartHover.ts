@@ -13,6 +13,12 @@ function positionTooltip(el: HTMLDivElement | null, x: number, y: number) {
 	el.style.top = `${flipY ? y - el.offsetHeight + 12 : y - 12}px`
 }
 
+/** Maps a pointer offset to an evenly sized bucket; the exact right edge belongs to the last bucket. */
+export function getSmolChartHoverIndex(relativeX: number, width: number, dataLength: number): number | null {
+	if (width <= 0 || relativeX < 0 || relativeX > width) return null
+	return Math.min(Math.floor((relativeX / width) * dataLength), dataLength - 1)
+}
+
 export function useSmolChartHover(dataLength: number) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const tooltipRef = useRef<HTMLDivElement>(null)
@@ -33,18 +39,12 @@ export function useSmolChartHover(dataLength: number) {
 			if (!container || dataLength === 0) return
 
 			const rect = container.getBoundingClientRect()
-			if (rect.width <= 0) {
+			const index = getSmolChartHoverIndex(event.clientX - rect.left, rect.width, dataLength)
+			if (index === null) {
 				clearHover()
 				return
 			}
 
-			const relativeX = event.clientX - rect.left
-			if (relativeX < 0 || relativeX > rect.width) {
-				clearHover()
-				return
-			}
-
-			const index = Math.min(Math.floor((relativeX / rect.width) * dataLength), dataLength - 1)
 			const pointerPosition = pointerPositionRef.current
 			pointerPosition.x = event.clientX
 			pointerPosition.y = event.clientY

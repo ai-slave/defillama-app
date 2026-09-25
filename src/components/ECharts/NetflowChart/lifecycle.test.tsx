@@ -1,82 +1,57 @@
 // @vitest-environment happy-dom
 
+import * as echarts from 'echarts/core'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => {
-	const instance = {
-		dispose: vi.fn(),
-		isDisposed: vi.fn(() => false),
-		resize: vi.fn(),
-		setOption: vi.fn()
-	}
-
-	return {
-		init: vi.fn(() => instance),
-		instance,
-		use: vi.fn()
-	}
-})
-
-vi.mock('echarts/core', () => ({
-	init: mocks.init,
-	use: mocks.use
-}))
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	useDarkModeManager: () => [false]
-}))
-
-vi.mock('~/hooks/useChartResize', () => ({
-	useChartResize: () => undefined
-}))
-
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installChartCanvas } from '~/utils/test/chartCanvas'
 import NetflowChart from '.'
 
 const DATA = {
 	day: [{ chain: 'ethereum', value: 10 }],
 	week: [{ chain: 'ethereum', value: 20 }],
-	month: [{ chain: 'ethereum', value: 30 }]
+	month: [{ chain: 'arbitrum', value: -30 }]
 }
 
-describe('NetflowChart lifecycle', () => {
-	let container: HTMLDivElement
-	let root: Root
+let container: HTMLDivElement
+let root: Root
 
-	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-		vi.clearAllMocks()
-	})
+beforeEach(() => {
+	installChartCanvas()
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
 
-	afterEach(async () => {
-		if (container.childNodes.length > 0) await act(async () => root.unmount())
-		container.remove()
-	})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	vi.restoreAllMocks()
+})
 
-	test('resizes without rebuilding options when only height changes', async () => {
-		const onReady = vi.fn()
+function shownBars() {
+	const instance = echarts.getInstanceByDom(container.querySelector<HTMLElement>('[_echarts_instance_]')!)!
+	const option = instance.getOption() as Record<string, any>
+	return {
+		chains: option.yAxis[0].data,
+		outflow: option.series[0].data,
+		inflow: option.series[1].data
+	}
+}
 
-		await act(async () => root.render(<NetflowChart data={DATA} height={500} onReady={onReady} />))
+test('hands out a drawn chart, switches period on selection, and takes the chart back on unmount', async () => {
+	const readyWith: Array<Array<string> | null> = []
+	const onReady = (instance: echarts.ECharts | null) =>
+		readyWith.push(instance ? (instance.getOption() as Record<string, any>).yAxis[0].data : null)
+	await act(async () => root.render(<NetflowChart data={DATA} height={500} onReady={onReady} />))
 
-		expect(mocks.init).toHaveBeenCalledOnce()
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-		expect(mocks.instance.resize).toHaveBeenCalledOnce()
-		expect(onReady).toHaveBeenCalledOnce()
-		expect(mocks.instance.setOption.mock.invocationCallOrder[0]).toBeLessThan(onReady.mock.invocationCallOrder[0])
+	expect(readyWith).toEqual([['Arbitrum']])
+	expect(shownBars()).toEqual({ chains: ['Arbitrum'], outflow: [-30], inflow: [0] })
 
-		await act(async () => root.render(<NetflowChart data={DATA} height={600} onReady={onReady} />))
+	await act(async () => container.querySelector<HTMLInputElement>('input[value="day"]')!.click())
 
-		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
-		expect(mocks.instance.resize).toHaveBeenCalledTimes(2)
-		expect(onReady).toHaveBeenCalledOnce()
+	expect(shownBars()).toEqual({ chains: ['Ethereum'], outflow: [0], inflow: [10] })
 
-		await act(async () => root.unmount())
-
-		expect(mocks.instance.dispose).toHaveBeenCalledOnce()
-		expect(onReady).toHaveBeenLastCalledWith(null)
-	})
+	await act(async () => root.unmount())
+	expect(readyWith.at(-1)).toBeNull()
 })

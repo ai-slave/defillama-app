@@ -1,36 +1,26 @@
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { BalanceSettings } from './BalanceSettings'
 
-const mocks = vi.hoisted(() => ({
-	refetch: vi.fn(),
-	mutateAsync: vi.fn(),
-	reset: vi.fn(),
-	subscribed: true,
-	totalAvailable: 10,
-	isError: false
-}))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: mocks.subscribed }) }))
-vi.mock('~/containers/Subscription/useTopup', () => ({
-	TOPUP_CONFIG: { minAmount: 1, maxAmount: 500, quickAmounts: [5, 10, 25, 50] },
-	useAiBalance: () => ({
-		balance: { freeRemaining: '3', toppedUpBalance: '7' },
-		totalAvailable: mocks.totalAvailable,
-		isLoading: false,
-		isError: mocks.isError,
-		refetch: mocks.refetch
-	}),
-	useCreateTopup: () => ({ mutateAsync: mocks.mutateAsync, reset: mocks.reset, isPending: false, error: null })
-}))
+const session = installSubscriberSession('reader')
+const BALANCE_URL = 'https://features.llama.fi/user/ai-balance'
+let balance = { freeRemaining: '3', toppedUpBalance: '7', freeLimit: '5', freeSpent: '2' }
+let balanceFails = false
+const balanceReads = () => session.requests.filter((request) => request.url.href === BALANCE_URL).length
 let root: Root
 let host: HTMLDivElement
+
 beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.subscribed = true
-	mocks.totalAvailable = 10
-	mocks.isError = false
+	balance = { freeRemaining: '3', toppedUpBalance: '7', freeLimit: '5', freeSpent: '2' }
+	balanceFails = false
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
+	session.serve({
+		[BALANCE_URL]: () => (balanceFails ? new Response('down', { status: 500 }) : Response.json(balance)),
+		'https://features.llama.fi/topup/create': () => new Response('test checkout', { status: 500 })
+	})
 	host = document.createElement('div')
 	document.body.append(host)
 	root = createRoot(host)
@@ -41,64 +31,72 @@ afterEach(async () => {
 	vi.useRealTimers()
 })
 
+async function draw(node: ReactNode) {
+	await act(async () => root.render(<session.Wrapper>{node}</session.Wrapper>))
+}
+async function settle(assertion: () => void) {
+	await act(async () => {
+		await vi.waitFor(assertion)
+	})
+}
+// Balance polling runs on timers; everything else (auth, query batching, fetch) runs as it does in the app.
+async function advance(ms: number) {
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(ms)
+	})
+}
+function button(text: string) {
+	return [...host.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent?.includes(text))
+}
+
 test('shows the balance and top-up form without starting a payment or nesting a dialog', async () => {
-	await act(async () => root.render(<BalanceSettings />))
-	expect(host.textContent).toContain('$10.00')
-	expect(host.querySelector('input')?.value).toBe('10')
+	await draw(<BalanceSettings />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	await settle(() => expect(host.querySelector('input')?.value).toBe('10'))
 	expect(host.querySelector('[role="dialog"]')).toBeNull()
-	expect(mocks.mutateAsync).not.toHaveBeenCalled()
 	expect(host.textContent).not.toContain('Refresh')
-	expect(mocks.refetch).toHaveBeenCalledTimes(1)
+	expect(session.requests.some((request) => request.url.pathname === '/topup/create')).toBe(false)
 })
 
-test('payment return schedules bounded balance reads and offers manual refresh', async () => {
-	vi.useFakeTimers()
-	await act(async () => root.render(<BalanceSettings result="success" />))
-	expect(mocks.refetch).toHaveBeenCalledTimes(1)
-	expect(host.textContent).not.toContain('Refresh balance')
-	await act(async () => vi.advanceTimersByTime(4000))
-	expect(mocks.refetch).toHaveBeenCalledTimes(2)
-	await act(async () => vi.advanceTimersByTime(8000))
-	expect(mocks.refetch).toHaveBeenCalledTimes(3)
-	await act(async () => vi.advanceTimersByTime(60_000))
-	expect(mocks.refetch).toHaveBeenCalledTimes(3)
-	const refresh = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
-		(button) => button.textContent === 'Refresh balance'
-	)!
-	await act(async () => refresh.click())
-	expect(mocks.refetch).toHaveBeenCalledTimes(4)
+test('payment return polls the balance twice, then stops and offers a manual refresh', async () => {
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	await draw(<BalanceSettings result="success" />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	const afterMount = balanceReads()
+	expect(button('Refresh balance')).toBeUndefined()
+	await advance(4000)
+	expect(balanceReads()).toBe(afterMount + 1)
+	await advance(8000)
+	expect(balanceReads()).toBe(afterMount + 2)
+	await advance(60_000)
+	expect(balanceReads()).toBe(afterMount + 2)
+	await act(async () => button('Refresh balance')!.click())
+	await settle(() => expect(balanceReads()).toBe(afterMount + 3))
 	expect(host.textContent).toContain('may take a moment')
 })
 
 test('cancellation does not poll or claim payment succeeded', async () => {
-	vi.useFakeTimers()
-	await act(async () => root.render(<BalanceSettings result="cancelled" />))
-	await act(async () => vi.advanceTimersByTime(15_000))
-	expect(mocks.refetch).toHaveBeenCalledTimes(1)
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	await draw(<BalanceSettings result="cancelled" />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	const afterMount = balanceReads()
+	await advance(15_000)
+	expect(balanceReads()).toBe(afterMount)
 	expect(host.textContent).toContain('Payment cancelled')
 })
 
-test('leaving the tab cancels pending balance reads', async () => {
-	vi.useFakeTimers()
-	await act(async () => root.render(<BalanceSettings result="success" />))
-	await act(async () => root.render(null))
-	await act(async () => vi.advanceTimersByTime(15_000))
-	expect(mocks.refetch).toHaveBeenCalledTimes(1)
-})
-
 test('crypto checkout returns to Balance with separate completion and cancel results', async () => {
-	mocks.mutateAsync.mockRejectedValueOnce(new Error('test checkout'))
-	await act(async () => root.render(<BalanceSettings />))
-	const crypto = [...host.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
-		b.textContent?.includes('Pay with Crypto')
-	)!
-	await act(async () => crypto.click())
-	const request = mocks.mutateAsync.mock.calls[0][0]
+	await draw(<BalanceSettings />)
+	await settle(() => expect(button('Pay with Crypto')).toBeDefined())
+	await act(async () => button('Pay with Crypto')!.click())
+	await settle(() => expect(session.requests.some((request) => request.url.pathname === '/topup/create')).toBe(true))
+	const topup = session.requests.find((request) => request.url.pathname === '/topup/create')!
+	const body = JSON.parse(topup.init!.body as string)
 	for (const [key, result] of [
 		['redirectUrl', 'success'],
 		['cancelUrl', 'cancelled']
 	]) {
-		const url = new URL(request[key])
+		const url = new URL(body[key])
 		expect(url.searchParams.get('modal')).toBe('settings')
 		expect(url.searchParams.get('tab')).toBe('balance')
 		expect(url.searchParams.get('topup')).toBe(result)
@@ -106,32 +104,32 @@ test('crypto checkout returns to Balance with separate completion and cancel res
 })
 
 test('accounts without an active subscription can see balance but cannot start a payment', async () => {
-	mocks.subscribed = false
-	await act(async () => root.render(<BalanceSettings />))
-	expect(host.textContent).toContain('$10.00')
-	expect(host.textContent).toContain('Subscribe to a plan')
+	session.serve({ '/subscription/status': () => new Response(null, { status: 404 }) })
+	await draw(<BalanceSettings />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	await settle(() => expect(host.textContent).toContain('Subscribe to a plan'))
 	expect(host.querySelector('input')).toBeNull()
 })
 
-test('failed balance reads offer a retry', async () => {
-	mocks.isError = true
-	await act(async () => root.render(<BalanceSettings />))
-	const retry = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
-		(button) => button.textContent === 'Refresh balance'
-	)!
-	await act(async () => retry.click())
-	expect(mocks.refetch).toHaveBeenCalledTimes(2)
+test('failed balance reads offer a retry that reads the balance again', async () => {
+	balanceFails = true
+	await draw(<BalanceSettings />)
+	await settle(() => expect(button('Refresh balance')).toBeDefined())
+	balanceFails = false
+	await act(async () => button('Refresh balance')!.click())
+	await settle(() => expect(host.textContent).toContain('$10.00'))
 })
 
 test('an increased balance resolves the notice and then dismisses it', async () => {
-	vi.useFakeTimers()
-	await act(async () => root.render(<BalanceSettings result="success" />))
-	mocks.totalAvailable = 20
-	await act(async () => root.render(<BalanceSettings result="success" />))
-	expect(host.textContent).toContain('Balance updated')
+	vi.useFakeTimers({ shouldAdvanceTime: true })
+	await draw(<BalanceSettings result="success" />)
+	await settle(() => expect(host.textContent).toContain('$10.00'))
+	balance = { ...balance, toppedUpBalance: '17' }
+	await advance(4000)
+	await settle(() => expect(host.textContent).toContain('Balance updated'))
 	expect(host.textContent).toContain('Your current balance is $20.00')
-	expect(host.textContent).not.toContain('Refresh balance')
-	await act(async () => vi.advanceTimersByTime(5000))
+	expect(button('Refresh balance')).toBeUndefined()
+	await advance(5000)
 	expect(host.textContent).not.toContain('Balance updated')
 	expect(host.textContent).not.toContain('Checking your payment')
 })

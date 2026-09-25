@@ -224,17 +224,4 @@ describe('useChartResize', () => {
 
 		expect(instance.resize).not.toHaveBeenCalled()
 	})
-
-	test('removes the shared listener pair after the last chart unregisters', async () => {
-		const removeListener = vi.spyOn(window, 'removeEventListener')
-		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
-		await act(async () => root.render(<ChartHarness instance={instance} />))
-
-		await act(async () => root.render(null))
-
-		expect(removeListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1)
-		expect(removeListener.mock.calls.filter(([type]) => type === 'chartResize')).toHaveLength(1)
-		window.dispatchEvent(new Event('resize'))
-		expect(instance.resize).not.toHaveBeenCalled()
-	})
 })

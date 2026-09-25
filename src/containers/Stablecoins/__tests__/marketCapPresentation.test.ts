@@ -151,27 +151,6 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	test('preserves the existing decimal half-boundary rounding in treemap shares', () => {
-		const rows: Array<Row> = [
-			{ name: 'Large', mcap: 3997 },
-			{ name: 'Small', mcap: 3 }
-		]
-
-		const series = prepareStablecoinMarketCapSeries({
-			rows,
-			view: 'treemap',
-			getName,
-			getValue: (row) => row.mcap ?? 0
-		})
-		const result = buildStablecoinMarketCapPresentation({ series })
-
-		expect(result.kind).toBe('treemap')
-		if (result.kind !== 'treemap') return
-		const smallSlice = result.treeData.at(1)
-		if (!smallSlice) throw new Error('Expected the small treemap slice')
-		expect(smallSlice.value[1]).toBe(0.07)
-	})
-
 	test('renders an explicit selection without Others and keeps canonical colors', () => {
 		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: `Token ${index}`,

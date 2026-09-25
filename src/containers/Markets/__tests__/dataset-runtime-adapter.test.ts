@@ -1,37 +1,50 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { expect, test } from 'vitest'
+import { MARKETS_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
+const http = installFixtureFetch()
+installSnapshotDirectory('markets-index-test')
 
-const mocks = vi.hoisted(() => ({ readJson: vi.fn() }))
-
-vi.mock('~/server/datasetSnapshots/reader.server', () => ({
-	datasetSnapshotReader: { readJson: mocks.readJson }
-}))
-
-beforeEach(() => {
-	vi.clearAllMocks()
-})
-
-describe('markets dataset snapshot', () => {
-	test('checks market availability by canonical CoinGecko ID', async () => {
-		mocks.readJson.mockResolvedValue({ bitcoin: true })
-		const { hasTokenMarkets } = await import('~/containers/Markets/server/dataset.server')
-
-		await expect(hasTokenMarkets('Bitcoin')).resolves.toBe(true)
-		expect(mocks.readJson).toHaveBeenCalledWith('markets', 'token-gecko-ids.json')
+test('publishes token and exchange indexes where regional arms never take a DefiLlama slug', async () => {
+	http.serve({
+		[`${MARKETS_SERVER_URL}/tokens/list.json`]: { tokens: [] },
+		[`${MARKETS_SERVER_URL}/tokens/exchange-listings.json`]: {
+			last_updated: '2026-09-07',
+			tokens: [{ coingecko_id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', venues: [] }]
+		},
+		[`${MARKETS_SERVER_URL}/exchanges/directory.json`]: {
+			venues: [
+				{
+					slug: 'crypto-com-eu',
+					type: 'cex',
+					secondary: true,
+					links: { defillama: { type: 'cex', slug: 'crypto-com' } }
+				},
+				{
+					slug: 'crypto-com',
+					display_name: 'Crypto.com',
+					type: 'cex',
+					links: { defillama: { type: 'cex', slug: 'crypto-com', url: 'https://defillama.com/cex/crypto-com' } }
+				},
+				{ slug: 'uniswap', type: 'dex', links: { defillama: { type: 'protocol', slug: 'Uniswap' } } }
+			]
+		}
 	})
-
-	test('resolves retired CEX Markets slugs to canonical exchange profiles', async () => {
-		mocks.readJson.mockResolvedValue({
-			'crypto-com': { exchange: 'crypto-com', defillama_slug: 'Crypto.com' }
-		})
-
-		const { resolveExchangeByDefillamaCexSlug } = await import('~/containers/Markets/server/dataset.server')
-
-		await expect(resolveExchangeByDefillamaCexSlug('Crypto-com')).resolves.toEqual({
-			exchange: 'crypto-com',
-			defillama_slug: 'Crypto.com'
-		})
-		expect(mocks.readJson).toHaveBeenCalledWith('markets', 'cex-by-defillama-slug.json')
+	const { fileDatasetSnapshotStore } = await import('~/server/datasetSnapshots/fileStore.server')
+	const { buildMarketsDomain } = await import('../server/dataset.builder.server')
+	await fileDatasetSnapshotStore.publish('markets', buildMarketsDomain)
+	const api = await import('../server/dataset.server')
+	expect(await api.hasTokenMarkets('Bitcoin')).toBe(true)
+	expect(await api.hasTokenMarkets('missing')).toBe(false)
+	expect(await api.resolveExchangeByDefillamaCexSlug('Crypto-com')).toEqual({
+		exchange: 'crypto-com',
+		defillama_slug: 'crypto-com'
 	})
+	expect(await api.resolveExchangeByDefillamaCexSlug('Uniswap')).toEqual({
+		exchange: 'uniswap',
+		defillama_slug: 'Uniswap'
+	})
+	expect(await api.resolveExchangeByDefillamaCexSlug('missing')).toBeNull()
 })
 
 test('indexes bulk summaries by identity and tolerates older listings', async () => {

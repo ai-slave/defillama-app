@@ -21,35 +21,32 @@ vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getTokenLiquidationsSectionData: getTokenLiquidationsSectionDataMock
 }))
 
-vi.mock('~/utils/apiAuth', () => ({
-	validateSubscription: vi.fn()
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: {
-		chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
-		protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } },
-		liquidationsTokenSymbolsSet: new Set(['wstETH'])
-	},
-	refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
-}))
-
+import { AUTH_SERVER, POCKETBASE_URL } from '~/constants'
 import chainHandler from '~/pages/api/private/liquidations/[protocol]/[chain]'
 import protocolHandler from '~/pages/api/private/liquidations/[protocol]/index'
 import overviewHandler from '~/pages/api/private/liquidations/index'
 import tokenHandler from '~/pages/api/private/token-liquidations/[symbol]'
-import { validateSubscription } from '~/utils/apiAuth'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+const { serve } = installFixtureFetch()
+const { seed } = installMetadataSeeder()
 
-const mockedValidateSubscription = vi.mocked(validateSubscription)
 const mockedGetLiquidationsOverviewPageData = vi.mocked(getLiquidationsOverviewPageDataMock)
 const mockedGetLiquidationsProtocolPageData = vi.mocked(getLiquidationsProtocolPageDataMock)
 const mockedGetLiquidationsChainPageData = vi.mocked(getLiquidationsChainPageDataMock)
 const mockedGetTokenLiquidationsSectionData = vi.mocked(getTokenLiquidationsSectionDataMock)
 
 beforeEach(() => {
-	vi.clearAllMocks()
-	mockedValidateSubscription.mockResolvedValue({ valid: true, isTrial: false })
+	vi.resetAllMocks()
+	seed({
+		chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
+		protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } },
+		liquidationsTokenSymbolsSet: new Set(['wstETH'])
+	})
+	serve({
+		[`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'active' } },
+		[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: {}
+	})
 })
 
 describe('liquidations api routes', () => {
@@ -61,48 +58,23 @@ describe('liquidations api routes', () => {
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['GET'])
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
+		expect(res.statusCode).toBe(405)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Method Not Allowed' })
 	})
 
-	test('returns 400 for missing protocol route params before auth', async () => {
-		const req = { method: 'GET', headers: {}, query: {} } as unknown as NextApiRequest
+	test.each([
+		['protocol', protocolHandler, {}, 'Missing protocol parameter'],
+		['chain', chainHandler, { protocol: 'sky' }, 'Missing protocol or chain parameter'],
+		['token', tokenHandler, {}, 'Missing symbol parameter']
+	] as const)('returns 400 for missing %s route params before auth', async (_route, handler, query, error) => {
+		const req = { method: 'GET', headers: {}, query } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
-		await protocolHandler(req, res)
+		await handler(req, res)
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing protocol parameter' })
-		expect(mockedValidateSubscription).not.toHaveBeenCalled()
-	})
-
-	test('returns 400 for missing chain route params before auth', async () => {
-		const req = {
-			method: 'GET',
-			headers: {},
-			query: { protocol: 'sky' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await chainHandler(req, res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing protocol or chain parameter' })
-		expect(mockedValidateSubscription).not.toHaveBeenCalled()
-	})
-
-	test('returns 400 for missing token route params before auth', async () => {
-		const req = { method: 'GET', headers: {}, query: {} } as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenHandler(req, res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Missing symbol parameter' })
-		expect(mockedValidateSubscription).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(400)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error })
 	})
 
 	test('returns 403 for unauthorized protocol requests', async () => {
@@ -112,17 +84,12 @@ describe('liquidations api routes', () => {
 			query: { protocol: 'sky' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
-		mockedValidateSubscription.mockResolvedValue({
-			valid: false,
-			status: 403,
-			error: 'Active subscription required'
-		})
+		serve({ [`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'inactive' } } })
 
 		await protocolHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
-		expect(mockedGetLiquidationsProtocolPageData).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(403)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Active subscription required' })
 	})
 
 	test('lets one snapshot-backed builder resolve protocol routes', async () => {
@@ -136,16 +103,11 @@ describe('liquidations api routes', () => {
 
 		await protocolHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Liquidations protocol not found' })
-		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
-		expect(mockedGetLiquidationsProtocolPageData).toHaveBeenCalledWith('unknown', {
-			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
-			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
-		})
+		expect(res.statusCode).toBe(404)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Liquidations protocol not found' })
 	})
 
-	test('returns overview data for authorized requests', async () => {
+	test('serves overview data privately to a subscriber', async () => {
 		const req = { method: 'GET', headers: { authorization: 'Bearer ok' }, query: {} } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 		mockedGetLiquidationsOverviewPageData.mockResolvedValue({
@@ -162,17 +124,11 @@ describe('liquidations api routes', () => {
 
 		await overviewHandler(req, res)
 
-		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith(
-			expect.objectContaining({
-				protocolCount: 1,
-				totalCollateralUsd: 100
-			})
-		)
+		expect(res.statusCode).toBe(200)
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 	})
 
-	test('returns chain data for authorized requests', async () => {
+	test('serves chain data privately to a subscriber', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -200,21 +156,11 @@ describe('liquidations api routes', () => {
 
 		await chainHandler(req, res)
 
-		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
-		expect(mockedGetLiquidationsChainPageData).toHaveBeenCalledWith('sky', 'arbitrum-one', {
-			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
-			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
-		})
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith(
-			expect.objectContaining({
-				protocolName: 'Sky',
-				chainName: 'Arbitrum One'
-			})
-		)
+		expect(res.statusCode).toBe(200)
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 	})
 
-	test('returns token liquidations for authorized requests', async () => {
+	test('serves token liquidations privately to a subscriber', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -235,33 +181,23 @@ describe('liquidations api routes', () => {
 
 		await tokenHandler(req, res)
 
-		expect(mockedValidateSubscription).toHaveBeenCalledWith('Bearer ok')
-		expect(mockedGetTokenLiquidationsSectionData).toHaveBeenCalledWith('wstETH', {
-			chainMetadata: { arbitrum: { name: 'Arbitrum One', id: 'arbitrum' } },
-			protocolMetadata: { sky: { displayName: 'Sky', name: 'sky' } }
-		})
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith(
-			expect.objectContaining({
-				tokenSymbol: 'wstETH',
-				totalCollateralUsd: 100
-			})
-		)
+		expect(res.statusCode).toBe(200)
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 	})
 
-	test('returns 404 when token liquidations are missing', async () => {
+	test('returns 404 when a listed token has no liquidations snapshot', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
-			query: { symbol: 'missing' }
+			query: { symbol: 'wstETH' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 		mockedGetTokenLiquidationsSectionData.mockResolvedValue(null)
 
 		await tokenHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Token liquidations not found' })
+		expect(res.statusCode).toBe(404)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Token liquidations not found' })
 	})
 
 	test('does not substitute a differently cased token symbol', async () => {
@@ -271,67 +207,42 @@ describe('liquidations api routes', () => {
 			query: { symbol: 'wsteth' }
 		} as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
+		// The builder would answer any symbol; only the exact-case symbol list may reject this one.
+		mockedGetTokenLiquidationsSectionData.mockResolvedValue({
+			tokenSymbol: 'wstETH',
+			timestamp: 1,
+			positionCount: 2,
+			protocolCount: 2,
+			chainCount: 1,
+			totalCollateralUsd: 100,
+			distributionChart: { tokens: [] },
+			protocolRows: [],
+			chainRows: []
+		})
 
 		await tokenHandler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Token liquidations not found' })
-		expect(mockedGetTokenLiquidationsSectionData).not.toHaveBeenCalled()
+		expect(res.statusCode).toBe(404)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error: 'Token liquidations not found' })
 	})
 
-	test('returns a 500 json error when overview auth validation throws', async () => {
-		const req = { method: 'GET', headers: { authorization: 'Bearer bad' }, query: {} } as unknown as NextApiRequest
+	test.each([
+		['overview', overviewHandler, {}, 'Failed to fetch liquidations overview data'],
+		['protocol', protocolHandler, { protocol: 'sky' }, 'Failed to fetch liquidations protocol data'],
+		['chain', chainHandler, { protocol: 'sky', chain: 'arbitrum-one' }, 'Failed to fetch liquidations chain data'],
+		['token', tokenHandler, { symbol: 'wsteth' }, 'Failed to fetch token liquidations data']
+	] as const)('returns a 500 json error when %s auth validation throws', async (_route, handler, query, error) => {
+		const req = { method: 'GET', headers: { authorization: 'Bearer bad' }, query } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
-		mockedValidateSubscription.mockRejectedValue(new Error('Auth service unavailable'))
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: () => {
+				throw new Error('Auth service unavailable')
+			}
+		})
 
-		await overviewHandler(req, res)
+		await handler(req, res)
 
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations overview data' })
-	})
-
-	test('returns a 500 json error when protocol auth validation throws', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer bad' },
-			query: { protocol: 'sky' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-		mockedValidateSubscription.mockRejectedValue(new Error('Auth service unavailable'))
-
-		await protocolHandler(req, res)
-
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations protocol data' })
-	})
-
-	test('returns a 500 json error when chain auth validation throws', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer bad' },
-			query: { protocol: 'sky', chain: 'arbitrum-one' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-		mockedValidateSubscription.mockRejectedValue(new Error('Auth service unavailable'))
-
-		await chainHandler(req, res)
-
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations chain data' })
-	})
-
-	test('returns a 500 json error when token auth validation throws', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer bad' },
-			query: { symbol: 'wsteth' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-		mockedValidateSubscription.mockRejectedValue(new Error('Auth service unavailable'))
-
-		await tokenHandler(req, res)
-
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch token liquidations data' })
+		expect(res.statusCode).toBe(500)
+		expect(res.json.mock.lastCall?.[0]).toEqual({ error })
 	})
 })

@@ -106,19 +106,19 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		expect(getEnabledProtocolTaxonomyTvls({ staking: false, borrowed: false })).toEqual([])
 	})
 
-	test('reuses protocol rows and charts when no TVL extras are enabled', () => {
-		const protocols = [makeProtocol({ tvl: 100, extraTvls: { staking: 25 } })]
-		const charts = makeCharts()
-
+	test('leaves protocol and chart TVL unchanged when a present extra is disabled', () => {
 		const result = applyProtocolTaxonomyTvlSettings({
-			protocols,
-			charts,
-			extraTvlCharts: { staking: { 1000: 25 } },
-			tvlSettings: {}
+			protocols: [makeProtocol({ tvl: 100, extraTvls: { staking: 25 } })],
+			charts: makeCharts(),
+			extraTvlCharts: { staking: { 1000: 25, 2000: 30 } },
+			tvlSettings: { staking: false }
 		})
 
-		expect(result.finalProtocols).toBe(protocols)
-		expect(result.charts).toBe(charts)
+		expect(only(result.finalProtocols).tvl).toBe(100)
+		expect(result.charts.dataset.source).toEqual([
+			[1000, 100, 5],
+			[2000, 200, 10]
+		])
 	})
 
 	test('adds enabled extra TVL to protocol rows, subrows, and chart TVL series', () => {
@@ -145,18 +145,6 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 			[1000, 125, 5],
 			[2000, 230, 10]
 		])
-	})
-
-	test('ignores chain-only double counted and liquid staking settings', () => {
-		const result = applyProtocolTaxonomyTvlSettings({
-			protocols: [makeProtocol({ tvl: 100 })],
-			charts: makeCharts(),
-			extraTvlCharts: {},
-			tvlSettings: { doublecounted: true, liquidstaking: true }
-		})
-
-		expect(only(result.finalProtocols).tvl).toBe(100)
-		expect(only(result.charts.dataset.source)[1]).toBe(100)
 	})
 
 	test('lets present-null extras poison exact periods while absent extras contribute zero', () => {

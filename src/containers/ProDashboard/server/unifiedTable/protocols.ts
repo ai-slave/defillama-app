@@ -312,7 +312,7 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 	'market-cap': ['mcap', 'fdv']
 }
 
-const buildLensMetricProjection = (
+export const buildLensMetricProjection = (
 	alias: 'mp' | 'msp' | 'mpc' | 'mspc',
 	requestedFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): string => {

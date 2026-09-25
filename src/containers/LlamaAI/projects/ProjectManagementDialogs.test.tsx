@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { ProjectSessionItem } from './ProjectSessionItem'
@@ -18,23 +20,30 @@ const api = vi.hoisted(() => ({
 	error: vi.fn(),
 	push: vi.fn()
 }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: { id: 'user' },
-		authorizedFetch: vi.fn(),
-		hasActiveSubscription: true,
-		isAuthenticated: true
-	})
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: api.push }) }))
-vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
-vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ SIDEBAR_ROW: '', SIDEBAR_ROW_SURFACE: '' }))
-vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSessionItem', () => ({ AgenticSessionItem: () => null }))
-vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
 vi.mock('react-hot-toast', () => ({ default: { success: api.success, error: api.error } }))
+
+// Every LlamaAI request reaches `api.request(path, { method, json })`, which plays the AI server.
+const session = installSubscriberSession('user')
+const chrome = {
+	toggleSidebar: () => {},
+	hideSidebar: () => {},
+	toggleFullscreen: () => {},
+	isFullscreen: false,
+	fullscreenLocked: false,
+	sidebarVisible: true,
+	toggleDashboardPanel: () => {},
+	isDashboardPanelOpen: false
+}
+function Providers({ children }: { children: ReactNode }) {
+	return (
+		<session.Wrapper>
+			<LlamaAIChromeContext.Provider value={chrome}>{children}</LlamaAIChromeContext.Provider>
+		</session.Wrapper>
+	)
+}
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 const project: Project = {
 	id: 'qa',
 	user_id: 'user',
@@ -48,16 +57,20 @@ const project: Project = {
 }
 beforeEach(() => {
 	vi.resetAllMocks()
-	localStorage.clear()
 	localStorage.setItem('llamaai:sidebar-projects-open', 'true')
-	client = new QueryClient()
+	session.serve({
+		[AI_SERVER]: (url: URL, init?: RequestInit) =>
+			api.request(url.href.slice(AI_SERVER.length), {
+				method: init?.method,
+				json: init?.body ? JSON.parse(init.body as string) : undefined
+			})
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 async function mount(mode: 'create' | 'rename' | 'delete') {
@@ -81,9 +94,9 @@ async function mount(mode: 'create' | 'rename' | 'delete') {
 	}
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<Providers>
 				<Harness />
-			</QueryClientProvider>
+			</Providers>
 		)
 	)
 	await click('Open project dialog')
@@ -134,7 +147,7 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 	expect(description.value).toBe('Draft description')
 	await click('Save')
 	await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
-	expect(api.request).toHaveBeenLastCalledWith(expect.any(Function), '/projects/qa', {
+	expect(api.request).toHaveBeenLastCalledWith('/projects/qa', {
 		method: 'PATCH',
 		json: { name: 'Draft name', description: 'Draft description' }
 	})
@@ -179,7 +192,7 @@ test('project rows keep independent rename drafts when another row is pending or
 		.mockResolvedValue({})
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<Providers>
 				{['Alpha', 'Beta'].map((title) => (
 					<ProjectSessionItem
 						key={title}
@@ -199,7 +212,7 @@ test('project rows keep independent rename drafts when another row is pending or
 						isDeleting={false}
 					/>
 				))}
-			</QueryClientProvider>
+			</Providers>
 		)
 	)
 	await click('Rename Alpha')
@@ -224,8 +237,8 @@ test.each(['success', 'failure'] as const)(
 		let reject!: (error: Error) => void
 		api.request.mockImplementationOnce(
 			() =>
-				new Promise<void>((done, fail) => {
-					resolve = done
+				new Promise((done, fail) => {
+					resolve = () => done({})
 					reject = fail
 				})
 		)
@@ -246,9 +259,9 @@ test.each(['success', 'failure'] as const)(
 		const render = async (id: string) => {
 			await act(async () =>
 				root.render(
-					<QueryClientProvider client={client}>
+					<Providers>
 						<Harness id={id} />
-					</QueryClientProvider>
+					</Providers>
 				)
 			)
 		}
@@ -277,7 +290,7 @@ test.each([true, false])(
 		let savedProject = project
 		let removed = false
 		const deletion = Promise.withResolvers<void>()
-		api.request.mockImplementation(async (_fetch, path, options) => {
+		api.request.mockImplementation(async (path, options) => {
 			if (path === '/projects') return { projects: removed ? [] : [savedProject] }
 			if (path === '/projects/qa/sessions') return { sessions: [] }
 			if (options?.method === 'PATCH') {
@@ -294,9 +307,9 @@ test.each([true, false])(
 		const renderSidebar = async (currentProjectId: string | null) => {
 			await act(async () =>
 				root.render(
-					<QueryClientProvider client={client}>
+					<Providers>
 						<ProjectsSidebarSection currentProjectId={currentProjectId} onSessionSelect={vi.fn()} onDelete={vi.fn()} />
-					</QueryClientProvider>
+					</Providers>
 				)
 			)
 		}
@@ -324,7 +337,7 @@ test.each([true, false])(
 		await click('Delete project')
 		await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 		await click('Deleting…')
-		expect(api.request.mock.calls.filter(([, , options]) => options?.method === 'DELETE')).toHaveLength(1)
+		expect(api.request.mock.calls.filter(([, options]) => options?.method === 'DELETE')).toHaveLength(1)
 		if (switchedChat) await renderSidebar(null)
 		await act(async () => deletion.resolve())
 		await vi.waitFor(() => expect(container.textContent).not.toContain('Renamed project'))

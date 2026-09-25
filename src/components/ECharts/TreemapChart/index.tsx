@@ -7,15 +7,14 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
-import { escapeHtml } from '../shared/escapeHtml'
 import { formatChartValue } from '../shared/formatters'
 import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
-import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
+import { formatNarrativeTreemapLabel, formatNarrativeTreemapTooltip } from './formatters'
+import { formatRwaTreemapTooltip } from './rwaFormatting'
 import type { TreemapChartProps, TreemapNode, TreemapValue } from './types'
 
 type TreemapPathInfo = Array<{ name?: unknown }>
@@ -137,22 +136,8 @@ function TreemapChart({
 				formatter: (rawInfo: unknown) => {
 					if (!isTreemapFormatterParams(rawInfo)) return ''
 					const info = rawInfo
-					const treePathInfo = Array.isArray(info.treePathInfo) ? info.treePathInfo : []
-					const treePath: Array<string> = []
-					for (let i = 1; i < treePathInfo.length; i++) {
-						const name = treePathInfo[i]!.name
-						if (typeof name === 'string') treePath.push(name)
-					}
-
 					if (variant === 'narrative') {
-						if (treePath.length > 1) {
-							return [
-								`${escapeHtml(treePath[1]!)}<br>`,
-								`Return: ${formatPercent(info.value[1], { input: 'percent' })}<br>`,
-								`Market Cap: ${formatUsd(info.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
-							].join('')
-						}
-						return ''
+						return formatNarrativeTreemapTooltip(Array.isArray(info.treePathInfo) ? info.treePathInfo : [], info.value)
 					}
 
 					return formatRwaTreemapTooltip({
@@ -232,16 +217,10 @@ function TreemapChart({
 								}
 								const value = params.value
 
-								if (variant === 'narrative') {
-									return [
-										`{name|${pathParts[pathParts.length - 1]}}`,
-										`Return: {apy| ${formatPercent(value[1] ?? 0, { input: 'percent' })}}`,
-										`Market Cap: {mcap| ${formatUsd(value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}}`
-									].join('\n')
-								}
+								if (variant === 'narrative') return formatNarrativeTreemapLabel(pathParts[pathParts.length - 1]!, value)
 								if (isRwaVariant) {
 									return [
-										`{rwaName|${formatRwaTreemapBoxLabel(params)}}`,
+										`{rwaName|${String(params.name ?? '')}}`,
 										`{rwaMetric|${valueLabel}: ${formatTreemapMetricValue(value[0])}}`
 									].join('\n')
 								}
@@ -275,7 +254,7 @@ function TreemapChart({
 						show: true,
 						height: 20,
 						color: chartTheme.treemapLabel,
-						...(isRwaVariant ? { formatter: formatRwaUpperLabel } : {})
+						...(isRwaVariant ? { formatter: '{b}' } : {})
 					},
 					itemStyle: {
 						borderColor: isRwaVariant ? (isDark ? '#2d3139' : '#d1d5db') : '#fff'
@@ -294,7 +273,7 @@ function TreemapChart({
 										height: 22,
 										padding: [0, 4],
 										color: isDark ? '#fff' : '#1f2937',
-										formatter: formatRwaUpperLabel,
+										formatter: '{b}',
 										...(isDark ? { textBorderColor: 'rgba(0,0,0,0.3)', textBorderWidth: 2 } : {})
 									}
 								: {
@@ -331,7 +310,7 @@ function TreemapChart({
 											height: 22,
 											padding: [0, 2],
 											color: isDark ? '#fff' : '#1f2937',
-											formatter: formatRwaUpperLabel,
+											formatter: '{b}',
 											...(isDark
 												? {
 														backgroundColor: 'rgba(55,65,81,0.88)',

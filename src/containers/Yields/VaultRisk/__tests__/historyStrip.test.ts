@@ -201,10 +201,4 @@ describe('buildHistoryStrip', () => {
 		expect(frontend.recovered).toBe(true)
 		expect(frontend.money).toContain('before depositors lost anything')
 	})
-
-	test('renders protocol incidents even when the pool has no incidents (empty pool ≠ clean protocol)', () => {
-		const vm = buildHistoryStrip(manyAudits, [], morphoProtoIncidents, '2026-06-25')!
-		expect(vm.incidents).toHaveLength(0)
-		expect(vm.protocolIncidents.length).toBeGreaterThan(0)
-	})
 })

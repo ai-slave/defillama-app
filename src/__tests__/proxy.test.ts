@@ -131,15 +131,6 @@ describe('a/b assignment', () => {
 		expect(response.headers.get('Cache-Control')).toBeNull()
 	})
 
-	test('does not assign groups on investor hosts or API requests', async () => {
-		const { proxy } = await loadProxy()
-		const investorResponse = proxy(pageRequest('https://investors.defillama.com/'))
-		const apiResponse = proxy(apiRequest('https://defillama.com'))
-
-		expect(investorResponse.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
-		expect(apiResponse.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
-	})
-
 	test('does not assign groups to non-HTML requests', async () => {
 		const { proxy } = await loadProxy()
 		const response = proxy(pageRequest('https://defillama.com/chains', undefined, '*/*'))

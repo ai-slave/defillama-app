@@ -33,14 +33,14 @@ import { slug } from '~/utils'
 import { downloadBlob } from '~/utils/download'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { isProtocolListTvlKey } from './api.types'
 import type { ProtocolListInitialProps, ProtocolListPage, RecentProtocolTableRow } from './tableQuery'
 import {
-	protocolListQuery,
+	protocolListRequestQuery,
 	protocolListSelection,
 	protocolListSignature,
-	protocolListUrl,
-	PROTOCOL_LIST_SORT_KEYS
+	protocolListSort,
+	protocolListSortQuery,
+	protocolListUrl
 } from './tableQuery'
 
 const tableFeaturesConfig = expandedFilteredTableFeatures
@@ -57,19 +57,10 @@ export function RecentlyListedProtocolsTable({
 	const router = useRouter()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})
-	const sort =
-		typeof router.query.sort === 'string' && PROTOCOL_LIST_SORT_KEYS.includes(router.query.sort)
-			? router.query.sort
-			: 'listedAt'
-	const sorting: SortingState = [{ id: sort, desc: router.query.order !== 'asc' }]
+	const sorting: SortingState = [protocolListSort(router.query)]
 	const nameSearch = typeof router.query.search === 'string' ? router.query.search : ''
 	const search = useDebouncedValue(nameSearch, nameSearch ? 250 : 0)
-	const query = protocolListQuery({
-		...router.query,
-		sort,
-		search,
-		tvlKeys: Object.keys(extraTvlsEnabled).filter((key) => isProtocolListTvlKey(key) && extraTvlsEnabled[key])
-	})
+	const query = protocolListRequestQuery(router.query, extraTvlsEnabled, search)
 	const pages = useTablePages<RecentProtocolTableRow, ProtocolListPage>({
 		mode: 'cursor',
 		sourceKey: `${kind}:${protocolList.version}`,
@@ -105,10 +96,7 @@ export function RecentlyListedProtocolsTable({
 		manualFiltering: true,
 		onSortingChange: (updater) => {
 			const next = typeof updater === 'function' ? updater(sorting) : updater
-			void pushShallowQuery(router, {
-				sort: next[0]?.id ?? 'listedAt',
-				order: next[0]?.desc === false ? 'asc' : 'desc'
-			})
+			void pushShallowQuery(router, protocolListSortQuery(next))
 		}
 	})
 

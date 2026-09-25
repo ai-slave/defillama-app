@@ -6,7 +6,6 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ImagePreviewModal } from '../ImagePreviewModal'
 
 const { writeText, toastError } = vi.hoisted(() => ({ writeText: vi.fn(), toastError: vi.fn() }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ toast: { error: toastError } }))
 let root: Root
 let downloads: Array<{ filename: string; blob: Blob }>

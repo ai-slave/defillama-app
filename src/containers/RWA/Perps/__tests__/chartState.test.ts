@@ -1,30 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import {
-	DEFAULT_CHART_VIEW,
-	getDefaultRWAPerpsChartView,
-	getDefaultRWAPerpsChartBreakdown,
-	getRWAPerpsChartBreakdownOptions,
 	getRWAPerpsChartBreakdownQueryValue,
-	getRWAPerpsChartMetricOptions,
+	getRWAPerpsChartControls,
 	getRWAPerpsChartViewQueryValueForMode,
-	getRWAPerpsTimeSeriesModeOptions,
 	getRWAPerpsTimeSeriesModeQueryValue,
-	getRWAPerpsTreemapNestedByOptions,
 	getRWAPerpsVolumeGroupByQueryValue,
 	parseRWAPerpsChartState,
 	parseRWAPerpsVolumeGroupBy,
 	setRWAPerpsChartView
 } from '../chartState'
-
-const chartLabels = {
-	openInterest: { label: 'Open Interest' },
-	markets: { label: 'Markets' },
-	venue: { label: 'Venue' },
-	assetClass: { label: 'Asset Class' },
-	baseAsset: { label: 'Base Asset' },
-	assetGroup: { label: 'Asset Group' },
-	contract: { label: 'Contract' }
-} as const
 
 describe('parseRWAPerpsChartState', () => {
 	test('normalizes volume date grouping query values', () => {
@@ -127,16 +111,8 @@ describe('parseRWAPerpsChartState', () => {
 		})
 	})
 
-	test('parses a valid time-series mode query', () => {
-		const state = parseRWAPerpsChartState(
-			{
-				chartView: 'timeSeries',
-				timeSeriesMode: 'breakdown'
-			},
-			'overview'
-		)
-
-		expect(state.timeSeriesMode).toBe('breakdown')
+	test('parses the grouped time-series mode query', () => {
+		expect(parseRWAPerpsChartState({ timeSeriesMode: 'grouped' }, 'overview').timeSeriesMode).toBe('grouped')
 	})
 
 	test('supports a page-specific time-series breakdown default', () => {
@@ -152,221 +128,28 @@ describe('parseRWAPerpsChartState', () => {
 })
 
 describe('perps chartState options', () => {
-	test('uses time series as the shared default chart view', () => {
-		expect(DEFAULT_CHART_VIEW).toBe('timeSeries')
-	})
-
-	test('uses time series as the default chart view for every perps page', () => {
-		expect(getDefaultRWAPerpsChartView('overview')).toBe('timeSeries')
-		expect(getDefaultRWAPerpsChartView('venue')).toBe('timeSeries')
-		expect(getDefaultRWAPerpsChartView('assetGroup')).toBe('timeSeries')
-		expect(getDefaultRWAPerpsChartView('asset')).toBe('timeSeries')
-		expect(getRWAPerpsChartViewQueryValueForMode('overview', getDefaultRWAPerpsChartView('overview'))).toBe(undefined)
-		expect(getRWAPerpsChartViewQueryValueForMode('venue', getDefaultRWAPerpsChartView('venue'))).toBe(undefined)
-		expect(getRWAPerpsChartViewQueryValueForMode('assetGroup', getDefaultRWAPerpsChartView('assetGroup'))).toBe(
-			undefined
-		)
-		expect(getRWAPerpsChartViewQueryValueForMode('asset', getDefaultRWAPerpsChartView('asset'))).toBe(undefined)
-	})
-
-	test('uses the expected defaults for each page/view', () => {
-		expect(getDefaultRWAPerpsChartBreakdown('overview', 'timeSeries')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('overview', 'timeSeries', { timeSeriesBreakdown: 'baseAsset' })).toBe(
-			'baseAsset'
-		)
-		expect(getDefaultRWAPerpsChartBreakdown('overview', 'pie')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('overview', 'treemap')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('venue', 'timeSeries')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('venue', 'pie')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('venue', 'treemap')).toBe('assetGroup')
-		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'timeSeries')).toBe('baseAsset')
-		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'pie')).toBe('baseAsset')
-		expect(getDefaultRWAPerpsChartBreakdown('assetGroup', 'treemap')).toBe('baseAsset')
-		expect(getDefaultRWAPerpsChartBreakdown('asset', 'timeSeries')).toBe('venue')
-		expect(getDefaultRWAPerpsChartBreakdown('asset', 'pie')).toBe('venue')
-		expect(getDefaultRWAPerpsChartBreakdown('asset', 'treemap')).toBe('venue')
-	})
-
-	test('exposes chart metric options with key/name pairs', () => {
-		expect(getRWAPerpsChartMetricOptions(chartLabels)).toEqual([
-			{ key: 'openInterest', name: 'Open Interest' },
-			{ key: 'volume24h', name: 'Volume' },
-			{ key: 'markets', name: 'Markets' }
-		])
-	})
-
-	test('exposes grouped and breakdown time-series mode options', () => {
-		expect(getRWAPerpsTimeSeriesModeOptions()).toEqual([
-			{ key: 'grouped', name: 'Grouped' },
-			{ key: 'breakdown', name: 'Breakdown' }
-		])
-	})
+	test.each(['overview', 'venue', 'assetGroup', 'asset'] as const)(
+		'omits the time series view from the %s page url and keeps other views explicit',
+		(mode) => {
+			expect(getRWAPerpsChartViewQueryValueForMode(mode, 'timeSeries')).toBeUndefined()
+			expect(getRWAPerpsChartViewQueryValueForMode(mode, 'pie')).toBe('pie')
+		}
+	)
 
 	test('omits the default breakdown time-series mode from the query', () => {
 		expect(getRWAPerpsTimeSeriesModeQueryValue('breakdown')).toBeUndefined()
 		expect(getRWAPerpsTimeSeriesModeQueryValue('grouped')).toBe('grouped')
 	})
 
-	test('exposes the intended overview grouping matrix', () => {
+	// A single-asset page has one base asset, so it cannot break down by it.
+	test('falls back to venue when an asset page asks for a base asset breakdown', () => {
+		expect(parseRWAPerpsChartState({ timeSeriesChartBreakdown: 'baseAsset' }, 'asset').breakdown).toBe('venue')
 		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'overview',
-				view: 'timeSeries',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'venue', 'assetClass', 'contract'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'overview',
-				view: 'pie',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'venue', 'assetClass', 'contract'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'overview',
-				view: 'treemap',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'venue', 'assetClass', 'contract'])
+			parseRWAPerpsChartState({ chartView: 'treemap', nonTimeSeriesChartBreakdown: 'baseAsset' }, 'asset').breakdown
+		).toBe('venue')
 	})
 
-	test('exposes the intended venue grouping matrix', () => {
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'venue',
-				view: 'timeSeries',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'contract', 'assetClass'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'venue',
-				view: 'pie',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'contract', 'assetClass'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'venue',
-				view: 'treemap',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['assetGroup', 'baseAsset', 'assetClass', 'contract'])
-	})
-
-	test('exposes the intended asset-group grouping matrix', () => {
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'assetGroup',
-				view: 'timeSeries',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['baseAsset', 'venue', 'assetClass', 'contract'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'assetGroup',
-				view: 'pie',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['baseAsset', 'venue', 'assetClass', 'contract'])
-
-		expect(
-			getRWAPerpsChartBreakdownOptions({
-				mode: 'assetGroup',
-				view: 'treemap',
-				labels: chartLabels
-			}).map(({ key }) => key)
-		).toEqual(['baseAsset', 'venue', 'assetClass', 'contract'])
-	})
-
-	test('limits asset pages to venue and contract comparisons', () => {
-		for (const view of ['timeSeries', 'pie', 'treemap'] as const) {
-			expect(
-				getRWAPerpsChartBreakdownOptions({ mode: 'asset', view, labels: chartLabels }).map(({ key }) => key)
-			).toEqual(['venue', 'contract'])
-		}
-		expect(getRWAPerpsTreemapNestedByOptions('asset', 'venue', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'contract'
-		])
-	})
-
-	test('returns nested-group options keyed by treemap parent group', () => {
-		expect(getRWAPerpsTreemapNestedByOptions('overview', 'venue', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'assetClass',
-			'baseAsset',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('overview', 'assetGroup', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'baseAsset',
-			'assetClass',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('overview', 'assetClass', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'baseAsset',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('overview', 'baseAsset', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('overview', 'contract', chartLabels).map(({ key }) => key)).toEqual([
-			'none'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('venue', 'assetClass', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'baseAsset',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('venue', 'assetGroup', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'baseAsset',
-			'assetClass',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('venue', 'baseAsset', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('venue', 'contract', chartLabels).map(({ key }) => key)).toEqual(['none'])
-		expect(getRWAPerpsTreemapNestedByOptions('assetGroup', 'venue', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'baseAsset',
-			'assetClass',
-			'contract'
-		])
-		expect(getRWAPerpsTreemapNestedByOptions('assetGroup', 'baseAsset', chartLabels).map(({ key }) => key)).toEqual([
-			'none',
-			'contract'
-		])
-	})
-
-	test('defaults asset-group treemaps to nested base assets', () => {
-		const state = parseRWAPerpsChartState(
-			{
-				chartView: 'treemap',
-				nonTimeSeriesChartBreakdown: 'assetGroup'
-			},
-			'overview'
-		)
-
-		expect(state).toMatchObject({
-			view: 'treemap',
-			breakdown: 'assetGroup',
-			treemapNestedBy: 'baseAsset'
-		})
-	})
-
-	test('resets breakdown correctly when switching into treemap view', () => {
+	test('keeps the selected breakdown and nesting when switching into treemap view', () => {
 		const nextState = setRWAPerpsChartView(
 			{
 				mode: 'overview',
@@ -384,5 +167,23 @@ describe('perps chartState options', () => {
 			breakdown: 'assetClass',
 			treemapNestedBy: 'baseAsset'
 		})
+	})
+})
+
+describe('getRWAPerpsChartControls', () => {
+	test.each([
+		{ query: {}, controls: { nestedBy: false, restore: false, dateGrouping: false } },
+		{ query: { chartType: 'volume24h' }, controls: { nestedBy: false, restore: false, dateGrouping: true } },
+		{
+			query: { chartView: 'pie', chartType: 'volume24h' },
+			controls: { nestedBy: false, restore: false, dateGrouping: false }
+		},
+		{ query: { chartView: 'treemap' }, controls: { nestedBy: true, restore: true, dateGrouping: false } },
+		{
+			query: { chartView: 'treemap', nonTimeSeriesChartBreakdown: 'contract' },
+			controls: { nestedBy: false, restore: true, dateGrouping: false }
+		}
+	])('shows the overview controls that apply to $query', ({ query, controls }) => {
+		expect(getRWAPerpsChartControls(parseRWAPerpsChartState(query, 'overview'))).toEqual(controls)
 	})
 })

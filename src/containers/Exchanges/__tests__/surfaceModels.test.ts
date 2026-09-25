@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { DirectoryHeader } from '../DirectoryHeader'
-import { micaDepthDetail, micaProductLabel } from '../MicaCells'
+import { micaDepthDetail, micaProductLabel, supportsMicaProduct } from '../MicaCells'
 import { prepareMicaVenues } from '../MicaTable'
 import type { MicaVenueModel } from '../models'
 import { selectActivePromotion } from '../promotions'
@@ -198,8 +198,23 @@ describe('surface model selection', () => {
 	})
 
 	test('keeps observed one-sided zero depth visible in MiCA details', () => {
-		expect(micaDepthDetail(0, 9, false)).toBe('$0 bid\n$9 ask')
-		expect(micaDepthDetail(9, 0, true)).toBe('$9 bid\n$0 ask\nPartial coverage')
-		expect(micaDepthDetail(null, 9, false)).toBeNull()
+		const venue = micaVenue()
+		expect(micaDepthDetail(venue, 'spot', 0, 9)).toBe('$0 bid\n$9 ask')
+		expect(micaDepthDetail(venue, 'spot', null, 9)).toBeNull()
+	})
+
+	test('flags partial coverage from the selected product only', () => {
+		const partialPerp = micaVenue({ depth: { ...micaVenue().depth, perpPartialCoverage: true } })
+		const partialSpot = micaVenue({ depth: { ...micaVenue().depth, spotPartialCoverage: true } })
+
+		expect(micaDepthDetail(partialPerp, 'spot', 3, 4)).toBe('$3 bid\n$4 ask')
+		expect(micaDepthDetail(partialPerp, 'perp', 5, 6)).toBe('$5 bid\n$6 ask\nPartial coverage')
+		expect(micaDepthDetail(partialSpot, 'spot', 3, 4)).toBe('$3 bid\n$4 ask\nPartial coverage')
+		expect(micaDepthDetail(partialSpot, 'perp', 5, 6)).toBe('$5 bid\n$6 ask')
+	})
+
+	test('treats USD perp depth as inapplicable for an inverse-only venue', () => {
+		expect(supportsMicaProduct(micaVenue({ products: ['inverse_perp'] }), 'perp')).toBe(false)
+		expect(supportsMicaProduct(micaVenue({ products: ['linear_perp'] }), 'perp')).toBe(true)
 	})
 })

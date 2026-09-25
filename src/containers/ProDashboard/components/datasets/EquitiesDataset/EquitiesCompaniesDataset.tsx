@@ -21,21 +21,16 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
-import {
-	formatCompactNumber,
-	formatPercent,
-	formatPercentChange,
-	formatRatio,
-	formatUsd,
-	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
-	USD_LOWERCASE_MILLIONS_OPTIONS
-} from '~/utils/numberFormat'
+import { formatPercentChange, formatRatio, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { ProCardLoading } from '../../ProCardStatus'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
-import { getEquitiesCompanyCsvRow } from './EquitiesCompaniesDataset.utils'
+import {
+	formatEquitiesDividendYield,
+	formatEquitiesVolume,
+	getEquitiesCompanyCsvRow
+} from './EquitiesCompaniesDataset.utils'
 
 const tableFeaturesConfig = tableFeatures({
 	...orderedFilteredTableFeatures,
@@ -79,7 +74,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.volume ?? undefined, {
 		id: 'volume',
 		header: 'Volume',
-		cell: (info) => formatCompactNumber(info.getValue(), NUMBER_LOWERCASE_MILLIONS_OPTIONS),
+		cell: (info) => formatEquitiesVolume(info.getValue()),
 		meta: { align: 'end' },
 		size: 130
 	}),
@@ -129,7 +124,7 @@ const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
 		header: 'Div Yield',
-		cell: (info) => formatPercent(info.getValue(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+		cell: (info) => formatEquitiesDividendYield(info.getValue()),
 		meta: { align: 'end' },
 		size: 100
 	}),

@@ -90,21 +90,14 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.candlestick).toEqual({ ts: 'date', open: 'o', close: 'c', low: 'l', high: 'h' })
 	})
 
-	test('leaves URL params empty for defaults', () => {
-		const encoded = encodeDownloadConfig({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg })
-		expect(encoded.cs).toBeUndefined()
-		expect(encoded.csb).toBeUndefined()
-		expect(encoded.cn).toBeUndefined()
-		expect(encoded.cv).toBe('ln')
-	})
-
-	test('buildShareUrl embeds chart params', () => {
+	test('a share URL reopens the shared chart type', () => {
 		const url = buildShareUrl('https://x.test', '/downloads', {
 			kind: 'query',
 			sql: 'SELECT 1',
 			tables: [],
 			chartConfig: { ...baseCfg, chartType: 'scatter' }
 		})
-		expect(url).toContain('cv=sc')
+		const decoded = decodeDownloadConfig(Object.fromEntries(new URL(url).searchParams))
+		expect(decoded?.kind === 'query' ? decoded.chartConfig?.chartType : null).toBe('scatter')
 	})
 })

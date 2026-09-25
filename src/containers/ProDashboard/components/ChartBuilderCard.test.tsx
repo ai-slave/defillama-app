@@ -4,46 +4,15 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
-import { StreamDoneContext } from '../queries'
 import type { ChartBuilderConfig } from '../types'
 import { ChartBuilderCard } from './ChartBuilderCard'
 
-const mocks = vi.hoisted(() => ({ fetchProtocolBreakdownData: vi.fn() }))
-vi.mock('../services/ProtocolChartBuilderData', () => ({
-	fetchProtocolBreakdownData: mocks.fetchProtocolBreakdownData,
-	fetchProtocolChainBreakdownData: vi.fn()
-}))
+const http = installFixtureFetch()
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
-
-vi.mock('~/hooks/useChartImageExport', () => ({
-	useChartImageExport: () => ({ chartInstance: null, handleChartReady: vi.fn() })
-}))
-
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ getProtocolInfo: () => null }),
-	useProDashboardEditorActions: () => ({
-		handlePercentageChange: vi.fn(),
-		handleGroupingChange: vi.fn(),
-		handleHideOthersChange: vi.fn(),
-		handleChartTypeChange: vi.fn(),
-		handleEditItem: vi.fn(),
-		handleDuplicateChartBuilder: vi.fn()
-	}),
-	useProDashboardPermissions: () => ({
-		isReadOnly: true,
-		hideDuplicateButton: true
-	}),
-	useProDashboardTime: () => ({ timePeriod: '3y', customTimePeriod: null }),
-	useProDashboardDashboard: () => ({
-		currentDashboard: null,
-		dashboardId: null
-	}),
-	useProDashboardItemsState: () => ({ items: [] }),
-	useProDashboardVariables: () => ({ variables: [] }),
-	useProDashboardAnnotations: () => ({ annotations: [] })
-}))
 
 const config: ChartBuilderConfig['config'] = {
 	categories: [],
@@ -74,14 +43,23 @@ const builder: ChartBuilderConfig = {
 
 const queryKey = getChartBuilderQueryKey(config)
 
-function renderCard(queryClient: QueryClient) {
-	return renderToStaticMarkup(
+function Card({ queryClient, streamDone }: { queryClient: QueryClient; streamDone: boolean }) {
+	return (
 		<QueryClientProvider client={queryClient}>
-			<StreamDoneContext.Provider value={false}>
+			<DashboardTestProvider
+				mode="view"
+				streamDone={streamDone}
+				time={{ timePeriod: '3y' }}
+				permissions={{ isReadOnly: true, hideDuplicateButton: true }}
+			>
 				<ChartBuilderCard builder={builder} />
-			</StreamDoneContext.Provider>
+			</DashboardTestProvider>
 		</QueryClientProvider>
 	)
+}
+
+function renderCard(queryClient: QueryClient) {
+	return renderToStaticMarkup(<Card queryClient={queryClient} streamDone={false} />)
 }
 
 describe('ChartBuilderCard streamed loading state', () => {
@@ -103,21 +81,17 @@ describe('ChartBuilderCard streamed loading state', () => {
 
 	test('shows an error with retry when the series query fails', async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.fetchProtocolBreakdownData.mockRejectedValue(new Error('network down'))
+		http.serve({
+			'/api/public/pro-dashboard/chart-builder/adapter-metrics/breakdowns/revenue': fixtureStatus(503, {
+				error: 'network down'
+			})
+		})
 		const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		const container = document.createElement('div')
 		document.body.appendChild(container)
 		const root = createRoot(container)
 
-		await act(async () =>
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<StreamDoneContext.Provider value>
-						<ChartBuilderCard builder={builder} />
-					</StreamDoneContext.Provider>
-				</QueryClientProvider>
-			)
-		)
+		await act(async () => root.render(<Card queryClient={queryClient} streamDone />))
 		await vi.waitFor(() => {
 			if (!container.querySelector('[role="alert"]')) throw new Error('Expected the card error')
 		})

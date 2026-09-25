@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
@@ -6,15 +7,9 @@ const cacheMocks = vi.hoisted(() => ({
 	getObjectCache: vi.fn(),
 	setObjectCache: vi.fn()
 }))
-const telemetryMocks = vi.hoisted(() => ({ recordRuntimeError: vi.fn() }))
-const queriesMocks = vi.hoisted(() => ({ getProtocolsByChain: vi.fn() }))
+const telemetry = installTelemetrySink()
 
 vi.mock('~/utils/cache-client', () => cacheMocks)
-vi.mock(import('~/utils/telemetry'), async (importOriginal) => ({
-	...(await importOriginal()),
-	recordRuntimeError: telemetryMocks.recordRuntimeError
-}))
-vi.mock('../queries.server', () => queriesMocks)
 
 import type { IChainMetadata } from '~/utils/metadata/types'
 import { getProtocolRankingsSnapshot, type ProtocolRankingsCanonicalSnapshot } from '../server/tableData.server'
@@ -54,13 +49,31 @@ function snapshot(overrides: Partial<ProtocolRankingsCanonicalSnapshot> = {}): P
 	}
 }
 
+function serveNullTvlProtocols(data: { protocols: Array<IProtocol>; chains: Array<string> }) {
+	const chain = data.chains[0]
+	const protocols = data.protocols.flatMap((parent) =>
+		(parent.childProtocols ?? [parent]).map((row) => ({
+			defillamaId: row.id,
+			name: row.name,
+			slug: row.slug,
+			chains: [chain],
+			chainTvls: { [chain]: { tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null } },
+			extraTvl: {},
+			parentProtocol: parent.childProtocols ? parent.id : undefined
+		}))
+	)
+	telemetry.serve({
+		'/lite/protocols2': {
+			chains: data.chains,
+			protocols,
+			parentProtocols: data.protocols.filter((row) => row.childProtocols).map((row) => ({ id: row.id, name: row.name }))
+		}
+	})
+}
+
 const healthyContext = { expectDexs: true, expectPerps: true, previousProtocolCount: null }
 
 describe('assertPublishableSnapshot', () => {
-	test('accepts a healthy snapshot', () => {
-		expect(() => assertPublishableSnapshot(snapshot(), healthyContext)).not.toThrow()
-	})
-
 	test('rejects an empty protocols list', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [] }), healthyContext)).toThrow(
 			ProtocolRankingSnapshotValidationError
@@ -71,15 +84,6 @@ describe('assertPublishableSnapshot', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [protocol('aave', null)] }), healthyContext)).toThrow(
 			/TVL/
 		)
-	})
-
-	test('accepts an explicitly dimension-only snapshot with no TVL', () => {
-		expect(() =>
-			assertPublishableSnapshot(snapshot({ chain: 'Native Core', protocols: [protocol('native-core-clob', null)] }), {
-				...healthyContext,
-				allowNoTvl: true
-			})
-		).not.toThrow()
 	})
 
 	test('rejects a row count that dropped below the ratio floor of the previous snapshot', () => {
@@ -106,6 +110,7 @@ describe('assertPublishableSnapshot', () => {
 })
 
 describe('getProtocolRankingsSnapshot publication gate', () => {
+	const published = new Map<string, unknown>()
 	// cachedResult state is per-namespace-global; each test uses its own chain
 	// so a snapshot cached by one test cannot serve the next.
 	const chainMetadata: Record<string, IChainMetadata> = {
@@ -116,7 +121,9 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 	}
 	const args = {
 		chainMetadata,
-		protocolMetadata: {},
+		protocolMetadata: {
+			aave: { name: 'aave', displayName: 'aave', tvl: true, category: 'Lending', chains: ['Ethereum'] }
+		},
 		categoriesAndTagsMetadata: {
 			configs: { Dexs: { chains: ['1', '137'] }, Derivatives: { chains: ['1', '137'] } }
 		} as never
@@ -124,91 +131,100 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 
 	beforeEach(() => {
 		vi.resetAllMocks()
+		published.clear()
+		cacheMocks.setCache.mockImplementation(async (payload: { Key: string; Body: Buffer }) => {
+			published.set(payload.Key, payload.Body)
+			return true
+		})
+		cacheMocks.setObjectCache.mockImplementation(async (key: string, body: unknown) => {
+			published.set(key, body)
+			return true
+		})
+		telemetry.serve({
+			'https://api.llama.fi/v2/metrics/dexs/': { protocols: [], total24h: 1, total7d: 7, change_7dover7d: 0 },
+			'https://api.llama.fi/v2/chart/dexs/': [],
+			'https://api.llama.fi/v2/metrics/derivatives/': { protocols: [], total24h: 1 }
+		})
 		cacheMocks.getObjectCache.mockResolvedValue(null)
 		cacheMocks.getCache.mockResolvedValue(null)
 	})
 
-	test('publishes a healthy rebuild, blob before pointer', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
-			protocols: [protocol('aave', 100)],
-			chains: ['Ethereum'],
-			parentProtocols: [],
-			fees: null,
-			dexs: { total24h: 1, total7d: 7, change_7dover7d: 0, totalDataChart: [] },
-			perps: { total24h: 1 }
+	test('publishes a healthy rebuild with its current and last-good pointers', async () => {
+		telemetry.serve({
+			'/lite/protocols2': {
+				chains: ['Ethereum'],
+				parentProtocols: [],
+				protocols: [
+					{
+						defillamaId: 'aave',
+						name: 'aave',
+						slug: 'aave',
+						category: 'Lending',
+						chains: ['Ethereum'],
+						chainTvls: { Ethereum: { tvl: 100, tvlPrevDay: 100, tvlPrevWeek: 100, tvlPrevMonth: 100 } },
+						extraTvl: {}
+					}
+				]
+			}
 		})
 
 		const result = await getProtocolRankingsSnapshot({ ...args, chain: 'Ethereum' })
 
 		expect(result.protocols).toHaveLength(1)
-		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
-		// :latest and :last-good
-		expect(cacheMocks.setObjectCache).toHaveBeenCalledTimes(2)
-		expect(cacheMocks.setCache.mock.invocationCallOrder[0]).toBeLessThan(
-			cacheMocks.setObjectCache.mock.invocationCallOrder[0] ?? Infinity
-		)
+		expect(result.protocols[0].tvl.default.tvl).toBe(100)
+		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
+		expect([...published.keys()].some((key) => key.endsWith(':last-good'))).toBe(true)
 	})
 
 	test('publishes a dimension-only chain snapshot without TVL', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
+		serveNullTvlProtocols({
 			protocols: [protocol('native-core-clob', null)],
-			chains: ['Native Core'],
-			parentProtocols: [],
-			fees: null,
-			dexs: null,
-			perps: null
+			chains: ['Native Core']
 		})
 
 		const result = await getProtocolRankingsSnapshot({
 			chain: 'Native Core',
 			chainMetadata: { 'native-core': { id: 'native_core', name: 'Native Core' } },
-			protocolMetadata: { 'native-core-clob': { tvl: false } },
+			protocolMetadata: { 'native-core-clob': { displayName: 'native-core-clob', chains: [], tvl: false } },
 			categoriesAndTagsMetadata: { configs: {} } as never
 		})
 
 		expect(result.protocols).toHaveLength(1)
-		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
+		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
 	})
 
 	test('publishes a dimension-only chain whose protocols are all grouped', async () => {
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
 		const groupedProtocol = {
 			...protocol('parent#dimension-only', null),
 			childProtocols: [protocol('dimension-dex', null), protocol('dimension-perps', null)]
 		}
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
+		serveNullTvlProtocols({
 			protocols: [groupedProtocol],
-			chains: ['Grouped Dimensions'],
-			fees: null,
-			dexs: null,
-			perps: null
+			chains: ['Grouped Dimensions']
 		})
 
 		const result = await getProtocolRankingsSnapshot({
 			chain: 'Grouped Dimensions',
 			chainMetadata: { 'grouped-dimensions': { id: 'grouped-dimensions', name: 'Grouped Dimensions' } },
 			protocolMetadata: {
-				'parent#dimension-only': { tvl: true },
-				'dimension-dex': { tvl: false },
-				'dimension-perps': { tvl: false }
+				'parent#dimension-only': { displayName: 'parent#dimension-only', chains: [], tvl: true },
+				'dimension-dex': { displayName: 'dimension-dex', chains: [], tvl: false },
+				'dimension-perps': { displayName: 'dimension-perps', chains: [], tvl: false }
 			},
 			categoriesAndTagsMetadata: { configs: {} } as never
 		})
 
-		expect(result.protocols).toEqual([groupedProtocol])
-		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
-		expect(cacheMocks.setObjectCache).toHaveBeenCalledTimes(2)
+		expect(result.protocols).toMatchObject([
+			{ id: 'parent#dimension-only', childProtocols: [{ id: 'dimension-dex' }, { id: 'dimension-perps' }] }
+		])
+		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
+		expect([...published.keys()].some((key) => key.endsWith(':last-good'))).toBe(true)
 	})
 
 	test.each([true, undefined])('rejects missing grouped TVL when child TVL metadata is %s', async (tvl) => {
 		const chain = `Grouped Outage ${String(tvl)}`
 		const chainKey = `grouped-outage-${String(tvl)}`
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
+		serveNullTvlProtocols({
 			protocols: [
 				protocol('standalone-dimension', null),
 				{
@@ -216,10 +232,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 					childProtocols: [protocol('grouped-dimension', null), protocol('grouped-tvl', null)]
 				}
 			],
-			chains: [chain],
-			fees: null,
-			dexs: null,
-			perps: null
+			chains: [chain]
 		})
 
 		await expect(
@@ -227,54 +240,41 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 				chain,
 				chainMetadata: { [chainKey]: { id: chainKey, name: chain } },
 				protocolMetadata: {
-					'standalone-dimension': { tvl: false },
-					'parent#grouped-outage': { tvl: false },
-					'grouped-dimension': { tvl: false },
-					'grouped-tvl': { tvl }
+					'standalone-dimension': { displayName: 'standalone-dimension', chains: [], tvl: false },
+					'parent#grouped-outage': { displayName: 'parent#grouped-outage', chains: [], tvl: false },
+					'grouped-dimension': { displayName: 'grouped-dimension', chains: [], tvl: false },
+					'grouped-tvl': { displayName: 'grouped-tvl', chains: [], tvl }
 				},
 				categoriesAndTagsMetadata: { configs: {} } as never
 			})
 		).rejects.toThrow(/TVL/)
-		expect(cacheMocks.setCache).not.toHaveBeenCalled()
-		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
+		expect(published.size).toBe(0)
 	})
 
 	test('still rejects an all-null TVL rebuild for a TVL-backed chain', async () => {
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
+		serveNullTvlProtocols({
 			protocols: [protocol('aave', null)],
-			chains: ['TVL Outage'],
-			parentProtocols: [],
-			fees: null,
-			dexs: null,
-			perps: null
+			chains: ['TVL Outage']
 		})
 
 		await expect(
 			getProtocolRankingsSnapshot({
 				chain: 'TVL Outage',
 				chainMetadata: { 'tvl-outage': { id: 'tvl-outage', name: 'TVL Outage' } },
-				protocolMetadata: { aave: { tvl: true } },
+				protocolMetadata: { aave: { displayName: 'aave', chains: [], tvl: true } },
 				categoriesAndTagsMetadata: { configs: {} } as never
 			})
 		).rejects.toThrow(/TVL/)
 	})
 
 	test('never writes a snapshot that fails validation, and records the failure', async () => {
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
-			protocols: [],
-			chains: ['Ethereum'],
-			parentProtocols: [],
-			fees: null,
-			dexs: null,
-			perps: null
-		})
+		telemetry.serve({ '/lite/protocols2': { protocols: [], chains: ['Ethereum', 'Base'], parentProtocols: [] } })
 
 		await expect(getProtocolRankingsSnapshot({ ...args, chain: 'Polygon' })).rejects.toThrow(
 			ProtocolRankingSnapshotValidationError
 		)
-		expect(cacheMocks.setCache).not.toHaveBeenCalled()
-		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
-		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+		expect(published.size).toBe(0)
+		expect((await telemetry.events()).filter((event) => event.type === 'runtime_error')).toHaveLength(1)
 	})
 
 	test('serves :last-good when validation fails and :latest is gone', async () => {
@@ -300,23 +300,16 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 			Body: gzipSync(Buffer.from(JSON.stringify(healthy))),
 			ContentType: 'application/json+gzip'
 		})
-		queriesMocks.getProtocolsByChain.mockResolvedValue({
-			protocols: [],
-			chains: ['Base'],
-			parentProtocols: [],
-			fees: null,
-			dexs: null,
-			perps: null
-		})
+		telemetry.serve({ '/lite/protocols2': { protocols: [], chains: ['Ethereum', 'Base'], parentProtocols: [] } })
 
 		const result = await getProtocolRankingsSnapshot({ ...args, chain: 'Base' })
 
 		expect(result.snapshot).toBe(healthy.snapshot)
-		expect(cacheMocks.setCache).not.toHaveBeenCalled()
-		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
+		expect(published.size).toBe(0)
+		expect((await telemetry.events()).filter((event) => event.type === 'runtime_error')).toHaveLength(1)
 	})
 
-	test('never consults :last-good on the ordinary freshness path', async () => {
+	test('serves a current snapshot without fetching upstream data', async () => {
 		const { gzipSync } = await import('node:zlib')
 		const current = {
 			chain: 'Tron',
@@ -338,8 +331,6 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		const result = await getProtocolRankingsSnapshot({ ...args, chain: 'Tron' })
 
 		expect(result.snapshot).toBe(current.snapshot)
-		expect(queriesMocks.getProtocolsByChain).not.toHaveBeenCalled()
-		const pointerReads = cacheMocks.getObjectCache.mock.calls.map((call) => call[0])
-		expect(pointerReads.some((key) => key.endsWith(':last-good'))).toBe(false)
+		expect(telemetry.requests).toEqual([])
 	})
 })

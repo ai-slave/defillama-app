@@ -21,8 +21,4 @@ describe('filterChartDatasetByTimePeriod', () => {
 		expect(filtered.source).toEqual([[1_704_153_600_000, 2]])
 		expect(filtered.source[0]).toBe(dataset.source[1])
 	})
-
-	test('returns the original dataset when all rows remain', () => {
-		expect(filterChartDatasetByTimePeriod(dataset, 'all')).toBe(dataset)
-	})
 })

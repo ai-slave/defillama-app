@@ -5,13 +5,12 @@ import { Fragment, type ReactNode } from 'react'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
-import { resolveVerifiedApy } from '../data/apy'
 import { parseApyWindow } from '../data/query'
-import type { ApyWindow, VerifiedBlock } from '../data/types'
+import type { VerifiedBlock } from '../data/types'
 import { exitFeeWarning } from '../domain/exitPresentation'
-import { isVerifiedCurrent } from '../domain/verifiedFreshness'
 import { useSubscribeProModal } from '../useSubscribeProModal'
 import { useVerifiedAccess } from '../useVerifiedAccess'
+import { getMeasuredCardHeader } from './measuredCardHeader'
 
 // Each method is "signature — annotation". Split on the FIRST em-dash only: annotations
 // themselves contain dashes, and the signature is always the head.
@@ -369,8 +368,6 @@ export interface MeasuredRow {
  * The APY cell's hovercard: the breakdown alone when unmeasured, the same grid plus a header and
  * exit line when measured, and the offer in place of both when locked.
  */
-const WINDOW_LABEL: Record<ApyWindow, string> = { current: 'Now', avg_7d: '7d', avg_30d: '30d' }
-
 export function MeasuredCard({
 	rows,
 	verified,
@@ -408,41 +405,25 @@ export function MeasuredCard({
 		return <span className="flex w-max max-w-(--popover-available-width) flex-col">{breakdown}</span>
 	}
 
-	const hasReading = verified.apy.avg_1d != null || verified.apy.avg_7d != null || verified.apy.avg_30d != null
 	const feeWarning = verified.exit ? exitFeeWarning(verified.exit.fee_bps) : null
-	// A reading too old to be the headline still belongs to the APY leg: the card says "Verified APY"
-	// and dates THAT reading, so a fresher exit probe can never make a stale APY look current.
-	const apyStale = hasReading && !isVerifiedCurrent(verified.apy_as_of)
-	const reportsApy = measured || unsubstitutedMeasured || hasReading
-	// APY and exit are probed separately; date whichever leg the card is reporting.
-	const stamp = reportsApy ? verified.apy_as_of : (verified.exit?.as_of ?? verified.apy_as_of)
-	const stale = reportsApy ? apyStale : !isVerifiedCurrent(stamp)
-	const measuredLabel = verified.step_accrual ? 'rate last changed' : 'measured'
-	// The headline is the protocol's figure in two cases; each says which reading is missing and why.
-	const windowLabel = WINDOW_LABEL[window]
-	const pendingWindow =
-		!measured && !unsubstitutedMeasured && !apyStale && hasReading && resolveVerifiedApy(verified, window) == null
-	const reportedNote = pendingWindow
-		? `No ${windowLabel} measurement yet. Showing the protocol's reported ${windowLabel} rate.`
-		: hasReading
-			? null
-			: "Exits are measured, yield is not. Showing the protocol's reported rate."
+	const { title, stamp, stampPrefix, stale, reportedNote } = getMeasuredCardHeader({
+		verified,
+		measured,
+		unsubstitutedMeasured,
+		window
+	})
 
 	return (
 		<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2">
 			<span className="flex items-center justify-between gap-3">
 				<span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
 					<MeasuredSeal muted={!measured} size={14} />
-					{unsubstitutedMeasured
-						? 'Verified APY · not included in total'
-						: hasReading
-							? 'Verified APY'
-							: 'Verified exit'}
+					{title}
 				</span>
 				{stamp ? (
 					<RelativeTime
 						value={stamp}
-						prefix={reportsApy ? (stale ? 'last measured' : measuredLabel) : 'exit measured'}
+						prefix={stampPrefix}
 						className={`shrink-0 ${stale ? 'text-warning' : 'text-tertiary'}`}
 					/>
 				) : null}

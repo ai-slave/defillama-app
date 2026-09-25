@@ -1,12 +1,20 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { TokenDirectory } from '~/utils/tokenDirectory'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { filterTokenRightsRows, getStaticProps, getTokenRightsStats } from '~/pages/token-rights'
+import type { MetadataCache } from '~/utils/metadata/artifactContract'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 
-afterEach(() => {
-	vi.clearAllMocks()
-	vi.resetModules()
-})
+const dataset = vi.hoisted(() => ({ entries: [] as Array<unknown> }))
+vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
+	fetchTokenRightsEntries: async () => dataset.entries
+}))
 
-function setupPageModule({
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+const HOLDERS_REVENUE_URL = `${V2_SERVER_URL}/metrics/fees`
+
+function setup({
 	cexs = [],
 	chainMetadata = {},
 	holdersRevenueFails = false,
@@ -19,62 +27,25 @@ function setupPageModule({
 	chainMetadata?: Record<string, unknown>
 	holdersRevenueFails?: boolean
 	holdersRevenueProtocols?: Array<Record<string, unknown>>
-	tokensJson?: TokenDirectory
+	tokensJson?: Record<string, unknown>
 	tokenRightsEntries?: Array<unknown>
 	protocolMetadata?: Record<string, unknown>
 } = {}) {
-	vi.doMock('next/link', () => ({
-		default: () => null
-	}))
-	vi.doMock('~/containers/TokenRights/server/dataset.server', () => ({
-		fetchTokenRightsEntries: vi.fn().mockResolvedValue(tokenRightsEntries)
-	}))
-	vi.doMock('~/containers/AdapterMetrics/api', () => ({
-		fetchAdapterChainMetrics: vi
-			.fn()
-			.mockImplementation(() =>
-				holdersRevenueFails
-					? Promise.reject(new Error('holders revenue failed'))
-					: { protocols: holdersRevenueProtocols }
-			)
-	}))
-	vi.doMock('~/layout', () => ({
-		default: () => null
-	}))
-	vi.doMock('~/utils', () => ({
-		formatUsd: (value: number) => `$${value}`,
-		slug: (value: string) =>
-			value
-				.toLowerCase()
-				.replaceAll(/[^a-z0-9]+/g, '-')
-				.replace(/^-+|-+$/g, '')
-	}))
-	vi.doMock('~/utils/telemetry', () => ({
-		flushTelemetry: vi.fn().mockResolvedValue(undefined),
-		recordDomainEvent: vi.fn()
-	}))
-	vi.doMock('~/utils/icons', () => ({
-		tokenIconUrl: (value: string) => `icon:${value}`
-	}))
-	vi.doMock('~/utils/maxAgeForNext', () => ({
-		maxAgeForNext: () => 123
-	}))
-	vi.doMock('~/utils/perf', () => ({
-		withPerformanceLogging: (_label: string, fn: any) => fn
-	}))
-	vi.doMock('~/utils/metadata', () => ({
-		__esModule: true,
-		default: {
-			chainMetadata,
-			cexs,
-			protocolMetadata,
-			tokenDirectory: tokensJson
-		},
-		refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
-	}))
-
-	return import('~/pages/token-rights')
+	dataset.entries = tokenRightsEntries
+	metadata.seed({
+		cexs,
+		chainMetadata,
+		protocolMetadata,
+		tokenDirectory: tokensJson
+	} as unknown as Partial<MetadataCache>)
+	http.serve({
+		[HOLDERS_REVENUE_URL]: holdersRevenueFails ? fixtureStatus(404) : { protocols: holdersRevenueProtocols }
+	})
 }
+
+beforeEach(() => {
+	dataset.entries = []
+})
 
 function tokenRightsEntry(overrides: Record<string, unknown>) {
 	return {
@@ -122,7 +93,7 @@ function tokenRightsListItem(overrides: Record<string, unknown>) {
 
 describe('token rights page', () => {
 	test('builds table rows with rights, pending fee switch, and holders revenue', async () => {
-		const page = await setupPageModule({
+		setup({
 			chainMetadata: {
 				ethereum: { name: 'Ethereum', id: 'ethereum', gecko_id: 'ethereum' }
 			},
@@ -154,13 +125,12 @@ describe('token rights page', () => {
 			}
 		})
 
-		const result = await page.getStaticProps({} as never)
+		const result = await getStaticProps({} as never)
 		expect(result).toMatchObject({
 			props: {
 				protocols: [
 					{
 						name: 'Ethereum',
-						logo: 'icon:Ethereum',
 						href: '/token/ETH',
 						tokens: ['ETH'],
 						holdersRevenue24h: 1200,
@@ -173,7 +143,6 @@ describe('token rights page', () => {
 					},
 					{
 						name: 'Lido',
-						logo: 'icon:Lido',
 						href: '/token/LDO',
 						tokens: ['LDO'],
 						holdersRevenue24h: null,
@@ -181,12 +150,12 @@ describe('token rights page', () => {
 					}
 				]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
-	}, 30_000)
+	})
 
 	test('uses resolved metadata for deprecated rows', async () => {
-		const page = await setupPageModule({
+		setup({
 			protocolMetadata: {
 				'182': { displayName: 'Lido', gecko_id: 'lido-dao', deprecated: true }
 			},
@@ -196,7 +165,7 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				protocols: [{ name: 'Lido', deprecated: true }]
 			}
@@ -204,7 +173,7 @@ describe('token rights page', () => {
 	})
 
 	test('uses child protocol holders revenue for parent token-rights rows', async () => {
-		const page = await setupPageModule({
+		setup({
 			tokenRightsEntries: [
 				tokenRightsEntry({
 					'Protocol Name': 'Uniswap',
@@ -221,7 +190,7 @@ describe('token rights page', () => {
 			}
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				protocols: [{ name: 'Uniswap', holdersRevenue24h: 1000 }]
 			}
@@ -229,7 +198,7 @@ describe('token rights page', () => {
 	})
 
 	test('prefers direct holders revenue over summed child protocol revenue', async () => {
-		const page = await setupPageModule({
+		setup({
 			tokenRightsEntries: [
 				tokenRightsEntry({
 					'Protocol Name': 'Uniswap',
@@ -246,7 +215,7 @@ describe('token rights page', () => {
 			}
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				protocols: [{ name: 'Uniswap', holdersRevenue24h: 900 }]
 			}
@@ -254,7 +223,7 @@ describe('token rights page', () => {
 	})
 
 	test('keeps a direct measured zero instead of replacing it with child revenue', async () => {
-		const page = await setupPageModule({
+		setup({
 			tokenRightsEntries: [
 				tokenRightsEntry({
 					'Protocol Name': 'Uniswap',
@@ -271,7 +240,7 @@ describe('token rights page', () => {
 			}
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				holdersRevenueAvailable: true,
 				protocols: [{ name: 'Uniswap', holdersRevenue24h: 0 }]
@@ -280,7 +249,7 @@ describe('token rights page', () => {
 	})
 
 	test('skips entries without metadata and keeps metadata rows without a token route', async () => {
-		const page = await setupPageModule({
+		setup({
 			chainMetadata: {
 				ethereum: { name: 'Ethereum', id: 'ethereum', gecko_id: 'ethereum' }
 			},
@@ -295,19 +264,19 @@ describe('token rights page', () => {
 			]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				protocols: [
 					{ name: 'Pendle V2', href: null },
 					{ name: 'Ethereum', href: null }
 				]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
 	})
 
 	test('keeps the directory available when holders revenue fails', async () => {
-		const page = await setupPageModule({
+		setup({
 			holdersRevenueFails: true,
 			protocolMetadata: {
 				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
@@ -315,7 +284,7 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				holdersRevenueAvailable: false,
 				protocols: [{ name: 'Lido', holdersRevenue24h: null }]
@@ -324,14 +293,14 @@ describe('token rights page', () => {
 	})
 
 	test('keeps holders revenue available for a successful empty response', async () => {
-		const page = await setupPageModule({
+		setup({
 			protocolMetadata: {
 				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
 			},
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				holdersRevenueAvailable: true,
 				protocols: [{ name: 'Lido', holdersRevenue24h: null }]
@@ -340,7 +309,7 @@ describe('token rights page', () => {
 	})
 
 	test('routes chain entries when the metadata cache key differs from the chain id', async () => {
-		const page = await setupPageModule({
+		setup({
 			chainMetadata: {
 				'plume-mainnet': { name: 'Plume Mainnet', id: 'plume_mainnet' }
 			},
@@ -355,16 +324,16 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Plume', 'DefiLlama ID': 'plume_mainnet' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Plume Mainnet', logo: 'icon:Plume Mainnet', href: '/token/PLUME' }]
+				protocols: [{ name: 'Plume Mainnet', href: '/token/PLUME' }]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
 	})
 
 	test('routes protocol entries from token directory ids without a gecko id', async () => {
-		const page = await setupPageModule({
+		setup({
 			protocolMetadata: {
 				'7161': { displayName: 'Backpack SOL' }
 			},
@@ -379,16 +348,16 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Backpack', 'DefiLlama ID': '7161' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Backpack SOL', logo: 'icon:Backpack SOL', href: '/token/BP' }]
+				protocols: [{ name: 'Backpack SOL', href: '/token/BP' }]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
 	})
 
 	test('routes cex entries when the token rights name matches a cex slug', async () => {
-		const page = await setupPageModule({
+		setup({
 			cexs: [{ name: 'Backpack', slug: 'backpack' }],
 			tokensJson: {
 				bp: {
@@ -401,19 +370,16 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Backpack', 'DefiLlama ID': '4266' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Backpack', logo: 'icon:Backpack', href: '/token/BP' }]
+				protocols: [{ name: 'Backpack', href: '/token/BP' }]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
-		const { flushTelemetry, recordDomainEvent } = await import('~/utils/telemetry')
-		expect(recordDomainEvent).not.toHaveBeenCalled()
-		expect(flushTelemetry).not.toHaveBeenCalled()
 	})
 
 	test('renders cex entries as text when the matching token has no page route', async () => {
-		const page = await setupPageModule({
+		setup({
 			cexs: [{ name: 'Backpack', slug: 'backpack' }],
 			tokensJson: {
 				bp: {
@@ -425,19 +391,16 @@ describe('token rights page', () => {
 			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Backpack', 'DefiLlama ID': '4266' })]
 		})
 
-		await expect(page.getStaticProps({} as never)).resolves.toMatchObject({
+		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
 				protocols: [{ name: 'Backpack', href: null }]
 			},
-			revalidate: 123
+			revalidate: expect.any(Number)
 		})
-		const { flushTelemetry, recordDomainEvent } = await import('~/utils/telemetry')
-		expect(recordDomainEvent).not.toHaveBeenCalled()
-		expect(flushTelemetry).not.toHaveBeenCalled()
 	})
 
-	test('filters rows by multiple selected filters and token search', async () => {
-		const page = await setupPageModule()
+	test('filters rows by multiple selected filters and token search', () => {
+		setup()
 		const rows = [
 			tokenRightsListItem({
 				name: 'Aave',
@@ -471,14 +434,14 @@ describe('token rights page', () => {
 			})
 		]
 
-		expect(page.filterTokenRightsRows(rows, ['feeSwitchOn', 'hasBuybacks'], '')).toEqual([rows[0]])
-		expect(page.filterTokenRightsRows(rows, ['hasDividends'], 'sena')).toEqual([rows[1]])
-		expect(page.filterTokenRightsRows(rows, ['feeSwitchOn'], 'axl')).toEqual([])
+		expect(filterTokenRightsRows(rows, ['feeSwitchOn', 'hasBuybacks'], '')).toEqual([rows[0]])
+		expect(filterTokenRightsRows(rows, ['hasDividends'], 'sena')).toEqual([rows[1]])
+		expect(filterTokenRightsRows(rows, ['feeSwitchOn'], 'axl')).toEqual([])
 	})
 
-	test('counts stats from filtered rows', async () => {
-		const page = await setupPageModule()
-		const stats = page.getTokenRightsStats([
+	test('counts stats from filtered rows', () => {
+		setup()
+		const stats = getTokenRightsStats([
 			tokenRightsListItem({ feeSwitchStatus: 'ON', hasBuybacks: true, hasDividends: false }),
 			tokenRightsListItem({ feeSwitchStatus: 'PENDING', hasBuybacks: false, hasDividends: true }),
 			tokenRightsListItem({ feeSwitchStatus: 'ON', hasBuybacks: true, hasDividends: true })

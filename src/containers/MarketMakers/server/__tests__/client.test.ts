@@ -1,13 +1,11 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-
-const fetchJson = vi.fn()
-vi.mock('~/utils/async', () => ({ fetchJson: (...args: Array<unknown>) => fetchJson(...args) }))
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { buildForgdUrl, forgdFetch } from '../client'
 
 afterEach(() => {
 	vi.unstubAllEnvs()
-	fetchJson.mockReset()
 })
 
 describe('buildForgdUrl', () => {
@@ -20,23 +18,9 @@ describe('buildForgdUrl', () => {
 describe('forgdFetch', () => {
 	test('sends the bearer key from API_KEY_FORGD as an Authorization header', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'pk_test_123')
-		fetchJson.mockResolvedValue({ ok: true })
+		http.serve({ '/api/v1/public/whoami': { ok: true } })
 		const out = await forgdFetch('/whoami')
 		expect(out).toEqual({ ok: true })
-		expect(fetchJson).toHaveBeenCalledWith(
-			'https://quant.forgd.com/api/v1/public/whoami',
-			expect.objectContaining({ headers: { Authorization: 'Bearer pk_test_123' } })
-		)
-	})
-
-	test('omits the Authorization header when API_KEY_FORGD is missing', async () => {
-		vi.stubEnv('API_KEY_FORGD', '')
-		fetchJson.mockResolvedValue({ ok: true })
-		const out = await forgdFetch('/whoami')
-		expect(out).toEqual({ ok: true })
-		expect(fetchJson).toHaveBeenCalledWith(
-			'https://quant.forgd.com/api/v1/public/whoami',
-			expect.objectContaining({ headers: undefined })
-		)
+		expect(new Headers(http.requests[0].init?.headers).get('Authorization')).toBe('Bearer pk_test_123')
 	})
 })

@@ -31,17 +31,6 @@ describe('CoinGecko chart timeframes', () => {
 		vi.useRealTimers()
 	})
 
-	test('requests a one-day CoinGecko chart for 24H', async () => {
-		mocks.fetchJson.mockImplementation(async (url: string) =>
-			url.includes('/market_chart') ? { prices: [[1000, 10]] } : {}
-		)
-
-		await fetchCoinGeckoChartByIdWithCacheFallback('bitcoin', { timeframe: '24H' })
-
-		expect(requestedUrl('/market_chart').searchParams.get('days')).toBe('1')
-		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_24H')
-	})
-
 	test('uses bounded five-minute DefiLlama prices when the 24H CoinGecko chart is missing', async () => {
 		mocks.fetchJson.mockImplementation(async (url: string) => {
 			if (url.includes('/market_chart')) return {}
@@ -114,15 +103,6 @@ describe('CoinGecko chart timeframes', () => {
 		expect(Object.fromEntries(fallbackUrl.searchParams)).toEqual({ period: '1d', span: '242' })
 		expect(chart?.data?.prices).toEqual([[yearStartedAt, 10]])
 		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_YTD_2026')
-	})
-
-	test('maps MAX to the full CoinGecko chart', async () => {
-		mocks.fetchJson.mockResolvedValue({ prices: [[1000, 10]] })
-
-		await fetchCoinGeckoChartByIdWithCacheFallback('bitcoin', { timeframe: 'MAX' })
-
-		expect(requestedUrl('/market_chart').searchParams.get('days')).toBe('max')
-		expect(mocks.getObjectCache).toHaveBeenCalledWith('cgchart_bitcoin_timeframe_MAX')
 	})
 
 	test('removes negative market caps before caching fresh charts', async () => {

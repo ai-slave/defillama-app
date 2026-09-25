@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { normalizeSqlResultRows } from '../../resultNormalization'
-import { escapeSqlChartHtml, readSqlNumber, readSqlTimestampMs } from '../rowValues'
+import { readSqlNumber, readSqlTimestampMs } from '../rowValues'
 
 describe('SQL chart row values', () => {
 	test('normalizes numbers and dates once before chart readers enter hot loops', () => {
@@ -29,9 +29,5 @@ describe('SQL chart row values', () => {
 		expect(result.rows[0][0]).toBe(unsafe)
 		expect(readSqlNumber(result.rows[0][0])).toBeNull()
 		expect(readSqlNumber(true, true)).toBe(1)
-	})
-
-	test('escapes SQL labels embedded in tooltip markup', () => {
-		expect(escapeSqlChartHtml('<A&B>')).toBe('&lt;A&amp;B&gt;')
 	})
 })

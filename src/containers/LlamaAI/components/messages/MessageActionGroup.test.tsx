@@ -4,7 +4,6 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ActionButtonGroup } from './MessageActionGroup'
 
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 let root: Root
 let container: HTMLDivElement
 const actions = [

@@ -2,7 +2,6 @@ import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
-import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
@@ -12,7 +11,7 @@ import { slug } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildCompareProtocolsChartData, type CompareProtocolTvlCharts } from './chartData'
 import {
-	buildCompareProtocolTvlRequestPlan,
+	buildCompareProtocolTvlQuery,
 	getCompareProtocolExtraTvlKeys,
 	getCompareProtocolTvlSettings,
 	normalizeCompareProtocolSelection
@@ -44,10 +43,8 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 
 	const baseResults = useQueries({
 		queries: selectedProtocols.map((protocol) => {
-			const requestPlan = buildCompareProtocolTvlRequestPlan(protocol)
 			return {
-				queryKey: requestPlan.queryKey,
-				queryFn: () => fetchProtocolTvlChart({ protocol: requestPlan.protocolSlug }),
+				...buildCompareProtocolTvlQuery(protocol),
 				staleTime: 60 * 60 * 1000,
 				refetchOnWindowFocus: false,
 				retry: 0
@@ -57,10 +54,8 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 	const extraResults = useQueries({
 		queries: selectedProtocols.flatMap((protocol) =>
 			extraTvlKeys.map((key) => {
-				const requestPlan = buildCompareProtocolTvlRequestPlan(protocol, key)
 				return {
-					queryKey: requestPlan.queryKey,
-					queryFn: () => fetchProtocolTvlChart({ protocol: requestPlan.protocolSlug, key }),
+					...buildCompareProtocolTvlQuery(protocol, key),
 					staleTime: 60 * 60 * 1000,
 					refetchOnWindowFocus: false,
 					retry: 0

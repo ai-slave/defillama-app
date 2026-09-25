@@ -2,113 +2,72 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, expect, test, vi } from 'vitest'
-import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
-import type { EnrichedRouteRow, RouteTableRow } from '~/containers/Yields/data/types'
+import { expect, test, vi } from 'vitest'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { TokenBorrowSection } from '../TokenBorrowSection'
+import type { TokenBorrowRoutesHydration } from '../types'
 
-const state = vi.hoisted(() => ({ rows: [] as Array<EnrichedRouteRow>, generation: 0 }))
-vi.mock('~/containers/Yields/data/enrich.server', () => ({ getEnrichedRoutes: async () => state.rows }))
-vi.mock('~/containers/Yields/data/snapshot', async (original) => ({
-	...(await original<typeof import('~/containers/Yields/data/snapshot')>()),
-	readYieldsMeta: async () => ({
-		meme_pool_ids: ['meme-c', 'meme-b'],
-		tokens: { assets: [{ value: 'asset:doge', symbol: 'DOGE' }], families: [] }
-	}),
-	readYieldsDepegs: async () => []
-}))
-vi.mock('~/containers/Yields/data/server/raiseValuations', () => ({
-	getRaiseValuationsUsd: async () => new Map(),
-	getReferralUrls: async () => new Map()
-}))
-vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({ getRiskCoveredPoolIds: async () => new Set() }))
-vi.mock('~/utils/metadata', () => ({ default: { tokenDirectory: {} } }))
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/token/[token]', push: vi.fn() }) }))
+// Heavy filter controls the assertions never read.
 vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({
 	ResponsiveFilterLayout: ({ children }: { children: (nested: boolean) => ReactNode }) => children(false)
 }))
 vi.mock('~/components/Filters/FilterBetweenRange', () => ({ FilterBetweenRange: () => null }))
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
-vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
-	DeferredPaginatedBorrowRoutesTable: ({
-		data,
-		initialPageIndex,
-		sortingState,
-		onSortingChange
-	}: {
-		data: Array<RouteTableRow>
-		initialPageIndex: number
-		sortingState: Array<{ id: string; desc: boolean }>
-		onSortingChange: (value: Array<{ id: string; desc: boolean }>) => void
-	}) => (
-		<div data-routes data-page={initialPageIndex} data-sort={JSON.stringify(sortingState)}>
-			<span data-ids>{data.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')}</span>
-			<button type="button" onClick={() => onSortingChange([{ id: 'available', desc: true }])}>
-				Sort Available
-			</button>
-		</div>
-	)
+// Render the real routes table eagerly instead of through its lazy chunk.
+vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', async () => ({
+	DeferredPaginatedBorrowRoutesTable: (await import('~/containers/Yields/Tables/Borrow')).PaginatedBorrowRoutesTable
 }))
-import { getBorrowRoutesPage } from '~/containers/Yields/data/borrow.server'
-import { getTokenBorrowRoutes } from '~/containers/Yields/data/server/tokenPage'
-import { buildInitialBorrowRoutesSnapshot } from '../queries'
-import { TokenBorrowSection } from '../TokenBorrowSection'
 
-function route(
-	collateralId: string,
-	borrowId: string,
-	collateralSymbol: string,
-	borrowSymbol: string
-): EnrichedRouteRow {
-	const triple = { base: 1, reward: 0, total: 1 }
-	const apy = { current: triple, avg_7d: triple, avg_30d: triple }
-	const composition = { base: 0, base_reward: 0, base_intrinsic: null, base_reward_intrinsic: null }
-	const token = (symbol: string) => ({ address: symbol, symbol, decimals: null })
+const http = installFixtureFetch()
+
+function route(id: string, netApy: number, availableBorrowUsd: number): RouteTableRow {
 	return {
-		protocol: 'p',
+		id,
+		collateralId: `${id}-collateral`,
+		borrowId: `${id}-borrow`,
+		configID: id,
+		pool: id,
+		poolMeta: null,
+		url: null,
+		project: 'P',
+		projectslug: 'p',
+		airdrop: false,
+		raiseValuationUsd: null,
 		chain: 'Ethereum',
-		display: { detail: null },
-		protocolSlug: 'p',
-		chainSlug: 'ethereum',
-		isEvm: true,
-		category: null,
-		hasAudit: false,
-		potentialAirdrop: true,
-		collateral: {
-			id: collateralId,
-			pool_key: collateralId,
-			url: null,
-			token: token(collateralSymbol),
-			loan_to_value: 0.8,
-			total_supply_usd: 1000,
-			apy,
-			intrinsic: null,
-			reward_tokens: []
-		},
-		borrow: {
-			id: borrowId,
-			pool_key: borrowId,
-			url: null,
-			token: token(borrowSymbol),
-			total_borrow_usd: 100,
-			available_borrow_usd: 900,
-			cost_apy: apy,
-			intrinsic: null,
-			reward_tokens: []
-		},
-		net_apy: { current: composition, avg_7d: composition, avg_30d: composition },
-		collateralTokenKeys: [`asset:${collateralSymbol.toLowerCase()}`],
-		borrowTokenKeys: [`asset:${borrowSymbol.toLowerCase()}`]
+		chains: ['Ethereum'],
+		collateralSymbol: 'DOGE',
+		borrowSymbol: 'USD',
+		supplyApy: 1,
+		supplyApyBase: 1,
+		supplyApyReward: null,
+		supplyApyIntrinsic: null,
+		supplyIntrinsicSourceSymbol: null,
+		borrowApy: 1,
+		borrowApyBase: 1,
+		borrowApyReward: null,
+		borrowApyIntrinsic: null,
+		borrowIntrinsicSourceSymbol: null,
+		supplyRewardTokensSymbols: [],
+		borrowRewardTokensSymbols: [],
+		netApy,
+		availableBorrowUsd,
+		totalBorrowUsd: 100,
+		borrowCapacityFilled: 0.1,
+		ltv: 0.8
 	}
 }
-afterEach(() => vi.unstubAllGlobals())
+
+// The table shows one route per page. By the default net-APY sort the first route leads; by available
+// liquidity the second one does.
+const USE_ROUTES = [route('use-1', 5, 100), route('use-2', 1, 900)]
+const BORROW_ROUTES = [route('borrow-1', 5, 100), route('borrow-2', 1, 900)]
 
 /**
- * What each scenario expects, rather than branches inside the body. `recovered` is one snapshot of the
- * section after the second leg finally succeeds, so a scenario whose name drifts fails on a diff instead
- * of quietly asserting nothing.
+ * `recovered` is the section after the failing leg finally succeeds, so a scenario whose name drifts fails
+ * on a diff instead of quietly asserting nothing.
  */
-const DEFAULT_SORT = JSON.stringify([{ id: 'net_apy', desc: true }])
-const AVAILABLE_SORT = JSON.stringify([{ id: 'available', desc: true }])
-
 const SCENARIOS = [
 	{
 		name: 'use',
@@ -116,8 +75,7 @@ const SCENARIOS = [
 		trigger: 'next-page',
 		hydratesCollateral: true,
 		switchesLegAfterFailure: false,
-		recovered: { page: '1', sort: DEFAULT_SORT, noRoutes: false, retry: false },
-		finalLeg: 'collateral',
+		recovered: { rows: ['use-2'], noRoutes: false, retry: false },
 		finalIsEmpty: false
 	},
 	{
@@ -126,8 +84,7 @@ const SCENARIOS = [
 		trigger: 'next-page',
 		hydratesCollateral: true,
 		switchesLegAfterFailure: false,
-		recovered: { page: '1', sort: DEFAULT_SORT, noRoutes: false, retry: false },
-		finalLeg: 'borrow',
+		recovered: { rows: ['borrow-2'], noRoutes: false, retry: false },
 		finalIsEmpty: false
 	},
 	{
@@ -136,8 +93,7 @@ const SCENARIOS = [
 		trigger: 'sort',
 		hydratesCollateral: true,
 		switchesLegAfterFailure: false,
-		recovered: { page: '0', sort: AVAILABLE_SORT, noRoutes: false, retry: false },
-		finalLeg: 'collateral',
+		recovered: { rows: ['use-2'], noRoutes: false, retry: false },
 		finalIsEmpty: false
 	},
 	{
@@ -146,8 +102,7 @@ const SCENARIOS = [
 		trigger: 'next-page',
 		hydratesCollateral: true,
 		switchesLegAfterFailure: false,
-		recovered: { page: null, sort: null, noRoutes: true, retry: false },
-		finalLeg: 'collateral',
+		recovered: { rows: [], noRoutes: true, retry: false },
 		finalIsEmpty: true
 	},
 	{
@@ -156,96 +111,53 @@ const SCENARIOS = [
 		trigger: 'next-page',
 		hydratesCollateral: false,
 		switchesLegAfterFailure: true,
-		recovered: { page: '0', sort: DEFAULT_SORT, noRoutes: false, retry: false },
-		finalLeg: 'collateral',
+		recovered: { rows: ['use-1'], noRoutes: false, retry: false },
 		finalIsEmpty: false
 	}
 ] as const
 
 test.each(SCENARIOS)(
-	'retains meme routes and recovers the requested $name page after either leg fails',
+	'keeps hydrated routes and recovers the requested $name view after a leg fails',
 	async (scenario) => {
-		const tab = scenario.tab
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		state.rows = [
-			route('plain-c', 'plain-b', 'DOGE', 'DOGE'),
-			route('meme-c', 'usd-b', 'DOGE', 'USD'),
-			route('usd-c', 'meme-b', 'USD', 'DOGE')
-		]
-		const snapshot: YieldsSnapshot = {
-			generationId: `borrow-refresh-${++state.generation}`,
-			generatedAt: 1,
-			readJson: async () => {
-				throw new Error('Unexpected read')
-			}
-		}
-		const ssr = await getTokenBorrowRoutes(snapshot, 'DOGE')
-		expect(ssr.useAsCollateral).toHaveLength(2)
-		expect(ssr.borrowThis).toHaveLength(2)
-		for (const leg of ['collateralToken', 'borrowToken']) {
-			const old = await getBorrowRoutesPage(snapshot, { [leg]: ssr.tokenKeys, pageSize: 'all' })
-			expect(old.rows).toHaveLength(1)
-		}
-		const unmatched = await getTokenBorrowRoutes(snapshot, 'UNKNOWN')
-		expect(unmatched.useAsCollateral).toEqual([])
-		expect(unmatched.borrowThis).toEqual([])
-		const initial = buildInitialBorrowRoutesSnapshot(ssr, ssr.tokenKeys)
-		if (!initial) throw new Error('Missing hydration')
-		const hydration = {
-			...initial,
-			pageSize: 1,
+		const hydration: TokenBorrowRoutesHydration = {
+			tokenKeys: ['asset:doge'],
 			data: {
-				useAsCollateral: scenario.hydratesCollateral ? ssr.useAsCollateral.slice(0, 1) : [],
-				borrowThis: ssr.borrowThis.slice(0, 1)
-			}
+				useAsCollateral: scenario.hydratesCollateral ? USE_ROUTES.slice(0, 1) : [],
+				borrowThis: BORROW_ROUTES.slice(0, 1)
+			},
+			counts: { useAsCollateral: 2, borrowThis: 2 },
+			chainLists: { useAsCollateral: ['Ethereum'], borrowThis: ['Ethereum'] },
+			pageSize: 1
 		}
-		const recoveredRows = scenario.finalIsEmpty ? [] : ssr.useAsCollateral
-		const recoveredDebtRows = scenario.finalIsEmpty ? [] : ssr.borrowThis
 		let collateral = Promise.withResolvers<Response>()
 		let borrow = Promise.withResolvers<Response>()
-		const fetch = vi.fn(async (input: string | URL | Request) => {
-			const url = new URL(String(input), 'http://localhost')
-			expect(url.pathname).toBe('/api/public/yields/borrow-routes')
-			expect(url.searchParams.get('includeMemeTokens')).toBe('true')
-			const leg = url.searchParams.has('collateralToken') ? 'collateralToken' : 'borrowToken'
-			expect(url.searchParams.getAll(leg)).toEqual(ssr.tokenKeys)
-			const full = await getBorrowRoutesPage(snapshot, {
-				...Object.fromEntries(url.searchParams),
-				[leg]: url.searchParams.getAll(leg)
-			})
-			expect(full.rows).toEqual(leg === 'collateralToken' ? ssr.useAsCollateral : ssr.borrowThis)
-			return leg === 'collateralToken' ? collateral.promise : borrow.promise
+		http.serve({
+			'/api/public/yields/borrow-routes': (url: URL) =>
+				url.searchParams.has('collateralToken') ? collateral.promise : borrow.promise
 		})
-		vi.stubGlobal('fetch', fetch)
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-		client.setQueryData(['token-borrow-routes', 'token-page', ...ssr.tokenKeys], {
-			useAsCollateral: [],
-			borrowThis: []
-		})
 		const container = document.createElement('div')
 		document.body.appendChild(container)
 		const root = createRoot(container)
-		const findRadio = (label: string) => {
-			const radio = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
+		const findRadio = (label: string) =>
+			[...container.querySelectorAll<HTMLInputElement>('input[type="radio"]')].find(
 				(input) => input.parentElement?.textContent === label
-			)
-			if (!radio) throw new Error(`Missing radio: ${label}`)
-			return radio
-		}
-		const findButton = (text: string) => {
-			const b = Array.from(container.querySelectorAll('button')).find((x) => x.textContent === text)
-			if (!b) throw new Error(`Missing ${text}`)
-			return b
-		}
-		const shownIds = () => container.querySelector('[data-ids]')?.textContent
+			)!
+		const findButton = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent === text)!
+		const shownIds = () =>
+			[...container.querySelectorAll('tbody tr')].map((row) => row.textContent?.match(/(use|borrow)-\d/)?.[0])
 		const sectionState = () => ({
-			page: container.querySelector('[data-page]')?.getAttribute('data-page') ?? null,
-			sort: container.querySelector('[data-sort]')?.getAttribute('data-sort') ?? null,
+			rows: shownIds(),
 			noRoutes: container.textContent?.includes('No borrow routes found') ?? false,
 			retry: container.textContent?.includes('Retry') ?? false
 		})
-		/** Clicks Retry twice, resolves the collateral leg, and leaves the debt leg for the caller. */
-		const retry = async () => {
+		const waitForRetryEnabled = () =>
+			vi.waitFor(async () => {
+				await act(async () => expect(findButton('Retry')?.disabled).toBe(false))
+			})
+		/** Double-clicks Retry, which must start one request per leg; resolves collateral and leaves the debt leg. */
+		const retry = async (retained: Array<string>) => {
 			collateral = Promise.withResolvers<Response>()
 			borrow = Promise.withResolvers<Response>()
 			await act(async () => {
@@ -253,9 +165,10 @@ test.each(SCENARIOS)(
 				findButton('Retry').click()
 			})
 			await vi.waitFor(async () => {
-				await act(async () => expect(findButton('Retrying…').disabled).toBe(true))
+				await act(async () => expect(findButton('Retrying…')?.disabled).toBe(true))
 			})
-			await act(async () => collateral.resolve(Response.json({ rows: recoveredRows })))
+			await act(async () => collateral.resolve(Response.json({ rows: scenario.finalIsEmpty ? [] : USE_ROUTES })))
+			expect(shownIds()).toEqual(retained)
 		}
 		try {
 			await act(async () =>
@@ -265,65 +178,47 @@ test.each(SCENARIOS)(
 					</QueryClientProvider>
 				)
 			)
-			// The segmented control exposes the leg by its accessible label.
-			if (tab === 'borrow') {
-				await act(async () => findRadio('Borrow DOGE').click())
-			}
+			if (scenario.tab === 'borrow') await act(async () => findRadio('Borrow DOGE').click())
 			const hydrated = shownIds()
-			expect(hydrated).toBeTruthy()
-			expect(fetch).not.toHaveBeenCalled()
+			expect(hydrated).toEqual([scenario.tab === 'use' ? 'use-1' : 'borrow-1'])
+			expect(http.requests).toHaveLength(0)
+
 			const next =
 				scenario.trigger === 'sort'
-					? findButton('Sort Available')
-					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')
-			if (!next) throw new Error('Missing next page')
+					? [...container.querySelectorAll<HTMLButtonElement>('thead button')].find(
+							(b) => b.textContent === 'Available'
+						)!
+					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')!
 			await act(async () => next.click())
-			await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
+			await vi.waitFor(() => expect(http.requests).toHaveLength(2))
 			await act(async () => {
-				if (tab === 'use') {
+				if (scenario.tab === 'use') {
 					collateral.reject(new Error('Collateral failed'))
-					borrow.resolve(Response.json({ rows: ssr.borrowThis }))
+					borrow.resolve(Response.json({ rows: BORROW_ROUTES }))
 				} else {
 					borrow.reject(new Error('Debt failed'))
-					collateral.resolve(Response.json({ rows: ssr.useAsCollateral }))
+					collateral.resolve(Response.json({ rows: USE_ROUTES }))
 				}
 			})
-			await vi.waitFor(async () => {
-				await act(async () => expect(findButton('Retry').disabled).toBe(false))
-			})
-			expect(shownIds()).toBe(hydrated)
+			await waitForRetryEnabled()
+			expect(shownIds()).toEqual(hydrated)
 
 			// Switching to the leg that hydrated empty must show nothing rather than the other leg's rows.
-			if (scenario.switchesLegAfterFailure) {
-				await act(async () => findRadio('Use DOGE').click())
-			}
-			const retained = scenario.switchesLegAfterFailure ? undefined : hydrated
-			expect(shownIds()).toBe(retained)
-			expect(findButton('Retry').disabled).toBe(false)
+			if (scenario.switchesLegAfterFailure) await act(async () => findRadio('Use DOGE').click())
+			const retained = scenario.switchesLegAfterFailure ? [] : hydrated
+			expect(shownIds()).toEqual(retained)
 
 			// A retry whose debt leg fails again keeps the rows and re-enables Retry.
-			await retry()
-			expect(shownIds()).toBe(retained)
-			expect(findButton('Retrying…').disabled).toBe(true)
+			await retry(retained)
 			await act(async () => borrow.reject(new Error('Still unavailable')))
-			await vi.waitFor(async () => {
-				await act(async () => expect(findButton('Retry').disabled).toBe(false))
-			})
+			await waitForRetryEnabled()
 
-			// The retry that succeeds restores the page, sort and rows the scenario asked for.
-			await retry()
-			expect(shownIds()).toBe(retained)
-			expect(findButton('Retrying…').disabled).toBe(true)
-			await act(async () => borrow.resolve(Response.json({ rows: recoveredDebtRows })))
+			await retry(retained)
+			await act(async () => borrow.resolve(Response.json({ rows: scenario.finalIsEmpty ? [] : BORROW_ROUTES })))
 			await vi.waitFor(async () => {
 				await act(async () => expect(sectionState()).toEqual(scenario.recovered))
 			})
-
-			expect(fetch).toHaveBeenCalledTimes(6)
-			const rows = scenario.finalLeg === 'collateral' ? ssr.useAsCollateral : ssr.borrowThis
-			expect(shownIds()).toBe(
-				scenario.finalIsEmpty ? undefined : rows.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')
-			)
+			expect(http.requests).toHaveLength(6)
 		} finally {
 			await act(async () => root.unmount())
 			container.remove()

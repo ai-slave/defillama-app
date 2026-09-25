@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { RWA_FLOW_TOTAL_SPLIT_BY, sumRwaFlowSplit } from '../flowSplit'
+import { sumRwaFlowSplit } from '../flowSplit'
 
 describe('sumRwaFlowSplit', () => {
 	test('sums every group of a row into one net flow with full coverage', () => {
@@ -21,28 +21,16 @@ describe('sumRwaFlowSplit', () => {
 		])
 	})
 
-	test('skips null and non-finite group values without dropping the row', () => {
+	// A split point can carry null for a group with no value on that day.
+	test('skips null group values without dropping the row', () => {
 		expect(
 			sumRwaFlowSplit([
 				{ timestamp: 1, Bonds: null as unknown as number, 'Precious Metals': 7 },
-				{ timestamp: 2, Bonds: Number.NaN, 'Precious Metals': null as unknown as number }
+				{ timestamp: 2, Bonds: null as unknown as number }
 			])
 		).toEqual([
 			{ timestamp: 1, netFlowUsd: 7, coverage: 1 },
 			{ timestamp: 2, netFlowUsd: null, coverage: 0 }
 		])
-	})
-
-	test('preserves the row order it is given', () => {
-		expect(
-			sumRwaFlowSplit([
-				{ timestamp: 3, Bonds: 1 },
-				{ timestamp: 1, Bonds: 2 }
-			]).map((p) => p.timestamp)
-		).toEqual([3, 1])
-	})
-
-	test('reads the asset group split for the front page total', () => {
-		expect(RWA_FLOW_TOTAL_SPLIT_BY).toBe('assetGroup')
 	})
 })

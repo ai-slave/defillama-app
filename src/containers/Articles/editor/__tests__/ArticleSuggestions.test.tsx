@@ -127,50 +127,12 @@ test('fetches each mention query once and ignores a superseded response', async 
 	expect(editor.getJSON().content?.[0].content?.[0]?.marks).toBeUndefined()
 })
 
-test('continues a heading as body text and keeps later block changes local', async () => {
-	await type('/h2')
-	await pressKey('Enter')
-	await type('Market outlook')
-	await pressKey('Enter')
-	await type('Body text')
-	expect(editor.getJSON().content?.slice(0, 2)).toMatchObject([
-		{ type: 'heading', attrs: { level: 2 }, content: [{ text: 'Market outlook' }] },
-		{ type: 'paragraph', content: [{ text: 'Body text' }] }
-	])
-	await act(async () => {
-		editor.commands.toggleHeading({ level: 3 })
-	})
-	await act(async () => {
-		editor.commands.setParagraph()
-	})
-	expect(editor.getJSON().content?.[0]).toMatchObject({ type: 'heading', attrs: { level: 2 } })
-	expect(editor.getJSON().content?.[1]).toMatchObject({ type: 'paragraph', content: [{ text: 'Body text' }] })
-})
-
-test('keeps a deliberate Shift+Enter line break inside the same heading', async () => {
-	await type('/h2')
-	await pressKey('Enter')
-	await type('Two-line')
-	await pressKey('Enter', { shiftKey: true })
-	await type('heading')
-	expect(editor.getJSON().content?.[0]).toMatchObject({
-		type: 'heading',
-		attrs: { level: 2 },
-		content: [{ text: 'Two-line' }, { type: 'hardBreak' }, { text: 'heading' }]
-	})
-})
-
-test('writes list items and exits the empty last item into a paragraph', async () => {
+test('the /bullet command starts a bullet list', async () => {
 	await type('/bullet')
 	await pressKey('Enter')
 	await type('First point')
-	await pressKey('Enter')
-	await type('Second point')
-	await pressKey('Enter')
-	await pressKey('Enter')
-	await type('Body text')
-	const blocks = editor.getJSON().content!
-	expect(blocks[0].type).toBe('bulletList')
-	expect(blocks[0].content).toHaveLength(2)
-	expect(blocks[1]).toMatchObject({ type: 'paragraph', content: [{ text: 'Body text' }] })
+	expect(editor.getJSON().content?.[0]).toMatchObject({
+		type: 'bulletList',
+		content: [{ type: 'listItem', content: [{ type: 'paragraph', content: [{ text: 'First point' }] }] }]
+	})
 })

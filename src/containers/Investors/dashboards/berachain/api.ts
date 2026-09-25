@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import { fetchProChainChartData } from '~/containers/ProDashboard/services/ChainCharts'
 import { readInvestorApiJson } from '../../api.types'
@@ -166,6 +167,56 @@ function datasetView(source: Array<TimestampRow>, allKeys: Array<string>, select
 	}
 }
 
+// Each month sums into its first day, so the monthly datasets travel with the grouping that labels
+// their rows as months in tooltips and CSV exports.
+const MONTHLY: ChartTimeGroupingWithCumulative = 'monthly'
+
+export function buildBerachainIncome(data: BerachainIncomeServerData) {
+	const berachainKeys = ['Chain Fees']
+	const berachainDaily = buildTimeSeries(data.chainFees)
+	const berachainSeries = buildMonthlyAndCumulative(berachainDaily, berachainKeys.length)
+
+	// BEX section
+	const bexKeys = ['Revenue']
+	const bexDaily = buildTimeSeries(data.bexRevenue)
+	const bexSeries = buildMonthlyAndCumulative(bexDaily, bexKeys.length)
+
+	// BEX volume
+	const bexVolumeDaily = buildTimeSeries(data.bexVolume)
+	const bexVolumeCumulative = buildCumulative(bexVolumeDaily, 1)
+
+	// Bend section: Fees + Revenue
+	const bendKeys = ['Fees', 'Revenue']
+	const bendDaily = mergeSeries([data.bendFees, data.bendRevenue])
+	const bendSeries = buildMonthlyAndCumulative(bendDaily, bendKeys.length)
+
+	const totalRevenueKeys = ['Chain Fees', 'BEX Revenue', 'BEND Revenue']
+	const totalRevenueDaily = mergeSeries([data.chainFees, data.bexRevenue, data.bendRevenue])
+	const totalRevenueCumulative = buildCumulative(totalRevenueDaily, totalRevenueKeys.length)
+
+	return {
+		berachain: {
+			monthly: { dataset: datasetView(berachainSeries.monthly, berachainKeys), groupBy: MONTHLY },
+			cumulative: datasetView(berachainSeries.cumulative, berachainKeys),
+			chainFeesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Chain Fees'])
+		},
+		bex: {
+			monthly: { dataset: datasetView(bexSeries.monthly, bexKeys), groupBy: MONTHLY },
+			cumulative: datasetView(bexSeries.cumulative, bexKeys),
+			volumeCumulative: datasetView(bexVolumeCumulative, ['Volume'])
+		},
+		bend: {
+			monthly: { dataset: datasetView(bendSeries.monthly, bendKeys), groupBy: MONTHLY },
+			cumulative: datasetView(bendSeries.cumulative, bendKeys),
+			feesCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Fees']),
+			revenueCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Revenue'])
+		},
+		totalRevenue: {
+			cumulative: datasetView(totalRevenueCumulative, totalRevenueKeys)
+		}
+	}
+}
+
 export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 	const chainFees = useQuery({
 		queryKey: ['berachain-chain-fees-chart'],
@@ -230,55 +281,15 @@ export function useBerachainIncomeData(serverData?: BerachainIncomeServerData) {
 		const isLoading =
 			chainFees.isLoading || bexRevenue.isLoading || bexVolume.isLoading || bendFees.isLoading || bendRevenue.isLoading
 
-		const chainFeesData = chainFees.data ?? []
-		const bexRevenueData = bexRevenue.data ?? []
-		const bexVolumeData = bexVolume.data ?? []
-		const bendFeesData = bendFees.data ?? []
-		const bendRevenueData = bendRevenue.data ?? []
-
-		const berachainKeys = ['Chain Fees']
-		const berachainDaily = buildTimeSeries(chainFeesData)
-		const berachainSeries = buildMonthlyAndCumulative(berachainDaily, berachainKeys.length)
-
-		// BEX section
-		const bexKeys = ['Revenue']
-		const bexDaily = buildTimeSeries(bexRevenueData)
-		const bexSeries = buildMonthlyAndCumulative(bexDaily, bexKeys.length)
-
-		// BEX volume
-		const bexVolumeDaily = buildTimeSeries(bexVolumeData)
-		const bexVolumeCumulative = buildCumulative(bexVolumeDaily, 1)
-
-		// Bend section: Fees + Revenue
-		const bendKeys = ['Fees', 'Revenue']
-		const bendDaily = mergeSeries([bendFeesData, bendRevenueData])
-		const bendSeries = buildMonthlyAndCumulative(bendDaily, bendKeys.length)
-
-		const totalRevenueKeys = ['Chain Fees', 'BEX Revenue', 'BEND Revenue']
-		const totalRevenueDaily = mergeSeries([chainFeesData, bexRevenueData, bendRevenueData])
-		const totalRevenueCumulative = buildCumulative(totalRevenueDaily, totalRevenueKeys.length)
-
 		return {
 			isLoading,
-			berachain: {
-				monthly: datasetView(berachainSeries.monthly, berachainKeys),
-				cumulative: datasetView(berachainSeries.cumulative, berachainKeys),
-				chainFeesCumulative: datasetView(berachainSeries.cumulative, berachainKeys, ['Chain Fees'])
-			},
-			bex: {
-				monthly: datasetView(bexSeries.monthly, bexKeys),
-				cumulative: datasetView(bexSeries.cumulative, bexKeys),
-				volumeCumulative: datasetView(bexVolumeCumulative, ['Volume'])
-			},
-			bend: {
-				monthly: datasetView(bendSeries.monthly, bendKeys),
-				cumulative: datasetView(bendSeries.cumulative, bendKeys),
-				feesCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Fees']),
-				revenueCumulative: datasetView(bendSeries.cumulative, bendKeys, ['Revenue'])
-			},
-			totalRevenue: {
-				cumulative: datasetView(totalRevenueCumulative, totalRevenueKeys)
-			}
+			...buildBerachainIncome({
+				chainFees: chainFees.data ?? [],
+				bexRevenue: bexRevenue.data ?? [],
+				bexVolume: bexVolume.data ?? [],
+				bendFees: bendFees.data ?? [],
+				bendRevenue: bendRevenue.data ?? []
+			})
 		}
 	}, [
 		chainFees.data,

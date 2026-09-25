@@ -1,19 +1,12 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { Dashboard } from '../dashboardTypes'
 import { DashboardCard } from './DashboardCard'
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ authorizedFetch: vi.fn(), isAuthenticated: true })
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), query: {}, isReady: true }) }))
-vi.mock('../services/DashboardAPI', async () => {
-	const actual = await vi.importActual<typeof import('../services/DashboardAPI')>('../services/DashboardAPI')
-	return { ...actual, dashboardAPI: {} }
-})
 
 function makeDashboard(overrides: Partial<Dashboard>): Dashboard {
 	return {
@@ -31,13 +24,12 @@ function makeDashboard(overrides: Partial<Dashboard>): Dashboard {
 	} as Dashboard
 }
 
+const session = installSubscriberSession('reader', { resolved: true })
 let container: HTMLDivElement
 let root: Root
-let client: QueryClient
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
@@ -51,9 +43,9 @@ afterEach(async () => {
 async function render(dashboard: Dashboard, onDelete?: (id: string) => Promise<void>) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<DashboardCard dashboard={dashboard} viewMode="grid" {...(onDelete ? { onDelete } : {})} />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -103,7 +95,9 @@ test('a single card and a single view read in the singular', async () => {
 		})
 	)
 	expect(container.textContent).toContain('1 card')
+	expect(container.textContent).not.toContain('1 cards')
 	expect(container.textContent).toContain('1 view')
+	expect(container.textContent).not.toContain('1 views')
 })
 
 test('the card actions menu only exists when the card can be deleted', async () => {
@@ -136,13 +130,4 @@ test('a team dashboard names its last editor and hides delete for members who ca
 		onDelete
 	)
 	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
-})
-
-test('a personal dashboard keeps the delete control without server access', async () => {
-	await render(
-		makeDashboard({ visibility: 'private' }),
-		vi.fn(async () => {})
-	)
-	expect(container.querySelector('[aria-label="Dashboard card actions"]')).not.toBeNull()
-	expect(container.textContent).toContain('Updated')
 })

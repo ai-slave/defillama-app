@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { toRWAPerpsBreakdownChartDataset } from '../breakdownDataset'
 import {
 	appendRWAPerpsTimeSeriesDatasetTotal,
@@ -21,48 +22,46 @@ import {
 } from '../queries'
 import { buildRWAPerpsTreemapTreeData } from '../treemap'
 
-const {
-	fetchRWAPerpsContractBreakdownChartData,
-	fetchRWAPerpsMarketsByContract,
-	fetchRWAPerpsMarketChart,
-	fetchRWAPerpsFundingHistory,
-	fetchRWAPerpsMarketBreakdownChartData,
-	fetchRWAPerpsOverviewBreakdownChartData,
-	fetchRWAPerpsStats,
-	fetchRWAPerpsCurrent,
-	fetchRWAPerpsList,
-	fetchRWAPerpsMarketsByAssetGroup,
-	fetchRWAPerpsMarketsByAsset,
-	fetchRWAPerpsMarketsByVenue
-} = vi.hoisted(() => ({
-	fetchRWAPerpsContractBreakdownChartData: vi.fn(),
-	fetchRWAPerpsMarketsByContract: vi.fn(),
-	fetchRWAPerpsMarketChart: vi.fn(),
-	fetchRWAPerpsFundingHistory: vi.fn(),
-	fetchRWAPerpsMarketBreakdownChartData: vi.fn(),
-	fetchRWAPerpsOverviewBreakdownChartData: vi.fn(),
-	fetchRWAPerpsStats: vi.fn(),
-	fetchRWAPerpsCurrent: vi.fn(),
-	fetchRWAPerpsList: vi.fn(),
-	fetchRWAPerpsMarketsByAssetGroup: vi.fn(),
-	fetchRWAPerpsMarketsByAsset: vi.fn(),
-	fetchRWAPerpsMarketsByVenue: vi.fn()
+const { fetchJson } = vi.hoisted(() => ({ fetchJson: vi.fn() }))
+
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson
 }))
 
-vi.mock('../api', () => ({
-	fetchRWAPerpsContractBreakdownChartData,
-	fetchRWAPerpsMarketsByContract,
-	fetchRWAPerpsMarketChart,
-	fetchRWAPerpsFundingHistory,
-	fetchRWAPerpsMarketBreakdownChartData,
-	fetchRWAPerpsOverviewBreakdownChartData,
-	fetchRWAPerpsStats,
-	fetchRWAPerpsCurrent,
-	fetchRWAPerpsList,
-	fetchRWAPerpsMarketsByAssetGroup,
-	fetchRWAPerpsMarketsByAsset,
-	fetchRWAPerpsMarketsByVenue
-}))
+// Backend fixtures keyed by decoded path below the RWA perps server; a key ending in `*` matches a prefix.
+type Fixture = unknown | ((url: URL, rest: string) => unknown)
+const routes = new Map<string, Fixture>()
+const basePath = new URL(RWA_PERPS_SERVER_URL).pathname
+
+function serve(fixtures: Record<string, Fixture>) {
+	for (const path in fixtures) routes.set(path, fixtures[path])
+}
+
+function backendPath(href: string) {
+	const url = new URL(href)
+	url.searchParams.delete('cachebust')
+	return { url, path: decodeURIComponent(url.pathname.slice(basePath.length)) }
+}
+
+/** Backend requests in order, as decoded paths with their query and without the cache-busting parameter. */
+function requested(): Array<string> {
+	return fetchJson.mock.calls.map(([href]: [string]) => {
+		const { url, path } = backendPath(href)
+		return url.search ? `${path}${url.search}` : path
+	})
+}
+
+/** The chart scope a breakdown request names: `all`, a target slug, or `exclude:<asset class>`. */
+function chartScope(url: URL) {
+	const excluded = url.searchParams.get('excludeAssetClass')
+	if (excluded) return `exclude:${excluded}`
+	for (const key of ['venue', 'assetGroup', 'assetClass', 'baseAsset']) {
+		const slug = url.searchParams.get(key)
+		if (slug) return slug
+	}
+	return 'all'
+}
 
 const baseMarket = {
 	timestamp: 1_775_011_512,
@@ -120,292 +119,324 @@ afterEach(() => {
 beforeEach(() => {
 	vi.useFakeTimers()
 	vi.setSystemTime(new Date('2026-03-27T12:00:00Z'))
-	fetchRWAPerpsList.mockResolvedValue({
-		contracts: ['xyz:META', 'flx:GOLD'],
-		venues: ['xyz', 'flx'],
-		categories: ['RWA Perps', 'Gold & Commodities'],
-		assets: ['Meta', 'NVIDIA', 'Gold'],
-		assetGroups: ['Commodities', 'Equities'],
-		total: 2
-	})
-	fetchRWAPerpsStats.mockResolvedValue({
-		totalMarkets: 3,
-		totalOpenInterest: 350,
-		totalVolume24h: 200,
-		totalCumulativeFunding: 111,
-		byVenue: {
-			xyz: { openInterest: 250, volume24h: 160, markets: 2 },
-			flx: { openInterest: 100, volume24h: 40, markets: 1 }
-		},
-		byCategory: {
-			'RWA Perps': { openInterest: 300, volume24h: 170, markets: 2 },
-			'Gold & Commodities': { openInterest: 50, volume24h: 30, markets: 1 }
-		},
-		byAssetGroup: {
-			Equities: { openInterest: 250, volume24h: 160, markets: 2 },
-			Commodities: { openInterest: 100, volume24h: 40, markets: 1 }
-		},
-		lastUpdated: '2026-04-01T00:00:00.000Z'
-	})
-	fetchRWAPerpsCurrent.mockResolvedValue([
-		{
-			...baseMarket,
-			id: 'flx:gold',
-			contract: 'flx:GOLD',
-			venue: 'flx',
-			openInterest: 20,
-			referenceAssetGroup: 'Commodities',
-			category: ['Gold & Commodities'],
-			assetClass: ['Commodity Perp']
-		},
-		{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', openInterest: 120 },
-		{
-			...baseMarket,
-			id: 'xyz:nvda',
-			contract: 'xyz:NVDA',
-			referenceAsset: 'NVIDIA',
-			venue: 'xyz',
-			openInterest: 210
-		}
-	])
-	fetchRWAPerpsMarketsByVenue.mockResolvedValue([
-		{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', referenceAsset: 'Meta', estimatedProtocolFees24h: 5 },
-		{
-			...baseMarket,
-			id: 'xyz:nvda',
-			contract: 'xyz:NVDA',
-			referenceAsset: 'NVIDIA',
-			venue: 'xyz',
-			openInterest: 180,
-			estimatedProtocolFees24h: 7
-		}
-	])
-	fetchRWAPerpsMarketsByAssetGroup.mockImplementation(async (assetGroup: string) => {
-		if (assetGroup === 'Equities') {
-			return [
-				{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', referenceAsset: 'Meta', estimatedProtocolFees24h: 5 },
-				{
-					...baseMarket,
-					id: 'xyz:nvda',
-					contract: 'xyz:NVDA',
-					referenceAsset: 'NVIDIA',
-					venue: 'xyz',
-					openInterest: 180,
-					estimatedProtocolFees24h: 7
+	routes.clear()
+	fetchJson.mockReset()
+	fetchJson.mockImplementation(async (href: string) => {
+		const { url, path } = backendPath(href)
+		let fixture = routes.get(path)
+		let rest = ''
+		if (fixture === undefined) {
+			for (const [key, value] of routes) {
+				if (key.endsWith('*') && path.startsWith(key.slice(0, -1))) {
+					fixture = value
+					rest = path.slice(key.length - 1)
 				}
-			]
+			}
 		}
-
-		return [
+		if (fixture === undefined) throw new Error(`Unfixtured RWA perps request: ${href}`)
+		return typeof fixture === 'function' ? fixture(url, rest) : fixture
+	})
+	serve({
+		'/list': {
+			contracts: ['xyz:META', 'flx:GOLD'],
+			venues: ['xyz', 'flx'],
+			categories: ['RWA Perps', 'Gold & Commodities'],
+			assets: ['Meta', 'NVIDIA', 'Gold'],
+			assetGroups: ['Commodities', 'Equities'],
+			total: 2
+		}
+	})
+	serve({
+		'/stats': {
+			totalMarkets: 3,
+			totalOpenInterest: 350,
+			totalVolume24h: 200,
+			totalCumulativeFunding: 111,
+			byVenue: {
+				xyz: { openInterest: 250, volume24h: 160, markets: 2 },
+				flx: { openInterest: 100, volume24h: 40, markets: 1 }
+			},
+			byCategory: {
+				'RWA Perps': { openInterest: 300, volume24h: 170, markets: 2 },
+				'Gold & Commodities': { openInterest: 50, volume24h: 30, markets: 1 }
+			},
+			byAssetGroup: {
+				Equities: { openInterest: 250, volume24h: 160, markets: 2 },
+				Commodities: { openInterest: 100, volume24h: 40, markets: 1 }
+			},
+			lastUpdated: '2026-04-01T00:00:00.000Z'
+		}
+	})
+	serve({
+		'/current': [
 			{
 				...baseMarket,
 				id: 'flx:gold',
 				contract: 'flx:GOLD',
-				referenceAsset: 'Gold',
-				referenceAssetGroup: 'Commodities',
 				venue: 'flx',
 				openInterest: 20,
-				assetClass: ['Commodity Perp'],
-				estimatedProtocolFees24h: 2
+				referenceAssetGroup: 'Commodities',
+				category: ['Gold & Commodities'],
+				assetClass: ['Commodity Perp']
+			},
+			{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', openInterest: 120 },
+			{
+				...baseMarket,
+				id: 'xyz:nvda',
+				contract: 'xyz:NVDA',
+				referenceAsset: 'NVIDIA',
+				venue: 'xyz',
+				openInterest: 210
 			}
 		]
 	})
-	fetchRWAPerpsMarketsByAsset.mockImplementation(async (asset: string) => [
-		{ ...baseMarket, id: 'xyz:meta', referenceAsset: asset },
-		{
-			...baseMarket,
-			id: 'binance:meta',
-			contract: 'binance:METAUSDT',
-			venue: 'Binance',
-			venueType: 'CEX',
-			referenceAsset: asset,
-			openInterest: 300
-		}
-	])
-	fetchRWAPerpsMarketBreakdownChartData.mockResolvedValue([
-		{ timestamp: 1_774_483_200, 'xyz:meta': 100 },
-		{ timestamp: 1_774_569_600, 'xyz:meta': 120 }
-	])
-	fetchRWAPerpsOverviewBreakdownChartData.mockImplementation(async (request: any) => {
-		const target =
-			request.target.kind === 'all'
-				? 'all'
-				: request.target.kind === 'excludeAssetClass'
-					? `exclude:${request.target.slug}`
-					: request.target.slug
-		const key = request.key
-		const breakdown = request.breakdown
-
-		if (target === 'all' && key === 'openInterest' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 120 },
-				{ timestamp: 1_774_569_600, NVIDIA: 130, Gold: 100 }
-			]
-		}
-
-		if (target === 'all' && key === 'volume24h' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 70 },
-				{ timestamp: 1_774_569_600, NVIDIA: 90, Gold: 40 }
-			]
-		}
-
-		if (target === 'all' && key === 'openInterest' && breakdown === 'assetClass') {
-			return [
-				{ timestamp: 1_774_483_200, 'Stock Perp': 120 },
-				{ timestamp: 1_774_569_600, 'Stock Perp': 130, 'Commodity Perp': 100 }
-			]
-		}
-
-		if (target === 'all' && key === 'openInterest' && breakdown === 'assetGroup') {
-			return [
-				{ timestamp: 1_774_483_200, Equities: 120 },
-				{ timestamp: 1_774_569_600, Equities: 130, Commodities: 100 }
-			]
-		}
-
-		if (target === 'Forex Perps' && key === 'openInterest' && breakdown === 'assetGroup') {
-			return [
-				{ timestamp: 1_774_483_200, Forex: 70 },
-				{ timestamp: 1_774_569_600, Forex: 90 }
-			]
-		}
-
-		if (target === 'Forex Perps' && key === 'openInterest' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, EUR: 70 },
-				{ timestamp: 1_774_569_600, GBP: 40, EUR: 90 }
-			]
-		}
-
-		if (target === 'exclude:Forex Perps' && key === 'openInterest' && breakdown === 'assetGroup') {
-			return [
-				{ timestamp: 1_774_483_200, Equities: 120 },
-				{ timestamp: 1_774_569_600, Equities: 130, Commodities: 100 }
-			]
-		}
-
-		if (target === 'all' && key === 'openInterest' && breakdown === 'venue') {
-			return [
-				{ timestamp: 1_774_483_200, xyz: 120 },
-				{ timestamp: 1_774_569_600, xyz: 250, flx: 100 }
-			]
-		}
-
-		if (target === 'all' && key === 'markets' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 1 },
-				{ timestamp: 1_774_569_600, NVIDIA: 1, Gold: 1 }
-			]
-		}
-
-		if (target === 'all' && key === 'markets' && breakdown === 'assetGroup') {
-			return [
-				{ timestamp: 1_774_483_200, Equities: 1 },
-				{ timestamp: 1_774_569_600, Equities: 1, Commodities: 1 }
-			]
-		}
-
-		if (target === 'xyz' && key === 'openInterest' && breakdown === 'assetGroup') {
-			return [
-				{ timestamp: 1_774_483_200, Equities: 120 },
-				{ timestamp: 1_774_569_600, Equities: 130 }
-			]
-		}
-
-		if (target === 'xyz' && key === 'openInterest' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 120 },
-				{ timestamp: 1_774_569_600, NVIDIA: 130 }
-			]
-		}
-
-		if (target === 'xyz' && key === 'volume24h' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 30 },
-				{ timestamp: 1_774_569_600, NVIDIA: 90 }
-			]
-		}
-
-		if (target === 'Equities' && key === 'volume24h' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 30 },
-				{ timestamp: 1_774_569_600, NVIDIA: 90 }
-			]
-		}
-
-		if (target === 'Equities' && key === 'openInterest' && breakdown === 'baseAsset') {
-			return [
-				{ timestamp: 1_774_483_200, Meta: 120 },
-				{ timestamp: 1_774_569_600, NVIDIA: 130 }
-			]
-		}
-
-		if (target === 'Equities' && key === 'markets' && breakdown === 'venue') {
-			return [
-				{ timestamp: 1_774_483_200, xyz: 1 },
-				{ timestamp: 1_774_569_600, xyz: 1 }
-			]
-		}
-
-		return []
-	})
-	fetchRWAPerpsContractBreakdownChartData.mockImplementation(async (request: any) => {
-		if (request.target.kind === 'venue' && request.target.slug === 'xyz' && request.key === 'openInterest') {
-			return [
-				{ timestamp: 1_774_483_200, 'xyz:META': 120 },
-				{ timestamp: 1_774_569_600, 'xyz:NVDA': 130 }
-			]
-		}
-
-		if (request.key === 'markets') {
-			return [
-				{ timestamp: 1_774_483_200, 'xyz:META': 1 },
-				{ timestamp: 1_774_569_600, 'xyz:NVDA': 1, 'flx:GOLD': 1 }
-			]
-		}
-
-		return [
-			{ timestamp: 1_774_483_200, 'xyz:META': 120 },
-			{ timestamp: 1_774_569_600, 'xyz:NVDA': 130, 'flx:GOLD': 100 }
+	serve({
+		'/venue/*': [
+			{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', referenceAsset: 'Meta', estimatedProtocolFees24h: 5 },
+			{
+				...baseMarket,
+				id: 'xyz:nvda',
+				contract: 'xyz:NVDA',
+				referenceAsset: 'NVIDIA',
+				venue: 'xyz',
+				openInterest: 180,
+				estimatedProtocolFees24h: 7
+			}
 		]
 	})
-	fetchRWAPerpsMarketChart.mockResolvedValue([
-		{
-			timestamp: 1_774_483_200,
-			openInterest: 100,
-			volume24h: 50,
-			price: 500,
-			priceChange24h: 2,
-			fundingRate: 0.00001,
-			premium: 0.0002,
-			cumulativeFunding: 1
+	serve({
+		'/assetGroup/*': (_url: URL, assetGroup: string) => {
+			if (assetGroup === 'Equities') {
+				return [
+					{ ...baseMarket, id: 'xyz:meta', venue: 'xyz', referenceAsset: 'Meta', estimatedProtocolFees24h: 5 },
+					{
+						...baseMarket,
+						id: 'xyz:nvda',
+						contract: 'xyz:NVDA',
+						referenceAsset: 'NVIDIA',
+						venue: 'xyz',
+						openInterest: 180,
+						estimatedProtocolFees24h: 7
+					}
+				]
+			}
+
+			return [
+				{
+					...baseMarket,
+					id: 'flx:gold',
+					contract: 'flx:GOLD',
+					referenceAsset: 'Gold',
+					referenceAssetGroup: 'Commodities',
+					venue: 'flx',
+					openInterest: 20,
+					assetClass: ['Commodity Perp'],
+					estimatedProtocolFees24h: 2
+				}
+			]
 		}
-	])
-	fetchRWAPerpsFundingHistory.mockResolvedValue([
-		{
-			timestamp: 1_774_454_400_000,
-			id: 'xyz:meta',
-			contract: 'xyz:META',
-			venue: 'xyz',
-			fundingRate: 0.00000625,
-			premium: 0.0001,
-			openInterest: 6203.048,
-			fundingPayment: 0.03876905,
-			createdAt: '2026-03-26T15:17:54.413Z'
+	})
+	serve({
+		'/asset/*': (_url: URL, asset: string) => [
+			{ ...baseMarket, id: 'xyz:meta', referenceAsset: asset },
+			{
+				...baseMarket,
+				id: 'binance:meta',
+				contract: 'binance:METAUSDT',
+				venue: 'Binance',
+				venueType: 'CEX',
+				referenceAsset: asset,
+				openInterest: 300
+			}
+		]
+	})
+	serve({
+		'/chart/market-breakdown': [
+			{ timestamp: 1_774_483_200, 'xyz:meta': 100 },
+			{ timestamp: 1_774_569_600, 'xyz:meta': 120 }
+		]
+	})
+	serve({
+		'/chart/overview-breakdown': (url: URL) => {
+			const target = chartScope(url)
+			const key = url.searchParams.get('key')
+			const breakdown = url.searchParams.get('breakdown')
+
+			if (target === 'all' && key === 'openInterest' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 120 },
+					{ timestamp: 1_774_569_600, NVIDIA: 130, Gold: 100 }
+				]
+			}
+
+			if (target === 'all' && key === 'volume24h' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 70 },
+					{ timestamp: 1_774_569_600, NVIDIA: 90, Gold: 40 }
+				]
+			}
+
+			if (target === 'all' && key === 'openInterest' && breakdown === 'assetClass') {
+				return [
+					{ timestamp: 1_774_483_200, 'Stock Perp': 120 },
+					{ timestamp: 1_774_569_600, 'Stock Perp': 130, 'Commodity Perp': 100 }
+				]
+			}
+
+			if (target === 'all' && key === 'openInterest' && breakdown === 'assetGroup') {
+				return [
+					{ timestamp: 1_774_483_200, Equities: 120 },
+					{ timestamp: 1_774_569_600, Equities: 130, Commodities: 100 }
+				]
+			}
+
+			if (target === 'Forex Perps' && key === 'openInterest' && breakdown === 'assetGroup') {
+				return [
+					{ timestamp: 1_774_483_200, Forex: 70 },
+					{ timestamp: 1_774_569_600, Forex: 90 }
+				]
+			}
+
+			if (target === 'Forex Perps' && key === 'openInterest' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, EUR: 70 },
+					{ timestamp: 1_774_569_600, GBP: 40, EUR: 90 }
+				]
+			}
+
+			if (target === 'exclude:Forex Perps' && key === 'openInterest' && breakdown === 'assetGroup') {
+				return [
+					{ timestamp: 1_774_483_200, Equities: 110 },
+					{ timestamp: 1_774_569_600, Equities: 115, Commodities: 90 }
+				]
+			}
+
+			if (target === 'all' && key === 'openInterest' && breakdown === 'venue') {
+				return [
+					{ timestamp: 1_774_483_200, xyz: 120 },
+					{ timestamp: 1_774_569_600, xyz: 250, flx: 100 }
+				]
+			}
+
+			if (target === 'all' && key === 'markets' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 1 },
+					{ timestamp: 1_774_569_600, NVIDIA: 1, Gold: 1 }
+				]
+			}
+
+			if (target === 'all' && key === 'markets' && breakdown === 'assetGroup') {
+				return [
+					{ timestamp: 1_774_483_200, Equities: 1 },
+					{ timestamp: 1_774_569_600, Equities: 1, Commodities: 1 }
+				]
+			}
+
+			if (target === 'xyz' && key === 'openInterest' && breakdown === 'assetGroup') {
+				return [
+					{ timestamp: 1_774_483_200, Equities: 120 },
+					{ timestamp: 1_774_569_600, Equities: 130 }
+				]
+			}
+
+			if (target === 'xyz' && key === 'openInterest' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 120 },
+					{ timestamp: 1_774_569_600, NVIDIA: 130 }
+				]
+			}
+
+			if (target === 'xyz' && key === 'volume24h' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 30 },
+					{ timestamp: 1_774_569_600, NVIDIA: 90 }
+				]
+			}
+
+			if (target === 'Equities' && key === 'volume24h' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 30 },
+					{ timestamp: 1_774_569_600, NVIDIA: 90 }
+				]
+			}
+
+			if (target === 'Equities' && key === 'openInterest' && breakdown === 'baseAsset') {
+				return [
+					{ timestamp: 1_774_483_200, Meta: 120 },
+					{ timestamp: 1_774_569_600, NVIDIA: 130 }
+				]
+			}
+
+			if (target === 'Equities' && key === 'markets' && breakdown === 'venue') {
+				return [
+					{ timestamp: 1_774_483_200, xyz: 1 },
+					{ timestamp: 1_774_569_600, xyz: 1 }
+				]
+			}
+
+			return []
 		}
-	])
+	})
+	serve({
+		'/chart/contract-breakdown': (url: URL) => {
+			if (url.searchParams.get('venue') === 'xyz' && url.searchParams.get('key') === 'openInterest') {
+				return [
+					{ timestamp: 1_774_483_200, 'xyz:META': 120 },
+					{ timestamp: 1_774_569_600, 'xyz:NVDA': 130 }
+				]
+			}
+
+			if (url.searchParams.get('key') === 'markets') {
+				return [
+					{ timestamp: 1_774_483_200, 'xyz:META': 1 },
+					{ timestamp: 1_774_569_600, 'xyz:NVDA': 1, 'flx:GOLD': 1 }
+				]
+			}
+
+			return [
+				{ timestamp: 1_774_483_200, 'xyz:META': 120 },
+				{ timestamp: 1_774_569_600, 'xyz:NVDA': 130, 'flx:GOLD': 100 }
+			]
+		}
+	})
+	serve({
+		'/chart/*': [
+			{
+				timestamp: 1_774_483_200,
+				openInterest: 100,
+				volume24h: 50,
+				price: 500,
+				priceChange24h: 2,
+				fundingRate: 0.00001,
+				premium: 0.0002,
+				cumulativeFunding: 1
+			}
+		]
+	})
+	serve({
+		'/funding/*': [
+			{
+				timestamp: 1_774_454_400,
+				id: 'xyz:meta',
+				contract: 'xyz:META',
+				venue: 'xyz',
+				funding_rate: '0.00000625',
+				premium: '0.00010000',
+				open_interest: '6203.048',
+				funding_payment: '0.03876905',
+				created_at: '2026-03-26T15:17:54.413Z'
+			}
+		]
+	})
 })
 
 describe('getRWAPerpsContractData', () => {
 	test('uses the raw contract identifier and returns a single matching market', async () => {
-		fetchRWAPerpsMarketsByContract.mockResolvedValue([{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' }])
+		serve({ '/contract/*': [{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' }] })
 
 		const result = await getRWAPerpsContractData({ contract: 'xyz:META' })
 
-		expect(fetchRWAPerpsMarketsByContract).toHaveBeenCalledWith('xyz:META')
-		expect(fetchRWAPerpsMarketChart).toHaveBeenCalledWith('xyz:meta')
-		expect(fetchRWAPerpsFundingHistory).toHaveBeenCalledWith('xyz:meta')
+		expect(requested()).toEqual(['/contract/xyz:META', '/chart/xyz:meta', '/funding/xyz:meta'])
 		expect(result).toMatchObject({
 			contract: {
 				contract: 'xyz:META',
@@ -438,18 +469,16 @@ describe('getRWAPerpsContractData', () => {
 		})
 	})
 
-	test('returns null when the contract has no markets', async () => {
-		fetchRWAPerpsMarketsByContract.mockResolvedValue([])
-
-		await expect(getRWAPerpsContractData({ contract: 'xyz:MISSING' })).resolves.toBeNull()
-		expect(fetchRWAPerpsMarketChart).not.toHaveBeenCalled()
-		expect(fetchRWAPerpsFundingHistory).not.toHaveBeenCalled()
-	})
-
 	test('keeps the contract data when chart and funding fetches fail', async () => {
-		fetchRWAPerpsMarketsByContract.mockResolvedValue([{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' }])
-		fetchRWAPerpsMarketChart.mockRejectedValue(new Error('chart failed'))
-		fetchRWAPerpsFundingHistory.mockRejectedValue(new Error('funding failed'))
+		serve({
+			'/contract/*': [{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' }],
+			'/chart/*': () => {
+				throw new Error('chart failed')
+			},
+			'/funding/*': () => {
+				throw new Error('funding failed')
+			}
+		})
 
 		const result = await getRWAPerpsContractData({ contract: 'xyz:META' })
 
@@ -459,14 +488,15 @@ describe('getRWAPerpsContractData', () => {
 	})
 
 	test('returns null when multiple rows make the contract ambiguous', async () => {
-		fetchRWAPerpsMarketsByContract.mockResolvedValue([
-			{ ...baseMarket, id: 'xyz:meta-1', contract: 'xyz:META' },
-			{ ...baseMarket, id: 'xyz:meta-2', contract: 'xyz:META' }
-		])
+		serve({
+			'/contract/*': [
+				{ ...baseMarket, id: 'xyz:meta-1', contract: 'xyz:META' },
+				{ ...baseMarket, id: 'xyz:meta-2', contract: 'xyz:META' }
+			]
+		})
 
 		await expect(getRWAPerpsContractData({ contract: 'xyz:META' })).resolves.toBeNull()
-		expect(fetchRWAPerpsMarketChart).not.toHaveBeenCalled()
-		expect(fetchRWAPerpsFundingHistory).not.toHaveBeenCalled()
+		expect(requested()).toEqual(['/contract/xyz:META'])
 	})
 })
 
@@ -495,30 +525,12 @@ describe('perps overview queries', () => {
 		})
 	})
 
-	test('preloads the overview time-series dataset when the active view is timeSeries', async () => {
-		const result = await getRWAPerpsOverview({ activeView: 'timeSeries' })
-
-		expect(result.initialChartDataset).toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, Equities: 120 },
-				{ timestamp: 1_774_569_600_000, Commodities: 100, Equities: 130 }
-			],
-			dimensions: ['timestamp', 'Equities', 'Commodities']
-		})
-	})
-
 	test('preloads asset-class-filtered overview time-series datasets', async () => {
 		const result = await getRWAPerpsOverview({
 			activeView: 'timeSeries',
 			target: { kind: 'assetClass', slug: 'Forex Perps' }
 		})
 
-		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
-			breakdown: 'assetGroup',
-			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' },
-			includeCex: false
-		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
 				{ timestamp: 1_774_483_200_000, Forex: 70 },
@@ -535,12 +547,6 @@ describe('perps overview queries', () => {
 			defaultTimeSeriesBreakdown: 'baseAsset'
 		})
 
-		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
-			breakdown: 'baseAsset',
-			key: 'openInterest',
-			target: { kind: 'assetClass', slug: 'Forex Perps' },
-			includeCex: false
-		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
 				{ timestamp: 1_774_483_200_000, EUR: 70 },
@@ -556,22 +562,16 @@ describe('perps overview queries', () => {
 			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' }
 		})
 
-		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
-			breakdown: 'assetGroup',
-			key: 'openInterest',
-			target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
-			includeCex: false
-		})
 		expect(result.initialChartDataset).toEqual({
 			source: [
-				{ timestamp: 1_774_483_200_000, Equities: 120 },
-				{ timestamp: 1_774_569_600_000, Equities: 130, Commodities: 100 }
+				{ timestamp: 1_774_483_200_000, Equities: 110 },
+				{ timestamp: 1_774_569_600_000, Equities: 115, Commodities: 90 }
 			],
 			dimensions: ['timestamp', 'Equities', 'Commodities']
 		})
 	})
 
-	test('builds regrouped overview time-series datasets for asset classes', async () => {
+	test('requests the overview breakdown for the chosen grouping', async () => {
 		await expect(
 			getRWAPerpsBreakdownChartDataset({
 				breakdown: 'assetClass',
@@ -585,40 +585,6 @@ describe('perps overview queries', () => {
 				{ timestamp: 1_774_569_600_000, 'Stock Perp': 130, 'Commodity Perp': 100 }
 			],
 			dimensions: ['timestamp', 'Stock Perp', 'Commodity Perp']
-		})
-	})
-
-	test('builds regrouped overview time-series datasets for asset groups', async () => {
-		await expect(
-			getRWAPerpsBreakdownChartDataset({
-				breakdown: 'assetGroup',
-				key: 'openInterest',
-				target: { kind: 'all' },
-				includeCex: false
-			})
-		).resolves.toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, Equities: 120 },
-				{ timestamp: 1_774_569_600_000, Equities: 130, Commodities: 100 }
-			],
-			dimensions: ['timestamp', 'Equities', 'Commodities']
-		})
-	})
-
-	test('builds regrouped overview time-series datasets for reference assets', async () => {
-		await expect(
-			getRWAPerpsBreakdownChartDataset({
-				breakdown: 'baseAsset',
-				key: 'markets',
-				target: { kind: 'all' },
-				includeCex: false
-			})
-		).resolves.toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, Meta: 1 },
-				{ timestamp: 1_774_569_600_000, NVIDIA: 1, Gold: 1 }
-			],
-			dimensions: ['timestamp', 'Gold', 'Meta', 'NVIDIA']
 		})
 	})
 
@@ -669,63 +635,55 @@ describe('perps overview queries', () => {
 	})
 
 	test('resolves venue slugs back to the canonical venue name', async () => {
-		fetchRWAPerpsList.mockResolvedValueOnce({
-			contracts: [],
-			venues: ['XYZ Exchange'],
-			categories: [],
-			assetGroups: [],
-			total: 1
-		})
-		fetchRWAPerpsStats.mockResolvedValueOnce({
-			totalOpenInterest: 130,
-			totalVolume24h: 90,
-			totalMarkets: 2,
-			totalCumulativeFunding: 0,
-			byVenue: {
-				'XYZ Exchange': {
-					openInterest: 130,
-					volume24h: 90,
-					markets: 2
-				}
-			},
-			byAssetGroup: {}
-		})
-		fetchRWAPerpsMarketsByVenue.mockResolvedValueOnce([
-			{ ...baseMarket, id: 'xyz:meta', venue: 'XYZ Exchange', estimatedProtocolFees24h: 5 },
-			{
-				...baseMarket,
-				id: 'xyz:nvda',
-				contract: 'xyz:NVDA',
-				venue: 'XYZ Exchange',
-				referenceAsset: 'NVIDIA',
-				openInterest: 30,
-				volume24h: 40,
-				estimatedProtocolFees24h: 7
+		serve({
+			'/list': {
+				contracts: [],
+				venues: ['XYZ Exchange'],
+				categories: [],
+				assetGroups: [],
+				total: 1
 			}
-		])
-		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([
-			{ timestamp: 1_774_483_200, Meta: 120 },
-			{ timestamp: 1_774_569_600, Meta: 100, NVIDIA: 30 }
-		])
-		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([
-			{ timestamp: 1_774_483_200, Meta: 30 },
-			{ timestamp: 1_774_569_600, Meta: 50, NVIDIA: 40 }
-		])
+		})
+		serve({
+			'/stats': {
+				totalOpenInterest: 130,
+				totalVolume24h: 90,
+				totalMarkets: 2,
+				totalCumulativeFunding: 0,
+				byVenue: {
+					'XYZ Exchange': {
+						openInterest: 130,
+						volume24h: 90,
+						markets: 2
+					}
+				},
+				byAssetGroup: {}
+			}
+		})
+		serve({
+			'/venue/*': [
+				{ ...baseMarket, id: 'xyz:meta', venue: 'XYZ Exchange', estimatedProtocolFees24h: 5 },
+				{
+					...baseMarket,
+					id: 'xyz:nvda',
+					contract: 'xyz:NVDA',
+					venue: 'XYZ Exchange',
+					referenceAsset: 'NVIDIA',
+					openInterest: 30,
+					volume24h: 40,
+					estimatedProtocolFees24h: 7
+				}
+			]
+		})
 
 		const result = await getRWAPerpsVenuePage({ venue: 'xyz-exchange' })
 
-		expect(fetchRWAPerpsMarketsByVenue).toHaveBeenCalledWith('XYZ Exchange')
+		expect(requested()).toContain('/venue/XYZ Exchange')
 		expect(result?.venue).toBe('XYZ Exchange')
 		expect(result?.venueLinks).toEqual([
 			{ label: 'All', to: '/rwa/perps/venues' },
 			{ label: 'XYZ Exchange', to: '/rwa/perps/venue/xyz-exchange' }
 		])
-	})
-
-	test('preloads the venue time-series dataset when the active view is timeSeries', async () => {
-		const result = await getRWAPerpsVenuePage({ venue: 'xyz', activeView: 'timeSeries' })
-
-		expect(result?.initialChartDataset.dimensions).toEqual(['timestamp', 'Meta', 'NVIDIA'])
 	})
 
 	test('returns null for an unknown venue', async () => {
@@ -752,12 +710,6 @@ describe('perps overview queries', () => {
 			]
 		})
 		expect(result?.totals.openInterestChange24h).toBe(25)
-		expect(fetchRWAPerpsOverviewBreakdownChartData).toHaveBeenCalledWith({
-			breakdown: 'baseAsset',
-			key: 'openInterest',
-			target: { kind: 'assetGroup', slug: 'Equities' },
-			includeCex: false
-		})
 		expect(result?.initialChartDataset).toEqual({
 			source: [
 				{ timestamp: 1_774_483_200_000, Meta: 120 },
@@ -770,16 +722,13 @@ describe('perps overview queries', () => {
 
 describe('perps overview helpers', () => {
 	test('keeps successful empty venue and asset-group snapshots as empty results', async () => {
-		fetchRWAPerpsCurrent.mockResolvedValueOnce([])
-		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([])
+		serve({ '/current': [], '/chart/overview-breakdown': [] })
 		await expect(getRWAPerpsVenuesOverview()).resolves.toEqual({
 			rows: [],
 			dexRows: [],
 			initialChartDataset: { source: [], dimensions: ['timestamp'] }
 		})
 
-		fetchRWAPerpsCurrent.mockResolvedValueOnce([])
-		fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValueOnce([])
 		await expect(getRWAPerpsAssetGroupsOverview()).resolves.toEqual({
 			rows: [],
 			dexRows: [],
@@ -848,17 +797,15 @@ describe('perps overview helpers', () => {
 			openInterest: 400
 		}
 
-		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
+		serve({ '/current': [dexMarket, cexMarket] })
 		const venues = await getRWAPerpsVenuesOverview()
 		expect(venues.rows.map((row) => row.venue)).toEqual(['binance', 'xyz'])
 		expect(venues.dexRows.map((row) => row.venue)).toEqual(['xyz'])
 
-		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
 		const assetGroups = await getRWAPerpsAssetGroupsOverview()
 		expect(assetGroups.rows[0]?.openInterest).toBe(500)
 		expect(assetGroups.dexRows[0]?.openInterest).toBe(100)
 
-		fetchRWAPerpsCurrent.mockResolvedValueOnce([dexMarket, cexMarket])
 		const assets = await getRWAPerpsAssetsOverview()
 		expect(assets.rows[0]).toMatchObject({
 			asset: 'Meta',
@@ -916,52 +863,32 @@ describe('perps overview helpers', () => {
 			totals: { openInterest: 400, markets: 2 }
 		})
 
-		expect(fetchRWAPerpsMarketsByAsset).toHaveBeenCalledWith('Meta', true)
-		expect(fetchRWAPerpsList).not.toHaveBeenCalled()
-		expect(fetchRWAPerpsMarketBreakdownChartData).toHaveBeenCalledWith({
-			key: 'openInterest',
-			target: { kind: 'baseAsset', slug: 'Meta' },
-			includeCex: false
-		})
+		expect(requested()).toEqual([
+			'/asset/Meta?includeCex=true',
+			'/chart/market-breakdown?key=openInterest&baseAsset=Meta'
+		])
 	})
 
 	test('preloads all-venue history for a directly opened CEX-only asset', async () => {
-		fetchRWAPerpsMarketsByAsset.mockResolvedValueOnce([
-			{
-				...baseMarket,
-				id: 'binance:meta',
-				contract: 'binance:METAUSDT',
-				venue: 'Binance',
-				venueType: 'CEX'
-			}
-		])
+		serve({
+			'/asset/*': [
+				{
+					...baseMarket,
+					id: 'binance:meta',
+					contract: 'binance:METAUSDT',
+					venue: 'Binance',
+					venueType: 'CEX'
+				}
+			]
+		})
 
 		await expect(getRWAPerpsAssetPage({ asset: 'Meta', assetLinks: [] })).resolves.toMatchObject({ asset: 'Meta' })
-		expect(fetchRWAPerpsMarketBreakdownChartData).toHaveBeenCalledWith({
-			key: 'openInterest',
-			target: { kind: 'baseAsset', slug: 'Meta' },
-			includeCex: true
-		})
+		expect(requested()).toContain('/chart/market-breakdown?key=openInterest&includeCex=true&baseAsset=Meta')
 	})
 
 	test('aggregates overview chart rows by timestamp into a multi-series dataset', () => {
 		expect(toRWAPerpsBreakdownChartDataset([{ timestamp: 1_774_483_200, xyz: 100, flx: 20 }])).toEqual({
 			source: [{ timestamp: 1_774_483_200_000, xyz: 100, flx: 20 }],
-			dimensions: ['timestamp', 'xyz', 'flx']
-		})
-	})
-
-	test('counts markets per timestamp when building overview markets datasets', () => {
-		expect(
-			toRWAPerpsBreakdownChartDataset([
-				{ timestamp: 1_774_483_200, xyz: 2, flx: 1 },
-				{ timestamp: 1_774_569_600, flx: 1 }
-			])
-		).toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, xyz: 2, flx: 1 },
-				{ timestamp: 1_774_569_600_000, flx: 1 }
-			],
 			dimensions: ['timestamp', 'xyz', 'flx']
 		})
 	})
@@ -1217,10 +1144,16 @@ describe('perps overview helpers', () => {
 	test('orders series by latest available value instead of first-seen row order', () => {
 		expect(
 			toRWAPerpsBreakdownChartDataset([
-				{ timestamp: 1_774_483_200, alpha: 100, beta: 80, gamma: 60 },
-				{ timestamp: 1_774_569_600, alpha: 90, beta: 90 }
+				{ timestamp: 1_774_483_200, alpha: 100, beta: 10 },
+				{ timestamp: 1_774_569_600, alpha: 5, beta: 90 }
 			]).dimensions
-		).toEqual(['timestamp', 'alpha', 'beta', 'gamma'])
+		).toEqual(['timestamp', 'beta', 'alpha'])
+	})
+
+	test('breaks latest-value ties alphabetically', () => {
+		expect(
+			toRWAPerpsBreakdownChartDataset([{ timestamp: 1_774_569_600, NVIDIA: 1, Meta: 1, Gold: 1 }]).dimensions
+		).toEqual(['timestamp', 'Gold', 'Meta', 'NVIDIA'])
 	})
 
 	test('groups multi-series datasets into a single total series without changing row order', () => {

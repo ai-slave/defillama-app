@@ -106,21 +106,11 @@ describe('formatAdapterData', () => {
 			totalAllTime: 1500,
 			methodology: 'Fees methodology',
 			methodologyURL: 'https://example.com/methodology',
-			defaultChartView: 'weekly',
-			chainBreakdown: {
-				Ethereum: {
-					total24h: 4,
-					total7d: 28,
-					total30d: 120,
-					totalAllTime: 700
-				},
-				Base: {
-					total24h: 8,
-					total7d: 42,
-					total30d: 180,
-					totalAllTime: 800
-				}
-			}
+			defaultChartView: 'weekly'
+		})
+		expect(result?.chainBreakdown).toEqual({
+			Ethereum: { total24h: 4, total7d: 28, total30d: 120, totalAllTime: 700 },
+			Base: { total24h: 8, total7d: 42, total30d: 180, totalAllTime: 800 }
 		})
 	})
 

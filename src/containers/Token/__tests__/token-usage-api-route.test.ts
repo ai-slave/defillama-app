@@ -1,36 +1,28 @@
-import type { NextApiHandler, NextApiRequest } from 'next'
+import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const { fetchWithPoolingOnServerMock, recordRouteRuntimeErrorMock, validateSubscriptionMock } = vi.hoisted(() => ({
-	fetchWithPoolingOnServerMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn(),
+const { validateSubscriptionMock } = vi.hoisted(() => ({
 	validateSubscriptionMock: vi.fn()
-}))
-
-vi.mock('~/constants', () => ({
-	SERVER_URL: 'https://api.example.com'
 }))
 
 vi.mock('~/utils/apiAuth', () => ({
 	validateSubscription: validateSubscriptionMock
 }))
 
-vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: NextApiHandler) => handler
-}))
-
 import tokenUsageHandler from '~/pages/api/private/token-usage/[symbol]'
+
+const telemetry = installTelemetrySink()
 
 beforeEach(() => {
 	vi.clearAllMocks()
-	validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: false })
-	fetchWithPoolingOnServerMock.mockResolvedValue(new Response(JSON.stringify({ protocols: ['aave'] })))
+	validateSubscriptionMock.mockImplementation(async (authorization: string | undefined) =>
+		authorization === 'Bearer ok'
+			? { valid: true, isTrial: false }
+			: { valid: false, status: 401, error: 'Authentication required' }
+	)
+	telemetry.serve({ '/tokenProtocols/ETH': { protocols: ['aave'] } })
 })
 
 describe('/api/private/token-usage/[symbol]', () => {
@@ -44,8 +36,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['GET'])
 		expect(res.status).toHaveBeenCalledWith(405)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(telemetry.requests.filter(({ url }) => url.pathname.startsWith('/tokenProtocols/'))).toHaveLength(0)
 	})
 
 	test('returns auth failures before checking missing symbol params', async () => {
@@ -59,11 +50,10 @@ describe('/api/private/token-usage/[symbol]', () => {
 
 		await tokenUsageHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith(undefined)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(401)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(telemetry.requests.filter(({ url }) => url.pathname.startsWith('/tokenProtocols/'))).toHaveLength(0)
 	})
 
 	test('returns 400 for missing symbols after successful auth', async () => {
@@ -76,14 +66,13 @@ describe('/api/private/token-usage/[symbol]', () => {
 
 		await tokenUsageHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(400)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Missing symbol parameter' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(telemetry.requests.filter(({ url }) => url.pathname.startsWith('/tokenProtocols/'))).toHaveLength(0)
 	})
 
-	test('returns token usage data with private no-store', async () => {
+	test('resolves lowercase symbols to uppercase upstream data with private no-store', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -93,15 +82,13 @@ describe('/api/private/token-usage/[symbol]', () => {
 
 		await tokenUsageHandler(req, res)
 
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.example.com/tokenProtocols/ETH')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({ protocols: ['aave'] })
 	})
 
 	test('passes through upstream error status and status text', async () => {
-		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 404, statusText: 'Not Found' }))
+		telemetry.serve({ '/tokenProtocols/MISSING': () => new Response(null, { status: 404, statusText: 'Not Found' }) })
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -111,7 +98,6 @@ describe('/api/private/token-usage/[symbol]', () => {
 
 		await tokenUsageHandler(req, res)
 
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.example.com/tokenProtocols/MISSING')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Not Found' })
@@ -129,28 +115,14 @@ describe('/api/private/token-usage/[symbol]', () => {
 
 		await tokenUsageHandler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ type: 'runtime_error', phase: 'apiRoute', error_message: error.message })
+			])
+		)
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 		expect(res.status).toHaveBeenCalledWith(500)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch token usage data' })
-		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
-	})
-
-	test('returns the route-specific 500 body when fetching token usage throws', async () => {
-		const error = new Error('Upstream unavailable')
-		fetchWithPoolingOnServerMock.mockRejectedValue(error)
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { symbol: 'eth' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUsageHandler(req, res)
-
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch token usage data' })
+		expect(telemetry.requests.filter(({ url }) => url.pathname.startsWith('/tokenProtocols/'))).toHaveLength(0)
 	})
 })

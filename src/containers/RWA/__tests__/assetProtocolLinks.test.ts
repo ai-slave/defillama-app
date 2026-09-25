@@ -1,32 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { getRWAAssetData } from '../queries'
 
-const fetchRWAAssetDataByIdMock = vi.fn()
+const upstream = vi.hoisted(() => ({ asset: {} as Record<string, unknown> }))
 
-vi.mock('../api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('../api')>()
-	return {
-		...actual,
-		fetchRWAAssetDataById: (...args: Array<unknown>) => fetchRWAAssetDataByIdMock(...args),
-		fetchRWAAssetChartData: () => Promise.resolve(null)
-	}
-})
-
-vi.mock('~/api', () => ({
-	fetchBlockExplorers: () => Promise.resolve([])
-}))
-
-// `name` is the protocol SLUG in this artifact; `displayName` is the human label.
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		protocolMetadata: {
-			'3057': { name: 'openeden-tbill', displayName: 'OpenEden TBILL' },
-			'5995': { name: 'openeden-usdo' },
-			'7670': { name: 'openeden-prism', displayName: '' },
-			'9999': {}
-		}
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: async (url: string) => {
+		const { pathname } = new URL(url)
+		if (pathname.endsWith('/rwa/90')) return upstream.asset
+		if (pathname.endsWith('/chart/asset/90')) return []
+		if (pathname.includes('explorer')) return []
+		throw new Error(`Unrouted upstream request: ${url}`)
 	}
 }))
+
+const metadata = installMetadataSeeder()
 
 const baseAsset = {
 	id: '90',
@@ -39,13 +28,21 @@ const baseAsset = {
 }
 
 async function loadAsset(projectId: unknown) {
-	fetchRWAAssetDataByIdMock.mockResolvedValue({ ...baseAsset, projectId })
+	upstream.asset = { ...baseAsset, projectId }
 	return getRWAAssetData({ assetId: '90', yieldsSnapshot: null })
 }
 
 describe('rwa asset protocol links', () => {
+	// `name` is the protocol SLUG in this artifact; `displayName` is the human label.
 	beforeEach(() => {
-		fetchRWAAssetDataByIdMock.mockReset()
+		metadata.seed({
+			protocolMetadata: {
+				'3057': { name: 'openeden-tbill', displayName: 'OpenEden TBILL' },
+				'5995': { name: 'openeden-usdo' },
+				'7670': { name: 'openeden-prism', displayName: '' },
+				'9999': {}
+			}
+		})
 	})
 
 	test('resolves each projectId to its protocol slug, preferring the display name', async () => {

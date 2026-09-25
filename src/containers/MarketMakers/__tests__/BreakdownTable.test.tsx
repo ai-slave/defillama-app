@@ -1,38 +1,38 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
-import { BreakdownTable, type BreakdownRowConfig } from '../BreakdownTable'
+import { expect, test } from 'vitest'
+import { BreakdownTable, type BreakdownRowConfig, sortBreakdownRows } from '../BreakdownTable'
 
 const ROWS: Array<BreakdownRowConfig> = [
 	{ label: 'Bid & Ask Depth 50 bps (USD)', key: 'bidAskDepth50', kind: 'usd' },
-	{ label: 'Uptime %, Bid & Ask Depth 50 bps', key: 'bidAskDepth50Uptime', kind: 'percent' }
+	{ label: 'Uptime %, Bid & Ask Depth 50 bps', key: 'bidAskDepth50Uptime', kind: 'percent' },
+	{ label: 'Ask Depth 50 bps (USD)', key: 'askDepth50', kind: 'usd' }
 ]
+const DATA = {
+	bidAskDepth50: { value: 266_553_520, percentile: 95, rank: 2 },
+	bidAskDepth50Uptime: { value: 99.5, percentile: null, rank: 7 }
+}
 
-describe('BreakdownTable', () => {
-	test('renders value, percentile, and rank', () => {
-		const data = {
-			bidAskDepth50: { value: 266_553_520, percentile: 95, rank: 2 }
-		}
-		const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={data} />)
+function rowTexts(html: string) {
+	return [...html.matchAll(/<tr[^>]*>(.*?)<\/tr>/g)]
+		.slice(1)
+		.map((row) => [...row[1].matchAll(/<td[^>]*>(.*?)<\/td>/g)].map((cell) => cell[1]))
+}
 
-		expect(html).toContain('Depth KPIs, Detailed Breakdown')
-		expect(html).toContain('Last 30D')
-		expect(html).toContain('$266')
-		expect(html).toContain('95%')
-		expect(html).toContain('>2<')
-	})
+test('shows each metric value, percentile and rank, with N/A for missing parts', () => {
+	const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={DATA} />)
+	expect(html).toContain('Depth KPIs, Detailed Breakdown')
+	expect(rowTexts(html)).toEqual([
+		['Bid &amp; Ask Depth 50 bps (USD)', '$266.55M', '95%', '2'],
+		['Uptime %, Bid &amp; Ask Depth 50 bps', '99.5%', 'N/A', '7'],
+		['Ask Depth 50 bps (USD)', 'N/A', 'N/A', 'N/A']
+	])
+})
 
-	test('renders N/A with no fill for a missing metric or sub-value', () => {
-		const data = {
-			bidAskDepth50: { value: null, percentile: null, rank: null }
-		}
-		const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={data} />)
-
-		expect(html).toContain('N/A')
-	})
-
-	test('renders N/A when the metric key is entirely absent', () => {
-		const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={{}} />)
-
-		expect(html).toContain('N/A')
-	})
+test('sorts rows by a numeric column with missing values last in both directions', () => {
+	const labels = (sort: Parameters<typeof sortBreakdownRows>[2]) =>
+		sortBreakdownRows(ROWS, DATA, sort).map((row) => row.key)
+	expect(labels({ key: 'rank', dir: 'desc' })).toEqual(['bidAskDepth50Uptime', 'bidAskDepth50', 'askDepth50'])
+	expect(labels({ key: 'rank', dir: 'asc' })).toEqual(['bidAskDepth50', 'bidAskDepth50Uptime', 'askDepth50'])
+	expect(labels({ key: 'metric', dir: 'asc' })).toEqual(['askDepth50', 'bidAskDepth50', 'bidAskDepth50Uptime'])
+	expect(labels(null)).toEqual(['bidAskDepth50', 'bidAskDepth50Uptime', 'askDepth50'])
 })

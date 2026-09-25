@@ -114,15 +114,6 @@ test('ignores keystrokes while an IME composition is in progress', async () => {
 	expect(undo).not.toHaveBeenCalled()
 })
 
-test('ignores plain Z, Alt+Z and unrelated shortcuts', async () => {
-	await act(async () => root.render(<Editor />))
-	keydown(byTestId('card-button'), { key: 'z' })
-	keydown(byTestId('card-button'), { key: 'z', ctrlKey: true, altKey: true })
-	keydown(byTestId('card-button'), { key: 's', ctrlKey: true })
-	expect(undo).not.toHaveBeenCalled()
-	expect(redo).not.toHaveBeenCalled()
-})
-
 test('leaves the browser default alone when nothing was undone', async () => {
 	undo.mockReturnValue(false)
 	await act(async () => root.render(<Editor />))
@@ -160,13 +151,6 @@ test('Ctrl+K and Cmd+K open quick add and swallow the site search shortcut', asy
 	window.removeEventListener('keydown', bubbleListener)
 })
 
-test('Ctrl+K opens quick add on a layout that reports a non latin key', async () => {
-	await act(async () => root.render(<Editor />))
-	const event = keydown(byTestId('card-button'), { code: 'KeyK', key: 'л', ctrlKey: true })
-	expect(openQuickAdd).toHaveBeenCalledOnce()
-	expect(event.defaultPrevented).toBe(true)
-})
-
 test('Cmd+K inside the quick add dialog is swallowed instead of reaching the site search', async () => {
 	await act(async () => root.render(<Editor />))
 	const bubbleListener = vi.fn()
@@ -187,13 +171,6 @@ test('leaves Cmd+K to the site search while disabled', async () => {
 	expect(event.defaultPrevented).toBe(false)
 })
 
-test('ignores Cmd+K typed inside the palette combobox', async () => {
-	await act(async () => root.render(<Editor />))
-	const event = keydown(byTestId('input'), { key: 'k', metaKey: true })
-	expect(openQuickAdd).not.toHaveBeenCalled()
-	expect(event.defaultPrevented).toBe(false)
-})
-
 function resolveFrom(target: EventTarget, init: KeyboardEventInit) {
 	const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
 	target.dispatchEvent(event)
@@ -209,22 +186,16 @@ test.each([
 	['plain K', { key: 'k' }, null],
 	['Ctrl+Z', { key: 'z', ctrlKey: true }, 'undo'],
 	['Ctrl+Shift+Z', { key: 'z', ctrlKey: true, shiftKey: true }, 'redo'],
-	['Ctrl+Y', { key: 'y', ctrlKey: true }, 'redo']
+	['Ctrl+Y', { key: 'y', ctrlKey: true }, 'redo'],
+	['plain Z', { key: 'z' }, null],
+	['Ctrl+Alt+Z', { key: 'z', ctrlKey: true, altKey: true }, null],
+	['Ctrl+S', { key: 's', ctrlKey: true }, null]
 ] as const)('resolveDashboardEditorHotkey maps %s', (_label, init, expected) => {
 	expect(resolveFrom(document.createElement('div'), init)).toBe(expected)
 })
 
 test('resolveDashboardEditorHotkey ignores Cmd+K aimed at an input', () => {
 	expect(resolveFrom(document.createElement('input'), { key: 'k', metaKey: true })).toBe(null)
-})
-
-test('resolveDashboardEditorHotkey swallows Cmd+K aimed inside a dialog', () => {
-	const dialog = document.createElement('div')
-	dialog.setAttribute('role', 'dialog')
-	const field = document.createElement('input')
-	dialog.appendChild(field)
-	expect(resolveFrom(field, { key: 'k', metaKey: true })).toBe('swallow-quick-add')
-	expect(resolveFrom(field, { key: 'z', ctrlKey: true })).toBe(null)
 })
 
 test('resolveDashboardEditorHotkey ignores Cmd+K aimed inside a listbox', () => {

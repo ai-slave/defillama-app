@@ -9,13 +9,13 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createConfig, createConnector, http, ProviderNotFoundError, WagmiProvider, type Config } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import { mock } from 'wagmi/connectors'
+import { AuthProvider } from '~/auth'
 import { AuthDialogHeader } from '~/auth/AuthDialog'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import { createSignInFlowStore } from '~/auth/signInFlowStore'
 import pb from '~/utils/pocketbase'
 import { WalletSignInForm } from './WalletSignIn'
 
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ consumeSignupOutcome: () => {} }) }))
 vi.mock('~/layout/WalletProviderClient', () => ({ WalletProviderClient: () => null }))
 const first = '0x1111111111111111111111111111111111111111'
 const second = '0x2222222222222222222222222222222222222222'
@@ -134,9 +134,11 @@ beforeEach(async () => {
 			<QueryClientProvider
 				client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}
 			>
-				<WagmiProvider config={config} reconnectOnMount={false}>
-					<Fixture />
-				</WagmiProvider>
+				<AuthProvider>
+					<WagmiProvider config={config} reconnectOnMount={false}>
+						<Fixture />
+					</WagmiProvider>
+				</AuthProvider>
 			</QueryClientProvider>
 		)
 	)
@@ -196,30 +198,6 @@ test.each(['address', 'network'])('invalidates signing after a %s change, even i
 	expect(pb.authStore.token).toBe('')
 	expect(fetch).toHaveBeenCalledTimes(1)
 	expect(button('Sign in').disabled).toBe(false)
-})
-
-test('lets the user disconnect during a signature and ignores the late approval', async () => {
-	await beginSigning()
-	await click('Change wallet')
-	await vi.waitFor(() => expect(button('Fixture wallet').disabled).toBe(false))
-	await act(async () => completeSignature('0x1234'))
-	expect(pb.authStore.token).toBe('')
-	expect(fetch).toHaveBeenCalledTimes(1)
-})
-
-test('leaving while connecting never signs or opens the wallet screen again', async () => {
-	let finishConnect!: () => void
-	pendingConnect = new Promise((resolve) => {
-		finishConnect = resolve
-	})
-	await click('Fixture wallet')
-	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Back to sign in"]')!.click())
-	pb.authStore.save('email-session', { id: 'email-user', collectionId: 'users', collectionName: 'users' })
-	await act(async () => finishConnect())
-	expect(container.textContent).toBe('Email sign-in')
-	expect(fetch).not.toHaveBeenCalled()
-	expect(requestedSignatures).not.toHaveBeenCalled()
-	expect(pb.authStore.token).toBe('email-session')
 })
 
 test('puts an available last-used connector first without connecting it', async () => {

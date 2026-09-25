@@ -43,7 +43,7 @@ const categoriesAndTagsMetadata = {
 } satisfies ICategoriesAndTags
 
 describe('shouldFetchChainDexs', () => {
-	test('accepts an optional phase timer without changing missing-chain results', async () => {
+	test('returns no page data for an unknown chain without timing any phase', async () => {
 		const phaseTimer = createRoutePhaseTimer()
 
 		await expect(

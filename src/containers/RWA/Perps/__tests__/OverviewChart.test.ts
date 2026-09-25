@@ -1,0 +1,188 @@
+import { describe, expect, test } from 'vitest'
+import { CHART_COLORS } from '~/constants/colors'
+import {
+	buildRWAPerpsOverviewChartSeries,
+	getRWAPerpsOverviewChartType,
+	getRWAPerpsOverviewChartTypeQueryPatch,
+	getRWAPerpsOverviewTimeSeriesMode,
+	getRWAPerpsOverviewTimeSeriesModeQueryPatch,
+	getRWAPerpsChartDatasetForSelectedStacks,
+	resolveRWAPerpsOverviewSelectedStacks
+} from '../OverviewChart'
+
+describe('OverviewChart helpers', () => {
+	test('falls back to the default chart type for invalid query values', () => {
+		expect(getRWAPerpsOverviewChartType(undefined)).toBe('openInterest')
+		expect(getRWAPerpsOverviewChartType('invalid')).toBe('openInterest')
+		expect(getRWAPerpsOverviewChartType('markets')).toBe('markets')
+	})
+
+	test('builds the expected chart-type query patch', () => {
+		expect(getRWAPerpsOverviewChartTypeQueryPatch('openInterest')).toEqual({ chartType: undefined })
+		expect(getRWAPerpsOverviewChartTypeQueryPatch('volume24h')).toEqual({ chartType: 'volume24h' })
+	})
+
+	test('falls back to total mode for invalid time-series mode values', () => {
+		expect(getRWAPerpsOverviewTimeSeriesMode(undefined)).toBe('grouped')
+		expect(getRWAPerpsOverviewTimeSeriesMode('invalid')).toBe('grouped')
+		expect(getRWAPerpsOverviewTimeSeriesMode('breakdown')).toBe('breakdown')
+	})
+
+	test('builds the expected time-series-mode query patch', () => {
+		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('grouped')).toEqual({ timeSeriesMode: undefined })
+		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('breakdown')).toEqual({ timeSeriesMode: 'breakdown' })
+	})
+
+	test('prefers explicit selected stacks over excluded stacks and filters unknown values', () => {
+		expect(
+			resolveRWAPerpsOverviewSelectedStacks({
+				stackOptions: ['Meta', 'NVIDIA'],
+				selectedStacksQ: ['NVIDIA', 'Unknown'],
+				excludeStacksQ: ['Meta']
+			})
+		).toEqual(['NVIDIA'])
+	})
+
+	test('supports the None sentinel and exclusion-based defaults', () => {
+		expect(
+			resolveRWAPerpsOverviewSelectedStacks({
+				stackOptions: ['Meta', 'NVIDIA'],
+				selectedStacksQ: 'None',
+				excludeStacksQ: undefined
+			})
+		).toEqual([])
+
+		expect(
+			resolveRWAPerpsOverviewSelectedStacks({
+				stackOptions: ['Meta', 'NVIDIA'],
+				selectedStacksQ: undefined,
+				excludeStacksQ: ['NVIDIA']
+			})
+		).toEqual(['Meta'])
+	})
+
+	test('projects selected stack datasets after the first selected value while retaining the all-stack total', () => {
+		const dataset = {
+			source: [
+				{ timestamp: 1, Total: 10, PreStocks: null, Securitize: 10 },
+				{ timestamp: 2, Total: 11, PreStocks: null, Securitize: 11 },
+				{ timestamp: 3, Total: 23, PreStocks: 12, Securitize: 11 },
+				{ timestamp: 4, Total: 11, PreStocks: 0, Securitize: 11 }
+			],
+			dimensions: ['timestamp', 'Total', 'PreStocks', 'Securitize']
+		}
+
+		expect(getRWAPerpsChartDatasetForSelectedStacks(dataset, ['PreStocks'], ['PreStocks', 'Securitize'])).toEqual({
+			source: [
+				{ timestamp: 3, Total: 23, PreStocks: 12 },
+				{ timestamp: 4, Total: 11, PreStocks: 0 }
+			],
+			dimensions: ['timestamp', 'Total', 'PreStocks']
+		})
+	})
+
+	test('keeps only Total when every breakdown stack is deselected', () => {
+		expect(
+			getRWAPerpsChartDatasetForSelectedStacks(
+				{
+					source: [{ timestamp: 1, Total: 30, Meta: 10, NVIDIA: 20 }],
+					dimensions: ['timestamp', 'Total', 'Meta', 'NVIDIA']
+				},
+				[],
+				['Meta', 'NVIDIA']
+			)
+		).toEqual({
+			source: [{ timestamp: 1, Total: 30 }],
+			dimensions: ['timestamp', 'Total']
+		})
+	})
+
+	test('builds bar series for volume charts', () => {
+		expect(
+			buildRWAPerpsOverviewChartSeries({
+				chartType: 'volume24h',
+				stackOptions: ['Meta', 'NVIDIA'],
+				timeSeriesMode: 'breakdown'
+			})
+		).toMatchObject([
+			{ name: 'Meta', type: 'bar', stack: 'A', large: false },
+			{ name: 'NVIDIA', type: 'bar', stack: 'A', large: false }
+		])
+	})
+
+	test('builds a total series when the grouped dataset only exposes Total', () => {
+		expect(
+			buildRWAPerpsOverviewChartSeries({
+				chartType: 'markets',
+				stackOptions: ['Total'],
+				timeSeriesMode: 'grouped'
+			})
+		).toMatchObject([{ name: 'Total', type: 'line' }])
+	})
+
+	test('adds a plain total line ahead of the breakdown color scale for breakdown line charts', () => {
+		expect(
+			buildRWAPerpsOverviewChartSeries({
+				chartType: 'openInterest',
+				stackOptions: ['Total', 'Meta', 'NVIDIA'],
+				timeSeriesMode: 'breakdown'
+			})
+		).toEqual([
+			{
+				name: 'Meta',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Meta' },
+				color: CHART_COLORS[1]
+			},
+			{
+				name: 'NVIDIA',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'NVIDIA' },
+				color: CHART_COLORS[2]
+			},
+			{
+				name: 'Total',
+				type: 'line',
+				encode: { x: 'timestamp', y: 'Total' },
+				color: CHART_COLORS[0],
+				hideAreaStyle: true,
+				excludeFromTooltipTotal: true
+			}
+		])
+	})
+
+	test('does not add a total overlay to breakdown bar charts', () => {
+		expect(
+			buildRWAPerpsOverviewChartSeries({
+				chartType: 'volume24h',
+				stackOptions: ['Total', 'Meta', 'NVIDIA'],
+				timeSeriesMode: 'breakdown'
+			})
+		).toEqual([
+			{
+				name: 'Total',
+				type: 'bar',
+				stack: 'A',
+				large: false,
+				encode: { x: 'timestamp', y: 'Total' },
+				color: CHART_COLORS[0]
+			},
+			{
+				name: 'Meta',
+				type: 'bar',
+				stack: 'A',
+				large: false,
+				encode: { x: 'timestamp', y: 'Meta' },
+				color: CHART_COLORS[1]
+			},
+			{
+				name: 'NVIDIA',
+				type: 'bar',
+				stack: 'A',
+				large: false,
+				encode: { x: 'timestamp', y: 'NVIDIA' },
+				color: CHART_COLORS[2]
+			}
+		])
+	})
+})

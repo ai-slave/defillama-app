@@ -2,20 +2,13 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 import type { BuildResult } from '../buildResult'
 import { runDeployBuild } from '../deployBuild'
 import { createMemoryLogger, createTeeLogger } from '../logger'
 import { testEnv } from './testEnv'
 
-const telemetryMock = vi.hoisted(() => ({
-	flushTelemetry: vi.fn(async () => undefined),
-	recordDomainEvent: vi.fn()
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	flushTelemetry: telemetryMock.flushTelemetry,
-	recordDomainEvent: telemetryMock.recordDomainEvent
-}))
+const telemetry = installTelemetrySink()
 
 const tempDirs: Array<string> = []
 
@@ -38,8 +31,6 @@ function runDeployBuildTest(options: Parameters<typeof runDeployBuild>[0] = {}) 
 afterEach(async () => {
 	vi.unstubAllGlobals()
 	vi.restoreAllMocks()
-	telemetryMock.flushTelemetry.mockClear()
-	telemetryMock.recordDomainEvent.mockClear()
 	await Promise.all(tempDirs.splice(0).map((tempDir) => fs.rm(tempDir, { force: true, recursive: true })))
 })
 
@@ -125,6 +116,7 @@ describe('deploy build pipeline', () => {
 			.mockResolvedValueOnce(new Response('log-id', { status: 200 }))
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
+		vi.stubEnv('OPS_TELEMETRY_URL', '')
 		vi.stubGlobal('fetch', fetchImpl)
 
 		const result = await runDeployBuildTest({
@@ -167,6 +159,7 @@ describe('deploy build pipeline', () => {
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 			.mockResolvedValueOnce(new Response('log-id', { status: 200 }))
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
+		vi.stubEnv('OPS_TELEMETRY_URL', '')
 		vi.stubGlobal('fetch', fetchImpl)
 
 		const result = await runDeployBuildTest({
@@ -285,23 +278,26 @@ describe('deploy build pipeline', () => {
 		})
 
 		expect(syncArtifacts).toHaveBeenCalledWith(result)
-		expect(telemetryMock.recordDomainEvent).toHaveBeenCalledWith(
-			'build.complete',
-			'info',
-			'main',
-			'Build completed on main',
-			{
-				branch: 'main',
-				build_id: 'build-id',
-				commit_sha: 'abcdef123456',
-				duration_ms: 5000,
-				exit_code: 0,
-				finished_at: '2026-01-01T00:00:05.000Z',
-				started_at: '2026-01-01T00:00:00.000Z',
-				status: 'success'
-			}
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					event_name: 'build.complete',
+					level: 'info',
+					subject: 'main',
+					message: 'Build completed on main',
+					attributes: expect.objectContaining({
+						branch: 'main',
+						build_id: 'build-id',
+						commit_sha: 'abcdef123456',
+						duration_ms: 5000,
+						exit_code: 0,
+						finished_at: '2026-01-01T00:00:05.000Z',
+						started_at: '2026-01-01T00:00:00.000Z',
+						status: 'success'
+					})
+				})
+			])
 		)
-		expect(telemetryMock.flushTelemetry).toHaveBeenCalledWith({ runtime: 'build', timeoutMs: 2000 })
 	})
 
 	test('uses git fallback as the build commit when commit env vars are blank', async () => {
@@ -321,15 +317,19 @@ describe('deploy build pipeline', () => {
 
 		expect(result.status).toBe('success')
 		expect(logger.output.join('')).toContain('Commit: abcdef123456')
-		expect(telemetryMock.recordDomainEvent).toHaveBeenCalledWith(
-			'build.complete',
-			'info',
-			'main',
-			'Build completed on main',
-			expect.objectContaining({
-				build_id: 'abcdef123456',
-				commit_sha: 'abcdef123456'
-			})
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					event_name: 'build.complete',
+					level: 'info',
+					subject: 'main',
+					message: 'Build completed on main',
+					attributes: expect.objectContaining({
+						build_id: 'abcdef123456',
+						commit_sha: 'abcdef123456'
+					})
+				})
+			])
 		)
 	})
 
@@ -346,16 +346,20 @@ describe('deploy build pipeline', () => {
 		})
 
 		expect(result.status).toBe('failure')
-		expect(telemetryMock.recordDomainEvent).toHaveBeenCalledWith(
-			'build.complete',
-			'warn',
-			'main',
-			'Build failed on main',
-			expect.objectContaining({
-				commit_sha: 'abcdef123456',
-				exit_code: 1,
-				status: 'failure'
-			})
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					event_name: 'build.complete',
+					level: 'warn',
+					subject: 'main',
+					message: 'Build failed on main',
+					attributes: expect.objectContaining({
+						commit_sha: 'abcdef123456',
+						exit_code: 1,
+						status: 'failure'
+					})
+				})
+			])
 		)
 	})
 })

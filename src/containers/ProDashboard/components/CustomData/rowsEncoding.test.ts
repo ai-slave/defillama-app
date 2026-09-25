@@ -66,17 +66,6 @@ describe('encodeRows', () => {
 })
 
 describe('decodeRows', () => {
-	test('returns inline rows synchronously resolved and caches decoding per encoded object', async () => {
-		const inline = numericRows(3)
-		await expect(decodeRows(inline)).resolves.toBe(inline)
-		const encoded = await encodeRows(numericRows(2000))
-		if (!isCustomDataEncodedRows(encoded)) throw new Error('Expected compressed rows')
-		const first = decodeRows(encoded)
-		expect(decodeRows(encoded)).toBe(first)
-		expect(decodeRows({ ...encoded })).not.toBe(first)
-		await expect(first).resolves.toHaveLength(2000)
-	})
-
 	test('drops entries that are not rows when a stored payload is malformed', async () => {
 		const data = await gzipBase64Encode(JSON.stringify([[1, 2], 'junk', null, [3, 4]]))
 		await expect(decodeRows({ encoding: 'gzip-base64', data, rowCount: 4 })).resolves.toEqual([

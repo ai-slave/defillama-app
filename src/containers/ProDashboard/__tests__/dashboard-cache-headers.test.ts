@@ -1,10 +1,10 @@
 import { EventEmitter } from 'node:events'
-import { IncomingMessage, ServerResponse } from 'node:http'
+import { IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
-import type { GetServerSidePropsContext, GetServerSidePropsResult, NextApiRequest } from 'next'
-import { createElement, type ReactNode } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
+import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AUTH_SERVER, CONFIG_API, FEATURES_SERVER, POCKETBASE_URL, SERVER_URL, V2_SERVER_URL } from '~/constants'
+import { getChartBuilderQueryKey } from '~/containers/ProDashboard/chartBuilderQueryKey'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import {
 	INITIAL_DASHBOARD_STREAM_ITEM_COUNT,
@@ -12,189 +12,118 @@ import {
 } from '~/containers/ProDashboard/dashboardStreamContract'
 import type { DashboardVariable } from '~/containers/ProDashboard/dashboardTypes'
 import { createVariableCatalog, resolveDashboardItems } from '~/containers/ProDashboard/dashboardVariables/resolve'
-import type { ChartConfig } from '~/containers/ProDashboard/types'
-import { recordRouteRuntimeError, recordRuntimeError } from '~/utils/telemetry'
+import type { ChartBuilderConfig, ChartConfig } from '~/containers/ProDashboard/types'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
 import { createMockNextApiResponse, type MockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-async function readServerSideProps<Props extends object>(result: GetServerSidePropsResult<Props>): Promise<Props> {
-	if (!('props' in result)) throw new Error('Expected dashboard props')
-	return result.props
-}
-
-const catalogProtocol = (protocolSlug: string) => ({
-	id: protocolSlug,
-	name: protocolSlug,
-	slug: protocolSlug,
-	symbol: protocolSlug.toUpperCase(),
-	tvl: 1,
-	oracles: [],
-	chains: [],
-	geckoId: null
-})
-
-const {
-	fetchDashboardConfigMock,
-	fetchDashboardConfigWithStatusMock,
-	fetchProtocolsMock,
-	fetchOracleMetricsMock,
-	fetchProtocolsAndChainsMock,
-	fetchAppMetadataMock,
-	fetchSingleChartDataMock,
-	withTimeoutMock,
-	streamProTokenUsageDataMock,
-	fetchChartBuilderServerDataMock,
-	fetchProtocolsTableMock,
-	fetchAuthenticatedUserIdMock,
-	providerPropsMock,
-	proDashboardLoaderMock
-} = vi.hoisted(() => ({
-	fetchDashboardConfigMock: vi.fn(),
-	fetchDashboardConfigWithStatusMock: vi.fn(),
-	fetchProtocolsMock: vi.fn(),
-	fetchOracleMetricsMock: vi.fn(),
-	fetchProtocolsAndChainsMock: vi.fn(),
-	fetchAppMetadataMock: vi.fn(),
-	fetchSingleChartDataMock: vi.fn(),
-	withTimeoutMock: vi.fn((promise: Promise<unknown>, _ms?: number) => promise),
-	streamProTokenUsageDataMock: vi.fn(),
+const { fetchChartBuilderServerDataMock, fetchProtocolsTableMock } = vi.hoisted(() => ({
 	fetchChartBuilderServerDataMock: vi.fn(),
-	fetchProtocolsTableMock: vi.fn(),
-	fetchAuthenticatedUserIdMock: vi.fn(),
-	providerPropsMock: vi.fn(),
-	proDashboardLoaderMock: vi.fn()
+	fetchProtocolsTableMock: vi.fn()
 }))
 
-const routerQueryMock = vi.hoisted(
-	() => ({ dashboardId: 'dashboard-1' }) as { dashboardId: string; mode?: Array<string> }
-)
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRuntimeError: vi.fn(),
-	recordRouteRuntimeError: vi.fn(),
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler,
-	withServerSidePropsTelemetry: (_route: string, handler: unknown) => handler
+/** Upstream state the stream reads: catalog rows from the database, and a chart answer per request. */
+const upstream = vi.hoisted(() => ({
+	catalogRows: [] as Array<Record<string, unknown>>,
+	chart: (_url: URL): unknown => [[1_700_000_000, 1]]
 }))
 
-vi.mock('next/router', () => ({
-	default: { replace: vi.fn() },
-	useRouter: () => ({
-		asPath: '/pro/dashboard-1',
-		query: routerQueryMock,
-		replace: vi.fn()
-	})
+// The protocol catalog and P/F availability come from the database; everything else runs down to fetch.
+vi.mock('~/server/db/llama', () => ({
+	llamaDb: { query: async () => upstream.catalogRows, any: async () => [] }
 }))
-
-vi.mock('~/ui/Icon', () => ({
-	Icon: () => null
-}))
-
-vi.mock('~/components/Link', () => ({
-	BasicLink: () => null
-}))
-
-vi.mock('~/containers/ProDashboard/components/ProDashboardLoader', () => ({
-	ProDashboardLoader: (props: unknown) => {
-		proDashboardLoaderMock(props)
-		return null
-	}
-}))
-
-vi.mock('~/containers/ProDashboard/hooks/useDashboardEngagement', () => ({
-	useDashboardEngagement: () => ({ trackView: vi.fn() })
-}))
-
-vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
-	ProDashboardAPIProvider: ({ children, ...props }: { children: ReactNode }) => {
-		providerPropsMock(props)
-		return children
-	},
-	useProDashboardDashboard: () => ({
-		isLoadingDashboard: false,
-		dashboardVisibility: 'public',
-		currentDashboard: null,
-		dashboardName: 'Dashboard'
-	})
-}))
-
-vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
-	AppMetadataProvider: () => null
-}))
-
-vi.mock('~/containers/ProDashboard/server/auth', () => ({
-	getAuthTokenFromRequest: (req: { cookies?: Record<string, string> }) => req.cookies?.pb_auth_token ?? null,
-	fetchAuthenticatedUserId: fetchAuthenticatedUserIdMock
-}))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: false,
-		loaders: { userLoading: false },
-		hasActiveSubscription: false
-	})
-}))
-
-vi.mock('~/layout', () => ({
-	__esModule: true,
-	default: ({ children }: { children: ReactNode }) => children
-}))
-
-vi.mock('~/containers/ProDashboard/queries.server', () => ({
-	extractChartItems: vi.fn(() => []),
-	fetchAppMetadata: fetchAppMetadataMock,
-	fetchDashboardConfig: fetchDashboardConfigMock,
-	fetchDashboardConfigWithStatus: fetchDashboardConfigWithStatusMock,
-	fetchProtocolsAndChains: fetchProtocolsAndChainsMock,
-	fetchSingleChartData: fetchSingleChartDataMock,
-	withTimeout: withTimeoutMock
-}))
-
-vi.mock('~/containers/ProDashboard/server/tableQueries', () => ({
-	streamProTokenUsageData: streamProTokenUsageDataMock
-}))
-
-vi.mock('~/containers/ProtocolLists/api', () => ({
-	fetchProtocols: fetchProtocolsMock
-}))
-
-vi.mock('~/containers/Oracles/api', () => ({
-	fetchOracleMetrics: fetchOracleMetricsMock
-}))
-
-vi.mock('~/containers/ProDashboard/services/ProtocolCharts', () => ({
-	fetchProProtocolChartData: vi.fn()
-}))
-
+// Chart-builder series and unified tables are computed from dataset and database queries these tests do not model.
 vi.mock('~/containers/ProDashboard/server/chartBuilder/data', () => ({
 	fetchChartBuilderServerData: fetchChartBuilderServerDataMock
 }))
-
-vi.mock('~/containers/ProtocolOverview/api', () => ({
-	fetchProtocolBySlug: vi.fn()
-}))
-
-vi.mock('~/containers/Stablecoins/api', () => ({
-	fetchStablecoinAssetsApi: vi.fn(),
-	fetchStablecoinChartApi: vi.fn(),
-	fetchStablecoinPricesApi: vi.fn(),
-	fetchStablecoinRatesApi: vi.fn()
-}))
-
-vi.mock('~/containers/Stablecoins/utils', () => ({
-	formatPeggedAssetsData: vi.fn()
-}))
-
-vi.mock('~/containers/Unlocks/queries', () => ({
-	getProtocolEmissionsPieData: vi.fn(),
-	getProtocolEmissionsScheduleData: vi.fn()
-}))
-
 vi.mock('~/containers/ProDashboard/server/unifiedTable/protocols', () => ({
 	fetchProtocolsTable: fetchProtocolsTableMock
 }))
-
+// Authorized reads go through the pooled server client; route them to the same fetch fixtures.
 vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: vi.fn()
+	fetchWithPoolingOnServer: (url: string, init?: RequestInit) => fetch(url, init)
 }))
+
+const catalogRow = (slug: string) => ({
+	slug,
+	name: slug,
+	protocol: slug,
+	category: null,
+	tvl_base: 1,
+	symbol: slug.toUpperCase(),
+	token_nk: null,
+	has_misrepresented_tokens: false,
+	exclude_tvl_from_parent: false
+})
+
+const catalogChain = (name: string) => ({
+	name,
+	gecko_id: null,
+	tvl: 1,
+	tokenSymbol: null,
+	chainId: null,
+	cmcId: null
+})
+
+const PROTOCOLS_URL = `${SERVER_URL}/lite/protocols2`
+const CHAINS_URL = `${SERVER_URL}/chains`
+const ORACLES_URL = `${V2_SERVER_URL}/metrics/oracle`
+const APP_METADATA_URL = `${CONFIG_API}/smol/appMetadata-`
+const CHART_URL = `${V2_SERVER_URL}/chart/`
+
+/** Answers every upstream a dashboard stream can read, before a test overrides one. */
+function serveUpstreams(chains: Array<ReturnType<typeof catalogChain>> = []) {
+	telemetry.serve({
+		[PROTOCOLS_URL]: { protocols: [], chains: [], parentProtocols: [] },
+		[CHAINS_URL]: chains,
+		[ORACLES_URL]: { oracles: {}, chainsByOracle: {}, oraclesTVS: {} },
+		[`${APP_METADATA_URL}protocols.json`]: {},
+		[`${APP_METADATA_URL}chains.json`]: {},
+		[CHART_URL]: (url: URL) => upstream.chart(url)
+	})
+}
+
+/** Which shared upstreams the stream read, in order, without repeats. */
+function upstreamReads() {
+	const reads: Array<string> = []
+	for (const { url } of telemetry.requests) {
+		const read = url.href.startsWith(PROTOCOLS_URL)
+			? 'protocols'
+			: url.href === CHAINS_URL
+				? 'chains'
+				: url.href.startsWith(ORACLES_URL)
+					? 'oracles'
+					: url.href.startsWith(APP_METADATA_URL)
+						? 'app-metadata'
+						: null
+		if (read && !reads.includes(read)) reads.push(read)
+	}
+	return reads
+}
+
+/** Chart series requests, as the path under /chart/, in request order. */
+function chartReads() {
+	return telemetry.requests.flatMap(({ url }) =>
+		url.href.startsWith(CHART_URL) ? [url.href.slice(CHART_URL.length)] : []
+	)
+}
+
+/** Holds every chart request until the test answers it, counting how many are in flight at once. */
+function holdCharts() {
+	const held = { pending: [] as Array<(series: Array<[number, number]>) => void>, active: 0, maxActive: 0 }
+	upstream.chart = () =>
+		new Promise<Response>((resolve) => {
+			held.active += 1
+			held.maxActive = Math.max(held.maxActive, held.active)
+			held.pending.push((series) => {
+				held.active -= 1
+				resolve(Response.json(series))
+			})
+		})
+	return held
+}
+
+const feesChart = (protocol: string) => `fees/protocol/${protocol}?dataType=dailyFees`
 
 import {
 	DASHBOARD_CONFIG_STREAM_TIMEOUT_MS,
@@ -202,35 +131,48 @@ import {
 	DASHBOARD_STREAM_SOURCE_CONCURRENCY
 } from '~/containers/ProDashboard/server/stream'
 import dashboardStreamHandler from '~/pages/api/dynamic/pro-dashboard/[dashboardId]/stream'
-import DashboardPage, { getServerSideProps } from '~/pages/pro/[dashboardId]/[[...mode]]'
+
+const telemetry = installTelemetrySink()
+/** The saved dashboard the features server answers with; null answers 404, a pending promise never answers. */
+let dashboardConfig: unknown = null
+
+beforeEach(() => {
+	dashboardConfig = null
+	upstream.catalogRows = [catalogRow('aave')]
+	upstream.chart = () => [[1_700_000_000, 1]]
+	serveUpstreams()
+	telemetry.serve({
+		[`${FEATURES_SERVER}/dashboards/`]: () => (dashboardConfig === null ? fixtureStatus(404)() : dashboardConfig),
+		// Signed-in streams resolve the subscription; these sessions are not subscribed.
+		[`${AUTH_SERVER}/subscription/status`]: fixtureStatus(401),
+		[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: fixtureStatus(401)
+	})
+})
+
+/** Dashboard config reads in order, with the session token each one carried. */
+function dashboardReads() {
+	return telemetry.requests
+		.filter((request) => request.url.pathname.startsWith('/dashboards/'))
+		.map(
+			(request) => `${request.url.pathname} ${new Headers(request.init?.headers).get('Authorization') ?? 'anonymous'}`
+		)
+}
+
+/** Runtime errors the stream reported, by phase and the failed stream source or upstream URL. */
+async function runtimeErrors() {
+	return (await telemetry.events()).flatMap((event) =>
+		event.type === 'runtime_error'
+			? [{ phase: event.phase, source: event.attributes?.stream_source ?? event.attributes?.url }]
+			: []
+	)
+}
+
+function setDashboardConfig(dashboard: unknown) {
+	dashboardConfig = dashboard
+}
 
 const PUBLIC_DASHBOARD_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=60'
 const PRIVATE_DASHBOARD_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
-
-function createSsrContext(
-	dashboardId: string,
-	authToken?: string,
-	mode?: Array<string>,
-	search = ''
-): GetServerSidePropsContext {
-	const req = Object.assign(new IncomingMessage(new Socket()), {
-		cookies: authToken ? { pb_auth_token: authToken } : {}
-	})
-	req.method = 'GET'
-	const res = new ServerResponse(req)
-	vi.spyOn(res, 'setHeader')
-	return {
-		params: { dashboardId, ...(mode ? { mode } : {}) },
-		query: {},
-		req,
-		res,
-		resolvedUrl: `/pro/${dashboardId}${mode ? `/${mode.join('/')}` : ''}${search}`
-	}
-}
-
-function createEditSsrContext(dashboardId: string, authToken?: string, search = ''): GetServerSidePropsContext {
-	return createSsrContext(dashboardId, authToken, ['edit'], search)
-}
 
 function createStreamRequest(
 	dashboardId: string,
@@ -248,8 +190,29 @@ function createStreamRequest(
 	return req
 }
 
+// Route telemetry wraps `res.write` and `res.end` while the stream is open, so reads go through the original spies.
+const responseSpies = new WeakMap<
+	MockNextApiResponse,
+	{ write: MockNextApiResponse['write']; end: MockNextApiResponse['end'] }
+>()
+
+function streamResponse(): MockNextApiResponse {
+	const res = createMockNextApiResponse()
+	responseSpies.set(res, { write: res.write, end: res.end })
+	return res
+}
+
+function spiesOf(res: MockNextApiResponse) {
+	const spies = responseSpies.get(res)
+	if (!spies) throw new Error('Expected a stream response')
+	return spies
+}
+
+const written = (res: MockNextApiResponse) => spiesOf(res).write
+const ended = (res: MockNextApiResponse) => spiesOf(res).end
+
 function streamChunks(res: MockNextApiResponse): Array<DashboardStreamChunk> {
-	return res.write.mock.calls.map((call) => JSON.parse(String(call[0])) as DashboardStreamChunk)
+	return written(res).mock.calls.map((call) => JSON.parse(String(call[0])) as DashboardStreamChunk)
 }
 
 function readyItemIds(chunks: ReadonlyArray<DashboardStreamChunk>): Array<string> {
@@ -263,15 +226,6 @@ function readyIndex(chunks: ReadonlyArray<DashboardStreamChunk>, itemId: string)
 function chunkIndex(chunks: ReadonlyArray<DashboardStreamChunk>, type: DashboardStreamChunk['type']): number {
 	return chunks.findIndex((chunk) => chunk.type === type)
 }
-
-const catalogChain = (name: string) => ({
-	name,
-	gecko_id: null,
-	tvl: 1,
-	tokenSymbol: null,
-	chainId: null,
-	cmcId: null
-})
 
 describe('pro dashboard cache headers', () => {
 	const publicDashboard = {
@@ -314,446 +268,37 @@ describe('pro dashboard cache headers', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
-		fetchDashboardConfigMock.mockResolvedValue(publicDashboard)
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: publicDashboard,
-			status: 200
-		})
-		fetchProtocolsMock.mockResolvedValue({
-			protocols: [],
-			chains: [],
-			parentProtocols: []
-		})
-		fetchOracleMetricsMock.mockResolvedValue({
-			oracles: {},
-			chainsByOracle: {},
-			oraclesTVS: {}
-		})
-		fetchProtocolsAndChainsMock.mockResolvedValue({
-			protocols: [catalogProtocol('aave')],
-			chains: []
-		})
-		fetchAppMetadataMock.mockResolvedValue({})
-		fetchSingleChartDataMock.mockResolvedValue([[1_700_000_000, 1]])
-		streamProTokenUsageDataMock.mockResolvedValue(undefined)
+		setDashboardConfig(publicDashboard)
 		fetchChartBuilderServerDataMock.mockResolvedValue({ series: [] })
 		fetchProtocolsTableMock.mockResolvedValue({ rows: [], parentMetrics: {} })
-		fetchAuthenticatedUserIdMock.mockResolvedValue('user-1')
 	})
 
 	afterEach(() => {
 		vi.unstubAllEnvs()
 	})
 
-	test('keeps the public dashboard page cache header unjittered', async () => {
-		const context = createSsrContext('dashboard-1')
-
-		const result = await getServerSideProps(context)
-		const props = await readServerSideProps(result)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', null)
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'dashboard-1',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					visibility: 'public',
-					tags: ['fees', 'ethereum'],
-					data: expect.objectContaining({
-						dashboardName: 'Public Fees Dashboard',
-						items: publicDashboard.data.items
-					}),
-					viewCount: 7,
-					likeCount: 2
-				}),
-				noIndex: false,
-				status: 200,
-				seo: expect.objectContaining({
-					title: 'Public Fees Dashboard - DefiLlama Pro Dashboard',
-					description: 'Public dashboard description',
-					canonicalPath: '/pro/dashboard-1'
-				})
-			})
-		})
-		expect(props.initialDashboard).not.toHaveProperty('user')
-		expect(props.initialDashboard).not.toHaveProperty('collectionId')
-		expect(props.initialDashboard).not.toHaveProperty('collectionName')
-		expect(props.initialDashboard).not.toHaveProperty('aiGenerated')
-		expect(props.initialDashboard).not.toHaveProperty('metrics')
-		expect(fetchProtocolsAndChainsMock).not.toHaveBeenCalled()
-		expect(fetchSingleChartDataMock).not.toHaveBeenCalled()
-		expect(streamProTokenUsageDataMock).not.toHaveBeenCalled()
-	})
-
-	test('seeds the provider from public config without rendering the config loader', async () => {
-		const result = await getServerSideProps(createSsrContext('dashboard-1'))
-		const props = await readServerSideProps(result)
-
-		renderToStaticMarkup(createElement(DashboardPage, props))
-
-		expect(providerPropsMock).toHaveBeenCalledWith(
-			expect.objectContaining({
-				initialDashboardId: 'dashboard-1',
-				mode: 'view',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					user: '',
-					data: expect.objectContaining({ items: publicDashboard.data.items })
-				})
-			})
-		)
-		expect(proDashboardLoaderMock).not.toHaveBeenCalled()
-	})
-
-	test('seeds the provider in edit mode from the route segment', async () => {
-		const result = await getServerSideProps(createEditSsrContext('dashboard-1', 'auth-token'))
-		const props = await readServerSideProps(result)
-		routerQueryMock.mode = ['edit']
-
-		try {
-			renderToStaticMarkup(createElement(DashboardPage, props))
-		} finally {
-			delete routerQueryMock.mode
-		}
-
-		expect(providerPropsMock).toHaveBeenCalledWith(
-			expect.objectContaining({ initialDashboardId: 'dashboard-1', mode: 'edit' })
-		)
-	})
-
-	test('answers unknown mode segments with a 404', async () => {
-		const result = await getServerSideProps(createSsrContext('dashboard-1', 'auth-token', ['anything']))
-
-		expect(result).toEqual({ notFound: true })
-		expect(fetchDashboardConfigMock).not.toHaveBeenCalled()
-		expect(fetchDashboardConfigWithStatusMock).not.toHaveBeenCalled()
-	})
-
-	test('refuses edit requests without an auth token', async () => {
-		const context = createEditSsrContext('dashboard-1')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(context.res.statusCode).toBe(401)
-		expect(fetchDashboardConfigMock).not.toHaveBeenCalled()
-		expect(result).toEqual({
-			props: {
-				dashboardId: 'dashboard-1',
-				mode: 'edit',
-				initialDashboard: null,
-				seo: null,
-				ogImage: null,
-				noIndex: true,
-				status: 401
-			}
-		})
-	})
-
-	test('redirects edit requests to the canonical slug url', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({ ...publicDashboard, slug: 'public-fees-dashboard' })
-
-		const result = await getServerSideProps(createEditSsrContext('dashboard-1', 'auth-token'))
-
-		expect(result).toEqual({
-			redirect: { destination: '/pro/public-fees-dashboard/edit', permanent: true }
-		})
-	})
-
-	test('keeps the requested tab and parameters when redirecting to the canonical slug', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
-			status: 200
-		})
-
-		const result = await getServerSideProps(
-			createSsrContext('dashboard-1', undefined, undefined, '?tab=tab-1&var-chain=Base')
-		)
-
-		expect(result).toEqual({
-			redirect: {
-				destination: '/pro/public-fees-dashboard?tab=tab-1&var-chain=Base',
-				permanent: true
-			}
-		})
-	})
-
-	test('keeps the query string when redirecting an edit request to the canonical slug', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({ ...publicDashboard, slug: 'public-fees-dashboard' })
-
-		const result = await getServerSideProps(createEditSsrContext('dashboard-1', 'auth-token', '?tab=tab-1'))
-
-		expect(result).toEqual({
-			redirect: { destination: '/pro/public-fees-dashboard/edit?tab=tab-1', permanent: true }
-		})
-	})
-
-	test('seeds authenticated edit config only for the verified owner', async () => {
-		const context = createEditSsrContext('dashboard-1', 'auth-token')
-
-		const result = await getServerSideProps(context)
-		const props = await readServerSideProps(result)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(fetchAuthenticatedUserIdMock).toHaveBeenCalledWith('auth-token')
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'dashboard-1',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					ownerId: 'user-1',
-					data: expect.objectContaining({ items: publicDashboard.data.items })
-				})
-			})
-		})
-		expect(props.initialDashboard).not.toHaveProperty('aiGenerated')
-		expect(props.initialDashboard?.data).not.toHaveProperty('aiUndoState')
-	})
-
-	test('does not seed edit config for a non-owner', async () => {
-		fetchAuthenticatedUserIdMock.mockResolvedValue('other-user')
-
-		const result = await getServerSideProps(createEditSsrContext('dashboard-1', 'auth-token'))
-
-		expect(result).toEqual({
-			props: {
-				dashboardId: 'dashboard-1',
-				mode: 'edit',
-				initialDashboard: null,
-				seo: null,
-				ogImage: null,
-				noIndex: true,
-				status: 200
-			}
-		})
-	})
-
-	test('redirects anonymous id requests to the canonical slug url', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
-			status: 200
-		})
-		const context = createSsrContext('dashboard-1')
-
-		const result = await getServerSideProps(context)
-
-		expect(result).toEqual({
-			redirect: {
-				destination: '/pro/public-fees-dashboard',
-				permanent: true
-			}
-		})
-	})
-
-	test('redirects anonymous old-slug requests to the canonical slug url', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
-			status: 200
-		})
-		const context = createSsrContext('old-fees-dashboard')
-
-		const result = await getServerSideProps(context)
-
-		expect(result).toEqual({
-			redirect: {
-				destination: '/pro/public-fees-dashboard',
-				permanent: true
-			}
-		})
-	})
-
-	test('redirects authenticated public dashboard ids with private cache headers', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
-			status: 200
-		})
-		const context = createSsrContext('dashboard-1', 'auth-token')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(result).toEqual({
-			redirect: {
-				destination: '/pro/public-fees-dashboard',
-				permanent: true
-			}
-		})
-	})
-
-	test('renders canonical slug requests with a slug-based canonical path', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
-			status: 200
-		})
-		const context = createSsrContext('public-fees-dashboard')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'public-fees-dashboard',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					slug: 'public-fees-dashboard'
-				}),
-				noIndex: false,
-				seo: expect.objectContaining({
-					canonicalPath: '/pro/public-fees-dashboard'
-				})
-			})
-		})
-	})
-
-	test('hydrates authenticated public dashboard pages with private cache headers', async () => {
-		const context = createSsrContext('dashboard-1', 'auth-token')
-
-		const result = await getServerSideProps(context)
-		const props = await readServerSideProps(result)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', 'auth-token')
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'dashboard-1',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					visibility: 'public',
-					data: expect.objectContaining({ items: publicDashboard.data.items })
-				}),
-				noIndex: false,
-				status: 200
-			})
-		})
-		expect(props.initialDashboard).not.toHaveProperty('user')
-		expect(props.initialDashboard).not.toHaveProperty('aiGenerated')
-	})
-
-	test('seeds authenticated private dashboard pages from the token-authorized config read', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: { ...publicDashboard, visibility: 'private' },
-			status: 200
-		})
-		const context = createSsrContext('dashboard-1', 'auth-token')
-
-		const result = await getServerSideProps(context)
-		const props = await readServerSideProps(result)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledTimes(1)
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('dashboard-1', 'auth-token')
-		expect(result).toEqual({
-			props: {
-				dashboardId: 'dashboard-1',
-				mode: 'view',
-				initialDashboard: expect.objectContaining({
-					id: 'dashboard-1',
-					ownerId: 'user-1',
-					visibility: 'private',
-					data: expect.objectContaining({ items: publicDashboard.data.items })
-				}),
-				seo: null,
-				ogImage: null,
-				noIndex: true,
-				status: 200
-			}
-		})
-		expect(props.initialDashboard).not.toHaveProperty('user')
-		expect(props.initialDashboard).not.toHaveProperty('aiGenerated')
-		expect(props.initialDashboard).not.toHaveProperty('metrics')
-	})
-
-	test('keeps authenticated dashboard pages unseeded when the config read fails', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: null,
-			status: 401
-		})
-		const context = createSsrContext('private-dashboard', 'auth-token')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(context.res.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenNthCalledWith(1, 'private-dashboard', 'auth-token')
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenNthCalledWith(2, 'private-dashboard', null)
-		expect(result).toEqual({
-			props: {
-				dashboardId: 'private-dashboard',
-				mode: 'view',
-				initialDashboard: null,
-				seo: null,
-				ogImage: null,
-				noIndex: true,
-				status: 200
-			}
-		})
-	})
-
-	test('uses private no-store cache headers for unauthenticated private-dashboard pages', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: null,
-			status: 401
-		})
-		const context = createSsrContext('private-dashboard')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(context.res.statusCode).toBe(401)
-		expect(fetchDashboardConfigWithStatusMock).toHaveBeenCalledWith('private-dashboard', null)
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'private-dashboard',
-				initialDashboard: null,
-				noIndex: true,
-				status: 401
-			})
-		})
-	})
-
-	test('uses 404 and noindex props for missing dashboard pages', async () => {
-		fetchDashboardConfigWithStatusMock.mockResolvedValue({
-			dashboard: null,
-			status: 404
-		})
-		const context = createSsrContext('missing')
-
-		const result = await getServerSideProps(context)
-
-		expect(context.res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(context.res.statusCode).toBe(404)
-		expect(result).toEqual({
-			props: expect.objectContaining({
-				dashboardId: 'missing',
-				initialDashboard: null,
-				noIndex: true,
-				status: 404
-			})
-		})
-	})
-
 	test('keeps the public dashboard stream cache header unjittered', async () => {
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
 		expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/x-ndjson')
 		expect(res.setHeader).toHaveBeenCalledWith('X-Accel-Buffering', 'no')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('dashboard-1', null)
-		const dashboardLine = JSON.parse(String(res.write.mock.calls[0]?.[0]))
+		// Vary would fragment the shared CDN entry for an anonymous public stream.
+		expect(res.setHeader).not.toHaveBeenCalledWith('Vary', expect.anything())
+		expect(dashboardReads()).toEqual(['/dashboards/dashboard-1 anonymous'])
+		const dashboardLine = JSON.parse(String(written(res).mock.calls[0]?.[0]))
 		expect(dashboardLine.data).not.toHaveProperty('user')
 		expect(dashboardLine.data).not.toHaveProperty('aiGenerated')
 		expect(dashboardLine.data).not.toHaveProperty('collectionId')
 		expect(dashboardLine.data).not.toHaveProperty('collectionName')
-		expect(res.end).toHaveBeenCalled()
+		expect(ended(res)).toHaveBeenCalled()
 	})
 
 	test('waits for response backpressure to clear before ending the stream', async () => {
 		const events = new EventEmitter()
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 		Object.assign(res, {
 			once: events.once.bind(events),
 			off: events.off.bind(events)
@@ -761,119 +306,54 @@ describe('pro dashboard cache headers', () => {
 		res.write.mockReturnValueOnce(false)
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(res.write).toHaveBeenCalledOnce())
-		expect(res.end).not.toHaveBeenCalled()
+		await vi.waitFor(() => expect(written(res)).toHaveBeenCalledOnce())
+		expect(ended(res)).not.toHaveBeenCalled()
 
 		events.emit('drain')
 		await streamPromise
 
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
-		expect(res.end).toHaveBeenCalledOnce()
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(ended(res)).toHaveBeenCalledOnce()
 	})
 
 	test('finishes the stream when the shared protocols request fails', async () => {
-		fetchProtocolsMock.mockRejectedValue(new Error('protocols unavailable'))
-		fetchProtocolsAndChainsMock.mockImplementation(
-			async (_sourcePromise: undefined, protocolsPromise: Promise<unknown>) => {
-				await protocolsPromise
-				return null
-			}
-		)
-		const res = createMockNextApiResponse()
+		telemetry.serve({ [PROTOCOLS_URL]: fixtureStatus(404, { message: 'protocols unavailable' }) })
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		expect(recordRuntimeError).toHaveBeenCalledWith(
-			expect.any(Error),
-			'outboundFetch',
-			expect.objectContaining({ stream_source: 'protocols-and-chains' })
-		)
-		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
-		expect(res.write).toHaveBeenCalledWith('{"type":"done"}\n')
-		expect(res.end).toHaveBeenCalled()
+		expect(await runtimeErrors()).toEqual([
+			{ phase: 'outboundFetch', source: expect.stringContaining('/lite/protocols2') }
+		])
+		expect(telemetry.requests.filter(({ url }) => url.href.startsWith(PROTOCOLS_URL))).toHaveLength(1)
+		expect(written(res)).toHaveBeenCalledWith('{"type":"done"}\n')
+		expect(ended(res)).toHaveBeenCalled()
 	})
 
-	test('waits for app metadata before planning chart sources', async () => {
-		let resolveAppMetadata: (value: null) => void = () => {}
-		fetchAppMetadataMock.mockReturnValue(
-			new Promise<null>((resolve) => {
-				resolveAppMetadata = resolve
-			})
-		)
-		const res = createMockNextApiResponse()
+	test('plans chart sources with app metadata that answers after the catalog', async () => {
+		let answerAppMetadata: (response: Response) => void = () => {}
+		telemetry.serve({
+			[`${APP_METADATA_URL}protocols.json`]: () =>
+				new Promise<Response>((resolve) => {
+					answerAppMetadata = resolve
+				})
+		})
+		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchProtocolsAndChainsMock).toHaveBeenCalled())
-		expect(fetchSingleChartDataMock).not.toHaveBeenCalled()
-		resolveAppMetadata(null)
+		await vi.waitFor(() => expect(upstreamReads()).toEqual(expect.arrayContaining(['app-metadata', 'protocols'])))
+		// Aave's metadata advertises no fees adapter, so the fees card must be skipped rather than fetched.
+		answerAppMetadata(Response.json({ '1': { name: 'aave', displayName: 'Aave' } }))
 		await streamPromise
 
-		expect(fetchSingleChartDataMock).toHaveBeenCalled()
-		expect(res.end).toHaveBeenCalled()
-	})
-
-	test('does not fetch catalog, oracle, or chart metadata for a table without those columns', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			...publicDashboard,
-			data: {
-				...publicDashboard.data,
-				items: [
-					{
-						id: 'table-1',
-						kind: 'unified-table',
-						configVersion: 3,
-						strategy: 'protocols',
-						rowHeaders: ['protocol']
-					}
-				]
-			}
-		})
-		const res = createMockNextApiResponse()
-
-		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-
-		expect(fetchAppMetadataMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsAndChainsMock).not.toHaveBeenCalled()
-		expect(fetchOracleMetricsMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsTableMock).toHaveBeenCalledOnce()
-		expect(res.end).toHaveBeenCalledOnce()
-	})
-
-	test('fetches oracle membership without starting the protocol catalog for an oracle table', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			...publicDashboard,
-			data: {
-				...publicDashboard.data,
-				items: [
-					{
-						id: 'oracle-table',
-						kind: 'unified-table',
-						configVersion: 3,
-						strategy: 'protocols',
-						rowHeaders: ['protocol'],
-						filters: { oracles: ['Chainlink'] }
-					}
-				]
-			}
-		})
-		const res = createMockNextApiResponse()
-
-		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-
-		expect(fetchAppMetadataMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsAndChainsMock).not.toHaveBeenCalled()
-		expect(fetchOracleMetricsMock).toHaveBeenCalledOnce()
-		expect(fetchProtocolsTableMock).toHaveBeenCalledWith(
-			expect.objectContaining({ needsOracleMembership: true }),
-			expect.objectContaining({ oracleMetricsPromise: expect.any(Promise) })
-		)
-		expect(res.end).toHaveBeenCalledOnce()
+		expect(chartReads()).toEqual([])
+		const chunks = streamChunks(res)
+		expect(chunks.find((chunk) => chunk.type === 'chartData')).toMatchObject({ data: [] })
+		expect(readyItemIds(chunks)).toEqual(['chart-1'])
 	})
 
 	test('leaves catalog and chart sources beyond the initial stream window to client fallback', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
@@ -897,24 +377,22 @@ describe('pro dashboard cache headers', () => {
 				]
 			}
 		})
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		expect(fetchAppMetadataMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsMock).not.toHaveBeenCalled()
-		expect(fetchProtocolsAndChainsMock).not.toHaveBeenCalled()
-		expect(fetchSingleChartDataMock).not.toHaveBeenCalled()
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		const chunks = streamChunks(res)
+		expect(chunks.filter((chunk) => chunk.type === 'unifiedTableData')).toHaveLength(1)
+		expect(readyItemIds(chunks)).not.toContain('chart-9')
+		expect(chunkIndex(chunks, 'chartData')).toBe(-1)
+		expect(chartReads()).toEqual([])
+		expect(chunks.at(-1)).toEqual({ type: 'done' })
 	})
 
 	test('bounds source work even when one dashboard item expands into many requests', async () => {
 		const chartCount = DASHBOARD_STREAM_SOURCE_CONCURRENCY + 4
-		fetchProtocolsAndChainsMock.mockResolvedValue({
-			protocols: Array.from({ length: chartCount }, (_, index) => catalogProtocol(`protocol-${index}`)),
-			chains: []
-		})
-		fetchDashboardConfigMock.mockResolvedValue({
+		upstream.catalogRows = Array.from({ length: chartCount }, (_, index) => catalogRow(`protocol-${index}`))
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
@@ -933,48 +411,32 @@ describe('pro dashboard cache headers', () => {
 				]
 			}
 		})
-		let activeRequestCount = 0
-		let maximumActiveRequestCount = 0
-		const pendingResolutions: Array<(data: Array<[number, number]>) => void> = []
-		fetchSingleChartDataMock.mockImplementation(
-			() =>
-				new Promise<Array<[number, number]>>((resolve) => {
-					activeRequestCount += 1
-					maximumActiveRequestCount = Math.max(maximumActiveRequestCount, activeRequestCount)
-					pendingResolutions.push((data) => {
-						activeRequestCount -= 1
-						resolve(data)
-					})
-				})
-		)
-		const res = createMockNextApiResponse()
+		const held = holdCharts()
+		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(DASHBOARD_STREAM_SOURCE_CONCURRENCY))
+		await vi.waitFor(() => expect(chartReads()).toHaveLength(DASHBOARD_STREAM_SOURCE_CONCURRENCY))
 		for (let startedCount = DASHBOARD_STREAM_SOURCE_CONCURRENCY + 1; startedCount <= chartCount; startedCount++) {
-			const resolve = pendingResolutions.shift()
-			if (!resolve) throw new Error('Expected an active chart request')
-			resolve([[1_700_000_000, startedCount]])
-			await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(startedCount))
+			const answer = held.pending.shift()
+			if (!answer) throw new Error('Expected an active chart request')
+			answer([[1_700_000_000, startedCount]])
+			await vi.waitFor(() => expect(chartReads()).toHaveLength(startedCount))
 		}
-		for (const resolve of pendingResolutions) resolve([[1_700_000_000, 1]])
+		for (const answer of held.pending) answer([[1_700_000_000, 1]])
 		await streamPromise
 
-		expect(maximumActiveRequestCount).toBe(DASHBOARD_STREAM_SOURCE_CONCURRENCY)
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
-		expect(res.end).toHaveBeenCalledOnce()
+		expect(held.maxActive).toBe(DASHBOARD_STREAM_SOURCE_CONCURRENCY)
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(ended(res)).toHaveBeenCalledOnce()
 	})
 
 	test('caps expanded classic sources while preserving the first multi-chart', async () => {
 		const multiCount = INITIAL_DASHBOARD_STREAM_ITEM_COUNT
 		const chartCount = DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT
-		fetchProtocolsAndChainsMock.mockResolvedValue({
-			protocols: Array.from({ length: multiCount * chartCount }, (_protocol, index) =>
-				catalogProtocol(`protocol-${index}`)
-			),
-			chains: []
-		})
-		fetchDashboardConfigMock.mockResolvedValue({
+		upstream.catalogRows = Array.from({ length: multiCount * chartCount }, (_protocol, index) =>
+			catalogRow(`protocol-${index}`)
+		)
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
@@ -991,25 +453,19 @@ describe('pro dashboard cache headers', () => {
 				}))
 			}
 		})
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT)
-		expect(fetchSingleChartDataMock.mock.calls.map(([request]) => request.protocol)).toEqual(
-			Array.from({ length: chartCount }, (_, index) => `protocol-${index}`)
-		)
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(chartReads()).toEqual(Array.from({ length: chartCount }, (_, index) => feesChart(`protocol-${index}`)))
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('emits done after the initial window without fetching the offscreen remainder', async () => {
-		fetchProtocolsAndChainsMock.mockResolvedValue({
-			protocols: Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT + 1 }, (_, index) =>
-				catalogProtocol(`protocol-${index}`)
-			),
-			chains: []
-		})
-		fetchDashboardConfigMock.mockResolvedValue({
+		upstream.catalogRows = Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT + 1 }, (_, index) =>
+			catalogRow(`protocol-${index}`)
+		)
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
@@ -1022,105 +478,23 @@ describe('pro dashboard cache headers', () => {
 				}))
 			}
 		})
-		const pendingResolutions: Array<(data: Array<[number, number]>) => void> = []
-		fetchSingleChartDataMock.mockImplementation(
-			() =>
-				new Promise<Array<[number, number]>>((resolve) => {
-					pendingResolutions.push(resolve)
-				})
-		)
-		const res = createMockNextApiResponse()
+		const held = holdCharts()
+		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
-		expect(res.write).not.toHaveBeenCalledWith('{"type":"done"}\n')
-		for (const resolve of pendingResolutions) resolve([[1_700_000_000, 1]])
+		await vi.waitFor(() => expect(chartReads()).toHaveLength(INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
+		expect(written(res)).not.toHaveBeenCalledWith('{"type":"done"}\n')
+		for (const answer of held.pending) answer([[1_700_000_000, 1]])
 		await streamPromise
 
-		expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(INITIAL_DASHBOARD_STREAM_ITEM_COUNT)
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
-		expect(res.end).toHaveBeenCalledOnce()
-	})
-
-	test('does not let an offscreen table expand the initial table request', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			...publicDashboard,
-			data: {
-				...publicDashboard.data,
-				items: [
-					...Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT }, (_, index) => ({
-						id: `tvl-table-${index}`,
-						kind: 'unified-table' as const,
-						configVersion: 3 as const,
-						strategy: 'protocols' as const,
-						rowHeaders: ['protocol' as const],
-						columnOrder: ['name', 'tvl'],
-						columnVisibility: { name: true, tvl: true }
-					})),
-					{
-						id: 'deferred-fees-table',
-						kind: 'unified-table',
-						configVersion: 3,
-						strategy: 'protocols',
-						rowHeaders: ['protocol'],
-						columnOrder: ['name', 'fees24h'],
-						columnVisibility: { name: true, fees24h: true }
-					}
-				]
-			}
-		})
-		const res = createMockNextApiResponse()
-
-		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-
-		expect(fetchProtocolsTableMock).toHaveBeenCalledOnce()
-		expect(fetchProtocolsTableMock.mock.calls[0]?.[0]).toMatchObject({
-			baseMetricFamilies: ['tvl']
-		})
-	})
-
-	test('does not seed chart-builder data for stream-skipped metrics', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
-			...publicDashboard,
-			data: {
-				...publicDashboard.data,
-				items: [
-					{
-						id: 'builder-1',
-						kind: 'builder',
-						config: {
-							mode: 'chains',
-							metric: 'tvl',
-							protocol: null,
-							chains: [],
-							limit: 10,
-							categories: [],
-							chainCategories: [],
-							protocolCategories: [],
-							hideOthers: false,
-							groupByParent: false,
-							chainFilterMode: 'include',
-							categoryFilterMode: 'include',
-							chainCategoryFilterMode: 'include',
-							protocolCategoryFilterMode: 'include'
-						}
-					}
-				]
-			}
-		})
-		const res = createMockNextApiResponse()
-
-		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-
-		const chunks = res.write.mock.calls.map((call) => String(call[0]))
-		expect(chunks.some((chunk) => chunk.includes('"type":"chartBuilderData"'))).toBe(false)
-		expect(fetchChartBuilderServerDataMock).not.toHaveBeenCalled()
-		expect(res.end).toHaveBeenCalled()
+		expect(chartReads()).toHaveLength(INITIAL_DASHBOARD_STREAM_ITEM_COUNT)
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(ended(res)).toHaveBeenCalledOnce()
 	})
 
 	test('records failed chart-builder sources without failing the stream', async () => {
 		fetchChartBuilderServerDataMock.mockRejectedValue(new Error('builder unavailable'))
-		fetchDashboardConfigMock.mockResolvedValue({
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
@@ -1149,114 +523,97 @@ describe('pro dashboard cache headers', () => {
 				]
 			}
 		})
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		expect(recordRuntimeError).toHaveBeenCalledWith(
-			expect.any(Error),
-			'outboundFetch',
-			expect.objectContaining({ stream_source: 'chart-builder' })
-		)
-		expect(recordRouteRuntimeError).not.toHaveBeenCalled()
-		expect(res.write).toHaveBeenCalledWith('{"type":"done"}\n')
+		// A failed source is recorded once, and the route itself does not fail.
+		expect(await runtimeErrors()).toEqual([{ phase: 'outboundFetch', source: 'chart-builder' }])
+		expect(written(res)).toHaveBeenCalledWith('{"type":"done"}\n')
 	})
-	test('streams chart-builder data for metrics the stream owns', async () => {
-		fetchChartBuilderServerDataMock.mockResolvedValue({
-			series: [{ name: 'Aave', data: [[1_700_000_000, 5]] }]
+	test('streams chart-builder data under the client query key only for metrics the stream owns', async () => {
+		const builderConfig = (metric: string) => ({
+			mode: 'chains' as const,
+			metric,
+			chains: [],
+			limit: 10,
+			categories: [],
+			chainCategories: [],
+			protocolCategories: [],
+			hideOthers: false,
+			groupBy: 'protocol' as const,
+			chartType: 'stackedBar' as const,
+			displayAs: 'timeSeries' as const,
+			chainFilterMode: 'include' as const,
+			categoryFilterMode: 'include' as const,
+			chainCategoryFilterMode: 'include' as const,
+			protocolCategoryFilterMode: 'include' as const
 		})
-		fetchDashboardConfigMock.mockResolvedValue({
+		const feesConfig = builderConfig('fees') as ChartBuilderConfig['config']
+		setDashboardConfig({
 			...publicDashboard,
 			data: {
 				...publicDashboard.data,
 				items: [
-					{
-						id: 'builder-2',
-						kind: 'builder',
-						config: {
-							mode: 'chains',
-							metric: 'fees',
-							chains: [],
-							limit: 10,
-							categories: [],
-							chainCategories: [],
-							protocolCategories: [],
-							hideOthers: false,
-							groupBy: 'protocol',
-							chartType: 'stackedBar',
-							displayAs: 'timeSeries',
-							chainFilterMode: 'include',
-							categoryFilterMode: 'include',
-							chainCategoryFilterMode: 'include',
-							protocolCategoryFilterMode: 'include'
-						}
-					}
+					// Chain-mode TVL series are left to the client.
+					{ id: 'builder-tvl', kind: 'builder', config: builderConfig('tvl') },
+					{ id: 'builder-fees', kind: 'builder', config: feesConfig }
 				]
 			}
 		})
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
-		const chunks = res.write.mock.calls.map((call) => String(call[0]))
-		expect(chunks.some((chunk) => chunk.includes('"type":"chartBuilderData"') && chunk.includes('Aave'))).toBe(true)
-		expect(withTimeoutMock).toHaveBeenCalledWith(expect.any(Promise), 25_000)
-		expect(res.end).toHaveBeenCalled()
+		expect(streamChunks(res).flatMap((chunk) => (chunk.type === 'chartBuilderData' ? [chunk.key] : []))).toEqual([
+			JSON.stringify(getChartBuilderQueryKey(feesConfig))
+		])
 	})
 
 	test('uses private no-store cache headers for authenticated dashboard streams', async () => {
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', 'auth-token'), res)
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('dashboard-1', 'auth-token')
-		expect(res.end).toHaveBeenCalled()
+		expect(dashboardReads()).toEqual(['/dashboards/dashboard-1 Bearer auth-token'])
+		expect(ended(res)).toHaveBeenCalled()
 	})
 
 	test('uses private no-store cache headers for unauthenticated private-dashboard streams', async () => {
-		fetchDashboardConfigMock.mockResolvedValue({
+		setDashboardConfig({
 			visibility: 'private',
 			data: { items: [] }
 		})
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('private-dashboard'), res)
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(fetchDashboardConfigMock).toHaveBeenCalledWith('private-dashboard', null)
-		expect(res.end).toHaveBeenCalled()
+		expect(dashboardReads()).toEqual(['/dashboards/private-dashboard anonymous'])
+		expect(ended(res)).toHaveBeenCalled()
 	})
 
 	test('uses private no-store cache headers when dashboard is not found', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(null)
-		const res = createMockNextApiResponse()
+		setDashboardConfig(null)
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('missing'), res)
 
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
-		expect(res.end).toHaveBeenCalled()
-	})
-
-	test('omits Vary on edge-cacheable anonymous public streams', async () => {
-		const res = createMockNextApiResponse()
-
-		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PUBLIC_DASHBOARD_CACHE_CONTROL)
-		expect(res.setHeader).not.toHaveBeenCalledWith('Vary', expect.anything())
+		expect(ended(res)).toHaveBeenCalled()
 	})
 
 	test('varies private streams on cookie and authorization', async () => {
-		const authenticatedRes = createMockNextApiResponse()
+		const authenticatedRes = streamResponse()
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', 'auth-token'), authenticatedRes)
 		expect(authenticatedRes.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
 
-		fetchDashboardConfigMock.mockResolvedValue({
+		setDashboardConfig({
 			...publicDashboard,
 			visibility: 'private'
 		})
-		const privateRes = createMockNextApiResponse()
+		const privateRes = streamResponse()
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), privateRes)
 		expect(privateRes.setHeader).toHaveBeenCalledWith('Vary', 'Cookie, Authorization')
 	})
@@ -1264,30 +621,26 @@ describe('pro dashboard cache headers', () => {
 	test('ends the stream with done when the config read never resolves', async () => {
 		vi.useFakeTimers()
 		try {
-			fetchDashboardConfigMock.mockReturnValue(new Promise(() => {}))
-			withTimeoutMock.mockImplementationOnce(
-				(promise: Promise<unknown>, ms: number) =>
-					new Promise((resolve, reject) => {
-						const timeout = setTimeout(() => reject(new Error('timeout')), ms)
-						promise.then(resolve, reject).finally(() => clearTimeout(timeout))
-					})
-			)
-			const res = createMockNextApiResponse()
+			dashboardConfig = new Promise(() => {})
+			const res = streamResponse()
 
 			const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-			await vi.advanceTimersByTimeAsync(0)
-			expect(withTimeoutMock).toHaveBeenCalledWith(expect.any(Promise), DASHBOARD_CONFIG_STREAM_TIMEOUT_MS)
-			await vi.advanceTimersByTimeAsync(DASHBOARD_CONFIG_STREAM_TIMEOUT_MS)
+			await vi.advanceTimersByTimeAsync(DASHBOARD_CONFIG_STREAM_TIMEOUT_MS - 1)
+			expect(written(res)).not.toHaveBeenCalled()
+			await vi.advanceTimersByTimeAsync(1)
 			await streamPromise
 
 			expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', PRIVATE_DASHBOARD_CACHE_CONTROL)
 			expect(streamChunks(res).map((chunk) => chunk.type)).toEqual(['dashboard', 'done'])
-			expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
-			expect(res.end).toHaveBeenCalledOnce()
-			expect(recordRouteRuntimeError).not.toHaveBeenCalled()
+			expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+			expect(ended(res)).toHaveBeenCalledOnce()
 		} finally {
 			vi.useRealTimers()
 		}
+		// A config read that timed out is answered with an empty dashboard, not a route failure.
+		expect((await telemetry.events()).filter((event) => event.type === 'route_execution')).toEqual([
+			expect.objectContaining({ status: 'success', http_status: 200 })
+		])
 	})
 })
 
@@ -1332,26 +685,16 @@ describe('pro dashboard stream item readiness', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
-		fetchDashboardConfigMock.mockResolvedValue(publicDashboard)
-		fetchProtocolsMock.mockResolvedValue({
-			protocols: [],
-			chains: [],
-			parentProtocols: []
-		})
-		fetchProtocolsAndChainsMock.mockResolvedValue({
-			protocols: [catalogProtocol('aave'), catalogProtocol('lido')],
-			chains: [catalogChain('Ethereum'), catalogChain('Solana')]
-		})
-		fetchAppMetadataMock.mockResolvedValue({})
-		fetchSingleChartDataMock.mockResolvedValue([[1_700_000_000, 1]])
-		streamProTokenUsageDataMock.mockResolvedValue(undefined)
+		setDashboardConfig(publicDashboard)
+		upstream.catalogRows = [catalogRow('aave'), catalogRow('lido')]
+		serveUpstreams([catalogChain('Ethereum'), catalogChain('Solana')])
 		fetchChartBuilderServerDataMock.mockResolvedValue({ series: [] })
 		fetchProtocolsTableMock.mockResolvedValue({ rows: [], parentMetrics: {} })
 	})
 
 	test('marks a builder card ready after its data chunk and before done', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(withItems([{ id: 'builder-2', kind: 'builder', config: builderConfig }]))
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([{ id: 'builder-2', kind: 'builder', config: builderConfig }]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
@@ -1359,11 +702,11 @@ describe('pro dashboard stream item readiness', () => {
 		expect(readyItemIds(chunks)).toEqual(['builder-2'])
 		expect(readyIndex(chunks, 'builder-2')).toBeGreaterThan(chunkIndex(chunks, 'chartBuilderData'))
 		expect(readyIndex(chunks, 'builder-2')).toBeLessThan(chunkIndex(chunks, 'done'))
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('marks a multi-chart ready only after every one of its sources streamed', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(
+		setDashboardConfig(
 			withItems([
 				{
 					id: 'multi-chart',
@@ -1372,24 +715,18 @@ describe('pro dashboard stream item readiness', () => {
 				}
 			])
 		)
-		const pendingResolutions: Array<(data: Array<[number, number]>) => void> = []
-		fetchSingleChartDataMock.mockImplementation(
-			() =>
-				new Promise<Array<[number, number]>>((resolve) => {
-					pendingResolutions.push(resolve)
-				})
-		)
-		const res = createMockNextApiResponse()
+		const held = holdCharts()
+		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledTimes(2))
+		await vi.waitFor(() => expect(chartReads()).toHaveLength(2))
 		expect(readyItemIds(streamChunks(res))).toEqual([])
 
-		pendingResolutions[0]?.([[1_700_000_000, 1]])
+		held.pending[0]?.([[1_700_000_000, 1]])
 		await vi.waitFor(() => expect(chunkIndex(streamChunks(res), 'chartData')).toBeGreaterThan(-1))
 		expect(readyItemIds(streamChunks(res))).toEqual([])
 
-		pendingResolutions[1]?.([[1_700_000_000, 2]])
+		held.pending[1]?.([[1_700_000_000, 2]])
 		await streamPromise
 
 		const chunks = streamChunks(res)
@@ -1397,11 +734,11 @@ describe('pro dashboard stream item readiness', () => {
 		expect(chartDataIndexes).toHaveLength(2)
 		expect(readyItemIds(chunks)).toEqual(['multi-chart'])
 		expect(readyIndex(chunks, 'multi-chart')).toBeGreaterThan(Math.max(...chartDataIndexes))
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('marks text and section cards ready without waiting for chart sources', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(
+		setDashboardConfig(
 			withItems([
 				{
 					id: 'section-1',
@@ -1413,16 +750,11 @@ describe('pro dashboard stream item readiness', () => {
 				protocolChart('chart-1', 'aave')
 			])
 		)
-		let resolveChart: (data: Array<[number, number]>) => void = () => {}
-		fetchSingleChartDataMock.mockReturnValue(
-			new Promise<Array<[number, number]>>((resolve) => {
-				resolveChart = resolve
-			})
-		)
-		const res = createMockNextApiResponse()
+		const held = holdCharts()
+		const res = streamResponse()
 
 		const streamPromise = dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
-		await vi.waitFor(() => expect(fetchSingleChartDataMock).toHaveBeenCalledOnce())
+		await vi.waitFor(() => expect(chartReads()).toHaveLength(1))
 		const earlyChunks = streamChunks(res)
 		expect(earlyChunks[0]?.type).toBe('dashboard')
 		expect(earlyChunks[1]).toEqual({
@@ -1431,72 +763,65 @@ describe('pro dashboard stream item readiness', () => {
 		})
 		expect(readyItemIds(earlyChunks)).not.toContain('chart-1')
 
-		resolveChart([[1_700_000_000, 1]])
+		held.pending[0]?.([[1_700_000_000, 1]])
 		await streamPromise
 
 		const chunks = streamChunks(res)
 		expect(readyIndex(chunks, 'chart-1')).toBeGreaterThan(chunkIndex(chunks, 'chartData'))
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('marks a chart ready immediately when its only source is skipped', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(withItems([protocolChart('chart-1', 'ghost-protocol')]))
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([protocolChart('chart-1', 'ghost-protocol')]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
 		const chunks = streamChunks(res)
-		expect(fetchSingleChartDataMock).not.toHaveBeenCalled()
+		expect(chartReads()).toEqual([])
 		expect(chunks.find((chunk) => chunk.type === 'chartData')).toMatchObject({
 			data: []
 		})
 		expect(readyItemIds(chunks)).toEqual(['chart-1'])
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('marks a chart ready when its only source fails', async () => {
-		fetchSingleChartDataMock.mockRejectedValue(new Error('chart unavailable'))
-		fetchDashboardConfigMock.mockResolvedValue(withItems([protocolChart('chart-1', 'aave')]))
-		const res = createMockNextApiResponse()
+		upstream.chart = fixtureStatus(404, { message: 'chart unavailable' })
+		setDashboardConfig(withItems([protocolChart('chart-1', 'aave')]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
 		const chunks = streamChunks(res)
-		expect(recordRuntimeError).toHaveBeenCalledWith(
-			expect.any(Error),
-			'outboundFetch',
-			expect.objectContaining({ stream_source: 'chart' })
-		)
+		expect(await runtimeErrors()).toEqual([
+			{ phase: 'outboundFetch', source: expect.stringContaining('/chart/fees/protocol/aave') },
+			{ phase: 'outboundFetch', source: 'chart' }
+		])
 		expect(readyItemIds(chunks)).toEqual(['chart-1'])
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('plans only the requested card when item is given', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(
-			withItems([protocolChart('chart-1', 'aave'), protocolChart('chart-2', 'lido', 'tvl')])
-		)
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([protocolChart('chart-1', 'aave'), protocolChart('chart-2', 'lido', 'tvl')]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', undefined, { item: 'chart-2' }), res)
 
 		const chunks = streamChunks(res)
-		expect(fetchSingleChartDataMock).toHaveBeenCalledOnce()
-		expect(fetchSingleChartDataMock.mock.calls[0]?.[0]).toMatchObject({
-			protocol: 'lido',
-			type: 'tvl'
-		})
+		expect(chartReads()).toEqual(['tvl/protocol/lido'])
 		expect(readyItemIds(chunks)).toEqual(['chart-2'])
 		const dashboardChunk = chunks[0]
 		expect(dashboardChunk?.type === 'dashboard' && dashboardChunk.data?.data.items.map((item) => item.id)).toEqual([
 			'chart-1',
 			'chart-2'
 		])
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('ignores an item parameter that does not match a card', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(withItems([protocolChart('chart-1', 'aave')]))
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([protocolChart('chart-1', 'aave')]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(
 			createStreamRequest('dashboard-1', undefined, {
@@ -1506,7 +831,7 @@ describe('pro dashboard stream item readiness', () => {
 			res
 		)
 
-		expect(fetchSingleChartDataMock).toHaveBeenCalledOnce()
+		expect(chartReads()).toEqual([feesChart('aave')])
 		expect(readyItemIds(streamChunks(res))).toEqual(['chart-1'])
 	})
 
@@ -1520,23 +845,14 @@ describe('pro dashboard stream item readiness', () => {
 			bindings: { subject: 'chain' }
 		}
 		const variables: Array<DashboardVariable> = [{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }]
-		fetchDashboardConfigMock.mockResolvedValue(withItems([boundChart], { variables }))
-		const catalog = {
-			protocols: [catalogProtocol('aave')],
-			chains: [catalogChain('Ethereum'), catalogChain('Solana')]
-		}
-		fetchProtocolsAndChainsMock.mockResolvedValue(catalog)
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([boundChart], { variables }))
+		const catalog = { protocols: [], chains: [catalogChain('Ethereum'), catalogChain('Solana')] }
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', undefined, { 'var-chain': 'Solana' }), res)
 
 		const chunks = streamChunks(res)
-		expect(fetchSingleChartDataMock).toHaveBeenCalledOnce()
-		expect(fetchSingleChartDataMock.mock.calls[0]?.[0]).toMatchObject({
-			subjectType: 'chain',
-			chain: 'Solana',
-			type: 'fees'
-		})
+		expect(chartReads()).toEqual(['fees/chain/solana?dataType=dailyAppFees'])
 		const chartDataChunk = chunks.find((chunk) => chunk.type === 'chartData')
 		expect(chartDataChunk?.type === 'chartData' && chartDataChunk.queryKey).toEqual([
 			'pro-dashboard',
@@ -1572,22 +888,20 @@ describe('pro dashboard stream item readiness', () => {
 			type: 'fees',
 			bindings: { subject: 'chain' }
 		}
-		fetchDashboardConfigMock.mockResolvedValue(
+		setDashboardConfig(
 			withItems([boundChart], {
 				variables: [{ id: 'chain', kind: 'chain', label: 'Chain', value: 'Ethereum' }]
 			})
 		)
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', undefined, { 'var-chain': 'Nowhere' }), res)
 
-		expect(fetchSingleChartDataMock.mock.calls[0]?.[0]).toMatchObject({
-			chain: 'Ethereum'
-		})
+		expect(chartReads()).toEqual(['fees/chain/ethereum?dataType=dailyAppFees'])
 	})
 
 	test('does not let sections consume the initial stream window', async () => {
-		fetchDashboardConfigMock.mockResolvedValue(
+		setDashboardConfig(
 			withItems([
 				...Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT }, (_, index) => ({
 					id: `section-${index}`,
@@ -1598,17 +912,17 @@ describe('pro dashboard stream item readiness', () => {
 				protocolChart('chart-9', 'aave')
 			])
 		)
-		const res = createMockNextApiResponse()
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
 		const chunks = streamChunks(res)
-		expect(fetchSingleChartDataMock).toHaveBeenCalledOnce()
+		expect(chartReads()).toEqual([feesChart('aave')])
 		expect(readyItemIds(chunks)).toEqual([
 			...Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT }, (_, index) => `section-${index}`),
 			'chart-9'
 		])
-		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
+		expect(written(res).mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
 	test('marks the cards sharing one unified table source ready together', async () => {
@@ -1621,8 +935,8 @@ describe('pro dashboard stream item readiness', () => {
 			columnOrder: ['name', 'tvl'],
 			columnVisibility: { name: true, tvl: true }
 		})
-		fetchDashboardConfigMock.mockResolvedValue(withItems([table('table-1'), table('table-2')]))
-		const res = createMockNextApiResponse()
+		setDashboardConfig(withItems([table('table-1'), table('table-2')]))
+		const res = streamResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 

@@ -1,37 +1,20 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installUmamiSink } from '~/utils/test/umamiSink'
 import { ArticleBannerStrip } from '../renderer/ArticleBannerStrip'
 import { ArticleImageBanner } from '../renderer/ArticleImageBanner'
 import { ArticleImageBannerHorizontal } from '../renderer/ArticleImageBannerHorizontal'
 import { ArticlePromoCard } from '../renderer/ArticlePromoBanner'
 import type { Banner, BannerLookupResult } from '../types'
 
-const mocks = vi.hoisted(() => ({
-	trackUmamiEvent: vi.fn(),
-	lookups: new Map<string, BannerLookupResult>()
-}))
-
-vi.mock('~/utils/analytics/umami', () => ({
-	trackUmamiEvent: mocks.trackUmamiEvent
-}))
-
-vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: Array<unknown>; enabled?: boolean }) => ({
-		data: enabled ? mocks.lookups.get(JSON.stringify(queryKey)) : undefined,
-		isLoading: false
-	}))
-}))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: vi.fn(),
-		isAuthenticated: true,
-		loaders: { userLoading: false }
-	})
-}))
+const http = installFixtureFetch()
+const track = installUmamiSink()
 
 /** Lets a test decide when the observed sentinel enters the viewport. */
 class FakeIntersectionObserver {
@@ -102,7 +85,11 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	...overrides
 })
 
-const key = (...parts: Array<string>) => JSON.stringify(['research', 'banner', ...parts])
+// Serves banner lookups by path, e.g. serve({ 'all-articles': ... }); every other lookup is empty.
+function serve(lookups: Record<string, Partial<BannerLookupResult>>) {
+	http.serve({ [`${FEATURES_SERVER}/banners/lookup/`]: emptyLookup() })
+	for (const path in lookups) http.serve({ [`/banners/lookup/${path}`]: { ...emptyLookup(), ...lookups[path] } })
+}
 
 function expectedPayload(eventName: string, widgetLabel: string) {
 	return [
@@ -126,8 +113,7 @@ describe('article banner analytics', () => {
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.trackUmamiEvent.mockReset()
-		mocks.lookups.clear()
+		track.mockReset()
 		FakeIntersectionObserver.instances = []
 		vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver)
 		// Keep happy-dom from navigating away when a banner link is clicked.
@@ -144,7 +130,9 @@ describe('article banner analytics', () => {
 	})
 
 	async function render(element: React.ReactElement) {
-		await act(async () => root.render(element))
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
+		await vi.waitFor(() => expect(container.querySelector('a')).not.toBeNull(), { timeout: 1000 })
 	}
 
 	async function enterViewport() {
@@ -154,42 +142,32 @@ describe('article banner analytics', () => {
 	}
 
 	async function clickLink() {
-		const link = container.querySelector('a')
-		expect(link).not.toBeNull()
-		await act(async () => link!.click())
+		await act(async () => container.querySelector('a')!.click())
 	}
 
 	async function expectImpressionOnceAndClick(widgetLabel: string) {
-		expect(mocks.trackUmamiEvent).not.toHaveBeenCalled()
+		expect(track).not.toHaveBeenCalled()
 
 		await enterViewport()
 		await enterViewport()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith(...expectedPayload('widget_impression', widgetLabel))
+		expect(track).toHaveBeenCalledOnce()
+		expect(track).toHaveBeenCalledWith(...expectedPayload('widget_impression', widgetLabel))
 
 		await clickLink()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledTimes(2)
-		expect(mocks.trackUmamiEvent).toHaveBeenLastCalledWith(...expectedPayload('widget_click', widgetLabel))
+		expect(track).toHaveBeenCalledTimes(2)
+		expect(track).toHaveBeenLastCalledWith(...expectedPayload('widget_click', widgetLabel))
 	}
 
 	test('reports the sidebar image banner as an impression once and a click', async () => {
-		mocks.lookups.set(key('article', 'article-id'), emptyLookup())
-		mocks.lookups.set(key('section', 'report'), emptyLookup())
-		mocks.lookups.set(key('all-articles'), {
-			...emptyLookup(),
-			image: banner({ type: 'image', imageUrl: '/uploads/image/global' })
-		})
+		serve({ 'all-articles': { image: banner({ type: 'image', imageUrl: '/uploads/image/global' }) } })
 
 		await render(<ArticleImageBanner articleId="article-id" section="report" />)
 		await expectImpressionOnceAndClick('DefiLlama Research article image banner')
 	})
 
 	test('reports the in-body image banner under the same label as the sidebar one', async () => {
-		mocks.lookups.set(key('article', 'article-id'), emptyLookup())
-		mocks.lookups.set(key('section', 'report'), emptyLookup())
-		mocks.lookups.set(key('all-articles'), {
-			...emptyLookup(),
-			imageHorizontal: banner({ type: 'image-horizontal', imageUrl: '/uploads/image/horizontal' })
+		serve({
+			'all-articles': { imageHorizontal: banner({ type: 'image-horizontal', imageUrl: '/uploads/image/horizontal' }) }
 		})
 
 		await render(<ArticleImageBannerHorizontal articleId="article-id" section="report" />)
@@ -197,41 +175,33 @@ describe('article banner analytics', () => {
 	})
 
 	test('reports the promo frame as an impression once and a click', async () => {
-		mocks.lookups.set(key('all-articles'), {
-			...emptyLookup(),
-			promo: banner({ type: 'promo', imageCardUrl: '/uploads/promo/card' })
-		})
+		serve({ 'all-articles': { promo: banner({ type: 'promo', imageCardUrl: '/uploads/promo/card' }) } })
 
 		await render(<ArticlePromoCard articleId="article-id" />)
 		await expectImpressionOnceAndClick('DefiLlama Research article promo banner')
 	})
 
-	test('reports top bar clicks with a label per scope and never an impression', async () => {
-		mocks.lookups.set(key('landing'), { ...emptyLookup(), text: banner({ text: 'Landing strip' }) })
+	test('reports landing and article top bar clicks with a label per scope, never section clicks or impressions', async () => {
+		serve({ landing: { text: banner({ text: 'Landing strip' }) } })
 		await render(<ArticleBannerStrip scope="landing" />)
 		await enterViewport()
 		await clickLink()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith(
-			...expectedPayload('widget_click', 'DefiLlama Research landing top bar')
-		)
+		expect(track).toHaveBeenCalledOnce()
+		expect(track).toHaveBeenCalledWith(...expectedPayload('widget_click', 'DefiLlama Research landing top bar'))
 
-		mocks.trackUmamiEvent.mockReset()
-		mocks.lookups.set(key('article', 'article-id'), { ...emptyLookup(), text: banner({ text: 'Article strip' }) })
-		mocks.lookups.set(key('section', 'report'), emptyLookup())
-		mocks.lookups.set(key('all-articles'), emptyLookup())
+		track.mockReset()
+		serve({ 'article/article-id': { text: banner({ text: 'Article strip' }) } })
 		await render(<ArticleBannerStrip scope="article" articleId="article-id" section="report" />)
 		await clickLink()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith(
-			...expectedPayload('widget_click', 'DefiLlama Research article top bar')
-		)
-	})
+		expect(track).toHaveBeenCalledOnce()
+		expect(track).toHaveBeenCalledWith(...expectedPayload('widget_click', 'DefiLlama Research article top bar'))
 
-	test('does not track clicks on the section top bar', async () => {
-		mocks.lookups.set(key('section', 'report'), { ...emptyLookup(), text: banner({ text: 'Section strip' }) })
+		track.mockReset()
+		await act(async () => root.unmount())
+		root = createRoot(container)
+		serve({ 'section/report': { text: banner({ text: 'Section strip' }) } })
 		await render(<ArticleBannerStrip scope="section" section="report" />)
 		await clickLink()
-		expect(mocks.trackUmamiEvent).not.toHaveBeenCalled()
+		expect(track).not.toHaveBeenCalled()
 	})
 })

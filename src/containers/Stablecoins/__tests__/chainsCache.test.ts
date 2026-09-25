@@ -1,46 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-
-const mocks = vi.hoisted(() => ({
-	fetchBlockExplorers: vi.fn(),
-	fetchLlamaConfig: vi.fn(),
-	fetchStablecoinAssetApi: vi.fn(),
-	fetchStablecoinAssetsApi: vi.fn(),
-	fetchStablecoinBridgeInfoApi: vi.fn(),
-	fetchStablecoinChartAllApi: vi.fn(),
-	fetchStablecoinChartApi: vi.fn(),
-	fetchStablecoinDominanceAllApi: vi.fn(),
-	fetchStablecoinPeggedConfigApi: vi.fn(),
-	fetchStablecoinPricesApi: vi.fn(),
-	fetchStablecoinRatesApi: vi.fn(),
-	fetchStablecoinRecentCoinsDataApi: vi.fn(),
-	getObjectCache: vi.fn(),
-	setObjectCache: vi.fn()
-}))
-
-vi.mock('~/api', () => ({
-	fetchBlockExplorers: mocks.fetchBlockExplorers,
-	fetchLlamaConfig: mocks.fetchLlamaConfig
-}))
-vi.mock('~/utils/cache-client', () => ({
-	getObjectCache: mocks.getObjectCache,
-	setObjectCache: mocks.setObjectCache
-}))
-vi.mock('~/utils/metadata', () => ({ default: { chainMetadata: {} } }))
-vi.mock('../api', () => ({
-	fetchStablecoinAssetApi: mocks.fetchStablecoinAssetApi,
-	fetchStablecoinAssetsApi: mocks.fetchStablecoinAssetsApi,
-	fetchStablecoinBridgeInfoApi: mocks.fetchStablecoinBridgeInfoApi,
-	fetchStablecoinChartAllApi: mocks.fetchStablecoinChartAllApi,
-	fetchStablecoinChartApi: mocks.fetchStablecoinChartApi,
-	fetchStablecoinDominanceAllApi: mocks.fetchStablecoinDominanceAllApi,
-	fetchStablecoinPeggedConfigApi: mocks.fetchStablecoinPeggedConfigApi,
-	fetchStablecoinPricesApi: mocks.fetchStablecoinPricesApi,
-	fetchStablecoinRatesApi: mocks.fetchStablecoinRatesApi,
-	fetchStablecoinRecentCoinsDataApi: mocks.fetchStablecoinRecentCoinsDataApi
-}))
-
-import { getStablecoinChainsChartSeries, getStablecoinChainsPageData } from '../queries.server'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { PeggedChainsPageData } from '../types'
+import type { IFormattedStablecoinChainRow } from '../utils'
+
+const store = vi.hoisted(() => new Map<string, unknown>())
+vi.mock('~/utils/cache-client', () => ({
+	getObjectCache: async (key: string) => store.get(key) ?? null,
+	setObjectCache: async (key: string, value: unknown) => {
+		store.set(key, structuredClone(value))
+	}
+}))
+
+const http = installFixtureFetch()
 
 const NOW = Date.parse('2026-07-22T12:00:00Z')
 const timestamp = (daysAgo: number) => String(Math.floor(NOW / 1e3) - daysAgo * 86_400)
@@ -48,14 +19,7 @@ const ethereumHistory = [
 	{ date: timestamp(30), totalCirculatingUSD: { peggedUSD: 70 } },
 	{ date: timestamp(7), totalCirculatingUSD: { peggedUSD: 80 } },
 	{ date: timestamp(1), totalCirculatingUSD: { peggedUSD: 90 } },
-	{
-		date: timestamp(0),
-		totalCirculatingUSD: { peggedUSD: 100 },
-		totalCirculating: { peggedUSD: 100 },
-		totalUnreleased: { peggedUSD: 10 },
-		totalBridgedToUSD: { peggedUSD: 20 },
-		totalMintedUSD: { peggedUSD: 30 }
-	}
+	{ date: timestamp(0), totalCirculatingUSD: { peggedUSD: 100 } }
 ]
 const arbitrumHistory = [
 	{ date: timestamp(30), totalCirculatingUSD: { peggedUSD: 35 } },
@@ -69,29 +33,25 @@ const aggregateHistory = [
 	{ date: timestamp(1), totalCirculatingUSD: { peggedUSD: 135 } },
 	{ date: timestamp(0), totalCirculatingUSD: { peggedUSD: 150 } }
 ]
-const stablecoinAssets = {
-	peggedAssets: [
-		{
-			id: 'asset',
-			name: 'Stablecoin',
-			symbol: 'STABLE',
-			gecko_id: null,
-			chains: ['Ethereum', 'Arbitrum'],
-			pegType: 'peggedUSD',
-			pegMechanism: 'fiat-backed',
-			price: 1,
-			circulating: { peggedUSD: 150 },
-			circulatingPrevDay: { peggedUSD: 135 },
-			circulatingPrevWeek: { peggedUSD: 120 },
-			circulatingPrevMonth: { peggedUSD: 105 },
-			chainCirculating: {}
-		}
-	],
-	chains: [
-		{ name: 'Ethereum', totalCirculatingUSD: { peggedUSD: 80 } },
-		{ name: 'Arbitrum', totalCirculatingUSD: { peggedUSD: 60 } }
-	]
+const asset = {
+	id: 'asset',
+	name: 'Stablecoin',
+	symbol: 'STABLE',
+	gecko_id: null,
+	chains: ['Ethereum', 'Arbitrum'],
+	pegType: 'peggedUSD',
+	pegMechanism: 'fiat-backed',
+	price: 1,
+	circulating: { peggedUSD: 150 },
+	circulatingPrevDay: { peggedUSD: 135 },
+	circulatingPrevWeek: { peggedUSD: 120 },
+	circulatingPrevMonth: { peggedUSD: 105 },
+	chainCirculating: {}
 }
+const chains = [
+	{ name: 'Ethereum', totalCirculatingUSD: { peggedUSD: 80 } },
+	{ name: 'Arbitrum', totalCirculatingUSD: { peggedUSD: 60 } }
+]
 const dominance = {
 	dominanceMap: {
 		Ethereum: [
@@ -105,107 +65,62 @@ const dominance = {
 	chainChartMap: { Ethereum: ethereumHistory, Arbitrum: arbitrumHistory }
 }
 
-type PageCacheEntry = {
-	pageData: PeggedChainsPageData
-	latestChainTimestamps: Record<string, number | null>
-}
+const ASSETS = '/stablecoins'
+const CONFIG = '/config'
+const AGGREGATE = '/stablecoincharts2/all'
+const DOMINANCE = '/stablecoincharts2/all-dominance-chain-breakdown'
 
-const findStoredValue = (key: string): unknown => {
-	const call = mocks.setObjectCache.mock.calls.find(([cacheKey]) => cacheKey === key)
-	return call?.[1]
-}
-
-const findStoredPageEntry = (): PageCacheEntry => {
-	return findStoredValue('stablecoins:chains-page-data-v5') as PageCacheEntry
-}
-
-const getCachedChainTimestamp = (entry: PageCacheEntry, chain: string): number | null => {
-	const value = entry.latestChainTimestamps[chain]
-	if (value === undefined) throw new Error(`Missing cached timestamp for ${chain}`)
-	return value
-}
-
-const getChainRow = (pageData: PeggedChainsPageData, chain: string) => {
-	const row = pageData.chainCirculatings.find((candidate) => candidate.name === chain)
-	if (!row) throw new Error(`Missing ${chain} chain row`)
-	return row
-}
-
-const rejectStablecoinChainUpstreams = () => {
-	mocks.fetchStablecoinAssetsApi.mockRejectedValue(new Error('assets unavailable'))
-	mocks.fetchLlamaConfig.mockRejectedValue(new Error('config unavailable'))
-	mocks.fetchStablecoinChartAllApi.mockRejectedValue(new Error('aggregate unavailable'))
-	mocks.fetchStablecoinDominanceAllApi.mockRejectedValue(new Error('chains unavailable'))
-}
-
-const serveCachedEntries = (pageEntry: PageCacheEntry, chartSource?: unknown) => {
-	mocks.getObjectCache.mockImplementation(async (key: string) => {
-		if (key === 'stablecoins:chains-page-data-v5') return pageEntry
-		if (key === 'stablecoins:chains-chart-source-v4') return chartSource ?? null
-		return null
-	})
-}
-
-describe('stablecoin chain consumer caches', () => {
-	beforeEach(() => {
-		vi.useFakeTimers()
-		vi.setSystemTime(NOW)
-		vi.resetAllMocks()
-		mocks.getObjectCache.mockResolvedValue(null)
-		mocks.setObjectCache.mockResolvedValue(undefined)
-		mocks.fetchStablecoinAssetsApi.mockResolvedValue(stablecoinAssets)
-		mocks.fetchLlamaConfig.mockResolvedValue({ chainCoingeckoIds: {} })
-		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
-			aggregated: aggregateHistory,
-			breakdown: { asset: aggregateHistory },
-			doublecountedIds: []
-		})
-		mocks.fetchStablecoinDominanceAllApi.mockResolvedValue(dominance)
-	})
-	afterEach(() => vi.useRealTimers())
-
-	test('stores compact page data without raw assets, config, or chart histories', async () => {
-		const page = await getStablecoinChainsPageData()
-		const cachedEntry = findStoredPageEntry()
-
-		expect(cachedEntry).toEqual({
-			pageData: page,
-			latestChainTimestamps: { Ethereum: Number(timestamp(0)), Arbitrum: Number(timestamp(0)) }
-		})
-		expect(cachedEntry).not.toHaveProperty('peggedAssets')
-		expect(cachedEntry).not.toHaveProperty('chainCoingeckoIds')
-		expect(cachedEntry).not.toHaveProperty('chainChartMap')
-		expect(cachedEntry).not.toHaveProperty('dominanceMap')
-		expect(page).not.toHaveProperty('latestChainTimestamps')
-		expect(mocks.fetchStablecoinAssetsApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchLlamaConfig).toHaveBeenCalledOnce()
-		expect(mocks.fetchStablecoinChartAllApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
+const serveUpstreams = () =>
+	http.serve({
+		[ASSETS]: { peggedAssets: [asset], chains },
+		[CONFIG]: { chainCoingeckoIds: {} },
+		[AGGREGATE]: { aggregated: aggregateHistory, breakdown: { asset: aggregateHistory }, doublecountedIds: [] },
+		[DOMINANCE]: dominance
 	})
 
-	test('builds the chain-page headline from exclusion-safe asset histories', async () => {
-		const doublecountedAsset = {
-			...stablecoinAssets.peggedAssets[0],
-			id: 'double',
-			name: 'Double Stablecoin',
-			symbol: 'DOUBLE'
-		}
-		const doublecountedHistory = aggregateHistory.map((point) => ({
-			...point,
-			totalCirculatingUSD: { peggedUSD: 50 }
-		}))
-		mocks.fetchStablecoinAssetsApi.mockResolvedValue({
-			...stablecoinAssets,
-			peggedAssets: [...stablecoinAssets.peggedAssets, doublecountedAsset]
+// 404 fails without the retry backoff a 5xx would wait through.
+const failUpstreams = () =>
+	http.serve({
+		[ASSETS]: fixtureStatus(404),
+		[CONFIG]: fixtureStatus(404),
+		[AGGREGATE]: fixtureStatus(404),
+		[DOMINANCE]: fixtureStatus(404)
+	})
+
+// A fresh module instance per load, so the in-process result cache cannot hide the object cache.
+const load = async () => {
+	vi.resetModules()
+	return import('../queries.server')
+}
+
+beforeEach(() => {
+	store.clear()
+	vi.useFakeTimers({ toFake: ['Date'] })
+	vi.setSystemTime(NOW)
+	vi.spyOn(console, 'error').mockImplementation(() => {})
+})
+afterEach(() => {
+	vi.useRealTimers()
+	vi.restoreAllMocks()
+})
+
+describe('stablecoin chain caches', () => {
+	test('the headline excludes double-counted assets', async () => {
+		const doubleHistory = aggregateHistory.map((point) => ({ ...point, totalCirculatingUSD: { peggedUSD: 50 } }))
+		http.serve({
+			[ASSETS]: { peggedAssets: [asset, { ...asset, id: 'double', name: 'Double', symbol: 'DOUBLE' }], chains },
+			[CONFIG]: { chainCoingeckoIds: {} },
+			[AGGREGATE]: {
+				aggregated: aggregateHistory.map((point) => ({
+					...point,
+					totalCirculatingUSD: { peggedUSD: point.totalCirculatingUSD.peggedUSD + 50 }
+				})),
+				breakdown: { asset: aggregateHistory, double: doubleHistory },
+				doublecountedIds: ['double']
+			},
+			[DOMINANCE]: dominance
 		})
-		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
-			aggregated: aggregateHistory.map((point) => ({
-				...point,
-				totalCirculatingUSD: { peggedUSD: (point.totalCirculatingUSD.peggedUSD ?? 0) + 50 }
-			})),
-			breakdown: { asset: aggregateHistory, double: doublecountedHistory },
-			doublecountedIds: ['double']
-		})
+		const { getStablecoinChainsPageData } = await load()
 
 		const page = await getStablecoinChainsPageData()
 
@@ -213,92 +128,109 @@ describe('stablecoin chain consumer caches', () => {
 		expect(page.change1d).toBe('+11.11')
 	})
 
-	test('stores only normalized chart histories and avoids page-only requests', async () => {
-		await getStablecoinChainsChartSeries('chainMcaps', false, 10)
-		const cachedSource = findStoredValue('stablecoins:chains-chart-source-v4')
+	test('the chain market cap chart plots each chain history on its own column', async () => {
+		serveUpstreams()
+		const { getStablecoinChainsChartSeries } = await load()
 
-		expect(cachedSource).toEqual({
-			chainList: ['Ethereum', 'Arbitrum'],
-			chartDataByChain: [
-				[
-					{ date: Number(timestamp(30)), mcap: 70 },
-					{ date: Number(timestamp(7)), mcap: 80 },
-					{ date: Number(timestamp(1)), mcap: 90 },
-					{ date: Number(timestamp(0)), mcap: 100 }
-				],
-				[
-					{ date: Number(timestamp(30)), mcap: 35 },
-					{ date: Number(timestamp(7)), mcap: 40 },
-					{ date: Number(timestamp(1)), mcap: 45 },
-					{ date: Number(timestamp(0)), mcap: 50 }
-				]
+		const series = await getStablecoinChainsChartSeries('chainMcaps', false, 10)
+
+		expect(series.dataset).toEqual({
+			dimensions: ['timestamp', 'Ethereum', 'Arbitrum'],
+			source: [
+				[Number(timestamp(30)) * 1e3, 70, 35],
+				[Number(timestamp(7)) * 1e3, 80, 40],
+				[Number(timestamp(1)) * 1e3, 90, 45],
+				[Number(timestamp(0)) * 1e3, 100, 50]
 			]
 		})
-		expect(cachedSource).not.toHaveProperty('peggedAssets')
-		expect(cachedSource).not.toHaveProperty('chainCoingeckoIds')
-		expect(cachedSource).not.toHaveProperty('chainCirculatings')
-		expect(cachedSource).not.toHaveProperty('chainsGroupbyParent')
-		expect(mocks.fetchStablecoinAssetsApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchLlamaConfig).not.toHaveBeenCalled()
-		expect(mocks.fetchStablecoinChartAllApi).not.toHaveBeenCalled()
 	})
 
-	test('reuses shared upstream results across page and chart caches', async () => {
-		await getStablecoinChainsPageData()
-		await getStablecoinChainsChartSeries('totalMcap')
+	test('with every upstream down, the page and the chart are served from their stored entries', async () => {
+		serveUpstreams()
+		const first = await load()
+		const page = await first.getStablecoinChainsPageData()
+		const chart = await first.getStablecoinChainsChartSeries('totalMcap')
 
-		expect(mocks.fetchStablecoinAssetsApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
-		expect(mocks.fetchLlamaConfig).toHaveBeenCalledOnce()
-		expect(mocks.fetchStablecoinChartAllApi).toHaveBeenCalledOnce()
+		failUpstreams()
+		const next = await load()
+
+		await expect(next.getStablecoinChainsPageData()).resolves.toEqual(page)
+		await expect(next.getStablecoinChainsChartSeries('totalMcap')).resolves.toEqual(chart)
 	})
 
-	test('falls back independently to the versioned page and chart cache entries', async () => {
-		const page = await getStablecoinChainsPageData()
-		const pageEntry = findStoredPageEntry()
-		const chart = await getStablecoinChainsChartSeries('totalMcap')
-		const cachedChartSource = findStoredValue('stablecoins:chains-chart-source-v4')
+	test('a stored page served days later during an outage drops its changes and is flagged stale', async () => {
+		serveUpstreams()
+		await (await load()).getStablecoinChainsPageData()
 
-		rejectStablecoinChainUpstreams()
-		serveCachedEntries(pageEntry, cachedChartSource)
+		vi.setSystemTime(NOW + 3 * 86_400_000)
+		failUpstreams()
+		const page = await (await load()).getStablecoinChainsPageData()
 
-		await expect(getStablecoinChainsPageData()).resolves.toEqual(page)
-		await expect(getStablecoinChainsChartSeries('totalMcap')).resolves.toEqual(chart)
+		expect(page).toMatchObject({ isDataStale: true, change1d: null, change7d: null, totalMcapCurrent: 150 })
+		expect(page.chainCirculatings.map((chain) => [chain.name, chain.change_1d])).toEqual([
+			['Ethereum', null],
+			['Arbitrum', null]
+		])
 	})
+})
 
-	test('returns a fully fresh cache entry and its rows without cloning or leaking timestamps', async () => {
-		await getStablecoinChainsPageData()
-		const cachedEntry = findStoredPageEntry()
-		rejectStablecoinChainUpstreams()
-		serveCachedEntries(cachedEntry)
-		vi.setSystemTime(Date.parse('2026-07-23T12:00:00Z'))
+const row = (name: string, overrides: Partial<IFormattedStablecoinChainRow> = {}): IFormattedStablecoinChainRow => ({
+	name,
+	circulating: 100,
+	mcap: 100,
+	unreleased: 0,
+	bridgedTo: 0,
+	minted: 0,
+	mcapPrevDay: 90,
+	mcapPrevWeek: 80,
+	mcapPrevMonth: 70,
+	change_1d: 11.11,
+	change_7d: 25,
+	change_1m: 42.86,
+	dominance: null,
+	...overrides
+})
 
-		const fallback = await getStablecoinChainsPageData()
+const clearedDeltas = {
+	mcapPrevDay: null,
+	mcapPrevWeek: null,
+	mcapPrevMonth: null,
+	change_1d: null,
+	change_7d: null,
+	change_1m: null
+}
 
-		expect(fallback).toBe(cachedEntry.pageData)
-		expect(fallback.chainCirculatings[0]).toBe(cachedEntry.pageData.chainCirculatings[0])
-		expect(fallback.chainCirculatings[1]).toBe(cachedEntry.pageData.chainCirculatings[1])
-		expect(fallback).not.toHaveProperty('latestChainTimestamps')
-	})
+const pageData = (overrides: Partial<PeggedChainsPageData> = {}): PeggedChainsPageData => ({
+	chainCirculatings: [row('Ethereum'), row('Arbitrum')],
+	chainList: ['Ethereum', 'Arbitrum'],
+	chainsGroupbyParent: {},
+	deprecatedChains: {},
+	change1d: '+11.11',
+	change7d: '+25.00',
+	change30d: '+42.86',
+	totalMcapCurrent: 150,
+	change1d_nol: '+15',
+	change7d_nol: '+30',
+	change30d_nol: '+45',
+	dataTimestamp: Date.parse('2026-07-22T00:00:00Z') / 1e3,
+	isDataStale: false,
+	...overrides
+})
 
-	test('clears stale aggregate fields while preserving a chain with fresh history', async () => {
-		await getStablecoinChainsPageData()
-		const storedEntry = findStoredPageEntry()
-		const cachedEntry: PageCacheEntry = {
-			pageData: storedEntry.pageData,
-			latestChainTimestamps: {
-				Ethereum: Date.parse('2026-07-25T00:00:00Z') / 1e3,
-				Arbitrum: getCachedChainTimestamp(storedEntry, 'Arbitrum')
-			}
-		}
-		rejectStablecoinChainUpstreams()
-		serveCachedEntries(cachedEntry)
-		vi.setSystemTime(Date.parse('2026-07-25T12:00:00Z'))
+const TODAY = Date.parse('2026-07-22T00:00:00Z') / 1e3
+const THREE_DAYS_AGO = Date.parse('2026-07-19T00:00:00Z') / 1e3
 
-		const fallback = await getStablecoinChainsPageData()
+describe('revalidating a stored chains page', () => {
+	test('a stale aggregate loses its changes and is flagged; a chain with fresh history keeps its row', async () => {
+		const { revalidateStablecoinChainsPageData } = await import('../queries.server')
+		const stored = pageData({ dataTimestamp: THREE_DAYS_AGO })
 
-		expect(fallback).toMatchObject({
+		const result = revalidateStablecoinChainsPageData(
+			{ pageData: stored, latestChainTimestamps: { Ethereum: TODAY, Arbitrum: THREE_DAYS_AGO } },
+			NOW
+		)
+
+		expect(result).toMatchObject({
 			isDataStale: true,
 			change1d: null,
 			change7d: null,
@@ -306,89 +238,48 @@ describe('stablecoin chain consumer caches', () => {
 			change1d_nol: null,
 			change7d_nol: null,
 			change30d_nol: null,
-			totalMcapCurrent: storedEntry.pageData.totalMcapCurrent,
-			dataTimestamp: storedEntry.pageData.dataTimestamp
+			totalMcapCurrent: 150,
+			dataTimestamp: THREE_DAYS_AGO
 		})
-		const fallbackEthereum = getChainRow(fallback, 'Ethereum')
-		expect(fallbackEthereum).toBe(getChainRow(storedEntry.pageData, 'Ethereum'))
-		expect(fallbackEthereum.mcapPrevDay).not.toBeNull()
-		expect(getChainRow(fallback, 'Arbitrum')).toEqual({
-			...getChainRow(storedEntry.pageData, 'Arbitrum'),
-			mcapPrevDay: null,
-			mcapPrevWeek: null,
-			mcapPrevMonth: null,
-			change_1d: null,
-			change_7d: null,
-			change_1m: null
-		})
+		expect(result.chainCirculatings).toEqual([row('Ethereum'), row('Arbitrum', clearedDeltas)])
 	})
 
-	test('preserves fresh aggregate changes while clearing only a stale chain row', async () => {
-		await getStablecoinChainsPageData()
-		const storedEntry = findStoredPageEntry()
-		const cachedEntry: PageCacheEntry = {
-			pageData: storedEntry.pageData,
-			latestChainTimestamps: {
-				Ethereum: getCachedChainTimestamp(storedEntry, 'Ethereum'),
-				Arbitrum: Date.parse('2026-07-19T00:00:00Z') / 1e3
-			}
-		}
-		const cachedSnapshot = structuredClone(cachedEntry)
-		rejectStablecoinChainUpstreams()
-		serveCachedEntries(cachedEntry)
+	test('a fresh aggregate keeps its changes while only the stale chain row is cleared, leaving the stored entry intact', async () => {
+		const { revalidateStablecoinChainsPageData } = await import('../queries.server')
+		const stored = pageData()
 
-		const firstFallback = await getStablecoinChainsPageData()
-		const secondFallback = await getStablecoinChainsPageData()
+		const result = revalidateStablecoinChainsPageData(
+			{ pageData: stored, latestChainTimestamps: { Ethereum: TODAY, Arbitrum: THREE_DAYS_AGO } },
+			NOW
+		)
 
-		expect(firstFallback.change1d).toBe(storedEntry.pageData.change1d)
-		expect(firstFallback.change7d).toBe(storedEntry.pageData.change7d)
-		expect(firstFallback.change30d).toBe(storedEntry.pageData.change30d)
-		expect(firstFallback.isDataStale).toBe(false)
-		expect(firstFallback.chainCirculatings[0]).toBe(storedEntry.pageData.chainCirculatings[0])
-		expect(firstFallback.chainCirculatings[1]).not.toBe(storedEntry.pageData.chainCirculatings[1])
-		expect(getChainRow(firstFallback, 'Arbitrum')).toMatchObject({
-			mcap: getChainRow(storedEntry.pageData, 'Arbitrum').mcap,
-			mcapPrevDay: null,
-			mcapPrevWeek: null,
-			mcapPrevMonth: null,
-			change_1d: null,
-			change_7d: null,
-			change_1m: null
-		})
-		expect(secondFallback).toEqual(firstFallback)
-		expect(cachedEntry).toEqual(cachedSnapshot)
+		expect(result).toMatchObject({ change1d: '+11.11', change7d: '+25.00', change30d: '+42.86', isDataStale: false })
+		expect(result.chainCirculatings).toEqual([row('Ethereum'), row('Arbitrum', clearedDeltas)])
+		expect(stored).toEqual(pageData())
 	})
 
-	test('keeps aggregate freshness unset while independently clearing a stale chain', async () => {
-		await getStablecoinChainsPageData()
-		const storedEntry = findStoredPageEntry()
-		const cachedEntry: PageCacheEntry = {
-			pageData: { ...storedEntry.pageData, dataTimestamp: null, isDataStale: false },
-			latestChainTimestamps: {
-				Ethereum: getCachedChainTimestamp(storedEntry, 'Ethereum'),
-				Arbitrum: Date.parse('2026-07-19T00:00:00Z') / 1e3
-			}
-		}
-		rejectStablecoinChainUpstreams()
-		serveCachedEntries(cachedEntry)
+	test('an aggregate with no timestamp is never marked stale', async () => {
+		const { revalidateStablecoinChainsPageData } = await import('../queries.server')
 
-		const fallback = await getStablecoinChainsPageData()
+		const result = revalidateStablecoinChainsPageData(
+			{ pageData: pageData({ dataTimestamp: null }), latestChainTimestamps: { Ethereum: TODAY, Arbitrum: TODAY } },
+			NOW
+		)
 
-		expect(fallback).toMatchObject({
-			dataTimestamp: null,
-			isDataStale: false,
-			change1d: cachedEntry.pageData.change1d,
-			change7d: cachedEntry.pageData.change7d,
-			change30d: cachedEntry.pageData.change30d
-		})
-		expect(fallback.chainCirculatings[0]).toBe(cachedEntry.pageData.chainCirculatings[0])
-		expect(fallback.chainCirculatings[1]).toMatchObject({
-			mcapPrevDay: null,
-			mcapPrevWeek: null,
-			mcapPrevMonth: null,
-			change_1d: null,
-			change_7d: null,
-			change_1m: null
-		})
+		expect(result).toMatchObject({ dataTimestamp: null, isDataStale: false, change1d: '+11.11' })
+	})
+
+	test('an entry that is fresh everywhere is returned as stored', async () => {
+		const { revalidateStablecoinChainsPageData } = await import('../queries.server')
+		const stored = pageData()
+
+		// The previous UTC day still counts as current until today's snapshot lands.
+		const yesterday = Date.parse('2026-07-21T00:00:00Z') / 1e3
+		const result = revalidateStablecoinChainsPageData(
+			{ pageData: stored, latestChainTimestamps: { Ethereum: TODAY, Arbitrum: yesterday } },
+			NOW
+		)
+
+		expect(result).toBe(stored)
 	})
 })

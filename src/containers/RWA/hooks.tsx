@@ -686,35 +686,53 @@ export function useRWAAssetCategoryPieChartData({
 	metric: RWAChartMetricKey
 	includeBridgeTvl?: boolean
 }) {
-	return useMemo(() => {
-		if (!enabled) {
-			return emptyPieChartResult()
-		}
-		const pieChartStackColors = buildStackColors(categories)
-		const selectedCategoriesSet = new Set(selectedCategories)
-		const categoryTotals = new Map<string, number>()
+	return useMemo(
+		() =>
+			enabled
+				? buildRwaAssetCategoryPieChartData({ assets, categories, selectedCategories, metric, includeBridgeTvl })
+				: emptyPieChartResult(),
+		[assets, categories, enabled, includeBridgeTvl, metric, selectedCategories]
+	)
+}
 
-		for (const asset of assets) {
-			const primaryCategory = getPrimaryRwaCategory(asset.category)
-			if (!primaryCategory || !selectedCategoriesSet.has(primaryCategory)) continue
+/** Category pie slices: each asset counts only toward its primary category. */
+export function buildRwaAssetCategoryPieChartData({
+	assets,
+	categories,
+	selectedCategories,
+	metric,
+	includeBridgeTvl
+}: {
+	assets: IRWAAssetsOverview['assets']
+	categories: Array<string>
+	selectedCategories: Array<string>
+	metric: RWAChartMetricKey
+	includeBridgeTvl: boolean
+}) {
+	const pieChartStackColors = buildStackColors(categories)
+	const selectedCategoriesSet = new Set(selectedCategories)
+	const categoryTotals = new Map<string, number>()
 
-			categoryTotals.set(
-				primaryCategory,
-				(categoryTotals.get(primaryCategory) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
-			)
-		}
+	for (const asset of assets) {
+		const primaryCategory = getPrimaryRwaCategory(asset.category)
+		if (!primaryCategory || !selectedCategoriesSet.has(primaryCategory)) continue
 
-		const pieChartData: Array<PieChartDatum> = []
-		for (const [name, value] of categoryTotals) {
-			if (value > 0) pieChartData.push({ name, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
+		categoryTotals.set(
+			primaryCategory,
+			(categoryTotals.get(primaryCategory) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
+		)
+	}
 
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assets, categories, enabled, includeBridgeTvl, metric, selectedCategories])
+	const pieChartData: Array<PieChartDatum> = []
+	for (const [name, value] of categoryTotals) {
+		if (value > 0) pieChartData.push({ name, value })
+	}
+	pieChartData.sort((a, b) => b.value - a.value)
+
+	return {
+		pieChartData,
+		pieChartStackColors
+	}
 }
 
 export function useRwaCategoryAssetClassPieChartData({
@@ -826,34 +844,47 @@ export function useRwaAssetGroupPieChartData({
 	metric: RWAChartMetricKey
 	includeBridgeTvl?: boolean
 }) {
-	return useMemo(() => {
-		if (!enabled || assets.length === 0) {
-			return emptyPieChartResult()
-		}
+	return useMemo(
+		() =>
+			enabled && assets.length > 0
+				? buildRwaAssetGroupPieChartData({ assets, metric, includeBridgeTvl })
+				: emptyPieChartResult(),
+		[assets, enabled, includeBridgeTvl, metric]
+	)
+}
 
-		const totalsByGroup = new Map<string, number>()
-		for (const asset of assets) {
-			const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-			totalsByGroup.set(
-				assetGroup,
-				(totalsByGroup.get(assetGroup) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
-			)
-		}
+/** Asset-group pie slices, with missing groups counted as Unknown. */
+export function buildRwaAssetGroupPieChartData({
+	assets,
+	metric,
+	includeBridgeTvl
+}: {
+	assets: IRWAAssetsOverview['assets']
+	metric: RWAChartMetricKey
+	includeBridgeTvl: boolean
+}) {
+	const totalsByGroup = new Map<string, number>()
+	for (const asset of assets) {
+		const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
+		totalsByGroup.set(
+			assetGroup,
+			(totalsByGroup.get(assetGroup) ?? 0) + getRwaDisplayedMetricValue(asset, metric, includeBridgeTvl)
+		)
+	}
 
-		const colorOrder = Array.from(totalsByGroup.keys()).sort()
-		if (!colorOrder.includes('Others')) colorOrder.push('Others')
-		const pieChartStackColors = buildStackColors(colorOrder)
+	const colorOrder = Array.from(totalsByGroup.keys()).sort()
+	if (!colorOrder.includes('Others')) colorOrder.push('Others')
+	const pieChartStackColors = buildStackColors(colorOrder)
 
-		const pieChartData: Array<PieChartDatum> = []
-		for (const [name, value] of totalsByGroup) {
-			if (value > 0) pieChartData.push({ name, value })
-		}
-		pieChartData.sort((a, b) => b.value - a.value)
-		return {
-			pieChartData,
-			pieChartStackColors
-		}
-	}, [assets, enabled, includeBridgeTvl, metric])
+	const pieChartData: Array<PieChartDatum> = []
+	for (const [name, value] of totalsByGroup) {
+		if (value > 0) pieChartData.push({ name, value })
+	}
+	pieChartData.sort((a, b) => b.value - a.value)
+	return {
+		pieChartData,
+		pieChartStackColors
+	}
 }
 
 export function useRwaAssetPlatformPieChartData({
@@ -1193,23 +1224,13 @@ export function useRwaChartDataset({
 	})
 	assert(initialDataset == null || initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
-	const chartDataset = useMemo<RWAPositionalChartDataset>(() => {
-		if (!enabled) return { source: [], dimensions: ['timestamp'] }
-		if (useInitialDataset && initialDataset) {
-			if (mode !== 'total') return initialDataset
-			const totalDimension = initialDataset.dimensions[1]
-			if (totalDimension === undefined) {
-				return { dimensions: ['timestamp'], source: initialDataset.source.map((row) => [row[0]]) }
-			}
-			return {
-				dimensions: ['timestamp', totalDimension],
-				source: initialDataset.source.map((row) => [row[0], row[1] ?? null])
-			}
-		}
-		if (!assetRows) return { source: [], dimensions: ['timestamp'] }
-		const dataset = aggregateRwaMetricData(filteredAssets, assetRows, mode)
-		return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
-	}, [useInitialDataset, initialDataset, assetRows, filteredAssets, mode, selectedMetric, enabled])
+	const chartDataset = useMemo<RWAPositionalChartDataset>(
+		() =>
+			enabled
+				? buildRwaChartDataset({ useInitialDataset, initialDataset, assetRows, filteredAssets, mode, selectedMetric })
+				: { source: [], dimensions: ['timestamp'] },
+		[useInitialDataset, initialDataset, assetRows, filteredAssets, mode, selectedMetric, enabled]
+	)
 
 	return {
 		chartDataset,
@@ -1217,4 +1238,39 @@ export function useRwaChartDataset({
 		isChartLoading: shouldFetchAssetRows && isLoading,
 		chartError: shouldFetchAssetRows && error ? getErrorMessage(error) : null
 	}
+}
+
+/**
+ * The spot chart for one metric: the build-time dataset when the page uses it (Total projects its hidden Total
+ * column), otherwise the fetched per-asset rows folded by `mode`.
+ */
+export function buildRwaChartDataset({
+	useInitialDataset,
+	initialDataset,
+	assetRows,
+	filteredAssets,
+	mode,
+	selectedMetric
+}: {
+	useInitialDataset: boolean
+	initialDataset: RWAPositionalChartDataset | null
+	assetRows: IRWAChartMetricRows | undefined
+	filteredAssets: IRWAAssetsOverview['assets']
+	mode: RWAChartAggregationMode
+	selectedMetric: RWAChartMetricKey
+}): RWAPositionalChartDataset {
+	if (useInitialDataset && initialDataset) {
+		if (mode !== 'total') return initialDataset
+		const totalDimension = initialDataset.dimensions[1]
+		if (totalDimension === undefined) {
+			return { dimensions: ['timestamp'], source: initialDataset.source.map((row) => [row[0]]) }
+		}
+		return {
+			dimensions: ['timestamp', totalDimension],
+			source: initialDataset.source.map((row) => [row[0], row[1] ?? null])
+		}
+	}
+	if (!assetRows) return { source: [], dimensions: ['timestamp'] }
+	const dataset = aggregateRwaMetricData(filteredAssets, assetRows, mode)
+	return buildRwaCanonicalMetricDataset(dataset, selectedMetric, mode === 'total')
 }

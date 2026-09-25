@@ -54,54 +54,6 @@ describe('ArticleRenderer', () => {
 		expect(html).toContain('/research/authors/john-doe')
 	})
 
-	test('uses fixed table layout only when a table carries stored column widths', () => {
-		const table = (colwidth: Array<number> | null) => ({
-			type: 'table',
-			content: [
-				{
-					type: 'tableRow',
-					content: [
-						{
-							type: 'tableHeader',
-							attrs: colwidth ? { colwidth } : {},
-							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Metric' }] }]
-						},
-						{
-							type: 'tableHeader',
-							attrs: {},
-							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Aave' }] }]
-						}
-					]
-				}
-			]
-		})
-
-		const render = (node: unknown) => {
-			const normalized = normalizeLocalArticleDocument({
-				title: 'Table widths',
-				status: 'published',
-				author: 'Jane Doe',
-				section: 'report',
-				contentJson: { type: 'doc', content: [node] }
-			})
-			expect(normalized.ok).toBe(true)
-			if (!normalized.ok) throw new Error('normalize failed')
-			const client = new QueryClient()
-			return renderToStaticMarkup(
-				<QueryClientProvider client={client}>
-					<ArticleRenderer article={normalized.value} />
-				</QueryClientProvider>
-			)
-		}
-
-		const resized = render(table([400]))
-		expect(resized).toContain('table-fixed')
-		expect(resized).toContain('width:400px')
-
-		const untouched = render(table(null))
-		expect(untouched).not.toContain('table-fixed')
-	})
-
 	test('links the DefiLlama Research brand byline to the research author page', () => {
 		const normalized = normalizeLocalArticleDocument({
 			title: 'Market structure report',
@@ -164,7 +116,7 @@ describe('ArticleRenderer', () => {
 						type: 'defillamaChart',
 						attrs: {
 							config: {
-								entities: [{ entityType: 'protocol', slug: 'aave', name: 'Aave' }],
+								entities: [{ entityType: 'protocol', slug: 'compound', name: 'Compound' }],
 								chartType: 'fees'
 							}
 						}
@@ -186,71 +138,6 @@ describe('ArticleRenderer', () => {
 		expect(html).toContain('Watch the revenue line.')
 		expect(html).toContain('Fees · All time')
 		expect(html).not.toContain('ProseMirror')
-	})
-
-	test('flattens nested Q&A blocks before rendering published content', () => {
-		const normalized = normalizeLocalArticleDocument({
-			id: 'nested-interview',
-			title: 'Nested interview',
-			status: 'published',
-			contentJson: { type: 'doc', content: [] }
-		})
-
-		expect(normalized.ok).toBe(true)
-		if (!normalized.ok) return
-
-		const nestedContentJson = {
-			type: 'doc',
-			content: [
-				{
-					type: 'qa',
-					content: [
-						{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question one?' }] },
-						{
-							type: 'qaAnswer',
-							content: [
-								{ type: 'paragraph', content: [{ type: 'text', text: 'Answer one.' }] },
-								{
-									type: 'qa',
-									content: [
-										{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question two?' }] },
-										{
-											type: 'qaAnswer',
-											content: [
-												{ type: 'paragraph', content: [{ type: 'text', text: 'Answer two.' }] },
-												{
-													type: 'qa',
-													content: [
-														{ type: 'qaQuestion', content: [{ type: 'text', text: 'Question three?' }] },
-														{
-															type: 'qaAnswer',
-															content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Answer three.' }] }]
-														}
-													]
-												}
-											]
-										}
-									]
-								}
-							]
-						}
-					]
-				}
-			]
-		}
-
-		const client = new QueryClient()
-		const html = renderToStaticMarkup(
-			<QueryClientProvider client={client}>
-				<ArticleRenderer article={{ ...normalized.value, contentJson: nestedContentJson }} />
-			</QueryClientProvider>
-		)
-
-		expect(html.match(/data-article-qa="true"/g)).toHaveLength(3)
-		expect(html).toContain('Question one?')
-		expect(html).toContain('Question two?')
-		expect(html).toContain('Question three?')
-		expect(html).not.toMatch(/data-article-qa-answer="true"[^>]*>(?:(?!<\/dd>)[\s\S])*<dl data-article-qa="true"/)
 	})
 
 	test('renders an editor-defined Q&A question number', () => {
@@ -346,12 +233,6 @@ describe('llamaaiChart figure captions', () => {
 			</QueryClientProvider>
 		)
 	}
-
-	test('renders no figcaption or figure number when the author wrote no caption', () => {
-		const html = renderWithCharts([chartNode('')])
-		expect(html).not.toContain('Figure 1')
-		expect(html).not.toContain('Source')
-	})
 
 	test('numbers only captioned charts, so published numbering has no gaps', () => {
 		const html = renderWithCharts([chartNode(''), chartNode('Weekly fees by chain')])

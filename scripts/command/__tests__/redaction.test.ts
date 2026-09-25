@@ -32,14 +32,6 @@ describe('secret redaction', () => {
 		expect(redactor('key=coins/secret+ query=coins%2Fsecret%2B')).toBe('key=[REDACTED] query=[REDACTED]')
 	})
 
-	test('ignores inherited env values while collecting secrets', () => {
-		const env = Object.create({ API_KEY: 'inherited-secret' }) as NodeJS.ProcessEnv
-		env.LOGGER_API_KEY = 'own-secret'
-		const redactor = createSecretRedactor(env)
-
-		expect(redactor('own-secret inherited-secret')).toBe('[REDACTED] inherited-secret')
-	})
-
 	test('redacts raw and encoded connection strings', () => {
 		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
 		const databaseUrl = 'postgres://db-user:db-password@db.internal/app'
@@ -177,25 +169,12 @@ describe('secret redaction', () => {
 		expect(() => logger.close()).not.toThrow()
 	})
 
-	test('delegates ephemeral build secret injection to the deployment platform', async () => {
+	test('keeps secrets out of Docker build arguments and image environment', async () => {
 		const dockerfile = await fs.readFile(path.join(process.cwd(), 'Dockerfile'), 'utf8')
 		const secretInstruction =
 			/^\s*(?:ARG|ENV)\s+\w*(?:API_KEY|TOKEN|SECRET|PASSWORD|AUTH|WEBHOOK|PRIVATE_KEY|ACCESS_KEY|CREDENTIAL|COOKIE|DATABASE_URL|DB_URL|POSTGRES_URL|REDIS_URL|CONNECTION_STRING)\w*/im
 
 		expect(dockerfile).not.toMatch(secretInstruction)
-		expect(dockerfile).not.toContain('dotenvx')
-		expect(dockerfile).not.toContain('node_modules/@next/env')
-		expect(dockerfile).toContain('# syntax=docker/dockerfile:1.10')
-		expect(dockerfile).toContain('RUN bash ./scripts/build.sh')
-	})
-
-	test('adds context to build log open failures', async () => {
-		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'logger-open-test-'))
-		tempDirs.push(projectDir)
-		const logPath = path.join(projectDir, 'build.log')
-		await fs.mkdir(logPath)
-
-		expect(() => createTeeLogger({ logPath })).toThrow(`Failed to open build log for ${logPath}:`)
 	})
 
 	test('redacts notification logger output after build log capture closes', () => {

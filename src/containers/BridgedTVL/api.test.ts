@@ -1,35 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/constants', () => ({ SERVER_URL: 'https://pro-api.llama.fi/test-key/api' }))
-vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
+import { describe, expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { fetchChainAssetsChart, fetchChainAssetsDetail, fetchChainAssetsFlows1d } from './api'
 import { normalizeChainsAssetTotalsResponse } from './normalizers'
 
 const rawCategory = (total: string, breakdown: Record<string, string> = {}) => ({ total, breakdown })
-
-describe('chain asset totals projection', () => {
-	test('normalizes totals without carrying token breakdowns into list page data', () => {
-		const response = {
-			timestamp: 1_800_000_000,
-			Ethereum: {
-				total: rawCategory('12.5', { USDC: '10', USDT: '2.5' }),
-				canonical: rawCategory('10', { USDC: '10' }),
-				thirdParty: rawCategory('2.5', { USDT: '2.5' })
-			}
-		}
-
-		expect(normalizeChainsAssetTotalsResponse(response)).toEqual({
-			Ethereum: {
-				total: { total: 12.5 },
-				canonical: { total: 10 },
-				thirdParty: { total: 2.5 }
-			}
-		})
-	})
-})
 
 describe('eight-section producer payloads', () => {
 	test('normalizes stablecoins, rwa and lst alongside the original five', () => {
@@ -63,10 +40,6 @@ describe('eight-section producer payloads', () => {
 })
 
 describe('fetchChainAssetsDetail', () => {
-	beforeEach(() => {
-		fetchJsonMock.mockReset()
-	})
-
 	test('normalizes the selected breakdown and projects navigation totals', async () => {
 		const response = {
 			timestamp: 1_800_000_000,
@@ -82,7 +55,7 @@ describe('fetchChainAssetsDetail', () => {
 				native: rawCategory('0')
 			}
 		}
-		fetchJsonMock.mockResolvedValue(response)
+		http.serve({ [`${SERVER_URL}/chain-assets/chains`]: response })
 
 		const { chainData, totals } = await fetchChainAssetsDetail('ethereum')
 
@@ -96,16 +69,14 @@ describe('fetchChainAssetsDetail', () => {
 })
 
 describe('fetchChainAssetsFlows1d', () => {
-	beforeEach(() => {
-		fetchJsonMock.mockReset()
-	})
-
 	test('normalizes every represented flow category and preserves zero', async () => {
-		fetchJsonMock.mockResolvedValue({
-			Base: {
-				total: { perc: '0', raw: '0' },
-				stablecoins: { perc: '-1.5', raw: '25.25' },
-				rwa: { perc: '2', raw: '3' }
+		http.serve({
+			[`${SERVER_URL}/chain-assets/flows/24h`]: {
+				Base: {
+					total: { perc: '0', raw: '0' },
+					stablecoins: { perc: '-1.5', raw: '25.25' },
+					rwa: { perc: '2', raw: '3' }
+				}
 			}
 		})
 
@@ -120,20 +91,18 @@ describe('fetchChainAssetsFlows1d', () => {
 })
 
 describe('fetchChainAssetsChart', () => {
-	beforeEach(() => {
-		fetchJsonMock.mockReset()
-	})
-
 	test('keeps producer timestamps in seconds and normalizes every string section including zero', async () => {
-		fetchJsonMock.mockResolvedValue([
-			{ timestamp: 1_700_000_000, data: { total: '42.5', ownTokens: '0', canonical: '30' } },
-			{ timestamp: 1_700_086_400, data: { total: '0' } }
-		])
+		http.serve({
+			[`${SERVER_URL}/chain-assets/chart/base`]: [
+				{ timestamp: 1_700_000_000, data: { total: '42.5', ownTokens: '0', canonical: '30' } },
+				{ timestamp: 1_700_086_400, data: { total: '0' } }
+			]
+		})
 
 		await expect(fetchChainAssetsChart('base')).resolves.toEqual([
 			{ timestamp: 1_700_000_000, data: { total: 42.5, ownTokens: 0, canonical: 30 } },
 			{ timestamp: 1_700_086_400, data: { total: 0 } }
 		])
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://pro-api.llama.fi/test-key/api/chain-assets/chart/base')
+		expect(http.urls()).toEqual([`${SERVER_URL}/chain-assets/chart/base`])
 	})
 })

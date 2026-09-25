@@ -1,33 +1,31 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { useDashboardAPI } from '../hooks/useDashboardAPI'
 import { DashboardSettingsModal } from './DashboardSettingsModal'
 
-const api = vi.hoisted(() => ({ update: vi.fn() }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: true,
-		user: { id: 'owner' },
-		hasActiveSubscription: true,
-		authorizedFetch: vi.fn()
-	})
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('react-hot-toast', () => {
 	const mock = Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() })
 	return { default: mock, toast: mock }
 })
-vi.mock('../services/DashboardAPI', async (original) => ({
-	...(await original<typeof import('../services/DashboardAPI')>()),
-	dashboardAPI: { listDashboards: async () => [], updateDashboard: api.update }
-}))
+const session = installSubscriberSession('owner')
+const SAVE_PATH = '/api/private/pro-dashboard/save'
+const saved = {
+	id: 'dashboard',
+	data: { items: [], dashboardName: 'Original' },
+	created: '2026-09-01',
+	updated: '2026-09-01'
+}
+const savedTags = () =>
+	session.requests
+		.filter((request) => request.url.pathname === SAVE_PATH)
+		.map((request) => JSON.parse(request.init!.body as string).tags)
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 const close = vi.fn()
 function Harness({ open }: { open: boolean }) {
 	const { updateDashboard } = useDashboardAPI('dashboard')
@@ -51,9 +49,9 @@ function Harness({ open }: { open: boolean }) {
 async function render(open: boolean) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness open={open} />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -73,19 +71,20 @@ async function addTag(tag: string) {
 }
 beforeEach(() => {
 	vi.clearAllMocks()
-	api.update.mockReset()
-	client = new QueryClient()
+	session.serve({ '/dashboards': { items: [] } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 test('a real API failure appears once in the open settings form and retry saves the retained draft', async () => {
-	api.update.mockRejectedValueOnce(new Error('Offline')).mockResolvedValueOnce({ id: 'dashboard' })
+	let attempts = 0
+	session.serve({
+		[SAVE_PATH]: () => (++attempts === 1 ? Response.json({ error: 'Offline' }, { status: 500 }) : saved)
+	})
 	await render(true)
 	await addTag('lending')
 	await submit()
@@ -96,22 +95,20 @@ test('a real API failure appears once in the open settings form and retry saves 
 	expect(close).not.toHaveBeenCalled()
 	await submit()
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
-	expect(api.update.mock.calls.map(([, data]) => data.tags)).toEqual([['lending'], ['lending']])
+	expect(savedTags()).toEqual([['lending'], ['lending']])
 })
 test.each(['success', 'failure'] as const)(
 	'an old opening finishing with %s cannot affect a reopened form',
 	async (outcome) => {
-		const pending = Promise.withResolvers<{ id: string }>()
-		api.update.mockReturnValueOnce(pending.promise)
+		const pending = Promise.withResolvers<Response>()
+		session.serve({ [SAVE_PATH]: () => pending.promise })
 		await render(true)
 		const originalInput = tagInput()
 		originalInput.focus()
 		await submit()
-		// `readOnly` comes from the mutation's pending state, so waiting on the API mock alone races the
-		// React commit that locks the form: the mock is called from inside the mutation function, which
-		// runs before the pending render is flushed.
+		// The pending state reaches React on a TanStack notify tick, after the save request starts.
 		await vi.waitFor(() => {
-			expect(api.update).toHaveBeenCalledOnce()
+			expect(savedTags()).toEqual([[]])
 			expect(originalInput.readOnly).toBe(true)
 		})
 		expect(document.activeElement).toBe(originalInput)
@@ -120,10 +117,10 @@ test.each(['success', 'failure'] as const)(
 		const draft = tagInput()
 		draft.value = 'New opening'
 		await act(async () => {
-			if (outcome === 'success') pending.resolve({ id: 'dashboard' })
-			else pending.reject(new Error('Earlier save failed'))
+			if (outcome === 'success') pending.resolve(Response.json(saved))
+			else pending.resolve(Response.json({ error: 'Earlier save failed' }, { status: 500 }))
 		})
-		await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+		await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
 		expect(close).not.toHaveBeenCalled()
 		expect(draft.value).toBe('New opening')
 		expect(document.querySelector('[role="alert"]')).toBeNull()

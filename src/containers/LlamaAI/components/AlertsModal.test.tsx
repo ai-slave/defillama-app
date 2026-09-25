@@ -1,42 +1,20 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ALERTS_QUERY_KEY } from './alerts/queryKeys'
 import type { Alert } from './alerts/types'
 import { AlertsModal } from './AlertsModal'
-const mocks = vi.hoisted(() => ({
-	fetchAlerts: vi.fn(),
-	setAlertEnabled: vi.fn(),
-	fetchAlertExecutions: vi.fn(),
-	authorizedFetch: vi.fn(),
-	authenticated: true
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: mocks.authorizedFetch,
-		isAuthenticated: mocks.authenticated,
-		loaders: { userLoading: false },
-		user: mocks.authenticated ? { id: 'user' } : null
-	})
-}))
-vi.mock('./alerts/api', () => ({
-	...mocks,
-	deleteAlert: vi.fn(),
-	updateAlert: vi.fn(),
-	fetchAlertExecutionDetail: vi.fn()
-}))
+
+// Heavy children whose output these tests do not read.
 vi.mock('./CreateAlertModal', () => ({ CreateAlertModal: () => null }))
-vi.mock('~/containers/Subscription/SignInModal', () => ({ SignInModal: () => null }))
 vi.mock('./markdown/ChatMarkdownRenderer', () => ({ ChatMarkdownRenderer: () => null, SourcesList: () => null }))
-vi.mock('~/containers/LlamaAI/hooks/useIntegrationLink', () => ({
-	useIntegrationLink: () => ({ state: { status: 'idle' } })
-}))
-vi.mock('~/containers/LlamaAI/hooks/useSlackIntegrationLink', () => ({ useSlackWorkspaces: () => ({}) }))
-vi.mock('~/containers/LlamaAI/hooks/useSlackChannels', () => ({ useSlackChannels: () => ({}) }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
+
+const session = installSubscriberSession('user')
+const ALERTS_URL = 'https://ai.llama.fi/alerts'
 const alert: Alert = {
 	id: 'alert',
 	title: 'Weekly yields',
@@ -49,32 +27,36 @@ const alert: Alert = {
 	run_count: 1,
 	created_at: '2026-09-09T09:00:00Z'
 }
+const alertRequests = () => session.requests.filter((request) => request.url.href.startsWith(ALERTS_URL))
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
+
 function Harness() {
 	const store = Ariakit.useDialogStore({ defaultOpen: true })
 	return (
-		<QueryClientProvider client={client}>
+		<session.Wrapper>
 			<AlertsModal dialogStore={store} />
-		</QueryClientProvider>
+		</session.Wrapper>
 	)
 }
+
 beforeEach(() => {
-	vi.clearAllMocks()
-	mocks.authenticated = true
-	mocks.fetchAlerts.mockResolvedValue([alert])
-	mocks.fetchAlertExecutions.mockResolvedValue([])
-	client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
+	session.serve({
+		[`${ALERTS_URL}/alert/executions`]: { executions: [] },
+		'https://ai.llama.fi/telegram/status': { link: { state: 'unlinked' }, pending: null },
+		'https://ai.llama.fi/slack/status': { links: [], pending: null },
+		'https://ai.llama.fi/slack/workspaces': { workspaces: [] }
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
+
 async function render() {
 	await act(async () => root.render(<Harness />))
 }
@@ -88,24 +70,27 @@ function toggle() {
 }
 
 test('a failed refresh retains alerts and exposes retry', async () => {
-	client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
-	mocks.fetchAlerts.mockRejectedValue(new Error('Offline'))
+	let online = false
+	session.serve({
+		[ALERTS_URL]: () => (online ? Response.json({ alerts: [alert] }) : new Response('offline', { status: 503 }))
+	})
+	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
 	await render()
 	await settle(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load alerts"))
 	expect(document.body.textContent).toContain('Weekly yields')
-	mocks.fetchAlerts.mockResolvedValue([alert])
+	online = true
 	await act(async () => document.querySelector<HTMLButtonElement>('[role="alert"] button')!.click())
 	await settle(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+	expect(document.body.textContent).toContain('Weekly yields')
 })
 
 test('pending toggles block repeats, even after opening edit, and roll back on failure', async () => {
-	let reject!: (error: Error) => void
-	mocks.setAlertEnabled.mockImplementation(
-		() =>
-			new Promise((_resolve, fail) => {
-				reject = fail
-			})
-	)
+	const pending = Promise.withResolvers<Response>()
+	session.serve({
+		[ALERTS_URL]: { alerts: [alert] },
+		[`${ALERTS_URL}/alert`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'PATCH' ? pending.promise : Response.json(alert)
+	})
 	await render()
 	await settle(() => expect(toggle()).not.toBeNull())
 	await act(async () => toggle().click())
@@ -115,18 +100,92 @@ test('pending toggles block repeats, even after opening edit, and roll back on f
 		document.querySelector<HTMLButtonElement>('button[aria-label="Edit"]')!.click()
 		toggle().click()
 	})
-	expect(mocks.setAlertEnabled).toHaveBeenCalledTimes(1)
-	await act(async () => reject(new Error('Toggle failed')))
+	const patches = alertRequests().filter((request) => request.init?.method === 'PATCH')
+	expect(patches.map((request) => JSON.parse(request.init!.body as string))).toEqual([{ enabled: false }])
+	await act(async () => pending.resolve(new Response('nope', { status: 500 })))
 	await settle(() => expect(toggle().checked).toBe(true))
 	expect(toggle().getAttribute('aria-disabled')).not.toBe('true')
-	expect(document.body.textContent).toContain('Toggle failed')
+	expect(document.body.textContent).toContain('Failed to update alert')
 })
 
-test('sign-in does not also show the empty alert creation state', async () => {
-	mocks.authenticated = false
+test('signed out, the modal asks to sign in without an empty alert state or an alerts request', async () => {
+	pb.authStore.clear()
 	await render()
 	expect(document.body.textContent).toContain('Sign in to use alerts')
 	expect(document.querySelector('[role="status"]')).toBeNull()
-	expect(mocks.fetchAlerts).not.toHaveBeenCalled()
 	expect(document.body.textContent).not.toContain('Create your first')
+	expect(alertRequests()).toEqual([])
+})
+
+const reports: Array<Alert> = ['First report', 'Second report'].map((title, i) => ({
+	...alert,
+	id: String(i),
+	title,
+	original_query: title
+}))
+const listReads = () => alertRequests().filter((request) => request.url.href === ALERTS_URL).length
+const checked = () => [...document.querySelectorAll('[role="switch"]')].map((el) => el.getAttribute('aria-checked'))
+
+test('a failed toggle preserves other alert changes and allows retry without duplicate requests', async () => {
+	let list: Promise<Response> | Array<Alert> = reports
+	const patches = [Promise.withResolvers<Response>(), Promise.withResolvers<Response>()]
+	let patchCount = 0
+	session.serve({
+		[ALERTS_URL]: () => (Array.isArray(list) ? Response.json({ alerts: list }) : list),
+		[`${ALERTS_URL}/0`]: () => patches[patchCount++].promise
+	})
+	await render()
+	await settle(() => expect(checked()).toEqual(['true', 'true']))
+	const first = toggle()
+	await act(async () => {
+		first.focus()
+		first.click()
+	})
+	await settle(() => expect(first.getAttribute('aria-disabled')).toBe('true'))
+	expect(first.getAttribute('aria-checked')).toBe('false')
+	expect(document.activeElement).toBe(first)
+	await act(async () => first.click())
+	expect(patchCount).toBe(1)
+	// A separate alert changes while the first request is outstanding. Hold the
+	// reconciliation fetch so it cannot conceal an incorrect whole-list rollback.
+	list = new Promise<Response>(() => {})
+	await act(async () =>
+		session.client.setQueryData<Array<Alert>>([ALERTS_QUERY_KEY, 'user'], (current) =>
+			current!.map((item) => (item.id === '1' ? { ...item, enabled: false } : item))
+		)
+	)
+	await act(async () => patches[0].resolve(new Response('nope', { status: 500 })))
+	await settle(() => expect(checked()).toEqual(['true', 'false']))
+	expect(first.getAttribute('aria-label')).toBe('Alert enabled')
+	expect(first.getAttribute('aria-disabled')).not.toBe('true')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Failed to update alert')
+	await act(async () => first.click())
+	await act(async () => patches[1].resolve(Response.json({})))
+	await settle(() => expect(first.getAttribute('aria-checked')).toBe('false'))
+	expect(patchCount).toBe(2)
+})
+
+test('finishing one toggle does not refetch over another pending row', async () => {
+	let list = reports
+	const first = Promise.withResolvers<Response>()
+	const second = Promise.withResolvers<Response>()
+	session.serve({
+		[ALERTS_URL]: () => Response.json({ alerts: list }),
+		[`${ALERTS_URL}/0`]: () => first.promise,
+		[`${ALERTS_URL}/1`]: () => second.promise
+	})
+	await render()
+	await settle(() => expect(checked()).toEqual(['true', 'true']))
+	const [firstSwitch, secondSwitch] = document.querySelectorAll<HTMLElement>('[role="switch"]')
+	await act(async () => firstSwitch.click())
+	await act(async () => secondSwitch.click())
+	await settle(() => expect(checked()).toEqual(['false', 'false']))
+	const reads = listReads()
+	await act(async () => first.resolve(new Response('nope', { status: 500 })))
+	await settle(() => expect(checked()).toEqual(['true', 'false']))
+	expect(listReads()).toBe(reads)
+	list = reports.map((item) => (item.id === '1' ? { ...item, enabled: false } : item))
+	await act(async () => second.resolve(Response.json({})))
+	await settle(() => expect(listReads()).toBe(reads + 1))
+	expect(checked()).toEqual(['true', 'false'])
 })

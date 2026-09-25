@@ -8,6 +8,11 @@ const StripeCheckoutModal = lazy(() =>
 	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
+/** Checkout needs a reachable account: a verified email or a linked wallet. */
+export function needsVerificationBeforeCheckout(user: { verified?: boolean; walletAddress?: string } | null) {
+	return !user?.verified && !user?.walletAddress
+}
+
 export function PaymentButton({
 	paymentMethod,
 	type = 'api',
@@ -35,7 +40,7 @@ export function PaymentButton({
 	}
 
 	const handleClick = () => {
-		if (!user?.verified && !user?.walletAddress) {
+		if (needsVerificationBeforeCheckout(user)) {
 			promptVerifyEmail(user?.id)
 			return
 		}

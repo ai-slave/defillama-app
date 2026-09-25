@@ -5,7 +5,7 @@ import { Icon } from '~/ui/Icon'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { TabLink } from '~/ui/Tab'
 import { IrTabLabel } from './IrTabLabel'
-import { getMainSiteIrTabHref, type MainSiteIrDashboard } from './mainSiteDashboards'
+import { getIrTabMenuItems, type MainSiteIrDashboard } from './mainSiteDashboards'
 
 const menuItemStyles =
 	'group relative flex cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row'
@@ -56,12 +56,12 @@ export function IrTabMenu({
 					</div>
 				</div>
 				<div className="flex flex-col gap-0.5 p-1.5">
-					{dashboard.menuTabs.map((tab) => {
-						const isActive = active && activeTabId === tab.id
+					{getIrTabMenuItems(dashboard, active, activeTabId).map((tab) => {
+						const isActive = tab.isActive
 						return (
 							<Ariakit.MenuItem
 								key={tab.id}
-								render={<BasicLink href={getMainSiteIrTabHref(dashboard, tab.id)} />}
+								render={<BasicLink href={tab.href} />}
 								data-active={isActive}
 								className={menuItemStyles}
 								{...umamiProps}

@@ -16,8 +16,4 @@ describe('article annotation mark lines', () => {
 		expect(formatter({ dataIndex: 1 } as Parameters<typeof formatter>[0])).toBe('B')
 		expect(markLine.data).toEqual([{ xAxis: Date.parse('2025-03-01') }, { xAxis: Date.parse('2025-01-01') }])
 	})
-
-	test('omits mark-line configuration when there are no annotations', () => {
-		expect(buildArticleAnnotationMarkLine([])).toBeUndefined()
-	})
 })

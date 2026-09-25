@@ -8,7 +8,6 @@ import { Select } from '../Select'
 import { SelectWithCombobox } from '../SelectWithCombobox'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/' }) }))
-vi.mock('~/ui/Icon', () => ({ Icon: ({ name }: { name: string }) => <svg data-icon={name} /> }))
 
 const OPTIONS = [
 	{ key: 'tvl', name: 'TVL' },

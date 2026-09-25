@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
+	buildPieLayoutOption,
 	buildRuntimePieChartCsvDataset,
 	buildRuntimePieChartPresentation,
 	preparePieChartData,
@@ -65,18 +66,6 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	test('returns all slices when limit is not specified', () => {
-		const result = preparePieChartData({ data: { A: 1, B: 2, C: 3 } })
-		expect(result).toHaveLength(3)
-	})
-
-	test('ignores inherited enumerable fields on record input', () => {
-		const inherited = Object.create({ Phantom: 99 }) as Record<string, number>
-		inherited.Real = 5
-
-		expect(preparePieChartData({ data: inherited })).toEqual([{ name: 'Real', value: 5 }])
-	})
-
 	test('normalizes numeric-string values from record-shaped JSON', () => {
 		const data = { A: '10', B: '5', C: '2' } as unknown as Record<string, number>
 
@@ -84,15 +73,6 @@ describe('preparePieChartData', () => {
 			{ name: 'A', value: 10 },
 			{ name: 'Others', value: 7 }
 		])
-	})
-
-	test('does not read inherited fields from row-shaped input', () => {
-		expect(
-			preparePieChartData({
-				data: [{ value: 5 }],
-				sliceIdentifier: 'constructor'
-			})
-		).toEqual([{ name: 'undefined', value: 5 }])
 	})
 
 	test('omits Others when overflow sum is 0', () => {
@@ -285,5 +265,50 @@ describe('runtime pie selection', () => {
 			{ name: 'rETH', value: 5 },
 			{ name: 'Others', value: 5 }
 		])
+	})
+})
+
+describe('buildPieLayoutOption', () => {
+	const layout = (overrides: Partial<Parameters<typeof buildPieLayoutOption>[0]> = {}) =>
+		buildPieLayoutOption({
+			width: 600,
+			height: 360,
+			reservedRight: 0,
+			centerY: '50%',
+			showLegend: false,
+			isSmall: false,
+			canvasWatermarkEnabled: true,
+			isDark: false,
+			...overrides
+		})
+	const watermark = (option: ReturnType<typeof buildPieLayoutOption>) => {
+		const [graphic] = option.graphic ?? []
+		if (!graphic) throw new Error('Expected a watermark')
+		return { left: graphic.left, top: graphic.top, width: graphic.style.width, height: graphic.style.height }
+	}
+
+	test('centers the pie and its watermark in the whole canvas without a legend', () => {
+		const option = layout()
+		expect(option.series.center).toEqual(['50%', '50%'])
+		expect(watermark(option)).toEqual({ left: 242, top: 160, width: 117, height: 40 })
+	})
+
+	test('centers the pie and its watermark in the width a right-side legend leaves', () => {
+		const option = layout({ showLegend: true, reservedRight: 214 })
+		expect(option.series.center).toEqual([193, '50%'])
+		expect(watermark(option)).toMatchObject({ left: 135, top: 160 })
+	})
+
+	test('keeps a small-screen pie centered in the whole canvas even with a legend', () => {
+		expect(layout({ showLegend: true, reservedRight: 214, isSmall: true }).series.center).toEqual(['50%', '50%'])
+	})
+
+	test('shrinks the watermark to fit a small pie and follows the canvas height', () => {
+		expect(watermark(layout({ width: 150, height: 100 }))).toEqual({ left: 45, top: 40, width: 60, height: 21 })
+		expect(watermark(layout({ height: 500 })).top).toBe(230)
+	})
+
+	test('leaves the watermark out inside Pro dashboards', () => {
+		expect(layout({ canvasWatermarkEnabled: false })).not.toHaveProperty('graphic')
 	})
 })

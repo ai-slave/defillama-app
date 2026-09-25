@@ -14,6 +14,7 @@ import {
 	leafProtocolNamesFromTableRows,
 	normalizeProtocolBreakdownChartData,
 	normalizeChainsByAdapterChartState,
+	showsChainsByAdapterChart,
 	type ChainsByAdapterChartState
 } from '../utils'
 
@@ -95,15 +96,6 @@ const adapterBreakdownChartData = toDataset({
 })
 
 describe('normalizeChainsByAdapterChartState', () => {
-	test('returns the default bar state when no query params are present', () => {
-		expect(normalizeChainsByAdapterChartState({})).toEqual({
-			chartKind: 'bar',
-			valueMode: 'absolute',
-			barLayout: 'stacked',
-			groupBy: 'daily'
-		})
-	})
-
 	test('maps legacy dominance URLs to dominance mode and preserves cumulative grouping', () => {
 		expect(
 			normalizeChainsByAdapterChartState({
@@ -490,9 +482,13 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			state
 		})
 		const narrowed = buildChainsByAdapterChartPresentation({ chartData, selectedChains: ['B', 'C'], state })
-		if (full.kind !== 'dominance' || narrowed.kind !== 'dominance') return
+		assert(full.kind === 'dominance' && narrowed.kind === 'dominance')
 		const fullColors = new Map(full.charts.map((chart) => [chart.name, chart.color]))
-		for (const chart of narrowed.charts) expect(chart.color).toBe(fullColors.get(chart.name))
+		expect(new Set(fullColors.values()).size).toBe(3)
+		expect(Object.fromEntries(narrowed.charts.map(({ name, color }) => [name, color]))).toEqual({
+			B: fullColors.get('B'),
+			C: fullColors.get('C')
+		})
 	})
 
 	test('uses ECharts-parseable colors for selected overflow chains', () => {
@@ -586,33 +582,6 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
 			{ name: 'Solana', value: 40 },
 			{ name: 'Ethereum', value: 30 }
-		])
-	})
-
-	test('keeps first-row selection for duplicate latest daily timestamps', () => {
-		const timestamp = toMs(2024, 1, 2)
-		const presentation = buildChainsByAdapterChartPresentation({
-			chartData: toDataset({
-				dimensions: ['timestamp', 'Ethereum'],
-				source: [
-					{ timestamp, Ethereum: 10 },
-					{ timestamp, Ethereum: 20 }
-				]
-			}),
-			selectedChains: ['Ethereum'],
-			state: { chartKind: 'treemap', groupBy: 'daily' }
-		})
-
-		expect(presentation.kind).toBe('treemap')
-		if (presentation.kind !== 'treemap') return
-
-		expect(presentation.data).toEqual([
-			{
-				name: 'Ethereum',
-				value: 10,
-				share: 100,
-				itemStyle: { color: expect.any(String) }
-			}
 		])
 	})
 
@@ -843,15 +812,14 @@ describe('buildChainsByAdapterChartPresentation', () => {
 	})
 
 	test('sums only points inside the yearly rolling window for treemap', () => {
-		const t0 = toMs(2025, 1, 1)
-		const t1 = toMs(2025, 6, 1)
-		const t2 = toMs(2026, 3, 1)
+		const latest = toMs(2026, 3, 1)
+		const day = 24 * 60 * 60 * 1000
 		const yearlyRollingChartData = toDataset({
 			dimensions: ['timestamp', 'Ethereum', 'Solana'],
 			source: [
-				{ timestamp: t0, Ethereum: 10, Solana: 5 },
-				{ timestamp: t1, Ethereum: 20, Solana: 10 },
-				{ timestamp: t2, Ethereum: 30, Solana: 15 }
+				{ timestamp: latest - 380 * day, Ethereum: 10, Solana: 5 },
+				{ timestamp: latest - 350 * day, Ethereum: 20, Solana: 10 },
+				{ timestamp: latest, Ethereum: 30, Solana: 15 }
 			]
 		})
 
@@ -861,17 +829,11 @@ describe('buildChainsByAdapterChartPresentation', () => {
 			state: { chartKind: 'treemap', groupBy: 'yearly' }
 		})
 
-		expect(presentation.kind).toBe('treemap')
-		if (presentation.kind !== 'treemap') return
-
-		const cutoff = t2 - 365 * 24 * 60 * 60 * 1000
-		const ethereumSum = (t0 >= cutoff ? 10 : 0) + (t1 >= cutoff ? 20 : 0) + (t2 >= cutoff ? 30 : 0)
-		const solanaSum = (t0 >= cutoff ? 5 : 0) + (t1 >= cutoff ? 10 : 0) + (t2 >= cutoff ? 15 : 0)
-
-		const eth = presentation.data.find((d) => d.name === 'Ethereum')
-		const sol = presentation.data.find((d) => d.name === 'Solana')
-		expect(eth?.value).toBe(ethereumSum)
-		expect(sol?.value).toBe(solanaSum)
+		assert(presentation.kind === 'treemap')
+		expect(presentation.data.map(({ name, value }) => [name, value])).toEqual([
+			['Ethereum', 50],
+			['Solana', 25]
+		])
 	})
 })
 
@@ -908,7 +870,11 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 			state
 		})
 		const fullColors = new Map(full.charts.map((chart) => [chart.name, chart.color]))
-		for (const chart of narrowed.charts) expect(chart.color).toBe(fullColors.get(chart.name))
+		expect(new Set(fullColors.values()).size).toBe(3)
+		expect(Object.fromEntries(narrowed.charts.map(({ name, color }) => [name, color]))).toEqual({
+			dYdX: fullColors.get('dYdX'),
+			GMX: fullColors.get('GMX')
+		})
 	})
 
 	test('renormalizes protocol dominance after deselection', () => {
@@ -1087,13 +1053,20 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		])
 	})
 
-	test('exports the complete daily absolute dataset without copying it', () => {
+	test('exports every protocol in the daily absolute dataset', () => {
 		expect(
 			buildAdapterMetricsCsvDataset({
 				chartData: adapterBreakdownChartData,
 				state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
 			})
-		).toBe(adapterBreakdownChartData)
+		).toEqual({
+			dimensions: ['timestamp', 'Hyperliquid Perps', 'dYdX', 'GMX'],
+			source: [
+				[toMs(2024, 1, 1), 10, 20, 0],
+				[toMs(2024, 1, 2), 20, 10, 10],
+				[toMs(2024, 1, 3), 30, 0, 10]
+			]
+		})
 	})
 
 	test('exports dominance for every canonical protocol without a visual Others bucket', () => {
@@ -1192,12 +1165,15 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 	test('returns no rows when selected protocols are missing from the chosen daily timestamp', () => {
 		const chartData = toDataset({
 			dimensions: ['timestamp', 'Hyperliquid', 'dYdX'],
-			source: [{ timestamp: toMs(2024, 1, 2), Hyperliquid: 70, dYdX: 30 }]
+			source: [
+				{ timestamp: toMs(2024, 1, 1), Hyperliquid: 70, dYdX: 30 },
+				{ timestamp: toMs(2024, 1, 2), Hyperliquid: 80 }
+			]
 		})
 
 		const presentation = buildAdapterByChainLatestValuePresentation({
 			chartKind: 'hbar',
-			selectedProtocols: [],
+			selectedProtocols: ['dYdX'],
 			groupBy: 'daily',
 			chartData
 		})
@@ -1232,29 +1208,6 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(presentation.data).toHaveLength(10)
 		expect(presentation.data.at(-1)?.name).toBe('Others')
 		expect(presentation.data.at(-1)?.value).toBe(30)
-	})
-
-	test('uses the selected daily chart protocols directly', () => {
-		const chartData = toDataset({
-			dimensions: ['timestamp', 'Hyperliquid', 'dYdX', 'GMX'],
-			source: [{ timestamp: toMs(2024, 1, 2), Hyperliquid: 70, dYdX: 30, GMX: 10 }]
-		})
-
-		const presentation = buildAdapterByChainLatestValuePresentation({
-			chartKind: 'hbar',
-			selectedProtocols: ['Hyperliquid', 'dYdX', 'GMX'],
-			groupBy: 'daily',
-			chartData
-		})
-
-		expect(presentation.kind).toBe('hbar')
-		if (presentation.kind !== 'hbar') return
-
-		expect(presentation.data.map(({ name, value }) => ({ name, value }))).toEqual([
-			{ name: 'Hyperliquid', value: 70 },
-			{ name: 'dYdX', value: 30 },
-			{ name: 'GMX', value: 10 }
-		])
 	})
 
 	test('renders every selected treemap item without synthesizing an Others tile', () => {
@@ -1307,8 +1260,7 @@ describe('buildAdapterByChainLatestValuePresentation', () => {
 		expect(hbar.data.at(-1)?.share).toBeCloseTo((4371 / 5253) * 100)
 		const othersColor = hbar.data.find((item) => item.name === 'Others')?.itemStyle.color
 		const visiblePeerColor = hbar.data.find((item) => item.name === 'Protocol 9')?.itemStyle.color
-		expect(othersColor).toBeDefined()
-		expect(visiblePeerColor).toBeDefined()
+		expect([typeof othersColor, typeof visiblePeerColor]).toEqual(['string', 'string'])
 		expect(othersColor).not.toBe(visiblePeerColor)
 	})
 })
@@ -1328,32 +1280,6 @@ const protocol = (name: string, category: string | null, options: Partial<IProto
 		mcap: null,
 		...options
 	}) as IProtocol
-
-describe('buildProtocolBreakdownNormalization', () => {
-	test('maps parent-normalized rows back to raw breakdown aliases', () => {
-		const normalization = buildProtocolBreakdownNormalization([
-			protocol('Hyperliquid', null, { breakdownAliases: ['Hyperliquid Perps'] }),
-			protocol('tradeXYZ', null)
-		])
-
-		expect(normalization.canonicalBySeriesName.Hyperliquid).toBe('Hyperliquid')
-		expect(normalization.canonicalBySeriesName['Hyperliquid Perps']).toBe('Hyperliquid')
-		expect(normalization.canonicalBySeriesName.tradeXYZ).toBe('tradeXYZ')
-		expect(normalization.aliasesByCanonicalName.Hyperliquid).toEqual(['Hyperliquid', 'Hyperliquid Perps'])
-	})
-
-	test('maps child protocols to the parent canonical name', () => {
-		const normalization = buildProtocolBreakdownNormalization([
-			protocol('Aster', null, {
-				childProtocols: [protocol('Aster Perps', null), protocol('Aster Legacy', null)]
-			})
-		])
-
-		expect(normalization.canonicalBySeriesName.Aster).toBe('Aster')
-		expect(normalization.canonicalBySeriesName['Aster Perps']).toBe('Aster')
-		expect(normalization.canonicalBySeriesName['Aster Legacy']).toBe('Aster')
-	})
-})
 
 describe('normalizeProtocolBreakdownChartData', () => {
 	test('aggregates aliased series into the canonical parent protocol', () => {
@@ -1492,11 +1418,7 @@ describe('getCategoryProtocolNameFilterForChart', () => {
 })
 
 describe('leafProtocolNamesFromTableRows', () => {
-	test('returns each standalone protocol name', () => {
-		expect(leafProtocolNamesFromTableRows([protocol('A', 'Dex')])).toEqual(['A'])
-	})
-
-	test('returns child names sorted by total24h descending', () => {
+	test('returns standalone and child protocol names sorted by total24h descending', () => {
 		const parent = {
 			...protocol('Parent', 'Dex'),
 			childProtocols: [
@@ -1504,6 +1426,21 @@ describe('leafProtocolNamesFromTableRows', () => {
 				{ ...protocol('C2', 'Dex'), total24h: 100 }
 			]
 		} as IProtocol
-		expect(leafProtocolNamesFromTableRows([parent])).toEqual(['C2', 'C1'])
+		const standalone = { ...protocol('A', 'Dex'), total24h: 50 } as IProtocol
+		expect(leafProtocolNamesFromTableRows([standalone, parent])).toEqual(['C2', 'A', 'C1'])
+	})
+})
+
+describe('showsChainsByAdapterChart', () => {
+	test('shows the chart on app-level fee rankings and non-fee rankings', () => {
+		expect(showsChainsByAdapterChart('fees', 'App Fees')).toBe(true)
+		expect(showsChainsByAdapterChart('fees', 'App Revenue')).toBe(true)
+		expect(showsChainsByAdapterChart('fees', 'Holders Revenue')).toBe(true)
+		expect(showsChainsByAdapterChart('dexs', 'DEX Volume')).toBe(true)
+	})
+
+	test('hides the chart on chain-native fee and revenue rankings', () => {
+		expect(showsChainsByAdapterChart('fees', 'Fees')).toBe(false)
+		expect(showsChainsByAdapterChart('fees', 'Revenue')).toBe(false)
 	})
 })

@@ -1,28 +1,22 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
-
-vi.mock('./services/ProtocolCharts', () => ({ fetchProProtocolChartData: getProtocolDataMock }))
-vi.mock('./services/ChainCharts', () => ({ fetchProChainChartData: vi.fn() }))
+import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import { getChartQueryFn } from './queries'
 
 describe('getChartQueryFn protocol fallback', () => {
-	beforeEach(() => {
-		getProtocolDataMock.mockReset()
-	})
-
 	test('preserves a standalone source error for React Query retries and error UI', async () => {
-		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
+		http.serve({ [`${V2_SERVER_URL}/chart/fees/protocol/standalone`]: fixtureStatus(404) })
 
-		await expect(getChartQueryFn('fees', 'protocol', 'standalone')()).rejects.toThrow('upstream failed')
+		await expect(getChartQueryFn('fees', 'protocol', 'standalone')()).rejects.toThrow(/404/)
 	})
 
 	test('recovers a parent source failure by summing successful children', async () => {
-		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
-			if (protocol === 'parent') throw new Error('no parent adapter')
-			if (protocol === 'child-a') return [[1, 10]]
-			return [
+		http.serve({
+			[`${V2_SERVER_URL}/chart/fees/protocol/parent`]: fixtureStatus(404),
+			[`${V2_SERVER_URL}/chart/fees/protocol/child-a`]: [[1, 10]],
+			[`${V2_SERVER_URL}/chart/fees/protocol/child-b`]: [
 				[1, 20],
 				[2, 5]
 			]

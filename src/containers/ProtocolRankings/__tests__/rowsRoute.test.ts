@@ -1,10 +1,12 @@
 import { describe, expect, test, vi } from 'vitest'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import type { ProtocolRankingsCanonicalSnapshot } from '../server/tableData.server'
 import type { IProtocol } from '../types'
 
-const mocks = vi.hoisted(() => ({ loadProtocolRankingSnapshot: vi.fn() }))
-vi.mock('../server/api', () => ({ loadProtocolRankingSnapshot: mocks.loadProtocolRankingSnapshot }))
-vi.mock('~/utils/telemetry', () => ({
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
+const mocks = vi.hoisted(() => ({ readCurrent: vi.fn() }))
+vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
+	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
+	createRedisBlobStore: () => mocks
 }))
 
 import handler from '~/pages/api/dynamic/protocol-rankings/rows'
@@ -26,30 +28,24 @@ function row(name: string, children?: Array<string>): IProtocol {
 	} as IProtocol
 }
 
-const snapshot = {
+const snapshot: ProtocolRankingsCanonicalSnapshot = {
+	chain: 'All',
+	createdAt: 1,
+	availableActivityMetrics: [],
+	source: { chains: ['Ethereum'], feeProtocols: null, dexs: null, perps: null },
 	snapshot: 'aK3f9Qm2xLpR7Bn0Wc-T',
 	protocols: [row('Aave'), row('Lido'), row('Uniswap Labs', ['Uniswap V3', 'Uniswap V2'])]
 }
-mocks.loadProtocolRankingSnapshot.mockResolvedValue({ snapshot, mismatch: false })
+mocks.readCurrent.mockResolvedValue(snapshot)
 
-function call(body: unknown, method = 'POST') {
-	const res = {
-		statusCode: 0,
-		payload: undefined as unknown,
-		headers: {} as Record<string, string>,
-		setHeader(key: string, value: string) {
-			this.headers[key] = value
-		},
-		status(code: number) {
-			this.statusCode = code
-			return this
-		},
-		json(payload: unknown) {
-			this.payload = payload
-			return this
-		}
+async function call(body: unknown, method = 'POST') {
+	const res = createMockNextApiResponse()
+	await handler(createMockNextApiRequest({ method, body }), res)
+	return {
+		statusCode: res.statusCode,
+		payload: res.json.mock.calls.at(-1)?.[0],
+		headers: Object.fromEntries(res.setHeader.mock.calls)
 	}
-	return (handler as (req: unknown, res: unknown) => Promise<unknown>)({ method, body }, res).then(() => res)
 }
 
 describe('protocol rankings rows route', () => {

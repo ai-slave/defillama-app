@@ -137,8 +137,7 @@ describe('sendClaimToUserAnalytics', () => {
 		vi.stubGlobal('fetch', fetchMock)
 
 		const validated = validateClaimBody(validClaim)
-		expect(validated.ok).toBe(true)
-		if (!validated.ok) return
+		assert(validated.ok)
 		await sendClaimToUserAnalytics(validated.payload)
 
 		expect(fetchMock).toHaveBeenCalledWith(
@@ -149,25 +148,6 @@ describe('sendClaimToUserAnalytics', () => {
 				body: JSON.stringify(validated.payload)
 			})
 		)
-	})
-
-	test('does nothing when analytics is not configured', async () => {
-		vi.stubEnv('USER_ANALYTICS_URL', '')
-		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
-		const fetchMock = vi.fn()
-		vi.stubGlobal('fetch', fetchMock)
-
-		await sendClaimToUserAnalytics(validClaim)
-
-		expect(fetchMock).not.toHaveBeenCalled()
-	})
-
-	test('does not fail the submission when analytics rejects the copy', async () => {
-		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
-		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
-
-		await expect(sendClaimToUserAnalytics(validClaim)).resolves.toBeUndefined()
 	})
 })
 

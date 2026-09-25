@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
-import { protocolMatchesForkFilter, toFilterProtocol, toStrikeTvl } from '../utils'
+import { getSearchExpandedRows, protocolMatchesForkFilter, toFilterProtocol, toStrikeTvl } from '../utils'
 
 const protocolMetadata = (overrides: Partial<{ displayName: string; chains: Array<string> }> = {}) => ({
 	displayName: 'Protocol',
@@ -101,5 +101,23 @@ describe('ProtocolRankings TVL helpers', () => {
 
 	test('does not strike ordinary protocol rows without removed categories or extra TVL sections', () => {
 		expect(toStrikeTvl(liteProtocol(), {})).toBe(false)
+	})
+})
+
+describe('ProtocolRankings search expansion', () => {
+	const child = { id: 'stable-child', name: 'Stable Child', slug: 'stable-child' }
+	const rows = [
+		{ id: 'parent', name: 'Unrelated Parent', slug: 'parent', childProtocols: [child] },
+		{ id: 'stable-parent', name: 'Stable Parent', slug: 'stable-parent', childProtocols: [child] },
+		{ name: 'Idless Parent', slug: 'idless', childProtocols: [child] },
+		{ id: 'solo', name: 'Solo', slug: 'solo' }
+	] as Array<Parameters<typeof getSearchExpandedRows>[0][number]>
+
+	test('opens parents that a search reached only through their children', () => {
+		expect(getSearchExpandedRows(rows, '  STAB ')).toEqual({ parent: true, 'root:idless': true })
+	})
+
+	test('leaves expansion to the user without a search', () => {
+		expect(getSearchExpandedRows(rows, ' ')).toBeNull()
 	})
 })

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { findRuntimePolicyViolations, FORBIDDEN_RUNTIME_INVOCATIONS, NODE_RUNTIME_MAJOR } from '../runtimePolicy'
+import { findRuntimePolicyViolations } from '../runtimePolicy'
 
 const TRACKED_LAUNCHER_FILES = [
 	'package.json',
@@ -13,13 +13,7 @@ const TRACKED_LAUNCHER_FILES = [
 ]
 
 describe('runtime policy', () => {
-	test('records Node 24 as the runtime', () => {
-		expect(NODE_RUNTIME_MAJOR).toBe(24)
-	})
-
 	test('detects forbidden runtime invocations', () => {
-		const [nextStartRuntime] = FORBIDDEN_RUNTIME_INVOCATIONS
-
 		expect(
 			findRuntimePolicyViolations([
 				{ content: 'bun --bun next dev', filePath: 'package.json' },
@@ -32,8 +26,8 @@ describe('runtime policy', () => {
 		).toEqual([
 			{
 				filePath: 'standalone.sh',
-				message: nextStartRuntime.message,
-				patternId: nextStartRuntime.id
+				message: expect.stringContaining('standalone server.js'),
+				patternId: 'next-start-standalone-runtime'
 			}
 		])
 	})

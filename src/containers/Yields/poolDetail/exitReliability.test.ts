@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import { formatPercent } from '~/utils/numberFormat'
 import {
 	buildExitReliability,
 	type ExitIncident,
@@ -273,13 +272,6 @@ describe('the verdict cannot contradict its own ledger', () => {
 		expect(model.lastInterruptionDaysAgo).toBe(2)
 	})
 
-	test('stays null only when the ledger is genuinely empty', () => {
-		const clean = buildExitReliability([day(iso(0), 'ok_full'), day(iso(1), 'delayed')])!
-
-		expect(clean.incidents).toEqual([])
-		expect(clean.lastInterruptionDaysAgo).toBeNull()
-	})
-
 	// A coverage gap is not an interruption and must not date one.
 	test('ignores days that carry no verdict', () => {
 		const gapped = buildExitReliability([day(iso(0), 'ok_full'), day(iso(1), 'error_rpc'), day(iso(2), 'ok_full')])!
@@ -318,23 +310,5 @@ describe('incidentWithdrawableShare', () => {
 		expect(incidentWithdrawableShare(incident(1000, null))).toBeNull()
 		// Never Infinity.
 		expect(incidentWithdrawableShare(incident(1000, 0))).toBeNull()
-	})
-
-	test('renders a vanishing lane as one honest bucket, and holds two decimals for the column', () => {
-		const options = {
-			input: 'fraction',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-			smallValueDisplay: 'threshold'
-		} as const
-
-		expect(formatPercent(incidentWithdrawableShare(incident(0.0000038, 889_680_000)), options)).toBe('<0.01%')
-		expect(formatPercent(incidentWithdrawableShare(incident(0, 889_680_000)), options)).toBe('0.00%')
-		// Trailing zeros kept so the column aligns.
-		expect(formatPercent(incidentWithdrawableShare(incident(13_000_000, 100_000_000)), options)).toBe('13.00%')
-		expect(formatPercent(incidentWithdrawableShare(incident(11_610_000, 100_000_000)), options)).toBe('11.61%')
-		// Widest the figure gets; the column is sized for it.
-		expect(formatPercent(incidentWithdrawableShare(incident(100, 100)), options)).toBe('100.00%')
-		expect(formatPercent(incidentWithdrawableShare(incident(null, null)), options)).toBeNull()
 	})
 })

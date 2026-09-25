@@ -36,16 +36,15 @@ describe('useDebouncedCallback', () => {
 		vi.useRealTimers()
 	})
 
-	test('coalesces rapid calls into one invocation with the latest arguments', async () => {
-		act(() => {
-			debounced('a')
-			debounced('b')
-			debounced('c')
-		})
+	test('restarts the delay on each call and invokes once with the latest arguments', async () => {
+		act(() => debounced('a'))
+		await act(async () => vi.advanceTimersByTimeAsync(60))
+		act(() => debounced('b'))
+		await act(async () => vi.advanceTimersByTimeAsync(60))
 		expect(onCall).not.toHaveBeenCalled()
 
-		await act(async () => vi.advanceTimersByTimeAsync(100))
-		expect(onCall).toHaveBeenCalledExactlyOnceWith('c')
+		await act(async () => vi.advanceTimersByTimeAsync(40))
+		expect(onCall).toHaveBeenCalledExactlyOnceWith('b')
 	})
 
 	test('cancel drops the pending call', async () => {
@@ -53,9 +52,9 @@ describe('useDebouncedCallback', () => {
 			debounced('a')
 			debounced.cancel()
 		})
+		expect(vi.getTimerCount()).toBe(0)
 		await act(async () => vi.advanceTimersByTimeAsync(100))
 		expect(onCall).not.toHaveBeenCalled()
-		expect(vi.getTimerCount()).toBe(0)
 	})
 
 	test('flush invokes the pending call immediately and clears the timer', async () => {

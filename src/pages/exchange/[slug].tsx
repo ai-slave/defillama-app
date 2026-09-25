@@ -1,16 +1,16 @@
 import type { GetStaticPropsContext } from 'next'
 import { fetchCoinsChart } from '~/api'
 import { fetchCoinPrices } from '~/api/pricing'
-import type { CoinsChartResponse, PriceObject } from '~/api/types'
+import type { PriceObject } from '~/api/types'
 import { ExchangeProfile } from '~/containers/Exchanges/ExchangeProfile'
 import { fetchExchangeVenueSeries } from '~/containers/Exchanges/master.api'
 import type { ExchangeProfileModel } from '~/containers/Exchanges/models'
+import { matchesDefillamaCex, nativeTokenChange24h } from '~/containers/Exchanges/profileEnrichment'
 import { loadMasterExchangeProfile, MasterExchangeNotFoundError } from '~/containers/Exchanges/server/master.loaders'
 import { isCanonicalExchangeSlug } from '~/containers/Exchanges/slugs'
 import { fetchHacks } from '~/containers/Hacks/api'
 import { fetchRaises } from '~/containers/Raises/api'
 import Layout from '~/layout'
-import { getPercentChange } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -46,22 +46,6 @@ export const getStaticProps = withPerformanceLogging(
 		}
 	}
 )
-
-export function matchesDefillamaCex(name: string, defillamaCexSlug: string): boolean {
-	const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '')
-	const normalizedCexSlug = defillamaCexSlug.replace(/-cex$/, '').replace(/[^a-z0-9]/g, '')
-	return normalizedName === normalizedCexSlug
-}
-
-export function nativeTokenChange24h(
-	priceUsd: number | null,
-	priceKey: string | null,
-	history: CoinsChartResponse
-): number | null {
-	if (priceUsd == null || !priceKey) return null
-	const previousPrice = history.coins?.[priceKey]?.prices?.find((point) => Number.isFinite(point.price))?.price
-	return getPercentChange(priceUsd, previousPrice)
-}
 
 async function enrichExchangeProfile(profile: ExchangeProfileModel): Promise<ExchangeProfileModel> {
 	const priceKey = profile.nativeToken?.coinId ? `coingecko:${profile.nativeToken.coinId}` : null

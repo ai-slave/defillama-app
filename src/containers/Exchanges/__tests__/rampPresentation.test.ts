@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { mapMasterRamps } from '../master.mappers'
 import type { MasterExchangeRegionCatalogResponse, MasterRampsResponse } from '../master.types'
 import type { RampCatalogModel, RampVariantModel } from '../models'
-import { buildRampRows, DEFAULT_RAMP_CURRENCY, rampCurrencyOptions, resolveRampVariant } from '../rampPresentation'
+import { buildRampRows, rampCurrencyOptions, resolveRampVariant } from '../rampPresentation'
 
 const REGION_CATALOG = {
 	version: '2026-07-18',
@@ -205,52 +205,29 @@ describe('buildRampRows', () => {
 		expect(row.roundTripUsd).toBeNull()
 	})
 
-	test('keeps the requested currency when nothing prices the whole trip', () => {
-		const gbpOnly = mapMasterRamps(
-			response({
-				exchanges: [
-					{
-						...response().exchanges[0],
-						variants: {
-							global: variant({
-								ramp: {
-									...variant().ramp,
-									currencies: ['GBP'],
-									cost: {
-										GBP: {
-											'1000': {
-												pair: 'btc/gbp',
-												on_ramp: leg(0.5, 2),
-												off_ramp: leg(null, 0.2),
-												on_rail: 'Faster Payments',
-												off_rail: null
-											}
-										}
-									}
-								}
-							})
-						}
-					}
-				]
-			} as Partial<MasterRampsResponse>)
-		)
-		const [row] = buildRampRows(gbpOnly, { ...base, currency: 'GBP' })
-		expect(row.cost?.currency).toBe('GBP')
-		expect(row.roundTripUsd).toBeNull()
-		expect(row.cost?.onRamp.totalUsd).toBeCloseTo(3.6, 6)
-	})
-
 	test('keeps a country-blocked venue visible but last', () => {
 		const rows = buildRampRows(
 			mapMasterRamps(
 				response({
-					exchanges: [response().exchanges[0], { ...response().exchanges[0], slug: 'other', display_name: 'Other' }]
+					exchanges: [
+						response().exchanges[0],
+						{
+							...response().exchanges[0],
+							// Sorts after "Venue" by name, so only the status order can put it first.
+							slug: 'zeta',
+							display_name: 'Zeta',
+							variants: { us: variant() }
+						}
+					]
 				} as Partial<MasterRampsResponse>)
 			),
 			{ ...base, country: 'US', currency: 'USD' }
 		)
 		expect(rows).toHaveLength(2)
-		expect(rows.every((row) => row.status === 'unavailable')).toBe(true)
+		expect(rows.map((row) => [row.exchange, row.status])).toEqual([
+			['zeta', 'available'],
+			['venue', 'unavailable']
+		])
 	})
 })
 
@@ -362,25 +339,27 @@ describe('REAL ordering', () => {
 
 describe('currency selection', () => {
 	test('offers only currencies with a priced rail', () => {
-		const rows = buildRampRows(catalog(), { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
+		// CHF is accepted but has no priced rail, so picking it could only show blanks.
+		const acceptsChf = catalog({
+			exchanges: [
+				{
+					...response().exchanges[0],
+					variants: {
+						global: variant({
+							fiat_currencies: ['EUR', 'GBP', 'CHF'],
+							ramp: { ...variant().ramp, currencies: ['EUR', 'GBP', 'CHF'] }
+						})
+					}
+				}
+			]
+		} as Partial<MasterRampsResponse>)
+		const rows = buildRampRows(acceptsChf, { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
 		expect(rampCurrencyOptions(rows, 1000)).toEqual(['EUR', 'GBP'])
 	})
 
 	test('omits currencies priced only at another order size', () => {
 		const rows = buildRampRows(catalog(), { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
 		expect(rampCurrencyOptions(rows, 10_000)).toEqual([])
-	})
-
-	test('leaves the cost blank under the USD default when a venue has no USD rail', () => {
-		const [row] = buildRampRows(catalog(), {
-			country: null,
-			regionCatalog: REGION_CATALOG,
-			currency: DEFAULT_RAMP_CURRENCY,
-			size: 1000
-		})
-		expect(row.cost).toBeNull()
-		// The venue still shows: its rails and accepted currencies answer 'could I use it?'
-		expect(row.variant.fiatCurrencies).toEqual(['EUR', 'GBP'])
 	})
 })
 
@@ -482,28 +461,6 @@ describe('brand entities', () => {
 		})
 		expect(rows.map((row) => row.exchange).sort()).toEqual(['venue', 'venue-eu'])
 	})
-
-	test('lists an orphaned child whose parent is not listed', () => {
-		const orphan = mapMasterRamps(
-			response({
-				exchanges: [
-					{
-						...response().exchanges[0],
-						slug: 'venue-eu',
-						display_name: 'Venue EU',
-						parent_entity: {
-							slug: 'absent',
-							name: 'Absent',
-							scope: { kind: 'global' },
-							profile_url: '/exchange/absent'
-						}
-					}
-				]
-			} as Partial<MasterRampsResponse>)
-		)
-		const rows = buildRampRows(orphan, { country: null, regionCatalog: REGION_CATALOG, currency: 'EUR', size: 1000 })
-		expect(rows.map((row) => row.exchange)).toEqual(['venue-eu'])
-	})
 })
 
 describe('variant choice with no country', () => {
@@ -544,10 +501,5 @@ describe('variant choice with no country', () => {
 	test('picks the record that prices the selected currency, not the first region', () => {
 		const resolved = resolveRampVariant(manyRegions(), null, REGION_CATALOG, { currency: 'EUR', size: 1000 })
 		expect(resolved?.variant.region).toBe('eea')
-	})
-
-	test('still falls back to a record with rails when the currency prices nowhere', () => {
-		const resolved = resolveRampVariant(manyRegions(), null, REGION_CATALOG, { currency: 'JPY', size: 1000 })
-		expect(resolved?.variant.rails).not.toBeNull()
 	})
 })

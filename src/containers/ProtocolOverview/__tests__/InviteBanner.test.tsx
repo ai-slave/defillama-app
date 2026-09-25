@@ -82,6 +82,7 @@ afterEach(async () => {
 	localStorage.clear()
 	vi.unstubAllGlobals()
 	vi.restoreAllMocks()
+	vi.useRealTimers()
 })
 
 function button(text: string) {
@@ -102,8 +103,15 @@ async function render() {
 			</QueryClientProvider>
 		)
 	)
+	// Wait for the availability check, then flush the render it schedules.
+	await vi.waitFor(async () => {
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 10))
+		})
+		expect(client.isFetching()).toBe(0)
+	})
 	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 30))
+		await new Promise((resolve) => setTimeout(resolve, 10))
 	})
 }
 
@@ -113,10 +121,12 @@ async function openAndVerify() {
 }
 
 async function waitForText(text: string) {
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 30))
+	await vi.waitFor(async () => {
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 10))
+		})
+		expect(document.body.textContent).toContain(text)
 	})
-	expect(document.body.textContent).toContain(text)
 }
 
 test('requires verification and an explicit reveal, then shows the code and destination', async () => {
@@ -226,6 +236,8 @@ test('handles a non-JSON service outage and permits retrying after verification'
 })
 
 test('blocks new claims during the network cooldown and restores claiming when it ends', async () => {
+	// Only the countdown interval is faked; the settle waits in this file use real timeouts.
+	vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
 	claimStatus = 429
 	claimResponse = { status: 'cooldown', retryAt: new Date(Date.now() + 3_600_000).toISOString() }
 	await render()
@@ -236,9 +248,7 @@ test('blocks new claims during the network cooldown and restores claiming when i
 	expect(document.body.textContent).not.toContain('Reveal my code')
 	const later = Date.now() + 3_600_001
 	vi.spyOn(Date, 'now').mockReturnValue(later)
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 1100))
-	})
+	await act(async () => vi.advanceTimersByTime(1000))
 	expect(button('Reveal my code').disabled).toBe(true)
 	await click('Verify qfex_invite')
 	claimStatus = 200

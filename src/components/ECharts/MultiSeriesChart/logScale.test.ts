@@ -11,15 +11,11 @@ const invalidLogYAxisOverride = { type: 'log', scale: true } satisfies MultiSeri
 // @ts-expect-error `logBase` is exclusive to log axes.
 const invalidValueYAxisOverride = { type: 'value', logBase: 2 } satisfies MultiSeriesYAxisOverride
 
+// Compile-time only: `bun run test:typecheck` fails if either variant accepts the other's settings.
+void valueYAxisOverride
+void logYAxisOverride
 void invalidLogYAxisOverride
 void invalidValueYAxisOverride
-
-describe('MultiSeriesYAxisOverride', () => {
-	test('keeps value-only and log-only settings in separate variants', () => {
-		expect(valueYAxisOverride).toEqual({ type: 'value', scale: true })
-		expect(logYAxisOverride).toEqual({ type: 'log', logBase: 2 })
-	})
-})
 
 describe('applyConfiguredYAxisScale', () => {
 	test('removes the implicit zero baseline when a caller opts into axis scaling', () => {
@@ -110,10 +106,5 @@ describe('applyLogScaleToYAxes', () => {
 		const out = applyLogScaleToYAxes(axes, true, [0]) // axis 1 has zero/negative values → not eligible
 		expect(out[0].type).toBe('log')
 		expect(out[1]).toEqual({ type: 'value', min: 0, position: 'right' })
-	})
-
-	test('is a no-op when nothing is eligible', () => {
-		const axes: Array<MultiSeriesYAxisOption> = [{ type: 'value', min: 0 }]
-		expect(applyLogScaleToYAxes(axes, true, [])).toEqual(axes)
 	})
 })

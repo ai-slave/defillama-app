@@ -32,6 +32,13 @@ function createHatchPattern(color: string, opacity: number): { image: HTMLCanvas
 	return { image: canvas, repeat: 'repeat' }
 }
 
+/** Whether a projection end label fits the bar/line segment between the value and zero pixels. */
+export function projectionLabelFits(valuePixel: number, zeroPixel: number): boolean {
+	// A log axis cannot project zero; keep the label when pixel height is unavailable.
+	if (!Number.isFinite(valuePixel) || !Number.isFinite(zeroPixel)) return true
+	return Math.abs(valuePixel - zeroPixel) >= MIN_PROJECTION_LABEL_HEIGHT_PX
+}
+
 function createEndLabel(
 	text: string,
 	chartTheme: ChartTheme,
@@ -51,9 +58,7 @@ function createEndLabel(
 					const valuePixel = instance.convertToPixel({ yAxisIndex }, value)
 					const zeroPixel = instance.convertToPixel({ yAxisIndex }, 0)
 					if (typeof valuePixel !== 'number' || typeof zeroPixel !== 'number') return text
-					// A log axis cannot project zero; keep the label when pixel height is unavailable.
-					if (!Number.isFinite(valuePixel) || !Number.isFinite(zeroPixel)) return text
-					return Math.abs(valuePixel - zeroPixel) >= MIN_PROJECTION_LABEL_HEIGHT_PX ? text : ''
+					return projectionLabelFits(valuePixel, zeroPixel) ? text : ''
 				}
 			: text,
 		fontSize: 16,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildSingleMetricChartDataset } from './singleMetricChart'
+import { buildSingleMetricChartDataset, getSingleMetricPresentation } from './singleMetricChart'
 
 describe('buildSingleMetricChartDataset', () => {
 	test('normalizes ascending second points directly to final millisecond rows', () => {
@@ -40,5 +40,36 @@ describe('buildSingleMetricChartDataset', () => {
 			[2000, -3],
 			[3000, 5]
 		])
+	})
+})
+
+describe('getSingleMetricPresentation', () => {
+	test('titles grouped active addresses as a daily average and ignores a saved cumulative setting', () => {
+		expect(getSingleMetricPresentation({ type: 'activeUsers', grouping: 'week', showCumulative: true })).toMatchObject({
+			grouping: 'week',
+			metricTitle: 'Active Addresses (daily average)',
+			offersCumulative: false,
+			cumulative: false,
+			seriesType: 'bar'
+		})
+		expect(getSingleMetricPresentation({ type: 'activeUsers' }).metricTitle).toBe('Active Addresses')
+	})
+
+	test('keeps cumulative for metrics that add up and draws the running total as a line', () => {
+		expect(getSingleMetricPresentation({ type: 'newUsers', showCumulative: true })).toMatchObject({
+			offersCumulative: true,
+			cumulative: true,
+			seriesType: 'line'
+		})
+		expect(getSingleMetricPresentation({ type: 'newUsers' })).toMatchObject({ cumulative: false, seriesType: 'bar' })
+	})
+
+	test('keeps a metric that cannot be grouped daily whatever grouping was saved', () => {
+		expect(getSingleMetricPresentation({ type: 'tvl', grouping: 'month' })).toMatchObject({
+			isGroupable: false,
+			grouping: 'day',
+			offersCumulative: false,
+			seriesType: 'line'
+		})
 	})
 })

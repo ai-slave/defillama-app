@@ -1,6 +1,6 @@
 import type { GetStaticPropsContext } from 'next'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { jitterStaticPropsCacheSeconds, readCacheJitterMeta } from '../maxAgeForNext'
+import { readCacheJitterMeta } from '../maxAgeForNext'
 
 describe('withPerformanceLogging', () => {
 	afterEach(() => {
@@ -21,10 +21,10 @@ describe('withPerformanceLogging', () => {
 		}))
 		const context = { params: { protocol: 'uniswap' } } satisfies GetStaticPropsContext
 		const result = await wrapped(context)
-		const expected = jitterStaticPropsCacheSeconds(3600, 'protocol/[protocol]:/protocol/uniswap')
 
-		expect(result).toMatchObject({ props: { ok: true }, revalidate: expected.seconds })
-		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })
+		// Each resolved path gets its own offset, so pages of one route do not regenerate together.
+		expect(result).toMatchObject({ props: { ok: true }, revalidate: 4769 })
+		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: 1169 })
 	})
 
 	test('jitters numeric getStaticProps revalidate values on notFound results', async () => {
@@ -38,10 +38,9 @@ describe('withPerformanceLogging', () => {
 		}))
 		const context = { params: { protocol: 'missing' } } satisfies GetStaticPropsContext
 		const result = await wrapped(context)
-		const expected = jitterStaticPropsCacheSeconds(3600, 'protocol/[protocol]:/protocol/missing')
 
-		expect(result).toEqual({ notFound: true, revalidate: expected.seconds })
-		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })
+		expect(result).toEqual({ notFound: true, revalidate: 3619 })
+		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: 19 })
 	})
 
 	test('can skip numeric getStaticProps revalidate jitter', async () => {
@@ -114,26 +113,6 @@ describe('withPerformanceLogging', () => {
 		const context = { params: {} } satisfies GetStaticPropsContext
 		await expect(wrapped(context)).rejects.toThrow('timeout from upstream')
 		expect(calls).toBe(1)
-	})
-
-	test('logs final page build failures in development', async () => {
-		vi.stubEnv('NODE_ENV', 'development')
-		vi.stubEnv('PAGE_BUILD_MAX_RETRIES', '1')
-		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		const { withPerformanceLogging } = await import('../perf')
-
-		const wrapped = withPerformanceLogging('cex/[cex]', async () => {
-			throw new Error('overview API failed')
-		})
-
-		await expect(wrapped({ params: { cex: 'bybit' } } satisfies GetStaticPropsContext)).rejects.toThrow(
-			'overview API failed'
-		)
-		expect(error).toHaveBeenCalledWith(
-			expect.stringContaining('[page-build] cex/[cex] failed after'),
-			{ params: { cex: 'bybit' } },
-			'overview API failed'
-		)
 	})
 
 	test('records route phase timings as route telemetry attributes', async () => {

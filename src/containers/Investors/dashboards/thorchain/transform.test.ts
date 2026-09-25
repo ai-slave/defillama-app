@@ -164,6 +164,7 @@ describe('addNetworkFeeToIncomeStatement', () => {
 	test('drops days outside the periods the statement covers', () => {
 		const merged = addNetworkFeeToIncomeStatement(statement(), [[JAN_15_2026 - 365 * 86_400, 10]])
 		if (!merged) throw new Error('Expected merged income statement')
+		expect(Object.keys(merged.data.monthly)).toEqual(['2026-01'])
 		expect(getPeriod(merged, 'monthly', '2026-01').values['Gross Protocol Revenue']?.value).toBe(100)
 	})
 })

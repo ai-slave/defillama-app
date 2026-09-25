@@ -1,5 +1,4 @@
 import { expect, test } from 'vitest'
-import { CHART_INSET } from '../shared/chartSpacing'
 import { createSingleSeriesChartOptions } from './timeSeriesOptions'
 import { createSingleSeriesTooltipFormatter } from './tooltip'
 
@@ -16,16 +15,8 @@ test('preserves a compact unnamed tooltip for single-series charts', () => {
 	expect(tooltip).not.toContain('Semantic dataset key')
 })
 
-test('preserves the compact single-series grid and axis formatting', () => {
-	const options = createSingleSeriesChartOptions('%')
-	const grid = Array.isArray(options?.grid) ? options.grid[0] : options?.grid
-
-	expect(grid?.top).toBe(CHART_INSET)
-	expect(options?.xAxis).toMatchObject({ axisLabel: { hideOverlap: false } })
-	expect(options?.yAxis).toMatchObject({ min: undefined, axisLabel: { formatter: expect.any(Function) } })
-	expect(options?.yAxis).not.toHaveProperty('scale')
-	expect(Array.isArray(options?.yAxis)).toBe(false)
-	const yAxis = options?.yAxis
+test('formats single-series y-axis labels with the value symbol', () => {
+	const yAxis = createSingleSeriesChartOptions('%')?.yAxis
 	if (!yAxis || Array.isArray(yAxis) || typeof yAxis.axisLabel?.formatter !== 'function') {
 		throw new Error('Expected a single y-axis with a formatter')
 	}

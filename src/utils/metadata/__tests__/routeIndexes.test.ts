@@ -10,13 +10,13 @@ describe('metadata route indexes', () => {
 	test('builds narrative category ids without slugging ids', () => {
 		expect(
 			buildNarrativeCategoriesMetadata([
-				{ id: 'ai-agents', name: 'AI Agents', mcap: 1, volume1D: null, nbCoins: 1 },
+				{ id: 'AI_Agents', name: 'AI Agents', mcap: 1, volume1D: null, nbCoins: 1 },
 				{ id: 'rwa', name: 'RWA', mcap: 1, volume1D: null, nbCoins: 1 }
 			])
 		).toEqual({
-			ids: ['ai-agents', 'rwa'],
+			ids: ['AI_Agents', 'rwa'],
 			nameById: {
-				'ai-agents': 'AI Agents',
+				AI_Agents: 'AI Agents',
 				rwa: 'RWA'
 			}
 		})

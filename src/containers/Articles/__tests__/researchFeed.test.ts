@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { describe, expect, test } from 'vitest'
 import { buildResearchRssFeed } from '~/containers/Articles/researchFeed'
 import type { ArticleAuthorProfile, ArticleDocument } from '~/containers/Articles/types'
@@ -49,16 +50,14 @@ function makeArticle(overrides: Partial<ArticleDocument> = {}): ArticleDocument 
 }
 
 describe('buildResearchRssFeed', () => {
-	test('emits a valid RSS 2.0 channel envelope', () => {
-		const xml = buildResearchRssFeed([makeArticle()])
-		expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>')
-		expect(xml).toContain('<rss version="2.0"')
-		expect(xml).toContain('xmlns:content="http://purl.org/rss/1.0/modules/content/"')
-		expect(xml).toContain('<title>DefiLlama Research</title>')
-		expect(xml).toContain('<link>https://defillama.com/research</link>')
-		expect(xml).toContain(
-			'<atom:link href="https://defillama.com/research/feed.xml" rel="self" type="application/rss+xml" />'
-		)
+	test('emits a well-formed RSS 2.0 document with every namespace prefix declared', () => {
+		// happy-dom's XML parser rejects CDATA sections, so the HTML payloads are removed before parsing
+		const xml = buildResearchRssFeed([makeArticle()]).replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '')
+		const doc = new DOMParser().parseFromString(xml, 'application/xml')
+		expect(doc.getElementsByTagName('parsererror')[0]?.textContent).toBeUndefined()
+		expect(doc.documentElement.getAttribute('version')).toBe('2.0')
+		const selfLink = [...doc.getElementsByTagName('atom:link')].find((link) => link.getAttribute('rel') === 'self')
+		expect(selfLink?.getAttribute('href')).toBe('https://defillama.com/research/feed.xml')
 	})
 
 	test('renders item link, guid and pubDate from firstPublishedAt', () => {
@@ -114,14 +113,6 @@ describe('buildResearchRssFeed', () => {
 		expect(xml).not.toContain('<lastBuildDate>')
 	})
 
-	test('declares the custom dl namespace and channel copyright, generator and ttl', () => {
-		const xml = buildResearchRssFeed([makeArticle()])
-		expect(xml).toContain('xmlns:dl="https://defillama.com/ns/research"')
-		expect(xml).toContain('<copyright>© DefiLlama Research</copyright>')
-		expect(xml).toContain('<generator>DefiLlama Research CMS</generator>')
-		expect(xml).toContain('<ttl>30</ttl>')
-	})
-
 	test('emits the section label as dc:type', () => {
 		const xml = buildResearchRssFeed([makeArticle({ section: 'interview' })])
 		expect(xml).toContain('<dc:type>Interview</dc:type>')
@@ -136,11 +127,9 @@ describe('buildResearchRssFeed', () => {
 		expect(dcDate).not.toBe(pubDate)
 	})
 
-	test('emits reading time in whole minutes', () => {
-		const xml = buildResearchRssFeed([makeArticle()])
-		const minutes = Number(xml.match(/<dl:readingTime>(\d+)<\/dl:readingTime>/)?.[1])
-		expect(Number.isInteger(minutes)).toBe(true)
-		expect(minutes).toBeGreaterThanOrEqual(1)
+	test('emits reading time rounded up at 220 words per minute', () => {
+		const xml = buildResearchRssFeed([makeArticle({ plainText: Array(420).fill('word').join(' ') })])
+		expect(xml).toContain('<dl:readingTime>2</dl:readingTime>')
 	})
 
 	test('emits an explicit canonical atom:link and the excerpt as atom:summary', () => {

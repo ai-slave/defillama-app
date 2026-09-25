@@ -39,13 +39,16 @@ describe('buildBorrowedChartData', () => {
 	})
 
 	test('keeps raw token quantities in an unaggregated dataset', () => {
+		const rawBreakdown: IProtocolChainBreakdownChart = [
+			[1000, { ETH: 0.004, USDC: 20 }],
+			[2000, { ETH: 0.01, USDC: 40 }]
+		]
 		const result = buildBorrowedChartData('tokenBorrowedRaw', getBorrowedBreakdownSources('aave', 'tokenBorrowedRaw'), [
 			breakdown,
-			breakdown
+			rawBreakdown
 		])
 
-		expect(result.breakdown).toEqual(breakdown)
-		expect(result.pieSeries.peers).toEqual([])
+		expect(result.breakdown).toEqual(rawBreakdown)
 	})
 
 	test('selects raw token series by USD value instead of raw quantity', () => {

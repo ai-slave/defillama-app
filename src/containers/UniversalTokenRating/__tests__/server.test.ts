@@ -10,7 +10,8 @@ import {
 	fetchUtrLeaderboardStrict,
 	fetchUtrProjects,
 	fetchUtrScoringConfig,
-	fetchUtrUniverseWithLive
+	fetchUtrUniverseWithLive,
+	normalizeUtrScoringConfig
 } from '../server'
 
 const rawScoringConfig = {
@@ -74,21 +75,17 @@ afterEach(() => {
 })
 
 describe('UTR project API', () => {
-	test('loads claim options with the Forgd bearer key', async () => {
-		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
-		fetchJson
-			.mockResolvedValueOnce([{ arcticId: 'project-1', projectName: 'Ethereum' }])
-			.mockResolvedValueOnce([{ arcticId: 'project-1', disclosureScore: 8.72 }])
-			.mockResolvedValueOnce(rawScoringConfig)
+	test('normalizes the scoring config into grading scales, criteria, and exchange options', () => {
+		const scoringConfig = normalizeUtrScoringConfig(rawScoringConfig)
 
-		await expect(fetchUtrProjects()).resolves.toEqual([{ arcticId: 'project-1', projectName: 'Ethereum' }])
-		await expect(fetchUtrDisclosureScoreSummaries()).resolves.toEqual([
-			{ arcticId: 'project-1', disclosureScore: 8.72 }
-		])
-		const scoringConfig = await fetchUtrScoringConfig()
 		expect(scoringConfig?.version).toBe(18)
-		expect(scoringConfig?.grading.overall.scale.at(-1)?.min).toBeNull()
+		expect(scoringConfig?.grading.overall.scale).toEqual([
+			{ min: 60, grade: 'AAA', interpretation: 'Highest confidence' },
+			{ min: null, grade: 'CCC', interpretation: 'Very low confidence' }
+		])
 		expect(scoringConfig?.disclosure.categories[0].criteria[0]).toMatchObject({
+			key: 'team_identities',
+			label: 'Insider Identities Disclosed',
 			weight: 0.05,
 			applicability: 'both',
 			definition: 'Who is on the team.',
@@ -99,18 +96,15 @@ describe('UTR project API', () => {
 			{ id: 'binance', displayName: 'Binance' },
 			{ id: 'kraken', displayName: 'Kraken' }
 		])
-		expect(fetchJson).toHaveBeenNthCalledWith(
-			1,
-			'https://quant.forgd.com/api/utr/projects',
-			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
-		)
-		expect(fetchJson).toHaveBeenNthCalledWith(
-			2,
-			'https://quant.forgd.com/api/utr/projects/disclosure-scores',
-			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
-		)
-		expect(fetchJson).toHaveBeenNthCalledWith(
-			3,
+	})
+
+	test('authenticates project API requests with the Forgd bearer key', async () => {
+		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
+		fetchJson.mockResolvedValueOnce(rawScoringConfig)
+
+		await fetchUtrScoringConfig()
+
+		expect(fetchJson).toHaveBeenCalledWith(
 			'https://quant.forgd.com/api/utr/scoring-config',
 			expect.objectContaining({ headers: { Authorization: 'Bearer qk_test_123' } })
 		)

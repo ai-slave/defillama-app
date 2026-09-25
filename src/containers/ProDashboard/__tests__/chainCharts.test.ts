@@ -1,190 +1,77 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const {
-	fetchAdapterChainChartDataMock,
-	fetchAdapterProtocolChartDataMock,
-	fetchChainAssetsChartMock,
-	resolveChainAssetIdMock,
-	fetchStablecoinChartApiMock,
-	fetchChainChartMock
-} = vi.hoisted(() => ({
-	fetchAdapterChainChartDataMock: vi.fn(),
-	fetchAdapterProtocolChartDataMock: vi.fn(),
-	fetchChainAssetsChartMock: vi.fn(),
-	resolveChainAssetIdMock: vi.fn(),
-	fetchStablecoinChartApiMock: vi.fn(),
-	fetchChainChartMock: vi.fn()
-}))
-
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainChartData: fetchAdapterChainChartDataMock,
-	fetchAdapterProtocolChartData: fetchAdapterProtocolChartDataMock
-}))
-
-vi.mock('~/containers/BridgedTVL/api', () => ({
-	fetchChainAssetsChart: fetchChainAssetsChartMock
-}))
-
-vi.mock('~/containers/BridgedTVL/chainAssetIds', () => ({
-	resolveChainAssetId: resolveChainAssetIdMock
-}))
-
-vi.mock('~/containers/Stablecoins/api', () => ({
-	fetchStablecoinChartApi: fetchStablecoinChartApiMock
-}))
-
-vi.mock('~/containers/Chains/api', () => ({
-	fetchChainChart: fetchChainChartMock
-}))
-
+import { describe, expect, test } from 'vitest'
+import { CONFIG_API, SERVER_URL, STABLECOINS_SERVER_URL, V2_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchProChainChartData } from '../services/ChainCharts'
 
-describe('fetchProChainChartData TVL', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
+const http = installFixtureFetch()
 
+describe('chain TVL', () => {
 	test('rejects a failed chain source instead of returning a cacheable empty chart', async () => {
-		fetchChainChartMock.mockRejectedValue(new Error('chain TVL unavailable'))
+		http.serve({ [`${SERVER_URL}/lite/charts/Ethereum`]: fixtureStatus(404) })
 
-		await expect(fetchProChainChartData('tvl', 'Ethereum')).rejects.toThrow('chain TVL unavailable')
+		await expect(fetchProChainChartData('tvl', 'Ethereum')).rejects.toThrow(/404/)
 	})
 })
 
-describe('fetchProChainChartData Bridged TVL', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		fetchAdapterChainChartDataMock.mockResolvedValue([])
-		fetchAdapterProtocolChartDataMock.mockResolvedValue([])
-		fetchChainAssetsChartMock.mockResolvedValue([{ timestamp: 1_700_000_000, data: { total: 42 } }])
-		resolveChainAssetIdMock.mockResolvedValue('hyperliquid')
-	})
+describe('chain Bridged TVL', () => {
+	// The chain-asset id index is cached per module, so every test serves the same metadata.
+	function serveChainAssets(chart: unknown = [{ timestamp: 1_700_000_000, data: { total: '42' } }]) {
+		http.serve({
+			[`${CONFIG_API}/smol/appMetadata-chains.json`]: {
+				hyperliquid: { id: 'hyperliquid', name: 'Hyperliquid L1', chainAssets: true },
+				optimism: { id: 'optimism', name: 'OP Mainnet', chainAssets: true },
+				unknown: { id: 'unknown', name: 'Unknown' }
+			},
+			[`${SERVER_URL}/chain-assets/chart/hyperliquid`]: chart,
+			[`${SERVER_URL}/chain-assets/chart/optimism`]: chart
+		})
+	}
 
-	test('resolves saved chain names to the producer metadata ID', async () => {
+	test('resolves a saved chain name to its producer metadata ID', async () => {
+		serveChainAssets()
 		await expect(fetchProChainChartData('bridgedTvl', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(resolveChainAssetIdMock).toHaveBeenCalledWith('Hyperliquid L1')
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid')
+		// Fixture routes also match by prefix, so a display-name slug like /hyperliquid-l1 would still be answered.
+		expect(http.urls()).toContain(`${SERVER_URL}/chain-assets/chart/hyperliquid`)
 	})
 
-	test('rejects when the chain assets fetch fails so callers do not cache a fake empty chart', async () => {
-		fetchChainAssetsChartMock.mockRejectedValue(new Error('missing chart'))
-
-		resolveChainAssetIdMock.mockResolvedValue('base')
-		await expect(fetchProChainChartData('bridgedTvl', 'Base')).rejects.toThrow('missing chart')
-
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
+	test('rejects a failed chain assets fetch so callers do not cache a fake empty chart', async () => {
+		serveChainAssets(fixtureStatus(404))
+		await expect(fetchProChainChartData('bridgedTvl', 'Hyperliquid L1')).rejects.toThrow(/404/)
 	})
 
-	test('rejects when chain metadata resolution fails', async () => {
-		resolveChainAssetIdMock.mockRejectedValue(new Error('metadata unavailable'))
-
-		await expect(fetchProChainChartData('bridgedTvl', 'Base')).rejects.toThrow('metadata unavailable')
-		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
-	})
-
-	test('returns an empty chart for empty chain inputs without fetching', async () => {
-		await expect(fetchProChainChartData('bridgedTvl', '')).resolves.toEqual([])
-
-		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
-		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
-	})
-
-	test('uses an already-resolved producer ID without another metadata lookup', async () => {
-		await expect(fetchProChainChartData('bridgedTvl', 'OP Mainnet', undefined, 'optimism')).resolves.toEqual([
+	test('uses an already-resolved producer ID even when the saved name is not in metadata', async () => {
+		serveChainAssets()
+		await expect(fetchProChainChartData('bridgedTvl', 'Renamed Chain', undefined, 'optimism')).resolves.toEqual([
 			[1_700_000_000, 42]
 		])
-
-		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledTimes(1)
-		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('optimism')
 	})
 
-	test('does not fetch charts for chains without the metadata capability', async () => {
-		resolveChainAssetIdMock.mockResolvedValue(null)
-
+	test('does not fetch a chart for a chain without the chain-assets capability', async () => {
+		serveChainAssets()
 		await expect(fetchProChainChartData('bridgedTvl', 'Unknown')).resolves.toEqual([])
-
-		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
+		expect(http.urls().filter((url) => url.includes('/chain-assets/'))).toEqual([])
 	})
 })
 
-describe('fetchProChainChartData adapter metrics', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		fetchAdapterChainChartDataMock.mockResolvedValue([[1_700_000_000, 42]])
-		fetchAdapterProtocolChartDataMock.mockResolvedValue([[1_700_000_000, 7]])
-	})
+test.each([
+	['optionsPremium', `${V2_SERVER_URL}/chart/options/chain/ethereum?dataType=dailyPremiumVolume`],
+	['optionsNotional', `${V2_SERVER_URL}/chart/options/chain/ethereum?dataType=dailyNotionalVolume`],
+	['openInterest', `${V2_SERVER_URL}/chart/open-interest/chain/ethereum?dataType=openInterestAtEnd`],
+	['gasUsed', `${V2_SERVER_URL}/chart/active-users/chain/ethereum?dataType=dailyGasUsedUsd`],
+	// Chain activity totals are chain pseudo-protocols, not chain-filtered app aggregates.
+	['activeUsers', `${V2_SERVER_URL}/chart/active-users/protocol/ethereum`],
+	['newUsers', `${V2_SERVER_URL}/chart/new-users/protocol/ethereum`],
+	['txs', `${V2_SERVER_URL}/chart/active-users/protocol/ethereum?dataType=dailyTransactionsCount`]
+])('reads the %s chart from its dedicated adapter series', async (chartType, url) => {
+	http.serve({ [url]: [[1_700_000_000, 7]] })
 
-	test('uses the focused chain adapter chart for options premium volume', async () => {
-		await expect(fetchProChainChartData('optionsPremium', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
-			adapterType: 'options',
-			chain: 'Ethereum',
-			dataType: 'dailyPremiumVolume'
-		})
-	})
-
-	test('uses the focused chain adapter chart for options notional volume', async () => {
-		await expect(fetchProChainChartData('optionsNotional', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
-			adapterType: 'options',
-			chain: 'Ethereum',
-			dataType: 'dailyNotionalVolume'
-		})
-	})
-
-	test('uses the focused chain adapter chart for open interest', async () => {
-		await expect(fetchProChainChartData('openInterest', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
-			adapterType: 'open-interest',
-			chain: 'Hyperliquid L1',
-			dataType: 'openInterestAtEnd'
-		})
-	})
-
-	test('uses chain pseudo-protocol activity instead of retired userData endpoints', async () => {
-		await expect(fetchProChainChartData('activeUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-		await expect(fetchProChainChartData('newUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-		await expect(fetchProChainChartData('txs', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
-
-		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(1, {
-			adapterType: 'active-users',
-			protocol: 'Ethereum',
-			dataType: undefined
-		})
-		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(2, {
-			adapterType: 'new-users',
-			protocol: 'Ethereum',
-			dataType: undefined
-		})
-		expect(fetchAdapterProtocolChartDataMock).toHaveBeenNthCalledWith(3, {
-			adapterType: 'active-users',
-			protocol: 'Ethereum',
-			dataType: 'dailyTransactionsCount'
-		})
-	})
-
-	test('uses the chain aggregate endpoint for gas used in USD', async () => {
-		await expect(fetchProChainChartData('gasUsed', 'Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
-
-		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
-			adapterType: 'active-users',
-			chain: 'Avalanche',
-			dataType: 'dailyGasUsedUsd'
-		})
-		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
-	})
+	await expect(fetchProChainChartData(chartType, 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
+	expect(http.urls()).toEqual([url])
 })
 
-describe('fetchProChainChartData stablecoins', () => {
-	test('shares one raw chain response between concurrent supply and inflow charts', async () => {
-		fetchStablecoinChartApiMock.mockResolvedValue({
+test('concurrent supply and inflow charts share one stablecoin response', async () => {
+	http.serve({
+		[`${STABLECOINS_SERVER_URL}/stablecoincharts2/Ethereum`]: {
 			aggregated: [
 				{ date: '1', totalCirculatingUSD: { peggedUSD: 10, peggedEUR: 5 } },
 				{ date: '2', totalCirculatingUSD: { peggedUSD: 15, peggedEUR: 10 } }
@@ -196,22 +83,20 @@ describe('fetchProChainChartData stablecoins', () => {
 				]
 			},
 			doublecountedIds: ['double']
-		})
-
-		await expect(
-			Promise.all([
-				fetchProChainChartData('stablecoins', 'Ethereum'),
-				fetchProChainChartData('stablecoinInflows', 'Ethereum')
-			])
-		).resolves.toEqual([
-			[
-				[1, 12],
-				[2, 20]
-			],
-			[[2, 8]]
-		])
-
-		expect(fetchStablecoinChartApiMock).toHaveBeenCalledTimes(1)
-		expect(fetchStablecoinChartApiMock).toHaveBeenCalledWith('Ethereum')
+		}
 	})
+
+	await expect(
+		Promise.all([
+			fetchProChainChartData('stablecoins', 'Ethereum'),
+			fetchProChainChartData('stablecoinInflows', 'Ethereum')
+		])
+	).resolves.toEqual([
+		[
+			[1, 12],
+			[2, 20]
+		],
+		[[2, 8]]
+	])
+	expect(http.requests).toHaveLength(1)
 })

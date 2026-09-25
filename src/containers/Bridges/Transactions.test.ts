@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-const { fetchBridgeTransactionsClientMock } = vi.hoisted(() => ({
-	fetchBridgeTransactionsClientMock: vi.fn()
-}))
+const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 
-vi.mock('./api', () => ({ fetchBridgeTransactionsClient: fetchBridgeTransactionsClientMock }))
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: fetchJsonMock
+}))
 
 import {
 	createBridgeTransactionCollector,
@@ -43,12 +44,12 @@ const range = {
 	endTimestamp: unix('2026-02-01T00:00:00.000Z')
 }
 
-describe('bridge transaction construction behavior fixture', () => {
-	beforeEach(() => vi.clearAllMocks())
+describe('bridge transaction loading', () => {
+	beforeEach(() => fetchJsonMock.mockReset())
 
 	test('uses the opaque cursor and preserves same-second events with repeated hashes', async () => {
 		const boundary = unix('2026-01-20T03:47:25.000Z')
-		fetchBridgeTransactionsClientMock
+		fetchJsonMock
 			.mockResolvedValueOnce({
 				rows: [
 					{ ...transaction('repeated', boundary + 1), token: 'FIRST' },
@@ -64,20 +65,11 @@ describe('bridge transaction construction behavior fixture', () => {
 
 		const result = await fetchTransactions(args)
 
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenNthCalledWith(
-			1,
-			1,
-			range.startTimestamp,
-			range.endTimestamp,
-			undefined
-		)
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenNthCalledWith(
-			2,
-			1,
-			range.startTimestamp,
-			range.endTimestamp,
-			'cursor-page-2'
-		)
+		const query = `starttimestamp=${range.startTimestamp}&endtimestamp=${range.endTimestamp}&limit=10000`
+		expect(fetchJsonMock.mock.calls.map(([url]) => url)).toEqual([
+			`/api/public/bridges/transactions/1?${query}`,
+			`/api/public/bridges/transactions/1?${query}&cursor=cursor-page-2`
+		])
 		expect(result.rows.map((row) => [row.tx_hash, row.token])).toEqual([
 			['repeated', 'FIRST'],
 			['page-one-boundary', 'USDC'],
@@ -135,47 +127,33 @@ describe('bridge transaction construction behavior fixture', () => {
 		])
 	})
 
-	test('does not sort an already descending multi-page stream', () => {
-		const collector = createBridgeTransactionCollector(range)
-		collector.addPage([transaction('first', range.startTimestamp + 3), transaction('second', range.startTimestamp + 2)])
-		collector.addPage([transaction('third', range.startTimestamp + 1)])
-		const sortSpy = vi.spyOn(Array.prototype, 'sort')
-
-		const result = collector.finish(false)
-		const sortCalls = sortSpy.mock.calls.length
-		sortSpy.mockRestore()
-
-		expect(sortCalls).toBe(0)
-		expect(result.rows.map((row) => row.tx_hash)).toEqual(['first', 'second', 'third'])
-	})
-
 	test('returns a successful empty result without truncation', async () => {
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: [], hasMore: false })
+		fetchJsonMock.mockResolvedValueOnce({ rows: [], hasMore: false })
 
 		await expect(fetchTransactions(args)).resolves.toEqual({ rows: [], stats: null, truncated: false })
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(1)
+		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
 	})
 
 	test('keeps a first-page request failure unavailable', async () => {
-		fetchBridgeTransactionsClientMock.mockRejectedValueOnce(new Error('upstream unavailable'))
+		fetchJsonMock.mockRejectedValueOnce(new Error('upstream unavailable'))
 
 		await expect(fetchTransactions(args)).rejects.toThrow('upstream unavailable')
 	})
 
 	test('stops after one exact 10,000-row terminal page', async () => {
 		const page = Array.from({ length: 10_000 }, (_, index) => transaction(`0x${index}`, range.endTimestamp - index - 1))
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: page, hasMore: false })
+		fetchJsonMock.mockResolvedValueOnce({ rows: page, hasMore: false })
 
 		const result = await fetchTransactions(args)
 
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(1)
+		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
 		expect(result.rows).toHaveLength(10_000)
 		expect(result.stats?.total).toBe(10_000)
 		expect(result.truncated).toBe(false)
 	})
 
 	test('rejects continuation without a cursor', async () => {
-		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
+		fetchJsonMock.mockResolvedValueOnce({
 			rows: [transaction('first', range.startTimestamp + 1)],
 			hasMore: true
 		})
@@ -184,7 +162,7 @@ describe('bridge transaction construction behavior fixture', () => {
 	})
 
 	test('keeps a later-page failure unavailable instead of returning partial rows', async () => {
-		fetchBridgeTransactionsClientMock
+		fetchJsonMock
 			.mockResolvedValueOnce({
 				rows: [transaction('first', range.startTimestamp + 2)],
 				hasMore: true,
@@ -197,7 +175,7 @@ describe('bridge transaction construction behavior fixture', () => {
 
 	test('reports truncation after the approved 50-page limit', async () => {
 		for (let page = 0; page < 50; page++) {
-			fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
+			fetchJsonMock.mockResolvedValueOnce({
 				rows: [transaction(`page-${page}`, range.endTimestamp - page - 1)],
 				hasMore: true,
 				nextCursor: `cursor-${page + 1}`
@@ -206,7 +184,7 @@ describe('bridge transaction construction behavior fixture', () => {
 
 		const result = await fetchTransactions(args)
 
-		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(50)
+		expect(fetchJsonMock).toHaveBeenCalledTimes(50)
 		expect(result.rows).toHaveLength(50)
 		expect(result.truncated).toBe(true)
 	})

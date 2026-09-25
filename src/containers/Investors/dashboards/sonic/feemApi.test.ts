@@ -48,24 +48,6 @@ function buildResponse(): FeeMAPIResponse {
 }
 
 describe('buildFeeMViewModel', () => {
-	test('caches only the KPIs, leaderboard, title, and canonical chart model', () => {
-		const response = buildResponse()
-		const result = buildFeeMViewModel(response)
-
-		expect(Object.keys(result)).toEqual([
-			'globalKpis',
-			'leaderboard',
-			'dailyStatsModel',
-			'dailyStatsLength',
-			'dailyStatsTitle'
-		])
-		expect(result.globalKpis).toBe(response.feem.globalKpis)
-		expect(result.leaderboard).toBe(response.feem.leaderboard)
-		expect(result.dailyStatsTitle).toBe('Daily FeeM Activity')
-		expect(result).not.toHaveProperty('metadata')
-		expect(result).not.toHaveProperty('dailyStats')
-	})
-
 	test('preserves series order, UTC-second timestamps, axes, colors, and area styles', () => {
 		const result = buildFeeMViewModel(buildResponse())
 		const firstTimestamp = Date.UTC(2026, 6, 16)
@@ -104,15 +86,13 @@ describe('buildFeeMViewModel', () => {
 		expect(result.dailyStatsLength).toBe(2)
 	})
 
-	test('preserves chart configs when the daily history is empty', () => {
+	test('keeps an empty chart with its series when the daily history is empty', () => {
 		const response = buildResponse()
 		response.feem.dailyStats.dates = []
 		response.feem.dailyStats.series = [{ name: 'Transactions', data: [] }]
 		const result = buildFeeMViewModel(response)
 
 		expect(result.dailyStatsModel.dataset.source).toEqual([])
-		expect(result.dailyStatsModel.charts).toEqual([
-			expect.objectContaining({ name: 'Transactions', type: 'bar', color: '#4691ce', yAxisIndex: 0 })
-		])
+		expect(result.dailyStatsModel.charts.map((series) => series.name)).toEqual(['Transactions'])
 	})
 })

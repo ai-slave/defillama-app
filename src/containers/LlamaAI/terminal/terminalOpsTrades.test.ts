@@ -4,7 +4,9 @@ import {
 	agentSymbolInfo,
 	createTerminalStudies,
 	SOURCE_INPUT_ID,
+	studyBindPeriod,
 	tradeBars,
+	tradeMarkers,
 	TRADES_STUDY_NAME,
 	type TerminalPineJs,
 	type TradeFill
@@ -117,30 +119,25 @@ describe('the study that draws the fills', () => {
 
 	// The study reads the bound ticker's OHLC fields; tradeBars writes them. A swap between the two
 	// puts a long entry's triangle on the short exit's plot, which is a green up arrow on an exit.
-	test('a fill becomes a marker at its price, and a bar with no fill of that kind is NaN', async () => {
-		const study = (await trades()) as any
-		const instance = new study.constructor()
-		instance.init(pineContext([]), () => 'LLAMAAI:ai_1.1')
+	test('a fill becomes a marker at its price, and a bar with no fill of that kind is NaN', () => {
+		expect(tradeMarkers({ open: 31.5, high: 0, low: 0, close: 0 })).toEqual([31.5, NaN, NaN, NaN])
+		expect(tradeMarkers({ open: 0, high: 34.05, low: 34, close: 0 })).toEqual([NaN, 34.05, 34, NaN])
+		expect(tradeMarkers({ open: 0, high: 0, low: 0, close: 30.2 })).toEqual([NaN, NaN, NaN, 30.2])
+	})
 
-		const bar = tradeBars(defaultFills)[0]
-		expect(instance.main(pineContext([bar.open, bar.high, bar.low, bar.close]))).toEqual([31.5, NaN, NaN, NaN])
-
-		const both = tradeBars([defaultFills[0], { ...defaultFills[1], time: START + DAY }])[0]
-		expect(instance.main(pineContext([both.open, both.high, both.low, both.close]))).toEqual([31.5, 34.05, NaN, NaN])
+	test('a study left with no ticker plots nothing', () => {
+		expect(tradeMarkers(null)).toEqual([NaN, NaN, NaN, NaN])
 	})
 
 	// A 1h backtest of 8 trades drew 6 markers: the ticker offered nothing but '1D' and the study
 	// asked for '1D', so the fills of a whole UTC day landed on one bar and the last one won.
-	test('two fills of one kind an hour apart keep their own bars on an hourly chart', async () => {
-		const study = await trades()
+	test('two fills of one kind an hour apart keep their own bars on an hourly chart', () => {
 		const hourly: Array<TradeFill> = [
 			{ time: START + 9 * HOUR, price: 31.5, kind: 'long_entry' },
 			{ time: START + 10 * HOUR, price: 32.1, kind: 'long_entry' }
 		]
 
-		const bound: Array<string> = []
-		;new (study as any).constructor().init(pineContext([], '60', bound), () => 'LLAMAAI:ai_1.1')
-		expect(bound).toEqual(['60'])
+		expect(studyBindPeriod('trades', '60')).toBe('60')
 		const info = agentSymbolInfo('LLAMAAI:ai_1.1', 'Trades')
 		expect(info.has_intraday).toBe(true)
 		expect(info.supported_resolutions).toBeUndefined()
@@ -149,19 +146,8 @@ describe('the study that draws the fills', () => {
 
 	// The series study shares this ticker's metainfo, and a series carries one point a day. It asks
 	// for the daily grid whatever the chart shows, so an hourly chart still draws the daily line.
-	test('a daily agent series stays on the daily grid when the chart is hourly', async () => {
-		const [series] = await createTerminalStudies()(pineStub())
-		const bound: Array<string> = []
-		;new (series as any).constructor().init(pineContext([], '60', bound), () => 'LLAMAAI:ai_2.1')
-
-		expect(bound).toEqual(['1D'])
-	})
-
-	test('a study left with no ticker plots nothing rather than throwing', async () => {
-		const study = (await trades()) as any
-		const instance = new study.constructor()
-		instance.init(pineContext([]), () => '')
-		expect(instance.main(pineContext([1, 2, 3, 4]))).toEqual([NaN, NaN, NaN, NaN])
+	test('a daily agent series stays on the daily grid when the chart is hourly', () => {
+		expect(studyBindPeriod('series', '60')).toBe('1D')
 	})
 })
 
@@ -196,9 +182,12 @@ describe('the fills reach the datafeed through one ticker', () => {
 		expect(studies).toHaveLength(1)
 		expect(studies[0].name).toBe(TRADES_STUDY_NAME)
 		const ticker = studies[0].inputs[SOURCE_INPUT_ID]
-		expect(agentSeriesBars(ticker, { to: START + 30 * DAY, countBack: 0 })).toEqual(
-			tradeBars(defaultFills).map((bar) => ({ ...bar, time: bar.time * 1000, volume: 0 }))
-		)
+		expect(agentSeriesBars(ticker, { to: START + 30 * DAY, countBack: 0 })).toEqual([
+			{ time: (START + DAY) * 1000, open: 31.5, high: 0, low: 0, close: 0, volume: 0 },
+			{ time: (START + 3 * DAY) * 1000, open: 0, high: 34.05, low: 0, close: 0, volume: 0 },
+			{ time: (START + 5 * DAY) * 1000, open: 0, high: 0, low: 34, close: 0, volume: 0 },
+			{ time: (START + 7 * DAY) * 1000, open: 0, high: 0, low: 0, close: 30.2, volume: 0 }
+		])
 		// One drawing whatever the trade count, and a study is not a shape, so an unguarded prune
 		// would report it deleted on the very next turn.
 		expect(readTerminalContext().drawings).toEqual([{ id: 'ai_1', kind: 'trades', label: 'SMA-50 trades' }])
@@ -265,25 +254,15 @@ describe('the trades study never reaches the saved layout', () => {
 	})
 })
 
-// The library calls main() once per bar. These stand in for its series plumbing: what the study
-// owns is which Std reader feeds which plot, and adopt is the library's own.
+// createTerminalStudies needs the library's Std readers to build its constructors; the metainfo
+// cases above never call them.
 function pineStub(): TerminalPineJs {
 	return {
 		Std: {
-			open: (context: any) => context.values[0],
-			high: (context: any) => context.values[1],
-			low: (context: any) => context.values[2],
-			close: (context: any) => context.values[3]
+			open: () => 0,
+			high: () => 0,
+			low: () => 0,
+			close: () => 0
 		}
 	}
-}
-
-function pineContext(values: Array<number>, period = '1D', bound: Array<string> = []) {
-	return {
-		values,
-		symbol: { time: START * 1000, period },
-		new_sym: (_ticker: string, boundPeriod: string) => bound.push(boundPeriod),
-		select_sym: () => undefined,
-		new_unlimited_var: (value?: number) => ({ adopt: () => value as number })
-	} as any
 }

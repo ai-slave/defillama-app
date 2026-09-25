@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { FileDropProvider } from '../components/FileDrop'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
@@ -19,35 +20,41 @@ const api = vi.hoisted(() => ({
 	success: vi.fn(),
 	error: vi.fn()
 }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ isAuthenticated: true, authorizedFetch: vi.fn() }) }))
 vi.mock('next/router', () => ({ useRouter: () => ({ isReady: true, query: {}, replace: vi.fn() }) }))
 vi.mock('react-hot-toast', () => ({ default: { success: api.success, error: api.error } }))
-vi.mock('./api', async (original) => ({
-	...(await original<typeof import('./api')>()),
-	listGithubInstallations: async () => [{ installation_id: 1, account_login: 'owner' }],
-	listInstallationRepos: async () => [{ full_name: 'owner/repo', name: 'repo', private: false }],
-	listInstallationRepoBranches: async () => [{ name: 'main', is_default: true }],
-	connectGithubSource: api.connect,
-	addTextFile: api.add,
-	deleteProjectFile: api.remove,
-	listProjectFiles: api.files,
-	listProjectSources: api.sources,
-	uploadProjectFiles: api.upload
-}))
+
+// The AI server: each endpoint answers through the matching `api` function.
+async function aiServer(url: URL, init?: RequestInit) {
+	const path = url.href.slice(AI_SERVER.length)
+	const json = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined
+	const method = init?.method ?? 'GET'
+	if (path === '/github/installations') return [{ installation_id: 1, account_login: 'owner' }]
+	if (path === '/github/installations/1/repos')
+		return { repos: [{ full_name: 'owner/repo', name: 'repo', private: false }] }
+	if (path === '/github/installations/1/repos/owner/repo/branches') return [{ name: 'main', is_default: true }]
+	if (path === '/projects/qa/sources/github' && method === 'POST') return { source: await api.connect('qa', json) }
+	if (path === '/projects/qa/files/text' && method === 'POST') return api.add('qa', json.name, json.content)
+	if (path === '/projects/qa/files' && method === 'POST') return api.upload('qa', init!.body)
+	if (path.startsWith('/projects/qa/files/') && method === 'DELETE')
+		return (await api.remove('qa', path.slice(19))) ?? {}
+	if (path === '/projects/qa/files?limit=500') return api.files('qa')
+	if (path === '/projects/qa/sources') return { sources: await api.sources('qa') }
+	throw new Error(`Unexpected AI request: ${method} ${path}`)
+}
+const session = installSubscriberSession('user')
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(() => {
 	vi.resetAllMocks()
 	api.sources.mockResolvedValue([{ id: 'blob', adapter_type: 'blob' }])
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({ [AI_SERVER]: aiServer })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 function button(name: string) {
@@ -89,9 +96,9 @@ async function mount(kind: 'github' | 'text') {
 	}
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 	await click('Open sources')
@@ -122,7 +129,7 @@ test('GitHub connection preserves the new dialog when an older request completes
 	await click('Connect')
 	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
 	expect(api.connect).toHaveBeenCalledTimes(2)
-	expect(api.connect.mock.calls[0].slice(1)).toEqual([
+	expect(api.connect.mock.calls[0]).toEqual([
 		'qa',
 		{ owner: 'owner', repo: 'repo', branch: 'main', installation_id: 1 }
 	])
@@ -183,7 +190,7 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 	})
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<ProjectFilesPanel
 					projectId="qa"
 					projectBytesUsed={100}
@@ -192,7 +199,7 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 					projectFileLimit={10}
 					tier="paid"
 				/>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 	await vi.waitFor(() => expect(button('Delete notes.md')).toBeDefined())
@@ -218,7 +225,7 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 async function mountFiles() {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<FileDropProvider>
 					<ProjectFilesPanel
 						projectId="qa"
@@ -229,7 +236,7 @@ async function mountFiles() {
 						tier="paid"
 					/>
 				</FileDropProvider>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -263,7 +270,7 @@ test('connected source failure has its own retry without hiding available files'
 	await vi.waitFor(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load connected sources.")
 	)
-	expect(container.textContent).toContain('notes.md')
+	await vi.waitFor(() => expect(container.textContent).toContain('notes.md'))
 	expect(container.querySelector('[aria-label="Delete notes.md"]')).toBeNull()
 	await click('Retry sources')
 	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull())
@@ -278,7 +285,7 @@ test('a background file refresh failure preserves the known files and offers ret
 	await mountFiles()
 	await vi.waitFor(() => expect(container.textContent).toContain('notes.md'))
 	await act(async () => {
-		await client.refetchQueries()
+		await session.client.refetchQueries()
 	})
 	await vi.waitFor(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")

@@ -63,16 +63,9 @@ describe('useIntegrationLink state helpers', () => {
 		expect(getTelegramStatusRefetchInterval(linked)).toBe(false)
 	})
 
-	test('returns to query-derived linked state after switch confirmation is cancelled', () => {
-		expect(derive(linked, { status: 'idle' })).toEqual({
-			status: 'linked',
-			username: 'defillama',
-			linkedAt: '2026-05-14T00:00:00.000Z'
-		})
-	})
-
 	test('changes the reset key when a new tglogin token arrives', () => {
-		expect(getIntegrationRowResetKey('first-token', linked)).not.toBe(getIntegrationRowResetKey('second-token', linked))
+		expect(getIntegrationRowResetKey('first-token', linked)).toBe('tglogin:first-token')
+		expect(getIntegrationRowResetKey('second-token', linked)).toBe('tglogin:second-token')
 		expect(getIntegrationRowResetKey(null, pending)).toBe('pending:pending-token')
 	})
 

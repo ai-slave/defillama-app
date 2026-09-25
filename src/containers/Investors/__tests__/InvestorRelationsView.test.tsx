@@ -1,53 +1,53 @@
 // @vitest-environment happy-dom
 
-import { act, type ReactNode } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { DashboardTabConfig } from '../dashboardTypes'
+import type { DashboardModule } from '../dashboardTypes'
 import { InvestorRelationsView } from '../InvestorRelationsView'
 
-const { modules, registerModule } = vi.hoisted(() => {
-	type Loaded = { tabs: Array<{ id: string; label: string }> }
-	const modules: Record<string, { promise: Promise<Loaded>; resolve: (m: Loaded) => void }> = {}
-	function registerModule(id: string) {
-		let resolve!: (m: Loaded) => void
-		const promise = new Promise<Loaded>((r) => {
-			resolve = r
-		})
-		modules[id] = { promise, resolve }
-	}
-	return { modules, registerModule }
-})
-
+// The registry is the dynamic-import seam: the real one loads whole dashboard bundles, and these
+// tests need to decide when each module finishes loading to reproduce the dashboard-switch race.
+const { modules } = vi.hoisted(() => ({
+	modules: {} as Record<string, { promise: Promise<DashboardModule>; resolve: (m: DashboardModule) => void }>
+}))
 vi.mock('../registry', () => ({
 	getDashboardModule: (id: string) => modules[id]?.promise ?? null,
 	isDashboardRegistered: (id: string) => id in modules
 }))
-vi.mock('../DashboardTabsContent', () => ({
-	DEFAULT_TABS: [{ id: 'dashboard', label: 'Overview' }],
-	SkeletonTable: () => <div data-testid="skeleton" />,
-	TabLabel: ({ tab }: { tab: DashboardTabConfig }) => <>{tab.label}</>,
-	InvestorsContent: ({ activeTab }: { activeTab: string }) => <div data-testid="content">{activeTab}</div>,
-	CustomOnlyContent: ({ activeTab }: { activeTab: string }) => <div data-testid="content">{activeTab}</div>
-}))
-vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
-	AppMetadataProvider: ({ children }: { children: ReactNode }) => <>{children}</>
-}))
+// Heavy child: the chart grid renders only on a ProDashboard tab, which these tests never open.
+vi.mock('~/containers/ProDashboard/components/ChartGrid', () => ({ ChartGrid: () => null }))
+
+function registerModule(id: string) {
+	let resolve!: (m: DashboardModule) => void
+	const promise = new Promise<DashboardModule>((r) => {
+		resolve = r
+	})
+	modules[id] = { promise, resolve }
+}
+
+function tab(id: string, label: string) {
+	return { id, label, component: () => <p>{`${label} content`}</p> }
+}
 
 describe('InvestorRelationsView', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let client: QueryClient
 
 	function render(dashboardId: string, activeTab?: string) {
 		return act(async () => {
 			root.render(
-				<InvestorRelationsView
-					dashboardId={dashboardId}
-					customOnly={false}
-					entityName="Entity"
-					customServerData={{}}
-					activeTab={activeTab}
-				/>
+				<QueryClientProvider client={client}>
+					<InvestorRelationsView
+						dashboardId={dashboardId}
+						customOnly
+						entityName="Entity"
+						customServerData={{}}
+						activeTab={activeTab}
+					/>
+				</QueryClientProvider>
 			)
 		})
 	}
@@ -56,12 +56,19 @@ describe('InvestorRelationsView', () => {
 		return Array.from(container.querySelectorAll('button'), (b) => b.textContent?.trim())
 	}
 
-	function activeContent() {
-		return container.querySelector('[data-testid="content"]')?.textContent
+	function shownContent() {
+		return container.querySelector('p')?.textContent ?? null
+	}
+
+	async function clickTab(label: string) {
+		const button = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.trim() === label)
+		expect(button, `tab ${label}`).toBeDefined()
+		await act(async () => button!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		client = new QueryClient()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -71,59 +78,41 @@ describe('InvestorRelationsView', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		client.clear()
 	})
 
-	test('an unregistered dashboard shows the default tabs immediately', async () => {
-		await render('unknown')
-		expect(container.querySelector('[data-testid="skeleton"]')).toBeNull()
-		expect(activeContent()).toBe('dashboard')
-	})
-
-	test('a dashboard switch shows the skeleton, then the new tabs, and starts from their first tab', async () => {
+	test('a dashboard switch hides the old tabs while the new module loads, then starts from its first tab', async () => {
 		registerModule('a')
 		registerModule('b')
 		await render('a')
-		expect(container.querySelector('[data-testid="skeleton"]')).not.toBeNull()
+		expect(tabButtons()).toEqual([])
 
-		await act(async () =>
-			modules.a.resolve({
-				tabs: [
-					{ id: 'a-1', label: 'A one' },
-					{ id: 'a-2', label: 'A two' }
-				]
-			})
-		)
+		// Both dashboards have a tab with the same id, so a kept selection would open B two.
+		await act(async () => modules.a.resolve({ tabs: [tab('a-1', 'A one'), tab('shared', 'A two')] }))
 		expect(tabButtons()).toEqual(['A one', 'A two'])
-		const second = Array.from(container.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'A two')!
-		await act(async () => second.dispatchEvent(new MouseEvent('click', { bubbles: true })))
-		expect(activeContent()).toBe('a-2')
+		expect(shownContent()).toBe('A one content')
+		await clickTab('A two')
+		expect(shownContent()).toBe('A two content')
 
 		// Switching dashboards must not show A's tabs under B's name while B loads.
 		await render('b')
-		expect(container.querySelector('[data-testid="skeleton"]')).not.toBeNull()
 		expect(tabButtons()).toEqual([])
+		expect(shownContent()).toBeNull()
 
-		await act(async () => modules.b.resolve({ tabs: [{ id: 'b-1', label: 'B one' }] }))
-		expect(tabButtons()).toEqual(['B one'])
-		expect(activeContent()).toBe('b-1')
+		await act(async () => modules.b.resolve({ tabs: [tab('b-1', 'B one'), tab('shared', 'B two')] }))
+		expect(tabButtons()).toEqual(['B one', 'B two'])
+		expect(shownContent()).toBe('B one content')
 	})
 
 	test('a controlled active tab hides the pill strip and drives the content', async () => {
 		registerModule('a')
 		await render('a', 'a-2')
-		await act(async () =>
-			modules.a.resolve({
-				tabs: [
-					{ id: 'a-1', label: 'A one' },
-					{ id: 'a-2', label: 'A two' }
-				]
-			})
-		)
+		await act(async () => modules.a.resolve({ tabs: [tab('a-1', 'A one'), tab('a-2', 'A two')] }))
 		expect(tabButtons()).toEqual([])
-		expect(activeContent()).toBe('a-2')
+		expect(shownContent()).toBe('A two content')
 
 		await render('a', 'a-1')
-		expect(activeContent()).toBe('a-1')
+		expect(shownContent()).toBe('A one content')
 	})
 
 	test('a module that resolves after the dashboard changed is ignored', async () => {
@@ -131,10 +120,16 @@ describe('InvestorRelationsView', () => {
 		registerModule('b')
 		await render('a')
 		await render('b')
-		await act(async () => modules.a.resolve({ tabs: [{ id: 'a-1', label: 'A one' }] }))
-		expect(container.querySelector('[data-testid="skeleton"]')).not.toBeNull()
+		expect(tabButtons()).toEqual([])
+		expect(shownContent()).toBeNull()
 
-		await act(async () => modules.b.resolve({ tabs: [{ id: 'b-1', label: 'B one' }] }))
+		await act(async () => modules.b.resolve({ tabs: [tab('b-1', 'B one')] }))
 		expect(tabButtons()).toEqual(['B one'])
+		expect(shownContent()).toBe('B one content')
+
+		// A's module finishing last must not replace B's tabs.
+		await act(async () => modules.a.resolve({ tabs: [tab('a-1', 'A one')] }))
+		expect(tabButtons()).toEqual(['B one'])
+		expect(shownContent()).toBe('B one content')
 	})
 })

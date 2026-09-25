@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { AggregatedMetrics } from '../PerformanceIndex/data'
 import { Podium } from '../PerformanceIndex/Podium'
-import { Superlatives } from '../PerformanceIndex/Superlatives'
+import { superlativeLeaders, Superlatives } from '../PerformanceIndex/Superlatives'
 import type { PerformanceRow } from '../PerformanceIndex/types'
 
 const row = (
@@ -51,6 +51,8 @@ const aggregated: Record<string, AggregatedMetrics> = {
 describe('Podium', () => {
 	test('renders the top 3 by composite with rank badges and stats', () => {
 		const rows = [
+			row('missing', 'No score', null),
+			row('fourth', 'Fourth place', 0),
 			row('gsr', 'GSR', 1),
 			row('lhava', 'Lhava', 9.5, 12, 250_000_000),
 			row('wintermute', 'Wintermute', 7, 30, 500_000_000)
@@ -62,18 +64,26 @@ describe('Podium', () => {
 		expect(html).toContain('Composite Score')
 		expect(html).toContain('Avg 2.00% Depth')
 		expect(html).toContain('Rank:')
-		expect(html).toContain('#C9971C')
+		expect(html).not.toContain('Fourth place')
+		expect(html).not.toContain('No score')
+		expect(html).toContain('GSR')
+		expect(html).toContain('Wintermute')
 	})
 })
 
 describe('Superlatives', () => {
-	test('selects max depth/volume/uptime and min spread leaders, with the timeframe period in each label', () => {
+	test('the deepest, busiest and most available maker win their cards, and the tightest spread wins spread', () => {
+		const leaders = superlativeLeaders(aggregated)
+		expect(
+			[leaders.depth, leaders.volume, leaders.spread, leaders.uptime].map((leader) => leader?.marketMakerId)
+		).toEqual(['wintermute', 'wintermute', 'lhava', 'lhava'])
+	})
+
+	test('every card names the timeframe period', () => {
 		const html = renderToStaticMarkup(<Superlatives aggregated={aggregated} period="7D" />)
 		expect(html).toContain('Top Avg. (+/-) 2.00% Depth (7D)')
 		expect(html).toContain('Highest Volume (Maker &amp; Taker) (7D)')
 		expect(html).toContain('Top Bid-Ask Spread (7D)')
 		expect(html).toContain('Top KPI Adherence — Combined Uptime (7D)')
-		expect(html).toContain('Wintermute')
-		expect(html).toContain('Lhava')
 	})
 })

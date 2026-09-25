@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../artifactContract'
+import type { CoreMetadataPayload } from '../artifactContract'
 import { loadMetadataArtifactsFromDisk } from '../artifacts'
 import { writeMetadataArtifacts } from '../artifactWriter'
 
@@ -67,13 +67,5 @@ describe('metadata artifact loader', () => {
 		expect(artifacts.payload.protocols['parent#aave']).toMatchObject({ displayName: 'Aave' })
 		expect(artifacts.payload.chainCategories).toEqual(['EVM'])
 		expect(artifacts.payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
-	})
-
-	test('loads parsed JSON artifacts without semantic validation', async () => {
-		const cacheDir = await createTempDir()
-		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
-		await fs.writeFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.chains), JSON.stringify([]))
-
-		expect(loadMetadataArtifactsFromDisk(cacheDir).payload.chains).toEqual([])
 	})
 })

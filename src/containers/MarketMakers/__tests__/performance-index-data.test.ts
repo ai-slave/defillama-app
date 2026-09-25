@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { getPerformanceIndexProps, mergePerformanceIndex } from '../PerformanceIndex/data'
 
 describe('mergePerformanceIndex', () => {
@@ -56,22 +56,27 @@ describe('mergePerformanceIndex', () => {
 })
 
 describe('getPerformanceIndexProps', () => {
-	test('fetches the performance and aggregated endpoints with the default range and merges them', async () => {
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	test('asks both endpoints for the default 30-day window and merges their rows', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
+		vi.setSystemTime(new Date(Date.UTC(2026, 5, 29)))
 		const forgdFetch = vi.fn(async (path: string, _query?: Record<string, string | number | undefined>) => {
 			if (path === '/market-maker/leaderboard/performance')
-				return [{ marketMakerId: 'lhava', marketMakerName: 'Lhava', composite: 9.5, activeEngagementsCount: 4 }]
-			if (path === '/market-maker/leaderboard/aggregated')
-				return [{ marketMakerId: 'lhava', marketMakerName: 'Lhava', bidAskDepth: { value: 1, percentile: 1, rank: 1 } }]
-			return []
+				return [{ marketMakerId: 'lhava', marketMakerName: 'Lhava' }]
+			return [{ marketMakerId: 'lhava', marketMakerName: 'Lhava', bidAskDepth: { value: 1, percentile: 1, rank: 1 } }]
 		})
 
 		const props = await getPerformanceIndexProps(forgdFetch as any)
 
-		expect(forgdFetch).toHaveBeenCalledTimes(2)
-		const performanceCall = forgdFetch.mock.calls.find((c) => c[0] === '/market-maker/leaderboard/performance')
-		expect(performanceCall?.[1]).toMatchObject({ start_date: expect.any(String), end_date: expect.any(String) })
-		expect(props.performanceRows[0].marketMakerId).toBe('lhava')
-		expect(props.performanceRows[0].activeEngagementsCount).toBe(4)
-		expect(props.aggregated.lhava.bidAskDepth?.value).toBe(1)
+		const range = { start_date: '2026-05-30', end_date: '2026-06-29' }
+		expect(forgdFetch.mock.calls).toEqual([
+			['/market-maker/leaderboard/performance', range],
+			['/market-maker/leaderboard/aggregated', range]
+		])
+		expect(props.performanceRows.map((row) => row.marketMakerId)).toEqual(['lhava'])
+		expect(Object.keys(props.aggregated)).toEqual(['lhava'])
 	})
 })

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, Suspense, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { expect, test, vi } from 'vitest'
+import { afterAll, expect, test, vi } from 'vitest'
 import { TopupCheckoutLoading } from './TopupCheckoutLoading'
 
 const checkout = vi.hoisted(() => {
@@ -15,7 +15,16 @@ const checkout = vi.hoisted(() => {
 		loadStripe: vi.fn()
 	}
 })
-vi.mock('~/constants', () => ({ STRIPE_PUBLISHABLE_KEY: 'pk_test_mock' }))
+// Constants read the publishable key at import time; checkout only loads Stripe when it is set.
+const originalKey = vi.hoisted(() => {
+	const value = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+	process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_fixture'
+	return value
+})
+afterAll(() => {
+	if (originalKey === undefined) delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+	else process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = originalKey
+})
 vi.mock('@stripe/stripe-js', () => ({ loadStripe: checkout.loadStripe }))
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: ({ children, ...props }: { children: ReactNode }) => {

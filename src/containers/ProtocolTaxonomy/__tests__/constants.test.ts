@@ -1,51 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import {
-	getProtocolCategoryChartMetricLabel,
-	getProtocolCategoryChartMetrics,
-	getProtocolCategoryColumns,
-	getProtocolCategoryDefaultSort,
-	getProtocolCategoryDexVolumeLabel,
-	protocolCategoryConfig
-} from '../constants'
+import { getProtocolCategoryChartMetrics, getProtocolCategoryColumns, protocolCategoryConfig } from '../constants'
 
 describe('ProtocolTaxonomy constants', () => {
-	test('keeps Interface perp-first while enabling dex volume columns and metrics', () => {
-		expect(protocolCategoryConfig.Interface?.defaultChart).toBe('perpVolume')
-		expect(getProtocolCategoryChartMetrics('Interface')).toEqual(['tvl', 'dexVolume', 'perpVolume'])
-		expect(getProtocolCategoryColumns('Interface')).toEqual([
-			'name',
-			'perp_volume_24h',
-			'spot_volume_24h',
-			'perp_volume_7d',
-			'spot_volume_7d',
-			'perp_volume_30d',
-			'spot_volume_30d',
-			'tvl',
-			'fees_7d',
-			'revenue_7d',
-			'mcap/tvl',
-			'fees_30d',
-			'revenue_30d',
-			'fees_24h',
-			'revenue_24h'
-		])
-		expect(getProtocolCategoryDefaultSort('Interface')).toBe('perp_volume_24h')
-	})
-
-	test('resolves category-aware dex volume labels for chart and table surfaces', () => {
-		expect(getProtocolCategoryDexVolumeLabel('Dexs')).toBe('DEX Volume')
-		expect(getProtocolCategoryDexVolumeLabel('DEX Aggregator')).toBe('DEX Aggregator Volume')
-		expect(getProtocolCategoryDexVolumeLabel('Prediction Market')).toBe('Prediction Volume')
-		expect(getProtocolCategoryDexVolumeLabel('Crypto Card Issuer')).toBe('Payment Volume')
-		expect(getProtocolCategoryDexVolumeLabel('Interface')).toBe('Spot Volume')
-		expect(getProtocolCategoryChartMetricLabel('dexVolume', 'Interface')).toBe('Spot Volume')
-	})
-
-	test('uses revenue without TVL for Physical TCG while preserving normal category TVL', () => {
-		expect(getProtocolCategoryChartMetrics('Physical TCG')).toEqual(['revenue'])
-		expect(getProtocolCategoryChartMetrics('Services')).toEqual(['tvl', 'revenue'])
-		expect(getProtocolCategoryChartMetrics('Onchain Capital Allocator')).toEqual(['tvl', 'fees'])
-		expect(getProtocolCategoryChartMetrics('Yield')).toEqual(['tvl'])
+	test('charts TVL unless a category opts out with tvl: false', () => {
+		expect(getProtocolCategoryChartMetrics('Physical TCG')).not.toContain('tvl')
+		expect(getProtocolCategoryChartMetrics('Physical TCG')).toContain('revenue')
+		expect(getProtocolCategoryChartMetrics('Services')).toContain('tvl')
+		expect(getProtocolCategoryChartMetrics('Not A Category')).toEqual(['tvl'])
+		expect(getProtocolCategoryChartMetrics(null)).toEqual(['tvl'])
 	})
 
 	test('keeps every configured default sort backed by a visible category column', () => {

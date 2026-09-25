@@ -120,70 +120,38 @@ describe('bridge volume freshness', () => {
 		])
 	})
 
-	test('indexes chain stats with the existing exact and case-insensitive matching rules', () => {
-		const charts = Array.from({ length: 8 }, (_, index) => ({
-			date: String((NOW - (8 - index) * 86_400_000) / 1e3),
-			depositUSD: index + 1,
-			withdrawUSD: index
-		}))
-		const prevDay = (name: string, symbol: string, usdValue: number) => ({
-			name,
+	test('matches netflows case-insensitively and uses the first previous-day stats for a chain', () => {
+		const prevDay = (symbol: string, usdValue: number) => ({
+			name: 'Ethereum',
 			date: 1,
 			totalDepositedUSD: 0,
 			totalWithdrawnUSD: 0,
 			totalDepositTxs: 0,
 			totalWithdrawalTxs: 0,
-			totalTokensDeposited: {
-				first: { symbol, usdValue, amount: 1, decimals: 18 },
-				tie: { symbol: 'TIE', usdValue, amount: 1, decimals: 18 }
-			},
+			totalTokensDeposited: { first: { symbol, usdValue, amount: 1, decimals: 18 } },
 			totalTokensWithdrawn: {},
 			totalAddressDeposited: {},
 			totalAddressWithdrawn: {}
 		})
-		const inputs = {
-			chains: [{ name: 'Ethereum' }, { name: 'ethereum' }],
-			chartDataByChain: [charts, charts],
-			chainToChartDataIndex: { Ethereum: 0, ethereum: 1 },
-			prevDayDataByChain: [prevDay('Ethereum', 'FIRST', 10), prevDay('Ethereum', 'LAST', 20)],
-			netflowsDataDay: [
-				{ chain: 'eThErEuM', depositedUsd: 100, withdrawnUsd: 40, netFlow: 60 },
-				{ chain: 'ethereum', depositedUsd: 999, withdrawnUsd: 999, netFlow: 0 }
-			],
+
+		const [row] = formatChainsData({
+			chains: [{ name: 'Ethereum' }],
+			prevDayDataByChain: [prevDay('FIRST', 10), prevDay('LAST', 20)],
+			netflowsDataDay: [{ chain: 'eThErEuM', depositedUsd: 100, withdrawnUsd: 40, netFlow: 60 }],
 			netflowsDataWeek: [{ chain: 'ETHEREUM', depositedUsd: 700, withdrawnUsd: 350, netFlow: 350 }],
 			currentTimeMs: NOW
-		}
-		const original = structuredClone(inputs)
+		})
 
-		expect(formatChainsData(inputs)).toEqual([
-			{
-				name: 'Ethereum',
-				prevDayUsdDeposits: 100,
-				prevDayUsdWithdrawals: 40,
-				prevWeekUsdDeposits: 700,
-				prevWeekUsdWithdrawals: 350,
-				topTokenDepositedSymbol: 'FIRST',
-				topTokenDepositedUsd: 10,
-				topTokenWithdrawnSymbol: null,
-				topTokenWithdrawnUsd: 0,
-				prevDayNetFlow: 60,
-				prevWeekNetFlow: 350
-			},
-			{
-				name: 'ethereum',
-				prevDayUsdDeposits: 100,
-				prevDayUsdWithdrawals: 40,
-				prevWeekUsdDeposits: 700,
-				prevWeekUsdWithdrawals: 350,
-				topTokenDepositedSymbol: null,
-				topTokenDepositedUsd: null,
-				topTokenWithdrawnSymbol: null,
-				topTokenWithdrawnUsd: null,
-				prevDayNetFlow: 60,
-				prevWeekNetFlow: 350
-			}
-		])
-		expect(inputs).toEqual(original)
+		expect(row).toMatchObject({
+			prevDayUsdDeposits: 100,
+			prevDayUsdWithdrawals: 40,
+			prevDayNetFlow: 60,
+			prevWeekUsdDeposits: 700,
+			prevWeekUsdWithdrawals: 350,
+			prevWeekNetFlow: 350,
+			topTokenDepositedSymbol: 'FIRST',
+			topTokenDepositedUsd: 10
+		})
 	})
 
 	test('uses only seven exact completed UTC days for a missing weekly netflow response', () => {
@@ -303,10 +271,10 @@ describe('bridge volume freshness', () => {
 		expect(unavailable.bridges[0]?.txsPrevDay).toBeNull()
 	})
 
-	test('uses exact completed-day volumes on a chain bridge overview', () => {
+	test('uses exact completed-day volumes on a chain bridge overview, counting an omitted day as zero', () => {
 		const chart = Array.from({ length: 30 }, (_, index) =>
 			day(new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString().slice(0, 10), index + 1)
-		)
+		).filter((point) => !point.date.startsWith('2026-07-10'))
 		const { bridges } = formatBridgesData({
 			chain: 'Ethereum',
 			bridges: [
@@ -319,33 +287,6 @@ describe('bridge volume freshness', () => {
 					dayBeforeLastVolume: 80,
 					weeklyVolume: 700,
 					monthlyVolume: 3000,
-					txsPrevDay: 10
-				}
-			],
-			chartDataByBridge: [chart],
-			bridgeNameToChartDataIndex: { 'Test Bridge': 0 },
-			currentTimeMs: NOW
-		})
-
-		expect(bridges[0]).toMatchObject({
-			lastDailyVolume: 30,
-			weeklyVolume: 189,
-			monthlyVolume: 465
-		})
-	})
-
-	test('keeps exact sparse totals when a longer completed window omits a zero-activity day', () => {
-		const chart = Array.from({ length: 30 }, (_, index) =>
-			day(new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString().slice(0, 10), index + 1)
-		).filter((point) => !point.date.startsWith('2026-07-10'))
-		const { bridges } = formatBridgesData({
-			chain: 'Ethereum',
-			bridges: [
-				{
-					name: 'test-bridge',
-					displayName: 'Test Bridge',
-					chains: ['Ethereum'],
-					last24hVolume: 100,
 					txsPrevDay: 10
 				}
 			],

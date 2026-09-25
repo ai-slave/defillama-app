@@ -54,12 +54,19 @@ describe('NEAR chart data', () => {
 		expect(lastSeriesValue({ ...breakdown, series: [{ name: 'A', data: [1, Number.NaN, 4] }] }, 'A')).toBe(4)
 	})
 
-	test('filters daily values in seconds', () => {
-		const dates = ['2026-01-05', '2026-01-06', '2026-01-12']
-		const values = [1, 2, 4]
-		expect(filterTimeSeries(dates, values, '7d')).toEqual(
-			dates.map((date, i) => [Date.parse(`${date}T00:00:00Z`) / 1e3, values[i]])
-		)
+	test('keeps the last seven days as Unix-second points', () => {
+		const dates = Array.from({ length: 9 }, (_, index) => `2026-01-0${index + 1}`)
+		const values = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+		expect(filterTimeSeries(dates, values, '7d')).toEqual([
+			[1_767_398_400, 3],
+			[1_767_484_800, 4],
+			[1_767_571_200, 5],
+			[1_767_657_600, 6],
+			[1_767_744_000, 7],
+			[1_767_830_400, 8],
+			[1_767_916_800, 9]
+		])
 	})
 
 	test('starts YTD at January 1 instead of estimating a trailing day count', () => {

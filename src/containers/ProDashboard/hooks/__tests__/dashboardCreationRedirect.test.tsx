@@ -1,21 +1,23 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { QueryClient } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 // Hoisted so the Router singleton mock can hold them directly: vi.mock factories run before the file.
-const { push, createDashboard } = vi.hoisted(() => ({ push: vi.fn(), createDashboard: vi.fn() }))
+const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 
 vi.mock('next/router', () => ({ default: { pathname: '/dexs', push }, useRouter: () => ({ pathname: '/dexs', push }) }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ authorizedFetch: vi.fn(), isAuthenticated: true, user: { id: 'u1' } })
-}))
-vi.mock('../../services/DashboardAPI', async (importOriginal) => ({
-	...(await importOriginal<typeof import('../../services/DashboardAPI')>()),
-	dashboardAPI: { createDashboard: (...a: Array<unknown>) => createDashboard(...a), listDashboards: async () => [] }
-}))
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+const session = installSubscriberSession('u1')
+const saved = {
+	id: 'd1',
+	slug: 'dex-volume',
+	data: { dashboardName: 'DEX Volume Dashboard', items: [] },
+	created: '',
+	updated: ''
+}
 vi.mock('react-hot-toast', () => ({
 	default: { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 't1'), dismiss: vi.fn() }
 }))
@@ -39,7 +41,7 @@ describe('creating a dashboard from a dataset', () => {
 
 	function render(node: React.ReactNode) {
 		return act(async () => {
-			root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>)
+			root.render(<session.Wrapper>{node}</session.Wrapper>)
 		})
 	}
 
@@ -48,7 +50,7 @@ describe('creating a dashboard from a dataset', () => {
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.clearAllMocks()
-		client = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+		client = session.client
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -60,7 +62,7 @@ describe('creating a dashboard from a dataset', () => {
 	})
 
 	test('it redirects to the new dashboard', async () => {
-		createDashboard.mockResolvedValue({ id: 'd1', slug: 'dex-volume' })
+		session.serve({ '/api/private/pro-dashboard/save': saved })
 		await render(<Button />)
 		await act(async () => container.querySelector('button')!.click())
 		await settle()
@@ -70,13 +72,13 @@ describe('creating a dashboard from a dataset', () => {
 
 	test('a reader who leaves first is not pulled to the new dashboard', async () => {
 		let finish: (value: { id: string; slug: string }) => void = () => {}
-		createDashboard.mockImplementation(() => new Promise((resolve) => (finish = resolve)))
+		session.serve({ '/api/private/pro-dashboard/save': () => new Promise((resolve) => (finish = resolve)) })
 		await render(<Button />)
 		await act(async () => container.querySelector('button')!.click())
 
 		await act(async () => root.unmount())
 		await act(async () => {
-			finish({ id: 'd1', slug: 'dex-volume' })
+			finish(saved)
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})
 		expect(push).not.toHaveBeenCalled()

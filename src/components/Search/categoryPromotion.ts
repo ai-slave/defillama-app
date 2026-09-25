@@ -66,7 +66,6 @@ export function findCategoryToPromote<T extends CategoryPromotionHit>(
 	}
 
 	for (const category of categoryHits) {
-		if (category.type !== 'Category') continue
 		const normalizedName = normalize(category.name)
 		if (!normalizedName.startsWith(normalizedQuery)) continue
 		if (normalizedName === normalizedQuery) continue

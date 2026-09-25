@@ -182,37 +182,18 @@ describe('useDashboardActions', () => {
 		}
 	})
 
-	test('duplicates a unified table with independent nested configuration and a fresh id', async () => {
-		const dispatch = vi.fn<(action: DashboardAction) => void>()
-		const autoSave = vi.fn<(items: Array<DashboardItemConfig>) => void>()
-		const rendered: { actions?: ReturnType<typeof useDashboardActions> } = {}
+	test('duplicates a unified table right after the original and reports the copy id', async () => {
+		const { actions, autoSave } = await renderActions(dashboardState({ items: [UNIFIED_TABLE, FIRST, SECOND] }))
 
-		function Harness() {
-			rendered.actions = useDashboardActions(dispatch, dashboardState(), autoSave, false)
-			return null
-		}
-
-		await act(async () => root.render(<Harness />))
-		const actions = rendered.actions
-		if (!actions) throw new Error('Expected dashboard actions to render')
-
-		act(() => actions.handleDuplicateUnifiedTable(UNIFIED_TABLE))
+		let duplicateId: string | null | undefined
+		act(() => {
+			duplicateId = actions.handleDuplicateUnifiedTable(UNIFIED_TABLE)
+		})
 
 		const savedItems = autoSave.mock.calls[0]?.[0]
-		const duplicate = savedItems?.at(-1)
-		expect(duplicate).toMatchObject({ ...UNIFIED_TABLE, id: expect.any(String) })
-		expect(duplicate?.id).not.toBe(UNIFIED_TABLE.id)
-		if (duplicate?.kind !== 'unified-table') throw new Error('Expected a duplicated unified table')
-		expect(duplicate.rowHeaders).not.toBe(UNIFIED_TABLE.rowHeaders)
-		expect(duplicate.defaultSorting).not.toBe(UNIFIED_TABLE.defaultSorting)
-		expect(duplicate.params).not.toBe(UNIFIED_TABLE.params)
-		expect(duplicate.params?.chains).not.toBe(UNIFIED_TABLE.params?.chains)
-		expect(duplicate.filters).not.toBe(UNIFIED_TABLE.filters)
-		expect(duplicate.filters?.protocols).not.toBe(UNIFIED_TABLE.filters?.protocols)
-		expect(duplicate.columnOrder).not.toBe(UNIFIED_TABLE.columnOrder)
-		expect(duplicate.columnVisibility).not.toBe(UNIFIED_TABLE.columnVisibility)
-		expect(duplicate.customColumns).not.toBe(UNIFIED_TABLE.customColumns)
-		expect(duplicate.customColumns?.[0]).not.toBe(UNIFIED_TABLE.customColumns?.[0])
+		expect(savedItems?.map((item) => item.id)).toEqual([UNIFIED_TABLE.id, duplicateId, FIRST.id, SECOND.id])
+		expect(duplicateId).not.toBe(UNIFIED_TABLE.id)
+		expect(savedItems?.[1]).toEqual({ ...UNIFIED_TABLE, id: duplicateId })
 	})
 
 	test('handleAddUnifiedTable keeps the parameter bindings chosen in the modal', async () => {
@@ -311,16 +292,6 @@ describe('useDashboardActions', () => {
 		})
 		expect(appended).toEqual(['added', 'added-too'])
 		expect(edited).toBe(true)
-	})
-
-	test('a duplicate reports the id of the copy it inserted', async () => {
-		const { actions } = await renderActions(dashboardState({ items: [UNIFIED_TABLE, FIRST, SECOND] }))
-
-		let duplicateId: string | null | undefined
-		act(() => {
-			duplicateId = actions.handleDuplicateUnifiedTable(UNIFIED_TABLE)
-		})
-		expect(duplicateId).toMatch(/^unified-table-protocols-/)
 	})
 
 	test('an append rejected by the size limit reports false instead of ids', async () => {

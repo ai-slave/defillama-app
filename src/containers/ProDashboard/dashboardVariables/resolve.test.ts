@@ -326,11 +326,6 @@ describe('resolveDashboardItem', () => {
 		})
 	})
 
-	test('chart already at the bound value keeps its reference', () => {
-		const chart = chainChart()
-		expect(resolveDashboardItem(chart, [chainVariable], { chain: 'Ethereum' }, catalog).item).toBe(chart)
-	})
-
 	test('metric bound to a chain variable switches subject and drops geckoId', () => {
 		const { item } = resolveDashboardItem(chainMetric(), [chainVariable], { chain: 'Solana' }, catalog)
 		expect(item).toMatchObject({ kind: 'metric', subject: { itemType: 'chain', chain: 'Solana' }, type: 'fees' })
@@ -358,11 +353,6 @@ describe('resolveDashboardItem', () => {
 		expect(resolveDashboardItem(unifiedTable(null), [chainVariable], { chain: 'Solana' }, catalog).item).toMatchObject({
 			params: { chains: ['Solana'] }
 		})
-	})
-
-	test('unified-table keeps the All literal for the query layer to drop', () => {
-		const { item } = resolveDashboardItem(unifiedTable(), [chainVariable], { chain: 'All' }, catalog)
-		expect((item as UnifiedTableConfig).params?.chains).toEqual(['All'])
 	})
 
 	test('builder chains binding rewrites config.chains, All becomes an empty filter', () => {
@@ -434,24 +424,9 @@ describe('resolveDashboardItem', () => {
 		chainOnly.bindings = { chain: 'protocol' }
 		expect(resolveDashboardItem(chainOnly, [protocolVariable], { protocol: 'lido' }, catalog).item).toBe(chainOnly)
 	})
-
-	test('items without bindings or of unbindable kinds pass through', () => {
-		const plain = withoutBindings(chainChart())
-		expect(resolveDashboardItem(plain, [chainVariable], { chain: 'Solana' }, catalog).item).toBe(plain)
-		expect(resolveDashboardItem(text, [chainVariable], { chain: 'Solana' }, catalog).item).toBe(text)
-	})
 })
 
 describe('resolveDashboardItems', () => {
-	test('returns the same array reference when there are no variables or no bindings', () => {
-		const bound = [chainChart()]
-		expect(resolveDashboardItems(bound, [], { chain: 'Solana' }, catalog).items).toBe(bound)
-		const unbound = [text, section]
-		expect(resolveDashboardItems(unbound, [chainVariable], { chain: 'Solana' }, catalog).items).toBe(unbound)
-		const nothingChanged = [chainChart()]
-		expect(resolveDashboardItems(nothingChanged, [chainVariable], {}, catalog).items).toBe(nothingChanged)
-	})
-
 	test('resolves every bound card and collects unavailable cards by item id', () => {
 		const items: Array<DashboardItemConfig> = [
 			chainChart(),

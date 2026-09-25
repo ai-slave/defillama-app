@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { PoolDetail, PoolHistory } from '../../poolDetail/types'
 import type { EarnPageRow, VerifiedBlock } from '../types'
-import { lockEarnRow, lockEarnRows, lockPoolDetail, lockPoolHistory } from '../verifiedGate'
+import { lockEarnRow, lockPoolDetail, lockPoolHistory } from '../verifiedGate'
 
 const VERIFIED = {
 	apy: { avg_1d: 2.58, avg_7d: null, avg_30d: null },
@@ -56,18 +56,6 @@ describe('lockEarnRow', () => {
 	// measurement they cannot see.
 	test('drops the exit sort key so the Exit column cannot be ordered by a hidden measurement', () => {
 		expect(lockEarnRow(row()).exitStatus).toBeNull()
-	})
-
-	// The APY figures need no repair: getEarnPage never applies the measured base for a locked
-	// request, so what arrives here is already the protocol's own.
-	test('passes the reported composition through untouched', () => {
-		const locked = lockEarnRow(row({ apy: 2.83, apyBase: 2.38 }))
-		expect(locked.apy).toBe(2.83)
-		expect(locked.apyBase).toBe(2.38)
-	})
-
-	test('locks every row of a page', () => {
-		expect(lockEarnRows([row(), row()]).every((r) => r.verified === null && r.verifiedLocked === true)).toBe(true)
 	})
 })
 

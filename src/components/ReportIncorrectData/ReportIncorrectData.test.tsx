@@ -2,12 +2,11 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ReportIncorrectData, type ReportSubject } from '.'
 
-const mocks = vi.hoisted(() => ({ fetchJson: vi.fn(), success: vi.fn(), error: vi.fn() }))
-vi.mock('react-hot-toast', () => ({ default: { success: mocks.success, error: mocks.error } }))
-
+const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
 
 let container: HTMLDivElement
@@ -24,11 +23,20 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await act(async () => root.unmount())
+	// react-hot-toast keeps toasts in a module store that outlives the Toaster.
+	toast.remove()
 	document.body.innerHTML = ''
 })
 
 async function openReport(subject: ReportSubject) {
-	await act(async () => root.render(<ReportIncorrectData subject={subject} />))
+	await act(async () =>
+		root.render(
+			<>
+				<Toaster />
+				<ReportIncorrectData subject={subject} />
+			</>
+		)
+	)
 	const trigger = Array.from(document.querySelectorAll('button')).find(
 		(button) => button.textContent?.trim() === 'Report incorrect data'
 	)
@@ -126,10 +134,12 @@ test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reo
 	expect(document.querySelector('form')).toBe(newForm)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await vi.waitFor(() => expect(document.querySelector('textarea')?.readOnly).toBe(false))
-	expect(mocks.success.mock.calls).toEqual(outcome === 'success' ? [['Report sent successfully']] : [])
-	expect(mocks.error.mock.calls).toEqual(
-		outcome === 'failure' ? [["Something went wrong, couldn't submit report"]] : []
-	)
+	const [shown, hidden] =
+		outcome === 'success'
+			? ['Report sent successfully', "Something went wrong, couldn't submit report"]
+			: ["Something went wrong, couldn't submit report", 'Report sent successfully']
+	await vi.waitFor(() => expect(document.body.textContent).toContain(shown), { timeout: 1000 })
+	expect(document.body.textContent).not.toContain(hidden)
 	await submitReport('Revenue')
 	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body).dataType).toBe('Revenue')
 	await vi.waitFor(() =>

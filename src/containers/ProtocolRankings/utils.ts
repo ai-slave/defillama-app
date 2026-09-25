@@ -2,6 +2,7 @@ import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { removedCategoriesFromChainTvlSet } from './constants'
+import type { IProtocol } from './types'
 
 const excludedCategoriesSet = new Set(['Canonical Bridge', 'Staking Pool', 'Foundation'])
 
@@ -48,4 +49,21 @@ export const protocolMatchesForkFilter = ({
 		if (slug(forkName) === normalizedFork) return true
 	}
 	return false
+}
+
+/** Parents a search reached only through their children open, keyed like the table's root row ids. */
+export function getSearchExpandedRows(
+	rows: ReadonlyArray<Pick<IProtocol, 'id' | 'name' | 'slug' | 'childProtocols'>>,
+	search: string
+): Record<string, boolean> | null {
+	const normalizedQuery = search.trim().toLowerCase()
+	if (!normalizedQuery) return null
+	const expanded: Record<string, boolean> = {}
+	for (let index = 0; index < rows.length; index++) {
+		const row = rows[index]
+		if (row?.childProtocols?.length && !row.name.toLowerCase().includes(normalizedQuery)) {
+			expanded[row.id ?? `root:${row.slug || index}`] = true
+		}
+	}
+	return expanded
 }

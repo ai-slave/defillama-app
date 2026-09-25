@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -14,22 +13,18 @@ import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUns
 import { projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 
-const mocks = vi.hoisted(() => ({
-	userId: 'user-1' as string | null,
+const session = installSubscriberSession('user-1')
+
+const view = {
 	visibilityState: 'visible' as DocumentVisibilityState,
 	hasFocus: true,
 	sessionId: 'session-1' as string | null,
 	uncovered: true,
 	hasUnseenCompletion: true,
 	projectId: 'project-1' as string | null
-}))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: mocks.userId ? { id: mocks.userId } : null
-	})
-}))
+}
 
 function chatSession(overrides: Partial<ChatSession> = {}): ChatSession {
 	return {
@@ -62,77 +57,84 @@ function projectSession(overrides: Partial<ProjectChatSession> = {}): ProjectCha
 describe('useClearUnseenCompletion', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let queryClient: QueryClient
 	let result: ReturnType<typeof useClearUnseenCompletion>
 
 	function Harness() {
 		result = useClearUnseenCompletion({
 			attention: {
-				uncovered: mocks.uncovered,
-				sessionId: mocks.sessionId,
+				uncovered: view.uncovered,
+				sessionId: view.sessionId,
 				visibleMessageIds: new Set(['message-1'])
 			} satisfies ChatAttention,
-			projectId: mocks.projectId,
-			hasUnseenCompletion: mocks.hasUnseenCompletion
+			projectId: view.projectId,
+			hasUnseenCompletion: view.hasUnseenCompletion
 		})
 		return null
 	}
 
-	function unseen(sessionId = 'session-1') {
-		const data = queryClient.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, 'user-1'])
-		return data?.pages[0]?.sessions.find((session) => session.sessionId === sessionId)?.hasUnseenCompletion
-	}
-
-	function projectUnseen(sessionId = 'session-1') {
-		const data = queryClient.getQueryData<Array<ProjectChatSession>>(projectSessionsKey('project-1'))
-		return data?.find((session) => session.sessionId === sessionId)?.hasUnseenCompletion
-	}
-
-	beforeEach(async () => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.clearAllMocks()
-		mocks.userId = 'user-1'
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
-		mocks.sessionId = 'session-1'
-		mocks.uncovered = true
-		mocks.hasUnseenCompletion = true
-		mocks.projectId = 'project-1'
-		Object.defineProperty(document, 'visibilityState', {
-			configurable: true,
-			get: () => mocks.visibilityState
-		})
-		vi.spyOn(document, 'hasFocus').mockImplementation(() => mocks.hasFocus)
-		queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-		queryClient.setQueryData(
+	function seedSessions(sessions: Array<ChatSession>) {
+		session.client.setQueryData(
 			[SESSIONS_QUERY_KEY, 'user-1'],
 			createSessionListInfiniteData({
-				sessions: [chatSession(), chatSession({ sessionId: 'session-2', title: 'Other' })],
+				sessions,
 				usage: null,
 				factCheckedUsage: null,
 				alertsUsage: null,
 				hasMore: false
 			})
 		)
-		queryClient.setQueryData(projectSessionsKey('project-1'), [
+	}
+
+	async function render(node = <Harness />) {
+		await act(async () => root.render(<session.Wrapper>{node}</session.Wrapper>))
+	}
+
+	/** A new completion lands for the attended session, the only moment the hook decides to clear. */
+	async function completionArrives() {
+		view.hasUnseenCompletion = false
+		await render()
+		seedSessions([chatSession()])
+		view.hasUnseenCompletion = true
+		await render()
+	}
+
+	function unseen(sessionId = 'session-1') {
+		const data = session.client.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, 'user-1'])
+		return data?.pages[0]?.sessions.find((row) => row.sessionId === sessionId)?.hasUnseenCompletion
+	}
+
+	function projectUnseen(sessionId = 'session-1') {
+		const data = session.client.getQueryData<Array<ProjectChatSession>>(projectSessionsKey('project-1'))
+		return data?.find((row) => row.sessionId === sessionId)?.hasUnseenCompletion
+	}
+
+	beforeEach(async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.clearAllMocks()
+		view.visibilityState = 'visible'
+		view.hasFocus = true
+		view.sessionId = 'session-1'
+		view.uncovered = true
+		view.hasUnseenCompletion = true
+		view.projectId = 'project-1'
+		Object.defineProperty(document, 'visibilityState', {
+			configurable: true,
+			get: () => view.visibilityState
+		})
+		vi.spyOn(document, 'hasFocus').mockImplementation(() => view.hasFocus)
+		seedSessions([chatSession(), chatSession({ sessionId: 'session-2', title: 'Other' })])
+		session.client.setQueryData(projectSessionsKey('project-1'), [
 			projectSession(),
 			projectSession({ sessionId: 'session-2', title: 'Other' })
 		])
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		await render()
 	})
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
-		queryClient.clear()
 		container.remove()
 		vi.restoreAllMocks()
 	})
@@ -144,98 +146,42 @@ describe('useClearUnseenCompletion', () => {
 	})
 
 	test('holds the badge while the tab is hidden', async () => {
-		mocks.visibilityState = 'hidden'
-		mocks.hasFocus = false
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession()],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		view.visibilityState = 'hidden'
+		view.hasFocus = false
+		await completionArrives()
+		expect(unseen()).toBe(true)
+	})
+
+	test('holds the badge while another window has focus over the visible tab', async () => {
+		view.hasFocus = false
+		await completionArrives()
 		expect(unseen()).toBe(true)
 	})
 
 	test('holds the badge while chat chrome covers the conversation', async () => {
-		mocks.uncovered = false
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession()],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		view.uncovered = false
+		seedSessions([chatSession()])
+		await render()
 		expect(unseen()).toBe(true)
 	})
 
 	test('clears the badge when the user returns focus to the attended chat', async () => {
-		mocks.visibilityState = 'hidden'
-		mocks.hasFocus = false
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession()],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		view.visibilityState = 'hidden'
+		view.hasFocus = false
+		await completionArrives()
 		expect(unseen()).toBe(true)
 
-		mocks.visibilityState = 'visible'
-		mocks.hasFocus = true
+		view.visibilityState = 'visible'
+		view.hasFocus = true
 		await act(async () => window.dispatchEvent(new Event('focus')))
 		expect(unseen()).toBe(false)
 	})
 
 	test('still clears on an explicit sidebar click', async () => {
-		mocks.hasUnseenCompletion = false
-		mocks.sessionId = null
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession({ sessionId: 'session-2' })],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		view.hasUnseenCompletion = false
+		view.sessionId = null
+		seedSessions([chatSession({ sessionId: 'session-2' })])
+		await render()
 		act(() => result('session-2', 'project-1'))
 		expect(unseen('session-2')).toBe(false)
 	})
@@ -246,23 +192,8 @@ describe('useClearUnseenCompletion', () => {
 			return null
 		}
 
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession({ sessionId: 'session-2' })],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<ClickHarness />
-				</QueryClientProvider>
-			)
-		})
+		seedSessions([chatSession({ sessionId: 'session-2' })])
+		await render(<ClickHarness />)
 		act(() => result('session-2', 'project-1'))
 		expect(unseen('session-2')).toBe(false)
 	})
@@ -270,33 +201,7 @@ describe('useClearUnseenCompletion', () => {
 	test('clears again after a refetch restores the unseen flag', async () => {
 		expect(unseen()).toBe(false)
 
-		mocks.hasUnseenCompletion = false
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
-
-		queryClient.setQueryData(
-			[SESSIONS_QUERY_KEY, 'user-1'],
-			createSessionListInfiniteData({
-				sessions: [chatSession()],
-				usage: null,
-				factCheckedUsage: null,
-				alertsUsage: null,
-				hasMore: false
-			})
-		)
-		mocks.hasUnseenCompletion = true
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
+		await completionArrives()
 		expect(unseen()).toBe(false)
 	})
 })

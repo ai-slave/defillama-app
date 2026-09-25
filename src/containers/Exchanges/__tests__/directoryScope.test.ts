@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
-import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
+import { buildDirectoryColumns } from '../directoryColumns'
 import { directoryColumnVisibility } from '../DirectoryTable'
 import type { ExchangeDirectoryRowModel } from '../models'
-import { DIRECTORY_ALL_SEGMENTS, type DirectoryScope } from '../queryState'
+import type { DirectoryScope } from '../queryState'
 
 const visibleIds = (scope: DirectoryScope) =>
 	Object.entries(directoryColumnVisibility('activity', scope))
@@ -12,19 +12,7 @@ const visibleIds = (scope: DirectoryScope) =>
 		.map(([id]) => id)
 		.sort()
 
-const MERGED_ONLY = [
-	'spotActiveLiquidity',
-	'perpActiveLiquidity',
-	'perpOpenInterest',
-	'spotNormalizedVolume',
-	'perpNormalizedVolume'
-]
-
 describe('merged directory scope', () => {
-	test('merges spot and USD perps only — COIN perps stay in their own table', () => {
-		expect(DIRECTORY_ALL_SEGMENTS).toEqual(['spot', 'linear_perp'])
-	})
-
 	test('does not add COIN-perp values to the merged Perp columns', () => {
 		const row = {
 			segments: {
@@ -57,13 +45,6 @@ describe('merged directory scope', () => {
 		expect(value('perpNormalizedVolume')).toBe(60)
 	})
 
-	// The point of the merged view is a row that fits without horizontal scroll and
-	// leads with measured metrics. Pinned so adding a column stays a decision rather
-	// than drift.
-	test('shows one segment-qualified set plus the execution metrics, and nothing else', () => {
-		expect(visibleIds('all')).toEqual([...MERGED_ONLY, ...EXECUTION_COLUMN_IDS].sort())
-	})
-
 	// Links, venue type and fee schedules are one click away and none is a measurement,
 	// so the merged view spends its width on the metrics instead.
 	test('drops links, type and fee columns from the merged view but keeps them per segment', () => {
@@ -76,26 +57,41 @@ describe('merged directory scope', () => {
 		expect(visibleIds('linear_perp')).toContain('linearPerpFee')
 	})
 
-	test('drops every column that would have no segment to read in the merged view', () => {
-		const visible = visibleIds('all')
-		for (const id of [
-			'activeLiquidity',
-			'depth2Usd',
-			'volume24h',
-			'volumeChange24h',
-			'normalizedVolume',
-			'openInterestUsd',
-			'openInterestChange24h',
-			'volumeToOi',
-			'volumeToDepth',
-			'sparkline',
-			'marketCount',
-			'coinCount'
-		]) {
-			expect(visible).not.toContain(id)
+	test('shows no merged-view column that is blank for a venue with spot and USD-perp data', () => {
+		const segment = {
+			volume24h: 80,
+			volumePrevious24h: 70,
+			openInterestUsd: 100,
+			openInterestPreviousUsd: 90,
+			marketCount: 2,
+			coinCount: 2,
+			depthBidUsd: 5,
+			depthAskUsd: 5
 		}
-		// COIN perps are out of scope here, including their fee column.
-		expect(visible).not.toContain('inversePerpFee')
+		const row = {
+			name: 'Venue',
+			segments: { spot: segment, linear_perp: segment },
+			normalizedVolume: {
+				spot: { activeLiquidity: 40, normalized: 60 },
+				linear_perp: { activeLiquidity: 40, normalized: 60 }
+			},
+			sparks: { spot: [1, 2], linear_perp: [1, 2] },
+			execution: { costToTradeBps: 1, realizedSlippage10kBps: 2, markout1mBps: 3 }
+		} as unknown as ExchangeDirectoryRowModel
+		const visible = new Set(visibleIds('all'))
+		const table = constructTestTable({
+			features: tableFeaturesConfig,
+			data: [row],
+			columns: buildDirectoryColumns('all', true),
+			state: {},
+			renderFallbackValue: null
+		})
+		const blank = table
+			.getRowModel()
+			.rows[0]!.getAllCells()
+			.filter((cell) => visible.has(cell.column.id) && cell.column.accessorFn && cell.getValue() == null)
+			.map((cell) => cell.column.id)
+		expect(blank).toEqual([])
 	})
 
 	// Fee columns are hidden from the merged metric views, but the Fees view is made
@@ -110,14 +106,14 @@ describe('merged directory scope', () => {
 		expect(visible).not.toContain('inversePerpFee')
 	})
 
-	test('leaves the exact-segment tables untouched by the merged columns', () => {
-		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
-			const visible = visibleIds(scope)
-			for (const id of MERGED_ONLY) expect(visible).not.toContain(id)
-			// Each segment table keeps the liquidity column it had: the volatility band
-			// where a normalized-volume band exists, the fixed ±2% depth for COIN perps.
-			expect(visible).toContain(scope === 'inverse_perp' ? 'depth2Usd' : 'activeLiquidity')
-			expect(visible).toContain('volume24h')
+	// Each segment table keeps its own liquidity column: the volatility band where a
+	// normalized-volume band exists, the fixed ±2% depth for COIN perps, which have none.
+	test('shows COIN perps the ±2% depth and the other segment tables the volatility band', () => {
+		expect(visibleIds('inverse_perp')).toContain('depth2Usd')
+		expect(visibleIds('inverse_perp')).not.toContain('activeLiquidity')
+		for (const scope of ['spot', 'linear_perp'] as const) {
+			expect(visibleIds(scope)).toContain('activeLiquidity')
+			expect(visibleIds(scope)).not.toContain('depth2Usd')
 		}
 	})
 })

@@ -10,7 +10,6 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
-import { formatNumber } from '~/utils/numberFormat'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
 import {
 	CLAIM_BLOCKS,
@@ -29,7 +28,7 @@ import {
 	type UtrClaimFormRow,
 	type UtrClaimRows
 } from './claimRequest'
-import { resolveRequestedProjectId } from './navigation'
+import { formatClaimProjectStatus, resolveRequestedProjectId } from './navigation'
 import { scrollToFirstUtrClaimError } from './scrollToClaimError'
 import type {
 	UtrClaimExchangeOption,
@@ -402,23 +401,7 @@ export function ClaimTokenProfile({
 	const submit = useMutation({ mutationFn: submitUtrClaim })
 	const scrollToError = () => window.requestAnimationFrame(() => scrollToFirstUtrClaimError(formRef.current))
 	const selectedProject = variant === 'claim' ? (projects.find((project) => project.arcticId === token) ?? null) : null
-	const selectedProjectStatus = selectedProject
-		? [
-				selectedProject.tgeStatus === 'post' ? 'Listed' : 'Pre-TGE',
-				selectedProject.criteriaCount
-					? `${selectedProject.gradedCount}/${selectedProject.criteriaCount} criteria scored`
-					: 'Not scored',
-				selectedProject.disclosureScore == null
-					? null
-					: `Disclosure ${formatNumber(selectedProject.disclosureScore, {
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-							useGrouping: false
-						})}/10`
-			]
-				.filter(Boolean)
-				.join(' · ')
-		: null
+	const selectedProjectStatus = selectedProject ? formatClaimProjectStatus(selectedProject) : null
 
 	const requestInput = (clickId: string | null) => ({
 		coingeckoId: selectedProject?.coingeckoId ?? null,

@@ -67,23 +67,11 @@ function coll(partial: Partial<CollateralVM>): CollateralVM {
 }
 
 describe('buildAllocation', () => {
-	test('produces a sane histogram denominator for the real morpho vault', () => {
+	// Unallocated is 1M supply less the 950k reported allocation.
+	test('sizes the morpho vault histogram from supply and the server split', () => {
 		const vm = morphoVm()
-		if (vm.supplyUsd == null) throw new Error('Expected known vault supply')
-		const alloc = buildAllocation(vm.collateral, vm.supplyUsd, vm.allocatedUsd, vm.idleUsd)!
-		expect(alloc).not.toBeNull()
-		expect(alloc.totalUsd).toBeGreaterThan(0)
-		// every row's share of the vault is a sane percentage
-		for (const c of vm.collateral) {
-			const pct = (positionUsd(c) / alloc.totalUsd) * 100
-			expect(pct).toBeGreaterThanOrEqual(0)
-			expect(pct).toBeLessThanOrEqual(100.01)
-		}
-		// Unallocated agrees with the server split: 1M supply less the 950k reported allocation, which is
-		// far above the 0.5% floor below which the histogram reports no unallocated slice at all.
-		expect(vm.supplyUsd - (vm.allocatedUsd ?? 0)).toBe(50_000)
-		expect(50_000).toBeGreaterThan(alloc.totalUsd * 0.005)
-		expect(alloc.unallocatedUsd).toBeCloseTo(50_000, 2)
+		const alloc = buildAllocation(vm.collateral, vm.supplyUsd!, vm.allocatedUsd, vm.idleUsd)!
+		expect([alloc.totalUsd, alloc.unallocatedUsd]).toEqual([1_000_000, 50_000])
 	})
 
 	test('derives unallocated from the server split — NEVER from Σ exposure (min-capped by design)', () => {

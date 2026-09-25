@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
 import {
 	getProtocolSitemapRoutes,
 	getStandaloneProtocolSitemapRoutes
 } from '~/containers/ProtocolOverview/server/routes'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const metadataCache = vi.hoisted((): MetadataCache => ({
+const METADATA: MetadataCache = {
 	chainMetadata: {
 		ethereum: { name: 'Ethereum', id: 'ethereum', stablecoins: true, fees: true }
 	},
@@ -100,87 +102,71 @@ const metadataCache = vi.hoisted((): MetadataCache => ({
 		tokens: {},
 		categories: []
 	}
+}
+
+const raisesInvestors = vi.hoisted(() => ({ fail: false }))
+
+vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
+	getLiquidationsSitemapProtocolChains: async () => [{ protocolId: 'aave', chainIds: ['ethereum'] }]
 }))
 
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: metadataCache
-}))
-
-vi.mock('~/containers/LiquidationsV2/server/routeData', () => ({
-	getLiquidationsSitemapProtocolChainsFromSnapshot: vi
-		.fn()
-		.mockResolvedValue([{ protocolId: 'aave', chainIds: ['ethereum'] }])
-}))
-
-vi.mock('~/containers/Raises/server/routeData', () => ({
-	getRaisesInvestorSlugsFromSnapshot: vi.fn().mockResolvedValue(['paradigm', 'a16z'])
+vi.mock('~/containers/Raises/server/dataset.server', () => ({
+	fetchRaises: async () => {
+		if (raisesInvestors.fail) throw new Error('snapshot unavailable')
+		return { raises: [{ leadInvestors: ['Paradigm'], otherInvestors: ['a16z'] }] }
+	}
 }))
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	fetchExchangeDirectory: vi.fn().mockResolvedValue({ venues: [{ slug: 'binance' }, { slug: 'coinbase' }] }),
-	fetchCexExchangeSlugIndex: vi.fn().mockResolvedValue({
+	fetchExchangeDirectory: async () => ({ venues: [{ slug: 'binance' }, { slug: 'coinbase' }] }),
+	fetchCexExchangeSlugIndex: async () => ({
 		'binance-cex': { exchange: 'binance', defillama_slug: 'binance-cex' }
 	})
 }))
 
-import { buildAppSitemapSections, getSitemapSection, getSitemapSectionPath } from '~/server/routeRegistry/sitemap'
+const http = installFixtureFetch()
+let sitemap: typeof import('~/server/routeRegistry/sitemap')
 
-beforeEach(() => {
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(async (input: RequestInfo | URL) => {
-			const url = String(input)
-			if (url.includes('/dashboards/search')) {
-				return new Response(
-					JSON.stringify({
-						items: [
-							{
-								id: 'empty-public-dashboard',
-								visibility: 'public',
-								updated: '2026-01-02T00:00:00.000Z'
-							},
-							{
-								id: 'rich-public-dashboard',
-								visibility: 'public',
-								editedAt: '2026-01-03T00:00:00.000Z'
-							}
-						],
-						totalPages: 1
-					}),
-					{ status: 200 }
-				)
-			}
-
-			return new Response('{}', { status: 404 })
-		})
-	)
+// Each test loads a cold sitemap cache over the real metadata module, seeded with METADATA.
+beforeEach(async () => {
+	raisesInvestors.fail = false
+	vi.resetModules()
+	Object.assign((await import('~/utils/metadata')).default, METADATA)
+	sitemap = await import('~/server/routeRegistry/sitemap')
+	http.serve({
+		[`${FEATURES_SERVER}/dashboards/search`]: {
+			items: [
+				{ id: 'empty-public-dashboard', visibility: 'public', updated: '2026-01-02T00:00:00.000Z' },
+				{ id: 'rich-public-dashboard', visibility: 'public', editedAt: '2026-01-03T00:00:00.000Z' }
+			],
+			totalPages: 1
+		}
+	})
 })
 
 afterEach(() => {
 	vi.useRealTimers()
-	vi.clearAllMocks()
+	vi.restoreAllMocks()
 })
 
 describe('cache-backed sitemap sections', () => {
 	test('omits governance routes from legacy metadata while retaining token rights and unlocks', () => {
-		const originalMetadata = metadataCache.protocolMetadata.aave
-		const legacyMetadata = { ...originalMetadata, tokenRights: true, governance: true }
-		metadataCache.protocolMetadata.aave = legacyMetadata
-		try {
-			const standaloneRoutes = getStandaloneProtocolSitemapRoutes(metadataCache)
-			const paths = [...getProtocolSitemapRoutes(metadataCache), ...Object.values(standaloneRoutes).flat()]
-
-			expect(standaloneRoutes).not.toHaveProperty('governance')
-			expect(paths.some((path) => /^(?:protocol\/)?governance(?:\/|$)/.test(path))).toBe(false)
-			expect(paths).toEqual(expect.arrayContaining(['protocol/token-rights/aave', 'protocol/tvl/aave', 'unlocks/aave']))
-		} finally {
-			metadataCache.protocolMetadata.aave = originalMetadata
+		// A cache written before governance routes were removed still carries the flag.
+		const legacyAave = { ...METADATA.protocolMetadata.aave, tokenRights: true, governance: true }
+		const legacy: MetadataCache = {
+			...METADATA,
+			protocolMetadata: { ...METADATA.protocolMetadata, aave: legacyAave }
 		}
+		const standaloneRoutes = getStandaloneProtocolSitemapRoutes(legacy)
+		const paths = [...getProtocolSitemapRoutes(legacy), ...Object.values(standaloneRoutes).flat()]
+
+		expect(standaloneRoutes).not.toHaveProperty('governance')
+		expect(paths.some((path) => /^(?:protocol\/)?governance(?:\/|$)/.test(path))).toBe(false)
+		expect(paths).toEqual(expect.arrayContaining(['protocol/token-rights/aave', 'protocol/tvl/aave', 'unlocks/aave']))
 	})
 
 	test('builds grouped public routes from metadata and dataset snapshots only', async () => {
-		const sections = await buildAppSitemapSections()
+		const sections = await sitemap.buildAppSitemapSections()
 		const entriesBySection = new Map(
 			sections.map((section) => [section.id, section.entries.map((entry) => entry.path)])
 		)
@@ -189,7 +175,7 @@ describe('cache-backed sitemap sections', () => {
 		expect(sections.map((section) => String(section.id))).not.toContain('governance')
 		expect(allEntryPaths).not.toContain('governance')
 		expect(allEntryPaths).toContain('token-rights')
-		expect(getSitemapSectionPath('protocols')).toBe('sitemap/protocols.xml')
+		expect(sitemap.getSitemapSectionPath('protocols')).toBe('sitemap/protocols.xml')
 		expect(entriesBySection.get('protocols')).toEqual(expect.arrayContaining(['protocol/aave', 'protocol/fees/aave']))
 		expect(entriesBySection.get('protocols')).not.toContain('protocol/binance-cex')
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum', 'fees/chain/ethereum']))
@@ -217,7 +203,7 @@ describe('cache-backed sitemap sections', () => {
 			])
 		)
 		expect(entriesBySection.get('bridges')).toEqual(expect.arrayContaining(['bridge/stargate', 'bridges/ethereum']))
-		expect(getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
+		expect(sitemap.getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
 		expect(entriesBySection.get('dat')).toEqual(
 			expect.arrayContaining(['digital-asset-treasury/MSTR', 'digital-asset-treasuries/bitcoin'])
 		)
@@ -241,7 +227,7 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('raises')).toEqual(expect.arrayContaining(['raises/paradigm', 'raises/a16z']))
 		expect(sections.map((section) => String(section.id))).not.toContain('tokens')
 		expect(entriesBySection.get('narratives')).toEqual(expect.arrayContaining(['narrative-tracker/ai']))
-		expect(getSitemapSectionPath('pro-dashboards')).toBe('sitemap/pro-dashboards.xml')
+		expect(sitemap.getSitemapSectionPath('pro-dashboards')).toBe('sitemap/pro-dashboards.xml')
 		expect(entriesBySection.get('pro-dashboards')).toEqual(
 			expect.arrayContaining(['pro/empty-public-dashboard', 'pro/rich-public-dashboard'])
 		)
@@ -257,45 +243,40 @@ describe('cache-backed sitemap sections', () => {
 				})
 			])
 		)
-		expect(vi.mocked(fetch)).toHaveBeenCalledWith(
-			expect.stringContaining('visibility=public&sortBy=popular&page=1&limit=100'),
-			expect.objectContaining({ signal: expect.any(AbortSignal) })
-		)
+		expect(http.requests.map((request) => request.url.search)).toEqual([
+			'?visibility=public&sortBy=popular&page=1&limit=100'
+		])
 	})
 
 	test('resolves section ids from Next page params that include the .xml suffix', async () => {
-		const section = await getSitemapSection('static.xml')
+		const section = await sitemap.getSitemapSection('static.xml')
 
 		expect(section?.id).toBe('static')
 	})
 
 	test('serves the previous sitemap snapshot while an expired cache refresh fails', async () => {
-		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-		await buildAppSitemapSections()
+		await sitemap.buildAppSitemapSections()
 		vi.useFakeTimers({ now: Date.now() + 60 * 60 * 1000 + 1 })
-		vi.mocked(getRaisesInvestorSlugsFromSnapshot).mockRejectedValueOnce(new Error('refresh failed'))
+		raisesInvestors.fail = true
 
-		const section = await getSitemapSection('raises.xml')
+		const section = await sitemap.getSitemapSection('raises.xml')
 
 		expect(section?.entries.map((entry) => entry.path)).toEqual(
 			expect.arrayContaining(['raises/paradigm', 'raises/a16z'])
 		)
-		await vi.waitFor(() => {
-			expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build raises section', expect.any(Error))
-		})
-		warnSpy.mockRestore()
+		await vi.waitFor(
+			() => expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build raises section', expect.any(Error)),
+			{ timeout: 500 }
+		)
 	})
 
 	test('keeps building other sitemap sections when one cold section fails', async () => {
-		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-		vi.mocked(getRaisesInvestorSlugsFromSnapshot).mockRejectedValueOnce(new Error('snapshot unavailable'))
-		vi.resetModules()
-		const sitemapModule = await import('~/server/routeRegistry/sitemap')
+		raisesInvestors.fail = true
 
-		const sections = await sitemapModule.buildAppSitemapSections()
+		const sections = await sitemap.buildAppSitemapSections()
 		const entriesBySection = new Map(
 			sections.map((section) => [section.id, section.entries.map((entry) => entry.path)])
 		)
@@ -303,6 +284,5 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum']))
 		expect(entriesBySection.get('raises')).toEqual([])
 		expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build raises section', expect.any(Error))
-		warnSpy.mockRestore()
 	})
 })

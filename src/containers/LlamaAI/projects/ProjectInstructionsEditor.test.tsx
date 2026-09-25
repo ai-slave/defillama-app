@@ -3,30 +3,93 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import {
+	getInstructionsBlurAction,
+	getInstructionsSaveStatus,
+	isInstructionsDraftDirty,
+	reconcileInstructionsDraft
+} from './instructionsDraft'
 import { ProjectInstructionsEditor } from './ProjectInstructionsEditor'
 
-const updateProject = vi.fn<(body: { custom_instructions: string | null }) => Promise<void>>()
-let projectUpdatePending = false
-let projectUpdateError: Error | null = null
+const idle = { isPending: false, hasError: false }
 
-vi.mock('./hooks', () => ({
-	useUpdateProject: () => ({ isPending: projectUpdatePending, error: projectUpdateError, mutate: updateProject })
-}))
+describe('instructions draft', () => {
+	test('adopts fresh server text only while the draft is clean and nothing is saving', () => {
+		const clean = { value: 'Original', savedValue: 'Original', edited: false }
+		expect(reconcileInstructionsDraft(clean, 'Server refresh', false)).toEqual({
+			value: 'Server refresh',
+			savedValue: 'Server refresh',
+			edited: false
+		})
+		expect(reconcileInstructionsDraft(clean, 'Server refresh', true).value).toBe('Original')
+		const dirty = { value: 'Local draft', savedValue: 'Original', edited: true }
+		expect(reconcileInstructionsDraft(dirty, 'Server refresh', false)).toEqual({
+			value: 'Local draft',
+			savedValue: 'Server refresh',
+			edited: true
+		})
+	})
 
-vi.mock('react-hot-toast', () => ({
-	default: { success: vi.fn(), error: vi.fn() }
-}))
+	test('keeps a focused edit when an earlier save is acknowledged', () => {
+		const typedBack = { value: 'Original', savedValue: 'Original', edited: true }
+		expect(reconcileInstructionsDraft(typedBack, 'Submitted draft', false).value).toBe('Original')
+	})
+
+	test('labels a newer edit Unsaved after an earlier save finishes', () => {
+		const draft = reconcileInstructionsDraft(
+			{ value: 'Newer edit', savedValue: 'Original', edited: true },
+			'Submitted draft',
+			false
+		)
+		expect(getInstructionsSaveStatus({ ...idle, dirty: isInstructionsDraftDirty(draft) })).toBe('unsaved')
+	})
+
+	test('saves the trimmed draft on blur and clears whitespace-only text to null', () => {
+		const draft = (value: string) => ({ value, savedValue: 'Original', edited: true })
+		expect(getInstructionsBlurAction(draft('  Updated  '), idle)).toEqual({ type: 'save', value: 'Updated' })
+		expect(getInstructionsBlurAction(draft('  '), idle)).toEqual({ type: 'save', value: null })
+	})
+
+	test('does not submit a changed-then-restored draft unless a save is in flight', () => {
+		const restored = { value: 'Saved instructions', savedValue: 'Saved instructions', edited: true }
+		expect(getInstructionsBlurAction(restored, idle)).toEqual({ type: 'clear-edited' })
+		expect(getInstructionsBlurAction({ ...restored, edited: false }, idle)).toEqual({ type: 'none' })
+		// Typing back to the saved text must supersede the in-flight save of other text.
+		expect(getInstructionsBlurAction(restored, { isPending: true, hasError: false })).toEqual({
+			type: 'save',
+			value: 'Saved instructions'
+		})
+	})
+
+	test('waits for an explicit retry after a failed save', () => {
+		const dirty = { value: 'Retry me', savedValue: 'Original', edited: true }
+		expect(getInstructionsBlurAction(dirty, { isPending: false, hasError: true })).toEqual({ type: 'none' })
+	})
+
+	test('reports saving before failure and failure before unsaved text', () => {
+		expect(getInstructionsSaveStatus({ isPending: true, hasError: true, dirty: true })).toBe('saving')
+		expect(getInstructionsSaveStatus({ isPending: false, hasError: true, dirty: true })).toBe('failed')
+		expect(getInstructionsSaveStatus({ ...idle, dirty: true })).toBe('unsaved')
+		expect(getInstructionsSaveStatus({ ...idle, dirty: false })).toBe('saved')
+	})
+})
 
 describe('ProjectInstructionsEditor', () => {
+	const session = installSubscriberSession('owner')
 	let container: HTMLDivElement
 	let root: Root
+	let patchReplies: Array<Response>
+	const patches = () =>
+		session.requests.filter(({ init }) => init?.method === 'PATCH').map(({ init }) => JSON.parse(init!.body as string))
 
 	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.clearAllMocks()
-		projectUpdatePending = false
-		projectUpdateError = null
-		updateProject.mockResolvedValue(undefined)
+		patchReplies = []
+		session.serve({
+			[`${AI_SERVER}/projects/project-1`]: (_url: URL, init?: RequestInit) =>
+				patchReplies.shift() ?? { project: { id: 'project-1', ...JSON.parse(init!.body as string) } }
+		})
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -37,160 +100,41 @@ describe('ProjectInstructionsEditor', () => {
 		container.remove()
 	})
 
-	async function render(projectId: string, value: string | null) {
-		await act(async () =>
-			root.render(<ProjectInstructionsEditor key={projectId} projectId={projectId} value={value} />)
-		)
-		return container.querySelector('textarea') as HTMLTextAreaElement
-	}
-
-	function change(textarea: HTMLTextAreaElement, value: string) {
-		const setValue = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
-		setValue?.call(textarea, value)
+	function type(textarea: HTMLTextAreaElement, value: string) {
+		Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, value)
 		textarea.dispatchEvent(new Event('input', { bubbles: true }))
 	}
+	const status = () => container.querySelector('[role="status"]')?.textContent
 
-	test('does not submit a changed-then-restored draft without a pending save', async () => {
-		const textarea = await render('project-1', 'Saved instructions')
-
-		await act(async () => change(textarea, 'Changed instructions'))
-		expect(container.textContent).toContain('Unsaved')
-
-		await act(async () => change(textarea, 'Saved instructions'))
-		expect(container.textContent).not.toContain('Unsaved')
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		expect(updateProject).not.toHaveBeenCalled()
-
-		const refreshed = await render('project-1', 'Server refresh')
-		expect(refreshed.value).toBe('Server refresh')
-	})
-
-	test('preserves a dirty draft when fresh project data arrives', async () => {
-		const textarea = await render('project-1', 'Original')
-		await act(async () => change(textarea, 'Local draft'))
-
-		const refreshed = await render('project-1', 'Server refresh')
-
-		expect(refreshed.value).toBe('Local draft')
-		expect(container.textContent).toContain('Unsaved')
-	})
-
-	test('adopts fresh project data when the draft is clean', async () => {
-		await render('project-1', 'Original')
-
-		const refreshed = await render('project-1', 'Server refresh')
-
-		expect(refreshed.value).toBe('Server refresh')
-		expect(container.textContent).not.toContain('Unsaved')
-	})
-
-	test('saves the trimmed draft on blur', async () => {
-		const textarea = await render('project-1', 'Original')
-		await act(async () => change(textarea, '  Updated instructions  '))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-
-		expect(updateProject).toHaveBeenCalledOnce()
-		expect(updateProject).toHaveBeenCalledWith({ custom_instructions: 'Updated instructions' })
-	})
-
-	test('submits a newer draft while an earlier save is pending', async () => {
-		let resolveFirstSave: (() => void) | null = null
-		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
-		const textarea = await render('project-1', 'Original')
-
-		await act(async () => change(textarea, 'First draft'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		await act(async () => change(textarea, 'Latest draft'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-
-		expect(updateProject).toHaveBeenCalledTimes(2)
-		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: 'Latest draft' })
-		await act(async () => {
-			resolveFirstSave?.()
-			await Promise.resolve()
-		})
-	})
-
-	test('restores the saved value after a different draft starts saving', async () => {
-		let resolveFirstSave: (() => void) | null = null
-		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
-		const textarea = await render('project-1', 'Original')
-
-		await act(async () => change(textarea, 'Temporary draft'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		projectUpdatePending = true
-		await render('project-1', 'Original')
-		await act(async () => change(textarea, 'Original'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-
-		expect(updateProject).toHaveBeenCalledTimes(2)
-		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: 'Original' })
-		await act(async () => {
-			resolveFirstSave?.()
-			await Promise.resolve()
-		})
-	})
-
-	test('preserves a focused edit when an earlier save is acknowledged', async () => {
-		let resolveFirstSave: (() => void) | null = null
-		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
-		const textarea = await render('project-1', 'Original')
-
-		await act(async () => change(textarea, 'Submitted draft'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		projectUpdatePending = true
-		await render('project-1', 'Original')
-		await act(async () => change(textarea, 'Original'))
-		const acknowledged = await render('project-1', 'Submitted draft')
-
-		expect(acknowledged.value).toBe('Original')
-		await act(async () => resolveFirstSave?.())
-	})
-	test('reports pending and failed saves accurately, then retries the current draft once', async () => {
-		const textarea = await render('project-1', 'Original')
-		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
+	test('shows a failed save inline and retries the current draft once', async () => {
+		patchReplies.push(Response.json({ error: 'Network unavailable' }, { status: 500 }))
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<ProjectInstructionsEditor projectId="project-1" value="Original" />
+				</session.Wrapper>
+			)
+		)
+		const textarea = container.querySelector('textarea')!
 		expect(textarea.labels?.[0].textContent).toBe('Instructions')
-		await act(async () => change(textarea, 'First draft'))
+		expect(status()).toBe('Saved')
+
+		await act(async () => type(textarea, '  First draft  '))
+		expect(status()).toBe('Unsaved')
 		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		projectUpdatePending = true
-		await render('project-1', 'Original')
-		expect(container.querySelector('[role="status"]')?.textContent).toContain('Saving…')
-		projectUpdatePending = false
-		projectUpdateError = new Error('Network unavailable')
-		await render('project-1', 'Original')
-		expect(container.querySelector('[role="status"]')?.textContent).toBe('Not saved')
+		await vi.waitFor(() => expect(status()).toBe('Not saved'), { timeout: 1000 })
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Network unavailable')
 		expect(textarea.getAttribute('aria-invalid')).toBe('true')
-		expect(textarea.value).toBe('First draft')
-		await act(async () => change(textarea, 'Retry this newer draft'))
+
+		await act(async () => type(textarea, 'Retry this newer draft'))
 		await act(async () => {
 			textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
-			container.querySelector<HTMLButtonElement>('button')!.click()
+			container.querySelector<HTMLButtonElement>('[role="alert"] button')!.click()
 		})
-		expect(updateProject).toHaveBeenCalledTimes(2)
-		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: 'Retry this newer draft' })
-		projectUpdateError = null
-		await render('project-1', 'Retry this newer draft')
-		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
-		expect(container.querySelector('[role="alert"]')).toBeNull()
-	})
-
-	test('does not label a newer edit Saved when an earlier save finishes', async () => {
-		const textarea = await render('project-1', 'Original')
-		await act(async () => change(textarea, 'Submitted draft'))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		await act(async () => change(textarea, 'Newer edit'))
-		await render('project-1', 'Submitted draft')
-		expect(textarea.value).toBe('Newer edit')
-		expect(container.querySelector('[role="status"]')?.textContent).toBe('Unsaved')
-	})
-
-	test('clearing instructions saves null and returns to Saved after acknowledgement', async () => {
-		const textarea = await render('project-1', 'Original')
-		await act(async () => change(textarea, '  '))
-		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: null })
-		await render('project-1', null)
-		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
+		await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
+		expect(patches()).toEqual([
+			{ custom_instructions: 'First draft' },
+			{ custom_instructions: 'Retry this newer draft' }
+		])
 	})
 })

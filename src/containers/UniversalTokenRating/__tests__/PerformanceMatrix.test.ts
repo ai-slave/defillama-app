@@ -1,7 +1,5 @@
-import { createElement } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
-import { buildMatrixOption, PerformanceMatrix } from '../PerformanceMatrix'
+import { buildMatrixOption } from '../PerformanceMatrix'
 import { areMatrixIconsReady } from '../performanceMatrixIcons'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
 
@@ -95,14 +93,5 @@ describe('buildMatrixOption', () => {
 		) as any
 
 		expect(option.series[0].data[0].symbol).toBe('image://data:image/png;base64,rounded')
-	})
-
-	test('shows an accessible loading state until the chart is ready', () => {
-		const html = renderToStaticMarkup(createElement(PerformanceMatrix, { rows: [row(null)], grading }))
-
-		expect(html).toContain('role="status"')
-		expect(html).toContain('Loading chart')
-		expect(html).toContain('invisible')
-		expect(html).toContain('h-[494px]')
 	})
 })

@@ -24,6 +24,11 @@ type Store<T> = {
 
 const stores = new Map<string, Store<unknown>>()
 
+/** Forgets every cached result and in-flight computation, leaving the state a freshly started runtime has. */
+export function clearResultCache(): void {
+	stores.clear()
+}
+
 function getStore<T>(namespace: string): Store<T> {
 	let store = stores.get(namespace)
 	if (!store) {

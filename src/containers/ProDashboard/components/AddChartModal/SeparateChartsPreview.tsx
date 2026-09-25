@@ -2,10 +2,8 @@ import { lazy, Suspense } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { getProDashboardChartTypeConfig } from '../../types'
-import { DASHBOARD_CHART_GROUPING, getGroupedMetricTitle } from '../../utils'
-import { EXTENDED_COLOR_PALETTE, getPaletteColor } from '../../utils/colorManager'
-import { buildMultiChartSeriesView, getMultiChartGrouping } from '../multiChartSeries'
+import { DASHBOARD_CHART_GROUPING } from '../../utils'
+import { buildComposerPreviewSeries, buildMultiChartSeriesView, getMultiChartGrouping } from '../multiChartSeries'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -29,27 +27,12 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 		<div className="flex size-full flex-col gap-2 overflow-y-auto p-2">
 			<div className="grid grid-cols-2 gap-2">
 				{visibleItems.map((item, index) => {
-					const meta = getProDashboardChartTypeConfig(item.type)
 					const grouping = getMultiChartGrouping([item], item.grouping) ?? 'day'
-					const title = getGroupedMetricTitle(item.type, meta?.title || item.type, grouping)
 					const subject =
 						item.subjectType === 'protocol' ? getProtocolInfo(item.protocol)?.name || item.protocol : item.chain
+					const series = buildComposerPreviewSeries(item, grouping, subject, index)
 					const chartView = buildMultiChartSeriesView({
-						series:
-							item.data.length > 0
-								? [
-										{
-											name: `${subject} ${title}`,
-											baseType:
-												meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
-													? meta.chartType
-													: undefined,
-											data: item.data,
-											color: item.color || getPaletteColor(EXTENDED_COLOR_PALETTE, index),
-											metricType: item.type
-										}
-									]
-								: [],
+						series: item.data.length > 0 ? [series] : [],
 						showCumulative: false,
 						showPercentage: false,
 						stackSeries: false
@@ -59,9 +42,7 @@ export function SeparateChartsPreview({ composerItems }: SeparateChartsPreviewPr
 							key={item.id}
 							className="flex flex-col gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2"
 						>
-							<span className="truncate text-xs text-pro-text-secondary">
-								{subject} {title}
-							</span>
+							<span className="truncate text-xs text-pro-text-secondary">{series.name}</span>
 							<div className="h-[120px]">
 								{chartView.charts.length > 0 ? (
 									<Suspense fallback={<div className="size-full animate-pulse rounded-sm bg-pro-cards-bg" />}>

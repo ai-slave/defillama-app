@@ -6,6 +6,7 @@ import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'
 import type { TokenOption } from '../data/types'
 import { pushYieldsQuery } from '../queryUpdates.client'
+import { matchModeQuery, matchOnQuery, toggleTokenQuery } from './includeTokensQuery'
 import { type MatchConfig, TokenSearchDialog } from './TokenSearchDialog'
 
 // Token search entry point for the /yields (earn) and /yields/loop pages. The pill
@@ -67,18 +68,11 @@ export function IncludeTokens({
 	}
 
 	const toggleToken = (value: string, wasSelected: boolean) => {
-		const next = wasSelected ? selectedValues.filter((v) => v !== value) : [...selectedValues, value]
-		const hasNextSelection = next.length > 0
 		if (!wasSelected) trackYieldsEvent(YIELDS_EVENTS.SEARCH_TOKEN_INCLUDE, { token: value })
-		void pushYieldsQuery(router, {
-			token: next,
-			...(matchOn
-				? {
-						tokenMatch: hasNextSelection && draftMode !== 'exact' ? draftMode : undefined,
-						tokenOn: hasNextSelection && draftOn !== 'reference' ? draftOn : undefined
-					}
-				: {})
-		})
+		void pushYieldsQuery(
+			router,
+			toggleTokenQuery(selectedValues, value, wasSelected, matchOn ? { mode: draftMode, on: draftOn } : null)
+		)
 	}
 
 	const clearAll = () => {
@@ -95,12 +89,14 @@ export function IncludeTokens({
 				onModeChange: (next) => {
 					if (next !== draftMode) trackYieldsEvent(YIELDS_EVENTS.SEARCH_TOKEN_MATCH, { match: next })
 					setDraftMode(next)
-					if (hasSelection) void pushYieldsQuery(router, { tokenMatch: next === 'exact' ? undefined : next })
+					const update = matchModeQuery(next, hasSelection)
+					if (update) void pushYieldsQuery(router, update)
 				},
 				onOnChange: (next) => {
 					if (next !== draftOn) trackYieldsEvent(YIELDS_EVENTS.SEARCH_TOKEN_ON, { on: next })
 					setDraftOn(next)
-					if (hasSelection) void pushYieldsQuery(router, { tokenOn: next === 'reference' ? undefined : next })
+					const update = matchOnQuery(next, hasSelection)
+					if (update) void pushYieldsQuery(router, update)
 				}
 			}
 		: undefined

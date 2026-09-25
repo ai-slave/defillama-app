@@ -1,26 +1,14 @@
-import type { Table } from '@tanstack/react-table'
-import { createElement } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
+// @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, createElement } from 'react'
+import { createRoot } from 'react-dom/client'
 import { describe, expect, test, vi } from 'vitest'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
+import { getProChainsDatasetQueryKey } from '~/containers/ProDashboard/tableQueryKeys'
 import { buildChainShareTotals, getChainMetricShare } from './chainShares'
-import type { tableFeaturesConfig } from './index'
 import { ChainsDataset } from './index'
 
-const mocks = vi.hoisted(() => ({
-	data: [] as Array<ChainsDatasetRow>,
-	table: null as Table<typeof tableFeaturesConfig, ChainsDatasetRow> | null
-}))
-vi.mock('./useChainsData', () => ({ useChainsData: () => ({ data: mocks.data, isLoading: false, error: null }) }))
-vi.mock('./ChainsTableHeader', () => ({ ChainsTableHeader: () => null }))
-vi.mock('./ColumnManagementPanel', () => ({ ColumnManagementPanel: () => null }))
-vi.mock('../../Table/TablePagination', () => ({ TablePagination: () => null }))
-vi.mock('../../Table/TableBody', () => ({
-	TableBody: ({ table }: { table: Table<typeof tableFeaturesConfig, ChainsDatasetRow> }) => {
-		mocks.table = table
-		return null
-	}
-}))
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {}, push: vi.fn() }) }))
 
 function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 	return {
@@ -54,49 +42,63 @@ function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 	}
 }
 
-describe('chain metric shares', () => {
-	test.each([true, false])('sorts signed shares with missing values last when descending=%s', (desc) => {
-		mocks.data = [chain('Positive', 100), chain('Unknown', null), chain('Zero', 0), chain('Adjustment', -20)]
-		renderToStaticMarkup(createElement(ChainsDataset))
-		const table = mocks.table!
-		table.setOptions((options) => ({
-			...options,
-			state: { ...options.state, sorting: [{ id: 'totalFees24h_share', desc }] }
-		}))
-
-		expect(
-			table.getSortedRowModel().rows.map((row) => [row.original.name, row.getValue('totalFees24h_share')])
-		).toEqual(
-			desc
-				? [
-						['Positive', 125],
-						['Zero', 0],
-						['Adjustment', -25],
-						['Unknown', undefined]
-					]
-				: [
-						['Adjustment', -25],
-						['Zero', 0],
-						['Positive', 125],
-						['Unknown', undefined]
-					]
+// The rows come from the query cache the dashboard stream fills.
+async function renderChains(rows: Array<ChainsDatasetRow>) {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	const client = new QueryClient()
+	client.setQueryData(getProChainsDatasetQueryKey(undefined), rows)
+	const container = document.createElement('div')
+	document.body.appendChild(container)
+	const root = createRoot(container)
+	await act(async () =>
+		root.render(
+			createElement(
+				QueryClientProvider,
+				{ client },
+				createElement(ChainsDataset, {
+					columnOrder: ['name', 'totalFees24h_share'],
+					columnVisibility: { name: true, totalFees24h_share: true }
+				})
+			)
 		)
-	})
+	)
+	return {
+		clickShareHeader: () =>
+			act(async () =>
+				Array.from(container.querySelectorAll('th button'))
+					.find((button) => button.textContent?.includes('24h Fees % Share'))!
+					.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			),
+		shareCells: () =>
+			Array.from(container.querySelectorAll('tbody tr'), (row) =>
+				Array.from(row.querySelectorAll('td'), (cell) => cell.textContent?.trim())
+					.slice(0, 2)
+					.join(' ')
+			),
+		unmount: async () => {
+			await act(async () => root.unmount())
+			container.remove()
+			client.clear()
+		}
+	}
+}
 
-	test.each([0, -10])('keeps shares unavailable when the total is %s', (total) => {
-		mocks.data = [chain('First', total), chain('Zero', 0), chain('Unknown', null)]
-		renderToStaticMarkup(createElement(ChainsDataset))
-		const table = mocks.table!
-		table.setOptions((options) => ({
-			...options,
-			state: { ...options.state, sorting: [{ id: 'totalFees24h_share', desc: true }] }
-		}))
-
-		expect(table.getSortedRowModel().rows.map((row) => row.getValue('totalFees24h_share'))).toEqual([
-			undefined,
-			undefined,
-			undefined
+describe('chain metric shares', () => {
+	test('sorts signed shares with missing values last in both directions', async () => {
+		const table = await renderChains([
+			chain('Positive', 100),
+			chain('Unknown', null),
+			chain('Zero', 0),
+			chain('Adjustment', -20)
 		])
+		await table.clickShareHeader()
+		const descending = table.shareCells()
+		await table.clickShareHeader()
+		const ascending = table.shareCells()
+		await table.unmount()
+
+		expect(descending).toEqual(['Positive 125.00%', 'Zero 0.00%', 'Adjustment -25.00%', 'Unknown -'])
+		expect(ascending).toEqual(['Adjustment -25.00%', 'Zero 0.00%', 'Positive 125.00%', 'Unknown -'])
 	})
 
 	test('uses the algebraic canonical total so signed contributions sum to 100%', () => {

@@ -9,7 +9,7 @@ import type {
 import { CHART_INSET } from '~/components/ECharts/shared/chartSpacing'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
-import { buildProtocolChartPresentation } from './chartPresentation'
+import { buildProtocolChartPresentation, shouldHideProtocolDataZoom } from './chartPresentation'
 import { buildProtocolYAxis } from './chartYAxis'
 import type { IProtocolCoreChartProps } from './types'
 
@@ -39,8 +39,7 @@ export default function ProtocolChart({
 }: IProtocolCoreChartProps) {
 	const tooltipGroupBy: ChartTimeGrouping = groupBy && groupBy !== 'cumulative' ? groupBy : 'daily'
 	const chartTheme = useChartTheme(isThemeDark)
-	const effectiveHideDataZoom =
-		hideDataZoom || Object.values(chartData).every((seriesData) => (seriesData?.length ?? 0) < 2)
+	const effectiveHideDataZoom = shouldHideProtocolDataZoom(chartData, hideDataZoom)
 	const presentation = useMemo(
 		() =>
 			buildProtocolChartPresentation({

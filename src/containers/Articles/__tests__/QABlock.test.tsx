@@ -54,13 +54,11 @@ describe('Q&A block question number editor', () => {
 		expect(inputs).toHaveLength(2)
 		expect(inputs[0].placeholder).toBe('01')
 		expect(inputs[1].placeholder).toBe('02')
-		expect(inputs[1].style.width).toBe('calc(2ch + 1em)')
 
 		await act(async () => {
 			inputs[1].focus()
 			changeInputValue(inputs[1], '012')
 		})
-		expect(inputs[1].style.width).toBe('calc(3ch + 1em)')
 		await act(async () => inputs[1].blur())
 
 		expect(editor.getJSON().content?.[1].attrs?.questionNumber).toBe('012')

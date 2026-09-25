@@ -2,6 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartDatasetDefinition } from '../chart-datasets'
 import { ChartDatasetModal } from '../ChartDatasetModal'
@@ -9,13 +10,7 @@ import { DatasetPreviewModal } from '../DatasetPreviewModal'
 import type { DatasetDefinition } from '../datasets'
 import type { ChartSavedConfig, DatasetSavedConfig, SavedDownloadInput } from '../savedDownloads'
 
-const mocks = vi.hoisted(() => ({ changed: vi.fn(), toast: vi.fn(), save: vi.fn(), recent: vi.fn() }))
-vi.mock('~/contexts/LocalStorage', () => ({
-	useSavedDownloads: () => ({ savedDownloads: [], saveDownload: mocks.save }),
-	useRecentDownloads: () => ({ recordRecent: mocks.recent })
-}))
-vi.mock('react-hot-toast', () => ({ toast: Object.assign(mocks.toast, { error: mocks.toast, success: mocks.toast }) }))
-vi.mock('~/auth/signupSource', () => ({ setSignupSource: vi.fn() }))
+const mocks = vi.hoisted(() => ({ changed: vi.fn() }))
 const chart: ChartDatasetDefinition = {
 	slug: 'test-chart',
 	name: 'Test chart',
@@ -71,12 +66,30 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
 	container.remove()
+	localStorage.clear()
 })
 async function render(node: ReactNode) {
-	await act(async () => root.render(<QueryClientProvider client={client}>{node}</QueryClientProvider>))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				{node}
+				<Toaster />
+			</QueryClientProvider>
+		)
+	)
 }
+const missingColumnNotices = () =>
+	document.body.textContent!.split('1 saved column no longer available: missing').length - 1
 function latest(): SavedDownloadInput {
 	return mocks.changed.mock.calls.at(-1)![0]
+}
+// Refetches through the modal's own fetcher, so the test does not depend on its query keys.
+async function refreshCsv(body: string) {
+	const calls = fetchCsv.mock.calls.length
+	fetchCsv.mockImplementation(async () => new Response(body))
+	await act(async () => client.invalidateQueries())
+	await vi.waitFor(() => expect(fetchCsv.mock.calls.length).toBeGreaterThan(calls))
+	await settle()
 }
 async function settle() {
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
@@ -122,10 +135,7 @@ test('late options and CSV initialize saved selections once, preserving edits an
 	expect(selectedColumns()).toEqual([])
 	await renderChart([...options])
 	expect(selectedColumns()).toEqual([])
-	await act(async () =>
-		client.setQueryData(['chart-preview', chart.slug, 'alpha', undefined], `${csv}\n2026-09-03,30,5`)
-	)
-	await settle()
+	await refreshCsv(`${csv}\n2026-09-03,30,5`)
 	expect(selectedColumns()).toEqual([])
 	await click(column('other'))
 	expect(selectedColumns()).toEqual(['other'])
@@ -194,15 +204,12 @@ test('dataset defaults initialize from loaded rows and saved settings do not ove
 	await settle()
 	await vi.waitFor(() => expect(selectedColumns()).toEqual(['date']))
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
-	expect(mocks.toast.mock.calls.map(([message]) => message)).toEqual(['1 saved column no longer available: missing'])
+	await vi.waitFor(() => expect(missingColumnNotices()).toBe(1))
 	await click(column('date'))
 	expect(selectedColumns()).toEqual([])
-	await act(async () =>
-		client.setQueryData(['downloads-preview', dataset.slug, null, undefined], `${csv}\n2026-09-03,50,2`)
-	)
-	await settle()
+	await refreshCsv(`${csv}\n2026-09-03,50,2`)
 	expect(selectedColumns()).toEqual([])
-	expect(mocks.toast.mock.calls.map(([message]) => message)).toEqual(['1 saved column no longer available: missing'])
+	expect(missingColumnNotices()).toBe(1)
 })
 
 test('dataset default sort initializes without a preset and remains user-editable after refresh', async () => {
@@ -219,9 +226,6 @@ test('dataset default sort initializes without a preset and remains user-editabl
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
 	await click(button('value'))
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
-	await act(async () =>
-		client.setQueryData(['downloads-preview', dataset.slug, null, undefined], `${csv}\n2026-09-03,50,2`)
-	)
-	await settle()
+	await refreshCsv(`${csv}\n2026-09-03,50,2`)
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 })

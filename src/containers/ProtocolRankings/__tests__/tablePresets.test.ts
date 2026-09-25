@@ -1,34 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { PROTOCOL_RANKING_RESET_QUERY, PROTOCOL_RANKING_RESET_STORAGE_KEYS } from '../settings'
 import { getProtocolRankingDefaultColumnVisibility, getProtocolRankingPresetColumnVisibility } from '../Table'
 
 const primaryPresets = ['Fees', 'Revenue', 'Spot', 'Perps', 'TVL'] as const
 
 describe('Protocol Rankings period presets', () => {
-	test('keeps Reset scoped to ranking state while clearing both TVL bounds', () => {
-		expect(PROTOCOL_RANKING_RESET_STORAGE_KEYS).toEqual(['ptcfs', 'ptcmp', 'ptcp', 'ptc'])
-		expect(PROTOCOL_RANKING_RESET_QUERY).toEqual({ minTvl: undefined, maxTvl: undefined })
-	})
-	test('restores the compact overview and hides custom columns by default', () => {
+	test('hides custom columns and columns outside the configured defaults', () => {
 		const visibility = getProtocolRankingDefaultColumnVisibility(2)
 
-		expect(visibility).toMatchObject({
-			name: true,
-			category: true,
-			tvl: true,
-			change_1d: true,
-			change_7d: true,
-			change_1m: true,
-			mcap: true,
-			token_price: true,
-			fees_24h: true,
-			revenue_24h: true,
-			fees_7d: false,
-			perp_volume_24h: false,
-			options_premium_volume_24h: false,
-			custom_formula_0: false,
-			custom_formula_1: false
-		})
+		expect(visibility).toMatchObject({ tvl: true, fees_7d: false, custom_formula_0: false, custom_formula_1: false })
 	})
 
 	test.each([

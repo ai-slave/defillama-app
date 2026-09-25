@@ -257,6 +257,6 @@ describe('llamaaiChart html fallback', () => {
 			type: 'doc',
 			content: [{ type: 'llamaaiChart', attrs: { chartConfig: 'garbage' } }]
 		})
-		expect(html).not.toContain('Chart')
+		expect(html).toBe('')
 	})
 })

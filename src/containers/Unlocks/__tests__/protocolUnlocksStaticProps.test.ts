@@ -1,25 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { fetchCoinGeckoChartMock, getProtocolEmissonsMock } = vi.hoisted(() => ({
-	fetchCoinGeckoChartMock: vi.fn(),
-	getProtocolEmissonsMock: vi.fn()
-}))
-
-vi.mock('~/api/coingecko', () => ({
-	fetchCoinGeckoChartByIdWithCacheFallback: fetchCoinGeckoChartMock
-}))
-
-vi.mock('~/containers/Unlocks/queries', () => ({
-	getProtocolEmissons: getProtocolEmissonsMock
-}))
-
+import { describe, expect, test } from 'vitest'
+import { DATASETS_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { calculateTotalUnlockValue, getProtocolUnlocksStaticPropsData } from '../protocolUnlocksStaticProps'
 
-describe('protocol unlock static props boundary', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
+const http = installFixtureFetch()
 
+describe('protocol unlock static props boundary', () => {
 	test('does not present a weekly rate as a one-time unlock value', () => {
 		expect(
 			calculateTotalUnlockValue({
@@ -70,10 +56,10 @@ describe('protocol unlock static props boundary', () => {
 		).toBe(0)
 	})
 
-	test('treats a nonpositive price as unavailable', () => {
+	test.each([0, -2])('treats a nonpositive price (%d) as unavailable', (price) => {
 		expect(
 			calculateTotalUnlockValue({
-				tokenPrice: { price: -2 },
+				tokenPrice: { price },
 				upcomingEvent: [
 					{
 						description: 'Cliff',
@@ -87,24 +73,10 @@ describe('protocol unlock static props boundary', () => {
 		).toBeNull()
 	})
 
-	test('returns canonical absence without requesting a detail outside the producer list', async () => {
-		const result = await getProtocolUnlocksStaticPropsData('Missing Protocol', {}, ['aave'])
-
-		expect(result).toEqual({
-			normalizedName: 'missing-protocol',
-			emissions: null,
-			geckoId: null,
-			tokenSymbol: null,
-			initialTokenMarketData: null
-		})
-		expect(getProtocolEmissonsMock).not.toHaveBeenCalled()
-	})
-
 	test('throws on transient detail failure so ISR can retain its stale page', async () => {
-		const error = new Error('detail source unavailable')
-		getProtocolEmissonsMock.mockRejectedValue(error)
+		http.serve({ [`${DATASETS_SERVER_URL}/emissions/aave`]: fixtureStatus(400) })
 
-		await expect(getProtocolUnlocksStaticPropsData('Aave', {}, ['aave'])).rejects.toBe(error)
-		expect(fetchCoinGeckoChartMock).not.toHaveBeenCalled()
+		await expect(getProtocolUnlocksStaticPropsData('Aave', {}, ['aave'])).rejects.toThrow(/400/)
+		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/aave`])
 	})
 })

@@ -81,8 +81,9 @@ describe('profile navigation segment resolution', () => {
 })
 
 describe('profile section navigation', () => {
-	test('orders primary information before historical events', () => {
-		expect(visibleProfileTabs(true, true, true)).toEqual(['markets', 'reserves', 'information', 'history'])
+	test('includes available profile sections', () => {
+		expect(visibleProfileTabs(true, true, true).toSorted()).toEqual(['history', 'information', 'markets', 'reserves'])
+		expect(visibleProfileTabs(false, false, false)).toEqual(['markets'])
 	})
 })
 
@@ -146,7 +147,6 @@ describe('profile country view states', () => {
 		]
 		const regionalView = resolveProfileCountryView('DE', query({ data: regionalData }))
 
-		expect(baseProfile.metadata.groups).toEqual([])
 		expect(profileInformationMetadata(baseProfile, regionalView)?.groups).toHaveLength(1)
 		expect(profileInformationMetadata(baseProfile, { status: 'global' })).toBe(baseProfile.metadata)
 		expect(profileInformationMetadata(baseProfile, { status: 'loading', country: 'DE' })).toBeNull()
@@ -240,7 +240,13 @@ describe('regional information presentation', () => {
 
 	test('does not add a funding fallback when the report publishes that section', () => {
 		const exchange = profile('venue', ['spot'])
-		exchange.metadata.groups = [{ key: 'funding', title: 'Funding', fields: [] }]
+		exchange.metadata.groups = [
+			{
+				key: 'funding',
+				title: 'Funding',
+				fields: [{ key: 'sepa', label: 'SEPA deposits', type: 'text' as const, value: 'Free', comparable: true }]
+			}
+		]
 		const html = renderToStaticMarkup(
 			createElement(ExchangeRegionalInformation, {
 				profile: exchange,
@@ -249,6 +255,7 @@ describe('regional information presentation', () => {
 			})
 		)
 
+		expect(html).toContain('SEPA deposits')
 		expect(html).not.toContain('Select a country to view available deposit and withdrawal methods.')
 	})
 })

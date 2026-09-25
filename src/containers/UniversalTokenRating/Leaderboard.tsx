@@ -10,7 +10,12 @@ import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
 import { CategoryBreakdownTable, rowBreakdownColumns, type BreakdownColumn } from './CategoryBreakdown'
 import { GradeBadge, ScoreBar } from './grades'
-import { pageForUtrAsset, UTR_LEADERBOARD_PAGE_SIZE, type UtrFocusRequest } from './navigation'
+import {
+	syncUtrLeaderboardPaging,
+	UTR_LEADERBOARD_PAGE_SIZE,
+	type UtrFocusRequest,
+	type UtrLeaderboardPaging
+} from './navigation'
 import { PerformanceMatrix } from './PerformanceMatrix'
 import { ClaimProfileBanner } from './TokenPage'
 import type { UtrGradeScaleEntry, UtrGradingConfig, UtrLeaderboardRow } from './types'
@@ -261,7 +266,12 @@ export function Leaderboard({
 	focusRequest?: UtrFocusRequest | null
 }) {
 	const [expandedAssets, setExpandedAssets] = useState<Set<string>>(() => new Set())
-	const [page, setPage] = useState(0)
+	// The first render keeps page one even with a focus request; only a changed request pages to its asset.
+	const [paging, setPaging] = useState<UtrLeaderboardPaging>(() => ({
+		page: 0,
+		selections: { fdvRanges, sectors, listingStatuses, sort },
+		focusRequest
+	}))
 
 	const toggleExpanded = (asset: string) =>
 		setExpandedAssets((current) => {
@@ -280,36 +290,20 @@ export function Leaderboard({
 		return next
 	}, [rows, sort])
 
+	const syncedPaging = syncUtrLeaderboardPaging(
+		paging,
+		sortedRows,
+		{ fdvRanges, sectors, listingStatuses, sort },
+		focusRequest
+	)
+	if (syncedPaging !== paging) setPaging(syncedPaging)
+	const currentPage = syncedPaging.page
+	const setPage = (page: number) => setPaging((current) => ({ ...current, page }))
 	const pageCount = Math.max(1, Math.ceil(sortedRows.length / UTR_LEADERBOARD_PAGE_SIZE))
-	const currentPage = Math.min(page, pageCount - 1)
-	if (page !== currentPage) setPage(currentPage)
 	const pagedRows = sortedRows.slice(
 		currentPage * UTR_LEADERBOARD_PAGE_SIZE,
 		(currentPage + 1) * UTR_LEADERBOARD_PAGE_SIZE
 	)
-
-	// Only filter selections and sorting reset pagination; refreshed row data keeps the current page.
-	const [syncedFilters, setSyncedFilters] = useState({ fdvRanges, sectors, listingStatuses, sort })
-	if (
-		fdvRanges !== syncedFilters.fdvRanges ||
-		sectors !== syncedFilters.sectors ||
-		listingStatuses !== syncedFilters.listingStatuses ||
-		sort.key !== syncedFilters.sort.key ||
-		sort.desc !== syncedFilters.sort.desc
-	) {
-		setSyncedFilters({ fdvRanges, sectors, listingStatuses, sort })
-		setPage(0)
-	}
-
-	// A focus request pages to the asset in the same render, so the row exists for the effect below to
-	// scroll to. It runs after the reset above so that searching — which also restores the default
-	// filters and sort — lands on the token instead of the first page.
-	const [syncedFocusRequest, setSyncedFocusRequest] = useState(focusRequest)
-	if (focusRequest !== syncedFocusRequest) {
-		setSyncedFocusRequest(focusRequest)
-		const requestedPage = focusRequest ? pageForUtrAsset(sortedRows, focusRequest.asset) : null
-		if (requestedPage != null) setPage(requestedPage)
-	}
 
 	useEffect(() => {
 		if (!focusRequest || typeof window === 'undefined') return

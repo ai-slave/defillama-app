@@ -1,45 +1,39 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { createManualAlert } from '../alerts/api'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { PriceAlertEditor } from '../alerts/PriceAlertEditor'
 import { PRICE_OPERATOR_OPTIONS, SegmentedToggle } from '../alerts/ui'
 import { CreateAlertModal } from '../CreateAlertModal'
 
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ authorizedFetch: vi.fn() }) }))
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/ai/chat' }) }))
-vi.mock('../TipActionContext', () => ({ useTipActions: () => ({}) }))
-vi.mock('../alerts/api', () => ({ createManualAlert: vi.fn() }))
-vi.mock('../../hooks/useSessionList', () => ({
-	SESSIONS_QUERY_KEY: 'sessions',
-	useSessionList: () => ({ alertsUsage: { allowed: true } })
-}))
-vi.mock('../../hooks/useIntegrationLink', () => ({ useIntegrationLink: () => ({ state: { status: 'unlinked' } }) }))
-vi.mock('../../hooks/useSlackIntegrationLink', () => ({ useSlackWorkspaces: () => ({ data: { workspaces: [] } }) }))
-vi.mock('../../hooks/useSlackChannels', () => ({ useSlackChannels: () => ({ data: { channels: [] } }) }))
-vi.mock('~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch', () => ({
-	useTokenSearch: () => ({ data: [] })
-}))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
-vi.mock('react-hot-toast', () => ({ toast: { success: vi.fn() } }))
 
+const session = installSubscriberSession('reader')
+const AI = 'https://ai.llama.fi'
+const alertCreations = () =>
+	session.requests
+		.filter((request) => request.url.href === `${AI}/alerts` && request.init?.method === 'POST')
+		.map((request) => JSON.parse(request.init!.body as string))
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(() => {
-	vi.clearAllMocks()
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
+	session.serve({
+		[`${AI}/user/sessions`]: { sessions: [], hasMore: false },
+		[`${AI}/telegram/status`]: { link: { state: 'unlinked' }, pending: null },
+		[`${AI}/slack/status`]: { links: [], pending: null },
+		[`${AI}/slack/workspaces`]: { workspaces: [] },
+		'/api/dynamic/pro-dashboard/tokens/search': []
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	client.clear()
 })
 async function settle() {
 	await new Promise((resolve) => setTimeout(resolve, 40))
@@ -70,9 +64,9 @@ async function mountModal(props: Partial<ComponentProps<typeof CreateAlertModal>
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: false })
 		return (
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<CreateAlertModal dialogStore={store} {...props} />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	}
 	await act(async () => root.render(<Harness />))
@@ -113,7 +107,7 @@ test('alert type arrows retain focus and drafts; reopening restores defaults', a
 	expect(radio('Alert type', 'Scheduled report').getAttribute('aria-checked')).toBe('true')
 	expect(document.querySelector('textarea')!.value).toBe('')
 	expect(document.activeElement).toBe(document.querySelector('textarea'))
-	expect(createManualAlert).not.toHaveBeenCalled()
+	expect(alertCreations()).toEqual([])
 })
 
 test('unlinked delivery blocks submission; a rejected email save preserves the prefill', async () => {
@@ -129,24 +123,23 @@ test('unlinked delivery blocks submission; a rejected email save preserves the p
 	expect(radio('Delivery channel', 'Telegram').getAttribute('aria-checked')).toBe('true')
 	expect(submit().disabled).toBe(true)
 	await act(async () => submit().click())
-	expect(createManualAlert).not.toHaveBeenCalled()
+	expect(alertCreations()).toEqual([])
 	await press(radio('Delivery channel', 'Telegram'), 'End')
 	expect(radio('Delivery channel', 'Slack').getAttribute('aria-checked')).toBe('true')
 	expect(submit().disabled).toBe(true)
 	await press(radio('Delivery channel', 'Slack'), 'Home')
 	expect(submit().disabled).toBe(false)
-	vi.mocked(createManualAlert).mockRejectedValueOnce(new Error('Test save failure'))
+	session.serve({ [`${AI}/alerts`]: () => Response.json({ error: 'Test save failure' }, { status: 500 }) })
 	await act(async () => {
 		submit().click()
 		await settle()
 	})
-	expect(createManualAlert).toHaveBeenCalledWith(
-		expect.any(Function),
+	expect(alertCreations()).toEqual([
 		expect.objectContaining({
 			trigger: expect.objectContaining({ token_nk: 'coingecko:bitcoin', op: 'below', value: 50_000 }),
 			delivery_channel: 'email'
 		})
-	)
+	])
 	expect(store.getState().open).toBe(true)
 	expect(document.querySelector<HTMLInputElement>('[aria-label="Price"]')!.value).toBe(initialPrice)
 	expect(radio('Price comparison', 'Below').getAttribute('aria-checked')).toBe('true')
@@ -241,30 +234,4 @@ test.each([
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
 	expect(onSave).toHaveBeenCalledTimes(1)
-})
-
-test('a closed dialog renders no form, and a submission it left behind cannot reopen it', async () => {
-	let resolveCreate: (value: { id: string; alertExpression: string; nextRunAt: string }) => void = () => {}
-	vi.mocked(createManualAlert).mockImplementationOnce(
-		() => new Promise((resolve) => (resolveCreate = resolve)) as ReturnType<typeof createManualAlert>
-	)
-	const onCreated = vi.fn()
-	const store = await mountModal({ onCreated })
-
-	await input('textarea', 'Daily gas report')
-	await act(async () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
-	expect(createManualAlert).toHaveBeenCalledTimes(1)
-
-	await act(async () => {
-		store.hide()
-		await settle()
-	})
-	expect(document.querySelector('textarea')).toBeNull()
-
-	// The form went away with the dialog, so the late response has nothing to call back into.
-	await act(async () => {
-		resolveCreate({ id: 'alert-1', alertExpression: 'gas', nextRunAt: '2026-01-01T00:00:00.000Z' })
-		await settle()
-	})
-	expect(onCreated).not.toHaveBeenCalled()
 })

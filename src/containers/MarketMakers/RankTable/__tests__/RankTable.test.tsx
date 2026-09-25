@@ -1,39 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
-
-vi.mock('~/ui/SegmentedControl', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/ui/SegmentedControl')>()),
-	TagGroup: () => <div>tag-group</div>
-}))
-
+import { describe, expect, test } from 'vitest'
 import { VOLUME_COLUMNS } from '../../constants'
 import { RankTable } from '../index'
 
-const rows = [
-	{
-		marketMakerId: 'lhava',
-		marketMakerName: 'Lhava',
-		marketMakerImageUrl: null,
-		rank: { value: 1, percentile: 100 },
-		metrics: { orderFillVolumeTotal: { value: 1_744_638, percentile: 100, rank: 1 } }
-	}
-]
-
 describe('RankTable', () => {
-	test('renders a row per market maker', () => {
-		const html = renderToStaticMarkup(
-			<RankTable
-				rows={rows}
-				columns={VOLUME_COLUMNS}
-				mode="value"
-				setMode={() => {}}
-				onRefine={() => {}}
-				onSelectMM={() => {}}
-			/>
-		)
-		expect(html).toContain('Lhava')
-	})
-	test('sorts by rank ascending by default', () => {
+	test('lists the best-ranked market maker first by default', () => {
 		const unsorted = [
 			{
 				marketMakerId: 'b',

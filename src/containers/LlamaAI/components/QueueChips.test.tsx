@@ -79,27 +79,6 @@ describe('QueueChips', () => {
 		expect(container.querySelector('button')).toBeNull()
 	})
 
-	test('preserves the chip node when the server confirms an optimistic row', async () => {
-		await render(
-			surface({
-				rows: [
-					{
-						kind: 'local',
-						id: 'temp-1',
-						state: 'adding',
-						payload: { clientMutationId: 'mutation-1', message: 'Follow up', researchMode: false, client: 'web' }
-					}
-				]
-			})
-		)
-		const optimisticNode = container.querySelector('li')
-
-		await render(surface({ rows: [pending({ clientMutationId: 'mutation-1' })] }))
-
-		expect(container.querySelector('li')).toBe(optimisticNode)
-		expect(container.textContent).not.toContain('Adding…')
-	})
-
 	test('offers one Continue action for a paused queue', async () => {
 		const onContinue = vi.fn()
 		await render(

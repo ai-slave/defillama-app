@@ -80,7 +80,7 @@ describe('promptFailures', () => {
 		const failed = failure('mutation-a')
 		const projected = projectPromptFailure([], failed)
 
-		expect(projected).toEqual([materializeFailedPrompt(failed.request)])
+		expect(projected).toEqual([{ role: 'user', content: 'Prompt mutation-a', id: 'local-mutation-a' }])
 		expect(projectPromptFailure(projected, failed)).toBe(projected)
 	})
 

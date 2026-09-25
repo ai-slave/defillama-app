@@ -1,24 +1,25 @@
 // @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { appMetadataFixtures } from '~/utils/test/appMetadata'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { AppMetadataProvider } from '../../../AppMetadataContext'
 import { normalizeChartBuilderConfig } from '../../../chartBuilderCapabilities'
 import { ChartBuilderTab } from '../ChartBuilderTab'
 import { initializeFromEditItem } from '../modalReducer'
 import type { ChartBuilderConfig } from '../types'
 
-vi.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: undefined, isLoading: false }) }))
-vi.mock('../../../AppMetadataContext', () => ({
-	useAppMetadata: () => ({ loading: false, error: null, hasProtocolBuilderMetric: () => true })
-}))
-vi.mock('../../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ protocols: [], getProtocolInfo: () => null }),
-	useProDashboardVariables: () => ({ variables: [] })
-}))
+// The builder's category and preview requests answer empty; these tests only drive the radio controls.
+const http = installFixtureFetch()
 let root: Root
 let container: HTMLDivElement
+let client: QueryClient
 afterEach(async () => {
 	await act(async () => root.unmount())
+	client.clear()
 	container.remove()
 })
 
@@ -26,6 +27,12 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
+	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	http.serve({
+		...appMetadataFixtures(),
+		'https://api.llama.fi/chains2': { categories: [] },
+		'http://localhost:3000/api/public/pro-dashboard/chart-builder/': { series: [] }
+	})
 	const change = vi.fn()
 	function Harness() {
 		const [config, setConfig] = useState(initial)
@@ -45,7 +52,17 @@ async function renderBuilder(initial: ChartBuilderConfig) {
 			/>
 		)
 	}
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<AppMetadataProvider>
+					<DashboardTestProvider>
+						<Harness />
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</QueryClientProvider>
+		)
+	)
 	return change
 }
 function radio(group: string, value: string) {
@@ -84,7 +101,7 @@ test('grouping changes preserve metric normalization and conditional percentage 
 		protocol: 'Ethereum',
 		chartType: 'line'
 	})
-	expect(radio('Display value as', 'percentage')).toBeTruthy()
+	expect(radio('Display value as', 'percentage')).not.toBeNull()
 	await pressKey(radio('Grouping mode', 'protocol'), 'ArrowLeft')
 	await vi.waitFor(() => expect(radio('Grouping mode', 'chains').checked).toBe(true))
 	expect(change).toHaveBeenLastCalledWith({

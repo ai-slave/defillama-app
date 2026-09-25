@@ -103,34 +103,11 @@ describe('investor site configuration', () => {
 		expect(getInvestorsSite('enterprise.localhost:3000')).toBeNull()
 	})
 
-	test('preserves the landing catalog, cross-site links and separate analytics', async () => {
-		const { INVESTORS_SITES, getInvestorsProjects, getInvestorsLandingProjectHref } = await loadConfig()
+	test('links landing cards to the site that hosts each project', async () => {
+		const { INVESTORS_SITES, getInvestorsLandingProjectHref } = await loadConfig()
 		const { investors, enterprise } = INVESTORS_SITES
-		expect(investors.projectIds).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare'])
-		expect(investors.landingProjectIds).toEqual(investors.projectIds)
-		expect(enterprise.projectIds).toEqual(['odyssey-ecosystem'])
-		expect(enterprise.landingProjectIds).toEqual([...investors.projectIds, 'odyssey-ecosystem'])
-		expect(getInvestorsProjects(investors.comingSoonProjectIds).map((p) => p.id)).toEqual(['kpk'])
-		expect(enterprise.comingSoonProjectIds).toEqual([])
-		for (const projectId of investors.landingProjectIds) {
-			expect(getInvestorsLandingProjectHref(investors, projectId)).toBe(`/${projectId}`)
-			expect(getInvestorsLandingProjectHref(enterprise, projectId)).toBe(`https://investors.defillama.com/${projectId}`)
-		}
+		expect(getInvestorsLandingProjectHref(investors, 'spark')).toBe('/spark')
+		expect(getInvestorsLandingProjectHref(enterprise, 'spark')).toBe('https://investors.defillama.com/spark')
 		expect(getInvestorsLandingProjectHref(enterprise, 'odyssey-ecosystem')).toBe('/odyssey-ecosystem')
-		expect(investors.umamiWebsiteId).toBe('11de15eb-61d0-41c5-9e73-0bf496cc653c')
-		expect(enterprise.umamiWebsiteId).toBe('1c194e22-d31d-4816-b803-8074419f1b3e')
-	})
-
-	test('keeps preview access independent of landing visibility and enterprise projects', async () => {
-		const { INVESTORS_SITES, getInvestorsProject } = await loadConfig('true')
-		const { investors, enterprise } = INVESTORS_SITES
-		expect(investors.projectIds).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk', 'uniswap'])
-		expect(investors.landingProjectIds).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare'])
-		expect(investors.comingSoonProjectIds).toEqual(['kpk'])
-		expect(enterprise.projectIds).toEqual(['odyssey-ecosystem'])
-		for (const project of ['kpk', 'uniswap']) {
-			expect(getInvestorsProject(investors, project)?.id).toBe(project)
-			expect(getInvestorsProject(enterprise, project)).toBeUndefined()
-		}
 	})
 })

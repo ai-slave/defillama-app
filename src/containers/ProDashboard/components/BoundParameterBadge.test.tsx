@@ -1,19 +1,10 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
 import type { DashboardVariable } from '../dashboardTypes'
 import { BoundParameterBadge } from './BoundParameterBadge'
-
-const mocks = vi.hoisted(() => ({
-	variables: [] as Array<DashboardVariable>,
-	permissions: { isReadOnly: false }
-}))
-
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardVariables: () => ({ variables: mocks.variables }),
-	useProDashboardPermissions: () => mocks.permissions
-}))
 
 const chainVariable: DashboardVariable = {
 	id: 'chain',
@@ -32,8 +23,6 @@ let container: HTMLDivElement
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.variables = [chainVariable, protocolVariable]
-	mocks.permissions = { isReadOnly: false }
 	container = document.createElement('div')
 	document.body.append(container)
 })
@@ -42,9 +31,18 @@ afterEach(() => {
 	container.remove()
 })
 
-const render = async (element: React.ReactElement) => {
+const render = async (
+	element: React.ReactElement,
+	{ variables = [chainVariable, protocolVariable], isReadOnly = false } = {}
+) => {
 	const root = createRoot(container)
-	await act(async () => root.render(element))
+	await act(async () =>
+		root.render(
+			<DashboardTestProvider variables={{ variables }} permissions={{ isReadOnly }}>
+				{element}
+			</DashboardTestProvider>
+		)
+	)
 	return () => act(() => root.unmount())
 }
 
@@ -63,8 +61,7 @@ test('renders a single badge when two fields point at the same variable', async 
 })
 
 test('renders the badge without actions in read-only mode', async () => {
-	mocks.permissions = { isReadOnly: true }
-	const unmount = await render(<BoundParameterBadge bindings={{ chain: 'chain' }} />)
+	const unmount = await render(<BoundParameterBadge bindings={{ chain: 'chain' }} />, { isReadOnly: true })
 	const badge = container.querySelector('span')!
 	expect(badge.textContent).toBe('Chain')
 	expect(badge.getAttribute('title')).toBe('Follows the Chain parameter')
@@ -72,13 +69,10 @@ test('renders the badge without actions in read-only mode', async () => {
 	await unmount()
 })
 
-test('renders nothing without bindings or when the bound variable is gone', async () => {
-	const unmountEmpty = await render(<BoundParameterBadge />)
-	expect(container.textContent).toBe('')
-	await unmountEmpty()
-
-	mocks.variables = [protocolVariable]
-	const unmountStale = await render(<BoundParameterBadge bindings={{ chain: 'chain' }} />)
-	expect(container.textContent).toBe('')
-	await unmountStale()
+test('skips a binding whose variable was deleted and keeps the live one', async () => {
+	const unmount = await render(<BoundParameterBadge bindings={{ chain: 'chain', protocol: 'protocol' }} />, {
+		variables: [protocolVariable]
+	})
+	expect([...container.querySelectorAll('span')].map((badge) => badge.textContent)).toEqual(['Protocol'])
+	await unmount()
 })

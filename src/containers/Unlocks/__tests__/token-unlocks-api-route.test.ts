@@ -1,256 +1,88 @@
-import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import type { NextApiRequest } from 'next'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { AUTH_SERVER, DATASETS_SERVER_URL, POCKETBASE_URL, SERVER_URL } from '~/constants'
+import handler from '~/pages/api/private/token-unlocks/[protocol]'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const {
-	getProtocolEmissonsMock,
-	isEmptyProtocolEmissionResultMock,
-	recordRouteRuntimeErrorMock,
-	refreshMetadataInBackgroundIfStaleMock,
-	resolveProtocolParamFromMetadataMock,
-	validateSubscriptionMock
-} = vi.hoisted(() => ({
-	getProtocolEmissonsMock: vi.fn(),
-	isEmptyProtocolEmissionResultMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn(),
-	refreshMetadataInBackgroundIfStaleMock: vi.fn(),
-	resolveProtocolParamFromMetadataMock: vi.fn(),
-	validateSubscriptionMock: vi.fn()
-}))
-
-vi.mock('~/containers/Unlocks/queries', () => ({
-	getProtocolEmissons: getProtocolEmissonsMock,
-	isEmptyProtocolEmissionResult: isEmptyProtocolEmissionResultMock
-}))
-
-vi.mock('~/containers/ProtocolOverview/server/routes', () => ({
-	resolveProtocolParamFromMetadata: resolveProtocolParamFromMetadataMock
-}))
-
-vi.mock('~/utils/apiAuth', () => ({
-	validateSubscription: validateSubscriptionMock
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: {
-		emissionsProtocolsList: ['aave'],
-		emissionsProtocolBySlug: {
-			aave: 'aave',
-			'aave-alias': 'aave-alias',
-			nvda: 'nvda'
-		},
-		tokenlist: { aave: { symbol: 'AAVE' } }
-	},
-	refreshMetadataInBackgroundIfStale: refreshMetadataInBackgroundIfStaleMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: NextApiHandler) => handler
-}))
-
-import tokenUnlocksHandler from '~/pages/api/private/token-unlocks/[protocol]'
-
+const { serve } = installFixtureFetch()
+const { seed } = installMetadataSeeder()
 beforeEach(() => {
-	vi.clearAllMocks()
-	validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: false })
-	resolveProtocolParamFromMetadataMock.mockReturnValue({
-		canonicalSlug: 'aave'
+	// Development without an API key keeps the background metadata refresher from replacing the seeded cache.
+	vi.stubEnv('NODE_ENV', 'development')
+	vi.stubEnv('API_KEY', '')
+	seed({
+		protocolMetadata: { aave: { name: 'aave', displayName: 'Aave' } },
+		protocolRouteIdBySlug: { aave: 'aave', 'aave-alias': 'aave' },
+		emissionsProtocolBySlug: { aave: 'aave', 'aave-alias': 'aave-alias', nvda: 'nvda' },
+		tokenlist: {}
 	})
-	getProtocolEmissonsMock.mockResolvedValue({ protocol: 'aave' })
-	isEmptyProtocolEmissionResultMock.mockReturnValue(false)
+	serve({
+		[`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'active' } },
+		[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: { record: { flags: {} } },
+		[`${SERVER_URL}/emissions`]: []
+	})
 })
+afterEach(() => vi.unstubAllEnvs())
 
-describe('/api/private/token-unlocks/[protocol]', () => {
-	test('returns 405 with private no-store for non-GET requests', async () => {
-		const req = {
-			method: 'POST',
-			headers: {},
-			query: {}
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
+async function run(query: NextApiRequest['query'], auth: string | null = 'Bearer ok', method = 'GET') {
+	const res = createMockNextApiResponse()
+	await handler(createMockNextApiRequest({ method, query, headers: { authorization: auth ?? undefined } }), res)
+	expect(res.setHeader.mock.calls.find(([name]) => name === 'Cache-Control')?.[1]).toBe('private, no-store')
+	return { status: res.statusCode, body: res.json.mock.lastCall?.[0] }
+}
 
-		await tokenUnlocksHandler(req, res)
+const emission = {
+	name: 'Aave',
+	gecko_id: null,
+	pId: 'aave',
+	defillamaIds: ['aave'],
+	chainName: 'Ethereum',
+	metadata: { token: '', protocolIds: ['aave'], events: [], unlockEvents: [] },
+	documentedData: { data: [], tokenAllocation: { investors: null, insiders: null, nonInsiders: null } },
+	categories: {},
+	unlockUsdChart: []
+}
 
-		expect(res.setHeader).toHaveBeenCalledWith('Allow', ['GET'])
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
-		expect(validateSubscriptionMock).not.toHaveBeenCalled()
+describe('private token unlocks route', () => {
+	test('rejects unsupported methods', async () => {
+		expect((await run({}, null, 'POST')).status).toBe(405)
 	})
-
-	test('authenticates before returning 400 for missing protocol params', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: {}
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer ok')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({
-			error: 'Missing protocol parameter'
+	test('authenticates before revealing parameter errors or missing protocols', async () => {
+		expect(await run({}, null)).toEqual({ status: 401, body: { error: 'Authentication required' } })
+		serve({ [`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'inactive' } } })
+		expect(await run({ protocol: 'missing' })).toEqual({ status: 403, body: { error: 'Active subscription required' } })
+	})
+	test('validates protocol parameters for subscribed callers', async () => {
+		expect(await run({})).toEqual({ status: 400, body: { error: 'Missing protocol parameter' } })
+		expect(await run({ protocol: 'missing' })).toEqual({ status: 404, body: { error: 'Protocol emissions not found' } })
+	})
+	test('prefers the canonical protocol over a matching emissions alias', async () => {
+		serve({
+			[`${DATASETS_SERVER_URL}/emissions/aave`]: emission,
+			[`${DATASETS_SERVER_URL}/emissions/aave-alias`]: { ...emission, name: 'Aave alias file' }
 		})
+		const response = await run({ protocol: 'aave-alias' })
+		expect(response.status).toBe(200)
+		expect(response.body).toMatchObject({ name: 'Aave', events: [], chartData: { documented: [], realtime: [] } })
 	})
-
-	test('returns auth failures before checking missing protocol params', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 401,
-			error: 'Authentication required'
+	test('accepts equity tickers directly from the emissions index', async () => {
+		serve({ [`${DATASETS_SERVER_URL}/emissions/nvda`]: { ...emission, name: 'NVIDIA' } })
+		expect(await run({ protocol: 'NVDA' })).toMatchObject({ status: 200, body: { name: 'NVIDIA' } })
+	})
+	test('distinguishes a missing schedule from an upstream failure', async () => {
+		serve({ [`${DATASETS_SERVER_URL}/emissions/aave`]: fixtureStatus(404) })
+		expect((await run({ protocol: 'aave' })).status).toBe(404)
+		serve({ [`${DATASETS_SERVER_URL}/emissions/aave`]: fixtureStatus(400) })
+		expect(await run({ protocol: 'aave' })).toEqual({ status: 500, body: { error: 'Internal server error' } })
+	})
+	test('reports authentication service failures', async () => {
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: () => {
+				throw new Error('Auth unavailable')
+			}
 		})
-		const req = {
-			method: 'GET',
-			headers: {},
-			query: {}
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith(undefined)
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(401)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
-	})
-
-	test('returns subscription failures with private no-store', async () => {
-		validateSubscriptionMock.mockResolvedValue({
-			valid: false,
-			status: 403,
-			error: 'Active subscription required'
-		})
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer bad' },
-			query: { protocol: 'aave' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(validateSubscriptionMock).toHaveBeenCalledWith('Bearer bad')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(403)
-		expect(res.json).toHaveBeenCalledWith({
-			error: 'Active subscription required'
-		})
-	})
-
-	test('returns 404 with private no-store for unavailable protocols', async () => {
-		resolveProtocolParamFromMetadataMock.mockReturnValue(null)
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { protocol: 'missing' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({
-			error: 'Protocol emissions not found'
-		})
-		expect(getProtocolEmissonsMock).not.toHaveBeenCalled()
-	})
-
-	test('returns unlock data with private no-store', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { protocol: 'aave' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(getProtocolEmissonsMock).toHaveBeenCalledWith('aave', {
-			skipAvailabilityCheck: true,
-			tokenlist: { aave: { symbol: 'AAVE' } }
-		})
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ protocol: 'aave' })
-	})
-
-	test('prefers the canonical protocol route when a direct normalized slug also exists', async () => {
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { protocol: 'Aave Alias' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(getProtocolEmissonsMock).toHaveBeenCalledWith('aave', {
-			skipAvailabilityCheck: true,
-			tokenlist: { aave: { symbol: 'AAVE' } }
-		})
-		expect(res.status).toHaveBeenCalledWith(200)
-	})
-
-	test('falls back to a normalized emissions slug when no protocol route matches', async () => {
-		resolveProtocolParamFromMetadataMock.mockReturnValue(null)
-		getProtocolEmissonsMock.mockResolvedValue({ protocol: 'nvda' })
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { protocol: 'NVDA' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(getProtocolEmissonsMock).toHaveBeenCalledWith('nvda', {
-			skipAvailabilityCheck: true,
-			tokenlist: { aave: { symbol: 'AAVE' } }
-		})
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ protocol: 'nvda' })
-	})
-
-	test('returns 500 with private no-store when auth validation throws', async () => {
-		const error = new Error('Auth service unavailable')
-		validateSubscriptionMock.mockRejectedValue(error)
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer bad' },
-			query: { protocol: 'aave' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
-	})
-
-	test('returns 500 instead of a false 404 when the emissions source fails', async () => {
-		const error = new Error('Emissions source unavailable')
-		getProtocolEmissonsMock.mockRejectedValue(error)
-		const req = {
-			method: 'GET',
-			headers: { authorization: 'Bearer ok' },
-			query: { protocol: 'aave' }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await tokenUnlocksHandler(req, res)
-
-		expect(isEmptyProtocolEmissionResultMock).not.toHaveBeenCalled()
-		expect(recordRouteRuntimeErrorMock).toHaveBeenCalledWith(error, 'apiRoute')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
-		expect(res.status).toHaveBeenCalledWith(500)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
+		expect((await run({ protocol: 'aave' })).status).toBe(500)
 	})
 })

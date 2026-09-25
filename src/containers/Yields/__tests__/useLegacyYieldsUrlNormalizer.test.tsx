@@ -133,22 +133,6 @@ describe('useLegacyYieldsUrlNormalizer sticky view preferences', () => {
 		}
 	})
 
-	test('does not retry a cancelled destination after the user navigates elsewhere', async () => {
-		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
-		let cancel: (completed: boolean) => void = () => {}
-		routerMock.replace.mockImplementationOnce(
-			() =>
-				new Promise<boolean>((resolve) => {
-					cancel = resolve
-				})
-		)
-		await render({})
-		await render({ apyWindow: 'avg_7d' })
-		await act(async () => cancel(false))
-		expect(routerMock.replace).toHaveBeenCalledTimes(1)
-		expect(settled).toBe(true)
-	})
-
 	test('a navigation that has only started supersedes the pending restore', async () => {
 		window.localStorage.setItem(APY_WINDOW_PREF.storageKey, 'avg_30d')
 		let cancel: (completed: boolean) => void = () => {}

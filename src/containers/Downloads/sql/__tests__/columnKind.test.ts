@@ -3,7 +3,6 @@ import { defaultChartConfig } from '../chartConfig'
 import {
 	classifyColumn,
 	classifyColumns,
-	coarsen,
 	inferFineKindFromArrowType,
 	looksLikeISODate,
 	looksLikeNumericArray
@@ -28,22 +27,6 @@ describe('inferFineKindFromArrowType', () => {
 		expect(inferFineKindFromArrowType('LargeList<Int64>')).toBe('list')
 		expect(inferFineKindFromArrowType('Struct<x:Int32>')).toBe('other')
 		expect(inferFineKindFromArrowType(undefined)).toBe('other')
-	})
-})
-
-describe('coarsen', () => {
-	test('collapses int/float to number', () => {
-		expect(coarsen('int')).toBe('number')
-		expect(coarsen('float')).toBe('number')
-	})
-	test('collapses text/bool to category', () => {
-		expect(coarsen('text')).toBe('category')
-		expect(coarsen('bool')).toBe('category')
-	})
-	test('preserves date and list/other', () => {
-		expect(coarsen('date')).toBe('date')
-		expect(coarsen('list')).toBe('other')
-		expect(coarsen('other')).toBe('other')
 	})
 })
 
@@ -102,22 +85,31 @@ describe('classifyColumn', () => {
 })
 
 describe('classifyColumns', () => {
-	test('classifies all columns of a result', () => {
+	test('classifies all columns of a result into chartable kinds', () => {
 		const result: QueryResult = {
 			columns: [
 				{ name: 'date', type: 'Utf8' },
 				{ name: 'tvl', type: 'Float64' },
-				{ name: 'chain', type: 'Utf8' }
+				{ name: 'chain', type: 'Utf8' },
+				{ name: 'protocols', type: 'Int64' },
+				{ name: 'audited', type: 'Boolean' },
+				{ name: 'listed_at', type: 'Timestamp<MILLISECOND, null>' },
+				{ name: 'history', type: 'List<Double>' }
 			],
 			rows: [
-				['2024-01-01', 1.0, 'ethereum'],
-				['2024-01-02', 2.0, 'arbitrum']
+				['2024-01-01', 1.0, 'ethereum', 3, true, 1, [1]],
+				['2024-01-02', 2.0, 'arbitrum', 4, false, 2, [2]]
 			]
 		}
-		const classified = classifyColumns(result)
-		expect(classified[0].fine).toBe('date')
-		expect(classified[1].fine).toBe('float')
-		expect(classified[2].fine).toBe('text')
+		expect(classifyColumns(result).map((column) => [column.fine, column.coarse])).toEqual([
+			['date', 'date'],
+			['float', 'number'],
+			['text', 'category'],
+			['int', 'number'],
+			['bool', 'category'],
+			['date', 'date'],
+			['list', 'other']
+		])
 	})
 
 	test('preserves categorical chart defaults for server DuckDB results', () => {

@@ -200,7 +200,7 @@ describe('prepareStoredDashboardActivation', () => {
 		)
 	})
 
-	test('confirms and retries exactly once only when the server requires a higher premium ceiling', async () => {
+	test('confirms and retries with the confirmed ceiling when the server requires one', async () => {
 		const authorizedFetch = vi
 			.fn()
 			.mockResolvedValueOnce(
@@ -227,5 +227,32 @@ describe('prepareStoredDashboardActivation', () => {
 		expect(authorizedFetch.mock.calls[1][1]?.body).toBe(
 			JSON.stringify({ expectedItemIds: ['item-a'], confirmedMaxCostUsd: 0.005 })
 		)
+	})
+
+	test('gives up after one confirmed retry when the server still refuses', async () => {
+		const ceilingRequired = () =>
+			new Response(JSON.stringify({ error: 'Premium dashboard refresh requires a confirmed maximum cost' }), {
+				status: 409,
+				headers: { 'Content-Type': 'application/json' }
+			})
+		// A third answer succeeds, so a retry loop would report the dashboard active instead of pending.
+		const authorizedFetch = vi
+			.fn()
+			.mockResolvedValueOnce(ceilingRequired())
+			.mockResolvedValueOnce(ceilingRequired())
+			.mockResolvedValueOnce(
+				new Response(JSON.stringify({ outcomes: [{ itemId: 'item-a' }] }), {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				})
+			)
+		const confirmPremium = vi.fn(() => true)
+		const plan = { expectedItemIds: ['item-a'], containsPremium: true, estimatedMaxCostUsd: 0.005 }
+
+		await expect(
+			activateDashboardArtifactsWithConfirmation(authorizedFetch, 'dashboard-1', plan, confirmPremium)
+		).resolves.toBe('pending')
+		expect(confirmPremium).toHaveBeenCalledTimes(1)
+		expect(authorizedFetch).toHaveBeenCalledTimes(2)
 	})
 })

@@ -150,5 +150,6 @@ describe('metadata artifact import boundary', () => {
 		}
 
 		expect(errors).toEqual([])
+		// Reads and walks every source file under src/, which takes over a second on a loaded machine.
 	}, 15_000)
 })

@@ -1,15 +1,13 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { SERVER_URL } from '~/constants'
 import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
-import { getDimensionChainNameMap } from '~/containers/AdapterMetrics/chainNameMap'
-import { fetchEmissionsBreakdownAggregated } from './api'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { EmissionsBreakdownAggregatedResponse, EmissionsBreakdownProtocol } from './api.types'
-import { getDimensionAdapterChainEarningsOverview, getProtocolEmissionsLookupFromAggregated } from './queries'
+import { buildDimensionEarningsOverview, getProtocolEmissionsLookupFromAggregated } from './queries'
 import type { DimensionEarningsOverviewResult } from './types'
 
-vi.mock('./api', () => ({
-	fetchEmissionsBreakdownAggregated: vi.fn()
-}))
-vi.mock('~/containers/AdapterMetrics/chainNameMap', () => ({ getDimensionChainNameMap: vi.fn() }))
+const http = installFixtureFetch()
+const ethereumOnly = { Ethereum: 'Ethereum' }
 
 function protocol(overrides: Partial<AdapterChainProtocol> = {}): AdapterChainProtocol {
 	return {
@@ -71,19 +69,14 @@ function requireAvailable(result: DimensionEarningsOverviewResult) {
 }
 
 describe('dimension earnings aggregation', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		vi.mocked(getDimensionChainNameMap).mockResolvedValue({ Ethereum: 'Ethereum' })
-	})
-
-	test('subtracts the producer annual and all-time emission fields', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([emissionsProtocol()]))
-
+	test('subtracts the producer annual and all-time emission fields', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'All',
 				overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol()]),
+				chainNameMap: {}
 			})
 		)
 
@@ -94,15 +87,13 @@ describe('dimension earnings aggregation', () => {
 			annualized1y: null,
 			change_1d: null
 		})
-		expect(getDimensionChainNameMap).not.toHaveBeenCalled()
 	})
 
-	test('does not let an inactive child hide its active parent aggregation', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([]))
+	test('does not let an inactive child hide its active parent aggregation', () => {
 		const parentProtocol = 'parent#protocol'
 
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'All',
 				overviewData: {
 					allChains: ['Ethereum'],
@@ -118,7 +109,9 @@ describe('dimension earnings aggregation', () => {
 						})
 					]
 				},
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([]),
+				chainNameMap: {}
 			})
 		)
 
@@ -130,14 +123,14 @@ describe('dimension earnings aggregation', () => {
 		expect(result.total24h).toBe(100)
 	})
 
-	test('uses zero emissions for a protocol omitted from a successful emissions response', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([]))
-
+	test('uses zero emissions for a protocol omitted from a successful emissions response', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'All',
 				overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([]),
+				chainNameMap: {}
 			})
 		)
 
@@ -145,19 +138,17 @@ describe('dimension earnings aggregation', () => {
 		expect(result.total24h).toBe(100)
 	})
 
-	test('treats a nullable revenue period in a successful response as zero activity', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
-			emissionsResponse([emissionsProtocol({ emission24h: 10 })])
-		)
-
+	test('treats a nullable revenue period in a successful response as zero activity', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'All',
 				overviewData: {
 					allChains: ['Ethereum'],
 					protocols: [protocol({ total24h: null, breakdown24h: null })]
 				},
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol({ emission24h: 10 })]),
+				chainNameMap: {}
 			})
 		)
 
@@ -165,40 +156,38 @@ describe('dimension earnings aggregation', () => {
 		expect(result.total24h).toBe(-10)
 	})
 
-	test('keeps selected-chain earnings unavailable when chain aliases cannot be loaded', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([]))
-		vi.mocked(getDimensionChainNameMap).mockResolvedValueOnce(null)
-
-		const result = await getDimensionAdapterChainEarningsOverview({
+	test('keeps selected-chain earnings unavailable when chain aliases cannot be loaded', () => {
+		const result = buildDimensionEarningsOverview({
 			chain: 'Avalanche',
 			overviewData: { allChains: ['Avalanche'], protocols: [protocol()] },
-			totalDataChart: []
+			totalDataChart: [],
+			emissionsData: emissionsResponse([]),
+			chainNameMap: null
 		})
 
 		expect(result).toEqual({ status: 'unavailable' })
 	})
 
-	test('keeps selected-chain earnings unavailable when the authoritative map has no chain identity', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([]))
-		vi.mocked(getDimensionChainNameMap).mockResolvedValueOnce({ Ethereum: 'Ethereum' })
-
-		const result = await getDimensionAdapterChainEarningsOverview({
+	test('keeps selected-chain earnings unavailable when the authoritative map has no chain identity', () => {
+		const result = buildDimensionEarningsOverview({
 			chain: 'Avalanche',
 			overviewData: { allChains: ['Avalanche'], protocols: [protocol()] },
-			totalDataChart: []
+			totalDataChart: [],
+			emissionsData: emissionsResponse([]),
+			chainNameMap: { Ethereum: 'Ethereum' }
 		})
 
 		expect(result).toEqual({ status: 'unavailable' })
 	})
 
-	test('does not label all-chain earnings windows as chain-specific values', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([emissionsProtocol()]))
-
+	test('does not label all-chain earnings windows as chain-specific values', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'Ethereum',
 				overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol()]),
+				chainNameMap: ethereumOnly
 			})
 		)
 
@@ -210,65 +199,60 @@ describe('dimension earnings aggregation', () => {
 			total1y: null,
 			totalAllTime: null
 		})
-		expect(getDimensionChainNameMap).toHaveBeenCalledOnce()
 	})
 
-	test('keeps a matched nullable emissions period unavailable', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
-			emissionsResponse([emissionsProtocol({ emission24h: null })])
-		)
-
+	test('keeps a matched nullable emissions period unavailable', () => {
 		const allChains = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'All',
 				overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol({ emission24h: null })]),
+				chainNameMap: {}
 			})
 		)
 		expect(allChains).toMatchObject({ total24h: null, total7d: 630 })
 
 		const ethereum = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'Ethereum',
 				overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol({ emission24h: null })]),
+				chainNameMap: ethereumOnly
 			})
 		)
 		expect(ethereum).toMatchObject({ total24h: null, total30d: 2700 })
 	})
 
-	test('keeps a selected-chain period unavailable when a positive aggregate has no breakdown', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
-			emissionsResponse([emissionsProtocol({ emission24h: 0 })])
-		)
-
+	test('keeps a selected-chain period unavailable when a positive aggregate has no breakdown', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'Ethereum',
 				overviewData: {
 					allChains: ['Ethereum'],
 					protocols: [protocol({ breakdown24h: null })]
 				},
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol({ emission24h: 0 })]),
+				chainNameMap: ethereumOnly
 			})
 		)
 
 		expect(result).toMatchObject({ total24h: null, total30d: 2700 })
 	})
 
-	test('does not allocate nonzero emissions over a zero revenue basis', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(
-			emissionsResponse([emissionsProtocol({ emission24h: 10 })])
-		)
-
+	test('does not allocate nonzero emissions over a zero revenue basis', () => {
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'Ethereum',
 				overviewData: {
 					allChains: ['Ethereum'],
 					protocols: [protocol({ total24h: 0, breakdown24h: { Ethereum: {} } })]
 				},
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([emissionsProtocol({ emission24h: 10 })]),
+				chainNameMap: ethereumOnly
 			})
 		)
 
@@ -276,8 +260,7 @@ describe('dimension earnings aggregation', () => {
 		expect(result.protocols[0]?.total24h).toBeNull()
 	})
 
-	test('retains selected-chain protocols with activity in either supported period', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(emissionsResponse([]))
+	test('retains selected-chain protocols with activity in either supported period', () => {
 		const thirtyDayOnly = protocol({ total24h: null, breakdown24h: null })
 		const dailyOnly = protocol({
 			defillamaId: 'protocol-b',
@@ -293,10 +276,12 @@ describe('dimension earnings aggregation', () => {
 		})
 
 		const result = requireAvailable(
-			await getDimensionAdapterChainEarningsOverview({
+			buildDimensionEarningsOverview({
 				chain: 'Ethereum',
 				overviewData: { allChains: ['Ethereum'], protocols: [thirtyDayOnly, dailyOnly] },
-				totalDataChart: []
+				totalDataChart: [],
+				emissionsData: emissionsResponse([]),
+				chainNameMap: ethereumOnly
 			})
 		)
 
@@ -309,13 +294,13 @@ describe('dimension earnings aggregation', () => {
 		expect(result).toMatchObject({ total24h: 200, total30d: 3000 })
 	})
 
-	test('keeps earnings unavailable when the emissions source fails', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(null)
-
-		const result = await getDimensionAdapterChainEarningsOverview({
+	test('keeps earnings unavailable when the emissions source fails', () => {
+		const result = buildDimensionEarningsOverview({
 			chain: 'All',
 			overviewData: { allChains: ['Ethereum'], protocols: [protocol()] },
-			totalDataChart: [[1, 100]]
+			totalDataChart: [[1, 100]],
+			emissionsData: null,
+			chainNameMap: {}
 		})
 
 		expect(result).toEqual({ status: 'unavailable' })
@@ -324,7 +309,8 @@ describe('dimension earnings aggregation', () => {
 
 describe('protocol emissions lookup availability', () => {
 	test('preserves a whole-source failure as unavailable instead of an empty successful lookup', async () => {
-		vi.mocked(fetchEmissionsBreakdownAggregated).mockResolvedValue(null)
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		http.serve({ [`${SERVER_URL}/emissionsBreakdownAggregated`]: fixtureStatus(404) })
 
 		await expect(getProtocolEmissionsLookupFromAggregated()).resolves.toBeNull()
 	})

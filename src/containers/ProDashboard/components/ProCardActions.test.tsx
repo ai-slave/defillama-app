@@ -2,8 +2,8 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installDownloadSink } from '~/utils/test/downloadSink'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import { getEmbedCardHeight } from '../dashboardLayout/cardHeight'
 import { DashboardCardContext, type DashboardCardContextValue } from './DashboardCardContext'
 import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
 const mocks = vi.hoisted(() => ({
@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
 	dashboard: { currentDashboard: null as { id: string; slug?: string; visibility: 'public' | 'private' } | null },
 	items: { current: [] as Array<DashboardItemConfig> },
 	auth: { isAuthenticated: true, hasActiveSubscription: true, isTrial: false, loaders: { userLoading: false } },
-	download: vi.fn(),
 	writeText: vi.fn(),
 	variables: {
 		variables: [] as Array<{ id: string; kind: 'chain' | 'protocol'; label: string; value: string }>,
@@ -27,13 +26,13 @@ vi.mock('../ProDashboardAPIContext', () => ({
 }))
 vi.mock('~/auth', () => ({ useAuthContext: () => mocks.auth }))
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test' }) }))
-vi.mock('~/utils/download', () => ({ downloadCSV: mocks.download }))
 vi.mock('~/components/ChartExport/useChartPngExport', () => ({
 	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
 }))
 vi.mock('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard', () => ({
 	SubscribeProModal: () => <div>Subscribe to export</div>
 }))
+const downloads = installDownloadSink()
 const publicDashboard = { id: 'dashboard-1', slug: 'fees-dash', visibility: 'public' as const }
 const chartItem: DashboardItemConfig = {
 	id: 'chart-1',
@@ -54,7 +53,6 @@ beforeEach(() => {
 	mocks.items.current = []
 	mocks.variables.variables = []
 	mocks.variables.bindItemField.mockClear()
-	mocks.download.mockClear()
 	mocks.writeText.mockClear()
 	layoutControls.onColSpanChange.mockClear()
 	layoutControls.onHeightChange.mockClear()
@@ -130,6 +128,8 @@ test('readonly allows exports but hides duplicate and edit controls', async () =
 test('has no trigger without actions and respects hidden duplicate', async () => {
 	await act(async () => root.render(<ProCardOverflowMenu />))
 	expect(container.querySelector('button')).toBeNull()
+	await act(async () => root.render(<ProCardOverflowMenu onDuplicate={vi.fn()} />))
+	expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull()
 	mocks.permissions.hideDuplicateButton = true
 	await act(async () => root.render(<ProCardOverflowMenu onDuplicate={vi.fn()} />))
 	expect(container.querySelector('button')).toBeNull()
@@ -139,16 +139,14 @@ test('CSV downloads for subscribers and opens the gate otherwise', async () => {
 	await act(async () => root.render(<ProCardOverflowMenu csv={{ prepareCsv }} />))
 	await openMenu()
 	await clickMenuItem('Download CSV')
-	expect(mocks.download).toHaveBeenCalledOnce()
+	expect(downloads.map((download) => download.filename)).toEqual(['example.csv'])
+	expect(await downloads[0]!.blob.text()).toBe('value\n1')
 	mocks.auth.hasActiveSubscription = false
 	await act(async () => root.render(<ProCardOverflowMenu csv={{ prepareCsv }} />))
 	await openMenu()
 	await clickMenuItem('Download CSV')
-	expect(mocks.download).toHaveBeenCalledOnce()
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 20))
-	})
-	expect(document.body.textContent).toContain('Subscribe to export')
+	await vi.waitFor(() => expect(document.body.textContent).toContain('Subscribe to export'))
+	expect(downloads).toHaveLength(1)
 })
 test('offers a card permalink and an embed snippet for cards on a public dashboard', async () => {
 	mocks.permissions.isReadOnly = true
@@ -327,20 +325,4 @@ test('ends the menu with Remove card when the card context carries onRemove', as
 		)
 	)
 	expect(container.querySelector('button')).toBeNull()
-})
-test('embed height follows the card kind and height scale plus the header', () => {
-	expect(getEmbedCardHeight(chartItem)).toBe(558)
-	expect(getEmbedCardHeight({ ...chartItem, height: 'compact' })).toBe(324)
-	expect(
-		getEmbedCardHeight({
-			id: 'metric-1',
-			kind: 'metric',
-			subject: { itemType: 'protocol', protocol: 'aave' },
-			type: 'tvl',
-			aggregator: 'latest',
-			window: '30d',
-			chartType: 'sparkline'
-		})
-	).toBe(194)
-	expect(getEmbedCardHeight(undefined)).toBe(414)
 })

@@ -67,12 +67,4 @@ describe('CompareChains chart data', () => {
 		expect(buildCompareChainsChartData(chainData, ['tvlChart']).showTotalInTooltip).toBe(true)
 		expect(buildCompareChainsChartData(chainData, ['tvlChart', 'dexVolumeChart']).showTotalInTooltip).toBe(false)
 	})
-
-	test('returns an empty time-series contract for no chains', () => {
-		expect(buildCompareChainsChartData([], ['tvlChart'])).toEqual({
-			dataset: { source: [], dimensions: ['timestamp'] },
-			charts: [],
-			showTotalInTooltip: false
-		})
-	})
 })

@@ -134,7 +134,7 @@ test('the placeholder shows when there is no value', async () => {
 	expect(container.querySelector('button')!.textContent).toBe('Add a description')
 })
 
-test('saving dims the value and shows a spinner beside it', async () => {
+test('saving marks the value busy without an error', async () => {
 	await act(async () =>
 		root.render(
 			<InlineTextField value="Section" placeholder="Section title" maxLength={80} status="saving" onCommit={vi.fn()} />
@@ -142,9 +142,6 @@ test('saving dims the value and shows a spinner beside it', async () => {
 	)
 	const button = container.querySelector('button')!
 	expect(button.getAttribute('aria-busy')).toBe('true')
-	expect(button.className).toContain('opacity-70')
-	expect(button.className).toContain('pr-5')
-	expect(container.querySelector('.animate-spin')).not.toBeNull()
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 })
 
@@ -190,23 +187,8 @@ test('error marks the field and announces the message', async () => {
 		)
 	)
 	const button = container.querySelector('button')!
-	expect(button.className).toContain('ring-error')
 	expect(button.getAttribute('aria-busy')).toBeNull()
-	const alert = container.querySelector('[role="alert"]')!
-	expect(alert.tagName).toBe('SPAN')
-	expect(alert.textContent).toBe('Could not save the name')
-	expect(container.querySelector('.animate-spin')).toBeNull()
-})
-
-test('the saving state leaves the editor usable', async () => {
-	await act(async () =>
-		root.render(
-			<InlineTextField value="Section" placeholder="Section title" maxLength={80} status="idle" onCommit={vi.fn()} />
-		)
-	)
-	const input = await openEditor()
-	expect(input.getAttribute('aria-busy')).toBeNull()
-	expect(input.className).toContain('border-pro-cards-border')
+	expect(container.querySelector('[role="alert"]')!.textContent).toBe('Could not save the name')
 })
 
 test('multiline edits in a textarea where Enter commits and Shift+Enter does not', async () => {

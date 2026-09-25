@@ -1,0 +1,51 @@
+import type { IEquitiesCompanyApiItem } from '../api.types'
+
+export function company(
+	overrides: Partial<IEquitiesCompanyApiItem> & Pick<IEquitiesCompanyApiItem, 'ticker'>
+): IEquitiesCompanyApiItem {
+	return {
+		country: 'US',
+		name: `${overrides.ticker} Inc`,
+		currentPrice: null,
+		volume: null,
+		marketCap: null,
+		circulatingMarketCap: null,
+		enterpriseValue: null,
+		fiftyTwoWeekHigh: null,
+		fiftyTwoWeekLow: null,
+		dividendYield: null,
+		trailingPE: null,
+		priceToRevenue: null,
+		priceChangePercentage1d: null,
+		priceChangePercentage7d: null,
+		priceChangePercentage1m: null,
+		priceChange1d: null,
+		marketCapChange1d: null,
+		priceToBook: null,
+		enterpriseValueToEbitda: null,
+		holdersYield: null,
+		updatedAt: '2026-09-03T10:00:00Z',
+		revenueTTM: null,
+		grossProfitTTM: null,
+		earningsTTM: null,
+		ebitdaTTM: null,
+		operatingProfitMarginTTM: null,
+		holdersRevenueTTM: null,
+		holderEarningsTTM: null,
+		dividendsTTM: null,
+		stockRepurchaseTTM: null,
+		stockIssuanceTTM: null,
+		stockBasedCompensationTTM: null,
+		cashAndCashEquivalents: null,
+		totalAssets: null,
+		totalLiabilities: null,
+		totalShareholdersEquity: null,
+		totalDebt: null,
+		circulatingSupply: null,
+		totalSupply: null,
+		employeeCount: null,
+		sector: 'Technology',
+		industry: 'Software',
+		...overrides
+	}
+}

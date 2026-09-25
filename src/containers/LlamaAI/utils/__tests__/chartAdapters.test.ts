@@ -61,37 +61,33 @@ describe('chart adapters', () => {
 		expect(yAxis?.position).toBe('right')
 	})
 
-	test('supports display names that match logical dimensions but rejects duplicate series identities', () => {
-		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
-		const timestampSeries = {
-			...baseConfig,
-			type: 'line',
-			axes: { x: { field: 'date', label: 'Date', type: 'time' as const }, yAxes: baseConfig.axes.yAxes },
-			series: [
-				{
-					...baseSeries,
-					name: 'timestamp',
-					type: 'line' as const,
-					dataMapping: { xField: 'date', yField: 'y' }
-				}
-			]
-		} satisfies ChartConfiguration
-		const timestampChartSeries = timestampSeries.series[0]
-		if (!timestampChartSeries) throw new Error('Expected timestamp series')
+	const timestampSeries = {
+		...baseConfig,
+		type: 'line',
+		axes: { x: { field: 'date', label: 'Date', type: 'time' as const }, yAxes: baseConfig.axes.yAxes },
+		series: [{ ...baseSeries, name: 'timestamp', type: 'line' as const, dataMapping: { xField: 'date', yField: 'y' } }]
+	} satisfies ChartConfiguration
+
+	test('a series named like the x dimension still plots its own column', () => {
+		const result = adaptCartesianChartData(timestampSeries, [{ date: 1, y: 2 }])
+		expect(result.props.dataset.dimensions).toEqual(['timestamp', 'timestamp'])
+		expect(result.props.charts?.[0]?.encode).toEqual({ x: 0, y: 1 })
+	})
+
+	test('two series with the same name fail with an error that names it', () => {
+		vi.spyOn(console, 'log').mockImplementation(() => undefined)
+		const series = timestampSeries.series[0]
 		const duplicateNames = {
 			...timestampSeries,
 			series: [
-				{ ...timestampChartSeries, name: 'Duplicate' },
-				{ ...timestampChartSeries, name: 'Duplicate' }
+				{ ...series, name: 'Duplicate' },
+				{ ...series, name: 'Duplicate' }
 			]
 		} satisfies ChartConfiguration
 
-		const timestampResult = adaptCartesianChartData(timestampSeries, [{ date: 1, y: 2 }])
-		expect(timestampResult.props.dataset.dimensions).toEqual(['timestamp', 'timestamp'])
-		expect(timestampResult.props.charts?.[0]?.encode).toEqual({ x: 0, y: 1 })
-		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toContain('Duplicate')
-		expect(consoleLog).toHaveBeenCalledWith('Cartesian chart adapter error:', expect.any(Error))
-		consoleLog.mockRestore()
+		expect(adaptCartesianChartData(duplicateNames, [{ date: 1, y: 2 }]).description).toBe(
+			'Failed to render chart: Duplicate series name "Duplicate" is not allowed'
+		)
 	})
 
 	test('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {

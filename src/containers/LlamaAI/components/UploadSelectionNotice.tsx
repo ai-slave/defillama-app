@@ -5,6 +5,10 @@ export interface UploadSelectionFeedback {
 	skipped: Array<{ filename: string; reason: string }>
 }
 
+export function formatUploadSelectionSummary({ added, skipped }: UploadSelectionFeedback) {
+	return `${added} ${added === 1 ? 'file' : 'files'} added${skipped.length > 0 ? ` · ${skipped.length} skipped` : ''}`
+}
+
 export function UploadSelectionNotice({
 	feedback,
 	onDismiss
@@ -13,7 +17,7 @@ export function UploadSelectionNotice({
 	onDismiss: () => void
 }) {
 	if (!feedback) return null
-	const label = `${feedback.added} ${feedback.added === 1 ? 'file' : 'files'} added${feedback.skipped.length > 0 ? ` · ${feedback.skipped.length} skipped` : ''}`
+	const label = formatUploadSelectionSummary(feedback)
 	return (
 		<div className="relative px-1 py-1 pr-8 text-xs leading-5 text-secondary">
 			{feedback.skipped.length > 0 ? (

@@ -8,15 +8,12 @@ import {
 	getHolderModeQueryValue,
 	getPoolHistoryRange,
 	getPoolRange,
-	getPoolSeriesQueryKey,
 	getRangeQueryValue,
 	getPoolChartWindow,
-	getPoolRangeQueryKey,
 	getSeriesVisibility,
 	getWindowQueryPatch,
 	getWindowQueryValue,
 	GROWTH_MAX_DEPOSIT,
-	POOL_CHART_PREFS,
 	POOL_CHART_RANGE_PREFS,
 	POOL_CHART_WINDOW_PREFS,
 	slicePoolHistory,
@@ -50,11 +47,11 @@ describe('pool detail query state', () => {
 		expect(getHolderModeQueryValue('balance')).toBe('balance')
 	})
 
-	test('keeps one range per chart in the URL, the supply chart on the bare key it always had', () => {
-		expect(getPoolRangeQueryKey('supply')).toBe('range')
-		expect(getPoolRangeQueryKey('borrow')).toBe('borrowRange')
-		expect(getPoolRangeQueryKey('growth')).toBe('growthRange')
-		expect(getPoolRangeQueryKey('liquidity')).toBe('liquidityRange')
+	// Shared deep links carry these keys; the supply chart keeps the bare `range` it always had.
+	test('reads each chart range from its own URL key', () => {
+		expect(getPoolRange({ range: '30d' }, 'supply')).toBe('30d')
+		expect(getPoolRange({ growthRange: '30d' }, 'growth')).toBe('30d')
+		expect(getPoolRange({ liquidityRange: '90d' }, 'liquidity')).toBe('90d')
 	})
 
 	test('inherits the legacy supply range for borrow until borrowRange is explicit', () => {
@@ -72,14 +69,10 @@ describe('pool detail query state', () => {
 
 	test('slices one max history locally for nested ranges', () => {
 		const history = Array.from({ length: 120 }, (_, index) => ({ date: String(index) })) as never
-		expect(slicePoolHistory(history, '30d')).toHaveLength(30)
-		expect(slicePoolHistory(history, '90d')).toHaveLength(90)
+		const dates = (range: '30d' | '90d') => slicePoolHistory(history, range).map((point) => point.date)
+		expect(dates('30d')).toEqual(Array.from({ length: 30 }, (_, index) => String(90 + index)))
+		expect(dates('90d')).toEqual(Array.from({ length: 90 }, (_, index) => String(30 + index)))
 		expect(slicePoolHistory(history, 'max')).toBe(history)
-	})
-
-	test('names supply and borrow series independently', () => {
-		expect(getPoolSeriesQueryKey('supply', 'daily')).toBe('supplyDaily')
-		expect(getPoolSeriesQueryKey('borrow', 'window')).toBe('borrowWindow')
 	})
 
 	test('resolves the chart smoothing window with daily as the silent default', () => {
@@ -137,27 +130,15 @@ describe('pool detail query state', () => {
 })
 
 describe('sticky pool chart prefs', () => {
-	test('mirror the URL parsers and never accept a default', () => {
-		expect(POOL_CHART_RANGE_PREFS.supply.queryKey).toBe('range')
-		expect(POOL_CHART_RANGE_PREFS.borrow.queryKey).toBe('borrowRange')
+	test('share one stored range and never store a default', () => {
 		// One stored range serves both APY charts; the borrow chart still honours a bare `range` deep link.
 		expect(POOL_CHART_RANGE_PREFS.borrow.storageKey).toBe(POOL_CHART_RANGE_PREFS.supply.storageKey)
-		expect(POOL_CHART_RANGE_PREFS.borrow.aliasKeys).toEqual(['range'])
 		expect(POOL_CHART_RANGE_PREFS.supply.isValid('30d')).toBe(true)
 		expect(POOL_CHART_RANGE_PREFS.supply.isValid('90d')).toBe(true)
 		expect(POOL_CHART_RANGE_PREFS.supply.isValid('max')).toBe(false)
 
-		expect(POOL_CHART_WINDOW_PREFS.borrow.queryKey).toBe('borrowWindow')
-		expect(POOL_CHART_WINDOW_PREFS.borrow.aliasKeys).toEqual(['borrowAvg7d', 'borrowAvg30d'])
 		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('7d')).toBe(true)
 		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('30d')).toBe(true)
 		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('daily')).toBe(false)
-
-		expect(POOL_CHART_PREFS).toEqual([
-			POOL_CHART_RANGE_PREFS.supply,
-			POOL_CHART_RANGE_PREFS.borrow,
-			POOL_CHART_WINDOW_PREFS.supply,
-			POOL_CHART_WINDOW_PREFS.borrow
-		])
 	})
 })

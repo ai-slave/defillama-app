@@ -62,7 +62,7 @@ describe('useSeriesSelection', () => {
 		})
 	}
 
-	test('preserves an explicit selection while reconciling changing options', async () => {
+	test('keeps an explicit selection through a transient empty series list', async () => {
 		await renderSelection({ availableSeries: ['A', 'B'], selectionKey: 'peers' })
 		act(() => latest.setSelectedSeries(['B']))
 		expect(latest.activeSeries).toEqual(['B'])
@@ -70,7 +70,7 @@ describe('useSeriesSelection', () => {
 		await renderSelection({ availableSeries: [], selectionKey: 'peers' })
 		expect(latest.activeSeries).toEqual([])
 
-		await renderSelection({ availableSeries: ['B', 'C'], selectionKey: 'peers' })
+		await renderSelection({ availableSeries: ['C', 'B'], selectionKey: 'peers' })
 		expect(latest.activeSeries).toEqual(['B'])
 	})
 
@@ -117,7 +117,7 @@ describe('useSeriesSelection', () => {
 		expect(latest.activeSeries).toEqual(['E', 'F'])
 	})
 
-	test('does not turn an explicit subset into all intent while an unavailable peer is missing', async () => {
+	test('keeps an explicit subset that matches every available series when the missing peer returns', async () => {
 		const options = {
 			storeDefaultAsIntent: true,
 			resetToDefaultWhenStale: true,

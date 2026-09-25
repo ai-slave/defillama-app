@@ -1,9 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RewardsApiRecord, RewardsPopularity } from '../api.types'
 import { buildRewardsPageData } from '../queries.server'
 import { apiRecord } from './fixtures'
-
-vi.mock('~/utils/telemetry', () => ({ recordDomainEvent: vi.fn() }))
 const rankings: RewardsPopularity = { version: 1, startAt: 0, endAt: 1, viewsByPath: {} }
 
 describe('Rewards popularity boundary', () => {

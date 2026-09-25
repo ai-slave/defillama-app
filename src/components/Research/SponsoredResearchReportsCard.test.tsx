@@ -2,27 +2,12 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
+import { installUmamiSink } from '~/utils/test/umamiSink'
 import { SponsoredResearchReportsCard } from './SponsoredResearchReportsCard'
 
-const mocks = vi.hoisted(() => ({ trackUmamiEvent: vi.fn() }))
-
-vi.mock('next/link', () => ({
-	default: ({
-		children,
-		href,
-		prefetch: _prefetch,
-		...props
-	}: React.AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => (
-		<a href={href} {...props}>
-			{children}
-		</a>
-	)
-}))
-
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: mocks.trackUmamiEvent }))
+const track = installUmamiSink()
 
 const reports: Array<SponsoredResearchReportSummary> = [
 	{
@@ -51,53 +36,50 @@ const reports: Array<SponsoredResearchReportSummary> = [
 	}
 ]
 
-describe('SponsoredResearchReportsCard', () => {
-	let container: HTMLDivElement
-	let root: Root
+let container: HTMLDivElement
+let root: Root
 
-	beforeEach(() => {
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.trackUmamiEvent.mockReset()
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-	})
+beforeEach(() => {
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
 
-	afterEach(async () => {
-		await act(async () => root.unmount())
-		container.remove()
-	})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
 
-	test('renders nothing when no published reports are available', () => {
-		expect(
-			renderToStaticMarkup(<SponsoredResearchReportsCard reports={[]} entityType="chain" entitySlug="starknet" />)
-		).toBe('')
-	})
+test('an entity without published reports shows no research card', async () => {
+	await act(async () =>
+		root.render(<SponsoredResearchReportsCard reports={[]} entityType="chain" entitySlug="starknet" />)
+	)
+	expect(container.innerHTML).toBe('')
+})
 
-	test('renders multiple report sections and tracks the sponsor identity', async () => {
-		const html = renderToStaticMarkup(
+test('each report links to its own section in order and a click reports the sponsor identity', async () => {
+	await act(async () =>
+		root.render(
 			<SponsoredResearchReportsCard reports={reports} entityType="chain" entitySlug="starknet" layout="grid" />
 		)
+	)
+	const reportLinks = [...container.querySelectorAll('a')]
+		.map((link) => link.getAttribute('href'))
+		.filter((href) => href !== '/research')
+	expect(reportLinks).toEqual([
+		'/research/spotlight/how-starknet-is-reimagining-privacy',
+		'/research/report/the-btcfi-chain-future-is-bright'
+	])
 
-		expect(html).toContain('Latest from DefiLlama Research')
-		expect(html).toContain('/research/spotlight/how-starknet-is-reimagining-privacy')
-		expect(html).toContain('/research/report/the-btcfi-chain-future-is-bright')
-		expect(html.indexOf(reports[0].title)).toBeLessThan(html.indexOf(reports[1].title))
+	// Keep happy-dom from navigating away after the app handled the click.
+	const stayOnPage = (event: Event) => event.preventDefault()
+	window.addEventListener('click', stayOnPage)
+	await act(async () => container.querySelector<HTMLAnchorElement>('a[href^="/research/spotlight/"]')!.click())
 
-		await act(async () =>
-			root.render(
-				<SponsoredResearchReportsCard reports={reports} entityType="chain" entitySlug="starknet" layout="grid" />
-			)
-		)
-		const reportLink = container.querySelector<HTMLAnchorElement>(
-			'a[href="/research/spotlight/how-starknet-is-reimagining-privacy"]'
-		)
-		await act(async () => reportLink?.click())
-
-		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('sponsored-research-report-click', {
-			'entity-type': 'chain',
-			entity: 'starknet',
-			'article-id': 'spotlight-id'
-		})
+	window.removeEventListener('click', stayOnPage)
+	expect(track).toHaveBeenCalledWith('sponsored-research-report-click', {
+		'entity-type': 'chain',
+		entity: 'starknet',
+		'article-id': 'spotlight-id'
 	})
 })

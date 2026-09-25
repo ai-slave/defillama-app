@@ -1,56 +1,60 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { fetchDimensionDatasetMock, requestScope } = vi.hoisted(() => ({
-	fetchDimensionDatasetMock: vi.fn(),
-	requestScope: {
-		earningsRequests: new Map(),
-		metricRequests: new Map(),
-		scheduleRequest: vi.fn()
-	}
-}))
-
-vi.mock('~/containers/AdapterMetrics/server/datasets', () => ({
-	createDimensionDatasetRequestScope: () => requestScope,
-	fetchDimensionDataset: fetchDimensionDatasetMock,
-	getDimensionDatasetSpec: vi.fn()
-}))
-
+import { beforeEach, describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { fetchProtocolRowMembershipDataset } from './rowMembership'
 
-describe('protocol row membership source', () => {
-	beforeEach(() => {
-		fetchDimensionDatasetMock.mockReset().mockResolvedValue({ status: 'complete', protocols: [] })
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+const protocol: IAdapterChainMetrics['protocols'][number] = {
+	defillamaId: 'perps',
+	name: 'Perps',
+	displayName: 'Perps',
+	slug: 'perps',
+	id: 'perps',
+	total24h: 100,
+	breakdown24h: null,
+	breakdown30d: null,
+	module: null,
+	category: 'Derivatives',
+	logo: '',
+	chains: ['Ethereum'],
+	protocolType: 'protocol',
+	methodologyURL: null,
+	methodology: null
+}
+beforeEach(() => {
+	metadata.seed({
+		chainMetadata: {
+			ethereum: { name: 'Ethereum', id: 'ethereum', openInterest: true },
+			base: { name: 'Base', id: 'base', openInterest: true }
+		}
 	})
-
-	test('uses the canonical open-interest adapter contract for selected-chain membership', async () => {
-		await fetchProtocolRowMembershipDataset(
+	http.serve({
+		[`${V2_SERVER_URL}/metrics/open-interest/chain/ethereum?dataType=openInterestAtEnd`]: {
+			protocols: [protocol],
+			allChains: ['Ethereum']
+		}
+	})
+})
+describe('protocol row membership source', () => {
+	test('loads selected-chain membership from the canonical open-interest endpoint', async () => {
+		const result = await fetchProtocolRowMembershipDataset(
 			{ kind: 'base-metric', family: 'open-interest' },
 			{ kind: 'chain', chains: ['Ethereum'] }
 		)
-
-		expect(fetchDimensionDatasetMock).toHaveBeenCalledWith(
-			{
-				adapterType: 'open-interest',
-				route: 'open-interest',
-				metricName: 'Open Interest',
-				dataType: 'openInterestAtEnd',
-				chains: ['Ethereum']
-			},
-			requestScope
-		)
-	})
-
-	test('rejects a partial membership instead of publishing an incomplete table', async () => {
-		fetchDimensionDatasetMock.mockResolvedValueOnce({
-			status: 'partial',
-			protocols: [],
-			unavailableChains: ['Base']
+		expect(result).toMatchObject({
+			status: 'complete',
+			protocols: [{ name: 'Perps', total24h: 100, chains: ['Ethereum'] }]
 		})
-
+	})
+	test('rejects failed-chain membership even when another chain returns rows', async () => {
+		http.serve({ [`${V2_SERVER_URL}/metrics/open-interest/chain/base?dataType=openInterestAtEnd`]: fixtureStatus(503) })
 		await expect(
 			fetchProtocolRowMembershipDataset(
 				{ kind: 'base-metric', family: 'open-interest' },
-				{ kind: 'chain', chains: ['Base'] }
+				{ kind: 'chain', chains: ['Ethereum', 'Base'] }
 			)
 		).rejects.toThrow('Canonical open-interest membership is unavailable for: Base')
 	})

@@ -13,6 +13,11 @@ function ValueCard({ title, value }: { title: string; value: string }) {
 	)
 }
 
+export function getFundraisingStatus(hasFundraising: boolean | null, lastRound: string | null): string | null {
+	if (hasFundraising == null && !lastRound) return null
+	return lastRound ?? (hasFundraising ? 'Fundraising reported' : 'No fundraising reported')
+}
+
 export function PreTgePerformance({
 	hasFundraising,
 	lastRound
@@ -20,9 +25,8 @@ export function PreTgePerformance({
 	hasFundraising: boolean | null
 	lastRound: string | null
 }) {
-	if (hasFundraising == null && !lastRound) return null
-
-	const fundraisingStatus = lastRound ?? (hasFundraising ? 'Fundraising reported' : 'No fundraising reported')
+	const fundraisingStatus = getFundraisingStatus(hasFundraising, lastRound)
+	if (fundraisingStatus == null) return null
 	return (
 		<>
 			<h2 className="heading-sm">Performance Overview: Fundraising</h2>

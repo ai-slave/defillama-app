@@ -57,11 +57,8 @@ describe('resolveAnnouncement', () => {
 		expect(result).toMatchObject({ kind: 'targeted', category: 'yields', banner: { id: 'verified-apy' } })
 	})
 
-	test('a reader whose interests have no banner gets the fallback', () => {
+	test('a reader with no interests, or none with a banner, gets the fallback', () => {
 		expect(resolve({ profile: profile('protocols', 'chains', 'fees') })).toMatchObject({ kind: 'fallback' })
-	})
-
-	test('an unknown profile only considers the launch and fallback', () => {
 		expect(resolve({ profile: null })).toMatchObject({ kind: 'fallback' })
 		expect(resolve({ profile: { interests: [], segments: [] } })).toMatchObject({ kind: 'fallback' })
 	})

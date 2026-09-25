@@ -113,28 +113,23 @@ test('clicking a tab mounts its panel and unmounts the previous one', async () =
 	expect(tabButton('First').getAttribute('data-active')).toBe('false')
 })
 
-test('every tab reports the switch to telemetry and exposes its description', async () => {
+test('a tab with a description exposes it as its title', async () => {
 	await act(async () => root.render(<Harness />))
 	const tabList = container.querySelector('[aria-label="Dashboard sections"]')!
 	const tabNodes = Array.from(tabList.querySelectorAll('button'))
-	expect(tabNodes.map((node) => node.getAttribute('data-umami-event'))).toEqual([
-		'dashboard-tab-switch',
-		'dashboard-tab-switch'
-	])
 	expect(tabNodes.map((node) => node.getAttribute('title'))).toEqual([null, 'Second section'])
 })
 
-test('tabs that fit their row carry no scroll arrows', async () => {
+test('tabs that fit carry no arrows, and overflowing tabs get arrows that page the list', async () => {
+	const tabList = () => container.querySelector('[aria-label="Dashboard sections"]')!
 	await act(async () => root.render(<Harness />))
 	await flushFrames()
 	expect(arrow('Scroll tabs right')).toBeUndefined()
 	expect(arrow('Scroll tabs left')).toBeUndefined()
-})
 
-test('overflowing tabs get arrows that page the list', async () => {
 	metrics.scrollWidth = 600
 	metrics.clientWidth = 300
-	await act(async () => root.render(<Harness />))
+	await act(async () => tabList().dispatchEvent(new Event('scroll')))
 	await flushFrames()
 	expect(arrow('Scroll tabs left')).toBeUndefined()
 	const right = arrow('Scroll tabs right')
@@ -144,14 +139,12 @@ test('overflowing tabs get arrows that page the list', async () => {
 	expect(scrollBy).toHaveBeenCalledWith({ left: 240, behavior: 'smooth' })
 
 	metrics.scrollLeft = 240
-	await act(async () =>
-		container.querySelector('[aria-label="Dashboard sections"]')!.dispatchEvent(new Event('scroll'))
-	)
+	await act(async () => tabList().dispatchEvent(new Event('scroll')))
 	await flushFrames()
 	expect(arrow('Scroll tabs left')).toBeDefined()
 })
 
-test('the active tab is kept in view by scrolling the list sideways, never on first mount', async () => {
+test('the active tab is kept in view by scrolling an overflowing list sideways, never on first mount', async () => {
 	metrics.scrollWidth = 600
 	metrics.clientWidth = 300
 	await act(async () => root.render(<Harness />))
@@ -159,18 +152,16 @@ test('the active tab is kept in view by scrolling the list sideways, never on fi
 	expect(scrollTo).not.toHaveBeenCalled()
 	expect(scrollIntoView).not.toHaveBeenCalled()
 
+	// Once every tab fits, a tab change has nothing to scroll.
+	metrics.scrollWidth = 300
 	await act(async () => tabButton('Second').click())
+	expect(scrollTo).not.toHaveBeenCalled()
+
+	metrics.scrollWidth = 600
+	await act(async () => tabButton('First').click())
 	expect(scrollIntoView).not.toHaveBeenCalled()
 	expect(scrollTo).toHaveBeenCalledOnce()
 	const [request] = scrollTo.mock.calls[0] as [ScrollToOptions]
 	expect(Object.keys(request).sort()).toEqual(['behavior', 'left'])
 	expect(request.left).toBeGreaterThanOrEqual(0)
-})
-
-test('tabs that fit their row are never scrolled when the active tab changes', async () => {
-	await act(async () => root.render(<Harness />))
-	await flushFrames()
-	await act(async () => tabButton('Second').click())
-	expect(scrollTo).not.toHaveBeenCalled()
-	expect(scrollIntoView).not.toHaveBeenCalled()
 })

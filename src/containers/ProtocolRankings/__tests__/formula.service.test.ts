@@ -14,13 +14,14 @@ describe('protocol ranking custom formulas', () => {
 		})
 	})
 
-	test('preserves zero and boolean formula results while leaving missing variables blank', () => {
+	test('preserves zero, boolean and string formula results while leaving missing variables blank', () => {
 		expect(evaluateFormula('tvl_default_tvl - tvl_default_tvl', sampleProtocol)).toEqual({
 			status: 'success',
 			value: 0
 		})
 		expect(evaluateFormula('tvl_default_tvl > 0', sampleProtocol)).toEqual({ status: 'success', value: true })
 		expect(evaluateFormula('strikeTvl', sampleProtocol)).toEqual({ status: 'success', value: true })
+		expect(evaluateFormula("'ready'", sampleProtocol)).toEqual({ status: 'success', value: 'ready' })
 		expect(evaluateFormula('missing_metric + 1', sampleProtocol)).toEqual({ status: 'missing' })
 	})
 
@@ -33,12 +34,6 @@ describe('protocol ranking custom formulas', () => {
 			expect(result.error).toEqual(expect.any(String))
 		}
 	)
-
-	test('accepts finite number, string, and boolean leaves only', () => {
-		expect(evaluateFormula('42', sampleProtocol)).toEqual({ status: 'success', value: 42 })
-		expect(evaluateFormula("'ready'", sampleProtocol)).toEqual({ status: 'success', value: 'ready' })
-		expect(evaluateFormula('strikeTvl', sampleProtocol)).toEqual({ status: 'success', value: true })
-	})
 
 	test('keeps null and zero distinct in formatting and sorting', () => {
 		expect(formatCustomColumnValue(0, 'number')).toBe('0')

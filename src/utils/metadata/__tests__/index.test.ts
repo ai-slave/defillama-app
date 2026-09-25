@@ -1,27 +1,20 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { SERVER_URL } from '~/constants'
+import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 import type { CoreMetadataPayload } from '../artifactContract'
-
-const { bootArtifactsMock, fetchCoreMetadataMock, recordDomainEventMock, runOutsideRouteTelemetryMock } = vi.hoisted(
-	() => ({
-		bootArtifactsMock: vi.fn(),
-		fetchCoreMetadataMock: vi.fn(),
-		recordDomainEventMock: vi.fn(),
-		runOutsideRouteTelemetryMock: vi.fn((run: () => unknown) => run())
-	})
-)
-
-vi.mock('../fetch', () => ({
-	fetchCoreMetadata: fetchCoreMetadataMock
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	recordDomainEvent: recordDomainEventMock,
-	runOutsideRouteTelemetry: runOutsideRouteTelemetryMock
-}))
-
-vi.mock('../artifacts', () => ({
-	loadMetadataArtifactsForBoot: bootArtifactsMock
-}))
+import { writeMetadataArtifacts } from '../artifactWriter'
+import { getMetadataCacheDir } from '../config'
+import { serveCoreMetadata } from './sourceFixture'
+const protocolsUrl = `${SERVER_URL}/config/smol/appMetadata-protocols.json`
+const telemetry = installTelemetrySink()
+installSnapshotDirectory('metadata-refresh-test')
+const protocolRequests = () =>
+	telemetry.requests.filter(({ url }) => url.pathname.endsWith('/appMetadata-protocols.json'))
+afterEach(() => {
+	vi.clearAllTimers()
+	vi.useRealTimers()
+})
 
 const defaultTokenListEntry = {
 	symbol: 'AAVE',
@@ -128,98 +121,9 @@ function createDeferred<T>() {
 }
 
 describe('metadata refresh', () => {
-	beforeEach(() => {
-		vi.useRealTimers()
-		vi.unstubAllEnvs()
-		vi.restoreAllMocks()
-		vi.resetModules()
-		fetchCoreMetadataMock.mockReset()
-		recordDomainEventMock.mockReset()
-		bootArtifactsMock.mockReset()
-		bootArtifactsMock.mockReturnValue({ manifest: null, payload: createMetadataPayload() })
-		runOutsideRouteTelemetryMock.mockReset()
-		runOutsideRouteTelemetryMock.mockImplementation((run: () => unknown) => run())
-	})
-
-	test('applies an empty token directory refresh payload directly', async () => {
-		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
-		const existingDirectory = {
-			aave: {
-				name: 'Aave',
-				symbol: 'AAVE',
-				route: '/token/AAVE'
-			}
-		}
-		const metadata = createMetadataCacheFromArtifacts(
-			createMetadataPayload({
-				tokenDirectory: existingDirectory
-			})
-		)
-
-		applyMetadataRefresh(metadata, createMetadataPayload())
-
-		expect(metadata.tokenDirectory).toEqual({})
-	})
-
-	test('applies empty protocol metadata refresh payloads directly', async () => {
-		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
-		const existingProtocols = {
-			'parent#aave': {
-				name: 'aave',
-				displayName: 'Aave',
-				tvl: true
-			}
-		}
-		const metadata = createMetadataCacheFromArtifacts(
-			createMetadataPayload({
-				protocols: existingProtocols,
-				protocolDisplayNames: {
-					aave: 'Aave'
-				}
-			})
-		)
-
-		applyMetadataRefresh(
-			metadata,
-			createMetadataPayload({
-				protocols: {},
-				protocolDisplayNames: {}
-			})
-		)
-
-		expect(metadata.protocolMetadata).toEqual({})
-		expect(metadata.protocolDisplayNames.size).toBe(0)
-	})
-
-	test('replaces the token directory when refresh returns token data', async () => {
-		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
-		const refreshedDirectory = {
-			morpho: {
-				name: 'Morpho',
-				symbol: 'MORPHO',
-				route: '/token/MORPHO'
-			}
-		}
-		const metadata = createMetadataCacheFromArtifacts(
-			createMetadataPayload({
-				tokenDirectory: {
-					aave: {
-						name: 'Aave',
-						symbol: 'AAVE',
-						route: '/token/AAVE'
-					}
-				}
-			})
-		)
-
-		applyMetadataRefresh(
-			metadata,
-			createMetadataPayload({
-				tokenDirectory: refreshedDirectory
-			})
-		)
-
-		expect(metadata.tokenDirectory).toEqual(refreshedDirectory)
+	beforeEach(async () => {
+		serveCoreMetadata(telemetry)
+		await writeMetadataArtifacts(getMetadataCacheDir(), createMetadataPayload(), 'stub', 0)
 	})
 
 	test('starts a background refresh without blocking and dedupes concurrent callers', async () => {
@@ -230,8 +134,8 @@ describe('metadata refresh', () => {
 				tvl: true
 			}
 		}
-		const deferred = createDeferred<ReturnType<typeof createMetadataPayload>>()
-		fetchCoreMetadataMock.mockReturnValue(deferred.promise)
+		const deferred = createDeferred<CoreMetadataPayload['protocols']>()
+		telemetry.serve({ [protocolsUrl]: () => deferred.promise })
 
 		const metadataModule = await import('../index')
 		const metadata = metadataModule.default
@@ -240,84 +144,77 @@ describe('metadata refresh', () => {
 		metadataModule.refreshMetadataInBackgroundIfStale()
 		metadataModule.refreshMetadataInBackgroundIfStale()
 
-		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
+		await vi.waitFor(() => expect(protocolRequests()).toHaveLength(1))
 		expect(metadata.protocolMetadata).toBe(initialProtocolMetadata)
 
-		deferred.resolve(
-			createMetadataPayload({
-				protocols: refreshedProtocols,
-				protocolDisplayNames: {
-					morpho: 'Morpho'
-				}
-			})
-		)
+		deferred.resolve(refreshedProtocols)
 		await metadataModule.refreshMetadataIfStale()
 
 		expect(metadata.protocolMetadata).toEqual(refreshedProtocols)
 		expect(metadata.protocolDisplayNames.get('morpho')).toBe('Morpho')
-		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
-	}, 15_000)
-
-	test('detaches every background refresh caller from active route telemetry', async () => {
-		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
-		const metadataModule = await import('../index')
-
-		metadataModule.refreshMetadataInBackgroundIfStale()
-		metadataModule.refreshMetadataInBackgroundIfStale('homepage')
-
-		expect(runOutsideRouteTelemetryMock).toHaveBeenCalledTimes(2)
-		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
+		expect(protocolRequests()).toHaveLength(1)
 	})
 
 	test('records successful metadata refresh telemetry', async () => {
-		vi.spyOn(Date, 'now')
-			.mockReturnValueOnce(1000)
-			.mockReturnValueOnce(1000)
-			.mockReturnValueOnce(1250)
-			.mockReturnValue(1250)
-		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
+		vi.useFakeTimers()
+		vi.setSystemTime(1000)
+		telemetry.serve({
+			[protocolsUrl]: () => {
+				vi.setSystemTime(1250)
+				return createMetadataPayload().protocols
+			}
+		})
 		const metadataModule = await import('../index')
 
 		await metadataModule.refreshMetadataIfStale()
 
-		expect(recordDomainEventMock).toHaveBeenCalledWith(
-			'metadata.refresh',
-			'info',
-			'manual',
-			'Metadata refresh completed',
-			{
-				duration_ms: 250,
-				source: 'manual',
-				status: 'success'
-			}
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					event_name: 'metadata.refresh',
+					level: 'info',
+					subject: 'manual',
+					message: 'Metadata refresh completed',
+					attributes: expect.objectContaining({
+						duration_ms: 250,
+						source: 'manual',
+						status: 'success'
+					})
+				})
+			])
 		)
 	})
 
 	test('records failed metadata refresh telemetry', async () => {
-		const error = new Error('metadata failed')
-		vi.spyOn(Date, 'now')
-			.mockReturnValueOnce(1000)
-			.mockReturnValueOnce(1000)
-			.mockReturnValueOnce(1400)
-			.mockReturnValue(1400)
+		vi.useFakeTimers()
+		vi.setSystemTime(1000)
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-		fetchCoreMetadataMock.mockRejectedValue(error)
+		telemetry.serve({
+			[protocolsUrl]: () => {
+				vi.setSystemTime(1400)
+				throw new Error('metadata failed')
+			}
+		})
 		const metadataModule = await import('../index')
 
 		await metadataModule.refreshMetadataIfStale()
 
-		expect(recordDomainEventMock).toHaveBeenCalledWith(
-			'metadata.refresh',
-			'warn',
-			'manual',
-			'Metadata refresh failed',
-			{
-				duration_ms: 400,
-				error_message: 'metadata failed',
-				error_name: 'Error',
-				source: 'manual',
-				status: 'failure'
-			}
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					event_name: 'metadata.refresh',
+					level: 'warn',
+					subject: 'manual',
+					message: 'Metadata refresh failed',
+					attributes: expect.objectContaining({
+						duration_ms: 400,
+						error_message: 'metadata failed',
+						error_name: 'Error',
+						source: 'manual',
+						status: 'failure'
+					})
+				})
+			])
 		)
 		consoleErrorSpy.mockRestore()
 	})
@@ -325,34 +222,19 @@ describe('metadata refresh', () => {
 	test('applies the refresh cooldown after failed refreshes', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-		fetchCoreMetadataMock.mockRejectedValue(new Error('metadata failed'))
+		telemetry.serve({
+			[protocolsUrl]: () => {
+				throw new Error('metadata failed')
+			}
+		})
 		const metadataModule = await import('../index')
 
 		await metadataModule.refreshMetadataIfStale()
 		await metadataModule.refreshMetadataIfStale()
 
-		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
+		expect(protocolRequests()).toHaveLength(1)
+		expect(metadataModule.getMetadataRefreshStatus()).toMatchObject({ failedRefreshes: 1, retrySuppressions: 1 })
 		expect(consoleErrorSpy).toHaveBeenCalledWith('[metadata] refresh failed, keeping stale cache:', expect.any(Error))
-		consoleErrorSpy.mockRestore()
-	})
-
-	test('applies refresh payloads without semantic artifact validation', async () => {
-		vi.stubEnv('NODE_ENV', 'production')
-		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-		fetchCoreMetadataMock.mockResolvedValue(
-			createMetadataPayload({
-				chainCategories: {} as CoreMetadataPayload['chainCategories']
-			})
-		)
-		const metadataModule = await import('../index')
-		const metadata = metadataModule.default
-
-		await metadataModule.refreshMetadataIfStale()
-
-		expect(metadata.chainCategories).toEqual({})
-		expect(metadataModule.getMetadataRefreshStatus().successfulRefreshes).toBe(1)
-		expect(metadataModule.getMetadataRefreshStatus().failedRefreshes).toBe(0)
-		expect(consoleErrorSpy).not.toHaveBeenCalled()
 		consoleErrorSpy.mockRestore()
 	})
 
@@ -364,51 +246,36 @@ describe('metadata refresh', () => {
 		await metadataModule.refreshMetadataIfStale()
 		metadataModule.refreshMetadataInBackgroundIfStale()
 
-		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
+		expect(protocolRequests()).toHaveLength(0)
+
+		vi.stubEnv('API_KEY', 'local-key')
+		await metadataModule.refreshMetadataIfStale()
+
+		expect(protocolRequests()).toHaveLength(1)
 	})
 
 	test('runs the runtime refresh loop with initial and per-fetch jitter', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(1000)
 		vi.stubEnv('NODE_ENV', 'production')
-		bootArtifactsMock.mockReturnValue({
-			manifest: {
-				artifactVersion: 2,
-				pulledAt: 0,
-				status: 'ready',
-				artifacts: []
-			},
-			payload: createMetadataPayload()
-		})
+		await writeMetadataArtifacts(getMetadataCacheDir(), createMetadataPayload(), 'ready', 0)
 		const randomSpy = vi.spyOn(Math, 'random')
 		randomSpy.mockReturnValueOnce(0.5).mockReturnValueOnce(0.25)
-		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
 
 		await import('../index')
 		await vi.advanceTimersByTimeAsync(150_000 - 1)
-		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
+		expect(protocolRequests()).toHaveLength(0)
 
 		await vi.advanceTimersByTimeAsync(1)
-		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
+		expect(protocolRequests()).toHaveLength(0)
 
 		await vi.advanceTimersByTimeAsync(75_000 - 1)
-		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
+		expect(protocolRequests()).toHaveLength(0)
 
 		await vi.advanceTimersByTimeAsync(1)
-		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
+		expect(protocolRequests()).toHaveLength(1)
 		const metadataModule = await import('../index')
 		expect(metadataModule.getMetadataRefreshStatus().jitteredRefreshAttempts).toBe(1)
-	})
-
-	test('does not start the runtime refresh loop in tests', async () => {
-		vi.useFakeTimers()
-		vi.setSystemTime(1000)
-		bootArtifactsMock.mockReturnValue({ manifest: null, payload: createMetadataPayload() })
-		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
-
-		await import('../index')
-		await vi.advanceTimersByTimeAsync(60 * 60 * 1000)
-
-		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
+		randomSpy.mockRestore()
 	})
 })

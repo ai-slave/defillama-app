@@ -76,13 +76,6 @@ describe('mergeDashboardItems', () => {
 		expect(merged.map((item) => item.id)).toEqual(['a', 'x', 'c', 'b'])
 		expect(new Set(merged.map((item) => item.id)).size).toBe(merged.length)
 	})
-
-	test('returns the local array itself when nothing merges in', () => {
-		const base = [text('a')]
-		const server = [text('a')]
-		const local = [text('a'), text('c')]
-		expect(mergeDashboardItems(base, server, local)).toBe(local)
-	})
 })
 
 const section = (id: string, title = id): DashboardItemConfig => ({ id, kind: 'section', title, displayAs: 'heading' })

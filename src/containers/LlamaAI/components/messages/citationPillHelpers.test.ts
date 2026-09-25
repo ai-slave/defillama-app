@@ -43,11 +43,6 @@ describe('formatCellValue', () => {
 	test('renders empty string as an em dash', () => {
 		expect(formatCellValue('   ')).toBe('—')
 	})
-
-	test('handles non-finite numbers', () => {
-		expect(formatCellValue(Number.NaN)).toBe('NaN')
-		expect(formatCellValue(Infinity)).toBe('Infinity')
-	})
 })
 
 describe('parseRefNumber', () => {

@@ -18,7 +18,7 @@ import type { GrowthChartModel, IntrinsicSourceSeries } from './growthChart'
 import { HoldersPanel } from './HoldersPanel'
 import type { LiquidityChartModel } from './liquidityChart'
 import { PoolApyChart } from './PoolApyChart'
-import { type PoolChartModel, stripVerifiedSeries } from './poolCharts'
+import type { PoolChartModel } from './poolCharts'
 import { PoolGrowthChart } from './PoolGrowthChart'
 import { PoolHeader, PoolMetaInfo } from './PoolHeader'
 import { PoolLiquidityChart } from './PoolLiquidityChart'
@@ -27,6 +27,7 @@ import type { DetailChain, DetailHolders, DetailProtocol, PoolHistoryRange } fro
 import { usePoolVerifiedProps } from './useVerifiedProps'
 import { VerifiedApyPanel, type VerifiedWindowRow } from './VerifiedApyPanel'
 import { buildVerifiedSnapshot, LockedVerifiedSection, type MeasuredComposition } from './VerifiedSnapshotCard'
+import { isPoolVerifiedLocked, resolvePoolVerifiedView } from './verifiedView'
 
 export interface ApyBreakdown {
 	total: number | null
@@ -158,44 +159,64 @@ export function PoolDetailView({
 	details
 }: PoolDetailViewProps) {
 	const { hasAccess, isDenied } = useVerifiedAccess()
-	// A subscriber's page carries its measured props; they stand only while the reader is still
-	// entitled, as the table's seed does, so a lapsed or ended session drops them without a reload.
-	const seeded = !isDenied
-	const locked = verifiedLocked === null || verifiedLocked === true || (isDenied && verifiedFromProps != null)
+	const locked = isPoolVerifiedLocked(verifiedLocked, isDenied, verifiedFromProps)
 	// The page's props are redacted for everyone else; a subscriber's measured sections arrive here.
 	const { props: paid, isLoading: paidLoading } = usePoolVerifiedProps({
 		poolId,
 		range: initialRange,
 		locked
 	})
-	const verified = (seeded ? verifiedFromProps : null) ?? paid.verified
-	const verifiedWindows =
-		seeded && verifiedWindowsFromProps.length > 0 ? verifiedWindowsFromProps : paid.verifiedWindows
-	const growthChart = (seeded ? growthChartFromProps : null) ?? paid.growthChart
-	const intrinsicSeries = (seeded ? intrinsicSeriesFromProps : null) ?? paid.intrinsicSeries
-	const liquidityChart = (seeded ? liquidityChartFromProps : null) ?? paid.liquidityChart
-	const liquidityDecimals = (seeded ? liquidityDecimalsFromProps : null) ?? paid.liquidityDecimals
-	const exitReliability = (seeded ? exitReliabilityFromProps : null) ?? paid.exitReliability
-	// The measured rebuild defaults its TVL label, which depends on protocol meta only the page
-	// resolves. The page's own chart holds the right one, so it is carried across.
-	const supplyChart = useMemo(() => {
-		if (!paid.supplyChart) {
-			// A subscriber's page carries the measured chart; once their access has ended (a logout in
-			// another tab), it shows what the public build would: the reported bars without the verified base.
-			return seeded || !supplyChartFromProps ? supplyChartFromProps : stripVerifiedSeries(supplyChartFromProps)
-		}
-		const label = supplyChartFromProps?.lines.find((line) => line.unit === 'usd')?.label
-		if (label == null) return paid.supplyChart
-		return {
-			...paid.supplyChart,
-			lines: paid.supplyChart.lines.map((line) => (line.unit === 'usd' ? { ...line, label } : line))
-		}
-	}, [paid.supplyChart, seeded, supplyChartFromProps])
-	// Anonymous SSR keeps its offer; an unavailable server check must wait for a client verdict.
-	const showOffer = locked && verified == null && !paidLoading && !hasAccess && (verifiedLocked !== null || isDenied)
+	const {
+		verified,
+		verifiedWindows,
+		growthChart,
+		intrinsicSeries,
+		liquidityChart,
+		liquidityDecimals,
+		exitReliability,
+		supplyChart,
+		apy: measuredApy,
+		notice
+	} = useMemo(
+		() =>
+			resolvePoolVerifiedView({
+				access: { hasAccess, isDenied },
+				verifiedLocked,
+				locked,
+				paid,
+				paidLoading,
+				fromProps: {
+					verified: verifiedFromProps,
+					apy: apyFromProps,
+					verifiedWindows: verifiedWindowsFromProps,
+					growthChart: growthChartFromProps,
+					intrinsicSeries: intrinsicSeriesFromProps,
+					liquidityChart: liquidityChartFromProps,
+					liquidityDecimals: liquidityDecimalsFromProps,
+					exitReliability: exitReliabilityFromProps,
+					supplyChart: supplyChartFromProps
+				}
+			}),
+		[
+			hasAccess,
+			isDenied,
+			verifiedLocked,
+			locked,
+			paid,
+			paidLoading,
+			verifiedFromProps,
+			apyFromProps,
+			verifiedWindowsFromProps,
+			growthChartFromProps,
+			intrinsicSeriesFromProps,
+			liquidityChartFromProps,
+			liquidityDecimalsFromProps,
+			exitReliabilityFromProps,
+			supplyChartFromProps
+		]
+	)
 	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows) : null
 	// The table cell's split: only when a leg was substituted and there is more than the base to show.
-	const measuredApy = (seeded ? apyFromProps : null) ?? paid.apy
 	let composition: MeasuredComposition | null = null
 	if (
 		supply &&
@@ -309,8 +330,8 @@ export function PoolDetailView({
 				hasRisk={hasRisk}
 				poolId={poolId}
 			/>
-			{showOffer ? <LockedVerifiedSection symbol={symbol} /> : null}
-			{verifiedLocked === null && verified == null && !paidLoading && !isDenied ? (
+			{notice === 'offer' ? <LockedVerifiedSection symbol={symbol} /> : null}
+			{notice === 'unavailable' ? (
 				<p role="status" className="px-1 body-sm text-secondary">
 					Verified APY is temporarily unavailable.
 				</p>

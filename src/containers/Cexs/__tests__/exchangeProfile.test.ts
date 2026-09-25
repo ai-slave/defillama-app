@@ -26,9 +26,9 @@ describe('CEX Exchange profile identity', () => {
 		expect(result).toMatchObject({ cexProtocolSlug: 'binance-cex', exchangeProfileSlug: 'binance' })
 	})
 
-	test('leaves a CEX without an Exchange profile unchanged', () => {
+	test('does not attach an Exchange profile slug to a CEX without one', () => {
 		const [result] = attachExchangeProfileSlugs([cex], {})
 
-		expect(result).toBe(cex)
+		expect(result).toStrictEqual(cex)
 	})
 })

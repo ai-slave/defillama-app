@@ -33,3 +33,18 @@ export function filterBorrowRoutes({
 		return true
 	})
 }
+
+/** A partial count means only the hydrated first page is loaded, so the total comes from the snapshot. */
+export function formatBorrowRoutesSummary({
+	shownCount,
+	totalCount,
+	isPartial
+}: {
+	shownCount: number
+	totalCount: number
+	isPartial: boolean
+}) {
+	if (shownCount === 0) return null
+	if (isPartial) return `Showing ${shownCount} of ${totalCount} ${totalCount === 1 ? 'route' : 'routes'}`
+	return `Tracking ${shownCount} ${shownCount === 1 ? 'route' : 'routes'}`
+}

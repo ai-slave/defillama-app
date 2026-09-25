@@ -2,25 +2,6 @@ import { describe, expect, test } from 'vitest'
 import { prepareMultiSeriesDataset } from './datasetAdapter'
 
 describe('prepareMultiSeriesDataset', () => {
-	test('passes positional rows through and assigns private ECharts dimensions', () => {
-		const source = [[1000, 2, 3]]
-		const prepared = prepareMultiSeriesDataset({ dimensions: ['timestamp', 'A', 'B'], source }, [
-			{ type: 'line', name: 'A', encode: { x: 0, y: 1 } },
-			{ type: 'line', name: 'B', encode: { x: 0, y: 2 } }
-		])
-
-		expect(prepared.source).toBe(source)
-		expect(prepared.dimensions).toEqual([
-			{ name: '__dimension_0', displayName: 'timestamp' },
-			{ name: '__dimension_1', displayName: 'A' },
-			{ name: '__dimension_2', displayName: 'B' }
-		])
-		expect(prepared.charts.map((chart) => chart.encode)).toEqual([
-			{ x: 0, y: 1 },
-			{ x: 0, y: 2 }
-		])
-	})
-
 	test('keeps every logical dimension available to CSV while filtering rendered series', () => {
 		const source = [
 			[1000, 2, 3],

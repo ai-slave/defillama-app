@@ -1,74 +1,78 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { AgenticSidebar } from '../AgenticSidebar'
 
-const mocks = vi.hoisted(() => ({
-	toggleSidebar: vi.fn(),
-	toggleFullscreen: vi.fn(),
-	fullscreenLocked: false
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: { id: 'user', flags: { is_llama: true } },
-		authorizedFetch: vi.fn(),
-		isAuthenticated: true,
-		hasActiveSubscription: true
-	})
-}))
-vi.mock('~/containers/LlamaAI/chrome', () => ({
-	useLlamaAIChrome: () => ({
-		hideSidebar: vi.fn(),
-		toggleSidebar: mocks.toggleSidebar,
-		toggleFullscreen: mocks.toggleFullscreen,
-		isFullscreen: false,
-		fullscreenLocked: mocks.fullscreenLocked
-	})
-}))
-vi.mock('~/containers/Subscription/useTopup', () => ({ useAiBalance: () => ({ balance: null, totalAvailable: 0 }) }))
+const mocks = { toggleSidebar: vi.fn(), toggleFullscreen: vi.fn(), fullscreenLocked: false }
+const session = installSubscriberSession('user')
+// Heavy child these tests do not read.
 vi.mock('~/containers/LlamaAI/projects/ProjectsSidebarSection', () => ({
 	ProjectsSidebarSection: () => null,
 	SIDEBAR_PROJECTS_OPEN_KEY: 'projects-open'
 }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(() => {
-	vi.clearAllMocks()
+	mocks.toggleSidebar.mockReset()
+	mocks.toggleFullscreen.mockReset()
 	mocks.fullscreenLocked = false
-	client = new QueryClient()
+	// The terminal place exists only for llama accounts.
+	const record = { ...pb.authStore.record!, flags: { is_llama: true } }
+	pb.authStore.save(pb.authStore.token, record)
+	session.serve({
+		'/api/collections/users/auth-refresh': { token: pb.authStore.token, record },
+		'https://features.llama.fi/user/ai-balance': {
+			freeRemaining: '0',
+			toppedUpBalance: '0',
+			freeLimit: '1',
+			freeSpent: '1'
+		}
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 
 async function render(props: Partial<ComponentProps<typeof AgenticSidebar>>) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<AgenticSidebar
-					sessions={[]}
-					isLoading={false}
-					currentSessionId={null}
-					restoringSessionId={null}
-					onSessionSelect={vi.fn()}
-					onNewChat={vi.fn()}
-					onDelete={async () => {}}
-					onOpenAlerts={vi.fn()}
-					alertsCount={3}
-					onOpenSettings={vi.fn()}
-					{...props}
-				/>
-			</QueryClientProvider>
+			<session.Wrapper>
+				<LlamaAIChromeContext.Provider
+					value={{
+						hideSidebar: () => {},
+						toggleSidebar: mocks.toggleSidebar,
+						toggleFullscreen: mocks.toggleFullscreen,
+						isFullscreen: false,
+						fullscreenLocked: mocks.fullscreenLocked,
+						sidebarVisible: true,
+						toggleDashboardPanel: () => {},
+						isDashboardPanelOpen: false
+					}}
+				>
+					<AgenticSidebar
+						sessions={[]}
+						isLoading={false}
+						currentSessionId={null}
+						restoringSessionId={null}
+						onSessionSelect={vi.fn()}
+						onNewChat={vi.fn()}
+						onDelete={async () => {}}
+						onOpenAlerts={vi.fn()}
+						alertsCount={3}
+						onOpenSettings={vi.fn()}
+						{...props}
+					/>
+				</LlamaAIChromeContext.Provider>
+			</session.Wrapper>
 		)
 	)
 }

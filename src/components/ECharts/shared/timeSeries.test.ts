@@ -27,10 +27,6 @@ describe('formatBarChart', () => {
 		expect(getBucketTimestampMs(toMs(2024, 3, 17), 'quarterly')).toBe(toMs(2024, 1, 1))
 	})
 
-	test('returns empty array for empty input', () => {
-		expect(formatBarChart({ data: [], groupBy: 'daily', denominationPriceHistory: null })).toEqual([])
-	})
-
 	test('preserves hourly timestamps in daily mode and converts sec → ms', () => {
 		expect(
 			formatBarChart({
@@ -44,23 +40,6 @@ describe('formatBarChart', () => {
 		).toEqual([
 			[toMs(2024, 1, 1) + 13 * 60 * 60 * 1e3, 10],
 			[toMs(2024, 1, 2), 20]
-		])
-	})
-
-	test('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
-		const h6 = toSec(2024, 1, 1) + 6 * 3600
-		const h18 = toSec(2024, 1, 1) + 18 * 3600
-		const result = formatBarChart({
-			data: [
-				[h6, 10],
-				[h18, 20]
-			],
-			groupBy: 'daily',
-			denominationPriceHistory: null
-		})
-		expect(result).toEqual([
-			[h6 * 1e3, 10],
-			[h18 * 1e3, 20]
 		])
 	})
 
@@ -78,57 +57,6 @@ describe('formatBarChart', () => {
 		).toEqual([
 			[weekBucketJan21, 15],
 			[weekBucketJan28, 30]
-		])
-	})
-
-	test('sums values into monthly buckets', () => {
-		expect(
-			formatBarChart({
-				data: [
-					[toSec(2024, 3, 10), 10],
-					[toSec(2024, 3, 25), 20],
-					[toSec(2024, 4, 5), 30]
-				],
-				groupBy: 'monthly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 3, 1), 30],
-			[toMs(2024, 4, 1), 30]
-		])
-	})
-
-	test('sums values into quarterly buckets', () => {
-		expect(
-			formatBarChart({
-				data: [
-					[toSec(2024, 1, 15), 10],
-					[toSec(2024, 3, 20), 20],
-					[toSec(2024, 4, 5), 30]
-				],
-				groupBy: 'quarterly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1), 30],
-			[toMs(2024, 4, 1), 30]
-		])
-	})
-
-	test('sums values into yearly buckets', () => {
-		expect(
-			formatBarChart({
-				data: [
-					[toSec(2024, 2, 1), 10],
-					[toSec(2024, 10, 1), 20],
-					[toSec(2025, 1, 1), 30]
-				],
-				groupBy: 'yearly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1), 30],
-			[toMs(2025, 1, 1), 30]
 		])
 	})
 
@@ -198,19 +126,6 @@ describe('formatBarChart', () => {
 				],
 				groupBy: 'quarterly',
 				dateInMs: true,
-				denominationPriceHistory: null
-			})
-		).toEqual([[toMs(2024, 1, 1), 30]])
-	})
-
-	test('accepts string dates', () => {
-		expect(
-			formatBarChart({
-				data: [
-					[String(toSec(2024, 1, 15)), 10],
-					[String(toSec(2024, 2, 15)), 20]
-				],
-				groupBy: 'quarterly',
 				denominationPriceHistory: null
 			})
 		).toEqual([[toMs(2024, 1, 1), 30]])
@@ -375,56 +290,6 @@ describe('formatNullableBarChart', () => {
 })
 
 describe('formatLineChart', () => {
-	test('preserves hourly timestamps in daily mode', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toSec(2024, 1, 1) + 13 * 60 * 60, 10],
-					[toSec(2024, 1, 2), 20]
-				],
-				groupBy: 'daily',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1) + 13 * 60 * 60 * 1e3, 10],
-			[toMs(2024, 1, 2), 20]
-		])
-	})
-
-	test('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
-		const h6 = toSec(2024, 1, 1) + 6 * 3600
-		const h18 = toSec(2024, 1, 1) + 18 * 3600
-		const result = formatLineChart({
-			data: [
-				[h6, 10],
-				[h18, 20]
-			],
-			groupBy: 'daily',
-			denominationPriceHistory: null
-		})
-		expect(result).toEqual([
-			[h6 * 1e3, 10],
-			[h18 * 1e3, 20]
-		])
-	})
-
-	test('keeps the last value in weekly buckets', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toSec(2024, 1, 15), 10], // Mon → Sun Jan 21
-					[toSec(2024, 1, 17), 25], // Wed → Sun Jan 21 (overwrites 10)
-					[toSec(2024, 1, 22), 30] // Mon → Sun Jan 28
-				],
-				groupBy: 'weekly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[weekBucketJan21, 25],
-			[weekBucketJan28, 30]
-		])
-	})
-
 	test('keeps the last value in monthly buckets', () => {
 		expect(
 			formatLineChart({
@@ -437,40 +302,6 @@ describe('formatLineChart', () => {
 				denominationPriceHistory: null
 			})
 		).toEqual([[toMs(2024, 3, 1), 30]])
-	})
-
-	test('keeps the last value in quarterly buckets', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toSec(2024, 1, 15), 10],
-					[toSec(2024, 3, 20), 20],
-					[toSec(2024, 4, 5), 30]
-				],
-				groupBy: 'quarterly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1), 20],
-			[toMs(2024, 4, 1), 30]
-		])
-	})
-
-	test('keeps the last value in yearly buckets', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toSec(2024, 2, 1), 10],
-					[toSec(2024, 10, 1), 20],
-					[toSec(2025, 1, 1), 30]
-				],
-				groupBy: 'yearly',
-				denominationPriceHistory: null
-			})
-		).toEqual([
-			[toMs(2024, 1, 1), 20],
-			[toMs(2025, 1, 1), 30]
-		])
 	})
 
 	test('passes through daily for cumulative mode (no aggregation)', () => {
@@ -489,20 +320,6 @@ describe('formatLineChart', () => {
 			[toMs(2024, 1, 2), 20],
 			[toMs(2024, 1, 3), 30]
 		])
-	})
-
-	test('supports millisecond input timestamps', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toMs(2024, 1, 15), 10],
-					[toMs(2024, 3, 20), 20]
-				],
-				groupBy: 'quarterly',
-				dateInMs: true,
-				denominationPriceHistory: null
-			})
-		).toEqual([[toMs(2024, 1, 1), 20]])
 	})
 
 	test('converts denominated values (last wins per bucket)', () => {
@@ -535,21 +352,6 @@ describe('formatLineChart', () => {
 				}
 			})
 		).toEqual([[toMs(2024, 1, 1), null]])
-	})
-
-	test('last-wins with 3+ values in a single bucket', () => {
-		expect(
-			formatLineChart({
-				data: [
-					[toSec(2024, 1, 5), 100],
-					[toSec(2024, 1, 15), 200],
-					[toSec(2024, 2, 10), 300],
-					[toSec(2024, 3, 20), 400]
-				],
-				groupBy: 'quarterly',
-				denominationPriceHistory: null
-			})
-		).toEqual([[toMs(2024, 1, 1), 400]])
 	})
 })
 

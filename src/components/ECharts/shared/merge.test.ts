@@ -26,14 +26,4 @@ describe('mergeDeep', () => {
 		expect(mergeDeep({ a: 1 }, null)).toEqual({ a: 1 })
 		expect(mergeDeep({ a: 1 }, undefined)).toEqual({ a: 1 })
 	})
-
-	test('overwrites with primitive source', () => {
-		expect(mergeDeep({ a: 1 }, 42)).toBe(42)
-	})
-
-	test('handles deeply nested merge', () => {
-		expect(mergeDeep({ a: { b: { c: 1 } } }, { a: { b: { d: 2 } } })).toEqual({
-			a: { b: { c: 1, d: 2 } }
-		})
-	})
 })

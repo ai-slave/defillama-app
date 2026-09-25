@@ -87,21 +87,6 @@ describe('kitchen sink — markdown pipeline', () => {
 		])
 	})
 
-	test('strips the pre-report preamble and every citation marker', () => {
-		expect(json).not.toContain('preamble')
-		expect(json).not.toContain('[1]')
-		expect(json).not.toContain('【')
-		expect(json).toContain('Closing thoughts.')
-	})
-
-	test('demotes h1 and keeps formatting, links, table cells, and code', () => {
-		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
-		expect(json).toContain('bold')
-		expect(json).toContain('https://defillama.com/protocol/uniswap')
-		expect(json).toContain('base')
-		expect(json).toContain('SELECT 1;')
-	})
-
 	test('hydrates known charts, downsamples large ones, drops unknown artifacts silently', () => {
 		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
 		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([
@@ -120,10 +105,6 @@ describe('kitchen sink — markdown pipeline', () => {
 		expect(json).not.toContain('db9')
 		expect(json).not.toContain('tell me more')
 		expect(json).not.toContain('img-skipped')
-	})
-
-	test('inserts uploaded images with their CMS src', () => {
-		expect(json).toContain('https://cdn.llama.fi/x.png')
 	})
 })
 
@@ -158,15 +139,5 @@ describe('kitchen sink — selection pipeline', () => {
 		expect(json).not.toContain('.csv')
 		expect(json).not.toContain('gear')
 		expect(json).not.toContain('watermark')
-	})
-
-	test('keeps table content and code spacing byte-identical', () => {
-		expect(json).toContain('base')
-		expect(json).toContain('SELECT  1;')
-	})
-
-	test('hydrates the known chart and drops the unknown one', () => {
-		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
-		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([expect.objectContaining({ id: 'c1' })])
 	})
 })

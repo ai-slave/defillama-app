@@ -187,8 +187,11 @@ describe('usePromptDraft', () => {
 		act(() => updateDraft('newest'))
 		await act(async () => vi.advanceTimersByTime(300))
 
+		// The draft just written plus the 19 most recently updated older drafts.
+		const expected = [SCOPE]
+		for (let index = 21; index < 40; index++) expected.push(`session:old-${index}`)
 		const remaining = Object.keys(localStorage).filter((key) => key.startsWith(`${LLAMA_AI_PROMPT_DRAFT_KEY}:`))
-		expect(remaining.length).toBeLessThanOrEqual(20)
+		expect(remaining.sort()).toEqual(expected.map(promptDraftKey).sort())
 		expect(readDraft(SCOPE)).toBe('newest')
 	})
 

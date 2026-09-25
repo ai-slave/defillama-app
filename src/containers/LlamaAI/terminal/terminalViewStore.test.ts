@@ -64,3 +64,25 @@ describe('stored pane layout', () => {
 		expect(JSON.parse(storage.get('llamaai-terminal-view')!)).toEqual({ chatRatio: 0.5, chatCollapsed: true })
 	})
 })
+
+describe('an explicit symbol request overrides a saved layout exactly once', () => {
+	test('the request survives a widget effect torn down before its chart was ready, and ends once one was', async () => {
+		const { peekRequestedTerminalSymbol, setTerminalViewOpen, settleRequestedTerminalSymbol } = await load()
+
+		setTerminalViewOpen(true, 'AAVE')
+		// Strict mode mounts the widget effect, tears it down before the chart is ready, and mounts it
+		// again. A `?symbol=` link opened on the saved layout's symbol when the first run took the
+		// request with it.
+		expect(peekRequestedTerminalSymbol()).toBe('AAVE')
+		expect(peekRequestedTerminalSymbol()).toBe('AAVE')
+		settleRequestedTerminalSymbol('AAVE')
+		// The widget is rebuilt on every theme change. A request that survived its chart would keep
+		// forcing an old symbol over the one the saved layout restores.
+		expect(peekRequestedTerminalSymbol()).toBeNull()
+
+		setTerminalViewOpen(true, 'ETH')
+		settleRequestedTerminalSymbol('AAVE')
+		expect(peekRequestedTerminalSymbol()).toBe('ETH')
+		settleRequestedTerminalSymbol('ETH')
+	})
+})

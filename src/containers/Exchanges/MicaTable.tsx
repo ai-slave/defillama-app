@@ -56,7 +56,7 @@ const MICA_COLUMN_VISIBILITY: Record<MicaFilter, ColumnVisibilityState> = {
 	}
 }
 
-export function micaColumnVisibility(filter: MicaFilter): ColumnVisibilityState {
+function micaColumnVisibility(filter: MicaFilter): ColumnVisibilityState {
 	return MICA_COLUMN_VISIBILITY[filter]
 }
 

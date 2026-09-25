@@ -1,9 +1,13 @@
 import type { ECharts } from 'echarts/core'
 // @vitest-environment happy-dom
-import { expect, test, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { chartHoverSyncGroupSize, joinChartHoverSync } from './chartHoverSync'
 
 type Handler = (event?: unknown) => void
+
+afterEach(() => {
+	vi.unstubAllGlobals()
+})
 
 function fakeChart() {
 	const handlers = new Map<string, Handler>()
@@ -16,7 +20,6 @@ function fakeChart() {
 	return {
 		instance: instance as unknown as ECharts,
 		dispatchAction: instance.dispatchAction,
-		off: instance.off,
 		emit: (event: string, payload?: unknown) => handlers.get(event)?.(payload),
 		element: document.createElement('div')
 	}
@@ -42,10 +45,12 @@ test('forwards the axis pointer to the other charts of the group and hides their
 	expect(target.dispatchAction).toHaveBeenLastCalledWith({ type: 'hideTip' })
 
 	leaveSource()
+	source.emit('updateAxisPointer', { type: 'updateAxisPointer', axesInfo: [{ axisDim: 'x', value: 2 }] })
+	expect(target.dispatchAction).toHaveBeenCalledTimes(2)
+
 	leaveTarget()
 	leaveStranger()
 	expect(chartHoverSyncGroupSize('dashboard-1')).toBe(0)
-	expect(source.off).toHaveBeenCalledWith('updateAxisPointer', expect.any(Function))
 })
 
 test('a forwarded pointer does not echo back to the source', () => {
@@ -99,5 +104,4 @@ test('charts scrolled out of the viewport do not receive the pointer', () => {
 
 	leaveSource()
 	leaveOffscreen()
-	vi.unstubAllGlobals()
 })

@@ -1,9 +1,8 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { buildProtocolTvlRanking, fetchProtocolTvlRankingRows, type ProtocolTvlRankingRow } from './protocolTvlRanking'
+import { describe, expect, test, vi } from 'vitest'
+import { buildProtocolTvlRanking, type ProtocolTvlRankingRow, resolveRankingFilter } from './protocolTvlRanking'
 
-const { anyMock } = vi.hoisted(() => ({ anyMock: vi.fn() }))
-
-vi.mock('~/server/db/llama', () => ({ llamaDb: { any: anyMock } }))
+// The module opens a DB pool on import; these tests only use its pure helpers.
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
 
 function row(overrides: Partial<ProtocolTvlRankingRow>): ProtocolTvlRankingRow {
 	return {
@@ -16,17 +15,7 @@ function row(overrides: Partial<ProtocolTvlRankingRow>): ProtocolTvlRankingRow {
 	}
 }
 
-function requireMockCall(index: number): Array<unknown> {
-	const call = anyMock.mock.calls[index]
-	if (!call) throw new Error(`Expected database call ${index}`)
-	return call
-}
-
 describe('protocol TVL Lens ranking', () => {
-	beforeEach(() => {
-		anyMock.mockReset().mockResolvedValue([])
-	})
-
 	test('ranks parent sums while keeping parent-excluded children standalone', () => {
 		const result = buildProtocolTvlRanking({
 			rows: [
@@ -65,26 +54,14 @@ describe('protocol TVL Lens ranking', () => {
 		expect(result.items.map((item) => item.protocolSlug)).toEqual(['dex'])
 	})
 
-	test('uses global current views for all-chain ranking', async () => {
-		await fetchProtocolTvlRankingRows({ chains: ['All'], chainFilterMode: 'include' })
-		const [query, params] = requireMockCall(0)
-
-		expect(query).toContain('FROM lens.metrics_protocol_current mp')
-		expect(query).not.toContain('metrics_protocol_by_chain_current')
-		expect(params).toEqual([])
-	})
-
-	test('expresses selected-chain include and exclusion exactly in Lens SQL', async () => {
-		await fetchProtocolTvlRankingRows({ chains: ['Arbitrum One'], chainFilterMode: 'include' })
-		await fetchProtocolTvlRankingRows({ chains: ['Ethereum', 'Base'], chainFilterMode: 'exclude' })
-		const [includeQuery, includeParams] = requireMockCall(0)
-		const [excludeQuery, excludeParams] = requireMockCall(1)
-
-		expect(includeQuery).toContain('lower(metrics.chain) = ANY($1)')
-		expect(includeQuery).toContain('lens.metrics_sub_protocol_by_chain_current')
-		expect(includeParams).toEqual([['arbitrum-one']])
-		expect(excludeQuery).toContain('lower(metrics.chain) <> ALL($1)')
-		expect(excludeQuery).toContain('lens.metrics_protocol_by_chain_current')
-		expect(excludeParams).toEqual([['ethereum', 'base']])
+	test('an All selection ranks every chain, and selected chains filter by their Lens slug', () => {
+		expect(resolveRankingFilter(['All'], 'include')).toEqual({ scope: 'global', chains: [] })
+		expect(resolveRankingFilter([], 'exclude')).toEqual({ scope: 'global', chains: [] })
+		expect(resolveRankingFilter(['All', 'Ethereum'], 'include')).toEqual({ scope: 'global', chains: [] })
+		expect(resolveRankingFilter(['Arbitrum One'], 'include')).toEqual({ scope: 'include', chains: ['arbitrum-one'] })
+		expect(resolveRankingFilter(['Ethereum', 'Base'], 'exclude')).toEqual({
+			scope: 'exclude',
+			chains: ['ethereum', 'base']
+		})
 	})
 })

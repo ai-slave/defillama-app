@@ -8,7 +8,7 @@ import { fetchProProtocolCatalogSourceRows } from './protocolCatalogSource'
 describe('Pro protocol catalog Lens source', () => {
 	beforeEach(() => llamaQuery.mockReset())
 
-	test('reads membership, TVL, parent policy, and canonical token metadata from Lens', async () => {
+	test('maps Lens rows to catalog rows with parent policy and the CoinGecko id from the token key', async () => {
 		llamaQuery.mockResolvedValue([
 			{
 				slug: 'child',
@@ -36,7 +36,5 @@ describe('Pro protocol catalog Lens source', () => {
 				excludeTvlFromParent: true
 			}
 		])
-		expect(llamaQuery.mock.calls[0]?.[0]).toContain('FROM lens.metrics_sub_protocol_current metrics')
-		expect(llamaQuery.mock.calls[0]?.[0]).toContain('JOIN dim.protocol p ON p.slug = metrics.sub_protocol')
 	})
 })

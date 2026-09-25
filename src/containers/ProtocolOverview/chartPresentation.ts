@@ -16,6 +16,14 @@ export function getProtocolSeriesName(label: string, groupBy: ChartTimeGroupingW
 	return label === 'Active Addresses' && groupBy !== 'daily' ? getDailyAverageLabel(label) : label
 }
 
+/** Every series having fewer than two points leaves nothing to zoom across. */
+export function shouldHideProtocolDataZoom(
+	chartData: Partial<Record<ProtocolChartsLabels, Array<[number, number | null]>>>,
+	hideDataZoom: boolean
+): boolean {
+	return hideDataZoom || Object.values(chartData).every((seriesData) => (seriesData?.length ?? 0) < 2)
+}
+
 export function buildProtocolChartPresentation({
 	chartData,
 	chartColors,

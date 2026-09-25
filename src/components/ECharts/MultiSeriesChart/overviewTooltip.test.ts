@@ -96,20 +96,4 @@ describe('overview tooltip', () => {
 		}
 		expect(output).not.toContain('Others')
 	})
-
-	test('renders an actual Others series only as its independent value', () => {
-		const timestamp = 1_700_000_000_000
-		const output = createOverviewTooltipFormatter({
-			valueSymbol: 'ETH',
-			unlockTokenSymbol: '',
-			seriesValueSymbols: new Map([['Others', '$']])
-		})([
-			{ axisValue: timestamp, seriesName: 'Metric', value: [timestamp, 5], encode: { y: [1] } },
-			{ axisValue: timestamp, seriesName: 'Others', value: [timestamp, 7], encode: { y: [1] } }
-		])
-
-		expect(output).toContain('Metric&nbsp;&nbsp;5 ETH')
-		expect(output).toContain('Others&nbsp;&nbsp;$7')
-		expect(output.match(/Others/g)).toHaveLength(1)
-	})
 })

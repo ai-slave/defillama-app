@@ -1,70 +1,65 @@
-import { useSelector } from '@tanstack/react-store'
-import type { ReactTable } from '@tanstack/react-table'
 // @vitest-environment happy-dom
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLiquidationsSection } from '~/containers/Token/TokenLiquidationsSection'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { LiquidationsChainPage } from '../ChainPage'
 import { LiquidationsOverview } from '../index'
 import { LiquidationsProtocolPage } from '../ProtocolPage'
 
+vi.mock('next/router', () => ({
+	useRouter: () => ({ pathname: '/liquidations', asPath: '/liquidations', query: {}, push() {}, replace() {} })
+}))
+// Heavy children the tab contract does not read.
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
-vi.mock('@tanstack/react-query', () => ({
-	useQuery: () => ({ data: { ...props, tokenSymbol: 'ETH' }, isLoading: false })
-}))
-vi.mock('~/containers/Token/TokenPrivateSectionGate', () => ({
-	useTokenPrivateSectionAccess: () => ({
-		isAuthenticated: true,
-		hasActiveSubscription: true,
-		loaders: { userLoading: false }
-	}),
-	TokenPrivateSectionGate: ({ children }: { children: React.ReactNode }) => children
-}))
-vi.mock('~/containers/Token/deferred/DeferredTokenLiquidationsTable', async () => ({
-	DeferredTokenLiquidationsTable: (await import('~/containers/Token/TokenLiquidationsTable')).TokenLiquidationsTable
-}))
 vi.mock('~/components/RowLinksWithDropdown', () => ({ RowLinksWithDropdown: () => null }))
 vi.mock('../LiquidationsDistributionChart', () => ({ LiquidationsDistributionChart: () => null }))
-vi.mock('../Summary', () => ({ LiquidationsSummaryStats: () => null, LiquidationsPageHeader: () => null }))
-vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, unknown> }) => {
-		const state = useSelector(instance.store)
-		const rows = useSelector(instance.store, () => instance.getRowModel().rows)
-		return (
-			<div data-testid="table" data-sort={JSON.stringify(state.sorting)}>
-				<button type="button" onClick={() => instance.getColumn(state.sorting[0].id)!.toggleSorting(false)}>
-					Sort ascending
-				</button>
-				<output>{rows.length} rows</output>
-			</div>
-		)
-	}
-}))
 
-const chain = {
-	id: 'ethereum',
-	name: 'Ethereum',
-	slug: 'ethereum',
+const session = installSubscriberSession('subscriber')
+
+const ref = (name: string) => ({ id: name.toLowerCase(), name, slug: name.toLowerCase() })
+const protocolRow = (name: string, totalCollateralUsd: number) => ({
+	...ref(name),
+	positionCount: 1,
+	chainCount: 1,
+	collateralCount: 1,
+	totalCollateralUsd
+})
+const chainRow = (name: string, totalCollateralUsd: number) => ({
+	...ref(name),
 	protocolId: 'aave',
 	protocolName: 'Aave',
 	protocolSlug: 'aave',
 	positionCount: 1,
+	protocolCount: 1,
 	collateralCount: 1,
-	totalCollateralUsd: 200_000,
-	protocolCount: 1
-}
+	totalCollateralUsd
+})
+const position = (protocolName: string, collateralAmountUsd: number) => ({
+	protocolId: protocolName.toLowerCase(),
+	protocolName,
+	protocolSlug: protocolName.toLowerCase(),
+	chainId: 'ethereum',
+	chainName: 'Ethereum',
+	chainSlug: 'ethereum',
+	owner: `0x${protocolName}`,
+	liqPrice: 1000,
+	collateral: 'ETH',
+	collateralId: 'eth',
+	collateralAmount: 1,
+	collateralAmountUsd
+})
+// Every table defaults to the largest collateral first, so the smaller row comes second.
 const props = {
 	protocolLinks: [],
 	chainLinks: [],
 	timestamp: 100,
-	protocolCount: 1,
-	chainCount: 1,
-	positionCount: 1,
+	protocolCount: 2,
+	chainCount: 2,
+	positionCount: 2,
 	collateralCount: 1,
-	totalCollateralUsd: 200_000,
+	totalCollateralUsd: 350_000,
 	distributionChart: { tokens: [] },
 	protocolId: 'aave',
 	protocolName: 'Aave',
@@ -72,41 +67,35 @@ const props = {
 	chainId: 'ethereum',
 	chainName: 'Ethereum',
 	chainSlug: 'ethereum',
-	protocolRows: [
-		{
-			id: 'aave',
-			name: 'Aave',
-			slug: 'aave',
-			positionCount: 1,
-			chainCount: 1,
-			collateralCount: 1,
-			totalCollateralUsd: 200_000
-		}
-	],
-	chainRows: [chain],
+	protocolRows: [protocolRow('Spark', 100_000), protocolRow('Aave', 200_000)],
+	chainRows: [chainRow('Arbitrum', 50_000), chainRow('Ethereum', 300_000)],
 	ownerBlockExplorers: [],
-	positions: [
-		{
-			protocolId: 'aave',
-			protocolName: 'Aave',
-			protocolSlug: 'aave',
-			chainId: 'ethereum',
-			chainName: 'Ethereum',
-			chainSlug: 'ethereum',
-			owner: '0x123',
-			liqPrice: 1000,
-			collateral: 'ETH',
-			collateralId: 'eth',
-			collateralAmount: 100,
-			collateralAmountUsd: 200_000
-		}
-	]
+	positions: [position('Spark', 100_000), position('Aave', 200_000)]
 }
 const cases = [
-	{ name: 'overview', render: () => <LiquidationsOverview {...props} />, labels: ['Protocols', 'Chains'] },
-	{ name: 'protocol', render: () => <LiquidationsProtocolPage {...props} />, labels: ['Chains', 'Positions'] },
-	{ name: 'chain', render: () => <LiquidationsChainPage {...props} />, labels: ['Positions', 'Chains'] }
+	{
+		name: 'overview',
+		render: () => <LiquidationsOverview {...props} />,
+		labels: ['Protocols', 'Chains'],
+		firstRows: ['Aave', 'Spark'],
+		secondRows: ['Ethereum', 'Arbitrum']
+	},
+	{
+		name: 'protocol',
+		render: () => <LiquidationsProtocolPage {...props} />,
+		labels: ['Chains', 'Positions'],
+		firstRows: ['Ethereum', 'Arbitrum'],
+		secondRows: ['Aave', 'Spark']
+	},
+	{
+		name: 'chain',
+		render: () => <LiquidationsChainPage {...props} />,
+		labels: ['Positions', 'Chains'],
+		firstRows: ['Aave', 'Spark'],
+		secondRows: ['Ethereum', 'Arbitrum']
+	}
 ]
+
 let container: HTMLDivElement
 let root: Root
 beforeEach(() => {
@@ -118,6 +107,10 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
+
+async function mount(ui: ReactNode) {
+	await act(async () => root.render(<session.Wrapper>{ui}</session.Wrapper>))
+}
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
 		element.focus()
@@ -126,6 +119,25 @@ async function press(element: HTMLElement, key: string) {
 		await new Promise((resolve) => setTimeout(resolve, 30))
 	})
 }
+const tabs = () => [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+const search = () => container.querySelector<HTMLInputElement>('[role="tabpanel"] input')!
+async function type(value: string) {
+	await act(async () => {
+		search().value = value
+		search().dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+async function sortByCollateral() {
+	const header = [...container.querySelectorAll<HTMLButtonElement>('thead button')].find(
+		(button) => button.textContent === 'Collateral USD'
+	)!
+	await act(async () => header.click())
+}
+// The first cell of each rendered row names the protocol or chain.
+const rowNames = () =>
+	[...container.querySelectorAll('[role="tabpanel"] tbody tr:not([aria-hidden])')].map(
+		(row) => row.querySelector('td')!.textContent
+	)
 function expectPanel(tab: HTMLButtonElement) {
 	const panel = container.querySelector<HTMLElement>('[role="tabpanel"]')!
 	expect(tab.getAttribute('aria-selected')).toBe('true')
@@ -136,42 +148,40 @@ function expectPanel(tab: HTMLButtonElement) {
 }
 
 test.each(cases)(
-	'$name preserves focused tabs while selection resets the actual table state',
-	async ({ render, labels }) => {
-		await act(async () => root.render(render()))
-		const [first, second] = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+	'$name moves focus without switching views and resets search and sorting on a new view',
+	async ({ render, labels, firstRows, secondRows }) => {
+		await mount(render())
+		const [first, second] = tabs()
 		expect([first.textContent, second.textContent]).toEqual(labels)
 		expectPanel(first)
-		const search = container.querySelector<HTMLInputElement>('input')!
-		const table = container.querySelector('[data-testid="table"]')!
-		await act(async () => {
-			search.value = 'no matching rows'
-			search.dispatchEvent(new Event('input', { bubbles: true }))
-			container.querySelector<HTMLButtonElement>('[data-testid="table"] button')!.click()
-		})
-		expect(container.querySelector('output')!.textContent).toBe('0 rows')
-		expect(table.getAttribute('data-sort')).toContain('"desc":false')
+		expect(rowNames()).toEqual(firstRows)
+
+		await sortByCollateral()
+		expect(rowNames()).toEqual([...firstRows].reverse())
+		await type('no matching rows')
+		expect(rowNames()).toEqual([])
+
 		await press(first, 'ArrowRight')
 		expect(document.activeElement).toBe(second)
 		expectPanel(first)
-		expect(container.querySelector('[data-testid="table"]')).toBe(table)
-		expect(search.value).toBe('no matching rows')
+		expect(search().value).toBe('no matching rows')
+		expect(rowNames()).toEqual([])
+
 		await press(second, 'Enter')
 		expect(document.activeElement).toBe(second)
-		expect(container.querySelectorAll('[role="tab"]')[1]).toBe(second)
 		expectPanel(second)
-		expect(container.querySelector('input')).not.toBe(search)
-		expect(container.querySelector<HTMLInputElement>('input')!.value).toBe('')
-		expect(container.querySelector('output')!.textContent).toBe('1 rows')
+		expect(search().value).toBe('')
+		expect(rowNames()).toEqual(secondRows)
+
 		await press(second, 'Home')
 		expect(document.activeElement).toBe(first)
 		expectPanel(second)
 		await press(first, ' ')
 		expectPanel(first)
 		expect(document.activeElement).toBe(first)
-		expect(container.querySelector('[data-testid="table"]')).not.toBe(table)
-		expect(container.querySelector('[data-testid="table"]')!.getAttribute('data-sort')).toContain('"desc":true')
-		expect(container.querySelector<HTMLInputElement>('input')!.value).toBe('')
+		expect(search().value).toBe('')
+		expect(rowNames()).toEqual(firstRows)
+
 		await press(first, 'End')
 		expect(document.activeElement).toBe(second)
 		expectPanel(first)
@@ -179,32 +189,46 @@ test.each(cases)(
 )
 
 test('token liquidations keeps search and sorting across views without losing focus', async () => {
-	await act(async () => root.render(<TokenLiquidationsSection tokenSymbol="ETH" />))
-	const [first, second] = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
-	const search = container.querySelector<HTMLInputElement>('input')!
-	const table = container.querySelector('[data-testid="table"]')!
-	await act(async () => {
-		search.value = 'Ethereum'
-		search.dispatchEvent(new Event('input', { bubbles: true }))
-		container.querySelector<HTMLButtonElement>('[data-testid="table"] button')!.click()
+	session.serve({
+		'/api/private/token-liquidations/ETH': {
+			tokenSymbol: 'ETH',
+			timestamp: 100,
+			positionCount: 2,
+			protocolCount: 2,
+			chainCount: 2,
+			totalCollateralUsd: 350_000,
+			distributionChart: { tokens: [] },
+			protocolRows: props.protocolRows,
+			chainRows: props.chainRows
+		}
 	})
+	await mount(<TokenLiquidationsSection tokenSymbol="ETH" />)
+	await vi.waitFor(async () => {
+		await act(async () => {})
+		expect(tabs()).toHaveLength(2)
+		expect(rowNames()).toEqual(['Aave', 'Spark'])
+	})
+	const [first, second] = tabs()
 	expectPanel(first)
-	expect(container.querySelector('output')!.textContent).toBe('0 rows')
+
+	// "um" matches both chains and neither protocol.
+	await sortByCollateral()
+	await type('um')
+	expect(rowNames()).toEqual([])
+
 	await press(first, 'ArrowRight')
 	expectPanel(first)
 	await press(second, 'Enter')
 	expectPanel(second)
 	expect(document.activeElement).toBe(second)
-	expect(container.querySelector('input')).toBe(search)
-	expect(search.value).toBe('Ethereum')
-	expect(container.querySelector('[data-testid="table"]')).toBe(table)
-	expect(table.getAttribute('data-sort')).toContain('"desc":false')
-	expect(container.querySelector('output')!.textContent).toBe('1 rows')
+	expect(search().value).toBe('um')
+	expect(rowNames()).toEqual(['Arbitrum', 'Ethereum'])
+
 	await press(second, 'Home')
 	await press(first, ' ')
 	expectPanel(first)
 	expect(document.activeElement).toBe(first)
-	expect(search.value).toBe('Ethereum')
-	expect(table.getAttribute('data-sort')).toContain('"desc":false')
-	expect(container.querySelector('output')!.textContent).toBe('0 rows')
+	expect(search().value).toBe('um')
+	await type('')
+	expect(rowNames()).toEqual(['Spark', 'Aave'])
 })

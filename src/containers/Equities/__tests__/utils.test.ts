@@ -1,16 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import {
-	buildEquityTickerCountrySlug,
-	parseEquityTickerCountryParam,
-	parseEquityTickerCountrySlug
-} from '../tickerCountry'
+import { parseEquityTickerCountryParam, parseEquityTickerCountrySlug } from '../tickerCountry'
 
 describe('equities slug helpers', () => {
-	test('builds ticker-country slugs from provided values', () => {
-		expect(buildEquityTickerCountrySlug('NVDA', 'US')).toBe('NVDA:US')
-		expect(buildEquityTickerCountrySlug('nvda', 'us')).toBe('nvda:us')
-	})
-
 	test('parses ticker-country slugs without normalizing values', () => {
 		expect(parseEquityTickerCountrySlug('NVDA:US')).toEqual({ ticker: 'NVDA', country: 'US' })
 		expect(parseEquityTickerCountrySlug('nvda:us')).toEqual({ ticker: 'nvda', country: 'us' })

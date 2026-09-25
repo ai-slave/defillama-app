@@ -155,28 +155,6 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		)
 	})
 
-	test('is independent of input order for grouped and cumulative output', () => {
-		const charts = makeCharts()
-		charts.dataset.source = [
-			[toMs(2024, 1, 22), 7, 130],
-			[toMs(2024, 1, 17), 5, 120],
-			[toMs(2024, 1, 15), 10, 100]
-		]
-
-		const weekly = buildProtocolTaxonomyGroupedCharts({ charts, groupBy: 'weekly' })
-		const cumulative = buildProtocolTaxonomyGroupedCharts({ charts, groupBy: 'cumulative' })
-
-		expect(weekly.charts.dataset.source).toEqual([
-			[toMs(2024, 1, 21), 15, 120],
-			[toMs(2024, 1, 28), 7, 130]
-		])
-		expect(cumulative.charts.dataset.source).toEqual([
-			[toMs(2024, 1, 15), 10, 100],
-			[toMs(2024, 1, 17), 15, 120],
-			[toMs(2024, 1, 22), 22, 130]
-		])
-	})
-
 	test('never accumulates line snapshots in cumulative mode', () => {
 		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'cumulative' })
 

@@ -1,35 +1,26 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { Dashboard } from '../dashboardTypes'
 import { SimilarDashboards } from './SimilarDashboards'
 
-const mocks = vi.hoisted(() => ({
-	searchDashboards: vi.fn(),
-	push: vi.fn(),
-	authorizedFetch: vi.fn()
-}))
+const mocks = vi.hoisted(() => ({ push: vi.fn() }))
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ authorizedFetch: mocks.authorizedFetch, isAuthenticated: false })
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push, query: {} }) }))
-vi.mock('../services/DashboardAPI', () => ({ dashboardAPI: { searchDashboards: mocks.searchDashboards } }))
-vi.mock('./DashboardCard', () => ({
-	DashboardCard: ({ dashboard, onTagClick }: { dashboard: Dashboard; onTagClick?: (tag: string) => void }) => (
-		<article>
-			<span>{dashboard.data.dashboardName}</span>
-			<button type="button" onClick={() => onTagClick?.('Yields')}>
-				Yields
-			</button>
-		</article>
-	)
-}))
+const http = installSubscriberSession('reader', { account: 'signed-out' })
+const searches = () =>
+	http.requests.filter((request) => request.url.pathname === '/dashboards/search').map((request) => request.url.search)
 
 function makeDashboard(id: string): Dashboard {
-	return { id, tags: ['Yields'], data: { items: [], dashboardName: `Dashboard ${id}` } } as unknown as Dashboard
+	return {
+		id,
+		tags: ['Yields'],
+		data: { items: [], dashboardName: `Dashboard ${id}` },
+		created: '2026-09-01 00:00:00.000Z',
+		updated: '2026-09-02 00:00:00.000Z'
+	} as Dashboard
 }
 
 function searchResponse(items: Array<Dashboard>) {
@@ -39,26 +30,28 @@ function searchResponse(items: Array<Dashboard>) {
 describe('SimilarDashboards', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let client: QueryClient
 
 	const render = async (props: { dashboardId: string; tags: ReadonlyArray<string> }) => {
 		await act(async () =>
 			root.render(
-				<QueryClientProvider client={client}>
+				<http.Wrapper>
 					<SimilarDashboards {...props} />
-				</QueryClientProvider>
+				</http.Wrapper>
 			)
 		)
-		await act(async () => {
-			await new Promise((resolve) => setTimeout(resolve, 20))
+		if (props.tags.length === 0) return
+		await vi.waitFor(() => {
+			expect(searches()).toHaveLength(1)
+			expect(http.client.isFetching()).toBe(0)
 		})
+		// TanStack notifies observers on a timer tick, after the cache already holds the result.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
 	}
+	const serveSearch = (items: Array<Dashboard>) => http.serve({ '/dashboards/search': searchResponse(items) })
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.searchDashboards.mockReset()
 		mocks.push.mockReset()
-		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -67,51 +60,47 @@ describe('SimilarDashboards', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
-		client.clear()
 	})
 
-	test('renders nothing and skips the request when the dashboard has no tags', async () => {
+	test('skips the request and renders nothing until the dashboard has a tag', async () => {
+		serveSearch([makeDashboard('a')])
 		await render({ dashboardId: 'current', tags: [] })
 		expect(container.innerHTML).toBe('')
-		expect(mocks.searchDashboards).not.toHaveBeenCalled()
+		expect(searches()).toEqual([])
+
+		await render({ dashboardId: 'current', tags: ['Yields'] })
+		expect(searches()).toEqual(['?tags=Yields&visibility=public&sortBy=popular&page=1&limit=9'])
+		expect(container.querySelector('h2')?.textContent).toBe('Similar dashboards')
 	})
 
 	test('queries the first two tags, drops the current dashboard and shows at most four cards', async () => {
-		mocks.searchDashboards.mockResolvedValue(
-			searchResponse(['a', 'current', 'b', 'c', 'd', 'e', 'f'].map((id) => makeDashboard(id)))
-		)
+		serveSearch(['a', 'current', 'b', 'c', 'd', 'e', 'f'].map((id) => makeDashboard(id)))
 		await render({ dashboardId: 'current', tags: ['Yields', 'Perps', 'Fees'] })
 
-		expect(mocks.searchDashboards).toHaveBeenCalledOnce()
-		expect(mocks.searchDashboards.mock.calls[0]?.[0]).toEqual({
-			tags: ['Yields', 'Perps'],
-			visibility: 'public',
-			sortBy: 'popular',
-			page: 1,
-			limit: 9
-		})
-		expect(mocks.searchDashboards.mock.calls[0]?.[1]).toBeUndefined()
+		expect(searches()).toEqual(['?tags=Yields%2CPerps&visibility=public&sortBy=popular&page=1&limit=9'])
 
 		expect(container.querySelector('h2')?.textContent).toBe('Similar dashboards')
-		const names = Array.from(container.querySelectorAll('article span')).map((node) => node.textContent)
+		const names = Array.from(container.querySelectorAll('[data-umami-event="dashboard-similar-click"] h2')).map(
+			(node) => node.textContent
+		)
 		expect(names).toEqual(['Dashboard a', 'Dashboard b', 'Dashboard c', 'Dashboard d'])
 		const wrappers = container.querySelectorAll('[data-umami-event="dashboard-similar-click"]')
 		expect(wrappers).toHaveLength(4)
 		expect(wrappers[0]?.getAttribute('data-umami-event-dashboard')).toBe('a')
-		expect(wrappers[0]?.querySelector('article')).not.toBeNull()
 	})
 
 	test('renders nothing when the only match is the current dashboard', async () => {
-		mocks.searchDashboards.mockResolvedValue(searchResponse([makeDashboard('current')]))
+		serveSearch([makeDashboard('current')])
 		await render({ dashboardId: 'current', tags: ['Yields'] })
-		expect(mocks.searchDashboards).toHaveBeenCalledOnce()
+		expect(searches()).toHaveLength(1)
 		expect(container.innerHTML).toBe('')
 	})
 
 	test('opens the discover tag filter when a card tag is clicked', async () => {
-		mocks.searchDashboards.mockResolvedValue(searchResponse([makeDashboard('a')]))
+		serveSearch([makeDashboard('a')])
 		await render({ dashboardId: 'current', tags: ['Yields'] })
-		await act(async () => container.querySelector('button')!.click())
+		const tagChip = Array.from(container.querySelectorAll('button')).find((node) => node.textContent === 'Yields')!
+		await act(async () => tagChip.click())
 		expect(mocks.push).toHaveBeenCalledWith({ pathname: '/pro', query: { tab: 'discover', tag: 'Yields' } })
 	})
 })

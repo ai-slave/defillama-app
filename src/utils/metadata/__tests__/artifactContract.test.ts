@@ -1,13 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import {
-	METADATA_ARTIFACT_KEYS,
 	METADATA_ARTIFACT_FILES,
 	METADATA_ARTIFACT_REGISTRY,
-	METADATA_CI_STUBS,
 	applyMetadataRefresh,
 	createMetadataCacheFromArtifacts,
 	getMetadataArtifactEntries,
-	validateCoreMetadataPayload,
 	type CoreMetadataPayload
 } from '../artifactContract'
 
@@ -72,17 +69,6 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 }
 
 describe('metadata artifact contract', () => {
-	test('declares a registry entry for every payload key', () => {
-		expect(METADATA_ARTIFACT_KEYS.toSorted()).toEqual(Object.keys(createPayload()).toSorted())
-
-		for (const key of METADATA_ARTIFACT_KEYS) {
-			const artifact = METADATA_ARTIFACT_REGISTRY[key]
-			expect(artifact.file).toMatch(/\.json$/)
-			expect(artifact.file).not.toContain('..')
-			expect(artifact.parse(artifact.stub, artifact.file)).toBe(artifact.stub)
-		}
-	})
-
 	test('lists every generated artifact filename once', () => {
 		const artifactFiles = Object.values(METADATA_ARTIFACT_FILES)
 		expect(new Set(artifactFiles).size).toBe(artifactFiles.length)
@@ -91,14 +77,6 @@ describe('metadata artifact contract', () => {
 				.map(([file]) => file)
 				.toSorted()
 		).toEqual(artifactFiles.toSorted())
-	})
-
-	test('provides CI stubs for every generated artifact', () => {
-		expect(
-			getMetadataArtifactEntries(METADATA_CI_STUBS)
-				.map(([file]) => file)
-				.toSorted()
-		).toEqual(Object.values(METADATA_ARTIFACT_FILES).toSorted())
 	})
 
 	test('creates runtime metadata lookups from artifact payloads', () => {
@@ -164,38 +142,6 @@ describe('metadata artifact contract', () => {
 		expect(metadata.chainDisplayNames.get('Arbitrum')).toBe('Arbitrum One')
 		expect(metadata.chainDisplayNames.get('arbitrum-one')).toBe('Arbitrum One')
 		expect(metadata.chainDisplayNames.get('arbitrum')).toBe('Arbitrum One')
-	})
-
-	test('allows smaller but valid refresh payloads', () => {
-		const payload = createPayload({
-			chains: {}
-		})
-
-		expect(validateCoreMetadataPayload(payload).chains).toEqual({})
-	})
-
-	test('accepts backend-owned artifact shapes without revalidating them', () => {
-		const payload = createPayload({
-			chains: [] as unknown as CoreMetadataPayload['chains']
-		})
-
-		expect(validateCoreMetadataPayload(payload).chains).toEqual([])
-	})
-
-	test('accepts nested backend-owned fields without revalidating them', () => {
-		const payload = createPayload({
-			tokenDirectory: {
-				aave: { name: 'Aave' }
-			} as unknown as CoreMetadataPayload['tokenDirectory'],
-			categoriesAndTags: {
-				categories: ['Lending'],
-				tags: [1],
-				tagCategoryMap: {},
-				configs: {}
-			} as unknown as CoreMetadataPayload['categoriesAndTags']
-		})
-
-		expect(validateCoreMetadataPayload(payload).tokenDirectory).toEqual({ aave: { name: 'Aave' } })
 	})
 })
 

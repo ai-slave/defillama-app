@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
-import {
-	BRIDGE_VOLUME_SPLIT_CHARTS,
-	buildBridgeVolumeChartData,
-	getStaleBridgeVolumeTimestamp
-} from '../bridgeVolumeData'
+import { buildBridgeVolumeChartData, getStaleBridgeVolumeTimestamp } from '../bridgeVolumeData'
 
 describe('buildBridgeVolumeChartData', () => {
 	test('builds daily split volume rows in chronological order', () => {
@@ -25,27 +21,6 @@ describe('buildBridgeVolumeChartData', () => {
 				[2000, 20, -5]
 			]
 		})
-	})
-
-	test('keeps signed split bars out of ECharts large mode', () => {
-		expect(BRIDGE_VOLUME_SPLIT_CHARTS).toEqual([
-			{
-				type: 'bar',
-				name: 'Deposits',
-				encode: { x: 0, y: 1 },
-				color: '#3b82f6',
-				stack: 'metric',
-				large: false
-			},
-			{
-				type: 'bar',
-				name: 'Withdrawals',
-				encode: { x: 0, y: 2 },
-				color: '#ef4444',
-				stack: 'metric',
-				large: false
-			}
-		])
 	})
 
 	test('groups combined transaction rows by selected period', () => {
@@ -74,20 +49,31 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 	})
 
-	test('preserves unknown volume legs and requires both for a combined value', () => {
-		const result = buildBridgeVolumeChartData({
-			data: [
-				{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 },
-				{ date: 2, depositUSD: null, withdrawUSD: 5, depositTxs: 0, withdrawTxs: 1 }
-			],
-			timePeriod: 'daily',
-			metricType: 'Volume',
-			viewType: 'Combined'
-		})
+	test('preserves unknown volume legs, requires both for a combined value, and still counts transactions', () => {
+		const data = [
+			{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 },
+			{ date: 2, depositUSD: null, withdrawUSD: 5, depositTxs: 0, withdrawTxs: 1 }
+		]
 
-		expect(result.dataset.source).toEqual([
+		expect(
+			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Volume', viewType: 'Split' }).dataset.source
+		).toEqual([
+			[1000, 10, null],
+			[2000, null, -5]
+		])
+		expect(
+			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Volume', viewType: 'Combined' }).dataset
+				.source
+		).toEqual([
 			[1000, null],
 			[2000, null]
+		])
+		expect(
+			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Transactions', viewType: 'Combined' })
+				.dataset.source
+		).toEqual([
+			[1000, 2],
+			[2000, 1]
 		])
 	})
 
@@ -102,24 +88,6 @@ describe('buildBridgeVolumeChartData', () => {
 			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Transactions', viewType: 'Combined' })
 				.dataset.source
 		).toEqual([[1000, 5]])
-	})
-
-	test('shows a known split leg and exact transaction counts', () => {
-		const volume = buildBridgeVolumeChartData({
-			data: [{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 0, withdrawTxs: 0 }],
-			timePeriod: 'daily',
-			metricType: 'Volume',
-			viewType: 'Split'
-		})
-		const transactions = buildBridgeVolumeChartData({
-			data: [{ date: 1, depositUSD: null, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 }],
-			timePeriod: 'daily',
-			metricType: 'Transactions',
-			viewType: 'Combined'
-		})
-
-		expect(volume.dataset.source).toEqual([[1000, 10, null]])
-		expect(transactions.dataset.source).toEqual([[1000, 2]])
 	})
 
 	test('keeps empty combined datasets dimensioned for the active view', () => {

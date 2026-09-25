@@ -19,21 +19,14 @@ describe('runChild', () => {
 
 		const result = await runChild(
 			process.execPath,
-			['-e', "process.stderr.write('next compiler failed'); process.exit(1)"],
+			['-e', "process.stderr.write('next compiler failed'); process.exit(4)"],
 			{
 				logger
 			}
 		)
 
-		expect(result.exitCode).toBe(1)
-		expect(logger.output.join('')).toBe('next compiler failed')
-	})
-
-	test('returns non-zero exits', async () => {
-		const result = await runChild(process.execPath, ['-e', 'process.exit(4)'])
-
 		expect(result.exitCode).toBe(4)
-		expect(result.signal).toBeNull()
+		expect(logger.output.join('')).toBe('next compiler failed')
 	})
 
 	test('rejects when final output flushing fails', async () => {

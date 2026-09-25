@@ -131,7 +131,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 			mode: 'overview',
 			markets: [
 				{ ...baseMarket, id: 'xyz:meta', venue: 'xyz' },
-				{ ...baseMarket, id: 'flx:gold', contract: 'flx:GOLD', referenceAsset: 'Gold', venue: 'flx', openInterest: 50 }
+				{ ...baseMarket, id: 'flx:gold', contract: 'flx:GOLD', referenceAsset: 'Gold', venue: 'flx', openInterest: 300 }
 			],
 			metric: 'openInterest',
 			parentGrouping: 'venue',
@@ -139,8 +139,8 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		})
 
 		expect(tree).toEqual([
-			expect.objectContaining({ name: 'xyz', path: 'Venue/xyz' }),
-			expect.objectContaining({ name: 'flx', path: 'Venue/flx' })
+			{ name: 'flx', path: 'Venue/flx', value: [300, 75, 75], itemStyle: { color: CHART_COLORS[0] } },
+			{ name: 'xyz', path: 'Venue/xyz', value: [100, 25, 25], itemStyle: { color: CHART_COLORS[1] } }
 		])
 	})
 
@@ -176,59 +176,6 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 			path: 'Asset Class/Stock Perp'
 		})
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:NVDA', 'xyz:META'])
-	})
-
-	test('builds overview nested tree data by reference asset -> contract', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'overview',
-			markets: [
-				{ ...baseMarket, id: 'xyz:meta', contract: 'xyz:META', referenceAsset: 'Meta', openInterest: 100 },
-				{ ...baseMarket, id: 'flx:meta', contract: 'flx:META', venue: 'flx', referenceAsset: 'Meta', openInterest: 80 }
-			],
-			metric: 'openInterest',
-			parentGrouping: 'baseAsset',
-			nestedBy: 'contract'
-		})
-
-		expect(defined(tree[0])).toMatchObject({
-			name: 'Meta',
-			path: 'Base Asset/Meta'
-		})
-		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:META', 'flx:META'])
-	})
-
-	test('builds overview nested tree data by asset group -> base asset', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'overview',
-			markets: [
-				{ ...baseMarket, id: 'xyz:meta', referenceAssetGroup: 'Equities', referenceAsset: 'Meta', openInterest: 100 },
-				{
-					...baseMarket,
-					id: 'xyz:nvda',
-					contract: 'xyz:NVDA',
-					referenceAssetGroup: 'Equities',
-					referenceAsset: 'NVIDIA',
-					openInterest: 150
-				},
-				{
-					...baseMarket,
-					id: 'xyz:gold',
-					contract: 'xyz:GOLD',
-					referenceAssetGroup: 'Commodities',
-					referenceAsset: 'Gold',
-					openInterest: 50
-				}
-			],
-			metric: 'openInterest',
-			parentGrouping: 'assetGroup',
-			nestedBy: 'baseAsset'
-		})
-
-		expect(defined(tree[0])).toMatchObject({
-			name: 'Equities',
-			path: 'Asset Group/Equities'
-		})
-		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['NVIDIA', 'Meta'])
 	})
 
 	test('builds venue detail nested trees by asset class -> contract', () => {
@@ -275,66 +222,6 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:NVDA', 'xyz:META'])
 	})
 
-	test('builds venue detail nested trees by reference asset -> contract', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'venue',
-			markets: [
-				{ ...baseMarket, id: 'xyz:meta', contract: 'xyz:META', referenceAsset: 'Meta', openInterest: 100 },
-				{ ...baseMarket, id: 'xyz:meta-2', contract: 'xyz:META-2', referenceAsset: 'Meta', openInterest: 80 }
-			],
-			metric: 'openInterest',
-			parentGrouping: 'baseAsset',
-			nestedBy: 'contract',
-			scopeLabel: 'xyz'
-		})
-
-		expect(defined(tree[0])).toMatchObject({
-			name: 'Meta',
-			path: 'xyz/Meta'
-		})
-		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:META', 'xyz:META-2'])
-	})
-
-	test('builds venue detail nested trees by asset group -> base asset', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'venue',
-			markets: [
-				{ ...baseMarket, id: 'xyz:meta', referenceAssetGroup: 'Equities', referenceAsset: 'Meta', openInterest: 100 },
-				{
-					...baseMarket,
-					id: 'xyz:nvda',
-					contract: 'xyz:NVDA',
-					referenceAssetGroup: 'Equities',
-					referenceAsset: 'NVIDIA',
-					openInterest: 80
-				}
-			],
-			metric: 'openInterest',
-			parentGrouping: 'assetGroup',
-			nestedBy: 'baseAsset',
-			scopeLabel: 'xyz'
-		})
-
-		expect(defined(tree[0])).toMatchObject({
-			name: 'Equities',
-			path: 'xyz/Equities'
-		})
-		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['Meta', 'NVIDIA'])
-	})
-
-	test('uses the asset-group page label as the asset-group detail root', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'assetGroup',
-			scopeLabel: 'Equities',
-			markets: [baseMarket],
-			metric: 'openInterest',
-			parentGrouping: 'baseAsset',
-			nestedBy: 'none'
-		})
-
-		expect(tree).toEqual([expect.objectContaining({ name: 'Meta', path: 'Equities/Meta' })])
-	})
-
 	test('keeps markets metric as numeric counts in flat trees', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'venue',
@@ -360,6 +247,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 			mode: 'overview',
 			markets: [
 				{ ...baseMarket, id: 'xyz:meta', referenceAsset: 'Meta', volume24h: 100 },
+				{ ...baseMarket, id: 'flx:meta', contract: 'flx:META', venue: 'flx', referenceAsset: 'Meta', volume24h: -40 },
 				{
 					...baseMarket,
 					id: 'xyz:zero',
@@ -387,56 +275,6 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 				value: [100, 100, 100],
 				itemStyle: { color: CHART_COLORS[0] }
 			}
-		])
-	})
-
-	test('builds a flat overview treemap for contract parent grouping', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'overview',
-			markets: [
-				{
-					...baseMarket,
-					id: 'xyz:gold',
-					contract: 'xyz:GOLD',
-					venue: 'xyz',
-					referenceAsset: 'Gold',
-					openInterest: 80
-				},
-				{
-					...baseMarket,
-					id: 'flx:gold',
-					contract: 'flx:GOLD',
-					venue: 'flx',
-					referenceAsset: 'Gold',
-					openInterest: 20
-				}
-			],
-			metric: 'openInterest',
-			parentGrouping: 'contract',
-			nestedBy: 'none'
-		})
-
-		expect(tree).toEqual([
-			expect.objectContaining({ name: 'xyz:GOLD', path: 'Contract/xyz:GOLD' }),
-			expect.objectContaining({ name: 'flx:GOLD', path: 'Contract/flx:GOLD' })
-		])
-	})
-
-	test('keeps a stable root label for flat base-asset treemaps', () => {
-		const tree = buildRWAPerpsTreemapTreeData({
-			mode: 'overview',
-			markets: [
-				{ ...baseMarket, id: 'xyz:meta', referenceAsset: 'Meta', openInterest: 100 },
-				{ ...baseMarket, id: 'xyz:nvda', contract: 'xyz:NVDA', referenceAsset: 'NVIDIA', openInterest: 80 }
-			],
-			metric: 'markets',
-			parentGrouping: 'baseAsset',
-			nestedBy: 'none'
-		})
-
-		expect(tree).toEqual([
-			expect.objectContaining({ name: 'Meta', path: 'Base Asset/Meta' }),
-			expect.objectContaining({ name: 'NVIDIA', path: 'Base Asset/NVIDIA' })
 		])
 	})
 

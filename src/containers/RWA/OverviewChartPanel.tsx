@@ -11,7 +11,7 @@ import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAChartMetricKey } from './api.types'
 import { getRwaChartTotalLabel } from './chartAggregation'
 import {
@@ -23,12 +23,8 @@ import {
 	getRwaPerpsChartMetricQueryValue,
 	getRwaPerpsChartSource,
 	getRwaSpotChartSource,
-	parseRwaPerpsChartMetric,
-	getRwaTreemapParentGrouping,
 	type RWAChartDataOrigin,
-	type RWAOverviewChartMetric,
-	type RWAPerpsChartMetric,
-	type RwaChartAxis
+	type RWAOverviewChartMetric
 } from './chartBreakdown'
 import type { RWAPositionalChartDataset } from './chartDataset'
 import {
@@ -38,18 +34,14 @@ import {
 	RWA_MAX_CHART_SERIES,
 	toRwaShareDataset
 } from './chartFold'
-import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts, RWA_PERPS_OI_TOTAL_LABEL } from './chartSeries'
+import { getRwaOverviewChartMetricOptions, resolveRwaChartQueryState, type RwaChartQueryState } from './chartQueryState'
+import { buildRwaPerpsChartSeries, buildRwaTimeSeriesCharts } from './chartSeries'
 import {
 	getChartMetricLabel,
-	getChartMetricOptions,
 	getChartMetricQueryValue,
 	getChartViewQueryValue,
 	getTreemapNestedByQueryValue,
-	parseRwaChartState,
 	setTreemapNestedBy,
-	type RWAChartMetricAvailability,
-	type RWAChartState,
-	type RWAChartView,
 	type RwaTreemapNestedBy
 } from './chartState'
 import type { RWAOverviewMode } from './constants'
@@ -65,13 +57,11 @@ import {
 	getRWAFlowOverlayOptions,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
-	parseRWAFlowQueryState,
 	parseRWAFlowOverlayMetrics,
 	RWA_FLOW_GROUPING_OPTIONS,
 	type RWAFlowChartSelection,
 	type RWAFlowGrouping,
 	type RWAFlowOverlay,
-	type RWAFlowQueryState,
 	type RWAFlowVisibleRange
 } from './flows'
 import { type RWAFlowScope, useRWAFlowSeries } from './flows.hooks'
@@ -114,58 +104,12 @@ function isSameFlowVisibleRange(a: RWAFlowVisibleRange | null, b: RWAFlowVisible
 	return a.start === b.start && a.end === b.end
 }
 
-type RwaChartQueryState = {
-	flowQueryState: RWAFlowQueryState
-	perpsChartMetric: RWAPerpsChartMetric
-	treemapParentGrouping: RwaChartAxis
-	chartState: RWAChartState
-	selectedChartMetric: RWAOverviewChartMetric
-	chartView: RWAChartView
-	chartTotalLabel: string
-}
-
 /**
  * The chart state the URL and the page settle: a hook on purpose, since the compiler treats a hook's return as
  * frozen and lets the memoized folds below depend on these values.
  */
-function useRwaChartQueryState(
-	query: ReturnType<typeof useRouter>['query'],
-	{
-		isPerpsView,
-		isPlatformMode,
-		groupBy,
-		availability
-	}: { isPerpsView: boolean; isPlatformMode: boolean; groupBy: RWAGroupBy; availability: RWAChartMetricAvailability }
-): RwaChartQueryState {
-	const chartTypeQuery = readSingleQueryValue(query.chartType)
-	const flowModeQuery = readSingleQueryValue(query.flowMode)
-	/* Flows are an asset metric; the Perps view reads the period control for its volume bars instead. */
-	const flowQueryState = parseRWAFlowQueryState(isPerpsView ? undefined : chartTypeQuery, flowModeQuery, isPlatformMode)
-	const perpsChartMetric = parseRwaPerpsChartMetric(chartTypeQuery)
-	const treemapParentGrouping = getRwaTreemapParentGrouping(groupBy)
-	const chartState = parseRwaChartState(query, { treemapParentGrouping, availability })
-	const selectedChartMetric: RWAOverviewChartMetric = isPerpsView
-		? perpsChartMetric
-		: flowQueryState.view === 'flowVsPrice'
-			? 'flowVsPrice'
-			: flowQueryState.view != null
-				? 'flows'
-				: chartState.metric
-	const chartView: RWAChartView = getRwaChartViewOptions(selectedChartMetric).some(
-		(option) => option.key === chartState.view
-	)
-		? chartState.view
-		: 'timeSeries'
-	const chartTotalLabel = isPerpsView ? RWA_PERPS_OI_TOTAL_LABEL : getRwaChartTotalLabel(chartState.metric)
-	return {
-		flowQueryState,
-		perpsChartMetric,
-		treemapParentGrouping,
-		chartState,
-		selectedChartMetric,
-		chartView,
-		chartTotalLabel
-	}
+function useRwaChartQueryState(...args: Parameters<typeof resolveRwaChartQueryState>): RwaChartQueryState {
+	return resolveRwaChartQueryState(...args)
 }
 
 /** The overview chart panel: the metric switch, the view select, the exports and the chart body. */
@@ -397,13 +341,11 @@ export function RWAOverviewChartPanel({
 			: isFlowMetric
 				? 'Net Flows'
 				: getChartMetricLabel(chartTypeKey)
-	const chartMetricOptions: ReadonlyArray<{ key: RWAOverviewChartMetric; label: string }> = isPerpsView
-		? getRwaPerpsChartMetricOptions()
-		: [
-				...getChartMetricOptions(chartMetricAvailability),
-				{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label },
-				...(isPlatformMode ? [{ key: 'flowVsPrice' as const, label: definitions.flows.flowVsPrice.label }] : [])
-			]
+	const chartMetricOptions = getRwaOverviewChartMetricOptions({
+		isPerpsView,
+		isPlatformMode,
+		availability: chartMetricAvailability
+	})
 	const exportChartTitle = getRwaExportChartTitle({
 		mode,
 		metricLabel: chartMetricLabel,

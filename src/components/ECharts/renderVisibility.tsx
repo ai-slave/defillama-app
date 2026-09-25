@@ -1,4 +1,4 @@
-import type { ECharts, EChartsOption } from 'echarts'
+import type { ECharts, EChartsCoreOption, EChartsOption } from 'echarts'
 import { createContext, type ComponentType, type ReactNode, useCallback, useContext, useMemo, useRef } from 'react'
 
 const EChartsRenderVisibilityContext = createContext(true)
@@ -24,6 +24,17 @@ export function usePersistentEChartsLifecycle() {
 	return useContext(EChartsLifecycleContext)
 }
 
+/**
+ * The part of a chart's live option a user changes by interacting (legend selection, zoom range). It is kept
+ * across a scroll-away remount; data and styling are not, so the remounted chart shows fresh props.
+ */
+export function interactiveStateFromOption(option: EChartsCoreOption): EChartsOption {
+	const interactiveState: EChartsOption = {}
+	if (option.legend != null) interactiveState.legend = option.legend
+	if (option.dataZoom != null) interactiveState.dataZoom = option.dataZoom
+	return interactiveState
+}
+
 export function withEChartsRenderVisibility<Props extends object>(Renderer: ComponentType<Props>) {
 	function VisibilityBoundary(props: Props) {
 		const visible = useContext(EChartsRenderVisibilityContext)
@@ -32,11 +43,7 @@ export function withEChartsRenderVisibility<Props extends object>(Renderer: Comp
 
 		const capture = useCallback((instance: ECharts) => {
 			if (instance.isDisposed()) return
-			const option = instance.getOption()
-			const interactiveState: EChartsOption = {}
-			if (option.legend != null) interactiveState.legend = option.legend
-			if (option.dataZoom != null) interactiveState.dataZoom = option.dataZoom
-			interactiveStateRef.current = interactiveState
+			interactiveStateRef.current = interactiveStateFromOption(instance.getOption())
 		}, [])
 
 		const restore = useCallback((instance: ECharts) => {

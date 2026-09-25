@@ -8,7 +8,6 @@ const BarSparkline = lazy(() =>
 		default: m.BarSparkline
 	}))
 )
-import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { useCountUp } from '../hooks/useCountUp'
 import { useMetricData } from '../hooks/useMetricData'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
@@ -18,6 +17,7 @@ import { ProBadge, ProMeta } from '../ui'
 import { getItemIconUrl } from '../utils'
 import { BoundParameterBadge } from './BoundParameterBadge'
 import { EntityIcon } from './EntityIcon'
+import { formatMetricValue, getMetricDelta, getMetricValueFormat } from './metricCardValue'
 import { ProCardHeader } from './ProCardHeader'
 import { ProCardError, ProCardLoading } from './ProCardStatus'
 
@@ -119,64 +119,19 @@ export function MetricCard({ metric }: MetricCardProps) {
 		const baseTitle = name ? `${name} ${typeLabel}` : typeLabel
 		const label = metric.label?.trim()
 		const displayTitle = label && label.length > 0 ? label : baseTitle
-
-		let auto: 'currency' | 'number' | 'percent' = ['medianApy'].includes(metric.type)
-			? 'percent'
-			: ['activeUsers', 'newUsers', 'txs'].includes(metric.type)
-				? 'number'
-				: 'currency'
-
-		if (metric.aggregator === 'growth') {
-			auto = 'percent'
-		}
-
-		const fmt = metric.format?.value && metric.format.value !== 'auto' ? metric.format.value : auto
-		return { displayTitle, baseTitle, iconUrl, format: fmt }
+		return { displayTitle, baseTitle, iconUrl, format: getMetricValueFormat(metric) }
 	}, [metric, getChainInfo, getProtocolInfo])
 
 	const [hasSeenLoading, setHasSeenLoading] = useState(isLoading)
 	if (isLoading && !hasSeenLoading) setHasSeenLoading(true)
 	const animatedValue = useCountUp(value, { enabled: hasSeenLoading })
 
-	const formatMetricValue = (input: number | null | undefined) => {
-		if (input == null) return '-'
-		if (format === 'currency')
-			return formatUsd(input, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		if (format === 'number')
-			return formatCompactNumber(input, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		return `${formatPercent(input, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-	}
-
-	const displayValue = formatMetricValue(animatedValue)
-	const exactValue = formatMetricValue(value)
+	const displayValue = formatMetricValue(animatedValue, format)
+	const exactValue = formatMetricValue(value, format)
 
 	const compareFormat = metric.compare?.format ?? 'percent'
 
-	const deltaText = (() => {
-		if (delta == null && deltaPct == null) return null
-		if (compareFormat === 'absolute') {
-			if (delta == null) return null
-			if (format === 'percent') {
-				if (Math.abs(delta) < 0.005) return null
-			} else if (Math.abs(delta) < 1e-12) {
-				return null
-			}
-			const v =
-				format === 'currency'
-					? formatUsd(delta, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: format === 'percent'
-						? `${formatNumber(delta)}pp`
-						: formatCompactNumber(delta, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-			return v
-		}
-		if (deltaPct == null) return null
-		if (Math.abs(deltaPct) < 0.005) return null
-		const sign = deltaPct > 0 ? '+' : ''
-		return `${sign}${formatPercent(deltaPct, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-	})()
-
-	const deltaPositive = (delta ?? deltaPct ?? 0) > 0
-	const deltaNegative = (delta ?? deltaPct ?? 0) < 0
+	const change = getMetricDelta(delta, deltaPct, format, compareFormat)
 
 	const windowBadge = WINDOW_BADGE_LABELS[metric.window]
 	const windowPhrase = WINDOW_PHRASES[metric.window]
@@ -200,7 +155,8 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const chartSeries = chartType === 'none' ? EMPTY_CHART_SERIES : sparklineData
 
-	const sparklineColor = deltaPositive ? 'var(--success)' : deltaNegative ? 'var(--error)' : 'var(--bg-brand)'
+	const sparklineColor =
+		change.direction === 'up' ? 'var(--success)' : change.direction === 'down' ? 'var(--error)' : 'var(--bg-brand)'
 
 	const content = useMemo(() => {
 		if (isLoading) {
@@ -215,13 +171,12 @@ export function MetricCard({ metric }: MetricCardProps) {
 			<div className="flex h-full flex-1 flex-col items-start justify-center gap-2">
 				<div className="flex flex-wrap items-baseline gap-2">
 					<p className="text-3xl leading-tight font-semibold tabular-nums">{displayValue}</p>
-					{deltaText && metric.aggregator !== 'growth' ? (
+					{change.label && metric.aggregator !== 'growth' ? (
 						<ProBadge
-							tone={deltaPositive ? 'success' : deltaNegative ? 'warning' : 'neutral'}
+							tone={change.direction === 'up' ? 'success' : change.direction === 'down' ? 'warning' : 'neutral'}
 							{...(hasSeenLoading ? { className: 'animate-pro-rise [animation-delay:300ms]' } : {})}
 						>
-							{deltaPositive ? '▲' : deltaNegative ? '▼' : ''}
-							{deltaText}
+							{change.label}
 						</ProBadge>
 					) : null}
 				</div>
@@ -241,9 +196,8 @@ export function MetricCard({ metric }: MetricCardProps) {
 		)
 	}, [
 		chartType,
-		deltaNegative,
-		deltaPositive,
-		deltaText,
+		change.direction,
+		change.label,
 		displayValue,
 		isError,
 		isLoading,

@@ -321,10 +321,8 @@ describe('calculateUpcomingUnlockStatistics', () => {
 			for (const point of item.linearPoints) linearValue += point[1]
 		}
 
-		expect(statistics.upcomingUnlocks30d).toMatchObject({
-			cliff: cliffValue,
-			linear: linearValue,
-			total: cliffValue + linearValue
-		})
+		// Only the 2-token cliff after now is in the window; 30 days of a 7/week rate is 30 tokens.
+		expect({ cliff: cliffValue, linear: linearValue }).toEqual({ cliff: 14, linear: 210 })
+		expect(statistics.upcomingUnlocks30d).toMatchObject({ cliff: 14, linear: 210, total: 224 })
 	})
 })

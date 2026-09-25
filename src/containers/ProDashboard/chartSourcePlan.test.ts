@@ -89,7 +89,11 @@ describe('Pro dashboard chart source planning', () => {
 			{ id: 'missing', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'free-protocol' }
 		]
 
-		expect(buildProDashboardChartSourcePlan(items, catalog)[0]?.skipReason).toBeDefined()
+		const plan = buildProDashboardChartSourcePlan(items, catalog)
+
+		expect(plan.map((source) => [source.request.protocol, Boolean(source.skipReason)])).toEqual([
+			['free-protocol', true]
+		])
 	})
 
 	test('seeds unsupported persisted chain sources as empty instead of retrying a known-invalid API', () => {
@@ -200,6 +204,6 @@ describe('Pro dashboard chart source planning', () => {
 
 		const plan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
 
-		expect(plan[0]?.skipReason).toBeUndefined()
+		expect(plan.map((source) => [source.request.protocol, source.skipReason])).toEqual([['aave', undefined]])
 	})
 })

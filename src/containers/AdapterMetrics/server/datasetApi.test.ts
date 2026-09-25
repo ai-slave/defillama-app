@@ -1,23 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-
-const fetchDimensionDatasetMock = vi.hoisted(() => vi.fn())
-
-vi.mock('./datasets', async (importOriginal) => {
-	const original = await importOriginal<typeof import('./datasets')>()
-	return { ...original, fetchDimensionDataset: fetchDimensionDatasetMock }
-})
-
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: vi.fn(),
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
+const http = installFixtureFetch()
 
 import { createAdapterMetricDatasetHandler } from './datasetApi'
 
 describe('adapter metric dataset API', () => {
-	beforeEach(() => fetchDimensionDatasetMock.mockReset())
-
 	test('rejects oversized chain lists before fetching the dataset', async () => {
 		const handler = createAdapterMetricDatasetHandler('fees')
 		const req = createMockNextApiRequest({
@@ -30,6 +18,6 @@ describe('adapter metric dataset API', () => {
 
 		expect(res.status).toHaveBeenCalledWith(400)
 		expect(res.json).toHaveBeenCalledWith({ error: 'chains supports at most 50 values' })
-		expect(fetchDimensionDatasetMock).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 })

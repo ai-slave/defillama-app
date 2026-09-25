@@ -1,29 +1,19 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-vi.mock('~/utils/async', () => ({ fetchJson: vi.fn() }))
-
+import { describe, expect, test } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
-import { fetchJson } from '~/utils/async'
-import { fetchForkProtocolBreakdownChart, fetchForkProtocolChart } from '../api'
-
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { fetchForkProtocolChart } from '../api'
+const http = installFixtureFetch()
 describe('Fork API routes', () => {
-	beforeEach(() => {
-		vi.mocked(fetchJson).mockReset().mockResolvedValue([])
-	})
-
-	test('derives the protocol chart route from the canonical Fork name', async () => {
-		await fetchForkProtocolChart({ protocol: 'Aave V3', key: 'vesting' })
-
-		expect(fetchJson).toHaveBeenCalledWith(`${V2_SERVER_URL}/chart/fork/protocol/aave-v3?key=vesting`, {
-			timeout: 30_000
+	test('fetches the canonical protocol chart with its selected metric', async () => {
+		http.serve({
+			[`${V2_SERVER_URL}/chart/fork/protocol/aave-v3?key=vesting`]: [
+				[1, 25],
+				[2, 30]
+			]
 		})
-	})
-
-	test('omits the key query for default TVL', async () => {
-		await fetchForkProtocolBreakdownChart()
-
-		expect(fetchJson).toHaveBeenCalledWith(`${V2_SERVER_URL}/chart/fork/protocol-breakdown`, {
-			timeout: 30_000
-		})
+		await expect(fetchForkProtocolChart({ protocol: 'Aave V3', key: 'vesting' })).resolves.toEqual([
+			[1, 25],
+			[2, 30]
+		])
 	})
 })

@@ -2,14 +2,15 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { downloadBlob } from '~/utils/download'
+import { installDownloadSink } from '~/utils/test/downloadSink'
 import type { AttachmentPreview } from '../utils/attachmentPreview'
 import { TextChip } from './input/ImageUpload'
 import { PastedContentModal } from './PastedContentModal'
 
-vi.mock('~/utils/download', () => ({ downloadBlob: vi.fn() }))
+// Heavy child for image previews; these tests only open text previews.
 vi.mock('./ImagePreviewModal', () => ({ ImagePreviewModal: () => null }))
 
+const downloads = installDownloadSink()
 const writeText = vi.fn<(text: string) => Promise<void>>()
 const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
 let root: Root
@@ -65,7 +66,8 @@ test.each([
 ])('downloads $filename without changing its text or filename', async ({ type, ...preview }) => {
 	await mount(preview)
 	await click('Download')
-	const [filename, blob] = vi.mocked(downloadBlob).mock.calls[0]
+	expect(downloads).toHaveLength(1)
+	const { filename, blob } = downloads[0]
 	expect(filename).toBe(preview.filename)
 	expect(blob.type).toBe(type)
 	expect(await blob.text()).toBe(preview.content)
@@ -102,7 +104,7 @@ test('failed copy offers retry and leaves download available', async () => {
 	await click('Copy')
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't copy")
 	await click('Download')
-	expect(downloadBlob).toHaveBeenCalledTimes(1)
+	expect(downloads.map((download) => download.filename)).toEqual(['data.csv'])
 	await click('Retry copy')
 	expect(button('Copied')).toBeDefined()
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -139,5 +141,5 @@ test('labels a truncated preview and downloads the original bytes', async () => 
 	await click('Copy preview')
 	expect(writeText).toHaveBeenCalledWith('complete')
 	await click('Download full file')
-	expect(downloadBlob).toHaveBeenCalledWith('large.csv', original)
+	expect(downloads).toEqual([{ filename: 'large.csv', blob: original }])
 })

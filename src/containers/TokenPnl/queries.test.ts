@@ -1,17 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { buildAscendingPriceChartSource, formatPriceSeriesFromCoinsChart } from './queries'
+import { buildAscendingPriceChartSource } from './queries'
 
 describe('Token PnL price chart data', () => {
-	test('uses the API chronological array directly', () => {
-		const prices = [
-			{ timestamp: 1, price: 10 },
-			{ timestamp: 2, price: 20 }
-		]
-
-		expect(formatPriceSeriesFromCoinsChart(prices)).toBe(prices)
-		expect(formatPriceSeriesFromCoinsChart(undefined)).toEqual([])
-	})
-
 	test('merges synthetic range boundaries without sorting the API series', () => {
 		expect(
 			buildAscendingPriceChartSource(

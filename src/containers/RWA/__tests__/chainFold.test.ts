@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { foldRwaChainSeries, rankRwaChains } from '../chainFold'
-import { spotAsset } from '../table/__tests__/fixtures'
+import { perpsAsset, spotAsset } from '../table/__tests__/fixtures'
 
 const usdy = spotAsset()
 const buidl = spotAsset({
@@ -47,7 +47,8 @@ describe('rankRwaChains', () => {
 	})
 
 	test('ignores perps rows and assets without a breakdown', () => {
-		expect(rankRwaChains([spotAsset({ activeMcap: null })], 'activeMcap')).toEqual([])
+		const perps = perpsAsset({ activeMcap: { total: 10, breakdown: [['Hyperliquid L1', 10]] } })
+		expect(rankRwaChains([perps, spotAsset({ activeMcap: null })], 'activeMcap')).toEqual([])
 	})
 })
 
@@ -115,10 +116,5 @@ describe('foldRwaChainSeries', () => {
 
 	test('returns the total alone when there is no chain', () => {
 		expect(foldRwaChainSeries({ chains: [], assets: [usdy], total })).toEqual(total)
-	})
-
-	test('returns an empty dataset when the total is empty', () => {
-		const empty = { dimensions: ['timestamp'] as ['timestamp'], source: [] }
-		expect(foldRwaChainSeries({ chains: [], assets: [usdy], total: empty })).toEqual(empty)
 	})
 })

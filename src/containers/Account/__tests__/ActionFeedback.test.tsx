@@ -1,93 +1,82 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
 import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchSponsorsAdminView'
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ApiAccessCard } from '../ApiAccessCard'
 
-const api = vi.hoisted(() => ({
-	update: vi.fn(),
-	sponsors: vi.fn(),
-	removeSponsor: vi.fn(),
-	logos: vi.fn(),
-	mentions: vi.fn(),
-	removeLogo: vi.fn(),
-	removeMention: vi.fn(),
-	copy: vi.fn(),
-	regenerate: vi.fn(),
-	error: vi.fn()
-}))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ isAuthenticated: true, authorizedFetch: vi.fn() }) }))
-vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: api.error } }))
-vi.mock('~/containers/Articles/api', async (original) => ({
-	...(await original<typeof import('~/containers/Articles/api')>()),
-	listResearchSponsors: api.sponsors,
-	updateResearchSponsor: api.update,
-	deleteResearchSponsor: api.removeSponsor,
-	listTrustedLogos: api.logos,
-	listSocialMentions: api.mentions,
-	deleteTrustedLogo: api.removeLogo,
-	deleteSocialMention: api.removeMention,
-	revalidateResearchLanding: async () => {}
-}))
+const session = installSubscriberSession('admin')
+const features = (path: string) => `${FEATURES_SERVER.replace(/\/$/, '')}${path}`
+const copy = vi.fn<(text: string) => Promise<void>>()
+const regenerate = vi.fn<() => Promise<string>>()
+type Reply = () => unknown
+/** Replies for the next mutation requests, in order; an empty queue answers `{}`. */
+let sponsorUpdates: Array<Reply>
+let deletions: Array<Reply>
+let logosReply: Reply
+let sponsors: Array<object>
+const sponsorUpdateBodies = () =>
+	session.requests
+		.filter((request) => request.init?.method === 'PATCH')
+		.map((request) => [request.url.pathname.split('/').at(-1), JSON.parse(String(request.init!.body)).entitySlug])
+const deletedPaths = () =>
+	session.requests.filter((request) => request.init?.method === 'DELETE').map((request) => request.url.pathname)
+const next = (queue: Array<Reply>) => (queue.shift() ?? (() => ({})))()
+const entity = (slug: string, label: string) => ({
+	id: `protocol:${slug}`,
+	entityType: 'protocol',
+	slug,
+	label,
+	route: `/protocol/${slug}`,
+	source: 'search'
+})
+
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 beforeEach(() => {
-	vi.resetAllMocks()
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	copy.mockReset()
+	regenerate.mockReset()
+	sponsorUpdates = []
+	deletions = []
+	sponsors = [
+		{ id: 's1', displayName: 'Original sponsor', entityType: 'protocol', entitySlug: 'original', reports: [] }
+	]
+	const logos = [
+		{ id: 'l1', name: 'Example logo', linkUrl: 'https://example.com', imageUrl: '/test.svg', enabled: false }
+	]
+	logosReply = () => ({ logos })
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({
+		[features('/research/sponsors')]: () => ({ sponsors }),
+		[features('/research/sponsors/')]: () => next(sponsorUpdates),
+		[features('/research/trusted-by/logos')]: () => logosReply(),
+		[features('/research/trusted-by/mentions')]: {
+			mentions: [{ id: 'm1', username: 'example', quote: 'A useful tool', enabled: false }]
+		},
+		[features('/research/trusted-by/logos/l1')]: () => next(deletions),
+		[features('/research/trusted-by/mentions/m1')]: () => next(deletions),
+		'/api/private/research/revalidate-landing': {},
+		'/api/public/research/entities/search': {
+			entities: [entity('new', 'New sponsor'), entity('second', 'Second sponsor')]
+		}
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	vi.stubGlobal('navigator', { clipboard: { writeText: api.copy }, userAgent: 'test' })
-	api.sponsors.mockResolvedValue([
-		{ id: 's1', displayName: 'Original sponsor', entityType: 'protocol', entitySlug: 'original', reports: [] }
-	])
-	api.logos.mockResolvedValue([
-		{ id: 'l1', name: 'Example logo', linkUrl: 'https://example.com', imageUrl: '/test.svg', enabled: false }
-	])
-	api.mentions.mockResolvedValue([{ id: 'm1', username: 'example', quote: 'A useful tool', enabled: false }])
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(
-			async () =>
-				new Response(
-					JSON.stringify({
-						entities: [
-							{
-								id: 'protocol:new',
-								entityType: 'protocol',
-								slug: 'new',
-								label: 'New sponsor',
-								route: '/protocol/new',
-								source: 'search'
-							},
-							{
-								id: 'protocol:second',
-								entityType: 'protocol',
-								slug: 'second',
-								label: 'Second sponsor',
-								route: '/protocol/second',
-								source: 'search'
-							}
-						]
-					}),
-					{ status: 200 }
-				)
-		)
-	)
+	vi.stubGlobal('navigator', { clipboard: { writeText: copy }, userAgent: 'test' })
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
-	vi.unstubAllGlobals()
 	vi.useRealTimers()
 })
 async function mount(element: React.ReactNode) {
-	await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
+	await act(async () => root.render(<session.Wrapper>{element}</session.Wrapper>))
 }
 function button(name: string) {
 	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
@@ -105,7 +94,7 @@ function dialog() {
 function ApiHarness({ initialKey = 'old-test-key' }: { initialKey?: string | null }) {
 	const [key, setKey] = useState(initialKey)
 	const generation = useMutation({
-		mutationFn: () => api.regenerate() as Promise<string>,
+		mutationFn: () => regenerate(),
 		onSuccess: (generatedKey) => setKey(generatedKey)
 	})
 	return (
@@ -121,7 +110,7 @@ function ApiHarness({ initialKey = 'old-test-key' }: { initialKey?: string | nul
 }
 test('copy reports success only after the clipboard accepts the key and retries a rejection', async () => {
 	const request = Promise.withResolvers<void>()
-	api.copy.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
+	copy.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
 	await mount(<ApiHarness />)
 	await click('Copy')
 	await vi.waitFor(() => expect(button('Copying…').disabled).toBe(true))
@@ -130,12 +119,11 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
 	await click('Copy')
 	await vi.waitFor(() => expect(button('Copied')).toBeDefined())
-	expect(api.copy).toHaveBeenCalledWith('old-test-key')
-	expect(api.error).not.toHaveBeenCalled()
+	expect(copy).toHaveBeenCalledWith('old-test-key')
 })
 test('each successful copy gets a fresh feedback interval, while a later failure stays visible', async () => {
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
-	api.copy.mockResolvedValue(undefined)
+	copy.mockResolvedValue(undefined)
 	await mount(<ApiHarness />)
 	await click('Copy')
 	await act(async () => {
@@ -149,7 +137,7 @@ test('each successful copy gets a fresh feedback interval, while a later failure
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(1)
 	})
-	expect(api.copy).toHaveBeenCalledTimes(2)
+	expect(copy).toHaveBeenCalledTimes(2)
 	// Cross the first copy's expiry while the second copy should still show success.
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(1100)
@@ -163,7 +151,7 @@ test('each successful copy gets a fresh feedback interval, while a later failure
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(1)
 	})
-	api.copy.mockRejectedValueOnce(new Error('Permission denied'))
+	copy.mockRejectedValueOnce(new Error('Permission denied'))
 	await click('Copied')
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(2100)
@@ -172,18 +160,18 @@ test('each successful copy gets a fresh feedback interval, while a later failure
 })
 test('regeneration keeps confirmation and old key on failure, retries, and closes on success', async () => {
 	const request = Promise.withResolvers<string>()
-	api.regenerate.mockReturnValueOnce(request.promise).mockResolvedValueOnce('new-test-key')
+	regenerate.mockReturnValueOnce(request.promise).mockResolvedValueOnce('new-test-key')
 	await mount(<ApiHarness />)
 	await click('Regenerate')
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Cancel')
-	expect(api.regenerate).not.toHaveBeenCalled()
+	expect(regenerate).not.toHaveBeenCalled()
 	await click('Regenerate')
 	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => el.textContent?.trim() === 'Regenerate')!
 	await act(async () => confirm.click())
 	await vi.waitFor(() => expect(confirm.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => confirm.click())
-	expect(api.regenerate).toHaveBeenCalledOnce()
+	expect(regenerate).toHaveBeenCalledOnce()
 	await act(async () => request.reject(new Error('Generation refused')))
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Generation refused'))
 	await act(async () => confirm.click())
@@ -192,7 +180,7 @@ test('regeneration keeps confirmation and old key on failure, retries, and close
 	expect(container.textContent).toContain('new-test-key')
 })
 test('first key generation needs no destructive confirmation and exposes retry feedback', async () => {
-	api.regenerate.mockRejectedValueOnce(new Error('Try again')).mockResolvedValueOnce('first-test-key')
+	regenerate.mockRejectedValueOnce(new Error('Try again')).mockResolvedValueOnce('first-test-key')
 	await mount(<ApiHarness initialKey={null} />)
 	await click('Generate API Key')
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Try again'))
@@ -214,9 +202,15 @@ async function selectReplacement(sponsorId: string, slug: string) {
 			.click()
 	)
 }
+const pending = () => {
+	const reply = Promise.withResolvers<unknown>()
+	return { reply, answer: () => reply.promise }
+}
+const offline = () => fixtureStatus(500, { error: 'Offline' })()
+
 test('an old sponsor update cannot close a reopened editor or clear its new selection', async () => {
-	const request = Promise.withResolvers<{}>()
-	api.update.mockReturnValueOnce(request.promise).mockResolvedValueOnce({})
+	const first = pending()
+	sponsorUpdates.push(first.answer)
 	await mount(<ResearchSponsorsAdminView />)
 	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
@@ -225,85 +219,92 @@ test('an old sponsor update cannot close a reopened editor or clear its new sele
 	await click('Cancel edit')
 	await click('Change page')
 	await selectReplacement('s1', 'second')
-	await act(async () => request.resolve({}))
+	await act(async () => first.reply.resolve({}))
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
 	expect(button('Save page').disabled).toBe(false)
 	await click('Save page')
 	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
-	expect(api.update).toHaveBeenCalledTimes(2)
-	expect(api.update.mock.calls[1][1].entitySlug).toBe('second')
+	expect(sponsorUpdateBodies()).toEqual([
+		['s1', 'new'],
+		['s1', 'second']
+	])
 })
 test.each(['success', 'failure'] as const)(
 	'a reopened sponsor save waits for the previous request to settle with %s',
 	async (outcome) => {
-		const first = Promise.withResolvers<{}>()
-		const second = Promise.withResolvers<{}>()
-		api.update.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+		const first = pending()
+		const second = pending()
+		sponsorUpdates.push(first.answer, second.answer)
 		await mount(<ResearchSponsorsAdminView />)
 		await vi.waitFor(() => expect(button('Change page')).toBeDefined())
 		await click('Change page')
 		await selectReplacement('s1', 'new')
 		await click('Save page')
-		await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
+		await vi.waitFor(() => expect(sponsorUpdateBodies()).toHaveLength(1))
 		await click('Cancel edit')
 		await click('Change page')
 		await selectReplacement('s1', 'second')
 		await click('Save page')
 		await vi.waitFor(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
-		expect(api.update).toHaveBeenCalledOnce()
-		await act(async () => {
-			if (outcome === 'success') first.resolve({})
-			else first.reject(new Error('Offline'))
-		})
-		await vi.waitFor(() => expect(api.update).toHaveBeenCalledTimes(2))
-		expect(api.update.mock.calls[1][1].entitySlug).toBe('second')
+		expect(sponsorUpdateBodies()).toHaveLength(1)
+		await act(async () => first.reply.resolve(outcome === 'success' ? {} : offline()))
+		await vi.waitFor(() =>
+			expect(sponsorUpdateBodies()).toEqual([
+				['s1', 'new'],
+				['s1', 'second']
+			])
+		)
 		expect(document.querySelector('#replacement-s1')).not.toBeNull()
 		expect(document.querySelector('[role="alert"]')).toBeNull()
-		await act(async () => second.resolve({}))
+		await act(async () => second.reply.resolve({}))
 		await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 	}
 )
 
 test('a pending sponsor save does not block saving another sponsor', async () => {
-	const first = Promise.withResolvers<{}>()
-	api.update.mockReturnValueOnce(first.promise).mockResolvedValueOnce({})
-	api.sponsors.mockResolvedValue([
+	const first = pending()
+	sponsorUpdates.push(first.answer)
+	sponsors = [
 		{ id: 's1', displayName: 'First', entityType: 'protocol', entitySlug: 'first', reports: [] },
 		{ id: 's2', displayName: 'Second', entityType: 'protocol', entitySlug: 'second', reports: [] }
-	])
+	]
 	await mount(<ResearchSponsorsAdminView />)
 	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
-	await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
+	await vi.waitFor(() => expect(sponsorUpdateBodies()).toHaveLength(1))
 	await click('Change page')
 	await selectReplacement('s2', 'second')
 	await click('Save page')
-	await vi.waitFor(() => expect(api.update).toHaveBeenCalledTimes(2))
-	expect(api.update.mock.calls.map(([id]) => id)).toEqual(['s1', 's2'])
+	await vi.waitFor(() =>
+		expect(sponsorUpdateBodies()).toEqual([
+			['s1', 'new'],
+			['s2', 'second']
+		])
+	)
 	await vi.waitFor(() => expect(document.querySelector('#replacement-s2')).toBeNull())
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
-	await act(async () => first.resolve({}))
+	await act(async () => first.reply.resolve({}))
 	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 })
 
 test('sponsor save failure preserves the selected page and retries inline', async () => {
-	api.update.mockRejectedValueOnce(new Error('Offline')).mockResolvedValueOnce({})
+	sponsorUpdates.push(offline)
 	await mount(<ResearchSponsorsAdminView />)
 	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update'))
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
-	expect(api.error).not.toHaveBeenCalled()
 	await click('Save page')
 	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 })
 test('sponsor deletion removes the row and restores focus to the surviving heading', async () => {
-	api.removeSponsor.mockImplementation(async () => {
-		api.sponsors.mockResolvedValue([])
+	sponsorUpdates.push(() => {
+		sponsors = []
+		return {}
 	})
 	await mount(<ResearchSponsorsAdminView />)
 	await vi.waitFor(() => expect(button('Remove')).toBeDefined())
@@ -313,13 +314,13 @@ test('sponsor deletion removes the row and restores focus to the surviving headi
 	await act(async () => confirm.click())
 	await vi.waitFor(() => expect(container.textContent).not.toContain('Original sponsor'))
 	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Sponsored reports'))
+	expect(deletedPaths()).toEqual(['/research/sponsors/s1'])
 })
 test.each([
-	['Delete Example logo', 'logo'],
-	['Delete mention example', 'mention']
-] as const)('%s sends only the selected deletion', async (name, kind) => {
-	const remove = kind === 'logo' ? api.removeLogo : api.removeMention
-	remove.mockRejectedValueOnce(new Error('Retry deletion')).mockResolvedValueOnce(undefined)
+	['Delete Example logo', '/research/trusted-by/logos/l1'],
+	['Delete mention example', '/research/trusted-by/mentions/m1']
+] as const)('%s retries after a failure and sends only the selected deletion', async (name, path) => {
+	deletions.push(() => fixtureStatus(500, { error: 'Retry deletion' })())
 	await mount(<TrustedByAdminView />)
 	await vi.waitFor(() => expect(button(name)).toBeDefined())
 	await click(name)
@@ -328,14 +329,14 @@ test.each([
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Retry deletion'))
 	await click('Delete')
 	await vi.waitFor(() => expect(dialog()).toBeUndefined())
-	expect(remove).toHaveBeenCalledTimes(2)
-	expect(kind === 'logo' ? api.removeMention : api.removeLogo).not.toHaveBeenCalled()
+	expect(deletedPaths()).toEqual([path, path])
 })
 
 test('deletion stays pending through the list refresh before restoring focus after its row disappears', async () => {
-	const refreshed = Promise.withResolvers<Array<never>>()
-	api.removeLogo.mockImplementation(async () => {
-		api.logos.mockReturnValue(refreshed.promise)
+	const refreshed = Promise.withResolvers<unknown>()
+	deletions.push(() => {
+		logosReply = () => refreshed.promise
+		return {}
 	})
 	await mount(<TrustedByAdminView />)
 	await vi.waitFor(() => expect(button('Delete Example logo')).toBeDefined())
@@ -343,7 +344,7 @@ test('deletion stays pending through the list refresh before restoring focus aft
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Delete')
 	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
-	await act(async () => refreshed.resolve([]))
+	await act(async () => refreshed.resolve({ logos: [] }))
 	await vi.waitFor(() => expect(dialog()).toBeUndefined())
 	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Trusted By'))
 })

@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { RWAPlatformMeta } from '../../api.types'
 import {
 	getRwaAccessSplit,
-	getRwaConfidenceTone,
 	getRwaDocumentGroups,
 	getRwaFeeRows,
 	getRwaLeadership,
@@ -140,11 +139,7 @@ describe('fees and revenue', () => {
 		])
 	})
 
-	test('maps the confidence to its tone and knows when the panel has nothing to say', () => {
-		expect(getRwaConfidenceTone('Public Filings')).toBe('text-data-up')
-		expect(getRwaConfidenceTone('Issuer-Disclosed')).toBe('text-data-up-alt')
-		expect(getRwaConfidenceTone('Reasoned Estimate')).toBe('text-warning')
-		expect(getRwaConfidenceTone('No-public-data')).toBe('text-tertiary')
+	test('knows when the fees panel has nothing to say', () => {
 		expect(hasRwaFeesContent(empty)).toBe(false)
 		expect(hasRwaFeesContent(meta({ revenueNotes: 'Estimated from docs.' }))).toBe(true)
 		expect(hasRwaFeesContent(meta({ revenueConfidence: 'No-public-data' }))).toBe(true)

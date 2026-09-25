@@ -18,16 +18,17 @@ describe('alert schedule helpers', () => {
 		expect(getUserTimezone()).toBe('Asia/Kolkata')
 	})
 
-	test('prefers the resolved IANA user timezone over a fixed whole-hour offset', () => {
+	// getTimezoneOffset is positive west of UTC, and Etc/GMT names invert the sign: UTC-5 is Etc/GMT+5.
+	test('falls back to the browser offset when no IANA timezone resolves', () => {
 		vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300)
 		vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(
 			() =>
 				({
-					resolvedOptions: () => ({ timeZone: 'America/New_York' })
+					resolvedOptions: () => ({ timeZone: '' })
 				}) as Intl.DateTimeFormat
 		)
 
-		expect(getUserTimezone()).toBe('America/New_York')
+		expect(getUserTimezone()).toBe('Etc/GMT+5')
 	})
 
 	test('ignores out-of-range schedule hours', () => {

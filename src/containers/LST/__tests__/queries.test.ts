@@ -1,27 +1,70 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { earnRow } from '~/utils/test/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot, yieldsMeta } from '~/utils/test/yieldsSnapshotFixture'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from '../api.types'
 import { buildLstInflowsData, buildLstInflowsSeriesData } from '../chartData'
 import { getLSTPageData } from '../queries'
 
-const mocks = vi.hoisted(() => ({
-	fetchProtocols: vi.fn<() => Promise<ProtocolsResponse>>(),
-	fetchProtocolBySlug: vi.fn<(protocolSlug: string) => Promise<IProtocolDetailApiItem>>(),
-	fetchYieldPools: vi.fn<() => Promise<Array<IYieldPoolApiItem>>>(),
-	fetchLsdRates: vi.fn<() => Promise<Array<ILsdRateApiItem>>>(),
-	fetchEthPrice: vi.fn<() => Promise<number | null>>()
-}))
-
-vi.mock('~/containers/ProtocolLists/api', () => ({
-	fetchProtocols: mocks.fetchProtocols
-}))
-
-vi.mock('../api', () => ({
-	fetchProtocolBySlug: mocks.fetchProtocolBySlug,
-	fetchYieldPools: mocks.fetchYieldPools,
-	fetchLsdRates: mocks.fetchLsdRates,
-	fetchEthPrice: mocks.fetchEthPrice
-}))
+const http = installYieldsFixtures()
+let pools: Array<IYieldPoolApiItem> = []
+let poolsFailed = false
+function snapshot(): YieldsSnapshot {
+	if (poolsFailed)
+		return {
+			generationId: 'unavailable',
+			generatedAt: 0,
+			async readJson() {
+				throw new Error('yields unavailable')
+			}
+		}
+	return yieldsSnapshot({
+		earn: pools.map((pool, index) => {
+			const row = earnRow(`lst-${index}`, pool.tvlUsd ?? 0)
+			return {
+				...row,
+				protocol: pool.project,
+				chain: pool.chain,
+				display: { label: pool.symbol, detail: null },
+				apy: { ...row.apy, current: { base: pool.apy, reward: null, total: pool.apy } }
+			}
+		}),
+		meta: {
+			...yieldsMeta,
+			protocols: pools.map((pool) => ({
+				name: pool.project,
+				slug: pool.project,
+				category: 'Liquid Staking',
+				has_audit: false,
+				potential_airdrop: false
+			}))
+		}
+	})
+}
+function serveProtocols(body: ProtocolsResponse) {
+	http.serve({ '/lite/protocols2': body })
+}
+function serveRates(body: Array<ILsdRateApiItem> | ReturnType<typeof fixtureStatus>) {
+	http.serve({ '/lstRates': body })
+}
+function servePools(rows: Array<IYieldPoolApiItem>) {
+	pools = rows
+}
+function serveEthPrice(price: number | null) {
+	http.serve({
+		'/prices/current/ethereum:0x0000000000000000000000000000000000000000': {
+			coins: price === null ? {} : { 'ethereum:0x0000000000000000000000000000000000000000': { price } }
+		}
+	})
+}
+function serveDetails(getDetail: (slug: string) => Promise<IProtocolDetailApiItem>) {
+	http.serve({
+		[`${SERVER_URL}/updatedProtocol/`]: (url: URL) => getDetail(decodeURIComponent(url.pathname.split('/').at(-1)!))
+	})
+}
 
 function protocolLite({
 	name,
@@ -78,8 +121,9 @@ function protocolDetail({
 
 describe('getLSTPageData', () => {
 	beforeEach(() => {
-		vi.clearAllMocks()
-		mocks.fetchLsdRates.mockResolvedValue([])
+		pools = []
+		poolsFailed = false
+		serveRates([])
 	})
 
 	test('preserves LST token ordering, one output population, and Lido-required history rows', async () => {
@@ -87,7 +131,7 @@ describe('getLSTPageData', () => {
 		const missingLidoDate = 1_608_422_400
 		const latestDate = 1_609_027_200
 
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [
 				protocolLite({ name: 'Lido' }),
 				protocolLite({ name: 'Rocket Pool' }),
@@ -100,13 +144,13 @@ describe('getLSTPageData', () => {
 			protocolCategories: ['Liquid Staking', 'Dexes']
 		})
 
-		mocks.fetchYieldPools.mockResolvedValue([
+		servePools([
 			{ project: 'lido', chain: 'Ethereum', symbol: 'STETH', apy: 3, tvlUsd: 300 },
 			{ project: 'rocket-pool', chain: 'Ethereum', symbol: 'RETH', apy: 2, tvlUsd: 200 },
 			{ project: 'diva', chain: 'Ethereum', symbol: 'DIVAETH', apy: 1, tvlUsd: 100 }
 		])
-		mocks.fetchEthPrice.mockResolvedValue(2000)
-		mocks.fetchLsdRates.mockResolvedValue([
+		serveEthPrice(2000)
+		serveRates([
 			{
 				name: 'Lido',
 				symbol: 'stETH',
@@ -150,13 +194,13 @@ describe('getLSTPageData', () => {
 				tokensInUsd: []
 			})
 		}
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) => {
+		serveDetails(async (protocolSlug) => {
 			const detail = protocolDetails[protocolSlug]
 			if (!detail) throw new Error(`Unexpected protocol slug: ${protocolSlug}`)
 			return detail
 		})
 
-		const result = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const result = await getLSTPageData(snapshot())
 		const firstAreaRow = result.areaChartData[0]
 		const firstTokenRow = result.tokensList[0]
 		if (!firstAreaRow || !firstTokenRow) throw new Error('Expected LST chart and token rows')
@@ -199,12 +243,8 @@ describe('getLSTPageData', () => {
 			{ name: 'diva', encode: { x: 0, y: 3 }, stack: undefined }
 		])
 
-		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('legacy rates unavailable'))
-		const resultWithoutLegacyRates = await getLSTPageData({
-			generationId: 'test-gen',
-			generatedAt: 0,
-			readJson: vi.fn()
-		})
+		serveRates(fixtureStatus(503))
+		const resultWithoutLegacyRates = await getLSTPageData(snapshot())
 
 		expect(resultWithoutLegacyRates.tokensList[0]).toMatchObject({
 			apy: 3,
@@ -216,37 +256,35 @@ describe('getLSTPageData', () => {
 	})
 
 	test('rejects when a required member history is unavailable', async () => {
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'Lido' }), protocolLite({ name: 'Rocket Pool' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([])
-		mocks.fetchEthPrice.mockResolvedValue(0)
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) => {
+		servePools([])
+		serveEthPrice(0)
+		serveDetails(async (protocolSlug) => {
 			if (protocolSlug === 'rocket-pool') throw new Error('member history unavailable')
 			return protocolDetail({ name: protocolSlug, tokens: [], tokensInUsd: [] })
 		})
 
-		await expect(getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })).rejects.toThrow(
-			'member history unavailable'
-		)
+		await expect(getLSTPageData(snapshot())).rejects.toThrow('member history unavailable')
 	})
 
 	test('selects APY by exact LST symbol before largest-pool fallback', async () => {
 		const latestDate = 1_609_027_200
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'Lido' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([
+		servePools([
 			{ project: 'lido', chain: 'Ethereum', symbol: 'ETH', apy: 3, tvlUsd: 500 },
 			{ project: 'lido', chain: 'Ethereum', symbol: 'stETH', apy: 2, tvlUsd: 100 }
 		])
-		mocks.fetchLsdRates.mockResolvedValue([
+		serveRates([
 			{
 				name: 'Lido',
 				symbol: 'stETH',
@@ -258,8 +296,8 @@ describe('getLSTPageData', () => {
 				fee: null
 			}
 		])
-		mocks.fetchEthPrice.mockResolvedValue(2000)
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
+		serveEthPrice(2000)
+		serveDetails(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
 						name: 'Lido',
@@ -269,26 +307,24 @@ describe('getLSTPageData', () => {
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' })
 		)
 
-		const exactSymbol = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const exactSymbol = await getLSTPageData(snapshot())
 		expect(exactSymbol.tokensList[0]?.apy).toBe(2)
 
-		mocks.fetchLsdRates.mockResolvedValueOnce([])
-		const largestPool = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		serveRates([])
+		const largestPool = await getLSTPageData(snapshot())
 		expect(largestPool.tokensList[0]?.apy).toBe(3)
 	})
 
 	test('joins APY with canonical member identity instead of reconstructed casing', async () => {
 		const latestDate = 1_609_027_200
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'mETH Protocol' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([
-			{ project: 'meth-protocol', chain: 'Ethereum', symbol: 'mETH', apy: 1.34, tvlUsd: 591_000_000 }
-		])
-		mocks.fetchLsdRates.mockResolvedValue([
+		servePools([{ project: 'meth-protocol', chain: 'Ethereum', symbol: 'mETH', apy: 1.34, tvlUsd: 591_000_000 }])
+		serveRates([
 			{
 				name: 'mETH Protocol',
 				symbol: 'mETH',
@@ -300,8 +336,8 @@ describe('getLSTPageData', () => {
 				fee: null
 			}
 		])
-		mocks.fetchEthPrice.mockResolvedValue(null)
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
+		serveEthPrice(null)
+		serveDetails(async (protocolSlug) =>
 			protocolSlug === 'meth-protocol'
 				? protocolDetail({
 						name: 'mETH Protocol',
@@ -311,46 +347,46 @@ describe('getLSTPageData', () => {
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' })
 		)
 
-		const result = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const result = await getLSTPageData(snapshot())
 		expect(result.tokensList[0]).toMatchObject({ name: 'mETH Protocol', apy: 1.34 })
 	})
 
 	test('distinguishes successful empty optional sources from source failure', async () => {
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [],
 			chains: [],
 			parentProtocols: [],
 			protocolCategories: []
 		})
-		mocks.fetchYieldPools.mockResolvedValue([])
-		mocks.fetchLsdRates.mockResolvedValue([])
-		mocks.fetchEthPrice.mockResolvedValue(null)
-		mocks.fetchProtocolBySlug.mockResolvedValue(protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' }))
+		servePools([])
+		serveRates([])
+		serveEthPrice(null)
+		serveDetails(async () => protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' }))
 
-		const successfulEmpty = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const successfulEmpty = await getLSTPageData(snapshot())
 		expect(successfulEmpty).toMatchObject({ ratesAvailable: true, apyAvailable: true })
 
-		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('rates unavailable'))
-		mocks.fetchYieldPools.mockRejectedValueOnce(new Error('yields unavailable'))
-		const unavailable = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		serveRates(fixtureStatus(503))
+		poolsFailed = true
+		const unavailable = await getLSTPageData(snapshot())
 		expect(unavailable).toMatchObject({ ratesAvailable: false, apyAvailable: false })
 
+		serveRates([])
 		const missingSnapshot = await getLSTPageData(null)
 		expect(missingSnapshot).toMatchObject({ ratesAvailable: true, apyAvailable: false })
-		expect(mocks.fetchYieldPools).toHaveBeenCalledTimes(2)
 	})
 
 	test('keeps daily multi-token history summed while current ETH uses the largest token balance', async () => {
 		const day = 1_700_006_400
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'Lido' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([])
-		mocks.fetchEthPrice.mockResolvedValue(2000)
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
+		servePools([])
+		serveEthPrice(2000)
+		serveDetails(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
 						name: 'Lido',
@@ -363,7 +399,7 @@ describe('getLSTPageData', () => {
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' })
 		)
 
-		const result = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const result = await getLSTPageData(snapshot())
 		expect(result.areaChartData).toEqual([{ date: day, Lido: 55 }])
 		expect(result.tokensList[0]).toMatchObject({ stakedEth: 60, stakedEthInUsd: 120_000 })
 	})
@@ -372,15 +408,15 @@ describe('getLSTPageData', () => {
 		const day1 = 1_500_000_000
 		const day2 = day1 + 86_400
 		const bscOnlyDay = day2 + 86_400
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'Binance staked ETH' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([])
-		mocks.fetchEthPrice.mockResolvedValue(null)
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) => {
+		servePools([])
+		serveEthPrice(null)
+		serveDetails(async (protocolSlug) => {
 			if (protocolSlug !== 'binance-staked-eth') {
 				return protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' })
 			}
@@ -413,24 +449,22 @@ describe('getLSTPageData', () => {
 			}
 		})
 
-		const result = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const result = await getLSTPageData(snapshot())
 		expect(result.areaChartData.map((row) => row['Binance staked ETH'])).toEqual([10, 25])
 		expect(result.tokensList[0]).toMatchObject({ stakedEth: 25, stakedEthInUsd: 50_000 })
 	})
 
 	test('preserves unavailable and explicit-zero LST measurements', async () => {
 		const latestDate = 1_609_027_200
-		mocks.fetchProtocols.mockResolvedValue({
+		serveProtocols({
 			protocols: [protocolLite({ name: 'Lido' })],
 			chains: ['Ethereum'],
 			parentProtocols: [],
 			protocolCategories: ['Liquid Staking']
 		})
-		mocks.fetchYieldPools.mockResolvedValue([
-			{ project: 'lido', chain: 'Ethereum', symbol: 'stETH', apy: 0, tvlUsd: 100 }
-		])
-		mocks.fetchEthPrice.mockResolvedValue(null)
-		mocks.fetchLsdRates.mockResolvedValue([
+		servePools([{ project: 'lido', chain: 'Ethereum', symbol: 'stETH', apy: 0, tvlUsd: 100 }])
+		serveEthPrice(null)
+		serveRates([
 			{
 				name: 'Lido',
 				symbol: 'stETH',
@@ -442,7 +476,7 @@ describe('getLSTPageData', () => {
 				fee: 0
 			}
 		])
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
+		serveDetails(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
 						name: 'Lido',
@@ -456,7 +490,7 @@ describe('getLSTPageData', () => {
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos', tokens: [], tokensInUsd: [] })
 		)
 
-		const unavailableUsd = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const unavailableUsd = await getLSTPageData(snapshot())
 		expect(unavailableUsd.stakedEthInUsdSum).toBeNull()
 		expect(unavailableUsd.tokensList[0]).toMatchObject({
 			stakedEthInUsd: null,
@@ -467,7 +501,7 @@ describe('getLSTPageData', () => {
 			fee: 0
 		})
 
-		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
+		serveDetails(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
 						name: 'Lido',
@@ -476,7 +510,7 @@ describe('getLSTPageData', () => {
 					})
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos', tokens: [], tokensInUsd: [] })
 		)
-		const explicitZeroUsd = await getLSTPageData({ generationId: 'test-gen', generatedAt: 0, readJson: vi.fn() })
+		const explicitZeroUsd = await getLSTPageData(snapshot())
 		expect(explicitZeroUsd.stakedEthInUsdSum).toBe(0)
 		expect(explicitZeroUsd.tokensList[0]?.stakedEthInUsd).toBe(0)
 	})

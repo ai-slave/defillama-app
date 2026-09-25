@@ -2,19 +2,69 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { UploadChatFileOptions, UploadedAttachment } from '../../api/uploadChatFile'
-import type { UploadContext } from '../useImageUpload'
+import type { UploadedAttachment } from '../../api/uploadChatFile'
+import { toSubmittedAttachments, useImageUpload, type UploadContext } from '../useImageUpload'
 
-const errorToast = vi.fn()
-vi.mock('~/components/Toast/notifications', () => ({ errorToast: (...a: Array<unknown>) => errorToast(...a) }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
-
-const uploadChatFile = vi.fn()
-vi.mock('~/containers/LlamaAI/api/uploadChatFile', () => ({
-	uploadChatFile: (...a: Array<unknown>) => uploadChatFile(...a)
-}))
-
-const { useImageUpload } = await import('../useImageUpload')
+/** One upload as the server sees it. XMLHttpRequest is the network boundary: fetch cannot report progress. */
+class FakeUpload {
+	static sent: Array<FakeUpload> = []
+	/** How every new upload answers; null leaves it open for the test to settle. */
+	static answer: ((upload: FakeUpload) => void) | null = null
+	url = new URL('about:blank')
+	file!: File
+	aborted = false
+	status = 0
+	responseText = ''
+	upload = new EventTarget()
+	private events = new EventTarget()
+	open(_method: string, url: string) {
+		this.url = new URL(url)
+	}
+	setRequestHeader() {}
+	addEventListener(type: string, listener: EventListener) {
+		this.events.addEventListener(type, listener)
+	}
+	send(form: FormData) {
+		this.file = form.get('file') as File
+		FakeUpload.sent.push(this)
+		FakeUpload.answer?.(this)
+	}
+	abort() {
+		this.aborted = true
+		this.events.dispatchEvent(new Event('abort'))
+	}
+	get sessionId() {
+		return this.url.searchParams.get('sessionId')
+	}
+	get projectId() {
+		return this.url.searchParams.get('projectId')
+	}
+	resolve(attachment: UploadedAttachment = uploaded) {
+		this.finish(200, { attachments: [attachment] })
+	}
+	reject(status: number, body: unknown) {
+		this.finish(status, body)
+	}
+	fail() {
+		this.events.dispatchEvent(new Event('error'))
+	}
+	progress(fraction: number) {
+		this.upload.dispatchEvent(
+			Object.assign(new Event('progress'), { lengthComputable: true, loaded: fraction, total: 1 })
+		)
+	}
+	private finish(status: number, body: unknown) {
+		this.status = status
+		this.responseText = JSON.stringify(body)
+		this.events.dispatchEvent(new Event('load'))
+	}
+}
+const requests = FakeUpload.sent
+/** Leave uploads open so a test can settle each one itself. */
+function controlledUploads() {
+	FakeUpload.answer = null
+	return requests
+}
 
 function bigCsv(name: string, mb: number) {
 	const file = new File(['x'], name, { type: 'text/csv' })
@@ -41,33 +91,19 @@ const uploaded: UploadedAttachment = {
 	mimeType: 'text/csv',
 	size: 1
 }
-function controlledUploads() {
-	const requests: Array<{
-		options: UploadChatFileOptions
-		resolve: (attachment: UploadedAttachment) => void
-		reject: (error: Error) => void
-	}> = []
-	uploadChatFile.mockImplementation(
-		(options: UploadChatFileOptions) =>
-			new Promise<UploadedAttachment>((resolve, reject) => {
-				requests.push({ options, resolve, reject })
-				options.signal!.addEventListener('abort', () => reject(new DOMException('Upload cancelled', 'AbortError')))
-			})
-	)
-	return requests
-}
-
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
-	errorToast.mockReset()
-	uploadChatFile.mockReset().mockResolvedValue(uploaded)
+	FakeUpload.sent.length = 0
+	FakeUpload.answer = (upload) => queueMicrotask(() => upload.resolve())
+	vi.stubGlobal('XMLHttpRequest', FakeUpload)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	vi.unstubAllGlobals()
 })
 
 test("kyle's six 72MB CSVs all attach and each uploads on its own", async () => {
@@ -86,8 +122,7 @@ test("kyle's six 72MB CSVs all attach and each uploads on its own", async () => 
 		'p5.csv',
 		'p6.csv'
 	])
-	expect(uploadChatFile).toHaveBeenCalledTimes(6)
-	expect(errorToast).not.toHaveBeenCalled()
+	expect(requests).toHaveLength(6)
 	expect(api.selectedImages.every((i) => i.upload?.status === 'done')).toBe(true)
 })
 
@@ -97,7 +132,7 @@ test('without an upload context the message budget still applies', async () => {
 		api.addImages(['p1', 'p2'].map((n) => bigCsv(`${n}.csv`, 72)))
 	})
 	expect(api.selectedImages).toHaveLength(1)
-	expect(uploadChatFile).not.toHaveBeenCalled()
+	expect(requests).toHaveLength(0)
 	expect(api.selectionFeedback).toMatchObject({ added: 1, skipped: [{ filename: 'p2.csv' }] })
 })
 
@@ -108,12 +143,12 @@ test('images keep riding inside the message and keep their budget', async () => 
 	await act(async () => {
 		api.addImages([image])
 	})
-	expect(uploadChatFile).not.toHaveBeenCalled()
+	expect(requests).toHaveLength(0)
 	expect(api.selectedImages[0].upload).toBeUndefined()
 })
 
 test('a failed upload is shown on the file, not swallowed', async () => {
-	uploadChatFile.mockRejectedValue(new Error('Project storage quota exceeded'))
+	FakeUpload.answer = (upload) => queueMicrotask(() => upload.reject(507, { error: 'Project storage quota exceeded' }))
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => {
 		api.addImages([bigCsv('p1.csv', 72)])
@@ -123,8 +158,6 @@ test('a failed upload is shown on the file, not swallowed', async () => {
 		error: 'Project storage quota exceeded'
 	})
 })
-
-const { toSubmittedAttachments } = await import('../useImageUpload')
 
 test('an uploaded file is sent as a path; everything else is still inlined', async () => {
 	const csv = bigCsv('p1.csv', 72)
@@ -179,71 +212,56 @@ test('a converted document uses its uploaded URL even without a workspace path',
 })
 
 test('never runs more uploads at once than the server accepts', async () => {
-	let active = 0
-	let peak = 0
-	const release: Array<() => void> = []
-	uploadChatFile.mockImplementation(
-		() =>
-			new Promise((resolve) => {
-				active += 1
-				peak = Math.max(peak, active)
-				release.push(() => {
-					active -= 1
-					resolve({ id: '1', filename: 'a.csv', workspacePath: 'uploads/s1/a.csv' })
-				})
-			})
-	)
+	controlledUploads()
+	const open = () => requests.filter((r) => r.status === 0 && !r.aborted).length
 
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => {
 		api.addImages(['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].map((n) => bigCsv(`${n}.csv`, 72)))
 	})
 
-	expect(peak).toBe(3)
+	expect(open()).toBe(3)
 	expect(api.selectedImages.filter((i) => i.upload?.status === 'pending')).toHaveLength(3)
 
 	// Finishing the running ones lets the queued ones through, and all six still land.
-	while (release.length > 0) {
-		const next = release.shift()!
-		await act(async () => {
-			next()
-		})
+	for (let i = 0; i < 6; i++) {
+		await act(async () => requests[i]!.resolve())
+		expect(open()).toBeLessThanOrEqual(3)
 	}
-	expect(peak).toBe(3)
-	expect(api.selectedImages).toHaveLength(6)
+	expect(requests).toHaveLength(6)
 	expect(api.selectedImages.every((i) => i.upload?.status === 'done')).toBe(true)
 })
 
 test('removing a queued file prevents it from starting', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([1, 2, 3, 4, 5].map((i) => bigCsv(`${i}.csv`, 72))))
 	await act(async () => api.removeImage(3))
-	await act(async () => requests[0].resolve(uploaded))
-	expect(requests.map((r) => r.options.file.name)).toEqual(['1.csv', '2.csv', '3.csv', '5.csv'])
+	await act(async () => requests[0]!.resolve())
+	expect(requests.map((r) => r.file.name)).toEqual(['1.csv', '2.csv', '3.csv', '5.csv'])
 })
 
 test('removing an active upload aborts it and starts the next file without showing an error', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([1, 2, 3, 4].map((i) => bigCsv(`${i}.csv`, 72))))
 	await act(async () => api.removeImage(0))
-	expect(requests[0].options.signal!.aborted).toBe(true)
+	expect(requests[0]!.aborted).toBe(true)
 	expect(requests).toHaveLength(4)
 	await act(async () => {
-		requests[0].options.onProgress!(0.8)
-		requests[0].resolve(uploaded)
+		requests[0]!.progress(0.8)
+		requests[0]!.resolve()
 	})
 	expect(api.selectedImages.map((i) => i.file.name)).toEqual(['2.csv', '3.csv', '4.csv'])
 	expect(api.selectedImages.some((i) => i.upload?.status === 'error')).toBe(false)
 })
 
 test('retry keeps the failed chip and queues exactly one new attempt', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([bigCsv('retry.csv', 72)]))
 	const id = api.selectedImages[0].id
-	await act(async () => requests[0].reject(new Error('Connection interrupted')))
+	await act(async () => requests[0]!.fail())
 	expect(api.selectedImages[0].upload?.status).toBe('error')
 	await act(async () => {
 		api.retryUpload(id)
@@ -251,48 +269,48 @@ test('retry keeps the failed chip and queues exactly one new attempt', async () 
 	})
 	expect(requests).toHaveLength(2)
 	expect(api.selectedImages[0].id).toBe(id)
-	await act(async () => requests[1].resolve(uploaded))
+	await act(async () => requests[1]!.resolve())
 	expect(api.selectedImages[0].upload?.status).toBe('done')
 })
 
 test('clearing the draft cancels active and queued work', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([1, 2, 3, 4, 5, 6].map((i) => bigCsv(`${i}.csv`, 72))))
 	await act(async () => api.clearImages())
 	expect(requests).toHaveLength(3)
-	expect(requests.every((r) => r.options.signal!.aborted)).toBe(true)
+	expect(requests.every((r) => r.aborted)).toBe(true)
 	expect(api.selectedImages).toHaveLength(0)
 })
 
 test('changing the destination cancels old work instead of redirecting queued files', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1', projectId: 'p1' })
 	await act(async () => api.addImages([1, 2, 3, 4].map((i) => bigCsv(`${i}.csv`, 72))))
 	await render({ authToken: 'tok', sessionId: 's2', projectId: 'p2' })
 	expect(requests).toHaveLength(3)
-	expect(requests.every((r) => r.options.signal!.aborted)).toBe(true)
+	expect(requests.every((r) => r.aborted)).toBe(true)
 	expect(api.selectedImages).toHaveLength(0)
 	await act(async () => api.addImages([bigCsv('new.csv', 72)]))
-	expect(requests[3].options).toMatchObject({ sessionId: 's2', projectId: 'p2' })
+	expect([requests[3]!.sessionId, requests[3]!.projectId]).toEqual(['s2', 'p2'])
 })
 
 test('refreshing authentication preserves uploads and their original destination', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([bigCsv('a.csv', 72)]))
 	await render({ authToken: 'fresh', sessionId: 's1' })
-	expect(requests[0].options.signal!.aborted).toBe(false)
+	expect(requests[0]!.aborted).toBe(false)
 	expect(api.selectedImages).toHaveLength(1)
 })
 
 test('unmounting cancels uploads and does not start queued work', async () => {
-	const requests = controlledUploads()
+	controlledUploads()
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages([1, 2, 3, 4].map((i) => bigCsv(`${i}.csv`, 72))))
 	await act(async () => root.unmount())
 	expect(requests).toHaveLength(3)
-	expect(requests.every((r) => r.options.signal!.aborted)).toBe(true)
+	expect(requests.every((r) => r.aborted)).toBe(true)
 })
 
 test('uploaded files do not consume the budget for pasted inline text', async () => {
@@ -307,9 +325,19 @@ test('uploaded files do not consume the budget for pasted inline text', async ()
 test('does not eagerly read large files just to render their chips', async () => {
 	await render({ authToken: 'tok', sessionId: 's1' })
 	const file = bigCsv('large.csv', 72)
-	const read = vi.spyOn(file, 'text')
+	const reads = [
+		vi.spyOn(file, 'text'),
+		vi.spyOn(file, 'arrayBuffer'),
+		vi.spyOn(file, 'stream'),
+		vi.spyOn(file, 'slice'),
+		vi.spyOn(FileReader.prototype, 'readAsDataURL'),
+		vi.spyOn(FileReader.prototype, 'readAsText'),
+		vi.spyOn(FileReader.prototype, 'readAsArrayBuffer')
+	]
 	await act(async () => api.addImages([file]))
-	expect(read).not.toHaveBeenCalled()
+	expect(api.selectedImages.map((i) => i.file.name)).toEqual(['large.csv'])
+	expect(reads.filter((read) => read.mock.calls.length > 0)).toEqual([])
+	for (const read of reads) read.mockRestore()
 })
 
 test('reports every skipped file once with its reason and keeps accepted files', async () => {
@@ -332,28 +360,28 @@ test('reports every skipped file once with its reason and keeps accepted files',
 test('JSON and TSV files are selectable and use the workspace upload path', async () => {
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => api.addImages(['data.json', 'data.tsv', 'data.jsonl'].map((name) => new File(['x'], name))))
-	expect(uploadChatFile).toHaveBeenCalledTimes(3)
+	expect(requests).toHaveLength(3)
 	expect(api.selectionFeedback).toBeNull()
 })
 
 test('a full workspace is not offered as something to retry', async () => {
-	uploadChatFile.mockRejectedValue(
-		Object.assign(new Error('File storage is full. Remove unused files before retrying.'), {
-			code: 'STORAGE_QUOTA_EXCEEDED',
-			retryable: false
-		})
-	)
+	FakeUpload.answer = (upload) =>
+		queueMicrotask(() =>
+			upload.reject(507, {
+				error: 'File storage is full. Remove unused files before retrying.',
+				code: 'STORAGE_QUOTA_EXCEEDED',
+				retryable: false
+			})
+		)
 	await render({ authToken: 'tok', sessionId: 's1' })
 	await act(async () => {
 		api.addImages([bigCsv('p1.csv', 72)])
 	})
-	const upload = api.selectedImages[0].upload
-	expect(upload).toMatchObject({ status: 'error', retryable: false })
+	expect(api.selectedImages[0].upload).toMatchObject({ status: 'error', retryable: false })
 
 	// Retrying would hit the same full workspace, so the hook refuses to start another attempt.
-	uploadChatFile.mockClear()
 	await act(async () => {
 		api.retryUpload(api.selectedImages[0].id)
 	})
-	expect(uploadChatFile).not.toHaveBeenCalled()
+	expect(requests).toHaveLength(1)
 })

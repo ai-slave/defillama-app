@@ -4,37 +4,42 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { ArticleChartConfig } from '../../types'
 import { ArticleChartPickerDialog } from '../ArticleChartPicker'
-const { query } = vi.hoisted(() => ({ query: vi.fn(async () => []) }))
-vi.mock('~/containers/ProDashboard/queries', async () => ({
-	ProxyAuthTokenContext: (await import('react')).createContext(''),
-	useProtocolsAndChains: () => ({
-		data: {
-			protocols: ['Aave', 'Compound', 'Curve', 'Lido', 'Uniswap'].map((name) => ({
-				name,
-				slug: name.toLowerCase(),
-				tvl: 100
-			})),
-			chains: [{ name: 'Ethereum', tvl: 1000 }]
-		}
-	}),
-	getChartQueryFn: () => query,
-	filterDataByTimePeriod: (data: unknown) => data
-}))
-vi.mock('~/containers/ProDashboard/AppMetadataContext', () => ({
-	useAppMetadata: () => ({
-		availableProtocolChartTypes: () => ['tvl', 'fees'],
-		availableChainChartTypes: () => ['tvl', 'fees'],
-		loading: false
-	})
-}))
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => <div>Chart preview</div> }))
+const http = installFixtureFetch()
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
 beforeEach(() => {
-	vi.clearAllMocks()
+	const protocols = ['Aave', 'Compound', 'Curve', 'Lido', 'Uniswap']
+	http.serve({
+		'/api/dynamic/pro-dashboard/protocol-catalog-source': protocols.map((name) => ({
+			name,
+			slug: name.toLowerCase(),
+			parentSlug: name.toLowerCase(),
+			tvl: 100,
+			category: 'Lending',
+			symbol: null,
+			geckoId: null,
+			hasMisrepresentedTokens: false,
+			excludeTvlFromParent: false
+		})),
+		'/lite/protocols2': { protocols: [], parentProtocols: [] },
+		'/chains': [{ name: 'Ethereum', tvl: 1000, gecko_id: 'ethereum', tokenSymbol: 'ETH', chainId: 1 }],
+		'/config/smol/appMetadata-protocols.json': Object.fromEntries(
+			protocols.map((name) => [
+				name.toLowerCase(),
+				{ name: name.toLowerCase(), displayName: name, tvl: true, fees: true }
+			])
+		),
+		'/config/smol/appMetadata-chains.json': { ethereum: { name: 'Ethereum', id: 'ethereum', tvl: true, fees: true } },
+		'/api/public/pro-dashboard/pf-ps-protocols': { pf: [], ps: [] },
+		[`${V2_SERVER_URL}/chart/tvl/protocol/`]: [],
+		'/lite/charts/Ethereum': []
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -46,7 +51,7 @@ afterEach(async () => {
 	client.clear()
 })
 async function settle() {
-	await new Promise((resolve) => setTimeout(resolve, 40))
+	await new Promise((resolve) => setTimeout(resolve, 0))
 }
 async function mount(props: Partial<ComponentProps<typeof ArticleChartPickerDialog>> = {}) {
 	const onInsert = vi.fn()
@@ -54,7 +59,9 @@ async function mount(props: Partial<ComponentProps<typeof ArticleChartPickerDial
 		const store = Ariakit.useDialogStore({ defaultOpen: true })
 		return (
 			<QueryClientProvider client={client}>
-				<ArticleChartPickerDialog store={store} onInsert={onInsert} {...props} />
+				<AppMetadataProvider>
+					<ArticleChartPickerDialog store={store} onInsert={onInsert} {...props} />
+				</AppMetadataProvider>
 			</QueryClientProvider>
 		)
 	}
@@ -104,7 +111,6 @@ test('entity filters clear search while preserving chart settings and selected s
 	const onInsert = await mount()
 	expect(radio('Entity type', 'Protocols').checked).toBe(true)
 	expect(document.activeElement).toBe(document.querySelector('[aria-label="Search protocols"]'))
-	expect(document.querySelector('[role="tablist"]')).toBeNull()
 	expect(insert().disabled).toBe(true)
 	await click(entity('Aave'))
 	expect(radio('Range', 'All').checked).toBe(true)
@@ -124,7 +130,6 @@ test('entity filters clear search while preserving chart settings and selected s
 	await press(radio('Entity type', 'Chains'), 'Home')
 	expect(entity('Aave').getAttribute('aria-checked')).toBe('true')
 	expect(onInsert).not.toHaveBeenCalled()
-	expect(query).toHaveBeenCalledTimes(2)
 	await click(insert())
 	expect(onInsert).toHaveBeenCalledExactlyOnceWith(
 		expect.objectContaining({

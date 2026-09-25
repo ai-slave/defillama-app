@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { DEFAULT_UNIFIED_TABLE_ROW_HEADERS, sanitizeUnifiedTableRowHeaders } from './layoutPolicy'
+import { sanitizeUnifiedTableRowHeaders } from './layoutPolicy'
 import type { UnifiedRowHeaderType } from './types'
 
 describe('sanitizeUnifiedTableRowHeaders', () => {
 	test('uses canonical defaults for absent and empty persisted headers', () => {
-		expect(sanitizeUnifiedTableRowHeaders(undefined)).toEqual(DEFAULT_UNIFIED_TABLE_ROW_HEADERS)
-		expect(sanitizeUnifiedTableRowHeaders([])).toEqual(DEFAULT_UNIFIED_TABLE_ROW_HEADERS)
+		expect(sanitizeUnifiedTableRowHeaders(undefined)).toEqual(['parent-protocol', 'protocol'])
+		expect(sanitizeUnifiedTableRowHeaders([])).toEqual(['parent-protocol', 'protocol'])
 	})
 
 	test('removes invalid and duplicate headers while keeping protocol last', () => {

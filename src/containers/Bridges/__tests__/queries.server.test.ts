@@ -1,13 +1,6 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { fetchJson } from '~/utils/async'
-import {
-	fetchBridgeDayStats,
-	fetchBridgeLargeTransactions,
-	fetchBridgeNetflows,
-	fetchBridges,
-	fetchBridgeVolumeAll,
-	fetchBridgeVolumeByChain
-} from '../api'
+import { describe, expect, test, vi } from 'vitest'
+import { BRIDGES_SERVER_URL, CONFIG_API } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { BridgeDayStats, RawBridgesWithChainsResponse } from '../api.types'
 import { getBridgeOverviewSummaryTotals } from '../bridgeOverviewChartData'
 import {
@@ -18,6 +11,8 @@ import {
 	getBridgeOverviewPageData
 } from '../queries.server'
 
+const http = installFixtureFetch()
+
 const REQUIRED_DAY_TOTALS = {
 	totalDepositedUSD: 0,
 	totalWithdrawnUSD: 0,
@@ -25,46 +20,54 @@ const REQUIRED_DAY_TOTALS = {
 	totalWithdrawalTxs: 0
 }
 
-vi.mock('~/utils/async', () => ({
-	fetchJson: vi.fn()
-}))
+const EMPTY_DAY_STATS = {
+	date: 1,
+	...REQUIRED_DAY_TOTALS,
+	totalTokensDeposited: {},
+	totalTokensWithdrawn: {},
+	totalAddressDeposited: {},
+	totalAddressWithdrawn: {}
+}
 
-vi.mock('../api', () => ({
-	fetchBridgeDayStats: vi.fn(),
-	fetchBridgeLargeTransactions: vi.fn(),
-	fetchBridgeNetflows: vi.fn(),
-	fetchBridges: vi.fn(),
-	fetchBridgeVolumeAll: vi.fn(),
-	fetchBridgeVolumeByChain: vi.fn()
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	default: { chainMetadata: {} }
-}))
-
-beforeEach(() => {
-	vi.mocked(fetchJson).mockReset()
-	vi.mocked(fetchBridgeDayStats).mockReset()
-	vi.mocked(fetchBridgeLargeTransactions).mockReset()
-	vi.mocked(fetchBridgeNetflows).mockReset()
-	vi.mocked(fetchBridges).mockReset()
-	vi.mocked(fetchBridgeVolumeAll).mockReset()
-	vi.mocked(fetchBridgeVolumeByChain).mockReset()
+const bridgeRow = (id: number, displayName: string, chain: string) => ({
+	id,
+	name: displayName.toLowerCase().replace(' ', '-'),
+	displayName,
+	icon: `chain:${chain}`,
+	volumePrevDay: 0,
+	volumePrev2Day: 0,
+	lastHourlyVolume: 0,
+	last24hVolume: 0,
+	lastDailyVolume: 0,
+	dayBeforeLastVolume: 0,
+	weeklyVolume: 0,
+	monthlyVolume: 0,
+	chains: [chain],
+	destinationChain: 'false'
 })
+
+const day = (iso: string, depositUSD: number | null, withdrawUSD: number | null) => ({
+	date: String(Date.parse(iso) / 1e3),
+	depositUSD,
+	withdrawUSD,
+	depositTxs: 0,
+	withdrawTxs: 0
+})
+
+const NOW = Date.parse('2026-04-28T12:00:00Z')
 
 describe('getBridgeChainNetInflows', () => {
 	test('returns the latest completed UTC-day net flow without fetching bridge overview data', async () => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
-		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([
-			{ date: Date.parse('2026-04-27T00:00:00Z') / 1e3, depositUSD: 12, withdrawUSD: 3, depositTxs: 1, withdrawTxs: 1 },
-			{ date: Date.parse('2026-04-28T00:00:00Z') / 1e3, depositUSD: 42, withdrawUSD: 5, depositTxs: 2, withdrawTxs: 1 }
-		])
-
-		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toEqual({
-			netInflows: 9
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { XDC: ['xdc-network'] } },
+			[`${BRIDGES_SERVER_URL}/bridgevolume/XDC`]: [
+				day('2026-04-27T00:00:00Z', 12, 3),
+				day('2026-04-28T00:00:00Z', 42, 5)
+			]
 		})
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledOnce()
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('XDC')
+
+		await expect(getBridgeChainNetInflows('XDC', NOW)).resolves.toEqual({ netInflows: 9 })
+		expect(http.urls()).toEqual([CONFIG_API, `${BRIDGES_SERVER_URL}/bridgevolume/XDC`])
 	})
 
 	test.each([
@@ -74,66 +77,55 @@ describe('getBridgeChainNetInflows', () => {
 		{ label: 'withdrawal-only', depositUSD: null, withdrawUSD: 5, expected: null },
 		{ label: 'missing', depositUSD: null, withdrawUSD: null, expected: null }
 	])('preserves a $label net-flow result', async ({ depositUSD, withdrawUSD, expected }) => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
-		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([
-			{ date: Date.parse('2026-04-27T00:00:00Z') / 1e3, depositUSD, withdrawUSD, depositTxs: 0, withdrawTxs: 0 }
-		])
-
-		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toEqual({
-			netInflows: expected
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { XDC: ['xdc-network'] } },
+			[`${BRIDGES_SERVER_URL}/bridgevolume/XDC`]: [day('2026-04-27T00:00:00Z', depositUSD, withdrawUSD)]
 		})
+
+		await expect(getBridgeChainNetInflows('XDC', NOW)).resolves.toEqual({ netInflows: expected })
 	})
 
 	test.each([
 		{ label: 'empty', chart: [] },
-		{
-			label: 'without the latest completed day',
-			chart: [
-				{
-					date: Date.parse('2026-04-26T00:00:00Z') / 1e3,
-					depositUSD: 12,
-					withdrawUSD: 3,
-					depositTxs: 1,
-					withdrawTxs: 1
-				}
-			]
-		}
+		{ label: 'without the latest completed day', chart: [day('2026-04-26T00:00:00Z', 12, 3)] }
 	])('returns zero for a successful sparse response that is $label', async ({ chart }) => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
-		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue(chart)
-
-		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toEqual({
-			netInflows: 0
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { XDC: ['xdc-network'] } },
+			[`${BRIDGES_SERVER_URL}/bridgevolume/XDC`]: chart
 		})
+
+		await expect(getBridgeChainNetInflows('XDC', NOW)).resolves.toEqual({ netInflows: 0 })
 	})
 
-	test('does not add another retry layer when a bridge request fails', async () => {
-		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
-		vi.mocked(fetchBridgeVolumeByChain).mockRejectedValue(new Error('bridge request failed'))
+	test('fails without another retry layer when the bridge volume request fails', async () => {
+		vi.spyOn(console, 'log').mockImplementation(() => undefined)
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { XDC: ['xdc-network'] } },
+			[`${BRIDGES_SERVER_URL}/bridgevolume/XDC`]: fixtureStatus(404)
+		})
 
 		await expect(getBridgeChainNetInflows('XDC')).rejects.toThrow('bridge volume for chain XDC is broken')
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledOnce()
-		expect(consoleLog).toHaveBeenCalledWith('[bridges][fetch-failed] fetchBridgeVolumeByChain(XDC)', expect.any(Error))
-		consoleLog.mockRestore()
+		expect(http.urls().filter((url) => url.includes('/bridgevolume/'))).toHaveLength(1)
 	})
 })
 
 describe('getBridgeOverviewPageData', () => {
 	test('projects global raw volume into the summary series', async () => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: {} })
 		const bridgesResponse: RawBridgesWithChainsResponse = {
 			dataUpdatedAt: '2026-07-28T16:00:00.000Z',
 			bridges: [],
 			chains: []
 		}
-		vi.mocked(fetchBridges).mockResolvedValue(bridgesResponse)
-		vi.mocked(fetchBridgeVolumeAll).mockResolvedValue([
-			{ date: 1, depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
-			{ date: 2, depositUSD: null, withdrawUSD: 4, depositTxs: 0, withdrawTxs: 1 }
-		])
-		vi.mocked(fetchBridgeLargeTransactions).mockResolvedValue([])
-		vi.mocked(fetchBridgeNetflows).mockResolvedValue([])
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: {} },
+			[`${BRIDGES_SERVER_URL}/bridges`]: bridgesResponse,
+			[`${BRIDGES_SERVER_URL}/bridgevolume/all`]: [
+				{ date: '1', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
+				{ date: '2', depositUSD: null, withdrawUSD: 4, depositTxs: 0, withdrawTxs: 1 }
+			],
+			[`${BRIDGES_SERVER_URL}/largetransactions`]: [],
+			[`${BRIDGES_SERVER_URL}/netflows`]: []
+		})
 
 		const result = await getBridgeOverviewPageData('')
 
@@ -153,113 +145,55 @@ describe('getBridgeOverviewPageData', () => {
 	})
 
 	test('fetches per-bridge volume only for bridges that support the selected chain', async () => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { Base: ['base'] } })
-		const bridgesResponse: RawBridgesWithChainsResponse = {
-			dataUpdatedAt: '2026-07-28T16:00:00.000Z',
-			bridges: [
-				{
-					id: 1,
-					name: 'base-bridge',
-					displayName: 'Base Bridge',
-					icon: 'chain:Base',
-					volumePrevDay: 0,
-					volumePrev2Day: 0,
-					lastHourlyVolume: 0,
-					last24hVolume: 0,
-					lastDailyVolume: 0,
-					dayBeforeLastVolume: 0,
-					weeklyVolume: 0,
-					monthlyVolume: 0,
-					chains: ['Base'],
-					destinationChain: 'false'
-				},
-				{
-					id: 2,
-					name: 'ethereum-bridge',
-					displayName: 'Ethereum Bridge',
-					icon: 'chain:Ethereum',
-					volumePrevDay: 0,
-					volumePrev2Day: 0,
-					lastHourlyVolume: 0,
-					last24hVolume: 0,
-					lastDailyVolume: 0,
-					dayBeforeLastVolume: 0,
-					weeklyVolume: 0,
-					monthlyVolume: 0,
-					chains: ['Ethereum'],
-					destinationChain: 'false'
-				}
-			],
-			chains: [{ name: 'Base', volumePrevDay: 0, gecko_id: 'base', tokenSymbol: null }]
-		}
-		vi.mocked(fetchBridges).mockResolvedValue(bridgesResponse)
-		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([])
-		vi.mocked(fetchBridgeDayStats).mockResolvedValue({
-			date: 1,
-			...REQUIRED_DAY_TOTALS,
-			totalTokensDeposited: {},
-			totalTokensWithdrawn: {},
-			totalAddressDeposited: {},
-			totalAddressWithdrawn: {}
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { Base: ['base'] } },
+			[`${BRIDGES_SERVER_URL}/bridges`]: {
+				dataUpdatedAt: '2026-07-28T16:00:00.000Z',
+				bridges: [bridgeRow(1, 'Base Bridge', 'Base'), bridgeRow(2, 'Ethereum Bridge', 'Ethereum')],
+				chains: [{ name: 'Base', volumePrevDay: 0, gecko_id: 'base', tokenSymbol: null }]
+			},
+			[`${BRIDGES_SERVER_URL}/bridgevolume/Base`]: [],
+			[`${BRIDGES_SERVER_URL}/bridgedaystats`]: EMPTY_DAY_STATS,
+			[`${BRIDGES_SERVER_URL}/largetransactions`]: []
 		})
-		vi.mocked(fetchBridgeLargeTransactions).mockResolvedValue([])
 
 		const result = await getBridgeOverviewPageData('Base')
 
+		const paths = http.urls().map((url) => url.replace(BRIDGES_SERVER_URL, ''))
+		expect(paths.filter((path) => path.includes('/bridgevolume/')).sort()).toEqual([
+			'/bridgevolume/Base',
+			'/bridgevolume/Base?id=1'
+		])
+		expect(paths.some((path) => path.includes('/bridgedaystats/') && path.endsWith('/Base?rollingHours=24'))).toBe(true)
 		expect(result.chain).toBe('Base')
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledTimes(2)
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('Base', 1)
-		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('Base')
-		expect(fetchBridgeVolumeByChain).not.toHaveBeenCalledWith('Base', 2)
-		expect(fetchBridgeDayStats).toHaveBeenCalledWith(expect.any(Number), 'Base', { rollingHours: 24 })
 		expect(result.bridgeNames).toEqual(['Base Bridge'])
 	})
 
 	test('preserves the large-transaction chain perspective on selected-chain pages', async () => {
-		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { Base: ['base'] } })
-		const bridgesResponse: RawBridgesWithChainsResponse = {
-			dataUpdatedAt: '2026-08-24T00:00:00.000Z',
-			bridges: [],
-			chains: [{ name: 'Base', volumePrevDay: 0, gecko_id: 'base', tokenSymbol: null }]
-		}
-		vi.mocked(fetchBridges).mockResolvedValue(bridgesResponse)
-		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([])
-		vi.mocked(fetchBridgeDayStats).mockResolvedValue({
+		const leg = (txHash: string, chain: string) => ({
 			date: 1,
-			...REQUIRED_DAY_TOTALS,
-			totalTokensDeposited: {},
-			totalTokensWithdrawn: {},
-			totalAddressDeposited: {},
-			totalAddressWithdrawn: {}
+			txHash,
+			from: 'from',
+			to: 'to',
+			token: `${chain.toLowerCase()}:token`,
+			symbol: 'USDC',
+			amount: '1',
+			isDeposit: true,
+			bridge: 'Circle',
+			chain,
+			usdValue: '1'
 		})
-		vi.mocked(fetchBridgeLargeTransactions).mockResolvedValue([
-			{
-				date: 1,
-				txHash: 'selected-leg',
-				from: 'from',
-				to: 'to',
-				token: 'base:token',
-				symbol: 'USDC',
-				amount: '1',
-				isDeposit: true,
-				bridge: 'Circle',
-				chain: 'Base',
-				usdValue: '1'
+		http.serve({
+			[CONFIG_API]: { chainCoingeckoIds: { Base: ['base'] } },
+			[`${BRIDGES_SERVER_URL}/bridges`]: {
+				dataUpdatedAt: '2026-08-24T00:00:00.000Z',
+				bridges: [],
+				chains: [{ name: 'Base', volumePrevDay: 0, gecko_id: 'base', tokenSymbol: null }]
 			},
-			{
-				date: 2,
-				txHash: 'opposite-leg',
-				from: 'from',
-				to: 'to',
-				token: 'ethereum:token',
-				symbol: 'USDC',
-				amount: '1',
-				isDeposit: true,
-				bridge: 'Circle',
-				chain: 'Ethereum',
-				usdValue: '1'
-			}
-		])
+			[`${BRIDGES_SERVER_URL}/bridgevolume/Base`]: [],
+			[`${BRIDGES_SERVER_URL}/bridgedaystats`]: EMPTY_DAY_STATS,
+			[`${BRIDGES_SERVER_URL}/largetransactions`]: [leg('selected-leg', 'Base'), leg('opposite-leg', 'Ethereum')]
+		})
 
 		const result = await getBridgeOverviewPageData('Base')
 

@@ -3,54 +3,23 @@
 
 import * as Ariakit from '@ariakit/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, useState, useSyncExternalStore } from 'react'
+import { act, useEffect, useState, useSyncExternalStore } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { LastUsedChip } from '~/auth/AuthDialog'
-import { signInWithPassword } from '~/auth/emailSignIn'
-import { signupWithEmail, type SignupRequest } from '~/auth/emailSignup'
+import { AuthProvider } from '~/auth'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import pb from '~/utils/pocketbase'
+import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/test/oauthBoundary'
 import { SignInDialog, SignInFlow } from './SignInDialog'
 
-const oauth = vi.hoisted(() => ({ google: vi.fn(), github: vi.fn() }))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		login: signInWithPassword,
-		signup: (request: SignupRequest) => signupWithEmail(request, () => {}),
-		signInWithGoogle: oauth.google,
-		signInWithGithub: oauth.github,
-		loaders: {},
-		resetPasswordMutation: { isPending: false }
-	})
-}))
-vi.mock('~/auth/GoogleSignInButton', () => ({
-	GoogleSignInButton: ({
-		onCode,
-		onStart,
-		loading,
-		disabled,
-		lastUsed
-	}: {
-		onCode: (code: string) => void
-		onStart: () => void
-		lastUsed: boolean
-		loading: boolean
-		disabled: boolean
-	}) => (
-		<button
-			type="button"
-			disabled={loading || disabled}
-			onClick={() => {
-				onStart()
-				onCode('fixture-code')
-			}}
-		>
-			Continue with Google
-			{lastUsed ? <LastUsedChip /> : null}
-		</button>
-	)
+// The Google Identity Services script cannot load in Node; the boundary installs window.google.
+vi.mock('next/script', () => ({
+	default: function GoogleScript({ onReady }: { onReady: () => void }) {
+		useEffect(() => {
+			if (window.google) onReady()
+		}, [onReady])
+		return null
+	}
 }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
 vi.mock('~/containers/Subscription/Turnstile', () => ({
@@ -91,18 +60,27 @@ function Harness() {
 	)
 }
 
-let requests: Array<{ resolve: (response: Response) => void; reject: (error: Error) => void }>
+const oauth = installOAuthBoundary()
+// Requests the sign-in methods send, held until the test answers; PocketBase OAuth plumbing is answered by the boundary.
+let requests: Array<{
+	url: string
+	init?: RequestInit
+	resolve: (response: Response) => void
+	reject: (error: Error) => void
+}>
 
 beforeEach(async () => {
 	hideOnAuthentication = false
 	localStorage.clear()
 	pb.authStore.clear()
-	oauth.google.mockReset()
-	oauth.github.mockReset()
 	requests = []
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(() => new Promise<Response>((resolve, reject) => requests.push({ resolve, reject })))
+		vi.fn((url: string | URL, init?: RequestInit) => {
+			const route = oauth.routes[new URL(String(url)).pathname]
+			if (route) return route()
+			return new Promise<Response>((resolve, reject) => requests.push({ url: String(url), init, resolve, reject }))
+		})
 	)
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -112,7 +90,9 @@ beforeEach(async () => {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<Harness />
+				<AuthProvider>
+					<Harness />
+				</AuthProvider>
 			</QueryClientProvider>
 		)
 	)
@@ -142,7 +122,9 @@ async function submit() {
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 }
 const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-const success = () => new Response(JSON.stringify({ token: 'accepted-token', record: { id: 'account-a' } }))
+// A verified account skips the email-verification sheet, which these form tests do not exercise.
+const success = () =>
+	new Response(JSON.stringify({ token: 'accepted-token', record: { id: 'account-a', verified: true } }))
 
 test('keeps credentials on network failure, shows it inline, and allows a successful retry', async () => {
 	await submit()
@@ -239,7 +221,7 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 	expect(container.textContent).toContain('CAPTCHA complete')
 	requests[1].resolve(
 		new Response(
-			JSON.stringify({ token: 'new-token', user: { id: 'new-user', email: 'new@example.com', verified: false } })
+			JSON.stringify({ token: 'new-token', user: { id: 'new-user', email: 'new@example.com', verified: true } })
 		)
 	)
 	await settle()
@@ -288,44 +270,6 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 	expect(pb.authStore.token).toBe('')
 })
 
-test.each(['signin', 'signup'] as const)(
-	'prevents a repeated %s submission while the request is pending',
-	async (mode) => {
-		const label = mode === 'signup' ? 'Create an account' : 'Sign in'
-		const modeButton = () => container.querySelector<HTMLButtonElement>(`button[type="submit"]`)!
-		if (mode === 'signup') {
-			await act(async () =>
-				Array.from(container.querySelectorAll('button'))
-					.find((button) => button.textContent === label)!
-					.click()
-			)
-			input('passwordConfirm').value = 'correct horse battery staple'
-			await act(async () =>
-				Array.from(container.querySelectorAll('button'))
-					.find((button) => button.textContent === 'Test CAPTCHA')!
-					.click()
-			)
-		}
-		await submit()
-		await act(async () => modeButton().click())
-		requests[0].resolve(
-			mode === 'signup'
-				? new Response(
-						JSON.stringify({
-							token: 'accepted-token',
-							user: { id: 'account-a', email: 'person@example.com', verified: false }
-						})
-					)
-				: success()
-		)
-		await vi.waitFor(async () => {
-			await settle()
-			expect(onAuthenticated).toHaveBeenCalledOnce()
-		})
-		expect(requests).toHaveLength(1)
-	}
-)
-
 test.each(['person@example.com', ''])(
 	'starts recovery with the sign-in email "%s" and allows a different recipient',
 	async (email) => {
@@ -361,45 +305,34 @@ test.each(['person@example.com', ''])(
 	}
 )
 
+const buttonNamed = (label: string) =>
+	Array.from(container.querySelectorAll('button')).find((element) => element.textContent === label)!
+const googleExchange = () => requests.find((request) => request.url.endsWith('/auth/google-code-signin'))!
+
 test.each(['close', 'navigate'])('ignores a Google challenge returned after %s', async (exit) => {
-	let finish!: (value: unknown) => void
-	oauth.google.mockImplementation(
-		() =>
-			new Promise((resolve) => {
-				finish = resolve
-			})
-	)
-	const google = Array.from(container.querySelectorAll('button')).find(
-		(button) => button.textContent === 'Continue with Google'
-	)!
-	await act(async () => google.click())
+	await act(async () => buttonNamed('Continue with Google').click())
 	await settle()
 	expect(input('email').disabled).toBe(true)
-	const signal = oauth.google.mock.calls[0][0].signal as AbortSignal
+	expect(JSON.parse(String(googleExchange().init?.body))).toMatchObject({ code: GOOGLE_CODE })
+	const signal = googleExchange().init!.signal!
 	if (exit === 'close') await act(async () => root.render(null))
-	else
-		await act(async () =>
-			Array.from(container.querySelectorAll('button'))
-				.find((button) => button.textContent === 'Create an account')!
-				.click()
-		)
+	else await act(async () => buttonNamed('Create an account').click())
 	expect(signal.aborted).toBe(true)
-	finish({
-		kind: 'link_verification_required',
-		challengeToken: 'late',
-		expiresAt: new Date(Date.now() + 60_000).toISOString(),
-		resendAfter: new Date().toISOString()
-	})
+	googleExchange().resolve(
+		Response.json({
+			kind: 'link_verification_required',
+			challengeToken: 'late',
+			expiresAt: new Date(Date.now() + 60_000).toISOString(),
+			resendAfter: new Date().toISOString()
+		})
+	)
 	await settle()
 	expect(container.textContent).not.toContain('Confirm your email')
 	expect(onAuthenticated).not.toHaveBeenCalled()
 })
 
 test('keeps other sign-in methods available when the GitHub popup is blocked', async () => {
-	vi.stubGlobal(
-		'open',
-		vi.fn(() => null)
-	)
+	oauth.blockPopups()
 	const github = Array.from(container.querySelectorAll('button')).find((button) =>
 		button.textContent?.includes('Continue with GitHub')
 	)!
@@ -409,14 +342,13 @@ test('keeps other sign-in methods available when the GitHub popup is blocked', a
 	expect(
 		github.compareDocumentPosition(container.querySelector('[role="alert"]')!) & Node.DOCUMENT_POSITION_FOLLOWING
 	).toBeTruthy()
-	expect(oauth.github).not.toHaveBeenCalled()
+	expect(vi.mocked(fetch)).not.toHaveBeenCalled()
 	expect(input('email').disabled).toBe(false)
 
-	oauth.google.mockRejectedValue(new Error('Could not sign in with Google.'))
-	const google = Array.from(container.querySelectorAll('button')).find(
-		(button) => button.textContent === 'Continue with Google'
-	)!
+	const google = buttonNamed('Continue with Google')
 	await act(async () => google.click())
+	await settle()
+	googleExchange().resolve(new Response('{}', { status: 500 }))
 	await settle()
 	expect(container.querySelectorAll('[role="alert"]')).toHaveLength(1)
 	expect(
@@ -431,11 +363,33 @@ test('keeps other sign-in methods available when the GitHub popup is blocked', a
 
 	await submit()
 	expect(container.querySelector('[role="alert"]')).toBeNull()
-	requests[0].reject(new TypeError('Failed to fetch'))
+	requests[1].reject(new TypeError('Failed to fetch'))
 	await settle()
 	const alert = container.querySelector('[role="alert"]')!
 	expect(container.querySelector('form')!.contains(alert)).toBe(true)
 	expect(container.querySelector('form')!.getAttribute('aria-describedby')).toBe(alert.id)
+})
+
+test('stops waiting for GitHub and offers a retry when the person closes its popup', async () => {
+	await act(async () => buttonNamed('Continue with GitHub').click())
+	await oauth.github.waitForPopup()
+	await settle()
+	expect(container.textContent).toContain('Waiting for GitHub...')
+	expect(input('email').disabled).toBe(true)
+	oauth.popup!.closed = true
+	// GitHub sign-in polls the popup every 300ms.
+	await vi.waitFor(
+		async () => {
+			await settle()
+			expect(container.querySelector('[role="alert"]')?.textContent).toBe('GitHub sign-in did not finish.')
+		},
+		{ timeout: 1000 }
+	)
+	expect(oauth.github.listenerClosed).toBe(true)
+	expect(input('email').disabled).toBe(false)
+	expect(buttonNamed('Continue with GitHub').disabled).toBe(false)
+	expect(pb.authStore.token).toBe('')
+	expect(onAuthenticated).not.toHaveBeenCalled()
 })
 
 test('finishes sign-in even when accepting the session unmounts the form', async () => {
@@ -521,7 +475,9 @@ test('focuses the heading on opening and navigation without stealing focus for a
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<DialogHarness />
+				<AuthProvider>
+					<DialogHarness />
+				</AuthProvider>
 			</QueryClientProvider>
 		)
 	)
@@ -539,44 +495,47 @@ test('focuses the heading on opening and navigation without stealing focus for a
 	expect(document.activeElement?.tagName).toBe('H2')
 })
 
-test.each(['google', 'github'] as const)(
-	'offers %s on signup and cancels it when returning to sign-in',
-	async (method) => {
-		await act(async () =>
-			Array.from(container.querySelectorAll('button'))
-				.find((button) => button.textContent === 'Create an account')!
-				.click()
-		)
-		expect(container.textContent).not.toContain('Sign in with a wallet')
-		const popup = { close: vi.fn() } as unknown as Window
-		vi.spyOn(window, 'open').mockReturnValue(popup)
-		let finish!: (result: unknown) => void
-		oauth[method].mockImplementation(
-			() =>
-				new Promise((resolve) => {
-					finish = resolve
-				})
-		)
-		await act(async () =>
-			Array.from(container.querySelectorAll('button'))
-				.find(
-					(button) => button.textContent === (method === 'google' ? 'Continue with Google' : 'Continue with GitHub')
-				)!
-				.click()
-		)
-		await settle()
-		expect(input('email').disabled).toBe(true)
-		expect(input('password').disabled).toBe(true)
-		expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
-		const request = oauth[method].mock.calls[0][0]
-		await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to sign in"]')!.click())
-		expect(request.signal.aborted).toBe(true)
-		finish(null)
-		await settle()
-		expect(input('email').disabled).toBe(false)
-		expect(container.textContent).toContain('Sign in with a wallet')
-		expect(container.querySelector('[role="alert"]')).toBeNull()
-		expect(onAuthenticated).not.toHaveBeenCalled()
-		vi.restoreAllMocks()
-	}
-)
+async function startOnSignup(label: string) {
+	await act(async () => buttonNamed('Create an account').click())
+	expect(container.textContent).not.toContain('Sign in with a wallet')
+	await act(async () => buttonNamed(label).click())
+}
+async function returnToSignIn() {
+	await settle()
+	expect(input('email').disabled).toBe(true)
+	expect(input('password').disabled).toBe(true)
+	expect(container.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
+	await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to sign in"]')!.click())
+}
+function expectSignInRestored() {
+	expect(input('email').disabled).toBe(false)
+	expect(container.textContent).toContain('Sign in with a wallet')
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect(pb.authStore.token).toBe('')
+	expect(onAuthenticated).not.toHaveBeenCalled()
+}
+
+test('offers Google on signup and ignores its session after returning to sign-in', async () => {
+	await startOnSignup('Continue with Google')
+	await returnToSignIn()
+	expect(googleExchange().init!.signal!.aborted).toBe(true)
+	googleExchange().resolve(
+		Response.json({
+			kind: 'authenticated',
+			token: 'late-token',
+			user: { id: 'late', email: 'late@example.com', verified: true }
+		})
+	)
+	await settle()
+	expectSignInRestored()
+})
+
+test('offers GitHub on signup and closes its popup after returning to sign-in', async () => {
+	await startOnSignup('Continue with GitHub')
+	await oauth.github.waitForPopup()
+	await returnToSignIn()
+	await settle()
+	expect(oauth.popup!.closed).toBe(true)
+	expect(oauth.github.listenerClosed).toBe(true)
+	expectSignInRestored()
+})

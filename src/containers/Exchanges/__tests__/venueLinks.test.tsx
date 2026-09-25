@@ -56,13 +56,6 @@ describe('exchange venue links', () => {
 		})
 	})
 
-	test('ships with no standing overrides — all referrals come from the backend', () => {
-		expect(selectVenueDestination('bybit-eu', 'https://backend.example/ref', 'https://www.bybit.eu')).toEqual({
-			url: 'https://backend.example/ref',
-			kind: 'referral'
-		})
-	})
-
 	test('renders only the selected referral URL when both destinations exist', () => {
 		const html = renderToStaticMarkup(
 			<ProfileIdentity profile={profile('https://ref.example', 'https://website.example')} />

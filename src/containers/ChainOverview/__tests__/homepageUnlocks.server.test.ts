@@ -1,19 +1,10 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/constants', () => ({
-	DATASETS_SERVER_URL: 'https://defillama-datasets.llama.fi'
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: fetchJsonMock,
-	getFastJsonTimeoutMs: () => 1234
-}))
+import { DATASETS_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 describe('homepage unlocks summary', () => {
 	afterEach(() => {
-		fetchJsonMock.mockReset()
 		vi.restoreAllMocks()
 	})
 
@@ -97,14 +88,11 @@ describe('homepage unlocks summary', () => {
 	})
 
 	test('returns null when the homepage unlocks artifact fetch fails', async () => {
-		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-		fetchJsonMock.mockRejectedValue(new Error('not found'))
+		vi.spyOn(console, 'error').mockImplementation(() => undefined)
+		http.serve({ [DATASETS_SERVER_URL]: fixtureStatus(404) })
 		const { fetchHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
 
 		await expect(fetchHomepageUnlocksSummary()).resolves.toBeNull()
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://defillama-datasets.llama.fi/homepage/unlocks-summary.json', {
-			timeout: 1234
-		})
-		expect(error).toHaveBeenCalled()
+		expect(http.urls()).toEqual([`${DATASETS_SERVER_URL}/homepage/unlocks-summary.json`])
 	})
 })

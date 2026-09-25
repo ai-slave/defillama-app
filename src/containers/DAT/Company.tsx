@@ -321,7 +321,11 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				) : null}
 			</div>
 			<SearchTableProvider
-				options={{ data: props.transactions, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+				options={{
+					data: props.transactions,
+					columns: datTransactionColumns,
+					initialState: { sorting: DEFAULT_SORTING_STATE }
+				}}
 			>
 				<Card padding="none">
 					<TableToolbar className="w-full justify-end">
@@ -338,7 +342,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 type TransactionRow = IDATCompanyPageProps['transactions'][number]
 const columnHelper = createColumnHelper<SearchTableFeatures, TransactionRow>()
 
-const columns = columnHelper.columns([
+export const datTransactionColumns = columnHelper.columns([
 	columnHelper.accessor('assetName', {
 		header: 'Asset',
 		enableSorting: false,

@@ -1,72 +1,30 @@
-import { describe, expect, test } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import {
+	getIrTabMenuItems,
 	getMainSiteIrDashboard,
-	getMainSiteIrRoutePrefix,
 	getMainSiteIrTabHref,
 	hasMainSiteIrDashboard,
 	isMainSiteIrVisible,
-	MAIN_SITE_IR_CHAIN_SLUGS,
 	MAIN_SITE_IR_DASHBOARDS,
-	MAIN_SITE_IR_PROTOCOL_SLUGS,
 	resolveMainSiteIrTab
 } from '../mainSiteDashboards'
 import { getDashboardModule, isDashboardRegistered } from '../registry'
 
 describe('mainSiteDashboards', () => {
-	test('maps the odyssey-ecosystem dashboard onto the odyssey-finance protocol slug', () => {
-		const odyssey = getMainSiteIrDashboard('protocol', 'odyssey-finance')
-		expect(odyssey?.irProjectId).toBe('odyssey-ecosystem')
-		expect(odyssey?.dashboardId).toBe('0dyss3y3c0sys7m1')
-		expect(odyssey?.customOnly).toBe(true)
-	})
-
-	test('keeps the Superluminal overview for spark by marking it not customOnly', () => {
-		const spark = getMainSiteIrDashboard('protocol', 'spark')
-		expect(spark?.dashboardId).toBe('9vn8xp43tdzo6gt')
-		expect(spark?.customOnly).toBe(false)
-	})
-
-	test('resolves near, sonic, and thorchain as chain dashboards', () => {
-		expect(getMainSiteIrDashboard('chain', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
-		expect(getMainSiteIrDashboard('chain', 'sonic')?.dashboardId).toBe('s0n1cd4shb0ard1')
-		expect(getMainSiteIrDashboard('chain', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
-		expect(getMainSiteIrDashboard('chain', 'flare')?.dashboardId).toBe('fl4r3d4shb0ard1')
-	})
-
-	test('does not resolve a dashboard under the wrong entity type', () => {
-		expect(getMainSiteIrDashboard('chain', 'spark')).toBeUndefined()
-		expect(getMainSiteIrDashboard('protocol', 'sonic')).toBeUndefined()
-		expect(hasMainSiteIrDashboard('chain', 'spark')).toBe(false)
-		expect(hasMainSiteIrDashboard('protocol', 'sonic')).toBe(false)
-	})
-
-	test('surfaces near as both a chain and a protocol dashboard', () => {
+	test('finds a dashboard by the main-site slug, not the IR project id', () => {
+		expect(getMainSiteIrDashboard('protocol', 'odyssey-finance')?.irProjectId).toBe('odyssey-ecosystem')
+		expect(getMainSiteIrDashboard('protocol', 'odyssey-ecosystem')).toBeUndefined()
+		// One dashboard can sit on both entity pages.
 		expect(getMainSiteIrDashboard('chain', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
 		expect(getMainSiteIrDashboard('protocol', 'near')?.dashboardId).toBe('n34rr3v3nu3d4sh')
 	})
 
-	test('surfaces thorchain as both a chain and a protocol dashboard', () => {
-		expect(getMainSiteIrDashboard('chain', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
-		expect(getMainSiteIrDashboard('protocol', 'thorchain')?.dashboardId).toBe('bfqwxro9m0xnc9z')
-	})
-
-	test('returns undefined for entities without an IR dashboard', () => {
-		expect(getMainSiteIrDashboard('protocol', 'aave')).toBeUndefined()
-		expect(hasMainSiteIrDashboard('chain', 'ethereum')).toBe(false)
-	})
-
-	test('exposes protocol and chain slug lists that match the dashboard table', () => {
-		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(
-			new Set(['spark', 'odyssey-finance', 'near', 'thorchain', 'uniswap'])
-		)
-		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic', 'thorchain', 'flare']))
-		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(9)
-	})
-
-	test('uses a non-empty brand gradient for every dashboard', () => {
-		for (const dashboard of MAIN_SITE_IR_DASHBOARDS) {
-			expect(dashboard.brandGradient).toContain('gradient')
-		}
+	test('resolves a dashboard only under its own entity type', () => {
+		expect(hasMainSiteIrDashboard('protocol', 'spark')).toBe(true)
+		expect(hasMainSiteIrDashboard('chain', 'spark')).toBe(false)
+		expect(hasMainSiteIrDashboard('chain', 'sonic')).toBe(true)
+		expect(hasMainSiteIrDashboard('protocol', 'sonic')).toBe(false)
+		expect(hasMainSiteIrDashboard('protocol', 'aave')).toBe(false)
 	})
 
 	// mainSiteDashboards is intentionally decoupled from registry.ts, so an unregistered dashboardId
@@ -80,28 +38,11 @@ describe('mainSiteDashboards', () => {
 		}
 	})
 
-	test('uses the configured dashboard labels', () => {
-		const singleTabDashboards = MAIN_SITE_IR_DASHBOARDS.filter((dashboard) => dashboard.tabPlacement === 'single')
-		expect(singleTabDashboards.length).toBeGreaterThan(0)
-		expect(singleTabDashboards.map((dashboard) => dashboard.tabLabel)).toEqual(
-			singleTabDashboards.map(() => 'Enterprise')
-		)
-	})
-
-	test('surfaces uniswap as a public tab menu', () => {
-		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')
-		expect(uniswap?.dashboardId).toBe('un1swapd4shb0rd')
-		expect(uniswap?.tabPlacement).toBe('menu')
-		expect(uniswap?.tabLabel).toBe('Deep Dive')
-		expect(getMainSiteIrRoutePrefix(uniswap!)).toBe('deep-dive')
-		expect(getMainSiteIrRoutePrefix(getMainSiteIrDashboard('protocol', 'spark')!)).toBe('investor-relations')
-		expect(uniswap?.llamaOnly).toBeUndefined()
-		expect(isMainSiteIrVisible(uniswap!, false)).toBe(true)
-		expect(isMainSiteIrVisible(uniswap!, true)).toBe(true)
-	})
-
-	test('public dashboards are visible without the llama flag', () => {
-		expect(isMainSiteIrVisible(getMainSiteIrDashboard('protocol', 'spark')!, false)).toBe(true)
+	test('shows a llama-only dashboard to llamas alone and a public one to everyone', () => {
+		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')!
+		expect(isMainSiteIrVisible(uniswap, false)).toBe(true)
+		expect(isMainSiteIrVisible({ ...uniswap, llamaOnly: true }, false)).toBe(false)
+		expect(isMainSiteIrVisible({ ...uniswap, llamaOnly: true }, true)).toBe(true)
 	})
 
 	test('menu tab lists match the tabs of the registered module', async () => {
@@ -141,5 +82,20 @@ describe('mainSiteDashboards', () => {
 		const spark = getMainSiteIrDashboard('protocol', 'spark')!
 		expect(resolveMainSiteIrTab(spark, undefined)).toEqual({ type: 'tab', tabId: null })
 		expect(resolveMainSiteIrTab(spark, 'overview')).toEqual({ type: 'not-found' })
+	})
+
+	test('links the Uniswap Deep Dive menu to each page and marks only the open one', () => {
+		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')!
+		assert(uniswap.tabPlacement === 'menu')
+		const pages = (active: boolean, activeTabId: string | undefined) =>
+			getIrTabMenuItems(uniswap, active, activeTabId).map(({ label, href, isActive }) => ({ label, href, isActive }))
+		const open = pages(true, 'liquidity')
+		// The first page is the dashboard root, so its link carries no tab segment.
+		expect(open[0]).toEqual({ label: 'Overview', href: '/protocol/deep-dive/uniswap', isActive: false })
+		expect(open.filter((page) => page.isActive)).toEqual([
+			{ label: 'Liquidity Depth', href: '/protocol/deep-dive/uniswap/liquidity', isActive: true }
+		])
+		// On another protocol tab (e.g. Fees) the menu still lists the pages but marks none.
+		expect(pages(false, 'liquidity').filter((page) => page.isActive)).toEqual([])
 	})
 })

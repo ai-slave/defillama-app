@@ -3,16 +3,15 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { CumulativeUnavailableNotice } from '~/components/ECharts/shared/CumulativeUnavailableNotice'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { resolveProtocolChartQuery } from '~/containers/ProtocolOverview/chartQuery'
+import { resolveEmbedTvlSettings, resolveProtocolChartQuery } from '~/containers/ProtocolOverview/chartQuery'
 import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queries'
-import { PROTOCOL_EXTRA_TVL_KEYS } from '~/containers/ProtocolOverview/tvlChart'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { useFetchProtocolChartData } from '~/containers/ProtocolOverview/useFetchProtocolChartData'
 import { LocalLoader } from '~/ui/Loaders'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
-import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery } from '~/utils/routerQuery'
 
 const ProtocolCoreChart = lazy(() => import('~/containers/ProtocolOverview/Chart'))
 
@@ -91,15 +90,10 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 			defaultChartView: props.defaultChartView
 		})
 
-		const tvlSettings: Partial<Record<(typeof PROTOCOL_EXTRA_TVL_KEYS)[number], boolean>> = {}
-		for (const setting of PROTOCOL_EXTRA_TVL_KEYS) {
-			tvlSettings[setting] = isTruthyQueryParam(router.query[`include_${setting}_in_tvl`])
-		}
-
 		return {
 			toggledMetrics: chartQuery.toggledMetrics,
 			groupBy: chartQuery.groupBy,
-			tvlSettings
+			tvlSettings: resolveEmbedTvlSettings((key) => router.query[key])
 		}
 	}, [
 		router.query,

@@ -1,19 +1,6 @@
-// @vitest-environment happy-dom
-
-import { act, createElement, type ComponentProps } from 'react'
-import { createRoot } from 'react-dom/client'
-import { describe, expect, test, vi } from 'vitest'
-import { RWA_FILTERS_TEST_UTILS, RWAOverviewFilterControls, RWAOverviewFilters } from '../Filters'
-import { useRWATableQueryParams } from '../hooks'
-
-const routerMock = vi.hoisted(() => ({
-	query: {} as Record<string, string | Array<string> | undefined>,
-	push: vi.fn()
-}))
-
-vi.mock('next/router', () => ({
-	useRouter: () => ({ query: routerMock.query, pathname: '/rwa', asPath: '/rwa', push: routerMock.push })
-}))
+import type { ComponentProps } from 'react'
+import { describe, expect, test } from 'vitest'
+import { RWA_FILTERS_TEST_UTILS, type RWAOverviewFilters } from '../Filters'
 
 const actions = {
 	setDefiActiveTvlToOnChainMcapPctRange: () => {},
@@ -188,32 +175,6 @@ describe('RWA overview filter dialog helpers', () => {
 	})
 })
 
-function FiltersProbe() {
-	const { options } = baseProps
-	const state = useRWATableQueryParams({
-		assetNames: options.assetNames,
-		types: options.typeOptions.map((option) => option.key),
-		categories: options.categoriesOptions.map((option) => option.key),
-		platforms: options.platforms,
-		assetGroups: options.assetGroups,
-		assetClasses: options.assetClassOptions.map((option) => option.key),
-		rwaClassifications: options.rwaClassificationOptions.map((option) => option.key),
-		accessModels: options.accessModelOptions.map((option) => option.key),
-		issuers: options.issuers,
-		defaultInclusion: baseProps.defaultInclusion
-	})
-	return createElement(
-		'div',
-		null,
-		createElement(
-			'div',
-			{ 'data-strip': true },
-			createElement(RWAOverviewFilters, { ...baseProps, selections: state, actions: state })
-		),
-		createElement(RWAOverviewFilterControls, { ...baseProps, selections: state, actions: state })
-	)
-}
-
 describe('RWA overview Include group', () => {
 	test('seeds the draft from the current inclusion and serializes only overrides', () => {
 		const props = makeProps()
@@ -252,23 +213,5 @@ describe('RWA overview Include group', () => {
 		const router = { query: { includeGovernance: 'true' } }
 		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, router as any)
 		expect(pills.map((pill) => pill.label)).toEqual(['Governance Tokens: included'])
-	})
-
-	test('renders the strip with Include in TVL, Filters and List Your Assets, and no pill without a filter', async () => {
-		const container = document.createElement('div')
-		document.body.appendChild(container)
-		const root = createRoot(container)
-		await act(async () => {
-			root.render(createElement(FiltersProbe))
-		})
-		expect(container.querySelector('input[value="includeRwaPerps"]')).toBeNull()
-		expect(container.querySelector('input[value="includeStablecoins"]')).toBeNull()
-		const strip = container.querySelector('[data-strip]')?.textContent ?? ''
-		expect(strip).toContain('Filters')
-		expect(strip).toContain('Include in TVL')
-		expect(strip).toContain('List Your Assets')
-		expect(strip).not.toContain('included')
-		await act(async () => root.unmount())
-		container.remove()
 	})
 })

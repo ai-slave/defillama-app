@@ -1,6 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ recent: vi.fn() }))
-vi.mock('../queries', () => ({ getRecentProtocols: mocks.recent }))
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
 	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
 	createRedisBlobStore: () => ({
@@ -11,15 +10,18 @@ vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => (
 }))
 import { getProtocolListSnapshot, readProtocolListSnapshot } from '../server/tableData.server'
 
+const http = installFixtureFetch()
+const serveChains = (chains: Array<string>) =>
+	http.serve({ '/lite/protocols2': { protocols: [], chains, parentProtocols: [], protocolCategories: [] } })
+
 afterEach(() => vi.useRealTimers())
 test('retains exact older versions locally after latest refreshes without Redis', async () => {
 	vi.useFakeTimers()
 	vi.setSystemTime(new Date('2026-09-14T00:00:00Z'))
-	const source = { protocols: [], chainList: ['Ethereum'], categories: ['Lending'], forkedList: {} }
-	mocks.recent.mockResolvedValue(source)
+	serveChains(['Ethereum'])
 	const first = await getProtocolListSnapshot('recent')
 	vi.advanceTimersByTime(10 * 60 * 1000)
-	mocks.recent.mockResolvedValue({ ...source, chainList: ['Ethereum', 'Base'] })
+	serveChains(['Ethereum', 'Base'])
 	const second = await getProtocolListSnapshot('recent')
 	expect(second.version).not.toBe(first.version)
 	expect((await readProtocolListSnapshot('recent', first.version))?.chainList).toEqual(['Ethereum'])

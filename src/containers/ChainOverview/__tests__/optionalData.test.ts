@@ -1,290 +1,58 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
-import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
+import { describe, expect, test, vi } from 'vitest'
+import { installTelemetrySink } from '~/utils/test/telemetry'
+import { getTopProtocolsByFeesChart, runChainOverviewPhase } from '../queries.server'
 
-const mocks = vi.hoisted(() => ({
-	fetchLlamaConfig: vi.fn(),
-	fetchCoinGeckoCoinById: vi.fn(),
-	fetchAdapterChainMetrics: vi.fn(),
-	fetchAdapterProtocolMetrics: vi.fn(),
-	fetchCexVolume: vi.fn(),
-	fetchChainsAssetTotals: vi.fn(),
-	getBridgeChainNetInflows: vi.fn(),
-	fetchChainChart: vi.fn(),
-	getETFData: vi.fn(),
-	getChainIncentivesFromAggregatedEmissions: vi.fn(),
-	getProtocolsByChain: vi.fn(),
-	fetchRaises: vi.fn(),
-	fetchRWAStats: vi.fn(),
-	fetchStablecoinAssetsApi: vi.fn(),
-	getStablecoinChainMcapSummary: vi.fn(),
-	getSponsoredResearchReports: vi.fn(),
-	fetchJson: vi.fn(),
-	recordOptionalPageDataFailure: vi.fn(),
-	fetchHomepageUnlocksSummary: vi.fn()
-}))
+const telemetry = installTelemetrySink()
 
-vi.mock('~/api', () => ({ fetchLlamaConfig: mocks.fetchLlamaConfig }))
-vi.mock('~/api/coingecko', () => ({ fetchCoinGeckoCoinById: mocks.fetchCoinGeckoCoinById }))
-vi.mock('~/containers/AdapterMetrics/api', () => ({
-	fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics,
-	fetchAdapterProtocolMetrics: mocks.fetchAdapterProtocolMetrics,
-	fetchCexVolume: mocks.fetchCexVolume
-}))
-vi.mock('~/containers/BridgedTVL/api', () => ({ fetchChainsAssetTotals: mocks.fetchChainsAssetTotals }))
-vi.mock('~/containers/Bridges/queries.server', () => ({ getBridgeChainNetInflows: mocks.getBridgeChainNetInflows }))
-vi.mock('~/containers/Chains/api', () => ({ fetchChainChart: mocks.fetchChainChart }))
-vi.mock('~/containers/ETF/queries', () => ({ getETFData: mocks.getETFData }))
-vi.mock('~/containers/Incentives/queries', () => ({
-	getChainIncentivesFromAggregatedEmissions: mocks.getChainIncentivesFromAggregatedEmissions
-}))
-vi.mock('~/containers/ProtocolRankings/queries.server', () => ({ getProtocolsByChain: mocks.getProtocolsByChain }))
-vi.mock('~/containers/ProtocolRankings/server/tableData.server', () => {
-	// Version must be unique per build: the prepared-rows cache keys on
-	// (chain, version, signature) and trusts that a version names one content.
-	let snapshotCounter = 0
-	return {
-		getProtocolRankingsSnapshot: async () => {
-			const result = await mocks.getProtocolsByChain()
-			if (!result) throw new Error('Missing protocol aggregation for Ethereum')
-			const { protocols, chains, fees, dexs, perps } = result
-			return {
-				chain: 'Ethereum',
-				createdAt: 1,
-				snapshot: `test-snapshot-${++snapshotCounter}`,
-				protocols,
-				availableActivityMetrics: [],
-				source: { chains, feeProtocols: fees?.protocols ?? null, dexs, perps }
-			}
-		}
-	}
-})
-vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.fetchRaises }))
-vi.mock('~/containers/RWA/api', () => ({ fetchRWAStats: mocks.fetchRWAStats }))
-vi.mock('~/containers/Stablecoins/api', () => ({ fetchStablecoinAssetsApi: mocks.fetchStablecoinAssetsApi }))
-vi.mock('~/containers/Stablecoins/queries.server', () => ({
-	getStablecoinChainMcapSummary: mocks.getStablecoinChainMcapSummary
-}))
-vi.mock('~/containers/Articles/api', () => ({ getSponsoredResearchReports: mocks.getSponsoredResearchReports }))
-vi.mock('~/utils/async', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/async')>()
-	return { ...actual, fetchJson: mocks.fetchJson }
-})
-vi.mock('~/utils/optionalPageData', () => ({
-	recordOptionalPageDataFailure: mocks.recordOptionalPageDataFailure
-}))
-vi.mock('../homepageUnlocks.server', () => ({ fetchHomepageUnlocksSummary: mocks.fetchHomepageUnlocksSummary }))
-
-const categoriesAndTagsMetadata = {
-	categories: [],
-	tags: [],
-	tagCategoryMap: {},
-	configs: {}
-} satisfies ICategoriesAndTags
-
-const ethereum = {
-	name: 'Ethereum',
-	id: 'ethereum',
-	stablecoins: true
-} satisfies IChainMetadata
-
-function resetMocks() {
-	mocks.fetchLlamaConfig.mockResolvedValue({})
-	mocks.fetchCoinGeckoCoinById.mockResolvedValue(null)
-	mocks.fetchAdapterChainMetrics.mockResolvedValue(null)
-	mocks.fetchAdapterProtocolMetrics.mockResolvedValue(null)
-	mocks.fetchCexVolume.mockResolvedValue(null)
-	mocks.fetchChainsAssetTotals.mockResolvedValue({})
-	mocks.getBridgeChainNetInflows.mockResolvedValue(null)
-	mocks.fetchChainChart.mockResolvedValue({
-		tvl: [],
-		staking: [],
-		borrowed: [],
-		pool2: [],
-		vesting: [],
-		offers: [],
-		doublecounted: [],
-		liquidstaking: [],
-		dcAndLsOverlap: []
-	})
-	mocks.getETFData.mockResolvedValue({ flows: {} })
-	mocks.getChainIncentivesFromAggregatedEmissions.mockResolvedValue(null)
-	mocks.getProtocolsByChain.mockResolvedValue({ protocols: [], chains: [], fees: null, dexs: null })
-	mocks.fetchRaises.mockResolvedValue({ raises: [] })
-	mocks.fetchRWAStats.mockResolvedValue(null)
-	mocks.fetchStablecoinAssetsApi.mockResolvedValue({ peggedAssets: [], chains: [] })
-	mocks.getStablecoinChainMcapSummary.mockResolvedValue(null)
-	mocks.getSponsoredResearchReports.mockResolvedValue({ sponsor: null, reports: [] })
-	mocks.fetchJson.mockResolvedValue(null)
-	mocks.recordOptionalPageDataFailure.mockClear()
-	mocks.fetchHomepageUnlocksSummary.mockResolvedValue(null)
-}
-
-describe('getChainOverviewData optional sections', () => {
-	afterEach(() => {
-		vi.clearAllMocks()
-	})
-
-	test('falls back when stablecoins fail', async () => {
-		resetMocks()
-		const error = new Error('stablecoins unavailable')
-		mocks.getStablecoinChainMcapSummary.mockRejectedValueOnce(error)
-		const { getChainOverviewData } = await import('../queries.server')
-
-		const data = await getChainOverviewData({
-			chain: 'Ethereum',
-			chainMetadata: { ethereum },
-			protocolMetadata: {},
-			categoriesAndTagsMetadata
-		})
-
-		expect(data?.stablecoins).toBeNull()
-		expect(mocks.recordOptionalPageDataFailure).toHaveBeenCalledWith('chain:Ethereum:stablecoins', error)
-	})
-
-	test('looks up sponsored reports by the canonical chain page identity', async () => {
-		resetMocks()
-		const reports = [{ id: 'report-id' }]
-		mocks.getSponsoredResearchReports.mockResolvedValueOnce({ sponsor: null, reports })
-		const { getChainOverviewData } = await import('../queries.server')
-
-		const data = await getChainOverviewData({
-			chain: 'Ethereum',
-			chainMetadata: { ethereum },
-			protocolMetadata: {},
-			categoriesAndTagsMetadata,
-			researchSponsorEntitySlug: 'canonical-ethereum'
-		})
-
-		expect(mocks.getSponsoredResearchReports).toHaveBeenCalledWith('chain', 'canonical-ethereum', { limit: 3 })
-		expect(data?.sponsoredResearchReports).toEqual(reports)
-		expect(data?.researchSponsorEntitySlug).toBe('canonical-ethereum')
-	})
-
-	test('still rejects when protocols by chain fail', async () => {
-		resetMocks()
-		mocks.getProtocolsByChain.mockRejectedValueOnce(new Error('protocols unavailable'))
-		const { getChainOverviewData } = await import('../queries.server')
+describe('chain overview phases', () => {
+	test('records a failing optional section and falls back', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 		await expect(
-			getChainOverviewData({
-				chain: 'Ethereum',
-				chainMetadata: { ethereum },
-				protocolMetadata: {},
-				categoriesAndTagsMetadata
+			runChainOverviewPhase({
+				chainName: 'Ethereum',
+				phaseTimer: undefined,
+				label: 'stablecoins',
+				run: () => Promise.reject(new Error('stablecoins unavailable')),
+				options: { fallback: null }
 			})
-		).rejects.toThrow('Error fetching chainOverview:Ethereum')
+		).resolves.toBeNull()
+
+		const event = (await telemetry.events()).find((item) => item.type === 'runtime_error')
+		expect(event).toMatchObject({
+			phase: 'pageBuild',
+			attributes: { optional: true, label: 'chain:Ethereum:stablecoins' }
+		})
 	})
 
-	test('still rejects when required protocol aggregation is absent', async () => {
-		resetMocks()
-		mocks.getProtocolsByChain.mockResolvedValueOnce(null)
-		const { getChainOverviewData } = await import('../queries.server')
-
+	test('fails the page when a required section fails', async () => {
 		await expect(
-			getChainOverviewData({
-				chain: 'Ethereum',
-				chainMetadata: { ethereum },
-				protocolMetadata: {},
-				categoriesAndTagsMetadata
+			runChainOverviewPhase({
+				chainName: 'Ethereum',
+				phaseTimer: undefined,
+				label: 'protocols_by_chain',
+				run: () => Promise.reject(new Error('protocols unavailable')),
+				options: undefined
 			})
-		).rejects.toThrow('Missing protocol aggregation for Ethereum')
+		).rejects.toThrow('protocols unavailable')
 	})
+})
 
-	test('omits retired NFT data and its upstream request', async () => {
-		resetMocks()
-		const { getChainOverviewData } = await import('../queries.server')
-
-		const data = await getChainOverviewData({
-			chain: 'Ethereum',
-			chainMetadata: { ethereum },
-			protocolMetadata: {},
-			categoriesAndTagsMetadata
-		})
-
-		expect(data).not.toHaveProperty('nfts')
-		expect(mocks.fetchJson).not.toHaveBeenCalledWith('https://defillama-datasets.llama.fi/temp/chainNfts')
-	})
-
-	test('keeps chain-native and app fee/revenue requests on their canonical endpoints', async () => {
-		resetMocks()
-		const { getChainOverviewData } = await import('../queries.server')
-		const metricChain = {
-			...ethereum,
-			fees: true,
-			revenue: true,
-			chainFees: true,
-			chainRevenue: true
-		} satisfies IChainMetadata
-
-		await getChainOverviewData({
-			chain: 'Ethereum',
-			chainMetadata: { ethereum: metricChain },
-			protocolMetadata: {},
-			categoriesAndTagsMetadata
-		})
-
-		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledTimes(2)
-		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledWith({
-			adapterType: 'fees',
-			chain: 'Ethereum',
-			dataType: 'dailyAppFees'
-		})
-		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledWith({
-			adapterType: 'fees',
-			chain: 'Ethereum',
-			dataType: 'dailyAppRevenue'
-		})
-		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledTimes(2)
-		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
-			adapterType: 'fees',
-			protocol: 'Ethereum'
-		})
-		expect(mocks.fetchAdapterProtocolMetrics).toHaveBeenCalledWith({
-			adapterType: 'fees',
-			protocol: 'Ethereum',
-			dataType: 'dailyRevenue'
-		})
-	})
-
-	test('keeps the top fee protocol ordering, positive-value filter, and 14-row limit', async () => {
-		resetMocks()
+describe('top protocols by fees chart', () => {
+	test('keeps the 14 highest positive 24h fee protocols in descending order', () => {
 		const protocols = Array.from({ length: 16 }, (_, index) => ({
-			id: `protocol-${index + 1}`,
 			name: `Protocol ${index + 1}`,
-			slug: `protocol-${index + 1}`,
-			tvl: {
-				default: { tvl: 100 - index, tvlPrevDay: 100 - index, tvlPrevWeek: 100 - index, tvlPrevMonth: 100 - index }
-			},
 			fees: { total24h: index + 1 }
 		}))
-		protocols.push({
-			id: 'zero-protocol',
-			name: 'Zero Protocol',
-			slug: 'zero-protocol',
-			tvl: { default: { tvl: 0, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 } },
-			fees: { total24h: 0 }
-		})
-		mocks.getProtocolsByChain.mockResolvedValue({
-			protocols,
-			chains: [],
-			fees: { protocols: [{ slug: 'fee-protocol', total24h: 1 }] },
-			dexs: null
-		})
-		const { getChainOverviewData } = await import('../queries.server')
+		protocols.push({ name: 'Zero Protocol', fees: { total24h: 0 } })
 
-		const data = await getChainOverviewData({
-			chain: 'Ethereum',
-			chainMetadata: { ethereum },
-			protocolMetadata: {},
-			categoriesAndTagsMetadata
-		})
-
-		expect(data?.chainFees.topProtocolsChart?.map(([name, total24h]) => [name, total24h])).toEqual(
+		expect(getTopProtocolsByFeesChart(protocols, [{}])?.map(([name, total24h]) => [name, total24h])).toEqual(
 			Array.from({ length: 14 }, (_, index) => [`Protocol ${16 - index}`, 16 - index])
 		)
-		expect(data?.protocols.map((protocol) => protocol.name)).toEqual([
-			...Array.from({ length: 16 }, (_, index) => `Protocol ${index + 1}`),
-			'Zero Protocol'
-		])
+	})
+
+	test('has no chart when the chain reports no fee protocols or no positive fees', () => {
+		expect(getTopProtocolsByFeesChart([{ name: 'A', fees: { total24h: 5 } }], [])).toBeNull()
+		expect(getTopProtocolsByFeesChart([{ name: 'A', fees: { total24h: 0 } }], [{}])).toBeNull()
 	})
 })

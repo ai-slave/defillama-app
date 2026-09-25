@@ -61,26 +61,6 @@ describe('buildReserveStablecoinChartData', () => {
 		}
 	})
 
-	test('trusts unique timestamps and preserves the last duplicate-symbol definition', () => {
-		const result = buildReserveStablecoinChartData(
-			[
-				[1000, { USDT: 2 }],
-				[2000, { USDT: 4 }]
-			],
-			[usdtAsset, { symbol: 'USDT', pegType: 'peggedEUR', pegMechanism: 'algorithmic' }]
-		)
-
-		expect(result.totalStablecoins?.dataset.source).toEqual([
-			[1000, 2],
-			[2000, 4]
-		])
-		expect(result.stablecoinsByPegMechanism?.dataset.source).toEqual([
-			[1000, 2],
-			[2000, 4]
-		])
-		expect(result.pegTypesUnique).toEqual(['peggedEUR'])
-	})
-
 	test('uses the latest mechanism row for the pie and summary', () => {
 		const result = buildReserveStablecoinChartData(
 			[

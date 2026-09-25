@@ -25,15 +25,15 @@ describe('filterDataByTimePeriod', () => {
 		])
 	})
 
-	test('reuses the source for all-time and full-range selections', () => {
-		expect(filterDataByTimePeriod(data, 'all')).toBe(data)
+	test('keeps every row for all-time and full-range selections', () => {
+		expect(filterDataByTimePeriod(data, 'all')).toEqual(data)
 		expect(
 			filterDataByTimePeriod(data, 'custom', {
 				type: 'absolute',
 				startDate: 0,
 				endDate: 100
 			})
-		).toBe(data)
+		).toEqual(data)
 	})
 
 	test('returns an empty slice when the selected period has no rows', () => {
@@ -48,34 +48,14 @@ describe('filterDataByTimePeriod', () => {
 })
 
 describe('Pro dashboard chart query identities', () => {
-	test('shares a metric card with the equivalent raw chart source', () => {
-		expect(
-			getProDashboardChartSourceQueryKey({
-				type: 'chainPrice',
-				subjectType: 'chain',
-				chain: 'Ethereum',
-				geckoId: 'ethereum'
-			})
-		).toEqual(['pro-dashboard', 'chart-source', 'chainPrice', 'chain', 'Ethereum', 'ethereum', null])
-	})
-
 	test('keeps only source-relevant metadata in the key', () => {
-		const fees = getProDashboardChartSourceQueryKey({
-			type: 'fees',
-			subjectType: 'protocol',
-			protocol: 'aave',
-			geckoId: 'irrelevant',
-			dataType: 'realtime'
-		})
-		expect(fees).toEqual(['pro-dashboard', 'chart-source', 'fees', 'protocol', 'aave', null, null])
+		const feesKey = (extra: { geckoId?: string; dataType?: 'realtime' }) =>
+			getProDashboardChartSourceQueryKey({ type: 'fees', subjectType: 'protocol', protocol: 'aave', ...extra })
+		expect(feesKey({ geckoId: 'irrelevant', dataType: 'realtime' })).toEqual(feesKey({}))
 
-		const tokenPrice = getProDashboardChartSourceQueryKey({
-			type: 'tokenPrice',
-			subjectType: 'protocol',
-			protocol: 'aave',
-			geckoId: 'aave'
-		})
-		expect(tokenPrice[5]).toBe('aave')
+		const tokenPriceKey = (geckoId: string) =>
+			getProDashboardChartSourceQueryKey({ type: 'tokenPrice', subjectType: 'protocol', protocol: 'aave', geckoId })
+		expect(tokenPriceKey('aave')).not.toEqual(tokenPriceKey('aave-v2'))
 	})
 
 	test('canonicalizes the default unlock source while keeping realtime separate', () => {

@@ -951,8 +951,8 @@ describe('telemetry client', () => {
 				await fetchWithPoolingOnServer('https://api.llama.fi/large', {
 					method: 'POST',
 					body: JSON.stringify({
-						apiKey: 'not-in-env-secret',
-						nested: { token: 'also-not-in-env-secret' },
+						apiKey: 'user-api-key-7f3a',
+						nested: { token: 'user-session-token-9c1b' },
 						filler: 'x'.repeat(200)
 					})
 				})
@@ -967,8 +967,8 @@ describe('telemetry client', () => {
 			}
 		})
 		expect(JSON.stringify(outbound)).toContain('[REDACTED]')
-		expect(JSON.stringify(outbound)).not.toContain('not-in-env-secret')
-		expect(JSON.stringify(outbound)).not.toContain('also-not-in-env-secret')
+		expect(JSON.stringify(outbound)).not.toContain('user-api-key-7f3a')
+		expect(JSON.stringify(outbound)).not.toContain('user-session-token-9c1b')
 	})
 
 	test('links outbound spans from static, SSR, and API route contexts', async () => {

@@ -18,17 +18,17 @@ import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, ITreasuryRow>()
 
+/** Entity treasuries have no own token, core TVL, or market cap, so those columns only exist for protocols. */
+export function treasuryTableColumns(entity: boolean) {
+	if (!entity) return columns
+	return columns.filter((c) => {
+		const key = c.id ?? ('accessorKey' in c ? String(c.accessorKey) : '')
+		return !['ownTokens', 'coreTvl', 'mcap'].includes(key)
+	})
+}
+
 export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity: boolean }) {
-	const tableColumns = useMemo(
-		() =>
-			entity
-				? columns.filter((c) => {
-						const key = c.id ?? ('accessorKey' in c ? String(c.accessorKey) : '')
-						return !['ownTokens', 'coreTvl', 'mcap'].includes(key)
-					})
-				: columns,
-		[entity]
-	)
+	const tableColumns = useMemo(() => treasuryTableColumns(entity), [entity])
 
 	const sortingState = entity ? [{ id: 'tvl', desc: true }] : [{ id: 'coreTvl', desc: true }]
 

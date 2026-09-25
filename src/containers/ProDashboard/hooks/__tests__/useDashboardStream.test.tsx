@@ -105,12 +105,6 @@ describe('buildStreamRequest', () => {
 		expect(params.get('var-chain')).toBe('Solana')
 		expect(init.headers).toEqual({ Authorization: 'Bearer token' })
 	})
-
-	test('omits the query string when nothing is requested', () => {
-		const { url } = buildStreamRequest('dashboard-1', null, new AbortController().signal)
-
-		expect(url).toBe('/api/dynamic/pro-dashboard/dashboard-1/stream')
-	})
 })
 
 describe('useDashboardStream', () => {

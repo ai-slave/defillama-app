@@ -4,7 +4,7 @@ import { Announcement } from '~/components/Announcement'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
-import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
+import { articleBannerCandidates } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 
@@ -74,11 +74,15 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 
 	const candidates: Array<Banner | null> =
 		scope === 'article'
-			? [
-					articleBannerQuery.data?.text ?? null,
-					sectionBannerQuery.data?.text ?? null,
-					allArticlesBannerForArticle(allArticlesBannerQuery.data?.text ?? null, articleId)
-				]
+			? articleBannerCandidates(
+					'text',
+					{
+						article: articleBannerQuery.data,
+						section: sectionBannerQuery.data,
+						allArticles: allArticlesBannerQuery.data
+					},
+					articleId
+				)
 			: scope === 'section'
 				? [sectionBannerQuery.data?.text ?? null]
 				: [landingBannerQuery.data?.text ?? null]

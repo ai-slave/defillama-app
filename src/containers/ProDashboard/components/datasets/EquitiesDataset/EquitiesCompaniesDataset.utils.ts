@@ -1,5 +1,11 @@
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import type { CsvCell } from '~/utils/csvCell'
+import {
+	formatCompactNumber,
+	formatPercent,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 
 type EquitiesCompanyCsvItem = Pick<
 	IEquitiesCompanyApiItem,
@@ -32,4 +38,14 @@ export function getEquitiesCompanyCsvRow(item: EquitiesCompanyCsvItem): Array<Cs
 		item.revenueTTM,
 		item.earningsTTM
 	]
+}
+
+// Volume is a share count, not USD.
+export function formatEquitiesVolume(volume: number | undefined): string | null {
+	return formatCompactNumber(volume, NUMBER_LOWERCASE_MILLIONS_OPTIONS)
+}
+
+// The API already sends dividend yield in percentage points (0.34 means 0.34%).
+export function formatEquitiesDividendYield(dividendYield: number | undefined): string {
+	return formatPercent(dividendYield, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'
 }

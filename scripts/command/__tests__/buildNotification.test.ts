@@ -51,9 +51,10 @@ describe('build notification adapter', () => {
 		})
 
 		expect(result).toEqual({ buildLogUrl: 'https://logs.example/get/log-id', status: 'sent' })
-		expect(fetchImpl).toHaveBeenCalledTimes(4)
 		expect(fetchImpl.mock.calls[0][1]?.body).toContain('Deployment: core-next')
 		expect(fetchImpl.mock.calls[0][1]?.body).toContain('URL: https://core.example')
+		expect(JSON.parse(fetchImpl.mock.calls[2][1]?.body).content).toBe('https://logs.example/get/log-id')
+		expect(JSON.parse(fetchImpl.mock.calls[3][1]?.body).content).toBe('<@1> <@2>')
 	})
 
 	test('uses Coolify identifiers when no custom deployment name is set', async () => {

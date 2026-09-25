@@ -1,49 +1,46 @@
 // @vitest-environment happy-dom
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import toast from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import {
-	LLAMA_AI_ENABLE_MEMORY_KEY,
-	LLAMA_AI_SETTINGS_QUERY_KEY,
-	type SettingsQueryResult,
-	useLlamaAISettings
-} from './useLlamaAISettings'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { useLlamaAISettings } from './useLlamaAISettings'
 
-const mocks = vi.hoisted(() => ({
-	authorizedFetch: vi.fn(),
-	storage: new Map<string, string>()
-}))
+const session = installSubscriberSession('user-1')
+const SETTINGS_URL = `${AI_SERVER}/user-settings`
 
-vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
-
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		authorizedFetch: mocks.authorizedFetch,
-		isAuthenticated: true,
-		user: { id: 'user-1', flags: {} }
-	})
-}))
-
-vi.mock('~/contexts/localStorageStore', () => ({
-	useStorageItem: (key: string, fallback: string | null) => mocks.storage.get(key) ?? fallback,
-	setStorageItem: (key: string, value: string) => mocks.storage.set(key, value),
-	removeStorageItem: (key: string) => mocks.storage.delete(key)
-}))
+// A lost fixture must fail in a second, not wait out the 30s suite timeout.
+function within<T>(promise: Promise<T>, ms = 1000): Promise<T> {
+	return Promise.race([
+		promise,
+		new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`Not settled in ${ms}ms`)), ms))
+	])
+}
 
 describe('useLlamaAISettings', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let queryClient: QueryClient
-	let settingsHook: ReturnType<typeof useLlamaAISettings>
+	let hook: ReturnType<typeof useLlamaAISettings>
 
-	beforeEach(async () => {
+	function Harness() {
+		hook = useLlamaAISettings()
+		return null
+	}
+
+	async function mount() {
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<Harness />
+				</session.Wrapper>
+			)
+		)
+	}
+
+	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		mocks.authorizedFetch.mockReset()
-		mocks.storage.clear()
-		queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+		session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -51,92 +48,74 @@ describe('useLlamaAISettings', () => {
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
-		queryClient.clear()
 		container.remove()
 	})
 
-	async function renderHook() {
-		function Harness() {
-			settingsHook = useLlamaAISettings()
-			return null
-		}
-
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={queryClient}>
-					<Harness />
-				</QueryClientProvider>
-			)
-		})
-	}
-
 	test('serializes saves across remount and keeps the preceding accepted value', async () => {
-		let resolveFirstSave: ((response: Response) => void) | null = null
-		let putCount = 0
-		mocks.authorizedFetch.mockImplementation((_url: string, init?: RequestInit) => {
-			if (init?.method !== 'PUT') {
-				return Promise.resolve(
-					new Response(JSON.stringify({ settings: { enableMemory: true } }), {
-						status: 200,
-						headers: { 'Content-Type': 'application/json' }
-					})
-				)
+		let releaseFirstSave: (() => void) | null = null
+		const puts: Array<unknown> = []
+		session.serve({
+			[SETTINGS_URL]: (_url: URL, init?: RequestInit) => {
+				if (init?.method !== 'PUT') return { settings: { enableMemory: true } }
+				puts.push(JSON.parse(init.body as string))
+				if (puts.length === 1)
+					return new Promise<Response>((resolve) => (releaseFirstSave = () => resolve(new Response(null))))
+				return new Response(null, { status: 500 })
 			}
-
-			putCount += 1
-			if (putCount === 1) return new Promise<Response>((resolve) => (resolveFirstSave = resolve))
-			return Promise.resolve(new Response(null, { status: 500 }))
 		})
-		await renderHook()
+		await mount()
+		await vi.waitFor(() => expect(session.requests.some((r) => r.url.href === SETTINGS_URL)).toBe(true))
 
-		let firstSave: Promise<boolean>
-		let secondSave: Promise<boolean>
+		let firstSave!: Promise<boolean>
+		let secondSave!: Promise<boolean>
 		await act(async () => {
-			firstSave = settingsHook.actions.setEnableMemory(false)
-			await Promise.resolve()
-			root.unmount()
+			firstSave = hook.actions.setEnableMemory(false)
 		})
+		await vi.waitFor(() => expect(puts).toHaveLength(1))
+		await act(async () => root.unmount())
 		root = createRoot(container)
-		await renderHook()
+		await mount()
 		await act(async () => {
-			secondSave = settingsHook.actions.setEnableMemory(true)
-			await Promise.resolve()
+			secondSave = hook.actions.setEnableMemory(true)
 		})
-		expect(putCount).toBe(1)
+		// The second save waits behind the first instead of racing it to the server.
+		expect(puts).toHaveLength(1)
 
-		await act(async () => resolveFirstSave?.(new Response(null, { status: 200 })))
-		await expect(firstSave!).resolves.toBe(true)
-		await expect(secondSave!).resolves.toBe(false)
-
-		const cached = queryClient.getQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, 'user-1'])
-		expect(cached?.settings?.enableMemory).toBe(false)
-		expect(mocks.storage.get(LLAMA_AI_ENABLE_MEMORY_KEY)).toBe('false')
-		expect(toast.error).toHaveBeenCalledWith('Could not save AI settings. Please try again.')
+		await act(async () => releaseFirstSave!())
+		expect(await within(firstSave)).toBe(true)
+		expect(await within(secondSave)).toBe(false)
+		expect(puts).toEqual([{ settings: { enableMemory: false } }, { settings: { enableMemory: true } }])
+		// The failed second save rolls back to the value the server accepted, not the pre-save default.
+		expect(hook.settings.enableMemory).toBe(false)
 	})
 
-	test('ignores a settings query that predates a successful save', async () => {
-		let resolveSettingsQuery: ((response: Response) => void) | null = null
-		mocks.authorizedFetch.mockImplementation((_url: string, init?: RequestInit) => {
-			if (init?.method === 'PUT') return Promise.resolve(new Response(null, { status: 200 }))
-			return new Promise<Response>((resolve) => (resolveSettingsQuery = resolve))
+	test('ignores a settings response that predates a successful save', async () => {
+		let releaseSettings: (() => void) | null = null
+		session.serve({
+			[SETTINGS_URL]: (_url: URL, init?: RequestInit) => {
+				if (init?.method === 'PUT') return new Response(null)
+				return new Promise<Response>(
+					(resolve) =>
+						(releaseSettings = () => resolve(Response.json({ settings: { customInstructions: 'Old instructions' } })))
+				)
+			}
 		})
-		await renderHook()
+		await mount()
+		await vi.waitFor(() => expect(releaseSettings).not.toBeNull())
 
-		await expect(settingsHook.actions.setCustomInstructions('New instructions')).resolves.toBe(true)
-		const saved = queryClient.getQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, 'user-1'])
-		expect(saved?.settings?.customInstructions).toBe('New instructions')
-
+		let save!: Promise<boolean>
 		await act(async () => {
-			resolveSettingsQuery?.(
-				new Response(JSON.stringify({ settings: { customInstructions: 'Old instructions' } }), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				})
-			)
-			await Promise.resolve()
+			save = hook.actions.setCustomInstructions('New instructions')
+		})
+		expect(await within(save)).toBe(true)
+		await vi.waitFor(() => expect(hook.settings.customInstructions).toBe('New instructions'))
+
+		// Give the stale response every chance to land before checking it did not win.
+		await act(async () => {
+			releaseSettings!()
+			await new Promise((resolve) => setTimeout(resolve, 20))
 		})
 
-		const cached = queryClient.getQueryData<SettingsQueryResult>([...LLAMA_AI_SETTINGS_QUERY_KEY, 'user-1'])
-		expect(cached?.settings?.customInstructions).toBe('New instructions')
+		expect(hook.settings.customInstructions).toBe('New instructions')
 	})
 })

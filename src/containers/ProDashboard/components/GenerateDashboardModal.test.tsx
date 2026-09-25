@@ -1,28 +1,26 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AI_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
 import { GenerateDashboardModal } from './GenerateDashboardModal'
-const mocks = vi.hoisted(() => ({ fetch: vi.fn(), push: vi.fn() }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: true, user: { id: 'owner' }, authorizedFetch: mocks.fetch })
-}))
+const mocks = vi.hoisted(() => ({ creator: vi.fn(), push: vi.fn() }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push }) }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
+const session = installSubscriberSession('owner', { resolved: true })
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 const save = vi.fn()
 const close = vi.fn()
 const dashboard: Dashboard = { id: 'new', data: { items: [], dashboardName: 'My analysis' }, created: '', updated: '' }
 async function render(open = true, mode: 'create' | 'iterate' = 'create', items: Array<DashboardItemConfig> = []) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<GenerateDashboardModal
 					isOpen={open}
 					onClose={close}
@@ -36,7 +34,7 @@ async function render(open = true, mode: 'create' | 'iterate' = 'create', items:
 						items
 					}}
 				/>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -51,17 +49,17 @@ function draft() {
 beforeEach(() => {
 	vi.clearAllMocks()
 	save.mockReset()
-	mocks.fetch.mockImplementation(
+	mocks.creator.mockImplementation(
 		async () => new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n')
 	)
-	client = new QueryClient()
+	// The dashboard creator streams its answer; each test decides what the stream says.
+	session.serve({ [`${AI_SERVER}/dashboard-creator`]: (_url: URL, init?: RequestInit) => mocks.creator(_url, init) })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 test('generation waits for persistence, retains a failed draft, and navigates only after a successful retry', async () => {
@@ -75,7 +73,7 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	expect(mocks.push).not.toHaveBeenCalled()
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
 	await submit()
-	expect(mocks.fetch).toHaveBeenCalledOnce()
+	expect(mocks.creator).toHaveBeenCalledOnce()
 	await act(async () => pending.reject(new Error('Save unavailable')))
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(toast.error).not.toHaveBeenCalled()
@@ -83,7 +81,7 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	await submit()
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/pro/new')
-	expect(mocks.fetch).toHaveBeenCalledOnce()
+	expect(mocks.creator).toHaveBeenCalledOnce()
 	expect(save.mock.calls[1][0]).toEqual(save.mock.calls[0][0])
 })
 test.each(['success', 'failure'] as const)(
@@ -101,7 +99,7 @@ test.each(['success', 'failure'] as const)(
 			if (outcome === 'success') pending.resolve(dashboard)
 			else pending.reject(new Error('Earlier generation failed'))
 		})
-		await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+		await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
 		expect(close).not.toHaveBeenCalled()
 		expect(mocks.push).not.toHaveBeenCalled()
 		expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -109,7 +107,7 @@ test.each(['success', 'failure'] as const)(
 	}
 )
 test('a stream error is shown inline without attempting to save', async () => {
-	mocks.fetch.mockResolvedValueOnce(new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'))
+	mocks.creator.mockResolvedValueOnce(new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'))
 	await render()
 	draft()
 	await submit()
@@ -123,7 +121,7 @@ test('a stream error is shown inline without attempting to save', async () => {
 
 test('iteration preserves existing metadata, awaits saving, and closes without creation navigation', async () => {
 	const response = Promise.withResolvers<Response>()
-	mocks.fetch.mockReturnValueOnce(response.promise)
+	mocks.creator.mockReturnValueOnce(response.promise)
 	const pending = Promise.withResolvers<void>()
 	save.mockReturnValueOnce(pending.promise)
 	await render(true, 'iterate')
@@ -139,7 +137,7 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	await vi.waitFor(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Saving…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard')
 	expect(save).toHaveBeenCalledOnce()
-	expect(JSON.parse(mocks.fetch.mock.calls[0][1].body)).toEqual({
+	expect(JSON.parse(mocks.creator.mock.calls[0][1].body)).toEqual({
 		message: 'Add a fees comparison to this dashboard',
 		mode: 'iterate',
 		existingDashboard: { dashboardName: 'Existing dashboard', items: [] }
@@ -174,7 +172,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 		'Add a fees comparison to this dashboard'
 	await submit()
 	await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
-	expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).existingDashboard.items).toEqual([
+	expect(JSON.parse(mocks.creator.mock.calls[0][1].body).existingDashboard.items).toEqual([
 		section,
 		{
 			id: 'custom-1',
@@ -203,12 +201,12 @@ test('editing the prompt explicitly discards the generated result before generat
 	prompt.value = 'Compare stablecoin supplies instead of fees and TVL'
 	await submit()
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
-	expect(mocks.fetch).toHaveBeenCalledTimes(2)
-	expect(JSON.parse(mocks.fetch.mock.calls[1][1].body).message).toBe(prompt.value)
+	expect(mocks.creator).toHaveBeenCalledTimes(2)
+	expect(JSON.parse(mocks.creator.mock.calls[1][1].body).message).toBe(prompt.value)
 })
 test('generation finishing after leaving does not start a save in a new opening', async () => {
 	const response = Promise.withResolvers<Response>()
-	mocks.fetch.mockReturnValueOnce(response.promise)
+	mocks.creator.mockReturnValueOnce(response.promise)
 	await render()
 	draft()
 	await submit()
@@ -217,7 +215,7 @@ test('generation finishing after leaving does not start a save in a new opening'
 	await act(async () =>
 		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
 	)
-	await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+	await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
 	expect(save).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')

@@ -1,97 +1,66 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 
-const { getBridgeOverviewPageDataMock, getBridgePageDatanewMock } = vi.hoisted(() => ({
-	getBridgeOverviewPageDataMock: vi.fn(),
-	getBridgePageDatanewMock: vi.fn()
+const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
+
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: fetchJsonMock
 }))
 
-vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: (_filename: string, handler: unknown) => handler
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		bridgeChainSlugsSet: new Set(['base']),
-		bridgeChainSlugToName: { base: 'Base' },
-		bridgeProtocolSlugsSet: new Set(['layerzero'])
-	}
-}))
-
-vi.mock('~/containers/Bridges/queries.server', () => ({
-	getBridgeOverviewPageData: getBridgeOverviewPageDataMock,
-	getBridgePageDatanew: getBridgePageDatanewMock
-}))
-
-vi.mock('~/components/TemporarilyDisabledPage', () => ({
-	TemporarilyDisabledPage: () => null
-}))
-
-vi.mock('~/containers/Bridges/BridgesOverviewByChain', () => ({
-	BridgesOverviewByChain: () => null
-}))
-
-vi.mock('~/containers/Bridges/BridgeProtocolOverview', () => ({
-	BridgeProtocolOverview: () => null
-}))
-
-vi.mock('~/layout', () => ({
-	default: () => null
-}))
+// Heavy page children; these tests assert only getStaticProps results.
+vi.mock('~/components/TemporarilyDisabledPage', () => ({ TemporarilyDisabledPage: () => null }))
+vi.mock('~/containers/Bridges/BridgesOverviewByChain', () => ({ BridgesOverviewByChain: () => null }))
+vi.mock('~/containers/Bridges/BridgeProtocolOverview', () => ({ BridgeProtocolOverview: () => null }))
+vi.mock('~/layout', () => ({ default: () => null }))
 
 import { getStaticProps as getBridgeStaticProps } from '~/pages/bridge/[bridge]'
 import { getStaticProps as getBridgeChainStaticProps } from '~/pages/bridges/[chain]'
 
+const metadata = installMetadataSeeder()
+
 beforeEach(() => {
-	vi.clearAllMocks()
+	fetchJsonMock.mockReset()
 	vi.spyOn(console, 'error').mockImplementation(() => {})
+	vi.spyOn(console, 'log').mockImplementation(() => {})
+	metadata.seed({
+		bridgeChainSlugsSet: new Set(['base']),
+		bridgeChainSlugToName: { base: 'Base' },
+		bridgeProtocolSlugsSet: new Set(['layerzero'])
+	})
 })
 
-afterEach(() => {
-	vi.restoreAllMocks()
-})
+const chainContext = (revalidateReason: 'stale' | 'build') =>
+	({ params: { chain: 'base' }, revalidateReason }) as GetStaticPropsContext<{ chain: string }>
+const bridgeContext = (revalidateReason: 'stale' | 'build') =>
+	({ params: { bridge: 'layerzero' }, revalidateReason }) as GetStaticPropsContext<{ bridge: string }>
 
 describe('Bridges stale ISR handling', () => {
 	test('rethrows a chain loader failure during stale regeneration', async () => {
-		getBridgeOverviewPageDataMock.mockRejectedValue(new Error('upstream unavailable'))
-		const context = {
-			params: { chain: 'base' },
-			revalidateReason: 'stale'
-		} as GetStaticPropsContext<{ chain: string }>
+		fetchJsonMock.mockRejectedValue(new Error('upstream unavailable'))
 
-		await expect(getBridgeChainStaticProps(context)).rejects.toThrow('upstream unavailable')
+		await expect(getBridgeChainStaticProps(chainContext('stale'))).rejects.toThrow('upstream unavailable')
 	})
 
 	test('keeps the disabled chain fallback for an initial build failure', async () => {
-		getBridgeOverviewPageDataMock.mockRejectedValue(new Error('upstream unavailable'))
-		const context = {
-			params: { chain: 'base' },
-			revalidateReason: 'build'
-		} as GetStaticPropsContext<{ chain: string }>
+		fetchJsonMock.mockRejectedValue(new Error('upstream unavailable'))
 
-		await expect(getBridgeChainStaticProps(context)).resolves.toMatchObject({
+		await expect(getBridgeChainStaticProps(chainContext('build'))).resolves.toMatchObject({
 			props: { state: 'disabled', chainSlug: 'base', chainLabel: 'Base' }
 		})
 	})
 
 	test('rethrows missing bridge data during stale regeneration', async () => {
-		getBridgePageDatanewMock.mockResolvedValue(null)
-		const context = {
-			params: { bridge: 'layerzero' },
-			revalidateReason: 'stale'
-		} as GetStaticPropsContext<{ bridge: string }>
+		fetchJsonMock.mockResolvedValue({ bridges: [], chains: [] })
 
-		await expect(getBridgeStaticProps(context)).rejects.toThrow('No bridge data returned for layerzero')
+		await expect(getBridgeStaticProps(bridgeContext('stale'))).rejects.toThrow('No bridge data returned for layerzero')
 	})
 
 	test('keeps the disabled bridge fallback for an initial build failure', async () => {
-		getBridgePageDatanewMock.mockRejectedValue(new Error('upstream unavailable'))
-		const context = {
-			params: { bridge: 'layerzero' },
-			revalidateReason: 'build'
-		} as GetStaticPropsContext<{ bridge: string }>
+		fetchJsonMock.mockRejectedValue(new Error('upstream unavailable'))
 
-		await expect(getBridgeStaticProps(context)).resolves.toMatchObject({
+		await expect(getBridgeStaticProps(bridgeContext('build'))).resolves.toMatchObject({
 			props: { state: 'disabled', bridgeSlug: 'layerzero' }
 		})
 	})

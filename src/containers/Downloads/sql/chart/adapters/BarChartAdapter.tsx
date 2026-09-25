@@ -9,7 +9,7 @@ interface BarChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
 export function BarChartAdapter({ config, result, classified, onReady, height }: BarChartAdapterProps) {
@@ -19,7 +19,7 @@ export function BarChartAdapter({ config, result, classified, onReady, height }:
 			result={result}
 			classified={classified}
 			onReady={onReady}
-			{...(height === undefined ? {} : { height })}
+			height={height}
 			forceType="bar"
 			forceStack={config.stackMode !== 'off' ? 'bar' : undefined}
 		/>

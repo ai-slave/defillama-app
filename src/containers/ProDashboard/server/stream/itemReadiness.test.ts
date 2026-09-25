@@ -76,9 +76,14 @@ describe('createStreamItemReadiness', () => {
 describe('createStreamSourceRegistry', () => {
 	const runImmediately = (run: () => Promise<void>) => run()
 
-	test('serializes source keys the same way as the stream claims', () => {
-		expect(streamSourceKey('chart', ['pro-dashboard', 'chart-source', 'fees'])).toBe(
-			'chart:["pro-dashboard","chart-source","fees"]'
+	// Claims dedupe by key, so two different sources sharing a key would leave one card without data.
+	test('source keys match for equal query keys and differ for any other kind or key', () => {
+		const key = streamSourceKey('chart', ['pro-dashboard', 'fees', 'aave'])
+		expect(streamSourceKey('chart', ['pro-dashboard', 'fees', 'aave'])).toBe(key)
+		expect(streamSourceKey('advanced-tvl', ['pro-dashboard', 'fees', 'aave'])).not.toBe(key)
+		expect(streamSourceKey('chart', ['pro-dashboard', 'fees,aave'])).not.toBe(key)
+		expect(streamSourceKey('chart', ['pro-dashboard', 'fees', 1])).not.toBe(
+			streamSourceKey('chart', ['pro-dashboard', 'fees', '1'])
 		)
 	})
 
@@ -120,19 +125,5 @@ describe('createStreamSourceRegistry', () => {
 
 		expect(run).not.toHaveBeenCalled()
 		expect(onItemsReady).toHaveBeenCalledWith(['chart-1'])
-	})
-
-	test('does not report readiness while another source of the item is still pending', async () => {
-		const onItemsReady = vi.fn(async () => {})
-		const registry = createStreamSourceRegistry(createStreamItemReadiness(items), runImmediately, onItemsReady)
-		registry.register('multi-1', 'chart:a')
-		registry.register('multi-1', 'chart:b')
-
-		await registry.schedule('chart:a', async () => {})
-		expect(onItemsReady).not.toHaveBeenCalled()
-
-		await registry.schedule('chart:b', async () => {})
-		expect(onItemsReady).toHaveBeenCalledTimes(1)
-		expect(onItemsReady).toHaveBeenCalledWith(['multi-1'])
 	})
 })

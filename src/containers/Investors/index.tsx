@@ -4,7 +4,8 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { getInvestorsProjects, type InvestorsSite } from './config'
 import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
-import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
+import { DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
+import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { Logo } from './Logo'
 import { getDashboardModule } from './registry'
@@ -125,8 +126,7 @@ function InvestorsShell({
 	const displayName = activeProjectConfig?.name ?? 'Dashboard'
 	const tabs = tabsByProject[activeProject] ?? DEFAULT_TABS
 	const HeaderComponent = headersByProject[activeProject]
-	// Derive the effective tab: use activeTab if set and valid, otherwise first tab
-	const resolvedTab = activeTab && tabs.some((t) => t.id === activeTab) ? activeTab : (tabs[0]?.id ?? 'dashboard')
+	const resolvedTab = resolveActiveTab(tabs, activeTab)
 
 	// Only show the global loader when the active tab is the pro dashboard (Overview) tab.
 	// Custom tabs handle their own loading state and should not be blocked by the stream.

@@ -22,8 +22,7 @@ import {
 	getProDashboardChartTypeConfig,
 	isDailyAverageChartType,
 	isProDashboardChartType,
-	type ChartConfig,
-	type DashboardGrouping
+	type ChartConfig
 } from './types'
 import { averageDailyData, groupData } from './utils'
 
@@ -207,18 +206,21 @@ export function buildProDashboardChartObserverPlan(charts: Array<ChartConfig>): 
 }
 
 /** Relative periods are cut at `now`, the instant the projection runs, like every other dashboard card. */
-function projectChartData(
+export function projectChartData(
 	sourceData: Array<[number, number]>,
+	chart: Pick<ChartConfig, 'type' | 'grouping'>,
 	timePeriod: TimePeriod,
 	customPeriod: CustomTimePeriod | null | undefined,
-	grouping: DashboardGrouping | null,
-	now: dayjs.Dayjs,
-	chartType: string
+	now: dayjs.Dayjs
 ): Array<[number, number]> {
 	const relevantCustomPeriod = timePeriod === 'custom' ? customPeriod : null
 	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod, now)
-	if (!grouping) return filtered
-	return isDailyAverageChartType(chartType) ? averageDailyData(filtered, grouping) : groupData(filtered, grouping)
+	const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
+	const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
+	if (!groupable || !chart.grouping || chart.grouping === 'day') return filtered
+	return isDailyAverageChartType(chart.type)
+		? averageDailyData(filtered, chart.grouping)
+		: groupData(filtered, chart.grouping)
 }
 
 function getChartSourceQueryOptions(
@@ -276,10 +278,8 @@ export function useChartData(
 	// Relative periods refresh with the source data; a day rolling over without new data does not re-project.
 	const selectData = useCallback(
 		(sourceData: Array<[number, number]>) => {
-			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
-			const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
-			const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
-			return projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, dayjs(), chart.type)
+			const projected = { type: chart.type, grouping: chart.grouping }
+			return projectChartData(sourceData, projected, projectionTimePeriod, customPeriod, dayjs())
 		},
 		[chart.grouping, chart.type, customPeriod, projectionTimePeriod]
 	)
@@ -323,13 +323,7 @@ export function useChartsData(
 				const sourceData = query.data
 				if (!sourceData) return query
 
-				const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
-				const groupable = chartTypeDetails && 'groupable' in chartTypeDetails && chartTypeDetails.groupable
-				const grouping = groupable && chart.grouping && chart.grouping !== 'day' ? chart.grouping : null
-				return {
-					...query,
-					data: projectChartData(sourceData, projectionTimePeriod, customPeriod, grouping, now, chart.type)
-				}
+				return { ...query, data: projectChartData(sourceData, chart, projectionTimePeriod, customPeriod, now) }
 			})
 		},
 		[charts, customPeriod, observerPlan.sourceIndexByChart, projectionTimePeriod]

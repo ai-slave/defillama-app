@@ -450,7 +450,7 @@ export const getProtocolsByChain = async ({
 	const normalizedFork = fork ? slug(fork) : null
 
 	const [
-		{ protocols, chains, parentProtocols },
+		protocols,
 		fees,
 		revenue,
 		holdersRevenue,
@@ -576,13 +576,74 @@ export const getProtocolsByChain = async ({
 			: Promise.resolve(null)
 	])
 
+	const activity: ProtocolRankingActivitySources = {}
+	if (dexs) activity.dexs = dexs
+	if (perps) activity.perps = perps
+	if (normalizedVolume) activity.normalizedVolume = normalizedVolume
+	if (activeLiquidity) activity.activeLiquidity = activeLiquidity
+	if (openInterest) activity.openInterest = openInterest
+	if (optionsPremiumVolume) activity.optionsPremiumVolume = optionsPremiumVolume
+	if (optionsNotionalVolume) activity.optionsNotionalVolume = optionsNotionalVolume
+	if (dexAggregators) activity.dexAggregators = dexAggregators
+	if (perpsAggregators) activity.perpsAggregators = perpsAggregators
+	if (bridgeAggregators) activity.bridgeAggregators = bridgeAggregators
+
+	const input: ProtocolRankingInput = {
+		chainName: currentChainMetadata.name,
+		normalizedFork,
+		protocolMetadata,
+		protocols,
+		fees,
+		revenue,
+		holdersRevenue,
+		emissions: emissionsProtocols,
+		activity
+	}
+	const selection = selectRankingProtocols(input)
+	const prices: Record<string, PriceObject> =
+		selection.priceIds.length > 0 ? await fetchCoinPrices(selection.priceIds).catch(() => ({})) : {}
+
+	return {
+		protocols: buildProtocolRankings(input, selection, prices),
+		chains: protocols.chains,
+		fees,
+		dexs,
+		perps,
+		emissionsData: emissionsProtocols
+	}
+}
+
+/** Upstream data one rankings table is built from. `chainName` 'All' means every chain. */
+export type ProtocolRankingInput = {
+	chainName: string
+	normalizedFork: string | null
+	protocolMetadata: Record<string, IProtocolMetadata>
+	protocols: ProtocolsResponse
+	fees: IAdapterChainMetrics | null
+	revenue: IAdapterChainMetrics | null
+	holdersRevenue: IAdapterChainMetrics | null
+	/** null when the emissions source was not requested or failed; rows then carry no emissions. */
+	emissions: ProtocolEmissionsLookup | null
+	/** Only the activity sources that loaded; each key becomes a row metric. */
+	activity: ProtocolRankingActivitySources
+}
+
+export type ProtocolRankingSelection = {
+	eligibleProtocols: Array<{ protocol: ProtocolsResponse['protocols'][number]; metadata: IProtocolMetadata }>
+	/** `coingecko:<id>` keys for eligible protocols and their parents, fetched before rows are built. */
+	priceIds: Array<string>
+}
+
+export function selectRankingProtocols({
+	chainName,
+	normalizedFork,
+	protocolMetadata,
+	protocols
+}: ProtocolRankingInput): ProtocolRankingSelection {
 	const parentProtocolsMap = new Map<string, ProtocolsResponse['parentProtocols'][number]>()
-	for (const parentProtocol of parentProtocols) parentProtocolsMap.set(parentProtocol.id, parentProtocol)
-	const eligibleProtocols: Array<{
-		protocol: ProtocolsResponse['protocols'][number]
-		metadata: IProtocolMetadata
-	}> = []
-	for (const protocol of protocols) {
+	for (const parentProtocol of protocols.parentProtocols) parentProtocolsMap.set(parentProtocol.id, parentProtocol)
+	const eligibleProtocols: ProtocolRankingSelection['eligibleProtocols'] = []
+	for (const protocol of protocols.protocols) {
 		if (protocol.defillamaId.startsWith('chain#')) continue
 		const metadata = protocolMetadata[protocol.defillamaId]
 		if (!metadata) continue
@@ -591,7 +652,7 @@ export const getProtocolsByChain = async ({
 			!toFilterProtocol({
 				protocolMetadata: metadata,
 				protocolData: protocol,
-				chainDisplayName: currentChainMetadata.name
+				chainDisplayName: chainName
 			})
 		) {
 			continue
@@ -613,20 +674,25 @@ export const getProtocolsByChain = async ({
 		}
 	}
 
-	const protocolTokenPrices: Record<string, PriceObject> =
-		geckoIds.size > 0 ? await fetchCoinPrices(Array.from(geckoIds)).catch(() => ({})) : {}
+	return { eligibleProtocols, priceIds: Array.from(geckoIds) }
+}
 
-	const activity: ProtocolRankingActivitySources = {}
-	if (dexs) activity.dexs = dexs
-	if (perps) activity.perps = perps
-	if (normalizedVolume) activity.normalizedVolume = normalizedVolume
-	if (activeLiquidity) activity.activeLiquidity = activeLiquidity
-	if (openInterest) activity.openInterest = openInterest
-	if (optionsPremiumVolume) activity.optionsPremiumVolume = optionsPremiumVolume
-	if (optionsNotionalVolume) activity.optionsNotionalVolume = optionsNotionalVolume
-	if (dexAggregators) activity.dexAggregators = dexAggregators
-	if (perpsAggregators) activity.perpsAggregators = perpsAggregators
-	if (bridgeAggregators) activity.bridgeAggregators = bridgeAggregators
+/** Builds ranking rows, grouping children under their parent, sorted by default TVL. */
+export function buildProtocolRankings(
+	{
+		chainName,
+		normalizedFork,
+		protocolMetadata,
+		protocols: { parentProtocols },
+		fees,
+		revenue,
+		holdersRevenue,
+		emissions: emissionsProtocols,
+		activity
+	}: ProtocolRankingInput,
+	{ eligibleProtocols }: ProtocolRankingSelection,
+	protocolTokenPrices: Record<string, PriceObject>
+): Array<IProtocol> {
 	const activityMetricKeys = Object.keys(activity) as Array<ProtocolRankingActivitySourceKey>
 	const dimensionProtocols = buildDimensionProtocolMetrics({
 		fees,
@@ -639,9 +705,9 @@ export const getProtocolsByChain = async ({
 	const parentStore: Record<string, Array<StoredChildProtocol>> = {}
 
 	for (const { protocol, metadata } of eligibleProtocols) {
-		const selectedChainTvl = chain === 'All' ? undefined : protocol.chainTvls[currentChainMetadata.name]
+		const selectedChainTvl = chainName === 'All' ? undefined : protocol.chainTvls[chainName]
 		const defaultTvl: ProtocolRankingTvlEntry =
-			chain === 'All'
+			chainName === 'All'
 				? {
 						tvl: protocol.tvl,
 						tvlPrevDay: protocol.tvlPrevDay,
@@ -679,12 +745,12 @@ export const getProtocolsByChain = async ({
 		for (const chainKey in protocol.chainTvls) {
 			const chainTvl = protocol.chainTvls[chainKey]
 			if (!chainTvl) continue
-			if (chain === 'All') {
+			if (chainName === 'All') {
 				if (isExtraTvlType(chainKey)) {
 					tvls[chainKey] = toRankingTvlEntry(chainTvl)
 				}
 			} else {
-				const chainPrefix = `${currentChainMetadata.name}-`
+				const chainPrefix = `${chainName}-`
 				if (!chainKey.startsWith(chainPrefix)) continue
 				const tvlType = chainKey.slice(chainPrefix.length)
 				if (isExtraTvlType(tvlType)) tvls[tvlType] = toRankingTvlEntry(chainTvl)
@@ -697,7 +763,7 @@ export const getProtocolsByChain = async ({
 		const metadataChains = metadata.chains
 		if (!displayName || !metadataChains) continue
 		const hasDisplayTvl =
-			protocol.category !== 'Bridge' && (chain !== 'All' || protocol.tvl != null || normalizedFork !== null)
+			protocol.category !== 'Bridge' && (chainName !== 'All' || protocol.tvl != null || normalizedFork !== null)
 		const childRow: IChildProtocol = {
 			id: protocol.defillamaId,
 			name: displayName,
@@ -893,14 +959,5 @@ export const getProtocolsByChain = async ({
 		if (children) storeChildrenUngrouped(children)
 	}
 
-	const finalProtocols = Object.values(protocolsStore)
-
-	return {
-		protocols: finalProtocols.sort((a, b) => (b.tvl?.default?.tvl ?? 0) - (a.tvl?.default?.tvl ?? 0)),
-		chains,
-		fees,
-		dexs,
-		perps,
-		emissionsData: emissionsProtocols
-	}
+	return Object.values(protocolsStore).sort((a, b) => (b.tvl?.default?.tvl ?? 0) - (a.tvl?.default?.tvl ?? 0))
 }

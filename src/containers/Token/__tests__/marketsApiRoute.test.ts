@@ -1,46 +1,16 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { MARKETS_SERVER_URL } from '~/constants'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
-
-const { fetchJsonMock, recordRouteRuntimeErrorMock } = vi.hoisted(() => ({
-	fetchJsonMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn()
-}))
-
-vi.mock('~/constants', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/constants')>()
-	return {
-		...actual,
-		MARKETS_SERVER_URL: 'https://markets.example.com'
-	}
-})
-
-vi.mock('~/utils/async', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/async')>()
-	return {
-		...actual,
-		fetchJson: fetchJsonMock
-	}
-})
-
-vi.mock('~/utils/telemetry', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/telemetry')>()
-	return {
-		...actual,
-		recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-		withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-	}
-})
+import { installTelemetrySink } from '~/utils/test/telemetry'
+const http = installTelemetrySink()
 
 import handler from '~/pages/api/public/markets/[token]'
 
 describe('/api/public/markets/[token]', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
 	test('caches and serves serialized token markets through the shared JSON route builder', async () => {
-		fetchJsonMock.mockResolvedValueOnce({ token: 'bitcoin', markets: [] })
+		http.serve({ [MARKETS_SERVER_URL]: { token: 'bitcoin', markets: [] } })
 		const req = {
 			method: 'GET',
 			query: { token: 'Bitcoin' },
@@ -52,19 +22,16 @@ describe('/api/public/markets/[token]', () => {
 		await handler(req, firstRes)
 		await handler(req, secondRes)
 
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://markets.example.com/tokens/by-id/cg-626974636f696e.json', {
-			timeout: 30_000
-		})
-		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
+		expect(http.urls().filter((url) => url.startsWith(MARKETS_SERVER_URL))).toEqual([
+			`${MARKETS_SERVER_URL}/tokens/by-id/cg-626974636f696e.json`
+		])
 		expect(firstRes.status).toHaveBeenCalledWith(200)
 		expect(firstRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
 		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
 	})
 
 	test('keeps upstream 404s as token not found responses', async () => {
-		fetchJsonMock.mockRejectedValueOnce(
-			new Error('https://markets.example.com/tokens/by-id/cg-6d697373696e67.json: [404] Not Found')
-		)
+		http.serve({ [MARKETS_SERVER_URL]: fixtureStatus(404) })
 		const req = {
 			method: 'GET',
 			query: { token: 'missing' },
@@ -74,7 +41,9 @@ describe('/api/public/markets/[token]', () => {
 
 		await handler(req, res)
 
-		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
+		expect(
+			(await http.events()).filter((event) => event.type === 'runtime_error' && event.phase === 'apiRoute')
+		).toHaveLength(0)
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
 	})
@@ -89,26 +58,27 @@ describe('/api/public/markets/[token]', () => {
 
 		await handler(req, res)
 
-		expect(fetchJsonMock).not.toHaveBeenCalled()
+		expect(http.urls().filter((url) => url.startsWith(MARKETS_SERVER_URL))).toHaveLength(0)
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
 	})
 
 	test('does not cache token market failures', async () => {
-		fetchJsonMock
-			.mockRejectedValueOnce(new Error('temporary upstream failure'))
-			.mockResolvedValueOnce({ token: 'retry-cache-test', markets: [] })
+		http.serve({ [MARKETS_SERVER_URL]: fixtureStatus(400, { error: 'temporary upstream failure' }) })
 		const req = {
 			method: 'GET',
 			query: { token: 'retry-cache-test' },
 			url: '/api/public/markets/retry-cache-test'
 		} as unknown as NextApiRequest
 
-		await handler(req, createMockNextApiResponse())
+		const failureRes = createMockNextApiResponse()
+		await handler(req, failureRes)
+		expect(failureRes.status).toHaveBeenCalledWith(502)
+		http.serve({ [MARKETS_SERVER_URL]: { token: 'retry-cache-test', markets: [] } })
 		const retryRes = createMockNextApiResponse()
 		await handler(req, retryRes)
 
-		expect(fetchJsonMock).toHaveBeenCalledTimes(2)
+		expect(http.urls().filter((url) => url.startsWith(MARKETS_SERVER_URL))).toHaveLength(2)
 		expect(retryRes.status).toHaveBeenCalledWith(200)
 		expect(retryRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'retry-cache-test', markets: [] }))
 	})

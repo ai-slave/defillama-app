@@ -1,38 +1,38 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const recordRuntimeErrorMock = vi.hoisted(() => vi.fn())
-
-vi.mock('../telemetry', () => ({
-	recordRuntimeError: recordRuntimeErrorMock
-}))
+const telemetry = installTelemetrySink()
 
 describe('optionalPageData', () => {
 	afterEach(() => {
-		recordRuntimeErrorMock.mockClear()
 		vi.restoreAllMocks()
 	})
 
-	test('returns successful data without recording a degradation', async () => {
-		const { optionalPageData } = await import('../optionalPageData')
-
-		await expect(optionalPageData('chain:ethereum:stablecoins', async () => 123, 0)).resolves.toBe(123)
-
-		expect(recordRuntimeErrorMock).not.toHaveBeenCalled()
-	})
-
-	test('records optional page degradation and returns fallback on failure', async () => {
+	test('records a degradation and returns the fallback only when the loader fails', async () => {
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const error = new Error('upstream unavailable')
 		const { optionalPageData } = await import('../optionalPageData')
+
+		await expect(optionalPageData('chain:ethereum:stablecoins', async () => 123, 0)).resolves.toBe(123)
+		expect(await telemetry.events()).toEqual([])
 
 		await expect(
 			optionalPageData('chain:ethereum:stablecoins', async () => Promise.reject(error), null)
 		).resolves.toBeNull()
 
-		expect(recordRuntimeErrorMock).toHaveBeenCalledWith(error, 'pageBuild', {
-			optional: true,
-			label: 'chain:ethereum:stablecoins'
-		})
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: 'runtime_error',
+					phase: 'pageBuild',
+					error_message: 'upstream unavailable',
+					attributes: expect.objectContaining({
+						optional: true,
+						label: 'chain:ethereum:stablecoins'
+					})
+				})
+			])
+		)
 		expect(warnSpy).toHaveBeenCalledWith('[optional-page-data] chain:ethereum:stablecoins failed: upstream unavailable')
 	})
 })

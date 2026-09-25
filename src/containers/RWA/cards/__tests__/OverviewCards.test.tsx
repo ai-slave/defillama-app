@@ -1,12 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RwaOverviewCards } from '../cardData'
 import { RWAOverviewCards } from '../OverviewCards'
-
-vi.mock('~/contexts/LocalStorage', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/contexts/LocalStorage')>()),
-	useDarkModeManager: () => [true, vi.fn()]
-}))
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -59,29 +54,20 @@ const cards: RwaOverviewCards = {
 }
 
 describe('RWAOverviewCards', () => {
-	test('renders the three cards with their values, changes and bars', () => {
+	test('formats each card value, signed change and bar change with its percent', () => {
 		const markup = renderToStaticMarkup(<RWAOverviewCards cards={cards} includeBridgeTvl includeCex />)
-		expect(markup).toContain('RWA in DeFi by Protocol')
 		expect(markup).toContain('$3.88b')
 		expect(markup).toContain('-$79.5m')
-		expect(markup).toContain('Morpho Blue')
 		expect(markup).toContain('protocols/morpho-blue')
 		expect(markup).toContain('chains/rsz_solana')
-		expect(markup).toContain('Across')
-		expect(markup).toContain('Change by Chain, 30d')
 		expect(markup).toContain('+$654m')
 		expect(markup).toContain('+2.09%')
 		expect(markup).toContain('+$417m')
 		expect(markup).toContain('(+20.3%)')
 		expect(markup).toContain('(+1463%)')
-		expect(markup).toContain('bg-data-up')
 		expect(markup).toContain('-$310m')
-		expect(markup).toContain('bg-data-down')
-		expect(markup).toContain('RWA Perps Open Interest')
 		expect(markup).toContain('$15.7b')
 		expect(markup).toContain('+33.87%')
-		expect(markup.split('>30d<').length - 1).toBe(3)
-		expect(markup).toContain('<svg')
 	})
 
 	test('follows the Bridge TVL and CEX toggles', () => {

@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import type { IRWAAssetsOverview, IRWAFlowOverviewSplitPoint } from '../api.types'
-import { getRWAFlowRotationSeriesNames } from '../flows'
 import {
 	aggregateRWAFlowTreemapWindow,
 	buildRWAFlowTreemap,
@@ -35,21 +34,27 @@ describe('RWA flow treemap', () => {
 			{ timestamp: latest, 'Recent Inflow': 80, 'Recent Outflow': -100 }
 		]
 
+		const recent = { 'Recent Inflow': 80, 'Recent Outflow': -100 }
+		const allFlows = { ...recent, 'Weekly Flow': 50, 'Monthly Flow': 1000, 'No Recent Flow': 10_000 }
+		const expectedFlows = {
+			daily: recent,
+			weekly: { ...recent, 'Weekly Flow': 50 },
+			monthly: { ...recent, 'Weekly Flow': 50, 'Monthly Flow': 1000 },
+			quarterly: allFlows,
+			yearly: allFlows,
+			cumulative: allFlows
+		}
 		for (const groupBy of ['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'cumulative'] as const) {
 			const result = buildRWAFlowTreemapWindowData(points, groupBy)
-			expect(Object.fromEntries(result.flows)).toEqual(
-				Object.fromEntries(aggregateRWAFlowTreemapWindow(points, groupBy))
-			)
-			expect(result.orderedNames).toEqual(getRWAFlowRotationSeriesNames(points))
+			expect(Object.fromEntries(result.flows)).toEqual(expectedFlows[groupBy])
+			expect(result.orderedNames).toEqual([
+				'Recent Outflow',
+				'Recent Inflow',
+				'Weekly Flow',
+				'Monthly Flow',
+				'No Recent Flow'
+			])
 		}
-
-		expect(buildRWAFlowTreemapWindowData(points, 'weekly').orderedNames).toEqual([
-			'Recent Outflow',
-			'Recent Inflow',
-			'Weekly Flow',
-			'Monthly Flow',
-			'No Recent Flow'
-		])
 	})
 
 	test('sizes by the selected metric and preserves missing flow separately from zero', () => {

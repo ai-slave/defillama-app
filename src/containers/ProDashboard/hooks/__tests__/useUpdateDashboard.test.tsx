@@ -1,23 +1,26 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { Dashboard } from '../../dashboardTypes'
-import { DashboardError } from '../../services/DashboardAPI'
 import { useUpdateDashboard } from '../useDashboardAPI'
 
-const api = vi.hoisted(() => ({ update: vi.fn(), get: vi.fn() }))
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
 vi.mock('react-hot-toast', () => ({ default: toastMock, toast: toastMock }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: true, user: { id: 'owner' }, authorizedFetch: vi.fn() })
-}))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), query: {} }) }))
-vi.mock('../../services/DashboardAPI', async (original) => ({
-	...(await original<typeof import('../../services/DashboardAPI')>()),
-	dashboardAPI: { updateDashboard: api.update, getDashboard: api.get }
-}))
+
+const session = installSubscriberSession('owner')
+// Each save takes the next queued reply; without one the server accepts the save as a new revision.
+let saveReplies: Array<Response>
+let serverDashboard: Dashboard
+const conflict = () => Response.json({ message: 'Dashboard was modified elsewhere' }, { status: 409 })
+const saves = () =>
+	session.requests
+		.filter(({ url }) => url.pathname === '/api/private/pro-dashboard/save')
+		.map(({ init }) => JSON.parse(init!.body as string))
+const reads = () => session.requests.filter(({ url }) => url.pathname.startsWith('/dashboards/dashboard'))
 
 const a = { id: 'a', kind: 'text' as const, content: 'A' }
 const b = { id: 'b', kind: 'text' as const, content: 'B' }
@@ -31,11 +34,9 @@ const cached: Dashboard = {
 	editedAt: 'v1'
 }
 const remote: Dashboard = { ...cached, data: { ...cached.data, items: [a, b] }, editedAt: 'v2' }
-const conflict = () => new DashboardError('Dashboard was modified elsewhere', 409)
 
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let update: ReturnType<typeof useUpdateDashboard>
 
 function Harness() {
@@ -44,12 +45,12 @@ function Harness() {
 }
 
 async function mount() {
-	client.setQueryData(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'], cached)
+	session.client.setQueryData(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'], cached)
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -59,15 +60,16 @@ function save(data: Dashboard['data'] = { dashboardName: 'Original', items: [a, 
 }
 
 beforeEach(() => {
-	api.update.mockReset().mockImplementation(async (id, data, _fetch, baseEditedAt) => ({
-		...cached,
-		id,
-		data,
-		editedAt: `after ${baseEditedAt}`
-	}))
-	api.get.mockReset().mockResolvedValue(remote)
+	saveReplies = []
+	serverDashboard = remote
+	session.serve({
+		'/api/private/pro-dashboard/save': (_url: URL, init?: RequestInit) => {
+			const body = JSON.parse(init!.body as string)
+			return saveReplies.shift() ?? { ...cached, data: body.data, editedAt: `after ${body.baseEditedAt}` }
+		},
+		[`${FEATURES_SERVER}/dashboards/dashboard`]: () => serverDashboard
+	})
 	toastMock.mockClear()
-	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -75,41 +77,42 @@ beforeEach(() => {
 
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 
 test('sends the cached editedAt as the conflict baseline', async () => {
 	await mount()
 	await act(async () => save())
-	expect(api.update).toHaveBeenCalledOnce()
-	expect(api.update.mock.calls[0][3]).toBe('v1')
-	expect(api.get).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(1)
+	expect(saves()[0].baseEditedAt).toBe('v1')
+	expect(reads()).toHaveLength(0)
 })
 
 test('saves without a conflict baseline when no dashboard is cached', async () => {
 	await mount()
-	client.removeQueries({ queryKey: ['pro-dashboard', 'dashboard'] })
+	session.client.removeQueries({ queryKey: ['pro-dashboard', 'dashboard'] })
 	await act(async () => save())
 
-	expect(api.update).toHaveBeenCalledOnce()
-	expect(api.update.mock.calls[0][3]).toBeUndefined()
-	expect(api.get).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(1)
+	expect(saves()[0].baseEditedAt).toBeUndefined()
+	expect(reads()).toHaveLength(0)
 })
 
 test('a conflict re-reads the dashboard, merges items and retries once against the fresh revision', async () => {
-	api.update.mockRejectedValueOnce(conflict())
+	saveReplies.push(conflict())
 	await mount()
 	let result!: Dashboard
 	await act(async () => {
 		result = await save()
 	})
-	expect(api.get).toHaveBeenCalledOnce()
-	expect(api.update).toHaveBeenCalledTimes(2)
-	expect(api.update.mock.calls[1][1].items).toEqual([a, c, b])
-	expect(api.update.mock.calls[1][3]).toBe('v2')
+	expect(reads()).toHaveLength(1)
+	expect(saves()).toHaveLength(2)
+	expect(saves()[1].data.items).toEqual([a, c, b])
+	expect(saves()[1].baseEditedAt).toBe('v2')
 	expect(result.data.items).toEqual([a, c, b])
-	expect(client.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'])).toEqual(result)
+	expect(session.client.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', 'dashboard', true, 'owner'])).toEqual(
+		result
+	)
 	expect(toastMock).toHaveBeenCalledWith(
 		'This dashboard was changed in another tab or session. Your edits were merged.',
 		expect.objectContaining({ id: 'dashboard-merged' })
@@ -117,56 +120,56 @@ test('a conflict re-reads the dashboard, merges items and retries once against t
 })
 
 test('a conflict that changes nothing stays silent', async () => {
-	api.update.mockRejectedValueOnce(conflict())
-	api.get.mockResolvedValue(cached)
+	saveReplies.push(conflict())
+	serverDashboard = cached
 	await mount()
 	await act(async () => save({ dashboardName: 'Original', items: [a] }))
-	expect(api.update).toHaveBeenCalledTimes(2)
+	expect(saves()).toHaveLength(2)
 	expect(toastMock).not.toHaveBeenCalled()
 })
 
 test('a second conflict propagates', async () => {
-	api.update.mockRejectedValueOnce(conflict()).mockRejectedValueOnce(conflict())
+	saveReplies.push(conflict(), conflict())
 	await mount()
 	await expect(save()).rejects.toMatchObject({ status: 409 })
-	expect(api.update).toHaveBeenCalledTimes(2)
-	expect(api.get).toHaveBeenCalledOnce()
+	expect(saves()).toHaveLength(2)
+	expect(reads()).toHaveLength(1)
 })
 
 test('other failures do not trigger a re-read', async () => {
-	api.update.mockRejectedValueOnce(new DashboardError('Server error', 500))
+	saveReplies.push(Response.json({ message: 'Server error' }, { status: 500 }))
 	await mount()
 	await expect(save()).rejects.toMatchObject({ status: 500 })
-	expect(api.update).toHaveBeenCalledOnce()
-	expect(api.get).not.toHaveBeenCalled()
+	expect(saves()).toHaveLength(1)
+	expect(reads()).toHaveLength(0)
 })
 
 test('a slug-keyed cache entry still provides the conflict baseline', async () => {
-	client.setQueryData(['pro-dashboard', 'dashboard', 'my-slug', true, 'owner'], cached)
+	session.client.setQueryData(['pro-dashboard', 'dashboard', 'my-slug', true, 'owner'], cached)
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 	await act(async () => save())
-	expect(api.update.mock.calls[0][3]).toBe('v1')
+	expect(saves()[0].baseEditedAt).toBe('v1')
 })
 
 test('the retry keeps metadata another client changed', async () => {
-	api.update.mockRejectedValueOnce(conflict())
-	api.get.mockResolvedValue({ ...remote, data: { ...remote.data, dashboardName: 'Renamed remotely' } })
+	saveReplies.push(conflict())
+	serverDashboard = { ...remote, data: { ...remote.data, dashboardName: 'Renamed remotely' } }
 	await mount()
 	await act(async () => save())
-	expect(api.update.mock.calls[1][1].dashboardName).toBe('Renamed remotely')
-	expect(api.update.mock.calls[1][1].items).toEqual([a, c, b])
+	expect(saves()[1].data.dashboardName).toBe('Renamed remotely')
+	expect(saves()[1].data.items).toEqual([a, c, b])
 })
 
 test('the retry keeps metadata this client changed', async () => {
-	api.update.mockRejectedValueOnce(conflict())
-	api.get.mockResolvedValue({ ...remote, data: { ...remote.data, dashboardName: 'Renamed remotely' } })
+	saveReplies.push(conflict())
+	serverDashboard = { ...remote, data: { ...remote.data, dashboardName: 'Renamed remotely' } }
 	await mount()
 	await act(async () => save({ dashboardName: 'Renamed here', items: [a, c] }))
-	expect(api.update.mock.calls[1][1].dashboardName).toBe('Renamed here')
+	expect(saves()[1].data.dashboardName).toBe('Renamed here')
 })

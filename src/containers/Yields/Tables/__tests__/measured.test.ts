@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { VerifiedBlock, VerifiedExit, VerifiedExitStatus } from '../../data/types'
-import { exitFeeWarning, exitTone, humanizeEta } from '../../domain/exitPresentation'
+import { exitFeeWarning, exitHeadline, exitTone, humanizeEta } from '../../domain/exitPresentation'
 
 // The withdrawable share is derived from the measured amounts, so a fixture states it by setting
 // them: `fraction` of $1,000 deposits.
@@ -39,9 +39,7 @@ describe('exitFeeWarning', () => {
 	test('treats zero and negative measured fees as no fee at all', () => {
 		expect(exitFeeWarning(0)).toBeNull()
 		expect(exitFeeWarning(-0.03)).toBeNull()
-	})
-
-	test('makes no claim when the fee was not measured', () => {
+		// An unmeasured fee makes no claim either.
 		expect(exitFeeWarning(null)).toBeNull()
 	})
 })
@@ -57,5 +55,16 @@ describe('humanizeEta', () => {
 	test('returns null for a missing or non-positive ETA', () => {
 		expect(humanizeEta(null)).toBeNull()
 		expect(humanizeEta(0)).toBeNull()
+	})
+})
+
+describe('exitHeadline', () => {
+	test('labels a depleted lane as having no liquidity', () => {
+		expect(exitHeadline(block('depleted', { fraction: 0 }), { compact: true })).toBe('No liquidity')
+	})
+
+	// Whatever the server still calls partial is a real lane, so a sub-1% share stays a warning.
+	test('keeps a sub-1% partial share distinct from no liquidity', () => {
+		expect(exitHeadline(block('partial', { fraction: 0.004 }), { compact: true })).toBe('Partial <1%')
 	})
 })

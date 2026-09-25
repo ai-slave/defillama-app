@@ -3,28 +3,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
 import { LlamaAIShell } from './LlamaAIShell'
 
-const layout = vi.hoisted(() => ({ hideDesktopSearch: undefined as boolean | undefined }))
-vi.mock('~/layout', () => ({
-	default: ({ children, hideDesktopSearch }: { children: ReactNode; hideDesktopSearch?: boolean }) => {
-		layout.hideDesktopSearch = hideDesktopSearch
-		return <main>{children}</main>
-	}
-}))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ user: null, loaders: { userLoading: false }, isAuthenticated: false })
-}))
+// Heavy page chrome stubs; the test asserts only the site search hotkey the shell mounts itself.
+vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <main>{children}</main> }))
 vi.mock('~/containers/LlamaAI', () => ({ AgenticChat: () => null }))
 vi.mock('~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads', () => ({
 	LlamaAIAnimationPreloads: () => null
 }))
-vi.mock('~/containers/MobileApp/LlamaAIMobileAppGate', () => ({
-	LlamaAIMobileAppGate: ({ children }: { children: ReactNode }) => <>{children}</>
-}))
-vi.mock('~/contexts/LlamaAIRouteState', () => ({
-	useLlamaAIRouteState: () => ({ kind: 'chat-new' }),
-	LlamaAIRouteProvider: ({ children }: { children: ReactNode }) => <>{children}</>
+vi.mock('next/router', () => ({
+	useRouter: () => ({ isReady: true, pathname: '/ai/chat', asPath: '/ai/chat', query: {}, push: vi.fn() })
 }))
 vi.mock('~/utils/async', () => ({ fetchJson: () => new Promise(() => {}) }))
 
@@ -49,15 +38,16 @@ const siteSearchDialog = () =>
  * LlamaAI pages drop the site search bar so chat and terminal share one chrome, but ⌘K is how people
  * jump to a protocol or chain from anywhere on DefiLlama, so it must still open the site search.
  */
-test('LlamaAI hides the site search bar and ⌘K still opens the site search', async () => {
+test('⌘K opens the site search on LlamaAI pages', async () => {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={new QueryClient()}>
-				<LlamaAIShell>{null}</LlamaAIShell>
+				<AuthProvider>
+					<LlamaAIShell>{null}</LlamaAIShell>
+				</AuthProvider>
 			</QueryClientProvider>
 		)
 	)
-	expect(layout.hideDesktopSearch).toBe(true)
 	expect(siteSearchDialog()).toBeUndefined()
 
 	const hotkey = new KeyboardEvent('keydown', { key: 'k', code: 'KeyK', metaKey: true, cancelable: true })

@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import type { Table } from 'mdast'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -60,15 +59,27 @@ test('header and earlier row rewrites discard parsed rows', () => {
 		expect(cached.parse(text)).toEqual(reference.parse(text))
 })
 
-test('completed rows keep their parsed identity while the last row grows', () => {
-	const parser = parse().use(createRemarkIncremental())
-	const source = `${header}| A | 1 |\n| B | 2 |\n| C | 3`
-	const before = parser.parse(source).children[0] as Table,
-		after = parser.parse(`${source}0 |`).children[0] as Table
-	expect(before.type).toBe('table')
-	expect(after.type).toBe('table')
-	expect(after.children[1]).toBe(before.children[1])
-	expect(after.children.at(-1)).not.toBe(before.children.at(-1))
+test('a growing table costs a small fraction of reparsing every prefix', () => {
+	let parsedChars = 0
+	const parser = parse()
+		.use(function countInput() {
+			const full = this.parser!
+			this.parser = (source, file) => {
+				parsedChars += source.length
+				return full(source, file)
+			}
+		})
+		.use(createRemarkIncremental())
+	let rows = ''
+	for (let index = 0; index < 60; index++) rows += `| Protocol ${index} | ${index * 1000} |\n`
+	const source = header + rows
+	let fullChars = 0
+	for (let end = header.length + 20; end <= source.length; end += 3) {
+		fullChars += end
+		parser.parse(source.slice(0, end))
+	}
+	// A work budget, not a fixed count: further improvements remain valid, slow machines cannot fail.
+	expect(parsedChars).toBeLessThan(fullChars / 5)
 })
 
 const plugins = (resolvedIds = new Set<number>()) => [

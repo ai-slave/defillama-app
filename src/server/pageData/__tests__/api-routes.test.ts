@@ -1,251 +1,63 @@
-import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
-import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { expect, test } from 'vitest'
+import categoriesHandler from '~/pages/api/public/page-data/categories/charts'
+import chainsHandler from '~/pages/api/public/page-data/chains/charts'
+import adaptersHandler from '~/pages/api/public/page-data/dimension-adapters/chains-chart'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
+const http = installTelemetrySink()
+const metadata = installMetadataSeeder()
 
-const {
-	getProtocolsCategoriesChartDataMock,
-	getChainsByCategoryChartDataMock,
-	getChainsByAdapterAllChainsMock,
-	getChainsByAdapterChartDataMock
-} = vi.hoisted(() => ({
-	getProtocolsCategoriesChartDataMock: vi.fn(),
-	getChainsByCategoryChartDataMock: vi.fn(),
-	getChainsByAdapterAllChainsMock: vi.fn(),
-	getChainsByAdapterChartDataMock: vi.fn()
-}))
-
-vi.mock('~/containers/ProtocolTaxonomy/queries', () => ({
-	getProtocolsCategoriesChartData: getProtocolsCategoriesChartDataMock
-}))
-
-vi.mock('~/containers/ChainsByCategory/queries', () => ({
-	getChainsByCategoryChartData: getChainsByCategoryChartDataMock
-}))
-
-vi.mock('~/containers/AdapterMetrics/queries', () => ({
-	getChainsByAdapterAllChains: getChainsByAdapterAllChainsMock,
-	getChainsByAdapterChartData: getChainsByAdapterChartDataMock
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: {
-		chainMetadata: {
-			ethereum: { id: 'ethereum', name: 'Ethereum', dexs: true }
-		}
+test('serializes category values and reuses the response for equivalent extra-TVL queries', async () => {
+	http.serve({ '/categories': { categories: { Dexs: {} }, chart: { '2': { Dexs: { tvl: 100, staking: 12 } } } } })
+	for (const extraTvlTypes of ['staking,borrowed', ['staking', 'borrowed']]) {
+		const res = createMockNextApiResponse()
+		// oxlint-disable-next-line no-await-in-loop -- Sequential requests prove cache reuse.
+		await categoriesHandler(createMockNextApiRequest({ method: 'GET', query: { extraTvlTypes } }), res)
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
+		expect(JSON.parse(res.send.mock.calls[0][0])).toEqual({
+			chartSource: [{ timestamp: 2000, Dexs: 100 }],
+			extraTvlCharts: { Dexs: { staking: { '2000': 12 }, borrowed: { '2000': 0 } } }
+		})
 	}
-}))
-
-vi.mock('~/utils/telemetry', () => ({
-	addRouteTelemetryAttributes: vi.fn(),
-	currentTelemetryContext: vi.fn(() => null),
-	recordRuntimeError: vi.fn(),
-	recordRouteRuntimeError: vi.fn(),
-	withRouteTelemetry: (_options: unknown, run: () => unknown) => run(),
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
-
-import categoriesChartsHandler from '~/pages/api/public/page-data/categories/charts'
-import chainsChartsHandler from '~/pages/api/public/page-data/chains/charts'
-import dimensionAdapterChainsChartHandler from '~/pages/api/public/page-data/dimension-adapters/chains-chart'
-
-function expectSerializedJson(res: ReturnType<typeof createMockNextApiResponse>, expected: unknown) {
-	expect(res.send).toHaveBeenCalledWith(JSON.stringify(expected))
-}
-
-describe('page data chart api routes', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
-
-	test('returns cacheable categories chart data', async () => {
-		getProtocolsCategoriesChartDataMock.mockResolvedValue({
-			chartSource: [{ timestamp: 1, Dexes: 100 }],
-			extraTvlCharts: {}
-		})
-		const req = {
-			method: 'GET',
-			query: { extraTvlTypes: 'staking,borrowed' },
-			url: '/api/public/page-data/categories/charts?extraTvlTypes=staking,borrowed'
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await categoriesChartsHandler(req, res)
-
-		expect(getProtocolsCategoriesChartDataMock).toHaveBeenCalledWith({
-			extraTvlTypes: ['staking', 'borrowed']
-		})
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
-		expect(res.status).toHaveBeenCalledWith(200)
-		expectSerializedJson(res, {
-			chartSource: [{ timestamp: 1, Dexes: 100 }],
-			extraTvlCharts: {}
-		})
-	})
-
-	test('reuses categories chart cache entries for semantically identical extra tvl params', async () => {
-		const payload = {
-			chartSource: [{ timestamp: 1, Dexes: 100 }],
-			extraTvlCharts: {}
+	expect(http.requests.filter((request) => request.url.pathname === '/categories')).toHaveLength(1)
+})
+test('returns normalized chain TVL values through the serialized route response', async () => {
+	http.serve({
+		'https://api.llama.fi/chains2/': {
+			stackedDataset: [['1', { Ethereum: { t: 100, d: 20, l: 30, dl: 5 } }]],
+			tvlTypes: { tvl: 't', doublecounted: 'd', liquidstaking: 'l', dcAndLsOverlap: 'dl' }
 		}
-		getProtocolsCategoriesChartDataMock.mockResolvedValue(payload)
-		const commaReq = {
-			method: 'GET',
-			query: { extraTvlTypes: 'minted,unreleased' },
-			url: '/api/public/page-data/categories/charts?extraTvlTypes=minted,unreleased'
-		} as unknown as NextApiRequest
-		const repeatedReq = {
-			method: 'GET',
-			query: { extraTvlTypes: ['minted', 'unreleased'] },
-			url: '/api/public/page-data/categories/charts?extraTvlTypes=minted&extraTvlTypes=unreleased'
-		} as unknown as NextApiRequest
-		const commaRes = createMockNextApiResponse()
-		const repeatedRes = createMockNextApiResponse()
-
-		await categoriesChartsHandler(commaReq, commaRes)
-		await categoriesChartsHandler(repeatedReq, repeatedRes)
-
-		expect(getProtocolsCategoriesChartDataMock).toHaveBeenCalledTimes(1)
-		expect(getProtocolsCategoriesChartDataMock).toHaveBeenCalledWith({
-			extraTvlTypes: ['minted', 'unreleased']
-		})
-		expect(commaRes.status).toHaveBeenCalledWith(200)
-		expect(repeatedRes.status).toHaveBeenCalledWith(200)
-		expectSerializedJson(commaRes, payload)
-		expectSerializedJson(repeatedRes, payload)
 	})
-
-	test('returns cacheable chains chart data', async () => {
-		getChainsByCategoryChartDataMock.mockResolvedValue({
-			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
-			totalTvlByDate: { tvl: { 1: 100 } }
-		})
-		const req = {
-			method: 'GET',
-			query: { category: 'All', sampledChart: 'true', extraTvlTypes: 'staking,borrowed' },
-			url: '/api/public/page-data/chains/charts?category=All&sampledChart=true&extraTvlTypes=staking,borrowed'
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await chainsChartsHandler(req, res)
-
-		expect(getChainsByCategoryChartDataMock).toHaveBeenCalledWith({
-			category: 'All',
-			sampledChart: true,
-			extraTvlTypes: ['staking', 'borrowed']
-		})
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
-		expect(res.status).toHaveBeenCalledWith(200)
-		expectSerializedJson(res, {
-			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
-			totalTvlByDate: { tvl: { 1: 100 } }
-		})
+	const res = createMockNextApiResponse()
+	await chainsHandler(createMockNextApiRequest({ method: 'GET', query: { category: 'All' } }), res)
+	expect(res.status).toHaveBeenCalledWith(200)
+	expect(JSON.parse(res.send.mock.calls[0][0])).toEqual({
+		tvlChartsByChain: { tvl: { Ethereum: { '1000': 55 } } },
+		totalTvlByDate: { tvl: { '1000': 55 } }
 	})
-
-	test('reuses chains chart cache entries for semantically identical extra tvl params', async () => {
-		const payload = {
-			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
-			totalTvlByDate: { tvl: { 1: 100 } }
-		}
-		getChainsByCategoryChartDataMock.mockResolvedValue(payload)
-		const commaReq = {
-			method: 'GET',
-			query: { category: 'Normalized', sampledChart: 'true', extraTvlTypes: 'minted,unreleased' },
-			url: '/api/public/page-data/chains/charts?category=Normalized&sampledChart=true&extraTvlTypes=minted,unreleased'
-		} as unknown as NextApiRequest
-		const repeatedReq = {
-			method: 'GET',
-			query: { category: 'Normalized', sampledChart: 'true', extraTvlTypes: ['minted', 'unreleased'] },
-			url: '/api/public/page-data/chains/charts?category=Normalized&sampledChart=true&extraTvlTypes=minted&extraTvlTypes=unreleased'
-		} as unknown as NextApiRequest
-		const commaRes = createMockNextApiResponse()
-		const repeatedRes = createMockNextApiResponse()
-
-		await chainsChartsHandler(commaReq, commaRes)
-		await chainsChartsHandler(repeatedReq, repeatedRes)
-
-		expect(getChainsByCategoryChartDataMock).toHaveBeenCalledTimes(1)
-		expect(getChainsByCategoryChartDataMock).toHaveBeenCalledWith({
-			category: 'Normalized',
-			sampledChart: true,
-			extraTvlTypes: ['minted', 'unreleased']
-		})
-		expect(commaRes.status).toHaveBeenCalledWith(200)
-		expect(repeatedRes.status).toHaveBeenCalledWith(200)
-		expectSerializedJson(commaRes, {
-			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
-			totalTvlByDate: { tvl: { 1: 100 } }
-		})
-		expectSerializedJson(repeatedRes, {
-			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
-			totalTvlByDate: { tvl: { 1: 100 } }
-		})
+})
+test('returns adapter chart timestamps and measured chain values', async () => {
+	metadata.seed({ chainMetadata: { ethereum: { id: 'ethereum', name: 'Ethereum', dexs: true } } })
+	http.serve({ '/v2/chart/dexs/chain-breakdown': [[1, { Ethereum: 100 }]] })
+	const res = createMockNextApiResponse()
+	await adaptersHandler(
+		createMockNextApiRequest({ method: 'GET', query: { adapterType: 'dexs', dataType: 'dailyVolume' } }),
+		res
+	)
+	expect(res.status).toHaveBeenCalledWith(200)
+	expect(JSON.parse(res.send.mock.calls[0][0])).toEqual({
+		dimensions: ['timestamp', 'Ethereum'],
+		source: [[1000, 100]]
 	})
-
-	test('rejects unsupported dimension adapter chart params', async () => {
-		const req = {
-			method: 'GET',
-			query: { adapterType: 'bad', dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME }
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await dimensionAdapterChainsChartHandler(req, res)
-
-		expect(getChainsByAdapterChartDataMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(400)
-		expect(res.json).toHaveBeenCalledWith({ error: 'unsupported adapterType or dataType' })
-	})
-
-	test('returns cacheable dimension adapter chart data', async () => {
-		getChainsByAdapterAllChainsMock.mockReturnValue(['Ethereum'])
-		getChainsByAdapterChartDataMock.mockResolvedValue({
-			dimensions: ['timestamp', 'Ethereum'],
-			source: [{ timestamp: 1, Ethereum: 100 }]
-		})
-		const req = {
-			method: 'GET',
-			query: { adapterType: ADAPTER_TYPES.DEXS, dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME },
-			url: '/api/public/page-data/dimension-adapters/chains-chart?adapterType=dexs&dataType=dailyVolume'
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await dimensionAdapterChainsChartHandler(req, res)
-
-		expect(getChainsByAdapterAllChainsMock).toHaveBeenCalledWith({
-			adapterType: ADAPTER_TYPES.DEXS,
-			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
-			chainMetadata: { ethereum: { id: 'ethereum', name: 'Ethereum', dexs: true } }
-		})
-		expect(getChainsByAdapterChartDataMock).toHaveBeenCalledWith({
-			adapterType: ADAPTER_TYPES.DEXS,
-			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
-			allChains: ['Ethereum']
-		})
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
-		expect(res.status).toHaveBeenCalledWith(200)
-		expectSerializedJson(res, {
-			dimensions: ['timestamp', 'Ethereum'],
-			source: [{ timestamp: 1, Ethereum: 100 }]
-		})
-	})
-
-	test('does not cache failed dimension adapter chart responses', async () => {
-		getChainsByAdapterAllChainsMock.mockReturnValue(['Ethereum'])
-		getChainsByAdapterChartDataMock.mockRejectedValue(new Error('upstream failed'))
-		// Distinct params from the success case above so the in-process result
-		// cache cannot serve the previously computed value.
-		const req = {
-			method: 'GET',
-			query: { adapterType: ADAPTER_TYPES.FEES, dataType: ADAPTER_DATA_TYPES.DAILY_FEES },
-			url: '/api/public/page-data/dimension-adapters/chains-chart?adapterType=fees&dataType=dailyFees'
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
-
-		await dimensionAdapterChainsChartHandler(req, res)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
-		expect(res.status).toHaveBeenCalledWith(502)
-		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch dimension adapter chart data' })
-	})
+})
+test('returns an uncached gateway error when the category source fails', async () => {
+	http.serve({ '/categories': fixtureStatus(503) })
+	const res = createMockNextApiResponse()
+	await categoriesHandler(createMockNextApiRequest({ method: 'GET', query: { extraTvlTypes: 'vesting' } }), res)
+	expect(res.status).toHaveBeenCalledWith(502)
+	expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
+	expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch categories chart data' })
 })

@@ -17,7 +17,7 @@ export function getRwaMovers(
 		for (const asset of assets) {
 			if (asset.kind !== 'spot') continue
 			const flow = flowSummary.windows['7d'].asset[asset.canonicalMarketId]?.flow
-			if (flow == null || flow === 0) continue
+			if (flow == null) continue
 			movers.push({
 				asset,
 				flow,

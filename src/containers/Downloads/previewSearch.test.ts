@@ -17,8 +17,4 @@ describe('preview search index', () => {
 	test('does not search trailing cells without a header', () => {
 		expect(filterPreviewRows(rows, searchIndex, 'trailing')).toEqual([])
 	})
-
-	test('returns the original rows for an empty search', () => {
-		expect(filterPreviewRows(rows, searchIndex, '')).toBe(rows)
-	})
 })

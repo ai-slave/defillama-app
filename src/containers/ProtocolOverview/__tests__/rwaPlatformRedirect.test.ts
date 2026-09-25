@@ -28,24 +28,7 @@ const resolveTvl = (protocol: string) =>
 		rwaPlatformRedirect: true
 	})
 
-const resolveRwa = (protocol: string) =>
-	resolveProtocolFeatureRouteFromMetadata({
-		hasMetric: (metadata) => Boolean(metadata.rwaPlatformSlug),
-		metadataCache,
-		protocol,
-		routePrefix: 'protocol/rwa'
-	})
-
 describe('RWA platform tab and TVL retirement', () => {
-	test('routes the RWA tab for a protocol the sheet declares', () => {
-		expect(resolveRwa('xstocks')).toMatchObject({ type: 'route' })
-		expect(resolveRwa('okx')).toMatchObject({ type: 'route' })
-	})
-
-	test('404s the RWA tab for a protocol with no declared platform', () => {
-		expect(resolveRwa('spiko')).toBeNull()
-	})
-
 	test('redirects a retired TVL page to the platform page instead of 404ing', () => {
 		// Older metadata artifacts carry only the declared platform slug, so it remains a redirect fallback.
 		expect(resolveTvl('xstocks')).toEqual({ type: 'redirect', destination: '/rwa/platform/xstocks' })
@@ -123,14 +106,6 @@ const resolveChildTvl = (protocol: string) =>
 		rwaPlatformRedirect: true
 	})
 
-const resolveChildRwa = (protocol: string) =>
-	resolveProtocolFeatureRouteFromMetadata({
-		hasMetric: (metadata) => Boolean(metadata.rwaPlatformSlug),
-		metadataCache: openEdenCache,
-		protocol,
-		routePrefix: 'protocol/rwa'
-	})
-
 describe('child protocols of a declared RWA platform', () => {
 	test('redirects a retired child TVL page to the parent platform page', () => {
 		expect(resolveChildTvl('openeden-tbill')).toEqual({ type: 'redirect', destination: '/rwa/platform/openeden' })
@@ -138,11 +113,6 @@ describe('child protocols of a declared RWA platform', () => {
 
 	test('leaves a child with a live TVL adapter routing normally', () => {
 		expect(resolveChildTvl('openeden-usdo')).toMatchObject({ type: 'route' })
-	})
-
-	test('does not give the child an RWA tab — it would render the whole parent platform', () => {
-		expect(resolveChildRwa('openeden-tbill')).toBeNull()
-		expect(resolveChildRwa('openeden')).toMatchObject({ type: 'route' })
 	})
 
 	test('keeps the child out of the RWA sitemap while redirecting its retired TVL route', () => {

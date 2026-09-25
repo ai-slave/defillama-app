@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+	type ArticleEntitySuggestionItem,
 	getStaticArticleEntitySuggestions,
 	mergeArticleEntitySuggestions,
 	normalizeArticleEntitySearchHit
@@ -68,26 +69,23 @@ describe('article entity suggestions', () => {
 		expect(normalizeArticleEntitySearchHit({ id: 'x', name: 'X', type: 'Protocol' })).toBeNull()
 	})
 
-	test('static fallback returns the curated list when query is empty', () => {
-		const items = getStaticArticleEntitySuggestions('')
-		expect(items.length).toBeGreaterThan(0)
-		expect(items.every((i) => typeof i.route === 'string' && i.route.length > 0)).toBe(true)
+	test('offers the curated fallback when the query is empty and filters it by query', () => {
+		const ids = (query: string) => getStaticArticleEntitySuggestions(query).map((item) => item.id)
+		expect(ids('')).toEqual(['metric:protocols', 'metric:chains', 'hack:hacks'])
+		expect(ids('chains')).toEqual(['metric:chains'])
 	})
 
-	test('deduplicates search and static suggestions by id', () => {
+	test('keeps the first suggestion for each entity route, preferring search results', () => {
+		const item = (
+			id: string,
+			entityType: 'hack' | 'metric',
+			route: string,
+			source: 'search' | 'static'
+		): ArticleEntitySuggestionItem => ({ entityType, slug: id, label: id, route, id, source })
 		const merged = mergeArticleEntitySuggestions(
-			[
-				{
-					entityType: 'hack',
-					slug: 'hacks',
-					label: 'Hacks',
-					route: '/hacks',
-					id: 'hack:hacks',
-					source: 'search'
-				}
-			],
-			getStaticArticleEntitySuggestions('hacks')
+			[item('search-hacks', 'hack', '/hacks', 'search')],
+			[item('static-hacks', 'hack', '/hacks?tab=all', 'static'), item('static-chains', 'metric', '/chains', 'static')]
 		)
-		expect(merged.filter((i) => i.id === 'hack:hacks')).toHaveLength(1)
+		expect(merged.map(({ id }) => id)).toEqual(['search-hacks', 'static-chains'])
 	})
 })

@@ -4,8 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { useCountUp } from '../useCountUp'
 
-const reducedMotion = vi.hoisted(() => ({ enabled: false }))
-vi.mock('~/hooks/usePrefersReducedMotion', () => ({ prefersReducedMotion: () => reducedMotion.enabled }))
+const reducedMotion = { enabled: false }
 
 let root: Root
 let container: HTMLDivElement
@@ -21,6 +20,9 @@ beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame'] })
 	reducedMotion.enabled = false
+	vi.spyOn(window, 'matchMedia').mockImplementation(
+		(query) => ({ matches: query.includes('reduce') && reducedMotion.enabled, media: query }) as MediaQueryList
+	)
 	rendered.length = 0
 	container = document.createElement('div')
 	document.body.append(container)
@@ -31,6 +33,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	vi.useRealTimers()
+	vi.restoreAllMocks()
 })
 
 async function advanceFrames(count: number) {

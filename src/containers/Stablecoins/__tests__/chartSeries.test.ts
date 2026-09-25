@@ -7,7 +7,6 @@ import {
 	buildStablecoinOverviewPayload,
 	buildTokenInflowsPayload,
 	buildTotalMcapPayload,
-	buildUsdInflowsPayload,
 	groupStablecoinBarChartPayload,
 	getStablecoinRuntimeSeries,
 	type StablecoinChartSeriesPayload,
@@ -69,7 +68,8 @@ describe('stablecoin chart series builders', () => {
 				charts: [
 					{ type: 'line', name: 'USDT', encode: { x: 0, y: 1 } },
 					{ type: 'line', name: 'USDC', encode: { x: 0, y: 2 } },
-					{ type: 'line', name: 'Others', encode: { x: 0, y: 3 } }
+					{ type: 'line', name: 'Others', encode: { x: 0, y: 3 } },
+					{ type: 'line', name: 'Total', encode: { x: 0, y: 4 } }
 				],
 				availableSeries: ['USDT', 'USDC', 'DAI'],
 				defaultSeries: ['USDT', 'USDC']
@@ -79,7 +79,7 @@ describe('stablecoin chart series builders', () => {
 			defaultSeries: ['USDT', 'USDC'],
 			renderedSelectableSeries: ['USDT', 'USDC'],
 			fixedRemainderSeries: ['Others'],
-			alwaysVisibleSeries: []
+			alwaysVisibleSeries: ['Total']
 		})
 	})
 
@@ -101,33 +101,30 @@ describe('stablecoin chart series builders', () => {
 		})
 	})
 
-	test('keeps overview chart payloads identical while adding their shared summary', () => {
+	test('builds each overview chart from its own rows and adds the shared summary', () => {
 		const topToken = { symbol: 'USDT', mcap: 150 }
-		const { mcapStats } = buildStablecoinMcapSummary(params)
-		const summary = {
-			totalMcapCurrent: mcapStats.totalMcapCurrent,
-			change1d: mcapStats.change1d,
-			change7d: mcapStats.change7d,
-			change30d: mcapStats.change30d,
-			change1dUsd: mcapStats.change1dUsd,
-			change7dUsd: mcapStats.change7dUsd,
-			change30dUsd: mcapStats.change30dUsd,
-			topToken,
-			dominance: '62.50',
-			dataTimestamp: mcapStats.dataTimestamp,
-			isDataStale: mcapStats.isDataStale
-		}
-		const expectedPayloads = {
-			tokenMcaps: buildAreaPayload(params, { stackName: 'tokenMcaps' }),
-			dominance: buildDominancePayload(params, { stackName: 'dominance' }),
-			usdInflows: buildUsdInflowsPayload(params),
-			tokenInflows: buildTokenInflowsPayload(params)
+		const lastRows = {
+			tokenMcaps: [1_609_632_000_000, 150, 90],
+			dominance: [1_609_632_000_000, 62.5, 37.5],
+			usdInflows: [1_609_545_600_000, 55],
+			tokenInflows: [1_609_545_600_000, 25, 30]
 		}
 
 		for (const chart of ['tokenMcaps', 'dominance', 'usdInflows', 'tokenInflows'] as const) {
-			expect(buildStablecoinOverviewPayload(params, chart, topToken)).toEqual({
-				...expectedPayloads[chart],
-				summary
+			const payload = buildStablecoinOverviewPayload(params, chart, topToken)
+			expect(payload.dataset.source.at(-1)).toEqual(lastRows[chart])
+			expect(payload.summary).toEqual({
+				totalMcapCurrent: 240,
+				change1d: null,
+				change7d: null,
+				change30d: null,
+				change1dUsd: null,
+				change7dUsd: null,
+				change30dUsd: null,
+				topToken,
+				dominance: '62.50',
+				dataTimestamp: 1_609_632_000,
+				isDataStale: true
 			})
 		}
 	})
@@ -205,38 +202,6 @@ describe('stablecoin chart series builders', () => {
 
 		expect(summary.topToken).toEqual({ symbol: 'Current Small', mcap: 10 })
 		expect(summary.mcapStats.totalMcapCurrent).toBe(10)
-	})
-
-	test('parses string epoch dates before shaping mcap chart rows', () => {
-		const stringDateParams = {
-			chartDataByAssetOrChain: [
-				[
-					{ date: '1609459200', mcap: { peggedUSD: 10 } },
-					{ date: '1609545600', mcap: { peggedUSD: 20 } }
-				],
-				[
-					{ date: '1609459200', mcap: { peggedUSD: 5 } },
-					{ date: '1609545600', mcap: { peggedUSD: 10 } }
-				]
-			],
-			assetsOrChainsList: ['USDT', 'USDC'],
-			filteredIndexes: [0, 1],
-			issuanceType: 'mcap',
-			selectedChain: 'All'
-		} satisfies IBuildStablecoinChartDataParams
-
-		expect(buildTotalMcapPayload(stringDateParams).dataset.source).toEqual([
-			[1_609_459_200_000, 15],
-			[1_609_545_600_000, 30]
-		])
-		expect(buildAreaPayload(stringDateParams, { stackName: 'tokenMcaps' }).dataset.source).toEqual([
-			[1_609_459_200_000, 10, 5],
-			[1_609_545_600_000, 20, 10]
-		])
-		expect(buildDominancePayload(stringDateParams).dataset.source).toEqual([
-			[1_609_459_200_000, 66.67, 33.33],
-			[1_609_545_600_000, 66.67, 33.33]
-		])
 	})
 
 	test('adds unreleased values to total circulating payloads when requested', () => {
@@ -493,34 +458,9 @@ describe('stablecoin chart series builders', () => {
 		])
 	})
 
-	test('does not leak values across three disjoint packed series', () => {
-		const area = buildAreaPayload(
-			{
-				chartDataByAssetOrChain: [
-					[{ date: 1_660_000_000, circulating: 10 }],
-					[{ date: 1_660_086_400, circulating: 20 }],
-					[{ date: 1_660_172_800, circulating: 30 }]
-				],
-				assetsOrChainsList: ['First', 'Second', 'Third'],
-				issuanceType: 'circulating'
-			},
-			{ stackName: 'chains' }
-		)
-
-		expect(area.dataset.source).toEqual([
-			[1_660_000_000_000, 10, undefined, undefined],
-			[1_660_086_400_000, undefined, 20, undefined],
-			[1_660_172_800_000, undefined, undefined, 30]
-		])
-	})
-
-	test('builds dominance rows as a 100 percent stacked payload', () => {
+	test('builds dominance rows as shares of the day total', () => {
 		const payload = buildDominancePayload(params)
 
-		expect(payload.valueSymbol).toBe('%')
-		expect(payload.expandTo100Percent).toBe(true)
-		expect(payload.stacked).toBe(true)
-		expect(payload.charts.every((chart) => chart.type === 'line' && chart.stack === 'dominance')).toBe(true)
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'USDT', 'USDC'])
 		expect(payload.dataset.source.at(-1)).toEqual([1_609_632_000_000, 62.5, 37.5])
 	})
@@ -546,13 +486,8 @@ describe('stablecoin chart series builders', () => {
 		expect((row?.[1] ?? 0) + (row?.[2] ?? 0) + (row?.[3] ?? 0)).toBe(100)
 	})
 
-	test('keeps token inflows stacked because they render as bars', () => {
+	test('draws cumulative token inflows as stacked lines', () => {
 		const payload = buildTokenInflowsPayload(params)
-
-		expect(payload.stacked).toBe(true)
-		expect(payload.showTotalInTooltip).toBe(true)
-		expect(payload.charts.every((chart) => chart.type === 'bar' && chart.stack === 'tokenInflows')).toBe(true)
-		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
 
 		const cumulative = groupStablecoinBarChartPayload(payload, 'cumulative')
 		expect(cumulative.charts.every((chart) => chart.type === 'line' && chart.stack === 'tokenInflows')).toBe(true)

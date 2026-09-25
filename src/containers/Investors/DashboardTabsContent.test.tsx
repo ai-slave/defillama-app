@@ -3,26 +3,12 @@
 import { act, type ReactNode, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 
-const events = vi.hoisted(() => ({ mount: vi.fn(), unmount: vi.fn() }))
+vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), pathname: '/investors', query: {} }) }))
 
-vi.mock('~/containers/ProDashboard/components/ChartGrid', () => ({
-	ChartGrid: () => <div data-testid="chart-grid" />
-}))
-
-vi.mock('~/containers/ProDashboard/components/EmptyState', () => ({
-	EmptyState: () => <div data-testid="empty-state" />
-}))
-
-vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
-	ProDashboardAPIProvider: ({ children }: { children: ReactNode }) => (
-		<div data-testid="dashboard-provider">{children}</div>
-	),
-	useProDashboardCatalog: () => ({ protocolsLoading: false }),
-	useProDashboardDashboard: () => ({ currentDashboard: { id: 'dashboard' }, isLoadingDashboard: false }),
-	useProDashboardItemsState: () => ({ items: [{ id: 'chart' }] })
-}))
-
+const events = { mount: vi.fn(), unmount: vi.fn() }
+const session = installSubscriberSession('investor')
 import { CustomOnlyContent, InvestorsContent } from './DashboardTabsContent'
 import type { DashboardTabConfig } from './dashboardTypes'
 
@@ -50,6 +36,12 @@ const INVESTOR_TABS: Array<DashboardTabConfig> = [
 describe('DashboardTabsContent', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let signal: AbortSignal | undefined
+	let closeStream: (() => void) | undefined
+
+	function render(children: ReactNode) {
+		root.render(<session.Wrapper>{children}</session.Wrapper>)
+	}
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -57,16 +49,34 @@ describe('DashboardTabsContent', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		vi.clearAllMocks()
+		signal = undefined
+		closeStream = undefined
+		session.serve({
+			'/lite/dashboards': { items: [] },
+			'/dashboards': { items: [] },
+			'http://localhost:3000/api/dynamic/pro-dashboard/': (_url: URL, init?: RequestInit) => {
+				signal = init!.signal!
+				return new Response(
+					new ReadableStream({
+						start(controller) {
+							closeStream = () => controller.close()
+						}
+					}),
+					{ headers: { 'content-type': 'application/x-ndjson' } }
+				)
+			}
+		})
 	})
 
 	afterEach(async () => {
 		await act(async () => root.unmount())
+		closeStream?.()
 		container.remove()
 	})
 
 	test('unmounts an inactive investor dashboard tab instead of keeping it hidden', async () => {
 		await act(async () =>
-			root.render(
+			render(
 				<InvestorsContent
 					tabs={INVESTOR_TABS}
 					activeTab="dashboard"
@@ -76,10 +86,11 @@ describe('DashboardTabsContent', () => {
 				/>
 			)
 		)
-		expect(container.querySelector('[data-testid="dashboard-provider"]')).not.toBeNull()
+		await vi.waitFor(() => expect(signal).toBeDefined())
+		expect(signal!.aborted).toBe(false)
 
 		await act(async () =>
-			root.render(
+			render(
 				<InvestorsContent
 					tabs={INVESTOR_TABS}
 					activeTab="first"
@@ -89,11 +100,11 @@ describe('DashboardTabsContent', () => {
 				/>
 			)
 		)
-		expect(container.querySelector('[data-testid="dashboard-provider"]')).toBeNull()
+		expect(signal!.aborted).toBe(true)
 		expect(container.querySelector('[data-testid="custom-first"]')).not.toBeNull()
 
 		await act(async () =>
-			root.render(
+			render(
 				<InvestorsContent
 					tabs={INVESTOR_TABS}
 					activeTab="second"
@@ -115,14 +126,15 @@ describe('DashboardTabsContent', () => {
 		]
 
 		await act(async () =>
-			root.render(<CustomOnlyContent tabs={tabs} activeTab="pro" displayName="Investor" hideDuplicateButton />)
+			render(<CustomOnlyContent tabs={tabs} activeTab="pro" displayName="Investor" hideDuplicateButton />)
 		)
-		expect(container.querySelector('[data-testid="dashboard-provider"]')).not.toBeNull()
+		await vi.waitFor(() => expect(signal).toBeDefined())
+		expect(signal!.aborted).toBe(false)
 
 		await act(async () =>
-			root.render(<CustomOnlyContent tabs={tabs} activeTab="first" displayName="Investor" hideDuplicateButton />)
+			render(<CustomOnlyContent tabs={tabs} activeTab="first" displayName="Investor" hideDuplicateButton />)
 		)
-		expect(container.querySelector('[data-testid="dashboard-provider"]')).toBeNull()
+		expect(signal!.aborted).toBe(true)
 		expect(container.querySelector('[data-testid="custom-first"]')).not.toBeNull()
 	})
 })

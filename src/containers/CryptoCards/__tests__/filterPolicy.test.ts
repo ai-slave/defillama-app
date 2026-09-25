@@ -89,13 +89,25 @@ describe('custody and card-form filters', () => {
 	})
 
 	test('composes with the availability filter', () => {
-		const available = row('de-self', {
+		const germanCustodial = row('de-custodial', {
 			availabilityUnknown: false,
 			countryCodes: ['DE'],
-			custodyType: 'Self-custodial'
+			custodyType: 'custodial'
+		})
+		const germanSelf = row('de-self', {
+			availabilityUnknown: false,
+			countryCodes: ['DE'],
+			custodyType: 'self-custodial'
+		})
+		const frenchCustodial = row('fr-custodial', {
+			availabilityUnknown: false,
+			countryCodes: ['FR'],
+			custodyType: 'custodial'
 		})
 		const state = resolveCardsFilterState({ country: 'de', custody: 'custodial' })
-		expect(filterCards([available], state)).toHaveLength(0)
+		expect(filterCards([germanCustodial, germanSelf, frenchCustodial], state).map((r) => r.cardId)).toEqual([
+			'de-custodial'
+		])
 	})
 })
 

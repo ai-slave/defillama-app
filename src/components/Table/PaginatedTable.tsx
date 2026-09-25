@@ -40,6 +40,7 @@ import type {
 	SortingFeatures,
 	VisibilityFeatures
 } from './features/contracts'
+import { getPaginationControls } from './paginationControls'
 import { TableColumnGroup } from './TableColumnGroup'
 import { useTableCells } from './useTableCells'
 
@@ -146,15 +147,12 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 		)
 	const cellsByRow = useTableCells(rows, visibleLeafColumns)
 	const { pageIndex, pageSize } = pagination
-	const displayPageCount = Math.max(1, pageCount)
-	const displayPageIndex = pageCount === 0 ? 0 : Math.min(pageIndex, displayPageCount - 1)
-	const availablePageSizeOptions = useMemo(() => {
-		if (pageSizeOptions.includes(pageSize)) return pageSizeOptions
-
-		return [...pageSizeOptions, pageSize].sort((a, b) => a - b)
-	}, [pageSize, pageSizeOptions])
-	const shouldShowPaginationControls = rowCount > 10 && pageCount > 1
-	const shouldShowPageSizeSelector = rowCount > 10 && availablePageSizeOptions.length >= 2
+	const {
+		showNavigation: shouldShowPaginationControls,
+		showPageSizeSelector: shouldShowPageSizeSelector,
+		pageLabel,
+		pageSizeOptions: availablePageSizeOptions
+	} = getPaginationControls({ rowCount, pageCount, pageIndex, pageSize, pageSizeOptions })
 	const attachedPaginationClassName = shell === 'none' ? 'border-t border-subtle p-2' : ''
 	const stickyHeaderContentRef = useRef<HTMLDivElement>(null)
 	const handleTableScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -366,9 +364,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 									>
 										<Icon name="chevron-left" height={16} width={16} />
 									</button>
-									<span className="text-xs text-secondary">
-										{`Page ${displayPageIndex + 1} of ${displayPageCount}`}
-									</span>
+									<span className="text-xs text-secondary">{pageLabel}</span>
 									<button
 										type="button"
 										aria-label="Go to next page"

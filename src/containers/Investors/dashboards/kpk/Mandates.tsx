@@ -1,10 +1,17 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
-import type { KpkExcessWindow, KpkMandateClient, KpkMandatePerf, KpkMandateSleeve, KpkMandateWindow } from './api'
+import type { KpkMandateClient, KpkMandateSleeve, KpkMandateWindow } from './api'
 import { useKpkMandates } from './api'
 import { KPK_BENCH_TEXT, KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
+import {
+	clientFooterRows,
+	deployedTitle,
+	missingAumTitle,
+	performanceEarnedTitle,
+	rateBasisTitle
+} from './mandatesModel'
 import {
 	Card,
 	CompareBars,
@@ -15,7 +22,6 @@ import {
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
-	PROSE_DUST_M,
 	QueryError,
 	RefLinks,
 	RowLink,
@@ -28,7 +34,6 @@ import {
 	ToggleGroup,
 	usdFromMillions,
 	usdSignedFromMillions,
-	type FooterRow,
 	KPK_PERCENT_OPTIONS
 } from './ui'
 
@@ -46,44 +51,6 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 			{sleeve.alpha != null && <span className={`body-sm ${signClass(sleeve.alpha)}`}>{signedBps(sleeve.alpha)}</span>}
 		</span>
 	)
-}
-
-function deployedTitle(client: KpkMandateClient): string | undefined {
-	if (client.deployedUsd == null || client.yieldAum == null) return undefined
-	const idle = client.idleUsd ?? 0
-	const workingOps = (client.opsUsd ?? 0) - idle
-	const legs: Array<string> = []
-	if ((client.defiUsd ?? 0) > PROSE_DUST_M) legs.push(`${usdFromMillions(client.defiUsd)} in defi positions`)
-	if (workingOps > PROSE_DUST_M) legs.push(`${usdFromMillions(workingOps)} in ops positions`)
-	let out = `${usdFromMillions(client.deployedUsd)} of ${usdFromMillions(client.yieldAum)} deployed`
-	if (legs.length > 0) out += ` — ${legs.join(' and ')}`
-	if (idle > PROSE_DUST_M) out += `, with ${usdFromMillions(idle)} sitting idle`
-	return out
-}
-
-function rateBasisTitle(window: KpkMandateWindow): string | undefined {
-	if (window.realized === undefined) return undefined
-	if (!window.realized) {
-		return 'Spot reading: a trailing mean applied to the latest balances. No per-position history covers this window.'
-	}
-	const balance = window.avgBalance == null ? '' : ` on a mean balance of ${usdFromMillions(window.avgBalance)}`
-	const spot =
-		window.spot?.apy == null
-			? ''
-			: ` The spot reading on the latest balances is ${formatPercent(window.spot.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}.`
-	return `Earned: money-weighted across every priced position-day in the window${balance}.${spot}`
-}
-
-function performanceEarnedTitle(
-	perf: KpkMandatePerf | undefined,
-	window: KpkExcessWindow | null | undefined
-): string | undefined {
-	if (!perf || !window || perf.earned == null || perf.benchEarned == null || perf.avgBalance == null) return undefined
-	const from = formatDate(window.from) ?? window.from
-	const to = formatDate(window.to) ?? window.to
-	return `Window ${from} – ${to} (${window.days} days). ${perf.denom} earned ${usdFromMillions(
-		perf.earned
-	)} against ${usdFromMillions(perf.benchEarned)} at benchmark, on a mean balance of ${usdFromMillions(perf.avgBalance)}.`
 }
 
 export default function Mandates() {
@@ -105,37 +72,9 @@ export default function Mandates() {
 		[perf]
 	)
 
-	const sharesTotal = data ? data.clients.reduce((sum, client) => sum + (client.share ?? 0), 0) : null
-
 	const showPerf = !data || data.denominations.length > 0
 
-	const clientFooter = useMemo<Array<FooterRow> | undefined>(() => {
-		if (!data) return undefined
-		const rows: Array<FooterRow> = []
-		const inactive = data.inactive
-		if (inactive) {
-			rows.push({
-				muted: true,
-				title: `${inactive.names.join(', ')} held nothing in the ${
-					(data.asOf && formatDate(data.asOf)) ?? 'latest'
-				} snapshot, so they are not listed above.`,
-				cells: {
-					name: `Plus ${inactive.count} mandate${inactive.count > 1 ? 's' : ''} with no current balance`,
-					excess: usdSignedFromMillions(inactive.excess)
-				}
-			})
-		}
-		rows.push({
-			cells: {
-				name: 'Total',
-				aum: usdFromMillions(data.totals.aum),
-				share: formatPercent(sharesTotal, KPK_PERCENT_OPTIONS) ?? '—',
-				deployedPct: formatPercent(data.totals.weightedDeployedPct, KPK_PERCENT_OPTIONS) ?? '—',
-				excess: usdSignedFromMillions(data.totals.excess)
-			}
-		})
-		return rows
-	}, [data, sharesTotal])
+	const clientFooter = useMemo(() => (data ? clientFooterRows(data) : undefined), [data])
 
 	if (isError) return <QueryError label="Treasury mandates" />
 
@@ -308,19 +247,7 @@ export default function Mandates() {
 								right: true,
 								render: (row) => {
 									if (row.aum != null) return usdFromMillions(row.aum)
-									const snapshot = (data?.asOf && formatDate(data.asOf)) ?? 'latest'
-									// Two ways a client can be missing from the snapshot and still be real:
-									// the store has not caught up, or it wound down inside the earned window.
-									const title =
-										row.yieldAum != null
-											? `Not in the ${snapshot} treasury snapshot yet; ${usdFromMillions(row.yieldAum)} as of ${
-													(data?.yieldAsOf && formatDate(data.yieldAsOf)) ?? 'the positions report'
-												}`
-											: row.excessAvgBalance != null
-												? `Not in the ${snapshot} treasury snapshot — held a mean ${usdFromMillions(
-														row.excessAvgBalance
-													)} during the earned-return window`
-												: undefined
+									const title = missingAumTitle(row, data?.asOf, data?.yieldAsOf)
 									return title ? (
 										<span>
 											<InfoTip text={title} className="mr-1" />—

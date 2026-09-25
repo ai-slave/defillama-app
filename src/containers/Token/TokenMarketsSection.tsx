@@ -49,7 +49,7 @@ const TOKEN_PAGE_OMITTED_COLUMNS = ['token'] as const
 
 // Depth first, then volume and its derivatives, then the perp-only metrics — the same
 // reading order as the exchanges directory.
-export const TOKEN_PAGE_COLUMN_ORDER = [
+const TOKEN_PAGE_COLUMN_ORDER = [
 	'venue',
 	'pair',
 	'price',
@@ -68,7 +68,7 @@ export const TOKEN_PAGE_COLUMN_ORDER = [
 // OI and funding are perp-only; spot gets everything else.
 const SPOT_HIDDEN_COLUMNS = new Set<string>(['openInterestUsd', 'openInterestChange24h', 'fundingRate8h'])
 
-export const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, ReadonlyArray<string>> = {
+const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, ReadonlyArray<string>> = {
 	spot: TOKEN_PAGE_COLUMN_ORDER.filter((id) => !SPOT_HIDDEN_COLUMNS.has(id)),
 	linear_perp: TOKEN_PAGE_COLUMN_ORDER,
 	// Normalized volume has no inverse-perp equivalent, so it would only render N/A.
@@ -132,7 +132,7 @@ export function rankRowsBybitFirst(rows: Array<MarketPair>): Array<MarketPair> {
 	return [topBybit, ...rest.sort(byVolumeDesc)]
 }
 
-function getCategoryRows(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): Array<MarketPair> {
+export function getCategoryRows(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): Array<MarketPair> {
 	if (venue === 'dex') return data.dex[category] ?? []
 	if (venue === 'cex') return rankRowsBybitFirst(data.cex[category] ?? [])
 	const dexRows = data.dex[category] ?? []
@@ -160,6 +160,43 @@ function getAvailableCategories(data: TokenMarketsResponse, venue: VenueTabId): 
 		if (getCategoryRows(data, venue, tab.id).length > 0) categories.push(tab.id)
 	}
 	return categories
+}
+
+type AvailableCategoriesByVenue = Record<VenueTabId, Array<Segment>>
+
+export function getAvailableCategoriesByVenue(data: TokenMarketsResponse | undefined): AvailableCategoriesByVenue {
+	if (!data) return { dex: [], cex: [], all: [] }
+	return {
+		dex: getAvailableCategories(data, 'dex'),
+		cex: getAvailableCategories(data, 'cex'),
+		all: getAvailableCategories(data, 'all')
+	}
+}
+
+/** The requested venue and category stay as preferences: while a refresh leaves one without rows,
+ *  the first available tab shows instead, and the preference returns once it has rows again. */
+export function resolveTokenMarketsSelection(
+	availableCategoriesByVenue: AvailableCategoriesByVenue,
+	venueTab: VenueTabId,
+	categoryTab: Segment
+) {
+	const visibleVenueTabs = VENUE_TABS.filter((tab) => availableCategoriesByVenue[tab.id].length > 0)
+	const selectedVenueTab = visibleVenueTabs.some((tab) => tab.id === venueTab)
+		? venueTab
+		: (visibleVenueTabs[0]?.id ?? venueTab)
+	const available = new Set(availableCategoriesByVenue[selectedVenueTab])
+	const visibleCategoryTabs = CATEGORY_TABS.filter((tab) => available.has(tab.id))
+	const selectedCategoryTab: Segment = visibleCategoryTabs.some((tab) => tab.id === categoryTab)
+		? categoryTab
+		: (visibleCategoryTabs[0]?.id ?? categoryTab)
+	return {
+		visibleVenueTabs,
+		selectedVenueTab,
+		visibleCategoryTabs,
+		selectedCategoryTab,
+		// All/CEX keep their pre-ranked rows; DEX starts sorted by volume.
+		sorting: selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING
+	}
 }
 
 function HeaderStrip({
@@ -281,34 +318,11 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 		retry: false
 	})
 
-	const availableCategoriesByVenue = useMemo(() => {
-		if (!data) {
-			return { dex: [], cex: [], all: [] } as Record<VenueTabId, Array<Segment>>
-		}
-		return {
-			dex: getAvailableCategories(data, 'dex'),
-			cex: getAvailableCategories(data, 'cex'),
-			all: getAvailableCategories(data, 'all')
-		} as Record<VenueTabId, Array<Segment>>
-	}, [data])
-
-	const visibleVenueTabs = useMemo(
-		() => VENUE_TABS.filter((tab) => availableCategoriesByVenue[tab.id].length > 0),
-		[availableCategoriesByVenue]
+	const availableCategoriesByVenue = useMemo(() => getAvailableCategoriesByVenue(data), [data])
+	const { visibleVenueTabs, selectedVenueTab, visibleCategoryTabs, selectedCategoryTab, sorting } = useMemo(
+		() => resolveTokenMarketsSelection(availableCategoriesByVenue, venueTab, categoryTab),
+		[availableCategoriesByVenue, venueTab, categoryTab]
 	)
-
-	const selectedVenueTab = visibleVenueTabs.some((tab) => tab.id === venueTab)
-		? venueTab
-		: (visibleVenueTabs[0]?.id ?? venueTab)
-
-	const visibleCategoryTabs = useMemo(() => {
-		const available = new Set(availableCategoriesByVenue[selectedVenueTab])
-		return CATEGORY_TABS.filter((tab) => available.has(tab.id))
-	}, [availableCategoriesByVenue, selectedVenueTab])
-
-	const selectedCategoryTab: Segment = visibleCategoryTabs.some((tab) => tab.id === categoryTab)
-		? categoryTab
-		: (visibleCategoryTabs[0]?.id ?? categoryTab)
 
 	const rows = useMemo(
 		() => (data ? getCategoryRows(data, selectedVenueTab, selectedCategoryTab) : []),
@@ -415,8 +429,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 						label="Market category"
 					/>
 				</div>
-				{/* Reset table state per venue/category without replacing the focused filter.
-				    All/CEX preserve pre-ranked rows; DEX starts sorted by volume. */}
+				{/* Reset table state per venue/category without replacing the focused filter. */}
 				<Suspense fallback={<div className="col-span-full min-h-[360px]" />}>
 					<DeferredTokenMarketsTable
 						key={`${selectedVenueTab}-${selectedCategoryTab}`}
@@ -428,7 +441,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 						omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
 						columnOrder={TOKEN_PAGE_COLUMN_ORDER}
 						initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
-						sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
+						sorting={sorting}
 					/>
 				</Suspense>
 			</div>

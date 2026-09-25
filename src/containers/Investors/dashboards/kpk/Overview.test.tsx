@@ -1,25 +1,22 @@
 // @vitest-environment happy-dom
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { KpkOverview, KpkRangedComposition } from './api'
 import Overview from './Overview'
 
 // The renderer pulls in ECharts, which has no place in a ledger-strip assertion.
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
-
-vi.mock('./api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('./api')>()),
-	useKpkOverview: () => ({ data: served, isError: false })
-}))
+const http = installFixtureFetch()
 
 const EMPTY_COMP: KpkRangedComposition = {
 	title: 'By breakdown',
 	ranges: { max: { title: 'By breakdown', total: 0, months: [], segments: [] } }
 }
 
-/** Line names read as sentences, which is what pushes `Share` out of a narrow table. */
 const LINE_COMP: KpkRangedComposition = {
 	title: 'By line',
 	ranges: {
@@ -58,10 +55,13 @@ let served: KpkOverview = OVERVIEW
 describe('kpk Overview tab', () => {
 	let container: HTMLDivElement
 	let root: Root
+	let client: QueryClient
 
 	beforeEach(() => {
 		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 		served = OVERVIEW
+		client = new QueryClient()
+		http.serve({ '/api/public/kpk/overview': () => served })
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -70,16 +70,20 @@ describe('kpk Overview tab', () => {
 	afterEach(async () => {
 		await act(async () => root.unmount())
 		container.remove()
+		client.clear()
 	})
 
 	const renderTab = async () => {
 		await act(async () =>
 			root.render(
-				<Suspense fallback={null}>
-					<Overview />
-				</Suspense>
+				<QueryClientProvider client={client}>
+					<Suspense fallback={null}>
+						<Overview />
+					</Suspense>
+				</QueryClientProvider>
 			)
 		)
+		await vi.waitFor(() => expect(container.textContent).toContain('$9.9bn'), { timeout: 1000 })
 	}
 
 	test('links the operations query beside the rebalancing caption', async () => {
@@ -87,8 +91,8 @@ describe('kpk Overview tab', () => {
 
 		const link = container.querySelector<HTMLAnchorElement>('a[href="https://dune.com/kpk/kpk-vaults-operations"]')
 
-		expect(link).not.toBeNull()
-		expect(link?.parentElement?.parentElement?.textContent).toContain(
+		expect(link?.getAttribute('aria-label')).toBe('Open KPK Vaults Operations — Dune in a new tab')
+		expect(container.textContent).toContain(
 			"Executed by KPK's non-custodial rebalancing and exit agents on Vaults and Funds"
 		)
 	})
@@ -102,21 +106,5 @@ describe('kpk Overview tab', () => {
 
 		expect(container.querySelector('a[href="https://dune.com/kpk/other"]')).not.toBeNull()
 		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).toBeNull()
-	})
-
-	test('gives the share table the room the line names need', async () => {
-		await renderTab()
-
-		const split = [...container.querySelectorAll('div.grid')].find((el) => el.className.includes('minmax('))
-		const nameCell = [...container.querySelectorAll('td')].find((cell) =>
-			cell.textContent?.includes('Treasury mandates, discretionary execution')
-		)
-
-		expect(split?.className).toContain('minmax(0,420px)')
-		// Sized to the card, so the last column can't be pushed out of view.
-		expect(container.querySelector('table')?.className).toContain('w-full')
-		// A wrapping name stays inside the column rather than scrolling `Share` out of sight.
-		expect(nameCell?.className).not.toContain('whitespace-nowrap')
-		expect(container.textContent).toContain('Share')
 	})
 })

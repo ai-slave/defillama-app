@@ -1,54 +1,58 @@
 import { beforeEach, expect, test, vi } from 'vitest'
 import type { ApiQuery } from '~/server/api/types'
-import type { IRecentProtocolsPageData } from '../types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import type { ProtocolLite } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
 	current: vi.fn(),
 	read: vi.fn(),
-	publish: vi.fn(),
-	recent: vi.fn(),
-	airdrops: vi.fn()
+	publish: vi.fn()
 }))
 vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
 	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
 	createRedisBlobStore: () => ({ readCurrent: mocks.current, readVersion: mocks.read, publish: mocks.publish })
 }))
-vi.mock('../queries', () => ({ getRecentProtocols: mocks.recent, getAirdropsProtocols: mocks.airdrops }))
-vi.mock('~/server/api/resultCache', () => ({
-	cachedResult: (_namespace: string, _key: string, _memory: unknown, build: () => unknown) => build()
-}))
-import { protocolListsApi } from '../server/api'
-import { getProtocolListInitialProps } from '../server/tableData.server'
 
-const source: IRecentProtocolsPageData = {
-	chainList: ['Ethereum'],
-	categories: ['Lending'],
-	forkedList: {},
-	protocols: Array.from({ length: 80 }, (_, i) => ({
-		defillamaId: String(i),
-		name: `Protocol ${i}`,
-		symbol: '-',
-		logo: null,
-		url: '',
-		category: 'Lending',
-		chains: ['Ethereum'],
-		listedAt: i,
-		mcap: null,
-		tvl: i,
-		tvlPrevDay: i,
-		tvlPrevWeek: i,
-		tvlPrevMonth: i,
-		chainTvls: { Ethereum: { tvl: i, tvlPrevDay: i, tvlPrevWeek: i, tvlPrevMonth: i } },
-		extraTvl: {}
-	}))
-}
+const http = installFixtureFetch()
+const liteProtocols: Array<ProtocolLite> = Array.from({ length: 80 }, (_, i) => ({
+	defillamaId: String(i),
+	name: `Protocol ${i}`,
+	symbol: '-',
+	logo: null,
+	url: '',
+	category: 'Lending',
+	chains: ['Ethereum'],
+	listedAt: i,
+	mcap: null,
+	geckoId: null,
+	tvl: i,
+	tvlPrevDay: i,
+	tvlPrevWeek: i,
+	tvlPrevMonth: i,
+	chainTvls: { Ethereum: { tvl: i, tvlPrevDay: i, tvlPrevWeek: i, tvlPrevMonth: i } }
+}))
+const serveProtocols = (protocols: Array<ProtocolLite>) =>
+	http.serve({
+		'/lite/protocols2': { protocols, chains: ['Ethereum'], parentProtocols: [], protocolCategories: ['Lending'] },
+		'/raises': { raises: [] }
+	})
+const builds = () => http.requests.filter(({ url }) => url.pathname === '/lite/protocols2').length
+
+// The snapshot and result caches are module state, so every test starts from a fresh module graph.
+let protocolListsApi: typeof import('../server/api').protocolListsApi
+let getProtocolListInitialProps: typeof import('../server/tableData.server').getProtocolListInitialProps
 const request = (query: ApiQuery) => protocolListsApi.handle({ method: 'GET', url: '', headers: {}, query })
-beforeEach(() => {
+async function startWorker() {
+	vi.resetModules()
+	;({ protocolListsApi } = await import('../server/api'))
+	;({ getProtocolListInitialProps } = await import('../server/tableData.server'))
+}
+beforeEach(async () => {
 	vi.clearAllMocks()
+	await startWorker()
+	serveProtocols(liteProtocols)
 	mocks.current.mockResolvedValue(null)
 	mocks.publish.mockResolvedValue(true)
-	mocks.recent.mockResolvedValue(source)
-	mocks.airdrops.mockResolvedValue(source)
 	mocks.read.mockImplementation(
 		async (_kind, version) =>
 			mocks.publish.mock.calls.map(([snapshot]) => snapshot).find((snapshot) => snapshot.version === version) ?? null
@@ -78,7 +82,7 @@ test('initial props and subsequent pages share one eligible snapshot with compac
 		80,
 		false
 	])
-	expect(mocks.recent).toHaveBeenCalledTimes(1)
+	expect(builds()).toBe(1)
 })
 test('API filtering and complete CSV export reuse the pinned population', async () => {
 	const initial = await getProtocolListInitialProps('airdrops')
@@ -87,7 +91,7 @@ test('API filtering and complete CSV export reuse the pinned population', async 
 	expect((result as { body: string }).body).toBe(
 		'Name,Category,TVL,Disclosed Money Raised,Undisclosed Funding Rounds,Listed At,1d TVL Change,7d TVL Change,1m TVL Change\nProtocol 79,Lending,79,,,79,0,0,0\nProtocol 78,Lending,78,,,78,0,0,0'
 	)
-	expect(mocks.airdrops).toHaveBeenCalledTimes(1)
+	expect(builds()).toBe(1)
 })
 test('missing versions fail export and signal a page replacement instead of mixing rows', async () => {
 	const initial = await getProtocolListInitialProps('recent')
@@ -103,6 +107,7 @@ test('without Redis, a rebuild is accepted only when its content hash matches th
 	mocks.publish.mockResolvedValue(false)
 	mocks.read.mockResolvedValue(null)
 	const initial = await getProtocolListInitialProps('recent')
+	await startWorker()
 	expect(
 		(
 			await request({
@@ -112,7 +117,9 @@ test('without Redis, a rebuild is accepted only when its content hash matches th
 			})
 		).status
 	).toBe(200)
-	mocks.recent.mockResolvedValue({ ...source, protocols: [] })
+	expect(builds()).toBe(2)
+	await startWorker()
+	serveProtocols([])
 	expect((await request({ kind: 'recent', snapshot: initial.protocolList.version })).status).toBe(409)
 	expect((await request({ kind: 'recent', snapshot: initial.protocolList.version, csv: 'true' })).status).toBe(503)
 })

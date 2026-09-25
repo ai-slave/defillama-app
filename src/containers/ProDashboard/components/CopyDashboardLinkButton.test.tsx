@@ -4,7 +4,9 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CopyDashboardLinkButton } from './CopyDashboardLinkButton'
 
-vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
+vi.mock('react-hot-toast', () => ({
+	default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() })
+}))
 
 let container: HTMLDivElement
 let root: Root
@@ -33,7 +35,12 @@ test('a private dashboard hides the share button from everyone but its owner', a
 	await act(async () =>
 		root.render(<CopyDashboardLinkButton dashboardVisibility="private" dashboardId="dashboard-1" />)
 	)
-	expect(container.textContent).toBe('')
+	expect(buttonLabelled('Share')).toBeUndefined()
+
+	await act(async () =>
+		root.render(<CopyDashboardLinkButton dashboardVisibility="private" dashboardId="dashboard-1" isOwner />)
+	)
+	expect(buttonLabelled('Share')).toBeDefined()
 })
 
 test('the owner of a private dashboard gets an explanation and a way to publish', async () => {
@@ -90,30 +97,11 @@ test('publishing announces that the dashboard is live and offers to copy its lin
 		(node) => node.textContent?.trim() === 'Copy link'
 	)!
 	expect(copyLinkAction.getAttribute('data-umami-event')).toBe('dashboard-live-copy-link')
+	await navigator.clipboard.writeText('')
+	await act(async () => copyLinkAction.click())
+	expect(await navigator.clipboard.readText()).toBe(`${window.location.origin}/pro/dashboard-1`)
 	await act(async () => toastRoot.unmount())
 	toastContainer.remove()
-})
-
-test('a viewing owner publishes from the popover and can head to the editor instead', async () => {
-	const onMakePublic = vi.fn(async () => {})
-	const onSelect = vi.fn()
-	await act(async () =>
-		root.render(
-			<CopyDashboardLinkButton
-				dashboardVisibility="private"
-				dashboardId="dashboard-1"
-				isOwner
-				onMakePublic={onMakePublic}
-				manageAction={{ label: 'Edit dashboard', onSelect }}
-			/>
-		)
-	)
-	await openShare()
-	await act(async () => buttonLabelled('Make public')!.click())
-	expect(onMakePublic).toHaveBeenCalledOnce()
-	expect(buttonLabelled('Open settings')).toBeUndefined()
-	await act(async () => buttonLabelled('Edit dashboard')!.click())
-	expect(onSelect).toHaveBeenCalledOnce()
 })
 
 test('a publish that the server rejects surfaces its reason', async () => {

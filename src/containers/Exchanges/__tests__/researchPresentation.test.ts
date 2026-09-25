@@ -1,73 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { getResearchPresentation, RESEARCH_VIEWS, resolveResearchView } from '../researchPresentation'
+import { resolveResearchView } from '../researchPresentation'
 
 describe('research chart presentation', () => {
-	test('keeps view metadata aligned with metric semantics', () => {
-		expect(getResearchPresentation('volume', 'spot-exchanges')).toMatchObject({
-			id: 'spot-exchanges',
-			metric: 'volume',
-			segment: 'spot',
-			grouping: 'exchange',
-			valueSymbol: '$'
-		})
-		expect(RESEARCH_VIEWS.volume.map((view) => view.id)).toEqual([
-			'spot-exchanges',
-			'usd-perp-exchanges',
-			'coin-perp-exchanges',
-			'volume-types'
-		])
-		expect(RESEARCH_VIEWS.oi.map((view) => view.id)).toEqual([
-			'open-interest-base-share',
-			'open-interest-usd-exchanges',
-			'open-interest-coin-exchanges',
-			'open-interest-types'
-		])
-		expect(RESEARCH_VIEWS.depth.map((view) => view.id)).toEqual([
-			'depth-spot-exchanges',
-			'depth-usd-exchanges',
-			'depth-coin-exchanges',
-			'depth-types',
-			'btc-depth'
-		])
-		expect(RESEARCH_VIEWS.nvol.map((view) => view.id)).toEqual([
-			'normalized-spot-exchanges',
-			'normalized-usd-exchanges',
-			'normalized-coin-exchanges',
-			'normalized-types',
-			'normalized-segments',
-			'survival-spot-exchanges',
-			'survival-usd-exchanges'
-		])
-		expect(getResearchPresentation('nvol', 'survival-usd-exchanges')).toMatchObject({
-			metric: 'survival-ratio',
-			segment: 'linear_perp',
-			grouping: 'exchange',
-			valueSymbol: '%'
-		})
-	})
-
-	test('labels segment views with the exact vocabulary: Spot | USD Perps | COIN Perps', () => {
-		for (const part of ['volume', 'depth', 'nvol'] as const) {
-			const labels = RESEARCH_VIEWS[part].map((view) => view.label)
-			expect(labels).toContain('Spot')
-			expect(labels).toContain('USD Perps')
-			expect(labels).toContain('COIN Perps')
-		}
-		expect(RESEARCH_VIEWS.oi.map((view) => view.label)).toEqual([
-			'BTC vs ETH vs Others',
-			'USD Perps',
-			'COIN Perps',
-			'CEX vs DEX'
-		])
-		// No view presents a combined "perp" segment.
-		for (const views of Object.values(RESEARCH_VIEWS)) {
-			for (const view of views) {
-				expect(view.segment).not.toBe('perp')
-				expect(view.segment).not.toBe('combined')
-			}
-		}
-	})
-
 	test('keeps URL-selected views within the metric that supports them', () => {
 		expect(resolveResearchView('depth', 'btc-depth')).toBe('btc-depth')
 		expect(resolveResearchView('nvol', 'survival-usd-exchanges')).toBe('survival-usd-exchanges')

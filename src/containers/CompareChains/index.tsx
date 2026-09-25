@@ -11,7 +11,6 @@ import type {
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
 import { selectTriggerStyles } from '~/components/Select/types'
-import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -23,13 +22,12 @@ import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
 	buildCompareChainAdapterQueryKey,
-	buildCompareChainAdapterRequest,
 	buildCompareChainOverviewQueryKey,
 	getCompareChainFailedSources,
 	getCompareChainAdapterMetrics,
 	hasPendingCompareChainSources,
-	mergeCompareChainSources,
-	type CompareChainAdapterRequest
+	fetchCompareChainAdapterMetric,
+	mergeCompareChainSources
 } from './requestPlan'
 import { buildCompareChainsTvlChartState, type CompareChainsTvlChartState } from './tvlChart'
 
@@ -87,15 +85,6 @@ const getChainData = async (chain: string): Promise<ChainDataResult> => {
 	}
 }
 
-const getAdapterMetricData = (request: CompareChainAdapterRequest) => {
-	switch (request.endpoint) {
-		case 'chain':
-			return fetchAdapterChainChartData(request.params)
-		case 'protocol':
-			return fetchAdapterProtocolChartData(request.params)
-	}
-}
-
 const useCompare = ({
 	chains = [],
 	selectedCharts
@@ -118,16 +107,13 @@ const useCompare = ({
 	const metricQueries = React.useMemo(
 		() =>
 			chains.flatMap((chain) =>
-				adapterMetrics.map((metric) => {
-					const request = buildCompareChainAdapterRequest(chain, metric)
-					return {
-						queryKey: buildCompareChainAdapterQueryKey(chain, metric),
-						queryFn: () => getAdapterMetricData(request),
-						staleTime: 60 * 60 * 1000,
-						refetchOnWindowFocus: false,
-						retry: 0
-					}
-				})
+				adapterMetrics.map((metric) => ({
+					queryKey: buildCompareChainAdapterQueryKey(chain, metric),
+					queryFn: () => fetchCompareChainAdapterMetric(chain, metric),
+					staleTime: 60 * 60 * 1000,
+					refetchOnWindowFocus: false,
+					retry: 0
+				}))
 			),
 		[chains, adapterMetrics]
 	)

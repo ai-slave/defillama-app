@@ -1,33 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { YIELDS_V2_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
-
-const fetchers = vi.hoisted(() => ({
-	earn: vi.fn(),
-	earnVerified: vi.fn(),
-	trends: vi.fn(),
-	borrowMarkets: vi.fn(),
-	borrowRoutes: vi.fn(),
-	loops: vi.fn(),
-	tokenKeys: vi.fn(),
-	meta: vi.fn(),
-	depegs: vi.fn(),
-	exploits: vi.fn()
-}))
-
-vi.mock('../data/server/fetchers', () => ({
-	fetchEarnFromNetwork: fetchers.earn,
-	fetchEarnVerifiedFromNetwork: fetchers.earnVerified,
-	fetchTrendsFromNetwork: fetchers.trends,
-	fetchBorrowMarketsFromNetwork: fetchers.borrowMarkets,
-	fetchBorrowRoutesFromNetwork: fetchers.borrowRoutes,
-	fetchLoopsFromNetwork: fetchers.loops,
-	fetchTokenKeysFromNetwork: fetchers.tokenKeys,
-	fetchYieldsMetaFromNetwork: fetchers.meta,
-	fetchDepegsFromNetwork: fetchers.depegs,
-	fetchExploitsFromNetwork: fetchers.exploits
-}))
-
 import { buildYieldsSnapshotCandidate } from '../server/dataset.builder.server'
+
+const http = installFixtureFetch()
 
 let warn: ReturnType<typeof vi.spyOn>
 
@@ -48,84 +25,115 @@ function validMeta() {
 	}
 }
 
+const ENDPOINTS = {
+	earn: '/v2/earn',
+	earnVerified: '/v2/earn/verified',
+	trends: '/v2/earn/trends',
+	borrowMarkets: '/v2/borrow/markets',
+	borrowRoutes: '/v2/borrow/routes',
+	loops: '/v2/loops',
+	tokenKeys: '/v2/tokens',
+	meta: '/v2/meta',
+	depegs: '/v2/depegs',
+	exploits: '/v2/exploits'
+} as const
+
+const feeds = (): Record<keyof typeof ENDPOINTS, unknown> => ({
+	earn: [{ id: 'earn' }],
+	earnVerified: [{ id: 'earn' }],
+	trends: [{ id: 'trend' }],
+	borrowMarkets: [{ id: 'borrow-market' }],
+	borrowRoutes: [{ collateral: { id: 'collateral' }, borrow: { id: 'borrow' } }],
+	loops: [{ id: 'loop' }],
+	tokenKeys: [{ id: 'token-key' }],
+	meta: validMeta(),
+	depegs: [],
+	exploits: []
+})
+
+/** Serves every feed in its `{ data }` envelope; an override may be a fixture instead of a body. */
+function serveFeeds(overrides: Partial<Record<keyof typeof ENDPOINTS, unknown>> = {}) {
+	const bodies = { ...feeds(), ...overrides }
+	const routes: Record<string, unknown> = {}
+	for (const key in ENDPOINTS) {
+		const name = key as keyof typeof ENDPOINTS
+		const body = bodies[name]
+		routes[`${YIELDS_V2_SERVER_URL}${ENDPOINTS[name]}`] = typeof body === 'function' ? body : { data: body }
+	}
+	http.serve(routes)
+}
+
+// A 404 fails without the retry backoff a 5xx would wait through.
+const unavailable = fixtureStatus(404)
+
 beforeEach(() => {
-	vi.clearAllMocks()
-	fetchers.earn.mockResolvedValue([{ id: 'earn' }])
-	fetchers.earnVerified.mockResolvedValue([{ id: 'earn' }])
-	fetchers.trends.mockResolvedValue([{ id: 'trend' }])
-	fetchers.borrowMarkets.mockResolvedValue([{ id: 'borrow-market' }])
-	fetchers.borrowRoutes.mockResolvedValue([{ collateral: { id: 'collateral' }, borrow: { id: 'borrow' } }])
-	fetchers.loops.mockResolvedValue([{ id: 'loop' }])
-	fetchers.tokenKeys.mockResolvedValue([{ id: 'token-key' }])
-	fetchers.meta.mockResolvedValue(validMeta())
-	fetchers.depegs.mockResolvedValue([])
-	fetchers.exploits.mockResolvedValue([])
+	warn.mockClear()
 })
 
 describe('Yields v2 snapshot builder', () => {
-	test('writes all endpoint responses while allowing empty optional feeds', async () => {
+	test('writes every feed to its artifact while allowing empty optional feeds', async () => {
+		serveFeeds()
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await buildYieldsSnapshotCandidate({ writeJson })
 
-		for (const fetcher of Object.values(fetchers)) {
-			expect(fetcher).toHaveBeenCalledWith({ extraRetry: true, timeout: 180_000 })
-		}
-		expect(writeJson.mock.calls.map(([path]) => path)).toEqual(Object.values(YIELDS_SNAPSHOT_FILES))
+		const expected = feeds()
+		expect(writeJson.mock.calls).toEqual(
+			(Object.keys(YIELDS_SNAPSHOT_FILES) as Array<keyof typeof YIELDS_SNAPSHOT_FILES>).map((key) => [
+				YIELDS_SNAPSHOT_FILES[key],
+				expected[key]
+			])
+		)
 	})
 
 	test('publishes reported yields with an empty verified sidecar', async () => {
-		fetchers.earnVerified.mockResolvedValueOnce([])
+		serveFeeds({ earnVerified: [] })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await buildYieldsSnapshotCandidate({ writeJson })
 
 		expect(writeJson).toHaveBeenCalledWith(YIELDS_SNAPSHOT_FILES.earnVerified, [])
-		expect(warn).toHaveBeenCalledWith(
-			'[dataset-snapshots] yields verified feed is empty; publishing without measurements'
-		)
 	})
 
 	test('fails the generation when the verified request fails, like every other feed', async () => {
-		fetchers.earnVerified.mockRejectedValueOnce(new Error('verified unavailable'))
+		serveFeeds({ earnVerified: unavailable })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(
-			'Yields snapshot requests failed:\nearn verified: verified unavailable'
+			/^Yields snapshot requests failed:\nearn verified: .*\[404\]/
 		)
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
 	test('does not write a partial candidate when an endpoint fails', async () => {
-		fetchers.borrowRoutes.mockRejectedValueOnce(new Error('upstream failed'))
+		serveFeeds({ borrowRoutes: unavailable })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(
-			'Yields snapshot requests failed:\nborrow routes: upstream failed'
+			/^Yields snapshot requests failed:\nborrow routes: .*\[404\][^\n]*$/
 		)
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
 	test('reports every failed endpoint', async () => {
-		fetchers.trends.mockRejectedValueOnce(new Error('trends unavailable'))
-		fetchers.meta.mockRejectedValueOnce(new Error('meta unavailable'))
+		serveFeeds({ trends: unavailable, meta: unavailable })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(
-			'Yields snapshot requests failed:\ntrends: trends unavailable\nmeta: meta unavailable'
+			/^Yields snapshot requests failed:\ntrends: .*\[404\].*\nmeta: .*\[404\]/
 		)
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
 	test.each([
-		['earn', fetchers.earn],
-		['trends', fetchers.trends],
-		['borrow markets', fetchers.borrowMarkets],
-		['borrow routes', fetchers.borrowRoutes],
-		['loops', fetchers.loops],
-		['tokens', fetchers.tokenKeys]
-	])('rejects an empty %s dataset without replacing the candidate', async (name, fetcher) => {
-		fetcher.mockResolvedValueOnce([])
+		['earn', 'earn'],
+		['trends', 'trends'],
+		['borrow markets', 'borrowMarkets'],
+		['borrow routes', 'borrowRoutes'],
+		['loops', 'loops'],
+		['tokens', 'tokenKeys']
+	] as const)('rejects an empty %s dataset without replacing the candidate', async (name, feed) => {
+		serveFeeds({ [feed]: [] })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(
@@ -135,7 +143,7 @@ describe('Yields v2 snapshot builder', () => {
 	})
 
 	test('rejects empty core metadata', async () => {
-		fetchers.meta.mockResolvedValueOnce({ ...validMeta(), chains: [] })
+		serveFeeds({ meta: { ...validMeta(), chains: [] } })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow('Yields snapshot metadata has no chains')
@@ -143,7 +151,7 @@ describe('Yields v2 snapshot builder', () => {
 	})
 
 	test('rejects a generation whose default earn view is entirely hidden', async () => {
-		fetchers.meta.mockResolvedValueOnce({ ...validMeta(), meme_pool_ids: ['earn'] })
+		serveFeeds({ meta: { ...validMeta(), meme_pool_ids: ['earn'] } })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(

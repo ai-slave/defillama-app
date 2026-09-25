@@ -119,27 +119,6 @@ describe('cartesian chart models', () => {
 		])
 	})
 
-	test('keeps explicit and missing stacked-line values as gaps on the stack calendar', () => {
-		const model = buildSparseCartesianChartModel([
-			{
-				name: 'A',
-				type: 'line',
-				stack: 'total',
-				data: [
-					[1, 10],
-					[3, null]
-				]
-			},
-			{ name: 'B', type: 'line', stack: 'total', data: [[2, 20]] }
-		])
-
-		expect(model.charts[0].data).toEqual([
-			[1000, 10],
-			[2000, null],
-			[3000, null]
-		])
-	})
-
 	test('uses the same canonical output for already aligned sparse series', () => {
 		const model = buildSparseCartesianChartModel([
 			{

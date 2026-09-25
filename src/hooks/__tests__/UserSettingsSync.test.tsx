@@ -1,47 +1,40 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
+import { AUTH_SERVER } from '~/constants'
 import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
 import { notifyKeyChange } from '~/contexts/localStorageStore'
+import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { useBookmarks } from '../useBookmarks'
 import { USER_CONFIG_QUERY_KEY } from '../useUserConfig'
 
-const api = vi.hoisted(() => ({ fetch: vi.fn(), save: vi.fn(), userId: 'user' as string | null }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: !!api.userId,
-		user: api.userId ? { id: api.userId } : null,
-		authorizedFetch: api.fetch
-	})
-}))
-vi.mock('~/auth/authStore', () => ({
-	getAuthStoreSnapshot: () => ({ record: api.userId ? { id: api.userId } : null })
-}))
+// The auth server's settings endpoint: `load` answers reads and `save` receives each posted snapshot.
+const api = { load: vi.fn(), save: vi.fn() }
+const session = installSubscriberSession('user')
 const configKey = [...USER_CONFIG_QUERY_KEY, 'user']
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
+const client = () => session.client
 beforeEach(() => {
 	vi.useFakeTimers()
-	vi.clearAllMocks()
-	api.userId = 'user'
+	api.load.mockReset().mockImplementation(async () => new Response('{}'))
+	api.save.mockReset().mockImplementation(async () => new Response('{}'))
 	vi.spyOn(console, 'error').mockImplementation(() => {})
-	api.save.mockResolvedValue(new Response('{}'))
-	api.fetch.mockImplementation((_url, init) =>
-		init?.method === 'POST' ? api.save(JSON.parse(init.body)) : Promise.resolve(new Response('{}'))
-	)
+	session.serve({
+		[`${AUTH_SERVER}/user/config`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'POST' ? api.save(JSON.parse(init.body as string)) : api.load()
+	})
+	session.client.setDefaultOptions({ queries: { retry: false } })
 	writeAppStorage({})
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 	vi.useRealTimers()
 	vi.restoreAllMocks()
@@ -57,12 +50,12 @@ function Bookmark({ name }: { name: string }) {
 async function mount() {
 	await act(async () => {
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<UserSettingsSync />
 				<Bookmark name="Aave" />
 				<Bookmark name="Uniswap" />
 				<Bookmark name="Morpho" />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	})
 	await act(async () => {
@@ -77,23 +70,30 @@ async function add(index: number) {
 }
 test('multiple bookmark controls share one debounced settings save', async () => {
 	await mount()
-	await add(0)
+	await act(async () => container.querySelectorAll('button')[0].click())
+	// Past the storage store's own batching, but inside the settings debounce window.
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(500)
+	})
+	await add(1)
+	expect(readAppStorage().DEFI_WATCHLIST?.main).toEqual({ aave: 'Aave', uniswap: 'Uniswap' })
 	expect(api.save).toHaveBeenCalledExactlyOnceWith(readAppStorage())
-	expect(client.getQueryData(configKey)).toEqual(readAppStorage())
+	expect(client().getQueryData(configKey)).toEqual(readAppStorage())
 })
-test.each(['HTTP failure', 'missing response'])(
+test.each(['HTTP failure', 'network failure'])(
 	'a %s does not acknowledge local edits and the same snapshot can retry',
 	async (failure) => {
-		api.save.mockResolvedValueOnce(failure === 'HTTP failure' ? new Response('Unavailable', { status: 503 }) : null)
+		if (failure === 'HTTP failure') api.save.mockResolvedValueOnce(new Response('Unavailable', { status: 503 }))
+		else api.save.mockRejectedValueOnce(new TypeError('Failed to fetch'))
 		await mount()
 		await add(0)
-		expect(client.getQueryData(configKey)).toEqual({})
+		expect(client().getQueryData(configKey)).toEqual({})
 		await act(async () => notifyKeyChange('DEFILLAMA'))
 		await act(async () => {
 			await vi.advanceTimersByTimeAsync(2100)
 		})
 		expect(api.save).toHaveBeenCalledTimes(2)
-		expect(client.getQueryData(configKey)).toEqual(readAppStorage())
+		expect(client().getQueryData(configKey)).toEqual(readAppStorage())
 	}
 )
 test('a later edit waits for the earlier save and then persists the latest snapshot', async () => {
@@ -114,15 +114,11 @@ test('a later edit waits for the earlier save and then persists the latest snaps
 	})
 	expect(api.save).toHaveBeenCalledTimes(2)
 	expect(api.save.mock.calls[1][0]).toEqual(readAppStorage())
-	expect(client.getQueryData(configKey)).toEqual(readAppStorage())
+	expect(client().getQueryData(configKey)).toEqual(readAppStorage())
 })
 
-test('an edit immediately after remote settings load is saved without echoing the remote snapshot', async () => {
-	api.fetch.mockImplementation((_url, init) =>
-		init?.method === 'POST'
-			? api.save(JSON.parse(init.body))
-			: Promise.resolve(Response.json({ DEFI_WATCHLIST: { main: { aave: 'Aave' } } }))
-	)
+test('an edit immediately after remote settings load keeps the remote bookmarks', async () => {
+	api.load.mockResolvedValue(Response.json({ DEFI_WATCHLIST: { main: { aave: 'Aave' } } }))
 	await mount()
 	await add(1)
 	expect(api.save).toHaveBeenCalledExactlyOnceWith(readAppStorage())
@@ -131,12 +127,10 @@ test('an edit immediately after remote settings load is saved without echoing th
 
 test('an edit during the initial fetch is merged and saved after the remote response arrives', async () => {
 	let finish!: (response: Response) => void
-	api.fetch.mockImplementation((_url, init) =>
-		init?.method === 'POST'
-			? api.save(JSON.parse(init.body))
-			: new Promise((resolve) => {
-					finish = resolve
-				})
+	api.load.mockReturnValue(
+		new Promise((resolve) => {
+			finish = resolve
+		})
 	)
 	await mount()
 	await add(1)
@@ -160,13 +154,16 @@ test('queued settings from a signed-out account never post with a new account se
 	await mount()
 	await add(0)
 	await add(1)
-	api.userId = 'another-user'
+	const anotherToken = `e30.${btoa(JSON.stringify({ id: 'another-user', exp: 4_102_444_800 }))}.signature`
+	const anotherRecord = { id: 'another-user', collectionId: '_pb_users_auth_', collectionName: 'users' }
+	session.serve({ '/api/collections/users/auth-refresh': { token: anotherToken, record: anotherRecord } })
+	pb.authStore.save(anotherToken, anotherRecord)
 	await act(async () => {
 		finish(new Response('{}'))
 		await vi.advanceTimersByTimeAsync(1)
 	})
 	expect(api.save).toHaveBeenCalledOnce()
-	expect(client.getQueryData([...USER_CONFIG_QUERY_KEY, 'another-user'])).toEqual({})
+	expect(client().getQueryData([...USER_CONFIG_QUERY_KEY, 'another-user'])).toEqual({})
 })
 
 test('undoing an edit while its save is pending persists the previously saved snapshot again', async () => {
@@ -192,5 +189,5 @@ test('undoing an edit while its save is pending persists the previously saved sn
 	})
 	expect(api.save).toHaveBeenCalledTimes(3)
 	expect(api.save.mock.calls[2][0]).toEqual(previousSettings)
-	expect(client.getQueryData(configKey)).toEqual(previousSettings)
+	expect(client().getQueryData(configKey)).toEqual(previousSettings)
 })

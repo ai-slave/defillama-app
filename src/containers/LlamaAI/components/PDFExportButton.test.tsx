@@ -2,40 +2,57 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { PDFExportButton } from './PDFExportButton'
 
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ loaders: { userLoading: false }, authorizedFetch: vi.fn(), hasActiveSubscription: true })
-}))
+const session = installSubscriberSession('reader', { resolved: true })
 
-test('PDF options open the export menu and Escape returns focus to the button', async () => {
+test('Dark Mode exports the message as a dark PDF and downloads the file', async () => {
+	session.serve({
+		'https://ai.llama.fi/export/pdf': { success: true, pdfUrl: 'https://files.llama.fi/export-1.pdf' },
+		'https://files.llama.fi/export-1.pdf': () => new Response(new Blob(['%PDF'], { type: 'application/pdf' }))
+	})
+	const downloads: Array<string> = []
+	vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pdf')
+	vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+	vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+		downloads.push(this.download)
+	})
 	const container = document.createElement('div')
 	document.body.append(container)
 	const root = createRoot(container)
 	try {
 		await act(async () =>
-			root.render(<PDFExportButton sessionId="session" messageId="message" exportType="single_message" />)
+			root.render(
+				<session.Wrapper>
+					<PDFExportButton sessionId="session" messageId="message" exportType="single_message" />
+				</session.Wrapper>
+			)
 		)
-		const button = container.querySelector<HTMLButtonElement>('button[aria-label="Export PDF options"]')!
-		await act(async () => {
-			button.focus()
-			button.click()
-		})
-		await vi.waitFor(() => {
-			const menu = document.querySelector('[role="menu"]')
-			expect(menu?.textContent).toContain('Light Mode')
-			expect(menu?.textContent).toContain('Dark Mode')
-			expect(button.getAttribute('aria-controls')).toBe(menu?.id)
-		})
 		await act(async () =>
-			document
-				.querySelector('[role="menu"]')!
-				.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+			container.querySelector<HTMLButtonElement>('button[aria-label="Export PDF options"]')!.click()
 		)
-		await vi.waitFor(() => expect(button.getAttribute('aria-expanded')).toBe('false'))
-		await vi.waitFor(() => expect(document.activeElement).toBe(button))
+		const darkMode = await vi.waitFor(() => {
+			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+				(element) => element.textContent === 'Dark Mode'
+			)
+			expect(item?.getAttribute('aria-disabled')).not.toBe('true')
+			return item!
+		})
+		await act(async () => darkMode.click())
+
+		await vi.waitFor(() => expect(downloads).toHaveLength(1))
+		expect(downloads[0]).toMatch(/^llama-ai-export-\d+\.pdf$/)
+		const exportRequest = session.requests.find((request) => request.url.pathname === '/export/pdf')!
+		expect(JSON.parse(exportRequest.init!.body as string)).toEqual({
+			sessionId: 'session',
+			exportType: 'single_message',
+			messageId: 'message',
+			options: { includeTimestamps: true, includeCitations: true, paperSize: 'A4', isDark: true }
+		})
 	} finally {
 		await act(async () => root.unmount())
 		container.remove()
+		vi.restoreAllMocks()
 	}
 })

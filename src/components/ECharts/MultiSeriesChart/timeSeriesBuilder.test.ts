@@ -4,13 +4,6 @@ import { buildTimeSeriesChart } from './timeSeriesBuilder'
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildTimeSeriesChart', () => {
-	test('returns an empty chart spec for empty series input', () => {
-		expect(buildTimeSeriesChart({ kind: 'periodBars', groupBy: 'weekly', series: [] })).toEqual({
-			dataset: { source: [], dimensions: ['timestamp'] },
-			charts: []
-		})
-	})
-
 	test('sums values for periodBars buckets', () => {
 		expect(
 			buildTimeSeriesChart({

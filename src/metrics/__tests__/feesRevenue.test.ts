@@ -7,48 +7,6 @@ import {
 } from '~/metrics/routeSemantics'
 
 describe('fee/revenue metric semantics', () => {
-	test('keeps ranking route semantics in the shared registry', () => {
-		expect(feeRevenueMetrics.chainFees.ranking).toMatchObject({
-			route: '/fees/chains',
-			name: 'Fees by Chain',
-			totalTrackedKey: 'chainFees.chains',
-			builder: 'chain-native',
-			dataType: ADAPTER_DATA_TYPES.DAILY_FEES
-		})
-		expect(feeRevenueMetrics.chainRevenue.ranking).toMatchObject({
-			route: '/revenue/chains',
-			name: 'Revenue by Chain',
-			totalTrackedKey: 'chainRevenue.chains',
-			builder: 'chain-native',
-			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
-		})
-		expect(feeRevenueMetrics.appFees.ranking).toMatchObject({
-			route: '/app-fees/chains',
-			name: 'App Fees by Chain',
-			totalTrackedKey: 'fees.chains',
-			builder: 'app-aggregation',
-			dataType: ADAPTER_DATA_TYPES.DAILY_APP_FEES
-		})
-		expect(feeRevenueMetrics.appRevenue.ranking).toMatchObject({
-			route: '/app-revenue/chains',
-			name: 'App Revenue by Chain',
-			totalTrackedKey: 'revenue.chains',
-			builder: 'app-aggregation',
-			dataType: ADAPTER_DATA_TYPES.DAILY_APP_REVENUE
-		})
-		expect(feeRevenueMetrics.rev.ranking).toMatchObject({
-			route: '/rev/chains',
-			name: 'REV by Chain',
-			totalTrackedKey: 'chainFees.chains',
-			builder: 'rev'
-		})
-		expect(feeRevenueMetrics.rev.ranking).not.toHaveProperty('dataType')
-	})
-
-	test('keeps REV out of ChainOverview chart semantics', () => {
-		expect(feeRevenueMetrics.rev).not.toHaveProperty('chainOverview')
-	})
-
 	test('keeps chain-native fees and revenue on adapter protocol chart paths', () => {
 		expect(
 			getFeeRevenueChainChartApiParams({

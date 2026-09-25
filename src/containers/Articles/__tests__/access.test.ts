@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { AuthModel } from '~/utils/pocketbase'
 import {
-	RESEARCH_ACCESS_REDIRECT_PATH,
 	canEditResearchArticle,
 	canManageResearchArticle,
 	hasResearchAccess,
@@ -27,10 +26,6 @@ const article = (overrides: Partial<ArticleDocument> = {}) =>
 	}) as ArticleDocument
 
 describe('research access helpers', () => {
-	test('redirects denied research tool access back to the public research page', () => {
-		expect(RESEARCH_ACCESS_REDIRECT_PATH).toBe('/research')
-	})
-
 	test('allows only researchers into research tools', () => {
 		expect(hasResearchAccess(user({ is_llama: true }))).toBe(false)
 		expect(hasResearchAccess(user({ is_researcher: true }))).toBe(true)

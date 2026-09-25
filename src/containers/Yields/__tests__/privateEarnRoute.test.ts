@@ -1,67 +1,63 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { VerifiedRow } from '~/containers/Yields/data/types'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { earnRow } from '~/utils/test/yieldsEarnFixture'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
 
-const { getEarnPage, acquireYieldsSnapshot, validateSubscription } = vi.hoisted(() => ({
-	getEarnPage: vi.fn(),
+const { acquireYieldsSnapshot, validateSubscription } = vi.hoisted(() => ({
 	acquireYieldsSnapshot: vi.fn(),
 	validateSubscription: vi.fn()
 }))
-vi.mock('~/containers/Yields/data/earn.server', () => ({ getEarnPage }))
 vi.mock('~/containers/Yields/server/dataset.server', () => ({ acquireYieldsSnapshot }))
 vi.mock('~/utils/apiAuth', () => ({ validateSubscription }))
 
 import handler from '~/pages/api/private/yields/earn-verified'
 
-const VERIFIED_ROW = {
-	id: 'p',
-	apy: 2.58,
-	apyBase: 2.58,
-	verifiedApy: 2.58,
-	reportedApyBase: 2.38,
-	verified: { apy: { avg_1d: 2.58 }, confidence: 'high' }
-}
+installYieldsFixtures()
 
-function request(headers: Record<string, string> = {}) {
-	return { method: 'GET', query: { page: '1' }, headers } as never
+const verified: VerifiedRow = {
+	id: 'pool-a',
+	apy: { avg_1d: 2.58, avg_7d: 2.5, avg_30d: 2.4 },
+	apy_as_of: new Date().toISOString(),
+	apy_confidence: 'high',
+	exit: null,
+	exit_liquidity: null,
+	tvl: null
 }
 
 beforeEach(() => {
-	vi.clearAllMocks()
-	acquireYieldsSnapshot.mockResolvedValue({ generationId: 'g' })
-	getEarnPage.mockResolvedValue({ rows: [VERIFIED_ROW], total: 1, page: 1, pageSize: 50, hasMore: false })
+	acquireYieldsSnapshot
+		.mockReset()
+		.mockResolvedValue(yieldsSnapshot({ earn: [earnRow('pool-a', 1000)], earnVerified: [verified] }))
+	validateSubscription.mockReset()
 })
 
+async function call(authorization: string) {
+	const res = createMockNextApiResponse()
+	await handler({ method: 'GET', query: { page: '1' }, headers: { authorization } } as never, res as never)
+	return res
+}
+
 describe('/api/private/yields/earn-verified', () => {
-	// The counterpart to the public route always being redacted: this is where the measurement is
-	// allowed out, and it is the only place.
-	test('serves the measured rows to an active subscriber', async () => {
+	// The counterpart to the public route always being locked: this is where the measurement is
+	// allowed out, and it is the only place, so it must never reach a shared cache.
+	test('serves an active subscriber the measured rows, privately', async () => {
 		validateSubscription.mockResolvedValue({ valid: true, isTrial: false })
-		const res = createMockNextApiResponse()
 
-		await handler(request({ authorization: 'Bearer sub-token' }), res as never)
+		const res = await call('Bearer sub-token')
 
-		expect(getEarnPage).toHaveBeenCalledWith(expect.anything(), { page: '1' }, { verifiedAccess: true })
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(JSON.stringify(res.json.mock.calls[0][0])).toContain('"verified"')
+		expect(res.json.mock.calls[0][0].rows[0]).toMatchObject({ id: 'pool-a', verified: { apy: verified.apy } })
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 	})
 
 	// Authenticated is not the same as subscribed.
-	test('refuses a signed-in reader with no active subscription, without computing the page', async () => {
+	test('refuses a signed-in reader with no active subscription', async () => {
 		validateSubscription.mockResolvedValue({ valid: false, status: 403, error: 'Active subscription required' })
-		const res = createMockNextApiResponse()
 
-		await handler(request({ authorization: 'Bearer signed-in-but-free' }), res as never)
+		const res = await call('Bearer signed-in-but-free')
 
 		expect(res.status).toHaveBeenCalledWith(403)
-		expect(getEarnPage).not.toHaveBeenCalled()
-	})
-
-	test('never lets the measured page into a shared cache', async () => {
-		validateSubscription.mockResolvedValue({ valid: true, isTrial: false })
-		const res = createMockNextApiResponse()
-
-		await handler(request({ authorization: 'Bearer sub-token' }), res as never)
-
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
+		expect(JSON.stringify(res.json.mock.calls[0][0])).not.toContain('2.58')
 	})
 })

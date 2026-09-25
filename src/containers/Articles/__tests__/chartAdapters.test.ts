@@ -32,17 +32,23 @@ describe('validateArticleChartConfig', () => {
 		})
 	})
 
-	test('accepts multiple series mixing entity types and chart types up to the cap', () => {
+	test('keeps the first four series across entity and chart types', () => {
 		const config = validateArticleChartConfig({
 			series: [
 				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' },
 				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'volume' },
-				{ entityType: 'chain', slug: 'Ethereum', name: 'Ethereum', chartType: 'fees' }
+				{ entityType: 'chain', slug: 'Ethereum', name: 'Ethereum', chartType: 'fees' },
+				{ entityType: 'chain', slug: 'Base', name: 'Base', chartType: 'tvl' },
+				{ entityType: 'protocol', slug: 'uniswap', name: 'Uniswap', chartType: 'fees' }
 			]
 		})
-		expect(config?.series).toHaveLength(3)
-		expect(config?.entities).toHaveLength(2)
-		expect(config?.chartType).toBeDefined()
+		expect(config?.series.map(({ entityType, slug, chartType }) => [entityType, slug, chartType])).toEqual([
+			['protocol', 'aave', 'tvl'],
+			['protocol', 'aave', 'volume'],
+			['chain', 'Ethereum', 'fees'],
+			['chain', 'Base', 'tvl']
+		])
+		expect(config?.chartType).toBe('tvl')
 	})
 
 	test('deduplicates persisted series by the identity enforced in the editor', () => {

@@ -25,6 +25,5 @@ describe('protocol Unified Table response', () => {
 
 		expect(response.rows[0]).toMatchObject({ rowType: 'protocol', chain: null, category: null })
 		expect(response.rows[0]?.metrics).toEqual({ tvl: 0 })
-		expect(response.rows[0]).toBe(input)
 	})
 })

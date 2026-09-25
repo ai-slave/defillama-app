@@ -1,4 +1,5 @@
 import { formatDate } from '~/utils/dateFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import type { IRawTokenRightsEntry } from './api.types'
 import type {
 	ITokenRightsData,
@@ -11,8 +12,15 @@ function optionalText(value: string | undefined): string | null {
 	return value?.trim() || null
 }
 
-export function getTokenRightsPrimaryValueLabel(value: string | null): string | null {
-	return value === null || value === 'N/A' ? null : value
+/** A disclosed $0 round shows as $0; only an unknown amount shows as a dash. */
+export function formatTokenRightsRaiseUsd(value: number | null): string {
+	return value === null
+		? '—'
+		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+}
+
+export function hasTokenRightsPrimaryValueAccrual({ valueAccrual }: ITokenRightsData): boolean {
+	return valueAccrual.primary !== null || valueAccrual.details !== null
 }
 
 export function formatFeeSwitchStatus(value: string): string {
@@ -161,6 +169,24 @@ export function getEquityPieTone(fundraising: Array<string>, equityRevenueCaptur
 	return 'positive'
 }
 
+/** Dividends or buybacks: either one means the token accrues value. */
+export function hasTokenRightsValueAccrual({ valueAccrual }: ITokenRightsData): boolean {
+	return valueAccrual.dividends.displayTokens.length > 0 || valueAccrual.buybacks.displayTokens.length > 0
+}
+
+/** The overview pie: one slice per right, green when the token holds it. */
+export function getTokenRightsPieSegments(data: ITokenRightsData): Array<{ label: string; tone: TokenRightsPieTone }> {
+	const { governance, decisions, valueAccrual, alignment } = data
+	return [
+		{ label: 'Treasury', tone: decisions.treasury.displayTokens.length > 0 ? 'positive' : 'negative' },
+		{ label: 'Revenue', tone: decisions.revenue.displayTokens.length > 0 ? 'positive' : 'negative' },
+		{ label: 'Burns', tone: valueAccrual.burns.isActive ? 'positive' : 'negative' },
+		{ label: 'Equity', tone: getEquityPieTone(alignment.fundraising, alignment.equityRevenueCapture) },
+		{ label: 'Value Accrual', tone: hasTokenRightsValueAccrual(data) ? 'positive' : 'negative' },
+		{ label: 'Governance', tone: governance.decisionTokenDisplay.displayTokens.length > 0 ? 'positive' : 'negative' }
+	]
+}
+
 function splitUtilityLabels(value: string | null): Array<string> {
 	if (!value) return []
 	return value
@@ -185,6 +211,7 @@ export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsDa
 	const overviewTokens = parseTokenDisplay(raw.Token)
 	const utility = optionalText(raw.Utility)
 	const lastUpdated = optionalText(raw['Last Updated'])
+	const primaryValueAccrual = optionalText(raw['Value Accrual'])
 	const governanceDecisionTokens = parseTokenDisplay(raw['Governance Decisions'])
 	const fundraising = raw.Fundraising ?? []
 
@@ -227,7 +254,8 @@ export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsDa
 			links: parseMarkdownLinks(raw['Economic Links'])
 		},
 		valueAccrual: {
-			primary: optionalText(raw['Value Accrual']),
+			// The producer writes N/A when a protocol has no primary mechanism.
+			primary: primaryValueAccrual === 'N/A' ? null : primaryValueAccrual,
 			details: optionalText(raw['Value Accrual Details']),
 			buybacks: {
 				...parseTokenDisplay(raw.Buybacks),

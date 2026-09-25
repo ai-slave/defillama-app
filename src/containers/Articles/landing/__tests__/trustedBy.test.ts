@@ -16,20 +16,12 @@ const mention = (id: string): SocialMention => ({
 })
 
 describe('chunkMentions', () => {
-	test('splits six mentions into two blocks of three', () => {
-		const blocks = chunkMentions([1, 2, 3, 4, 5, 6].map((n) => mention(String(n))))
-		expect(blocks).toHaveLength(2)
-		expect(blocks[0].map((m) => m.id)).toEqual(['1', '2', '3'])
-		expect(blocks[1].map((m) => m.id)).toEqual(['4', '5', '6'])
-	})
-
-	test('keeps a trailing partial block', () => {
-		const blocks = chunkMentions([1, 2, 3, 4].map((n) => mention(String(n))))
-		expect(blocks).toHaveLength(2)
-		expect(blocks[1]).toHaveLength(1)
-	})
-
-	test('returns empty array for empty input', () => {
-		expect(chunkMentions([])).toEqual([])
+	test('groups mentions into blocks of three, keeping a partial final block', () => {
+		const mentions = [1, 2, 3, 4, 5, 6, 7].map((n) => mention(String(n)))
+		expect(chunkMentions(mentions).map((block) => block.map((item) => item.id))).toEqual([
+			['1', '2', '3'],
+			['4', '5', '6'],
+			['7']
+		])
 	})
 })

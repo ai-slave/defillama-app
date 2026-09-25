@@ -13,9 +13,6 @@ import { filteredTableFeatures } from '../features/filtering'
 import { paginatedTableFeatures } from '../features/pagination'
 import { PaginatedTable } from '../PaginatedTable'
 
-vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
-vi.mock('~/ui/Tooltip', () => ({ Tooltip: ({ children }: { children: React.ReactNode }) => children }))
-
 const features = tableFeatures({ ...paginatedTableFeatures, ...filteredTableFeatures })
 const rows = [
 	{ name: 'Zulu', value: 200 },

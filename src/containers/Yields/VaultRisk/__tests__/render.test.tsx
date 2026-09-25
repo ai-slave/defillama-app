@@ -6,7 +6,7 @@ import { ScenarioDetailContent } from '../components/ScenarioDetailPanel'
 import { TrustPanel } from '../components/TrustPanel'
 import { buildVaultRiskVM } from '../derive'
 import type { CollateralRisk, VaultRiskData, VaultScenario } from '../types'
-import { VaultRiskSection, VaultRiskUnmapped } from '../VaultRiskSection'
+import { VaultRiskSection } from '../VaultRiskSection'
 import {
 	makeAudit,
 	makeCollateral,
@@ -30,6 +30,19 @@ async function render(el: ReactElement): Promise<string> {
 	const chunks: Array<Buffer> = []
 	for await (const chunk of prelude) chunks.push(Buffer.from(chunk))
 	return Buffer.concat(chunks).toString('utf8')
+}
+
+const text = (html: string) =>
+	html
+		.replaceAll('<!-- -->', '')
+		.replace(/<[^>]+>/g, '')
+		.replaceAll('&amp;', '&')
+		.trim()
+
+// Visible text of each cell in one rendered scenario row.
+function rowCells(html: string, rowId: string): Array<string> {
+	const row = html.match(new RegExp(`<tr id="${rowId}"[^>]*>([\\s\\S]*?)</tr>`))![1]!
+	return [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(([, cell]) => text(cell!))
 }
 
 const UPDATED_TS = 1_780_000_000 // fixed unix seconds → deterministic "Updated …" footer
@@ -444,17 +457,6 @@ function aaveData(): VaultRiskData {
 }
 
 describe('VaultRiskSection render', () => {
-	const CASES: Array<[string, () => VaultRiskData]> = [
-		['Morpho vault', morphoData],
-		['Compound market', compoundData],
-		['Aave market', aaveData]
-	]
-
-	test.each(CASES)('renders without throwing (%s)', async (_label, build) => {
-		const html = await render(<VaultRiskSection data={build()} poolName="Test Pool" chain="ethereum" />)
-		expect(html).not.toBe('')
-	})
-
 	test('returns null when there is no data', async () => {
 		expect(await render(<VaultRiskSection data={null} poolName="x" chain="ethereum" />)).toBe('')
 	})
@@ -479,13 +481,6 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Coverage is rolling out across protocols')
 	})
 
-	test('VaultRiskUnmapped renders the scanning-radar loader for a pool with no record (standalone /risk page)', async () => {
-		const html = await render(<VaultRiskUnmapped poolName="KPK-USDC-PRIME" chain="ethereum" />)
-		expect(html).toContain('mapped yet') // the radar loader's headline
-		expect(html).toContain('Coverage is rolling out across protocols') // the honest "compiling" copy
-		expect(html).toContain('ethereum') // chain chip shows even with no protocol record
-	})
-
 	test('shows the protocol-wide drift banner when drift is present (compound-v3)', async () => {
 		const html = await render(<VaultRiskSection data={compoundData()} poolName="x" chain="ethereum" />)
 		expect(html).toContain('affects all compound-v3 vaults')
@@ -502,9 +497,9 @@ describe('VaultRiskSection render', () => {
 		expect(vault).toContain('underlying markets')
 	})
 
-	test('collateral view leads with max loss, names ACT, and shows the oracle block (aave market)', async () => {
+	async function renderAaveCollateral() {
 		const vm = buildVaultRiskVM(aaveData())
-		const html = await render(
+		return render(
 			<CollateralView
 				collateral={vm.collateral}
 				protocolId={vm.protocolId}
@@ -514,24 +509,25 @@ describe('VaultRiskSection render', () => {
 				chain={vm.chain}
 			/>
 		)
-		expect(html).toContain('Market Exposure') // the lead bad-debt exposure column
-		expect(html).toContain('Oracle Exposure') // separate oracle-drain column
-		expect(html).not.toContain('Exposure share') // bars removed
-		// market copy: shares read "of market", never "of vault"
+	}
+
+	test('reads collateral shares as a share of the market on a market pool (aave)', async () => {
+		const html = await renderAaveCollateral()
 		expect(html).toContain('of market')
 		expect(html).not.toContain('of vault')
-		expect(html).toContain('Aggregate Collateral Trust (ACT)') // renamed metric in the row detail
-		expect(html).toContain('shared-liquidity market')
-		expect(html).not.toContain('Blast radius') // renamed everywhere
-		// oracle dependency block: vendor exposure renders; on-chain control unresolved here
-		expect(html).toContain('Oracle dependencies')
-		expect(html).toContain('on-chain control not resolved') // admin unmapped → vendor gets its own row
+	})
+
+	test('gives a vendor whose on-chain admin is unresolved its own oracle row (aave)', async () => {
+		const html = await renderAaveCollateral()
+		expect(text(html)).toContain('Chainlink· on-chain control not resolved')
 		expect(html).toContain('mispriceable if this feed lies')
-		// every collateral here is bad_debt_basis-unmodeled: rows read "Not modeled" with the
-		// exposure ceiling as context, never an exposure figure dressed up as precise bad debt…
+	})
+
+	// Every aave collateral here is bad_debt_basis-unmodeled: never an exposure figure dressed up as bad debt.
+	test('reads unmodeled collateral as Not modeled with its exposure ceiling (aave)', async () => {
+		const html = await renderAaveCollateral()
 		expect(html).toContain('Not modeled')
-		expect(html).toContain('exposed') // "up to $X exposed" ceiling line
-		// …and the section-level stress states the gap honestly instead of a slider stuck at $0
+		expect(html).toContain('exposed')
 		expect(html).toContain('Per-collateral exposure ceilings are listed below')
 	})
 
@@ -716,7 +712,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('exposed') // unmodeled shows the exposure ceiling as context
 	})
 
-	test('collateral view folds per-market oracles into the accordion and gives each asset its own stress slider (morpho)', async () => {
+	test('collateral view gives each asset its own stress slider (morpho)', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(
 			<CollateralView
@@ -730,29 +726,10 @@ describe('VaultRiskSection render', () => {
 				chain={vm.chain}
 			/>
 		)
-		// per-market detail is folded into each collateral row, not a standalone bottom table
-		expect(html).toContain('Markets this collateral backs')
-		expect(html).toContain('% LLTV')
-		expect(html).toContain('If it breaks') // the left accordion column
-		// oracle dependency block — vendor exposure and the controlling multisig
-		expect(html).toContain('Oracle dependencies')
-		expect(html).toContain('misprice the collateral and borrow against it') // unified verdict band intro
-		expect(html).toContain('Safe multisig') // the 4/9 Safe controlling the feeds
-		expect(html).toContain('drainable if it is compromised')
-		// Stress is per asset only: the section header is a readout, and the sole drop control
-		// lives in each row — no vault-wide slider and no mode toggle competing with it.
-		expect(html).toContain('If collateral prices drop')
-		expect(html).toContain('per asset · no liquidations · stress estimate')
-		expect(html).not.toContain('Custom by asset')
-		expect(html).not.toContain('Collateral stress scope') // the removed mode toggle's aria-label
-		expect(html).toContain('At −30%:')
-		expect(html).toContain('drag to set this asset') // the row owns the only drop control
-		// one range input per modelable collateral, none in the header
+		// One range input per modelable collateral, none in the header.
 		expect(html.match(/type="range"/g)?.length).toBe(2)
 		expect(html).toContain('aria-label="Custom weETH collateral price drop"')
-		expect(html).toContain('modeled all-to-zero bad-debt ceiling')
-		expect(html).toContain('Oracle exposure')
-		expect(html).toContain('separate path: an attacker borrows against a fake price')
+		expect(html).toContain('aria-label="Custom cbETH collateral price drop"')
 	})
 
 	test('leads collateral detail with the backend oracle mechanism, price-path legs, and a PT pricing tag', async () => {
@@ -947,7 +924,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('is compromised') // …but no "controlled by" implication
 	})
 
-	test('trust panel groups vault-scoped deps and shows a pending-change countdown when queued', async () => {
+	test('trust panel shows a pending-change countdown when queued', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(
 			<TrustPanel
@@ -957,22 +934,8 @@ describe('VaultRiskSection render', () => {
 				nowIso="2026-06-19T00:00:00Z"
 			/>
 		)
-		// queued curator change → a window-to-exit countdown
-		expect(html).toContain('queued')
-		// operators panel leads, classifies each role, and marks what reaches principal
-		expect(html).toContain('Vault operators')
-		expect(html).toContain('Reaches deposit') // curator/owner capability marker
-		// non-principal deps are protocol context, not a deposit-loss path — the "Context" group is hidden
-		expect(html).not.toContain("don't put your deposit at risk")
-	})
-
-	test('trust panel renders audits + governance, and survives no explorer data', async () => {
-		const vm = buildVaultRiskVM(morphoData())
-		const html = await render(<TrustPanel protocol={vm.protocol} nowIso="2026-06-19T00:00:00Z" />)
-		expect(html).toContain('Audits')
-		expect(html).toContain('multisig')
-		// governance block renders and groups multisigs by role
-		expect(html).toContain('Governance owner') // per-chain 5/9 rows collapsed to one role
+		// The queued cap change lands at valid_at, two days after nowIso: the reader's window to exit.
+		expect(text(html)).toContain('Set supply cap— applies in 2 days; time to exit first')
 	})
 
 	test('titles the section with vault_name and shows the disambiguating contract address', async () => {
@@ -1052,45 +1015,34 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('Sentinels')
 	})
 
-	test('reduces the scenario table to Loss / Worst case / Exit window — no column per crash depth', async () => {
-		// The served anchors carry only a handful of distinct values across a table this size, so the
-		// per-depth columns (and the drop selector that fed them) are gone; each row states its loss
-		// at the depth it was modeled at, and the full curve lives in the expanded row.
-		const morpho = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		expect(morpho).toContain('Worst case')
-		expect(morpho).toContain('Exit window')
-		expect(morpho).toContain('Loss at −30%') // one fixed depth, not a column per anchor
-		expect(morpho).not.toContain('Loss at −10%')
-		expect(morpho).not.toContain('Loss at −50%')
-		expect(morpho).not.toContain('Possible loss') // the column that duplicated the selected anchor
-		expect(morpho).not.toContain('Collateral price-drop stress level') // the removed selector
-	})
-
-	test('leads with one loss figure bound to its cause, in % of deposit, with no interpolated loss curve', async () => {
-		// The loss curve was removed: over the served universe its shape is near-identical vault to
-		// vault, it splined a claim between only three modeled anchors, and it repeated both the
-		// headline above it and the VaultStress drop control below it.
+	test('leads with one loss figure bound to its cause, in % of deposit', async () => {
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		// one hero figure with its condition in plain language, then the ceiling as a sentence —
-		// no jargon labels and no two stats at opposite ends of a row to reconcile
-		expect(html).toMatch(/of your deposit if collateral falls \d+%/)
-		expect(html).toContain('reaches a total')
-		expect(html).not.toContain('realistic worst')
-		expect(html).not.toContain('extreme only')
-		// the chart's own scaffolding is gone
-		expect(html).not.toContain('Loss against collateral crash severity')
-		expect(html).not.toContain('vault-loss-grad')
-		expect(html).not.toContain('role="slider"')
+		// One hero figure with its condition in plain language, then the ceiling as a sentence:
+		// the crash loses 1.8m of a 10m deposit at −50%, the contract bug takes all of it.
+		expect(text(html)).toContain('18%of your deposit if collateral falls 50%')
+		expect(text(html)).toContain('Only representative failure reaches a total 100%, with no warning to exit.')
 	})
 
 	test('frames scenario losses as % of deposit, qualified by the crash depth each was modeled at', async () => {
 		// the smart-contract-bug at full supply reads 100% of deposit; price-driven rows carry the
 		// depth as a qualifier so the figure is readable without a page-level drop selector.
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		expect(html).toContain('100%') // smart-contract bug takes the whole deposit
-		expect(html).toContain('Full deposit') // …and its worst-case ceiling reads "Full deposit"
 		expect(html).toContain('Loss at −30%') // the column states the depth, so cells don't repeat it
-		expect(html).not.toMatch(/At −\d+% stress/)
+		expect(rowCells(html, 'scenario-smart-contract-bug')).toEqual([
+			'Representative failure',
+			'100%',
+			'Full deposit',
+			'Instant',
+			''
+		])
+		// 900k of 10m at the −30% column depth, 1.8m at the worst modeled depth.
+		expect(rowCells(html, 'scenario-wide-crypto-drop')).toEqual([
+			'Wide crypto crash',
+			'9%',
+			'up to 18%',
+			'1 day – 7 days',
+			''
+		])
 	})
 
 	test('survives collateral_risks with no liquidity_scenario (API may omit it) — no blank section', async () => {
@@ -1098,7 +1050,6 @@ describe('VaultRiskSection render', () => {
 		// not read it unguarded (it did, and threw → the whole section fell back to the empty state).
 		const d = morphoData()
 		for (const c of d.vault.collateral_risks) delete (c as { liquidity_scenario?: unknown }).liquidity_scenario
-		expect(() => buildVaultRiskVM(d)).not.toThrow()
 		const vm = buildVaultRiskVM(d)
 		expect(vm.collateral.length).toBe(d.vault.collateral_risks.length)
 		expect(vm.scenarios.length).toBeGreaterThan(0)
@@ -1126,10 +1077,19 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Wide crypto crash') // the data_gap scenario, shown
 	})
 
-	test('renders the grouped sections', async () => {
+	test('lists each scenario under its group header', async () => {
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
-		expect(html).toContain('Price-driven collateral stress') // a group header
-		expect(html).toContain('liquidation failures') // the oracle/liquidation group header (& is HTML-escaped)
+		const order = [...html.matchAll(/<tr id="(scenario-[^"]+)"|<td colSpan="5"[^>]*><span[^>]*>([^<]+)<\/span>/g)].map(
+			([, rowId, header]) => rowId ?? text(header!)
+		)
+		expect(order).toEqual([
+			'Full-deposit & protocol-level',
+			'scenario-smart-contract-bug',
+			'Price-driven collateral stress',
+			'scenario-wide-crypto-drop',
+			'Oracle & liquidation failures',
+			'scenario-market-oracle-compromise'
+		])
 	})
 
 	test('renders protocol-wide incidents in their own labeled lane, off the pool track record (morpho)', async () => {

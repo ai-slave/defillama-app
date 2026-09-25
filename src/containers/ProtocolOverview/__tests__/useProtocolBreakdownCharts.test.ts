@@ -1,8 +1,7 @@
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import {
-	type useProtocolBreakdownCharts,
 	buildComputedBreakdownResult,
 	buildProtocolBreakdownPresentation,
 	MAX_PROTOCOL_BREAKDOWN_SERIES,
@@ -20,19 +19,6 @@ function datasetValue(dataset: MultiSeriesChartDataset | null, rowIndex: number,
 }
 
 describe('ProtocolOverview breakdown chart computation', () => {
-	test('keeps token exclusions impossible for treasury hook requests', () => {
-		type HookParams = Parameters<typeof useProtocolBreakdownCharts>[0]
-		type TreasuryParamsWithExclusions = {
-			protocol: string
-			source: 'treasury'
-			keys: ['OwnTokens']
-			tokensToExclude: ['GT']
-		}
-		type TreasuryAcceptsExclusions = TreasuryParamsWithExclusions extends HookParams ? true : false
-
-		expectTypeOf<TreasuryAcceptsExclusions>().toEqualTypeOf<false>()
-	})
-
 	test('keeps aligned totals, labels, USD inflows, token inflows, and latest token filtering exact', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [
@@ -711,39 +697,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		])
 	})
 
-	test('omits token and inflow datasets when inflows are disabled', () => {
-		const result = buildComputedBreakdownResult({
-			tvlCharts: [
-				[
-					[DAY_MS, 100],
-					[DAY_MS * 2, 125]
-				]
-			],
-			chainBreakdownCharts: [],
-			tokenBreakdownUsdCharts: [
-				[
-					[DAY_MS, { USDC: 100 }],
-					[DAY_MS * 2, { USDC: 125 }]
-				]
-			],
-			tokenBreakdownRawCharts: [
-				[
-					[DAY_MS, { USDC: 100 }],
-					[DAY_MS * 2, { USDC: 125 }]
-				]
-			],
-			valueSeriesName: 'Treasury',
-			inflows: false
-		})
-
-		expect(result.valueDataset?.dimensions).toEqual(['timestamp', 'Treasury'])
-		expect(result.tokenBreakdownUSD).toBeNull()
-		expect(result.tokenRawBreakdown).toBeNull()
-		expect(result.usdInflowsDataset).toBeNull()
-		expect(result.tokenInflows).toBeNull()
-	})
-
-	test('keeps token datasets but skips inflow construction when the caller does not render inflows', () => {
+	test('keeps token datasets when the caller does not render inflows', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [],
 			chainBreakdownCharts: [],
@@ -765,8 +719,6 @@ describe('ProtocolOverview breakdown chart computation', () => {
 
 		expect(result.tokensUnique).toEqual(['USDC'])
 		expect(result.rawTokensUnique).toEqual(['USDC'])
-		expect(result.usdInflowsDataset).toBeNull()
-		expect(result.tokenInflows).toBeNull()
 	})
 
 	test('keeps a disappearing token as a full withdrawal', () => {

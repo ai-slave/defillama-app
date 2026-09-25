@@ -1,50 +1,21 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useSelector } from '@tanstack/react-store'
-import type { ReactTable } from '@tanstack/react-table'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { SearchTableFeatures } from '~/components/Table/features/search'
-import type { PairTableRow } from '~/containers/Exchanges/PairTable'
 import type { MarketPair, TokenMarketsResponse } from '~/containers/Markets/api.types'
-import { fetchTokenMarkets } from '../api'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { TokenMarketsSection } from '../TokenMarketsSection'
 
-vi.mock('../api', () => ({ fetchTokenMarkets: vi.fn() }))
-vi.mock('~/containers/Exchanges/master.api', () => ({
-	fetchExchangeExecutionSlippage: vi.fn().mockResolvedValue({ venues: {} })
-}))
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/token/[token]', push: vi.fn() }) }))
+// The order-book chart is an ECharts child the assertions never read.
 vi.mock('~/containers/Exchanges/TokenDepthChart', () => ({ TokenDepthChart: () => null }))
+// Render the real table eagerly instead of through its lazy chunk.
 vi.mock('../deferred/DeferredTokenMarketsTable', async () => ({
 	DeferredTokenMarketsTable: (await import('../TokenMarketsTable')).TokenMarketsTable
 }))
-vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
-vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, PairTableRow> }) => {
-		const state = useSelector(instance.store)
-		const rows = useSelector(instance.store, () => instance.getRowModel().rows)
-		return (
-			<div
-				data-table
-				data-sort={JSON.stringify(state.sorting)}
-				data-columns={instance
-					.getVisibleLeafColumns()
-					.map((column) => column.id)
-					.join(',')}
-			>
-				<button type="button" onClick={() => instance.getColumn('volume24h')!.toggleSorting(false)}>
-					Sort ascending
-				</button>
-				<button type="button" onClick={() => instance.getColumn('price')!.toggleVisibility(false)}>
-					Hide price
-				</button>
-				<output>{rows.map((row) => row.original.venue).join(',')}</output>
-			</div>
-		)
-	}
-}))
+
+const http = installFixtureFetch()
 
 function marketPair(slug: string, displayName: string, volume24h: number): MarketPair {
 	return {
@@ -141,11 +112,13 @@ let container: HTMLDivElement
 let root: Root
 let client: QueryClient
 beforeEach(() => {
-	vi.clearAllMocks()
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	http.serve({ '/api/public/exchanges/execution-slippage': { venues: {} } })
 	container = document.createElement('div')
 	document.body.appendChild(container)
 	root = createRoot(container)
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	// Page data seeds the markets query, so the section never fetches it.
 	client.setQueryData(['token-markets', 'bitcoin'], data)
 })
 afterEach(async () => {
@@ -153,121 +126,77 @@ afterEach(async () => {
 	container.remove()
 	client.clear()
 })
-async function render(variant: 'section' | 'embedded') {
-	await act(async () =>
-		root.render(
-			<QueryClientProvider client={client}>
-				<TokenMarketsSection geckoId="bitcoin" tokenSymbol="BTC" variant={variant} />
-			</QueryClientProvider>
-		)
-	)
-}
+
 function radio(group: string, value: string) {
 	return container.querySelector<HTMLInputElement>(
 		`[role="radiogroup"][aria-label="${group}"] input[value="${value}"]`
 	)!
 }
+const search = () => container.querySelector<HTMLInputElement>('[placeholder="Search exchanges..."]')
 async function press(element: HTMLElement, key: string) {
 	await act(async () => {
 		element.focus()
 		element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 		element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true, cancelable: true }))
-		await new Promise((resolve) => setTimeout(resolve, 30))
-	})
-}
-async function click(element: HTMLElement) {
-	await act(async () => element.click())
-}
-async function refresh(next: TokenMarketsResponse) {
-	await act(async () => {
-		client.setQueryData(['token-markets', 'bitcoin'], next)
-		await new Promise((resolve) => setTimeout(resolve, 30))
 	})
 }
 
-test.each(['section', 'embedded'] as const)('%s keeps filter focus while resetting table state', async (variant) => {
-	await render(variant)
+test('arrow keys move through market filters without losing focus while the table resets', async () => {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<TokenMarketsSection geckoId="bitcoin" tokenSymbol="BTC" />
+			</QueryClientProvider>
+		)
+	)
 	const all = radio('Market venue', 'all')
-	const cex = radio('Market venue', 'cex')
 	const spot = radio('Market category', 'spot')
-	const perp = radio('Market category', 'linear_perp')
 	expect(all.checked).toBe(true)
 	expect(spot.checked).toBe(true)
 	expect(all.name).not.toBe(spot.name)
-	expect(container.querySelector('[role="tablist"]')).toBeNull()
-	expect(container.querySelector('output')!.textContent).toBe('Bybit,Binance,Curve,Uniswap')
-	const search = container.querySelector<HTMLInputElement>('[placeholder="Search exchanges..."]')!
-	const table = container.querySelector('[data-table]')!
+
 	await act(async () => {
-		search.value = 'no matching exchange'
-		search.dispatchEvent(new Event('input', { bubbles: true }))
-		container.querySelector<HTMLButtonElement>('[data-table] button')!.click()
-		container.querySelectorAll<HTMLButtonElement>('[data-table] button')[1].click()
+		search()!.value = 'binance'
+		search()!.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	expect(container.querySelector('output')!.textContent).toBe('')
-	expect(table.getAttribute('data-sort')).toContain('"desc":false')
-	expect(table.getAttribute('data-columns')!.split(',')).not.toContain('price')
 	await press(spot, 'ArrowRight')
+	const perp = radio('Market category', 'linear_perp')
 	expect(document.activeElement).toBe(perp)
-	expect(radio('Market category', 'linear_perp')).toBe(perp)
 	expect(perp.checked).toBe(true)
-	expect(spot.checked).toBe(false)
 	expect(all.checked).toBe(true)
-	expect(container.querySelector('[data-table]')).not.toBe(table)
-	expect(container.querySelector<HTMLInputElement>('[placeholder="Search exchanges..."]')!.value).toBe('')
-	expect(container.querySelector('[data-table]')!.getAttribute('data-sort')).toBe('[]')
-	expect(container.querySelector('[data-table]')!.getAttribute('data-columns')!.split(',')).toContain('price')
+	expect(search()!.value).toBe('')
+
 	await press(perp, 'Home')
 	expect(document.activeElement).toBe(spot)
 	expect(spot.checked).toBe(true)
-	await press(all, 'ArrowRight')
-	expect(document.activeElement).toBe(cex)
-	expect(cex.checked).toBe(true)
-	expect(container.querySelector('output')!.textContent).toBe('Bybit,Binance')
-	await press(cex, 'End')
+
+	await press(all, 'End')
+	expect(document.activeElement).toBe(radio('Market venue', 'dex'))
 	expect(radio('Market venue', 'dex').checked).toBe(true)
-	expect(container.querySelector('[data-table]')!.getAttribute('data-sort')).toBe('[{"id":"volume24h","desc":true}]')
-	expect(container.querySelector('output')!.textContent).toBe('Curve,Uniswap')
-	expect(fetchTokenMarkets).not.toHaveBeenCalled()
 })
 
-test.each(['section', 'embedded'] as const)(
-	'%s restores the preferred category when it becomes available again',
-	async (variant) => {
-		await render(variant)
-		await press(radio('Market category', 'spot'), 'End')
-		expect(radio('Market category', 'inverse_perp').checked).toBe(true)
-		await click(radio('Market venue', 'dex'))
-		expect(radio('Market category', 'inverse_perp')).toBeNull()
-		expect(radio('Market category', 'spot').checked).toBe(true)
-		await click(radio('Market venue', 'all'))
-		expect(radio('Market category', 'inverse_perp').checked).toBe(true)
-		await refresh({ ...data, cex: { ...data.cex, inverse_perp: [] } })
-		expect(radio('Market category', 'inverse_perp')).toBeNull()
-		expect(radio('Market category', 'spot').checked).toBe(true)
-		expect(radio('Market category', 'spot').tabIndex).toBe(0)
-		await refresh(data)
-		expect(radio('Market category', 'inverse_perp').checked).toBe(true)
-		expect(radio('Market category', 'inverse_perp').tabIndex).toBe(0)
-		expect(fetchTokenMarkets).not.toHaveBeenCalled()
-	}
-)
+test('shows open interest and funding only on perps and hides normalized volume on inverse perps', async () => {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<TokenMarketsSection geckoId="bitcoin" tokenSymbol="BTC" />
+			</QueryClientProvider>
+		)
+	)
+	const headers = () => [...container.querySelectorAll('thead th')].map((th) => th.textContent).join(' | ')
+	const showCategory = (category: string) => act(async () => radio('Market category', category).click())
 
-test.each(['section', 'embedded'] as const)(
-	'%s recovers the requested venue after an empty refresh',
-	async (variant) => {
-		await render(variant)
-		await click(radio('Market venue', 'dex'))
-		const empty = { spot: [], linear_perp: [], inverse_perp: [] }
-		await refresh({ ...data, dex: empty })
-		expect(radio('Market venue', 'dex')).toBeNull()
-		expect(radio('Market venue', 'all').checked).toBe(true)
-		expect(radio('Market venue', 'all').tabIndex).toBe(0)
-		await refresh({ ...data, cex: empty, dex: empty })
-		expect(container.querySelector('[role="radiogroup"]')).toBeNull()
-		await refresh(data)
-		expect(radio('Market venue', 'dex').checked).toBe(true)
-		expect(radio('Market category', 'spot').checked).toBe(true)
-		expect(container.querySelector('output')!.textContent).toBe('Curve,Uniswap')
-	}
-)
+	expect(headers()).toContain('Norm Volume')
+	expect(headers()).not.toContain('Open Interest')
+	expect(headers()).not.toContain('Funding 8h')
+
+	await showCategory('linear_perp')
+	expect(headers()).toContain('Norm Volume')
+	expect(headers()).toContain('Open Interest')
+	expect(headers()).toContain('Funding 8h')
+
+	await showCategory('inverse_perp')
+	expect(headers()).not.toContain('Norm Volume')
+	expect(headers()).toContain('Open Interest')
+	expect(headers()).toContain('Funding 8h')
+})

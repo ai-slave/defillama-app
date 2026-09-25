@@ -1,21 +1,12 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '../api.types'
 
-const mocks = vi.hoisted(() => ({
-	fetchProtocols: vi.fn(),
-	fetchRaises: vi.fn(),
-	fetchChainChart: vi.fn(),
-	fetchChainsByCategoryAll: vi.fn()
-}))
-
-vi.mock('../api', () => ({
-	fetchProtocols: mocks.fetchProtocols
-}))
-vi.mock('~/containers/Raises/api', () => ({ fetchRaises: mocks.fetchRaises }))
-vi.mock('~/containers/Chains/api', () => ({
-	fetchChainChart: mocks.fetchChainChart,
-	fetchChainsByCategoryAll: mocks.fetchChainsByCategoryAll
-}))
+const http = installFixtureFetch()
+const serveProtocols = (body: ProtocolsResponse) => http.serve({ '/lite/protocols2': body })
+// The Raises API reports amounts in millions of USD.
+const serveRaises = (raises: Array<{ defillamaId: string; amount: number | null }>) =>
+	http.serve({ '/raises': { raises: raises.map((raise) => ({ ...raise, valuation: null })) } })
 
 import { getAirdropsProtocols, getRecentProtocols, getExtraTvlByChain, getProtocolsMarketCapsByChain } from '../queries'
 
@@ -79,26 +70,30 @@ const response = ({
 })
 
 beforeEach(() => {
-	mocks.fetchRaises.mockResolvedValue({ raises: [] })
-	mocks.fetchChainChart.mockResolvedValue({
-		borrowed: [
-			[1, 100],
-			[2, 100]
-		]
+	serveRaises([])
+	http.serve({
+		'/lite/charts/Ethereum': {
+			borrowed: [
+				[1, 100],
+				[2, 100]
+			]
+		}
 	})
-	mocks.fetchChainsByCategoryAll.mockResolvedValue({
-		chainTvls: [
-			{ name: 'Ethereum', extraTvl: { borrowed: 10 } },
-			{ name: 'Zero Chain', extraTvl: { borrowed: 0 } },
-			{ name: 'Missing Chain', extraTvl: {} }
-		]
+	http.serve({
+		'/chains2/All': {
+			chainTvls: [
+				{ name: 'Ethereum', extraTvl: { borrowed: 10 } },
+				{ name: 'Zero Chain', extraTvl: { borrowed: 0 } },
+				{ name: 'Missing Chain', extraTvl: {} }
+			]
+		}
 	})
 })
 
 describe('ProtocolLists queries', () => {
 	test('keeps tokenless children only when neither explicit nor parent-token exclusions apply', async () => {
 		const base = liteProtocol({ defillamaId: 'base', name: 'Eligible', mcap: null, borrowed: null })
-		mocks.fetchProtocols.mockResolvedValue(
+		serveProtocols(
 			response({
 				protocols: [
 					{ ...base, symbol: '-' },
@@ -129,7 +124,7 @@ describe('ProtocolLists queries', () => {
 	})
 	test('recent includes dated individual listings, preserving timestamps and newest-first order', async () => {
 		const base = liteProtocol({ defillamaId: 'base', name: 'Undated', mcap: null, borrowed: null })
-		mocks.fetchProtocols.mockResolvedValue(
+		serveProtocols(
 			response({
 				protocols: [
 					base,
@@ -147,10 +142,10 @@ describe('ProtocolLists queries', () => {
 			['Epoch', 0]
 		])
 	})
-	test.each([['funding rounds', () => mocks.fetchRaises.mockRejectedValueOnce(new Error('raises unavailable'))]])(
+	test.each([['funding rounds', () => http.serve({ '/raises': fixtureStatus(400, { error: 'raises unavailable' }) })]])(
 		'does not publish potential-airdrop membership when %s exclusions fail',
 		async (_source, fail) => {
-			mocks.fetchProtocols.mockResolvedValue(response({ protocols: [], parentProtocols: [] }))
+			serveProtocols(response({ protocols: [], parentProtocols: [] }))
 			fail()
 
 			await expect(getAirdropsProtocols()).rejects.toThrow('unavailable')
@@ -158,7 +153,7 @@ describe('ProtocolLists queries', () => {
 	)
 
 	test.each([false, true])('sums disclosed rounds regardless of order (reversed: %s)', async (reversed) => {
-		mocks.fetchProtocols.mockResolvedValue(
+		serveProtocols(
 			response({
 				protocols: [
 					{ ...liteProtocol({ defillamaId: 'partial', name: 'Partial', mcap: null, borrowed: null }), symbol: '-' },
@@ -170,17 +165,17 @@ describe('ProtocolLists queries', () => {
 			})
 		)
 		const raises = [
-			{ defillamaId: 'partial', amountUsd: 10 },
-			{ defillamaId: 'partial', amountUsd: null },
-			{ defillamaId: 'zero', amountUsd: 0 },
-			{ defillamaId: 'zero', amountUsd: null },
-			{ defillamaId: 'unknown', amountUsd: null }
+			{ defillamaId: 'partial', amount: 10 },
+			{ defillamaId: 'partial', amount: null },
+			{ defillamaId: 'zero', amount: 0 },
+			{ defillamaId: 'zero', amount: null },
+			{ defillamaId: 'unknown', amount: null }
 		]
-		mocks.fetchRaises.mockResolvedValue({ raises: reversed ? raises.toReversed() : raises })
+		serveRaises(reversed ? raises.toReversed() : raises)
 
 		const result = await getAirdropsProtocols()
 		expect(result.protocols.map(({ name, raiseSummary }) => [name, raiseSummary])).toEqual([
-			['Partial', { totalUsd: 10, undisclosedCount: 1 }],
+			['Partial', { totalUsd: 10_000_000, undisclosedCount: 1 }],
 			['Unknown', { totalUsd: null, undisclosedCount: 1 }],
 			['Zero', { totalUsd: 0, undisclosedCount: 1 }],
 			['None', undefined]
@@ -188,7 +183,7 @@ describe('ProtocolLists queries', () => {
 	})
 
 	test('preserves null and zero extra TVL while grouping only canonical multi-child parents', async () => {
-		mocks.fetchProtocols.mockResolvedValue(
+		serveProtocols(
 			response({
 				protocols: [
 					liteProtocol({
@@ -250,7 +245,7 @@ describe('ProtocolLists queries', () => {
 	})
 
 	test('uses exact parent IDs for token metrics and keeps unknown or sole children public', async () => {
-		mocks.fetchProtocols.mockResolvedValue(
+		serveProtocols(
 			response({
 				protocols: [
 					liteProtocol({

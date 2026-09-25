@@ -7,7 +7,6 @@ import { formatPercent } from '~/utils/numberFormat'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { escapeSqlChartHtml, readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 
@@ -18,18 +17,12 @@ interface PieChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
 const TOP_N_SLICES = 12
 
-export function PieChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: PieChartAdapterProps) {
+export function PieChartAdapter({ config, result, classified, onReady, height }: PieChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 	const nameCol = classified.find(
 		(column) => column.name === (config.xCol ?? classified.find((c) => c.coarse === 'category')?.name)

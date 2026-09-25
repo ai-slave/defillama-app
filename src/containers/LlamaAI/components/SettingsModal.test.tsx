@@ -6,79 +6,45 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MemoriesResponse, SkillsResponse } from '~/containers/LlamaAI/api/agentHome'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
+import { AGENT_HOME_MEMORIES_KEY, AGENT_HOME_SKILLS_KEY } from '~/containers/LlamaAI/hooks/useAgentHomeData'
 import type { LlamaAISettings, LlamaAISettingsActions } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import type {
 	WebMobilePreference,
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 
-const balanceRefetch = vi.hoisted(() => vi.fn())
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
-vi.mock('~/containers/Subscription/useTopup', () => ({
-	TOPUP_CONFIG: { minAmount: 1, maxAmount: 500, quickAmounts: [5, 10, 25, 50] },
-	useAiBalance: () => ({ balance: {}, totalAvailable: 10, isLoading: false, isError: false, refetch: balanceRefetch }),
-	useCreateTopup: () => ({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false, error: null })
-}))
+const session = installSubscriberSession('reader')
+const AGENT_HOME = 'https://ai.llama.fi/agent-home'
+const emptyMemories: MemoriesResponse = { available: true, user: [], memory: [], limits: { user: 1000, memory: 1000 } }
+const emptySkills: SkillsResponse = { available: true, active: [], archived: [] }
+const offline = () => new Response('offline', { status: 503 })
 
-const home = vi.hoisted(() => ({
-	memories: {
-		data: undefined as MemoriesResponse | undefined,
-		error: null as Error | null,
-		isLoading: false,
-		isFetching: false,
-		refetch: vi.fn()
-	},
-	skills: {
-		data: undefined as SkillsResponse | undefined,
-		error: null as Error | null,
-		isLoading: false,
-		isFetching: false,
-		refetch: vi.fn()
-	},
-	deleteMemoryMutation: {
-		error: null as Error | null,
-		isPending: false,
-		variables: undefined as string | undefined,
-		mutate: vi.fn()
-	},
-	clearMemoriesMutation: {
-		error: null as Error | null,
-		isPending: false,
-		variables: undefined as string | undefined,
-		mutate: vi.fn()
-	},
-	archiveSkillMutation: {
-		error: null as Error | null,
-		isPending: false,
-		variables: undefined as string | undefined,
-		mutate: vi.fn()
-	},
-	restoreSkillMutation: {
-		error: null as Error | null,
-		isPending: false,
-		variables: undefined as string | undefined,
-		mutate: vi.fn()
-	}
-}))
-// A hook composing query results hands back a new object each render, and react-query replaces a
-// result object when its state changes. Mutating one in place instead leaves every identity untouched,
-// which a memo cannot see -- so writes go through `set`, which replaces the slice it touches.
-vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({ useAgentHomeData: () => ({ ...home }) }))
+beforeEach(() => {
+	// The lab tab exists only in dark mode; these tests run in light mode.
+	document.documentElement.classList.remove('dark')
+	document.documentElement.classList.add('light')
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
+	session.serve({
+		[`${AGENT_HOME}/memories`]: emptyMemories,
+		[`${AGENT_HOME}/skills`]: emptySkills,
+		'https://features.llama.fi/user/ai-balance': {
+			freeRemaining: '3',
+			toppedUpBalance: '7',
+			freeLimit: '5',
+			freeSpent: '2'
+		}
+	})
+})
 
-function set<K extends keyof typeof home>(slice: K, patch: Partial<(typeof home)[K]>): void {
-	home[slice] = { ...home[slice], ...patch }
-}
-
-vi.mock('~/contexts/LocalStorage', () => ({
-	useDarkModeManager: () => [false, vi.fn()],
-	useLlamaAINotifyBannerDismissed: () => [false, vi.fn()]
-}))
-
-vi.mock('~/ui/Icon', () => ({
-	Icon: ({ name }: { name: string }) => <svg data-icon={name} />
-}))
-
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
+const settle = (assertion: () => void) =>
+	act(async () => {
+		await vi.waitFor(assertion)
+	})
+const agentHomeRequests = (path: string, method = 'GET') =>
+	session.requests.filter(
+		(request) => request.url.href === `${AGENT_HOME}${path}` && (request.init?.method ?? 'GET') === method
+	).length
 
 const settings: LlamaAISettings = {
 	customInstructions: 'Saved instructions',
@@ -114,31 +80,20 @@ describe('SettingsModal instructions', () => {
 	}) {
 		dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 		return (
-			<SettingsModal
-				dialogStore={dialogStore}
-				settings={currentSettings}
-				actions={actions}
-				mobileNotificationPreference={mobileNotificationPreference}
-				setMobileNotificationEnabled={setMobileNotifications}
-			/>
+			<session.Wrapper>
+				<SettingsModal
+					dialogStore={dialogStore}
+					settings={currentSettings}
+					actions={actions}
+					mobileNotificationPreference={mobileNotificationPreference}
+					setMobileNotificationEnabled={setMobileNotifications}
+				/>
+			</session.Wrapper>
 		)
 	}
 
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.clearAllMocks()
-		set('memories', { data: undefined, error: null, isFetching: false })
-		set('skills', { data: undefined, error: null, isFetching: false })
-		for (const mutation of [
-			home.deleteMemoryMutation,
-			home.clearMemoriesMutation,
-			home.archiveSkillMutation,
-			home.restoreSkillMutation
-		]) {
-			mutation.error = null
-			mutation.isPending = false
-			mutation.variables = undefined
-		}
 		setCustomInstructions = vi.fn(async () => true)
 		mutateMobileNotifications = vi.fn(async (enabled: boolean) => ({ available: true, enabled }))
 		setMobileNotifications = {
@@ -189,73 +144,85 @@ describe('SettingsModal instructions', () => {
 		)
 	}
 	test('memory and skills errors offer retry without claiming an empty workspace', async () => {
-		set('memories', { error: new Error('Offline') })
-		set('skills', { error: new Error('Offline') })
+		let memoriesOnline = false
+		session.serve({
+			[`${AGENT_HOME}/memories`]: () => (memoriesOnline ? Response.json(emptyMemories) : offline()),
+			[`${AGENT_HOME}/skills`]: offline
+		})
 		await openMemory()
+		await settle(() => expect(document.body.textContent).toContain("Couldn't load skills."))
 		expect(document.body.textContent).toContain("Couldn't load memories.")
-		expect(document.body.textContent).toContain("Couldn't load skills.")
 		expect(document.body.textContent).not.toContain('Nothing remembered yet.')
 		expect(document.body.textContent).not.toContain('No skills yet.')
-		const retries = document.querySelectorAll<HTMLButtonElement>('[role="alert"] button')
+		memoriesOnline = true
+		const [memoriesRetry, skillsRetry] = document.querySelectorAll<HTMLButtonElement>('[role="alert"] button')
 		await act(async () => {
-			retries[0].click()
-			retries[1].click()
+			memoriesRetry.click()
+			skillsRetry.click()
 		})
-		expect(home.memories.refetch).toHaveBeenCalledTimes(1)
-		expect(home.skills.refetch).toHaveBeenCalledTimes(1)
-		set('memories', { isFetching: true })
-		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
-		expect(document.querySelector<HTMLButtonElement>('[role="alert"] button')!.disabled).toBe(true)
+		await settle(() => expect(document.body.textContent).toContain('Nothing remembered yet.'))
+		await settle(() => expect(document.body.textContent).toContain("Couldn't load skills."))
+		expect(agentHomeRequests('/memories')).toBe(2)
+		expect(agentHomeRequests('/skills')).toBe(2)
 	})
 	test('failed refresh retains cached memories and skills, and a failed deletion retries its original target', async () => {
-		set('memories', {
-			data: {
-				available: true,
-				user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }],
-				memory: [],
-				limits: { user: 1000, memory: 1000 }
-			}
+		session.client.setQueryData(AGENT_HOME_MEMORIES_KEY, {
+			...emptyMemories,
+			user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }]
 		})
-		set('skills', {
-			data: {
-				available: true,
-				active: [
-					{
-						name: 'Research',
-						description: 'Saved workflow',
-						source: 'user',
-						createdBy: 'user',
-						useCount: 1,
-						pinned: false,
-						lastUsedAt: null,
-						referencedSkills: []
-					}
-				],
-				archived: []
-			}
+		session.client.setQueryData(AGENT_HOME_SKILLS_KEY, {
+			...emptySkills,
+			active: [
+				{
+					name: 'Research',
+					description: 'Saved workflow',
+					source: 'user',
+					createdBy: 'user',
+					useCount: 1,
+					pinned: false,
+					lastUsedAt: null,
+					referencedSkills: []
+				}
+			]
 		})
-		set('memories', { error: new Error('Offline') })
-		set('skills', { error: new Error('Offline') })
-		set('deleteMemoryMutation', { error: new Error('Delete failed'), variables: 'memory-1' })
+		const retriedDelete = Promise.withResolvers<Response>()
+		let deletes = 0
+		session.serve({
+			[`${AGENT_HOME}/memories`]: offline,
+			[`${AGENT_HOME}/skills`]: offline,
+			[`${AGENT_HOME}/memories/memory-1`]: () => (++deletes === 1 ? offline() : retriedDelete.promise)
+		})
 		await openMemory()
+		await settle(() => expect(document.body.textContent).toContain("Couldn't load memories."))
 		expect(document.body.textContent).toContain('Prefer concise answers')
 		expect(document.body.textContent).toContain('Saved workflow')
-		const error = [...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
-			el.textContent?.includes("Couldn't delete")
-		)!
-		await act(async () => error.querySelector('button')!.click())
-		expect(home.deleteMemoryMutation.mutate).toHaveBeenCalledExactlyOnceWith('memory-1')
-		set('deleteMemoryMutation', { isPending: true })
-		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
-		const deletion = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(el) => el.textContent === 'Delete'
-		)!
-		expect(deletion.disabled).toBe(true)
+		// With cached data the error stays up during a retry, and its button cannot start another.
+		const memoriesRefresh = Promise.withResolvers<Response>()
+		session.serve({ [`${AGENT_HOME}/memories`]: () => memoriesRefresh.promise })
+		const loadError = () =>
+			[...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
+				el.textContent?.includes("Couldn't load memories")
+			)!
+		await act(async () => loadError().querySelector('button')!.click())
+		await settle(() => expect(loadError().querySelector('button')!.disabled).toBe(true))
+		await act(async () => memoriesRefresh.resolve(offline()))
+		const deletion = () =>
+			[...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent === 'Delete')!
+		await act(async () => deletion().click())
+		const deleteError = () =>
+			[...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
+				el.textContent?.includes("Couldn't delete")
+			)
+		await settle(() => expect(deleteError()).toBeDefined())
+		await act(async () => deleteError()!.querySelector('button')!.click())
+		await settle(() => expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(2))
+		await settle(() => expect(deletion().disabled).toBe(true))
+		await act(async () => retriedDelete.resolve(Response.json({ deleted: true })))
 	})
 	test('a successfully loaded empty workspace still shows its empty states', async () => {
 		await openMemory()
+		await settle(() => expect(document.body.textContent).toContain('No skills yet.'))
 		expect(document.body.textContent).toContain('Nothing remembered yet.')
-		expect(document.body.textContent).toContain('No skills yet.')
 		expect(document.querySelector('[role="alert"]')).toBeNull()
 	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
@@ -414,7 +381,10 @@ describe('SettingsModal instructions', () => {
 		expect(document.querySelector('[role="status"]')?.textContent).toContain(
 			'Loading your mobile notification preference'
 		)
-		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
+		const mobileToggle = Array.from(document.querySelectorAll('input[role="switch"]')).find((input) =>
+			input.closest('label')?.textContent?.includes('Mobile notifications')
+		)
+		expect(mobileToggle).toBeUndefined()
 	})
 
 	test('shows an inline retry when the preference query fails', async () => {
@@ -463,27 +433,30 @@ describe('SettingsModal initial tab', () => {
 	let actions: LlamaAISettingsActions
 
 	function Harness({
-		initialState
+		initialState,
+		currentSettings = settings
 	}: {
 		initialState?: { tab?: string; tgloginToken?: string; topupResult?: 'success' | 'cancelled' } | null
+		currentSettings?: LlamaAISettings
 	}) {
 		const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 		return (
-			<SettingsModal
-				dialogStore={dialogStore}
-				settings={settings}
-				actions={actions}
-				initialState={initialState as never}
-				setMobileNotificationEnabled={
-					{ mutateAsync: vi.fn(), isPending: false, error: null } as unknown as WebMobilePushEnabledMutation
-				}
-			/>
+			<session.Wrapper>
+				<SettingsModal
+					dialogStore={dialogStore}
+					settings={currentSettings}
+					actions={actions}
+					initialState={initialState as never}
+					setMobileNotificationEnabled={
+						{ mutateAsync: vi.fn(), isPending: false, error: null } as unknown as WebMobilePushEnabledMutation
+					}
+				/>
+			</session.Wrapper>
 		)
 	}
 
 	beforeEach(() => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		vi.clearAllMocks()
 		actions = {
 			setCustomInstructions: vi.fn(async () => true),
 			setEnableMemory: vi.fn(async () => true),
@@ -537,7 +510,7 @@ describe('SettingsModal initial tab', () => {
 		expect(openTabId()).toBe(tab('App').id)
 	})
 
-	// The lab tab exists only in dark mode, and this suite mocks dark mode off.
+	// The lab tab exists only in dark mode, and these tests run in light mode.
 	test('falls back from a requested lab tab outside dark mode', async () => {
 		await render({ tab: 'lab' })
 		expect(openTabId()).toBe(tab('Persona').id)
@@ -560,12 +533,16 @@ describe('SettingsModal initial tab', () => {
 		expect(openTabId()).toBe(tab('App').id)
 	})
 
-	test('Balance includes a default-off sidebar visibility toggle', async () => {
-		await render({ tab: 'balance' })
+	test.each([false, true])('the Balance sidebar toggle shows saved value %s and flips it', async (saved) => {
+		await act(async () =>
+			root.render(
+				<Harness initialState={{ tab: 'balance' }} currentSettings={{ ...settings, showBalanceInSidebar: saved }} />
+			)
+		)
 		const toggle = document.querySelector<HTMLInputElement>('[aria-label="Show balance in sidebar"]')!
-		expect(toggle.checked).toBe(false)
+		expect(toggle.checked).toBe(saved)
 
 		await act(async () => toggle.click())
-		expect(actions.setShowBalanceInSidebar).toHaveBeenCalledWith(true)
+		expect(actions.setShowBalanceInSidebar).toHaveBeenCalledWith(!saved)
 	})
 })

@@ -1,58 +1,60 @@
 // @vitest-environment happy-dom
-import { act, type ComponentProps } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
+import { AI_SERVER } from '~/constants'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ProjectsSidebarSection } from './ProjectsSidebarSection'
-import type { ProjectChatSession, ProjectWithStats } from './types'
+import { PROJECTS_KEY } from './queryKeys'
+import type { ProjectChatSession } from './types'
 
-const mocks = vi.hoisted(() => ({
-	isDrawer: false,
-	hideSidebar: vi.fn(),
-	push: vi.fn(),
-	selectSession: vi.fn(),
-	sessionsByProject: {} as Record<string, Array<ProjectChatSession>>,
-	projects: {
-		data: [] as Array<ProjectWithStats>,
-		isLoading: false,
-		isFetching: false,
-		error: null as Error | null,
-		refetch: vi.fn()
-	},
-	sessions: { data: [], isLoading: false, isFetching: false, error: null as Error | null, refetch: vi.fn() }
-}))
-vi.mock('./hooks', () => ({
-	useProjectList: () => mocks.projects,
-	useProjectSessions: (id: string | null) => ({ ...mocks.sessions, data: id ? mocks.sessionsByProject[id] : undefined })
-}))
+const push = vi.hoisted(() => vi.fn())
+vi.mock('next/router', () => ({ useRouter: () => ({ push, query: {}, pathname: '/ai' }) }))
+// Heavy dialogs this suite never opens.
 vi.mock('./CreateProjectModal', () => ({ CreateProjectModal: () => null }))
 vi.mock('./DeleteProjectModal', () => ({ DeleteProjectModal: () => null }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ user: { id: 'user' }, hasActiveSubscription: true, isTrial: false })
-}))
-vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: mocks.hideSidebar }) }))
-vi.mock('next/router', () => ({ useRouter: () => ({ push: mocks.push }) }))
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => mocks.isDrawer }))
-vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSessionItem', () => ({
-	AgenticSessionItem: ({ session, onSessionSelect }: ComponentProps<typeof AgenticSessionItem>) => (
-		<button type="button" onClick={() => onSessionSelect(session.sessionId)}>
-			{session.title}
-		</button>
-	)
-}))
-vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ SIDEBAR_ROW: '', SIDEBAR_ROW_SURFACE: '' }))
+
+const session = installSubscriberSession('user')
+const hideSidebar = vi.fn()
+const selectSession = vi.fn()
+const chrome = {
+	toggleSidebar: () => {},
+	hideSidebar,
+	toggleFullscreen: () => {},
+	isFullscreen: false,
+	fullscreenLocked: false,
+	sidebarVisible: true,
+	toggleDashboardPanel: () => {},
+	isDashboardPanelOpen: false
+}
+const failure = () => Response.json({ error: 'Offline' }, { status: 503 })
+let projectsReply: () => unknown
+let sessionsReply: (projectId: string) => unknown
+let isDrawer: boolean
+
 let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
-	vi.clearAllMocks()
-	localStorage.clear()
+	hideSidebar.mockReset()
+	selectSession.mockReset()
+	push.mockReset()
 	localStorage.setItem('llamaai:sidebar-projects-open', 'true')
-	mocks.sessionsByProject = {}
-	mocks.isDrawer = false
-	mocks.projects.data = []
-	mocks.projects.error = null
-	mocks.projects.isFetching = false
-	mocks.sessions.error = null
+	isDrawer = false
+	vi.stubGlobal('matchMedia', (query: string) => ({
+		matches: isDrawer && query === '(max-width: 1023px)',
+		addEventListener: () => {},
+		removeEventListener: () => {}
+	}))
+	projectsReply = () => ({ projects: [] })
+	sessionsReply = () => ({ sessions: [] })
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({
+		[`${AI_SERVER}/projects`]: (url: URL) => {
+			const match = url.pathname.match(/^\/projects\/([^/]+)\/sessions$/)
+			return match ? sessionsReply(match[1]) : projectsReply()
+		}
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -61,131 +63,127 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
+
 async function render(currentProjectId: string | null = 'project', currentSessionProjectId: string | null = null) {
 	await act(async () =>
 		root.render(
-			<ProjectsSidebarSection
-				currentProjectId={currentProjectId}
-				currentSessionProjectId={currentSessionProjectId}
-				onSessionSelect={mocks.selectSession}
-				onDelete={vi.fn()}
-			/>
+			<session.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					<ProjectsSidebarSection
+						currentProjectId={currentProjectId}
+						currentSessionProjectId={currentSessionProjectId}
+						onSessionSelect={selectSession}
+						onDelete={async () => {}}
+					/>
+				</LlamaAIChromeContext.Provider>
+			</session.Wrapper>
 		)
 	)
 }
-
-async function waitFor(check: () => void) {
-	await act(async () => {
-		await vi.waitFor(check)
-	})
-}
+const until = (check: () => void) => vi.waitFor(check, { timeout: 1000 })
+const projects = (...names: Array<[string, string]>) => ({ projects: names.map(([id, name]) => ({ id, name })) })
+const button = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent === text)!
+const folder = (name: string) =>
+	[...container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]')].find((b) => b.textContent === name)!
+const sessionRequests = (projectId: string) =>
+	session.requests.filter(({ url }) => url.pathname === `/projects/${projectId}/sessions`).length
 
 test('failed project queries differ from empty results and can retry', async () => {
-	mocks.projects.error = new Error('Offline')
+	projectsReply = failure
 	await render()
-	expect(container.textContent).toContain("Couldn't load projects")
+	await until(() => expect(container.textContent).toContain("Couldn't load projects"))
 	expect(container.textContent).not.toContain('No projects yet')
+	projectsReply = () => ({ projects: [] })
 	await act(async () => container.querySelector<HTMLButtonElement>('[role="alert"] button')!.click())
-	expect(mocks.projects.refetch).toHaveBeenCalledTimes(1)
-	mocks.projects.isFetching = true
-	await render()
-	expect(container.querySelector<HTMLButtonElement>('[role="alert"] button')!.disabled).toBe(true)
-	mocks.projects.error = null
-	mocks.projects.isFetching = false
-	await render()
-	expect(container.textContent).toContain('No projects yet')
+	await until(() => expect(container.textContent).toContain('No projects yet'))
+	expect(container.querySelector('[role="alert"]')).toBeNull()
 })
+
 test('a failed refresh retains projects and exposes nested chat failures separately', async () => {
-	mocks.projects.data = [{ id: 'project', name: 'Research' } as ProjectWithStats]
-	mocks.projects.error = new Error('Offline')
-	mocks.sessions.error = new Error('Offline')
+	projectsReply = () => projects(['project', 'Research'])
+	sessionsReply = failure
 	await render()
-	await waitFor(() => expect(container.textContent).toContain("Couldn't load project chats"))
+	await until(() => expect(container.textContent).toContain("Couldn't load project chats"))
+	projectsReply = failure
+	await act(async () => session.client.refetchQueries({ queryKey: PROJECTS_KEY, exact: true }))
+	await until(() => expect(container.textContent).toContain("Couldn't load projects"))
 	expect(container.textContent).toContain('Research')
-	const error = [...container.querySelectorAll('[role="alert"]')].find((el) =>
+	const chatsError = [...container.querySelectorAll('[role="alert"]')].find((el) =>
 		el.textContent?.includes('project chats')
 	)!
-	await act(async () => error.querySelector<HTMLButtonElement>('button')!.click())
-	expect(mocks.sessions.refetch).toHaveBeenCalledTimes(1)
+	sessionsReply = () => ({ sessions: [] })
+	await act(async () => chatsError.querySelector<HTMLButtonElement>('button')!.click())
+	await until(() => expect(sessionRequests('project')).toBe(2))
 })
 
 test('the separate new-chat link opens the project and only closes the drawer for current-tab navigation', async () => {
-	mocks.isDrawer = true
-	mocks.projects.data = [{ id: 'project', name: 'Research' } as ProjectWithStats]
+	isDrawer = true
+	projectsReply = () => projects(['project', 'Research'])
 	await render()
+	await until(() => expect(container.querySelector('a[href="/ai/projects/project"]')).not.toBeNull())
 	const link = container.querySelector<HTMLAnchorElement>('a[href="/ai/projects/project"]')!
 	expect(link.getAttribute('aria-label')).toBe('New chat in Research')
 	expect(link.closest('button')).toBeNull()
 	expect(container.querySelector('a[href="/ai/projects"]')).not.toBeNull()
 	await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, metaKey: true })))
-	expect(mocks.hideSidebar).not.toHaveBeenCalled()
+	expect(hideSidebar).not.toHaveBeenCalled()
 	await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
-	expect(mocks.hideSidebar).toHaveBeenCalledOnce()
+	expect(hideSidebar).toHaveBeenCalledOnce()
 })
 
 test('folders toggle independently of the active chat and session clicks still select a conversation', async () => {
-	mocks.isDrawer = true
-	mocks.projects.data = [
-		{ id: 'project', name: 'Research' } as ProjectWithStats,
-		{ id: 'other', name: 'Other project' } as ProjectWithStats
-	]
-	mocks.sessionsByProject.other = [
-		{
-			sessionId: 'other-chat',
-			title: 'Other conversation',
-			createdAt: '2026-09-01',
-			lastActivity: null,
-			isPinned: false,
-			pinnedAt: null,
-			isPublic: false,
-			shareToken: null
-		}
-	]
+	isDrawer = true
+	projectsReply = () => projects(['project', 'Research'], ['other', 'Other project'])
+	const otherChat: ProjectChatSession = {
+		sessionId: 'other-chat',
+		title: 'Other conversation',
+		createdAt: '2026-09-01',
+		lastActivity: null,
+		isPinned: false,
+		pinnedAt: null,
+		isPublic: false,
+		shareToken: null
+	}
+	sessionsReply = (projectId) => ({ sessions: projectId === 'other' ? [otherChat] : [] })
 	await render(null, 'project')
-	const folder = (name: string) =>
-		[...container.querySelectorAll<HTMLButtonElement>('button[aria-expanded]')].find(
-			(button) => button.textContent === name
-		)!
-	await waitFor(() => expect(folder('Research').getAttribute('aria-expanded')).toBe('true'))
+	await until(() => expect(folder('Research').getAttribute('aria-expanded')).toBe('true'))
 	await act(async () => folder('Research').click())
-	await waitFor(() => expect(folder('Research').getAttribute('aria-expanded')).toBe('false'))
+	await until(() => expect(folder('Research').getAttribute('aria-expanded')).toBe('false'))
 	await act(async () => folder('Other project').click())
-	await waitFor(() => expect(container.textContent).toContain('Other conversation'))
+	await until(() => expect(container.textContent).toContain('Other conversation'))
 	expect(folder('Research').getAttribute('aria-expanded')).toBe('false')
 	await render(null, 'project')
 	expect(folder('Other project').getAttribute('aria-expanded')).toBe('true')
-	expect(mocks.push).not.toHaveBeenCalled()
-	expect(mocks.selectSession).not.toHaveBeenCalled()
-	expect(mocks.hideSidebar).not.toHaveBeenCalled()
-	await act(async () =>
-		[...container.querySelectorAll('button')].find((button) => button.textContent === 'Other conversation')!.click()
-	)
-	expect(mocks.selectSession).toHaveBeenCalledWith('other-chat')
+	expect(push).not.toHaveBeenCalled()
+	expect(selectSession).not.toHaveBeenCalled()
+	expect(hideSidebar).not.toHaveBeenCalled()
+	const conversation = [...container.querySelectorAll<HTMLElement>('a, button')].find(
+		(el) => el.textContent?.trim() === 'Other conversation'
+	)!
+	await act(async () => conversation.click())
+	expect(selectSession).toHaveBeenCalledWith('other-chat')
 	await act(async () => folder('Other project').click())
-	await waitFor(() => expect(container.textContent).not.toContain('Other conversation'))
+	await until(() => expect(container.textContent).not.toContain('Other conversation'))
 	await render('other')
-	await waitFor(() => expect(folder('Other project').getAttribute('aria-expanded')).toBe('true'))
+	await until(() => expect(folder('Other project').getAttribute('aria-expanded')).toBe('true'))
 })
 
 test('projects fold into one counted row that stays folded across renders until opened', async () => {
 	localStorage.removeItem('llamaai:sidebar-projects-open')
-	mocks.projects.data = [
-		{ id: 'project', name: 'Research' } as ProjectWithStats,
-		{ id: 'b', name: 'Other' } as ProjectWithStats
-	]
+	projectsReply = () => projects(['project', 'Research'], ['b', 'Other'])
 	await render()
 	const row = () => [...container.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Projects'))!
+	await until(() => expect(row().textContent).toBe('Projects2'))
 	expect(row().getAttribute('aria-expanded')).toBe('false')
-	expect(row().textContent).toBe('Projects2')
 	expect(container.textContent).not.toContain('Research')
 	expect(container.textContent).not.toContain('New project')
 
 	await act(async () => row().click())
-	await waitFor(() => expect(container.textContent).toContain('Research'))
-	expect(container.textContent).toContain('New project')
+	await until(() => expect(container.textContent).toContain('Research'))
+	expect(button('New project')).toBeDefined()
 	await act(async () => root.unmount())
 	root = createRoot(container)
 	await render()
 	expect(row().getAttribute('aria-expanded')).toBe('true')
-	expect(container.textContent).toContain('Research')
+	await until(() => expect(container.textContent).toContain('Research'))
 })

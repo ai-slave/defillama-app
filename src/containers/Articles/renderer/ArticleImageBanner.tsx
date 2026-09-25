@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getAllArticlesBanner, getArticleBanner, getSectionBanner } from '~/containers/Articles/api'
 import { useEligibleBanner } from '~/containers/Articles/bannerTargeting'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
-import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
+import { articleBannerCandidates } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, BannerLookupResult } from '~/containers/Articles/types'
 
 type Props = {
@@ -44,11 +44,11 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 	})
 
 	const banner = useEligibleBanner(
-		[
-			articleBannerQuery.data?.image ?? null,
-			sectionBannerQuery.data?.image ?? null,
-			allArticlesBannerForArticle(allArticlesBannerQuery.data?.image ?? null, articleId)
-		],
+		articleBannerCandidates(
+			'image',
+			{ article: articleBannerQuery.data, section: sectionBannerQuery.data, allArticles: allArticlesBannerQuery.data },
+			articleId
+		),
 		articleBannerQuery.isLoading || (!!section && sectionBannerQuery.isLoading) || allArticlesBannerQuery.isLoading
 	)
 

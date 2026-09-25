@@ -6,6 +6,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
 import { withEChartsRenderVisibility } from '../renderVisibility'
+import { sparklineAxisMax, sparklineAxisMin } from './extent'
 
 echarts.use([BarChart, GridComponent, CanvasRenderer])
 
@@ -108,25 +109,8 @@ function BarSparklineRenderer({ data, className, height = 48, maxBars = 60 }: Ba
 				axisTick: { show: false },
 				axisLabel: { show: false },
 				splitLine: { show: false },
-				min: (value) => {
-					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-					if (value.min === value.max) {
-						const pad = Math.abs(value.min) * 0.05 || 1
-						return value.min - pad
-					}
-					const pad = (value.max - value.min) * 0.08
-					const paddedMin = value.min - pad
-					return value.min < 0 ? paddedMin : Math.max(0, paddedMin)
-				},
-				max: (value) => {
-					if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-					if (value.min === value.max) {
-						const pad = Math.abs(value.max) * 0.05 || 1
-						return value.max + pad
-					}
-					const pad = (value.max - value.min) * 0.08
-					return value.max + pad
-				}
+				min: sparklineAxisMin,
+				max: sparklineAxisMax
 			},
 			series: [
 				{

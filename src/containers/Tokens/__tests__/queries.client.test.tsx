@@ -4,32 +4,18 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
-import { useTokensChartDataset, useTokensPaginatedTable, useWatchlistTokensTable } from '../queries.client'
-import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensChartResponse } from '../types'
+import { fetchTokensResponse } from '../queries.client'
+import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION } from '../types'
 import { buildTokensSortIndexes, getTokensPageFromRows } from '../utils'
 
 const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
-vi.mock('~/hooks/useBookmarks', () => ({
-	useBookmarks: () => ({
-		selectedPortfolio: 'Main',
-		portfolios: ['Main'],
-		savedProtocols: new Set(['bitcoin']),
-		isLoadingWatchlist: false
-	})
-}))
-vi.mock('~/contexts/LocalStorage', () => ({ DEFAULT_PORTFOLIO_NAME: 'Main' }))
+// Heavy children the watchlist mounts; nothing below reads their output.
 vi.mock('~/components/DialogForm', () => ({ DialogForm: () => null }))
 vi.mock('~/components/Menu', () => ({ Menu: () => null }))
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
 vi.mock('~/containers/Yields/views/WatchlistView', () => ({ WatchListTabs: () => null }))
 vi.mock('~/containers/Token/TokenMarketsSection', () => ({ TokenMarketsSection: () => null }))
-vi.mock('~/containers/Tokens', () => ({
-	EXPANDABLE_TOKENS_COLUMNS: [],
-	getRankColumnWidth: () => 40,
-	TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH: 40,
-	TOKENS_TABLE_WIDTH_EXCLUDING_RANK: 400
-}))
 
 const page = getTokensPageFromRows(
 	[],
@@ -52,51 +38,12 @@ const page = getTokensPageFromRows(
 		}
 	}
 )
-const chart: TokensChartResponse = {
-	schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
-	unavailableSources: [],
-	names: [],
-	symbols: [],
-	logoSources: [],
-	hrefs: [],
-	marketCaps: [],
-	priceChanges: { '24h': [], '7d': [], '30d': [] },
-	stablecoins: []
-}
-function TableProbe() {
-	const result = useTokensPaginatedTable('?page=2', page)
-	return <output>{result.isError ? 'error' : result.data ? result.data.stats.spotVolume24h : 'loading'}</output>
-}
-function WatchlistProbe() {
-	const result = useWatchlistTokensTable(['bitcoin'])
-	return (
-		<output>
-			{result.isError
-				? 'error'
-				: result.data
-					? `${result.data.unavailableSources.filter(Boolean).join(',')}:${result.data.stats.spotVolume24h}`
-					: 'loading'}
-		</output>
-	)
-}
-function ChartProbe() {
-	const result = useTokensChartDataset('')
-	return (
-		<output>
-			{result.isError
-				? 'error'
-				: result.data
-					? `${result.data.unavailableSources.join(',')}:${result.data.marketCaps.length}`
-					: 'loading'}
-		</output>
-	)
-}
-
 let root: Root
 let element: HTMLDivElement
 let client: QueryClient
 beforeEach(() => {
 	fetchJson.mockReset()
+	localStorage.setItem('DEFILLAMA', JSON.stringify({ TOKENS_WATCHLIST: { main: { bitcoin: 'bitcoin' } } }))
 	client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } })
 	element = document.createElement('div')
 	document.body.appendChild(element)
@@ -106,6 +53,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
 	element.remove()
+	localStorage.clear()
 })
 async function render(child: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{child}</QueryClientProvider>))
@@ -117,33 +65,28 @@ async function expectShows(text: string) {
 	})
 }
 
-describe('Tokens response deployment compatibility', () => {
-	test.each([
-		['table', TableProbe],
-		['watchlist', WatchlistProbe],
-		['chart', ChartProbe]
-	] as const)('rejects old %s responses before consuming new fields', async (_name, Probe) => {
-		// An old deployed wire response deliberately has no availability field.
-		fetchJson.mockResolvedValue({ schemaVersion: 13, rows: [], marketCaps: [] })
-		await render(<Probe />)
-		await expectShows('error')
-		for (const [url] of fetchJson.mock.calls) {
-			expect(new URL(url, 'http://localhost').searchParams.get('schemaVersion')).toBe(
-				String(TOKENS_PAGE_RESPONSE_SCHEMA_VERSION)
-			)
-		}
-	})
-	test('retains measured zero and successful empty responses', async () => {
+describe('fetchTokensResponse', () => {
+	const signal = new AbortController().signal
+
+	test('asks for the current schema on every Tokens request', async () => {
 		fetchJson.mockResolvedValue(page)
-		await render(<WatchlistProbe />)
-		await expectShows(':0')
-		expect(client.getQueryCache().getAll()[0]?.state.status).toBe('success')
+		await fetchTokensResponse('/api/public/tokens?page=2', signal)
+		await fetchTokensResponse('/api/public/tokens/market-map', signal)
+		expect(fetchJson.mock.calls.map(([url]) => url)).toEqual([
+			`/api/public/tokens?page=2&schemaVersion=${TOKENS_PAGE_RESPONSE_SCHEMA_VERSION}`,
+			`/api/public/tokens/market-map?schemaVersion=${TOKENS_PAGE_RESPONSE_SCHEMA_VERSION}`
+		])
 	})
-	test('accepts current chart availability with an empty dataset', async () => {
-		fetchJson.mockResolvedValue({ ...chart, unavailableSources: ['unlocks'] })
-		await render(<ChartProbe />)
-		await expectShows('unlocks:0')
+
+	test('rejects a response from an older deployment and accepts a current one, even with no rows', async () => {
+		fetchJson.mockResolvedValue({ schemaVersion: 13, rows: [] })
+		await expect(fetchTokensResponse('/api/public/tokens', signal)).rejects.toThrow('Token data is updating')
+		fetchJson.mockResolvedValue(page)
+		await expect(fetchTokensResponse('/api/public/tokens', signal)).resolves.toBe(page)
 	})
+})
+
+describe('Tokens watchlist', () => {
 	test('shows a retryable watchlist failure for an old response, then recovers without losing saved tokens', async () => {
 		fetchJson.mockImplementation(async (url: string) =>
 			url === '/api/public/markets/tokens' ? { last_updated: '', tokens: [] } : { schemaVersion: 13, rows: [] }

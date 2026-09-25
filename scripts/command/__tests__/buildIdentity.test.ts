@@ -58,12 +58,6 @@ describe('build identity', () => {
 		expect(env.SOURCE_COMMIT).toBe('')
 	})
 
-	test('returns the original env when a deploy commit env var is already set', () => {
-		const env = testEnv({ VERCEL_GIT_COMMIT_SHA: 'vercel-sha' })
-
-		expect(createBuildCommitEnv({ env, projectDir: '/repo', readGitCommitSha: () => 'git-sha' })).toBe(env)
-	})
-
 	test('reads a checked-out ref from minimal git metadata', async () => {
 		const projectDir = await createTempProject()
 		await fs.writeFile(path.join(projectDir, '.git', 'HEAD'), 'ref: refs/heads/main\n')

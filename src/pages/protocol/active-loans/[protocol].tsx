@@ -9,6 +9,7 @@ import {
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import { getActiveLoansPanel } from '~/containers/ProtocolOverview/activeLoans'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
@@ -270,12 +271,17 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 		inflows: props.metrics.inflows,
 		computeInflows: false
 	})
-	const hasBreakdownMetrics =
-		(chainBreakdown && chainsUnique.length > 1) ||
-		(tokenBreakdownUSD && tokensUnique.length > 0) ||
-		tokenBreakdownPieSeries.peers.length > 0 ||
-		tokenBreakdownPieSeries.upstreamOthersValue > 0 ||
-		(tokenRawBreakdown && rawTokensUnique.length > 0)
+	const panel = getActiveLoansPanel({
+		isLoading,
+		errorCount: errors.length,
+		chainBreakdown,
+		chainsUnique,
+		tokenBreakdownUSD,
+		tokensUnique,
+		tokenBreakdownPieSeries,
+		tokenRawBreakdown,
+		rawTokensUnique
+	})
 	const protocolIconUrl = tokenIconUrl(props.name)
 
 	return (
@@ -294,13 +300,13 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 				title={`${props.name} Active Loans`}
 			/>
 
-			{isLoading ? (
+			{panel === 'loading' ? (
 				<PanelLoadingStatus label={`Loading ${props.name} active loans`} />
-			) : !hasBreakdownMetrics && errors.length === 0 ? (
+			) : panel === 'empty' ? (
 				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown metrics are not available
 				</PanelStatus>
-			) : hasBreakdownMetrics ? (
+			) : panel === 'charts' ? (
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
 						<MultiSeriesChartCard

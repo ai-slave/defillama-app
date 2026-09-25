@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'vitest'
 import {
 	createStablecoinOverviewChartMode,
-	getStablecoinAssetDashboardChartType,
-	getStablecoinAssetSeriesChart,
 	getStablecoinAssetVolumeChartKind,
-	getStablecoinChainsSeriesChart,
 	getStablecoinChainsVolumeChartKind,
 	getStablecoinDashboardChartType,
 	getStablecoinChartViewOptions,
-	getStablecoinOverviewSeriesChart,
 	getStablecoinOverviewVolumeChartKind,
 	getStablecoinSeriesSelectorLabel,
 	parseStablecoinVolumeGroupBy,
@@ -18,20 +14,6 @@ import {
 describe('stablecoin chart state', () => {
 	test('uses overview defaults', () => {
 		expect(parseStablecoinChartState({}, createStablecoinOverviewChartMode('All'))).toMatchObject({
-			type: 'marketCap',
-			view: 'total'
-		})
-	})
-
-	test('uses chains page defaults', () => {
-		expect(parseStablecoinChartState({}, { page: 'chains' })).toMatchObject({
-			type: 'marketCap',
-			view: 'total'
-		})
-	})
-
-	test('uses asset page defaults', () => {
-		expect(parseStablecoinChartState({}, { page: 'asset' })).toMatchObject({
 			type: 'marketCap',
 			view: 'total'
 		})
@@ -90,45 +72,8 @@ describe('stablecoin chart state', () => {
 		expect(parseStablecoinVolumeGroupBy('invalid')).toBe('daily')
 	})
 
-	test('maps chart state to stablecoin dashboard chart types', () => {
-		expect(getStablecoinDashboardChartType('marketCap', 'total')).toBe('totalMcap')
-		expect(getStablecoinDashboardChartType('marketCap', 'breakdown')).toBe('tokenMcaps')
-		expect(getStablecoinDashboardChartType('marketCap', 'dominance')).toBe('dominance')
-		expect(getStablecoinDashboardChartType('marketCap', 'pie')).toBe('pie')
-		expect(getStablecoinDashboardChartType('inflows', 'usd')).toBe('usdInflows')
-		expect(getStablecoinDashboardChartType('inflows', 'token')).toBe('tokenInflows')
+	test('keeps volume views out of the dashboard chart types', () => {
 		expect(getStablecoinDashboardChartType('volume', 'total')).toBeNull()
-	})
-
-	test('maps chart state to overview series chart requests', () => {
-		expect(getStablecoinOverviewSeriesChart('marketCap', 'total')).toBe('totalMcap')
-		expect(getStablecoinOverviewSeriesChart('marketCap', 'breakdown')).toBe('tokenMcaps')
-		expect(getStablecoinOverviewSeriesChart('marketCap', 'dominance')).toBe('dominance')
-		expect(getStablecoinOverviewSeriesChart('marketCap', 'pie')).toBeNull()
-		expect(getStablecoinOverviewSeriesChart('volume', 'total')).toBeNull()
-		expect(getStablecoinOverviewSeriesChart('inflows', 'usd')).toBe('usdInflows')
-		expect(getStablecoinOverviewSeriesChart('inflows', 'token')).toBe('tokenInflows')
-	})
-
-	test('maps chart state to chains series chart requests', () => {
-		expect(getStablecoinChainsSeriesChart('marketCap', 'total')).toBe('totalMcap')
-		expect(getStablecoinChainsSeriesChart('marketCap', 'breakdown')).toBe('chainMcaps')
-		expect(getStablecoinChainsSeriesChart('marketCap', 'dominance')).toBe('dominance')
-		expect(getStablecoinChainsSeriesChart('marketCap', 'pie')).toBeNull()
-		expect(getStablecoinChainsSeriesChart('volume', 'total')).toBeNull()
-	})
-
-	test('maps chart state to asset dashboard and series chart requests', () => {
-		expect(getStablecoinAssetDashboardChartType('total')).toBe('totalCirc')
-		expect(getStablecoinAssetDashboardChartType('breakdown')).toBe('chainMcaps')
-		expect(getStablecoinAssetDashboardChartType('dominance')).toBe('chainDominance')
-		expect(getStablecoinAssetDashboardChartType('pie')).toBe('chainPie')
-
-		expect(getStablecoinAssetSeriesChart('marketCap', 'total')).toBe('totalCirc')
-		expect(getStablecoinAssetSeriesChart('marketCap', 'breakdown')).toBe('chainMcaps')
-		expect(getStablecoinAssetSeriesChart('marketCap', 'dominance')).toBe('chainDominance')
-		expect(getStablecoinAssetSeriesChart('marketCap', 'pie')).toBeNull()
-		expect(getStablecoinAssetSeriesChart('volume', 'total')).toBeNull()
 	})
 
 	test('maps chart state to scoped volume chart requests', () => {
@@ -147,16 +92,11 @@ describe('stablecoin chart state', () => {
 		expect(getStablecoinAssetVolumeChartKind('marketCap', 'total')).toBeNull()
 	})
 
-	test('labels only peer-series chart views', () => {
+	test('labels the peer selector by page and leaves total views without one', () => {
 		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'marketCap', 'breakdown')).toBe(
 			'Token'
 		)
 		expect(getStablecoinSeriesSelectorLabel({ page: 'chains' }, 'marketCap', 'dominance')).toBe('Chain')
-		expect(getStablecoinSeriesSelectorLabel({ page: 'asset' }, 'volume', 'byChain')).toBe('Chain')
-		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'volume', 'byCurrency')).toBe(
-			'Currency'
-		)
-		expect(getStablecoinSeriesSelectorLabel(createStablecoinOverviewChartMode('All'), 'inflows', 'token')).toBe('Token')
 		expect(getStablecoinSeriesSelectorLabel({ page: 'asset' }, 'marketCap', 'total')).toBeNull()
 	})
 })

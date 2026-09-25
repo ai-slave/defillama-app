@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { MetadataFieldValue } from '../MetadataGroups'
@@ -8,7 +9,7 @@ describe('MetadataFieldValue', () => {
 			<MetadataFieldValue field={{ key: 'founded', label: 'Founded', type: 'number', value: 2017, comparable: true }} />
 		)
 
-		expect(html).toBe('2017')
+		expect(new DOMParser().parseFromString(html, 'text/html').body.textContent).toBe('2017')
 	})
 
 	test('renders canonical link fields as active external links', () => {

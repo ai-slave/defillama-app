@@ -1,46 +1,46 @@
 // @vitest-environment happy-dom
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { ProtocolListInitialProps, ProtocolListQuery } from '../tableQuery'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import {
+	protocolListRequestQuery,
+	protocolListSort,
+	protocolListSortQuery,
+	type ProtocolListInitialProps,
+	type ProtocolListQuery
+} from '../tableQuery'
 
-const state = vi.hoisted(() => ({ query: {} as ProtocolListQuery, push: vi.fn(), settings: {} }))
+const state = vi.hoisted(() => ({ query: {} as ProtocolListQuery, push: vi.fn() }))
 vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/recent', query: state.query, push: state.push, isReady: true })
 }))
-vi.mock('~/contexts/LocalStorage', () => ({ useLocalStorageSettingsManager: () => [state.settings] }))
+// Heavy toolbar controls this suite never uses.
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
 vi.mock('~/components/Filters/TVLRange', () => ({ TVLRange: () => null }))
-vi.mock('~/components/CsvDownloadButton', () => ({
-	CSVDownloadButton: ({ onClick }: { onClick: () => void }) => (
-		<button type="button" onClick={onClick}>
-			Export
-		</button>
-	)
-}))
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({
-		table
-	}: {
-		table: {
-			getRowModel: () => { rows: Array<{ original: { name: string } }> }
-			getColumn: (id: string) => { toggleSorting: (desc: boolean) => void }
-		}
-	}) => (
-		<div>
-			<button type="button" onClick={() => table.getColumn('tvl').toggleSorting(false)}>
-				Sort TVL ascending
-			</button>
-			{table.getRowModel().rows.map((row) => (
-				<div data-row={row.original.name} key={row.original.name}>
-					{row.original.name}
-				</div>
-			))}
-		</div>
-	)
-}))
+vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
 import { RecentlyListedProtocolsTable } from '../RecentProtocolsTable'
+
+describe('protocol list request query', () => {
+	test('falls back to newest listings for unknown sorts and treats any non-asc order as descending', () => {
+		expect(protocolListSort({ sort: 'tvl', order: 'asc' })).toEqual({ id: 'tvl', desc: false })
+		expect(protocolListSort({ sort: 'unsupported', order: 'up' })).toEqual({ id: 'listedAt', desc: true })
+		expect(protocolListSortQuery([{ id: 'tvl', desc: false }])).toEqual({ sort: 'tvl', order: 'asc' })
+		expect(protocolListSortQuery([])).toEqual({ sort: 'listedAt', order: 'desc' })
+	})
+
+	test('sends URL filters, the debounced search, and only additive TVL settings that are enabled', () => {
+		expect(
+			protocolListRequestQuery(
+				{ chain: 'Base', category: '', search: 'Nee', sort: 'tvl', order: 'asc', unrelated: 'x' },
+				{ staking: true, doublecounted: true, pool2: false },
+				'Needle'
+			)
+		).toEqual({ chain: 'Base', category: '', search: 'Needle', sort: 'tvl', order: 'asc', tvlKeys: ['staking'] })
+		expect(protocolListRequestQuery({}, {}, '')).toEqual({})
+	})
+})
 
 const protocol = {
 	defillamaId: 'new',
@@ -70,130 +70,110 @@ const props: ProtocolListInitialProps = {
 	categories: ['Lending'],
 	protocolList: { version: 'abcdefghijklmnopqrst', nextCursor: 'next', total: 2, hasMore: true }
 }
-let container: HTMLDivElement
-let root: Root
-let pending: Array<(value: Response) => void>
-let observer: IntersectionObserverCallback
-beforeEach(() => {
-	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	state.query = {}
-	state.settings = {}
-	state.push.mockReset()
-	pending = []
-	vi.stubGlobal(
-		'fetch',
-		vi.fn(() => new Promise<Response>((resolve) => pending.push(resolve)))
-	)
-	vi.stubGlobal(
-		'IntersectionObserver',
-		class {
-			constructor(callback: IntersectionObserverCallback) {
-				observer = callback
+
+describe('RecentlyListedProtocolsTable', () => {
+	let container: HTMLDivElement
+	let root: Root
+	let pending: Array<(value: Response) => void>
+	let observers: Array<IntersectionObserverCallback>
+	let client: QueryClient
+	const fetchMock = vi.fn((_input: RequestInfo | URL) => new Promise<Response>((resolve) => pending.push(resolve)))
+	beforeEach(() => {
+		state.query = {}
+		state.push.mockReset()
+		fetchMock.mockClear()
+		pending = []
+		observers = []
+		client = new QueryClient()
+		vi.stubGlobal('fetch', fetchMock)
+		vi.stubGlobal(
+			'IntersectionObserver',
+			class {
+				constructor(callback: IntersectionObserverCallback) {
+					observers.push(callback)
+				}
+				observe() {}
+				unobserve() {}
+				disconnect() {}
+				takeRecords() {
+					return []
+				}
 			}
-			observe() {}
-			disconnect() {}
-		}
-	)
-	container = document.createElement('div')
-	document.body.appendChild(container)
-})
-afterEach(async () => {
-	if (root) await act(async () => root.unmount())
-	container.remove()
-	vi.unstubAllGlobals()
-})
-async function hydrate() {
-	container.innerHTML = renderToString(<RecentlyListedProtocolsTable {...props} />)
-	expect(container.querySelector('[data-row]')?.textContent).toBe('Newest')
-	await act(async () => {
-		root = hydrateRoot(container, <RecentlyListedProtocolsTable {...props} />)
+		)
+		container = document.createElement('div')
+		document.body.appendChild(container)
 	})
-}
-async function resolvePage(names: Array<string>, nextCursor: string | null = null) {
-	await act(async () => {
-		pending.shift()!(
-			new Response(
-				JSON.stringify({
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+		vi.unstubAllGlobals()
+	})
+
+	const requestedUrl = () => new URL(String(fetchMock.mock.lastCall?.[0]), 'http://localhost')
+	const table = () => (
+		<QueryClientProvider client={client}>
+			<RecentlyListedProtocolsTable {...props} />
+		</QueryClientProvider>
+	)
+	async function hydrate() {
+		container.innerHTML = renderToString(table())
+		await act(async () => {
+			root = hydrateRoot(container, table())
+		})
+	}
+	async function resolvePage(names: Array<string>, nextCursor: string | null = null) {
+		await act(async () => {
+			pending.shift()!(
+				Response.json({
 					...props.protocolList,
 					rows: names.map((name) => ({ ...protocol, defillamaId: name, name })),
 					nextCursor,
 					hasMore: nextCursor !== null
 				})
 			)
-		)
+		})
+	}
+
+	test('hydrates SSR rows without a fetch, appends a pinned page, and retains rows when a filter fails', async () => {
+		await hydrate()
+		expect(container.textContent).toContain('Newest')
+		expect(fetchMock).not.toHaveBeenCalled()
+		// Scrolling to the end of the list brings the load-more sentinel into view.
+		await act(async () => {
+			for (const callback of observers)
+				callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver)
+		})
+		expect(requestedUrl().searchParams.get('snapshot')).toBe('abcdefghijklmnopqrst')
+		expect(requestedUrl().searchParams.get('cursor')).toBe('next')
+		await resolvePage(['Older'])
+		expect(container.textContent).toContain('Older')
+
+		state.query = { chain: 'Base' }
+		await act(async () => root.render(table()))
+		expect(requestedUrl().searchParams.get('chain')).toBe('Base')
+		await act(async () => pending.shift()!(new Response('', { status: 500 })))
+		expect(container.textContent).toContain("Couldn't update results.")
+		expect(container.textContent).toContain('Newest')
+		expect(container.textContent).toContain('Older')
+		const retry = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Retry')!
+		await act(async () => retry.click())
+		await resolvePage(['Base Match'])
+		expect(container.textContent).toContain('Base Match')
+		expect(container.textContent).not.toContain('Older')
 	})
-}
-test('hydrates SSR rows without a full-data fetch, appends a pinned page, and retains rows on failure', async () => {
-	await hydrate()
-	expect(fetch).not.toHaveBeenCalled()
-	await act(async () => observer([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver))
-	expect(String(vi.mocked(fetch).mock.calls[0]?.[0])).toContain('snapshot=abcdefghijklmnopqrst&cursor=next')
-	await resolvePage(['Older'])
-	expect(Array.from(container.querySelectorAll('[data-row]'), (el) => el.textContent)).toEqual(['Newest', 'Older'])
-	state.query = { chain: 'Base', excludeCategory: 'Dexs', hideForks: 'true', maxTvl: '20', sort: 'tvl', order: 'asc' }
-	await act(async () => root.render(<RecentlyListedProtocolsTable {...props} />))
-	const url = new URL(String(vi.mocked(fetch).mock.calls.at(-1)?.[0]), 'http://localhost')
-	expect([
-		url.searchParams.get('chain'),
-		url.searchParams.get('excludeCategory'),
-		url.searchParams.get('hideForks'),
-		url.searchParams.get('maxTvl'),
-		url.searchParams.get('sort'),
-		url.searchParams.get('order')
-	]).toEqual(['Base', 'Dexs', 'true', '20', 'tvl', 'asc'])
-	await act(async () => pending.shift()!(new Response('', { status: 500 })))
-	expect(container.textContent).toContain("Couldn't update results.")
-	expect(Array.from(container.querySelectorAll('[data-row]'), (el) => el.textContent)).toEqual(['Newest', 'Older'])
-	const retry = Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Retry')!
-	await act(async () => retry.click())
-	await resolvePage(['Base Match'])
-	expect(Array.from(container.querySelectorAll('[data-row]'), (el) => el.textContent)).toEqual(['Base Match'])
-})
-test('sort controls persist URL state and server results replace the current page', async () => {
-	await hydrate()
-	await act(async () =>
-		Array.from(container.querySelectorAll('button'))
-			.find((button) => button.textContent === 'Sort TVL ascending')!
-			.click()
-	)
-	expect(state.push.mock.calls[0]?.[0].query).toEqual({ sort: 'tvl', order: 'asc' })
-	state.query = { sort: 'tvl', order: 'asc' }
-	await act(async () => root.render(<RecentlyListedProtocolsTable {...props} />))
-	expect(container.querySelector('[data-row]')?.textContent).toBe('Newest')
-	await resolvePage(['Smallest'])
-	expect(container.querySelector('[data-row]')?.textContent).toBe('Smallest')
-})
-test('URL search and TVL settings request filtered pages and export the same pinned query', async () => {
-	await hydrate()
-	state.query = { search: 'Needle', category: '' }
-	state.settings = { staking: true, doublecounted: true }
-	await act(async () => root.render(<RecentlyListedProtocolsTable {...props} />))
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 280))
+
+	test('a header sort persists to the URL and the server page replaces the current rows', async () => {
+		await hydrate()
+		const tvlHeader = Array.from(container.querySelectorAll('th button')).find(
+			(button) => button.textContent?.trim() === 'TVL'
+		) as HTMLButtonElement
+		await act(async () => tvlHeader.click())
+		expect(state.push.mock.calls[0]?.[0].query).toMatchObject({ sort: 'tvl' })
+		state.query = { sort: 'tvl', order: 'asc' }
+		await act(async () => root.render(table()))
+		expect(container.textContent).toContain('Newest')
+		await resolvePage(['Smallest'])
+		expect(container.textContent).toContain('Smallest')
+		expect(container.textContent).not.toContain('Newest')
 	})
-	const pageUrl = new URL(String(vi.mocked(fetch).mock.calls.at(-1)?.[0]), 'http://localhost')
-	expect([
-		pageUrl.searchParams.get('search'),
-		pageUrl.searchParams.get('category'),
-		pageUrl.searchParams.getAll('tvlKeys')
-	]).toEqual(['Needle', '', ['staking']])
-	await resolvePage([]) // Superseded request before the search debounce.
-	await resolvePage([])
-	expect(container.querySelectorAll('[data-row]')).toHaveLength(0)
-	vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:csv')
-	vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
-	vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-	await act(async () =>
-		Array.from(container.querySelectorAll('button'))
-			.find((button) => button.textContent === 'Export')!
-			.click()
-	)
-	const exportUrl = new URL(String(vi.mocked(fetch).mock.calls.at(-1)?.[0]), 'http://localhost')
-	expect([
-		exportUrl.searchParams.get('csv'),
-		exportUrl.searchParams.get('search'),
-		exportUrl.searchParams.get('snapshot'),
-		exportUrl.searchParams.get('cursor')
-	]).toEqual(['true', 'Needle', 'abcdefghijklmnopqrst', null])
-	await act(async () => pending.shift()!(new Response('Name\nNeedle')))
 })

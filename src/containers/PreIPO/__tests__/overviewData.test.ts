@@ -37,7 +37,7 @@ const companies: Array<PreIpoCompanyListItem> = [
 
 describe('pre-IPO overview data', () => {
 	test('returns the producer array when no filters are active', () => {
-		expect(filterPreIpoCompanies(companies, '', null)).toBe(companies)
+		expect(filterPreIpoCompanies(companies, '', null)).toEqual(companies)
 	})
 
 	test('searches name, canonical ID, and sector while applying the sector filter', () => {

@@ -8,8 +8,9 @@ export type StablecoinChangeStat = {
 	absolute: string | null
 }
 
-function ChangeValue({ stat, prominent = false }: { stat: StablecoinChangeStat; prominent?: boolean }) {
-	if (stat.percent == null || stat.absolute == null) return null
+type ValidChangeStat = StablecoinChangeStat & { percent: string; absolute: string }
+
+function ChangeValue({ stat, prominent = false }: { stat: ValidChangeStat; prominent?: boolean }) {
 	const color = stat.percent.startsWith('-') ? 'text-data-down' : 'text-data-up'
 
 	if (prominent) {
@@ -37,10 +38,7 @@ function ChangeValue({ stat, prominent = false }: { stat: StablecoinChangeStat; 
 }
 
 export function StablecoinChangeStats({ stats }: { stats: Array<StablecoinChangeStat> }) {
-	const validStats = stats.filter(
-		(stat): stat is StablecoinChangeStat & { percent: string; absolute: string } =>
-			stat.percent != null && stat.absolute != null
-	)
+	const validStats = stats.filter((stat): stat is ValidChangeStat => stat.percent != null && stat.absolute != null)
 	if (validStats.length === 0) return null
 
 	const primary = validStats[0]

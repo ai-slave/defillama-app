@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CitationDetailPanel } from './CitationDetailPanel'
 import { CitationSheetProvider, useCitationSheetController } from './CitationSheetContext'
 
-vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
+// Heavy child; these tests only move focus through the panel.
 vi.mock('./CitationPill', () => ({ PillBody: () => <button type="button">Panel content</button> }))
 
 let root: Root

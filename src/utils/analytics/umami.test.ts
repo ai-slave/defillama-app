@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	AB_GROUP_COOKIE_NAME,
-	AB_VISITOR_COOKIE_NAME,
-	getABClientAssignment,
-	getABGroup,
-	getABTag
-} from '~/utils/abTesting'
+import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABClientAssignment, getABGroup } from '~/utils/abTesting'
 import { addABTag } from './umami'
 
 describe('addABTag', () => {
@@ -19,7 +13,7 @@ describe('addABTag', () => {
 
 		expect(addABTag(payload, `theme=dark; ${AB_GROUP_COOKIE_NAME}=b`)).toEqual({
 			...payload,
-			tag: getABTag('b')
+			tag: 'ab:foundation-aa-v1:b'
 		})
 	})
 

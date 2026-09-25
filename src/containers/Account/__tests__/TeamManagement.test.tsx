@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
 import { InviteMemberModal } from '../Team/InviteMemberModal'
 import { ManageSeatsModal } from '../Team/ManageSeatsModal'
@@ -14,28 +15,26 @@ import { TeamTab } from '../Team/TeamTab'
 import type { Team } from '../Team/types'
 import { useTeam } from '../Team/useTeam'
 
-const api = vi.hoisted(() => ({ fetch: vi.fn(), checkout: vi.fn(), refresh: vi.fn(), prompt: vi.fn() }))
+vi.hoisted(() => {
+	process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = 'pk_test_team_preview'
+})
+afterAll(() => {
+	delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+})
+const api = vi.hoisted(() => ({
+	/** The team service behind `${AUTH_SERVER}/team*`: (url, init) => Response. */
+	fetch: vi.fn(),
+	/** PocketBase auth-refresh replies with this account record. */
+	refresh: vi.fn<() => Promise<object>>(),
+	checkout: vi.fn()
+}))
 const router = vi.hoisted(() => ({
 	isReady: true,
 	pathname: '/account',
 	query: {} as { token?: string },
 	replace: vi.fn()
 }))
-vi.mock('~/auth/authStore', () => ({ refreshSession: api.refresh }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: { id: 'user' },
-		isAuthenticated: true,
-		authorizedFetch: api.fetch,
-		promptVerifyEmail: api.prompt
-	})
-}))
 vi.mock('next/router', () => ({ useRouter: () => router }))
-vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }))
-vi.mock('~/constants', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/constants')>()),
-	STRIPE_PUBLISHABLE_KEY: 'pk_test_team_preview'
-}))
 vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve({}) }))
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: ({ children, options }: { children: ReactNode; options: { clientSecret: string } }) => {
@@ -44,9 +43,12 @@ vi.mock('@stripe/react-stripe-js', () => ({
 	},
 	EmbeddedCheckout: () => null
 }))
+const session = installSubscriberSession('user')
+const refreshRequests = () =>
+	session.requests.filter((request) => request.url.pathname === '/api/collections/users/auth-refresh')
+const verifyEmailPrompted = () => document.body.textContent?.includes('Verify your email') ?? false
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let team: Team
 const hooks: Record<string, ReturnType<typeof useTeam>> = {}
 function Hook({ id }: { id: string }) {
@@ -78,7 +80,20 @@ function Harness({ kind }: { kind: 'invite' | 'manage' | 'purchase' | 'assign' }
 beforeEach(() => {
 	vi.resetAllMocks()
 	router.query = {}
-	client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 2 } } })
+	// Team writes must opt out of retries themselves; a retrying default proves they do.
+	session.client.setDefaultOptions({ queries: { retry: false }, mutations: { retry: 2 } })
+	const record = pb.authStore.record!
+	api.refresh.mockImplementation(async () => pb.authStore.record ?? record)
+	session.serve({
+		[`${AUTH_SERVER}/team`]: (url: URL, init?: RequestInit) => api.fetch(url.href, init),
+		'/subscription/past-due': () => Response.json({ message: 'No past due subscription found' }, { status: 404 }),
+		'/subscription/trial-available': { trialAvailable: false },
+		'/sendOtp': {},
+		'/user/credits': { credits: 0, maxCredits: 0, monthKey: '2026-09' },
+		'/api/collections/users/auth-refresh': async () => ({ token: pb.authStore.token, record: await api.refresh() })
+	})
+	// The provider already confirmed the session; only the invite flow reads it again.
+	session.client.setQueryData(['auth', 'status', 'user'], record)
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -107,19 +122,15 @@ beforeEach(() => {
 		],
 		pendingInvites: []
 	}
-	client.setQueryData(['team', 'user'], team)
+	session.client.setQueryData(['team', 'user'], team)
 	api.fetch.mockImplementation(async () => Response.json({ team }))
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
-	pb.authStore.clear()
 	container.remove()
-	vi.restoreAllMocks()
-	vi.unstubAllGlobals()
 })
 async function mount(element: ReactNode) {
-	await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
+	await act(async () => root.render(<session.Wrapper>{element}</session.Wrapper>))
 }
 function button(name: string) {
 	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
@@ -166,7 +177,7 @@ test.each(['set', 'cancel', 'assign', 'unassign', 'invite', 'revoke', 'remove', 
 			if (action === 'leave') h.leaveTeamMutation.mutate()
 		})
 		await vi.waitFor(() => expect(posts()).toHaveLength(1))
-		expect(client.getQueryData(['team', 'user'])).toEqual(team)
+		expect(session.client.getQueryData(['team', 'user'])).toEqual(team)
 		const updated = {
 			...team,
 			name: 'Newer confirmed name',
@@ -180,18 +191,18 @@ test.each(['set', 'cancel', 'assign', 'unassign', 'invite', 'revoke', 'remove', 
 				}
 			]
 		}
-		await act(async () => client.setQueryData(['team', 'user'], updated))
+		await act(async () => session.client.setQueryData(['team', 'user'], updated))
 		await act(async () => request.reject(new Error('Request failed')))
 		await vi.waitFor(() =>
 			expect(
-				client
+				session.client
 					.getMutationCache()
 					.getAll()
 					.some((m) => m.state.status === 'error')
 			).toBe(true)
 		)
 		// Inspect before reconciliation: a GET must not conceal a destructive rollback.
-		expect(client.getQueryData(['team', 'user'])).toEqual(updated)
+		expect(session.client.getQueryData(['team', 'user'])).toEqual(updated)
 		expect(posts()).toHaveLength(1)
 		await act(async () => refresh.resolve(Response.json({ team: updated })))
 	}
@@ -444,15 +455,11 @@ test('removing a member returns focus to the surviving members heading', async (
 	await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('h2')))
 })
 
-test('arrow navigation selects the purchase plan and updates its price without submitting', async () => {
+test('choosing the API plan shows its price without submitting', async () => {
 	await mount(<Harness kind="purchase" />)
-	const pro = document.querySelector<HTMLInputElement>('input[value=llamafeed]')!
 	const apiRadio = document.querySelector<HTMLInputElement>('input[value=api]')!
-	await act(async () => {
-		pro.focus()
-		pro.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
-	})
-	await vi.waitFor(() => expect(apiRadio.checked).toBe(true))
+	await act(async () => apiRadio.click())
+	expect(apiRadio.checked).toBe(true)
 	expect(dialog().textContent).toContain('$300/month')
 	expect(posts()).toHaveLength(0)
 })
@@ -493,6 +500,21 @@ test('leaving a team waits for confirmation and focuses the surviving team regio
 	await act(async () => request.resolve(Response.json({})))
 	await vi.waitFor(() => expect(button('Create Team')).toBeTruthy())
 	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Team management'))
+})
+
+test('a failed team refresh keeps showing the cached team instead of a load error', async () => {
+	api.fetch.mockImplementation(async () => {
+		throw new Error('Refresh offline')
+	})
+	await mount(<TeamTab />)
+	await act(async () => {
+		await session.client.refetchQueries({ queryKey: ['team', 'user'] })
+		// Query observers notify on a zero-delay timer; let the failed state render.
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+	expect(session.client.getQueryState(['team', 'user'])?.status).toBe('error')
+	expect(container.textContent).toContain('Original')
+	expect(container.textContent).not.toContain("Couldn't load your team")
 })
 
 test('revoking an invite keeps its row until confirmed and returns focus to Invite Member', async () => {
@@ -581,83 +603,68 @@ test.each(['assign', 'unassign'] as const)('successful %s focuses the replacemen
 	expect(posts()).toHaveLength(1)
 })
 
+const inviteAccount = {
+	id: 'user',
+	email: 'invite@example.com',
+	verified: false,
+	collectionId: '_pb_users_auth_',
+	collectionName: 'users'
+}
+
 test.each([true, false])(
 	'prompts for invite verification only after a fresh account read: verified=%s',
 	async (verified) => {
-		const account = {
-			id: 'user',
-			email: 'invite@example.com',
-			verified: false,
-			collectionId: '_pb_users_auth_',
-			collectionName: 'users'
-		}
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(async (url: string) => {
-				if (String(url).endsWith('/subscription/past-due'))
-					return Response.json({ message: 'No past due subscription found' }, { status: 404 })
-				throw new Error(`Unexpected request: ${url}`)
-			})
-		)
-		pb.authStore.save('fixture-token', account)
+		pb.authStore.save(pb.authStore.token, inviteAccount)
 		router.query = { token: 'invite-token' }
-		const refresh = Promise.withResolvers<typeof account>()
+		const refresh = Promise.withResolvers<object>()
 		api.refresh.mockReturnValue(refresh.promise)
 		await mount(<TeamTab />)
-		await act(async () => {
-			await vi.waitFor(() => expect(api.refresh).toHaveBeenCalledTimes(1))
+		await vi.waitFor(async () => {
+			await act(async () => {})
+			expect(refreshRequests()).toHaveLength(1)
 		})
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 		expect(document.body.textContent).toContain('Invite accepted. Loading your account')
-		expect(api.prompt).not.toHaveBeenCalled()
+		expect(verifyEmailPrompted()).toBe(false)
 		expect(router.replace).not.toHaveBeenCalled()
-		await act(async () => {
-			refresh.resolve({ ...account, verified })
+		await act(async () => refresh.resolve({ ...inviteAccount, verified }))
+		await vi.waitFor(async () => {
+			await act(async () => {})
+			expect(router.replace).toHaveBeenCalled()
 		})
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-		expect(router.replace).toHaveBeenCalled()
-		expect(api.prompt.mock.calls).toEqual(verified ? [] : [['user']])
-		expect(posts()).toHaveLength(1)
+		expect(verifyEmailPrompted()).toBe(!verified)
+		expect(posts().map(([url]) => new URL(url).pathname)).toEqual(['/team/invite/accept'])
 	}
 )
 
 test.each([true, false])('recovers a lost invite response by reading membership: joined=%s', async (joined) => {
-	const account = {
-		id: 'user',
-		email: 'invite@example.com',
-		verified: false,
-		collectionId: '_pb_users_auth_',
-		collectionName: 'users'
-	}
-	pb.authStore.save('fixture-token', account)
+	pb.authStore.save(pb.authStore.token, inviteAccount)
 	router.query = { token: 'invite-token' }
-	client.removeQueries({ queryKey: ['team', 'user'] })
+	session.client.removeQueries({ queryKey: ['team', 'user'] })
 	team.isAdmin = false
 	api.fetch.mockImplementation(async (_url, options) => {
 		if (options?.method === 'POST') throw new TypeError('Connection lost after acceptance')
 		return Response.json({ team: null })
 	})
-	api.refresh.mockResolvedValue(account)
 	await mount(<TeamTab />)
 	await vi.waitFor(async () => {
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		await act(async () => {})
 		expect(button('Check membership')).toBeDefined()
 	})
-	expect(api.refresh).not.toHaveBeenCalled()
+	expect(refreshRequests()).toHaveLength(0)
 	api.fetch.mockRejectedValueOnce(new TypeError('Membership read failed'))
 	await click('Check membership')
 	await vi.waitFor(async () => {
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		await act(async () => {})
 		expect(container.textContent).toContain('Could not check membership')
 	})
 	api.fetch.mockImplementation(async () => Response.json({ team: joined ? team : null }))
 	await click('Check membership')
 	await vi.waitFor(async () => {
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		await act(async () => {})
 		expect(container.textContent?.includes('Could not check membership')).toBe(false)
 		expect(router.replace.mock.calls.length > 0).toBe(joined)
 	})
 	expect(posts()).toHaveLength(1)
-	expect(api.prompt.mock.calls).toEqual(joined ? [['user']] : [])
-	expect(api.refresh).toHaveBeenCalledTimes(joined ? 1 : 0)
+	expect(verifyEmailPrompted()).toBe(joined)
+	expect(refreshRequests()).toHaveLength(joined ? 1 : 0)
 })

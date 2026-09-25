@@ -1,94 +1,82 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const { addTelemetryMock, recordRuntimeErrorMock, requireSubscriptionMock, fetchPoolHistoryMock } = vi.hoisted(() => ({
-	addTelemetryMock: vi.fn(),
-	recordRuntimeErrorMock: vi.fn(),
-	requireSubscriptionMock: vi.fn(),
-	fetchPoolHistoryMock: vi.fn()
-}))
-
-vi.mock('~/server/api/requireSubscription', () => ({ requireSubscription: requireSubscriptionMock }))
-vi.mock('~/containers/ProDashboard/queries.server', () => ({
-	fetchProtocolsAndChains: vi.fn(),
-	fetchSingleChartData: vi.fn(),
-	withTimeout: async (promise: Promise<unknown>) => promise
-}))
-vi.mock('~/containers/Yields/poolDetail/fetch', () => ({
-	fetchPoolDetailHistory: fetchPoolHistoryMock,
-	fetchBorrowMarketDetailHistory: vi.fn()
-}))
-vi.mock('~/utils/telemetry', () => ({
-	addRouteTelemetryAttributes: addTelemetryMock,
-	recordRouteRuntimeError: recordRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
+const { validateSubscription } = vi.hoisted(() => ({ validateSubscription: vi.fn() }))
+vi.mock('~/utils/apiAuth', () => ({ validateSubscription }))
+vi.mock('~/server/db/llama', () => ({ llamaDb: {} }))
 
 import { dashboardFetchHandler } from './fetchRoute'
+
+const http = installTelemetrySink()
 
 function request(query: Record<string, string | Array<string> | undefined>, method = 'GET') {
 	return createMockNextApiRequest({ method, query, headers: { authorization: 'Bearer token' } })
 }
 
+const yieldsRequest = JSON.stringify({ type: 'yields', params: { poolConfigId: 'pool-1' } })
+
+beforeEach(() => {
+	validateSubscription.mockReset().mockResolvedValue({ valid: true })
+})
+
 describe('/api/private/pro-dashboard/fetch', () => {
-	beforeEach(() => {
-		addTelemetryMock.mockReset()
-		recordRuntimeErrorMock.mockReset()
-		requireSubscriptionMock.mockReset().mockResolvedValue(true)
-		fetchPoolHistoryMock.mockReset()
+	test('rejects unsupported methods before checking the subscription', async () => {
+		const res = createMockNextApiResponse()
+		await dashboardFetchHandler(request({}, 'POST'), res)
+		expect(res.status).toHaveBeenCalledWith(405)
+		expect(validateSubscription).not.toHaveBeenCalled()
 	})
 
-	test('rejects unsupported methods before checking subscription', async () => {
+	test('answers the auth failure without reaching upstream', async () => {
+		validateSubscription.mockResolvedValue({ valid: false, status: 403, error: 'Subscription required' })
 		const res = createMockNextApiResponse()
-
-		await dashboardFetchHandler(request({}, 'POST'), res)
-
-		expect(res.status).toHaveBeenCalledWith(405)
-		expect(requireSubscriptionMock).not.toHaveBeenCalled()
+		await dashboardFetchHandler(request({ request: yieldsRequest }), res)
+		expect(res.status).toHaveBeenCalledWith(403)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Subscription required' })
+		expect(http.urls()).toEqual([])
 	})
 
 	test.each([
 		{ query: {}, error: 'Missing request' },
 		{ query: { request: ['{}'] }, error: 'Missing request' },
 		{ query: { request: '{' }, error: 'Invalid request JSON' }
-	])('returns 400 for malformed input %# without recording an upstream failure', async ({ query, error }) => {
+	])('returns 400 for malformed input %#', async ({ query, error }) => {
 		const res = createMockNextApiResponse()
-
 		await dashboardFetchHandler(request(query), res)
-
 		expect(res.status).toHaveBeenCalledWith(400)
 		expect(res.json).toHaveBeenCalledWith({ error })
-		expect(recordRuntimeErrorMock).not.toHaveBeenCalled()
 	})
 
-	test('dispatches a valid request, preserves private caching, and records response telemetry', async () => {
-		const data = { points: [[1, 2]] }
-		fetchPoolHistoryMock.mockResolvedValue(data)
-		const res = createMockNextApiResponse()
-		const serialized = JSON.stringify({ type: 'yields', params: { poolConfigId: 'pool-1' } })
-
-		await dashboardFetchHandler(request({ request: serialized }), res)
-
-		expect(fetchPoolHistoryMock).toHaveBeenCalledWith('pool-1', 'max', { includeVerified: true })
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, max-age=300')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(JSON.stringify({ data }))
-		expect(addTelemetryMock).toHaveBeenCalledWith({
-			fetch_all_ms: expect.any(Number),
-			construct_response_ms: expect.any(Number),
-			response_bytes: Buffer.byteLength(JSON.stringify({ data }))
+	test('serves pool history with measured rows merged, privately cached', async () => {
+		const reported = { date: '2026-01-01', tvl_usd: 10, apy: null, intrinsic: null, price_per_share: 1 }
+		http.serve({
+			'/v2/earn/pool-1/history': { data: [reported] },
+			'/v2/earn/verified/pool-1/history': { data: [{ date: '2026-01-01', apy: 4, price_per_share: 1.1 }] }
 		})
+		const res = createMockNextApiResponse()
+
+		await dashboardFetchHandler(request({ request: yieldsRequest }), res)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, max-age=300')
+		const body = JSON.parse(vi.mocked(res.send).mock.calls[0][0])
+		expect(body.data).toEqual([
+			{ ...reported, verified: expect.objectContaining({ apy: 4, price_per_share: 1.1, tvl_usd: null }) }
+		])
+		expect(http.urls().filter((url) => url.includes('range=max'))).toHaveLength(2)
 	})
 
-	test('records valid-request dispatch failures against the discriminated request type', async () => {
-		fetchPoolHistoryMock.mockRejectedValue(new Error('upstream failed'))
+	test('returns 500 and records the failure with the request type when upstream fails', async () => {
+		http.serve({ '/v2/earn/pool-1/history': fixtureStatus(500), '/v2/earn/verified/pool-1/history': { data: [] } })
 		const res = createMockNextApiResponse()
-		const serialized = JSON.stringify({ type: 'yields', params: { poolConfigId: 'pool-1' } })
 
-		await dashboardFetchHandler(request({ request: serialized }), res)
+		await dashboardFetchHandler(request({ request: yieldsRequest }), res)
 
-		expect(recordRuntimeErrorMock).toHaveBeenCalledWith(expect.any(Error), 'apiRoute', { type: 'yields' })
 		expect(res.status).toHaveBeenCalledWith(500)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch data' })
+		const errors = (await http.events()).filter((event) => event.type === 'runtime_error')
+		expect(errors).toEqual([expect.objectContaining({ attributes: expect.objectContaining({ type: 'yields' }) })])
 	})
 })

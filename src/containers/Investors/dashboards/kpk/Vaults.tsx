@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
-import type { KpkRef, KpkVault } from './api'
+import type { KpkVault } from './api'
 import { useKpkVaults } from './api'
 import { KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
-import { vaultTotals } from './transform'
 import {
 	andList,
 	Card,
@@ -24,24 +23,14 @@ import {
 	ToggleGroup,
 	signClass,
 	signedBps,
-	usdCompact,
 	usdFromMillions,
-	type FooterRow,
 	KPK_PERCENT_OPTIONS
 } from './ui'
-
-const ALL_VENUES = 'all'
+import { ALL_VENUES, doubleCountedVenues, endSentence, vaultFooterRows, vaultRefs, vaultsOnVenue } from './vaultsModel'
 
 const DOUBLE_COUNT_NOTE = 'Counted inside another vault on this table. Excluded from the adjusted totals.'
 
-const SYMBIOTIC_REF: KpkRef = { label: 'Symbiotic vaults', url: 'https://dune.com/kpk/kpk-usdc-rwa-liquidity' }
-
 const LEGAL_URL = 'https://docs.kpk.io/vaults/resources/legal'
-
-function endSentence(text: string) {
-	const trimmed = text.trim()
-	return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`
-}
 
 /**
  * Three distinct states, rendered as three distinct things: a count (`0` is a real
@@ -68,49 +57,12 @@ export default function Vaults() {
 		[data?.venues]
 	)
 
-	const rows = useMemo(() => {
-		if (!data) return undefined
-		return venue === ALL_VENUES ? data.list : data.list.filter((vault) => vault.venue === venue)
-	}, [data, venue])
-
-	const totals = useMemo(() => (rows ? vaultTotals(rows) : null), [rows])
+	const rows = useMemo(() => (data ? vaultsOnVenue(data.list, venue) : undefined), [data, venue])
 	const doubleCountNote = data?.doubleCountNote ?? DOUBLE_COUNT_NOTE
-	const adjustedVenues = useMemo(
-		() => [...new Set((data?.list ?? []).filter((vault) => vault.doubleCounted).map((vault) => vault.venue))],
-		[data?.list]
-	)
+	const adjustedVenues = useMemo(() => doubleCountedVenues(data?.list ?? []), [data?.list])
 	const showAdjustedTva = data?.tvaAdjusted != null && adjustedVenues.length > 0
-
-	const refs = useMemo(() => {
-		const served = data?.refs
-		if (!served) return undefined
-		return served.some((ref) => ref.url === SYMBIOTIC_REF.url) ? served : [...served, SYMBIOTIC_REF]
-	}, [data?.refs])
-
-	const footer = useMemo<Array<FooterRow> | undefined>(() => {
-		if (!totals) return undefined
-		const footerRows: Array<FooterRow> = [
-			{
-				cells: {
-					name: 'Total',
-					tva: usdCompact(totals.tvaUsd),
-					interest: usdCompact(totals.interestUsd)
-				}
-			}
-		]
-		if (totals.duplicateVenues.length > 0) {
-			footerRows.push({
-				muted: true,
-				title: doubleCountNote,
-				cells: {
-					name: `Adjusted, excl. ${andList(totals.duplicateVenues)}`,
-					tva: usdCompact(totals.tvaAdjustedUsd),
-					interest: usdCompact(totals.interestAdjustedUsd)
-				}
-			})
-		}
-		return footerRows
-	}, [totals, doubleCountNote])
+	const refs = useMemo(() => vaultRefs(data?.refs), [data?.refs])
+	const footer = useMemo(() => (rows ? vaultFooterRows(rows, doubleCountNote) : undefined), [rows, doubleCountNote])
 
 	if (isError) return <QueryError label="Vaults" />
 

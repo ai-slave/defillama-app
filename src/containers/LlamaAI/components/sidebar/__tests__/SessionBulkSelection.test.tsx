@@ -1,29 +1,16 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { AgenticSidebar } from '../AgenticSidebar'
-const api = vi.hoisted(() => ({ fetch: vi.fn(), bulk: vi.fn(), open: vi.fn(), balance: null as object | null }))
+const api = vi.hoisted(() => ({ bulk: vi.fn(), open: vi.fn() }))
 const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: { id: 'user' },
-		authorizedFetch: api.fetch,
-		isAuthenticated: true,
-		hasActiveSubscription: true
-	})
-}))
-vi.mock('~/containers/LlamaAI/chrome', () => ({
-	useLlamaAIChrome: () => ({ hideSidebar: vi.fn(), toggleSidebar: vi.fn() })
-}))
-vi.mock('~/containers/Subscription/useTopup', () => ({
-	useAiBalance: () => ({ balance: api.balance, totalAvailable: 0.75 })
-}))
+// Heavy children these tests do not read.
 vi.mock('~/containers/LlamaAI/projects/ProjectsSidebarSection', () => ({ ProjectsSidebarSection: () => null }))
 vi.mock('~/containers/LlamaAI/projects/MoveToProjectMenu', () => ({ MoveToProjectMenuItem: () => null }))
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 vi.mock('@tanstack/react-virtual', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('@tanstack/react-virtual')>()
 	return {
@@ -44,9 +31,20 @@ vi.mock('@tanstack/react-virtual', async (importOriginal) => {
 			})
 	}
 })
+const session = installSubscriberSession('user')
+const chrome = {
+	toggleSidebar: () => {},
+	hideSidebar: () => {},
+	toggleFullscreen: () => {},
+	isFullscreen: false,
+	fullscreenLocked: false,
+	sidebarVisible: true,
+	toggleDashboardPanel: () => {},
+	isDashboardPanelOpen: false
+}
+const aiRequests = () => session.requests.filter((request) => request.url.hostname === 'ai.llama.fi')
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 const sessions: Array<ChatSession> = ['Alpha', 'Beta', 'Gamma'].map((title) => ({
 	sessionId: title,
 	title,
@@ -55,10 +53,16 @@ const sessions: Array<ChatSession> = ['Alpha', 'Beta', 'Gamma'].map((title) => (
 	lastActivity: '2026-09-07'
 }))
 beforeEach(() => {
-	vi.resetAllMocks()
-	api.balance = null
-	api.fetch.mockResolvedValue(new Response(JSON.stringify({ results: [] })))
-	client = new QueryClient()
+	api.bulk.mockReset()
+	api.open.mockReset()
+	session.serve({
+		'https://features.llama.fi/user/ai-balance': {
+			freeRemaining: '0.25',
+			toppedUpBalance: '0.5',
+			freeLimit: '1',
+			freeSpent: '0.75'
+		}
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -66,44 +70,48 @@ beforeEach(() => {
 afterEach(async () => {
 	vi.useRealTimers()
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 async function render(items = sessions, options: { showBalance?: boolean; onOpenBalanceSettings?: () => void } = {}) {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
-				<AgenticSidebar
-					sessions={items}
-					isLoading={false}
-					currentSessionId={null}
-					restoringSessionId={null}
-					onSessionSelect={api.open}
-					onNewChat={() => {}}
-					onDelete={async () => {}}
-					onBulkDelete={api.bulk}
-					showBalance={options.showBalance}
-					onOpenBalanceSettings={options.onOpenBalanceSettings}
-					searchOpen
-				/>
-			</QueryClientProvider>
+			<session.Wrapper>
+				<LlamaAIChromeContext.Provider value={chrome}>
+					<AgenticSidebar
+						sessions={items}
+						isLoading={false}
+						currentSessionId={null}
+						restoringSessionId={null}
+						onSessionSelect={api.open}
+						onNewChat={() => {}}
+						onDelete={async () => {}}
+						onBulkDelete={api.bulk}
+						showBalance={options.showBalance}
+						onOpenBalanceSettings={options.onOpenBalanceSettings}
+						searchOpen
+					/>
+				</LlamaAIChromeContext.Provider>
+			</session.Wrapper>
 		)
 	)
 }
 
 test('shows an enabled balance below chat history and opens Balance settings', async () => {
-	api.balance = {}
 	const openBalance = vi.fn()
 	await render()
 	expect(document.body.textContent).not.toContain('External Data Balance')
 
 	await render(sessions, { showBalance: true, onOpenBalanceSettings: openBalance })
 
-	const balanceButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find((element) =>
-		element.textContent?.includes('External Data Balance')
-	)!
-	expect(balanceButton.textContent).toContain('$0.75')
-	await act(async () => balanceButton.click())
+	const balanceButton = () =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((element) =>
+			element.textContent?.includes('External Data Balance')
+		)
+	await act(async () => {
+		await vi.waitFor(() => expect(balanceButton()).toBeDefined())
+	})
+	expect(balanceButton()!.textContent).toContain('$0.75')
+	await act(async () => balanceButton()!.click())
 	expect(openBalance).toHaveBeenCalledOnce()
 })
 function button(name: string) {
@@ -146,7 +154,7 @@ test('select all, deselect, and filtering use visible checkbox rows without sema
 	vi.useFakeTimers()
 	await search('Beta')
 	await act(async () => vi.advanceTimersByTimeAsync(300))
-	expect(api.fetch).not.toHaveBeenCalled()
+	expect(aiRequests()).toEqual([])
 	vi.useRealTimers()
 	expect(checked()).toEqual([])
 	expect(document.querySelectorAll('input[type="checkbox"]')).toHaveLength(1)

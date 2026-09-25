@@ -43,23 +43,21 @@ for (const [name, Table] of [
 			await act(async () => root.unmount())
 		}
 	})
-	test(`${name} preserves both anonymous occurrences when fallback is explicit`, async () => {
+	test(`${name} keeps every anonymous occurrence as rows with the same label come and go`, async () => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		const container = document.createElement('div')
 		const root = createRoot(container)
-		try {
-			await act(async () =>
-				root.render(
-					<Table
-						rows={[
-							{ id: 'one', label: 'Same' },
-							{ id: 'two', label: 'Same' }
-						]}
-						cols={cols}
-						getOccurrenceKey={(row) => row.label}
-					/>
-				)
+		const render = (ids: Array<string>) =>
+			root.render(
+				<Table rows={ids.map((id) => ({ id, label: 'Same' }))} cols={cols} getOccurrenceKey={(row) => row.label} />
 			)
-			expect(container.querySelectorAll('input')).toHaveLength(2)
+		const shown = () => Array.from(container.querySelectorAll('input'), (input) => input.getAttribute('aria-label'))
+		try {
+			await act(async () => render(['one', 'two', 'three']))
+			await act(async () => render(['one', 'two']))
+			expect(shown()).toEqual(['one', 'two'])
+			await act(async () => render(['one', 'two', 'three']))
+			expect(shown()).toEqual(['one', 'two', 'three'])
 		} finally {
 			await act(async () => root.unmount())
 		}

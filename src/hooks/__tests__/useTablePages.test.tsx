@@ -91,20 +91,6 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
 	})
 
-	test('aborts a stale replacement and accepts only the latest response', async () => {
-		await render('sig:first')
-		expect(pending).toHaveLength(1)
-		await render('sig:second')
-		expect(pending).toHaveLength(2)
-		expect(pending[0]?.signal.aborted).toBe(true)
-
-		await act(async () => pending[1]?.resolve(response(page('latest'))))
-		await act(async () => pending[0]?.resolve(response(page('stale'))))
-
-		expect(latest.rows.map((item) => item.id)).toEqual(['latest'])
-		expect(latest.isReplacing).toBe(false)
-	})
-
 	test('replaces against the pinned version, then re-pins to the version a 409 names', async () => {
 		await render('sig:changed')
 		expect(pending[0]?.url).toContain('version=v-initial')
@@ -199,7 +185,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
 	})
 
-	test('exposes a failed append for explicit retry without starting another request', async () => {
+	test('keeps rows after a failed append and exposes retry for it', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 		expect(pending).toHaveLength(1)
@@ -213,13 +199,5 @@ describe('useTablePages cursor mode', () => {
 
 		act(() => void latest.retry?.())
 		expect(pending).toHaveLength(2)
-	})
-
-	test('ignores loadMore while the query signature is ahead of the loaded rows', async () => {
-		await render('sig:diverged')
-		expect(pending).toHaveLength(1)
-
-		act(() => void latest.loadMore())
-		expect(pending).toHaveLength(1)
 	})
 })

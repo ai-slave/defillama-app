@@ -598,7 +598,7 @@ const isStablecoinTimestampFresh = (timestamp: number, currentTimeMs: number): b
 	return getFreshStablecoinCurrentPoint([{ date: timestamp }], (point) => point.date, currentTimeMs) != null
 }
 
-const revalidateStablecoinChainsPageData = (
+export const revalidateStablecoinChainsPageData = (
 	{ pageData, latestChainTimestamps }: StablecoinChainsPageCacheEntry,
 	currentTimeMs = Date.now()
 ): PeggedChainsPageData => {

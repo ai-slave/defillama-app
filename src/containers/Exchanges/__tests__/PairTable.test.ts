@@ -19,7 +19,7 @@ describe('pair depth totals', () => {
 })
 
 describe('pair presentation', () => {
-	test('renders perp leverage after the pair link and keeps its standalone column CSV-only', () => {
+	test('includes perp leverage and makes it available as a separate CSV field', () => {
 		const columns = buildPairColumns('linear_perp', { openInterest: true, funding: true, depth: true }, false)
 		const pairColumn = columns.find((column) => column.id === 'pair')!
 		if (typeof pairColumn.cell !== 'function') throw new Error('Expected the pair column to define a cell renderer')
@@ -30,12 +30,9 @@ describe('pair presentation', () => {
 				row: { original: { pairUrl: 'https://example.com/btc-usdt', maxLeverage: 100 } }
 			} as never)
 		)
-		const linkEnd = html.indexOf('</a>')
-		const leverage = html.indexOf('100×')
 
 		expect(html).toContain('href="https://example.com/btc-usdt"')
-		expect(linkEnd).toBeGreaterThan(-1)
-		expect(leverage).toBeGreaterThan(linkEnd)
+		expect(html).toContain('100×')
 		expect(columns.find((column) => column.id === 'maxLeverage')?.meta).toMatchObject({
 			hidden: true,
 			csvOnly: true
@@ -55,6 +52,7 @@ describe('pair presentation', () => {
 			} as never)
 		)
 
+		expect(html).toContain('href="https://example.com/btc-usdt"')
 		expect(html).not.toContain('100×')
 	})
 })

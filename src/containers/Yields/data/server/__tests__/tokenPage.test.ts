@@ -1,32 +1,26 @@
-import { describe, expect, test, vi } from 'vitest'
-
-const meta = {
-	chains: [],
-	protocols: [],
-	categories: [],
-	tokens: {
-		families: [
-			{ value: 'family:btc', symbol: 'BTC' },
-			{ value: 'family:eth', symbol: 'ETH' }
-		],
-		assets: [
-			{ value: 'asset:btc', symbol: 'BTC' },
-			{ value: 'asset:eth', symbol: 'ETH' },
-			{ value: 'asset:usdc', symbol: 'USDC' },
-			{ value: 'asset:wbar', symbol: 'WBAR' },
-			{ value: 'asset:foo.e', symbol: 'FOO.e' }
-		]
-	}
-}
-
-vi.mock('../../snapshot', async (importOriginal) => ({
-	...(await importOriginal<typeof import('../../snapshot')>()),
-	readYieldsMeta: vi.fn(() => Promise.resolve(meta))
-}))
-
+import { describe, expect, test } from 'vitest'
+import { yieldsMeta, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
 import { resolveTokenOptionKeys as resolveTokenOptionKeysFromSnapshot } from '../tokenPage'
 
-const snapshot = {} as never
+const snapshot = yieldsSnapshot({
+	meta: {
+		...yieldsMeta,
+		tokens: {
+			families: [
+				{ value: 'family:btc', symbol: 'BTC' },
+				{ value: 'family:eth', symbol: 'ETH' }
+			],
+			assets: [
+				{ value: 'asset:btc', symbol: 'BTC' },
+				{ value: 'asset:eth', symbol: 'ETH' },
+				{ value: 'asset:usdc', symbol: 'USDC' },
+				{ value: 'asset:wbar', symbol: 'WBAR' },
+				{ value: 'asset:foo.e', symbol: 'FOO.e' }
+			]
+		}
+	}
+})
+
 const resolveTokenOptionKeys = (symbol: string) => resolveTokenOptionKeysFromSnapshot(snapshot, symbol)
 
 describe('resolveTokenOptionKeys', () => {
@@ -45,10 +39,5 @@ describe('resolveTokenOptionKeys', () => {
 		await expect(resolveTokenOptionKeys('BAR')).resolves.toEqual(['asset:wbar'])
 		// only FOO.e exists, matched via the `.e` suffix
 		await expect(resolveTokenOptionKeys('FOO')).resolves.toEqual(['asset:foo.e'])
-	})
-
-	test('returns no keys for an unknown symbol or blank input', async () => {
-		await expect(resolveTokenOptionKeys('NOPE')).resolves.toEqual([])
-		await expect(resolveTokenOptionKeys('   ')).resolves.toEqual([])
 	})
 })

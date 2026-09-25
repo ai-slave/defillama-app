@@ -1,128 +1,68 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const getProtocolIncomeStatementMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/containers/ProtocolOverview/queries', () => ({
-	getProtocolIncomeStatement: getProtocolIncomeStatementMock
-}))
-
-vi.mock('~/utils/metadata', () => ({
-	default: {
-		protocolMetadata: {
-			'serialized-cache-protocol': { displayName: 'Serialized Cache Protocol' }
-		}
-	}
-}))
-
+import { beforeEach, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
 import { incomeStatement } from '../server/api'
 
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+const UPSTREAM = `${V2_SERVER_URL}/metrics/financial-statement/protocol/serialized-cache-protocol`
+
 beforeEach(() => {
-	vi.clearAllMocks()
-})
-
-describe('income statement serialized response cache', () => {
-	test('isolates legacy and v2 wire shapes while sharing normalized computation', async () => {
-		const normalized = {
-			data: {
-				monthly: {
-					'2026-01': {
-						timestamp: 1_767_225_600_000,
-						values: { Revenue: { value: 42, 'by-label': { Swap: 40 } }, Expenses: { value: 2 } }
-					}
-				},
-				quarterly: {
-					'2026-Q1': {
-						timestamp: 1_767_225_600_000,
-						values: { Expenses: { value: 6 } }
-					}
-				},
-				yearly: {
-					'2026': {
-						timestamp: 1_767_225_600_000,
-						values: { Expenses: { value: 24 } }
-					}
-				},
-				cumulative: {
-					cumulative: {
-						timestamp: 1_767_225_600_000,
-						values: { Expenses: { value: 2 } }
-					}
-				}
-			},
-			labelsByType: { Revenue: ['Swap'] },
-			methodology: {},
-			breakdownMethodology: {},
-			hasOtherTokenHolderFlows: false,
-			hasTokenHolderNetIncome: false
-		}
-		getProtocolIncomeStatementMock.mockResolvedValue(normalized)
-		const legacyRequest = {
-			method: 'GET',
-			url: '/api/public/income-statement?protocol=Serialized%20Cache%20Protocol',
-			query: { protocol: 'Serialized Cache Protocol' },
-			headers: {}
-		}
-		const v2Request = {
-			...legacyRequest,
-			url: `${legacyRequest.url}&version=2`,
-			query: { ...legacyRequest.query, version: '2' }
-		}
-
-		const v2First = await incomeStatement.handle(v2Request)
-		const legacyFirst = await incomeStatement.handle(legacyRequest)
-		const v2Second = await incomeStatement.handle(v2Request)
-		const legacySecond = await incomeStatement.handle(legacyRequest)
-		const legacy = {
-			...normalized,
-			data: {
-				monthly: {
-					'2026-01': {
-						Revenue: { value: 42, 'by-label': { Swap: 40 } },
-						Expenses: { value: 2 },
-						timestamp: 1_767_225_600_000
-					}
-				},
-				quarterly: {
-					'2026-Q1': {
-						Expenses: { value: 6 },
-						timestamp: 1_767_225_600_000
-					}
-				},
-				yearly: {
-					'2026': {
-						Expenses: { value: 24 },
-						timestamp: 1_767_225_600_000
-					}
-				},
-				cumulative: {
-					cumulative: {
-						Expenses: { value: 2, 'by-label': {} },
-						timestamp: 1_767_225_600_000
-					}
-				}
+	metadata.seed({
+		protocolMetadata: {
+			'serialized-cache-protocol': {
+				name: 'serialized-cache-protocol',
+				displayName: 'Serialized Cache Protocol',
+				fees: true,
+				revenue: true
 			}
 		}
-
-		expect(v2First).toMatchObject({
-			status: 200,
-			serializedJson: JSON.stringify(normalized)
-		})
-		expect(legacyFirst).toMatchObject({ status: 200, serializedJson: JSON.stringify(legacy) })
-		expect(v2First).not.toEqual(legacyFirst)
-		expect(v2Second).toEqual(v2First)
-		expect(legacySecond).toEqual(legacyFirst)
-		expect(getProtocolIncomeStatementMock).toHaveBeenCalledTimes(1)
 	})
-
-	test('rejects unsupported response versions before computing data', async () => {
-		const result = await incomeStatement.handle({
-			method: 'GET',
-			url: '/api/public/income-statement?protocol=Serialized%20Cache%20Protocol&version=3',
-			query: { protocol: 'Serialized Cache Protocol', version: '3' },
-			headers: {}
-		})
-
-		expect(result).toMatchObject({ status: 400, body: { error: 'Invalid version: 3' } })
-		expect(getProtocolIncomeStatementMock).not.toHaveBeenCalled()
+	http.serve({
+		[UPSTREAM]: {
+			aggregates: {
+				monthly: { '2026-01': { Revenue: { value: 42, 'by-label': { Swap: 40 } } } },
+				quarterly: {},
+				yearly: {}
+			}
+		}
 	})
+})
+
+function request(version?: string) {
+	const query: Record<string, string> = { protocol: 'Serialized Cache Protocol' }
+	if (version) query.version = version
+	return {
+		method: 'GET',
+		url: `/api/public/income-statement?protocol=Serialized%20Cache%20Protocol${version ? `&version=${version}` : ''}`,
+		query,
+		headers: {}
+	}
+}
+
+test('serves v2 periods with nested values and legacy periods with flattened values from one upstream fetch', async () => {
+	const v2 = await incomeStatement.handle(request('2'))
+	const legacy = await incomeStatement.handle(request())
+	expect([v2.status, legacy.status]).toEqual([200, 200])
+
+	const v2Month = JSON.parse((v2 as { serializedJson: string }).serializedJson).data.monthly['2026-01']
+	const legacyMonth = JSON.parse((legacy as { serializedJson: string }).serializedJson).data.monthly['2026-01']
+	expect(v2Month).toEqual({
+		timestamp: Date.parse('2026-01'),
+		values: { Revenue: { value: 42, 'by-label': { Swap: 40 } } }
+	})
+	expect(legacyMonth).toEqual({ timestamp: Date.parse('2026-01'), Revenue: { value: 42, 'by-label': { Swap: 40 } } })
+
+	expect(await incomeStatement.handle(request('2'))).toEqual(v2)
+	expect(await incomeStatement.handle(request())).toEqual(legacy)
+	expect(http.requests).toHaveLength(1)
+})
+
+test('rejects unsupported response versions before fetching data', async () => {
+	expect(await incomeStatement.handle(request('3'))).toMatchObject({
+		status: 400,
+		body: { error: 'Invalid version: 3' }
+	})
+	expect(http.requests).toHaveLength(0)
 })

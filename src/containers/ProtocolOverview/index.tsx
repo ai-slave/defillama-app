@@ -12,9 +12,9 @@ import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import { AdditionalInfo } from './AdditionalInfo'
-import { resolveProtocolChartDenomination } from './chartQuery'
+import { formatProtocolSummaryValue, resolveProtocolChartDenomination } from './chartQuery'
 import { getPrimaryValueLabelType, useFinalTVL } from './helpers'
 import { InviteBanner } from './InviteBanner'
 import { KeyMetrics } from './KeyMetrics'
@@ -37,24 +37,12 @@ export function ProtocolOverview(props: IProtocolOverviewPageData) {
 		props.chartDenominations[1]?.geckoId ?? undefined
 	)
 
-	const formatPrice = (value: number | null): string | number | null => {
-		if (value == null) return null
-
-		if (
-			!fetchingChainPrice &&
-			chainPrice?.price != null &&
-			chainPrice.price !== 0 &&
-			props.chartDenominations[1]?.symbol &&
-			props.chartDenominations[1].symbol === selectedDenomination
-		) {
-			return `${formatCompactNumber(value / chainPrice.price, {
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})} ${chainPrice.symbol}`
-		}
-
-		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-	}
+	const formatPrice = (value: number | null): string | number | null =>
+		formatProtocolSummaryValue(value, {
+			selectedDenomination,
+			tokenSymbol: props.chartDenominations[1]?.symbol,
+			tokenPrice: fetchingChainPrice ? null : chainPrice
+		})
 	const linkPreviewMetric = props.isOracleProtocol ? oracleTvs : hasTvlData ? tvl : null
 	const linkPreviewTvl =
 		linkPreviewMetric == null

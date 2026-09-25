@@ -113,7 +113,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		await expect(emptyCoordinator.acquire('yields', 'blocking')).rejects.toBe(failure)
 	})
 
-	test('returns stale immediately while a successful background refresh publishes the next version', async () => {
+	test('returns stale in background mode and publishes the next version in the background', async () => {
 		const builder = vi.fn().mockResolvedValue(undefined)
 		const previous = handle('old', 1)
 		const store = new FakeStore(previous)

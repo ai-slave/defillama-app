@@ -97,15 +97,23 @@ describe('sendClaimToDiscord', () => {
 		)
 	})
 
-	test('does nothing when the webhook is missing or not an official Discord webhook URL', async () => {
-		const fetchMock = vi.fn()
+	test('posts only to official Discord webhook hosts', async () => {
+		const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchMock)
 
-		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', '')
-		await sendClaimToDiscord(claim, 'utr', { ok: true })
-		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://example.com/api/webhooks/123/token')
-		await sendClaimToDiscord(claim, 'utr', { ok: true })
+		for (const webhook of [
+			'',
+			'https://example.com/api/webhooks/123/token',
+			'https://discordapp.com/api/webhooks/123/token',
+			'https://canary.discord.com/api/webhooks/123/token'
+		]) {
+			vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', webhook)
+			await sendClaimToDiscord(claim, 'utr', { ok: true })
+		}
 
-		expect(fetchMock).not.toHaveBeenCalled()
+		expect(fetchMock.mock.calls.map(([url]) => new URL(String(url)).host)).toEqual([
+			'discordapp.com',
+			'canary.discord.com'
+		])
 	})
 })

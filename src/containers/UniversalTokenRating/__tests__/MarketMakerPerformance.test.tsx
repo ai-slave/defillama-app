@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { MarketMakerPerformance } from '../MarketMakerPerformance'
 
 describe('MarketMakerPerformance', () => {
-	test('keeps the liquidity provider section and score cards visible without data', () => {
+	test('says the data is not disclosed when no provider data exists', () => {
 		const html = renderToStaticMarkup(
 			<MarketMakerPerformance
 				metrics={null}
@@ -15,11 +15,10 @@ describe('MarketMakerPerformance', () => {
 			/>
 		)
 
-		expect(html).toContain('Performance Overview: Liquidity Providers')
 		expect(html).toContain('Data not disclosed')
-		expect(html).toContain('Market Maker Volume')
-		expect(html).toContain('Market Maker Depth')
-		expect(html).toContain('Market Maker Uptime / KPI Adherence')
+		expect(html).not.toContain('Performance Summary')
+		// Without data the N/A insight cards stay hidden too.
+		expect(html).not.toContain('Performance Insights')
 	})
 
 	test('renders provider summary fields from the Forgd asset payload', () => {

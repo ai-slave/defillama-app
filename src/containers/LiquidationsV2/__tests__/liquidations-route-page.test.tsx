@@ -1,9 +1,15 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
-vi.mock('~/constants', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/constants')>()),
-	SKIP_BUILD_STATIC_GENERATION: false
-}))
+// Constants read the env at import time; build-time path generation is off unless this is false.
+const originalSkip = vi.hoisted(() => {
+	const value = process.env.SKIP_BUILD_STATIC_GENERATION
+	process.env.SKIP_BUILD_STATIC_GENERATION = 'false'
+	return value
+})
+afterAll(() => {
+	if (originalSkip === undefined) delete process.env.SKIP_BUILD_STATIC_GENERATION
+	else process.env.SKIP_BUILD_STATIC_GENERATION = originalSkip
+})
 
 vi.mock('~/layout', () => ({
 	default: () => null
@@ -20,19 +26,6 @@ vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getLiquidationsSitemapProtocolChains: vi.fn()
 }))
 
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: {
-		chainMetadata: {
-			arbitrum: { id: 'arbitrum', name: 'Arbitrum One' }
-		},
-		protocolMetadata: {
-			makerdao: { name: 'makerdao', displayName: 'Sky' }
-		}
-	},
-	refreshMetadataIfStale: vi.fn().mockResolvedValue(undefined)
-}))
-
 import {
 	getLiquidationsProtocolsList,
 	getLiquidationsSitemapProtocolChains
@@ -40,6 +33,9 @@ import {
 import * as chainPage from '~/pages/liquidations/[protocol]/[chain]'
 import * as protocolPage from '~/pages/liquidations/[protocol]/index'
 import * as overviewPage from '~/pages/liquidations/index'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+
+const { seed } = installMetadataSeeder()
 
 const mockedGetLiquidationsProtocolsList = getLiquidationsProtocolsList as unknown as ReturnType<typeof vi.fn>
 const mockedGetLiquidationsSitemapProtocolChains = getLiquidationsSitemapProtocolChains as unknown as ReturnType<
@@ -47,7 +43,10 @@ const mockedGetLiquidationsSitemapProtocolChains = getLiquidationsSitemapProtoco
 >
 
 beforeEach(() => {
-	vi.clearAllMocks()
+	seed({
+		chainMetadata: { arbitrum: { id: 'arbitrum', name: 'Arbitrum One' } },
+		protocolMetadata: { makerdao: { name: 'makerdao', displayName: 'Sky' } }
+	} as never)
 	mockedGetLiquidationsProtocolsList.mockResolvedValue({
 		protocols: ['makerdao']
 	})
@@ -82,7 +81,6 @@ describe('liquidations SSG routes', () => {
 				}
 			})
 		)
-		expect(mockedGetLiquidationsProtocolsList).toHaveBeenCalledOnce()
 	})
 
 	test('returns notFound for an invalid protocol slug', async () => {
@@ -119,8 +117,6 @@ describe('liquidations SSG routes', () => {
 				}
 			})
 		)
-		expect(mockedGetLiquidationsSitemapProtocolChains).toHaveBeenCalledOnce()
-		expect(mockedGetLiquidationsProtocolsList).not.toHaveBeenCalled()
 	})
 
 	test('returns notFound for an invalid chain slug', async () => {

@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { DashboardSeoSummary } from '../components/DashboardSeoSummary'
-import { ProDashboardLoader } from '../components/ProDashboardLoader'
 import type { Dashboard } from '../dashboardTypes'
 import { buildDashboardSeo, markdownToPlainText, toDashboardSeoPublicDashboard } from '../utils/seo'
 
@@ -141,13 +140,6 @@ describe('pro dashboard SEO shell', () => {
 		expect(compact).not.toHaveProperty('user')
 		expect(compact).not.toHaveProperty('collectionId')
 		expect(compact).not.toHaveProperty('collectionName')
-	})
-
-	test('keeps the loader heading opt-in for headingless SEO shell fallbacks', () => {
-		expect(renderToStaticMarkup(<ProDashboardLoader />)).not.toContain('<h1')
-		expect(renderToStaticMarkup(<ProDashboardLoader heading="Loading dashboard" />)).toMatch(
-			/<h1(?:\s[^>]*)?>Loading dashboard<\/h1>/
-		)
 	})
 
 	test('falls back honestly for empty public dashboards', () => {

@@ -9,7 +9,7 @@ import { Icon } from '~/ui/Icon'
 import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formatDate } from '~/utils/dateFormat'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getProtocolBridgeVolumeMetrics } from './chartSeries.utils'
 import { getPrimaryValueLabelType } from './helpers'
 import { getOffchainCostDisclosure } from './offchainCosts'
@@ -204,6 +204,26 @@ function buildStandardVolumeMetrics(
 	return metrics
 }
 
+export function buildStandardMetricSections(
+	props: IKeyMetricsProps,
+	primaryMetricSource: string | undefined
+): Array<{ dataType: string; metrics: Array<VolumeMetric> }> {
+	const sections: Array<{ dataType: string; metrics: Array<VolumeMetric> }> = []
+	for (const config of STANDARD_METRICS) {
+		if (config.dataProp === primaryMetricSource) continue
+		const data = props[config.dataProp]
+		if (!data) continue
+		const metrics = buildStandardVolumeMetrics(data, config.definitionKey, config.label)
+		if (metrics.length > 0) sections.push({ dataType: config.dataType, metrics })
+	}
+	return sections
+}
+
+// A share of a zero or missing total would render as Infinity% or NaN%.
+export function getSharePercent(part: number | null, total: number | null): number | null {
+	return part != null && total != null && total > 0 ? (part / total) * 100 : null
+}
+
 function extractChainValues(
 	cb: Record<
 		string,
@@ -253,23 +273,16 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 				<HoldersRevenue {...props} />
 				<Incentives {...props} />
 				<Earnings {...props} />
-				{STANDARD_METRICS.map((config) => {
-					if (config.dataProp === primaryMetricOverride?.source) return null
-					const data = props[config.dataProp]
-					if (!data) return null
-					const metrics = buildStandardVolumeMetrics(data, config.definitionKey, config.label)
-					if (metrics.length === 0) return null
-					return (
-						<SmolStats
-							key={config.dataType}
-							data={metrics}
-							protocolName={props.name}
-							formatPrice={props.formatPrice}
-							openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
-							dataType={config.dataType}
-						/>
-					)
-				})}
+				{buildStandardMetricSections(props, primaryMetricOverride?.source).map(({ dataType, metrics }) => (
+					<SmolStats
+						key={dataType}
+						data={metrics}
+						protocolName={props.name}
+						formatPrice={props.formatPrice}
+						openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
+						dataType={dataType}
+					/>
+				))}
 				{props.openInterest?.total24h != null ? (
 					<SmolStats
 						data={[
@@ -295,21 +308,11 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 						label="Staked"
 						valueClassName="ml-auto"
 						value={
-							props.tokenCGData?.marketCap?.current != null && props.tokenCGData.marketCap.current > 0 ? (
-								<span className="flex items-center gap-1">
-									<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
-									<span className="text-xs text-tertiary">
-										(
-										{formatCompactNumber(
-											(props.currentTvlByChain.staking / props.tokenCGData.marketCap.current) * 100,
-											{ minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }
-										)}
-										% of mcap)
-									</span>
-								</span>
-							) : (
-								<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
-							)
+							<StakedValue
+								staking={props.currentTvlByChain.staking}
+								marketCap={props.tokenCGData?.marketCap?.current ?? null}
+								formatPrice={props.formatPrice}
+							/>
 						}
 					/>
 				) : null}
@@ -334,6 +337,25 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 				/>
 			</KeyMetricsFooter>
 		</div>
+	)
+}
+
+function StakedValue({
+	staking,
+	marketCap,
+	formatPrice
+}: {
+	staking: number
+	marketCap: number | null
+	formatPrice: IKeyMetricsProps['formatPrice']
+}) {
+	const share = getSharePercent(staking, marketCap)
+	if (share == null) return <span className="font-jetbrains">{formatPrice(staking)}</span>
+	return (
+		<span className="flex items-center gap-1">
+			<span className="font-jetbrains">{formatPrice(staking)}</span>
+			<span className="text-xs text-tertiary">({formatPercent(share, { input: 'percent' })} of mcap)</span>
+		</span>
 	)
 }
 
@@ -407,7 +429,7 @@ type ChainBreakdownMap = Record<
 	{ total24h: number | null; total7d: number | null; total30d: number | null; totalAllTime: number | null }
 > | null
 
-const buildMetrics = (
+export const buildMetrics = (
 	data: MetricConfig,
 	defs: MetricDefinition,
 	label: string,
@@ -564,12 +586,10 @@ function Incentives(props: IKeyMetricsProps) {
 	)
 }
 
-function Earnings(props: IKeyMetricsProps) {
-	const revenue = props.revenue
-	const incentivesData = props.incentives
-
-	if (!incentivesData && !revenue) return null
-
+export function buildEarningsMetrics(
+	revenue: IKeyMetricsProps['revenue'],
+	incentivesData: IKeyMetricsProps['incentives']
+): Array<VolumeMetric> {
 	const earnings24h =
 		revenue?.total24h != null && incentivesData?.emissions24h != null
 			? revenue.total24h - incentivesData.emissions24h
@@ -623,6 +643,11 @@ function Earnings(props: IKeyMetricsProps) {
 		})
 	}
 
+	return metrics
+}
+
+function Earnings(props: IKeyMetricsProps) {
+	const metrics = buildEarningsMetrics(props.revenue, props.incentives)
 	if (metrics.length === 0) return null
 
 	return (
@@ -916,6 +941,7 @@ function Expenses(props: IKeyMetricsProps) {
 
 function TokenCGData(props: IKeyMetricsProps) {
 	if (!props.tokenCGData) return null
+	const dexVolumeShare = getSharePercent(props.tokenCGData.volume24h.dex, props.tokenCGData.volume24h.total)
 	const priceLabel = `${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`
 	const linkedPriceLabel = props.token?.tokenPageRoute ? (
 		<BasicLink href={props.token.tokenPageRoute} className="text-link hover:underline">
@@ -982,10 +1008,10 @@ function TokenCGData(props: IKeyMetricsProps) {
 								<span className="font-jetbrains">
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
-								{props.tokenCGData.volume24h.dex != null && props.tokenCGData.volume24h.total > 0 ? (
+								{dexVolumeShare != null ? (
 									<span className="text-xs text-tertiary">
 										(
-										{formatCompactNumber((props.tokenCGData.volume24h.dex / props.tokenCGData.volume24h.total) * 100, {
+										{formatCompactNumber(dexVolumeShare, {
 											minimumCompactValue: 1_000_000,
 											compactSuffix: 'lowercase'
 										})}

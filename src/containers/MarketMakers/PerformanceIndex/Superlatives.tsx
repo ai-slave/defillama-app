@@ -42,6 +42,17 @@ function Card({ label, winner, value }: { label: string; winner: AggregatedMetri
 	)
 }
 
+// Spread is the one superlative where lower wins.
+export function superlativeLeaders(aggregated: Record<string, AggregatedMetrics>) {
+	const rows = Object.values(aggregated)
+	return {
+		depth: leader(rows, (r) => r.bidAskDepth?.value, 'max'),
+		volume: leader(rows, (r) => r.dailyFillVolume?.value, 'max'),
+		spread: leader(rows, (r) => r.topOfBookSpread?.value, 'min'),
+		uptime: leader(rows, (r) => r.combinedUptime?.value, 'max')
+	}
+}
+
 export function Superlatives({
 	aggregated,
 	period
@@ -49,12 +60,7 @@ export function Superlatives({
 	aggregated: Record<string, AggregatedMetrics>
 	period: string
 }) {
-	const rows = Object.values(aggregated)
-
-	const topDepth = leader(rows, (r) => r.bidAskDepth?.value, 'max')
-	const topVolume = leader(rows, (r) => r.dailyFillVolume?.value, 'max')
-	const topSpread = leader(rows, (r) => r.topOfBookSpread?.value, 'min')
-	const topUptime = leader(rows, (r) => r.combinedUptime?.value, 'max')
+	const { depth: topDepth, volume: topVolume, spread: topSpread, uptime: topUptime } = superlativeLeaders(aggregated)
 
 	return (
 		<UICard padding="none" className="overflow-hidden">

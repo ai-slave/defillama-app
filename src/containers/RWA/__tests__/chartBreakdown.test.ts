@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
 	getRwaChartFilterNote,
-	getRwaChartGroupLabel,
 	getRwaChartViewOptions,
 	getRwaFlowSplitBy,
 	getRwaPerpsChartMetricOptions,
@@ -36,19 +35,6 @@ describe('getRwaTreemapParentGrouping', () => {
 			'category',
 			'assetName',
 			'assetName'
-		])
-	})
-})
-
-describe('getRwaChartGroupLabel', () => {
-	test('names the axis the way the table does, with None reading as the asset', () => {
-		expect(RWA_GROUP_BY_OPTIONS.map(getRwaChartGroupLabel)).toEqual([
-			'Platform',
-			'Chain',
-			'Asset Group',
-			'Category',
-			'Asset',
-			'Asset'
 		])
 	})
 })

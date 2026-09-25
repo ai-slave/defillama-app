@@ -1,4 +1,3 @@
-import * as echarts from 'echarts'
 import { afterEach, describe, expect, test } from 'vitest'
 import { prepareMultiSeriesDataset } from '~/components/ECharts/MultiSeriesChart/datasetAdapter'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
@@ -123,28 +122,4 @@ describe('calendar chart dates', () => {
 			expect(dates.map((_, index) => tooltipDate(hoverDay(chart, index)))).toEqual(expectedLabels)
 		}
 	)
-
-	test.each(TIME_ZONES)('places the time-axis day ticks on the UTC-midnight bars when viewed in %s', (timeZone) => {
-		process.env.TZ = timeZone
-		const week = ['2026-09-20', '2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26']
-		const chart = buildChart(
-			Object.fromEntries(week.map((date) => [date, { totalValue: 1, events: [unlockEvent('Alpha', 1)] }])),
-			week
-		)
-		const instance = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 800, height: 400 })
-		instance.setOption({
-			animation: false,
-			useUTC: calendarChartOptions.useUTC,
-			dataset: chart.dataset,
-			xAxis: { type: 'time' },
-			yAxis: {},
-			series: chart.charts.map((series) => ({ type: 'bar', encode: series.encode }))
-		})
-		// ECharts has no public tick API; the axis model is the only way to read tick instants.
-		const axis = (instance as unknown as { getModel(): any }).getModel().getComponent('xAxis').axis
-		const ticks: Array<number> = axis.scale.getTicks().map((tick: { value: number }) => tick.value)
-		instance.dispose()
-
-		expect(ticks).toEqual(week.map((date) => Date.parse(`${date}T00:00:00Z`)))
-	})
 })

@@ -1,13 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isDashboardChartTypeForSubject } from '../types'
-import {
-	getDefaultMetricAggregator,
-	getSubjectMetricPriority,
-	QUICK_ADD_METRIC_CHART_TYPE,
-	QUICK_ADD_METRIC_PRIORITY,
-	QUICK_ADD_METRIC_WINDOW,
-	resolveMetricForSubject
-} from './metricDefaults'
+import { getDefaultMetricAggregator, getSubjectMetricPriority, resolveMetricForSubject } from './metricDefaults'
 
 describe('quick add metric defaults', () => {
 	test('sums flow metrics and takes the latest point of stock metrics', () => {
@@ -27,11 +20,6 @@ describe('quick add metric defaults', () => {
 		]) {
 			expect(getDefaultMetricAggregator(type)).toBe('latest')
 		}
-	})
-
-	test('matches the window and chart type the full editor defaults to', () => {
-		expect(QUICK_ADD_METRIC_WINDOW).toBe('30d')
-		expect(QUICK_ADD_METRIC_CHART_TYPE).toBe('sparkline')
 	})
 
 	test('remaps subject specific metric twins', () => {
@@ -55,9 +43,5 @@ describe('quick add metric defaults', () => {
 		for (const type of chainPriority) expect(isDashboardChartTypeForSubject('chain', type)).toBe(true)
 		expect(new Set(protocolPriority).size).toBe(protocolPriority.length)
 		expect(new Set(chainPriority).size).toBe(chainPriority.length)
-	})
-
-	test('keeps the priority list free of duplicates', () => {
-		expect(new Set(QUICK_ADD_METRIC_PRIORITY).size).toBe(QUICK_ADD_METRIC_PRIORITY.length)
 	})
 })

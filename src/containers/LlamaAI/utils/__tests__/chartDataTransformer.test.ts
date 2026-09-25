@@ -199,25 +199,32 @@ function makeLegacyTimestampChart(): AdaptedLlamaAICartesianChart {
 }
 
 describe('ChartDataTransformer', () => {
-	test('reuses canonical data when no view transform is active', () => {
-		const chart = makeAscendingBarChart()
-		const transformed = ChartDataTransformer.applyViewState(chart, { ...viewState, percentage: false }, capabilities)
+	test('with percentage and stacking off, the chart shows its raw values', () => {
+		const transformed = ChartDataTransformer.applyViewState(
+			makeAscendingBarChart(),
+			{ ...viewState, percentage: false },
+			capabilities
+		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		expect(transformed).toBe(chart)
-		expect(transformed.props.dataset.source).toBe(chart.props.dataset.source)
+		expect(transformed.props.dataset.source).toEqual([
+			[Date.UTC(2026, 0, 1), 10],
+			[Date.UTC(2026, 1, 1), 20],
+			[Date.UTC(2026, 2, 1), 30]
+		])
+		expect(transformed.props.charts?.map((series) => series.stack)).toEqual([undefined])
 	})
 
-	test('reuses canonical rows when stacking changes only series presentation', () => {
-		const chart = makeMixedAxisChart('time')
+	test('stacking stacks the primary-axis series only and leaves the values alone', () => {
 		const transformed = ChartDataTransformer.applyViewState(
-			chart,
+			makeMixedAxisChart('time'),
 			{ ...viewState, percentage: false, stacked: true },
 			{ ...capabilities, allowStack: true }
 		)
+		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		expect(transformed).not.toBe(chart)
-		expect(transformed.props.dataset.source).toBe(chart.props.dataset.source)
-		expect(transformed.props.charts).not.toBe(chart.props.charts)
+		expect(transformed.props.charts?.map((series) => series.stack)).toEqual(['total', 'total', undefined])
+		expect(transformed.props.dataset.source).toEqual([[Date.UTC(2026, 0, 1), 20, 30, 5]])
 	})
 
 	test('keeps the configured series order when stacking instead of re-sorting by magnitude', () => {
@@ -530,21 +537,5 @@ describe('ChartDataTransformer', () => {
 			[Date.UTC(2026, 2, 1), 60],
 			[Date.UTC(2026, 3, 1), 100]
 		])
-	})
-
-	test('leaves log-axis policy to the renderer', () => {
-		const chart = makeMixedAxisChart('time')
-		chart.props.chartOptions = { yAxis: [{ min: 0 }, { min: 0 }] } as any
-
-		const transformed = ChartDataTransformer.applyViewState(
-			chart,
-			{ ...viewState, percentage: false, logScale: true },
-			{ ...capabilities, allowPercentage: false, allowLogScale: true, logEligibleYAxes: [0] }
-		)
-		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
-
-		const yAxis = transformed.props.chartOptions?.yAxis as unknown as Array<any>
-
-		expect(yAxis).toEqual([{ min: 0 }, { min: 0 }])
 	})
 })

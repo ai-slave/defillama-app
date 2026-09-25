@@ -23,7 +23,7 @@ afterEach(() => {
 const payload = { Key: 'snapshot:hash', Body: Buffer.from('compressed snapshot'), ContentType: 'application/json+gzip' }
 
 describe('setImmutableCache', () => {
-	test('sends the blob and minimum TTL in one atomic Redis operation', async () => {
+	test('sends the base64 blob and the TTL in seconds to the Redis retain script', async () => {
 		const { setImmutableCache } = await import('../cache-client')
 		redisMocks.eval.mockResolvedValue(1)
 		expect(await setImmutableCache(payload, 1800)).toBe(true)

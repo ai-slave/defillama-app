@@ -1,38 +1,30 @@
-import type { NextApiHandler } from 'next'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { installTelemetrySink } from '~/utils/test/telemetry'
 
-const { fetchCexs, recordRouteRuntimeError } = vi.hoisted(() => ({
-	fetchCexs: vi.fn(),
-	recordRouteRuntimeError: vi.fn()
-}))
-
-vi.mock('~/containers/Cexs/api', () => ({ fetchCexs }))
-vi.mock('./analytics', () => ({
-	getCexAnalyticsMarketShare: vi.fn(),
-	getCexAnalyticsSnapshot: vi.fn(),
-	getCexAnalyticsTotals: vi.fn()
-}))
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError,
-	withApiRouteTelemetry: (_route: string, handler: NextApiHandler) => handler
+vi.mock('~/server/db/llama', () => ({
+	llamaDb: {
+		query: () => {
+			throw new Error('Unexpected database request')
+		}
+	}
 }))
 
 import { cexDatasetApiHandler } from './datasetApi'
 
-describe('/api/dynamic/cexs', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-	})
+const telemetry = installTelemetrySink()
 
+describe('/api/dynamic/cexs', () => {
 	test('keeps unavailable assets null and measured zero distinct', async () => {
-		fetchCexs.mockResolvedValue({
-			cexs: [
-				{ name: 'Unavailable' },
-				{ name: 'Measured zero', currentTvl: 0, cleanAssetsTvl: 0, inflows_24h: 0 },
-				{ name: 'Measured assets', currentTvl: 20, cleanAssetsTvl: 10, inflows_24h: 5 }
-			],
-			cg_volume_cexs: []
+		telemetry.serve({
+			'/cexs': {
+				cexs: [
+					{ name: 'Unavailable' },
+					{ name: 'Measured zero', currentTvl: 0, cleanAssetsTvl: 0, inflows_24h: 0 },
+					{ name: 'Measured assets', currentTvl: 20, cleanAssetsTvl: 10, inflows_24h: 5 }
+				],
+				cg_volume_cexs: []
+			}
 		})
 		const req = createMockNextApiRequest({ method: 'GET' })
 		const res = createMockNextApiResponse()
@@ -49,13 +41,25 @@ describe('/api/dynamic/cexs', () => {
 
 	test('returns an error when the whole CEX source fails', async () => {
 		const error = new Error('source unavailable')
-		fetchCexs.mockRejectedValue(error)
+		telemetry.serve({
+			'/cexs': () => {
+				throw error
+			}
+		})
 		const req = createMockNextApiRequest({ method: 'GET' })
 		const res = createMockNextApiResponse()
 
 		await cexDatasetApiHandler(req, res)
 
-		expect(recordRouteRuntimeError).toHaveBeenCalledWith(error, 'apiRoute')
+		expect(await telemetry.events()).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: 'runtime_error',
+					phase: 'apiRoute',
+					error_message: expect.stringContaining(error.message)
+				})
+			])
+		)
 		expect(res.status).toHaveBeenCalledWith(500)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch cex data' })
 	})

@@ -56,19 +56,20 @@ describe('UpcomingEvent amount presentation', () => {
 	})
 
 	test('keeps cliff amounts and weekly rates in separate summaries', () => {
-		const markup = renderEvent([cliff(5), linear(10, 20)])
+		const text = renderEvent([cliff(5), linear(10, 20)])
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
 
-		expect(markup).toContain('Cliff Unlock')
-		expect(markup).toContain('Weekly Unlock Rate')
-		expect(markup).not.toContain('Total')
+		expect(text).toContain('Cliff Unlock $10 0.5%')
+		expect(text).toContain('Weekly Unlock Rate $40 / week 2%')
 	})
 
-	test('keeps float percentages emphasized beside table summaries', () => {
-		const markup = renderEvent([cliff(5), linear(10, 20)], false)
+	test('shows each table summary as a share of float', () => {
+		const text = renderEvent([cliff(5), linear(10, 20)], false)
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/\s+/g, ' ')
 
-		expect(markup).toContain('mono-sm-bold text-primary">1%</span>')
-		expect(markup).toContain('mono-sm-bold text-primary">4%</span>')
-		expect(markup.match(/>of float<\/span>/g)).toHaveLength(2)
+		expect(text.match(/\d+% of float/g)).toEqual(['1% of float', '4% of float'])
 	})
 
 	test('preserves known zero while leaving an unknown-only amount unavailable', () => {

@@ -29,27 +29,26 @@ async function tickAt(value: string) {
 	vi.setSystemTime(new Date(value).getTime() - 30_000)
 	await act(async () => vi.advanceTimersByTime(30_000))
 }
-function expectFreshness(text: string, color: string, title: string) {
+function expectFreshness(text: string, title: string) {
 	expect(container.textContent).toBe(`Updated ${text}`)
 	expect(container.firstElementChild?.getAttribute('title')).toBe(title)
-	expect(container.querySelector('[aria-hidden]')?.classList.contains(color)).toBe(true)
 }
 
 test('updates an idle badge at minute, 24-hour, and 48-hour boundaries', async () => {
 	await render()
-	expectFreshness('just now', 'bg-success', 'Data is fresh (updated within 24h)')
+	expectFreshness('just now', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-12T00:01:00Z')
-	expectFreshness('1min ago', 'bg-success', 'Data is fresh (updated within 24h)')
+	expectFreshness('1min ago', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-12T23:59:30Z')
-	expectFreshness('23h ago', 'bg-success', 'Data is fresh (updated within 24h)')
+	expectFreshness('23h ago', 'Data is fresh (updated within 24h)')
 	await tickAt('2026-09-13T00:00:00Z')
-	expectFreshness('1d ago', 'bg-warning', 'Data is older than 24h')
+	expectFreshness('1d ago', 'Data is older than 24h')
 	await tickAt('2026-09-13T23:59:30Z')
-	expectFreshness('1d ago', 'bg-warning', 'Data is older than 24h')
+	expectFreshness('1d ago', 'Data is older than 24h')
 	await tickAt('2026-09-14T00:00:00Z')
-	expectFreshness('2d ago', 'bg-error', 'Data is older than 48h')
+	expectFreshness('2d ago', 'Data is older than 48h')
 	await render('2026-09-14T00:00:00Z')
-	expectFreshness('just now', 'bg-success', 'Data is fresh (updated within 24h)')
+	expectFreshness('just now', 'Data is fresh (updated within 24h)')
 })
 
 test('renders the same absolute timestamp on the server regardless of clock time', () => {

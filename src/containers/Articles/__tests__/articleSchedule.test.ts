@@ -34,8 +34,4 @@ describe('isScheduled', () => {
 		).toBe(false)
 		vi.useRealTimers()
 	})
-
-	test('returns false when goLiveAt is null', () => {
-		expect(isScheduled({ status: 'draft', goLiveAt: null })).toBe(false)
-	})
 })

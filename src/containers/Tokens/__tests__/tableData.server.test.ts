@@ -1,6 +1,9 @@
 import { promisify } from 'node:util'
-import { gzip } from 'node:zlib'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { gzip, gunzip } from 'node:zlib'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import type { SharedTokensMarketSnapshot } from '../server/tableData.server'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
@@ -9,29 +12,35 @@ const cacheMocks = vi.hoisted(() => ({
 	setObjectCache: vi.fn()
 }))
 vi.mock('~/utils/cache-client', () => cacheMocks)
-vi.mock(import('~/utils/telemetry'), async (importOriginal) => ({
-	...(await importOriginal()),
-	recordRuntimeError: vi.fn()
-}))
 const upstreamMocks = vi.hoisted(() => ({
-	fetchCoinGeckoTokensListFromDataset: vi.fn(),
 	fetchTokenMarketsList: vi.fn()
-}))
-vi.mock('~/api/coingecko', () => ({
-	fetchCoinGeckoTokensListFromDataset: upstreamMocks.fetchCoinGeckoTokensListFromDataset
 }))
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	fetchTokenMarketsList: upstreamMocks.fetchTokenMarketsList
 }))
-vi.mock('~/utils/metadata', () => ({
-	__esModule: true,
-	default: { protocolMetadata: {}, tokenDirectory: {}, emissionsSupplyMetrics: {} },
-	refreshMetadataInBackgroundIfStale: vi.fn()
-}))
-
 import { getTokensMarketSnapshot } from '../server/tableData.server'
 
 const gzipAsync = promisify(gzip)
+const gunzipAsync = promisify(gunzip)
+const published = new Map<string, unknown>()
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+beforeEach(() => {
+	published.clear()
+	cacheMocks.setCache.mockImplementation(async (payload: { Key: string; Body: Buffer }) => {
+		published.set(payload.Key, payload.Body)
+		return true
+	})
+	cacheMocks.setObjectCache.mockImplementation(async (key: string, body: unknown) => {
+		published.set(key, body)
+		return true
+	})
+	// Keep seeded metadata stable while advancing the clock across cache windows.
+	vi.stubEnv('NODE_ENV', 'development')
+	vi.stubEnv('API_KEY', '')
+	metadata.seed({ protocolMetadata: {}, tokenDirectory: {}, emissionsSupplyMetrics: {} })
+})
+
 const WINDOW_MS = 5 * 60 * 1000
 
 async function blobFor(value: unknown) {
@@ -42,7 +51,7 @@ async function blobFor(value: unknown) {
 	}
 }
 
-function storedSnapshot(version: string, generatedAt: number) {
+function storedSnapshot(version: string, generatedAt: number): SharedTokensMarketSnapshot {
 	return {
 		version,
 		generatedAt,
@@ -54,6 +63,7 @@ function storedSnapshot(version: string, generatedAt: number) {
 
 afterEach(() => {
 	vi.useRealTimers()
+	vi.unstubAllEnvs()
 	vi.resetAllMocks()
 })
 
@@ -69,7 +79,7 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		const snapshot = await getTokensMarketSnapshot()
 
 		expect(snapshot.version).toBe(current.version)
-		expect(upstreamMocks.fetchCoinGeckoTokensListFromDataset).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 
 	test('rebuilds when the pointer still holds the previous window - alignment with CDN expiry', async () => {
@@ -79,15 +89,14 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		const stale = storedSnapshot('version-staleee-0001', Date.now() - 2000 - (Date.now() % WINDOW_MS))
 		cacheMocks.getObjectCache.mockResolvedValue({ version: stale.version, publishedAt: stale.generatedAt })
 		cacheMocks.getCache.mockResolvedValue(await blobFor(stale))
-		upstreamMocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([])
+		http.serve({ '/tokenlist/rankings.json': [] })
 		upstreamMocks.fetchTokenMarketsList.mockResolvedValue({ last_updated: '', tokens: [] })
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
 
 		const snapshot = await getTokensMarketSnapshot()
 
-		expect(upstreamMocks.fetchCoinGeckoTokensListFromDataset).toHaveBeenCalledTimes(1)
+		expect(http.requests).toHaveLength(1)
 		expect(snapshot.generatedAt).toBe(Date.now())
+		expect(published.get('tokens-market:v4:all:latest')).toMatchObject({ version: snapshot.version })
 	})
 
 	test('adopts a concurrent winner published for this window instead of double-publishing', async () => {
@@ -98,14 +107,18 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		cacheMocks.getObjectCache
 			.mockResolvedValueOnce(null)
 			.mockResolvedValue({ version: winner.version, publishedAt: winner.generatedAt })
-		cacheMocks.getCache.mockResolvedValue(await blobFor(winner))
-		upstreamMocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([{ id: 'own-sample' }])
+		const winnerBlob = await blobFor(winner)
+		published.set('tokens-market:v4:all:latest', { version: winner.version, publishedAt: winner.generatedAt })
+		published.set(`tokens-market:v4:all:${winner.version}`, winnerBlob.Body)
+		const existing = new Map(published)
+		cacheMocks.getCache.mockResolvedValue(winnerBlob)
+		http.serve({ '/tokenlist/rankings.json': [{ id: 'own-sample', name: 'Own Sample', symbol: 'own' }] })
 		upstreamMocks.fetchTokenMarketsList.mockResolvedValue({ last_updated: '', tokens: [] })
 
 		const snapshot = await getTokensMarketSnapshot()
 
 		expect(snapshot.version).toBe(winner.version)
-		expect(cacheMocks.setCache).not.toHaveBeenCalled()
+		expect(published).toEqual(existing)
 	})
 	test('keeps an outage null and does not reinterpret an old flag-based empty snapshot', async () => {
 		vi.useFakeTimers()
@@ -115,12 +128,12 @@ describe('getTokensMarketSnapshot window freshness', () => {
 			key.startsWith('tokens-market:v3:') ? { version: old.version } : null
 		)
 		cacheMocks.getCache.mockResolvedValue(await blobFor(old))
-		upstreamMocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([])
+		http.serve({ '/tokenlist/rankings.json': [] })
 		upstreamMocks.fetchTokenMarketsList.mockRejectedValue(new Error('Markets unavailable'))
-		cacheMocks.setCache.mockResolvedValue(true)
-		cacheMocks.setObjectCache.mockResolvedValue(true)
 		const snapshot = await getTokensMarketSnapshot()
 		expect(snapshot.markets).toBeNull()
-		expect(upstreamMocks.fetchTokenMarketsList).toHaveBeenCalledOnce()
+		expect(snapshot.version).not.toBe(old.version)
+		const saved = published.get(`tokens-market:v4:all:${snapshot.version}`) as Buffer
+		expect(JSON.parse((await gunzipAsync(saved)).toString()).markets).toBeNull()
 	})
 })

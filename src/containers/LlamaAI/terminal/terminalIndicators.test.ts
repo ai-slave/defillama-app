@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { resetTerminalIndicatorRuns, runTerminalIndicators } from './terminalIndicators'
-import { followTerminalSymbol, resetTerminalDrawings, restoreTerminalDrawings } from './terminalOps'
+import {
+	followTerminalSymbol,
+	readTerminalContext,
+	resetTerminalDrawings,
+	restoreTerminalDrawings
+} from './terminalOps'
 import {
 	registerTerminalScript,
 	resetTerminalScripts,
@@ -36,7 +41,7 @@ function recordingWidget(): TerminalWidget {
 		removeEntity: (id: string) => {
 			removed.push(id)
 		},
-		getAllShapes: () => [],
+		getAllShapes: () => created.filter((id) => !removed.includes(id)).map((id) => ({ id })),
 		getVisibleRange: () => ({ from: VIEW.from, to: VIEW.to }),
 		resolution: () => VIEW.interval
 	} as unknown as TerminalChart
@@ -79,11 +84,6 @@ afterEach(() => {
 })
 
 describe('re-running saved indicators', () => {
-	test('with no saved script, a pan costs no request at all', async () => {
-		await runTerminalIndicators(VIEW, fetchFn as unknown as typeof fetch)
-		expect(fetchFn).not.toHaveBeenCalled()
-	})
-
 	test('posts the view the chart is showing, so one script serves every symbol', async () => {
 		registerTerminalScript('scripts/mid.js', ['candles'])
 		await runTerminalIndicators({ ...VIEW, symbol: 'ARB' }, fetchFn as unknown as typeof fetch)
@@ -105,7 +105,8 @@ describe('re-running saved indicators', () => {
 		await runTerminalIndicators(VIEW, fetchFn as unknown as typeof fetch)
 		await Promise.resolve()
 		await new Promise((resolve) => setTimeout(resolve, 0))
-		expect(created.length).toBe(1)
+		expect(created).toEqual(['entity_1'])
+		expect(readTerminalContext().drawings).toEqual([{ id: 'sab12cd34_1', kind: 'hline', label: 'Mid' }])
 	})
 
 	test('an unchanged view is not re-requested — this is what a pan back and forth costs', async () => {
@@ -133,7 +134,10 @@ describe('re-running saved indicators', () => {
 	test('a range the chart could not read is never sent', async () => {
 		registerTerminalScript('scripts/mid.js', ['candles'])
 		await runTerminalIndicators({ ...VIEW, to: VIEW.from }, fetchFn as unknown as typeof fetch)
-		expect(fetchFn).not.toHaveBeenCalled()
+		await runTerminalIndicators(VIEW, fetchFn as unknown as typeof fetch)
+
+		const posted = fetchFn.mock.calls.map(([, init]) => JSON.parse(String(init.body)))
+		expect(posted).toEqual([{ script: 'scripts/mid.js', symbol: 'BTC', interval: '1D', from: VIEW.from, to: VIEW.to }])
 	})
 
 	test('every saved script runs, not just the newest one', async () => {

@@ -1,104 +1,90 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
+import { expect, test, vi } from 'vitest'
 import { ScoresTable } from '../ScoresTable'
 import type { PerformanceRow } from '../types'
 
+const base = { marketMakerImageUrl: null, activeEngagementsCount: null, medianEngagementsFdv: null }
 const rows: Array<PerformanceRow> = [
 	{
-		marketMakerId: 'lhava',
-		marketMakerName: 'Lhava',
-		marketMakerImageUrl: null,
-		composite: 10,
-		tradingKpis: 9.5,
-		trustIntegration: 8,
-		coverageCapabilities: 7.25,
-		uptime: 6,
-		integrationLevel: 3,
-		integrationStatus: 'full',
-		activeEngagementsCount: 12,
-		medianEngagementsFdv: 250_000_000
-	},
-	{
-		marketMakerId: 'wintermute',
-		marketMakerName: 'Wintermute',
-		marketMakerImageUrl: null,
-		composite: 5.25,
-		tradingKpis: null,
-		trustIntegration: 4,
-		coverageCapabilities: 3,
-		uptime: 2,
-		integrationLevel: 2,
-		integrationStatus: 'partial',
-		activeEngagementsCount: 5,
-		medianEngagementsFdv: null
-	},
-	{
+		...base,
 		marketMakerId: 'gsr',
 		marketMakerName: 'GSR',
-		marketMakerImageUrl: null,
 		composite: 1,
 		tradingKpis: 1,
 		trustIntegration: 1,
 		coverageCapabilities: 1,
 		uptime: 1,
 		integrationLevel: 1,
-		integrationStatus: 'none',
-		activeEngagementsCount: null,
-		medianEngagementsFdv: null
+		integrationStatus: 'none'
+	},
+	{
+		...base,
+		marketMakerId: 'lhava',
+		marketMakerName: 'Lhava',
+		composite: 10,
+		tradingKpis: 9.5,
+		trustIntegration: 8,
+		coverageCapabilities: 7.25,
+		uptime: 6,
+		integrationLevel: 3,
+		integrationStatus: 'full'
+	},
+	{
+		...base,
+		marketMakerId: 'wintermute',
+		marketMakerName: 'Wintermute',
+		composite: 5.25,
+		tradingKpis: null,
+		trustIntegration: 4,
+		coverageCapabilities: 3,
+		uptime: 2,
+		integrationLevel: 2,
+		integrationStatus: 'partial'
 	}
 ]
 
-describe('ScoresTable', () => {
-	test('renders a row per market maker with its name', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('Lhava')
-		expect(html).toContain('Wintermute')
-		expect(html).toContain('GSR')
-	})
+function cellTexts(container: HTMLElement) {
+	return [...container.querySelectorAll('tbody tr')].map((row) =>
+		[...row.querySelectorAll('td')].map((cell) => cell.textContent!.trim())
+	)
+}
 
-	test('formats numeric scores to two decimals', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('10.00')
-		expect(html).toContain('9.50')
-	})
+test('ranks market makers by composite with grade, scores and integration status, and lets the reader flip the order', async () => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	const onSelectMM = vi.fn()
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	try {
+		await act(async () => root.render(<ScoresTable rows={rows} onSelectMM={onSelectMM} />))
+		const headers = [...container.querySelectorAll('thead th')].map((th) =>
+			th.textContent!.replace(/[?i]?[↑↓]?$/, '').trim()
+		)
+		expect(headers.slice(0, 8)).toEqual([
+			'#',
+			'Market Maker',
+			'Grade',
+			'Composite Score',
+			'Trading KPIs',
+			'Trust',
+			'Coverage & Capabilities',
+			'Uptime'
+		])
+		expect(cellTexts(container)).toEqual([
+			['1', 'Lhava', 'AAA', '10.00', '9.50', '8.00', '7.25', '6.00', 'FullDetails'],
+			['2', 'Wintermute', 'B', '5.25', 'N/A', '4.00', '3.00', '2.00', 'PartialDetails'],
+			['3', 'GSR', 'CCC', '<5.00', '1.00', '1.00', '1.00', '1.00', 'NoneDetails']
+		])
 
-	test('renders <5.00 for a composite below 5', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('&lt;5.00')
-	})
+		await act(async () => container.querySelector<HTMLButtonElement>('thead th button')!.click())
+		expect(cellTexts(container).map((row) => row[1])).toEqual(['GSR', 'Wintermute', 'Lhava'])
 
-	test('renders N/A for a null score', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('N/A')
-	})
-
-	test('renders the integration badge labels', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('Full')
-		expect(html).toContain('Partial')
-		expect(html).toContain('None')
-	})
-
-	test('renders a Grade column between Market Maker and Composite Score', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		const order = ['Market Maker', 'Grade', 'Composite Score', 'Trading KPIs', 'Trust', 'Coverage &amp; Capabilities']
-		const positions = order.map((label) => html.indexOf(label))
-		expect(positions.every((p) => p >= 0)).toBe(true)
-		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
-	})
-
-	test('derives the grade from the composite score', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).toContain('>AAA</span>')
-		expect(html).toContain('text-success')
-		expect(html).toContain('>B</span>')
-		expect(html).toContain('text-warning')
-		expect(html).toContain('>CCC</span>')
-		expect(html).toContain('text-error')
-	})
-
-	test('labels the trustIntegration column Trust', () => {
-		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
-		expect(html).not.toContain('Trust &amp; Integration')
-	})
+		await act(async () => container.querySelector<HTMLButtonElement>('tbody tr td:nth-child(2) button')!.click())
+		expect(onSelectMM).toHaveBeenCalledWith('gsr', 'GSR')
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
+	}
 })

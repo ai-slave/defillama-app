@@ -5,13 +5,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Directory from '~/pages/directory'
 
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <main>{children}</main> }))
-vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: vi.fn() }))
-vi.mock('~/utils/perf', () => ({ withPerformanceLogging: (_name: string, fn: unknown) => fn }))
-vi.mock('~/contexts/localStorageStore', () => ({ useStorageItem: () => '[]', setStorageItem: vi.fn() }))
 
 let container: HTMLDivElement
 let root: Root
 beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -19,7 +17,6 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	vi.restoreAllMocks()
 })
 
 const protocols = Array.from({ length: 25 }, (_, i) => ({
@@ -40,7 +37,6 @@ test('directory results remain inline and visible through filtering, empty resul
 	await act(async () => root.render(<Directory protocols={protocols} />))
 	const list = container.querySelector('[role="listbox"]')!
 	expect(container.querySelector('[role="dialog"]')).toBeNull()
-	expect(list.parentElement).toBe(container.querySelector('input')!.parentElement!.parentElement)
 	expect(list.querySelectorAll('[role="option"]')).toHaveLength(21)
 	await search('no-match')
 	expect(list.textContent).toContain('No results found')

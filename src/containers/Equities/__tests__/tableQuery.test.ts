@@ -3,7 +3,6 @@ import {
 	buildEquitiesTableQueryString,
 	buildEquitiesTreemapQueryString,
 	getEquitiesTableQuery,
-	getEquitiesTableQuerySignature,
 	getEquitiesTableSortingFromQuery,
 	getEquitiesTreemapSizeMetricFromQuery
 } from '../tableQuery'
@@ -47,15 +46,6 @@ describe('getEquitiesTableQuery', () => {
 				{ kind: 'numeric', id: 'marketCap', operator: '>=', value: 1_000_000_000 }
 			]
 		})
-	})
-
-	test('signs on order-changing fields only, case-insensitively for search', () => {
-		const a = getEquitiesTableQuery({ page: '1', search: 'Apple', filters: 'country:in:US' })
-		const b = getEquitiesTableQuery({ page: '7', pageSize: '100', search: 'apple', filters: 'country:in:US' })
-		expect(getEquitiesTableQuerySignature(a)).toBe(getEquitiesTableQuerySignature(b))
-		expect(getEquitiesTableQuerySignature(getEquitiesTableQuery({ sortBy: 'volume' }))).not.toBe(
-			getEquitiesTableQuerySignature(a)
-		)
 	})
 })
 

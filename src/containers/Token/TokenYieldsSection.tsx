@@ -20,18 +20,19 @@ import { nestedMenuActionStyles } from '~/ui/Popover'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
-import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
+import {
+	filterTokenYieldPools,
+	formatTokenYieldsSummary,
+	hasActiveTokenYieldsFilters,
+	TOKEN_YIELDS_FILTER_QUERY_PARAMS
+} from './TokenYieldsSection.utils'
 import type { TokenYieldsHydration } from './types'
 import { getTokenYieldStats } from './yieldStats'
-
-// Client-side chain/TVL/APY filters over the earn rows (the rows are already
-// scoped to the page token server-side via the resolved token option keys).
-const FILTER_QUERY_PARAMS = ['chain', 'excludeChain', 'minTvl', 'maxTvl', 'minApy', 'maxApy']
 
 const TOKEN_YIELDS_SECTION_ID = 'token-yields'
 const DEFAULT_TABLE_SORTING: SortingState = [{ id: 'tvl', desc: true }]
@@ -68,14 +69,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const isClient = useIsClient()
 	const [requestedPageIndex, setRequestedPageIndex] = React.useState(0)
 	const [tableSorting, setTableSorting] = React.useState<SortingState>([...DEFAULT_TABLE_SORTING])
-	const hasActiveFilters = React.useMemo(
-		() =>
-			FILTER_QUERY_PARAMS.some((key) => {
-				const value = router.query[key]
-				return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
-			}),
-		[router.query]
-	)
+	const hasActiveFilters = React.useMemo(() => hasActiveTokenYieldsFilters(router.query), [router.query])
 	const tableSortingKey = React.useMemo(() => JSON.stringify(tableSorting), [tableSorting])
 	const hasNonDefaultSorting = tableSortingKey !== DEFAULT_TABLE_SORTING_KEY
 	const { authorizedFetch, hasAccess: paid, isPending, isDenied } = useVerifiedAccess()
@@ -123,30 +117,19 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	const { selectedChains, minTvl, maxTvl, minApy, maxApy } = useFormatYieldQueryParams({ chainList })
 
-	const filteredPools = React.useMemo(() => {
-		let pools = poolsList
-
-		if (selectedChains.length > 0 && selectedChains.length < chainList.length) {
-			const chainSet = new Set(selectedChains)
-			pools = pools.filter((pool) => chainSet.has(pool.chains[0]))
-		}
-
-		if (minTvl != null) {
-			pools = pools.filter((pool) => pool.tvl != null && pool.tvl >= minTvl)
-		}
-		if (maxTvl != null) {
-			pools = pools.filter((pool) => pool.tvl != null && pool.tvl <= maxTvl)
-		}
-
-		if (minApy != null) {
-			pools = pools.filter((pool) => pool.apy != null && pool.apy >= minApy)
-		}
-		if (maxApy != null) {
-			pools = pools.filter((pool) => pool.apy != null && pool.apy <= maxApy)
-		}
-
-		return pools
-	}, [chainList.length, maxApy, maxTvl, minApy, minTvl, poolsList, selectedChains])
+	const filteredPools = React.useMemo(
+		() =>
+			filterTokenYieldPools({
+				pools: poolsList,
+				chainCount: chainList.length,
+				selectedChains,
+				minTvl,
+				maxTvl,
+				minApy,
+				maxApy
+			}),
+		[chainList.length, maxApy, maxTvl, minApy, minTvl, poolsList, selectedChains]
+	)
 
 	const filteredStats = React.useMemo(() => {
 		return getTokenYieldStats(filteredPools)
@@ -175,7 +158,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 
 	const resetFilters = () => {
 		const updates: Record<string, undefined> = {}
-		for (const key of FILTER_QUERY_PARAMS) {
+		for (const key of TOKEN_YIELDS_FILTER_QUERY_PARAMS) {
 			updates[key] = undefined
 		}
 		pushShallowQuery(router, updates)
@@ -184,16 +167,11 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const isFilteredEmpty = filteredPools.length === 0 && totalRowCount > 0 && !isFetchingFullData
 	const hasPlaceholderState =
 		showInitialLoader || (showRetry && poolsList.length === 0) || (totalRowCount === 0 && !isFetchingFullData)
-	const summaryText =
-		filteredStats.noOfPoolsTracked > 0
-			? hasPartialData && !hasActiveFilters
-				? `Showing ${filteredStats.noOfPoolsTracked} of ${totalRowCount} ${totalRowCount > 1 ? 'pools' : 'pool'}`
-				: `Tracking ${filteredStats.noOfPoolsTracked} ${filteredStats.noOfPoolsTracked > 1 ? 'pools' : 'pool'}${
-						filteredStats.averageAPY != null
-							? `, average APY ${formatPercent(filteredStats.averageAPY, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-							: ''
-					}`
-			: null
+	const summaryText = formatTokenYieldsSummary({
+		stats: filteredStats,
+		totalRowCount,
+		isPartial: hasPartialData && !hasActiveFilters
+	})
 
 	const requestFullDataPage = React.useCallback((pageIndex: number) => {
 		setRequestedPageIndex(pageIndex)

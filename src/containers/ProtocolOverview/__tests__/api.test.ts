@@ -1,17 +1,10 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import { fetchProtocolOverviewMetrics, fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '../api'
 import type { IProtocolMetricsV2Api } from '../api.types'
 
-const fetchJsonMock = vi.hoisted(() => vi.fn())
-
-vi.mock('~/utils/async', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/async')>()
-	return {
-		...actual,
-		fetchJson: fetchJsonMock
-	}
-})
-
+const http = installFixtureFetch()
 const standaloneMetricsFixture = {
 	id: 'curve',
 	name: 'Curve DEX',
@@ -33,21 +26,15 @@ const standaloneMetricsFixture = {
 } satisfies IProtocolMetricsV2Api
 
 describe('ProtocolOverview API chart fetchers', () => {
-	const getFetchedUrl = () => {
-		const call = fetchJsonMock.mock.calls[0]
-		if (!call) throw new Error('Expected fetchJson to be called')
-		return String(call[0])
-	}
-
-	beforeEach(() => {
-		fetchJsonMock.mockReset()
-	})
+	const getFetchedUrl = () => http.urls()[0]
 
 	test('fetches and normalizes TVL value charts from the TVL namespace', async () => {
-		fetchJsonMock.mockResolvedValue([
-			[1, 10],
-			[2, 20]
-		])
+		http.serve({
+			[V2_SERVER_URL]: [
+				[1, 10],
+				[2, 20]
+			]
+		})
 
 		const result = await fetchProtocolTvlChart({ protocol: 'aave', key: 'pool2' })
 
@@ -61,22 +48,22 @@ describe('ProtocolOverview API chart fetchers', () => {
 	})
 
 	test('preserves an empty successful chart and lets upstream failures reject', async () => {
-		fetchJsonMock.mockResolvedValueOnce([])
+		http.serve({ [V2_SERVER_URL]: [] })
 		await expect(fetchProtocolTvlChart({ protocol: 'aave' })).resolves.toEqual([])
 
-		fetchJsonMock.mockRejectedValueOnce(new Error('upstream unavailable'))
-		await expect(fetchProtocolTvlChart({ protocol: 'aave' })).rejects.toThrow('upstream unavailable')
+		http.serve({ [V2_SERVER_URL]: fixtureStatus(404) })
+		await expect(fetchProtocolTvlChart({ protocol: 'aave' })).rejects.toThrow('[404]')
 	})
 
 	test('canonicalizes empty, duplicate, and reordered direct TVL exclusions', async () => {
-		fetchJsonMock.mockResolvedValue([])
+		http.serve({ [V2_SERVER_URL]: [] })
 
 		await fetchProtocolTvlChart({ protocol: 'aave', tokensToExclude: ['', 'MNT', 'GT', 'MNT', ''] })
 		await fetchProtocolTvlChart({ protocol: 'aave', tokensToExclude: ['GT', 'MNT'] })
 		await fetchProtocolTvlChart({ protocol: 'aave', tokensToExclude: ['', ''] })
 		await fetchProtocolTvlChart({ protocol: 'aave' })
 
-		const urls = fetchJsonMock.mock.calls.map((call) => String(call[0]))
+		const urls = http.urls()
 		expect(urls[0]).toBe(urls[1])
 		expect(urls[0]).toContain('tokensToExclude=GT%2CMNT')
 		expect(urls[2]).toBe(urls[3])
@@ -119,7 +106,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 				}
 			]
 		} satisfies IProtocolMetricsV2Api
-		fetchJsonMock.mockResolvedValue(metrics)
+		http.serve({ [V2_SERVER_URL]: metrics })
 
 		const result = await fetchProtocolOverviewMetrics('aave')
 
@@ -130,96 +117,13 @@ describe('ProtocolOverview API chart fetchers', () => {
 		expect(result.raises?.[0]).not.toHaveProperty('valuation')
 	})
 
-	test('preserves parent and child identity, explicit nulls, and zero chain values', async () => {
-		const parentFixture = {
-			id: 'parent#aave',
-			name: 'Aave',
-			isParentProtocol: true,
-			address: null,
-			symbol: 'AAVE',
-			url: 'https://aave.com',
-			description: 'Aave liquidity markets',
-			logo: 'https://icons.llama.fi/aave.jpg',
-			gecko_id: 'aave',
-			cmcId: null,
-			chains: ['Ethereum'],
-			currentChainTvls: { Ethereum: 0 },
-			mcap: null,
-			twitter: null,
-			treasury: null,
-			otherProtocols: ['aave-v3'],
-			hacks: [],
-			raises: []
-		} satisfies IProtocolMetricsV2Api
-		const childFixture = {
-			id: '1599',
-			name: 'Aave V3',
-			symbol: 'AAVE',
-			url: 'https://aave.com',
-			description: null,
-			logo: null,
-			gecko_id: 'aave',
-			cmcId: null,
-			chains: ['Ethereum'],
-			currentChainTvls: { Ethereum: 0 },
-			mcap: null,
-			category: 'Lending',
-			tags: ['Money Market'],
-			chain: 'Ethereum',
-			module: 'aave-v3/index.js',
-			parentProtocol: 'parent#aave',
-			parentProtocolSlug: 'aave',
-			hacks: [],
-			raises: []
-		} satisfies IProtocolMetricsV2Api
-		const { parentProtocolSlug: registrySlug, ...childWithoutRegistrySlugBase } = childFixture
-		expect(registrySlug).toBe('aave')
-		const childWithoutRegistrySlugFixture = {
-			...childWithoutRegistrySlugBase,
-			id: '1600',
-			name: 'Aave V2',
-			module: 'aave/index.js'
-		} satisfies IProtocolMetricsV2Api
-		fetchJsonMock
-			.mockResolvedValueOnce(parentFixture)
-			.mockResolvedValueOnce(childFixture)
-			.mockResolvedValueOnce(standaloneMetricsFixture)
-			.mockResolvedValueOnce(childWithoutRegistrySlugFixture)
-
-		const parent = await fetchProtocolOverviewMetrics('aave')
-		const child = await fetchProtocolOverviewMetrics('aave-v3')
-		const standalone = await fetchProtocolOverviewMetrics('curve')
-		const childWithoutRegistrySlug = await fetchProtocolOverviewMetrics('aave-v2')
-
-		expect(parent).toMatchObject({
-			isParentProtocol: true,
-			address: null,
-			description: 'Aave liquidity markets',
-			logo: 'https://icons.llama.fi/aave.jpg',
-			twitter: null,
-			treasury: null,
-			currentChainTvls: { Ethereum: 0 }
-		})
-		expect(parent).not.toHaveProperty('parentProtocol')
-		expect(child).toMatchObject({
-			parentProtocol: 'parent#aave',
-			parentProtocolSlug: 'aave',
-			category: 'Lending',
-			tags: ['Money Market'],
-			currentChainTvls: { Ethereum: 0 }
-		})
-		expect(child).not.toHaveProperty('isParentProtocol')
-		expect(standalone).toMatchObject({ tags: ['Dexes'], chain: 'Ethereum', module: 'curve/index.js' })
-		expect(standalone).not.toHaveProperty('parentProtocol')
-		expect(childWithoutRegistrySlug).toMatchObject({ parentProtocol: 'parent#aave', module: 'aave/index.js' })
-		expect(childWithoutRegistrySlug).not.toHaveProperty('parentProtocolSlug')
-	})
-
 	test('fetches and normalizes TVL chain breakdown charts from the TVL namespace', async () => {
-		fetchJsonMock.mockResolvedValue([
-			[1, { Ethereum: 10 }],
-			[2, { Ethereum: 20 }]
-		])
+		http.serve({
+			[V2_SERVER_URL]: [
+				[1, { Ethereum: 10 }],
+				[2, { Ethereum: 20 }]
+			]
+		})
 
 		const result = await fetchProtocolTvlChart({
 			protocol: 'aave',
@@ -237,10 +141,12 @@ describe('ProtocolOverview API chart fetchers', () => {
 	})
 
 	test('fetches and normalizes treasury token breakdown charts from the treasury namespace', async () => {
-		fetchJsonMock.mockResolvedValue([
-			[1, { MKR: 10 }],
-			[2, { MKR: 20 }]
-		])
+		http.serve({
+			[V2_SERVER_URL]: [
+				[1, { MKR: 10 }],
+				[2, { MKR: 20 }]
+			]
+		})
 
 		const result = await fetchProtocolTreasuryChart({
 			protocol: 'makerdao',

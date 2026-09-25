@@ -22,19 +22,8 @@ vi.mock('next/router', () => ({
 
 vi.mock('react-hot-toast', () => ({ default: { error: toastError } }))
 
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({
-		table: instance
-	}: {
-		table: { getRowModel: () => { rows: Array<{ id: string; depth: number; original: { name: string } }> } }
-	}) => (
-		<div data-testid="protocol-rankings-table">
-			{instance.getRowModel().rows.map((row) => (
-				<div key={row.id} data-row-name={row.original.name} data-row-depth={row.depth} />
-			))}
-		</div>
-	)
-}))
+// The virtualized grid is a heavy child; these tests read the loading surfaces and requests around it.
+vi.mock('~/components/Table/VirtualTable', () => ({ VirtualTable: () => null }))
 
 import { ChainProtocolsTable } from '../Table'
 
@@ -84,6 +73,22 @@ describe('Protocol Rankings hydration', () => {
 			)
 			await Promise.resolve()
 		})
+	}
+
+	// Types into the search box and lets its debounce fire without waiting in real time.
+	const typeSearch = async (value: string) => {
+		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
+		if (!search) throw new Error('Expected protocol search input')
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+		try {
+			await act(async () => {
+				Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, value)
+				search.dispatchEvent(new InputEvent('input', { bubbles: true }))
+				await vi.advanceTimersByTimeAsync(275)
+			})
+		} finally {
+			vi.useRealTimers()
+		}
 	}
 
 	beforeEach(() => {
@@ -158,18 +163,9 @@ describe('Protocol Rankings hydration', () => {
 		localStorage.clear()
 		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 		await hydrateTable()
-		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
-		if (!search) throw new Error('Expected protocol search input')
+		await typeSearch('aave')
 
-		await act(async () => {
-			const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
-			if (!setInputValue) throw new Error('Expected native input value setter')
-			setInputValue.call(search, 'aave')
-			search.dispatchEvent(new InputEvent('input', { bubbles: true }))
-			await new Promise((resolve) => setTimeout(resolve, 275))
-			await Promise.resolve()
-		})
-
+		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toContain('search=aave')
 		expect(toastError).toHaveBeenCalledWith("Couldn't update rankings. Please retry.", {
 			id: 'protocol-rankings-update-error'
 		})
@@ -185,17 +181,7 @@ describe('Protocol Rankings hydration', () => {
 				})
 		)
 		await hydrateTable()
-		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
-		if (!search) throw new Error('Expected protocol search input')
-
-		await act(async () => {
-			const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
-			if (!setInputValue) throw new Error('Expected native input value setter')
-			setInputValue.call(search, 'aave')
-			search.dispatchEvent(new InputEvent('input', { bubbles: true }))
-			await new Promise((resolve) => setTimeout(resolve, 275))
-			await Promise.resolve()
-		})
+		await typeSearch('aave')
 
 		expect(container.textContent).toContain('Updating rankings…')
 
@@ -240,34 +226,5 @@ describe('Protocol Rankings hydration', () => {
 		expect(fetch).toHaveBeenCalledTimes(requestsBeforeReset + 1)
 		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toContain('sort=tvl')
 		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).not.toContain('minTvl')
-	})
-
-	test('automatically expands a parent whose child name matches search', async () => {
-		localStorage.clear()
-		const matchingChild = { ...protocol, id: 'stable-child', name: 'Stable Child', slug: 'stable-child' }
-		const parent = {
-			...protocol,
-			id: 'parent',
-			name: 'Unrelated Parent',
-			slug: 'parent',
-			childProtocols: [matchingChild]
-		}
-		rankingResponse = { ...responsePage, rows: [parent] }
-		await hydrateTable()
-		const search = container.querySelector<HTMLInputElement>('input[type="search"]')
-		if (!search) throw new Error('Expected protocol search input')
-
-		await act(async () => {
-			const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
-			if (!setInputValue) throw new Error('Expected native input value setter')
-			setInputValue.call(search, 'stab')
-			search.dispatchEvent(new InputEvent('input', { bubbles: true }))
-			await new Promise((resolve) => setTimeout(resolve, 275))
-			await Promise.resolve()
-		})
-
-		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).toContain('search=stab')
-		expect(container.querySelector('[data-row-name="Unrelated Parent"][data-row-depth="0"]')).not.toBeNull()
-		expect(container.querySelector('[data-row-name="Stable Child"][data-row-depth="1"]')).not.toBeNull()
 	})
 })

@@ -3,13 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { DefillamaPages } from '../../metadata/pages'
-import {
-	buildGeneratedCatalogSections,
-	buildLlmsFullTxt,
-	buildLlmsTxt,
-	generateLlmsArtifacts,
-	normalizeSiteUrl
-} from '../llms'
+import { buildGeneratedCatalogSections, buildLlmsFullTxt, generateLlmsArtifacts, normalizeSiteUrl } from '../llms'
 
 const tempDirs: Array<string> = []
 
@@ -147,22 +141,15 @@ describe('llms artifact generation', () => {
 		expect(full).not.toContain('Hidden Subscription')
 	})
 
-	test('renders deterministic short and full files', () => {
-		const firstShort = buildLlmsTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
-		const secondShort = buildLlmsTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
-		const firstFull = buildLlmsFullTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
-		const secondFull = buildLlmsFullTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
-
-		expect(firstShort).toBe(secondShort)
-		expect(firstFull).toBe(secondFull)
-	})
-
-	test('falls back when pages.json is missing', async () => {
+	test('still writes both files, without a dashboard catalog, when pages.json is missing', async () => {
 		const repoRoot = await createRepoRoot()
 
-		await generateLlmsArtifacts({ logger: { log: vi.fn() }, repoRoot })
+		await generateLlmsArtifacts({ env: { NODE_ENV: 'test' }, logger: { log: vi.fn() }, repoRoot })
 
-		await expect(fs.stat(path.join(repoRoot, 'public', 'llms.txt'))).resolves.toBeTruthy()
-		await expect(fs.stat(path.join(repoRoot, 'public', 'llms-full.txt'))).resolves.toBeTruthy()
+		const llms = await fs.readFile(path.join(repoRoot, 'public', 'llms.txt'), 'utf8')
+		const full = await fs.readFile(path.join(repoRoot, 'public', 'llms-full.txt'), 'utf8')
+		expect(llms).toContain('[Full LLM context](https://defillama.com/llms-full.txt)')
+		expect(full).toContain('# DefiLlama full LLM context')
+		expect(full).not.toContain('## Dashboard catalog')
 	})
 })

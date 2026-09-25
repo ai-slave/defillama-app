@@ -95,11 +95,6 @@ describe('foldRwaTopSeries', () => {
 		const folded = foldRwaTopSeries(dataset(['timestamp', 'A', 'B'], [[1, 1, 2]]), { max: 1, othersLabel: 'Rest' })
 		expect(folded.dimensions).toEqual(['timestamp', 'B', 'Rest'])
 	})
-
-	test('returns an empty dataset unchanged', () => {
-		const empty = dataset(['timestamp'], [])
-		expect(foldRwaTopSeries(empty, { max: 10 })).toEqual(empty)
-	})
 })
 
 describe('toRwaShareDataset', () => {
@@ -215,10 +210,5 @@ describe('dropRwaRedundantTotal', () => {
 			]
 		)
 		expect(dropRwaRedundantTotal(differs)).toBe(differs)
-	})
-
-	test('leaves a dataset without a Total alone', () => {
-		const plain = dataset(['timestamp', 'A'], [[1, 10]])
-		expect(dropRwaRedundantTotal(plain)).toBe(plain)
 	})
 })

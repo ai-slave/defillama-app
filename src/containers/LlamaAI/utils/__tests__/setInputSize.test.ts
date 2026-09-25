@@ -63,11 +63,16 @@ describe('setInputSize', () => {
 
 	test('caps at maxRows and scrolls the textarea beyond it', () => {
 		const { refs } = mount(1000)
+		const textarea = refs.promptInputRef.current
+		textarea.style.lineHeight = '20px'
+		textarea.style.paddingTop = '8px'
+		textarea.style.paddingBottom = '6px'
 
 		setInputSize(refs.promptInputRef, refs.highlightRef, 3, refs.wrapperRef)
 
-		const capped = Number.parseFloat(refs.promptInputRef.current.style.height)
-		expect(capped).toBeLessThan(1000)
+		// Three 20px rows plus 8px and 6px of padding.
+		expect(textarea.style.height).toBe('74px')
+		expect(refs.highlightRef.current.style.height).toBe('74px')
 		expect(refs.promptInputRef.current.style.overflowY).toBe('auto')
 		expect(refs.highlightRef.current.style.overflowY).toBe('auto')
 	})

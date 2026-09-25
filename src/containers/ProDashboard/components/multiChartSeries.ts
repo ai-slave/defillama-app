@@ -4,9 +4,17 @@ import {
 	METRIC_UNIT_GROUP_SYMBOL,
 	resolveSeriesAxisLayout
 } from '~/containers/ProDashboard/components/metricGroups'
+import { capitalizeFirstLetter } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
-import { type ChartConfig, type DashboardGrouping, getProDashboardChartTypeConfig } from '../types'
-import { getCsvPeriodCells, getCsvPeriodHeaders } from '../utils'
+import type { ChartRuntimeView } from '../chartRuntime'
+import {
+	type ChartConfig,
+	type DashboardGrouping,
+	getProDashboardChartTypeConfig,
+	isDailyAverageChartType
+} from '../types'
+import { generateChartColor, getCsvPeriodCells, getCsvPeriodHeaders, getGroupedMetricTitle } from '../utils'
+import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
 
 /**
  * The grouping a combined chart applies to every series. Returns null when one of its metrics cannot
@@ -40,6 +48,132 @@ export type MultiChartInputSeries = {
 	data: Array<[number, number]>
 	color: string
 	metricType: string
+}
+
+/** One composer preview series, named the way the saved card names it at this grouping. */
+export function buildComposerPreviewSeries(
+	item: Pick<ChartConfig, 'type' | 'color'> & { data: Array<[number, number]> },
+	grouping: DashboardGrouping,
+	subject: string,
+	colorIndex: number
+): MultiChartInputSeries {
+	const meta = getProDashboardChartTypeConfig(item.type)
+	return {
+		name: `${subject} ${getGroupedMetricTitle(item.type, meta?.title || item.type, grouping)}`,
+		baseType:
+			meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
+				? meta.chartType
+				: undefined,
+		data: item.data,
+		color: item.color || getPaletteColor(EXTENDED_COLOR_PALETTE, colorIndex),
+		metricType: item.type
+	}
+}
+
+/** The series a combined chart card draws, named for its grouping, with colors kept stable per subject. */
+export function buildMultiChartCardSeries(
+	validItems: ReadonlyArray<ChartRuntimeView>,
+	{
+		showCumulative,
+		grouping,
+		getProtocolName
+	}: { showCumulative: boolean; grouping: DashboardGrouping; getProtocolName: (protocol: string) => string | undefined }
+): Array<MultiChartInputSeries> {
+	const uniqueChains = new Set<string>()
+	const uniqueProtocols = new Set<string>()
+	const itemIdsByProtocol = new Map<string, Array<string>>()
+	const itemIdsByChain = new Map<string, Array<string>>()
+	let onlyChains = true
+	let onlyProtocols = true
+
+	for (const item of validItems) {
+		if (item.subjectType === 'protocol') {
+			onlyChains = false
+			uniqueProtocols.add(item.protocol)
+			const ids = itemIdsByProtocol.get(item.protocol)
+			if (ids) ids.push(item.id)
+			else itemIdsByProtocol.set(item.protocol, [item.id])
+		} else {
+			onlyProtocols = false
+			uniqueChains.add(item.chain)
+			const ids = itemIdsByChain.get(item.chain)
+			if (ids) ids.push(item.id)
+			else itemIdsByChain.set(item.chain, [item.id])
+		}
+	}
+	const isSingleChain = onlyChains && uniqueChains.size === 1
+	const isSingleProtocol = onlyProtocols && uniqueProtocols.size === 1
+	const colorItemIds = new Set<string>()
+
+	for (const [item, ids] of itemIdsByProtocol) {
+		if (ids.length > 1) {
+			for (const id of ids) colorItemIds.add(id)
+		} else {
+			colorItemIds.add(item)
+		}
+	}
+
+	for (const [item, ids] of itemIdsByChain) {
+		if (ids.length > 1) {
+			for (const id of ids) colorItemIds.add(id)
+		} else {
+			colorItemIds.add(item)
+		}
+	}
+
+	const colorIndexByItemId = new Map<string, number>()
+	const sortedItemIds = Array.from(colorItemIds).sort()
+	for (let index = 0; index < sortedItemIds.length; index++) {
+		const itemId = sortedItemIds[index]
+		if (itemId) colorIndexByItemId.set(itemId, index)
+	}
+
+	const colorIndexesTaken = new Set<number>()
+
+	const getColorItemId = (item: ChartRuntimeView) => {
+		if (isSingleProtocol || isSingleChain) return item.type
+		const subject = item.subjectType === 'protocol' ? item.protocol : item.chain
+		return `${item.subjectType}_${subject}_${item.type}`
+	}
+
+	// A running total of daily averages is meaningless, so cumulative leaves those series out; the card says so.
+	const chartedItems = showCumulative ? validItems.filter((cfg) => !isDailyAverageChartType(cfg.type)) : validItems
+	const series: Array<MultiChartInputSeries> = chartedItems.map((cfg, index) => {
+		const data = cfg.data
+		const meta = getProDashboardChartTypeConfig(cfg.type)
+		const name = cfg.subjectType === 'protocol' ? getProtocolName(cfg.protocol) || cfg.protocol : cfg.chain
+
+		const itemIdentifier = cfg.subjectType === 'protocol' ? cfg.protocol : cfg.chain
+		const colorItemId = getColorItemId(cfg)
+
+		let color =
+			cfg.color ||
+			(isSingleChain || isSingleProtocol
+				? getPaletteColor(EXTENDED_COLOR_PALETTE, index)
+				: generateChartColor(colorItemId, meta?.color || '#8884d8'))
+
+		let colorIndex = colorIndexByItemId.get(itemIdentifier) ?? -1
+		if (colorIndexesTaken.has(colorIndex)) {
+			colorIndex = colorIndexByItemId.get(cfg.id) ?? -1
+		}
+
+		if (!cfg.color && colorIndex !== -1) {
+			color = getPaletteColor(COLOR_PALETTE_2, colorIndex)
+			colorIndexesTaken.add(colorIndex)
+		}
+
+		return {
+			name: `${name} ${getGroupedMetricTitle(cfg.type, meta?.title || capitalizeFirstLetter(cfg.type), grouping)}`,
+			baseType:
+				meta?.chartType === 'bar' || meta?.chartType === 'area' || meta?.chartType === 'line'
+					? meta.chartType
+					: undefined,
+			data,
+			color,
+			metricType: cfg.type
+		}
+	})
+	return series
 }
 
 export type MultiChartSeriesView = {

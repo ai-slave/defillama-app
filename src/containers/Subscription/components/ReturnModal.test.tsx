@@ -1,131 +1,134 @@
 // @vitest-environment happy-dom
 import type { NextRouter } from 'next/router'
-import { act, type ReactNode, StrictMode } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import Subscription from '~/pages/subscription'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
+import { getReturnIntentAction, ReturnModal, withoutReturnUrl } from './ReturnModal'
 
-const fixture = vi.hoisted(() => ({
-	isNewSignup: false,
-	consumeSignupOutcome: vi.fn(),
-	router: {} as Pick<NextRouter, 'pathname' | 'query' | 'replace' | 'isReady'>
+const router = vi.hoisted(() => ({
+	current: {} as Pick<NextRouter, 'pathname' | 'query' | 'replace' | 'isReady' | 'asPath'>
 }))
-vi.mock('next/router', () => ({ useRouter: () => fixture.router }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		user: { verified: true },
-		loaders: { userLoading: false },
-		isNewSignup: fixture.isNewSignup,
-		consumeSignupOutcome: fixture.consumeSignupOutcome
-	})
-}))
-vi.mock('~/auth/useSubscribe', () => ({ useSubscribe: () => ({}) }))
-vi.mock('~/containers/Subscription/usePageState', () => ({
-	useSubscriptionPageState: () => ({ isAuthenticated: true, currentPlan: 'free' })
-}))
-vi.mock('~/containers/Subscription/sections', () => ({
-	SubscriptionBackground: () => null,
-	SubscriptionComparisonSection: () => null,
-	SubscriptionFaqBlock: () => null,
-	SubscriptionFooter: () => null,
-	SubscriptionHeader: () => null,
-	SubscriptionPricingSection: () => null,
-	SubscriptionTrustedBlock: () => null
-}))
-vi.mock('~/components/SEO', () => ({ SEO: () => null }))
-vi.mock('~/components/Toast', () => ({ Toast: () => null }))
-vi.mock('~/containers/Subscription/SignInModal', () => ({ SignInModal: () => null }))
-vi.mock('~/containers/Account/EndTrialModal', () => ({ EndTrialModal: () => null }))
-vi.mock('~/layout/ClientOnly', () => ({ ClientOnly: ({ children }: { children: ReactNode }) => children }))
+vi.mock('next/router', () => ({ useRouter: () => router.current }))
 
-let root: Root
-let container: HTMLDivElement
+const session = installSubscriberSession('returning-subscriber')
+
 const destination = '/downloads?mode=sql'
-beforeEach(() => {
-	fixture.isNewSignup = false
-	fixture.consumeSignupOutcome.mockReset().mockImplementation(() => {
-		fixture.isNewSignup = false
+const signedIn = {
+	isAuthenticated: true,
+	userLoading: false,
+	isNewSignup: false,
+	returnUrl: destination,
+	handledReturnUrl: undefined
+}
+
+describe('return intent after sign-in', () => {
+	test('asks a returning visitor whether to go back', () => {
+		expect(getReturnIntentAction(signedIn)).toBe('prompt')
 	})
-	fixture.router = {
-		pathname: '/subscription',
-		query: { returnUrl: destination, billing: 'yearly', source: 'report' },
-		isReady: true,
-		replace: vi.fn(async (url) => {
-			fixture.router = { ...fixture.router, query: (url as { query: NextRouter['query'] }).query }
-			return true
+
+	test('drops the destination silently right after signup', () => {
+		expect(getReturnIntentAction({ ...signedIn, isNewSignup: true })).toBe('consume')
+	})
+
+	test.each([
+		{ case: 'signed out', input: { ...signedIn, isAuthenticated: false } },
+		{ case: 'the session is loading', input: { ...signedIn, userLoading: true } },
+		{ case: 'no destination is in the URL', input: { ...signedIn, returnUrl: undefined } },
+		{ case: 'the destination was already handled', input: { ...signedIn, handledReturnUrl: destination } }
+	])('does nothing when $case', ({ input }) => {
+		expect(getReturnIntentAction(input)).toBe('none')
+	})
+
+	test('consuming the intent keeps the other query parameters', () => {
+		expect(withoutReturnUrl({ returnUrl: destination, billing: 'yearly', source: 'report' })).toEqual({
+			billing: 'yearly',
+			source: 'report'
 		})
-	}
-	container = document.createElement('div')
-	document.body.append(container)
-	root = createRoot(container)
-})
-afterEach(async () => {
-	await act(async () => root.unmount())
-	container.remove()
-})
-async function render() {
-	await act(async () =>
-		root.render(
-			<StrictMode>
-				<Subscription />
-			</StrictMode>
-		)
-	)
-	await act(async () => new Promise((resolve) => setTimeout(resolve, 30)))
-}
-async function reload() {
-	await act(async () => root.unmount())
-	root = createRoot(container)
-	await render()
-}
-function button(text: string) {
-	return Array.from(document.querySelectorAll('button')).find(
-		(el) => el.textContent === text || el.getAttribute('aria-label') === text
-	)!
-}
-function expectConsumed() {
-	expect(fixture.router.query).toEqual({ billing: 'yearly', source: 'report' })
-	expect(fixture.router.replace).toHaveBeenCalledExactlyOnceWith(
-		{ pathname: '/subscription', query: { billing: 'yearly', source: 'report' } },
-		undefined,
-		{ shallow: true }
-	)
-}
-
-test('skips the signup prompt and consumes its URL before a reload loses signup state', async () => {
-	fixture.isNewSignup = true
-	await render()
-	expectConsumed()
-	expect(fixture.consumeSignupOutcome).toHaveBeenCalledOnce()
-	expect(document.querySelector('[role="dialog"]')).toBeNull()
-	await reload()
-	expect(document.querySelector('[role="dialog"]')).toBeNull()
+	})
 })
 
-test.each(['Stay on this page', 'Close', 'Escape'])(
-	'consumes the return intent on %s, preserving other query parameters across reload',
-	async (action) => {
-		await render()
-		const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
-		expect(dialog).not.toBeNull()
+describe('ReturnModal', () => {
+	let root: Root
+	let container: HTMLDivElement
+	let onClose: ReturnType<typeof vi.fn<() => void>>
+
+	beforeEach(async () => {
+		router.current = {
+			pathname: '/subscription',
+			asPath: '/subscription',
+			isReady: true,
+			query: { returnUrl: destination, billing: 'yearly' },
+			replace: vi.fn(async () => true)
+		}
+		onClose = vi.fn()
+		container = document.createElement('div')
+		document.body.append(container)
+		root = createRoot(container)
+		await act(async () => root.render(<ReturnModal isOpen onClose={onClose} returnUrl={destination} />))
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]')!
+
+	test('links back to the destination without consuming it', () => {
+		expect(dialog().querySelector('a')?.getAttribute('href')).toBe(destination)
+		expect(router.current.replace).not.toHaveBeenCalled()
+	})
+
+	test.each(['Stay on this page', 'Close', 'Escape'])('%s consumes the return intent', async (action) => {
 		await act(async () => {
 			if (action === 'Escape') {
-				dialog.focus()
-				dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-			} else button(action).click()
+				dialog().focus()
+				dialog().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+			} else {
+				Array.from(dialog().querySelectorAll('button'))
+					.find((button) => button.textContent === action || button.getAttribute('aria-label') === action)!
+					.click()
+			}
 		})
-		expectConsumed()
-		await reload()
-		expect(document.querySelector('[role="dialog"]')).toBeNull()
-	}
-)
 
-test('keeps an existing user’s return destination until they make a choice', async () => {
-	await render()
-	expect(document.querySelector('a')?.getAttribute('href')).toBe(destination)
-	expect(fixture.router.replace).not.toHaveBeenCalled()
-	expect(fixture.consumeSignupOutcome).not.toHaveBeenCalled()
-	await reload()
-	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
-	expect(document.querySelector('a')?.getAttribute('href')).toBe(destination)
+		expect(router.current.replace).toHaveBeenCalledExactlyOnceWith(
+			{ pathname: '/subscription', query: { billing: 'yearly' } },
+			undefined,
+			{ shallow: true }
+		)
+		expect(onClose).toHaveBeenCalled()
+	})
+})
+
+test('the subscription page asks a signed-in visitor whether to return to their destination', async () => {
+	router.current = {
+		pathname: '/subscription',
+		asPath: `/subscription?returnUrl=${encodeURIComponent(destination)}`,
+		isReady: true,
+		query: { returnUrl: destination },
+		replace: vi.fn(async () => true)
+	}
+	session.serve({ '/subscription/trial-available': { trialAvailable: false } })
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	try {
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<Subscription />
+				</session.Wrapper>
+			)
+		)
+		await vi.waitFor(async () => {
+			await act(async () => {})
+			expect(document.querySelector('[role="dialog"] a')?.getAttribute('href')).toBe(destination)
+		})
+		expect(router.current.replace).not.toHaveBeenCalled()
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
+	}
 })

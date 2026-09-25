@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { YieldsSnapshot } from '../data/snapshot'
 import {
 	readBorrowMarkets,
@@ -14,34 +14,40 @@ import {
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 
 describe('Yields v2 snapshot reader', () => {
-	test('reads every artifact through the same pinned handle', async () => {
-		const readJson = vi.fn()
+	test('reads each artifact from its own file on the pinned handle', async () => {
 		const snapshot: YieldsSnapshot = {
 			generationId: 'test-gen',
 			generatedAt: 0,
 			async readJson<T>(path: string): Promise<T> {
-				readJson(path)
-				// `readEarn` joins three artifacts, so the handle has to return real collections.
-				return [] as T
+				if (path === YIELDS_SNAPSHOT_FILES.earnVerified) return [] as T
+				if (path === YIELDS_SNAPSHOT_FILES.meta) return { from: path } as T
+				return [{ from: path }] as T
 			}
 		}
 
-		await Promise.all([
-			readEarn(snapshot),
-			readTrends(snapshot),
-			readBorrowMarkets(snapshot),
-			readBorrowRoutes(snapshot),
-			readLoops(snapshot),
-			readTokenKeys(snapshot),
-			readYieldsMeta(snapshot),
-			readYieldsDepegs(snapshot),
-			readYieldsExploits(snapshot)
+		expect(
+			await Promise.all([
+				readEarn(snapshot),
+				readTrends(snapshot),
+				readBorrowMarkets(snapshot),
+				readBorrowRoutes(snapshot),
+				readLoops(snapshot),
+				readTokenKeys(snapshot),
+				readYieldsMeta(snapshot),
+				readYieldsDepegs(snapshot),
+				readYieldsExploits(snapshot)
+			])
+		).toEqual([
+			[{ from: 'earn.json' }],
+			[{ from: 'trends.json' }],
+			[{ from: 'borrow-markets.json' }],
+			[{ from: 'borrow-routes.json' }],
+			[{ from: 'loops.json' }],
+			[{ from: 'token-keys.json' }],
+			{ from: 'meta.json' },
+			[{ from: 'depegs.json' }],
+			[{ from: 'exploits.json' }]
 		])
-
-		// Order-independent: `readEarn` pulls its artifacts in parallel (meta twice: once for its join).
-		expect([...new Set(readJson.mock.calls.map(([path]) => path))].sort()).toEqual(
-			Object.values(YIELDS_SNAPSHOT_FILES).sort()
-		)
 	})
 
 	// enrich.server.ts caches by the earn array's identity, so the join has to be stable per handle.

@@ -1,33 +1,29 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSettingsModal } from '~/containers/ProDashboard/components/DashboardSettingsModal'
+import { fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { SubscriptionPricingSection } from '../sections/SubscriptionPricingSection'
 import type { BillingCycle } from '../types'
 
-const auth = vi.hoisted(() => ({ hasActiveSubscription: true }))
-vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 vi.mock('~/containers/Subscription/components', () => ({ PricingCard: () => null }))
-let client: QueryClient
+const session = installSubscriberSession('owner')
 let root: Root
 let container: HTMLDivElement
 const save = vi.fn()
 const close = vi.fn()
 const remove = vi.fn()
 beforeEach(() => {
-	auth.hasActiveSubscription = true
 	vi.clearAllMocks()
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	client = new QueryClient()
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	client.clear()
 })
 async function press(el: HTMLElement, key: string) {
 	await act(async () => {
@@ -43,7 +39,7 @@ function radio(value: string) {
 async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'public') {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<DashboardSettingsModal
 					isOpen={isOpen}
 					onClose={close}
@@ -54,10 +50,19 @@ async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'pu
 					onSave={save}
 					onDelete={remove}
 				/>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
+	// Private visibility stays locked until the subscription lookup settles.
+	if (!isOpen) return
+	await vi.waitFor(() => {
+		if (radio('private').disabled === subscribed) throw new Error('The subscription lookup has not settled')
+	})
 }
+let subscribed: boolean
+beforeEach(() => {
+	subscribed = true
+})
 test('visibility arrows update only the local draft; cancel and reopen discard it', async () => {
 	await dashboard(true)
 	const dialog = document.querySelector('[role="dialog"]')!
@@ -78,7 +83,8 @@ test('visibility arrows update only the local draft; cancel and reopen discard i
 	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'private', tags: [] })
 })
 test('an unavailable private selection remains intact while Public stays keyboard reachable', async () => {
-	auth.hasActiveSubscription = false
+	subscribed = false
+	session.serve({ '/subscription/status': fixtureStatus(404, { message: 'No active subscription' }) })
 	await dashboard(true, 'private')
 	expect(radio('private').checked).toBe(true)
 	expect(radio('private').disabled).toBe(true)

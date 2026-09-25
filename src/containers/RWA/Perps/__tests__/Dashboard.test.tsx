@@ -1,15 +1,11 @@
-import type { ReactNode } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Window } from 'happy-dom'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { CHART_COLORS } from '~/constants/colors'
+import { AuthProvider } from '~/auth'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import type { IRWAPerpsMarket } from '../api.types'
 import { RWAPerpsDashboard } from '../Dashboard'
-import {
-	buildRWAPerpsTimeSeriesCharts,
-	buildRWAPerpsTimeSeriesDatasetForRows,
-	getRWAPerpsIncludedRows
-} from '../dashboardData'
 import type {
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetPageData,
@@ -17,121 +13,71 @@ import type {
 	IRWAPerpsVenuePageData
 } from '../types'
 
-let routerQuery: Record<string, string | Array<string>> = {}
-type CapturedQueryOptions = {
-	queryKey: Array<unknown>
-	queryFn: () => Promise<unknown>
-	enabled: boolean
-}
-
-type CapturedColumn = {
-	id?: string
-	header?: string
-	cell?: (info: { row: { original: IRWAPerpsMarket }; getValue: () => string }) => ReactNode
-}
-
-type CapturedTableProps = {
-	data: Array<IRWAPerpsMarket>
-	columns: Array<CapturedColumn>
-}
-
-let lastTableOptions: CapturedTableProps | null = null
-let lastUseQueryOptions: CapturedQueryOptions | null = null
-
-function getLastTableOptions(): CapturedTableProps {
-	if (!lastTableOptions) throw new Error('Expected the table props to be captured')
-	return lastTableOptions
-}
-
-function getLastUseQueryOptions(): CapturedQueryOptions {
-	if (!lastUseQueryOptions) throw new Error('Expected the query options to be captured')
-	return lastUseQueryOptions
-}
-
+const router = vi.hoisted(() => ({ query: {} as Record<string, string> }))
 vi.mock('next/router', () => ({
-	useRouter: () => ({
-		query: routerQuery,
-		pathname: '/rwa/perps'
-	})
+	useRouter: () => ({ query: router.query, pathname: '/rwa/perps', asPath: '/rwa/perps', push() {} })
 }))
 
-let queryState: {
-	data: RWAChartDataset | null
-	isLoading: boolean
-	error: Error | null
-} = {
-	data: null,
-	isLoading: false,
-	error: null
+beforeEach(() => {
+	router.query = {}
+})
+
+type DashboardProps = Parameters<typeof RWAPerpsDashboard>[0]
+
+/** Server-renders the dashboard as a page does; charts are lazy, so the markup holds everything around them. */
+function render(
+	props: DashboardProps,
+	cachedChart?: { key: unknown; state: { data?: RWAChartDataset; error?: Error } }
+) {
+	const client = new QueryClient()
+	if (cachedChart) {
+		const query = client.getQueryCache().build(client, { queryKey: ['rwa-perps-chart', cachedChart.key] })
+		query.setState(
+			cachedChart.state.error
+				? { status: 'error', error: cachedChart.state.error }
+				: { status: 'success', data: cachedChart.state.data, dataUpdatedAt: Date.now() }
+		)
+	}
+	const html = renderToStaticMarkup(
+		<QueryClientProvider client={client}>
+			<AuthProvider>
+				<RWAPerpsDashboard {...props} />
+			</AuthProvider>
+		</QueryClientProvider>
+	)
+	client.clear()
+	return html
 }
 
-vi.mock('@tanstack/react-query', () => ({
-	skipToken: Symbol('skipToken'),
-	useQuery: (options: CapturedQueryOptions) => {
-		lastUseQueryOptions = options
-		return queryState
-	}
-}))
+/** Chart controls between the stat cards and the table, as text, with each control's accessible name. */
+function chartToolbar(html: string) {
+	return html
+		.slice(html.indexOf('Est. Protocol Fees'), html.indexOf('<table'))
+		.replace(/<[^>]*?aria-label="([^"]*)"[^>]*>/g, ' [$1] ')
+		.replace(/<[^>]+>/g, ' ')
+		.replace(/\s+/g, ' ')
+}
 
-const { fetchJson } = vi.hoisted(() => ({
-	fetchJson: vi.fn()
-}))
+/** The accessible names of the market filter toggles, in toolbar order. */
+function filterToggles(html: string) {
+	const { document } = new Window()
+	document.body.innerHTML = html
+	return Array.from(document.querySelectorAll('input[type="checkbox"]'), (input) => input.closest('label')?.textContent)
+}
 
-vi.mock('~/utils/async', () => ({
-	fetchJson
-}))
+/** The contracts shown in the markets table, in row order. */
+function tableContracts(html: string, contracts: Array<string>) {
+	const body = html.slice(html.indexOf('<tbody'), html.indexOf('</tbody>'))
+	return contracts
+		.filter((contract) => body.includes(`>${contract}<`))
+		.sort((a, b) => body.indexOf(`>${a}<`) - body.indexOf(`>${b}<`))
+}
 
-vi.mock('~/components/Select/Select', () => ({
-	Select: ({ label }: { label: string }) => <div>{label}</div>
-}))
-
-vi.mock('~/components/Select/SelectWithCombobox', () => ({
-	SelectWithCombobox: ({ label, selectedValues }: { label: string; selectedValues: Array<string> }) => (
-		<div>{`combobox:${label}:${selectedValues.join('|')}`}</div>
-	)
-}))
-
-vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
-	ChartExportButtons: () => <div>exports</div>
-}))
-
-vi.mock('~/ui/QuestionHelper', () => ({
-	QuestionHelper: ({ text }: { text: string }) => <span>{text}</span>
-}))
-
-vi.mock('~/components/Table/search/SearchTableProvider', () => ({
-	SearchTableProvider: ({ options: props }: { options: CapturedTableProps }) => {
-		lastTableOptions = props
-		return <div>table</div>
-	}
-}))
-
-vi.mock('~/components/RowLinksWithDropdown', () => ({
-	RowLinksWithDropdown: () => <div>links</div>
-}))
-
-vi.mock('~/hooks/useGetChartInstance', () => ({
-	useGetChartInstance: () => ({
-		chartInstance: () => null,
-		handleChartReady: () => {}
-	})
-}))
-
-vi.mock('~/components/ECharts/PieChart', () => ({
-	default: () => <div>pie</div>
-}))
-
-vi.mock('~/components/ECharts/HBarChart', () => ({
-	default: () => <div>hbar</div>
-}))
-
-vi.mock('~/components/ECharts/TreemapChart', () => ({
-	default: () => <div>treemap</div>
-}))
-
-vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: () => <div>timeseries</div>
-}))
+/** Header labels of the markets table, in column order. */
+function tableHeaders(html: string) {
+	const head = html.slice(html.indexOf('<thead'), html.indexOf('</thead>'))
+	return [...head.matchAll(/<th[^>]*>(.*?)<\/th>/g)].map(([, cell]) => cell.replace(/<[^>]+>/g, '').trim())
+}
 
 const overviewMarket: IRWAPerpsMarket = {
 	id: 'xyz:meta',
@@ -294,481 +240,167 @@ const assetData = {
 	}
 } satisfies IRWAPerpsAssetPageData
 
-describe('getRWAPerpsIncludedRows', () => {
-	const suspiciousMarket: IRWAPerpsMarket = {
-		...overviewMarket,
-		id: 'parcl:nyc',
-		venue: 'Parcl',
-		suspicious: true
-	}
-	const markets = [overviewMarket, suspiciousMarket]
+const forexData = {
+	...overviewData,
+	markets: [
+		{ ...overviewMarket, id: 'fx:eurusd', contract: 'EURUSD', referenceAsset: 'EUR/USD', assetClass: ['Forex Perps'] },
+		{ ...overviewMarket, id: 'fx:gbpusd', contract: 'GBPUSD', referenceAsset: 'GBP/USD', assetClass: ['Forex Perps'] }
+	]
+} satisfies IRWAPerpsOverviewPageData
 
-	test('excludes suspicious markets from cross-venue charts', () => {
-		expect(getRWAPerpsIncludedRows(markets, 'overview')).toEqual([overviewMarket])
-		expect(getRWAPerpsIncludedRows(markets, 'assetGroup')).toEqual([overviewMarket])
+const ALL_CONTRACTS = ['binance:METAUSDT', 'xyz:META', 'xyz:NVDA', 'flx:GOLD', 'EURUSD', 'GBPUSD']
+
+describe('RWA perps dashboard chart controls', () => {
+	test('offers the CEX and Forex filters on the overview and only the CEX filter on the Forex page', () => {
+		expect(filterToggles(render({ mode: 'overview', data: multiBaseAssetOverviewData }))).toEqual([
+			'Forex Perps',
+			'CEX Venues'
+		])
+		expect(filterToggles(render({ mode: 'overview', data: cexOverviewData, assetClassFilter: 'Forex Perps' }))).toEqual(
+			['CEX Venues']
+		)
 	})
 
-	test('keeps suspicious markets in venue totals and charts', () => {
-		expect(getRWAPerpsIncludedRows(markets, 'venue')).toBe(markets)
-	})
-
-	test('reuses an unchanged cross-venue population when no suspicious market exists', () => {
-		const ordinaryMarkets = [overviewMarket]
-		expect(getRWAPerpsIncludedRows(ordinaryMarkets, 'overview')).toBe(ordinaryMarkets)
+	test('defaults the Forex page time series to base asset when configured', () => {
+		const toolbar = chartToolbar(
+			render({
+				mode: 'overview',
+				data: overviewData,
+				assetClassFilter: 'Forex Perps',
+				defaultTimeSeriesBreakdown: 'baseAsset'
+			})
+		)
+		expect(toolbar).toContain('Base Asset dropdown')
 	})
 })
 
-describe('RWAPerpsDashboard treemap controls', () => {
-	beforeEach(() => {
-		routerQuery = {}
-		lastTableOptions = null
-		lastUseQueryOptions = null
-		fetchJson.mockReset()
-		fetchJson.mockResolvedValue({ source: [], dimensions: ['timestamp'] })
-		queryState = {
-			data: null,
-			isLoading: false,
-			error: null
+describe('RWA perps dashboard history', () => {
+	const DEFAULT_REQUEST = {
+		source: 'overview-breakdown',
+		key: 'openInterest',
+		breakdown: 'assetGroup',
+		target: { kind: 'excludeAssetClass', slug: 'Forex Perps' },
+		includeCex: false
+	}
+	const NOT_ENOUGH_HISTORY = 'There is not enough time-series history for this selection yet.'
+	const history = (days: number) => ({
+		source: Array.from({ length: days }, (_, index) => ({
+			timestamp: 1_774_483_200_000 + index * 86_400_000,
+			Equities: 100
+		})),
+		dimensions: ['timestamp', 'Equities']
+	})
+
+	test.each([
+		{ days: 1, explained: true },
+		{ days: 2, explained: false }
+	])('explains a fetched history of $days day(s) only when it is too short to chart', ({ days, explained }) => {
+		const html = render(
+			{ mode: 'overview', data: overviewData },
+			{ key: DEFAULT_REQUEST, state: { data: history(days) } }
+		)
+
+		expect(chartToolbar(html)).toContain('Time Series Chart dropdown')
+		expect(html.includes(NOT_ENOUGH_HISTORY)).toBe(explained)
+	})
+
+	test('explains the missing history instead of loading when the filters leave no markets', () => {
+		router.query = { excludeBaseAssets: 'Meta' }
+		const html = render({ mode: 'overview', data: overviewData })
+
+		expect(tableContracts(html, ALL_CONTRACTS)).toEqual([])
+		expect(html).toContain(NOT_ENOUGH_HISTORY)
+		expect(html).not.toContain('Loading')
+	})
+
+	test('shows the preloaded history without surfacing a stale cached chart error', () => {
+		const html = render(
+			{ mode: 'overview', data: { ...overviewData, initialChartDataset: history(2) } },
+			{ key: DEFAULT_REQUEST, state: { error: new Error('stale cached error') } }
+		)
+
+		expect(chartToolbar(html)).toContain('Time Series Chart dropdown')
+		expect(html).not.toContain('stale cached error')
+		expect(html).not.toContain(NOT_ENOUGH_HISTORY)
+	})
+})
+
+describe('RWA perps dashboard markets table', () => {
+	test.each([
+		{ name: 'hides CEX venues by default', data: cexOverviewData, query: {}, rows: ['xyz:META'] },
+		{
+			name: 'lists CEX venues once opted in',
+			data: cexOverviewData,
+			query: { includeCex: 'true' },
+			rows: ['binance:METAUSDT', 'xyz:META']
+		},
+		{
+			name: 'keeps only included base assets',
+			data: multiBaseAssetOverviewData,
+			query: { baseAssets: 'Meta' },
+			rows: ['xyz:META']
+		},
+		{
+			name: 'drops excluded base assets',
+			data: multiBaseAssetOverviewData,
+			query: { excludeBaseAssets: 'Gold' },
+			rows: ['xyz:META', 'xyz:NVDA']
 		}
+	])('$name', ({ data, query, rows }) => {
+		router.query = query
+		expect(tableContracts(render({ mode: 'overview', data }), ALL_CONTRACTS)).toEqual(rows)
 	})
 
-	test('shows treemap parent and nested-grouping controls plus reset in treemap view', () => {
-		routerQuery = { chartView: 'treemap' }
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
+	test('filters Forex rows by base asset and ignores the hidden asset-class filter on the Forex page', () => {
+		const forexPage = {
+			mode: 'overview',
+			data: forexData,
+			assetClassFilter: 'Forex Perps',
+			defaultTimeSeriesBreakdown: 'baseAsset'
+		} as const
+		router.query = { baseAssets: 'EUR/USD' }
+		expect(tableContracts(render(forexPage), ALL_CONTRACTS)).toEqual(['EURUSD'])
 
-		expect(html).toContain('Asset Group')
-		expect(html).toContain('Nested by: Base Asset')
-		expect(html).toContain('reset')
+		router.query = { assetClasses: 'Stock Perp' }
+		expect(tableContracts(render(forexPage), ALL_CONTRACTS)).toEqual(['EURUSD', 'GBPUSD'])
 	})
 
-	test('shows the asset-group time-series breakdown by default on the overview page', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Time Series Chart')
-		expect(html).toContain('Asset Group')
-		expect(html).not.toContain('Nested by:')
-		expect(html).not.toContain('reset')
-	})
-
-	test('requests no-Forex overview time-series data by default', async () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest&excludeAssetClass=Forex+Perps'
-		)
-	})
-
-	test('shows the CEX filter on the overview', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('CEX Venues')
-	})
-
-	test('hides CEX venues from the table by default', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={cexOverviewData} />)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META'])
-	})
-
-	test('drops the DEX scope from both table and chart once CEX is opted in', async () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={cexOverviewData} />)
-		const dexQueryKey = getLastUseQueryOptions().queryKey
-
-		routerQuery = { includeCex: 'true' }
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={cexOverviewData} />)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['binance:METAUSDT', 'xyz:META'])
-		expect(getLastUseQueryOptions().queryKey).not.toEqual(dexQueryKey)
-
-		await getLastUseQueryOptions().queryFn()
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest&includeCex=true&excludeAssetClass=Forex+Perps'
-		)
-	})
-
-	test('requests all-market overview time-series data when Forex is included', async () => {
-		routerQuery = { includeForex: 'true' }
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest'
-		)
-	})
-
-	test('fetches all-market default time-series data when the include-Forex toggle overrides the preloaded no-Forex dataset', () => {
-		routerQuery = { includeForex: 'true' }
-		renderToStaticMarkup(
-			<RWAPerpsDashboard
-				mode="overview"
-				data={{
-					...overviewData,
-					initialChartDataset: {
-						source: [
-							{ timestamp: 1_774_483_200_000, Equities: 100 },
-							{ timestamp: 1_774_569_600_000, Equities: 120 }
-						],
-						dimensions: ['timestamp', 'Equities']
-					}
-				}}
-			/>
-		)
-
-		expect(getLastUseQueryOptions().enabled).toBe(true)
-	})
-
-	test('shows the CEX filter and requests the default DEX Forex aggregate', async () => {
-		const html = renderToStaticMarkup(
-			<RWAPerpsDashboard mode="overview" data={cexOverviewData} assetClassFilter="Forex Perps" />
-		)
-
-		expect(html).toContain('CEX Venues')
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=assetGroup&key=openInterest&assetClass=Forex+Perps'
-		)
-	})
-
-	test('defaults the Forex overview time series to base asset when configured', async () => {
-		const html = renderToStaticMarkup(
-			<RWAPerpsDashboard
-				mode="overview"
-				data={overviewData}
-				assetClassFilter="Forex Perps"
-				defaultTimeSeriesBreakdown="baseAsset"
-			/>
-		)
-
-		expect(html).toContain('Base Asset')
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=baseAsset&key=openInterest&assetClass=Forex+Perps'
-		)
-	})
-
-	test('uses the full Forex chart when CEX venues are included', async () => {
-		routerQuery = { includeCex: 'true' }
-		renderToStaticMarkup(
-			<RWAPerpsDashboard
-				mode="overview"
-				data={overviewData}
-				assetClassFilter="Forex Perps"
-				defaultTimeSeriesBreakdown="baseAsset"
-			/>
-		)
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=baseAsset&key=openInterest&includeCex=true&assetClass=Forex+Perps'
-		)
-	})
-
-	test('projects filtered Forex rows from the DEX market series', async () => {
-		routerQuery = { baseAssets: 'EUR/USD' }
-		const forexData = {
-			...overviewData,
-			markets: [
-				{
-					...overviewMarket,
-					id: 'fx:eurusd',
-					contract: 'EURUSD',
-					referenceAsset: 'EUR/USD',
-					assetClass: ['Forex Perps']
-				},
-				{
-					...overviewMarket,
-					id: 'fx:gbpusd',
-					contract: 'GBPUSD',
-					referenceAsset: 'GBP/USD',
-					assetClass: ['Forex Perps']
-				}
-			]
-		} satisfies IRWAPerpsOverviewPageData
-
-		renderToStaticMarkup(
-			<RWAPerpsDashboard
-				mode="overview"
-				data={forexData}
-				assetClassFilter="Forex Perps"
-				defaultTimeSeriesBreakdown="baseAsset"
-			/>
-		)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['EURUSD'])
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/market-breakdown?key=openInterest&assetClass=Forex+Perps'
-		)
-	})
-
-	test('ignores hidden Asset Class query params on the Forex page', () => {
-		routerQuery = { assetClasses: 'Stock Perp' }
-		const forexData = {
-			...overviewData,
-			markets: [
-				{
-					...overviewMarket,
-					id: 'fx:eurusd',
-					contract: 'EURUSD',
-					referenceAsset: 'EUR/USD',
-					assetClass: ['Forex Perps']
-				},
-				{
-					...overviewMarket,
-					id: 'fx:gbpusd',
-					contract: 'GBPUSD',
-					referenceAsset: 'GBP/USD',
-					assetClass: ['Forex Perps']
-				}
-			]
-		} satisfies IRWAPerpsOverviewPageData
-
-		renderToStaticMarkup(
-			<RWAPerpsDashboard
-				mode="overview"
-				data={forexData}
-				assetClassFilter="Forex Perps"
-				defaultTimeSeriesBreakdown="baseAsset"
-			/>
-		)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
-	})
-
-	test('shows a filters dialog next to the separate Forex filter when multiple filters are available', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
-
-		expect(html).toContain('Filters')
-		expect(html).toContain('Forex Perps')
-		expect(html).toContain('Reset filters')
-		expect(html).not.toContain('combobox:Base Asset:Meta|NVIDIA|Gold')
-	})
-
-	test('filters rows and requests market time-series data when Base Asset include selection is active', async () => {
-		routerQuery = { baseAssets: 'Meta' }
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META'])
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps'
-		)
-	})
-
-	test('filters rows using Base Asset exclude query semantics', () => {
-		routerQuery = { excludeBaseAssets: 'Gold' }
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
-
-		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META', 'xyz:NVDA'])
-	})
-
-	test('regroups fetched contract time-series data by the selected breakdown for Base Asset filters', () => {
-		const dataset = buildRWAPerpsTimeSeriesDatasetForRows({
-			dataset: {
-				source: [
-					{ timestamp: 1_774_396_800_000, 'flx:GOLD': 4 },
-					{
-						timestamp: 1_774_483_200_000,
-						'xyz:META': 10,
-						'xyz:NVDA': 20,
-						'flx:GOLD': 5
-					},
-					{ timestamp: 1_774_526_400_000, 'flx:GOLD': 5.5 },
-					{
-						timestamp: 1_774_569_600_000,
-						'xyz:META': 12,
-						'xyz:NVDA': 22,
-						'flx:GOLD': 6
-					}
-				],
-				dimensions: ['timestamp', 'xyz:META', 'xyz:NVDA', 'flx:GOLD']
-			},
-			rows: multiBaseAssetOverviewData.markets.slice(0, 2),
-			breakdown: 'assetGroup'
-		})
-
-		expect(dataset).toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, Equities: 30 },
-				{ timestamp: 1_774_569_600_000, Equities: 34 }
-			],
-			dimensions: ['timestamp', 'Equities']
-		})
-	})
-
-	test('regroups fetched market-id time-series data by selected market ids', () => {
-		const dataset = buildRWAPerpsTimeSeriesDatasetForRows({
-			dataset: {
-				source: [
-					{
-						timestamp: 1_774_483_200_000,
-						'alpha:aapl': 10,
-						'beta:aapl': 20,
-						'fx:eurusd': 5
-					},
-					{
-						timestamp: 1_774_569_600_000,
-						'alpha:aapl': 12,
-						'beta:aapl': 22,
-						'fx:eurusd': 6
-					}
-				],
-				dimensions: ['timestamp', 'alpha:aapl', 'beta:aapl', 'fx:eurusd']
-			},
-			rows: [
-				{
-					...overviewMarket,
-					id: 'alpha:aapl',
-					contract: 'AAPL',
-					venue: 'Alpha',
-					referenceAssetGroup: 'Equities'
-				},
-				{
-					...overviewMarket,
-					id: 'beta:aapl',
-					contract: 'AAPL',
-					venue: 'Beta',
-					referenceAssetGroup: 'Equities'
-				}
-			],
-			breakdown: 'venue',
-			seriesKey: 'id'
-		})
-
-		expect(dataset).toEqual({
-			source: [
-				{ timestamp: 1_774_483_200_000, Alpha: 10, Beta: 20 },
-				{ timestamp: 1_774_569_600_000, Alpha: 12, Beta: 22 }
-			],
-			dimensions: ['timestamp', 'Beta', 'Alpha']
-		})
-	})
-
-	test('requests the DEX contract aggregate on the Forex page', async () => {
-		routerQuery = {
-			chartView: 'timeSeries',
-			timeSeriesChartBreakdown: 'contract'
-		}
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} assetClassFilter="Forex Perps" />)
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/contract-breakdown?key=openInterest&assetClass=Forex+Perps'
-		)
-	})
-
-	test('requests the DEX aggregate on Asset Group pages', async () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={assetGroupData} />)
-
-		await getLastUseQueryOptions().queryFn()
-
-		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/overview-breakdown?breakdown=baseAsset&key=openInterest&assetGroup=Equities'
-		)
-	})
-
-	test('hides the treemap nested-grouping selector when parent grouping is Contract', () => {
-		routerQuery = {
-			chartView: 'treemap',
-			nonTimeSeriesChartBreakdown: 'contract'
-		}
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Contract')
-		expect(html).not.toContain('Nested by:')
-		expect(html).toContain('reset')
-	})
-
-	test('shows the treemap nested-grouping selector when parent grouping is Base Asset', () => {
-		routerQuery = {
-			chartView: 'treemap',
-			nonTimeSeriesChartBreakdown: 'baseAsset'
-		}
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Base Asset')
-		expect(html).toContain('Nested by: Contract')
-		expect(html).toContain('reset')
-	})
-
-	test('shows asset-group treemap controls with a base-asset nested default', () => {
-		routerQuery = {
-			chartView: 'treemap',
-			nonTimeSeriesChartBreakdown: 'assetGroup'
-		}
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Asset Group')
-		expect(html).toContain('Nested by: Base Asset')
-		expect(html).toContain('reset')
-	})
-
-	test('keeps the no-grouping treemap state selectable for Base Asset breakdowns', () => {
-		routerQuery = {
-			chartView: 'treemap',
-			nonTimeSeriesChartBreakdown: 'baseAsset',
-			treemapNestedBy: 'none'
-		}
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Base Asset')
-		expect(html).toContain('Nested by: No Grouping')
-		expect(html).toContain('reset')
-	})
-
-	test('shows parent grouping but hides treemap-only controls outside treemap view', () => {
-		routerQuery = { chartView: 'pie' }
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Asset Group')
-		expect(html).not.toContain('Nested by:')
-		expect(html).not.toContain('reset')
-	})
-
-	test('keeps the requested overview table column order', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
+	test('includes CEX markets by default on CEX-only venue and asset pages but not asset-group pages', () => {
 		expect(
-			getLastTableOptions()
-				.columns.slice(0, 5)
-				.map((column) => column.header)
-		).toEqual(['Contract', 'Venue', 'Asset Class', 'Asset Group', 'Base Asset'])
-	})
-
-	test('keeps the requested venue table column order', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={venueData} />)
-
+			tableContracts(
+				render({ mode: 'venue', data: { ...venueData, venue: 'binance', markets: [cexMarket] } }),
+				ALL_CONTRACTS
+			)
+		).toEqual(['binance:METAUSDT'])
 		expect(
-			getLastTableOptions()
-				.columns.slice(0, 4)
-				.map((column) => column.header)
-		).toEqual(['Contract', 'Base Asset', 'Asset Group', 'Asset Class'])
-	})
-
-	test('shows asset-group detail tables with the venue column restored', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={assetGroupData} />)
-
+			tableContracts(render({ mode: 'asset', data: { ...assetData, markets: [cexMarket] } }), ALL_CONTRACTS)
+		).toEqual(['binance:METAUSDT'])
 		expect(
-			getLastTableOptions()
-				.columns.slice(0, 4)
-				.map((column) => column.header)
-		).toEqual(['Contract', 'Venue', 'Base Asset', 'Asset Class'])
+			tableContracts(render({ mode: 'assetGroup', data: { ...assetGroupData, markets: [cexMarket] } }), ALL_CONTRACTS)
+		).toEqual([])
 	})
 
-	test('excludes suspicious markets from cross-venue headlines while retaining and explaining their table rows', () => {
+	test.each([
+		{
+			mode: 'overview',
+			data: overviewData,
+			leading: ['Contract', 'Venue', 'Asset Class', 'Asset Group', 'Base Asset']
+		},
+		{ mode: 'venue', data: venueData, leading: ['Contract', 'Base Asset', 'Asset Group', 'Asset Class'] },
+		{ mode: 'assetGroup', data: assetGroupData, leading: ['Contract', 'Venue', 'Base Asset', 'Asset Class'] }
+	] as const)('orders the $mode table columns and shows 24h changes on the stat cards', (props) => {
+		const html = render(props as DashboardProps)
+		const cards = html.slice(0, html.indexOf('<table'))
+		expect(cards).toContain('+25.00%')
+		expect(cards).toContain('-10.00%')
+
+		const headers = tableHeaders(html)
+
+		expect(headers.slice(0, props.leading.length)).toEqual(props.leading)
+		expect(headers).toEqual(expect.arrayContaining(['24h OI Change', '24h Volume Change', '24h Price Change']))
+	})
+
+	test('keeps suspicious markets out of cross-venue headlines while listing and explaining them', () => {
 		const ordinaryMarket = {
 			...overviewMarket,
 			openInterest: 1_000_000,
@@ -785,342 +417,24 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			estimatedProtocolFees24h: 9000,
 			suspicious: true
 		}
-		const data = {
-			...overviewData,
-			markets: [ordinaryMarket, suspiciousMarket],
-			totals: {
-				...overviewData.totals,
-				openInterest: 10_000_000,
-				volume24h: 5_000_000,
-				markets: 2,
-				protocolFees24h: 10_000
+		const html = render({
+			mode: 'overview',
+			data: {
+				...overviewData,
+				markets: [ordinaryMarket, suspiciousMarket],
+				totals: {
+					...overviewData.totals,
+					openInterest: 10_000_000,
+					volume24h: 5_000_000,
+					markets: 2,
+					protocolFees24h: 10_000
+				}
 			}
-		} satisfies IRWAPerpsOverviewPageData
-
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={data} />)
+		})
 
 		expect(html).toContain('$1m')
 		expect(html).not.toContain('$10m')
-		expect(getLastTableOptions().data).toEqual([ordinaryMarket, suspiciousMarket])
-
-		const contractColumn = getLastTableOptions().columns.find((column) => column.id === 'contract')
-		if (!contractColumn?.cell) throw new Error('Expected the contract cell renderer')
-		const cellHtml = renderToStaticMarkup(
-			<>
-				{contractColumn.cell({
-					row: { original: suspiciousMarket },
-					getValue: () => suspiciousMarket.contract
-				})}
-			</>
-		)
-		expect(cellHtml).toContain('marked as suspicious and is excluded from cross-venue totals and charts')
-	})
-
-	test('omits the access model column from the shared tables', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(getLastTableOptions().columns.map((column) => column.id)).not.toContain('accessModel')
-	})
-
-	test('shows 24h open interest and volume change columns in the shared tables', () => {
-		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(getLastTableOptions().columns.map((column) => column.id)).toEqual(
-			expect.arrayContaining(['openInterestChange24h', 'volume24hChange24h', 'priceChange24h'])
-		)
-	})
-
-	test('shows an explicit empty state when time-series data only has a single timestamp', () => {
-		routerQuery = {
-			chartView: 'timeSeries',
-			timeSeriesChartBreakdown: 'assetClass'
-		}
-		queryState = {
-			data: {
-				source: [{ timestamp: 1_774_483_200_000, 'Stock Perp': 100 }],
-				dimensions: ['timestamp', 'Stock Perp']
-			},
-			isLoading: false,
-			error: null
-		}
-
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('There is not enough time-series history for this selection yet.')
-		expect(html).not.toContain('timeseries')
-	})
-
-	test('ignores a cached query error while rendering a reusable server-preloaded dataset', () => {
-		routerQuery = { chartView: 'timeSeries' }
-		queryState = {
-			data: null,
-			isLoading: false,
-			error: new Error('stale cached error')
-		}
-		const data = {
-			...overviewData,
-			initialChartDataset: {
-				source: [
-					{ timestamp: 1_774_483_200_000, Equities: 100 },
-					{ timestamp: 1_774_569_600_000, Equities: 120 }
-				],
-				dimensions: ['timestamp', 'Equities']
-			}
-		} satisfies IRWAPerpsOverviewPageData
-
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={data} />)
-
-		expect(getLastUseQueryOptions().enabled).toBe(false)
-		expect(html).not.toContain('stale cached error')
-		expect(html).not.toContain('There is not enough time-series history for this selection yet.')
-	})
-
-	test('renders fetched default time-series data when no server-preloaded dataset is available', () => {
-		routerQuery = { chartView: 'timeSeries' }
-		queryState = {
-			data: {
-				source: [
-					{ timestamp: 1_774_483_200_000, Meta: 100 },
-					{ timestamp: 1_774_569_600_000, Meta: 120 }
-				],
-				dimensions: ['timestamp', 'Meta']
-			},
-			isLoading: false,
-			error: null
-		}
-
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).not.toContain('Only a single snapshot is available')
-	})
-
-	test('renders the time-series metric switch labels from metric option names', () => {
-		routerQuery = { chartView: 'timeSeries' }
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Open Interest')
-		expect(html).toContain('Volume')
-		expect(html).toContain('Markets')
-		expect(html).toContain('Asset Group')
-		expect(html).toContain('Total')
-		expect(html).not.toContain('aria-label="Weekly"')
-	})
-
-	test('renders date grouping controls for volume time-series charts', () => {
-		routerQuery = { chartView: 'timeSeries', chartType: 'volume24h' }
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('aria-label="Daily"')
-		expect(html).toContain('aria-label="Weekly"')
-		expect(html).toContain('aria-label="Monthly"')
-		expect(html).toContain('aria-label="Quarterly"')
-		expect(html).toContain('aria-label="Yearly"')
-		expect(html).not.toContain('aria-label="Cumulative"')
-	})
-
-	test('renders the selected time-series breakdown label when selected', () => {
-		routerQuery = {
-			chartView: 'timeSeries',
-			timeSeriesChartBreakdown: 'baseAsset',
-			timeSeriesMode: 'breakdown'
-		}
-
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('Base Asset')
-	})
-
-	test('builds bar-series configs for time-series volume', () => {
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'volume24h',
-				dimensions: ['timestamp', 'Meta', 'NVIDIA'],
-				timeSeriesMode: 'breakdown'
-			})
-		).toMatchObject([
-			{
-				name: 'Meta',
-				type: 'bar',
-				stack: 'A',
-				large: false,
-				encode: { x: 'timestamp', y: 'Meta' },
-				color: expect.any(String)
-			},
-			{
-				name: 'NVIDIA',
-				type: 'bar',
-				stack: 'A',
-				large: false,
-				encode: { x: 'timestamp', y: 'NVIDIA' },
-				color: expect.any(String)
-			}
-		])
-	})
-
-	test('does not enable point markers on overview line-series configs', () => {
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'openInterest',
-				dimensions: ['timestamp', 'Meta'],
-				timeSeriesMode: 'breakdown'
-			})
-		).toMatchObject([
-			{
-				name: 'Meta',
-				type: 'line',
-				encode: { x: 'timestamp', y: 'Meta' },
-				color: expect.any(String)
-			}
-		])
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'openInterest',
-				dimensions: ['timestamp', 'Meta'],
-				timeSeriesMode: 'breakdown'
-			})[0]
-		).not.toHaveProperty('showSymbol')
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'openInterest',
-				dimensions: ['timestamp', 'Meta'],
-				timeSeriesMode: 'breakdown'
-			})[0]
-		).not.toHaveProperty('stack')
-	})
-
-	test('builds a grouped time-series series for total mode', () => {
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'openInterest',
-				dimensions: ['timestamp', 'Total'],
-				timeSeriesMode: 'grouped'
-			})
-		).toEqual([
-			{
-				name: 'Total',
-				type: 'line',
-				encode: { x: 'timestamp', y: 'Total' },
-				color: expect.any(String)
-			}
-		])
-	})
-
-	test('adds a plain total overlay line for breakdown line charts', () => {
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'openInterest',
-				dimensions: ['timestamp', 'Total', 'Meta', 'NVIDIA'],
-				timeSeriesMode: 'breakdown'
-			})
-		).toEqual([
-			{
-				name: 'Meta',
-				type: 'line',
-				encode: { x: 'timestamp', y: 'Meta' },
-				color: CHART_COLORS[1]
-			},
-			{
-				name: 'NVIDIA',
-				type: 'line',
-				encode: { x: 'timestamp', y: 'NVIDIA' },
-				color: CHART_COLORS[2]
-			},
-			{
-				name: 'Total',
-				type: 'line',
-				encode: { x: 'timestamp', y: 'Total' },
-				color: CHART_COLORS[0],
-				hideAreaStyle: true,
-				excludeFromTooltipTotal: true
-			}
-		])
-	})
-
-	test('does not add a total overlay line for breakdown bar charts', () => {
-		expect(
-			buildRWAPerpsTimeSeriesCharts({
-				metric: 'volume24h',
-				dimensions: ['timestamp', 'Total', 'Meta', 'NVIDIA'],
-				timeSeriesMode: 'breakdown'
-			})
-		).toEqual([
-			{
-				name: 'Total',
-				type: 'bar',
-				stack: 'A',
-				large: false,
-				encode: { x: 'timestamp', y: 'Total' },
-				color: CHART_COLORS[0]
-			},
-			{
-				name: 'Meta',
-				type: 'bar',
-				stack: 'A',
-				large: false,
-				encode: { x: 'timestamp', y: 'Meta' },
-				color: CHART_COLORS[1]
-			},
-			{
-				name: 'NVIDIA',
-				type: 'bar',
-				stack: 'A',
-				large: false,
-				encode: { x: 'timestamp', y: 'NVIDIA' },
-				color: CHART_COLORS[2]
-			}
-		])
-	})
-
-	test('renders 24h changes inline on the overview open interest and volume cards', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
-
-		expect(html).toContain('+25.00%')
-		expect(html).toContain('-10.00%')
-	})
-
-	test('renders 24h open interest and volume changes on venue stat cards', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={venueData} />)
-
-		expect(html).toContain('+25.00%')
-		expect(html).toContain('-10.00%')
-	})
-
-	test('defaults direct CEX venues and assets on while asset groups remain off', () => {
-		const cexVenueData = {
-			...venueData,
-			venue: 'binance',
-			markets: [cexMarket]
-		} satisfies IRWAPerpsVenuePageData
-		const venueHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={cexVenueData} />)
-
-		expect(venueHtml).toContain('CEX Venues')
-		expect(getLastTableOptions().data).toEqual([cexMarket])
-
-		const cexAssetData = {
-			...assetData,
-			markets: [cexMarket]
-		} satisfies IRWAPerpsAssetPageData
-		const assetHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="asset" data={cexAssetData} />)
-
-		expect(assetHtml).toContain('CEX Venues')
-		expect(getLastTableOptions().data).toEqual([cexMarket])
-		expect(getLastUseQueryOptions().queryKey).toEqual([
-			'rwa-perps-chart',
-			{
-				source: 'market-breakdown',
-				key: 'openInterest',
-				target: { kind: 'baseAsset', slug: 'Meta' },
-				includeCex: true
-			}
-		])
-
-		const cexAssetGroupData = {
-			...assetGroupData,
-			markets: [cexMarket]
-		} satisfies IRWAPerpsAssetGroupPageData
-		const assetGroupHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={cexAssetGroupData} />)
-
-		expect(assetGroupHtml).toContain('CEX Venues')
-		expect(getLastTableOptions().data).toEqual([])
+		expect(tableContracts(html, ['parcl:NYC', 'xyz:META'])).toEqual(['parcl:NYC', 'xyz:META'])
+		expect(html).toContain('marked as suspicious and is excluded from cross-venue totals and charts')
 	})
 })

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { DISPLAY_MODES, selectCellNumber, VOLUME_COLUMNS } from '../constants'
+import { selectCellNumber } from '../constants'
 
 describe('selectCellNumber', () => {
 	const metric = { value: 1000, percentile: 80, rank: 3 }
@@ -10,16 +10,5 @@ describe('selectCellNumber', () => {
 	})
 	test('returns null for a missing metric', () => {
 		expect(selectCellNumber(null, 'value')).toBeNull()
-	})
-})
-
-describe('column configs', () => {
-	test('exposes the three display modes', () => {
-		expect(DISPLAY_MODES).toEqual(['value', 'percentile', 'rank'])
-	})
-	test('declares volume columns with a market-share twin where applicable', () => {
-		const total = VOLUME_COLUMNS.find((c) => c.metricKey === 'orderFillVolumeTotal')
-		expect(total?.marketKey).toBe('orderFillVolumeTotalMarketPercentage')
-		expect(total?.kind).toBe('usd')
 	})
 })

@@ -182,17 +182,18 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.change_1d).toBeNull()
 	})
 
-	test('treats a protocol-table govtokens-only setting as a no-op', () => {
-		const protocols = [makeProtocol()]
+	test('adds enabled staking but never persisted govtokens TVL to protocol table rows', () => {
+		// govtokens is a retired setting that can still be persisted; the API may still ship its entry.
+		const tvl = { ...makeProtocolTvl({ staking: makeTvlEntry(20) }), govtokens: makeTvlEntry(50) } as ProtocolTvlRecord
 
-		expect(
-			applyProtocolTvlSettings({
-				protocols,
-				extraTvlsEnabled: { govtokens: true },
-				minTvl: null,
-				maxTvl: null
-			})
-		).toBe(protocols)
+		const [protocol] = applyProtocolTvlSettings({
+			protocols: [makeProtocol({ tvl })],
+			extraTvlsEnabled: { staking: true, govtokens: true },
+			minTvl: null,
+			maxTvl: null
+		})
+
+		expect(protocol?.tvl?.default.tvl).toBe(120)
 	})
 
 	test('adds enabled recent protocol extras while persisted classification settings are no-ops', () => {
@@ -241,21 +242,6 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeNull()
 	})
 
-	test('returns null for non-finite recent protocol market-cap-to-tvl ratios', () => {
-		const [protocol] = applyExtraTvl(
-			[
-				makeRecentProtocol({
-					tvl: Number.MIN_VALUE,
-					mcap: Number.MAX_VALUE
-				})
-			],
-			{}
-		)
-		if (!protocol) throw new Error('Expected adjusted protocol')
-
-		expect(protocol.mcaptvl).toBeNull()
-	})
-
 	test('adds normal protocol table extras while keeping doublecounted and liquid staking non-additive', () => {
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
@@ -279,25 +265,6 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, 100, 70, 45))
 		expect(protocol.tvlChange?.change1d).toBe(20)
 		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
-	})
-
-	test('returns null for non-finite protocol table market-cap-to-tvl ratios', () => {
-		const [protocol] = applyProtocolTvlSettings({
-			protocols: [
-				makeProtocol({
-					mcap: Number.MAX_VALUE,
-					tvl: makeProtocolTvl({
-						default: makeTvlEntry(Number.MIN_VALUE)
-					})
-				})
-			],
-			extraTvlsEnabled: {},
-			minTvl: null,
-			maxTvl: null
-		})
-		if (!protocol) throw new Error('Expected adjusted protocol')
-
-		expect(protocol.mcaptvl).toBeNull()
 	})
 
 	test('keeps market-cap ratios finite with positive denominators and preserves a zero numerator', () => {

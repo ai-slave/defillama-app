@@ -9,7 +9,7 @@ interface AreaChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
 export function AreaChartAdapter({ config, result, classified, onReady, height }: AreaChartAdapterProps) {
@@ -20,7 +20,7 @@ export function AreaChartAdapter({ config, result, classified, onReady, height }
 			result={result}
 			classified={classified}
 			onReady={onReady}
-			{...(height === undefined ? {} : { height })}
+			height={height}
 			forceType="line"
 			forceArea
 			forceStack={stackKey}

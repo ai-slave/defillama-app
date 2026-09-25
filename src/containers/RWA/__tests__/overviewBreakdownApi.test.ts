@@ -3,21 +3,29 @@ import { rwaOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/overview-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
-const mocks = vi.hoisted(() => ({
-	fetchRWACategoryBreakdownChartData: vi.fn()
+const upstream = vi.hoisted(() => ({
+	rowsByKey: {} as Record<string, Array<Record<string, number>>>,
+	requests: [] as Array<string>
 }))
 
-vi.mock('~/containers/RWA/api', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/containers/RWA/api')>()
-	return {
-		...actual,
-		fetchRWACategoryBreakdownChartData: mocks.fetchRWACategoryBreakdownChartData
+vi.mock('~/utils/async', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/utils/async')>()),
+	fetchJson: async (url: string) => {
+		const { pathname, search, searchParams } = new URL(url)
+		if (!pathname.endsWith('/chart/category-breakdown')) throw new Error(`Unrouted upstream request: ${url}`)
+		upstream.requests.push(search)
+		return upstream.rowsByKey[searchParams.get('key') ?? 'onChainMcap']
 	}
-})
+}))
 
 beforeEach(() => {
-	vi.clearAllMocks()
+	upstream.rowsByKey = {}
+	upstream.requests = []
 })
+
+// The RWA server reports seconds; the route answers in milliseconds.
+const timestampSeconds = 1_774_483_200
+const timestampMs = timestampSeconds * 1000
 
 describe('parseOverviewBreakdownRequest', () => {
 	test('accepts platform requests when both flags are false', () => {
@@ -59,41 +67,22 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	test('accepts category and asset group requests with mixed inclusion flags', () => {
-		expect(
-			parseOverviewBreakdownRequest({
-				query: {
-					breakdown: 'category',
-					key: 'activeMcap',
-					includeStablecoin: 'true',
-					includeGovernance: 'false'
-				}
+	test.each(['chain', 'category', 'platform', 'assetGroup'])(
+		'accepts %s requests with mixed inclusion flags',
+		(breakdown) => {
+			expect(
+				parseOverviewBreakdownRequest({
+					query: { breakdown, key: 'activeMcap', includeStablecoin: 'true', includeGovernance: 'false' }
+				})
+			).toEqual({
+				breakdown,
+				key: 'activeMcap',
+				includeStablecoin: true,
+				includeGovernance: false,
+				includeBridgeTvl: true
 			})
-		).toEqual({
-			breakdown: 'category',
-			key: 'activeMcap',
-			includeStablecoin: true,
-			includeGovernance: false,
-			includeBridgeTvl: true
-		})
-
-		expect(
-			parseOverviewBreakdownRequest({
-				query: {
-					breakdown: 'assetGroup',
-					key: 'activeMcap',
-					includeStablecoin: 'false',
-					includeGovernance: 'true'
-				}
-			})
-		).toEqual({
-			breakdown: 'assetGroup',
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: true,
-			includeBridgeTvl: true
-		})
-	})
+		}
+	)
 
 	test('rejects arrays and invalid enum values', () => {
 		expect(
@@ -133,8 +122,7 @@ describe('parseOverviewBreakdownRequest', () => {
 
 describe('rwaOverviewBreakdown', () => {
 	test('returns serialized transformed breakdown data', async () => {
-		const timestampMs = 1_774_483_200_000
-		mocks.fetchRWACategoryBreakdownChartData.mockResolvedValue([{ timestamp: timestampMs, Treasuries: 42 }])
+		upstream.rowsByKey.activeMcap = [{ timestamp: timestampSeconds, Treasuries: 42 }]
 
 		const result = await rwaOverviewBreakdown.handle({
 			method: 'GET',
@@ -161,10 +149,8 @@ describe('rwaOverviewBreakdown', () => {
 	})
 
 	test('subtracts bridge TVL from excluded DeFi breakdown history', async () => {
-		const timestampMs = 1_774_483_200_000
-		mocks.fetchRWACategoryBreakdownChartData
-			.mockResolvedValueOnce([{ timestamp: timestampMs, Treasuries: 42, Credit: 3 }])
-			.mockResolvedValueOnce([{ timestamp: timestampMs, Treasuries: 2, Credit: 1 }])
+		upstream.rowsByKey.defiActiveTvl = [{ timestamp: timestampSeconds, Treasuries: 42, Credit: 3 }]
+		upstream.rowsByKey.bridgeTvl = [{ timestamp: timestampSeconds, Treasuries: 2, Credit: 1 }]
 
 		const result = await rwaOverviewBreakdown.handle({
 			method: 'GET',
@@ -179,16 +165,7 @@ describe('rwaOverviewBreakdown', () => {
 			}
 		})
 
-		expect(mocks.fetchRWACategoryBreakdownChartData).toHaveBeenNthCalledWith(1, {
-			key: 'defiActiveTvl',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-		expect(mocks.fetchRWACategoryBreakdownChartData).toHaveBeenNthCalledWith(2, {
-			key: 'bridgeTvl',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
+		expect(upstream.requests.sort()).toEqual(['?key=bridgeTvl', '?key=defiActiveTvl'])
 		expect(resultBody(result)).toEqual({
 			source: [[timestampMs, 40, 2]],
 			dimensions: ['timestamp', 'Treasuries', 'Credit']

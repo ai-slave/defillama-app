@@ -1,12 +1,11 @@
-// @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
+// @vitest-environment happy-dom
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { useImageUpload } from '../useImageUpload'
 import { usePdfUpload } from '../usePdfUpload'
-const api = vi.hoisted(() => ({ fetch: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ authorizedFetch: api.fetch }) }))
+const session = installSubscriberSession('article-editor')
 
 test.each([
 	{
@@ -28,7 +27,6 @@ test.each([
 		const container = document.createElement('div')
 		document.body.append(container)
 		const root = createRoot(container)
-		const client = new QueryClient()
 		let upload!: { uploadFile: (file: File) => Promise<unknown>; isUploading: boolean }
 		function Harness() {
 			upload = useUpload()
@@ -48,9 +46,9 @@ test.each([
 		try {
 			await act(async () =>
 				root.render(
-					<QueryClientProvider client={client}>
+					<session.Wrapper>
 						<Harness />
-					</QueryClientProvider>
+					</session.Wrapper>
 				)
 			)
 			let result!: Promise<unknown>
@@ -61,7 +59,7 @@ test.each([
 				await new Promise((resolve) => setTimeout(resolve, 0))
 			})
 			expect(container.querySelector('button')!.disabled).toBe(true)
-			expect(api.fetch).not.toHaveBeenCalled()
+			expect(session.requests.filter(({ url }) => url.pathname.startsWith('/uploads/'))).toHaveLength(0)
 			await act(async () => reject(new Error('Read failed')))
 			expect(await result).toMatchObject({ message: 'Read failed' })
 			await act(async () => {
@@ -71,7 +69,6 @@ test.each([
 		} finally {
 			await act(async () => root.unmount())
 			container.remove()
-			client.clear()
 		}
 	}
 )

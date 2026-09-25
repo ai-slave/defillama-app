@@ -60,7 +60,6 @@ import {
 	pushShallowQuery,
 	toNonEmptyArrayParam
 } from '~/utils/routerQuery'
-import { setRWAPerpsChartScope } from './api'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsBaseAssetBreakdownLabel } from './breakdownLabels'
 import type { RWAPerpsChartDefaults } from './chartState'
@@ -69,6 +68,7 @@ import {
 	getRWAPerpsBreakdownLabel,
 	getRWAPerpsChartBreakdownOptions,
 	getRWAPerpsChartBreakdownQueryValue,
+	getRWAPerpsChartControls,
 	getRWAPerpsChartMetricLabel,
 	getRWAPerpsChartMetricOptions,
 	getRWAPerpsChartMetricQueryValue,
@@ -105,18 +105,15 @@ import {
 	sumMarketMetric,
 	sumProtocolFees24h
 } from './queries'
+import { FOREX_ASSET_CLASS, planRWAPerpsTimeSeriesQuery, rwaPerpsTimeSeriesUrl } from './timeSeriesQuery'
 import { buildRWAPerpsTreemapTreeData } from './treemap'
 import type {
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetPageData,
-	IRWAPerpsContractBreakdownRequest,
-	IRWAPerpsMarketBreakdownRequest,
-	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsOverviewPageData,
 	IRWAPerpsVenuePageData,
 	RWAPerpsAssetGroupTimeSeriesBreakdown,
 	RWAPerpsAssetTimeSeriesBreakdown,
-	RWAPerpsMarketBreakdownTarget,
 	RWAPerpsOverviewTimeSeriesBreakdown,
 	RWAPerpsVenueTimeSeriesBreakdown
 } from './types'
@@ -132,7 +129,6 @@ const EMPTY_DATASET: RWAChartDataset = {
 }
 const EMPTY_SNAPSHOT_BREAKDOWN_ROWS: Array<{ name: string; value: number }> = []
 const PIE_CHART_RADIUS = ['50%', '70%'] as [string, string]
-const FOREX_ASSET_CLASS = 'Forex Perps'
 const UNKNOWN_FILTER_VALUE = 'Unknown'
 
 type RWAPerpsMarketFilterKey =
@@ -162,11 +158,6 @@ type RWAPerpsMarketFilterState = RWAPerpsMarketFilterDefinition & {
 	active: boolean
 	enabled: boolean
 }
-
-type RWAPerpsTimeSeriesRequest =
-	| ({ source: 'market-breakdown' } & IRWAPerpsMarketBreakdownRequest)
-	| ({ source: 'contract-breakdown' } & IRWAPerpsContractBreakdownRequest)
-	| ({ source: 'overview-breakdown' } & IRWAPerpsOverviewBreakdownRequest)
 
 const PERPS_MARKET_FILTER_DEFINITIONS: Array<RWAPerpsMarketFilterDefinition> = [
 	{
@@ -1677,34 +1668,6 @@ function StatCard({
 	)
 }
 
-function fetchOverviewTimeSeriesDataset(request: IRWAPerpsOverviewBreakdownRequest): Promise<RWAChartDataset> {
-	const searchParams = new URLSearchParams({
-		breakdown: request.breakdown,
-		key: request.key
-	})
-	setRWAPerpsChartScope(searchParams, request)
-
-	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/overview-breakdown?${searchParams.toString()}`)
-}
-
-function fetchContractTimeSeriesDataset(request: IRWAPerpsContractBreakdownRequest): Promise<RWAChartDataset> {
-	const searchParams = new URLSearchParams({
-		key: request.key
-	})
-	setRWAPerpsChartScope(searchParams, request)
-
-	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
-}
-
-function fetchMarketTimeSeriesDataset(request: IRWAPerpsMarketBreakdownRequest): Promise<RWAChartDataset> {
-	const searchParams = new URLSearchParams({
-		key: request.key
-	})
-	setRWAPerpsChartScope(searchParams, request)
-
-	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`)
-}
-
 export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const router = useRouter()
 	const {
@@ -1764,7 +1727,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const treemapBreakdown =
 		chartState.view === 'treemap' ? chartState.breakdown : getDefaultRWAPerpsChartBreakdown(chartState.mode, 'treemap')
 	const treemapNestedByOptions = getRWAPerpsTreemapNestedByOptions(props.mode, treemapBreakdown, d)
-	const showTreemapNestedBySelect = chartState.view === 'treemap' && treemapNestedByOptions.length > 1
+	const chartControls = getRWAPerpsChartControls(chartState)
 	const treemapNestedByLabel = getRWAPerpsTreemapNestedByLabel(chartState.treemapNestedBy, d)
 	const breakdownLabel =
 		chartState.view === 'timeSeries' && chartState.timeSeriesMode === 'grouped'
@@ -1914,76 +1877,28 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		if (assetLabel !== null) return { mode: 'asset', scopeLabel: assetLabel } as const
 		return { mode: 'overview' } as const
 	}, [assetGroupLabel, assetLabel, venueLabel])
-	const timeSeriesClassTarget: RWAPerpsMarketBreakdownTarget | null = assetClassFilter
-		? { kind: 'assetClass', slug: assetClassFilter }
-		: showForexToggle && !includeForex
-			? { kind: 'excludeAssetClass', slug: FOREX_ASSET_CLASS }
-			: null
-	const pageTarget: RWAPerpsMarketBreakdownTarget = isVenueMode
-		? { kind: 'venue', slug: props.data.venue }
-		: isAssetGroupMode
-			? { kind: 'assetGroup', slug: props.data.assetGroup }
-			: isAssetMode
-				? { kind: 'baseAsset', slug: props.data.asset }
-				: { kind: 'all' }
-	const aggregatePageTarget = isVenueMode
-		? ({ kind: 'venue', slug: props.data.venue } as const)
-		: isAssetGroupMode
-			? ({ kind: 'assetGroup', slug: props.data.assetGroup } as const)
-			: ({ kind: 'all' } as const)
-	const shouldProjectMarketBreakdown = hasActiveMarketFilters
-	const timeSeriesRequest: RWAPerpsTimeSeriesRequest = (() => {
-		if (isAssetMode || shouldProjectMarketBreakdown) {
-			const target = timeSeriesClassTarget ?? pageTarget
-			return { source: 'market-breakdown', key: chartState.metric, target, includeCex }
-		}
-
-		const target = timeSeriesClassTarget ?? aggregatePageTarget
-		return chartState.breakdown === 'contract'
-			? { source: 'contract-breakdown', key: chartState.metric, target, includeCex }
-			: { source: 'overview-breakdown', key: chartState.metric, breakdown: chartState.breakdown, target, includeCex }
-	})()
-	const isDefaultTimeSeriesState =
-		chartState.view === 'timeSeries' &&
-		chartState.metric === 'openInterest' &&
-		chartState.breakdown === getDefaultRWAPerpsChartBreakdown(props.mode, 'timeSeries', chartDefaults)
-	const hasPreloadedTimeSeriesDataset =
-		initialChartDataset.source.length > 0 ||
-		initialChartDataset.dimensions.some((dimension) => dimension !== 'timestamp')
-	const canUseInitialTimeSeriesDataset =
-		(timeSeriesRequest.source !== 'market-breakdown' || isAssetMode) &&
-		(!showForexToggle || !includeForex) &&
-		includeCex === includeCexByDefault
-	const shouldUseInitialTimeSeriesDataset =
-		isDefaultTimeSeriesState && hasPreloadedTimeSeriesDataset && canUseInitialTimeSeriesDataset
+	const {
+		request: timeSeriesRequest,
+		useInitialDataset: shouldUseInitialTimeSeriesDataset,
+		enabled: isTimeSeriesQueryEnabled
+	} = planRWAPerpsTimeSeriesQuery({
+		mode: props.mode,
+		scopeName: venueLabel ?? assetGroupLabel ?? assetLabel ?? '',
+		chartState,
+		chartDefaults,
+		assetClassFilter,
+		showForexToggle,
+		includeForex,
+		includeCex,
+		includeCexByDefault,
+		hasActiveMarketFilters,
+		hasIncludedRows: includedRows.length > 0,
+		initialChartDataset
+	})
 	const timeSeriesQueryFn =
 		chartState.view === 'timeSeries'
-			? () => {
-					switch (timeSeriesRequest.source) {
-						case 'market-breakdown':
-							return fetchMarketTimeSeriesDataset({
-								key: timeSeriesRequest.key,
-								target: timeSeriesRequest.target,
-								includeCex: timeSeriesRequest.includeCex
-							})
-						case 'contract-breakdown':
-							return fetchContractTimeSeriesDataset({
-								key: timeSeriesRequest.key,
-								target: timeSeriesRequest.target,
-								includeCex: timeSeriesRequest.includeCex
-							})
-						case 'overview-breakdown':
-							return fetchOverviewTimeSeriesDataset({
-								breakdown: timeSeriesRequest.breakdown,
-								key: timeSeriesRequest.key,
-								target: timeSeriesRequest.target,
-								includeCex: timeSeriesRequest.includeCex
-							})
-					}
-				}
+			? () => fetchJson<RWAChartDataset>(rwaPerpsTimeSeriesUrl(timeSeriesRequest))
 			: skipToken
-	const isTimeSeriesQueryEnabled =
-		chartState.view === 'timeSeries' && !shouldUseInitialTimeSeriesDataset && includedRows.length > 0
 
 	const timeSeriesQuery = useQuery({
 		queryKey: ['rwa-perps-chart', timeSeriesRequest],
@@ -2360,7 +2275,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								size="md"
 							/>
 						) : null}
-						{chartState.metric === 'volume24h' ? (
+						{chartControls.dateGrouping ? (
 							<ChartGroupingSelector
 								value={volumeGroupBy}
 								options={DWM_GROUPING_OPTIONS_LOWERCASE}
@@ -2437,7 +2352,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								size="md"
 							/>
 						) : null}
-						{showTreemapNestedBySelect ? (
+						{chartControls.nestedBy ? (
 							<Select
 								allValues={treemapNestedByOptions}
 								selectedValues={chartState.treemapNestedBy}
@@ -2448,7 +2363,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								size="md"
 							/>
 						) : null}
-						{chartState.view === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
+						{chartControls.restore ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
 						<ChartExportButtons
 							chartInstance={nonTimeSeriesChartInstance}
 							filename={nonTimeSeriesFilename}

@@ -1,45 +1,26 @@
+import { fetchAdapterChainChartData, fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChart } from '~/containers/AdapterMetrics/api.types'
 
 export const COMPARE_CHAIN_ADAPTER_METRICS = ['dexVolumeChart', 'chainFeesChart', 'chainRevenueChart'] as const
 
 export type CompareChainAdapterMetric = (typeof COMPARE_CHAIN_ADAPTER_METRICS)[number]
 
-export type CompareChainAdapterRequest =
-	| {
-			metric: 'dexVolumeChart'
-			endpoint: 'chain'
-			params: { adapterType: 'dexs'; chain: string }
-	  }
-	| {
-			metric: 'chainFeesChart'
-			endpoint: 'protocol'
-			params: { adapterType: 'fees'; protocol: string }
-	  }
-	| {
-			metric: 'chainRevenueChart'
-			endpoint: 'protocol'
-			params: { adapterType: 'fees'; protocol: string; dataType: 'dailyRevenue' }
-	  }
-
 export function getCompareChainAdapterMetrics(selectedCharts: ReadonlyArray<string>): Array<CompareChainAdapterMetric> {
 	return COMPARE_CHAIN_ADAPTER_METRICS.filter((metric) => selectedCharts.includes(metric))
 }
 
-export function buildCompareChainAdapterRequest(
+// DEX volume is a chain-level adapter; chain fees and revenue come from the chain's own protocol entry.
+export function fetchCompareChainAdapterMetric(
 	chain: string,
 	metric: CompareChainAdapterMetric
-): CompareChainAdapterRequest {
+): Promise<IAdapterChart> {
 	switch (metric) {
 		case 'dexVolumeChart':
-			return { metric, endpoint: 'chain', params: { adapterType: 'dexs', chain } }
+			return fetchAdapterChainChartData({ adapterType: 'dexs', chain })
 		case 'chainFeesChart':
-			return { metric, endpoint: 'protocol', params: { adapterType: 'fees', protocol: chain } }
+			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain })
 		case 'chainRevenueChart':
-			return {
-				metric,
-				endpoint: 'protocol',
-				params: { adapterType: 'fees', protocol: chain, dataType: 'dailyRevenue' }
-			}
+			return fetchAdapterProtocolChartData({ adapterType: 'fees', protocol: chain, dataType: 'dailyRevenue' })
 	}
 }
 

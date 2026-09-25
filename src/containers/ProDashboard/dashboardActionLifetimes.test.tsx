@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, createContext } from 'react'
+import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER, SERVER_URL } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { Dashboard, DashboardRatingDecision } from './dashboardTypes'
 import {
@@ -11,19 +12,8 @@ import {
 	useProDashboardEditorActions,
 	useProDashboardItemsState
 } from './ProDashboardAPIContext'
+import type { DashboardSavePayload } from './services/DashboardAPI'
 
-const api = vi.hoisted(() => ({ update: vi.fn(), dashboard: null as Dashboard | null }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({
-		isAuthenticated: true,
-		user: { id: 'owner' },
-		hasActiveSubscription: true,
-		authToken: 'test',
-		loaders: { userLoading: false },
-		authorizedFetch: vi.fn()
-	})
-}))
-vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
 const router = vi.hoisted(() => ({
 	push: vi.fn(),
 	replace: vi.fn(),
@@ -32,32 +22,9 @@ const router = vi.hoisted(() => ({
 	query: {}
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
-vi.mock('./hooks/useFreeTierStatus', () => ({
-	useFreeTierStatus: () => ({ canCreateDashboard: true, isFreeUser: false })
-}))
-vi.mock('./hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({
-		dashboard: api.dashboard,
-		isDone: true,
-		isStreaming: false,
-		readyItemIds: new Set<string>(),
-		error: null
-	})
-}))
-vi.mock('./hooks/useAutoSave', () => {
-	const hasPendingSave = () => false
-	return { useAutoSave: () => ({ autoSave: vi.fn(), flush: vi.fn(), acknowledge: vi.fn(), hasPendingSave }) }
-})
-vi.mock('./queries', () => ({
-	StreamDoneContext: createContext(true),
-	StreamItemReadinessContext: createContext(null),
-	ProxyAuthTokenContext: createContext(null),
-	useProtocolsAndChains: () => ({ data: { protocols: [], chains: [] } })
-}))
-vi.mock('./services/DashboardAPI', async (original) => ({
-	...(await original<typeof import('./services/DashboardAPI')>()),
-	dashboardAPI: { listDashboards: async () => [], getDashboard: async () => api.dashboard, updateDashboard: api.update }
-}))
+
+const session = installSubscriberSession('owner')
+
 const oldItems: Array<DashboardItemConfig> = [{ id: 'before', kind: 'text', content: 'Before AI' }]
 const aiItems: Array<DashboardItemConfig> = [{ id: 'ai', kind: 'text', content: 'AI result' }]
 const laterItems: Array<DashboardItemConfig> = [{ id: 'later', kind: 'text', content: 'Written during save' }]
@@ -76,43 +43,91 @@ const original: Dashboard = {
 		session: { mode: 'iterate', timestamp: '2026-09-07', prompt: 'Compare fees', userId: 'owner', rated: false }
 	}
 }
+const another: Dashboard = {
+	...original,
+	id: 'another',
+	data: { ...original.data, dashboardName: 'Another dashboard', items: laterItems }
+}
+const savedDashboards: Record<string, Dashboard> = { dashboard: original, another }
+
+/** The payload of every save request, in order. */
+let saves: Array<DashboardSavePayload>
+/** Answers for the next saves; a save without one is stored as sent. */
+let replies: Array<(payload: DashboardSavePayload) => Promise<Dashboard>>
+const storeAsSent = async ({ visibility, tags, description, aiGenerated, ...data }: DashboardSavePayload) =>
+	({ ...original, visibility, tags, description, aiGenerated, data: { ...original.data, ...data } }) as Dashboard
+
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let dashboard: ReturnType<typeof useProDashboardDashboard>
 let editor: ReturnType<typeof useProDashboardEditorActions>
 let items: Array<DashboardItemConfig>
+/** The dashboard each render showed, to catch a wrong dashboard even when a later render corrects it. */
+let renderedDashboardIds: Array<string | null>
 function Probe() {
 	dashboard = useProDashboardDashboard()
 	editor = useProDashboardEditorActions()
 	items = useProDashboardItemsState().items
+	renderedDashboardIds.push(dashboard.dashboardId)
 	return null
 }
+async function open(value: Dashboard) {
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<ProDashboardAPIProvider mode="edit" initialDashboardId={value.id} initialDashboard={value}>
+					<Probe />
+				</ProDashboardAPIProvider>
+			</session.Wrapper>
+		)
+	)
+	// Editor actions need the restored session, and the stream re-applies the saved dashboard when it lands.
+	await vi.waitFor(() => {
+		expect(session.urls().some((url) => url.includes(`/${value.id}/stream`))).toBe(true)
+		expect(dashboard.streamHasResolved).toBe(true)
+	})
+}
 beforeEach(async () => {
-	api.update.mockReset()
-	api.dashboard = { ...original }
-	client = new QueryClient()
+	saves = []
+	replies = []
+	renderedDashboardIds = []
+	session.serve({
+		'http://localhost:3000/api/dynamic/pro-dashboard/': (url: URL) => {
+			const id = url.pathname.split('/')[4]!
+			return new Response(`${JSON.stringify({ type: 'dashboard', data: savedDashboards[id] })}\n{"type":"done"}\n`)
+		},
+		'/api/private/pro-dashboard/save': async (_url: URL, init?: RequestInit) => {
+			const body = JSON.parse(String(init!.body))
+			const { visibility, tags, description, aiGenerated } = body
+			const payload: DashboardSavePayload = { ...body.data, visibility, tags, description, aiGenerated }
+			saves.push(payload)
+			try {
+				return Response.json(await (replies.shift() ?? storeAsSent)(payload))
+			} catch (error) {
+				return Response.json({ message: (error as Error).message }, { status: 503 })
+			}
+		},
+		// The editor's catalogs and dashboard lists load in the background; these dashboards need none of them.
+		'/api/dynamic/pro-dashboard/protocol-catalog-source': [],
+		[`${SERVER_URL}/lite/protocols2`]: { protocols: [], chains: [], parentProtocols: [] },
+		[`${SERVER_URL}/chains`]: [],
+		[`${FEATURES_SERVER}/lite/dashboards`]: { items: [] },
+		[`${FEATURES_SERVER}/dashboards`]: { items: [] },
+		[`${FEATURES_SERVER}/dashboards/`]: (url: URL) => savedDashboards[url.pathname.split('/')[2]!]
+	})
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	await act(async () =>
-		root.render(
-			<QueryClientProvider client={client}>
-				<ProDashboardAPIProvider mode="edit" initialDashboardId="dashboard" initialDashboard={original}>
-					<Probe />
-				</ProDashboardAPIProvider>
-			</QueryClientProvider>
-		)
-	)
+	await open(original)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
+
 test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made while saving', async (action) => {
 	const pending = Promise.withResolvers<Dashboard>()
-	api.update.mockReturnValueOnce(pending.promise)
+	replies.push(() => pending.promise)
 	let completion: Promise<void>
 	await act(async () => {
 		completion =
@@ -126,41 +141,37 @@ test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made w
 						items: oldItems
 					})
 	})
-	await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
+	await vi.waitFor(() => expect(saves).toHaveLength(1))
 	await act(async () => editor.handleEditItem('ai', laterItems[0]))
-	const saved = { ...original, data: { ...original.data, ...api.update.mock.calls[0][1] } }
 	await act(async () => {
-		pending.resolve(saved)
+		pending.resolve(await storeAsSent(saves[0]!))
 		await completion
 	})
 	// The saved result adds a different item; accepting it must retain the concurrent local edit.
 	expect(items).toEqual([...laterItems, ...oldItems])
 	expect(dashboard.currentDashboard?.data.items).toEqual(oldItems)
 })
+
 test('undo restores the previous items when no newer edit exists and removes the undo action', async () => {
-	api.update.mockImplementation(async (_id, data) => ({
-		...original,
-		aiGenerated: data.aiGenerated,
-		data: { ...original.data, ...data }
-	}))
 	await act(async () => dashboard.undoAIGeneration())
+	expect(saves.map((save) => save.items)).toEqual([oldItems])
 	expect(items).toEqual(oldItems)
 	expect(dashboard.canUndo).toBe(false)
 	expect(dashboard.getCurrentRatingSession()).toBeNull()
 })
+
 test.each<DashboardRatingDecision>([{ rating: 4, feedback: 'Useful' }, { skipped: true }])(
 	'rating decision %j stays retryable after an API failure',
 	async (decision) => {
-		api.update.mockRejectedValueOnce(new Error('Offline')).mockImplementationOnce(async (_id, data) => ({
-			...original,
-			aiGenerated: data.aiGenerated,
-			data: { ...original.data, ...data }
-		}))
+		replies.push(async () => {
+			throw new Error('Offline')
+		})
 		await act(async () => {
 			await expect(dashboard.submitRating('session', decision)).rejects.toThrow('Offline')
 		})
 		expect(dashboard.getCurrentRatingSession()?.sessionId).toBe('session')
 		await act(async () => dashboard.submitRating('session', decision))
+		expect(saves).toHaveLength(2)
 		expect(dashboard.getCurrentRatingSession()).toBeNull()
 		expect(dashboard.currentDashboard?.aiGenerated?.session).toMatchObject(decision)
 	}
@@ -168,33 +179,20 @@ test.each<DashboardRatingDecision>([{ rating: 4, feedback: 'Useful' }, { skipped
 
 test('a late undo acknowledgement cannot replace the dashboard opened during its save', async () => {
 	const pending = Promise.withResolvers<Dashboard>()
-	api.update.mockReturnValueOnce(pending.promise)
+	replies.push(() => pending.promise)
 	let completion: Promise<void>
 	await act(async () => {
 		completion = dashboard.undoAIGeneration()
 	})
-	await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
-	const another = {
-		...original,
-		id: 'another',
-		data: { ...original.data, dashboardName: 'Another dashboard', items: laterItems }
-	}
-	api.dashboard = another
-	await act(async () =>
-		root.render(
-			<QueryClientProvider client={client}>
-				<ProDashboardAPIProvider mode="edit" initialDashboardId="another" initialDashboard={another}>
-					<Probe />
-				</ProDashboardAPIProvider>
-			</QueryClientProvider>
-		)
-	)
+	await vi.waitFor(() => expect(saves).toHaveLength(1))
+	await open(another)
 	expect(dashboard.dashboardId).toBe('another')
+	renderedDashboardIds = []
 	await act(async () => {
 		pending.resolve({ ...original, data: { ...original.data, items: oldItems } })
 		await completion
 	})
-	expect(dashboard.dashboardId).toBe('another')
+	expect(new Set(renderedDashboardIds)).toEqual(new Set(['another']))
 	expect(dashboard.dashboardName).toBe('Another dashboard')
 	expect(items).toEqual(laterItems)
 })

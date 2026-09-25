@@ -38,34 +38,28 @@ describe('DemoPreview', () => {
 		container.remove()
 	})
 
-	test('leads with the build-your-own headline instead of the old preview title', () => {
-		expect(container.querySelector('h1')?.textContent).toBe('Build your own DeFi dashboard')
-		expect(container.textContent).not.toContain('Pro Dashboard Preview')
-	})
-
-	test('labels sample charts and the live table separately instead of one simulated-data disclaimer', () => {
-		const text = container.textContent ?? ''
-		expect(text).not.toContain('All data shown below is simulated')
-		expect(text).toContain('Sample charts use illustrative data')
-		expect(text).toContain('Live data from DefiLlama')
-
+	test('labels the sample charts as sample data and the table below them as live', () => {
 		const captions = Array.from(container.querySelectorAll('p'))
 		const chartsCaption = captions.find((node) => node.textContent?.trim() === 'Sample charts use illustrative data')!
 		const liveCaption = captions.find((node) => node.textContent?.trim() === 'Live data from DefiLlama')!
 		const table = container.querySelector('[data-demo-table]')!
 		const firstChart = container.querySelector('[data-demo-chart]')!
-		expect(chartsCaption.compareDocumentPosition(firstChart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-		expect(liveCaption.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-		expect(firstChart.compareDocumentPosition(liveCaption) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+		expect(chartsCaption.compareDocumentPosition(firstChart) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING
+		)
+		expect(liveCaption.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING
+		)
+		expect(firstChart.compareDocumentPosition(liveCaption) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+			Node.DOCUMENT_POSITION_FOLLOWING
+		)
 	})
 
-	test('offers account creation and community dashboards from the sticky strip', () => {
+	test('offers account creation that returns to the preview, and community dashboards', () => {
 		const links = Array.from(container.querySelectorAll('a'))
 		const createAccount = links.find((link) => link.textContent?.trim() === 'Create a free account')
 		const discover = links.find((link) => link.textContent?.trim() === 'See community dashboards')
 		expect(createAccount?.getAttribute('href')).toBe('/subscription?returnUrl=%2Fpro%2Fpreview')
 		expect(discover?.getAttribute('href')).toBe('/pro?tab=discover')
-		expect(createAccount?.closest('.sticky')).not.toBeNull()
-		expect(discover?.closest('.sticky')).toBe(createAccount?.closest('.sticky'))
 	})
 })

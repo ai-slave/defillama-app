@@ -780,6 +780,53 @@ const collectFailedQueries = (
 	return failed
 }
 
+type ChartQuerySnapshot<T> = { data: T | undefined; dataUpdatedAt: number; isError: boolean }
+
+/** A source whose query failed before returning data is dropped; a failed refetch keeps its cached data. */
+export function selectComputableCharts<T>(queries: Array<ChartQuerySnapshot<T>>): Array<T | undefined> {
+	return queries.some((query) => query.isError && query.data === undefined) ? [] : queries.map((query) => query.data)
+}
+
+/**
+ * The breakdown is recomputed only when this changes: a source's data arriving, updating or going
+ * away, or an input that shapes the result. Error and loading flips alone keep the last result.
+ */
+export function getBreakdownComputeSignature({
+	queryGroups,
+	protocol,
+	source,
+	includeBase,
+	keys,
+	tokensToExclude,
+	inflows,
+	computeInflows,
+	tokenPieMinimumValue
+}: {
+	queryGroups: Array<Array<ChartQuerySnapshot<unknown>>>
+	protocol: string
+	source: string
+	includeBase: boolean
+	keys: Array<string>
+	tokensToExclude: Array<string> | undefined
+	inflows: boolean
+	computeInflows: boolean
+	tokenPieMinimumValue: number
+}): string {
+	return [
+		...queryGroups.map((queries) =>
+			queries.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`).join('|')
+		),
+		protocol,
+		source,
+		includeBase ? '1' : '0',
+		keys.join('|'),
+		canonicalizeTokensToExclude(tokensToExclude)?.queryValue ?? '',
+		inflows ? 'with-breakdowns' : 'without-breakdowns',
+		computeInflows ? 'inflows' : 'no-inflows',
+		tokenPieMinimumValue
+	].join('::')
+}
+
 export function useProtocolBreakdownCharts(
 	params: IUseProtocolBreakdownChartsParams
 ): IUseProtocolBreakdownChartsResult {
@@ -820,31 +867,17 @@ export function useProtocolBreakdownCharts(
 		chainBreakdownChartQueries.some((query) => query.isLoading) ||
 		tokenBreakdownUsdQueries.some((query) => query.isLoading) ||
 		tokenBreakdownRawQueries.some((query) => query.isLoading)
-	const tokenExclusionSignature =
-		params.source === 'treasury' ? '' : (canonicalizeTokensToExclude(params.tokensToExclude)?.queryValue ?? '')
-
-	const computeSignature = [
-		tvlChartQueries
-			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
-			.join('|'),
-		chainBreakdownChartQueries
-			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
-			.join('|'),
-		tokenBreakdownUsdQueries
-			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
-			.join('|'),
-		tokenBreakdownRawQueries
-			.map((query) => `${query.dataUpdatedAt}:${query.data === undefined ? 'absent' : 'present'}`)
-			.join('|'),
+	const computeSignature = getBreakdownComputeSignature({
+		queryGroups: [tvlChartQueries, chainBreakdownChartQueries, tokenBreakdownUsdQueries, tokenBreakdownRawQueries],
 		protocol,
 		source,
-		includeBase ? '1' : '0',
-		keys.join('|'),
-		tokenExclusionSignature,
-		inflows ? 'with-breakdowns' : 'without-breakdowns',
-		computeInflows ? 'inflows' : 'no-inflows',
+		includeBase,
+		keys,
+		tokensToExclude: params.source === 'treasury' ? undefined : params.tokensToExclude,
+		inflows,
+		computeInflows,
 		tokenPieMinimumValue
-	].join('::')
+	})
 
 	const latestComputeInputRef = React.useRef<{
 		tvlCharts: Array<IProtocolValueChart | null | undefined>
@@ -860,18 +893,10 @@ export function useProtocolBreakdownCharts(
 	// Written after commit and read only by the scheduled computation, never during render.
 	React.useLayoutEffect(() => {
 		latestComputeInputRef.current = {
-			tvlCharts: tvlChartQueries.some((query) => query.isError && query.data === undefined)
-				? []
-				: tvlChartQueries.map((query) => query.data),
-			chainBreakdownCharts: chainBreakdownChartQueries.some((query) => query.isError && query.data === undefined)
-				? []
-				: chainBreakdownChartQueries.map((query) => query.data),
-			tokenBreakdownUsdCharts: tokenBreakdownUsdQueries.some((query) => query.isError && query.data === undefined)
-				? []
-				: tokenBreakdownUsdQueries.map((query) => query.data),
-			tokenBreakdownRawCharts: tokenBreakdownRawQueries.some((query) => query.isError && query.data === undefined)
-				? []
-				: tokenBreakdownRawQueries.map((query) => query.data)
+			tvlCharts: selectComputableCharts(tvlChartQueries),
+			chainBreakdownCharts: selectComputableCharts(chainBreakdownChartQueries),
+			tokenBreakdownUsdCharts: selectComputableCharts(tokenBreakdownUsdQueries),
+			tokenBreakdownRawCharts: selectComputableCharts(tokenBreakdownRawQueries)
 		}
 	})
 

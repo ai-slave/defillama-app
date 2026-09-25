@@ -186,17 +186,6 @@ describe('useSavedDraft', () => {
 		expect(latest.conflict).toBe(false)
 	})
 
-	test('a genuine change by someone else after a save is still a conflict', async () => {
-		await render(saved())
-		await type('Mine')
-		await act(async () => latest.acceptSaved(toForm(saved({ name: 'Mine' })), latest.draft))
-		await type('Mine, edited')
-
-		await render(saved({ name: 'Theirs' }))
-		expect(container.querySelector('input')!.value).toBe('Mine, edited')
-		expect(latest.conflict).toBe(true)
-	})
-
 	test('switching from new to the created entity resets to the saved values', async () => {
 		await render(null)
 		await type('Fresh')

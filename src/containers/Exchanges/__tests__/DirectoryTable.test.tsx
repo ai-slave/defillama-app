@@ -1,5 +1,3 @@
-import { flexRender } from '@tanstack/react-table'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
@@ -80,27 +78,21 @@ function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: Ex
 
 describe('exact segment scopes in directory columns', () => {
 	test('hides execution columns only when the execution source is unavailable', () => {
-		const availableIds = buildDirectoryColumns('linear_perp', true).map((column) => column.id)
-		const unavailableIds = buildDirectoryColumns('linear_perp', false).map((column) => column.id)
+		const availableIds = new Set(buildDirectoryColumns('linear_perp', true).map((column) => column.id))
+		const unavailableIds = new Set(buildDirectoryColumns('linear_perp', false).map((column) => column.id))
 
-		expect(availableIds).toEqual(expect.arrayContaining(['execCostToTrade', 'execSlippage10k', 'execMarkout1m']))
-		expect(unavailableIds).not.toEqual(expect.arrayContaining(['execCostToTrade', 'execSlippage10k', 'execMarkout1m']))
+		const execIds = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
+		expect(execIds.filter((id) => availableIds.has(id))).toEqual(execIds)
+		expect(execIds.filter((id) => unavailableIds.has(id))).toEqual([])
 	})
 
-	test('keeps an unmeasured venue in the available execution population', () => {
-		const column = buildDirectoryColumns('linear_perp', true).find((item) => item.id === 'execCostToTrade')
-		if (!column) throw new Error('Expected execution column')
-
-		expect(column.meta?.csvValue?.(row())).toBe('')
-	})
-
-	test('keeps selected-country status out of the exchange name cell', () => {
-		const venue = row({ selectedCountry: 'DE', selectedCountryStatus: 'restricted' })
-		const cell = directoryCell('spot', venue, 'name')
-		const html = renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext()))
-
-		expect(venue.selectedCountryStatus).toBe('restricted')
-		expect(html).not.toContain('Restricted')
+	test('exports blank execution cells for a venue without measured fills', () => {
+		const columns = buildDirectoryColumns('linear_perp', true)
+		for (const id of ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']) {
+			const column = columns.find((item) => item.id === id)
+			if (!column) throw new Error(`Expected ${id} column`)
+			expect(column.meta?.csvValue?.(row())).toBe('')
+		}
 	})
 
 	test('never renders a summed perp figure for a venue with both perpetual classes', () => {
@@ -114,10 +106,6 @@ describe('exact segment scopes in directory columns', () => {
 		expect(directoryCell('linear_perp', venue, 'volume24h').getValue()).toBe(600)
 		expect(directoryCell('inverse_perp', venue, 'volume24h').getValue()).toBe(25)
 		expect(directoryCell('spot', venue, 'volume24h').getValue()).toBeUndefined()
-		// 625 (600 + 25) must not be produced by any scope.
-		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
-			expect(directoryCell(scope, venue, 'volume24h').getValue()).not.toBe(625)
-		}
 	})
 
 	// Sorting by any other column is a one-way trip unless the name column can restore

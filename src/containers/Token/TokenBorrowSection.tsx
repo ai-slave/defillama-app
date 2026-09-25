@@ -16,7 +16,7 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { formatNumber } from '~/utils/numberFormat'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
-import { filterBorrowRoutes } from './TokenBorrowSection.utils'
+import { filterBorrowRoutes, formatBorrowRoutesSummary } from './TokenBorrowSection.utils'
 import { TokenDataRetry } from './TokenDataRetry'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenBorrowRoutesHydration } from './types'
@@ -266,12 +266,11 @@ export function TokenBorrowSection({
 	const showBackgroundLoading = isFetchingFullData && rows.length > 0
 	const hasPlaceholderState = showInitialLoader || (showRetry && rows.length === 0) || totalCount === 0
 	const tabLabel = activeTab === 'use' ? `Use ${tokenSymbol}` : `Borrow ${tokenSymbol}`
-	const summaryText =
-		filteredRows.length > 0
-			? hasPartialData && !hasActiveFilters
-				? `Showing ${filteredRows.length} of ${totalCount} ${totalCount === 1 ? 'route' : 'routes'}`
-				: `Tracking ${filteredRows.length} ${filteredRows.length === 1 ? 'route' : 'routes'}`
-			: null
+	const summaryText = formatBorrowRoutesSummary({
+		shownCount: filteredRows.length,
+		totalCount,
+		isPartial: hasPartialData && !hasActiveFilters
+	})
 
 	const requestFullDataPage = React.useCallback(
 		(pageIndex: number) => {

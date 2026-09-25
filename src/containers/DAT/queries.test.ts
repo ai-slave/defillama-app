@@ -1,28 +1,15 @@
-import type { Table } from '@tanstack/react-table'
-import { createElement } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
-import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { fetchDATInstitutionDetail, fetchDATInstitutions, toUnixMsTimestamp } from './api'
+import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
+import { searchTableOptions } from '~/components/Table/features/searchHook'
+import { TRADFI_API } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { toUnixMsTimestamp } from './api'
 import type { IDATInstitutionDetailResponse, IDATInstitutionsResponse, IDATTransaction } from './api.types'
-import { DATCompany } from './Company'
+import { datTransactionColumns } from './Company'
 import { buildDATTransactionRowsByAsset, getDATCompanyData, getDATOverviewData } from './queries'
 import type { IDATTransactionRow } from './types'
 
-const captured = vi.hoisted(() => ({ table: null as Table<SearchTableFeatures, IDATTransactionRow> | null }))
-vi.mock('~/components/Table/VirtualTable', () => ({
-	VirtualTable: ({ table: instance }: { table: Table<SearchTableFeatures, IDATTransactionRow> }) => {
-		captured.table = instance
-		return null
-	}
-}))
-vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null }))
-vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
-vi.mock('./api', async (importOriginal) => ({
-	...(await importOriginal<typeof import('./api')>()),
-	fetchDATInstitutionDetail: vi.fn(),
-	fetchDATInstitutions: vi.fn()
-}))
+const http = installFixtureFetch()
 
 describe('toUnixMsTimestamp', () => {
 	test('normalizes documented numeric second timestamps without changing millisecond timestamps', () => {
@@ -56,7 +43,7 @@ function transaction(overrides: Partial<IDATTransactionRow>): IDATTransactionRow
 }
 
 describe('buildDATTransactionRowsByAsset', () => {
-	test('reverse-iterates the newest-first API response and groups assets in one pass', () => {
+	test('plots each asset oldest-first from the newest-first API response', () => {
 		const result = buildDATTransactionRowsByAsset([
 			transaction({ id: 3, end_date: '2026-01-03', amount: 3, avg_price: 300, usd_value: 900 }),
 			transaction({ id: 2, asset: 'ethereum', end_date: '2026-01-02', amount: 2 }),
@@ -124,7 +111,7 @@ describe('getDATCompanyData transaction rows', () => {
 	}
 
 	test('converts API strings once for table and chart data without turning null into zero', async () => {
-		vi.mocked(fetchDATInstitutionDetail).mockResolvedValueOnce(response)
+		http.serve({ [`${TRADFI_API}/institutions/mstr`]: response })
 		const result = (await getDATCompanyData('mstr'))!
 
 		expect(result.transactions.map(({ amount, avg_price, usd_value }) => [amount, avg_price, usd_value])).toEqual([
@@ -147,16 +134,20 @@ describe('getDATCompanyData transaction rows', () => {
 	test.each(['avg_price', 'usd_value'])(
 		'sorts %s numerically in both directions with missing values last',
 		async (id) => {
-			vi.mocked(fetchDATInstitutionDetail).mockResolvedValueOnce(response)
-			const props = (await getDATCompanyData('mstr'))!
-			renderToStaticMarkup(createElement(DATCompany, { ...props, chartByAsset: [] }))
-			const table = captured.table!
+			http.serve({ [`${TRADFI_API}/institutions/mstr`]: response })
+			const { transactions: rows } = (await getDATCompanyData('mstr'))!
 
 			for (const desc of [false, true]) {
-				table.setOptions((options) => ({ ...options, state: { ...options.state, sorting: [{ id, desc }] } }))
-				const rows = table.getSortedRowModel().rows
-				expect(rows.map((row) => row.original.id)).toEqual(desc ? [2, 1, 5, 3, 4] : [3, 5, 1, 2, 4])
-				expect(rows.at(-1)?.getValue(id)).toBeUndefined()
+				const table = constructTestTable({
+					...searchTableOptions,
+					data: rows,
+					columns: datTransactionColumns,
+					state: { sorting: [{ id, desc }] },
+					renderFallbackValue: null
+				})
+				expect(table.getSortedRowModel().rows.map((row) => row.original.id)).toEqual(
+					desc ? [2, 1, 5, 3, 4] : [3, 5, 1, 2, 4]
+				)
 			}
 		}
 	)
@@ -210,7 +201,7 @@ test('retains asset IDs through duplicate labels, valuation sorting and renaming
 		flows: {},
 		mNAV: {}
 	}
-	vi.mocked(fetchDATInstitutions).mockResolvedValue(response)
+	http.serve({ [`${TRADFI_API}/institutions`]: response })
 	expect(
 		(await getDATOverviewData()).institutions[0].holdings.map(({ asset, name, usdValue }) => ({
 			asset,
@@ -221,11 +212,16 @@ test('retains asset IDs through duplicate labels, valuation sorting and renaming
 		{ asset: 'second', name: 'Same asset', usdValue: 20 },
 		{ asset: 'first', name: 'Same asset', usdValue: 10 }
 	])
-	vi.mocked(fetchDATInstitutions).mockResolvedValue({
-		...response,
-		assetMetadata: { ...response.assetMetadata, first: { ...assetMetadata, name: 'Renamed' } },
-		institutionMetadata: {
-			'1': { ...response.institutionMetadata['1'], holdings: { first: { ...holding, usdValue: 30 }, second: holding } }
+	http.serve({
+		[`${TRADFI_API}/institutions`]: {
+			...response,
+			assetMetadata: { ...response.assetMetadata, first: { ...assetMetadata, name: 'Renamed' } },
+			institutionMetadata: {
+				'1': {
+					...response.institutionMetadata['1'],
+					holdings: { first: { ...holding, usdValue: 30 }, second: holding }
+				}
+			}
 		}
 	})
 	expect((await getDATOverviewData()).institutions[0].holdings.map(({ asset, name }) => ({ asset, name }))).toEqual([

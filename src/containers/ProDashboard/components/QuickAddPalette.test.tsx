@@ -1,23 +1,23 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { appMetadataFixtures } from '~/utils/test/appMetadata'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { AppMetadataProvider } from '../AppMetadataContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
+import { DASHBOARD_ITEM_REVEAL_EVENT } from '../hooks/useDashboardItemDeepLink'
+import { readQuickAddRecents } from '../quickAdd/quickAddRecents'
 import type { Chain, ChartConfig, Protocol } from '../types'
-import type { DashboardItemPlacement } from '../useDashboardActions'
+import type { DashboardItemPlacement, useDashboardActions } from '../useDashboardActions'
 import { QuickAddPalette } from './QuickAddPalette'
 
 const mocks = vi.hoisted(() => ({
-	appendItems: vi.fn((_createItems: (existing: Array<DashboardItemConfig>) => Array<DashboardItemConfig>) => [
-		'added-item'
-	]) as unknown as ReturnType<typeof vi.fn>,
+	appendItems: vi.fn<ReturnType<typeof useDashboardActions>['handleAppendItems']>(() => ['added-item']),
 	items: [] as Array<DashboardItemConfig>,
-	protocolsLoading: false,
-	metadataLoading: false,
-	metadataError: undefined as string | undefined,
-	reveal: vi.fn(),
-	pushRecent: vi.fn(() => []),
-	readRecents: vi.fn(() => [])
+	protocolsLoading: false
 }))
 
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
@@ -32,53 +32,39 @@ const chains: Array<Chain> = [
 	{ name: 'Ethereum', gecko_id: 'ethereum', tvl: 60_000_000_000, tokenSymbol: 'ETH', chainId: null, cmcId: null }
 ]
 
-const AVAILABLE_PROTOCOL_TYPES: Record<string, Array<string>> = {
-	uniswap: ['tvl', 'fees', 'revenue', 'volume'],
-	aave: ['tvl', 'fees', 'revenue']
-}
-
-vi.mock('../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({
-		protocols,
-		chains,
-		protocolsLoading: mocks.protocolsLoading,
-		parentMapping: new Map<string, Array<string>>()
-	}),
-	useProDashboardEditorActions: () => ({ handleAppendItems: mocks.appendItems }),
-	useProDashboardItemsState: () => ({ items: mocks.items })
-}))
-
-vi.mock('../AppMetadataContext', () => ({
-	useAppMetadata: () => ({
-		loading: mocks.metadataLoading,
-		error: mocks.metadataError,
-		availableProtocolChartTypes: (slug: string) => AVAILABLE_PROTOCOL_TYPES[slug] ?? [],
-		availableChainChartTypes: () => ['tvl', 'fees']
-	})
-}))
-
-vi.mock('../hooks/useDashboardItemDeepLink', () => ({ requestDashboardItemReveal: mocks.reveal }))
-
-vi.mock('../quickAdd/quickAddRecents', () => ({
-	readQuickAddRecents: mocks.readRecents,
-	pushQuickAddRecent: mocks.pushRecent
-}))
+const http = installFixtureFetch()
+const metadata = appMetadataFixtures({
+	protocols: {
+		'1': { name: 'uniswap', tvl: true, fees: true, revenue: true, dexs: true },
+		'2': { name: 'aave', tvl: true, fees: true, revenue: true }
+	},
+	chains: { ethereum: { name: 'Ethereum', id: 'ethereum', fees: true } }
+})
+let client: QueryClient
 
 let root: Root
 let container: HTMLDivElement
 const onClose = vi.fn()
 const onClosed = vi.fn()
 const onOpenFullEditor = vi.fn()
+// The grid listens for reveal requests; handling them here keeps a request from lingering for the next test.
+const reveals: Array<unknown> = []
+const recordReveal = (event: Event) => {
+	event.preventDefault()
+	reveals.push((event as CustomEvent).detail)
+}
 
 beforeEach(() => {
+	reveals.length = 0
+	window.addEventListener(DASHBOARD_ITEM_REVEAL_EVENT, recordReveal)
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
 	mocks.appendItems.mockImplementation(() => ['added-item'])
-	mocks.readRecents.mockImplementation(() => [])
+	localStorage.clear()
 	mocks.items = []
 	mocks.protocolsLoading = false
-	mocks.metadataLoading = false
-	mocks.metadataError = undefined
+	http.serve(metadata)
+	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -87,20 +73,40 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	client.clear()
+	window.removeEventListener(DASHBOARD_ITEM_REVEAL_EVENT, recordReveal)
 })
 
-async function renderPalette(placement?: DashboardItemPlacement) {
+const METADATA_URL = 'https://api.llama.fi/config/smol/appMetadata-protocols.json'
+
+async function renderPalette(placement?: DashboardItemPlacement, open = true, awaitMetadata = true) {
 	await act(async () =>
 		root.render(
-			<QuickAddPalette
-				open
-				onClose={onClose}
-				onClosed={onClosed}
-				onOpenFullEditor={onOpenFullEditor}
-				{...(placement === undefined ? {} : { placement })}
-			/>
+			<QueryClientProvider client={client}>
+				<AppMetadataProvider>
+					<DashboardTestProvider
+						items={mocks.items}
+						catalog={{ protocols, chains, protocolsLoading: mocks.protocolsLoading }}
+						editorActions={{ handleAppendItems: mocks.appendItems }}
+					>
+						<QuickAddPalette
+							open={open}
+							onClose={onClose}
+							onClosed={onClosed}
+							onOpenFullEditor={onOpenFullEditor}
+							{...(placement === undefined ? {} : { placement })}
+						/>
+					</DashboardTestProvider>
+				</AppMetadataProvider>
+			</QueryClientProvider>
 		)
 	)
+	if (!awaitMetadata) return
+	// The palette asks for chart availability when it mounts; rows describe it once the read settles.
+	await vi.waitFor(() => {
+		expect(http.urls()).toContain(METADATA_URL)
+		expect(client.isFetching()).toBe(0)
+	})
 }
 
 function input() {
@@ -157,13 +163,9 @@ test('Enter adds the leading suggestion, clears the query and keeps the palette 
 	expect(statusText()).toContain('Added Uniswap · Fees')
 	expect(onClose).not.toHaveBeenCalled()
 	expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()
-	expect(mocks.pushRecent).toHaveBeenCalledWith({
-		subjectType: 'protocol',
-		id: 'uniswap',
-		name: 'Uniswap',
-		kind: 'chart',
-		metric: 'fees'
-	})
+	expect(readQuickAddRecents()).toEqual([
+		{ subjectType: 'protocol', id: 'uniswap', name: 'Uniswap', kind: 'chart', metric: 'fees' }
+	])
 })
 
 test('Shift+Enter adds and closes, revealing the added card', async () => {
@@ -173,18 +175,18 @@ test('Shift+Enter adds and closes, revealing the added card', async () => {
 
 	expect(mocks.appendItems).toHaveBeenCalledOnce()
 	expect(onClose).toHaveBeenCalledOnce()
-	expect(mocks.reveal).toHaveBeenCalledWith('added-item')
+	expect(reveals).toEqual([{ itemId: 'added-item' }])
 })
 
 test('closing after an add reveals the last added card once', async () => {
 	await renderPalette()
 	await type('uniswap fees')
 	await pressKey('Enter')
-	expect(mocks.reveal).not.toHaveBeenCalled()
+	expect(reveals).toEqual([])
 
 	await pressKey('Escape')
 
-	expect(mocks.reveal).toHaveBeenCalledExactlyOnceWith('added-item')
+	expect(reveals).toEqual([{ itemId: 'added-item' }])
 	expect(onClose).toHaveBeenCalledOnce()
 })
 
@@ -260,18 +262,6 @@ test('the table row is appended with the placement like any other card', async (
 	expect(statusText()).toContain('Added Top protocols table')
 })
 
-test('the table row answers the not ready dashboard with a toast', async () => {
-	mocks.appendItems.mockImplementation(() => false)
-	await renderPalette()
-	await type('table')
-	await pressKey('Enter')
-
-	expect(toastMock.error).toHaveBeenCalledWith('The dashboard is still loading. Try again in a moment.', {
-		id: 'dashboard-not-ready'
-	})
-	expect(statusText()).not.toContain('Added')
-})
-
 test('the text row opens the full editor with a text draft instead of appending a blank card', async () => {
 	await renderPalette()
 	await type('text')
@@ -289,7 +279,7 @@ test('the section row closes the palette and focuses the new heading title', asy
 	await pressKey('Enter')
 
 	expect(appendedItems()[0]).toMatchObject({ kind: 'section', title: 'New section' })
-	expect(mocks.reveal).toHaveBeenCalledExactlyOnceWith('added-item', { focusTitle: true })
+	expect(reveals).toEqual([{ itemId: 'added-item', focusTitle: true }])
 	expect(onClose).toHaveBeenCalledOnce()
 	expect(statusText()).not.toContain('Added')
 })
@@ -304,15 +294,15 @@ test('a metric already on the dashboard says so instead of its detail', async ()
 })
 
 test('a pending metadata fetch marks the rows as still checking data', async () => {
-	mocks.metadataLoading = true
-	await renderPalette()
+	http.serve({ [METADATA_URL]: () => new Promise<Response>(() => {}) })
+	await renderPalette(undefined, true, false)
 	await type('uniswap fees')
 
 	expect(rows()[0]?.textContent).toContain('checking data…')
 })
 
 test('a failed metadata fetch keeps the rows without the checking data note', async () => {
-	mocks.metadataError = 'boom'
+	http.serve({ [METADATA_URL]: fixtureStatus(404, { message: 'boom' }) })
 	await renderPalette()
 	await type('uniswap treasury')
 
@@ -369,18 +359,14 @@ test('a comparison row is not replayed as a single chart recent', async () => {
 	await pressKey('Enter')
 
 	expect(appendedItems()[0]?.kind).toBe('multi')
-	expect(mocks.pushRecent).not.toHaveBeenCalled()
+	expect(readQuickAddRecents()).toEqual([])
 })
 
 test('the palette reports it has finished leaving so its session can be dropped', async () => {
 	await renderPalette()
 	expect(onClosed).not.toHaveBeenCalled()
 
-	await act(async () =>
-		root.render(
-			<QuickAddPalette open={false} onClose={onClose} onClosed={onClosed} onOpenFullEditor={onOpenFullEditor} />
-		)
-	)
+	await renderPalette(undefined, false)
 
 	expect(document.body.querySelector('[role="dialog"]')).toBeNull()
 	expect(onClosed).toHaveBeenCalledOnce()

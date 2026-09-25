@@ -43,6 +43,18 @@ export function areMyDashboardsControlsActive(state: MyDashboardsControlsState):
 	)
 }
 
+/**
+ * Active controls search and sort on the client, so they fetch the most recent dashboards in one
+ * large first page instead of the selected server page.
+ */
+export function getMyDashboardsRequest(
+	controls: MyDashboardsControlsState,
+	selectedPage: number
+): { page: number; limit: number } {
+	if (areMyDashboardsControlsActive(controls)) return { page: 1, limit: MY_DASHBOARDS_FILTERED_PAGE_SIZE }
+	return { page: selectedPage, limit: 20 }
+}
+
 function haystack(dashboard: Dashboard): string {
 	return [dashboard.data?.dashboardName ?? '', dashboard.description ?? '', ...(dashboard.tags ?? [])]
 		.join(' ')

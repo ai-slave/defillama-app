@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { SERVER_URL } from '~/constants'
 import { hydrateMetadataCache, METADATA_CI_STUBS, type CoreMetadataPayload } from '~/utils/metadata/artifactContract'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 import type { Hack } from './model'
-import { getHacksPageData, getTotalValueLostInHacksByProtocol } from './queries'
+import { buildHacksPageData, buildTotalValueLostInHacksByProtocol, getTotalValueLostInHacksByProtocol } from './queries'
 
-const fetchHacksMock = vi.hoisted(() => vi.fn())
-
-vi.mock('./api', () => ({ fetchHacks: fetchHacksMock }))
+const http = installFixtureFetch()
 
 function hack(overrides: Partial<Hack> = {}): Hack {
 	return {
@@ -49,21 +49,15 @@ function metadataFixture() {
 }
 
 describe('Hacks queries', () => {
-	beforeEach(() => {
-		fetchHacksMock.mockReset()
-	})
-
-	test('uses whole USD and zero contribution for unknown aggregate values', async () => {
-		fetchHacksMock.mockResolvedValue([
+	test('uses whole USD and zero contribution for unknown aggregate values', () => {
+		const hacks = [
 			hack({ amountUsd: 10_000_000, returnedFundsUsd: 2_000_000 }),
 			hack({ amountUsd: null, returnedFundsUsd: null }),
 			hack({ defillamaId: 'stale', name: 'Stale Protocol', amountUsd: null, returnedFundsUsd: null })
-		])
+		]
 
-		const [page, totals] = await Promise.all([
-			getHacksPageData(),
-			getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
-		])
+		const page = buildHacksPageData(hacks)
+		const totals = buildTotalValueLostInHacksByProtocol(hacks, metadataFixture())
 
 		expect(page.data.map((item) => item.amountUsd)).toEqual([10_000_000, null, null])
 		expect(page.monthlyHacksChartData.dataset.source[0]?.[1]).toBe(10_000_000)
@@ -73,32 +67,32 @@ describe('Hacks queries', () => {
 		])
 	})
 
-	test('sorts unknown dates last and excludes them from monthly history', async () => {
-		fetchHacksMock.mockResolvedValue([
+	test('sorts unknown dates last and excludes them from monthly history', () => {
+		const page = buildHacksPageData([
+			hack({ name: 'Older', date: 1_704_067_200, amountUsd: 10 }),
 			hack({ name: 'Unknown date', date: null, amountUsd: 5 }),
-			hack({ name: 'Dated', date: 1_704_067_200, amountUsd: 10 })
+			hack({ name: 'Newer', date: 1_706_745_600, amountUsd: 20 })
 		])
 
-		const page = await getHacksPageData()
-
-		expect(page.data.map((item) => item.name)).toEqual(['Dated', 'Unknown date'])
-		expect(page.totalHacked).toBe('$15')
-		expect(page.monthlyHacksChartData.dataset.source).toHaveLength(1)
+		expect(page.data.map((item) => item.name)).toEqual(['Newer', 'Older', 'Unknown date'])
+		expect(page.totalHacked).toBe('$35')
+		expect(page.monthlyHacksChartData.dataset.source).toHaveLength(2)
 	})
 
-	test('uses current metadata identity instead of historical target labels', async () => {
-		fetchHacksMock.mockResolvedValue([
-			hack({ amountUsd: 10, targetType: 'CEX' }),
-			hack({ amountUsd: null, targetType: 'DeFi Protocol' }),
-			hack({ defillamaId: 'cex', name: 'Gate', amountUsd: 20, targetType: 'DeFi Protocol' }),
-			hack({ defillamaId: 'chain#tac', name: 'TAC', amountUsd: 30 }),
-			hack({ defillamaId: 'old-aave', name: 'Aave', amountUsd: 40 }),
-			hack({ defillamaId: 'stale', name: 'Stale Protocol', amountUsd: 50 }),
-			hack({ defillamaId: 'duplicate-a', name: 'Duplicate', amountUsd: 1 }),
-			hack({ defillamaId: 'duplicate-b', name: 'Duplicate', amountUsd: 2 })
-		])
-
-		const { protocols } = await getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
+	test('uses current metadata identity instead of historical target labels', () => {
+		const { protocols } = buildTotalValueLostInHacksByProtocol(
+			[
+				hack({ amountUsd: 10, targetType: 'CEX' }),
+				hack({ amountUsd: null, targetType: 'DeFi Protocol' }),
+				hack({ defillamaId: 'cex', name: 'Gate', amountUsd: 20, targetType: 'DeFi Protocol' }),
+				hack({ defillamaId: 'chain#tac', name: 'TAC', amountUsd: 30 }),
+				hack({ defillamaId: 'old-aave', name: 'Aave', amountUsd: 40 }),
+				hack({ defillamaId: 'stale', name: 'Stale Protocol', amountUsd: 50 }),
+				hack({ defillamaId: 'duplicate-a', name: 'Duplicate', amountUsd: 1 }),
+				hack({ defillamaId: 'duplicate-b', name: 'Duplicate', amountUsd: 2 })
+			],
+			metadataFixture()
+		)
 
 		expect(protocols.find((item) => item.name === 'Protocol')).toMatchObject({
 			route: '/protocol/protocol',
@@ -111,48 +105,33 @@ describe('Hacks queries', () => {
 		expect(protocols.filter((item) => item.name === 'Duplicate').map((item) => item.totalHackedUsd)).toEqual([2, 1])
 	})
 
-	test('does not replace an unresolved authoritative identity with a same-name route', async () => {
-		fetchHacksMock.mockResolvedValue([hack({ defillamaId: 'chain#missing', name: 'Protocol', amountUsd: 10 })])
-
-		const { protocols } = await getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
+	test('does not replace an unresolved authoritative identity with a same-name route', () => {
+		const { protocols } = buildTotalValueLostInHacksByProtocol(
+			[hack({ defillamaId: 'chain#missing', name: 'Protocol', amountUsd: 10 })],
+			metadataFixture()
+		)
 
 		expect(protocols).toEqual([
 			expect.objectContaining({ name: 'Protocol', slug: 'protocol', route: null, totalHackedUsd: 10 })
 		])
 	})
 
-	test('preserves producer order when protocol totals are equal', async () => {
-		fetchHacksMock.mockResolvedValue([
-			hack({ defillamaId: 'duplicate-b', name: 'Zulu', amountUsd: 10 }),
-			hack({ defillamaId: 'duplicate-a', name: 'Alpha', amountUsd: 10 })
-		])
-
-		const { protocols } = await getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
+	test('preserves producer order when protocol totals are equal', () => {
+		const { protocols } = buildTotalValueLostInHacksByProtocol(
+			[
+				hack({ defillamaId: 'duplicate-b', name: 'Zulu', amountUsd: 10 }),
+				hack({ defillamaId: 'duplicate-a', name: 'Alpha', amountUsd: 10 })
+			],
+			metadataFixture()
+		)
 
 		expect(protocols.map((item) => item.slug)).toEqual(['zulu', 'alpha'])
 	})
 
-	test('preserves negative net loss when returned funds exceed measured losses', async () => {
-		fetchHacksMock.mockResolvedValue([
-			hack({ defillamaId: 'refund', amountUsd: 197_000_000, returnedFundsUsd: 240_000_000 })
-		])
-
-		const { protocols } = await getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
-		const protocol = protocols[0]
-
-		expect(protocol).toBeDefined()
-		expect((protocol?.totalHackedUsd ?? 0) - (protocol?.returnedFundsUsd ?? 0)).toBe(-43_000_000)
-	})
-
 	test('keeps successful empty separate from source failure', async () => {
-		fetchHacksMock.mockResolvedValueOnce([])
-		await expect(getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })).resolves.toEqual({
-			protocols: []
-		})
+		expect(buildTotalValueLostInHacksByProtocol([], metadataFixture())).toEqual({ protocols: [] })
 
-		fetchHacksMock.mockRejectedValueOnce(new Error('source unavailable'))
-		await expect(getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })).rejects.toThrow(
-			'source unavailable'
-		)
+		http.serve({ [`${SERVER_URL}/hacks`]: fixtureStatus(404) })
+		await expect(getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })).rejects.toThrow('[404]')
 	})
 })

@@ -10,6 +10,7 @@ import {
 	KeyboardSensor,
 	PointerSensor,
 	type ScreenReaderInstructions,
+	type UniqueIdentifier,
 	useSensor,
 	useSensors
 } from '@dnd-kit/core'
@@ -41,9 +42,7 @@ import {
 	type DashboardLayout,
 	type DashboardLayoutGroup,
 	type DashboardLayoutTab,
-	dropGroupBounds,
 	findGroupHeadingForItem,
-	findTabForItem,
 	moveDashboardItemWithinBounds,
 	moveSectionWithChildren,
 	removeSectionKeepingChildren,
@@ -86,13 +85,14 @@ import { proCardShellStyles } from '../ui/styles'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import type { DashboardItemPlacement } from '../useDashboardActions'
 import { generateItemId } from '../utils/dashboardUtils'
+import { gridColumnSpan, itemColSpan, itemColSpanOptions, itemSpansFullRow } from './cardColSpan'
 import { CardHeightScaleContext } from './cardHeightContext'
 import { CollapsibleGroup } from './CollapsibleGroup'
 import { DashboardCardContext, type DashboardCardContextValue } from './DashboardCardContext'
 import { DashboardCardLoader } from './DashboardCardLoader'
-import { dashboardItemLabel } from './dashboardItemLabel'
 import { DashboardTabs } from './DashboardTabs'
 import { actionToast, TOAST_DURATION_UNDO } from './dashboardToasts'
+import { dragAnnouncement } from './dragAnnouncements'
 import { DragPreviewCard } from './DragPreviewCard'
 import { InViewDashboardCard } from './InViewDashboardCard'
 import { ParameterUnavailableCard } from './ParameterUnavailableCard'
@@ -168,8 +168,6 @@ const CustomDataCard = lazy(() =>
 	}))
 )
 
-const STORED_COL_SPANS = [0.5, 1, 1.5, 2] as const satisfies ReadonlyArray<StoredColSpan>
-const METRIC_COL_SPANS = [0.5, 1] as const satisfies ReadonlyArray<StoredColSpan>
 const COL_SPAN_CLASS_MAP: Record<1 | 2 | 3 | 4, string> = {
 	1: 'lg:col-span-1',
 	2: 'lg:col-span-2',
@@ -191,31 +189,7 @@ const DRAG_INSTRUCTIONS: ScreenReaderInstructions = {
 const READ_ONLY_SORTABLE = { draggable: true, droppable: true } as const
 const CARD_REMOVED_TOAST_ID = 'card-removed'
 const SECTION_REMOVED_TOAST_ID = 'section-removed'
-
-const normalizeStoredColSpan = (span: StoredColSpan | undefined, fallback: StoredColSpan = 1): StoredColSpan =>
-	span ?? fallback
-
-const getEffectiveColSpan = (span?: StoredColSpan): 1 | 2 | 3 | 4 => {
-	const stored = normalizeStoredColSpan(span)
-	if (stored === 0.5) return 1
-	if (stored === 1) return 2
-	if (stored === 1.5) return 3
-	return 4
-}
-
-const NO_COL_SPANS: ReadonlyArray<StoredColSpan> = []
 const NO_CARD_HEIGHTS: ReadonlyArray<DashboardCardHeight> = []
-
-function itemColSpanOptions(item: DashboardItemConfig): ReadonlyArray<StoredColSpan> {
-	if (item.kind === 'section' || item.kind === 'dataset-table') return NO_COL_SPANS
-	return item.kind === 'metric' ? METRIC_COL_SPANS : STORED_COL_SPANS
-}
-
-function itemColSpan(item: DashboardItemConfig): StoredColSpan {
-	if (item.kind === 'section') return 2
-	const fallbackSpan: StoredColSpan = item.kind === 'metric' ? METRIC_COL_SPANS[0] : 1
-	return normalizeStoredColSpan(item.colSpan, fallbackSpan)
-}
 
 function SharedHeaderLabel() {
 	return (
@@ -673,47 +647,13 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 	}
 
 	const announcements = useMemo<Announcements>(() => {
-		const labelFor = (id: string) => {
-			const item = rawById.get(id)
-			return item ? dashboardItemLabel(item) : 'Card'
-		}
-		const placeFor = (id: string) => {
-			const bounds = dropGroupBounds(items, id, activeTabId)
-			if (!bounds) return null
-			const siblings = items.slice(bounds[0], bounds[1]).filter((item) => item.kind !== 'section')
-			const position = siblings.findIndex((item) => item.id === id) + 1
-			if (position === 0) return null
-			const group = findGroupHeadingForItem(layout, id) ?? findTabForItem(layout, id)
-			return `position ${position} of ${siblings.length}${group ? ` in ${group.title}` : ''}`
-		}
+		const context = { items, rawById, layout, activeTabId }
+		const overId = (over: { id: UniqueIdentifier } | null) => (over ? String(over.id) : null)
 		return {
-			onDragStart: ({ active }) => {
-				const place = placeFor(String(active.id))
-				return `Picked up ${labelFor(String(active.id))}.${place ? ` Currently at ${place}.` : ''}`
-			},
-			onDragOver: ({ active, over }) => {
-				const label = labelFor(String(active.id))
-				if (!over) return `${label} is not over a card.`
-				const overLabel = labelFor(String(over.id))
-				if (
-					active.id !== over.id &&
-					resolveDropIndex(items, String(active.id), String(over.id), activeTabId) === null
-				) {
-					return `${label} is over ${overLabel}; cards move only inside their own section.`
-				}
-				const place = placeFor(String(over.id))
-				return place ? `${label} is over ${place}.` : `${label} is over ${overLabel}.`
-			},
-			onDragEnd: ({ active, over }) => {
-				const label = labelFor(String(active.id))
-				if (!over || active.id === over.id) return `${label} was dropped where it started.`
-				if (resolveDropIndex(items, String(active.id), String(over.id), activeTabId) === null) {
-					return `${label} stayed where it was. Cards move only inside their own section.`
-				}
-				const place = placeFor(String(over.id))
-				return place ? `${label} moved to ${place}.` : `${label} moved.`
-			},
-			onDragCancel: ({ active }) => `Moving ${labelFor(String(active.id))} cancelled.`
+			onDragStart: ({ active }) => dragAnnouncement(context, 'start', String(active.id), null),
+			onDragOver: ({ active, over }) => dragAnnouncement(context, 'over', String(active.id), overId(over)),
+			onDragEnd: ({ active, over }) => dragAnnouncement(context, 'end', String(active.id), overId(over)),
+			onDragCancel: ({ active }) => dragAnnouncement(context, 'cancel', String(active.id), null)
 		}
 	}, [items, activeTabId, layout, rawById])
 
@@ -786,7 +726,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 
 	const renderItem = (item: DashboardItemConfig) => {
 		const rawItem = rawById.get(item.id) ?? item
-		const effectiveColSpan = getEffectiveColSpan(itemColSpan(rawItem))
+		const effectiveColSpan = gridColumnSpan(itemColSpan(rawItem))
 		const index = items.findIndex((candidate) => candidate.id === item.id)
 		const bounds = visibleGroupBounds(items, item.id, activeTabId)
 		return (
@@ -795,7 +735,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 				id={item.id}
 				elementId={dashboardItemElementId(rawItem.id)}
 				{...(isReadOnly ? { disabled: READ_ONLY_SORTABLE } : {})}
-				isTable={rawItem.kind === 'dataset-table'}
+				isTable={itemSpansFullRow(rawItem)}
 				data-col={itemColSpan(rawItem)}
 				data-item-id={rawItem.id}
 				style={cardScaleStyle(getDashboardItemHeight(rawItem))}

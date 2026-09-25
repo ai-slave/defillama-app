@@ -4,7 +4,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { fetchJson } from '~/utils/async'
-import { StreamDoneContext } from '../../queries'
+import { DashboardTestProvider } from '~/utils/test/dashboardContext'
 import type { UnifiedTableConfig } from '../../unifiedTable/config/current'
 import type { FilteredShareMetricKey } from '../../unifiedTable/config/filteredShareColumns'
 import type { ProtocolsUnifiedTableResponse } from '../../unifiedTable/contracts'
@@ -12,9 +12,6 @@ import { getUnifiedTableQueryIdentity } from '../../unifiedTableQuery'
 import { useUnifiedTableReadModel } from './useUnifiedTableReadModel'
 
 vi.mock('~/utils/async', () => ({ fetchJson: vi.fn() }))
-vi.mock('../../ProDashboardAPIContext', () => ({
-	useProDashboardCatalog: () => ({ getProtocolInfo: () => null })
-}))
 const config: UnifiedTableConfig = {
 	id: 'data-test',
 	kind: 'unified-table',
@@ -78,9 +75,9 @@ test('refreshes cached metrics and recalculates filtered shares without fetching
 	const render = (searchTerm: string, shares: boolean) =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<StreamDoneContext.Provider value>
+				<DashboardTestProvider>
 					<DataView searchTerm={searchTerm} shares={shares} />
-				</StreamDoneContext.Provider>
+				</DashboardTestProvider>
 			</QueryClientProvider>
 		)
 	vi.mocked(fetchJson).mockClear()
@@ -130,9 +127,9 @@ test('waits for dashboard streaming before making the initial request', async ()
 	const render = (done: boolean) =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<StreamDoneContext.Provider value={done}>
+				<DashboardTestProvider streamDone={done}>
 					<DataView searchTerm="" shares={false} />
-				</StreamDoneContext.Provider>
+				</DashboardTestProvider>
 			</QueryClientProvider>
 		)
 	try {

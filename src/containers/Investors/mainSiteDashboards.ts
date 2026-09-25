@@ -220,6 +220,21 @@ export function getMainSiteIrTabHref(dashboard: MainSiteIrDashboard, tabId: stri
 	return dashboard.menuTabs[0]?.id === tabId ? base : `${base}/${tabId}`
 }
 
+export type IrTabMenuItem = MainSiteIrTab & { href: string; isActive: boolean }
+
+/** The pages listed in a menu-placed dashboard's tab menu. An item is active only while its dashboard tab is. */
+export function getIrTabMenuItems(
+	dashboard: Extract<MainSiteIrDashboard, { tabPlacement: 'menu' }>,
+	active: boolean,
+	activeTabId: string | undefined
+): Array<IrTabMenuItem> {
+	return dashboard.menuTabs.map((tab) => ({
+		...tab,
+		href: getMainSiteIrTabHref(dashboard, tab.id),
+		isActive: active && activeTabId === tab.id
+	}))
+}
+
 export type MainSiteIrTabResolution =
 	| { type: 'tab'; tabId: string | null }
 	| { type: 'redirect'; destination: string }

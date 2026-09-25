@@ -5,7 +5,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
-import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { readSqlNumber } from '../rowValues'
 import { makeValueFormatter } from '../valueFormatters'
 
@@ -16,16 +15,10 @@ interface HBarChartAdapterProps {
 	result: QueryResult
 	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
-	height?: string
+	height: string
 }
 
-export function HBarChartAdapter({
-	config,
-	result,
-	classified,
-	onReady,
-	height = SQL_CHART_HEIGHT
-}: HBarChartAdapterProps) {
+export function HBarChartAdapter({ config, result, classified, onReady, height }: HBarChartAdapterProps) {
 	const formatter = useMemo(() => makeValueFormatter(config.numberFormat), [config.numberFormat])
 
 	const { categories, values } = useMemo(() => {

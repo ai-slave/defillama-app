@@ -7,14 +7,13 @@ import { mapPersistedMessage } from '~/containers/LlamaAI/messageMappers'
 import type { AgentStep, ToolExecution } from '~/containers/LlamaAI/types'
 import { AgentTimeline } from './AgentTimeline'
 
-vi.mock('~/containers/LlamaAI/components/status/useHackerMode', () => ({ useHackerMode: () => false }))
-vi.mock('~/containers/LlamaAI/components/status/useCurrentSecond', () => ({ useCurrentSecond: () => 1_700_000_010 }))
-
 let container: HTMLDivElement
 let root: Root
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	// Ten seconds into the run that started at executionStartedAt. Only the clock is faked.
+	vi.useFakeTimers({ toFake: ['Date'], now: 1_700_000_010_000 })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -23,6 +22,7 @@ beforeEach(() => {
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	vi.useRealTimers()
 })
 
 const draw = (steps: Array<AgentStep>, streaming: boolean) =>
@@ -157,9 +157,12 @@ test('a restored result with nothing to show is not expandable', async () => {
 	expect(rows()).toHaveLength(2)
 	const rowButtons = [...container.querySelectorAll<HTMLButtonElement>('li button')]
 	expect(rowButtons.map((b) => b.getAttribute('aria-expanded'))).toEqual(['false'])
-	expect(container.querySelector('li .select-text')).toBeNull()
+	// The row preview already shows the count; opening the row adds its execution details.
+	const resultMentions = () => container.textContent!.split('3 results').length - 1
+	expect(resultMentions()).toBe(1)
 	await act(async () => rowButtons[0].click())
-	expect(container.querySelector('li .select-text')?.textContent).toContain('3 results')
+	expect(rowButtons[0].getAttribute('aria-expanded')).toBe('true')
+	expect(resultMentions()).toBe(2)
 })
 
 test('the list follows its end only until the reader scrolls up, and again once they come back near it', async () => {
@@ -204,9 +207,11 @@ test('the list follows its end only until the reader scrolls up, and again once 
 	expect(top).toBe(1180)
 })
 
-test('renders nothing for a finished message with no steps', async () => {
+test('a message with no steps shows Thinking while streaming and nothing once finished', async () => {
+	await draw([], true)
+	expect(rows()).toEqual(['Thinking…'])
 	await draw([], false)
-	expect(container.innerHTML).toBe('')
+	expect(container.textContent).toBe('')
 })
 
 test.each(['live', 'completed', 'restored'] as const)(

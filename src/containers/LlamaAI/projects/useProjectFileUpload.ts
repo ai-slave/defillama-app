@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import type { UploadSelectionFeedback } from '../components/UploadSelectionNotice'
 import { useUploadProjectFiles } from './hooks'
+import type { ImportResult } from './types'
 
 const PROJECT_FILE_ACCEPT_EXTENSIONS = [
 	'.md',
@@ -85,6 +86,41 @@ function isAcceptedProjectFile(file: File): boolean {
 	return PROJECT_FILE_ACCEPT_EXTENSION_SET.has(name.slice(extensionStart))
 }
 
+/** Rejects files the server would refuse before uploading, keeping the reason per file. */
+export function partitionProjectUploadFiles(fileList: Array<File>) {
+	const files: Array<File> = []
+	const skipped: UploadSelectionFeedback['skipped'] = []
+	for (const file of fileList) {
+		let reason = ''
+		if (isArchiveFile(file)) reason = 'Unzip the archive and upload its files instead.'
+		else if (file.size > PROJECT_MAX_FILE_BYTES) reason = 'Exceeds the 100 MB per-file limit.'
+		else if (!isAcceptedProjectFile(file)) reason = 'Unsupported file type.'
+		if (reason) skipped.push({ filename: getProjectFileName(file), reason })
+		else files.push(file)
+	}
+	return { files, skipped }
+}
+
+/** Client and server rejections are reported together; a failed request rejects every sent file. */
+export function getProjectUploadFeedback(
+	clientSkipped: UploadSelectionFeedback['skipped'],
+	sent: Array<File>,
+	outcome: { result: ImportResult } | { error: unknown }
+): UploadSelectionFeedback {
+	if ('result' in outcome) {
+		return {
+			added: outcome.result.imported.length,
+			skipped: [...clientSkipped, ...outcome.result.skipped.map(({ path, reason }) => ({ filename: path, reason }))]
+		}
+	}
+	const reason =
+		outcome.error instanceof Error ? outcome.error.message : 'Upload failed. Select the file again to retry.'
+	return {
+		added: 0,
+		skipped: [...clientSkipped, ...sent.map((file) => ({ filename: getProjectFileName(file), reason }))]
+	}
+}
+
 export function useProjectFileUpload(projectId: string) {
 	const upload = useUploadProjectFiles(projectId)
 	const [feedback, setFeedback] = useState<UploadSelectionFeedback | null>(null)
@@ -93,30 +129,13 @@ export function useProjectFileUpload(projectId: string) {
 		async (fileList: Array<File>) => {
 			if (fileList.length === 0) return
 
-			const files: Array<File> = []
-			const skipped: UploadSelectionFeedback['skipped'] = []
-			for (const file of fileList) {
-				let reason = ''
-				if (isArchiveFile(file)) reason = 'Unzip the archive and upload its files instead.'
-				else if (file.size > PROJECT_MAX_FILE_BYTES) reason = 'Exceeds the 100 MB per-file limit.'
-				else if (!isAcceptedProjectFile(file)) reason = 'Unsupported file type.'
-				if (reason) skipped.push({ filename: getProjectFileName(file), reason })
-				else files.push(file)
-			}
+			const { files, skipped } = partitionProjectUploadFiles(fileList)
 			setFeedback(skipped.length > 0 ? { added: 0, skipped } : null)
 			if (files.length === 0) return
 			try {
-				const res = await upload.mutateAsync(files)
-				setFeedback({
-					added: res.imported.length,
-					skipped: [...skipped, ...res.skipped.map(({ path, reason }) => ({ filename: path, reason }))]
-				})
+				setFeedback(getProjectUploadFeedback(skipped, files, { result: await upload.mutateAsync(files) }))
 			} catch (error) {
-				const reason = error instanceof Error ? error.message : 'Upload failed. Select the file again to retry.'
-				setFeedback({
-					added: 0,
-					skipped: [...skipped, ...files.map((file) => ({ filename: getProjectFileName(file), reason }))]
-				})
+				setFeedback(getProjectUploadFeedback(skipped, files, { error }))
 			}
 		},
 		[upload]

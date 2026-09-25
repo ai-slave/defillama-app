@@ -183,7 +183,7 @@ describe('revalidate instance helpers', () => {
 		])
 	})
 
-	test('marks a failing instance as failed without rejecting the others', async () => {
+	test('marks an instance answering HTTP 500 as failed without rejecting the others', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(new Response('boom', { status: 500, statusText: 'Internal Server Error' }))

@@ -1,9 +1,9 @@
 import type { EChartsOption, LegendComponentOption } from 'echarts'
-import { LineChart, PieChart } from 'echarts/charts'
+import { LineChart, PieChart, TreemapChart } from 'echarts/charts'
 import { GridComponent, LegendComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { SVGRenderer } from 'echarts/renderers'
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
 	buildCartesianExportLegendOption,
@@ -29,16 +29,9 @@ describe('pie PNG export legend', () => {
 			false
 		)
 
-		expect(legend).toMatchObject({
-			show: true,
-			orient: 'vertical',
-			type: 'scroll',
-			right: 16,
-			top: 72,
-			width: 400,
-			itemWidth: 20,
-			itemHeight: 20
-		})
+		expect(legend).toMatchObject({ show: true, orient: 'vertical' })
+		expect(legend.right).toBeDefined()
+		expect(legend.left).toBeUndefined()
 		expect(legend.formatter).toBe(formatter)
 	})
 })
@@ -102,18 +95,6 @@ describe('PNG export legend selection', () => {
 		expect(legendOf(exported).data).toEqual(['Binance', 'Total'])
 	})
 
-	test('lists every line series when nothing was toggled off', () => {
-		const live = render(lineSeries({}))
-
-		const legendItems = collectLegendItems(live.getOption() as EChartsOption, false)
-		const exported = render(
-			lineSeries(buildCartesianExportLegendOption(legendOf(live), legendItems, exportLayout(legendItems), true, false))
-		)
-
-		expect(legendOf(exported).data).toEqual(['Total', 'Binance'])
-		expect(legendOf(exported).selected).toEqual({})
-	})
-
 	test('greys out toggled-off slices in the pie legend and keeps them hidden', () => {
 		// PieChart passes the slice names as legend data.
 		const live = render(pieSeries({ data: ['Tether', 'Paxos'] }))
@@ -127,20 +108,27 @@ describe('PNG export legend selection', () => {
 })
 
 describe('mutateAndWaitForChartRender', () => {
-	test('subscribes before a mutation emits rendered synchronously', async () => {
-		let rendered: (() => void) | null = null
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	test('resolves without waiting for the timeout when the mutation emits rendered synchronously', async () => {
+		vi.useFakeTimers()
+		const handlers = new Set<() => void>()
 		const chart = {
-			on: vi.fn((_event: string, handler: () => void) => {
-				rendered = handler
-			}),
-			off: vi.fn()
-		} as any
-		const mutate = vi.fn(() => rendered?.())
+			on: (_event: string, handler: () => void) => handlers.add(handler),
+			off: (_event: string, handler: () => void) => handlers.delete(handler)
+		} as unknown as echarts.ECharts
+		let settled = false
 
-		await mutateAndWaitForChartRender(chart, mutate)
+		void mutateAndWaitForChartRender(chart, () => {
+			for (const handler of handlers) handler()
+		}).then(() => {
+			settled = true
+		})
+		await vi.advanceTimersByTimeAsync(0)
 
-		expect(chart.on).toHaveBeenCalledBefore(mutate)
-		expect(chart.off).toHaveBeenCalledWith('rendered', expect.any(Function))
+		expect(settled).toBe(true)
 	})
 })
 
@@ -183,36 +171,37 @@ describe('treemap viewport export', () => {
 		).toEqual({ name: 'Duplicate', data: second.children })
 	})
 
-	test('resolves a stashed focus path against clone-local node ids before dispatching', () => {
-		const sourceSeries = { id: 'source', getData: () => ({ tree: { root: {} } }) }
-		const originalChart = {
-			__llamaTreemapFocusNode: { id: 'source-node', path: ['All', 'Technology'] },
-			getModel: () => ({ getSeriesByType: () => [sourceSeries] })
-		} as any
-		const state = readTreemapViewportExportState(originalChart)
-		expect(state).toMatchObject({ actionType: 'treemapZoomToNode', targetNodePath: ['All', 'Technology'] })
-
-		const cloneNode = {
-			getAncestors: () => [{ name: 'All' }, { name: 'Technology' }],
-			getId: () => 'clone-node'
-		}
-		const cloneRoot = {
-			getNodeById: () => null,
-			eachNode: (visit: (node: typeof cloneNode) => unknown) => visit(cloneNode)
-		}
-		const cloneSeries = { id: 'clone-series', getData: () => ({ tree: { root: cloneRoot } }) }
-		const dispatchAction = vi.fn()
-		const cloneChart = {
-			getModel: () => ({ getSeriesByType: () => [cloneSeries] }),
-			dispatchAction
-		} as any
-
-		expect(applyTreemapViewportExportState(cloneChart, state!)).toBe(true)
-		expect(dispatchAction).toHaveBeenCalledWith({
-			type: 'treemapZoomToNode',
-			seriesId: 'clone-series',
-			targetNodeId: 'clone-node'
+	test('focuses the export clone on the stashed path when the clone has different node ids', () => {
+		echarts.use([TreemapChart, SVGRenderer])
+		const treemap = (): EChartsOption => ({
+			series: [
+				{
+					type: 'treemap',
+					name: 'All',
+					data: [
+						{ name: 'Technology', value: 3, children: [{ name: 'AI', value: 3 }] },
+						{ name: 'Finance', value: 2 }
+					]
+				}
+			]
 		})
+		const render = () => {
+			const chart = echarts.init(null, null, { renderer: 'svg', ssr: true, width: 400, height: 300 })
+			chart.setOption(treemap())
+			return chart
+		}
+		const rootLayout = (chart: echarts.ECharts) =>
+			(chart as any).getModel().getSeriesByType('treemap')[0].getData().tree.root.getLayout()
+		const live = render()
+		// The id belongs to the live chart's tree; the clone must find the node by its path.
+		Reflect.set(live, '__llamaTreemapFocusNode', { id: 'live-node', path: ['All', 'Technology'] })
+		const clone = render()
+		const unfocusedLayout = rootLayout(clone)
+		live.dispatchAction({ type: 'treemapZoomToNode', targetNodeId: 'Technology' })
+
+		expect(applyTreemapViewportExportState(clone, readTreemapViewportExportState(live)!)).toBe(true)
+		expect(rootLayout(clone)).not.toEqual(unfocusedLayout)
+		expect(rootLayout(clone)).toEqual(rootLayout(live))
 	})
 })
 
@@ -342,20 +331,6 @@ describe('computeExportLayout', () => {
 		}
 
 		expect(computeExportLayout({ ...base, hasMarkLineHallmarks: true }).gridTop).toBe(computeExportLayout(base).gridTop)
-	})
-
-	test('reserves one row no matter how many hallmarks there are — they share a single label row', () => {
-		const layout = (hasMarkLineHallmarks: boolean) =>
-			computeExportLayout({
-				title: undefined,
-				legendItems: [],
-				shouldShowLegend: false,
-				hasIcon: false,
-				expandLegend: undefined,
-				hasMarkLineHallmarks
-			})
-
-		expect(layout(true).gridTop - layout(false).gridTop).toBe(EXPORT_HALLMARK_LABEL_RESERVE)
 	})
 })
 

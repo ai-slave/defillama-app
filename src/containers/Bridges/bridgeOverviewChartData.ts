@@ -107,20 +107,7 @@ export function buildBridgeOverviewTokenPieSeries(tokens: Record<string, BridgeT
 		totalsByToken[displayName] = usdValue
 	}
 
-	return prepareRuntimePieChartData({
-		data: totalsByToken,
-		limit: 10,
-		comparePeers: (a, b) => {
-			const valueDifference = b.value - a.value
-			if (valueDifference !== 0) return valueDifference
-			const aIndex = /^(0|[1-9]\d*)$/.test(a.name) ? Number(a.name) : null
-			const bIndex = /^(0|[1-9]\d*)$/.test(b.name) ? Number(b.name) : null
-			if (aIndex !== null && bIndex !== null) return aIndex - bIndex
-			if (aIndex !== null) return -1
-			if (bIndex !== null) return 1
-			return 0
-		}
-	})
+	return prepareRuntimePieChartData({ data: totalsByToken, limit: 10 })
 }
 
 export function buildBridgeOverviewActiveChart({

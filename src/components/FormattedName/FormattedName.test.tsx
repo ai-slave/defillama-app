@@ -1,33 +1,27 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FormattedName } from '.'
 
-describe('FormattedName', () => {
-	test('renders a bare ellipsized span without a character limit', () => {
-		const html = renderToStaticMarkup(<FormattedName text="Uniswap" />)
-
-		expect(html).toContain('Uniswap')
-		expect(html).toContain('truncate')
-		expect(html).toContain('data-link="false"')
-		expect(html).not.toContain('cursor-pointer')
-	})
-
-	test('renders a tooltip only when text exceeds maxCharacters', () => {
-		const withLimit = renderToStaticMarkup(<FormattedName text="A very long protocol name" maxCharacters={5} />)
-		const withoutLimit = renderToStaticMarkup(<FormattedName text="A very long protocol name" />)
-
-		expect(withLimit).toContain('cursor-pointer')
-		expect(withLimit).not.toBe(withoutLimit)
-		expect(withoutLimit).not.toContain('cursor-pointer')
-	})
-
-	test('marks link text via data-link', () => {
-		const html = renderToStaticMarkup(<FormattedName text="Uniswap" link />)
-
-		expect(html).toContain('data-link="true"')
-	})
-
-	test('renders nothing for empty text', () => {
-		expect(renderToStaticMarkup(<FormattedName text="" />)).toBe('')
-	})
+let container: HTMLDivElement
+let root: Root
+beforeEach(() => {
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+})
+test('opens the full name on touch only when it exceeds the character limit', async () => {
+	const name = 'A very long protocol name'
+	await act(async () => root.render(<FormattedName text={name} maxCharacters={5} />))
+	await act(async () => container.firstElementChild!.dispatchEvent(new Event('touchstart', { bubbles: true })))
+	await vi.waitFor(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe(name))
+	await act(async () => root.render(<FormattedName text={name} />))
+	expect(document.querySelector('[role="tooltip"]')).toBeNull()
+	expect(container.textContent).toBe(name)
 })

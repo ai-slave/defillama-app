@@ -8,7 +8,8 @@ import { DialogHeading } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNumber, formatUsd } from '~/utils/numberFormat'
+import { formatNumber } from '~/utils/numberFormat'
+import { formatSeatTotal } from './seatPricing'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
@@ -281,13 +282,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 								<div className="flex items-center justify-between">
 									<span className="text-sm text-sub-text-muted">Estimated total</span>
 									<span className="text-sm font-semibold text-sub-text-primary">
-										{subscriptionType === 'api'
-											? billingInterval === 'year'
-												? `${formatUsd(3000 * seatCount)}/year`
-												: `${formatUsd(300 * seatCount)}/month`
-											: billingInterval === 'year'
-												? `${formatUsd(490 * seatCount)}/year`
-												: `${formatUsd(49 * seatCount)}/month`}
+										{formatSeatTotal(subscriptionType, billingInterval, seatCount)}
 									</span>
 								</div>
 							</div>

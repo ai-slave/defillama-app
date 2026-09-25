@@ -274,8 +274,7 @@ export default function IncomeBreakdown() {
 			) : (
 				<ChartCard title="Monthly Breakdown">
 					<MultiSeriesChart
-						dataset={berachain.monthly}
-						groupBy="monthly"
+						{...berachain.monthly}
 						charts={BERACHAIN_MONTHLY_CHARTS}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
@@ -324,8 +323,7 @@ export default function IncomeBreakdown() {
 			) : (
 				<ChartCard title="Monthly Revenue">
 					<MultiSeriesChart
-						dataset={bex.monthly}
-						groupBy="monthly"
+						{...bex.monthly}
 						charts={BEX_MONTHLY_CHART}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}
@@ -373,8 +371,7 @@ export default function IncomeBreakdown() {
 			) : (
 				<ChartCard title="Monthly Breakdown">
 					<MultiSeriesChart
-						dataset={bend.monthly}
-						groupBy="monthly"
+						{...bend.monthly}
 						charts={BEND_MONTHLY_CHARTS}
 						chartOptions={DOLLAR_CHART_OPTIONS}
 						exportButtons={BAR_CHART_EXPORTS}

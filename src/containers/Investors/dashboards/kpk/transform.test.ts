@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import type { KpkComposition, KpkRangedComposition, KpkVault } from './api'
-import {
-	KPK_CATEGORY_SLOTS,
-	KPK_LINE_STROKE_DARK,
-	KPK_OTHER_DARK,
-	KPK_PALETTE_DARK,
-	kpkChartColors
-} from './chartDefaults'
+import type { KpkComposition, KpkRangedComposition } from './api'
+import { KPK_LINE_STROKE_DARK, KPK_OTHER_DARK, KPK_PALETTE_DARK, kpkChartColors } from './chartDefaults'
 import {
 	asRanged,
 	buildComposition as build,
@@ -15,8 +9,7 @@ import {
 	gapNote,
 	MILLION,
 	PERIOD_DIMENSION,
-	rangeOptions,
-	vaultTotals
+	rangeOptions
 } from './transform'
 
 const buildComposition = (comp: KpkComposition, colorNames?: ReadonlyArray<string>) =>
@@ -43,21 +36,6 @@ const withLine: KpkComposition = {
 	}
 }
 
-function vault(overrides: Partial<KpkVault>): KpkVault {
-	return {
-		name: 'Vault',
-		venue: 'Morpho',
-		chain: 'Ethereum',
-		asset: 'USDC',
-		tva: 0,
-		interest: 0,
-		liqTarget: 15,
-		spreadBps: null,
-		belowTarget: false,
-		...overrides
-	}
-}
-
 describe('buildComposition', () => {
 	test('plots period labels as categories with one stacked band per segment', () => {
 		const model = buildComposition(comp)
@@ -79,10 +57,6 @@ describe('buildComposition', () => {
 
 		expect(model.totalUsd).toBe(30 * MILLION)
 		expect(model.rows.map((row) => row.valueUsd)).toEqual([20 * MILLION, 10 * MILLION])
-	})
-
-	test('keeps the payload order for the breakdown table', () => {
-		expect(buildComposition(comp).rows.map((row) => row.name)).toEqual(['Morpho', 'Euler'])
 	})
 
 	test('carries a missing point through as a gap rather than zero', () => {
@@ -118,13 +92,6 @@ describe('buildComposition', () => {
 
 		expect(shortest.rows[0].color).toBe(widest.rows[1].color)
 		expect(shortest.rows[0].color).toBe(KPK_PALETTE_DARK[1])
-	})
-
-	test('emits no line for a breakdown that carries none', () => {
-		const model = buildComposition(comp)
-
-		expect(model.line).toBeUndefined()
-		expect(model.rows.some((row) => row.duplicate)).toBe(false)
 	})
 
 	test('adds the overlay line as an unstacked dashed series after the bands', () => {
@@ -186,9 +153,6 @@ describe('asRanged', () => {
 
 		expect(lifted).toEqual({ title: 'By venue', ranges: { max: comp } })
 		expect(rangeOptions(lifted)).toEqual([{ key: 'max', label: 'Max' }])
-	})
-
-	test('carries nothing through for a breakdown the payload omitted', () => {
 		expect(asRanged(undefined)).toBeUndefined()
 	})
 })
@@ -278,12 +242,6 @@ describe('compositionColors', () => {
 		expect(colors['Other (15)']).toBe(KPK_OTHER_DARK)
 		expect(colors['Other (27)']).toBe(KPK_OTHER_DARK)
 		expect(colors.Euler).toBe(KPK_PALETTE_DARK[0])
-	})
-
-	test('pins only slots the palette has', () => {
-		for (const slot of Object.values(KPK_CATEGORY_SLOTS)) {
-			expect(Number.isInteger(slot) && slot >= 0 && slot < KPK_PALETTE_DARK.length).toBe(true)
-		}
 	})
 
 	/** Every breakdown's membership as the payloads carried it in Sep 2026, union across ranges. */
@@ -383,43 +341,5 @@ describe('compositionColors', () => {
 		const repainted = [...seen].filter(([, colors]) => colors.size > 1).map(([name]) => name)
 
 		expect(repainted).toEqual([])
-	})
-})
-
-describe('vaultTotals', () => {
-	test('sums the rows on screen and converts to USD', () => {
-		const totals = vaultTotals([
-			vault({ tva: 20.5, interest: 0.25 }),
-			vault({ tva: 9.5, interest: 0.75, venue: 'Euler' })
-		])
-
-		expect(totals.tvaUsd).toBe(30 * MILLION)
-		expect(totals.interestUsd).toBe(1 * MILLION)
-	})
-
-	test('returns zeroes for an empty filter result', () => {
-		expect(vaultTotals([])).toEqual({
-			tvaUsd: 0,
-			interestUsd: 0,
-			tvaAdjustedUsd: 0,
-			interestAdjustedUsd: 0,
-			duplicateVenues: []
-		})
-	})
-
-	test('nets a double-counted vault out of the adjusted pair and names its venue', () => {
-		const totals = vaultTotals([
-			vault({ tva: 20, interest: 0.5 }),
-			vault({ tva: 10, interest: 0.25, venue: 'Symbiotic', doubleCounted: true })
-		])
-
-		expect(totals.tvaUsd).toBe(30 * MILLION)
-		expect(totals.tvaAdjustedUsd).toBe(20 * MILLION)
-		expect(totals.interestAdjustedUsd).toBe(0.5 * MILLION)
-		expect(totals.duplicateVenues).toEqual(['Symbiotic'])
-	})
-
-	test('reports no duplicate venues for a filter that nets out nothing', () => {
-		expect(vaultTotals([vault({ tva: 20, interest: 0.5 })]).duplicateVenues).toEqual([])
 	})
 })

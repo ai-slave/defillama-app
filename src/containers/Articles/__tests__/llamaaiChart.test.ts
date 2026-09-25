@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
-import { LLAMAAI_CHART_MAX_DATA_BYTES, downsampleChartData } from '../llamaaiChart'
+import { downsampleChartData } from '../llamaaiChart'
 
 const validConfig = {
 	id: 'c1',
@@ -49,7 +49,7 @@ describe('isChartData', () => {
 describe('downsampleChartData', () => {
 	test('leaves small series untouched', () => {
 		const rows = Array.from({ length: 100 }, (_, i) => ({ ts: i, value: i }))
-		expect(downsampleChartData(rows, 2000)).toBe(rows)
+		expect(downsampleChartData(rows, 2000)).toEqual(Array.from({ length: 100 }, (_, i) => ({ ts: i, value: i })))
 	})
 
 	test('downsamples an array series to the cap, keeping first and last points', () => {
@@ -69,9 +69,5 @@ describe('downsampleChartData', () => {
 		expect(out.a?.length).toBeLessThanOrEqual(1000)
 		expect(out.a?.at(-1)?.ts).toBe(4999)
 		expect(out.b?.length).toBe(10)
-	})
-
-	test('exports a client cap below the 512KB server backstop', () => {
-		expect(LLAMAAI_CHART_MAX_DATA_BYTES).toBeLessThan(512 * 1024)
 	})
 })

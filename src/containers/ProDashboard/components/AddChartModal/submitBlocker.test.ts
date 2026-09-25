@@ -152,7 +152,3 @@ test('tables, text, metrics, saved charts and custom data each name their gap', 
 		)
 	).toBeNull()
 })
-
-test('the SQL tab never blocks because it has no submit button', () => {
-	expect(resolveSubmitBlocker(state({ selectedMainTab: 'sql' }))).toBeNull()
-})

@@ -29,7 +29,7 @@ import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getProtocolSeriesName } from './chartPresentation'
-import { resolveProtocolChartQuery } from './chartQuery'
+import { readAsPathQuery, resolveProtocolChartQuery } from './chartQuery'
 import {
 	protocolChartCategories,
 	protocolChartCategoryOrder,
@@ -70,10 +70,7 @@ const getProtocolMetricLabel = (chart: ProtocolChartsLabels, tokenSymbol?: strin
 
 export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const router = useRouter()
-	const searchParams = useMemo(() => {
-		const queryString = router.asPath.split('?')[1]?.split('#')[0] ?? ''
-		return new URLSearchParams(queryString)
-	}, [router.asPath])
+	const getQueryValue = useMemo(() => readAsPathQuery(router.asPath), [router.asPath])
 	const [isThemeDark] = useDarkModeManager()
 	const { chartInstance: overviewChartInstance, handleChartReady: handleOverviewChartReady } = useChartImageExport()
 	const overviewImageFilename = slug(props.name)
@@ -81,12 +78,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const { toggledMetrics, hasAtLeastOneBarChart, toggledCharts, groupBy, defaultEnabledCharts, hasEvents } = useMemo(
 		() =>
 			resolveProtocolChartQuery({
-				getQueryValue: (key) => {
-					const values = searchParams.getAll(key)
-					if (values.length === 0) return null
-					if (values.length === 1) return values[0]
-					return values
-				},
+				getQueryValue,
 				availableCharts: props.availableCharts,
 				defaultToggledCharts: props.defaultToggledCharts,
 				chartDenominations: props.chartDenominations,
@@ -95,7 +87,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				defaultChartView: props.defaultChartView
 			}),
 		[
-			searchParams,
+			getQueryValue,
 			props.availableCharts,
 			props.defaultToggledCharts,
 			props.chartDenominations,

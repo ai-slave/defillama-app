@@ -1,16 +1,14 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
-
-vi.mock('~/utils/async', () => ({ fetchJson: fetchJsonMock }))
+import { describe, expect, test } from 'vitest'
+import { STABLECOINS_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+const http = installFixtureFetch()
 
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
 	fetchStablecoinChainVolumeChartApi,
 	fetchStablecoinPricesApi,
-	fetchStablecoinTokenVolumeChartApi,
-	fetchStablecoinVolumeChartApi
+	fetchStablecoinTokenVolumeChartApi
 } from '../api'
 import type { RawStablecoinDetailResponse, RawStablecoinPricesResponse, RawStablecoinsListResponse } from '../api.types'
 
@@ -18,28 +16,16 @@ const chainMetadata = {
 	'zksync-era': { id: 'era', name: 'ZKsync Era' }
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
-	fetchJsonMock.mockResolvedValue([])
-})
-
 describe('stablecoin volume API fetchers', () => {
 	test('resolves chain display names to metadata ids for scoped volume routes', async () => {
-		await fetchStablecoinChainVolumeChartApi('zkSync Era', 'token', chainMetadata)
-
-		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/chain/era/token-breakdown'))
+		http.serve({ [`${STABLECOINS_SERVER_URL}/chart/volume/chain/era/token-breakdown`]: [[1, { USDT: 25 }]] })
+		await expect(fetchStablecoinChainVolumeChartApi('zkSync Era', 'token', chainMetadata)).resolves.toEqual([
+			[1, { USDT: 25 }]
+		])
 	})
-
-	test('uses global volume routes', async () => {
-		await fetchStablecoinVolumeChartApi('currency')
-
-		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/currency-breakdown'))
-	})
-
 	test('preserves token symbols for scoped token routes', async () => {
-		await fetchStablecoinTokenVolumeChartApi('USDT', 'chain')
-
-		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/token/USDT/chain-breakdown'))
+		http.serve({ [`${STABLECOINS_SERVER_URL}/chart/volume/token/USDT/chain-breakdown`]: [[1, { Ethereum: 15 }]] })
+		await expect(fetchStablecoinTokenVolumeChartApi('USDT', 'chain')).resolves.toEqual([[1, { Ethereum: 15 }]])
 	})
 })
 
@@ -66,7 +52,7 @@ describe('stablecoin API normalization', () => {
 			],
 			chains: []
 		} satisfies RawStablecoinsListResponse
-		fetchJsonMock.mockResolvedValue(response)
+		http.serve({ [`${STABLECOINS_SERVER_URL}/stablecoins`]: response })
 
 		await expect(fetchStablecoinAssetsApi()).resolves.toMatchObject({
 			peggedAssets: [{ pegMechanism: 'crypto-backed', deadFrom: '2024-01-31' }]
@@ -77,14 +63,14 @@ describe('stablecoin API normalization', () => {
 		const response = [
 			{ date: 1, prices: { tether: '1.001', zero: '0', numeric: 2 } }
 		] satisfies RawStablecoinPricesResponse
-		fetchJsonMock.mockResolvedValue(response)
+		http.serve({ [`${STABLECOINS_SERVER_URL}/stablecoinprices`]: response })
 
 		await expect(fetchStablecoinPricesApi()).resolves.toEqual([
 			{ date: 1, prices: { tether: 1.001, zero: 0, numeric: 2 } }
 		])
 	})
 
-	test('normalizes detail metadata without copying its historical arrays', async () => {
+	test('normalizes detail metadata and preserves its historical balances', async () => {
 		const tokens: RawStablecoinDetailResponse['tokens'] = [{ date: 1, circulating: { peggedUSD: 10 } }]
 		const chainBalances: RawStablecoinDetailResponse['chainBalances'] = { Ethereum: { tokens } }
 		const response = {
@@ -107,7 +93,7 @@ describe('stablecoin API normalization', () => {
 			chainBalances,
 			currentChainBalances: {}
 		} satisfies RawStablecoinDetailResponse
-		fetchJsonMock.mockResolvedValue(response)
+		http.serve({ [`${STABLECOINS_SERVER_URL}/stablecoin/1`]: response })
 
 		const result = await fetchStablecoinAssetApi('1')
 
@@ -118,7 +104,7 @@ describe('stablecoin API normalization', () => {
 			wiki: null,
 			module: 'test-usd'
 		})
-		expect(result.tokens).toBe(tokens)
-		expect(result.chainBalances).toBe(chainBalances)
+		expect(result.tokens).toEqual(tokens)
+		expect(result.chainBalances).toEqual(chainBalances)
 	})
 })

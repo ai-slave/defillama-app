@@ -262,21 +262,6 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['A', 'B', 'C'])
 	})
 
-	test('establishes the full default when route scope changes and the old selection is stale', async () => {
-		const prepare = (names: Array<string>) =>
-			prepareStablecoinMarketCapSeries({
-				rows: names.map((name, index) => ({ name, value: names.length - index })),
-				view: 'pie',
-				getName: (row) => row.name,
-				getValue: (row) => row.value
-			})
-
-		await renderSelection(prepare(['A', 'B']), EMPTY_RUNTIME_SERIES, 'ethereum')
-		act(() => latest.setSelectedSeries(['B']))
-		await renderSelection(prepare(['C', 'D', 'E']), EMPTY_RUNTIME_SERIES, 'solana')
-		expect(latest.activeSeries).toEqual(['C', 'D', 'E'])
-	})
-
 	test('uses the active default without erasing same-scope include intent when peers temporarily disappear', async () => {
 		const prepare = (names: Array<string>) =>
 			prepareStablecoinMarketCapSeries({

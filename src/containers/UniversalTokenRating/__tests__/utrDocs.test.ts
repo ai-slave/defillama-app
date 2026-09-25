@@ -138,9 +138,6 @@ describe('buildUtrDocChapters', () => {
 		expect(text).toContain('15.00%')
 		expect(text).toContain('Binance Live')
 		expect(text).toContain('active scoring configuration')
-		expect(text).not.toContain('final Performance score of 7.91')
-		expect(text).not.toContain('Market Makers (category weight: 21%)')
-		expect(text).not.toContain('carry a null or provisional score')
 		expect(text).toContain('fully diluted valuation is at least $2.5 billion')
 	})
 

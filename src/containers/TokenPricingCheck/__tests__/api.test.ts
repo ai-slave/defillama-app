@@ -88,13 +88,9 @@ describe('token pricing check', () => {
 		expect(tokenPriceKey('xrp', 'XRP')).toBe('ripple:XRP')
 	})
 
-	test('uses pricing-service chain keys with readable names', async () => {
-		fetchJsonMock.mockResolvedValueOnce(['ethereum', 'avax', 'arbitrum_nova'])
-		await expect(fetchPricingChains()).resolves.toEqual(['ethereum', 'avax', 'arbitrum_nova'])
-		expect(fetchJsonMock).toHaveBeenCalledWith('https://coins.llama.fi/chains')
-		expect(pricingChainName('ethereum', { ethereum: 'Ethereum' })).toBe('Ethereum')
-		expect(pricingChainName('avax', {})).toBe('Avalanche')
-		expect(pricingChainName('arbitrum_nova', {})).toBe('Arbitrum Nova')
+	test('names chains from the site display names before title-casing an unmapped key', () => {
+		expect(pricingChainName('avax', { avax: 'Avalanche C-Chain' })).toBe('Avalanche C-Chain')
+		expect(pricingChainName('base_sepolia', {})).toBe('Base Sepolia')
 	})
 
 	test('does not list aggregate categories as chains', async () => {

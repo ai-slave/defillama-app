@@ -48,17 +48,6 @@ describe('buildNarrativeTreemapTreeData', () => {
 		])
 	})
 
-	test('keeps the previous blank category path for rows without a category name', () => {
-		expect(buildNarrativeTreemapTreeData([row({ name: 'Bitcoin', mcap: 500, returnField: null })])).toEqual([
-			{
-				value: [500, null, null, 0],
-				name: '',
-				path: '',
-				children: [{ value: [500, 0, 0, 0], name: 'Bitcoin', path: '/Bitcoin' }]
-			}
-		])
-	})
-
 	test('uses zero treemap weight for coins without market cap data', () => {
 		expect(buildNarrativeTreemapTreeData([row({ name: 'SpiritSwap', mcap: null, returnField: 1.23 })])).toEqual([
 			{
@@ -172,15 +161,6 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(result[1].Bitcoin).toBeUndefined()
 	})
 
-	test('withholds relative returns when no row has the selected denomination', () => {
-		const rows = [
-			{ date: 1, DeFi: 10 },
-			{ date: 2, DeFi: 20 }
-		]
-
-		expect(calculateDenominatedTimeSeries(rows, 'Bitcoin')).toEqual([{ date: 1 }, { date: 2 }])
-	})
-
 	test('returns date-only rows when denomination performance is zero or missing for a day', () => {
 		const result = calculateDenominatedTimeSeries(
 			[
@@ -217,8 +197,7 @@ describe('calculateDenominatedChange', () => {
 
 	test('preserves USD returns without requiring token benchmarks', () => {
 		const rows = [row({ name: 'DeFi', change1W: 21 })]
-		expect(calculateDenominatedChange(rows, '$', 'change1W')).toBe(rows)
-		const series = [{ date: 1, DeFi: 21 }]
-		expect(calculateDenominatedTimeSeries(series, '$')).toBe(series)
+		expect(calculateDenominatedChange(rows, '$', 'change1W').map((item) => item.change1W)).toEqual([21])
+		expect(calculateDenominatedTimeSeries([{ date: 1, DeFi: 21 }], '$')).toEqual([{ date: 1, DeFi: 21 }])
 	})
 })

@@ -1,16 +1,21 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { fetchCexs } from '../api'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import type { RawCexsResponse } from '../api.types'
 import { getCexsPageData } from '../queries'
 import { binanceCexMetadataCache } from './metadataFixture'
 
-vi.mock('../api', () => ({ fetchCexs: vi.fn() }))
-vi.mock('~/server/routeRegistry/common', () => ({ getMetadataCache: vi.fn(() => binanceCexMetadataCache) }))
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+function serveCexs(body: RawCexsResponse) {
+	http.serve({ '/cexs': body })
+}
 
 describe('CEX page data', () => {
-	beforeEach(() => vi.resetAllMocks())
+	beforeEach(() => metadata.seed(binanceCexMetadataCache))
 
 	test('normalizes the CEX protocol identity and producer exclusion population once', async () => {
-		vi.mocked(fetchCexs).mockResolvedValue({
+		serveCexs({
 			cexs: [
 				{
 					name: 'Binance',
@@ -37,7 +42,7 @@ describe('CEX page data', () => {
 	})
 
 	test('keeps display coin separate when the producer has no exclusion symbol', async () => {
-		vi.mocked(fetchCexs).mockResolvedValue({
+		serveCexs({
 			cexs: [{ name: 'Bitrue', coin: 'BTR' }],
 			cg_volume_cexs: []
 		})
@@ -48,7 +53,7 @@ describe('CEX page data', () => {
 	})
 
 	test('keeps an unknown producer slug as an unlinked CEX row', async () => {
-		vi.mocked(fetchCexs).mockResolvedValue({
+		serveCexs({
 			cexs: [{ name: 'New CEX', slug: 'new-cex', coinSymbol: 'NEW' }],
 			cg_volume_cexs: []
 		})

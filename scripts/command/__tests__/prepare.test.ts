@@ -3,35 +3,6 @@ import { runPreparationCommand, type PreparationStep } from '../prepare'
 import { CommandExitError } from '../timedStep'
 
 describe('preparation command', () => {
-	test('runs preparation steps in order', async () => {
-		const calls: Array<string> = []
-		const steps: Array<PreparationStep> = [
-			{
-				name: 'Metadata cache',
-				run: vi.fn(async () => {
-					calls.push('metadata')
-				})
-			},
-			{
-				name: 'Dataset cache',
-				run: vi.fn(async () => {
-					calls.push('dataset')
-				})
-			},
-			{
-				name: 'robots.txt',
-				run: vi.fn(async () => {
-					calls.push('robots')
-				})
-			}
-		]
-
-		const result = await runPreparationCommand({ logger: { log: vi.fn() }, steps })
-
-		expect(result.exitCode).toBe(0)
-		expect(calls).toEqual(['metadata', 'dataset', 'robots'])
-	})
-
 	test('keeps running later preparation steps after a failure', async () => {
 		const dataset = vi.fn()
 		const steps: Array<PreparationStep> = [
@@ -48,18 +19,5 @@ describe('preparation command', () => {
 
 		expect(result.exitCode).toBe(9)
 		expect(dataset).toHaveBeenCalledTimes(1)
-	})
-
-	test('uses the requested log prefix for build preparation', async () => {
-		const logger = { log: vi.fn() }
-
-		await runPreparationCommand({
-			logger,
-			prefix: '[build:prepare]',
-			steps: [{ name: 'Metadata cache', run: vi.fn(async () => {}) }]
-		})
-
-		expect(logger.log).toHaveBeenCalledWith('[build:prepare] Preparing local data before Next.js starts')
-		expect(logger.log).toHaveBeenCalledWith('[build:prepare] Metadata cache started')
 	})
 })

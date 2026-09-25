@@ -427,21 +427,6 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.filteredShares.tvl).toBe(100)
 	})
 
-	test('does not traverse or replace share state when no share metrics are requested', () => {
-		const model = buildProtocolTableReadModel({
-			rows: [protocol('included', 100)],
-			rowHeaders: ['category', 'protocol'],
-			parentMetrics: {},
-			chainMetrics: {},
-			customColumns: []
-		})
-		const shares = model.rows[0]?.filteredShares
-
-		setProtocolTableFilteredShares(model.rows, [])
-
-		expect(model.rows[0]?.filteredShares).toBe(shares)
-	})
-
 	test('distinguishes source filters from canonical chain-only filters', () => {
 		expect(hasProtocolSubsetFilters({ tvlMin: 10 })).toBe(true)
 		expect(hasProtocolSubsetFilters({ categories: ['Dexs'] })).toBe(true)

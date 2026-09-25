@@ -1,19 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { expect, test } from 'vitest'
+import { RISK_SERVER_URL } from '~/constants'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installSnapshotDirectory } from '~/utils/test/snapshotDirectory'
 import type { TokenRiskBorrowCapacityResponse, TokenRiskBorrowCapacityTokenEntry } from '../api.types'
 
-const mocks = vi.hoisted(() => ({
-	fetchRisk: vi.fn(),
-	readJson: vi.fn(),
-	writeJson: vi.fn()
-}))
-
-vi.mock('~/containers/Token/api', () => ({ getTokenRiskBorrowCapacityFromNetwork: mocks.fetchRisk }))
-vi.mock('~/server/datasetSnapshots/reader.server', () => ({
-	datasetSnapshotReader: { readJson: mocks.readJson }
-}))
-
-import { buildRiskDomain } from '../server/dataset.risk.builder.server'
-import { getIndexedTokenRiskBorrowCapacity } from '../server/dataset.risk.server'
+const http = installFixtureFetch()
+installSnapshotDirectory('token-risk-test')
 
 const riskData: TokenRiskBorrowCapacityResponse = {
 	methodologies: {
@@ -30,42 +22,29 @@ const riskData: TokenRiskBorrowCapacityResponse = {
 	tokens: []
 }
 
-beforeEach(() => {
-	vi.clearAllMocks()
-})
-
-describe('token risk dataset snapshot', () => {
-	test('hydrates the serialized risk index directly from the snapshot', async () => {
-		const indexedEntry: TokenRiskBorrowCapacityTokenEntry = {
-			asset: { symbol: 'USDC', address: '0x1', priceUsd: 1 },
-			chain: 'ethereum',
-			totals: {
-				collateralMaxBorrowUsdGovernance: 100,
-				collateralMaxBorrowUsdLiquidity: 90,
-				collateralBorrowedDebtUsd: 50,
-				minBadDebtAtPriceZeroUsd: 10
-			},
-			byProtocol: []
-		}
-		mocks.readJson.mockResolvedValue({ data: riskData, indexedTokens: { 'ethereum:0x1': [indexedEntry] } })
-
+const indexedEntry: TokenRiskBorrowCapacityTokenEntry = {
+	asset: { symbol: 'USDC', address: '0x1', priceUsd: 1 },
+	chain: 'ethereum',
+	totals: {
+		collateralMaxBorrowUsdGovernance: 100,
+		collateralMaxBorrowUsdLiquidity: 90,
+		collateralBorrowedDebtUsd: 50,
+		minBadDebtAtPriceZeroUsd: 10
+	},
+	byProtocol: []
+}
+test.each([{ tokens: [] }, { tokens: [indexedEntry] }])(
+	'publishes and hydrates the risk index for $tokens',
+	async ({ tokens }) => {
+		const data = { ...riskData, tokens }
+		http.serve({ [`${RISK_SERVER_URL}/get-borrow-capacity-by-asset`]: data })
+		const { fileDatasetSnapshotStore } = await import('~/server/datasetSnapshots/fileStore.server')
+		const { buildRiskDomain } = await import('../server/dataset.risk.builder.server')
+		await fileDatasetSnapshotStore.publish('risk', buildRiskDomain)
+		const { getIndexedTokenRiskBorrowCapacity } = await import('../server/dataset.risk.server')
 		const result = await getIndexedTokenRiskBorrowCapacity()
-
-		expect(mocks.readJson).toHaveBeenCalledWith('risk', 'indexed.json')
-		expect(result.data).toBe(riskData)
-		expect(result.indexedTokens.get('ethereum:0x1')).toEqual([indexedEntry])
-	})
-
-	test('writes the risk snapshot through the registered contract', async () => {
-		mocks.fetchRisk.mockResolvedValue(riskData)
-		mocks.writeJson.mockResolvedValue(undefined)
-
-		const writer = { writeJson: mocks.writeJson }
-		await expect(buildRiskDomain(writer)).resolves.toBeUndefined()
-
-		expect(mocks.writeJson).toHaveBeenCalledWith('indexed.json', {
-			data: riskData,
-			indexedTokens: {}
-		})
-	})
-})
+		expect(result.data).toEqual(data)
+		expect([...result.indexedTokens]).toEqual(tokens.length > 0 ? [['ethereum:0x1', [indexedEntry]]] : [])
+		expect(http.urls()).toEqual([`${RISK_SERVER_URL}/get-borrow-capacity-by-asset`])
+	}
+)

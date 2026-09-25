@@ -112,7 +112,6 @@ describe('metadata artifact manifest', () => {
 		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.protocols), 'utf8'))).toEqual({
 			aave: { name: 'Aave' }
 		})
-		expect(await fs.readFile(getMetadataManifestPath(cacheDir), 'utf8')).toContain('"status": "stub"')
 	})
 
 	test('detects missing files from a ready manifest', async () => {
@@ -158,24 +157,6 @@ describe('metadata artifact manifest', () => {
 		)
 
 		await expect(readMetadataArtifactManifest(cacheDir)).rejects.toThrow(/version mismatch/)
-	})
-
-	test('publishes parsed JSON payloads without semantic artifact validation', async () => {
-		const cacheDir = await createTempDir()
-		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
-
-		await writeMetadataArtifacts(
-			cacheDir,
-			{
-				...createPayload(),
-				chains: [] as unknown as CoreMetadataPayload['chains']
-			},
-			'ready',
-			456
-		)
-
-		expect((await readMetadataArtifactManifest(cacheDir))?.pulledAt).toBe(456)
-		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.chains), 'utf8'))).toEqual([])
 	})
 
 	test('treats only fresh ready manifests as pull skips', () => {

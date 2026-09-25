@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { ProDashboardAPIProvider, useProDashboardUI } from '../ProDashboardAPIContext'
 import { CreateDashboardPicker } from './CreateDashboardPicker'
 
@@ -14,32 +14,21 @@ const api = vi.hoisted(() => ({
 	push: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => ({ push: api.push, query: {} }) }))
-vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: false, hasActiveSubscription: true, loaders: { userLoading: false } })
-}))
-vi.mock('~/utils/pocketbase', () => ({ default: { authStore: { isValid: false } } }))
-vi.mock('../hooks/useDashboardStream', () => ({
-	useDashboardStream: () => ({
-		isDone: true,
-		isStreaming: false,
-		readyItemIds: new Set<string>(),
-		dashboard: null,
-		error: null
-	})
-}))
-vi.mock('~/containers/Chains/api', () => ({
-	fetchChainsList: async () => [
-		{ name: 'Base', tvl: 300 },
-		{ name: 'Ethereum', tvl: 200 }
-	],
-	fetchChainsByCategory: api.category
-}))
-vi.mock('~/containers/ProtocolLists/api', () => ({
-	fetchProtocols: async () => ({ protocols: [], parentProtocols: [] })
-}))
+// fetchJson is the network boundary: route each upstream the templates read to its own fixture.
 vi.mock('~/utils/async', async (original) => ({
 	...(await original<typeof import('~/utils/async')>()),
-	fetchJson: (url: string) => (url.endsWith('protocol-catalog-source') ? api.catalog() : api.dimension(url))
+	fetchJson: async (url: string) => {
+		const { pathname } = new URL(url, 'http://localhost')
+		if (pathname.endsWith('protocol-catalog-source')) return api.catalog()
+		if (pathname.startsWith('/chains2/')) return api.category(decodeURIComponent(pathname.slice('/chains2/'.length)))
+		if (pathname === '/chains')
+			return [
+				{ name: 'Base', tvl: 300 },
+				{ name: 'Ethereum', tvl: 200 }
+			]
+		if (pathname === '/lite/protocols2') return { protocols: [], parentProtocols: [] }
+		return api.dimension(url)
+	}
 }))
 
 const catalog = [
@@ -47,9 +36,9 @@ const catalog = [
 	{ slug: 'spark', parentSlug: 'spark', name: 'Spark', tvl: 50, category: 'Lending' },
 	{ slug: 'dex-by-tvl', parentSlug: 'dex-by-tvl', name: 'DEX by TVL', tvl: 500, category: 'Dexes' }
 ]
+const session = installSubscriberSession('owner', { resolved: true })
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 function Harness() {
 	const { createDashboardDialogStore } = useProDashboardUI()
 	return (
@@ -64,11 +53,11 @@ function Harness() {
 async function mount() {
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<ProDashboardAPIProvider mode="view">
 					<Harness />
 				</ProDashboardAPIProvider>
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 }
@@ -98,14 +87,16 @@ beforeEach(() => {
 	api.category.mockReset().mockResolvedValue({ chainsUnique: ['Base'] })
 	api.dimension.mockReset().mockResolvedValue({ protocols: [{ slug: 'volume-leader', name: 'Volume Leader' }] })
 	api.create.mockReset().mockResolvedValue({ id: 'created', slug: 'template-created' })
-	client = new QueryClient({ defaultOptions: { queries: { retry: false, retryDelay: 0 } } })
+	// Template sources retry on their own; a zero delay keeps a failing source from stalling the test.
+	session.client.setDefaultOptions({ queries: { retry: false, retryDelay: 0 } })
+	// The signed-in owner has no dashboards yet.
+	session.serve({ '/dashboards': { items: [] }, '/lite/dashboards': { items: [] } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
-	client.clear()
 	container.remove()
 })
 

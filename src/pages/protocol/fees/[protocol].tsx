@@ -21,7 +21,10 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { formatAdapterData } from '~/containers/ProtocolOverview/formatAdapterData'
 import { KeyMetrics } from '~/containers/ProtocolOverview/KeyMetrics'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
-import { buildProtocolFeeChartPresentation } from '~/containers/ProtocolOverview/protocolFeeCharts'
+import {
+	buildProtocolFeeChartPresentation,
+	getProtocolFeeBreakdownPanels
+} from '~/containers/ProtocolOverview/protocolFeeCharts'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
@@ -328,60 +331,20 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
-				{props.protocolChains.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+				{getProtocolFeeBreakdownPanels(props).map((panel) => (
+					<ChartPanel key={panel.title} className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
-							chartType="chain"
+							chartType={panel.chartType}
 							protocolName={slug(props.name)}
 							protocolDisplayName={props.name}
 							adapterType="fees"
-							breakdownNames={props.protocolChains}
+							{...(panel.dataType ? { dataType: panel.dataType } : {})}
+							breakdownNames={panel.breakdownNames}
 							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Fees by chain"
+							title={panel.title}
 						/>
 					</ChartPanel>
-				) : null}
-				{props.protocolFeesVersions.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType="version"
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="fees"
-							breakdownNames={props.protocolFeesVersions}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Fees by protocol version"
-						/>
-					</ChartPanel>
-				) : null}
-				{props.protocolRevenueChains.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType="chain"
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="fees"
-							dataType="dailyRevenue"
-							breakdownNames={props.protocolRevenueChains}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Revenue by chain"
-						/>
-					</ChartPanel>
-				) : null}
-				{props.protocolRevenueVersions.length > 1 ? (
-					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
-						<DimensionProtocolChartByType
-							chartType="version"
-							protocolName={slug(props.name)}
-							protocolDisplayName={props.name}
-							adapterType="fees"
-							dataType="dailyRevenue"
-							breakdownNames={props.protocolRevenueVersions}
-							{...(props.hallmarks ? { hallmarks: props.hallmarks } : {})}
-							title="Revenue by protocol version"
-						/>
-					</ChartPanel>
-				) : null}
+				))}
 			</div>
 		</ProtocolOverviewLayout>
 	)

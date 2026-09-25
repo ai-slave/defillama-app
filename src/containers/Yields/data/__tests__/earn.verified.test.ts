@@ -1,41 +1,25 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
-import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow, VerifiedBlock } from '../types'
-
-// getEarnPage pulls its rows from getEnrichedEarn; mock it so the test controls the dataset.
-const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
-vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
-vi.mock('../snapshot', async (importOriginal) => ({
-	...(await importOriginal<typeof import('../snapshot')>()),
-	readYieldsMeta: () => Promise.resolve({ halal: [], meme_pool_ids: [] }),
-	readYieldsDepegs: () => Promise.resolve([]),
-	readYieldsExploits: () => Promise.resolve([])
-}))
-vi.mock('../server/raiseValuations', () => ({
-	getRaiseValuationsUsd: () => Promise.resolve(new Map<string, number>()),
-	getReferralUrls: () => Promise.resolve(new Map<string, string>())
-}))
-vi.mock('~/containers/Yields/VaultRisk/coveredPools', () => ({
-	getRiskCoveredPoolIds: () => Promise.resolve(new Set<string>())
-}))
-
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { installYieldsFixtures, yieldsSnapshot } from '~/utils/test/yieldsSnapshotFixture'
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
+import type { ApyWindows, EarnRow, VerifiedBlock } from '../types'
+import { NULL_TRIPLE, pool } from './earnSnapshot'
 
-let generationCounter = 0
+installYieldsFixtures()
+
+// The earn artifact rows the current test reads; every call reads them from a fresh generation.
+let currentRows: Array<EarnRow> = []
+const useRows = (rows: Array<EarnRow>) => {
+	currentRows = rows
+}
+
 // Access defaults to LOCKED in production; these cases are about what a subscriber sees unless
 // they say otherwise, so the helper inverts that default and the locked block passes LOCKED.
 const getEarnPage = (
 	query: Parameters<typeof getEarnPageFromSnapshot>[1],
 	access: Parameters<typeof getEarnPageFromSnapshot>[2] = { verifiedAccess: true }
-) => getEarnPageFromSnapshot({ generationId: `verified-${++generationCounter}` } as never, query, access)
+) => getEarnPageFromSnapshot(yieldsSnapshot({ earn: currentRows }), query, access)
 
 const LOCKED = { verifiedAccess: false } as const
-
-const NULL_TRIPLE: ApyTriple = { base: null, reward: null, total: null }
-const ATTRIBUTES: EarnAttributes = {
-	stablecoin_only: false,
-	single_asset_exposure: false,
-	impermanent_loss_risk: false
-}
 
 function apyOf(total: number | null): ApyWindows {
 	return {
@@ -47,37 +31,8 @@ function apyOf(total: number | null): ApyWindows {
 
 // Deliberately built WITHOUT a `verified` key — the shape of any snapshot generated before
 // the API served the field.
-function row(id: string, apyTotal: number | null, overrides: Partial<EnrichedEarnRow> = {}): EnrichedEarnRow {
-	return {
-		id,
-		pool_key: id,
-		pool_token: null,
-		display: { label: id, detail: null },
-		reference_asset_symbol: null,
-		url: null,
-		protocol: 'Aave',
-		chain: 'Ethereum',
-		underlying_tokens: [],
-		reward_tokens: [],
-		tvl_usd: 1000,
-		apy: apyOf(apyTotal),
-		intrinsic: null,
-		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
-		holders: null,
-		price_per_share: null,
-		volume_1d_usd: null,
-		attributes: ATTRIBUTES,
-		protocolSlug: 'aave',
-		chainSlug: 'ethereum',
-		isEvm: true,
-		category: 'Lending',
-		hasAudit: false,
-		potentialAirdrop: false,
-		trend: null,
-		tokenKeys: null,
-		...overrides,
-		available_supply_usd: overrides.available_supply_usd ?? null
-	}
+function row(id: string, apyTotal: number | null, overrides: Partial<EarnRow> = {}): EarnRow {
+	return pool(id, { apy: apyOf(apyTotal), ...overrides })
 }
 
 const VERIFIED: VerifiedBlock = {
@@ -94,14 +49,10 @@ describe('getEarnPage verified fields', () => {
 	beforeAll(() => vi.setSystemTime(new Date('2026-08-11T06:00:00Z')))
 	afterAll(() => vi.useRealTimers())
 
-	beforeEach(() => {
-		getEnrichedEarn.mockReset()
-	})
-
 	// getStaticProps cannot serialize `undefined`, and an upstream row that predates the field
 	// has no `verified` key at all — so the absence must be normalized to null, not passed through.
 	test('normalizes an absent verified block to null so the page can serialize', async () => {
-		getEnrichedEarn.mockResolvedValue([row('a', 5)])
+		useRows([row('a', 5)])
 
 		const { rows } = await getEarnPage({})
 
@@ -112,7 +63,7 @@ describe('getEarnPage verified fields', () => {
 	})
 
 	test('leaves the reported APY as the headline figure for an unmeasured pool', async () => {
-		getEnrichedEarn.mockResolvedValue([row('a', 5)])
+		useRows([row('a', 5)])
 
 		const { rows } = await getEarnPage({})
 
@@ -122,7 +73,7 @@ describe('getEarnPage verified fields', () => {
 	// The measured base BECOMES the headline: one number in the cell, and the same number the
 	// sort key, the APY filters and the median run on.
 	test('swaps the measured base into the headline APY, keeping the reported one for disclosure', async () => {
-		getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+		useRows([row('a', 5, { verified: VERIFIED })])
 
 		const current = await getEarnPage({})
 		// `now.apy_24h` is null across the real dataset, so `current` resolves via avg_1d.
@@ -144,7 +95,7 @@ describe('getEarnPage verified fields', () => {
 			apy: { current: { base: 2.29 }, avg_7d: { base: 2.29 }, avg_30d: { base: null } },
 			source_pool: { id: 'weeth', pool_token: null, symbol: 'weETH' }
 		}
-		getEnrichedEarn.mockResolvedValue([row('weeth', 2.27, { verified: VERIFIED }), row('aweeth', 0.5, { intrinsic })])
+		useRows([row('weeth', 2.27, { verified: VERIFIED }), row('aweeth', 0.5, { intrinsic })])
 
 		const { rows } = await getEarnPage({ apyComponents: 'base,intrinsic' })
 		const held = rows.find((r) => r.id === 'aweeth')!
@@ -177,7 +128,7 @@ describe('getEarnPage verified fields', () => {
 			reward_tokens: [{ address: '0xabc', symbol: 'MORPHO', decimals: 18 }],
 			verified: { ...VERIFIED, apy: { avg_1d: 2.58, avg_7d: null, avg_30d: null } }
 		})
-		getEnrichedEarn.mockResolvedValue([withReward])
+		useRows([withReward])
 
 		// Default components: base + reward.
 		const { rows } = await getEarnPage({})
@@ -192,16 +143,13 @@ describe('getEarnPage verified fields', () => {
 	// base-only in fact and does get replaced; a pool that pays rewards keeps its reported figure,
 	// because dropping a base-only number in would silently delete emissions we cannot separate.
 	test('replaces a rewardless unsplit total but leaves one that may hide emissions alone', async () => {
-		const unsplit = (id: string, rewardTokens: EnrichedEarnRow['reward_tokens']) =>
+		const unsplit = (id: string, rewardTokens: EarnRow['reward_tokens']) =>
 			row(id, null, {
 				apy: { current: { base: null, reward: null, total: 4.52 }, avg_7d: NULL_TRIPLE, avg_30d: NULL_TRIPLE },
 				reward_tokens: rewardTokens,
 				verified: { ...VERIFIED, apy: { avg_1d: 5.68, avg_7d: null, avg_30d: null } }
 			})
-		getEnrichedEarn.mockResolvedValue([
-			unsplit('rewardless', []),
-			unsplit('rewarded', [{ address: '0xabc', symbol: 'CVX', decimals: 18 }])
-		])
+		useRows([unsplit('rewardless', []), unsplit('rewarded', [{ address: '0xabc', symbol: 'CVX', decimals: 18 }])])
 
 		const { rows } = await getEarnPage({ sortBy: 'id' })
 		const byId = new Map(rows.map((r) => [r.id, r]))
@@ -217,7 +165,7 @@ describe('getEarnPage verified fields', () => {
 	// Filtering on the reported figure and then rendering the measured one would hand back rows
 	// that visibly fail the filter the user set.
 	test('runs the APY range filters on the measured headline', async () => {
-		getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+		useRows([row('a', 5, { verified: VERIFIED })])
 
 		// Reported 5% passes, measured 2.2% does not.
 		expect((await getEarnPage({ minApy: '4' })).rows).toHaveLength(0)
@@ -226,7 +174,7 @@ describe('getEarnPage verified fields', () => {
 
 	// Coverage is ~124 of 15k pools, so the filter is the only practical way to find them.
 	test('narrows to measured pools when verified=true, and leaves the set alone otherwise', async () => {
-		getEnrichedEarn.mockResolvedValue([row('measured', 5, { verified: VERIFIED }), row('unmeasured', 6)])
+		useRows([row('measured', 5, { verified: VERIFIED }), row('unmeasured', 6)])
 
 		const filtered = await getEarnPage({ verified: 'true' })
 		expect(filtered.rows.map((r) => r.id)).toEqual(['measured'])
@@ -240,7 +188,7 @@ describe('getEarnPage verified fields', () => {
 			...VERIFIED,
 			apy: { ...VERIFIED.apy, avg_30d: null }
 		}
-		getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: noThirtyDay })])
+		useRows([row('a', 5, { verified: noThirtyDay })])
 
 		const { rows } = await getEarnPage({ apyWindow: 'avg_30d' })
 
@@ -258,7 +206,7 @@ describe('getEarnPage verified fields', () => {
 	// from it. Stripping the fields but ordering by the measurement would leak it by rank.
 	describe('without a subscription', () => {
 		test('leaves the reported composition as the headline and the sort key', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+			useRows([row('a', 5, { verified: VERIFIED })])
 
 			const { rows } = await getEarnPage({}, LOCKED)
 
@@ -267,20 +215,20 @@ describe('getEarnPage verified fields', () => {
 		})
 
 		test('runs the APY range filters on the reported figure, so filtered rows match what is shown', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+			useRows([row('a', 5, { verified: VERIFIED })])
 
 			// Measured 2.2% would fail this; reported 5% passes, and 5% is what the cell renders.
 			expect((await getEarnPage({ minApy: '4' }, LOCKED)).rows.map((r) => r.id)).toEqual(['a'])
 		})
 
 		test('medians the reported figures', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED }), row('b', 7)])
+			useRows([row('a', 5, { verified: VERIFIED }), row('b', 7)])
 
 			expect((await getEarnPage({}, LOCKED)).medianApy).toBe(6)
 		})
 
 		test('orders by the reported figure', async () => {
-			getEnrichedEarn.mockResolvedValue([row('measured', 5, { verified: VERIFIED }), row('other', 3)])
+			useRows([row('measured', 5, { verified: VERIFIED }), row('other', 3)])
 
 			const { rows } = await getEarnPage({ sortBy: 'apy', sortDesc: 'true' }, LOCKED)
 
@@ -290,7 +238,7 @@ describe('getEarnPage verified fields', () => {
 
 		// The guard: a field added to the row later must not reach an anonymous reader unnoticed.
 		test('serializes no measured value at all, only the fact that one exists', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+			useRows([row('a', 5, { verified: VERIFIED })])
 
 			const { rows } = await getEarnPage({}, LOCKED)
 			const wire = JSON.stringify(rows[0])
@@ -307,9 +255,9 @@ describe('getEarnPage verified fields', () => {
 		// call getEarnPage without an access argument. The default has to be the safe one, or the
 		// next such caller leaks the dataset by omission.
 		test('locks by default, so a caller that says nothing publishes nothing', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
+			useRows([row('a', 5, { verified: VERIFIED })])
 
-			const { rows } = await getEarnPageFromSnapshot({ generationId: 'default-access' } as never, {})
+			const { rows } = await getEarnPageFromSnapshot(yieldsSnapshot({ earn: currentRows }), {})
 
 			expect(rows[0].verified).toBeNull()
 			expect(rows[0].apy).toBe(5)
@@ -319,8 +267,8 @@ describe('getEarnPage verified fields', () => {
 		// The two tiers must not share a prepared-rows entry: same generation, same filters, one
 		// asked with access and one without.
 		test('never serves one tier from the prepared cache of the other', async () => {
-			getEnrichedEarn.mockResolvedValue([row('a', 5, { verified: VERIFIED })])
-			const snapshot = { generationId: 'shared-generation' } as never
+			useRows([row('a', 5, { verified: VERIFIED })])
+			const snapshot = yieldsSnapshot({ earn: currentRows })
 
 			const unlocked = await getEarnPageFromSnapshot(snapshot, {}, { verifiedAccess: true })
 			const locked = await getEarnPageFromSnapshot(snapshot, {}, LOCKED)

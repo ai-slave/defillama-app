@@ -1,18 +1,10 @@
-import type { ComponentType, ReactNode } from 'react'
-import { createElement } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ComponentType } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
 
-vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }))
-vi.mock('~/containers/MarketMakers/PerformanceIndex', () => ({
-	PerformanceIndex: () => <div>Performance Index</div>
-}))
-vi.mock('~/containers/MarketMakers/Documentation', () => ({
-	MarketMakersDocumentation: () => <div>Documentation</div>
-}))
-vi.mock('~/containers/MarketMakers/Leaderboard', () => ({
-	Leaderboard: ({ title }: { title: string }) => <div>{title}</div>
-}))
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/', asPath: '/', query: {} }) }))
 
 import DepthLeaderboard from '~/pages/market-makers/depth'
 import MarketMakersDocumentationPage from '~/pages/market-makers/documentation'
@@ -21,17 +13,31 @@ import KpiLeaderboard from '~/pages/market-makers/kpi'
 import SpreadLeaderboard from '~/pages/market-makers/spread'
 import VolumeLeaderboard from '~/pages/market-makers/volume'
 
-function renderPage(Page: unknown, props: Record<string, unknown> = {}) {
-	return renderToStaticMarkup(createElement(Page as ComponentType<Record<string, unknown>>, props))
+function renderPage<Props extends object>(Component: ComponentType<Props>, props: Props) {
+	const client = new QueryClient()
+	try {
+		const html = renderToStaticMarkup(
+			<QueryClientProvider client={client}>
+				<AuthProvider>
+					<Component {...props} />
+				</AuthProvider>
+			</QueryClientProvider>
+		)
+		return html.match(/<main[^>]*>([\s\S]*?)<\/main>/)![1].replace(/<[^>]*>/g, '')
+	} finally {
+		client.clear()
+	}
 }
 
 describe('public Market Makers pages', () => {
 	test('renders every route without an auth or preview access gate', () => {
-		expect(renderPage(MarketMakersPerformanceIndex)).toContain('Performance Index')
-		expect(renderPage(MarketMakersDocumentationPage)).toContain('Documentation')
-		expect(renderPage(DepthLeaderboard)).toContain('Depth Leaderboard')
-		expect(renderPage(VolumeLeaderboard)).toContain('Volume Leaderboard')
-		expect(renderPage(SpreadLeaderboard)).toContain('Spread Leaderboard')
-		expect(renderPage(KpiLeaderboard)).toContain('KPI Adherence Leaderboard')
+		expect(renderPage(MarketMakersPerformanceIndex, { performanceRows: [], aggregated: {} })).toContain(
+			'Performance Index'
+		)
+		expect(renderPage(MarketMakersDocumentationPage, {})).toContain('Documentation')
+		expect(renderPage(DepthLeaderboard, { payload: null })).toContain('Depth Leaderboard')
+		expect(renderPage(VolumeLeaderboard, { rows: [] })).toContain('Volume Leaderboard')
+		expect(renderPage(SpreadLeaderboard, { rows: [] })).toContain('Spread Leaderboard')
+		expect(renderPage(KpiLeaderboard, { rows: [] })).toContain('KPI Adherence Leaderboard')
 	})
 })

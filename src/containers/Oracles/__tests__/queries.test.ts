@@ -1,23 +1,11 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { V2_SERVER_URL } from '~/constants'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const mocks = vi.hoisted(() => ({
-	fetchProtocols: vi.fn(),
-	fetchOracleMetrics: vi.fn(),
-	fetchOracleProtocolBreakdownChart: vi.fn(),
-	fetchOracleProtocolChart: vi.fn(),
-	fetchOracleProtocolChainBreakdownChart: vi.fn(),
-	fetchOracleChainProtocolBreakdownChart: vi.fn()
-}))
-
-vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: mocks.fetchProtocols }))
-vi.mock('../api', () => ({
-	fetchOracleMetrics: mocks.fetchOracleMetrics,
-	fetchOracleProtocolBreakdownChart: mocks.fetchOracleProtocolBreakdownChart,
-	fetchOracleProtocolChart: mocks.fetchOracleProtocolChart,
-	fetchOracleProtocolChainBreakdownChart: mocks.fetchOracleProtocolChainBreakdownChart,
-	fetchOracleChainProtocolBreakdownChart: mocks.fetchOracleChainProtocolBreakdownChart
-}))
+const http = installFixtureFetch()
+const protocolsUrl = '/lite/protocols2'
+const metricsUrl = `${V2_SERVER_URL}/metrics/oracle`
 
 import { getOracleDetailPageData, getOraclesListPageData } from '../queries'
 
@@ -55,49 +43,47 @@ const protocolsResponse = {
 } satisfies ProtocolsResponse
 
 beforeEach(() => {
-	mocks.fetchProtocols.mockResolvedValue(protocolsResponse)
-	mocks.fetchOracleMetrics.mockResolvedValue({
-		oracles: {
-			Chainlink: [
-				'Null TVL Protocol',
-				'Zero Protocol',
-				'Metadata Only',
-				'Missing Lite Metadata',
-				'Hyphen Chain Protocol',
-				'Extra Only Protocol'
-			],
-			'Unmeasured Oracle': ['Metadata Only']
-		},
-		chainsByOracle: { Chainlink: ['Ethereum', 'X-Layer'], 'Unmeasured Oracle': ['Ethereum'] },
-		protocolsByOracleChain: {
-			Chainlink: {
-				Ethereum: [
+	http.serve({ [protocolsUrl]: protocolsResponse, [`${V2_SERVER_URL}/chart/oracle/`]: [] })
+	http.serve({
+		[metricsUrl]: {
+			oracles: {
+				Chainlink: [
 					'Null TVL Protocol',
 					'Zero Protocol',
 					'Metadata Only',
 					'Missing Lite Metadata',
+					'Hyphen Chain Protocol',
 					'Extra Only Protocol'
 				],
-				'X-Layer': ['Hyphen Chain Protocol']
+				'Unmeasured Oracle': ['Metadata Only']
 			},
-			'Unmeasured Oracle': { Ethereum: ['Metadata Only'] }
-		},
-		oraclesTVS: {
-			Chainlink: {
-				'Null TVL Protocol': { Ethereum: 0 },
-				'Zero Protocol': { Ethereum: 0 },
-				'Missing Lite Metadata': { Ethereum: 50 },
-				'Hyphen Chain Protocol': { 'X-Layer': 42, 'X-Layer-staking': 3 },
-				'Extra Only Protocol': { 'Ethereum-staking': 5 }
+			chainsByOracle: { Chainlink: ['Ethereum', 'X-Layer'], 'Unmeasured Oracle': ['Ethereum'] },
+			protocolsByOracleChain: {
+				Chainlink: {
+					Ethereum: [
+						'Null TVL Protocol',
+						'Zero Protocol',
+						'Metadata Only',
+						'Missing Lite Metadata',
+						'Extra Only Protocol'
+					],
+					'X-Layer': ['Hyphen Chain Protocol']
+				},
+				'Unmeasured Oracle': { Ethereum: ['Metadata Only'] }
 			},
-			'Unmeasured Oracle': {},
-			'Legacy Ghost': { 'Zero Protocol': { Ethereum: 999 } }
+			oraclesTVS: {
+				Chainlink: {
+					'Null TVL Protocol': { Ethereum: 0 },
+					'Zero Protocol': { Ethereum: 0 },
+					'Missing Lite Metadata': { Ethereum: 50 },
+					'Hyphen Chain Protocol': { 'X-Layer': 42, 'X-Layer-staking': 3 },
+					'Extra Only Protocol': { 'Ethereum-staking': 5 }
+				},
+				'Unmeasured Oracle': {},
+				'Legacy Ghost': { 'Zero Protocol': { Ethereum: 999 } }
+			}
 		}
 	})
-	mocks.fetchOracleProtocolBreakdownChart.mockResolvedValue([])
-	mocks.fetchOracleProtocolChart.mockResolvedValue([])
-	mocks.fetchOracleProtocolChainBreakdownChart.mockResolvedValue([])
-	mocks.fetchOracleChainProtocolBreakdownChart.mockResolvedValue([])
 })
 
 describe('Oracle queries', () => {
@@ -147,18 +133,20 @@ describe('Oracle queries', () => {
 	})
 
 	test('orders successful omitted and explicit zero measurements together', async () => {
-		mocks.fetchOracleMetrics.mockResolvedValueOnce({
-			oracles: { Unknown: ['Unknown'], Zero: ['Zero'], Positive: ['Positive'] },
-			chainsByOracle: { Unknown: [], Zero: ['Ethereum'], Positive: ['Ethereum'] },
-			protocolsByOracleChain: {
-				Unknown: {},
-				Zero: { Ethereum: ['Zero'] },
-				Positive: { Ethereum: ['Positive'] }
-			},
-			oraclesTVS: {
-				Unknown: {},
-				Zero: { Zero: { Ethereum: 0 } },
-				Positive: { Positive: { Ethereum: 10 } }
+		http.serve({
+			[metricsUrl]: {
+				oracles: { Unknown: ['Unknown'], Zero: ['Zero'], Positive: ['Positive'] },
+				chainsByOracle: { Unknown: [], Zero: ['Ethereum'], Positive: ['Ethereum'] },
+				protocolsByOracleChain: {
+					Unknown: {},
+					Zero: { Ethereum: ['Zero'] },
+					Positive: { Ethereum: ['Positive'] }
+				},
+				oraclesTVS: {
+					Unknown: {},
+					Zero: { Zero: { Ethereum: 0 } },
+					Positive: { Positive: { Ethereum: 10 } }
+				}
 			}
 		})
 
@@ -175,33 +163,37 @@ describe('Oracle queries', () => {
 		const aaveV2 = { ...protocol('Aave V2', 10), parentProtocol: 'parent#aave' }
 		const aaveV3 = { ...protocol('Aave V3', 20), parentProtocol: 'parent#aave' }
 		const aaveV4 = { ...protocol('Aave V4', 30), parentProtocol: 'parent#aave' }
-		mocks.fetchProtocols.mockResolvedValueOnce({
-			...protocolsResponse,
-			protocols: [aaveV2, aaveV3, aaveV4],
-			parentProtocols: [
-				{
-					id: 'parent#aave',
-					name: 'Aave',
-					chains: ['Ethereum'],
-					gecko_id: null,
-					mcap: null,
-					logo: ''
-				}
-			]
+		http.serve({
+			[protocolsUrl]: {
+				...protocolsResponse,
+				protocols: [aaveV2, aaveV3, aaveV4],
+				parentProtocols: [
+					{
+						id: 'parent#aave',
+						name: 'Aave',
+						chains: ['Ethereum'],
+						gecko_id: null,
+						mcap: null,
+						logo: ''
+					}
+				]
+			}
 		})
-		mocks.fetchOracleMetrics.mockResolvedValueOnce({
-			oracles: { Chainlink: ['Aave V2', 'Aave V3'], Pyth: ['Aave V2'] },
-			chainsByOracle: { Chainlink: ['Ethereum'], Pyth: ['Ethereum'] },
-			protocolsByOracleChain: {
-				Chainlink: { Ethereum: ['Aave V2', 'Aave V3'] },
-				Pyth: { Ethereum: ['Aave V2'] }
-			},
-			oraclesTVS: {
-				Chainlink: {
-					'Aave V2': { Ethereum: 10, 'Ethereum-staking': 1 },
-					'Aave V3': { Ethereum: 20, 'Ethereum-staking': 2 }
+		http.serve({
+			[metricsUrl]: {
+				oracles: { Chainlink: ['Aave V2', 'Aave V3'], Pyth: ['Aave V2'] },
+				chainsByOracle: { Chainlink: ['Ethereum'], Pyth: ['Ethereum'] },
+				protocolsByOracleChain: {
+					Chainlink: { Ethereum: ['Aave V2', 'Aave V3'] },
+					Pyth: { Ethereum: ['Aave V2'] }
 				},
-				Pyth: { 'Aave V2': { Ethereum: 10 } }
+				oraclesTVS: {
+					Chainlink: {
+						'Aave V2': { Ethereum: 10, 'Ethereum-staking': 1 },
+						'Aave V3': { Ethereum: 20, 'Ethereum-staking': 2 }
+					},
+					Pyth: { 'Aave V2': { Ethereum: 10 } }
+				}
 			}
 		})
 
@@ -215,16 +207,22 @@ describe('Oracle queries', () => {
 			})
 		])
 
-		mocks.fetchOracleMetrics.mockResolvedValueOnce({
-			oracles: { Pyth: ['Aave V2'] },
-			chainsByOracle: { Pyth: ['Ethereum'] },
-			protocolsByOracleChain: { Pyth: { Ethereum: ['Aave V2'] } },
-			oraclesTVS: { Pyth: { 'Aave V2': { Ethereum: 10 } } }
+		http.serve({
+			[metricsUrl]: {
+				oracles: { Pyth: ['Aave V2'] },
+				chainsByOracle: { Pyth: ['Ethereum'] },
+				protocolsByOracleChain: { Pyth: { Ethereum: ['Aave V2'] } },
+				oraclesTVS: { Pyth: { 'Aave V2': { Ethereum: 10 } } }
+			}
 		})
-		mocks.fetchProtocols.mockResolvedValueOnce({
-			...protocolsResponse,
-			protocols: [aaveV2, aaveV3, aaveV4],
-			parentProtocols: [{ id: 'parent#aave', name: 'Aave', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }]
+		http.serve({
+			[protocolsUrl]: {
+				...protocolsResponse,
+				protocols: [aaveV2, aaveV3, aaveV4],
+				parentProtocols: [
+					{ id: 'parent#aave', name: 'Aave', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }
+				]
+			}
 		})
 		const pyth = await getOracleDetailPageData({ oracle: 'pyth' })
 		expect(pyth?.protocolTableData).toEqual([expect.objectContaining({ name: 'Aave V2' })])

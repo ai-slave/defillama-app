@@ -1,11 +1,13 @@
 import type { GetServerSidePropsContext } from 'next'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { DATASETS_SERVER_URL } from '~/constants'
+import { fixtureStatus, installFixtureFetch } from '~/utils/test/fixtureFetch'
 
-const { fetchCustomServerData } = vi.hoisted(() => ({ fetchCustomServerData: vi.fn() }))
-vi.mock('../serverDataRegistry', () => ({ fetchCustomServerData }))
-vi.mock('~/components/SEO', () => ({ SEO: () => null }))
-vi.mock('~/components/Toast', () => ({ Toast: () => null }))
-vi.mock('~/components/Nav/ThemeSwitch', () => ({ ThemeSwitch: () => null }))
+const network = installFixtureFetch()
+
+// THORChain is the one standalone IR project with server data. Its fetcher skips the network when
+// the emissions list does not include its slug, and requests the emissions API when it does.
+const THORCHAIN_UNLOCKS_WITHOUT_EMISSIONS = { thorchainUnlocks: { emissions: null, initialTokenMarketData: null } }
 
 function context(host: string | undefined, protocol?: string): GetServerSidePropsContext {
 	return {
@@ -17,12 +19,17 @@ function context(host: string | undefined, protocol?: string): GetServerSideProp
 	} as GetServerSidePropsContext
 }
 
-async function loadPages() {
-	const [landing, all, project] = await Promise.all([
+// config.ts reads NEXT_PUBLIC_INVESTORS_PREVIEW when it loads, so every test imports fresh pages.
+// The metadata module is fresh too, which is why it is seeded here and not with installMetadataSeeder.
+// Listing every server-data slug by default makes any server-data load an unfixtured request.
+async function loadPages(emissionsProtocolsList = ['thorchain-dex', 'uniswap']) {
+	const [landing, all, project, metadata] = await Promise.all([
 		import('~/pages/investors'),
 		import('~/pages/investors/all'),
-		import('~/pages/investors/[protocol]')
+		import('~/pages/investors/[protocol]'),
+		import('~/utils/metadata')
 	])
+	metadata.default.emissionsProtocolsList = emissionsProtocolsList
 	return { landing: landing.getServerSideProps, all: all.getServerSideProps, project: project.getServerSideProps }
 }
 
@@ -31,7 +38,6 @@ beforeEach(() => {
 	vi.stubEnv('NEXT_PUBLIC_INVESTORS_SITE', '')
 	vi.stubEnv('NEXT_PUBLIC_SUPERLUMINAL_DASHBOARD_ID', '')
 	vi.stubEnv('NEXT_PUBLIC_INVESTORS_PREVIEW', '')
-	fetchCustomServerData.mockReset().mockImplementation(async (dashboardId: string) => ({ [dashboardId]: 'data' }))
 })
 afterEach(() => vi.unstubAllEnvs())
 
@@ -43,72 +49,78 @@ describe('standalone IR server pages', () => {
 		expect(await all(context('enterprise.defillama.com'))).toEqual({
 			redirect: { destination: '/odyssey-ecosystem', permanent: false }
 		})
-		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
 	test('uses the same forwarded site for the landing, all page and project data', async () => {
-		const { landing, all, project } = await loadPages()
-		const investorRequest = context('app-origin.example', 'spark')
+		const { landing, all, project } = await loadPages([])
+		const investorRequest = context('app-origin.example', 'thorchain')
 		investorRequest.req.headers['x-forwarded-host'] = 'investors.defillama.com'
 		const enterpriseRequest = context('app-origin.example', 'odyssey-ecosystem')
 		enterpriseRequest.req.headers['x-forwarded-host'] = 'enterprise.defillama.com'
 		expect(await landing(investorRequest)).toEqual({ props: { investorsSiteId: 'investors' } })
 		expect(await landing(enterpriseRequest)).toEqual({ props: { investorsSiteId: 'enterprise' } })
-		expect(await all(investorRequest)).toMatchObject({ props: { investorsSiteId: 'investors' } })
-		expect(await all(enterpriseRequest)).toEqual({ redirect: { destination: '/odyssey-ecosystem', permanent: false } })
-		expect(await project(investorRequest)).toMatchObject({ props: { investorsSiteId: 'investors', protocol: 'spark' } })
-		expect(await project(enterpriseRequest)).toMatchObject({
-			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem' }
+		expect(await all(investorRequest)).toEqual({
+			props: { investorsSiteId: 'investors', customServerData: THORCHAIN_UNLOCKS_WITHOUT_EMISSIONS }
 		})
-		fetchCustomServerData.mockClear()
-		enterpriseRequest.params = { protocol: 'spark' }
+		expect(await all(enterpriseRequest)).toEqual({ redirect: { destination: '/odyssey-ecosystem', permanent: false } })
+		expect(await project(investorRequest)).toEqual({
+			props: {
+				investorsSiteId: 'investors',
+				protocol: 'thorchain',
+				customServerData: THORCHAIN_UNLOCKS_WITHOUT_EMISSIONS
+			}
+		})
+		expect(await project(enterpriseRequest)).toEqual({
+			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: {} }
+		})
+		enterpriseRequest.params = { protocol: 'thorchain' }
 		expect(await project(enterpriseRequest)).toEqual({ notFound: true })
 		investorRequest.req.headers['x-forwarded-host'] = 'defillama.com'
 		expect(await landing(investorRequest)).toEqual({ notFound: true })
-		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
 	test('derives the site from the path while the LB host is opaque', async () => {
-		const { landing, all, project } = await loadPages()
+		const { landing, all, project } = await loadPages([])
 		const opaque = (protocol?: string) => context('app-origin.example', protocol)
 		expect(await landing(opaque())).toEqual({ props: { investorsSiteId: 'investors' } })
-		expect(await all(opaque())).toMatchObject({ props: { investorsSiteId: 'investors' } })
-		expect(await project(opaque('spark'))).toMatchObject({ props: { investorsSiteId: 'investors', protocol: 'spark' } })
-		expect(await project(opaque('odyssey-ecosystem'))).toMatchObject({
-			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem' }
+		expect(await all(opaque())).toEqual({
+			props: { investorsSiteId: 'investors', customServerData: THORCHAIN_UNLOCKS_WITHOUT_EMISSIONS }
 		})
-		fetchCustomServerData.mockClear()
+		expect(await project(opaque('spark'))).toEqual({
+			props: { investorsSiteId: 'investors', protocol: 'spark', customServerData: {} }
+		})
+		expect(await project(opaque('odyssey-ecosystem'))).toEqual({
+			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: {} }
+		})
 		for (const protocol of ['kpk', 'uniswap', 'unknown']) {
 			expect(await project(opaque(protocol))).toEqual({ notFound: true })
 		}
-		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
 	test('isolates overlapping project requests in the same imported pages', async () => {
-		const { project } = await loadPages()
-		let resolveSpark!: (value: Record<string, unknown>) => void
-		fetchCustomServerData.mockImplementation((id: string) =>
-			id === '9vn8xp43tdzo6gt'
-				? new Promise((resolve) => {
-						resolveSpark = resolve
-					})
-				: Promise.resolve({ odyssey: true })
-		)
-		const spark = project(context('investors.defillama.com', 'spark'))
-		expect(await project(context('enterprise.defillama.com', 'odyssey-ecosystem'))).toEqual({
-			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: { odyssey: true } }
+		const { project } = await loadPages([])
+		const [thorchain, odyssey] = await Promise.all([
+			project(context('investors.defillama.com', 'thorchain')),
+			project(context('enterprise.defillama.com', 'odyssey-ecosystem'))
+		])
+		expect(thorchain).toEqual({
+			props: {
+				investorsSiteId: 'investors',
+				protocol: 'thorchain',
+				customServerData: THORCHAIN_UNLOCKS_WITHOUT_EMISSIONS
+			}
 		})
-		resolveSpark({ spark: true })
-		expect(await spark).toEqual({
-			props: { investorsSiteId: 'investors', protocol: 'spark', customServerData: { spark: true } }
+		expect(odyssey).toEqual({
+			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: {} }
 		})
 	})
 
+	// No emissions fixture is served, so a data load before the 404 fails the test as an unfixtured request.
 	test('returns real 404s before fetching data for direct unavailable project requests', async () => {
 		const { project } = await loadPages()
 		const requests = [
 			['investors.defillama.com', 'odyssey-ecosystem'],
-			['enterprise.defillama.com', 'spark'],
+			['enterprise.defillama.com', 'thorchain'],
 			['investors.defillama.com', 'kpk'],
 			['investors.defillama.com', 'uniswap'],
 			['enterprise.defillama.com', 'kpk'],
@@ -119,7 +131,7 @@ describe('standalone IR server pages', () => {
 				expect(await project(context(host, protocol))).toEqual({ notFound: true })
 			})
 		)
-		expect(fetchCustomServerData).not.toHaveBeenCalled()
+		expect(network.urls()).toEqual([])
 	})
 
 	test('does not expose standalone routes on the main site or without a host', async () => {
@@ -127,40 +139,39 @@ describe('standalone IR server pages', () => {
 		await Promise.all(
 			[undefined, 'defillama.com', 'www.defillama.com'].flatMap((host) =>
 				Object.values(pages).map(async (page) => {
-					expect(await page(context(host, 'spark'))).toEqual({ notFound: true })
+					expect(await page(context(host, 'thorchain'))).toEqual({ notFound: true })
 				})
 			)
 		)
-		expect(fetchCustomServerData).not.toHaveBeenCalled()
+		expect(network.urls()).toEqual([])
 	})
 
-	test('loads only investor projects for all, and retains site identity if optional data fails', async () => {
-		const { all, project } = await loadPages()
-		const result = await all(context('investors.defillama.com'))
-		expect(result).toMatchObject({ props: { investorsSiteId: 'investors' } })
-		expect(fetchCustomServerData.mock.calls.map(([id]) => id)).toEqual([
-			'9vn8xp43tdzo6gt',
-			's0n1cd4shb0ard1',
-			'n34rr3v3nu3d4sh',
-			'bfqwxro9m0xnc9z',
-			'fl4r3d4shb0ard1'
-		])
-		fetchCustomServerData.mockRejectedValue(new Error('optional source unavailable'))
-		expect(await project(context('enterprise.defillama.com', 'odyssey-ecosystem'))).toEqual({
-			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem', customServerData: {} }
+	test('keeps the project page when its optional server data fails', async () => {
+		network.serve({
+			[`${DATASETS_SERVER_URL}/emissions/thorchain-dex`]: fixtureStatus(500, { message: 'unavailable' })
 		})
+		const { project } = await loadPages()
+		expect(await project(context('investors.defillama.com', 'thorchain'))).toEqual({
+			props: { investorsSiteId: 'investors', protocol: 'thorchain', customServerData: {} }
+		})
+		expect(network.urls()).toEqual([`${DATASETS_SERVER_URL}/emissions/thorchain-dex`])
 	})
 
 	test('preview env enables direct IR project requests but not enterprise access', async () => {
 		vi.stubEnv('NEXT_PUBLIC_INVESTORS_PREVIEW', 'true')
-		const { project } = await loadPages()
-		await Promise.all(
-			['kpk', 'uniswap'].map(async (protocol) => {
-				expect(await project(context('investors.defillama.com', protocol))).toMatchObject({
-					props: { investorsSiteId: 'investors', protocol }
-				})
-				expect(await project(context('enterprise.defillama.com', protocol))).toEqual({ notFound: true })
-			})
-		)
+		const { project } = await loadPages([])
+		expect(await project(context('investors.defillama.com', 'kpk'))).toEqual({
+			props: { investorsSiteId: 'investors', protocol: 'kpk', customServerData: {} }
+		})
+		expect(await project(context('investors.defillama.com', 'uniswap'))).toEqual({
+			props: {
+				investorsSiteId: 'investors',
+				protocol: 'uniswap',
+				customServerData: { uniswapUnlocks: { emissions: null, initialTokenMarketData: null } }
+			}
+		})
+		for (const protocol of ['kpk', 'uniswap']) {
+			expect(await project(context('enterprise.defillama.com', protocol))).toEqual({ notFound: true })
+		}
 	})
 })

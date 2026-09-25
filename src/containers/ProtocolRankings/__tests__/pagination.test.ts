@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { TableCursorError } from '~/server/tablePages/cursorPage.server'
 import { getProtocolRankingRows, paginateProtocolRankingRows } from '../pagination.server'
 import type { ProtocolRankingsSnapshotData } from '../server/tableData.server'
-import { DEFAULT_PROTOCOL_RANKING_QUERY, type ProtocolRankingQuery } from '../tableQuery'
+import { DEFAULT_PROTOCOL_RANKING_QUERY, PROTOCOL_RANKINGS_LIMITS, type ProtocolRankingQuery } from '../tableQuery'
 
 function queryProtocolRankingSnapshot({
 	snapshot: data,
@@ -57,6 +57,19 @@ function snapshot(version: string, protocols: Array<IProtocol>): ProtocolRanking
 }
 
 describe('protocol ranking pagination', () => {
+	test('the static first page ships the top 50 by TVL and reports the remaining rows', () => {
+		const protocols = Array.from({ length: 52 }, (_, index) => row(String(index), `Protocol ${index}`, index))
+		const page = queryProtocolRankingSnapshot({
+			snapshot: snapshot('abcdefghijklmnopqrst', protocols),
+			query: DEFAULT_PROTOCOL_RANKING_QUERY,
+			limit: PROTOCOL_RANKINGS_LIMITS.initial
+		})
+
+		expect([page.rows.length, page.rows[0]?.name, page.rows.at(-1)?.name]).toEqual([50, 'Protocol 51', 'Protocol 2'])
+		expect([page.total, page.snapshot, page.hasMore]).toEqual([52, 'abcdefghijklmnopqrst', true])
+		expect(page.nextCursor).toEqual(expect.any(String))
+	})
+
 	test('uses the protocol id as a deterministic tie-breaker without duplicates', () => {
 		const data = snapshot('stable', [row('c', 'C', 10), row('a', 'A', 10), row('b', 'B', 10), row('d', 'D', 9)])
 		const first = queryProtocolRankingSnapshot({
@@ -73,6 +86,8 @@ describe('protocol ranking pagination', () => {
 
 		expect(first.rows.map((item) => item.id)).toEqual(['a', 'b'])
 		expect(second.rows.map((item) => item.id)).toEqual(['c', 'd'])
+		// The last page ends the feed.
+		expect([second.hasMore, second.nextCursor]).toEqual([false, null])
 		expect(new Set([...first.rows, ...second.rows].map((item) => item.id)).size).toBe(4)
 	})
 

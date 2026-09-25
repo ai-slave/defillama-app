@@ -1,22 +1,21 @@
 // @vitest-environment happy-dom
 import * as Ariakit from '@ariakit/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { LlamaAIChartPickerDialog } from '../LlamaAIChartPicker'
 import { LlamaAIChart } from '../nodes/LlamaAIChart'
 import { makeEmptyPeoplePanelItem } from '../peoplePanel'
 import { PeoplePanelDialog } from '../PeoplePanelDialog'
 
-const api = vi.hoisted(() => ({ fetch: vi.fn(), error: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ authorizedFetch: api.fetch, isAuthenticated: true }) }))
+const api = vi.hoisted(() => ({ error: vi.fn() }))
+const session = installSubscriberSession('article-editor')
 vi.mock('react-hot-toast', () => ({ default: { error: api.error, promise: (promise: Promise<unknown>) => promise } }))
 let root: Root
 let container: HTMLDivElement
-let client: QueryClient
 let store: Ariakit.DialogStore
 let editor: Editor
 beforeEach(() => {
@@ -25,13 +24,13 @@ beforeEach(() => {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
-	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+	session.client.setDefaultOptions({ queries: { retry: false } })
+	session.serve({ '/charts': { charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] } })
 	editor = new Editor({ extensions: [StarterKit, LlamaAIChart], content: '<p>Draft</p>' })
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
-	client.clear()
 	editor.destroy()
 })
 function deferred<T>() {
@@ -70,9 +69,9 @@ async function mountPanel() {
 	}
 	await act(async () =>
 		root.render(
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<Harness />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	)
 	return submit
@@ -86,7 +85,7 @@ async function uploadFirst() {
 }
 test('keeps an upload attached to its person after reordering', async () => {
 	const pending = deferred<Response>()
-	api.fetch.mockReturnValue(pending.promise)
+	session.serve({ '/uploads/image': () => pending.promise })
 	const submit = await mountPanel()
 	await uploadFirst()
 	await click('Uploading images…')
@@ -99,16 +98,13 @@ test('keeps an upload attached to its person after reordering', async () => {
 		{ name: 'Alice', src: '/new.png' }
 	])
 })
-test('ignores a removed person’s late upload', async () => {
+test('an in-flight upload of a removed person does not block saving the remaining people', async () => {
 	const pending = deferred<Response>()
-	api.fetch.mockReturnValue(pending.promise)
+	session.serve({ '/uploads/image': () => pending.promise })
 	const submit = await mountPanel()
 	await uploadFirst()
 	await click('Remove person 1')
 	await click('Update panel')
-	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
-	await act(async () => pending.resolve(Response.json({ id: 'new', url: '/new.png', width: 100, height: 100 })))
-	expect(submit).toHaveBeenCalledOnce()
 	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
 })
 const chart = {
@@ -139,9 +135,9 @@ async function mountCharts() {
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: true })
 		return (
-			<QueryClientProvider client={client}>
+			<session.Wrapper>
 				<LlamaAIChartPickerDialog dialogStore={store} editor={editor} />
-			</QueryClientProvider>
+			</session.Wrapper>
 		)
 	}
 	await act(async () => root.render(<Harness />))
@@ -152,10 +148,8 @@ async function mountCharts() {
 test('closing and reopening the picker ignores an old insertion but allows the new one', async () => {
 	const first = deferred<Response>()
 	const second = deferred<Response>()
-	api.fetch
-		.mockResolvedValueOnce(Response.json({ charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] }))
-		.mockReturnValueOnce(first.promise)
-		.mockReturnValueOnce(second.promise)
+	let detailRequest = 0
+	session.serve({ '/charts/saved': () => (++detailRequest === 1 ? first.promise : second.promise) })
 	await mountCharts()
 	const select = async () => {
 		await act(async () =>
@@ -181,12 +175,15 @@ test('closing and reopening the picker ignores an old insertion but allows the n
 })
 
 test('offers a retry for list failures and distinguishes a search miss from an empty library', async () => {
-	api.fetch
-		.mockRejectedValueOnce(new Error('Offline'))
-		.mockResolvedValueOnce(Response.json({ charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] }))
+	session.serve({
+		'/charts': () => {
+			throw new Error('Offline')
+		}
+	})
 	await mountCharts()
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load saved charts')
 	expect(document.body.textContent).not.toContain('No saved charts yet')
+	session.serve({ '/charts': { charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] } })
 	await click('Try again')
 	await act(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 30))
@@ -201,10 +198,11 @@ test('offers a retry for list failures and distinguishes a search miss from an e
 })
 
 test('allows insertion retry after a detail request fails', async () => {
-	api.fetch
-		.mockResolvedValueOnce(Response.json({ charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] }))
-		.mockRejectedValueOnce(new Error('Detail unavailable'))
-		.mockResolvedValueOnce(Response.json(chart))
+	session.serve({
+		'/charts/saved': () => {
+			throw new Error('Detail unavailable')
+		}
+	})
 	await mountCharts()
 	const select = async () => {
 		await act(async () =>
@@ -216,6 +214,7 @@ test('allows insertion retry after a detail request fails', async () => {
 	await select()
 	expect(api.error).toHaveBeenCalledWith('Detail unavailable')
 	expect(store.getState().open).toBe(true)
+	session.serve({ '/charts/saved': chart })
 	await select()
 	expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1)
 })

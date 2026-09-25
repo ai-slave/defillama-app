@@ -83,4 +83,15 @@ describe('a forked initial prompt', () => {
 		await runFrames()
 		expect(submitPrompt).not.toHaveBeenCalled()
 	})
+
+	test('waits for the session restore to finish before submitting', async () => {
+		const submitPrompt = vi.fn()
+		await render(base({ submitPrompt, sessionId: 's1', restoringSessionId: 's1' }))
+		await runFrames()
+		expect(submitPrompt).not.toHaveBeenCalled()
+
+		await render(base({ submitPrompt, sessionId: 's1', restoringSessionId: null }))
+		await runFrames()
+		expect(submitPrompt).toHaveBeenCalledExactlyOnceWith('fork this')
+	})
 })

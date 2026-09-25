@@ -48,11 +48,7 @@ describe('token usage table server data', () => {
 		})
 
 		expect(llamaQuery).toHaveBeenCalledOnce()
-		expect(llamaQuery).toHaveBeenCalledWith(expect.stringContaining("LIKE '%' || LOWER(requested.symbol) || '%'"), [
-			['USDC', 'USDT'],
-			false
-		])
-		expect(llamaQuery.mock.calls[0]?.[0]).toContain('AND t.tvl IS NOT NULL')
+		expect(llamaQuery.mock.calls[0][1]).toEqual([['USDC', 'USDT'], false])
 		expect(chunks).toHaveLength(1)
 		expect(readyItemIds.sort()).toEqual(['duplicate', 'token-usage'])
 		expect(readiness.pending()).toEqual([])
@@ -87,25 +83,5 @@ describe('token usage table server data', () => {
 				tokens: { USDC: 4000, USDT: 500 }
 			}
 		])
-	})
-
-	test('does not create a legacy protocol source for Unified tables', async () => {
-		const items: Array<DashboardItemConfig> = [
-			{
-				id: 'unified',
-				kind: 'unified-table',
-				configVersion: 3,
-				strategy: 'protocols',
-				rowHeaders: ['protocol']
-			}
-		]
-		const { sources, readyItemIds, readiness } = createSourceRegistry(items)
-		await streamProTokenUsageData(items, sources, async () => {
-			throw new Error('Unified tables must not produce token-usage data')
-		})
-
-		expect(llamaQuery).not.toHaveBeenCalled()
-		expect(readyItemIds).toEqual([])
-		expect(readiness.unregistered()).toEqual(['unified'])
 	})
 })

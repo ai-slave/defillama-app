@@ -3,13 +3,15 @@ import type { ProtocolRankingsCanonicalSnapshot } from '../server/tableData.serv
 import { parseStructuredProtocolRankingQuery } from '../tableQuery'
 import type { IProtocol } from '../types'
 
-const mocks = vi.hoisted(() => ({
-	getRequestedProtocolRankingsSnapshot: vi.fn(),
-	getProtocolRankingsSnapshot: vi.fn(),
-	isProtocolRankingSnapshotToken: (value: string) => /^[A-Za-z0-9_-]{20}$/.test(value)
+// The snapshot store is the boundary; the route reads the current snapshot and unknown versions miss.
+const store = vi.hoisted(() => ({
+	readCurrent: vi.fn(async () => canonical),
+	readVersion: vi.fn(async () => null)
 }))
-
-vi.mock('../server/tableData.server', () => mocks)
+vi.mock('~/server/datasetSnapshots/redisBlobStore.server', async (original) => ({
+	...(await original<typeof import('~/server/datasetSnapshots/redisBlobStore.server')>()),
+	createRedisBlobStore: () => store
+}))
 
 import { parseProtocolRankingApiQuery, protocolRankingsApi } from '../server/api'
 
@@ -40,8 +42,7 @@ const canonical: ProtocolRankingsCanonicalSnapshot = {
 
 describe('protocol rankings API', () => {
 	beforeEach(() => {
-		mocks.getRequestedProtocolRankingsSnapshot.mockReset()
-		mocks.getProtocolRankingsSnapshot.mockReset()
+		store.readVersion.mockClear()
 	})
 
 	test('normalizes GET and structured export queries through the same rules', () => {
@@ -66,11 +67,20 @@ describe('protocol rankings API', () => {
 			tvlKeys: ['staking', 'not-a-tvl-key', 'pool2', 'staking']
 		})
 
-		expect(parsedGet?.query).toEqual(parsedExport)
+		const expected = {
+			search: 'stable',
+			minTvl: 10,
+			maxTvl: 100,
+			sort: 'custom',
+			order: 'asc',
+			customSort: { formula: 'fees_30d / tvl', formatType: 'number' },
+			tvlKeys: ['pool2', 'staking']
+		}
+		expect(parsedGet?.query).toEqual(expected)
+		expect(parsedExport).toEqual(expected)
 	})
 
 	test('returns a snapshot mismatch instead of mixing refreshed rows with an old cursor', async () => {
-		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: canonical, mismatch: true })
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',
 			url: '/api/public/protocol-rankings?chain=All&snapshot=uvwxyzABCDEFGHIJKLMN',
@@ -85,7 +95,6 @@ describe('protocol rankings API', () => {
 	})
 
 	test('returns only the requested page from the cached canonical rows', async () => {
-		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: canonical, mismatch: false })
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',
 			url: '/api/public/protocol-rankings?chain=All&limit=1',
@@ -102,11 +111,7 @@ describe('protocol rankings API', () => {
 	})
 
 	test('slices later cursor pages from the same prepared order', async () => {
-		// The sort-once memoization itself is covered by preparedRows.test.ts;
-		// here we only pin the observable contract: page 2 continues page 1's
-		// order under the same snapshot with no skipped or repeated rows.
-		const pagedSnapshot = { ...canonical, snapshot: 'abcdefghijklmnopqr99' }
-		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: pagedSnapshot, mismatch: false })
+		// Page 2 continues page 1's order under the same snapshot with no skipped or repeated rows.
 		const first = await protocolRankingsApi.handle({
 			method: 'GET',
 			url: '/api/public/protocol-rankings?chain=All&limit=1',
@@ -134,7 +139,7 @@ describe('protocol rankings API', () => {
 		})
 
 		expect(result).toEqual({ status: 400, body: { error: 'Invalid protocol ranking query' } })
-		expect(mocks.getRequestedProtocolRankingsSnapshot).not.toHaveBeenCalled()
+		expect(store.readVersion).not.toHaveBeenCalled()
 	})
 
 	test('rejects oversized cursors before decoding them', async () => {
@@ -147,6 +152,6 @@ describe('protocol rankings API', () => {
 		})
 
 		expect(result).toEqual({ status: 400, body: { error: 'Invalid protocol ranking query' } })
-		expect(mocks.getRequestedProtocolRankingsSnapshot).not.toHaveBeenCalled()
+		expect(store.readVersion).not.toHaveBeenCalled()
 	})
 })

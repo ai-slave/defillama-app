@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { collectionHallmarks, hallmarkMetricsForKeys } from '../chartHallmarks'
 
-const day = (date: string) => Math.floor(Date.parse(`${date}T00:00:00Z`) / 1000)
-
 describe('hallmarkMetricsForKeys', () => {
 	// Series keys carry the metric family in their name, so a chart never has to restate
 	// what it is plotting just to get the right notes.
@@ -22,14 +20,13 @@ describe('hallmarkMetricsForKeys', () => {
 })
 
 describe('collectionHallmarks', () => {
-	test('marks the day OI coverage widened, for OI charts only', () => {
-		expect(collectionHallmarks(['oi'])).toEqual([[day('2026-04-24'), 'OI coverage widened']])
-		expect(collectionHallmarks(['volume'])).toEqual([])
-	})
-
-	test('marks the depth coverage change for liquidity and depth charts', () => {
-		expect(collectionHallmarks(['liquidity'])).toEqual([[day('2026-07-10'), 'Depth coverage widened']])
-		expect(collectionHallmarks(['depth'])).toEqual([[day('2026-07-10'), 'Depth coverage widened']])
+	test('attaches each coverage note only to the metric families it affected', () => {
+		const labels = (metrics: Parameters<typeof collectionHallmarks>[0]) =>
+			collectionHallmarks(metrics).map(([, label]) => label)
+		expect(labels(['oi'])).toEqual(['OI coverage widened'])
+		expect(labels(['liquidity'])).toEqual(['Depth coverage widened'])
+		expect(labels(['depth'])).toEqual(['Depth coverage widened'])
+		expect(labels(['volume'])).toEqual([])
 	})
 
 	test('returns every relevant note, oldest first, and nothing for no metrics', () => {

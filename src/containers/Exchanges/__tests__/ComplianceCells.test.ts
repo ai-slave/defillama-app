@@ -1,12 +1,17 @@
 import { describe, expect, test } from 'vitest'
-import { getEuStatusPresentation, getKycRequirementIndicators, getMicaLicensePresentation } from '../ComplianceCells'
+import {
+	eeaOrderbookTooltip,
+	getEuStatusPresentation,
+	getKycRequirementIndicators,
+	getMicaLicensePresentation
+} from '../ComplianceCells'
 
 describe('exchange compliance presentation', () => {
-	test('uses explicit semantic labels for every EU availability state', () => {
-		expect(getEuStatusPresentation('available')).toMatchObject({ label: 'Available', tone: 'positive' })
-		expect(getEuStatusPresentation('leaving')).toMatchObject({ label: 'Leaving', tone: 'caution' })
-		expect(getEuStatusPresentation('restricted')).toMatchObject({ label: 'Restricted', tone: 'caution' })
-		expect(getEuStatusPresentation('unavailable')).toMatchObject({ label: 'Unavailable', tone: 'negative' })
+	test('colors each EU availability state by how usable the exchange is', () => {
+		expect(getEuStatusPresentation('available').tone).toBe('positive')
+		expect(getEuStatusPresentation('leaving').tone).toBe('caution')
+		expect(getEuStatusPresentation('restricted').tone).toBe('caution')
+		expect(getEuStatusPresentation('unavailable').tone).toBe('negative')
 	})
 
 	test('presents MiCA authorization rather than exposing the record status', () => {
@@ -28,5 +33,14 @@ describe('exchange compliance presentation', () => {
 			'Liveness / selfie check',
 			'Proof of address'
 		])
+	})
+
+	test('describes EEA orderbook ownership per segment', () => {
+		expect(eeaOrderbookTooltip({ mode: 'own' })).toBe('Uses dedicated regional orderbooks.')
+		expect(eeaOrderbookTooltip({ mode: 'shared' })).toBe('Shares the global orderbook.')
+		expect(eeaOrderbookTooltip({ mode: 'mixed', sharedSegments: ['spot'], dedicatedSegments: ['linear_perp'] })).toBe(
+			'Shared: Spot. Dedicated: USD Perps.'
+		)
+		expect(eeaOrderbookTooltip(null)).toBeNull()
 	})
 })

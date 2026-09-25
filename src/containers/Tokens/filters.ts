@@ -23,12 +23,11 @@ export interface TokensActiveFilter {
 
 export const TOKENS_FILTER_CONFIGS: Array<TokensFilterConfig> = [
 	{ id: 'rank', label: 'MCap Rank', format: 'number', category: 'market' },
-	...TOKENS_HIDEABLE_COLUMN_SPECS.filter((spec) => spec.format != null && spec.filterCategory != null).map((spec) => ({
-		id: spec.id as TokensNumericFilterField,
-		label: spec.filterLabel ?? spec.header,
-		format: spec.format!,
-		category: spec.filterCategory!
-	}))
+	...TOKENS_HIDEABLE_COLUMN_SPECS.flatMap((spec) =>
+		spec.id === 'rights'
+			? []
+			: [{ id: spec.id, label: spec.filterLabel ?? spec.header, format: spec.format, category: spec.filterCategory }]
+	)
 ]
 
 const CONFIG_BY_ID = new Map(TOKENS_FILTER_CONFIGS.map((config) => [config.id, config]))

@@ -81,14 +81,14 @@ export const stablecoinMcapChart = defineApiRoute({
 // /api/public/stablecoins/chart-series
 // ---------------------------------------------------------------------------
 
-const parseLimit = (value: string | Array<string> | undefined): number | undefined => {
+export const parseLimit = (value: string | Array<string> | undefined): number | undefined => {
 	const raw = Array.isArray(value) ? value[0] : value
 	if (!raw) return undefined
 	const parsed = Math.trunc(Number(raw))
 	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
 }
 
-const parseSeriesSelectionIntent = (
+export const parseSeriesSelectionIntent = (
 	query: Record<string, string | Array<string> | undefined>
 ): StablecoinSeriesSelectionIntent | 'invalid' => {
 	const includes = isTruthyQueryParam(query.include) || isTruthyQueryParam(query.selected)

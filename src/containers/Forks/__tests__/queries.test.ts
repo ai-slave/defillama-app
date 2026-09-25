@@ -1,39 +1,54 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
+import { installFixtureFetch, fixtureStatus } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { getForksByProtocolPageData, getForksListPageData } from '../queries'
 
-vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: vi.fn() }))
-vi.mock('~/containers/ProtocolRankings/queries.server', () => ({
-	getProtocolsByChain: vi.fn()
-}))
-vi.mock('~/utils/metadata', () => ({
-	default: {
+const unmeasuredFork = {
+	name: 'Unmeasured Fork',
+	symbol: 'FORK',
+	logo: null,
+	url: '',
+	chains: [],
+	chainTvls: {},
+	tvl: null,
+	tvlPrevDay: null,
+	tvlPrevWeek: null,
+	tvlPrevMonth: null,
+	mcap: null,
+	defillamaId: 'unmeasured-fork',
+	geckoId: null,
+	category: 'Dexs',
+	forkedFrom: ['Aave V3']
+} satisfies ProtocolLite
+
+const http = installFixtureFetch()
+const metadata = installMetadataSeeder()
+beforeEach(() => {
+	metadata.seed({
 		chainMetadata: {},
 		protocolMetadata: {
 			aave: { name: 'aave-v3', displayName: 'Aave V3', forks: true }
 		},
 		protocolRouteIdBySlug: { 'aave-v3': 'aave' }
-	}
-}))
-vi.mock('../api', () => ({
-	fetchForkMetrics: vi.fn(),
-	fetchForkProtocolBreakdownChart: vi.fn()
-}))
-
-import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
-import { getProtocolsByChain } from '~/containers/ProtocolRankings/queries.server'
-import { fetchForkMetrics, fetchForkProtocolBreakdownChart } from '../api'
-import { getForksByProtocolPageData, getForksListPageData } from '../queries'
+	})
+	http.serve({
+		'/lite/protocols2': { protocols: [], parentProtocols: [], chains: [], protocolCategories: [] },
+		'/v2/metrics/fork': { 'Aave V3': ['Seamless V1'], Curve: ['Convex'] },
+		'/v2/chart/fork/protocol-breakdown': [{ timestamp: 1, 'Aave V3': 5, Curve: 10 }],
+		'/v2/metrics/fees': { protocols: [], allChains: [] },
+		'/v2/metrics/dexs': { protocols: [], allChains: [] },
+		'/v2/chart/dexs': [],
+		'/emissionsBreakdownAggregated': { protocols: [] }
+	})
+})
 
 describe('getForksListPageData', () => {
 	test('treats omitted current default TVL as zero', async () => {
-		vi.mocked(fetchForkMetrics).mockResolvedValueOnce({ Omitted: [], Explicit: [] })
-		vi.mocked(fetchProtocols).mockResolvedValueOnce({
-			protocols: [],
-			parentProtocols: [],
-			chains: [],
-			protocolCategories: []
+		http.serve({
+			'/v2/metrics/fork': { Omitted: [], Explicit: [] },
+			'/v2/chart/fork/protocol-breakdown': [{ timestamp: 1, Explicit: 0 }]
 		})
-		vi.mocked(fetchForkProtocolBreakdownChart).mockResolvedValueOnce([{ timestamp: 1, Explicit: 0 }])
 
 		const result = await getForksListPageData()
 
@@ -52,31 +67,16 @@ describe('getForksListPageData', () => {
 	})
 
 	test('counts current Fork relationships even when the metrics cache has no measurement', async () => {
-		const protocol = {
-			name: 'Unmeasured Fork',
-			symbol: 'FORK',
-			logo: null,
-			url: '',
-			chains: [],
-			chainTvls: {},
-			tvl: null,
-			tvlPrevDay: null,
-			tvlPrevWeek: null,
-			tvlPrevMonth: null,
-			mcap: null,
-			defillamaId: 'unmeasured-fork',
-			geckoId: null,
-			category: 'Dexs',
-			forkedFrom: ['Aave V3']
-		} satisfies ProtocolLite
-		vi.mocked(fetchForkMetrics).mockResolvedValueOnce({ 'Aave V3': [] })
-		vi.mocked(fetchProtocols).mockResolvedValueOnce({
-			protocols: [protocol],
-			parentProtocols: [],
-			chains: [],
-			protocolCategories: []
+		http.serve({ '/v2/metrics/fork': { 'Aave V3': [] } })
+		http.serve({
+			'/lite/protocols2': {
+				protocols: [unmeasuredFork],
+				parentProtocols: [],
+				chains: [],
+				protocolCategories: []
+			}
 		})
-		vi.mocked(fetchForkProtocolBreakdownChart).mockResolvedValueOnce([])
+		http.serve({ '/v2/chart/fork/protocol-breakdown': [] })
 
 		const result = await getForksListPageData()
 
@@ -85,20 +85,33 @@ describe('getForksListPageData', () => {
 })
 
 describe('getForksByProtocolPageData', () => {
-	beforeEach(() => {
-		vi.clearAllMocks()
-		vi.mocked(fetchForkMetrics).mockResolvedValue({
-			'Aave V3': ['Seamless V1'],
-			Curve: ['Convex']
-		})
-		vi.mocked(fetchForkProtocolBreakdownChart).mockResolvedValue([{ timestamp: 1, 'Aave V3': 5, Curve: 10 }])
-		vi.mocked(getProtocolsByChain).mockResolvedValue(null)
-	})
-
 	test('resolves a route slug to the producer canonical Fork identity', async () => {
+		metadata.seed({
+			protocolMetadata: {
+				aave: { name: 'aave-v3', displayName: 'Aave V3', forks: true },
+				'unmeasured-fork': {
+					name: 'unmeasured-fork',
+					displayName: 'Unmeasured Fork',
+					chains: ['Ethereum'],
+					category: 'Dexs'
+				},
+				unrelated: { name: 'unrelated', displayName: 'Unrelated', chains: ['Ethereum'], category: 'Dexs' }
+			}
+		})
+		http.serve({
+			'/lite/protocols2': {
+				protocols: [
+					unmeasuredFork,
+					{ ...unmeasuredFork, name: 'Unrelated', defillamaId: 'unrelated', forkedFrom: ['Curve'], tvl: 1000 }
+				],
+				parentProtocols: [],
+				chains: [],
+				protocolCategories: []
+			}
+		})
 		const result = await getForksByProtocolPageData({ fork: 'aave-v3' })
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			status: 'success',
 			data: {
 				fork: 'Aave V3',
@@ -107,28 +120,26 @@ describe('getForksByProtocolPageData', () => {
 					{ label: 'Curve', to: '/forks/curve' },
 					{ label: 'Aave V3', to: '/forks/aave-v3' }
 				],
-				protocolTableData: [],
+				protocolTableData: [{ name: 'Unmeasured Fork', tvl: { default: { tvl: 0 } } }],
 				chartData: [[1, 5]]
 			}
 		})
-		expect(getProtocolsByChain).toHaveBeenCalledWith(expect.objectContaining({ fork: 'Aave V3' }))
 	})
 
 	test('returns not-found from metadata before requesting producer data', async () => {
 		await expect(getForksByProtocolPageData({ fork: 'unknown-fork' })).resolves.toEqual({ status: 'not-found' })
-		expect(fetchForkMetrics).not.toHaveBeenCalled()
-		expect(fetchForkProtocolBreakdownChart).not.toHaveBeenCalled()
+		expect(http.requests).toHaveLength(0)
 	})
 
 	test('keeps metadata and producer identity drift unavailable', async () => {
-		vi.mocked(fetchForkMetrics).mockResolvedValue({ Curve: ['Convex'] })
+		http.serve({ '/v2/metrics/fork': { Curve: ['Convex'] } })
 
 		await expect(getForksByProtocolPageData({ fork: 'aave-v3' })).resolves.toEqual({ status: 'unavailable' })
-		expect(fetchForkProtocolBreakdownChart).not.toHaveBeenCalled()
+		expect(http.requests.map(({ url }) => url.pathname)).toEqual(['/v2/metrics/fork'])
 	})
 
 	test('keeps a metadata-valid all-extra Fork available with empty default history', async () => {
-		vi.mocked(fetchForkProtocolBreakdownChart).mockResolvedValue([{ timestamp: 1, Curve: 10 }])
+		http.serve({ '/v2/chart/fork/protocol-breakdown': [{ timestamp: 1, Curve: 10 }] })
 
 		const result = await getForksByProtocolPageData({ fork: 'aave-v3' })
 
@@ -139,7 +150,7 @@ describe('getForksByProtocolPageData', () => {
 	})
 
 	test('keeps a required source failure distinct from not-found', async () => {
-		vi.mocked(fetchForkProtocolBreakdownChart).mockRejectedValue(new Error('source unavailable'))
+		http.serve({ '/v2/chart/fork/protocol-breakdown': fixtureStatus(503) })
 
 		await expect(getForksByProtocolPageData({ fork: 'Aave V3' })).resolves.toEqual({ status: 'unavailable' })
 	})

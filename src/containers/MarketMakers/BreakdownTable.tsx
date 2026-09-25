@@ -23,7 +23,7 @@ export type BreakdownRowConfig = {
 }
 
 type SortKey = 'metric' | 'value' | 'percentile' | 'rank'
-type Sort = { key: SortKey; dir: 'asc' | 'desc' }
+export type Sort = { key: SortKey; dir: 'asc' | 'desc' }
 
 const THRESHOLDS = [50, 100, 200] as const
 
@@ -137,6 +137,29 @@ function BreakdownRow({ row, data }: { row: BreakdownRowConfig; data: Dict }) {
 	)
 }
 
+// Missing values sort last in both directions so N/A rows never lead the table.
+export function sortBreakdownRows(
+	rows: Array<BreakdownRowConfig>,
+	data: Dict,
+	sort: Sort | null
+): Array<BreakdownRowConfig> {
+	if (!sort) return rows
+	if (sort.key === 'metric') {
+		return [...rows].sort((a, b) =>
+			sort.dir === 'desc' ? b.label.localeCompare(a.label) : a.label.localeCompare(b.label)
+		)
+	}
+	const value = (row: BreakdownRowConfig) => asNum(asDict(data[row.key])[sort.key])
+	return [...rows].sort((a, b) => {
+		const va = value(a)
+		const vb = value(b)
+		if (va == null && vb == null) return 0
+		if (va == null) return 1
+		if (vb == null) return -1
+		return sort.dir === 'desc' ? vb - va : va - vb
+	})
+}
+
 export function BreakdownTable({
 	title,
 	badge,
@@ -155,23 +178,7 @@ export function BreakdownTable({
 	const onSort = (key: SortKey) =>
 		setSort((prev) => (prev?.key === key ? { key, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }))
 
-	const sortedRows = useMemo(() => {
-		if (!sort) return rows
-		if (sort.key === 'metric') {
-			return [...rows].sort((a, b) =>
-				sort.dir === 'desc' ? b.label.localeCompare(a.label) : a.label.localeCompare(b.label)
-			)
-		}
-		const value = (row: BreakdownRowConfig) => asNum(asDict(data[row.key])[sort.key])
-		return [...rows].sort((a, b) => {
-			const va = value(a)
-			const vb = value(b)
-			if (va == null && vb == null) return 0
-			if (va == null) return 1
-			if (vb == null) return -1
-			return sort.dir === 'desc' ? vb - va : va - vb
-		})
-	}, [rows, data, sort])
+	const sortedRows = useMemo(() => sortBreakdownRows(rows, data, sort), [rows, data, sort])
 
 	return (
 		<div className="flex scroll-mt-2 flex-col gap-2" data-breakdown-section={sectionKey}>

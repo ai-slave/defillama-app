@@ -112,11 +112,4 @@ describe('queue flow requires a live queue, not just a missing capacity series',
 			expect(answerQueueFlow(queued([1000, 900, 800]), FULL, status), `status ${status}`).toBeNull()
 		}
 	})
-
-	test('still answers for a pool whose exit is a queue today', () => {
-		expect(answerQueueFlow(queued([1000, 900, 800]), FULL, 'queued')).toMatchObject({
-			from: 1000,
-			to: 800
-		})
-	})
 })

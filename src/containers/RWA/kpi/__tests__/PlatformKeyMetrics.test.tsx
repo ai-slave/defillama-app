@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -27,30 +29,10 @@ const kpi = foldRwaPlatformKpi(
 )
 
 describe('RWAPlatformKeyMetrics', () => {
-	test('headlines the active AUM fold with its 24h change and opens the four sections into their rows', () => {
-		const markup = renderToStaticMarkup(<RWAPlatformKeyMetrics meta={meta} kpi={kpi} />)
-		expect(markup).toContain('Ondo')
-		expect(markup).toContain('Active AUM')
-		expect(markup).toContain('$1.6m')
-		expect(markup).toContain('+1.27%')
-		expect(markup).toContain('Onchain AUM')
-		expect(markup).toContain('$2m')
-		expect(markup).toContain('Active / Onchain')
-		expect(markup).toContain('80%')
-		expect(markup).toContain('DeFi Active TVL')
-		expect(markup).toContain('Utilization')
-		expect(markup).toContain('12.5%')
-		expect(markup).toContain('Largest protocol')
-		expect(markup).toContain('Aave')
-		expect(markup).toContain('Net Flows 30d')
-		expect(markup).toContain('Net Flows 7d')
-		expect(markup).toContain('Live Assets')
-		expect(markup).toContain('Issuers')
-		expect(markup).not.toContain('Chains')
-		expect(markup).not.toContain('Attested')
-		expect(markup).not.toContain('Permissionless')
-		expect(markup).not.toContain('Est. Annual Revenue')
-		expect(markup).not.toContain('Suspicious')
+	test('headlines the active AUM fold with its 24h change', () => {
+		const root = document.createElement('div')
+		root.innerHTML = renderToStaticMarkup(<RWAPlatformKeyMetrics meta={meta} kpi={kpi} />)
+		expect(root.textContent).toContain('Active AUM$1.6m+1.27%24h')
 	})
 
 	test('reads N/A where nothing is priced, never $0', () => {

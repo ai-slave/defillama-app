@@ -6,8 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartControls } from './ChartControls'
 
-vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
-
 const model = (overrides: Partial<ChartControlsModel>): ChartControlsModel => ({
 	state: {
 		stacked: false,

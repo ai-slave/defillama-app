@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import type { IEquitiesCompanyApiItem } from '../api.types'
 import {
 	buildEquitiesSnapshot,
 	buildEquitiesTreemapPage,
@@ -7,56 +6,7 @@ import {
 	prepareEquitiesRows
 } from '../server/tableData.server'
 import { getEquitiesTableQuery } from '../tableQuery'
-
-function company(
-	overrides: Partial<IEquitiesCompanyApiItem> & Pick<IEquitiesCompanyApiItem, 'ticker'>
-): IEquitiesCompanyApiItem {
-	return {
-		country: 'US',
-		name: `${overrides.ticker} Inc`,
-		currentPrice: null,
-		volume: null,
-		marketCap: null,
-		circulatingMarketCap: null,
-		enterpriseValue: null,
-		fiftyTwoWeekHigh: null,
-		fiftyTwoWeekLow: null,
-		dividendYield: null,
-		trailingPE: null,
-		priceToRevenue: null,
-		priceChangePercentage1d: null,
-		priceChangePercentage7d: null,
-		priceChangePercentage1m: null,
-		priceChange1d: null,
-		marketCapChange1d: null,
-		priceToBook: null,
-		enterpriseValueToEbitda: null,
-		holdersYield: null,
-		updatedAt: '2026-09-03T10:00:00Z',
-		revenueTTM: null,
-		grossProfitTTM: null,
-		earningsTTM: null,
-		ebitdaTTM: null,
-		operatingProfitMarginTTM: null,
-		holdersRevenueTTM: null,
-		holderEarningsTTM: null,
-		dividendsTTM: null,
-		stockRepurchaseTTM: null,
-		stockIssuanceTTM: null,
-		stockBasedCompensationTTM: null,
-		cashAndCashEquivalents: null,
-		totalAssets: null,
-		totalLiabilities: null,
-		totalShareholdersEquity: null,
-		totalDebt: null,
-		circulatingSupply: null,
-		totalSupply: null,
-		employeeCount: null,
-		sector: 'Technology',
-		industry: 'Software',
-		...overrides
-	}
-}
+import { company } from './companyFixture'
 
 const companies = [
 	company({ ticker: 'AAPL', name: 'Apple', marketCap: 300, volume: 5, sector: 'Technology' }),
@@ -139,6 +89,16 @@ describe('getEquitiesTablePage', () => {
 		})
 		expect(page.rows.map((row) => row.ticker)).toEqual(['ZERO'])
 		expect(page.options.country).toEqual(['CA', 'US'])
+	})
+
+	test('serves a new sort from freshly ordered rows instead of the previous sort', async () => {
+		const snapshot = buildEquitiesSnapshot(companies, 0)
+		const byMarketCap = await getEquitiesTablePage(snapshot, { pageSize: '2' })
+		const byVolume = await getEquitiesTablePage(snapshot, { pageSize: '2', sortBy: 'volume' })
+		const byVolumePageTwo = await getEquitiesTablePage(snapshot, { page: '2', pageSize: '2', sortBy: 'volume' })
+		expect(byMarketCap.rows.map((row) => row.ticker)).toEqual(['AAPL', 'BANK'])
+		expect(byVolume.rows.map((row) => row.ticker)).toEqual(['APLE', 'AAPL'])
+		expect(byVolumePageTwo.rows.map((row) => row.ticker)).toEqual(['ZERO', 'BANK'])
 	})
 })
 

@@ -12,7 +12,7 @@ vi.mock('next/router', () => ({
 }))
 
 import { UniversalTokenRating } from '..'
-import { PreTgePerformance } from '../PreTgePerformance'
+import { getFundraisingStatus, PreTgePerformance } from '../PreTgePerformance'
 import { CantFindTokenBanner } from '../TokenPage'
 import { TopMovers } from '../TopMovers'
 
@@ -35,25 +35,26 @@ describe('UTR empty states', () => {
 		expect(html).toContain('-1.23%')
 	})
 
-	test('keeps available fundraising metadata without empty cards', () => {
-		const html = renderToStaticMarkup(<PreTgePerformance hasFundraising lastRound="Strategic" />)
-
-		expect(html).toContain('Strategic')
-		expect(html).not.toContain('NO DATA YET')
-		expect(html).not.toContain('Total Amount Fundraised')
+	test('shows the last fundraising round, falling back to whether fundraising was reported', () => {
+		expect(getFundraisingStatus(true, 'Strategic')).toBe('Strategic')
+		expect(getFundraisingStatus(null, 'Seed')).toBe('Seed')
+		expect(getFundraisingStatus(true, null)).toBe('Fundraising reported')
+		expect(getFundraisingStatus(false, null)).toBe('No fundraising reported')
 	})
 
 	test('hides pre-TGE performance when no metrics are available', () => {
 		expect(renderToStaticMarkup(<PreTgePerformance hasFundraising={null} lastRound={null} />)).toBe('')
 	})
 
-	test('links the missing-token CTA to the UTR application form without account-creation copy', () => {
+	test('links the missing-token CTA to the UTR application form', () => {
 		const html = renderToStaticMarkup(<CantFindTokenBanner />)
+		const links = [...html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/g)].map(([, href, name]) => [href, name])
 
-		expect(html).toContain('Apply for UTR')
-		expect(html).toContain('/universal-token-rating/join')
-		expect(html).not.toContain('Join Forgd')
-		expect(html).not.toContain('Create an account')
+		// One link per breakpoint layout.
+		expect(links).toEqual([
+			['/universal-token-rating/join', 'Apply for UTR'],
+			['/universal-token-rating/join', 'Apply for UTR']
+		])
 	})
 
 	test('uses the API scored count instead of the number of rendered rows', () => {
@@ -88,7 +89,7 @@ describe('UTR empty states', () => {
 			/>
 		)
 
-		expect(html).toContain('<strong class="text-primary">128</strong> of 139 tokens scored')
-		expect(html).not.toContain('<strong class="text-primary">1</strong> of 139 tokens scored')
+		expect(html.replace(/<[^>]*>/g, '')).toContain('128 of 139 tokens scored')
+		expect(html.replace(/<[^>]*>/g, '')).not.toContain('1 of 139 tokens scored')
 	})
 })

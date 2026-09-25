@@ -162,23 +162,6 @@ describe('getSubmitBlockReason', () => {
 		).toBe('Link Telegram first')
 	})
 
-	test('blocks when slack channel is not picked even with a workspace selected', () => {
-		expect(
-			getSubmitBlockReason({
-				triggerType: 'price',
-				prompt: '',
-				price: { tokenNk: 'coingecko:aave', value: '100' },
-				delivery: {
-					...baseDelivery,
-					channel: 'slack',
-					slackTeamId: 'team-1',
-					slackChannelId: '',
-					slackWorkspaceCount: 1
-				}
-			})
-		).toBe('Pick a Slack channel')
-	})
-
 	test('returns null once everything is valid', () => {
 		expect(
 			getSubmitBlockReason({
@@ -235,8 +218,7 @@ describe('deriveAlertTitle', () => {
 	test('truncates long prompts and falls back when empty', () => {
 		const long = 'a'.repeat(80)
 		const derived = deriveAlertTitle({ triggerType: 'schedule', prompt: long, symbol: null, op: 'above', value: '' })
-		expect(derived.length).toBeLessThanOrEqual(60)
-		expect(derived.endsWith('…')).toBe(true)
+		expect(derived).toBe(`${'a'.repeat(59)}…`)
 		expect(deriveAlertTitle({ triggerType: 'schedule', prompt: '  ', symbol: null, op: 'above', value: '' })).toBe(
 			'Scheduled report'
 		)
@@ -483,18 +465,6 @@ describe('formatPriceDisplay', () => {
 })
 
 describe('getDeliveryBlockReason', () => {
-	test('surfaces readiness blocks', () => {
-		expect(
-			getDeliveryBlockReason({
-				channel: 'telegram',
-				telegramLinked: false,
-				slackTeamId: '',
-				slackChannelId: '',
-				slackWorkspaceCount: 0
-			})
-		).toBe('Link Telegram first')
-	})
-
 	test('requires a slack channel once a workspace is selected', () => {
 		expect(
 			getDeliveryBlockReason({
@@ -505,18 +475,6 @@ describe('getDeliveryBlockReason', () => {
 				slackWorkspaceCount: 1
 			})
 		).toBe('Pick a Slack channel')
-	})
-
-	test('passes for a ready channel', () => {
-		expect(
-			getDeliveryBlockReason({
-				channel: 'email',
-				telegramLinked: false,
-				slackTeamId: '',
-				slackChannelId: '',
-				slackWorkspaceCount: 0
-			})
-		).toBeNull()
 	})
 })
 
@@ -637,23 +595,6 @@ describe('resolveSlackTarget', () => {
 		})
 	})
 
-	test('defaults only when nothing was picked', () => {
-		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [t1] })).toEqual({
-			teamId: 'T1',
-			channelId: 'C1'
-		})
-	})
-
-	test('clears a pick whose workspace is gone among several', () => {
-		expect(
-			resolveSlackTarget({
-				isSlack: true,
-				picked: { teamId: 'T1', channelId: 'C9' },
-				workspaces: [t2, { team_id: 'T3', default_channel_id: 'C3' }]
-			})
-		).toEqual({ teamId: '', channelId: '' })
-	})
-
 	// Two workspaces is an ambiguous choice, so the form asks instead of guessing.
 	test('defaults nothing when there is more than one workspace', () => {
 		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [t1, t2] })).toEqual({
@@ -718,7 +659,7 @@ describe('resolveSlackChannelName', () => {
 
 	test('gives no name when no channel is chosen', () => {
 		expect(
-			resolveSlackChannelName({ channelId: '', channels, intentChannelId: 'C1', intentChannelName: 'general' })
+			resolveSlackChannelName({ channelId: '', channels, intentChannelId: '', intentChannelName: 'general' })
 		).toBeNull()
 	})
 

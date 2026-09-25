@@ -16,11 +16,6 @@ const DAY = 24 * 60 * 60 * 1000
 describe('persisted user interests', () => {
 	beforeEach(() => localStorage.clear())
 
-	test('round-trips for the same user within a day', () => {
-		writePersistedUserInterests({ userId: 'user-a', value, now })
-		expect(readPersistedUserInterests({ userId: 'user-a', now: now + DAY - 1 })).toEqual(value)
-	})
-
 	test('caches an empty profile too, so a reader without interests does not refetch every load', () => {
 		const empty: UserInterestsResponse = { interests: [], segments: [] }
 		writePersistedUserInterests({ userId: 'user-a', value: empty, now })

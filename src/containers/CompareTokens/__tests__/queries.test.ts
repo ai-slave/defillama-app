@@ -1,20 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { AdapterChainProtocol, IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
-
-const mocks = vi.hoisted(() => ({
-	fetchCoinGeckoTokensListFromDataset: vi.fn(),
-	fetchAdapterChainMetrics: vi.fn(),
-	fetchProtocols: vi.fn()
-}))
-
-vi.mock('~/api/coingecko', () => ({
-	fetchCoinGeckoTokensListFromDataset: mocks.fetchCoinGeckoTokensListFromDataset
-}))
-vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterChainMetrics: mocks.fetchAdapterChainMetrics }))
-vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: mocks.fetchProtocols }))
-
-import { getCompareTokensPageData } from '../queries'
+import { buildCompareTokenProtocols } from '../queries'
 
 function protocol({
 	name,
@@ -94,105 +81,64 @@ function adapterProtocol(defillamaId: string, total24h: number | null): AdapterC
 	}
 }
 
-beforeEach(() => {
-	const protocolsResponse = {
-		protocols: [
-			protocol({ name: 'Known Child', id: 'known-child', tvl: 100 }),
-			protocol({ name: 'Null Child', id: 'null-child', tvl: null, deprecated: true })
-		],
-		chains: ['Ethereum'],
-		parentProtocols: [
-			{
-				id: 'parent#suite',
-				name: 'Suite',
-				chains: ['Ethereum'],
-				gecko_id: null,
-				mcap: null,
-				logo: ''
-			}
-		],
-		protocolCategories: ['Lending']
-	} satisfies ProtocolsResponse
-	mocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([])
-	mocks.fetchProtocols.mockResolvedValue(protocolsResponse)
-	mocks.fetchAdapterChainMetrics.mockImplementation(async ({ dataType }) => {
-		if (dataType === 'dailyRevenue') throw new Error('revenue unavailable')
-		return adapterMetrics([adapterProtocol('known-child', null)])
-	})
+const suite = { id: 'parent#suite', name: 'Suite', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }
+
+function protocolsResponse(protocols: Array<ProtocolLite>): ProtocolsResponse {
+	return { protocols, chains: ['Ethereum'], parentProtocols: [suite], protocolCategories: ['Lending'] }
+}
+
+function suiteTvl(protocols: Array<ProtocolLite>) {
+	const fees = adapterMetrics([])
+	return buildCompareTokenProtocols(protocolsResponse(protocols), fees, fees).find((row) => row.name === 'Suite')?.tvl
+}
+
+const excludeParent = (tvl: number | null) => ({
+	excludeParent: { tvl, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
 })
 
-describe('getCompareTokensPageData', () => {
-	test('separates adapter failure from successful zero activity and skips no-TVL children in parent TVL', async () => {
-		const result = await getCompareTokensPageData()
-		const knownChild = result.protocols.find((row) => row.name === 'Known Child')
-		const nullChild = result.protocols.find((row) => row.name === 'Null Child')
-		const parent = result.protocols.find((row) => row.name === 'Suite')
+describe('compare tokens protocol rows', () => {
+	test('a failed revenue source is unavailable while missing fees activity is zero, and parents skip no-TVL children', () => {
+		const rows = buildCompareTokenProtocols(
+			protocolsResponse([
+				protocol({ name: 'Known Child', id: 'known-child', tvl: 100 }),
+				protocol({ name: 'Null Child', id: 'null-child', tvl: null, deprecated: true })
+			]),
+			adapterMetrics([adapterProtocol('known-child', null)]),
+			null
+		)
 
-		expect(knownChild).toMatchObject({ tvl: 100, fees: 0, revenue: null })
-		expect(nullChild).toMatchObject({ tvl: null, fees: 0, revenue: null })
-		expect(parent).toMatchObject({ tvl: 100, fees: 0, revenue: null })
+		expect(rows).toEqual([
+			{ name: 'Known Child', geckoId: null, tvl: 100, fees: 0, revenue: null },
+			{ name: 'Null Child', geckoId: null, tvl: null, fees: 0, revenue: null },
+			{ name: 'Suite', geckoId: null, tvl: 100, fees: 0, revenue: null }
+		])
 	})
 
-	test('keeps a parent without any measured child TVL unavailable', async () => {
-		mocks.fetchProtocols.mockResolvedValue({
-			protocols: [protocol({ name: 'Null Child', id: 'null-child', tvl: null, deprecated: true })],
-			chains: ['Ethereum'],
-			parentProtocols: [
-				{ id: 'parent#suite', name: 'Suite', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }
-			],
-			protocolCategories: ['Lending']
-		} satisfies ProtocolsResponse)
+	test('sums child fees into the parent', () => {
+		const rows = buildCompareTokenProtocols(
+			protocolsResponse([protocol({ name: 'A', id: 'a', tvl: 1 }), protocol({ name: 'B', id: 'b', tvl: 2 })]),
+			adapterMetrics([adapterProtocol('a', 5), adapterProtocol('b', 7)]),
+			adapterMetrics([adapterProtocol('a', 1)])
+		)
 
-		const result = await getCompareTokensPageData()
-
-		expect(result.protocols.find((row) => row.name === 'Suite')?.tvl).toBeNull()
+		expect(rows.find((row) => row.name === 'Suite')).toEqual({
+			name: 'Suite',
+			geckoId: null,
+			tvl: 3,
+			fees: 12,
+			revenue: 1
+		})
 	})
 
-	test('subtracts each child TVL excluded from its synthetic parent', async () => {
-		mocks.fetchProtocols.mockResolvedValue({
-			protocols: [
-				protocol({
-					name: 'Excluded Child',
-					id: 'excluded-child',
-					tvl: 100,
-					chainTvls: {
-						excludeParent: { tvl: 30, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
-					}
-				})
-			],
-			chains: ['Ethereum'],
-			parentProtocols: [
-				{ id: 'parent#suite', name: 'Suite', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }
-			],
-			protocolCategories: ['Lending']
-		} satisfies ProtocolsResponse)
-
-		const result = await getCompareTokensPageData()
-
-		expect(result.protocols.find((row) => row.name === 'Suite')?.tvl).toBe(70)
+	test('keeps a parent without any measured child TVL unavailable', () => {
+		expect(suiteTvl([protocol({ name: 'Null Child', id: 'null-child', tvl: null, deprecated: true })])).toBeNull()
 	})
 
-	test('keeps synthetic parent TVL unavailable when a required exclusion is unavailable', async () => {
-		mocks.fetchProtocols.mockResolvedValue({
-			protocols: [
-				protocol({
-					name: 'Excluded Child',
-					id: 'excluded-child',
-					tvl: 100,
-					chainTvls: {
-						excludeParent: { tvl: null, tvlPrevDay: 0, tvlPrevWeek: 0, tvlPrevMonth: 0 }
-					}
-				})
-			],
-			chains: ['Ethereum'],
-			parentProtocols: [
-				{ id: 'parent#suite', name: 'Suite', chains: ['Ethereum'], gecko_id: null, mcap: null, logo: '' }
-			],
-			protocolCategories: ['Lending']
-		} satisfies ProtocolsResponse)
+	test('subtracts each child TVL excluded from its synthetic parent', () => {
+		expect(suiteTvl([protocol({ name: 'Child', id: 'child', tvl: 100, chainTvls: excludeParent(30) })])).toBe(70)
+	})
 
-		const result = await getCompareTokensPageData()
-
-		expect(result.protocols.find((row) => row.name === 'Suite')?.tvl).toBeNull()
+	test('keeps synthetic parent TVL unavailable when a required exclusion is unavailable', () => {
+		expect(suiteTvl([protocol({ name: 'Child', id: 'child', tvl: 100, chainTvls: excludeParent(null) })])).toBeNull()
 	})
 })

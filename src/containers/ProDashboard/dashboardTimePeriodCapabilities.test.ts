@@ -16,11 +16,18 @@ test.each([
 ])('period capability %s %s', (kind, datasetType, expected) => {
 	expect(dashboardItemUsesTimePeriod({ kind, datasetType } as DashboardItemConfig)).toBe(expected)
 })
-test('empty dashboards have no period capability', () => expect(dashboardItemsUseTimePeriod([])).toBe(false))
-test('a dashboard of sections and custom data has no period capability', () =>
-	expect(
-		dashboardItemsUseTimePeriod([
-			{ id: 's', kind: 'section', title: 'S', displayAs: 'heading' },
-			{ kind: 'custom-data' } as DashboardItemConfig
-		])
-	).toBe(false))
+test.each([
+	['an empty dashboard', [], false],
+	[
+		'sections and custom data',
+		[{ id: 's', kind: 'section', title: 'S', displayAs: 'heading' }, { kind: 'custom-data' }],
+		false
+	],
+	[
+		'a section beside a chart',
+		[{ id: 's', kind: 'section', title: 'S', displayAs: 'heading' }, { kind: 'chart' }],
+		true
+	]
+])('period capability of %s', (_name, items, expected) => {
+	expect(dashboardItemsUseTimePeriod(items as Array<DashboardItemConfig>)).toBe(expected)
+})

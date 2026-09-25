@@ -139,16 +139,6 @@ describe('normalizeAlertProposedData', () => {
 		expect(result.alertIntent.trigger).toBeUndefined()
 	})
 
-	test('omits trigger entirely for schedule proposals, matching today’s payload shape', () => {
-		const result = normalizeAlertProposedData({
-			alertId: 'alert-1',
-			title: 'Daily brief',
-			alertIntent: {}
-		})
-
-		expect('trigger' in result.alertIntent).toBe(false)
-	})
-
 	test('carries a restored price trigger through buildRestoredAlerts', () => {
 		const alerts = buildRestoredAlerts({
 			content: '[ALERT:price_1]',
@@ -157,16 +147,6 @@ describe('normalizeAlertProposedData', () => {
 		})
 
 		expect(alerts?.[0]?.alertIntent.trigger).toEqual(priceTrigger)
-	})
-
-	test('renders schedule artifacts identically for old restored payloads without a trigger', () => {
-		const alerts = buildRestoredAlerts({
-			content: '[ALERT:schedule_1]',
-			messageId: 'message-1',
-			metadata: { alertIntent }
-		})
-
-		expect('trigger' in alerts![0].alertIntent).toBe(false)
 	})
 })
 

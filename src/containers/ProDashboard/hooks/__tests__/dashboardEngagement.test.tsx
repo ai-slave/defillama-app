@@ -1,27 +1,26 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
+import { installSubscriberSession } from '~/utils/test/subscriberSession'
 import { LikeDashboardButton } from '../../components/LikeDashboardButton'
 import type { Dashboard } from '../../dashboardTypes'
-const api = vi.hoisted(() => ({ like: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ authorizedFetch: vi.fn(), isAuthenticated: true }) }))
-vi.mock('../../services/DashboardAPI', () => ({ dashboardAPI: { likeDashboard: api.like } }))
+const session = installSubscriberSession('user')
 vi.mock('react-hot-toast', () => ({ default: { success: vi.fn(), error: vi.fn() } }))
 
 test('keeps a late like response on its original dashboard and displays an unlike count of zero', async () => {
-	const client = new QueryClient()
+	const client = session.client
 	const container = document.createElement('div')
 	document.body.append(container)
 	const root = createRoot(container)
 	let finish!: (value: { liked: boolean; likeCount: number }) => void
-	api.like.mockImplementationOnce(
-		() =>
+	session.serve({
+		[`${FEATURES_SERVER}/dashboards/first/like`]: () =>
 			new Promise((resolve) => {
 				finish = resolve
 			})
-	)
+	})
 	const first = { id: 'first', liked: true, likeCount: 1 } as Dashboard
 	const second = { id: 'second', liked: false, likeCount: 7 } as Dashboard
 	const firstKey = ['pro-dashboard', 'dashboard', 'first']
@@ -31,9 +30,9 @@ test('keeps a late like response on its original dashboard and displays an unlik
 	const render = (dashboard: Dashboard) =>
 		act(async () =>
 			root.render(
-				<QueryClientProvider client={client}>
+				<session.Wrapper>
 					<LikeDashboardButton currentDashboard={dashboard} dashboardId={dashboard.id} dashboardVisibility="public" />
-				</QueryClientProvider>
+				</session.Wrapper>
 			)
 		)
 	try {

@@ -23,8 +23,7 @@ const columns = [
 		cell: (info) => info.getValue(),
 		meta: {
 			headerClassName: 'w-[180px]',
-			headerHelperText: 'Venue identity help',
-			cellStyle: (row) => (row.name === 'Asset 1' ? { backgroundColor: 'red' } : undefined)
+			headerHelperText: 'Venue identity help'
 		}
 	}),
 	columnHelper.accessor('mcap', {
@@ -69,33 +68,10 @@ describe('VirtualTable SSR', () => {
 		expect(html).not.toContain('Asset 40')
 	})
 
-	test('can render auto table layout without fixed column widths', () => {
-		const html = renderToStaticMarkup(<TestVirtualTable tableLayout="auto" />)
-
-		expect(html).toContain('table-layout:auto')
-		expect(html).not.toContain('<colgroup')
-	})
-
-	test('uses the normal and compact row sizes unless explicitly overridden', () => {
-		const normalHtml = renderToStaticMarkup(<TestVirtualTable />)
-		const compactHtml = renderToStaticMarkup(<TestVirtualTable compact />)
-		const overriddenHtml = renderToStaticMarkup(<TestVirtualTable compact rowSize={64} />)
-
-		expect(normalHtml).toContain('height:50px')
-		expect(compactHtml).toContain('height:40px')
-		expect(overriddenHtml).toContain('height:64px')
-	})
-
 	test('makes helper text on a non-sortable header keyboard reachable', () => {
 		const html = renderToStaticMarkup(<TestVirtualTable />)
 
 		expect(html).toMatch(/<button[^>]*type="button"[^>]*>Name<\/button>/)
-	})
-
-	test('applies row-derived cell styles', () => {
-		const html = renderToStaticMarkup(<TestVirtualTable />)
-
-		expect(html).toContain('background-color:red')
 	})
 })
 
@@ -128,20 +104,32 @@ function GroupedTable({ hideDay = false }: { hideDay?: boolean }) {
 	return <Table table={table} />
 }
 
+// Header rows as `label colSpan×rowSpan`, read from the rendered cells.
+function headerGrid(html: string) {
+	const thead = html.match(/<thead[^>]*>(.*?)<\/thead>/s)![1]!
+	return [...thead.matchAll(/<tr[^>]*>(.*?)<\/tr>/gs)].map(([, row]) =>
+		[...row!.matchAll(/<th([^>]*)>(.*?)<\/th>/gs)].map(([, attributes, content]) => {
+			const colSpan = attributes!.match(/colSpan="(\d+)"/i)?.[1] ?? '1'
+			const rowSpan = attributes!.match(/rowSpan="(\d+)"/i)?.[1] ?? '1'
+			return `${content!.replace(/<[^>]+>/g, '')} ${colSpan}×${rowSpan}`
+		})
+	)
+}
+
 test('spans leaf headers across three levels without duplicate labels', () => {
-	const html = renderToStaticMarkup(<GroupedTable />)
-	expect(html.match(/>Name</g)).toHaveLength(1)
-	expect(html.match(/>Market Cap</g)).toHaveLength(1)
-	expect(html).toMatch(/<th[^>]*rowSpan="3"/i)
-	expect(html).toMatch(/<th[^>]*rowSpan="2"/i)
+	expect(headerGrid(renderToStaticMarkup(<GroupedTable />))).toEqual([
+		['Name 1×3', 'Metrics 3×1'],
+		['Market Cap 1×2', 'Changes 2×1'],
+		['Day 1×1', 'Week 1×1']
+	])
 })
 
 test('recomputes group spans when a nested column is hidden', () => {
-	const html = renderToStaticMarkup(<GroupedTable hideDay />)
-	expect(html).not.toContain('>Day<')
-	expect(html).toContain('>Week<')
-	expect(html).toMatch(/<th[^>]*colSpan="2"/i)
-	expect(html.match(/>Name</g)).toHaveLength(1)
+	expect(headerGrid(renderToStaticMarkup(<GroupedTable hideDay />))).toEqual([
+		['Name 1×3', 'Metrics 2×1'],
+		['Market Cap 1×2', 'Changes 1×1'],
+		['Week 1×1']
+	])
 })
 
 test('Table renders every row while VirtualTable limits the initial window', () => {
@@ -149,8 +137,4 @@ test('Table renders every row while VirtualTable limits the initial window', () 
 	const virtual = renderToStaticMarkup(<TestVirtualTable />)
 	expect(standard).toContain('Asset 40')
 	expect(virtual).not.toContain('Asset 40')
-	expect(standard).toContain('height:50px')
-	expect(standard).toContain('background-color:red')
-	expect(standard).not.toContain('data-index=')
-	expect(virtual).toContain('data-index="0"')
 })

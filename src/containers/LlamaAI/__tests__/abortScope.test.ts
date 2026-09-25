@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
 
 describe('AbortScope', () => {
-	test('invalidates the old callback before aborting its request', async () => {
+	test('treats a replaced operation as stale inside its abort handler', async () => {
 		const scope = new AbortScope()
 		let currentDuringAbort = true
 		const first = scope.run('session-a', async (operation) => {
@@ -40,9 +40,11 @@ describe('AbortScope', () => {
 		const sessionB = restore('session-b', 'session-b')
 		const finalA = restore('session-a', 'final-a')
 
+		// The final restore lands first, so only the guard stops the slower stale ones overwriting it.
+		releases[2]?.()
+		await finalA
 		releases[1]?.()
 		releases[0]?.()
-		releases[2]?.()
 		await Promise.all([firstA, sessionB, finalA])
 
 		expect(state).toEqual({

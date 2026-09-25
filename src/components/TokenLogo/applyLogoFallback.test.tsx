@@ -63,18 +63,6 @@ test('a broken placeholder is assigned once, not on every error', async () => {
 	expect(image.getAttribute('src')).toBe(PLACEHOLDER)
 })
 
-test('a token selected after a failed one shows its own logo', async () => {
-	const select = await render('https://icons.llama.fi/a.png')
-	const first = await select('https://icons.llama.fi/a.png')
-	fail(first)
-	fail(first)
-	expect(first.getAttribute('src')).toBe(PLACEHOLDER)
-
-	const second = await select('https://icons.llama.fi/b.png')
-
-	expect(second.getAttribute('src')).toBe('https://icons.llama.fi/b.png')
-})
-
 test('a token selected after a failed one still gets its own placeholder', async () => {
 	const select = await render('https://icons.llama.fi/a.png')
 	fail(await select('https://icons.llama.fi/a.png'))

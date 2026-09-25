@@ -113,6 +113,8 @@ describe('terminal layout persistence', () => {
 		switchAccount(null)
 		switchAccount('account-a')
 		const nextSession = getTerminalLayoutSession('account-a')!
+		// The panel rebuilds its widget when the session object changes, even for the same account.
+		expect(nextSession).not.toBe(session)
 		finishJson({ layout: chartState('old-login') })
 		expect(await pending).toBeNull()
 		getResponse = () => ({ layout: chartState('new-login') })
@@ -358,32 +360,5 @@ describe('the agent’s own series never reach the saved layout', () => {
 
 		expect(puts).toHaveLength(1)
 		expect(puts[0].body).not.toContain('LLAMAAI:')
-	})
-})
-
-describe('an explicit symbol request overrides a saved layout exactly once', () => {
-	test('the request survives a widget effect torn down before its chart was ready, and ends once one was', async () => {
-		// The store pulls in the auth context, whose toast dependency reaches for `document` the
-		// moment a `window` exists.
-		vi.unstubAllGlobals()
-		const { peekRequestedTerminalSymbol, setTerminalViewOpen, settleRequestedTerminalSymbol } =
-			await import('./terminalViewStore')
-
-		setTerminalViewOpen(true, 'AAVE')
-		// Strict mode mounts the widget effect, tears it down before the chart is ready, and mounts it
-		// again. A `?symbol=` link opened on the saved layout's symbol when the first run took the
-		// request with it.
-		expect(peekRequestedTerminalSymbol()).toBe('AAVE')
-		expect(peekRequestedTerminalSymbol()).toBe('AAVE')
-		settleRequestedTerminalSymbol('AAVE')
-		// The widget is rebuilt on every theme change. A request that survived its chart would keep
-		// forcing an old symbol over the one the saved layout restores.
-		expect(peekRequestedTerminalSymbol()).toBeNull()
-
-		setTerminalViewOpen(true, 'ETH')
-		settleRequestedTerminalSymbol('AAVE')
-		expect(peekRequestedTerminalSymbol()).toBe('ETH')
-		settleRequestedTerminalSymbol('ETH')
-		setTerminalViewOpen(false)
 	})
 })

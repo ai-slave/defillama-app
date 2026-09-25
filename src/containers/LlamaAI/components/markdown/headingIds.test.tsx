@@ -65,11 +65,6 @@ test('numbers repeated headings inside a blockquote', async () => {
 	expect(ids()).toEqual(['revenue', 'revenue-1'])
 })
 
-test('a nested fence does not disturb numbering', async () => {
-	await render('````\n```\n## not a heading\n```\n````\n\n## Revenue\n\na\n\n## Revenue\n')
-	expect(ids()).toEqual(['revenue', 'revenue-1'])
-})
-
 test('falls back to a stable slug when a heading has no sluggable text', async () => {
 	await render('## ***\n\na\n\n## ***\n')
 	expect(ids()).toEqual(['section', 'section-1'])

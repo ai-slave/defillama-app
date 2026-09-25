@@ -1,32 +1,37 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { AUTH_SERVER, POCKETBASE_URL, SERVER_URL } from '~/constants'
+import batchHandler from '~/pages/api/private/cex/inflows/batch'
+import { installFixtureFetch } from '~/utils/test/fixtureFetch'
+import { installMetadataSeeder } from '~/utils/test/metadataCache'
+import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
+import { binanceCexMetadataCache } from './metadataFixture'
 
-const mocks = vi.hoisted(() => ({
-	fetchJson: vi.fn(),
-	serverUrl: 'https://api.example.com'
-}))
-
-vi.mock('~/constants', () => ({
-	get SERVER_URL() {
-		return mocks.serverUrl
-	}
-}))
-
-vi.mock('~/utils/async', () => ({
-	fetchJson: mocks.fetchJson
-}))
-
-beforeEach(() => {
-	mocks.fetchJson.mockReset()
-	mocks.fetchJson.mockResolvedValue(null)
-})
+const { serve } = installFixtureFetch()
+const { seed } = installMetadataSeeder()
+beforeEach(() => seed(binanceCexMetadataCache))
 
 describe('cex api', () => {
-	test('requests exchange inflows through the batch proxy', async () => {
+	test('returns exchange inflows from the real batch route', async () => {
 		const api = await import('../api')
-		const response = {
-			'binance-cex': { outflows: 100, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } }
+		const upstream = { 'binance-cex': { outflows: 100, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } } }
+		serve({
+			[`${AUTH_SERVER}/subscription/status`]: { subscription: { status: 'active' } },
+			[`${POCKETBASE_URL}/api/collections/users/auth-refresh`]: { record: { flags: {} } },
+			[`${SERVER_URL}/inflows/batch`]: upstream
+		})
+		// The client proxy posts to our own route; hand that request to the route handler.
+		const authorizedFetch = async (_url: string, options?: RequestInit) => {
+			const res = createMockNextApiResponse()
+			await batchHandler(
+				createMockNextApiRequest({
+					method: options?.method,
+					headers: { authorization: 'Bearer ok' },
+					body: JSON.parse(options?.body as string)
+				}),
+				res
+			)
+			return Response.json(res.json.mock.lastCall?.[0], { status: res.statusCode })
 		}
-		const authorizedFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)))
 
 		await expect(
 			api.fetchCexInflowsBatchProxy(
@@ -35,17 +40,7 @@ describe('cex api', () => {
 				5000,
 				authorizedFetch
 			)
-		).resolves.toEqual(response)
-
-		expect(authorizedFetch).toHaveBeenCalledWith('/api/private/cex/inflows/batch', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				cexs: [{ cexProtocolSlug: 'binance-cex', tokensToExclude: ['BNB', 'BUSD'] }],
-				start: 1000,
-				end: 5000
-			})
-		})
+		).resolves.toEqual(upstream)
 	})
 
 	test('keeps a failed batch unavailable without issuing per-exchange requests', async () => {

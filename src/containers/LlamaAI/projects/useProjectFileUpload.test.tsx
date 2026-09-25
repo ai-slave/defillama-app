@@ -1,47 +1,42 @@
-// @vitest-environment happy-dom
-import { act } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { useProjectFileUpload } from './useProjectFileUpload'
+import { expect, test } from 'vitest'
+import { getProjectUploadFeedback, partitionProjectUploadFiles } from './useProjectFileUpload'
 
-const mutateAsync = vi.fn()
-vi.mock('./hooks', () => ({ useUploadProjectFiles: () => ({ mutateAsync, isPending: false }) }))
-let root: Root
-let api: ReturnType<typeof useProjectFileUpload>
-function Probe() {
-	api = useProjectFileUpload('project')
-	return null
-}
-beforeEach(async () => {
-	mutateAsync.mockReset()
-	root = createRoot(document.createElement('div'))
-	await act(async () => root.render(<Probe />))
-})
-afterEach(async () => {
-	await act(async () => root.unmount())
+const ok = new File(['a'], 'ok.csv')
+const duplicate = new File(['a'], 'duplicate.csv')
+
+test('sends accepted files and rejects archives, oversized files, and unsupported types', () => {
+	const huge = new File(['a'], 'big.md')
+	Object.defineProperty(huge, 'size', { value: 100 * 1024 * 1024 + 1 })
+	const { files, skipped } = partitionProjectUploadFiles([
+		ok,
+		new File(['x'], 'archive.zip'),
+		huge,
+		new File(['x'], 'image.png'),
+		new File(['x'], 'Dockerfile'),
+		duplicate
+	])
+	expect(files.map((file) => file.name)).toEqual(['ok.csv', 'Dockerfile', 'duplicate.csv'])
+	expect(skipped).toEqual([
+		{ filename: 'archive.zip', reason: 'Unzip the archive and upload its files instead.' },
+		{ filename: 'big.md', reason: 'Exceeds the 100 MB per-file limit.' },
+		{ filename: 'image.png', reason: 'Unsupported file type.' }
+	])
 })
 
-test('summarizes client and server rejections together without discarding accepted files', async () => {
-	mutateAsync.mockResolvedValue({
-		imported: [{ filename: 'ok.csv' }],
+test('summarizes client and server rejections together without discarding accepted files', () => {
+	const clientSkipped = [{ filename: 'archive.zip', reason: 'Unzip the archive and upload its files instead.' }]
+	const result = {
+		imported: [{ path: 'ok.csv', size: 1, fileId: 'f1' }],
 		skipped: [{ path: 'duplicate.csv', reason: 'Already exists' }]
-	})
-	const ok = new File(['a'], 'ok.csv')
-	const duplicate = new File(['a'], 'duplicate.csv')
-	await act(async () => api.handleFiles([ok, new File(['x'], 'archive.zip'), duplicate]))
-	expect(mutateAsync).toHaveBeenCalledWith([ok, duplicate])
-	expect(api.feedback).toMatchObject({
+	}
+	expect(getProjectUploadFeedback(clientSkipped, [ok, duplicate], { result })).toEqual({
 		added: 1,
-		skipped: [{ filename: 'archive.zip' }, { filename: 'duplicate.csv', reason: 'Already exists' }]
+		skipped: [...clientSkipped, { filename: 'duplicate.csv', reason: 'Already exists' }]
 	})
-	await act(async () => api.dismissFeedback())
-	expect(api.feedback).toBeNull()
 })
 
-test('keeps failed project upload details visible', async () => {
-	mutateAsync.mockRejectedValue(new Error('Project storage quota exceeded'))
-	await act(async () => api.handleFiles([new File(['a'], 'ok.csv')]))
-	expect(api.feedback).toEqual({
+test('keeps failed project upload details visible for every sent file', () => {
+	expect(getProjectUploadFeedback([], [ok], { error: new Error('Project storage quota exceeded') })).toEqual({
 		added: 0,
 		skipped: [{ filename: 'ok.csv', reason: 'Project storage quota exceeded' }]
 	})
