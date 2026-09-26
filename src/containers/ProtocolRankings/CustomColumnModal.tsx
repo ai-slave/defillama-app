@@ -231,13 +231,13 @@ export function CustomColumnModal({
 							<span className="label-sm text-secondary">Formula</span>
 							<div className="relative">
 								{state.fieldWarning && !displayedError ? (
-									<div className="mb-2 flex items-center gap-2 rounded-sm border border-yellow-400 bg-yellow-100 px-3 py-2 text-sm font-semibold text-yellow-700">
+									<div className="mb-2 flex items-center gap-2 rounded-sm border border-warning bg-warning/10 px-3 py-2 text-sm font-semibold text-warning">
 										<Icon name="help-circle" height={18} width={18} />
 										<span>{state.fieldWarning}</span>
 									</div>
 								) : null}
 								{displayedError ? (
-									<div className="mb-2 flex items-center gap-2 rounded-sm border border-error bg-red-100 px-3 py-2 text-sm font-semibold text-error">
+									<div className="mb-2 flex items-center gap-2 rounded-sm border border-error bg-error/10 px-3 py-2 text-sm font-semibold text-error-on-tint">
 										<Icon name="alert-triangle" height={18} width={18} />
 										<span>{displayedError}</span>
 									</div>

@@ -543,14 +543,14 @@ type TokenRightsChipVariant = 'overview' | 'details'
 const CHIP_TONE_CLASSES: Record<TokenRightsChipVariant, Record<StatusTone, string>> = {
 	overview: {
 		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-red-600/30 bg-red-600/10 text-error dark:text-error',
-		warning: 'border-amber-600/30 bg-amber-600/10 text-warning',
+		negative: 'border-error/30 bg-error/10 text-error-on-tint',
+		warning: 'border-warning/30 bg-warning/10 text-warning',
 		neutral: 'border-medium bg-surface text-secondary'
 	},
 	details: {
 		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-red-600/30 bg-red-600/10 text-error dark:text-error',
-		warning: 'border-amber-600/30 bg-amber-600/10 text-warning',
+		negative: 'border-error/30 bg-error/10 text-error-on-tint',
+		warning: 'border-warning/30 bg-warning/10 text-warning',
 		neutral: 'border-medium bg-surface-elevated-1 text-secondary'
 	}
 }

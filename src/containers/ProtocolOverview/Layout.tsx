@@ -134,7 +134,7 @@ export function ProtocolOverviewLayout({
 			{...(toggleOptions !== undefined ? { tvlOptions: toggleOptions } : {})}
 		>
 			{showsActiveLoansTvlNotice(tab, category) ? (
-				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-black dark:text-primary">
+				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-primary">
 					<p>
 						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
 						click{' '}
@@ -153,7 +153,7 @@ export function ProtocolOverviewLayout({
 
 			{warningBanners?.map((banner) => (
 				<div
-					className={`relative rounded-md border p-2 text-center text-xs text-black dark:text-primary ${
+					className={`relative rounded-md border p-2 text-center text-xs text-primary ${
 						banner.level === 'rug'
 							? 'border-error bg-error/20'
 							: banner.level === 'alert'

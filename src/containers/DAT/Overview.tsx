@@ -182,7 +182,7 @@ const overviewColumns = columnHelper.columns([
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} />}
 						contentClassName="w-72 max-w-(--popover-available-width) p-3"
 						render={<button type="button" />}
-						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
+						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-surface-elevated-2"
 					>
 						{assetBreakdown.map((asset) => (
 							<div

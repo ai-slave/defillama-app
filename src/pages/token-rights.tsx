@@ -825,9 +825,9 @@ function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
 		tone === 'positive'
 			? 'border-success/40 bg-success/10 text-success'
 			: tone === 'negative'
-				? 'border-red-600/40 bg-red-600/10 text-error dark:text-error'
+				? 'border-error/40 bg-error/10 text-error-on-tint'
 				: tone === 'pending'
-					? 'border-amber-600/40 bg-amber-600/10 text-warning'
+					? 'border-warning/40 bg-warning/10 text-warning'
 					: 'border-medium bg-page text-secondary'
 
 	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 label-sm ${toneClassName} ${extraClassName}`

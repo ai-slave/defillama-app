@@ -13,7 +13,6 @@ type DismissibleAnnouncementProps = {
 	announcementId: string
 	version: string
 	notCancellable?: false
-	warning?: boolean
 	className?: string
 	contentClassName?: string
 	dismissButtonClassName?: string
@@ -23,7 +22,6 @@ type DismissibleAnnouncementProps = {
 type PermanentAnnouncementProps = {
 	children: React.ReactNode
 	notCancellable: true
-	warning?: boolean
 	className?: string
 	contentClassName?: string
 	dismissButtonClassName?: string
@@ -38,7 +36,6 @@ export function Announcement(props: AnnouncementProps) {
 	const {
 		children,
 		notCancellable,
-		warning = false,
 		className,
 		contentClassName,
 		dismissButtonClassName,
@@ -65,18 +62,14 @@ export function Announcement(props: AnnouncementProps) {
 	}
 
 	const wrapperStyle: React.CSSProperties & Record<'--announcement-bg', string> = {
-		'--announcement-bg': warning ? 'hsl(45deg 80% 50% / 18%)' : 'hsl(215deg 79% 51% / 12%)'
+		'--announcement-bg': 'hsl(215deg 79% 51% / 12%)'
 	}
 
 	return (
 		<div
 			className={clsx(
 				'flex min-h-[38px] items-center justify-between gap-2 rounded-md p-1.5 text-sm',
-				className ??
-					clsx(
-						'border border-(--announcement-bg) bg-(--announcement-bg)',
-						warning && 'text-amber-900 dark:text-amber-200'
-					),
+				className ?? 'border border-(--announcement-bg) bg-(--announcement-bg)',
 				dismissalToken ? `announcement-token--${dismissalToken}` : ''
 			)}
 			style={wrapperStyle}

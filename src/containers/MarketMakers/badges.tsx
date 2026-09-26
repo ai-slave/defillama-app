@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { CompositeGrade } from './format'
 
 const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
-	full: 'border-emerald-500 bg-success/10 text-success',
+	full: 'border-success bg-success/10 text-success',
 	partial: 'border-warning bg-warning/10 text-warning',
 	none: 'border-error bg-error/10 text-error'
 }

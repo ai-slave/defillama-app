@@ -102,15 +102,13 @@ function ClassificationItem({ label, value, positive, description }: Classificat
 				isBoolean
 					? positive
 						? 'border-success/30 bg-success/10'
-						: 'border-red-600/30 bg-red-600/10'
+						: 'border-error/30 bg-error/10'
 					: 'border-subtle bg-surface'
 			}`}
 		>
 			<p className="flex flex-col gap-1">
 				<span
-					className={`font-medium ${
-						isBoolean ? (positive ? 'text-success' : 'text-error dark:text-error') : 'text-secondary'
-					}`}
+					className={`font-medium ${isBoolean ? (positive ? 'text-success' : 'text-error-on-tint') : 'text-secondary'}`}
 				>
 					{label}
 				</span>
@@ -119,7 +117,7 @@ function ClassificationItem({ label, value, positive, description }: Classificat
 			{isBoolean ? (
 				<Icon
 					name={positive ? 'check-circle' : 'x'}
-					className={`size-5 shrink-0 ${positive ? 'text-success' : 'text-error dark:text-error'}`}
+					className={`size-5 shrink-0 ${positive ? 'text-success' : 'text-error-on-tint'}`}
 				/>
 			) : (
 				<span className="font-medium">{displayValue}</span>
@@ -135,7 +133,7 @@ function KYCItem({ label, required, description }: { label: string; required: bo
 	return (
 		<div
 			className={`flex items-start justify-between gap-2 rounded-md border p-2 ${
-				required ? 'border-amber-600/30 bg-amber-600/10' : 'border-success/30 bg-success/10'
+				required ? 'border-warning/30 bg-warning/10' : 'border-success/30 bg-success/10'
 			}`}
 		>
 			<p className="flex flex-col gap-1">

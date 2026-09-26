@@ -13,6 +13,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { Skeleton } from '~/ui/Skeleton'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
@@ -59,11 +60,7 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 		case 'disabled':
 			return null
 		case 'loading':
-			return (
-				<span className="relative ml-auto block h-4 w-16 overflow-hidden rounded-sm bg-black/5 dark:bg-white/12">
-					<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
-				</span>
-			)
+			return <Skeleton className="ml-auto h-4 w-16" />
 		case 'failed': {
 			const message = 'Failed to fetch inflows for this date range'
 			return (

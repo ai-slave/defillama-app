@@ -11,7 +11,7 @@ export function ChainWarningBanners({
 		<>
 			{warningBanners?.map((banner) => (
 				<p
-					className={`relative rounded-md border p-2 text-center text-xs text-black dark:text-primary ${
+					className={`relative rounded-md border p-2 text-center text-xs text-primary ${
 						banner.level === 'rug'
 							? 'border-error bg-error/20'
 							: banner.level === 'alert'

@@ -103,7 +103,7 @@ const columns = columnHelper.columns([
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
 					contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
 					render={<button type="button" />}
-					className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
+					className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-surface-elevated-2"
 				>
 					{dominance.map((dom) => {
 						const color = breakdownColor(dom[0])

@@ -339,6 +339,8 @@ The design-token check is a ratchet, not a zero-debt certificate: a passing resu
 
 The remaining core hardcoded-color baseline is intentionally limited to non-reusable palettes: chain/protocol announcement themes, MCP terminal traffic-light dots, Market Makers documentation illustrations, regulatory/category hues, the RWA premium accent, and a metrics data marker. These colors describe branded artwork or data categories rather than reusable application chrome; do not copy them into buttons, panels, tables, or text treatments.
 
+The stock-palette baseline (`builtin-palette-color`) keeps the same kind of exception. The Exchanges KYC requirement chips in [`ComplianceCells.tsx`](src/containers/Exchanges/ComplianceCells.tsx) give each requirement type its own hue: ID sky, selfie violet, proof of address amber, income profile teal, and knowledge quiz indigo. The hue marks a category, not a state; the icon and tooltip carry the meaning. Keep the palette in that file's map, and never use it for status: compliance status badges use the data-up, warning, and data-down tones. The other intentional stock colors are the frosted white badges on the branded announcements, the white backdrops in the Market Makers documentation figures, the dark text on the fixed LlamaAI gold button, and the white `Switch` knob.
+
 ### Design-library follow-ups (not implementation blockers)
 
 - Publish the accepted light-mode `Text/Warning` and dark
