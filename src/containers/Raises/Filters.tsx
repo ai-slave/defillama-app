@@ -16,13 +16,10 @@ interface IDropdownMenusProps {
 	headingAs?: 'h1' | 'h2'
 	pathname?: string
 	investors: Array<string>
-	selectedInvestors: Array<string>
 	chains: Array<string>
-	selectedChains: Array<string>
 	sectors: Array<string>
-	selectedSectors: Array<string>
 	rounds: Array<string>
-	selectedRounds: Array<string>
+	hasActiveFilters: boolean
 }
 
 export function RaisesFilters(props: IDropdownMenusProps) {
@@ -38,28 +35,14 @@ export function RaisesFilters(props: IDropdownMenusProps) {
 
 function Filters({
 	investors,
-	selectedInvestors,
 	chains,
-	selectedChains,
 	sectors,
-	selectedSectors,
 	rounds,
-	selectedRounds,
+	hasActiveFilters,
 	pathname,
 	nestedMenu
 }: IDropdownMenusProps & { nestedMenu: boolean }) {
 	const router = useRouter()
-
-	// Check if any filters are active based on URL query params.
-	// The selected* arrays default to "all values" when no query is set, so using their lengths
-	// would incorrectly mark filters as active (especially on investor pages).
-	const hasActiveFilters =
-		(!!router.query.investor && router.query.investor !== 'All') ||
-		(!!router.query.chain && router.query.chain !== 'All') ||
-		(!!router.query.sector && router.query.sector !== 'All') ||
-		(!!router.query.round && router.query.round !== 'All') ||
-		!!router.query.minRaised ||
-		!!router.query.maxRaised
 
 	const resetFilters = () => {
 		// Clear only query params while keeping the route.
@@ -87,7 +70,6 @@ function Filters({
 				<SelectWithCombobox
 					label="Investors"
 					allValues={investors}
-					selectedValues={selectedInvestors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -101,7 +83,6 @@ function Filters({
 				<SelectWithCombobox
 					label="Chains"
 					allValues={chains}
-					selectedValues={selectedChains}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -115,7 +96,6 @@ function Filters({
 				<SelectWithCombobox
 					label="Sectors"
 					allValues={sectors}
-					selectedValues={selectedSectors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
@@ -129,7 +109,6 @@ function Filters({
 				<SelectWithCombobox
 					label="Rounds"
 					allValues={rounds}
-					selectedValues={selectedRounds}
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"

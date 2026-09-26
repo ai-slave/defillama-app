@@ -2,11 +2,13 @@ import type { ParsedUrlQuery } from 'node:querystring'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import type { MultiSeriesChartSeriesConfig, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { readSelectionFromQuery } from '~/components/Select/query'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { parseExcludeParam } from '~/utils/routerQuery'
 import type { Raise } from './model'
 import type { RaisesSummary } from './summary'
+import { UNKNOWN_OPTION } from './utils'
 
 interface UseRaisesDataParams {
 	raises: Array<Raise>
@@ -69,87 +71,22 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 	)
 }
 
+/** Trimmed values, or Unknown when a raise has none, matching how the picker options are built. */
+function valuesOrUnknown(values: Array<string>): Array<string> {
+	const trimmed: Array<string> = []
+	for (const value of values) {
+		const name = value.trim()
+		if (name) trimmed.push(name)
+	}
+	return trimmed.length > 0 ? trimmed : [UNKNOWN_OPTION]
+}
+
 /** The Raises page's filtered rows, breakdowns and charts for the filters in the URL query. */
 export function buildRaisesData(
 	{ raises, investors, rounds, sectors, chains }: UseRaisesDataParams,
 	query: ParsedUrlQuery
 ) {
-	const {
-		investor,
-		excludeInvestor,
-		round,
-		excludeRound,
-		sector,
-		excludeSector,
-		chain,
-		excludeChain,
-		minRaised,
-		maxRaised
-	} = query
-
-	// Parse exclude sets upfront
-	// Note: For investors and chains, we need separate exclude sets because we're checking
-	// "exclude if ANY item in array matches", which can't be combined with the selection logic
-	const excludeInvestorsSet = parseExcludeParam(excludeInvestor)
-	const excludeChainsSet = parseExcludeParam(excludeChain)
-	const excludeRoundsSet = parseExcludeParam(excludeRound)
-	const excludeSectorsSet = parseExcludeParam(excludeSector)
-
-	// Build selectedInvestors
-	let selectedInvestors: Array<string>
-	if (investor) {
-		if (typeof investor === 'string') {
-			selectedInvestors = investor === 'All' ? [...investors] : investor === 'None' ? [] : [investor]
-		} else {
-			selectedInvestors = [...investor]
-		}
-	} else {
-		selectedInvestors = [...investors]
-	}
-	// Filter out excludes from selectedInvestors
-	selectedInvestors =
-		excludeInvestorsSet.size > 0 ? selectedInvestors.filter((i) => !excludeInvestorsSet.has(i)) : selectedInvestors
-
-	// Build selectedRounds and filter out excludes inline
-	let selectedRounds: Array<string>
-	if (round) {
-		if (typeof round === 'string') {
-			selectedRounds = round === 'All' ? [...rounds] : round === 'None' ? [] : [round]
-		} else {
-			selectedRounds = [...round]
-		}
-	} else {
-		selectedRounds = [...rounds]
-	}
-	selectedRounds = excludeRoundsSet.size > 0 ? selectedRounds.filter((r) => !excludeRoundsSet.has(r)) : selectedRounds
-
-	// Build selectedSectors and filter out excludes inline
-	let selectedSectors: Array<string>
-	if (sector) {
-		if (typeof sector === 'string') {
-			selectedSectors = sector === 'All' ? [...sectors] : sector === 'None' ? [] : [sector]
-		} else {
-			selectedSectors = [...sector]
-		}
-	} else {
-		selectedSectors = [...sectors]
-	}
-	selectedSectors =
-		excludeSectorsSet.size > 0 ? selectedSectors.filter((s) => !excludeSectorsSet.has(s)) : selectedSectors
-
-	// Build selectedChains
-	let selectedChains: Array<string>
-	if (chain) {
-		if (typeof chain === 'string') {
-			selectedChains = chain === 'All' ? [...chains] : chain === 'None' ? [] : [chain]
-		} else {
-			selectedChains = [...chain]
-		}
-	} else {
-		selectedChains = [...chains]
-	}
-	// Filter out excludes from selectedChains
-	selectedChains = excludeChainsSet.size > 0 ? selectedChains.filter((c) => !excludeChainsSet.has(c)) : selectedChains
+	const { minRaised, maxRaised } = query
 
 	const raisesByCategory: { [category: string]: number } = {}
 	const fundingRoundsByMonth: Record<string, number> = {}
@@ -168,68 +105,35 @@ export function buildRaisesData(
 
 	const isAmountRangeActive = minimumAmountRaised !== null || maximumAmountRaised !== null
 
-	const isInvestorFilterActive = selectedInvestors.length !== investors.length
-	const isChainsFilterActive = selectedChains.length !== chains.length
-	const isRoundsFilterActive = selectedRounds.length !== rounds.length
-	const isSectorsFilterActive = selectedSectors.length !== sectors.length
-
-	const selectedInvestorsSet = isInvestorFilterActive ? new Set(selectedInvestors) : null
-	const selectedChainsSet = isChainsFilterActive ? new Set(selectedChains) : null
-	const selectedRoundsSet = isRoundsFilterActive ? new Set(selectedRounds) : null
-	const selectedSectorsSet = isSectorsFilterActive ? new Set(selectedSectors) : null
+	// null when every option is selected. An investor page has no investor options, so its hidden picker's
+	// key selects nothing to filter.
+	const pick = (includeKey: string, excludeKey: ExcludeQueryKey, options: Array<string>) => {
+		const selected = readSelectionFromQuery(query, includeKey, excludeKey, options)
+		return selected.length === options.length ? null : new Set(selected)
+	}
+	const selectedInvestorsSet = pick('investor', 'excludeInvestor', investors)
+	const selectedChainsSet = pick('chain', 'excludeChain', chains)
+	const selectedRoundsSet = pick('round', 'excludeRound', rounds)
+	const selectedSectorsSet = pick('sector', 'excludeSector', sectors)
+	const hasActiveFilters =
+		selectedInvestorsSet !== null ||
+		selectedChainsSet !== null ||
+		selectedRoundsSet !== null ||
+		selectedSectorsSet !== null ||
+		isAmountRangeActive
 
 	const filteredRaisesList: Array<Raise> = []
 	let undisclosedCount = 0
 	for (const raise of raises) {
-		if (selectedInvestorsSet) {
-			if (raise.leadInvestors.length === 0 && raise.otherInvestors.length === 0) {
-				continue
-			}
-
-			let isAnInvestor = false
-
-			for (const lead of raise.leadInvestors) {
-				if (selectedInvestorsSet.has(lead)) {
-					isAnInvestor = true
-					break
-				}
-			}
-
-			if (!isAnInvestor) {
-				for (const otherInv of raise.otherInvestors) {
-					if (selectedInvestorsSet.has(otherInv)) {
-						isAnInvestor = true
-						break
-					}
-				}
-			}
-
-			if (!isAnInvestor) {
-				continue
-			}
-		}
-
-		if (selectedChainsSet) {
-			if (raise.chains.length === 0) {
-				continue
-			}
-
-			let raiseIncludesChain = false
-
-			for (const raiseChain of raise.chains) {
-				if (selectedChainsSet.has(raiseChain)) {
-					raiseIncludesChain = true
-					break
-				}
-			}
-
-			if (!raiseIncludesChain) {
-				continue
-			}
-		}
-
-		if (selectedRoundsSet && (!raise.round || !selectedRoundsSet.has(raise.round))) continue
-		if (selectedSectorsSet && (!raise.category || !selectedSectorsSet.has(raise.category))) continue
+		// A raise with several investors or chains stays while any of them is selected.
+		if (
+			selectedInvestorsSet &&
+			!valuesOrUnknown([...raise.leadInvestors, ...raise.otherInvestors]).some((i) => selectedInvestorsSet.has(i))
+		)
+			continue
+		if (selectedChainsSet && !valuesOrUnknown(raise.chains).some((c) => selectedChainsSet.has(c))) continue
+		if (selectedRoundsSet && !selectedRoundsSet.has(raise.round?.trim() || UNKNOWN_OPTION)) continue
+		if (selectedSectorsSet && !selectedSectorsSet.has(raise.category?.trim() || UNKNOWN_OPTION)) continue
 
 		if (isAmountRangeActive) {
 			if (raise.amountUsd === null) continue
@@ -328,10 +232,7 @@ export function buildRaisesData(
 		undisclosedCount
 	}
 	return {
-		selectedInvestors,
-		selectedChains,
-		selectedRounds,
-		selectedSectors,
+		hasActiveFilters,
 		filteredRaisesList,
 		raisesByCategory: finalRaisesByCategory.sort((a, b) => b.value - a.value),
 		investmentByRounds: finalInvestmentByRounds.sort((a, b) => b.value - a.value),

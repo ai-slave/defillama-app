@@ -16,18 +16,13 @@ interface HacksFiltersProps {
 	chainOptions: Array<string>
 	techniqueOptions: Array<string>
 	classificationOptions: Array<string>
-	selectedChains: Array<string>
-	selectedTechniques: Array<string>
-	selectedClassifications: Array<string>
+	hasActiveFilters: boolean
 }
 
 interface FiltersInnerProps {
 	chainOptions: Array<string>
 	techniqueOptions: Array<string>
 	classificationOptions: Array<string>
-	selectedChains: Array<string>
-	selectedTechniques: Array<string>
-	selectedClassifications: Array<string>
 	timeOptions: Array<TimeLabelKey>
 	selectedTimeLabel: TimeLabelKey
 	setSelectedTime: (label: TimeLabelKey) => void
@@ -65,12 +60,10 @@ export function HacksFilters({
 	chainOptions,
 	techniqueOptions,
 	classificationOptions,
-	selectedChains,
-	selectedTechniques,
-	selectedClassifications
+	hasActiveFilters
 }: HacksFiltersProps) {
 	const router = useRouter()
-	const { chain, tech, class: classQ, time } = router.query
+	const { time } = router.query
 
 	const {
 		min: minLostVal,
@@ -87,21 +80,14 @@ export function HacksFilters({
 		void pushShallowQuery(router, { time: key && key !== 'all' ? key : undefined })
 	}
 
-	const hasActiveFilters =
-		chain !== undefined ||
-		tech !== undefined ||
-		classQ !== undefined ||
-		time !== undefined ||
-		minLostVal != null ||
-		maxLostVal != null
-
 	const onClearAll = (): void => {
 		void pushShallowQuery(router, {
 			chain: undefined,
+			excludeChain: undefined,
 			tech: undefined,
+			excludeTech: undefined,
 			class: undefined,
-			start: undefined,
-			end: undefined,
+			excludeClass: undefined,
 			minLost: undefined,
 			maxLost: undefined,
 			time: undefined
@@ -114,15 +100,12 @@ export function HacksFilters({
 				{(nestedMenu) => (
 					<Filters
 						chainOptions={chainOptions}
-						selectedChains={selectedChains}
 						minLostVal={minLostVal}
 						maxLostVal={maxLostVal}
 						handleAmountSubmit={handleAmountSubmit}
 						handleAmountClear={handleAmountClear}
 						classificationOptions={classificationOptions}
-						selectedClassifications={selectedClassifications}
 						techniqueOptions={techniqueOptions}
-						selectedTechniques={selectedTechniques}
 						timeOptions={defaultTimeOptions}
 						selectedTimeLabel={selectedTimeLabel}
 						setSelectedTime={setSelectedTime}
@@ -138,15 +121,12 @@ export function HacksFilters({
 
 function Filters({
 	chainOptions,
-	selectedChains,
 	minLostVal,
 	maxLostVal,
 	handleAmountSubmit,
 	handleAmountClear,
 	classificationOptions,
-	selectedClassifications,
 	techniqueOptions,
-	selectedTechniques,
 	timeOptions,
 	selectedTimeLabel,
 	setSelectedTime,
@@ -158,7 +138,6 @@ function Filters({
 		<>
 			<SelectWithCombobox
 				allValues={chainOptions}
-				selectedValues={selectedChains}
 				label="Chains"
 				labelType="smol"
 				variant="filter-responsive"
@@ -192,7 +171,6 @@ function Filters({
 
 			<SelectWithCombobox
 				allValues={classificationOptions}
-				selectedValues={selectedClassifications}
 				label="Classification"
 				labelType="smol"
 				variant="filter-responsive"
@@ -203,7 +181,6 @@ function Filters({
 			/>
 			<SelectWithCombobox
 				allValues={techniqueOptions}
-				selectedValues={selectedTechniques}
 				label="Techniques"
 				labelType="smol"
 				variant="filter-responsive"

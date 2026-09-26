@@ -26,15 +26,7 @@ interface RaisesContainerProps {
 function RaisesContainer({ raises, investors, rounds, sectors, chains, investorName }: RaisesContainerProps) {
 	const { pathname } = useRouter()
 
-	const {
-		filteredRaisesList,
-		selectedInvestors,
-		selectedRounds,
-		selectedChains,
-		selectedSectors,
-		fundingSummary,
-		monthlyInvestmentChart
-	} = useRaisesData({
+	const { filteredRaisesList, hasActiveFilters, fundingSummary, monthlyInvestmentChart } = useRaisesData({
 		raises,
 		investors,
 		rounds,
@@ -65,16 +57,13 @@ function RaisesContainer({ raises, investors, rounds, sectors, chains, investorN
 				</span>
 			</Announcement>
 			<RaisesFilters
+				hasActiveFilters={hasActiveFilters}
 				header={investorName ? `${investorName} raises` : 'Raises'}
 				headingAs="h1"
 				rounds={rounds}
-				selectedRounds={selectedRounds}
 				sectors={sectors}
-				selectedSectors={selectedSectors}
 				investors={investors}
-				selectedInvestors={selectedInvestors}
 				chains={chains}
-				selectedChains={selectedChains}
 				pathname={pathname}
 			/>
 

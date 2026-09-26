@@ -90,22 +90,14 @@ export function InvestorContainer({
 	chains,
 	investorName
 }: InvestorContainerProps) {
-	const {
-		filteredRaisesList,
-		selectedInvestors,
-		selectedRounds,
-		selectedChains,
-		selectedSectors,
-		raisesByCategory,
-		fundingRoundsByMonthChart,
-		investmentByRounds
-	} = useRaisesData({
-		raises,
-		investors,
-		rounds,
-		sectors,
-		chains
-	})
+	const { filteredRaisesList, hasActiveFilters, raisesByCategory, fundingRoundsByMonthChart, investmentByRounds } =
+		useRaisesData({
+			raises,
+			investors,
+			rounds,
+			sectors,
+			chains
+		})
 	const deferredFundingRoundsByMonthChart = React.useDeferredValue(fundingRoundsByMonthChart)
 	const deferredInvestmentByRounds = React.useDeferredValue(investmentByRounds)
 	const deferredRaisesByCategory = React.useDeferredValue(raisesByCategory)
@@ -125,16 +117,13 @@ export function InvestorContainer({
 			</Announcement>
 
 			<RaisesFilters
+				hasActiveFilters={hasActiveFilters}
 				header="Raises"
 				headingAs="h2"
 				rounds={rounds}
-				selectedRounds={selectedRounds}
 				sectors={sectors}
-				selectedSectors={selectedSectors}
 				investors={investors}
-				selectedInvestors={selectedInvestors}
 				chains={chains}
-				selectedChains={selectedChains}
 				pathname={`/raises/${slug(investorName)}`}
 			/>
 

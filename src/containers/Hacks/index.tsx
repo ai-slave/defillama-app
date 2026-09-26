@@ -7,6 +7,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { readSelectionFromQuery } from '~/components/Select/query'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -21,7 +23,7 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
-import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
+import { parseNumberQueryParam } from '~/utils/routerQuery'
 import { buildFilteredHacksSummary, filterHacksRows } from './data'
 import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
@@ -125,91 +127,35 @@ export function HacksContainer({
 	const [nowSec] = React.useState(() => Math.floor(Date.now() / 1000))
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const router = useRouter()
-	const {
-		chain: chainQ,
-		excludeChain,
-		tech: techQ,
-		excludeTech,
-		class: classQ,
-		excludeClass,
-		time: timeQ,
-		minLost,
-		maxLost
-	} = router.query
-
-	const selectedChains = React.useMemo(() => {
-		const excludeSet = parseExcludeParam(excludeChain)
-		const selected = parseArrayParam(chainQ, chainOptions)
-		return excludeSet.size > 0 ? selected.filter((c) => !excludeSet.has(c)) : selected
-	}, [chainQ, excludeChain, chainOptions])
-
-	const selectedTechniques = React.useMemo(() => {
-		const excludeSet = parseExcludeParam(excludeTech)
-		const selected = parseArrayParam(techQ, techniqueOptions)
-		return excludeSet.size > 0 ? selected.filter((t) => !excludeSet.has(t)) : selected
-	}, [techQ, excludeTech, techniqueOptions])
-
-	const selectedClassifications = React.useMemo(() => {
-		const excludeSet = parseExcludeParam(excludeClass)
-		const selected = parseArrayParam(classQ, classificationOptions)
-		return excludeSet.size > 0 ? selected.filter((c) => !excludeSet.has(c)) : selected
-	}, [classQ, excludeClass, classificationOptions])
-
+	const { time: timeQ, minLost, maxLost } = router.query
 	const minLostVal = parseNumberQueryParam(minLost)
 	const maxLostVal = parseNumberQueryParam(maxLost)
 
-	const hasActiveFilters =
-		chainQ !== undefined ||
-		excludeChain !== undefined ||
-		techQ !== undefined ||
-		excludeTech !== undefined ||
-		classQ !== undefined ||
-		excludeClass !== undefined ||
-		timeQ !== undefined ||
-		minLostVal != null ||
-		maxLostVal != null
-
-	const filteredData = React.useMemo(() => {
-		const chainIncludeNone = isParamNone(chainQ)
-		const techIncludeNone = isParamNone(techQ)
-		const classIncludeNone = isParamNone(classQ)
-
-		const chainFilterEnabled = chainQ !== undefined || excludeChain !== undefined
-		const techFilterEnabled = techQ !== undefined || excludeTech !== undefined
-		const classFilterEnabled = classQ !== undefined || excludeClass !== undefined
-
-		const chainKeys = chainFilterEnabled ? new Set(selectedChains) : undefined
-		const techKeys = techFilterEnabled ? new Set(selectedTechniques) : undefined
-		const classKeys = classFilterEnabled ? new Set(selectedClassifications) : undefined
-		const since = getTimeSinceSeconds(typeof timeQ === 'string' ? timeQ : undefined, nowSec)
-
-		return filterHacksRows(data, {
-			chainKeys,
-			techKeys,
-			classKeys,
-			chainIncludeNone,
-			techIncludeNone,
-			classIncludeNone,
-			since,
+	const filters = React.useMemo(() => {
+		// null when every option is selected, so the picker filters nothing.
+		const pick = (includeKey: string, excludeKey: ExcludeQueryKey, options: Array<string>) => {
+			const selected = readSelectionFromQuery(router.query, includeKey, excludeKey, options)
+			return selected.length === options.length ? null : new Set(selected)
+		}
+		return {
+			chains: pick('chain', 'excludeChain', chainOptions),
+			techniques: pick('tech', 'excludeTech', techniqueOptions),
+			classifications: pick('class', 'excludeClass', classificationOptions),
+			since: getTimeSinceSeconds(typeof timeQ === 'string' ? timeQ : undefined, nowSec),
 			minLost: minLostVal,
 			maxLost: maxLostVal
-		})
-	}, [
-		data,
-		chainQ,
-		excludeChain,
-		techQ,
-		excludeTech,
-		classQ,
-		excludeClass,
-		selectedChains,
-		selectedTechniques,
-		selectedClassifications,
-		timeQ,
-		minLostVal,
-		maxLostVal,
-		nowSec
-	])
+		}
+	}, [router.query, chainOptions, techniqueOptions, classificationOptions, timeQ, nowSec, minLostVal, maxLostVal])
+
+	const hasActiveFilters =
+		filters.chains !== null ||
+		filters.techniques !== null ||
+		filters.classifications !== null ||
+		filters.since !== null ||
+		filters.minLost !== null ||
+		filters.maxLost !== null
+
+	const filteredData = React.useMemo(() => filterHacksRows(data, filters), [data, filters])
 
 	const derivedStats = React.useMemo(() => {
 		if (!hasActiveFilters) return null
@@ -240,9 +186,7 @@ export function HacksContainer({
 				chainOptions={chainOptions}
 				techniqueOptions={techniqueOptions}
 				classificationOptions={classificationOptions}
-				selectedChains={selectedChains}
-				selectedTechniques={selectedTechniques}
-				selectedClassifications={selectedClassifications}
+				hasActiveFilters={hasActiveFilters}
 			/>
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">

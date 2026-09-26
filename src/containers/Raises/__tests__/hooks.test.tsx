@@ -85,6 +85,23 @@ describe('Raises filters and chart population', () => {
 		expect(transform(data, { excludeInvestor: 'Other', excludeChain: 'Blast' }).filteredRaisesList).toEqual([data[1]])
 	})
 
+	test('offers Unknown for raises without a chain and keeps them when another chain is excluded', () => {
+		const data = [raise('Chainless', 1, { chains: [] }), raise('Blast', 2, { chains: ['Blast'] })]
+		expect(getRaisesFiltersList({ raises: data }).chains).toEqual(['Blast', 'Unknown'])
+		expect(transform(data, { excludeChain: 'Blast' }).filteredRaisesList).toEqual([data[0]])
+		expect(transform(data, { excludeChain: 'Unknown' }).filteredRaisesList).toEqual([data[1]])
+	})
+
+	test('ignores an investor filter on an investor page, which has no investor picker', () => {
+		const data = [raise('A', 1, { leadInvestors: ['a16z', 'Paradigm'] }), raise('B', 2, { leadInvestors: ['a16z'] })]
+		const investorPage = buildRaisesData(
+			{ raises: data, ...getRaisesFiltersList({ raises: data, investorName: 'a16z' }) },
+			{ investor: 'Paradigm' }
+		)
+		expect(investorPage.filteredRaisesList).toEqual(data)
+		expect(investorPage.hasActiveFilters).toBe(false)
+	})
+
 	test('keeps EOS spread over 13 months and series chronologically ordered', () => {
 		const data = transform([raise('EOS', 4_200_000_000, { date: 1_527_811_200 })])
 		const amounts = data.monthlyInvestmentChart.dataset.source

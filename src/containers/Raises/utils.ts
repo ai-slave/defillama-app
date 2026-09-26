@@ -21,6 +21,12 @@ const sortByAmountThenName = (values: Array<string>, amounts: Map<string, number
 	})
 }
 
+/** The picker option for raises without an investor, round, sector or chain, so users can keep or drop them. */
+export const UNKNOWN_OPTION = 'Unknown'
+
+const withUnknown = (names: Array<string>, hasMissing: boolean): Array<string> =>
+	hasMissing ? [...names, UNKNOWN_OPTION] : names
+
 export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersListArgs): IRaisesFilters {
 	if (raises.length === 0)
 		return {
@@ -41,6 +47,10 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 	const roundAmounts = new Map<string, number>()
 	const sectorAmounts = new Map<string, number>()
 	const chainAmounts = new Map<string, number>()
+	let missingInvestor = false
+	let missingRound = false
+	let missingSector = false
+	let missingChain = false
 
 	for (const raise of raises) {
 		const includeRaise =
@@ -56,6 +66,7 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 
 		// Only build investors list for the "all raises" page.
 		if (!investorSlug) {
+			if (raise.leadInvestors.length === 0 && raise.otherInvestors.length === 0) missingInvestor = true
 			for (const leadInvestor of raise.leadInvestors) {
 				const investor = leadInvestor.trim()
 				investors.add(investor)
@@ -68,6 +79,10 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 				addAmount(investorAmounts, investor, amount)
 			}
 		}
+
+		if (!raise.round) missingRound = true
+		if (!raise.category) missingSector = true
+		if (!raise.chains.some((chain) => chain.trim())) missingChain = true
 
 		if (raise.round) {
 			const round = raise.round.trim()
@@ -90,9 +105,11 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 	}
 
 	return {
-		investors: investorSlug ? [] : sortByAmountThenName(Array.from(investors), investorAmounts),
-		rounds: sortByAmountThenName(Array.from(rounds), roundAmounts),
-		sectors: sortByAmountThenName(Array.from(sectors), sectorAmounts),
-		chains: sortByAmountThenName(Array.from(chains), chainAmounts)
+		investors: investorSlug
+			? []
+			: withUnknown(sortByAmountThenName(Array.from(investors), investorAmounts), missingInvestor),
+		rounds: withUnknown(sortByAmountThenName(Array.from(rounds), roundAmounts), missingRound),
+		sectors: withUnknown(sortByAmountThenName(Array.from(sectors), sectorAmounts), missingSector),
+		chains: withUnknown(sortByAmountThenName(Array.from(chains), chainAmounts), missingChain)
 	}
 }

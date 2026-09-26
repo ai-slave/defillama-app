@@ -16,12 +16,9 @@ const row = (overrides: Partial<IHackRow> = {}): IHackRow => ({
 })
 
 const filters = (overrides: Partial<HacksFilterState> = {}): HacksFilterState => ({
-	chainKeys: undefined,
-	techKeys: undefined,
-	classKeys: undefined,
-	chainIncludeNone: false,
-	techIncludeNone: false,
-	classIncludeNone: false,
+	chains: null,
+	techniques: null,
+	classifications: null,
 	since: null,
 	minLost: null,
 	maxLost: null,
@@ -71,6 +68,24 @@ describe('Hacks data', () => {
 
 		expect(filterHacksRows([unknownDate, dated], filters())).toEqual([unknownDate, dated])
 		expect(filterHacksRows([unknownDate, dated], filters({ since: 1_700_000_000 }))).toEqual([dated])
+	})
+
+	test('offers an Unknown chain option for hacks without a chain', () => {
+		const summary = buildHacksPageSummary([row({ chains: ['Base'], amountUsd: 5 }), row({ chains: [], amountUsd: 9 })])
+		expect(summary.chainOptions).toEqual(['Base', 'Unknown'])
+		expect(buildHacksPageSummary([row()]).chainOptions).toEqual(['Ethereum'])
+	})
+
+	test('files hacks without a chain under Unknown and keeps multi-chain hacks while any chain is selected', () => {
+		const chainless = row({ name: 'Chainless', chains: [] })
+		const bridged = row({ name: 'Bridged', chains: ['Ethereum', 'Arbitrum'] })
+		const base = row({ name: 'Base only', chains: ['Base'] })
+		const names = (chains: Array<string>) =>
+			filterHacksRows([chainless, bridged, base], filters({ chains: new Set(chains) })).map((hack) => hack.name)
+
+		expect(names(['Unknown'])).toEqual(['Chainless'])
+		expect(names(['Arbitrum', 'Base'])).toEqual(['Bridged', 'Base only'])
+		expect(names([])).toEqual([])
 	})
 
 	test('returns measured zero summaries for successful empty data', () => {
