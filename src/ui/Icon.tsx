@@ -149,7 +149,7 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/v48.svg#${name}`} />
+			<use href={`/icons/v49.svg#${name}`} />
 		</svg>
 	)
 }
