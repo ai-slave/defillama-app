@@ -11,7 +11,7 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
-import { LoadingIndicator } from '~/ui/Status'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -182,10 +182,7 @@ export function CompareTokens({
 				</Ariakit.MenuProvider>
 				{coins.length === 2 ? (
 					priceData == null ? (
-						<div role="status" aria-live="polite" className="m-auto flex min-h-[360px] items-center justify-center">
-							<LoadingIndicator />
-							<span className="sr-only">Loading token comparison</span>
-						</div>
+						<SurfaceBodyLoadingStatus label="Loading token comparison" />
 					) : (
 						<div className="mt-10 flex flex-col items-center gap-2">
 							<h2 className="flex flex-wrap items-center justify-center gap-1 text-base font-normal">

@@ -26,6 +26,7 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
@@ -433,8 +434,7 @@ export function AddToDashboardModal({
 					<div className="max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
 							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-								<div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-								<span className="sr-only">Loading dashboards</span>
+								<LoadingIndicator label="Loading dashboards" />
 							</div>
 						) : filteredDashboards.length === 0 && !search.trim() ? (
 							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">

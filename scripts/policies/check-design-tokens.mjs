@@ -305,6 +305,14 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'hand-rolled-spinner',
+		description:
+			'hand-rolled animate-spin spinner — use LoadingSpinner from src/ui/Loaders in buttons and inline controls, or LoadingIndicator from src/ui/Status for in-panel loading',
+		pattern: /\banimate-spin\b/g,
+		// src/ui/Loaders owns the one spinner.
+		uiOwned: true
+	},
+	{
 		id: 'conflicting-named-typography',
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',

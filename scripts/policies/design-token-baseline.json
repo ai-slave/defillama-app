@@ -16,6 +16,7 @@
 		"implicit-border-color": 3,
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 0,
+		"hand-rolled-spinner": 0,
 		"conflicting-named-typography": 31
 	},
 	"product": {
@@ -35,6 +36,7 @@
 		"implicit-border-color": 3,
 		"deprecated-tailwind-spelling": 0,
 		"raw-popover-surface": 48,
+		"hand-rolled-spinner": 31,
 		"conflicting-named-typography": 0
 	}
 }

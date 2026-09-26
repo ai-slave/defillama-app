@@ -9,6 +9,7 @@ import {
 	authPrimaryButtonStyles
 } from '~/auth/AuthDialog'
 import { OtpRequestError, sendVerificationCode, verifyEmailCode } from '~/auth/emailVerification'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 export function VerifyEmailDialog({
 	accountId,
@@ -102,10 +103,7 @@ export function VerifyEmailDialog({
 					<button type="submit" disabled={pending || otp.length !== 6} className={authPrimaryButtonStyles}>
 						{verify.isPending ? (
 							<span className="inline-flex items-center gap-2">
-								<span
-									aria-hidden
-									className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-								/>
+								<LoadingSpinner size={16} />
 								Verifying...
 							</span>
 						) : (

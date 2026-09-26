@@ -14,6 +14,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatRatio } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -314,7 +315,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 			<Card padding="md" className="flex flex-col items-center gap-6">
 				{!showContent ? (
 					<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
-						<p className="body-sm text-tertiary">Loading...</p>
+						<LoadingIndicator />
 					</div>
 				) : (
 					<div className="flex flex-col sm:flex-row">
