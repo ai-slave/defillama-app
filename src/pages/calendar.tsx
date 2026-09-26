@@ -1,34 +1,26 @@
-import * as Ariakit from '@ariakit/react'
 import { type ColumnFiltersState, createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
-import { selectTriggerStyles } from '~/components/Select/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import calendarEvents from '~/constants/calendar'
 import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
+import { type CalendarEvent, selectCalendarEvents } from '~/containers/Unlocks/calendarEvents'
 import { formatUnlockDate, formatUnlockTime } from '~/containers/Unlocks/dateFormat'
 import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import {
-	popoverActionBarStyles,
-	popoverActionButtonStyles,
-	popoverMultiSelectCheckStyles,
-	popoverRowWithBorderStyles
-} from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
-import { pushShallowQuery } from '~/utils/routerQuery'
 
 const tableFeaturesConfig = filteredTableFeatures
 
@@ -84,36 +76,14 @@ type CalendarRow = {
 
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, CalendarRow>()
 
-const options = ['Unlock', 'Close', 'Macro', 'Crypto']
-
 export default function Protocols({ emissions }: { emissions: Array<CalendarEmission> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: false }])
 	const router = useRouter()
-	const { type } = router.query
-
-	const selectedOptions = React.useMemo(() => {
-		let selectedOptions: Array<string>
-		if (type) {
-			if (typeof type === 'string') {
-				selectedOptions = type === 'All' ? [...options] : type === 'None' ? [] : [type]
-			} else {
-				selectedOptions = [...type]
-			}
-		} else selectedOptions = [...options]
-
-		return selectedOptions
-	}, [type])
-	const selectedOptionsSet = React.useMemo(() => new Set(selectedOptions), [selectedOptions])
 	const [mountedAtMs] = React.useState(() => Date.now())
 
-	const allEvents = React.useMemo(() => {
-		const events: Array<{
-			name: string
-			timestamp: number
-			type: string
-			link?: string
-		}> = []
+	const events = React.useMemo(() => {
+		const events: Array<CalendarEvent> = []
 		for (const emission of emissions) {
 			const tokens = emission.unlock[1]
 			const tokenValue = emission.tPrice ? tokens * emission.tPrice : null
@@ -137,25 +107,16 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 				})
 			}
 		}
-
-		const filteredEvents: Array<{
-			name: string
-			timestamp: number
-			type: string
-			link?: string
-		}> = []
-		for (const event of events) {
-			if (event.timestamp >= mountedAtMs && selectedOptionsSet.has(event.type)) {
-				filteredEvents.push(event)
-			}
-		}
-		filteredEvents.sort((a, b) => a.timestamp - b.timestamp)
-		return filteredEvents
-	}, [emissions, selectedOptionsSet, mountedAtMs])
+		return events
+	}, [emissions])
+	const { typeOptions, rows } = React.useMemo(
+		() => selectCalendarEvents(events, mountedAtMs, router.query),
+		[events, mountedAtMs, router.query]
+	)
 
 	const instance = useTable({
 		features: tableFeaturesConfig,
-		data: allEvents,
+		data: rows,
 		columns: calendarColumns,
 		state: {
 			columnFilters,
@@ -185,67 +146,18 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 				<PanelHeader className="gap-4 *:last:ml-auto">
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
 
-					<Ariakit.ComboboxProvider
-						selectedValue={selectedOptions}
-						setSelectedValue={(newOptions) => {
-							void pushShallowQuery(router, { type: newOptions })
-						}}
-					>
-						<Ariakit.ComboboxSelect className={selectTriggerStyles('filter', 'md')}>
-							{selectedOptions.length > 0 ? (
-								<>
-									<span>Type: </span>
-									<span className="text-link">
-										{`${selectedOptions[1]}${
-											selectedOptions.length > 1 ? ` + ${selectedOptions.length - 1} others` : ''
-										}`}
-									</span>
-								</>
-							) : (
-								<span>Filter by type</span>
-							)}
-							<Ariakit.ComboboxSelectArrow />
-						</Ariakit.ComboboxSelect>
-						<ComboboxSurface variant="list">
-							<span className={popoverActionBarStyles}>
-								<button
-									type="button"
-									onClick={() => {
-										void pushShallowQuery(router, { type: 'None' })
-									}}
-									className={popoverActionButtonStyles}
-								>
-									Clear
-								</button>
-								<button
-									type="button"
-									onClick={() => {
-										void pushShallowQuery(router, { type: 'All' })
-									}}
-									className={popoverActionButtonStyles}
-								>
-									Toggle all
-								</button>
-							</span>
-
-							{options.map((value) => (
-								<Ariakit.ComboboxItem
-									key={`calendar-type-${value}`}
-									value={value}
-									className={popoverRowWithBorderStyles}
-								>
-									<span>{value}</span>
-									<Ariakit.ComboboxItemSelected>
-										{(selected) => (
-											<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-												{selected ? <Icon name="check" className="size-3" /> : null}
-											</span>
-										)}
-									</Ariakit.ComboboxItemSelected>
-								</Ariakit.ComboboxItem>
-							))}
-						</ComboboxSurface>
-					</Ariakit.ComboboxProvider>
+					{typeOptions.length > 1 ? (
+						<SelectWithCombobox
+							allValues={typeOptions}
+							includeQueryKey="type"
+							excludeQueryKey="excludeType"
+							label="Type"
+							labelType="regular"
+							variant="filter"
+							size="md"
+							nestedMenu={false}
+						/>
+					) : null}
 
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search events...</span>

@@ -10,6 +10,7 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { BasicLink } from '~/components/Link'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
@@ -30,7 +31,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import { pushShallowQuery } from '~/utils/routerQuery'
 
 const tableFeaturesConfig = expandedFilteredTableFeatures
 
@@ -163,12 +164,10 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 		void pushShallowQuery(router, { [key]: value })
 	}
 
-	const unlockTypesParam = readSingleQueryValue(router.query.unlockTypes)
-	const selectedUnlockTypes = useMemo(() => {
-		if (!unlockTypesParam) return unlockTypes
-		const types = Array.from(new Set(unlockTypesParam.split(','))).filter((type) => unlockTypes.includes(type))
-		return types.length > 0 ? types : unlockTypes
-	}, [unlockTypes, unlockTypesParam])
+	const selectedUnlockTypes = useMemo(
+		() => readSelectionFromQuery(router.query, 'unlockType', 'excludeUnlockType', unlockTypes),
+		[router.query, unlockTypes]
+	)
 
 	const {
 		minUnlockValue: minUnlockValueQuery,
@@ -361,12 +360,8 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 
 				<SelectWithCombobox
 					allValues={unlockTypeOptions}
-					selectedValues={selectedUnlockTypes}
-					setSelectedValues={(values: Array<string> | ((prev: Array<string>) => Array<string>)) => {
-						const keys = typeof values === 'function' ? values(selectedUnlockTypes) : values
-						const isAllSelected = keys.length === unlockTypes.length
-						setQueryParam('unlockTypes', isAllSelected ? undefined : keys.join(','))
-					}}
+					includeQueryKey="unlockType"
+					excludeQueryKey="excludeUnlockType"
 					nestedMenu={false}
 					label="Next Event Types"
 					labelType="smol"
