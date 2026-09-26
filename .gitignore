@@ -54,3 +54,6 @@ next-env.d.ts
 
 # Local browser harness for the LlamaAI terminal — dev tooling, not product code.
 scripts/terminal-e2e/
+
+# vitest reports and caches
+.vitest/

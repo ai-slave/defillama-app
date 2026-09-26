@@ -5,6 +5,7 @@ import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { settleQueries } from '~/utils/testing/settleQueries'
 import type { KpkMandates } from '../api'
 import Mandates from '../Mandates'
 
@@ -243,7 +244,7 @@ describe('kpk Treasury mandates tab', () => {
 	beforeEach(() => {
 		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 		served = MANDATES
-		client = new QueryClient()
+		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		http.serve({ '/api/public/kpk/mandates': () => served })
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -266,8 +267,8 @@ describe('kpk Treasury mandates tab', () => {
 				</QueryClientProvider>
 			)
 		)
-		await vi.waitFor(() => expect(container.textContent).toContain('Per-client breakdown'), { timeout: 1000 })
-		await vi.waitFor(() => expect(container.textContent).toContain('ENS DAO'), { timeout: 1000 })
+		await settleQueries(client)
+		expect(container.textContent).toContain('ENS DAO')
 	}
 
 	const clickChip = async (label: string) => {

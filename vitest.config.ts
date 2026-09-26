@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { configDefaults, defineConfig } from 'vitest/config'
+import type { VitestPluginContext } from 'vitest/node'
 
 const { reactCompilerBabel } = createRequire(import.meta.url)('./scripts/reactCompilerBabel.cjs')
 
@@ -19,9 +20,15 @@ function reactCompilerUnderTest() {
 	// Application source, hooks included. Not tests, which are what does the checking, and not
 	// declarations, which have no runtime.
 	const appSource = /\/src\/.*(?<!\.test)(?<!\.d)\.tsx?$/
+	// The module cache keys on file content, config files, plugin names and the lockfile, so a compiler
+	// upgrade already starts a fresh cache. The options come from a runtime require it cannot see.
+	const compilerOptions = JSON.stringify(compilerPlugins)
 	return {
 		name: 'react-compiler-under-test',
 		enforce: 'pre' as const,
+		configureVitest({ defineCacheKeyGenerator }: VitestPluginContext) {
+			defineCacheKeyGenerator(({ id }) => (appSource.test(id) ? compilerOptions : undefined))
+		},
 		transform(code: string, id: string) {
 			if (!appSource.test(id)) return null
 			const output = babel.transformSync(code, {
@@ -76,6 +83,9 @@ export default defineConfig({
 		// only changes how long a genuinely stuck test takes to give up.
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
+		// Keeps transformed modules in node_modules/.vitest-cache between runs. Transforming, mostly the
+		// React Compiler pass, is about a quarter of a cold run; a warm run skips nearly all of it.
+		fsModuleCache: true,
 		exclude: SHARED_EXCLUDE,
 		setupFiles: ['./vitest.setup.ts'],
 		projects: [

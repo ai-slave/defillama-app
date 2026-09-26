@@ -2,7 +2,7 @@
 import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import { DashboardTestProvider, type DashboardTestState } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
@@ -10,6 +10,11 @@ import ProDashboard from '..'
 import { subscribeSqlRefreshAll } from '../components/SqlChart/sqlRefreshBus'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
+// The editor dialogs load lazily. Loading them while the file is collected keeps the first open inside a
+// test's wait, and keeps their compile time (about 12s cold for the chart editor) off any hook's timeout.
+import '../components/AddChartModal/AddChartModal'
+import '../components/DashboardSettingsModal'
+import '../components/QuickAddPalette'
 
 const mocks = vi.hoisted(() => ({ push: vi.fn() }))
 const toastMock = vi.hoisted(() => Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn(), dismiss: vi.fn() }))
@@ -71,16 +76,6 @@ function CreateDialogOwner({ children }: { children: (store: Ariakit.DialogStore
 	createDialog = store
 	return children(store)
 }
-
-// The editor dialogs load lazily; loading them once up front keeps the first open inside a test's wait.
-beforeAll(async () => {
-	await Promise.all([
-		import('../components/AddChartModal/AddChartModal'),
-		import('../components/QuickAddPalette'),
-		import('../components/SqlChart/SqlChartModal'),
-		import('../components/DashboardSettingsModal')
-	])
-})
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true

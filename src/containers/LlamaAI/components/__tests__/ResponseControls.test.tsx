@@ -12,6 +12,9 @@ let container: HTMLDivElement
 const writeText = vi.fn<(text: string) => Promise<void>>()
 const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
 beforeEach(async () => {
+	// "Copied" reverts on a 2s timer. Real time lets a starved worker pass it between a click and the
+	// assertion that follows, so the tests move it themselves.
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	vi.clearAllMocks()
 	Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
 	vi.stubGlobal('ClipboardItem', undefined)
@@ -24,6 +27,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	vi.unstubAllGlobals()
+	vi.useRealTimers()
 	if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard)
 	else Reflect.deleteProperty(navigator, 'clipboard')
 })
@@ -50,6 +54,16 @@ test('pending copy is named, announced and blocks duplicate clicks until success
 	expect(button.disabled).toBe(false)
 	expect(button.getAttribute('aria-label')).toBe('Copied')
 	expect(container.querySelector('[role="status"]')?.textContent).toBe('Response copied')
+})
+
+test('the copied confirmation returns to the copy label after two seconds', async () => {
+	writeText.mockResolvedValue(undefined)
+	await act(async () => copyButton().click())
+	expect(copyButton().getAttribute('aria-label')).toBe('Copied')
+	await act(async () => vi.advanceTimersByTime(1999))
+	expect(copyButton().getAttribute('aria-label')).toBe('Copied')
+	await act(async () => vi.advanceTimersByTime(1))
+	expect(copyButton().getAttribute('aria-label')).toBe('Copy')
 })
 
 test('clipboard failure is visible and the same control retries successfully', async () => {

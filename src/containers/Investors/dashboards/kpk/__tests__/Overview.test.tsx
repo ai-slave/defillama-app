@@ -5,6 +5,7 @@ import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { settleQueries } from '~/utils/testing/settleQueries'
 import type { KpkOverview, KpkRangedComposition } from '../api'
 import Overview from '../Overview'
 
@@ -60,7 +61,7 @@ describe('kpk Overview tab', () => {
 	beforeEach(() => {
 		;(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 		served = OVERVIEW
-		client = new QueryClient()
+		client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		http.serve({ '/api/public/kpk/overview': () => served })
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -83,7 +84,8 @@ describe('kpk Overview tab', () => {
 				</QueryClientProvider>
 			)
 		)
-		await vi.waitFor(() => expect(container.textContent).toContain('$9.9bn'), { timeout: 1000 })
+		await settleQueries(client)
+		expect(container.textContent).toContain('$9.9bn')
 	}
 
 	test('links the operations query beside the rebalancing caption', async () => {

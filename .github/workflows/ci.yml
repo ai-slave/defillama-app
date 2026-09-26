@@ -99,5 +99,23 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Transformed modules from the latest main run of this shard. Entries are keyed by file content,
+      # so a partial match is still correct; the lockfile hash in the key starts a fresh cache whenever
+      # dependencies change, which is also when Vitest would discard it.
+      - name: Restore module cache
+        uses: actions/cache/restore@v4
+        with:
+          path: node_modules/.vitest-cache
+          key: vitest-modules-${{ matrix.shard }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          restore-keys: vitest-modules-${{ matrix.shard }}-${{ hashFiles('bun.lock') }}-
+
       - name: Run tests
         run: bun run test -- --shard=${{ matrix.shard }}/4
+
+      # Only main saves, so pull requests read one shared cache instead of each writing their own.
+      - name: Save module cache
+        if: github.event_name == 'push' && !cancelled()
+        uses: actions/cache/save@v4
+        with:
+          path: node_modules/.vitest-cache
+          key: vitest-modules-${{ matrix.shard }}-${{ hashFiles('bun.lock') }}-${{ github.sha }}
