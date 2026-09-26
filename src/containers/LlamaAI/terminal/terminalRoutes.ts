@@ -40,6 +40,11 @@ export function legacyTerminalRedirect(pathname: string, searchParams: URLSearch
 	return sessionId && sessionId !== 'shared' ? `${TERMINAL_PATH}/${sessionId}${passThroughQuery(searchParams)}` : null
 }
 
+// Conversation pages stay static so client navigation needs no build-bound data request,
+// which leaves rejecting paths past the session ID to the proxy.
+export const isExtraConversationPath = (pathname: string) =>
+	/^\/ai\/(?:chat|terminal)\/[^/]+\/./.test(pathname) && !/^\/ai\/chat\/shared\/[^/]+$/.test(pathname)
+
 export function terminalEntryFromUrl(asPath: string): { symbol?: string; cleanUrl?: string } {
 	const url = new URL(asPath, 'http://localhost')
 	if (!isTerminalPath(url.pathname) || (!url.searchParams.has('symbol') && !url.searchParams.has('view'))) return {}

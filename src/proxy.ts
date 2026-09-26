@@ -5,7 +5,7 @@ import {
 	getInvestorsSiteForRequest,
 	getInvestorsSiteWithPathFallback
 } from '~/containers/Investors/config'
-import { legacyTerminalRedirect } from '~/containers/LlamaAI/terminal/terminalRoutes'
+import { isExtraConversationPath, legacyTerminalRedirect } from '~/containers/LlamaAI/terminal/terminalRoutes'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
@@ -194,6 +194,12 @@ export function proxy(request: NextRequest) {
 		return NextResponse.redirect(new URL(terminalRedirect, request.url))
 	}
 
+	if (isExtraConversationPath(request.nextUrl.pathname)) {
+		const notFound = request.nextUrl.clone()
+		notFound.pathname = '/404'
+		return NextResponse.rewrite(notFound)
+	}
+
 	const origin = request.headers.get('origin')
 	const isPublicApi = isPublicApiPath(request.nextUrl.pathname)
 	const allowedOrigin = isPublicApi ? '*' : resolveAllowedOrigin(origin, request.nextUrl.origin)
@@ -246,6 +252,9 @@ export const config = {
 		'/thorchain',
 		'/kpk',
 		'/uniswap',
+		// Client navigation fetches /_next/data without Accept: text/html; it must reach the extra-segment 404 too.
+		'/ai/chat/:path+',
+		'/ai/terminal/:path+',
 		{
 			source: '/((?!api|_next/static|_next/image).*)',
 			has: [{ type: 'header', key: 'accept', value: '.*text/html.*' }]

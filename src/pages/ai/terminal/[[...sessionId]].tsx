@@ -1,1 +1,1 @@
-export { default, getServerSideProps } from '../chat/[[...sessionId]]'
+export { default } from '../chat/[[...sessionId]]'

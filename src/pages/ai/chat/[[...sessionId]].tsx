@@ -7,8 +7,6 @@ import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPro
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 
-export { getServerSideProps } from '~/containers/LlamaAI/server/conversationPage'
-
 function LlamaAIPage() {
 	const router = useRouter()
 	const { user, loaders } = useAuthContext()

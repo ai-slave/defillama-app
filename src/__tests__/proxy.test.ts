@@ -1,3 +1,4 @@
+import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server'
 import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABGroup, isABVisitorId } from '~/utils/abTesting'
@@ -285,5 +286,34 @@ describe('old terminal links', () => {
 			proxy(pageRequest('https://defillama.com/ai/chat/shared/tok?view=terminal')).headers.get('location')
 		).toBeNull()
 		expect(proxy(pageRequest('https://defillama.com/ai/chat/abc')).headers.get('location')).toBeNull()
+	})
+})
+
+describe('conversation paths', () => {
+	test('return 404 past the session ID', async () => {
+		const { proxy } = await loadProxy()
+
+		for (const path of ['/ai/chat/abc/extra', '/ai/terminal/abc/extra', '/ai/chat/shared/tok/extra']) {
+			expect(rewriteUrl(proxy(pageRequest(`https://defillama.com${path}`)))).toBe('https://defillama.com/404')
+		}
+	})
+
+	test('reach the proxy from client navigation data requests', async () => {
+		const { config } = await loadProxy()
+
+		for (const url of [
+			'https://defillama.com/_next/data/build-id/ai/chat/abc/extra.json',
+			'https://defillama.com/_next/data/build-id/ai/terminal/abc/extra.json'
+		]) {
+			expect(unstable_doesMiddlewareMatch({ config, url, headers: { accept: '*/*' } })).toBe(true)
+		}
+	})
+
+	test('serve New Chat, sessions and shared links', async () => {
+		const { proxy } = await loadProxy()
+
+		for (const path of ['/ai/chat', '/ai/chat/abc', '/ai/terminal', '/ai/terminal/abc', '/ai/chat/shared/tok']) {
+			expect(rewriteUrl(proxy(pageRequest(`https://defillama.com${path}`)))).toBeNull()
+		}
 	})
 })

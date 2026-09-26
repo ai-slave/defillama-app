@@ -81,7 +81,9 @@ function parsePinnedMetrics(value: string): Array<string> {
 }
 
 export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: string }> }) {
-	const { asPath } = useRouter()
+	const router = useRouter()
+	// A rewritten 404 keeps the requested URL in the browser, unlike its static server render.
+	const asPath = router.pathname === '/404' ? '/404' : router.asPath
 	const { data: liteDashboards } = useGetLiteDashboards()
 
 	const { isAuthenticated, user } = useAuthContext()
