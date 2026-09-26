@@ -1377,44 +1377,22 @@ describe('filterProtocolsByCategoryQuery', () => {
 	const rows = [lending, dex, family]
 	const categories = ['Lending', 'Dexs']
 	const names = (query: Record<string, string | Array<string>>) =>
-		filterProtocolsByCategoryQuery(rows, categories, query).protocols.map((row) => row.name)
+		filterProtocolsByCategoryQuery(rows, categories, query).map((row) => row.name)
 
 	test('shows every row, parents whole, when the URL has no category filter', () => {
-		expect(filterProtocolsByCategoryQuery(rows, categories, {})).toEqual({
-			selectedCategories: ['Lending', 'Dexs'],
-			protocols: rows
-		})
+		expect(filterProtocolsByCategoryQuery(rows, categories, {})).toEqual(rows)
 	})
 
 	test('keeps only matching rows and splits a parent whose children do not all match', () => {
 		expect(names({ category: 'Lending' })).toEqual(['Aave', 'Family Lend'])
-		expect(names({ category: ['Lending', 'Dexs'] })).toEqual(['Aave', 'Uniswap', 'Family'])
-	})
-
-	test('drops excluded categories from the selection and the rows', () => {
-		expect(filterProtocolsByCategoryQuery(rows, categories, { excludeCategory: 'Dexs' })).toEqual({
-			selectedCategories: ['Lending'],
-			protocols: [lending, family.childProtocols![0]]
-		})
+		expect(names({ excludeCategory: 'Lending' })).toEqual(['Uniswap', 'Family Swap'])
 	})
 
 	test('shows no rows after Deselect All', () => {
-		expect(filterProtocolsByCategoryQuery(rows, categories, { category: 'None' })).toEqual({
-			selectedCategories: [],
-			protocols: []
-		})
-		expect(filterProtocolsByCategoryQuery(rows, categories, { category: '' })).toEqual({
-			selectedCategories: [],
-			protocols: []
-		})
-		expect(names({ excludeCategory: ['Lending', 'Dexs'] })).toEqual([])
-	})
-
-	test('treats All as a selection that does not narrow the rows', () => {
-		expect(names({ category: 'All' })).toEqual(['Aave', 'Uniswap', 'Family'])
+		expect(names({ category: 'None' })).toEqual([])
 	})
 
 	test('ignores the category filter on pages without categories', () => {
-		expect(filterProtocolsByCategoryQuery(rows, [], { category: '' }).protocols).toEqual(rows)
+		expect(filterProtocolsByCategoryQuery(rows, [], { category: 'None' })).toEqual(rows)
 	})
 })

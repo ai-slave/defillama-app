@@ -1,6 +1,6 @@
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { canonicalQuerySignature } from '~/server/tablePages/tableQuery'
 import type { CursorTablePage } from '~/server/tablePages/types'
-import { parseExcludeParam, getSelectedChainFilters, parseIncludeExcludeParam } from '~/utils/routerQuery'
 import { isProtocolListTvlKey } from './api.types'
 import type { IRecentProtocolsPageData } from './types'
 import type { applyExtraTvl } from './utils'
@@ -76,14 +76,10 @@ export function protocolListSignature(query: ProtocolListQuery): string {
 	return canonicalQuerySignature(protocolListQuery(query), { exclude: [] })
 }
 export function protocolListSelection(query: ProtocolListQuery, chainList: Array<string>, categories: Array<string>) {
-	const { chain, excludeChain, category, excludeCategory } = query
-	const excludeChainSet = parseExcludeParam(excludeChain)
-	let selectedChains = getSelectedChainFilters(chain, chainList)
-	selectedChains = excludeChainSet.size > 0 ? selectedChains.filter((c) => !excludeChainSet.has(c)) : selectedChains
-
-	const selectedCategories = parseIncludeExcludeParam(category, excludeCategory, categories)
-
-	return { selectedChains, selectedCategories }
+	return {
+		selectedChains: readSelectionFromQuery(query, 'chain', 'excludeChain', chainList),
+		selectedCategories: readSelectionFromQuery(query, 'category', 'excludeCategory', categories)
+	}
 }
 export function protocolListUrl(
 	kind: ProtocolListKind,

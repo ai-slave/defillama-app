@@ -1,13 +1,19 @@
 import type { NextRouter } from 'next/router'
-import { pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { ExcludeQueryKey } from './types'
 
-// URL update helpers - used when includeQueryKey/excludeQueryKey is provided
-// Encoding:
-// - missing include+exclude => "all selected" (default)
-// - include="None" => "none selected"
-// - include=[...] or include="..." => explicit include selection(s)
-// - exclude=[...] or exclude="..." => start from all, then remove excludes
+/*
+ * How a filter picker stores its selection in the URL. Pickers write through `getQueryUpdatesFromSelected` and
+ * pages read through `readSelectionFromQuery`, on the client and the server alike, so the checkmarks, rows,
+ * requests and exports all see the same selection.
+ *
+ * - No keys, or an empty value: the picker's default, which is every option unless the picker passes a subset.
+ * - `include=All`: every option.
+ * - `include=None`: nothing selected; the page shows an empty result.
+ * - `include=a&include=b`: those options. Values that are not options are dropped and not counted.
+ * - `exclude=c`: every option except those. The writer picks whichever list is shorter, so an exclude list
+ *   means exactly the same as including the rest.
+ */
 export const getQueryUpdatesFromSelected = (
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,
@@ -118,4 +124,23 @@ export const updateQueryFromSelected = (
 		return
 	}
 	void pushShallowQuery(router, payload)
+}
+
+/** Reads the selection that `getQueryUpdatesFromSelected` wrote, in option order. */
+export function readSelectionFromQuery(
+	query: Readonly<Record<string, string | Array<string> | undefined>>,
+	includeKey: string,
+	excludeKey: ExcludeQueryKey,
+	allKeys: ReadonlyArray<string>,
+	defaultSelectedValues: ReadonlyArray<string> = allKeys
+): Array<string> {
+	const included = toNonEmptyArrayParam(query[includeKey])
+	const excluded = new Set(toNonEmptyArrayParam(query[excludeKey]))
+	if (included.includes('None')) return []
+	if (included.length === 0 && excluded.size === 0) {
+		const defaults = new Set(defaultSelectedValues)
+		return allKeys.filter((key) => defaults.has(key))
+	}
+	const picked = included.length > 0 && !included.includes('All') ? new Set(included) : null
+	return allKeys.filter((key) => (!picked || picked.has(key)) && !excluded.has(key))
 }

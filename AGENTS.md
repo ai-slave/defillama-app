@@ -91,6 +91,10 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 - Test a custom formatter with real builder output that has at least two series with different values, and confirm the test fails without the fix.
 - Before grouping chart data by week, month, quarter, or year, follow "Grouped chart periods" in `docs/date-formatting.md` and reuse its shared formatters instead of writing a local bucketing loop.
 
+## Filter Pickers
+
+- Filter pickers read and write the page URL only through `src/components/Select/query.ts`; its header lists the rules. Pass a picker its URL keys and options and let it read its own selection; filter rows, requests and exports with `readSelectionFromQuery`, on the client and the server alike.
+
 ## Local User Instructions
 
 If `.codex/local-instructions.md` exists, read and follow it before making code changes. It contains local user preferences and skill routing, and is intentionally gitignored.

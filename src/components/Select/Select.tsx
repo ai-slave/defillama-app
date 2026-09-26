@@ -18,14 +18,13 @@ import {
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
-import { updateQueryFromSelected } from './query'
+import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
 
 interface ISelectBase {
 	allValues: SelectValues
-	selectedValues: Array<string> | string
 	label: React.ReactNode
 	nestedMenu?: boolean
 	labelType?: 'regular' | 'smol' | 'none'
@@ -42,6 +41,8 @@ interface ISelectWithUrlParams extends ISelectBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
 	defaultSelectedValues?: Array<string>
+	/** Omit it: the picker reads its selection from the URL. Only pages that still read the URL themselves pass it. */
+	selectedValues?: Array<string>
 	setSelectedValues?: never
 }
 
@@ -72,7 +73,6 @@ function isMultiStateSelect(props: ISelect): props is ISelectWithStateArray {
 export function Select(props: ISelect) {
 	const {
 		allValues,
-		selectedValues,
 		label,
 		nestedMenu,
 		labelType = 'regular',
@@ -84,6 +84,21 @@ export function Select(props: ISelect) {
 		unmountOnHide = true
 	} = props
 	const router = useRouter()
+	const { includeQueryKey, excludeQueryKey, defaultSelectedValues } = isUrlSelect(props) ? props : {}
+	const urlSelection = React.useMemo(
+		() =>
+			includeQueryKey && excludeQueryKey
+				? readSelectionFromQuery(
+						router.query,
+						includeQueryKey,
+						excludeQueryKey,
+						allValues.map((v) => (typeof v === 'string' ? v : v.key)),
+						defaultSelectedValues
+					)
+				: [],
+		[router.query, includeQueryKey, excludeQueryKey, allValues, defaultSelectedValues]
+	)
+	const selectedValues = props.selectedValues ?? urlSelection
 	// Nested menus share their parent's values, so each select needs its own field.
 	const selectionName = React.useId()
 	const labelText = typeof label === 'string' ? label : typeof label === 'number' ? String(label) : 'Select'

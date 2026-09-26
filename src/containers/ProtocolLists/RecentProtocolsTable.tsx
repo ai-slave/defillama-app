@@ -36,7 +36,6 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ProtocolListInitialProps, ProtocolListPage, RecentProtocolTableRow } from './tableQuery'
 import {
 	protocolListRequestQuery,
-	protocolListSelection,
 	protocolListSignature,
 	protocolListSort,
 	protocolListSortQuery,
@@ -71,7 +70,6 @@ export function RecentlyListedProtocolsTable({
 		getRowKey: (row: RecentProtocolTableRow) => row.defillamaId,
 		buildPageUrl: ({ version, cursor }) => protocolListUrl(kind, query, version, cursor)
 	})
-	const { selectedChains, selectedCategories } = protocolListSelection(query, pages.chainList, pages.categories)
 	const columns = kind === 'airdrops' ? airdropsColumns : recentlyListedProtocolsColumns
 	const downloadCsv = async () => {
 		const response = await fetch(protocolListUrl(kind, query, pages.version, null, true))
@@ -121,7 +119,6 @@ export function RecentlyListedProtocolsTable({
 						<SelectWithCombobox
 							label="Chains"
 							allValues={pages.chainList}
-							selectedValues={selectedChains}
 							includeQueryKey="chain"
 							excludeQueryKey="excludeChain"
 							labelType="smol"
@@ -132,7 +129,6 @@ export function RecentlyListedProtocolsTable({
 							<SelectWithCombobox
 								label="Category"
 								allValues={pages.categories}
-								selectedValues={selectedCategories}
 								includeQueryKey="category"
 								excludeQueryKey="excludeCategory"
 								labelType="smol"

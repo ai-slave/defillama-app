@@ -115,7 +115,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			: COLUMNS_BY_TYPE[props.type]
 	const columnsOptions = useMemo(() => getColumnsOptions(props.type, tableColumns), [props.type, tableColumns])
 
-	const { selectedCategories, protocols } = useMemo(
+	const protocols = useMemo(
 		() => filterProtocolsByCategoryQuery(props.protocols, props.categories, router.query),
 		[props.protocols, props.categories, router.query]
 	)
@@ -317,7 +317,6 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 					{props.categories.length > 0 ? (
 						<SelectWithCombobox
 							allValues={props.categories}
-							selectedValues={selectedCategories}
 							includeQueryKey="category"
 							excludeQueryKey="excludeCategory"
 							nestedMenu={false}

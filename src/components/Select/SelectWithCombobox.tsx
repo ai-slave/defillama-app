@@ -22,14 +22,13 @@ import {
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
-import { updateQueryFromSelected } from './query'
+import { readSelectionFromQuery, updateQueryFromSelected } from './query'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
 import { selectTriggerStyles } from './types'
 
 interface ISelectWithComboboxBase {
 	allValues: SelectValues
-	selectedValues: Array<string>
 	/** What the trigger lists instead of `selectedValues`, e.g. one group name for its selected members. */
 	selectedLabels?: Array<string>
 	label: string
@@ -61,12 +60,15 @@ interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
 	defaultSelectedValues?: Array<string>
+	/** Omit it: the picker reads its selection from the URL. Only pages that still read the URL themselves pass it. */
+	selectedValues?: Array<string>
 	setSelectedValues?: never
 }
 
 interface ISelectWithComboboxState extends ISelectWithComboboxBase {
 	includeQueryKey?: never
 	excludeQueryKey?: never
+	selectedValues: Array<string>
 	setSelectedValues: (values: Array<string>) => void
 }
 
@@ -85,8 +87,8 @@ export function getSelectOptionLabel(allValues: SelectValues, selectedValue: str
 
 export function SelectWithCombobox({
 	allValues,
-	selectedValues,
-	selectedLabels = selectedValues,
+	selectedValues: selectedValuesProp,
+	selectedLabels: selectedLabelsProp,
 	setSelectedValues: setSelectedValuesProp,
 	label,
 	singleSelect = false,
@@ -115,6 +117,21 @@ export function SelectWithCombobox({
 	emptyLabel = 'No results found'
 }: ISelectWithCombobox) {
 	const router = useRouter()
+	const urlSelection = React.useMemo(
+		() =>
+			includeQueryKey && excludeQueryKey
+				? readSelectionFromQuery(
+						router.query,
+						includeQueryKey,
+						excludeQueryKey,
+						allValues.map((v) => (typeof v === 'string' ? v : v.key)),
+						defaultSelectedValues
+					)
+				: [],
+		[router.query, includeQueryKey, excludeQueryKey, allValues, defaultSelectedValues]
+	)
+	const selectedValues = selectedValuesProp ?? urlSelection
+	const selectedLabels = selectedLabelsProp ?? selectedValues
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
 	const shouldPortalPopover = portal ?? true

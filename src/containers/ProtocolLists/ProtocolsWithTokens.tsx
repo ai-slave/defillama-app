@@ -5,6 +5,7 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -18,7 +19,6 @@ import { Icon } from '~/ui/Icon'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import { parseIncludeExcludeParam } from '~/utils/routerQuery'
 import type { IProtocolsWithTokensByChainPageData, ITokenMetricProtocolRow, TokenMetricType } from './types'
 
 const chainLikeCategories = new Set(['Chain', 'Rollup'])
@@ -26,26 +26,11 @@ const chainLikeCategories = new Set(['Chain', 'Rollup'])
 export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) {
 	const router = useRouter()
 
-	const { category, excludeCategory } = router.query
-
-	const { selectedCategories, protocols } = useMemo(() => {
-		const selectedCategories = parseIncludeExcludeParam(category, excludeCategory, props.categories)
-		const categoriesToFilter = selectedCategories.filter((c) => c.toLowerCase() !== 'all' && c.toLowerCase() !== 'none')
-
-		const protocols =
-			props.categories.length === 0
-				? props.protocols
-				: selectedCategories.length === 0
-					? []
-					: categoriesToFilter.length > 0
-						? getProtocolsByCategory(props.protocols, categoriesToFilter)
-						: props.protocols
-
-		return {
-			selectedCategories,
-			protocols
-		}
-	}, [category, excludeCategory, props.categories, props.protocols])
+	const protocols = useMemo(() => {
+		if (props.categories.length === 0) return props.protocols
+		const selectedCategories = readSelectionFromQuery(router.query, 'category', 'excludeCategory', props.categories)
+		return selectedCategories.length === 0 ? [] : getProtocolsByCategory(props.protocols, selectedCategories)
+	}, [router.query, props.categories, props.protocols])
 
 	const { columns, sortingState } = getMetricNameAndColumns(props.type)
 
@@ -66,7 +51,6 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 						{props.categories.length > 0 ? (
 							<SelectWithCombobox
 								allValues={props.categories}
-								selectedValues={selectedCategories}
 								includeQueryKey="category"
 								excludeQueryKey="excludeCategory"
 								nestedMenu={false}

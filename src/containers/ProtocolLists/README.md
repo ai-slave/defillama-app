@@ -67,8 +67,8 @@ configuration is changed here.
 
 Default listing order is newest first on both pages, matching the former table sort
 (including airdrops, whose source builder orders ascending). Equal values use protocol
-ID as a deterministic tie-breaker. Explicit empty category selections and the legacy
-`category=All` / `category=None` empty-result behavior remain unchanged.
+ID as a deterministic tie-breaker. Chain and category selections follow the filter
+picker rules in `src/components/Select/query.ts`.
 
 Token metric lists:
 

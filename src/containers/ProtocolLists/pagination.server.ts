@@ -20,13 +20,7 @@ function filterRows(data: IRecentProtocolsPageData, query: ProtocolListQuery) {
 	const maxTvl = parseNumberQueryParam(query.maxTvl)
 	const rawKeys = query.tvlKeys ?? []
 	const tvlKeys = (typeof rawKeys === 'string' ? [rawKeys] : rawKeys).filter(isProtocolListTvlKey)
-	const categoriesToFilterSet = new Set(
-		selectedCategories
-			.filter(
-				(selectedCategory) => selectedCategory.toLowerCase() !== 'all' && selectedCategory.toLowerCase() !== 'none'
-			)
-			.map((selectedCategory) => selectedCategory.toLowerCase())
-	)
+	const categoriesToFilterSet = new Set(selectedCategories.map((selectedCategory) => selectedCategory.toLowerCase()))
 
 	const chainsToSelectSet = new Set(selectedChains.map((t) => t.toLowerCase()))
 

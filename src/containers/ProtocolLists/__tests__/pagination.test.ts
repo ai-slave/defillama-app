@@ -85,8 +85,6 @@ describe('server protocol lists', () => {
 		).toEqual([['Dual', 15]])
 		expect(names(getProtocolListRows(source, { chain: 'Base' }))).toEqual(['Dual'])
 		expect(names(getProtocolListRows(source, { category: 'Dexs' }))).toEqual(['Dex'])
-		expect(names(getProtocolListRows(source, { category: '' }))).toEqual([])
-		expect(names(getProtocolListRows(source, { category: 'All' }))).toEqual([])
 		expect(names(getProtocolListRows(source, { category: 'None' }))).toEqual([])
 		expect(names(getProtocolListRows(source, { chain: 'None' }))).toEqual([])
 		expect(names(getProtocolListRows(source, { hideForks: 'true' }))).toEqual(['Dex', 'Dual'])

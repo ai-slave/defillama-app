@@ -230,47 +230,6 @@ export function parseArrayParam(
 	const valid = validSet ?? new Set(allValues)
 	return arr.filter((value) => valid.has(value))
 }
-/**
- * Reads the selection a filter picker writes to the URL (see `getQueryUpdatesFromSelected`). A missing include
- * param selects every value, `None` or an empty value selects nothing, and excluded values are removed.
- *
- * @example
- * parseIncludeExcludeParam(undefined, 'bar', ['foo', 'bar']) // ['foo']
- * parseIncludeExcludeParam('None', undefined, ['foo', 'bar']) // []
- */
-export function parseIncludeExcludeParam(
-	include: QueryParamInput,
-	exclude: QueryParamInput,
-	allValues: Array<string>
-): Array<string> {
-	const selected = include === '' || isParamNone(include) ? [] : include ? toNonEmptyArrayParam(include) : allValues
-	const excludeSet = parseExcludeParam(exclude)
-	return excludeSet.size > 0 ? selected.filter((value) => !excludeSet.has(value)) : selected
-}
-
-/**
- * Resolves selected chain filters from a query param.
- * Handles special 'All' and 'None' values.
- *
- * @example
- * getSelectedChainFilters('All', ['eth', 'btc']) // ['eth', 'btc']
- * getSelectedChainFilters('None', ['eth', 'btc']) // []
- * getSelectedChainFilters('eth', ['eth', 'btc']) // ['eth']
- */
-export function getSelectedChainFilters(chainQueryParam: QueryParamInput, allChains: Array<string>): Array<string> {
-	if (!chainQueryParam) return allChains
-
-	const validChains = new Set(allChains)
-
-	if (typeof chainQueryParam === 'string') {
-		if (chainQueryParam === 'All') return allChains
-		if (chainQueryParam === 'None') return []
-		return validChains.has(chainQueryParam) ? [chainQueryParam] : []
-	}
-
-	return toNonEmptyArrayParam(chainQueryParam).filter((chain) => validChains.has(chain))
-}
-
 // ============================================================================
 // Serialization
 // ============================================================================

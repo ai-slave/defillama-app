@@ -32,8 +32,9 @@ Recent rows still require `listedAt`, including zero, and remain individual list
 Both tables default to newest first, as the previous table did. Equal sort values
 now use protocol ID for deterministic cursor boundaries. Nullable exact TVL,
 selected-chain coverage, zero-valued bounds and the four additive settings retain
-existing semantics. Explicit empty categories and legacy `category=All`/`None`
-empty results are preserved.
+existing semantics. Chain and category selections follow the filter picker rules in
+`src/components/Select/query.ts`: `None` shows no rows, and an empty value or `All`
+selects every option.
 
 ## Comparable initial-props measurements
 
