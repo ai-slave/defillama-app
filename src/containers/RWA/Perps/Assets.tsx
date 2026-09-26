@@ -16,7 +16,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
-import { RWAPerpsOverviewChart } from './OverviewChart'
+import { getRWAPerpsCexOnlyStacks, RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetsOverviewRow } from './types'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsAssetsOverviewRow>()
@@ -143,6 +143,10 @@ export function RWAPerpsAssetsOverview({
 				breakdown="baseAsset"
 				initialChartDataset={initialChartDataset}
 				includeCex={includeCex}
+				cexOnlyStacks={getRWAPerpsCexOnlyStacks(
+					assets.map((row) => row.asset),
+					dexAssets.map((row) => row.asset)
+				)}
 				stackLabel={d.baseAsset.label}
 			/>
 			<SearchTableProvider

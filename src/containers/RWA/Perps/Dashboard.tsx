@@ -18,9 +18,9 @@ import { buildTreemapCsvDataset } from '~/components/ECharts/TreemapChart/csv'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
-import { getQueryUpdatesFromSelected } from '~/components/Select/query'
+import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -53,13 +53,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
-import {
-	isTrueQueryParam,
-	parseArrayParam,
-	parseExcludeParam,
-	pushShallowQuery,
-	toNonEmptyArrayParam
-} from '~/utils/routerQuery'
+import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsBaseAssetBreakdownLabel } from './breakdownLabels'
 import type { RWAPerpsChartDefaults } from './chartState'
@@ -152,7 +146,9 @@ type RWAPerpsMarketFilterDefinition = {
 }
 
 type RWAPerpsMarketFilterState = RWAPerpsMarketFilterDefinition & {
-	options: Array<string>
+	/** Every option in the page's scope; the CEX and Forex toggles hide rows, never options. */
+	options: Array<{ key: string; name: string; help?: string }>
+	optionKeys: Array<string>
 	selectedValues: Array<string>
 	selectedValuesSet: ReadonlySet<string>
 	active: boolean
@@ -1123,59 +1119,71 @@ function getRWAPerpsFilterOptions(
 		.map(([label]) => label)
 }
 
-function getSelectedRWAPerpsFilterValues({
-	allValues,
-	includeQuery,
-	excludeQuery
-}: {
-	allValues: Array<string>
-	includeQuery: string | Array<string> | undefined
-	excludeQuery: string | Array<string> | undefined
-}) {
-	const validSet = new Set(allValues)
-	const excluded = parseExcludeParam(excludeQuery)
-	const baseSelection = parseArrayParam(includeQuery, allValues, validSet)
-
-	return excluded.size > 0 ? baseSelection.filter((value) => !excluded.has(value)) : baseSelection
-}
-
-function isRWAPerpsFilterActive(
-	selectedValues: Array<string>,
-	selectedValuesSet: ReadonlySet<string>,
-	allValues: Array<string>
-) {
-	if (selectedValues.length !== allValues.length) return true
-
-	return allValues.some((value) => !selectedValuesSet.has(value))
-}
-
-function getRWAPerpsMarketFilterStates({
-	markets,
+/**
+ * Each picker lists every option in the page's scope and reads the URL against that fixed list, so the CEX and Forex
+ * toggles never change what a selection means; they only hide rows. An option whose markets all sit behind a toggle
+ * that is off says which toggle it needs, and stays selectable.
+ */
+export function getRWAPerpsMarketFilterStates({
+	scopedMarkets,
 	query,
-	hideAssetClass
+	hideAssetClass,
+	hideCex,
+	hideForex
 }: {
-	markets: Array<IRWAPerpsMarket>
+	scopedMarkets: Array<IRWAPerpsMarket>
 	query: Record<string, string | Array<string> | undefined>
 	hideAssetClass: boolean
+	hideCex: boolean
+	hideForex: boolean
 }): Array<RWAPerpsMarketFilterState> {
 	return PERPS_MARKET_FILTER_DEFINITIONS.map((definition) => {
-		const options = getRWAPerpsFilterOptions(markets, definition.getValues)
-		const selectedValues = getSelectedRWAPerpsFilterValues({
-			allValues: options,
-			includeQuery: query[definition.includeQueryKey],
-			excludeQuery: query[definition.excludeQueryKey]
-		})
-		const selectedValuesSet = new Set(selectedValues)
-		const active = isRWAPerpsFilterActive(selectedValues, selectedValuesSet, options)
+		const optionKeys = getRWAPerpsFilterOptions(scopedMarkets, definition.getValues)
+		const enabled = !(hideAssetClass && definition.hideWhenHardScoped) && optionKeys.length > 1
+		const selectedValues = enabled
+			? readSelectionFromQuery(query, definition.includeQueryKey, definition.excludeQueryKey, optionKeys)
+			: optionKeys
+		const hints = getRWAPerpsToggleHints(scopedMarkets, definition.getValues, hideCex, hideForex)
 		return {
 			...definition,
-			options,
+			options: optionKeys.map((key) => {
+				const help = hints.get(key)
+				return help ? { key, name: key, help } : { key, name: key }
+			}),
+			optionKeys,
 			selectedValues,
-			selectedValuesSet,
-			active,
-			enabled: (!hideAssetClass || !definition.hideWhenHardScoped) && (options.length > 1 || active)
+			selectedValuesSet: new Set(selectedValues),
+			active: selectedValues.length < optionKeys.length,
+			enabled
 		}
 	})
+}
+
+/** Options whose markets are all CEX venues, or all Forex perps, need that toggle on to show any row. */
+function getRWAPerpsToggleHints(
+	markets: Array<IRWAPerpsMarket>,
+	getValues: (market: IRWAPerpsMarket) => Array<string>,
+	hideCex: boolean,
+	hideForex: boolean
+): Map<string, string> {
+	const needs = new Map<string, { cex: boolean; forex: boolean }>()
+	if (!hideCex && !hideForex) return new Map()
+	for (const market of markets) {
+		const isCex = market.venueType === 'CEX'
+		const isForex = market.assetClass?.[0] === FOREX_ASSET_CLASS
+		for (const value of getValues(market)) {
+			const need = needs.get(value) ?? { cex: true, forex: true }
+			need.cex &&= isCex
+			need.forex &&= isForex
+			needs.set(value, need)
+		}
+	}
+	const hints = new Map<string, string>()
+	for (const [value, need] of needs) {
+		if (hideCex && need.cex) hints.set(value, 'Requires CEX Venues')
+		else if (hideForex && need.forex) hints.set(value, 'Requires Forex Perps')
+	}
+	return hints
 }
 
 function matchesRWAPerpsMarketFilter(market: IRWAPerpsMarket, filter: RWAPerpsMarketFilterState) {
@@ -1183,12 +1191,6 @@ function matchesRWAPerpsMarketFilter(market: IRWAPerpsMarket, filter: RWAPerpsMa
 		if (filter.selectedValuesSet.has(value)) return true
 	}
 	return false
-}
-
-function formatPerpsActiveFilterValues(values: ReadonlyArray<string>) {
-	if (values.length === 0) return 'None'
-	if (values.length <= 2) return values.join(', ')
-	return `${values[0]}, ${values[1]} + ${values.length - 2}`
 }
 
 function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: ReadonlyArray<string>) {
@@ -1199,14 +1201,7 @@ function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys
 	void pushShallowQuery(router, resetUpdates)
 }
 
-function isAllPerpsFilterSelection(filter: RWAPerpsMarketFilterState, values: Array<string>): boolean {
-	const validSet = new Set(filter.options)
-	const selected = values.filter((value) => validSet.has(value))
-	const selectedSet = new Set(selected)
-	return selected.length === filter.options.length && filter.options.every((value) => selectedSet.has(value))
-}
-
-function createRWAPerpsFilterDraft(filters: Array<RWAPerpsMarketFilterState>): RWAPerpsFilterDraft {
+export function createRWAPerpsFilterDraft(filters: Array<RWAPerpsMarketFilterState>): RWAPerpsFilterDraft {
 	const activeIds: Array<string> = []
 	const selectValues: Record<string, Array<string>> = {}
 
@@ -1241,16 +1236,10 @@ function getRWAPerpsSelectDraftQueryUpdates(
 	filter: RWAPerpsMarketFilterState,
 	values: Array<string>
 ): Record<string, string | Array<string> | undefined> {
-	return getQueryUpdatesFromSelected(
-		filter.includeQueryKey,
-		filter.excludeQueryKey,
-		filter.options,
-		values,
-		filter.options
-	)
+	return getQueryUpdatesFromSelected(filter.includeQueryKey, filter.excludeQueryKey, filter.optionKeys, values)
 }
 
-function serializeRWAPerpsFilterDraft(
+export function serializeRWAPerpsFilterDraft(
 	filters: Array<RWAPerpsMarketFilterState>,
 	draft: RWAPerpsFilterDraft
 ): Record<string, string | Array<string> | undefined> {
@@ -1268,53 +1257,54 @@ function serializeRWAPerpsFilterDraft(
 	return updates
 }
 
-function getRWAPerpsActiveFilterPill(
-	filter: RWAPerpsMarketFilterState,
-	query: ReturnType<typeof useRouter>['query'],
-	onRemove: () => void
-): RWAPerpsActiveFilterPill | null {
-	const includeQuery = query[filter.includeQueryKey]
-	const excludeQuery = query[filter.excludeQueryKey]
-	if (includeQuery == null && excludeQuery == null) return null
-
-	if (excludeQuery != null) {
-		const validValues = new Set(filter.options)
-		const excludedValues = toNonEmptyArrayParam(excludeQuery).filter((value) => validValues.has(value))
-		if (excludedValues.length === 0 || isAllPerpsFilterSelection(filter, filter.selectedValues)) return null
-		return {
-			id: filter.excludeQueryKey,
-			label: `${filter.label} excludes ${formatPerpsActiveFilterValues(excludedValues)}`,
-			onRemove
-		}
-	}
-
-	if (isAllPerpsFilterSelection(filter, filter.selectedValues)) return null
-
-	return {
-		id: filter.includeQueryKey,
-		label: `${filter.label}: ${formatPerpsActiveFilterValues(filter.selectedValues)}`,
-		onRemove
-	}
-}
-
 function getRWAPerpsActiveFilterPills(filters: Array<RWAPerpsMarketFilterState>, router: ReturnType<typeof useRouter>) {
 	const activeFilters: Array<RWAPerpsActiveFilterPill> = []
 
 	for (const filter of filters) {
-		const pill = getRWAPerpsActiveFilterPill(filter, router.query, () =>
-			clearRWAPerpsFilterQueryKeys(router, [filter.includeQueryKey, filter.excludeQueryKey])
-		)
-		if (pill) activeFilters.push(pill)
+		if (!filter.active) continue
+		activeFilters.push({
+			id: filter.includeQueryKey,
+			label: `${filter.label}: ${describeSelection(filter.options, filter.selectedValues)}`,
+			onRemove: () => clearRWAPerpsFilterQueryKeys(router, [filter.includeQueryKey, filter.excludeQueryKey])
+		})
 	}
 
 	return activeFilters
 }
 
-function hasResettableRWAPerpsFilterQueryParam(query: ReturnType<typeof useRouter>['query'], includeForex: boolean) {
-	for (const key of PERPS_MARKET_FILTER_QUERY_KEYS) {
-		if (query[key] != null) return true
+/**
+ * Explains an empty table only when the toggles cause it: some market matches every filter but sits behind a toggle
+ * that is off. Names only the toggles those markets need.
+ */
+export function getRWAPerpsToggleNotice({
+	scopedMarkets,
+	filters,
+	hideCex,
+	hideForex
+}: {
+	scopedMarkets: Array<IRWAPerpsMarket>
+	filters: Array<RWAPerpsMarketFilterState>
+	hideCex: boolean
+	hideForex: boolean
+}): string | null {
+	// A toggle is enough on its own when some matching market needs only that toggle; otherwise it takes both.
+	const enoughAlone = new Set<string>()
+	let needsBoth = false
+	for (const market of scopedMarkets) {
+		if (!filters.every((filter) => matchesRWAPerpsMarketFilter(market, filter))) continue
+		const needed: Array<string> = []
+		if (hideCex && market.venueType === 'CEX') needed.push('CEX Venues')
+		if (hideForex && market.assetClass?.[0] === FOREX_ASSET_CLASS) needed.push('Forex Perps')
+		if (needed.length === 1) enoughAlone.add(needed[0])
+		else if (needed.length === 2) needsBoth = true
 	}
-	return includeForex
+	if (enoughAlone.size > 0) {
+		const names = [...enoughAlone]
+		return `These filters only match markets under ${names.join(' or ')}. Turn ${names.length === 1 ? 'it' : 'one'} on to see them.`
+	}
+	return needsBoth
+		? 'These filters only match markets under CEX Venues and Forex Perps. Turn both on to see them.'
+		: null
 }
 
 function RWAPerpsActiveFilterPills({ pills }: { pills: Array<RWAPerpsActiveFilterPill> }) {
@@ -1351,6 +1341,8 @@ function RWAPerpsMarketFilters({
 	showForexToggle,
 	includeForex,
 	includeCex,
+	hasActiveFilters,
+	emptyNotice,
 	onToggleIncludeCex,
 	onToggleIncludeForex
 }: {
@@ -1358,6 +1350,8 @@ function RWAPerpsMarketFilters({
 	showForexToggle: boolean
 	includeForex: boolean
 	includeCex: boolean
+	hasActiveFilters: boolean
+	emptyNotice: string | null
 	onToggleIncludeCex: () => void
 	onToggleIncludeForex: () => void
 }) {
@@ -1365,10 +1359,6 @@ function RWAPerpsMarketFilters({
 
 	const activeFilterPills = getRWAPerpsActiveFilterPills(filters, router)
 	const selectedFilterCount = createRWAPerpsFilterDraft(filters).activeIds.length
-	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(
-		router.query,
-		(showForexToggle && includeForex) || includeCex
-	)
 
 	return (
 		<Card padding="sm" className="flex flex-col gap-2">
@@ -1402,6 +1392,11 @@ function RWAPerpsMarketFilters({
 					Reset filters
 				</Button>
 			</div>
+			{emptyNotice ? (
+				<p role="status" className="body-sm text-tertiary">
+					{emptyNotice}
+				</p>
+			) : null}
 		</Card>
 	)
 }
@@ -1744,16 +1739,22 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		(props.mode === 'venue' || props.mode === 'asset') &&
 		props.data.markets.every((market) => market.venueType === 'CEX')
 	const includeCex = router.query.includeCex == null ? includeCexByDefault : isTrueQueryParam(router.query.includeCex)
-	const rowsBeforeUserFilters = useMemo(() => {
-		const markets = includeCex ? props.data.markets : props.data.markets.filter((market) => market.venueType !== 'CEX')
-		if (assetClassFilter != null) {
-			return markets.filter((market) => market.assetClass?.[0] === assetClassFilter)
-		}
-		if (showForexToggle && !includeForex) {
-			return markets.filter((market) => market.assetClass?.[0] !== FOREX_ASSET_CLASS)
-		}
-		return markets
-	}, [assetClassFilter, includeCex, includeForex, props.data.markets, showForexToggle])
+	const scopedMarkets = useMemo(
+		() =>
+			assetClassFilter == null
+				? props.data.markets
+				: props.data.markets.filter((market) => market.assetClass?.[0] === assetClassFilter),
+		[assetClassFilter, props.data.markets]
+	)
+	const hideForex = showForexToggle && !includeForex
+	const rowsBeforeUserFilters = useMemo(
+		() =>
+			scopedMarkets.filter(
+				(market) =>
+					(includeCex || market.venueType !== 'CEX') && !(hideForex && market.assetClass?.[0] === FOREX_ASSET_CLASS)
+			),
+		[hideForex, includeCex, scopedMarkets]
+	)
 	const venuesQuery = router.query.venues
 	const excludeVenuesQuery = router.query.excludeVenues
 	const baseAssetsQuery = router.query.baseAssets
@@ -1817,11 +1818,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const marketFilters = useMemo(
 		() =>
 			getRWAPerpsMarketFilterStates({
-				markets: rowsBeforeUserFilters,
+				scopedMarkets,
 				query: marketFilterQuery,
-				hideAssetClass: assetClassFilter != null
+				hideAssetClass: assetClassFilter != null,
+				hideCex: !includeCex,
+				hideForex
 			}),
-		[assetClassFilter, rowsBeforeUserFilters, marketFilterQuery]
+		[assetClassFilter, scopedMarkets, marketFilterQuery, includeCex, hideForex]
 	)
 	const activeMarketFilters = useMemo(
 		() => marketFilters.filter((filter) => filter.enabled && filter.active),
@@ -1840,6 +1843,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		})
 	}, [activeMarketFilters, hasActiveMarketFilters, rowsBeforeUserFilters])
 	const includedRows = getRWAPerpsIncludedRows(currentRows, props.mode)
+	// Reset has work to do only when something differs from the page default.
+	const hasActiveFilters =
+		hasActiveMarketFilters || (showForexToggle && includeForex) || includeCex !== includeCexByDefault
+	const emptyNotice =
+		currentRows.length === 0
+			? getRWAPerpsToggleNotice({ scopedMarkets, filters: activeMarketFilters, hideCex: !includeCex, hideForex })
+			: null
 	const isTotalsPopulationFiltered = includedRows !== props.data.markets
 	const computedTotals = useMemo(
 		() =>
@@ -2244,6 +2254,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				includeForex={includeForex}
 				onToggleIncludeForex={onToggleIncludeForex}
 				includeCex={includeCex}
+				hasActiveFilters={hasActiveFilters}
+				emptyNotice={emptyNotice}
 				onToggleIncludeCex={onToggleIncludeCex}
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">

@@ -5,7 +5,12 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import type { IRWAPerpsMarket } from '../api.types'
-import { RWAPerpsDashboard } from '../Dashboard'
+import {
+	createRWAPerpsFilterDraft,
+	getRWAPerpsMarketFilterStates,
+	RWAPerpsDashboard,
+	serializeRWAPerpsFilterDraft
+} from '../Dashboard'
 import type {
 	IRWAPerpsAssetGroupPageData,
 	IRWAPerpsAssetPageData,
@@ -63,6 +68,19 @@ function filterToggles(html: string) {
 	const { document } = new Window()
 	document.body.innerHTML = html
 	return Array.from(document.querySelectorAll('input[type="checkbox"]'), (input) => input.closest('label')?.textContent)
+}
+
+/** Whether the Reset filters button is enabled, and the active filter pills beside it. */
+function filterBar(html: string) {
+	const { document } = new Window()
+	document.body.innerHTML = html
+	const buttons = Array.from(document.querySelectorAll('button'))
+	const reset = buttons.find((button) => button.textContent === 'Reset filters')
+	return {
+		resetEnabled: reset ? !reset.hasAttribute('disabled') : null,
+		pills: buttons.map((button) => button.textContent ?? '').filter((text) => text.includes(': ')),
+		notice: reset?.closest('div')?.parentElement?.querySelector('p[role="status"]')?.textContent ?? null
+	}
 }
 
 /** The contracts shown in the markets table, in row order. */
@@ -305,8 +323,8 @@ describe('RWA perps dashboard history', () => {
 	})
 
 	test('explains the missing history instead of loading when the filters leave no markets', () => {
-		router.query = { excludeBaseAssets: 'Meta' }
-		const html = render({ mode: 'overview', data: overviewData })
+		router.query = { baseAssets: 'None' }
+		const html = render({ mode: 'overview', data: multiBaseAssetOverviewData })
 
 		expect(tableContracts(html, ALL_CONTRACTS)).toEqual([])
 		expect(html).toContain(NOT_ENOUGH_HISTORY)
@@ -345,10 +363,154 @@ describe('RWA perps dashboard markets table', () => {
 			data: multiBaseAssetOverviewData,
 			query: { excludeBaseAssets: 'Gold' },
 			rows: ['xyz:META', 'xyz:NVDA']
+		},
+		{
+			name: 'reads an old Select All link as every base asset',
+			data: multiBaseAssetOverviewData,
+			query: { baseAssets: 'All' },
+			rows: ['xyz:META', 'xyz:NVDA', 'flx:GOLD']
 		}
 	])('$name', ({ data, query, rows }) => {
 		router.query = query
 		expect(tableContracts(render({ mode: 'overview', data }), ALL_CONTRACTS)).toEqual(rows)
+	})
+
+	test('keeps a CEX venue selected while CEX Venues is off and says the toggle hides its markets', () => {
+		router.query = { venues: 'binance' }
+		const html = render({ mode: 'overview', data: cexOverviewData })
+
+		expect(tableContracts(html, ALL_CONTRACTS)).toEqual([])
+		expect(filterBar(html).pills).toEqual(['Venue: binance'])
+		expect(html).toContain('These filters only match markets under CEX Venues. Turn it on to see them.')
+
+		router.query = { venues: 'binance', includeCex: 'true' }
+		const withCex = render({ mode: 'overview', data: cexOverviewData })
+		expect(tableContracts(withCex, ALL_CONTRACTS)).toEqual(['binance:METAUSDT'])
+		expect(withCex).not.toContain('These filters only match markets under')
+	})
+
+	test('asks for both toggles when the matching markets need both', () => {
+		const cexForexMarket = {
+			...cexMarket,
+			id: 'binance:eurusd',
+			contract: 'binance:EURUSD',
+			assetClass: ['Forex Perps']
+		}
+		const data = { ...overviewData, markets: [cexForexMarket, overviewMarket] }
+
+		router.query = { venues: 'binance' }
+		expect(filterBar(render({ mode: 'overview', data })).notice).toBe(
+			'These filters only match markets under CEX Venues and Forex Perps. Turn both on to see them.'
+		)
+
+		router.query = { venues: 'binance', includeForex: 'true' }
+		expect(filterBar(render({ mode: 'overview', data })).notice).toBe(
+			'These filters only match markets under CEX Venues. Turn it on to see them.'
+		)
+	})
+
+	test('does not blame a toggle when turning it on would still show no market', () => {
+		const forexMarket = { ...overviewMarket, id: 'fx:eurusd', contract: 'EURUSD', assetClass: ['Forex Perps'] }
+		router.query = { venues: 'binance', assetClasses: 'Forex Perps', includeForex: 'true' }
+		const html = render({
+			mode: 'overview',
+			data: { ...overviewData, markets: [cexMarket, overviewMarket, forexMarket] }
+		})
+
+		expect(tableContracts(html, ALL_CONTRACTS)).toEqual([])
+		expect(filterBar(html).notice).toBeNull()
+	})
+
+	test('marks options that need a toggle, and keeps them selectable', () => {
+		const forexMarket = { ...overviewMarket, id: 'fx:eurusd', contract: 'EURUSD', assetClass: ['Forex Perps'] }
+		const venue = (hideCex: boolean) =>
+			getRWAPerpsMarketFilterStates({
+				scopedMarkets: [cexMarket, overviewMarket, forexMarket],
+				query: { venues: 'binance' },
+				hideAssetClass: false,
+				hideCex,
+				hideForex: true
+			}).find((filter) => filter.id === 'venue')
+		const assetClass = getRWAPerpsMarketFilterStates({
+			scopedMarkets: [cexMarket, overviewMarket, forexMarket],
+			query: {},
+			hideAssetClass: false,
+			hideCex: true,
+			hideForex: true
+		}).find((filter) => filter.id === 'assetClass')
+
+		expect(venue(true)?.options).toEqual([
+			{ key: 'binance', name: 'binance', help: 'Requires CEX Venues' },
+			{ key: 'xyz', name: 'xyz' }
+		])
+		expect(venue(true)?.selectedValues).toEqual(['binance'])
+		expect(venue(false)?.options).toEqual([
+			{ key: 'binance', name: 'binance' },
+			{ key: 'xyz', name: 'xyz' }
+		])
+		expect(assetClass?.options).toEqual([
+			{ key: 'Stock Perp', name: 'Stock Perp' },
+			{ key: 'Forex Perps', name: 'Forex Perps', help: 'Requires Forex Perps' }
+		])
+	})
+
+	test('keeps an excluded venue out when the CEX toggle hides every other venue', () => {
+		const okxMarket = { ...cexMarket, id: 'okx:metausdt', contract: 'okx:METAUSDT', venue: 'okx' }
+		const data = { ...overviewData, markets: [cexMarket, okxMarket, overviewMarket] }
+
+		router.query = { excludeVenues: 'xyz', includeCex: 'true' }
+		expect(tableContracts(render({ mode: 'overview', data }), [...ALL_CONTRACTS, 'okx:METAUSDT'])).toEqual([
+			'binance:METAUSDT',
+			'okx:METAUSDT'
+		])
+
+		router.query = { excludeVenues: 'xyz' }
+		const html = render({ mode: 'overview', data })
+		expect(tableContracts(html, [...ALL_CONTRACTS, 'okx:METAUSDT'])).toEqual([])
+		expect(filterBar(html)).toEqual({
+			resetEnabled: true,
+			pills: ['Venue: All except xyz'],
+			notice: 'These filters only match markets under CEX Venues. Turn it on to see them.'
+		})
+		expect(html).toContain('These filters only match markets under CEX Venues. Turn it on to see them.')
+	})
+
+	test('saving the filters dialog keeps an untouched exclude list and writes an edited one as shown', () => {
+		const okxMarket = { ...cexMarket, id: 'okx:metausdt', contract: 'okx:METAUSDT', venue: 'okx' }
+		const flxMarket = { ...overviewMarket, id: 'flx:meta', contract: 'flx:META', venue: 'flx' }
+		const filters = getRWAPerpsMarketFilterStates({
+			scopedMarkets: [cexMarket, okxMarket, overviewMarket, flxMarket],
+			query: { excludeVenues: 'xyz' },
+			hideAssetClass: false,
+			hideCex: true,
+			hideForex: false
+		})
+		const draft = createRWAPerpsFilterDraft(filters)
+		const venueUpdates = (venues: Array<string>) => {
+			const updates = serializeRWAPerpsFilterDraft(filters, {
+				...draft,
+				selectValues: { ...draft.selectValues, venue: venues }
+			})
+			return { venues: updates.venues, excludeVenues: updates.excludeVenues }
+		}
+
+		expect(venueUpdates(draft.selectValues.venue ?? [])).toEqual({ venues: undefined, excludeVenues: 'xyz' })
+		expect(venueUpdates(['xyz'])).toEqual({ venues: 'xyz', excludeVenues: undefined })
+		expect(venueUpdates([])).toEqual({ venues: 'None', excludeVenues: undefined })
+	})
+
+	test('enables Reset only when a filter differs from the page default', () => {
+		const cexVenuePage: DashboardProps = {
+			mode: 'venue',
+			data: { ...venueData, venue: 'binance', markets: [cexMarket] }
+		}
+		expect(filterBar(render(cexVenuePage)).resetEnabled).toBe(false)
+
+		router.query = { baseAssets: '' }
+		expect(filterBar(render({ mode: 'overview', data: multiBaseAssetOverviewData })).resetEnabled).toBe(false)
+
+		router.query = { excludeBaseAssets: 'Gold' }
+		expect(filterBar(render({ mode: 'overview', data: multiBaseAssetOverviewData })).resetEnabled).toBe(true)
 	})
 
 	test('filters Forex rows by base asset and ignores the hidden asset-class filter on the Forex page', () => {

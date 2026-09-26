@@ -1,4 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { AuthProvider } from '~/auth'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	buildRWAPerpsOverviewChartSeries,
@@ -7,8 +10,45 @@ import {
 	getRWAPerpsOverviewTimeSeriesMode,
 	getRWAPerpsOverviewTimeSeriesModeQueryPatch,
 	getRWAPerpsChartDatasetForSelectedStacks,
-	resolveRWAPerpsOverviewSelectedStacks
+	resolveRWAPerpsStackSelection,
+	RWAPerpsOverviewChart
 } from '../OverviewChart'
+
+const router = vi.hoisted(() => ({ query: {} as Record<string, string | Array<string>> }))
+vi.mock('next/router', () => ({
+	useRouter: () => ({ query: router.query, pathname: '/rwa/perps/venues', asPath: '/rwa/perps/venues', push() {} })
+}))
+
+beforeEach(() => {
+	router.query = {}
+})
+
+/** Server-renders the venues stacks chart with a fetched volume breakdown already in the cache. */
+function renderVolumeStacks() {
+	const client = new QueryClient()
+	client.setQueryData(['rwa-perps-overview-breakdown', 'venue', 'volume24h', false], {
+		source: [
+			{ timestamp: 1_774_483_200_000, xyz: 10, flx: 5 },
+			{ timestamp: 1_774_569_600_000, xyz: 12, flx: 6 }
+		],
+		dimensions: ['timestamp', 'xyz', 'flx']
+	})
+	const html = renderToStaticMarkup(
+		<QueryClientProvider client={client}>
+			<AuthProvider>
+				<RWAPerpsOverviewChart
+					breakdown="venue"
+					initialChartDataset={null}
+					includeCex={false}
+					cexOnlyStacks={['binance']}
+					stackLabel="Venue"
+				/>
+			</AuthProvider>
+		</QueryClientProvider>
+	)
+	client.clear()
+	return html
+}
 
 describe('OverviewChart helpers', () => {
 	test('falls back to the default chart type for invalid query values', () => {
@@ -31,34 +71,6 @@ describe('OverviewChart helpers', () => {
 	test('builds the expected time-series-mode query patch', () => {
 		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('grouped')).toEqual({ timeSeriesMode: undefined })
 		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('breakdown')).toEqual({ timeSeriesMode: 'breakdown' })
-	})
-
-	test('prefers explicit selected stacks over excluded stacks and filters unknown values', () => {
-		expect(
-			resolveRWAPerpsOverviewSelectedStacks({
-				stackOptions: ['Meta', 'NVIDIA'],
-				selectedStacksQ: ['NVIDIA', 'Unknown'],
-				excludeStacksQ: ['Meta']
-			})
-		).toEqual(['NVIDIA'])
-	})
-
-	test('supports the None sentinel and exclusion-based defaults', () => {
-		expect(
-			resolveRWAPerpsOverviewSelectedStacks({
-				stackOptions: ['Meta', 'NVIDIA'],
-				selectedStacksQ: 'None',
-				excludeStacksQ: undefined
-			})
-		).toEqual([])
-
-		expect(
-			resolveRWAPerpsOverviewSelectedStacks({
-				stackOptions: ['Meta', 'NVIDIA'],
-				selectedStacksQ: undefined,
-				excludeStacksQ: ['NVIDIA']
-			})
-		).toEqual(['Meta'])
 	})
 
 	test('projects selected stack datasets after the first selected value while retaining the all-stack total', () => {
@@ -184,5 +196,50 @@ describe('OverviewChart helpers', () => {
 				color: CHART_COLORS[2]
 			}
 		])
+	})
+})
+
+describe('RWA perps stacks chart', () => {
+	test('draws every stack for an empty stacks value and says so when none is selected', () => {
+		router.query = { chartType: 'volume24h', timeSeriesMode: 'breakdown', stacks: '' }
+		const allStacks = renderVolumeStacks()
+		expect(allStacks).not.toContain('No stacks selected.')
+		expect(allStacks).not.toContain('There is not enough time-series history')
+
+		router.query = { chartType: 'volume24h', timeSeriesMode: 'breakdown', stacks: 'None' }
+		expect(renderVolumeStacks()).toContain('No stacks selected.')
+	})
+
+	test('keeps a CEX-only stack selected while CEX Venues is off and says the toggle hides it', () => {
+		const notice = 'This selection only has data under CEX Venues. Turn it on to see it.'
+		router.query = { chartType: 'volume24h', timeSeriesMode: 'breakdown', stacks: 'binance' }
+		const html = renderVolumeStacks()
+		expect(html).toContain(notice)
+		expect(html).toContain('Show every venue')
+
+		router.query = { chartType: 'volume24h', timeSeriesMode: 'breakdown', excludeStacks: ['xyz', 'flx'] }
+		expect(renderVolumeStacks()).toContain(notice)
+
+		router.query = { chartType: 'volume24h', timeSeriesMode: 'breakdown', stacks: 'missing-venue' }
+		const unknown = renderVolumeStacks()
+		expect(unknown).not.toContain(notice)
+		expect(unknown).toContain('No stacks selected.')
+	})
+
+	test('lists CEX-only stacks whether or not CEX Venues is on', () => {
+		const stacks = (includeCex: boolean) =>
+			resolveRWAPerpsStackSelection({
+				query: {},
+				stackOptions: includeCex ? ['xyz', 'binance', 'flx'] : ['xyz', 'flx'],
+				cexOnlyStacks: ['binance'],
+				includeCex
+			})
+
+		expect(stacks(false).options).toEqual([
+			{ key: 'xyz', name: 'xyz' },
+			{ key: 'flx', name: 'flx' },
+			{ key: 'binance', name: 'binance', help: 'Requires CEX Venues' }
+		])
+		expect(stacks(true).optionKeys).toEqual(['xyz', 'binance', 'flx'])
 	})
 })

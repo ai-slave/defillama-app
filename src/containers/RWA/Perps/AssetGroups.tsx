@@ -15,7 +15,7 @@ import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
-import { RWAPerpsOverviewChart } from './OverviewChart'
+import { getRWAPerpsCexOnlyStacks, RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetGroupsOverviewRow } from './types'
 
 const columnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsAssetGroupsOverviewRow>()
@@ -124,6 +124,10 @@ export function RWAPerpsAssetGroupsOverview({
 				breakdown="assetGroup"
 				initialChartDataset={initialChartDataset}
 				includeCex={includeCex}
+				cexOnlyStacks={getRWAPerpsCexOnlyStacks(
+					assetGroups.map((row) => row.assetGroup),
+					dexAssetGroups.map((row) => row.assetGroup)
+				)}
 				stackLabel={d.assetGroup.label}
 			/>
 			<SearchTableProvider

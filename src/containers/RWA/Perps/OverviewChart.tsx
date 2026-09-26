@@ -8,17 +8,19 @@ import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
-import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { toRwaMultiSeriesChartDataset, type RWAChartDataset } from '../chartDataset'
 import { setRWAPerpsChartScope } from './api'
 import { getRWAPerpsVolumeGroupByQueryValue, parseRWAPerpsVolumeGroupBy } from './chartState'
@@ -76,26 +78,48 @@ export function getRWAPerpsOverviewTimeSeriesModeQueryPatch(nextTimeSeriesMode: 
 	}
 }
 
-export function resolveRWAPerpsOverviewSelectedStacks({
+/** Stacks that only have data with CEX venues: named in the CEX-inclusive rows and missing from the DEX rows. */
+export function getRWAPerpsCexOnlyStacks(names: Array<string>, dexNames: Array<string>): Array<string> {
+	const dex = new Set(dexNames)
+	return names.filter((name) => !dex.has(name))
+}
+
+/**
+ * The stack picker's options and selection. The options are the stacks with CEX venues included, whatever the toggle,
+ * so a selection means the same with CEX Venues on or off; the toggle only changes what the chart draws. A CEX-only
+ * stack says it needs the toggle and stays selectable. `emptyNotice` explains a chart the toggle leaves empty.
+ */
+export function resolveRWAPerpsStackSelection({
+	query,
 	stackOptions,
-	selectedStacksQ,
-	excludeStacksQ
+	cexOnlyStacks,
+	includeCex
 }: {
+	query: Readonly<Record<string, string | Array<string> | undefined>>
 	stackOptions: Array<string>
-	selectedStacksQ: string | Array<string> | undefined
-	excludeStacksQ: string | Array<string> | undefined
+	cexOnlyStacks: ReadonlyArray<string>
+	includeCex: boolean
 }) {
-	if (stackOptions.length === 0) return []
+	const drawn = new Set(stackOptions)
+	const optionKeys = [...stackOptions, ...cexOnlyStacks.filter((stack) => !drawn.has(stack))]
+	const cexOnly = new Set(cexOnlyStacks)
+	const selectedStacks = readSelectionFromQuery(query, STACKS_QUERY_KEY, EXCLUDE_STACKS_QUERY_KEY, optionKeys)
+	// Only blame the toggle when turning it on would draw a selected stack.
+	const emptyNotice =
+		!includeCex &&
+		!selectedStacks.some((stack) => drawn.has(stack)) &&
+		selectedStacks.some((stack) => cexOnly.has(stack))
+			? 'This selection only has data under CEX Venues. Turn it on to see it.'
+			: null
 
-	const availableStacks = new Set(stackOptions)
-	if (selectedStacksQ === 'None') return []
-	if (selectedStacksQ != null) {
-		return toNonEmptyArrayParam(selectedStacksQ).filter((stack) => availableStacks.has(stack))
+	return {
+		optionKeys,
+		options: optionKeys.map((key) =>
+			!includeCex && cexOnly.has(key) ? { key, name: key, help: 'Requires CEX Venues' } : { key, name: key }
+		),
+		selectedStacks,
+		emptyNotice
 	}
-
-	const excludedStacksSet = new Set(toNonEmptyArrayParam(excludeStacksQ).filter((stack) => availableStacks.has(stack)))
-	if (excludedStacksSet.size === 0) return [...stackOptions]
-	return stackOptions.filter((stack) => !excludedStacksSet.has(stack))
 }
 
 export function getRWAPerpsChartDatasetForSelectedStacks(
@@ -190,11 +214,13 @@ export function RWAPerpsOverviewChart({
 	breakdown,
 	initialChartDataset,
 	includeCex,
+	cexOnlyStacks,
 	stackLabel
 }: {
 	breakdown: IRWAPerpsOverviewBreakdownRequest['breakdown']
 	initialChartDataset: RWAChartDataset | null
 	includeCex: boolean
+	cexOnlyStacks: Array<string>
 	stackLabel: string
 }) {
 	const router = useRouter()
@@ -238,23 +264,21 @@ export function RWAPerpsOverviewChart({
 			}),
 		[chartType, timeSeriesMode, ungroupedDataset.dimensions]
 	)
-	const selectedStacksQ = router.query[STACKS_QUERY_KEY]
-	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY]
-	const selectedStacks = useMemo(
-		() =>
-			resolveRWAPerpsOverviewSelectedStacks({
-				stackOptions,
-				selectedStacksQ,
-				excludeStacksQ
-			}),
-		[excludeStacksQ, selectedStacksQ, stackOptions]
+	const {
+		optionKeys: stackOptionKeys,
+		options: stackPickerOptions,
+		selectedStacks,
+		emptyNotice: stackEmptyNotice
+	} = useMemo(
+		() => resolveRWAPerpsStackSelection({ query: router.query, stackOptions, cexOnlyStacks, includeCex }),
+		[router.query, stackOptions, cexOnlyStacks, includeCex]
 	)
 	const selectedRawDataset = useMemo(
 		() =>
 			timeSeriesMode === 'breakdown'
-				? getRWAPerpsChartDatasetForSelectedStacks(ungroupedDataset, selectedStacks, stackOptions)
+				? getRWAPerpsChartDatasetForSelectedStacks(ungroupedDataset, selectedStacks, stackOptionKeys)
 				: ungroupedDataset,
-		[selectedStacks, stackOptions, timeSeriesMode, ungroupedDataset]
+		[selectedStacks, stackOptionKeys, timeSeriesMode, ungroupedDataset]
 	)
 	const selectedDataset = useMemo(() => {
 		const canonicalDataset = toRwaMultiSeriesChartDataset(selectedRawDataset)
@@ -262,17 +286,18 @@ export function RWAPerpsOverviewChart({
 			? groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy })
 			: canonicalDataset
 	}, [chartType, selectedRawDataset, volumeGroupBy])
+	// The CSV holds what the chart draws, so it follows the stack picker.
 	const prepareCsvDataset = useCallback(() => {
-		const canonicalDataset = toRwaMultiSeriesChartDataset(ungroupedDataset)
+		const canonicalDataset = toRwaMultiSeriesChartDataset(selectedRawDataset)
 		return chartType === 'volume24h'
 			? {
 					...groupMultiSeriesBarChartDataset({ dataset: canonicalDataset, groupBy: volumeGroupBy }),
 					groupBy: volumeGroupBy
 				}
 			: canonicalDataset
-	}, [chartType, ungroupedDataset, volumeGroupBy])
+	}, [chartType, selectedRawDataset, volumeGroupBy])
 	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(selectedRawDataset), [selectedRawDataset])
-	const showStackSelect = timeSeriesMode === 'breakdown' && stackOptions.length > 1
+	const showStackSelect = timeSeriesMode === 'breakdown' && stackOptionKeys.length > 1
 	const visibleCharts = useMemo(
 		() =>
 			timeSeriesMode === 'breakdown'
@@ -333,11 +358,9 @@ export function RWAPerpsOverviewChart({
 				) : null}
 				{showStackSelect ? (
 					<SelectWithCombobox
-						allValues={stackOptions}
-						selectedValues={selectedStacks}
+						allValues={stackPickerOptions}
 						includeQueryKey={STACKS_QUERY_KEY}
 						excludeQueryKey={EXCLUDE_STACKS_QUERY_KEY}
-						defaultSelectedValues={stackOptions}
 						label={stackLabel}
 						labelType="smol"
 						variant="filter"
@@ -360,6 +383,27 @@ export function RWAPerpsOverviewChart({
 				<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 					Loading
 					<LoadingDots />
+				</ChartPanelBodyFallback>
+			) : timeSeriesMode === 'breakdown' && stackEmptyNotice ? (
+				<ChartPanelBodyFallback
+					role="status"
+					aria-live="polite"
+					className="flex-col gap-2 px-4 text-center body-sm text-tertiary"
+				>
+					<p>{stackEmptyNotice}</p>
+					<Button
+						type="button"
+						size="md"
+						onClick={() =>
+							void pushShallowQuery(router, { [STACKS_QUERY_KEY]: undefined, [EXCLUDE_STACKS_QUERY_KEY]: undefined })
+						}
+					>
+						Show every {stackLabel.toLowerCase()}
+					</Button>
+				</ChartPanelBodyFallback>
+			) : timeSeriesMode === 'breakdown' && !shouldShowTotalOverlay && selectedStacks.length === 0 ? (
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
+					No stacks selected.
 				</ChartPanelBodyFallback>
 			) : !hasTimeSeriesHistory ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">

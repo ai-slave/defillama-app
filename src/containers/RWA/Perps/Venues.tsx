@@ -15,7 +15,7 @@ import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
-import { RWAPerpsOverviewChart } from './OverviewChart'
+import { getRWAPerpsCexOnlyStacks, RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsVenuesOverviewRow } from './types'
 
 type RWAPerpsVenuesTableRow = {
@@ -133,6 +133,10 @@ export function RWAPerpsVenuesOverview({
 				breakdown="venue"
 				initialChartDataset={initialChartDataset}
 				includeCex={includeCex}
+				cexOnlyStacks={getRWAPerpsCexOnlyStacks(
+					venues.map((row) => row.venue),
+					dexVenues.map((row) => row.venue)
+				)}
 				stackLabel={d.venue.label}
 			/>
 			<SearchTableProvider
