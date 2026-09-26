@@ -95,6 +95,12 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 
 - Filter pickers read and write the page URL only through `src/components/Select/query.ts`; its header lists the rules. Pass a picker its URL keys and options and let it read its own selection; filter rows, requests and exports with `readSelectionFromQuery`, on the client and the server alike.
 
+## UI Changes
+
+- Before adding or changing UI, find the element's recipe in `design.md` and reuse the `src/ui` component it names, such as `Status.tsx` for loading, empty and error states, `Button`, `Panel` and `ChartPanel`. Style with the semantic tokens from `src/styles/semantics.css`; `bun scripts/policies/check-design-tokens.mjs` runs in CI and fails when raw colors or other token bypasses grow past its baseline.
+- Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset, in light and dark mode. Tests do not show layout, wrapping or contrast.
+- When fixing a reported UI problem, also fix what allowed it: add or correct the recipe in `design.md`, move the pattern into a shared `src/ui` component, or extend a policy check when the rule is mechanical. A fix at one call site leaves the same mistake on the next page.
+
 ## Local User Instructions
 
 If `.codex/local-instructions.md` exists, read and follow it before making code changes. It contains local user preferences and skill routing, and is intentionally gitignored.
