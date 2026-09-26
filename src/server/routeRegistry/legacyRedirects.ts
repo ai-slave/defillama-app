@@ -101,8 +101,9 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
+		// Yields filters protocols by name, so a slug path goes to the slug-keyed protocol yields page.
 		source: '/yields/project/:path*',
-		destination: '/yields?protocol=:path*',
+		destination: '/protocol/yields/:path*',
 		permanent: true
 	},
 	{
@@ -111,8 +112,9 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
+		// The chain picker matches display names, which a slug path cannot supply.
 		source: '/yields/chain/:path*',
-		destination: '/yields?chain=:path*',
+		destination: '/yields',
 		permanent: true
 	},
 	{

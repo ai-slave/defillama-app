@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { IconsRow } from '~/components/IconsRow'
-import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { chainHref, toChainIconItems, yieldsProtocolsHref } from '~/components/IconsRow/utils'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -433,7 +433,7 @@ function Yields(props: IProtocolOverviewPageData) {
 				<MetricRow label="Average Supply APY" value={averageApy} />
 			</div>
 			<ButtonLink
-				href={`/yields?project=${props.otherProtocols ? props.otherProtocols.slice(1).join('&project=') : props.name}`}
+				href={yieldsProtocolsHref(props.otherProtocols ? props.otherProtocols.slice(1) : [props.name])}
 				className={`${INFO_ACTION_STYLES} mr-auto`}
 			>
 				<span>View all Yields</span>

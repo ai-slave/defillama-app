@@ -1,13 +1,13 @@
 import { slug } from '~/utils'
 import type { IconsRowItem } from './index'
 
-const toYieldsProjectSlug = (project: string) => project.toLowerCase().split(' ').join('-')
-
 export const chainHref = (base: string, chain: string) => `${base}/${slug(chain)}`
 
-export const yieldsChainHref = (chain: string) => `/yields?chain=${chain}`
+// Yields matches its chain and protocol pickers by display name ("Aave V3"), never by slug.
+export const yieldsChainHref = (chain: string) => `/yields?chain=${encodeURIComponent(chain)}`
 
-export const yieldsProjectHref = (project: string) => `/yields?project=${toYieldsProjectSlug(project)}`
+export const yieldsProtocolsHref = (protocols: Array<string>) =>
+	`/yields?${new URLSearchParams(protocols.map((protocol) => ['protocol', protocol])).toString()}`
 
 export const toChainIconItems = (
 	chains: Array<string>,
