@@ -293,4 +293,30 @@ describe('ProtocolLists queries', () => {
 		])
 		expect(result?.protocols[0]?.subRows?.map((protocol) => protocol.name)).toEqual(['Multi A', 'Multi B'])
 	})
+
+	test('offers sorted category options for the rows a chain page lists only', async () => {
+		const protocol = (name: string, category: string, chains: Array<string>, mcap: number | null) => ({
+			...liteProtocol({ defillamaId: name, name, mcap, borrowed: 0 }),
+			category,
+			chains
+		})
+		serveProtocols(
+			response({
+				protocols: [
+					protocol('Lend', 'Lending', ['Ethereum'], 10),
+					protocol('Swap', 'Dexs', ['Solana'], 5),
+					protocol('No Token', 'Yield', ['Ethereum'], null),
+					protocol('Vault', 'CDP', ['Ethereum'], 3)
+				],
+				parentProtocols: []
+			})
+		)
+
+		const result = await getProtocolsMarketCapsByChain({ chain: 'Ethereum', protocolMetadata: {} })
+
+		expect([result?.protocols.map((row) => row.name), result?.categories]).toEqual([
+			['Lend', 'Vault'],
+			['CDP', 'Lending']
+		])
+	})
 })

@@ -378,18 +378,13 @@ function buildTokenMetricProtocols({
 	protocolMetadata: Record<string, IProtocolMetadata>
 	getValue: (protocol: ProtocolLite) => number | null
 	getParentValue: (parent: ParentProtocolLite) => number | null
-}): { finalProtocols: Array<ITokenMetricProtocolRow>; categories: Set<string> } {
+}): { finalProtocols: Array<ITokenMetricProtocolRow> } {
 	const parentProtocolsMap = new Map(parentProtocols.map((p) => [p.id, p]))
 	const finalProtocols: Array<ITokenMetricProtocolRow> = []
 	const parentChildren: Record<string, Array<ITokenMetricProtocolRow>> = {}
-	const categories = new Set<string>()
 
 	for (const protocol of protocols) {
 		if (TOKEN_METRIC_EXCLUDE_CATEGORIES.has(protocol.category ?? '')) continue
-
-		if (protocol.category) {
-			categories.add(protocol.category)
-		}
 
 		const p: ITokenMetricProtocolRow = {
 			name: protocol.name,
@@ -436,7 +431,19 @@ function buildTokenMetricProtocols({
 		})
 	}
 
-	return { finalProtocols, categories }
+	return { finalProtocols }
+}
+
+/** The categories of the rows a page lists, sorted, so every category option matches at least one row. */
+function getRowCategories(rows: Array<ITokenMetricProtocolRow>): Array<string> {
+	const categories = new Set<string>()
+	for (const row of rows) {
+		if (row.category) categories.add(row.category)
+		for (const child of row.subRows ?? []) {
+			if (child.category) categories.add(child.category)
+		}
+	}
+	return Array.from(categories).sort()
 }
 
 function filterAndSort(protocols: Array<ITokenMetricProtocolRow>, chain: string): Array<ITokenMetricProtocolRow> {
@@ -458,7 +465,7 @@ export async function getProtocolsMarketCapsByChain({
 }): Promise<IProtocolsWithTokensByChainPageData | null> {
 	const { protocols, chains, parentProtocols } = await fetchProtocols()
 
-	const { finalProtocols, categories } = buildTokenMetricProtocols({
+	const { finalProtocols } = buildTokenMetricProtocols({
 		protocols,
 		parentProtocols,
 		protocolMetadata,
@@ -466,11 +473,13 @@ export async function getProtocolsMarketCapsByChain({
 		getParentValue: (p) => p.mcap ?? null
 	})
 
+	const rows = filterAndSort(finalProtocols, chain)
+
 	return {
-		protocols: filterAndSort(finalProtocols, chain),
+		protocols: rows,
 		chain,
 		chains: buildChainLinks(chains, '/mcaps'),
-		categories: Array.from(categories),
+		categories: getRowCategories(rows),
 		type: 'mcap'
 	}
 }
@@ -489,7 +498,7 @@ export async function getProtocolsFDVsByChain({
 
 	const tokenListMap = new Map(tokenList.map((t) => [t.id, t]))
 
-	const { finalProtocols, categories } = buildTokenMetricProtocols({
+	const { finalProtocols } = buildTokenMetricProtocols({
 		protocols,
 		parentProtocols,
 		protocolMetadata,
@@ -498,11 +507,13 @@ export async function getProtocolsFDVsByChain({
 			parent.gecko_id ? (tokenListMap.get(parent.gecko_id)?.['fully_diluted_valuation'] ?? null) : null
 	})
 
+	const rows = filterAndSort(finalProtocols, chain)
+
 	return {
-		protocols: filterAndSort(finalProtocols, chain),
+		protocols: rows,
 		chain,
 		chains: buildChainLinks(chains, '/fdv'),
-		categories: Array.from(categories),
+		categories: getRowCategories(rows),
 		type: 'fdv'
 	}
 }
@@ -526,7 +537,7 @@ export async function getProtocolsTokenPricesByChain({
 
 	const prices = await fetchCoinPrices(Array.from(geckoIds))
 
-	const { finalProtocols, categories } = buildTokenMetricProtocols({
+	const { finalProtocols } = buildTokenMetricProtocols({
 		protocols,
 		parentProtocols,
 		protocolMetadata,
@@ -534,11 +545,13 @@ export async function getProtocolsTokenPricesByChain({
 		getParentValue: (parent) => (parent.gecko_id ? (prices[`coingecko:${parent.gecko_id}`]?.price ?? null) : null)
 	})
 
+	const rows = filterAndSort(finalProtocols, chain)
+
 	return {
-		protocols: filterAndSort(finalProtocols, chain),
+		protocols: rows,
 		chain,
 		chains: buildChainLinks(chains, '/token-prices'),
-		categories: Array.from(categories),
+		categories: getRowCategories(rows),
 		type: 'price'
 	}
 }
@@ -592,7 +605,7 @@ export async function getProtocolsAdjustedFDVsByChain({
 		return null
 	}
 
-	const { finalProtocols, categories } = buildTokenMetricProtocols({
+	const { finalProtocols } = buildTokenMetricProtocols({
 		protocols,
 		parentProtocols,
 		protocolMetadata,
@@ -600,8 +613,10 @@ export async function getProtocolsAdjustedFDVsByChain({
 		getParentValue: (parent) => getAdjustedFdv(parent.gecko_id, parent.name)
 	})
 
+	const rows = filterAndSort(finalProtocols, chain)
+
 	return {
-		protocols: filterAndSort(finalProtocols, chain),
+		protocols: rows,
 		chain,
 		chains: [
 			{ label: 'All', to: '/outstanding-fdv' },
@@ -609,7 +624,7 @@ export async function getProtocolsAdjustedFDVsByChain({
 				.filter((c) => chainsWithEmissions.has(c))
 				.map((c) => ({ label: c, to: `/outstanding-fdv/chain/${slug(c)}` }))
 		],
-		categories: Array.from(categories),
+		categories: getRowCategories(rows),
 		type: 'outstanding-fdv'
 	}
 }
