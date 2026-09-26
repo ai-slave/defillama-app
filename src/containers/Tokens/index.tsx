@@ -55,7 +55,12 @@ import type {
 	TokensTableRow
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
-import { buildTokensChartQueryString, resolveTokenFilterValues } from './utils'
+import {
+	buildTokensChartQueryString,
+	getTokenFilterSelection,
+	getTokensChainQueryUpdates,
+	resolveTokenFilterValues
+} from './utils'
 
 const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
 	...tokenTableFeatures
@@ -563,7 +568,7 @@ function TokensSharedControls({
 	updateSearch,
 	filters,
 	selectedChains,
-	hasChainQuery,
+	hasChainFilter,
 	nativeOnly,
 	selectedCategories,
 	chainOptions,
@@ -576,7 +581,7 @@ function TokensSharedControls({
 	updateSearch: (search: string) => void
 	filters: Array<TokensActiveFilter>
 	selectedChains: Array<string>
-	hasChainQuery: boolean
+	hasChainFilter: boolean
 	nativeOnly: boolean
 	selectedCategories: Array<string>
 	chainOptions: Array<TokensFilterOption>
@@ -653,7 +658,7 @@ function TokensSharedControls({
 				searchPlaceholder="Search chains..."
 				pushQueryUpdates={onChainQueryChange}
 			/>
-			{hasChainQuery ? (
+			{hasChainFilter ? (
 				<Checkbox variant="filter" checked={nativeOnly} onChange={(event) => onNativeOnlyChange(event.target.checked)}>
 					<span className="flex items-center gap-1">
 						Primary chain only
@@ -734,7 +739,8 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			),
 		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
 	)
-	const hasChainQuery = serverTable.pageQuery.chains !== null || serverTable.pageQuery.excludeChains.length > 0
+	const hasChainFilter =
+		getTokenFilterSelection(serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains, chainOptionIds) !== null
 	const pendingFiltersRef = React.useRef<{ query: typeof router.query; filters: Array<TokensActiveFilter> } | null>(
 		null
 	)
@@ -771,10 +777,9 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	)
 	const updateChainQuery = React.useCallback(
 		(updates: Record<string, string | Array<string> | undefined>) => {
-			const hasNextChainFilter = updates.chains !== undefined || updates.excludeChains !== undefined
-			void pushShallowQuery(router, hasNextChainFilter ? updates : { ...updates, nativeOnly: undefined })
+			void pushShallowQuery(router, getTokensChainQueryUpdates(updates, hasChainFilter))
 		},
-		[router]
+		[hasChainFilter, router]
 	)
 	const rankColumnWidth = getRankColumnWidth(serverTable.rows)
 	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(DEFAULT_COLUMN_VISIBILITY)
@@ -869,7 +874,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			updateSearch={serverTable.updateSearch}
 			filters={filters}
 			selectedChains={selectedChains}
-			hasChainQuery={hasChainQuery}
+			hasChainFilter={hasChainFilter}
 			nativeOnly={serverTable.pageQuery.nativeOnly}
 			selectedCategories={selectedCategories}
 			chainOptions={serverTable.data.chainOptions}

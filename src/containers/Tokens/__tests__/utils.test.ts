@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensSourceRow } from '../types'
 import {
 	buildTokensChartQueryString,
 	buildTokensSortIndexes,
 	getTokensPageFromRows,
+	getTokenFilterSelection,
+	getTokensChainQueryUpdates,
 	getTokensPageQuery,
 	resolveTokenFilterValues
 } from '../utils'
@@ -82,6 +85,52 @@ describe('token filter query values', () => {
 		expect(resolveTokenFilterValues(null, ['solana'], allValues)).toEqual(['ethereum', 'bsc'])
 		expect(resolveTokenFilterValues(['None'], [], allValues)).toEqual([])
 		expect(resolveTokenFilterValues(['Solana'], [], allValues)).toEqual([])
+	})
+
+	test('reads an empty chains or categories value as every option, in the picker and the rows', () => {
+		const rows = [
+			row({ id: 'eth', name: 'Eth', symbol: 'ETH', marketCap: 2, chains: ['ethereum'], categories: ['dex'] }),
+			row({ id: 'sol', name: 'Sol', symbol: 'SOL', marketCap: 1, chains: ['solana'], categories: ['lending'] })
+		]
+		const query = { chains: '', categories: '' }
+		const pageQuery = getTokensPageQuery(query)
+
+		expect(resolveTokenFilterValues(pageQuery.chains, pageQuery.excludeChains, ['ethereum', 'solana'])).toEqual([
+			'ethereum',
+			'solana'
+		])
+		expect(getPage(rows, query).rows.map((item) => item.id)).toEqual(['eth', 'sol'])
+	})
+
+	test('treats every chain selected, however written, as no chain filter for Primary chain only', () => {
+		const allValues = ['ethereum', 'solana']
+		expect(getTokenFilterSelection(null, [], allValues)).toBeNull()
+		expect(getTokenFilterSelection(['All'], [], allValues)).toBeNull()
+		expect(getTokenFilterSelection(['ethereum', 'solana'], [], allValues)).toBeNull()
+		expect(getTokenFilterSelection(null, ['solana'], allValues)).toEqual(new Set(['ethereum']))
+		expect(getTokenFilterSelection(['None'], [], allValues)).toEqual(new Set())
+	})
+
+	test('clears a stale Primary chain only when a chain filter starts and keeps a ticked one across chain changes', () => {
+		const allChains = ['ethereum', 'solana', 'bsc']
+		// The picker writes through the shared writer; an undefined key removes it from the URL, as in pushShallowQuery.
+		const pickChains = (query: Record<string, string>, hasChainFilter: boolean, chains: Array<string>) =>
+			getTokensPageQuery({
+				...query,
+				...getTokensChainQueryUpdates(
+					getQueryUpdatesFromSelected('chains', 'excludeChains', allChains, chains),
+					hasChainFilter
+				)
+			})
+
+		const fromStaleLink = pickChains({ nativeOnly: 'true' }, false, ['ethereum'])
+		expect([fromStaleLink.chains, fromStaleLink.nativeOnly]).toEqual([['ethereum'], false])
+
+		const switched = pickChains({ chains: 'ethereum', nativeOnly: 'true' }, true, ['solana'])
+		expect([switched.chains, switched.nativeOnly]).toEqual([['solana'], true])
+
+		const cleared = pickChains({ chains: 'ethereum', nativeOnly: 'true' }, true, allChains)
+		expect([cleared.chains, cleared.nativeOnly]).toEqual([null, false])
 	})
 })
 

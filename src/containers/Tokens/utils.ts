@@ -1,5 +1,6 @@
 import type { ParsedUrlQuery } from 'node:querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import {
 	isTrueQueryParam,
@@ -42,9 +43,10 @@ function parseOptionalRankQueryParam(value: ParsedUrlQuery[string]): number | nu
 	return parsed != null && parsed > 0 ? Math.floor(parsed) : null
 }
 
+/** Null when the key is absent or empty, which both mean the default: every option. */
 export function parseTokenFilterValues(value: ParsedUrlQuery[string]): Array<string> | null {
-	if (value == null) return null
-	return toNonEmptyArrayParam(value)
+	const values = toNonEmptyArrayParam(value)
+	return values.length > 0 ? values : null
 }
 
 export function resolveTokenFilterValues(
@@ -52,29 +54,19 @@ export function resolveTokenFilterValues(
 	excludeValues: Array<string>,
 	allValues: Array<string>
 ): Array<string> {
-	const validValues = new Set(allValues)
-	let selectedValues: Array<string>
-	if (includeValues == null || includeValues.includes('All')) {
-		selectedValues = allValues
-	} else if (includeValues.includes('None')) {
-		selectedValues = []
-	} else {
-		selectedValues = []
-		const selected = new Set<string>()
-		for (const value of includeValues) {
-			if (validValues.has(value) && !selected.has(value)) {
-				selected.add(value)
-				selectedValues.push(value)
-			}
-		}
-	}
-
-	if (excludeValues.length === 0) return selectedValues
-	const excluded = new Set(excludeValues)
-	return selectedValues.filter((value) => !excluded.has(value))
+	return readSelectionFromQuery(
+		{ values: includeValues ?? undefined, excludeValues },
+		'values',
+		'excludeValues',
+		allValues
+	)
 }
 
-function getTokenFilterSelection(
+/**
+ * The selection rows are filtered by, or null when every option is selected. "Primary chain only" applies, and its
+ * checkbox shows, only while the chain selection is not null.
+ */
+export function getTokenFilterSelection(
 	includeValues: Array<string> | null,
 	excludeValues: Array<string>,
 	allValues: Array<string>
@@ -83,6 +75,19 @@ function getTokenFilterSelection(
 	const selectedValues = resolveTokenFilterValues(includeValues, excludeValues, allValues)
 	if ((!hasExplicitInclude || allValues.length > 0) && selectedValues.length === allValues.length) return null
 	return new Set(selectedValues)
+}
+
+/**
+ * The URL update for a chain picker change. "Primary chain only" lives only while a chain filter does, so it is
+ * dropped when the chain filter ends and when a new one starts; a box ticked under a chain filter survives a switch to
+ * another chain filter.
+ */
+export function getTokensChainQueryUpdates(
+	updates: Record<string, string | Array<string> | undefined>,
+	hasChainFilter: boolean
+): Record<string, string | Array<string> | undefined> {
+	const hasNextChainFilter = updates.chains !== undefined || updates.excludeChains !== undefined
+	return hasNextChainFilter && hasChainFilter ? updates : { ...updates, nativeOnly: undefined }
 }
 
 export function parseRankRangeQueryParams(query: ParsedUrlQuery): { rankFrom: number | null; rankTo: number | null } {
