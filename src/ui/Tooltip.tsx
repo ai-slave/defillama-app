@@ -16,6 +16,10 @@ interface ITooltip extends Ariakit.TooltipOptions {
 	portal?: boolean
 }
 
+/** Elements whose tap already does something, such as a link or button: a tap there keeps that action instead of opening the tooltip. */
+const TAP_ACTION_SELECTOR =
+	'a[href], button, summary, input, select, textarea, label, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]'
+
 export function Tooltip({
 	content,
 	children,
@@ -34,7 +38,13 @@ export function Tooltip({
 				store={store}
 				className={`flex shrink-0 items-center truncate ${className ?? ''}`}
 				render={<span />}
-				{...(props.render ? {} : { onTouchStart: store.toggle, onMouseLeave: store.hide })}
+				// Touch has no hover, so a tap opens the tooltip. A `render` anchor that is, or sits in, a
+				// control leaves the tap to that control; plain anchors keep toggling as they always have.
+				onTouchStart={(event) => {
+					if (props.render && event.currentTarget.closest(TAP_ACTION_SELECTOR)) return
+					store.toggle()
+				}}
+				onMouseLeave={store.hide}
 				{...props}
 			>
 				{children}

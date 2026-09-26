@@ -117,7 +117,6 @@ export function SummaryChange({
 		</>
 	)
 
-	// No `render` on the Tooltip: it opens on tap only for its default anchor.
 	return tooltip ? (
 		<Tooltip content={tooltip} className={className}>
 			{children}
