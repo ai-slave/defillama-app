@@ -542,6 +542,12 @@ export function StablecoinsByChain({
 							csvSource={csvSource}
 						/>
 					</ChartPanelToolbar>
+					{/* The volume API reports by symbol, so it cannot apply the stablecoin filters. */}
+					{isVolumeChart && hasActiveStablecoinUrlFilters ? (
+						<p className="px-2 pt-2 body-sm text-tertiary">
+							This chart ignores the filters above and shows volume for every stablecoin.
+						</p>
+					) : null}
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart

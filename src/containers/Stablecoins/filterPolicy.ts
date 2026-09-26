@@ -1,4 +1,6 @@
-import { parseNumberQueryParam } from '~/utils/routerQuery'
+import { readSelectionFromQuery } from '~/components/Select/query'
+import { parseNumberQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import type { StablecoinPegMechanism, StablecoinPegType } from './api.types'
 import type { FormattedStablecoinAsset } from './utils'
 
 type QueryParamInput = string | Array<string> | undefined | null
@@ -68,185 +70,63 @@ export const stablecoinAttributeOptions: Array<StablecoinFilterOption> = [
 	}
 ]
 
-export const stablecoinBackingOptions: Array<StablecoinFilterOption> = [
-	{
-		name: 'Fiat',
-		key: 'FIATSTABLES',
-		filterFn: (item) => item.pegMechanism === 'fiat-backed',
-		help: 'Show stablecoins backed by fiat'
-	},
-	{
-		name: 'Crypto',
-		key: 'CRYPTOSTABLES',
-		filterFn: (item) => item.pegMechanism === 'crypto-backed',
-		help: 'Show stablecoins backed by crypto'
-	},
-	{
-		name: 'Algorithmic',
-		key: 'ALGOSTABLES',
-		filterFn: (item) => item.pegMechanism === 'algorithmic',
-		help: 'Show algorithmic stablecoins'
-	}
-]
+const backingOptionLabels = {
+	'fiat-backed': { key: 'FIATSTABLES', name: 'Fiat', help: 'Show stablecoins backed by fiat' },
+	'crypto-backed': { key: 'CRYPTOSTABLES', name: 'Crypto', help: 'Show stablecoins backed by crypto' },
+	algorithmic: { key: 'ALGOSTABLES', name: 'Algorithmic', help: 'Show algorithmic stablecoins' }
+} satisfies Record<StablecoinPegMechanism, { key: string; name: string; help: string }>
 
-export const stablecoinPegTypeOptions: Array<StablecoinFilterOption> = [
-	{
-		name: 'USD',
-		key: 'PEGGEDUSD',
-		filterFn: (item) => item.pegType === 'peggedUSD',
-		help: 'Show stablecoins pegged to USD'
-	},
-	{
-		name: 'EUR',
-		key: 'PEGGEDEUR',
-		filterFn: (item) => item.pegType === 'peggedEUR',
-		help: 'Show stablecoins pegged to EUR'
-	},
-	{
-		name: 'SGD',
-		key: 'PEGGEDSGD',
-		filterFn: (item) => item.pegType === 'peggedSGD',
-		help: 'Show stablecoins pegged to SGD'
-	},
-	{
-		name: 'JPY',
-		key: 'PEGGEDJPY',
-		filterFn: (item) => item.pegType === 'peggedJPY',
-		help: 'Show stablecoins pegged to JPY'
-	},
-	{
-		name: 'CNY',
-		key: 'PEGGEDCNY',
-		filterFn: (item) => item.pegType === 'peggedCNY',
-		help: 'Show stablecoins pegged to CNY'
-	},
-	{
-		name: 'UAH',
-		key: 'PEGGEDUAH',
-		filterFn: (item) => item.pegType === 'peggedUAH',
-		help: 'Show stablecoins pegged to UAH'
-	},
-	{
-		name: 'ARS',
-		key: 'PEGGEDARS',
-		filterFn: (item) => item.pegType === 'peggedARS',
-		help: 'Show stablecoins pegged to ARS'
-	},
-	{
-		name: 'GBP',
-		key: 'PEGGEDGBP',
-		filterFn: (item) => item.pegType === 'peggedGBP',
-		help: 'Show stablecoins pegged to GBP'
-	},
-	{
-		name: 'Variable',
-		key: 'PEGGEDVAR',
-		filterFn: (item) => item.pegType === 'peggedVAR',
-		help: 'Show stablecoins with a variable or floating peg'
-	},
-	{
-		name: 'CAD',
-		key: 'PEGGEDCAD',
-		filterFn: (item) => item.pegType === 'peggedCAD',
-		help: 'Show stablecoins pegged to CAD'
-	},
-	{
-		name: 'AUD',
-		key: 'PEGGEDAUD',
-		filterFn: (item) => item.pegType === 'peggedAUD',
-		help: 'Show stablecoins pegged to AUD'
-	},
-	{
-		name: 'TRY',
-		key: 'PEGGEDTRY',
-		filterFn: (item) => item.pegType === 'peggedTRY',
-		help: 'Show stablecoins pegged to Turkish Lira'
-	},
-	{
-		name: 'CHF',
-		key: 'PEGGEDCHF',
-		filterFn: (item) => item.pegType === 'peggedCHF',
-		help: 'Show stablecoins pegged to Swiss Franc'
-	},
-	{
-		name: 'COP',
-		key: 'PEGGEDCOP',
-		filterFn: (item) => item.pegType === 'peggedCOP',
-		help: 'Show stablecoins pegged to Colombian Peso'
-	},
-	{
-		name: 'REAL',
-		key: 'PEGGEDREAL',
-		filterFn: (item) => item.pegType === 'peggedREAL',
-		help: 'Show stablecoins pegged to Brazilian Real'
-	},
-	{
-		name: 'RUB',
-		key: 'PEGGEDRUB',
-		filterFn: (item) => item.pegType === 'peggedRUB',
-		help: 'Show stablecoins pegged to Russian Ruble'
-	},
-	{
-		name: 'PHP',
-		key: 'PEGGEDPHP',
-		filterFn: (item) => item.pegType === 'peggedPHP',
-		help: 'Show stablecoins pegged to Philippine Peso'
-	},
-	{
-		name: 'MXN',
-		key: 'PEGGEDMXN',
-		filterFn: (item) => item.pegType === 'peggedMXN',
-		help: 'Show stablecoins pegged to Mexican Peso'
-	},
-	{
-		name: 'KES',
-		key: 'PEGGEDKES',
-		filterFn: (item) => item.pegType === 'peggedKES',
-		help: 'Show stablecoins pegged to Kenyan Shilling'
-	},
-	{
-		name: 'ZAR',
-		key: 'PEGGEDZAR',
-		filterFn: (item) => item.pegType === 'peggedZAR',
-		help: 'Show stablecoins pegged to South African Rand'
-	},
-	{
-		name: 'NGN',
-		key: 'PEGGEDNGN',
-		filterFn: (item) => item.pegType === 'peggedNGN',
-		help: 'Show stablecoins pegged to Nigerian Naira'
-	},
-	{
-		name: 'XOF',
-		key: 'PEGGEDXOF',
-		filterFn: (item) => item.pegType === 'peggedXOF',
-		help: 'Show stablecoins pegged to West African CFA Franc'
-	},
-	{
-		name: 'GHS',
-		key: 'PEGGEDGHS',
-		filterFn: (item) => item.pegType === 'peggedGHS',
-		help: 'Show stablecoins pegged to Ghanaian Cedi'
-	},
-	{
-		name: 'MYR',
-		key: 'PEGGEDMYR',
-		filterFn: (item) => item.pegType === 'peggedMYR',
-		help: 'Show stablecoins pegged to Malaysian Ringgit'
-	},
-	{
-		name: 'KRW',
-		key: 'PEGGEDKRW',
-		filterFn: (item) => item.pegType === 'peggedKRW',
-		help: 'Show stablecoins pegged to Korean Won'
-	},
-	{
-		name: 'HKD',
-		key: 'PEGGEDHKD',
-		filterFn: (item) => item.pegType === 'peggedHKD',
-		help: 'Show stablecoins pegged to Hong Kong Dollar'
-	}
-]
+// Typed by the API's unions so every backing and peg type has an option: a row without one would disappear as soon as
+// any filter is on.
+export const stablecoinBackingOptions: Array<StablecoinFilterOption> = []
+for (const mechanism in backingOptionLabels) {
+	const pegMechanism = mechanism as StablecoinPegMechanism
+	stablecoinBackingOptions.push({
+		...backingOptionLabels[pegMechanism],
+		filterFn: (item) => item.pegMechanism === pegMechanism
+	})
+}
+
+const pegTypeOptionLabels = {
+	peggedUSD: { name: 'USD', help: 'Show stablecoins pegged to USD' },
+	peggedEUR: { name: 'EUR', help: 'Show stablecoins pegged to EUR' },
+	peggedSGD: { name: 'SGD', help: 'Show stablecoins pegged to SGD' },
+	peggedJPY: { name: 'JPY', help: 'Show stablecoins pegged to JPY' },
+	peggedCNY: { name: 'CNY', help: 'Show stablecoins pegged to CNY' },
+	peggedUAH: { name: 'UAH', help: 'Show stablecoins pegged to UAH' },
+	peggedARS: { name: 'ARS', help: 'Show stablecoins pegged to ARS' },
+	peggedGBP: { name: 'GBP', help: 'Show stablecoins pegged to GBP' },
+	peggedVAR: { name: 'Variable', help: 'Show stablecoins with a variable or floating peg' },
+	peggedCAD: { name: 'CAD', help: 'Show stablecoins pegged to CAD' },
+	peggedAUD: { name: 'AUD', help: 'Show stablecoins pegged to AUD' },
+	peggedTRY: { name: 'TRY', help: 'Show stablecoins pegged to Turkish Lira' },
+	peggedCHF: { name: 'CHF', help: 'Show stablecoins pegged to Swiss Franc' },
+	peggedCOP: { name: 'COP', help: 'Show stablecoins pegged to Colombian Peso' },
+	peggedREAL: { name: 'REAL', help: 'Show stablecoins pegged to Brazilian Real' },
+	peggedRUB: { name: 'RUB', help: 'Show stablecoins pegged to Russian Ruble' },
+	peggedPHP: { name: 'PHP', help: 'Show stablecoins pegged to Philippine Peso' },
+	peggedMXN: { name: 'MXN', help: 'Show stablecoins pegged to Mexican Peso' },
+	peggedKES: { name: 'KES', help: 'Show stablecoins pegged to Kenyan Shilling' },
+	peggedZAR: { name: 'ZAR', help: 'Show stablecoins pegged to South African Rand' },
+	peggedNGN: { name: 'NGN', help: 'Show stablecoins pegged to Nigerian Naira' },
+	peggedXOF: { name: 'XOF', help: 'Show stablecoins pegged to West African CFA Franc' },
+	peggedGHS: { name: 'GHS', help: 'Show stablecoins pegged to Ghanaian Cedi' },
+	peggedCLP: { name: 'CLP', help: 'Show stablecoins pegged to Chilean Peso' },
+	peggedPEN: { name: 'PEN', help: 'Show stablecoins pegged to Peruvian Sol' },
+	peggedMYR: { name: 'MYR', help: 'Show stablecoins pegged to Malaysian Ringgit' },
+	peggedKRW: { name: 'KRW', help: 'Show stablecoins pegged to Korean Won' },
+	peggedHKD: { name: 'HKD', help: 'Show stablecoins pegged to Hong Kong Dollar' }
+} satisfies Record<StablecoinPegType, { name: string; help: string }>
+
+export const stablecoinPegTypeOptions: Array<StablecoinFilterOption> = []
+for (const peg in pegTypeOptionLabels) {
+	const pegType = peg as StablecoinPegType
+	stablecoinPegTypeOptions.push({
+		...pegTypeOptionLabels[pegType],
+		key: pegType.toUpperCase(),
+		filterFn: (item) => item.pegType === pegType
+	})
+}
 
 const filterQueryKeys: Array<keyof StablecoinFilterQuery> = [
 	'attribute',
@@ -259,23 +139,10 @@ const filterQueryKeys: Array<keyof StablecoinFilterQuery> = [
 	'maxMcap'
 ]
 
-const legacyFilterKeyAliases: Record<string, string> = {
-	deppeged: 'DEPEGGED',
-	unknow: 'UNKNOWN'
-}
-
 const hasQueryValue = (value: QueryParamInput): boolean => {
 	if (value == null) return false
 	if (Array.isArray(value)) return value.length > 0
 	return value !== ''
-}
-
-const getOptionKeyByLower = (options: ReadonlyArray<StablecoinFilterOption>): Map<string, string> => {
-	const optionKeyByLower = new Map<string, string>()
-	for (const option of options) {
-		optionKeyByLower.set(option.key.toLowerCase(), option.key)
-	}
-	return optionKeyByLower
 }
 
 const getFilterOptionMap = (options: ReadonlyArray<StablecoinFilterOption>): Map<string, StablecoinFilterOption> => {
@@ -286,13 +153,10 @@ const getFilterOptionMap = (options: ReadonlyArray<StablecoinFilterOption>): Map
 	return map
 }
 
-const normalizeFilterKey = (raw: string, optionKeyByLower: Map<string, string>): string | null => {
-	const lower = raw.toLowerCase()
-	const alias = legacyFilterKeyAliases[lower]
-	if (alias && optionKeyByLower.has(alias.toLowerCase())) return alias
-	return optionKeyByLower.get(lower) ?? null
-}
-
+/**
+ * Reads a selection with the shared picker rules. Stablecoin links also match option keys case-insensitively and
+ * accept two old typos, so values are mapped to option keys (and `none`/`all` to the sentinels) first.
+ */
 export const resolveSelectedStablecoinFilterKeys = ({
 	includeParam,
 	excludeParam,
@@ -302,35 +166,21 @@ export const resolveSelectedStablecoinFilterKeys = ({
 	excludeParam: QueryParamInput
 	options: ReadonlyArray<StablecoinFilterOption>
 }): Array<string> => {
-	const optionKeyByLower = getOptionKeyByLower(options)
-	const allKeys = options.map((option) => option.key)
-	const rawIncludes = Array.isArray(includeParam) ? includeParam : includeParam ? [includeParam] : []
-	let selected: Array<string>
-
-	if (rawIncludes.length === 0) {
-		selected = allKeys
-	} else if (rawIncludes.some((raw) => raw.toLowerCase() === 'none')) {
-		selected = []
-	} else {
-		selected = []
-		const seen = new Set<string>()
-		for (const raw of rawIncludes) {
-			const key = normalizeFilterKey(raw, optionKeyByLower)
-			if (!key || seen.has(key)) continue
-			selected.push(key)
-			seen.add(key)
-		}
-	}
-
-	const rawExcludes = Array.isArray(excludeParam) ? excludeParam : excludeParam ? [excludeParam] : []
-	if (rawExcludes.length === 0 || selected.length === 0) return selected
-	const excludeSet = new Set<string>()
-	for (const raw of rawExcludes) {
-		const key = normalizeFilterKey(raw, optionKeyByLower)
-		if (key) excludeSet.add(key)
-	}
-	if (excludeSet.size === 0) return selected
-	return selected.filter((key) => !excludeSet.has(key))
+	const keyByLower = new Map<string, string>([
+		['none', 'None'],
+		['all', 'All'],
+		['deppeged', 'DEPEGGED'],
+		['unknow', 'UNKNOWN']
+	])
+	for (const option of options) keyByLower.set(option.key.toLowerCase(), option.key)
+	const toKeys = (param: QueryParamInput) =>
+		toNonEmptyArrayParam(param).map((raw) => keyByLower.get(raw.toLowerCase()) ?? raw)
+	return readSelectionFromQuery(
+		{ values: toKeys(includeParam), excludeValues: toKeys(excludeParam) },
+		'values',
+		'excludeValues',
+		options.map((option) => option.key)
+	)
 }
 
 export const resolveStablecoinFilterState = (query: StablecoinFilterQuery = {}): StablecoinFilterState => ({

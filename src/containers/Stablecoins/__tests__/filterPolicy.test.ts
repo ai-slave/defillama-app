@@ -73,7 +73,15 @@ describe('stablecoin filter policy', () => {
 			attribute: ['deppeged', 'unknow']
 		})
 
-		expect(state.selectedAttributes).toEqual(['DEPEGGED', 'UNKNOWN'])
+		expect(state.selectedAttributes).toEqual(['UNKNOWN', 'DEPEGGED'])
+	})
+
+	test('reads All as every option, and None over All', () => {
+		const state = resolveStablecoinFilterState({ attribute: 'All', pegtype: 'all', backing: ['All', 'None'] })
+
+		expect(state.selectedAttributes).toEqual(['STABLE', 'YIELDBEARING', 'UNKNOWN', 'DEPEGGED'])
+		expect(state.selectedPegTypes).toHaveLength(28)
+		expect(state.selectedBackings).toEqual([])
 	})
 
 	test('treats None as an empty selected set', () => {
@@ -129,6 +137,17 @@ describe('stablecoin filter policy', () => {
 				})
 			).map((asset) => asset.symbol)
 		).toEqual(['USDC'])
+	})
+
+	test('keeps stablecoins of every peg type when only a market cap range is set', () => {
+		const assets = [
+			stablecoin({ symbol: 'WCLP', pegType: 'peggedCLP', mcap: 100, pegDeviation: 0 }),
+			stablecoin({ symbol: 'WPEN', pegType: 'peggedPEN', mcap: 100, pegDeviation: 0 })
+		]
+
+		expect(
+			filterStablecoinAssets(assets, resolveStablecoinFilterState({ minMcap: '50' })).map((asset) => asset.symbol)
+		).toEqual(['WCLP', 'WPEN'])
 	})
 
 	test('marks invalid mcap query values active without applying a range', () => {
