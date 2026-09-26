@@ -852,16 +852,23 @@ function buildGroupedFlowDataset({
 }
 
 /** Build the complete chart metric for CSV without visual selection or overflow grouping. */
+/** Exports every series the picker selected, in dataset order, without the chart's top-N "Others" grouping. */
 export function buildAdapterMetricsCsvDataset({
 	chartData,
-	state
+	state,
+	selectedNames
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
 	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
+	selectedNames: Array<string>
 }): MultiSeriesTimeSeriesDataset {
-	if (state.chartKind === 'bar' && state.groupBy === 'daily' && state.valueMode === 'absolute') return chartData
+	const selected = new Set(selectedNames)
+	const seriesNames = chartData.dimensions.slice(1).filter((name) => selected.has(name))
+	const isEverySeries = seriesNames.length === chartData.dimensions.length - 1
+	if (isEverySeries && state.chartKind === 'bar' && state.groupBy === 'daily' && state.valueMode === 'absolute') {
+		return chartData
+	}
 
-	const seriesNames = chartData.dimensions.slice(1)
 	return buildGroupedFlowDataset({
 		chartData,
 		topEntityNames: seriesNames,
@@ -874,6 +881,7 @@ export function buildAdapterMetricsCsvDataset({
 
 function buildBarPresentation({
 	chartData,
+	selectedNames,
 	topEntityNames,
 	otherEntityNames,
 	topSeriesNames,
@@ -881,6 +889,8 @@ function buildBarPresentation({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
+	/** The picker's selection; the ranked names below leave out series with no values, which the export keeps. */
+	selectedNames: Array<string>
 	topEntityNames: Array<string>
 	otherEntityNames: Array<string>
 	topSeriesNames: Array<string>
@@ -901,7 +911,10 @@ function buildBarPresentation({
 		kind: 'bar',
 		csvSource: {
 			type: 'dataset',
-			prepare: () => ({ ...buildAdapterMetricsCsvDataset({ chartData, state }), groupBy: state.groupBy })
+			prepare: () => ({
+				...buildAdapterMetricsCsvDataset({ chartData, state, selectedNames }),
+				groupBy: state.groupBy
+			})
 		},
 		dataset: finalDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({
@@ -921,6 +934,7 @@ function buildBarPresentation({
 
 function buildDominancePresentation({
 	chartData,
+	selectedNames,
 	topEntityNames,
 	otherEntityNames,
 	topSeriesNames,
@@ -928,6 +942,7 @@ function buildDominancePresentation({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
+	selectedNames: Array<string>
 	topEntityNames: Array<string>
 	otherEntityNames: Array<string>
 	topSeriesNames: Array<string>
@@ -947,7 +962,10 @@ function buildDominancePresentation({
 		kind: 'dominance',
 		csvSource: {
 			type: 'dataset',
-			prepare: () => ({ ...buildAdapterMetricsCsvDataset({ chartData, state }), groupBy: state.groupBy })
+			prepare: () => ({
+				...buildAdapterMetricsCsvDataset({ chartData, state, selectedNames }),
+				groupBy: state.groupBy
+			})
 		},
 		dataset: relativeDataset,
 		charts: topSeriesNames.map((seriesName, index) => ({
@@ -1203,17 +1221,14 @@ function getEffectiveDailyLatestRow(chartData: MultiSeriesTimeSeriesDataset): Mu
 	return !isUtcMidnight || gapMs < MIN_COMPLETE_DAILY_GAP_MS ? previousTimestampRow : lastTimestampRow
 }
 
+/** Exports the latest value of every series the picker selected, without the chart's top-N grouping. */
 function buildLatestValuesCsvDataset({
-	chartData,
-	groupBy,
+	latestRows,
 	entityDimension
 }: {
-	chartData: MultiSeriesTimeSeriesDataset
-	groupBy: ChartTimeGroupingWithCumulative
+	latestRows: Array<BreakdownLatestValueRow>
 	entityDimension: 'Chain' | 'Protocol'
 }): MultiSeriesChartDataset {
-	const names = chartData.dimensions.slice(1)
-	const latestRows = buildLatestValueRowsFromChartData({ chartData, selectedNames: names, groupBy })
 	const source = new Array<MultiSeriesChartDataset['source'][number]>(latestRows.length)
 	for (let index = 0; index < latestRows.length; index++) {
 		const row = latestRows[index]!
@@ -1274,12 +1289,7 @@ export function buildChainsByAdapterChartPresentation({
 				kind: 'treemap',
 				csvSource: {
 					type: 'dataset',
-					prepare: () =>
-						buildLatestValuesCsvDataset({
-							chartData,
-							groupBy: state.groupBy,
-							entityDimension: 'Chain'
-						})
+					prepare: () => buildLatestValuesCsvDataset({ latestRows, entityDimension: 'Chain' })
 				},
 				data: buildTreemapPresentation({
 					chartData,
@@ -1299,12 +1309,7 @@ export function buildChainsByAdapterChartPresentation({
 				kind: 'hbar',
 				csvSource: {
 					type: 'dataset',
-					prepare: () =>
-						buildLatestValuesCsvDataset({
-							chartData,
-							groupBy: state.groupBy,
-							entityDimension: 'Chain'
-						})
+					prepare: () => buildLatestValuesCsvDataset({ latestRows, entityDimension: 'Chain' })
 				},
 				data: buildHBarPresentation({
 					chartData,
@@ -1323,6 +1328,7 @@ export function buildChainsByAdapterChartPresentation({
 				})
 			return buildDominancePresentation({
 				chartData,
+				selectedNames: selectedChains,
 				topEntityNames,
 				otherEntityNames,
 				topSeriesNames,
@@ -1339,6 +1345,7 @@ export function buildChainsByAdapterChartPresentation({
 				})
 			return buildBarPresentation({
 				chartData,
+				selectedNames: selectedChains,
 				topEntityNames,
 				otherEntityNames,
 				topSeriesNames,
@@ -1471,6 +1478,7 @@ export function buildAdapterByChainBreakdownPresentation({
 		case 'dominance': {
 			return buildDominancePresentation({
 				chartData,
+				selectedNames: selectedProtocols,
 				topEntityNames,
 				otherEntityNames,
 				topSeriesNames,
@@ -1481,6 +1489,7 @@ export function buildAdapterByChainBreakdownPresentation({
 		case 'bar':
 			return buildBarPresentation({
 				chartData,
+				selectedNames: selectedProtocols,
 				topEntityNames,
 				otherEntityNames,
 				topSeriesNames,
@@ -1514,7 +1523,7 @@ export function buildAdapterByChainLatestValuePresentation({
 			kind: 'treemap',
 			csvSource: {
 				type: 'dataset',
-				prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
+				prepare: () => buildLatestValuesCsvDataset({ latestRows, entityDimension: 'Protocol' })
 			},
 			data: buildTreemapPresentation({
 				chartData,
@@ -1529,7 +1538,7 @@ export function buildAdapterByChainLatestValuePresentation({
 		kind: 'hbar',
 		csvSource: {
 			type: 'dataset',
-			prepare: () => buildLatestValuesCsvDataset({ chartData, groupBy, entityDimension: 'Protocol' })
+			prepare: () => buildLatestValuesCsvDataset({ latestRows, entityDimension: 'Protocol' })
 		},
 		data: buildHBarPresentation({
 			chartData,

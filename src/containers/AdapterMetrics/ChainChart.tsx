@@ -10,6 +10,7 @@ import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
@@ -22,7 +23,7 @@ import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { getErrorMessage } from '~/utils/error'
 import { chainIconUrl } from '~/utils/icons'
-import { parseArrayParam, parseExcludeParam, pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { fetchAdapterChainChartDataByProtocolBreakdown, fetchChainsByAdapterPageChartData } from './api'
 import { buildAdapterByChainCombinedChartPresentation, type CombinedChartPresentation } from './combinedChart'
 import { LINE_DIMENSIONS, type ADAPTER_TYPES } from './constants'
@@ -261,20 +262,8 @@ export function AdapterByChainChart({
 	const selectedProtocols = React.useMemo(() => {
 		if (chartViewMode !== 'Breakdown' || protocolOptions.length === 0) return []
 
-		const protocolsQuery = router.query.protocol
-		const excludeProtocolsQuery = router.query.excludeProtocol
-		const excludedProtocolsSet = parseExcludeParam(excludeProtocolsQuery)
-		const baseSelectedProtocols =
-			protocolsQuery != null ? parseArrayParam(protocolsQuery, protocolOptions) : protocolOptions
-
-		if (excludedProtocolsSet.size === 0) return baseSelectedProtocols
-
-		const selectedProtocols: Array<string> = []
-		for (const protocolName of baseSelectedProtocols) {
-			if (!excludedProtocolsSet.has(protocolName)) selectedProtocols.push(protocolName)
-		}
-		return selectedProtocols
-	}, [chartViewMode, protocolOptions, router.query.protocol, router.query.excludeProtocol])
+		return readSelectionFromQuery(router.query, 'protocol', 'excludeProtocol', protocolOptions)
+	}, [chartViewMode, protocolOptions, router.query])
 
 	const onChangeCombinedChartInterval = (nextInterval: LowercaseDwmcGrouping) => {
 		void pushShallowQuery(router, { groupBy: nextInterval === 'daily' ? undefined : nextInterval })
@@ -791,20 +780,10 @@ export function ChainsByAdapterChart({
 			router.query.valueMode
 		]
 	)
-	const selectedChains = React.useMemo(() => {
-		const chainsQuery = router.query.chain
-		const excludeChainsQuery = router.query.excludeChain
-		const excludedChainsSet = parseExcludeParam(excludeChainsQuery)
-		const baseSelectedChains = chainsQuery != null ? parseArrayParam(chainsQuery, allChains) : allChains
-
-		if (excludedChainsSet.size === 0) return baseSelectedChains
-
-		const selectedChains: Array<string> = []
-		for (const chain of baseSelectedChains) {
-			if (!excludedChainsSet.has(chain)) selectedChains.push(chain)
-		}
-		return selectedChains
-	}, [allChains, router.query.chain, router.query.excludeChain])
+	const selectedChains = React.useMemo(
+		() => readSelectionFromQuery(router.query, 'chain', 'excludeChain', allChains),
+		[allChains, router.query]
+	)
 	const shouldFetchBaseChartData = chartData.source.length === 0 && dataType != null
 	const {
 		data: baseChartData,

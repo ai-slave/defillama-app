@@ -1,4 +1,5 @@
 import { assert, describe, expect, test } from 'vitest'
+import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
@@ -1056,7 +1057,8 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 		expect(
 			buildAdapterMetricsCsvDataset({
 				chartData: adapterBreakdownChartData,
-				state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
+				state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' },
+				selectedNames: ['Hyperliquid Perps', 'dYdX', 'GMX']
 			})
 		).toEqual({
 			dimensions: ['timestamp', 'Hyperliquid Perps', 'dYdX', 'GMX'],
@@ -1078,7 +1080,8 @@ describe('buildAdapterByChainBreakdownPresentation', () => {
 
 		const csvDataset = buildAdapterMetricsCsvDataset({
 			chartData,
-			state: { chartKind: 'dominance', groupBy: 'daily' }
+			state: { chartKind: 'dominance', groupBy: 'daily' },
+			selectedNames: protocolNames
 		})
 
 		expect(csvDataset.dimensions).toEqual(['timestamp', ...protocolNames])
@@ -1394,5 +1397,105 @@ describe('filterProtocolsByCategoryQuery', () => {
 
 	test('ignores the category filter on pages without categories', () => {
 		expect(filterProtocolsByCategoryQuery(rows, [], { category: 'None' })).toEqual(rows)
+	})
+})
+
+describe('chart picker CSV exports', () => {
+	const prepareCsv = async (presentation: { csvSource: ChartCsvSource }) => {
+		if (presentation.csvSource === 'rendered-chart' || presentation.csvSource.type !== 'dataset') {
+			throw new Error('Expected a prepared export')
+		}
+		return presentation.csvSource.prepare()
+	}
+	const picked = ['dYdX', 'GMX']
+
+	test('export only the protocols or chains the picker selected, in every chart kind', async () => {
+		const seriesStates = [
+			{ chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' },
+			{ chartKind: 'bar', valueMode: 'relative', barLayout: 'stacked', groupBy: 'weekly' },
+			{ chartKind: 'dominance', groupBy: 'daily' }
+		] as const
+		for (const state of seriesStates) {
+			const protocolCsv = await prepareCsv(
+				buildAdapterByChainBreakdownPresentation({
+					chartData: adapterBreakdownChartData,
+					selectedProtocols: picked,
+					state
+				})
+			)
+			const chainCsv = await prepareCsv(
+				buildChainsByAdapterChartPresentation({ chartData: adapterBreakdownChartData, selectedChains: picked, state })
+			)
+			expect([protocolCsv.dimensions, chainCsv.dimensions]).toEqual([
+				['timestamp', ...picked],
+				['timestamp', ...picked]
+			])
+		}
+
+		for (const chartKind of ['treemap', 'hbar'] as const) {
+			const protocolCsv = await prepareCsv(
+				buildAdapterByChainLatestValuePresentation({
+					chartKind,
+					selectedProtocols: picked,
+					groupBy: 'daily',
+					chartData: adapterBreakdownChartData
+				})
+			)
+			const chainCsv = await prepareCsv(
+				buildChainsByAdapterChartPresentation({
+					chartData: adapterBreakdownChartData,
+					selectedChains: picked,
+					state: { chartKind, groupBy: 'daily' }
+				})
+			)
+			expect([protocolCsv.source, chainCsv.source]).toEqual([
+				[
+					['dYdX', 0],
+					['GMX', 10]
+				],
+				[
+					['dYdX', 0],
+					['GMX', 10]
+				]
+			])
+		}
+	})
+
+	test('keep a selected series that has no values', async () => {
+		const chartData = toDataset({
+			dimensions: ['timestamp', 'Ethereum', 'Missing'],
+			source: [{ timestamp: toMs(2024, 1, 1), Ethereum: 10 }]
+		})
+		const selected = ['Ethereum', 'Missing']
+		for (const state of [
+			{ chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' },
+			{ chartKind: 'dominance', groupBy: 'daily' }
+		] as const) {
+			const chainCsv = await prepareCsv(
+				buildChainsByAdapterChartPresentation({ chartData, selectedChains: selected, state })
+			)
+			const protocolCsv = await prepareCsv(
+				buildAdapterByChainBreakdownPresentation({ chartData, selectedProtocols: selected, state })
+			)
+			expect([chainCsv.dimensions, protocolCsv.dimensions]).toEqual([
+				['timestamp', ...selected],
+				['timestamp', ...selected]
+			])
+		}
+	})
+
+	test('export dominance shares within the selection, as the chart draws them', async () => {
+		const csv = await prepareCsv(
+			buildAdapterByChainBreakdownPresentation({
+				chartData: adapterBreakdownChartData,
+				selectedProtocols: picked,
+				state: { chartKind: 'dominance', groupBy: 'daily' }
+			})
+		)
+		expect(csv.source).toEqual([
+			[toMs(2024, 1, 1), 100, 0],
+			[toMs(2024, 1, 2), 50, 50],
+			[toMs(2024, 1, 3), 0, 100]
+		])
 	})
 })
