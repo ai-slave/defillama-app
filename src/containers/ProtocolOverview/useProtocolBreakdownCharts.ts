@@ -595,6 +595,27 @@ const buildTokenInflowsFromChartPairs = (
 const EMPTY_MULTI_SERIES_CHARTS: MultiSeriesCharts = []
 const EMPTY_RUNTIME_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOthersValue: 0 }
 
+/** Build pie slices from the latest breakdown point, skipping `UNKNOWN*` keys and values below the minimum. */
+export const buildLatestBreakdownPieSeries = (
+	breakdown: ProtocolBreakdownChart | null | undefined,
+	minimumValue: number
+): RuntimePieChartData => {
+	const latestPoint = breakdown?.at(-1)
+	if (!latestPoint) return EMPTY_RUNTIME_PIE_SERIES
+	const source: Record<string, number> = {}
+	let hasSource = false
+	const latestValues = latestPoint[1]
+	for (const name in latestValues) {
+		const value = latestValues[name]
+		if (name.startsWith('UNKNOWN') || !value || value <= 0) continue
+		if (value >= minimumValue) {
+			source[name] = value
+			hasSource = true
+		}
+	}
+	return hasSource ? prepareRuntimePieChartData({ data: source, limit: 15 }) : EMPTY_RUNTIME_PIE_SERIES
+}
+
 const EMPTY_COMPUTED_RESULT: IUseProtocolBreakdownChartsComputed = {
 	chainsUnique: [],
 	tokensUnique: [],
@@ -687,27 +708,9 @@ export const buildComputedBreakdownResult = ({
 	const rawTokensUnique = rawTokenSeries.available
 	const defaultRawTokens = rawTokenSeries.defaults
 
-	const tokenBreakdownPieSource: Record<string, number> = {}
-	let hasTokenBreakdownPieSource = false
-	if (buildTokenPieChart && tokenBreakdownUSD?.length) {
-		const latestPoint = tokenBreakdownUSD.at(-1)
-		if (latestPoint) {
-			const latestTokens = latestPoint[1]
-			for (const name in latestTokens) {
-				const value = latestTokens[name]
-				if (name.startsWith('UNKNOWN') || !value || value <= 0) continue
-				if (value >= tokenPieMinimumValue) {
-					tokenBreakdownPieSource[name] = value
-					hasTokenBreakdownPieSource = true
-				}
-			}
-		}
-	}
-
-	const tokenBreakdownPieSeries =
-		tokenBreakdownUSD?.length && hasTokenBreakdownPieSource
-			? prepareRuntimePieChartData({ data: tokenBreakdownPieSource, limit: 15 })
-			: EMPTY_RUNTIME_PIE_SERIES
+	const tokenBreakdownPieSeries = buildTokenPieChart
+		? buildLatestBreakdownPieSeries(tokenBreakdownUSD, tokenPieMinimumValue)
+		: EMPTY_RUNTIME_PIE_SERIES
 
 	if (!computeInflows) {
 		return {

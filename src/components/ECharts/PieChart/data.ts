@@ -105,6 +105,40 @@ export function prepareRuntimePieChartData({
 	return { peers, limit, upstreamOthersValue }
 }
 
+export interface RuntimePieChartTableRow {
+	name: string
+	value: number
+	/** Percentage of every canonical slice, including the upstream remainder. */
+	share: number
+}
+
+/** List the selected pie slices without the top-N fold; `Others` follows the pie's upstream-remainder rule. */
+export function buildRuntimePieChartTableRows({
+	series,
+	selectedSeries,
+	includeUpstreamOthers = true
+}: {
+	series: RuntimePieChartData
+	selectedSeries?: ReadonlySet<string>
+	includeUpstreamOthers?: boolean
+}): Array<RuntimePieChartTableRow> {
+	let total = Math.max(series.upstreamOthersValue, 0)
+	for (const peer of series.peers) total += peer.value
+	const toShare = (value: number) => (total > 0 ? (value / total) * 100 : 0)
+
+	const rows: Array<RuntimePieChartTableRow> = []
+	let selectedPeerCount = 0
+	for (const peer of series.peers) {
+		if (selectedSeries && !selectedSeries.has(peer.name)) continue
+		selectedPeerCount++
+		rows.push({ name: peer.name, value: peer.value, share: toShare(peer.value) })
+	}
+	if (includeUpstreamOthers && selectedPeerCount === series.peers.length && series.upstreamOthersValue > 0) {
+		rows.push({ name: 'Others', value: series.upstreamOthersValue, share: toShare(series.upstreamOthersValue) })
+	}
+	return rows
+}
+
 export function buildRuntimePieChartPresentation({
 	series,
 	selectedSeries,

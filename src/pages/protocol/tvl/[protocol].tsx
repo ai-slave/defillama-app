@@ -3,21 +3,24 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import {
-	buildRuntimePieChartCsvDataset,
-	buildRuntimePieChartPresentation,
-	type RuntimePieChartData
-} from '~/components/ECharts/PieChart/data'
 import { tvlOptionsMap } from '~/components/Filters/options'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { oldBlue } from '~/constants/colors'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
+import {
+	BreakdownChartCard,
+	BreakdownSnapshotTable,
+	buildSnapshotCsvSource,
+	type SnapshotTableRow,
+	TokensBreakdownPieChartCard
+} from '~/containers/ProtocolOverview/BreakdownCards'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { isProtocolExtraTvlKey, type ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
 import {
+	buildLatestBreakdownPieSeries,
 	type FailedQueryCategory,
 	type ProtocolBreakdownChart,
 	useProtocolBreakdownCharts
@@ -26,9 +29,9 @@ import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { isTvlSettingsKey, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -37,8 +40,6 @@ import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-
-const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
@@ -128,216 +129,26 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-function ChainsChartCard({
-	title,
-	allValues,
-	breakdown,
-	exportFilenameBase,
-	exportTitle,
-	exportIconUrl
-}: {
-	title: string
-	allValues: Array<string>
-	breakdown: ProtocolBreakdownChart
-	exportFilenameBase: string
-	exportTitle: string
-	exportIconUrl: string | undefined
-}) {
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
-		useProtocolBreakdownPresentation({
-			breakdown,
-			availableSeries: allValues,
-			aggregateOthers: true,
-			type: 'line'
-		})
+type InflowsView = 'bar' | 'table'
 
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const deferredDataset = React.useDeferredValue(dataset)
-	const deferredCharts = React.useDeferredValue(charts)
+const INFLOWS_VIEW_OPTIONS = [
+	{ value: 'bar', label: 'Bar' },
+	{ value: 'table', label: 'Table' }
+] as const satisfies ReadonlyArray<SegmentedControlOption<InflowsView>>
 
-	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
-				<h2 className="mr-auto heading-xs">{title}</h2>
-				{allValues.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allValues}
-						selectedValues={activeSeries}
-						setSelectedValues={setSelectedSeries}
-						label="Chain"
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-					csvSource={csvSource}
-				/>
-			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart
-					dataset={deferredDataset}
-					charts={deferredCharts}
-					csvSource={csvSource}
-					hideDefaultLegend={false}
-					valueSymbol="$"
-					selectedCharts={selectedCharts}
-					showTotalInTooltip
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
-		</ChartPanel>
-	)
-}
-
-function TokenLineChartCard({
-	title,
-	allValues,
-	breakdown,
-	defaultValues,
-	aggregateOthers,
-	valueSymbol,
-	exportFilenameBase,
-	exportTitle,
-	exportIconUrl
-}: {
-	title: string
-	allValues: Array<string>
-	breakdown: ProtocolBreakdownChart
-	defaultValues?: Array<string>
-	aggregateOthers: boolean
-	valueSymbol: string
-	exportFilenameBase: string
-	exportTitle: string
-	exportIconUrl: string | undefined
-}) {
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
-		useProtocolBreakdownPresentation({
-			breakdown,
-			availableSeries: allValues,
-			...(defaultValues ? { defaultSeries: defaultValues } : {}),
-			aggregateOthers,
-			type: 'line'
-		})
-
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const deferredDataset = React.useDeferredValue(dataset)
-	const deferredCharts = React.useDeferredValue(charts)
-
-	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
-				<h2 className="mr-auto heading-xs">{title}</h2>
-				{allValues.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allValues}
-						selectedValues={activeSeries}
-						setSelectedValues={setSelectedSeries}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-					csvSource={csvSource}
-				/>
-			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart
-					dataset={deferredDataset}
-					charts={deferredCharts}
-					csvSource={csvSource}
-					hideDefaultLegend={false}
-					valueSymbol={valueSymbol}
-					selectedCharts={selectedCharts}
-					showTotalInTooltip={valueSymbol === '$'}
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
-		</ChartPanel>
-	)
-}
-
-function TokensBreakdownPieChartCard({
-	title,
-	tokenBreakdownPieSeries,
-	exportFilenameBase,
-	exportTitle,
-	exportIconUrl
-}: {
-	title: string
-	tokenBreakdownPieSeries: RuntimePieChartData
-	exportFilenameBase: string
-	exportTitle: string
-	exportIconUrl: string | undefined
-}) {
-	const selectableSeries = React.useMemo(
-		() => tokenBreakdownPieSeries.peers.map((peer) => peer.name),
-		[tokenBreakdownPieSeries.peers]
-	)
-	const {
-		activeSeries: selectedTokens,
-		selectedCharts,
-		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
-	const presentation = React.useMemo(
-		() =>
-			buildRuntimePieChartPresentation({
-				series: tokenBreakdownPieSeries,
-				selectedSeries: selectedCharts,
-				includeUpstreamOthers
-			}),
-		[includeUpstreamOthers, selectedCharts, tokenBreakdownPieSeries]
-	)
-	const deferredPresentation = React.useDeferredValue(presentation)
-
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-
-	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
-				<h2 className="mr-auto heading-xs">{title}</h2>
-				{selectableSeries.length > 1 ? (
-					<SelectWithCombobox
-						allValues={selectableSeries}
-						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokens}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-					csvSource={{
-						type: 'dataset',
-						prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
-					}}
-				/>
-			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<PieChart
-					chartData={deferredPresentation.chartData}
-					stackColors={deferredPresentation.stackColors}
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
-		</ChartPanel>
-	)
+/** Selected tokens' non-zero flows from the latest inflow point; outflows stay negative. */
+const buildLatestInflowRows = (
+	breakdown: ProtocolBreakdownChart,
+	selectedTokens: ReadonlySet<string>
+): Array<SnapshotTableRow> => {
+	const latestFlows = breakdown.at(-1)?.[1]
+	if (!latestFlows) return []
+	const rows: Array<SnapshotTableRow> = []
+	for (const name in latestFlows) {
+		const value = latestFlows[name]
+		if (value && selectedTokens.has(name)) rows.push({ name, value })
+	}
+	return rows
 }
 
 function USDInflowsChartCard({
@@ -404,6 +215,11 @@ function InflowsByTokenChartCard({
 			type: 'bar',
 			stack: 'tokenInflows'
 		})
+	const [view, setView] = React.useState<InflowsView>('bar')
+	const tableRows = React.useMemo(
+		() => (view === 'table' ? buildLatestInflowRows(breakdown, new Set(activeSeries)) : []),
+		[activeSeries, breakdown, view]
+	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const deferredDataset = React.useDeferredValue(dataset)
@@ -413,6 +229,14 @@ function InflowsByTokenChartCard({
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
+				<SegmentedControl<InflowsView>
+					options={INFLOWS_VIEW_OPTIONS}
+					value={view}
+					onValueChange={setView}
+					label={`${title} view`}
+					variant="default"
+					size="md"
+				/>
 				{allValues.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allValues}
@@ -429,23 +253,28 @@ function InflowsByTokenChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={csvSource}
+					csvSource={view === 'table' ? buildSnapshotCsvSource(tableRows, 'Inflow') : csvSource}
+					showPng={view !== 'table'}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart
-					dataset={deferredDataset}
-					charts={deferredCharts}
-					csvSource={csvSource}
-					hideDefaultLegend={false}
-					valueSymbol="$"
-					selectedCharts={selectedCharts}
-					{...(selectedCharts.size > 1
-						? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
-						: {})}
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
+			{view === 'table' ? (
+				<BreakdownSnapshotTable rows={tableRows} kind="Inflow" />
+			) : (
+				<React.Suspense fallback={<ChartPanelBodyFallback />}>
+					<MultiSeriesChart
+						dataset={deferredDataset}
+						charts={deferredCharts}
+						csvSource={csvSource}
+						hideDefaultLegend={false}
+						valueSymbol="$"
+						selectedCharts={selectedCharts}
+						{...(selectedCharts.size > 1
+							? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
+							: {})}
+						onReady={handleChartReady}
+					/>
+				</React.Suspense>
+			)}
 		</ChartPanel>
 	)
 }
@@ -483,6 +312,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		inflows: props.metrics.inflows,
 		tokenPieMinimumValue: 0
 	})
+	const chainBreakdownPieSeries = React.useMemo(
+		() => buildLatestBreakdownPieSeries(chainBreakdown, 0),
+		[chainBreakdown]
+	)
 
 	const protocolSlug = slug(props.name)
 	const buildFilename = (suffix: string) => `${protocolSlug}-${slug(suffix)}`
@@ -516,10 +349,15 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
-						<ChainsChartCard
+						<BreakdownChartCard
 							title="TVL by Chain"
+							seriesLabel="Chain"
 							allValues={chainsUnique}
 							breakdown={chainBreakdown}
+							aggregateOthers
+							valueSymbol="$"
+							showDominance
+							snapshot={chainBreakdownPieSeries}
 							exportFilenameBase={buildFilename('chains')}
 							exportTitle={buildTitle('TVL by Chain')}
 							exportIconUrl={protocolIconUrl}
@@ -527,12 +365,14 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					) : null}
 
 					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
-						<TokenLineChartCard
+						<BreakdownChartCard
 							title="Token Values (USD)"
+							seriesLabel="Token"
 							allValues={tokensUnique}
 							breakdown={tokenBreakdownUSD}
 							aggregateOthers
 							valueSymbol="$"
+							showDominance
 							exportFilenameBase={buildFilename('token-values-usd')}
 							exportTitle={buildTitle('TVL by Token (USD)')}
 							exportIconUrl={protocolIconUrl}
@@ -553,8 +393,9 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					) : null}
 
 					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
-						<TokenLineChartCard
+						<BreakdownChartCard
 							title="Token Balances (Raw Quantities)"
+							seriesLabel="Token"
 							allValues={rawTokensUnique}
 							breakdown={tokenRawBreakdown}
 							defaultValues={defaultRawTokens}

@@ -1,29 +1,19 @@
 import type { GetStaticPropsContext } from 'next'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import {
-	buildRuntimePieChartCsvDataset,
-	buildRuntimePieChartPresentation,
-	type RuntimePieChartData
-} from '~/components/ECharts/PieChart/data'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { getActiveLoansPanel } from '~/containers/ProtocolOverview/activeLoans'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
+import { BreakdownChartCard, TokensBreakdownPieChartCard } from '~/containers/ProtocolOverview/BreakdownCards'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { ProtocolExtraTvlKey } from '~/containers/ProtocolOverview/tvlChart'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import {
-	type ProtocolBreakdownChart,
+	buildLatestBreakdownPieSeries,
 	useProtocolBreakdownCharts
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
-import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
-import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
@@ -32,12 +22,9 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
-
-const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
-
 const EMPTY_OTHER_PROTOCOLS: Array<string> = []
 const ACTIVE_LOANS_KEYS: Array<ProtocolExtraTvlKey> = ['borrowed']
+const ACTIVE_LOANS_SHARE_HEADER = '% of Active Loans'
 
 interface ActiveLoansProtocolPageProps {
 	name: string
@@ -47,146 +34,6 @@ interface ActiveLoansProtocolPageProps {
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
 	seoTitle: string
 	seoDescription: string
-}
-
-function MultiSeriesChartCard({
-	title,
-	protocolName,
-	allSeries,
-	seriesLabel,
-	breakdown,
-	defaultSeries,
-	aggregateOthers,
-	exportSuffix,
-	valueSymbol,
-	exportIconUrl
-}: {
-	title: string
-	protocolName: string
-	allSeries: Array<string>
-	seriesLabel: string
-	breakdown: ProtocolBreakdownChart
-	defaultSeries?: Array<string>
-	aggregateOthers: boolean
-	exportSuffix: string
-	valueSymbol?: string
-	exportIconUrl?: string
-}) {
-	const {
-		activeSeries: selectedSeries,
-		setSelectedSeries,
-		dataset,
-		charts,
-		selectedCharts,
-		csvSource
-	} = useProtocolBreakdownPresentation({
-		breakdown,
-		availableSeries: allSeries,
-		...(defaultSeries !== undefined ? { defaultSeries } : {}),
-		aggregateOthers,
-		type: 'line'
-	})
-
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-
-	const exportFilenameBase = `${slug(protocolName)}-${slug(exportSuffix)}`
-	const exportTitle = `${protocolName} ${title}`
-
-	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
-				<h2 className="mr-auto heading-xs">{title}</h2>
-				{allSeries.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allSeries}
-						selectedValues={selectedSeries}
-						setSelectedValues={setSelectedSeries}
-						label={seriesLabel}
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-					csvSource={csvSource}
-				/>
-			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<MultiSeriesChart
-					dataset={dataset}
-					charts={charts}
-					csvSource={csvSource}
-					{...(valueSymbol !== undefined ? { valueSymbol } : {})}
-					selectedCharts={selectedCharts}
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
-		</ChartPanel>
-	)
-}
-
-function TokensBreakdownPieChartCard({
-	protocolName,
-	series,
-	exportIconUrl
-}: {
-	protocolName: string
-	series: RuntimePieChartData
-	exportIconUrl?: string
-}) {
-	const selectableSeries = React.useMemo(() => series.peers.map((peer) => peer.name), [series.peers])
-	const {
-		activeSeries: selectedTokens,
-		selectedCharts,
-		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
-	const presentation = React.useMemo(
-		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
-		[includeUpstreamOthers, selectedCharts, series]
-	)
-
-	const { chartInstance, handleChartReady } = useGetChartInstance()
-
-	const exportFilenameBase = `${slug(protocolName)}-active-loans-tokens-breakdown-usd`
-	const exportTitle = `${protocolName} Active Loans Tokens Breakdown (USD)`
-
-	return (
-		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
-				<h2 className="mr-auto heading-xs">Active Loans Tokens Breakdown (USD)</h2>
-				{selectableSeries.length > 1 ? (
-					<SelectWithCombobox
-						allValues={selectableSeries}
-						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokens}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-					csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
-				/>
-			</ChartPanelToolbar>
-			<React.Suspense fallback={<ChartPanelBodyFallback />}>
-				<PieChart
-					chartData={presentation.chartData}
-					stackColors={presentation.stackColors}
-					onReady={handleChartReady}
-				/>
-			</React.Suspense>
-		</ChartPanel>
-	)
 }
 
 export const getStaticProps = withPerformanceLogging<ActiveLoansProtocolPageProps, { protocol: string }>(
@@ -271,6 +118,11 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 		inflows: props.metrics.inflows,
 		computeInflows: false
 	})
+	// Same minimum as the hook's token pie default, so chain and token tables filter alike.
+	const chainBreakdownPieSeries = React.useMemo(
+		() => buildLatestBreakdownPieSeries(chainBreakdown, 1),
+		[chainBreakdown]
+	)
 	const panel = getActiveLoansPanel({
 		isLoading,
 		errorCount: errors.length,
@@ -283,6 +135,8 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 		rawTokensUnique
 	})
 	const protocolIconUrl = tokenIconUrl(props.name)
+	const buildFilename = (suffix: string) => `${protocol}-${slug(suffix)}`
+	const buildTitle = (suffix: string) => `${props.name} ${suffix}`
 
 	return (
 		<ProtocolOverviewLayout
@@ -309,52 +163,59 @@ export default function ActiveLoansProtocol(props: ActiveLoansProtocolPageProps)
 			) : panel === 'charts' ? (
 				<div className="grid grid-cols-2 gap-2">
 					{chainBreakdown && chainsUnique.length > 1 ? (
-						<MultiSeriesChartCard
+						<BreakdownChartCard
 							title="Active Loans by Chain"
-							protocolName={props.name}
-							allSeries={chainsUnique}
 							seriesLabel="Chain"
+							allValues={chainsUnique}
 							breakdown={chainBreakdown}
 							aggregateOthers
-							exportSuffix="active-loans-by-chain"
 							valueSymbol="$"
+							showDominance
+							snapshot={chainBreakdownPieSeries}
+							shareHeader={ACTIVE_LOANS_SHARE_HEADER}
+							exportFilenameBase={buildFilename('active-loans-by-chain')}
+							exportTitle={buildTitle('Active Loans by Chain')}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
 					{tokenBreakdownUSD && tokensUnique.length > 0 ? (
-						<MultiSeriesChartCard
+						<BreakdownChartCard
 							title="Active Loans by Token (USD)"
-							protocolName={props.name}
-							allSeries={tokensUnique}
 							seriesLabel="Token"
+							allValues={tokensUnique}
 							breakdown={tokenBreakdownUSD}
 							aggregateOthers
-							exportSuffix="active-loans-by-token-usd"
 							valueSymbol="$"
+							showDominance
+							exportFilenameBase={buildFilename('active-loans-by-token-usd')}
+							exportTitle={buildTitle('Active Loans by Token (USD)')}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
 					{tokenBreakdownPieSeries.peers.length > 0 || tokenBreakdownPieSeries.upstreamOthersValue > 0 ? (
 						<TokensBreakdownPieChartCard
-							protocolName={props.name}
-							series={tokenBreakdownPieSeries}
+							title="Active Loans Tokens Breakdown (USD)"
+							tokenBreakdownPieSeries={tokenBreakdownPieSeries}
+							shareHeader={ACTIVE_LOANS_SHARE_HEADER}
+							exportFilenameBase={buildFilename('active-loans-tokens-breakdown-usd')}
+							exportTitle={buildTitle('Active Loans Tokens Breakdown (USD)')}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}
 
 					{tokenRawBreakdown && rawTokensUnique.length > 0 ? (
-						<MultiSeriesChartCard
+						<BreakdownChartCard
 							title="Active Loans by Token (Raw Quantities)"
-							protocolName={props.name}
-							allSeries={rawTokensUnique}
 							seriesLabel="Token"
+							allValues={rawTokensUnique}
 							breakdown={tokenRawBreakdown}
-							defaultSeries={defaultRawTokens}
+							defaultValues={defaultRawTokens}
 							aggregateOthers={false}
-							exportSuffix="active-loans-by-token-raw"
 							valueSymbol=""
+							exportFilenameBase={buildFilename('active-loans-by-token-raw')}
+							exportTitle={buildTitle('Active Loans by Token (Raw Quantities)')}
 							exportIconUrl={protocolIconUrl}
 						/>
 					) : null}

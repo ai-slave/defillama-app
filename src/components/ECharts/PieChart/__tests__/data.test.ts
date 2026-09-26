@@ -4,6 +4,7 @@ import {
 	buildPieLayoutOption,
 	buildRuntimePieChartCsvDataset,
 	buildRuntimePieChartPresentation,
+	buildRuntimePieChartTableRows,
 	preparePieChartData,
 	prepareRuntimePieChartData
 } from '../data'
@@ -264,6 +265,34 @@ describe('runtime pie selection', () => {
 			{ name: 'stETH', value: 5 },
 			{ name: 'rETH', value: 5 },
 			{ name: 'Others', value: 5 }
+		])
+	})
+})
+
+describe('buildRuntimePieChartTableRows', () => {
+	const series = prepareRuntimePieChartData({ data: { A: 50, B: 30, C: 10, Others: 10 }, limit: 1 })
+
+	test('lists every slice without folding the tail, with shares of the full total', () => {
+		expect(buildRuntimePieChartTableRows({ series })).toEqual([
+			{ name: 'A', value: 50, share: 50 },
+			{ name: 'B', value: 30, share: 30 },
+			{ name: 'C', value: 10, share: 10 },
+			{ name: 'Others', value: 10, share: 10 }
+		])
+	})
+
+	test('drops the upstream remainder once the selection is partial', () => {
+		expect(buildRuntimePieChartTableRows({ series, selectedSeries: new Set(['A', 'C']) })).toEqual([
+			{ name: 'A', value: 50, share: 50 },
+			{ name: 'C', value: 10, share: 10 }
+		])
+	})
+
+	test('omits the upstream remainder when excluded', () => {
+		expect(buildRuntimePieChartTableRows({ series, includeUpstreamOthers: false }).map((row) => row.name)).toEqual([
+			'A',
+			'B',
+			'C'
 		])
 	})
 })
