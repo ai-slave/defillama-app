@@ -22,6 +22,7 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { protocolCategoryConfig } from '~/containers/ProtocolTaxonomy/constants'
+import { selectTopProtocolsView } from '~/containers/ProtocolTaxonomy/topProtocolsView'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
@@ -33,7 +34,6 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
-import { parseExcludeParam } from '~/utils/routerQuery'
 
 const tableFeaturesConfig = tableFeatures({
 	...sortingFeatures,
@@ -110,39 +110,10 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 	const columnOptions = uniqueCategories.map((cat) => ({ name: cat, key: cat }))
 
 	const router = useRouter()
-	const { chain: chainQuery, excludeChain, column, excludeColumn } = router.query
-	const { selectedChains, selectedColumns, columnVisibility } = React.useMemo(() => {
-		const excludeChainSet = parseExcludeParam(excludeChain)
-		const excludeColumnSet = parseExcludeParam(excludeColumn)
-
-		let selectedChains = chainQuery
-			? Array.isArray(chainQuery)
-				? chainQuery
-				: chainQuery === 'All'
-					? chains
-					: [chainQuery]
-			: chains
-		// Filter out excludes
-		selectedChains = excludeChainSet.size > 0 ? selectedChains.filter((c) => !excludeChainSet.has(c)) : selectedChains
-
-		let selectedColumns = column
-			? Array.isArray(column)
-				? column
-				: column === 'All'
-					? uniqueCategories
-					: [column]
-			: uniqueCategories
-		// Filter out excludes
-		selectedColumns =
-			excludeColumnSet.size > 0 ? selectedColumns.filter((c) => !excludeColumnSet.has(c)) : selectedColumns
-
-		const selectedColumnsSet = new Set(selectedColumns)
-		const columnVisibility = {}
-		for (const col of uniqueCategories) {
-			columnVisibility[col] = selectedColumnsSet.has(col)
-		}
-		return { selectedChains, selectedColumns, columnVisibility }
-	}, [chainQuery, excludeChain, column, excludeColumn, chains, uniqueCategories])
+	const { rows, columnVisibility } = React.useMemo(
+		() => selectTopProtocolsView(data, chains, uniqueCategories, router.query),
+		[data, chains, uniqueCategories, router.query]
+	)
 
 	const columns = React.useMemo(() => {
 		const baseColumns = [
@@ -203,7 +174,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 
 	const table = useTable({
 		features: tableFeaturesConfig,
-		data,
+		data: rows,
 		columns,
 		state: {
 			columnFilters,
@@ -243,7 +214,6 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 					<div className="flex items-center gap-2 max-sm:w-full max-sm:flex-col">
 						<SelectWithCombobox
 							allValues={chains}
-							selectedValues={selectedChains}
 							includeQueryKey="chain"
 							excludeQueryKey="excludeChain"
 							nestedMenu={false}
@@ -255,7 +225,6 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 
 						<SelectWithCombobox
 							allValues={columnOptions}
-							selectedValues={selectedColumns}
 							includeQueryKey="column"
 							excludeQueryKey="excludeColumn"
 							nestedMenu={false}
