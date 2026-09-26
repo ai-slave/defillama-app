@@ -14,6 +14,7 @@ import { BasicLink } from '~/components/Link'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { searchTableFeatures } from '~/components/Table/features/search'
 import {
@@ -119,6 +120,9 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		() => filterProtocolsByCategoryQuery(props.protocols, props.categories, router.query),
 		[props.protocols, props.categories, router.query]
 	)
+	const isCategoryFiltered =
+		readSelectionFromQuery(router.query, 'category', 'excludeCategory', props.categories).length <
+		props.categories.length
 
 	const [sorting, setSorting] = useState<SortingState>(defaultSorting ?? DEFAULT_SORTING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -288,6 +292,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						chartName={props.type}
 						dataType={props.dataType}
 						tableProtocols={protocols}
+						isCategoryFiltered={isCategoryFiltered}
 					/>
 				</SummaryCardGrid>
 			) : null}

@@ -213,10 +213,12 @@ export function AdapterByChainChart({
 	chain,
 	chartName,
 	dataType,
-	tableProtocols
+	tableProtocols,
+	isCategoryFiltered
 }: Pick<IAdapterByChainPageData, 'chartData' | 'adapterType' | 'chain' | 'dataType'> & {
 	chartName: string
 	tableProtocols: IAdapterByChainPageData['protocols']
+	isCategoryFiltered: boolean
 }) {
 	const router = useRouter()
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
@@ -613,6 +615,14 @@ export function AdapterByChainChart({
 					)}
 				</div>
 			</ChartPanelToolbar>
+			{/* The API totals do not add up by category, so the header and combined chart stay unfiltered. */}
+			{isCategoryFiltered ? (
+				<p className="px-2 pt-2 body-sm text-tertiary">
+					{chartViewMode === 'Combined'
+						? 'The totals and this chart ignore the category filter.'
+						: 'The totals ignore the category filter.'}
+				</p>
+			) : null}
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
 				<ChartPanelBodyFallback className="body-sm text-data-down" role="alert">
 					{breakdownChartDataState.message}
