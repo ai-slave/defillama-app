@@ -41,8 +41,8 @@ interface ISelectWithUrlParams extends ISelectBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
 	defaultSelectedValues?: Array<string>
-	/** Omit it: the picker reads its selection from the URL. Only pages that still read the URL themselves pass it. */
-	selectedValues?: Array<string>
+	/** The picker reads its selection from the URL with `readSelectionFromQuery`, the same reader pages use. */
+	selectedValues?: never
 	setSelectedValues?: never
 }
 

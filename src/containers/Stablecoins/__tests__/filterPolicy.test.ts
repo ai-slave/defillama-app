@@ -3,11 +3,11 @@ import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import {
 	filterStablecoinAssets,
 	resolveStablecoinFilterState,
-	resolveSelectedStablecoinFilterKeys,
 	stablecoinAttributeOptions,
 	stablecoinBackingOptions,
 	stablecoinPegTypeOptions
 } from '../filterPolicy'
+import type { StablecoinFilterState } from '../filterPolicy'
 import type { FormattedStablecoinAsset } from '../utils'
 
 const stablecoin = (overrides: Partial<FormattedStablecoinAsset>): FormattedStablecoinAsset => ({
@@ -53,31 +53,8 @@ describe('stablecoin filter policy', () => {
 		})
 	})
 
-	test('normalizes include and exclude keys case-insensitively', () => {
-		const state = resolveStablecoinFilterState({
-			attribute: ['stable', 'YIELDBEARING'],
-			excludeAttribute: 'yieldbearing',
-			pegtype: ['peggedusd', 'PEGGEDEUR'],
-			excludePegtype: 'peggedeur',
-			backing: 'fiatstables'
-		})
-
-		expect(state.selectedAttributes).toEqual(['STABLE'])
-		expect(state.selectedPegTypes).toEqual(['PEGGEDUSD'])
-		expect(state.selectedBackings).toEqual(['FIATSTABLES'])
-		expect(state.hasActiveFilters).toBe(true)
-	})
-
-	test('keeps legacy typo aliases for attribute filters', () => {
-		const state = resolveStablecoinFilterState({
-			attribute: ['deppeged', 'unknow']
-		})
-
-		expect(state.selectedAttributes).toEqual(['UNKNOWN', 'DEPEGGED'])
-	})
-
 	test('reads All as every option, and None over All', () => {
-		const state = resolveStablecoinFilterState({ attribute: 'All', pegtype: 'all', backing: ['All', 'None'] })
+		const state = resolveStablecoinFilterState({ attribute: 'All', pegtype: 'All', backing: ['All', 'None'] })
 
 		expect(state.selectedAttributes).toEqual(['STABLE', 'YIELDBEARING', 'UNKNOWN', 'DEPEGGED'])
 		expect(state.selectedPegTypes).toHaveLength(28)
@@ -86,7 +63,7 @@ describe('stablecoin filter policy', () => {
 
 	test('treats None as an empty selected set', () => {
 		const state = resolveStablecoinFilterState({
-			attribute: 'none',
+			attribute: 'None',
 			pegtype: 'None',
 			backing: ['FIATSTABLES', 'None']
 		})
@@ -104,9 +81,9 @@ describe('stablecoin filter policy', () => {
 			stablecoin({ name: 'Tether', symbol: 'USDT', mcap: 200, pegDeviation: 0 })
 		]
 		const state = resolveStablecoinFilterState({
-			attribute: 'stable',
-			pegtype: 'peggedusd',
-			backing: 'fiatstables',
+			attribute: 'STABLE',
+			pegtype: 'PEGGEDUSD',
+			backing: 'FIATSTABLES',
 			minMcap: '50',
 			maxMcap: '150'
 		})
@@ -124,7 +101,7 @@ describe('stablecoin filter policy', () => {
 			filterStablecoinAssets(
 				assets,
 				resolveStablecoinFilterState({
-					attribute: 'stable'
+					attribute: 'STABLE'
 				})
 			).map((asset) => asset.symbol)
 		).toEqual(['USDC', 'NOCAP'])
@@ -132,7 +109,7 @@ describe('stablecoin filter policy', () => {
 			filterStablecoinAssets(
 				assets,
 				resolveStablecoinFilterState({
-					attribute: 'stable',
+					attribute: 'STABLE',
 					maxMcap: '150'
 				})
 			).map((asset) => asset.symbol)
@@ -160,17 +137,29 @@ describe('stablecoin filter policy', () => {
 
 describe('stablecoin selection URL round trips', () => {
 	const groups = [
-		{ name: 'attributes', include: 'attribute', exclude: 'excludeAttribute', options: stablecoinAttributeOptions },
-		{ name: 'backing', include: 'backing', exclude: 'excludeBacking', options: stablecoinBackingOptions },
-		{ name: 'peg types', include: 'pegtype', exclude: 'excludePegtype', options: stablecoinPegTypeOptions },
 		{
-			name: 'chain-scoped backing',
+			name: 'attributes',
+			include: 'attribute',
+			exclude: 'excludeAttribute',
+			options: stablecoinAttributeOptions,
+			read: (state: StablecoinFilterState) => state.selectedAttributes
+		},
+		{
+			name: 'backing',
 			include: 'backing',
 			exclude: 'excludeBacking',
-			options: stablecoinBackingOptions.slice(0, 2)
+			options: stablecoinBackingOptions,
+			read: (state: StablecoinFilterState) => state.selectedBackings
+		},
+		{
+			name: 'peg types',
+			include: 'pegtype',
+			exclude: 'excludePegtype',
+			options: stablecoinPegTypeOptions,
+			read: (state: StablecoinFilterState) => state.selectedPegTypes
 		}
 	] as const
-	for (const { name, include, exclude, options } of groups) {
+	for (const { name, include, exclude, options, read } of groups) {
 		test(`preserves none, all, only and every individual deselection for ${name}`, () => {
 			const all = options.map((option) => option.key)
 			const selections = [
@@ -181,11 +170,7 @@ describe('stablecoin selection URL round trips', () => {
 			]
 			for (const selection of selections) {
 				const updates = getQueryUpdatesFromSelected(include, exclude, all, selection)
-				const restored = resolveSelectedStablecoinFilterKeys({
-					includeParam: updates[include],
-					excludeParam: updates[exclude],
-					options
-				})
+				const restored = read(resolveStablecoinFilterState(updates))
 				expect(new Set(restored)).toEqual(new Set(selection))
 			}
 			expect(getQueryUpdatesFromSelected(include, exclude, all, [])).toEqual({

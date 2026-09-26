@@ -8,33 +8,16 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { formatNumber } from '~/utils/numberFormat'
-import {
-	resolveSelectedStablecoinFilterKeys,
-	stablecoinAttributeOptions,
-	stablecoinBackingOptions,
-	stablecoinPegTypeOptions
-} from './filterPolicy'
+import { stablecoinAttributeOptions, stablecoinBackingOptions, stablecoinPegTypeOptions } from './filterPolicy'
 
 const isStablecoinChartQueryKey = (key: string) => key === 'chartType' || key === 'chartView' || key === 'groupBy'
 
 type StablecoinFilterKey = string
 
 function Attribute({ nestedMenu }: { nestedMenu: boolean }) {
-	const router = useRouter()
-	const { attribute, excludeAttribute } = router.query
-
-	const selectedValues = useMemo(() => {
-		return resolveSelectedStablecoinFilterKeys({
-			includeParam: attribute,
-			excludeParam: excludeAttribute,
-			options: stablecoinAttributeOptions
-		})
-	}, [attribute, excludeAttribute])
-
 	return (
 		<Select
 			allValues={stablecoinAttributeOptions}
-			selectedValues={selectedValues}
 			label="Attribute"
 			nestedMenu={nestedMenu}
 			labelType="smol"
@@ -53,27 +36,15 @@ function BackingType({
 	nestedMenu: boolean
 	availableBackings: Array<StablecoinFilterKey>
 }) {
-	const router = useRouter()
-	const { backing, excludeBacking } = router.query
-
 	const backingOptions = useMemo(() => {
 		if (!availableBackings || availableBackings.length === 0) return stablecoinBackingOptions
 		const allowed = new Set(availableBackings)
 		return stablecoinBackingOptions.filter((o) => allowed.has(o.key))
 	}, [availableBackings])
 
-	const selectedValues = useMemo(() => {
-		return resolveSelectedStablecoinFilterKeys({
-			includeParam: backing,
-			excludeParam: excludeBacking,
-			options: backingOptions
-		})
-	}, [backing, excludeBacking, backingOptions])
-
 	return (
 		<Select
 			allValues={backingOptions}
-			selectedValues={selectedValues}
 			label="Backing Type"
 			nestedMenu={nestedMenu}
 			labelType="smol"
@@ -92,27 +63,15 @@ function PegType({
 	nestedMenu: boolean
 	availablePegTypes: Array<StablecoinFilterKey>
 }) {
-	const router = useRouter()
-	const { pegtype, excludePegtype } = router.query
-
 	const pegTypeOptions = useMemo(() => {
 		if (!availablePegTypes || availablePegTypes.length === 0) return stablecoinPegTypeOptions
 		const allowed = new Set(availablePegTypes)
 		return stablecoinPegTypeOptions.filter((o) => allowed.has(o.key))
 	}, [availablePegTypes])
 
-	const selectedValues = useMemo(() => {
-		return resolveSelectedStablecoinFilterKeys({
-			includeParam: pegtype,
-			excludeParam: excludePegtype,
-			options: pegTypeOptions
-		})
-	}, [pegtype, excludePegtype, pegTypeOptions])
-
 	return (
 		<Select
 			allValues={pegTypeOptions}
-			selectedValues={selectedValues}
 			label="Peg Type"
 			nestedMenu={nestedMenu}
 			labelType="smol"

@@ -1,9 +1,9 @@
 import { readSelectionFromQuery } from '~/components/Select/query'
-import { parseNumberQueryParam, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { StablecoinPegMechanism, StablecoinPegType } from './api.types'
 import type { FormattedStablecoinAsset } from './utils'
 
-type QueryParamInput = string | Array<string> | undefined | null
+type QueryParamInput = string | Array<string> | undefined
 
 type StablecoinFilterableItem = Pick<
 	FormattedStablecoinAsset,
@@ -153,52 +153,15 @@ const getFilterOptionMap = (options: ReadonlyArray<StablecoinFilterOption>): Map
 	return map
 }
 
-/**
- * Reads a selection with the shared picker rules. Stablecoin links also match option keys case-insensitively and
- * accept two old typos, so values are mapped to option keys (and `none`/`all` to the sentinels) first.
- */
-export const resolveSelectedStablecoinFilterKeys = ({
-	includeParam,
-	excludeParam,
-	options
-}: {
-	includeParam: QueryParamInput
-	excludeParam: QueryParamInput
-	options: ReadonlyArray<StablecoinFilterOption>
-}): Array<string> => {
-	const keyByLower = new Map<string, string>([
-		['none', 'None'],
-		['all', 'All'],
-		['deppeged', 'DEPEGGED'],
-		['unknow', 'UNKNOWN']
-	])
-	for (const option of options) keyByLower.set(option.key.toLowerCase(), option.key)
-	const toKeys = (param: QueryParamInput) =>
-		toNonEmptyArrayParam(param).map((raw) => keyByLower.get(raw.toLowerCase()) ?? raw)
-	return readSelectionFromQuery(
-		{ values: toKeys(includeParam), excludeValues: toKeys(excludeParam) },
-		'values',
-		'excludeValues',
-		options.map((option) => option.key)
-	)
-}
+const optionKeys = (options: ReadonlyArray<StablecoinFilterOption>) => options.map((option) => option.key)
+const attributeKeys = optionKeys(stablecoinAttributeOptions)
+const pegTypeKeys = optionKeys(stablecoinPegTypeOptions)
+const backingKeys = optionKeys(stablecoinBackingOptions)
 
 export const resolveStablecoinFilterState = (query: StablecoinFilterQuery = {}): StablecoinFilterState => ({
-	selectedAttributes: resolveSelectedStablecoinFilterKeys({
-		includeParam: query.attribute,
-		excludeParam: query.excludeAttribute,
-		options: stablecoinAttributeOptions
-	}),
-	selectedPegTypes: resolveSelectedStablecoinFilterKeys({
-		includeParam: query.pegtype,
-		excludeParam: query.excludePegtype,
-		options: stablecoinPegTypeOptions
-	}),
-	selectedBackings: resolveSelectedStablecoinFilterKeys({
-		includeParam: query.backing,
-		excludeParam: query.excludeBacking,
-		options: stablecoinBackingOptions
-	}),
+	selectedAttributes: readSelectionFromQuery(query, 'attribute', 'excludeAttribute', attributeKeys),
+	selectedPegTypes: readSelectionFromQuery(query, 'pegtype', 'excludePegtype', pegTypeKeys),
+	selectedBackings: readSelectionFromQuery(query, 'backing', 'excludeBacking', backingKeys),
 	minMcap: parseNumberQueryParam(query.minMcap),
 	maxMcap: parseNumberQueryParam(query.maxMcap),
 	hasActiveFilters: filterQueryKeys.some((key) => hasQueryValue(query[key]))

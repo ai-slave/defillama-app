@@ -12,7 +12,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { TableToolbar } from '~/ui/Toolbar'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { buildCardsColumns, CARDS_COLUMN_GROUPS, type CardsColumnGroup, cardsColumnVisibility } from './cardsColumns'
-import { filterCards, resolveCardsFilterState } from './filterPolicy'
+import { cardsChainOptions, filterCards, resolveCardsFilterState } from './filterPolicy'
 import { type CardsReferenceModel, type CardTableRow, type CardTierRow, groupCardRows } from './models'
 
 export const CARDS_QUERY_KEYS = {
@@ -37,7 +37,16 @@ export function CardsTable({ rows, reference }: { rows: Array<CardTierRow>; refe
 
 	const columns = React.useMemo(() => buildCardsColumns(reference), [reference])
 	const filteredRows = React.useMemo(
-		() => groupCardRows(filterCards(rows, resolveCardsFilterState(router.query))),
+		() =>
+			groupCardRows(
+				filterCards(
+					rows,
+					resolveCardsFilterState(
+						router.query,
+						cardsChainOptions(rows).map((option) => option.key)
+					)
+				)
+			),
 		[rows, router.query]
 	)
 

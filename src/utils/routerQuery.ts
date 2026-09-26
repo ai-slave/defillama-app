@@ -185,52 +185,6 @@ export function parseExcludeParam(param: QueryParamInput): Set<string> {
 }
 
 // ============================================================================
-// Special Value Checks
-// ============================================================================
-
-/**
- * Checks if a query parameter represents 'None' (empty selection).
- * Handles both single values and arrays.
- *
- * @example
- * isParamNone('None') // true
- * isParamNone(['None', 'foo']) // true
- * isParamNone(undefined) // false
- */
-export function isParamNone(param: QueryParamInput): boolean {
-	if (param === 'None') return true
-	if (Array.isArray(param) && param.includes('None')) return true
-	return false
-}
-
-// ============================================================================
-// Filter Array Parsing
-// ============================================================================
-
-/**
- * Parses an array query parameter with 'None' support and validation.
- * Returns all valid values if no param, empty array if 'None',
- * or filtered valid values otherwise.
- *
- * If validSet is not provided, creates one from allValues.
- *
- * @example
- * parseArrayParam('foo', ['foo', 'bar'], new Set(['foo', 'bar'])) // ['foo']
- * parseArrayParam('None', ['foo', 'bar']) // []
- * parseArrayParam(undefined, ['foo', 'bar']) // ['foo', 'bar']
- */
-export function parseArrayParam(
-	param: QueryParamInput,
-	allValues: Array<string>,
-	validSet?: Set<string>
-): Array<string> {
-	if (param === 'None') return []
-	if (!param) return allValues
-	const arr = toNonEmptyArrayParam(param).filter((v) => v !== 'None')
-	const valid = validSet ?? new Set(allValues)
-	return arr.filter((value) => valid.has(value))
-}
-// ============================================================================
 // Serialization
 // ============================================================================
 

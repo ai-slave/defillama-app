@@ -55,12 +55,7 @@ import type {
 	TokensTableRow
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
-import {
-	buildTokensChartQueryString,
-	getTokenFilterSelection,
-	getTokensChainQueryUpdates,
-	resolveTokenFilterValues
-} from './utils'
+import { buildTokensChartQueryString, getTokenFilterSelection, getTokensChainQueryUpdates } from './utils'
 
 const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
 	...tokenTableFeatures
@@ -567,10 +562,8 @@ function TokensSharedControls({
 	search,
 	updateSearch,
 	filters,
-	selectedChains,
 	hasChainFilter,
 	nativeOnly,
-	selectedCategories,
 	chainOptions,
 	categoryOptions,
 	onFiltersChange,
@@ -580,10 +573,8 @@ function TokensSharedControls({
 	search: string
 	updateSearch: (search: string) => void
 	filters: Array<TokensActiveFilter>
-	selectedChains: Array<string>
 	hasChainFilter: boolean
 	nativeOnly: boolean
-	selectedCategories: Array<string>
 	chainOptions: Array<TokensFilterOption>
 	categoryOptions: Array<TokensFilterOption>
 	onFiltersChange: (filters: Array<TokensActiveFilter>) => void
@@ -647,7 +638,6 @@ function TokensSharedControls({
 			</form>
 			<SelectWithCombobox
 				allValues={chainSelectOptions}
-				selectedValues={selectedChains}
 				includeQueryKey="chains"
 				excludeQueryKey="excludeChains"
 				resetPageOnQueryChange
@@ -668,7 +658,6 @@ function TokensSharedControls({
 			) : null}
 			<SelectWithCombobox
 				allValues={categorySelectOptions}
-				selectedValues={selectedCategories}
 				includeQueryKey="categories"
 				excludeQueryKey="excludeCategories"
 				resetPageOnQueryChange
@@ -721,23 +710,6 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	const chainOptionIds = React.useMemo(
 		() => serverTable.data.chainOptions.map((option) => option.id),
 		[serverTable.data.chainOptions]
-	)
-	const categoryOptionIds = React.useMemo(
-		() => serverTable.data.categoryOptions.map((option) => option.id),
-		[serverTable.data.categoryOptions]
-	)
-	const selectedChains = React.useMemo(
-		() => resolveTokenFilterValues(serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains, chainOptionIds),
-		[chainOptionIds, serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains]
-	)
-	const selectedCategories = React.useMemo(
-		() =>
-			resolveTokenFilterValues(
-				serverTable.pageQuery.categories,
-				serverTable.pageQuery.excludeCategories,
-				categoryOptionIds
-			),
-		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
 	)
 	const hasChainFilter =
 		getTokenFilterSelection(serverTable.pageQuery.chains, serverTable.pageQuery.excludeChains, chainOptionIds) !== null
@@ -873,10 +845,8 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			search={serverTable.pageQuery.search}
 			updateSearch={serverTable.updateSearch}
 			filters={filters}
-			selectedChains={selectedChains}
 			hasChainFilter={hasChainFilter}
 			nativeOnly={serverTable.pageQuery.nativeOnly}
-			selectedCategories={selectedCategories}
 			chainOptions={serverTable.data.chainOptions}
 			categoryOptions={serverTable.data.categoryOptions}
 			onFiltersChange={applyFilters}

@@ -1,4 +1,5 @@
 import type { ParsedUrlQuery } from 'node:querystring'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type { CardTierRow } from './models'
 
@@ -16,7 +17,7 @@ export interface CardsFilterState {
 	custody: Array<string>
 	cardTypes: Array<string>
 	networks: Array<string>
-	/** Selected chains (lowercased); null means the filter is inactive. */
+	/** Selected chain keys (lowercased); null means every chain is selected. */
 	chains: Array<string> | null
 	physicalOnly: boolean
 	virtualOnly: boolean
@@ -27,9 +28,13 @@ export const CARDS_FILTER_QUERY_KEYS = {
 	country: 'country',
 	includeUnknown: 'includeUnknown',
 	custody: 'custody',
+	excludeCustody: 'excludeCustody',
 	cardType: 'type',
+	excludeCardType: 'excludeType',
 	network: 'network',
+	excludeNetwork: 'excludeNetwork',
 	chain: 'chain',
+	excludeChain: 'excludeChain',
 	physical: 'physical',
 	virtual: 'virtual'
 } as const
@@ -56,38 +61,25 @@ const CUSTODY_KEYS = CUSTODY_OPTIONS.map((option) => option.key as string)
 const CARD_TYPE_KEYS = CARD_TYPE_OPTIONS.map((option) => option.key as string)
 const NETWORK_KEYS = NETWORK_OPTIONS.map((option) => option.key as string)
 
-/** URL value meaning "nothing selected" — distinct from an absent param, which means all. */
-export const NONE_SELECTED = 'none'
-
 const COUNTRY_CODE = /^[A-Za-z]{2}$/
 
-/** Static facet params: absent means all selected (inactive); the none
- *  sentinel means nothing selected; unknown values fall back to all. */
-function resolveSelectedFacet(param: ParsedUrlQuery[string], keys: Array<string>): Array<string> {
-	const raw = Array.isArray(param) ? param : param ? [param] : []
-	if (raw.length === 0) return keys
-	if (raw.some((value) => value.toLowerCase() === NONE_SELECTED)) return []
-	const selected = keys.filter((key) => raw.some((value) => value.toLowerCase() === key))
-	return selected.length === 0 ? keys : selected
-}
-
-/** Dynamic list params (chains): keys aren't known statically, so values pass
- *  through lowercased; null means the param is absent (filter inactive). */
-function resolveSelectedList(param: ParsedUrlQuery[string]): Array<string> | null {
-	const raw = Array.isArray(param) ? param : param ? [param] : []
-	if (raw.length === 0) return null
-	if (raw.some((value) => value.toLowerCase() === NONE_SELECTED)) return []
-	return raw.map((value) => value.toLowerCase())
-}
-
-export function resolveCardsFilterState(query: ParsedUrlQuery): CardsFilterState {
+export function resolveCardsAvailability(query: ParsedUrlQuery): { country: string | null; includeUnknown: boolean } {
 	const rawCountry = readSingleQueryValue(query[CARDS_FILTER_QUERY_KEYS.country])
-	const country = rawCountry && COUNTRY_CODE.test(rawCountry) ? rawCountry.toUpperCase() : null
-	const includeUnknown = readSingleQueryValue(query[CARDS_FILTER_QUERY_KEYS.includeUnknown]) === 'true'
-	const custody = resolveSelectedFacet(query[CARDS_FILTER_QUERY_KEYS.custody], CUSTODY_KEYS)
-	const cardTypes = resolveSelectedFacet(query[CARDS_FILTER_QUERY_KEYS.cardType], CARD_TYPE_KEYS)
-	const networks = resolveSelectedFacet(query[CARDS_FILTER_QUERY_KEYS.network], NETWORK_KEYS)
-	const chains = resolveSelectedList(query[CARDS_FILTER_QUERY_KEYS.chain])
+	return {
+		country: rawCountry && COUNTRY_CODE.test(rawCountry) ? rawCountry.toUpperCase() : null,
+		includeUnknown: readSingleQueryValue(query[CARDS_FILTER_QUERY_KEYS.includeUnknown]) === 'true'
+	}
+}
+
+/** Reads the pickers with the shared rules; chains are read against the chain keys of the listed cards. */
+export function resolveCardsFilterState(query: ParsedUrlQuery, chainKeys: Array<string>): CardsFilterState {
+	const keys = CARDS_FILTER_QUERY_KEYS
+	const { country, includeUnknown } = resolveCardsAvailability(query)
+	const custody = readSelectionFromQuery(query, keys.custody, keys.excludeCustody, CUSTODY_KEYS)
+	const cardTypes = readSelectionFromQuery(query, keys.cardType, keys.excludeCardType, CARD_TYPE_KEYS)
+	const networks = readSelectionFromQuery(query, keys.network, keys.excludeNetwork, NETWORK_KEYS)
+	const selectedChains = readSelectionFromQuery(query, keys.chain, keys.excludeChain, chainKeys)
+	const chains = selectedChains.length === chainKeys.length ? null : selectedChains
 	const physicalOnly = readSingleQueryValue(query[CARDS_FILTER_QUERY_KEYS.physical]) === 'true'
 	const virtualOnly = readSingleQueryValue(query[CARDS_FILTER_QUERY_KEYS.virtual]) === 'true'
 	return {

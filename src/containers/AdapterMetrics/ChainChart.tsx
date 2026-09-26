@@ -572,7 +572,6 @@ export function AdapterByChainChart({
 					{chartViewMode === 'Breakdown' && protocolOptions.length > 0 ? (
 						<SelectWithCombobox
 							allValues={protocolOptions}
-							selectedValues={selectedProtocols}
 							includeQueryKey="protocol"
 							excludeQueryKey="excludeProtocol"
 							defaultSelectedValues={protocolOptions}
@@ -989,7 +988,6 @@ export function ChainsByAdapterChart({
 				<div className="ml-auto flex items-center justify-end gap-1.5">
 					<SelectWithCombobox
 						allValues={allChains}
-						selectedValues={selectedChains}
 						includeQueryKey="chain"
 						excludeQueryKey="excludeChain"
 						defaultSelectedValues={allChains}

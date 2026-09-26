@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -16,7 +17,7 @@ import {
 	cardsCountryOptions,
 	CUSTODY_OPTIONS,
 	NETWORK_OPTIONS,
-	NONE_SELECTED,
+	resolveCardsAvailability,
 	resolveCardsFilterState
 } from './filterPolicy'
 import type { CardTierRow } from './models'
@@ -25,7 +26,7 @@ const ALL_COUNTRIES_SELECTION = 'all'
 
 function AvailabilityFilter({ nestedMenu, rows }: { nestedMenu: boolean; rows: Array<CardTierRow> }) {
 	const router = useRouter()
-	const { country, includeUnknown } = resolveCardsFilterState(router.query)
+	const { country, includeUnknown } = resolveCardsAvailability(router.query)
 
 	const countryOptions = useMemo(
 		() => [{ key: ALL_COUNTRIES_SELECTION, name: 'All countries' }, ...cardsCountryOptions(rows)],
@@ -75,29 +76,22 @@ function FacetFilter({
 	nestedMenu,
 	label,
 	queryKey,
+	excludeQueryKey,
 	options,
-	selected,
 	searchPlaceholder
 }: {
 	nestedMenu: boolean
 	label: string
 	queryKey: string
+	excludeQueryKey: ExcludeQueryKey
 	options: Array<{ key: string; name: string }>
-	selected: Array<string>
 	searchPlaceholder?: string
 }) {
-	const router = useRouter()
 	return (
 		<SelectWithCombobox
 			allValues={options}
-			selectedValues={selected}
-			setSelectedValues={(values) => {
-				const nextSelected = Array.isArray(values) ? values : [values]
-				const isAll = nextSelected.length === options.length
-				void pushShallowQuery(router, {
-					[queryKey]: isAll ? undefined : nextSelected.length === 0 ? NONE_SELECTED : nextSelected
-				})
-			}}
+			includeQueryKey={queryKey}
+			excludeQueryKey={excludeQueryKey}
 			label={label}
 			labelType="smol"
 			nestedMenu={nestedMenu}
@@ -157,8 +151,11 @@ function ResetAllCardsFilters({ nestedMenu }: { nestedMenu: boolean }) {
 
 function CardsFiltersDropdowns({ nestedMenu, rows }: { nestedMenu?: boolean; rows: Array<CardTierRow> }) {
 	const router = useRouter()
-	const { custody, cardTypes, networks, chains, physicalOnly, virtualOnly } = resolveCardsFilterState(router.query)
 	const chainOptions = useMemo(() => cardsChainOptions(rows), [rows])
+	const { physicalOnly, virtualOnly } = resolveCardsFilterState(
+		router.query,
+		chainOptions.map((option) => option.key)
+	)
 	return (
 		<>
 			<AvailabilityFilter nestedMenu={!!nestedMenu} rows={rows} />
@@ -166,29 +163,29 @@ function CardsFiltersDropdowns({ nestedMenu, rows }: { nestedMenu?: boolean; row
 				nestedMenu={!!nestedMenu}
 				label="Type"
 				queryKey={CARDS_FILTER_QUERY_KEYS.cardType}
+				excludeQueryKey={CARDS_FILTER_QUERY_KEYS.excludeCardType}
 				options={[...CARD_TYPE_OPTIONS]}
-				selected={cardTypes}
 			/>
 			<FacetFilter
 				nestedMenu={!!nestedMenu}
 				label="Network"
 				queryKey={CARDS_FILTER_QUERY_KEYS.network}
+				excludeQueryKey={CARDS_FILTER_QUERY_KEYS.excludeNetwork}
 				options={[...NETWORK_OPTIONS]}
-				selected={networks}
 			/>
 			<FacetFilter
 				nestedMenu={!!nestedMenu}
 				label="Custody"
 				queryKey={CARDS_FILTER_QUERY_KEYS.custody}
+				excludeQueryKey={CARDS_FILTER_QUERY_KEYS.excludeCustody}
 				options={[...CUSTODY_OPTIONS]}
-				selected={custody}
 			/>
 			<FacetFilter
 				nestedMenu={!!nestedMenu}
 				label="Chains"
 				queryKey={CARDS_FILTER_QUERY_KEYS.chain}
+				excludeQueryKey={CARDS_FILTER_QUERY_KEYS.excludeChain}
 				options={chainOptions}
-				selected={chains ?? chainOptions.map((option) => option.key)}
 				searchPlaceholder="Search chains..."
 			/>
 			<OnlyWithCheckbox nestedMenu={!!nestedMenu} queryKey={CARDS_FILTER_QUERY_KEYS.physical} checked={physicalOnly}>

@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { filterCards, isCardAvailableIn, resolveCardsFilterState } from '../filterPolicy'
+import { getQueryUpdatesFromSelected } from '~/components/Select/query'
+import { cardsChainOptions, filterCards, isCardAvailableIn, resolveCardsFilterState } from '../filterPolicy'
+import type { CardTierRow } from '../models'
 import { cardTierRow as row } from './fixtures'
 
 const listsGermanyA = row('lists-de-a', { availabilityUnknown: false, countryCodes: ['DE', 'FR'] })
@@ -9,6 +11,16 @@ const unknownB = row('unknown-b')
 const listsOnlyFrance = row('lists-fr', { availabilityUnknown: false, countryCodes: ['FR'] })
 
 const rows = [listsGermanyA, listsGermanyB, unknownA, unknownB, listsOnlyFrance]
+
+// The page reads chains against the chain keys of the cards it lists.
+const filterBy = (cards: Array<CardTierRow>, query: Record<string, string | Array<string> | undefined>) =>
+	filterCards(
+		cards,
+		resolveCardsFilterState(
+			query,
+			cardsChainOptions(cards).map((option) => option.key)
+		)
+	).map((card) => card.cardId)
 
 describe('isCardAvailableIn', () => {
 	test('treats confirmed lists as allowlist claims and undisclosed availability as unknown', () => {
@@ -20,13 +32,11 @@ describe('isCardAvailableIn', () => {
 
 describe('filterCards', () => {
 	test('shows only explicit allowlist matches by default', () => {
-		const state = resolveCardsFilterState({ country: 'de' })
-		expect(filterCards(rows, state).map((r) => r.cardId)).toEqual(['lists-de-a', 'lists-de-b'])
+		expect(filterBy(rows, { country: 'de' })).toEqual(['lists-de-a', 'lists-de-b'])
 	})
 
 	test('adds undisclosed-availability rows when includeUnknown is set', () => {
-		const state = resolveCardsFilterState({ country: 'de', includeUnknown: 'true' })
-		expect(filterCards(rows, state).map((r) => r.cardId)).toEqual([
+		expect(filterBy(rows, { country: 'de', includeUnknown: 'true' })).toEqual([
 			'lists-de-a',
 			'lists-de-b',
 			'unknown-a',
@@ -35,18 +45,12 @@ describe('filterCards', () => {
 	})
 
 	test('returns all rows when no country is selected', () => {
-		expect(filterCards(rows, resolveCardsFilterState({})).map((item) => item.cardId)).toEqual([
-			'lists-de-a',
-			'lists-de-b',
-			'unknown-a',
-			'unknown-b',
-			'lists-fr'
-		])
+		expect(filterBy(rows, {})).toEqual(['lists-de-a', 'lists-de-b', 'unknown-a', 'unknown-b', 'lists-fr'])
 	})
 
 	test('ignores malformed country params', () => {
-		expect(resolveCardsFilterState({ country: 'germany' }).country).toBe(null)
-		expect(resolveCardsFilterState({ country: ['de', 'fr'] }).country).toBe('DE')
+		expect(resolveCardsFilterState({ country: 'germany' }, []).country).toBe(null)
+		expect(resolveCardsFilterState({ country: ['de', 'fr'] }, []).country).toBe('DE')
 	})
 })
 
@@ -57,35 +61,28 @@ describe('custody and card-form filters', () => {
 	const formRows = [selfCustodial, custodial, unknownCustody]
 
 	test('treats absent custody param as all selected, including unknown-custody rows', () => {
-		const state = resolveCardsFilterState({})
-		expect(state.hasActiveFilters).toBe(false)
-		expect(filterCards(formRows, state).map((item) => item.cardId)).toEqual(['self', 'custodial', 'no-custody'])
+		expect(resolveCardsFilterState({}, []).hasActiveFilters).toBe(false)
+		expect(filterBy(formRows, {})).toEqual(['self', 'custodial', 'no-custody'])
 	})
 
 	test('drops unknown-custody rows when custody is narrowed', () => {
-		const state = resolveCardsFilterState({ custody: 'self-custodial' })
-		expect(filterCards(formRows, state).map((r) => r.cardId)).toEqual(['self'])
+		expect(filterBy(formRows, { custody: 'self-custodial' })).toEqual(['self'])
 	})
 
-	test('treats a full custody selection as inactive and supports the none sentinel', () => {
+	test('treats a full custody selection as inactive, and None as nothing selected', () => {
 		// Both options selected = the facet is inactive, so unknown-custody rows stay.
-		expect(
-			filterCards(formRows, resolveCardsFilterState({ custody: ['self-custodial', 'custodial'] })).map(
-				(item) => item.cardId
-			)
-		).toEqual(['self', 'custodial', 'no-custody'])
-		expect(filterCards(formRows, resolveCardsFilterState({ custody: 'custodial' })).map((r) => r.cardId)).toEqual([
-			'custodial'
-		])
-		expect(filterCards(formRows, resolveCardsFilterState({ custody: 'none' }))).toHaveLength(0)
-	})
-
-	test('physical/virtual checkboxes require an explicit true claim', () => {
-		expect(filterCards(formRows, resolveCardsFilterState({ physical: 'true' })).map((r) => r.cardId)).toEqual(['self'])
-		expect(filterCards(formRows, resolveCardsFilterState({ virtual: 'true' })).map((r) => r.cardId)).toEqual([
+		expect(filterBy(formRows, { custody: ['self-custodial', 'custodial'] })).toEqual([
+			'self',
 			'custodial',
 			'no-custody'
 		])
+		expect(filterBy(formRows, { custody: 'custodial' })).toEqual(['custodial'])
+		expect(filterBy(formRows, { custody: 'None' })).toEqual([])
+	})
+
+	test('physical/virtual checkboxes require an explicit true claim', () => {
+		expect(filterBy(formRows, { physical: 'true' })).toEqual(['self'])
+		expect(filterBy(formRows, { virtual: 'true' })).toEqual(['custodial', 'no-custody'])
 	})
 
 	test('composes with the availability filter', () => {
@@ -104,8 +101,7 @@ describe('custody and card-form filters', () => {
 			countryCodes: ['FR'],
 			custodyType: 'custodial'
 		})
-		const state = resolveCardsFilterState({ country: 'de', custody: 'custodial' })
-		expect(filterCards([germanCustodial, germanSelf, frenchCustodial], state).map((r) => r.cardId)).toEqual([
+		expect(filterBy([germanCustodial, germanSelf, frenchCustodial], { country: 'de', custody: 'custodial' })).toEqual([
 			'de-custodial'
 		])
 	})
@@ -130,27 +126,49 @@ describe('type, network, and chain filters', () => {
 	const typedRows = [debitVisa, creditMc, spendUnknownNetwork]
 
 	test('matches the classification against the option keys', () => {
-		expect(filterCards(typedRows, resolveCardsFilterState({ type: 'credit' })).map((r) => r.cardId)).toEqual([
-			'credit-mc'
-		])
-		expect(
-			filterCards(typedRows, resolveCardsFilterState({ type: ['debit', 'spend'] })).map((item) => item.cardId)
-		).toEqual(['debit-visa', 'spend-unknown'])
+		expect(filterBy(typedRows, { type: 'credit' })).toEqual(['credit-mc'])
+		expect(filterBy(typedRows, { type: ['debit', 'spend'] })).toEqual(['debit-visa', 'spend-unknown'])
 	})
 
 	test('filters by network and drops unknown-network rows when narrowed', () => {
-		expect(filterCards(typedRows, resolveCardsFilterState({ network: 'mastercard' })).map((r) => r.cardId)).toEqual([
-			'credit-mc'
-		])
+		expect(filterBy(typedRows, { network: 'mastercard' })).toEqual(['credit-mc'])
 	})
 
-	test('filters by chain, case-insensitively, and none matches nothing', () => {
-		expect(filterCards(typedRows, resolveCardsFilterState({ chain: 'base' })).map((r) => r.cardId)).toEqual([
-			'credit-mc'
-		])
+	test('filters by chain key, and None or only unknown chains match nothing', () => {
+		expect(filterBy(typedRows, { chain: 'base' })).toEqual(['credit-mc'])
+		expect(filterBy(typedRows, { chain: ['gnosis chain', 'base'] })).toEqual(['debit-visa', 'credit-mc'])
+		expect(filterBy(typedRows, { chain: ['base', 'solana'] })).toEqual(['credit-mc'])
+		expect(filterBy(typedRows, { chain: 'solana' })).toEqual([])
+		expect(filterBy(typedRows, { chain: 'None' })).toEqual([])
+	})
+
+	test('reads what the picker writes, exclude lists included', () => {
+		const chainKeys = cardsChainOptions(typedRows).map((option) => option.key)
 		expect(
-			filterCards(typedRows, resolveCardsFilterState({ chain: ['gnosis chain', 'base'] })).map((item) => item.cardId)
+			filterBy(
+				typedRows,
+				getQueryUpdatesFromSelected(
+					'type',
+					'excludeType',
+					['debit', 'credit', 'prepaid', 'spend'],
+					['debit', 'credit', 'prepaid']
+				)
+			)
 		).toEqual(['debit-visa', 'credit-mc'])
-		expect(filterCards(typedRows, resolveCardsFilterState({ chain: 'none' }))).toHaveLength(0)
+		expect(
+			filterBy(
+				typedRows,
+				getQueryUpdatesFromSelected(
+					'chain',
+					'excludeChain',
+					chainKeys,
+					chainKeys.filter((key) => key !== 'gnosis chain')
+				)
+			)
+		).toEqual(['credit-mc'])
+	})
+
+	test('selects nothing when a facet names only unknown values', () => {
+		expect(filterBy(typedRows, { type: 'charge' })).toEqual([])
 	})
 })
