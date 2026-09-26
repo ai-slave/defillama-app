@@ -5,7 +5,6 @@ import {
 	buildDominancePayload,
 	buildStablecoinMcapSummary,
 	buildStablecoinOverviewPayload,
-	buildTokenInflowsPayload,
 	buildTotalMcapPayload,
 	groupStablecoinBarChartPayload,
 	getStablecoinRuntimeSeries,
@@ -18,6 +17,9 @@ import {
 	getStablecoinValueFromPoint,
 	type IBuildStablecoinChartDataParams
 } from '../utils'
+
+// Token inflows reach users through the overview payload; the top token only feeds the summary.
+const summaryTopToken = { symbol: 'USDT', mcap: 150 }
 
 function datasetValue(dataset: MultiSeriesTimeSeriesDataset, rowIndex: number, dimension: string) {
 	return dataset.source[rowIndex]?.[dataset.dimensions.indexOf(dimension)]
@@ -322,10 +324,12 @@ describe('stablecoin chart series builders', () => {
 		})
 		expect(selectedDoubleDominance.dataset.source.at(-1)).toEqual([secondDay * 1e3, 100])
 
-		const inflows = buildTokenInflowsPayload(doublecountedParams, { seriesLimit: 1 })
+		const inflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, {
+			seriesLimit: 1
+		})
 		expect(inflows.defaultSeries).toEqual(['Base', 'Other'])
 		expect(datasetValue(inflows.dataset, 0, 'Others')).toBe(10)
-		const selectedDoubleInflows = buildTokenInflowsPayload(doublecountedParams, {
+		const selectedDoubleInflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, {
 			selectedNames: ['Double'],
 			seriesLimit: 1
 		})
@@ -408,7 +412,7 @@ describe('stablecoin chart series builders', () => {
 			[1_660_086_400_000, undefined, 25],
 			[1_660_172_800_000, undefined, 30]
 		])
-		const inflows = buildTokenInflowsPayload(producerData)
+		const inflows = buildStablecoinOverviewPayload(producerData, 'tokenInflows', summaryTopToken)
 		expect(inflows.dataset.dimensions).toEqual(['timestamp', 'Current'])
 		expect(inflows.dataset.source).toEqual([
 			[1_660_000_000_000, 5],
@@ -436,21 +440,25 @@ describe('stablecoin chart series builders', () => {
 	})
 
 	test('keeps token inflow series within their different ending calendars', () => {
-		const tokenInflows = buildTokenInflowsPayload({
-			chartDataByAssetOrChain: [
-				[
-					{ date: 1_660_000_000, mcap: { peggedUSD: 10 } },
-					{ date: 1_660_086_400, mcap: { peggedUSD: 15 } }
+		const tokenInflows = buildStablecoinOverviewPayload(
+			{
+				chartDataByAssetOrChain: [
+					[
+						{ date: 1_660_000_000, mcap: { peggedUSD: 10 } },
+						{ date: 1_660_086_400, mcap: { peggedUSD: 15 } }
+					],
+					[
+						{ date: 1_660_086_400, mcap: { peggedUSD: 20 } },
+						{ date: 1_660_172_800, mcap: { peggedUSD: 12 } }
+					]
 				],
-				[
-					{ date: 1_660_086_400, mcap: { peggedUSD: 20 } },
-					{ date: 1_660_172_800, mcap: { peggedUSD: 12 } }
-				]
-			],
-			assetsOrChainsList: ['Ended', 'Current'],
-			issuanceType: 'mcap',
-			selectedChain: 'All'
-		})
+				assetsOrChainsList: ['Ended', 'Current'],
+				issuanceType: 'mcap',
+				selectedChain: 'All'
+			},
+			'tokenInflows',
+			summaryTopToken
+		)
 
 		expect(tokenInflows.dataset.source).toEqual([
 			[1_660_000_000_000, 5, undefined],
@@ -487,7 +495,7 @@ describe('stablecoin chart series builders', () => {
 	})
 
 	test('draws cumulative token inflows as stacked lines', () => {
-		const payload = buildTokenInflowsPayload(params)
+		const payload = buildStablecoinOverviewPayload(params, 'tokenInflows', summaryTopToken)
 
 		const cumulative = groupStablecoinBarChartPayload(payload, 'cumulative')
 		expect(cumulative.charts.every((chart) => chart.type === 'line' && chart.stack === 'tokenInflows')).toBe(true)
@@ -540,7 +548,7 @@ describe('stablecoin chart series builders', () => {
 		expect(datasetValue(dominance.dataset, 1, 'Token12')).toBe(14.46)
 		expect(datasetValue(dominance.dataset, 1, 'Others')).toBeCloseTo(9.65)
 		expect(dominance.dataset.source[1]?.slice(1).reduce<number>((sum, value) => sum + (value ?? 0), 0)).toBe(100)
-		const tokenInflows = buildTokenInflowsPayload(largeParams, {
+		const tokenInflows = buildStablecoinOverviewPayload(largeParams, 'tokenInflows', summaryTopToken, {
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
 		expect(tokenInflows.defaultSeries).toEqual(names.slice(0, -1).reverse())

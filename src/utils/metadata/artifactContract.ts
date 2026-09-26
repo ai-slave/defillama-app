@@ -356,10 +356,6 @@ export function hydrateMetadataCache(payload: CoreMetadataPayload): MetadataCach
 	}
 }
 
-export function createMetadataCacheFromArtifacts(payload: CoreMetadataPayload): MetadataCache {
-	return hydrateMetadataCache(payload)
-}
-
 function createChainDisplayNameMap(payload: CoreMetadataPayload): Map<string, string> {
 	return createStringLookupMap({
 		...payload.chainDisplayNames,
@@ -492,5 +488,3 @@ function getEquityCompanySlug(company: IEquitiesCompanyRoute): string {
 export function replaceMetadataCacheContents(metadataCache: MetadataCache, payload: CoreMetadataPayload): void {
 	Object.assign(metadataCache, hydrateMetadataCache(payload))
 }
-
-export const applyMetadataRefresh = replaceMetadataCacheContents

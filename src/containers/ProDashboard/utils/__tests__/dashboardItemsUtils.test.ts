@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { Dashboard } from '../../dashboardTypes'
 import type { DashboardAuthorizedFetch } from '../../services/DashboardAPI'
-import { addItemToDashboard, moveDashboardItem, replaceDashboardItem } from '../dashboardItemsUtils'
+import { addItemToDashboard, replaceDashboardItem } from '../dashboardItemsUtils'
 
 describe('replaceDashboardItem', () => {
 	test('replaces one broken chart while preserving its durable slot identity and layout', () => {
@@ -47,13 +47,6 @@ describe('replaceDashboardItem', () => {
 			})
 		).toThrow('no longer exists')
 	})
-})
-
-test('moves within the list and preserves boundary references', () => {
-	const items = ['a', 'b', 'c'].map((id) => ({ id, kind: 'text' as const, content: id }))
-	expect(moveDashboardItem(items, 0, -1)).toBe(items)
-	expect(moveDashboardItem(items, 2, 1)).toBe(items)
-	expect(moveDashboardItem(items, 1, 1).map((item) => item.id)).toEqual(['a', 'c', 'b'])
 })
 
 describe('addItemToDashboard', () => {

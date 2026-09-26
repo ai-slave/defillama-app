@@ -55,7 +55,3 @@ export function joinChartHoverSync(group: string, instance: ECharts, element: El
 		if (members.size === 0) groups.delete(group)
 	}
 }
-
-export function chartHoverSyncGroupSize(group: string): number {
-	return groups.get(group)?.size ?? 0
-}

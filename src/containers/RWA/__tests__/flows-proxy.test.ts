@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { fetchRWAFlowsAssetGroup, fetchRWAFlowsOverview } from '../api'
 import { buildRWAFlowProxyUrl, rwaFlowsProxy } from '../server/flows'
 
 const fetchJsonMock = vi.fn()
@@ -80,23 +79,5 @@ describe('RWA flow proxy mapping', () => {
 		})
 		expect(second).toEqual(first)
 		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
-	})
-})
-
-describe('RWA flow server fetchers', () => {
-	test('matches the retained aggregate API routes', async () => {
-		await fetchRWAFlowsOverview({
-			splitBy: 'assetGroup',
-			includeStablecoin: false,
-			includeGovernance: true
-		})
-		await fetchRWAFlowsAssetGroup('Treasury Funds')
-
-		expect(fetchJsonMock.mock.calls.map(([url]) => url)).toEqual([
-			expect.stringMatching(
-				/\/rwa\/flows\/overview\?splitBy=assetGroup&includeStablecoin=false&includeGovernance=true$/
-			),
-			expect.stringMatching(/\/rwa\/flows\/assetGroup\/Treasury%20Funds$/)
-		])
 	})
 })

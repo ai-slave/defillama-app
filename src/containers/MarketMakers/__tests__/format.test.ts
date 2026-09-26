@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	formatComposite,
-	formatMarketPct,
-	formatMetricValue,
-	normalizeUptime,
-	resolveGrade,
-	roundPercentile
-} from '../format'
+import { formatComposite, formatMarketPct, formatMetricValue, resolveGrade, roundPercentile } from '../format'
 
 describe('formatComposite', () => {
 	test('renders N/A for null', () => {
@@ -50,18 +43,6 @@ describe('roundPercentile', () => {
 	test('rounds to the nearest integer', () => {
 		expect(roundPercentile(80.85106382978724)).toBe(81)
 		expect(roundPercentile(95.4)).toBe(95)
-	})
-})
-
-describe('normalizeUptime', () => {
-	test('scales a 0..1 fraction up to 0..100', () => {
-		expect(normalizeUptime(0.9)).toBe(90)
-	})
-	test('passes through a value already on the 0..100 scale', () => {
-		expect(normalizeUptime(99.75)).toBe(99.75)
-	})
-	test('returns null for null', () => {
-		expect(normalizeUptime(null)).toBeNull()
 	})
 })
 

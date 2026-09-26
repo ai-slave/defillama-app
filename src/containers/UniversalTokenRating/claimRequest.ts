@@ -1,5 +1,5 @@
 import { EMAIL_PATTERN, normalizeSocialUrl, SOCIAL_PROFILE_PATTERN } from '~/containers/MarketMakers/leadShared'
-import { CLAIM_DISCLOSURE_SECTIONS, type ClaimDisclosureSectionId } from './claimFormConfig'
+import type { ClaimDisclosureSectionId } from './claimFormConfig'
 
 export const UTR_CLAIM_DOCUMENT_KEYS = [
 	'alignment',
@@ -103,19 +103,6 @@ export type UtrClaimRequestInput = {
 export type UtrClaimValidation = {
 	payload: UtrClaimPayload | null
 	errors: Record<string, string>
-}
-
-export const EMPTY_UTR_CLAIM_DOCUMENTS: UtrClaimDocuments = {
-	alignment: [],
-	teamOrg: [],
-	tokenomics: [],
-	treasuryCashFlows: [],
-	legal: [],
-	serviceProviders: []
-}
-
-export function createEmptyUtrClaimRows(): UtrClaimRows {
-	return Object.fromEntries(CLAIM_DISCLOSURE_SECTIONS.map((section) => [section.id, []])) as UtrClaimRows
 }
 
 function requiredString(

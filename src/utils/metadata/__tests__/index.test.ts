@@ -11,6 +11,14 @@ const telemetry = installTelemetrySink()
 installSnapshotDirectory('metadata-refresh-test')
 const protocolRequests = () =>
 	telemetry.requests.filter(({ url }) => url.pathname.endsWith('/appMetadata-protocols.json'))
+// Each caller names its source, so the refresh that ran is the one whose source reaches telemetry.
+const refreshSources = async () => {
+	const sources: Array<string> = []
+	for (const event of await telemetry.events()) {
+		if (event.type === 'domain_event' && event.event_name === 'metadata.refresh') sources.push(event.subject)
+	}
+	return sources
+}
 afterEach(() => {
 	vi.clearAllTimers()
 	vi.useRealTimers()
@@ -141,86 +149,94 @@ describe('metadata refresh', () => {
 		const metadata = metadataModule.default
 		const initialProtocolMetadata = metadata.protocolMetadata
 
-		metadataModule.refreshMetadataInBackgroundIfStale()
-		metadataModule.refreshMetadataInBackgroundIfStale()
+		metadataModule.refreshMetadataInBackgroundIfStale('homepage')
+		metadataModule.refreshMetadataInBackgroundIfStale('tokens')
 
 		await vi.waitFor(() => expect(protocolRequests()).toHaveLength(1))
 		expect(metadata.protocolMetadata).toBe(initialProtocolMetadata)
 
 		deferred.resolve(refreshedProtocols)
-		await metadataModule.refreshMetadataIfStale()
+		await vi.waitFor(() => expect(metadata.protocolMetadata).toEqual(refreshedProtocols))
 
-		expect(metadata.protocolMetadata).toEqual(refreshedProtocols)
 		expect(metadata.protocolDisplayNames.get('morpho')).toBe('Morpho')
 		expect(protocolRequests()).toHaveLength(1)
 	})
 
 	test('records successful metadata refresh telemetry', async () => {
-		vi.useFakeTimers()
-		vi.setSystemTime(1000)
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(1000)
 		telemetry.serve({
 			[protocolsUrl]: () => {
-				vi.setSystemTime(1250)
+				clock.mockReturnValue(1250)
 				return createMetadataPayload().protocols
 			}
 		})
 		const metadataModule = await import('../index')
 
-		await metadataModule.refreshMetadataIfStale()
+		metadataModule.refreshMetadataInBackgroundIfStale('homepage')
 
-		expect(await telemetry.events()).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					event_name: 'metadata.refresh',
-					level: 'info',
-					subject: 'manual',
-					message: 'Metadata refresh completed',
-					attributes: expect.objectContaining({
-						duration_ms: 250,
-						source: 'manual',
-						status: 'success'
+		await vi.waitFor(async () =>
+			expect(await telemetry.events()).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						event_name: 'metadata.refresh',
+						level: 'info',
+						subject: 'homepage',
+						message: 'Metadata refresh completed',
+						attributes: expect.objectContaining({
+							duration_ms: 250,
+							source: 'homepage',
+							status: 'success'
+						})
 					})
-				})
-			])
+				])
+			)
 		)
+		clock.mockRestore()
 	})
 
 	test('records failed metadata refresh telemetry', async () => {
-		vi.useFakeTimers()
-		vi.setSystemTime(1000)
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(1000)
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		telemetry.serve({
 			[protocolsUrl]: () => {
-				vi.setSystemTime(1400)
+				clock.mockReturnValue(1400)
 				throw new Error('metadata failed')
 			}
 		})
 		const metadataModule = await import('../index')
 
-		await metadataModule.refreshMetadataIfStale()
+		metadataModule.refreshMetadataInBackgroundIfStale('homepage')
 
-		expect(await telemetry.events()).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					event_name: 'metadata.refresh',
-					level: 'warn',
-					subject: 'manual',
-					message: 'Metadata refresh failed',
-					attributes: expect.objectContaining({
-						duration_ms: 400,
-						error_message: 'metadata failed',
-						error_name: 'Error',
-						source: 'manual',
-						status: 'failure'
+		await vi.waitFor(async () =>
+			expect(await telemetry.events()).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						event_name: 'metadata.refresh',
+						level: 'warn',
+						subject: 'homepage',
+						message: 'Metadata refresh failed',
+						attributes: expect.objectContaining({
+							duration_ms: 400,
+							error_message: 'metadata failed',
+							error_name: 'Error',
+							source: 'homepage',
+							status: 'failure'
+						})
 					})
-				})
-			])
+				])
+			)
+		)
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			'[metadata] refresh failed from homepage, keeping stale cache:',
+			expect.any(Error)
 		)
 		consoleErrorSpy.mockRestore()
+		clock.mockRestore()
 	})
 
 	test('applies the refresh cooldown after failed refreshes', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(1000)
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		telemetry.serve({
 			[protocolsUrl]: () => {
@@ -229,13 +245,18 @@ describe('metadata refresh', () => {
 		})
 		const metadataModule = await import('../index')
 
-		await metadataModule.refreshMetadataIfStale()
-		await metadataModule.refreshMetadataIfStale()
+		metadataModule.refreshMetadataInBackgroundIfStale('homepage')
+		await vi.waitFor(async () => expect(await refreshSources()).toEqual(['homepage']))
 
-		expect(protocolRequests()).toHaveLength(1)
-		expect(metadataModule.getMetadataRefreshStatus()).toMatchObject({ failedRefreshes: 1, retrySuppressions: 1 })
-		expect(consoleErrorSpy).toHaveBeenCalledWith('[metadata] refresh failed, keeping stale cache:', expect.any(Error))
+		// A refresh started here would still be in flight for the next caller, which would then report its source.
+		metadataModule.refreshMetadataInBackgroundIfStale('during_cooldown')
+		clock.mockReturnValue(1000 + 60 * 60 * 1000)
+		metadataModule.refreshMetadataInBackgroundIfStale('after_cooldown')
+
+		await vi.waitFor(async () => expect(await refreshSources()).toEqual(['homepage', 'after_cooldown']))
+		expect(protocolRequests()).toHaveLength(2)
 		consoleErrorSpy.mockRestore()
+		clock.mockRestore()
 	})
 
 	test('skips refresh in local development without an API key', async () => {
@@ -243,14 +264,11 @@ describe('metadata refresh', () => {
 		vi.stubEnv('API_KEY', '')
 		const metadataModule = await import('../index')
 
-		await metadataModule.refreshMetadataIfStale()
-		metadataModule.refreshMetadataInBackgroundIfStale()
-
-		expect(protocolRequests()).toHaveLength(0)
-
+		metadataModule.refreshMetadataInBackgroundIfStale('without_api_key')
 		vi.stubEnv('API_KEY', 'local-key')
-		await metadataModule.refreshMetadataIfStale()
+		metadataModule.refreshMetadataInBackgroundIfStale('with_api_key')
 
+		await vi.waitFor(async () => expect(await refreshSources()).toEqual(['with_api_key']))
 		expect(protocolRequests()).toHaveLength(1)
 	})
 
@@ -274,8 +292,6 @@ describe('metadata refresh', () => {
 
 		await vi.advanceTimersByTimeAsync(1)
 		expect(protocolRequests()).toHaveLength(1)
-		const metadataModule = await import('../index')
-		expect(metadataModule.getMetadataRefreshStatus().jitteredRefreshAttempts).toBe(1)
 		randomSpy.mockRestore()
 	})
 })

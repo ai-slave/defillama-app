@@ -3,11 +3,7 @@ import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { IRWAList } from '~/utils/metadata/types'
 import {
-	fetchRWAAssetGroupBreakdownChartData,
 	fetchRWAChainBreakdownChartData,
-	fetchRWACategoryBreakdownChartData,
-	fetchRWAPlatformBreakdownChartData,
-	fetchRWAStats,
 	fetchRWAChartDataByAsset,
 	fetchRWAChartMetricDataByAsset,
 	fetchRWAAssetDataById,
@@ -19,14 +15,6 @@ import type {
 	IFetchedRWAProject,
 	IRWAAssetsOverview,
 	IRWAAssetData,
-	IRWAChainsOverview,
-	IRWAChainsOverviewRow,
-	IRWACategoriesOverview,
-	IRWACategoriesOverviewRow,
-	IRWAPlatformsOverview,
-	IRWAPlatformsOverviewRow,
-	IRWAAssetGroupsOverview,
-	IRWAAssetGroupsOverviewRow,
 	IRWAChartDataByAsset,
 	IRWAChartMetricRows,
 	IRWAInitialChartDataset,
@@ -36,7 +24,6 @@ import type {
 	RWADefiTvlProtocolBreakdown
 } from './api.types'
 import { UNKNOWN_RWA_ASSET_GROUP, appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from './assetGroup'
-import { toOverviewBreakdownChartDataset } from './breakdownDataset'
 import { buildRwaOverviewCards, type RwaOverviewCards } from './cards/cardData'
 import { foldRwaChainSeries, rankRwaChains } from './chainFold'
 import { aggregateRwaMetricData, applyDefaultAssetFilters, buildRwaCanonicalMetricDataset } from './chartAggregation'
@@ -825,119 +812,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		}
 	} catch (error) {
 		throw new Error(error instanceof Error ? error.message : 'Failed to get RWA assets overview', { cause: error })
-	}
-}
-
-export async function getRWAChainsOverview(): Promise<IRWAChainsOverview> {
-	const [data, activeMcapRows] = await Promise.all([
-		fetchRWAStats(),
-		fetchRWAChainBreakdownChartData({ key: 'activeMcap' })
-	])
-
-	const rows: Array<IRWAChainsOverviewRow> = []
-	for (const [chain, stats] of Object.entries(data.byChain)) {
-		rows.push({
-			...stats,
-			chain
-		})
-	}
-
-	return {
-		rows: rows.sort((a, b) => b.base.onChainMcap - a.base.onChainMcap),
-		initialChartDataset: toOverviewBreakdownChartDataset(activeMcapRows, {
-			breakdown: 'chain',
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	}
-}
-
-export async function getRWACategoriesOverview(): Promise<IRWACategoriesOverview> {
-	const [data, activeMcapRows] = await Promise.all([
-		fetchRWAStats(),
-		fetchRWACategoryBreakdownChartData({
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	])
-
-	const rows: Array<IRWACategoriesOverviewRow> = []
-	for (const [category, stats] of Object.entries(data.byCategory)) {
-		if (!isCategoryIncludedInStandardRwaOverview(category)) continue
-		rows.push({
-			category,
-			...stats
-		})
-	}
-
-	return {
-		rows: rows.sort((a, b) => b.base.onChainMcap - a.base.onChainMcap),
-		initialChartDataset: toOverviewBreakdownChartDataset(activeMcapRows, {
-			breakdown: 'category',
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	}
-}
-
-export async function getRWAPlatformsOverview(): Promise<IRWAPlatformsOverview> {
-	const [data, activeMcapRows] = await Promise.all([
-		fetchRWAStats(),
-		fetchRWAPlatformBreakdownChartData({
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	])
-
-	const rows: Array<IRWAPlatformsOverviewRow> = []
-	for (const [platform, stats] of Object.entries(data.byPlatform)) {
-		rows.push({
-			...stats,
-			platform
-		})
-	}
-
-	return {
-		rows: rows.sort((a, b) => b.base.onChainMcap - a.base.onChainMcap),
-		initialChartDataset: toOverviewBreakdownChartDataset(activeMcapRows, {
-			breakdown: 'platform',
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	}
-}
-
-export async function getRWAAssetGroupsOverview(): Promise<IRWAAssetGroupsOverview> {
-	const [data, activeMcapRows] = await Promise.all([
-		fetchRWAStats(),
-		fetchRWAAssetGroupBreakdownChartData({
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
-	])
-
-	const rows: Array<IRWAAssetGroupsOverviewRow> = []
-	for (const [assetGroup, stats] of Object.entries(data.byAssetGroup)) {
-		rows.push({
-			assetGroup: normalizeRwaAssetGroup(assetGroup),
-			...stats
-		})
-	}
-
-	return {
-		rows: rows.sort((a, b) => b.base.onChainMcap - a.base.onChainMcap),
-		initialChartDataset: toOverviewBreakdownChartDataset(activeMcapRows, {
-			breakdown: 'assetGroup',
-			key: 'activeMcap',
-			includeStablecoin: false,
-			includeGovernance: false
-		})
 	}
 }
 

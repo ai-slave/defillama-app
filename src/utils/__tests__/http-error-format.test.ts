@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	looksLikeHtmlDocument,
-	previewResponseBody,
 	redactApiKeyFromUrl,
 	sanitizeDefiLlamaProApiUrl,
 	sanitizeResponseTextForError
@@ -17,8 +16,7 @@ describe('HTTP error formatting', () => {
 		expect(sanitizeResponseTextForError('<html><head></head><body>Cloudflare</body></html>')).toBe('[html error page]')
 	})
 
-	test('previews and truncates response text for logs', () => {
-		expect(previewResponseBody('  hello\n\nworld  ')).toBe('hello world')
+	test('truncates long response text for logs', () => {
 		expect(sanitizeResponseTextForError('x'.repeat(510))).toBe(`${'x'.repeat(500)}…`)
 	})
 

@@ -10,8 +10,6 @@ import {
 	buildAdapterMetricsCsvDataset,
 	buildChainsByAdapterChartPresentation,
 	buildProtocolBreakdownNormalization,
-	getCategoryProtocolNameFilterForChart,
-	leafProtocolNamesFromTableRows,
 	normalizeProtocolBreakdownChartData,
 	normalizeChainsByAdapterChartState,
 	showsChainsByAdapterChart,
@@ -1352,82 +1350,6 @@ describe('normalizeProtocolBreakdownChartData', () => {
 
 		expect(result.protocolDimensions).toEqual([])
 		expect(result.chartData).toEqual({ source: [], dimensions: ['timestamp'] })
-	})
-})
-
-describe('getCategoryProtocolNameFilterForChart', () => {
-	test('returns unrestricted when the page has no categories', () => {
-		expect(
-			getCategoryProtocolNameFilterForChart({
-				categories: [],
-				protocols: [protocol('Uniswap', 'Dex')],
-				categoryParam: undefined,
-				excludeCategoryParam: undefined,
-				hasCategoryParam: false
-			})
-		).toEqual({ kind: 'unrestricted' })
-	})
-
-	test('returns restricted names matching selected categories (parent + children)', () => {
-		const parent = {
-			...protocol('Parent', 'Dex'),
-			childProtocols: [protocol('Child A', 'Lending'), protocol('Child B', 'Dex')]
-		} as IProtocol
-
-		const result = getCategoryProtocolNameFilterForChart({
-			categories: ['Dex', 'Lending'],
-			protocols: [parent],
-			categoryParam: 'Lending',
-			excludeCategoryParam: undefined,
-			hasCategoryParam: true
-		})
-
-		assert(result.kind === 'restricted')
-		expect([...result.names].sort()).toEqual(['Child A'])
-	})
-
-	test('returns no-rows when category param clears the selection', () => {
-		expect(
-			getCategoryProtocolNameFilterForChart({
-				categories: ['Dex'],
-				protocols: [protocol('A', 'Dex')],
-				categoryParam: '',
-				excludeCategoryParam: undefined,
-				hasCategoryParam: true
-			})
-		).toEqual({ kind: 'no-rows' })
-	})
-
-	test('returns restricted leaf names when the filtered row is a parent with all children matching', () => {
-		const parent = {
-			...protocol('Parent', 'Dex'),
-			childProtocols: [protocol('Child A', 'Dex'), protocol('Child B', 'Lending')]
-		} as IProtocol
-
-		const result = getCategoryProtocolNameFilterForChart({
-			categories: ['Dex', 'Lending'],
-			protocols: [parent],
-			categoryParam: undefined,
-			excludeCategoryParam: undefined,
-			hasCategoryParam: false
-		})
-
-		assert(result.kind === 'restricted')
-		expect([...result.names].sort()).toEqual(['Child A', 'Child B'])
-	})
-})
-
-describe('leafProtocolNamesFromTableRows', () => {
-	test('returns standalone and child protocol names sorted by total24h descending', () => {
-		const parent = {
-			...protocol('Parent', 'Dex'),
-			childProtocols: [
-				{ ...protocol('C1', 'Dex'), total24h: 10 },
-				{ ...protocol('C2', 'Dex'), total24h: 100 }
-			]
-		} as IProtocol
-		const standalone = { ...protocol('A', 'Dex'), total24h: 50 } as IProtocol
-		expect(leafProtocolNamesFromTableRows([standalone, parent])).toEqual(['C2', 'A', 'C1'])
 	})
 })
 

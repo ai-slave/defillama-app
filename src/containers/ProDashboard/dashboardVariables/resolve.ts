@@ -93,12 +93,6 @@ export function readVariableOverridesFromQuery(
 	return overrides
 }
 
-export function variableOverridesToQuery(overrides: Readonly<Record<string, string>>): Record<string, string> {
-	const query: Record<string, string> = {}
-	for (const id in overrides) query[`${VARIABLE_QUERY_PREFIX}${id}`] = overrides[id] as string
-	return query
-}
-
 function describeItem(item: DashboardItemConfig): string {
 	const kindLabel = DASHBOARD_ITEM_KIND_SUMMARY_LABELS[item.kind].one
 	if (!('type' in item) || typeof item.type !== 'string') return kindLabel

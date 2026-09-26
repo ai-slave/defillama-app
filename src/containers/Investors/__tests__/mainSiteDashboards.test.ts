@@ -3,7 +3,6 @@ import {
 	getIrTabMenuItems,
 	getMainSiteIrDashboard,
 	getMainSiteIrTabHref,
-	hasMainSiteIrDashboard,
 	isMainSiteIrVisible,
 	MAIN_SITE_IR_DASHBOARDS,
 	resolveMainSiteIrTab
@@ -20,11 +19,11 @@ describe('mainSiteDashboards', () => {
 	})
 
 	test('resolves a dashboard only under its own entity type', () => {
-		expect(hasMainSiteIrDashboard('protocol', 'spark')).toBe(true)
-		expect(hasMainSiteIrDashboard('chain', 'spark')).toBe(false)
-		expect(hasMainSiteIrDashboard('chain', 'sonic')).toBe(true)
-		expect(hasMainSiteIrDashboard('protocol', 'sonic')).toBe(false)
-		expect(hasMainSiteIrDashboard('protocol', 'aave')).toBe(false)
+		expect(getMainSiteIrDashboard('protocol', 'spark')?.entityType).toBe('protocol')
+		expect(getMainSiteIrDashboard('chain', 'spark')).toBeUndefined()
+		expect(getMainSiteIrDashboard('chain', 'sonic')?.entityType).toBe('chain')
+		expect(getMainSiteIrDashboard('protocol', 'sonic')).toBeUndefined()
+		expect(getMainSiteIrDashboard('protocol', 'aave')).toBeUndefined()
 	})
 
 	// mainSiteDashboards is intentionally decoupled from registry.ts, so an unregistered dashboardId

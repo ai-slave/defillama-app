@@ -78,19 +78,6 @@ function getBridgeDailyVolume(point: BridgeDailyVolumePoint, useDepositAndWithdr
 	return Number.isFinite(value) ? value : null
 }
 
-export function getCompletedBridgeVolumeTotal(
-	chart: Array<BridgeDailyVolumePoint> | null | undefined,
-	days: number,
-	useDepositAndWithdrawalVolume = false,
-	currentTimeMs: number = Date.now()
-): number | null {
-	if (!Number.isInteger(days) || days <= 0) return null
-	return (
-		getCompletedBridgeVolumeSummary(chart, [days], useDepositAndWithdrawalVolume, currentTimeMs).totals.get(days) ??
-		null
-	)
-}
-
 export function getCompletedBridgeVolumeTotals(
 	chart: Array<BridgeDailyVolumePoint> | null | undefined,
 	days: ReadonlyArray<number>,
@@ -142,13 +129,6 @@ function getCompletedBridgeVolumeSummary(
 	}
 
 	return { pair: current == null || previous == null ? null : { current, previous }, totals }
-}
-
-export function getCompletedBridgeVolumePair(
-	chart: Array<BridgeDailyVolumePoint> | null | undefined,
-	currentTimeMs: number = Date.now()
-): { current: number; previous: number } | null {
-	return getCompletedBridgeVolumeSummary(chart, [], false, currentTimeMs).pair
 }
 
 export const formatBridgesData = ({

@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import { DASHBOARD_CARD_HEIGHTS, type DashboardCardHeight, type DashboardItemLayout } from '../types'
+import type { DashboardCardHeight, DashboardItemLayout } from '../types'
 
 export const DASHBOARD_CARD_HEIGHT_SCALE = { compact: 0.75, default: 1, tall: 1.4 } as const satisfies Record<
 	DashboardCardHeight,
@@ -52,12 +52,6 @@ export function getCardHeightScale(height: DashboardCardHeight | undefined): num
 export function cardScaleStyle(height: DashboardCardHeight | undefined): CSSProperties | undefined {
 	const scale = getCardHeightScale(height)
 	return scale === 1 ? undefined : ({ '--card-scale': scale } as CSSProperties)
-}
-
-export function getAdjacentCardHeight(height: DashboardCardHeight, direction: -1 | 1): DashboardCardHeight {
-	const index = DASHBOARD_CARD_HEIGHTS.indexOf(height)
-	const next = DASHBOARD_CARD_HEIGHTS[index + direction]
-	return next ?? height
 }
 
 export function scaledCardHeight(base: number, height: DashboardCardHeight | undefined): number {

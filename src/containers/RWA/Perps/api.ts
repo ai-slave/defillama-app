@@ -1,7 +1,6 @@
 import { RWA_PERPS_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
 import type {
-	IRWAPerpsAggregateHistoricalPoint,
 	IRWAPerpsBreakdownChartResponse,
 	IRWAPerpsFundingHistoryParams,
 	IRWAPerpsFundingHistoryPoint,
@@ -92,14 +91,6 @@ export async function fetchRWAPerpsStats(includeCex: boolean): Promise<IRWAPerps
 	return fetchJson<IRWAPerpsStatsResponse>(createRWAPerpsScopedUrl('stats', includeCex))
 }
 /**
- * Fetch a single market by its venue:contract ID.
- */
-export async function fetchRWAPerpsMarketById(id: string): Promise<IRWAPerpsMarket> {
-	const encodedId = encodeRWAPerpsPathSegment(id)
-	return fetchJson<IRWAPerpsMarket>(`${RWA_PERPS_SERVER_URL}/market/${encodedId}?cachebust=091626`)
-}
-
-/**
  * Fetch all markets for a contract across venues.
  */
 export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<Array<IRWAPerpsMarket>> {
@@ -140,16 +131,6 @@ export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boo
 export async function fetchRWAPerpsMarketChart(id: string): Promise<Array<IRWAPerpsMarketChartPoint>> {
 	const encodedId = encodeRWAPerpsPathSegment(id)
 	return fetchJson<Array<IRWAPerpsMarketChartPoint>>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?cachebust=091626`)
-}
-
-/**
- * Fetch historical constituent rows for a venue.
- */
-export async function fetchRWAPerpsVenueChart(venue: string): Promise<Array<IRWAPerpsAggregateHistoricalPoint>> {
-	const encodedVenue = encodeRWAPerpsPathSegment(venue)
-	return fetchJson<Array<IRWAPerpsAggregateHistoricalPoint>>(
-		`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?cachebust=091626`
-	)
 }
 
 export async function fetchRWAPerpsOverviewBreakdownChartData(

@@ -4,8 +4,7 @@ import type { SqlChartConfig, TextConfig } from '../../types'
 import {
 	DASHBOARD_DATA_LENGTH_LIMIT,
 	estimateDashboardDataLength,
-	formatDashboardDataLength,
-	isDashboardDataTooLarge
+	formatDashboardDataLength
 } from '../dashboardDocumentSize'
 
 const text: TextConfig = { id: 'text', kind: 'text', content: 'Hello' }
@@ -77,8 +76,6 @@ test('flags documents above the limit and formats the size in kilobytes', () => 
 		displayMode: 'table'
 	}
 	expect(estimateDashboardDataLength({ items: [large] })).toBeGreaterThan(DASHBOARD_DATA_LENGTH_LIMIT)
-	expect(isDashboardDataTooLarge({ items: [large] })).toBe(true)
-	expect(isDashboardDataTooLarge({ items: [text] })).toBe(false)
 	expect(formatDashboardDataLength(1024 * 900)).toBe('900 KB')
 	expect(formatDashboardDataLength(1500)).toBe('1 KB')
 })

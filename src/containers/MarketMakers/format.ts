@@ -22,11 +22,6 @@ export function roundPercentile(value: number | null | undefined): number | null
 	return Math.round(value)
 }
 
-export function normalizeUptime(value: number | null | undefined): number | null {
-	if (value == null) return null
-	return value <= 1 ? value * 100 : value
-}
-
 export function formatMetricValue(value: number | null | undefined, kind: MetricFormatKind): string {
 	if (value == null) return 'N/A'
 	switch (kind) {

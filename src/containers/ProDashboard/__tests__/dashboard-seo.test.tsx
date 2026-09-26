@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { DashboardSeoSummary } from '../components/DashboardSeoSummary'
 import type { Dashboard } from '../dashboardTypes'
-import { buildDashboardSeo, markdownToPlainText, toDashboardSeoPublicDashboard } from '../utils/seo'
+import { buildDashboardSeo, markdownToPlainText } from '../utils/seo'
 
 function hasNestedUndefined(value: unknown): boolean {
 	if (value === undefined) return true
@@ -106,7 +106,6 @@ describe('pro dashboard SEO shell', () => {
 				})
 			])
 		})
-		expect(toDashboardSeoPublicDashboard({ ...dashboard, slug: 'revenue-watchlist' }).slug).toBe('revenue-watchlist')
 	})
 
 	test('renders a visible semantic summary for the initial HTML', () => {
@@ -126,20 +125,6 @@ describe('pro dashboard SEO shell', () => {
 		expect(html).toContain('2026-01-03')
 		expect(html).toContain('fees')
 		expect(html).toContain('ethereum')
-	})
-
-	test('compacts dashboard SEO props without raw owner ids', () => {
-		const compact = toDashboardSeoPublicDashboard(dashboard)
-
-		expect(compact.author).toEqual(
-			expect.objectContaining({
-				slug: 'jane-builder',
-				displayName: 'Jane Builder'
-			})
-		)
-		expect(compact).not.toHaveProperty('user')
-		expect(compact).not.toHaveProperty('collectionId')
-		expect(compact).not.toHaveProperty('collectionName')
 	})
 
 	test('falls back honestly for empty public dashboards', () => {

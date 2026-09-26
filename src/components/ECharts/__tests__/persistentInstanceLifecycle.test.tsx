@@ -5,7 +5,6 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RadarChart } from '~/containers/MarketMakers/RadarChart'
-import { RWAFlowTreemapChart } from '~/containers/RWA/FlowTreemapChart'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { BarSparkline } from '../BarSparkline'
 import CandlestickChart from '../CandlestickChart'
@@ -14,6 +13,8 @@ import HBarChart from '../HBarChart'
 import ScatterChart from '../ScatterChart'
 import { SparklineChart } from '../SparklineChart'
 import TreemapChart from '../TreemapChart'
+import MarketTreemapChart from '../TreemapChart/Market'
+import type { MarketTreemapLeaf } from '../TreemapChart/Market/types'
 
 let container: HTMLDivElement
 let root: Root
@@ -76,14 +77,22 @@ describe('persistent ECharts instances', () => {
 			shown: () => option().series[0].data[0][0]
 		},
 		{
-			name: 'RWA flow treemap',
-			render: (value: number) => (
-				<RWAFlowTreemapChart
-					nodes={[{ name: 'A', value: [value, 1], netFlowUsd: 1 }]}
-					sizeLabel="TVL"
-					periodLabel="30d"
-				/>
-			),
+			name: 'market treemap',
+			render: (value: number) => {
+				// An empty icon URL skips the icon preload, which happy-dom cannot load.
+				const leaves: Array<MarketTreemapLeaf> = [
+					{
+						name: 'A',
+						value: [value, 1],
+						iconKey: 1,
+						iconUrl: '',
+						itemStyle: { color: '#269f3c' },
+						companyName: 'A Corp',
+						marketCap: value
+					}
+				]
+				return <MarketTreemapChart treeData={leaves} leaves={leaves} sizeLabel="Market Cap" colorLabel="Change" />
+			},
 			shown: () => option().series[0].data[0].value[0]
 		}
 	])('keeps the $name chart across data updates and releases it on unmount', async ({ render: chartFor, shown }) => {

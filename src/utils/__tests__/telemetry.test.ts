@@ -80,6 +80,7 @@ describe('telemetry client', () => {
 
 	afterEach(() => {
 		telemetryTest.reset()
+		vi.useRealTimers()
 		vi.unstubAllEnvs()
 		vi.unstubAllGlobals()
 	})
@@ -155,32 +156,30 @@ describe('telemetry client', () => {
 		})
 	})
 
-	test('reuses the idempotency key for retries and opens the circuit after failures', async () => {
+	test('retries a failed batch with the same idempotency key and pauses sending for the cooldown after three failures', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] })
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 500 }))
 		vi.stubGlobal('fetch', fetchMock)
+		const idempotencyKeys = () =>
+			fetchMock.mock.calls.map(([, init]) => (init!.headers as Record<string, string>)['Idempotency-Key'])
 
 		recordTelemetry(runtimeError('retry me'))
 		await flushTelemetry({ timeoutMs: 1000 })
 		await flushTelemetry({ timeoutMs: 1000 })
 		await flushTelemetry({ timeoutMs: 1000 })
+		vi.advanceTimersByTime(999)
+		await flushTelemetry({ timeoutMs: 1000 })
+		expect(fetchMock).toHaveBeenCalledTimes(3)
+
+		fetchMock.mockResolvedValue(new Response(null, { status: 204 }))
+		vi.advanceTimersByTime(1)
 		await flushTelemetry({ timeoutMs: 1000 })
 
-		const firstCall = fetchMock.mock.calls[0]!
-		const secondCall = fetchMock.mock.calls[1]!
-		const thirdCall = fetchMock.mock.calls[2]!
-		const firstInit = firstCall[1]
-		const secondInit = secondCall[1]
-		const thirdInit = thirdCall[1]
-		if (!firstInit || !secondInit || !thirdInit) throw new Error('missing telemetry request init')
-		const firstHeaders = firstInit.headers as Record<string, string>
-		const secondHeaders = secondInit.headers as Record<string, string>
-		const thirdHeaders = thirdInit.headers as Record<string, string>
-
-		expect(fetchMock).toHaveBeenCalledTimes(3)
-		expect(firstHeaders['Idempotency-Key']).toBe(secondHeaders['Idempotency-Key'])
-		expect(secondHeaders['Idempotency-Key']).toBe(thirdHeaders['Idempotency-Key'])
-		expect(telemetryTest.retryBatchEvents()).toBe(1)
-		expect(telemetryTest.circuitOpenUntil()).toBeGreaterThan(Date.now())
+		expect(fetchMock).toHaveBeenCalledTimes(4)
+		expect(new Set(idempotencyKeys()).size).toBe(1)
+		expect(
+			sentBatch(fetchMock).events.map((event: TelemetryEvent) => event.type === 'runtime_error' && event.error_message)
+		).toEqual(['retry me'])
 	})
 
 	test('creates unique static route traces and page build finish ticks', async () => {

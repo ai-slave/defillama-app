@@ -85,11 +85,6 @@ export interface ModeledLossCell {
 // drop; 'worst' shows the all-to-zero ceiling.
 export type StressSel = 10 | 30 | 50 | 'worst'
 
-// True when the backend serves the per-drop curve; absent on older fixtures → toggle hidden.
-export function anyHasAnchors(scenarios: Array<ScenarioVM>): boolean {
-	return scenarios.some((s) => s.status === 'computed' && (s.lossByAnchor?.length ?? 0) > 0)
-}
-
 // Drop-agnostic cell — never implies a stress drop the scenario wasn't modeled with.
 function baseModeledCell(scenario: ScenarioVM, supplyUsd: number | null): ModeledLossCell {
 	const drop = dropPct(scenario)

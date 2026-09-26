@@ -172,20 +172,6 @@ export function updateAttributeFilterStatesQueryValue(
 	return normalizedStates
 }
 
-export function filterRwaAssetOverviewRows(
-	assets: Array<RWAAssetOverviewRow>,
-	filterState: RWAFilterState
-): Array<RWAAssetOverviewRow> {
-	const filteredRows: Array<RWAAssetOverviewRow> = []
-	const preparedFilters = prepareRwaFilters(filterState)
-
-	for (const asset of assets) {
-		if (matchesRwaAssetFilters(asset, filterState, preparedFilters)) filteredRows.push(asset)
-	}
-
-	return filteredRows
-}
-
 export function filterRwaPerpsContractOverlayRows(
 	rows: Array<RWAPerpsContractOverlayRow>,
 	filterState: RWAFilterState

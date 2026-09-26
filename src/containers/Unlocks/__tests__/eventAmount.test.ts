@@ -5,9 +5,7 @@ import {
 	getCliffEmissionAmount,
 	getEmissionAmountBreakdownOverInterval,
 	getEmissionAmountOverInterval,
-	getEmissionEventAmount,
-	getLinearEmissionRateDelta,
-	getLinearEmissionWeeklyRate
+	getEmissionEventAmount
 } from '../eventAmount'
 import intervalFixtures from './intervalFixtures.json'
 
@@ -27,16 +25,14 @@ describe('emission event amounts', () => {
 
 		expect(getEmissionEventAmount(cliff)).toBe(12)
 		expect(getCliffEmissionAmount(cliff)).toBe(12)
-		expect(getLinearEmissionWeeklyRate(cliff)).toBeNull()
-		expect(getLinearEmissionRateDelta(cliff)).toBeNull()
 	})
 
 	test.each([
-		[10, 14, 14, 4],
-		[10, 4, 4, -6],
-		[10, 10, 10, 0],
-		[10, 0, 0, -10]
-	])('reads a linear tuple as previous/new weekly rates', (previous, next, amount, delta) => {
+		[10, 14, 14],
+		[10, 4, 4],
+		[10, 10, 10],
+		[10, 0, 0]
+	])('reads a linear tuple as previous/new weekly rates', (previous, next, amount) => {
 		const linear = event({
 			description: 'Linear rate change',
 			category: 'farming',
@@ -48,8 +44,6 @@ describe('emission event amounts', () => {
 
 		expect(getEmissionEventAmount(linear)).toBe(amount)
 		expect(getCliffEmissionAmount(linear)).toBeNull()
-		expect(getLinearEmissionWeeklyRate(linear)).toBe(amount)
-		expect(getLinearEmissionRateDelta(linear)).toBe(delta)
 	})
 
 	test('integrates a known new rate when the previous rate is unavailable', () => {
@@ -62,8 +56,6 @@ describe('emission event amounts', () => {
 			rateDurationDays: 1
 		})
 
-		expect(getLinearEmissionWeeklyRate(linear)).toBe(7)
-		expect(getLinearEmissionRateDelta(linear)).toBeNull()
 		expect(getEmissionAmountOverInterval(linear, 0, 86_400)).toBe(1)
 	})
 
@@ -80,8 +72,6 @@ describe('emission event amounts', () => {
 
 		expect(getEmissionEventAmount(unknown)).toBeNull()
 		expect(getCliffEmissionAmount(unknown)).toBeNull()
-		expect(getLinearEmissionWeeklyRate(unknown)).toBeNull()
-		expect(getLinearEmissionRateDelta(unknown)).toBeNull()
 		expect(getEmissionAmountOverInterval(unknown, 1, 2)).toBeNull()
 		expect(getEmissionAmountOverInterval(unknown, 8 * 86_400, 9 * 86_400)).toBe(0)
 	})

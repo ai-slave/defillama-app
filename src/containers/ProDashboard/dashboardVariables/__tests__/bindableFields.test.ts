@@ -2,12 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { migrateDashboardItemConfig } from '../../dashboardConfig/migrate'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { ChartBuilderConfig } from '../../types'
-import {
-	getBindableFieldVariableKind,
-	getBindableFields,
-	getDashboardItemBindings,
-	sanitizeDashboardItemBindings
-} from '../bindableFields'
+import { getBindableFieldVariableKind, getBindableFields, sanitizeDashboardItemBindings } from '../bindableFields'
 
 function builder(mode: ChartBuilderConfig['config']['mode']): ChartBuilderConfig {
 	return {
@@ -119,30 +114,7 @@ describe('sanitizeDashboardItemBindings', () => {
 	})
 })
 
-describe('getDashboardItemBindings', () => {
-	test('unions the sub-chart bindings of a multi card', () => {
-		expect(
-			getDashboardItemBindings({
-				id: 'multi',
-				kind: 'multi',
-				items: [
-					{ id: 'a', kind: 'chart', subjectType: 'chain', chain: 'Ethereum', type: 'tvl' },
-					{
-						id: 'b',
-						kind: 'chart',
-						subjectType: 'protocol',
-						protocol: 'aave',
-						type: 'fees',
-						bindings: { subject: 'protocol' }
-					}
-				]
-			})
-		).toEqual({ subject: 'protocol' })
-		expect(getDashboardItemBindings({ id: 'multi', kind: 'multi', items: [] })).toEqual({})
-		expect(getDashboardItemBindings(chainChart)).toEqual({})
-		expect(getDashboardItemBindings({ ...chainChart, bindings: { subject: 'chain' } })).toEqual({ subject: 'chain' })
-	})
-
+describe('multi card bindings', () => {
 	test('migration keeps multi sub-chart bindings and drops unknown fields', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'multi',
@@ -159,7 +131,10 @@ describe('getDashboardItemBindings', () => {
 				{ id: 'b', kind: 'chart', subjectType: 'protocol', protocol: 'aave', type: 'fees' }
 			]
 		})
-		expect(getDashboardItemBindings(migrated!)).toEqual({ subject: 'chain' })
+		expect(migrated?.kind === 'multi' ? migrated.items.map((chart) => chart.bindings) : null).toEqual([
+			{ subject: 'chain' },
+			undefined
+		])
 		expect(migrateDashboardItemConfig({ id: 'multi', kind: 'multi', items: [] })).toBeNull()
 	})
 })

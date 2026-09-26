@@ -769,7 +769,7 @@ export function getRWAFlowVsPriceAssetSummaries(
 	return summaries
 }
 
-export function sortRWAFlowRotationSeriesNames(
+function sortRWAFlowRotationSeriesNames(
 	seriesNames: ReadonlySet<string>,
 	flow7d: ReadonlyMap<string, number>,
 	flow30d: ReadonlyMap<string, number>
@@ -780,29 +780,6 @@ export function sortRWAFlowRotationSeriesNames(
 		const flow30dDifference = Math.abs(flow30d.get(b) ?? 0) - Math.abs(flow30d.get(a) ?? 0)
 		return flow30dDifference !== 0 ? flow30dDifference : a.localeCompare(b)
 	})
-}
-
-export function getRWAFlowRotationSeriesNames(points: ReadonlyArray<IRWAFlowOverviewSplitPoint>): Array<string> {
-	const seriesNames = new Set<string>()
-	const latestPoint = points[points.length - 1]
-	const latestTimestamp = latestPoint ? rwaUnixSecondsToMilliseconds(latestPoint.timestamp) : 0
-	const flow7d = new Map<string, number>()
-	const flow30d = new Map<string, number>()
-	const cutoff7d = latestTimestamp - 7 * DAY_MS
-	const cutoff30d = latestTimestamp - 30 * DAY_MS
-	for (const point of points) {
-		const pointTimestamp = rwaUnixSecondsToMilliseconds(point.timestamp)
-		for (const name in point) {
-			if (name === 'timestamp') continue
-			seriesNames.add(name)
-			const value = point[name]
-			if (value === undefined) continue
-			if (pointTimestamp > cutoff30d) flow30d.set(name, (flow30d.get(name) ?? 0) + value)
-			if (pointTimestamp > cutoff7d) flow7d.set(name, (flow7d.get(name) ?? 0) + value)
-		}
-	}
-
-	return sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
 }
 
 export function buildRWAFlowRotationChart(

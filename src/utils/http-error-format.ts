@@ -7,10 +7,6 @@ export function looksLikeHtmlDocument(text: string): boolean {
 	return s.startsWith('<!doctype html') || s.startsWith('<html') || (s.includes('<head') && s.includes('</html>'))
 }
 
-export function previewResponseBody(body: string, length = 200): string {
-	return body.replace(/\s+/g, ' ').trim().slice(0, length)
-}
-
 export function sanitizeResponseTextForError(text: string): string {
 	if (!text) return ''
 	if (looksLikeHtmlDocument(text)) return '[html error page]'

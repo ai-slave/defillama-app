@@ -9,7 +9,6 @@ import {
 	getRWAFlowModeQueryValue,
 	getRWAFlowOverlayQueryValue,
 	getRWAFlowOverlayOptions,
-	getRWAFlowRotationSeriesNames,
 	getRWAFlowVsPriceAssetSummaries,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowGrouping,
@@ -465,7 +464,6 @@ describe('RWA flow chart data', () => {
 
 		expect(weekly.dataset.dimensions).toEqual(expectedOrder)
 		expect(monthly.dataset.dimensions).toEqual(expectedOrder)
-		expect(getRWAFlowRotationSeriesNames(points)).toEqual(expectedOrder.slice(1))
 		expect(weekly.charts.map((chart) => chart.name)).toEqual(expectedOrder.slice(1))
 		expect(monthly.charts.map((chart) => chart.name)).toEqual(expectedOrder.slice(1))
 	})

@@ -5,7 +5,7 @@ import { installSnapshotDirectory } from '~/utils/testing/snapshotDirectory'
 const http = installFixtureFetch()
 installSnapshotDirectory('liquidations-index-test')
 
-test('reads protocol chain membership and the sitemap from one published generation', async () => {
+test('reads protocol chain membership for the sitemap from one published generation', async () => {
 	http.serve({
 		[`${LIQUIDATIONS_SERVER_URL_V2}/protocols`]: { protocols: ['aave', 'compound'] },
 		[`${LIQUIDATIONS_SERVER_URL_V2}/all`]: {
@@ -18,8 +18,6 @@ test('reads protocol chain membership and the sitemap from one published generat
 	const { buildLiquidationsDomain } = await import('../server/dataset.builder.server')
 	await fileDatasetSnapshotStore.publish('liquidations', buildLiquidationsDomain)
 	const api = await import('../server/dataset.server')
-	expect(await api.getLiquidationsProtocolChainIds('aave')).toEqual(['ethereum', 'arbitrum'])
-	expect(await api.getLiquidationsProtocolChainIds('missing')).toEqual([])
 	expect(await api.getLiquidationsSitemapProtocolChains()).toEqual([
 		{ protocolId: 'aave', chainIds: ['ethereum', 'arbitrum'] },
 		{ protocolId: 'compound', chainIds: ['base'] }

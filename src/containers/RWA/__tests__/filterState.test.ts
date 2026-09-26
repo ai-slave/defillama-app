@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
-	filterRwaAssetOverviewRows,
 	filterRwaOverviewDisplayRows,
 	hasPerpsOverlayBlockingFiltersFromQuery,
 	parseAttributeFilterStatesParam,
@@ -204,9 +203,11 @@ describe('RWA filter state', () => {
 			minActiveMcapToOnChainMcapPct: 1
 		}
 
-		expect(filterRwaAssetOverviewRows([baseAsset], filterState).map((asset) => asset.id)).toEqual(['asset-1'])
+		expect(filterRwaOverviewDisplayRows([baseAsset], filterState).filteredAssets.map((asset) => asset.id)).toEqual([
+			'asset-1'
+		])
 		expect(
-			filterRwaAssetOverviewRows(
+			filterRwaOverviewDisplayRows(
 				[
 					{
 						...baseAsset,
@@ -215,7 +216,7 @@ describe('RWA filter state', () => {
 					}
 				],
 				filterState
-			)
+			).filteredAssets
 		).toEqual([])
 	})
 
@@ -239,18 +240,18 @@ describe('RWA filter state', () => {
 		expect(getRwaDisplayedDefiActiveTvlByProtocol(asset, false)).toEqual([['Aave', 15]])
 		expect(getRwaDisplayedDefiActiveTvlByProtocol({ ...asset, bridgeTvlByProtocol: null }, false)).toBeNull()
 
-		const filteredWithBridge = filterRwaAssetOverviewRows([asset], {
+		const filteredWithBridge = filterRwaOverviewDisplayRows([asset], {
 			...baseFilterState,
 			minDefiActiveTvlToOnChainMcapPct: 20,
 			includeBridgeTvl: true
 		})
-		const filteredWithoutBridge = filterRwaAssetOverviewRows([asset], {
+		const filteredWithoutBridge = filterRwaOverviewDisplayRows([asset], {
 			...baseFilterState,
 			minDefiActiveTvlToOnChainMcapPct: 20,
 			includeBridgeTvl: false
 		})
-		expect(filteredWithBridge).toHaveLength(1)
-		expect(filteredWithoutBridge).toHaveLength(0)
+		expect(filteredWithBridge.filteredAssets.map((row) => row.id)).toEqual(['asset-1'])
+		expect(filteredWithoutBridge.filteredAssets).toEqual([])
 	})
 
 	test('keeps suspicious assets visible but excludes them from non-platform totals', () => {

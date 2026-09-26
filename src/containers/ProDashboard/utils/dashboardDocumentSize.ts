@@ -25,10 +25,6 @@ export function estimateDashboardDataLength({
 	}).length
 }
 
-export function isDashboardDataTooLarge(input: DashboardDocumentInput): boolean {
-	return estimateDashboardDataLength(input) > DASHBOARD_DATA_LENGTH_LIMIT
-}
-
 export function formatDashboardDataLength(length: number): string {
 	return `${Math.round(length / 1024)} KB`
 }

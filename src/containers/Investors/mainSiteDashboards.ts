@@ -197,11 +197,6 @@ export function getMainSiteIrDashboard(entityType: IrEntityType, entitySlug: str
 	return BY_ENTITY_SLUG.get(`${entityType}:${entitySlug}`)
 }
 
-/** Pass an already-normalized slug (e.g. `slug(name)`). */
-export function hasMainSiteIrDashboard(entityType: IrEntityType, entitySlug: string): boolean {
-	return BY_ENTITY_SLUG.has(`${entityType}:${entitySlug}`)
-}
-
 export function isMainSiteIrVisible(dashboard: MainSiteIrDashboard, isLlama: boolean): boolean {
 	return !dashboard.llamaOnly || isLlama
 }

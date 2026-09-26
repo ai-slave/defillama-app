@@ -225,10 +225,7 @@ export type RWAPerpsContractOverlayRow = RWAOverviewDisplayRowBase & {
 
 export type RWAOverviewDisplayRow = RWAAssetOverviewRow | RWAPerpsContractOverlayRow
 
-export type RWAOverviewAssetBase = RWAOverviewDisplayRowBase
 export type RWASpotOverviewAsset = RWAAssetOverviewRow
-export type RWAPerpsOverviewAsset = RWAPerpsContractOverlayRow
-export type RWAOverviewAsset = RWAOverviewDisplayRow
 
 export interface IRWAAssetsOverview {
 	platformPage: RWAPlatformPageData | null
@@ -331,12 +328,6 @@ export type IRWAAssetChartApiRow = {
 	totalSupply: number | null
 }
 
-export type IRWAFlowsRequest = {
-	start?: number
-	end?: number
-	withMcap?: boolean
-}
-
 export type IRWAFlowPoint = {
 	timestamp: number
 	netFlowUsd: number | null
@@ -361,20 +352,7 @@ export type IRWAFlowAggregatePoint = {
 	coverage: number
 }
 
-export type IRWAFlowOverviewAggregateResponse = {
-	series: Array<IRWAFlowAggregatePoint>
-	coverage: number
-}
-
-export type IRWAFlowGroupAggregateResponse = IRWAFlowOverviewAggregateResponse & { members: Array<string> }
-
 export type RWAFlowOverviewSplitBy = 'assetGroup' | 'category' | 'platform' | 'chain'
-
-export type IRWAFlowOverviewRequest = {
-	splitBy: RWAFlowOverviewSplitBy
-	includeStablecoin: boolean
-	includeGovernance: boolean
-}
 
 export type IRWAFlowOverviewSplitPoint = { timestamp: number } & Record<string, number>
 
@@ -411,7 +389,6 @@ export type IRWAFlowSummaryResponse = {
 	windows: Record<RWAFlowWindow, IRWAFlowSummaryWindow>
 }
 
-export type RWAOverviewPage = { kind: 'chain' } | { kind: 'category' } | { kind: 'platform' } | { kind: 'assetGroup' }
 export type RWAOverviewBreakdownRequest =
 	| { breakdown: 'chain'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
 	| { breakdown: 'category'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
@@ -420,32 +397,6 @@ export type RWAOverviewBreakdownRequest =
 
 export type RWAOverviewBreakdownRouteRequest = RWAOverviewBreakdownRequest & {
 	includeBridgeTvl: boolean
-}
-
-export type IRWAChainsOverviewRow = NonNullable<IRWAStatsResponse['byChain']>[string] & { chain: string }
-
-export type IRWACategoriesOverviewRow = NonNullable<IRWAStatsResponse['byCategory']>[string] & { category: string }
-export type IRWAPlatformsOverviewRow = NonNullable<IRWAStatsResponse['byPlatform']>[string] & { platform: string }
-export type IRWAAssetGroupsOverviewRow = NonNullable<IRWAStatsResponse['byAssetGroup']>[string] & { assetGroup: string }
-
-export type IRWAChainsOverview = {
-	rows: Array<IRWAChainsOverviewRow>
-	initialChartDataset: RWAPositionalChartDataset
-}
-
-export type IRWACategoriesOverview = {
-	rows: Array<IRWACategoriesOverviewRow>
-	initialChartDataset: RWAPositionalChartDataset
-}
-
-export type IRWAPlatformsOverview = {
-	rows: Array<IRWAPlatformsOverviewRow>
-	initialChartDataset: RWAPositionalChartDataset
-}
-
-export type IRWAAssetGroupsOverview = {
-	rows: Array<IRWAAssetGroupsOverviewRow>
-	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type RWADefiTvlProtocolBreakdown = {

@@ -20,22 +20,6 @@ let refreshInFlight: Promise<void> | null = null
 let runtimeLoopStarted = false
 let scheduledRuntimeRefresh: ReturnType<typeof setTimeout> | null = null
 
-export type MetadataRefreshStatus = {
-	failedRefreshes: number
-	jitteredRefreshAttempts: number
-	lastStaleAgeMs: number | null
-	retrySuppressions: number
-	successfulRefreshes: number
-}
-
-const refreshStatus: MetadataRefreshStatus = {
-	failedRefreshes: 0,
-	jitteredRefreshAttempts: 0,
-	lastStaleAgeMs: null,
-	retrySuppressions: 0,
-	successfulRefreshes: 0
-}
-
 function unrefTimer(timer: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>): void {
 	timer.unref?.()
 }
@@ -47,9 +31,7 @@ function getRuntimeRefreshJitterDelayMs(): number {
 
 function isRefreshDue(now: number): boolean {
 	if (lastSuccessfulRefreshMs === 0) return true
-	const staleAgeMs = now - lastSuccessfulRefreshMs
-	refreshStatus.lastStaleAgeMs = staleAgeMs
-	return staleAgeMs > getMetadataCacheMaxAgeMs()
+	return now - lastSuccessfulRefreshMs > getMetadataCacheMaxAgeMs()
 }
 
 function isRetrySuppressed(now: number): boolean {
@@ -65,14 +47,13 @@ function recordMetadataRefreshTelemetry({
 }: {
 	durationMs: number
 	error?: unknown
-	source: string | undefined
+	source: string
 	staleAgeMs: number | undefined
 	status: 'failure' | 'success'
 }): void {
-	const subject = source ?? 'manual'
 	const attributes = {
 		duration_ms: durationMs,
-		source: subject,
+		source,
 		status,
 		...(staleAgeMs === undefined ? null : { stale_age_ms: staleAgeMs }),
 		...(error instanceof Error
@@ -85,13 +66,13 @@ function recordMetadataRefreshTelemetry({
 	recordDomainEvent(
 		'metadata.refresh',
 		status === 'success' ? 'info' : 'warn',
-		subject,
+		source,
 		status === 'success' ? 'Metadata refresh completed' : 'Metadata refresh failed',
 		attributes
 	)
 }
 
-async function doRefresh(source?: string): Promise<void> {
+async function doRefresh(source: string): Promise<void> {
 	const startedAt = Date.now()
 	const staleAgeMs = lastSuccessfulRefreshMs === 0 ? undefined : startedAt - lastSuccessfulRefreshMs
 	try {
@@ -100,7 +81,6 @@ async function doRefresh(source?: string): Promise<void> {
 		const now = Date.now()
 		lastSuccessfulRefreshMs = now
 		lastAttemptMs = now
-		refreshStatus.successfulRefreshes += 1
 		recordMetadataRefreshTelemetry({
 			durationMs: now - startedAt,
 			source,
@@ -110,7 +90,6 @@ async function doRefresh(source?: string): Promise<void> {
 	} catch (error) {
 		const now = Date.now()
 		lastAttemptMs = now
-		refreshStatus.failedRefreshes += 1
 		recordMetadataRefreshTelemetry({
 			durationMs: now - startedAt,
 			error,
@@ -118,12 +97,7 @@ async function doRefresh(source?: string): Promise<void> {
 			staleAgeMs,
 			status: 'failure'
 		})
-		console.error(
-			source
-				? `[metadata] refresh failed from ${source}, keeping stale cache:`
-				: '[metadata] refresh failed, keeping stale cache:',
-			error
-		)
+		console.error(`[metadata] refresh failed from ${source}, keeping stale cache:`, error)
 	}
 }
 
@@ -131,7 +105,7 @@ async function doRefresh(source?: string): Promise<void> {
  * Start a metadata refresh if stale. Safe to call from concurrent requests:
  * only one refresh runs at a time, and failed refreshes keep the current cache.
  */
-function startMetadataRefreshIfStale(source?: string): Promise<void> | null {
+function startMetadataRefreshIfStale(source: string): Promise<void> | null {
 	// Local contributors without an API key should still be able to boot dev
 	// from generated or stub artifacts; affected pages can resolve to 404s.
 	if (shouldSkipMetadataRefresh()) {
@@ -139,12 +113,7 @@ function startMetadataRefreshIfStale(source?: string): Promise<void> | null {
 	}
 
 	const now = Date.now()
-	const refreshDue = isRefreshDue(now)
-	const retrySuppressed = isRetrySuppressed(now)
-	if (!refreshDue || retrySuppressed) {
-		if (retrySuppressed) {
-			refreshStatus.retrySuppressions += 1
-		}
+	if (!isRefreshDue(now) || isRetrySuppressed(now)) {
 		return null
 	}
 
@@ -162,7 +131,6 @@ function startMetadataRefreshIfStale(source?: string): Promise<void> | null {
 function scheduleJitteredRuntimeRefresh(): void {
 	if (scheduledRuntimeRefresh !== null) return
 
-	refreshStatus.jitteredRefreshAttempts += 1
 	const timer = setTimeout(() => {
 		scheduledRuntimeRefresh = null
 		void runOutsideRouteTelemetry(() => startMetadataRefreshIfStale('runtime_loop'))
@@ -194,21 +162,10 @@ function startRuntimeRefreshLoop(): void {
 }
 
 /**
- * Refresh metadata cache if stale, waiting for the refresh to complete.
- */
-export async function refreshMetadataIfStale(): Promise<void> {
-	await runOutsideRouteTelemetry(() => startMetadataRefreshIfStale())
-}
-
-/**
  * Start refreshing stale metadata in the background while callers continue using the current cache.
  */
-export function refreshMetadataInBackgroundIfStale(source?: string): void {
+export function refreshMetadataInBackgroundIfStale(source: string): void {
 	void runOutsideRouteTelemetry(() => startMetadataRefreshIfStale(source))
-}
-
-export function getMetadataRefreshStatus(): MetadataRefreshStatus {
-	return { ...refreshStatus }
 }
 
 startRuntimeRefreshLoop()

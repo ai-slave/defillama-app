@@ -91,18 +91,3 @@ export function getDashboardItemBoundVariableIds(item: DashboardItemConfig): Arr
 	}
 	return ids
 }
-
-export function getDashboardItemBindings(item: DashboardItemConfig): DashboardItemBindings {
-	if (item.kind === 'multi') {
-		const merged: DashboardItemBindings = {}
-		for (const chart of item.items) {
-			if (!chart.bindings) continue
-			for (const field of Object.keys(chart.bindings) as Array<DashboardBindableField>) {
-				const variableId = chart.bindings[field]
-				if (variableId && merged[field] === undefined) merged[field] = variableId
-			}
-		}
-		return merged
-	}
-	return 'bindings' in item && item.bindings ? item.bindings : {}
-}

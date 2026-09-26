@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest'
 import {
 	METADATA_ARTIFACT_FILES,
 	METADATA_ARTIFACT_REGISTRY,
-	applyMetadataRefresh,
-	createMetadataCacheFromArtifacts,
+	hydrateMetadataCache,
 	getMetadataArtifactEntries,
+	replaceMetadataCacheContents,
 	type CoreMetadataPayload
 } from '../artifactContract'
 
@@ -80,7 +80,7 @@ describe('metadata artifact contract', () => {
 	})
 
 	test('creates runtime metadata lookups from artifact payloads', () => {
-		const metadata = createMetadataCacheFromArtifacts(createPayload())
+		const metadata = hydrateMetadataCache(createPayload())
 
 		expect(metadata.protocolMetadata['parent#aave']).toMatchObject({ displayName: 'Aave' })
 		expect(metadata.protocolRouteIdBySlug.aave).toBe('parent#aave')
@@ -104,9 +104,9 @@ describe('metadata artifact contract', () => {
 	})
 
 	test('applies refresh payloads directly', () => {
-		const metadata = createMetadataCacheFromArtifacts(createPayload())
+		const metadata = hydrateMetadataCache(createPayload())
 
-		applyMetadataRefresh(
+		replaceMetadataCacheContents(
 			metadata,
 			createPayload({
 				protocols: {},
@@ -127,9 +127,9 @@ describe('metadata artifact contract', () => {
 	})
 
 	test('rebuilds chain display-name fallbacks during refresh', () => {
-		const metadata = createMetadataCacheFromArtifacts(createPayload())
+		const metadata = hydrateMetadataCache(createPayload())
 
-		applyMetadataRefresh(
+		replaceMetadataCacheContents(
 			metadata,
 			createPayload({
 				chains: {
@@ -147,7 +147,7 @@ describe('metadata artifact contract', () => {
 
 describe('routes for renamed protocols', () => {
 	test('resolves a protocol by a name it used to have', () => {
-		const metadata = createMetadataCacheFromArtifacts(
+		const metadata = hydrateMetadataCache(
 			createPayload({
 				protocols: {
 					'parent#aave': { name: 'aave', displayName: 'Aave', previousNames: ['Aave V1'], tvl: true }
@@ -160,7 +160,7 @@ describe('routes for renamed protocols', () => {
 	})
 
 	test('resolves an exchange by every name it used to have', () => {
-		const metadata = createMetadataCacheFromArtifacts(
+		const metadata = hydrateMetadataCache(
 			createPayload({
 				protocols: {
 					'7248': { name: 'osl-exchange', displayName: 'OSL Exchange', previousNames: ['OSL HK', 'OSL'], cex: true }
@@ -183,7 +183,7 @@ describe('routes for renamed protocols', () => {
 			{ renamed, current },
 			{ current, renamed }
 		]) {
-			const metadata = createMetadataCacheFromArtifacts(createPayload({ protocols }))
+			const metadata = hydrateMetadataCache(createPayload({ protocols }))
 
 			expect(metadata.protocolRouteIdBySlug.shared).toBe('current')
 		}
@@ -197,7 +197,7 @@ describe('routes for renamed protocols', () => {
 			{ renamed, current },
 			{ current, renamed }
 		]) {
-			const metadata = createMetadataCacheFromArtifacts(createPayload({ protocols }))
+			const metadata = hydrateMetadataCache(createPayload({ protocols }))
 
 			expect(metadata.cexRouteIdBySlug.shared).toBe('current')
 		}

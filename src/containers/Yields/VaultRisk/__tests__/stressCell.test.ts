@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import {
-	anyHasAnchors,
 	formatDepositPct,
 	lossPct,
 	modeledLossCell,
@@ -10,7 +9,7 @@ import {
 } from '../components/scenarioShared'
 import type { ScenarioVM } from '../types'
 
-// Minimal computed scenario — only the fields modeledLossCell/anyHasAnchors read matter.
+// Minimal computed scenario — only the fields modeledLossCell reads matter.
 function scn(partial: Partial<ScenarioVM>): ScenarioVM {
 	return {
 		scenarioId: 's',
@@ -36,15 +35,6 @@ const CURVE = [
 	{ dropPct: 30, lossUsd: 5000 },
 	{ dropPct: 50, lossUsd: 9000 }
 ]
-
-describe('anyHasAnchors', () => {
-	test('is true only when a computed scenario carries the served per-drop curve', () => {
-		expect(anyHasAnchors([scn({ lossByAnchor: CURVE })])).toBe(true)
-		expect(anyHasAnchors([scn({})])).toBe(false)
-		// a curve on a non-computed row does not enable the toggle
-		expect(anyHasAnchors([scn({ status: 'data_gap', lossByAnchor: CURVE })])).toBe(false)
-	})
-})
 
 describe('modeledLossCell — no stress (mechanism enumeration)', () => {
 	test('shows the representative drop note from inputs.drop_pct', () => {

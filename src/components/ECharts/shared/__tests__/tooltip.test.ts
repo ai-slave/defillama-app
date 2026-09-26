@@ -1,12 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { asTooltipDataRecord, createSignedInflowsTooltipFormatter, getTooltipDimensionValue } from '../tooltip'
+import { asTooltipDataRecord, createSignedInflowsTooltipFormatter } from '../tooltip'
 
 describe('shared ECharts tooltip data access', () => {
-	test('reads object and positional rows without cloning', () => {
+	test('reads object rows without cloning', () => {
 		const row = { timestamp: 1_767_225_600_000, Value: 5 }
 		expect(asTooltipDataRecord(row)).toBe(row)
-		expect(getTooltipDimensionValue({ data: { category: 'A' } }, 'category')).toBe('A')
-		expect(getTooltipDimensionValue({ data: ['A', 7], dimensionNames: ['category', 'Value'] }, 'Value')).toBe(7)
 	})
 })
 

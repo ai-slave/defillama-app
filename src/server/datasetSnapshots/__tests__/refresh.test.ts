@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { DATASET_SNAPSHOT_DOMAINS, type DatasetSnapshotDomain } from '../contract'
-import { createDatasetSnapshotRefreshCoordinator, type DatasetSnapshotAcquisition } from '../refresh.server'
+import { DatasetSnapshotRefreshCoordinator, type DatasetSnapshotAcquisition } from '../refresh.server'
 import type { DatasetSnapshotRegistration } from '../registry.server'
 import type {
 	DatasetSnapshotBuilder,
@@ -51,9 +51,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		const builder = vi.fn()
 		const current = handle('current', 950)
 		const store = new FakeStore(current)
-		const coordinator = createDatasetSnapshotRefreshCoordinator({
-			store,
-			registry: registry(builder),
+		const coordinator = new DatasetSnapshotRefreshCoordinator(store, registry(builder), {
 			now: () => 1000
 		})
 
@@ -69,9 +67,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		const builder = vi.fn(() => gate)
 		const store = new FakeStore(handle('old', 1))
 		store.next = handle('new', 1000)
-		const coordinator = createDatasetSnapshotRefreshCoordinator({
-			store,
-			registry: registry(builder),
+		const coordinator = new DatasetSnapshotRefreshCoordinator(store, registry(builder), {
 			now: () => 1000
 		})
 
@@ -92,9 +88,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		const previous = handle('old', 1)
 		const logger = { warn: vi.fn() }
 		const staleStore = new FakeStore(previous)
-		const staleCoordinator = createDatasetSnapshotRefreshCoordinator({
-			store: staleStore,
-			registry: registry(builder),
+		const staleCoordinator = new DatasetSnapshotRefreshCoordinator(staleStore, registry(builder), {
 			now: () => 1000,
 			logger
 		})
@@ -104,9 +98,7 @@ describe('dataset snapshot refresh coordinator', () => {
 			status: 'stale_if_error'
 		})
 
-		const emptyCoordinator = createDatasetSnapshotRefreshCoordinator({
-			store: new FakeStore(null),
-			registry: registry(builder),
+		const emptyCoordinator = new DatasetSnapshotRefreshCoordinator(new FakeStore(null), registry(builder), {
 			now: () => 1000,
 			logger
 		})
@@ -118,9 +110,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		const previous = handle('old', 1)
 		const store = new FakeStore(previous)
 		store.next = handle('new', 1000)
-		const coordinator = createDatasetSnapshotRefreshCoordinator({
-			store,
-			registry: registry(builder),
+		const coordinator = new DatasetSnapshotRefreshCoordinator(store, registry(builder), {
 			now: () => 1000
 		})
 
@@ -139,9 +129,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		const store = new FakeStore(previous)
 		const logger = { warn: vi.fn() }
 		let now = 1000
-		const coordinator = createDatasetSnapshotRefreshCoordinator({
-			store,
-			registry: registry(builder),
+		const coordinator = new DatasetSnapshotRefreshCoordinator(store, registry(builder), {
 			now: () => now,
 			retryBackoffMs: 100,
 			logger

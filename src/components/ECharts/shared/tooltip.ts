@@ -65,17 +65,6 @@ export function getTooltipAxisValue(first: EChartsTooltipItem | undefined): numb
 	return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-/** Read a named dimension from either an object dataset row or a positional row. */
-export function getTooltipDimensionValue(item: EChartsTooltipItem | undefined, dimensionName: string): unknown {
-	const data = asTooltipDataRecord(item?.data)
-	if (data && Object.hasOwn(data, dimensionName)) return data[dimensionName]
-
-	const values = Array.isArray(item?.data) ? item.data : Array.isArray(item?.value) ? item.value : null
-	if (!values) return undefined
-	const dimensionIndex = item?.dimensionNames?.indexOf(dimensionName)
-	return dimensionIndex != null && dimensionIndex >= 0 ? values[dimensionIndex] : undefined
-}
-
 /** Read the raw y-value for a series from object-row or positional ECharts tooltip data. */
 export function getTooltipRawYValue(item: EChartsTooltipItem | undefined, seriesName: string): unknown {
 	const data = asTooltipDataRecord(item?.data)

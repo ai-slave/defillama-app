@@ -1424,14 +1424,5 @@ export const telemetryTest = {
 		consecutiveFailures = 0
 		circuitOpenUntil = 0
 		previousPageBuildFinishedAt = undefined
-	},
-	queueLength() {
-		return queue.length
-	},
-	retryBatchEvents() {
-		return retryBatch?.events.length ?? 0
-	},
-	circuitOpenUntil() {
-		return circuitOpenUntil
 	}
 }

@@ -1,7 +1,7 @@
 import type { ECharts } from 'echarts/core'
 // @vitest-environment happy-dom
 import { afterEach, expect, test, vi } from 'vitest'
-import { chartHoverSyncGroupSize, joinChartHoverSync } from '../chartHoverSync'
+import { joinChartHoverSync } from '../chartHoverSync'
 
 type Handler = (event?: unknown) => void
 
@@ -50,7 +50,6 @@ test('forwards the axis pointer to the other charts of the group and hides their
 
 	leaveTarget()
 	leaveStranger()
-	expect(chartHoverSyncGroupSize('dashboard-1')).toBe(0)
 })
 
 test('a forwarded pointer does not echo back to the source', () => {

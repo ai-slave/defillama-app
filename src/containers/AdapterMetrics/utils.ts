@@ -9,7 +9,6 @@ import type {
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { getNDistinctColors } from '~/utils'
 import { formatFixedNumber } from '~/utils/numberFormat'
-import { parseExcludeParam } from '~/utils/routerQuery'
 import type { ADAPTER_TYPES } from './constants'
 import type { IAdapterByChainPageData, IChainsByAdapterPageData, IProtocol } from './types'
 
@@ -52,95 +51,6 @@ export function getProtocolsByCategory(
 	}
 
 	return final
-}
-
-/** Leaf `name`s for breakdown filter: parents with children are omitted; children are included recursively. */
-export function leafProtocolNamesFromTableRows(protocols: Array<IProtocol>): Array<string> {
-	const leafProtocols: Array<IProtocol> = []
-	const walk = (protocol: IProtocol) => {
-		if (protocol.childProtocols && protocol.childProtocols.length > 0) {
-			for (const childProtocol of protocol.childProtocols) {
-				walk(childProtocol)
-			}
-			return
-		}
-		leafProtocols.push(protocol)
-	}
-
-	for (const protocol of protocols) {
-		walk(protocol)
-	}
-	leafProtocols.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
-
-	const names: Array<string> = []
-	for (const protocol of leafProtocols) {
-		names.push(protocol.name)
-	}
-	return names
-}
-
-export type CategoryProtocolNameFilter =
-	| { kind: 'unrestricted' }
-	| { kind: 'no-rows' }
-	| { kind: 'restricted'; names: Set<string> }
-
-/**
- * Same category selection rules as the adapter-by-chain table; used to align breakdown chart series with the table.
- */
-export function getCategoryProtocolNameFilterForChart({
-	categories,
-	protocols,
-	categoryParam,
-	excludeCategoryParam,
-	hasCategoryParam
-}: {
-	categories: Array<string>
-	protocols: Array<IProtocol>
-	categoryParam: string | Array<string> | undefined
-	excludeCategoryParam: string | Array<string> | undefined
-	hasCategoryParam: boolean
-}): CategoryProtocolNameFilter {
-	const excludeSet = parseExcludeParam(excludeCategoryParam)
-
-	let selectedCategories =
-		categories.length > 0 && hasCategoryParam && categoryParam === ''
-			? []
-			: categoryParam
-				? typeof categoryParam === 'string'
-					? [categoryParam]
-					: categoryParam
-				: categories
-
-	if (excludeSet.size > 0) {
-		const filteredCategories: Array<string> = []
-		for (const category of selectedCategories) {
-			if (!excludeSet.has(category)) filteredCategories.push(category)
-		}
-		selectedCategories = filteredCategories
-	}
-
-	const categoriesToFilter: Array<string> = []
-	for (const category of selectedCategories) {
-		const normalizedCategory = category.toLowerCase()
-		if (normalizedCategory !== 'all' && normalizedCategory !== 'none') {
-			categoriesToFilter.push(category)
-		}
-	}
-
-	if (categories.length === 0) {
-		return { kind: 'unrestricted' }
-	}
-
-	if (selectedCategories.length === 0) {
-		return { kind: 'no-rows' }
-	}
-
-	if (categoriesToFilter.length > 0) {
-		const filtered = getProtocolsByCategory(protocols, categoriesToFilter)
-		return { kind: 'restricted', names: new Set(leafProtocolNamesFromTableRows(filtered)) }
-	}
-
-	return { kind: 'unrestricted' }
 }
 
 const toChartPointMap = (points: Array<[number, number]>) => {

@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
-import { extractQAPairs } from '../extractors'
 
 const now = '2026-05-01T10:00:00.000Z'
 
@@ -103,39 +102,6 @@ describe('local article documents', () => {
 		])
 	})
 
-	test('extracts Q&A pairs from content', () => {
-		const pairs = extractQAPairs({
-			type: 'doc',
-			content: [
-				{ type: 'paragraph', content: [{ type: 'text', text: 'intro' }] },
-				{
-					type: 'qa',
-					content: [
-						{ type: 'qaQuestion', content: [{ type: 'text', text: 'What changed?' }] },
-						{
-							type: 'qaAnswer',
-							content: [
-								{ type: 'paragraph', content: [{ type: 'text', text: 'A lot.' }] },
-								{ type: 'paragraph', content: [{ type: 'text', text: 'In particular fees.' }] }
-							]
-						}
-					]
-				},
-				{
-					type: 'qa',
-					content: [
-						{ type: 'qaQuestion', content: [{ type: 'text', text: '' }] },
-						{
-							type: 'qaAnswer',
-							content: [{ type: 'paragraph', content: [{ type: 'text', text: 'orphan answer' }] }]
-						}
-					]
-				}
-			]
-		})
-		expect(pairs).toEqual([{ question: 'What changed?', answer: 'A lot. In particular fees.' }])
-	})
-
 	test('flattens nested Q&A blocks while normalizing article content', () => {
 		const result = normalizeLocalArticleDocument({
 			title: 'Nested interview',
@@ -182,16 +148,17 @@ describe('local article documents', () => {
 
 		expect(result.ok).toBe(true)
 		if (!result.ok) return
-		const content = result.value.contentJson.content ?? []
-		expect(content.map((node) => node.type)).toEqual(['qa', 'qa', 'qa'])
-		for (const node of content) {
-			const answer = node.content?.find((child) => child.type === 'qaAnswer')
-			expect(answer?.content?.some((child) => child.type === 'qa')).toBe(false)
-		}
-		expect(extractQAPairs(result.value.contentJson)).toEqual([
-			{ question: 'Question one?', answer: 'Answer one.' },
-			{ question: 'Question two?', answer: 'Answer two.' },
-			{ question: 'Question three?', answer: 'Answer three.' }
+		const qaBlock = (question: string, answer: string) => ({
+			type: 'qa',
+			content: [
+				{ type: 'qaQuestion', content: [{ type: 'text', text: question }] },
+				{ type: 'qaAnswer', content: [{ type: 'paragraph', content: [{ type: 'text', text: answer }] }] }
+			]
+		})
+		expect(result.value.contentJson.content).toEqual([
+			qaBlock('Question one?', 'Answer one.'),
+			qaBlock('Question two?', 'Answer two.'),
+			qaBlock('Question three?', 'Answer three.')
 		])
 	})
 

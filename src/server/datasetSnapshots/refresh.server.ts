@@ -20,8 +20,6 @@ export type DatasetSnapshotAcquisition = {
 }
 
 type RefreshCoordinatorOptions = {
-	store: DatasetSnapshotStore
-	registry: Record<DatasetSnapshotDomain, DatasetSnapshotRegistration>
 	now?: () => number
 	retryBackoffMs?: number
 	logger?: Pick<Console, 'warn'>
@@ -37,7 +35,7 @@ export class DatasetSnapshotRefreshCoordinator {
 	constructor(
 		private readonly store: DatasetSnapshotStore,
 		private readonly registry: Record<DatasetSnapshotDomain, DatasetSnapshotRegistration>,
-		options: Omit<RefreshCoordinatorOptions, 'store' | 'registry'> = {}
+		options: RefreshCoordinatorOptions = {}
 	) {
 		this.now = options.now ?? Date.now
 		this.retryBackoffMs = options.retryBackoffMs ?? 60_000
@@ -112,16 +110,6 @@ export class DatasetSnapshotRefreshCoordinator {
 			throw error
 		}
 	}
-}
-
-export function createDatasetSnapshotRefreshCoordinator({
-	store,
-	registry,
-	now,
-	retryBackoffMs,
-	logger
-}: RefreshCoordinatorOptions): DatasetSnapshotRefreshCoordinator {
-	return new DatasetSnapshotRefreshCoordinator(store, registry, { now, retryBackoffMs, logger })
 }
 
 export const datasetSnapshotRefreshCoordinator = new DatasetSnapshotRefreshCoordinator(

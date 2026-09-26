@@ -2,10 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
 	buildColumnarTimeSeriesDataset,
 	buildSparseTimeSeriesDataset,
-	buildTimeSeriesDataset,
-	materializeZeroFilledDataset,
-	sliceTimestampDataset,
-	type TimestampDataset
+	buildTimeSeriesDataset
 } from '../timeSeriesDataset'
 
 describe('timeSeriesDataset', () => {
@@ -80,25 +77,6 @@ describe('timeSeriesDataset', () => {
 		expect(dataset.source.map((row) => row[1])).toEqual([0, 5])
 	})
 
-	test('materializes only visible series and zero-fills sparse rows', () => {
-		const input: TimestampDataset = {
-			dimensions: ['timestamp', 'A', 'B', 'Hidden'],
-			source: [
-				[1000, 2, undefined, 9],
-				[2000, undefined, 3, 8]
-			]
-		}
-
-		expect(materializeZeroFilledDataset(input, ['A', 'B'])).toEqual({
-			dimensions: ['timestamp', 'A', 'B'],
-			source: [
-				[1000, 2, 0],
-				[2000, 0, 3]
-			]
-		})
-		expect(input.source[0]).toEqual([1000, 2, undefined, 9])
-	})
-
 	test('converts second timestamps once and preserves null values', () => {
 		expect(
 			buildTimeSeriesDataset(
@@ -116,28 +94,5 @@ describe('timeSeriesDataset', () => {
 				[20_000, null]
 			]
 		})
-	})
-
-	test('slices duplicate boundaries inclusively without copying row objects', () => {
-		const dataset = buildTimeSeriesDataset(
-			[
-				[10, 1],
-				[20, 2],
-				[20, 3],
-				[30, 4]
-			],
-			'Value',
-			1
-		)
-		const sliced = sliceTimestampDataset(dataset, 20, 20)
-
-		expect(sliced.source).toEqual([
-			[20, 2],
-			[20, 3]
-		])
-		expect(sliced.source[0]).toBe(dataset.source[1])
-		expect(sliced.source[1]).toBe(dataset.source[2])
-		expect(sliced.dimensions).toBe(dataset.dimensions)
-		expect(sliceTimestampDataset(dataset, 0, 40)).toBe(dataset)
 	})
 })

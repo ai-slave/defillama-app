@@ -183,13 +183,3 @@ export function sliceYieldsPage<TRow>(
 		hasMore: result.hasMore
 	}
 }
-
-export function paginateAndSortRows<TRow, SortKey extends string>(args: {
-	rows: Array<TRow>
-	query: ParsedUrlQuery
-	sortAccessors?: YieldsTableSortAccessors<TRow, SortKey>
-	defaultSort?: YieldsTableSort<SortKey>
-	fallbackSortAccessor?: (row: TRow, sortBy: string) => unknown
-}): YieldsPaginatedTableResponse<TRow> {
-	return sliceYieldsPage(sortYieldsRows(args), args.query)
-}

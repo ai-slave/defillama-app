@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { DirectoryHeader } from '../DirectoryHeader'
-import { micaDepthDetail, micaProductLabel, supportsMicaProduct } from '../MicaCells'
+import { micaDepthDetail, supportsMicaProduct } from '../MicaCells'
 import { prepareMicaVenues } from '../MicaTable'
 import type { MicaVenueModel } from '../models'
 import { selectActivePromotion } from '../promotions'
@@ -76,17 +76,6 @@ describe('surface model selection', () => {
 		]
 
 		expect(prepareMicaVenues(rows, filter).map((row) => row.exchange)).toEqual(expected)
-	})
-
-	test('labels inverse perpetual support without claiming linear perps', () => {
-		expect(micaProductLabel(['inverse_perp'])).toBe('COIN perps')
-		expect(micaProductLabel(['linear_perp', 'inverse_perp'])).toBe('Perps · COIN perps')
-	})
-
-	test('labels every canonical MiCA product in stable wire order', () => {
-		expect(micaProductLabel(['spot', 'margin', 'linear_perp', 'inverse_perp', 'futures', 'options'])).toBe(
-			'Spot · Margin · Perps · COIN perps · Futures · Options'
-		)
 	})
 
 	test('selects active promotions by date and priority', () => {

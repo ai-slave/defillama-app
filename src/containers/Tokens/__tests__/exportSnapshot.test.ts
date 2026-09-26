@@ -57,14 +57,14 @@ vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRig
 
 import { clearResultCache } from '~/server/api/resultCache'
 import { getObjectCache, setImmutableCache } from '~/utils/cache-client'
-import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
+import { hydrateMetadataCache, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { TOKENS_SOURCE_CACHE_TTL_MS } from '../cache.server'
 import { getTokensPageSnapshot } from '../queries.server'
 import { tokensDataset } from '../server/api'
 
-const metadata = createMetadataCacheFromArtifacts({
+const metadata = hydrateMetadataCache({
 	...METADATA_CI_STUBS,
 	tokenDirectory: { a: { name: 'a', symbol: 'A', route: '/token/a', token_nk: 'coingecko:a', protocolId: 'a' } }
 })

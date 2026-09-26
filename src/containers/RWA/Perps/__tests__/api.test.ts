@@ -26,12 +26,10 @@ describe('rwa perps api urls', () => {
 		await api.fetchRWAPerpsCurrent(false)
 		await api.fetchRWAPerpsList(true)
 		await api.fetchRWAPerpsStats(true)
-		await api.fetchRWAPerpsMarketById('xyz:META/2026')
 		await api.fetchRWAPerpsMarketsByContract('xyz:META/2026')
 		await api.fetchRWAPerpsMarketsByVenue('my venue')
 		await api.fetchRWAPerpsMarketsByAssetGroup('US Equities', true)
 		await api.fetchRWAPerpsMarketsByAsset('SK Hynix', true)
-		await api.fetchRWAPerpsVenueChart('venue/one')
 		await api.fetchRWAPerpsOverviewBreakdownChartData({
 			breakdown: 'assetGroup',
 			key: 'openInterest',
@@ -53,12 +51,10 @@ describe('rwa perps api urls', () => {
 			[`${base}/current`],
 			[`${base}/list?includeCex=true`],
 			[`${base}/stats?includeCex=true`],
-			[`${base}/market/xyz%3AMETA%2F2026`],
 			[`${base}/contract/xyz%3AMETA%2F2026`],
 			[`${base}/venue/my%20venue`],
 			[`${base}/assetGroup/US%20Equities?includeCex=true`],
 			[`${base}/asset/SK%20Hynix?includeCex=true`],
-			[`${base}/chart/venue/venue%2Fone`],
 			[`${base}/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz`],
 			[`${base}/chart/contract-breakdown?key=markets&includeCex=true&assetGroup=US+Equities`],
 			[`${base}/chart/market-breakdown?key=openInterest&baseAsset=SK+Hynix`]

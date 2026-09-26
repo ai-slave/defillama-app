@@ -45,16 +45,6 @@ export async function getLiquidationsProtocolsList(): Promise<RawProtocolsRespon
 	return readProtocols(await acquireLiquidationsSnapshot())
 }
 
-export async function getLiquidationsProtocolChainIds(protocolId: string): Promise<Array<string>> {
-	const allResponse = await readAllLiquidations(await acquireLiquidationsSnapshot())
-	const protocolData = allResponse.data[protocolId]
-	if (!protocolData) return []
-
-	const chainIds: Array<string> = []
-	for (const chainId in protocolData) chainIds.push(chainId)
-	return chainIds
-}
-
 export type LiquidationsSitemapProtocolChains = Array<{
 	protocolId: string
 	chainIds: Array<string>

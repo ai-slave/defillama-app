@@ -932,16 +932,6 @@ const buildTokenInflowsPayloadFromCollection = (
 	return payload
 }
 
-export const buildTokenInflowsPayload = (
-	params: IBuildStablecoinChartDataParams,
-	options?: StablecoinBreakdownSelectionOptions & { summaryTopToken?: { symbol: string; mcap: number } }
-): StablecoinChartSeriesPayload => {
-	return buildTokenInflowsPayloadFromCollection(
-		collectCanonicalStablecoinInflowHistory(params, options?.summaryTopToken != null),
-		options
-	)
-}
-
 export type StablecoinSelectableOverviewChartType = Extract<
 	StablecoinOverviewChartType,
 	'tokenMcaps' | 'dominance' | 'tokenInflows'

@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-	buildUtrClaimRequest,
-	createEmptyUtrClaimRows,
-	EMPTY_UTR_CLAIM_DOCUMENTS,
-	validateUtrClaimFiles,
-	type UtrClaimRequestInput
-} from '../claimRequest'
+import { buildUtrClaimRequest, validateUtrClaimFiles, type UtrClaimRequestInput } from '../claimRequest'
 
 function validInput(): UtrClaimRequestInput {
 	return {
@@ -18,10 +12,25 @@ function validInput(): UtrClaimRequestInput {
 		profileUrl: 'x.com/alice',
 		email: ' alice@uniswap.org ',
 		telegram: ' @alice ',
-		rows: createEmptyUtrClaimRows(),
+		rows: {
+			insiderIdentities: [],
+			organizationalStructure: [],
+			insiderWallets: [],
+			tokenomicsGroups: [],
+			externalAllocations: [],
+			multisigWallets: [],
+			licenses: [],
+			marketMakerEngagements: [],
+			exchangeEngagements: [],
+			auditors: []
+		},
 		verifyMmEngagements: true,
 		documents: {
-			...EMPTY_UTR_CLAIM_DOCUMENTS,
+			teamOrg: [],
+			tokenomics: [],
+			treasuryCashFlows: [],
+			legal: [],
+			serviceProviders: [],
 			alignment: [
 				{
 					key: 'utr-claims/claim/affiliation.txt',

@@ -24,17 +24,6 @@ export function getCliffEmissionAmount(event: EmissionEvent): number | null {
 	return event.noOfTokens[0]
 }
 
-export function getLinearEmissionWeeklyRate(event: EmissionEvent): number | null {
-	if (isUnknownEmissionEvent(event) || event.unlockType !== 'linear') return null
-	return event.noOfTokens[1]
-}
-
-export function getLinearEmissionRateDelta(event: EmissionEvent): number | null {
-	if (isUnknownEmissionEvent(event) || event.unlockType !== 'linear') return null
-	if (event.noOfTokens[0] === null) return null
-	return event.noOfTokens[1] - event.noOfTokens[0]
-}
-
 /** Return the tokens released by one event during a half-open time interval. */
 export function getEmissionAmountOverInterval(
 	event: EmissionEvent,

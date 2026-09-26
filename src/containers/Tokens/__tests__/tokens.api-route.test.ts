@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import handler from '~/pages/api/public/tokens'
 import marketMapHandler from '~/pages/api/public/tokens/market-map'
-import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
+import { hydrateMetadataCache, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
@@ -33,7 +33,7 @@ beforeEach(() => {
 	vi.setSystemTime('2027-05-01T10:02:00Z')
 	vi.stubEnv('NODE_ENV', 'development')
 	vi.stubEnv('API_KEY', '')
-	metadata.seed(createMetadataCacheFromArtifacts(METADATA_CI_STUBS))
+	metadata.seed(hydrateMetadataCache(METADATA_CI_STUBS))
 	http.serve({ '/tokenlist/rankings.json': tokens, '/v2/metrics/fees': { protocols: [] }, '/emissions': [] })
 })
 afterEach(() => {

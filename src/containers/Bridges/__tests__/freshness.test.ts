@@ -1,30 +1,18 @@
 import { describe, expect, test } from 'vitest'
-import {
-	formatBridgesData,
-	formatChainsData,
-	getCompletedBridgeVolumePair,
-	getCompletedBridgeVolumeTotal,
-	getCompletedBridgeVolumeTotals
-} from '../utils'
+import { formatBridgesData, formatChainsData, getCompletedBridgeVolumeTotals } from '../utils'
 
 const NOW = Date.parse('2026-07-14T12:00:00Z')
 const day = (date: string, volume: number) => ({ date: `${date}T00:00:00Z`, volume })
 
 describe('bridge volume freshness', () => {
-	test('uses yesterday as the latest complete daily bucket', () => {
-		const chart = [day('2026-07-12', 10), day('2026-07-13', 20), day('2026-07-14', 5)]
-		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 20, previous: 10 })
-	})
-
 	test('counts an omitted producer day as zero activity in a rolling total', () => {
 		const chart = [day('2026-07-11', 5), day('2026-07-13', 20), day('2026-07-14', 1)]
-		expect(getCompletedBridgeVolumeTotal(chart, 3, false, NOW)).toBe(25)
+		expect(getCompletedBridgeVolumeTotals(chart, [3], false, NOW)).toEqual(new Map([[3, 25]]))
 	})
 
 	test('treats omitted recent rows in a successful sparse response as zero activity', () => {
 		const chart = [day('2026-06-10', 5), day('2026-06-11', 20)]
 
-		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 0, previous: 0 })
 		expect(getCompletedBridgeVolumeTotals(chart, [1, 7, 30], false, NOW)).toEqual(
 			new Map([
 				[1, 0],
@@ -44,7 +32,7 @@ describe('bridge volume freshness', () => {
 			{ date: '2026-07-12T00:00:00Z', Deposits: 5, Withdrawals: -2 },
 			{ date: '2026-07-13T00:00:00Z', Deposits: 10, Withdrawals: -3 }
 		]
-		expect(getCompletedBridgeVolumeTotal(chart, 2, true, NOW)).toBe(20)
+		expect(getCompletedBridgeVolumeTotals(chart, [2], true, NOW)).toEqual(new Map([[2, 20]]))
 	})
 
 	test('calculates multiple completed windows in one daily-series pass', () => {
@@ -69,7 +57,12 @@ describe('bridge volume freshness', () => {
 			{ date: '2026-07-13T01:00:00Z', volume: 20 }
 		]
 
-		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 30, previous: 10 })
+		expect(getCompletedBridgeVolumeTotals(chart, [1, 2], false, NOW)).toEqual(
+			new Map([
+				[1, 30],
+				[2, 40]
+			])
+		)
 	})
 
 	test('keeps exact completed windows when a zero-activity day is omitted', () => {
@@ -93,7 +86,7 @@ describe('bridge volume freshness', () => {
 			{ date: '2026-07-12T00:00:00Z', Deposits: 5, Withdrawals: -2 },
 			{ date: '2026-07-13T00:00:00Z', Deposits: null, Withdrawals: -3 }
 		]
-		expect(getCompletedBridgeVolumeTotal(chart, 2, true, NOW)).toBeNull()
+		expect(getCompletedBridgeVolumeTotals(chart, [2], true, NOW)).toEqual(new Map([[2, null]]))
 	})
 
 	test('does not present a completed daily chart point as rolling 24h data', () => {

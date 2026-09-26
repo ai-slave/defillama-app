@@ -68,6 +68,8 @@ Do not assert calls between internal modules, class names, inline styles, wrappe
 
 One test per behavior, named in user or data terms. No characterization tests that freeze current output, bugs included. When a change breaks a test without changing behavior, rewrite or delete the test instead of patching the assertion. When deleting a test file, account for each behavior it asserted: where it is now covered, or why it is intentionally untested.
 
+A function that only tests call is dead code: delete it with its tests. Exporting a pure function that production code also calls, so a test can reach it, is fine. A module may also export a reset for its module-level state, such as a cache, so each test starts from a fresh runtime. Tests read results through the public API, not through getters that expose internal state.
+
 Keep every test under two seconds and every file under five. A test that needs longer sets its own timeout in the `test()` call and says why. Never wait on a promise a mock is expected to resolve without bounding it; a lost mock registration must fail fast, not hang.
 
 ## Metric Semantics

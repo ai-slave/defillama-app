@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import { anyHasAnchors } from '../components/scenarioShared'
 import {
 	buildCollateral,
 	buildScenarios,
@@ -589,7 +588,6 @@ describe('vault depeg stress curve', () => {
 			{ dropPct: 30, lossUsd: 80_000 },
 			{ dropPct: 50, lossUsd: 150_000 }
 		])
-		expect(anyHasAnchors(vm.scenarios)).toBe(true)
 	})
 })
 

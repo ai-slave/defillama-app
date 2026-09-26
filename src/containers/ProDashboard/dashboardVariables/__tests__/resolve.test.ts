@@ -39,7 +39,6 @@ import {
 	stripCustomDataRows,
 	suggestVariableBindings,
 	unbindDashboardVariable,
-	variableOverridesToQuery,
 	type DashboardVariableCatalog
 } from '../resolve'
 
@@ -251,16 +250,6 @@ describe('query overrides', () => {
 				tab: 'overview'
 			})
 		).toEqual({ chain: 'Solana', protocol: 'lido' })
-	})
-
-	test('round-trips overrides to query keys', () => {
-		expect(variableOverridesToQuery({ chain: 'Solana', protocol: 'lido' })).toEqual({
-			'var-chain': 'Solana',
-			'var-protocol': 'lido'
-		})
-		expect(readVariableOverridesFromQuery(variableOverridesToQuery({ chain: 'OP Mainnet' }))).toEqual({
-			chain: 'OP Mainnet'
-		})
 	})
 })
 

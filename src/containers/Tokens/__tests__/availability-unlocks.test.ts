@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { EmissionEvent, KnownEmissionEvent, RawProtocolEmission } from '~/containers/Unlocks/api.types'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
-import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
+import { hydrateMetadataCache, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
 import { installFixtureFetch, fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { buildTokensSourceRows, fetchTokensSourceRows } from '../queries.server'
 import { getTokensPageFromRows } from '../utils'
@@ -13,7 +13,7 @@ vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRig
 
 const day = 86_400
 const nowSec = 1_800_000_000
-const metadata = createMetadataCacheFromArtifacts({
+const metadata = hydrateMetadataCache({
 	...METADATA_CI_STUBS,
 	tokenDirectory: {
 		sample: { name: 'Sample', symbol: 'S', route: '/token/S', token_nk: 'coingecko:sample', protocolId: 'sample' }

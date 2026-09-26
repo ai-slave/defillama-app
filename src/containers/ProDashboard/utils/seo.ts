@@ -48,25 +48,6 @@ export interface DashboardSeoPublicDashboard {
 	editedAt?: string
 }
 
-export function toDashboardSeoPublicDashboard(dashboard: Dashboard): DashboardSeoPublicDashboard {
-	return {
-		id: dashboard.id,
-		...(dashboard.slug === undefined ? {} : { slug: dashboard.slug }),
-		data: {
-			dashboardName: dashboard.data?.dashboardName || DEFAULT_DASHBOARD_NAME
-		},
-		visibility: 'public',
-		tags: Array.isArray(dashboard.tags) ? dashboard.tags.filter((tag) => typeof tag === 'string' && tag.trim()) : [],
-		description: typeof dashboard.description === 'string' ? dashboard.description : '',
-		...(dashboard.viewCount === undefined ? {} : { viewCount: dashboard.viewCount }),
-		...(dashboard.likeCount === undefined ? {} : { likeCount: dashboard.likeCount }),
-		...(dashboard.author === undefined ? {} : { author: dashboard.author }),
-		created: dashboard.created,
-		updated: dashboard.updated,
-		...(dashboard.editedAt === undefined ? {} : { editedAt: dashboard.editedAt })
-	}
-}
-
 function safeSameAs(author: PublicDashboardAuthor | undefined): Array<string> {
 	if (!author?.socials) return []
 	return Object.values(author.socials).filter((value): value is string => {

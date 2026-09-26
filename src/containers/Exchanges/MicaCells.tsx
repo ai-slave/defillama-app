@@ -3,7 +3,7 @@ import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
-import type { ExchangePromotionModel, MicaProduct, MicaVenueModel } from './models'
+import type { ExchangePromotionModel, MicaVenueModel } from './models'
 import { promotionLinks } from './promotions'
 import { btcAmount, Breakdown, CostBadge, LEG_TONE_LIMITS } from './RampCells'
 
@@ -17,19 +17,6 @@ const USD_FIXED_OPTIONS = { currency: 'USD', minimumFractionDigits: 2, maximumFr
 
 export function supportsMicaProduct(row: MicaVenueModel, product: 'spot' | 'perp'): boolean {
 	return row.products.includes(product === 'perp' ? 'linear_perp' : product)
-}
-
-const MICA_PRODUCT_LABELS: Record<MicaProduct, string> = {
-	spot: 'Spot',
-	margin: 'Margin',
-	linear_perp: 'Perps',
-	inverse_perp: 'COIN perps',
-	futures: 'Futures',
-	options: 'Options'
-}
-
-export function micaProductLabel(products: Array<MicaProduct>): string {
-	return products.map((product) => MICA_PRODUCT_LABELS[product]).join(' · ')
 }
 
 export function micaDepthDetail(

@@ -44,20 +44,6 @@ export interface IEquitiesTreemapGroup extends Omit<MarketTreemapGroup, 'childre
 
 export type EquitiesTreemapNode = IEquitiesTreemapLeaf | IEquitiesTreemapGroup
 
-export interface IEquitiesTreemapOptions {
-	groupBy: EquitiesTreemapGroupBy
-	sizeMetric: EquitiesTreemapSizeMetric
-	colorMetric: EquitiesTreemapColorMetric
-	limit?: number
-}
-
-export interface IEquitiesTreemapResult {
-	treeData: Array<EquitiesTreemapNode>
-	leaves: Array<IEquitiesTreemapLeaf>
-	excludedCount: number
-	truncatedCount: number
-}
-
 export interface IEquitiesTreemapRanking {
 	rows: Array<EquitiesTreemapRow>
 	sizeMetric: EquitiesTreemapSizeMetric
@@ -203,18 +189,4 @@ export function groupEquitiesTreemapLeaves(
 	}
 
 	return treeData
-}
-
-export function buildEquitiesTreemap(
-	rows: Array<EquitiesTreemapRow>,
-	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions
-): IEquitiesTreemapResult {
-	const ranking = rankEquitiesTreemapRows(rows, sizeMetric, limit)
-	const leaves = buildEquitiesTreemapLeaves(ranking, colorMetric)
-	return {
-		treeData: groupEquitiesTreemapLeaves(leaves, groupBy),
-		leaves,
-		excludedCount: ranking.excludedCount,
-		truncatedCount: ranking.truncatedCount
-	}
 }

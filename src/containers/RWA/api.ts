@@ -9,14 +9,6 @@ import type {
 	IRWAAssetChartApiRow,
 	IRWABreakdownChartParams,
 	IRWABreakdownChartResponse,
-	IRWAFlowGroupAggregateResponse,
-	IRWAFlowOverviewAggregateResponse,
-	IRWAFlowOverviewRequest,
-	IRWAFlowOverviewSplitPoint,
-	IRWAFlowSummaryResponse,
-	IRWAFlowPointWithMcap,
-	IRWAFlowsRequest,
-	IRWAFlowsResponse,
 	RWAAssetChartTarget,
 	RWAChartMetricKey
 } from './api.types'
@@ -57,70 +49,6 @@ export async function fetchRWAStats(): Promise<IRWAStatsResponse> {
 export async function fetchRWAAssetDataById(assetId: string): Promise<IFetchedRWAProject> {
 	const encodedAssetId = encodeURIComponent(assetId)
 	return fetchJson<IFetchedRWAProject>(`${RWA_SERVER_URL}/rwa/${encodedAssetId}`)
-}
-
-function buildRWAFlowsUrl(assetId: string, request: IRWAFlowsRequest = {}): string {
-	const encodedAssetId = encodeURIComponent(assetId)
-	const searchParams = new URLSearchParams()
-	if (request.start != null) searchParams.set('start', String(request.start))
-	if (request.end != null) searchParams.set('end', String(request.end))
-	if (request.withMcap) searchParams.set('withMcap', 'true')
-	const qs = searchParams.toString()
-	return `${RWA_SERVER_URL}/flows/${encodedAssetId}${qs ? `?${qs}` : ''}`
-}
-
-/**
- * Fetch daily net USD flows for a single RWA asset.
- */
-export function fetchRWAFlows(
-	assetId: string,
-	request: IRWAFlowsRequest & { withMcap: true }
-): Promise<IRWAFlowsResponse<IRWAFlowPointWithMcap>>
-export function fetchRWAFlows(assetId: string, request?: IRWAFlowsRequest): Promise<IRWAFlowsResponse>
-export async function fetchRWAFlows(
-	assetId: string,
-	request: IRWAFlowsRequest = {}
-): Promise<IRWAFlowsResponse | IRWAFlowsResponse<IRWAFlowPointWithMcap>> {
-	return fetchJson<IRWAFlowsResponse | IRWAFlowsResponse<IRWAFlowPointWithMcap>>(buildRWAFlowsUrl(assetId, request))
-}
-
-export function fetchRWAFlowsOverview(): Promise<IRWAFlowOverviewAggregateResponse>
-export function fetchRWAFlowsOverview(request: IRWAFlowOverviewRequest): Promise<Array<IRWAFlowOverviewSplitPoint>>
-export async function fetchRWAFlowsOverview(
-	request?: IRWAFlowOverviewRequest
-): Promise<IRWAFlowOverviewAggregateResponse | Array<IRWAFlowOverviewSplitPoint>> {
-	const searchParams = new URLSearchParams()
-	if (request) {
-		searchParams.set('splitBy', request.splitBy)
-		searchParams.set('includeStablecoin', String(request.includeStablecoin))
-		searchParams.set('includeGovernance', String(request.includeGovernance))
-	}
-	const qs = searchParams.toString()
-	return fetchJson<IRWAFlowOverviewAggregateResponse | Array<IRWAFlowOverviewSplitPoint>>(
-		`${RWA_SERVER_URL}/flows/overview${qs ? `?${qs}` : ''}`
-	)
-}
-
-export async function fetchRWAFlowsSummary(): Promise<IRWAFlowSummaryResponse> {
-	return fetchJson<IRWAFlowSummaryResponse>(`${RWA_SERVER_URL}/flows/summary`)
-}
-
-export async function fetchRWAFlowsAssetGroup(assetGroup: string): Promise<IRWAFlowGroupAggregateResponse> {
-	return fetchJson<IRWAFlowGroupAggregateResponse>(
-		`${RWA_SERVER_URL}/flows/assetGroup/${encodeURIComponent(assetGroup)}`
-	)
-}
-
-export async function fetchRWAFlowsCategory(category: string): Promise<IRWAFlowGroupAggregateResponse> {
-	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/category/${encodeURIComponent(category)}`)
-}
-
-export async function fetchRWAFlowsPlatform(platform: string): Promise<IRWAFlowGroupAggregateResponse> {
-	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/platform/${encodeURIComponent(platform)}`)
-}
-
-export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowGroupAggregateResponse> {
-	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
 }
 
 // This protocol's OWN issued RWA mcap history, same bare [unixSec, usd] shape. Server-side the
@@ -210,7 +138,7 @@ function fetchRWAAssetBreakdownMetric(
 }
 
 // DeFi TVL without its bridge part is the only metric read as two series and subtracted.
-export function leavesOutBridge(metric: RWAChartMetricKey, includeBridgeTvl: boolean): boolean {
+function leavesOutBridge(metric: RWAChartMetricKey, includeBridgeTvl: boolean): boolean {
 	return metric === 'defiActiveTvl' && !includeBridgeTvl
 }
 

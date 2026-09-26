@@ -50,20 +50,6 @@ export interface IRWAPerpsMarket {
 	suspicious: boolean
 }
 
-export interface IRWAPerpsAggregateHistoricalPoint {
-	timestamp: number
-	id: string
-	contract: string
-	venue: string
-	referenceAsset: string | null
-	referenceAssetGroup: string | null
-	assetClass: Array<string> | null
-	category: Array<string>
-	openInterest: number
-	volume24h: number
-	suspicious: boolean
-}
-
 export interface IRWAPerpsMarketChartPoint {
 	timestamp: number
 	openInterest: number

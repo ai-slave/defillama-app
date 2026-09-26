@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { DashboardItemLayout } from '../../types'
 import {
-	getAdjacentCardHeight,
 	getDashboardItemHeight,
 	getDashboardItemLayout,
 	getEmbedCardHeight,
@@ -25,13 +24,6 @@ describe('card height presets', () => {
 		expect(getDashboardItemHeight(chart({ height: 'compact' }))).toBe('compact')
 		expect(getDashboardItemHeight({ id: 'text', kind: 'text', content: 'x', height: 'tall' })).toBe('default')
 		expect(getDashboardItemHeight({ id: 's', kind: 'section', title: 'S', displayAs: 'heading' })).toBe('default')
-	})
-
-	test('adjacent presets stop at the edges', () => {
-		expect(getAdjacentCardHeight('default', -1)).toBe('compact')
-		expect(getAdjacentCardHeight('default', 1)).toBe('tall')
-		expect(getAdjacentCardHeight('compact', -1)).toBe('compact')
-		expect(getAdjacentCardHeight('tall', 1)).toBe('tall')
 	})
 
 	test('scaled heights are rounded pixel values', () => {

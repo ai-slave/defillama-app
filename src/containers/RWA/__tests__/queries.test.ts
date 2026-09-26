@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RWA_PERPS_SERVER_URL, RWA_SERVER_URL } from '~/constants'
-import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
+import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview } from '../queries'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 
@@ -11,7 +11,6 @@ vi.mock('~/utils/async', async (importOriginal) => {
 
 // Upstream routes, answered by URL. An Error fixture is a failed upstream request.
 const LISTING = `${RWA_SERVER_URL}/current?lite=true`
-const STATS = `${RWA_SERVER_URL}/stats`
 const CHAIN_SPLIT = `${RWA_SERVER_URL}/chart/chain-breakdown?key=activeMcap`
 const PERPS_CURRENT = `${RWA_PERPS_SERVER_URL}/current?cachebust=091626&includeCex=true`
 const assetBreakdown = (scope: string) =>
@@ -1169,80 +1168,6 @@ describe('rwa queries', () => {
 		expect(result?.assets).toEqual([])
 		// No spot assets is not evidence that activeMcap is untracked, so the metric switch is left alone.
 		expect(result?.chartMetricAvailability.hasActiveMcapData).toBe(true)
-	})
-
-	test('excludes the RWA Perps bucket from category overview rows', async () => {
-		serve({ [`${RWA_SERVER_URL}/chart/category-breakdown?key=activeMcap`]: [] })
-		serve({
-			[STATS]: {
-				byCategory: {
-					Treasuries: {
-						base: {
-							onChainMcap: 100,
-							activeMcap: 90,
-							defiActiveTvl: 10,
-							assetCount: 1,
-							assetIssuers: ['Issuer A']
-						},
-						stablecoinsOnly: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						},
-						governanceOnly: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						},
-						stablecoinsAndGovernance: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						}
-					},
-					'RWA Perps': {
-						base: {
-							onChainMcap: 500,
-							activeMcap: 450,
-							defiActiveTvl: 0,
-							assetCount: 2,
-							assetIssuers: ['Issuer P']
-						},
-						stablecoinsOnly: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						},
-						governanceOnly: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						},
-						stablecoinsAndGovernance: {
-							onChainMcap: 0,
-							activeMcap: 0,
-							defiActiveTvl: 0,
-							assetCount: 0,
-							assetIssuers: []
-						}
-					}
-				}
-			}
-		})
-
-		const result = await getRWACategoriesOverview()
-
-		expect(result.rows.map((row) => row.category)).toEqual(['Treasuries'])
 	})
 
 	test('ships only the logos of platforms present in the rows', async () => {
