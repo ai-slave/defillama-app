@@ -171,7 +171,7 @@ export function Stats(props: IStatsProps) {
 								>
 									{`${change24h > 0 ? '+' : ''}${formatPercent(change24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
 								</span>
-								<span className="body-md text-tertiary">24h</span>
+								<span className="body-md text-tertiary">over 24h</span>
 							</Tooltip>
 						) : null}
 					</div>

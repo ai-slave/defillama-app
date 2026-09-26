@@ -70,6 +70,15 @@ describe('RWAOverviewCards', () => {
 		expect(markup).toContain('+33.87%')
 	})
 
+	test('names the comparison window beside each change', () => {
+		const text = renderToStaticMarkup(<RWAOverviewCards cards={cards} includeBridgeTvl includeCex />).replace(
+			/<[^>]+>/g,
+			''
+		)
+		expect(text).toContain('$3.88b-$79.5mover 30d')
+		expect(text).toContain('Change by Chain+$654m+2.09%over 30d')
+	})
+
 	test('follows the Bridge TVL and CEX toggles', () => {
 		const markup = renderToStaticMarkup(<RWAOverviewCards cards={cards} includeBridgeTvl={false} includeCex={false} />)
 		expect(markup).toContain('$3.78b')

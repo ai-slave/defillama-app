@@ -39,7 +39,7 @@ function rowValues(root: HTMLElement) {
 describe('RWAKeyMetrics', () => {
 	test('shows the headline with its change and every section and row value', () => {
 		const root = render()
-		expect(root.textContent).toContain('$800,000+1.27%24h')
+		expect(root.textContent).toContain('$800,000+1.27%over 24h')
 		expect(rowValues(root)).toEqual([
 			'$1m',
 			'+1.01%',

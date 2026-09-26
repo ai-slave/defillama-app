@@ -32,7 +32,7 @@ describe('RWAPlatformKeyMetrics', () => {
 	test('headlines the active AUM fold with its 24h change', () => {
 		const root = document.createElement('div')
 		root.innerHTML = renderToStaticMarkup(<RWAPlatformKeyMetrics meta={meta} kpi={kpi} />)
-		expect(root.textContent).toContain('Active AUM$1.6m+1.27%24h')
+		expect(root.textContent).toContain('Active AUM$1.6m+1.27%over 24h')
 	})
 
 	test('reads N/A where nothing is priced, never $0', () => {

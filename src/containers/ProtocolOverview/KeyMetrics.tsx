@@ -6,7 +6,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
-import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -264,79 +264,81 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 		primaryMetricOverride != null || (props.isOracleProtocol ? props.oracleTvs != null : hasTvlData)
 
 	return (
-		<div className="flex flex-1 flex-col gap-2">
-			<KeyMetricsHeader id="key-metrics" />
-			<div className="flex flex-col" ref={containerRef}>
-				{props.isOracleProtocol && hasTvlData && props.tvl != null ? <TVL {...props} tvl={props.tvl} /> : null}
-				<Fees {...props} />
-				<Revenue {...props} />
-				<HoldersRevenue {...props} />
-				<Incentives {...props} />
-				<Earnings {...props} />
-				{buildStandardMetricSections(props, primaryMetricOverride?.source).map(({ dataType, metrics }) => (
-					<SmolStats
-						key={dataType}
-						data={metrics}
-						protocolName={props.name}
+		<KeyMetricsPanel
+			id="key-metrics"
+			rowsRef={containerRef}
+			footer={
+				<>
+					<ReportIncorrectData
+						subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }}
+					/>
+					<KeyMetricsPngExportButton
+						containerRef={containerRef}
+						title={props.name}
+						iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
+						primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
+						primaryLabel={primaryLabel}
 						formatPrice={props.formatPrice}
-						openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
-						dataType={dataType}
 					/>
-				))}
-				{props.openInterest?.total24h != null ? (
-					<SmolStats
-						data={[
-							{
-								name: 'Open Interest',
-								tooltipContent: definitions.openInterest.protocol,
-								value: props.openInterest.total24h,
-								chainBreakdown: props.openInterest.chainBreakdown
-									? extractChainValues(props.openInterest.chainBreakdown, 'total24h')
-									: null
-							}
-						]}
-						protocolName={props.name}
-						formatPrice={props.formatPrice}
-						openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
-						dataType="Open Interest"
-					/>
-				) : null}
-				<BridgeVolume {...props} />
-				<TokenCGData {...props} />
-				{props.currentTvlByChain?.staking != null ? (
-					<MetricRow
-						label="Staked"
-						valueClassName="ml-auto"
-						value={
-							<StakedValue
-								staking={props.currentTvlByChain.staking}
-								marketCap={props.tokenCGData?.marketCap?.current ?? null}
-								formatPrice={props.formatPrice}
-							/>
-						}
-					/>
-				) : null}
-				{props.currentTvlByChain?.borrowed != null ? (
-					<MetricRow label="Active Loans" value={props.formatPrice(props.currentTvlByChain.borrowed)} />
-				) : null}
-				<Treasury {...props} />
-				<Raises {...props} />
-				<Expenses {...props} />
-			</div>
-			<KeyMetricsFooter>
-				<ReportIncorrectData
-					subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }}
-				/>
-				<KeyMetricsPngExportButton
-					containerRef={containerRef}
-					title={props.name}
-					iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
-					primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
-					primaryLabel={primaryLabel}
+				</>
+			}
+		>
+			{props.isOracleProtocol && hasTvlData && props.tvl != null ? <TVL {...props} tvl={props.tvl} /> : null}
+			<Fees {...props} />
+			<Revenue {...props} />
+			<HoldersRevenue {...props} />
+			<Incentives {...props} />
+			<Earnings {...props} />
+			{buildStandardMetricSections(props, primaryMetricOverride?.source).map(({ dataType, metrics }) => (
+				<SmolStats
+					key={dataType}
+					data={metrics}
+					protocolName={props.name}
 					formatPrice={props.formatPrice}
+					openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
+					dataType={dataType}
 				/>
-			</KeyMetricsFooter>
-		</div>
+			))}
+			{props.openInterest?.total24h != null ? (
+				<SmolStats
+					data={[
+						{
+							name: 'Open Interest',
+							tooltipContent: definitions.openInterest.protocol,
+							value: props.openInterest.total24h,
+							chainBreakdown: props.openInterest.chainBreakdown
+								? extractChainValues(props.openInterest.chainBreakdown, 'total24h')
+								: null
+						}
+					]}
+					protocolName={props.name}
+					formatPrice={props.formatPrice}
+					openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
+					dataType="Open Interest"
+				/>
+			) : null}
+			<BridgeVolume {...props} />
+			<TokenCGData {...props} />
+			{props.currentTvlByChain?.staking != null ? (
+				<MetricRow
+					label="Staked"
+					valueClassName="ml-auto"
+					value={
+						<StakedValue
+							staking={props.currentTvlByChain.staking}
+							marketCap={props.tokenCGData?.marketCap?.current ?? null}
+							formatPrice={props.formatPrice}
+						/>
+					}
+				/>
+			) : null}
+			{props.currentTvlByChain?.borrowed != null ? (
+				<MetricRow label="Active Loans" value={props.formatPrice(props.currentTvlByChain.borrowed)} />
+			) : null}
+			<Treasury {...props} />
+			<Raises {...props} />
+			<Expenses {...props} />
+		</KeyMetricsPanel>
 	)
 }
 

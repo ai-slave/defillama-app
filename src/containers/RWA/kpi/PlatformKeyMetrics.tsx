@@ -2,6 +2,7 @@ import type { CsvPayload } from '~/components/CsvDownloadButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatCompactNumber, formatPercentChange } from '~/utils/numberFormat'
@@ -87,45 +88,41 @@ export function RWAPlatformKeyMetrics(props: RWAPlatformKeyMetricsProps) {
 						<span className={`truncate mono-md ${headlinePercent >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 							{formatPercentChange(headlinePercent)}
 						</span>
-						<span className="body-md text-tertiary">{PERIOD_LABEL}</span>
+						<span className="body-md text-tertiary">over {PERIOD_LABEL}</span>
 					</p>
 				) : null}
 			</div>
-			<div className="flex flex-col gap-2">
-				<h2 className="label-md">Key Metrics</h2>
-				<div className="flex flex-col">
-					<OnchainMcapSection metrics={metrics} labels={LABELS} />
-					<DefiActiveTvlSection metrics={metrics} largestProtocol={largestProtocol} labels={LABELS} />
-					<MetricSection
-						label={definitions.flows.assetNetFlow30d.label}
-						tooltip={definitions.flows.assetNetFlow30d.description}
-						value={formatRwaKpiUsd(metrics.netFlow30d)}
-					>
+			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaPlatformKeyMetricsCsv(props)} smol />}>
+				<OnchainMcapSection metrics={metrics} labels={LABELS} />
+				<DefiActiveTvlSection metrics={metrics} largestProtocol={largestProtocol} labels={LABELS} />
+				<MetricSection
+					label={definitions.flows.assetNetFlow30d.label}
+					tooltip={definitions.flows.assetNetFlow30d.description}
+					value={formatRwaKpiUsd(metrics.netFlow30d)}
+				>
+					<SubMetricRow
+						label={definitions.flows.assetNetFlow7d.label}
+						tooltip={definitions.flows.assetNetFlow7d.description}
+						value={formatRwaKpiUsd(metrics.netFlow7d)}
+					/>
+				</MetricSection>
+				<MetricSection label="Live Assets" value={formatCompactNumber(metrics.assetCount, COUNT_FORMAT)}>
+					<SubMetricRow
+						label="Issuers"
+						tooltip={definitions.issuer.description}
+						value={formatCompactNumber(metrics.issuerCount, COUNT_FORMAT)}
+					/>
+				</MetricSection>
+				{meta.estAnnualRevenueUsd != null ? (
+					<MetricSection label="Est. Annual Revenue" value={formatRwaKpiUsd(meta.estAnnualRevenueUsd)}>
 						<SubMetricRow
-							label={definitions.flows.assetNetFlow7d.label}
-							tooltip={definitions.flows.assetNetFlow7d.description}
-							value={formatRwaKpiUsd(metrics.netFlow7d)}
+							label="Confidence"
+							value={meta.revenueConfidence ?? 'N/A'}
+							valueClassName="ml-auto label-md"
 						/>
 					</MetricSection>
-					<MetricSection label="Live Assets" value={formatCompactNumber(metrics.assetCount, COUNT_FORMAT)}>
-						<SubMetricRow
-							label="Issuers"
-							tooltip={definitions.issuer.description}
-							value={formatCompactNumber(metrics.issuerCount, COUNT_FORMAT)}
-						/>
-					</MetricSection>
-					{meta.estAnnualRevenueUsd != null ? (
-						<MetricSection label="Est. Annual Revenue" value={formatRwaKpiUsd(meta.estAnnualRevenueUsd)}>
-							<SubMetricRow
-								label="Confidence"
-								value={meta.revenueConfidence ?? 'N/A'}
-								valueClassName="ml-auto label-md"
-							/>
-						</MetricSection>
-					) : null}
-				</div>
-			</div>
-			<CSVDownloadButton prepareCsv={() => buildRwaPlatformKeyMetricsCsv(props)} smol className="ml-auto" />
+				) : null}
+			</KeyMetricsPanel>
 		</SummaryStatsCard>
 	)
 }

@@ -19,7 +19,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, Char
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
-import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -212,98 +212,93 @@ function AssetKeyMetrics({
 	const defiActiveTvl = asset.defiActiveTvl ?? null
 
 	return (
-		<div className="flex flex-col gap-2">
-			<KeyMetricsHeader />
-			<div className="flex flex-col">
-				{activeMcap?.breakdown != null && activeMcap.breakdown.length > 0 ? (
-					<MetricSection
-						label={definitions.activeMcap.label}
-						tooltip={definitions.activeMcap.description}
-						value={formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
-					>
-						{activeMcap.breakdown.map(([chain, value]) => (
-							<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
-						))}
-					</MetricSection>
-				) : (
-					<MetricRow
-						label={definitions.activeMcap.label}
-						tooltip={definitions.activeMcap.description}
-						value={activeMcap?.total != null ? formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS) : '-'}
-					/>
-				)}
-				{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
-					<MetricSection
-						label={definitions.defiActiveTvl.label}
-						tooltip={definitions.defiActiveTvl.description}
-						value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
-					>
-						{asset.defiActiveTvlByProtocolChain.map((row) => (
-							<SubMetricSection
-								key={row.protocol}
-								label={row.protocol}
-								value={formatUsd(row.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
-							>
-								{row.byChain.map(([chain, value]) => (
-									<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
-								))}
-							</SubMetricSection>
-						))}
-					</MetricSection>
-				) : (
-					<MetricRow
-						label={definitions.defiActiveTvl.label}
-						tooltip={definitions.defiActiveTvl.description}
-						value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
-					/>
-				)}
+		<KeyMetricsPanel>
+			{activeMcap?.breakdown != null && activeMcap.breakdown.length > 0 ? (
+				<MetricSection
+					label={definitions.activeMcap.label}
+					tooltip={definitions.activeMcap.description}
+					value={formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
+				>
+					{activeMcap.breakdown.map(([chain, value]) => (
+						<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
+					))}
+				</MetricSection>
+			) : (
 				<MetricRow
-					label={definitions.flows.assetNetFlow7d.label}
-					tooltip={
-						<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow7d.description} summary={flow7d} />
-					}
-					value={
-						isLoadingFlows ? (
-							<RWAFlowValueShimmer />
-						) : isFlowUnavailable ? (
-							<RWAFlowValueUnavailable />
-						) : (
-							formatSignedRWAFlow(flow7d?.flow)
-						)
-					}
-					valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
+					label={definitions.activeMcap.label}
+					tooltip={definitions.activeMcap.description}
+					value={activeMcap?.total != null ? formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS) : '-'}
 				/>
+			)}
+			{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
+				<MetricSection
+					label={definitions.defiActiveTvl.label}
+					tooltip={definitions.defiActiveTvl.description}
+					value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
+				>
+					{asset.defiActiveTvlByProtocolChain.map((row) => (
+						<SubMetricSection
+							key={row.protocol}
+							label={row.protocol}
+							value={formatUsd(row.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
+						>
+							{row.byChain.map(([chain, value]) => (
+								<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
+							))}
+						</SubMetricSection>
+					))}
+				</MetricSection>
+			) : (
 				<MetricRow
-					label={definitions.flows.assetNetFlow30d.label}
-					tooltip={
-						<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow30d.description} summary={flow30d} />
-					}
-					value={
-						isLoadingFlows ? (
-							<RWAFlowValueShimmer />
-						) : isFlowUnavailable ? (
-							<RWAFlowValueUnavailable />
-						) : (
-							formatSignedRWAFlow(flow30d?.flow)
-						)
-					}
-					valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
+					label={definitions.defiActiveTvl.label}
+					tooltip={definitions.defiActiveTvl.description}
+					value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
 				/>
-				{asset.price != null ? (
-					<MetricRow
-						label={`${asset.ticker ?? 'Token'} Price`}
-						value={formatUsd(asset.price, USD_LOWERCASE_MILLIONS_OPTIONS)}
-					/>
-				) : null}
-				<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
-				{asset.nativeYieldCurrent != null ? (
-					<MetricRow
-						label="Native Yield"
-						value={`${formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`}
-					/>
-				) : null}
-			</div>
-		</div>
+			)}
+			<MetricRow
+				label={definitions.flows.assetNetFlow7d.label}
+				tooltip={<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow7d.description} summary={flow7d} />}
+				value={
+					isLoadingFlows ? (
+						<RWAFlowValueShimmer />
+					) : isFlowUnavailable ? (
+						<RWAFlowValueUnavailable />
+					) : (
+						formatSignedRWAFlow(flow7d?.flow)
+					)
+				}
+				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
+			/>
+			<MetricRow
+				label={definitions.flows.assetNetFlow30d.label}
+				tooltip={
+					<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow30d.description} summary={flow30d} />
+				}
+				value={
+					isLoadingFlows ? (
+						<RWAFlowValueShimmer />
+					) : isFlowUnavailable ? (
+						<RWAFlowValueUnavailable />
+					) : (
+						formatSignedRWAFlow(flow30d?.flow)
+					)
+				}
+				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
+			/>
+			{asset.price != null ? (
+				<MetricRow
+					label={`${asset.ticker ?? 'Token'} Price`}
+					value={formatUsd(asset.price, USD_LOWERCASE_MILLIONS_OPTIONS)}
+				/>
+			) : null}
+			<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
+			{asset.nativeYieldCurrent != null ? (
+				<MetricRow
+					label="Native Yield"
+					value={`${formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`}
+				/>
+			) : null}
+		</KeyMetricsPanel>
 	)
 }
 

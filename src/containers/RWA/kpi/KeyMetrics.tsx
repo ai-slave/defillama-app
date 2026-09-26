@@ -1,5 +1,6 @@
 import type { CsvPayload } from '~/components/CsvDownloadButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercentChange } from '~/utils/numberFormat'
@@ -68,34 +69,30 @@ export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 						<span className={`truncate mono-md ${headlinePercent >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 							{formatPercentChange(headlinePercent)}
 						</span>
-						<span className="body-md text-tertiary">{periodLabel}</span>
+						<span className="body-md text-tertiary">over {periodLabel}</span>
 					</p>
 				) : null}
 			</div>
-			<div className="flex flex-col gap-2">
-				<h2 className="label-md">Key Metrics</h2>
-				<div className="flex flex-col">
-					<OnchainMcapSection metrics={metrics} labels={LABELS} />
-					<DefiActiveTvlSection metrics={metrics} largestProtocol={largestProtocol} labels={LABELS} />
-					<MetricSection
-						label="RWA Perps OI"
-						tooltip={perpsDefinitions.totalOpenInterest.description}
-						value={formatRwaKpiUsd(perps.openInterest)}
-					>
-						<SubMetricRow
-							label="Change (24h)"
-							value={<RwaMetricChange change={perps.openInterestChange24h} total={perps.openInterest} />}
-						/>
-						<SubMetricRow
-							label="DEX share"
-							tooltip="Open interest on DEX venues as a share of all open interest."
-							value={formatRwaKpiRatio(perps.dexShare)}
-						/>
-						<SubMetricRow label="Volume (24h)" value={formatRwaKpiUsd(perps.volume24h)} />
-					</MetricSection>
-				</div>
-			</div>
-			<CSVDownloadButton prepareCsv={() => buildRwaKeyMetricsCsv(props)} smol className="ml-auto" />
+			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaKeyMetricsCsv(props)} smol />}>
+				<OnchainMcapSection metrics={metrics} labels={LABELS} />
+				<DefiActiveTvlSection metrics={metrics} largestProtocol={largestProtocol} labels={LABELS} />
+				<MetricSection
+					label="RWA Perps OI"
+					tooltip={perpsDefinitions.totalOpenInterest.description}
+					value={formatRwaKpiUsd(perps.openInterest)}
+				>
+					<SubMetricRow
+						label="Change (24h)"
+						value={<RwaMetricChange change={perps.openInterestChange24h} total={perps.openInterest} />}
+					/>
+					<SubMetricRow
+						label="DEX share"
+						tooltip="Open interest on DEX venues as a share of all open interest."
+						value={formatRwaKpiRatio(perps.dexShare)}
+					/>
+					<SubMetricRow label="Volume (24h)" value={formatRwaKpiUsd(perps.volume24h)} />
+				</MetricSection>
+			</KeyMetricsPanel>
 		</SummaryStatsCard>
 	)
 }

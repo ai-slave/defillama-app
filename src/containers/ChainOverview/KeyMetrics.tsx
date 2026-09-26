@@ -5,7 +5,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
 import { definitions } from '~/public/definitions'
-import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import {
 	MetricRow as ChainMetricRow,
 	MetricSection as ChainMetricSection,
@@ -57,110 +57,111 @@ export function KeyMetrics(props: KeyMetricsProps) {
 	const hasKeyMetricsPrimary = props.protocols.length > 0 && props.totalValueUSD != null
 
 	return (
-		<div className="flex flex-1 flex-col gap-2">
-			<KeyMetricsHeader />
-			<div className="flex flex-col" ref={keyMetricsRef}>
-				<StablecoinsMcap stablecoins={props.stablecoins} isAll={props.metadata.name === 'All'} />
-				<RwaActiveMcap rwaActiveMcap={props.rwaActiveMcap} />
-				<NativeStablecoins chainStablecoins={props.chainStablecoins} />
-				{props.chainFees.total24h != null ? (
-					<ChainMetricRow
-						label="Chain Fees (24h)"
-						tooltip={definitions.fees.chain['24h']}
-						value={formatUsd(props.chainFees.total24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				{props.chainRevenue.total24h != null ? (
-					<ChainMetricRow
-						label="Chain Revenue (24h)"
-						tooltip={definitions.revenue.chain['24h']}
-						value={formatUsd(props.chainRevenue.total24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				{props.chainFees.totalREV24h != null ? (
-					<ChainMetricRow
-						label="Chain REV (24h)"
-						tooltip={definitions.rev.chain['24h']}
-						value={formatUsd(props.chainFees.totalREV24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				{props.chainIncentives.emissions24h != null ? (
-					<ChainMetricRow
-						label="Token Incentives (24h)"
-						tooltip={definitions.incentives.protocol['24h']}
-						value={formatUsd(props.chainIncentives.emissions24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				{props.appRevenue.total24h != null && props.appRevenue.total24h > 1e3 ? (
-					<ChainMetricRow
-						label="App Revenue (24h)"
-						tooltip={definitions.appRevenue.chain['24h']}
-						value={formatUsd(props.appRevenue.total24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				{props.appFees.total24h != null && props.appFees.total24h > 1e3 ? (
-					<ChainMetricRow
-						label="App Fees (24h)"
-						tooltip={definitions.appFees.chain['24h']}
-						value={formatUsd(props.appFees.total24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				<DexsVolume dexs={props.dexs} />
-				<PerpsVolume perps={props.perps} />
-				{props.inflows?.netInflows != null ? (
-					<ChainMetricRow
-						label="Inflows (24h)"
-						tooltip="Net value bridged to the chain during the latest completed UTC day."
-						value={formatUsd(props.inflows.netInflows, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
-					/>
-				) : null}
-				<ActiveAddresses users={props.users} />
-				<RaisesSection chainRaises={props.chainRaises} />
-				<BridgedTvlSection chainAssets={props.chainAssets} tvlSettingsGovtokens={props.tvlSettingsGovtokens} />
-				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
-			</div>
-			<KeyMetricsFooter>
-				{props.footerAction}
-				{props.metadata.name !== 'All' ? (
-					<KeyMetricsPngExportButton
-						containerRef={keyMetricsRef}
-						title={keyMetricsTitle}
-						iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
-						primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
-						primaryLabel="Total Value Locked in DeFi"
-						formatPrice={formatKeyMetricsValue}
-					/>
-				) : null}
-			</KeyMetricsFooter>
-		</div>
+		<KeyMetricsPanel
+			rowsRef={keyMetricsRef}
+			footer={
+				<>
+					{props.footerAction}
+					{props.metadata.name !== 'All' ? (
+						<KeyMetricsPngExportButton
+							containerRef={keyMetricsRef}
+							title={keyMetricsTitle}
+							iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
+							primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
+							primaryLabel="Total Value Locked in DeFi"
+							formatPrice={formatKeyMetricsValue}
+						/>
+					) : null}
+				</>
+			}
+		>
+			<StablecoinsMcap stablecoins={props.stablecoins} isAll={props.metadata.name === 'All'} />
+			<RwaActiveMcap rwaActiveMcap={props.rwaActiveMcap} />
+			<NativeStablecoins chainStablecoins={props.chainStablecoins} />
+			{props.chainFees.total24h != null ? (
+				<ChainMetricRow
+					label="Chain Fees (24h)"
+					tooltip={definitions.fees.chain['24h']}
+					value={formatUsd(props.chainFees.total24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			{props.chainRevenue.total24h != null ? (
+				<ChainMetricRow
+					label="Chain Revenue (24h)"
+					tooltip={definitions.revenue.chain['24h']}
+					value={formatUsd(props.chainRevenue.total24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			{props.chainFees.totalREV24h != null ? (
+				<ChainMetricRow
+					label="Chain REV (24h)"
+					tooltip={definitions.rev.chain['24h']}
+					value={formatUsd(props.chainFees.totalREV24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			{props.chainIncentives.emissions24h != null ? (
+				<ChainMetricRow
+					label="Token Incentives (24h)"
+					tooltip={definitions.incentives.protocol['24h']}
+					value={formatUsd(props.chainIncentives.emissions24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			{props.appRevenue.total24h != null && props.appRevenue.total24h > 1e3 ? (
+				<ChainMetricRow
+					label="App Revenue (24h)"
+					tooltip={definitions.appRevenue.chain['24h']}
+					value={formatUsd(props.appRevenue.total24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			{props.appFees.total24h != null && props.appFees.total24h > 1e3 ? (
+				<ChainMetricRow
+					label="App Fees (24h)"
+					tooltip={definitions.appFees.chain['24h']}
+					value={formatUsd(props.appFees.total24h, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			<DexsVolume dexs={props.dexs} />
+			<PerpsVolume perps={props.perps} />
+			{props.inflows?.netInflows != null ? (
+				<ChainMetricRow
+					label="Inflows (24h)"
+					tooltip="Net value bridged to the chain during the latest completed UTC day."
+					value={formatUsd(props.inflows.netInflows, {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}
+				/>
+			) : null}
+			<ActiveAddresses users={props.users} />
+			<RaisesSection chainRaises={props.chainRaises} />
+			<BridgedTvlSection chainAssets={props.chainAssets} tvlSettingsGovtokens={props.tvlSettingsGovtokens} />
+			<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
+		</KeyMetricsPanel>
 	)
 }
 

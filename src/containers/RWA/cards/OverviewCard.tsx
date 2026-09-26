@@ -1,10 +1,7 @@
-import type { ReactNode } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Card } from '~/ui/Card'
-import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { formatRwaKpiUsd } from '../kpi/format'
-import { RWA_CARD_CHANGE_DAYS, type RwaChangeBar, type RwaNamedBar } from './cardData'
+import type { RwaChangeBar, RwaNamedBar } from './cardData'
 
 const BAR_USD = {
 	compact: true,
@@ -39,43 +36,6 @@ function formatBarPercent(value: number): string {
 export function getRwaChangeTone(value: number | null): 'text-data-up' | 'text-data-down' | 'text-secondary' {
 	if (value == null || value === 0) return 'text-secondary'
 	return value > 0 ? 'text-data-up' : 'text-data-down'
-}
-
-/** The home page card header: a title with its definition, the value, then a change line with its period. */
-export function RWAOverviewCard({
-	title,
-	tooltip,
-	value,
-	change,
-	changeTone,
-	children
-}: {
-	title: string
-	tooltip: string
-	value: string | null
-	change: string | null
-	changeTone: 'text-data-up' | 'text-data-down' | 'text-secondary'
-	children: ReactNode
-}) {
-	return (
-		<Card padding="sm" className="col-span-1 flex flex-col gap-1">
-			<Tooltip placement="top-start" className="text-sm font-semibold" content={`${tooltip} ${RWA_CARD_FILTER_NOTE}`}>
-				{title}
-			</Tooltip>
-			{value == null ? (
-				<p className="text-tertiary">Unavailable</p>
-			) : (
-				<>
-					<p className="truncate text-secondary">{value}</p>
-					<p className="flex items-center gap-1 text-xs">
-						<span className={`truncate ${changeTone}`}>{change ?? 'N/A'}</span>
-						<span className="text-tertiary">{RWA_CARD_CHANGE_DAYS}d</span>
-					</p>
-				</>
-			)}
-			{children}
-		</Card>
-	)
 }
 
 type RwaBarRow = {

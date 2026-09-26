@@ -21,7 +21,7 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
@@ -359,135 +359,132 @@ function TokenMetrics({ overview }: { overview: TokenOverviewData }) {
 	const marketsHasOi = markets != null && (markets.total_oi_usd ?? 0) > 0
 
 	return (
-		<div className="flex flex-1 flex-col gap-2">
-			<KeyMetricsHeader id="token-key-metrics" />
-			<div className="flex flex-col">
-				{overview.marketData.mcap != null ? (
-					<MetricRow
-						label="Market Cap"
-						tooltip={MARKET_CAP_TOOLTIP}
-						value={formatUsd(overview.marketData.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					/>
-				) : null}
-				{overview.marketData.fdv != null ? (
-					<MetricRow
-						label="Fully Diluted Valuation"
-						tooltip={FDV_TOOLTIP}
-						value={formatUsd(overview.marketData.fdv, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					/>
-				) : null}
-				{overview.marketData.circulatingSupply != null ? (
-					<MetricRow
-						label="Circ. Supply"
-						tooltip={CIRCULATING_SUPPLY_TOOLTIP}
-						value={formatSupply(overview.marketData.circulatingSupply, overview.symbol)}
-					/>
-				) : null}
-				{overview.marketData.maxSupply != null ? (
-					<MetricRow
-						label="Max Supply"
-						tooltip={MAX_SUPPLY_TOOLTIP}
-						value={formatSupply(overview.marketData.maxSupply, overview.symbol)}
-					/>
-				) : null}
-				{overview.outstandingFDV != null ? (
-					<MetricRow
-						label="Outstanding FDV"
-						tooltip={OUTSTANDING_FDV_TOOLTIP}
-						value={formatUsd(overview.outstandingFDV, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					/>
-				) : null}
-				{marketsHasVolume && markets ? (
-					<MarketsMetricSection
-						label="Volume 24h"
-						tooltip={VOLUME_24H_TOOLTIP}
-						totalValue={markets.total_volume_24h ?? null}
-						markets={markets}
-						metric="volume"
-					/>
-				) : overview.marketData.volume24h.total != null ||
-				  overview.marketData.volume24h.cex != null ||
-				  overview.marketData.volume24h.dex != null ? (
-					<MetricSection
-						label="Volume 24h"
-						tooltip={VOLUME_24H_TOOLTIP}
-						value={formatUsd(overview.marketData.volume24h.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					>
-						{overview.marketData.volume24h.cex != null ? (
-							<SubMetricRow
-								label="CEX Volume"
-								value={formatUsd(overview.marketData.volume24h.cex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-						{overview.marketData.volume24h.dex != null ? (
-							<SubMetricRow
-								label="DEX Volume"
-								value={formatUsd(overview.marketData.volume24h.dex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-					</MetricSection>
-				) : null}
-				{marketsHasOi && markets ? (
-					<MarketsMetricSection
-						label="Open Interest"
-						tooltip={OPEN_INTEREST_TOOLTIP}
-						totalValue={markets.total_oi_usd ?? null}
-						markets={markets}
-						metric="oi"
-					/>
-				) : null}
-				{overview.treasury ? (
-					<MetricSection
-						label="Treasury"
-						tooltip={TREASURY_TOOLTIP}
-						value={formatUsd(overview.treasury.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					>
-						{overview.treasury.majors != null ? (
-							<SubMetricRow
-								label="Majors"
-								tooltip="BTC, ETH"
-								value={formatUsd(overview.treasury.majors, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-						{overview.treasury.stablecoins != null ? (
-							<SubMetricRow
-								label="Stablecoins"
-								value={formatUsd(overview.treasury.stablecoins, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-						{overview.treasury.ownTokens != null ? (
-							<SubMetricRow
-								label="Own Tokens"
-								value={formatUsd(overview.treasury.ownTokens, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-						{overview.treasury.others != null ? (
-							<SubMetricRow
-								label="Others"
-								value={formatUsd(overview.treasury.others, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-							/>
-						) : null}
-					</MetricSection>
-				) : null}
-				{overview.raises?.length ? (
-					<MetricSection label="Total Raised" value={<RaisesTotal {...summarizeRaises(overview.raises)} />}>
-						{overview.raises.map((raise) => (
-							<SubMetricRow
-								key={`${raise.date}-${raise.round ?? 'raise'}`}
-								label={
-									raise.round
-										? `${raise.round} · ${formatDateLabel(raise.date) ?? 'Unknown date'}`
-										: (formatDateLabel(raise.date) ?? 'Unknown date')
-								}
-								value={
-									raise.amountUsd == null ? 'Undisclosed' : formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
-								}
-							/>
-						))}
-					</MetricSection>
-				) : null}
-			</div>
-		</div>
+		<KeyMetricsPanel id="token-key-metrics">
+			{overview.marketData.mcap != null ? (
+				<MetricRow
+					label="Market Cap"
+					tooltip={MARKET_CAP_TOOLTIP}
+					value={formatUsd(overview.marketData.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+				/>
+			) : null}
+			{overview.marketData.fdv != null ? (
+				<MetricRow
+					label="Fully Diluted Valuation"
+					tooltip={FDV_TOOLTIP}
+					value={formatUsd(overview.marketData.fdv, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+				/>
+			) : null}
+			{overview.marketData.circulatingSupply != null ? (
+				<MetricRow
+					label="Circ. Supply"
+					tooltip={CIRCULATING_SUPPLY_TOOLTIP}
+					value={formatSupply(overview.marketData.circulatingSupply, overview.symbol)}
+				/>
+			) : null}
+			{overview.marketData.maxSupply != null ? (
+				<MetricRow
+					label="Max Supply"
+					tooltip={MAX_SUPPLY_TOOLTIP}
+					value={formatSupply(overview.marketData.maxSupply, overview.symbol)}
+				/>
+			) : null}
+			{overview.outstandingFDV != null ? (
+				<MetricRow
+					label="Outstanding FDV"
+					tooltip={OUTSTANDING_FDV_TOOLTIP}
+					value={formatUsd(overview.outstandingFDV, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+				/>
+			) : null}
+			{marketsHasVolume && markets ? (
+				<MarketsMetricSection
+					label="Volume 24h"
+					tooltip={VOLUME_24H_TOOLTIP}
+					totalValue={markets.total_volume_24h ?? null}
+					markets={markets}
+					metric="volume"
+				/>
+			) : overview.marketData.volume24h.total != null ||
+			  overview.marketData.volume24h.cex != null ||
+			  overview.marketData.volume24h.dex != null ? (
+				<MetricSection
+					label="Volume 24h"
+					tooltip={VOLUME_24H_TOOLTIP}
+					value={formatUsd(overview.marketData.volume24h.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+				>
+					{overview.marketData.volume24h.cex != null ? (
+						<SubMetricRow
+							label="CEX Volume"
+							value={formatUsd(overview.marketData.volume24h.cex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+					{overview.marketData.volume24h.dex != null ? (
+						<SubMetricRow
+							label="DEX Volume"
+							value={formatUsd(overview.marketData.volume24h.dex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+				</MetricSection>
+			) : null}
+			{marketsHasOi && markets ? (
+				<MarketsMetricSection
+					label="Open Interest"
+					tooltip={OPEN_INTEREST_TOOLTIP}
+					totalValue={markets.total_oi_usd ?? null}
+					markets={markets}
+					metric="oi"
+				/>
+			) : null}
+			{overview.treasury ? (
+				<MetricSection
+					label="Treasury"
+					tooltip={TREASURY_TOOLTIP}
+					value={formatUsd(overview.treasury.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+				>
+					{overview.treasury.majors != null ? (
+						<SubMetricRow
+							label="Majors"
+							tooltip="BTC, ETH"
+							value={formatUsd(overview.treasury.majors, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+					{overview.treasury.stablecoins != null ? (
+						<SubMetricRow
+							label="Stablecoins"
+							value={formatUsd(overview.treasury.stablecoins, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+					{overview.treasury.ownTokens != null ? (
+						<SubMetricRow
+							label="Own Tokens"
+							value={formatUsd(overview.treasury.ownTokens, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+					{overview.treasury.others != null ? (
+						<SubMetricRow
+							label="Others"
+							value={formatUsd(overview.treasury.others, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+						/>
+					) : null}
+				</MetricSection>
+			) : null}
+			{overview.raises?.length ? (
+				<MetricSection label="Total Raised" value={<RaisesTotal {...summarizeRaises(overview.raises)} />}>
+					{overview.raises.map((raise) => (
+						<SubMetricRow
+							key={`${raise.date}-${raise.round ?? 'raise'}`}
+							label={
+								raise.round
+									? `${raise.round} · ${formatDateLabel(raise.date) ?? 'Unknown date'}`
+									: (formatDateLabel(raise.date) ?? 'Unknown date')
+							}
+							value={
+								raise.amountUsd == null ? 'Undisclosed' : formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+							}
+						/>
+					))}
+				</MetricSection>
+			) : null}
+		</KeyMetricsPanel>
 	)
 }
 
