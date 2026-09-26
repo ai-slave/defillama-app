@@ -13,11 +13,10 @@ import {
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
+import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { downloadCSV } from '~/utils/download'
 import { getChainDenominations } from '~/utils/metadata/chainDenominations'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import { ChainChartPanel } from './ChainChartPanel'
 import { BAR_CHARTS, chainCharts } from './constants'
 import { KeyMetrics } from './KeyMetrics'
@@ -159,20 +158,15 @@ export function Stats(props: IStatsProps) {
 							truncate
 						/>
 						{change24h != null && valueChange24hUSD != null ? (
-							<Tooltip
-								content={`${formatUsd(valueChange24hUSD, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`}
-								render={<p />}
-								className="relative bottom-0.5 flex flex-nowrap items-center gap-1"
-							>
-								<span
-									className={`truncate mono-md underline decoration-dotted ${
-										change24h >= 0 ? 'text-data-up' : 'text-data-down'
-									}`}
-								>
-									{`${change24h > 0 ? '+' : ''}${formatPercent(change24h, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
-								</span>
-								<span className="body-md text-tertiary">over 24h</span>
-							</Tooltip>
+							<SummaryChange
+								percent={change24h}
+								comparison="over 24h"
+								tooltip={formatUsd(valueChange24hUSD, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							/>
 						) : null}
 					</div>
 				) : null}

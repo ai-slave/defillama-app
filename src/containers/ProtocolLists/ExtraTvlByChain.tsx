@@ -16,11 +16,11 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
-import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
-import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatUsd } from '~/utils/numberFormat'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -76,18 +76,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 							})}
 							truncate
 						/>
-						{props.change24h != null ? (
-							<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2 text-sm">
-								<span
-									className={`text-right font-jetbrains text-ellipsis ${
-										props.change24h >= 0 ? 'text-data-up' : 'text-data-down'
-									}`}
-								>
-									{formatPercentChange(props.change24h)}
-								</span>
-								<span className="text-secondary">24h</span>
-							</p>
-						) : null}
+						{props.change24h != null ? <SummaryChange percent={props.change24h} comparison="over 24h" /> : null}
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">

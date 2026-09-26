@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
+import { formatPercentChange } from '~/utils/numberFormat'
 
 /* ----------------------------------------------------------------------------
    Summary-card layout (design.md → Summary metric cards, variants 1–2).
@@ -14,8 +15,8 @@ import { Tooltip } from '~/ui/Tooltip'
    </SummaryCardGrid>
 
    These replace the grid/card/stat strings that were copy-pasted across
-   ~19 route files. Titles (h1 + logo) and change badges vary legitimately
-   and remain callsite JSX.
+   ~19 route files. Titles (h1 + logo) vary legitimately and remain callsite
+   JSX; a headline's change is SummaryChange.
 ---------------------------------------------------------------------------- */
 
 export function SummaryCardGrid({ className, children }: { className?: string; children: ReactNode }) {
@@ -90,6 +91,39 @@ export function StatItem({
 				{value}
 			</span>
 		</Container>
+	)
+}
+
+/** A headline's change beside its StatItem: the signed percent colored by direction, then what it is compared against. */
+export function SummaryChange({
+	percent,
+	comparison,
+	tooltip
+}: {
+	percent: number
+	/** Worded as a comparison window, such as "over 24h" (design.md → measurement vs comparison window). */
+	comparison: string
+	/** The same movement in another unit, such as the dollar change; underlines the percent. */
+	tooltip?: string
+}) {
+	const tone = percent > 0 ? 'text-data-up' : percent < 0 ? 'text-data-down' : 'text-secondary'
+	const className = 'relative bottom-0.5 flex flex-nowrap items-center gap-1'
+	const children = (
+		<>
+			<span className={`truncate mono-md ${tone} ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>
+				{formatPercentChange(percent)}
+			</span>
+			<span className="body-md text-tertiary">{comparison}</span>
+		</>
+	)
+
+	// No `render` on the Tooltip: it opens on tap only for its default anchor.
+	return tooltip ? (
+		<Tooltip content={tooltip} className={className}>
+			{children}
+		</Tooltip>
+	) : (
+		<p className={className}>{children}</p>
 	)
 }
 

@@ -95,6 +95,11 @@ describe('Contract helpers', () => {
 		expect(html).toContain('XYZ Exchange')
 	})
 
+	test('names the price change window beside the headline price', () => {
+		const text = renderToStaticMarkup(<RWAPerpsContractPage contract={TEST_CONTRACT} />).replace(/<[^>]+>/g, '')
+		expect(text).toContain('+5.00%over 24h')
+	})
+
 	test('renders the contract link as a right-aligned website icon when present', () => {
 		const html = renderToStaticMarkup(<RWAPerpsContractPage contract={TEST_CONTRACT} />)
 

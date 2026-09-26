@@ -2,8 +2,7 @@ import type { CsvPayload } from '~/components/CsvDownloadButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formatPercentChange } from '~/utils/numberFormat'
+import { StatItem, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
 import type { RwaNamedBar, RwaPerpsTotals } from '../cards/cardData'
 import { definitions } from '../definitions'
 import { perpsDefinitions } from '../Perps/definitions'
@@ -65,12 +64,7 @@ export function RWAKeyMetrics(props: RWAKeyMetricsProps) {
 					truncate
 				/>
 				{headlinePercent != null ? (
-					<p className="relative bottom-0.5 flex flex-nowrap items-center gap-1">
-						<span className={`truncate mono-md ${headlinePercent >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-							{formatPercentChange(headlinePercent)}
-						</span>
-						<span className="body-md text-tertiary">over {periodLabel}</span>
-					</p>
+					<SummaryChange percent={headlinePercent} comparison={`over ${periodLabel}`} />
 				) : null}
 			</div>
 			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaKeyMetricsCsv(props)} smol />}>

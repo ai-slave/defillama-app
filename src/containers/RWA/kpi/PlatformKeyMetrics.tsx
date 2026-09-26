@@ -4,8 +4,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { StatItem, SummaryStatsCard } from '~/ui/SummaryStats'
-import { formatCompactNumber, formatPercentChange } from '~/utils/numberFormat'
+import { StatItem, SummaryChange, SummaryStatsCard } from '~/ui/SummaryStats'
+import { formatCompactNumber } from '~/utils/numberFormat'
 import { definitions } from '../definitions'
 import type { RWAPlatformMeta } from '../PlatformPage/api.types'
 import { percentChange } from '../table/change'
@@ -84,12 +84,7 @@ export function RWAPlatformKeyMetrics(props: RWAPlatformKeyMetricsProps) {
 					truncate
 				/>
 				{headlinePercent != null ? (
-					<p className="relative bottom-0.5 flex flex-nowrap items-center gap-1">
-						<span className={`truncate mono-md ${headlinePercent >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-							{formatPercentChange(headlinePercent)}
-						</span>
-						<span className="body-md text-tertiary">over {PERIOD_LABEL}</span>
-					</p>
+					<SummaryChange percent={headlinePercent} comparison={`over ${PERIOD_LABEL}`} />
 				) : null}
 			</div>
 			<KeyMetricsPanel footer={<CSVDownloadButton prepareCsv={() => buildRwaPlatformKeyMetricsCsv(props)} smol />}>

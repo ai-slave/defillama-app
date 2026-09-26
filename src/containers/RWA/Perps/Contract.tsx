@@ -18,7 +18,7 @@ import { Icon } from '~/ui/Icon'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
-import { PercentChange } from '~/ui/PercentChange'
+import { SummaryChange } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -137,12 +137,7 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 			</div>
 
 			{contract.market.priceChange24h != null ? (
-				<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2">
-					<span className="truncate font-jetbrains">
-						<PercentChange percent={contract.market.priceChange24h} fontWeight={600} />
-					</span>
-					<span className="text-secondary">24h</span>
-				</p>
+				<SummaryChange percent={contract.market.priceChange24h} comparison="over 24h" />
 			) : null}
 		</div>
 	)
