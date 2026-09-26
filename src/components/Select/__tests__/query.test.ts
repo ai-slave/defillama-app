@@ -1,5 +1,6 @@
 import type { NextRouter } from 'next/router'
 import { describe, expect, test, vi } from 'vitest'
+import { parseIncludeExcludeParam } from '~/utils/routerQuery'
 import { getQueryUpdatesFromSelected, updateQueryFromSelected } from '../query'
 
 const router = {} as NextRouter
@@ -77,5 +78,28 @@ describe('non-all selection defaults', () => {
 			include: 'opt-in',
 			exclude: undefined
 		})
+	})
+})
+
+describe('parseIncludeExcludeParam', () => {
+	const all = ['a', 'b', 'c', 'd', 'e', 'f']
+
+	// The picker writes whichever list is shorter, so the reader must return the same selection from either key.
+	test.each([
+		{ picked: null, writes: {}, selected: all },
+		{ picked: 'None' as const, writes: { category: 'None' }, selected: [] },
+		{ picked: ['b'], writes: { category: 'b' }, selected: ['b'] },
+		{ picked: ['a', 'b'], writes: { category: ['a', 'b'] }, selected: ['a', 'b'] },
+		{ picked: ['a', 'b', 'c'], writes: { category: ['a', 'b', 'c'] }, selected: ['a', 'b', 'c'] },
+		{ picked: ['a', 'b', 'c', 'd'], writes: { excludeCategory: ['e', 'f'] }, selected: ['a', 'b', 'c', 'd'] },
+		{ picked: ['a', 'b', 'c', 'd', 'e'], writes: { excludeCategory: 'f' }, selected: ['a', 'b', 'c', 'd', 'e'] }
+	])('reads back $selected after the picker writes $writes', ({ picked, writes, selected }) => {
+		const query = getQueryUpdatesFromSelected('category', 'excludeCategory', all, picked)
+		expect(Object.fromEntries(Object.entries(query).filter(([, value]) => value !== undefined))).toEqual(writes)
+		expect(parseIncludeExcludeParam(query.category, query.excludeCategory, all)).toEqual(selected)
+	})
+
+	test('treats an empty include value from an old link as nothing selected', () => {
+		expect(parseIncludeExcludeParam('', undefined, all)).toEqual([])
 	})
 })

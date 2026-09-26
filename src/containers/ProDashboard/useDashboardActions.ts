@@ -31,11 +31,7 @@ import {
 	DEFAULT_UNIFIED_TABLE_SORTING,
 	sanitizeUnifiedTableRowHeaders
 } from './unifiedTable/config/layoutPolicy'
-import {
-	DASHBOARD_DATA_LENGTH_LIMIT,
-	estimateDashboardDataLength,
-	formatDashboardDataLength
-} from './utils/dashboardDocumentSize'
+import { getDashboardSizeLimitError } from './utils/dashboardDocumentSize'
 import { generateItemId } from './utils/dashboardUtils'
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -140,14 +136,14 @@ export function useDashboardActions(
 	}, [items, variables, annotations, aiUndoState, history])
 
 	const fitsDashboardSizeLimit = useCallback((candidateItems: Array<DashboardItemConfig>) => {
-		const length = estimateDashboardDataLength({
+		const error = getDashboardSizeLimitError({
 			items: candidateItems,
 			variables: variablesRef.current,
 			annotations: annotationsRef.current,
 			aiUndoState: aiUndoStateRef.current
 		})
-		if (length <= DASHBOARD_DATA_LENGTH_LIMIT) return true
-		toast.error(`Dashboard is too large (${formatDashboardDataLength(length)}). Remove rows or a card.`)
+		if (!error) return true
+		toast.error(error)
 		return false
 	}, [])
 

@@ -41,10 +41,9 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
-import { parseExcludeParam } from '~/utils/routerQuery'
 import { AdapterByChainChart } from './ChainChart'
-import type { IAdapterByChainPageData, IProtocol } from './types'
-import { getProtocolsByCategory } from './utils'
+import type { IAdapterByChainPageData } from './types'
+import { filterProtocolsByCategoryQuery } from './utils'
 
 const tableFeaturesConfig = searchTableFeatures
 
@@ -108,9 +107,6 @@ const pageTypeByDefinition: Partial<Record<TPageType, Record<string, string>>> =
 export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const router = useRouter()
 	const isChain = props.chain !== 'All'
-	const categoryParam = router.query.category
-	const excludeCategoryParam = router.query.excludeCategory
-	const hasCategoryParam = Object.hasOwn(router.query, 'category')
 	const tableColumns =
 		props.type === 'Earnings'
 			? isChain
@@ -119,48 +115,10 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			: COLUMNS_BY_TYPE[props.type]
 	const columnsOptions = useMemo(() => getColumnsOptions(props.type, tableColumns), [props.type, tableColumns])
 
-	const { selectedCategories, protocols } = useMemo(() => {
-		const excludeSet = parseExcludeParam(excludeCategoryParam)
-
-		let selectedCategories =
-			props.categories.length > 0 && hasCategoryParam && categoryParam === ''
-				? []
-				: categoryParam
-					? typeof categoryParam === 'string'
-						? [categoryParam]
-						: categoryParam
-					: props.categories
-
-		if (excludeSet.size > 0) {
-			const filteredCategories: Array<string> = []
-			for (const category of selectedCategories) {
-				if (!excludeSet.has(category)) filteredCategories.push(category)
-			}
-			selectedCategories = filteredCategories
-		}
-
-		const categoriesToFilter: Array<string> = []
-		for (const category of selectedCategories) {
-			const normalizedCategory = category.toLowerCase()
-			if (normalizedCategory !== 'all' && normalizedCategory !== 'none') {
-				categoriesToFilter.push(category)
-			}
-		}
-
-		const protocols: Array<IProtocol> =
-			props.categories.length === 0
-				? props.protocols
-				: selectedCategories.length === 0
-					? ([] as Array<IProtocol>)
-					: categoriesToFilter.length > 0
-						? getProtocolsByCategory(props.protocols, categoriesToFilter)
-						: props.protocols
-
-		return {
-			selectedCategories,
-			protocols
-		}
-	}, [categoryParam, excludeCategoryParam, hasCategoryParam, props])
+	const { selectedCategories, protocols } = useMemo(
+		() => filterProtocolsByCategoryQuery(props.protocols, props.categories, router.query),
+		[props.protocols, props.categories, router.query]
+	)
 
 	const [sorting, setSorting] = useState<SortingState>(defaultSorting ?? DEFAULT_SORTING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])

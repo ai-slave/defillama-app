@@ -1,11 +1,6 @@
 import { expect, test } from 'vitest'
-import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { SqlChartConfig, TextConfig } from '../../types'
-import {
-	DASHBOARD_DATA_LENGTH_LIMIT,
-	estimateDashboardDataLength,
-	formatDashboardDataLength
-} from '../dashboardDocumentSize'
+import { estimateDashboardDataLength, getDashboardSizeLimitError } from '../dashboardDocumentSize'
 
 const text: TextConfig = { id: 'text', kind: 'text', content: 'Hello' }
 
@@ -50,32 +45,15 @@ test('ignores SQL snapshots because they never reach the server', () => {
 	expect(estimateDashboardDataLength({ items: [sql] })).toBe(JSON.stringify({ items: [persisted] }).length)
 })
 
-test('flags documents above the limit and formats the size in kilobytes', () => {
-	const rows = Array.from({ length: 12_000 }, (_, index) => [index, `value-${index}`, index * 1.5])
-	const large: DashboardItemConfig = {
-		id: 'custom',
-		kind: 'custom-data',
-		name: 'Large',
-		columns: [
-			{ name: 'id', type: 'BIGINT' },
-			{ name: 'label', type: 'VARCHAR' },
-			{ name: 'amount', type: 'DOUBLE' }
-		],
-		rows: [...rows, ...rows, ...rows],
-		chart: {
-			chartType: 'bar',
-			xCol: 'label',
-			yCols: ['amount'],
-			splitByCol: null,
-			stackMode: 'off',
-			rightAxisCols: [],
-			seriesKinds: {},
-			seriesColors: {},
-			numberFormat: 'auto'
-		},
-		displayMode: 'table'
-	}
-	expect(estimateDashboardDataLength({ items: [large] })).toBeGreaterThan(DASHBOARD_DATA_LENGTH_LIMIT)
-	expect(formatDashboardDataLength(1024 * 900)).toBe('900 KB')
-	expect(formatDashboardDataLength(1500)).toBe('1 KB')
+test('refuses a save only once the dashboard passes 900,000 characters', () => {
+	// A text card sized so the whole serialized dashboard is exactly `length` characters long.
+	const sized = (length: number): TextConfig => ({
+		...text,
+		content: 'x'.repeat(length - JSON.stringify({ items: [{ ...text, content: '' }] }).length)
+	})
+
+	expect(getDashboardSizeLimitError({ items: [sized(900_000)] })).toBeNull()
+	expect(getDashboardSizeLimitError({ items: [sized(900_001)] })).toBe(
+		'Dashboard is too large (879 KB). Remove rows or a card.'
+	)
 })

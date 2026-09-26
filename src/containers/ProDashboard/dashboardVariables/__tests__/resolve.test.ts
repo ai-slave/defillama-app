@@ -31,6 +31,7 @@ import {
 	isValidVariableValue,
 	listCompatibleBindings,
 	readVariableOverridesFromQuery,
+	replaceVariableOverridesInQuery,
 	resolveDashboardItem,
 	resolveDashboardItems,
 	restoreItemsAfterIterate,
@@ -250,6 +251,17 @@ describe('query overrides', () => {
 				tab: 'overview'
 			})
 		).toEqual({ chain: 'Solana', protocol: 'lido' })
+	})
+
+	test('replaces the variable overrides in the page URL and keeps every other query key', () => {
+		const query = { dashboardId: 'abc', tab: 'overview', 'var-chain': 'Solana', 'var-protocol': 'lido' }
+
+		expect(replaceVariableOverridesInQuery(query, { chain: 'Base' })).toEqual({
+			dashboardId: 'abc',
+			tab: 'overview',
+			'var-chain': 'Base'
+		})
+		expect(replaceVariableOverridesInQuery(query, {})).toEqual({ dashboardId: 'abc', tab: 'overview' })
 	})
 })
 

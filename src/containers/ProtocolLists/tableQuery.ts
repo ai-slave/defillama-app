@@ -1,6 +1,6 @@
 import { canonicalQuerySignature } from '~/server/tablePages/tableQuery'
 import type { CursorTablePage } from '~/server/tablePages/types'
-import { parseExcludeParam, getSelectedChainFilters } from '~/utils/routerQuery'
+import { parseExcludeParam, getSelectedChainFilters, parseIncludeExcludeParam } from '~/utils/routerQuery'
 import { isProtocolListTvlKey } from './api.types'
 import type { IRecentProtocolsPageData } from './types'
 import type { applyExtraTvl } from './utils'
@@ -81,20 +81,7 @@ export function protocolListSelection(query: ProtocolListQuery, chainList: Array
 	let selectedChains = getSelectedChainFilters(chain, chainList)
 	selectedChains = excludeChainSet.size > 0 ? selectedChains.filter((c) => !excludeChainSet.has(c)) : selectedChains
 
-	const excludeCategorySet = parseExcludeParam(excludeCategory)
-	let selectedCategories =
-		categories.length > 0 && Object.hasOwn(query, 'category') && category === ''
-			? []
-			: category
-				? typeof category === 'string'
-					? [category]
-					: category
-				: categories
-
-	selectedCategories =
-		excludeCategorySet.size > 0
-			? selectedCategories.filter((selectedCategory) => !excludeCategorySet.has(selectedCategory))
-			: selectedCategories
+	const selectedCategories = parseIncludeExcludeParam(category, excludeCategory, categories)
 
 	return { selectedChains, selectedCategories }
 }

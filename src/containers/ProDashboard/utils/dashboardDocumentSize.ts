@@ -2,7 +2,7 @@ import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { AIUndoState, DashboardAnnotation, DashboardVariable } from '../dashboardTypes'
 import { toPersistedDashboardItems } from './dashboardUtils'
 
-export const DASHBOARD_DATA_LENGTH_LIMIT = 900_000
+const DASHBOARD_DATA_LENGTH_LIMIT = 900_000
 
 export interface DashboardDocumentInput {
 	items: Array<DashboardItemConfig>
@@ -25,6 +25,13 @@ export function estimateDashboardDataLength({
 	}).length
 }
 
-export function formatDashboardDataLength(length: number): string {
+function formatDashboardDataLength(length: number): string {
 	return `${Math.round(length / 1024)} KB`
+}
+
+/** The message shown when saving `document` would pass the stored dashboard size limit, or null when it fits. */
+export function getDashboardSizeLimitError(document: DashboardDocumentInput): string | null {
+	const length = estimateDashboardDataLength(document)
+	if (length <= DASHBOARD_DATA_LENGTH_LIMIT) return null
+	return `Dashboard is too large (${formatDashboardDataLength(length)}). Remove rows or a card.`
 }

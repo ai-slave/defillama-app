@@ -68,6 +68,12 @@ Do not assert calls between internal modules, class names, inline styles, wrappe
 
 One test per behavior, named in user or data terms. No characterization tests that freeze current output, bugs included. When a change breaks a test without changing behavior, rewrite or delete the test instead of patching the assertion. When deleting a test file, account for each behavior it asserted: where it is now covered, or why it is intentionally untested.
 
+Each behavior has one test that owns it, at the strongest boundary that reaches it. Do not repeat the same scenario at every layer it passes through; a second layer needs a failure the first cannot catch. Name a test for what it asserts, and make a negative test fail for the reason its name gives: a "rejects X" test must go red when the X guard is removed, not stay green because another guard also rejects it.
+
+A regression test must fail on the code before the fix, for the reason the bug describes. Run it against the old code before landing the fix; a test that never failed proves nothing about the fix.
+
+When code reads a value that other code writes (URL query params, storage, API payloads), test the round trip through the real writer instead of hand-writing what the reader receives. Readers that copy an old encoding drift silently when the writer changes.
+
 A function that only tests call is dead code: delete it with its tests. Exporting a pure function that production code also calls, so a test can reach it, is fine. A module may also export a reset for its module-level state, such as a cache, so each test starts from a fresh runtime. Tests read results through the public API, not through getters that expose internal state.
 
 Keep every test under two seconds and every file under five. A test that needs longer sets its own timeout in the `test()` call and says why. Never wait on a promise a mock is expected to resolve without bounding it; a lost mock registration must fail fast, not hang.

@@ -18,7 +18,7 @@ import { Icon } from '~/ui/Icon'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
-import { parseExcludeParam } from '~/utils/routerQuery'
+import { parseIncludeExcludeParam } from '~/utils/routerQuery'
 import type { IProtocolsWithTokensByChainPageData, ITokenMetricProtocolRow, TokenMetricType } from './types'
 
 const chainLikeCategories = new Set(['Chain', 'Rollup'])
@@ -27,23 +27,9 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 	const router = useRouter()
 
 	const { category, excludeCategory } = router.query
-	const hasCategoryParam = Object.hasOwn(router.query, 'category')
 
 	const { selectedCategories, protocols } = useMemo(() => {
-		const excludeSet = parseExcludeParam(excludeCategory)
-
-		let selectedCategories =
-			props.categories.length > 0 && hasCategoryParam && category === ''
-				? []
-				: category
-					? typeof category === 'string'
-						? [category]
-						: category
-					: props.categories
-
-		// Filter out excludes
-		selectedCategories = excludeSet.size > 0 ? selectedCategories.filter((c) => !excludeSet.has(c)) : selectedCategories
-
+		const selectedCategories = parseIncludeExcludeParam(category, excludeCategory, props.categories)
 		const categoriesToFilter = selectedCategories.filter((c) => c.toLowerCase() !== 'all' && c.toLowerCase() !== 'none')
 
 		const protocols =
@@ -59,7 +45,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 			selectedCategories,
 			protocols
 		}
-	}, [category, excludeCategory, hasCategoryParam, props.categories, props.protocols])
+	}, [category, excludeCategory, props.categories, props.protocols])
 
 	const { columns, sortingState } = getMetricNameAndColumns(props.type)
 

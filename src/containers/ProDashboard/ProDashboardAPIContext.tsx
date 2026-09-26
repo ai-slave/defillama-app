@@ -52,6 +52,7 @@ import {
 	type ParameterCandidate,
 	type ParameterUnavailable,
 	readVariableOverridesFromQuery,
+	replaceVariableOverridesInQuery,
 	resolveDashboardItems,
 	restoreItemsAfterIterate,
 	setDashboardItemBinding,
@@ -1156,9 +1157,7 @@ function ProDashboardAPIProviderInner({
 	const setVariableValue = useCallback(
 		(variableId: string, value: string, options?: { persist?: boolean }) => {
 			const replaceVariableQuery = (nextOverrides: Record<string, string>) => {
-				const query = { ...router.query }
-				for (const key of Object.keys(query)) if (key.startsWith(VARIABLE_QUERY_PREFIX)) delete query[key]
-				for (const id in nextOverrides) query[`${VARIABLE_QUERY_PREFIX}${id}`] = nextOverrides[id] as string
+				const query = replaceVariableOverridesInQuery(router.query, nextOverrides)
 				void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false })
 			}
 			if (options?.persist && canEditVariables) {

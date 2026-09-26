@@ -1,3 +1,4 @@
+import type { ParsedUrlQuery } from 'node:querystring'
 import { DASHBOARD_ITEM_KIND_SUMMARY_LABELS } from '../components/dashboardItemKindSummary'
 import { createChartConfig, createMetricConfig } from '../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -91,6 +92,17 @@ export function readVariableOverridesFromQuery(
 		overrides[key.slice(VARIABLE_QUERY_PREFIX.length)] = value
 	}
 	return overrides
+}
+
+/** Returns the page query with its variable override keys replaced by `overrides`, keeping every other key. */
+export function replaceVariableOverridesInQuery(
+	query: ParsedUrlQuery,
+	overrides: Record<string, string>
+): ParsedUrlQuery {
+	const next: ParsedUrlQuery = {}
+	for (const key in query) if (!key.startsWith(VARIABLE_QUERY_PREFIX)) next[key] = query[key]
+	for (const id in overrides) next[`${VARIABLE_QUERY_PREFIX}${id}`] = overrides[id]
+	return next
 }
 
 function describeItem(item: DashboardItemConfig): string {

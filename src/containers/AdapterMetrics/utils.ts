@@ -1,3 +1,4 @@
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type {
 	MultiSeriesChartDataset,
@@ -9,6 +10,7 @@ import type {
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { getNDistinctColors } from '~/utils'
 import { formatFixedNumber } from '~/utils/numberFormat'
+import { parseIncludeExcludeParam } from '~/utils/routerQuery'
 import type { ADAPTER_TYPES } from './constants'
 import type { IAdapterByChainPageData, IChainsByAdapterPageData, IProtocol } from './types'
 
@@ -17,6 +19,38 @@ export type ActiveLiquidityData = { total24h: number | null; doublecounted: bool
 export type NormalizedVolumeData = { total24h: number | null }
 
 /** Table/category filter: which protocol rows belong to the selected categories (including child protocols). */
+/**
+ * Applies the page URL's `category` and `excludeCategory` filters. `category=None`, which the picker's
+ * "Deselect All" writes, and an empty `category=` select nothing and show no rows.
+ */
+export function filterProtocolsByCategoryQuery(
+	protocols: IAdapterByChainPageData['protocols'],
+	categories: Array<string>,
+	query: ParsedUrlQuery
+): { selectedCategories: Array<string>; protocols: Array<IProtocol> } {
+	const selectedCategories = parseIncludeExcludeParam(query.category, query.excludeCategory, categories)
+
+	const categoriesToFilter: Array<string> = []
+	for (const category of selectedCategories) {
+		const normalizedCategory = category.toLowerCase()
+		if (normalizedCategory !== 'all' && normalizedCategory !== 'none') {
+			categoriesToFilter.push(category)
+		}
+	}
+
+	return {
+		selectedCategories,
+		protocols:
+			categories.length === 0
+				? protocols
+				: selectedCategories.length === 0
+					? []
+					: categoriesToFilter.length > 0
+						? getProtocolsByCategory(protocols, categoriesToFilter)
+						: protocols
+	}
+}
+
 export function getProtocolsByCategory(
 	protocols: IAdapterByChainPageData['protocols'],
 	categoriesToFilter: Array<string>

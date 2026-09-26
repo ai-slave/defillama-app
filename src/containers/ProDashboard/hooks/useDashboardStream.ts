@@ -4,6 +4,7 @@ import { createDashboardStreamLineParser } from '~/containers/ProDashboard/dashb
 import { parseDashboardQueryKey } from '../dashboardQueryKey'
 import type { DashboardStreamChunk } from '../dashboardStreamContract'
 import type { Dashboard } from '../dashboardTypes'
+import { VARIABLE_QUERY_PREFIX } from '../dashboardVariables/resolve'
 import { getProRwaBreakdownQueryKey } from '../rwaBreakdown'
 import {
 	getProEquitiesFilingsCacheKey,
@@ -84,7 +85,7 @@ export function buildStreamRequest(
 	else if (options.version) params.set('v', options.version)
 	if (options.itemId) params.set('item', options.itemId)
 	for (const id of Object.keys(options.variableOverrides ?? {}).sort()) {
-		params.set(`var-${id}`, options.variableOverrides![id] as string)
+		params.set(`${VARIABLE_QUERY_PREFIX}${id}`, options.variableOverrides![id] as string)
 	}
 	const query = params.toString()
 	const url = `/api/dynamic/pro-dashboard/${dashboardId}/stream${query ? `?${query}` : ''}`
