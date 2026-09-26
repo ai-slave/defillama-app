@@ -210,6 +210,19 @@ export function getStablecoinOverviewSeriesChart(
 	return null
 }
 
+/**
+ * The summary header shows the market cap of the stablecoins that pass the filters. Overview series payloads
+ * carry that summary; a filtered chart without one (volume, market cap pie/hbar/treemap) fetches it from the
+ * filtered total market cap series.
+ */
+export function getStablecoinSummarySeriesChart(
+	type: StablecoinChartType,
+	view: StablecoinChartView,
+	hasActiveFilters: boolean
+): 'totalMcap' | null {
+	return hasActiveFilters && getStablecoinOverviewSeriesChart(type, view) == null ? 'totalMcap' : null
+}
+
 export function getStablecoinChainsSeriesChart(
 	type: StablecoinChartType,
 	view: StablecoinChartView

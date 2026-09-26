@@ -39,6 +39,7 @@ import {
 	getStablecoinOverviewSeriesChart,
 	getStablecoinOverviewVolumeChartKind,
 	getStablecoinSeriesSelectorLabel,
+	getStablecoinSummarySeriesChart,
 	parseStablecoinChartState,
 	parseStablecoinVolumeGroupBy,
 	type StablecoinChartType as StablecoinChartCategory
@@ -251,8 +252,6 @@ export function StablecoinsByChain({
 	const isVolumeChart = volumeChartKind != null
 	const isGroupedBarChart = isVolumeChart || chartType === 'inflows'
 	const overviewChartType = getStablecoinOverviewSeriesChart(chartType, chartView)
-	const isMarketCapTableChart =
-		chartType === 'marketCap' && (chartView === 'pie' || chartView === 'hbar' || chartView === 'treemap')
 	const shouldFetchOverviewChart =
 		overviewChartType != null && (chartType !== 'marketCap' || chartView !== 'total' || hasActiveStablecoinUrlFilters)
 	const overviewChartQuery = useStablecoinChartSeriesData({
@@ -264,12 +263,12 @@ export function StablecoinsByChain({
 		filters: stablecoinFilterQuery,
 		enabled: shouldFetchOverviewChart
 	})
+	const summarySeriesChart = getStablecoinSummarySeriesChart(chartType, chartView, hasActiveStablecoinUrlFilters)
 	const summaryChartQuery = useStablecoinChartSeriesData({
 		scope: 'overview',
 		chain: selectedChain,
-		chart: 'totalMcap',
-		filters: stablecoinFilterQuery,
-		enabled: isMarketCapTableChart && hasActiveStablecoinUrlFilters
+		chart: summarySeriesChart,
+		filters: stablecoinFilterQuery
 	})
 	const selectedChartData =
 		shouldFetchOverviewChart && overviewChartType
@@ -283,11 +282,11 @@ export function StablecoinsByChain({
 			(selectedChartData == null && (overviewChartQuery.isFetching || overviewChartQuery.data != null)))
 	const isSelectedChartUnavailable =
 		shouldFetchOverviewChart && !isSelectedChartLoading && (overviewChartQuery.error != null || !selectedChartData)
-	const chartSummary = hasActiveStablecoinUrlFilters
-		? isMarketCapTableChart
-			? (summaryChartQuery.data?.summary ?? null)
-			: (selectedChartData?.summary ?? null)
-		: (selectedChartData?.summary ?? defaultChartData.summary)
+	const chartSummary = summarySeriesChart
+		? (summaryChartQuery.data?.summary ?? null)
+		: hasActiveStablecoinUrlFilters
+			? (selectedChartData?.summary ?? null)
+			: (selectedChartData?.summary ?? defaultChartData.summary)
 	const changeStats = [
 		toChangeStat(7, chartSummary?.change7d, chartSummary?.change7dUsd),
 		toChangeStat(1, chartSummary?.change1d, chartSummary?.change1dUsd),

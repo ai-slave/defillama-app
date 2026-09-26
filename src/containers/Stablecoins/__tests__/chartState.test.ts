@@ -7,6 +7,7 @@ import {
 	getStablecoinChartViewOptions,
 	getStablecoinOverviewVolumeChartKind,
 	getStablecoinSeriesSelectorLabel,
+	getStablecoinSummarySeriesChart,
 	parseStablecoinVolumeGroupBy,
 	parseStablecoinChartState
 } from '../chartState'
@@ -90,6 +91,19 @@ describe('stablecoin chart state', () => {
 		expect(getStablecoinAssetVolumeChartKind('volume', 'byChain')).toBe('chain')
 		expect(getStablecoinAssetVolumeChartKind('volume', 'byToken')).toBe('total')
 		expect(getStablecoinAssetVolumeChartKind('marketCap', 'total')).toBeNull()
+	})
+
+	test('fetches the filtered market cap summary for filtered charts without their own summary', () => {
+		expect(getStablecoinSummarySeriesChart('volume', 'total', true)).toBe('totalMcap')
+		expect(getStablecoinSummarySeriesChart('volume', 'byToken', true)).toBe('totalMcap')
+		expect(getStablecoinSummarySeriesChart('marketCap', 'pie', true)).toBe('totalMcap')
+		// Market cap series and inflows payloads already carry the filtered summary.
+		expect(getStablecoinSummarySeriesChart('marketCap', 'breakdown', true)).toBeNull()
+		expect(getStablecoinSummarySeriesChart('inflows', 'usd', true)).toBeNull()
+		expect(getStablecoinSummarySeriesChart('inflows', 'token', true)).toBeNull()
+		// Unfiltered pages read the server-rendered summary.
+		expect(getStablecoinSummarySeriesChart('volume', 'total', false)).toBeNull()
+		expect(getStablecoinSummarySeriesChart('marketCap', 'pie', false)).toBeNull()
 	})
 
 	test('labels the peer selector by page and leaves total views without one', () => {
