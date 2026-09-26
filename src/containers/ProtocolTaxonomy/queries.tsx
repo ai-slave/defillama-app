@@ -482,6 +482,7 @@ export async function getProtocolTaxonomyPageData(
 	const config = effectiveCategory ? protocolCategoryConfig[effectiveCategory] : null
 	const categoryMetrics: ProtocolCategoryMetrics | undefined = config?.metrics
 	const chartMetrics = getProtocolCategoryChartMetrics(effectiveCategory)
+	const hasBorrowedColumns = categoryMetrics?.borrowed === true
 	const hasCardBreakdowns = effectiveCategory === CARD_ISSUER_CATEGORY && !chain
 	const categoryOrTagConfig = getCategoryOrTagConfig({
 		categoriesAndTags,
@@ -917,7 +918,7 @@ export async function getProtocolTaxonomyPageData(
 			tvl,
 			extraTvls,
 			mcap: protocol.mcap,
-			...(effectiveCategory && ['Lending'].includes(effectiveCategory) ? { borrowed, supplied, suppliedTvl } : {}),
+			...(hasBorrowedColumns ? { borrowed, supplied, suppliedTvl } : {}),
 			fees: feesData === null ? null : (adapterProtocolData?.fees ?? ZERO_PROTOCOL_METRIC_TOTALS),
 			revenue: revenueData === null ? null : (adapterProtocolData?.revenue ?? ZERO_PROTOCOL_METRIC_TOTALS),
 			dexVolume: dexVolumeData === null ? null : (adapterProtocolData?.dexVolume ?? ZERO_PROTOCOL_METRIC_TOTALS),
@@ -1008,7 +1009,7 @@ export async function getProtocolTaxonomyPageData(
 			chains: parentProtocol.chains,
 			mcap: parentProtocol.mcap,
 			tvl: hiddenParentTvls?.has(parentSlug) ? null : tvl,
-			...(effectiveCategory && ['Lending'].includes(effectiveCategory) ? { borrowed, supplied, suppliedTvl } : {}),
+			...(hasBorrowedColumns ? { borrowed, supplied, suppliedTvl } : {}),
 			extraTvls,
 			fees,
 			revenue,

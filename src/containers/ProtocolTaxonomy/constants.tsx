@@ -369,7 +369,20 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 		searchPlaceholder: 'Search options vaults...'
 	},
 	'Uncollateralized Lending': {
-		description: 'Protocol that allows you to lend against known parties that can borrow without collaterall'
+		description: 'Protocol that allows you to lend against known parties that can borrow without collaterall',
+		metrics: { borrowed: true },
+		columns: [
+			'name',
+			'tvl',
+			'borrowed',
+			'fees_7d',
+			'revenue_7d',
+			'mcap/tvl',
+			'fees_30d',
+			'revenue_30d',
+			'fees_24h',
+			'revenue_24h'
+		]
 	},
 	'Exotic Options': { description: 'Protocols that provide option vaults while also adding borrowing on top' },
 	'Liquidity Manager': { description: 'Protocols that manage Liquidity Positions in concentrated liquidity AMMs' },
