@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
+import { settleQueries } from '~/utils/testing/settleQueries'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { TokenLiquidationsSection } from '../TokenLiquidationsSection'
 import { TokenUnlocksSection } from '../TokenUnlocksSection'
@@ -46,19 +47,22 @@ test('a subscriber sees token usage by descending amount, with CEXs only after o
 	await render(<TokenUsageSection tokenSymbol="link" />)
 
 	const names = () => [...container.querySelectorAll('tbody tr')].map((row) => row.querySelector('td')?.textContent)
-	await vi.waitFor(() => expect(names()).toEqual(['Compound', 'Aave']))
+	await settleQueries(session.client)
+	expect(names()).toEqual(['Compound', 'Aave'])
 
 	const includeCexs = [...container.querySelectorAll('label')].find((label) => label.textContent === 'Include CEXs')!
 	await act(async () => includeCexs.click())
 
-	await vi.waitFor(() => expect(names()).toEqual(['Binance', 'Compound', 'Aave']))
+	await settleQueries(session.client)
+	expect(names()).toEqual(['Binance', 'Compound', 'Aave'])
 })
 
 test('a subscriber sees the server reason when token unlocks fail to load', async () => {
 	session.serve({ '/api/private/token-unlocks/solana': fixtureStatus(503, { error: 'Unlocks are being rebuilt' }) })
 	await render(<TokenUnlocksSection resolvedUnlocksSlug="solana" />)
 
-	await vi.waitFor(() => expect(container.textContent).toContain('Unlocks are being rebuilt'))
+	await settleQueries(session.client)
+	expect(container.textContent).toContain('Unlocks are being rebuilt')
 })
 
 test('the liquidations section shows a token with positions and stays hidden for one without', async () => {
@@ -102,13 +106,11 @@ test('the liquidations section shows a token with positions and stays hidden for
 		'/api/private/token-liquidations/rETH': liquidations('RETH', 0)
 	})
 	await render(<TokenLiquidationsSection tokenSymbol="wstETH" />)
-	await vi.waitFor(() => expect(container.textContent).toContain('Liquidations'))
+	await settleQueries(session.client)
+	expect(container.textContent).toContain('Liquidations')
 
 	await render(<TokenLiquidationsSection tokenSymbol="rETH" />)
-	await vi.waitFor(() =>
-		expect(session.requests.some((request) => request.url.pathname === '/api/private/token-liquidations/rETH')).toBe(
-			true
-		)
-	)
-	await vi.waitFor(() => expect(container.textContent).toBe(''))
+	await settleQueries(session.client)
+	expect(session.requests.some((request) => request.url.pathname === '/api/private/token-liquidations/rETH')).toBe(true)
+	expect(container.textContent).toBe('')
 })

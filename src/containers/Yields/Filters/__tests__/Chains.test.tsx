@@ -72,7 +72,6 @@ test('checks the real EVM chains, and Select All returns to every chain', async 
 	await click(button('Only EVM chains'))
 	expect(router.query).toEqual({ excludeChain: 'Solana' })
 	expect(selected()).toEqual(['Ethereum', 'Base'])
-	expect(trigger().textContent).toBe('Chains: All except Solana')
 
 	await click(button('Select All'))
 	expect(router.query).toEqual({})

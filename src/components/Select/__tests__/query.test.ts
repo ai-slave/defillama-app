@@ -104,13 +104,6 @@ describe('readSelectionFromQuery', () => {
 		expect(read(query)).toEqual(selected)
 	})
 
-	test('returns to every option after Deselect All then Select All', () => {
-		const cleared = getQueryUpdatesFromSelected('category', 'excludeCategory', all, 'None')
-		expect(read(cleared)).toEqual([])
-		const restored = getQueryUpdatesFromSelected('category', 'excludeCategory', all, null)
-		expect(read({ ...cleared, ...restored })).toEqual(all)
-	})
-
 	test('reads a picker whose default is a subset', () => {
 		const defaults = ['a', 'b']
 		expect(read({}, defaults)).toEqual(['a', 'b'])

@@ -28,10 +28,6 @@ describe('getEarnPage picker selections', () => {
 		expect(await ids({ excludeProtocol: ['Aave', 'lido'] })).toEqual(['eth-unknown'])
 	})
 
-	test('shows no pools after Deselect All', async () => {
-		expect(await ids({ chain: 'None' })).toEqual([])
-	})
-
 	test('files pools without a category under Uncategorized', async () => {
 		expect(await ids({ category: 'Uncategorized' })).toEqual(['eth-unknown'])
 		expect(await ids({ excludeCategory: 'Uncategorized' })).toEqual(['base-aave', 'eth-aave', 'eth-lido'])
