@@ -19,6 +19,7 @@ import type {
 	IRWAChartMetricRows,
 	IRWAInitialChartDataset,
 	RWAChartMetricKey,
+	RWAOverviewDisplayRow,
 	RWASpotOverviewAsset,
 	RWAAssetChartTarget,
 	RWADefiTvlProtocolBreakdown
@@ -39,7 +40,7 @@ import {
 	type RWAOverviewMode
 } from './constants'
 import { definitions } from './definitions'
-import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
+import { getRwaRowFilterValues, type RWASelectFilterKey } from './filterState'
 import { aggregateRwaMetrics, hasMetricBreakdown } from './overviewAssembly'
 import { fetchRWAPerpsCurrent, fetchRWAPerpsOverviewBreakdownChartData } from './Perps/api'
 import type { IRWAPerpsMarket } from './Perps/api.types'
@@ -97,6 +98,26 @@ function getSortedBreakdownEntries(breakdown: Record<string, number>, selectedCh
 	}
 	entries.sort((a, b) => b[1] - a[1])
 	return entries
+}
+
+type RWAFilterOptionKey = Exclude<RWASelectFilterKey, 'assetNames'>
+type RWAFilterOptionWeights = Record<RWAFilterOptionKey, Map<string, number>>
+
+function addRwaFilterOptions(options: RWAFilterOptionWeights, row: RWAOverviewDisplayRow, weight: number) {
+	let key: RWAFilterOptionKey
+	for (key in options) {
+		// Types is a spot filter; the view switch owns the perps rows.
+		if (key === 'types' && row.kind === 'perps') continue
+		for (const value of getRwaRowFilterValues(row, key)) {
+			options[key].set(value, (options[key].get(value) ?? 0) + weight)
+		}
+	}
+}
+
+function rankRwaFilterOptions(weights: Map<string, number>): Array<string> {
+	return Array.from(weights.entries())
+		.sort((a, b) => b[1] - a[1])
+		.map(([key]) => key)
 }
 
 /**
@@ -303,15 +324,17 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		}
 
 		const assets: IRWAAssetsOverview['assets'] = []
-		const types = new Map<string, number>()
-		const assetClasses = new Map<string, number>()
-		const rwaClassifications = new Map<string, number>()
-		const accessModels = new Map<string, number>()
-		const categories = new Map<string, number>()
-		const platforms = new Map<string, number>()
-		const assetGroups = new Map<string, number>()
+		const filterOptions: RWAFilterOptionWeights = {
+			types: new Map(),
+			assetGroups: new Map(),
+			categories: new Map(),
+			platforms: new Map(),
+			assetClasses: new Map(),
+			rwaClassifications: new Map(),
+			accessModels: new Map(),
+			issuers: new Map()
+		}
 		const assetNames = new Map<string, number>()
-		const issuers = new Map<string, number>()
 		const issuerSet = new Set<string>()
 		const issuerSetStablecoinsOnly = new Set<string>()
 		const issuerSetGovernanceOnly = new Set<string>()
@@ -513,35 +536,8 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					totalDeFiActiveTvlStablecoinsAndGovernance += effectiveDeFiActiveTvl
 				}
 
-				// Add to categories/issuers/assetClasses/rwaClassifications/accessModels for assets on this chain
-				if (asset.type) {
-					types.set(asset.type, (types.get(asset.type) ?? 0) + effectiveOnChainMcap)
-				}
-				for (const assetClass of asset.assetClass ?? []) {
-					if (assetClass) {
-						assetClasses.set(assetClass, (assetClasses.get(assetClass) ?? 0) + effectiveOnChainMcap)
-					}
-				}
-				const primaryCategory = getPrimaryRwaCategory(asset.category)
-				if (primaryCategory) {
-					categories.set(primaryCategory, (categories.get(primaryCategory) ?? 0) + effectiveOnChainMcap)
-				}
-				for (const platform of getRwaPlatforms(asset.parentPlatform)) {
-					if (platform === UNKNOWN_PLATFORM) continue
-					platforms.set(platform, (platforms.get(platform) ?? 0) + effectiveOnChainMcap)
-				}
-				// Preserve assets with blank assetGroup values by assigning them to the normalized Unknown bucket.
-				const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-				assetGroups.set(assetGroup, (assetGroups.get(assetGroup) ?? 0) + effectiveOnChainMcap)
-				if (asset.rwaClassification) {
-					rwaClassifications.set(
-						asset.rwaClassification,
-						(rwaClassifications.get(asset.rwaClassification) ?? 0) + effectiveOnChainMcap
-					)
-				}
-				if (asset.accessModel) {
-					accessModels.set(asset.accessModel, (accessModels.get(asset.accessModel) ?? 0) + effectiveOnChainMcap)
-				}
+				// Filter options come from the rows they filter, Unknown included, ranked by onchain mcap.
+				addRwaFilterOptions(filterOptions, asset, effectiveOnChainMcap)
 				if (asset.issuer) {
 					// issuerSet is used for *base* issuer count (exclude stablecoin/governance buckets)
 					if (includeInAggregates && isBaseAsset) {
@@ -553,10 +549,6 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 					} else if (includeInAggregates && isStablecoinAndGovernance) {
 						issuerSetStablecoinsAndGovernance.add(asset.issuer)
 					}
-					issuers.set(asset.issuer, (issuers.get(asset.issuer) ?? 0) + effectiveOnChainMcap)
-				} else {
-					// Surface assets without a known issuer as a selectable "Unknown" bucket so they can be filtered out.
-					issuers.set('Unknown', (issuers.get('Unknown') ?? 0) + effectiveOnChainMcap)
 				}
 			}
 		}
@@ -575,55 +567,14 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 			if (selectedPlatform) {
 				assetNames.set(asset.assetName, assetNames.get(asset.assetName) ?? 0)
 			}
-			// Types is a spot filter; the view switch owns the perps rows.
-			for (const assetClass of asset.assetClass ?? []) {
-				assetClasses.set(assetClass, assetClasses.get(assetClass) ?? 0)
-			}
-			const primaryCategory = getPrimaryRwaCategory(asset.category)
-			if (primaryCategory) {
-				categories.set(primaryCategory, categories.get(primaryCategory) ?? 0)
-			}
-			for (const platform of getRwaPlatforms(asset.parentPlatform)) {
-				if (platform === UNKNOWN_PLATFORM) continue
-				platforms.set(platform, platforms.get(platform) ?? 0)
-			}
-			const assetGroup = normalizeRwaAssetGroup(asset.assetGroup)
-			assetGroups.set(assetGroup, assetGroups.get(assetGroup) ?? 0)
-			if (asset.rwaClassification) {
-				rwaClassifications.set(asset.rwaClassification, rwaClassifications.get(asset.rwaClassification) ?? 0)
-			}
-			if (asset.accessModel) {
-				accessModels.set(asset.accessModel, accessModels.get(asset.accessModel) ?? 0)
-			}
-			const issuer = asset.issuer || 'Unknown'
-			issuers.set(issuer, issuers.get(issuer) ?? 0)
+			addRwaFilterOptions(filterOptions, asset, 0)
 		}
 
-		const formattedRwaClassifications = Array.from(rwaClassifications.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-
-		const formattedAccessModels = Array.from(accessModels.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-
-		const formattedTypes = Array.from(types.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-
-		const formattedAssetClasses = Array.from(assetClasses.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-
-		const formattedCategories = Array.from(categories.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-		const formattedPlatforms = Array.from(platforms.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
-		const formattedAssetGroups = Array.from(assetGroups.entries())
-			.sort((a, b) => b[1] - a[1])
-			.map(([key]) => key)
+		const formattedRwaClassifications = rankRwaFilterOptions(filterOptions.rwaClassifications)
+		const formattedAccessModels = rankRwaFilterOptions(filterOptions.accessModels)
+		const formattedTypes = rankRwaFilterOptions(filterOptions.types)
+		const formattedAssetClasses = rankRwaFilterOptions(filterOptions.assetClasses)
+		const formattedCategories = rankRwaFilterOptions(filterOptions.categories)
 
 		const chainNavValues = params.rwaList.chains.map((chain) => ({
 			label: chain,
@@ -748,16 +699,14 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 				const help = definitions.category.values?.[category]
 				return { key: category, name: category, ...(help ? { help } : {}) }
 			}),
-			platforms: formattedPlatforms,
-			assetGroups: formattedAssetGroups,
+			platforms: rankRwaFilterOptions(filterOptions.platforms),
+			assetGroups: rankRwaFilterOptions(filterOptions.assetGroups),
 			assetNames: selectedPlatform
 				? Array.from(assetNames.entries())
 						.sort((a, b) => b[1] - a[1])
 						.map(([key]) => key)
 				: [],
-			issuers: Array.from(issuers.entries())
-				.sort((a, b) => b[1] - a[1])
-				.map(([key]) => key),
+			issuers: rankRwaFilterOptions(filterOptions.issuers),
 			selectedChain: actualChainName ?? 'All',
 			chainLinks:
 				selectedCategory || selectedPlatform || selectedAssetGroup || chainNavValues.length === 0

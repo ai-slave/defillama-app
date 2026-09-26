@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SummaryCardGrid } from '~/ui/SummaryStats'
-import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import { foldRwaPerpsTotals, rankRwaDefiProtocols } from './cards/cardData'
 import { RWAOverviewCards } from './cards/OverviewCards'
@@ -10,12 +10,7 @@ import type { RWAOverviewMode } from './constants'
 import { RWAOverviewFilters } from './Filters'
 import { useRWAFlowSummary } from './flows.hooks'
 import { RWAHighlights } from './highlights/Highlights'
-import {
-	useFilteredRwaAssets,
-	useRWATableQueryParams,
-	hasActiveChartFilters,
-	hasActiveRwaAttributeFilters
-} from './hooks'
+import { useFilteredRwaAssets, useRWATableQueryParams, hasRwaInclusionOverrides } from './hooks'
 import { RWAKeyMetrics } from './kpi/KeyMetrics'
 import { sumRwaKpiTotals } from './kpi/kpiTotals'
 import { RWAPlatformKeyMetrics } from './kpi/PlatformKeyMetrics'
@@ -63,6 +58,16 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 	const isPlatformMode = mode === 'platform'
 	const isAssetGroupMode = mode === 'assetGroup'
 
+	const selectFilterOptions = useMemo(
+		() => ({
+			...rankedFilterValues,
+			assetNames: props.assetNames,
+			platforms: props.platforms,
+			assetGroups: props.assetGroups,
+			issuers: props.issuers
+		}),
+		[rankedFilterValues, props.assetNames, props.platforms, props.assetGroups, props.issuers]
+	)
 	const {
 		selectedAssetNames,
 		selectedTypes,
@@ -93,28 +98,15 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		includeBridgeTvl,
 		includeWrappers,
 		hasPerpsOverlayBlockingFilters,
+		hasDialogFilters,
 		setDefiActiveTvlToOnChainMcapPctRange,
 		setActiveMcapToOnChainMcapPctRange,
 		setDefiActiveTvlToActiveMcapPctRange,
 		setIncludeRwaPerps,
-		setIncludeCex,
-		setRedeemableStates,
-		setAttestationsStates,
-		setCexListedStates,
-		setKycForMintRedeemStates,
-		setKycAllowlistedWhitelistedToTransferHoldStates,
-		setTransferableStates,
-		setSelfCustodyStates
+		setIncludeCex
 	} = useRWATableQueryParams({
-		assetNames: props.assetNames,
-		types: rankedFilterValues.types,
-		categories: rankedFilterValues.categories,
-		platforms: props.platforms,
-		assetClasses: rankedFilterValues.assetClasses,
-		rwaClassifications: rankedFilterValues.rwaClassifications,
-		accessModels: rankedFilterValues.accessModels,
-		issuers: props.issuers,
-		assetGroups: props.assetGroups,
+		options: selectFilterOptions,
+		mode,
 		defaultInclusion: props.defaultInclusion
 	})
 
@@ -152,8 +144,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		maxDefiActiveTvlToActiveMcapPct
 	})
 
-	const activeFilters = hasActiveChartFilters(router.query, props.defaultInclusion)
-	const activeAttributeFilters = hasActiveRwaAttributeFilters(router.query)
+	const activeFilters = hasDialogFilters || hasRwaInclusionOverrides(router.query, props.defaultInclusion)
 	/* A platform page is spot only: its perps live on the venue page, whatever a shared link says. */
 	const tableView: RWATableView = includeRwaPerps && !props.platformPage ? 'perps' : 'assets'
 	const groupByScope: RWAGroupByScope = getAssetChartTarget(props).kind
@@ -176,21 +167,8 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		[router]
 	)
 
-	// Preserve filter/toggle query params only in chain mode.
-	// (The chain/category/platform itself is in the pathname, so we strip the dynamic param from the query object.)
-	const baseNavLinks = getModeLinks(
-		mode,
-		props.chainLinks,
-		props.categoryLinks,
-		props.platformLinks,
-		props.assetGroupLinks
-	)
-	let navLinks = baseNavLinks
-	if (isChainMode) {
-		const { chain: _chain, category: _category, platform: _platform, ...restQuery } = router.query
-		const qs = toQueryString(restQuery)
-		if (qs) navLinks = baseNavLinks.map((link) => ({ ...link, to: `${link.to}${qs}` }))
-	}
+	// Switching chain starts a clean page: filter values from one chain may not exist on another.
+	const navLinks = getModeLinks(mode, props.chainLinks, props.categoryLinks, props.platformLinks, props.assetGroupLinks)
 
 	const selectedModeLabel = getSelectedModeLabel(mode, props)
 	const showFilters = props.assets.length > 0
@@ -261,7 +239,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 				includeCex={includeCex}
 				includeBridgeTvl={includeBridgeTvl}
 				activeFilters={activeFilters}
-				activeAttributeFilters={activeAttributeFilters}
+				activeAttributeFilters={hasDialogFilters}
 			/>
 		)
 
@@ -321,14 +299,7 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 		actions: {
 			setDefiActiveTvlToOnChainMcapPctRange,
 			setActiveMcapToOnChainMcapPctRange,
-			setDefiActiveTvlToActiveMcapPctRange,
-			setRedeemableStates,
-			setAttestationsStates,
-			setCexListedStates,
-			setKycForMintRedeemStates,
-			setKycAllowlistedWhitelistedToTransferHoldStates,
-			setTransferableStates,
-			setSelfCustodyStates
+			setDefiActiveTvlToActiveMcapPctRange
 		}
 	}
 

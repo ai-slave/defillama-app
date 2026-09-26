@@ -1,18 +1,12 @@
 import type { ComponentProps } from 'react'
 import { describe, expect, test } from 'vitest'
 import { RWA_FILTERS_TEST_UTILS, type RWAOverviewFilters } from '../Filters'
+import { readRwaQueryFilters } from '../filterState'
 
 const actions = {
 	setDefiActiveTvlToOnChainMcapPctRange: () => {},
 	setActiveMcapToOnChainMcapPctRange: () => {},
-	setDefiActiveTvlToActiveMcapPctRange: () => {},
-	setRedeemableStates: () => {},
-	setAttestationsStates: () => {},
-	setCexListedStates: () => {},
-	setKycForMintRedeemStates: () => {},
-	setKycAllowlistedWhitelistedToTransferHoldStates: () => {},
-	setTransferableStates: () => {},
-	setSelfCustodyStates: () => {}
+	setDefiActiveTvlToActiveMcapPctRange: () => {}
 }
 
 const baseProps: ComponentProps<typeof RWAOverviewFilters> = {
@@ -119,18 +113,11 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludeTypes).toBeUndefined()
 	})
 
-	test('marks changed select filters active and serializes them with the shared include/exclude rules', () => {
-		const props = makeProps({
-			selections: {
-				selectedPlatforms: ['Ondo', 'Maple']
-			}
-		})
+	test('opens a narrowed select filter as active in the dialog', () => {
+		const props = makeProps({ selections: { selectedPlatforms: ['Ondo', 'Maple'] } })
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
-		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, draft)
 
-		expect(draft.activeIds).toContain('platforms')
-		expect(updates.platforms).toBeUndefined()
-		expect(updates.excludePlatforms).toBe('Centrifuge')
+		expect(draft.activeIds).toEqual(['platforms'])
 	})
 
 	test('seeds a newly added select filter with current values instead of an empty None selection', () => {
@@ -148,30 +135,56 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludePlatforms).toBeUndefined()
 	})
 
-	test('keeps reset enabled for hidden filter, chart, and flow params', () => {
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ types: 'Asset' })).toBe(true)
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ chartView: 'treemap' })).toBe(true)
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ timeSeriesChartBreakdown: 'total' })).toBe(true)
-		for (const key of [
-			'flowMode',
-			'flowOverlays',
-			'flowRotationView',
-			'flowRotationBy',
-			'flowRotationFrequency',
-			'flowHeatmapSize',
-			'flowTreemapSize'
-		]) {
-			expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ [key]: 'custom' })).toBe(true)
+	test('saved filters read back as the selections the dialog saved', () => {
+		const props = makeProps()
+		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
+		const updates = RWA_FILTERS_TEST_UTILS.serializeRwaFilterDraft(props as any, {
+			...draft,
+			activeIds: ['types', 'platforms', 'issuers', 'redeemableStates', 'attestationsStates'],
+			selectValues: { ...draft.selectValues, types: ['Asset'], platforms: ['Ondo', 'Maple'], issuers: [] },
+			attributeStates: { redeemableStates: ['yes', 'no'], attestationsStates: [] }
+		})
+		const query: Record<string, string | Array<string>> = {}
+		for (const key in updates) {
+			const value = updates[key]
+			if (value !== undefined) query[key] = value
 		}
-		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({})).toBe(false)
+		const options = {
+			types: ['Asset', 'Platform', 'Wrapper'],
+			assetNames: ['USDY', 'USTB'],
+			assetGroups: ['Bonds', 'Private Credit'],
+			categories: ['Treasuries', 'Private Credit'],
+			platforms: ['Ondo', 'Maple', 'Centrifuge'],
+			assetClasses: ['Debt', 'Fund'],
+			rwaClassifications: ['Tokenized Asset', 'Synthetic'],
+			accessModels: ['Permissioned', 'Permissionless'],
+			issuers: ['Issuer One', 'Issuer Two']
+		}
+		const filters = readRwaQueryFilters(query, options, 'chain')
+
+		expect(filters.selectedTypes).toEqual(['Asset'])
+		expect(filters.selectedPlatforms).toEqual(['Ondo', 'Maple'])
+		expect(filters.selectedIssuers).toEqual([])
+		expect(filters.selectedRedeemableStates).toEqual(['yes', 'no'])
+		expect(filters.selectedAttestationsStates).toEqual([])
+		expect(filters.selectedCategories).toEqual(['Treasuries', 'Private Credit'])
 	})
 
-	test('does not render an active pill for an empty or stale exclude query', () => {
-		const props = makeProps()
-		const router = { query: { excludePlatforms: 'Bogus' } }
-		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, router as any)
+	test('labels a narrowed filter pill the way the picker trigger describes it', () => {
+		const props = makeProps({
+			selections: {
+				selectedTypes: [],
+				selectedPlatforms: ['Ondo', 'Maple'],
+				selectedRedeemableStates: ['yes', 'no']
+			}
+		})
+		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, { query: {} } as any)
 
-		expect(pills).toEqual([])
+		expect(pills.map((pill) => pill.label)).toEqual([
+			'Types: None',
+			'Platforms: All except Centrifuge',
+			'Redeemable: All except Unknown'
+		])
 	})
 })
 

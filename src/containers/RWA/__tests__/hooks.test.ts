@@ -10,8 +10,7 @@ import {
 	buildRwaAssetCategoryPieChartData,
 	buildRwaChartDataset,
 	fetchRwaAssetChartData,
-	hasActiveChartFilters,
-	hasActiveRwaAttributeFilters,
+	hasRwaInclusionOverrides,
 	resolveRWAOverviewInclusionFlag,
 	useRwaChartDataset
 } from '../hooks'
@@ -282,29 +281,22 @@ describe('resolveRWAOverviewInclusionFlag', () => {
 	})
 })
 
-describe('hasActiveChartFilters', () => {
+describe('hasRwaInclusionOverrides', () => {
 	test('ignores inclusion params that resolve to the current defaults', () => {
-		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
-		expect(hasActiveChartFilters({ includeGovernance: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
-		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(false)
-		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasActiveChartFilters({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
-		expect(hasActiveChartFilters({ includeCex: 'true' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeGovernance: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'true' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeRwaPerps: 'false' }, DEFAULT_INCLUSION)).toBe(false)
+		expect(hasRwaInclusionOverrides({ includeCex: 'true' }, DEFAULT_INCLUSION)).toBe(false)
 	})
 
 	test('treats inclusion params as active when they override the current defaults', () => {
-		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
-		expect(hasActiveChartFilters({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
-		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(true)
-		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
-	})
-
-	test('still treats non-inclusion query filters as active', () => {
-		expect(hasActiveChartFilters({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_ALL_INCLUSION)).toBe(true)
-	})
-
-	test('treats the bridge toggle as an active chart filter', () => {
-		expect(hasActiveChartFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+		expect(hasRwaInclusionOverrides({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'false' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(true)
+		expect(hasRwaInclusionOverrides({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
+		expect(hasRwaInclusionOverrides({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 })
 
@@ -370,13 +362,5 @@ describe('buildRwaAssetCategoryPieChartData', () => {
 		})
 
 		expect(data.pieChartData).toEqual([{ name: 'Private Credit', value: 40 }])
-	})
-})
-
-describe('hasActiveRwaAttributeFilters', () => {
-	test('counts Filters dialog keys but not the chart type, scope toggles or the view', () => {
-		expect(hasActiveRwaAttributeFilters({ platforms: 'Ondo' })).toBe(true)
-		expect(hasActiveRwaAttributeFilters({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
-		expect(hasActiveRwaAttributeFilters({ chartType: 'flows', includeStablecoins: 'true', perps: 'true' })).toBe(false)
 	})
 })

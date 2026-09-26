@@ -2,8 +2,7 @@ import { describe, expect, test } from 'vitest'
 import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
 	filterRwaOverviewDisplayRows,
-	hasPerpsOverlayBlockingFiltersFromQuery,
-	parseAttributeFilterStatesParam,
+	readRwaQueryFilters,
 	getRwaDisplayedDefiActiveTvl,
 	getRwaDisplayedDefiActiveTvlByChain,
 	getRwaDisplayedDefiActiveTvlByProtocol,
@@ -55,10 +54,10 @@ const baseFilterState: RWAFilterState = {
 	selectedAssetNames: [],
 	selectedTypes: ['Asset'],
 	selectedCategories: ['Treasuries'],
-	selectedPlatforms: [],
+	selectedPlatforms: ['Unknown'],
 	selectedAssetGroups: ['Treasuries'],
-	selectedAssetClasses: [],
-	selectedRwaClassifications: [],
+	selectedAssetClasses: ['Unknown'],
+	selectedRwaClassifications: ['Unknown'],
 	selectedAccessModels: ['Unknown'],
 	selectedIssuers: ['Issuer One'],
 	selectedRedeemableStates: ['yes', 'no', 'unknown'],
@@ -108,6 +107,63 @@ const cexPerp: RWAPerpsContractOverlayRow = {
 const sumOpenInterest = (rows: Array<{ openInterest: number | null }>) =>
 	rows.reduce((total, row) => total + (row.openInterest ?? 0), 0)
 
+const OPTIONS = {
+	types: ['Asset', 'Wrapper'],
+	assetNames: ['USDY', 'USTB'],
+	assetGroups: ['Bonds', 'Private Credit'],
+	categories: ['Treasuries', 'Private Credit'],
+	platforms: ['Ondo', 'Maple'],
+	assetClasses: ['Debt', 'Fund'],
+	rwaClassifications: ['RWA', 'Unknown'],
+	accessModels: ['Permissioned', 'Permissionless'],
+	issuers: ['Issuer One', 'Issuer Two']
+}
+
+describe('readRwaQueryFilters', () => {
+	test('reads an old Select All link as every option', () => {
+		expect(readRwaQueryFilters({ types: 'All' }, OPTIONS, 'chain').selectedTypes).toEqual(['Asset', 'Wrapper'])
+	})
+
+	test('ignores keys for pickers the page does not show', () => {
+		const query = { assetNames: 'USDY', categories: 'Treasuries', platforms: 'Ondo', types: 'Wrapper' }
+
+		const chainPage = readRwaQueryFilters(query, OPTIONS, 'chain')
+		expect(chainPage.selectedAssetNames).toEqual(['USDY', 'USTB'])
+		expect(chainPage.selectedCategories).toEqual(['Treasuries'])
+		expect(chainPage.selectedPlatforms).toEqual(['Ondo'])
+
+		const categoryPage = readRwaQueryFilters(query, OPTIONS, 'category')
+		expect(categoryPage.selectedCategories).toEqual(['Treasuries', 'Private Credit'])
+
+		const oneType = readRwaQueryFilters(query, { ...OPTIONS, types: ['Asset'] }, 'chain')
+		expect(oneType.selectedTypes).toEqual(['Asset'])
+	})
+
+	test('counts a filter as active only when it narrows the rows', () => {
+		const active = (query: Record<string, string>) => readRwaQueryFilters(query, OPTIONS, 'chain').hasDialogFilters
+
+		expect(active({})).toBe(false)
+		expect(active({ types: '' })).toBe(false)
+		expect(active({ types: 'All' })).toBe(false)
+		expect(active({ assetNames: 'USDY' })).toBe(false)
+		expect(active({ chartType: 'flows', includeStablecoins: 'true', perps: 'true' })).toBe(false)
+		expect(active({ excludeTypes: 'Asset' })).toBe(true)
+		expect(active({ redeemableStates: 'yes' })).toBe(true)
+		expect(active({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
+	})
+
+	test('hides perps rows only for asset names, attributes and ratios, which perps rows lack', () => {
+		const blocks = (query: Record<string, string>) =>
+			readRwaQueryFilters(query, OPTIONS, 'platform').hasPerpsOverlayBlockingFilters
+
+		expect(blocks({ types: 'Asset', categories: 'Treasuries', platforms: 'Ondo', perps: 'false' })).toBe(false)
+		expect(blocks({ assetNames: 'USDY' })).toBe(true)
+		expect(readRwaQueryFilters({ assetNames: 'USDY' }, OPTIONS, 'chain').hasPerpsOverlayBlockingFilters).toBe(false)
+		expect(blocks({ kycForMintRedeemStates: 'yes' })).toBe(true)
+		expect(blocks({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
+	})
+})
+
 describe('RWA filter state', () => {
 	test('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
 		const rows = [baseAsset, dexPerp, cexPerp]
@@ -139,11 +195,7 @@ describe('RWA filter state', () => {
 					...baseFilterState,
 					includeStablecoins,
 					includeGovernance,
-					includeCex: true,
-					hasPerpsOverlayBlockingFilters: hasPerpsOverlayBlockingFiltersFromQuery({
-						includeStablecoins: String(includeStablecoins),
-						includeGovernance: String(includeGovernance)
-					})
+					includeCex: true
 				})
 				expect(sumOpenInterest(result.aggregateAssets)).toBe(300)
 				expect(result.filteredAssets.map((asset) => asset.id)).toEqual([
@@ -170,31 +222,26 @@ describe('RWA filter state', () => {
 			...baseFilterState,
 			includeCex: true,
 			selectedAttestationsStates: ['yes'],
-			hasPerpsOverlayBlockingFilters: hasPerpsOverlayBlockingFiltersFromQuery({ attestationsStates: 'yes' })
+			hasPerpsOverlayBlockingFilters: true
 		})
 		expect(result.filteredAssets.map((asset) => asset.id)).toEqual(['asset-1'])
 		expect(sumOpenInterest(result.aggregateAssets)).toBe(0)
 	})
 
-	test('parses attribute filter state params', () => {
-		expect(parseAttributeFilterStatesParam(undefined)).toEqual(['yes', 'no', 'unknown'])
-		expect(parseAttributeFilterStatesParam('yes')).toEqual(['yes'])
-		expect(parseAttributeFilterStatesParam(['yes', 'unknown'])).toEqual(['yes', 'unknown'])
-		expect(parseAttributeFilterStatesParam('none')).toEqual([])
-		expect(parseAttributeFilterStatesParam('invalid')).toEqual(['yes', 'no', 'unknown'])
-	})
+	test('rows missing a field match only the Unknown option', () => {
+		const bare = { ...baseAsset, id: 'bare', type: null, category: null, parentPlatform: null, rwaClassification: null }
+		const shown = (overrides: Partial<RWAFilterState>) =>
+			filterRwaOverviewDisplayRows([bare], { ...baseFilterState, ...overrides }).filteredAssets.map((row) => row.id)
 
-	test('treats asset-only query filters as perps overlay blockers', () => {
-		// The Types filter is a spot classification; the view switch owns perps, so it never hides them.
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' })).toBe(true)
-	})
-
-	test('does not treat shared filters or includeRwaPerps as perps overlay blockers', () => {
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' })).toBe(false)
-		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' })).toBe(false)
+		expect(shown({ selectedTypes: ['Unknown'], selectedCategories: ['Unknown'] })).toEqual(['bare'])
+		expect(shown({ selectedTypes: [] })).toEqual([])
+		expect(shown({ selectedTypes: ['Unknown'], selectedCategories: [] })).toEqual([])
+		expect(shown({ selectedTypes: ['Unknown'], selectedCategories: ['Unknown'], selectedPlatforms: ['Ondo'] })).toEqual(
+			[]
+		)
+		expect(
+			shown({ selectedTypes: ['Unknown'], selectedCategories: ['Unknown'], selectedRwaClassifications: ['RWA'] })
+		).toEqual([])
 	})
 
 	test('does not include ratio-filtered rows with a zero denominator', () => {

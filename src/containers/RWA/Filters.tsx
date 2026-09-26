@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
@@ -11,14 +11,22 @@ import { Checkbox } from '~/ui/Checkbox'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercent } from '~/utils/numberFormat'
-import { parseNumberInput, pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
+import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import type { RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import {
+	getRwaExcludeQueryKey,
 	getRwaInclusionQueryValue,
 	hasActiveInclusionOverride,
-	updateAttributeFilterStatesQueryValue
+	isRwaSelectFilterShown,
+	RWA_ATTRIBUTE_FILTER_KEYS,
+	RWA_ATTRIBUTE_FILTER_STATES,
+	RWA_RATIO_FILTER_KEYS,
+	RWA_SELECT_FILTER_KEYS,
+	type RWAAttributeFilterKey,
+	type RWAAttributeFilterState,
+	type RWASelectFilterKey
 } from './filterState'
 import { RWAIncludeInTvlSelect } from './IncludeInTvl'
 import { getRwaInclusionDefault, RWA_INCLUSION_OPTIONS, type RWAInclusionKey } from './inclusion'
@@ -29,90 +37,26 @@ import { RWAListYourAssetsButton } from './links'
 const rangeInputShellStyles =
 	'flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-lg border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand'
 
-const ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
-type RWAAttributeFilterState = (typeof ATTRIBUTE_FILTER_STATES)[number]
 const ATTRIBUTE_FILTER_STATE_LABELS: Record<RWAAttributeFilterState, string> = {
 	yes: 'Yes',
 	no: 'No',
 	unknown: 'Unknown'
 }
+const ATTRIBUTE_FILTER_OPTIONS = RWA_ATTRIBUTE_FILTER_STATES.map((state) => ({
+	key: state,
+	name: ATTRIBUTE_FILTER_STATE_LABELS[state]
+}))
 
-const DIALOG_FILTER_QUERY_KEYS = [
-	'assetNames',
-	'excludeAssetNames',
-	'types',
-	'excludeTypes',
-	'categories',
-	'excludeCategories',
-	'platforms',
-	'excludePlatforms',
-	'assetGroups',
-	'excludeAssetGroups',
-	'assetClasses',
-	'excludeAssetClasses',
-	'rwaClassifications',
-	'excludeRwaClassifications',
-	'accessModels',
-	'excludeAccessModels',
-	'issuers',
-	'excludeIssuers',
-	'minDefiActiveTvlToOnChainMcapPct',
-	'maxDefiActiveTvlToOnChainMcapPct',
-	'minActiveMcapToOnChainMcapPct',
-	'maxActiveMcapToOnChainMcapPct',
-	'minDefiActiveTvlToActiveMcapPct',
-	'maxDefiActiveTvlToActiveMcapPct',
-	'redeemableStates',
-	'attestationsStates',
-	'cexListedStates',
-	'kycForMintRedeemStates',
-	'kycAllowlistedWhitelistedToTransferHoldStates',
-	'transferableStates',
-	'selfCustodyStates'
-] as const
-
-const FILTER_QUERY_KEYS = [
-	...DIALOG_FILTER_QUERY_KEYS,
-	'includeStablecoins',
-	'includeGovernance',
-	'perps',
-	'includeRwaPerps',
-	'includeCex',
-	'includeBridgeTvl',
-	'includeWrappers'
-] as const
-
-const CHART_QUERY_KEYS = [
-	'chartType',
-	'chartView',
-	'timeSeriesChartBreakdown',
-	'nonTimeSeriesChartBreakdown',
-	'treemapNestedBy',
-	'flowMode',
-	'flowOverlays',
-	'flowRotationView',
-	// Legacy key kept for cleanup when present in shared links/bookmarks.
-	'flowRotationBy',
-	'flowRotationFrequency',
-	'flowHeatmapSize',
-	// Legacy key kept for cleanup when present in shared links/bookmarks.
-	'flowTreemapSize',
-	// Legacy key kept for cleanup when present in shared links/bookmarks.
-	'pieChartBreakdown'
-] as const
-
-const RESETTABLE_QUERY_KEYS = [...FILTER_QUERY_KEYS, ...CHART_QUERY_KEYS] as const
+const DIALOG_FILTER_QUERY_KEYS: Array<string> = [
+	...RWA_SELECT_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
+	...RWA_ATTRIBUTE_FILTER_KEYS.flatMap((key) => [key, getRwaExcludeQueryKey(key)]),
+	...RWA_RATIO_FILTER_KEYS
+]
 
 const formatPercentRange = (minPercent: number | null, maxPercent: number | null) => {
 	const minLabel = minPercent != null ? formatPercent(minPercent, { input: 'percent' }) : 'no min'
 	const maxLabel = maxPercent != null ? formatPercent(maxPercent, { input: 'percent' }) : 'no max'
 	return `${minLabel} - ${maxLabel}`
-}
-
-const formatActiveFilterValues = (values: ReadonlyArray<string>) => {
-	if (values.length === 0) return 'None'
-	if (values.length <= 2) return values.join(', ')
-	return `${values[0]}, ${values[1]} + ${values.length - 2}`
 }
 
 type RWAFilterModes = {
@@ -172,13 +116,6 @@ type RWAFilterActions = {
 	setDefiActiveTvlToOnChainMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
 	setActiveMcapToOnChainMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
 	setDefiActiveTvlToActiveMcapPctRange: (minValue: string | number | null, maxValue: string | number | null) => void
-	setRedeemableStates: (values: Array<RWAAttributeFilterState>) => void
-	setAttestationsStates: (values: Array<RWAAttributeFilterState>) => void
-	setCexListedStates: (values: Array<RWAAttributeFilterState>) => void
-	setKycForMintRedeemStates: (values: Array<RWAAttributeFilterState>) => void
-	setKycAllowlistedWhitelistedToTransferHoldStates: (values: Array<RWAAttributeFilterState>) => void
-	setTransferableStates: (values: Array<RWAAttributeFilterState>) => void
-	setSelfCustodyStates: (values: Array<RWAAttributeFilterState>) => void
 }
 
 type RWAOverviewFiltersProps = {
@@ -191,7 +128,7 @@ type RWAOverviewFiltersProps = {
 }
 
 type RWAAttributeFilterConfig = {
-	queryKey: string
+	queryKey: RWAAttributeFilterKey
 	label: string
 	selectedStates: Array<RWAAttributeFilterState>
 }
@@ -200,10 +137,9 @@ type RWASelectFilterConfig = {
 	enabled: boolean
 	allValues: SelectValues
 	selectedValues: Array<string>
-	includeQueryKey: string
+	includeQueryKey: RWASelectFilterKey
 	excludeQueryKey: ExcludeQueryKey
 	label: string
-	defaultSelectedValues?: Array<string>
 }
 
 type RWARangeFilterConfig = {
@@ -257,7 +193,7 @@ const toggleAttributeFilterState = (
 	} else {
 		selectedSet.add(state)
 	}
-	return ATTRIBUTE_FILTER_STATES.filter((value) => selectedSet.has(value))
+	return RWA_ATTRIBUTE_FILTER_STATES.filter((value) => selectedSet.has(value))
 }
 
 function getRwaSelectFilters({
@@ -265,79 +201,34 @@ function getRwaSelectFilters({
 	options,
 	selections
 }: Pick<RWAOverviewFiltersProps, 'modes' | 'options' | 'selections'>): Array<RWASelectFilterConfig> {
+	const selectFilter = (
+		key: RWASelectFilterKey,
+		allValues: SelectValues,
+		selectedValues: Array<string>,
+		label: string
+	): RWASelectFilterConfig => ({
+		enabled: isRwaSelectFilterShown(key, modes.mode, allValues.length),
+		allValues,
+		selectedValues,
+		includeQueryKey: key,
+		excludeQueryKey: getRwaExcludeQueryKey(key),
+		label
+	})
 	return [
-		{
-			enabled: options.typeOptions.length > 1,
-			allValues: options.typeOptions,
-			selectedValues: selections.selectedTypes,
-			includeQueryKey: 'types',
-			excludeQueryKey: 'excludeTypes',
-			label: 'Types'
-		},
-		{
-			enabled: modes.isPlatformMode && options.assetNames.length > 1,
-			allValues: options.assetNames,
-			selectedValues: selections.selectedAssetNames,
-			includeQueryKey: 'assetNames',
-			excludeQueryKey: 'excludeAssetNames',
-			label: 'Asset Names'
-		},
-		{
-			enabled: options.assetGroups.length > 1,
-			allValues: options.assetGroups,
-			selectedValues: selections.selectedAssetGroups,
-			includeQueryKey: 'assetGroups',
-			excludeQueryKey: 'excludeAssetGroups',
-			label: 'Asset Groups'
-		},
-		{
-			enabled: (modes.isChainMode || modes.isPlatformMode) && options.categoriesOptions.length > 1,
-			allValues: options.categoriesOptions,
-			selectedValues: selections.selectedCategories,
-			includeQueryKey: 'categories',
-			excludeQueryKey: 'excludeCategories',
-			label: 'Categories'
-		},
-		{
-			enabled: (modes.isChainMode || modes.isCategoryMode) && options.platforms.length > 1,
-			allValues: options.platforms,
-			selectedValues: selections.selectedPlatforms,
-			includeQueryKey: 'platforms',
-			excludeQueryKey: 'excludePlatforms',
-			label: 'Platforms'
-		},
-		{
-			enabled: options.assetClassOptions.length > 1,
-			allValues: options.assetClassOptions,
-			selectedValues: selections.selectedAssetClasses,
-			includeQueryKey: 'assetClasses',
-			excludeQueryKey: 'excludeAssetClasses',
-			label: 'Asset Classes'
-		},
-		{
-			enabled: options.rwaClassificationOptions.length > 1,
-			allValues: options.rwaClassificationOptions,
-			selectedValues: selections.selectedRwaClassifications,
-			includeQueryKey: 'rwaClassifications',
-			excludeQueryKey: 'excludeRwaClassifications',
-			label: 'RWA Classification'
-		},
-		{
-			enabled: options.accessModelOptions.length > 1,
-			allValues: options.accessModelOptions,
-			selectedValues: selections.selectedAccessModels,
-			includeQueryKey: 'accessModels',
-			excludeQueryKey: 'excludeAccessModels',
-			label: 'Access Model'
-		},
-		{
-			enabled: options.issuers.length > 1,
-			allValues: options.issuers,
-			selectedValues: selections.selectedIssuers,
-			includeQueryKey: 'issuers',
-			excludeQueryKey: 'excludeIssuers',
-			label: 'Issuers'
-		}
+		selectFilter('types', options.typeOptions, selections.selectedTypes, 'Types'),
+		selectFilter('assetNames', options.assetNames, selections.selectedAssetNames, 'Asset Names'),
+		selectFilter('assetGroups', options.assetGroups, selections.selectedAssetGroups, 'Asset Groups'),
+		selectFilter('categories', options.categoriesOptions, selections.selectedCategories, 'Categories'),
+		selectFilter('platforms', options.platforms, selections.selectedPlatforms, 'Platforms'),
+		selectFilter('assetClasses', options.assetClassOptions, selections.selectedAssetClasses, 'Asset Classes'),
+		selectFilter(
+			'rwaClassifications',
+			options.rwaClassificationOptions,
+			selections.selectedRwaClassifications,
+			'RWA Classification'
+		),
+		selectFilter('accessModels', options.accessModelOptions, selections.selectedAccessModels, 'Access Model'),
+		selectFilter('issuers', options.issuers, selections.selectedIssuers, 'Issuers')
 	]
 }
 
@@ -427,37 +318,8 @@ function getSelectOptionKeys(values: SelectValues): Array<string> {
 	return values.map((value) => (typeof value === 'string' ? value : value.key))
 }
 
-function getDefaultSelectValues(config: RWASelectFilterConfig): Array<string> {
-	const allKeys = getSelectOptionKeys(config.allValues)
-	const validSet = new Set(allKeys)
-	return config.defaultSelectedValues?.filter((value) => validSet.has(value)) ?? allKeys
-}
-
-function isDefaultSelectSelection(config: RWASelectFilterConfig, values: Array<string>): boolean {
-	const defaultSelected = getDefaultSelectValues(config)
-	const validSet = new Set(getSelectOptionKeys(config.allValues))
-	const selected = values.filter((value) => validSet.has(value))
-	const defaultSet = new Set(defaultSelected)
-	return selected.length === defaultSelected.length && selected.every((value) => defaultSet.has(value))
-}
-
-function isAllSelectSelection(config: RWASelectFilterConfig, values: Array<string>): boolean {
-	const allKeys = getSelectOptionKeys(config.allValues)
-	const validSet = new Set(allKeys)
-	const selected = values.filter((value) => validSet.has(value))
-	const selectedSet = new Set(selected)
-	return selected.length === allKeys.length && allKeys.every((value) => selectedSet.has(value))
-}
-
-function isDialogSelectFilterActive(config: RWASelectFilterConfig, values: Array<string>): boolean {
-	return !isAllSelectSelection(config, values) || !isAllSelectSelection(config, getDefaultSelectValues(config))
-}
-
-function hasResettableRwaQueryParam(query: ReturnType<typeof useRouter>['query']): boolean {
-	for (const key of RESETTABLE_QUERY_KEYS) {
-		if (query[key] != null) return true
-	}
-	return false
+function isSelectFilterNarrowed(config: RWASelectFilterConfig, values: Array<string>): boolean {
+	return values.length < config.allValues.length
 }
 
 function getRwaInclusionFilters(props: RWAOverviewFiltersProps): Array<RWAInclusionFilterConfig> {
@@ -520,7 +382,7 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 	for (const config of getRwaSelectFilters(props)) {
 		if (!config.enabled) continue
 		selectValues[config.includeQueryKey] = config.selectedValues.slice()
-		if (isDialogSelectFilterActive(config, config.selectedValues)) pushActiveId(config.includeQueryKey)
+		if (isSelectFilterNarrowed(config, config.selectedValues)) pushActiveId(config.includeQueryKey)
 	}
 
 	for (const config of getRwaRangeFilters(props)) {
@@ -533,7 +395,7 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 
 	for (const config of getRwaAttributeFilters(props)) {
 		attributeStates[config.queryKey] = config.selectedStates.slice()
-		if (config.selectedStates.length !== ATTRIBUTE_FILTER_STATES.length) pushActiveId(config.queryKey)
+		if (config.selectedStates.length < RWA_ATTRIBUTE_FILTER_STATES.length) pushActiveId(config.queryKey)
 	}
 
 	const inclusion: Record<RWAInclusionKey, boolean> = {
@@ -545,19 +407,6 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 	for (const config of getRwaInclusionFilters(props)) inclusion[config.id] = config.value
 
 	return { activeIds, selectValues, ranges, attributeStates, inclusion }
-}
-
-function getSelectDraftQueryUpdates(
-	config: RWASelectFilterConfig,
-	values: Array<string>
-): Record<string, string | Array<string> | undefined> {
-	return getQueryUpdatesFromSelected(
-		config.includeQueryKey,
-		config.excludeQueryKey,
-		getSelectOptionKeys(config.allValues),
-		values,
-		config.defaultSelectedValues
-	)
 }
 
 function serializeRwaFilterDraft(
@@ -575,64 +424,39 @@ function serializeRwaFilterDraft(
 
 	const activeIds = new Set(draft.activeIds)
 	for (const definition of filterDefinitions) {
+		if (!activeIds.has(definition.id)) continue
 		if (definition.kind === 'select') {
-			if (!activeIds.has(definition.id)) {
-				if (isDialogSelectFilterActive(definition.config, getDefaultSelectValues(definition.config))) {
-					Object.assign(
-						updates,
-						getSelectDraftQueryUpdates(definition.config, getSelectOptionKeys(definition.config.allValues))
-					)
-				}
-				continue
-			}
-			Object.assign(updates, getSelectDraftQueryUpdates(definition.config, draft.selectValues[definition.id] ?? []))
+			const { includeQueryKey, excludeQueryKey, allValues } = definition.config
+			Object.assign(
+				updates,
+				getQueryUpdatesFromSelected(
+					includeQueryKey,
+					excludeQueryKey,
+					getSelectOptionKeys(allValues),
+					draft.selectValues[definition.id] ?? []
+				)
+			)
 		} else if (definition.kind === 'range') {
-			if (!activeIds.has(definition.id)) continue
 			const range = draft.ranges[definition.id] ?? { min: '', max: '' }
 			const min = parseNumberInput(range.min)
 			const max = parseNumberInput(range.max)
 			updates[definition.config.minQueryKey] = min == null ? undefined : String(min)
 			updates[definition.config.maxQueryKey] = max == null ? undefined : String(max)
 		} else if (definition.kind === 'attribute') {
-			if (!activeIds.has(definition.id)) continue
-			updates[definition.config.queryKey] = updateAttributeFilterStatesQueryValue(
-				draft.attributeStates[definition.id] ?? []
+			const { queryKey } = definition.config
+			Object.assign(
+				updates,
+				getQueryUpdatesFromSelected(
+					queryKey,
+					getRwaExcludeQueryKey(queryKey),
+					[...RWA_ATTRIBUTE_FILTER_STATES],
+					draft.attributeStates[definition.id] ?? []
+				)
 			)
 		}
 	}
 
 	return updates
-}
-
-function getActiveSelectFilterPill(
-	config: RWASelectFilterConfig,
-	query: ReturnType<typeof useRouter>['query'],
-	onRemove: () => void
-): RWAActiveFilterPill | null {
-	if (!config.enabled) return null
-
-	const includeQuery = query[config.includeQueryKey]
-	const excludeQuery = query[config.excludeQueryKey]
-	if (includeQuery == null && excludeQuery == null) return null
-
-	if (excludeQuery != null) {
-		const validValues = new Set(getSelectOptionKeys(config.allValues))
-		const excludedValues = toNonEmptyArrayParam(excludeQuery).filter((value) => validValues.has(value))
-		if (excludedValues.length === 0 || isDefaultSelectSelection(config, config.selectedValues)) return null
-		return {
-			id: config.excludeQueryKey,
-			label: `${config.label} excludes ${formatActiveFilterValues(excludedValues)}`,
-			onRemove
-		}
-	}
-
-	if (isDefaultSelectSelection(config, config.selectedValues)) return null
-
-	return {
-		id: config.includeQueryKey,
-		label: `${config.label}: ${formatActiveFilterValues(config.selectedValues)}`,
-		onRemove
-	}
 }
 
 function getRwaActiveFilterPills(
@@ -642,10 +466,12 @@ function getRwaActiveFilterPills(
 	const activeFilters: Array<RWAActiveFilterPill> = []
 
 	for (const config of getRwaSelectFilters(props)) {
-		const pill = getActiveSelectFilterPill(config, router.query, () =>
-			clearRwaFilterQueryKeys(router, [config.includeQueryKey, config.excludeQueryKey])
-		)
-		if (pill) activeFilters.push(pill)
+		if (!config.enabled || !isSelectFilterNarrowed(config, config.selectedValues)) continue
+		activeFilters.push({
+			id: config.includeQueryKey,
+			label: `${config.label}: ${describeSelection(config.allValues, config.selectedValues)}`,
+			onRemove: () => clearRwaFilterQueryKeys(router, [config.includeQueryKey, config.excludeQueryKey])
+		})
 	}
 
 	for (const config of getRwaRangeFilters(props)) {
@@ -658,12 +484,11 @@ function getRwaActiveFilterPills(
 	}
 
 	for (const config of getRwaAttributeFilters(props)) {
-		if (config.selectedStates.length === ATTRIBUTE_FILTER_STATES.length) continue
-		const stateLabels = config.selectedStates.map((state) => ATTRIBUTE_FILTER_STATE_LABELS[state])
+		if (config.selectedStates.length === RWA_ATTRIBUTE_FILTER_STATES.length) continue
 		activeFilters.push({
 			id: config.queryKey,
-			label: `${config.label}: ${formatActiveFilterValues(stateLabels)}`,
-			onRemove: () => clearRwaFilterQueryKeys(router, [config.queryKey])
+			label: `${config.label}: ${describeSelection(ATTRIBUTE_FILTER_OPTIONS, config.selectedStates)}`,
+			onRemove: () => clearRwaFilterQueryKeys(router, [config.queryKey, getRwaExcludeQueryKey(config.queryKey)])
 		})
 	}
 
@@ -1120,11 +945,11 @@ function RWAAttributeDraftEditor({
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
-	const selectedStates = draft.attributeStates[definition.id] ?? [...ATTRIBUTE_FILTER_STATES]
+	const selectedStates = draft.attributeStates[definition.id] ?? [...RWA_ATTRIBUTE_FILTER_STATES]
 
 	return (
 		<div className="flex flex-wrap gap-1">
-			{ATTRIBUTE_FILTER_STATES.map((state) => {
+			{RWA_ATTRIBUTE_FILTER_STATES.map((state) => {
 				const isSelected = selectedStates.includes(state)
 				return (
 					<button
@@ -1134,7 +959,7 @@ function RWAAttributeDraftEditor({
 						data-active={isSelected}
 						onClick={() =>
 							onDraftChange((current) => {
-								const currentStates = current.attributeStates[definition.id] ?? [...ATTRIBUTE_FILTER_STATES]
+								const currentStates = current.attributeStates[definition.id] ?? [...RWA_ATTRIBUTE_FILTER_STATES]
 								return {
 									...current,
 									attributeStates: {
@@ -1160,7 +985,6 @@ export const RWA_FILTERS_TEST_UTILS = {
 	getRwaActiveFilterPills,
 	getRwaFilterDefinitions,
 	getRwaInclusionFilters,
-	hasResettableRwaQueryParam,
 	removeDraftFilter,
 	serializeRwaFilterDraft
 }

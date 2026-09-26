@@ -5,13 +5,7 @@ import { useMemo } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
-import {
-	toNonEmptyArrayParam,
-	parseExcludeParam,
-	parseNumberInput,
-	parseNumberQueryParam,
-	pushShallowQuery
-} from '~/utils/routerQuery'
+import { parseNumberInput, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, IRWAChartMetricRows, RWAChartMetricKey, RWAAssetChartTarget } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import {
@@ -20,23 +14,22 @@ import {
 	type RWAChartAggregationMode
 } from './chartAggregation'
 import type { RWAPositionalChartDataset } from './chartDataset'
-import type { RWAOverviewInclusionDefaults } from './constants'
+import type { RWAOverviewInclusionDefaults, RWAOverviewMode } from './constants'
 import {
 	filterRwaOverviewDisplayRows,
 	getRwaDisplayedDefiActiveTvlByChain,
 	getRwaDisplayedMetricValue,
 	getEmptyRwaFilteredRowsResult,
 	hasActiveInclusionOverride,
-	hasPerpsOverlayBlockingFiltersFromQuery,
-	parseAttributeFilterStatesParam,
+	readRwaQueryFilters,
 	resolveRWAOverviewInclusionFlag,
-	updateAttributeFilterStatesQueryValue,
 	type RWAAttributeFilterState,
+	type RWASelectFilterOptions,
 	getRwaInclusionQueryValue
 } from './filterState'
 import { computeWeightedGroups, getPrimaryRwaCategory } from './grouping'
 import { rwaSlug } from './rwaSlug'
-import { getRwaTableViewQuery, parseRwaTableView, RWA_LEGACY_VIEW_QUERY_KEY, RWA_VIEW_QUERY_KEY } from './table/view'
+import { getRwaTableViewQuery, parseRwaTableView } from './table/view'
 
 export { resolveRWAOverviewInclusionFlag } from './filterState'
 
@@ -81,337 +74,32 @@ const updateNumberRangeQuery = (
 	})
 }
 
-const updateAttributeFilterStatesQuery = (
-	queryKey: string,
-	values: Array<RWAAttributeFilterState>,
-	router: NextRouter
-) => {
-	void pushShallowQuery(router, {
-		[queryKey]: updateAttributeFilterStatesQueryValue(values)
-	})
-}
-
 export const useRWATableQueryParams = ({
-	assetNames,
-	types,
-	categories,
-	platforms,
-	assetGroups,
-	assetClasses,
-	rwaClassifications,
-	accessModels,
-	issuers,
+	options,
+	mode,
 	defaultInclusion
 }: {
-	assetNames: Array<string>
-	types: Array<string>
-	categories: Array<string>
-	platforms: Array<string>
-	assetGroups: Array<string>
-	assetClasses: Array<string>
-	rwaClassifications: Array<string>
-	accessModels: Array<string>
-	issuers: Array<string>
+	options: RWASelectFilterOptions
+	mode: RWAOverviewMode
 	defaultInclusion: RWAOverviewInclusionDefaults
 }) => {
 	const router = useRouter()
+	const filters = useMemo(() => readRwaQueryFilters(router.query, options, mode), [router.query, options, mode])
 	const {
-		assetNames: assetNamesQ,
-		excludeAssetNames: excludeAssetNamesQ,
-		types: typesQ,
-		excludeTypes: excludeTypesQ,
-		categories: categoriesQ,
-		excludeCategories: excludeCategoriesQ,
-		platforms: platformsQ,
-		excludePlatforms: excludePlatformsQ,
-		assetGroups: assetGroupsQ,
-		excludeAssetGroups: excludeAssetGroupsQ,
-		assetClasses: assetClassesQ,
-		excludeAssetClasses: excludeAssetClassesQ,
-		rwaClassifications: rwaClassificationsQ,
-		excludeRwaClassifications: excludeRwaClassificationsQ,
-		accessModels: accessModelsQ,
-		excludeAccessModels: excludeAccessModelsQ,
-		issuers: issuersQ,
-		excludeIssuers: excludeIssuersQ,
-		minDefiActiveTvlToOnChainMcapPct: minDefiActiveTvlToOnChainMcapPctQ,
-		maxDefiActiveTvlToOnChainMcapPct: maxDefiActiveTvlToOnChainMcapPctQ,
-		minActiveMcapToOnChainMcapPct: minActiveMcapToOnChainMcapPctQ,
-		maxActiveMcapToOnChainMcapPct: maxActiveMcapToOnChainMcapPctQ,
-		minDefiActiveTvlToActiveMcapPct: minDefiActiveTvlToActiveMcapPctQ,
-		maxDefiActiveTvlToActiveMcapPct: maxDefiActiveTvlToActiveMcapPctQ,
 		includeStablecoins: stablecoinsQ,
 		includeGovernance: governanceQ,
 		includeCex: cexQ,
 		includeBridgeTvl: bridgeTvlQ,
-		includeWrappers: wrappersQ,
-		redeemableStates: redeemableStatesQ,
-		attestationsStates: attestationsStatesQ,
-		cexListedStates: cexListedStatesQ,
-		kycForMintRedeemStates: kycForMintRedeemStatesQ,
-		kycAllowlistedWhitelistedToTransferHoldStates: kycAllowlistedWhitelistedToTransferHoldStatesQ,
-		transferableStates: transferableStatesQ,
-		selfCustodyStates: selfCustodyStatesQ
+		includeWrappers: wrappersQ
 	} = router.query
-	const viewQ = router.query[RWA_VIEW_QUERY_KEY]
-	const legacyViewQ = router.query[RWA_LEGACY_VIEW_QUERY_KEY]
-	const {
-		selectedAssetNames,
-		selectedTypes,
-		selectedCategories,
-		selectedPlatforms,
-		selectedAssetGroups,
-		selectedAssetClasses,
-		selectedRwaClassifications,
-		selectedAccessModels,
-		selectedIssuers,
-		selectedRedeemableStates,
-		selectedAttestationsStates,
-		selectedCexListedStates,
-		selectedKycForMintRedeemStates,
-		selectedKycAllowlistedWhitelistedToTransferHoldStates,
-		selectedTransferableStates,
-		selectedSelfCustodyStates,
-		minDefiActiveTvlToOnChainMcapPct,
-		maxDefiActiveTvlToOnChainMcapPct,
-		minActiveMcapToOnChainMcapPct,
-		maxActiveMcapToOnChainMcapPct,
-		minDefiActiveTvlToActiveMcapPct,
-		maxDefiActiveTvlToActiveMcapPct,
-		includeStablecoins,
-		includeGovernance,
-		includeRwaPerps,
-		includeCex,
-		includeBridgeTvl,
-		includeWrappers
-	} = useMemo(() => {
-		// If query param is 'None', return empty array. If no param, return all (default). Otherwise parse the array.
-		const parseArrayParam = (
-			param: string | Array<string> | undefined,
-			allValues: Array<string>,
-			validSet: Set<string>
-		): Array<string> => {
-			if (param === 'None') return []
-			if (!param) return allValues
-			const arr = toNonEmptyArrayParam(param)
-			return arr.filter((v) => validSet.has(v))
-		}
-
-		const assetNamesValidSet = new Set(assetNames)
-		const typesValidSet = new Set(types)
-		const categoriesValidSet = new Set(categories)
-		const platformsValidSet = new Set(platforms)
-		const assetGroupsValidSet = new Set(assetGroups)
-		const assetClassesValidSet = new Set(assetClasses)
-		const rwaClassificationsValidSet = new Set(rwaClassifications)
-		const accessModelsValidSet = new Set(accessModels)
-		const issuersValidSet = new Set(issuers)
-
-		// Parse exclude sets
-		const excludeAssetNamesSet = parseExcludeParam(excludeAssetNamesQ)
-		const excludeTypesSet = parseExcludeParam(excludeTypesQ)
-		const excludeCategoriesSet = parseExcludeParam(excludeCategoriesQ)
-		const excludePlatformsSet = parseExcludeParam(excludePlatformsQ)
-		const excludeAssetGroupsSet = parseExcludeParam(excludeAssetGroupsQ)
-		const excludeAssetClassesSet = parseExcludeParam(excludeAssetClassesQ)
-		const excludeRwaClassificationsSet = parseExcludeParam(excludeRwaClassificationsQ)
-		const excludeAccessModelsSet = parseExcludeParam(excludeAccessModelsQ)
-		const excludeIssuersSet = parseExcludeParam(excludeIssuersQ)
-
-		const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
-		const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
-		// The view key is `perps`; the flag keeps its old name inside the code so the thirty call sites stay put.
-		const includeRwaPerps =
-			parseRwaTableView(
-				{ [RWA_VIEW_QUERY_KEY]: viewQ, [RWA_LEGACY_VIEW_QUERY_KEY]: legacyViewQ },
-				defaultInclusion.includeRwaPerps
-			) === 'perps'
-		// CEX venues are on by default in the Perps view.
-		const includeCex = includeRwaPerps && resolveRWAOverviewInclusionFlag(cexQ, true)
-		const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
-		const includeWrappers = resolveRWAOverviewInclusionFlag(wrappersQ, defaultInclusion.includeWrappers ?? false)
-
-		// Build selected arrays with correct "exclude" semantics:
-		// - if include param missing but exclude param exists, selection is (all - excluded), NOT "defaults - excluded"
-		const baseAssetNames =
-			assetNamesQ != null
-				? parseArrayParam(assetNamesQ, assetNames, assetNamesValidSet)
-				: excludeAssetNamesSet.size > 0
-					? assetNames
-					: assetNames
-		const selectedAssetNames =
-			excludeAssetNamesSet.size > 0 ? baseAssetNames.filter((a) => !excludeAssetNamesSet.has(a)) : baseAssetNames
-
-		const baseTypes = typesQ != null ? parseArrayParam(typesQ, types, typesValidSet) : types
-		const selectedTypes = excludeTypesSet.size > 0 ? baseTypes.filter((t) => !excludeTypesSet.has(t)) : baseTypes
-
-		const baseCategories =
-			categoriesQ != null
-				? parseArrayParam(categoriesQ, categories, categoriesValidSet)
-				: excludeCategoriesSet.size > 0
-					? categories
-					: categories
-		const selectedCategories =
-			excludeCategoriesSet.size > 0 ? baseCategories.filter((c) => !excludeCategoriesSet.has(c)) : baseCategories
-
-		const basePlatforms =
-			platformsQ != null
-				? parseArrayParam(platformsQ, platforms, platformsValidSet)
-				: excludePlatformsSet.size > 0
-					? platforms
-					: platforms
-		const selectedPlatforms =
-			excludePlatformsSet.size > 0 ? basePlatforms.filter((p) => !excludePlatformsSet.has(p)) : basePlatforms
-
-		const baseAssetGroups =
-			assetGroupsQ != null
-				? parseArrayParam(assetGroupsQ, assetGroups, assetGroupsValidSet)
-				: excludeAssetGroupsSet.size > 0
-					? assetGroups
-					: assetGroups
-		const selectedAssetGroups =
-			excludeAssetGroupsSet.size > 0
-				? baseAssetGroups.filter((assetGroup) => !excludeAssetGroupsSet.has(assetGroup))
-				: baseAssetGroups
-
-		const baseAssetClasses =
-			assetClassesQ != null
-				? parseArrayParam(assetClassesQ, assetClasses, assetClassesValidSet)
-				: excludeAssetClassesSet.size > 0
-					? assetClasses
-					: assetClasses
-		const selectedAssetClasses =
-			excludeAssetClassesSet.size > 0
-				? baseAssetClasses.filter((a) => !excludeAssetClassesSet.has(a))
-				: baseAssetClasses
-
-		const baseRwaClassifications =
-			rwaClassificationsQ != null
-				? parseArrayParam(rwaClassificationsQ, rwaClassifications, rwaClassificationsValidSet)
-				: excludeRwaClassificationsSet.size > 0
-					? rwaClassifications
-					: rwaClassifications
-		const selectedRwaClassifications =
-			excludeRwaClassificationsSet.size > 0
-				? baseRwaClassifications.filter((r) => !excludeRwaClassificationsSet.has(r))
-				: baseRwaClassifications
-
-		const baseAccessModels = parseArrayParam(accessModelsQ, accessModels, accessModelsValidSet)
-		const selectedAccessModels =
-			excludeAccessModelsSet.size > 0
-				? baseAccessModels.filter((a) => !excludeAccessModelsSet.has(a))
-				: baseAccessModels
-
-		const baseIssuers = parseArrayParam(issuersQ, issuers, issuersValidSet)
-		const selectedIssuers =
-			excludeIssuersSet.size > 0 ? baseIssuers.filter((i) => !excludeIssuersSet.has(i)) : baseIssuers
-
-		const selectedRedeemableStates = parseAttributeFilterStatesParam(redeemableStatesQ)
-		const selectedAttestationsStates = parseAttributeFilterStatesParam(attestationsStatesQ)
-		const selectedCexListedStates = parseAttributeFilterStatesParam(cexListedStatesQ)
-		const selectedKycForMintRedeemStates = parseAttributeFilterStatesParam(kycForMintRedeemStatesQ)
-		const selectedKycAllowlistedWhitelistedToTransferHoldStates = parseAttributeFilterStatesParam(
-			kycAllowlistedWhitelistedToTransferHoldStatesQ
-		)
-		const selectedTransferableStates = parseAttributeFilterStatesParam(transferableStatesQ)
-		const selectedSelfCustodyStates = parseAttributeFilterStatesParam(selfCustodyStatesQ)
-
-		const minDefiActiveTvlToOnChainMcapPct = parseNumberQueryParam(minDefiActiveTvlToOnChainMcapPctQ)
-		const maxDefiActiveTvlToOnChainMcapPct = parseNumberQueryParam(maxDefiActiveTvlToOnChainMcapPctQ)
-		const minActiveMcapToOnChainMcapPct = parseNumberQueryParam(minActiveMcapToOnChainMcapPctQ)
-		const maxActiveMcapToOnChainMcapPct = parseNumberQueryParam(maxActiveMcapToOnChainMcapPctQ)
-		const minDefiActiveTvlToActiveMcapPct = parseNumberQueryParam(minDefiActiveTvlToActiveMcapPctQ)
-		const maxDefiActiveTvlToActiveMcapPct = parseNumberQueryParam(maxDefiActiveTvlToActiveMcapPctQ)
-
-		return {
-			selectedAssetNames,
-			selectedTypes,
-			selectedCategories,
-			selectedPlatforms,
-			selectedAssetGroups,
-			selectedAssetClasses,
-			selectedRwaClassifications,
-			selectedAccessModels,
-			selectedIssuers,
-			selectedRedeemableStates,
-			selectedAttestationsStates,
-			selectedCexListedStates,
-			selectedKycForMintRedeemStates,
-			selectedKycAllowlistedWhitelistedToTransferHoldStates,
-			selectedTransferableStates,
-			selectedSelfCustodyStates,
-			minDefiActiveTvlToOnChainMcapPct,
-			maxDefiActiveTvlToOnChainMcapPct,
-			minActiveMcapToOnChainMcapPct,
-			maxActiveMcapToOnChainMcapPct,
-			minDefiActiveTvlToActiveMcapPct,
-			maxDefiActiveTvlToActiveMcapPct,
-			includeStablecoins,
-			includeGovernance,
-			includeRwaPerps,
-			includeCex,
-			includeBridgeTvl,
-			includeWrappers
-		}
-	}, [
-		assetNamesQ,
-		excludeAssetNamesQ,
-		typesQ,
-		excludeTypesQ,
-		categoriesQ,
-		excludeCategoriesQ,
-		platformsQ,
-		excludePlatformsQ,
-		assetGroupsQ,
-		excludeAssetGroupsQ,
-		assetClassesQ,
-		excludeAssetClassesQ,
-		rwaClassificationsQ,
-		excludeRwaClassificationsQ,
-		accessModelsQ,
-		excludeAccessModelsQ,
-		issuersQ,
-		excludeIssuersQ,
-		redeemableStatesQ,
-		attestationsStatesQ,
-		cexListedStatesQ,
-		kycForMintRedeemStatesQ,
-		kycAllowlistedWhitelistedToTransferHoldStatesQ,
-		transferableStatesQ,
-		selfCustodyStatesQ,
-		minDefiActiveTvlToOnChainMcapPctQ,
-		maxDefiActiveTvlToOnChainMcapPctQ,
-		minActiveMcapToOnChainMcapPctQ,
-		maxActiveMcapToOnChainMcapPctQ,
-		minDefiActiveTvlToActiveMcapPctQ,
-		maxDefiActiveTvlToActiveMcapPctQ,
-		stablecoinsQ,
-		governanceQ,
-		viewQ,
-		legacyViewQ,
-		cexQ,
-		bridgeTvlQ,
-		defaultInclusion.includeStablecoins,
-		defaultInclusion.includeGovernance,
-		defaultInclusion.includeRwaPerps,
-		defaultInclusion.includeBridgeTvl,
-		defaultInclusion.includeWrappers,
-		wrappersQ,
-		assetNames,
-		types,
-		categories,
-		platforms,
-		assetGroups,
-		assetClasses,
-		rwaClassifications,
-		accessModels,
-		issuers
-	])
-
-	const hasPerpsOverlayBlockingFilters = useMemo(
-		() => hasPerpsOverlayBlockingFiltersFromQuery(router.query),
-		[router.query]
-	)
+	const includeStablecoins = resolveRWAOverviewInclusionFlag(stablecoinsQ, defaultInclusion.includeStablecoins)
+	const includeGovernance = resolveRWAOverviewInclusionFlag(governanceQ, defaultInclusion.includeGovernance)
+	// The view key is `perps`; the flag keeps its old name inside the code so the thirty call sites stay put.
+	const includeRwaPerps = parseRwaTableView(router.query, defaultInclusion.includeRwaPerps) === 'perps'
+	// CEX venues are on by default in the Perps view.
+	const includeCex = includeRwaPerps && resolveRWAOverviewInclusionFlag(cexQ, true)
+	const includeBridgeTvl = resolveRWAOverviewInclusionFlag(bridgeTvlQ, defaultInclusion.includeBridgeTvl ?? true)
+	const includeWrappers = resolveRWAOverviewInclusionFlag(wrappersQ, defaultInclusion.includeWrappers ?? false)
 
 	const setDefiActiveTvlToOnChainMcapPctRange = (minValue: string | number | null, maxValue: string | number | null) =>
 		updateNumberRangeQuery(
@@ -467,58 +155,14 @@ export const useRWATableQueryParams = ({
 		})
 	}
 
-	const setRedeemableStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('redeemableStates', values, router)
-	const setAttestationsStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('attestationsStates', values, router)
-	const setCexListedStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('cexListedStates', values, router)
-	const setKycForMintRedeemStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('kycForMintRedeemStates', values, router)
-	const setKycAllowlistedWhitelistedToTransferHoldStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('kycAllowlistedWhitelistedToTransferHoldStates', values, router)
-	const setTransferableStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('transferableStates', values, router)
-	const setSelfCustodyStates = (values: Array<RWAAttributeFilterState>) =>
-		updateAttributeFilterStatesQuery('selfCustodyStates', values, router)
-
 	return {
-		selectedAssetNames,
-		selectedTypes,
-		selectedCategories,
-		selectedPlatforms,
-		selectedAssetGroups,
-		selectedAssetClasses,
-		selectedRwaClassifications,
-		selectedAccessModels,
-		selectedIssuers,
-		selectedRedeemableStates,
-		selectedAttestationsStates,
-		selectedCexListedStates,
-		selectedKycForMintRedeemStates,
-		selectedKycAllowlistedWhitelistedToTransferHoldStates,
-		selectedTransferableStates,
-		selectedSelfCustodyStates,
-		minDefiActiveTvlToOnChainMcapPct,
-		maxDefiActiveTvlToOnChainMcapPct,
-		minActiveMcapToOnChainMcapPct,
-		maxActiveMcapToOnChainMcapPct,
-		minDefiActiveTvlToActiveMcapPct,
-		maxDefiActiveTvlToActiveMcapPct,
+		...filters,
 		includeStablecoins,
 		includeGovernance,
 		includeRwaPerps,
 		includeCex,
 		includeBridgeTvl,
 		includeWrappers,
-		hasPerpsOverlayBlockingFilters,
-		setRedeemableStates,
-		setAttestationsStates,
-		setCexListedStates,
-		setKycForMintRedeemStates,
-		setKycAllowlistedWhitelistedToTransferHoldStates,
-		setTransferableStates,
-		setSelfCustodyStates,
 		setDefiActiveTvlToOnChainMcapPctRange,
 		setActiveMcapToOnChainMcapPctRange,
 		setDefiActiveTvlToActiveMcapPctRange,
@@ -1021,93 +665,17 @@ export function useRwaChainBreakdownPieChartData({
 	}, [assets, enabled, includeBridgeTvl, metric])
 }
 
-const CHART_FILTER_QUERY_KEYS = new Set([
-	'assetNames',
-	'types',
-	'categories',
-	'platforms',
-	'assetGroups',
-	'assetClasses',
-	'rwaClassifications',
-	'accessModels',
-	'issuers',
-	'excludeAssetNames',
-	'excludeTypes',
-	'excludeCategories',
-	'excludePlatforms',
-	'excludeAssetGroups',
-	'excludeAssetClasses',
-	'excludeRwaClassifications',
-	'excludeAccessModels',
-	'excludeIssuers',
-	'redeemableStates',
-	'attestationsStates',
-	'cexListedStates',
-	'kycForMintRedeemStates',
-	'kycAllowlistedWhitelistedToTransferHoldStates',
-	'transferableStates',
-	'selfCustodyStates',
-	'minDefiActiveTvlToOnChainMcapPct',
-	'maxDefiActiveTvlToOnChainMcapPct',
-	'minActiveMcapToOnChainMcapPct',
-	'maxActiveMcapToOnChainMcapPct',
-	'minDefiActiveTvlToActiveMcapPct',
-	'maxDefiActiveTvlToActiveMcapPct',
-	'includeStablecoins',
-	'includeGovernance',
-	RWA_VIEW_QUERY_KEY,
-	RWA_LEGACY_VIEW_QUERY_KEY,
-	'includeCex',
-	'includeBridgeTvl',
-	'includeWrappers'
-])
-
-const SCOPE_FLAG_QUERY_KEYS = new Set([
-	'includeStablecoins',
-	'includeGovernance',
-	RWA_VIEW_QUERY_KEY,
-	RWA_LEGACY_VIEW_QUERY_KEY,
-	'includeCex',
-	'includeBridgeTvl',
-	'includeWrappers'
-])
-
-/** True when a filter from the Filters dialog is active; the scope toggles and the view do not count. */
-export function hasActiveRwaAttributeFilters(query: NextRouter['query']): boolean {
-	for (const key of CHART_FILTER_QUERY_KEYS) {
-		if (SCOPE_FLAG_QUERY_KEYS.has(key)) continue
-		if (key in query) return true
-	}
-	return false
-}
-
-export function hasActiveChartFilters(
+/** True when an Include toggle differs from the page default. */
+export function hasRwaInclusionOverrides(
 	query: NextRouter['query'],
 	defaultInclusion: RWAOverviewInclusionDefaults
 ): boolean {
-	for (const key of CHART_FILTER_QUERY_KEYS) {
-		if (key === 'includeStablecoins') {
-			if (hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins)) return true
-			continue
-		}
-		if (key === 'includeGovernance') {
-			if (hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance)) return true
-			continue
-		}
-		if (key === RWA_VIEW_QUERY_KEY || key === RWA_LEGACY_VIEW_QUERY_KEY || key === 'includeCex') {
-			continue
-		}
-		if (key === 'includeBridgeTvl') {
-			if (hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true)) return true
-			continue
-		}
-		if (key === 'includeWrappers') {
-			if (hasActiveInclusionOverride(query.includeWrappers, defaultInclusion.includeWrappers ?? false)) return true
-			continue
-		}
-		if (key in query) return true
-	}
-	return false
+	return (
+		hasActiveInclusionOverride(query.includeStablecoins, defaultInclusion.includeStablecoins) ||
+		hasActiveInclusionOverride(query.includeGovernance, defaultInclusion.includeGovernance) ||
+		hasActiveInclusionOverride(query.includeBridgeTvl, defaultInclusion.includeBridgeTvl ?? true) ||
+		hasActiveInclusionOverride(query.includeWrappers, defaultInclusion.includeWrappers ?? false)
+	)
 }
 
 export function getRwaAssetChartQueryKey(

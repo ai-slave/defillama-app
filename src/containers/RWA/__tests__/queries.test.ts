@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RWA_PERPS_SERVER_URL, RWA_SERVER_URL } from '~/constants'
+import { filterRwaOverviewDisplayRows, readRwaQueryFilters } from '../filterState'
 import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview } from '../queries'
+import { getRankedRwaFilterValues } from '../rankedFilterValues'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 
@@ -921,7 +923,7 @@ describe('rwa queries', () => {
 		expect(result?.platformLogos).toEqual({})
 	})
 
-	test('preserves original category order when filtering by a secondary category', async () => {
+	test('keeps each asset category order and offers every category an asset carries', async () => {
 		serveBreakdown('category/other-rwas', NO_HISTORY)
 		serveListing([
 			{
@@ -957,16 +959,81 @@ describe('rwa queries', () => {
 		expect(result?.assets[0]?.category).toEqual(['RWA Stablecoins', 'Other RWAs'])
 		expect(result?.categoriesOptions).toEqual([
 			{
-				key: 'RWA Stablecoins',
-				name: 'RWA Stablecoins',
-				help: expect.stringContaining('Fiat-pegged stablecoins')
-			},
-			{
 				key: 'Other RWAs',
 				name: 'Other RWAs',
 				help: expect.stringContaining('alternative or niche real-world assets')
+			},
+			{
+				key: 'RWA Stablecoins',
+				name: 'RWA Stablecoins',
+				help: expect.stringContaining('Fiat-pegged stablecoins')
 			}
 		])
+	})
+
+	test('offers Unknown for a field an asset lacks, so the default view shows that asset', async () => {
+		serveBreakdown('chain/ethereum', NO_HISTORY)
+		const asset = {
+			category: ['Treasuries'],
+			assetGroup: 'Treasuries',
+			chain: ['Ethereum'],
+			activeMcap: { Ethereum: 5 },
+			defiActiveTvl: { Ethereum: { Aave: 1 } }
+		}
+		serveListing([
+			{
+				...asset,
+				id: 'typed',
+				canonicalMarketId: 'typed',
+				ticker: 'TYP',
+				assetName: 'Typed',
+				type: 'Asset',
+				parentPlatform: 'Ondo',
+				rwaClassification: 'RWA',
+				onChainMcap: { Ethereum: 20 }
+			},
+			{
+				...asset,
+				id: 'bare',
+				canonicalMarketId: 'bare',
+				ticker: 'BAR',
+				assetName: 'Bare',
+				onChainMcap: { Ethereum: 10 }
+			}
+		])
+
+		const overview = await getRWAAssetsOverview({
+			chain: 'ethereum',
+			rwaList: { chains: ['Ethereum'], categories: ['Treasuries'], platforms: [], assetGroups: ['Treasuries'] } as never
+		})
+		if (!overview) throw new Error('Expected an overview')
+
+		expect(overview.typeOptions.map((option) => option.key)).toEqual(['Asset', 'Unknown'])
+		expect(overview.platforms).toEqual(['Ondo', 'Unknown'])
+		expect(overview.rwaClassificationOptions.map((option) => option.key)).toEqual(['RWA', 'Unknown'])
+
+		const filters = readRwaQueryFilters(
+			{},
+			{
+				...getRankedRwaFilterValues(overview),
+				assetNames: overview.assetNames,
+				platforms: overview.platforms,
+				assetGroups: overview.assetGroups,
+				issuers: overview.issuers
+			},
+			'chain'
+		)
+		const { filteredAssets } = filterRwaOverviewDisplayRows(overview.assets, {
+			...filters,
+			isPlatformMode: false,
+			includeStablecoins: true,
+			includeGovernance: true,
+			includeRwaPerps: false,
+			includeCex: false,
+			includeBridgeTvl: true,
+			includeWrappers: true
+		})
+		expect(filteredAssets.map((row) => row.id)).toEqual(['typed', 'bare'])
 	})
 
 	test('resolves perps-only platform slugs on platform overview routes', async () => {

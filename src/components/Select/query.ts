@@ -127,21 +127,21 @@ export const updateQueryFromSelected = (
 }
 
 /** Reads the selection that `getQueryUpdatesFromSelected` wrote, in option order. */
-export function readSelectionFromQuery(
+export function readSelectionFromQuery<T extends string>(
 	query: Readonly<Record<string, string | Array<string> | undefined>>,
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,
-	allKeys: ReadonlyArray<string>,
+	allKeys: ReadonlyArray<T>,
 	defaultSelectedValues: ReadonlyArray<string> = allKeys
-): Array<string> {
+): Array<T> {
 	const included = toNonEmptyArrayParam(query[includeKey])
-	const excluded = new Set(toNonEmptyArrayParam(query[excludeKey]))
+	const excluded = new Set<string>(toNonEmptyArrayParam(query[excludeKey]))
 	if (included.includes('None')) return []
 	if (included.length === 0 && excluded.size === 0) {
-		const defaults = new Set(defaultSelectedValues)
+		const defaults = new Set<string>(defaultSelectedValues)
 		return allKeys.filter((key) => defaults.has(key))
 	}
-	const picked = included.length > 0 && !included.includes('All') ? new Set(included) : null
+	const picked = included.length > 0 && !included.includes('All') ? new Set<string>(included) : null
 	return allKeys.filter((key) => (!picked || picked.has(key)) && !excluded.has(key))
 }
 
