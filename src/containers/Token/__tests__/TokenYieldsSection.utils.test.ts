@@ -16,7 +16,14 @@ const POOLS = [
 	pool('eth-small', 'Ethereum', 1000, 2),
 	pool('base', 'Base', 50_000, null)
 ]
-const NO_FILTERS = { chainCount: 2, selectedChains: [], minTvl: null, maxTvl: null, minApy: null, maxApy: null }
+const NO_FILTERS = {
+	chainCount: 2,
+	selectedChains: ['Ethereum', 'Base'],
+	minTvl: null,
+	maxTvl: null,
+	minApy: null,
+	maxApy: null
+}
 const ids = (rows: Array<IYieldTableRow>) => rows.map((row) => row.id)
 
 describe('token yields filters', () => {
@@ -39,6 +46,10 @@ describe('token yields filters', () => {
 		expect(
 			ids(filterTokenYieldPools({ pools: unlisted, ...NO_FILTERS, selectedChains: ['Base', 'Ethereum'] }))
 		).toEqual(['eth-big', 'eth-small', 'base', 'arbitrum'])
+	})
+
+	test('shows no pools after Deselect All', () => {
+		expect(ids(filterTokenYieldPools({ pools: POOLS, ...NO_FILTERS, selectedChains: [] }))).toEqual([])
 	})
 
 	test('drops pools without a TVL or APY once that bound is set', () => {

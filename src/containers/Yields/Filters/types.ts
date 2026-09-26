@@ -13,11 +13,9 @@ export type ProjectGroup = { name: string; projects: Array<string> }
 export interface IDropdownMenusProps {
 	pathname?: string
 	chainList?: Array<string>
-	selectedChains?: Array<string>
 	evmChains?: Array<string>
 	projectList?: Array<string>
 	projectGroups?: Array<ProjectGroup>
-	selectedProjects?: Array<string>
 	// Opt-in label override for the Projects dropdown (/yields uses "Protocols").
 	// Defaults to "Projects" — every other page keeps the shared label.
 	projectsLabel?: string
@@ -25,7 +23,6 @@ export interface IDropdownMenusProps {
 	// Defaults to "Category" — every other page keeps the shared label.
 	categoriesLabel?: string
 	categoryList?: Array<string>
-	selectedCategories?: Array<string>
 	attributeIds?: Array<AttributeId>
 	tvlRange?: boolean
 	// Opt-in (/yields): trigger label override for the TVL range (defaults to 'TVL Range').

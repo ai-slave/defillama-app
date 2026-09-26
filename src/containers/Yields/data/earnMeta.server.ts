@@ -1,6 +1,7 @@
 import { EARN_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import type { ProjectGroup } from '../Filters/types'
 import { getEarnWithTokenKeys } from './enrich.server'
+import { UNCATEGORIZED } from './query'
 import { getProtocolParents } from './server/raiseValuations'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import { getGeckoIdResolver } from './tokenIcons.server'
@@ -46,7 +47,8 @@ export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPag
 		if (!memePoolIds.has(row.id)) {
 			if (row.chain) chainCounts.set(row.chain, (chainCounts.get(row.chain) ?? 0) + 1)
 			if (row.protocol) projectCounts.set(row.protocol, (projectCounts.get(row.protocol) ?? 0) + 1)
-			if (row.category) categoryCounts.set(row.category, (categoryCounts.get(row.category) ?? 0) + 1)
+			const category = row.category || UNCATEGORIZED
+			categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
 			for (const key of row.tokenKeys?.reference_asset ?? []) tokenCounts.set(key, (tokenCounts.get(key) ?? 0) + 1)
 		}
 	}

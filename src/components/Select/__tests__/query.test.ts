@@ -1,6 +1,11 @@
 import type { NextRouter } from 'next/router'
 import { describe, expect, test, vi } from 'vitest'
-import { getQueryUpdatesFromSelected, readSelectionFromQuery, updateQueryFromSelected } from '../query'
+import {
+	createSelectionMatcher,
+	getQueryUpdatesFromSelected,
+	readSelectionFromQuery,
+	updateQueryFromSelected
+} from '../query'
 
 const router = {} as NextRouter
 
@@ -128,5 +133,30 @@ describe('readSelectionFromQuery', () => {
 		expect(read({ category: ['b', 'dexs', 'a'] })).toEqual(['a', 'b'])
 		expect(read({ category: 'dexs' })).toEqual([])
 		expect(read({ excludeCategory: ['dexs', 'f'] })).toEqual(['a', 'b', 'c', 'd', 'e'])
+	})
+})
+
+describe('createSelectionMatcher', () => {
+	const all = ['a', 'b', 'c', 'd', 'e', 'f']
+
+	// Servers filter rows with the matcher and never see the option list, so it has to agree with the reader.
+	test.each([
+		{ query: {} },
+		{ query: { category: 'None' } },
+		{ query: { category: ['b', 'c'] } },
+		{ query: { excludeCategory: ['e', 'f'] } },
+		{ query: { category: 'All', excludeCategory: 'a' } },
+		{ query: { category: '' } },
+		{ query: { category: ['None', 'b'] } }
+	])('keeps the options the reader selects for $query', ({ query }) => {
+		const matches = createSelectionMatcher(query, 'category', 'excludeCategory')
+		const kept = all.filter((option) => (matches ? matches(option) : true))
+		expect(kept).toEqual(readSelectionFromQuery(query, 'category', 'excludeCategory', all))
+	})
+
+	test('keeps a row with several values when any of them is selected', () => {
+		const matches = createSelectionMatcher({ excludeCategory: 'a' }, 'category', 'excludeCategory')!
+		expect(['a', 'b'].some(matches)).toBe(true)
+		expect(['a'].some(matches)).toBe(false)
 	})
 })

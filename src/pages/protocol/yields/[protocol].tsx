@@ -9,8 +9,6 @@ import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '~/containers/Yie
 import { YieldFilters } from '~/containers/Yields/Filters'
 import { ApyViewControls } from '~/containers/Yields/Filters/ApyViewControls'
 import { resolveEarnColumnAccess } from '~/containers/Yields/Filters/columnOptions'
-import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
-import { selectedSubsetQuery } from '~/containers/Yields/queryState'
 import { YIELDS_TABLE_PREFS } from '~/containers/Yields/stickyQueryPrefs'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
@@ -79,7 +77,7 @@ export const getStaticProps = withPerformanceLogging(
 		// fetches the rows itself).
 		let protocolNames: Array<string> = []
 		// Chains present for THIS protocol's pools (drives the tab's Chains dropdown options),
-		// ordered by pool count; evmChains is the EVM subset (the shared dropdown's "All EVM").
+		// ordered by pool count; evmChains is the EVM subset behind the chain picker's "Only EVM chains" action.
 		let chainList: Array<string> = []
 		let evmChains: Array<string> = []
 		const [{ acquireYieldsSnapshot, readYieldsMeta }, { getEntityEarn }] = await Promise.all([
@@ -159,28 +157,21 @@ function ProtocolYieldsTab({
 }) {
 	const hasProtocols = protocolNames.length > 0
 
-	// Chains dropdown state: decode the URL `chain=` selection (expands ALL_EVM / All / None)
-	// against this protocol's chain list, exactly as the earn page does.
 	const router = useRouter()
 	const resolvedPathname = router.asPath.split('?')[0]
 	const preferencesReady = useStickyQueryReplace(
 		useStickyPrefsOverlay(hasProtocols && router.isReady ? router.query : null, YIELDS_TABLE_PREFS)
 	)
 
-	const { selectedChains } = useFormatYieldQueryParams({
-		chainList,
-		evmChains,
-		projectQueryKey: 'protocol',
-		excludeProjectQueryKey: 'excludeProtocol'
-	})
-
-	// Fixed protocol filter + the resolved chain selection ride the earn table's server query.
-	// TVL/APY ranges (minTvl/maxTvl/minApy/maxApy) and the `column=` param flow through the URL
-	// query untouched: the earn route honors the ranges and the table reads `column=` from the
-	// router, so no extra wiring is needed for those three.
+	// The fixed protocol filter rides the earn table's server query. The chain picker's keys, the
+	// TVL/APY ranges and the `column=` param flow through the URL query untouched: the earn route
+	// applies the chain selection and ranges, and the table reads `column=` from the router.
 	const extraQuery = {
 		protocol: protocolNames,
-		chain: chainList.length > 0 ? selectedSubsetQuery(selectedChains, chainList) : undefined
+		// The tab only has a chain picker, so other picker keys in the URL are ignored.
+		excludeProtocol: undefined,
+		category: undefined,
+		excludeCategory: undefined
 	}
 	// Same two tiers as the earn page: subscribers read the private mirror, so their APY cells carry
 	// the measured figure and the Exit Status column is on by default. No server-tiered seed here,
@@ -209,7 +200,6 @@ function ProtocolYieldsTab({
 			<div className="mb-3">
 				<YieldFilters
 					chainList={chainList}
-					selectedChains={selectedChains}
 					evmChains={evmChains}
 					tvlRange
 					tvlRangeLabel="TVL"
@@ -228,7 +218,7 @@ function ProtocolYieldsTab({
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsPoolTable data={poolsData} defaultColumns={defaultColumns} {...tableProps} />
 			) : (
-				<PanelStatus variant="empty">No yield pools for this protocol</PanelStatus>
+				<PanelStatus variant="empty">No pools match the selected filters</PanelStatus>
 			)}
 		</>
 	)

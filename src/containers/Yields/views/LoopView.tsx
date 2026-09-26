@@ -10,13 +10,11 @@ import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOpti
 import { IncludeTokens } from '../Filters/IncludeTokens'
 import { LoopCountSelect } from '../Filters/LoopCountSelect'
 import { useFormatYieldQueryParams } from '../hooks'
-import { selectedSubsetQuery } from '../queryState'
 import { PaginatedLoopsTable } from '../Tables/Loops'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
 import { YieldsTabs } from '../YieldsTabs'
 
-const EMPTY_CATEGORIES: Array<string> = []
 const EMPTY_STRINGS: Array<string> = []
 const EMPTY_TOKENS: Array<TokenOption> = []
 const LOOPS_DEFAULT_SORT = [{ id: 'loop_apy', desc: true }]
@@ -41,17 +39,14 @@ function LoopView({
 
 	const { selectedChains, selectedProjects, selectedAttributes } = useFormatYieldQueryParams({
 		projectList,
-		chainList,
-		categoryList: EMPTY_CATEGORIES,
-		evmChains,
-		projectQueryKey: 'protocol',
-		excludeProjectQueryKey: 'excludeProtocol'
+		chainList
 	})
 
 	const attributeSet = new Set(selectedAttributes)
 	const extraQuery = {
-		chain: selectedSubsetQuery(selectedChains, chainList),
-		protocol: selectedSubsetQuery(selectedProjects, projectList),
+		// No category picker on this page, so a category in the URL is ignored.
+		category: undefined,
+		excludeCategory: undefined,
 		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
 		potentialAirdrop: attributeSet.has('airdrop') ? 'true' : undefined,
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
@@ -92,10 +87,8 @@ function LoopView({
 				showSearchOnMobile
 				tokenSearch={<IncludeTokens tokens={tokens} placeholder="Search tokens" data-alwaysdisplay />}
 				chainList={chainList}
-				selectedChains={selectedChains}
 				evmChains={evmChains}
 				projectList={projectList}
-				selectedProjects={selectedProjects}
 				projectsLabel="Protocols"
 				attributeIds={attributeIds}
 				availableRange

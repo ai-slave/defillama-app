@@ -85,6 +85,26 @@ export function getSelectOptionLabel(allValues: SelectValues, selectedValue: str
 	return selectedValue
 }
 
+/**
+ * Trigger text for a selection: "None" when nothing is selected, and "All except …" when fewer options are
+ * left out than kept, which is when the picker writes an exclude list.
+ */
+export function describeSelection(allValues: SelectValues, selectedValues: Array<string>): string {
+	if (selectedValues.length === 0) return 'None'
+	const selected = new Set(selectedValues)
+	const leftOut: Array<string> = []
+	for (const option of allValues) {
+		const key = typeof option === 'string' ? option : option.key
+		if (!selected.has(key)) leftOut.push(typeof option === 'string' ? option : option.name)
+	}
+	const names =
+		leftOut.length > 0 && leftOut.length < selectedValues.length
+			? leftOut
+			: selectedValues.map((value) => getSelectOptionLabel(allValues, value))
+	const list = names.length > 2 ? `${names[0]} + ${names.length - 1} others` : names.join(', ')
+	return names === leftOut ? `All except ${list}` : list
+}
+
 export function SelectWithCombobox({
 	allValues,
 	selectedValues: selectedValuesProp,
@@ -132,6 +152,9 @@ export function SelectWithCombobox({
 	)
 	const selectedValues = selectedValuesProp ?? urlSelection
 	const selectedLabels = selectedLabelsProp ?? selectedValues
+	// A picker reading the URL says when nothing or "all except" is selected, so an active filter never
+	// looks like the default.
+	const urlSelectionText = includeQueryKey && !selectedLabelsProp ? describeSelection(allValues, selectedValues) : null
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
 	const shouldPortalPopover = portal ?? true
@@ -398,15 +421,16 @@ export function SelectWithCombobox({
 						</span>
 						<span>{label}</span>
 					</span>
-				) : labelType === 'regular' && selectedLabels.length > 0 ? (
+				) : labelType === 'regular' && (urlSelectionText || selectedLabels.length > 0) ? (
 					<>
 						<span>{label}: </span>
 						<span className="text-link">
-							{singleSelect && firstSelectedValue !== undefined
-								? getSelectOptionLabel(allValues, firstSelectedValue)
-								: selectedLabels.length > 2
-									? `${selectedLabels[0]} + ${selectedLabels.length - 1} others`
-									: selectedLabels.join(', ')}
+							{urlSelectionText ??
+								(singleSelect && firstSelectedValue !== undefined
+									? getSelectOptionLabel(allValues, firstSelectedValue)
+									: selectedLabels.length > 2
+										? `${selectedLabels[0]} + ${selectedLabels.length - 1} others`
+										: selectedLabels.join(', '))}
 						</span>
 					</>
 				) : (

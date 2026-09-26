@@ -1,5 +1,6 @@
 import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import { getEnrichedMarkets } from './enrich.server'
+import { UNCATEGORIZED } from './query'
 import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import { getGeckoIdResolver } from './tokenIcons.server'
 import type { MetaTokenOption, YieldsMeta, TokenOption } from './types'
@@ -83,7 +84,8 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 		if (!memePoolIds.has(row.id)) {
 			if (row.chain) chainCounts.set(row.chain, (chainCounts.get(row.chain) ?? 0) + 1)
 			if (row.protocol) projectCounts.set(row.protocol, (projectCounts.get(row.protocol) ?? 0) + 1)
-			if (row.category) categoryCounts.set(row.category, (categoryCounts.get(row.category) ?? 0) + 1)
+			const category = row.category || UNCATEGORIZED
+			categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
 			for (const key of row.tokenKeys?.reference_asset ?? [])
 				collateralCounts.set(key, (collateralCounts.get(key) ?? 0) + 1)
 			for (const key of row.tokenKeys?.borrow_token ?? []) borrowCounts.set(key, (borrowCounts.get(key) ?? 0) + 1)

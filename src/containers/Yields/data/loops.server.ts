@@ -111,8 +111,8 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 
 	const pageRows: Array<LoopTableRow> = []
 	for (const row of rows) {
-		if (common.chains && !common.chains.has(row.chain)) continue
-		if (common.projects && !common.projects.has(row.protocol)) continue
+		if (common.matchesChain && !common.matchesChain(row.chain)) continue
+		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue

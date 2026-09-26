@@ -216,12 +216,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 							<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
 								{(nestedMenu) => (
 									<>
-										<FilterByChain
-											chainList={chainList}
-											selectedChains={selectedChains}
-											nestedMenu={nestedMenu}
-											size="md"
-										/>
+										<FilterByChain chainList={chainList} nestedMenu={nestedMenu} size="md" />
 										<TVLRange label="TVL" variant="secondary" nestedMenu={nestedMenu} size="md" />
 										<APYRange nestedMenu={nestedMenu} size="md" />
 										{hasActiveFilters ? (

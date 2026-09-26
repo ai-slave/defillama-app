@@ -18,13 +18,14 @@ const CATEGORIES = ['Dexs', 'Lending', 'Bridge']
 let container: HTMLDivElement
 let root: Root
 
+let labelType: 'smol' | 'regular' = 'smol'
 const picker = () => (
 	<SelectWithCombobox
 		allValues={CATEGORIES}
 		includeQueryKey="category"
 		excludeQueryKey="excludeCategory"
 		label="Category"
-		labelType="smol"
+		labelType={labelType}
 		variant="filter"
 		size="md"
 	/>
@@ -63,6 +64,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 	router.query = {}
+	labelType = 'smol'
 })
 
 test('shows the selection the URL holds and writes Deselect All and Select All back to it', async () => {
@@ -78,4 +80,19 @@ test('shows the selection the URL holds and writes Deselect All and Select All b
 	await click(button('Select All'))
 	expect(router.query).toEqual({})
 	expect(selected()).toEqual(['Dexs', 'Lending', 'Bridge'])
+})
+
+test('names an empty or all-except selection on the trigger, so a filter never looks like the default', async () => {
+	labelType = 'regular'
+	router.query = { excludeCategory: 'Lending' }
+	await act(async () => root.render(picker()))
+	expect(trigger().textContent).toBe('Category: All except Lending')
+
+	router.query = { category: 'None' }
+	await act(async () => root.render(picker()))
+	expect(trigger().textContent).toBe('Category: None')
+
+	router.query = { category: 'Dexs' }
+	await act(async () => root.render(picker()))
+	expect(trigger().textContent).toBe('Category: Dexs')
 })

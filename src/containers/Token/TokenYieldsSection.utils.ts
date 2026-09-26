@@ -33,8 +33,8 @@ export function filterTokenYieldPools({
 }) {
 	let filtered = pools
 
-	// Selecting every chain, or none, means no chain filter.
-	if (selectedChains.length > 0 && selectedChains.length < chainCount) {
+	// Every chain selected means no chain filter; Deselect All keeps no pools.
+	if (selectedChains.length < chainCount) {
 		const chainSet = new Set(selectedChains)
 		filtered = filtered.filter((pool) => chainSet.has(pool.chains[0]))
 	}

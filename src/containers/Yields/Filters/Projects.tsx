@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
-import { updateQueryFromSelected } from '~/components/Select/query'
-import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { ExcludeQueryKey, SelectOption } from '~/components/Select/types'
+import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
+import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SelectOption } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import type { ProjectGroup } from './types'
@@ -13,25 +13,13 @@ const GROUP_KEY_PREFIX = 'group:'
 interface IYieldProjectsProps {
 	projectList: Array<string>
 	projectGroups?: Array<ProjectGroup>
-	selectedProjects: Array<string>
 	label?: string
 	nestedMenu?: boolean
-	includeQueryKey: string
-	excludeQueryKey: ExcludeQueryKey
 }
 
-export function YieldProjects({
-	projectList,
-	projectGroups = EMPTY_GROUPS,
-	selectedProjects,
-	label,
-	nestedMenu,
-	includeQueryKey,
-	excludeQueryKey
-}: IYieldProjectsProps) {
+export function YieldProjects({ projectList, projectGroups = EMPTY_GROUPS, label, nestedMenu }: IYieldProjectsProps) {
 	const router = useRouter()
-	// Read the badge state off whichever key this dropdown emits (v2 `protocol`, others `project`).
-	const selectedQueryValue = router.query[includeQueryKey]
+	const selectedProjects = readSelectionFromQuery(router.query, 'protocol', 'excludeProtocol', projectList)
 	const prevSelectionRef = useRef<Set<string>>(new Set(selectedProjects))
 
 	const selectedSet = new Set(selectedProjects)
@@ -69,6 +57,10 @@ export function YieldProjects({
 		if (!group || !isGroupSelected(group)) selectedLabels.push(project)
 	}
 
+	// Same trigger text as other URL pickers: "None", or "All except …" when fewer are left out than kept.
+	const leftOut = projectList.length - selectedProjects.length
+	const summarize = selectedProjects.length === 0 || (leftOut > 0 && leftOut < selectedProjects.length)
+
 	const handleValuesChange = (values: Array<string>) => {
 		const prev = new Set(displaySelected)
 		const next = new Set<string>()
@@ -100,7 +92,7 @@ export function YieldProjects({
 			}
 		}
 		prevSelectionRef.current = next
-		updateQueryFromSelected(router, includeQueryKey, excludeQueryKey, projectList, [...next], undefined, {
+		updateQueryFromSelected(router, 'protocol', 'excludeProtocol', projectList, [...next], undefined, {
 			pushQueryUpdates: (updates) => {
 				void pushYieldsQuery(router, updates)
 			}
@@ -113,11 +105,11 @@ export function YieldProjects({
 			size="sm"
 			allValues={options}
 			selectedValues={displaySelected}
-			selectedLabels={selectedLabels}
+			selectedLabels={summarize ? [describeSelection(projectList, selectedProjects)] : selectedLabels}
 			setSelectedValues={handleValuesChange}
 			label={label ?? 'Projects'}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
-			labelType={!selectedQueryValue || selectedQueryValue === 'All' ? 'none' : 'regular'}
+			labelType={selectedProjects.length === projectList.length ? 'none' : 'regular'}
 		/>
 	)
 }

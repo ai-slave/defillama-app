@@ -144,3 +144,22 @@ export function readSelectionFromQuery(
 	const picked = included.length > 0 && !included.includes('All') ? new Set(included) : null
 	return allKeys.filter((key) => (!picked || picked.has(key)) && !excluded.has(key))
 }
+
+/**
+ * Tests row values against the selection in `query` without the option list, for servers that filter rows
+ * directly. It agrees with `readSelectionFromQuery` for every option; rows with several values pass when any
+ * value passes. Returns null when nothing is filtered. Pickers whose default is a subset need the option list:
+ * use `readSelectionFromQuery` for them.
+ */
+export function createSelectionMatcher(
+	query: Readonly<Record<string, string | Array<string> | undefined>>,
+	includeKey: string,
+	excludeKey: ExcludeQueryKey
+): ((value: string) => boolean) | null {
+	const included = toNonEmptyArrayParam(query[includeKey])
+	const excluded = new Set(toNonEmptyArrayParam(query[excludeKey]))
+	if (included.includes('None')) return () => false
+	const picked = included.length > 0 && !included.includes('All') ? new Set(included) : null
+	if (!picked && excluded.size === 0) return null
+	return (value) => (!picked || picked.has(value)) && !excluded.has(value)
+}

@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useRef } from 'react'
+import { readSelectionFromQuery } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
@@ -8,7 +9,6 @@ const EMPTY_ARRAY: Array<string> = []
 
 interface IFiltersByCategoryProps {
 	categoryList: Array<string>
-	selectedCategories: Array<string>
 	nestedMenu?: boolean
 	labelType?: 'smol' | 'none'
 	label?: string
@@ -16,13 +16,12 @@ interface IFiltersByCategoryProps {
 
 export function FiltersByCategory({
 	categoryList = EMPTY_ARRAY,
-	selectedCategories,
 	nestedMenu,
 	labelType,
 	label = 'Category'
 }: IFiltersByCategoryProps) {
 	const router = useRouter()
-	const { category } = router.query
+	const selectedCategories = readSelectionFromQuery(router.query, 'category', 'excludeCategory', categoryList)
 	const prevSelectionRef = useRef<Set<string>>(new Set(selectedCategories))
 
 	return (
@@ -31,9 +30,8 @@ export function FiltersByCategory({
 			size="sm"
 			label={label}
 			allValues={categoryList}
-			selectedValues={selectedCategories}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
-			labelType={labelType ? labelType : !category || category === 'All' ? 'none' : 'regular'}
+			labelType={labelType ?? (selectedCategories.length === categoryList.length ? 'none' : 'regular')}
 			includeQueryKey="category"
 			excludeQueryKey="excludeCategory"
 			pushQueryUpdates={(updates) => {

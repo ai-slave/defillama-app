@@ -14,23 +14,17 @@ import { YieldProjects } from './Projects'
 import { ResetAllYieldFilters } from './ResetAll'
 import type { IDropdownMenusProps } from './types'
 
-const EMPTY_CHAINS: Array<string> = []
-const EMPTY_PROJECTS: Array<string> = []
-const EMPTY_CATEGORIES: Array<string> = []
 const TVL_MIN_PRESETS = [100_000, 500_000, 1_000_000, 10_000_000]
 
 export function YieldFilterDropdowns({
 	pathname,
 	chainList,
-	selectedChains,
 	evmChains,
 	projectList,
 	projectGroups,
-	selectedProjects,
 	projectsLabel,
 	categoriesLabel,
 	categoryList,
-	selectedCategories,
 	attributeIds,
 	tvlRange,
 	tvlRangeLabel,
@@ -51,7 +45,6 @@ export function YieldFilterDropdowns({
 			{chainList && chainList.length > 0 ? (
 				<FilterByChain
 					chainList={chainList}
-					selectedChains={selectedChains ?? EMPTY_CHAINS}
 					{...(evmChains ? { evmChains } : {})}
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 				/>
@@ -61,18 +54,14 @@ export function YieldFilterDropdowns({
 				<YieldProjects
 					projectList={projectList}
 					{...(projectGroups ? { projectGroups } : {})}
-					selectedProjects={selectedProjects ?? EMPTY_PROJECTS}
 					label={projectsLabel ?? 'Projects'}
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
-					includeQueryKey="protocol"
-					excludeQueryKey="excludeProtocol"
 				/>
 			) : null}
 
 			{categoryList && categoryList.length > 0 ? (
 				<FiltersByCategory
 					categoryList={categoryList}
-					selectedCategories={selectedCategories ?? EMPTY_CATEGORIES}
 					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 					{...(categoriesLabel ? { label: categoriesLabel } : {})}
 				/>

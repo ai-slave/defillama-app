@@ -1,27 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { decodeYieldsQuery, resetYieldsPoolPageOnFilterChange, selectedSubsetQuery } from '../queryState'
-
-describe('selectedSubsetQuery', () => {
-	test('encodes all, none, and partial selections for include filters', () => {
-		expect(selectedSubsetQuery(['Ethereum', 'Base'], ['Ethereum', 'Base'])).toBeUndefined()
-		expect(selectedSubsetQuery([], ['Ethereum', 'Base'])).toEqual(['__none__'])
-		expect(selectedSubsetQuery(['Base'], ['Ethereum', 'Base'])).toEqual(['Base'])
-	})
-
-	test('does not turn unavailable metadata into a deselect-all filter', () => {
-		expect(selectedSubsetQuery([], [])).toBeUndefined()
-		expect(selectedSubsetQuery(['Ethereum'], [])).toEqual(['Ethereum'])
-	})
-})
+import { decodeYieldsQuery, resetYieldsPoolPageOnFilterChange } from '../queryState'
 
 describe('decodeYieldsQuery', () => {
-	test('applies selection, exclusion, range, and ALL_EVM semantics consistently', () => {
+	test('reads the protocol, chain and category pickers, attributes and ranges from the page URL', () => {
 		const decoded = decodeYieldsQuery(
 			{
-				project: ['Aave', 'Compound'],
-				excludeProject: 'Compound',
-				chain: 'ALL_EVM',
-				excludeChain: 'Arbitrum',
+				excludeProtocol: 'Compound',
+				chain: ['Ethereum', 'Solana'],
+				category: 'None',
 				attribute: ['single_exposure', 'no_il'],
 				minTvl: '1000',
 				maxApy: '12'
@@ -29,12 +15,13 @@ describe('decodeYieldsQuery', () => {
 			{
 				projectList: ['Aave', 'Compound', 'Morpho'],
 				chainList: ['Ethereum', 'Arbitrum', 'Solana'],
-				evmChains: ['Ethereum', 'Arbitrum']
+				categoryList: ['Lending', 'Dexs']
 			}
 		)
 
-		expect(decoded.selectedProjects).toEqual(['Aave'])
-		expect(decoded.selectedChains).toEqual(['Ethereum'])
+		expect(decoded.selectedProjects).toEqual(['Aave', 'Morpho'])
+		expect(decoded.selectedChains).toEqual(['Ethereum', 'Solana'])
+		expect(decoded.selectedCategories).toEqual([])
 		expect(decoded.selectedAttributes).toEqual(['single_exposure', 'no_il'])
 		expect(decoded.minTvl).toBe(1000)
 		expect(decoded.maxApy).toBe(12)

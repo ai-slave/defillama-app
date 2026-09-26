@@ -18,7 +18,6 @@ import { VerifiedFilterToggle } from '../Filters/VerifiedFilterToggle'
 import { getYieldsQuestionContext } from '../getYieldsQuestionContext'
 import { useFormatYieldQueryParams } from '../hooks'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
-import { selectedSubsetQuery } from '../queryState'
 import { PaginatedYieldsPoolTable } from '../Tables/Pools'
 import type { IYieldTableRow } from '../Tables/types'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
@@ -71,13 +70,9 @@ function EarnView({
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'earn', tokens })
 
-	const { selectedProjects, selectedChains, selectedAttributes, selectedCategories } = useFormatYieldQueryParams({
+	const { selectedProjects, selectedChains, selectedAttributes } = useFormatYieldQueryParams({
 		projectList,
-		chainList,
-		categoryList,
-		evmChains,
-		projectQueryKey: 'protocol',
-		excludeProjectQueryKey: 'excludeProtocol'
+		chainList
 	})
 
 	// Translate the shared filter selections into the earn route params.
@@ -97,9 +92,6 @@ function EarnView({
 	const singleAssetExposure: string | Array<string> | undefined =
 		single && multi ? ['true', 'false'] : single ? 'true' : multi ? 'false' : undefined
 	const extraQuery = {
-		chain: selectedSubsetQuery(selectedChains, chainList),
-		protocol: router.query.excludeProtocol ? router.query.protocol : selectedSubsetQuery(selectedProjects, projectList),
-		category: selectedSubsetQuery(selectedCategories, categoryList),
 		stablecoin: attributeSet.has('stablecoins') ? 'true' : undefined,
 		halal: attributeSet.has('halal') ? 'true' : undefined,
 		singleAssetExposure,
@@ -152,7 +144,7 @@ function EarnView({
 	const apyCellMedian =
 		selectedTokenValues.length > 0 && medianApy != null ? { label: medianLabel, apy: medianApy } : undefined
 
-	const filterContext = getYieldsQuestionContext(router.query)
+	const filterContext = getYieldsQuestionContext(router.query, { chainList, projectList, categoryList })
 	// Never a skeleton here: a filter change keeps the current chips (or the page's own set) on screen
 	// and swaps them once the filtered set lands. The strip simply stays away while there is nothing.
 	const { data: filteredQuestionsData } = useEntityQuestions(
@@ -210,14 +202,11 @@ function EarnView({
 				tokenSearch={<IncludeTokens tokens={tokens} matchOn resultCount={serverTotal} data-alwaysdisplay={false} />}
 				mobileActions={<IncludeTokens tokens={tokens} matchOn compact resultCount={serverTotal} />}
 				chainList={chainList}
-				selectedChains={selectedChains}
 				evmChains={evmChains}
 				projectList={projectList}
 				projectGroups={projectGroups}
-				selectedProjects={selectedProjects}
 				projectsLabel="Protocols"
 				categoryList={categoryList}
-				selectedCategories={selectedCategories}
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				showColumns

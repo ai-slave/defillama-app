@@ -1,4 +1,5 @@
 import type { ParsedUrlQuery } from 'node:querystring'
+import { readSelectionFromQuery } from '~/components/Select/query'
 
 interface YieldsQuestionFilters {
 	chains?: Array<string>
@@ -12,35 +13,39 @@ interface YieldsQuestionFilters {
 	maxApy?: number
 }
 
-export function getYieldsQuestionContext(query: ParsedUrlQuery): { filters: YieldsQuestionFilters } | null {
+interface YieldsFilterOptions {
+	chainList: Array<string>
+	projectList: Array<string>
+	categoryList: Array<string>
+}
+
+export function getYieldsQuestionContext(
+	query: ParsedUrlQuery,
+	{ chainList, projectList, categoryList }: YieldsFilterOptions
+): { filters: YieldsQuestionFilters } | null {
 	const filters: YieldsQuestionFilters = {}
 	let hasFilters = false
 
-	if (query.chain) {
-		const chains = Array.isArray(query.chain) ? query.chain : [query.chain]
-		if (chains.length > 0 && chains[0] !== 'All') {
-			filters.chains = chains
-			hasFilters = true
-		}
+	// A picker selection only narrows the question when it leaves options out.
+	const chains = readSelectionFromQuery(query, 'chain', 'excludeChain', chainList)
+	if (chains.length < chainList.length) {
+		filters.chains = chains
+		hasFilters = true
 	}
-	if (query.project) {
-		const projects = Array.isArray(query.project) ? query.project : [query.project]
-		if (projects.length > 0) {
-			filters.projects = projects
-			hasFilters = true
-		}
+	const projects = readSelectionFromQuery(query, 'protocol', 'excludeProtocol', projectList)
+	if (projects.length < projectList.length) {
+		filters.projects = projects
+		hasFilters = true
+	}
+	const categories = readSelectionFromQuery(query, 'category', 'excludeCategory', categoryList)
+	if (categories.length < categoryList.length) {
+		filters.categories = categories
+		hasFilters = true
 	}
 	if (query.token) {
 		const tokens = Array.isArray(query.token) ? query.token : [query.token]
 		if (tokens.length > 0) {
 			filters.tokens = tokens
-			hasFilters = true
-		}
-	}
-	if (query.category) {
-		const categories = Array.isArray(query.category) ? query.category : [query.category]
-		if (categories.length > 0) {
-			filters.categories = categories
 			hasFilters = true
 		}
 	}

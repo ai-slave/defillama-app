@@ -13,7 +13,8 @@ import {
 	parseCommonFilters,
 	parseNumber,
 	parseTokenPairFilters,
-	parseTriState
+	parseTriState,
+	UNCATEGORIZED
 } from './query'
 import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
@@ -217,9 +218,9 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 
 	const pageRows: Array<MarketTableRow> = []
 	for (const row of rows) {
-		if (common.chains && !common.chains.has(row.chain)) continue
-		if (common.projects && !common.projects.has(row.protocol)) continue
-		if (common.categories && !(row.category != null && common.categories.has(row.category))) continue
+		if (common.matchesChain && !common.matchesChain(row.chain)) continue
+		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
+		if (common.matchesCategory && !common.matchesCategory(row.category || UNCATEGORIZED)) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue
@@ -300,9 +301,9 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 
 	const pageRows: Array<RouteTableRow> = []
 	for (const row of rows) {
-		if (common.chains && !common.chains.has(row.chain)) continue
-		if (common.projects && !common.projects.has(row.protocol)) continue
-		if (common.categories && !(row.category != null && common.categories.has(row.category))) continue
+		if (common.matchesChain && !common.matchesChain(row.chain)) continue
+		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
+		if (common.matchesCategory && !common.matchesCategory(row.category || UNCATEGORIZED)) continue
 		if (memePoolIds && (memePoolIds.has(row.collateral.id) || memePoolIds.has(row.borrow.id))) continue
 		if (hasAudit && !row.hasAudit) continue
 		if (!matchesTriState(potentialAirdrop, row.potentialAirdrop)) continue

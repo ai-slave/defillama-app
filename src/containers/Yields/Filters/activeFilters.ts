@@ -22,7 +22,9 @@ export function countActiveYieldFilters(query: QueryRecord, routeParams: Readonl
 		for (const key of group) {
 			if (routeParams.has(key)) continue
 			const value = query[key]
-			if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) continue
+			// An empty value and `All` select the default, so they filter nothing.
+			if (value === undefined || value === '' || value === 'All' || (Array.isArray(value) && value.length === 0))
+				continue
 			count += 1
 			break
 		}

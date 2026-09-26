@@ -10,7 +10,6 @@ import { ApyViewControls } from '../Filters/ApyViewControls'
 import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
 import { BorrowTokenPickers } from '../Filters/BorrowTokenPickers'
 import { useFormatYieldQueryParams } from '../hooks'
-import { selectedSubsetQuery } from '../queryState'
 import { PaginatedBorrowMarketsTable, PaginatedBorrowRoutesTable } from '../Tables/Borrow'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
@@ -49,20 +48,13 @@ function BorrowView({
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'borrow', tokens: collateralTokens })
 
-	const { selectedChains, selectedProjects, selectedCategories, selectedAttributes } = useFormatYieldQueryParams({
+	const { selectedChains, selectedProjects, selectedAttributes } = useFormatYieldQueryParams({
 		projectList,
-		chainList,
-		categoryList,
-		evmChains,
-		projectQueryKey: 'protocol',
-		excludeProjectQueryKey: 'excludeProtocol'
+		chainList
 	})
 
 	const attributeSet = new Set(selectedAttributes)
 	const extraQuery = {
-		chain: selectedSubsetQuery(selectedChains, chainList),
-		protocol: selectedSubsetQuery(selectedProjects, projectList),
-		category: selectedSubsetQuery(selectedCategories, categoryList),
 		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
 		potentialAirdrop: attributeSet.has('airdrop') ? 'true' : undefined,
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
@@ -117,13 +109,10 @@ function BorrowView({
 				showSearchOnMobile
 				tokenSearch={<BorrowTokenPickers collateralTokens={collateralTokens} borrowTokens={borrowTokens} />}
 				chainList={chainList}
-				selectedChains={selectedChains}
 				evmChains={evmChains}
 				projectList={projectList}
-				selectedProjects={selectedProjects}
 				projectsLabel="Protocols"
 				categoryList={categoryList}
-				selectedCategories={selectedCategories}
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				availableRange

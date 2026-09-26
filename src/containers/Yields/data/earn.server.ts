@@ -29,8 +29,8 @@ import {
 	parseTokenMatch,
 	parseTokenOn,
 	parseTriState,
-	toArray,
-	type TokenFilterInput
+	type TokenFilterInput,
+	UNCATEGORIZED
 } from './query'
 import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
@@ -124,7 +124,6 @@ async function buildPreparedEarn(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const excludedProjects = new Set(toArray(query.excludeProtocol))
 
 	// Token search: Match (exact/contains/set) × On (reference/pool/both). Absent/invalid
 	// params fall back to the default exact-on-reference behavior.
@@ -172,10 +171,9 @@ async function buildPreparedEarn(
 	const pageRows: Array<EarnPageRow> = []
 	for (const row of rows) {
 		if (common.ids && !common.ids.has(row.id)) continue
-		if (common.chains && !common.chains.has(row.chain)) continue
-		if (common.projects && !common.projects.has(row.protocol)) continue
-		if (excludedProjects.has(row.protocol)) continue
-		if (common.categories && !(row.category != null && common.categories.has(row.category))) continue
+		if (common.matchesChain && !common.matchesChain(row.chain)) continue
+		if (common.matchesProtocol && !common.matchesProtocol(row.protocol)) continue
+		if (common.matchesCategory && !common.matchesCategory(row.category || UNCATEGORIZED)) continue
 		if (memePoolIds?.has(row.id)) continue
 		if (stablecoin && !row.attributes.stablecoin_only) continue
 		if (halalSlugs && !(row.protocolSlug != null && halalSlugs.has(row.protocolSlug))) continue

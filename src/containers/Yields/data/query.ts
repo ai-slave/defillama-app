@@ -1,3 +1,4 @@
+import { createSelectionMatcher } from '~/components/Select/query'
 import { queryBoolean, queryEnum, queryString } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
 import { legacyProtocolParam } from './legacyQuery'
@@ -65,11 +66,17 @@ export function parseApyComponents(query: ApiQuery): Array<ApyComponent> {
 	return APY_COMPONENT_ORDER.filter((component) => selected.has(component))
 }
 
+/** The category option for rows without one, so the category picker can keep or drop them. */
+export const UNCATEGORIZED = 'Uncategorized'
+
+type SelectionMatcher = (value: string) => boolean
+
 export interface CommonFilters {
 	ids: Set<string> | null
-	chains: Set<string> | null
-	projects: Set<string> | null
-	categories: Set<string> | null
+	matchesChain: SelectionMatcher | null
+	matchesProtocol: SelectionMatcher | null
+	/** Call with `row.category || UNCATEGORIZED`. */
+	matchesCategory: SelectionMatcher | null
 	tokens: Array<string>
 	includeMemeTokens: boolean
 }
@@ -78,15 +85,13 @@ export function parseCommonFilters(query: ApiQuery): CommonFilters {
 	// Repeatable `id` param restricts the result to an explicit id set (e.g. the
 	// watchlist fetches its bookmarked earn pools by id). Cheap, and generally useful.
 	const ids = toArray(query.id)
-	const chains = toArray(query.chain)
 	// Canonical `protocol=`, with a legacy `project=` fallback (see legacyProtocolParam).
-	const projects = toArray(legacyProtocolParam(query))
-	const categories = toArray(query.category)
+	const protocolQuery = { protocol: legacyProtocolParam(query), excludeProtocol: query.excludeProtocol }
 	return {
 		ids: ids.length > 0 ? new Set(ids) : null,
-		chains: chains.length > 0 ? new Set(chains) : null,
-		projects: projects.length > 0 ? new Set(projects) : null,
-		categories: categories.length > 0 ? new Set(categories) : null,
+		matchesChain: createSelectionMatcher(query, 'chain', 'excludeChain'),
+		matchesProtocol: createSelectionMatcher(protocolQuery, 'protocol', 'excludeProtocol'),
+		matchesCategory: createSelectionMatcher(query, 'category', 'excludeCategory'),
 		tokens: toArray(query.token),
 		includeMemeTokens: queryBoolean(query, 'includeMemeTokens')
 	}
