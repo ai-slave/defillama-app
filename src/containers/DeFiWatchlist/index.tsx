@@ -670,7 +670,12 @@ function PortfolioSelection() {
 
 	const { portfolios, selectedPortfolio, addPortfolio, removePortfolio, setSelectedPortfolio } = useBookmarks('defi')
 	const { setSelectedPortfolio: setSelectedChainPortfolio } = useBookmarks('chains')
-	const { deletePreferences: deleteNotificationPreferences } = useEmailNotifications(null)
+	const { hasActiveSubscription, loaders } = useAuthContext()
+	const {
+		preferences: notificationPreferences,
+		isLoading: isLoadingNotificationPreferences,
+		deletePreferences: deleteNotificationPreferences
+	} = useEmailNotifications(selectedPortfolio)
 
 	const handleSelectPortfolio = (portfolio: string) => {
 		setSelectedPortfolio(portfolio)
@@ -682,14 +687,17 @@ function PortfolioSelection() {
 		setSelectedChainPortfolio(name)
 	}
 
+	const removeSelectedPortfolio = () => {
+		removePortfolio(selectedPortfolio)
+		setSelectedChainPortfolio(DEFAULT_PORTFOLIO_NAME)
+	}
+
 	const handleRemovePortfolio = () => {
-		deleteNotificationPreferences
-			.mutateAsync({ portfolioName: selectedPortfolio })
-			.catch(() => {})
-			.finally(() => {
-				removePortfolio(selectedPortfolio)
-				setSelectedChainPortfolio(DEFAULT_PORTFOLIO_NAME)
-			})
+		// Only portfolios with saved notifications have server preferences, and the server refuses to delete
+		// them without an active subscription (its email job skips those accounts too).
+		if (!notificationPreferences || !hasActiveSubscription) return removeSelectedPortfolio()
+		// Keep the portfolio until the server delete succeeds: once it is gone, nothing in the UI can stop its emails.
+		deleteNotificationPreferences.mutate({ portfolioName: selectedPortfolio }, { onSuccess: removeSelectedPortfolio })
 	}
 
 	return (
@@ -720,6 +728,11 @@ function PortfolioSelection() {
 						size="md"
 						type="button"
 						onClick={handleRemovePortfolio}
+						disabled={
+							loaders.subscriptionInitialCheck ||
+							isLoadingNotificationPreferences ||
+							deleteNotificationPreferences.isPending
+						}
 						title="Delete current portfolio"
 					>
 						<Icon name="trash-2" height={16} width={16} />
