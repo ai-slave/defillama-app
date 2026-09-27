@@ -15,7 +15,7 @@ export function TokenMarketsTable(
 	return (
 		<PairTable {...props}>
 			<div className="col-start-1 row-start-2 min-w-0 self-center sm:col-start-2 sm:row-start-1 sm:[&_label]:mr-0 sm:[&_label]:ml-auto">
-				<TableToolbar className="w-full justify-end">
+				<TableToolbar>
 					<TableSearchInput columnId="venue" placeholder="Search exchanges..." />
 					<TableColumnSelect />
 					<TableCsvExport filename={props.csvFileName} includeHiddenColumns />

@@ -6,9 +6,9 @@ import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
-import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -348,7 +348,7 @@ export function BridgesOverviewByChain({
 				<ChartPanel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
-							<ChartPanelToolbar className="justify-end">
+							<ChartPanelToolbar>
 								<SegmentedControl
 									value={chartView}
 									onValueChange={(value) => setChartView(value as typeof chartView)}
@@ -379,11 +379,19 @@ export function BridgesOverviewByChain({
 					) : (
 						<>
 							{chartType !== 'Bridge Volume' && (
-								<ChartPanelToolbar className="justify-end">
-									<ChartSelector
-										options={BRIDGE_CHAIN_CHART_OPTIONS}
-										selectedChart={chartType}
-										onClick={(value) => setChartType(value as BridgeOverviewChartType)}
+								<ChartPanelToolbar>
+									<SelectWithCombobox
+										allValues={BRIDGE_CHAIN_CHART_OPTIONS}
+										selectedValues={[chartType]}
+										setSelectedValues={(values) => {
+											if (values[0]) setChartType(values[0] as BridgeOverviewChartType)
+										}}
+										label="Chart"
+										labelType="regular"
+										singleSelect
+										variant="filter"
+										size="md"
+										triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} mr-auto` }}
 									/>
 									{activeTokenPieSeries && activeTokenSeriesNames.length > 1 ? (
 										<SelectWithCombobox
@@ -413,10 +421,18 @@ export function BridgesOverviewByChain({
 									onReady={handleChartReady}
 									scopeNote={chartScopeNote}
 									headerStart={
-										<ChartSelector
-											options={BRIDGE_CHAIN_CHART_OPTIONS}
-											selectedChart={chartType}
-											onClick={(value) => setChartType(value as BridgeOverviewChartType)}
+										<SelectWithCombobox
+											allValues={BRIDGE_CHAIN_CHART_OPTIONS}
+											selectedValues={[chartType]}
+											setSelectedValues={(values) => {
+												if (values[0]) setChartType(values[0] as BridgeOverviewChartType)
+											}}
+											label="Chart"
+											labelType="regular"
+											singleSelect
+											variant="filter"
+											size="md"
+											triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} mr-auto` }}
 										/>
 									}
 									headerEnd={
@@ -488,7 +504,7 @@ export function BridgesOverviewByChain({
 			</SummaryCardGrid>
 
 			<Panel padding="none">
-				<TableToolbar className="w-full justify-end">
+				<TableToolbar>
 					<SegmentedControl
 						value={activeTab}
 						onValueChange={(value) => setActiveTab(value as typeof activeTab)}

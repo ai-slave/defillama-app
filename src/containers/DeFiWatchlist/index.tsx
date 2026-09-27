@@ -26,6 +26,7 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { TableToolbar } from '~/ui/Toolbar'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { IChainsByCategoryData } from '../ChainsByCategory/types'
@@ -163,7 +164,7 @@ export function DefiWatchlistContainer({
 				/>
 				{protocolsTableData.length > 0 ? <TopMovers protocols={protocolsTableData} /> : null}
 				<Card padding="none">
-					<div className="flex flex-wrap items-center gap-2 p-2">
+					<TableToolbar>
 						<div className="mr-auto">
 							<h2 className="heading-xs">Protocols</h2>
 							<p className="body-xs text-secondary">
@@ -179,7 +180,7 @@ export function DefiWatchlistContainer({
 							variant="filter"
 							size="md"
 						/>
-					</div>
+					</TableToolbar>
 					{protocolsTableData.length > 0 ? (
 						<ChainProtocolsTable protocols={protocolsTableData} useStickyHeader={false} borderless />
 					) : isLoadingProtocolRows && watchedNames.length > 0 ? (
@@ -194,7 +195,7 @@ export function DefiWatchlistContainer({
 				</Card>
 
 				<Card padding="none">
-					<div className="flex flex-wrap items-center gap-2 p-2">
+					<TableToolbar>
 						<div className="mr-auto">
 							<h2 className="heading-xs">Chains</h2>
 							<p className="body-xs text-secondary">
@@ -210,7 +211,7 @@ export function DefiWatchlistContainer({
 							variant="filter"
 							size="md"
 						/>
-					</div>
+					</TableToolbar>
 					{chainsTableData.length > 0 ? (
 						<ChainsByCategoryTable data={chainsTableData} useStickyHeader={false} borderless showByGroup={false} />
 					) : isLoadingChainRows && watchedChainNames.length > 0 ? (
@@ -695,7 +696,7 @@ function PortfolioSelection() {
 
 	return (
 		<Card padding="none">
-			<div className="flex flex-wrap items-center gap-2 p-2">
+			<TableToolbar>
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
 					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
@@ -726,7 +727,7 @@ function PortfolioSelection() {
 						<span>Delete</span>
 					</button>
 				) : null}
-			</div>
+			</TableToolbar>
 		</Card>
 	)
 }
@@ -799,7 +800,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 
 	return (
 		<Card padding="none">
-			<div className="flex flex-wrap items-center gap-2 p-2">
+			<TableToolbar>
 				<h2 className="mr-auto heading-xs">Top Movers</h2>
 
 				<label className="flex cursor-pointer items-center gap-1.5">
@@ -836,7 +837,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 						size="md"
 					/>
 				) : null}
-			</div>
+			</TableToolbar>
 
 			<div className="grid grid-cols-1 gap-4 p-3 pt-1 sm:grid-cols-3">
 				{(['1d', '7d', '1m'] as const).map((period) => (

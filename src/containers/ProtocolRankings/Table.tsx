@@ -618,15 +618,15 @@ function ChainProtocolsTableInner({
 	return (
 		<div className={borderless ? 'isolate' : 'isolate rounded-lg border border-subtle bg-surface'}>
 			{!borderless && headingAs === 'h1' ? (
-				<PanelHeader className="justify-end">
+				<PanelHeader>
 					<PanelTitle as="h1">Protocol Rankings</PanelTitle>
-					<TableToolbarControlGroup className="justify-end">{primaryToolbarControls}</TableToolbarControlGroup>
+					<TableToolbarControlGroup>{primaryToolbarControls}</TableToolbarControlGroup>
 					<div className="w-full pt-1">{secondaryToolbarControls}</div>
 				</PanelHeader>
 			) : (
 				<div className="border-b border-subtle">
-					<TableToolbar className="justify-end">
-						{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
+					<TableToolbar>
+						{borderless ? null : <h2 className="mr-auto label-md">Protocol Rankings</h2>}
 						{primaryToolbarControls}
 					</TableToolbar>
 					<div className="px-2 pb-2">{secondaryToolbarControls}</div>

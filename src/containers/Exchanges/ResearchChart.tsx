@@ -177,7 +177,7 @@ function ResearchChartFrame({
 }) {
 	return (
 		<ChartPanel className="flex-1">
-			<ChartPanelToolbar className="items-start justify-end">
+			<ChartPanelToolbar className="items-start">
 				<div className="mr-auto flex min-w-0 basis-full flex-col">
 					<h2 className="heading-xs">{title}</h2>
 					<p className="body-sm text-secondary">{description}</p>

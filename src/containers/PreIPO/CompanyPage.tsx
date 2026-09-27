@@ -101,7 +101,7 @@ export function PreIpoCompanyPage({
 						</Suspense>
 					) : (
 						<>
-							<ChartPanelToolbar className="justify-end">
+							<ChartPanelToolbar>
 								<h2 className="mr-auto heading-xs">{HISTORY_CHART_TITLE}</h2>
 							</ChartPanelToolbar>
 							<ChartPanelBodyFallback className="body-md text-secondary">

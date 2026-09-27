@@ -313,7 +313,7 @@ export function ChainsWithStablecoins({
 					) : null}
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<SegmentedControl
 							value={chartType}
 							onValueChange={onChartTypeChange}

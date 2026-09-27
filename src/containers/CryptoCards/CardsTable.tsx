@@ -62,22 +62,20 @@ export function CardsTable({ rows, reference }: { rows: Array<CardTierRow>; refe
 				}}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
-						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-							<div className="flex items-center overflow-x-auto">
-								<SegmentedControl<CardsColumnGroup>
-									value={columnGroup}
-									onValueChange={(nextGroup) => {
-										void pushShallowQuery(router, {
-											[CARDS_QUERY_KEYS.columnGroup]: nextGroup === DEFAULT_CARDS_COLUMN_GROUP ? undefined : nextGroup
-										})
-									}}
-									options={CARDS_COLUMN_GROUPS}
-									label="Card attributes"
-									variant="chips"
-									size="md"
-								/>
-							</div>
+					<TableToolbar>
+						<div className="mr-auto flex items-center overflow-x-auto">
+							<SegmentedControl<CardsColumnGroup>
+								value={columnGroup}
+								onValueChange={(nextGroup) => {
+									void pushShallowQuery(router, {
+										[CARDS_QUERY_KEYS.columnGroup]: nextGroup === DEFAULT_CARDS_COLUMN_GROUP ? undefined : nextGroup
+									})
+								}}
+								options={CARDS_COLUMN_GROUPS}
+								label="Card attributes"
+								variant="chips"
+								size="md"
+							/>
 						</div>
 						<TableSearchInput
 							columnId="name"

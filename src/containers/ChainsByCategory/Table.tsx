@@ -135,7 +135,7 @@ export function ChainsByCategoryTable({
 
 	const tableContent = (
 		<>
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search chains</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -146,39 +146,34 @@ export function ChainsByCategoryTable({
 					/>
 				</label>
 
-				<div className="flex items-center gap-1.5 max-sm:w-full max-sm:flex-col">
-					<div className="flex w-full items-center gap-1.5 sm:w-auto">
-						{showByGroup ? (
-							<SelectWithCombobox
-								allValues={CHAINS_CATEGORY_GROUP_SETTINGS}
-								selectedValues={selectedAggregateTypes}
-								setSelectedValues={setAggrOptions}
-								nestedMenu={false}
-								label="Group Chains"
-								labelType="smol"
-								variant="filter-responsive"
-								size="md"
-							/>
-						) : null}
-						<SelectWithCombobox
-							allValues={columnOptions}
-							selectedValues={selectedColumns}
-							setSelectedValues={setColumnOptions}
-							nestedMenu={false}
-							label="Columns"
-							labelType="smol"
-							variant="filter-responsive"
-							size="md"
-						/>
-					</div>
-
-					<TVLRange size="md" />
-					<CSVDownloadButton
-						prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })}
-						smol
+				{showByGroup ? (
+					<SelectWithCombobox
+						allValues={CHAINS_CATEGORY_GROUP_SETTINGS}
+						selectedValues={selectedAggregateTypes}
+						setSelectedValues={setAggrOptions}
+						nestedMenu={false}
+						label="Group Chains"
+						labelType="smol"
+						variant="filter"
 						size="md"
 					/>
-				</div>
+				) : null}
+				<SelectWithCombobox
+					allValues={columnOptions}
+					selectedValues={selectedColumns}
+					setSelectedValues={setColumnOptions}
+					nestedMenu={false}
+					label="Columns"
+					labelType="smol"
+					variant="filter"
+					size="md"
+				/>
+				<TVLRange size="md" />
+				<CSVDownloadButton
+					prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })}
+					smol
+					size="md"
+				/>
 			</TableToolbar>
 			<VirtualTable table={instance} useStickyHeader={useStickyHeader} />
 		</>

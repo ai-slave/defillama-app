@@ -76,7 +76,7 @@ export function ProfileReserves({
 						{ value: 'stablecoins', label: 'Stablecoins' }
 					]}
 					label="Reserves view"
-					variant="responsive"
+					variant="default"
 					size="md"
 				/>
 				{showOwnTokensSwitch && reserves.ownToken ? (

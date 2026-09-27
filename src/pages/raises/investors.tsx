@@ -13,7 +13,7 @@ import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -180,7 +180,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 			pageName={pageName}
 		>
 			<Panel padding="none">
-				<PanelHeader className="justify-end">
+				<PanelHeader>
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search investors...</span>
@@ -192,21 +192,16 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 							className={searchFieldInputStyles}
 						/>
 					</label>
-					<div className={`${TAG_GROUP_VARIANTS.solid.container} ${TAG_GROUP_SIZES.md}`}>
-						{allPeriods.map((dataInterval) => (
-							<button
-								type="button"
-								className={TAG_GROUP_VARIANTS.solid.button}
-								data-active={dataInterval.value === selectedPeriod}
-								onClick={() => {
-									void pushShallowQuery(router, { period: dataInterval.value })
-								}}
-								key={`deals-period-${dataInterval.value}`}
-							>
-								{dataInterval.label}
-							</button>
-						))}
-					</div>
+					<SegmentedControl
+						value={selectedPeriod}
+						onValueChange={(value) => {
+							void pushShallowQuery(router, { period: value })
+						}}
+						options={allPeriods}
+						label="Period"
+						variant="default"
+						size="md"
+					/>
 				</PanelHeader>
 				<VirtualTable table={instance} />
 			</Panel>

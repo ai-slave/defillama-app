@@ -219,7 +219,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Button>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
 						{props.assets.length > 1 ? (
 							<TagGroup
@@ -227,7 +227,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								selectedValue={selectedAsset}
 								setValue={setSelectedAsset}
 								values={props.assets}
-								variant="responsive"
+								variant="default"
 							/>
 						) : null}
 						<ChartExportButtons
@@ -328,7 +328,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				}}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="assetName" placeholder="Search assets" />
 						<TableCsvExport filename={`${props.name}-transactions`} />
 					</TableToolbar>

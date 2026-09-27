@@ -14,7 +14,7 @@ import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { InlineStatStrip } from '~/ui/SummaryStats'
@@ -485,7 +485,26 @@ function TokenRightsPage({
 
 				<Panel padding="none">
 					<TableToolbar>
-						<span className="mr-1 label-sm text-tertiary">Filters</span>
+						<label className={searchFieldWrapperStyles}>
+							<span className="sr-only">Search protocol</span>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<input
+								onInput={(event) => {
+									setSearchValue(event.currentTarget.value)
+								}}
+								placeholder="Search protocol..."
+								className={searchFieldInputStyles}
+							/>
+						</label>
+						<ExternalLinkButton
+							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
+							icon="plus"
+						>
+							List Your Tokens
+						</ExternalLinkButton>
+					</TableToolbar>
+					<div role="group" aria-label="Filters" className="flex flex-wrap items-center gap-1.5 px-2 pb-2">
+						<span className="mr-1 label-sm text-secondary">Filters</span>
 						{TOKEN_RIGHTS_FILTERS.map((filter) => {
 							const active = activeFilters.includes(filter.key)
 							return (
@@ -503,24 +522,7 @@ function TokenRightsPage({
 								</Button>
 							)
 						})}
-						<ExternalLinkButton
-							href="https://docs.google.com/forms/d/e/1FAIpQLSdV1cCKiwQzzSlUIkPbfVHrTLFYaiDFpTR1cvXmuDiakORfuQ/viewform"
-							icon="plus"
-						>
-							List Your Tokens
-						</ExternalLinkButton>
-						<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
-							<span className="sr-only">Search protocol</span>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-							<input
-								onInput={(event) => {
-									setSearchValue(event.currentTarget.value)
-								}}
-								placeholder="Search protocol..."
-								className={searchFieldInputStyles}
-							/>
-						</label>
-					</TableToolbar>
+					</div>
 
 					<div className="overflow-hidden">
 						<Table table={table} rowSize={58} />

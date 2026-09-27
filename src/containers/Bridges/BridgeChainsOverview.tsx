@@ -52,7 +52,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 	return (
 		<>
 			<ChartPanel>
-				<ChartPanelToolbar className="justify-end">
+				<ChartPanelToolbar>
 					{rankedChains.length > 1 ? (
 						<SelectWithCombobox
 							allValues={rankedChains}

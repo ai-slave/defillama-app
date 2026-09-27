@@ -10,7 +10,7 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { Card } from '~/ui/Card'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
@@ -256,66 +256,62 @@ export function DirectoryTable({
 			}}
 		>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-						<div className="flex items-center overflow-x-auto">
-							<div className="flex flex-wrap items-center gap-2">
-								<SegmentedControl<DirectoryScope>
-									value={scope}
-									onValueChange={(nextScope) => {
-										void pushShallowQuery(router, {
-											[EXCHANGES_QUERY_KEYS.directoryScope]:
-												nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : segmentQueryValue(nextScope)
-										})
-									}}
-									options={SCOPE_OPTIONS}
-									label="Market scope"
-									variant="responsive"
-									size="md"
-								/>
-								<SelectWithCombobox
-									allValues={KIND_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
-									selectedValues={[kind]}
-									setSelectedValues={(values) => {
-										const nextKind = values[0] as DirectoryKind | undefined
-										if (!nextKind) return
-										void pushShallowQuery(router, {
-											[EXCHANGES_QUERY_KEYS.directoryKind]:
-												nextKind === DEFAULT_DIRECTORY_QUERY_STATE.kind ? undefined : nextKind
-										})
-									}}
-									label="Venue"
-									singleSelect
-									labelType="regular"
-									variant="filter-responsive"
-									size="md"
-								/>
-								<ExchangeCountrySelect
-									catalog={catalog}
-									catalogFailed={catalogFailed}
-									selectedCountry={country}
-									onCountryChange={onCountryChange}
-								/>
-								<SelectWithCombobox
-									allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
-									selectedValues={[group]}
-									setSelectedValues={(values) => {
-										const nextGroup = values[0] as DirectoryColumnGroup | undefined
-										if (!nextGroup) return
-										void pushShallowQuery(router, {
-											[EXCHANGES_QUERY_KEYS.directoryGroup]:
-												nextGroup === DEFAULT_DIRECTORY_QUERY_STATE.group ? undefined : nextGroup
-										})
-									}}
-									label="View"
-									singleSelect
-									labelType="regular"
-									variant="filter-responsive"
-									size="md"
-								/>
-							</div>
-						</div>
-					</div>
+				<TableToolbar>
+					<TableToolbarControlGroup className="mr-auto">
+						<SegmentedControl<DirectoryScope>
+							value={scope}
+							onValueChange={(nextScope) => {
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.directoryScope]:
+										nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : segmentQueryValue(nextScope)
+								})
+							}}
+							options={SCOPE_OPTIONS}
+							label="Market scope"
+							variant="default"
+							size="md"
+						/>
+						<SelectWithCombobox
+							allValues={KIND_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+							selectedValues={[kind]}
+							setSelectedValues={(values) => {
+								const nextKind = values[0] as DirectoryKind | undefined
+								if (!nextKind) return
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.directoryKind]:
+										nextKind === DEFAULT_DIRECTORY_QUERY_STATE.kind ? undefined : nextKind
+								})
+							}}
+							label="Venue"
+							singleSelect
+							labelType="regular"
+							variant="filter"
+							size="md"
+						/>
+						<ExchangeCountrySelect
+							catalog={catalog}
+							catalogFailed={catalogFailed}
+							selectedCountry={country}
+							onCountryChange={onCountryChange}
+						/>
+						<SelectWithCombobox
+							allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+							selectedValues={[group]}
+							setSelectedValues={(values) => {
+								const nextGroup = values[0] as DirectoryColumnGroup | undefined
+								if (!nextGroup) return
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.directoryGroup]:
+										nextGroup === DEFAULT_DIRECTORY_QUERY_STATE.group ? undefined : nextGroup
+								})
+							}}
+							label="View"
+							singleSelect
+							labelType="regular"
+							variant="filter"
+							size="md"
+						/>
+					</TableToolbarControlGroup>
 					<TableSearchInput
 						columnId="name"
 						placeholder="Search exchanges..."

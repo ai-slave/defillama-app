@@ -81,7 +81,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 	return (
 		<SearchTableProvider options={{ data: protocols, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 			<Card padding="none">
-				<PanelHeader className="w-full justify-end">
+				<PanelHeader>
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Total Value Lost in Hacks
 					</PanelTitle>

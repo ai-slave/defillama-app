@@ -299,7 +299,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			{children}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
 			<Panel padding="none">
-				<TableToolbar className="justify-end">
+				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -316,7 +316,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						nestedMenu={false}
 						label="Columns"
 						labelType="smol"
-						variant="filter-responsive"
+						variant="filter"
 						size="md"
 					/>
 					{props.categories.length > 0 ? (
@@ -327,7 +327,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 							nestedMenu={false}
 							label="Category"
 							labelType="smol"
-							variant="filter-responsive"
+							variant="filter"
 							size="md"
 						/>
 					) : null}

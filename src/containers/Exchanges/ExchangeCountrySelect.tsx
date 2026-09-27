@@ -139,7 +139,7 @@ export function ExchangeCountrySelect({
 				label="Country"
 				labelType="regular"
 				singleSelect
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				searchPlaceholder="Search countries..."
 				triggerProps={{ disabled: catalog === null }}

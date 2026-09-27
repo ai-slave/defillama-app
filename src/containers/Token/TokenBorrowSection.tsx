@@ -12,7 +12,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatNumber } from '~/utils/numberFormat'
 import { DeferredPaginatedBorrowRoutesTable } from './deferred/DeferredPaginatedBorrowRoutesTable'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
@@ -319,7 +319,7 @@ export function TokenBorrowSection({
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				<div className="flex flex-1 flex-col gap-2">
-					<TableToolbar>
+					<TableToolbarControlGroup>
 						<SegmentedControl
 							value={activeTab}
 							onValueChange={(value) => setActiveTab(value as typeof activeTab)}
@@ -330,8 +330,9 @@ export function TokenBorrowSection({
 							label="Borrow view"
 							variant="default"
 							size="md"
+							className="mr-auto"
 						/>
-					</TableToolbar>
+					</TableToolbarControlGroup>
 					{showInitialLoader ? (
 						<div className="flex flex-1 items-center justify-center">
 							<LoadingIndicator />
@@ -348,7 +349,7 @@ export function TokenBorrowSection({
 						</div>
 					) : (
 						<>
-							<TableToolbar>
+							<TableToolbarControlGroup>
 								<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
 									{(nestedMenu) => (
 										<>
@@ -381,7 +382,7 @@ export function TokenBorrowSection({
 										</>
 									)}
 								</ResponsiveFilterLayout>
-							</TableToolbar>
+							</TableToolbarControlGroup>
 							{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
 
 							{filteredRows.length === 0 && !isFetchingFullData ? (

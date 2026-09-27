@@ -196,10 +196,8 @@ export function PerpetualMarketsTable({
 	return (
 		<SearchTableProvider options={{ data: perps, columns: perpColumns }}>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-						<h2 className="label-md whitespace-nowrap">Perpetual Markets</h2>
-					</div>
+				<TableToolbar>
+					<h2 className="mr-auto label-md">Perpetual Markets</h2>
 					<TableSearchInput
 						columnId="exchangeName"
 						placeholder="Search exchanges..."
@@ -226,10 +224,8 @@ export function TokenIssuersTable({
 	return (
 		<SearchTableProvider options={{ data: tokenIssuers, columns: issuerColumns }}>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-						<h2 className="label-md whitespace-nowrap">Token Issuers</h2>
-					</div>
+				<TableToolbar>
+					<h2 className="mr-auto label-md">Token Issuers</h2>
 					<TableSearchInput
 						columnId="issuerName"
 						placeholder="Search issuers..."

@@ -62,8 +62,8 @@ function Shell({
 	return (
 		<section aria-labelledby={SECTION_ID}>
 			<Panel padding="none">
-				<PanelHeader className="items-start justify-between gap-x-3 gap-y-3">
-					<div className="min-w-0">
+				<PanelHeader className="items-start gap-x-3 gap-y-3">
+					<div className="mr-auto min-w-0">
 						<PanelTitle className="group relative flex min-w-0 scroll-mt-24 items-center gap-1" id={SECTION_ID}>
 							Risk
 							<a

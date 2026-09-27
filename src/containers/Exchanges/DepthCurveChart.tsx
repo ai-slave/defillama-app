@@ -3,6 +3,7 @@
  * venue, bids and asks on one axis.
  */
 import * as React from 'react'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { aggregateEntries, depthCurveVenues, venueEntries, type DepthCurveRow } from './depthCurve'
 import { DepthCurveBody } from './DepthCurveBody'
@@ -36,7 +37,7 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center gap-1.5 px-2 pt-2">
+			<ChartPanelToolbar>
 				<SegmentedControl<DepthSegment>
 					value={activeSegment}
 					onValueChange={setSegment}
@@ -45,8 +46,9 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 						label: EXCHANGE_SEGMENT_LABELS[option]
 					}))}
 					label="Depth segment"
-					variant="responsive"
-					size="sm"
+					variant="default"
+					size="md"
+					className="mr-auto"
 				/>
 				<SegmentedControl<DepthView>
 					value={view}
@@ -56,10 +58,10 @@ export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 						{ value: 'breakdown', label: 'By exchange' }
 					]}
 					label="Depth breakdown"
-					variant="responsive"
-					size="sm"
+					variant="default"
+					size="md"
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<DepthCurveBody entries={entries} />
 			<p className="px-2 pb-2 body-sm text-tertiary">
 				{`Cumulative USD resting within each distance of mid across ${venues.length} books, unstacked. Only books measured that far out are counted, so a curve can step down where a shallower book drops out. A venue trading on another's book counts once, under that book.`}

@@ -56,7 +56,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				options={{ data: props.expenses, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 			>
 				<Card padding="none">
-					<PanelHeader className="w-full justify-end">
+					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Protocol Expenses
 						</PanelTitle>

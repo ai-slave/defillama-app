@@ -12,6 +12,7 @@ import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
+import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
@@ -818,7 +819,7 @@ function TransactionsTable({
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="w-full justify-end">
+			<TableToolbar>
 				<h2 className="mr-auto label-md">
 					Transactions
 					{truncated ? <span className="ml-2 text-warning">· newest loaded rows</span> : null}
@@ -858,14 +859,14 @@ function TransactionsTable({
 						onClick={() => React.startTransition(() => instance.setPageIndex(0))}
 						disabled={!instance.getCanPreviousPage()}
 					>
-						<Icon name="chevrons-left" height={14} width={14} />
+						<Icon name="chevrons-left" height={16} width={16} />
 					</PagerButton>
 					<PagerButton
 						aria-label="Previous page"
 						onClick={() => React.startTransition(() => instance.previousPage())}
 						disabled={!instance.getCanPreviousPage()}
 					>
-						<Icon name="chevron-left" height={14} width={14} />
+						<Icon name="chevron-left" height={16} width={16} />
 					</PagerButton>
 					<span className="px-2 font-medium text-primary">
 						{pageCount === 0 ? '0 / 0' : `${pageIndex + 1} / ${pageCount}`}
@@ -875,36 +876,33 @@ function TransactionsTable({
 						onClick={() => React.startTransition(() => instance.nextPage())}
 						disabled={!instance.getCanNextPage()}
 					>
-						<Icon name="chevron-right" height={14} width={14} />
+						<Icon name="chevron-right" height={16} width={16} />
 					</PagerButton>
 					<PagerButton
 						aria-label="Last page"
 						onClick={() => React.startTransition(() => instance.setPageIndex(Math.max(0, pageCount - 1)))}
 						disabled={!instance.getCanNextPage()}
 					>
-						<Icon name="chevrons-right" height={14} width={14} />
+						<Icon name="chevrons-right" height={16} width={16} />
 					</PagerButton>
 				</div>
 
-				<label className="flex items-center gap-2">
-					<span>Rows</span>
-					<select
-						value={pageSize}
-						onChange={(e) =>
-							React.startTransition(() => {
-								instance.setPageSize(Number(e.target.value))
-								instance.setPageIndex(0)
-							})
-						}
-						className={selectTriggerStyles('filter', 'md')}
-					>
-						{PAGE_SIZE_OPTIONS.map((size) => (
-							<option key={size} value={size}>
-								{size}
-							</option>
-						))}
-					</select>
-				</label>
+				<Select
+					allValues={PAGE_SIZE_OPTIONS.map(String)}
+					selectedValues={String(pageSize)}
+					setSelectedValues={(value) =>
+						React.startTransition(() => {
+							instance.setPageSize(Number(value))
+							instance.setPageIndex(0)
+						})
+					}
+					label="Rows per page"
+					labelType="regular"
+					variant="filter"
+					size="md"
+					placement="top-end"
+					triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} ml-auto` }}
+				/>
 			</div>
 		</Panel>
 	)
@@ -922,7 +920,15 @@ function PagerButton({
 	'aria-label': string
 }) {
 	return (
-		<Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={disabled} aria-label={ariaLabel} square>
+		<Button
+			type="button"
+			variant="secondary"
+			size="md"
+			onClick={onClick}
+			disabled={disabled}
+			aria-label={ariaLabel}
+			square
+		>
 			{children}
 		</Button>
 	)

@@ -106,7 +106,7 @@ export function TokensChartsSection({
 		<>
 			<TableToolbar>
 				{sharedControls}
-				<TableToolbarControlGroup className="ml-auto justify-end">
+				<TableToolbarControlGroup>
 					<SegmentedControl
 						value={universe}
 						onValueChange={(next: TokensUniverse) => setChartQuery({ universe: next })}

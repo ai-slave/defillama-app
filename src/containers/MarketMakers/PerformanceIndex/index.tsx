@@ -43,8 +43,8 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 					<Podium rows={performanceRows} aggregated={aggregated} />
 					<Superlatives aggregated={aggregated} period={period} />
 					<Panel padding="none">
-						<PanelHeader className="justify-between">
-							<h2 className="heading-xs">Ranking</h2>
+						<PanelHeader>
+							<h2 className="mr-auto heading-xs">Ranking</h2>
 							<div className="flex items-center gap-1.5">
 								<AboutButton onClick={() => setDocsOpen(true)} />
 								<RefineButton onClick={() => setRefineOpen(true)} />

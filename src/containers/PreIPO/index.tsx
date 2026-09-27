@@ -219,7 +219,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 				</p>
 			</Card>
 			<Panel padding="none">
-				<TableToolbar className="justify-between">
+				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search companies, IDs, or sectors</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -232,7 +232,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 							className={searchFieldInputStyles}
 						/>
 					</label>
-					<TableToolbarControlGroup className="ml-auto justify-end">
+					<TableToolbarControlGroup>
 						<SelectWithCombobox
 							allValues={sectors}
 							includeQueryKey="sector"
@@ -240,7 +240,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 							onValuesChange={resetPage}
 							label="Sector"
 							labelType="smol"
-							variant="filter-responsive"
+							variant="filter"
 							size="md"
 							nestedMenu={false}
 						/>

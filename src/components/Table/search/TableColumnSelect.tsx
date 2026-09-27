@@ -19,7 +19,7 @@ export function TableColumnSelect({ label = 'Columns' }: { label?: string }) {
 			nestedMenu={false}
 			label={label}
 			labelType="smol"
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 		/>
 	)

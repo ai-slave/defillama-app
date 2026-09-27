@@ -23,6 +23,8 @@ import {
 	type CSSProperties,
 	type ReactNode
 } from 'react'
+import { Select } from '~/components/Select/Select'
+import { selectTriggerStyles } from '~/components/Select/types'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -31,6 +33,7 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
@@ -346,72 +349,74 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 						<div className="flex items-center gap-2">
 							{shouldShowPaginationControls ? (
 								<>
-									<button
+									<Button
 										type="button"
 										aria-label="Go to first page"
 										onClick={() => startTransition(() => table.setPageIndex(0))}
 										disabled={interactionDisabled || !canPreviousPage}
-										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+										variant="secondary"
+										size="md"
+										square
 									>
 										<Icon name="chevrons-left" height={16} width={16} />
-									</button>
-									<button
+									</Button>
+									<Button
 										type="button"
 										aria-label="Go to previous page"
 										onClick={() => startTransition(() => table.previousPage())}
 										disabled={interactionDisabled || !canPreviousPage}
-										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+										variant="secondary"
+										size="md"
+										square
 									>
 										<Icon name="chevron-left" height={16} width={16} />
-									</button>
-									<span className="text-xs text-secondary">{pageLabel}</span>
-									<button
+									</Button>
+									<span className="body-sm text-secondary">{pageLabel}</span>
+									<Button
 										type="button"
 										aria-label="Go to next page"
 										onClick={() => startTransition(() => table.nextPage())}
 										disabled={interactionDisabled || !canNextPage}
-										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+										variant="secondary"
+										size="md"
+										square
 									>
 										<Icon name="chevron-right" height={16} width={16} />
-									</button>
-									<button
+									</Button>
+									<Button
 										type="button"
 										aria-label="Go to last page"
 										onClick={() => startTransition(() => table.setPageIndex(Math.max(0, table.getPageCount() - 1)))}
 										disabled={interactionDisabled || !canNextPage}
-										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+										variant="secondary"
+										size="md"
+										square
 									>
 										<Icon name="chevrons-right" height={16} width={16} />
-									</button>
+									</Button>
 								</>
 							) : null}
 						</div>
 
 						{shouldShowPageSizeSelector ? (
-							<label className="flex items-center gap-2 text-sm">
-								<span className="text-secondary">Rows per page</span>
-								<select
-									value={pageSize}
-									disabled={interactionDisabled}
-									onChange={(event) => {
-										const nextPageSize = Number(event.currentTarget.value)
-										startTransition(() => {
-											table.setPagination((prev) => ({
-												...prev,
-												pageIndex: 0,
-												pageSize: nextPageSize
-											}))
-										})
-									}}
-									className="rounded-md border border-medium bg-surface px-2 py-1 disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									{availablePageSizeOptions.map((pageSizeOption) => (
-										<option key={pageSizeOption} value={pageSizeOption}>
-											{pageSizeOption}
-										</option>
-									))}
-								</select>
-							</label>
+							<Select
+								allValues={availablePageSizeOptions.map(String)}
+								selectedValues={String(pageSize)}
+								setSelectedValues={(value) => {
+									startTransition(() => {
+										table.setPagination((prev) => ({ ...prev, pageIndex: 0, pageSize: Number(value) }))
+									})
+								}}
+								label="Rows per page"
+								labelType="regular"
+								variant="filter"
+								size="md"
+								placement="top-end"
+								triggerProps={{
+									disabled: interactionDisabled,
+									className: `${selectTriggerStyles('filter', 'md')} ml-auto`
+								}}
+							/>
 						) : null}
 					</div>
 				) : null}

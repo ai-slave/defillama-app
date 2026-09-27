@@ -143,9 +143,18 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 			<Announcement notCancellable>Want us to track other events? Tweet at @0xngmi on twitter!</Announcement>
 
 			<Panel padding="none">
-				<PanelHeader className="gap-4 *:last:ml-auto">
+				<PanelHeader>
 					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
-
+					<label className={searchFieldInlineWrapperStyles}>
+						<span className="sr-only">Search events...</span>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<input
+							name="search"
+							onInput={(e) => setProjectName(e.currentTarget.value)}
+							placeholder="Search events..."
+							className={searchFieldInputStyles}
+						/>
+					</label>
 					{typeOptions.length > 1 ? (
 						<SelectWithCombobox
 							allValues={typeOptions}
@@ -158,17 +167,6 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 							nestedMenu={false}
 						/>
 					) : null}
-
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search events...</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
-							name="search"
-							onInput={(e) => setProjectName(e.currentTarget.value)}
-							placeholder="Search events..."
-							className={searchFieldInputStyles}
-						/>
-					</label>
 				</PanelHeader>
 				<VirtualTable table={instance} />
 			</Panel>

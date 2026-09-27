@@ -222,7 +222,7 @@ export function StablecoinsChainsTable({
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="items-center justify-between">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -239,7 +239,7 @@ export function StablecoinsChainsTable({
 					nestedMenu={false}
 					label="Group Chains"
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 				/>
 				<CSVDownloadButton

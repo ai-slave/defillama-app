@@ -358,7 +358,7 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: Array<IEquitie
 
 	return (
 		<Panel padding="none" className="col-span-full">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-tokens` })}
 					smol

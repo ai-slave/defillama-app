@@ -173,7 +173,7 @@ export function DirectoryChart({ chart, range, status, country }: DirectoryChart
 
 	return (
 		<ChartPanel>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Trading activity</h2>
 				<ChartRangeControl range={range} />
 				<SegmentedControl<DirectoryOverviewTab>

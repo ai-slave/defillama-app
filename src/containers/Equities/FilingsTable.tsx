@@ -8,14 +8,14 @@ import {
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { selectTriggerStyles } from '~/components/Select/types'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import type { IEquitiesFilingApiItem } from './api.types'
 
@@ -128,7 +128,7 @@ export function EquitiesFilingsTable({
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search filings</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -138,28 +138,23 @@ export function EquitiesFilingsTable({
 						className={searchFieldInputStyles}
 					/>
 				</label>
-				<TableToolbarControlGroup>
-					<label className="flex items-center gap-2 label-sm">
-						<span className="text-secondary">Form</span>
-						<select
-							value={selectedForm}
-							onChange={(e) => setSelectedForm(e.currentTarget.value)}
-							className={selectTriggerStyles('filter', 'md')}
-						>
-							<option value="All">All</option>
-							{filingForms.map((form) => (
-								<option key={form} value={form}>
-									{form}
-								</option>
-							))}
-						</select>
-					</label>
-					<CSVDownloadButton
-						prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })}
-						smol
-						size="md"
-					/>
-				</TableToolbarControlGroup>
+				<SelectWithCombobox
+					allValues={['All', ...filingForms]}
+					selectedValues={[selectedForm]}
+					setSelectedValues={(values) => {
+						if (values[0]) setSelectedForm(values[0])
+					}}
+					label="Form"
+					labelType="regular"
+					singleSelect
+					variant="filter"
+					size="md"
+				/>
+				<CSVDownloadButton
+					prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })}
+					smol
+					size="md"
+				/>
 			</TableToolbar>
 			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} shell="none" />
 		</Panel>

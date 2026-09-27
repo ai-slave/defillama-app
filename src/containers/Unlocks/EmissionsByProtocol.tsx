@@ -912,7 +912,7 @@ function ChartContainer({
 			<div className="flex flex-col gap-2">
 				{categoriesFromData.length > 0 && rawChartData.length > 0 ? (
 					<ChartPanel>
-						<ChartPanelToolbar className="justify-end">
+						<ChartPanelToolbar>
 							<h3 className="mr-auto heading-xs">Schedule</h3>
 							{hasGroupAllocationData ? (
 								<Switch

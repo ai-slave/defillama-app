@@ -374,7 +374,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							</p>
 						</div>
 
-						<ChartPanelToolbar className="justify-end">
+						<ChartPanelToolbar>
 							<h2 className="mr-auto heading-xs">Price History</h2>
 							<TagGroup
 								variant="default"

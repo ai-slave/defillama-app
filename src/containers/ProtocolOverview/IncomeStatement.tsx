@@ -574,7 +574,7 @@ export function IncomeStatement({
 					</div>
 				) : null}
 				{showTable ? (
-					<TableToolbarControlGroup className="ml-auto justify-end">
+					<TableToolbarControlGroup className="ml-auto">
 						<TagGroup
 							variant="default"
 							size="md"

@@ -100,7 +100,7 @@ export function ChainsByAdapter(props: IProps) {
 				/>
 			) : null}
 			<Panel padding="none">
-				<TableToolbar className="justify-end">
+				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />

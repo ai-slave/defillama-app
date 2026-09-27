@@ -596,10 +596,10 @@ export function PairTable({
 		>
 			{children ?? (
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						{leadingControls || header ? (
 							<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-								{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
+								{leadingControls}
 								{header ? <h2 className="label-md whitespace-nowrap">{header}</h2> : null}
 							</div>
 						) : null}

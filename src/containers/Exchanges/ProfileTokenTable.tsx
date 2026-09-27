@@ -166,12 +166,8 @@ export function ProfileTokenTable({
 	return (
 		<SearchTableProvider options={{ data: rows, columns: TOKEN_COLUMNS }}>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					{leadingControls ? (
-						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-							<div className="flex items-center overflow-x-auto">{leadingControls}</div>
-						</div>
-					) : null}
+				<TableToolbar>
+					{leadingControls ? <div className="mr-auto flex items-center overflow-x-auto">{leadingControls}</div> : null}
 					<TableSearchInput
 						columnId="token"
 						placeholder="Search tokens..."

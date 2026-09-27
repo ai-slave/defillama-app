@@ -120,7 +120,7 @@ function Banks() {
 				options={{ data: tableData, columns: banksTableColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="1" placeholder="Search banks..." />
 						<TableCsvExport filename="banks" />
 					</TableToolbar>

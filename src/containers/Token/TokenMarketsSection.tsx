@@ -361,7 +361,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 	const isPerpCategory = selectedCategoryTab !== 'spot'
 
 	const sectionHeader = (
-		<PanelHeader className="justify-between">
+		<PanelHeader>
 			<PanelTitle as="h2" className="group relative flex scroll-mt-24 items-center gap-1" id={TOKEN_MARKETS_SECTION_ID}>
 				Markets
 				<a

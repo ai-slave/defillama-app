@@ -98,22 +98,20 @@ export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 			}}
 		>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-						<div className="flex items-center overflow-x-auto">
-							<SegmentedControl<MicaFilter>
-								value={filter}
-								onValueChange={(nextFilter) => {
-									void pushShallowQuery(router, {
-										[EXCHANGES_QUERY_KEYS.micaFilter]: nextFilter === DEFAULT_MICA_FILTER ? undefined : nextFilter
-									})
-								}}
-								options={FILTER_OPTIONS}
-								label="Exchange product"
-								variant="responsive"
-								size="md"
-							/>
-						</div>
+				<TableToolbar>
+					<div className="mr-auto flex items-center overflow-x-auto">
+						<SegmentedControl<MicaFilter>
+							value={filter}
+							onValueChange={(nextFilter) => {
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.micaFilter]: nextFilter === DEFAULT_MICA_FILTER ? undefined : nextFilter
+								})
+							}}
+							options={FILTER_OPTIONS}
+							label="Exchange product"
+							variant="default"
+							size="md"
+						/>
 					</div>
 					<TableSearchInput
 						columnId="name"

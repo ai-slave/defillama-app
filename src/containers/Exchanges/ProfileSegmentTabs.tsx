@@ -34,7 +34,7 @@ export function ProfileSegmentTabs({
 			onValueChange={onValueChange}
 			options={options}
 			label="Market segment"
-			variant="responsive"
+			variant="default"
 			size="md"
 		/>
 	)

@@ -327,7 +327,7 @@ function ChartByType({
 
 	return (
 		<>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				{title ? <h2 className="mr-auto heading-xs">{title}</h2> : null}
 				<ChartGroupingSelector
 					value={chartInterval}

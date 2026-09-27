@@ -80,7 +80,7 @@ export function DexSpotShareChart({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar className="items-start">
-				<div className="mr-auto flex min-w-0 basis-full flex-col md:basis-auto">
+				<div className="mr-auto flex min-w-0 flex-col">
 					<h2 className="heading-xs">{CHART_TITLE}</h2>
 					<p className="body-sm text-secondary">{methodology}</p>
 				</div>

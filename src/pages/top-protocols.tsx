@@ -200,7 +200,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 				<h1 className="heading-sm">Protocols with highest TVL by chain on each category</h1>
 			</Card>
 			<Panel padding="none">
-				<TableToolbar className="justify-end">
+				<TableToolbar>
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -211,34 +211,31 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						/>
 					</label>
 
-					<div className="flex items-center gap-2 max-sm:w-full max-sm:flex-col">
-						<SelectWithCombobox
-							allValues={chains}
-							includeQueryKey="chain"
-							excludeQueryKey="excludeChain"
-							nestedMenu={false}
-							label="Chains"
-							labelType="smol"
-							variant="filter-responsive"
-							size="md"
-						/>
-
-						<SelectWithCombobox
-							allValues={columnOptions}
-							includeQueryKey="column"
-							excludeQueryKey="excludeColumn"
-							nestedMenu={false}
-							label="Columns"
-							labelType="smol"
-							variant="filter-responsive"
-							size="md"
-						/>
-						<CSVDownloadButton
-							prepareCsv={() => prepareTableCsv({ instance: table, filename: 'top-protocols' })}
-							smol
-							size="md"
-						/>
-					</div>
+					<SelectWithCombobox
+						allValues={chains}
+						includeQueryKey="chain"
+						excludeQueryKey="excludeChain"
+						nestedMenu={false}
+						label="Chains"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+					<SelectWithCombobox
+						allValues={columnOptions}
+						includeQueryKey="column"
+						excludeQueryKey="excludeColumn"
+						nestedMenu={false}
+						label="Columns"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+					<CSVDownloadButton
+						prepareCsv={() => prepareTableCsv({ instance: table, filename: 'top-protocols' })}
+						smol
+						size="md"
+					/>
 				</TableToolbar>
 				{table.getFilteredRowModel().rows.length > 0 ? <VirtualTable table={table} /> : <NoResults />}
 			</Panel>

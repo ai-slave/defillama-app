@@ -91,13 +91,13 @@ function RWATableView({
 		<Panel padding="none">
 			{/* The home page's Protocol Rankings header: a label-md title in the toolbar row, controls right. */}
 			<div className="border-b border-subtle">
-				<TableToolbar className="justify-end">
+				<TableToolbar>
 					{headerSlot ?? (
-						<h1 className="mr-auto flex w-full grow label-md md:w-auto">
+						<h1 className="mr-auto label-md">
 							{view === 'perps' ? 'Perps Rankings' : RWA_TABLE_PRESETS[preset].title}
 						</h1>
 					)}
-					<TableToolbarControlGroup className="justify-end lg:flex-nowrap">
+					<TableToolbarControlGroup>
 						<label className={searchFieldInlineWrapperStyles}>
 							<span className="sr-only">Search assets</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -115,7 +115,7 @@ function RWATableView({
 							nestedMenu={false}
 							label="Columns"
 							labelType="smol"
-							variant="filter-responsive"
+							variant="filter"
 							size="md"
 						/>
 						<CSVDownloadButton

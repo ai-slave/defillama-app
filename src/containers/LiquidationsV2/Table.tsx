@@ -321,7 +321,7 @@ export function LiquidationsProtocolsTable({ rows }: { rows: Array<OverviewProto
 		>
 			<LiquidationsTableContent
 				toolbar={
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search protocols..." />
 						<TableCsvExport filename="liquidations-v2-100k-protocols" />
 					</TableToolbar>
@@ -343,7 +343,7 @@ export function LiquidationsOverviewChainsTable({ rows }: { rows: Array<Overview
 		>
 			<LiquidationsTableContent
 				toolbar={
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search chains..." />
 						<TableCsvExport filename="liquidations-v2-100k-chains" />
 					</TableToolbar>
@@ -365,7 +365,7 @@ export function LiquidationsProtocolChainsTable({ rows }: { rows: Array<Protocol
 		>
 			<LiquidationsTableContent
 				toolbar={
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search chains..." />
 						<TableCsvExport filename="liquidations-v2-100k-protocol-chains" />
 					</TableToolbar>
@@ -402,7 +402,7 @@ export function LiquidationsPositionsTable({
 			>
 				<LiquidationsTableContent
 					toolbar={
-						<TableToolbar className="w-full justify-end">
+						<TableToolbar>
 							<label className={searchFieldInlineWrapperStyles}>
 								<span className="sr-only">Search positions</span>
 								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />

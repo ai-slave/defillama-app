@@ -6,7 +6,12 @@ export function ChartPanel({ className, ...props }: ComponentPropsWithoutRef<'di
 }
 
 export function ChartPanelToolbar({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
-	return <div className={`flex flex-wrap items-center gap-1.5 px-2 pt-2 pb-0 ${className ?? ''}`.trim()} {...props} />
+	return (
+		<div
+			className={`flex flex-wrap items-center justify-end gap-1.5 px-2 pt-2 pb-0 ${className ?? ''}`.trim()}
+			{...props}
+		/>
+	)
 }
 
 /* A panel showing a supporting chart alongside a primary one runs shorter, so the pair reads as

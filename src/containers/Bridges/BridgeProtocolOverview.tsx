@@ -14,7 +14,6 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
-import { BridgeChainSelector } from '~/containers/Bridges/BridgeChainSelector'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -110,10 +109,6 @@ export function BridgeInfo({
 	const windowLabel = rollingHours === 24 ? '24h' : `${rollingHours}h`
 
 	const volPercentChange = getVolumePercentChange(completedDayVolumes, currentDailyVolume)
-
-	const chainOptions = chains.map((chain) => {
-		return { name: chain, route: '' }
-	})
 
 	const volumeDataset = React.useMemo(
 		() =>
@@ -212,17 +207,20 @@ export function BridgeInfo({
 								eventData={{ bridge: displayName }}
 							/>
 						) : null}
-						<BridgeChainSelector
-							currentChain={currentChain}
-							options={chainOptions}
-							handleClick={(chain) => {
+						<SelectWithCombobox
+							allValues={chains}
+							selectedValues={[currentChain]}
+							setSelectedValues={(values) => {
+								const chain = values[0]
+								if (!chain) return
 								setCurrentChain(chain)
-								if (chain === 'All Chains') {
-									setChartType('Volume')
-								} else {
-									setChartType('Inflows')
-								}
+								setChartType(chain === 'All Chains' ? 'Volume' : 'Inflows')
 							}}
+							label="Chain"
+							labelType="regular"
+							singleSelect
+							variant="filter"
+							size="md"
 						/>
 					</>
 				}
@@ -295,7 +293,7 @@ export function BridgeInfo({
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<TagGroup
 							variant="default"
 							size="md"
@@ -371,9 +369,9 @@ export function BridgeInfo({
 				</ChartPanel>
 			</SummaryCardGrid>
 			<Panel padding="none">
-				<TableToolbar className="items-end justify-between">
+				<TableToolbar>
+					<p className="mr-auto body-sm text-tertiary">All stats in table use the same rolling window.</p>
 					<AddressesTableSwitch />
-					<p className="text-sm italic opacity-60">All stats in table use the same rolling window.</p>
 				</TableToolbar>
 				{isBridgesShowingAddresses ? (
 					<BridgeAddressesTable data={addressesTableData} />

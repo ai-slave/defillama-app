@@ -147,7 +147,7 @@ export function EquitiesTreemapSection({
 		<>
 			<TableToolbar>
 				{sharedControls}
-				<TableToolbarControlGroup className="ml-auto justify-end">
+				<TableToolbarControlGroup>
 					<SegmentedControl
 						value={groupBy}
 						onValueChange={(next) => setTreemapQuery('groupBy', next)}
@@ -163,7 +163,7 @@ export function EquitiesTreemapSection({
 							setSelectedValues={setSelectedCompanies}
 							label="Company"
 							labelType="smol"
-							variant="filter-responsive"
+							variant="filter"
 							size="md"
 						/>
 					) : null}
@@ -178,7 +178,7 @@ export function EquitiesTreemapSection({
 						singleSelect
 						nestedMenu={false}
 						labelType="none"
-						variant="filter-responsive"
+						variant="filter"
 						size="md"
 					/>
 					<SegmentedControl

@@ -183,8 +183,8 @@ export default function Tokens() {
 				</PanelStatus>
 			) : (
 				<Panel padding="none" className="w-full flex-1">
-					<ChartPanelToolbar className="items-center justify-between">
-						<div className="mr-auto flex w-full grow flex-col sm:w-auto">
+					<ChartPanelToolbar>
+						<div className="mr-auto flex flex-col">
 							<h2 className="heading-xs">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
 							<p className="flex items-center gap-1 body-sm" title="Sum of amounts for currently selected protocols">
 								<span className="font-jetbrains font-semibold">
@@ -198,7 +198,7 @@ export default function Tokens() {
 							</p>
 						</div>
 
-						<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 max-sm:w-full">
+						<div className="flex flex-wrap items-center justify-end gap-1.5">
 							<Checkbox
 								variant="filter"
 								value="includeCentraliseExchanges"

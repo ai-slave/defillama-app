@@ -294,7 +294,7 @@ function VenueChartFrame({
 	const router = useRouter()
 	return (
 		<ChartPanel>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				{tabs.length > 1 ? (
 					<SegmentedControl<VenueHistoryMetric>
 						value={activeId}

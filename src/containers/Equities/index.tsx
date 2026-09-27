@@ -24,10 +24,11 @@ import { useDebouncedCallback } from '~/hooks/useDebounce'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -810,7 +811,7 @@ function EquitiesRankingsTable({
 		<>
 			<TableToolbar>
 				{sharedControls}
-				<TableToolbarControlGroup className="ml-auto justify-end">
+				<TableToolbarControlGroup>
 					<SelectWithCombobox
 						allValues={columnOptions}
 						selectedValues={selectedColumns}
@@ -818,7 +819,7 @@ function EquitiesRankingsTable({
 						nestedMenu={false}
 						label="Columns"
 						labelType="smol"
-						variant="filter-responsive"
+						variant="filter"
 						size="md"
 					/>
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
@@ -856,7 +857,7 @@ function EquitiesSearchInput({ search, updateSearch }: { search: string; updateS
 				debouncedUpdateSearch.cancel()
 				updateSearch(inputRef.current?.value.trim() ?? '')
 			}}
-			className={searchFieldInlineWrapperStyles}
+			className={searchFieldWrapperStyles}
 		>
 			<label className="relative block min-w-0">
 				<span className="sr-only">Search companies or tickers</span>
@@ -952,7 +953,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 			data-umami-event="equities-preset-click"
 			data-umami-event-preset={PRESET_QUERY_SLUGS[preset] ?? 'market-cap'}
 			variant="toggle"
-			size="sm"
+			size="md"
 			onClick={() => selectPreset(preset)}
 		>
 			{preset}
@@ -960,10 +961,10 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 	)
 
 	const sharedControls = (
-		<TableToolbarControlGroup>
+		<>
 			<EquitiesSearchInput search={serverTable.search} updateSearch={serverTable.updateSearch} />
 			<EquitiesFiltersDialog categoricalOptions={serverTable.options} filters={filters} onFiltersChange={setFilters} />
-		</TableToolbarControlGroup>
+		</>
 	)
 	const filterPills =
 		filters.length > 0 ? (
@@ -973,24 +974,28 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 		) : null
 	const presetsRow = (
 		<div className="px-2 pb-2">
-			{/* Mobile: collapsible drawer toggled purely by the native <details> element */}
-			<details className="group rounded-xl border border-subtle bg-surface sm:hidden">
-				<summary className="flex items-center gap-2 px-3 py-2.5">
-					<span className="text-sm font-medium text-secondary">Rank by</span>
-					<span className="ml-auto text-sm font-medium text-primary">{selectedPreset}</span>
-					<Icon
-						name="chevron-down"
-						height={16}
-						width={16}
-						className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
-					/>
-				</summary>
-				<div className="flex flex-wrap gap-2 border-t border-subtle p-3">{EQUITIES_PRESETS.map(renderPreset)}</div>
-			</details>
+			<div className="sm:hidden">
+				<SelectWithCombobox
+					allValues={EQUITIES_PRESETS}
+					selectedValues={[selectedPreset]}
+					setSelectedValues={(values) => {
+						const preset = values[0] as EquitiesPreset | undefined
+						if (!preset) return
+						trackUmamiEvent('equities-preset-click', { preset: PRESET_QUERY_SLUGS[preset] ?? 'market-cap' })
+						selectPreset(preset)
+					}}
+					label="Rank by"
+					labelType="regular"
+					singleSelect
+					visibleOptionLimit={null}
+					variant="filter"
+					size="md"
+				/>
+			</div>
 
 			{/* Desktop: inline chips with a +More toggle */}
-			<div className="hidden flex-wrap items-center gap-2 sm:flex">
-				<span className="text-sm font-medium text-secondary">Rank by</span>
+			<div className="hidden flex-wrap items-center gap-1.5 sm:flex">
+				<span className="mr-1 label-sm text-secondary">Rank by</span>
 				{EQUITIES_PRIMARY_PRESETS.map(renderPreset)}
 				{showMorePresets ? (
 					<>
@@ -1001,9 +1006,9 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 								aria-expanded
 								onClick={() => setIsMorePresetsManuallyOpen(false)}
 								variant="secondary"
-								size="sm"
+								size="md"
 							>
-								<Icon name="minus" height={12} width={12} />
+								<Icon name="minus" height={14} width={14} />
 								Less
 							</Button>
 						) : null}
@@ -1015,7 +1020,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 						data-active={isMorePresetActive}
 						onClick={() => setIsMorePresetsManuallyOpen(true)}
 						variant="secondary"
-						size="sm"
+						size="md"
 					>
 						+ More
 					</Button>

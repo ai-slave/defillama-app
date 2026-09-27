@@ -100,7 +100,7 @@ export function RecentlyListedProtocolsTable({
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -112,35 +112,29 @@ export function RecentlyListedProtocolsTable({
 					/>
 				</label>
 
-				<div className="flex items-start gap-1.5 max-sm:w-full max-sm:flex-col sm:items-center">
-					<HideForkedProtocols />
-
-					<div className="flex w-full items-center gap-1.5 sm:w-auto">
-						<SelectWithCombobox
-							label="Chains"
-							allValues={pages.chainList}
-							includeQueryKey="chain"
-							excludeQueryKey="excludeChain"
-							labelType="smol"
-							variant="filter-responsive"
-							size="md"
-						/>
-						{pages.categories.length > 0 ? (
-							<SelectWithCombobox
-								label="Category"
-								allValues={pages.categories}
-								includeQueryKey="category"
-								excludeQueryKey="excludeCategory"
-								labelType="smol"
-								variant="filter-responsive"
-								size="md"
-							/>
-						) : null}
-						<TVLRange size="md" />
-					</div>
-
-					<CSVDownloadButton onClick={downloadCsv} isLoading={false} smol size="md" />
-				</div>
+				<HideForkedProtocols />
+				<SelectWithCombobox
+					label="Chains"
+					allValues={pages.chainList}
+					includeQueryKey="chain"
+					excludeQueryKey="excludeChain"
+					labelType="smol"
+					variant="filter"
+					size="md"
+				/>
+				{pages.categories.length > 0 ? (
+					<SelectWithCombobox
+						label="Category"
+						allValues={pages.categories}
+						includeQueryKey="category"
+						excludeQueryKey="excludeCategory"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
+				<TVLRange size="md" />
+				<CSVDownloadButton onClick={downloadCsv} isLoading={false} smol size="md" />
 			</TableToolbar>
 			<div className="relative">
 				<VirtualTable table={instance} />

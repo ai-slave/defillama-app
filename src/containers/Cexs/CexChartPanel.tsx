@@ -14,7 +14,7 @@ export function CexChartPanel({
 }) {
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{controls}
 			</ChartPanelToolbar>

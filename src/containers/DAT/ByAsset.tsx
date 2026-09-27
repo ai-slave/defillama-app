@@ -120,7 +120,7 @@ export function DATByAsset({
 			</div>
 			<SearchTableProvider options={{ data: institutions, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search institutions" />
 						<TableCsvExport filename={`${metadata.name}-treasury-holdings`} />
 					</TableToolbar>
@@ -341,7 +341,7 @@ function MNAVChart({
 
 	return (
 		<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{institutionsNames.length > 1 ? (
 					<SelectWithCombobox

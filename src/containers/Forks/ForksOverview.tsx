@@ -175,7 +175,7 @@ export function ForksOverview({
 			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
 			<div className="flex flex-col gap-2 xl:flex-row">
 				<ChartPanel className="isolate flex-1">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{pieSelectableSeries.length > 1 ? (
 							<SelectWithCombobox
 								allValues={pieSelectableSeries}
@@ -213,7 +213,7 @@ export function ForksOverview({
 					)}
 				</ChartPanel>
 				<ChartPanel className="flex-1">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Forks TVL Dominance (%)</h2>
 						{forkSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -270,7 +270,7 @@ export function ForksOverview({
 					options={{ data: tableData, columns: forksColumn, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 				>
 					<Card padding="none">
-						<PanelHeader className="w-full justify-end">
+						<PanelHeader>
 							<PanelTitle as="h1" className="whitespace-nowrap">
 								Protocol Rankings
 							</PanelTitle>

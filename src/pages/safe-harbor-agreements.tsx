@@ -96,7 +96,7 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 		>
 			<SearchTableProvider options={{ data: protocols, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
-					<PanelHeader className="w-full justify-end">
+					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Safe Harbor Agreements
 						</PanelTitle>

@@ -22,7 +22,6 @@ import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { TableToolbar } from '~/ui/Toolbar'
 import { getABGroupFromCookie } from '~/utils/abTesting'
 import { REWARDS_EVENTS, trackRewardsEvent } from '~/utils/analytics/rewards'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -181,75 +180,71 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 						Add Your Rewards
 					</ExternalLinkButton>
 				</PanelHeader>
-				<TableToolbar>
-					<div role="group" aria-label="Lifecycle" className="flex flex-wrap items-center gap-1.5">
-						<span className="mr-1 label-sm text-secondary">Status</span>
-						{LIFECYCLE_OPTIONS.filter(
-							(value) => value === 'All' || value === query.lifecycle || view.availableLifecycles.has(value)
-						).map((value) => (
+				<div role="group" aria-label="Lifecycle" className="flex flex-wrap items-center gap-1.5 p-2">
+					<span className="mr-1 label-sm text-secondary">Status</span>
+					{LIFECYCLE_OPTIONS.filter(
+						(value) => value === 'All' || value === query.lifecycle || view.availableLifecycles.has(value)
+					).map((value) => (
+						<Button
+							key={value}
+							type="button"
+							size="md"
+							variant="toggle"
+							data-active={query.lifecycle === value}
+							aria-pressed={query.lifecycle === value}
+							onClick={() => {
+								if (value !== query.lifecycle) updateQuery({ lifecycle: value })
+							}}
+						>
+							{value}
+							<span className="body-xs text-tertiary">{view.lifecycleCounts[value]}</span>
+						</Button>
+					))}
+				</div>
+				<FeaturedCards programs={cards} />
+				<div role="group" aria-label="Reward type" className="flex flex-wrap items-center gap-1.5 p-2">
+					<span className="mr-1 label-sm text-secondary">Reward</span>
+					<Button
+						type="button"
+						size="md"
+						variant="toggle"
+						data-active={query.rewardTypes.length === 0}
+						aria-pressed={query.rewardTypes.length === 0}
+						onClick={() => {
+							if (query.rewardTypes.length === 0) return
+							trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value: 'All', selected: true })
+							updateQuery({ rewardTypes: [] })
+						}}
+					>
+						All
+					</Button>
+					{REWARD_TYPES.filter(
+						(value) => view.availableRewardTypes.has(value) || query.rewardTypes.includes(value)
+					).map((value) => {
+						const active = query.rewardTypes.includes(value)
+						return (
 							<Button
 								key={value}
 								type="button"
 								size="md"
 								variant="toggle"
-								data-active={query.lifecycle === value}
-								aria-pressed={query.lifecycle === value}
+								data-active={active}
+								aria-pressed={active}
 								onClick={() => {
-									if (value !== query.lifecycle) updateQuery({ lifecycle: value })
+									trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value, selected: !active })
+									updateQuery({
+										rewardTypes: active
+											? query.rewardTypes.filter((type) => type !== value)
+											: [...query.rewardTypes, value]
+									})
 								}}
 							>
 								{value}
-								<span className="body-xs text-tertiary">{view.lifecycleCounts[value]}</span>
+								<span className="body-xs text-tertiary">{view.rewardCounts[value]}</span>
 							</Button>
-						))}
-					</div>
-				</TableToolbar>
-				<FeaturedCards programs={cards} />
-				<TableToolbar>
-					<div role="group" aria-label="Reward type" className="flex flex-wrap items-center gap-1.5">
-						<span className="mr-1 label-sm text-secondary">Reward</span>
-						<Button
-							type="button"
-							size="md"
-							variant="toggle"
-							data-active={query.rewardTypes.length === 0}
-							aria-pressed={query.rewardTypes.length === 0}
-							onClick={() => {
-								if (query.rewardTypes.length === 0) return
-								trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value: 'All', selected: true })
-								updateQuery({ rewardTypes: [] })
-							}}
-						>
-							All
-						</Button>
-						{REWARD_TYPES.filter(
-							(value) => view.availableRewardTypes.has(value) || query.rewardTypes.includes(value)
-						).map((value) => {
-							const active = query.rewardTypes.includes(value)
-							return (
-								<Button
-									key={value}
-									type="button"
-									size="md"
-									variant="toggle"
-									data-active={active}
-									aria-pressed={active}
-									onClick={() => {
-										trackRewardsEvent(REWARDS_EVENTS.FILTER_REWARD_TYPE, { variant, value, selected: !active })
-										updateQuery({
-											rewardTypes: active
-												? query.rewardTypes.filter((type) => type !== value)
-												: [...query.rewardTypes, value]
-										})
-									}}
-								>
-									{value}
-									<span className="body-xs text-tertiary">{view.rewardCounts[value]}</span>
-								</Button>
-							)
-						})}
-					</div>
-				</TableToolbar>
+						)
+					})}
+				</div>
 				<p className="px-3 py-2 body-sm text-tertiary">
 					<span role="status">{view.rows.length} matching programs.</span> Status is reviewed separately from dates;
 					some dates may be approximate. Verification reflects a review of program information, not a security audit or

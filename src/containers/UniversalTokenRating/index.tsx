@@ -232,7 +232,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			) : null}
 
 			<Panel padding="none" className="max-lg:hidden">
-				<PanelHeader className="justify-between">
+				<PanelHeader>
 					<PanelTitle>Performance Matrix</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>
@@ -257,7 +257,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			</Panel>
 
 			<Panel padding="none">
-				<PanelHeader className="justify-between">
+				<PanelHeader>
 					<PanelTitle>Leaderboard Ranking</PanelTitle>
 					{scoredLabel}
 				</PanelHeader>

@@ -169,7 +169,7 @@ function LanguageSeriesChart({
 
 	return (
 		<ChartPanel className="relative">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{series.length > 1 ? (
 					<SelectWithCombobox

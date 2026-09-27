@@ -51,7 +51,7 @@ export function BridgeVolumeChart({
 
 	return (
 		<>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				{headerStart}
 				<ChartGroupingSelector
 					value={timePeriod}

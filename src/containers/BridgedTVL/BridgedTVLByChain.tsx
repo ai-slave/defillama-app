@@ -216,7 +216,7 @@ export function BridgedTVLByChain({
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<div className="mr-auto">
 							<Select
 								allValues={chartTypeOptions}

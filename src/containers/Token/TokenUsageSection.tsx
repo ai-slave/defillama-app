@@ -23,6 +23,7 @@ import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
@@ -193,7 +194,7 @@ export function TokenUsageSection({
 			emptyMessage={filteredRows.length === 0 ? 'No token usage entries found.' : null}
 			headerActions={
 				isAuthenticated && hasActiveSubscription && rows ? (
-					<div className="flex flex-wrap items-center gap-1.5 max-sm:w-full">
+					<TableToolbarControlGroup>
 						<Checkbox
 							variant="filter"
 							value="includeCentralizedExchanges"
@@ -268,7 +269,7 @@ export function TokenUsageSection({
 							smol
 							size="md"
 						/>
-					</div>
+					</TableToolbarControlGroup>
 				) : null
 			}
 		>

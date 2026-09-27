@@ -205,7 +205,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="items-center justify-between">
+			<TableToolbar>
 				<h3 className="label-md">Stablecoins Usage by Chain</h3>
 				<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 					<span className="sr-only">Search</span>

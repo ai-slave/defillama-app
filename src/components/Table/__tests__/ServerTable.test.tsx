@@ -13,6 +13,9 @@ import { filteredTableFeatures } from '../features/filtering'
 import { paginatedTableFeatures } from '../features/pagination'
 import { PaginatedTable } from '../PaginatedTable'
 
+// The rows-per-page picker reads the router query for its URL mode.
+vi.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
+
 const features = tableFeatures({ ...paginatedTableFeatures, ...filteredTableFeatures })
 const rows = [
 	{ name: 'Zulu', value: 200 },
@@ -90,5 +93,33 @@ test('leaves processing to the server while controls emit requests and totals dr
 		expect(displayedNames()).toEqual(['Zulu', 'Alpha'])
 	} finally {
 		await act(async () => root.unmount())
+	}
+})
+
+async function click(element: HTMLElement) {
+	await act(async () => {
+		element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+		element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, button: 0 }))
+		element.click()
+		await Promise.resolve()
+	})
+}
+
+test('choosing more rows per page requests the first page at that size', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	try {
+		await act(async () => root.render(<ServerTable rowCount={42} />))
+		expect(container.textContent).toContain('Page 3 of 5')
+		await click(container.querySelector<HTMLElement>('[aria-label="Rows per page dropdown"]')!)
+		const option = [...document.querySelectorAll<HTMLElement>('[role="option"]')].find((o) => o.textContent === '20')!
+		await click(option)
+		expect(requested.pagination).toHaveBeenLastCalledWith({ pageIndex: 0, pageSize: 20 })
+		expect(container.textContent).toContain('Page 1 of 3')
+		expect(container.textContent).toContain('Rows per page: 20')
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
 	}
 })

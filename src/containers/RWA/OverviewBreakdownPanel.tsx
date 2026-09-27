@@ -275,7 +275,7 @@ export function RWAOverviewBreakdownPanel({
 
 	return (
 		<ChartPanel className={view === 'treemap' ? undefined : 'min-h-[420px]'}>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				{toolbarStart}
 				{view === 'treemap' ? treemapNestedBySwitch : null}
 				{view === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}

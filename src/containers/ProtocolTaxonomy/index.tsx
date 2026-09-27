@@ -231,7 +231,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{chartBreakdownOptions.length > 1 ? (
 							<div className="mr-auto">
 								<Select
@@ -290,10 +290,8 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 				}}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
-						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-							<h2 className="label-md whitespace-nowrap">{categoryPresentation.tableHeader}</h2>
-						</div>
+					<TableToolbar>
+						<h2 className="mr-auto label-md">{categoryPresentation.tableHeader}</h2>
 						<TableSearchInput
 							columnId="name"
 							placeholder={categoryPresentation.searchPlaceholder}

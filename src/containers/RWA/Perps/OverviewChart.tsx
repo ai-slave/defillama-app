@@ -328,7 +328,7 @@ export function RWAPerpsOverviewChart({
 
 	return (
 		<ChartPanel>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<SegmentedControl
 					value={chartType}
 					onValueChange={onSelectChartType}

@@ -73,7 +73,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -195,10 +195,11 @@ export function HacksContainer({
 					<StatItem label="Total Value Hacked in Bridges (USD)" value={displayTotalRugs} />
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end *:first:mr-auto">
+					<ChartPanelToolbar>
 						<TagGroup
 							variant="default"
 							size="md"
+							className="mr-auto"
 							setValue={setChartType}
 							selectedValue={chartType}
 							values={chartTypeList}

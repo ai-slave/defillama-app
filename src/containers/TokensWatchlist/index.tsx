@@ -36,6 +36,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
 
@@ -161,7 +162,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 					/>
 				) : null}
 				<Card padding="none">
-					<div className="flex flex-wrap items-center gap-2 p-2">
+					<TableToolbar>
 						<div className="mr-auto">
 							<h2 className="heading-xs">Tokens</h2>
 							<p className="body-xs text-secondary">
@@ -177,7 +178,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							variant="filter"
 							size="md"
 						/>
-					</div>
+					</TableToolbar>
 					{hasSavedTokens && isLoading ? (
 						<SurfaceBodyLoadingStatus className="p-2" />
 					) : hasSavedTokens && !data && isError ? (
@@ -251,14 +252,14 @@ function TokensPortfolioSelection() {
 
 	return (
 		<Card padding="none">
-			<div className="flex flex-wrap items-center gap-2 p-2">
+			<TableToolbar>
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
 					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => setSelectedPortfolio(value)}
-					className={`${selectTriggerStyles('filter-responsive', 'md')} min-w-[100px]`}
+					className={`${selectTriggerStyles('filter', 'md')} min-w-[100px]`}
 				/>
 				<DialogForm
 					title="New Portfolio"
@@ -282,7 +283,7 @@ function TokensPortfolioSelection() {
 						<span>Delete</span>
 					</button>
 				) : null}
-			</div>
+			</TableToolbar>
 		</Card>
 	)
 }

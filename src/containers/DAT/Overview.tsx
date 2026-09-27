@@ -78,7 +78,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink="All" />
 			<ChartPanel className="col-span-2">
-				<ChartPanelToolbar className="justify-end">
+				<ChartPanelToolbar>
 					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
 					<ChartGroupingSelector
 						value={groupBy}
@@ -122,7 +122,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 				options={{ data: institutions, columns: overviewColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search institutions" />
 						<TableCsvExport filename="digital-asset-treasuries" />
 					</TableToolbar>

@@ -496,7 +496,7 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 						<AssetHeader asset={asset} displayName={displayName} headingAs="div" />
 					</Card>
 					<ChartPanel>
-						<ChartPanelToolbar className="justify-end">
+						<ChartPanelToolbar>
 							<SegmentedControl<AssetChartMetric>
 								value={chartMetric}
 								onValueChange={(nextMetric) => {

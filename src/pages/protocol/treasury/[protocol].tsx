@@ -84,7 +84,7 @@ function TokensBreakdownPieChartCard({
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
 				{selectableSeries.length > 1 ? (
 					<SelectWithCombobox
@@ -134,7 +134,7 @@ function HistoricalTreasuryChartCard({
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">Historical Treasury</h2>
 				<ChartExportButtons
 					chartInstance={chartInstance}
@@ -201,7 +201,7 @@ function TokensMultiSeriesChartCard({
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
 					<SelectWithCombobox

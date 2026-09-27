@@ -35,7 +35,7 @@ export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity
 	return (
 		<SearchTableProvider options={{ data, columns: tableColumns, initialState: { sorting: sortingState } }}>
 			<Card padding="none">
-				<PanelHeader className="w-full justify-end">
+				<PanelHeader>
 					<PanelTitle as="h1" className="whitespace-nowrap">
 						Treasuries
 					</PanelTitle>

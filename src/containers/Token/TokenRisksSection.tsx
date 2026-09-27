@@ -195,7 +195,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 	return (
 		<Panel padding="none">
 			<PanelHeader>
-				<div className="min-w-0">
+				<div className="mr-auto min-w-0">
 					<PanelTitle
 						className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
 						id={TOKEN_RISKS_SECTION_ID}

@@ -398,7 +398,7 @@ export function LSTOverview({
 					{tab === 'breakdown' ? (
 						<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
 							<div className="flex flex-col">
-								<ChartPanelToolbar className="justify-end">
+								<ChartPanelToolbar>
 									{pieSelectableSeries.length > 1 ? (
 										<SelectWithCombobox
 											allValues={pieSelectableSeries}
@@ -464,12 +464,12 @@ export function LSTOverview({
 						</div>
 					) : (
 						<div className="flex flex-col">
-							<div className="flex flex-nowrap items-center justify-end gap-2 overflow-x-auto p-2 pb-0">
+							<ChartPanelToolbar>
 								<ChartGroupingSelector
 									value={groupBy}
 									setValue={setGroupBy}
 									options={DWMC_GROUPING_OPTIONS_LOWERCASE}
-									className="mr-auto shrink-0"
+									className="mr-auto"
 								/>
 								{tokens.length > 1 ? (
 									<SelectWithCombobox
@@ -495,7 +495,7 @@ export function LSTOverview({
 											: null
 									}
 								/>
-							</div>
+							</ChartPanelToolbar>
 
 							{selectedInflowsPresentation ? (
 								<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -527,10 +527,8 @@ export function LSTOverview({
 
 			<SearchTableProvider options={{ data: tokensList, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
-						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-							<h2 className="label-md whitespace-nowrap">Liquid Staking Protocols</h2>
-						</div>
+					<TableToolbar>
+						<h2 className="mr-auto label-md">Liquid Staking Protocols</h2>
 						<TableSearchInput
 							columnId="name"
 							placeholder="Search protocols..."

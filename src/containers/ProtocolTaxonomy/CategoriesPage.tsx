@@ -213,7 +213,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 	return (
 		<>
 			<ChartPanel>
-				<ChartPanelToolbar className="justify-end">
+				<ChartPanelToolbar>
 					<h1 className="mr-auto heading-xs">TVL by Category</h1>
 					{categories.length > 1 ? (
 						<SelectWithCombobox
@@ -267,7 +267,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					}}
 				>
 					<Card padding="none">
-						<TableToolbar className="w-full justify-end">
+						<TableToolbar>
 							<TableSearchInput columnId="name" placeholder="Search category..." />
 							<TableCsvExport filename="protocol-categories" />
 						</TableToolbar>

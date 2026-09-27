@@ -175,7 +175,7 @@ function UpcomingUnlockVolumeChart({
 
 	return (
 		<>
-			<ChartPanelToolbar className="justify-end">
+			<ChartPanelToolbar>
 				<div className="mr-auto">
 					<Select
 						allValues={UPCOMING_UNLOCK_TYPE_OPTIONS}

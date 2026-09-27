@@ -311,7 +311,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 
 	return (
 		<Card padding="none">
-			<TableToolbar className="justify-end">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -370,7 +370,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 					nestedMenu={false}
 					label="Columns"
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 				/>
 
@@ -381,7 +381,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 					nestedMenu={false}
 					label="Next Event Types"
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 				/>
 			</TableToolbar>

@@ -375,7 +375,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="items-center justify-between">
+			<TableToolbar>
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search stablecoins</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />

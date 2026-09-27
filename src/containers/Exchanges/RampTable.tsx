@@ -9,7 +9,7 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { Card } from '~/ui/Card'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ExchangeCountrySelect, useExchangeCountry } from './ExchangeCountrySelect'
@@ -54,49 +54,47 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 			}}
 		>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
-					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-						<div className="flex items-center overflow-x-auto">
-							<ExchangeCountrySelect
-								catalog={regionCatalog}
-								catalogFailed={catalogFailed}
-								selectedCountry={country}
-								onCountryChange={setCountry}
-							/>
-							<SelectWithCombobox
-								allValues={currencyOptions}
-								selectedValues={[currency]}
-								setSelectedValues={(values) => {
-									const next = values[0]
-									void pushShallowQuery(router, {
-										[EXCHANGES_QUERY_KEYS.rampCurrency]:
-											!next || next === DEFAULT_RAMP_CURRENCY ? undefined : next.toLowerCase()
-									})
-								}}
-								label="Currency"
-								labelType="regular"
-								singleSelect
-								variant="filter-responsive"
-								size="md"
-								searchPlaceholder="Search currencies..."
-							/>
-							<SegmentedControl<string>
-								value={String(size)}
-								onValueChange={(next) => {
-									void pushShallowQuery(router, {
-										[EXCHANGES_QUERY_KEYS.rampSize]: Number(next) === catalog.sizes[0] ? undefined : next
-									})
-								}}
-								options={catalog.sizes.map((option) => ({
-									value: String(option),
-									label: formatUsd(option, { compact: true }) ?? String(option)
-								}))}
-								label="Order size"
-								variant="responsive"
-								size="md"
-							/>
-						</div>
-					</div>
+				<TableToolbar>
+					<TableToolbarControlGroup className="mr-auto">
+						<ExchangeCountrySelect
+							catalog={regionCatalog}
+							catalogFailed={catalogFailed}
+							selectedCountry={country}
+							onCountryChange={setCountry}
+						/>
+						<SelectWithCombobox
+							allValues={currencyOptions}
+							selectedValues={[currency]}
+							setSelectedValues={(values) => {
+								const next = values[0]
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.rampCurrency]:
+										!next || next === DEFAULT_RAMP_CURRENCY ? undefined : next.toLowerCase()
+								})
+							}}
+							label="Currency"
+							labelType="regular"
+							singleSelect
+							variant="filter"
+							size="md"
+							searchPlaceholder="Search currencies..."
+						/>
+						<SegmentedControl<string>
+							value={String(size)}
+							onValueChange={(next) => {
+								void pushShallowQuery(router, {
+									[EXCHANGES_QUERY_KEYS.rampSize]: Number(next) === catalog.sizes[0] ? undefined : next
+								})
+							}}
+							options={catalog.sizes.map((option) => ({
+								value: String(option),
+								label: formatUsd(option, { compact: true }) ?? String(option)
+							}))}
+							label="Order size"
+							variant="default"
+							size="md"
+						/>
+					</TableToolbarControlGroup>
 					<TableSearchInput
 						columnId="name"
 						placeholder="Search exchanges..."

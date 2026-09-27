@@ -46,7 +46,7 @@ function REVByChain(props: IChainsByREVPageData) {
 		>
 			<SearchTableProvider options={{ data: props.chains, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
-					<PanelHeader className="w-full justify-end">
+					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Chain Rankings
 						</PanelTitle>

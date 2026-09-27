@@ -21,7 +21,7 @@ import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
@@ -621,8 +621,8 @@ function TokensSharedControls({
 	)
 
 	return (
-		<TableToolbarControlGroup>
-			<form onSubmit={handleSubmit} className={searchFieldInlineWrapperStyles}>
+		<>
+			<form onSubmit={handleSubmit} className={searchFieldWrapperStyles}>
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -643,7 +643,7 @@ function TokensSharedControls({
 				resetPageOnQueryChange
 				label="Chains"
 				labelType="smol"
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				searchPlaceholder="Search chains..."
 				pushQueryUpdates={onChainQueryChange}
@@ -663,13 +663,13 @@ function TokensSharedControls({
 				resetPageOnQueryChange
 				label="Categories"
 				labelType="smol"
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				visibleOptionLimit={null}
 				searchPlaceholder="Search categories..."
 			/>
 			<TokensFiltersDialog filters={filters} onFiltersChange={onFiltersChange} />
-		</TableToolbarControlGroup>
+		</>
 	)
 }
 
@@ -873,7 +873,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 							<>
 								<TableToolbar>
 									{sharedControls}
-									<TableToolbarControlGroup className="ml-auto justify-end">
+									<TableToolbarControlGroup>
 										<SelectWithCombobox
 											allValues={COLUMN_PICKER_OPTIONS}
 											selectedValues={selectedColumns}
@@ -881,7 +881,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 											nestedMenu={false}
 											label="Columns"
 											labelType="smol"
-											variant="filter-responsive"
+											variant="filter"
 											size="md"
 										/>
 										<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />

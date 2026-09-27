@@ -148,7 +148,7 @@ export function Cexs({ cexs }: { cexs: Array<ICex> }) {
 			options={{ data: enrichedData, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
 		>
 			<Card padding="none">
-				<TableToolbar className="w-full justify-end">
+				<TableToolbar>
 					<TableSearchInput columnId="name" placeholder="Search exchange..." />
 					<DateFilter
 						startDate={startDate}

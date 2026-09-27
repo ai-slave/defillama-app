@@ -43,7 +43,7 @@ export function Panel({ className, padding, ...props }: PanelProps) {
 export function PanelHeader({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return (
 		<div
-			className={`flex flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-subtle px-4 py-3 ${className ?? ''}`.trim()}
+			className={`flex flex-wrap items-center justify-end gap-x-1.5 gap-y-2 border-b border-subtle px-4 py-3 ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

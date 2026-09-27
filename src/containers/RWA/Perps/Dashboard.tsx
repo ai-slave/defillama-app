@@ -2265,7 +2265,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			</div>
 			{chartState.view === 'timeSeries' ? (
 				<ChartPanel>
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{timeSeriesMetricSwitch}
 						<Select
 							allValues={chartViewOptions}
@@ -2342,7 +2342,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				</ChartPanel>
 			) : (
 				<ChartPanel className={chartState.view === 'treemap' ? undefined : 'min-h-[420px]'}>
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{timeSeriesMetricSwitch}
 						<Select
 							allValues={chartViewOptions}
@@ -2455,7 +2455,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				}}
 			>
 				<Card padding="none">
-					<PanelHeader className="w-full justify-end">
+					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							{isOverviewMode
 								? 'Markets Rankings'

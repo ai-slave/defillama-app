@@ -119,7 +119,7 @@ export default function TrendingContracts() {
 			canonicalUrl="/trending-contracts"
 		>
 			<Panel padding="none" className="flex-1">
-				<PanelHeader className="gap-5">
+				<PanelHeader>
 					<PanelTitle as="h1">Trending Contracts</PanelTitle>
 					<TagGroup variant="default" size="md" selectedValue={value} setValue={setValue} values={TIME_VALUES} />
 					<TagGroup

@@ -153,7 +153,7 @@ export function RWAPerpsAssetsOverview({
 				options={{ data: rows, columns, initialState: { sorting: [{ id: 'openInterest', desc: true }] } }}
 			>
 				<Card padding="none">
-					<PanelHeader className="w-full justify-end">
+					<PanelHeader>
 						<PanelTitle as="h1" className="whitespace-nowrap">
 							Asset Rankings
 						</PanelTitle>

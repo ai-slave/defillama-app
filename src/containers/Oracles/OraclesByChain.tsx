@@ -120,7 +120,7 @@ export function OraclesByChain({
 
 			<div className="flex flex-col gap-2 xl:flex-row">
 				<ChartPanel className="isolate flex-1">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{pieSelectableSeries.length > 1 ? (
 							<SelectWithCombobox
 								allValues={pieSelectableSeries}
@@ -147,7 +147,7 @@ export function OraclesByChain({
 					</React.Suspense>
 				</ChartPanel>
 				<ChartPanel className="flex-1">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Oracle Dominance</h2>
 						{oracleSeries.length > 1 ? (
 							<SelectWithCombobox
@@ -211,7 +211,7 @@ export function OraclesByChain({
 					}}
 				>
 					<Card padding="none">
-						<PanelHeader className="w-full justify-end">
+						<PanelHeader>
 							<PanelTitle as="h1" className="whitespace-nowrap">
 								Oracle Rankings
 							</PanelTitle>

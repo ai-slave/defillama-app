@@ -46,7 +46,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 				}}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search protocols..." />
 						{props.categories.length > 0 ? (
 							<SelectWithCombobox
@@ -56,7 +56,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 								nestedMenu={false}
 								label="Category"
 								labelType="smol"
-								variant="filter-responsive"
+								variant="filter"
 								size="md"
 							/>
 						) : null}

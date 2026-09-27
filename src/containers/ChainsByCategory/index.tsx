@@ -192,7 +192,7 @@ export function ChainsByCategory({
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 					<ChartPanel className="relative isolate">
-						<ChartPanelToolbar className="justify-end">
+						<ChartPanelToolbar>
 							{pieSelectableSeries.length > 1 ? (
 								<SelectWithCombobox
 									allValues={pieSelectableSeries}
@@ -220,7 +220,7 @@ export function ChainsByCategory({
 						</React.Suspense>
 					</ChartPanel>
 					<ChartPanel className="relative isolate">
-						<ChartPanelToolbar className="justify-end">
+						<ChartPanelToolbar>
 							{chainSeries.length > 1 ? (
 								<SelectWithCombobox
 									allValues={chainSeries}

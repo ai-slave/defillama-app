@@ -95,7 +95,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 					</div>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<Select
@@ -104,7 +104,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							setSelectedValues={setTickers}
 							label="Asset"
 							labelType="smol"
-							variant="filter-responsive"
+							variant="filter"
 							size="md"
 						/>
 						<ChartExportButtons
@@ -127,10 +127,8 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 			</SummaryCardGrid>
 			<SearchTableProvider options={{ data: snapshot, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
-						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-							<h2 className="label-md whitespace-nowrap">Exchange Traded Funds</h2>
-						</div>
+					<TableToolbar>
+						<h2 className="mr-auto label-md">Exchange Traded Funds</h2>
 						<TableSearchInput
 							columnId="ticker"
 							placeholder="Search ETF..."

@@ -18,7 +18,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
@@ -212,7 +212,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 					<SurfaceBodyStatus variant="empty">No yield pools found.</SurfaceBodyStatus>
 				) : (
 					<div className="flex flex-1 flex-col">
-						<TableToolbar>
+						<TableToolbarControlGroup>
 							<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
 								{(nestedMenu) => (
 									<>
@@ -233,7 +233,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 									</>
 								)}
 							</ResponsiveFilterLayout>
-						</TableToolbar>
+						</TableToolbarControlGroup>
 						{showRetry ? <InlineStatus variant="error">{retryStatus}</InlineStatus> : null}
 
 						{isFilteredEmpty ? (

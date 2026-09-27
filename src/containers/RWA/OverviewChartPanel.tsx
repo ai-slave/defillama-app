@@ -509,7 +509,7 @@ export function RWAOverviewChartPanel({
 		<>
 			{isTimeSeriesView ? (
 				<ChartPanel className="flex flex-1 flex-col">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						{chartTypeSwitchRow}
 						{isFlowMetric || isPerpsVolume ? (
 							<SegmentedControl<RWAFlowGrouping>

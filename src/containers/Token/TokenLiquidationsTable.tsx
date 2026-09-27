@@ -19,7 +19,7 @@ export function TokenLiquidationsTable<T extends RowData>({
 		<SearchTableProvider options={options}>
 			<LiquidationsTableContent
 				toolbar={
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder={placeholder} />
 						<TableCsvExport filename={csvFileName} />
 					</TableToolbar>

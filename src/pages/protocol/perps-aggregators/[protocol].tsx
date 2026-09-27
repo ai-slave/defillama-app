@@ -213,7 +213,7 @@ export default function Protocols(props: PerpsAggregatorProtocolPageProps) {
 					/>
 				</Panel>
 				<ChartPanel className="col-span-1 xl:col-[2/-1]">
-					<ChartPanelToolbar className="justify-end">
+					<ChartPanelToolbar>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<ChartExportButtons
 							chartInstance={chartInstance}

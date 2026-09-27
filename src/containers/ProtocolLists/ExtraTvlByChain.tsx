@@ -94,7 +94,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 				}}
 			>
 				<Card padding="none">
-					<TableToolbar className="w-full justify-end">
+					<TableToolbar>
 						<TableSearchInput columnId="name" placeholder="Search protocols..." />
 						<TableCsvExport filename={`protocols-${props.metric}-${props.chain}`} />
 					</TableToolbar>
