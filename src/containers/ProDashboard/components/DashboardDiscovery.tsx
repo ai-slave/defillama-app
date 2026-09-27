@@ -228,10 +228,10 @@ export function DashboardDiscovery({
 								}
 								labelType="none"
 								triggerProps={{
+									'aria-label': 'Items per page',
 									className:
 										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 								}}
-								aria-label="Items per page"
 							/>
 							<Select
 								variant="default"
@@ -257,10 +257,10 @@ export function DashboardDiscovery({
 								}
 								labelType="none"
 								triggerProps={{
+									'aria-label': 'Sort by',
 									className:
 										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 								}}
-								aria-label="Sort by"
 							/>
 							{selectedSortBy.key === 'trending' ? (
 								<Select
@@ -283,10 +283,10 @@ export function DashboardDiscovery({
 									}
 									labelType="none"
 									triggerProps={{
+										'aria-label': 'Time frame',
 										className:
 											'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
 									}}
-									aria-label="Time frame"
 								/>
 							) : null}
 

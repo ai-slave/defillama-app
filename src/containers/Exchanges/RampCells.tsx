@@ -1,5 +1,4 @@
-import * as Ariakit from '@ariakit/react'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { FEE_TONE_CLASS, type FeeTone } from './feePresentation'
@@ -40,25 +39,15 @@ export function CostBadge({
 }) {
 	const badgeTone = tone(fraction, limits)
 	return (
-		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
-			<Ariakit.HovercardAnchor
-				render={<button type="button" />}
-				type="button"
-				className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
-				aria-label={ariaLabel}
-			>
-				{label}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-80 p-3 text-primary`}
-				portal
-			>
-				{children}
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+		<Hovercard
+			placement="left-start"
+			className={`ml-auto w-fit rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
+			render={<button type="button" aria-label={ariaLabel} />}
+			contentClassName="w-80 p-3 text-primary"
+			content={children}
+		>
+			{label}
+		</Hovercard>
 	)
 }
 

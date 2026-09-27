@@ -15,15 +15,16 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
-import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
-import { TagGroup } from '~/ui/SegmentedControl'
+import { SegmentedControl, TagGroup, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getPercentChange, slug } from '~/utils'
 import { formatUsd, formatPercentChange } from '~/utils/numberFormat'
@@ -59,6 +60,31 @@ function getVolumePercentChange(
 	return getPercentChange(currentDailyVolume, previousVolume)
 }
 
+const BRIDGE_TABLE_VIEWS = ['tokens', 'addresses'] as const
+type BridgeTableView = (typeof BRIDGE_TABLE_VIEWS)[number]
+const BRIDGE_TABLE_VIEW_OPTIONS = [
+	{
+		value: 'tokens',
+		label: (
+			<span className="flex items-center gap-1">
+				<Icon name="trending-up" height={14} width={14} />
+				Tokens
+			</span>
+		),
+		ariaLabel: 'Tokens'
+	},
+	{
+		value: 'addresses',
+		label: (
+			<span className="flex items-center gap-1">
+				<Icon name="users" height={14} width={14} />
+				Addresses
+			</span>
+		),
+		ariaLabel: 'Addresses'
+	}
+] satisfies ReadonlyArray<SegmentedControlOption<BridgeTableView>>
+
 export function BridgeInfo({
 	displayName,
 	logo,
@@ -72,9 +98,6 @@ export function BridgeInfo({
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmGrouping>('daily')
 	const [currentChain, setCurrentChain] = React.useState(defaultChain)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
-
-	const [bridgesSettings] = useLocalStorageSettingsManager('bridges')
-	const isBridgesShowingAddresses = bridgesSettings[BRIDGES_SHOWING_ADDRESSES]
 
 	// Read through rather than destructured from a fallback object: a fresh literal there makes every
 	// value taken out of it look mutable to the compiler, which then refuses to preserve the
@@ -368,18 +391,44 @@ export function BridgeInfo({
 					</>
 				</ChartPanel>
 			</SummaryCardGrid>
-			<Panel padding="none">
+			<BridgeTablePanel tokensTableData={tokensTableData} addressesTableData={addressesTableData} />
+		</>
+	)
+}
+
+export function BridgeTablePanel({
+	tokensTableData,
+	addressesTableData
+}: Pick<BridgeTableData, 'tokensTableData' | 'addressesTableData'>) {
+	const [bridgesSettings, toggleBridgesSettings] = useLocalStorageSettingsManager('bridges')
+	const tableView: BridgeTableView = bridgesSettings[BRIDGES_SHOWING_ADDRESSES] ? 'addresses' : 'tokens'
+
+	return (
+		<Panel padding="none">
+			<Tabs
+				value={tableView}
+				values={BRIDGE_TABLE_VIEWS}
+				onValueChange={() => toggleBridgesSettings(BRIDGES_SHOWING_ADDRESSES)}
+			>
 				<TableToolbar>
 					<p className="mr-auto body-sm text-tertiary">All stats in table use the same rolling window.</p>
-					<AddressesTableSwitch />
+					<SegmentedControl
+						semantics="tabs"
+						options={BRIDGE_TABLE_VIEW_OPTIONS}
+						label="Bridge table"
+						variant="default"
+						size="md"
+					/>
 				</TableToolbar>
-				{isBridgesShowingAddresses ? (
-					<BridgeAddressesTable data={addressesTableData} />
-				) : (
-					<BridgeTokensTable data={tokensTableData} />
-				)}
-			</Panel>
-		</>
+				<TabPanel value={tableView}>
+					{tableView === 'addresses' ? (
+						<BridgeAddressesTable data={addressesTableData} />
+					) : (
+						<BridgeTokensTable data={tokensTableData} />
+					)}
+				</TabPanel>
+			</Tabs>
+		</Panel>
 	)
 }
 

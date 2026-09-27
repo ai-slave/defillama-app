@@ -1,6 +1,5 @@
-import * as Ariakit from '@ariakit/react'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatPercent, formatUsd, formatNumber } from '~/utils/numberFormat'
 import type { ExchangePromotionModel, MicaVenueModel } from './models'
@@ -92,60 +91,54 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 	const hasTerms = Boolean(promotion.termsUrl || /\s*T&Cs apply\.?$/i.test(promotion.subtitle ?? ''))
 
 	return (
-		<Ariakit.HovercardProvider placement="right-start" showTimeout={0} hideTimeout={50}>
-			<Ariakit.HovercardAnchor
-				render={<button type="button" />}
-				type="button"
-				className="hover-wash inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
-				aria-label={`${venue.name} promotion: ${promotion.label}`}
-			>
-				<Icon name="gift" height={15} width={15} />
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-72 overflow-hidden p-0`}
-				portal
-			>
-				<span className="flex flex-col gap-3 p-3">
-					<span className="flex items-start gap-2">
-						<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
-							<Icon name="gift" height={15} width={15} />
+		<Hovercard
+			placement="right-start"
+			className="hover-wash size-7 justify-center rounded-lg border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
+			render={<button type="button" aria-label={`${venue.name} promotion: ${promotion.label}`} />}
+			contentClassName="w-72 overflow-hidden p-0"
+			content={
+				<>
+					<span className="flex flex-col gap-3 p-3">
+						<span className="flex items-start gap-2">
+							<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
+								<Icon name="gift" height={15} width={15} />
+							</span>
+							<span className="flex min-w-0 flex-col gap-1">
+								<span className="label-md text-primary">{promotion.title}</span>
+								<span className="label-sm text-link">{promotion.label}</span>
+							</span>
 						</span>
-						<span className="flex min-w-0 flex-col gap-1">
-							<span className="label-md text-primary">{promotion.title}</span>
-							<span className="label-sm text-link">{promotion.label}</span>
+						{subtitle ? <span className="body-sm text-secondary">{subtitle}</span> : null}
+						<span className="flex flex-wrap gap-x-3 gap-y-1 label-sm text-tertiary">
+							{promotion.endsAt ? <span>Ends {promotion.endsAt}</span> : null}
+							{hasTerms ? <span>T&amp;Cs apply</span> : null}
 						</span>
 					</span>
-					{subtitle ? <span className="body-sm text-secondary">{subtitle}</span> : null}
-					<span className="flex flex-wrap gap-x-3 gap-y-1 label-sm text-tertiary">
-						{promotion.endsAt ? <span>Ends {promotion.endsAt}</span> : null}
-						{hasTerms ? <span>T&amp;Cs apply</span> : null}
-					</span>
-				</span>
-				{links.length > 0 ? (
-					<span className="flex flex-col border-t border-subtle">
-						{links.map((link) => (
-							<a
-								key={`${link.label}:${link.href}`}
-								href={link.href}
-								target="_blank"
-								rel="noopener noreferrer"
-								data-umami-event="mica-promotion-click"
-								data-umami-event-exchange={venue.exchange}
-								data-umami-event-link={link.label}
-								className="flex items-center gap-2 px-3 py-2 label-sm text-primary hover:bg-hover-row"
-							>
-								<Icon name="gift" height={12} width={12} className="shrink-0 text-link" />
-								<span>{link.label}</span>
-								<Icon name="arrow-up-right" height={12} width={12} className="ml-auto shrink-0 text-tertiary" />
-							</a>
-						))}
-					</span>
-				) : null}
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+					{links.length > 0 ? (
+						<span className="flex flex-col border-t border-subtle">
+							{links.map((link) => (
+								<a
+									key={`${link.label}:${link.href}`}
+									href={link.href}
+									target="_blank"
+									rel="noopener noreferrer"
+									data-umami-event="mica-promotion-click"
+									data-umami-event-exchange={venue.exchange}
+									data-umami-event-link={link.label}
+									className="flex items-center gap-2 px-3 py-2 label-sm text-primary hover:bg-hover-row"
+								>
+									<Icon name="gift" height={12} width={12} className="shrink-0 text-link" />
+									<span>{link.label}</span>
+									<Icon name="arrow-up-right" height={12} width={12} className="ml-auto shrink-0 text-tertiary" />
+								</a>
+							))}
+						</span>
+					) : null}
+				</>
+			}
+		>
+			<Icon name="gift" height={15} width={15} />
+		</Hovercard>
 	)
 }
 

@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
 import Link from 'next/link'
@@ -13,10 +12,10 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -767,29 +766,26 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 	)
 
 	return (
-		<Ariakit.HovercardProvider placement="top-start" showTimeout={0}>
-			<Ariakit.HovercardAnchor className="flex shrink-0 items-center justify-center gap-2">
-				{rights.map((active, index) => (
-					<span
-						key={labels[index]}
-						className={
-							active
-								? 'size-3 rounded-full bg-success shadow-sub-live'
-								: 'size-3 rounded-full border-2 border-success/40'
-						}
-					/>
-				))}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-max p-2`}
-				portal
-			>
-				{content}
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+		<Hovercard
+			className="w-full justify-center gap-2"
+			render={
+				<button
+					type="button"
+					aria-label={labels.map((label, index) => `${label}: ${rights[index] ? 'Active' : 'Inactive'}`).join(', ')}
+				/>
+			}
+			contentClassName="w-max p-2"
+			content={content}
+		>
+			{rights.map((active, index) => (
+				<span
+					key={labels[index]}
+					className={
+						active ? 'size-3 rounded-full bg-success shadow-sub-live' : 'size-3 rounded-full border-2 border-success/40'
+					}
+				/>
+			))}
+		</Hovercard>
 	)
 }
 

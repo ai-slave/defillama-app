@@ -1,7 +1,6 @@
-import * as Ariakit from '@ariakit/react'
 import type { ComponentProps } from 'react'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -200,22 +199,12 @@ export function MicaLicenseValue({
 	if (presentation === null) return <span className="text-tertiary">–</span>
 
 	return (
-		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
-			<Ariakit.HovercardAnchor
-				render={<button type="button" />}
-				type="button"
-				className="inline-flex rounded-sm focus-visible:focus-ring"
-				aria-label={`${presentation.label} MiCA details for ${name}`}
-			>
-				<StatusBadge presentation={presentation} />
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-72 p-3 text-primary`}
-				portal
-			>
+		<Hovercard
+			placement="left-start"
+			className="w-fit rounded-sm"
+			render={<button type="button" aria-label={`${presentation.label} MiCA details for ${name}`} />}
+			contentClassName="w-72 p-3 text-primary"
+			content={
 				<dl className="flex flex-col gap-1.5 body-sm">
 					<div className="flex justify-between gap-3">
 						<dt className="text-secondary">License status</dt>
@@ -240,32 +229,24 @@ export function MicaLicenseValue({
 						</div>
 					) : null}
 				</dl>
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+			}
+		>
+			<StatusBadge presentation={presentation} />
+		</Hovercard>
 	)
 }
 
 function KycSummaryHovercard({ summary, name }: { summary: string; name: string }) {
 	return (
-		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
-			<Ariakit.HovercardAnchor
-				render={<button type="button" />}
-				type="button"
-				className="inline-flex size-7 items-center justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
-				aria-label={`Full KYC requirements for ${name}`}
-			>
-				<Icon name="file-text" height={14} width={14} />
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				unmountOnHide
-				gutter={6}
-				overflowPadding={16}
-				className={`${popoverHovercardSurfaceStyles} w-96 p-3 leading-snug text-primary`}
-				portal
-			>
-				<span className="block break-words whitespace-pre-wrap">{summary}</span>
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+		<Hovercard
+			placement="left-start"
+			className="size-7 items-center justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
+			render={<button type="button" aria-label={`Full KYC requirements for ${name}`} />}
+			contentClassName="w-96 p-3 leading-snug text-primary"
+			content={<span className="block break-words whitespace-pre-wrap">{summary}</span>}
+		>
+			<Icon name="file-text" height={14} width={14} />
+		</Hovercard>
 	)
 }
 

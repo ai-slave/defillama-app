@@ -31,6 +31,8 @@ interface ISelectBase {
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
 	triggerProps?: Ariakit.ComboboxSelectProps
+	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
+	'aria-label'?: never
 	portal?: boolean
 	placement?: Ariakit.ComboboxProviderProps['placement']
 	defaultSelectedValues?: Array<string>

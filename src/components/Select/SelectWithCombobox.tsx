@@ -38,6 +38,8 @@ interface ISelectWithComboboxBase {
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
 	triggerProps?: Ariakit.ComboboxSelectProps
+	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
+	'aria-label'?: never
 	customFooter?: React.ReactNode
 	customHeader?: React.ReactNode
 	onEditCustomColumn?: (idx: number) => void

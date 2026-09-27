@@ -1,13 +1,12 @@
-import * as Ariakit from '@ariakit/react'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { createColumnHelper } from '@tanstack/react-table'
 import { startTransition, Suspense, useMemo, useState } from 'react'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
@@ -91,28 +90,19 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: Array<Token
 	if (!label) return null
 
 	return (
-		<Ariakit.HovercardProvider placement="bottom-start" timeout={150}>
-			<Ariakit.HovercardAnchor
-				render={
-					<button
-						type="button"
-						className="cursor-help text-left body-sm text-secondary underline decoration-dotted underline-offset-2 hover:text-primary focus-visible:text-primary"
-						aria-label={`Show ${label} exposure breakdown by chain`}
-					/>
-				}
-			>
-				{label}
-			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				className={`${popoverHovercardSurfaceStyles} p-3`}
-				gutter={6}
-				overflowPadding={16}
-				portal
-				unmountOnHide
-			>
-				<ChainBreakdownTooltipContent chainBreakdowns={chainBreakdowns} />
-			</Ariakit.Hovercard>
-		</Ariakit.HovercardProvider>
+		<Hovercard
+			placement="bottom-start"
+			render={
+				<button
+					type="button"
+					className="cursor-help text-left body-sm text-secondary underline decoration-dotted underline-offset-2 hover:text-primary focus-visible:text-primary"
+					aria-label={`Show ${label} exposure breakdown by chain`}
+				/>
+			}
+			content={<ChainBreakdownTooltipContent chainBreakdowns={chainBreakdowns} />}
+		>
+			{label}
+		</Hovercard>
 	)
 }
 

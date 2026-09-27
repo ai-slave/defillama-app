@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -14,9 +15,12 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { boundSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { tabTrackStyles, TabLink } from '~/ui/Tab'
+import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import {
@@ -64,6 +68,14 @@ const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' 
 const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const EMPTY_SERIES: Array<string> = []
 
+const NARRATIVE_CHART_TABS = ['linechart', 'barchart', 'heatmap'] as const
+type NarrativeChartTab = (typeof NARRATIVE_CHART_TABS)[number]
+const NARRATIVE_CHART_TAB_LABELS: Record<NarrativeChartTab, string> = {
+	linechart: 'Linechart',
+	barchart: 'Barchart',
+	heatmap: 'Heatmap'
+}
+
 export function CategoryPerformanceContainer({
 	pctChanges,
 	performanceTimeSeries,
@@ -71,7 +83,7 @@ export function CategoryPerformanceContainer({
 	isCoinPage,
 	categoryName
 }: CategoryPerformanceProps) {
-	const [tab, setTab] = React.useState('linechart')
+	const [tab, setTab] = React.useState<NarrativeChartTab>('linechart')
 	const [groupBy, setGroupBy] = React.useState<Period>('30D')
 	const [groupByDenom, setGroupByDenom] = React.useState<Denom>('$')
 
@@ -234,108 +246,92 @@ export function CategoryPerformanceContainer({
 				) : null}
 			</div>
 
-			<div className="rounded-lg border border-subtle bg-surface">
-				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
-					<button
-						type="button"
-						className="border-b border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
-						onClick={() => setTab('linechart')}
-						data-selected={tab === 'linechart'}
-					>
-						Linechart
-					</button>
-					<button
-						type="button"
-						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
-						onClick={() => setTab('barchart')}
-						data-selected={tab === 'barchart'}
-					>
-						Barchart
-					</button>
-					<button
-						type="button"
-						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
-						onClick={() => setTab('heatmap')}
-						data-selected={tab === 'heatmap'}
-					>
-						Heatmap
-					</button>
-				</div>
-
-				<div className="flex items-center justify-end gap-2 p-2">
-					<TagGroup
-						variant="default"
-						size="md"
-						values={PERIODS}
-						selectedValue={groupBy}
-						setValue={(val) => setGroupBy(val)}
-					/>
-					<TagGroup
-						variant="default"
-						size="md"
-						values={DENOMS}
-						selectedValue={groupByDenom}
-						setValue={(val) => setGroupByDenom(val)}
-						label="Denom (vs):"
-						disabledValues={disabledDenoms}
-					/>
-					{availableSeries.length > 1 ? (
-						<SelectWithCombobox
-							allValues={availableSeries}
-							selectedValues={displayedSelectedSeries}
-							setSelectedValues={setBoundedSelectedSeries}
-							label={isCoinPage ? 'Coin' : 'Category'}
-							labelType="smol"
-							variant="filter"
-							size="md"
-						/>
-					) : null}
-					<ChartExportButtons
-						chartInstance={exportChartInstance}
-						showCsv={tab !== 'heatmap'}
-						filename={`category-performance-${tab}`}
-						title={`Category Performance ${tab}`}
-						csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
-					/>
-				</div>
-
-				<div className="min-h-[360px]">
-					{tab === 'barchart' ? (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<MultiSeriesChart
-								dataset={deferredChartData.dataset}
-								charts={deferredChartData.barCharts}
-								selectedCharts={displayedSelectedCharts}
-								valueSymbol={chartValueSymbol}
-								height="533px"
-								hideDataZoom={false}
-								chartOptions={barChartOptions}
-								exportButtons="hidden"
-								onReady={onChartReady}
+			<Card padding="none">
+				<Tabs<NarrativeChartTab> value={tab} values={NARRATIVE_CHART_TABS} onValueChange={setTab}>
+					<Ariakit.TabList aria-label="Chart type" className={tabTrackStyles}>
+						{NARRATIVE_CHART_TABS.map((value) => (
+							<Tab key={value} value={value} render={<TabLink as="button" />}>
+								{NARRATIVE_CHART_TAB_LABELS[value]}
+							</Tab>
+						))}
+					</Ariakit.TabList>
+					<TabPanel value={tab}>
+						<ChartPanelToolbar>
+							<TagGroup
+								variant="default"
+								size="md"
+								values={PERIODS}
+								selectedValue={groupBy}
+								setValue={(val) => setGroupBy(val)}
 							/>
-						</React.Suspense>
-					) : tab === 'linechart' ? (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<MultiSeriesChart
-								dataset={deferredChartData.dataset}
-								charts={deferredChartData.lineCharts}
-								selectedCharts={displayedSelectedCharts}
-								valueSymbol={chartValueSymbol}
-								height="533px"
-								solidChartAreaStyle={false}
-								chartOptions={lineChartOptions}
-								tooltipMaxItems={30}
-								exportButtons="hidden"
-								onReady={onChartReady}
+							<TagGroup
+								variant="default"
+								size="md"
+								values={DENOMS}
+								selectedValue={groupByDenom}
+								setValue={(val) => setGroupByDenom(val)}
+								label="Denom (vs):"
+								disabledValues={disabledDenoms}
 							/>
-						</React.Suspense>
-					) : (
-						<React.Suspense fallback={<div className="h-[533px]" />}>
-							<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" onReady={onChartReady} />
-						</React.Suspense>
-					)}
-				</div>
-			</div>
+							{availableSeries.length > 1 ? (
+								<SelectWithCombobox
+									allValues={availableSeries}
+									selectedValues={displayedSelectedSeries}
+									setSelectedValues={setBoundedSelectedSeries}
+									label={isCoinPage ? 'Coin' : 'Category'}
+									labelType="smol"
+									variant="filter"
+									size="md"
+								/>
+							) : null}
+							<ChartExportButtons
+								chartInstance={exportChartInstance}
+								showCsv={tab !== 'heatmap'}
+								filename={`category-performance-${tab}`}
+								title={`Category Performance ${tab}`}
+								csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
+							/>
+						</ChartPanelToolbar>
+
+						<div className="min-h-[360px]">
+							{tab === 'barchart' ? (
+								<React.Suspense fallback={<div className="h-[533px]" />}>
+									<MultiSeriesChart
+										dataset={deferredChartData.dataset}
+										charts={deferredChartData.barCharts}
+										selectedCharts={displayedSelectedCharts}
+										valueSymbol={chartValueSymbol}
+										height="533px"
+										hideDataZoom={false}
+										chartOptions={barChartOptions}
+										exportButtons="hidden"
+										onReady={onChartReady}
+									/>
+								</React.Suspense>
+							) : tab === 'linechart' ? (
+								<React.Suspense fallback={<div className="h-[533px]" />}>
+									<MultiSeriesChart
+										dataset={deferredChartData.dataset}
+										charts={deferredChartData.lineCharts}
+										selectedCharts={displayedSelectedCharts}
+										valueSymbol={chartValueSymbol}
+										height="533px"
+										solidChartAreaStyle={false}
+										chartOptions={lineChartOptions}
+										tooltipMaxItems={30}
+										exportButtons="hidden"
+										onReady={onChartReady}
+									/>
+								</React.Suspense>
+							) : (
+								<React.Suspense fallback={<div className="h-[533px]" />}>
+									<TreemapChart treeData={treemapTreeData} variant="narrative" height="533px" onReady={onChartReady} />
+								</React.Suspense>
+							)}
+						</div>
+					</TabPanel>
+				</Tabs>
+			</Card>
 
 			<SearchTableProvider
 				options={{
