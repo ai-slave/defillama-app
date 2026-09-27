@@ -5,12 +5,12 @@ import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
-import { getChartTheme } from '../../shared/chartTheme'
 import { formatChartValue } from '../../shared/formatters'
 import { asTooltipDataRecord, normalizeTooltipItems } from '../../shared/tooltip'
 import { buildWatermarkGraphic } from '../../shared/watermark'
@@ -29,7 +29,15 @@ import {
 } from './leafLabel'
 import type { MarketTreemapGroup, MarketTreemapLeaf, MarketTreemapNode } from './types'
 
-echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent, LabelLayout])
+echarts.use([
+	TreemapLabelContrast,
+	TooltipComponent,
+	ToolboxComponent,
+	EChartTreemap,
+	CanvasRenderer,
+	GraphicComponent,
+	LabelLayout
+])
 
 export interface MarketTreemapChartProps {
 	treeData: Array<MarketTreemapNode>
@@ -41,10 +49,6 @@ export interface MarketTreemapChartProps {
 	showMarketCapRow?: boolean
 	groupItemsLabel?: string
 	onReady?: (instance: echarts.ECharts | null) => void
-}
-
-const LEAF_TEXT_STYLE = {
-	color: '#fff'
 }
 
 const TREEMAP_SQUARE_RATIO = 0.9
@@ -187,12 +191,11 @@ for (const fontSize of TICKER_SIZES) {
 	LEAF_TEXT_RICH[`ticker${fontSize}`] = {
 		fontSize,
 		fontWeight: 600,
-		lineHeight: lineHeightOf(fontSize),
-		...LEAF_TEXT_STYLE
+		lineHeight: lineHeightOf(fontSize)
 	}
 }
 for (const fontSize of CHG_SIZES) {
-	LEAF_TEXT_RICH[`chg${fontSize}`] = { fontSize, lineHeight: lineHeightOf(fontSize), ...LEAF_TEXT_STYLE }
+	LEAF_TEXT_RICH[`chg${fontSize}`] = { fontSize, lineHeight: lineHeightOf(fontSize) }
 }
 
 function buildLeafIconRich(image: HTMLCanvasElement | undefined) {
@@ -269,7 +272,6 @@ function buildLevels(hasGroups: boolean, isDark: boolean) {
 				height: 22,
 				padding: [0, 4],
 				fontWeight: 600,
-				color: isDark ? '#fff' : '#1f2937',
 				...(isDark ? { backgroundColor: 'rgba(55,65,81,0.88)' } : { backgroundColor: 'rgba(229,231,235,0.92)' })
 			}
 		},
@@ -463,8 +465,7 @@ export default function MarketTreemapChart({
 					},
 					upperLabel: {
 						show: true,
-						height: 24,
-						color: getChartTheme(isDark).treemapLabel
+						height: 24
 					},
 					itemStyle: {
 						borderColor: isDark ? '#2d3139' : '#d1d5db'

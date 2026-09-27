@@ -8,12 +8,14 @@ import type {
 	YAXisComponentOption
 } from 'echarts'
 import type { PieSeriesOption, TreemapSeriesOption } from 'echarts/charts'
+import { use as registerEChartsExtensions } from 'echarts/core'
 import type * as echarts from 'echarts/core'
 import { getChartLogoMetadata, type ChartLogoMetadata } from '~/components/ECharts/shared/chartLogoMetadata'
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { mergeDeep } from '~/components/ECharts/shared/merge'
 import { buildWatermarkGraphic, isWatermarkGraphicElement } from '~/components/ECharts/shared/watermark'
 import { formatTreemapUsd } from '~/components/ECharts/TreemapChart/formatters'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { formatPercent } from '~/utils/numberFormat'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
 import {
@@ -25,12 +27,13 @@ import {
 	type ExportLayout
 } from './chartPngExportLayout'
 
+registerEChartsExtensions([TreemapLabelContrast])
+
 export type PngExportProfile = 'default' | 'scatterWithImageSymbols' | 'treemap' | 'treemapNormalized' | 'hbar'
 
 export const IMAGE_EXPORT_HEIGHT = 720
 const TREEMAP_EXPORT_SIDE_PADDING = 16
 const TREEMAP_EXPORT_BOTTOM_PADDING = 16
-const TREEMAP_EXPORT_LABEL_Z = 10_000
 const EXPORT_TITLE_Z = 10_002
 
 type TreemapLabelOption = NonNullable<TreemapSeriesOption['label']>
@@ -151,10 +154,6 @@ function applyTreemapDataExportLabels(
 			...(item.children ? { children: applyTreemapDataExportLabels(item.children, label, upperLabel) } : {})
 		}
 	})
-}
-
-function stripRichText(value: string): string {
-	return value.replace(/\{[^|{}]+\|([^{}]*)\}/g, '$1')
 }
 
 function findTreemapDataNodeByPath(
@@ -418,90 +417,6 @@ export function applyTreemapViewportExportState(chart: echarts.ECharts, state: T
 function getGraphicArray(graphic: any): Array<any> {
 	if (!graphic) return []
 	return Array.isArray(graphic) ? graphic : [graphic]
-}
-
-function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean): Array<any> {
-	const seriesModel = getTreemapSeriesModel(chart)
-	const viewRoot = seriesModel?.getViewRoot?.()
-	const layoutInfo = seriesModel?.layoutInfo
-	if (!seriesModel || !viewRoot || !layoutInfo) return []
-
-	const graphics: Array<any> = []
-	const baseX = Number(layoutInfo.x ?? 0)
-	const baseY = Number(layoutInfo.y ?? 0)
-	const labelFill = '#fff'
-	const labelStroke = getChartTheme(isDark).exportLabelStroke
-
-	const getNodeLabel = (node: any, includeValue: boolean) => {
-		const formatted = stripRichText(String(seriesModel.getFormattedLabel?.(node.dataIndex, 'normal') ?? '')).trim()
-		if (formatted) return formatted
-		const name = typeof node.name === 'string' ? node.name : ''
-		if (!includeValue) return name
-		const value = getTreemapNumericValue(node.getValue?.())
-		return value > 0 ? `${name}\n${formatTreemapUsd(value)}` : name
-	}
-
-	const addText = (node: any, x: number, y: number, width: number, height: number, includeValue: boolean) => {
-		const text = getNodeLabel(node, includeValue)
-		if (!text || width < 32 || height < 14) return
-		graphics.push({
-			id: `treemap-export-label-${graphics.length}`,
-			type: 'text',
-			left: x,
-			top: y,
-			z: TREEMAP_EXPORT_LABEL_Z,
-			silent: true,
-			style: {
-				text,
-				fill: labelFill,
-				stroke: labelStroke,
-				lineWidth: 3,
-				fontSize: includeValue ? 12 : 13,
-				fontWeight: includeValue ? 500 : 600,
-				lineHeight: includeValue ? 16 : 15,
-				width: Math.max(width, 0),
-				height: Math.max(height, 0),
-				overflow: 'truncate',
-				lineOverflow: 'truncate'
-			}
-		})
-	}
-
-	const visit = (node: any, parentX: number, parentY: number, isRoot: boolean) => {
-		const layout = node?.getLayout?.()
-		if (!layout?.isInView) return
-
-		const x = parentX + Number(layout.x ?? 0)
-		const y = parentY + Number(layout.y ?? 0)
-		const width = Number(layout.width ?? 0)
-		const height = Number(layout.height ?? 0)
-		const borderWidth = Number(layout.borderWidth ?? 0)
-		const upperLabelHeight = Number(layout.upperLabelHeight ?? 0)
-		const children = Array.isArray(node.viewChildren) ? node.viewChildren : []
-		const isParent = children.length > 0
-
-		if (!isRoot) {
-			if (isParent && upperLabelHeight > 0) {
-				addText(node, x + borderWidth + 4, y + 2, width - borderWidth * 2 - 8, upperLabelHeight - 4, false)
-			} else {
-				addText(
-					node,
-					x + borderWidth + 6,
-					y + borderWidth + 4,
-					width - borderWidth * 2 - 12,
-					height - borderWidth * 2 - 8,
-					true
-				)
-			}
-		}
-
-		for (const child of children) {
-			visit(child, x, y, false)
-		}
-	}
-
-	visit(viewRoot, baseX, baseY, true)
-	return graphics
 }
 
 // ECharts' SVG renderer ignores getDataURL({ type: 'png' }); rasterize its output explicitly.
@@ -1171,12 +1086,10 @@ function adjustSeriesForExport(opts: {
 					name: {
 						fontSize: 16,
 						fontWeight: 600,
-						color: '#fff',
 						lineHeight: 22
 					},
 					value: {
 						fontSize: 13,
-						color: 'rgba(255,255,255,0.85)',
 						lineHeight: 18
 					},
 					...sourceLabel.rich
@@ -1186,7 +1099,6 @@ function adjustSeriesForExport(opts: {
 			const exportUpperLabel: TreemapExportLabelOption = {
 				...sourceUpperLabel,
 				show: sourceUpperLabel.show !== false,
-				color: sourceUpperLabel.color ?? getChartTheme(isDark).treemapLabel,
 				formatter:
 					typeof sourceUpperLabel.formatter === 'function'
 						? sourceUpperLabel.formatter
@@ -1196,6 +1108,8 @@ function adjustSeriesForExport(opts: {
 			const exportData = targetDataRoot?.data ?? s.data
 			const next: TreemapSeriesOption = {
 				...treemapSeries,
+				// Treemap's own default overrides the global flag and fades labels in from transparent.
+				animation: false,
 				...(targetDataRoot ? { name: targetDataRoot.name } : {}),
 				top: layout.gridTop,
 				left: TREEMAP_EXPORT_SIDE_PADDING,
@@ -1438,22 +1352,6 @@ export async function renderClonedChartExport(
 			await mutateAndWaitForChartRender(tempChart, () =>
 				applyTreemapViewportExportState(tempChart, treemapViewportState)
 			)
-		}
-
-		if (flags.isTreemapChart) {
-			const labelGraphics = buildTreemapExportLabelGraphics(tempChart, isDark)
-			if (labelGraphics.length > 0) {
-				currentOptions.graphic = [
-					{
-						elements: [
-							...getGraphicArray(currentOptions.graphic).flatMap((group) => group.elements ?? [group]),
-							...labelGraphics
-						]
-					}
-				]
-				const graphicOption: EChartsOption = { graphic: currentOptions.graphic }
-				await mutateAndWaitForChartRender(tempChart, () => tempChart.setOption(graphicOption))
-			}
 		}
 
 		const baseDataURL = await getChartPngDataURL(tempChart, {

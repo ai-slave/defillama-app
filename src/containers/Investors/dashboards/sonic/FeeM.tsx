@@ -7,6 +7,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { lazy, useEffect, useMemo, useRef } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -18,7 +19,7 @@ import { SonicIcon } from './SonicIcon'
 
 const tableFeaturesConfig = paginatedTableFeatures
 
-echarts.use([EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
+echarts.use([TreemapLabelContrast, EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -137,15 +138,12 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 					label: {
 						show: true,
 						position: 'insideTopLeft',
-						color: '#fff',
-						textBorderColor: 'rgba(0,0,0,0.3)',
-						textBorderWidth: 2,
 						formatter(params) {
 							return `{name|${params.name}}\n{val|${formatSonicCount(getTreemapValue(params.value))} S}`
 						},
 						rich: {
-							name: { fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 20 },
-							val: { fontSize: 11, color: 'rgba(255,255,255,0.85)', lineHeight: 18 }
+							name: { fontSize: 13, fontWeight: 600, lineHeight: 20 },
+							val: { fontSize: 11, lineHeight: 18 }
 						}
 					},
 					itemStyle: {

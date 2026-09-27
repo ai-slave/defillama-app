@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useRef } from 'react'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -13,7 +14,7 @@ import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../.
 import { clearTreemapFocus, registerTreemapFocusTracking } from '../focus'
 import { formatTreemapUsd } from '../formatters'
 
-echarts.use([TooltipComponent, GraphicComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
+echarts.use([TreemapLabelContrast, TooltipComponent, GraphicComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
 interface BuilderTreemapChartProps {
 	data: Array<{
@@ -153,12 +154,10 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 							name: {
 								fontSize: 14,
 								fontWeight: 600,
-								color: '#fff',
 								lineHeight: 20
 							},
 							value: {
 								fontSize: 12,
-								color: 'rgba(255,255,255,0.8)',
 								lineHeight: 18
 							}
 						}

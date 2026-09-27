@@ -6,6 +6,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -16,7 +17,7 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
 
-echarts.use([TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
+echarts.use([TreemapLabelContrast, TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
 interface UnlocksTreemapProps {
 	unlocksData: UnlocksData
@@ -141,11 +142,8 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					upperLabel: {
 						show: true,
 						height: 28,
-						color: getChartTheme(isDark).ink(1),
 						fontSize: 13,
-						fontWeight: 600,
-						textShadowBlur: 2,
-						textShadowColor: getChartTheme(isDark).inkInverted(0.8)
+						fontWeight: 600
 					},
 					itemStyle: {
 						borderColor: isDark ? '#555555' : '#d0d0d0',
@@ -172,7 +170,6 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 							upperLabel: {
 								show: true,
 								height: 26,
-								color: getChartTheme(isDark).ink(1),
 								fontSize: 12,
 								fontWeight: 600
 							},

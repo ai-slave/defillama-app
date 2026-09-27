@@ -4,6 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -60,7 +61,7 @@ function isTreemapNode(value: unknown): value is TreemapNode {
 const VISUAL_MIN = -100
 const VISUAL_MAX = 100
 
-echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
+echarts.use([TreemapLabelContrast, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent])
 
 function TreemapChart({
 	treeData,
@@ -195,13 +196,6 @@ function TreemapChart({
 						: {}),
 					label: {
 						position: 'insideTopRight',
-						...(isRwaVariant
-							? {
-									color: '#fff',
-									textBorderColor: 'rgba(0,0,0,0.35)',
-									textBorderWidth: 2
-								}
-							: {}),
 						formatter: (rawParams: unknown) => {
 							if (!isTreemapFormatterParams(rawParams)) return ''
 							const params = rawParams
@@ -230,22 +224,18 @@ function TreemapChart({
 						rich: {
 							name: {
 								fontSize: 15,
-								color: '#fff',
 								lineHeight: 20
 							},
 							apy: {
 								fontSize: 13,
-								color: '#fff',
 								lineHeight: 20
 							},
 							rwaName: {
 								fontSize: 12,
-								color: '#fff',
 								lineHeight: 18
 							},
 							rwaMetric: {
 								fontSize: 12,
-								color: '#fff',
 								lineHeight: 18
 							}
 						}
@@ -253,7 +243,6 @@ function TreemapChart({
 					upperLabel: {
 						show: true,
 						height: 20,
-						color: chartTheme.treemapLabel,
 						...(isRwaVariant ? { formatter: '{b}' } : {})
 					},
 					itemStyle: {
@@ -272,9 +261,7 @@ function TreemapChart({
 										show: true,
 										height: 22,
 										padding: [0, 4],
-										color: isDark ? '#fff' : '#1f2937',
-										formatter: '{b}',
-										...(isDark ? { textBorderColor: 'rgba(0,0,0,0.3)', textBorderWidth: 2 } : {})
+										formatter: '{b}'
 									}
 								: {
 										show: false
@@ -309,13 +296,10 @@ function TreemapChart({
 											show: true,
 											height: 22,
 											padding: [0, 2],
-											color: isDark ? '#fff' : '#1f2937',
 											formatter: '{b}',
 											...(isDark
 												? {
-														backgroundColor: 'rgba(55,65,81,0.88)',
-														textBorderColor: 'rgba(0,0,0,0.3)',
-														textBorderWidth: 2
+														backgroundColor: 'rgba(55,65,81,0.88)'
 													}
 												: { backgroundColor: 'rgba(229,231,235,0.92)' })
 										}
