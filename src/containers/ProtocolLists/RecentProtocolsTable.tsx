@@ -20,7 +20,7 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useTablePages } from '~/hooks/useTablePages'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -104,11 +104,11 @@ export function RecentlyListedProtocolsTable({
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						value={nameSearch}
 						onChange={(e) => void pushShallowQuery(router, { search: e.currentTarget.value })}
 						placeholder="Search protocols..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 

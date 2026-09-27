@@ -18,7 +18,7 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useCalcCirculating } from '~/containers/Stablecoins/hooks'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -379,10 +379,10 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search stablecoins</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 				<CSVDownloadButton

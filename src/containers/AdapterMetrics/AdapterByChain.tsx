@@ -33,7 +33,7 @@ import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -303,10 +303,10 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					<SelectWithCombobox

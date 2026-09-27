@@ -1,5 +1,5 @@
 import { useEffect, useRef, type FocusEvent } from 'react'
-import { inputStyles } from '~/ui/Input'
+import { Input } from '~/ui/Input'
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 // type="date" fires change with padded years (e.g. 0002) while the real year is still being typed. Keep in sync with TokenPnl min (epoch).
@@ -17,15 +17,13 @@ export function DateInput({
 	value,
 	onChange,
 	min,
-	max,
-	invalid
+	max
 }: {
 	label: string
 	value: string
 	onChange: (value: string) => void
 	min?: string
 	max?: string
-	invalid?: boolean
 }) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const lastCommittedRef = useRef(value)
@@ -61,7 +59,7 @@ export function DateInput({
 	return (
 		<label className="flex flex-col gap-1.5">
 			<span className="body-sm text-secondary">{label}</span>
-			<input
+			<Input
 				ref={inputRef}
 				type="date"
 				defaultValue={value}
@@ -69,7 +67,7 @@ export function DateInput({
 				onBlur={handleBlur}
 				min={min}
 				max={max}
-				className={`${inputStyles} cursor-pointer dark:scheme-dark ${invalid ? 'border-data-down' : ''}`}
+				className="cursor-pointer dark:scheme-dark"
 			/>
 		</label>
 	)

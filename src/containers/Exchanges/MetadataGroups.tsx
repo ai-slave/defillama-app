@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
@@ -72,9 +73,7 @@ function MetadataPills({ values }: { values: Array<string> }) {
 	return (
 		<span className="flex flex-wrap gap-1">
 			{values.map((value) => (
-				<span key={value} className="rounded-md border border-subtle bg-surface-elevated-1 px-2 py-0.5 label-sm">
-					{metadataValueLabel(value)}
-				</span>
+				<Tag key={value}>{metadataValueLabel(value)}</Tag>
 			))}
 		</span>
 	)

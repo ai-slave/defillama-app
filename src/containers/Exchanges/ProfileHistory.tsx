@@ -4,6 +4,7 @@ import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -16,11 +17,7 @@ function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: str
 				<Icon name={icon} height={17} width={17} />
 			</span>
 			<h2 className="label-lg">{title}</h2>
-			{count != null ? (
-				<span className="rounded-md border border-subtle bg-surface-elevated-1 px-2 py-0.5 label-sm text-secondary">
-					{count}
-				</span>
-			) : null}
+			{count != null ? <Tag>{count}</Tag> : null}
 		</div>
 	)
 }

@@ -1,11 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useState, useSyncExternalStore, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
+import {
+	CsvDownloadDialogs,
+	downloadPreparedCsv,
+	type PrepareCsv,
+	useCsvDownload
+} from '~/components/CsvDownloadButton'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { popoverMenuItemStyles } from '~/ui/Popover'
-import { PopoverSurface } from '~/ui/PopoverSurface'
 import { copyTableImage, downloadTableImage, type TableImageInput } from './renderTableImage'
 
 export type TableImageSource = () => Omit<TableImageInput, 'isDark'> | null
@@ -85,7 +91,7 @@ export function TableImageButtons({
 	iconOnly = false,
 	triggerContent,
 	triggerLabel,
-	csvSlot,
+	prepareCsv,
 	watermarkMode = 'always',
 	hideWatermarkItem = false
 }: {
@@ -98,8 +104,8 @@ export function TableImageButtons({
 	triggerContent?: ReactNode
 	/** Overrides the trigger's text. Use a verb when the menu does more than PNG. */
 	triggerLabel?: string
-	/** Rendered as the first menu item, so the caller keeps its own CSV gating and modals. */
-	csvSlot?: ReactNode
+	/** Adds a "Download CSV" item on top, gated like CSVDownloadButton. */
+	prepareCsv?: PrepareCsv
 	/** 'always' keeps attribution on reader surfaces; 'preference' lets authors turn it off. */
 	watermarkMode?: 'always' | 'preference'
 	/** Keeps the export on the preference while the caller renders its own watermark control. */
@@ -108,7 +114,8 @@ export function TableImageButtons({
 	const [isDarkMode] = useDarkModeManager()
 	const [watermarkEnabled, toggleWatermark] = useTableImageWatermark()
 	const [isLoading, setIsLoading] = useState(false)
-	const popover = Ariakit.usePopoverStore()
+	const menu = Ariakit.useMenuStore()
+	const csv = useCsvDownload()
 
 	const run = useCallback(
 		async (mode: 'download' | 'copy') => {
@@ -141,8 +148,8 @@ export function TableImageButtons({
 
 	return (
 		<div className={className ?? 'flex flex-nowrap items-center gap-2'}>
-			<Ariakit.PopoverProvider store={popover}>
-				<Ariakit.PopoverDisclosure
+			<Ariakit.MenuProvider store={menu}>
+				<Ariakit.MenuButton
 					className={buttonClassName}
 					disabled={disabled || isLoading}
 					title="Export table as image"
@@ -154,42 +161,38 @@ export function TableImageButtons({
 						(triggerContent ?? <Icon name="download-paper" height={14} width={14} />)
 					)}
 					{triggerContent || iconOnly ? null : <span>{triggerLabel ?? '.png'}</span>}
-				</Ariakit.PopoverDisclosure>
+				</Ariakit.MenuButton>
 
-				<PopoverSurface variant="actions" aria-label="Export table" gutter={8} className="z-50">
-					{csvSlot ? <div className="contents">{csvSlot}</div> : null}
-					<button
-						type="button"
-						className={popoverMenuItemStyles}
+				<MenuSurface variant="actions" aria-label="Export table" gutter={8} className="z-50">
+					{prepareCsv ? (
+						<MenuItem
+							disabled={csv.userLoading || csv.status === 'pending'}
+							data-umami-event="export-csv"
+							onClick={() => csv.requestDownload(() => downloadPreparedCsv(prepareCsv))}
+						>
+							<Icon name="download-paper" height={14} width={14} />
+							<span>Download CSV</span>
+						</MenuItem>
+					) : null}
+					<MenuItem
 						disabled={disabled || isLoading}
 						data-umami-event="export-table-png"
-						onClick={() => {
-							void run('download')
-							popover.hide()
-						}}
+						onClick={() => void run('download')}
 					>
 						<Icon name="download-paper" height={14} width={14} />
 						<span>Download image</span>
-					</button>
-					<button
-						type="button"
-						className={popoverMenuItemStyles}
-						disabled={disabled || isLoading}
-						data-umami-event="copy-table-png"
-						onClick={() => {
-							void run('copy')
-							popover.hide()
-						}}
-					>
+					</MenuItem>
+					<MenuItem disabled={disabled || isLoading} data-umami-event="copy-table-png" onClick={() => void run('copy')}>
 						<Icon name="copy" height={14} width={14} />
 						<span>Copy image</span>
-					</button>
+					</MenuItem>
 					{watermarkMode === 'preference' && !hideWatermarkItem ? (
-						<button
-							type="button"
+						<Ariakit.MenuItemCheckbox
+							name="watermark"
+							checked={watermarkEnabled}
+							onChange={toggleWatermark}
+							hideOnClick={false}
 							className={`${popoverMenuItemStyles} border-t border-medium`}
-							aria-pressed={watermarkEnabled}
-							onClick={toggleWatermark}
 						>
 							<Icon
 								name={watermarkEnabled ? 'checkmark' : 'box'}
@@ -198,10 +201,11 @@ export function TableImageButtons({
 								className={watermarkEnabled ? '' : 'opacity-40'}
 							/>
 							<span>Include watermark</span>
-						</button>
+						</Ariakit.MenuItemCheckbox>
 					) : null}
-				</PopoverSurface>
-			</Ariakit.PopoverProvider>
+				</MenuSurface>
+			</Ariakit.MenuProvider>
+			{prepareCsv ? <CsvDownloadDialogs controller={csv} /> : null}
 		</div>
 	)
 }

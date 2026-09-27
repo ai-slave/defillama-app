@@ -1,7 +1,7 @@
 import { useSelector } from '@tanstack/react-store'
 import { useDeferredValue, useEffect, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { useSearchTableScope } from './context'
 
 export function TableSearchInput({
@@ -69,7 +69,7 @@ export function TableSearchInput({
 		<label className={className}>
 			<span className="sr-only">{placeholder}</span>
 			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-			<input
+			<Input
 				value={draft.value}
 				onInput={(event) =>
 					setDraft({
@@ -81,7 +81,7 @@ export function TableSearchInput({
 					})
 				}
 				placeholder={placeholder}
-				className={searchFieldInputStyles}
+				className={searchFieldInputPlacementStyles}
 			/>
 		</label>
 	)

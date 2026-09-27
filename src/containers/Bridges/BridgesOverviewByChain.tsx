@@ -12,7 +12,12 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -526,10 +531,10 @@ export function BridgesOverviewByChain({
 							<label className={searchFieldInlineWrapperStyles}>
 								<span className="sr-only">Search bridges</span>
 								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-								<input
+								<Input
 									onInput={(e) => setSearchValue(e.currentTarget.value)}
 									placeholder="Search..."
-									className={searchFieldInputStyles}
+									className={searchFieldInputPlacementStyles}
 								/>
 							</label>
 						)}

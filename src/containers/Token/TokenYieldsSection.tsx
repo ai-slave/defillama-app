@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
@@ -13,10 +14,8 @@ import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
@@ -219,17 +218,9 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 										<FilterByChain chainList={chainList} nestedMenu={nestedMenu} size="md" />
 										<TVLRange label="TVL" variant="secondary" nestedMenu={nestedMenu} size="md" />
 										<APYRange nestedMenu={nestedMenu} size="md" />
-										{hasActiveFilters ? (
-											nestedMenu ? (
-												<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
-													Reset filters
-												</button>
-											) : (
-												<Button type="button" size="md" onClick={resetFilters}>
-													Reset filters
-												</Button>
-											)
-										) : null}
+										<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
+											Reset filters
+										</ResetFiltersButton>
 									</>
 								)}
 							</ResponsiveFilterLayout>

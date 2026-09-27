@@ -7,7 +7,8 @@ import { tw } from './tw'
    Field: 32px (min-h-8, padding-driven like Button md), bg-page on the
    surface it sits in, border-medium 1px, 8px radius, px-3 py-1.5. Entered
    text and placeholder are body-sm (text-primary / text-tertiary); focus
-   swaps the border to brand. Mobile stays text-base below the sm breakpoint
+   swaps the border to brand, and `aria-invalid` keeps it border-error while
+   focused too. Mobile stays text-base below the sm breakpoint
    so iOS Safari does not zoom the page when the field focuses — sm:body-sm
    takes over from there (variant utilities sort after base ones, verified).
 
@@ -25,7 +26,7 @@ import { tw } from './tw'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60`
+const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error aria-invalid:focus:border-error`
 
 export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-1.5 sm:body-sm`
 

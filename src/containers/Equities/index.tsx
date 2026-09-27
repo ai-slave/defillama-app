@@ -24,7 +24,7 @@ import { useDebouncedCallback } from '~/hooks/useDebounce'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { StaleText } from '~/ui/StaleText'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -862,13 +862,13 @@ function EquitiesSearchInput({ search, updateSearch }: { search: string; updateS
 			<label className="relative block min-w-0">
 				<span className="sr-only">Search companies or tickers</span>
 				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-				<input
+				<Input
 					ref={inputRef}
 					name="search"
 					defaultValue={search}
 					onInput={(event) => debouncedUpdateSearch(event.currentTarget.value.trim())}
 					placeholder="Search companies or tickers"
-					className={searchFieldInputStyles}
+					className={searchFieldInputPlacementStyles}
 				/>
 			</label>
 		</form>

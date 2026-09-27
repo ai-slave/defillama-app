@@ -15,7 +15,12 @@ import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/componen
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
@@ -195,11 +200,11 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol size="md" />

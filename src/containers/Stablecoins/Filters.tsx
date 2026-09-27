@@ -1,12 +1,11 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { Select } from '~/components/Select/Select'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { formatNumber } from '~/utils/numberFormat'
 import { stablecoinAttributeOptions, stablecoinBackingOptions, stablecoinPegTypeOptions } from './filterPolicy'
 
@@ -131,14 +130,10 @@ function ResetAllStablecoinFilters({ pathname, nestedMenu }: { pathname: string;
 		void router.push({ pathname, query: chartQuery }, undefined, { shallow: true })
 	}
 
-	return nestedMenu ? (
-		<button type="button" onClick={resetFilters} disabled={!hasActiveQueryFilters} className={nestedMenuActionStyles}>
+	return (
+		<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveQueryFilters}>
 			Reset all filters
-		</button>
-	) : (
-		<Button type="button" size="md" onClick={resetFilters} disabled={!hasActiveQueryFilters}>
-			Reset all filters
-		</Button>
+		</ResetFiltersButton>
 	)
 }
 

@@ -4,13 +4,11 @@ import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
+import { Select } from '~/components/Select/Select'
 import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
-import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { MenuSurface } from '~/ui/MenuSurface'
-import { popoverRowWithBorderStyles } from '~/ui/Popover'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
@@ -30,6 +28,8 @@ const compareTypes: Array<CompareType> = [
 	{ label: 'Revenue', value: 'revenue' },
 	{ label: 'Fees', value: 'fees' }
 ]
+
+const compareTypeOptions = compareTypes.map((type) => ({ key: type.value, name: type.label }))
 
 export function CompareTokens({
 	coinsData,
@@ -111,7 +111,7 @@ export function CompareTokens({
 						) : (
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						)}
-						<input
+						<Input
 							value={selectedCoins[0]?.name ?? ''}
 							onClick={() => {
 								setIsModalOpen(1)
@@ -119,7 +119,7 @@ export function CompareTokens({
 							}}
 							readOnly
 							placeholder="Search coins..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</div>
 					<button
@@ -149,7 +149,7 @@ export function CompareTokens({
 						) : (
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						)}
-						<input
+						<Input
 							value={selectedCoins[1]?.name ?? ''}
 							onClick={() => {
 								setIsModalOpen(2)
@@ -157,29 +157,21 @@ export function CompareTokens({
 							}}
 							readOnly
 							placeholder="Search coins..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</div>
 				</div>
-				<Ariakit.MenuProvider>
-					<Ariakit.MenuButton className={`${buttonStyles({ size: 'md' })} w-full justify-between`}>
-						<span>{compareType.label}</span>
-						<Ariakit.MenuButtonArrow />
-					</Ariakit.MenuButton>
-					<MenuSurface variant="actions" sameWidth>
-						{compareTypes.map((item) => (
-							<Ariakit.MenuItem
-								key={item.value}
-								onClick={() => {
-									void pushShallowQuery(router, { type: item.value })
-								}}
-								className={popoverRowWithBorderStyles}
-							>
-								{item.label}
-							</Ariakit.MenuItem>
-						))}
-					</MenuSurface>
-				</Ariakit.MenuProvider>
+				<Select
+					allValues={compareTypeOptions}
+					selectedValues={compareType.value}
+					setSelectedValues={(type) => void pushShallowQuery(router, { type })}
+					label={compareType.label}
+					labelType="none"
+					variant="filter"
+					size="md"
+					className="w-full"
+					triggerProps={{ 'aria-label': 'Compare by' }}
+				/>
 				{coins.length === 2 ? (
 					priceData == null ? (
 						<SurfaceBodyLoadingStatus label="Loading token comparison" />

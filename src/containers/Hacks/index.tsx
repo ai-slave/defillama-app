@@ -16,7 +16,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -78,12 +78,12 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						ref={searchInputRef}
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 

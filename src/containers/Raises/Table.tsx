@@ -16,7 +16,7 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -204,11 +204,11 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 				<ExternalLinkButton href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093">

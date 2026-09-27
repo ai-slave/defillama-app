@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router'
-import { Button } from '~/ui/Button'
-import { nestedMenuActionStyles } from '~/ui/Popover'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { Tooltip } from '~/ui/Tooltip'
 import { YIELDS_TABLE_PREFS } from '../stickyQueryPrefs'
 
@@ -34,23 +33,15 @@ export function ResetAllYieldFilters({
 		break
 	}
 
-	const button = nestedMenu ? (
-		<button type="button" onClick={handleClick} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
-			{label}
-		</button>
-	) : (
-		<Button type="button" variant="secondary" size="md" onClick={handleClick} disabled={!hasActiveFilters}>
-			{label}
-		</Button>
-	)
-
 	return (
 		<Tooltip
 			content="Clear filters while keeping your APY window, reward/intrinsic settings, and rows per page."
 			className={nestedMenu ? 'w-full' : undefined}
 			tabIndex={hasActiveFilters ? undefined : 0}
 		>
-			{button}
+			<ResetFiltersButton nestedMenu={nestedMenu} onClick={handleClick} disabled={!hasActiveFilters}>
+				{label}
+			</ResetFiltersButton>
 		</Tooltip>
 	)
 }

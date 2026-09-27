@@ -10,7 +10,7 @@ import { VirtualTable } from '~/components/Table/VirtualTable'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -59,11 +59,11 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />

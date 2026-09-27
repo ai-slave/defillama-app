@@ -5,8 +5,7 @@ import toast from 'react-hot-toast'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { popoverMenuItemStyles } from '~/ui/Popover'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
@@ -55,7 +54,7 @@ export function ChartPngExportButton({
 	iconOnly = false
 }: ChartPngExportButtonProps) {
 	const router = useRouter()
-	const popover = Ariakit.usePopoverStore({ placement: 'bottom-end' })
+	const menu = Ariakit.useMenuStore({ placement: 'bottom-end' })
 	const {
 		isExporting: isLoading,
 		downloadImage,
@@ -63,24 +62,22 @@ export function ChartPngExportButton({
 	} = useChartPngExport({ chartInstance, title, filename, iconUrl, expandLegend, pngProfile, onExport })
 	const handleDownload = () => {
 		if (disabled || isLoading) return
-		popover.hide()
 		downloadImage()
 	}
 	const handleCopyToClipboard = () => {
 		if (disabled || isLoading) return
-		popover.hide()
 		copyImage()
 	}
 
 	const exportLabel = csvMenuItem ? 'Export chart' : 'Export chart as image'
 
 	return (
-		<Ariakit.PopoverProvider store={popover}>
+		<Ariakit.MenuProvider store={menu}>
 			<Tooltip
 				content={exportLabel}
 				render={
-					<Ariakit.PopoverDisclosure
-						store={popover}
+					<Ariakit.MenuButton
+						store={menu}
 						data-loading={isLoading}
 						disabled={disabled || isLoading}
 						aria-label={iconOnly ? exportLabel : undefined}
@@ -92,14 +89,12 @@ export function ChartPngExportButton({
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Tooltip>
 
-			<PopoverSurface variant="actions" gutter={8} className="z-50">
+			<MenuSurface variant="actions" gutter={8} className="z-50">
 				{csvMenuItem ? (
-					<button
+					<MenuItem
 						data-umami-event="export-csv"
 						disabled={disabled || isLoading}
 						data-umami-event-page={router.pathname}
-						type="button"
-						className={popoverMenuItemStyles}
 						onClick={() => {
 							try {
 								const { filename: csvFilename, rows } = csvMenuItem.prepareCsv()
@@ -107,36 +102,31 @@ export function ChartPngExportButton({
 							} catch {
 								toast.error('Failed to export CSV')
 							}
-							popover.hide()
 						}}
 					>
 						<Icon name="download-paper" height={14} width={14} />
 						<span>Download CSV</span>
-					</button>
+					</MenuItem>
 				) : null}
-				<button
+				<MenuItem
 					data-umami-event="export-image"
 					disabled={disabled || isLoading}
 					data-umami-event-page={router.pathname}
-					type="button"
-					className={popoverMenuItemStyles}
-					onClick={() => void handleDownload()}
+					onClick={handleDownload}
 				>
 					<Icon name="download-paper" height={14} width={14} />
 					<span>Download image</span>
-				</button>
-				<button
+				</MenuItem>
+				<MenuItem
 					data-umami-event="copy-image"
 					disabled={disabled || isLoading}
 					data-umami-event-page={router.pathname}
-					type="button"
-					className={popoverMenuItemStyles}
-					onClick={() => void handleCopyToClipboard()}
+					onClick={handleCopyToClipboard}
 				>
 					<Icon name="copy" height={14} width={14} />
 					<span>Copy to clipboard</span>
-				</button>
-			</PopoverSurface>
-		</Ariakit.PopoverProvider>
+				</MenuItem>
+			</MenuSurface>
+		</Ariakit.MenuProvider>
 	)
 }

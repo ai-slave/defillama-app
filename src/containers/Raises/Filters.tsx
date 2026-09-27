@@ -1,13 +1,12 @@
 import type * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { RaisesSearch } from '~/containers/Raises/Search'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -120,15 +119,9 @@ function Filters({
 
 			<RaisedRange nestedMenu={nestedMenu} placement="bottom-start" />
 
-			{nestedMenu ? (
-				<button type="button" onClick={resetFilters} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
-					Reset all filters
-				</button>
-			) : (
-				<Button type="button" size="md" onClick={resetFilters} disabled={!hasActiveFilters}>
-					Reset all filters
-				</Button>
-			)}
+			<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
+				Reset all filters
+			</ResetFiltersButton>
 		</>
 	)
 }

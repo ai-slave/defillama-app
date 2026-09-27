@@ -242,9 +242,10 @@ export function CustomColumnModal({
 										<span>{displayedError}</span>
 									</div>
 								) : null}
-								<input
+								<Input
 									ref={inputRef}
-									className={`${inputStyles} w-full ${displayedError ? 'border-error focus:border-error' : ''}`}
+									aria-invalid={displayedError ? true : undefined}
+									className="w-full"
 									value={state.formula}
 									onChange={handleFormulaChange}
 									onKeyDown={handleKeyDown}

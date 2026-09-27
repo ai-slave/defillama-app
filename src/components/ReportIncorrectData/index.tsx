@@ -5,7 +5,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { inputStyles, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
@@ -176,7 +176,7 @@ export function ReportIncorrectData({
 								readOnly={status === 'pending'}
 								name="message"
 								required
-								className={`${inputStyles} min-h-24 resize-y read-only:opacity-50`}
+								className={`${textareaStyles} min-h-24 resize-y read-only:opacity-50`}
 							/>
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
@@ -184,7 +184,7 @@ export function ReportIncorrectData({
 							<textarea
 								readOnly={status === 'pending'}
 								name="correctSource"
-								className={`${inputStyles} min-h-24 resize-y read-only:opacity-50`}
+								className={`${textareaStyles} min-h-24 resize-y read-only:opacity-50`}
 							/>
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">

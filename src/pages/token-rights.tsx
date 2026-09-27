@@ -14,7 +14,7 @@ import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -487,12 +487,12 @@ function TokenRightsPage({
 						<label className={searchFieldWrapperStyles}>
 							<span className="sr-only">Search protocol</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-							<input
+							<Input
 								onInput={(event) => {
 									setSearchValue(event.currentTarget.value)
 								}}
 								placeholder="Search protocol..."
-								className={searchFieldInputStyles}
+								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
 						<ExternalLinkButton

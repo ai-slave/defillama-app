@@ -1,15 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
+import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
-import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import {
@@ -39,13 +37,7 @@ import {
 } from './filters'
 import type { EquitiesCategoricalOptions } from './types'
 
-const OPERATOR_OPTIONS: Array<{ value: EquityNumericOperator; label: string }> = [
-	{ value: '>=', label: '>=' },
-	{ value: '>', label: '>' },
-	{ value: '<=', label: '<=' },
-	{ value: '<', label: '<' },
-	{ value: 'between', label: 'between' }
-]
+const OPERATOR_OPTIONS: Array<EquityNumericOperator> = ['>=', '>', '<=', '<', 'between']
 
 const CATEGORICAL_VALUE_LABELS: Record<EquityCategoricalFilterField, string> = {
 	country: 'Countries',
@@ -87,29 +79,18 @@ function OperatorSelect({
 	onChange: (operator: EquityNumericOperator) => void
 }) {
 	return (
-		<Ariakit.ComboboxProvider
-			selectedValue={value}
-			setSelectedValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}
-		>
-			<Ariakit.ComboboxSelect className={`${selectTriggerStyles('input', 'md')} shrink-0`}>
-				<Ariakit.ComboboxSelectedValue />
-				<Ariakit.ComboboxSelectArrow />
-			</Ariakit.ComboboxSelect>
-			<ComboboxSurface variant="list" sameWidth className="z-100">
-				{OPERATOR_OPTIONS.map((operator) => (
-					<Ariakit.ComboboxItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
-						<span>{operator.label}</span>
-						<Ariakit.ComboboxItemSelected>
-							{(selected) => (
-								<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
-									<Icon name="check" className="size-3" />
-								</span>
-							)}
-						</Ariakit.ComboboxItemSelected>
-					</Ariakit.ComboboxItem>
-				))}
-			</ComboboxSurface>
-		</Ariakit.ComboboxProvider>
+		<Select
+			allValues={OPERATOR_OPTIONS}
+			selectedValues={value}
+			setSelectedValues={(nextValue) => onChange(nextValue as EquityNumericOperator)}
+			label={value}
+			labelType="none"
+			variant="input"
+			size="md"
+			className="shrink-0"
+			popoverClassName="z-100"
+			triggerProps={{ 'aria-label': 'Operator' }}
+		/>
 	)
 }
 

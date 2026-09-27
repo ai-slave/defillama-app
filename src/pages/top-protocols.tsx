@@ -27,7 +27,7 @@ import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -204,10 +204,10 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
 							placeholder="Search chains..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 

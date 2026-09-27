@@ -13,7 +13,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
@@ -132,10 +132,10 @@ export function EquitiesFilingsTable({
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search filings</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 						placeholder="Search filings"
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 				<SelectWithCombobox

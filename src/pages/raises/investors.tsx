@@ -11,7 +11,12 @@ import { getInvestorsPageData } from '~/containers/Raises/queries'
 import type { IInvestorsPageData, IInvestorTimespan } from '~/containers/Raises/types'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -185,11 +190,11 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search investors...</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							name="search"
 							onInput={(e) => setInvestorName(e.currentTarget.value)}
 							placeholder="Search investors..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					<SegmentedControl

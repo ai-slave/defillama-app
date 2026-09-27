@@ -36,6 +36,8 @@ interface ISelectBase {
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
 	placement?: Ariakit.ComboboxProviderProps['placement']
+	/** Layout only, e.g. `z-100` above an open dialog. */
+	popoverClassName?: string
 }
 
 interface ISelectWithUrlParams extends ISelectBase {
@@ -80,7 +82,8 @@ export function Select(props: ISelect) {
 		size,
 		className,
 		triggerProps,
-		placement = 'bottom-start'
+		placement = 'bottom-start',
+		popoverClassName
 	} = props
 	const router = useRouter()
 	const { includeQueryKey, excludeQueryKey } = isUrlSelect(props) ? props : {}
@@ -283,7 +286,7 @@ export function Select(props: ISelect) {
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface hideOnInteractOutside ref={selectRef}>
+			<ComboboxSurface hideOnInteractOutside className={popoverClassName} ref={selectRef}>
 				{allValues.length > 0 ? (
 					<>
 						{showCheckboxes ? (

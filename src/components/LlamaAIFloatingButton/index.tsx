@@ -9,7 +9,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { textareaStyles } from '~/ui/Input'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -283,7 +283,7 @@ export function LlamaAIFloatingButton() {
 									onChange={(e) => setValue(e.target.value)}
 									onKeyDown={handleKeyDown}
 									placeholder="Ask LlamaAI about TVL, fees, revenue, protocols..."
-									className={`${inputStyles} min-h-[100px] w-full resize-none pr-12`}
+									className={`${textareaStyles} min-h-[100px] w-full resize-none pr-12`}
 									rows={4}
 								/>
 								<Button

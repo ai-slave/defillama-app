@@ -1,6 +1,7 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { ExchangeProfileModel } from './models'
 import { activePromotions, promotionLinks } from './promotions'
@@ -28,7 +29,7 @@ export function ProfilePromotions({
 						<div className="min-w-0 flex-1">
 							<div className="flex flex-wrap items-center gap-2">
 								<h2 className="label-md">{promotion.title}</h2>
-								<span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm">{promotion.label}</span>
+								<Tag>{promotion.label}</Tag>
 								{promotion.endsAt ? <span className="body-sm text-tertiary">Ends {promotion.endsAt}</span> : null}
 							</div>
 							{promotion.subtitle ? <p className="body-sm text-secondary">{promotion.subtitle}</p> : null}

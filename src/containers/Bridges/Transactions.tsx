@@ -22,7 +22,12 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { inputStyles, searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -591,19 +596,19 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				</label>
 				<label className="flex flex-col gap-1.5">
 					<span className="label-sm text-secondary uppercase">Start Date</span>
-					<input
+					<Input
 						type="date"
 						name="startDate"
 						value={startDate}
 						onChange={(e) => handleStartDateChange(e.target.value)}
 						max={maxDate}
 						required
-						className={`${inputStyles} cursor-pointer dark:scheme-dark`}
+						className="cursor-pointer dark:scheme-dark"
 					/>
 				</label>
 				<label className="flex flex-col gap-1.5">
 					<span className="label-sm text-secondary uppercase">End Date</span>
-					<input
+					<Input
 						type="date"
 						name="endDate"
 						value={endDate}
@@ -611,7 +616,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 						min={startDate}
 						max={maxDate}
 						required
-						className={`${inputStyles} cursor-pointer dark:scheme-dark`}
+						className="cursor-pointer dark:scheme-dark"
 					/>
 				</label>
 				<Button type="submit" variant="primary" size="md" disabled={isPending || !selectedBridge}>
@@ -833,11 +838,11 @@ function TransactionsTable({
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search transactions</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							value={globalFilter}
 							onChange={(e) => setGlobalFilter(e.target.value)}
 							placeholder="Search hash, address, token, chain…"
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					<span className="body-sm whitespace-nowrap text-secondary">

@@ -1,6 +1,7 @@
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tag } from '~/ui/Tag'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import type { ExchangeProfileModel } from './models'
@@ -18,7 +19,7 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 				alt={`${profile.name} logo`}
 			/>
 			<span>{profile.name}</span>
-			<span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{profile.kind}</span>
+			<Tag>{profile.kind.toUpperCase()}</Tag>
 			<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 				{venueDestination ? (
 					<Tooltip

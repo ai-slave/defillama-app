@@ -23,7 +23,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -139,10 +139,10 @@ export function ChainsByCategoryTable({
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search chains</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 

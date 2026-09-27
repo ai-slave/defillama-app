@@ -16,7 +16,12 @@ import { getCliffEmissionAmount } from '~/containers/Unlocks/eventAmount'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -149,11 +154,11 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search events...</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							name="search"
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search events..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					{typeOptions.length > 1 ? (

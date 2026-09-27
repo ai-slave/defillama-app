@@ -28,7 +28,12 @@ import type { TablePageRequestResult } from '~/hooks/useTablePages'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { popoverFooterActionStyles } from '~/ui/Popover'
@@ -539,7 +544,7 @@ function ChainProtocolsTableInner({
 			<label className={searchFieldInlineWrapperStyles}>
 				<span className="sr-only">Search protocols by name</span>
 				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-				<input
+				<Input
 					type="search"
 					value={nameSearch}
 					onChange={(event) => {
@@ -548,7 +553,7 @@ function ChainProtocolsTableInner({
 					}}
 					placeholder="Search protocols..."
 					autoComplete="off"
-					className={searchFieldInputStyles}
+					className={searchFieldInputPlacementStyles}
 				/>
 			</label>
 			<TagGroup

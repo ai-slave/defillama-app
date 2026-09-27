@@ -10,7 +10,7 @@ import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { StaleText } from '~/ui/StaleText'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -224,13 +224,13 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search companies, IDs, or sectors</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							onInput={(event) => {
 								setSearchValue(event.currentTarget.value)
 								resetPage()
 							}}
 							placeholder="Search companies..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					<TableToolbarControlGroup>

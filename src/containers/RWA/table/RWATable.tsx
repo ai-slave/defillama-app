@@ -4,7 +4,12 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import type { RWAOverviewDisplayRow } from '../api.types'
@@ -101,10 +106,10 @@ function RWATableView({
 						<label className={searchFieldInlineWrapperStyles}>
 							<span className="sr-only">Search assets</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-							<input
+							<Input
 								onInput={(event) => setSearchValue(event.currentTarget.value)}
 								placeholder="Search assets..."
-								className={searchFieldInputStyles}
+								className={searchFieldInputPlacementStyles}
 							/>
 						</label>
 						{view === 'assets' ? <RWATablePeriodSwitch value={period} onChange={onPeriodChange} /> : null}

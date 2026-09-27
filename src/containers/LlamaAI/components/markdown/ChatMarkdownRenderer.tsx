@@ -11,7 +11,6 @@ import {
 	useSyncExternalStore
 } from 'react'
 import type { Components } from 'react-markdown'
-import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
 import { EntityPreviewLink } from '~/containers/Articles/renderer/EntityPreviewLink'
 import type { ArticleEntityType } from '~/containers/Articles/types'
@@ -36,7 +35,6 @@ import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
 import { Button, buttonStyles } from '~/ui/Button'
 import { DialogCloseButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
@@ -225,13 +223,7 @@ function TableWrapper({
 					disabled={isStreaming}
 					buttonClassName={TABLE_TOOLBAR_BUTTON}
 					triggerLabel="Export"
-					csvSlot={
-						isStreaming ? null : (
-							<CSVDownloadButton prepareCsv={prepareCsv} replaceClassName className={popoverMenuItemStyles}>
-								<span>Download CSV</span>
-							</CSVDownloadButton>
-						)
-					}
+					prepareCsv={isStreaming ? undefined : prepareCsv}
 				/>
 			</div>
 			<div ref={tableRef} className="relative overflow-x-auto">

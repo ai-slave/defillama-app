@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { Input, inputStyles } from '~/ui/Input'
+import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
 
@@ -57,11 +57,11 @@ function ReportError() {
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>What's wrong about it?</span>
-						<textarea name="message" required className={`${inputStyles} min-h-24 w-full`} />
+						<textarea name="message" required className={`${textareaStyles} min-h-24 w-full`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>Where can we find correct information? (optional)</span>
-						<textarea name="correctSource" className={`${inputStyles} min-h-24 w-full`} />
+						<textarea name="correctSource" className={`${textareaStyles} min-h-24 w-full`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>How can we contact you? (optional)</span>

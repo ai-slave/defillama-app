@@ -16,7 +16,12 @@ import { TokenLogo } from '~/components/TokenLogo'
 import type { useGroupBridgeData } from '~/containers/Stablecoins/hooks'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -210,10 +215,10 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 				<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 					<span className="sr-only">Search</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 			</TableToolbar>

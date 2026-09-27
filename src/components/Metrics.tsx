@@ -11,7 +11,7 @@ import trendingPages from '~/public/trending.json'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogCanvasSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { searchFieldInputStyles } from '~/ui/Input'
+import { Input, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -165,12 +165,12 @@ export function Metrics({
 				<label className="relative">
 					<span className="sr-only">Search pages</span>
 					<Icon name="search" height={16} width={16} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
-					<input
+					<Input
 						ref={metricsInputRef}
 						type="text"
 						inputMode="search"
 						placeholder="Search..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 					/>
 				</label>

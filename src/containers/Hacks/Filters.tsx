@@ -1,11 +1,10 @@
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -190,24 +189,20 @@ function Filters({
 				excludeQueryKey="excludeTech"
 			/>
 
-			<div className="px-3 py-2 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
+			<div className="flex flex-col gap-2 px-4 py-2.5 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
+				{isMobile ? <span className="body-sm text-primary">Time</span> : null}
 				<TagGroup
-					variant="default"
+					variant="responsive"
 					size="md"
 					setValue={setSelectedTime}
 					selectedValue={selectedTimeLabel}
 					values={timeOptions}
+					ariaLabel="Time period"
 				/>
 			</div>
-			{isMobile ? (
-				<button type="button" onClick={onClearAll} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
-					Reset filters
-				</button>
-			) : (
-				<Button type="button" size="md" onClick={onClearAll} disabled={!hasActiveFilters}>
-					Reset filters
-				</Button>
-			)}
+			<ResetFiltersButton nestedMenu={isMobile} onClick={onClearAll} disabled={!hasActiveFilters}>
+				Reset filters
+			</ResetFiltersButton>
 		</>
 	)
 }

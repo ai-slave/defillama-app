@@ -1,15 +1,14 @@
 import type { SortingState } from '@tanstack/react-table'
 import * as React from 'react'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import type { FormSubmitEvent } from '~/types/forms'
-import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -370,15 +369,9 @@ export function TokenBorrowSection({
 												setMaxAvailable={setMaxAvailable}
 												nestedMenu={nestedMenu}
 											/>
-											{hasActiveFilters && nestedMenu ? (
-												<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
-													Reset filters
-												</button>
-											) : hasActiveFilters ? (
-												<Button type="button" size="md" onClick={resetFilters}>
-													Reset filters
-												</Button>
-											) : null}
+											<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveFilters}>
+												Reset filters
+											</ResetFiltersButton>
 										</>
 									)}
 								</ResponsiveFilterLayout>

@@ -1,13 +1,12 @@
 import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
+import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { nestedMenuActionStyles } from '~/ui/Popover'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { CARDS_QUERY_KEYS } from './CardsTable'
 import {
@@ -138,14 +137,10 @@ function ResetAllCardsFilters({ nestedMenu }: { nestedMenu: boolean }) {
 		void router.push('/crypto-cards', undefined, { shallow: true })
 	}
 
-	return nestedMenu ? (
-		<button type="button" onClick={resetFilters} disabled={!hasActiveQueryFilters} className={nestedMenuActionStyles}>
+	return (
+		<ResetFiltersButton nestedMenu={nestedMenu} onClick={resetFilters} disabled={!hasActiveQueryFilters}>
 			Reset all filters
-		</button>
-	) : (
-		<Button type="button" size="md" onClick={resetFilters} disabled={!hasActiveQueryFilters}>
-			Reset all filters
-		</Button>
+		</ResetFiltersButton>
 	)
 }
 

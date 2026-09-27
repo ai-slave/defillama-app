@@ -21,7 +21,7 @@ import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
@@ -626,13 +626,13 @@ function TokensSharedControls({
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						ref={searchInputRef}
 						name="search"
 						defaultValue={search}
 						onInput={handleSearchInput}
 						placeholder="Search tokens..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 			</form>

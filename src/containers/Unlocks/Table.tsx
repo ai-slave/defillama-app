@@ -26,7 +26,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -315,11 +315,11 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
+					<Input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className={searchFieldInputStyles}
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 

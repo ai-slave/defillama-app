@@ -19,7 +19,12 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	Input,
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { getABGroupFromCookie } from '~/utils/abTesting'
@@ -140,12 +145,12 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search protocols or programs</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
+						<Input
 							type="search"
 							value={search}
 							onChange={(event) => setSearch(event.currentTarget.value)}
 							placeholder="Search protocols or programs..."
-							className={searchFieldInputStyles}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</label>
 					{/* filter, not inline: it sits between the search field and Reset, so it
