@@ -2,7 +2,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { oldBlue } from '~/constants/colors'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 
 function PressPanel({ imageFilename }) {
 	return (
@@ -50,7 +50,7 @@ function PressPage() {
 			description="DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB."
 			canonicalUrl="/press"
 		>
-			<PageTitleStrip title="Press & Media" />
+			<EntityTitleStrip title="Press & Media" />
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About DefiLlama</h2>

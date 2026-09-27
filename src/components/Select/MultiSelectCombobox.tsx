@@ -6,7 +6,7 @@ import { inputStyles } from '~/ui/Input'
 import {
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
-	popoverSearchBlockWithBottomPaddingStyles,
+	popoverSearchBlockStyles,
 	popoverSeeMoreStyles
 } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
@@ -120,7 +120,7 @@ export function MultiSelectCombobox({
 				)}
 			</span>
 			<ComboboxSurface preventBodyScroll sameWidth>
-				<span className={popoverSearchBlockWithBottomPaddingStyles}>
+				<span className={popoverSearchBlockStyles}>
 					<input
 						placeholder="Search..."
 						className={`${inputStyles} w-full`}

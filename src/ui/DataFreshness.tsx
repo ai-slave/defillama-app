@@ -3,11 +3,11 @@ import { RelativeTime } from '~/ui/RelativeTime'
 
 export function DataFreshness({
 	timestamp,
-	label = 'Data last updated',
+	label,
 	className
 }: {
 	timestamp: number
-	label?: string
+	label: string
 	className?: string
 }) {
 	return (

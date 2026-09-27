@@ -454,7 +454,7 @@ export function PoolApyChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol="%"
-							containerClassName={CHART_FILL.default}
+							containerClassName={CHART_FILL}
 							hideDefaultLegend
 							exportButtons="hidden"
 							onReady={(inst) => {

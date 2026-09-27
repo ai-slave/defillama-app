@@ -6,28 +6,20 @@ type RelativeTimeProps = {
 	input?: TimestampInput
 	prefix?: string
 	fallback?: string
-	refreshIntervalMs?: number
 	className?: string
 }
 
 /** Hydration-safe freshness label with a ticking relative value and an exact timestamp tooltip. */
-export function RelativeTime({
-	value,
-	input,
-	prefix,
-	fallback = '-',
-	refreshIntervalMs = 60_000,
-	className
-}: RelativeTimeProps) {
+export function RelativeTime({ value, input, prefix, fallback = '-', className }: RelativeTimeProps) {
 	const [now, setNow] = useState<Date | null>(null)
 
 	useEffect(() => {
 		// The clock starts on the client only: rendering a time during SSR would not match hydration.
 		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setNow(new Date())
-		const timer = window.setInterval(() => setNow(new Date()), refreshIntervalMs)
+		const timer = window.setInterval(() => setNow(new Date()), 60_000)
 		return () => window.clearInterval(timer)
-	}, [refreshIntervalMs])
+	}, [])
 
 	const exact =
 		typeof value === 'number'

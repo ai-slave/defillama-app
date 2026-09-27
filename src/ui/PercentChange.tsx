@@ -55,34 +55,3 @@ export function PercentChange({ percent, noSign, fontWeight }: PercentChangeProp
 		<span className={colorClass}>{display.finalValue}</span>
 	)
 }
-
-export function renderPercentChange(
-	percent: unknown,
-	noSign: boolean | undefined,
-	fontWeight: number | undefined,
-	returnTextOnly: true
-): string | null
-export function renderPercentChange(
-	percent: unknown,
-	noSign?: boolean,
-	fontWeight?: number,
-	returnTextOnly?: false
-): React.JSX.Element | null
-export function renderPercentChange(
-	percent: unknown,
-	noSign?: boolean,
-	fontWeight?: number,
-	returnTextOnly?: boolean
-): string | null | React.JSX.Element
-export function renderPercentChange(
-	percent: unknown,
-	noSign?: boolean,
-	fontWeight?: number,
-	returnTextOnly?: boolean
-): string | null | React.JSX.Element {
-	if (returnTextOnly) {
-		return formatPercentChangeText(percent, noSign)
-	}
-
-	return <PercentChange percent={percent} noSign={noSign} fontWeight={fontWeight} />
-}

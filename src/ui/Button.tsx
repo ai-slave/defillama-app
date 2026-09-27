@@ -8,7 +8,6 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    - primary:   bg-brand + text-on-brand (one per view: Done, Sign-in, …)
    - outline:   border-brand + text-link ("active = branded" toggles/chips)
    - destructive: outlined data-down treatment for irreversible actions
-   - warning:   warning-tinted outline (light keeps text-primary; the light warning ink is brown)
    - filter:    rounded-full brand-border filter pill (metrics directory)
    - toggle:    filled toolbar filter with a brand-tinted active state
    - metricBrowse: dashed 6px-radius selected pill in the home metrics browse bar
@@ -32,7 +31,6 @@ type ButtonVariant =
 	| 'primary'
 	| 'outline'
 	| 'destructive'
-	| 'warning'
 	| 'ghost'
 	| 'filter'
 	| 'toggle'
@@ -47,8 +45,6 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	outline: 'border border-brand text-link not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
 	destructive:
 		'border border-data-down text-data-down not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row',
-	warning:
-		'hover-wash border border-warning/60 bg-warning/6 text-primary dark:border-warning dark:bg-warning/10 dark:text-warning',
 	ghost:
 		'hover-wash border border-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint text-secondary not-disabled:not-aria-disabled:hover:text-primary focus-visible:text-primary',
 	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',

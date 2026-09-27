@@ -56,21 +56,12 @@ interface StatItemProps {
 	labelAs?: 'span' | 'h1' | 'h2'
 	className?: string
 	/** Layout-only additions; the type comes from the recipe. */
-	valueClassName?: string
 	/** Single-line value that ellipsizes instead of wrapping (reserves control height). */
 	truncate?: boolean
 }
 
 /** Headline stat: text-secondary label over a font-jetbrains text-2xl font-semibold value. */
-export function StatItem({
-	label,
-	value,
-	tooltip,
-	labelAs = 'span',
-	className,
-	valueClassName,
-	truncate
-}: StatItemProps) {
+export function StatItem({ label, value, tooltip, labelAs = 'span', className, truncate }: StatItemProps) {
 	const Container = labelAs === 'span' ? 'p' : 'div'
 	const Label = labelAs
 
@@ -83,13 +74,7 @@ export function StatItem({
 			) : (
 				<Label className="text-secondary">{label}</Label>
 			)}
-			<span
-				className={`font-jetbrains text-2xl font-semibold ${truncate ? 'min-h-8 truncate' : ''} ${valueClassName ?? ''}`
-					.replace(/\s+/g, ' ')
-					.trim()}
-			>
-				{value}
-			</span>
+			<span className={`font-jetbrains text-2xl font-semibold${truncate ? ' min-h-8 truncate' : ''}`}>{value}</span>
 		</Container>
 	)
 }
@@ -143,21 +128,9 @@ export interface InlineStatStripItem {
     everywhere — strip padding, 14px pairs (body-md secondary labels, label-md
     values), 24px item gaps. `stacked` puts each label over its value for
     dense one-row headers. */
-export function InlineStatStrip({
-	items,
-	stacked,
-	className
-}: {
-	items: Array<InlineStatStripItem>
-	stacked?: boolean
-	className?: string
-}) {
+export function InlineStatStrip({ items, stacked }: { items: Array<InlineStatStripItem>; stacked?: boolean }) {
 	return (
-		<Card
-			as="dl"
-			padding="strip"
-			className={`flex w-full flex-wrap items-center gap-x-6 gap-y-2 ${className ?? ''}`.trim()}
-		>
+		<Card as="dl" padding="strip" className="flex w-full flex-wrap items-center gap-x-6 gap-y-2">
 			{items.map((item) => (
 				<div key={item.label} className={stacked ? 'flex flex-col' : 'flex items-baseline gap-1.5'}>
 					<dt className={item.labelHidden ? 'sr-only' : 'body-md text-secondary'}>

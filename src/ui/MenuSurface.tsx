@@ -44,12 +44,11 @@ export function MenuSurface({
 	)
 }
 
-type MenuItemRow = 'menu' | 'tree' | 'none'
+type MenuItemRow = 'menu' | 'tree'
 
 const ROW_STYLES: Record<MenuItemRow, string> = {
 	menu: popoverMenuItemStyles,
-	tree: popoverTreeRowStyles,
-	none: ''
+	tree: popoverTreeRowStyles
 }
 
 type MenuItemProps = Ariakit.MenuItemProps & { row?: MenuItemRow }
@@ -57,8 +56,4 @@ type MenuItemProps = Ariakit.MenuItemProps & { row?: MenuItemRow }
 export function MenuItem({ row = 'menu', className, ...props }: MenuItemProps) {
 	const recipe = ROW_STYLES[row]
 	return <Ariakit.MenuItem {...props} className={className ? `${recipe} ${className}`.trim() : recipe} />
-}
-
-export function MenuSeparator(props: Omit<Ariakit.MenuSeparatorProps, 'className'>) {
-	return <Ariakit.MenuSeparator {...props} className="border-t border-subtle" />
 }

@@ -54,7 +54,7 @@ export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.co
 export const chartSegmentedControlButtonStyles = TAG_GROUP_VARIANTS.default.button
 
 export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
-export type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
+type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
 
 export type SegmentedControlOption<T extends string> = {
 	value: T

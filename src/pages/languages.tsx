@@ -12,7 +12,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -111,7 +111,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceCharts, osDa
 			canonicalUrl="/languages"
 			pageName={pageName}
 		>
-			<PageTitleStrip title="Breakdown by Smart Contract Languages" />
+			<EntityTitleStrip title="Breakdown by Smart Contract Languages" />
 
 			<LanguageSeriesChart dataset={tvlDataset} charts={tvlCharts} title="TVL" label="Language" stacked />
 			<LanguageSeriesChart

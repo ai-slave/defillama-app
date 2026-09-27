@@ -652,7 +652,7 @@ export function PoolLiquidityChart({
 							charts={charts}
 							chartOptions={chartOptions}
 							valueSymbol={unit === 'usd' ? '$' : ''}
-							containerClassName={CHART_FILL.default}
+							containerClassName={CHART_FILL}
 							stacked
 							stateTimeline={timeline}
 							hideDefaultLegend

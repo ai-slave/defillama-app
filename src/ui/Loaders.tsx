@@ -8,7 +8,7 @@ export function LoadingDots() {
 	)
 }
 
-export function LoadingSpinner({ size = 14 }: { size: number }) {
+export function LoadingSpinner({ size }: { size: number }) {
 	return (
 		<span className="animate-spin">
 			<svg

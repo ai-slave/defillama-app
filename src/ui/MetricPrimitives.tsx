@@ -80,23 +80,12 @@ interface MetricSectionProps {
 	extra?: ReactNode
 	children?: ReactNode
 	defaultOpen?: boolean
-	className?: string
-	valueClassName?: string
 }
 
 const metricSummaryStyles =
 	'flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold'
 
-export function MetricSection({
-	label,
-	tooltip,
-	value,
-	extra,
-	children,
-	defaultOpen = false,
-	className = '',
-	valueClassName = 'mono-md-bold ml-auto'
-}: MetricSectionProps) {
+export function MetricSection({ label, tooltip, value, extra, children, defaultOpen = false }: MetricSectionProps) {
 	const summaryContent = (
 		<>
 			<span
@@ -113,7 +102,7 @@ export function MetricSection({
 			/>
 			{extra}
 			{value != null ? (
-				<span className={valueClassName} data-metric-value>
+				<span className="ml-auto mono-md-bold" data-metric-value>
 					{value}
 				</span>
 			) : null}
@@ -121,7 +110,7 @@ export function MetricSection({
 	)
 
 	return (
-		<details className={`group/metric ${className}`.trim()} open={defaultOpen}>
+		<details className="group/metric" open={defaultOpen}>
 			{tooltip ? (
 				/* A <summary> must not contain interactive descendants, so the
 				   summary itself is the tooltip anchor — hover or focus on the
@@ -145,16 +134,14 @@ export function MetricSection({
 export function SubMetricSection({
 	label,
 	value,
-	children,
-	defaultOpen = false
+	children
 }: {
 	label: ReactNode
 	value?: ReactNode
 	children?: ReactNode
-	defaultOpen?: boolean
 }) {
 	return (
-		<details className="group/sub" open={defaultOpen}>
+		<details className="group/sub">
 			<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
 				<span className="body-md text-secondary" data-metric-label>
 					{label}

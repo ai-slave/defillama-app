@@ -7,11 +7,7 @@ import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { NoResults } from '~/ui/NoResults'
-import {
-	popoverRowWithBorderStyles,
-	popoverSearchBlockWithBottomPaddingStyles,
-	popoverSeeMoreStyles
-} from '~/ui/Popover'
+import { popoverRowWithBorderStyles, popoverSearchBlockStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 interface IProps {
@@ -65,7 +61,7 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
 				<MenuSurface variant="panel" unmountOnHide={false} gutter={6}>
-					<span className={popoverSearchBlockWithBottomPaddingStyles}>
+					<span className={popoverSearchBlockStyles}>
 						<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />
 					</span>
 					{matches.length > 0 ? (

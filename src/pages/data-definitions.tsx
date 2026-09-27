@@ -1,7 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
 
 function Definition({ header, id, children }: { header: string; id: string; children: React.ReactNode }) {
@@ -30,7 +30,7 @@ export default function DataDefinitions() {
 			description="Glossary of DeFi metrics including TVL, Fees, Revenue, FDV, DEX Volume, Holders Revenue, App Fees, and REV."
 			canonicalUrl="/data-definitions"
 		>
-			<PageTitleStrip title="Data Definitions" />
+			<EntityTitleStrip title="Data Definitions" />
 
 			<Definition header="TVL" id="tvl">
 				<p>For protocols: Value of all coins held in smart contracts of the protocol</p>

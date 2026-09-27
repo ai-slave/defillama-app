@@ -1,6 +1,6 @@
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 
 function PluginPage() {
 	return (
@@ -9,7 +9,7 @@ function PluginPage() {
 			description="Access DefiLlama DeFi data through the ChatGPT plugin. Query TVL, protocol stats, chain data, and more using natural language."
 			canonicalUrl="/chatgptplugin"
 		>
-			<PageTitleStrip title="DefiLlama ChatGPT Plugin" />
+			<EntityTitleStrip title="DefiLlama ChatGPT Plugin" />
 
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About</h2>

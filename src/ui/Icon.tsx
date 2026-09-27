@@ -9,7 +9,6 @@ const ICON_NAMES = [
 	'chevron-down',
 	'chevron-left',
 	'chevron-right',
-	'chevrons-up',
 	'external-link',
 	'clock',
 	'folder',
@@ -85,7 +84,6 @@ const ICON_NAMES = [
 	'message-square-plus',
 	'square-pen',
 	'arrow-up',
-	'arrow-right-to-line',
 	'ellipsis',
 	'thumbs-up',
 	'thumbs-down',
@@ -137,8 +135,7 @@ const ICON_NAMES = [
 	'shield-check',
 	'grip-vertical',
 	'badge-check',
-	'lock',
-	'clock'
+	'lock'
 ] as const
 
 type Name = (typeof ICON_NAMES)[number]

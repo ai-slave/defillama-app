@@ -14,10 +14,9 @@ type PanelStatusProps = {
 	children: ReactNode
 	variant: StatusVariant
 	className?: string
-	textClassName?: string
 }
 
-export function PanelStatus({ children, variant, className, textClassName }: PanelStatusProps) {
+export function PanelStatus({ children, variant, className }: PanelStatusProps) {
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
@@ -25,7 +24,7 @@ export function PanelStatus({ children, variant, className, textClassName }: Pan
 			<p
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
-				className={`text-center body-sm ${STATUS_TEXT[variant]} ${textClassName ?? ''}`.trim()}
+				className={`text-center body-sm ${STATUS_TEXT[variant]}`}
 			>
 				{children}
 			</p>
@@ -78,22 +77,11 @@ export function SurfaceLoadingOverlay({ label }: { label: string }) {
 	)
 }
 
-type PanelLoadingStatusProps = {
-	children?: ReactNode
-	label?: string
-	className?: string
-}
-
-export function PanelLoadingStatus({ children, label = 'Loading', className }: PanelLoadingStatusProps) {
+export function PanelLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
 	return (
 		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
-			<div
-				role="status"
-				aria-live="polite"
-				aria-label={children != null ? label : undefined}
-				className="flex items-center justify-center"
-			>
-				{children ?? <LoadingIndicator label={label} />}
+			<div role="status" aria-live="polite" className="flex items-center justify-center">
+				<LoadingIndicator label={label} />
 			</div>
 		</Panel>
 	)
@@ -130,28 +118,11 @@ export function SurfaceBodyStatus({
 	)
 }
 
-type SurfaceBodyLoadingStatusProps = {
-	children?: ReactNode
-	label?: string
-	className?: string
-	contentClassName?: string
-}
-
-export function SurfaceBodyLoadingStatus({
-	children,
-	label = 'Loading',
-	className,
-	contentClassName
-}: SurfaceBodyLoadingStatusProps) {
+export function SurfaceBodyLoadingStatus({ label = 'Loading', className }: { label?: string; className?: string }) {
 	return (
 		<div className={`flex min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
-			<div
-				role="status"
-				aria-live="polite"
-				aria-label={children != null ? label : undefined}
-				className={`flex items-center justify-center ${contentClassName ?? ''}`.trim()}
-			>
-				{children ?? <LoadingIndicator label={label} />}
+			<div role="status" aria-live="polite" className="flex items-center justify-center">
+				<LoadingIndicator label={label} />
 			</div>
 		</div>
 	)

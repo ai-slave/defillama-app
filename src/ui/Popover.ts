@@ -11,8 +11,6 @@ export const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:
 
 const tooltipMotionStyles = tw`translate-y-1 opacity-0 transition-[opacity,translate] duration-120 ease-out-quart data-enter:translate-y-0 data-enter:opacity-100 data-leave:duration-100`
 
-export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-overlay-sm`
-
 export const popoverHovercardSurfaceStyles = `z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-overlay-sm ${surfaceMotionStyles}`
 
 /* Text-only tooltips: same chrome as hovercards, but radius follows the
@@ -34,8 +32,6 @@ export const popoverActionBarStyles = tw`grid w-full min-w-0 grid-cols-2 border-
 export const popoverActionButtonStyles = tw`flex min-w-0 items-center justify-center truncate px-3 py-2 text-link hover:bg-hover-row focus-visible:bg-hover-row`
 
 export const popoverSearchBlockStyles = tw`relative p-3`
-
-export const popoverSearchBlockWithBottomPaddingStyles = popoverSearchBlockStyles
 
 export const popoverFooterActionStyles = tw`flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row max-sm:min-h-11`
 

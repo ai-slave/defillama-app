@@ -4,30 +4,18 @@ import { tooltipSurfaceStyles } from '~/ui/Popover'
 interface ITooltip extends Ariakit.TooltipOptions {
 	content: string | null | React.ReactNode
 	'data-fullwidth'?: boolean
-	href?: string
-	shallow?: boolean
 	onClick?: (e: React.MouseEvent) => void
 	children: React.ReactNode
-	color?: string
-	fontSize?: string
 	className?: string
 	tabIndex?: number
 	placement?: Ariakit.TooltipProviderProps['placement']
-	portal?: boolean
 }
 
 /** Elements whose tap already does something, such as a link or button: a tap there keeps that action instead of opening the tooltip. */
 const TAP_ACTION_SELECTOR =
 	'a[href], button, summary, input, select, textarea, label, [contenteditable="true"], [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"]'
 
-export function Tooltip({
-	content,
-	children,
-	placement = 'top-start',
-	className,
-
-	...props
-}: ITooltip) {
+export function Tooltip({ content, children, placement = 'top-start', className, ...props }: ITooltip) {
 	const store = Ariakit.useTooltipStore({ placement })
 
 	if (!content || content === '') return <>{children}</>
