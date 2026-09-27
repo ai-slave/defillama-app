@@ -14,7 +14,6 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -585,11 +584,9 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 						singleSelect
 						label={selectedBridge?.displayName ?? 'Select a bridge'}
 						labelType="none"
-						variant="default"
-						size="sm"
-						triggerProps={{
-							className: `${selectTriggerStyles('filter', 'md')} w-full`
-						}}
+						variant="filter"
+						size="md"
+						className="w-full"
 					/>
 				</label>
 				<label className="flex flex-col gap-1.5">
@@ -909,7 +906,7 @@ function TransactionsTable({
 					variant="filter"
 					size="md"
 					placement="top-end"
-					triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} ml-auto` }}
+					className="ml-auto"
 				/>
 			</div>
 		</Panel>

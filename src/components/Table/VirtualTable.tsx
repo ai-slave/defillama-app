@@ -15,7 +15,6 @@ interface VirtualTableProps<F extends SortingFeatures & VisibilityFeatures, T ex
 	T
 > {
 	useStickyHeader?: boolean
-	scrollMargin?: number
 }
 const DEFAULT_VIRTUAL_ROW_SIZE = 50
 const COMPACT_VIRTUAL_ROW_SIZE = 40
@@ -30,7 +29,6 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 	stripedBg = false,
 	compact = false,
 	useStickyHeader = true,
-	scrollMargin,
 	rowRankById,
 	tableLayout = 'fixed',
 	className,
@@ -63,7 +61,7 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 		initialOffset: 0,
 		initialRect: initialVirtualizerRect,
 		overscan: 5,
-		scrollMargin: scrollMargin ?? containerOffset,
+		scrollMargin: containerOffset,
 		// Sync the virtualizer's internal scrollOffset to the real window position
 		// during effect setup, *before* its mount-time _scrollToOffset fires. Otherwise
 		// the virtualizer would scroll the window to its stale initialOffset (0) and

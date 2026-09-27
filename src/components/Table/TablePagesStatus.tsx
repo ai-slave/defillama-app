@@ -16,8 +16,7 @@ export function TablePagesStatus({
 	retry,
 	noun = 'rows',
 	replacingLabel = 'Updating…',
-	replaceFailedLabel = "Couldn't update results.",
-	appendFailedLabel
+	replaceFailedLabel = "Couldn't update results."
 }: {
 	sentinelRef: RefObject<HTMLDivElement | null>
 	error: 'replace' | 'append' | null
@@ -32,7 +31,6 @@ export function TablePagesStatus({
 	/** Pass null when an overlay owns the replacing signal; the footer then keeps showing the row count. */
 	replacingLabel?: string | null
 	replaceFailedLabel?: string
-	appendFailedLabel?: string
 }) {
 	return (
 		<div
@@ -43,7 +41,7 @@ export function TablePagesStatus({
 		>
 			{error ? (
 				<>
-					{error === 'replace' ? replaceFailedLabel : (appendFailedLabel ?? `Couldn't load more ${noun}.`)}
+					{error === 'replace' ? replaceFailedLabel : `Couldn't load more ${noun}.`}
 					<button type="button" className="ml-1 underline" onClick={() => void retry?.()}>
 						Retry
 					</button>

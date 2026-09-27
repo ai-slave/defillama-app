@@ -832,7 +832,6 @@ function EquitiesRankingsTable({
 				table={table}
 				pageSizeOptions={PAGE_SIZE_OPTIONS}
 				tableClassName="min-w-max!"
-				shell="none"
 				interactionDisabled={serverTable.rowsQuery.isFetching}
 			/>
 		</>

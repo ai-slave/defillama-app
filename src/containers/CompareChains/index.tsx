@@ -10,7 +10,6 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
-import { selectTriggerStyles } from '~/components/Select/types'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -282,9 +281,6 @@ function ChartFilters() {
 					</span>
 				</>
 			}
-			triggerProps={{
-				className: selectTriggerStyles('default', 'md')
-			}}
 			placement="bottom-end"
 		/>
 	)

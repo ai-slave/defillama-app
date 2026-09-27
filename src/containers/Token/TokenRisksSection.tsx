@@ -283,12 +283,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						bounds when a row is marked partial.
 					</p>
 					<Suspense fallback={<div className="min-h-[360px]" />}>
-						<DeferredPaginatedTable
-							table={exposureTable}
-							pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
-							className="mt-3"
-							shell="none"
-						/>
+						<DeferredPaginatedTable table={exposureTable} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} className="mt-3" />
 					</Suspense>
 				</Card>
 			</div>

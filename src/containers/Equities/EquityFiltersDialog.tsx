@@ -350,17 +350,15 @@ function CategoricalFilterEditor({
 					setSelectedValues={(next) => onUpdate({ ...filter, values: next })}
 					label={valueLabel}
 					labelType="smol"
-					variant="default"
-					size="sm"
+					variant="input"
+					size="md"
 					visibleOptionLimit={null}
 					selectAllScope="matches"
 					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}
 					emptyLabel="No matches found"
 					popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
-					triggerProps={{
-						'aria-label': `${valueLabel} values`,
-						className: `${selectTriggerStyles('input', 'md')} flex-1`
-					}}
+					className="flex-1"
+					triggerProps={{ 'aria-label': `${valueLabel} values` }}
 				/>
 			</div>
 		</Card>

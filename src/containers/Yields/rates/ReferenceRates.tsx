@@ -368,7 +368,6 @@ function RatesByProtocolPanel({
 					label="Asset"
 					labelType="regular"
 					variant="filter"
-					portal
 				/>
 			</TableToolbar>
 			<TokenPageTableScroller>

@@ -22,7 +22,6 @@ import { getQueryUpdatesFromSelected, readSelectionFromQuery } from '~/component
 import { Select } from '~/components/Select/Select'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
-import { selectTriggerStyles } from '~/components/Select/types'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
 import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
@@ -1604,17 +1603,14 @@ function RWAPerpsDraftFilterEditor({
 				}
 				label="Values"
 				labelType="smol"
-				variant="filter"
-				size="sm"
+				variant="input"
+				size="md"
 				visibleOptionLimit={null}
 				selectAllScope="matches"
 				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}
 				emptyLabel="No matches found"
 				popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
-				triggerProps={{
-					'aria-label': `${filter.label} values`,
-					className: selectTriggerStyles('input', 'md')
-				}}
+				triggerProps={{ 'aria-label': `${filter.label} values` }}
 			/>
 		</Card>
 	)

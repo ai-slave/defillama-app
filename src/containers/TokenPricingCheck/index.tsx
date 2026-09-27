@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -168,11 +167,11 @@ export function TokenPricingCheck({ chainDisplayNames }: { chainDisplayNames: Re
 									singleSelect
 									searchPlaceholder="Search chains..."
 									popoverClassName="sm:w-(--popover-anchor-width) sm:min-w-0"
+									className={`w-full justify-between ${selectedChain ? 'pl-9' : ''}`}
 									triggerProps={{
 										id: chainId,
 										'aria-label': 'Chain',
-										disabled: chainsQuery.isPending || chainsQuery.isError,
-										className: `${selectTriggerStyles('input', 'md')} w-full justify-between ${selectedChain ? 'pl-9' : ''}`
+										disabled: chainsQuery.isPending || chainsQuery.isError
 									}}
 								/>
 								{selectedChain ? (

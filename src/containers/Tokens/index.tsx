@@ -895,7 +895,6 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 									tableClassName="min-w-(--tokens-table-min-width)"
 									stickyHeader
 									interactionDisabled={serverTable.rowsQuery.isFetching}
-									shell="none"
 								/>
 							</>
 						) : (

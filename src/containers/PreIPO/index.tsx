@@ -258,7 +258,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 						/>
 					</TableToolbarControlGroup>
 				</TableToolbar>
-				<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" shell="none" />
+				<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" />
 			</Panel>
 			<StaleText as="p" className="px-1 body-sm text-tertiary">
 				{`Updated ${formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}

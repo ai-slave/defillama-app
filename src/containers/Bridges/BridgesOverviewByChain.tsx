@@ -6,7 +6,6 @@ import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -389,7 +388,7 @@ export function BridgesOverviewByChain({
 										singleSelect
 										variant="filter"
 										size="md"
-										triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} mr-auto` }}
+										className="mr-auto"
 									/>
 									{activeTokenPieSeries && activeTokenSeriesNames.length > 1 ? (
 										<SelectWithCombobox
@@ -430,7 +429,7 @@ export function BridgesOverviewByChain({
 											singleSelect
 											variant="filter"
 											size="md"
-											triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} mr-auto` }}
+											className="mr-auto"
 										/>
 									}
 									headerEnd={

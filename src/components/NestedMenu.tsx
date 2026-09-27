@@ -20,23 +20,12 @@ export function NestedMenuItem({ ref, ...props }: NestedMenuItemProps) {
 
 interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode
-	portal?: boolean
 	combobox?: Ariakit.MenuStoreProps['combobox']
 	buttonVariant?: 'default' | 'filter'
-	ref?: React.Ref<HTMLDivElement>
 }
 
-export function NestedMenu({
-	label,
-	children,
-	ref,
-	portal,
-	combobox,
-	buttonVariant = 'default',
-	...props
-}: NestedMenuProps) {
+export function NestedMenu({ label, children, combobox, buttonVariant = 'default', ...props }: NestedMenuProps) {
 	const menu = Ariakit.useMenuStore({ combobox })
-	const shouldPortalMenu = portal ?? true
 
 	const rootButtonClassName =
 		buttonVariant === 'filter' ? nestedMenuRootFilterButtonStyles : buttonStyles({ size: 'md' })
@@ -45,7 +34,6 @@ export function NestedMenu({
 	return (
 		<Ariakit.MenuProvider store={menu}>
 			<Ariakit.MenuButton
-				ref={ref}
 				{...props}
 				className={`${!menu.parent ? rootButtonClassName : nestedMenuRootRowStyles} ${props.className ?? ''}`}
 				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : undefined}
@@ -65,7 +53,6 @@ export function NestedMenu({
 				hideOnInteractOutside
 				gutter={menu.parent ? 4 : 8}
 				shift={menu.parent ? -9 : 0}
-				portal={shouldPortalMenu}
 				className={menu.parent ? 'z-20' : 'z-10'}
 			>
 				{menu.parent ? (

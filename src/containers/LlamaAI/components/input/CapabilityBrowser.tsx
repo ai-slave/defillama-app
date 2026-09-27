@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useId } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
@@ -85,7 +84,7 @@ export function BrowserContent({
 							searchPlaceholder="Search categories…"
 							emptyLabel="No matching categories"
 							popoverClassName="z-50"
-							triggerProps={{ className: `${selectTriggerStyles('filter', 'md')} w-full` }}
+							className="w-full"
 						/>
 					</div>
 				) : null}

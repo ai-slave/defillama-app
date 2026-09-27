@@ -4,7 +4,6 @@ import { MetricsAndTools } from '~/components/Metrics'
 import { Nav } from '~/components/Nav'
 import { DesktopSearch } from '~/components/Search'
 import { Select } from '~/components/Select/Select'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { type ISEOProps, SEO } from '~/components/SEO'
 import { useIsClient } from '~/hooks/useIsClient'
 
@@ -81,9 +80,7 @@ function TvlFilters({ options }: { options: Array<{ name: string; key: string }>
 			label="Include in TVL"
 			variant="default"
 			size="sm"
-			triggerProps={{
-				className: `${selectTriggerStyles('default', 'sm')} ml-auto whitespace-nowrap *:shrink-0`
-			}}
+			className="ml-auto whitespace-nowrap *:shrink-0"
 			placement="bottom-end"
 		/>
 	)

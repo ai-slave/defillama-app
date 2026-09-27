@@ -37,21 +37,19 @@ interface ISelectWithComboboxBase {
 	labelType?: 'regular' | 'smol' | 'none'
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
-	triggerProps?: Ariakit.ComboboxSelectProps
+	/** Placement and layout classes appended to the trigger; `variant` and `size` own its look. */
+	className?: string
+	triggerProps?: Omit<Ariakit.ComboboxSelectProps, 'className'>
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
 	customFooter?: React.ReactNode
 	customHeader?: React.ReactNode
 	onEditCustomColumn?: (idx: number) => void
 	onDeleteCustomColumn?: (idx: number) => void
-	portal?: boolean
 	onValuesChange?: (values: Array<string>, label: string) => void
-	defaultSelectedValues?: Array<string>
 	resetPageOnQueryChange?: boolean
 	pushQueryUpdates?: (updates: Record<string, string | Array<string> | undefined>) => void
-	unmountOnHide?: boolean
 	popoverClassName?: string
-	popoverWrapperClassName?: string
 	searchPlaceholder?: string
 	visibleOptionLimit?: number | null
 	selectAllScope?: 'all' | 'matches'
@@ -61,6 +59,7 @@ interface ISelectWithComboboxBase {
 interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
+	/** Rendered as selected while the URL holds no selection; defaults to every option. */
 	defaultSelectedValues?: Array<string>
 	/** The picker reads its selection from the URL with `readSelectionFromQuery`, the same reader pages use. */
 	selectedValues?: never
@@ -70,6 +69,7 @@ interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
 interface ISelectWithComboboxState extends ISelectWithComboboxBase {
 	includeQueryKey?: never
 	excludeQueryKey?: never
+	defaultSelectedValues?: never
 	selectedValues: Array<string>
 	setSelectedValues: (values: Array<string>) => void
 }
@@ -118,21 +118,19 @@ export function SelectWithCombobox({
 	labelType,
 	variant,
 	size,
+	className,
 	triggerProps,
 	customFooter,
 	customHeader,
 	onEditCustomColumn,
 	onDeleteCustomColumn,
-	portal,
 	includeQueryKey,
 	excludeQueryKey,
 	resetPageOnQueryChange,
 	pushQueryUpdates,
 	onValuesChange,
 	defaultSelectedValues,
-	unmountOnHide = true,
 	popoverClassName,
-	popoverWrapperClassName,
 	searchPlaceholder = 'Search...',
 	visibleOptionLimit = 20,
 	selectAllScope = 'all',
@@ -159,7 +157,6 @@ export function SelectWithCombobox({
 	const urlSelectionText = includeQueryKey && !selectedLabelsProp ? describeSelection(allValues, selectedValues) : null
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
-	const shouldPortalPopover = portal ?? true
 	const queryUpdateOptions = {
 		...(resetPageOnQueryChange !== undefined ? { resetPage: resetPageOnQueryChange } : {}),
 		...(pushQueryUpdates !== undefined ? { pushQueryUpdates } : {})
@@ -412,7 +409,7 @@ export function SelectWithCombobox({
 			setSelectedValue={setSelectedValue}
 		>
 			<Ariakit.ComboboxSelect
-				className={selectTriggerStyles(variant, size)}
+				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
 				aria-label={`${label} dropdown`}
 				{...triggerProps}
 			>
@@ -440,13 +437,7 @@ export function SelectWithCombobox({
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface
-				unmountOnHide={unmountOnHide}
-				hideOnInteractOutside
-				className={popoverClassName}
-				wrapperClassName={popoverWrapperClassName}
-				portal={shouldPortalPopover}
-			>
+			<ComboboxSurface hideOnInteractOutside className={popoverClassName}>
 				<span className={popoverSearchBlockStyles}>
 					<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 				</span>

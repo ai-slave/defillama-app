@@ -3,7 +3,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { getColumnSelectState, getColumnVisibilityForSelection } from './columnSelect'
 import { useSearchTableContext } from './context'
 
-export function TableColumnSelect({ label = 'Columns' }: { label?: string }) {
+export function TableColumnSelect() {
 	const table = useSearchTableContext()
 	const visibility = useSelector(table.atoms.columnVisibility)
 	const columns = table.getAllLeafColumns()
@@ -17,7 +17,7 @@ export function TableColumnSelect({ label = 'Columns' }: { label?: string }) {
 				table.setColumnVisibility(getColumnVisibilityForSelection(columns, next))
 			}}
 			nestedMenu={false}
-			label={label}
+			label="Columns"
 			labelType="smol"
 			variant="filter"
 			size="md"

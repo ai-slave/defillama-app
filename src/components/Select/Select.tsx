@@ -30,19 +30,17 @@ interface ISelectBase {
 	labelType?: 'regular' | 'smol' | 'none'
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
-	triggerProps?: Ariakit.ComboboxSelectProps
+	/** Placement and layout classes appended to the trigger; `variant` and `size` own its look. */
+	className?: string
+	triggerProps?: Omit<Ariakit.ComboboxSelectProps, 'className'>
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
-	portal?: boolean
 	placement?: Ariakit.ComboboxProviderProps['placement']
-	defaultSelectedValues?: Array<string>
-	unmountOnHide?: boolean
 }
 
 interface ISelectWithUrlParams extends ISelectBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
-	defaultSelectedValues?: Array<string>
 	/** The picker reads its selection from the URL with `readSelectionFromQuery`, the same reader pages use. */
 	selectedValues?: never
 	setSelectedValues?: never
@@ -80,13 +78,12 @@ export function Select(props: ISelect) {
 		labelType = 'regular',
 		variant,
 		size,
+		className,
 		triggerProps,
-		portal,
-		placement = 'bottom-start',
-		unmountOnHide = true
+		placement = 'bottom-start'
 	} = props
 	const router = useRouter()
-	const { includeQueryKey, excludeQueryKey, defaultSelectedValues } = isUrlSelect(props) ? props : {}
+	const { includeQueryKey, excludeQueryKey } = isUrlSelect(props) ? props : {}
 	const urlSelection = React.useMemo(
 		() =>
 			includeQueryKey && excludeQueryKey
@@ -94,11 +91,10 @@ export function Select(props: ISelect) {
 						router.query,
 						includeQueryKey,
 						excludeQueryKey,
-						allValues.map((v) => (typeof v === 'string' ? v : v.key)),
-						defaultSelectedValues
+						allValues.map((v) => (typeof v === 'string' ? v : v.key))
 					)
 				: [],
-		[router.query, includeQueryKey, excludeQueryKey, allValues, defaultSelectedValues]
+		[router.query, includeQueryKey, excludeQueryKey, allValues]
 	)
 	const selectedValues = props.selectedValues ?? urlSelection
 	// Nested menus share their parent's values, so each select needs its own field.
@@ -119,14 +115,7 @@ export function Select(props: ISelect) {
 	const setSelectedValues = React.useCallback(
 		(values: Array<string> | string) => {
 			if (isUrlSelect(props)) {
-				updateQueryFromSelected(
-					router,
-					props.includeQueryKey,
-					props.excludeQueryKey,
-					getAllKeys(),
-					values,
-					props.defaultSelectedValues
-				)
+				updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), values)
 				return
 			}
 			if (isMultiStateSelect(props)) {
@@ -139,14 +128,7 @@ export function Select(props: ISelect) {
 	)
 	const clearAll = React.useCallback(() => {
 		if (isUrlSelect(props)) {
-			updateQueryFromSelected(
-				router,
-				props.includeQueryKey,
-				props.excludeQueryKey,
-				getAllKeys(),
-				'None',
-				props.defaultSelectedValues
-			)
+			updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), 'None')
 			return
 		}
 		if (isMultiStateSelect(props)) {
@@ -157,14 +139,7 @@ export function Select(props: ISelect) {
 	}, [getAllKeys, props, router])
 	const toggleAll = React.useCallback(() => {
 		if (isUrlSelect(props)) {
-			updateQueryFromSelected(
-				router,
-				props.includeQueryKey,
-				props.excludeQueryKey,
-				getAllKeys(),
-				null,
-				props.defaultSelectedValues
-			)
+			updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), null)
 			return
 		}
 		if (isMultiStateSelect(props)) {
@@ -174,14 +149,7 @@ export function Select(props: ISelect) {
 	const selectOnlyOne = React.useCallback(
 		(value: string) => {
 			if (isUrlSelect(props)) {
-				updateQueryFromSelected(
-					router,
-					props.includeQueryKey,
-					props.excludeQueryKey,
-					getAllKeys(),
-					[value],
-					props.defaultSelectedValues
-				)
+				updateQueryFromSelected(router, props.includeQueryKey, props.excludeQueryKey, getAllKeys(), [value])
 				return
 			}
 			if (isMultiStateSelect(props)) {
@@ -197,7 +165,6 @@ export function Select(props: ISelect) {
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
-	const shouldPortalPopover = portal ?? true
 
 	const selectRef = React.useRef<HTMLDivElement>(null)
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
@@ -289,7 +256,7 @@ export function Select(props: ISelect) {
 	return (
 		<Ariakit.ComboboxProvider selectedValue={selectedValues} setSelectedValue={setSelectedValues} placement={placement}>
 			<Ariakit.ComboboxSelect
-				className={selectTriggerStyles(variant, size)}
+				className={`${selectTriggerStyles(variant, size)} ${className ?? ''}`}
 				aria-label={`${labelText} dropdown`}
 				{...triggerProps}
 			>
@@ -316,7 +283,7 @@ export function Select(props: ISelect) {
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface unmountOnHide={unmountOnHide} hideOnInteractOutside portal={shouldPortalPopover} ref={selectRef}>
+			<ComboboxSurface hideOnInteractOutside ref={selectRef}>
 				{allValues.length > 0 ? (
 					<>
 						{showCheckboxes ? (

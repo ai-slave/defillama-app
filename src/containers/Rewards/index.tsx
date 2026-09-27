@@ -253,7 +253,6 @@ export default function Rewards({ programs, popularityOrder, featuredCardIds }: 
 				<PaginatedTable
 					table={table}
 					pageSizeOptions={PAGE_SIZES}
-					shell="none"
 					tableClassName="min-w-max!"
 					renderSubComponent={renderProgramDetails}
 				/>

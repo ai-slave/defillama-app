@@ -335,7 +335,7 @@ export function EquitiesMarketsTable({
 						: `No ${activeVenue} markets found for ${ticker}.`}
 				</EmptyState>
 			) : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
 		</Panel>
 	)
 }
@@ -367,7 +367,7 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: Array<IEquitie
 				/>
 			</TableToolbar>
 			{tokens.length === 0 ? <EmptyState>No tokenized assets found for {ticker}.</EmptyState> : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
 		</Panel>
 	)
 }

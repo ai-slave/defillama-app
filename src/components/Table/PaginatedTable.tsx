@@ -24,13 +24,11 @@ import {
 	type ReactNode
 } from 'react'
 import { Select } from '~/components/Select/Select'
-import { selectTriggerStyles } from '~/components/Select/types'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
 	TokenPageTableHeaderCell,
-	TokenPageTableScroller,
-	TokenPageTableShell
+	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { Button } from '~/ui/Button'
@@ -53,8 +51,6 @@ interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & V
 	className?: string
 	style?: CSSProperties
 	tableClassName?: string
-	paginationClassName?: string
-	shell?: 'default' | 'none'
 	stickyHeader?: boolean
 	interactionDisabled?: boolean
 	loadingLabel?: string
@@ -126,8 +122,6 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 	className,
 	style,
 	tableClassName,
-	paginationClassName,
-	shell = 'default',
 	stickyHeader = false,
 	interactionDisabled = false,
 	loadingLabel = 'Loading data...',
@@ -156,7 +150,6 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 		pageLabel,
 		pageSizeOptions: availablePageSizeOptions
 	} = getPaginationControls({ rowCount, pageCount, pageIndex, pageSize, pageSizeOptions })
-	const attachedPaginationClassName = shell === 'none' ? 'border-t border-subtle p-2' : ''
 	const stickyHeaderContentRef = useRef<HTMLDivElement>(null)
 	const handleTableScroll = (event: React.UIEvent<HTMLDivElement>) => {
 		if (!stickyHeaderContentRef.current) return
@@ -315,7 +308,8 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 
 	return (
 		<DisplayRowNumbersContext.Provider value={displayRowNumbers}>
-			<div className={`flex flex-col ${shell === 'none' ? 'gap-0' : 'gap-3'} ${className ?? ''}`} style={style}>
+			{/* The page's Panel or Card owns the border, so the pagination row attaches to the table. */}
+			<div className={`flex flex-col ${className ?? ''}`} style={style}>
 				{stickyHeader ? (
 					<div data-sticky-table-header className="sticky top-0 z-30 h-0">
 						<div className="w-full overflow-clip bg-surface shadow-xs">
@@ -336,16 +330,10 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 						</div>
 					</div>
 				) : null}
-				{shell === 'default' ? (
-					<TokenPageTableShell className="bg-surface">{tableContent}</TokenPageTableShell>
-				) : (
-					tableContent
-				)}
+				{tableContent}
 
 				{shouldShowPaginationControls || shouldShowPageSizeSelector ? (
-					<div
-						className={`flex flex-wrap items-center justify-between gap-2 ${attachedPaginationClassName} ${paginationClassName ?? ''}`.trim()}
-					>
+					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle p-2">
 						<div className="flex items-center gap-2">
 							{shouldShowPaginationControls ? (
 								<>
@@ -412,10 +400,8 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 								variant="filter"
 								size="md"
 								placement="top-end"
-								triggerProps={{
-									disabled: interactionDisabled,
-									className: `${selectTriggerStyles('filter', 'md')} ml-auto`
-								}}
+								className="ml-auto"
+								triggerProps={{ disabled: interactionDisabled }}
 							/>
 						) : null}
 					</div>

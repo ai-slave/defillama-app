@@ -156,7 +156,7 @@ export function EquitiesFilingsTable({
 					size="md"
 				/>
 			</TableToolbar>
-			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} shell="none" />
+			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} />
 		</Panel>
 	)
 }

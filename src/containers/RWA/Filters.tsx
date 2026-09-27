@@ -4,7 +4,6 @@ import { useState, type ReactNode } from 'react'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { describeSelection, SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
-import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -877,17 +876,14 @@ function RWASelectDraftEditor({
 			}
 			label="Values"
 			labelType="smol"
-			variant="filter"
-			size="sm"
+			variant="input"
+			size="md"
 			visibleOptionLimit={null}
 			selectAllScope="matches"
 			searchPlaceholder={`Search ${definition.label.toLowerCase()}...`}
 			emptyLabel="No matches found"
 			popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
-			triggerProps={{
-				'aria-label': `${definition.label} values`,
-				className: selectTriggerStyles('input', 'md')
-			}}
+			triggerProps={{ 'aria-label': `${definition.label} values` }}
 		/>
 	)
 }

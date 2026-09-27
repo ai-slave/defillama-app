@@ -194,7 +194,6 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							pageSizeOptions={PAGE_SIZE_OPTIONS}
 							style={tableStyle}
 							tableClassName="min-w-(--tokens-table-min-width)"
-							shell="none"
 							interactionDisabled={isFetching}
 							renderSubComponent={(row: Row<typeof tableFeaturesConfig, TokensTableRow>) => (
 								<ExpandedTokenMarkets geckoId={row.original.id} symbol={row.original.symbol} />

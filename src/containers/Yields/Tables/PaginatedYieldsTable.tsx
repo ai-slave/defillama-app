@@ -72,7 +72,6 @@ export function PaginatedYieldsTable<TRow>({
 			pageSizeOptions={PAGE_SIZE_OPTIONS}
 			interactionDisabled={interactionDisabled}
 			{...(loadingLabel ? { loadingLabel } : {})}
-			shell="none"
 		/>
 	)
 

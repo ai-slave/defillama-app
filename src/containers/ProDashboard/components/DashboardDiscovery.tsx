@@ -215,8 +215,8 @@ export function DashboardDiscovery({
 					{!isBrowseMode ? (
 						<div className="ml-auto flex flex-wrap items-center gap-4">
 							<Select
-								variant="default"
-								size="sm"
+								variant="pro"
+								size="md"
 								allValues={itemsPerPageOptions}
 								selectedValues={itemsPerPage.toString()}
 								setSelectedValues={handleItemsPerPageChange}
@@ -227,15 +227,11 @@ export function DashboardDiscovery({
 									</>
 								}
 								labelType="none"
-								triggerProps={{
-									'aria-label': 'Items per page',
-									className:
-										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
-								}}
+								triggerProps={{ 'aria-label': 'Items per page' }}
 							/>
 							<Select
-								variant="default"
-								size="sm"
+								variant="pro"
+								size="md"
 								allValues={sortOptions}
 								selectedValues={selectedSortBy.key}
 								setSelectedValues={(value: string) => {
@@ -256,16 +252,12 @@ export function DashboardDiscovery({
 									</>
 								}
 								labelType="none"
-								triggerProps={{
-									'aria-label': 'Sort by',
-									className:
-										'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
-								}}
+								triggerProps={{ 'aria-label': 'Sort by' }}
 							/>
 							{selectedSortBy.key === 'trending' ? (
 								<Select
-									variant="default"
-									size="sm"
+									variant="pro"
+									size="md"
 									allValues={timeFrameOptions}
 									selectedValues={selectedTimeFrame.key}
 									setSelectedValues={(value: string) => {
@@ -282,11 +274,7 @@ export function DashboardDiscovery({
 										</>
 									}
 									labelType="none"
-									triggerProps={{
-										'aria-label': 'Time frame',
-										className:
-											'flex items-center justify-between gap-1 rounded-md border border-pro-cards-border px-2 py-1.5'
-									}}
+									triggerProps={{ 'aria-label': 'Time frame' }}
 								/>
 							) : null}
 
