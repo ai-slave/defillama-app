@@ -33,7 +33,8 @@ const DEFILLAMA_RESEARCH_ARTICLE_LIMIT = 12
 const EMPTY_ARTICLES: Array<ArticleDocument> = []
 const shortDateFormatter = new Intl.DateTimeFormat('en', {
 	month: 'short',
-	day: 'numeric'
+	day: 'numeric',
+	timeZone: 'UTC'
 })
 const SITE_ORIGIN = 'https://defillama.com'
 

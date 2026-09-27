@@ -19,6 +19,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -444,6 +445,14 @@ export const fetchTransactions = async ({ bridge, startDate, endDate }: FetchArg
 
 const toDateOnly = (date: Date) => date.toISOString().slice(0, 10)
 
+/** The month up to the page clock, in UTC so the server and every visitor seed the same days. */
+export function getDefaultBridgeTransactionRange(nowSec: number): { startDate: string; endDate: string } {
+	const end = new Date(nowSec * 1000)
+	const start = new Date(end)
+	start.setUTCMonth(end.getUTCMonth() - 1)
+	return { startDate: toDateOnly(start), endDate: toDateOnly(end) }
+}
+
 interface StatCardProps {
 	label: string
 	value: React.ReactNode
@@ -478,10 +487,15 @@ function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	)
 }
 
-export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeInfo> }) {
-	const defaultEndDate = new Date()
-	const defaultStartDate = new Date(defaultEndDate)
-	defaultStartDate.setMonth(defaultEndDate.getMonth() - 1)
+export function BridgeTransactionsPage({
+	bridges,
+	generatedAtSec
+}: {
+	bridges: Array<RawBridgeInfo>
+	generatedAtSec: number
+}) {
+	const nowSec = useNowSeconds(generatedAtSec)
+	const defaultRange = getDefaultBridgeTransactionRange(nowSec)
 
 	const [transactionResult, setTransactionResult] = React.useState<BridgeTransactionResult>({
 		rows: [],
@@ -509,8 +523,8 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 
 	const { startDate, endDate, dateError, handleStartDateChange, handleEndDateChange, validateDateRange } =
 		useDateRangeValidation({
-			initialStartDate: toDateOnly(defaultStartDate),
-			initialEndDate: toDateOnly(defaultEndDate)
+			defaultStartDate: defaultRange.startDate,
+			defaultEndDate: defaultRange.endDate
 		})
 
 	const { data: blockExplorersData } = useBlockExplorers()
@@ -539,7 +553,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 		})
 	}
 
-	const maxDate = toDateOnly(new Date())
+	const maxDate = toDateOnly(new Date(nowSec * 1000))
 
 	const tableData = transactionResult.rows
 	const columns = React.useMemo(() => buildBridgeColumns(blockExplorersData), [blockExplorersData])

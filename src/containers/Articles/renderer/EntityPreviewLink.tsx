@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
+import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 import { formatNumber, formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { EntityPreview } from '../entityPreviewTypes'
@@ -294,9 +295,7 @@ function PreviewBody({
 			)
 		}
 		case 'hack': {
-			const dateLabel = preview.date
-				? new Date(preview.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-				: null
+			const dateLabel = formatDate(preview.date)
 			const lossLabel = formatUsd(preview.amountUsd, { compact: true })
 			const returnedLabel = formatUsd(preview.returnedFundsUsd, { compact: true })
 			const recoveredPct =

@@ -31,10 +31,11 @@ export function getArticleBylineAuthorEntries(article: LocalArticleDocument): Ar
 
 export function formatDate(value: string | null, emptyLabel = '') {
 	if (!value) return emptyLabel
+	// UTC: the server and every visitor must agree on the day.
 	const date = new Date(value)
-	const day = date.getDate()
-	const month = date.toLocaleString('en', { month: 'short' })
-	const year = date.getFullYear()
+	const day = date.getUTCDate()
+	const month = date.toLocaleString('en', { month: 'short', timeZone: 'UTC' })
+	const year = date.getUTCFullYear()
 	return `${day} ${month} ${year}`
 }
 

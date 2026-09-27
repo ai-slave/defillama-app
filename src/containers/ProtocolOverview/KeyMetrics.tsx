@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 import { KeyMetricsPngExportButton } from '~/components/KeyMetricsPngExport/KeyMetricsPngExportButton'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
@@ -44,6 +45,7 @@ type KeyMetricsOptionalFields = Partial<
 		| 'holdersRevenue'
 		| 'incentives'
 		| 'bridgeVolume'
+		| 'generatedAtSec'
 		| 'expenses'
 		| 'treasury'
 		| 'raises'
@@ -664,14 +666,14 @@ function Earnings(props: IKeyMetricsProps) {
 }
 
 function BridgeVolume(props: IKeyMetricsProps) {
-	const [now] = useState(() => Date.now())
+	const nowSec = useNowSeconds(props.generatedAtSec)
 
 	if (!props.bridgeVolume || props.bridgeVolume.length === 0) return null
 
 	const metrics = []
 	const { lastCompletedDay, sevenCompletedDays, thirtyCompletedDays, sinceDataStart } = getProtocolBridgeVolumeMetrics(
 		props.bridgeVolume,
-		now
+		nowSec * 1000
 	)
 
 	if (thirtyCompletedDays != null) {

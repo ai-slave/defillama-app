@@ -35,6 +35,7 @@ vi.mock('../PoolApyChart', async () => {
 vi.mock('../PoolHeader', () => ({ PoolHeader: () => <h1>Pool summary</h1>, PoolMetaInfo: () => null }))
 
 const props: PoolDetailViewProps = {
+	generatedAtMs: 1_700_000_000_000,
 	poolId: 'pool-1',
 	mode: 'pool',
 	hasRisk: false,

@@ -65,7 +65,7 @@ export const getStaticProps = withPerformanceLogging(
 			}
 
 		return {
-			props,
+			props: { ...props, year: new Date().getUTCFullYear() },
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -94,7 +94,8 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		effectiveCategory: props.effectiveCategory,
 		isTagPage: !!props.tag && !props.category,
 		chain: props.chain,
-		protocolCount: props.protocols.length
+		protocolCount: props.protocols.length,
+		year: props.year
 	})
 	const title = presentation.seoTitle
 	const description = presentation.seoDescription

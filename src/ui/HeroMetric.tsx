@@ -7,8 +7,8 @@ import { Tooltip } from '~/ui/Tooltip'
 interface HeroMetricProps {
 	label: string
 	tooltip?: string
-	/** Already formatted headline value. */
-	value: ReactNode
+	/** Already formatted headline value. Text only: the hydration flag on its span covers nothing nested. */
+	value: string | number
 	/** Per-chain breakdown; when present the hero expands to show it. */
 	byChain?: Array<[string, ReactNode]>
 	byChainTitle?: string

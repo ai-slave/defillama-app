@@ -132,6 +132,8 @@ export interface IProtocolOverviewPageData {
 	liquidationVolume: IAdapterOverview | null
 	collateralLiquidated: IAdapterOverview | null
 	bridgeVolume: Array<Pick<BridgeVolumePoint, 'date' | 'depositUSD' | 'withdrawUSD'>> | null
+	/** The clock the page data was built with; day-window metrics hydrate against it. */
+	generatedAtSec: number
 	incentives?: {
 		emissions24h: number | null
 		emissions7d: number | null

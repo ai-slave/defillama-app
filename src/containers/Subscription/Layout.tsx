@@ -107,7 +107,7 @@ export function SubscribeLayout({
 						</div>
 
 						<div className="mt-6 flex flex-wrap items-center justify-center gap-4 border-t border-sub-line/40 pt-6 text-xs text-sub-text-muted md:justify-between">
-							<div>© {new Date().getFullYear()} DefiLlama. All rights reserved.</div>
+							<div suppressHydrationWarning>© {new Date().getFullYear()} DefiLlama. All rights reserved.</div>
 							<div className="flex flex-wrap items-center gap-4">
 								<BasicLink href="/privacy-policy" className="transition-colors hover:text-on-brand">
 									Privacy Policy

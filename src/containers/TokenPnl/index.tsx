@@ -254,9 +254,15 @@ function TokenPnlContent({
 	)
 }
 
-export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
+export function TokenPnl({
+	initialTokenOptions,
+	generatedAtSec
+}: {
+	initialTokenOptions: Array<TokenSearchResult>
+	generatedAtSec: number
+}) {
 	const router = useRouter()
-	const nowSeconds = useNowSeconds()
+	const nowSeconds = useNowSeconds(generatedAtSec)
 	const maxSelectableDateUnix = Math.max(0, nowSeconds - TOKEN_PNL_MAX_DATE_BUFFER_SECONDS)
 	const coinParam = router.query?.coin
 
@@ -266,8 +272,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const { startDate, endDate, handleStartDateChange, handleEndDateChange, validateDateRange } = useDateRangeValidation({
-		initialStartDate: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60),
-		initialEndDate: unixToDateString(maxSelectableDateUnix)
+		defaultStartDate: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60),
+		defaultEndDate: unixToDateString(maxSelectableDateUnix)
 	})
 
 	useEffect(() => {

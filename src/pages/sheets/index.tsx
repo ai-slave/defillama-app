@@ -110,7 +110,7 @@ export default function Sheets() {
 						</a>
 					</p>
 					<div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-sub-text-muted sm:px-6 md:justify-between md:px-8">
-						<span>&copy; {new Date().getFullYear()} DefiLlama</span>
+						<span suppressHydrationWarning>&copy; {new Date().getFullYear()} DefiLlama</span>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-sub-text-soft">
 								Privacy Policy
