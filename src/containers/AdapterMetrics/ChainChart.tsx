@@ -1031,7 +1031,7 @@ export function ChainsByAdapterChart({
 				) : baseChartErrorMessage ? (
 					<div
 						role="alert"
-						className="flex items-center justify-center p-4 text-center body-sm text-tertiary"
+						className="flex items-center justify-center p-4 text-center body-sm text-data-down"
 						style={{ height: chartHeight }}
 					>
 						Failed to load chart data: {baseChartErrorMessage}

@@ -6,9 +6,9 @@ import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -98,10 +98,9 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 						<ChartPanelExportShellFallback
 							role="status"
 							aria-live="polite"
-							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
+							className="my-auto flex items-center justify-center"
 						>
-							Loading
-							<LoadingDots />
+							<LoadingIndicator />
 						</ChartPanelExportShellFallback>
 					) : (
 						<Suspense fallback={<ChartPanelExportShellFallback />}>

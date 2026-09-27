@@ -2,10 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 
 export function EmbedChart() {
 	const router = useRouter()
@@ -41,12 +42,18 @@ export function EmbedChart() {
 		)}" title="DefiLlama" frameborder="0"></iframe>`
 	}, [router.asPath, tvlSettings, isDarkTheme])
 
+	const popover = Ariakit.usePopoverStore()
+
 	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className={buttonStyles({ square: true, size: 'md' })}>
+		<Ariakit.PopoverProvider store={popover}>
+			{/* The disclosure names its store: inside the tooltip, context would bind it to the tooltip store. */}
+			<Tooltip
+				content="Embed chart"
+				render={<Ariakit.PopoverDisclosure store={popover} render={<Button size="md" square />} />}
+			>
 				<Icon name="code" height={16} width={16} />
 				<span className="sr-only">Embed Chart</span>
-			</Ariakit.PopoverDisclosure>
+			</Tooltip>
 
 			<PopoverSurface variant="list" className="mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4">
 				<span className="flex flex-col items-end gap-2 p-3">

@@ -510,15 +510,18 @@ function RWAActiveFilterPills({ pills }: { pills: Array<RWAActiveFilterPill> }) 
 	return (
 		<div className="flex flex-wrap gap-1">
 			{pills.map((pill) => (
-				<button
+				<Button
 					key={pill.id}
 					type="button"
+					variant="filter"
+					size="sm"
+					data-active="true"
+					className="group"
 					onClick={pill.onRemove}
-					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary"
 				>
 					<span>{pill.label}</span>
 					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</button>
+				</Button>
 			))}
 		</div>
 	)

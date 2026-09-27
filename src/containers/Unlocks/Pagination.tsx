@@ -1,5 +1,5 @@
 import { Children, useEffect, useReducer, useRef, useState } from 'react'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 interface PaginationProps {
@@ -37,9 +37,6 @@ const initialState: PaginationState = {
 	isSwiping: false,
 	swipeOffset: 0
 }
-
-const desktopPageButtonStyles = buttonStyles({ variant: 'ghost', size: 'md', square: true })
-const mobilePageButtonStyles = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 
 function paginationReducer(state: PaginationState, action: PaginationAction): PaginationState {
 	switch (action.type) {
@@ -220,14 +217,17 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 				onTouchEnd={onTouchEnd}
 			>
 				{totalPages > 1 ? (
-					<button
+					<Button
+						variant="ghost"
+						size="md"
+						square
+						className="max-md:hidden"
 						type="button"
 						onClick={handlePrevPage}
-						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Previous page"
 					>
 						<Icon name="arrow-left" height={16} width={16} />
-					</button>
+					</Button>
 				) : null}
 				<div className="min-w-0 overflow-hidden">
 					<div className={contentClassName} style={contentStyle}>
@@ -238,40 +238,49 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 					</div>
 				</div>
 				{totalPages > 1 ? (
-					<button
+					<Button
+						variant="ghost"
+						size="md"
+						square
+						className="max-md:hidden"
 						type="button"
 						onClick={handleNextPage}
-						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Next page"
 					>
 						<Icon name="arrow-right" height={16} width={16} />
-					</button>
+					</Button>
 				) : null}
 			</div>
 
 			{totalPages > 1 ? (
 				<div className="mt-2 flex items-center justify-center gap-2">
-					<button
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						className="md:hidden"
 						type="button"
 						onClick={handlePrevPage}
-						className={`${mobilePageButtonStyles} md:hidden`}
 						aria-label="Previous page"
 					>
 						<Icon name="arrow-left" height={14} width={14} />
-					</button>
+					</Button>
 
 					<span className="label-sm text-secondary">
 						{currentPage + 1} / {totalPages}
 					</span>
 
-					<button
+					<Button
+						variant="ghost"
+						size="sm"
+						square
+						className="md:hidden"
 						type="button"
 						onClick={handleNextPage}
-						className={`${mobilePageButtonStyles} md:hidden`}
 						aria-label="Next page"
 					>
 						<Icon name="arrow-right" height={14} width={14} />
-					</button>
+					</Button>
 				</div>
 			) : null}
 		</>

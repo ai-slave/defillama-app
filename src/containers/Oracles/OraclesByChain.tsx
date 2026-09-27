@@ -20,9 +20,9 @@ import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSele
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -175,13 +175,8 @@ export function OraclesByChain({
 						/>
 					) : null}
 					{isFetchingExtraBreakdowns ? (
-						<ChartPanelBodyFallback
-							role="status"
-							aria-live="polite"
-							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
-						>
-							Loading
-							<LoadingDots />
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
 						</ChartPanelBodyFallback>
 					) : (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>

@@ -16,7 +16,7 @@ import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -233,7 +233,7 @@ export function ChainChartPanel({
 			<ChartPanelToolbar>
 				{charts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
+						<Ariakit.DialogDisclosure render={<Button size="md" />}>
 							<span>Add Metrics</span>
 							<Icon name="plus" className="size-3.5" />
 						</Ariakit.DialogDisclosure>

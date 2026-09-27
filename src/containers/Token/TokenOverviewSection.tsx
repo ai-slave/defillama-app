@@ -22,11 +22,11 @@ import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dial
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
-import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StaleText } from '~/ui/StaleText'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
@@ -568,7 +568,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 			<ChartPanelToolbar>
 				{availableCharts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
+						<Ariakit.DialogDisclosure render={<Button size="md" />}>
 							<span>Add Metrics</span>
 							<Icon name="plus" className="size-3.5" />
 						</Ariakit.DialogDisclosure>
@@ -652,9 +652,8 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartBody === 'wait-for-client' ? null : chartBody === 'loading' ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 text-center body-sm text-tertiary">
-						fetching {loadingLabel}
-						<LoadingDots />
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator label={`fetching ${loadingLabel}`} />
 					</ChartPanelBodyFallback>
 				) : chartBody === 'chart' ? (
 					<DeferredProtocolChart

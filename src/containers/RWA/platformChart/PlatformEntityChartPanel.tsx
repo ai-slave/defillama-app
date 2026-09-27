@@ -9,13 +9,13 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from '../api.types'
 import type { RWAPlatformMeta } from '../PlatformPage/api.types'
@@ -109,9 +109,8 @@ export function RWAPlatformEntityChartPanel({
 				}
 			/>
 			{isLoading && deferredChart.series.every((series) => (series.data?.length ?? 0) === 0) ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-					Loading
-					<LoadingDots />
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			) : error ? (
 				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
@@ -217,7 +216,7 @@ function MetricsDialog({
 	)
 	return (
 		<Ariakit.DialogProvider store={store}>
-			<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
+			<Ariakit.DialogDisclosure render={<Button size="md" />}>
 				<span>Add Metrics</span>
 				<Icon name="plus" className="size-3.5" />
 			</Ariakit.DialogDisclosure>

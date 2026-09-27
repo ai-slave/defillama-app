@@ -6,7 +6,6 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { buttonStyles } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -44,7 +43,6 @@ const MOVERS_HEIGHT = '360px'
 const GAINER_COLOR = '#269f3c'
 const LOSER_COLOR = '#942e38'
 const EXPORT_FILENAME = 'tokens-market-map'
-const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
 
 const UNIVERSE_OPTIONS = TOKENS_UNIVERSES.map((universe) => ({ value: universe, label: `Top ${universe}` }))
 
@@ -135,10 +133,9 @@ export function TokensChartsSection({
 							/>
 							{treemap && treemap.treeData.length > 0 ? (
 								<>
-									<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
+									<ChartRestoreButton chartInstance={chartInstance} />
 									<ChartExportButtons
 										chartInstance={chartInstance}
-										className={CHART_ACTION_BUTTON_CLASSNAME}
 										filename={EXPORT_FILENAME}
 										title="Tokens Market Map"
 										csvSource={{
@@ -169,7 +166,6 @@ export function TokensChartsSection({
 							{movers && (movers.gainers.length > 0 || movers.losers.length > 0) ? (
 								<ChartExportButtons
 									chartInstance={chartInstance}
-									className={CHART_ACTION_BUTTON_CLASSNAME}
 									filename={`tokens-movers-${moversWindow}-top-${universe}`}
 									csvSource={{
 										type: 'prepare-csv',

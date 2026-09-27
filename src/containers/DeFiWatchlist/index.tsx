@@ -230,14 +230,10 @@ export function DefiWatchlistContainer({
 }
 
 const EMPTY_ARRAY: Array<any> = []
-const smallActionButtonClassName = buttonStyles({ size: 'md' })
 const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
 const smallToneActionButtonBaseClassName =
 	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border px-3 py-1.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
-const destructiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-down text-data-down hover:bg-hover-row focus-visible:bg-hover-row`
 const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-up text-data-up hover:bg-hover-row focus-visible:bg-hover-row`
-const portfolioDestructiveActionButtonClassName =
-	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
 
 export function PortfolioNotifications({
 	selectedPortfolio,
@@ -465,29 +461,29 @@ export function PortfolioNotifications({
 				) : null}
 
 				<div className="flex flex-wrap items-center gap-2">
-					<button
+					<Button
+						size="md"
 						type="button"
 						onClick={handleNotificationsButtonClick}
 						disabled={loaders.userLoading || isLoading}
-						className={smallActionButtonClassName}
 					>
 						<Icon name="mail" height={16} width={16} />
 						<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
-					</button>
+					</Button>
 
 					{preferences ? (
 						<>
 							{preferences.active ? (
-								<button
+								<Button
+									size="md"
 									type="button"
 									onClick={handleDisableNotifications}
 									disabled={loaders.userLoading || isChangingPreferences}
-									className={smallActionButtonClassName}
 									title="Temporarily disable notifications"
 								>
 									<Icon name="pause" height={16} width={16} />
 									<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
-								</button>
+								</Button>
 							) : null}
 							{!preferences.active ? (
 								<button
@@ -503,16 +499,17 @@ export function PortfolioNotifications({
 									<span>{updateStatus.isPending ? 'Enabling...' : 'Enable'}</span>
 								</button>
 							) : null}
-							<button
+							<Button
+								variant="destructive"
+								size="md"
 								type="button"
 								onClick={handleDeleteNotifications}
 								disabled={loaders.userLoading || isChangingPreferences}
-								className={destructiveActionButtonClassName}
 								title="Permanently delete notification preferences"
 							>
 								<Icon name="trash-2" height={16} width={16} />
 								<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
-							</button>
+							</Button>
 						</>
 					) : null}
 				</div>
@@ -627,25 +624,26 @@ export function PortfolioNotifications({
 							{preferences ? (
 								<>
 									{preferences.active ? (
-										<button
+										<Button
+											size="md"
 											type="button"
 											onClick={handleDisableNotifications}
 											disabled={isChangingPreferences}
-											className={smallActionButtonClassName}
 										>
 											<Icon name="pause" height={16} width={16} />
 											<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
-										</button>
+										</Button>
 									) : null}
-									<button
+									<Button
+										variant="destructive"
+										size="md"
 										type="button"
 										onClick={handleDeleteNotifications}
 										disabled={isChangingPreferences}
-										className={destructiveActionButtonClassName}
 									>
 										<Icon name="trash-2" height={16} width={16} />
 										<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
-									</button>
+									</Button>
 								</>
 							) : (
 								<div className="body-sm text-secondary">Configure notification settings for your portfolio</div>
@@ -717,15 +715,16 @@ function PortfolioSelection() {
 					<span>New</span>
 				</Button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
-					<button
+					<Button
+						variant="destructive"
+						size="md"
 						type="button"
 						onClick={handleRemovePortfolio}
-						className={portfolioDestructiveActionButtonClassName}
 						title="Delete current portfolio"
 					>
 						<Icon name="trash-2" height={16} width={16} />
 						<span>Delete</span>
-					</button>
+					</Button>
 				) : null}
 			</TableToolbar>
 		</Card>

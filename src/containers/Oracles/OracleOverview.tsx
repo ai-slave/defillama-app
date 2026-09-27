@@ -17,10 +17,10 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { FailedDataNote } from '~/ui/ScopeNote'
+import { LoadingIndicator } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getTokenDominance, slug } from '~/utils'
@@ -304,10 +304,9 @@ export function OracleOverview({
 						<ChartPanelExportShellFallback
 							role="status"
 							aria-live="polite"
-							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
+							className="my-auto flex items-center justify-center"
 						>
-							Loading
-							<LoadingDots />
+							<LoadingIndicator />
 						</ChartPanelExportShellFallback>
 					) : (
 						<Suspense fallback={<ChartPanelExportShellFallback />}>

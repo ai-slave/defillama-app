@@ -610,15 +610,18 @@ export function EquityActiveFilterPills({
 	return (
 		<div className="flex flex-wrap gap-1">
 			{filters.map((filter) => (
-				<button
+				<Button
 					key={filter.id}
 					type="button"
+					variant="filter"
+					size="sm"
+					data-active="true"
+					className="group"
 					onClick={() => onRemove(filter.id)}
-					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-1 text-xs text-primary"
 				>
 					<span>{formatEquityActiveFilter(filter)}</span>
 					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</button>
+				</Button>
 			))}
 		</div>
 	)

@@ -2,6 +2,7 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 
 const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
 
@@ -25,16 +26,20 @@ export function ChartRestoreButton({
 	}
 
 	return (
-		<button
-			type="button"
-			data-umami-event="chart-restore"
-			data-umami-event-page={router.pathname}
+		<Tooltip
+			content="Restore chart view"
+			render={
+				<button
+					type="button"
+					data-umami-event="chart-restore"
+					data-umami-event-page={router.pathname}
+					onClick={handleRestore}
+				/>
+			}
 			className={className}
-			onClick={handleRestore}
-			title="Restore chart view"
 		>
 			<Icon name="repeat" height={12} width={12} />
 			<span>{smol ? 'reset' : 'Restore'}</span>
-		</button>
+		</Tooltip>
 	)
 }

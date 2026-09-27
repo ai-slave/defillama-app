@@ -4,8 +4,9 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import type { MultiChartConfig } from '~/containers/ProDashboard/types'
 import { useIsClient } from '~/hooks/useIsClient'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 import { AddToDashboardModal } from './AddToDashboardModal'
 
@@ -59,20 +60,26 @@ export function AddToDashboardButton({
 		}
 	}
 
-	const baseClassName =
-		`${buttonStyles({ size: 'md', ...(smol === undefined ? {} : { square: smol }) })} ${className ?? ''}`.trim()
+	const showLabel = !smol && variant === 'button'
 	const button = (
-		<button
-			type="button"
-			onClick={handleClick}
-			disabled={loaders.userLoading || disabled || !hasConfig}
-			className={baseClassName}
-			data-umami-event="dashboard-add-chart"
-			title="Add to Custom Dashboard"
+		<Tooltip
+			content="Add to Custom Dashboard"
+			render={
+				<Button
+					type="button"
+					size="md"
+					square={smol ?? false}
+					onClick={handleClick}
+					disabled={loaders.userLoading || disabled || !hasConfig}
+					className={className}
+					data-umami-event="dashboard-add-chart"
+					aria-label={showLabel ? undefined : 'Add to Custom Dashboard'}
+				/>
+			}
 		>
 			<Icon name="plus" className="size-4" />
-			{!smol && variant === 'button' ? <span>Add to Dashboard</span> : null}
-		</button>
+			{showLabel ? <span>Add to Dashboard</span> : null}
+		</Tooltip>
 	)
 
 	return (

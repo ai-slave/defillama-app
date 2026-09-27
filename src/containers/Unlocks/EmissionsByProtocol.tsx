@@ -13,7 +13,6 @@ import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LoadingDots } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
@@ -1000,9 +999,8 @@ function ChartContainer({
 							/>
 						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (
-							<ChartPanelBodyFallback className="gap-1">
-								Loading
-								<LoadingDots />
+							<ChartPanelBodyFallback role="status" aria-live="polite">
+								<LoadingIndicator />
 							</ChartPanelBodyFallback>
 						) : (
 							<Suspense fallback={<ChartPanelBodyFallback />}>

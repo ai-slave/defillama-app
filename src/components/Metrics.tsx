@@ -8,7 +8,7 @@ import { TOTAL_TRACKED_BY_METRIC_API } from '~/constants'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
 import trendingPages from '~/public/trending.json'
-import { Button, buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogCanvasSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInputStyles } from '~/ui/Input'
@@ -374,7 +374,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 									<span>{metric}</span>
 								) : (
 									<Ariakit.DialogDisclosure
-										className={buttonStyles({ variant: 'metricBrowse', size: 'sm' })}
+										render={<Button variant="metricBrowse" size="sm" />}
 										onClick={() => trackDialogOpen('pill', metric)}
 									>
 										{metric}

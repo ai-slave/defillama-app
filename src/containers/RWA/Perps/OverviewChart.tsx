@@ -16,8 +16,8 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -380,9 +380,8 @@ export function RWAPerpsOverviewChart({
 					{getErrorMessage(error)}
 				</ChartPanelBodyFallback>
 			) : showLoadingState ? (
-				<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-					Loading
-					<LoadingDots />
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator />
 				</ChartPanelBodyFallback>
 			) : timeSeriesMode === 'breakdown' && stackEmptyNotice ? (
 				<ChartPanelBodyFallback

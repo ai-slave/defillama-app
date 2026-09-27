@@ -7,7 +7,6 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import defs from '~/public/equities-definitions.json'
-import { buttonStyles } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -40,7 +39,6 @@ const MarketTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/
 
 const CHART_HEIGHT = '600px'
 const EXPORT_FILENAME = 'equities-market-map'
-const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
 const NO_ROWS: Array<EquitiesTreemapRow> = []
 
 const GROUP_OPTIONS: Array<{ value: EquitiesTreemapGroupBy; label: string }> = [
@@ -191,10 +189,9 @@ export function EquitiesTreemapSection({
 					/>
 					{treeData.length > 0 ? (
 						<>
-							<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
+							<ChartRestoreButton chartInstance={chartInstance} />
 							<ChartExportButtons
 								chartInstance={chartInstance}
-								className={CHART_ACTION_BUTTON_CLASSNAME}
 								filename={EXPORT_FILENAME}
 								title="Equities Market Map"
 								csvSource={{

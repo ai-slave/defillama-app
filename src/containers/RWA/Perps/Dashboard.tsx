@@ -45,10 +45,10 @@ import { Checkbox } from '~/ui/Checkbox'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -1313,15 +1313,18 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: Array<RWAPerpsActiveFilte
 	return (
 		<div className="flex flex-wrap gap-1">
 			{pills.map((pill) => (
-				<button
+				<Button
 					key={pill.id}
 					type="button"
+					variant="filter"
+					size="sm"
+					data-active="true"
+					className="group"
 					onClick={pill.onRemove}
-					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary"
 				>
 					<span>{pill.label}</span>
 					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-				</button>
+				</Button>
 			))}
 		</div>
 	)
@@ -2317,9 +2320,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							{getErrorMessage(timeSeriesQuery.error)}
 						</ChartPanelBodyFallback>
 					) : isTimeSeriesQueryEnabled && timeSeriesQuery.isLoading ? (
-						<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-							Loading
-							<LoadingDots />
+						<ChartPanelBodyFallback role="status" aria-live="polite">
+							<LoadingIndicator />
 						</ChartPanelBodyFallback>
 					) : !hasTimeSeriesHistory ? (
 						<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">

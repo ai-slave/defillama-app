@@ -4,7 +4,7 @@ import utc from 'dayjs/plugin/utc'
 import { useMemo } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
@@ -36,10 +36,7 @@ function ProtocolPageButton() {
 
 function RegularButton() {
 	return (
-		<Ariakit.MenuButton
-			className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-			aria-label="Add to calendar"
-		>
+		<Ariakit.MenuButton render={<Button variant="ghost" size="md" square />} aria-label="Add to calendar">
 			<Icon name="calendar-plus" width={16} height={16} />
 		</Ariakit.MenuButton>
 	)

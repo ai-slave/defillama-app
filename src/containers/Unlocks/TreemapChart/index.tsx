@@ -10,6 +10,8 @@ import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
+import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
@@ -233,23 +235,13 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				{timeView === 'Month' ? (
 					<div className="order-1 flex items-center gap-2 md:order-0">
-						<button
-							type="button"
-							onClick={goToPrevMonth}
-							className="rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
-							aria-label="Previous Month"
-						>
-							←
-						</button>
-						<span className="w-28 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
-						<button
-							type="button"
-							onClick={goToNextMonth}
-							className="rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
-							aria-label="Next Month"
-						>
-							→
-						</button>
+						<Button type="button" variant="ghost" size="md" square onClick={goToPrevMonth} aria-label="Previous Month">
+							<Icon name="chevron-left" height={16} width={16} />
+						</Button>
+						<span className="w-32 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
+						<Button type="button" variant="ghost" size="md" square onClick={goToNextMonth} aria-label="Next Month">
+							<Icon name="chevron-right" height={16} width={16} />
+						</Button>
 					</div>
 				) : null}
 

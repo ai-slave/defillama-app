@@ -273,15 +273,16 @@ function TokensPortfolioSelection() {
 					<span>New</span>
 				</Button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
-					<button
+					<Button
 						type="button"
+						variant="destructive"
+						size="md"
 						onClick={() => removePortfolio(selectedPortfolio)}
-						className="flex min-h-8 items-center gap-1 rounded-lg border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
 						title="Delete current portfolio"
 					>
 						<Icon name="trash-2" height={16} width={16} />
 						<span>Delete</span>
-					</button>
+					</Button>
 				) : null}
 			</TableToolbar>
 		</Card>

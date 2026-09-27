@@ -7,6 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { PopoverSurface } from '~/ui/PopoverSurface'
+import { Tooltip } from '~/ui/Tooltip'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import type { PngExportProfile } from './chartPngExport'
@@ -71,17 +72,25 @@ export function ChartPngExportButton({
 		copyImage()
 	}
 
+	const exportLabel = csvMenuItem ? 'Export chart' : 'Export chart as image'
+
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure
+			<Tooltip
+				content={exportLabel}
+				render={
+					<Ariakit.PopoverDisclosure
+						store={popover}
+						data-loading={isLoading}
+						disabled={disabled || isLoading}
+						aria-label={iconOnly ? exportLabel : undefined}
+					/>
+				}
 				className={className}
-				data-loading={isLoading}
-				disabled={disabled || isLoading}
-				title={csvMenuItem ? 'Export chart' : 'Export chart as image'}
 			>
 				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
 				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
-			</Ariakit.PopoverDisclosure>
+			</Tooltip>
 
 			<PopoverSurface variant="actions" gutter={8} className="z-50">
 				{csvMenuItem ? (

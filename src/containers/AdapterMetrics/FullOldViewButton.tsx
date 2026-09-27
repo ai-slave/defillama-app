@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { useDashboardCreation } from '~/containers/ProDashboard/hooks/useDashboardCreation'
 import { useIsClient } from '~/hooks/useIsClient'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -52,15 +52,14 @@ export function FullOldViewButton() {
 	return (
 		<>
 			<span className="flex items-center gap-1">
-				<button type="button" onClick={handleClick} disabled={isLoading} className={buttonStyles({ size: 'md' })}>
+				<Button type="button" size="md" onClick={handleClick} disabled={isLoading}>
 					{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
 					<span>Open in Dashboard</span>
-				</button>
+				</Button>
 				<Hovercard
 					content={featureContent}
 					contentClassName="w-max max-w-(--popover-available-width) p-3"
-					render={<button type="button" aria-label="What Full View includes" />}
-					className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+					render={<Button type="button" variant="ghost" size="md" square aria-label="What Full View includes" />}
 				>
 					<Icon name="help-circle" height={16} width={16} />
 				</Hovercard>

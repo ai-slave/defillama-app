@@ -37,7 +37,7 @@ import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { popoverRowWithBorderStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
-import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { LoadingIndicator, PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -392,7 +392,9 @@ export function TokenUsageSearch() {
 
 			<ComboboxSurface variant="list" sameWidth>
 				{isLoading ? (
-					<p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p>
+					<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">
+						<LoadingIndicator />
+					</p>
 				) : error ? (
 					<p className="px-3 py-6 text-center body-sm text-data-down" role="alert">{`Error: ${error.message}`}</p>
 				) : !data?.length ? (

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { BasicLink } from '~/components/Link'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { countryLabel, ExchangeCountrySelect, type useExchangeCountry } from './ExchangeCountrySelect'
@@ -135,9 +135,9 @@ export function ProfileCountryCard({
 						Country-specific information for {countryLabel(view.country)} could not be loaded. Showing global
 						information.
 					</p>
-					<button type="button" className={buttonStyles({ variant: 'outline', size: 'sm' })} onClick={view.retry}>
+					<Button type="button" variant="outline" size="sm" onClick={view.retry}>
 						Retry
-					</button>
+					</Button>
 				</div>
 			) : view.status !== 'global' && country ? (
 				<RegionalAvailability profileName={profileName} country={countryLabel(country)} regional={view.regional} />

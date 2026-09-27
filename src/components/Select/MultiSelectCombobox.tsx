@@ -10,6 +10,7 @@ import {
 	popoverSeeMoreStyles
 } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { LoadingIndicator } from '~/ui/Status'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { MultiSelectOption } from './types'
@@ -131,7 +132,11 @@ export function MultiSelectCombobox({
 				</span>
 
 				<Ariakit.ComboboxList ref={comboboxRef}>
-					{isLoading ? <p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p> : null}
+					{isLoading ? (
+						<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">
+							<LoadingIndicator />
+						</p>
+					) : null}
 					{matches.slice(0, viewableMatches).map((item) => (
 						<Ariakit.ComboboxItem
 							key={`multi-select-${item.value}`}

@@ -8,6 +8,7 @@ import { useDebouncedValue } from '~/hooks/useDebounce'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { LoadingIndicator } from '~/ui/Status'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { searchTokens } from './search'
 import { TOKEN_SEARCH_LIMIT, type TokenSearchResult } from './types'
@@ -126,8 +127,8 @@ export function TokenSearchDialog({
 						</button>
 					))}
 					{isLoading ? (
-						<p role="status" aria-live="polite" className="p-3 body-sm text-tertiary">
-							Loading...
+						<p role="status" aria-live="polite" className="p-3">
+							<LoadingIndicator />
 						</p>
 					) : null}
 					{!isLoading && visibleTokens.length === 0 ? (

@@ -1,6 +1,6 @@
 import { useState, type RefObject } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
@@ -289,17 +289,17 @@ export function KeyMetricsPngExportButton({
 	}
 
 	return (
-		<button
+		<Button
 			type="button"
+			size="sm"
 			onClick={() => {
 				void handleExport()
 			}}
 			disabled={isLoading}
-			className={buttonStyles({ size: 'sm' })}
 			title="Download Key Metrics as PNG"
 		>
 			{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={12} width={12} />}
 			<span>.png</span>
-		</button>
+		</Button>
 	)
 }

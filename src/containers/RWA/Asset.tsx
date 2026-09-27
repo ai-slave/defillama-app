@@ -20,10 +20,10 @@ import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
-import { LoadingDots } from '~/ui/Loaders'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
@@ -556,9 +556,8 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 						) : null}
 						{isFlowChart ? (
 							isLoadingFlows ? (
-								<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
-									Loading
-									<LoadingDots />
+								<ChartPanelBodyFallback role="status" aria-live="polite">
+									<LoadingIndicator />
 								</ChartPanelBodyFallback>
 							) : flowError ? (
 								<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
@@ -978,9 +977,8 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 							</ChartPanelToolbar>
 
 							{isLoadingYieldChart ? (
-								<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1 gap-1 body-sm text-tertiary">
-									Loading
-									<LoadingDots />
+								<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1">
+									<LoadingIndicator />
 								</ChartPanelBodyFallback>
 							) : (
 								<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>

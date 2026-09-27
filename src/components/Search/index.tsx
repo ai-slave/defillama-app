@@ -14,6 +14,7 @@ import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
+import { LoadingIndicator } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
@@ -158,14 +159,18 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 	if (debouncedSearchValue) {
 		if (isLoading) {
 			return (
-				<p role="status" className="flex items-center justify-center gap-1 p-4">
-					Loading
-					<LoadingDots />
+				<p role="status" className="flex justify-center p-4">
+					<LoadingIndicator />
 				</p>
 			)
 		}
 		if (error) {
-			return <p role="alert" className="flex items-center justify-center p-4 text-error">{`Error: ${error.message}`}</p>
+			return (
+				<p
+					role="alert"
+					className="flex items-center justify-center p-4 body-sm text-data-down"
+				>{`Error: ${error.message}`}</p>
+			)
 		}
 		if (data.length === 0) {
 			return (
@@ -186,9 +191,8 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 
 	if (isLoadingDefaultSearchList) {
 		return (
-			<p role="status" className="flex items-center justify-center gap-1 p-4">
-				Loading
-				<LoadingDots />
+			<p role="status" className="flex justify-center p-4">
+				<LoadingIndicator />
 			</p>
 		)
 	}
@@ -196,7 +200,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 		return (
 			<p
 				role="alert"
-				className="flex items-center justify-center p-4 text-error"
+				className="flex items-center justify-center p-4 body-sm text-data-down"
 			>{`Error: ${errorDefaultSearchList.message}`}</p>
 		)
 	}
@@ -310,14 +314,13 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					<Ariakit.ComboboxList alwaysVisible>
 						{debouncedSearchValue ? (
 							isLoading ? (
-								<p role="status" className="flex items-center justify-center gap-1 p-4">
-									Loading
-									<LoadingDots />
+								<p role="status" className="flex justify-center p-4">
+									<LoadingIndicator />
 								</p>
 							) : error ? (
 								<p
 									role="alert"
-									className="flex items-center justify-center p-4 text-error"
+									className="flex items-center justify-center p-4 body-sm text-data-down"
 								>{`Error: ${error.message}`}</p>
 							) : data.length === 0 ? (
 								<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
@@ -334,14 +337,13 @@ export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 								</>
 							)
 						) : isLoadingDefaultSearchList ? (
-							<p role="status" className="flex items-center justify-center gap-1 p-4">
-								Loading
-								<LoadingDots />
+							<p role="status" className="flex justify-center p-4">
+								<LoadingIndicator />
 							</p>
 						) : errorDefaultSearchList ? (
 							<p
 								role="alert"
-								className="flex items-center justify-center p-4 text-error"
+								className="flex items-center justify-center p-4 body-sm text-data-down"
 							>{`Error: ${errorDefaultSearchList.message}`}</p>
 						) : !defaultSearchList?.length ? (
 							<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">

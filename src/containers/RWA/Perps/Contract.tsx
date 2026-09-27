@@ -10,7 +10,7 @@ import {
 import { BasicLink } from '~/components/Link'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -293,7 +293,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 		<div className="flex flex-col gap-2">
 			<ChartPanelToolbar>
 				<Ariakit.DialogProvider store={metricsDialogStore}>
-					<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
+					<Ariakit.DialogDisclosure render={<Button size="md" />}>
 						<span>Add Metrics</span>
 						<Icon name="plus" className="size-3.5" />
 					</Ariakit.DialogDisclosure>

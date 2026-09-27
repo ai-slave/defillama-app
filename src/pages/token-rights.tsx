@@ -526,7 +526,10 @@ function TokenRightsPage({
 					<div className="overflow-hidden">
 						<Table table={table} rowSize={58} />
 						{filteredProtocols.length === 0 ? (
-							<div className="flex min-h-[180px] items-center justify-center border-t border-subtle px-4 text-center body-sm text-secondary">
+							<div
+								role="status"
+								className="flex min-h-[180px] items-center justify-center border-t border-subtle px-4 text-center body-sm text-tertiary"
+							>
 								No protocols found for these filters
 							</div>
 						) : null}
