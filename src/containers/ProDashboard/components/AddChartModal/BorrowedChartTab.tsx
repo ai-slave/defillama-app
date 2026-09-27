@@ -4,9 +4,9 @@ import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesCh
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -87,25 +87,26 @@ export function BorrowedChartTab({
 		aggregateOthers: activeChartType === 'chainsBorrowed' || activeChartType === 'tokenBorrowedUsd',
 		type: 'line',
 		fillMissingWithZero: true,
-		selectionKey: `${selectedBorrowedProtocol}:${activeChartType}`
+		scope: `${selectedBorrowedProtocol}:${activeChartType}`
 	})
 	const dataset = isRuntimeBreakdown ? runtimePresentation.dataset : EMPTY_DATASET
 	const charts = useMemo(
 		() => runtimePresentation.charts.map((chart) => ({ ...chart, hideAreaStyle: true })),
 		[runtimePresentation.charts]
 	)
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: pieSeriesNames,
-		selectionKey: `${selectedBorrowedProtocol}:tokensBorrowedPie`
+		scope: `${selectedBorrowedProtocol}:tokensBorrowedPie`
 	})
 	const piePresentation = useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: borrowedData.pieSeries,
 				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+				includeUpstreamOthers: pieSelection.isDefaultSelection
 			}),
-		[borrowedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+		[borrowedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
 	)
 	const selectorLabel = activeChartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 

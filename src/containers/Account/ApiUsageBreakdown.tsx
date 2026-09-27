@@ -2,8 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { type ApiUsageChartColors, buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
@@ -122,9 +122,10 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 	const activeColors = colors ?? FALLBACK_CHART_COLORS
 
 	const { sortedStats, totalRequests, averageRequests, windowDays, routeSeries } = useChartSource(usageStats)
-	const { activeSeries, setSelectedSeries } = useAllSeriesSelection({
+	const { activeSeries, setSelectedSeries } = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: routeSeries,
-		selectionKey: String(windowDays)
+		scope: String(windowDays)
 	})
 	const { dataset, charts } = useChartData(
 		sortedStats,

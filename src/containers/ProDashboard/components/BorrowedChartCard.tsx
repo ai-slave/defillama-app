@@ -3,11 +3,11 @@ import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/tim
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { buildCompleteProtocolBreakdownDataset } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
+import { buildProtocolBreakdownCsvDataset } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPE_LABELS } from '../borrowedChartConstants'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -76,14 +76,15 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		[borrowedData.pieSeries.peers]
 	)
 	const isRuntimeBreakdown = chartType !== 'tokensBorrowedPie'
+	const aggregateOthers = chartType === 'chainsBorrowed' || chartType === 'tokenBorrowedUsd'
 	const runtimePresentation = useProtocolBreakdownPresentation({
 		breakdown: borrowedData.breakdown ?? [],
 		availableSeries: isRuntimeBreakdown ? seriesNames : [],
 		defaultSeries: borrowedData.defaultSeriesNames,
-		aggregateOthers: chartType === 'chainsBorrowed' || chartType === 'tokenBorrowedUsd',
+		aggregateOthers,
 		type: 'line',
 		fillMissingWithZero: true,
-		selectionKey: `${protocol}:${chartType}`
+		scope: `${protocol}:${chartType}`
 	})
 	const rawDataset = isRuntimeBreakdown ? runtimePresentation.dataset : EMPTY_DATASET
 	const visibleCharts = useMemo(() => {
@@ -92,18 +93,19 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 	}, [chartType, runtimePresentation.charts])
 
 	const selectorValues = seriesNames
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: pieSeriesNames,
-		selectionKey: `${protocol}:tokensBorrowedPie`
+		scope: `${protocol}:tokensBorrowedPie`
 	})
 	const piePresentation = useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: borrowedData.pieSeries,
 				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+				includeUpstreamOthers: pieSelection.isDefaultSelection
 			}),
-		[borrowedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+		[borrowedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
@@ -127,7 +129,11 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 				filename = `${protocolSlug}-borrowed-by-token-usd`
 				break
 			case 'tokensBorrowedPie':
-				exportDataset = buildRuntimePieChartCsvDataset(borrowedData.pieSeries)
+				exportDataset = buildRuntimePieChartCsvDataset({
+					series: borrowedData.pieSeries,
+					selectedSeries: pieSelection.selectedCharts,
+					includeUpstreamOthers: pieSelection.isDefaultSelection
+				})
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break
 			case 'tokenBorrowedRaw':
@@ -136,14 +142,14 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		}
 
 		if (isRuntimeBreakdown) {
-			const completeDataset = buildCompleteProtocolBreakdownDataset({
+			const pickedDataset = buildProtocolBreakdownCsvDataset({
 				breakdown: borrowedData.breakdown,
 				availableSeries: seriesNames,
-				includeUpstreamOthers: chartType === 'chainsBorrowed' || chartType === 'tokenBorrowedUsd',
+				activeSeries: runtimePresentation.activeSeries,
+				includeUpstreamOthers: aggregateOthers && runtimePresentation.isDefaultSelection,
 				fillMissingWithZero: true
 			})
-			if (!completeDataset) throw new Error('Borrowed chart data is unavailable')
-			exportDataset = filterChartDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+			exportDataset = filterChartDatasetByTimePeriod(pickedDataset, timePeriod, customTimePeriod)
 		}
 
 		return prepareProChartCsv(exportDataset, filename)

@@ -96,7 +96,10 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 
 ## Filter Pickers
 
-- Filter pickers read and write the page URL only through `src/components/Select/query.ts`; its header lists the rules. Pass a picker its URL keys and options and let it read its own selection; filter rows, requests and exports with `readSelectionFromQuery`, on the client and the server alike.
+- Keep a selection in the URL when it filters page data (tables, totals, exports) or should survive a reload or a shared link. Keep it local when it only changes what one chart draws, such as the series a breakdown chart shows. Never keep a list selection in plain `useState`.
+- URL selections are read and written only through `src/components/Select/query.ts`; its header lists the rules. Pass a picker its URL keys and options and let it read its own selection; filter rows, requests and exports with `readSelectionFromQuery`, on the client and the server alike.
+- Local selections use `useLocalSelection` (or `useSelectionIntent` when an API needs the intent) from `src/components/Select/localSelection.ts`; its header lists the rules. Give it a `scope` that names the entity and the chart, such as `${protocol}:tokens`, so a page that stays mounted while the entity changes starts from the default.
+- A chart's CSV follows its picker: every picked series in its own column, without the top-N "Others" fold, plus the upstream "Others" only while the chart shows it. Percent views export the same shares the chart draws. Build exports with `selectChartDatasetColumns` or the shared builders in `src/components/ECharts/MultiSeriesChart/selection.ts` and `src/components/ECharts/PieChart/data.ts`, never from the full dataset.
 
 ## UI Changes
 

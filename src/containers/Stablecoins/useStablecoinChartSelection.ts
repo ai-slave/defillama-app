@@ -1,50 +1,12 @@
 import * as React from 'react'
-import type { StablecoinRuntimeSeries, StablecoinSeriesSelectionIntent } from './chartSeries'
+import { pickSelectionIntent, resolveLocalSelection, type SelectionIntent } from '~/components/Select/localSelection'
+import type { StablecoinRuntimeSeries } from './chartSeries'
 import type { StablecoinMarketCapSeries } from './marketCapPresentation'
 
-function reconcileStablecoinSelection({
-	availableSeries,
-	selectedSeries,
-	defaultSeries,
-	fallbackToDefault
-}: {
-	availableSeries: ReadonlyArray<string>
-	selectedSeries: ReadonlyArray<string> | null
-	defaultSeries: ReadonlyArray<string>
-	fallbackToDefault: boolean
-}) {
-	if (availableSeries.length === 0 || selectedSeries?.length === 0) return []
-	const available = new Set(availableSeries)
-	const preferred = selectedSeries ?? defaultSeries
-	const reconciled: Array<string> = []
-	const included = new Set<string>()
-	for (const name of preferred) {
-		if (!available.has(name) || included.has(name)) continue
-		included.add(name)
-		reconciled.push(name)
-	}
-	if (reconciled.length > 0) return reconciled
-	if (selectedSeries && !fallbackToDefault) return []
-	for (const name of defaultSeries) {
-		if (!available.has(name) || included.has(name)) continue
-		included.add(name)
-		reconciled.push(name)
-	}
-	return reconciled
-}
-
-export function useStablecoinSelectionIntent(selectionKey: string) {
-	const [selectionByKey, setSelectionByKey] = React.useState<Record<string, StablecoinSeriesSelectionIntent>>({})
-	const selectionIntent = selectionByKey[selectionKey] ?? null
-	const setSelectionIntent = React.useCallback(
-		(intent: StablecoinSeriesSelectionIntent) =>
-			setSelectionByKey((current) => ({ ...current, [selectionKey]: intent })),
-		[selectionKey]
-	)
-	return { selectionIntent, setSelectionIntent }
-}
-
-/** Resolve one controlled intent against the active snapshot or runtime payload. */
+/**
+ * Resolves one chart's intent, kept by `useSelectionIntent` so the page can send it to the stablecoins API, against the
+ * snapshot or runtime series with the shared local-selection rules.
+ */
 export function useStablecoinChartSelection({
 	marketCapSeries,
 	runtimeSeries,
@@ -56,28 +18,21 @@ export function useStablecoinChartSelection({
 		StablecoinRuntimeSeries,
 		'selectableSeries' | 'defaultSeries' | 'renderedSelectableSeries' | 'fixedRemainderSeries'
 	>
-	selectionIntent: StablecoinSeriesSelectionIntent
-	setSelectionIntent: (intent: StablecoinSeriesSelectionIntent) => void
+	selectionIntent: SelectionIntent | null
+	setSelectionIntent: (intent: SelectionIntent | null) => void
 }) {
 	const selectableSeries = marketCapSeries?.selectionSeries ?? runtimeSeries.selectableSeries
 	const defaultSeries = marketCapSeries?.defaultSeries ?? runtimeSeries.defaultSeries
-	const selectedNames = React.useMemo(() => {
-		if (!selectionIntent) return null
-		if (selectionIntent.mode === 'include') return selectionIntent.names
-		const excluded = new Set(selectionIntent.names)
-		return selectableSeries.filter((name) => !excluded.has(name))
-	}, [selectableSeries, selectionIntent])
-	const reconciledSeries = React.useMemo(
+	const activeSeries = React.useMemo(
 		() =>
-			reconcileStablecoinSelection({
+			resolveLocalSelection({
+				intent: selectionIntent,
 				availableSeries: selectableSeries,
-				selectedSeries: selectedNames,
 				defaultSeries,
-				fallbackToDefault: marketCapSeries != null
+				allowEmptySelection: true
 			}),
-		[defaultSeries, marketCapSeries, selectableSeries, selectedNames]
+		[defaultSeries, selectableSeries, selectionIntent]
 	)
-	const activeSeries = reconciledSeries
 	const renderedCharts = React.useMemo(() => {
 		const rendered = new Set(activeSeries)
 		if (!marketCapSeries && runtimeSeries.renderedSelectableSeries.every((name) => rendered.has(name))) {
@@ -86,22 +41,17 @@ export function useStablecoinChartSelection({
 		return rendered
 	}, [activeSeries, marketCapSeries, runtimeSeries.fixedRemainderSeries, runtimeSeries.renderedSelectableSeries])
 	const setSelectedSeries = React.useCallback(
-		(nextSelection: Array<string>) => {
-			const selected = new Set(nextSelection)
-			const selectsDefault =
-				nextSelection.length === defaultSeries.length && defaultSeries.every((name) => selected.has(name))
-			if (selectsDefault) {
-				setSelectionIntent(null)
-				return
-			}
-			const excludedNames = selectableSeries.filter((name) => !selected.has(name))
+		(nextSelection: Array<string>) =>
 			setSelectionIntent(
-				nextSelection.length <= excludedNames.length
-					? { mode: 'include', names: nextSelection }
-					: { mode: 'exclude', names: excludedNames }
-			)
-		},
-		[defaultSeries, selectableSeries, setSelectionIntent]
+				pickSelectionIntent({
+					intent: selectionIntent,
+					requested: nextSelection,
+					availableSeries: selectableSeries,
+					defaultSeries,
+					allowEmptySelection: true
+				})
+			),
+		[defaultSeries, selectableSeries, selectionIntent, setSelectionIntent]
 	)
 
 	return { activeSeries, selectableSeries, renderedCharts, setSelectedSeries }

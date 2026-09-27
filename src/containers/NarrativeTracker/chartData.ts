@@ -1,4 +1,5 @@
 import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
+import { boundSelection } from '~/components/Select/localSelection'
 import type { TimeSeriesEntry } from './api.types'
 import type { IPctChangeRow } from './types'
 
@@ -141,4 +142,19 @@ export function filterNarrativeTreemapTreeData(
 		filtered.push({ ...category, value: [marketCap, null, null, 0], children })
 	}
 	return filtered
+}
+
+/**
+ * The line and bar charts draw only the first `limit` selected series. An edit made there replaces that visible part
+ * and keeps the rest of the selection, which the heatmap still shows. Deselecting everything clears it all.
+ */
+export function editVisibleSelection(
+	selected: ReadonlyArray<string>,
+	edited: Array<string>,
+	limit: number
+): Array<string> {
+	if (edited.length === 0) return []
+	const visible = selected.slice(0, limit)
+	const shownSet = new Set(visible)
+	return [...boundSelection(visible, edited, limit), ...selected.filter((name) => !shownSet.has(name))]
 }

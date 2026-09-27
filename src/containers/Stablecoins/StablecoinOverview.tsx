@@ -13,6 +13,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
+import { useSelectionIntent } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
@@ -53,7 +54,7 @@ import { capitalizeFirstLetter, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
-import { fetchCompleteStablecoinSeriesCsvDataset, fetchCompleteStablecoinVolumeCsvDataset } from './csvDataset'
+import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -61,7 +62,7 @@ import {
 } from './marketCapPresentation'
 import { StablecoinByChainUsageTable } from './StablecoinUsageByChainTable'
 import type { PeggedAssetPageProps } from './types'
-import { useStablecoinChartSelection, useStablecoinSelectionIntent } from './useStablecoinChartSelection'
+import { useStablecoinChartSelection } from './useStablecoinChartSelection'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -162,7 +163,7 @@ export function PeggedAssetInfo({
 	const seriesSelectorLabel =
 		getStablecoinSeriesSelectorLabel(ASSET_CHART_MODE, chartType, chartView) ??
 		(chartType === 'marketCap' && chartView === 'pie' ? 'Chain' : null)
-	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(
+	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(
 		`asset-${slug(name)}-${chartType}-${seriesSelectorLabel ?? 'none'}`
 	)
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
@@ -345,13 +346,16 @@ export function PeggedAssetInfo({
 	const activeSelectedCharts =
 		seriesSelectorLabel && selectableSeries.length > 1 ? selectedChartsWithHelpers : undefined
 	const csvSource: ChartCsvSource | null = marketCapSeries
-		? { type: 'dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		? {
+				type: 'dataset',
+				prepare: () => buildStablecoinMarketCapCsvDataset({ series: marketCapSeries, selectedSeries: renderedCharts })
+			}
 		: activeSelectedCharts && volumeChartKind != null
 			? {
 					type: 'dataset',
 					prepare: () =>
-						fetchCompleteStablecoinVolumeCsvDataset(
-							{ scope: 'token', token: volumeToken, chart: volumeChartKind },
+						fetchStablecoinVolumeCsvDataset(
+							{ scope: 'token', token: volumeToken, chart: volumeChartKind, selectionIntent },
 							volumeGroupBy
 						)
 				}
@@ -359,11 +363,12 @@ export function PeggedAssetInfo({
 				? {
 						type: 'dataset',
 						prepare: () =>
-							fetchCompleteStablecoinSeriesCsvDataset(
+							fetchStablecoinSeriesCsvDataset(
 								{
 									scope: 'asset',
 									stablecoin: slug(name),
 									chart: selectedSeriesChart,
+									selectionIntent,
 									includeUnreleased
 								},
 								null

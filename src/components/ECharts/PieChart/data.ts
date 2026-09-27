@@ -14,14 +14,6 @@ export interface RuntimePieChartData {
 	upstreamOthersValue: number
 }
 
-/** Export canonical slices without applying top-N or interactive legend selection. */
-export function buildRuntimePieChartCsvDataset(series: RuntimePieChartData): MultiSeriesChartDataset {
-	const source: MultiSeriesChartDataset['source'] = []
-	for (const peer of series.peers) source.push([peer.name, peer.value])
-	if (series.upstreamOthersValue > 0) source.push(['Others', series.upstreamOthersValue])
-	return { dimensions: ['Name', 'Value'], source }
-}
-
 /** Normalize and rank pie slices, folding the tail and any explicit remainder into `Others`. */
 export function preparePieChartData({
 	data,
@@ -137,6 +129,15 @@ export function buildRuntimePieChartTableRows({
 		rows.push({ name: 'Others', value: series.upstreamOthersValue, share: toShare(series.upstreamOthersValue) })
 	}
 	return rows
+}
+
+/** Export the pie's selected slices without the top-N fold, the same rows as its table view. */
+export function buildRuntimePieChartCsvDataset(
+	selection: Parameters<typeof buildRuntimePieChartTableRows>[0]
+): MultiSeriesChartDataset {
+	const source: MultiSeriesChartDataset['source'] = []
+	for (const row of buildRuntimePieChartTableRows(selection)) source.push([row.name, row.value])
+	return { dimensions: ['Name', 'Value'], source }
 }
 
 export function buildRuntimePieChartPresentation({

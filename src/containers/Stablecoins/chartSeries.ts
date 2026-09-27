@@ -4,6 +4,7 @@ import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesDataset
 } from '~/components/ECharts/MultiSeriesChart/types'
+import type { SelectionIntent } from '~/components/Select/localSelection'
 import { CHART_COLORS } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
 import { getGroupedBarCharts } from './chartGrouping'
@@ -99,10 +100,8 @@ export type StablecoinBreakdownSelectionOptions = {
 	seriesLimit?: number
 }
 
-export type StablecoinSeriesSelectionIntent =
-	| { mode: 'include'; names: Array<string> }
-	| { mode: 'exclude'; names: Array<string> }
-	| null
+/** The chart's selection intent as the stablecoins API reads it; `null` follows the default. */
+export type StablecoinSeriesSelectionIntent = SelectionIntent | null
 
 type StablecoinBreakdownSelection = {
 	availableSeries: Array<string>
@@ -116,7 +115,7 @@ type StablecoinBreakdownSelection = {
 
 const resolveStablecoinBreakdownSelection = ({
 	seriesNames,
-	selectedNames,
+	selectedNames: requestedNames,
 	excludedNames,
 	seriesLimit,
 	getLatestValue,
@@ -126,7 +125,9 @@ const resolveStablecoinBreakdownSelection = ({
 	getLatestValue: (name: string) => number
 	defaultSeriesNames?: ReadonlyArray<string>
 }): StablecoinBreakdownSelection => {
-	const hasExclusionIntent = excludedNames != null
+	// A pick list that names nothing here follows the default, as `resolveLocalSelection` shows it on the client.
+	const selectedNames =
+		requestedNames?.length && !requestedNames.some((name) => seriesNames.includes(name)) ? null : requestedNames
 	const uniqueNames: Array<string> = []
 	const seen = new Set<string>()
 	let hasReservedOthers = false
@@ -139,6 +140,9 @@ const resolveStablecoinBreakdownSelection = ({
 		}
 		uniqueNames.push(name)
 	}
+
+	// An exclusion that leaves nothing here also follows the default, as `resolveLocalSelection` shows it.
+	const hasExclusionIntent = excludedNames != null && uniqueNames.some((name) => !excludedNames.includes(name))
 
 	// Ranking once at the presentation boundary keeps the default chart bounded
 	// without changing the chronological order of the underlying dataset.

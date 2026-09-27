@@ -13,6 +13,7 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
+import { useSelectionIntent } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
@@ -45,7 +46,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
-import { fetchCompleteStablecoinSeriesCsvDataset, fetchCompleteStablecoinVolumeCsvDataset } from './csvDataset'
+import { fetchStablecoinSeriesCsvDataset, fetchStablecoinVolumeCsvDataset } from './csvDataset'
 import {
 	buildStablecoinMarketCapCsvDataset,
 	buildStablecoinMarketCapPresentation,
@@ -53,7 +54,7 @@ import {
 } from './marketCapPresentation'
 import { StablecoinChangeStats } from './StablecoinChangeStats'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
-import { useStablecoinChartSelection, useStablecoinSelectionIntent } from './useStablecoinChartSelection'
+import { useStablecoinChartSelection } from './useStablecoinChartSelection'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -119,7 +120,7 @@ export function ChainsWithStablecoins({
 		(chartType === 'marketCap' && (chartView === 'pie' || chartView === 'hbar' || chartView === 'treemap')
 			? 'Chain'
 			: null)
-	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(
+	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(
 		`chains-${chartType}-${seriesSelectorLabel ?? 'none'}`
 	)
 	const volumeGroupBy = parseStablecoinVolumeGroupBy(router.query.groupBy)
@@ -269,21 +270,25 @@ export function ChainsWithStablecoins({
 		}
 	}, [chartType, chartView])
 	const csvSource: ChartCsvSource | null = marketCapSeries
-		? { type: 'dataset', prepare: () => buildStablecoinMarketCapCsvDataset(marketCapSeries) }
+		? {
+				type: 'dataset',
+				prepare: () => buildStablecoinMarketCapCsvDataset({ series: marketCapSeries, selectedSeries: renderedCharts })
+			}
 		: activeSelectedCharts && volumeChartKind != null
 			? {
 					type: 'dataset',
 					prepare: () =>
-						fetchCompleteStablecoinVolumeCsvDataset({ scope: 'global', chart: volumeChartKind }, volumeGroupBy)
+						fetchStablecoinVolumeCsvDataset({ scope: 'global', chart: volumeChartKind, selectionIntent }, volumeGroupBy)
 				}
 			: activeSelectedCharts && selectedSeriesChart != null
 				? {
 						type: 'dataset',
 						prepare: () =>
-							fetchCompleteStablecoinSeriesCsvDataset(
+							fetchStablecoinSeriesCsvDataset(
 								{
 									scope: 'chains',
 									chart: selectedSeriesChart,
+									selectionIntent,
 									includeUnreleased: selectedSeriesChart === 'dominance' && includeUnreleased
 								},
 								null

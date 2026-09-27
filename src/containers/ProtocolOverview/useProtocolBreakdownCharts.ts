@@ -287,19 +287,26 @@ const hasBreakdownSeries = (breakdown: ProtocolBreakdownChart, name: string): bo
 	return false
 }
 
-export function buildCompleteProtocolBreakdownDataset({
+/**
+ * The breakdown's export: every picked series in canonical order without the top-N fold, plus the upstream
+ * `Others` while the chart shows it.
+ */
+export function buildProtocolBreakdownCsvDataset({
 	breakdown,
 	availableSeries,
+	activeSeries,
 	includeUpstreamOthers,
 	fillMissingWithZero
 }: {
 	breakdown: ProtocolBreakdownChart | null | undefined
 	availableSeries: ReadonlyArray<string>
+	activeSeries: ReadonlyArray<string>
 	includeUpstreamOthers: boolean
 	fillMissingWithZero: boolean
-}): TimestampDataset | null {
-	if (!breakdown?.length) return null
-	const seriesNames = [...availableSeries]
+}): TimestampDataset {
+	if (!breakdown?.length) return { source: [], dimensions: ['timestamp'] }
+	const active = new Set(activeSeries)
+	const seriesNames = availableSeries.filter((name) => active.has(name))
 	if (
 		includeUpstreamOthers &&
 		hasBreakdownSeries(breakdown, OTHERS_SERIES_NAME) &&
@@ -343,12 +350,13 @@ export const buildProtocolBreakdownPresentation = ({
 	const csvSource: ChartCsvSource = {
 		type: 'dataset',
 		prepare: () =>
-			buildCompleteProtocolBreakdownDataset({
+			buildProtocolBreakdownCsvDataset({
 				breakdown,
 				availableSeries,
-				includeUpstreamOthers: aggregateOthers,
+				activeSeries,
+				includeUpstreamOthers,
 				fillMissingWithZero
-			}) ?? { source: [], dimensions: ['timestamp'] }
+			})
 	}
 	if (!breakdown?.length) {
 		return { dataset: null, charts: EMPTY_MULTI_SERIES_CHARTS, csvSource }
@@ -903,21 +911,19 @@ export function useProtocolBreakdownCharts(
 		}
 	})
 
-	const [computed, setComputed] = React.useState<IUseProtocolBreakdownChartsComputed>(EMPTY_COMPUTED_RESULT)
-	const [isComputing, setIsComputing] = React.useState(false)
+	const [computed, setComputed] = React.useState<{
+		protocol: string
+		result: IUseProtocolBreakdownChartsComputed
+	} | null>(null)
 	const computeRunIdRef = React.useRef(0)
 
 	React.useEffect(() => {
-		// While the network is loading the caller already reports loading, so the flag is left as it is and
-		// the next run sets it.
+		// Nothing to compute until the data arrives; the previous result stays on screen meanwhile.
 		if (isNetworkLoading) return
 
 		let cancelled = false
 		const runId = ++computeRunIdRef.current
-		// The flag drives a loading state for work scheduled on an idle callback, which is an external
-		// scheduler; it cannot be derived during render.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setIsComputing(true)
+		const computedProtocol = protocol
 
 		const runComputation = () => {
 			if (cancelled || runId !== computeRunIdRef.current) return
@@ -931,8 +937,7 @@ export function useProtocolBreakdownCharts(
 			})
 
 			if (cancelled || runId !== computeRunIdRef.current) return
-			setComputed(next)
-			setIsComputing(false)
+			setComputed({ protocol: computedProtocol, result: next })
 		}
 
 		let timeoutId: number | undefined
@@ -958,7 +963,7 @@ export function useProtocolBreakdownCharts(
 			}
 		}
 		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- computeSignature is the trigger: the computation reads its inputs from the ref, so the signature is what says they changed.
-	}, [isNetworkLoading, computeSignature, source, inflows, computeInflows, tokenPieMinimumValue])
+	}, [isNetworkLoading, computeSignature, protocol, source, inflows, computeInflows, tokenPieMinimumValue])
 
 	const errors = React.useMemo(
 		() =>
@@ -971,9 +976,12 @@ export function useProtocolBreakdownCharts(
 		[tvlChartQueries, chainBreakdownChartQueries, tokenBreakdownUsdQueries, tokenBreakdownRawQueries, keysToFetch]
 	)
 
+	// Only the first result for a protocol is a loading state. A recompute after a settings toggle keeps showing the
+	// previous charts, so the cards stay mounted and keep their series selections.
+	const current = computed?.protocol === protocol ? computed.result : null
 	return {
-		isLoading: isNetworkLoading || isComputing,
+		isLoading: current === null,
 		errors,
-		...computed
+		...(current ?? EMPTY_COMPUTED_RESULT)
 	}
 }

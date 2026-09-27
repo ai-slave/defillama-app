@@ -190,6 +190,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 
 					<DeferredLiquidationsDistributionChart
 						chart={data.distributionChart}
+						scope={`token:${data.tokenSymbol}`}
 						timestamp={data.timestamp}
 						title={`${data.tokenSymbol} Liquidation Distribution`}
 						defaultBreakdownMode="protocol"

@@ -11,8 +11,10 @@ import {
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
@@ -27,7 +29,6 @@ import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPICo
 import { getTimePeriodBounds, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type { CexDatasetTableConfig } from '~/containers/ProDashboard/types'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatDateTime } from '~/utils/dateFormat'
 import { downloadCSV } from '~/utils/download'
@@ -448,9 +449,9 @@ function VenueMarketShareChart({
 		}
 	}, [filtered])
 	const venueSeries = useMemo(() => charts.map((chart) => chart.name), [charts])
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: venueSeries,
-		selectionKey: metric
+		scope: metric
 	})
 	const title = `CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`
 
@@ -481,7 +482,14 @@ function VenueMarketShareChart({
 						chartInstance={chartInstance}
 						filename={`cex-${metric}-market-share`}
 						title={title}
-						csvSource={{ type: 'dataset', prepare: () => dataset }}
+						csvSource={{
+							type: 'dataset',
+							prepare: () =>
+								selectChartDatasetColumns(
+									dataset,
+									charts.filter((chart) => selectedCharts.has(chart.name))
+								)
+						}}
 						smol
 					/>
 				</div>

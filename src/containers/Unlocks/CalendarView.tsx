@@ -6,12 +6,12 @@ import { lazy, Suspense } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -147,9 +147,9 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 		() => currentChart?.charts.map((chart) => chart.name) ?? [],
 		[currentChart?.charts]
 	)
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: protocolSeries,
-		selectionKey: 'calendar-protocols'
+		scope: 'calendar-protocols'
 	})
 	const selectedChart = React.useMemo(
 		() =>

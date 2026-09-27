@@ -4,6 +4,7 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -12,7 +13,6 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -158,7 +158,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 		activeSeries: selectedCategories,
 		selectedCharts,
 		setSelectedSeries: setSelectedCategories
-	} = useSeriesSelection({ availableSeries: categories })
+	} = useLocalSelection({ scope: 'categories-tvl', availableSeries: categories })
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const enabledTvls = React.useMemo(() => getEnabledProtocolsCategoriesTvls(extraTvlsEnabled), [extraTvlsEnabled])

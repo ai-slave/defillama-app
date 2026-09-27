@@ -3,10 +3,11 @@ import { lazy, type ReactNode, Suspense, useContext, useMemo } from 'react'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
-	buildCompleteProtocolBreakdownDataset,
+	buildProtocolBreakdownCsvDataset,
 	buildProtocolBreakdownPresentation,
 	MAX_PROTOCOL_BREAKDOWN_SERIES,
 	type ProtocolBreakdownChart
@@ -17,7 +18,6 @@ import {
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { useProDashboardCatalog, useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
@@ -113,14 +113,12 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		chartType === 'tokenInflows'
 	const selectorValues = isRuntimeBreakdown ? advancedSeriesNames : EMPTY_STACKS
 	const aggregateOthers = chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows'
-	const { activeSeries, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
+	const { activeSeries, setSelectedSeries, isDefaultSelection } = useLocalSelection({
 		availableSeries: selectorValues,
 		defaultSeries: advancedData.defaultSeriesNames,
 		...(aggregateOthers ? {} : { maxSelectedSeries: MAX_PROTOCOL_BREAKDOWN_SERIES }),
 		allowEmptySelection: true,
-		resetToDefaultWhenStale: true,
-		selectionKey: `${protocol}:${chartType}`,
-		storeDefaultAsIntent: true
+		scope: `${protocol}:${chartType}`
 	})
 	const runtimePresentation = useMemo(() => {
 		const presentation = buildProtocolBreakdownPresentation({
@@ -166,18 +164,19 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			}),
 		[chartType, advancedDataset, pieSeriesNames, renderedSeries]
 	)
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: pieSeriesNames,
-		selectionKey: `${protocol}:tokensPie`
+		scope: `${protocol}:tokensPie`
 	})
 	const piePresentation = useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: advancedData.pieSeries,
 				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+				includeUpstreamOthers: pieSelection.isDefaultSelection
 			}),
-		[advancedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+		[advancedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 
@@ -204,7 +203,11 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 				filename = `${protocolSlug}-token-values-usd`
 				break
 			case 'tokensPie':
-				exportDataset = buildRuntimePieChartCsvDataset(advancedData.pieSeries)
+				exportDataset = buildRuntimePieChartCsvDataset({
+					series: advancedData.pieSeries,
+					selectedSeries: pieSelection.selectedCharts,
+					includeUpstreamOthers: pieSelection.isDefaultSelection
+				})
 				filename = `${protocolSlug}-tokens-breakdown`
 				break
 			case 'tokenBalances':
@@ -219,14 +222,14 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		}
 
 		if (isRuntimeBreakdown) {
-			const completeDataset = buildCompleteProtocolBreakdownDataset({
+			const pickedDataset = buildProtocolBreakdownCsvDataset({
 				breakdown: advancedData.breakdown,
 				availableSeries: selectorValues,
-				includeUpstreamOthers: aggregateOthers,
+				activeSeries,
+				includeUpstreamOthers: aggregateOthers && isDefaultSelection,
 				fillMissingWithZero: true
 			})
-			if (!completeDataset) throw new Error('Advanced TVL data is unavailable')
-			exportDataset = filterChartDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+			exportDataset = filterChartDatasetByTimePeriod(pickedDataset, timePeriod, customTimePeriod)
 		}
 
 		return prepareProChartCsv(exportDataset, filename)

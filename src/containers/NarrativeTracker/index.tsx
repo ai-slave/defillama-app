@@ -2,9 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -13,7 +15,6 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { boundSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -24,6 +25,7 @@ import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatUsd } from '~/utils/numberFormat'
 import {
+	editVisibleSelection,
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedChange,
 	calculateDenominatedTimeSeries,
@@ -88,7 +90,8 @@ export function CategoryPerformanceContainer({
 	const [groupByDenom, setGroupByDenom] = React.useState<Denom>('$')
 
 	const availableSeries = areaChartLegend ?? EMPTY_SERIES
-	const { activeSeries: selectedSeries, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries: selectedSeries, setSelectedSeries } = useLocalSelection({
+		scope: `narrative-${categoryName ?? 'all'}`,
 		availableSeries,
 		allowEmptySelection: true
 	})
@@ -102,9 +105,9 @@ export function CategoryPerformanceContainer({
 				setSelectedSeries(values)
 				return
 			}
-			setSelectedSeries(boundSeriesSelection(displayedSelectedSeries, values, MAX_VISIBLE_TIME_SERIES))
+			setSelectedSeries(editVisibleSelection(selectedSeries, values, MAX_VISIBLE_TIME_SERIES))
 		},
-		[displayedSelectedSeries, setSelectedSeries, tab]
+		[selectedSeries, setSelectedSeries, tab]
 	)
 	const displayedSelectedCharts = React.useMemo(() => new Set(displayedSelectedSeries), [displayedSelectedSeries])
 
@@ -289,7 +292,16 @@ export function CategoryPerformanceContainer({
 								showCsv={tab !== 'heatmap'}
 								filename={`category-performance-${tab}`}
 								title={`Category Performance ${tab}`}
-								csvSource={{ type: 'dataset', prepare: () => deferredChartData.dataset }}
+								csvSource={{
+									type: 'dataset',
+									prepare: () =>
+										selectChartDatasetColumns(
+											deferredChartData.dataset,
+											(tab === 'barchart' ? deferredChartData.barCharts : deferredChartData.lineCharts).filter(
+												(chart) => displayedSelectedCharts.has(chart.name)
+											)
+										)
+								}}
 							/>
 						</ChartPanelToolbar>
 

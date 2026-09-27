@@ -10,6 +10,7 @@ import {
 } from '~/components/ECharts/PieChart/data'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
@@ -17,7 +18,6 @@ import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -119,8 +119,8 @@ export function BridgedTVLByChain({
 		activeSeries: selectedPieTokens,
 		selectedCharts: selectedPieTokenSet,
 		setSelectedSeries: setSelectedPieTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: pieSelectableSeries, selectionKey: chain })
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: chain })
 	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -250,7 +250,15 @@ export function BridgedTVLByChain({
 							filename={`${slug(chainName)}-bridged-tvl-${chartType}`}
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
-							csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(pieSeries) }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () =>
+									buildRuntimePieChartCsvDataset({
+										series: pieSeries,
+										selectedSeries: selectedPieTokenSet,
+										includeUpstreamOthers
+									})
+							}}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

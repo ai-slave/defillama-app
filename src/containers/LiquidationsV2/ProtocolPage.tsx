@@ -32,6 +32,7 @@ export function LiquidationsProtocolPage(props: LiquidationsProtocolPageProps) {
 				/>
 				<LiquidationsDistributionChart
 					chart={props.distributionChart}
+					scope={props.protocolName}
 					timestamp={props.timestamp}
 					title={`${props.protocolName} Liquidation Distribution`}
 					iconUrl={tokenIconUrl(props.protocolName)}

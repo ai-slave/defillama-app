@@ -4,13 +4,13 @@ import { useGeckoId, usePriceChart } from '~/api/client'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -649,9 +649,9 @@ function ChartContainer({
 	// carry a coincidentally matching subset into the next authored schedule.
 	const protocolSelectionScope = readSingleQueryValue(router.query.protocol) ?? data.name
 	const categorySelectionKey = `${protocolSelectionScope}:${dataType}:${allocationMode}`
-	const { activeSeries: selectedCategories, setSelectedSeries: setSelectedCategories } = useSeriesSelection({
+	const { activeSeries: selectedCategories, setSelectedSeries: setSelectedCategories } = useLocalSelection({
 		availableSeries: availableCategories,
-		selectionKey: categorySelectionKey
+		scope: categorySelectionKey
 	})
 
 	const displayData = useMemo(() => {
@@ -840,11 +840,22 @@ function ChartContainer({
 	)
 	// Deferred together with the rows, so labels and exports never pair old rows with a new grouping.
 	const scheduleChartData = useMemo(
-		() => ({ dataset, charts, groupBy: CHART_GROUP_BY[timeGrouping] }),
-		[dataset, charts, timeGrouping]
+		() => ({
+			dataset,
+			charts,
+			groupBy: CHART_GROUP_BY[timeGrouping],
+			hallmarks,
+			expandTo100Percent: chartType === 'bar'
+		}),
+		[dataset, charts, timeGrouping, hallmarks, chartType]
 	)
 	const deferredScheduleChartData = useDeferredValue(scheduleChartData)
-	const deferredAllocationPieChartData = useDeferredValue(formattedPieChartDataAllocationMode)
+	// The pie's colors follow its slices, so they are deferred with them.
+	const allocationPie = useMemo(
+		() => ({ chartData: formattedPieChartDataAllocationMode, stackColors: formattedAllocationPieStackColors }),
+		[formattedPieChartDataAllocationMode, formattedAllocationPieStackColors]
+	)
+	const deferredAllocationPie = useDeferredValue(allocationPie)
 	const deferredUnlockedPieChartData = useDeferredValue(unlockedPieChartData)
 
 	const pieChartLegendTextStyle = useMemo(() => ({ fontSize: width < 640 ? 12 : 14 }), [width])
@@ -1007,9 +1018,9 @@ function ChartContainer({
 								<MultiSeriesChart
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
-									hallmarks={hallmarks}
+									hallmarks={deferredScheduleChartData.hallmarks}
 									hallmarkStyle="mark-line"
-									expandTo100Percent={chartType === 'bar'}
+									expandTo100Percent={deferredScheduleChartData.expandTo100Percent}
 									solidChartAreaStyle
 									valueSymbol={data.tokenPrice.symbol ?? ''}
 									groupBy={deferredScheduleChartData.groupBy}
@@ -1029,8 +1040,8 @@ function ChartContainer({
 								<PieChart
 									showLegend
 									title="Allocation"
-									chartData={deferredAllocationPieChartData}
-									stackColors={formattedAllocationPieStackColors}
+									chartData={deferredAllocationPie.chartData}
+									stackColors={deferredAllocationPie.stackColors}
 									valueSymbol={data.tokenPrice.symbol ?? ''}
 									legendPosition={allocationPieChartLegendPosition}
 									legendTextStyle={pieChartLegendTextStyle}

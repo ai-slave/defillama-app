@@ -13,6 +13,9 @@ import type { ExcludeQueryKey } from './types'
  * - `include=a&include=b`: those options. Values that are not options are dropped and not counted.
  * - `exclude=c`: every option except those. The writer picks whichever list is shorter, so an exclude list
  *   means exactly the same as including the rest.
+ *
+ * A selection that only changes what one chart draws, and should not survive a reload, lives in React state through
+ * `./localSelection.ts`, which stores intent the same way.
  */
 export const getQueryUpdatesFromSelected = (
 	includeKey: string,

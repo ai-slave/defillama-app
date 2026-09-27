@@ -9,6 +9,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -17,7 +18,6 @@ import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Icon } from '~/ui/Icon'
@@ -176,10 +176,11 @@ export function BridgeInfo({
 		activeSeries: selectedTokens,
 		selectedCharts: selectedTokenSet,
 		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: activeTokenSeriesNames,
-		selectionKey: `${displayName}-${currentChain}`
+		scope: `${displayName}-${currentChain}`
 	})
 	const visibleTokenPresentation = React.useMemo(
 		() =>
@@ -212,7 +213,15 @@ export function BridgeInfo({
 			: chartType === 'Inflows' && !isAllChains
 				? { type: 'dataset', prepare: () => ({ ...inflowsDataset, groupBy }) }
 				: activeTokenSeries
-					? { type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(activeTokenSeries) }
+					? {
+							type: 'dataset',
+							prepare: () =>
+								buildRuntimePieChartCsvDataset({
+									series: activeTokenSeries,
+									selectedSeries: selectedTokenSet,
+									includeUpstreamOthers
+								})
+						}
 					: null
 
 	return (

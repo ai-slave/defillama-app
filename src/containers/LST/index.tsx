@@ -5,7 +5,8 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	buildSelectedAdditiveChart,
-	buildSelectedPercentageChart
+	buildSelectedPercentageChart,
+	selectChartDatasetColumns
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
@@ -16,6 +17,7 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -24,7 +26,6 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -269,25 +270,22 @@ export function LSTOverview({
 		activeSeries: selectedBreakdownTokens,
 		selectedCharts: selectedBreakdownTokensSet,
 		setSelectedSeries: setSelectedBreakdownTokens
-	} = useSeriesSelection({
+	} = useLocalSelection({
 		availableSeries: tokens,
-		selectionKey: 'breakdown'
+		scope: 'breakdown'
 	})
 	const {
 		activeSeries: selectedInflowTokens,
 		selectedCharts: selectedInflowTokensSet,
 		setSelectedSeries: setSelectedInflowTokens
-	} = useSeriesSelection({ availableSeries: tokens, selectionKey: 'inflows' })
+	} = useLocalSelection({ availableSeries: tokens, scope: 'inflows' })
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
 	const {
 		activeSeries: selectedPieTokens,
 		selectedCharts: selectedPieTokensSet,
 		setSelectedSeries: setSelectedPieTokens,
-		includeUpstreamOthers: includePieUpstreamOthers
-	} = useAllSeriesSelection({
-		availableSeries: pieSelectableSeries,
-		selectionKey: 'breakdown-pie'
-	})
+		isDefaultSelection: includePieUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: 'breakdown-pie' })
 	const visiblePieChartData = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -415,7 +413,12 @@ export function LSTOverview({
 											title="LST Breakdown"
 											csvSource={{
 												type: 'dataset',
-												prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+												prepare: () =>
+													buildRuntimePieChartCsvDataset({
+														series: pieSeries,
+														selectedSeries: selectedPieTokensSet,
+														includeUpstreamOthers: includePieUpstreamOthers
+													})
 											}}
 										/>
 									</ChartPanelToolbar>
@@ -489,7 +492,16 @@ export function LSTOverview({
 											renderedActiveChartData.kind === 'inflows'
 												? {
 														type: 'dataset',
-														prepare: () => ({ ...renderedActiveChartData.data.dataset, groupBy: renderedGroupBy })
+														prepare: () => ({
+															...selectChartDatasetColumns(
+																renderedActiveChartData.data.dataset,
+																(renderedGroupBy === 'cumulative'
+																	? renderedActiveChartData.data.cumulativeCharts
+																	: renderedActiveChartData.data.barCharts
+																).filter((chart) => selectedInflowTokensSet.has(chart.name))
+															),
+															groupBy: renderedGroupBy
+														})
 													}
 												: null
 										}

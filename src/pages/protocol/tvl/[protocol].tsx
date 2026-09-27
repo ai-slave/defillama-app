@@ -209,6 +209,7 @@ function InflowsByTokenChartCard({
 }) {
 	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
 		useProtocolBreakdownPresentation({
+			scope: exportFilenameBase,
 			breakdown,
 			availableSeries: allValues,
 			aggregateOthers: true,
@@ -222,8 +223,12 @@ function InflowsByTokenChartCard({
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const deferredDataset = React.useDeferredValue(dataset)
-	const deferredCharts = React.useDeferredValue(charts)
+	const chartSnapshot = React.useMemo(
+		() => ({ dataset, charts, selectedCharts, csvSource }),
+		[charts, csvSource, dataset, selectedCharts]
+	)
+	// Deferred together with the rows, so the chart and its export never pair old rows with a new selection.
+	const deferredChart = React.useDeferredValue(chartSnapshot)
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
@@ -253,7 +258,7 @@ function InflowsByTokenChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={view === 'table' ? buildSnapshotCsvSource(tableRows, 'Inflow') : csvSource}
+					csvSource={view === 'table' ? buildSnapshotCsvSource(tableRows, 'Inflow') : deferredChart.csvSource}
 					showPng={view !== 'table'}
 				/>
 			</ChartPanelToolbar>
@@ -262,13 +267,13 @@ function InflowsByTokenChartCard({
 			) : (
 				<React.Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
-						dataset={deferredDataset}
-						charts={deferredCharts}
-						csvSource={csvSource}
+						dataset={deferredChart.dataset}
+						charts={deferredChart.charts}
+						csvSource={deferredChart.csvSource}
 						hideDefaultLegend={false}
 						valueSymbol="$"
-						selectedCharts={selectedCharts}
-						{...(selectedCharts.size > 1
+						selectedCharts={deferredChart.selectedCharts}
+						{...(deferredChart.selectedCharts.size > 1
 							? { chartOptions: { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER_USD } } }
 							: {})}
 						onReady={handleChartReady}

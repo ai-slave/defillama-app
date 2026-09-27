@@ -7,6 +7,7 @@ import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from
 import { tvlOptionNames } from '~/components/Filters/options'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -16,7 +17,6 @@ import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchT
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -140,7 +140,10 @@ export function ForksOverview({
 
 	const forkSeries = React.useMemo(() => dominanceCharts.map((chart) => chart.name), [dominanceCharts])
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: forkSeries })
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
+		scope: 'forks-dominance',
+		availableSeries: forkSeries
+	})
 	const selectedDominance = React.useMemo(
 		() =>
 			buildSelectedPercentageChart({
@@ -155,11 +158,8 @@ export function ForksOverview({
 		activeSeries: activePieSeries,
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries,
-		includeUpstreamOthers: includePieUpstreamOthers
-	} = useAllSeriesSelection({
-		availableSeries: pieSelectableSeries,
-		selectionKey: 'fork-pie'
-	})
+		isDefaultSelection: includePieUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: 'fork-pie' })
 	const visibleTokenTvls = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -194,7 +194,12 @@ export function ForksOverview({
 							title="Forks TVL Breakdown"
 							csvSource={{
 								type: 'dataset',
-								prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+								prepare: () =>
+									buildRuntimePieChartCsvDataset({
+										series: pieSeries,
+										selectedSeries: selectedPieSeries,
+										includeUpstreamOthers: includePieUpstreamOthers
+									})
 							}}
 						/>
 					</ChartPanelToolbar>

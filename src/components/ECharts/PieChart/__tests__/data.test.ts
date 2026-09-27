@@ -108,9 +108,26 @@ describe('runtime pie selection', () => {
 			name: 'Others',
 			value: series.peers.slice(11).reduce((total, peer) => total + peer.value, 0)
 		})
-		expect(buildRuntimePieChartCsvDataset(series)).toEqual({
+	})
+
+	test('exports every picked slice without the top-N fold, and Others only while every slice is picked', () => {
+		const series = prepareRuntimePieChartData({ data: { A: 6, B: 5, C: 4, D: 3, E: 2, Others: 1 }, limit: 3 })
+		expect(
+			buildRuntimePieChartCsvDataset({ series, selectedSeries: new Set(['A', 'B', 'C', 'D', 'E']) }).source
+		).toEqual([
+			['A', 6],
+			['B', 5],
+			['C', 4],
+			['D', 3],
+			['E', 2],
+			['Others', 1]
+		])
+		expect(buildRuntimePieChartCsvDataset({ series, selectedSeries: new Set(['E', 'A']) })).toEqual({
 			dimensions: ['Name', 'Value'],
-			source: series.peers.map(({ name, value }) => [name, value])
+			source: [
+				['A', 6],
+				['E', 2]
+			]
 		})
 	})
 

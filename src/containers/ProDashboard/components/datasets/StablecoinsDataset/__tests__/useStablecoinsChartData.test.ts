@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest'
+import { resolveLocalSelection } from '~/components/Select/localSelection'
 import {
 	getTopStablecoinFromLatestPoints,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
 } from '~/containers/Stablecoins/chartSeries'
-import { reconcileSeriesSelection } from '~/hooks/useSeriesSelection'
 import {
-	buildCompleteProStablecoinCsvDataset,
+	buildProStablecoinCsvDataset,
 	buildProStablecoinChartPresentationFromCollection,
 	buildProStablecoinOverviewPayload,
 	collectProStablecoinChart
@@ -98,7 +98,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		const selectedPresentation = buildProStablecoinChartPresentationFromCollection(collection, {
 			selectedNames: ['USDC']
 		})
-		const completeCsvDataset = buildCompleteProStablecoinCsvDataset(collection)
+		const csvDataset = buildProStablecoinCsvDataset(collection, { selectedNames: ['USDC'] })
 
 		expect(reads).toBe(4)
 		expect(presentation.chartPayload.dataset).toEqual({
@@ -115,7 +115,13 @@ describe('buildProStablecoinOverviewPayload', () => {
 				[1_660_086_400_000, 75]
 			]
 		})
-		expect(completeCsvDataset).toEqual(presentation.chartPayload.dataset)
+		expect(csvDataset).toEqual({
+			dimensions: ['timestamp', 'USDC'],
+			source: [
+				[1_660_000_000_000, 50],
+				[1_660_086_400_000, 75]
+			]
+		})
 	})
 
 	test('preserves one backend Others remainder when peers are below the series limit', () => {
@@ -194,17 +200,17 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.defaultSeries).toEqual([])
 		expect(result.totalMcapCurrent).toBeNull()
 		expect(
-			reconcileSeriesSelection({
+			resolveLocalSelection({
 				availableSeries: ['DOUBLE'],
-				selectedSeries: null,
+				intent: null,
 				defaultSeries: result.defaultSeries,
 				allowEmptySelection: true
 			})
 		).toEqual([])
 		expect(
-			reconcileSeriesSelection({
+			resolveLocalSelection({
 				availableSeries: ['DOUBLE'],
-				selectedSeries: ['DOUBLE'],
+				intent: { mode: 'include', names: ['DOUBLE'] },
 				defaultSeries: result.defaultSeries,
 				allowEmptySelection: true
 			})

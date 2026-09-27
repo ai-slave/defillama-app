@@ -1,9 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesChart/tooltip'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -11,7 +13,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -335,7 +336,7 @@ function MNAVChart({
 		activeSeries: selectedInstitution,
 		selectedCharts,
 		setSelectedSeries: setSelectedInstitution
-	} = useSeriesSelection({ availableSeries: institutionsNames, selectionKey: title })
+	} = useLocalSelection({ availableSeries: institutionsNames, scope: `${metadata.name}:${title}` })
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -358,7 +359,14 @@ function MNAVChart({
 					chartInstance={chartInstance}
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
-					csvSource={{ type: 'dataset', prepare: () => data.dataset }}
+					csvSource={{
+						type: 'dataset',
+						prepare: () =>
+							selectChartDatasetColumns(
+								data.dataset,
+								data.charts.filter((chart) => selectedCharts.has(chart.name))
+							)
+					}}
 				/>
 			</ChartPanelToolbar>
 			<Suspense fallback={<ChartPanelBodyFallback />}>

@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useContext, useMemo } from 'react'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import {
-	buildRuntimePieChartCsvDataset,
-	prepareRuntimePieChartData,
-	type RuntimePieChartData
-} from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import {
@@ -52,7 +48,7 @@ interface UseStablecoinAssetChartDataResult {
 	stablecoinName: string
 	stablecoinSymbol: string
 	isInactive: boolean
-	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
+	prepareCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	isFetching: boolean
 	error: Error | null
@@ -191,16 +187,23 @@ export function buildStablecoinAssetPresentation(
 	}
 }
 
-export function buildCompleteStablecoinAssetCsvDataset(
+/** The chart's picked chains without the series limit; the chain pie exports from its own pie selection. */
+export function buildStablecoinAssetCsvDataset(
 	rawData: Pick<StablecoinAssetCacheValue, 'chainsData' | 'chainsUnique' | 'stablecoinSymbol'>,
 	chartType: StablecoinAssetChartType,
-	periodBounds?: { start: number; end: number } | null,
+	periodBounds: { start: number; end: number } | null | undefined,
+	selectionOptions: StablecoinBreakdownSelectionOptions | undefined,
 	canonicalHistory?: StablecoinCanonicalHistory | null
 ): MultiSeriesChartDataset {
-	const presentation = buildStablecoinAssetPresentation(rawData, chartType, periodBounds, undefined, canonicalHistory)
-	return presentation.chartType === 'chainPie'
-		? buildRuntimePieChartCsvDataset(presentation.pieSeries)
-		: presentation.dataset
+	const presentation = buildStablecoinAssetPresentation(
+		rawData,
+		chartType,
+		periodBounds,
+		{ ...selectionOptions, seriesLimit: Number.POSITIVE_INFINITY },
+		canonicalHistory
+	)
+	if (presentation.chartType === 'chainPie') throw new Error('The chain pie exports from its own pie selection')
+	return presentation.dataset
 }
 
 export function useStablecoinAssetChartData(
@@ -254,10 +257,10 @@ export function useStablecoinAssetChartData(
 		[rawData, chartType, periodBounds, selectionOptions, canonicalHistory]
 	)
 	const isInactive = rawData ? isInactiveStablecoin(rawData.peggedAssetData) : false
-	const prepareCompleteCsvDataset = useCallback(() => {
+	const prepareCsvDataset = useCallback(() => {
 		if (!rawData) throw new Error('Stablecoin asset data is unavailable')
-		return buildCompleteStablecoinAssetCsvDataset(rawData, chartType, periodBounds, canonicalHistory)
-	}, [canonicalHistory, chartType, periodBounds, rawData])
+		return buildStablecoinAssetCsvDataset(rawData, chartType, periodBounds, selectionOptions, canonicalHistory)
+	}, [canonicalHistory, chartType, periodBounds, rawData, selectionOptions])
 
 	return useMemo(
 		() => ({
@@ -266,7 +269,7 @@ export function useStablecoinAssetChartData(
 			stablecoinName: rawData?.stablecoinName ?? '',
 			stablecoinSymbol: rawData?.stablecoinSymbol ?? '',
 			isInactive,
-			prepareCompleteCsvDataset,
+			prepareCsvDataset,
 			isLoading,
 			isFetching,
 			error,
@@ -278,7 +281,7 @@ export function useStablecoinAssetChartData(
 			rawData?.stablecoinName,
 			rawData?.stablecoinSymbol,
 			isInactive,
-			prepareCompleteCsvDataset,
+			prepareCsvDataset,
 			isLoading,
 			isFetching,
 			error,

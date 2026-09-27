@@ -2,6 +2,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	type StablecoinAssetInfo,
@@ -26,11 +27,7 @@ import {
 	STABLECOIN_TOKEN_COLORS
 } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
-import {
-	useStablecoinChartSelection,
-	useStablecoinSelectionIntent
-} from '~/containers/Stablecoins/useStablecoinChartSelection'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
@@ -165,8 +162,9 @@ export function StablecoinsChartTab({
 			extra: slug(asset.name)
 		}))
 	}, [assetsList])
-	const { selectionIntent: chainSelectionIntent, setSelectionIntent: setChainSelectionIntent } =
-		useStablecoinSelectionIntent(`${selectedStablecoinChain}:${chainChartType}`)
+	const { intent: chainSelectionIntent, setIntent: setChainSelectionIntent } = useSelectionIntent(
+		`${selectedStablecoinChain}:${chainChartType}`
+	)
 	const chainSelectionOptions = useMemo(
 		() => ({
 			selectedNames: chainSelectionIntent?.mode === 'include' ? chainSelectionIntent.names : null,
@@ -181,7 +179,7 @@ export function StablecoinsChartTab({
 		seriesNames,
 		defaultSeries: chainDefaultSeries,
 		totalMcapCurrent,
-		prepareCompleteCsvDataset: prepareCompleteChainCsvDataset,
+		prepareCsvDataset: prepareChainCsvDataset,
 		isLoading: chainChartDataLoading
 	} = useStablecoinsChartData(
 		selectedStablecoinChain,
@@ -202,13 +200,11 @@ export function StablecoinsChartTab({
 		setSelectionIntent: setChainSelectionIntent
 	})
 	const chainPieSeriesNames = useMemo(() => chainPieSeries.peers.map((peer) => peer.name), [chainPieSeries.peers])
-	const chainPieSelection = useSeriesSelection({
+	const chainPieSelection = useLocalSelection({
 		availableSeries: chainPieSeriesNames,
 		defaultSeries: chainDefaultSeries,
 		allowEmptySelection: true,
-		resetToDefaultWhenStale: true,
-		storeDefaultAsIntent: true,
-		selectionKey: `${selectedStablecoinChain}:pie`
+		scope: `${selectedStablecoinChain}:pie`
 	})
 	const chainPiePresentation = useMemo(
 		() =>
@@ -226,8 +222,9 @@ export function StablecoinsChartTab({
 			chainPieSeriesNames.length
 		]
 	)
-	const { selectionIntent: assetSelectionIntent, setSelectionIntent: setAssetSelectionIntent } =
-		useStablecoinSelectionIntent(`${selectedStablecoinAssetId}:${assetChartType}`)
+	const { intent: assetSelectionIntent, setIntent: setAssetSelectionIntent } = useSelectionIntent(
+		`${selectedStablecoinAssetId}:${assetChartType}`
+	)
 	const assetSelectionOptions = useMemo(
 		() => ({
 			selectedNames: assetSelectionIntent?.mode === 'include' ? assetSelectionIntent.names : null,
@@ -241,7 +238,7 @@ export function StablecoinsChartTab({
 		chainsUnique,
 		stablecoinName,
 		stablecoinSymbol,
-		prepareCompleteCsvDataset: prepareCompleteAssetCsvDataset,
+		prepareCsvDataset: prepareAssetCsvDataset,
 		isLoading: assetChartDataLoading
 	} = useStablecoinAssetChartData(
 		stablecoinMode === 'asset' ? selectedStablecoinAssetId || '' : '',
@@ -255,9 +252,10 @@ export function StablecoinsChartTab({
 		() => assetPieSeries?.peers.map((peer) => peer.name) ?? EMPTY_SERIES,
 		[assetPieSeries]
 	)
-	const assetPieSelection = useAllSeriesSelection({
+	const assetPieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: assetPieSeriesNames,
-		selectionKey: `${selectedStablecoinAssetId}:chainPie`
+		scope: `${selectedStablecoinAssetId}:chainPie`
 	})
 	const assetPiePresentation = useMemo(
 		() =>
@@ -265,10 +263,10 @@ export function StablecoinsChartTab({
 				? buildRuntimePieChartPresentation({
 						series: assetPieSeries,
 						selectedSeries: assetPieSelection.selectedCharts,
-						includeUpstreamOthers: assetPieSelection.includeUpstreamOthers
+						includeUpstreamOthers: assetPieSelection.isDefaultSelection
 					})
 				: { chartData: [], stackColors: {} },
-		[assetPieSelection.includeUpstreamOthers, assetPieSelection.selectedCharts, assetPieSeries]
+		[assetPieSelection.isDefaultSelection, assetPieSelection.selectedCharts, assetPieSeries]
 	)
 	const totalCirculating = assetPresentation.totalCirculating
 	const assetRuntimeSeries = useMemo(
@@ -405,7 +403,7 @@ export function StablecoinsChartTab({
 					showTotalInTooltip={chainChartPayload.showTotalInTooltip}
 					{...(chainChartType === 'totalMcap' ? { hallmarks: EMPTY_HALLMARKS } : {})}
 					chartOptions={chartOptions}
-					csvSource={{ type: 'dataset', prepare: prepareCompleteChainCsvDataset }}
+					csvSource={{ type: 'dataset', prepare: prepareChainCsvDataset }}
 					exportButtons={exportButtons}
 				/>
 			</Suspense>
@@ -439,7 +437,7 @@ export function StablecoinsChartTab({
 							valueSymbol={stablecoinSymbol}
 							hallmarks={EMPTY_HALLMARKS}
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
-							csvSource={{ type: 'dataset', prepare: prepareCompleteAssetCsvDataset }}
+							csvSource={{ type: 'dataset', prepare: prepareAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>
@@ -461,7 +459,7 @@ export function StablecoinsChartTab({
 							selectedCharts={selectedAssetCharts}
 							valueSymbol={stablecoinSymbol}
 							chartOptions={STABLECOIN_DOLLAR_CHART_OPTIONS}
-							csvSource={{ type: 'dataset', prepare: prepareCompleteAssetCsvDataset }}
+							csvSource={{ type: 'dataset', prepare: prepareAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>
@@ -500,7 +498,7 @@ export function StablecoinsChartTab({
 							selectedCharts={selectedAssetCharts}
 							expandTo100Percent
 							chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
-							csvSource={{ type: 'dataset', prepare: prepareCompleteAssetCsvDataset }}
+							csvSource={{ type: 'dataset', prepare: prepareAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}
 						/>
 					</Suspense>

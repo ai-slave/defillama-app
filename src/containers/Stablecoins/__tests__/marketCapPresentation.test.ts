@@ -60,9 +60,28 @@ describe('buildStablecoinMarketCapPresentation', () => {
 			'Token 11'
 		])
 		expect(series.selectionSeries).toEqual(series.peers.map((peer) => peer.name))
-		expect(buildStablecoinMarketCapCsvDataset(series)).toEqual({
+	})
+
+	test('exports every picked slice without the top-N fold, and Others only while every slice is picked', () => {
+		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
+			name: index === 11 ? 'Others' : `Token ${index}`,
+			mcap: 120 - index * 10
+		}))
+		const series = prepareStablecoinMarketCapSeries({ rows, view: 'pie', getName, getValue: (row) => row.mcap ?? 0 })
+
+		const everySlice = buildStablecoinMarketCapCsvDataset({ series, selectedSeries: new Set(series.selectionSeries) })
+		expect(everySlice.source.slice(-3)).toEqual([
+			['Token 9', 30],
+			['Token 10', 20],
+			['Others', 10]
+		])
+		expect(everySlice.source).toHaveLength(12)
+		expect(buildStablecoinMarketCapCsvDataset({ series, selectedSeries: new Set(['Token 10', 'Token 0']) })).toEqual({
 			dimensions: ['Name', 'Market Cap'],
-			source: [...series.peers.map(({ name, value }) => [name, value]), ['Others', 100]]
+			source: [
+				['Token 0', 120],
+				['Token 10', 20]
+			]
 		})
 	})
 

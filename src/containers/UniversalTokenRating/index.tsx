@@ -1,11 +1,15 @@
+import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
+import { updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatNumber } from '~/utils/numberFormat'
+import { pushShallowQuery } from '~/utils/routerQuery'
 import { FDV_RANGES, LISTING_STATUS_LABELS, UTR_SECTORS } from './constants'
+import { filterUtrRows, readUtrFilters, UTR_FILTER_KEYS } from './filters'
 import { Leaderboard, type UtrSort } from './Leaderboard'
 import { MobileFiltersDrawer } from './MobileFiltersDrawer'
 import { findUtrSearchMatch, type UtrFocusRequest } from './navigation'
@@ -21,7 +25,11 @@ export type UniversalTokenRatingProps = {
 	scoringConfig?: UtrScoringConfig | null
 }
 
+const FDV_OPTIONS = FDV_RANGES.map((range) => ({ key: range.key, name: range.label }))
+const STATUS_OPTIONS = Object.entries(LISTING_STATUS_LABELS).map(([key, name]) => ({ key, name }))
+
 export function UniversalTokenRating({ universe, topMovers, scoringConfig }: UniversalTokenRatingProps) {
+	const router = useRouter()
 	const [docsOpen, setDocsOpen] = useState(false)
 
 	const sectorOptions = useMemo(() => {
@@ -32,9 +40,21 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		return availableSectors.size > 0 ? [...availableSectors].sort() : [...UTR_SECTORS]
 	}, [universe.rows])
 
-	const [fdvRanges, setFdvRanges] = useState<Array<string>>(() => FDV_RANGES.map((range) => range.key))
-	const [sectors, setSectors] = useState<Array<string>>(() => sectorOptions)
-	const [listingStatuses, setListingStatuses] = useState<Array<string>>(() => Object.keys(LISTING_STATUS_LABELS))
+	const sectorPickerOptions = useMemo(
+		() => sectorOptions.map((sector) => ({ key: sector, name: sector })),
+		[sectorOptions]
+	)
+
+	// Filters live in the URL so a reload or a shared link keeps them; search stays local.
+	const filters = useMemo(() => readUtrFilters(router.query, sectorOptions), [router.query, sectorOptions])
+	const { fdvRanges, sectors, listingStatuses } = filters
+	const { fdv: fdvKeys, sector: sectorKeys, listing: listingKeys } = UTR_FILTER_KEYS
+	const setFdvRanges = (values: Array<string>) =>
+		updateQueryFromSelected(router, fdvKeys.include, fdvKeys.exclude, [...fdvKeys.all], values)
+	const setSectors = (values: Array<string>) =>
+		updateQueryFromSelected(router, sectorKeys.include, sectorKeys.exclude, sectorOptions, values)
+	const setListingStatuses = (values: Array<string>) =>
+		updateQueryFromSelected(router, listingKeys.include, listingKeys.exclude, [...listingKeys.all], values)
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
 	const [searchQuery, setSearchQuery] = useState('')
@@ -48,9 +68,14 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		(sort.key === 'rank' ? 0 : 1)
 
 	const resetFilters = () => {
-		setFdvRanges(FDV_RANGES.map((range) => range.key))
-		setSectors(sectorOptions)
-		setListingStatuses(Object.keys(LISTING_STATUS_LABELS))
+		void pushShallowQuery(router, {
+			[fdvKeys.include]: undefined,
+			[fdvKeys.exclude]: undefined,
+			[sectorKeys.include]: undefined,
+			[sectorKeys.exclude]: undefined,
+			[listingKeys.include]: undefined,
+			[listingKeys.exclude]: undefined
+		})
 		setSort({ key: 'rank', desc: false })
 	}
 
@@ -94,26 +119,10 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		}
 	}
 
-	const filteredRows = useMemo(() => {
-		return universe.rows.filter((row) => {
-			if (row.fdvUsd == null) {
-				if (fdvRanges.length !== FDV_RANGES.length) return false
-			} else if (
-				!FDV_RANGES.some(
-					(range) => fdvRanges.includes(range.key) && row.fdvUsd! >= range.min && row.fdvUsd! < range.max
-				)
-			) {
-				return false
-			}
-			if (row.sector == null) {
-				if (sectors.length !== sectorOptions.length) return false
-			} else if (!sectors.includes(row.sector)) {
-				return false
-			}
-			if (!listingStatuses.includes(row.listingStatus)) return false
-			return true
-		})
-	}, [universe.rows, fdvRanges, sectors, listingStatuses, sectorOptions])
+	const filteredRows = useMemo(
+		() => filterUtrRows(universe.rows, filters, sectorOptions),
+		[universe.rows, filters, sectorOptions]
+	)
 
 	const scoredLabel = (
 		<span className="body-sm text-secondary">
@@ -167,9 +176,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				) : null}
 				<span className="max-lg:hidden">
 					<SelectWithCombobox
-						allValues={FDV_RANGES.map((range) => ({ key: range.key, name: range.label }))}
-						selectedValues={fdvRanges}
-						setSelectedValues={setFdvRanges}
+						allValues={FDV_OPTIONS}
+						includeQueryKey={fdvKeys.include}
+						excludeQueryKey={fdvKeys.exclude}
 						label="FDV Range"
 						labelType="smol"
 						variant="filter"
@@ -178,9 +187,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</span>
 				<span className="max-lg:hidden">
 					<SelectWithCombobox
-						allValues={sectorOptions.map((sector) => ({ key: sector, name: sector }))}
-						selectedValues={sectors}
-						setSelectedValues={setSectors}
+						allValues={sectorPickerOptions}
+						includeQueryKey={sectorKeys.include}
+						excludeQueryKey={sectorKeys.exclude}
 						label="Sector"
 						labelType="smol"
 						variant="filter"
@@ -189,9 +198,9 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 				</span>
 				<span className="max-lg:hidden">
 					<SelectWithCombobox
-						allValues={Object.entries(LISTING_STATUS_LABELS).map(([key, name]) => ({ key, name }))}
-						selectedValues={listingStatuses}
-						setSelectedValues={setListingStatuses}
+						allValues={STATUS_OPTIONS}
+						includeQueryKey={listingKeys.include}
+						excludeQueryKey={listingKeys.exclude}
 						label="Exchange Listing Status"
 						labelType="smol"
 						variant="filter"
@@ -280,13 +289,13 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 			<MobileFiltersDrawer
 				open={filtersOpen}
 				onClose={() => setFiltersOpen(false)}
-				fdvOptions={FDV_RANGES.map((range) => ({ key: range.key, name: range.label }))}
+				fdvOptions={FDV_OPTIONS}
 				fdvRanges={fdvRanges}
 				setFdvRanges={setFdvRanges}
-				sectorOptions={sectorOptions.map((sector) => ({ key: sector, name: sector }))}
+				sectorOptions={sectorPickerOptions}
 				sectors={sectors}
 				setSectors={setSectors}
-				statusOptions={Object.entries(LISTING_STATUS_LABELS).map(([key, name]) => ({ key, name }))}
+				statusOptions={STATUS_OPTIONS}
 				listingStatuses={listingStatuses}
 				setListingStatuses={setListingStatuses}
 				sort={sort}

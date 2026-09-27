@@ -7,10 +7,10 @@ import {
 	rankSeriesByPeakAbsoluteValue
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -32,9 +32,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 		activeSeries: selectedChains,
 		selectedCharts,
 		setSelectedSeries
-	} = useSeriesSelection({
-		availableSeries: rankedChains
-	})
+	} = useLocalSelection({ scope: 'bridge-chains', availableSeries: rankedChains })
 	const presentation = React.useMemo(
 		() =>
 			buildSelectedAdditiveChart({

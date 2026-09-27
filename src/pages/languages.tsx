@@ -1,15 +1,18 @@
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
+import {
+	buildSelectedPercentageChart,
+	selectChartDatasetColumns
+} from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	CanonicalMultiSeriesChartDataset,
 	IMultiSeriesChartProps,
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { SERVER_URL } from '~/constants'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
@@ -148,7 +151,10 @@ function LanguageSeriesChart({
 	expandTo100Percent?: boolean
 }) {
 	const series = React.useMemo(() => charts.map((chart) => chart.name), [charts])
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: series })
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
+		scope: 'languages-tvl',
+		availableSeries: series
+	})
 	const selectedPercentage = React.useMemo(
 		() =>
 			expandTo100Percent
@@ -158,7 +164,18 @@ function LanguageSeriesChart({
 						selectedCharts,
 						missingValuePolicy: 'require-complete'
 					})
-				: { dataset, charts, csvSource: { type: 'dataset' as const, prepare: () => dataset } },
+				: {
+						dataset,
+						charts,
+						csvSource: {
+							type: 'dataset' as const,
+							prepare: () =>
+								selectChartDatasetColumns(
+									dataset,
+									charts.filter((chart) => selectedCharts.has(chart.name))
+								)
+						}
+					},
 		[charts, dataset, expandTo100Percent, selectedCharts]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()

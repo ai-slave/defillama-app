@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useContext, useMemo } from 'react'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import {
-	buildRuntimePieChartCsvDataset,
-	prepareRuntimePieChartData,
-	type RuntimePieChartData
-} from '~/components/ECharts/PieChart/data'
+import { prepareRuntimePieChartData, type RuntimePieChartData } from '~/components/ECharts/PieChart/data'
 import { useIdleChartComputation } from '~/containers/ProDashboard/hooks/useIdleChartComputation'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
@@ -36,7 +32,7 @@ interface UseStablecoinsChartDataResult {
 	availableSeries: Array<string>
 	defaultSeries: Array<string>
 	totalMcapCurrent: number | null
-	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
+	prepareCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
 	isFetching: boolean
 	error: Error | null
@@ -53,7 +49,7 @@ const EMPTY_CHART_PAYLOAD: StablecoinChartSeriesPayload = {
 const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 10, upstreamOthersValue: 0 }
 type StablecoinPresentation = Omit<
 	UseStablecoinsChartDataResult,
-	'prepareCompleteCsvDataset' | 'isLoading' | 'isFetching' | 'error' | 'refetch'
+	'prepareCsvDataset' | 'isLoading' | 'isFetching' | 'error' | 'refetch'
 >
 
 const EMPTY_STABLECOIN_PRESENTATION: StablecoinPresentation = {
@@ -190,13 +186,15 @@ export function buildProStablecoinChartPresentationFromCollection(
 	return buildProStablecoinPresentationResult(collected.rawData, collected.chartType, chartPayload)
 }
 
-export function buildCompleteProStablecoinCsvDataset(collected: ProStablecoinChartCollection): MultiSeriesChartDataset {
+/** The chart's picked series without the series limit; the pie card exports from its own pie selection. */
+export function buildProStablecoinCsvDataset(
+	collected: ProStablecoinChartCollection,
+	selectionOptions: StablecoinBreakdownSelectionOptions | undefined
+): MultiSeriesChartDataset {
 	if (collected.kind === 'selectable') {
-		return buildStablecoinOverviewPayloadFromCollection(collected.collection).dataset
+		return buildStablecoinOverviewPayloadFromCollection(collected.collection, selectionOptions).dataset
 	}
-	return collected.chartType === 'pie'
-		? buildRuntimePieChartCsvDataset(collected.presentation.pieSeries)
-		: collected.presentation.chartPayload.dataset
+	return collected.presentation.chartPayload.dataset
 }
 
 export function useStablecoinsChartData(
@@ -252,11 +250,14 @@ export function useStablecoinsChartData(
 		() => buildProStablecoinChartPresentationFromCollection(collected, selectionOptions),
 		[collected, selectionOptions]
 	)
-	const prepareCompleteCsvDataset = useCallback(() => buildCompleteProStablecoinCsvDataset(collected), [collected])
+	const prepareCsvDataset = useCallback(
+		() => buildProStablecoinCsvDataset(collected, selectionOptions),
+		[collected, selectionOptions]
+	)
 
 	return {
 		...presentation,
-		prepareCompleteCsvDataset,
+		prepareCsvDataset,
 		isLoading: enabled && (isLoading || (!streamDone && !rawData) || isComputing),
 		isFetching,
 		error,

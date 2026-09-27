@@ -3,9 +3,10 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { useSelectionIntent } from '~/components/Select/localSelection'
 import type { StablecoinRuntimeSeries } from '../chartSeries'
 import { prepareStablecoinMarketCapSeries, type StablecoinMarketCapSeries } from '../marketCapPresentation'
-import { useStablecoinChartSelection, useStablecoinSelectionIntent } from '../useStablecoinChartSelection'
+import { useStablecoinChartSelection } from '../useStablecoinChartSelection'
 import { buildUniqueStablecoinChartLabels } from '../utils'
 
 type RuntimeSeries = Pick<
@@ -31,7 +32,7 @@ function SelectionHarness({
 	selectionScope?: string
 	onRender: (result: SelectionResult) => void
 }) {
-	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(`${selectionScope}-Token`)
+	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${selectionScope}-Token`)
 	const selection = useStablecoinChartSelection({
 		marketCapSeries: series,
 		runtimeSeries,
@@ -220,8 +221,9 @@ describe('useStablecoinChartSelection', () => {
 			renderedSelectableSeries: ['D', 'E'],
 			fixedRemainderSeries: ['Others']
 		})
-		expect(latest.activeSeries).toEqual([])
-		expect(latest.renderedCharts).toEqual(new Set())
+		// None of the picks exist in the new series, so the chart shows the default instead of an empty chart.
+		expect(latest.activeSeries).toEqual(['D', 'E'])
+		expect(latest.renderedCharts).toEqual(new Set(['D', 'E', 'Others']))
 	})
 
 	test('selects every default peer while rendering a bounded breakdown plus Others', async () => {

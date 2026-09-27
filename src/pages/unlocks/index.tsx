@@ -5,7 +5,8 @@ import { Announcement } from '~/components/Announcement'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	buildSelectedAdditiveChart,
-	rankSeriesByPeakAbsoluteValue
+	rankSeriesByPeakAbsoluteValue,
+	selectChartDatasetColumns
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import {
@@ -13,6 +14,7 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
@@ -39,7 +41,6 @@ import {
 } from '~/containers/Unlocks/upcomingUnlockChartState'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -156,9 +157,9 @@ function UpcomingUnlockVolumeChart({
 				: [],
 		[deferredChartData, deferredViewMode]
 	)
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: protocolSeries,
-		selectionKey: `${deferredViewMode}:${deferredUnlockType}`
+		scope: `${deferredViewMode}:${deferredUnlockType}`
 	})
 	const selectedBreakdown = useMemo(
 		() =>
@@ -238,7 +239,15 @@ function UpcomingUnlockVolumeChart({
 						title={unlockType === 'all' ? 'Upcoming Unlocks' : `Upcoming ${unlockTypeLabel}`}
 						csvSource={{
 							type: 'dataset',
-							prepare: () => ({ ...deferredChartData.dataset, groupBy: deferredTimePeriod })
+							prepare: () => ({
+								...(selectedBreakdown
+									? selectChartDatasetColumns(
+											deferredChartData.dataset,
+											deferredChartData.charts.filter((chart) => selectedCharts.has(chart.name))
+										)
+									: deferredChartData.dataset),
+								groupBy: deferredTimePeriod
+							})
 						}}
 					/>
 				) : null}

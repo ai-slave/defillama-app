@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, type ReactNode, Suspense, useContext, useMemo, useState } from 'react'
+import { selectDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { slug } from '~/utils'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { StreamDoneContext } from '../queries'
@@ -62,9 +63,9 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 		activeSeries: activeCategories,
 		selectedCharts: selectedChartsSet,
 		setSelectedSeries
-	} = useSeriesSelection({
+	} = useLocalSelection({
 		availableSeries: stacks,
-		selectionKey: `${protocol}:${resolvedDataType}`
+		scope: `${protocol}:${resolvedDataType}`
 	})
 
 	// Apply time-period filtering on the pre-built dataset source
@@ -78,7 +79,13 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const imageFilename = `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
 
 	const prepareCsvExport = () =>
-		prepareProChartCsv(dataset, `${protocolName || protocol}-unlock-schedule-${resolvedDataType}`)
+		prepareProChartCsv(
+			selectDatasetColumns(
+				dataset,
+				stacks.filter((stack) => selectedChartsSet.has(stack))
+			),
+			`${protocolName || protocol}-unlock-schedule-${resolvedDataType}`
+		)
 
 	const hallmarks = useDashboardAnnotationHallmarks(todayHallmarks)
 	const syncGroup = useChartSyncGroup()

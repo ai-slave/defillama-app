@@ -69,6 +69,7 @@ import {
 import { buildHallmarksMarkLine } from './hallmarks'
 import { applyConfiguredYAxisScale, applyLogScaleToYAxes } from './logScale'
 import { buildMultiYAxis, normalizeSeriesYAxisIndices } from './multiYAxis'
+import { selectChartDatasetColumns } from './selection'
 import { buildMultiSeries } from './series'
 import { createStateTimelineSeries, getStateTimelineGridBottom } from './stateTimeline'
 import { buildSparseTimeSeriesDataset } from './timeSeriesDataset'
@@ -381,9 +382,16 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 
 	const exportFilename = exportButtonsConfig?.filename || (title ? slug(title) : 'multi-series-chart')
 	const exportTitle = exportButtonsConfig?.pngTitle || title
+	// Without a `csvSource` the export follows the picker: only the series `selectedCharts` shows.
 	const defaultCsvSource = useMemo(() => {
 		if (!renderedCharts.some((chart) => chart.data)) {
-			return { type: 'dataset' as const, prepare: () => ({ ...dataset, groupBy: groupBySafe }) }
+			return {
+				type: 'dataset' as const,
+				prepare: () => ({
+					...(selectedCharts ? selectChartDatasetColumns(dataset, displayedCharts) : dataset),
+					groupBy: groupBySafe
+				})
+			}
 		}
 		return {
 			type: 'dataset' as const,
@@ -392,7 +400,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 					name: string
 					data: Array<[timestamp: number, value: number | null]>
 				}> = []
-				for (const chart of renderedCharts) {
+				for (const chart of displayedRenderedCharts) {
 					if (chart.data) {
 						independentSeries.push({ name: chart.name, data: chart.data })
 						continue
@@ -412,7 +420,15 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 				return { ...buildSparseTimeSeriesDataset(independentSeries), groupBy: groupBySafe }
 			}
 		}
-	}, [dataset, renderedCharts, renderedDatasetSource, groupBySafe])
+	}, [
+		dataset,
+		displayedCharts,
+		displayedRenderedCharts,
+		renderedCharts,
+		renderedDatasetSource,
+		groupBySafe,
+		selectedCharts
+	])
 	const exportCsvSource = useMemo<ChartCsvSource>(
 		() => (csvSource ? withChartGroupBy(csvSource, groupBySafe) : defaultCsvSource),
 		[csvSource, defaultCsvSource, groupBySafe]

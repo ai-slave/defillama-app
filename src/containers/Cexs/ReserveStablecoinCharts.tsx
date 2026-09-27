@@ -12,6 +12,7 @@ import {
 	type RuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
 import {
@@ -23,7 +24,6 @@ import { fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOvervi
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -63,9 +63,9 @@ function MultiSeriesChartCard({
 			),
 		[charts, dataset]
 	)
-	const { activeSeries, selectedCharts, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
-		availableSeries: allValues,
-		storeDefaultAsIntent: true
+	const { activeSeries, selectedCharts, setSelectedSeries, isDefaultSelection } = useLocalSelection({
+		scope: exportFilenameBase,
+		availableSeries: allValues
 	})
 	const presentation = React.useMemo(
 		() =>
@@ -139,8 +139,8 @@ function PieChartCard({
 		activeSeries: selectedValues,
 		selectedCharts,
 		setSelectedSeries: setSelectedValues,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({ scope: exportFilenameBase, allowEmptySelection: true, availableSeries: selectableSeries })
 	const presentation = React.useMemo(
 		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
 		[includeUpstreamOthers, selectedCharts, series]
@@ -169,7 +169,11 @@ function PieChartCard({
 						filename={exportFilenameBase}
 						title={exportTitle}
 						iconUrl={exportIconUrl}
-						csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
+						csvSource={{
+							type: 'dataset',
+							prepare: () =>
+								buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts, includeUpstreamOthers })
+						}}
 					/>
 				</>
 			}

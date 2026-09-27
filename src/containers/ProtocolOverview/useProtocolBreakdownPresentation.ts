@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import {
 	buildProtocolBreakdownPresentation,
 	MAX_PROTOCOL_BREAKDOWN_SERIES,
@@ -17,7 +17,7 @@ export function useProtocolBreakdownPresentation({
 	type,
 	stack,
 	fillMissingWithZero = false,
-	selectionKey = 'default'
+	scope
 }: {
 	breakdown: ProtocolBreakdownChart
 	availableSeries: Array<string>
@@ -26,16 +26,15 @@ export function useProtocolBreakdownPresentation({
 	type: 'line' | 'bar'
 	stack?: string
 	fillMissingWithZero?: boolean
-	selectionKey?: string
+	/** What the selection belongs to, such as the protocol and the chart. */
+	scope: string
 }) {
-	const { activeSeries, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
+	const { activeSeries, setSelectedSeries, isDefaultSelection } = useLocalSelection({
 		availableSeries,
 		defaultSeries,
 		...(aggregateOthers ? {} : { maxSelectedSeries: MAX_PROTOCOL_BREAKDOWN_SERIES }),
 		allowEmptySelection: true,
-		resetToDefaultWhenStale: true,
-		selectionKey,
-		storeDefaultAsIntent: true
+		scope
 	})
 
 	const presentation = React.useMemo(
@@ -60,6 +59,7 @@ export function useProtocolBreakdownPresentation({
 	return {
 		activeSeries,
 		setSelectedSeries,
+		isDefaultSelection,
 		dataset: presentation.dataset ?? EMPTY_DATASET,
 		charts: presentation.charts,
 		selectedCharts,

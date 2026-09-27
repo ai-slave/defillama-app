@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useMemo } from 'react'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
@@ -14,7 +15,6 @@ import {
 	fetchProtocolValueChart
 } from '~/containers/ProtocolOverview/valueChartSources'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -132,16 +132,14 @@ export function AdvancedTvlChartTab({
 		chartType === 'tokenInflows'
 	const selectorValues = isRuntimeBreakdown ? advancedSeriesNames : EMPTY_STACKS
 	const breakdown = advancedData.breakdown ?? EMPTY_BREAKDOWN
-	const { activeSeries, setSelectedSeries, isDefaultSelection } = useSeriesSelection({
+	const { activeSeries, setSelectedSeries, isDefaultSelection } = useLocalSelection({
 		availableSeries: selectorValues,
 		defaultSeries: advancedData.defaultSeriesNames,
 		...(chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows'
 			? {}
 			: { maxSelectedSeries: MAX_PROTOCOL_BREAKDOWN_SERIES }),
 		allowEmptySelection: true,
-		resetToDefaultWhenStale: true,
-		selectionKey: `${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`,
-		storeDefaultAsIntent: true
+		scope: `${selectedAdvancedTvlProtocol}:${selectedAdvancedTvlChartType}`
 	})
 	const runtimePresentation = useMemo(() => {
 		const aggregateOthers = chartType === 'chainsTvl' || chartType === 'tokenValuesUsd' || chartType === 'tokenInflows'
@@ -180,18 +178,19 @@ export function AdvancedTvlChartTab({
 			}),
 		[chartType, advancedDataset, pieSeriesNames, renderedSeries]
 	)
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: pieSeriesNames,
-		selectionKey: `${selectedAdvancedTvlProtocol}:tokensPie`
+		scope: `${selectedAdvancedTvlProtocol}:tokensPie`
 	})
 	const piePresentation = useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: advancedData.pieSeries,
 				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.includeUpstreamOthers
+				includeUpstreamOthers: pieSelection.isDefaultSelection
 			}),
-		[advancedData.pieSeries, pieSelection.includeUpstreamOthers, pieSelection.selectedCharts]
+		[advancedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 	const canonicalDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset

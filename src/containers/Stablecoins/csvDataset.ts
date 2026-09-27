@@ -9,7 +9,8 @@ import {
 } from './queries.client'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
-export async function fetchCompleteStablecoinVolumeCsvDataset(
+// Exports carry the chart's selection intent without its series limit, so the CSV has every picked series unfolded.
+export async function fetchStablecoinVolumeCsvDataset(
 	query: StablecoinVolumeChartQuery,
 	groupBy: LowercaseDwmcGrouping
 ): Promise<ChartCsvDataset> {
@@ -18,7 +19,7 @@ export async function fetchCompleteStablecoinVolumeCsvDataset(
 	return { ...groupStablecoinVolumeChartPayload(payload, groupBy).dataset, groupBy }
 }
 
-export async function fetchCompleteStablecoinSeriesCsvDataset(
+export async function fetchStablecoinSeriesCsvDataset(
 	query: StablecoinChartSeriesQuery,
 	groupBy: LowercaseDwmcGrouping | null
 ): Promise<ChartCsvDataset> {

@@ -21,11 +21,21 @@ export type StablecoinMarketCapPresentation =
 	| { kind: 'hbar'; categories: Array<string>; values: Array<number>; colors: Array<string> }
 	| { kind: 'treemap'; treeData: Array<TreemapNode> }
 
-/** Export every canonical peer; visual top-N and legend state are presentation-only. */
-export function buildStablecoinMarketCapCsvDataset(series: StablecoinMarketCapSeries): MultiSeriesChartDataset {
+/** Export the selected peers without the top-N fold; `Others` follows the pie and bar remainder rule. */
+export function buildStablecoinMarketCapCsvDataset({
+	series,
+	selectedSeries
+}: {
+	series: StablecoinMarketCapSeries
+	selectedSeries: ReadonlySet<string>
+}): MultiSeriesChartDataset {
 	const source: MultiSeriesChartDataset['source'] = []
-	for (const peer of series.peers) source.push([peer.name, peer.value])
-	if (series.upstreamRemainderValue > 0) source.push(['Others', series.upstreamRemainderValue])
+	for (const peer of series.peers) {
+		if (selectedSeries.has(peer.name)) source.push([peer.name, peer.value])
+	}
+	if (series.kind !== 'treemap' && source.length === series.peers.length && series.upstreamRemainderValue > 0) {
+		source.push(['Others', series.upstreamRemainderValue])
+	}
 	return { dimensions: ['Name', 'Market Cap'], source }
 }
 

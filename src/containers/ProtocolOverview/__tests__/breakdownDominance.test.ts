@@ -18,24 +18,24 @@ function present(breakdown: ProtocolBreakdownChart, availableSeries: Array<strin
 		selectedCharts: new Set(visual.charts.map((chart) => chart.name)),
 		breakdown,
 		availableSeries,
-		aggregateOthers: true
+		activeSeries,
+		includeUpstreamOthers: activeSeries.length === availableSeries.length
 	})
 }
 
-test('exports every peer against the full total while the chart follows partial and empty selections', async () => {
+test('exports the same shares the chart draws for partial and empty selections', async () => {
 	const breakdown: ProtocolBreakdownChart = [[1000, { Ethereum: 120, Solana: 60, Base: 20 }]]
-	for (const selected of [['Ethereum'], []]) {
-		const result = present(breakdown, ['Ethereum', 'Solana', 'Base'], selected)
-		expect(result.dataset).toEqual(
-			selected.length > 0
-				? { dimensions: ['timestamp', 'Ethereum'], source: [[1000, 100]] }
-				: { dimensions: ['timestamp'], source: [[1000]] }
-		)
-		expect(await result.csvSource.prepare()).toEqual({
-			dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
-			source: [[1000, 60, 30, 10]]
-		})
+	const twoPicks = present(breakdown, ['Ethereum', 'Solana', 'Base'], ['Base', 'Ethereum'])
+	const picked = {
+		dimensions: ['timestamp', 'Ethereum', 'Base'],
+		source: [[1000, (120 / 140) * 100, 100 - (120 / 140) * 100]]
 	}
+	expect(twoPicks.dataset).toEqual(picked)
+	expect(await twoPicks.csvSource.prepare()).toEqual(picked)
+
+	const empty = present(breakdown, ['Ethereum', 'Solana', 'Base'], [])
+	expect(empty.dataset).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
+	expect(await empty.csvSource.prepare()).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
 })
 
 test('exports individual tail peers and the upstream remainder while folding only the chart', async () => {

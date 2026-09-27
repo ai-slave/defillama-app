@@ -103,6 +103,26 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
 	})
 
+	test('a pick list that names no chain in the data shows every chain', () => {
+		const data: Array<StablecoinVolumeBreakdownChartPoint> = [
+			[1_609_459_200, { ethereum: 100, base: 5 }],
+			[1_609_545_600, { ethereum: 0, tron: 10, base: 7 }]
+		]
+		const payload = buildStablecoinVolumeChartPayload({ data, chart: 'chain', limit: 5, selectedNames: ['polygon'] })
+		expect(payload.dataset.dimensions.slice(1).sort()).toEqual(['base', 'ethereum', 'tron'])
+	})
+
+	test('an exclusion that leaves no chain shows every chain', () => {
+		const data: Array<StablecoinVolumeBreakdownChartPoint> = [[1_609_459_200, { ethereum: 100, base: 5 }]]
+		const payload = buildStablecoinVolumeChartPayload({
+			data,
+			chart: 'chain',
+			limit: 5,
+			excludedNames: ['ethereum', 'base']
+		})
+		expect(payload.dataset.dimensions.slice(1).sort()).toEqual(['base', 'ethereum'])
+	})
+
 	test('projects explicit historical peers and aggregates only the selected tail', () => {
 		const data: Array<StablecoinVolumeBreakdownChartPoint> = [
 			[1_609_459_200, { ethereum: 100, base: 5 }],

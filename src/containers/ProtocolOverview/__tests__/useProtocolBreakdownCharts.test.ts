@@ -938,7 +938,7 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		expect(result.inflowTokensUnique).toEqual(['PAST_LEADER', 'CURRENT_LEADER', 'UNCHANGED'])
 	})
 
-	test('projects only the selected visual tail while exporting every canonical peer', async () => {
+	test('projects only the selected visual tail and exports each pick without the fold', async () => {
 		const values = Object.fromEntries(Array.from({ length: 35 }, (_, index) => [`TOKEN_${index}`, index + 1]))
 		const availableSeries = Object.keys(values).toReversed()
 		const full = buildProtocolBreakdownPresentation({
@@ -970,11 +970,12 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			tailSelection.charts.find((chart) => chart.name === 'TOKEN_5')?.color
 		)
 		expect(subset.dataset?.dimensions).not.toContain('Others')
-		if (subset.csvSource === 'rendered-chart' || subset.csvSource.type !== 'dataset') {
-			throw new Error('Expected a prepared complete export')
+		if (tailSelection.csvSource === 'rendered-chart' || tailSelection.csvSource.type !== 'dataset') {
+			throw new Error('Expected a dataset export')
 		}
-		const csvDataset = await subset.csvSource.prepare()
-		expect(csvDataset.dimensions).toEqual(['timestamp', ...availableSeries])
-		expect(csvDataset.dimensions).not.toContain('Others')
+		const csvDataset = await tailSelection.csvSource.prepare()
+		expect(tailSelection.dataset?.dimensions).toHaveLength(32)
+		expect(csvDataset.dimensions).toEqual(['timestamp', ...availableSeries.slice(1, 32)])
+		expect(csvDataset.source[0]).toEqual([DAY_MS, ...Array.from({ length: 31 }, (_, index) => 34 - index)])
 	})
 })

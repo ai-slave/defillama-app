@@ -8,6 +8,7 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -16,7 +17,6 @@ import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -76,9 +76,9 @@ export function OraclesByChain({
 	}, [chartData, extraBreakdownsByApiKey, extraTvlsEnabled, oracleSeries, shouldApplyExtraTvlFormatting, oraclesColors])
 
 	const activeLink = chain ?? 'All'
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: oracleSeries,
-		selectionKey: activeLink
+		scope: activeLink
 	})
 	const selectedDominance = React.useMemo(
 		() =>
@@ -98,11 +98,8 @@ export function OraclesByChain({
 		activeSeries: activePieSeries,
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries,
-		includeUpstreamOthers: includePieUpstreamOthers
-	} = useAllSeriesSelection({
-		availableSeries: pieSelectableSeries,
-		selectionKey: activeLink
-	})
+		isDefaultSelection: includePieUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: activeLink })
 	const visiblePieData = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -139,7 +136,12 @@ export function OraclesByChain({
 							title="Oracles TVS"
 							csvSource={{
 								type: 'dataset',
-								prepare: () => buildRuntimePieChartCsvDataset(tableAndPieData.pieSeries)
+								prepare: () =>
+									buildRuntimePieChartCsvDataset({
+										series: tableAndPieData.pieSeries,
+										selectedSeries: selectedPieSeries,
+										includeUpstreamOthers: includePieUpstreamOthers
+									})
 							}}
 						/>
 					</ChartPanelToolbar>

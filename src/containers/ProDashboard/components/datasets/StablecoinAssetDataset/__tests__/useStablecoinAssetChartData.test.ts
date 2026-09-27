@@ -1,8 +1,5 @@
 import { assert, describe, expect, test } from 'vitest'
-import {
-	buildCompleteStablecoinAssetCsvDataset,
-	buildStablecoinAssetPresentation
-} from '../useStablecoinAssetChartData'
+import { buildStablecoinAssetCsvDataset, buildStablecoinAssetPresentation } from '../useStablecoinAssetChartData'
 
 const day = 86_400
 const firstDate = 1_700_000_000
@@ -67,17 +64,17 @@ describe('buildStablecoinAssetPresentation', () => {
 		})
 	})
 
-	test('renormalizes dominance to the selected chain set', () => {
+	test('renormalizes dominance to the selected chain set and exports only that set', () => {
 		const result = buildStablecoinAssetPresentation(rawData, 'chainDominance', null, {
 			selectedNames: ['Ethereum']
 		})
-		const completeCsvDataset = buildCompleteStablecoinAssetCsvDataset(rawData, 'chainDominance')
+		const csvDataset = buildStablecoinAssetCsvDataset(rawData, 'chainDominance', null, { selectedNames: ['Ethereum'] })
 
 		assert(result.chartType === 'chainDominance')
 		expect(result.availableSeries).toEqual(['Ethereum', 'Base'])
 		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
 		expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
-		expect(completeCsvDataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
+		expect(csvDataset.dimensions).toEqual(['timestamp', 'Ethereum'])
 	})
 
 	test('returns an empty snapshot when the active period has no points', () => {

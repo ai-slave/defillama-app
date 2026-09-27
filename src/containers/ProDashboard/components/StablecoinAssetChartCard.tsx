@@ -1,6 +1,7 @@
 import { lazy, type ReactElement, type ReactNode, Suspense, useMemo } from 'react'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { useLocalSelection, useSelectionIntent } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useStablecoinAssetChartData } from '~/containers/ProDashboard/components/datasets/StablecoinAssetDataset/useStablecoinAssetChartData'
 import {
@@ -10,12 +11,8 @@ import {
 } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 import { colorManager } from '~/containers/ProDashboard/utils/colorManager'
 import { getStablecoinRuntimeSeries } from '~/containers/Stablecoins/chartSeries'
-import {
-	useStablecoinChartSelection,
-	useStablecoinSelectionIntent
-} from '~/containers/Stablecoins/useStablecoinChartSelection'
+import { useStablecoinChartSelection } from '~/containers/Stablecoins/useStablecoinChartSelection'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { getTimePeriodBounds } from '../queries'
@@ -51,7 +48,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	const { stablecoin, stablecoinId, chartType } = config
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
-	const { selectionIntent, setSelectionIntent } = useStablecoinSelectionIntent(`${stablecoinId}:${chartType}`)
+	const { intent: selectionIntent, setIntent: setSelectionIntent } = useSelectionIntent(`${stablecoinId}:${chartType}`)
 	const selectionOptions = useMemo(
 		() => ({
 			selectedNames: selectionIntent?.mode === 'include' ? selectionIntent.names : null,
@@ -70,7 +67,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		stablecoinName,
 		stablecoinSymbol,
 		isInactive,
-		prepareCompleteCsvDataset,
+		prepareCsvDataset,
 		isLoading,
 		isFetching,
 		error,
@@ -136,9 +133,10 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 	})
 	const pieSeries = presentation.chartType === 'chainPie' ? presentation.pieSeries : null
 	const pieSeriesNames = useMemo(() => pieSeries?.peers.map((peer) => peer.name) ?? EMPTY_SERIES, [pieSeries])
-	const pieSelection = useAllSeriesSelection({
+	const pieSelection = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: pieSeriesNames,
-		selectionKey: `${stablecoinId}:chainPie`
+		scope: `${stablecoinId}:chainPie`
 	})
 	const piePresentation = useMemo(
 		() =>
@@ -146,10 +144,10 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				? buildRuntimePieChartPresentation({
 						series: pieSeries,
 						selectedSeries: pieSelection.selectedCharts,
-						includeUpstreamOthers: pieSelection.includeUpstreamOthers
+						includeUpstreamOthers: pieSelection.isDefaultSelection
 					})
 				: { chartData: [], stackColors: {} },
-		[pieSelection.includeUpstreamOthers, pieSelection.selectedCharts, pieSeries]
+		[pieSelection.isDefaultSelection, pieSelection.selectedCharts, pieSeries]
 	)
 
 	const filteredDataset = useMemo(
@@ -180,11 +178,13 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				filename = `${assetSlug}-chain-pie`
 				break
 		}
-		const completeDataset = prepareCompleteCsvDataset()
-		const exportDataset =
-			chartType === 'chainPie'
-				? completeDataset
-				: filterStablecoinDatasetByTimePeriod(completeDataset, timePeriod, customTimePeriod)
+		const exportDataset = pieSeries
+			? buildRuntimePieChartCsvDataset({
+					series: pieSeries,
+					selectedSeries: pieSelection.selectedCharts,
+					includeUpstreamOthers: pieSelection.isDefaultSelection
+				})
+			: filterStablecoinDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
 		return prepareProChartCsv(exportDataset, filename)
 	}
 

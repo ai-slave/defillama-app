@@ -9,6 +9,7 @@ import {
 	type RuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { oldBlue } from '~/constants/colors'
 import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
@@ -19,7 +20,6 @@ import {
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -76,6 +76,7 @@ function ChainsChartCard({
 		selectedCharts,
 		csvSource
 	} = useProtocolBreakdownPresentation({
+		scope: `${slug(protocolName)}-chains`,
 		breakdown,
 		availableSeries: allChains,
 		aggregateOthers: true,
@@ -146,6 +147,7 @@ function TokenValuesUSDChartCard({
 		selectedCharts,
 		csvSource
 	} = useProtocolBreakdownPresentation({
+		scope: `${slug(protocolName)}-token-values-usd`,
 		breakdown,
 		availableSeries: allTokens,
 		aggregateOthers: true,
@@ -214,8 +216,12 @@ function TokensBreakdownPieChartCard({
 		activeSeries: selectedTokens,
 		selectedCharts,
 		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({
+		scope: `${slug(protocolName)}-tokens-breakdown`,
+		allowEmptySelection: true,
+		availableSeries: selectableSeries
+	})
 	const presentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -254,7 +260,12 @@ function TokensBreakdownPieChartCard({
 						iconUrl={reserveExchangeIconUrl(protocolName)}
 						csvSource={{
 							type: 'dataset',
-							prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
+							prepare: () =>
+								buildRuntimePieChartCsvDataset({
+									series: tokenBreakdownPieSeries,
+									selectedSeries: selectedCharts,
+									includeUpstreamOthers
+								})
 						}}
 					/>
 				</>
@@ -290,6 +301,7 @@ function TokenBalancesRawChartCard({
 		selectedCharts,
 		csvSource
 	} = useProtocolBreakdownPresentation({
+		scope: `${slug(protocolName)}-token-balances-raw`,
 		breakdown,
 		availableSeries: allTokens,
 		defaultSeries: defaultTokens,
@@ -392,6 +404,7 @@ function InflowsByTokenChartCard({
 		selectedCharts,
 		csvSource
 	} = useProtocolBreakdownPresentation({
+		scope: `${slug(protocolName)}-inflows-by-token`,
 		breakdown,
 		availableSeries: allTokens,
 		aggregateOthers: true,

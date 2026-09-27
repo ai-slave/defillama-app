@@ -9,6 +9,57 @@ function readNumericValue(value: MultiSeriesChartDataset['source'][number][numbe
 	return typeof value === 'number' ? value : undefined
 }
 
+/**
+ * A chart export that follows the picker: the first (x) dimension, then each named dimension in the given order.
+ * Names the dataset lacks have no values to export and are left out.
+ */
+export function selectDatasetColumns(
+	dataset: MultiSeriesChartDataset,
+	names: Iterable<string>
+): MultiSeriesChartDataset {
+	const indexByName = new Map(dataset.dimensions.map((name, index) => [name, index]))
+	const columns: Array<{ name: string; index: number }> = []
+	for (const name of names) {
+		const index = indexByName.get(name)
+		if (index !== undefined && index !== 0) columns.push({ name, index })
+	}
+	return projectDatasetColumns(dataset, 0, columns)
+}
+
+/** The x column and each chart's y column, named by the chart, for exporting what a chart draws. */
+export function selectChartDatasetColumns(
+	dataset: MultiSeriesChartDataset,
+	charts: ReadonlyArray<MultiSeriesChartSeriesConfig>
+): MultiSeriesChartDataset {
+	const xIndex = charts[0] ? resolveDimensionIndex(charts[0].encode.x, dataset.dimensions) : 0
+	return projectDatasetColumns(
+		dataset,
+		xIndex,
+		charts.map((chart) => ({ name: chart.name, index: resolveDimensionIndex(chart.encode.y, dataset.dimensions) }))
+	)
+}
+
+function projectDatasetColumns(
+	dataset: MultiSeriesChartDataset,
+	xIndex: number,
+	columns: ReadonlyArray<{ name: string; index: number }>
+): MultiSeriesChartDataset {
+	const dimensions = [dataset.dimensions[xIndex]!]
+	const indexes = [xIndex]
+	for (const column of columns) {
+		dimensions.push(column.name)
+		indexes.push(column.index)
+	}
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
+	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
+		const input = dataset.source[rowIndex]!
+		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(indexes.length)
+		for (let column = 0; column < indexes.length; column++) row[column] = input[indexes[column]!]
+		source[rowIndex] = row
+	}
+	return { dimensions, source }
+}
+
 /** Rank named dataset dimensions by their peak absolute value, retaining input order for ties. */
 export function rankSeriesByPeakAbsoluteValue(
 	dataset: MultiSeriesChartDataset,
@@ -128,17 +179,12 @@ export function buildSelectedPercentageChart({
 	selectedCharts: ReadonlySet<string>
 	missingValuePolicy: 'require-complete' | 'sum-available'
 }): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; csvSource: ChartCsvSource } {
-	return {
-		...projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy }),
-		csvSource: {
-			type: 'dataset',
-			prepare: () => buildCompletePercentageChartDataset({ dataset, charts, missingValuePolicy })
-		}
-	}
+	const projected = projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy })
+	return { ...projected, csvSource: { type: 'dataset', prepare: () => projected.dataset } }
 }
 
-/** Recompute a peer-relative metric over every canonical input series for complete export. */
-export function buildCompletePercentageChartDataset({
+/** Recompute each row as shares of every given series. */
+export function buildPercentageChartDataset({
 	dataset,
 	charts,
 	missingValuePolicy
@@ -155,7 +201,10 @@ export function buildCompletePercentageChartDataset({
 	}).dataset
 }
 
-/** Bound an additive peer chart while retaining the exact selected tail as Others. */
+/**
+ * Bound an additive peer chart while retaining the exact selected tail as Others. The export lists every selected
+ * series without that fold, plus the upstream remainder while the chart shows it.
+ */
 export function buildSelectedAdditiveChart({
 	dataset,
 	charts,
@@ -180,12 +229,16 @@ export function buildSelectedAdditiveChart({
 	const selectedNames = selectedSeries.map((chart) => chart.name)
 	const namedLimit = Math.max(1, limit)
 	const includesUpstreamRemainder = includeUpstreamRemainder && chartByName.has(REMAINDER_SERIES_NAME)
+	const csvSource: ChartCsvSource = {
+		type: 'dataset',
+		prepare: () =>
+			selectChartDatasetColumns(
+				dataset,
+				includesUpstreamRemainder ? [...selectedSeries, chartByName.get(REMAINDER_SERIES_NAME)!] : selectedSeries
+			)
+	}
 	if (selectedNames.length <= namedLimit && !includesUpstreamRemainder) {
-		return {
-			dataset,
-			charts: selectedSeries,
-			csvSource: { type: 'dataset', prepare: () => dataset }
-		}
+		return { dataset, charts: selectedSeries, csvSource }
 	}
 	const visibleSeries = selectedSeries.slice(0, namedLimit)
 	const visibleNames = visibleSeries.map((chart) => chart.name)
@@ -249,9 +302,5 @@ export function buildSelectedAdditiveChart({
 		}
 	}
 
-	return {
-		dataset: { dimensions, source },
-		charts: outputCharts,
-		csvSource: { type: 'dataset', prepare: () => dataset }
-	}
+	return { dataset: { dimensions, source }, charts: outputCharts, csvSource }
 }

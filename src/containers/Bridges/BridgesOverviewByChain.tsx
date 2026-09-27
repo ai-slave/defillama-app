@@ -5,11 +5,11 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import {
@@ -195,11 +195,8 @@ export function BridgesOverviewByChain({
 		activeSeries: selectedTokens,
 		selectedCharts: selectedTokenSet,
 		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({
-		availableSeries: activeTokenSeriesNames,
-		selectionKey: selectedChain
-	})
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: activeTokenSeriesNames, scope: selectedChain })
 	const visibleTokenPiePresentation = React.useMemo(
 		() =>
 			activeTokenPieSeries
@@ -218,7 +215,15 @@ export function BridgesOverviewByChain({
 	const activeChartCsvSource: ChartCsvSource | null = activeChart
 		? 'dataset' in activeChart
 			? { type: 'dataset', prepare: () => activeChart.dataset }
-			: { type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(activeChart.series) }
+			: {
+					type: 'dataset',
+					prepare: () =>
+						buildRuntimePieChartCsvDataset({
+							series: activeChart.series,
+							selectedSeries: selectedTokenSet,
+							includeUpstreamOthers
+						})
+				}
 		: null
 	const prepareCsv = () => {
 		const resolvedFilteredBridges = filteredBridges ?? EMPTY_PROTOCOLS

@@ -162,8 +162,18 @@ const buildBreakdownVolumePayload = (
 	const rankedSeries = rankedKeys.map((key) => ({ key, label: formatDimensionLabel(key, options.chart) }))
 	const availableSeries = rankedSeries.map((series) => series.label)
 	const colorIndexByName = new Map(availableSeries.map((name, index) => [name, index]))
-	const selectedSet = options.selectedNames == null ? null : new Set(options.selectedNames)
-	const excludedSet = options.excludedNames == null ? null : new Set(options.excludedNames)
+	// A pick list that names nothing here follows the default, as `resolveLocalSelection` shows it on the client.
+	const selectedSet =
+		options.selectedNames == null ||
+		(options.selectedNames.length > 0 && !options.selectedNames.some((name) => availableSeries.includes(name)))
+			? null
+			: new Set(options.selectedNames)
+	// So does an exclusion that leaves nothing.
+	const excludedNames = options.excludedNames
+	const excludedSet =
+		excludedNames == null || availableSeries.every((name) => excludedNames.includes(name))
+			? null
+			: new Set(excludedNames)
 	const selectedSeries = selectedSet
 		? rankedSeries.filter((series) => selectedSet.has(series.label))
 		: excludedSet

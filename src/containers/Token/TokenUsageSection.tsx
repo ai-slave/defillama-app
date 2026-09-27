@@ -7,6 +7,7 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { prepareTableCsv } from '~/components/Table/utils'
@@ -19,7 +20,6 @@ import {
 	prepareTokenUsageTreemapCsv
 } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -157,10 +157,7 @@ export function TokenUsageSection({
 		activeSeries: selectedTreemapProtocols,
 		selectedCharts: selectedTreemapProtocolSet,
 		setSelectedSeries: setSelectedTreemapProtocols
-	} = useAllSeriesSelection({
-		availableSeries: treemapProtocolKeys,
-		selectionKey: tokenSymbol
-	})
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: treemapProtocolKeys, scope: tokenSymbol })
 	const treemapTreeData = useMemo(
 		() => filterTokenUsageTreemapTreeData(canonicalTreemapTreeData, selectedTreemapProtocolSet),
 		[canonicalTreemapTreeData, selectedTreemapProtocolSet]

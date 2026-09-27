@@ -9,12 +9,12 @@ import {
 	type RuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { SegmentedControl, type SegmentedControlOption } from '~/ui/SegmentedControl'
 import { slug } from '~/utils'
@@ -193,8 +193,9 @@ export function BreakdownChartCard({
 	)
 	const [view, setView] = React.useState<BreakdownChartView>('line')
 	const isDominance = view === 'dominance'
-	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
+	const { activeSeries, setSelectedSeries, isDefaultSelection, dataset, charts, selectedCharts, csvSource } =
 		useProtocolBreakdownPresentation({
+			scope: exportFilenameBase,
 			breakdown,
 			availableSeries: allValues,
 			...(defaultValues ? { defaultSeries: defaultValues } : {}),
@@ -213,10 +214,21 @@ export function BreakdownChartCard({
 						selectedCharts,
 						breakdown,
 						availableSeries: allValues,
-						aggregateOthers
+						activeSeries,
+						includeUpstreamOthers: aggregateOthers && isDefaultSelection
 					})
 				: null,
-		[aggregateOthers, allValues, breakdown, charts, dataset, isDominance, selectedCharts]
+		[
+			activeSeries,
+			aggregateOthers,
+			allValues,
+			breakdown,
+			charts,
+			dataset,
+			isDefaultSelection,
+			isDominance,
+			selectedCharts
+		]
 	)
 	const tableRows = React.useMemo(
 		() =>
@@ -227,14 +239,27 @@ export function BreakdownChartCard({
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
-	const deferredDataset = React.useDeferredValue(dominance?.dataset ?? dataset)
-	const deferredCharts = React.useDeferredValue(dominance?.charts ?? charts)
-	const activeCsvSource =
-		view === 'table'
-			? buildSnapshotCsvSource(tableRows, seriesLabel, shareHeader)
-			: dominance
-				? dominance.csvSource
-				: csvSource
+	const activeCsvSource = React.useMemo(
+		() =>
+			view === 'table'
+				? buildSnapshotCsvSource(tableRows, seriesLabel, shareHeader)
+				: dominance
+					? dominance.csvSource
+					: csvSource,
+		[csvSource, dominance, seriesLabel, shareHeader, tableRows, view]
+	)
+	const chartSnapshot = React.useMemo(
+		() => ({
+			dataset: dominance?.dataset ?? dataset,
+			charts: dominance?.charts ?? charts,
+			selectedCharts,
+			isDominance,
+			csvSource: activeCsvSource
+		}),
+		[activeCsvSource, charts, dataset, dominance, isDominance, selectedCharts]
+	)
+	// Deferred together with the rows, so the chart and its export never pair old rows with a new selection or view.
+	const deferredChart = React.useDeferredValue(chartSnapshot)
 
 	return (
 		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
@@ -263,10 +288,10 @@ export function BreakdownChartCard({
 				) : null}
 				<ChartExportButtons
 					chartInstance={chartInstance}
-					filename={isDominance ? `${exportFilenameBase}-dominance` : exportFilenameBase}
-					title={isDominance ? `${exportTitle} (Dominance)` : exportTitle}
+					filename={deferredChart.isDominance ? `${exportFilenameBase}-dominance` : exportFilenameBase}
+					title={deferredChart.isDominance ? `${exportTitle} (Dominance)` : exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={activeCsvSource}
+					csvSource={deferredChart.csvSource}
 					showPng={view !== 'table'}
 				/>
 			</ChartPanelToolbar>
@@ -275,13 +300,15 @@ export function BreakdownChartCard({
 			) : (
 				<React.Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
-						dataset={deferredDataset}
-						charts={deferredCharts}
-						csvSource={activeCsvSource}
+						dataset={deferredChart.dataset}
+						charts={deferredChart.charts}
+						csvSource={deferredChart.csvSource}
 						hideDefaultLegend={false}
-						valueSymbol={isDominance ? '%' : valueSymbol}
-						{...(isDominance ? { stacked: true, expandTo100Percent: true } : { selectedCharts })}
-						showTotalInTooltip={!isDominance && valueSymbol === '$'}
+						valueSymbol={deferredChart.isDominance ? '%' : valueSymbol}
+						{...(deferredChart.isDominance
+							? { stacked: true, expandTo100Percent: true }
+							: { selectedCharts: deferredChart.selectedCharts })}
+						showTotalInTooltip={!deferredChart.isDominance && valueSymbol === '$'}
 						onReady={handleChartReady}
 					/>
 				</React.Suspense>
@@ -313,8 +340,8 @@ export function TokensBreakdownPieChartCard({
 		activeSeries: selectedTokens,
 		selectedCharts,
 		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({ scope: exportFilenameBase, allowEmptySelection: true, availableSeries: selectableSeries })
 	const presentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -373,7 +400,12 @@ export function TokensBreakdownPieChartCard({
 							? buildSnapshotCsvSource(tableRows, 'Token', shareHeader)
 							: {
 									type: 'dataset',
-									prepare: () => buildRuntimePieChartCsvDataset(tokenBreakdownPieSeries)
+									prepare: () =>
+										buildRuntimePieChartCsvDataset({
+											series: tokenBreakdownPieSeries,
+											selectedSeries: selectedCharts,
+											includeUpstreamOthers
+										})
 								}
 					}
 					showPng={view !== 'table'}

@@ -10,6 +10,7 @@ import {
 	type RuntimePieChartData
 } from '~/components/ECharts/PieChart/data'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
@@ -25,7 +26,6 @@ import {
 import { useProtocolBreakdownPresentation } from '~/containers/ProtocolOverview/useProtocolBreakdownPresentation'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -70,8 +70,12 @@ function TokensBreakdownPieChartCard({
 		activeSeries: selectedTokens,
 		selectedCharts,
 		setSelectedSeries: setSelectedTokens,
-		includeUpstreamOthers
-	} = useAllSeriesSelection({ availableSeries: selectableSeries })
+		isDefaultSelection: includeUpstreamOthers
+	} = useLocalSelection({
+		scope: `${protocolName}:tokens-pie`,
+		allowEmptySelection: true,
+		availableSeries: selectableSeries
+	})
 	const presentation = React.useMemo(
 		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
 		[includeUpstreamOthers, selectedCharts, series]
@@ -102,7 +106,11 @@ function TokensBreakdownPieChartCard({
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
-					csvSource={{ type: 'dataset', prepare: () => buildRuntimePieChartCsvDataset(series) }}
+					csvSource={{
+						type: 'dataset',
+						prepare: () =>
+							buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts, includeUpstreamOthers })
+					}}
 				/>
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
@@ -187,6 +195,7 @@ function TokensMultiSeriesChartCard({
 		selectedCharts,
 		csvSource
 	} = useProtocolBreakdownPresentation({
+		scope: `${protocolName}:${exportSuffix}`,
 		breakdown,
 		availableSeries: allTokens,
 		...(defaultTokens ? { defaultSeries: defaultTokens } : {}),

@@ -162,6 +162,51 @@ describe('stablecoin chart series builders', () => {
 		])
 	})
 
+	test('a pick list that names no stablecoin in the data shows the default series', () => {
+		const point = (date: number, value: number) => ({ date, mcap: { peggedUSD: value } })
+		const euroParams = {
+			chartDataByAssetOrChain: [
+				[point(1_660_000_000, 100), point(1_660_086_400, 125)],
+				[point(1_660_000_000, 50), point(1_660_086_400, 75)]
+			],
+			assetsOrChainsList: ['EURC', 'EURS'],
+			filteredIndexes: [0, 1],
+			issuanceType: 'mcap',
+			selectedChain: 'All'
+		} satisfies IBuildStablecoinChartDataParams
+		const payload = buildStablecoinOverviewPayload(
+			euroParams,
+			'tokenMcaps',
+			{ symbol: 'EURC', mcap: 125 },
+			{
+				selectedNames: ['USDT']
+			}
+		)
+		expect(payload.dataset.dimensions).toEqual(['timestamp', 'EURC', 'EURS'])
+		expect(payload.dataset.source).toEqual([
+			[1_660_000_000_000, 100, 50],
+			[1_660_086_400_000, 125, 75]
+		])
+	})
+
+	test('an exclusion that leaves no stablecoin in the data shows the default series', () => {
+		const point = (date: number, value: number) => ({ date, mcap: { peggedUSD: value } })
+		const onlyUsdt = {
+			chartDataByAssetOrChain: [[point(1_660_000_000, 100)]],
+			assetsOrChainsList: ['USDT'],
+			filteredIndexes: [0],
+			issuanceType: 'mcap',
+			selectedChain: 'All'
+		} satisfies IBuildStablecoinChartDataParams
+		const payload = buildStablecoinOverviewPayload(
+			onlyUsdt,
+			'tokenMcaps',
+			{ symbol: 'USDT', mcap: 100 },
+			{ excludedNames: ['USDT'] }
+		)
+		expect(payload.dataset).toEqual({ dimensions: ['timestamp', 'USDT'], source: [[1_660_000_000_000, 100]] })
+	})
+
 	test('keeps total market cap ordering, currency totals, and missing values exact', () => {
 		const mixedCurrencyParams = {
 			chartDataByAssetOrChain: [

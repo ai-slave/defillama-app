@@ -3,11 +3,11 @@ import { lazy, Suspense, type ReactNode, useEffect, useMemo, useState } from 're
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { EmissionsChartConfig, EmissionsDataset } from '~/containers/Unlocks/api.types'
 import { formatUnlockDate } from '~/containers/Unlocks/dateFormat'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug } from '~/utils'
@@ -131,9 +131,9 @@ export function UnlocksChartTab({
 		if (categories.length > 0) return categories
 		return EMPTY_STACKS
 	}, [scheduleCharts, data])
-	const scheduleSelection = useSeriesSelection({
+	const scheduleSelection = useLocalSelection({
 		availableSeries: stacks,
-		selectionKey: `${selectedUnlocksProtocol}:schedule`
+		scope: `${selectedUnlocksProtocol}:schedule`
 	})
 
 	const allocationPieChart = useMemo(() => {

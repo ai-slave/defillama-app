@@ -13,6 +13,7 @@ import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
 	CHAINS_CATEGORY_GROUP_SETTINGS,
@@ -21,7 +22,6 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
@@ -115,9 +115,9 @@ export function ChainsByCategory({
 	const chartErrorMessage = chartDataQuery.error ? getErrorMessage(chartDataQuery.error) : null
 	const showSharedChartState = (shouldFetchChartData && chartDataQuery.isLoading) || chartErrorMessage != null
 	const pieSelectableSeries = React.useMemo(() => pieSeries.peers.map((peer) => peer.name), [pieSeries.peers])
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: chainSeries,
-		selectionKey: categoryName
+		scope: categoryName
 	})
 	const selectedDominance = React.useMemo(
 		() =>
@@ -133,11 +133,8 @@ export function ChainsByCategory({
 		activeSeries: activePieSeries,
 		selectedCharts: selectedPieSeries,
 		setSelectedSeries: setSelectedPieSeries,
-		includeUpstreamOthers: includePieUpstreamOthers
-	} = useAllSeriesSelection({
-		availableSeries: pieSelectableSeries,
-		selectionKey: categoryName
-	})
+		isDefaultSelection: includePieUpstreamOthers
+	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: categoryName })
 	const visiblePieChartData = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
@@ -208,7 +205,12 @@ export function ChainsByCategory({
 								title="Chains TVL"
 								csvSource={{
 									type: 'dataset',
-									prepare: () => buildRuntimePieChartCsvDataset(pieSeries)
+									prepare: () =>
+										buildRuntimePieChartCsvDataset({
+											series: pieSeries,
+											selectedSeries: selectedPieSeries,
+											includeUpstreamOthers: includePieUpstreamOthers
+										})
 								}}
 							/>
 						</ChartPanelToolbar>

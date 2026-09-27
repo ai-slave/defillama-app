@@ -8,6 +8,7 @@ import { setSignupSource } from '~/auth/signupSource'
 import { DialogForm } from '~/components/DialogForm'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGroupAndFormatChains } from '~/containers/ChainsByCategory'
@@ -168,7 +169,9 @@ export function DefiWatchlistContainer({
 					filteredProtocols={protocolsTableData as any}
 					filteredChains={chainsTableData}
 				/>
-				{protocolsTableData.length > 0 ? <TopMovers protocols={protocolsTableData} /> : null}
+				{protocolsTableData.length > 0 ? (
+					<TopMovers protocols={protocolsTableData} portfolio={selectedPortfolio} />
+				) : null}
 				<Card padding="none">
 					<TableToolbar>
 						<div className="mr-auto">
@@ -753,14 +756,12 @@ function PortfolioSelection() {
 
 type TopMoversProps = {
 	protocols: Array<IProtocol>
+	portfolio: string
 }
 
-function TopMovers({ protocols }: TopMoversProps) {
+function TopMovers({ protocols, portfolio }: TopMoversProps) {
 	const [showPositive, setShowPositive] = useState(true)
 	const [showNegative, setShowNegative] = useState(true)
-	const [selectedChains, setSelectedChains] = useState<Array<string>>([])
-	const selectedChainsSet = useMemo(() => new Set(selectedChains), [selectedChains])
-
 	const availableChains = useMemo(() => {
 		const chainSet = new Set<string>()
 		for (const protocol of protocols) {
@@ -770,6 +771,13 @@ function TopMovers({ protocols }: TopMoversProps) {
 		}
 		return Array.from(chainSet).sort()
 	}, [protocols])
+	// Every chain is selected by default; the filter applies once the user narrows it, and a new portfolio starts over.
+	const {
+		activeSeries: selectedChains,
+		selectedCharts: selectedChainsSet,
+		setSelectedSeries: setSelectedChains,
+		isDefaultSelection: showsAllChains
+	} = useLocalSelection({ scope: portfolio, availableSeries: availableChains, allowEmptySelection: true })
 
 	const topMovers = useMemo(() => {
 		const periods = ['1d', '7d', '1m']
@@ -786,7 +794,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 					chains: p.chains || []
 				}))
 
-			if (selectedChainsSet.size > 0) {
+			if (!showsAllChains) {
 				candidates = candidates.filter((protocolEntry) => {
 					for (const chain of protocolEntry.chains) {
 						if (selectedChainsSet.has(chain)) return true
@@ -808,7 +816,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 		}
 
 		return movers
-	}, [protocols, showPositive, showNegative, selectedChainsSet])
+	}, [protocols, showPositive, showNegative, selectedChainsSet, showsAllChains])
 
 	const chainOptions = useMemo(() => {
 		return availableChains.map((chain) => ({
@@ -847,9 +855,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 						selectedValues={selectedChains}
 						setSelectedValues={setSelectedChains}
 						label={
-							selectedChains.length > 0
-								? `${selectedChains.length} chain${selectedChains.length === 1 ? '' : 's'}`
-								: 'All chains'
+							showsAllChains ? 'All chains' : `${selectedChains.length} chain${selectedChains.length === 1 ? '' : 's'}`
 						}
 						labelType="smol"
 						variant="filter"

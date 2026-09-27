@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -9,6 +10,7 @@ import {
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -16,7 +18,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
@@ -45,7 +46,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 		activeSeries: tickers,
 		selectedCharts,
 		setSelectedSeries: setTickers
-	} = useSeriesSelection({ availableSeries: ETF_ASSET_NAMES })
+	} = useLocalSelection({ scope: 'etf-assets', availableSeries: ETF_ASSET_NAMES })
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = React.useMemo(() => {
@@ -111,7 +112,16 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							chartInstance={chartInstance}
 							filename="etf-flows"
 							title="ETF Flows"
-							csvSource={{ type: 'dataset', prepare: () => ({ ...finalCharts.dataset, groupBy }) }}
+							csvSource={{
+								type: 'dataset',
+								prepare: () => ({
+									...selectChartDatasetColumns(
+										finalCharts.dataset,
+										finalCharts.charts.filter((chart) => selectedCharts.has(chart.name))
+									),
+									groupBy
+								})
+							}}
 						/>
 					</ChartPanelToolbar>
 					<React.Suspense fallback={<ChartPanelBodyFallback />}>

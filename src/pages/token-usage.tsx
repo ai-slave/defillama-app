@@ -10,6 +10,7 @@ import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/VirtualTable'
@@ -27,7 +28,6 @@ import {
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useIsClient } from '~/hooks/useIsClient'
-import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
@@ -111,9 +111,10 @@ export default function Tokens() {
 		activeSeries: selectedTreemapProtocols,
 		selectedCharts: selectedTreemapProtocolSet,
 		setSelectedSeries: setSelectedTreemapProtocols
-	} = useAllSeriesSelection({
+	} = useLocalSelection({
+		allowEmptySelection: true,
 		availableSeries: treemapProtocolKeys,
-		selectionKey: tokenSymbol ?? 'none'
+		scope: tokenSymbol ?? 'none'
 	})
 	const treemapTreeData = useMemo(
 		() => filterTokenUsageTreemapTreeData(canonicalTreemapTreeData, selectedTreemapProtocolSet),

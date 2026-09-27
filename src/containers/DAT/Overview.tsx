@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildTimeSeriesChart } from '~/components/ECharts/MultiSeriesChart/timeSeriesBuilder'
 import {
 	ChartGroupingSelector,
@@ -10,6 +11,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
@@ -17,7 +19,6 @@ import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
 import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
@@ -66,7 +67,10 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	}, [dailyFlowsByAsset, groupBy])
 	const deferredChartData = useDeferredValue(chartData)
 	const assetSeries = useMemo(() => chartData.charts.map((chart) => chart.name), [chartData.charts])
-	const { activeSeries, selectedCharts, setSelectedSeries } = useSeriesSelection({ availableSeries: assetSeries })
+	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
+		scope: 'digital-asset-treasuries',
+		availableSeries: assetSeries
+	})
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -102,7 +106,13 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						title="DAT Inflows by Asset"
 						csvSource={{
 							type: 'dataset',
-							prepare: () => ({ ...deferredChartData.dataset, groupBy: deferredChartData.groupBy })
+							prepare: () => ({
+								...selectChartDatasetColumns(
+									deferredChartData.dataset,
+									deferredChartData.charts.filter((chart) => selectedCharts.has(chart.name))
+								),
+								groupBy: deferredChartData.groupBy
+							})
 						}}
 					/>
 				</ChartPanelToolbar>

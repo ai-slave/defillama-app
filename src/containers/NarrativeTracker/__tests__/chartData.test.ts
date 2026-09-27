@@ -3,6 +3,7 @@ import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
 	calculateDenominatedChange,
+	editVisibleSelection,
 	filterNarrativeTreemapTreeData
 } from '../chartData'
 import type { IPctChangeRow } from '../types'
@@ -199,5 +200,13 @@ describe('calculateDenominatedChange', () => {
 		const rows = [row({ name: 'DeFi', change1W: 21 })]
 		expect(calculateDenominatedChange(rows, '$', 'change1W').map((item) => item.change1W)).toEqual([21])
 		expect(calculateDenominatedTimeSeries([{ date: 1, DeFi: 21 }], '$')).toEqual([{ date: 1, DeFi: 21 }])
+	})
+})
+
+describe('editVisibleSelection', () => {
+	test('keeps the series past the visible limit when the visible part is edited', () => {
+		const selected = ['A', 'B', 'C', 'D', 'E']
+		expect(editVisibleSelection(selected, ['A', 'C'], 3)).toEqual(['A', 'C', 'D', 'E'])
+		expect(editVisibleSelection(selected, [], 3)).toEqual([])
 	})
 })

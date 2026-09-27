@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
 import type {
 	MultiSeriesChartSeriesConfig,
 	MultiSeriesTimeSeriesDataset,
@@ -13,12 +14,12 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
+import { useLocalSelectionWithRemainder } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 import { getAdapterBuilderMetric } from '~/containers/ProDashboard/utils/adapterChartMapping'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelectionWithFixedRemainder } from '~/hooks/useSeriesSelection'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { getNDistinctColors, slug } from '~/utils'
@@ -257,7 +258,10 @@ function ChartByType({
 		selectableSeries,
 		renderedCharts,
 		setSelectedSeries: setSelectedTypes
-	} = useSeriesSelectionWithFixedRemainder({ availableSeries: uniqueBreakdownNames })
+	} = useLocalSelectionWithRemainder({
+		scope: `${protocolName}:${adapterType}:${chartType}`,
+		availableSeries: uniqueBreakdownNames
+	})
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const chartBuilderConfig = React.useMemo<ChartBuilderConfig | null>(() => {
@@ -353,7 +357,13 @@ function ChartByType({
 					iconUrl={tokenIconUrl(exportProtocolName)}
 					csvSource={{
 						type: 'dataset',
-						prepare: () => ({ ...deferredMainChartData.dataset, groupBy: deferredMainChartData.groupBy })
+						prepare: () => ({
+							...selectChartDatasetColumns(
+								deferredMainChartData.dataset,
+								deferredMainChartData.charts.filter((chart) => renderedCharts.has(chart.name))
+							),
+							groupBy: deferredMainChartData.groupBy
+						})
 					}}
 				/>
 			</ChartPanelToolbar>

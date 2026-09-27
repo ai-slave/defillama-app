@@ -3,9 +3,9 @@ import { lazy, Suspense, useCallback, useMemo, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/TreemapChart/Market/colors'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import defs from '~/public/equities-definitions.json'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -105,13 +105,12 @@ export function EquitiesTreemapSection({
 		activeSeries: selectedCompanies,
 		selectedCharts: selectedCompanySet,
 		setSelectedSeries: setSelectedCompanies
-	} = useSeriesSelection({
+	} = useLocalSelection({
 		availableSeries: companyTickers,
 		defaultSeries: companyTickers,
 		maxSelectedSeries: EQUITIES_TREEMAP_DEFAULT_LIMIT,
 		allowEmptySelection: true,
-		resetToDefaultWhenStale: true,
-		selectionKey: 'equities-market-map'
+		scope: 'equities-market-map'
 	})
 	const ranking = useMemo<IEquitiesTreemapRanking>(
 		() => ({

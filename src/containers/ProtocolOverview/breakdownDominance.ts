@@ -1,9 +1,9 @@
 import {
-	buildCompletePercentageChartDataset,
+	buildPercentageChartDataset,
 	buildSelectedPercentageChart
 } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildCompleteProtocolBreakdownDataset, type ProtocolBreakdownChart } from './useProtocolBreakdownCharts'
+import { buildProtocolBreakdownCsvDataset, type ProtocolBreakdownChart } from './useProtocolBreakdownCharts'
 
 export function buildProtocolBreakdownDominance({
 	dataset,
@@ -11,14 +11,16 @@ export function buildProtocolBreakdownDominance({
 	selectedCharts,
 	breakdown,
 	availableSeries,
-	aggregateOthers
+	activeSeries,
+	includeUpstreamOthers
 }: {
 	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts: ReadonlySet<string>
 	breakdown: ProtocolBreakdownChart
 	availableSeries: ReadonlyArray<string>
-	aggregateOthers: boolean
+	activeSeries: ReadonlyArray<string>
+	includeUpstreamOthers: boolean
 }) {
 	const presentation = buildSelectedPercentageChart({
 		dataset,
@@ -31,17 +33,17 @@ export function buildProtocolBreakdownDominance({
 		csvSource: {
 			type: 'dataset' as const,
 			prepare: () => {
-				// Export from canonical peers before selection and the visual top-30 fold.
-				const complete = buildCompleteProtocolBreakdownDataset({
+				// The chart folds picks past the top 30 into Others; the export lists each pick over the same total.
+				const picked = buildProtocolBreakdownCsvDataset({
 					breakdown,
 					availableSeries,
-					includeUpstreamOthers: aggregateOthers,
+					activeSeries,
+					includeUpstreamOthers,
 					fillMissingWithZero: true
 				})
-				if (!complete) return { dimensions: ['timestamp'], source: [] }
-				return buildCompletePercentageChartDataset({
-					dataset: complete,
-					charts: complete.dimensions.slice(1).map((name, index) => ({
+				return buildPercentageChartDataset({
+					dataset: picked,
+					charts: picked.dimensions.slice(1).map((name, index) => ({
 						type: 'line',
 						name,
 						encode: { x: 0, y: index + 1 }

@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { buildSelectedAdditiveChart, buildSelectedPercentageChart, rankSeriesByPeakAbsoluteValue } from '../selection'
+import {
+	buildSelectedAdditiveChart,
+	buildSelectedPercentageChart,
+	rankSeriesByPeakAbsoluteValue,
+	selectChartDatasetColumns,
+	selectDatasetColumns
+} from '../selection'
 
 test('ranks additive peers by peak absolute value with stable ties', () => {
 	expect(
@@ -16,8 +22,30 @@ test('ranks additive peers by peak absolute value with stable ties', () => {
 	).toEqual(['HistoricalLeader', 'CurrentLeader', 'Signed'])
 })
 
+describe('picked-series exports', () => {
+	const dataset = { dimensions: ['timestamp', 'eth', 'sol', 'base'], source: [[1, 60, 30, 10]] }
+
+	test('export the x column and the picked columns in the order given, skipping names without data', () => {
+		expect(selectDatasetColumns(dataset, ['base', 'missing', 'eth'])).toEqual({
+			dimensions: ['timestamp', 'base', 'eth'],
+			source: [[1, 10, 60]]
+		})
+	})
+
+	test('name each exported column after its chart, reading the column the chart encodes', () => {
+		const charts = [
+			{ type: 'line' as const, name: 'Solana', encode: { x: 0, y: 2 } },
+			{ type: 'line' as const, name: 'Ethereum', encode: { x: 'timestamp', y: 'eth' } }
+		]
+		expect(selectChartDatasetColumns(dataset, charts)).toEqual({
+			dimensions: ['timestamp', 'Solana', 'Ethereum'],
+			source: [[1, 30, 60]]
+		})
+	})
+})
+
 describe('buildSelectedAdditiveChart', () => {
-	test('keeps selected peers visible and folds only the selected tail into fixed-color Others', async () => {
+	test('keeps selected peers visible, folds only the selected tail into Others, and exports each peer', async () => {
 		const names = Array.from({ length: 5 }, (_, index) => `Series${index + 1}`)
 		const dataset = { dimensions: ['timestamp', ...names], source: [[1, 50, 40, 30, 20, 10]] }
 		const charts = names.map((name, index) => ({
@@ -49,7 +77,10 @@ describe('buildSelectedAdditiveChart', () => {
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
 			throw new Error('Expected a dataset export')
 		}
-		expect(await result.csvSource.prepare()).toBe(dataset)
+		expect(await result.csvSource.prepare()).toEqual({
+			dimensions: ['timestamp', 'Series1', 'Series2', 'Series3', 'Series4', 'Series5'],
+			source: [[1, 50, 40, 30, 20, 10]]
+		})
 	})
 
 	test('keeps Others unavailable when any selected remainder member is unavailable', () => {
@@ -104,6 +135,31 @@ describe('buildSelectedAdditiveChart', () => {
 			}).dataset
 		).toEqual({ dimensions: ['timestamp', 'A', 'B', 'Others'], source: [[1, 10, 20, 30]] })
 	})
+
+	test('exports the picked peers, and the upstream Others only while the chart shows it', async () => {
+		const charts = [
+			{ type: 'line' as const, name: 'A', encode: { x: 0, y: 1 } },
+			{ type: 'line' as const, name: 'B', encode: { x: 0, y: 2 } },
+			{ type: 'line' as const, name: 'Others', encode: { x: 0, y: 3 } }
+		]
+		const dataset = { dimensions: ['timestamp', 'A', 'B', 'Others'], source: [[1, 10, 20, 30]] }
+		const exportOf = async (selected: Array<string>, includeUpstreamRemainder: boolean) => {
+			const { csvSource } = buildSelectedAdditiveChart({
+				dataset,
+				charts,
+				seriesOrder: ['A', 'B'],
+				selectedCharts: new Set(selected),
+				includeUpstreamRemainder
+			})
+			if (csvSource === 'rendered-chart' || csvSource.type !== 'dataset') throw new Error('Expected a dataset export')
+			return csvSource.prepare()
+		}
+		expect(await exportOf(['B'], false)).toEqual({ dimensions: ['timestamp', 'B'], source: [[1, 20]] })
+		expect(await exportOf(['A', 'B'], true)).toEqual({
+			dimensions: ['timestamp', 'A', 'B', 'Others'],
+			source: [[1, 10, 20, 30]]
+		})
+	})
 })
 
 describe('buildSelectedPercentageChart', () => {
@@ -120,7 +176,7 @@ describe('buildSelectedPercentageChart', () => {
 		{ type: 'line' as const, name: 'Base', encode: { x: 0, y: 3 }, color: '#333333' }
 	]
 
-	test('renormalizes selected peers visually while exporting the full canonical denominator', async () => {
+	test('renormalizes selected peers and exports the same shares', async () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -137,13 +193,13 @@ describe('buildSelectedPercentageChart', () => {
 		])
 		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
-			throw new Error('Expected a prepared complete export')
+			throw new Error('Expected a dataset export')
 		}
 		expect(await result.csvSource.prepare()).toEqual({
-			dimensions: ['timestamp', 'Ethereum', 'Solana', 'Base'],
+			dimensions: ['timestamp', 'Ethereum', 'Solana'],
 			source: [
-				[1, 60, 30, 10],
-				[2, null, null, null]
+				[1, (60 / 90) * 100, 100 - (60 / 90) * 100],
+				[2, 0, 0]
 			]
 		})
 	})

@@ -8,10 +8,10 @@ import type {
 	MultiSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/shared/chartSpacing'
+import { useLocalSelection } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
-import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -72,7 +72,6 @@ export function LiquidationsDistributionChartFooter({ timestamp }: { timestamp: 
 function LiquidationsDistributionChartCard({
 	availableSeries,
 	breakdownOptions,
-	chartOptions,
 	chartState,
 	deferredChartModel,
 	prepareExportDataset,
@@ -81,7 +80,6 @@ function LiquidationsDistributionChartCard({
 	setBreakdownMode,
 	setChartMode,
 	setMetric,
-	selectedCharts,
 	selectedSeries,
 	setSelectedToken,
 	setSelectedSeries,
@@ -93,9 +91,14 @@ function LiquidationsDistributionChartCard({
 }: {
 	availableSeries: Array<string>
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
-	chartOptions: NonNullable<IMultiSeriesChartProps['chartOptions']>
 	chartState: LiquidationsChartState
-	deferredChartModel: { dataset: MultiSeriesChartDataset; charts: NonNullable<IMultiSeriesChartProps['charts']> }
+	deferredChartModel: {
+		dataset: MultiSeriesChartDataset
+		charts: NonNullable<IMultiSeriesChartProps['charts']>
+		selectedCharts: Set<string>
+		chartOptions: NonNullable<IMultiSeriesChartProps['chartOptions']>
+		valueSymbol: string
+	}
 	prepareExportDataset: () => MultiSeriesChartDataset
 	displayOptions: {
 		hideTokenSelector: boolean
@@ -107,7 +110,6 @@ function LiquidationsDistributionChartCard({
 	setBreakdownMode: (mode: BreakdownMode) => void
 	setChartMode: (mode: ChartMode) => void
 	setMetric: (metric: Metric) => void
-	selectedCharts: Set<string>
 	selectedSeries: Array<string>
 	setSelectedToken: (token: string) => void
 	setSelectedSeries: React.Dispatch<React.SetStateAction<Array<string>>>
@@ -222,13 +224,13 @@ function LiquidationsDistributionChartCard({
 				<MultiSeriesChart
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
-					selectedCharts={selectedCharts}
-					chartOptions={chartOptions}
+					selectedCharts={deferredChartModel.selectedCharts}
+					chartOptions={deferredChartModel.chartOptions}
 					containerClassName="min-h-[360px]"
 					hideDataZoom={displayOptions.shouldHideDataZoom}
 					hideDefaultLegend={!displayOptions.showBreakdownLegend}
 					onReady={onChartReady}
-					valueSymbol={chartState.metric === 'usd' ? '$' : ''}
+					valueSymbol={deferredChartModel.valueSymbol}
 				/>
 			</React.Suspense>
 			<LiquidationsDistributionChartFooter timestamp={timestamp} />
@@ -412,6 +414,7 @@ export function buildLiquidationsChartExportDataset(
 
 export function LiquidationsDistributionChart({
 	chart,
+	scope,
 	timestamp,
 	title,
 	allowedBreakdownModes = DEFAULT_BREAKDOWN_MODES,
@@ -422,6 +425,8 @@ export function LiquidationsDistributionChart({
 	iconUrl
 }: {
 	chart: LiquidationsDistributionChartData
+	/** The page's entity, such as the protocol and chain; the series selection starts over for a new one. */
+	scope: string
 	timestamp: number
 	title?: string
 	iconUrl?: string
@@ -548,9 +553,9 @@ export function LiquidationsDistributionChart({
 		activeSeries: selectedSeries,
 		selectedCharts,
 		setSelectedSeries
-	} = useSeriesSelection({
+	} = useLocalSelection({
 		availableSeries,
-		selectionKey: `${chartState.token ?? 'none'}:${chartState.breakdownMode}`
+		scope: `${scope}:${chartState.token ?? 'none'}:${chartState.breakdownMode}`
 	})
 	const visibleDataPointCount = React.useMemo(() => {
 		let count = 0
@@ -674,7 +679,12 @@ export function LiquidationsDistributionChart({
 		return options
 	}, [chartState.metric, chartState.tokenLabel, shouldHideDataZoom, showBreakdownLegend])
 
-	const deferredChartModel = React.useDeferredValue(chartModel)
+	const chartRenderModel = React.useMemo(
+		() => ({ ...chartModel, selectedCharts, chartOptions, valueSymbol: chartState.metric === 'usd' ? '$' : '' }),
+		[chartModel, chartOptions, chartState.metric, selectedCharts]
+	)
+	// Deferred together with the rows, so formatters, the value symbol and the visible series never pair with old rows.
+	const deferredChartModel = React.useDeferredValue(chartRenderModel)
 
 	if (chart.tokens.length === 0) {
 		return (
@@ -689,7 +699,6 @@ export function LiquidationsDistributionChart({
 		<LiquidationsDistributionChartCard
 			availableSeries={availableSeries}
 			breakdownOptions={breakdownOptions}
-			chartOptions={chartOptions}
 			chartState={chartState}
 			deferredChartModel={deferredChartModel}
 			prepareExportDataset={prepareExportDataset}
@@ -698,7 +707,6 @@ export function LiquidationsDistributionChart({
 			setBreakdownMode={setBreakdownMode}
 			setChartMode={setChartMode}
 			setMetric={setMetric}
-			selectedCharts={selectedCharts}
 			selectedSeries={selectedSeries}
 			setSelectedToken={setSelectedToken}
 			setSelectedSeries={setSelectedSeries}
