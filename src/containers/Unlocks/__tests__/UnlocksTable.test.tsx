@@ -59,7 +59,7 @@ const client = new QueryClient()
 const table = () => (
 	<QueryClientProvider client={client}>
 		<RouterContext.Provider value={router()}>
-			<UnlocksTable protocols={PROTOCOLS} showOnlyWatchlist={false} savedProtocols={new Set()} />
+			<UnlocksTable protocols={PROTOCOLS} showOnlyWatchlist={false} savedProtocols={new Set()} initialNowSec={0} />
 		</RouterContext.Provider>
 	</QueryClientProvider>
 )

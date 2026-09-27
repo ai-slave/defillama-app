@@ -17,7 +17,7 @@ import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PastUnlockPriceImpact } from '~/containers/Unlocks/PastUnlockPriceImpact'
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
-import { UnlocksTable } from '~/containers/Unlocks/Table'
+import { getUnlockTypes, hasActiveUnlockTableFilters, UnlocksTable } from '~/containers/Unlocks/Table'
 import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
 import {
 	buildUpcomingUnlockChart,
@@ -43,6 +43,7 @@ import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
@@ -112,7 +113,13 @@ function UpcomingUnlockMetric({ days, values }: { days: 7 | 30; values: Upcoming
 	)
 }
 
-function UpcomingUnlockVolumeChart({ series }: { series: Array<UpcomingUnlockChartSeries> }) {
+function UpcomingUnlockVolumeChart({
+	series,
+	ignoresTableFilters
+}: {
+	series: Array<UpcomingUnlockChartSeries>
+	ignoresTableFilters: boolean
+}) {
 	const router = useRouter()
 	const { groupBy: timePeriod, unlockType, viewMode } = parseUpcomingUnlockChartState(router.query)
 	const unlockTypeLabel = getUpcomingUnlockTypeLabel(unlockType)
@@ -238,6 +245,11 @@ function UpcomingUnlockVolumeChart({ series }: { series: Array<UpcomingUnlockCha
 					/>
 				) : null}
 			</ChartPanelToolbar>
+			{ignoresTableFilters ? (
+				<ChartScopeNote>
+					This chart ignores the table filters and shows upcoming unlocks for every protocol.
+				</ChartScopeNote>
+			) : null}
 			{deferredChartData.dataset.source.length > 0 ? (
 				<React.Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart
@@ -271,6 +283,8 @@ export default function Protocols({
 	const router = useRouter()
 
 	const showOnlyWatchlist = readSingleQueryValue(router.query.watchlist) === 'true'
+	const unlockTypes = useMemo(() => getUnlockTypes(data), [data])
+	const chartIgnoresTableFilters = hasActiveUnlockTableFilters(router.query, unlockTypes)
 
 	const { upcomingUnlocks7d, upcomingUnlocks30d } = useMemo(
 		() => calculateUpcomingUnlockStatistics(data, generatedAtSec),
@@ -314,7 +328,7 @@ export default function Protocols({
 					</BasicLink>
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
-					<UpcomingUnlockVolumeChart series={unlockChartSeries} />
+					<UpcomingUnlockVolumeChart series={unlockChartSeries} ignoresTableFilters={chartIgnoresTableFilters} />
 				</ChartPanel>
 			</SummaryCardGrid>
 
@@ -332,7 +346,12 @@ export default function Protocols({
 				</Card>
 			</div>
 
-			<UnlocksTable protocols={data} showOnlyWatchlist={showOnlyWatchlist} savedProtocols={savedProtocols} />
+			<UnlocksTable
+				protocols={data}
+				showOnlyWatchlist={showOnlyWatchlist}
+				savedProtocols={savedProtocols}
+				initialNowSec={generatedAtSec}
+			/>
 		</Layout>
 	)
 }

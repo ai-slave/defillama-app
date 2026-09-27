@@ -10,10 +10,10 @@ const STALE_TIME = 60 * 60 * 1000
 interface DirectoryOverviewProps {
 	directory: ExchangeDirectoryModel
 	loadOverview: (range: ExchangeResearchRange) => Promise<ExchangeOverviewChartModel>
-	showGlobalDataNotice: boolean
+	country: string | null
 }
 
-export function DirectoryOverview({ directory, loadOverview, showGlobalDataNotice }: DirectoryOverviewProps) {
+export function DirectoryOverview({ directory, loadOverview, country }: DirectoryOverviewProps) {
 	const router = useRouter()
 	const range = getResearchRange(router.query)
 	const { ref, visible } = useLazyVisible<HTMLDivElement>()
@@ -30,14 +30,9 @@ export function DirectoryOverview({ directory, loadOverview, showGlobalDataNotic
 	return (
 		<div ref={ref}>
 			{query.data ? (
-				<DirectoryChart chart={query.data} range={range} showGlobalDataNotice={showGlobalDataNotice} />
+				<DirectoryChart chart={query.data} range={range} country={country} />
 			) : (
-				<DirectoryChart
-					chart={null}
-					range={range}
-					status={query.isError ? 'error' : 'loading'}
-					showGlobalDataNotice={showGlobalDataNotice}
-				/>
+				<DirectoryChart chart={null} range={range} status={query.isError ? 'error' : 'loading'} country={country} />
 			)}
 		</div>
 	)

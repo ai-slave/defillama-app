@@ -1,3 +1,4 @@
+import type { ParsedUrlQuery } from 'node:querystring'
 import {
 	type ColumnFiltersState,
 	createColumnHelper,
@@ -20,6 +21,7 @@ import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { UnconstrainedSmolLineChart } from '~/containers/Unlocks/UnconstrainedSmolLineChart'
 import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -31,7 +33,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
-import { pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const tableFeaturesConfig = expandedFilteredTableFeatures
 
@@ -49,6 +51,8 @@ interface IUnlocksTableProps {
 	protocols: Array<IEmission>
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
+	/** The page's clock at render time; the table hides events that passed before it. */
+	initialNowSec: number
 }
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEmission>()
 
@@ -84,6 +88,18 @@ export const parseUnlockFilterValue = (value: string | Array<string> | undefined
 	if (typeof value !== 'string' || value === '') return ''
 	const parsed = Number(value)
 	return Number.isFinite(parsed) ? parsed : ''
+}
+
+/** The table filters the Upcoming Unlocks chart cannot follow: it draws every protocol's schedule. */
+export function hasActiveUnlockTableFilters(query: ParsedUrlQuery, unlockTypes: Array<string>): boolean {
+	return (
+		readSingleQueryValue(query.watchlist) === 'true' ||
+		readSelectionFromQuery(query, 'unlockType', 'excludeUnlockType', unlockTypes).length !== unlockTypes.length ||
+		parseUnlockFilterValue(query.minUnlockValue) !== '' ||
+		parseUnlockFilterValue(query.maxUnlockValue) !== '' ||
+		parseUnlockFilterValue(query.minUnlockPerc) !== '' ||
+		parseUnlockFilterValue(query.maxUnlockPerc) !== ''
+	)
 }
 
 export const filterUnlockTableProtocols = (
@@ -152,7 +168,7 @@ export const filterUnlockTableProtocols = (
 	return filteredProtocols
 }
 
-export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: IUnlocksTableProps) {
+export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, initialNowSec }: IUnlocksTableProps) {
 	const router = useRouter()
 	const unlockTypes = useMemo(() => getUnlockTypes(protocols), [protocols])
 	const unlockTypeOptions = useMemo(
@@ -266,7 +282,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 		maxPerc
 	])
 
-	const [nowSec] = useState(() => Math.floor(Date.now() / 1000))
+	const nowSec = useNowSeconds(initialNowSec)
 	const columns = useMemo(() => [...emissionsColumns, upcomingEventColumn(nowSec)], [nowSec])
 
 	const instance = useTable({
@@ -641,6 +657,7 @@ const upcomingEventColumn = (nowSec: number) =>
 							mcap: row.original.mcap,
 							maxSupply: row.original.maxSupply,
 							name: row.original.name,
+							initialNowSec: nowSec,
 							...(row.original.gecko_id !== undefined ? { geckoId: row.original.gecko_id } : {})
 						}}
 					/>

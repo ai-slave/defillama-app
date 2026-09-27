@@ -12,6 +12,7 @@ import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -268,6 +269,14 @@ export function BridgesOverviewByChain({
 		return { filename: fileName, rows }
 	}
 
+	// The volume series come from the bridges API, so the messaging switch reaches only the table and its totals.
+	const chartScopeNote =
+		activeTab === 'bridges' && includeMessaging ? (
+			<ChartScopeNote>
+				This chart ignores the Include Messaging Protocols switch and shows bridge volume only.
+			</ChartScopeNote>
+		) : null
+
 	const bridgesTableData = React.useMemo(() => {
 		if (activeTab === 'messaging') return messagingProtocols
 		if (includeMessaging) return [...(filteredBridges ?? []), ...(messagingProtocols ?? [])]
@@ -357,6 +366,7 @@ export function BridgesOverviewByChain({
 									csvSource="rendered-chart"
 								/>
 							</ChartPanelToolbar>
+							{chartScopeNote}
 
 							{chartView === 'netflow' && netflowsData ? (
 								<React.Suspense fallback={<div className="min-h-[600px]" />}>
@@ -395,11 +405,13 @@ export function BridgesOverviewByChain({
 									/>
 								</ChartPanelToolbar>
 							)}
+							{chartType !== 'Bridge Volume' ? chartScopeNote : null}
 							{chartType === 'Bridge Volume' ? (
 								<BridgeVolumeChart
 									data={rawBridgeVolumeData}
 									height="360px"
 									onReady={handleChartReady}
+									scopeNote={chartScopeNote}
 									headerStart={
 										<ChartSelector
 											options={BRIDGE_CHAIN_CHART_OPTIONS}

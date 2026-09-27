@@ -40,6 +40,7 @@ function renderEvent(event: Array<EmissionEvent>, isProtocolPage = true) {
 			maxSupply={1000}
 			name="Token"
 			isProtocolPage={isProtocolPage}
+			initialNowSec={1_700_000_000}
 		/>
 	)
 }

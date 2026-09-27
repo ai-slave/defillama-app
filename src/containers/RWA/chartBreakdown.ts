@@ -24,7 +24,7 @@ export type RWASpotChartSource =
 export type RWAChartDataOrigin = 'fold' | 'split'
 
 export const RWA_CHART_FILTER_NOTE =
-	'This chart follows the Group by and the scope toggles; the other filters apply to the table only.'
+	'This chart ignores the table filters and shows every asset under the Group by and scope toggles.'
 
 const GROUP_LABELS: Record<RWAGroupBy, string> = {
 	platform: 'Platform',

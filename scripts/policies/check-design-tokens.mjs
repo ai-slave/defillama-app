@@ -313,6 +313,14 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'raw-chart-scope-note',
+		description:
+			'hand-rolled chart scope note (a `px-* pt-* body-sm text-tertiary` paragraph) — render ChartScopeNote from src/ui/ChartScopeNote under the chart toolbar',
+		pattern: /className="px-\d pt-\d (?:pb-\d )?body-sm text-tertiary"/g,
+		// src/ui/ChartScopeNote owns the one note.
+		uiOwned: true
+	},
+	{
 		id: 'conflicting-named-typography',
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',

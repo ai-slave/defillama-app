@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
-import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -91,6 +92,8 @@ interface UpcomingEventProps {
 	name: string
 	geckoId?: string | null
 	isProtocolPage?: boolean
+	/** The page's clock at render time, so the server and the hydrating client count from the same second. */
+	initialNowSec: number
 }
 
 interface UnlockBreakdown {
@@ -170,7 +173,8 @@ export function UpcomingEvent({
 	maxSupply,
 	name,
 	geckoId,
-	isProtocolPage = false
+	isProtocolPage = false,
+	initialNowSec
 }: UpcomingEventProps) {
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
 	const { currentUnlockBreakdown, eventSummaries, calendarTokenValue } = useMemo(() => {
@@ -306,17 +310,13 @@ export function UpcomingEvent({
 		}
 	}, [event, price, maxSupply, mcap, tokenSymbol])
 
-	const [nowMs, setNowMs] = useState(() => Date.now())
-	const nowSec = nowMs / 1e3
-	const timeLeft = Math.max(0, timestamp - nowMs / 1e3)
+	// One-second ticks: the countdown shows seconds.
+	const nowSec = useNowSeconds(initialNowSec, 1000)
+	const timeLeft = Math.max(0, timestamp - nowSec)
 	const days = Math.floor(timeLeft / 86_400)
 	const hours = Math.floor((timeLeft - 86_400 * days) / 3600)
 	const minutes = Math.floor((timeLeft - 86_400 * days - 3600 * hours) / 60)
 	const seconds = Math.floor(timeLeft - 86_400 * days - 3600 * hours - minutes * 60)
-
-	const onCountdownTick = useEffectEvent(() => {
-		setNowMs(Date.now())
-	})
 
 	const renderBreakdownRow = (item: UnlockBreakdown, variant: 'protocol' | 'hover', index: number) => {
 		const RowTag = variant === 'protocol' ? 'div' : 'span'
@@ -394,16 +394,6 @@ export function UpcomingEvent({
 		)
 	}
 
-	useEffect(() => {
-		const now = Date.now() / 1e3
-		if (timestamp <= now) return
-		const id = setInterval(() => {
-			onCountdownTick()
-		}, 1000)
-
-		return () => clearInterval(id)
-	}, [timestamp])
-
 	if (isProtocolPage) {
 		return (
 			<Card as="article" padding="md" radius="large" className="flex flex-col gap-2.5">
@@ -448,10 +438,7 @@ export function UpcomingEvent({
 							{`${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
 						</span>
 						{timeLeft > 0 ? (
-							<span
-								className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary tabular-nums"
-								suppressHydrationWarning
-							>
+							<span className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary tabular-nums">
 								{formatCountdownBadge(days, hours, minutes, seconds)}
 							</span>
 						) : (
@@ -519,7 +506,7 @@ export function UpcomingEvent({
 								)}
 							</div>
 
-							<div className="flex items-center gap-1.5" suppressHydrationWarning>
+							<div className="flex items-center gap-1.5">
 								<span className={countdownTileStyles}>{days}D</span>
 								<span className={countdownTileStyles}>{hours}H</span>
 								<span className={countdownTileStyles}>{minutes}M</span>

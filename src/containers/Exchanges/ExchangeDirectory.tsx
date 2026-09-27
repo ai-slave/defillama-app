@@ -35,11 +35,7 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<DirectoryHeader summary={directory.summary} />
 				<div className="xl:col-[2/-1]">
-					<DirectoryOverview
-						directory={directory}
-						loadOverview={loadOverview}
-						showGlobalDataNotice={countryState.country !== null}
-					/>
+					<DirectoryOverview directory={directory} loadOverview={loadOverview} country={countryState.country} />
 				</div>
 			</div>
 			<a

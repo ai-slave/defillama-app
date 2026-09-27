@@ -573,11 +573,21 @@ function ChartContainer({
 					maxSupply: data.meta?.maxSupply,
 					name: data.name,
 					geckoId: data.geckoId,
-					isProtocolPage: true
+					isProtocolPage: true,
+					initialNowSec: nowSec
 				}}
 			/>
 		))
-	}, [sortedEvents, tokenPrice, tokenMcap, data.meta?.maxSupply, data.name, data.geckoId, data.tokenPrice.symbol])
+	}, [
+		sortedEvents,
+		tokenPrice,
+		tokenMcap,
+		data.meta?.maxSupply,
+		data.name,
+		data.geckoId,
+		data.tokenPrice.symbol,
+		nowSec
+	])
 
 	const chartData = useMemo(() => {
 		// Keep chart data independent from the price query unless an overlay is enabled.

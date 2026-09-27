@@ -23,6 +23,7 @@ import {
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartScopeNote, ignoredFiltersPhrase } from '~/ui/ChartScopeNote'
 import { Panel } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
@@ -148,7 +149,16 @@ export function ChainsByCategory({
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
-	const { showByGroup, chainsTableData } = useGroupAndFormatChains({ chains, category: categoryName })
+	const { showByGroup, chainsTableData, chartIgnoredFilters } = useGroupAndFormatChains({
+		chains,
+		category: categoryName
+	})
+	const chartScopeNote =
+		chartIgnoredFilters.length > 0 ? (
+			<ChartScopeNote>
+				This chart ignores {ignoredFiltersPhrase(chartIgnoredFilters)} and shows every chain.
+			</ChartScopeNote>
+		) : null
 
 	return (
 		<>
@@ -204,6 +214,7 @@ export function ChainsByCategory({
 								}}
 							/>
 						</ChartPanelToolbar>
+						{chartScopeNote}
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart chartData={visiblePieChartData} stackColors={colorsByChain} onReady={handlePieChartReady} />
 						</React.Suspense>
@@ -228,6 +239,7 @@ export function ChainsByCategory({
 								csvSource={selectedDominance.csvSource}
 							/>
 						</ChartPanelToolbar>
+						{chartScopeNote}
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart
 								dataset={selectedDominance.dataset}
@@ -344,6 +356,18 @@ const useFormatChartData = (options: Parameters<typeof buildChainsByCategoryChar
 	)
 }
 
+/** The table filters the TVL pie and dominance charts cannot follow: they draw every chain in the category. */
+export function getChainsChartIgnoredFilters(
+	minTvl: number | null,
+	maxTvl: number | null,
+	groupedParents: Array<string>
+): Array<string> {
+	const labels: Array<string> = []
+	if (minTvl != null || maxTvl != null) labels.push('TVL range')
+	if (groupedParents.length > 0) labels.push('Group Chains')
+	return labels
+}
+
 export const useGroupAndFormatChains = ({
 	chains,
 	category,
@@ -373,6 +397,11 @@ export const useGroupAndFormatChains = ({
 			(item) => chainsGroupbyParent[item.key]
 		).map((item) => item.key)
 		const { minTvl, maxTvl } = JSON.parse(minMaxTvl)
+		const chartIgnoredFilters = getChainsChartIgnoredFilters(
+			minTvl,
+			maxTvl,
+			showByGroup ? toggledChainsGroupbyParent : []
+		)
 
 		const data = chains
 			.map((chain) => {
@@ -421,7 +450,7 @@ export const useGroupAndFormatChains = ({
 						(maxTvl != null ? chain.tvl <= maxTvl : true)
 			)
 
-		if (!showByGroup) return { showByGroup, chainsTableData: data }
+		if (!showByGroup) return { showByGroup, chainsTableData: data, chartIgnoredFilters }
 		const chainsTableData: Array<IFormattedDataWithExtraTvl> = []
 		for (const chain of getTopLevelGroupedChains(data, toggledChainsGroupbyParent)) {
 			const subChainsList = new Set<string>()
@@ -509,6 +538,7 @@ export const useGroupAndFormatChains = ({
 
 		return {
 			showByGroup,
+			chartIgnoredFilters,
 			chainsTableData: chainsTableData.sort((a, b) => {
 				if (a.tvl == null) return b.tvl == null ? 0 : 1
 				if (b.tvl == null) return -1

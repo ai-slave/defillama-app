@@ -1,13 +1,15 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
-const NOW_TICK_INTERVAL_MS = 30_000
+const DEFAULT_TICK_MS = 30_000
 
 let nowSecondsSnapshot = Math.floor(Date.now() / 1000)
-const listeners = new Set<() => void>()
+/** Each subscriber's tick; the one clock runs at the fastest of them. */
+const listeners = new Map<() => void, number>()
 let intervalId: number | null = null
+let intervalMs: number | null = null
 
 const notifyListeners = () => {
-	for (const listener of listeners) {
+	for (const listener of listeners.keys()) {
 		listener()
 	}
 }
@@ -20,27 +22,26 @@ const syncNowSecondsSnapshot = () => {
 	}
 }
 
-const startClock = () => {
-	if (intervalId !== null || typeof window === 'undefined') return
-	intervalId = window.setInterval(syncNowSecondsSnapshot, NOW_TICK_INTERVAL_MS)
+const restartClock = () => {
+	if (typeof window === 'undefined') return
+	let fastest: number | null = null
+	for (const tickMs of listeners.values()) {
+		if (fastest === null || tickMs < fastest) fastest = tickMs
+	}
+	if (fastest === intervalMs) return
+	if (intervalId !== null) window.clearInterval(intervalId)
+	intervalMs = fastest
+	intervalId = fastest === null ? null : window.setInterval(syncNowSecondsSnapshot, fastest)
 }
 
-const stopClock = () => {
-	if (intervalId === null) return
-	window.clearInterval(intervalId)
-	intervalId = null
-}
-
-const subscribeToNowSeconds = (listener: () => void) => {
-	listeners.add(listener)
+const subscribeToNowSeconds = (listener: () => void, tickMs: number) => {
+	listeners.set(listener, tickMs)
 	syncNowSecondsSnapshot()
-	startClock()
+	restartClock()
 
 	return () => {
 		listeners.delete(listener)
-		if (listeners.size === 0) {
-			stopClock()
-		}
+		restartClock()
 	}
 }
 
@@ -51,8 +52,13 @@ const normalizeInitialNowSeconds = (value?: number) => {
 	return Math.floor(value)
 }
 
-export function useNowSeconds(initialNowSeconds?: number) {
+/**
+ * The unix time in seconds, ticking every `tickMs`. `initialNowSeconds` is the clock the server rendered with, so
+ * the hydrating client renders the same second and then moves to the browser clock without a mismatch.
+ */
+export function useNowSeconds(initialNowSeconds?: number, tickMs = DEFAULT_TICK_MS) {
+	const subscribe = useCallback((listener: () => void) => subscribeToNowSeconds(listener, tickMs), [tickMs])
 	const getServerSnapshot = useCallback(() => normalizeInitialNowSeconds(initialNowSeconds), [initialNowSeconds])
 
-	return useSyncExternalStore(subscribeToNowSeconds, getNowSecondsSnapshot, getServerSnapshot)
+	return useSyncExternalStore(subscribe, getNowSecondsSnapshot, getServerSnapshot)
 }

@@ -7,6 +7,7 @@ import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSer
 import { Select } from '~/components/Select/Select'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -552,7 +553,7 @@ export function RWAOverviewChartPanel({
 							title={exportChartTitle}
 						/>
 					</ChartPanelToolbar>
-					{chartNote ? <p className="px-3 pt-2 body-sm text-tertiary">{chartNote}</p> : null}
+					{chartNote ? <ChartScopeNote>{chartNote}</ChartScopeNote> : null}
 					{isFlowVsPrice && flowVsPriceSummary ? (
 						<RWAFlowVsPriceStrip
 							summary={flowVsPriceSummary}

@@ -132,6 +132,16 @@ export function getDirectoryQueryState(query: ParsedUrlQuery): {
 	return { scope, kind, group }
 }
 
+/** Table filters the directory chart cannot follow: it draws the global aggregate series. */
+export function getDirectoryChartIgnoredFilters(query: ParsedUrlQuery, country: string | null): Array<string> {
+	const { scope, kind } = getDirectoryQueryState(query)
+	const labels: Array<string> = []
+	if (scope !== 'all') labels.push('Market scope')
+	if (kind !== 'all') labels.push('Venue')
+	if (country) labels.push('Country')
+	return labels
+}
+
 export function getDirectoryOverviewTab(query: ParsedUrlQuery): DirectoryOverviewTab {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryChart])
 	return segmentFromQueryValue(value) ?? DEFAULT_DIRECTORY_OVERVIEW_TAB

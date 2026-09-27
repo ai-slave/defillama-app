@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartScopeNote, ignoredFiltersPhrase } from '~/ui/ChartScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
@@ -12,6 +13,7 @@ import type { ExchangeOverviewChartModel } from './models'
 import {
 	DEFAULT_DIRECTORY_OVERVIEW_TAB,
 	EXCHANGES_QUERY_KEYS,
+	getDirectoryChartIgnoredFilters,
 	getDirectoryOverviewTab,
 	segmentQueryValue,
 	type DirectoryOverviewTab,
@@ -126,16 +128,17 @@ function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Array<Re
 	return `Exchange trading activity. ${parts.join(' ')}`
 }
 
-type DirectoryChartProps = { range: ExchangeResearchRange } & (
-	| { chart: ExchangeOverviewChartModel; status?: never; showGlobalDataNotice: boolean }
-	| { chart: null; status: 'loading' | 'error'; showGlobalDataNotice: boolean }
+type DirectoryChartProps = { range: ExchangeResearchRange; country: string | null } & (
+	| { chart: ExchangeOverviewChartModel; status?: never }
+	| { chart: null; status: 'loading' | 'error' }
 )
 
 // Liquidity and Volume are daily histories; Order book is the current book by
 // distance from mid. The captions below carry that difference so the labels stay short.
-export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: DirectoryChartProps) {
+export function DirectoryChart({ chart, range, status, country }: DirectoryChartProps) {
 	const router = useRouter()
 	const tab = getDirectoryOverviewTab(router.query)
+	const ignoredFilters = getDirectoryChartIgnoredFilters(router.query, country)
 	const resolved = React.useMemo(
 		() =>
 			chart
@@ -187,6 +190,11 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 					size="md"
 				/>
 			</ChartPanelToolbar>
+			{ignoredFilters.length > 0 ? (
+				<ChartScopeNote>
+					The totals and this chart ignore {ignoredFiltersPhrase(ignoredFilters)} and show every exchange.
+				</ChartScopeNote>
+			) : null}
 			{chart ? (
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */
 				<React.Suspense
@@ -220,9 +228,6 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 				</ChartPanelBodyFallback>
 			)}
 			{/* The blurb and the last-updated stamp were dropped to keep the table above the fold. */}
-			{showGlobalDataNotice ? (
-				<p className="px-2 pt-0 pb-2 body-sm text-tertiary">Totals and chart show global data</p>
-			) : null}
 		</ChartPanel>
 	)
 }

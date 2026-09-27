@@ -26,9 +26,18 @@ interface BridgeVolumeChartProps {
 	onReady?: (instance: echarts.ECharts | null) => void
 	headerStart?: ReactNode
 	headerEnd?: ReactNode
+	/** A `ChartScopeNote` for the page to place under this chart's own toolbar. */
+	scopeNote?: ReactNode
 }
 
-export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEnd }: BridgeVolumeChartProps) {
+export function BridgeVolumeChart({
+	data,
+	height,
+	onReady,
+	headerStart,
+	headerEnd,
+	scopeNote
+}: BridgeVolumeChartProps) {
 	const [timePeriod, setTimePeriod] = useState<LowercaseDwmGrouping>('weekly')
 	const [metricType, setMetricType] = useState<BridgeVolumeMetricType>('Volume')
 	const [viewType, setViewType] = useState<BridgeVolumeViewType>('Split')
@@ -66,6 +75,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 				/>
 				{headerEnd}
 			</ChartPanelToolbar>
+			{scopeNote}
 			{staleDataTimestamp != null ? (
 				<div className="px-4 pt-2">
 					<DataFreshness timestamp={staleDataTimestamp} label="Bridge volume data last updated" />
