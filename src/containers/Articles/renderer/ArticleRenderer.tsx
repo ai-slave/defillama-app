@@ -446,15 +446,16 @@ function formatHeaderDate(iso: string | null | undefined) {
 	if (!iso) return null
 	const date = new Date(iso)
 	if (Number.isNaN(date.getTime())) return null
-	const day = date.getDate()
-	const month = date.toLocaleString(undefined, { month: 'long' })
-	const year = date.getFullYear()
-	let hours = date.getHours()
+	// UTC and a fixed locale: the server and every visitor must render the same label.
+	const day = date.getUTCDate()
+	const month = date.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' })
+	const year = date.getUTCFullYear()
+	let hours = date.getUTCHours()
 	const ampm = hours >= 12 ? 'PM' : 'AM'
 	hours = hours % 12 || 12
 	const hh = hours.toString().padStart(2, '0')
-	const mm = date.getMinutes().toString().padStart(2, '0')
-	return `${day} ${month} ${year} at ${hh}:${mm} ${ampm}`
+	const mm = date.getUTCMinutes().toString().padStart(2, '0')
+	return `${day} ${month} ${year} at ${hh}:${mm} ${ampm} UTC`
 }
 
 const metaChipClassName =

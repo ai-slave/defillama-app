@@ -6,6 +6,7 @@ const PROTOCOL = 'uniswap'
 export interface UniswapUnlocks {
 	emissions: Awaited<ReturnType<typeof getProtocolUnlocksStaticPropsData>>['emissions']
 	initialTokenMarketData: Awaited<ReturnType<typeof getProtocolUnlocksStaticPropsData>>['initialTokenMarketData']
+	generatedAtSec: number
 }
 
 // Fetched server-side (keyed pro API) so the dashboard gets data the in-browser code can't:
@@ -16,6 +17,7 @@ export async function fetchUniswapServerData(): Promise<UniswapUnlocks> {
 	const unlocks = await getProtocolUnlocksStaticPropsData(PROTOCOL, metadata.tokenlist, metadata.emissionsProtocolsList)
 	return {
 		emissions: unlocks.emissions,
-		initialTokenMarketData: unlocks.initialTokenMarketData
+		initialTokenMarketData: unlocks.initialTokenMarketData,
+		generatedAtSec: unlocks.generatedAtSec
 	}
 }

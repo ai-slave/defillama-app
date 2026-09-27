@@ -25,6 +25,7 @@ export default function Unlocks() {
 				<EmissionsByProtocol
 					data={data.emissions}
 					initialTokenMarketData={data.initialTokenMarketData}
+					generatedAtSec={data.generatedAtSec}
 					isEmissionsPage
 					disableClientTokenStatsFetch
 					// Percentage pies (Allocation / Unlocked %) carry the story here; the

@@ -6,6 +6,7 @@ const DEX = 'thorchain-dex'
 export interface ThorchainUnlocks {
 	emissions: Awaited<ReturnType<typeof getProtocolUnlocksStaticPropsData>>['emissions']
 	initialTokenMarketData: Awaited<ReturnType<typeof getProtocolUnlocksStaticPropsData>>['initialTokenMarketData']
+	generatedAtSec: number
 }
 
 // Fetched server-side (keyed pro API) so the dashboard gets data the in-browser code can't:
@@ -20,6 +21,7 @@ export async function fetchThorchainServerData(): Promise<ThorchainUnlocks> {
 	const emissions = unlocks.emissions ? { ...unlocks.emissions, name: 'THORChain', notes: [] } : unlocks.emissions
 	return {
 		emissions,
-		initialTokenMarketData: unlocks.initialTokenMarketData
+		initialTokenMarketData: unlocks.initialTokenMarketData,
+		generatedAtSec: unlocks.generatedAtSec
 	}
 }

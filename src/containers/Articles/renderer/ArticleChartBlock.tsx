@@ -10,6 +10,7 @@ import {
 	ProxyAuthTokenContext,
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
+import { formatDate } from '~/utils/dateFormat'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -255,9 +256,7 @@ export function ArticleChartBlock({
 							<span className="font-jetbrains text-[10px] font-semibold text-tertiary">
 								{String.fromCharCode(65 + i)}
 							</span>
-							<span className="font-jetbrains text-[10px] text-tertiary">
-								{new Date(a.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-							</span>
+							<span className="font-jetbrains text-[10px] text-tertiary">{formatDate(a.date)}</span>
 							<span className="text-secondary">{a.label}</span>
 						</li>
 					))}

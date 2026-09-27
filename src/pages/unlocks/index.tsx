@@ -29,7 +29,7 @@ import {
 import {
 	getUpcomingUnlockGroupByQueryValue,
 	getUpcomingUnlockTypeLabel,
-	getUpcomingUnlockTypeQueryValue,
+	getUpcomingUnlockTypeQueryUpdates,
 	getUpcomingUnlockViewModeQueryValue,
 	parseUpcomingUnlockChartState,
 	UPCOMING_UNLOCK_CHART_QUERY_KEYS,
@@ -183,15 +183,13 @@ function UpcomingUnlockVolumeChart({
 						setSelectedValues={(value: string) => {
 							const selectedType = UPCOMING_UNLOCK_TYPE_OPTIONS.find((option) => option.key === value)?.key
 							if (!selectedType) throw new Error(`Unknown upcoming unlock type: ${value}`)
-							void pushShallowQuery(router, {
-								[UPCOMING_UNLOCK_CHART_QUERY_KEYS.unlockType]: getUpcomingUnlockTypeQueryValue(selectedType)
-							})
+							void pushShallowQuery(router, getUpcomingUnlockTypeQueryUpdates(selectedType))
 						}}
 						label={unlockTypeLabel}
 						labelType="none"
 						variant="filter"
 						size="md"
-						triggerProps={{ 'aria-label': 'Upcoming unlock type' }}
+						triggerProps={{ 'aria-label': 'Release type' }}
 					/>
 				</div>
 				<ChartGroupingSelector

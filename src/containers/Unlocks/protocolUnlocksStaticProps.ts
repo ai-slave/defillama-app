@@ -110,6 +110,8 @@ export async function getProtocolUnlocksStaticPropsData(
 		emissions,
 		geckoId,
 		tokenSymbol,
-		initialTokenMarketData
+		initialTokenMarketData,
+		/** The clock this data was built with; countdowns and "ago" labels hydrate against it. */
+		generatedAtSec: Math.floor(Date.now() / 1000)
 	}
 }

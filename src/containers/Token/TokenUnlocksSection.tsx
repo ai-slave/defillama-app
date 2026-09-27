@@ -26,7 +26,7 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 	const access = useTokenPrivateSectionAccess()
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = access
 	const isEnabled = Boolean(resolvedUnlocksSlug)
-	const { data, error, isLoading } = useQuery<ProtocolEmissionResult>({
+	const { data, error, isLoading, dataUpdatedAt } = useQuery<ProtocolEmissionResult>({
 		queryKey: ['token-unlocks', resolvedUnlocksSlug],
 		queryFn: () => fetchTokenUnlocksClient(resolvedUnlocksSlug!, authorizedFetch),
 		staleTime: 60 * 60 * 1000,
@@ -59,6 +59,7 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 				<DeferredUnlocksCharts
 					protocolName={resolvedUnlocksSlug}
 					initialData={data}
+					generatedAtSec={Math.floor(dataUpdatedAt / 1000)}
 					disableClientTokenStatsFetch
 					hideTokenStats
 					isEmissionsPage={false}

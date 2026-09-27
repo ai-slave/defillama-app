@@ -96,12 +96,15 @@ export function EmissionsByProtocol({
 	data,
 	isEmissionsPage = false,
 	initialTokenMarketData = null,
+	generatedAtSec,
 	disableClientTokenStatsFetch = false,
 	hideTokenStats = false
 }: {
 	data: ResolvedProtocolEmissionResult
 	isEmissionsPage?: boolean
 	initialTokenMarketData?: InitialTokenMarketData | null
+	/** The clock the server data was built with, so event ordering and countdowns hydrate cleanly. */
+	generatedAtSec: number
 	disableClientTokenStatsFetch?: boolean
 	hideTokenStats?: boolean
 }) {
@@ -112,6 +115,7 @@ export function EmissionsByProtocol({
 				data={data}
 				isEmissionsPage={isEmissionsPage}
 				initialTokenMarketData={initialTokenMarketData}
+				generatedAtSec={generatedAtSec}
 				disableClientTokenStatsFetch={disableClientTokenStatsFetch}
 				hideTokenStats={hideTokenStats}
 			/>
@@ -442,12 +446,14 @@ function ChartContainer({
 	data,
 	isEmissionsPage,
 	initialTokenMarketData,
+	generatedAtSec,
 	disableClientTokenStatsFetch,
 	hideTokenStats
 }: {
 	data: ResolvedProtocolEmissionResult
 	isEmissionsPage: boolean
 	initialTokenMarketData: InitialTokenMarketData | null
+	generatedAtSec: number
 	disableClientTokenStatsFetch: boolean
 	hideTokenStats: boolean
 }) {
@@ -537,7 +543,7 @@ function ChartContainer({
 
 	const groupedEvents = useMemo(() => groupByKey(data.events, (event) => event.timestamp), [data.events])
 
-	const nowSec = useNowSeconds()
+	const nowSec = useNowSeconds(generatedAtSec)
 	const currentMinuteSec = Math.floor(nowSec / 60) * 60
 	const sortedEvents = useMemo(() => {
 		const entries = Array.from(groupedEvents.entries())
@@ -1091,6 +1097,7 @@ export function UnlocksCharts({
 	protocolName,
 	initialData,
 	initialTokenMarketData = null,
+	generatedAtSec,
 	disableClientTokenStatsFetch = false,
 	isEmissionsPage = false,
 	hideTokenStats = false
@@ -1098,6 +1105,8 @@ export function UnlocksCharts({
 	protocolName: string
 	initialData?: ProtocolEmissionResult | null
 	initialTokenMarketData?: InitialTokenMarketData | null
+	/** The clock `initialData` was built with; data fetched in the browser renders after mount anyway. */
+	generatedAtSec: number
 	disableClientTokenStatsFetch?: boolean
 	isEmissionsPage?: boolean
 	hideTokenStats?: boolean
@@ -1127,6 +1136,7 @@ export function UnlocksCharts({
 			data={resolvedData}
 			isEmissionsPage={isEmissionsPage}
 			initialTokenMarketData={initialTokenMarketData}
+			generatedAtSec={generatedAtSec}
 			disableClientTokenStatsFetch={disableClientTokenStatsFetch}
 			hideTokenStats={hideTokenStats}
 		/>

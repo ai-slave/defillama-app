@@ -39,7 +39,7 @@ export const getStaticProps = withPerformanceLogging(
 		const protocolData = await fetchProtocolOverviewMetrics(canonicalProtocol)
 
 		const metrics = getProtocolMetricFlags({ protocolData, metadata })
-		const { emissions, tokenSymbol, initialTokenMarketData } = await getProtocolUnlocksStaticPropsData(
+		const { emissions, tokenSymbol, initialTokenMarketData, generatedAtSec } = await getProtocolUnlocksStaticPropsData(
 			canonicalProtocol,
 			metadataCache.tokenlist,
 			metadataCache.emissionsProtocolsList
@@ -59,6 +59,7 @@ export const getStaticProps = withPerformanceLogging(
 				warningBanners: getProtocolWarningBanners(protocolData),
 				emissions,
 				initialTokenMarketData,
+				generatedAtSec,
 				seoTitle,
 				seoDescription
 			},
@@ -98,6 +99,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					protocolName={props.name}
 					initialData={props.emissions}
 					initialTokenMarketData={props.initialTokenMarketData}
+					generatedAtSec={props.generatedAtSec}
 					disableClientTokenStatsFetch
 					isEmissionsPage
 				/>

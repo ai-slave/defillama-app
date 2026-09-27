@@ -5,8 +5,12 @@ import type { ReactNode } from 'react'
  * it only while a filter the data ignores is active, and say what it shows instead:
  * "This chart ignores the X filter and shows Y."
  */
-export function ScopeNote({ children }: { children: ReactNode }) {
-	return <p className="px-2 pt-2 body-sm text-tertiary">{children}</p>
+export function ScopeNote({ children, role }: { children: ReactNode; role?: 'status' }) {
+	return (
+		<p role={role} className="px-2 pt-2 body-sm text-tertiary">
+			{children}
+		</p>
+	)
 }
 
 /** "A", "A and B", "A, B and C". */

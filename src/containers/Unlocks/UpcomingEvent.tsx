@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { useMemo } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
@@ -118,9 +119,12 @@ interface EventSummary {
 	percentageFloat: number | null
 }
 
-const formatTimeAgo = (timestamp: number) => {
-	const now = dayjs()
-	const eventDate = dayjs.unix(timestamp)
+dayjs.extend(utc)
+
+/** Whole days, months and years in UTC, so the server and every visitor count the same. */
+export const formatTimeAgo = (timestamp: number, nowSec: number) => {
+	const now = dayjs.unix(nowSec).utc()
+	const eventDate = dayjs.unix(timestamp).utc()
 
 	const elapsedYears = now.diff(eventDate, 'year')
 	const afterYears = eventDate.add(elapsedYears, 'year')
@@ -433,8 +437,11 @@ export function UpcomingEvent({
 						)}
 					</div>
 					<div className="flex shrink-0 flex-col items-end">
-						<span className="body-md text-primary">{dayjs(timestamp * 1e3).format('MMM D, YYYY')}</span>
-						<span className="body-sm text-secondary">
+						{/* Local time on purpose: the server renders its own zone, so each span owns its text. */}
+						<span className="body-md text-primary" suppressHydrationWarning>
+							{dayjs(timestamp * 1e3).format('MMM D, YYYY')}
+						</span>
+						<span className="body-sm text-secondary" suppressHydrationWarning>
 							{`${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
 						</span>
 						{timeLeft > 0 ? (
@@ -443,7 +450,7 @@ export function UpcomingEvent({
 							</span>
 						) : (
 							<span className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary">
-								{formatTimeAgo(timestamp)}
+								{formatTimeAgo(timestamp, nowSec)}
 							</span>
 						)}
 					</div>
@@ -514,9 +521,7 @@ export function UpcomingEvent({
 							</div>
 						</div>
 					) : (
-						<span className="label-sm text-tertiary" suppressHydrationWarning>
-							{formatTimeAgo(timestamp)}
-						</span>
+						<span className="label-sm text-tertiary">{formatTimeAgo(timestamp, nowSec)}</span>
 					)}
 				</Ariakit.HovercardAnchor>
 				<Ariakit.HovercardDisclosure />

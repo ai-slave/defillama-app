@@ -515,6 +515,7 @@ export default function Economics() {
 					<EmissionsByProtocol
 						data={unlockedEmissions}
 						initialTokenMarketData={unlocks.initialTokenMarketData}
+						generatedAtSec={unlocks.generatedAtSec}
 						isEmissionsPage
 						disableClientTokenStatsFetch
 					/>

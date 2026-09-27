@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -19,6 +20,7 @@ interface CalendarDayCellProps {
 
 export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue }: CalendarDayCellProps) {
 	const [isDarkMode] = useDarkModeManager()
+	const isClient = useIsClient()
 
 	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40" />
 
@@ -31,7 +33,8 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue }: Calend
 			if (event.unit === 'week') weeklyRateValue += event.value
 		}
 	}
-	const isToday = dayInfo.date.isSame(dayjs(), 'day')
+	// Today is the visitor's local day, which the server cannot know, so it is marked after mount.
+	const isToday = isClient && dayInfo.date.isSame(dayjs(), 'day')
 
 	let intensityFactor = 0
 	if (hasUnlocks && maxUnlockValue > 0 && dayInfo.isCurrentMonth) {

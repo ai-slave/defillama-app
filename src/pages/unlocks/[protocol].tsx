@@ -36,7 +36,7 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/unlocks/${canonicalProtocol}`)
 		}
 
-		const { emissions, tokenSymbol, initialTokenMarketData } = await getProtocolUnlocksStaticPropsData(
+		const { emissions, tokenSymbol, initialTokenMarketData, generatedAtSec } = await getProtocolUnlocksStaticPropsData(
 			canonicalProtocol,
 			metadataCache.tokenlist,
 			metadataCache.emissionsProtocolsList
@@ -68,6 +68,7 @@ export const getStaticProps = withPerformanceLogging(
 				eventCountdown: getEventCountdown(emissions.upcomingEvent[0]?.timestamp),
 				noUpcomingEvent,
 				initialTokenMarketData,
+				generatedAtSec,
 				canonicalProtocol,
 				seoTitle,
 				seoDescription
@@ -97,6 +98,7 @@ export default function Protocol({
 	eventCountdown,
 	noUpcomingEvent,
 	initialTokenMarketData,
+	generatedAtSec,
 	canonicalProtocol,
 	seoTitle,
 	seoDescription
@@ -122,6 +124,7 @@ export default function Protocol({
 				data={emissions}
 				isEmissionsPage
 				initialTokenMarketData={initialTokenMarketData}
+				generatedAtSec={generatedAtSec}
 				disableClientTokenStatsFetch
 			/>
 		</Layout>

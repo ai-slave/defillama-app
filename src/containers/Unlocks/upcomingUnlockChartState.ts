@@ -24,8 +24,9 @@ export const UPCOMING_UNLOCK_TYPE_OPTIONS = [
 
 export const UPCOMING_UNLOCK_VIEW_MODES = ['Total View', 'Breakdown View'] as const
 
+/** `release` is cliff vs linear, the API's own unlockType; the table's `unlockType` key filters event categories. */
 export const UPCOMING_UNLOCK_CHART_QUERY_KEYS = {
-	unlockType: 'chartUnlockType',
+	unlockType: 'release',
 	groupBy: 'chartGroup',
 	viewMode: 'chartView'
 } as const
@@ -37,7 +38,10 @@ export type UpcomingUnlockChartState = {
 }
 
 export function parseUpcomingUnlockChartState(query: ParsedUrlQuery): UpcomingUnlockChartState {
-	const unlockTypeValue = readSingleQueryValue(query[UPCOMING_UNLOCK_CHART_QUERY_KEYS.unlockType])
+	// `chartUnlockType` was the key until 2026-09; shared links still carry it.
+	const unlockTypeValue =
+		readSingleQueryValue(query[UPCOMING_UNLOCK_CHART_QUERY_KEYS.unlockType]) ??
+		readSingleQueryValue(query.chartUnlockType)
 	const groupByValue = readSingleQueryValue(query[UPCOMING_UNLOCK_CHART_QUERY_KEYS.groupBy])?.toLowerCase()
 	const viewModeValue = readSingleQueryValue(query[UPCOMING_UNLOCK_CHART_QUERY_KEYS.viewMode])
 
@@ -56,6 +60,16 @@ export function getUpcomingUnlockTypeLabel(unlockType: UpcomingUnlockChartType) 
 
 export function getUpcomingUnlockTypeQueryValue(unlockType: UpcomingUnlockChartType): string | undefined {
 	return unlockType === 'all' ? undefined : unlockType
+}
+
+/** The picker's URL write. It also clears the legacy key, or a shared link would pin its old selection. */
+export function getUpcomingUnlockTypeQueryUpdates(
+	unlockType: UpcomingUnlockChartType
+): Record<string, string | undefined> {
+	return {
+		[UPCOMING_UNLOCK_CHART_QUERY_KEYS.unlockType]: getUpcomingUnlockTypeQueryValue(unlockType),
+		chartUnlockType: undefined
+	}
 }
 
 export function getUpcomingUnlockGroupByQueryValue(groupBy: LowercaseDwmGrouping): string | undefined {

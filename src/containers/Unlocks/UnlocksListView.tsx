@@ -3,6 +3,7 @@ import type { Dayjs } from 'dayjs'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
@@ -14,6 +15,8 @@ interface UnlocksListViewProps {
 }
 
 export function UnlocksListView({ events }: UnlocksListViewProps) {
+	// Today is the visitor's local day, which the server cannot know, so it is marked after mount.
+	const isClient = useIsClient()
 	const groupedEventsEntries = React.useMemo(() => {
 		const groupedEvents: { [date: string]: Array<DailyUnlocks['events'][0]> } = {}
 		for (const { date, event } of events) {
@@ -40,7 +43,7 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 				<Card key={dateStr} padding="sm" className="flex flex-col gap-2">
 					<h3 className="font-semibold">
 						{dayjs(dateStr).format('dddd, MMMM D, YYYY')}
-						{dayjs(dateStr).isSame(dayjs(), 'day') ? (
+						{isClient && dayjs(dateStr).isSame(dayjs(), 'day') ? (
 							<span className="ml-2 text-xs font-normal text-link">(Today)</span>
 						) : null}
 					</h3>

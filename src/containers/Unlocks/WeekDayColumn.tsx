@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { useIsClient } from '~/hooks/useIsClient'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
@@ -17,7 +18,8 @@ export function WeekDayColumn({ dayInfo, unlocksData }: WeekDayColumnProps) {
 	const dateStr = dayInfo.date?.format('YYYY-MM-DD')
 	const dayData = dateStr ? unlocksData[dateStr] : undefined
 	const hasUnlocks = dayData !== undefined && dayData.events.length > 0
-	const isToday = dayInfo.date?.isSame(dayjs(), 'day')
+	// Today is the visitor's local day, which the server cannot know, so it is marked after mount.
+	const isToday = useIsClient() && dayInfo.date?.isSame(dayjs(), 'day')
 
 	return (
 		<div
