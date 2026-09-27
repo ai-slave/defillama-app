@@ -18,7 +18,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
@@ -565,90 +565,93 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 
 	return (
 		<>
-			<ChartPanelToolbar>
-				{availableCharts.length > 0 ? (
-					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure render={<Button size="md" />}>
-							<span>Add Metrics</span>
-							<Icon name="plus" className="size-3.5" />
-						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
-							<div className="flex items-center gap-2 border-b border-subtle p-3">
-								<DialogHeading>Add metrics to chart</DialogHeading>
-								<DialogCloseButton className="ml-auto" />
-							</div>
+			<ChartPanelToolbar
+				leading={
+					<>
+						{availableCharts.length > 0 ? (
+							<Ariakit.DialogProvider store={metricsDialogStore}>
+								<Ariakit.DialogDisclosure render={<Button size="md" />}>
+									<span>Add Metrics</span>
+									<Icon name="plus" className="size-3.5" />
+								</Ariakit.DialogDisclosure>
+								<Ariakit.Dialog className={dialogFullSheetSurfaceStyles} unmountOnHide portal>
+									<div className="flex items-center gap-2 border-b border-subtle p-3">
+										<DialogHeading>Add metrics to chart</DialogHeading>
+										<DialogCloseButton className="ml-auto" />
+									</div>
 
-							<div className="flex flex-col gap-3 p-3">
-								<label className="relative">
-									<span className="sr-only">Search metrics</span>
-									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-									<Input
-										type="text"
-										name="search"
-										inputMode="search"
-										placeholder="Search..."
-										value={metricsSearchValue}
-										className={searchFieldInputPlacementStyles}
-										onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
-									/>
-								</label>
+									<div className="flex flex-col gap-3 p-3">
+										<label className="relative">
+											<span className="sr-only">Search metrics</span>
+											<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+											<Input
+												type="text"
+												name="search"
+												inputMode="search"
+												placeholder="Search..."
+												value={metricsSearchValue}
+												className={searchFieldInputPlacementStyles}
+												onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
+											/>
+										</label>
 
-								<div className="flex flex-wrap gap-2">
-									{filteredMetricOptions.map((option) => (
-										<button
-											key={`token-chart-option-${option.id}`}
-											type="button"
-											aria-label={`${option.active ? 'Remove' : 'Add'} ${option.label}`}
-											onClick={() => {
-												setActiveCharts(
-													activeCharts.includes(option.id)
-														? activeCharts.filter((value) => value !== option.id)
-														: [...activeCharts, option.id]
-												)
-												metricsDialogStore.toggle()
-											}}
-											data-active={option.active}
-											className={metricOptionChipStyles}
-										>
-											<span>{option.label}</span>
-											{option.active ? (
-												<Icon name="x" aria-hidden="true" className="size-3.5" />
-											) : (
-												<Icon name="plus" aria-hidden="true" className="size-3.5" />
-											)}
-										</button>
-									))}
-									{filteredMetricOptions.length === 0 ? (
-										<p className="py-2 body-sm text-tertiary">No metrics found.</p>
-									) : null}
-								</div>
-							</div>
-						</Ariakit.Dialog>
-					</Ariakit.DialogProvider>
-				) : null}
-				{activeCharts.map((chart) => (
-					<button
-						key={chart}
-						type="button"
-						aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
-						onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
-						className={metricChipStyles}
-						style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}
-					>
-						<span>{getChartLabel(chart, overview.symbol)}</span>
-						<Icon name="x" aria-hidden="true" className="size-3.5" />
-					</button>
-				))}
-				<div className="ml-auto">
-					<TagGroup
-						variant="default"
-						size="md"
-						selectedValue={activeTimeframe}
-						setValue={setActiveTimeframe}
-						values={PRICE_CHART_TIMEFRAMES}
-						ariaLabel="Price history timeframe"
-					/>
-				</div>
+										<div className="flex flex-wrap gap-2">
+											{filteredMetricOptions.map((option) => (
+												<button
+													key={`token-chart-option-${option.id}`}
+													type="button"
+													aria-label={`${option.active ? 'Remove' : 'Add'} ${option.label}`}
+													onClick={() => {
+														setActiveCharts(
+															activeCharts.includes(option.id)
+																? activeCharts.filter((value) => value !== option.id)
+																: [...activeCharts, option.id]
+														)
+														metricsDialogStore.toggle()
+													}}
+													data-active={option.active}
+													className={metricOptionChipStyles}
+												>
+													<span>{option.label}</span>
+													{option.active ? (
+														<Icon name="x" aria-hidden="true" className="size-3.5" />
+													) : (
+														<Icon name="plus" aria-hidden="true" className="size-3.5" />
+													)}
+												</button>
+											))}
+											{filteredMetricOptions.length === 0 ? (
+												<p className="py-2 body-sm text-tertiary">No metrics found.</p>
+											) : null}
+										</div>
+									</div>
+								</Ariakit.Dialog>
+							</Ariakit.DialogProvider>
+						) : null}
+						{activeCharts.map((chart) => (
+							<button
+								key={chart}
+								type="button"
+								aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
+								onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
+								className={metricChipStyles}
+								style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}
+							>
+								<span>{getChartLabel(chart, overview.symbol)}</span>
+								<Icon name="x" aria-hidden="true" className="size-3.5" />
+							</button>
+						))}
+					</>
+				}
+			>
+				<TagGroup
+					variant="default"
+					size="md"
+					selectedValue={activeTimeframe}
+					setValue={setActiveTimeframe}
+					values={PRICE_CHART_TIMEFRAMES}
+					ariaLabel="Price history timeframe"
+				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartBody === 'wait-for-client' ? null : chartBody === 'loading' ? (

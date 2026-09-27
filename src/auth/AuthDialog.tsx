@@ -3,7 +3,7 @@ import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 
-export const authDialogStyles = `${dialogSurfaceStyles} [--dialog-width:420px] max-sm:h-fit max-sm:min-h-0 motion-reduce:transition-none`
+export const authDialogStyles = `${dialogSurfaceStyles} [--dialog-width:420px] motion-reduce:transition-none`
 export const authBodyStyles = `${dialogScrollableBodyStyles} flex flex-col gap-4 p-4 sm:p-5`
 // Reserve four wallet rows and the helper (two lines on mobile) while the SDK loads.
 export const authWalletPickerStyles = 'min-h-62 sm:min-h-58'

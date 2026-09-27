@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, DialogFooter, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 
 export function DialogForm({
@@ -50,11 +50,11 @@ export function DialogForm({
 					<Input ref={inputRef} required name="name" />
 				</label>
 			</form>
-			<div className="flex justify-end border-t border-subtle bg-overlay px-4 py-3">
+			<DialogFooter>
 				<Button type="submit" form="newPortfolio" variant="primary" size="md">
 					Save
 				</Button>
-			</div>
+			</DialogFooter>
 		</Ariakit.Dialog>
 	)
 }

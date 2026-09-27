@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { isChartDataRow } from '~/containers/LlamaAI/chartTypes'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -155,7 +155,7 @@ function SavedChartPickerSession({
 	return (
 		<Ariakit.Dialog
 			store={dialogStore}
-			className={`${dialogSurfaceStyles} flex max-h-[80dvh] w-full max-w-md flex-col gap-3 overflow-y-auto p-4`}
+			className={`${dialogFullSheetSurfaceStyles} flex max-h-[80dvh] w-full max-w-md flex-col gap-3 overflow-y-auto p-4`}
 			unmountOnHide
 			portal
 		>

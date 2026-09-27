@@ -2,7 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { getErrorMessage } from '~/utils/error'
@@ -41,7 +47,7 @@ export function CreateProjectModal({
 				}}
 				hideOnEscape={!pending}
 				hideOnInteractOutside={!pending}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 				unmountOnHide
 				portal
 			>
@@ -160,10 +166,13 @@ function CreateProjectForm({
 					</p>
 				) : null}
 			</div>
-			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Ariakit.DialogDismiss type="button" disabled={isPending} render={<Button size="md" />}>
-					Cancel
-				</Ariakit.DialogDismiss>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss type="button" disabled={isPending} render={<Button size="md" />}>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
 				<Ariakit.Button
 					accessibleWhenDisabled
 					type="submit"
@@ -173,7 +182,7 @@ function CreateProjectForm({
 					{isPending ? <LoadingSpinner size={14} /> : null}
 					{isPending ? (mode === 'rename' ? 'Saving…' : 'Creating…') : mode === 'rename' ? 'Save' : 'Create project'}
 				</Ariakit.Button>
-			</footer>
+			</DialogFooter>
 		</form>
 	)
 }

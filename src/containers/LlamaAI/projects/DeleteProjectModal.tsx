@@ -1,7 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { getErrorMessage } from '~/utils/error'
 import { useDeleteProject } from './hooks'
@@ -55,7 +61,7 @@ export function DeleteProjectModal({
 				onClose={() => remove.reset()}
 				hideOnEscape={!remove.isPending}
 				hideOnInteractOutside={!remove.isPending}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 			>
 				<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>Delete project?</DialogHeading>
@@ -72,7 +78,7 @@ export function DeleteProjectModal({
 						</p>
 					) : null}
 				</div>
-				<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
+				<DialogFooter>
 					<Ariakit.DialogDismiss type="button" disabled={remove.isPending} autoFocus render={<Button size="md" />}>
 						Cancel
 					</Ariakit.DialogDismiss>
@@ -89,7 +95,7 @@ export function DeleteProjectModal({
 						{remove.isPending ? <LoadingSpinner size={14} /> : null}
 						{remove.isPending ? 'Deleting…' : remove.error ? 'Retry deletion' : 'Delete project'}
 					</Ariakit.Button>
-				</footer>
+				</DialogFooter>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

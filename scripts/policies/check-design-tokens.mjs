@@ -206,6 +206,20 @@ function matchConflictingNamedTypography(content) {
 	return found.length > 0 ? found : null
 }
 
+function matchChartToolbarAutoMargin(content) {
+	// Inside a ChartPanelToolbar, an ml-auto group or a last-of-type:mr-auto hack decides left vs right by
+	// hand, and the left side jumps right once the row wraps. The toolbar's `leading` slot owns that split.
+	const found = []
+	for (const [block] of content.matchAll(/<ChartPanelToolbar\b[\s\S]*?<\/ChartPanelToolbar>/g)) {
+		// Dialogs opened from the toolbar lay out their own header; only the toolbar row counts.
+		const row = block.replace(/<Ariakit\.Dialog\b[\s\S]*?<\/Ariakit\.Dialog>/g, '')
+		for (const [cls] of row.matchAll(/className="[^"]*"/g)) {
+			if (/(?:^|[\s"])(?:ml-auto|ms-auto)(?=[\s"])|last-of-type:mr-auto/.test(cls)) found.push(cls)
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
 const RULES = [
 	{
 		id: 'hex-in-classname',
@@ -326,6 +340,12 @@ const RULES = [
 			'justify-* passed to TableToolbar/TableToolbarControlGroup/PanelHeader/ChartPanelToolbar — they own justify-end; give the left-side item (search, title, view switch) mr-auto instead',
 		pattern:
 			/<(?:TableToolbar|TableToolbarControlGroup|PanelHeader|ChartPanelToolbar)\b[^>]*?className="[^"]*(?<![\w-])justify-[a-z]+/g
+	},
+	{
+		id: 'chart-toolbar-auto-margin',
+		description:
+			'ml-auto group or last-of-type:mr-auto inside ChartPanelToolbar — put the title, view switch or metric chips in its `leading` slot; everything else hugs the right',
+		match: matchChartToolbarAutoMargin
 	},
 	{
 		id: 'conflicting-named-typography',

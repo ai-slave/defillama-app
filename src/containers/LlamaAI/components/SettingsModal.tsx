@@ -28,7 +28,7 @@ import {
 } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -386,7 +386,7 @@ export const SettingsModal = memo(function SettingsModal({
 					setAppliedInitialState(null)
 					void commitDraft(instructionsDraft.value)
 				}}
-				className={`${dialogSurfaceStyles} [--dialog-width:720px]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:720px]`}
 				portal
 				unmountOnHide
 			>

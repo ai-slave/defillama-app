@@ -42,7 +42,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PanelTitle, PanelHeader } from '~/ui/Panel'
@@ -1440,7 +1440,7 @@ function RWAPerpsFiltersDialog({
 				<Icon name="pencil" className="size-3 text-tertiary" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
 				portal
 			>
@@ -1457,25 +1457,27 @@ function RWAPerpsFiltersDialog({
 					<RWAPerpsActiveDraftFilters filters={filters} draft={draft} onDraftChange={setDraft} />
 				</div>
 
-				<div className="flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
-					{draft.activeIds.length > 0 ? (
-						<Button
-							type="button"
-							variant="ghost"
-							size="md"
-							onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
-							className="mr-auto"
-						>
-							Clear all
-						</Button>
-					) : (
-						<span className="mr-auto label-sm text-tertiary">No filters selected</span>
-					)}
-					<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>
+				<DialogFooter
+					dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>}
+					leading={
+						draft.activeIds.length > 0 ? (
+							<Button
+								type="button"
+								variant="ghost"
+								size="md"
+								onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
+							>
+								Clear all
+							</Button>
+						) : (
+							<span className="label-sm text-tertiary">No filters selected</span>
+						)
+					}
+				>
 					<Button type="button" variant="primary" size="md" onClick={saveDraft}>
 						Save filters
 					</Button>
-				</div>
+				</DialogFooter>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
@@ -1495,10 +1497,10 @@ function RWAPerpsFilterBrowser({
 
 	return (
 		<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-			<div className="border-b border-subtle px-4 py-2">
+			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
 				<h3 className="label-sm text-secondary">Browse filters</h3>
 			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
 				{availableFilters.length > 0 ? (
 					<DialogPanelSection title="Market Fields">
 						<div className="flex flex-wrap gap-1">
@@ -1542,10 +1544,10 @@ function RWAPerpsActiveDraftFilters({
 
 	return (
 		<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-			<div className="border-b border-subtle px-4 py-2">
+			<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
 				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
-			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
 				{activeFilters.length > 0 ? (
 					activeFilters.map((filter) => (
 						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />

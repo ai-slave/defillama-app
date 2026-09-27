@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useCallback, useId, useState } from 'react'
 import { useCreateTopup, TOPUP_CONFIG } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatUsd } from '~/utils/numberFormat'
@@ -26,11 +26,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 				if (!open) onClose()
 			}}
 		>
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:420px] max-sm:h-fit max-sm:min-h-0`}
-				portal
-				unmountOnHide
-			>
+			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:420px]`} portal unmountOnHide>
 				<TopupForm
 					inDialog
 					redirectUrl={`${origin}${currentPath}?topup=success`}

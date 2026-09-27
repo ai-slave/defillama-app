@@ -1,16 +1,25 @@
-import type { ComponentPropsWithoutRef } from 'react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { Panel } from './Panel'
 
 export function ChartPanel({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return <Panel padding="none" className={className} {...props} />
 }
 
-export function ChartPanelToolbar({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
+type ChartPanelToolbarProps = ComponentPropsWithoutRef<'div'> & {
+	/** What the chart shows: a title, a view switch, or the metric picker and its chips. It stays on the
+	    left as one group; every other child hugs the right, and both wrap without swapping sides. */
+	leading?: ReactNode
+}
+
+export function ChartPanelToolbar({ leading, className, children, ...props }: ChartPanelToolbarProps) {
 	return (
 		<div
 			className={`flex flex-wrap items-center justify-end gap-1.5 px-2 pt-2 pb-0 ${className ?? ''}`.trim()}
 			{...props}
-		/>
+		>
+			{leading ? <div className="mr-auto flex min-w-0 flex-wrap items-center gap-1.5">{leading}</div> : null}
+			{children}
+		</div>
 	)
 }
 

@@ -1,6 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 
 interface DeepLinkPromptModalProps {
@@ -36,15 +42,18 @@ export function DeepLinkPromptModal({ isOpen, prompt, onClose, onConfirm }: Deep
 					<p className="body-sm break-words whitespace-pre-wrap text-primary">{prompt}</p>
 				</div>
 			</div>
-			<div className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Button type="button" size="md" onClick={onClose}>
-					Close
-				</Button>
+			<DialogFooter
+				dismiss={
+					<Button type="button" size="md" onClick={onClose}>
+						Close
+					</Button>
+				}
+			>
 				<Button type="button" size="md" variant="primary" onClick={onConfirm}>
 					<Icon name="sparkles" height={14} width={14} />
 					Ask LlamaAI
 				</Button>
-			</div>
+			</DialogFooter>
 		</Ariakit.Dialog>
 	)
 }

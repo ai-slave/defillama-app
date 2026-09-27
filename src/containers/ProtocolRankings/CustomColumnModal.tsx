@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { isCustomColumnFormat, type CustomColumnDef } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS, replaceAliases } from './customColumnsUtils'
@@ -213,7 +213,7 @@ export function CustomColumnModal({
 	return (
 		<>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:560px]`} unmountOnHide portal>
+				<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:560px]`} unmountOnHide portal>
 					<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 						<DialogHeading>Add Custom Column</DialogHeading>
 						<DialogCloseButton ariaLabel="Close modal" />
@@ -331,14 +331,17 @@ export function CustomColumnModal({
 							</a>
 						</div>
 					</div>
-					<div className="flex justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
-						<Button type="button" size="md" onClick={dialogStore.toggle}>
-							Cancel
-						</Button>
+					<DialogFooter
+						dismiss={
+							<Button type="button" size="md" onClick={dialogStore.toggle}>
+								Cancel
+							</Button>
+						}
+					>
 						<Button type="button" variant="primary" size="md" onClick={handleSave}>
 							Save
 						</Button>
-					</div>
+					</DialogFooter>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
 			{shouldRenderModal ? (

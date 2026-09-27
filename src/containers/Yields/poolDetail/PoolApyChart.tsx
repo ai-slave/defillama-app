@@ -414,14 +414,16 @@ export function PoolApyChart({
 				</div>
 			</PanelHeader>
 
-			<ChartPanelToolbar>
-				<ChartMetricsPicker
-					groups={metricGroups}
-					onToggle={(option) => toggle(option.key, option.active, option.defaultEnabled)}
-					onUnlock={showUpgrade}
-				/>
+			<ChartPanelToolbar
+				leading={
+					<ChartMetricsPicker
+						groups={metricGroups}
+						onToggle={(option) => toggle(option.key, option.active, option.defaultEnabled)}
+						onUnlock={showUpgrade}
+					/>
+				}
+			>
 				<ChartGroupingSelector
-					className="ml-auto"
 					value={apyWindow}
 					options={WINDOW_OPTIONS}
 					onValueChange={(next) => {

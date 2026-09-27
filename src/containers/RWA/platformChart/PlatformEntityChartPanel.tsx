@@ -11,7 +11,7 @@ import {
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
@@ -160,41 +160,41 @@ function EntityChartToolbar({
 }) {
 	const colorByName = new Map(chart.series.map((entry) => [entry.name, entry.color]))
 	return (
-		<ChartPanelToolbar>
-			<MetricsDialog selected={selected} onToggle={onToggle} onClear={onClear} />
-			{RWA_PLATFORM_CHART_METRICS.filter((metric) => selected.includes(metric.key)).map((metric) => (
-				<label
-					key={metric.key}
-					className="relative flex cursor-pointer flex-nowrap items-center gap-1 last-of-type:mr-auto"
-				>
-					<input
-						type="checkbox"
-						value={metric.key}
-						checked
-						onChange={() => onToggle(metric.key)}
-						className="peer absolute size-[1em] opacity-[0.00001]"
-					/>
-					<span
-						className={metricChipStyles}
-						style={{ borderColor: colorByName.get(metric.label) ?? 'var(--text-tertiary)' }}
-					>
-						<span>{metric.label}</span>
-						<Icon name="x" className="size-3.5" />
-					</span>
-				</label>
-			))}
-			<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-				<ChartGroupingSelector value={period} options={DWM_GROUPING_OPTIONS_LOWERCASE} onValueChange={onPeriodChange} />
-				<ChartCsvExportButton
-					chartInstance={chartInstance}
-					filename={filename}
-					source={{
-						type: 'dataset',
-						prepare: () => buildRwaPlatformEntityCsvDataset(chart.series, chart.period)
-					}}
-				/>
-				<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
-			</div>
+		<ChartPanelToolbar
+			leading={
+				<>
+					<MetricsDialog selected={selected} onToggle={onToggle} onClear={onClear} />
+					{RWA_PLATFORM_CHART_METRICS.filter((metric) => selected.includes(metric.key)).map((metric) => (
+						<label key={metric.key} className="relative flex cursor-pointer flex-nowrap items-center gap-1">
+							<input
+								type="checkbox"
+								value={metric.key}
+								checked
+								onChange={() => onToggle(metric.key)}
+								className="peer absolute size-[1em] opacity-[0.00001]"
+							/>
+							<span
+								className={metricChipStyles}
+								style={{ borderColor: colorByName.get(metric.label) ?? 'var(--text-tertiary)' }}
+							>
+								<span>{metric.label}</span>
+								<Icon name="x" className="size-3.5" />
+							</span>
+						</label>
+					))}
+				</>
+			}
+		>
+			<ChartGroupingSelector value={period} options={DWM_GROUPING_OPTIONS_LOWERCASE} onValueChange={onPeriodChange} />
+			<ChartCsvExportButton
+				chartInstance={chartInstance}
+				filename={filename}
+				source={{
+					type: 'dataset',
+					prepare: () => buildRwaPlatformEntityCsvDataset(chart.series, chart.period)
+				}}
+			/>
+			<ChartPngExportButton chartInstance={chartInstance} filename={filename} title={title} />
 		</ChartPanelToolbar>
 	)
 }
@@ -220,7 +220,7 @@ function MetricsDialog({
 				<span>Add Metrics</span>
 				<Icon name="plus" className="size-3.5" />
 			</Ariakit.DialogDisclosure>
-			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
+			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
 						<DialogHeading>Chart metrics</DialogHeading>
@@ -285,14 +285,17 @@ function MetricsDialog({
 						)
 					})}
 				</div>
-				<div className="flex items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
-					<Button type="button" variant="ghost" size="md" onClick={onClear}>
-						Reset
-					</Button>
+				<DialogFooter
+					leading={
+						<Button type="button" variant="ghost" size="md" onClick={onClear}>
+							Reset
+						</Button>
+					}
+				>
 					<Button type="button" variant="primary" size="md" onClick={() => store.hide()}>
 						Done
 					</Button>
-				</div>
+				</DialogFooter>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

@@ -22,7 +22,7 @@ import { dashboardAPI, type LiteDashboardSummary } from '~/containers/ProDashboa
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -402,7 +402,7 @@ export function AddToDashboardModal({
 	return (
 		<Ariakit.Dialog
 			store={dialogStore}
-			className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
+			className={`${dialogFullSheetSurfaceStyles} [--dialog-width:448px]`}
 			unmountOnHide
 			portal
 			hideOnInteractOutside
@@ -518,11 +518,14 @@ export function AddToDashboardModal({
 					) : null}
 				</div>
 
-				<div className="flex gap-2 border-t border-subtle px-4 py-3">
-					<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" className="flex-1" />}>
-						Cancel
-					</Ariakit.DialogDismiss>
-					<Button type="submit" variant="primary" size="md" disabled={isSubmitting || !canSubmit} className="flex-1">
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" />}>
+							Cancel
+						</Ariakit.DialogDismiss>
+					}
+				>
+					<Button type="submit" variant="primary" size="md" disabled={isSubmitting || !canSubmit}>
 						{isSubmitting ? (
 							<LoadingSpinner size={16} />
 						) : (
@@ -532,7 +535,7 @@ export function AddToDashboardModal({
 							</>
 						)}
 					</Button>
-				</div>
+				</DialogFooter>
 			</form>
 		</Ariakit.Dialog>
 	)

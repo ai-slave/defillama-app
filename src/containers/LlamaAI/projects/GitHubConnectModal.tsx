@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useId, useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, dialogScrollableBodyStyles, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -45,7 +45,7 @@ export function GitHubConnectModal({ dialogStore, projectId, finalFocus }: GitHu
 			<Ariakit.Dialog
 				initialFocus={headingRef}
 				finalFocus={finalFocus}
-				className={`${dialogSurfaceStyles} [--dialog-width:520px]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:520px]`}
 				portal
 			>
 				{isOpen ? (
@@ -379,10 +379,13 @@ function GitHubConnectForm({
 					)}
 				</div>
 			</div>
-			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-					Cancel
-				</Ariakit.DialogDismiss>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
 				{hasInstalls ? (
 					<Button
 						type="button"
@@ -395,7 +398,7 @@ function GitHubConnectForm({
 						{connect.isPending ? 'Connecting…' : 'Connect'}
 					</Button>
 				) : null}
-			</footer>
+			</DialogFooter>
 		</div>
 	)
 }

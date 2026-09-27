@@ -5,7 +5,7 @@ import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
@@ -35,7 +35,7 @@ export function SettingsIntegrationsLink() {
 	)
 }
 
-export const alertDialogClass = `${dialogSurfaceStyles} [--dialog-width:512px]`
+export const alertDialogClass = `${dialogFullSheetSurfaceStyles} [--dialog-width:512px]`
 
 export const alertInputClass = `${inputStyles} w-full`
 

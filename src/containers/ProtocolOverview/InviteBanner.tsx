@@ -44,7 +44,7 @@ export function InviteBanner({ protocol, name, website }: InviteBannerProps) {
 			</Card>
 			{/* The recipe's 40dvh drawer floor leaves a short invite form floating in empty space on phones. */}
 			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:440px] max-sm:h-fit max-sm:min-h-0`}
+				className={`${dialogSurfaceStyles} [--dialog-width:440px]`}
 				backdrop={<div className="fixed inset-0 z-50 bg-screen-dim" />}
 				unmountOnHide
 			>

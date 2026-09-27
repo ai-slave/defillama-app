@@ -170,7 +170,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 				</div>
 			)}
 			<Ariakit.DialogProvider open={!!disconnectTarget} setOpen={(open) => !open && setDisconnectTarget(null)}>
-				<Ariakit.Dialog portal className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}>
+				<Ariakit.Dialog portal className={`${dialogSurfaceStyles} [--dialog-width:448px]`}>
 					<header className="shrink-0 border-b border-subtle p-3">
 						<DialogHeading>Disconnect Slack workspace?</DialogHeading>
 					</header>

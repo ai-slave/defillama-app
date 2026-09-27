@@ -2,7 +2,7 @@
 // selected series as removable chips beside it. Option counts are small, so no search box.
 import * as Ariakit from '@ariakit/react'
 import { Button, buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { SealGlyph } from '../Tables/Measured'
@@ -119,11 +119,11 @@ export function ChartMetricsPicker({
 							))}
 					</div>
 
-					<div className="flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
+					<DialogFooter>
 						<Button type="button" variant="primary" size="md" onClick={() => dialogStore.hide()}>
 							Done
 						</Button>
-					</div>
+					</DialogFooter>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
 

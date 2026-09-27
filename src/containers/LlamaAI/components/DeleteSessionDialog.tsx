@@ -34,7 +34,7 @@ export function DeleteSessionDialog({
 			finalFocus={finalFocus}
 			hideOnEscape={!pending}
 			hideOnInteractOutside={!pending}
-			className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+			className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 		>
 			<header className="shrink-0 border-b border-subtle p-3">
 				<DialogHeading className="break-words">{title}</DialogHeading>

@@ -7,7 +7,7 @@ import { articleHref, formatDate, readingMinutes } from '~/containers/Articles/l
 import { listResearchNewsletterItems, type ResearchNewsletterItem } from '~/containers/Articles/newsletterFeed'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingIndicator } from '~/ui/Status'
@@ -532,7 +532,7 @@ export function ResearchSearchDialog({ variant }: { variant: SearchDialogVariant
 			<SearchDialogTrigger variant={variant} />
 
 			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:700px]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:700px]`}
 				backdrop={<div className="fixed inset-0 z-50 bg-screen-dim" />}
 				initialFocus={inputRef}
 				portal

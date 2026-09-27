@@ -5,7 +5,7 @@ import { selectTriggerStyles } from '~/components/Select/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, DialogFooter, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -467,7 +467,7 @@ export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersCh
 				<Icon name="settings" className="size-3.5" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:860px] sm:max-h-[min(760px,calc(100%-32px))]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:860px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
 				portal
 			>
@@ -510,10 +510,10 @@ export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersCh
 
 				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
 					<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-						<div className="border-b border-subtle px-4 py-2">
+						<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
 							<h3 className="label-sm text-secondary">Browse filters</h3>
 						</div>
-						<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+						<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
 							{groupedAvailableFilters.map((group) => (
 								<section key={group.key} className="flex flex-col gap-2">
 									<div className="flex items-baseline gap-1.5">
@@ -552,10 +552,10 @@ export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersCh
 					</section>
 
 					<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-						<div className="border-b border-subtle px-4 py-2">
+						<div className="px-4 pt-4 sm:border-b sm:border-subtle sm:py-2">
 							<h3 className="label-sm text-secondary">Active filters</h3>
 						</div>
-						<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+						<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible max-sm:pt-2">
 							{draftFilters.length > 0 ? (
 								draftFilters.map((filter) => (
 									<ActiveFilterEditor
@@ -578,21 +578,22 @@ export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersCh
 					</section>
 				</div>
 
-				<div className="flex items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
-					{draftFilters.length > 0 ? (
-						<Button type="button" variant="ghost" size="md" onClick={() => setDraftFilters([])}>
-							Clear all
-						</Button>
-					) : (
-						<span className="label-sm text-tertiary">No filters selected</span>
-					)}
-					<div className="flex items-center gap-2">
-						<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
-						<Button type="button" variant="primary" size="md" onClick={commitFilters}>
-							Done
-						</Button>
-					</div>
-				</div>
+				<DialogFooter
+					dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
+					leading={
+						draftFilters.length > 0 ? (
+							<Button type="button" variant="ghost" size="md" onClick={() => setDraftFilters([])}>
+								Clear all
+							</Button>
+						) : (
+							<span className="label-sm text-tertiary">No filters selected</span>
+						)
+					}
+				>
+					<Button type="button" variant="primary" size="md" onClick={commitFilters}>
+						Done
+					</Button>
+				</DialogFooter>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

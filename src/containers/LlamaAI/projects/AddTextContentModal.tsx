@@ -2,7 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { useAddTextFile } from './hooks'
@@ -113,15 +119,18 @@ function AddTextContentForm({
 					</p>
 				) : null}
 			</div>
-			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-					Cancel
-				</Ariakit.DialogDismiss>
+			<DialogFooter
+				dismiss={
+					<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
+						Cancel
+					</Ariakit.DialogDismiss>
+				}
+			>
 				<Button type="submit" size="md" variant="primary" disabled={!name.trim() || !content || add.isPending}>
 					{add.isPending ? <LoadingSpinner size={14} /> : null}
 					{add.isPending ? 'Saving…' : 'Save'}
 				</Button>
-			</footer>
+			</DialogFooter>
 		</form>
 	)
 }

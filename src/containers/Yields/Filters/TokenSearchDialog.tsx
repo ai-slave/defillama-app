@@ -5,7 +5,7 @@ import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { popoverMultiSelectCheckStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -448,7 +448,7 @@ export function TokenSearchDialog({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(nextOpen) => (nextOpen ? undefined : onClose())}>
 			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:800px]`}
+				className={`${dialogFullSheetSurfaceStyles} [--dialog-width:800px]`}
 				style={{ height: '100%' }}
 				initialFocus={inputRef}
 				unmountOnHide

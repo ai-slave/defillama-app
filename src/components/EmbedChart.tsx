@@ -55,7 +55,7 @@ export function EmbedChart() {
 				<span className="sr-only">Embed Chart</span>
 			</Tooltip>
 
-			<PopoverSurface variant="list" className="mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4">
+			<PopoverSurface variant="panel" className="mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4">
 				<span className="flex flex-col items-end gap-2 p-3">
 					<code className="block rounded-lg bg-page p-2 text-xs break-all">{url}</code>
 					<CopyHelper toCopy={url} />

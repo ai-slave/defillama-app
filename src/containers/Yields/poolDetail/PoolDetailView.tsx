@@ -118,9 +118,8 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 				<PanelTitle>{title}</PanelTitle>
 				<Skeleton className="ml-auto h-8 w-40" />
 			</PanelHeader>
-			<ChartPanelToolbar>
+			<ChartPanelToolbar leading={<Skeleton className="h-8 w-40" />}>
 				<Skeleton className="h-8 w-40" />
-				<Skeleton className="ml-auto h-8 w-40" />
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				<ChartPanelBodyFallback role="status" aria-live="polite">

@@ -430,35 +430,36 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				</div>
 
 				<ChartPanel className="col-span-full">
-					<ChartPanelToolbar>
-						<TagGroup
-							variant="default"
-							size="md"
-							selectedValue={activeFundamentalChart}
-							setValue={setActiveFundamentalChart}
-							values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
-						/>
-						<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
+					<ChartPanelToolbar
+						leading={
 							<TagGroup
 								variant="default"
 								size="md"
-								selectedValue={activeDimensionPeriod}
-								setValue={setActiveDimensionPeriod}
-								values={EQUITY_DIMENSION_PERIOD_OPTIONS}
+								selectedValue={activeFundamentalChart}
+								setValue={setActiveFundamentalChart}
+								values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
 							/>
-							<ChartExportButtons
-								chartInstance={fundamentalsChartInstance}
-								filename={fundamentalsExportFilename}
-								title={fundamentalsExportTitle}
-								csvSource={{
-									type: 'prepare-csv',
-									prepare: () => ({
-										filename: `${fundamentalsExportFilename}.csv`,
-										rows: buildEquitiesDimensionsCsvRows(activeFundamentalsChart)
-									})
-								}}
-							/>
-						</div>
+						}
+					>
+						<TagGroup
+							variant="default"
+							size="md"
+							selectedValue={activeDimensionPeriod}
+							setValue={setActiveDimensionPeriod}
+							values={EQUITY_DIMENSION_PERIOD_OPTIONS}
+						/>
+						<ChartExportButtons
+							chartInstance={fundamentalsChartInstance}
+							filename={fundamentalsExportFilename}
+							title={fundamentalsExportTitle}
+							csvSource={{
+								type: 'prepare-csv',
+								prepare: () => ({
+									filename: `${fundamentalsExportFilename}.csv`,
+									rows: buildEquitiesDimensionsCsvRows(activeFundamentalsChart)
+								})
+							}}
+						/>
 					</ChartPanelToolbar>
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart

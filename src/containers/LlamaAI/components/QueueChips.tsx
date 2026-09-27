@@ -187,7 +187,7 @@ export function QueueChips({
 				store={clearStore}
 				unmountOnHide
 				finalFocus={returnFocus}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 			>
 				<header className="shrink-0 border-b border-subtle p-3">
 					<DialogHeading>Clear all queued prompts?</DialogHeading>

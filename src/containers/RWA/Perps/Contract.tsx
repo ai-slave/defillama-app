@@ -291,89 +291,91 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 
 	return (
 		<div className="flex flex-col gap-2">
-			<ChartPanelToolbar>
-				<Ariakit.DialogProvider store={metricsDialogStore}>
-					<Ariakit.DialogDisclosure render={<Button size="md" />}>
-						<span>Add Metrics</span>
-						<Icon name="plus" className="size-3.5" />
-					</Ariakit.DialogDisclosure>
-					<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
-						<div className="flex items-center gap-2 border-b border-subtle p-2">
-							<DialogHeading>Add metrics to chart</DialogHeading>
-							<DialogCloseButton className="ml-auto" />
-						</div>
+			<ChartPanelToolbar
+				leading={
+					<>
+						<Ariakit.DialogProvider store={metricsDialogStore}>
+							<Ariakit.DialogDisclosure render={<Button size="md" />}>
+								<span>Add Metrics</span>
+								<Icon name="plus" className="size-3.5" />
+							</Ariakit.DialogDisclosure>
+							<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
+								<div className="flex items-center gap-2 border-b border-subtle p-2">
+									<DialogHeading>Add metrics to chart</DialogHeading>
+									<DialogCloseButton className="ml-auto" />
+								</div>
 
-						<div className="flex flex-wrap gap-2 p-2">
-							{RWA_PERPS_CONTRACT_CHART_METRICS.map((metric) => {
-								const isActive = enabledMetrics.includes(metric.key)
-								return (
-									<button
-										type="button"
-										key={`add-metric-${metric.key}`}
-										onClick={() => {
-											void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive })).then(
-												() => {
-													metricsDialogStore.toggle()
-												}
-											)
+								<div className="flex flex-wrap gap-2 p-2">
+									{RWA_PERPS_CONTRACT_CHART_METRICS.map((metric) => {
+										const isActive = enabledMetrics.includes(metric.key)
+										return (
+											<button
+												type="button"
+												key={`add-metric-${metric.key}`}
+												onClick={() => {
+													void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive })).then(
+														() => {
+															metricsDialogStore.toggle()
+														}
+													)
+												}}
+												data-active={isActive}
+												className={metricOptionChipStyles}
+											>
+												<span>{metric.label}</span>
+												{isActive ? <Icon name="x" className="size-3.5" /> : <Icon name="plus" className="size-3.5" />}
+											</button>
+										)
+									})}
+								</div>
+							</Ariakit.Dialog>
+						</Ariakit.DialogProvider>
+
+						{enabledMetrics.map((metricKey) => {
+							const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)
+							if (!metric) return null
+
+							return (
+								<label
+									className="relative flex cursor-pointer flex-nowrap items-center gap-1 label-sm"
+									key={metric.key}
+								>
+									<input
+										type="checkbox"
+										value={metric.key}
+										checked
+										onChange={() => {
+											void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
 										}}
-										data-active={isActive}
-										className={metricOptionChipStyles}
-									>
+										className="peer absolute size-[1em] opacity-[0.00001]"
+									/>
+									<span className={metricChipStyles} style={{ borderColor: metric.color }}>
 										<span>{metric.label}</span>
-										{isActive ? <Icon name="x" className="size-3.5" /> : <Icon name="plus" className="size-3.5" />}
-									</button>
-								)
-							})}
-						</div>
-					</Ariakit.Dialog>
-				</Ariakit.DialogProvider>
-
-				{enabledMetrics.map((metricKey) => {
-					const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)
-					if (!metric) return null
-
-					return (
-						<label
-							className="relative flex cursor-pointer flex-nowrap items-center gap-1 label-sm last-of-type:mr-auto"
-							key={metric.key}
-						>
-							<input
-								type="checkbox"
-								value={metric.key}
-								checked
-								onChange={() => {
-									void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
-								}}
-								className="peer absolute size-[1em] opacity-[0.00001]"
-							/>
-							<span className={metricChipStyles} style={{ borderColor: metric.color }}>
-								<span>{metric.label}</span>
-								<Icon name="x" className="size-3.5" />
-							</span>
-						</label>
-					)
-				})}
-
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-					<ChartGroupingSelector
-						value={groupBy}
-						onValueChange={(nextGroupBy) => {
-							void pushShallowQuery(router, getRWAPerpsContractGroupByQueryPatch(nextGroupBy))
-						}}
-						options={DWM_GROUPING_OPTIONS_LOWERCASE}
-					/>
-					<ChartExportButtons
-						chartInstance={chartInstance}
-						filename={`${contractSlugBase}-market-metrics`}
-						title={`${contract.contract.contract} Market Metrics`}
-						smol
-						csvSource={{
-							type: 'dataset',
-							prepare: () => ({ ...deferredChartSpec.dataset, groupBy: deferredChartSpec.groupBy })
-						}}
-					/>
-				</div>
+										<Icon name="x" className="size-3.5" />
+									</span>
+								</label>
+							)
+						})}
+					</>
+				}
+			>
+				<ChartGroupingSelector
+					value={groupBy}
+					onValueChange={(nextGroupBy) => {
+						void pushShallowQuery(router, getRWAPerpsContractGroupByQueryPatch(nextGroupBy))
+					}}
+					options={DWM_GROUPING_OPTIONS_LOWERCASE}
+				/>
+				<ChartExportButtons
+					chartInstance={chartInstance}
+					filename={`${contractSlugBase}-market-metrics`}
+					title={`${contract.contract.contract} Market Metrics`}
+					smol
+					csvSource={{
+						type: 'dataset',
+						prepare: () => ({ ...deferredChartSpec.dataset, groupBy: deferredChartSpec.groupBy })
+					}}
+				/>
 			</ChartPanelToolbar>
 
 			{hasChartData ? (

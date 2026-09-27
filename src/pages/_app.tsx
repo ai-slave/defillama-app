@@ -18,6 +18,7 @@ import { PageClockProvider } from '~/hooks/usePageClock'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
 import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
+import { useKeyboardInset } from '~/ui/useKeyboardInset'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_EXPERIMENT_ID,
@@ -87,6 +88,7 @@ const isChunkLoadError = (error: unknown) => {
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
 	const umamiScriptAttributes = getUmamiScriptAttributes(useInvestorsSite())
+	useKeyboardInset()
 
 	useEffect(() => {
 		const trackExposure = () => {

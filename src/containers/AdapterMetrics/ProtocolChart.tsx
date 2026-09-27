@@ -333,7 +333,6 @@ function ChartByType({
 					value={chartInterval}
 					setValue={setChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
-					className="ml-auto"
 				/>
 				{selectableSeries.length > 1 ? (
 					<SelectWithCombobox
@@ -346,6 +345,7 @@ function ChartByType({
 						size="md"
 					/>
 				) : null}
+				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 				<ChartExportButtons
 					chartInstance={exportChartInstance}
 					filename={exportFilename}
@@ -356,7 +356,6 @@ function ChartByType({
 						prepare: () => ({ ...deferredMainChartData.dataset, groupBy: deferredMainChartData.groupBy })
 					}}
 				/>
-				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart

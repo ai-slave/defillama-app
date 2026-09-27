@@ -17,7 +17,7 @@ import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -258,220 +258,231 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 
 	return (
 		<ChartPanel className="flex-1">
-			<ChartPanelToolbar>
-				{props.availableCharts.length > 0 ? (
-					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure render={<Button size="md" />}>
-							<span>Add Metrics</span>
-							<Icon name="plus" className="size-3.5" />
-						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
-							<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-								<div className="flex items-baseline gap-2.5">
-									<DialogHeading>Chart metrics</DialogHeading>
-									<span className="body-sm text-tertiary">
-										{selectedOptions.length}/{allMetricOptions.length}
-									</span>
-								</div>
-								<DialogCloseButton />
-							</div>
-
-							<div className="border-b border-subtle px-4 py-3">
-								<label className="relative block">
-									<span className="sr-only">Search metrics</span>
-									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-									<Input
-										type="text"
-										name="search"
-										inputMode="search"
-										placeholder={`Search ${allMetricOptions.length} metrics…`}
-										autoFocus
-										value={metricsSearchValue}
-										className="w-full pr-24 pl-8"
-										onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
-									/>
-									{metricsSearchValue ? (
-										<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
-											<span className="body-xs text-tertiary">
-												{filteredMetricOptions.length} {filteredMetricOptions.length === 1 ? 'match' : 'matches'}
-											</span>
-											<button
-												type="button"
-												onClick={() => setMetricsSearchValue('')}
-												className="flex size-5 items-center justify-center rounded-sm text-tertiary hover:bg-hover-row hover:text-primary"
-											>
-												<Icon name="x" className="size-3.5" />
-												<span className="sr-only">Clear search</span>
-											</button>
-										</div>
-									) : null}
-								</label>
-							</div>
-
-							<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
-								{groupedFilteredOptions.map((group) => (
-									<section key={`category-${group.label}`} className="flex flex-col gap-2">
-										<div className="flex items-baseline gap-1.5">
-											<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
-											<span className="body-xs text-tertiary/70">
-												· {group.selectedCount}/{group.options.length}
+			<ChartPanelToolbar
+				leading={
+					<>
+						{props.availableCharts.length > 0 ? (
+							<Ariakit.DialogProvider store={metricsDialogStore}>
+								<Ariakit.DialogDisclosure render={<Button size="md" />}>
+									<span>Add Metrics</span>
+									<Icon name="plus" className="size-3.5" />
+								</Ariakit.DialogDisclosure>
+								<Ariakit.Dialog
+									className={`${dialogFullSheetSurfaceStyles} [--dialog-width:600px]`}
+									unmountOnHide
+									portal
+								>
+									<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+										<div className="flex items-baseline gap-2.5">
+											<DialogHeading>Chart metrics</DialogHeading>
+											<span className="body-sm text-tertiary">
+												{selectedOptions.length}/{allMetricOptions.length}
 											</span>
 										</div>
-										<div className="flex flex-wrap gap-1">
-											{group.options.map((option) => {
-												return (
-													<button
-														key={`option-${group.label}-${option.id}`}
-														type="button"
-														onClick={() => handleToggleMetric(option)}
-														data-active={option.active}
-														className={metricOptionChipStyles}
-													>
-														{option.active ? (
-															<span
-																aria-hidden
-																className="size-1.5 rounded-full"
-																style={{
-																	backgroundColor: `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
-																}}
-															/>
-														) : (
-															<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-														)}
-														<span>{option.label}</span>
-														{option.active ? (
-															<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-														) : null}
-													</button>
-												)
-											})}
-										</div>
-									</section>
-								))}
-
-								{groupedFilteredOptions.length === 0 ? (
-									<div className="flex flex-col items-center gap-1 py-8 text-center">
-										<p className="text-sm text-secondary">
-											No metrics match{' '}
-											<span className="font-medium text-primary">&ldquo;{deferredMetricsSearchValue}&rdquo;</span>
-										</p>
-										<button
-											type="button"
-											onClick={() => setMetricsSearchValue('')}
-											className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
-										>
-											Clear search
-										</button>
+										<DialogCloseButton />
 									</div>
-								) : null}
-							</div>
 
-							<div className="flex items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
-								{selectedOptions.length > 0 ? (
-									<Button type="button" variant="ghost" size="md" onClick={handleClearAll}>
-										Clear all
-									</Button>
-								) : (
-									<span className="text-xs text-tertiary">Pick metrics to plot</span>
-								)}
-								<Button type="button" variant="primary" size="md" onClick={() => metricsDialogStore.hide()}>
-									Done
-								</Button>
-							</div>
-						</Ariakit.Dialog>
-					</Ariakit.DialogProvider>
-				) : null}
-				{toggledCharts.map((tchart) => (
-					<label
-						className="relative flex cursor-pointer flex-nowrap items-center gap-1 last-of-type:mr-auto"
-						key={`add-or-remove-metric-${tchart}`}
-					>
-						<input
-							type="checkbox"
-							value={tchart}
-							checked
-							onChange={() => {
-								void pushShallowQuery(router, {
-									[protocolCharts[tchart]]: getQueryValueOnRemove(defaultEnabledCharts[tchart] === true) ?? undefined
-								})
-							}}
-							className="peer absolute size-[1em] opacity-[0.00001]"
-						/>
-						<span
-							className={metricChipStyles}
-							style={{
-								borderColor: props.chartColors[tchart]
-							}}
-						>
-							<span>{tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}</span>
-							{loadingChartSet.has(tchart) ? (
-								<span aria-label={`${tchart} is loading`} role="status">
-									<LoadingSpinner size={14} />
+									<div className="border-b border-subtle px-4 py-3">
+										<label className="relative block">
+											<span className="sr-only">Search metrics</span>
+											<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+											<Input
+												type="text"
+												name="search"
+												inputMode="search"
+												placeholder={`Search ${allMetricOptions.length} metrics…`}
+												autoFocus
+												value={metricsSearchValue}
+												className="w-full pr-24 pl-8"
+												onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
+											/>
+											{metricsSearchValue ? (
+												<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
+													<span className="body-xs text-tertiary">
+														{filteredMetricOptions.length} {filteredMetricOptions.length === 1 ? 'match' : 'matches'}
+													</span>
+													<button
+														type="button"
+														onClick={() => setMetricsSearchValue('')}
+														className="flex size-5 items-center justify-center rounded-sm text-tertiary hover:bg-hover-row hover:text-primary"
+													>
+														<Icon name="x" className="size-3.5" />
+														<span className="sr-only">Clear search</span>
+													</button>
+												</div>
+											) : null}
+										</label>
+									</div>
+
+									<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+										{groupedFilteredOptions.map((group) => (
+											<section key={`category-${group.label}`} className="flex flex-col gap-2">
+												<div className="flex items-baseline gap-1.5">
+													<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
+													<span className="body-xs text-tertiary/70">
+														· {group.selectedCount}/{group.options.length}
+													</span>
+												</div>
+												<div className="flex flex-wrap gap-1">
+													{group.options.map((option) => {
+														return (
+															<button
+																key={`option-${group.label}-${option.id}`}
+																type="button"
+																onClick={() => handleToggleMetric(option)}
+																data-active={option.active}
+																className={metricOptionChipStyles}
+															>
+																{option.active ? (
+																	<span
+																		aria-hidden
+																		className="size-1.5 rounded-full"
+																		style={{
+																			backgroundColor: `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
+																		}}
+																	/>
+																) : (
+																	<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
+																)}
+																<span>{option.label}</span>
+																{option.active ? (
+																	<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
+																) : null}
+															</button>
+														)
+													})}
+												</div>
+											</section>
+										))}
+
+										{groupedFilteredOptions.length === 0 ? (
+											<div className="flex flex-col items-center gap-1 py-8 text-center">
+												<p className="text-sm text-secondary">
+													No metrics match{' '}
+													<span className="font-medium text-primary">&ldquo;{deferredMetricsSearchValue}&rdquo;</span>
+												</p>
+												<button
+													type="button"
+													onClick={() => setMetricsSearchValue('')}
+													className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
+												>
+													Clear search
+												</button>
+											</div>
+										) : null}
+									</div>
+
+									<DialogFooter
+										leading={
+											selectedOptions.length > 0 ? (
+												<Button type="button" variant="ghost" size="md" onClick={handleClearAll}>
+													Clear all
+												</Button>
+											) : (
+												<span className="label-sm text-tertiary">Pick metrics to plot</span>
+											)
+										}
+									>
+										<Button type="button" variant="primary" size="md" onClick={() => metricsDialogStore.hide()}>
+											Done
+										</Button>
+									</DialogFooter>
+								</Ariakit.Dialog>
+							</Ariakit.DialogProvider>
+						) : null}
+						{toggledCharts.map((tchart) => (
+							<label
+								className="relative flex cursor-pointer flex-nowrap items-center gap-1"
+								key={`add-or-remove-metric-${tchart}`}
+							>
+								<input
+									type="checkbox"
+									value={tchart}
+									checked
+									onChange={() => {
+										void pushShallowQuery(router, {
+											[protocolCharts[tchart]]:
+												getQueryValueOnRemove(defaultEnabledCharts[tchart] === true) ?? undefined
+										})
+									}}
+									className="peer absolute size-[1em] opacity-[0.00001]"
+								/>
+								<span
+									className={metricChipStyles}
+									style={{
+										borderColor: props.chartColors[tchart]
+									}}
+								>
+									<span>{tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}</span>
+									{loadingChartSet.has(tchart) ? (
+										<span aria-label={`${tchart} is loading`} role="status">
+											<LoadingSpinner size={14} />
+										</span>
+									) : (
+										<Icon name="x" className="size-3.5" />
+									)}
 								</span>
-							) : (
-								<Icon name="x" className="size-3.5" />
-							)}
-						</span>
-					</label>
-				))}
-				{shouldShowEnabledEventsChip ? (
-					<label className="relative flex cursor-pointer flex-nowrap items-center gap-1 last-of-type:mr-auto">
-						<input
-							type="checkbox"
-							value="events"
-							checked
-							onChange={() => {
-								void pushShallowQuery(router, {
-									events: toggledMetrics.events === 'true' ? (getQueryValueOnRemove(true) ?? undefined) : 'true'
-								})
-							}}
-							className="peer absolute size-[1em] opacity-[0.00001]"
-						/>
-						<span
-							className={metricChipStyles}
-							style={{
-								borderColor: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? '#9CA3AF'
-							}}
-						>
-							<span>Events</span>
-							<Icon name="x" className="size-3.5" />
-						</span>
-					</label>
-				) : null}
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-					{props.chartDenominations?.length ? (
-						<SegmentedControl
-							value={toggledMetrics.denomination ?? 'USD'}
-							onValueChange={(symbol) =>
-								void pushShallowQuery(router, { denomination: symbol === 'USD' ? undefined : symbol })
-							}
-							options={props.chartDenominations.map((denom) => ({ value: denom.symbol, label: denom.symbol }))}
-							label="Denomination"
-							variant="default"
-							size="md"
-						/>
-					) : null}
-					{hasAtLeastOneBarChart ? (
-						<ChartGroupingSelector
-							value={groupBy}
-							onValueChange={(dataInterval) => {
-								void pushShallowQuery(router, {
-									groupBy: dataInterval
-								})
-							}}
-							options={DWMC_GROUPING_OPTIONS_LOWERCASE}
-						/>
-					) : null}
-					<EmbedChart />
-					<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
-					<ChartExportButtons
-						chartInstance={overviewChartInstance}
-						csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
-						filename={overviewImageFilename}
-						title={overviewImageTitle}
-						iconUrl={tokenIconUrl(props.name)}
+							</label>
+						))}
+						{shouldShowEnabledEventsChip ? (
+							<label className="relative flex cursor-pointer flex-nowrap items-center gap-1">
+								<input
+									type="checkbox"
+									value="events"
+									checked
+									onChange={() => {
+										void pushShallowQuery(router, {
+											events: toggledMetrics.events === 'true' ? (getQueryValueOnRemove(true) ?? undefined) : 'true'
+										})
+									}}
+									className="peer absolute size-[1em] opacity-[0.00001]"
+								/>
+								<span
+									className={metricChipStyles}
+									style={{
+										borderColor: props.chartColors['Events'] ?? props.chartColors['TVL'] ?? '#9CA3AF'
+									}}
+								>
+									<span>Events</span>
+									<Icon name="x" className="size-3.5" />
+								</span>
+							</label>
+						) : null}
+					</>
+				}
+			>
+				{props.chartDenominations?.length ? (
+					<SegmentedControl
+						value={toggledMetrics.denomination ?? 'USD'}
+						onValueChange={(symbol) =>
+							void pushShallowQuery(router, { denomination: symbol === 'USD' ? undefined : symbol })
+						}
+						options={props.chartDenominations.map((denom) => ({ value: denom.symbol, label: denom.symbol }))}
+						label="Denomination"
+						variant="default"
+						size="md"
 					/>
-				</div>
+				) : null}
+				{hasAtLeastOneBarChart ? (
+					<ChartGroupingSelector
+						value={groupBy}
+						onValueChange={(dataInterval) => {
+							void pushShallowQuery(router, {
+								groupBy: dataInterval
+							})
+						}}
+						options={DWMC_GROUPING_OPTIONS_LOWERCASE}
+					/>
+				) : null}
+				<EmbedChart />
+				<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
+				<ChartExportButtons
+					chartInstance={overviewChartInstance}
+					csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
+					filename={overviewImageFilename}
+					title={overviewImageTitle}
+					iconUrl={tokenIconUrl(props.name)}
+				/>
 			</ChartPanelToolbar>
 			{isClient ? (
 				<FailedDataNote

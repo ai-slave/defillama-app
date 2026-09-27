@@ -3,7 +3,7 @@ import type { UseMutationResult } from '@tanstack/react-query'
 import { useRef, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from './Button'
-import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from './Dialog'
+import { DialogFooter, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from './Dialog'
 import { LoadingSpinner } from './Loaders'
 
 // Mount for one confirmation only. Request callbacks belong to that opening;
@@ -46,12 +46,12 @@ export function ConfirmActionDialog<TData, TVariables>({
 			}}
 			hideOnEscape={!mutation.isPending}
 			hideOnInteractOutside={!mutation.isPending}
-			className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+			className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 		>
-			<header className="shrink-0 border-b border-subtle p-3">
+			<header className="shrink-0 border-b border-subtle px-4 py-3">
 				<DialogHeading className="break-words">{title}</DialogHeading>
 			</header>
-			<div className={`${dialogScrollableBodyStyles} p-3`}>
+			<div className={`${dialogScrollableBodyStyles} px-4 py-3`}>
 				<Ariakit.DialogDescription className="body-sm text-secondary">{description}</Ariakit.DialogDescription>
 				{mutation.error ? (
 					<p role="alert" className="mt-3 body-sm text-data-down">
@@ -59,7 +59,7 @@ export function ConfirmActionDialog<TData, TVariables>({
 					</p>
 				) : null}
 			</div>
-			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
+			<DialogFooter>
 				<Ariakit.DialogDismiss autoFocus disabled={mutation.isPending} render={<Button size="md" />}>
 					Cancel
 				</Ariakit.DialogDismiss>
@@ -84,7 +84,7 @@ export function ConfirmActionDialog<TData, TVariables>({
 					{mutation.isPending ? <LoadingSpinner size={14} /> : null}
 					{mutation.isPending ? pendingLabel : confirmLabel}
 				</Ariakit.Button>
-			</footer>
+			</DialogFooter>
 			<span role="status" className="sr-only">
 				{mutation.isPending ? pendingLabel : ''}
 			</span>

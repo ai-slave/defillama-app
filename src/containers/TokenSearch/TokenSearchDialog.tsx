@@ -5,7 +5,7 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDebouncedValue } from '~/hooks/useDebounce'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingIndicator } from '~/ui/Status'
@@ -91,7 +91,7 @@ export function TokenSearchDialog({
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
+			<Ariakit.Dialog className={`${dialogFullSheetSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
 				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
 					<DialogHeading>Add Token</DialogHeading>
 					<DialogCloseButton className="ml-auto" />

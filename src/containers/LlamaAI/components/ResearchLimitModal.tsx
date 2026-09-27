@@ -4,7 +4,13 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 
 interface ResearchLimitModalProps {
@@ -86,7 +92,7 @@ export function ResearchLimitModal({
 					</Ariakit.DialogDescription>
 					{isBlocked ? <p className="text-center body-sm text-tertiary">{COPY[feature].proPitch}</p> : null}
 				</div>
-				<div className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
+				<DialogFooter>
 					{isBlocked ? (
 						<Button
 							as={BasicLink}
@@ -104,7 +110,7 @@ export function ResearchLimitModal({
 							Got it
 						</Button>
 					)}
-				</div>
+				</DialogFooter>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

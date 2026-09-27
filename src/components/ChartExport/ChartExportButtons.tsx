@@ -36,8 +36,9 @@ export function ChartExportButtons({
 	onCsvExport,
 	onPngExport
 }: ChartExportButtonsProps) {
+	// One unit, so .csv and .png wrap together instead of splitting across toolbar rows.
 	return (
-		<>
+		<div className="flex items-center gap-1.5">
 			{showCsv && csvSource ? (
 				<ChartCsvExportButton
 					chartInstance={chartInstance}
@@ -63,6 +64,6 @@ export function ChartExportButtons({
 					onExport={onPngExport}
 				/>
 			) : null}
-		</>
+		</div>
 	)
 }

@@ -503,57 +503,62 @@ export function AdapterByChainChart({
 	}, [breakdownChartState, chain, chartName])
 	return (
 		<ChartPanel className="col-span-2">
-			<ChartPanelToolbar>
-				<Select
-					allValues={CHART_VIEW_MODE_OPTIONS}
-					selectedValues={chartViewMode}
-					setSelectedValues={(value: string) => onChangeChartViewMode(value as AdapterByChainViewMode)}
-					label={chartViewMode}
-					labelType="none"
-					variant="filter"
-					size="md"
-				/>
-				{chartViewMode === 'Breakdown' ? (
-					<Select
-						allValues={CHART_KIND_OPTIONS}
-						selectedValues={
-							breakdownChartState.chartKind === 'treemap'
-								? 'Treemap'
-								: breakdownChartState.chartKind === 'hbar'
-									? 'HBar'
-									: breakdownChartState.chartKind === 'dominance'
-										? 'Dominance'
-										: 'Bar'
-						}
-						setSelectedValues={(value: string) => onChangeChartKind(value as ChainsByAdapterChartKind)}
-						label={breakdownChartKindLabel}
-						labelType="none"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
-					<Select
-						allValues={BAR_VALUE_MODE_OPTIONS}
-						selectedValues={breakdownChartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
-						setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
-						label={breakdownBarValueModeLabel ?? 'Absolute'}
-						labelType="none"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
-					<Select
-						allValues={BAR_LAYOUT_OPTIONS}
-						selectedValues={breakdownChartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
-						setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}
-						label={breakdownBarLayoutLabel ?? 'Stacked'}
-						labelType="none"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
+			<ChartPanelToolbar
+				leading={
+					<>
+						<Select
+							allValues={CHART_VIEW_MODE_OPTIONS}
+							selectedValues={chartViewMode}
+							setSelectedValues={(value: string) => onChangeChartViewMode(value as AdapterByChainViewMode)}
+							label={chartViewMode}
+							labelType="none"
+							variant="filter"
+							size="md"
+						/>
+						{chartViewMode === 'Breakdown' ? (
+							<Select
+								allValues={CHART_KIND_OPTIONS}
+								selectedValues={
+									breakdownChartState.chartKind === 'treemap'
+										? 'Treemap'
+										: breakdownChartState.chartKind === 'hbar'
+											? 'HBar'
+											: breakdownChartState.chartKind === 'dominance'
+												? 'Dominance'
+												: 'Bar'
+								}
+								setSelectedValues={(value: string) => onChangeChartKind(value as ChainsByAdapterChartKind)}
+								label={breakdownChartKindLabel}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
+							<Select
+								allValues={BAR_VALUE_MODE_OPTIONS}
+								selectedValues={breakdownChartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
+								setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
+								label={breakdownBarValueModeLabel ?? 'Absolute'}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
+							<Select
+								allValues={BAR_LAYOUT_OPTIONS}
+								selectedValues={breakdownChartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
+								setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}
+								label={breakdownBarLayoutLabel ?? 'Stacked'}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+					</>
+				}
+			>
 				{chartViewMode === 'Breakdown' ? (
 					<ChartGroupingSelector
 						value={breakdownChartState.groupBy}
@@ -569,51 +574,49 @@ export function AdapterByChainChart({
 					/>
 				) : null}
 				{chartViewMode === 'Combined' && chain ? <AddToDashboardButton chartConfig={multiChart} smol /> : null}
-				<div className="ml-auto flex items-center justify-end gap-1.5">
-					{chartViewMode === 'Breakdown' && protocolOptions.length > 0 ? (
-						<SelectWithCombobox
-							allValues={protocolOptions}
-							includeQueryKey="protocol"
-							excludeQueryKey="excludeProtocol"
-							defaultSelectedValues={protocolOptions}
-							label="Protocols"
-							labelType="smol"
-							variant="filter"
-							size="md"
-						/>
-					) : null}
-					{chartViewMode === 'Breakdown' ? (
-						breakdownChartState.chartKind === 'treemap' ? (
-							<ChartRestoreButton chartInstance={exportChartInstance} />
-						) : null
-					) : null}
-					{chartViewMode === 'Breakdown' ? (
-						canExportBreakdownChart ? (
-							<ChartExportButtons
-								chartInstance={exportChartInstance}
-								filename={breakdownExportConfig.filename}
-								title={breakdownExportConfig.title}
-								iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
-								csvSource={deferredBreakdownPresentation.csvSource}
-								pngProfile={breakdownChartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
-							/>
-						) : null
-					) : (
+				{chartViewMode === 'Breakdown' && protocolOptions.length > 0 ? (
+					<SelectWithCombobox
+						allValues={protocolOptions}
+						includeQueryKey="protocol"
+						excludeQueryKey="excludeProtocol"
+						defaultSelectedValues={protocolOptions}
+						label="Protocols"
+						labelType="smol"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
+				{chartViewMode === 'Breakdown' ? (
+					breakdownChartState.chartKind === 'treemap' ? (
+						<ChartRestoreButton chartInstance={exportChartInstance} />
+					) : null
+				) : null}
+				{chartViewMode === 'Breakdown' ? (
+					canExportBreakdownChart ? (
 						<ChartExportButtons
 							chartInstance={exportChartInstance}
-							filename={`${chain}-${adapterType}-${chartName}`}
-							title={chain === 'All' ? 'All Chains' : chain}
+							filename={breakdownExportConfig.filename}
+							title={breakdownExportConfig.title}
 							iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
-							csvSource={{
-								type: 'dataset',
-								prepare: () => ({
-									...deferredCombinedFinalCharts.dataset,
-									groupBy: deferredCombinedFinalCharts.groupBy
-								})
-							}}
+							csvSource={deferredBreakdownPresentation.csvSource}
+							pngProfile={breakdownChartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
 						/>
-					)}
-				</div>
+					) : null
+				) : (
+					<ChartExportButtons
+						chartInstance={exportChartInstance}
+						filename={`${chain}-${adapterType}-${chartName}`}
+						title={chain === 'All' ? 'All Chains' : chain}
+						iconUrl={chain !== 'All' ? chainIconUrl(chain) : undefined}
+						csvSource={{
+							type: 'dataset',
+							prepare: () => ({
+								...deferredCombinedFinalCharts.dataset,
+								groupBy: deferredCombinedFinalCharts.groupBy
+							})
+						}}
+					/>
+				)}
 			</ChartPanelToolbar>
 			{/* The API totals do not add up by category, so the header and combined chart stay unfiltered. */}
 			{isCategoryFiltered ? (
@@ -941,73 +944,76 @@ export function ChainsByAdapterChart({
 		deferredChartPresentation.data.length > 0
 	return (
 		<ChartPanel className="col-span-2">
-			<ChartPanelToolbar>
-				<Select
-					allValues={CHART_KIND_OPTIONS}
-					selectedValues={
-						chartState.chartKind === 'treemap'
-							? 'Treemap'
-							: chartState.chartKind === 'hbar'
-								? 'HBar'
-								: chartState.chartKind === 'dominance'
-									? 'Dominance'
-									: 'Bar'
-					}
-					setSelectedValues={(value: string) => onChangeChartKind(value as ChainsByAdapterChartKind)}
-					label={chartKindLabel}
-					labelType="none"
-					variant="filter"
-					size="md"
-				/>
-				{chartState.chartKind === 'bar' ? (
-					<Select
-						allValues={BAR_VALUE_MODE_OPTIONS}
-						selectedValues={chartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
-						setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
-						label={barValueModeLabel ?? 'Absolute'}
-						labelType="none"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
-				{chartState.chartKind === 'bar' ? (
-					<Select
-						allValues={BAR_LAYOUT_OPTIONS}
-						selectedValues={chartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
-						setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}
-						label={barLayoutLabel ?? 'Stacked'}
-						labelType="none"
-						variant="filter"
-						size="md"
-					/>
-				) : null}
+			<ChartPanelToolbar
+				leading={
+					<>
+						<Select
+							allValues={CHART_KIND_OPTIONS}
+							selectedValues={
+								chartState.chartKind === 'treemap'
+									? 'Treemap'
+									: chartState.chartKind === 'hbar'
+										? 'HBar'
+										: chartState.chartKind === 'dominance'
+											? 'Dominance'
+											: 'Bar'
+							}
+							setSelectedValues={(value: string) => onChangeChartKind(value as ChainsByAdapterChartKind)}
+							label={chartKindLabel}
+							labelType="none"
+							variant="filter"
+							size="md"
+						/>
+						{chartState.chartKind === 'bar' ? (
+							<Select
+								allValues={BAR_VALUE_MODE_OPTIONS}
+								selectedValues={chartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
+								setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
+								label={barValueModeLabel ?? 'Absolute'}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+						{chartState.chartKind === 'bar' ? (
+							<Select
+								allValues={BAR_LAYOUT_OPTIONS}
+								selectedValues={chartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
+								setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}
+								label={barLayoutLabel ?? 'Stacked'}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
+					</>
+				}
+			>
 				<ChartGroupingSelector
 					value={chartState.groupBy}
 					onValueChange={onChangeChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 				/>
-				<div className="ml-auto flex items-center justify-end gap-1.5">
-					<SelectWithCombobox
-						allValues={allChains}
-						includeQueryKey="chain"
-						excludeQueryKey="excludeChain"
-						defaultSelectedValues={allChains}
-						label="Chains"
-						labelType="smol"
-						variant="filter"
-						size="md"
+				<SelectWithCombobox
+					allValues={allChains}
+					includeQueryKey="chain"
+					excludeQueryKey="excludeChain"
+					defaultSelectedValues={allChains}
+					label="Chains"
+					labelType="smol"
+					variant="filter"
+					size="md"
+				/>
+				{chartState.chartKind === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
+				{canExportChart ? (
+					<ChartExportButtons
+						chartInstance={exportChartInstance}
+						filename={exportConfig.filename}
+						title={exportConfig.title}
+						csvSource={deferredChartPresentation.csvSource}
+						pngProfile={chartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
 					/>
-					{chartState.chartKind === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
-					{canExportChart ? (
-						<ChartExportButtons
-							chartInstance={exportChartInstance}
-							filename={exportConfig.filename}
-							title={exportConfig.title}
-							csvSource={deferredChartPresentation.csvSource}
-							pngProfile={chartState.chartKind === 'treemap' ? 'treemapNormalized' : undefined}
-						/>
-					) : null}
-				</div>
+				) : null}
 			</ChartPanelToolbar>
 			<React.Suspense
 				fallback={

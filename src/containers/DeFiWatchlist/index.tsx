@@ -22,7 +22,13 @@ import { useEmailNotifications, type NotificationSettings } from '~/hooks/useEma
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	DialogFooter,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatPercentChangeText } from '~/ui/PercentChange'
 import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
@@ -557,71 +563,74 @@ export function PortfolioNotifications({
 						e.preventDefault()
 						handleFormSubmit()
 					}}
-					className="min-h-0 flex-auto overflow-y-auto overscroll-contain"
+					className="flex min-h-0 flex-auto flex-col"
 				>
-					<div className="border-b border-subtle px-4 py-3">
-						<h3 className="mb-2 label-md text-primary">Protocol Metrics</h3>
-						{filteredProtocols.length > 0 ? (
-							<>
-								<p className="mb-3 body-sm text-secondary">
-									Select which metrics you want to receive notifications for your {filteredProtocols.length} watchlisted
-									protocol{filteredProtocols.length === 1 ? '' : 's'}.
-								</p>
-								<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
-									{protocolMetrics.map((metric) => (
-										<label key={metric.key} className="flex cursor-pointer items-center gap-2">
-											<Ariakit.FormCheckbox
-												name="protocolMetrics"
-												value={metric.key}
-												className="size-3.5 rounded-[4px] border border-strong accent-brand"
-											/>
-											<span className="body-sm text-primary">{metric.name}</span>
-										</label>
-									))}
+					{/* The body scrolls and the footer stays pinned below it. */}
+					<div className={dialogScrollableBodyStyles}>
+						<div className="border-b border-subtle px-4 py-3">
+							<h3 className="mb-2 label-md text-primary">Protocol Metrics</h3>
+							{filteredProtocols.length > 0 ? (
+								<>
+									<p className="mb-3 body-sm text-secondary">
+										Select which metrics you want to receive notifications for your {filteredProtocols.length}{' '}
+										watchlisted protocol{filteredProtocols.length === 1 ? '' : 's'}.
+									</p>
+									<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
+										{protocolMetrics.map((metric) => (
+											<label key={metric.key} className="flex cursor-pointer items-center gap-2">
+												<Ariakit.FormCheckbox
+													name="protocolMetrics"
+													value={metric.key}
+													className="size-3.5 rounded-[4px] border border-strong accent-brand"
+												/>
+												<span className="body-sm text-primary">{metric.name}</span>
+											</label>
+										))}
+									</div>
+								</>
+							) : (
+								<div className="py-6 text-center">
+									<Icon name="bookmark" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
+									<p className="body-sm text-tertiary">No protocols in your watchlist</p>
+									<p className="mt-1 body-sm text-tertiary">Add protocols to your watchlist to set up notifications</p>
 								</div>
-							</>
-						) : (
-							<div className="py-6 text-center">
-								<Icon name="bookmark" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
-								<p className="body-sm text-tertiary">No protocols in your watchlist</p>
-								<p className="mt-1 body-sm text-tertiary">Add protocols to your watchlist to set up notifications</p>
-							</div>
-						)}
-					</div>
+							)}
+						</div>
 
-					<div className="px-4 py-3">
-						<h3 className="mb-2 label-md text-primary">Chain Metrics</h3>
-						{filteredChains.length > 0 ? (
-							<>
-								<p className="mb-3 body-sm text-secondary">
-									Select which metrics you want to receive notifications for your {filteredChains.length} watchlisted
-									chain{filteredChains.length === 1 ? '' : 's'}.
-								</p>
-								<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
-									{chainMetrics.map((metric) => (
-										<label key={metric.key} className="flex cursor-pointer items-center gap-2">
-											<Ariakit.FormCheckbox
-												name="chainMetrics"
-												value={metric.key}
-												className="size-3.5 rounded-[4px] border border-strong accent-brand"
-											/>
-											<span className="body-sm text-primary">{metric.name}</span>
-										</label>
-									))}
+						<div className="px-4 py-3">
+							<h3 className="mb-2 label-md text-primary">Chain Metrics</h3>
+							{filteredChains.length > 0 ? (
+								<>
+									<p className="mb-3 body-sm text-secondary">
+										Select which metrics you want to receive notifications for your {filteredChains.length} watchlisted
+										chain{filteredChains.length === 1 ? '' : 's'}.
+									</p>
+									<div className="flex max-h-60 flex-wrap gap-3 overflow-y-auto">
+										{chainMetrics.map((metric) => (
+											<label key={metric.key} className="flex cursor-pointer items-center gap-2">
+												<Ariakit.FormCheckbox
+													name="chainMetrics"
+													value={metric.key}
+													className="size-3.5 rounded-[4px] border border-strong accent-brand"
+												/>
+												<span className="body-sm text-primary">{metric.name}</span>
+											</label>
+										))}
+									</div>
+								</>
+							) : (
+								<div className="py-6 text-center">
+									<Icon name="map" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
+									<p className="body-sm text-tertiary">No chains in your watchlist</p>
+									<p className="mt-1 body-sm text-tertiary">Add chains to your watchlist to set up notifications</p>
 								</div>
-							</>
-						) : (
-							<div className="py-6 text-center">
-								<Icon name="map" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
-								<p className="body-sm text-tertiary">No chains in your watchlist</p>
-								<p className="mt-1 body-sm text-tertiary">Add chains to your watchlist to set up notifications</p>
-							</div>
-						)}
+							)}
+						</div>
 					</div>
-
-					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
-						<div className="flex items-center gap-2">
-							{preferences ? (
+					<DialogFooter
+						dismiss={<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>}
+						leading={
+							preferences ? (
 								<>
 									{preferences.active ? (
 										<Button
@@ -647,18 +656,16 @@ export function PortfolioNotifications({
 								</>
 							) : (
 								<div className="body-sm text-secondary">Configure notification settings for your portfolio</div>
-							)}
-						</div>
-						<div className="flex gap-2">
-							<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
-							<Ariakit.FormSubmit
-								disabled={isChangingPreferences}
-								render={<Button type="submit" variant="primary" size="md" />}
-							>
-								{savePreferences.isPending ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
-							</Ariakit.FormSubmit>
-						</div>
-					</div>
+							)
+						}
+					>
+						<Ariakit.FormSubmit
+							disabled={isChangingPreferences}
+							render={<Button type="submit" variant="primary" size="md" />}
+						>
+							{savePreferences.isPending ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
+						</Ariakit.FormSubmit>
+					</DialogFooter>
 				</Ariakit.Form>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

@@ -80,7 +80,7 @@ function FailedDashboardDraft({ request, userId }: { request: DashboardUpdate; u
 			</section>
 			<Ariakit.Dialog
 				role="alertdialog"
-				className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 				autoFocusOnHide={(element) => {
 					if (element) return true
 					// Discard removes this notice and its trigger. Return to the page content in that case.

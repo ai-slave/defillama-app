@@ -8,7 +8,13 @@ import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { toShareToken, type ShareToken } from '~/containers/LlamaAI/ids'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import {
+	DialogCloseButton,
+	DialogHeading,
+	dialogScrollableBodyStyles,
+	dialogSurfaceStyles,
+	DialogFooter
+} from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -215,8 +221,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 					</div>
 				) : null}
 			</div>
-			<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Ariakit.DialogDismiss render={<Button size="md" />}>Close</Ariakit.DialogDismiss>
+			<DialogFooter dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Close</Ariakit.DialogDismiss>}>
 				{sessionId ? (
 					<Ariakit.Button
 						type="button"
@@ -245,7 +250,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 										: 'Retry'}
 					</Ariakit.Button>
 				) : null}
-			</div>
+			</DialogFooter>
 			<span role="status" className="sr-only">
 				{nativeShare.isPending ? 'Sharing link' : ''}
 			</span>

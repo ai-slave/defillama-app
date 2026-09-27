@@ -265,16 +265,15 @@ function ReferenceRatesSummary({
 					/>
 				</dl>
 			</TableToolbar>
-			<ChartPanelToolbar>
-				<ChartGroupingSelector value={asset} options={assetOptions} onValueChange={onAssetChange} />
-				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
-					<ChartGroupingSelector value={range} options={RANGE_OPTIONS} onValueChange={onRangeChange} />
-					<ChartExportButtons
-						chartInstance={() => chartRef.current}
-						filename={`stablecoin-rates-${asset}`}
-						csvSource="rendered-chart"
-					/>
-				</div>
+			<ChartPanelToolbar
+				leading={<ChartGroupingSelector value={asset} options={assetOptions} onValueChange={onAssetChange} />}
+			>
+				<ChartGroupingSelector value={range} options={RANGE_OPTIONS} onValueChange={onRangeChange} />
+				<ChartExportButtons
+					chartInstance={() => chartRef.current}
+					filename={`stablecoin-rates-${asset}`}
+					csvSource="rendered-chart"
+				/>
 			</ChartPanelToolbar>
 			<ChartPanelBody>
 				{chartStatus === 'loading' ? (
