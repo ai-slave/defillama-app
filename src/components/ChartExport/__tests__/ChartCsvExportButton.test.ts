@@ -25,14 +25,14 @@ describe('buildCsvRowsFromDataset', () => {
 		])
 	})
 
-	test('downloads every protocol column of a capped presentation, including unselected history', async () => {
+	test('downloads every selected protocol column of a presentation the chart caps with Others', async () => {
 		const names = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
 		const presentation = buildAdapterByChainBreakdownPresentation({
 			chartData: {
 				dimensions: ['timestamp', ...names, 'Historical protocol'],
 				source: [[JAN_1, ...Array.from({ length: 32 }, (_, index) => index + 1), 500]]
 			},
-			selectedProtocols: names,
+			selectedProtocols: [...names, 'Historical protocol'],
 			state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
 		})
 		expect(presentation.dataset.dimensions.at(-1)).toBe('Others')
