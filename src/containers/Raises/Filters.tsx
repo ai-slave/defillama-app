@@ -72,7 +72,7 @@ function Filters({
 					allValues={investors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 					includeQueryKey="investor"
 					excludeQueryKey="excludeInvestor"
@@ -85,7 +85,7 @@ function Filters({
 					allValues={chains}
 					nestedMenu={nestedMenu}
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 					includeQueryKey="chain"
 					excludeQueryKey="excludeChain"
@@ -98,7 +98,7 @@ function Filters({
 					allValues={sectors}
 					nestedMenu={nestedMenu}
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 					includeQueryKey="sector"
 					excludeQueryKey="excludeSector"
@@ -111,7 +111,7 @@ function Filters({
 					allValues={rounds}
 					nestedMenu={nestedMenu}
 					labelType="smol"
-					variant="filter-responsive"
+					variant="filter"
 					size="md"
 					includeQueryKey="round"
 					excludeQueryKey="excludeRound"

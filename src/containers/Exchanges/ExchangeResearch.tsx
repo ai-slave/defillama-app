@@ -152,7 +152,7 @@ function ResearchChartCard({
 					}
 				})}
 				label="Chart view"
-				variant="responsive"
+				variant="default"
 				size="md"
 			/>
 		) : null

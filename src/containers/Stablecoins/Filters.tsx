@@ -21,7 +21,7 @@ function Attribute({ nestedMenu }: { nestedMenu: boolean }) {
 			label="Attribute"
 			nestedMenu={nestedMenu}
 			labelType="smol"
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 			includeQueryKey="attribute"
 			excludeQueryKey="excludeAttribute"
@@ -48,7 +48,7 @@ function BackingType({
 			label="Backing Type"
 			nestedMenu={nestedMenu}
 			labelType="smol"
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 			includeQueryKey="backing"
 			excludeQueryKey="excludeBacking"
@@ -75,7 +75,7 @@ function PegType({
 			label="Peg Type"
 			nestedMenu={nestedMenu}
 			labelType="smol"
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 			includeQueryKey="pegtype"
 			excludeQueryKey="excludePegtype"

@@ -50,7 +50,7 @@ function AvailabilityFilter({ nestedMenu, rows }: { nestedMenu: boolean; rows: A
 			labelType="none"
 			singleSelect
 			nestedMenu={nestedMenu}
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 			searchPlaceholder="Search countries..."
 			customHeader={
@@ -95,7 +95,7 @@ function FacetFilter({
 			label={label}
 			labelType="smol"
 			nestedMenu={nestedMenu}
-			variant="filter-responsive"
+			variant="filter"
 			size="md"
 			{...(searchPlaceholder ? { searchPlaceholder } : {})}
 		/>

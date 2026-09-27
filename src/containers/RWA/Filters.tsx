@@ -872,7 +872,7 @@ function RWASelectDraftEditor({
 			}
 			label="Values"
 			labelType="smol"
-			variant="filter-responsive"
+			variant="filter"
 			size="sm"
 			visibleOptionLimit={null}
 			selectAllScope="matches"

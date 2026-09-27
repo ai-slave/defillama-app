@@ -140,7 +140,7 @@ function Filters({
 				allValues={chainOptions}
 				label="Chains"
 				labelType="smol"
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="chain"
@@ -173,7 +173,7 @@ function Filters({
 				allValues={classificationOptions}
 				label="Classification"
 				labelType="smol"
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="class"
@@ -183,7 +183,7 @@ function Filters({
 				allValues={techniqueOptions}
 				label="Techniques"
 				labelType="smol"
-				variant="filter-responsive"
+				variant="filter"
 				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="tech"
