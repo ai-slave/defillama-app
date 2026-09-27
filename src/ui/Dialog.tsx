@@ -37,7 +37,7 @@ import { tw } from './tw'
 ---------------------------------------------------------------------------- */
 
 const dialogSurfaceBaseStyles =
-	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog [--sheet-height:min(85dvh,calc(var(--visual-viewport-height,100dvh)-3rem))] max-sm:bottom-[var(--keyboard-inset,0px)] max-sm:drawer sm:top-0 sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
+	'fixed inset-(--inset) right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-(--sheet-height) w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog [--sheet-height:min(85dvh,calc(var(--visual-viewport-height,100dvh)-3rem))] max-sm:bottom-(--keyboard-inset,0px) max-sm:drawer sm:top-0 sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-dialog-deep sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-260 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-200'
 
 export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 
