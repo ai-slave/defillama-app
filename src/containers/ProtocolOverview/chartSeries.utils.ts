@@ -83,7 +83,7 @@ export interface ProtocolBridgeVolumeMetrics {
 /** Build exact completed-UTC-day bridge totals; duplicate rows are additive observations for that day. */
 export function getProtocolBridgeVolumeMetrics(
 	data: ReadonlyArray<Pick<BridgeVolumePoint, 'date' | 'depositUSD' | 'withdrawUSD'>>,
-	currentTimeMs: number = Date.now()
+	currentTimeMs: number
 ): ProtocolBridgeVolumeMetrics {
 	const lastCompletedDayMs = getUtcStartOfDay(currentTimeMs) - DAY_MS
 	const volumeByDay = new Map<number, number | null>()

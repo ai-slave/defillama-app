@@ -7,6 +7,7 @@ import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { PoolDetailView, type PoolDetailViewProps } from '../PoolDetailView'
 import { POOL_CHART_RANGE_PREFS, POOL_CHART_WINDOW_PREFS } from '../queryState'
 
@@ -35,7 +36,6 @@ vi.mock('../PoolApyChart', async () => {
 vi.mock('../PoolHeader', () => ({ PoolHeader: () => <h1>Pool summary</h1>, PoolMetaInfo: () => null }))
 
 const props: PoolDetailViewProps = {
-	generatedAtMs: 1_700_000_000_000,
 	poolId: 'pool-1',
 	mode: 'pool',
 	hasRisk: false,
@@ -81,7 +81,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 test.each([true, false])('never renders default charts before resolving preferences (saved: %s)', async (saved) => {
-	const html = renderToString(<Page />)
+	const page = (
+		<PageClockProvider pageClockSec={1_700_000_000}>
+			<Page />
+		</PageClockProvider>
+	)
+	const html = renderToString(page)
 	expect(html).toContain('Pool summary')
 	expect(html).toContain('Loading chart')
 	expect(mocks.chart).not.toHaveBeenCalled()
@@ -96,7 +101,7 @@ test.each([true, false])('never renders default charts before resolving preferen
 	let root: Root | undefined
 	try {
 		await act(async () => {
-			root = hydrateRoot(container, <Page />, { onRecoverableError })
+			root = hydrateRoot(container, page, { onRecoverableError })
 		})
 		expect(onRecoverableError).not.toHaveBeenCalled()
 		expect(container.textContent.includes('Loading chart')).toBe(saved)

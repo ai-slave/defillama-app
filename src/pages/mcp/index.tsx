@@ -2,6 +2,8 @@ import Head from 'next/head'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard } from '~/components/SEO'
 import MCPContainer from '~/containers/MCP'
+import { StaleText } from '~/ui/StaleText'
+import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 export default function MCP() {
 	return (
@@ -61,7 +63,7 @@ export default function MCP() {
 						</a>
 					</p>
 					<div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-4 px-4 py-6 body-sm text-secondary sm:px-6 md:justify-between md:px-8">
-						<span suppressHydrationWarning>&copy; {new Date().getFullYear()} DefiLlama</span>
+						<StaleText>{`© ${COPYRIGHT_YEAR} DefiLlama`}</StaleText>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-primary">
 								Privacy Policy

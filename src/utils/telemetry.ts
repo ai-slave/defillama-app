@@ -8,6 +8,7 @@ import type {
 	NextApiResponse
 } from 'next'
 import { readCacheJitterMeta } from '~/utils/maxAgeForNext'
+import { withPageClockServerSideProps } from '~/utils/pageClock'
 
 type TelemetryRuntime = 'node' | 'browser' | 'lambda' | 'build'
 type RouteStatus = 'success' | 'slow' | 'timeout' | 'error'
@@ -1402,7 +1403,7 @@ export function withServerSidePropsTelemetry<T extends { [key: string]: any }>(
 				getResultAttributes: getServerSidePropsTelemetryAttributes,
 				getStatus: serverSidePropsStatus
 			},
-			() => handler(context)
+			async () => withPageClockServerSideProps(await handler(context))
 		)
 	}
 }

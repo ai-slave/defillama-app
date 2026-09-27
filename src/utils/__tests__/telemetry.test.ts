@@ -369,7 +369,8 @@ describe('telemetry client', () => {
 			request_path: '/ssr/abc?tab=one',
 			http_status: 202,
 			status: 'success',
-			attributes: { params: { id: 'abc' }, query: { id: 'abc', tab: 'one' }, props_bytes: 12 }
+			// `{"id":"abc"}` plus the page clock the wrapper stamps in.
+			attributes: { params: { id: 'abc' }, query: { id: 'abc', tab: 'one' }, props_bytes: 38 }
 		})
 		expect(notFoundRoute).toMatchObject({
 			operation_type: 'getServerSideProps',

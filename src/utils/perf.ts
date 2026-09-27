@@ -10,6 +10,7 @@ import { sleep, getJitteredDelay, isTransientError, getEnvNumber } from './async
 import { getCache, type RedisCachePayload, setCache, setPageBuildTimes } from './cache-client'
 import { normalizeError } from './error'
 import { fetchWithPoolingOnServer } from './http-client'
+import { withPageClockStaticProps } from './pageClock'
 import {
 	addRouteTelemetryPhases,
 	buildStaticRouteRequestPath,
@@ -110,7 +111,12 @@ async function runPerformanceLoggedStaticProps<
 
 	for (let attempt = 0; attempt < MAX_PAGE_BUILD_RETRIES; attempt++) {
 		try {
-			const props = jitterStaticPropsRevalidate(await getStaticPropsFunction(context), jitterKey, options)
+			// The page clock goes in before the jitter meta attaches to the final result object.
+			const props = jitterStaticPropsRevalidate(
+				withPageClockStaticProps(await getStaticPropsFunction(context)),
+				jitterKey,
+				options
+			)
 			const elapsed = Date.now() - start
 
 			if (elapsed > 10_000) {

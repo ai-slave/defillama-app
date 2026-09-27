@@ -10,11 +10,11 @@ interface TopUnlocksProps {
 	period: number
 	title?: string
 	className?: string
-	initialNowSec?: number
+	initialNowSec: number
 }
 
 export function TopUnlocks({ data, period, title, className, initialNowSec }: TopUnlocksProps) {
-	const [now] = React.useState(() => Math.floor(initialNowSec ?? Date.now() / 1000))
+	const [now] = React.useState(() => Math.floor(initialNowSec))
 	const { topUnlocks } = React.useMemo(() => {
 		const protocolUnlocks = new Map<
 			string,

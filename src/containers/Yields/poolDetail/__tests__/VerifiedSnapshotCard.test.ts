@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { VerifiedBlock } from '../../data/types'
 import { buildVerifiedSnapshot } from '../VerifiedSnapshotCard'
 
@@ -12,13 +12,12 @@ const verified: VerifiedBlock = {
 	methods: ['sharesOf(holder)']
 }
 
-describe('verified snapshot', () => {
-	// The fixtures are dated 2026-08-26; judge freshness from the day after, as the page would have.
-	beforeAll(() => vi.setSystemTime(new Date('2026-08-27T09:00:00Z')))
-	afterAll(() => vi.useRealTimers())
+// The fixtures are dated 2026-08-26; judge freshness from the day after, as the page would have.
+const NOW = Date.parse('2026-08-27T09:00:00Z')
 
+describe('verified snapshot', () => {
 	test('compares like-for-like daily base APY and names an uncapped queue', () => {
-		expect(buildVerifiedSnapshot(verified, [{ label: '24h', verified: 2.28 }])).toEqual({
+		expect(buildVerifiedSnapshot(verified, [{ label: '24h', verified: 2.28 }], NOW)).toEqual({
 			baseApy: 2.28,
 			lastVerifiedApy: null,
 			current: true,
@@ -39,7 +38,7 @@ describe('verified snapshot', () => {
 			tvl: { amount: '1000000000', usd: 1000, as_of: null },
 			denomination: { address: '0xabc', decimals: 6 }
 		}
-		const snapshot = buildVerifiedSnapshot(instant, [{ label: '24h', verified: 2.28 }])
+		const snapshot = buildVerifiedSnapshot(instant, [{ label: '24h', verified: 2.28 }], NOW)
 		expect(snapshot.withdrawableUsd).toBe(250)
 		expect(snapshot.withdrawableFraction).toBeCloseTo(0.25, 8)
 		// The dollar figure has its own row, so the detail carries the share.
@@ -68,7 +67,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 
 	// A closed exit path is not a revert and emphatically not an instant exit.
 	test('names an unavailable exit rather than reading it as instant', () => {
-		const snapshot = buildVerifiedSnapshot(withStatus('unavailable'), [])
+		const snapshot = buildVerifiedSnapshot(withStatus('unavailable'), [], NOW)
 
 		expect(snapshot.exitHeadline).toBe('Unavailable')
 		expect(snapshot.exitDetail).toBe('No usable exit path right now')
@@ -76,7 +75,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 
 	// A null status is an RPC failure at the last observation, not a verdict about the pool.
 	test('reports a null status as unattested', () => {
-		const snapshot = buildVerifiedSnapshot(withStatus(null), [])
+		const snapshot = buildVerifiedSnapshot(withStatus(null), [], NOW)
 
 		expect(snapshot.exitHeadline).toBe('—')
 		expect(snapshot.exitDetail).toBe('Exit could not be attested on the last check')
@@ -84,7 +83,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 
 	test('degrades an unrecognised status to unattested, never to success', () => {
 		for (const status of ['probe_timeout', 'PARTIAL', '', 'instant ']) {
-			const snapshot = buildVerifiedSnapshot(withStatus(status), [])
+			const snapshot = buildVerifiedSnapshot(withStatus(status), [], NOW)
 
 			expect(snapshot.exitHeadline, `status ${JSON.stringify(status)}`).toBe('—')
 			expect(snapshot.exitDetail).toBe('Exit could not be attested on the last check')
@@ -93,7 +92,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 
 	// An absent exit block is a third state again: nothing was probed at all.
 	test('distinguishes an absent exit block from an unattested one', () => {
-		const snapshot = buildVerifiedSnapshot({ ...verified, exit: null }, [])
+		const snapshot = buildVerifiedSnapshot({ ...verified, exit: null }, [], NOW)
 
 		expect(snapshot.exitHeadline).toBe('—')
 		expect(snapshot.exitDetail).toBe('Exit not measured')
@@ -102,7 +101,7 @@ describe('exitStatusFallsBackToUnattested', () => {
 	// The six real statuses still resolve to their own headline, so the fallback cannot swallow one.
 	test('keeps every known status distinct', () => {
 		const headlines = (['instant', 'partial', 'depleted', 'queued', 'unavailable', 'blocked'] as const).map(
-			(status) => buildVerifiedSnapshot(withStatus(status), []).exitHeadline
+			(status) => buildVerifiedSnapshot(withStatus(status), [], NOW).exitHeadline
 		)
 
 		expect(new Set(headlines).size).toBe(headlines.length)

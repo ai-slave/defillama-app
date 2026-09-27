@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { definitions } from '~/public/definitions'
 import {
 	buildEarningsMetrics,
@@ -53,7 +54,12 @@ const metrics: IProtocolPageMetrics = {
 	rwa: false
 }
 
-const renderKeyMetrics = async (props: IKeyMetricsProps) => renderToStaticMarkup(<KeyMetrics {...props} />)
+const renderKeyMetrics = async (props: IKeyMetricsProps) =>
+	renderToStaticMarkup(
+		<PageClockProvider pageClockSec={1_700_000_000}>
+			<KeyMetrics {...props} />
+		</PageClockProvider>
+	)
 const visibleText = (markup: string) =>
 	markup
 		.replace(/<[^>]*>/g, ' ')

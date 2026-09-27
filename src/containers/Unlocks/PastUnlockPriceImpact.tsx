@@ -15,7 +15,7 @@ interface PastUnlockPriceImpactProps {
 	data: Array<EnrichedProtocolEmission>
 	title?: string
 	className?: string
-	initialNowSec?: number
+	initialNowSec: number
 }
 
 interface UnlockBreakdown {
@@ -34,7 +34,7 @@ const parseDescription = (description: string): string => {
 }
 
 export function PastUnlockPriceImpact({ data, title, className, initialNowSec }: PastUnlockPriceImpactProps) {
-	const [now] = React.useState(() => Math.floor(initialNowSec ?? Date.now() / 1000))
+	const [now] = React.useState(() => Math.floor(initialNowSec))
 	const { topImpacts } = React.useMemo(() => {
 		const protocolImpacts = new Map<
 			string,

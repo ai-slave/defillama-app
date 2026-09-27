@@ -1,5 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { Icon } from '~/ui/Icon'
+import { StaleText } from '~/ui/StaleText'
+import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 /* ── Footer sub-components ──────────────────────────────────────────── */
 
@@ -74,9 +76,9 @@ export function SubscriptionFooter() {
 				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] leading-3 text-sub-footer-text">
 					<FooterLinks />
 				</div>
-				<p className="mt-4 text-[10px] leading-3 text-sub-footer-text" suppressHydrationWarning>
-					&copy; {new Date().getFullYear()} DefiLlama. All rights reserved.
-				</p>
+				<StaleText as="p" className="mt-4 text-[10px] leading-3 text-sub-footer-text">
+					{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}
+				</StaleText>
 			</footer>
 
 			{/* Desktop */}
@@ -99,7 +101,7 @@ export function SubscriptionFooter() {
 						<SocialIcons size={20} />
 					</div>
 					<div className="flex items-center justify-between text-xs text-sub-footer-text">
-						<p suppressHydrationWarning>&copy; {new Date().getFullYear()} DefiLlama. All rights reserved.</p>
+						<StaleText as="p">{`© ${COPYRIGHT_YEAR} DefiLlama. All rights reserved.`}</StaleText>
 						<div className="flex items-center gap-8">
 							<FooterLinks />
 						</div>

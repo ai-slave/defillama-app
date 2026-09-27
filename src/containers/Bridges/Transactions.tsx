@@ -487,14 +487,8 @@ function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	)
 }
 
-export function BridgeTransactionsPage({
-	bridges,
-	generatedAtSec
-}: {
-	bridges: Array<RawBridgeInfo>
-	generatedAtSec: number
-}) {
-	const nowSec = useNowSeconds(generatedAtSec)
+export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeInfo> }) {
+	const nowSec = useNowSeconds()
 	const defaultRange = getDefaultBridgeTransactionRange(nowSec)
 
 	const [transactionResult, setTransactionResult] = React.useState<BridgeTransactionResult>({

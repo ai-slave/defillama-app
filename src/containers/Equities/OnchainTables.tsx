@@ -9,6 +9,7 @@ import { prepareTableCsv } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { StaleText } from '~/ui/StaleText'
 import { Tag } from '~/ui/Tag'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
@@ -178,9 +179,9 @@ const marketsColumns = marketsColumnHelper.columns([
 	marketsColumnHelper.accessor('updatedAt', {
 		header: 'Updated',
 		cell: ({ getValue }) => (
-			<span className="whitespace-nowrap" suppressHydrationWarning>
+			<StaleText className="whitespace-nowrap">
 				{formatDateTime(getValue(), { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
-			</span>
+			</StaleText>
 		),
 		meta: {
 			headerClassName: 'w-[172px]',

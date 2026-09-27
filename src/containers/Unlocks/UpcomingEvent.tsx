@@ -13,6 +13,7 @@ import { generateGoogleCalendarUrl } from '~/utils/calendar'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import type { EmissionEvent } from './api.types'
+import { formatUnlockDate, formatUnlockTime } from './dateFormat'
 import { getEmissionEventAmount, isUnknownEmissionEvent } from './eventAmount'
 
 interface CalendarButtonProps {
@@ -437,13 +438,8 @@ export function UpcomingEvent({
 						)}
 					</div>
 					<div className="flex shrink-0 flex-col items-end">
-						{/* Local time on purpose: the server renders its own zone, so each span owns its text. */}
-						<span className="body-md text-primary" suppressHydrationWarning>
-							{dayjs(timestamp * 1e3).format('MMM D, YYYY')}
-						</span>
-						<span className="body-sm text-secondary" suppressHydrationWarning>
-							{`${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}`}
-						</span>
+						<span className="body-md text-primary">{formatUnlockDate(timestamp)}</span>
+						<span className="body-sm text-secondary">{`${formatUnlockTime(timestamp)} UTC`}</span>
 						{timeLeft > 0 ? (
 							<span className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary tabular-nums">
 								{formatCountdownBadge(days, hours, minutes, seconds)}

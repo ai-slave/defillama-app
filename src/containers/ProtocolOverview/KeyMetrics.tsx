@@ -45,7 +45,6 @@ type KeyMetricsOptionalFields = Partial<
 		| 'holdersRevenue'
 		| 'incentives'
 		| 'bridgeVolume'
-		| 'generatedAtSec'
 		| 'expenses'
 		| 'treasury'
 		| 'raises'
@@ -666,7 +665,7 @@ function Earnings(props: IKeyMetricsProps) {
 }
 
 function BridgeVolume(props: IKeyMetricsProps) {
-	const nowSec = useNowSeconds(props.generatedAtSec)
+	const nowSec = useNowSeconds()
 
 	if (!props.bridgeVolume || props.bridgeVolume.length === 0) return null
 

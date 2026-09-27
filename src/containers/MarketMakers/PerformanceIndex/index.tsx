@@ -8,7 +8,7 @@ import { MMDetailDrawer } from '../MMDetailDrawer'
 import { RefineDrawer } from '../RankTable/RefineDrawer'
 import { RefineButton } from '../RefineButton'
 import { AboutButton, RfqButton, SectionHeader } from '../SectionHeader'
-import { timeframeBadge, timeframePeriod, useLeaderboardTimeframe } from '../timeframe'
+import { DEFAULT_TIMEFRAME, timeframeBadge, timeframePeriod, useLeaderboardTimeframe } from '../timeframe'
 import type { PerformanceIndexProps } from './data'
 import { Definitions } from './Definitions'
 import { Podium } from './Podium'
@@ -21,7 +21,7 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 	const { timeframe, setTimeframe, applyToAll, setApplyToAll, range } = useLeaderboardTimeframe('performance')
 	const badge = timeframeBadge(timeframe)
 	const period = timeframePeriod(timeframe)
-	const { data } = usePerformanceIndex(range, props)
+	const { data } = usePerformanceIndex(range, timeframe === DEFAULT_TIMEFRAME ? props : undefined)
 	const { performanceRows, aggregated } = data ?? props
 	const [docsOpen, setDocsOpen] = useState(false)
 	const [refineOpen, setRefineOpen] = useState(false)

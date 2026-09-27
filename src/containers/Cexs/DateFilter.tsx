@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
@@ -37,11 +38,6 @@ const getHourFromTimestamp = (timestamp: number | null) => {
 	if (timestamp == null) return '0'
 	const date = new Date(timestamp)
 	return date.getUTCHours().toString()
-}
-
-const getTodayString = () => {
-	const today = new Date()
-	return today.toISOString().split('T')[0]
 }
 
 function formatCexRangePoint(timestampMs: number, includeTime: boolean) {
@@ -79,7 +75,8 @@ export function DateFilter({
 	const [rangeError, setRangeError] = useState<string | null>(() =>
 		appliedRangeState === 'invalid' ? CEX_RANGE_ERROR : null
 	)
-	const maxDate = getTodayString()
+	const nowSec = useNowSeconds()
+	const maxDate = new Date(nowSec * 1000).toISOString().split('T')[0]
 
 	const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const newStartDate = e.target.value

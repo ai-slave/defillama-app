@@ -52,6 +52,9 @@ jobs:
       - name: Check date-formatting policy
         run: bun scripts/policies/check-date-formatting.ts --self-test && bun scripts/policies/check-date-formatting.ts
 
+      - name: Check hydration policy
+        run: bun scripts/policies/check-hydration.ts --self-test && bun scripts/policies/check-hydration.ts
+
       - name: Check design-token policy
         run: bun scripts/policies/check-design-tokens.mjs
 

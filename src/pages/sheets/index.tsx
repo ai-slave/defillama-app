@@ -4,6 +4,8 @@ import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import SheetsContainer from '~/containers/Sheets'
 import { Icon } from '~/ui/Icon'
+import { StaleText } from '~/ui/StaleText'
+import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 
 export default function Sheets() {
 	return (
@@ -110,7 +112,7 @@ export default function Sheets() {
 						</a>
 					</p>
 					<div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-sub-text-muted sm:px-6 md:justify-between md:px-8">
-						<span suppressHydrationWarning>&copy; {new Date().getFullYear()} DefiLlama</span>
+						<StaleText>{`© ${COPYRIGHT_YEAR} DefiLlama`}</StaleText>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-sub-text-soft">
 								Privacy Policy

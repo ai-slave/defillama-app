@@ -62,8 +62,7 @@ export const getStaticProps = withPerformanceLogging('calendar', async () => {
 
 	return {
 		props: {
-			emissions,
-			generatedAtSec: Math.floor(nowSec)
+			emissions
 		},
 		revalidate: maxAgeForNext([22])
 	}
@@ -78,17 +77,11 @@ type CalendarRow = {
 
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, CalendarRow>()
 
-export default function Protocols({
-	emissions,
-	generatedAtSec
-}: {
-	emissions: Array<CalendarEmission>
-	generatedAtSec: number
-}) {
+export default function Protocols({ emissions }: { emissions: Array<CalendarEmission> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: false }])
 	const router = useRouter()
-	const nowSec = useNowSeconds(generatedAtSec)
+	const nowSec = useNowSeconds()
 
 	const events = React.useMemo(() => {
 		const events: Array<CalendarEvent> = []
@@ -121,12 +114,11 @@ export default function Protocols({
 		() => selectCalendarEvents(events, nowSec * 1e3, router.query),
 		[events, nowSec, router.query]
 	)
-	const columns = React.useMemo(() => calendarColumns(generatedAtSec), [generatedAtSec])
 
 	const instance = useTable({
 		features: tableFeaturesConfig,
 		data: rows,
-		columns,
+		columns: calendarColumns,
 		state: {
 			columnFilters,
 			sorting
@@ -183,62 +175,51 @@ export default function Protocols({
 	)
 }
 
-const calendarColumns = (generatedAtSec: number) =>
-	columnHelper.columns([
-		columnHelper.accessor('name', {
-			header: 'Name',
-			enableSorting: false,
-			cell: ({ getValue, row }) => {
-				return (
-					<span className="relative flex items-center gap-2">
-						<span className="vf-row-index shrink-0" aria-hidden="true" />
-						{row.original.type === 'Unlock' ? (
-							<BasicLink
-								href={`/unlocks/${slug(row.original.link)}`}
-								className="truncate text-sm font-medium text-link hover:underline"
-							>
-								{getValue()}
-							</BasicLink>
-						) : (
-							getValue()
-						)}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[min(220px,40vw)]'
-			}
-		}),
-		columnHelper.accessor('type', {
-			header: 'Type',
-			meta: {
-				headerClassName: 'w-[100px]'
-			}
-		}),
-		columnHelper.accessor((row) => row.timestamp ?? undefined, {
-			id: 'timestamp',
-			header: 'Date',
-			cell: ({ getValue, row }) => {
-				return (
-					<SimpleUpcomingEvent timestamp={getValue() / 1e3} name={row.original.name} initialNowSec={generatedAtSec} />
-				)
-			},
-			meta: {
-				headerClassName: 'w-[min(800px,40vw)]'
-			}
-		})
-	])
+const calendarColumns = columnHelper.columns([
+	columnHelper.accessor('name', {
+		header: 'Name',
+		enableSorting: false,
+		cell: ({ getValue, row }) => {
+			return (
+				<span className="relative flex items-center gap-2">
+					<span className="vf-row-index shrink-0" aria-hidden="true" />
+					{row.original.type === 'Unlock' ? (
+						<BasicLink
+							href={`/unlocks/${slug(row.original.link)}`}
+							className="truncate text-sm font-medium text-link hover:underline"
+						>
+							{getValue()}
+						</BasicLink>
+					) : (
+						getValue()
+					)}
+				</span>
+			)
+		},
+		meta: {
+			headerClassName: 'w-[min(220px,40vw)]'
+		}
+	}),
+	columnHelper.accessor('type', {
+		header: 'Type',
+		meta: {
+			headerClassName: 'w-[100px]'
+		}
+	}),
+	columnHelper.accessor((row) => row.timestamp ?? undefined, {
+		id: 'timestamp',
+		header: 'Date',
+		cell: ({ getValue, row }) => {
+			return <SimpleUpcomingEvent timestamp={getValue() / 1e3} name={row.original.name} />
+		},
+		meta: {
+			headerClassName: 'w-[min(800px,40vw)]'
+		}
+	})
+])
 
-function SimpleUpcomingEvent({
-	timestamp,
-	name,
-	initialNowSec
-}: {
-	timestamp: number
-	name: string
-	initialNowSec: number
-}) {
-	const nowSec = useNowSeconds(initialNowSec, 1000)
+function SimpleUpcomingEvent({ timestamp, name }: { timestamp: number; name: string }) {
+	const nowSec = useNowSeconds(undefined, 1000)
 	const timeLeft = Math.max(0, timestamp - nowSec)
 	const days = Math.floor(timeLeft / 86_400)
 	const hours = Math.floor((timeLeft - 86_400 * days) / 3600)

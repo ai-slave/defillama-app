@@ -10,6 +10,7 @@ import type {
 import { ChartGroupingSelector, type ChartGroupingOption } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { CHART_FILL, ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -91,14 +92,15 @@ function buildChartInputs(
 	enabled: Record<string, boolean>,
 	apyWindow: PoolChartWindow,
 	range: PoolHistoryRange,
-	isDark: boolean
+	isDark: boolean,
+	nowMs: number
 ): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; hasData: boolean } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const standIn = model.bars.find((b) => enabled[b.key] === true && b.replaces != null)
 	const renderedBars = model.bars.filter((b) => enabled[b.key] === true && b.key !== standIn?.replaces)
 	// The verified view spans the measured days only: from the first reading to yesterday, since the
 	// days before have no base to draw and today's reading only completes at the next anchor.
-	const today = Date.now() - (Date.now() % 86_400_000)
+	const today = nowMs - (nowMs % 86_400_000)
 	const total = model.dates.length - (standIn && model.dates[model.dates.length - 1]! >= today ? 1 : 0)
 	const measuredFrom = standIn ? standIn.values.findIndex((value) => value != null) : 0
 	const start = Math.min(total, Math.max(total - rangeCount(range, total), measuredFrom))
@@ -338,6 +340,7 @@ export function PoolApyChart({
 
 	// MultiSeriesChart reapplies its ECharts model when these input references change, so keep
 	// the history transform and chart props stable across unrelated renders.
+	const nowMs = useNowSecondsOnce() * 1000
 	const { enabled, dataset, charts, hasData } = useMemo(() => {
 		const enabled: Record<string, boolean> = {}
 		for (const def of seriesDefs) {
@@ -345,9 +348,9 @@ export function PoolApyChart({
 		}
 		return {
 			enabled,
-			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark)
+			...buildChartInputs(currentModel, enabled, apyWindow, range, isDark, nowMs)
 		}
-	}, [apyWindow, currentModel, isDark, kind, range, router.query, seriesDefs])
+	}, [apyWindow, currentModel, isDark, kind, nowMs, range, router.query, seriesDefs])
 	const chartOptions = useMemo(
 		() => ({ tooltip: { formatter: buildTooltipFormatter(currentModel, apyWindow) } }),
 		[apyWindow, currentModel]

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
+import { formatIsoDate } from '~/utils/dateFormat'
 import type { DayInfo } from './calendarTypes'
 
 dayjs.extend(isBetween)
@@ -54,4 +55,15 @@ export const generateWeekDays = (date: Dayjs): Array<DayInfo> => {
 		})
 	}
 	return days
+}
+
+/**
+ * The day the calendar opens on: the `date` query when it parses, else the UTC day of `nowSec`. Unlock days are
+ * keyed by UTC date, and a local-zone "now" would open a different month on the server and in the visitor's
+ * browser near a month boundary.
+ */
+export const calendarDateFromQuery = (dateParam: string | undefined, nowSec: number): Dayjs => {
+	const parsed = dateParam ? dayjs(dateParam) : null
+	// A local-midnight day for the UTC date, so the grid's calendar-day math stays in the zone it already uses.
+	return parsed?.isValid() ? parsed : dayjs(formatIsoDate(nowSec, { input: 'seconds' }))
 }

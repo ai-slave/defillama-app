@@ -3,7 +3,6 @@ import { fetchJson } from '~/utils/async'
 import { toQueryString } from '~/utils/routerQuery'
 import { type BreakdownPayloads, reconstructBreakdown, type ReconstructedBreakdown } from './breakdown'
 import { mergePerformanceIndex, type PerformanceIndexProps } from './PerformanceIndex/data'
-import { isDefaultRange } from './timeframe'
 import type { LeaderboardRow } from './types'
 
 export type LeaderboardRange = { start_date?: string; end_date?: string }
@@ -18,7 +17,8 @@ function fetchFreshJson<T>(url: string) {
 	return fetchJson<T>(withCacheNonce(url))
 }
 
-export function usePerformanceIndex(range: LeaderboardRange, initialData: PerformanceIndexProps) {
+/** `initialData` is the server's rows for the default timeframe; pass it only while that timeframe is selected. */
+export function usePerformanceIndex(range: LeaderboardRange, initialData: PerformanceIndexProps | undefined) {
 	const queryString = toQueryString(range)
 	return useQuery<PerformanceIndexProps, Error>({
 		queryKey: ['market-makers', 'performance-index', range.start_date ?? null, range.end_date ?? null],
@@ -29,7 +29,7 @@ export function usePerformanceIndex(range: LeaderboardRange, initialData: Perfor
 			])
 			return mergePerformanceIndex(performance, aggregated)
 		},
-		initialData: isDefaultRange(range) ? initialData : undefined,
+		initialData,
 		placeholderData: keepPreviousData,
 		staleTime: 0,
 		refetchOnMount: 'always',
@@ -49,7 +49,7 @@ export function useLeaderboardRows(
 		queryKey: ['market-makers', fetchPath, range.start_date ?? null, range.end_date ?? null],
 		queryFn: () => fetchFreshJson<unknown>(`/api/public/market-makers/${fetchPath}${queryString}`),
 		select: shape,
-		initialData: isDefaultRange(range) ? initialData : undefined,
+		initialData,
 		placeholderData: keepPreviousData,
 		staleTime: 0,
 		refetchOnMount: 'always',

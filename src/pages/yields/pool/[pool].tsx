@@ -82,7 +82,7 @@ async function buildBorrowOnlyProps(
 	id: string,
 	market: BorrowMarketDetail,
 	initialRange: PoolHistoryRange
-): Promise<Omit<PoolDetailViewProps, 'hasRisk' | 'exploited' | 'generatedAtMs'>> {
+): Promise<Omit<PoolDetailViewProps, 'hasRisk' | 'exploited'>> {
 	const available = market.available_history ?? { supply: false, borrow: true }
 	const metaPromise = readYieldsMeta(snapshot)
 	const [borrowHistory, meta, referralUrls] = await Promise.all([
@@ -229,14 +229,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		const market = await optionalResource(() => fetchBorrowMarketDetail(id))
 		if (!market) return { notFound: true }
 		setCacheHeaders()
-		return {
-			props: {
-				...(await buildBorrowOnlyProps(snapshot, id, market, initialBorrowRange)),
-				hasRisk,
-				exploited,
-				generatedAtMs: Date.now()
-			}
-		}
+		return { props: { ...(await buildBorrowOnlyProps(snapshot, id, market, initialBorrowRange)), hasRisk, exploited } }
 	}
 
 	// `available_history` gates the history fetch (fallback: assume supply history exists).
@@ -348,7 +341,6 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 
 	return {
 		props: {
-			generatedAtMs: Date.now(),
 			hasRisk,
 			verifiedLocked: verifiedLocked && subscription === null ? null : verifiedLocked,
 			stepAccrual: meta.step_accrual_pool_ids?.includes(id) ?? false,

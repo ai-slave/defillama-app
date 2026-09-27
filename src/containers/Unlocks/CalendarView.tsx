@@ -9,6 +9,8 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useIsClient } from '~/hooks/useIsClient'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
@@ -24,7 +26,7 @@ import {
 	type DailyUnlocks,
 	type DayInfo
 } from './calendarTypes'
-import { generateCalendarDays, generateWeekDays } from './calendarUtils'
+import { calendarDateFromQuery, generateCalendarDays, generateWeekDays } from './calendarUtils'
 import { DAYS_OF_WEEK } from './constants'
 import { UnlocksListView } from './UnlocksListView'
 import { useUnlockChartData } from './useUnlockChartData'
@@ -48,11 +50,12 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 	const showOnlyInsider = readSingleQueryValue(router.query.insiders) === 'true'
 
 	const dateParam = readSingleQueryValue(router.query.date)
-	const currentDate = React.useMemo(() => {
-		if (!dateParam) return dayjs()
-		const parsed = dayjs(dateParam)
-		return parsed.isValid() ? parsed : dayjs()
-	}, [dateParam])
+	const nowSec = useNowSeconds()
+	const currentDate = React.useMemo(() => calendarDateFromQuery(dateParam, nowSec), [dateParam, nowSec])
+	// Today is the visitor's local day, which the server cannot know, so it is marked after mount. It is read here
+	// once, not per cell, so the cells skip the 30-second clock ticks.
+	const isClient = useIsClient()
+	const todayKey = isClient ? dayjs.unix(nowSec).format('YYYY-MM-DD') : null
 
 	const setQueryParams = React.useCallback(
 		(updates: Record<string, string | undefined>) => {
@@ -333,7 +336,12 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 					<div className="grid grid-cols-7 grid-rows-6 gap-px border border-medium bg-border-medium">
 						{calendarDays.map((day, i) => (
 							<React.Fragment key={day.date?.format('YYYY-MM-DD') ?? i}>
-								<CalendarDayCell dayInfo={day} unlocksData={unlocksData} maxUnlockValue={maxMonthlyValue} />
+								<CalendarDayCell
+									dayInfo={day}
+									unlocksData={unlocksData}
+									maxUnlockValue={maxMonthlyValue}
+									isToday={todayKey !== null && day.date?.format('YYYY-MM-DD') === todayKey}
+								/>
 							</React.Fragment>
 						))}
 					</div>
@@ -342,7 +350,11 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 				<div className="grid grid-cols-1 gap-px border border-medium bg-border-medium md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
 					{calendarDays.map((day) => (
 						<React.Fragment key={day.date!.format('YYYY-MM-DD')}>
-							<WeekDayColumn dayInfo={day as { date: Dayjs; isCurrentMonth: boolean }} unlocksData={unlocksData} />
+							<WeekDayColumn
+								dayInfo={day as { date: Dayjs; isCurrentMonth: boolean }}
+								unlocksData={unlocksData}
+								isToday={day.date!.format('YYYY-MM-DD') === todayKey}
+							/>
 						</React.Fragment>
 					))}
 				</div>

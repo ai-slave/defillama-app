@@ -110,6 +110,56 @@ are more specific than a generic display date. Domain ownership does not preserv
 confirmed correctness bug, such as dropping a meaningful time component or including
 one extra day in an inclusive preset.
 
+## Render clock and hydration
+
+Most pages are static with a long revalidate, so the HTML a visitor receives was rendered hours earlier. React
+compares that HTML with the first client render; any text derived from the live clock, the visitor's zone or the
+visitor's locale differs, React logs a hydration mismatch and rebuilds the subtree. The rule is:
+
+**The first client render uses the server's clock. After hydration, live displays may advance, but never by
+overwriting a choice the reader made.**
+
+- Every data function that goes through `withPerformanceLogging` or `withServerSidePropsTelemetry` stamps
+  `pageClockSec` into its props, and `_app` provides it as the page clock. A page without a data function has no
+  clock, and time-dependent content there renders after mount.
+- Read the clock through `useNowSeconds(seed?, tickMs?)` from `src/hooks/useNowSeconds.ts`. Without a seed it
+  uses the page clock for the first render and the browser clock afterwards. Pass a seed only when the value is
+  tied to the data, such as the time a dataset was built or React Query's `dataUpdatedAt`. `useNowSecondsOnce(seed?)`
+  has the same first render but then reads the browser clock once at mount and never moves; use it for values that
+  feed memoized transforms or a per-view decision.
+  A bare call on a page with no clock throws outside production: there is no safe guess.
+- Never read `Date.now()`, `new Date()` or `dayjs()` while rendering: not in a component or hook body, not in a
+  `useMemo` or `useState` initializer, not in a default parameter value, and not in a helper a render path calls.
+  Effects, event handlers, query functions and data functions may read it.
+- When a render value moves to the page clock, move everything compared against it too, including helpers in other
+  modules. A range built from `useNowSeconds` and checked against `new Date()` in an imported helper agrees on the
+  server and disagrees in the browser once the HTML crosses midnight.
+- "Today" for the visitor is their local day, which the server cannot know. Mark it after mount with
+  `useIsClient()`, or compare in UTC.
+- Date arithmetic uses the UTC methods (`getUTCMonth`, `setUTCDate`); the local-zone methods belong to the few
+  modules listed in `scripts/policies/check-hydration.ts` with their reason.
+- Server-rendered date text names a literal locale and a `timeZone`. `~/utils/dateFormat` does this; an approved
+  raw formatter must too, unless the surface renders after interaction.
+- Text the server may legitimately render differently, a cached price, a build-frozen copyright year, goes through
+  `StaleText` from `src/ui/StaleText.tsx`. It carries the one `suppressHydrationWarning` in the app and accepts text
+  only, because the flag covers an element's own text and nothing nested. React keeps the server's text until a
+  later render changes the value, so suppression is not a way to show the visitor's zone: a local-zone time is the
+  same on every client render and would stay as the server wrote it. Render it after mount or in UTC.
+- A form default seeded from the page clock must follow the clock after hydration while a value the reader picked
+  stays: derive the shown value from the selection when there is one, else from the live default
+  (`useDateRangeValidation` is the reference).
+- Test the whole path with `renderHydrated` from `src/utils/testing/hydration.tsx`: render on the server at a
+  stale clock and zone, hydrate at the visitor's, assert no errors, then assert the displayed values after the live
+  clock takes over and that a selection survives it. The helper renders the server side under the page clock
+  and gives both renders the same element, so build per-render state such as a `QueryClient` inside the tree: a
+  shared instance hands the browser the server's cache and hides the mismatch. A component that hydrates cleanly
+  can still freeze on the
+  server's day.
+
+`scripts/policies/check-hydration.ts` enforces the flag, the render-time reads it can see and the local-zone
+methods; it does not trace a clock read through an imported helper, so keep clock reads out of helpers that
+render code imports.
+
 ## Enforcement rules
 
 - Do not re-export date formatters from `~/utils` or another barrel.
@@ -120,6 +170,8 @@ one extra day in an inclusive preset.
 - Display labels must not be reused for machine output.
 - Invalid or missing values return `null`; the consumer chooses the appropriate UI copy.
 - Raw `Intl.DateTimeFormat`, Date locale methods, and Day.js display formatting are limited to reviewed domain-owned paths.
+- Approved raw formatters name a literal locale and a `timeZone` unless the surface renders after interaction.
+- Render-time clock reads and `suppressHydrationWarning` outside `StaleText` fail `check-hydration.ts` (see "Render clock and hydration").
 
 `scripts/policies/check-date-formatting.ts` enforces these boundaries. CI runs it over
 the whole tree; the pre-commit hook runs it on the staged `src/` TypeScript files by

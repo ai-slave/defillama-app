@@ -12,6 +12,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StaleText } from '~/ui/StaleText'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
@@ -259,14 +260,9 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 				</TableToolbar>
 				<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" shell="none" />
 			</Panel>
-			<p className="px-1 body-sm text-tertiary" suppressHydrationWarning>
-				Updated{' '}
-				{formatDateTime(updatedAt, {
-					timeZone: 'local',
-					timeZoneName: 'short'
-				}) ?? '-'}
-				.
-			</p>
+			<StaleText as="p" className="px-1 body-sm text-tertiary">
+				{`Updated ${formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}
+			</StaleText>
 		</div>
 	)
 }

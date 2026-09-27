@@ -9,8 +9,7 @@ export const getStaticProps = withPerformanceLogging('token-pnl', async () => {
 	const initialTokenOptions = await getInitialTokenSearchOptions(DEFAULT_TOKEN_PNL_TOKEN_IDS)
 	return {
 		props: {
-			initialTokenOptions,
-			generatedAtSec: Math.floor(Date.now() / 1000)
+			initialTokenOptions
 		},
 		revalidate: maxAgeForNext([22])
 	}
@@ -18,13 +17,7 @@ export const getStaticProps = withPerformanceLogging('token-pnl', async () => {
 
 const pageName = ['Token PNL']
 
-export default function TokenPnlPage({
-	initialTokenOptions,
-	generatedAtSec
-}: {
-	initialTokenOptions: Array<TokenSearchResult>
-	generatedAtSec: number
-}) {
+export default function TokenPnlPage({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
 	return (
 		<Layout
 			title="Token Profit & Loss (PnL) Tracker - DefiLlama"
@@ -32,7 +25,7 @@ export default function TokenPnlPage({
 			canonicalUrl="/token-pnl"
 			pageName={pageName}
 		>
-			<TokenPnl initialTokenOptions={initialTokenOptions} generatedAtSec={generatedAtSec} />
+			<TokenPnl initialTokenOptions={initialTokenOptions} />
 		</Layout>
 	)
 }

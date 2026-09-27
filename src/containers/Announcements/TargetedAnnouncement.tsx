@@ -2,6 +2,8 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
+import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
+import { usePageClockSec } from '~/hooks/usePageClock'
 import { trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { getDismissedAnnouncements } from '~/utils/cookies'
 import { ANNOUNCEMENT_REGISTRY } from './registry'
@@ -31,8 +33,11 @@ function PageViewAnnouncement({ page }: { page: string }) {
 	// worse than a moment of the fallback.
 	const canTarget = isClient && interests.status !== 'loading' && !loaders.subscriptionInitialCheck
 	const profile = canTarget && interests.status === 'ready' ? interests.profile : null
-	// The launch window is checked against the time of the page view, not of every re-render.
-	const [now] = React.useState(() => Date.now())
+	// The launch window is judged at the page clock, so the HTML and the hydrating client agree. A page without a
+	// data function has no clock; there the launch banner waits for mount instead of guessing.
+	const pageClockSec = usePageClockSec()
+	const nowSec = useNowSecondsOnce(pageClockSec ?? 0)
+	const now = pageClockSec !== null || isClient ? nowSec * 1000 : Number.POSITIVE_INFINITY
 	// Closing any banner empties the slot for the rest of this page view, even if the profile arrives
 	// afterwards and would have picked a different one.
 	const [dismissedThisView, setDismissedThisView] = React.useState(false)

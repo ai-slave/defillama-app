@@ -2,12 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
+import { StaleText } from '~/ui/StaleText'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface HeroMetricProps {
 	label: string
 	tooltip?: string
-	/** Already formatted headline value. Text only: the hydration flag on its span covers nothing nested. */
+	/** Already formatted headline value; a cached price may differ from the live one, so it renders as StaleText. */
 	value: string | number
 	/** Per-chain breakdown; when present the hero expands to show it. */
 	byChain?: Array<[string, ReactNode]>
@@ -16,11 +17,7 @@ interface HeroMetricProps {
 
 /** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows. */
 export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: HeroMetricProps) {
-	const valueEl = (
-		<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-			{value}
-		</span>
-	)
+	const valueEl = <StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">{value}</StaleText>
 
 	if (!byChain || byChain.length === 0) {
 		return (

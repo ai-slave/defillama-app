@@ -58,7 +58,7 @@ describe('withPerformanceLogging', () => {
 		)
 		const result = await wrapped({ params: {} } satisfies GetStaticPropsContext)
 
-		expect(result).toEqual({ props: { ok: true }, revalidate: 60 })
+		expect(result).toEqual({ props: { ok: true, pageClockSec: expect.any(Number) }, revalidate: 60 })
 		expect(readCacheJitterMeta(result)).toBeUndefined()
 	})
 

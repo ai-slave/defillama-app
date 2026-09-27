@@ -6,6 +6,7 @@ import { AuthProvider } from '~/auth'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/', asPath: '/', query: {} }) }))
 
+import { PageClockProvider } from '~/hooks/usePageClock'
 import DepthLeaderboard from '~/pages/market-makers/depth'
 import MarketMakersDocumentationPage from '~/pages/market-makers/documentation'
 import MarketMakersPerformanceIndex from '~/pages/market-makers/index'
@@ -19,7 +20,9 @@ function renderPage<Props extends object>(Component: ComponentType<Props>, props
 		const html = renderToStaticMarkup(
 			<QueryClientProvider client={client}>
 				<AuthProvider>
-					<Component {...props} />
+					<PageClockProvider pageClockSec={1_700_000_000}>
+						<Component {...props} />
+					</PageClockProvider>
 				</AuthProvider>
 			</QueryClientProvider>
 		)

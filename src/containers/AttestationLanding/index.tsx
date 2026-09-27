@@ -5,6 +5,8 @@ import { type ReactNode, type RefObject, useEffect, useId, useRef, useState } fr
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Button } from '~/ui/Button'
+import { StaleText } from '~/ui/StaleText'
+import { COPYRIGHT_YEAR } from '~/utils/copyrightYear'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 
 const pageCss = `
@@ -1463,7 +1465,7 @@ export default function VerifiedLanding() {
 
 					<footer className="relative overflow-hidden border-t border-subtle">
 						<div className="relative z-10 mx-auto flex max-w-[1140px] flex-wrap items-center justify-center gap-4 px-4 pt-6 pb-20 body-sm text-secondary sm:px-6 md:justify-between md:px-8 lg:pb-28">
-							<span suppressHydrationWarning>&copy; {new Date().getFullYear()} DefiLlama</span>
+							<StaleText>{`© ${COPYRIGHT_YEAR} DefiLlama`}</StaleText>
 							<div className="flex gap-5">
 								<BasicLink href="/" className="transition-colors hover:text-primary">
 									Back to DefiLlama

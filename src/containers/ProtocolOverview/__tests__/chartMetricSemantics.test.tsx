@@ -111,7 +111,6 @@ const feeProps: ProbeProps = {
 	liquidationVolume: null,
 	collateralLiquidated: null,
 	bridgeVolume: null,
-	generatedAtSec: 1_700_000_000,
 	treasury: null,
 	unlocks: null,
 	yields: null,

@@ -14,6 +14,7 @@ import { UserSettingsSync } from '~/components/UserSettingsSync'
 import { InvestorsSiteProvider, useInvestorsSite } from '~/containers/Investors/SiteContext'
 import { getUmamiScriptAttributes } from '~/containers/Investors/umamiScript'
 import { useAuthBridge } from '~/hooks/useAuthBridge'
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
 import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
@@ -196,7 +197,9 @@ function AppWrapper(props: AppPropsWithLayout) {
 				<UserSettingsSync />
 				<DashboardSaveGuard />
 				<InvestorsSiteProvider siteId={props.pageProps.investorsSiteId}>
-					<App {...props} />
+					<PageClockProvider pageClockSec={props.pageProps.pageClockSec ?? null}>
+						<App {...props} />
+					</PageClockProvider>
 				</InvestorsSiteProvider>
 			</AuthProvider>
 			<ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />

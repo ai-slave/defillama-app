@@ -27,7 +27,7 @@ export function SignInModal({
 	return (
 		<>
 			{shouldRenderTrigger ? (
-				<button type="button" className={className} onClick={dialogStore.show} suppressHydrationWarning>
+				<button type="button" className={className} onClick={dialogStore.show}>
 					{text ?? 'Sign In'}
 				</button>
 			) : null}

@@ -73,6 +73,34 @@ const directRelativeTimeFiles = new Set([
 	'src/containers/Articles/editor/ArticleEditorClient.tsx'
 ])
 
+/**
+ * Approved formatters that render in the visitor's locale and zone on purpose: chart tooltips and client-only grids
+ * that draw after interaction, and the client-rendered product surfaces. Everywhere else an approved raw formatter
+ * must name a literal locale and a timeZone, or the server and the visitor render different text.
+ */
+const visitorLocalePatterns = [
+	/^src\/components\/ECharts\/shared\/formatters\.ts$/,
+	/^src\/containers\/TokenPnl\/format\.ts$/,
+	/^src\/containers\/LlamaAI\//,
+	/^src\/containers\/Investors\//,
+	/^src\/containers\/Articles\/(?:editor|admin)\//
+]
+
+function isVisitorLocaleFile(relative: string) {
+	return visitorLocalePatterns.some((pattern) => pattern.test(relative))
+}
+
+/** `('en', { timeZone: … })`: the locale is a string literal (or the canonical constant) and the options name a zone. */
+function namesLiteralLocaleAndZone(args: ReadonlyArray<ts.Expression>): boolean {
+	const [locale, options] = args
+	if (!locale) return false
+	const literalLocale = ts.isStringLiteral(locale) || (ts.isIdentifier(locale) && locale.text === 'DISPLAY_LOCALE')
+	if (!literalLocale || !options || !ts.isObjectLiteralExpression(options)) return false
+	return options.properties.some(
+		(property) => ts.isPropertyAssignment(property) && property.name.getText() === 'timeZone'
+	)
+}
+
 const legacyNames = [
 	'toNiceCsvDate',
 	'toNiceDateYear',
@@ -180,13 +208,19 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 			}
 		}
 
-		if (
-			!testFile &&
-			ts.isNewExpression(node) &&
-			node.expression.getText(sourceFile) === 'Intl.DateTimeFormat' &&
-			!intlDateFormatFiles.has(relative)
-		) {
-			report(node, 'constructs Intl.DateTimeFormat outside the canonical formatter or an approved domain policy')
+		if (!testFile && ts.isNewExpression(node) && node.expression.getText(sourceFile) === 'Intl.DateTimeFormat') {
+			if (!intlDateFormatFiles.has(relative)) {
+				report(node, 'constructs Intl.DateTimeFormat outside the canonical formatter or an approved domain policy')
+			} else if (
+				relative !== canonicalFormatter &&
+				!isVisitorLocaleFile(relative) &&
+				!namesLiteralLocaleAndZone(node.arguments ?? [])
+			) {
+				report(
+					node,
+					'constructs Intl.DateTimeFormat without a literal locale and a timeZone; the server and the visitor would format differently'
+				)
+			}
 		}
 
 		if (!testFile && ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
@@ -200,6 +234,15 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 					receiver.text === 'value'
 				if (!localeDateMethodFiles.has(relative) && !isBigIntResultCell) {
 					report(node, `calls ${method} outside the canonical formatter or an approved domain policy`)
+				} else if (
+					localeDateMethodFiles.has(relative) &&
+					!isVisitorLocaleFile(relative) &&
+					!namesLiteralLocaleAndZone(node.arguments)
+				) {
+					report(
+						node,
+						`calls ${method} without a literal locale and a timeZone; the server and the visitor would format differently`
+					)
 				}
 			}
 			if (
@@ -227,6 +270,21 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 				report(node, 'calls Intl.DateTimeFormat outside the canonical formatter or an approved domain policy')
 			}
 		}
+		if (
+			!testFile &&
+			ts.isCallExpression(node) &&
+			node.expression.getText(sourceFile) === 'Intl.DateTimeFormat' &&
+			intlDateFormatFiles.has(relative) &&
+			relative !== canonicalFormatter &&
+			!isVisitorLocaleFile(relative) &&
+			node.arguments.length > 0 &&
+			!namesLiteralLocaleAndZone(node.arguments)
+		) {
+			report(
+				node,
+				'calls Intl.DateTimeFormat without a literal locale and a timeZone; the server and the visitor would format differently'
+			)
+		}
 
 		if (
 			!testFile &&
@@ -250,7 +308,31 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 }
 
 if (process.argv.includes('--self-test')) {
-	const cases: Array<{ name: string; source: string; violation: boolean }> = [
+	const cases: Array<{ name: string; relative?: string; source: string; violation: boolean }> = [
+		{
+			name: 'approved Intl with literal locale and zone',
+			relative: 'src/containers/Exchanges/VenueChart.tsx',
+			source: "new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })",
+			violation: false
+		},
+		{
+			name: 'approved Intl without a zone',
+			relative: 'src/containers/Exchanges/VenueChart.tsx',
+			source: "new Intl.DateTimeFormat('en', { dateStyle: 'medium' })",
+			violation: true
+		},
+		{
+			name: 'approved Intl with the visitor locale',
+			relative: 'src/containers/Exchanges/VenueChart.tsx',
+			source: "new Intl.DateTimeFormat(undefined, { timeZone: 'UTC' })",
+			violation: true
+		},
+		{
+			name: 'approved visitor-locale surface',
+			relative: 'src/containers/Investors/dashboards/hyperliquid/Stats.tsx',
+			source: "new Date(ts).toLocaleString('en-US', { month: 'short' })",
+			violation: false
+		},
 		{ name: 'canonical import', source: "import { formatDate } from '~/utils/dateFormat'", violation: false },
 		{ name: 'barrel import', source: "import { formatDate } from '~/utils'", violation: true },
 		{ name: 'local alias', source: "import { formatDate as pretty } from '~/utils/dateFormat'", violation: true },
@@ -276,8 +358,9 @@ if (process.argv.includes('--self-test')) {
 		},
 		{ name: 'relative string', source: 'formatRelativeTime(value)', violation: true }
 	]
-	const failures = cases.filter(({ name, source, violation }) => {
-		const actual = scanSource(`src/policy-self-test/${name}.tsx`, `${name}.tsx`, source).length > 0
+	const failures = cases.filter(({ name, relative, source, violation }) => {
+		const file = relative ?? `src/policy-self-test/${name}.tsx`
+		const actual = scanSource(file, path.basename(file), source).length > 0
 		return actual !== violation
 	})
 	if (failures.length > 0) {

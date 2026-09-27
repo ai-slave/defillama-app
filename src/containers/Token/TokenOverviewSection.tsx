@@ -26,6 +26,7 @@ import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { StaleText } from '~/ui/StaleText'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
@@ -217,9 +218,9 @@ export function TokenPageHero({
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
 						<span className="basis-full text-secondary">Token Price</span>
-						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
+						<StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">
 							{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-						</span>
+						</StaleText>
 						<Icon
 							name="chevron-down"
 							height={18}
@@ -269,9 +270,9 @@ export function TokenPageHero({
 			) : (
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 					<span className="basis-full text-secondary">Token Price</span>
-					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
+					<StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">
 						{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
-					</span>
+					</StaleText>
 					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}
 				</div>
 			)}

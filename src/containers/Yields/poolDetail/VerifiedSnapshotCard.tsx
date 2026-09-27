@@ -30,7 +30,7 @@ export interface VerifiedSnapshotModel {
 export function buildVerifiedSnapshot(
 	verified: VerifiedBlock,
 	windows: Array<VerifiedWindowRow>,
-	now: number = Date.now()
+	now: number
 ): VerifiedSnapshotModel {
 	const daily = windows.find((row) => row.label === '24h') ?? null
 	const reading = daily?.verified ?? verified.apy.avg_1d

@@ -9,7 +9,7 @@ import { RankTable } from './RankTable'
 import { RefineDrawer } from './RankTable/RefineDrawer'
 import { DocsActionButton, SectionHeader } from './SectionHeader'
 import { selectDepthBucket, toBoardRows } from './server/shape'
-import { timeframeBadge, useLeaderboardTimeframe } from './timeframe'
+import { DEFAULT_TIMEFRAME, timeframeBadge, useLeaderboardTimeframe } from './timeframe'
 import type { LeaderboardRow } from './types'
 
 interface ILeaderboardProps {
@@ -40,7 +40,12 @@ export function Leaderboard({
 			hasThreshold ? (raw) => selectDepthBucket(raw, threshold) : (raw) => toBoardRows(Array.isArray(raw) ? raw : []),
 		[hasThreshold, threshold]
 	)
-	const { data, isLoading } = useLeaderboardRows(fetchPath, range, initialData, shape)
+	const { data, isLoading } = useLeaderboardRows(
+		fetchPath,
+		range,
+		timeframe === DEFAULT_TIMEFRAME ? initialData : undefined,
+		shape
+	)
 	const [refineOpen, setRefineOpen] = useState(false)
 	const [docsOpen, setDocsOpen] = useState(false)
 	const [selectedMM, setSelectedMM] = useState<{ id: string; name: string } | null>(null)

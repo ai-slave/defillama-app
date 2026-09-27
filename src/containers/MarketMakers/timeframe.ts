@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { getStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { DEFAULT_TIMEFRAME, TIMEFRAMES, type Timeframe } from './constants'
 
 const DAYS: Record<Timeframe, number | null> = {
@@ -21,11 +22,6 @@ export function timeframeToRange(tf: Timeframe, today: Date): TimeRange {
 	const start = new Date(today)
 	start.setUTCDate(start.getUTCDate() - days)
 	return { start_date: isoDate(start), end_date: isoDate(today) }
-}
-
-export function isDefaultRange(range: TimeRange): boolean {
-	const def = timeframeToRange(DEFAULT_TIMEFRAME, new Date())
-	return range.start_date === def.start_date && range.end_date === def.end_date
 }
 
 const TIMEFRAME_BADGES: Record<Timeframe, string> = {
@@ -80,7 +76,14 @@ export function useLeaderboardTimeframe(boardId: string) {
 		[key]
 	)
 
-	return { timeframe, setTimeframe, applyToAll, setApplyToAll, range: timeframeToRange(timeframe, new Date()) }
+	const nowSec = useNowSeconds()
+	return {
+		timeframe,
+		setTimeframe,
+		applyToAll,
+		setApplyToAll,
+		range: timeframeToRange(timeframe, new Date(nowSec * 1000))
+	}
 }
 
 export { DEFAULT_TIMEFRAME }

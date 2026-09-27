@@ -13,6 +13,7 @@ vi.mock('next/router', () => ({
 }))
 vi.mock('../ChainChartPanel', () => ({ ChainChartPanel: () => null }))
 vi.mock('../KeyMetrics', () => ({ KeyMetrics: () => null }))
+import { PageClockProvider } from '~/hooks/usePageClock'
 import { Stats } from '../Stats'
 
 const statsProps = {
@@ -46,7 +47,9 @@ describe('ChainOverview Stats header', () => {
 		const output = document.createElement('div')
 		output.innerHTML = renderToStaticMarkup(
 			<session.Wrapper>
-				<Stats {...statsProps} hideChart />
+				<PageClockProvider pageClockSec={1_700_000_000}>
+					<Stats {...statsProps} hideChart />
+				</PageClockProvider>
 			</session.Wrapper>
 		)
 		const link = output.querySelector('[aria-label="Open Ethereum website"]')

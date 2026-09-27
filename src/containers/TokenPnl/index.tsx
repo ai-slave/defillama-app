@@ -254,15 +254,9 @@ function TokenPnlContent({
 	)
 }
 
-export function TokenPnl({
-	initialTokenOptions,
-	generatedAtSec
-}: {
-	initialTokenOptions: Array<TokenSearchResult>
-	generatedAtSec: number
-}) {
+export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
 	const router = useRouter()
-	const nowSeconds = useNowSeconds(generatedAtSec)
+	const nowSeconds = useNowSeconds()
 	const maxSelectableDateUnix = Math.max(0, nowSeconds - TOKEN_PNL_MAX_DATE_BUFFER_SECONDS)
 	const coinParam = router.query?.coin
 

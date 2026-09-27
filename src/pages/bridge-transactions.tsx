@@ -9,17 +9,14 @@ export const getStaticProps = withPerformanceLogging('bridge-transactions', asyn
 	const { bridges } = await getBridges()
 
 	return {
-		props: { bridges, generatedAtSec: Math.floor(Date.now() / 1000) },
+		props: { bridges },
 		revalidate: maxAgeForNext([22])
 	}
 })
 
 const pageName = ['Bridge Transactions']
 
-export default function BridgeTransactions({
-	bridges,
-	generatedAtSec
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function BridgeTransactions({ bridges }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Bridge Transactions - DefiLlama"
@@ -27,7 +24,7 @@ export default function BridgeTransactions({
 			canonicalUrl="/bridge-transactions"
 			pageName={pageName}
 		>
-			<BridgeTransactionsPage bridges={bridges} generatedAtSec={generatedAtSec} />
+			<BridgeTransactionsPage bridges={bridges} />
 		</Layout>
 	)
 }

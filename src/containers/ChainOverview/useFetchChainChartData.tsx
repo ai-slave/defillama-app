@@ -1,10 +1,11 @@
 import { skipToken, useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChainAssetsChartResponse } from '~/containers/BridgedTVL/api.types'
 import { useGetBridgeChartDataByChain } from '~/containers/Bridges/queries.client'
 import { useGetStabelcoinsChartDataByChain } from '~/containers/Stablecoins/queries.client'
+import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import { fetchJson } from '~/utils/async'
 import {
@@ -67,7 +68,7 @@ export const useFetchChainChartData = ({
 	groupBy: ChartTimeGroupingWithCumulative
 }) => {
 	const toggledChartsSet = useMemo(() => new Set(toggledCharts), [toggledCharts])
-	const [nowMs] = useState(() => Date.now())
+	const nowMs = useNowSecondsOnce() * 1000
 
 	const { denominationGeckoId, tokenGeckoId } = getChainChartGeckoIds({
 		denomination,

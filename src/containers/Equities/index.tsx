@@ -26,6 +26,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StaleText } from '~/ui/StaleText'
 import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -1060,10 +1061,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 				</a>
 				. Filings data from SEC EDGAR.
 				{updatedAt ? (
-					<span suppressHydrationWarning>
-						{' '}
-						Updated {formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.
-					</span>
+					<StaleText>{` Updated ${formatDateTime(updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}</StaleText>
 				) : null}
 			</p>
 		</div>

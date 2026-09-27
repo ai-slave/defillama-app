@@ -45,7 +45,7 @@ function formatShort(value: string | null) {
 
 function formatYear(value: string | null) {
 	if (!value) return ''
-	return new Date(value).getFullYear().toString()
+	return new Date(value).getUTCFullYear().toString()
 }
 
 function getAuthorPageArticles(slug: string, articles: Array<ArticleDocument>) {

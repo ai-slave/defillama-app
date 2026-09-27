@@ -902,7 +902,6 @@ export const getProtocolOverviewPageData = async ({
 		liquidationVolume: liquidationVolumeData,
 		collateralLiquidated: collateralLiquidatedData,
 		bridgeVolume: bridgeVolumeData || null,
-		generatedAtSec: Math.floor(Date.now() / 1000),
 		treasury,
 		unlocks: null,
 		yields,

@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 // Constants read the env at import time; build-time path generation is off unless this is false.
 const originalSkip = vi.hoisted(() => {
@@ -43,6 +43,7 @@ const mockedGetLiquidationsSitemapProtocolChains = getLiquidationsSitemapProtoco
 >
 
 beforeEach(() => {
+	vi.useFakeTimers({ toFake: ['Date'], now: 1_790_000_000_000 })
 	seed({
 		chainMetadata: { arbitrum: { id: 'arbitrum', name: 'Arbitrum One' } },
 		protocolMetadata: { makerdao: { name: 'makerdao', displayName: 'Sky' } }
@@ -51,6 +52,10 @@ beforeEach(() => {
 		protocols: ['makerdao']
 	})
 	mockedGetLiquidationsSitemapProtocolChains.mockResolvedValue([{ protocolId: 'makerdao', chainIds: ['arbitrum'] }])
+})
+
+afterEach(() => {
+	vi.useRealTimers()
 })
 
 describe('liquidations SSG routes', () => {
@@ -77,7 +82,8 @@ describe('liquidations SSG routes', () => {
 						{ label: 'Overview', to: '/liquidations' },
 						{ label: 'Sky', to: '/liquidations/makerdao' }
 					],
-					chainLinks: [{ label: 'All Chains', to: '/liquidations/makerdao' }]
+					chainLinks: [{ label: 'All Chains', to: '/liquidations/makerdao' }],
+					pageClockSec: 1_790_000_000
 				}
 			})
 		)
@@ -113,7 +119,8 @@ describe('liquidations SSG routes', () => {
 					chainLinks: [
 						{ label: 'All Chains', to: '/liquidations/makerdao' },
 						{ label: 'Arbitrum One', to: '/liquidations/makerdao/arbitrum' }
-					]
+					],
+					pageClockSec: 1_790_000_000
 				}
 			})
 		)

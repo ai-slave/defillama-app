@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
+import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -59,8 +60,6 @@ export interface StabilityInfo {
 
 export interface PoolDetailViewProps {
 	poolId: string
-	/** The server's clock, so "verified within a day" reads the same on the server and the hydrating client. */
-	generatedAtMs: number
 	// 'pool' = earn pool (may also be a borrow market); 'borrow' = borrow-only market
 	// (no /v2/earn row) rendered from the borrow-markets detail endpoint.
 	mode: 'pool' | 'borrow'
@@ -134,7 +133,6 @@ function PoolChartPlaceholder({ title }: { title: string }) {
 
 export function PoolDetailView({
 	poolId,
-	generatedAtMs,
 	hasRisk,
 	exploited,
 	initialRange,
@@ -218,7 +216,9 @@ export function PoolDetailView({
 			supplyChartFromProps
 		]
 	)
-	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows, generatedAtMs) : null
+	// The page clock on the first render, so "verified within a day" reads the same on the server and the client.
+	const nowMs = useNowSecondsOnce() * 1000
+	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows, nowMs) : null
 	// The table cell's split: only when a leg was substituted and there is more than the base to show.
 	let composition: MeasuredComposition | null = null
 	if (

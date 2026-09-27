@@ -13,7 +13,7 @@ test('passes the bucketed depth payload through for the default 30-day range', a
 	}
 	http.serve({ [ROUTE]: payload })
 	const res = (await getStaticProps({})) as { props: unknown }
-	expect(res.props).toEqual({ payload })
+	expect(res.props).toEqual({ payload, pageClockSec: expect.any(Number) })
 	const range = http.requests[0].url.searchParams
 	expect([range.has('start_date'), range.has('end_date')]).toEqual([true, true])
 })
@@ -21,5 +21,5 @@ test('passes the bucketed depth payload through for the default 30-day range', a
 test('renders the page with no payload when the leaderboard request fails', async () => {
 	http.serve({ [ROUTE]: fixtureStatus(404) })
 	const res = (await getStaticProps({})) as { props: unknown }
-	expect(res.props).toEqual({ payload: null })
+	expect(res.props).toEqual({ payload: null, pageClockSec: expect.any(Number) })
 })

@@ -6,6 +6,7 @@ import { PerpetualMarketsTable, TokenIssuersTable } from '~/containers/PreIPO/In
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { StaleText } from '~/ui/StaleText'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
@@ -134,22 +135,12 @@ export function PreIpoCompanyPage({
 			<TokenIssuersTable companyName={summary.name} tokenIssuers={integrations.tokenIssuers} />
 
 			<div className="flex flex-wrap gap-x-4 gap-y-1 px-1 body-sm text-tertiary">
-				<p suppressHydrationWarning>
-					Valuation and funding data updated{' '}
-					{formatDateTime(valuationDataUpdatedAt, {
-						timeZone: 'local',
-						timeZoneName: 'short'
-					}) ?? '-'}
-					.
-				</p>
-				<p suppressHydrationWarning>
-					Market data updated{' '}
-					{formatDateTime(marketDataUpdatedAt, {
-						timeZone: 'local',
-						timeZoneName: 'short'
-					}) ?? '-'}
-					.
-				</p>
+				<StaleText as="p">
+					{`Valuation and funding data updated ${formatDateTime(valuationDataUpdatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}
+				</StaleText>
+				<StaleText as="p">
+					{`Market data updated ${formatDateTime(marketDataUpdatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}.`}
+				</StaleText>
 			</div>
 		</div>
 	)

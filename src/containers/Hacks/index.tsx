@@ -13,6 +13,7 @@ import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { VirtualTable } from '~/components/Table/VirtualTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
@@ -124,7 +125,7 @@ export function HacksContainer({
 	classificationOptions
 }: IHacksPageData) {
 	const [chartType, setChartType] = React.useState('Monthly Sum')
-	const [nowSec] = React.useState(() => Math.floor(Date.now() / 1000))
+	const nowSec = useNowSeconds()
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const router = useRouter()
 	const { time: timeQ, minLost, maxLost } = router.query

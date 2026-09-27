@@ -14,6 +14,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { KeyMetricsPanel } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
+import { StaleText } from '~/ui/StaleText'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
@@ -618,14 +619,14 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 									/>
 									<MetricRow
 										label="Coverage since"
-										value={<span suppressHydrationWarning>{formatDate(props.metadata.startDate) ?? '-'}</span>}
+										value={<StaleText>{formatDate(props.metadata.startDate) ?? '-'}</StaleText>}
 									/>
 									<MetricRow
 										label="Last Updated"
 										value={
-											<span suppressHydrationWarning>
+											<StaleText>
 												{formatDateTime(props.summary.updatedAt, { timeZone: 'local', timeZoneName: 'short' }) ?? '-'}
-											</span>
+											</StaleText>
 										}
 									/>
 								</div>

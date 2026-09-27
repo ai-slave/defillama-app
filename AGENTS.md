@@ -92,6 +92,7 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 - Formatter params are typed `unknown`, so type errors do not reveal readers that a chart data layout change breaks. Before changing a chart dataset's row layout, search for every reader of the old layout (for example `data[seriesName]`, `seriesName in data`, `.value[1]`). Migrate each reader or confirm it is unaffected before the change is done.
 - Test a custom formatter with real builder output that has at least two series with different values, and confirm the test fails without the fix.
 - Before grouping chart data by week, month, quarter, or year, follow "Grouped chart periods" in `docs/date-formatting.md` and reuse its shared formatters instead of writing a local bucketing loop.
+- Before rendering anything from the clock, the visitor's zone or locale (a countdown, an "ago" label, a "today" marker, a date input default), follow "Render clock and hydration" in `docs/date-formatting.md`: read the clock through `useNowSeconds`, never `Date.now()` or `dayjs()` in render, and prove it with `renderHydrated`.
 
 ## Filter Pickers
 

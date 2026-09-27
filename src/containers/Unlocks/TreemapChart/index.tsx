@@ -9,6 +9,7 @@ import { getChartTheme } from '~/components/ECharts/shared/chartTheme'
 import type { UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useNowSecondsOnce } from '~/hooks/useNowSeconds'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildUnlocksTreemapTreeData, UNLOCKS_TREEMAP_TIME_VIEWS, type UnlocksTreemapTimeView } from './buildTreeData'
@@ -31,14 +32,15 @@ interface UnlocksTreemapTooltipParams {
 export default function UnlocksTreemapChart({ unlocksData, height = '600px', filterYear }: UnlocksTreemapProps) {
 	const [isDark] = useDarkModeManager()
 	const [timeView, setTimeView] = useState<UnlocksTreemapTimeView>('Current Year')
-	const [selectedDate, setSelectedDate] = useState(() => dayjs())
+	const nowSec = useNowSecondsOnce()
+	const [selectedDate, setSelectedDate] = useState(() => dayjs.unix(nowSec))
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef, containerRef)
 
-	const currentYear = filterYear ?? dayjs().year()
+	const currentYear = filterYear ?? dayjs.unix(nowSec).year()
 
 	const chartDataTree = useMemo(() => {
 		return buildUnlocksTreemapTreeData({
