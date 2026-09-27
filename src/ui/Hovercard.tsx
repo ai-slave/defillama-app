@@ -4,7 +4,10 @@ import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 interface IHovercard {
 	content: React.ReactNode
 	children: React.ReactNode
-	/** Anchor layout classes; the anchor renders as a span unless `render` is given. */
+	/** Anchor layout classes; the anchor renders as a span unless `render` is given.
+	    The anchor is inline-flex so it sizes to its content and follows the parent's
+	    text-align, like a table cell's `align`. Do not pass another display class:
+	    `inline-flex` sorts after `flex`, `block` and `inline-block`, so it always wins. */
 	className?: string
 	/** Custom anchor element, e.g. render={<button onClick={...} />}. */
 	render?: React.ReactElement
@@ -41,7 +44,7 @@ export function Hovercard({
 		<Ariakit.HovercardProvider store={store}>
 			<Ariakit.HovercardAnchor
 				store={store}
-				className={`flex shrink-0 items-center ${className ?? ''}`}
+				className={`inline-flex shrink-0 items-center ${className ?? ''}`}
 				render={render ?? <span />}
 				{...(showOnClick ? { onClick: () => store.show() } : {})}
 			>

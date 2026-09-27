@@ -251,7 +251,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 		<Hovercard
 			content={<RightsPopover rights={rights} fullRightsHref={fullRightsHref} />}
 			placement="left"
-			className="inline-flex! w-fit"
+			className="align-middle"
 		>
 			<TokenRightsPieChart segments={getRightsPieSegments(rights)} showLabels={false} className="size-7 shrink-0" />
 		</Hovercard>

@@ -201,7 +201,7 @@ export function MicaLicenseValue({
 	return (
 		<Hovercard
 			placement="left-start"
-			className="w-fit rounded-sm"
+			className="rounded-sm"
 			render={<button type="button" aria-label={`${presentation.label} MiCA details for ${name}`} />}
 			contentClassName="w-72 p-3 text-primary"
 			content={
@@ -240,7 +240,7 @@ function KycSummaryHovercard({ summary, name }: { summary: string; name: string 
 	return (
 		<Hovercard
 			placement="left-start"
-			className="size-7 items-center justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
+			className="size-7 justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
 			render={<button type="button" aria-label={`Full KYC requirements for ${name}`} />}
 			contentClassName="w-96 p-3 leading-snug text-primary"
 			content={<span className="block break-words whitespace-pre-wrap">{summary}</span>}

@@ -239,7 +239,6 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	// One anchor, one card, so nothing in the cell competes for the cursor.
 	const anchored = (onUpgrade?: () => void) => (
 		<Hovercard
-			className="w-fit"
 			contentClassName="p-3"
 			placement="top-end"
 			content={
@@ -278,7 +277,6 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 			<LockedCell placement="exit-cell">
 				{(onUpgrade) => (
 					<Hovercard
-						className="ml-auto w-fit"
 						contentClassName="p-3"
 						placement="top-end"
 						content={
@@ -323,7 +321,6 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 	// A hovercard rather than a tooltip: the footer links out to the pool page's exit ledger.
 	return (
 		<Hovercard
-			className="ml-auto w-fit"
 			contentClassName="p-3"
 			placement="top-end"
 			content={
@@ -486,7 +483,7 @@ export function TotalApyCell({
 
 	return (
 		<Hovercard
-			className="ml-auto w-fit max-w-full justify-end"
+			className="max-w-full"
 			contentClassName="p-3"
 			content={
 				<span className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 whitespace-nowrap">
@@ -562,7 +559,7 @@ export function SignedApyCell({
 
 	return (
 		<Hovercard
-			className="ml-auto w-fit max-w-full justify-end"
+			className="max-w-full"
 			contentClassName="max-w-96 p-3"
 			content={
 				<span className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 gap-y-1 whitespace-nowrap">

@@ -43,9 +43,9 @@ function LeafAssetTypeCell({ asset }: { asset: RWAOverviewDisplayRow }) {
 				</span>
 			}
 			contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
-			className="inline-block max-w-full justify-end truncate"
+			className="max-w-full"
 		>
-			{assetClasses.join(', ')}
+			<span className="truncate">{assetClasses.join(', ')}</span>
 		</Hovercard>
 	)
 }

@@ -767,7 +767,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 
 	return (
 		<Hovercard
-			className="w-full justify-center gap-2"
+			className="gap-2"
 			render={
 				<button
 					type="button"

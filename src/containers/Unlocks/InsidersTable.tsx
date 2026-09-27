@@ -80,7 +80,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 					if (allocations.length === 0) return <span>{sections.join(', ')}</span>
 					return (
 						<Hovercard
-							className="max-w-full truncate"
+							className="max-w-full"
 							contentClassName="w-80 max-w-(--popover-available-width) p-3"
 							content={
 								<span className="flex flex-col gap-1">
@@ -103,7 +103,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 								</span>
 							}
 						>
-							{sections.join(', ')}
+							<span className="truncate">{sections.join(', ')}</span>
 						</Hovercard>
 					)
 				},

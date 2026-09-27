@@ -41,7 +41,7 @@ export function CostBadge({
 	return (
 		<Hovercard
 			placement="left-start"
-			className={`ml-auto w-fit rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
+			className={`rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${badgeTone ? FEE_TONE_CLASS[badgeTone] : 'border-subtle text-primary'}`}
 			render={<button type="button" aria-label={ariaLabel} />}
 			contentClassName="w-80 p-3 text-primary"
 			content={children}

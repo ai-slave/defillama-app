@@ -71,7 +71,7 @@ export function FiatFeesValue({ name, fees }: { name: string; fees: ExchangeFiat
 	return (
 		<Hovercard
 			placement="left-start"
-			className="inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
+			className="rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-link hover:bg-hover-row"
 			render={
 				<button
 					type="button"
