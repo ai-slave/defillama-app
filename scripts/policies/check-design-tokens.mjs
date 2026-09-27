@@ -313,11 +313,11 @@ const RULES = [
 		uiOwned: true
 	},
 	{
-		id: 'raw-chart-scope-note',
+		id: 'raw-scope-note',
 		description:
-			'hand-rolled chart scope note (a `px-* pt-* body-sm text-tertiary` paragraph) — render ChartScopeNote from src/ui/ChartScopeNote under the chart toolbar',
-		pattern: /className="px-\d pt-\d (?:pb-\d )?body-sm text-tertiary"/g,
-		// src/ui/ChartScopeNote owns the one note.
+			'hand-rolled scope or failed-data note (a `px-* pt-* body-sm text-tertiary|text-data-down` paragraph) — render ScopeNote or FailedDataNote from src/ui/ScopeNote under the chart toolbar',
+		pattern: /className="px-\d pt-\d (?:pb-\d )?body-sm text-(?:tertiary|data-down)"/g,
+		// src/ui/ScopeNote owns the one note.
 		uiOwned: true
 	},
 	{

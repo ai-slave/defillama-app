@@ -4,6 +4,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { tvlOptionNames } from '~/components/Filters/options'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -18,10 +19,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -233,6 +234,12 @@ export function ForksOverview({
 							csvSource={selectedDominance.csvSource}
 						/>
 					</ChartPanelToolbar>
+					{!isFetchingExtraSeries ? (
+						<FailedDataNote
+							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
+							shows="The chart shows TVL without them."
+						/>
+					) : null}
 					{isFetchingExtraSeries ? (
 						<ChartPanelBodyFallback
 							role="status"
@@ -256,13 +263,6 @@ export function ForksOverview({
 							/>
 						</React.Suspense>
 					)}
-					{!isFetchingExtraSeries ? (
-						<FailedDataPopover
-							items={failedApiKeys}
-							ariaLabel="Show failed Fork TVL sections"
-							title="Failed to load selected TVL data for:"
-						/>
-					) : null}
 				</ChartPanel>
 			</div>
 			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>

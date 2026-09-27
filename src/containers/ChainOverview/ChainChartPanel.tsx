@@ -19,10 +19,10 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
@@ -412,6 +412,9 @@ export function ChainChartPanel({
 					/>
 				</div>
 			</ChartPanelToolbar>
+			{isClient && !isFetchingChartData ? (
+				<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
+			) : null}
 
 			<ChartPanelBody>
 				{isFetchingChartData ? (
@@ -438,13 +441,6 @@ export function ChainChartPanel({
 						/>
 					</Suspense>
 				)}
-				{isClient && !isFetchingChartData ? (
-					<FailedDataPopover
-						items={failedMetrics}
-						ariaLabel="Show failed metric APIs"
-						getLabel={(metric) => selectedChartLabel(metric)}
-					/>
-				) : null}
 			</ChartPanelBody>
 		</ChartPanel>
 	)

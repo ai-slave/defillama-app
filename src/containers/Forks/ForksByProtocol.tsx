@@ -1,13 +1,14 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { tvlOptionNames } from '~/components/Filters/options'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -87,6 +88,12 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
+					{!isFetchingExtraSeries ? (
+						<FailedDataNote
+							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
+							shows="The chart shows TVL without them."
+						/>
+					) : null}
 					{isFetchingExtraSeries ? (
 						<ChartPanelExportShellFallback
 							role="status"
@@ -112,13 +119,6 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 							/>
 						</Suspense>
 					)}
-					{!isFetchingExtraSeries ? (
-						<FailedDataPopover
-							items={failedApiKeys}
-							ariaLabel="Show failed Fork TVL sections"
-							title="Failed to load selected TVL data for:"
-						/>
-					) : null}
 				</ChartPanel>
 			</SummaryCardGrid>
 			<Suspense

@@ -51,8 +51,8 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { DataFreshness } from '~/ui/DataFreshness'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { slug } from '~/utils'
@@ -544,7 +544,7 @@ export function StablecoinsByChain({
 					</ChartPanelToolbar>
 					{/* The volume API reports by symbol, so it cannot apply the stablecoin filters. */}
 					{isVolumeChart && hasActiveStablecoinUrlFilters ? (
-						<ChartScopeNote>This chart ignores the filters above and shows volume for every stablecoin.</ChartScopeNote>
+						<ScopeNote>This chart ignores the filters above and shows volume for every stablecoin.</ScopeNote>
 					) : null}
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>

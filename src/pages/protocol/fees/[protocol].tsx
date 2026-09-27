@@ -30,8 +30,8 @@ import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/ty
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Panel } from '~/ui/Panel'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import type { HallmarkPoint } from '~/utils/hallmarks'
@@ -317,6 +317,7 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							}}
 						/>
 					</ChartPanelToolbar>
+					<FailedDataNote labels={props.failedMetrics} shows="The chart shows the other metrics." />
 					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart
 							dataset={deferredFinalCharts.dataset}
@@ -327,7 +328,6 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-					<FailedProtocolFeeMetricsPopover failedMetrics={props.failedMetrics} />
 				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
@@ -348,8 +348,4 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 			</div>
 		</ProtocolOverviewLayout>
 	)
-}
-
-function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: Array<OptionalProtocolFeeMetric> }) {
-	return <FailedDataPopover items={failedMetrics} ariaLabel="Show failed metric APIs" />
 }

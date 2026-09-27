@@ -5,7 +5,7 @@ import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { LoadingIndicator, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -136,6 +136,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 			{selectedProtocols.length > 1 ? (
 				<div className="relative flex flex-col gap-2">
 					<ChartPanel>
+						<FailedDataNote labels={failedSources} shows="The chart shows the other protocols." />
 						{isLoading || !router.isReady ? (
 							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
 								<LoadingIndicator />
@@ -159,7 +160,6 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 								/>
 							</React.Suspense>
 						)}
-						<FailedDataPopover items={failedSources} ariaLabel="Show failed protocol chart APIs" />
 					</ChartPanel>
 
 					{selectedProtocolsData.length > 0 ? (

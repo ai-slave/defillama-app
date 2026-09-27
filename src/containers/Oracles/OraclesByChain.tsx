@@ -3,6 +3,7 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
+import { tvlOptionNames } from '~/components/Filters/options'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -18,10 +19,10 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -167,6 +168,12 @@ export function OraclesByChain({
 							csvSource={selectedDominance.csvSource}
 						/>
 					</ChartPanelToolbar>
+					{!isFetchingExtraBreakdowns ? (
+						<FailedDataNote
+							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
+							shows="The chart shows TVL without them."
+						/>
+					) : null}
 					{isFetchingExtraBreakdowns ? (
 						<ChartPanelBodyFallback
 							role="status"
@@ -190,13 +197,6 @@ export function OraclesByChain({
 							/>
 						</React.Suspense>
 					)}
-					{!isFetchingExtraBreakdowns ? (
-						<FailedDataPopover
-							items={failedApiKeys}
-							ariaLabel="Show failed Oracle TVL sections"
-							title="Failed to load selected TVL data for:"
-						/>
-					) : null}
 				</ChartPanel>
 			</div>
 

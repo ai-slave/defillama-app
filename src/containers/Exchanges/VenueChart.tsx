@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -311,9 +312,11 @@ function VenueChartFrame({
 				) : null}
 				<ChartRangeControl range={range} />
 			</ChartPanelToolbar>
+			{showGlobalDataNotice ? (
+				<ScopeNote>The totals and this chart ignore the Country filter and show global data.</ScopeNote>
+			) : null}
 			{children}
 			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">
-				{showGlobalDataNotice ? <p>Totals and chart show global data</p> : null}
 				{/* Keep loading, error, empty, and ready panels the same height. */}
 				<p aria-hidden={updatedAt ? undefined : true} className={`ml-auto ${updatedAt ? '' : 'invisible'}`.trim()}>
 					{updatedAt ? `Last updated ${UTC_TIMESTAMP.format(new Date(updatedAt))}` : 'Last updated'}

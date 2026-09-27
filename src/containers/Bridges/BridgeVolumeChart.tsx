@@ -26,7 +26,7 @@ interface BridgeVolumeChartProps {
 	onReady?: (instance: echarts.ECharts | null) => void
 	headerStart?: ReactNode
 	headerEnd?: ReactNode
-	/** A `ChartScopeNote` for the page to place under this chart's own toolbar. */
+	/** A `ScopeNote` for the page to place under this chart's own toolbar. */
 	scopeNote?: ReactNode
 }
 

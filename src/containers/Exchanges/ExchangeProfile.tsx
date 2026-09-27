@@ -4,6 +4,7 @@ import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { ViewTabs } from '~/components/ViewTabs'
 import { Card } from '~/ui/Card'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { useExchangeCountry } from './ExchangeCountrySelect'
@@ -205,7 +206,7 @@ function MarketsExchangeProfile({
 				) : segment === 'all' ? (
 					<div className="flex flex-col gap-1">
 						{countryView.status !== 'global' ? (
-							<p className="px-1 body-sm text-tertiary">Markets show global data</p>
+							<ScopeNote>This table ignores the Country filter and shows every market.</ScopeNote>
 						) : null}
 						<ProfileTokenTable
 							profile={profile}
@@ -215,7 +216,7 @@ function MarketsExchangeProfile({
 				) : segment && active ? (
 					<div className="flex flex-col gap-1">
 						{countryView.status !== 'global' ? (
-							<p className="px-1 body-sm text-tertiary">Markets show global data</p>
+							<ScopeNote>This table ignores the Country filter and shows every market.</ScopeNote>
 						) : null}
 						<PairTable
 							pairs={active.pairs}

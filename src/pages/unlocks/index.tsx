@@ -43,9 +43,9 @@ import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
@@ -246,9 +246,7 @@ function UpcomingUnlockVolumeChart({
 				) : null}
 			</ChartPanelToolbar>
 			{ignoresTableFilters ? (
-				<ChartScopeNote>
-					This chart ignores the table filters and shows upcoming unlocks for every protocol.
-				</ChartScopeNote>
+				<ScopeNote>This chart ignores the table filters and shows upcoming unlocks for every protocol.</ScopeNote>
 			) : null}
 			{deferredChartData.dataset.source.length > 0 ? (
 				<React.Suspense fallback={<ChartPanelBodyFallback />}>

@@ -40,3 +40,6 @@ export const tvlOptions: Array<ToggleOption<TvlSettingsKey>> = [
 ]
 
 export const tvlOptionsMap = new Map(tvlOptions.map((option) => [option.key, option]))
+export const tvlOptionNames: Record<string, string> = Object.fromEntries(
+	tvlOptions.map((option) => [option.key, option.name])
+)

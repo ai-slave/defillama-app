@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote, ignoredFiltersPhrase } from '~/ui/ChartScopeNote'
+import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
@@ -191,9 +191,9 @@ export function DirectoryChart({ chart, range, status, country }: DirectoryChart
 				/>
 			</ChartPanelToolbar>
 			{ignoredFilters.length > 0 ? (
-				<ChartScopeNote>
+				<ScopeNote>
 					The totals and this chart ignore {ignoredFiltersPhrase(ignoredFilters)} and show every exchange.
-				</ChartScopeNote>
+				</ScopeNote>
 			) : null}
 			{chart ? (
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */

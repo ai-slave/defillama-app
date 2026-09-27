@@ -19,7 +19,7 @@ import { getAdapterDashboardType } from '~/containers/ProDashboard/utils/adapter
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote } from '~/ui/ChartScopeNote'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { getErrorMessage } from '~/utils/error'
@@ -617,11 +617,11 @@ export function AdapterByChainChart({
 			</ChartPanelToolbar>
 			{/* The API totals do not add up by category, so the header and combined chart stay unfiltered. */}
 			{isCategoryFiltered ? (
-				<ChartScopeNote>
+				<ScopeNote>
 					{chartViewMode === 'Combined'
 						? 'The totals and this chart ignore the category filter and show every protocol.'
 						: 'The totals ignore the category filter and show every protocol.'}
-				</ChartScopeNote>
+				</ScopeNote>
 			) : null}
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
 				<ChartPanelBodyFallback className="body-sm text-data-down" role="alert">

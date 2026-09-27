@@ -23,8 +23,8 @@ import {
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote, ignoredFiltersPhrase } from '~/ui/ChartScopeNote'
 import { Panel } from '~/ui/Panel'
+import { ScopeNote, ignoredFiltersPhrase } from '~/ui/ScopeNote'
 import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -155,9 +155,7 @@ export function ChainsByCategory({
 	})
 	const chartScopeNote =
 		chartIgnoredFilters.length > 0 ? (
-			<ChartScopeNote>
-				This chart ignores {ignoredFiltersPhrase(chartIgnoredFilters)} and shows every chain.
-			</ChartScopeNote>
+			<ScopeNote>This chart ignores {ignoredFiltersPhrase(chartIgnoredFilters)} and shows every chain.</ScopeNote>
 		) : null
 
 	return (

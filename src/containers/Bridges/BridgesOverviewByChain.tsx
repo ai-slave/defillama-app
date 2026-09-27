@@ -12,10 +12,10 @@ import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { ChartScopeNote } from '~/ui/ChartScopeNote'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { ScopeNote } from '~/ui/ScopeNote'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
@@ -272,9 +272,7 @@ export function BridgesOverviewByChain({
 	// The volume series come from the bridges API, so the messaging switch reaches only the table and its totals.
 	const chartScopeNote =
 		activeTab === 'bridges' && includeMessaging ? (
-			<ChartScopeNote>
-				This chart ignores the Include Messaging Protocols switch and shows bridge volume only.
-			</ChartScopeNote>
+			<ScopeNote>This chart ignores the Include Messaging Protocols switch and shows bridge volume only.</ScopeNote>
 		) : null
 
 	const bridgesTableData = React.useMemo(() => {

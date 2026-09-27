@@ -16,7 +16,7 @@ import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { LoadingIndicator, PanelStatus } from '~/ui/Status'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -359,6 +359,7 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 						</ChartPanel>
 					) : (
 						<ChartPanel>
+							<FailedDataNote labels={failedChains} shows="The chart shows the other chains." />
 							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart
 									dataset={chartData.dataset}
@@ -372,7 +373,6 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 									}}
 								/>
 							</React.Suspense>
-							<FailedCompareChainsPopover failedChains={failedChains} />
 						</ChartPanel>
 					)}
 
@@ -394,10 +394,6 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 			)}
 		</>
 	)
-}
-
-function FailedCompareChainsPopover({ failedChains }: { failedChains: Array<string> }) {
-	return <FailedDataPopover items={failedChains} ariaLabel="Show failed chain APIs" />
 }
 
 function useChainsChartFilterState() {

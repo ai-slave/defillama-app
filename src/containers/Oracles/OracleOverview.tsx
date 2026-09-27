@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
+import { tvlOptionNames } from '~/components/Filters/options'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
@@ -14,12 +15,12 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Icon } from '~/ui/Icon'
 import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { FailedDataNote } from '~/ui/ScopeNote'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { getTokenDominance, slug } from '~/utils'
@@ -293,6 +294,12 @@ export function OracleOverview({
 				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
+					{!isFetchingExtraSeries ? (
+						<FailedDataNote
+							labels={failedApiKeys.map((key) => tvlOptionNames[key])}
+							shows="The chart shows TVL without them."
+						/>
+					) : null}
 					{isFetchingExtraSeries ? (
 						<ChartPanelExportShellFallback
 							role="status"
@@ -318,13 +325,6 @@ export function OracleOverview({
 							/>
 						</Suspense>
 					)}
-					{!isFetchingExtraSeries ? (
-						<FailedDataPopover
-							items={failedApiKeys}
-							ariaLabel="Show failed Oracle TVL sections"
-							title="Failed to load selected TVL data for:"
-						/>
-					) : null}
 				</ChartPanel>
 			</SummaryCardGrid>
 
