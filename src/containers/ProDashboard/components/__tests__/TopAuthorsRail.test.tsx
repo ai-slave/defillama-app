@@ -2,9 +2,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TopAuthorsRail } from '../TopAuthorsRail'
 
 const http = installFixtureFetch()
@@ -61,14 +62,14 @@ test('the rail keeps its heading while loading and says so when there are no aut
 	expect(container.textContent).not.toContain('No authors to show yet')
 
 	await act(async () => response.resolve(Response.json({ items: [] })))
-	await vi.waitFor(() => expect(container.textContent).toContain('No authors to show yet'))
+	await waitForUi(() => expect(container.textContent).toContain('No authors to show yet'))
 	expect(container.querySelector('h3')?.textContent).toBe('Top Authors')
 })
 
 test('author cards carry their handle and compact counts', async () => {
 	http.serve({ '/authors/top': { items: [entry] } })
 	await render()
-	await vi.waitFor(() => expect(container.textContent).toContain('@llama'))
+	await waitForUi(() => expect(container.textContent).toContain('@llama'))
 	expect(container.textContent).toContain('12 dashboards')
 	expect(container.textContent).toContain('15.4K views')
 	expect(container.textContent).toContain('2.3K likes')

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import {
 	useRWAAssetFlows,
 	useRWAFlowAssetBreakdown,
@@ -60,7 +61,7 @@ async function renderFlowSeries(request: RWAFlowSeriesRequest) {
 		results.push(useRWAFlowSeries(request))
 		return null
 	})
-	await vi.waitFor(() => expect(results.at(-1)?.isLoading).toBe(false))
+	await waitForUi(() => expect(results.at(-1)?.isLoading).toBe(false))
 	return results.at(-1)
 }
 
@@ -76,7 +77,7 @@ describe('RWA flow browser routes', () => {
 			return null
 		})
 
-		await vi.waitFor(() => expect(fetchJsonMock).toHaveBeenCalledTimes(5))
+		await waitForUi(() => expect(fetchJsonMock).toHaveBeenCalledTimes(5))
 		expect(requestedUrls().sort()).toEqual([
 			'/api/public/rwa/flows/asset-breakdown/assetGroup/Treasury%20Funds',
 			'/api/public/rwa/flows/asset-breakdown/chain/Ethereum',

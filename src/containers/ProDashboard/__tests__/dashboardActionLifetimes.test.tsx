@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard, DashboardRatingDecision } from '../dashboardTypes'
 import {
@@ -82,7 +83,7 @@ async function open(value: Dashboard) {
 		)
 	)
 	// Editor actions need the restored session, and the stream re-applies the saved dashboard when it lands.
-	await vi.waitFor(() => {
+	await waitForUi(() => {
 		expect(session.urls().some((url) => url.includes(`/${value.id}/stream`))).toBe(true)
 		expect(dashboard.streamHasResolved).toBe(true)
 	})
@@ -141,7 +142,7 @@ test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made w
 						items: oldItems
 					})
 	})
-	await vi.waitFor(() => expect(saves).toHaveLength(1))
+	await waitForUi(() => expect(saves).toHaveLength(1))
 	await act(async () => editor.handleEditItem('ai', laterItems[0]))
 	await act(async () => {
 		pending.resolve(await storeAsSent(saves[0]!))
@@ -184,7 +185,7 @@ test('a late undo acknowledgement cannot replace the dashboard opened during its
 	await act(async () => {
 		completion = dashboard.undoAIGeneration()
 	})
-	await vi.waitFor(() => expect(saves).toHaveLength(1))
+	await waitForUi(() => expect(saves).toHaveLength(1))
 	await open(another)
 	expect(dashboard.dashboardId).toBe('another')
 	renderedDashboardIds = []

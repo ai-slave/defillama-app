@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { PDFExportButton } from '../PDFExportButton'
 
 const session = installSubscriberSession('reader', { resolved: true })
@@ -32,7 +33,7 @@ test('Dark Mode exports the message as a dark PDF and downloads the file', async
 		await act(async () =>
 			container.querySelector<HTMLButtonElement>('button[aria-label="Export PDF options"]')!.click()
 		)
-		const darkMode = await vi.waitFor(() => {
+		const darkMode = await waitForUi(() => {
 			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
 				(element) => element.textContent === 'Dark Mode'
 			)
@@ -41,7 +42,7 @@ test('Dark Mode exports the message as a dark PDF and downloads the file', async
 		})
 		await act(async () => darkMode.click())
 
-		await vi.waitFor(() => expect(downloads).toHaveLength(1))
+		await waitForUi(() => expect(downloads).toHaveLength(1))
 		expect(downloads[0]).toMatch(/^llama-ai-export-\d+\.pdf$/)
 		const exportRequest = session.requests.find((request) => request.url.pathname === '/export/pdf')!
 		expect(JSON.parse(exportRequest.init!.body as string)).toEqual({

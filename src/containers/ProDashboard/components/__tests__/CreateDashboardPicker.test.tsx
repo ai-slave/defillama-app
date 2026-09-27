@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
 import { CreateDashboardPicker } from '../CreateDashboardPicker'
 const navigation = vi.hoisted(() => ({ push: vi.fn() }))
@@ -88,7 +89,7 @@ async function click(name: string) {
 	})
 }
 async function waitFor(check: () => void) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})

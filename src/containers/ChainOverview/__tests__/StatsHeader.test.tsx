@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IChainOverviewData } from '../types'
 const session = installSubscriberSession('chain-header')
 vi.mock('next/router', () => ({
@@ -78,7 +79,7 @@ describe('ChainOverview Stats header', () => {
 			)
 			const change = [...container.querySelectorAll('span')].find((el) => el.textContent === '-0.28%')!
 			await act(async () => change.dispatchEvent(new Event('touchstart', { bubbles: true })))
-			await vi.waitFor(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('-$149.46m'))
+			await waitForUi(() => expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('-$149.46m'))
 		} finally {
 			await act(async () => root.unmount())
 			container.remove()

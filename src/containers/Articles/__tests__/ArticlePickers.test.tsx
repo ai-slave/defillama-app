@@ -4,6 +4,7 @@ import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ArticleMultiPicker } from '../admin/ArticleMultiPicker'
 import { ArticlePicker } from '../admin/ArticlePicker'
 import type { ArticleDocument } from '../types'
@@ -105,7 +106,7 @@ describe('article pickers keep known titles', () => {
 			setValue.call(input, 'Beta')
 			input.dispatchEvent(new Event('input', { bubbles: true }))
 		})
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await flush()
 			// The popover renders in a portal outside the component container.
 			const options = Array.from(document.querySelectorAll('[role="option"]'), (el) => el.textContent)

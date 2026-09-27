@@ -5,6 +5,7 @@ import hotToast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { ChartGrid } from '../ChartGrid'
 
@@ -358,7 +359,7 @@ test('an edit made while the card removal toast is alive dismisses it', async ()
 	expect(toaster.text()).toContain('Card removed')
 
 	await renderGrid({ items, undoDepth: 2 })
-	await vi.waitFor(() => expect(toaster.text()).not.toContain('Card removed'))
+	await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
 	await toaster.unmount()
 })
 
@@ -374,7 +375,7 @@ test('an undo made while the card removal toast is alive dismisses it', async ()
 	expect(toaster.text()).toContain('Card removed')
 
 	await renderGrid({ items, undoDepth: 3 })
-	await vi.waitFor(() => expect(toaster.text()).not.toContain('Card removed'))
+	await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
 	await toaster.unmount()
 })
 
@@ -389,7 +390,7 @@ test('a card permalink expands the collapsed heading holding the card', async ()
 		]
 	})
 	await act(async () => {
-		await vi.waitFor(() => expect(scrollIntoView).toHaveBeenCalled())
+		await waitForUi(() => expect(scrollIntoView).toHaveBeenCalled())
 	})
 	expect(localStorage.getItem('pro-dashboard-collapsed:dashboard')).toBe('{"section-1":false}')
 	const card = container.querySelector('#item-text-1')!

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { createEmptyLocalArticle } from '~/containers/Articles/document'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ResearchSearchDialog } from '../ResearchSearchDialog'
 
 const http = installFixtureFetch()
@@ -80,7 +81,7 @@ function resultTitles() {
 	return [...document.querySelectorAll('[role="dialog"] a')].map((el) => el.textContent)
 }
 async function expectResults(titles: Array<string>) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})

@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProDashboardAPIProvider, useProDashboardUI } from '../../ProDashboardAPIContext'
 import { CreateDashboardPicker } from '../CreateDashboardPicker'
 
@@ -71,7 +72,7 @@ async function click(name: string) {
 }
 async function ready(name: string) {
 	await act(async () => {
-		await vi.waitFor(() => {
+		await waitForUi(() => {
 			expect(button(name).getAttribute('aria-label')).toBe(name)
 			expect(button(name).getAttribute('aria-disabled')).not.toBe('true')
 		})
@@ -174,7 +175,7 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		await click('Create new dashboard')
 		const name = source === 'catalog' ? 'Lending Protocols' : source === 'category' ? 'L2 Ecosystem' : 'DEX Leaders'
 		await act(async () => {
-			await vi.waitFor(() => expect(button(`Retry ${name}`)).toBeDefined())
+			await waitForUi(() => expect(button(`Retry ${name}`)).toBeDefined())
 		})
 		const retry = button(`Retry ${name}`)
 		await act(async () => retry.focus())
@@ -182,7 +183,7 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 		api[source].mockReturnValue(response.promise)
 		await click(`Retry ${name}`)
 		await act(async () => {
-			await vi.waitFor(() => expect(retry.getAttribute('aria-disabled')).toBe('true'))
+			await waitForUi(() => expect(retry.getAttribute('aria-disabled')).toBe('true'))
 		})
 		expect(api.create).not.toHaveBeenCalled()
 		if (source !== 'catalog') await ready('Lending Protocols')
@@ -214,7 +215,7 @@ test('empty dimension data cannot fall back to unrelated TVL data or create an e
 	await click('Create new dashboard')
 	await ready('Lending Protocols')
 	await act(async () => {
-		await vi.waitFor(() => expect(button('DEX Leaders').textContent).toContain('No matching data available'))
+		await waitForUi(() => expect(button('DEX Leaders').textContent).toContain('No matching data available'))
 	})
 	await click('DEX Leaders')
 	expect(api.create).not.toHaveBeenCalled()
@@ -247,7 +248,7 @@ test('pending template creation keeps focus and ignores duplicate activation, th
 	await act(async () => choice.focus())
 	await click('Lending Protocols')
 	await act(async () => {
-		await vi.waitFor(() => expect(choice.getAttribute('aria-disabled')).toBe('true'))
+		await waitForUi(() => expect(choice.getAttribute('aria-disabled')).toBe('true'))
 	})
 	expect(document.activeElement).toBe(choice)
 	expect(choice.querySelector('[role="status"]')?.textContent).toBe('Creating dashboard…')
@@ -271,7 +272,7 @@ test('keeps the selected template busy until navigation finishes without creatin
 	await ready('Lending Protocols')
 	await click('Lending Protocols')
 	await act(async () => {
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
 		)
 	})
@@ -281,6 +282,6 @@ test('keeps the selected template busy until navigation finishes without creatin
 	expect(api.create).toHaveBeenCalledOnce()
 	await act(async () => navigation.resolve(true))
 	await act(async () => {
-		await vi.waitFor(() => expect(button('Lending Protocols')).toBeUndefined())
+		await waitForUi(() => expect(button('Lending Protocols')).toBeUndefined())
 	})
 })

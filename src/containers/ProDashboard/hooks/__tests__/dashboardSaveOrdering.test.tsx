@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardSavePayload } from '../../services/DashboardAPI'
 import { useDashboardAPI } from '../useDashboardAPI'
 const session = installSubscriberSession('user')
@@ -53,20 +54,20 @@ test.each(['success', 'failure'] as const)(
 		session.serve({ '/api/private/pro-dashboard/save': () => (saves().length === 1 ? first.promise : second.promise) })
 		await mount('a')
 		await act(async () => save.mutate({ id: 'a', data: payload('First') }))
-		await vi.waitFor(() => expect(saves()).toHaveLength(1))
+		await waitForUi(() => expect(saves()).toHaveLength(1))
 		await mount('b')
 		await mount('a')
 		await act(async () => save.mutate({ id: 'a', data: payload('Second') }))
-		await vi.waitFor(() => expect(save.isPaused).toBe(true))
+		await waitForUi(() => expect(save.isPaused).toBe(true))
 		expect(saves()).toHaveLength(1)
 		await act(async () => {
 			if (outcome === 'success') first.resolve(saved('a'))
 			else first.reject(new Error('Offline'))
 		})
-		await vi.waitFor(() => expect(saves()).toHaveLength(2))
+		await waitForUi(() => expect(saves()).toHaveLength(2))
 		expect(JSON.parse(saves()[1].init!.body as string).data.dashboardName).toBe('Second')
 		await act(async () => second.resolve(saved('a')))
-		await vi.waitFor(() => expect(save.isSuccess).toBe(true))
+		await waitForUi(() => expect(save.isSuccess).toBe(true))
 	}
 )
 test('saving another dashboard does not wait for the current dashboard', async () => {
@@ -76,10 +77,10 @@ test('saving another dashboard does not wait for the current dashboard', async (
 	})
 	await mount('a')
 	await act(async () => save.mutate({ id: 'a', data: payload('First') }))
-	await vi.waitFor(() => expect(saves()).toHaveLength(1))
+	await waitForUi(() => expect(saves()).toHaveLength(1))
 	await mount('b')
 	await act(async () => save.mutate({ id: 'b', data: payload('Other') }))
-	await vi.waitFor(() => expect(saves()).toHaveLength(2))
+	await waitForUi(() => expect(saves()).toHaveLength(2))
 	expect(saves().map(({ url }) => url.searchParams.get('id'))).toEqual(['a', 'b'])
 	await act(async () => first.resolve(saved('a')))
 })

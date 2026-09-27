@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { CustomDataConfig } from '../../../types'
 import { CardHeightScaleContext } from '../../cardHeightContext'
 import { DashboardCardContext } from '../../DashboardCardContext'
@@ -172,7 +173,7 @@ test('decodes compressed rows lazily before rendering them', async () => {
 	const data = await gzipBase64Encode(JSON.stringify(rows))
 	await render({ ...base, rows: { encoding: 'gzip-base64', data, rowCount: 1500 } })
 	expect(container.textContent).toContain('1,500 rows')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.textContent).toContain(`grid rows: 1500, last row: ${Date.UTC(2026, 0, 16)} 1499`)
 	)
 })
@@ -188,7 +189,7 @@ test('shows a loader while rows are still streaming and an empty state once the 
 
 test('unreadable stored rows offer the editor when the card is editable', async () => {
 	await render({ ...base, rows: { encoding: 'gzip-base64', data: 'not-gzip', rowCount: 2 } }, { editable: true })
-	await vi.waitFor(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
+	await waitForUi(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
 	const edit = [...container.querySelectorAll<HTMLElement>('[role="status"] button')].find(
 		(node) => node.textContent === 'Edit card'
 	)
@@ -199,7 +200,7 @@ test('unreadable stored rows offer the editor when the card is editable', async 
 
 test('unreadable stored rows explain the fix instead of printing the decoder error', async () => {
 	await render({ ...base, rows: { encoding: 'gzip-base64', data: 'not-gzip', rowCount: 2 } })
-	await vi.waitFor(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
+	await waitForUi(() => expect(container.textContent).toContain("Stored rows couldn't be read"))
 	const alert = [...container.querySelectorAll('[role="status"]')].find((node) =>
 		node.textContent?.includes("Stored rows couldn't be read")
 	)

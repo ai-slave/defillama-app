@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { MultiChartConfig } from '../../types'
 import MultiChartCard from '../MultiChartCard'
 
@@ -68,7 +69,7 @@ test('waits for every series, blocks failed partial exports, then exports both s
 		return button
 	}
 	await render(multi)
-	const menu = await vi.waitFor(() => {
+	const menu = await waitForUi(() => {
 		const button = container.querySelector<HTMLButtonElement>('[aria-label="More actions"]')
 		if (!button) throw new Error('Missing card menu')
 		return button
@@ -80,14 +81,14 @@ test('waits for every series, blocks failed partial exports, then exports both s
 	expect(downloads).toHaveLength(0)
 
 	await act(async () => solana.resolve(Response.json({ error: 'down' }, { status: 500 })))
-	await vi.waitFor(() => expect(container.textContent).toContain('1 series is unavailable.'))
+	await waitForUi(() => expect(container.textContent).toContain('1 series is unavailable.'))
 	expect(exportButton().getAttribute('aria-disabled')).toBe('true')
 
 	solana = Promise.withResolvers<Response>()
 	solana.resolve(Response.json({ tvl: [[1_704_067_200, 7]] }))
 	const retry = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Try again')!
 	await act(async () => retry.click())
-	await vi.waitFor(() => expect(exportButton().getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(exportButton().getAttribute('aria-disabled')).not.toBe('true'))
 	await act(async () => exportButton().click())
 	expect(downloads).toHaveLength(1)
 	expect(await downloads[0]!.blob.text()).toBe('Date,Ethereum TVL,Solana TVL\n2024-01-01,12,7')
@@ -106,7 +107,7 @@ test('a cumulative chart explains why active addresses are missing and offers in
 		]
 	})
 
-	await vi.waitFor(() => expect(container.textContent).toContain("Cumulative isn't available for Active Addresses."))
+	await waitForUi(() => expect(container.textContent).toContain("Cumulative isn't available for Active Addresses."))
 	const action = [...container.querySelectorAll('button')].find(
 		(button) => button.textContent === 'Show individual values'
 	)!

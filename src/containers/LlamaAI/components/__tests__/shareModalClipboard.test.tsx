@@ -3,6 +3,7 @@
 import { act, StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const { writeText, nativeShare, toastError } = vi.hoisted(() => ({
 	writeText: vi.fn(),
@@ -51,7 +52,7 @@ const settle = async () => {
 }
 async function expectText(text: string) {
 	await act(async () => {
-		await vi.waitFor(() => expect(document.body.textContent).toContain(text))
+		await waitForUi(() => expect(document.body.textContent).toContain(text))
 	})
 }
 

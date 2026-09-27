@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ConfirmationModal } from '../ConfirmationModal'
 import { DashboardCard } from '../DashboardCard'
 import { DashboardList } from '../DashboardList'
@@ -34,7 +35,7 @@ async function click(name: string) {
 	await act(async () => button(name).click())
 }
 async function clickMenuItem(name: string) {
-	await vi.waitFor(() => {
+	await waitForUi(() => {
 		const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
 			(e) => e.textContent?.trim() === name
 		)
@@ -76,7 +77,7 @@ test.each(['banner', 'inline'] as const)(
 			radios[0].focus()
 			radios[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
 		})
-		await vi.waitFor(() => expect(radios[1].checked).toBe(true))
+		await waitForUi(() => expect(radios[1].checked).toBe(true))
 		expect(radios.filter((e) => e.checked)).toHaveLength(1)
 		expect(rate).not.toHaveBeenCalled()
 		const feedback = document.querySelector('textarea')!
@@ -85,7 +86,7 @@ test.each(['banner', 'inline'] as const)(
 			document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 		)
 		expect(rate).toHaveBeenCalledExactlyOnceWith('rating-1', { rating: 2, feedback: 'Useful summary' })
-		await vi.waitFor(() => expect(radios.every((e) => e.getAttribute('aria-disabled') === 'true')).toBe(true))
+		await waitForUi(() => expect(radios.every((e) => e.getAttribute('aria-disabled') === 'true')).toBe(true))
 		await act(async () => request.resolve())
 		expect(radios[1].checked).toBe(true)
 		expect(feedback.value).toBe('Useful summary')
@@ -113,15 +114,15 @@ test('dashboard deletion stays pending in the confirmation and retries failures 
 	await click('Dashboard card actions')
 	await clickMenuItem('Delete…')
 	await click('Delete')
-	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
 	expect(remove).toHaveBeenCalledExactlyOnceWith('qa')
 	expect(openDialog()).toBeDefined()
 	expect(button('Cancel').disabled).toBe(true)
 	await act(async () => request.reject(new Error('Deletion failed')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Deletion failed'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Deletion failed'))
 	await click('Delete')
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 	expect(remove).toHaveBeenCalledTimes(2)
 })
 
@@ -166,11 +167,11 @@ test('deleting the last dashboard returns focus to the surviving list', async ()
 	)
 	await click('Dashboard card actions')
 	await clickMenuItem('Delete…')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Delete')
-	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => request.resolve())
-	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Your dashboards'))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Your dashboards'))
 	expect(button('Create dashboard')).toBeDefined()
 	expect(openDialog()).toBeUndefined()
 })

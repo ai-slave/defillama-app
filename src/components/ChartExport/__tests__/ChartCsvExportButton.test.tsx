@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ChartCsvExportButton } from '../ChartCsvExportButton'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/charts' }) }))
@@ -31,7 +32,7 @@ async function mount(props: ComponentProps<typeof ChartCsvExportButton>) {
 		)
 	)
 	const button = container.querySelector<HTMLButtonElement>('button')!
-	await vi.waitFor(() => expect(button.disabled).toBe(false))
+	await waitForUi(() => expect(button.disabled).toBe(false))
 	return button
 }
 async function prepareCsv(instance: ECharts) {

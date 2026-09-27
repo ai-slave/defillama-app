@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { fetchTokensResponse } from '../queries.client'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION } from '../types'
 import { buildTokensSortIndexes, getTokensPageFromRows } from '../utils'
@@ -59,7 +60,7 @@ async function render(child: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{child}</QueryClientProvider>))
 }
 async function expectShows(text: string) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		expect(element.textContent).toContain(text)
 	})

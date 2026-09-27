@@ -7,6 +7,7 @@ import { FEATURES_SERVER } from '~/constants'
 import HomePage from '~/pages/pro'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const router = vi.hoisted(() => ({
 	pathname: '/pro',
@@ -175,7 +176,7 @@ test.each(['unknown', ['favorites', 'profile']])(
 test('typing a search refetches My Dashboards once, after the debounce', async () => {
 	router.query = { tab: 'my-dashboards', page: '3' }
 	await render()
-	await vi.waitFor(() => expect(listRequests()).toEqual(['3/20']))
+	await waitForUi(() => expect(listRequests()).toEqual(['3/20']))
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	onTestFinished(() => void vi.useRealTimers())
 	const search = container.querySelector<HTMLInputElement>('[aria-label="Search my dashboards"]')!
@@ -189,14 +190,14 @@ test('typing a search refetches My Dashboards once, after the debounce', async (
 		await vi.advanceTimersByTimeAsync(250)
 	})
 	vi.useRealTimers()
-	await vi.waitFor(() => expect(listRequests()).toEqual(['3/20', '1/100']))
+	await waitForUi(() => expect(listRequests()).toEqual(['3/20', '1/100']))
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
 test('a viewer without a team gets no Team tab and no team request', async () => {
 	router.query = { tab: 'team' }
 	await render()
-	await vi.waitFor(() => expect(session.requests.some((request) => request.url.pathname === '/team')).toBe(true))
+	await waitForUi(() => expect(session.requests.some((request) => request.url.pathname === '/team')).toBe(true))
 	expect(tabs().map((tab) => tab.textContent)).toEqual([
 		'Discover',
 		'My Dashboards',
@@ -213,7 +214,7 @@ test('a team member opens the Team tab on the team scope', async () => {
 	session.serve({ '/team': { team: { id: 'team-1', name: 'Growth' } } })
 	router.query = { tab: 'team' }
 	await render()
-	const team = await vi.waitFor(() => {
+	const team = await waitForUi(() => {
 		const tab = tabs().find((candidate) => candidate.textContent === 'Team')
 		expect(tab && panel(tab).textContent).toContain('Shared with Growth')
 		return tab!
@@ -227,5 +228,5 @@ test('a team member opens the Team tab on the team scope', async () => {
 		'My Profile'
 	])
 	expect(panel(team).hidden).toBe(false)
-	await vi.waitFor(() => expect(listRequests()).toContain('1/20/team'))
+	await waitForUi(() => expect(listRequests()).toContain('1/20/team'))
 })

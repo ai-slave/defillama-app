@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DashboardAuthorProfileCard } from '../DashboardAuthorProfileCard'
 import type { PublicDashboardAuthor } from '../types'
 
@@ -58,12 +59,12 @@ describe('the dashboard author profile card', () => {
 	test('a failed load shows the error card instead of spinning forever', async () => {
 		respond = fixtureStatus(500, { error: 'nope' })
 		await render()
-		await vi.waitFor(() => expect(container.textContent).toContain('Profile could not be loaded.'), { timeout: 1000 })
+		await waitForUi(() => expect(container.textContent).toContain('Profile could not be loaded.'), { timeout: 1000 })
 	})
 
 	test('the form opens on the loaded profile', async () => {
 		await render()
-		await vi.waitFor(() => expect(inputValues()).toEqual(expect.arrayContaining(['Ada Lovelace', 'ada'])), {
+		await waitForUi(() => expect(inputValues()).toEqual(expect.arrayContaining(['Ada Lovelace', 'ada'])), {
 			timeout: 1000
 		})
 		expect(container.querySelector('textarea')?.value).toBe('Writes about analytical engines.')

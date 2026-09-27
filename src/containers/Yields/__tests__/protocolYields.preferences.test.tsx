@@ -10,6 +10,7 @@ import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import ProtocolPage from '~/pages/protocol/yields/[protocol]'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { APY_COMPONENTS_PREF, APY_WINDOW_PREF, TABLE_PAGE_SIZE_PREF } from '../stickyQueryPrefs'
 
 const mocks = vi.hoisted(() => ({
@@ -113,7 +114,7 @@ test('restores APY preferences before fetching and keeps protocol scope when tog
 	})
 	mocks.router = { ...mocks.router, query: restored }
 	await act(async () => root.render(element()))
-	await vi.waitFor(() => expect(container.textContent).toContain('aave-pool'))
+	await waitForUi(() => expect(container.textContent).toContain('aave-pool'))
 	expect(lastRequest().getAll('protocol')).toEqual(['Aave V2', 'Aave V3'])
 	expect(lastRequest().get('apyWindow')).toBe('avg_30d')
 	expect(lastRequest().get('apyComponents')).toBe('intrinsic')

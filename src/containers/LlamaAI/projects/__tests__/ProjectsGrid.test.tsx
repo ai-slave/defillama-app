@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectsGrid } from '../ProjectsGrid'
 
 const push = vi.hoisted(() => vi.fn())
@@ -40,19 +41,19 @@ const openDialog = () => [...document.querySelectorAll<HTMLElement>('[role="dial
 const dialogTitle = () => document.getElementById(openDialog()!.getAttribute('aria-labelledby')!)?.textContent
 
 test('project cards have a real link with separate rename and delete controls', async () => {
-	await vi.waitFor(() => expect(container.querySelector('a[href="/ai/projects/research"]')).not.toBeNull())
+	await waitForUi(() => expect(container.querySelector('a[href="/ai/projects/research"]')).not.toBeNull())
 	const link = container.querySelector<HTMLAnchorElement>('a[href="/ai/projects/research"]')!
 	expect(link.textContent).toBe('Research')
 	expect(link.querySelector('button')).toBeNull()
 
 	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Rename Research"]')!.click())
-	await vi.waitFor(() => expect(dialogTitle()).toBe('Rename project'))
+	await waitForUi(() => expect(dialogTitle()).toBe('Rename project'))
 	expect(openDialog()!.querySelector('input')!.value).toBe('Research')
 	const cancel = [...openDialog()!.querySelectorAll('button')].find((button) => button.textContent === 'Cancel')!
 	await act(async () => cancel.click())
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 
 	await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="Delete Research"]')!.click())
-	await vi.waitFor(() => expect(openDialog()?.textContent).toContain('Research'))
+	await waitForUi(() => expect(openDialog()?.textContent).toContain('Research'))
 	expect(push).not.toHaveBeenCalled()
 })

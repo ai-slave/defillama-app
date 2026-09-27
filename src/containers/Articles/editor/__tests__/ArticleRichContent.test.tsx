@@ -2,7 +2,8 @@
 import { EditorContent, useEditor, type Editor, type JSONContent } from '@tiptap/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, expect, test } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TableControlsOverlay } from '../ArticleEditorControls'
 import { createArticleEditorExtensions } from '../extensions'
 
@@ -69,14 +70,14 @@ afterEach(async () => {
 test('cancels image credit drafts from any control, returns focus, and saves the edited credit fields', async () => {
 	await mount({ type: 'doc', content: [image, { type: 'paragraph' }] })
 	await click('Credit')
-	await vi.waitFor(() => expect(document.activeElement?.getAttribute('placeholder')).toBe('Image title'))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('placeholder')).toBe('Image title'))
 	expect(button('Credit').getAttribute('aria-expanded')).toBe('true')
 	await fill('Image title', 'Changed headline')
 	await act(async () => button('Save').focus())
 	await escape()
-	await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).toBeNull())
 	expect(editor.getJSON().content![0].attrs!.headline).toBe('Original headline')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Credit')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Credit')))
 	await click('Credit')
 	expect(document.querySelector<HTMLInputElement>('[placeholder="Image title"]')!.value).toBe('Original headline')
 	await fill('Image title', 'Saved headline')
@@ -114,7 +115,7 @@ test('undo restores image captions and removing a caption does not resurrect its
 	expect(document.querySelector<HTMLTextAreaElement>('[aria-label="Image caption"]')!.value).toBe('Original caption')
 	await click('Caption')
 	await click('Caption')
-	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Image caption'))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Image caption'))
 	expect(document.querySelector<HTMLTextAreaElement>('[aria-label="Image caption"]')!.value).toBe('')
 	await fill('Add a caption…', 'New caption')
 	await act(async () => document.querySelector<HTMLTextAreaElement>('[aria-label="Image caption"]')!.blur())

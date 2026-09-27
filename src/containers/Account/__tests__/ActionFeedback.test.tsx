@@ -8,6 +8,7 @@ import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchS
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ApiAccessCard } from '../ApiAccessCard'
 
 const session = installSubscriberSession('admin')
@@ -113,12 +114,12 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	copy.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
 	await mount(<ApiHarness />)
 	await click('Copy')
-	await vi.waitFor(() => expect(button('Copying…').disabled).toBe(true))
+	await waitForUi(() => expect(button('Copying…').disabled).toBe(true))
 	expect(container.textContent).not.toContain('Copied')
 	await act(async () => request.reject(new Error('Permission denied')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy'))
 	await click('Copy')
-	await vi.waitFor(() => expect(button('Copied')).toBeDefined())
+	await waitForUi(() => expect(button('Copied')).toBeDefined())
 	expect(copy).toHaveBeenCalledWith('old-test-key')
 })
 test('each successful copy gets a fresh feedback interval, while a later failure stays visible', async () => {
@@ -163,19 +164,19 @@ test('regeneration keeps confirmation and old key on failure, retries, and close
 	regenerate.mockReturnValueOnce(request.promise).mockResolvedValueOnce('new-test-key')
 	await mount(<ApiHarness />)
 	await click('Regenerate')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Cancel')
 	expect(regenerate).not.toHaveBeenCalled()
 	await click('Regenerate')
 	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => el.textContent?.trim() === 'Regenerate')!
 	await act(async () => confirm.click())
-	await vi.waitFor(() => expect(confirm.getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(confirm.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => confirm.click())
 	expect(regenerate).toHaveBeenCalledOnce()
 	await act(async () => request.reject(new Error('Generation refused')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Generation refused'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Generation refused'))
 	await act(async () => confirm.click())
-	await vi.waitFor(() => expect(dialog()).toBeUndefined())
+	await waitForUi(() => expect(dialog()).toBeUndefined())
 	await click('Show API key')
 	expect(container.textContent).toContain('new-test-key')
 })
@@ -183,10 +184,10 @@ test('first key generation needs no destructive confirmation and exposes retry f
 	regenerate.mockRejectedValueOnce(new Error('Try again')).mockResolvedValueOnce('first-test-key')
 	await mount(<ApiHarness initialKey={null} />)
 	await click('Generate API Key')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Try again'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Try again'))
 	expect(dialog()).toBeUndefined()
 	await click('Generate API Key')
-	await vi.waitFor(() => expect(button('Show API key')).toBeDefined())
+	await waitForUi(() => expect(button('Show API key')).toBeDefined())
 })
 async function selectReplacement(sponsorId: string, slug: string) {
 	const input = document.querySelector<HTMLInputElement>(`#replacement-${sponsorId}`)!
@@ -195,7 +196,7 @@ async function selectReplacement(sponsorId: string, slug: string) {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'New')
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	await vi.waitFor(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
 	await act(async () =>
 		[...document.querySelectorAll<HTMLElement>('[role="option"]')]
 			.find((option) => option.textContent?.includes(`/protocol/${slug}`))!
@@ -212,7 +213,7 @@ test('an old sponsor update cannot close a reopened editor or clear its new sele
 	const first = pending()
 	sponsorUpdates.push(first.answer)
 	await mount(<ResearchSponsorsAdminView />)
-	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
+	await waitForUi(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
@@ -223,7 +224,7 @@ test('an old sponsor update cannot close a reopened editor or clear its new sele
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
 	expect(button('Save page').disabled).toBe(false)
 	await click('Save page')
-	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 	expect(sponsorUpdateBodies()).toEqual([
 		['s1', 'new'],
 		['s1', 'second']
@@ -236,19 +237,19 @@ test.each(['success', 'failure'] as const)(
 		const second = pending()
 		sponsorUpdates.push(first.answer, second.answer)
 		await mount(<ResearchSponsorsAdminView />)
-		await vi.waitFor(() => expect(button('Change page')).toBeDefined())
+		await waitForUi(() => expect(button('Change page')).toBeDefined())
 		await click('Change page')
 		await selectReplacement('s1', 'new')
 		await click('Save page')
-		await vi.waitFor(() => expect(sponsorUpdateBodies()).toHaveLength(1))
+		await waitForUi(() => expect(sponsorUpdateBodies()).toHaveLength(1))
 		await click('Cancel edit')
 		await click('Change page')
 		await selectReplacement('s1', 'second')
 		await click('Save page')
-		await vi.waitFor(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
+		await waitForUi(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
 		expect(sponsorUpdateBodies()).toHaveLength(1)
 		await act(async () => first.reply.resolve(outcome === 'success' ? {} : offline()))
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(sponsorUpdateBodies()).toEqual([
 				['s1', 'new'],
 				['s1', 'second']
@@ -257,7 +258,7 @@ test.each(['success', 'failure'] as const)(
 		expect(document.querySelector('#replacement-s1')).not.toBeNull()
 		expect(document.querySelector('[role="alert"]')).toBeNull()
 		await act(async () => second.reply.resolve({}))
-		await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+		await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 	}
 )
 
@@ -269,37 +270,37 @@ test('a pending sponsor save does not block saving another sponsor', async () =>
 		{ id: 's2', displayName: 'Second', entityType: 'protocol', entitySlug: 'second', reports: [] }
 	]
 	await mount(<ResearchSponsorsAdminView />)
-	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
+	await waitForUi(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
-	await vi.waitFor(() => expect(sponsorUpdateBodies()).toHaveLength(1))
+	await waitForUi(() => expect(sponsorUpdateBodies()).toHaveLength(1))
 	await click('Change page')
 	await selectReplacement('s2', 'second')
 	await click('Save page')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(sponsorUpdateBodies()).toEqual([
 			['s1', 'new'],
 			['s2', 'second']
 		])
 	)
-	await vi.waitFor(() => expect(document.querySelector('#replacement-s2')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('#replacement-s2')).toBeNull())
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
 	await act(async () => first.reply.resolve({}))
-	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 })
 
 test('sponsor save failure preserves the selected page and retries inline', async () => {
 	sponsorUpdates.push(offline)
 	await mount(<ResearchSponsorsAdminView />)
-	await vi.waitFor(() => expect(button('Change page')).toBeDefined())
+	await waitForUi(() => expect(button('Change page')).toBeDefined())
 	await click('Change page')
 	await selectReplacement('s1', 'new')
 	await click('Save page')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Offline'))
 	expect(document.querySelector('#replacement-s1')).not.toBeNull()
 	await click('Save page')
-	await vi.waitFor(() => expect(document.querySelector('#replacement-s1')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('#replacement-s1')).toBeNull())
 })
 test('sponsor deletion removes the row and restores focus to the surviving heading', async () => {
 	sponsorUpdates.push(() => {
@@ -307,13 +308,13 @@ test('sponsor deletion removes the row and restores focus to the surviving headi
 		return {}
 	})
 	await mount(<ResearchSponsorsAdminView />)
-	await vi.waitFor(() => expect(button('Remove')).toBeDefined())
+	await waitForUi(() => expect(button('Remove')).toBeDefined())
 	await click('Remove')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => el.textContent === 'Remove')!
 	await act(async () => confirm.click())
-	await vi.waitFor(() => expect(container.textContent).not.toContain('Original sponsor'))
-	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Sponsored reports'))
+	await waitForUi(() => expect(container.textContent).not.toContain('Original sponsor'))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sponsored reports'))
 	expect(deletedPaths()).toEqual(['/research/sponsors/s1'])
 })
 test.each([
@@ -322,13 +323,13 @@ test.each([
 ] as const)('%s retries after a failure and sends only the selected deletion', async (name, path) => {
 	deletions.push(() => fixtureStatus(500, { error: 'Retry deletion' })())
 	await mount(<TrustedByAdminView />)
-	await vi.waitFor(() => expect(button(name)).toBeDefined())
+	await waitForUi(() => expect(button(name)).toBeDefined())
 	await click(name)
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Delete')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Retry deletion'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Retry deletion'))
 	await click('Delete')
-	await vi.waitFor(() => expect(dialog()).toBeUndefined())
+	await waitForUi(() => expect(dialog()).toBeUndefined())
 	expect(deletedPaths()).toEqual([path, path])
 })
 
@@ -339,12 +340,12 @@ test('deletion stays pending through the list refresh before restoring focus aft
 		return {}
 	})
 	await mount(<TrustedByAdminView />)
-	await vi.waitFor(() => expect(button('Delete Example logo')).toBeDefined())
+	await waitForUi(() => expect(button('Delete Example logo')).toBeDefined())
 	await click('Delete Example logo')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Delete')
-	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => refreshed.resolve({ logos: [] }))
-	await vi.waitFor(() => expect(dialog()).toBeUndefined())
-	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Trusted By'))
+	await waitForUi(() => expect(dialog()).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Trusted By'))
 })

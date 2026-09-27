@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { RiskTabs, type RiskTab } from '../components/RiskTabs'
 
 const renders = vi.fn()
@@ -66,7 +67,7 @@ test('SSR includes inactive content and public anchors with the correct visibili
 test('hash navigation preserves scenario state without rerendering inactive content', async () => {
 	window.history.replaceState(null, '', '/#vault-risk-scenarios')
 	await act(async () => root.render(view()))
-	await vi.waitFor(() => expect(tab('Scenarios').getAttribute('aria-selected')).toBe('true'))
+	await waitForUi(() => expect(tab('Scenarios').getAttribute('aria-selected')).toBe('true'))
 	const draft = container.querySelector<HTMLButtonElement>('#vault-risk-scenarios button')!
 	await act(async () => draft.click())
 	expect(draft.textContent).toBe('Drop 20%')

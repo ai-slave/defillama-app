@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportHighlightControls } from '../admin/EditorialTagsView'
 import { ReportRow } from '../admin/ReportsAdminView'
 import type { ArticleDocument } from '../types'
@@ -127,12 +128,12 @@ describe('admin drafts around saves', () => {
 
 		await type('B')
 		await click('Save')
-		await vi.waitFor(() => expect(reportBodies).toMatchObject([{ reportDescription: 'B' }]), { timeout: 500 })
+		await waitForUi(() => expect(reportBodies).toMatchObject([{ reportDescription: 'B' }]), { timeout: 500 })
 
 		await type('C')
 		await act(async () => save.resolve({ ...article, reportDescription: 'B' }))
 
-		await vi.waitFor(() => expect(button('Save').disabled).toBe(false), { timeout: 500 })
+		await waitForUi(() => expect(button('Save').disabled).toBe(false), { timeout: 500 })
 		expect(textarea().value).toBe('C')
 		expect(container.textContent).not.toContain('changed elsewhere')
 	})
@@ -144,7 +145,7 @@ describe('admin drafts around saves', () => {
 		await type('  B  ')
 		await click('Save')
 
-		await vi.waitFor(() => expect(textarea().value).toBe('B'), { timeout: 500 })
+		await waitForUi(() => expect(textarea().value).toBe('B'), { timeout: 500 })
 		expect(button('Save').disabled).toBe(true)
 	})
 
@@ -155,7 +156,7 @@ describe('admin drafts around saves', () => {
 		await type('Draft highlight')
 		await chooseLogoFile()
 
-		await vi.waitFor(() => expect(logo()).toBe('/uploads/logo-1.png'), { timeout: 500 })
+		await waitForUi(() => expect(logo()).toBe('/uploads/logo-1.png'), { timeout: 500 })
 		expect(textarea().value).toBe('Draft highlight')
 		expect(container.textContent).not.toContain('changed elsewhere')
 	})
@@ -173,7 +174,7 @@ describe('admin drafts around saves', () => {
 		expect(logo()).toBeNull()
 
 		await act(async () => removal.reject(new Error('offline')))
-		await vi.waitFor(() => expect(logo()).toBe('/uploads/saved-logo.png'), { timeout: 500 })
+		await waitForUi(() => expect(logo()).toBe('/uploads/saved-logo.png'), { timeout: 500 })
 		expect(textarea().value).toBe('Draft highlight')
 	})
 
@@ -183,12 +184,12 @@ describe('admin drafts around saves', () => {
 		await render(<ReportHighlightControls article={article} pending={false} invalidate={vi.fn()} />)
 
 		await chooseLogoFile()
-		await vi.waitFor(() => expect(logo()).toBe('/uploads/logo-1.png'), { timeout: 500 })
+		await waitForUi(() => expect(logo()).toBe('/uploads/logo-1.png'), { timeout: 500 })
 		await chooseLogoFile()
-		await vi.waitFor(() => expect(logo()).toBe('/uploads/logo-2.png'), { timeout: 500 })
+		await waitForUi(() => expect(logo()).toBe('/uploads/logo-2.png'), { timeout: 500 })
 
 		await act(async () => failing.reject(new Error('offline')))
-		await vi.waitFor(() => expect(patches.logo).toEqual([]), { timeout: 500 })
+		await waitForUi(() => expect(patches.logo).toEqual([]), { timeout: 500 })
 		expect(logo()).toBe('/uploads/logo-2.png')
 	})
 
@@ -201,7 +202,7 @@ describe('admin drafts around saves', () => {
 		await type('  New highlight  ')
 		await click('Save highlight text')
 
-		await vi.waitFor(() => expect(textarea().value).toBe('New highlight'), { timeout: 500 })
+		await waitForUi(() => expect(textarea().value).toBe('New highlight'), { timeout: 500 })
 		expect(logo()).toBe('/uploads/saved-logo.png')
 		expect(button('Save highlight text').disabled).toBe(true)
 	})

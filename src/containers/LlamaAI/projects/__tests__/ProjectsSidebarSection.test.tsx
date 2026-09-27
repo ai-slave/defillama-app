@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectsSidebarSection } from '../ProjectsSidebarSection'
 import { PROJECTS_KEY } from '../queryKeys'
 import type { ProjectChatSession } from '../types'
@@ -80,7 +81,7 @@ async function render(currentProjectId: string | null = 'project', currentSessio
 		)
 	)
 }
-const until = (check: () => void) => vi.waitFor(check, { timeout: 1000 })
+const until = (check: () => void) => waitForUi(check, { timeout: 1000 })
 const projects = (...names: Array<[string, string]>) => ({ projects: names.map(([id, name]) => ({ id, name })) })
 const button = (text: string) => [...container.querySelectorAll('button')].find((b) => b.textContent === text)!
 const folder = (name: string) =>

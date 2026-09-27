@@ -9,6 +9,7 @@ import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardA
 import pb from '~/utils/pocketbase'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { CSVDownloadButton, type CsvPayload } from '../CsvDownloadButton'
 // Warm the lazily loaded access dialog; a cold import under full-suite load outlasts waitFor.
 import '~/containers/Subscription/shared/SubscribeCards/SubscribeProCard'
@@ -58,7 +59,7 @@ async function key(element: HTMLElement, value: string) {
 		element.dispatchEvent(new KeyboardEvent('keyup', { key: value, bubbles: true, cancelable: true }))
 	})
 }
-const waitFor = (assertion: () => void) => vi.waitFor(assertion, { timeout: 1000 })
+const waitFor = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 })
 // The export is gated until the session's subscription check settles.
 const waitForSession = () =>
 	waitFor(() => expect(button('Download .csv').getAttribute('aria-disabled')).not.toBe('true'))

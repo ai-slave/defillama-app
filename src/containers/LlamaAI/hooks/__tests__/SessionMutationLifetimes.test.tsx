@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '../sessionListCache'
 import { useSessionMutations } from '../useSessionMutations'
 import { useUpdateSessionTitle } from '../useUpdateSessionTitle'
@@ -125,7 +126,7 @@ test('a failed delete does not overwrite another session rename', async () => {
 	await act(async () => {
 		deleting = mutations.deleteSession.mutateAsync({ sessionId: 'chat' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(deletion.arrived).toBe(true))
+	await waitForUi(() => expect(deletion.arrived).toBe(true))
 	await act(async () => {
 		await rename.mutateAsync({ sessionId: 'other', title: 'Renamed' })
 	})
@@ -148,7 +149,7 @@ test('bulk deletion keeps its rows until success and preserves another renamed r
 	await act(async () => {
 		deleting = mutations.bulkDeleteSessions.mutateAsync(['chat'])
 	})
-	await vi.waitFor(() => expect(deletion.arrived).toBe(true))
+	await waitForUi(() => expect(deletion.arrived).toBe(true))
 	expect(sessions().map((s) => s.sessionId)).toEqual(['chat', 'other'])
 	await act(async () => {
 		await rename.mutateAsync({ sessionId: 'other', title: 'Renamed' })
@@ -168,7 +169,7 @@ test('a failed rename does not overwrite the next queued title', async () => {
 	await act(async () => {
 		firstRename = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(first.arrived).toBe(true))
+	await waitForUi(() => expect(first.arrived).toBe(true))
 	let newer!: Promise<unknown>
 	await act(async () => {
 		newer = rename.mutateAsync({ sessionId: 'chat', title: 'Newer' })
@@ -196,7 +197,7 @@ test('a settled rename waits for an overlapping write before refetching', async 
 		await act(async () => {
 			deleting = mutations.deleteSession.mutateAsync({ sessionId: 'other' })
 		})
-		await vi.waitFor(() => expect(deletion.arrived).toBe(true))
+		await waitForUi(() => expect(deletion.arrived).toBe(true))
 		await act(async () => {
 			await rename.mutateAsync({ sessionId: 'chat', title: 'Renamed' })
 		})
@@ -206,8 +207,8 @@ test('a settled rename waits for an overlapping write before refetching', async 
 			deletion.resolve()
 			await deleting
 		})
-		await vi.waitFor(() => expect(fetchSessions).toHaveBeenCalledTimes(1))
-		await vi.waitFor(() => expect(observer.getCurrentResult().isFetching).toBe(false))
+		await waitForUi(() => expect(fetchSessions).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(observer.getCurrentResult().isFetching).toBe(false))
 		expect(observer.getCurrentResult().data).toEqual(refreshed)
 	} finally {
 		unsubscribe()
@@ -223,7 +224,7 @@ test('two failed edits of the same session restore its confirmed title', async (
 	await act(async () => {
 		firstRename = rename.mutateAsync({ sessionId: 'chat', title: 'First' }).catch(() => {})
 	})
-	await vi.waitFor(() => expect(first.arrived).toBe(true))
+	await waitForUi(() => expect(first.arrived).toBe(true))
 	await act(async () => {
 		secondRename = rename.mutateAsync({ sessionId: 'chat', title: 'Second' }).catch(() => {})
 	})

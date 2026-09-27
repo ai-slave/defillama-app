@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { readAppStorage } from '~/contexts/LocalStorage'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 const session = installSubscriberSession('welcome-user')
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 const track = installUmamiSink()
@@ -25,7 +26,7 @@ beforeEach(async () => {
 			</session.Wrapper>
 		)
 	)
-	await vi.waitFor(() => {
+	await waitForUi(() => {
 		if (!container.textContent?.includes('Pick all that apply')) throw new Error('Onboarding choices have not loaded')
 	})
 })

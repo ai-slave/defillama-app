@@ -4,6 +4,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, test, vi } from 'vitest'
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IRWAAssetsOverview } from '../api.types'
 import {
 	buildRwaAssetGroupPieChartData,
@@ -243,9 +244,9 @@ describe('asset chart fetching', () => {
 			)
 
 		await render(false)
-		await vi.waitFor(() => expect(results.at(-1)?.chartDataset.source).toEqual([[1, 18]]))
+		await waitForUi(() => expect(results.at(-1)?.chartDataset.source).toEqual([[1, 18]]))
 		await render(true)
-		await vi.waitFor(() => expect(results.at(-1)?.chartDataset.source).toEqual([[1, 180]]))
+		await waitForUi(() => expect(results.at(-1)?.chartDataset.source).toEqual([[1, 180]]))
 
 		await act(async () => root.unmount())
 		client.clear()

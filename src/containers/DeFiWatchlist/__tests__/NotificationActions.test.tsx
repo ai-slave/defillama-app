@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { PortfolioNotifications } from '../index'
 
 const session = installSubscriberSession('user')
@@ -51,7 +52,7 @@ function button(name: string) {
 	)
 }
 
-const waitFor = (assertion: () => void) => vi.waitFor(assertion, { timeout: 1000 })
+const waitFor = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 })
 
 test.each([
 	['Disable', 'Disabling...', 'Notification preferences disabled'],

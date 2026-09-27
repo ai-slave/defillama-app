@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from '../DashboardActionButtons'
 import { Rating } from '../Rating'
@@ -51,15 +52,15 @@ test('copy blocks repeated activation, exposes failure, and navigates after a su
 	await render(<CopyDashboardButton onCopy={copy} />)
 	button('Copy Dashboard').focus()
 	await click('Copy Dashboard')
-	await vi.waitFor(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
 	expect(document.activeElement).toBe(button('Copying…'))
 	await click('Copying…')
 	expect(copy).toHaveBeenCalledOnce()
 	await act(async () => pending.reject(new Error('Copy unavailable')))
-	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Copy unavailable'))
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Copy unavailable'))
 	expect(push).not.toHaveBeenCalled()
 	await click('Copy Dashboard')
-	await vi.waitFor(() => expect(push).toHaveBeenCalledExactlyOnceWith('/pro/copied-analysis'))
+	await waitForUi(() => expect(push).toHaveBeenCalledExactlyOnceWith('/pro/copied-analysis'))
 })
 test('copy respects the dashboard limit and cannot navigate after its source page is replaced', async () => {
 	const pending = Promise.withResolvers<Dashboard>()
@@ -71,11 +72,11 @@ test('copy respects the dashboard limit and cannot navigate after its source pag
 	expect(copy).not.toHaveBeenCalled()
 	await render(<CopyDashboardButton key="source" onCopy={copy} />)
 	await click('Copy Dashboard')
-	await vi.waitFor(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Copying…').getAttribute('aria-disabled')).toBe('true'))
 	expect(copy).toHaveBeenCalledOnce()
 	await render(<CopyDashboardButton key="another-source" onCopy={copy} />)
 	await act(async () => pending.resolve(copied))
-	await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+	await waitForUi(() => expect(client.isMutating()).toBe(0))
 	expect(push).not.toHaveBeenCalled()
 	expect(button('Copy Dashboard').getAttribute('aria-disabled')).not.toBe('true')
 })
@@ -84,14 +85,14 @@ test('undo blocks another request while pending and keeps failure beside the ret
 	const undo = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
 	await render(<UndoAIGenerationButton onUndo={undo} />)
 	await click('Undo AI changes')
-	await vi.waitFor(() => expect(button('Undo AI changes').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Undo AI changes').getAttribute('aria-disabled')).toBe('true'))
 	await click('Undo AI changes')
 	expect(undo).toHaveBeenCalledOnce()
 	await act(async () => pending.reject(new Error('Undo unavailable')))
-	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Undo unavailable'))
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Undo unavailable'))
 	await click('Undo AI changes')
-	await vi.waitFor(() => expect(undo).toHaveBeenCalledTimes(2))
-	await vi.waitFor(() => {
+	await waitForUi(() => expect(undo).toHaveBeenCalledTimes(2))
+	await waitForUi(() => {
 		expect(container.querySelector('[role="alert"]')).toBeNull()
 		expect(button('Undo AI changes').textContent).toBe('Undo AI changes')
 		expect(button('Undo AI changes').getAttribute('aria-disabled')).not.toBe('true')
@@ -107,17 +108,17 @@ test.each(['Skip', 'Dismiss rating'])(
 		container.querySelector('textarea')!.value = 'Keep this feedback'
 		button(action).focus()
 		await click(action)
-		await vi.waitFor(() => expect(button(action).getAttribute('aria-disabled')).toBe('true'))
+		await waitForUi(() => expect(button(action).getAttribute('aria-disabled')).toBe('true'))
 		expect(document.activeElement).toBe(button(action))
 		await click('Submit Rating')
 		await click('Skip')
 		await click('Dismiss rating')
 		expect(submit).toHaveBeenCalledExactlyOnceWith('first', { skipped: true })
 		await act(async () => pending.reject(new Error('Rating unavailable')))
-		await vi.waitFor(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Rating unavailable'))
+		await waitForUi(() => expect(container.querySelector('[role="alert"]')?.textContent).toBe('Rating unavailable'))
 		expect(container.querySelector('textarea')!.value).toBe('Keep this feedback')
 		await click('Submit Rating')
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(submit).toHaveBeenLastCalledWith('first', { rating: 4, feedback: 'Keep this feedback' })
 		)
 		await render(<Rating sessionId="second" mode="iterate" variant="banner" onSubmit={submit} />)
@@ -135,17 +136,17 @@ test('opening the editor blocks repeated navigation and exposes a retry after fa
 	await render(<EditDashboardButton href="/pro/example/edit" />)
 	button('Edit').focus()
 	await click('Edit')
-	await vi.waitFor(() => expect(button('Opening editor…')?.getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Opening editor…')?.getAttribute('aria-disabled')).toBe('true'))
 	expect(document.activeElement).toBe(button('Opening editor…'))
 	await click('Opening editor…')
 	expect(push).toHaveBeenCalledExactlyOnceWith('/pro/example/edit', undefined, { shallow: true })
 	await act(async () => route.reject(new Error('Offline')))
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Could not open the editor')
 	)
 	await click('Edit')
-	await vi.waitFor(() => expect(push).toHaveBeenCalledTimes(2))
-	await vi.waitFor(() => {
+	await waitForUi(() => expect(push).toHaveBeenCalledTimes(2))
+	await waitForUi(() => {
 		expect(container.querySelector('[role="alert"]')).toBeNull()
 		expect(button('Edit')?.textContent).toBe('Edit')
 		expect(button('Edit').getAttribute('aria-disabled')).not.toBe('true')
@@ -157,7 +158,7 @@ test('a copied dashboard remains reachable when navigation fails without creatin
 	push.mockRejectedValueOnce(new Error('Route unavailable'))
 	await render(<CopyDashboardButton onCopy={copy} />)
 	await click('Copy Dashboard')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.querySelector('a[href="/pro/copied-analysis"]')?.textContent).toBe('Open copy')
 	)
 	await click('Copied')

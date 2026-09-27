@@ -2,6 +2,7 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { IncomeStatement } from '../IncomeStatement'
 import type { IProtocolOverviewPageData } from '../types'
 
@@ -37,7 +38,7 @@ async function openComparison(label: string, value: string) {
 	)!
 	const cell = Array.from(row.querySelectorAll('td')).find((cell) => cell.textContent === value)!
 	await act(async () => cell.querySelector('span')!.dispatchEvent(new Event('touchstart', { bubbles: true })))
-	await vi.waitFor(() => expect(document.querySelector('[role="tooltip"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="tooltip"]')).not.toBeNull())
 	return document.querySelector('[role="tooltip"]')!.textContent
 }
 

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { CONFIG_API, SERVER_URL } from '~/constants'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../AppMetadataContext'
 import {
 	ComparisonWizardProvider,
@@ -110,7 +111,7 @@ async function click(label: string) {
 }
 
 async function waitForText(text: string) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})

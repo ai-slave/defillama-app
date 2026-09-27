@@ -10,6 +10,7 @@ import { AuthProvider } from '~/auth'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import pb from '~/utils/pocketbase'
 import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/testing/oauthBoundary'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { SignInDialog, SignInFlow } from '../SignInDialog'
 
 // The Google Identity Services script cannot load in Node; the boundary installs window.google.
@@ -199,7 +200,7 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 	expect(input('email').disabled).toBe(true)
 	expect(container.textContent).toContain('CAPTCHA complete')
 	requests[0].resolve(new Response(JSON.stringify({ error: 'User with this email already exists' }), { status: 400 }))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('already exists')
 	})
@@ -249,7 +250,7 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 	await settle()
 	expect(input('email').disabled).toBe(true)
 	requests[0].reject(new TypeError('Offline'))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Check your connection')
 	})
@@ -261,7 +262,7 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 	)
 	await settle()
 	requests[1].resolve(new Response(JSON.stringify({ ok: true })))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(container.querySelector('[role="status"]')?.textContent).toContain('password reset link')
 	})
@@ -291,7 +292,7 @@ test.each(['person@example.com', ''])(
 		expect(String(url)).toMatch(/\/auth\/request-password-reset$/)
 		expect(JSON.parse(String(options?.body))).toEqual({ email: 'other@example.com', turnstile_token: 'test-captcha' })
 		requests[0].resolve(new Response(JSON.stringify({ ok: true })))
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await settle()
 			expect(container.querySelector('[role="status"]')?.textContent).toContain('other@example.com')
 		})
@@ -378,7 +379,7 @@ test('stops waiting for GitHub and offers a retry when the person closes its pop
 	expect(input('email').disabled).toBe(true)
 	oauth.popup!.closed = true
 	// GitHub sign-in polls the popup every 300ms.
-	await vi.waitFor(
+	await waitForUi(
 		async () => {
 			await settle()
 			expect(container.querySelector('[role="alert"]')?.textContent).toBe('GitHub sign-in did not finish.')
@@ -481,7 +482,7 @@ test('focuses the heading on opening and navigation without stealing focus for a
 			</QueryClientProvider>
 		)
 	)
-	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Sign in'))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sign in'))
 	expect(document.activeElement?.tagName).toBe('H2')
 	await act(async () => document.querySelector<HTMLInputElement>('input[name="email"]')!.focus())
 	await act(async () => rememberSignIn({ method: 'github' }))
@@ -491,7 +492,7 @@ test('focuses the heading on opening and navigation without stealing focus for a
 			.find((button) => button.textContent === 'Create an account')!
 			.click()
 	)
-	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Create an account'))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Create an account'))
 	expect(document.activeElement?.tagName).toBe('H2')
 })
 

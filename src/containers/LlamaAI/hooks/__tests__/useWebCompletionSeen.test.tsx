@@ -9,6 +9,7 @@ import { canMarkSeen, useWebCompletionSeen, type PendingSeen } from '~/container
 import type { WebMobilePreference } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const session = installSubscriberSession('user-1')
 const SEEN_PATH = '/mobile-push/completions/'
@@ -122,7 +123,7 @@ describe('useWebCompletionSeen', () => {
 	test('marks the attended completion seen on the server', async () => {
 		await mark()
 
-		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		await waitForUi(() => expect(seenRequests()).toHaveLength(1))
 		expect(seenRequests()[0]!.url.pathname).toBe('/mobile-push/completions/session-1/messages/message-1/seen')
 		expect(seenRequests()[0]!.init?.method).toBe('POST')
 	})
@@ -137,7 +138,7 @@ describe('useWebCompletionSeen', () => {
 		focused = true
 		await act(async () => window.dispatchEvent(new Event('focus')))
 
-		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		await waitForUi(() => expect(seenRequests()).toHaveLength(1))
 	})
 
 	test('waits until the message scrolls into view', async () => {
@@ -147,7 +148,7 @@ describe('useWebCompletionSeen', () => {
 
 		await render({ visibleMessageIds: new Set(['message-1']) })
 
-		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		await waitForUi(() => expect(seenRequests()).toHaveLength(1))
 	})
 
 	test('does not let another session’s pending completion block the active one', async () => {
@@ -156,7 +157,7 @@ describe('useWebCompletionSeen', () => {
 			result.markCompletionSeen('session-1', 'message-1')
 		})
 
-		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		await waitForUi(() => expect(seenRequests()).toHaveLength(1))
 		expect(seenRequests()[0]!.url.pathname).toContain('/session-1/messages/message-1/')
 	})
 
@@ -168,7 +169,7 @@ describe('useWebCompletionSeen', () => {
 
 		await render({ preference: ENABLED })
 
-		await vi.waitFor(() => expect(seenRequests()).toHaveLength(1))
+		await waitForUi(() => expect(seenRequests()).toHaveLength(1))
 	})
 
 	test.each([

@@ -4,6 +4,7 @@ import { act } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ProtocolRankingInitialPage, ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
 
@@ -147,14 +148,14 @@ describe('Protocol Rankings hydration', () => {
 			String(call[0]).toLowerCase().includes('hydration')
 		)
 		expect(hydrationErrors).toEqual([])
-		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
 	})
 
 	test('does not toast when an automatic persisted-preset request fails', async () => {
 		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 
 		await hydrateTable()
-		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(fetch).toHaveBeenCalledTimes(1))
 
 		expect(toastError).not.toHaveBeenCalled()
 	})
@@ -200,7 +201,7 @@ describe('Protocol Rankings hydration', () => {
 		if (!triggerIntersection) throw new Error('Expected protocol rankings scroll observer')
 
 		act(() => triggerIntersection?.())
-		await vi.waitFor(() => expect(container.textContent).toContain('Loading more protocols… 1 of 2'))
+		await waitForUi(() => expect(container.textContent).toContain('Loading more protocols… 1 of 2'))
 
 		expect(container.textContent).not.toContain('Updating rankings…')
 	})

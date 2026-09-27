@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 // constants read the search token at import time; without it searchApi skips the request.
 vi.hoisted(() => {
@@ -100,7 +101,7 @@ describe('TokenUsageSearch', () => {
 		await renderSearch()
 
 		await act(async () => container.querySelector('button')?.click())
-		await vi.waitFor(() => expect(document.querySelector('[role="option"]')?.textContent).toContain('Ethereum'))
+		await waitForUi(() => expect(document.querySelector('[role="option"]')?.textContent).toContain('Ethereum'))
 		const option = document.querySelector<HTMLElement>('[role="option"]')
 
 		await act(async () => option?.click())

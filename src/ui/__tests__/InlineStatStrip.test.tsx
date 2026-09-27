@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { expect, test, vi } from 'vitest'
+import { expect, test } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { InlineStatStrip } from '../SummaryStats'
 
 test('opens metric definitions on keyboard focus while preserving zero values', async () => {
@@ -27,7 +28,7 @@ test('opens metric definitions on keyboard focus while preserving zero values', 
 		expect(document.body.textContent).not.toContain(definition)
 		await act(async () => trigger.focus())
 		expect(document.activeElement).toBe(trigger)
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {
 				await new Promise((resolve) => setTimeout(resolve, 20))
 			})

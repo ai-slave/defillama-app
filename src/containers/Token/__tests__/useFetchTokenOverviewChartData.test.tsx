@@ -2,9 +2,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { TokenOverviewData } from '../tokenOverview'
 import { useFetchTokenOverviewChartData } from '../useFetchTokenOverviewChartData'
 const http = installFixtureFetch()
@@ -93,7 +94,7 @@ describe('useFetchTokenOverviewChartData', () => {
 		])
 
 		await act(async () => rangeRequest.resolve({ data: { prices: [[2_000_000_000_000, 200]] } }))
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[2_000_000_000_000, 200]] })
 		})

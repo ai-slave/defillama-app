@@ -2,8 +2,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolChartsByKeys,
@@ -51,7 +52,7 @@ test('adds own-token exclusions to every TVL batch request', async () => {
 		useFetchProtocolChartsByKeys({ protocol: 'gate', keys: [], source: 'tvl', tokensToExclude: ['GT'] })
 		return null
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(requested().toSorted()).toEqual([
 			`${CHARTS}?kind=tvl&protocol=gate&breakdownType=chain-breakdown&tokensToExclude=GT`,
 			`${CHARTS}?kind=tvl&protocol=gate&breakdownType=token-breakdown&tokensToExclude=GT`,
@@ -68,7 +69,7 @@ test('shares one cached request between duplicate or reordered exclusion lists',
 		useFetchProtocolTVLChart({ protocol: 'gate', tokensToExclude: ['GT', 'MNT'] })
 		return null
 	})
-	await vi.waitFor(() => expect(data).toEqual([]))
+	await waitForUi(() => expect(data).toEqual([]))
 	expect(requested()).toEqual([`${CHARTS}?kind=tvl&protocol=gate&tokensToExclude=GT%2CMNT`])
 })
 
@@ -77,7 +78,7 @@ test('requests value, chain and token breakdowns for the base chart and every TV
 		useFetchProtocolChartsByKeys({ protocol: 'aave', keys: ['pool2', 'staking'], source: 'tvl' })
 		return null
 	})
-	await vi.waitFor(() => expect(requested()).toHaveLength(12))
+	await waitForUi(() => expect(requested()).toHaveLength(12))
 	expect(requested().toSorted()).toEqual(
 		['', '&key=pool2', '&key=staking']
 			.flatMap((key) => [
@@ -101,7 +102,7 @@ test('keeps treasury batch requests on the treasury source', async () => {
 		})
 		return null
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(requested().toSorted()).toEqual([
 			`${CHARTS}?kind=treasury&protocol=makerdao&key=OwnTokens`,
 			`${CHARTS}?kind=treasury&protocol=makerdao&key=OwnTokens&breakdownType=chain-breakdown`
@@ -134,7 +135,7 @@ test('returns activity rows in milliseconds and keeps sub-dollar gas costs', asy
 		}).data
 		return null
 	})
-	await vi.waitFor(() => expect(data).toEqual([[1_700_000_000_000, 0.01]]))
+	await waitForUi(() => expect(data).toEqual([[1_700_000_000_000, 0.01]]))
 	expect(requested()).toEqual([
 		`${CHARTS}?kind=adapter&adapterType=active-users&protocol=pangolin-v2&dataType=dailyGasUsedUsd`
 	])
@@ -153,7 +154,7 @@ test('keeps successful empty activity and median responses distinct from failure
 		results.median = { data: median.data, isError: median.isError }
 		return null
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(results).toEqual({ activity: { data: [], isError: false }, median: { data: [], isError: false } })
 	)
 
@@ -172,7 +173,7 @@ test('keeps successful empty activity and median responses distinct from failure
 		results.median = { data: median.data, isError: median.isError }
 		return null
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(results).toEqual({
 			activity: { data: undefined, isError: true },
 			median: { data: undefined, isError: true }

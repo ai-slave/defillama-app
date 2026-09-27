@@ -5,6 +5,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { RevisionHistoryDrawer } from '../editor/RevisionHistoryDrawer'
 import type { ArticleRevision, ArticleRevisionEventType } from '../types'
 
@@ -165,7 +166,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 		})
 		await flush()
 		const drawer = document.querySelector<HTMLElement>('[role="dialog"]')!
-		await vi.waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true))
+		await waitForUi(() => expect(drawer.contains(document.activeElement)).toBe(true))
 		expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)!.textContent).toBe('Revision history')
 		const press = async (target: HTMLElement, key: string) => {
 			await act(async () =>
@@ -178,13 +179,13 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await press(drawer, 'k')
 		expect(drawer.textContent).toContain('Revision 4')
 		await press(drawer, 'r')
-		await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+		await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 		await press(button('Cancel'), 'Escape')
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 		expect(onClose).not.toHaveBeenCalled()
-		await vi.waitFor(() => expect(document.activeElement?.textContent).toContain('Restore as pending'))
+		await waitForUi(() => expect(document.activeElement?.textContent).toContain('Restore as pending'))
 		await press(document.activeElement as HTMLElement, 'Escape')
-		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		await waitForUi(() => expect(document.activeElement).toBe(trigger))
 		expect(onClose).toHaveBeenCalledTimes(1)
 		expect(document.querySelector('[role="dialog"]')).toBeNull()
 		client.clear()

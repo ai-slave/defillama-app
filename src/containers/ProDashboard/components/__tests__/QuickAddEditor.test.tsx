@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { AddChartModal } from '../AddChartModal/AddChartModal'
@@ -98,7 +99,7 @@ async function openPalette() {
 		trigger.focus()
 		trigger.click()
 	})
-	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Quick add'))
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Quick add'))
 	return trigger
 }
 
@@ -133,7 +134,7 @@ test.each(['click', 'Enter', 'Tab', 'all card types'])(
 				}
 			})
 		}
-		await vi.waitFor(() => expect(editorDialog()?.contains(document.activeElement)).toBe(true))
+		await waitForUi(() => expect(editorDialog()?.contains(document.activeElement)).toBe(true))
 		expect(restoreFocus).not.toHaveBeenCalled()
 		expect(mocks.closeEditor).not.toHaveBeenCalled()
 	}
@@ -150,6 +151,6 @@ test.each(['Escape', 'close button'])('closing quick add with %s still returns f
 			document.querySelector<HTMLButtonElement>('[aria-label="Close quick add"]')!.click()
 		}
 	})
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 })

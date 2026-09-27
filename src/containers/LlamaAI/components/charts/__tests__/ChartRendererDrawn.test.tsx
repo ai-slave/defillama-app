@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
 vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({ ChartPngExportButton: () => null }))
@@ -79,7 +80,7 @@ const drawnOptions = () =>
 // Charts load lazily and redraw after React commits, so assertions retry until the drawing settles.
 const settle = (assertion: () => void) =>
 	act(async () => {
-		await vi.waitFor(assertion, { timeout: 5000 })
+		await waitForUi(assertion, { timeout: 5000 })
 	})
 const seriesTypes = (option: Record<string, any>) =>
 	option.series.map((series: { name: string; type: string }) => `${series.name}:${series.type}`)

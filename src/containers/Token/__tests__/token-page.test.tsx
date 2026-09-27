@@ -20,6 +20,7 @@ import { EMPTY_TOKEN_FILTER_METADATA } from '~/utils/metadata/tokenFilters'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installMetadataSeeder } from '~/utils/testing/metadataCache'
 import { createMockNextApiResponse } from '~/utils/testing/nextApiMocks'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { earnRow } from '~/utils/testing/yieldsEarnFixture'
 import { yieldsMeta, yieldsSnapshot } from '~/utils/testing/yieldsSnapshotFixture'
 import { createTokenDirectoryRecordByRouteSegment, type TokenDirectory } from '~/utils/tokenDirectory'
@@ -376,7 +377,7 @@ describe('token page', () => {
 			return false
 		})
 		const pending = props()
-		await vi.waitFor(() => expect(marketsFinished).toBe(true))
+		await waitForUi(() => expect(marketsFinished).toBe(true))
 		resolveSnapshot(null)
 		const page = await pending
 		expect(page.sections.map((section) => section.id)).not.toContain('token-yields')

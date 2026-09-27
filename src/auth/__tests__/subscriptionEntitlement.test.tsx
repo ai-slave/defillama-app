@@ -14,6 +14,7 @@ import { Account } from '~/components/Nav/Account'
 import { PremiumFeatureGate } from '~/containers/ProDashboard/components/PremiumFeatureGate'
 import { useVerifiedAccess, type VerifiedAccessStatus } from '~/containers/Yields/useVerifiedAccess'
 import pb from '~/utils/pocketbase'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/', asPath: '/', query: {}, isReady: true, replace: vi.fn() })
@@ -136,7 +137,7 @@ const useRetryClock = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTime
 const passRetries = () => act(() => vi.advanceTimersByTimeAsync(800))
 
 async function waitFor(assertion: () => void) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		assertion()
 	})

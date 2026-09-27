@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import type { SqlChartConfig } from '../../types'
 import { useAutoSave } from '../useAutoSave'
@@ -136,7 +137,7 @@ test('failed saves retain the draft for retry and warn before leaving until succ
 	await advance()
 	expect(autosave.state?.error?.message).toBe('Offline')
 	await act(async () => {
-		await vi.waitFor(() => expect(leaving()).toBe(true))
+		await waitForUi(() => expect(leaving()).toBe(true))
 	})
 	expect(saves()).toHaveLength(1)
 	await act(async () => autosave.retry())

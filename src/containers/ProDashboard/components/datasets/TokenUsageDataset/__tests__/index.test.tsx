@@ -7,6 +7,7 @@ import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { TokenUsageDatasetTableConfig } from '../../../../types'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/test', query: {} }) }))
@@ -80,7 +81,7 @@ describe('TokenUsageDataset CSV export', () => {
 		http.serve({ [USAGE_PATH]: rows })
 		await render()
 
-		await vi.waitFor(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))
+		await waitForUi(() => expect(container.querySelectorAll('tbody tr').length).toBeGreaterThan(0))
 		expect(http.requests.map((request) => request.url.search)).toEqual([
 			'?includeCex=false&symbols%5B%5D=USDC&dashboardId=dash-1'
 		])

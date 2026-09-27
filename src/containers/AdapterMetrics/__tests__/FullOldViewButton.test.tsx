@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { useAuthContext } from '~/auth'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { FullOldViewButton } from '../FullOldViewButton'
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
@@ -37,15 +38,15 @@ test('opens feature help without creating a dashboard, then creates the selected
 				</Wrapper>
 			)
 		)
-		await vi.waitFor(() => expect(container.querySelector('[aria-label="What Full View includes"]')).not.toBeNull())
+		await waitForUi(() => expect(container.querySelector('[aria-label="What Full View includes"]')).not.toBeNull())
 		await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="What Full View includes"]')!.click())
-		await vi.waitFor(() => expect(document.body.textContent).toContain('Full View includes:'))
+		await waitForUi(() => expect(document.body.textContent).toContain('Full View includes:'))
 		expect(saves).toHaveLength(0)
 		const action = [...container.querySelectorAll('button')].find((button) =>
 			button.textContent?.includes('Open in Dashboard')
 		)!
 		await act(async () => action.click())
-		await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/pro/created'))
+		await waitForUi(() => expect(push).toHaveBeenCalledWith('/pro/created'))
 		expect(saves).toHaveLength(1)
 		expect(saves[0]!.data).toMatchObject({
 			dashboardName: 'DEX Volume Dashboard',

@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { getUnsavedDashboardChanges, type DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { getDashboardRecovery, type DashboardSaveAttempt } from '../dashboardRecovery'
 import { DashboardSaveGuard } from '../DashboardSaveGuard'
 
@@ -115,7 +116,7 @@ test('the draft’s own editor shows no notice but still warns before leaving', 
 		)
 	)
 
-	await vi.waitFor(() => expect(warns()).toBe(true), { timeout: 1000 })
+	await waitForUi(() => expect(warns()).toBe(true), { timeout: 1000 })
 	expect(container.textContent).toBe('')
 })
 
@@ -131,7 +132,7 @@ test('a failed draft on another page can be reopened, kept, or explicitly discar
 		)
 	)
 
-	await vi.waitFor(() => expect(container.querySelector('a')?.getAttribute('href')).toBe('/pro/draft/edit'), {
+	await waitForUi(() => expect(container.querySelector('a')?.getAttribute('href')).toBe('/pro/draft/edit'), {
 		timeout: 1000
 	})
 	expect(warns()).toBe(true)
@@ -140,19 +141,19 @@ test('a failed draft on another page can be reopened, kept, or explicitly discar
 		trigger.focus()
 		trigger.click()
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Discard unsaved dashboard changes?')
 	)
 	await act(async () => button('Keep draft').click())
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toEqual(request.changes)
 	expect(warns()).toBe(true)
 
 	await act(async () => trigger.click())
 	await act(async () => button('Discard draft').click())
-	await vi.waitFor(() => expect(container.querySelector('section')).toBeNull())
+	await waitForUi(() => expect(container.querySelector('section')).toBeNull())
 	expect(getUnsavedDashboardChanges(client, 'draft', 'owner')).toBeUndefined()
 	expect(warns()).toBe(false)
 	// The notice and its trigger are gone, so focus returns to the page content.
-	await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('main')))
+	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('main')))
 })

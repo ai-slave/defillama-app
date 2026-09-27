@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { useDashboardAPI } from '../../hooks/useDashboardAPI'
 import { DashboardSettingsModal } from '../DashboardSettingsModal'
 
@@ -88,13 +89,13 @@ test('a real API failure appears once in the open settings form and retry saves 
 	await render(true)
 	await addTag('lending')
 	await submit()
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
 	)
 	expect(toast.error).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(savedTags()).toEqual([['lending'], ['lending']])
 })
 test.each(['success', 'failure'] as const)(
@@ -104,10 +105,10 @@ test.each(['success', 'failure'] as const)(
 		session.serve({ [SAVE_PATH]: () => pending.promise })
 		await render(true)
 		const originalInput = tagInput()
-		originalInput.focus()
+		await act(async () => originalInput.focus())
 		await submit()
 		// The pending state reaches React on a TanStack notify tick, after the save request starts.
-		await vi.waitFor(() => {
+		await waitForUi(() => {
 			expect(savedTags()).toEqual([[]])
 			expect(originalInput.readOnly).toBe(true)
 		})
@@ -120,7 +121,7 @@ test.each(['success', 'failure'] as const)(
 			if (outcome === 'success') pending.resolve(Response.json(saved))
 			else pending.resolve(Response.json({ error: 'Earlier save failed' }, { status: 500 }))
 		})
-		await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
+		await waitForUi(() => expect(session.client.isMutating()).toBe(0))
 		expect(close).not.toHaveBeenCalled()
 		expect(draft.value).toBe('New opening')
 		expect(document.querySelector('[role="alert"]')).toBeNull()

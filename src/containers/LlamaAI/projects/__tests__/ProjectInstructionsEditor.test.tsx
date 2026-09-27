@@ -2,9 +2,10 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import {
 	getInstructionsBlurAction,
 	getInstructionsSaveStatus,
@@ -122,7 +123,7 @@ describe('ProjectInstructionsEditor', () => {
 		await act(async () => type(textarea, '  First draft  '))
 		expect(status()).toBe('Unsaved')
 		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
-		await vi.waitFor(() => expect(status()).toBe('Not saved'), { timeout: 1000 })
+		await waitForUi(() => expect(status()).toBe('Not saved'), { timeout: 1000 })
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Network unavailable')
 		expect(textarea.getAttribute('aria-invalid')).toBe('true')
 
@@ -131,7 +132,7 @@ describe('ProjectInstructionsEditor', () => {
 			textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
 			container.querySelector<HTMLButtonElement>('[role="alert"] button')!.click()
 		})
-		await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
+		await waitForUi(() => expect(container.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
 		expect(patches()).toEqual([
 			{ custom_instructions: 'First draft' },
 			{ custom_instructions: 'Retry this newer draft' }

@@ -2,8 +2,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { useTokenBorrowRoutes } from '../useTokenBorrowRoutes'
 
 const http = installFixtureFetch()
@@ -47,7 +48,7 @@ test('keeps collateral and borrowing results separate when the selected token ch
 	})
 	async function selectToken(token: string) {
 		await render([token])
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(JSON.parse(container.textContent!)).toEqual({
 				useAsCollateral: [{ route: `collateralToken:${token}` }],
 				borrowThis: [{ route: `borrowToken:${token}` }]
@@ -69,7 +70,7 @@ test.each([
 		expect(http.requests).toHaveLength(0)
 
 		await render(['family:btc'])
-		await vi.waitFor(() => expect(JSON.parse(container.textContent!)).toEqual({ useAsCollateral: [], borrowThis: [] }))
+		await waitForUi(() => expect(JSON.parse(container.textContent!)).toEqual({ useAsCollateral: [], borrowThis: [] }))
 		const legs = http.requests.map((request) =>
 			request.url.searchParams.has('collateralToken') ? 'collateral' : 'borrow'
 		)

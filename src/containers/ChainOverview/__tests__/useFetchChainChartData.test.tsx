@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { getChainChartApiUrl } from '../chainChartData'
 import type { ChainChartLabels } from '../constants'
 import { useFetchChainChartData } from '../useFetchChainChartData'
@@ -58,7 +59,7 @@ test('each toggled chain chart shows the response of its own endpoint', async ()
 			</QueryClientProvider>
 		)
 	)
-	await vi.waitFor(() => expect(probe.result?.isFetchingChartData).toBe(false))
+	await waitForUi(() => expect(probe.result?.isFetchingChartData).toBe(false))
 
 	const expected: Record<string, Array<[number, number]>> = {}
 	for (const [label, value] of charts) expected[label] = [[daySec * 1e3, value]]

@@ -6,6 +6,7 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { earnPageRow } from '~/utils/testing/yieldsEarnFixture'
 import { TokenYieldsSection } from '../TokenYieldsSection'
 import type { TokenYieldsHydration } from '../types'
@@ -96,7 +97,7 @@ async function mountRefresh({ filter }: { filter: boolean }) {
 					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')
 			await act(async () => control!.click())
 		},
-		awaitRequests: (count: number) => vi.waitFor(() => expect(earnRequests()).toHaveLength(count)),
+		awaitRequests: (count: number) => waitForUi(() => expect(earnRequests()).toHaveLength(count)),
 		/** Replaces the in-flight response, as a retry does. */
 		restart() {
 			pending.response = Promise.withResolvers<Response>()
@@ -126,7 +127,7 @@ test('asks the public earn endpoint for the token pools and opens the requested 
 		])
 		await refresh.resolve(POOLS)
 
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {
 				expect(refresh.state()).toEqual({ pools: ['held'], noPools: false, retry: false })
 			})
@@ -143,7 +144,7 @@ test('shows the empty state when a full-data refresh returns no pools', async ()
 		await refresh.awaitRequests(1)
 		await refresh.resolve([])
 
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {
 				expect(refresh.state()).toEqual({ pools: [], noPools: true, retry: false })
 			})
@@ -165,7 +166,7 @@ test.each([
 		await refresh.awaitRequests(1)
 
 		await refresh.reject('Yields unavailable')
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => expect(refresh.container.textContent).toContain('Yields unavailable'))
 		})
 		// The failed refresh leaves the hydrated selection on screen rather than emptying the table.
@@ -174,14 +175,14 @@ test.each([
 		// A retry that fails again keeps that selection and offers Retry once more.
 		await retryOnce(refresh, hydratedPools)
 		await refresh.reject('Still unavailable')
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => expect(refresh.container.textContent).toContain('Still unavailable'))
 		})
 
 		// The retry that succeeds restores the page and sort the scenario asked for.
 		await retryOnce(refresh, hydratedPools)
 		await refresh.resolve(scenario.filter ? [] : POOLS)
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {
 				expect(refresh.state()).toEqual({
 					pools: scenario.pools,
@@ -204,7 +205,7 @@ async function retryOnce(refresh: Awaited<ReturnType<typeof mountRefresh>>, hydr
 		retry.click()
 		retry.click()
 	})
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			expect(retry.disabled).toBe(true)
 			expect(refresh.container.textContent).toContain('Retrying…')

@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: vi.fn(), pathname: '/ai/chat' }) }))
 vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
@@ -135,7 +136,7 @@ async function chooseView(scope: ParentNode, current: string, option: string) {
 		[...document.querySelectorAll<HTMLElement>('[role="option"]')].find((candidate) =>
 			candidate.textContent?.includes(option)
 		)
-	await vi.waitFor(() => expect(find()?.textContent).toContain(option))
+	await waitForUi(() => expect(find()?.textContent).toContain(option))
 	await press(find()!)
 }
 
@@ -422,14 +423,14 @@ describe('ChartRenderer', () => {
 			trigger.click()
 		})
 		const editor = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Edit chart: Protocol Revenue"]')!
-		await vi.waitFor(() => expect(editor.contains(document.activeElement)).toBe(true))
+		await waitForUi(() => expect(editor.contains(document.activeElement)).toBe(true))
 		const title = editor.querySelector<HTMLInputElement>('[aria-label="Chart title"]')!
 		await setInputValue(title, 'Discard this title')
 		await act(async () => {
 			title.focus()
 			title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 		})
-		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		await waitForUi(() => expect(document.activeElement).toBe(trigger))
 		expect(onParentClose).not.toHaveBeenCalled()
 		expect(document.querySelector('[aria-label="Article editor"]')).not.toBeNull()
 		expect(document.querySelector('[aria-label="Edit chart: Protocol Revenue"]')).toBeNull()

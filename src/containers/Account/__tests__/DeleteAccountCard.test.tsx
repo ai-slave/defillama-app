@@ -8,6 +8,7 @@ import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DeleteAccountCard } from '../DeleteAccountCard'
 
 const router = vi.hoisted(() => ({ replace: vi.fn() }))
@@ -58,7 +59,7 @@ const deleteRequests = () => session.requests.filter((request) => request.url.hr
 const signedOut = () => pb.authStore.token === ''
 
 async function waitFor(assertion: () => void) {
-	await vi.waitFor(
+	await waitForUi(
 		async () => {
 			await act(async () => {})
 			assertion()
@@ -221,7 +222,7 @@ test('ignores a completed deletion after the session switches to another account
 
 	const otherToken = token('account-b', 1)
 	session.serve({ '/api/collections/users/auth-refresh': { token: otherToken, record: record('account-b') } })
-	pb.authStore.save(otherToken, record('account-b'))
+	await act(async () => pb.authStore.save(otherToken, record('account-b')))
 	await act(async () => pending.resolve(Response.json(completed)))
 	await act(async () => {})
 
@@ -236,7 +237,7 @@ test('signs out the deleted account even after its token refreshed mid-request',
 	await continueAndSubmit()
 	await waitFor(() => expect(deleteRequests()).toHaveLength(1))
 
-	pb.authStore.save(token('account-a', 2), record('account-a'))
+	await act(async () => pb.authStore.save(token('account-a', 2), record('account-a')))
 	await act(async () => pending.resolve(Response.json(completed)))
 	await waitFor(() => expect(signedOut()).toBe(true))
 
@@ -261,7 +262,7 @@ test('refuses to delete through a dialog opened by an older session', async () =
 	await act(async () => button('Continue')!.click())
 	await waitFor(() => expect(document.querySelector('#delete-account-confirmation')).not.toBeNull())
 
-	pb.authStore.save(token('account-a', 3), record('account-a'))
+	await act(async () => pb.authStore.save(token('account-a', 3), record('account-a')))
 	await act(async () => setInput('#delete-account-confirmation', 'DELETE'))
 	await act(async () => document.querySelector('#delete-account-confirmation')!.closest('form')!.requestSubmit())
 

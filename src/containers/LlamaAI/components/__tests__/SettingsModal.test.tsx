@@ -13,6 +13,7 @@ import type {
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const session = installSubscriberSession('reader')
 const AGENT_HOME = 'https://ai.llama.fi/agent-home'
@@ -39,7 +40,7 @@ beforeEach(() => {
 
 const settle = (assertion: () => void) =>
 	act(async () => {
-		await vi.waitFor(assertion)
+		await waitForUi(assertion)
 	})
 const agentHomeRequests = (path: string, method = 'GET') =>
 	session.requests.filter(

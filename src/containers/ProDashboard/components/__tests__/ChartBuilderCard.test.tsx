@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { getChartBuilderQueryKey } from '../../chartBuilderQueryKey'
 import type { ChartBuilderConfig } from '../../types'
 import { ChartBuilderCard } from '../ChartBuilderCard'
@@ -92,7 +93,7 @@ describe('ChartBuilderCard streamed loading state', () => {
 		const root = createRoot(container)
 
 		await act(async () => root.render(<Card queryClient={queryClient} streamDone />))
-		await vi.waitFor(() => {
+		await waitForUi(() => {
 			if (!container.querySelector('[role="alert"]')) throw new Error('Expected the card error')
 		})
 

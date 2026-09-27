@@ -8,6 +8,7 @@ import type { QueuedMessageElement } from '~/containers/LlamaAI/queue/protocol'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import { createStreamBuffer, type StreamDispatch } from '~/containers/LlamaAI/streamState'
 import type { Message } from '~/containers/LlamaAI/types'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const ACTIVE_URL = 'https://ai.llama.fi/agentic/active/session-a'
 const STREAM_URL = 'https://ai.llama.fi/agentic/stream/session-a'
@@ -46,7 +47,7 @@ async function bounded<T>(promise: Promise<T>): Promise<T> {
 		() => (settled = true),
 		() => (settled = true)
 	)
-	await vi.waitFor(() => expect(settled).toBe(true), { timeout: 1000 })
+	await waitForUi(() => expect(settled).toBe(true), { timeout: 1000 })
 	return promise
 }
 

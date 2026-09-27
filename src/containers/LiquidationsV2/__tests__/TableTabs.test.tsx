@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { TokenLiquidationsSection } from '~/containers/Token/TokenLiquidationsSection'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { LiquidationsChainPage } from '../ChainPage'
 import { LiquidationsOverview } from '../index'
 import { LiquidationsProtocolPage } from '../ProtocolPage'
@@ -203,7 +204,7 @@ test('token liquidations keeps search and sorting across views without losing fo
 		}
 	})
 	await mount(<TokenLiquidationsSection tokenSymbol="ETH" />)
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		expect(tabs()).toHaveLength(2)
 		expect(rowNames()).toEqual(['Aave', 'Spark'])

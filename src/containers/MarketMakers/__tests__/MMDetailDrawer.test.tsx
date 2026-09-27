@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { MMDetailDrawer } from '../MMDetailDrawer'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers', push: vi.fn() }) }))
@@ -87,7 +88,7 @@ async function mount(focusSection?: 'volume') {
 
 test('loads the selected market maker and renders its scores, services and venue names', async () => {
 	const close = await mount()
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 10))
 		})
@@ -116,7 +117,7 @@ test('scrolls to the requested volume breakdown after its data loads', async () 
 	})
 	try {
 		await mount('volume')
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {
 				await new Promise((resolve) => setTimeout(resolve, 20))
 			})

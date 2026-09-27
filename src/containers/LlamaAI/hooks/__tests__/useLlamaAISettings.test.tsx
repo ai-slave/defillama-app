@@ -2,9 +2,10 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { useLlamaAISettings } from '../useLlamaAISettings'
 
 const session = installSubscriberSession('user-1')
@@ -64,14 +65,14 @@ describe('useLlamaAISettings', () => {
 			}
 		})
 		await mount()
-		await vi.waitFor(() => expect(session.requests.some((r) => r.url.href === SETTINGS_URL)).toBe(true))
+		await waitForUi(() => expect(session.requests.some((r) => r.url.href === SETTINGS_URL)).toBe(true))
 
 		let firstSave!: Promise<boolean>
 		let secondSave!: Promise<boolean>
 		await act(async () => {
 			firstSave = hook.actions.setEnableMemory(false)
 		})
-		await vi.waitFor(() => expect(puts).toHaveLength(1))
+		await waitForUi(() => expect(puts).toHaveLength(1))
 		await act(async () => root.unmount())
 		root = createRoot(container)
 		await mount()
@@ -101,14 +102,14 @@ describe('useLlamaAISettings', () => {
 			}
 		})
 		await mount()
-		await vi.waitFor(() => expect(releaseSettings).not.toBeNull())
+		await waitForUi(() => expect(releaseSettings).not.toBeNull())
 
 		let save!: Promise<boolean>
 		await act(async () => {
 			save = hook.actions.setCustomInstructions('New instructions')
 		})
 		expect(await within(save)).toBe(true)
-		await vi.waitFor(() => expect(hook.settings.customInstructions).toBe('New instructions'))
+		await waitForUi(() => expect(hook.settings.customInstructions).toBe('New instructions'))
 
 		// Give the stale response every chance to land before checking it did not win.
 		await act(async () => {

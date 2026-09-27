@@ -10,6 +10,7 @@ import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
 import { installOAuthBoundary } from '~/utils/testing/oauthBoundary'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const oauth = installOAuthBoundary()
 
@@ -299,7 +300,7 @@ test('shows delivery failures inline and respects the server resend delay on ret
 	await emailLogin()
 	otpCalls[0].resolve(jsonResponse({ error: 'Failed to send OTP' }, 500))
 	await settle()
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
 	})
@@ -308,7 +309,7 @@ test('shows delivery failures inline and respects the server resend delay on ret
 	await settle()
 	otpCalls[1].resolve(jsonResponse({ error: 'Please wait', details: { retryAfterSeconds: 120 } }, 429))
 	await settle()
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
 	})
@@ -339,7 +340,7 @@ test.each([
 	await emailLogin()
 	const headers = header ? { 'Retry-After': header } : undefined
 	otpCalls[0].resolve(new Response(body, { status: 429, headers }))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
 	})
@@ -412,14 +413,14 @@ test('retries the account read after an accepted invite without repeating member
 			</QueryClientProvider>
 		)
 	)
-	await vi.waitFor(() => expect(inviteCalls).toHaveLength(1))
+	await waitForUi(() => expect(inviteCalls).toHaveLength(1))
 	inviteCalls[0].resolve(jsonResponse({ team: { id: 'team', name: 'Team' } }))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(refreshCalls).toHaveLength(2)
 	})
 	refreshCalls[1].resolve(jsonResponse({ error: 'Temporarily unavailable' }, 503))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(inviteView.inviteAccount.isError).toBe(true)
 	})
@@ -428,7 +429,7 @@ test('retries the account read after an accepted invite without repeating member
 	await act(async () => {
 		retry = inviteView.inviteAccount.refetch()
 	})
-	await vi.waitFor(() => expect(refreshCalls).toHaveLength(3))
+	await waitForUi(() => expect(refreshCalls).toHaveLength(3))
 	await act(async () => {
 		refreshCalls[2].resolve(
 			jsonResponse({
@@ -438,7 +439,7 @@ test('retries the account read after an accepted invite without repeating member
 		)
 		await retry
 	})
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(container.querySelector('output[aria-label="Invite account"]')?.textContent).toBe('Verified')
 	})
@@ -454,14 +455,14 @@ test.each([
 	await render()
 	await emailLogin()
 	otpCalls[0].resolve(jsonResponse({ error: 'Send failed', details: { retryAfterSeconds: 8 } }, status))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.querySelector('[role="alert"]')?.textContent).toBe(message)
 	})
 	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
 	expect(document.activeElement).not.toBe(document.querySelector('[role="alert"]'))
 	const codeInput = document.querySelector<HTMLInputElement>('input[autocomplete="one-time-code"]')!
-	codeInput.focus()
+	await act(async () => codeInput.focus())
 	await act(async () => {
 		vi.advanceTimersByTime(8000)
 	})
@@ -596,7 +597,7 @@ test('ignores an onboarding save after the owning session is replaced', async ()
 	await settle()
 	await act(async () => pb.authStore.save(token('replacement')))
 	finish(jsonResponse({ success: true }))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.body.textContent).not.toContain('Thanks for signing up!')
 	})
@@ -629,7 +630,7 @@ test('accepts an onboarding save when the same account refreshes its token', asy
 	await settle()
 	expect(pb.authStore.token).toBe(token('rotated-google'))
 	finish(jsonResponse({ success: true }))
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await settle()
 		expect(document.body.textContent).not.toContain('Thanks for signing up!')
 	})

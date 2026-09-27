@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import { SimilarDashboards } from '../SimilarDashboards'
 
@@ -40,7 +41,7 @@ describe('SimilarDashboards', () => {
 			)
 		)
 		if (props.tags.length === 0) return
-		await vi.waitFor(() => {
+		await waitForUi(() => {
 			expect(searches()).toHaveLength(1)
 			expect(http.client.isFetching()).toBe(0)
 		})

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { CreateProjectModal } from '../CreateProjectModal'
 import { DeleteProjectModal } from '../DeleteProjectModal'
 import { ProjectSessionItem } from '../ProjectSessionItem'
@@ -132,26 +133,26 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 	await mount('rename')
 	const input = document.querySelector<HTMLInputElement>('input')!
 	const description = document.querySelector<HTMLTextAreaElement>('textarea')!
-	await vi.waitFor(() => expect(document.activeElement).toBe(input))
+	await waitForUi(() => expect(document.activeElement).toBe(input))
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Rename project')
 	await fill(input, 'Draft name')
 	await fill(description, 'Draft description')
 	await click('Save')
-	await vi.waitFor(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Saving…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Saving…')
 	expect(api.request).toHaveBeenCalledTimes(1)
 	await act(async () => reject(new Error('Offline')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(input.value).toBe('Draft name')
 	expect(description.value).toBe('Draft description')
 	await click('Save')
-	await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 	expect(api.request).toHaveBeenLastCalledWith('/projects/qa', {
 		method: 'PATCH',
 		json: { name: 'Draft name', description: 'Draft description' }
 	})
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Open project dialog')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Open project dialog')))
 })
 
 test('delete cancellation, failure and retry retain the named project and complete once', async () => {
@@ -161,11 +162,11 @@ test('delete cancellation, failure and retry retain the named project and comple
 	expect(api.request).not.toHaveBeenCalled()
 	await click('Open project dialog')
 	await click('Delete project')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('QA Project')
 	expect(api.deleted).not.toHaveBeenCalled()
 	await click('Retry deletion')
-	await vi.waitFor(() => expect(api.deleted).toHaveBeenCalledTimes(1))
+	await waitForUi(() => expect(api.deleted).toHaveBeenCalledTimes(1))
 })
 
 test('canceling and reopening creation clears the abandoned draft and stale error', async () => {
@@ -173,7 +174,7 @@ test('canceling and reopening creation clears the abandoned draft and stale erro
 	await mount('create')
 	await fill(document.querySelector<HTMLInputElement>('input')!, 'Abandoned')
 	await click('Create project')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	await click('Cancel')
 	await click('Open project dialog')
 	expect(document.querySelector<HTMLInputElement>('input')!.value).toBe('')
@@ -219,12 +220,12 @@ test('project rows keep independent rename drafts when another row is pending or
 	const alpha = document.querySelector<HTMLInputElement>('input[name="newTitle"]')!
 	await fill(alpha, 'Alpha draft')
 	await act(async () => alpha.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
-	await vi.waitFor(() => expect(reject).toBeTypeOf('function'))
+	await waitForUi(() => expect(reject).toBeTypeOf('function'))
 	await click('Rename Beta')
 	const beta = [...document.querySelectorAll<HTMLInputElement>('input[name="newTitle"]')].find((el) => el !== alpha)!
 	await fill(beta, 'Beta draft')
 	await act(async () => reject(new Error('Offline')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(alpha.value).toBe('Alpha draft')
 	expect(beta.value).toBe('Beta draft')
 	expect(beta.disabled).toBe(false)
@@ -268,14 +269,14 @@ test.each(['success', 'failure'] as const)(
 		await render('Alpha')
 		await click('Open project dialog')
 		await click('Delete project')
-		await vi.waitFor(() => expect(api.request).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(api.request).toHaveBeenCalledTimes(1))
 		await render('Beta')
-		await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')?.hasAttribute('hidden')).toBe(false))
+		await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.hasAttribute('hidden')).toBe(false))
 		await act(async () => {
 			if (outcome === 'success') resolve()
 			else reject(new Error('Offline'))
 		})
-		await vi.waitFor(() => expect(outcome === 'success' ? api.success : api.error).toHaveBeenCalledTimes(1))
+		await waitForUi(() => expect(outcome === 'success' ? api.success : api.error).toHaveBeenCalledTimes(1))
 		expect(api.deleted).not.toHaveBeenCalled()
 		const dialog = document.querySelector('[role="dialog"]')!
 		expect(dialog.textContent).toContain('Beta')
@@ -320,29 +321,29 @@ test.each([true, false])(
 			await act(async () => item.click())
 		}
 		await renderSidebar('qa')
-		await vi.waitFor(() => expect(container.textContent).toContain('QA Project'))
+		await waitForUi(() => expect(container.textContent).toContain('QA Project'))
 		await click('Actions for project QA Project')
 		await chooseAction('Rename project')
-		await vi.waitFor(() => expect(document.querySelector('input')).not.toBeNull())
+		await waitForUi(() => expect(document.querySelector('input')).not.toBeNull())
 		await fill(document.querySelector<HTMLInputElement>('input')!, 'Renamed project')
 		await click('Save')
-		await vi.waitFor(() => expect(container.textContent).toContain('Renamed project'))
-		await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+		await waitForUi(() => expect(container.textContent).toContain('Renamed project'))
+		await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 		expect(api.push).not.toHaveBeenCalled()
 		await click('Actions for project Renamed project')
 		await chooseAction('Delete project')
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Attached sessions remain')
 		)
 		await click('Delete project')
-		await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+		await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 		await click('Deleting…')
 		expect(api.request.mock.calls.filter(([, options]) => options?.method === 'DELETE')).toHaveLength(1)
 		if (switchedChat) await renderSidebar(null)
 		await act(async () => deletion.resolve())
-		await vi.waitFor(() => expect(container.textContent).not.toContain('Renamed project'))
-		await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+		await waitForUi(() => expect(container.textContent).not.toContain('Renamed project'))
+		await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
 		expect(api.push.mock.calls).toEqual(switchedChat ? [] : [['/ai/projects']])
-		await vi.waitFor(() => expect(document.activeElement).toBe(button('New project')))
+		await waitForUi(() => expect(document.activeElement).toBe(button('New project')))
 	}
 )

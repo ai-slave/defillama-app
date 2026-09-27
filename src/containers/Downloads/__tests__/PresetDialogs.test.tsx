@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { readAppStorage, writeAppStorage } from '~/contexts/LocalStorage'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DownloadsCatalog } from '../DownloadsCatalog'
 
 // Heavy dialogs the preset list can open; these tests assert nothing about them.
@@ -63,20 +64,20 @@ test('delete cancellation returns focus; confirming returns to Saved even after 
 	await click(trigger)
 	const dialog = document.querySelector('[role="alertdialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Delete preset?')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await escape()
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(savedNames()).toEqual(['First preset', 'Second preset'])
 	const deletePreset = async (name: string, remaining: Array<string>) => {
 		await click(button(`Delete ${name}`))
 		await click(button('Delete'))
-		await vi.waitFor(() => expect(document.activeElement).toBe(button('Saved')))
+		await waitForUi(() => expect(document.activeElement).toBe(button('Saved')))
 		expect(savedNames()).toEqual(remaining)
 		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	}
 	await deletePreset('First preset', ['Second preset'])
 	await deletePreset('Second preset', [])
-	await vi.waitFor(() => expect(container.textContent).toContain('Pin your first preset'))
+	await waitForUi(() => expect(container.textContent).toContain('Pin your first preset'))
 })
 
 test('rename starts in the named input, retains edits through rerender, and cancels without saving', async () => {
@@ -85,7 +86,7 @@ test('rename starts in the named input, retains edits through rerender, and canc
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Rename preset')
 	const input = dialog.querySelector<HTMLInputElement>('input')!
-	await vi.waitFor(() => expect(document.activeElement).toBe(input))
+	await waitForUi(() => expect(document.activeElement).toBe(input))
 	await act(async () => {
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Unsubmitted draft')
 		input.dispatchEvent(new Event('input', { bubbles: true }))
@@ -93,7 +94,7 @@ test('rename starts in the named input, retains edits through rerender, and canc
 	await act(async () => root.render(catalog()))
 	expect(input.value).toBe('Unsubmitted draft')
 	await escape()
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(savedNames()).toEqual(['First preset', 'Second preset'])
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')!.value).toBe('First preset')
@@ -129,7 +130,7 @@ test('catalog navigation preserves visible search and category deselection witho
 			new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
 		)
 	})
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Time Series')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Time Series')))
 	expect(button('Datasets').getAttribute('aria-selected')).toBe('true')
 	await click(button('Time Series'))
 	const panel = document.querySelector('[role="tabpanel"]')!

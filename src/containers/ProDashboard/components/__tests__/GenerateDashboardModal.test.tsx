@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { Dashboard } from '../../dashboardTypes'
 import { GenerateDashboardModal } from '../GenerateDashboardModal'
@@ -68,18 +69,18 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	await render()
 	draft()
 	await submit()
-	await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 	expect(close).not.toHaveBeenCalled()
 	expect(mocks.push).not.toHaveBeenCalled()
 	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
 	await submit()
 	expect(mocks.creator).toHaveBeenCalledOnce()
 	await act(async () => pending.reject(new Error('Save unavailable')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(toast.error).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('My analysis')
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/pro/new')
 	expect(mocks.creator).toHaveBeenCalledOnce()
 	expect(save.mock.calls[1][0]).toEqual(save.mock.calls[0][0])
@@ -92,14 +93,14 @@ test.each(['success', 'failure'] as const)(
 		await render()
 		draft()
 		await submit()
-		await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
+		await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 		await render(false)
 		await render()
 		await act(async () => {
 			if (outcome === 'success') pending.resolve(dashboard)
 			else pending.reject(new Error('Earlier generation failed'))
 		})
-		await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
+		await waitForUi(() => expect(session.client.isMutating()).toBe(0))
 		expect(close).not.toHaveBeenCalled()
 		expect(mocks.push).not.toHaveBeenCalled()
 		expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -111,7 +112,7 @@ test('a stream error is shown inline without attempting to save', async () => {
 	await render()
 	draft()
 	await submit()
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Generation unavailable')
 	)
 	expect(save).not.toHaveBeenCalled()
@@ -128,13 +129,13 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
 		'Add a fees comparison to this dashboard'
 	await submit()
-	await vi.waitFor(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Updating…'))
+	await waitForUi(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Updating…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Updating dashboard')
 	expect(save).not.toHaveBeenCalled()
 	await act(async () =>
 		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
 	)
-	await vi.waitFor(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Saving…'))
+	await waitForUi(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Saving…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard')
 	expect(save).toHaveBeenCalledOnce()
 	expect(JSON.parse(mocks.creator.mock.calls[0][1].body)).toEqual({
@@ -151,7 +152,7 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	})
 	expect(close).not.toHaveBeenCalled()
 	await act(async () => pending.resolve())
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).not.toHaveBeenCalled()
 })
 
@@ -171,7 +172,7 @@ test('an iteration keeps custom data rows out of the request and restores what t
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
 		'Add a fees comparison to this dashboard'
 	await submit()
-	await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(save).toHaveBeenCalledOnce())
 	expect(JSON.parse(mocks.creator.mock.calls[0][1].body).existingDashboard.items).toEqual([
 		section,
 		{
@@ -191,16 +192,16 @@ test('editing the prompt explicitly discards the generated result before generat
 	await render()
 	draft()
 	await submit()
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.readOnly).toBe(true)
 	await act(async () =>
 		[...document.querySelectorAll('button')].find((el) => el.textContent === 'Edit prompt and regenerate')!.click()
 	)
 	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
-	await vi.waitFor(() => expect(prompt.readOnly).toBe(false))
+	await waitForUi(() => expect(prompt.readOnly).toBe(false))
 	prompt.value = 'Compare stablecoin supplies instead of fees and TVL'
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.creator).toHaveBeenCalledTimes(2)
 	expect(JSON.parse(mocks.creator.mock.calls[1][1].body).message).toBe(prompt.value)
 })
@@ -215,7 +216,7 @@ test('generation finishing after leaving does not start a save in a new opening'
 	await act(async () =>
 		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
 	)
-	await vi.waitFor(() => expect(session.client.isMutating()).toBe(0))
+	await waitForUi(() => expect(session.client.isMutating()).toBe(0))
 	expect(save).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')

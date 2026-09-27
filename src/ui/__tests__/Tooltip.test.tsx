@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { Tooltip } from '../Tooltip'
 
 let container: HTMLDivElement
@@ -28,7 +29,7 @@ test('opens on tap when the anchor renders as a heading', async () => {
 		)
 	)
 	await act(async () => container.querySelector('h2')!.dispatchEvent(new Event('touchstart', { bubbles: true })))
-	await vi.waitFor(() => expect(tooltipText()).toBe('Sum of value locked in DeFi'))
+	await waitForUi(() => expect(tooltipText()).toBe('Sum of value locked in DeFi'))
 })
 
 test('inside a row button, a tap opens only plain anchors and leaves rendered ones to the row', async () => {
@@ -51,7 +52,7 @@ test('inside a row button, a tap opens only plain anchors and leaves rendered on
 	expect(tooltipText()).toBeUndefined()
 	const pinned = [...container.querySelectorAll('span')].find((el) => el.textContent === 'Pinned')!
 	await act(async () => pinned.dispatchEvent(new Event('touchstart', { bubbles: true })))
-	await vi.waitFor(() => expect(tooltipText()).toBe('Pinned to the top'))
+	await waitForUi(() => expect(tooltipText()).toBe('Pinned to the top'))
 })
 
 test('leaves a tap on a link anchor to the link and still opens on focus', async () => {
@@ -67,5 +68,5 @@ test('leaves a tap on a link anchor to the link and still opens on focus', async
 	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
 	expect(tooltipText()).toBeUndefined()
 	await act(async () => link.focus())
-	await vi.waitFor(() => expect(tooltipText()).toBe('Open the DEX dashboard'))
+	await waitForUi(() => expect(tooltipText()).toBe('Open the DEX dashboard'))
 })

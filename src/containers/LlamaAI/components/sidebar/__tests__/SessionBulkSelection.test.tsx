@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AgenticSidebar } from '../AgenticSidebar'
 const api = vi.hoisted(() => ({ bulk: vi.fn(), open: vi.fn() }))
 const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))
@@ -108,7 +109,7 @@ test('shows an enabled balance below chat history and opens Balance settings', a
 			element.textContent?.includes('External Data Balance')
 		)
 	await act(async () => {
-		await vi.waitFor(() => expect(balanceButton()).toBeDefined())
+		await waitForUi(() => expect(balanceButton()).toBeDefined())
 	})
 	expect(balanceButton()!.textContent).toContain('$0.75')
 	await act(async () => balanceButton()!.click())
@@ -165,7 +166,7 @@ test('select all, deselect, and filtering use visible checkbox rows without sema
 	expect(api.bulk).not.toHaveBeenCalled()
 	await click('Delete (1)')
 	await click('Delete')
-	await vi.waitFor(() => expect(api.bulk).toHaveBeenCalledExactlyOnceWith(['Beta']))
+	await waitForUi(() => expect(api.bulk).toHaveBeenCalledExactlyOnceWith(['Beta']))
 })
 
 test('removed selections do not count toward deletion and a failed bulk delete can retry', async () => {
@@ -177,10 +178,10 @@ test('removed selections do not count toward deletion and a failed bulk delete c
 	expect(button('Delete (2)')).toBeDefined()
 	await click('Delete (2)')
 	await click('Delete')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(checked()).toEqual(['Beta', 'Gamma'])
 	await click('Retry deletion')
-	await vi.waitFor(() => expect(api.bulk).toHaveBeenCalledTimes(2))
+	await waitForUi(() => expect(api.bulk).toHaveBeenCalledTimes(2))
 	expect(api.bulk).toHaveBeenLastCalledWith(['Beta', 'Gamma'])
 })
 

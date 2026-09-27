@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { defaultChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { SqlChartConfig, SqlSnapshot } from '../../../types'
 import { scaledPx } from '../../cardHeightContext'
 import { SqlChartCard, sqlCardBody } from '../SqlChartCard'
@@ -76,7 +77,7 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 			</session.Wrapper>
 		)
 	)
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull(), { timeout: 1000 })
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull(), { timeout: 1000 })
 	const alert = document.querySelector('[role="alert"]')!
 	expect(alert.textContent).toContain("Couldn't refresh this query.")
 	expect(alert.textContent).not.toContain('SQL run failed')
@@ -88,7 +89,7 @@ test('a failed refresh keeps the stored result, hides the raw error, and Try aga
 			.find((b) => b.textContent?.trim() === 'Try again')!
 			.click()
 	)
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull(), { timeout: 1000 })
 	expect(session.urls().filter((url) => url.includes('sql-run'))).toEqual([
 		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql',
 		'http://localhost:3000/api/private/pro-dashboard/sql-run?dashboardId=d1&itemId=sql&refresh=1'

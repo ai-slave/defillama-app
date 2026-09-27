@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ArticleBannerStrip } from '../renderer/ArticleBannerStrip'
 import { ArticleImageBanner } from '../renderer/ArticleImageBanner'
 import { ArticleImageBannerHorizontal } from '../renderer/ArticleImageBannerHorizontal'
@@ -132,7 +133,7 @@ describe('article banner analytics', () => {
 	async function render(element: React.ReactElement) {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
-		await vi.waitFor(() => expect(container.querySelector('a')).not.toBeNull(), { timeout: 1000 })
+		await waitForUi(() => expect(container.querySelector('a')).not.toBeNull(), { timeout: 1000 })
 	}
 
 	async function enterViewport() {

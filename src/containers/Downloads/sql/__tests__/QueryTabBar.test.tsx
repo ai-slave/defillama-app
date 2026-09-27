@@ -4,6 +4,7 @@ import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { Tabs, TabPanel } from '~/ui/Tabs'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { QueryTabBar } from '../QueryTabBar'
 import { useSqlTabs, type UseSqlTabsReturn } from '../useSqlTabs'
 
@@ -294,7 +295,7 @@ test('renaming with IME keeps the draft until composition ends, then saves the r
 	expect(document.activeElement).toBe(input)
 	await press(input, 'Enter')
 	expect(mocks.rename.mock.calls).toEqual([['b', 'SQL 日本語']])
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(persisted()).toMatchObject({
 			activeTabId: 'b',
 			tabs: expect.arrayContaining([expect.objectContaining({ id: 'b', title: 'SQL 日本語', sql: "SELECT 'b'" })])

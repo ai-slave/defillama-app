@@ -3,6 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { AgenticAnswerMode } from '../../types'
 import { ModeToggle } from '../input/ModeToggle'
 import { OnboardingWalkthrough } from '../OnboardingWalkthrough'
@@ -68,7 +69,7 @@ function button(text: string) {
 const frame = () => new Promise((resolve) => setTimeout(resolve, 20))
 // Waits for the control instead of a fixed delay: only the intro's exit animation (250ms) takes real time.
 async function click(text: string) {
-	await vi.waitFor(() => expect(button(text)).toBeDefined(), { interval: 10 })
+	await waitForUi(() => expect(button(text)).toBeDefined(), { interval: 10 })
 	await act(async () => {
 		button(text).click()
 		await frame()
@@ -81,7 +82,7 @@ async function escape(el: HTMLElement) {
 	})
 }
 test('Escape skips the named intro without submitting and returns focus to the prompt', async () => {
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Show me around')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Show me around')))
 	const intro = button('Show me around').closest('[role="dialog"]')!
 	expect(document.getElementById(intro.getAttribute('aria-labelledby')!)?.textContent).toBe('Welcome to LlamaAI')
 	await escape(button('Show me around'))
@@ -91,14 +92,14 @@ test('Escape skips the named intro without submitting and returns focus to the p
 })
 test('an expanded highlighted popover stays usable and Escape resumes the same tour step', async () => {
 	await click('Show me around')
-	await vi.waitFor(() => expect(button('Try this control')).toBeDefined())
+	await waitForUi(() => expect(button('Try this control')).toBeDefined())
 	await click('Try this control')
 	expect(document.activeElement).toBe(button('Explore'))
 	await click('Explore')
-	await vi.waitFor(() => expect(button('Try this control')).toBeUndefined())
+	await waitForUi(() => expect(button('Try this control')).toBeUndefined())
 	expect(complete).not.toHaveBeenCalled()
 	await escape(button('Close capabilities'))
-	await vi.waitFor(() => expect(button('Try this control')).toBeDefined())
+	await waitForUi(() => expect(button('Try this control')).toBeDefined())
 	expect(complete).not.toHaveBeenCalled()
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Step 2 of 6')
 })
@@ -112,7 +113,7 @@ test('advancing the full tour preserves mode until Research is selected and neve
 	expect(document.activeElement).toBe(quick)
 	expect(quick.checked).toBe(true)
 	await act(async () => container.querySelector<HTMLInputElement>('input[value="research"]')!.click())
-	await vi.waitFor(() => expect(button('Start chatting')).toBeDefined())
+	await waitForUi(() => expect(button('Start chatting')).toBeDefined())
 	expect(submit).not.toHaveBeenCalled()
 	await click('Start chatting')
 	expect(complete).toHaveBeenCalledOnce()
@@ -128,7 +129,7 @@ test('opening Alerts pauses the tour and closing it resumes the same step', asyn
 	expect(button('Try this control')).toBeUndefined()
 	expect(complete).not.toHaveBeenCalled()
 	await escape(button('Close alerts'))
-	await vi.waitFor(() => expect(button('Try this control')).toBeDefined())
+	await waitForUi(() => expect(button('Try this control')).toBeDefined())
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Step 3 of 6')
 	expect(complete).not.toHaveBeenCalled()
 })

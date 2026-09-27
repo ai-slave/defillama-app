@@ -9,6 +9,7 @@ import type { DashboardInitialRenderPayload } from '~/containers/ProDashboard/in
 import DashboardPage from '~/pages/pro/[dashboardId]/[[...mode]]'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const router = vi.hoisted(() => ({
 	query: { dashboardId: 'test-dashboard', mode: ['edit'] },
@@ -95,7 +96,7 @@ async function hydrate() {
 
 test('hydrates a seeded owner dashboard without redirecting the restored session', async () => {
 	await hydrate()
-	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	await waitForUi(() => expect(showsEditorLoader()).toBe(false))
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
@@ -109,20 +110,20 @@ test('keeps the loader while client authentication is pending, then opens the ed
 			})
 	})
 	await hydrate()
-	await vi.waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
+	await waitForUi(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
 	expect(showsEditorLoader()).toBe(true)
 	expect(router.replace).not.toHaveBeenCalled()
 
 	await act(async () =>
 		answerSubscription(Response.json({ subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }))
 	)
-	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	await waitForUi(() => expect(showsEditorLoader()).toBe(false))
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
 test('redirects to the dashboard view when the owner signs out after hydration', async () => {
 	await hydrate()
-	await vi.waitFor(() => expect(showsEditorLoader()).toBe(false))
+	await waitForUi(() => expect(showsEditorLoader()).toBe(false))
 	await act(async () => pb.authStore.clear())
 	expect(router.replace).toHaveBeenCalledWith('/pro/test-dashboard', undefined, { shallow: true })
 })

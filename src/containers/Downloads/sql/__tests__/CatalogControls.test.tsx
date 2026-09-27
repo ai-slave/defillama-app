@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { chartDatasets } from '../../chart-datasets'
 import { datasets } from '../../datasets'
 import { SchemaBrowser } from '../SchemaBrowser'
@@ -48,7 +49,7 @@ test('schema radio filtering is reversible and retains search without loading a 
 	expect(container.textContent).toContain(chartDescription)
 	await act(async () => all.focus())
 	await press(all, 'ArrowRight')
-	await vi.waitFor(() => expect(flat.checked).toBe(true))
+	await waitForUi(() => expect(flat.checked).toBe(true))
 	expect(container.textContent).not.toContain(chartDescription)
 	const search = container.querySelector<HTMLInputElement>('input[type="text"]')!
 	await act(async () => {
@@ -57,10 +58,10 @@ test('schema radio filtering is reversible and retains search without loading a 
 		flat.focus()
 	})
 	await press(flat, 'ArrowRight')
-	await vi.waitFor(() => expect(timeseries.checked).toBe(true))
+	await waitForUi(() => expect(timeseries.checked).toBe(true))
 	expect(container.textContent).toContain('No tables match')
 	await press(timeseries, 'ArrowRight')
-	await vi.waitFor(() => expect(all.checked).toBe(true))
+	await waitForUi(() => expect(all.checked).toBe(true))
 	expect(search.value).toBe('hacks')
 	expect(container.textContent).toContain(flatDescription)
 	expect(load).not.toHaveBeenCalled()
@@ -74,11 +75,11 @@ test('SQL sample focus preserves the current query until activation', async () =
 	const initialContent = activePanel().textContent
 	await act(async () => notebook.focus())
 	await press(notebook, 'End')
-	await vi.waitFor(() => expect(document.activeElement).toBe(chains))
+	await waitForUi(() => expect(document.activeElement).toBe(chains))
 	expect(notebook.getAttribute('aria-selected')).toBe('true')
 	expect(activePanel().textContent).toBe(initialContent)
 	await press(chains, 'Enter')
-	await vi.waitFor(() => expect(chains.getAttribute('aria-selected')).toBe('true'))
+	await waitForUi(() => expect(chains.getAttribute('aria-selected')).toBe('true'))
 	expect(activePanel().getAttribute('aria-labelledby')).toBe(chains.id)
 	expect(activePanel().querySelector('code')?.textContent).toContain('FROM chains')
 	expect(container.querySelectorAll('[role="tabpanel"]:not([hidden])')).toHaveLength(1)

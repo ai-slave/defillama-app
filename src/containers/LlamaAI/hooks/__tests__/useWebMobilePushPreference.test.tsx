@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import {
 	useWebMobilePushPreference,
@@ -11,6 +11,7 @@ import {
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 const session = installSubscriberSession('user-1')
 const STATUS_URL = `${AI_SERVER}/mobile-push/web-notifications`
@@ -91,7 +92,7 @@ describe('useWebMobilePushPreference', () => {
 	}
 
 	async function waitForPreference(preference: ReturnType<typeof useWebMobilePushPreference>['preference']) {
-		await vi.waitFor(() => expect(result.preference).toEqual(preference))
+		await waitForUi(() => expect(result.preference).toEqual(preference))
 	}
 
 	const ENABLED = { kind: 'known', available: true, enabled: true } as const
@@ -104,7 +105,7 @@ describe('useWebMobilePushPreference', () => {
 		await act(async () => {
 			mutation = result.setEnabled.mutateAsync(false).catch(() => undefined)
 		})
-		await vi.waitFor(() => expect(holdPut).not.toBeNull())
+		await waitForUi(() => expect(holdPut).not.toBeNull())
 		return async () =>
 			act(async () => {
 				holdPut!({ available: true, enabled: false })
@@ -122,7 +123,7 @@ describe('useWebMobilePushPreference', () => {
 	test('reports an error with a retry that recovers', async () => {
 		serverStatus = 'fail'
 		await renderHook()
-		await vi.waitFor(() => expect(result.preference.kind).toBe('error'))
+		await waitForUi(() => expect(result.preference.kind).toBe('error'))
 		expect(result.preference).toMatchObject({ kind: 'error', message: 'Network unavailable' })
 
 		serverStatus = { available: true, enabled: false }
@@ -137,7 +138,7 @@ describe('useWebMobilePushPreference', () => {
 		serverStatus = 'fail'
 
 		await act(async () => session.client.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY }))
-		await vi.waitFor(() => expect(statusReads()).toBe(2))
+		await waitForUi(() => expect(statusReads()).toBe(2))
 
 		expect(result.preference).toEqual(ENABLED)
 	})
@@ -146,7 +147,7 @@ describe('useWebMobilePushPreference', () => {
 		serverStatus = { available: false, enabled: true }
 		await renderHook()
 
-		await vi.waitFor(() => expect(result.preference).toEqual({ kind: 'known', available: false, enabled: true }))
+		await waitForUi(() => expect(result.preference).toEqual({ kind: 'known', available: false, enabled: true }))
 	})
 
 	test('reports signed-out without requesting a status', async () => {

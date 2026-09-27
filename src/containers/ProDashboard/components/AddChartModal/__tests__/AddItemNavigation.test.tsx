@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession, type SessionOptions } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DASHBOARD_ITEM_REVEAL_EVENT } from '../../../hooks/useDashboardItemDeepLink'
 import { AddChartModal } from '../AddChartModal'
 import { CHART_MODE_STORAGE_KEY } from '../chartModePreference'
@@ -79,7 +80,7 @@ describe('a subscriber without SQL access', () => {
 	test('the SQL tab shows a subscription hand-off without opening the editor', async () => {
 		await renderModal()
 		await pressKey(tab('charts'), 'End')
-		await vi.waitFor(() => expect(document.activeElement).toBe(tab('sql')))
+		await waitForUi(() => expect(document.activeElement).toBe(tab('sql')))
 		expect(openSql).not.toHaveBeenCalled()
 		expect(tab('charts').getAttribute('aria-selected')).toBe('true')
 		await click(tab('sql'))
@@ -96,7 +97,7 @@ describe('a subscriber without SQL access', () => {
 		await click(tab('builder'))
 		expect(document.body.textContent).toContain('Chart builder preview')
 		await pressKey(tab('builder'), 'ArrowRight')
-		await vi.waitFor(() => expect(document.activeElement).toBe(tab('manual')))
+		await waitForUi(() => expect(document.activeElement).toBe(tab('manual')))
 		expect(document.body.textContent).toContain('Chart builder preview')
 		expect(tab('builder').getAttribute('aria-selected')).toBe('true')
 		await click(tab('manual'))

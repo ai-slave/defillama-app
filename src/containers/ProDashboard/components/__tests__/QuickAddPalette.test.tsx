@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../AppMetadataContext'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { DASHBOARD_ITEM_REVEAL_EVENT } from '../../hooks/useDashboardItemDeepLink'
@@ -103,7 +104,7 @@ async function renderPalette(placement?: DashboardItemPlacement, open = true, aw
 	)
 	if (!awaitMetadata) return
 	// The palette asks for chart availability when it mounts; rows describe it once the read settles.
-	await vi.waitFor(() => {
+	await waitForUi(() => {
 		expect(http.urls()).toContain(METADATA_URL)
 		expect(client.isFetching()).toBe(0)
 	})

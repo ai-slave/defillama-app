@@ -78,6 +78,8 @@ A function that only tests call is dead code: delete it with its tests. Exportin
 
 Keep every test under two seconds and every file under five. A test that needs longer sets its own timeout in the `test()` call and says why. Never wait on a promise a mock is expected to resolve without bounding it; a lost mock registration must fail fast, not hang.
 
+In render tests, wrap every event, focus change and store write in `act`, and wait with `waitForUi` from `src/utils/testing/waitForUi.ts` instead of `vi.waitFor`. React logs a warning for each update outside `act`, and those warnings can crash a CI worker at teardown. To see them locally, run with `--silent=false --reporter=default`; the default reporter hides console output.
+
 ## Metric Semantics
 
 Before changing metric routes, chart queries, metadata flags, public API validation, or adapter data types, read `docs/metrics.md`.

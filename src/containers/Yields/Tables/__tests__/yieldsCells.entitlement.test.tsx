@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { IYieldTableRow } from '../types'
 import { EarnApyCell, ExitCell } from '../YieldsCells'
 
@@ -60,7 +61,7 @@ const hasLock = () => cell('apy').querySelector(`[aria-label="${LOCK_LABEL}"]`) 
 describe('embedded public yields rows', () => {
 	test('a subscriber sees the reported APY without a Pro lock or upsell', async () => {
 		await renderCells()
-		await vi.waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true), {
+		await waitForUi(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true), {
 			timeout: 1000
 		})
 		await act(async () => new Promise((resolve) => setTimeout(resolve, 20)))
@@ -72,7 +73,7 @@ describe('embedded public yields rows', () => {
 	test('a signed-out reader sees both cells locked', async () => {
 		pb.authStore.clear()
 		await renderCells()
-		await vi.waitFor(() => expect(cell('exit').textContent).toBe('•••'), { timeout: 1000 })
+		await waitForUi(() => expect(cell('exit').textContent).toBe('•••'), { timeout: 1000 })
 		expect(hasLock()).toBe(true)
 	})
 })

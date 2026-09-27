@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import Subscription from '~/pages/subscription'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { getReturnIntentAction, ReturnModal, withoutReturnUrl } from '../ReturnModal'
 
 const router = vi.hoisted(() => ({
@@ -122,7 +123,7 @@ test('the subscription page asks a signed-in visitor whether to return to their 
 				</session.Wrapper>
 			)
 		)
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(document.querySelector('[role="dialog"] a')?.getAttribute('href')).toBe(destination)
 		})

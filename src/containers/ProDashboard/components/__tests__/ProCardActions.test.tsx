@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { DashboardCardContext, type DashboardCardContextValue } from '../DashboardCardContext'
 import { ProCardEditControls, ProCardOverflowMenu } from '../ProCardActions'
@@ -145,7 +146,7 @@ test('CSV downloads for subscribers and opens the gate otherwise', async () => {
 	await act(async () => root.render(<ProCardOverflowMenu csv={{ prepareCsv }} />))
 	await openMenu()
 	await clickMenuItem('Download CSV')
-	await vi.waitFor(() => expect(document.body.textContent).toContain('Subscribe to export'))
+	await waitForUi(() => expect(document.body.textContent).toContain('Subscribe to export'))
 	expect(downloads).toHaveLength(1)
 })
 test('offers a card permalink and an embed snippet for cards on a public dashboard', async () => {

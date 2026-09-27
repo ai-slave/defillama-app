@@ -7,6 +7,7 @@ import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 
 const routerMock = vi.hoisted(() => ({
@@ -168,7 +169,7 @@ describe('useYieldsServerTable ISR seed', () => {
 			routerMock.query = { apyWindow: 'avg_30d' }
 			await act(async () => root.render(element()))
 		}
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(container.textContent).toContain(saved ? 'saved-pool' : 'seeded-1')
 		})
@@ -187,7 +188,7 @@ describe('useYieldsServerTable ISR seed', () => {
 
 		routerMock.query = { apyWindow: 'avg_30d' }
 		await render(true)
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(latest.rows[0]?.id).toBe('30d-pool')
 		})
@@ -263,7 +264,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		await act(async () => {
 			resolve({ rows: [{ id: 'filtered', tvl: 10 }], total: 1, page: 1, pageSize: 50, hasMore: false })
 		})
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(latest.rows.map((row) => row.id)).toEqual(['filtered'])
 		})
@@ -382,7 +383,7 @@ describe('useYieldsServerTable hydration', () => {
 		})
 		expect(onRecoverableError).not.toHaveBeenCalled()
 
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(fetchJson).toHaveBeenCalledTimes(1)
 		})

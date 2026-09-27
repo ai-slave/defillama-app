@@ -3,8 +3,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { KpkMetadata } from '../api'
 import KpkHeader from '../KpkHeader'
 
@@ -57,7 +58,7 @@ describe('KpkHeader', () => {
 				</QueryClientProvider>
 			)
 		)
-		await vi.waitFor(() => expect(container.textContent).toContain('Data as of'), { timeout: 1000 })
+		await waitForUi(() => expect(container.textContent).toContain('Data as of'), { timeout: 1000 })
 	}
 
 	const links = () =>

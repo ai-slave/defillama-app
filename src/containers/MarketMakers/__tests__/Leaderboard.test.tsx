@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers/volume', push: () => {} }) }))
 
@@ -44,7 +45,7 @@ test('a board saved on the 7-day timeframe shows the 7-day badge and that window
 				</QueryClientProvider>
 			)
 		)
-		await vi.waitFor(() => expect(container.textContent).toContain('Birch'), { timeout: 1000 })
+		await waitForUi(() => expect(container.textContent).toContain('Birch'), { timeout: 1000 })
 
 		expect(container.textContent).toContain('Last 7-day')
 		expect(container.textContent).not.toContain('Amber')

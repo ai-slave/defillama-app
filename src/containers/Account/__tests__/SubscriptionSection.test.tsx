@@ -7,6 +7,7 @@ import type { Subscription } from '~/auth/useSubscribe'
 import pb from '~/utils/pocketbase'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { SubscriptionSection } from '../SubscriptionSection'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/account', query: {} }) }))
@@ -70,7 +71,7 @@ async function render() {
 }
 
 async function waitFor(assertion: () => void) {
-	await vi.waitFor(
+	await waitForUi(
 		async () => {
 			await act(async () => {})
 			assertion()

@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TokenBorrowSection } from '../TokenBorrowSection'
 import type { TokenBorrowRoutesHydration } from '../types'
 
@@ -153,7 +154,7 @@ test.each(SCENARIOS)(
 			retry: container.textContent?.includes('Retry') ?? false
 		})
 		const waitForRetryEnabled = () =>
-			vi.waitFor(async () => {
+			waitForUi(async () => {
 				await act(async () => expect(findButton('Retry')?.disabled).toBe(false))
 			})
 		/** Double-clicks Retry, which must start one request per leg; resolves collateral and leaves the debt leg. */
@@ -164,7 +165,7 @@ test.each(SCENARIOS)(
 				findButton('Retry').click()
 				findButton('Retry').click()
 			})
-			await vi.waitFor(async () => {
+			await waitForUi(async () => {
 				await act(async () => expect(findButton('Retrying…')?.disabled).toBe(true))
 			})
 			await act(async () => collateral.resolve(Response.json({ rows: scenario.finalIsEmpty ? [] : USE_ROUTES })))
@@ -190,7 +191,7 @@ test.each(SCENARIOS)(
 						)!
 					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')!
 			await act(async () => next.click())
-			await vi.waitFor(() => expect(http.requests).toHaveLength(2))
+			await waitForUi(() => expect(http.requests).toHaveLength(2))
 			await act(async () => {
 				if (scenario.tab === 'use') {
 					collateral.reject(new Error('Collateral failed'))
@@ -215,7 +216,7 @@ test.each(SCENARIOS)(
 
 			await retry(retained)
 			await act(async () => borrow.resolve(Response.json({ rows: scenario.finalIsEmpty ? [] : BORROW_ROUTES })))
-			await vi.waitFor(async () => {
+			await waitForUi(async () => {
 				await act(async () => expect(sectionState()).toEqual(scenario.recovered))
 			})
 			expect(http.requests).toHaveLength(6)

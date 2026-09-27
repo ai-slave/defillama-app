@@ -4,6 +4,7 @@ import { act, type ReactNode, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ push: vi.fn(), pathname: '/investors', query: {} }) }))
 
@@ -86,7 +87,7 @@ describe('DashboardTabsContent', () => {
 				/>
 			)
 		)
-		await vi.waitFor(() => expect(signal).toBeDefined())
+		await waitForUi(() => expect(signal).toBeDefined())
 		expect(signal!.aborted).toBe(false)
 
 		await act(async () =>
@@ -128,7 +129,7 @@ describe('DashboardTabsContent', () => {
 		await act(async () =>
 			render(<CustomOnlyContent tabs={tabs} activeTab="pro" displayName="Investor" hideDuplicateButton />)
 		)
-		await vi.waitFor(() => expect(signal).toBeDefined())
+		await waitForUi(() => expect(signal).toBeDefined())
 		expect(signal!.aborted).toBe(false)
 
 		await act(async () =>

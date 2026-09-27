@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useImperativeHandle, useState, type Ref } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { InviteBanner } from '../InviteBanner'
 
 vi.mock('@marsidev/react-turnstile', () => ({
@@ -104,7 +105,7 @@ async function render() {
 		)
 	)
 	// Wait for the availability check, then flush the render it schedules.
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 10))
 		})
@@ -121,7 +122,7 @@ async function openAndVerify() {
 }
 
 async function waitForText(text: string) {
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {
 			await new Promise((resolve) => setTimeout(resolve, 10))
 		})

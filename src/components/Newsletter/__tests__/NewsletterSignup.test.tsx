@@ -2,10 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { AuthProvider } from '~/auth'
 import pb from '~/utils/pocketbase'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { NewsletterSignup } from '../NewsletterSignup'
 
 const http = installFixtureFetch()
@@ -67,7 +68,7 @@ test.each(['card', 'strip'] as const)(
 		expect(choices.map((e) => e.getAttribute('aria-checked'))).toEqual(['false', 'false'])
 		await act(async () => choices[1].click())
 		await act(async () => submit.click())
-		await vi.waitFor(() => expect(submit.disabled).toBe(true))
+		await waitForUi(() => expect(submit.disabled).toBe(true))
 		expect(subscribeRequests().map((request) => JSON.parse(request.init!.body as string))).toEqual([
 			{ email: 'reader@example.com', newsletters: ['research'] }
 		])
@@ -78,6 +79,6 @@ test.each(['card', 'strip'] as const)(
 		expect(choices[0].getAttribute('aria-checked')).toBe('false')
 		expect(subscribeRequests()).toHaveLength(1)
 		await act(async () => pending.resolve(Response.json({ email: 'reader@example.com', result: { research: 'ok' } })))
-		await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+		await waitForUi(() => expect(client.isMutating()).toBe(0))
 	}
 )

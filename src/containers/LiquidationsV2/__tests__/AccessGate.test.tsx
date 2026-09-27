@@ -8,6 +8,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import pb from '~/utils/pocketbase'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { LiquidationsChainRouteContent } from '../RouteContent'
 
 vi.mock('next/router', () => ({
@@ -77,7 +78,7 @@ async function render(chainLinks = shell.chainLinks) {
 
 const text = () => container.textContent ?? ''
 const waitForText = (value: string) =>
-	vi.waitFor(async () => {
+	waitForUi(async () => {
 		await act(async () => {})
 		expect(text()).toContain(value)
 	})

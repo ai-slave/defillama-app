@@ -10,6 +10,7 @@ import pb from '~/utils/pocketbase'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TargetedAnnouncement } from '../TargetedAnnouncement'
 
 const route = { asPath: '/chain/ethereum', pathname: '/chain/[chain]' }
@@ -46,8 +47,8 @@ describe('TargetedAnnouncement', () => {
 	}
 
 	const text = () => container.textContent ?? ''
-	const waitForText = (expected: string) => vi.waitFor(() => expect(text()).toContain(expected), { timeout: 1000 })
-	const waitForImpression = () => vi.waitFor(() => expect(impressions()).toHaveLength(1), { timeout: 1000 })
+	const waitForText = (expected: string) => waitForUi(() => expect(text()).toContain(expected), { timeout: 1000 })
+	const waitForImpression = () => waitForUi(() => expect(impressions()).toHaveLength(1), { timeout: 1000 })
 
 	function dismiss() {
 		const button = container.querySelector<HTMLButtonElement>('[data-announcement-dismiss]')!
@@ -157,7 +158,7 @@ describe('TargetedAnnouncement', () => {
 		const profile = new Promise<UserInterestsResponse>((resolve) => (resolveProfile = resolve))
 		session.serve({ [INTERESTS_URL]: () => profile })
 		await render()
-		await vi.waitFor(() => expect(interestsRequests()).toBe(1), { timeout: 1000 })
+		await waitForUi(() => expect(interestsRequests()).toBe(1), { timeout: 1000 })
 		expect(text()).toContain('Universal Token Rating')
 		expect(impressions()).toEqual([])
 

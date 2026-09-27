@@ -9,6 +9,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { useYieldsPaginatedTable } from '../queries.client'
 import { useYieldsServerTable } from '../useYieldsServerTable'
 
@@ -55,7 +56,7 @@ async function mount<T>(useHook: () => T) {
 }
 
 const signOut = () => act(async () => pb.authStore.clear())
-const settle = (check: () => void) => vi.waitFor(check, { timeout: 1000, interval: 5 })
+const settle = (check: () => void) => waitForUi(check, { timeout: 1000, interval: 5 })
 
 describe('measured data after entitlement loss', () => {
 	test('the paid page is never painted as a placeholder while the public one loads', async () => {

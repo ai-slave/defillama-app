@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ALERTS_QUERY_KEY } from '../alerts/queryKeys'
 import type { Alert } from '../alerts/types'
 import { AlertsModal } from '../AlertsModal'
@@ -62,7 +63,7 @@ async function render() {
 }
 async function settle(assertion: () => void) {
 	await act(async () => {
-		await vi.waitFor(assertion)
+		await waitForUi(assertion)
 	})
 }
 function toggle() {

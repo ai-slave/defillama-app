@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TipActionProvider } from '../TipActionContext'
 import { TipOrNotifyBanner } from '../TipOrNotifyBanner'
 
@@ -46,7 +47,7 @@ test('shows low balance only after paid usage and opens the Balance tab', async 
 	expect(host.textContent).not.toContain('balance is low')
 	await render('paid-message')
 	await act(async () => {
-		await vi.waitFor(() => expect(host.textContent).toContain('balance is low'))
+		await waitForUi(() => expect(host.textContent).toContain('balance is low'))
 	})
 	const topup = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
 		(button) => button.textContent === 'Top up'
@@ -78,16 +79,16 @@ test('a sufficient balance shows the regular tip instead of a top-up notice', as
 	})
 	await render('paid-message')
 	await act(async () => {
-		await vi.waitFor(() => expect(host.textContent).toContain('Schedule a daily alert'))
+		await waitForUi(() => expect(host.textContent).toContain('Schedule a daily alert'))
 	})
 	await act(async () => {
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(session.requests.some((request) => request.url.pathname === '/user/ai-balance')).toBe(true)
 		)
 	})
 	// React Query tells its observers on a timer after the fetch settles; give the answer time to render.
 	await act(async () => {
-		await vi.waitFor(() => expect(session.client.isFetching()).toBe(0))
+		await waitForUi(() => expect(session.client.isFetching()).toBe(0))
 		await new Promise((resolve) => setTimeout(resolve, 20))
 	})
 	expect(host.textContent).not.toContain('balance is low')

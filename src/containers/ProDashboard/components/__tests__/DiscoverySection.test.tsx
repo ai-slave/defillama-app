@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { Dashboard } from '../../dashboardTypes'
 import { DiscoverySection } from '../DiscoverySection'
 
@@ -69,7 +70,7 @@ test('an overflowing rail offers a scroll button only once it holds more than th
 		expect(container.querySelectorAll('button')).toHaveLength(0)
 
 		await render([makeDashboard('a'), makeDashboard('b'), makeDashboard('c'), makeDashboard('d')])
-		await vi.waitFor(() => expect(container.querySelector('[aria-label="Scroll Trending Today right"]')).not.toBeNull())
+		await waitForUi(() => expect(container.querySelector('[aria-label="Scroll Trending Today right"]')).not.toBeNull())
 	} finally {
 		vi.restoreAllMocks()
 	}

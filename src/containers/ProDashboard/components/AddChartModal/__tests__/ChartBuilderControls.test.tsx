@@ -6,6 +6,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../../AppMetadataContext'
 import { normalizeChartBuilderConfig } from '../../../chartBuilderCapabilities'
 import { ChartBuilderTab } from '../ChartBuilderTab'
@@ -79,13 +80,13 @@ test('chart and display selection uses arrows without changing the draft on moun
 	const change = await renderBuilder(initializeFromEditItem(undefined).chartBuilder)
 	expect(change).not.toHaveBeenCalled()
 	await pressKey(radio('Chart type', 'stackedArea'), 'ArrowRight')
-	await vi.waitFor(() => expect(radio('Chart type', 'line').checked).toBe(true))
+	await waitForUi(() => expect(radio('Chart type', 'line').checked).toBe(true))
 	await act(async () => radio('Chart type', 'line').click())
 	expect(change.mock.calls).toEqual([[{ chartType: 'line' }]])
 	await pressKey(radio('Display value as', 'timeSeries'), 'ArrowRight')
-	await vi.waitFor(() => expect(radio('Display value as', 'percentage').checked).toBe(true))
+	await waitForUi(() => expect(radio('Display value as', 'percentage').checked).toBe(true))
 	await pressKey(radio('Display value as', 'percentage'), 'ArrowLeft')
-	await vi.waitFor(() => expect(radio('Display value as', 'timeSeries').checked).toBe(true))
+	await waitForUi(() => expect(radio('Display value as', 'timeSeries').checked).toBe(true))
 	expect(change.mock.calls).toEqual([
 		[{ chartType: 'line' }],
 		[{ displayAs: 'percentage' }],
@@ -103,7 +104,7 @@ test('grouping changes preserve metric normalization and conditional percentage 
 	})
 	expect(radio('Display value as', 'percentage')).not.toBeNull()
 	await pressKey(radio('Grouping mode', 'protocol'), 'ArrowLeft')
-	await vi.waitFor(() => expect(radio('Grouping mode', 'chains').checked).toBe(true))
+	await waitForUi(() => expect(radio('Grouping mode', 'chains').checked).toBe(true))
 	expect(change).toHaveBeenLastCalledWith({
 		mode: 'chains',
 		chains: [],
@@ -113,7 +114,7 @@ test('grouping changes preserve metric normalization and conditional percentage 
 	})
 	expect(radio('Chart type', 'stackedArea').checked).toBe(true)
 	await pressKey(radio('Grouping mode', 'chains'), 'ArrowRight')
-	await vi.waitFor(() => expect(radio('Grouping mode', 'protocol').checked).toBe(true))
+	await waitForUi(() => expect(radio('Grouping mode', 'protocol').checked).toBe(true))
 	expect(change).toHaveBeenLastCalledWith({ mode: 'protocol', chains: [], protocol: undefined })
 })
 

@@ -3,6 +3,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { BalanceSettings } from '../BalanceSettings'
 
 const session = installSubscriberSession('reader')
@@ -36,7 +37,7 @@ async function draw(node: ReactNode) {
 }
 async function settle(assertion: () => void) {
 	await act(async () => {
-		await vi.waitFor(assertion)
+		await waitForUi(assertion)
 	})
 }
 // Balance polling runs on timers; everything else (auth, query batching, fetch) runs as it does in the app.

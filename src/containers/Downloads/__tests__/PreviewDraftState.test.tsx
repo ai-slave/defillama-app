@@ -4,6 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChartDatasetDefinition } from '../chart-datasets'
 import { ChartDatasetModal } from '../ChartDatasetModal'
 import { DatasetPreviewModal } from '../DatasetPreviewModal'
@@ -88,7 +89,7 @@ async function refreshCsv(body: string) {
 	const calls = fetchCsv.mock.calls.length
 	fetchCsv.mockImplementation(async () => new Response(body))
 	await act(async () => client.invalidateQueries())
-	await vi.waitFor(() => expect(fetchCsv.mock.calls.length).toBeGreaterThan(calls))
+	await waitForUi(() => expect(fetchCsv.mock.calls.length).toBeGreaterThan(calls))
 	await settle()
 }
 async function settle() {
@@ -129,7 +130,7 @@ async function renderChart(nextOptions = options, initialConfig = config) {
 test('late options and CSV initialize saved selections once, preserving edits and empty selection', async () => {
 	await renderChart([])
 	await renderChart()
-	await vi.waitFor(() => expect(selectedColumns()).toEqual(['date']))
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await click(column('date'))
 	expect(selectedColumns()).toEqual([])
@@ -143,7 +144,7 @@ test('late options and CSV initialize saved selections once, preserving edits an
 
 test('switching or removing the active preview and toggling sum reset table controls but retain dates', async () => {
 	await renderChart()
-	await vi.waitFor(() => expect(selectedColumns()).toEqual(['date']))
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
 	await click(button('Preview Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
 	expect(latest()).toMatchObject({
@@ -170,7 +171,7 @@ test('category drafts use CSV protocols absent from the catalog and do not resel
 	fetchCsv.mockResolvedValue(new Response('date,Alpha,Unlisted\n2026-09-01,20,30'))
 	const categoryConfig = { ...config, columns: undefined, categoryBreakdown: { category: 'Lending' } }
 	await renderChart(options, categoryConfig)
-	await vi.waitFor(() => expect(latest()).toMatchObject({ params: ['alpha', 'unlisted'] }))
+	await waitForUi(() => expect(latest()).toMatchObject({ params: ['alpha', 'unlisted'] }))
 	expect(selectedColumns()).toEqual(['date', 'Alpha', 'Unlisted'])
 	await click(column('Unlisted'))
 	await renderChart(options, categoryConfig)
@@ -202,9 +203,9 @@ test('dataset defaults initialize from loaded rows and saved settings do not ove
 		/>
 	)
 	await settle()
-	await vi.waitFor(() => expect(selectedColumns()).toEqual(['date']))
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
-	await vi.waitFor(() => expect(missingColumnNotices()).toBe(1))
+	await waitForUi(() => expect(missingColumnNotices()).toBe(1))
 	await click(column('date'))
 	expect(selectedColumns()).toEqual([])
 	await refreshCsv(`${csv}\n2026-09-03,50,2`)
@@ -222,7 +223,7 @@ test('dataset default sort initializes without a preset and remains user-editabl
 		/>
 	)
 	await settle()
-	await vi.waitFor(() => expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'desc' } }))
+	await waitForUi(() => expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'desc' } }))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
 	await click(button('value'))
 	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })

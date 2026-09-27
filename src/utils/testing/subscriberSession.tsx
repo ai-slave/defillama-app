@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { act, type ReactNode } from 'react'
 import { afterEach, beforeEach } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { subscriptionStatusQueryKey, type Subscription } from '~/auth/subscriptionStatus'
@@ -61,9 +61,12 @@ export function installSubscriberSession(
 		}
 		pb.authStore.save(token, record)
 	})
-	afterEach(() => {
-		client.clear()
-		pb.authStore.clear()
+	// Hooks inside a describe run before a file's unmount, so a mounted AuthProvider can see the session end.
+	afterEach(async () => {
+		await act(async () => {
+			client.clear()
+			pb.authStore.clear()
+		})
 		localStorage.clear()
 	})
 	return {

@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DashboardSettingsModal } from '../DashboardSettingsModal'
 
 vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
@@ -80,7 +81,7 @@ test('the form keeps visibility and tags and no longer carries the name or descr
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="private"]')!.click())
 	await submit()
 	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'private', tags: ['lending'] })
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	const toast = (await import('react-hot-toast')).default
 	expect(toast.success).toHaveBeenCalledWith(
 		'Settings saved',
@@ -101,12 +102,12 @@ test('deletion runs through the confirmation dialog and reports a failure there'
 	await act(async () => button('Delete Dashboard')!.click())
 	expect(document.body.textContent).toContain('Are you sure you want to delete')
 	await act(async () => button('Delete')!.click())
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not delete')
 	)
 	expect(close).not.toHaveBeenCalled()
 	await act(async () => button('Delete')!.click())
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(remove).toHaveBeenCalledTimes(2)
 	expect(remove).toHaveBeenLastCalledWith('dashboard-1')
 })
@@ -118,7 +119,7 @@ test('sharing with the team is a separate call that lands after the settings sav
 	expect(document.body.textContent).toContain('Share with Growth')
 	await act(async () => toggle.click())
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(move).toHaveBeenCalledExactlyOnceWith('team-1')
 	expect(save).toHaveBeenCalledExactlyOnceWith({ visibility: 'public', tags: [] })
 	expect(save.mock.invocationCallOrder[0]).toBeLessThan(move.mock.invocationCallOrder[0])
@@ -133,13 +134,13 @@ test('an unchanged switch does not move, and unchecking moves the dashboard back
 	const toggle = teamSwitch()!
 	expect(toggle.checked).toBe(true)
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(move).not.toHaveBeenCalled()
 
 	close.mockClear()
 	await act(async () => toggle.click())
 	await submit()
-	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(close).toHaveBeenCalledOnce())
 	expect(move).toHaveBeenCalledExactlyOnceWith(null)
 })
 
@@ -161,7 +162,7 @@ test('a failed move keeps the dialog open after the settings save', async () => 
 	await renderSettings([], { myTeam: { id: 'team-1', name: 'Growth' }, team: null, canMove: true })
 	await act(async () => teamSwitch()!.click())
 	await submit()
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
 	)
 	expect(save).toHaveBeenCalledOnce()

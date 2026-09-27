@@ -6,6 +6,7 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AppMetadataProvider } from '../../../AppMetadataContext'
 import type { MetricChartType } from '../../../types'
 import { MetricSentenceBuilder } from '../MetricSentenceBuilder'
@@ -69,10 +70,10 @@ test('chart type arrows update the draft once and None remains a selectable valu
 		})
 	}
 	await arrow('sparkline', 'ArrowRight')
-	await vi.waitFor(() => expect(radio('bar').checked).toBe(true))
+	await waitForUi(() => expect(radio('bar').checked).toBe(true))
 	await arrow('bar', 'ArrowRight')
-	await vi.waitFor(() => expect(radio('none').checked).toBe(true))
+	await waitForUi(() => expect(radio('none').checked).toBe(true))
 	await arrow('none', 'ArrowLeft')
-	await vi.waitFor(() => expect(radio('bar').checked).toBe(true))
+	await waitForUi(() => expect(radio('bar').checked).toBe(true))
 	expect(change.mock.calls).toEqual([['bar'], ['none'], ['bar']])
 })

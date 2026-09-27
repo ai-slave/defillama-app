@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { protocolCharts } from '../constants'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics, IToggledMetrics } from '../types'
 import { useFetchProtocolChartData } from '../useFetchProtocolChartData'
@@ -179,7 +180,7 @@ async function mount(props: ProbeProps) {
 
 // Lets fetches resolve inside act, so their renders are flushed, until the assertion holds.
 function until(assertion: () => void) {
-	return vi.waitFor(async () => {
+	return waitForUi(async () => {
 		await act(() => new Promise((resolve) => setTimeout(resolve, 5)))
 		assertion()
 	})

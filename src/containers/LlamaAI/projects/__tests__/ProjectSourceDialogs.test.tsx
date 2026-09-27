@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { FileDropProvider } from '../../components/FileDrop'
 import { AddTextContentModal } from '../AddTextContentModal'
 import { GitHubConnectModal } from '../GitHubConnectModal'
@@ -104,12 +105,12 @@ async function mount(kind: 'github' | 'text') {
 	await click('Open sources')
 }
 async function selectRepo() {
-	await vi.waitFor(() => expect(document.querySelector('input[role="combobox"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('input[role="combobox"]')).not.toBeNull())
 	const label = [...document.querySelectorAll('label')].find((e) => e.textContent === 'Repository')!
 	await fill(document.getElementById(label.htmlFor) as HTMLInputElement, 'repo')
-	await vi.waitFor(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="option"]')).not.toBeNull())
 	await act(async () => (document.querySelector('[role="option"]') as HTMLElement).click())
-	await vi.waitFor(() => expect(button('Connect').disabled).toBe(false))
+	await waitForUi(() => expect(button('Connect').disabled).toBe(false))
 }
 
 test('GitHub connection preserves the new dialog when an older request completes', async () => {
@@ -127,7 +128,7 @@ test('GitHub connection preserves the new dialog when an older request completes
 	expect(openDialog()).toBeDefined()
 	expect(button('Connect').disabled).toBe(false)
 	await click('Connect')
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 	expect(api.connect).toHaveBeenCalledTimes(2)
 	expect(api.connect.mock.calls[0]).toEqual([
 		'qa',
@@ -140,10 +141,10 @@ test('GitHub failure stays inline, keeps selection, and can retry', async () => 
 	await mount('github')
 	await selectRepo()
 	await click('Connect')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Connection refused'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Connection refused'))
 	expect(api.error).not.toHaveBeenCalled()
 	await click('Connect')
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 	expect(api.connect).toHaveBeenCalledTimes(2)
 })
 
@@ -153,14 +154,14 @@ test('text import focuses its filename, keeps a skipped draft, and resets after 
 		.mockResolvedValueOnce({ imported: [{ path: 'notes.md' }], skipped: [] })
 	await mount('text')
 	const input = document.querySelector('input')!
-	await vi.waitFor(() => expect(document.activeElement).toBe(input))
+	await waitForUi(() => expect(document.activeElement).toBe(input))
 	await fill(input, 'notes.md')
 	await fill(document.querySelector('textarea')!, 'Article notes')
 	await click('Save')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('File limit reached'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('File limit reached'))
 	expect(document.querySelector('textarea')?.value).toBe('Article notes')
 	await click('Save')
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
 	await click('Open sources')
 	expect(document.querySelector('input')?.value).toBe('')
 	expect(document.querySelector('textarea')?.value).toBe('')
@@ -202,23 +203,23 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 			</session.Wrapper>
 		)
 	)
-	await vi.waitFor(() => expect(button('Delete notes.md')).toBeDefined())
+	await waitForUi(() => expect(button('Delete notes.md')).toBeDefined())
 	const trigger = button('Delete notes.md')
 	await click('Delete notes.md')
 	await click('Cancel')
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	await click('Delete notes.md')
 	await click('Delete')
-	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
 	expect(api.remove).toHaveBeenCalledTimes(1)
 	expect(button('Cancel').disabled).toBe(true)
 	await act(async () => request.reject(new Error('Please retry')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Please retry'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Please retry'))
 	expect(openDialog()).toBeDefined()
 	await click('Delete')
-	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Add project source')))
+	await waitForUi(() => expect(openDialog()).toBeUndefined())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Add project source')))
 	expect(document.body.textContent).not.toContain('notes.md')
 })
 
@@ -248,12 +249,12 @@ test('file loading and failure do not look empty, retry restores the upload targ
 	expect(container.textContent).toContain('Loading files')
 	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
 	await act(async () => request.reject(new Error('Offline')))
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
 	)
 	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
 	await click('Retry files')
-	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull())
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')).toBeNull())
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(api.files).toHaveBeenCalledTimes(2)
 	const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
@@ -267,13 +268,13 @@ test('connected source failure has its own retry without hiding available files'
 	api.sources.mockRejectedValueOnce(new Error('Sources offline')).mockResolvedValueOnce([])
 	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'blob', path: 'notes.md', size: 100 }] })
 	await mountFiles()
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load connected sources.")
 	)
-	await vi.waitFor(() => expect(container.textContent).toContain('notes.md'))
+	await waitForUi(() => expect(container.textContent).toContain('notes.md'))
 	expect(container.querySelector('[aria-label="Delete notes.md"]')).toBeNull()
 	await click('Retry sources')
-	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull())
+	await waitForUi(() => expect(container.querySelector('[role="alert"]')).toBeNull())
 	expect(container.textContent).toContain('notes.md')
 	expect(api.sources).toHaveBeenCalledTimes(2)
 })
@@ -283,11 +284,11 @@ test('a background file refresh failure preserves the known files and offers ret
 		.mockResolvedValueOnce({ files: [{ id: 'file-1', source_id: 'blob', path: 'notes.md', size: 100 }] })
 		.mockRejectedValueOnce(new Error('Offline'))
 	await mountFiles()
-	await vi.waitFor(() => expect(container.textContent).toContain('notes.md'))
+	await waitForUi(() => expect(container.textContent).toContain('notes.md'))
 	await act(async () => {
 		await session.client.refetchQueries()
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
 	)
 	expect(container.textContent).toContain('notes.md')
@@ -299,7 +300,7 @@ test('upload pending disables picking and ignores another drop until completion'
 	api.files.mockResolvedValue({ files: [] })
 	api.upload.mockReturnValueOnce(request.promise)
 	await mountFiles()
-	await vi.waitFor(() => expect(container.textContent).toContain('Drop files here'))
+	await waitForUi(() => expect(container.textContent).toContain('Drop files here'))
 	const target = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Drop files here'))!
 	const file = new File(['Test source'], 'notes.md', { type: 'text/markdown' })
 	async function drop() {
@@ -312,13 +313,13 @@ test('upload pending disables picking and ignores another drop until completion'
 		)
 	}
 	await drop()
-	await vi.waitFor(() => expect(container.textContent).toContain('Uploading…'))
+	await waitForUi(() => expect(container.textContent).toContain('Uploading…'))
 	expect(button('Add project source').disabled).toBe(true)
 	expect(target.disabled).toBe(true)
 	await drop()
 	expect(api.upload).toHaveBeenCalledOnce()
 	await act(async () => request.resolve({ imported: [], skipped: [] }))
-	await vi.waitFor(() => expect(target.disabled).toBe(false))
+	await waitForUi(() => expect(target.disabled).toBe(false))
 	expect(button('Add project source').disabled).toBe(false)
 })
 
@@ -327,13 +328,13 @@ test('GitHub files never get a per-file delete action while source metadata load
 	api.sources.mockReturnValue(request.promise)
 	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'github-1', path: 'repo/notes.md', size: 100 }] })
 	await mountFiles()
-	await vi.waitFor(() => expect(container.textContent).toContain('repo/notes.md'))
+	await waitForUi(() => expect(container.textContent).toContain('repo/notes.md'))
 	expect(container.querySelector('[role="status"][aria-label="Loading connected sources"]')).not.toBeNull()
 	expect(container.querySelector('[aria-label="Delete repo/notes.md"]')).toBeNull()
 	await act(async () =>
 		request.resolve([{ id: 'github-1', adapter_type: 'github', config: { owner: 'owner', repo: 'repo' } }])
 	)
-	await vi.waitFor(() => expect(container.textContent).toContain('GitHub'))
+	await waitForUi(() => expect(container.textContent).toContain('GitHub'))
 	expect(container.querySelector('[aria-label="Delete repo/notes.md"]')).toBeNull()
 })
 
@@ -351,10 +352,10 @@ test('file picking stays unavailable until both file and source requests settle'
 	expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
 	expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading files')
 	await act(async () => files.resolve({ files: [] }))
-	await vi.waitFor(() => expect(container.textContent).toContain('Loading connected sources'))
+	await waitForUi(() => expect(container.textContent).toContain('Loading connected sources'))
 	expect(drop.getAttribute('aria-hidden')).toBe('true')
 	await act(async () => sources.resolve([]))
-	await vi.waitFor(() => expect(drop.disabled).toBe(false))
+	await waitForUi(() => expect(drop.disabled).toBe(false))
 	expect(drop.hasAttribute('aria-hidden')).toBe(false)
 	expect(container.querySelector('[role="status"]')).toBeNull()
 })

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { V2_SERVER_URL } from '~/constants'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChartConfig } from '../../types'
 import { ChartCard } from '../ChartCard'
 
@@ -56,7 +57,7 @@ test.each([
 			)
 		)
 
-		await vi.waitFor(() => expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull())
+		await waitForUi(() => expect(container.querySelector('[aria-label="More actions"]')).not.toBeNull())
 		expect(container.textContent).toContain(title)
 		// The control's label reads Cumulative or Individual; a metric without it shows neither.
 		expect(/Cumulative|Individual/.test(container.textContent!)).toBe(offersCumulative)

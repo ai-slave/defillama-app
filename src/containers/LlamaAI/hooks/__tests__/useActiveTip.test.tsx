@@ -2,11 +2,12 @@
 
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { TipDTO } from '../useLlamaAISettings'
 import { useActiveTip } from '../useLlamaAITip'
 
@@ -123,5 +124,5 @@ test('the resolved server tip wins over the cached one', async () => {
 	localStorage.setItem('llamaai-last-tip:user-a', JSON.stringify(tipFor('tip-a')))
 	serverTip = tipFor('tip-server')
 	await render()
-	await vi.waitFor(() => expect(seen.at(-1)).toBe('tip-server'))
+	await waitForUi(() => expect(seen.at(-1)).toBe('tip-server'))
 })

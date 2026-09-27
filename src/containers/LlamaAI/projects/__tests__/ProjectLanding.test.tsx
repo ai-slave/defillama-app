@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ProjectLanding } from '../ProjectLanding'
 
 const router = vi.hoisted(() => ({
@@ -71,7 +72,7 @@ async function render(isStreaming = false) {
 		)
 	)
 }
-const until = (assertion: () => void) => vi.waitFor(assertion, { timeout: 1000 })
+const until = (assertion: () => void) => waitForUi(assertion, { timeout: 1000 })
 async function renderLoaded() {
 	await render()
 	await until(() => expect(tabs()).toHaveLength(2))

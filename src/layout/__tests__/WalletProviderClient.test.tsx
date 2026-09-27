@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { expect, test, vi } from 'vitest'
 import { useConnection, useConnectors } from 'wagmi'
 import { connect } from 'wagmi/actions'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { walletConfig, WalletProviderClient } from '../WalletProviderClient'
 
 // Keep discovery/hydration real, without starting third-party relay sessions in this test.
@@ -59,7 +60,7 @@ test('reopening discovers each wallet once and preserves an explicitly connected
 	)
 	try {
 		await act(async () => root.render(screen))
-		await vi.waitFor(() => expect(container.textContent?.match(/Discovered wallet/g)).toHaveLength(1))
+		await waitForUi(() => expect(container.textContent?.match(/Discovered wallet/g)).toHaveLength(1))
 		await act(async () => {
 			await connect(walletConfig, {
 				connector: walletConfig.connectors.find((connector) => connector.name === 'Discovered wallet')!

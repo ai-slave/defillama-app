@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { TopupModal } from '../TopupModal'
 
 // The card step lazy-loads Stripe; this stub holds the import open so the cold-load state is observable.
@@ -87,7 +88,7 @@ test('keeps back and close available during a cold checkout load, and does not r
 	await mount()
 	await click('$25')
 	await click('Pay with Card')
-	await vi.waitFor(() => expect(cardCheckout.load).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(cardCheckout.load).toHaveBeenCalledOnce())
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Loading card payments…')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Complete Payment')
 	await click('Back to amount')
@@ -108,7 +109,7 @@ test('keeps a failed payment error visible on the card step with a route back to
 	topupReplies.push(unavailable())
 	await mount()
 	await click('Pay with Crypto')
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	await click('Pay with Card')
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Checkout unavailable')
 	await click('Back to amount')
@@ -166,16 +167,16 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	expect(button('Pay with Card').disabled).toBe(true)
 	await click('Redirecting…')
 	await click('Pay with Card')
-	await vi.waitFor(() => expect(topups()).toHaveLength(1))
+	await waitForUi(() => expect(topups()).toHaveLength(1))
 	expect(topups()[0]).toMatchObject({ amount: 25, provider: 'llamapay' })
 	await act(async () => request.resolve(unavailable()))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	expect(input.value).toBe('25')
 	expect(input.disabled).toBe(false)
 	expect(button('Pay with Card').disabled).toBe(false)
 	await click('$5')
 	await click('Pay with Crypto')
-	await vi.waitFor(() => expect(button('Pay with Crypto').disabled).toBe(false))
+	await waitForUi(() => expect(button('Pay with Crypto').disabled).toBe(false))
 	expect(topups()).toHaveLength(2)
 	expect(topups()[1]).toMatchObject({ amount: 5, provider: 'llamapay' })
 	expect(input.value).toBe('5')

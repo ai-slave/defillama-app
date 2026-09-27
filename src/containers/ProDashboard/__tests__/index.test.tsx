@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import { DashboardTestProvider, type DashboardTestState } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import ProDashboard from '..'
 import { subscribeSqlRefreshAll } from '../components/SqlChart/sqlRefreshBus'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -175,14 +176,14 @@ function dialogTitle() {
 }
 async function openQuickAddTextDraft() {
 	await pressKey(window, 'k', { ctrlKey: true })
-	const input = await vi.waitFor(() => {
+	const input = await waitForUi(() => {
 		const field = document.querySelector<HTMLInputElement>('input[aria-label="Quick add"]')
 		if (!field) throw new Error('Expected quick add')
 		return field
 	})
 	await act(async () => typeInto(input, 'text'))
 	await pressKey(input, 'Enter')
-	await vi.waitFor(() => expect(dialogTitle()).toBe('Add card'))
+	await waitForUi(() => expect(dialogTitle()).toBe('Add card'))
 }
 
 describe('a visitor', () => {
@@ -239,7 +240,7 @@ describe('a visitor', () => {
 			'/dashboards/search': { items: [similar], page: 1, perPage: 9, totalItems: 1, totalPages: 1, searchParams: {} }
 		})
 		await renderDashboard({ items: [note], tags: ['lending', 'l2'] })
-		await vi.waitFor(() => expect(container.textContent).toContain('Similar dashboards'))
+		await waitForUi(() => expect(container.textContent).toContain('Similar dashboards'))
 		expect(container.textContent).toContain('Other lending')
 		expect(
 			session.requests.find((request) => request.url.pathname === '/dashboards/search')?.url.searchParams.get('tags')
@@ -279,7 +280,7 @@ describe('an editor', () => {
 	test('adding text after editing a card starts from an empty draft, not the edited card', async () => {
 		await renderDashboard({ items: [{ id: 'existing-text', kind: 'text', content: 'Keep this note' }], mode: 'edit' })
 		await act(async () => button('Edit card')!.click())
-		await vi.waitFor(() => expect(dialogTitle()).toBe('Edit card · Text'))
+		await waitForUi(() => expect(dialogTitle()).toBe('Edit card · Text'))
 		expect(cardEditor()?.querySelector('textarea')?.value).toBe('Keep this note')
 		await pressKey(cardEditor()!, 'Escape')
 

@@ -2,6 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { EquitiesFiltersDialog } from '../EquityFiltersDialog'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/equities', query: {} }) }))
@@ -26,7 +27,7 @@ async function exclude() {
 		radio.focus()
 		radio.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }))
 	})
-	await vi.waitFor(() => expect(document.querySelector<HTMLInputElement>('input[value="exclude"]')!.checked).toBe(true))
+	await waitForUi(() => expect(document.querySelector<HTMLInputElement>('input[value="exclude"]')!.checked).toBe(true))
 }
 test('mode navigation stays in the dialog draft until Done and cancellation restores the applied mode', async () => {
 	container = document.createElement('div')

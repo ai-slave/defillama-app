@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ReportIncorrectData, type ReportSubject } from '..'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
@@ -94,7 +95,7 @@ test('failed reports retain the draft for retry but reopening starts without the
 	mocks.fetchJson.mockRejectedValueOnce(new Error('Offline'))
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Something went wrong, couldn't submit report")
 	)
 	expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
@@ -110,7 +111,7 @@ test('failed reports retain the draft for retry but reopening starts without the
 		correctSource: '',
 		contact: ''
 	})
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
 	)
 })
@@ -120,7 +121,7 @@ test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reo
 	mocks.fetchJson.mockReturnValueOnce(request.promise)
 	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
 	await submitReport('TVL')
-	await vi.waitFor(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
+	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
 	await clickReportButton('Close report dialog')
 	await clickReportButton('Report incorrect data')
 	const newForm = document.querySelector('form')!
@@ -133,16 +134,16 @@ test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reo
 	})
 	expect(document.querySelector('form')).toBe(newForm)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await vi.waitFor(() => expect(document.querySelector('textarea')?.readOnly).toBe(false))
+	await waitForUi(() => expect(document.querySelector('textarea')?.readOnly).toBe(false))
 	const [shown, hidden] =
 		outcome === 'success'
 			? ['Report sent successfully', "Something went wrong, couldn't submit report"]
 			: ["Something went wrong, couldn't submit report", 'Report sent successfully']
-	await vi.waitFor(() => expect(document.body.textContent).toContain(shown), { timeout: 1000 })
+	await waitForUi(() => expect(document.body.textContent).toContain(shown), { timeout: 1000 })
 	expect(document.body.textContent).not.toContain(hidden)
 	await submitReport('Revenue')
 	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body).dataType).toBe('Revenue')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
 	)
 })

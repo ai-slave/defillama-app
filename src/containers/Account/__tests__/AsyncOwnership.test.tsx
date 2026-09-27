@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test } from 'vitest'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { EmailChangeModal } from '../EmailChangeModal'
 import { TeamInfoCard } from '../Team/TeamInfoCard'
 import { TeamMembersCard } from '../Team/TeamMembersCard'
@@ -90,24 +91,24 @@ test('email confirmation locks the address during submission and identifies the 
 	emailReplies.push(() => request.promise)
 	await mount(<EmailHarness />)
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
-	await vi.waitFor(() => expect(document.activeElement).toBe(input))
+	await waitForUi(() => expect(document.activeElement).toBe(input))
 	await change(input, 'first@example.com')
 	await click('Confirm Email')
-	await vi.waitFor(() => expect(emailRequests()).toEqual(['first@example.com']))
-	await vi.waitFor(() => expect(input.readOnly).toBe(true))
+	await waitForUi(() => expect(emailRequests()).toEqual(['first@example.com']))
+	await waitForUi(() => expect(input.readOnly).toBe(true))
 	await act(async () => request.resolve(emailSent()))
-	await vi.waitFor(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('first@example.com'))
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('first@example.com'))
 })
 test('a failed email request can retry unchanged and does not claim the address is already used', async () => {
 	emailReplies.push(offline)
 	await mount(<EmailHarness />)
 	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
 	await click('Confirm Email')
-	await vi.waitFor(() => expect(document.querySelector('[role=alert]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role=alert]')).not.toBeNull())
 	expect(document.body.textContent).not.toContain('already associated')
 	expect(button('Confirm Email').disabled).toBe(false)
 	await click('Confirm Email')
-	await vi.waitFor(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
 	expect(emailRequests()).toEqual(['first@example.com', 'first@example.com'])
 })
 test('closing and reopening email change ignores the previous request completion', async () => {
@@ -116,7 +117,7 @@ test('closing and reopening email change ignores the previous request completion
 	await mount(<EmailHarness />)
 	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
 	await click('Confirm Email')
-	await vi.waitFor(() => expect(emailRequests()).toHaveLength(1))
+	await waitForUi(() => expect(emailRequests()).toHaveLength(1))
 	await click('Close email change')
 	await click('Open email')
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
@@ -125,7 +126,7 @@ test('closing and reopening email change ignores the previous request completion
 	expect(input.value).toBe('second@example.com')
 	expect(input.isConnected).toBe(true)
 	await click('Confirm Email')
-	await vi.waitFor(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('second@example.com'))
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('second@example.com'))
 	expect(emailRequests()).toEqual(['first@example.com', 'second@example.com'])
 })
 test('team rename keeps the submitted draft stable while pending and returns focus on success', async () => {
@@ -136,13 +137,13 @@ test('team rename keeps the submitted draft stable while pending and returns foc
 	const input = container.querySelector('input')!
 	await change(input, 'Renamed')
 	await click('Save')
-	await vi.waitFor(() => expect(renameRequests()).toEqual(['Renamed']))
-	await vi.waitFor(() => expect(input.readOnly).toBe(true))
+	await waitForUi(() => expect(renameRequests()).toEqual(['Renamed']))
+	await waitForUi(() => expect(input.readOnly).toBe(true))
 	expect(button('Cancel').disabled).toBe(true)
 	team = { ...team, name: 'Renamed' }
 	await act(async () => request.resolve({ team }))
-	await vi.waitFor(() => expect(container.querySelector('input')).toBeNull())
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Rename team')))
+	await waitForUi(() => expect(container.querySelector('input')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(button('Rename team')))
 	expect(container.textContent).toContain('Renamed')
 })
 test('failed team rename does not roll back a newer member cache update', async () => {
@@ -157,7 +158,7 @@ test('failed team rename does not roll back a newer member cache update', async 
 	await click('Rename team')
 	await change(container.querySelector('input')!, 'Failed rename')
 	await click('Save')
-	await vi.waitFor(() => expect(renameRequests()).toHaveLength(1))
+	await waitForUi(() => expect(renameRequests()).toHaveLength(1))
 	const member = {
 		id: 'member',
 		userId: 'member-user',
@@ -171,7 +172,7 @@ test('failed team rename does not roll back a newer member cache update', async 
 	const refresh = Promise.withResolvers<unknown>()
 	teamReply = () => refresh.promise
 	await act(async () => request.resolve(offline()))
-	await vi.waitFor(() => expect(container.querySelector('[role=alert]')).not.toBeNull())
+	await waitForUi(() => expect(container.querySelector('[role=alert]')).not.toBeNull())
 	expect(container.textContent).toContain('Members (1)')
 	expect(container.textContent).toContain('member@example.com')
 	await click('Cancel')
@@ -185,7 +186,7 @@ test('team rename failure preserves its draft for retry and Cancel restores the 
 	await click('Rename team')
 	await change(container.querySelector('input')!, 'Retry name')
 	await click('Save')
-	await vi.waitFor(() => expect(container.querySelector('[role=alert]')).not.toBeNull())
+	await waitForUi(() => expect(container.querySelector('[role=alert]')).not.toBeNull())
 	expect(container.querySelector('input')!.value).toBe('Retry name')
 	expect(button('Save').disabled).toBe(false)
 	renameReply = () => {
@@ -193,10 +194,10 @@ test('team rename failure preserves its draft for retry and Cancel restores the 
 		return { team }
 	}
 	await click('Save')
-	await vi.waitFor(() => expect(container.querySelector('input')).toBeNull())
+	await waitForUi(() => expect(container.querySelector('input')).toBeNull())
 	await click('Rename team')
 	await click('Cancel')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Rename team')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Rename team')))
 })
 test('team rename rejects blank names and submits a trimmed name', async () => {
 	await mount(<TeamInfoCard />)
@@ -208,5 +209,5 @@ test('team rename rejects blank names and submits a trimmed name', async () => {
 	await click('Save')
 	await change(input, '  A clear name  ')
 	await click('Save')
-	await vi.waitFor(() => expect(renameRequests()).toEqual(['A clear name']))
+	await waitForUi(() => expect(renameRequests()).toEqual(['A clear name']))
 })

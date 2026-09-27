@@ -6,6 +6,7 @@ import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AutosaveStatus } from '../components/AutosaveStatus'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard, DashboardAnnotation, DashboardVariable } from '../dashboardTypes'
@@ -111,7 +112,7 @@ async function open(value: Dashboard, key = value.id, withInitial = true) {
 		)
 	)
 	// Editor actions need the restored session, and the stream re-applies the saved dashboard when it lands.
-	await vi.waitFor(() => {
+	await waitForUi(() => {
 		expect(session.urls().some((url) => url.includes(`/${key}/stream`))).toBe(true)
 		expect(dashboard.streamHasResolved).toBe(true)
 	})
@@ -188,7 +189,7 @@ describe('a subscriber editing a dashboard', () => {
 		// Flushing stands in for the debounce timer firing.
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(saves).toHaveLength(2))
+			await waitForUi(() => expect(saves).toHaveLength(2))
 		})
 		expect(saves[1]).toMatchObject({ dashboardName: 'Renamed', tags: ['Research'], items: laterItems })
 	})
@@ -200,7 +201,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => {
 			completion = dashboard.submitRating('session', { rating: 5 })
 		})
-		await vi.waitFor(() => expect(saves).toHaveLength(1))
+		await waitForUi(() => expect(saves).toHaveLength(1))
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => {
 			pending.resolve(await storeAsSent(saves[0]!))
@@ -208,7 +209,7 @@ describe('a subscriber editing a dashboard', () => {
 		})
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(saves).toHaveLength(2))
+			await waitForUi(() => expect(saves).toHaveLength(2))
 		})
 		expect(saves[1]!.aiGenerated?.session?.rating).toBe(5)
 		expect(saves[1]!.aiUndoState).toEqual(original.data.aiUndoState)
@@ -221,7 +222,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		expect(saves).toHaveLength(1)
 		const button = [...container.querySelectorAll('button')].find((el) => el.textContent === 'Retry save')!
@@ -230,7 +231,7 @@ describe('a subscriber editing a dashboard', () => {
 			button.click()
 		})
 		await act(async () => {
-			await vi.waitFor(() => expect(button.getAttribute('aria-disabled')).toBe('true'))
+			await waitForUi(() => expect(button.getAttribute('aria-disabled')).toBe('true'))
 		})
 		expect(document.activeElement).toBe(button)
 		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saving changes')
@@ -238,7 +239,7 @@ describe('a subscriber editing a dashboard', () => {
 		expect(saves.map((save) => save.items)).toEqual([laterItems, laterItems])
 		await act(async () => retry.resolve({ ...original, data: { ...original.data, items: laterItems } }))
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('success'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('success'))
 		})
 		expect(document.activeElement).toBe(button)
 		expect(container.querySelector('[role="alert"]')).toBeNull()
@@ -250,7 +251,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		await act(async () => dashboard.saveDashboard({ dashboardName: 'Recovered' }))
 		expect(saves[1]).toMatchObject({ dashboardName: 'Recovered', items: laterItems })
@@ -274,7 +275,7 @@ describe('a subscriber editing a dashboard', () => {
 			completion = dashboard.saveDashboard({ dashboardName: 'Renamed' })
 		})
 		await act(async () => {
-			await vi.waitFor(() => expect(saves).toHaveLength(2))
+			await waitForUi(() => expect(saves).toHaveLength(2))
 		})
 		const latest = { id: 'latest', kind: 'text' as const, content: 'Even newer' }
 		await act(async () => editor.handleEditItem('later', latest))
@@ -284,7 +285,7 @@ describe('a subscriber editing a dashboard', () => {
 			await completion
 		})
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		expect(saves[2]).toMatchObject({ dashboardName: 'Renamed', items: [latest] })
 		expect(items).toEqual([latest])
@@ -298,7 +299,7 @@ describe('a subscriber editing a dashboard', () => {
 			await act(async () => editor.handleEditItem('ai', laterItems[0]))
 			await act(async () => autosave.flush())
 			await act(async () => {
-				await vi.waitFor(() => expect(saves).toHaveLength(1))
+				await waitForUi(() => expect(saves).toHaveLength(1))
 			})
 			const other: Dashboard = { ...original, id: 'other', data: { ...original.data, dashboardName: 'Other' } }
 			savedDashboards.other = other
@@ -312,7 +313,7 @@ describe('a subscriber editing a dashboard', () => {
 				await act(async () => pending.resolve({ ...original, data: { ...original.data, items: laterItems } }))
 			else await act(async () => autosave.retry())
 			await act(async () => {
-				await vi.waitFor(() => expect(autosave.state?.status).toBe('success'))
+				await waitForUi(() => expect(autosave.state?.status).toBe('success'))
 			})
 			expect(saves.at(-1)!.items).toEqual(laterItems)
 		}
@@ -323,7 +324,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		await leave()
 		session.client.removeQueries({ queryKey: ['pro-dashboard', 'dashboard'] })
@@ -337,7 +338,7 @@ describe('a subscriber editing a dashboard', () => {
 		await open(current, 'current-analysis')
 		await act(async () => autosave.retry())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('success'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('success'))
 		})
 		expect(saves[1]).toMatchObject({ dashboardName: 'Current analysis', tags: ['Current'], items: laterItems })
 	})
@@ -377,7 +378,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		await act(async () => {
 			await expect(dashboard.deleteDashboard(original.id)).rejects.toThrow('Delete failed')
@@ -400,7 +401,7 @@ describe('a subscriber editing a dashboard', () => {
 		replies.push(offline)
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(autosave.state?.status).toBe('error'))
+			await waitForUi(() => expect(autosave.state?.status).toBe('error'))
 		})
 		const draft = getUnsavedDashboardChanges(session.client, 'dashboard', 'owner')
 		expect(draft?.variables).toEqual([parameter])
@@ -412,7 +413,7 @@ describe('a subscriber editing a dashboard', () => {
 		await act(async () => editor.handleEditItem('ai', laterItems[0]))
 		await act(async () => autosave.flush())
 		await act(async () => {
-			await vi.waitFor(() => expect(saves).toHaveLength(2))
+			await waitForUi(() => expect(saves).toHaveLength(2))
 		})
 		expect(saves[1]!.variables).toEqual([parameter])
 		expect(saves[1]!.annotations).toEqual([annotation])
@@ -457,7 +458,7 @@ test('loading another id is independent of the hook’s deleted dashboard, while
 			</session.Wrapper>
 		)
 	)
-	await vi.waitFor(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
+	await waitForUi(() => expect(session.urls().some((url) => url.endsWith('/subscription/status'))).toBe(true))
 	session.client.setQueryData(['pro-dashboard-deleted', original.id, 'owner'], true)
 	const other = { ...original, id: 'other' }
 	nextReads.other = [async () => other]

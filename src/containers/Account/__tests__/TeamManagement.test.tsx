@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
 import { InviteMemberModal } from '../Team/InviteMemberModal'
 import { ManageSeatsModal } from '../Team/ManageSeatsModal'
@@ -176,7 +177,7 @@ test.each(['set', 'cancel', 'assign', 'unassign', 'invite', 'revoke', 'remove', 
 			if (action === 'remove') h.removeMemberMutation.mutate({ userId: 'member-user' })
 			if (action === 'leave') h.leaveTeamMutation.mutate()
 		})
-		await vi.waitFor(() => expect(posts()).toHaveLength(1))
+		await waitForUi(() => expect(posts()).toHaveLength(1))
 		expect(session.client.getQueryData(['team', 'user'])).toEqual(team)
 		const updated = {
 			...team,
@@ -193,7 +194,7 @@ test.each(['set', 'cancel', 'assign', 'unassign', 'invite', 'revoke', 'remove', 
 		}
 		await act(async () => session.client.setQueryData(['team', 'user'], updated))
 		await act(async () => request.reject(new Error('Request failed')))
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(
 				session.client
 					.getMutationCache()
@@ -222,7 +223,7 @@ test.each([true, false])(
 		)
 		await mount(<Hook key="first" id="first" />)
 		await act(async () => hooks.first.setSeatsMutation.mutate({ subscriptionType: 'llamafeed', seatCount: 4 }))
-		await vi.waitFor(() => expect(posts()).toHaveLength(1))
+		await waitForUi(() => expect(posts()).toHaveLength(1))
 		await mount(<Hook key="second" id="second" />)
 		await act(async () =>
 			hooks.second.assignMemberMutation.mutate({ userId: 'member-user', subscriptionType: 'llamafeed' })
@@ -231,10 +232,10 @@ test.each([true, false])(
 		if (success) {
 			await act(async () => first.resolve(Response.json({})))
 		} else await act(async () => first.reject(new Error('Declined')))
-		await vi.waitFor(() => expect(api.fetch.mock.calls.some(([url]) => url.endsWith('/team'))).toBe(true))
-		await vi.waitFor(() => expect(posts()).toHaveLength(success ? 1 : 2))
+		await waitForUi(() => expect(api.fetch.mock.calls.some(([url]) => url.endsWith('/team'))).toBe(true))
+		await waitForUi(() => expect(posts()).toHaveLength(success ? 1 : 2))
 		await act(async () => refresh.resolve(Response.json({ team })))
-		await vi.waitFor(() => expect(posts()).toHaveLength(2))
+		await waitForUi(() => expect(posts()).toHaveLength(2))
 		expect(posts().map(([url]) => new URL(url).pathname)).toEqual(['/team/seats', '/team/member/assign'])
 	}
 )
@@ -247,23 +248,23 @@ test('invite validates the address, preserves a failed draft and retries through
 	await mount(<Harness kind="invite" />)
 	expect(namedDialog('Invite Member')).toBeTruthy()
 	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
-	await vi.waitFor(() => expect(document.activeElement).toBe(input))
+	await waitForUi(() => expect(document.activeElement).toBe(input))
 	await click('Send Invite')
 	await change(input, 'not-an-email')
 	await click('Send Invite')
 	expect(posts()).toHaveLength(0)
 	await change(input, 'colleague@example.com')
 	await click('Send Invite')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
-	await vi.waitFor(() => expect(input.readOnly).toBe(true))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(input.readOnly).toBe(true))
 	await click('Close')
 	expect(dialog()).toBeTruthy()
 	await act(async () => first.reject(new Error('Invite unavailable')))
-	await vi.waitFor(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Invite unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Invite unavailable'))
 	expect(input.value).toBe('colleague@example.com')
 	api.fetch.mockImplementation(async () => Response.json({ team }))
 	await click('Send Invite')
-	await vi.waitFor(() => expect(dialog()).toBeNull())
+	await waitForUi(() => expect(dialog()).toBeNull())
 	expect(posts().map(([, options]) => JSON.parse(options.body))).toEqual([
 		{ email: 'colleague@example.com' },
 		{ email: 'colleague@example.com' }
@@ -287,14 +288,14 @@ test('seat form locks its submitted amount and preserves it after a failure', as
 	expect(dialog().textContent).toContain('$196/month')
 	expect(dialog().textContent).not.toContain('will not be refunded')
 	await click('Update Seats')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 4 })
-	await vi.waitFor(() => expect(input.readOnly).toBe(true))
+	await waitForUi(() => expect(input.readOnly).toBe(true))
 	expect(button('Increase seats').disabled).toBe(true)
 	await click('Close')
 	expect(dialog()).toBeTruthy()
 	await act(async () => request.reject(new Error('Card declined')))
-	await vi.waitFor(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Card declined'))
+	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Card declined'))
 	expect(input.value).toBe('4')
 })
 
@@ -303,12 +304,12 @@ test('cancellation sends zero only after confirmation and preserves access until
 	await click('Cancel subscription')
 	const confirmation = namedDialog('Cancel Pro Subscription')
 	expect(confirmation.textContent).toContain('Assigned members keep access until the period ends')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Cancel')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 	await click('Cancel')
 	expect(posts()).toHaveLength(0)
 	await click('Cancel subscription')
 	await click('Cancel Subscription')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 0 })
 })
 
@@ -325,7 +326,7 @@ test('scheduled cancellation locks the current-seat floor and an increase retain
 	await change(input, '4')
 	expect(dialog().textContent).toContain('resume billing and undo the pending cancellation')
 	await click('Update Seats')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body).seatCount).toBe(4)
 })
 
@@ -341,8 +342,8 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	expect(document.querySelector<HTMLInputElement>('input[value=year]')!.getAttribute('aria-checked')).toBe('true')
 	expect(dialog().textContent).toContain('$490/year')
 	await click('Purchase Seats')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
-	await vi.waitFor(() =>
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() =>
 		expect(document.querySelector<HTMLInputElement>('input[value=api]')!.getAttribute('aria-disabled')).toBe('true')
 	)
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
@@ -353,7 +354,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 		billingInterval: 'year'
 	})
 	await act(async () => request.resolve(Response.json({ action: 'checkout_created', clientSecret: 'test-secret' })))
-	await vi.waitFor(() => expect(namedDialog('Complete Payment')).toBeTruthy())
+	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeTruthy())
 	expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' })
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(1)
@@ -369,10 +370,10 @@ test('a late purchase response cannot close a new opening after navigation', asy
 	)
 	await mount(<Harness key="old" kind="purchase" />)
 	await click('Purchase Seats')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await mount(<Harness key="new" kind="purchase" />)
 	await act(async () => first.resolve(Response.json({ action: 'seats_added', seatsAdded: 1 })))
-	await vi.waitFor(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
 	expect(namedDialog('Purchase Seats')).toBeTruthy()
 })
 
@@ -387,10 +388,10 @@ test('assignment requires a selected available plan and retains it after failure
 	const radio = document.querySelector<HTMLInputElement>('input[type=radio]')!
 	await act(async () => radio.click())
 	await click('Assign')
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ userId: 'member-user', subscriptionType: 'llamafeed' })
 	await act(async () => request.reject(new Error('No seats available')))
-	await vi.waitFor(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('No seats available'))
+	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('No seats available'))
 	expect(radio.checked).toBe(true)
 })
 
@@ -402,12 +403,12 @@ test('failed member removal keeps the row and its confirmation available for ret
 	await mount(<TeamMembersCard />)
 	await click('Remove member@example.com')
 	await click('Remove')
-	await vi.waitFor(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Remove unavailable'))
+	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Remove unavailable'))
 	expect(namedDialog('Remove Member')).toBeTruthy()
 	expect(container.textContent).toContain('member@example.com')
 	expect(button('Remove').getAttribute('aria-disabled')).not.toBe('true')
 	await click('Cancel')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Remove member@example.com')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Remove member@example.com')))
 })
 
 test('returning during an upgrade waits for confirmed yearly pricing before another seat purchase', async () => {
@@ -422,7 +423,7 @@ test('returning during an upgrade waits for confirmed yearly pricing before anot
 	)
 	await mount(<Hook key="old" id="upgrade" />)
 	await act(async () => hooks.upgrade.upgradeSeatsMutation.mutate({ subscriptionType: 'llamafeed' }))
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await mount(<Harness key="new" kind="purchase" />)
 	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
 	expect(dialog().textContent).toContain('Another team update is in progress')
@@ -432,10 +433,10 @@ test('returning during an upgrade waits for confirmed yearly pricing before anot
 	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
 	const updated = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	await act(async () => refresh.resolve(Response.json({ team: updated })))
-	await vi.waitFor(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
 	expect(dialog().textContent).toContain('$490/year')
 	await click('Purchase Seats')
-	await vi.waitFor(() => expect(posts()).toHaveLength(2))
+	await waitForUi(() => expect(posts()).toHaveLength(2))
 	expect(JSON.parse(posts()[1][1].body).billingInterval).toBe('year')
 })
 
@@ -448,11 +449,11 @@ test('removing a member returns focus to the surviving members heading', async (
 	await act(async () => button('Remove member@example.com').focus())
 	await click('Remove member@example.com')
 	await click('Close')
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Remove member@example.com')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Remove member@example.com')))
 	await click('Remove member@example.com')
 	await click('Remove')
-	await vi.waitFor(() => expect(container.textContent).toContain('Members (0)'))
-	await vi.waitFor(() => expect(document.activeElement).toBe(container.querySelector('h2')))
+	await waitForUi(() => expect(container.textContent).toContain('Members (0)'))
+	await waitForUi(() => expect(document.activeElement).toBe(container.querySelector('h2')))
 })
 
 test('choosing the API plan shows its price without submitting', async () => {
@@ -471,7 +472,7 @@ test('a successful write with a failed refresh blocks another billing change unt
 	})
 	await mount(<Harness kind="purchase" />)
 	await click('Purchase Seats')
-	await vi.waitFor(() => expect(dialog()).toBeNull())
+	await waitForUi(() => expect(dialog()).toBeNull())
 	await click('Open')
 	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
 	expect(dialog().textContent).toContain("Couldn't refresh team billing")
@@ -480,7 +481,7 @@ test('a successful write with a failed refresh blocks another billing change unt
 	team = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	api.fetch.mockImplementation(async () => Response.json({ team }))
 	await click('Try again')
-	await vi.waitFor(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
 	expect(dialog().textContent).toContain('$490/year')
 	expect(posts()).toHaveLength(1)
 })
@@ -495,11 +496,11 @@ test('leaving a team waits for confirmation and focuses the surviving team regio
 	await click('Leave Team')
 	const confirm = namedDialog('Leave Team').querySelectorAll('button')
 	await act(async () => [...confirm].find((b) => b.textContent === 'Leave Team')!.click())
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('Original')
 	await act(async () => request.resolve(Response.json({})))
-	await vi.waitFor(() => expect(button('Create Team')).toBeTruthy())
-	await vi.waitFor(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Team management'))
+	await waitForUi(() => expect(button('Create Team')).toBeTruthy())
+	await waitForUi(() => expect(document.activeElement?.getAttribute('aria-label')).toBe('Team management'))
 })
 
 test('a failed team refresh keeps showing the cached team instead of a load error', async () => {
@@ -536,12 +537,12 @@ test('revoking an invite keeps its row until confirmed and returns focus to Invi
 	await act(async () =>
 		[...namedDialog('Revoke Invite').querySelectorAll('button')].find((b) => b.textContent === 'Revoke')!.click()
 	)
-	await vi.waitFor(() => expect(posts()).toHaveLength(1))
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('invite@example.com')
 	team = { ...team, pendingInvites: [] }
 	await act(async () => request.resolve(Response.json({})))
-	await vi.waitFor(() => expect(container.textContent).toContain('No pending invites'))
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Invite Member')))
+	await waitForUi(() => expect(container.textContent).toContain('No pending invites'))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Invite Member')))
 })
 
 test.each(['', '1', '2.5', '0'])(
@@ -573,7 +574,7 @@ test.each(['assign', 'unassign', 'remove'] as const)(
 			trigger.click()
 		})
 		await click('Cancel')
-		await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+		await waitForUi(() => expect(document.activeElement).toBe(trigger))
 		expect(posts()).toHaveLength(0)
 	}
 )
@@ -591,7 +592,7 @@ test.each(['assign', 'unassign'] as const)('successful %s focuses the replacemen
 	)
 	if (action === 'assign') await act(async () => document.querySelector<HTMLInputElement>('input[type=radio]')!.click())
 	await click(action === 'assign' ? 'Assign' : 'Unassign')
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.activeElement).toBe(
 			button(
 				action === 'assign'
@@ -619,7 +620,7 @@ test.each([true, false])(
 		const refresh = Promise.withResolvers<object>()
 		api.refresh.mockReturnValue(refresh.promise)
 		await mount(<TeamTab />)
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(refreshRequests()).toHaveLength(1)
 		})
@@ -627,7 +628,7 @@ test.each([true, false])(
 		expect(verifyEmailPrompted()).toBe(false)
 		expect(router.replace).not.toHaveBeenCalled()
 		await act(async () => refresh.resolve({ ...inviteAccount, verified }))
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(router.replace).toHaveBeenCalled()
 		})
@@ -646,20 +647,20 @@ test.each([true, false])('recovers a lost invite response by reading membership:
 		return Response.json({ team: null })
 	})
 	await mount(<TeamTab />)
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		expect(button('Check membership')).toBeDefined()
 	})
 	expect(refreshRequests()).toHaveLength(0)
 	api.fetch.mockRejectedValueOnce(new TypeError('Membership read failed'))
 	await click('Check membership')
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		expect(container.textContent).toContain('Could not check membership')
 	})
 	api.fetch.mockImplementation(async () => Response.json({ team: joined ? team : null }))
 	await click('Check membership')
-	await vi.waitFor(async () => {
+	await waitForUi(async () => {
 		await act(async () => {})
 		expect(container.textContent?.includes('Could not check membership')).toBe(false)
 		expect(router.replace.mock.calls.length > 0).toBe(joined)

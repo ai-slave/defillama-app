@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 const session = installSubscriberSession('equity-ticker')
 const downloads = installDownloadSink()
 import type { EquitiesPriceHistory } from '../api.types'
@@ -171,7 +172,7 @@ describe('EquityTickerPage price history', () => {
 	const DEFAULT_CSV = 'Timestamp,Date,Close\n1787837400000,2026-08-27,222\n1787837700000,2026-08-27,223'
 
 	async function waitForExportedCsv(expected: string) {
-		await vi.waitFor(async () => {
+		await waitForUi(async () => {
 			await act(async () => {})
 			expect(button('.csv').disabled).toBe(false)
 		})
@@ -268,7 +269,7 @@ describe('EquityTickerPage price history', () => {
 				'/api/public/equities/price-history': () => (result === 'empty' ? [] : new Response(null, { status: 404 }))
 			})
 			await render()
-			await vi.waitFor(async () => {
+			await waitForUi(async () => {
 				await act(async () => {})
 				expect(container.textContent).toContain(
 					result === 'empty' ? 'No price history available' : 'Failed to load price history'

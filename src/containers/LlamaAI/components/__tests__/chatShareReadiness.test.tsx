@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import type { ChatSurface } from '../ChatSurface'
 import type { AgenticSidebar } from '../sidebar/AgenticSidebar'
 
@@ -87,7 +88,7 @@ async function mount(route: LlamaAIRouteState = { kind: 'chat-new' }) {
 }
 async function waitFor(check: () => void) {
 	await act(async () => {
-		await vi.waitFor(check)
+		await waitForUi(check)
 	})
 }
 function shareButtons() {

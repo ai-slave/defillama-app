@@ -14,6 +14,7 @@ import { AuthDialogHeader } from '~/auth/AuthDialog'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import { createSignInFlowStore } from '~/auth/signInFlowStore'
 import pb from '~/utils/pocketbase'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { WalletSignInForm } from '../WalletSignIn'
 
 vi.mock('~/layout/WalletProviderClient', () => ({ WalletProviderClient: () => null }))
@@ -156,12 +157,12 @@ async function click(text: string) {
 }
 async function choose() {
 	await click('Fixture wallet')
-	await vi.waitFor(() => expect(container.textContent).toContain(first))
+	await waitForUi(() => expect(container.textContent).toContain(first))
 }
 async function beginSigning() {
 	await choose()
 	await click('Sign in')
-	await vi.waitFor(() => expect(requestedSignatures).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(requestedSignatures).toHaveBeenCalledOnce())
 }
 
 test('connects without signing, then signs only on the explicit button', async () => {
@@ -170,10 +171,10 @@ test('connects without signing, then signs only on the explicit button', async (
 	expect(fetch).not.toHaveBeenCalled()
 	expect(requestedSignatures).not.toHaveBeenCalled()
 	await click('Sign in')
-	await vi.waitFor(() => expect(requestedSignatures).toHaveBeenCalledOnce())
+	await waitForUi(() => expect(requestedSignatures).toHaveBeenCalledOnce())
 	expect(button('Approve in your wallet…').disabled).toBe(true)
 	await act(async () => completeSignature('0x1234'))
-	await vi.waitFor(() => expect(pb.authStore.token).toBe(session.token))
+	await waitForUi(() => expect(pb.authStore.token).toBe(session.token))
 	expect(onAuthenticated).toHaveBeenCalledOnce()
 })
 
@@ -290,7 +291,7 @@ test('declining a connection quietly returns to the picker', async () => {
 	})
 	await click('Fixture wallet')
 	await act(async () => failConnect(new UserRejectedRequestError(new Error('Rejected'))))
-	await vi.waitFor(() => expect(button('Fixture wallet')?.disabled).toBe(false))
+	await waitForUi(() => expect(button('Fixture wallet')?.disabled).toBe(false))
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(requestedSignatures).not.toHaveBeenCalled()
 })

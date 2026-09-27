@@ -3,6 +3,7 @@ import type { DetachedWindowAPI } from 'happy-dom'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { CAPABILITIES } from '../../capabilities'
 import { CapabilityChips } from '../input/CapabilityChips'
 import { MobileToolsPopover } from '../input/MobileToolsPopover'
@@ -51,7 +52,7 @@ test('category navigation updates one panel and selecting a prompt closes Explor
 	await click(trigger)
 	const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
 	await press(tabs[0], 'ArrowRight')
-	await vi.waitFor(() => expect(tabs[1].getAttribute('aria-selected')).toBe('true'))
+	await waitForUi(() => expect(tabs[1].getAttribute('aria-selected')).toBe('true'))
 	expect(document.activeElement).toBe(tabs[1])
 	const panel = document.querySelector('[role="tabpanel"]')!
 	expect(panel.getAttribute('aria-labelledby')).toBe(tabs[1].id)
@@ -59,7 +60,7 @@ test('category navigation updates one panel and selecting a prompt closes Explor
 	expect(select).not.toHaveBeenCalled()
 	await click(button(CAPABILITIES[1].prompts[0]))
 	expect(select).toHaveBeenCalledExactlyOnceWith(CAPABILITIES[1].prompts[0], CAPABILITIES[1].key)
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(document.querySelector('[role="tabpanel"]')).toBeNull()
 })
 test('mobile Explore returns to its parent tools on Escape and closes both after a prompt', async () => {
@@ -88,20 +89,20 @@ test('mobile Explore returns to its parent tools on Escape and closes both after
 		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(search, 'Yields')
 		search.dispatchEvent(new Event('input', { bubbles: true }))
 	})
-	await vi.waitFor(() => expect(document.querySelectorAll('[role="option"]').length).toBe(1))
+	await waitForUi(() => expect(document.querySelectorAll('[role="option"]').length).toBe(1))
 	await click(document.querySelector<HTMLElement>('[role="option"]')!)
-	await vi.waitFor(() => expect(document.activeElement).toBe(category))
+	await waitForUi(() => expect(document.activeElement).toBe(category))
 	expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain(
 		CAPABILITIES.find((c) => c.name === 'Yields')!.prompts[0]
 	)
 	await press(category, 'Escape')
-	await vi.waitFor(() => expect(document.activeElement).toBe(explore))
+	await waitForUi(() => expect(document.activeElement).toBe(explore))
 	expect(document.querySelector('[role="tabpanel"]')).toBeNull()
 	expect(select).not.toHaveBeenCalled()
 	await click(explore)
 	await click(button(CAPABILITIES[0].prompts[0]))
 	expect(select).toHaveBeenCalledExactlyOnceWith(CAPABILITIES[0].prompts[0], CAPABILITIES[0].key)
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(document.querySelector('[role="menu"]')).toBeNull()
 })
 

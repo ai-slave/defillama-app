@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { act, useRef, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ArticleEditorCanvas } from '../ArticleEditorCanvas'
 import { useEditorFlags } from '../ArticleEditorControls'
 
@@ -77,6 +78,6 @@ test.each(['Link URL', 'Open in new tab'])(
 		expect(container.querySelector('[aria-label="Link URL"]')).toBeNull()
 		expect(apply).not.toHaveBeenCalled()
 		const documentElement = container.querySelector<HTMLElement>('[contenteditable="true"]')!
-		await vi.waitFor(() => expect(document.activeElement).toBe(documentElement))
+		await waitForUi(() => expect(document.activeElement).toBe(documentElement))
 	}
 )

@@ -3,6 +3,7 @@ import * as Ariakit from '@ariakit/react'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { DateRangePicker } from '../DateRangePicker'
 import { RowLimitPicker } from '../RowLimitPicker'
 import type { DateRangeConfig } from '../savedDownloads'
@@ -63,7 +64,7 @@ test('unapplied dates keep All selected; Apply and Clear change the active range
 	expect(button('All').getAttribute('aria-pressed')).toBe('true')
 	expect(changed).not.toHaveBeenCalled()
 	await escape(dates[0])
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	await click(trigger)
 	const reopened = [...document.querySelectorAll<HTMLInputElement>('input[type="date"]')]
 	expect(reopened[0].value).toBe('2026-01-01')
@@ -115,7 +116,7 @@ test('row limit errors identify the input; correcting and clearing restore unres
 	expect(field.getAttribute('aria-invalid')).toBe('false')
 	await click(button('Apply'))
 	expect(changed).toHaveBeenCalledExactlyOnceWith(250)
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	await click(button('Clear row limit'))
 	expect(document.activeElement).toBe(trigger)
 	expect(changed).toHaveBeenLastCalledWith(null)

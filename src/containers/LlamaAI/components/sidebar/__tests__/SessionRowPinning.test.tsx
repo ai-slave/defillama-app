@@ -8,6 +8,7 @@ import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/L
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
 const toastError = vi.hoisted(() => vi.fn())
@@ -107,14 +108,14 @@ test('a failed pin restores the cached session, reports the failure, and can ret
 	auth.serveInOrder(`${AI}/user/sessions/chat/pin`, [() => first.promise], {})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
-	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
+	await waitForUi(() => expect(isPinned('chat')).toBe(true))
 	await act(async () => first.resolve(failure('Unavailable')))
-	await vi.waitFor(() => expect(client.getQueryData(key)).toEqual(initial))
+	await waitForUi(() => expect(client.getQueryData(key)).toEqual(initial))
 	expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
 	const retry = await pinItem('chat')
-	await vi.waitFor(() => expect(retry.getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(retry.getAttribute('aria-disabled')).not.toBe('true'))
 	await act(async () => retry.click())
-	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
+	await waitForUi(() => expect(isPinned('chat')).toBe(true))
 })
 
 test('a pending pin prevents duplicate requests without blocking another session', async () => {
@@ -125,17 +126,17 @@ test('a pending pin prevents duplicate requests without blocking another session
 	})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
-	await vi.waitFor(() => expect(requestsTo('/user/sessions/chat/pin', 'PUT')).toHaveLength(1))
+	await waitForUi(() => expect(requestsTo('/user/sessions/chat/pin', 'PUT')).toHaveLength(1))
 	const pendingItem = await pinItem('chat')
-	await vi.waitFor(() => expect(pendingItem.getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(pendingItem.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => pendingItem.click())
 	expect(requestsTo('/user/sessions/chat/pin', 'PUT')).toHaveLength(1)
 	await act(async () => pendingItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	await act(async () => (await pinItem('other')).click())
-	await vi.waitFor(() => expect(requestsTo('/user/sessions/other/pin', 'PUT')).toHaveLength(1))
+	await waitForUi(() => expect(requestsTo('/user/sessions/other/pin', 'PUT')).toHaveLength(1))
 	expect(isPinned('other')).toBe(true)
 	await act(async () => first.resolve(Response.json({})))
-	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
+	await waitForUi(() => expect(isPinned('chat')).toBe(true))
 })
 
 function ManagedRows() {
@@ -192,7 +193,7 @@ async function openDelete() {
 		el.textContent?.includes('Delete Session')
 	)!
 	await act(async () => item.click())
-	await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
 }
 
 test('session confirmation cancels without a request and returns focus to its menu', async () => {
@@ -202,7 +203,7 @@ test('session confirmation cancels without a request and returns focus to its me
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Delete “chat”?')
 	await click('Cancel')
 	expect(requestsTo('/user/sessions/chat', 'DELETE')).toEqual([])
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('Actions for chat')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('Actions for chat')))
 })
 
 test('deletion keeps feedback mounted, prevents duplicates, retries, and completes after row removal', async () => {
@@ -211,17 +212,17 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 	await mountManaged()
 	await openDelete()
 	await click('Delete')
-	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
 	expect(requestsTo('/user/sessions/chat', 'DELETE')).toHaveLength(1)
 	expect(button('Actions for chat')).toBeDefined()
 	await act(async () => first.resolve(failure('Offline')))
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
 	await click('Retry deletion')
-	await vi.waitFor(() => expect(container.textContent).toContain('Deletion completed'))
+	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
 	expect(container.querySelector('[aria-label="Actions for chat"]')).toBeNull()
-	await vi.waitFor(() => expect(document.activeElement).toBe(button('New Chat')))
+	await waitForUi(() => expect(document.activeElement).toBe(button('New Chat')))
 })
 
 test('failed rename preserves the entered title for retry', async () => {
@@ -233,10 +234,10 @@ test('failed rename preserves the entered title for retry', async () => {
 		input.value = 'QA renamed'
 		input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
 	expect(input.value).toBe('QA renamed')
 	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
-	await vi.waitFor(() => expect(container.querySelector('[aria-label="Rename QA renamed"]')).not.toBeNull())
+	await waitForUi(() => expect(container.querySelector('[aria-label="Rename QA renamed"]')).not.toBeNull())
 })
 
 test('a failed pin does not undo another row pin that has succeeded', async () => {
@@ -247,11 +248,11 @@ test('a failed pin does not undo another row pin that has succeeded', async () =
 	})
 	await render()
 	await act(async () => (await pinItem('chat')).click())
-	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
+	await waitForUi(() => expect(isPinned('chat')).toBe(true))
 	await act(async () => (await pinItem('other')).click())
-	await vi.waitFor(() => expect(isPinned('other')).toBe(true))
+	await waitForUi(() => expect(isPinned('other')).toBe(true))
 	await act(async () => first.resolve(failure('Offline')))
-	await vi.waitFor(() => expect(isPinned('chat')).toBe(false))
+	await waitForUi(() => expect(isPinned('chat')).toBe(false))
 	expect(isPinned('other')).toBe(true)
 })
 
@@ -285,7 +286,7 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	auth.serveInOrder(`${AI}/user/sessions/chat/share`, [() => request.promise], { isPublic: false })
 	const trigger = await openShareMenu(true)
 	await act(async () => namedButton('Make Private').click())
-	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Cancel'))
+	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Cancel'))
 	await act(async () => namedButton('Cancel').click())
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toEqual([])
 	await act(async () => namedButton('Make Private').click())
@@ -293,15 +294,15 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	await act(async () =>
 		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
 	)
-	await vi.waitFor(() => expect(confirm.textContent).toContain('Updating…'))
+	await waitForUi(() => expect(confirm.textContent).toContain('Updating…'))
 	await act(async () => request.resolve(Response.json({ message: 'Not available' }, { status: 503 })))
-	await vi.waitFor(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
+	await waitForUi(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
 	expect(toastError).not.toHaveBeenCalled()
 	await act(async () =>
 		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
 	)
-	await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
 
@@ -317,14 +318,14 @@ test('making a chat public reports failure in the menu without adding a private-
 	)
 	const trigger = await openShareMenu(false)
 	await act(async () => namedButton('Make Public').click())
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
 	)
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	await reopenMenu(trigger)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Make Public').click())
-	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
 
@@ -337,7 +338,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 		.mockResolvedValueOnce(undefined)
 	const trigger = await openShareMenu(true)
 	await act(async () => namedButton('Copy Link').click())
-	await vi.waitFor(() =>
+	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
 	)
 	expect(toastError).not.toHaveBeenCalled()
@@ -350,12 +351,12 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 			.querySelector('[role="menu"]')!
 			.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
-	await vi.waitFor(() => expect(document.querySelector('[role="menu"]')).toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="menu"]')).toBeNull())
 	await act(async () => request.reject(new Error('Clipboard blocked')))
-	await vi.waitFor(() => expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
+	await waitForUi(() => expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
 	await act(async () => trigger.click())
 	await act(async () => namedButton('Copy Link').click())
-	await vi.waitFor(() => expect(namedButton('Link copied')).toBeDefined())
+	await waitForUi(() => expect(namedButton('Link copied')).toBeDefined())
 	expect(copy).toHaveBeenLastCalledWith(`${window.location.origin}/ai/chat/shared/test-share`)
 })
 
@@ -404,11 +405,11 @@ async function reopenMenu(trigger: HTMLElement) {
 			.querySelector('[role="menu"]')!
 			.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
 	)
-	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
+	await waitForUi(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
 	await act(async () =>
 		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
 	)
-	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
+	await waitForUi(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
 }
 
 test.each(['copy', 'visibility'] as const)(
@@ -430,7 +431,7 @@ test.each(['copy', 'visibility'] as const)(
 			if (action === 'copy') copyRequest.reject(new Error('Denied'))
 			else visibilityRequest.reject(new Error('Offline'))
 		})
-		await vi.waitFor(() =>
+		await waitForUi(() =>
 			expect(document.querySelector('[role="alert"]')?.textContent).toBe(
 				action === 'copy'
 					? 'Could not copy the link. Please try again.'
@@ -449,15 +450,15 @@ test('the real project submenu returns to its parent and closes the whole menu f
 				new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
 			)
 		)
-		await vi.waitFor(() => expect(namedButton('Research notes')?.textContent).toBe('Research notes'))
+		await waitForUi(() => expect(namedButton('Research notes')?.textContent).toBe('Research notes'))
 	}
 	await openSubmenu()
 	await act(async () => namedButton('Back to session actions').click())
-	await vi.waitFor(() => expect(document.activeElement).toBe(namedButton('Move to project')))
+	await waitForUi(() => expect(document.activeElement).toBe(namedButton('Move to project')))
 	expect(trigger.getAttribute('aria-expanded')).toBe('true')
 	expect(namedButton('Research notes')).toBeUndefined()
 	await openSubmenu()
 	await act(async () => namedButton('Close session menus').click())
-	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
-	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	await waitForUi(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
+	await waitForUi(() => expect(document.activeElement).toBe(trigger))
 })
