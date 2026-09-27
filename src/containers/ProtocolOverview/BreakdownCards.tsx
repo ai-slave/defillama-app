@@ -193,42 +193,22 @@ export function BreakdownChartCard({
 	)
 	const [view, setView] = React.useState<BreakdownChartView>('line')
 	const isDominance = view === 'dominance'
-	const { activeSeries, setSelectedSeries, isDefaultSelection, dataset, charts, selectedCharts, csvSource } =
+	const { activeSeries, setSelectedSeries, dataset, charts, selectedCharts, csvSource } =
 		useProtocolBreakdownPresentation({
 			scope: exportFilenameBase,
 			breakdown,
 			availableSeries: allValues,
 			...(defaultValues ? { defaultSeries: defaultValues } : {}),
 			aggregateOthers,
-			type: 'line',
-			// Gaps would break the 100% stack, so missing points count as zero in dominance.
-			fillMissingWithZero: isDominance
+			type: 'line'
 		})
 
 	const dominance = React.useMemo(
 		() =>
 			isDominance
-				? buildProtocolBreakdownDominance({
-						dataset,
-						charts,
-						selectedCharts,
-						breakdown,
-						availableSeries: allValues,
-						activeSeries,
-						includeUpstreamOthers: aggregateOthers && isDefaultSelection
-					})
+				? buildProtocolBreakdownDominance({ breakdown, availableSeries: allValues, activeSeries, aggregateOthers })
 				: null,
-		[
-			activeSeries,
-			aggregateOthers,
-			allValues,
-			breakdown,
-			charts,
-			dataset,
-			isDefaultSelection,
-			isDominance,
-			selectedCharts
-		]
+		[activeSeries, aggregateOthers, allValues, breakdown, isDominance]
 	)
 	const tableRows = React.useMemo(
 		() =>
@@ -339,17 +319,15 @@ export function TokensBreakdownPieChartCard({
 	const {
 		activeSeries: selectedTokens,
 		selectedCharts,
-		setSelectedSeries: setSelectedTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({ scope: exportFilenameBase, allowEmptySelection: true, availableSeries: selectableSeries })
 	const presentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: tokenBreakdownPieSeries,
-				selectedSeries: selectedCharts,
-				includeUpstreamOthers
+				selectedSeries: selectedCharts
 			}),
-		[includeUpstreamOthers, selectedCharts, tokenBreakdownPieSeries]
+		[selectedCharts, tokenBreakdownPieSeries]
 	)
 	const deferredPresentation = React.useDeferredValue(presentation)
 	const [view, setView] = React.useState<TokensBreakdownView>('pie')
@@ -358,11 +336,10 @@ export function TokensBreakdownPieChartCard({
 			view === 'table'
 				? buildRuntimePieChartTableRows({
 						series: tokenBreakdownPieSeries,
-						selectedSeries: selectedCharts,
-						includeUpstreamOthers
+						selectedSeries: selectedCharts
 					})
 				: [],
-		[includeUpstreamOthers, selectedCharts, tokenBreakdownPieSeries, view]
+		[selectedCharts, tokenBreakdownPieSeries, view]
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -403,8 +380,7 @@ export function TokensBreakdownPieChartCard({
 									prepare: () =>
 										buildRuntimePieChartCsvDataset({
 											series: tokenBreakdownPieSeries,
-											selectedSeries: selectedCharts,
-											includeUpstreamOthers
+											selectedSeries: selectedCharts
 										})
 								}
 					}

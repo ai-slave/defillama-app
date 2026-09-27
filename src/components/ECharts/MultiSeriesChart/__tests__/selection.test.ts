@@ -176,7 +176,7 @@ describe('buildSelectedPercentageChart', () => {
 		{ type: 'line' as const, name: 'Base', encode: { x: 0, y: 3 }, color: '#333333' }
 	]
 
-	test('renormalizes selected peers and exports the same shares', async () => {
+	test('keeps picked peers at their share of the whole, draws the rest as Others, and exports the same', async () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -184,27 +184,27 @@ describe('buildSelectedPercentageChart', () => {
 			missingValuePolicy: 'require-complete'
 		})
 
-		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Solana'])
-		expect(result.dataset.source[0]).toEqual([1, (60 / 90) * 100, 100 - (60 / 90) * 100])
-		expect(result.dataset.source[1]).toEqual([2, 0, 0])
+		const expected = {
+			dimensions: ['timestamp', 'Ethereum', 'Solana', 'Others'],
+			source: [
+				[1, 60, 30, 10],
+				[2, null, null, null]
+			]
+		}
+		expect(result.dataset).toEqual(expected)
 		expect(result.charts).toEqual([
 			{ ...charts[0], encode: { x: 0, y: 1 } },
-			{ ...charts[1], encode: { x: 0, y: 2 } }
+			{ ...charts[1], encode: { x: 0, y: 2 } },
+			{ ...charts[0], name: 'Others', color: '#AAAAAA', encode: { x: 0, y: 3 } }
 		])
 		expect(dataset.source[0]).toEqual([1, 60, 30, 10])
 		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
 			throw new Error('Expected a dataset export')
 		}
-		expect(await result.csvSource.prepare()).toEqual({
-			dimensions: ['timestamp', 'Ethereum', 'Solana'],
-			source: [
-				[1, (60 / 90) * 100, 100 - (60 / 90) * 100],
-				[2, 0, 0]
-			]
-		})
+		expect(await result.csvSource.prepare()).toEqual(expected)
 	})
 
-	test('makes a single selected peer 100% while preserving missing values', () => {
+	test('keeps a single pick at its share of the whole instead of 100%', () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -213,9 +213,31 @@ describe('buildSelectedPercentageChart', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1, 100],
-			[2, null]
+			[1, 10, 90],
+			[2, null, null]
 		])
+	})
+
+	test('folds picks past the limit into Others in the chart but exports each pick', async () => {
+		const result = buildSelectedPercentageChart({
+			dataset,
+			charts,
+			selectedCharts: new Set(['Ethereum', 'Solana']),
+			missingValuePolicy: 'sum-available',
+			limit: 1
+		})
+
+		expect(result.dataset).toEqual({
+			dimensions: ['timestamp', 'Ethereum', 'Others'],
+			source: [
+				[1, 60, 40],
+				[2, 0, 0]
+			]
+		})
+		if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
+			throw new Error('Expected a dataset export')
+		}
+		expect((await result.csvSource.prepare()).dimensions).toEqual(['timestamp', 'Ethereum', 'Solana', 'Others'])
 	})
 
 	test('keeps every selected share unavailable when the selected denominator is incomplete', () => {

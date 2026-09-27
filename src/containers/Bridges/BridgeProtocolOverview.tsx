@@ -175,8 +175,7 @@ export function BridgeInfo({
 	const {
 		activeSeries: selectedTokens,
 		selectedCharts: selectedTokenSet,
-		setSelectedSeries: setSelectedTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({
 		allowEmptySelection: true,
 		availableSeries: activeTokenSeriesNames,
@@ -188,11 +187,10 @@ export function BridgeInfo({
 				? buildRuntimePieChartPresentation({
 						series: activeTokenSeries,
 						selectedSeries: selectedTokenSet,
-						colorIndexByPeer: tokenColorIndex,
-						includeUpstreamOthers
+						colorIndexByPeer: tokenColorIndex
 					})
 				: { chartData: [], stackColors: {} },
-		[activeTokenSeries, includeUpstreamOthers, selectedTokenSet, tokenColorIndex]
+		[activeTokenSeries, selectedTokenSet, tokenColorIndex]
 	)
 
 	const inflowsDataset = React.useMemo(
@@ -218,8 +216,7 @@ export function BridgeInfo({
 							prepare: () =>
 								buildRuntimePieChartCsvDataset({
 									series: activeTokenSeries,
-									selectedSeries: selectedTokenSet,
-									includeUpstreamOthers
+									selectedSeries: selectedTokenSet
 								})
 						}
 					: null

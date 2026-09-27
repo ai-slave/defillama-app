@@ -1,42 +1,31 @@
 import { expect, test } from 'vitest'
 import { buildProtocolBreakdownDominance } from '../breakdownDominance'
-import { buildProtocolBreakdownPresentation, type ProtocolBreakdownChart } from '../useProtocolBreakdownCharts'
+import type { ProtocolBreakdownChart } from '../useProtocolBreakdownCharts'
 
 function present(breakdown: ProtocolBreakdownChart, availableSeries: Array<string>, activeSeries: Array<string>) {
-	const visual = buildProtocolBreakdownPresentation({
-		breakdown,
-		availableSeries,
-		activeSeries,
-		aggregateOthers: true,
-		includeUpstreamOthers: activeSeries.length === availableSeries.length,
-		fillMissingWithZero: true,
-		type: 'line'
-	})
-	return buildProtocolBreakdownDominance({
-		dataset: visual.dataset!,
-		charts: visual.charts,
-		selectedCharts: new Set(visual.charts.map((chart) => chart.name)),
-		breakdown,
-		availableSeries,
-		activeSeries,
-		includeUpstreamOthers: activeSeries.length === availableSeries.length
-	})
+	return buildProtocolBreakdownDominance({ breakdown, availableSeries, activeSeries, aggregateOthers: true })
 }
 
-test('exports the same shares the chart draws for partial and empty selections', async () => {
+test('picked series keep their share of the whole breakdown, with the rest in Others, in the chart and its export', async () => {
 	const breakdown: ProtocolBreakdownChart = [[1000, { Ethereum: 120, Solana: 60, Base: 20 }]]
 	const twoPicks = present(breakdown, ['Ethereum', 'Solana', 'Base'], ['Base', 'Ethereum'])
-	const picked = {
-		dimensions: ['timestamp', 'Ethereum', 'Base'],
-		source: [[1000, (120 / 140) * 100, 100 - (120 / 140) * 100]]
-	}
-	expect(twoPicks.dataset).toEqual(picked)
-	expect(await twoPicks.csvSource.prepare()).toEqual(picked)
-
-	const empty = present(breakdown, ['Ethereum', 'Solana', 'Base'], [])
-	expect(empty.dataset).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
-	expect(await empty.csvSource.prepare()).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
+	const expected = { dimensions: ['timestamp', 'Ethereum', 'Base', 'Others'], source: [[1000, 60, 10, 30]] }
+	expect(twoPicks.dataset).toEqual(expected)
+	expect(await csvOf(twoPicks)).toEqual(expected)
 })
+
+test('nothing picked draws and exports nothing', async () => {
+	const empty = present([[1000, { Ethereum: 120, Solana: 60 }]], ['Ethereum', 'Solana'], [])
+	expect(empty.dataset).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
+	expect(await csvOf(empty)).toEqual({ dimensions: ['timestamp'], source: [[1000]] })
+})
+
+function csvOf(result: ReturnType<typeof present>) {
+	if (result.csvSource === 'rendered-chart' || result.csvSource.type !== 'dataset') {
+		throw new Error('Expected a dataset export')
+	}
+	return result.csvSource.prepare()
+}
 
 test('exports individual tail peers and the upstream remainder while folding only the chart', async () => {
 	const names = Array.from({ length: 32 }, (_, index) => `Token${index}`)
@@ -44,7 +33,7 @@ test('exports individual tail peers and the upstream remainder while folding onl
 	const result = present([[1000, { ...values, Others: 8 }]], names, names)
 	expect(result.dataset.dimensions).toHaveLength(32)
 	expect(result.dataset.source[0]?.at(-1)).toBe(10)
-	expect(await result.csvSource.prepare()).toEqual({
+	expect(await csvOf(result)).toEqual({
 		dimensions: [
 			'timestamp',
 			'Token0',

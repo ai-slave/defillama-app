@@ -69,16 +69,15 @@ function TokensBreakdownPieChartCard({
 	const {
 		activeSeries: selectedTokens,
 		selectedCharts,
-		setSelectedSeries: setSelectedTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({
 		scope: `${protocolName}:tokens-pie`,
 		allowEmptySelection: true,
 		availableSeries: selectableSeries
 	})
 	const presentation = React.useMemo(
-		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
-		[includeUpstreamOthers, selectedCharts, series]
+		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts }),
+		[selectedCharts, series]
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -108,8 +107,7 @@ function TokensBreakdownPieChartCard({
 					iconUrl={exportIconUrl}
 					csvSource={{
 						type: 'dataset',
-						prepare: () =>
-							buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts, includeUpstreamOthers })
+						prepare: () => buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts })
 					}}
 				/>
 			</ChartPanelToolbar>

@@ -97,17 +97,15 @@ export function OraclesByChain({
 	const {
 		activeSeries: activePieSeries,
 		selectedCharts: selectedPieSeries,
-		setSelectedSeries: setSelectedPieSeries,
-		isDefaultSelection: includePieUpstreamOthers
+		setSelectedSeries: setSelectedPieSeries
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: activeLink })
 	const visiblePieData = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: tableAndPieData.pieSeries,
-				selectedSeries: selectedPieSeries,
-				includeUpstreamOthers: includePieUpstreamOthers
+				selectedSeries: selectedPieSeries
 			}).chartData,
-		[includePieUpstreamOthers, selectedPieSeries, tableAndPieData.pieSeries]
+		[selectedPieSeries, tableAndPieData.pieSeries]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
@@ -139,8 +137,7 @@ export function OraclesByChain({
 								prepare: () =>
 									buildRuntimePieChartCsvDataset({
 										series: tableAndPieData.pieSeries,
-										selectedSeries: selectedPieSeries,
-										includeUpstreamOthers: includePieUpstreamOthers
+										selectedSeries: selectedPieSeries
 									})
 							}}
 						/>

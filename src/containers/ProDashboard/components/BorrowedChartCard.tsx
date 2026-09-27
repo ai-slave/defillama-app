@@ -102,10 +102,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		() =>
 			buildRuntimePieChartPresentation({
 				series: borrowedData.pieSeries,
-				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.isDefaultSelection
+				selectedSeries: pieSelection.selectedCharts
 			}),
-		[borrowedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
+		[borrowedData.pieSeries, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 
@@ -131,8 +130,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 			case 'tokensBorrowedPie':
 				exportDataset = buildRuntimePieChartCsvDataset({
 					series: borrowedData.pieSeries,
-					selectedSeries: pieSelection.selectedCharts,
-					includeUpstreamOthers: pieSelection.isDefaultSelection
+					selectedSeries: pieSelection.selectedCharts
 				})
 				filename = `${protocolSlug}-borrowed-tokens-breakdown`
 				break

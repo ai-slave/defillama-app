@@ -363,11 +363,8 @@ describe('stablecoin chart series builders', () => {
 		const dominance = buildDominancePayload(doublecountedParams, { seriesLimit: 1 })
 		expect(dominance.defaultSeries).toEqual(['Base', 'Other'])
 		expect(datasetValue(dominance.dataset, 1, 'Others')).toBeCloseTo(15.38)
-		const selectedDoubleDominance = buildDominancePayload(doublecountedParams, {
-			selectedNames: ['Double'],
-			seriesLimit: 1
-		})
-		expect(selectedDoubleDominance.dataset.source.at(-1)).toEqual([secondDay * 1e3, 100])
+		// A double-counted asset has no share of the aggregate market, so dominance does not offer it.
+		expect(dominance.availableSeries).toEqual(['Base', 'Other'])
 
 		const inflows = buildStablecoinOverviewPayload(doublecountedParams, 'tokenInflows', summaryTopToken, {
 			seriesLimit: 1
@@ -632,13 +629,13 @@ describe('stablecoin chart series builders', () => {
 		expect(datasetValue(allExceptLargest.dataset, 1, 'Others')).toBe(60)
 		expect(allExceptLargest.dataset.dimensions).not.toContain('Token12')
 
+		// Picked coins keep their share of the whole market; the rest of the market stays in Others.
 		const selectedDominance = buildDominancePayload(largeParams, {
 			selectedNames: ['Token1', 'Token2'],
 			seriesLimit: STABLECOIN_BREAKDOWN_SERIES_LIMIT
 		})
-		expect(datasetValue(selectedDominance.dataset, 1, 'Token1')).toBeCloseTo(33.33)
-		expect(datasetValue(selectedDominance.dataset, 1, 'Token2')).toBeCloseTo(66.67)
-		expect(selectedDominance.charts.map((chart) => chart.name)).toEqual(['Token2', 'Token1'])
+		expect(selectedDominance.charts.map((chart) => chart.name)).toEqual(['Token2', 'Token1', 'Others'])
+		expect(selectedDominance.dataset.source[1]).toEqual([1_700_086_400_000, 2.41, 1.2, 96.39])
 
 		const selectedPair = buildAreaPayload(largeParams, {
 			stackName: 'tokenMcaps',

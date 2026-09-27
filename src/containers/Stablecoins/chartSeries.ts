@@ -796,7 +796,24 @@ export const buildDominancePayloadFromCollection = (
 	collected: StablecoinCanonicalHistory,
 	options?: StablecoinDominancePayloadOptions
 ): StablecoinChartSeriesPayload => {
-	const selection = getStablecoinSelectionFromCollection(collected, options, options?.chartNames)
+	// Dominance is a share of the whole filtered market. Only aggregate-eligible series can be picked, and Others
+	// holds the aggregate total minus the drawn series, so every row totals 100% of the same market.
+	const aggregate = new Set(collected.aggregateSeries)
+	const seriesNames = (options?.chartNames ?? collected.series.map((series) => series.name)).filter(
+		(name) => aggregate.has(name) || name === STABLECOIN_OTHERS_SERIES_NAME
+	)
+	const picked = getStablecoinSelectionFromCollection(collected, options, seriesNames)
+	const hasRemainder =
+		picked.explicitSeries.length > 0 &&
+		(picked.explicitSeries.length < collected.aggregateSeries.length ||
+			seriesNames.includes(STABLECOIN_OTHERS_SERIES_NAME))
+	const selection: StablecoinBreakdownSelection = {
+		...picked,
+		omittedSeries: hasRemainder ? [STABLECOIN_OTHERS_SERIES_NAME] : [],
+		visibleSeries: hasRemainder ? [...picked.explicitSeries, STABLECOIN_OTHERS_SERIES_NAME] : picked.explicitSeries,
+		deriveOmittedFromAggregate: true,
+		excludedSeries: []
+	}
 	const canonicalColorIndex = new Map(selection.availableSeries.map((name, index) => [name, index]))
 	const baseDataset = buildStablecoinBreakdownDatasetFromCollection({ collection: collected, selection })
 	const source: MultiSeriesTimeSeriesDataset['source'] = []

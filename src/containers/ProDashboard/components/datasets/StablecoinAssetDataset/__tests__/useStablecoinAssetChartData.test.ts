@@ -64,7 +64,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		})
 	})
 
-	test('renormalizes dominance to the selected chain set and exports only that set', () => {
+	test('keeps a picked chain at its share of the whole supply, with the other chains in Others', () => {
 		const result = buildStablecoinAssetPresentation(rawData, 'chainDominance', null, {
 			selectedNames: ['Ethereum']
 		})
@@ -72,9 +72,9 @@ describe('buildStablecoinAssetPresentation', () => {
 
 		assert(result.chartType === 'chainDominance')
 		expect(result.availableSeries).toEqual(['Ethereum', 'Base'])
-		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
-		expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
-		expect(csvDataset.dimensions).toEqual(['timestamp', 'Ethereum'])
+		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Others'])
+		expect(result.dataset.source[1]).toEqual([(firstDate + day) * 1e3, 0, 100])
+		expect(csvDataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Others'])
 	})
 
 	test('returns an empty snapshot when the active period has no points', () => {

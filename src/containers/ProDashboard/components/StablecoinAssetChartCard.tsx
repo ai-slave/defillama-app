@@ -143,11 +143,10 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 			pieSeries
 				? buildRuntimePieChartPresentation({
 						series: pieSeries,
-						selectedSeries: pieSelection.selectedCharts,
-						includeUpstreamOthers: pieSelection.isDefaultSelection
+						selectedSeries: pieSelection.selectedCharts
 					})
 				: { chartData: [], stackColors: {} },
-		[pieSelection.isDefaultSelection, pieSelection.selectedCharts, pieSeries]
+		[pieSelection.selectedCharts, pieSeries]
 	)
 
 	const filteredDataset = useMemo(
@@ -181,8 +180,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		const exportDataset = pieSeries
 			? buildRuntimePieChartCsvDataset({
 					series: pieSeries,
-					selectedSeries: pieSelection.selectedCharts,
-					includeUpstreamOthers: pieSelection.isDefaultSelection
+					selectedSeries: pieSelection.selectedCharts
 				})
 			: filterStablecoinDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
 		return prepareProChartCsv(exportDataset, filename)

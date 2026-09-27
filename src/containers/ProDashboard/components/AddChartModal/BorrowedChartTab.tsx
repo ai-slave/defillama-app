@@ -103,10 +103,9 @@ export function BorrowedChartTab({
 		() =>
 			buildRuntimePieChartPresentation({
 				series: borrowedData.pieSeries,
-				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.isDefaultSelection
+				selectedSeries: pieSelection.selectedCharts
 			}),
-		[borrowedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
+		[borrowedData.pieSeries, pieSelection.selectedCharts]
 	)
 	const selectorLabel = activeChartType === 'chainsBorrowed' ? 'Chain' : 'Token'
 

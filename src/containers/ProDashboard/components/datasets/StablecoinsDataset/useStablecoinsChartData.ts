@@ -100,7 +100,8 @@ const buildProStablecoinPresentationResult = (
 	const pieSeries =
 		chartType === 'pie'
 			? prepareRuntimePieChartData({
-					data: rawData.pieAssets,
+					// A pie is a share of the aggregate market, which leaves out double-counted assets.
+					data: rawData.pieAssets.filter((asset) => asset.aggregateIncluded),
 					sliceIdentifier: 'symbol',
 					sliceValue: 'mcap',
 					limit: 10

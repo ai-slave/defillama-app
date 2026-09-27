@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
-import { selectChartDatasetColumns } from '~/components/ECharts/MultiSeriesChart/selection'
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { useLocalSelection } from '~/components/Select/localSelection'
@@ -407,16 +407,18 @@ function VenueMarketShareChart({
 		const order: Array<string> = []
 		const seenVenues = new Set<string>()
 		for (const point of filtered) {
-			if (!seenVenues.has(point.venue)) {
-				seenVenues.add(point.venue)
-				order.push(point.venue)
+			// The server folds venues past the top N into "Other"; it is the remainder, not a pickable venue.
+			const venue = point.venue === 'Other' ? 'Others' : point.venue
+			if (!seenVenues.has(venue)) {
+				seenVenues.add(venue)
+				order.push(venue)
 			}
 			let values = byDate.get(point.date)
 			if (!values) {
 				values = new Map()
 				byDate.set(point.date, values)
 			}
-			values.set(point.venue, point.share)
+			values.set(venue, point.share)
 		}
 
 		// The server query is ordered by date, and filtering preserves that order.
@@ -448,11 +450,16 @@ function VenueMarketShareChart({
 			charts
 		}
 	}, [filtered])
-	const venueSeries = useMemo(() => charts.map((chart) => chart.name), [charts])
+	const venueSeries = useMemo(() => charts.flatMap((chart) => (chart.name === 'Others' ? [] : [chart.name])), [charts])
 	const { activeSeries, selectedCharts, setSelectedSeries } = useLocalSelection({
 		availableSeries: venueSeries,
 		scope: metric
 	})
+	// Unpicked venues join Others, so every picked venue keeps its share of the whole market.
+	const shareChart = useMemo(
+		() => buildSelectedPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy: 'sum-available' }),
+		[charts, dataset, selectedCharts]
+	)
 	const title = `CEX ${metric === 'spot' ? 'Spot' : 'Derivatives'} Market Share (Top ${topN})`
 
 	if (dataset.source.length === 0 || charts.length === 0) {
@@ -482,14 +489,7 @@ function VenueMarketShareChart({
 						chartInstance={chartInstance}
 						filename={`cex-${metric}-market-share`}
 						title={title}
-						csvSource={{
-							type: 'dataset',
-							prepare: () =>
-								selectChartDatasetColumns(
-									dataset,
-									charts.filter((chart) => selectedCharts.has(chart.name))
-								)
-						}}
+						csvSource={shareChart.csvSource}
 						smol
 					/>
 				</div>
@@ -497,9 +497,8 @@ function VenueMarketShareChart({
 			<Suspense fallback={<div className="h-[calc(360px*var(--card-scale,1))]" />}>
 				<MultiSeriesChart
 					title=""
-					dataset={dataset}
-					charts={charts}
-					selectedCharts={selectedCharts}
+					dataset={shareChart.dataset}
+					charts={shareChart.charts}
 					chartOptions={STACKED_PERCENT_CHART_OPTIONS}
 					solidChartAreaStyle
 					valueSymbol="%"

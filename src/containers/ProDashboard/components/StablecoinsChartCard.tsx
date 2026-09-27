@@ -84,15 +84,13 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 		allowEmptySelection: true,
 		scope: `${chain}:pie`
 	})
-	const includePieUpstreamOthers = pieSelection.isDefaultSelection && defaultSeries.length === pieSeriesNames.length
 	const piePresentation = useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
-				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: includePieUpstreamOthers
+				selectedSeries: pieSelection.selectedCharts
 			}),
-		[includePieUpstreamOthers, pieSelection.selectedCharts, pieSeries]
+		[pieSelection.selectedCharts, pieSeries]
 	)
 
 	const stackColors = useMemo(() => {
@@ -131,8 +129,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 			chartType === 'pie'
 				? buildRuntimePieChartCsvDataset({
 						series: pieSeries,
-						selectedSeries: pieSelection.selectedCharts,
-						includeUpstreamOthers: includePieUpstreamOthers
+						selectedSeries: pieSelection.selectedCharts
 					})
 				: filterStablecoinDatasetByTimePeriod(prepareCsvDataset(), timePeriod, customTimePeriod)
 		if (chartType === 'pie') filename = `stablecoins-${chainSlug}-pie`

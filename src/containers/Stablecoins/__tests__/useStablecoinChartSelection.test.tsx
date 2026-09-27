@@ -125,7 +125,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['Token 20', 'Token 21'])
 	})
 
-	test('keeps duplicate symbols distinct while excluding only double-counted peers by default', async () => {
+	test('keeps duplicate symbols distinct and double-counted peers pickable but unticked in the bar view', async () => {
 		const [canonicalLabel, doubleCountedLabel, reservedLabel] = buildUniqueStablecoinChartLabels(
 			[
 				{ id: '1', name: 'Canonical USX', symbol: 'USX', gecko_id: 'canonical-usx' },
@@ -143,7 +143,7 @@ describe('useStablecoinChartSelection', () => {
 		const rows = [canonicalRow, doubleCountedRow]
 		const series = prepareStablecoinMarketCapSeries({
 			rows,
-			view: 'pie',
+			view: 'hbar',
 			getName: (row) => row.chartLabel,
 			getValue: (row) => row.value,
 			isAggregateIncluded: (row) => !row.doublecounted
@@ -166,7 +166,7 @@ describe('useStablecoinChartSelection', () => {
 
 		const filteredSeries = prepareStablecoinMarketCapSeries({
 			rows: [doubleCountedRow],
-			view: 'pie',
+			view: 'hbar',
 			getName: (row) => row.chartLabel,
 			getValue: (row) => row.value,
 			isAggregateIncluded: (row) => !row.doublecounted

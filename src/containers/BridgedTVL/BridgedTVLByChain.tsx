@@ -118,18 +118,16 @@ export function BridgedTVLByChain({
 	const {
 		activeSeries: selectedPieTokens,
 		selectedCharts: selectedPieTokenSet,
-		setSelectedSeries: setSelectedPieTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedPieTokens
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: chain })
 	const piePresentation = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
 				selectedSeries: selectedPieTokenSet,
-				colorIndexByPeer: pieColorIndex,
-				includeUpstreamOthers
+				colorIndexByPeer: pieColorIndex
 			}),
-		[includeUpstreamOthers, pieColorIndex, pieSeries, selectedPieTokenSet]
+		[pieColorIndex, pieSeries, selectedPieTokenSet]
 	)
 
 	const deferredPiePresentation = React.useDeferredValue(piePresentation)
@@ -255,8 +253,7 @@ export function BridgedTVLByChain({
 								prepare: () =>
 									buildRuntimePieChartCsvDataset({
 										series: pieSeries,
-										selectedSeries: selectedPieTokenSet,
-										includeUpstreamOthers
+										selectedSeries: selectedPieTokenSet
 									})
 							}}
 						/>

@@ -138,12 +138,11 @@ function PieChartCard({
 	const {
 		activeSeries: selectedValues,
 		selectedCharts,
-		setSelectedSeries: setSelectedValues,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedValues
 	} = useLocalSelection({ scope: exportFilenameBase, allowEmptySelection: true, availableSeries: selectableSeries })
 	const presentation = React.useMemo(
-		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts, includeUpstreamOthers }),
-		[includeUpstreamOthers, selectedCharts, series]
+		() => buildRuntimePieChartPresentation({ series, selectedSeries: selectedCharts }),
+		[selectedCharts, series]
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -171,8 +170,7 @@ function PieChartCard({
 						iconUrl={exportIconUrl}
 						csvSource={{
 							type: 'dataset',
-							prepare: () =>
-								buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts, includeUpstreamOthers })
+							prepare: () => buildRuntimePieChartCsvDataset({ series, selectedSeries: selectedCharts })
 						}}
 					/>
 				</>

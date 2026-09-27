@@ -91,10 +91,9 @@ describe('runtime pie selection', () => {
 
 		expect(series.peers).toEqual([])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set() })).toEqual([{ name: 'Others', value: 2 }])
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(), includeUpstreamOthers: false })).toEqual([])
 	})
 
-	test('selects every peer while rendering top N plus a dynamic selected-tail Others', () => {
+	test('draws the top N picks and folds the pick tail and unpicked peers into Others', () => {
 		const data = Object.fromEntries(Array.from({ length: 479 }, (_, index) => [`Chain ${index}`, 479 - index]))
 		const series = prepareRuntimePieChartData({ data, limit: 10 })
 
@@ -104,13 +103,14 @@ describe('runtime pie selection', () => {
 		const selectedSeries = new Set(series.peers.slice(1).map((peer) => peer.name))
 		const rendered = buildRuntimePieChartData({ series, selectedSeries })
 		expect(rendered[0]).toEqual({ name: 'Chain 1', value: 478 })
+		// Chain 0 (479) is unpicked; Chains 11 to 478 are picks past the limit.
 		expect(rendered.at(-1)).toEqual({
 			name: 'Others',
-			value: series.peers.slice(11).reduce((total, peer) => total + peer.value, 0)
+			value: 479 + series.peers.slice(11).reduce((total, peer) => total + peer.value, 0)
 		})
 	})
 
-	test('exports every picked slice without the top-N fold, and Others only while every slice is picked', () => {
+	test('exports every picked slice without the top-N fold, then the rest of the whole as Others', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 6, B: 5, C: 4, D: 3, E: 2, Others: 1 }, limit: 3 })
 		expect(
 			buildRuntimePieChartCsvDataset({ series, selectedSeries: new Set(['A', 'B', 'C', 'D', 'E']) }).source
@@ -126,18 +126,22 @@ describe('runtime pie selection', () => {
 			dimensions: ['Name', 'Value'],
 			source: [
 				['A', 6],
-				['E', 2]
+				['E', 2],
+				['Others', 13]
 			]
 		})
 	})
 
-	test('renders exact selections below the visual limit without Others', () => {
+	test('keeps a single pick at its share of the whole, and nothing picked draws nothing', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 4, B: 3, C: 2, D: 1 }, limit: 3 })
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['B']) })).toEqual([{ name: 'B', value: 3 }])
+		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['B']) })).toEqual([
+			{ name: 'B', value: 3 },
+			{ name: 'Others', value: 7 }
+		])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set() })).toEqual([])
 	})
 
-	test('adds Others at N+1 and decreases it when a selected tail peer is removed', () => {
+	test('adds Others after N, always equal to the whole minus the drawn slices', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 6, B: 5, C: 4, D: 3, E: 2 }, limit: 3 })
 		expect(buildRuntimePieChartPresentation({ series }).stackColors).toMatchObject({
 			A: CHART_COLORS[0],
@@ -153,19 +157,18 @@ describe('runtime pie selection', () => {
 			selectedSeries: new Set(['B', 'C', 'D', 'E'])
 		})
 		expect(selectedTailPresentation.stackColors.D).not.toBe(selectedTailPresentation.stackColors.Others)
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'B', 'C']) })).toEqual([
-			{ name: 'A', value: 6 },
-			{ name: 'B', value: 5 },
-			{ name: 'C', value: 4 }
-		])
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'B', 'C', 'D']) }).at(-1)).toEqual({
-			name: 'Others',
-			value: 3
-		})
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'B', 'C', 'E']) }).at(-1)).toEqual({
-			name: 'Others',
-			value: 2
-		})
+		for (const picks of [
+			['A', 'B', 'C'],
+			['A', 'B', 'C', 'D'],
+			['A', 'B', 'C', 'E']
+		]) {
+			expect(buildRuntimePieChartData({ series, selectedSeries: new Set(picks) })).toEqual([
+				{ name: 'A', value: 6 },
+				{ name: 'B', value: 5 },
+				{ name: 'C', value: 4 },
+				{ name: 'Others', value: 5 }
+			])
+		}
 	})
 
 	test('keeps Others distinct from selected peers after the palette wraps', () => {
@@ -200,16 +203,20 @@ describe('runtime pie selection', () => {
 		)
 	})
 
-	test('includes upstream Others only while every known peer is selected', () => {
+	test('keeps unpicked peers and the upstream remainder in Others for any partial selection', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 4, B: 3, Others: 2 }, limit: 2 })
 		expect(buildRuntimePieChartData({ series })).toEqual([
 			{ name: 'A', value: 4 },
 			{ name: 'B', value: 3 },
 			{ name: 'Others', value: 2 }
 		])
-		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A']) })).toEqual([{ name: 'A', value: 4 }])
+		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A']) })).toEqual([
+			{ name: 'A', value: 4 },
+			{ name: 'Others', value: 5 }
+		])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'stale']) })).toEqual([
-			{ name: 'A', value: 4 }
+			{ name: 'A', value: 4 },
+			{ name: 'Others', value: 5 }
 		])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['stale']) })).toEqual([])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'B', 'stale']) })).toEqual([
@@ -238,7 +245,8 @@ describe('runtime pie selection', () => {
 		])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['A', 'B']) })).toEqual([
 			{ name: 'A', value: 5 },
-			{ name: 'B', value: 4 }
+			{ name: 'B', value: 4 },
+			{ name: 'Others', value: 6 }
 		])
 	})
 
@@ -298,18 +306,11 @@ describe('buildRuntimePieChartTableRows', () => {
 		])
 	})
 
-	test('drops the upstream remainder once the selection is partial', () => {
+	test('puts unpicked slices and the upstream remainder in one Others row', () => {
 		expect(buildRuntimePieChartTableRows({ series, selectedSeries: new Set(['A', 'C']) })).toEqual([
 			{ name: 'A', value: 50, share: 50 },
-			{ name: 'C', value: 10, share: 10 }
-		])
-	})
-
-	test('omits the upstream remainder when excluded', () => {
-		expect(buildRuntimePieChartTableRows({ series, includeUpstreamOthers: false }).map((row) => row.name)).toEqual([
-			'A',
-			'B',
-			'C'
+			{ name: 'C', value: 10, share: 10 },
+			{ name: 'Others', value: 40, share: 40 }
 		])
 	})
 })

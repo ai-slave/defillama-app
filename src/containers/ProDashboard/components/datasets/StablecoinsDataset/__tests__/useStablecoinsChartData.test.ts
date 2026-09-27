@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import { resolveLocalSelection } from '~/components/Select/localSelection'
 import {
 	getTopStablecoinFromLatestPoints,
 	STABLECOIN_BREAKDOWN_SERIES_LIMIT
@@ -153,7 +152,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.dataset.source).toEqual([[1_600_000_000_000, 1200]])
 	})
 
-	test('keeps every pie token canonical until runtime presentation', () => {
+	test('keeps every aggregate pie token canonical until runtime presentation, leaving out double-counted ones', () => {
 		const pieAssets = Array.from({ length: 12 }, (_, index) => ({
 			symbol: `TOKEN_${index}`,
 			mcap: 12 - index,
@@ -173,7 +172,8 @@ describe('buildProStablecoinOverviewPayload', () => {
 			})
 		)
 
-		expect(result.pieSeries.peers).toHaveLength(12)
+		expect(result.pieSeries.peers).toHaveLength(11)
+		expect(result.pieSeries.peers.some((peer) => peer.name === 'TOKEN_1')).toBe(false)
 		expect(result.pieSeries.peers.at(-1)).toEqual({ name: 'TOKEN_11', value: 1 })
 		expect(result.pieSeries.limit).toBe(10)
 		expect(result.defaultSeries).toEqual(
@@ -182,7 +182,7 @@ describe('buildProStablecoinOverviewPayload', () => {
 		expect(result.totalMcapCurrent).toBe(67)
 	})
 
-	test('keeps an all-double-counted pie empty by default but explicitly selectable', () => {
+	test('offers nothing in a pie of only double-counted assets', () => {
 		const result = buildProStablecoinChartPresentationFromCollection(
 			collectProStablecoinChart({
 				rawData: {
@@ -197,23 +197,8 @@ describe('buildProStablecoinOverviewPayload', () => {
 			})
 		)
 
+		expect(result.pieSeries.peers).toEqual([])
 		expect(result.defaultSeries).toEqual([])
 		expect(result.totalMcapCurrent).toBeNull()
-		expect(
-			resolveLocalSelection({
-				availableSeries: ['DOUBLE'],
-				intent: null,
-				defaultSeries: result.defaultSeries,
-				allowEmptySelection: true
-			})
-		).toEqual([])
-		expect(
-			resolveLocalSelection({
-				availableSeries: ['DOUBLE'],
-				intent: { mode: 'include', names: ['DOUBLE'] },
-				defaultSeries: result.defaultSeries,
-				allowEmptySelection: true
-			})
-		).toEqual(['DOUBLE'])
 	})
 })

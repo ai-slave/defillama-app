@@ -194,8 +194,7 @@ export function BridgesOverviewByChain({
 	const {
 		activeSeries: selectedTokens,
 		selectedCharts: selectedTokenSet,
-		setSelectedSeries: setSelectedTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: activeTokenSeriesNames, scope: selectedChain })
 	const visibleTokenPiePresentation = React.useMemo(
 		() =>
@@ -203,11 +202,10 @@ export function BridgesOverviewByChain({
 				? buildRuntimePieChartPresentation({
 						series: activeTokenPieSeries,
 						selectedSeries: selectedTokenSet,
-						colorIndexByPeer: tokenColorIndex,
-						includeUpstreamOthers
+						colorIndexByPeer: tokenColorIndex
 					})
 				: { chartData: [], stackColors: {} },
-		[activeTokenPieSeries, includeUpstreamOthers, selectedTokenSet, tokenColorIndex]
+		[activeTokenPieSeries, selectedTokenSet, tokenColorIndex]
 	)
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
@@ -220,8 +218,7 @@ export function BridgesOverviewByChain({
 					prepare: () =>
 						buildRuntimePieChartCsvDataset({
 							series: activeChart.series,
-							selectedSeries: selectedTokenSet,
-							includeUpstreamOthers
+							selectedSeries: selectedTokenSet
 						})
 				}
 		: null

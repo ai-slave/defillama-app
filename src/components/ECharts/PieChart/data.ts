@@ -104,34 +104,36 @@ export interface RuntimePieChartTableRow {
 	share: number
 }
 
-/** List the selected pie slices without the top-N fold; `Others` follows the pie's upstream-remainder rule. */
+/*
+ * A pie is a share view: its slices always add up to the whole. Picked peers get their own slice (up to `limit` in the
+ * pie), and everything else, unpicked peers and the upstream remainder included, is one `Others` slice. Nothing picked
+ * draws nothing.
+ */
+
+/** The picked slices without the top-N fold, then `Others` holding the rest of the whole. */
 export function buildRuntimePieChartTableRows({
 	series,
-	selectedSeries,
-	includeUpstreamOthers = true
+	selectedSeries
 }: {
 	series: RuntimePieChartData
 	selectedSeries?: ReadonlySet<string>
-	includeUpstreamOthers?: boolean
 }): Array<RuntimePieChartTableRow> {
 	let total = Math.max(series.upstreamOthersValue, 0)
 	for (const peer of series.peers) total += peer.value
 	const toShare = (value: number) => (total > 0 ? (value / total) * 100 : 0)
 
 	const rows: Array<RuntimePieChartTableRow> = []
-	let selectedPeerCount = 0
+	let othersValue = Math.max(series.upstreamOthersValue, 0)
 	for (const peer of series.peers) {
-		if (selectedSeries && !selectedSeries.has(peer.name)) continue
-		selectedPeerCount++
-		rows.push({ name: peer.name, value: peer.value, share: toShare(peer.value) })
+		if (selectedSeries && !selectedSeries.has(peer.name)) othersValue += peer.value
+		else rows.push({ name: peer.name, value: peer.value, share: toShare(peer.value) })
 	}
-	if (includeUpstreamOthers && selectedPeerCount === series.peers.length && series.upstreamOthersValue > 0) {
-		rows.push({ name: 'Others', value: series.upstreamOthersValue, share: toShare(series.upstreamOthersValue) })
-	}
+	if (rows.length === 0 && series.peers.length > 0) return rows
+	if (othersValue > 0) rows.push({ name: 'Others', value: othersValue, share: toShare(othersValue) })
 	return rows
 }
 
-/** Export the pie's selected slices without the top-N fold, the same rows as its table view. */
+/** Export the pie's picked slices without the top-N fold, the same rows as its table view. */
 export function buildRuntimePieChartCsvDataset(
 	selection: Parameters<typeof buildRuntimePieChartTableRows>[0]
 ): MultiSeriesChartDataset {
@@ -143,35 +145,32 @@ export function buildRuntimePieChartCsvDataset(
 export function buildRuntimePieChartPresentation({
 	series,
 	selectedSeries,
-	colorIndexByPeer,
-	includeUpstreamOthers = true
+	colorIndexByPeer
 }: {
 	series: RuntimePieChartData
 	selectedSeries?: ReadonlySet<string>
 	colorIndexByPeer?: ReadonlyMap<string, number>
-	includeUpstreamOthers?: boolean
 }) {
 	const chartData: Array<{ name: string; value: number }> = []
 	const stackColors: Record<string, string> = {}
-	let selectedPeerCount = 0
-	let othersValue = 0
+	let othersValue = Math.max(series.upstreamOthersValue, 0)
 	for (let index = 0; index < series.peers.length; index++) {
 		const peer = series.peers[index]!
-		if (selectedSeries && !selectedSeries.has(peer.name)) continue
-		selectedPeerCount++
-		if (chartData.length < series.limit) {
-			chartData.push(peer)
-			const canonicalIndex = colorIndexByPeer?.get(peer.name) ?? index
-			const reservedColorIndex = series.limit % CHART_COLORS.length
-			const colorIndexBeforeReservedSlot = canonicalIndex % (CHART_COLORS.length - 1)
-			const colorIndex =
-				colorIndexBeforeReservedSlot < reservedColorIndex
-					? colorIndexBeforeReservedSlot
-					: colorIndexBeforeReservedSlot + 1
-			stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]!
-		} else othersValue += peer.value
+		if ((selectedSeries && !selectedSeries.has(peer.name)) || chartData.length >= series.limit) {
+			othersValue += peer.value
+			continue
+		}
+		chartData.push(peer)
+		const canonicalIndex = colorIndexByPeer?.get(peer.name) ?? index
+		const reservedColorIndex = series.limit % CHART_COLORS.length
+		const colorIndexBeforeReservedSlot = canonicalIndex % (CHART_COLORS.length - 1)
+		const colorIndex =
+			colorIndexBeforeReservedSlot < reservedColorIndex
+				? colorIndexBeforeReservedSlot
+				: colorIndexBeforeReservedSlot + 1
+		stackColors[peer.name] = CHART_COLORS[colorIndex % CHART_COLORS.length]!
 	}
-	if (includeUpstreamOthers && selectedPeerCount === series.peers.length) othersValue += series.upstreamOthersValue
+	if (chartData.length === 0 && series.peers.length > 0) return { chartData, stackColors }
 	if (othersValue > 0) {
 		chartData.push({ name: 'Others', value: othersValue })
 		stackColors.Others = CHART_COLORS[series.limit % CHART_COLORS.length]!

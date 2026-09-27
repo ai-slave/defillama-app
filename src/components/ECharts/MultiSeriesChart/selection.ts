@@ -96,109 +96,136 @@ function resolveDimensionIndex(
 }
 
 /**
- * Project a peer-relative chart to the selected series and recompute every row over
- * that selected denominator. The canonical dataset remains untouched and colors/order
- * continue to come from the canonical chart configs.
+ * A share chart: every row is a share of all `charts`, the whole population. The picked series (the first `limit` in
+ * chart order) are drawn, and everything else, including an upstream `Others`, is one `Others` series, so each row
+ * totals 100% of the same whole whatever is picked. Nothing picked draws nothing. The export lists every pick
+ * without the `limit` fold. The canonical dataset stays untouched; colors and order come from the chart configs.
  */
-function projectPercentageChart({
-	dataset,
-	charts,
-	selectedCharts,
-	missingValuePolicy
-}: {
-	dataset: MultiSeriesChartDataset
-	charts: Array<MultiSeriesChartSeriesConfig>
-	selectedCharts: ReadonlySet<string>
-	missingValuePolicy: 'require-complete' | 'sum-available'
-}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
-	const displayedCharts = charts.filter((chart) => selectedCharts.has(chart.name))
-	const xIndex =
-		displayedCharts.length > 0 ? resolveDimensionIndex(displayedCharts[0]!.encode.x, dataset.dimensions) : 0
-	const xDimension = dataset.dimensions[xIndex]
-	if (xDimension === undefined) throw new Error('A chart dataset requires an x-axis dimension')
-	const yIndexes = displayedCharts.map((chart) => resolveDimensionIndex(chart.encode.y, dataset.dimensions))
-	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
-
-	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
-		const input = dataset.source[rowIndex]!
-		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(displayedCharts.length + 1)
-		row[0] = input[xIndex]
-		let total = 0
-		let lastPositiveValueIndex = -1
-		let hasUnavailableValue = false
-		for (let seriesIndex = 0; seriesIndex < yIndexes.length; seriesIndex++) {
-			const value = readNumericValue(input[yIndexes[seriesIndex]!])
-			row[seriesIndex + 1] = value
-			if (value == null) hasUnavailableValue = missingValuePolicy === 'require-complete'
-			else {
-				total += value
-				if (value > 0) lastPositiveValueIndex = seriesIndex + 1
-			}
-		}
-
-		if (hasUnavailableValue) {
-			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) row[valueIndex] = null
-		} else if (total > 0 && lastPositiveValueIndex !== -1) {
-			let normalizedTotal = 0
-			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
-				const value = readNumericValue(row[valueIndex])
-				if (value == null || valueIndex === lastPositiveValueIndex) continue
-				const normalized = (value / total) * 100
-				row[valueIndex] = normalized
-				normalizedTotal += normalized
-			}
-			row[lastPositiveValueIndex] = 100 - normalizedTotal
-		} else {
-			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
-				if (row[valueIndex] != null) row[valueIndex] = 0
-			}
-		}
-		source[rowIndex] = row
-	}
-
-	return {
-		dataset: {
-			dimensions: [xDimension, ...displayedCharts.map((chart) => chart.name)],
-			source
-		},
-		charts: displayedCharts.map((chart, index) => ({
-			...chart,
-			encode: { x: 0, y: index + 1 }
-		}))
-	}
-}
-
 export function buildSelectedPercentageChart({
 	dataset,
 	charts,
 	selectedCharts,
-	missingValuePolicy
+	missingValuePolicy,
+	limit = Number.POSITIVE_INFINITY
 }: {
 	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts: ReadonlySet<string>
 	missingValuePolicy: 'require-complete' | 'sum-available'
+	limit?: number
 }): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; csvSource: ChartCsvSource } {
-	const projected = projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy })
-	return { ...projected, csvSource: { type: 'dataset', prepare: () => projected.dataset } }
+	const projected = projectShareChart({ dataset, charts, selectedCharts, missingValuePolicy, limit })
+	return {
+		...projected,
+		csvSource: {
+			type: 'dataset',
+			prepare: () =>
+				limit === Number.POSITIVE_INFINITY
+					? projected.dataset
+					: projectShareChart({
+							dataset,
+							charts,
+							selectedCharts,
+							missingValuePolicy,
+							limit: Number.POSITIVE_INFINITY
+						}).dataset
+		}
+	}
 }
 
-/** Recompute each row as shares of every given series. */
-export function buildPercentageChartDataset({
+function projectShareChart({
 	dataset,
 	charts,
-	missingValuePolicy
+	selectedCharts,
+	missingValuePolicy,
+	limit
 }: {
 	dataset: MultiSeriesChartDataset
 	charts: Array<MultiSeriesChartSeriesConfig>
+	selectedCharts: ReadonlySet<string>
 	missingValuePolicy: 'require-complete' | 'sum-available'
-}): MultiSeriesChartDataset {
-	return projectPercentageChart({
-		dataset,
-		charts,
-		selectedCharts: new Set(charts.map((chart) => chart.name)),
-		missingValuePolicy
-	}).dataset
+	limit: number
+}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
+	const drawnCharts: Array<MultiSeriesChartSeriesConfig> = []
+	const remainderCharts: Array<MultiSeriesChartSeriesConfig> = []
+	for (const chart of charts) {
+		if (chart.name !== REMAINDER_SERIES_NAME && selectedCharts.has(chart.name) && drawnCharts.length < limit) {
+			drawnCharts.push(chart)
+		} else remainderCharts.push(chart)
+	}
+	const xIndex = charts.length > 0 ? resolveDimensionIndex(charts[0]!.encode.x, dataset.dimensions) : 0
+	const xDimension = dataset.dimensions[xIndex]
+	if (xDimension === undefined) throw new Error('A chart dataset requires an x-axis dimension')
+	const hasRemainder = drawnCharts.length > 0 && remainderCharts.length > 0
+	const drawnIndexes = drawnCharts.map((chart) => resolveDimensionIndex(chart.encode.y, dataset.dimensions))
+	const remainderIndexes = remainderCharts.map((chart) => resolveDimensionIndex(chart.encode.y, dataset.dimensions))
+	const width = drawnCharts.length + (hasRemainder ? 1 : 0)
+	const source = new Array<MultiSeriesChartDataset['source'][number]>(dataset.source.length)
+
+	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
+		const input = dataset.source[rowIndex]!
+		const row = new Array<MultiSeriesChartDataset['source'][number][number]>(width + 1)
+		row[0] = input[xIndex]
+		source[rowIndex] = row
+		if (width === 0) continue
+		let total = 0
+		let hasUnavailableValue = false
+		for (let seriesIndex = 0; seriesIndex < drawnIndexes.length; seriesIndex++) {
+			const value = readNumericValue(input[drawnIndexes[seriesIndex]!])
+			row[seriesIndex + 1] = value
+			if (value == null) hasUnavailableValue = true
+			else total += value
+		}
+		let remainder: number | null = null
+		for (const inputIndex of remainderIndexes) {
+			const value = readNumericValue(input[inputIndex])
+			if (value == null) hasUnavailableValue = true
+			else {
+				remainder = (remainder ?? 0) + value
+				total += value
+			}
+		}
+		if (hasRemainder) row[width] = remainder
+
+		if (hasUnavailableValue && missingValuePolicy === 'require-complete') {
+			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) row[valueIndex] = null
+			continue
+		}
+		let lastPositiveValueIndex = -1
+		for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
+			const value = readNumericValue(row[valueIndex])
+			if (value != null && value > 0) lastPositiveValueIndex = valueIndex
+		}
+		if (total <= 0 || lastPositiveValueIndex === -1) {
+			for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
+				if (row[valueIndex] != null) row[valueIndex] = 0
+			}
+			continue
+		}
+		// The last positive share absorbs rounding so a complete row stacks to exactly 100.
+		let normalizedTotal = 0
+		for (let valueIndex = 1; valueIndex < row.length; valueIndex++) {
+			const value = readNumericValue(row[valueIndex])
+			if (value == null || valueIndex === lastPositiveValueIndex) continue
+			const normalized = (value / total) * 100
+			row[valueIndex] = normalized
+			normalizedTotal += normalized
+		}
+		row[lastPositiveValueIndex] = 100 - normalizedTotal
+	}
+
+	const outputCharts = drawnCharts.map((chart, index) => ({ ...chart, encode: { x: 0, y: index + 1 } }))
+	if (hasRemainder) {
+		const template = charts.find((chart) => chart.name === REMAINDER_SERIES_NAME) ?? drawnCharts[0]!
+		outputCharts.push({ ...template, name: REMAINDER_SERIES_NAME, encode: { x: 0, y: width }, color: '#AAAAAA' })
+	}
+	return {
+		dataset: {
+			dimensions: [xDimension, ...outputCharts.map((chart) => chart.name)],
+			source
+		},
+		charts: outputCharts
+	}
 }
 
 /**

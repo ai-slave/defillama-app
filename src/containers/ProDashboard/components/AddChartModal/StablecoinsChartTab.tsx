@@ -210,17 +210,9 @@ export function StablecoinsChartTab({
 		() =>
 			buildRuntimePieChartPresentation({
 				series: chainPieSeries,
-				selectedSeries: chainPieSelection.selectedCharts,
-				includeUpstreamOthers:
-					chainPieSelection.isDefaultSelection && chainDefaultSeries.length === chainPieSeriesNames.length
+				selectedSeries: chainPieSelection.selectedCharts
 			}),
-		[
-			chainDefaultSeries.length,
-			chainPieSelection.isDefaultSelection,
-			chainPieSelection.selectedCharts,
-			chainPieSeries,
-			chainPieSeriesNames.length
-		]
+		[chainPieSelection.selectedCharts, chainPieSeries]
 	)
 	const { intent: assetSelectionIntent, setIntent: setAssetSelectionIntent } = useSelectionIntent(
 		`${selectedStablecoinAssetId}:${assetChartType}`
@@ -262,11 +254,10 @@ export function StablecoinsChartTab({
 			assetPieSeries
 				? buildRuntimePieChartPresentation({
 						series: assetPieSeries,
-						selectedSeries: assetPieSelection.selectedCharts,
-						includeUpstreamOthers: assetPieSelection.isDefaultSelection
+						selectedSeries: assetPieSelection.selectedCharts
 					})
 				: { chartData: [], stackColors: {} },
-		[assetPieSelection.isDefaultSelection, assetPieSelection.selectedCharts, assetPieSeries]
+		[assetPieSelection.selectedCharts, assetPieSeries]
 	)
 	const totalCirculating = assetPresentation.totalCirculating
 	const assetRuntimeSeries = useMemo(

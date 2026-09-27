@@ -215,8 +215,7 @@ function TokensBreakdownPieChartCard({
 	const {
 		activeSeries: selectedTokens,
 		selectedCharts,
-		setSelectedSeries: setSelectedTokens,
-		isDefaultSelection: includeUpstreamOthers
+		setSelectedSeries: setSelectedTokens
 	} = useLocalSelection({
 		scope: `${slug(protocolName)}-tokens-breakdown`,
 		allowEmptySelection: true,
@@ -226,10 +225,9 @@ function TokensBreakdownPieChartCard({
 		() =>
 			buildRuntimePieChartPresentation({
 				series: tokenBreakdownPieSeries,
-				selectedSeries: selectedCharts,
-				includeUpstreamOthers
+				selectedSeries: selectedCharts
 			}),
-		[includeUpstreamOthers, selectedCharts, tokenBreakdownPieSeries]
+		[selectedCharts, tokenBreakdownPieSeries]
 	)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
@@ -263,8 +261,7 @@ function TokensBreakdownPieChartCard({
 							prepare: () =>
 								buildRuntimePieChartCsvDataset({
 									series: tokenBreakdownPieSeries,
-									selectedSeries: selectedCharts,
-									includeUpstreamOthers
+									selectedSeries: selectedCharts
 								})
 						}}
 					/>

@@ -1,56 +1,44 @@
+import { buildSelectedPercentageChart } from '~/components/ECharts/MultiSeriesChart/selection'
+import { CHART_COLORS } from '~/constants/colors'
 import {
-	buildPercentageChartDataset,
-	buildSelectedPercentageChart
-} from '~/components/ECharts/MultiSeriesChart/selection'
-import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import { buildProtocolBreakdownCsvDataset, type ProtocolBreakdownChart } from './useProtocolBreakdownCharts'
+	buildProtocolBreakdownCsvDataset,
+	MAX_PROTOCOL_BREAKDOWN_SERIES,
+	type ProtocolBreakdownChart
+} from './useProtocolBreakdownCharts'
 
+/**
+ * Dominance over the whole breakdown: every series plus the upstream Others. Picks keep their share of that whole, and
+ * unpicked series, picks past the top 30 and the upstream Others share one Others band.
+ */
 export function buildProtocolBreakdownDominance({
-	dataset,
-	charts,
-	selectedCharts,
 	breakdown,
 	availableSeries,
 	activeSeries,
-	includeUpstreamOthers
+	aggregateOthers
 }: {
-	dataset: MultiSeriesChartDataset
-	charts: Array<MultiSeriesChartSeriesConfig>
-	selectedCharts: ReadonlySet<string>
 	breakdown: ProtocolBreakdownChart
 	availableSeries: ReadonlyArray<string>
 	activeSeries: ReadonlyArray<string>
-	includeUpstreamOthers: boolean
+	aggregateOthers: boolean
 }) {
-	const presentation = buildSelectedPercentageChart({
-		dataset,
-		charts,
-		selectedCharts,
-		missingValuePolicy: 'sum-available'
+	const whole = buildProtocolBreakdownCsvDataset({
+		breakdown,
+		availableSeries,
+		activeSeries: availableSeries,
+		includeUpstreamOthers: aggregateOthers,
+		fillMissingWithZero: true
 	})
-	return {
-		...presentation,
-		csvSource: {
-			type: 'dataset' as const,
-			prepare: () => {
-				// The chart folds picks past the top 30 into Others; the export lists each pick over the same total.
-				const picked = buildProtocolBreakdownCsvDataset({
-					breakdown,
-					availableSeries,
-					activeSeries,
-					includeUpstreamOthers,
-					fillMissingWithZero: true
-				})
-				return buildPercentageChartDataset({
-					dataset: picked,
-					charts: picked.dimensions.slice(1).map((name, index) => ({
-						type: 'line',
-						name,
-						encode: { x: 0, y: index + 1 }
-					})),
-					missingValuePolicy: 'sum-available'
-				})
-			}
-		}
-	}
+	return buildSelectedPercentageChart({
+		dataset: whole,
+		// Same palette slots as the breakdown's line view, so a series keeps its color across views.
+		charts: whole.dimensions.slice(1).map((name, index) => ({
+			type: 'line',
+			name,
+			encode: { x: 0, y: index + 1 },
+			color: CHART_COLORS[index % CHART_COLORS.length]!
+		})),
+		selectedCharts: new Set(activeSeries),
+		missingValuePolicy: 'sum-available',
+		limit: aggregateOthers ? MAX_PROTOCOL_BREAKDOWN_SERIES : Number.POSITIVE_INFINITY
+	})
 }

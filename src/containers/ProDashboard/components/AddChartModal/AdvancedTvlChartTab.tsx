@@ -187,10 +187,9 @@ export function AdvancedTvlChartTab({
 		() =>
 			buildRuntimePieChartPresentation({
 				series: advancedData.pieSeries,
-				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.isDefaultSelection
+				selectedSeries: pieSelection.selectedCharts
 			}),
-		[advancedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
+		[advancedData.pieSeries, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 	const canonicalDataset = chartType === 'tvl' ? resolvedBasicTvlDataset : advancedDataset

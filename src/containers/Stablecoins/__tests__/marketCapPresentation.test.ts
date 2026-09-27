@@ -62,7 +62,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(series.selectionSeries).toEqual(series.peers.map((peer) => peer.name))
 	})
 
-	test('exports every picked slice without the top-N fold, and Others only while every slice is picked', () => {
+	test('exports every picked slice without the top-N fold, then the rest of the market as Others', () => {
 		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: index === 11 ? 'Others' : `Token ${index}`,
 			mcap: 120 - index * 10
@@ -80,9 +80,41 @@ describe('buildStablecoinMarketCapPresentation', () => {
 			dimensions: ['Name', 'Market Cap'],
 			source: [
 				['Token 0', 120],
-				['Token 10', 20]
+				['Token 10', 20],
+				['Others', 640]
 			]
 		})
+	})
+
+	test('measures pie and treemap shares against the aggregate market, leaving out double-counted assets', () => {
+		const rows = [
+			{ name: 'USDT', mcap: 60, doublecounted: false },
+			{ name: 'USDC', mcap: 40, doublecounted: false },
+			{ name: 'Wrapped USDT', mcap: 20, doublecounted: true }
+		]
+		for (const view of ['pie', 'treemap'] as const) {
+			const series = prepareStablecoinMarketCapSeries({
+				rows,
+				view,
+				getName: (row) => row.name,
+				getValue: (row) => row.mcap,
+				isAggregateIncluded: (row) => !row.doublecounted
+			})
+			expect(series.selectionSeries).toEqual(['USDT', 'USDC'])
+			expect(buildStablecoinMarketCapCsvDataset({ series, selectedSeries: new Set(['USDT']) }).source).toEqual([
+				['USDT', 60],
+				['Others', 40]
+			])
+		}
+		const bar = prepareStablecoinMarketCapSeries({
+			rows,
+			view: 'hbar',
+			getName: (row) => row.name,
+			getValue: (row) => row.mcap,
+			isAggregateIncluded: (row) => !row.doublecounted
+		})
+		expect(bar.selectionSeries).toEqual(['USDT', 'USDC', 'Wrapped USDT'])
+		expect(bar.defaultSeries).toEqual(['USDT', 'USDC'])
 	})
 
 	test('builds horizontal-bar columns and colors only for its selected slices', () => {
@@ -170,7 +202,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	test('renders an explicit selection without Others and keeps canonical colors', () => {
+	test('keeps a picked token at its share of the whole, with the rest in Others, and canonical colors', () => {
 		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: `Token ${index}`,
 			mcap: 12 - index
@@ -179,8 +211,11 @@ describe('buildStablecoinMarketCapPresentation', () => {
 
 		expect(buildStablecoinMarketCapPresentation({ series, selectedSeries: new Set(['Token 2']) })).toEqual({
 			kind: 'pie',
-			chartData: [{ name: 'Token 2', value: 10 }],
-			stackColors: { 'Token 2': CHART_COLORS[2] }
+			chartData: [
+				{ name: 'Token 2', value: 10 },
+				{ name: 'Others', value: 68 }
+			],
+			stackColors: { 'Token 2': CHART_COLORS[2], Others: '#AAAAAA' }
 		})
 		expect(buildStablecoinMarketCapPresentation({ series, selectedSeries: new Set() })).toEqual({
 			kind: 'pie',
@@ -194,8 +229,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 		expect(exactlyAtLimit.kind).toBe('pie')
 		if (exactlyAtLimit.kind !== 'pie') return
-		expect(exactlyAtLimit.chartData).toHaveLength(10)
-		expect(exactlyAtLimit.chartData.some((slice) => slice.name === 'Others')).toBe(false)
+		expect(exactlyAtLimit.chartData).toHaveLength(11)
+		expect(exactlyAtLimit.chartData.at(-1)).toEqual({ name: 'Others', value: 3 })
 
 		const aboveLimit = buildStablecoinMarketCapPresentation({
 			series,
@@ -203,10 +238,10 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 		expect(aboveLimit.kind).toBe('pie')
 		if (aboveLimit.kind !== 'pie') return
-		expect(aboveLimit.chartData.at(-1)).toEqual({ name: 'Others', value: 2 })
+		expect(aboveLimit.chartData.at(-1)).toEqual({ name: 'Others', value: 3 })
 	})
 
-	test('renormalizes treemap shares over only the selected peers', () => {
+	test('keeps treemap tiles at their share of the whole market, with the rest in one Others tile', () => {
 		const rows: Array<Row> = [
 			{ name: 'Alpha', mcap: 6 },
 			{ name: 'Beta', mcap: 3 },
@@ -226,8 +261,9 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(result.kind).toBe('treemap')
 		if (result.kind !== 'treemap') return
 		expect(result.treeData.map((node) => [node.name, node.value[1]])).toEqual([
-			['Beta', 75],
-			['Gamma', 25]
+			['Beta', 30],
+			['Gamma', 10],
+			['Others', 60]
 		])
 	})
 
@@ -281,7 +317,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(withoutTopChain.chartData.at(0)?.name).toBe('Chain 1')
 		expect(withoutTopChain.chartData.at(-1)).toEqual({
 			name: 'Others',
-			value: rows.slice(11).reduce((total, row) => total + (row.mcap ?? 0), 0)
+			// Chain 0 (479) is unpicked; Chains 11 onward are picks past the limit.
+			value: 479 + rows.slice(11).reduce((total, row) => total + (row.mcap ?? 0), 0)
 		})
 	})
 
@@ -328,7 +365,7 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(series.peers.at(0)?.value).toBe(2)
 	})
 
-	test('restores upstream Others only after matching every canonical peer', () => {
+	test('keeps unpicked tokens and the upstream remainder in Others', () => {
 		const rows: Array<Row> = [
 			{ name: 'A', mcap: 4 },
 			{ name: 'B', mcap: 3 },
@@ -337,7 +374,10 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		const series = prepareStablecoinMarketCapSeries({ rows, view: 'pie', getName, getValue: (row) => row.mcap ?? 0 })
 
 		expect(buildStablecoinMarketCapPresentation({ series, selectedSeries: new Set(['A', 'stale']) })).toMatchObject({
-			chartData: [{ name: 'A', value: 4 }]
+			chartData: [
+				{ name: 'A', value: 4 },
+				{ name: 'Others', value: 5 }
+			]
 		})
 		expect(
 			buildStablecoinMarketCapPresentation({ series, selectedSeries: new Set(['A', 'B', 'stale']) })

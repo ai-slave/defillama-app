@@ -21,7 +21,10 @@ export type StablecoinMarketCapPresentation =
 	| { kind: 'hbar'; categories: Array<string>; values: Array<number>; colors: Array<string> }
 	| { kind: 'treemap'; treeData: Array<TreemapNode> }
 
-/** Export the selected peers without the top-N fold; `Others` follows the pie and bar remainder rule. */
+/**
+ * Export the picked peers without the top-N fold. The pie and treemap are share views, so `Others` holds the rest of
+ * the whole; the bar view shows values, so its `Others` is the upstream remainder only while every peer is picked.
+ */
 export function buildStablecoinMarketCapCsvDataset({
 	series,
 	selectedSeries
@@ -30,12 +33,18 @@ export function buildStablecoinMarketCapCsvDataset({
 	selectedSeries: ReadonlySet<string>
 }): MultiSeriesChartDataset {
 	const source: MultiSeriesChartDataset['source'] = []
+	let unpickedValue = 0
 	for (const peer of series.peers) {
 		if (selectedSeries.has(peer.name)) source.push([peer.name, peer.value])
+		else unpickedValue += peer.value
 	}
-	if (series.kind !== 'treemap' && source.length === series.peers.length && series.upstreamRemainderValue > 0) {
-		source.push(['Others', series.upstreamRemainderValue])
-	}
+	const othersValue =
+		series.kind === 'hbar'
+			? unpickedValue === 0
+				? series.upstreamRemainderValue
+				: 0
+			: unpickedValue + series.upstreamRemainderValue
+	if (source.length > 0 && othersValue > 0) source.push(['Others', othersValue])
 	return { dimensions: ['Name', 'Market Cap'], source }
 }
 
@@ -64,6 +73,9 @@ export function prepareStablecoinMarketCapSeries<T>({
 			upstreamRemainderValue += value
 			continue
 		}
+		// The pie and treemap are shares of the aggregate market, which leaves out double-counted assets, so only the
+		// bar view offers them.
+		if (view !== 'hbar' && !isAggregateIncluded(row)) continue
 		valueByPeer.set(name, (valueByPeer.get(name) ?? 0) + value)
 		if (isAggregateIncluded(row)) aggregateIncludedPeers.add(name)
 	}
@@ -96,14 +108,19 @@ export function buildStablecoinMarketCapPresentation({
 	selectedSeries?: ReadonlySet<string>
 }): StablecoinMarketCapPresentation {
 	if (series.kind === 'treemap') {
+		// A share view: tiles are shares of the whole market, and unpicked peers plus the upstream remainder share one
+		// Others tile.
 		const visibleSlices: Array<MarketCapSlice> = []
+		let total = series.upstreamRemainderValue
+		let othersValue = series.upstreamRemainderValue
 		for (const peer of series.peers) {
-			if (peer.value <= 0 || (selectedSeries && !selectedSeries.has(peer.name))) continue
-			visibleSlices.push(peer)
+			total += peer.value
+			if (selectedSeries && !selectedSeries.has(peer.name)) othersValue += peer.value
+			else if (peer.value > 0) visibleSlices.push(peer)
 		}
-
-		let total = 0
-		for (const slice of visibleSlices) total += slice.value
+		if (visibleSlices.length > 0 && othersValue > 0) {
+			visibleSlices.push({ name: 'Others', value: othersValue, color: '#AAAAAA' })
+		}
 		const treeData: Array<TreemapNode> = []
 		for (const slice of visibleSlices) {
 			const share = total > 0 ? roundNumber((slice.value / total) * 100, 2) : 0
@@ -117,17 +134,25 @@ export function buildStablecoinMarketCapPresentation({
 		return { kind: 'treemap', treeData }
 	}
 
+	// The pie is a share view, so unpicked peers and the upstream remainder always join Others; the bar view shows
+	// values, so unpicking a peer removes it and the upstream remainder shows only while every peer is picked.
 	const limit = series.kind === 'pie' ? PIE_SLICE_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT
 	const visibleSlices: Array<MarketCapSlice> = []
 	let selectedPeerCount = 0
+	let unpickedValue = 0
 	let othersValue = 0
 	for (const peer of series.peers) {
-		if (selectedSeries && !selectedSeries.has(peer.name)) continue
+		if (selectedSeries && !selectedSeries.has(peer.name)) {
+			unpickedValue += peer.value
+			continue
+		}
 		selectedPeerCount++
 		if (visibleSlices.length < limit) visibleSlices.push(peer)
 		else othersValue += peer.value
 	}
-	if (selectedPeerCount === series.peers.length) othersValue += series.upstreamRemainderValue
+	if (series.kind === 'pie') othersValue += unpickedValue + series.upstreamRemainderValue
+	else if (selectedPeerCount === series.peers.length) othersValue += series.upstreamRemainderValue
+	if (selectedPeerCount === 0 && series.peers.length > 0) othersValue = 0
 	if (othersValue > 0) {
 		visibleSlices.push({
 			name: 'Others',

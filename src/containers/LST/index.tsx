@@ -283,17 +283,15 @@ export function LSTOverview({
 	const {
 		activeSeries: selectedPieTokens,
 		selectedCharts: selectedPieTokensSet,
-		setSelectedSeries: setSelectedPieTokens,
-		isDefaultSelection: includePieUpstreamOthers
+		setSelectedSeries: setSelectedPieTokens
 	} = useLocalSelection({ allowEmptySelection: true, availableSeries: pieSelectableSeries, scope: 'breakdown-pie' })
 	const visiblePieChartData = React.useMemo(
 		() =>
 			buildRuntimePieChartPresentation({
 				series: pieSeries,
-				selectedSeries: selectedPieTokensSet,
-				includeUpstreamOthers: includePieUpstreamOthers
+				selectedSeries: selectedPieTokensSet
 			}).chartData,
-		[includePieUpstreamOthers, pieSeries, selectedPieTokensSet]
+		[pieSeries, selectedPieTokensSet]
 	)
 	const { chartInstance: breakdownChartInstance, handleChartReady: handleBreakdownReady } = useGetChartInstance()
 	const { chartInstance: inflowsChartInstance, handleChartReady: handleInflowsReady } = useGetChartInstance()
@@ -416,8 +414,7 @@ export function LSTOverview({
 												prepare: () =>
 													buildRuntimePieChartCsvDataset({
 														series: pieSeries,
-														selectedSeries: selectedPieTokensSet,
-														includeUpstreamOthers: includePieUpstreamOthers
+														selectedSeries: selectedPieTokensSet
 													})
 											}}
 										/>

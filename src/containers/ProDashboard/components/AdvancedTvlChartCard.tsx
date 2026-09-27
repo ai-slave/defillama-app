@@ -173,10 +173,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 		() =>
 			buildRuntimePieChartPresentation({
 				series: advancedData.pieSeries,
-				selectedSeries: pieSelection.selectedCharts,
-				includeUpstreamOthers: pieSelection.isDefaultSelection
+				selectedSeries: pieSelection.selectedCharts
 			}),
-		[advancedData.pieSeries, pieSelection.isDefaultSelection, pieSelection.selectedCharts]
+		[advancedData.pieSeries, pieSelection.selectedCharts]
 	)
 	const selectorLabel = chartType === 'chainsTvl' ? 'Chain' : 'Token'
 
@@ -205,8 +204,7 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 			case 'tokensPie':
 				exportDataset = buildRuntimePieChartCsvDataset({
 					series: advancedData.pieSeries,
-					selectedSeries: pieSelection.selectedCharts,
-					includeUpstreamOthers: pieSelection.isDefaultSelection
+					selectedSeries: pieSelection.selectedCharts
 				})
 				filename = `${protocolSlug}-tokens-breakdown`
 				break
