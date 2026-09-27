@@ -175,18 +175,29 @@ export function formatUsd(value: NumericValue | null | undefined, options?: Form
 export function formatUsd(value: NumericValue | null | undefined, options: FormatUsdOptions = {}): string | null {
 	const number = finiteValue(value)
 	if (number == null) return null
-	const compact = options.compact && Math.abs(number) >= (options.minimumCompactValue ?? 1000)
+	const absoluteValue = Math.abs(number)
+	const compact = options.compact && absoluteValue >= (options.minimumCompactValue ?? 1000)
+	// Without caller precision, expanded amounts show whole dollars from $1,000 and full cents below it
+	// ($5.40, never $5.4). Exact integers stay whole ($5, $0) so axis ticks and prices read naturally.
+	// Callers that need other precision (prices, balances) pass their own.
+	const defaultCents =
+		!compact && absoluteValue < 1000 && options.minimumFractionDigits == null && options.maximumFractionDigits == null
+	const minimumFractionDigits = options.minimumFractionDigits ?? (defaultCents ? 2 : 0)
 	const maximumFractionDigits =
-		options.maximumFractionDigits ?? (compact ? compactFractionDigits(number) : adaptiveFractionDigits(number, 2, 2))
+		options.maximumFractionDigits ??
+		(compact
+			? compactFractionDigits(number)
+			: absoluteValue >= 1000
+				? minimumFractionDigits
+				: adaptiveFractionDigits(number, 2, 2))
 	const formatted = getFormatter({
 		style: 'currency',
 		currency: 'USD',
 		...(compact ? { notation: 'compact', compactDisplay: 'short' } : {}),
 		signDisplay: options.signDisplay ?? 'auto',
 		maximumFractionDigits,
-		...(options.minimumFractionDigits == null
-			? { minimumFractionDigits: 0 }
-			: { minimumFractionDigits: options.minimumFractionDigits }),
+		minimumFractionDigits,
+		...(defaultCents ? { trailingZeroDisplay: 'stripIfInteger' } : {}),
 		...(options.maximumSignificantDigits == null ? {} : { maximumSignificantDigits: options.maximumSignificantDigits })
 	}).format(number)
 	return applyCompactSuffixCase(formatted, options.compactSuffix)
