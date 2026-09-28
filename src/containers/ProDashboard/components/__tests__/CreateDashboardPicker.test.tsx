@@ -194,7 +194,11 @@ describe('a subscriber', () => {
 		// happy-dom click() does not enforce disabled ancestor fieldsets.
 		await click('Creating…')
 		expect(create).toHaveBeenCalledOnce()
-		expect(exitButton.disabled || exitButton.closest('fieldset[disabled]') !== null).toBe(true)
+		expect(
+			exitButton.disabled ||
+				exitButton.getAttribute('aria-disabled') === 'true' ||
+				exitButton.closest('fieldset[disabled]') !== null
+		).toBe(true)
 		await act(async () => saved.resolve({ id: 'created', slug: 'created-dashboard' }))
 		await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).not.toBeNull())
 		expect(toast.error).not.toHaveBeenCalled()

@@ -1,4 +1,5 @@
-import type { ComponentPropsWithRef, ElementType } from 'react'
+import type { ComponentPropsWithRef, ElementType, MouseEvent } from 'react'
+import { LoadingSpinner } from './Loaders'
 
 /* ----------------------------------------------------------------------------
    Button — the design.md button recipe (see "Component recipes").
@@ -20,6 +21,11 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    `className` is for LAYOUT PLACEMENT ONLY (ml-auto, w-full, shrink-0…),
    same contract as Card. If you need different colors/spacing, that is a
    new variant to agree on in design.md, not a className override.
+
+   `pendingLabel` is the pending state: while an action runs, pass its label
+   ("Saving…") and the button shows a spinner and that label, stays focusable
+   (aria-disabled, announced as busy) and ignores clicks, so a form cannot
+   submit twice through Enter either. Pass null once the action settles.
 
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
@@ -83,7 +89,7 @@ export function buttonStyles({
 	size: ButtonSize
 	square?: boolean
 }): string {
-	return `flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 ${
+	return `flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
@@ -93,6 +99,8 @@ type ButtonProps<T extends ElementType> = {
 	variant?: ButtonVariant
 	size: ButtonSize
 	square?: boolean
+	/** Set while the button's action runs; the button shows a spinner and this label and ignores clicks. */
+	pendingLabel?: string | null
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string | undefined
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'className'>
@@ -102,9 +110,24 @@ export function Button<T extends ElementType = 'button'>({
 	variant = 'secondary',
 	size,
 	square = false,
+	pendingLabel = null,
 	className,
 	...props
 }: ButtonProps<T>) {
 	const Component = (as ?? 'button') as ElementType
-	return <Component className={`${buttonStyles({ variant, size, square })} ${className ?? ''}`.trim()} {...props} />
+	const classes = `${buttonStyles({ variant, size, square })} ${className ?? ''}`.trim()
+	if (pendingLabel === null) return <Component className={classes} {...props} />
+	return (
+		<Component
+			className={classes}
+			{...props}
+			aria-disabled
+			aria-busy
+			// A pending button swallows clicks, including the one a form's Enter key sends to its submit button.
+			onClick={(event: MouseEvent) => event.preventDefault()}
+		>
+			<LoadingSpinner size={14} />
+			{pendingLabel}
+		</Component>
+	)
 }

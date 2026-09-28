@@ -116,7 +116,7 @@ test('shows an enabled balance below chat history and opens Balance settings', a
 	expect(openBalance).toHaveBeenCalledOnce()
 })
 function button(name: string) {
-	const scope = name === 'Cancel' ? (document.querySelector('[role=dialog]:not([hidden])') ?? document) : document
+	const scope = name === 'Cancel' ? (document.querySelector('[role=alertdialog]:not([hidden])') ?? document) : document
 	const element = [...scope.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent?.trim() === name)
 	expect(element).toBeDefined()
 	return element!

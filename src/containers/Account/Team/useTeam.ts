@@ -324,9 +324,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onSuccess: () => {
-			toast.success('Invite sent successfully!')
-		},
+		// InviteMemberModal confirms success after it closes; a toast here would sit over the open dialog.
 		onSettled: reconcileTeam
 	})
 

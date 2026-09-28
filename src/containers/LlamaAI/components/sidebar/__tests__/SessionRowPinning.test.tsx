@@ -193,13 +193,13 @@ async function openDelete() {
 		el.textContent?.includes('Delete Session')
 	)!
 	await act(async () => item.click())
-	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
+	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeNull())
 }
 
 test('session confirmation cancels without a request and returns focus to its menu', async () => {
 	await mountManaged()
 	await openDelete()
-	const dialog = document.querySelector('[role="dialog"]')!
+	const dialog = document.querySelector('[role="alertdialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Delete “chat”?')
 	await click('Cancel')
 	expect(requestsTo('/user/sessions/chat', 'DELETE')).toEqual([])
@@ -218,7 +218,7 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 	expect(button('Actions for chat')).toBeDefined()
 	await act(async () => first.resolve(failure('Offline')))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
-	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+	expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
 	await click('Retry deletion')
 	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
 	expect(container.querySelector('[aria-label="Actions for chat"]')).toBeNull()

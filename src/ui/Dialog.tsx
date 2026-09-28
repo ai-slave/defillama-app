@@ -1,5 +1,12 @@
 import * as Ariakit from '@ariakit/react'
-import { Children, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import {
+	Children,
+	createContext,
+	useContext,
+	type ComponentProps,
+	type ComponentPropsWithoutRef,
+	type ReactNode
+} from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
@@ -50,6 +57,137 @@ export const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-
 /** Use a content basis so Safari includes the body when sizing a fit-content dialog. */
 export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto overscroll-contain`
 
+/* ----------------------------------------------------------------------------
+   Dialog / SideSheet — the surfaces as components. Pick a size, never an
+   arbitrary --dialog-width:
+     Dialog     sm 448 (confirms, short forms, lists) · md 600 (forms, pickers)
+                · lg 880 (two-pane filters, rails, settings)
+     SideSheet  sm 448 (forms, filters) · md 672 (detail viewers)
+                · lg 1152 (docs with a table of contents, history)
+   Below sm both are bottom sheets: a Dialog hugs its content unless
+   `fullSheet`; a SideSheet always keeps the full sheet height.
+
+   `pending` locks the surface while a request that cannot be cancelled runs:
+   Escape, an outside tap and the header × stop closing it. Callers still
+   disable their own Cancel. A request that aborts on close does not need it.
+
+   Contents: <DialogHeader> · optional <DialogToolbar> (search, tabs, steps)
+   · <DialogBody> · optional <DialogFooter>.
+---------------------------------------------------------------------------- */
+
+const DialogPendingContext = createContext(false)
+
+type DialogSize = 'sm' | 'md' | 'lg'
+
+const DIALOG_WIDTH: Record<DialogSize, string> = {
+	sm: '[--dialog-width:448px]',
+	md: '[--dialog-width:600px]',
+	lg: '[--dialog-width:880px]'
+}
+
+type SurfaceProps = {
+	pending?: boolean
+} & Omit<ComponentProps<typeof Ariakit.Dialog>, 'className'>
+
+export function Dialog({
+	size,
+	fullSheet = false,
+	pending = false,
+	hideOnEscape = true,
+	hideOnInteractOutside = true,
+	...props
+}: SurfaceProps & { size: DialogSize; fullSheet?: boolean }) {
+	return (
+		<DialogPendingContext value={pending}>
+			<Ariakit.Dialog
+				hideOnEscape={!pending && hideOnEscape}
+				hideOnInteractOutside={!pending && hideOnInteractOutside}
+				className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${DIALOG_WIDTH[size]}`}
+				{...props}
+			/>
+		</DialogPendingContext>
+	)
+}
+
+const SIDE_SHEET_WIDTH: Record<DialogSize, string> = {
+	sm: '[--side-sheet-width:448px]',
+	md: '[--side-sheet-width:672px]',
+	lg: '[--side-sheet-width:1152px]'
+}
+
+// Below sm: the same bottom sheet as a full-height Dialog. From sm: pinned to the right edge at full
+// height, sliding in with the dialog's timing.
+const sideSheetStyles =
+	'fixed inset-x-0 bottom-(--keyboard-inset,0px) z-50 flex h-(--sheet-height) w-full flex-col overflow-hidden rounded-t-xl border border-medium pb-[max(0px,calc(env(safe-area-inset-bottom)-var(--keyboard-inset,0px)))] shadow-dialog [--sheet-height:min(85dvh,calc(var(--visual-viewport-height,100dvh)-3rem))] max-sm:drawer sm:inset-y-0 sm:right-0 sm:left-auto sm:h-auto sm:max-w-[min(var(--side-sheet-width),calc(100%-48px))] sm:translate-x-full sm:rounded-none sm:border-y-0 sm:border-r-0 sm:pb-0 sm:opacity-0 sm:transition-[translate,opacity] sm:duration-260 sm:ease-out-quart sm:data-enter:translate-x-0 sm:data-enter:opacity-100 sm:data-leave:duration-200 motion-reduce:transition-none dark:shadow-dialog-deep'
+
+export function SideSheet({
+	size,
+	canvas = false,
+	pending = false,
+	hideOnEscape = true,
+	hideOnInteractOutside = true,
+	...props
+}: SurfaceProps & {
+	size: DialogSize
+	/** Only for a body of bg-surface cards, like the canvas dialog. */
+	canvas?: boolean
+}) {
+	return (
+		<DialogPendingContext value={pending}>
+			<Ariakit.Dialog
+				hideOnEscape={!pending && hideOnEscape}
+				hideOnInteractOutside={!pending && hideOnInteractOutside}
+				className={`${sideSheetStyles} ${canvas ? 'bg-surface-elevated-1' : 'bg-overlay'} ${SIDE_SHEET_WIDTH[size]}`}
+				{...props}
+			/>
+		</DialogPendingContext>
+	)
+}
+
+/** The title row: heading, an optional body-sm subtitle, and the × (confirmations pass closable={false}). */
+export function DialogHeader({
+	title,
+	subtitle,
+	closable = true
+}: {
+	title: ReactNode
+	subtitle?: ReactNode
+	closable?: boolean
+}) {
+	return (
+		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
+			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+				<DialogHeading className="break-words">{title}</DialogHeading>
+				{subtitle ? <p className="body-sm text-secondary">{subtitle}</p> : null}
+			</div>
+			{closable ? <DialogCloseButton /> : null}
+		</header>
+	)
+}
+
+/** A band under the header for search, tabs or steps. */
+export function DialogToolbar({ children }: { children: ReactNode }) {
+	return <div className="shrink-0 border-b border-subtle px-4 py-3">{children}</div>
+}
+
+const DIALOG_BODY_KIND = {
+	content: 'flex flex-col gap-4 p-4',
+	list: 'p-2',
+	flush: ''
+} as const
+
+/** The scrolling body. content: p-4 with 16px between blocks; list: p-2, rows bring their own inset;
+    flush: no padding, for panes, tables and bodies that own their layout. */
+export function DialogBody({
+	kind = 'content',
+	children
+}: {
+	kind?: keyof typeof DIALOG_BODY_KIND
+	children: ReactNode
+}) {
+	return <div className={`${dialogScrollableBodyStyles} ${DIALOG_BODY_KIND[kind]}`.trim()}>{children}</div>
+}
+
 type DialogHeadingProps = {
 	/** Layout placement only — the type/color comes from the recipe. */
 	className?: string
@@ -70,8 +208,11 @@ type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.Dialo
 }
 
 export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...props }: DialogCloseButtonProps) {
+	const pending = useContext(DialogPendingContext)
 	return (
 		<Ariakit.DialogDismiss
+			disabled={pending}
+			accessibleWhenDisabled
 			render={
 				<Button
 					type="button"

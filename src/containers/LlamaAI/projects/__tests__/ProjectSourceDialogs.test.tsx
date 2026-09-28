@@ -213,7 +213,7 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 	await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
 	await click('Deleting…')
 	expect(api.remove).toHaveBeenCalledTimes(1)
-	expect(button('Cancel').disabled).toBe(true)
+	expect(button('Cancel').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => request.reject(new Error('Please retry')))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Please retry'))
 	expect(openDialog()).toBeDefined()

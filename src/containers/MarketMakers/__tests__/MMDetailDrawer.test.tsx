@@ -106,7 +106,7 @@ test('loads the selected market maker and renders its scores, services and venue
 	expect(dialog.textContent).toContain('Binance')
 	expect(dialog.textContent).toContain('Uniswap V3')
 	expect(dialog.textContent).toContain('Treasury Management')
-	await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close"]')!.click())
+	await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Close dialog"]')!.click())
 	expect(close).toHaveBeenCalledOnce()
 })
 

@@ -257,7 +257,7 @@ test('invite validates the address, preserves a failed draft and retries through
 	await click('Send Invite')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await waitForUi(() => expect(input.readOnly).toBe(true))
-	await click('Close')
+	await click('Close dialog')
 	expect(dialog()).toBeTruthy()
 	await act(async () => first.reject(new Error('Invite unavailable')))
 	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Invite unavailable'))

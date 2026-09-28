@@ -3,6 +3,7 @@ import { type ComponentProps, useEffect, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
+import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
@@ -17,7 +18,6 @@ import {
 } from './client'
 import { ConnectDialog } from './ConnectDialog'
 import { countryFromCode } from './country'
-import { Drawer } from './Drawer'
 import { roundPercentile } from './format'
 import type { RadarScores } from './RadarChart'
 import { forgdCtaPrimaryButtonStyles, forgdCtaSecondaryButtonStyles } from './styles'
@@ -467,23 +467,30 @@ export function MMDetailDrawer({
 
 	return (
 		<>
-			<Drawer
+			<SideSheet
+				size="md"
+				canvas
 				open={open}
 				onClose={onClose}
-				title={title}
-				widthClassName="sm:max-w-2xl"
-				dismissible={leadDialog == null}
+				// A lead dialog on top owns Escape and outside taps until it closes.
+				hideOnEscape={leadDialog == null}
+				hideOnInteractOutside={leadDialog == null}
+				portal
+				unmountOnHide
 			>
-				<DrawerBody
-					open={open}
-					marketMakerId={id}
-					range={range}
-					badge={badge}
-					fallbackName={name}
-					focusSection={focusSection}
-					onOpenLead={setLeadDialog}
-				/>
-			</Drawer>
+				<DialogHeader title={title} />
+				<DialogBody kind="flush">
+					<DrawerBody
+						open={open}
+						marketMakerId={id}
+						range={range}
+						badge={badge}
+						fallbackName={name}
+						focusSection={focusSection}
+						onOpenLead={setLeadDialog}
+					/>
+				</DialogBody>
+			</SideSheet>
 			<ConnectDialog
 				open={leadDialog === 'connect'}
 				onClose={() => setLeadDialog(null)}

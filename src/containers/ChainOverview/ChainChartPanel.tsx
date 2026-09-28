@@ -16,9 +16,10 @@ import { EmbedChart } from '~/components/EmbedChart'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
+import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, DialogToolbar } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
@@ -141,6 +142,7 @@ export function ChainChartPanel({
 	const canAddToDashboard = metadata.name !== 'All' && multiChart && toggledCharts.length > 0 && denomination === 'USD'
 
 	const metricsDialogStore = Ariakit.useDialogStore()
+	const isSmallScreen = useMedia('(max-width: 639px)')
 	const [metricsSearchValue, setMetricsSearchValue] = useState('')
 	const deferredMetricsSearchValue = useDeferredValue(metricsSearchValue)
 	const prepareCsv = () => {
@@ -239,34 +241,30 @@ export function ChainChartPanel({
 									<span>Add Metrics</span>
 									<Icon name="plus" className="size-3.5" />
 								</Ariakit.DialogDisclosure>
-								<Ariakit.Dialog
-									className={`${dialogFullSheetSurfaceStyles} [--dialog-width:600px]`}
-									unmountOnHide
-									portal
-								>
-									<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-										<div className="flex items-baseline gap-2.5">
-											<DialogHeading>Chart metrics</DialogHeading>
-											<span className="body-sm text-tertiary">
-												{selectedOptions.length}/{allMetricOptions.length}
-											</span>
-										</div>
-										<DialogCloseButton />
-									</div>
-
-									<div className="border-b border-subtle px-4 py-3">
+								<Dialog size="md" fullSheet unmountOnHide portal>
+									<DialogHeader
+										title="Chart metrics"
+										subtitle={`${selectedOptions.length} of ${allMetricOptions.length} selected`}
+									/>
+									<DialogToolbar>
 										<label className="relative block">
 											<span className="sr-only">Search metrics</span>
 											<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-											<Input
-												type="text"
-												name="search"
-												inputMode="search"
-												placeholder={`Search ${allMetricOptions.length} metrics...`}
-												autoFocus
-												value={metricsSearchValue}
-												className="w-full pr-24 pl-8"
-												onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
+											{/* Ariakit's autoFocus, so the dialog starts on the search instead of the header ×. Phones
+											    skip it: the keyboard would cover the metric list before anyone asked to search. */}
+											<Ariakit.Focusable
+												autoFocus={!isSmallScreen}
+												render={
+													<Input
+														type="text"
+														name="search"
+														inputMode="search"
+														placeholder={`Search ${allMetricOptions.length} metrics...`}
+														value={metricsSearchValue}
+														className="w-full pr-24 pl-8"
+														onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
+													/>
+												}
 											/>
 											{metricsSearchValue ? (
 												<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
@@ -284,9 +282,9 @@ export function ChainChartPanel({
 												</div>
 											) : null}
 										</label>
-									</div>
+									</DialogToolbar>
 
-									<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+									<DialogBody>
 										{groupedFilteredOptions.map((group) => (
 											<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
 												<div className="flex items-baseline gap-1.5">
@@ -342,7 +340,7 @@ export function ChainChartPanel({
 												</button>
 											</div>
 										) : null}
-									</div>
+									</DialogBody>
 
 									<DialogFooter
 										leading={
@@ -359,7 +357,7 @@ export function ChainChartPanel({
 											Done
 										</Button>
 									</DialogFooter>
-								</Ariakit.Dialog>
+								</Dialog>
 							</Ariakit.DialogProvider>
 						) : null}
 						{toggledCharts.map((tchart) => (
