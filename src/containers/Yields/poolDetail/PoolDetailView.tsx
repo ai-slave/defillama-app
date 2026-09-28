@@ -19,7 +19,7 @@ import type { GrowthChartModel, IntrinsicSourceSeries } from './growthChart'
 import { HoldersPanel } from './HoldersPanel'
 import type { LiquidityChartModel } from './liquidityChart'
 import { PoolApyChart } from './PoolApyChart'
-import type { PoolChartModel } from './poolCharts'
+import type { IntrinsicApySeries, PoolChartModel } from './poolCharts'
 import { PoolGrowthChart } from './PoolGrowthChart'
 import { PoolHeader, PoolMetaInfo } from './PoolHeader'
 import { PoolLiquidityChart } from './PoolLiquidityChart'
@@ -84,6 +84,7 @@ export interface PoolDetailViewProps {
 	// growth chart at all rather than an empty one.
 	growthChart: GrowthChartModel | null
 	intrinsicSeries: IntrinsicSourceSeries | null
+	intrinsicApy: IntrinsicApySeries | null
 	// Null when the pool never reported withdrawable liquidity, or when its underlying tokens
 	// disagree on decimals so the raw amounts cannot be denominated.
 	liquidityChart: LiquidityChartModel | null
@@ -147,6 +148,7 @@ export function PoolDetailView({
 	borrowChart,
 	growthChart: growthChartFromProps,
 	intrinsicSeries: intrinsicSeriesFromProps,
+	intrinsicApy: intrinsicApyFromProps,
 	liquidityChart: liquidityChartFromProps,
 	liquidityDecimals: liquidityDecimalsFromProps,
 	exitReliability: exitReliabilityFromProps,
@@ -171,6 +173,7 @@ export function PoolDetailView({
 		verifiedWindows,
 		growthChart,
 		intrinsicSeries,
+		intrinsicApy,
 		liquidityChart,
 		liquidityDecimals,
 		exitReliability,
@@ -191,6 +194,7 @@ export function PoolDetailView({
 					verifiedWindows: verifiedWindowsFromProps,
 					growthChart: growthChartFromProps,
 					intrinsicSeries: intrinsicSeriesFromProps,
+					intrinsicApy: intrinsicApyFromProps,
 					liquidityChart: liquidityChartFromProps,
 					liquidityDecimals: liquidityDecimalsFromProps,
 					exitReliability: exitReliabilityFromProps,
@@ -209,6 +213,7 @@ export function PoolDetailView({
 			verifiedWindowsFromProps,
 			growthChartFromProps,
 			intrinsicSeriesFromProps,
+			intrinsicApyFromProps,
 			liquidityChartFromProps,
 			liquidityDecimalsFromProps,
 			exitReliabilityFromProps,
@@ -349,6 +354,7 @@ export function PoolDetailView({
 								poolId={poolId}
 								kind="supply"
 								initialRange={initialRange}
+								intrinsicApy={intrinsicApy}
 								lockedVerifiedApy={locked && !hasAccess}
 							/>
 						) : (

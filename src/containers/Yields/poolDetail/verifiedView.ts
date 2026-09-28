@@ -67,6 +67,7 @@ export function resolvePoolVerifiedView({
 		verifiedWindows: seeded && fromProps.verifiedWindows.length > 0 ? fromProps.verifiedWindows : paid.verifiedWindows,
 		growthChart: (seeded ? fromProps.growthChart : null) ?? paid.growthChart,
 		intrinsicSeries: (seeded ? fromProps.intrinsicSeries : null) ?? paid.intrinsicSeries,
+		intrinsicApy: (seeded ? fromProps.intrinsicApy : null) ?? paid.intrinsicApy,
 		liquidityChart: (seeded ? fromProps.liquidityChart : null) ?? paid.liquidityChart,
 		liquidityDecimals: (seeded ? fromProps.liquidityDecimals : null) ?? paid.liquidityDecimals,
 		exitReliability: (seeded ? fromProps.exitReliability : null) ?? paid.exitReliability,

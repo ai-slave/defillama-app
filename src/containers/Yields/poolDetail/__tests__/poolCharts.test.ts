@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { buildBorrowChart, buildSupplyChart, hasDrawableDay, stripVerifiedSeries } from '../poolCharts'
+import {
+	buildBorrowChart,
+	buildIntrinsicApySeries,
+	buildSupplyChart,
+	hasDrawableDay,
+	stripVerifiedSeries
+} from '../poolCharts'
 import type { BorrowMarketHistoryPoint, PoolHistoryPoint } from '../types'
 
 function apy(base: number | null, reward: number | null, total: number | null) {
@@ -112,6 +118,62 @@ describe('pool chart models', () => {
 		expect(reported.bars.map((bar) => bar.key)).toEqual(['base'])
 		expect(reported.bars[0]?.values).toEqual([3.5, null, 3.6])
 		expect(stripVerifiedSeries(reported)).toBe(reported)
+	})
+
+	test('draws the measured intrinsic leg with gaps on days the source was not measured', () => {
+		const reportedLeg = (d1: number, d7: number, d30: number) => ({
+			apy: { avg_1d: { base: d1 }, avg_7d: { base: d7 }, avg_30d: { base: d30 } }
+		})
+		const pool: Array<PoolHistoryPoint> = [
+			['2026-01-01', reportedLeg(2.5, 2.6, 2.7)] as const,
+			['2026-01-02', reportedLeg(3.5, 3.6, 3.7)] as const,
+			['2026-01-03', reportedLeg(4.5, 4.6, 4.7)] as const
+		].map(([date, intrinsic]) => ({
+			date,
+			tvl_usd: 100,
+			apy: { avg_1d: apy(0, null, 0), avg_7d: apy(0, null, 0), avg_30d: apy(0, null, 0) },
+			intrinsic,
+			price_per_share: null
+		}))
+		const measured = (d1: number | null, d7: number | null, d30: number | null) => ({
+			apy: { avg_1d: d1, avg_7d: d7, avg_30d: d30 },
+			price_per_share: 1,
+			liquidity_available: null,
+			liquidity_available_usd: null,
+			tvl: null,
+			tvl_usd: null,
+			exit: null
+		})
+		const source: Array<PoolHistoryPoint> = [
+			{ ...pool[0]!, intrinsic: null, verified: measured(2.2, 2.21, 2.22) },
+			{ ...pool[1]!, intrinsic: null, verified: null },
+			{ ...pool[2]!, intrinsic: null, verified: measured(2.4, 2.41, 2.42) }
+		]
+
+		const model = buildSupplyChart(pool, 'TVL', buildIntrinsicApySeries(source))
+		expect(model?.bars.find((bar) => bar.key === 'intrinsic')).toMatchObject({
+			label: 'Verified Intrinsic',
+			values: [2.2, null, 2.4],
+			avg7: [2.21, null, 2.41],
+			avg30: [2.22, null, 2.42]
+		})
+
+		// A source whose only measurement is still running has no rate yet: the reported leg stays.
+		const running = [{ ...source[0]!, verified: measured(null, null, null) }]
+		expect(buildSupplyChart(pool, 'TVL', buildIntrinsicApySeries(running))?.bars[1]).toMatchObject({
+			label: 'Intrinsic',
+			values: [2.5, 3.5, 4.5]
+		})
+
+		// A reader whose access ended sees the reported leg again.
+		expect(stripVerifiedSeries(model!).bars.find((bar) => bar.key === 'intrinsic')).toEqual({
+			key: 'intrinsic',
+			label: 'Intrinsic',
+			colorKey: 'intrinsic',
+			values: [2.5, 3.5, 4.5],
+			avg7: [2.6, 3.6, 4.6],
+			avg30: [2.7, 3.7, 4.7]
+		})
 	})
 
 	test('preserves borrow components, net averages, and liquidity series', () => {

@@ -155,6 +155,7 @@ async function buildBorrowOnlyProps(
 		// Borrow-only markets have no earn row, so no simulated redemptions are measured for them.
 		growthChart: null,
 		intrinsicSeries: null,
+		intrinsicApy: null,
 		liquidityChart: null,
 		liquidityDecimals: null,
 		exitReliability: null,
@@ -265,7 +266,6 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	const categorySlug = protocolMeta?.category ? (categorySlugByName.get(protocolMeta.category) ?? null) : null
 	const usesSupplyLabel = categorySlug ? SUPPLY_HEADER_CATEGORIES.has(categorySlug) : false
 
-	const supplyChart = history?.length ? buildSupplyChart(history, usesSupplyLabel ? 'Total supplied' : 'TVL') : null
 	const borrowChart = borrowHistory?.length ? buildBorrowChart(borrowHistory) : null
 	// Empty on a redacted page; a subscriber's request carries the measured models from here.
 	const fullHistory = initialRange === 'max' ? history : maxHistory
@@ -284,6 +284,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		verifiedWindows,
 		growthChart,
 		intrinsicSeries,
+		intrinsicApy,
 		liquidityChart,
 		liquidityDecimals,
 		exitReliability
@@ -294,6 +295,9 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		sourceVerified,
 		sourceHistory
 	})
+	const supplyChart = history?.length
+		? buildSupplyChart(history, usesSupplyLabel ? 'Total supplied' : 'TVL', intrinsicApy)
+		: null
 
 	// When this pool is also a borrow market, surface the borrow side (APY + borrowed /
 	// available) from the borrow-markets dataset row (same id), resolved at current
@@ -367,6 +371,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			borrowChart,
 			growthChart,
 			intrinsicSeries,
+			intrinsicApy,
 			liquidityChart,
 			liquidityDecimals,
 			exitReliability,

@@ -1,4 +1,4 @@
-import type { BorrowMarketHistoryPoint, PoolHistoryPoint } from './types'
+import type { BorrowMarketHistoryPoint, PoolHistory, PoolHistoryPoint, VerifiedHistoryBlock } from './types'
 
 // [light, dark] hex pairs because ECharts can't resolve CSS vars; the client wrapper
 // picks the entry for the active theme.
@@ -36,6 +36,21 @@ export interface PoolChartBar {
 	values: Array<number | null>
 	avg7: Array<number | null>
 	avg30: Array<number | null>
+	/** The reported series a measured bar replaced, restored when access ends. */
+	reported?: Pick<PoolChartBar, 'label' | 'values' | 'avg7' | 'avg30'>
+}
+
+/** The intrinsic source pool's measured APY, by day. */
+export type IntrinsicApySeries = Record<string, VerifiedHistoryBlock['apy']>
+
+export function buildIntrinsicApySeries(history: PoolHistory | null | undefined): IntrinsicApySeries | null {
+	if (!history?.length) return null
+	const series: IntrinsicApySeries = {}
+	for (const point of history) {
+		const apy = point.verified?.apy
+		if (apy && Object.values(apy).some((value) => value != null)) series[point.date] = apy
+	}
+	return Object.keys(series).length > 0 ? series : null
 }
 
 /**
@@ -83,7 +98,11 @@ export interface PoolChartModel {
 	netLine: PoolChartNet | null
 }
 
-export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TVL'): PoolChartModel | null {
+export function buildSupplyChart(
+	series: Array<PoolHistoryPoint>,
+	tvlLabel = 'TVL',
+	intrinsicApy: IntrinsicApySeries | null = null
+): PoolChartModel | null {
 	if (series.length === 0) return null
 	const dates = new Array<number>(series.length)
 	const tvl = new Array<number | null>(series.length)
@@ -180,15 +199,25 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 			avg7: total7,
 			avg30: total30
 		})
-	if (hasIntrinsic)
+	if (hasIntrinsic) {
+		const reported = { label: 'Intrinsic', values: intrinsic, avg7: intrinsic7, avg30: intrinsic30 }
+		// Like the verified base, an unmeasured source day is a gap, never the reported rate.
+		const measured = (window: keyof VerifiedHistoryBlock['apy']) =>
+			series.map((point) => intrinsicApy?.[point.date]?.[window] ?? null)
 		bars.push({
 			key: 'intrinsic',
-			label: 'Intrinsic',
 			colorKey: 'intrinsic',
-			values: intrinsic,
-			avg7: intrinsic7,
-			avg30: intrinsic30
+			...(intrinsicApy
+				? {
+						label: 'Verified Intrinsic',
+						values: measured('avg_1d'),
+						avg7: measured('avg_7d'),
+						avg30: measured('avg_30d'),
+						reported
+					}
+				: reported)
 		})
+	}
 
 	return {
 		title: 'Supply APY',
@@ -202,12 +231,16 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 
 /**
  * The reported view of a measured supply chart, for a reader whose access ended after the page was
- * built: the verified base drops and the bar it replaced draws alone, as the public build would.
+ * built: the verified base drops and the bar it replaced draws alone, and a measured intrinsic leg
+ * returns to the reported one, as the public build would.
  * (The TVL line may keep a measured pool size on days the protocol never reported.)
  */
 export function stripVerifiedSeries(model: PoolChartModel): PoolChartModel {
-	const bars = model.bars.filter((bar) => bar.key !== VERIFIED_APY_SERIES.key)
-	return bars.length === model.bars.length ? model : { ...model, bars }
+	if (!model.bars.some((bar) => bar.key === VERIFIED_APY_SERIES.key || bar.reported)) return model
+	const bars = model.bars.flatMap(({ reported, ...bar }) =>
+		bar.key === VERIFIED_APY_SERIES.key ? [] : [{ ...bar, ...reported }]
+	)
+	return { ...model, bars }
 }
 
 export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolChartModel | null {

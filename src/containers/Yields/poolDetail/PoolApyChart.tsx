@@ -27,6 +27,7 @@ import {
 	CHART_PALETTE,
 	type ChartColorKey,
 	hasDrawableDay,
+	type IntrinsicApySeries,
 	type PoolChartBar,
 	type PoolChartLine,
 	type PoolChartModel,
@@ -67,6 +68,7 @@ interface SeriesDef {
 	colorKey: ChartColorKey
 	defaultEnabled: boolean
 	group: 'apy' | 'overlay'
+	verified?: boolean
 }
 
 function fmtVal(v: number, symbol: string): string {
@@ -259,12 +261,14 @@ export function PoolApyChart({
 	poolId,
 	kind,
 	initialRange = 'max',
+	intrinsicApy = null,
 	lockedVerifiedApy = false
 }: {
 	model: PoolChartModel
 	poolId: string
 	kind: 'supply' | 'borrow'
 	initialRange?: PoolHistoryRange
+	intrinsicApy?: IntrinsicApySeries | null
 	// The pool is measured but this reader's model has no measured line. The picker still lists
 	// it, greyed, so the reader learns the line exists and what unlocks it.
 	lockedVerifiedApy?: boolean
@@ -286,7 +290,7 @@ export function PoolApyChart({
 		(next) => {
 			const tvlLabel = model.lines.find((line) => line.unit === 'usd')?.label ?? 'TVL'
 			return kind === 'supply'
-				? fetchHistory(next).then((h) => buildSupplyChart(h, tvlLabel))
+				? fetchHistory(next).then((h) => buildSupplyChart(h, tvlLabel, intrinsicApy))
 				: fetchBorrowMarketDetailHistory(poolId, next).then((h) => buildBorrowChart(h))
 		},
 		kind === 'borrow' || !historyAccessPending
@@ -322,7 +326,8 @@ export function PoolApyChart({
 				label: bar.label,
 				colorKey: bar.colorKey,
 				defaultEnabled: drawable(bar) && !replaced.has(bar.key),
-				group: 'apy'
+				group: 'apy',
+				verified: bar.reported != null
 			})
 		}
 		// The measured APY is a rate and lists with the rates; dollar magnitudes are the overlays.
@@ -382,7 +387,7 @@ export function PoolApyChart({
 			color: resolve(def.colorKey),
 			active: enabled[def.key] === true,
 			defaultEnabled: def.defaultEnabled,
-			verified: def.colorKey === 'verified'
+			verified: def.colorKey === 'verified' || def.verified === true
 		})
 		const apy = seriesDefs.filter((def) => def.group === 'apy').map(toOption)
 		if (lockedVerifiedApy && !apy.some((option) => option.key === VERIFIED_APY_SERIES.key)) {

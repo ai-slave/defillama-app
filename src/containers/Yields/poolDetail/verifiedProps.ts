@@ -11,7 +11,7 @@ import {
 	type IntrinsicSourceSeries
 } from './growthChart'
 import { buildLiquidityChart, type LiquidityChartModel } from './liquidityChart'
-import { buildSupplyChart, type PoolChartModel } from './poolCharts'
+import { buildIntrinsicApySeries, buildSupplyChart, type IntrinsicApySeries, type PoolChartModel } from './poolCharts'
 import type { PoolDetail, PoolHistory } from './types'
 import type { VerifiedWindowRow } from './VerifiedApyPanel'
 
@@ -23,6 +23,8 @@ export interface PoolVerifiedProps {
 	growthChart: GrowthChartModel | null
 	/** The source pool's measured rates, so the client can rebuild the chart on a range change. */
 	intrinsicSeries: IntrinsicSourceSeries | null
+	/** The source pool's measured APY, for the supply chart's intrinsic leg. */
+	intrinsicApy: IntrinsicApySeries | null
 	liquidityChart: LiquidityChartModel | null
 	// Null when the pool carries no denomination; the chart then offers its USD view only.
 	liquidityDecimals: number | null
@@ -38,6 +40,7 @@ export const EMPTY_POOL_VERIFIED_PROPS: PoolVerifiedProps = {
 	verifiedWindows: [],
 	growthChart: null,
 	intrinsicSeries: null,
+	intrinsicApy: null,
 	liquidityChart: null,
 	liquidityDecimals: null,
 	exitReliability: null,
@@ -95,17 +98,21 @@ export function buildPoolVerifiedProps({
 	sourceHistory?: PoolHistory | null
 }): PoolVerifiedProps {
 	const intrinsicSeries = buildIntrinsicSeries(sourceHistory)
+	const intrinsicApy = buildIntrinsicApySeries(sourceHistory)
 	return {
 		verified: pool.verified ?? null,
 		apy: buildMeasuredApy(pool, sourceVerified),
 		verifiedWindows: buildVerifiedWindows(pool),
 		growthChart: history?.length ? buildGrowthChart(history, intrinsicSeries) : null,
 		intrinsicSeries,
+		intrinsicApy,
 		liquidityChart: history?.length ? buildLiquidityChart(history, verifiedDenomination(pool)) : null,
 		liquidityDecimals: pool.verified?.denomination?.decimals ?? null,
 		exitReliability: fullHistory?.length ? buildExitReliability(fullHistory) : null,
 		// Redacted history carries no `verified` block, so the page never pays to rebuild a chart
 		// identical to the one it already has.
-		supplyChart: history?.some((point) => point.verified != null) ? buildSupplyChart(history) : null
+		supplyChart: history?.some((point) => point.verified != null)
+			? buildSupplyChart(history, 'TVL', intrinsicApy)
+			: null
 	}
 }
