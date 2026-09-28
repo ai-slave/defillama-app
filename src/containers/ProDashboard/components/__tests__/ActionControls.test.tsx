@@ -47,7 +47,7 @@ async function clickMenuItem(name: string) {
 	await act(async () => item!.click())
 }
 function openDialog() {
-	return [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((e) => !e.hidden)
+	return [...document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')].find((e) => !e.hidden)
 }
 
 test.each(['banner', 'inline'] as const)(
@@ -118,7 +118,7 @@ test('dashboard deletion stays pending in the confirmation and retries failures 
 	await click('Deleting…')
 	expect(remove).toHaveBeenCalledExactlyOnceWith('qa')
 	expect(openDialog()).toBeDefined()
-	expect(button('Cancel').disabled).toBe(true)
+	expect(button('Cancel').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => request.reject(new Error('Deletion failed')))
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Deletion failed'))
 	await click('Delete')

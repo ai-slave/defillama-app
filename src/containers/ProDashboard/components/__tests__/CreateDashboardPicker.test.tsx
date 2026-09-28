@@ -174,7 +174,7 @@ describe('a subscriber', () => {
 		['From Scratch', 'Back to dashboard choices'],
 		['From Scratch', 'Cancel'],
 		['Comparison', 'Back to dashboard choices'],
-		['Comparison', 'Close comparison creation']
+		['Comparison', 'Close dialog']
 	])('%s permits %s after navigation fails without allowing another creation', async (mode, exit) => {
 		const saved = Promise.withResolvers<{ id: string; slug: string }>()
 		create.mockReturnValueOnce(saved.promise)
@@ -220,6 +220,20 @@ describe('a subscriber', () => {
 		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).toBeNull()
 		expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
 		expect(create).toHaveBeenCalledOnce()
+	})
+
+	test('a comparison step that cannot continue says what it still needs', async () => {
+		await mount('Comparison')
+		await click('Back')
+		await click('TVL')
+		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+			(button) => button.textContent?.trim() === 'Next'
+		)!
+		expect(next.disabled).toBe(true)
+		expect(document.querySelector('footer')!.textContent).toContain('Pick at least 1 metric')
+		await click('TVL')
+		expect(next.disabled).toBe(false)
+		expect(document.querySelector('footer')!.textContent).not.toContain('Pick at least')
 	})
 
 	test('navigation completion cannot dismiss a newer picker opening', async () => {

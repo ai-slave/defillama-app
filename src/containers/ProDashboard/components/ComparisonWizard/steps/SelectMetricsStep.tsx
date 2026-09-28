@@ -17,7 +17,7 @@ export function SelectMetricsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-pro-text-primary">Select Metrics to Compare</h2>
+				<h3 className="label-md text-pro-text-primary">Select Metrics to Compare</h3>
 				<p className="mt-1 text-sm text-pro-text-secondary">
 					Choose the metrics you want to compare across your selected {typeLabel}
 				</p>

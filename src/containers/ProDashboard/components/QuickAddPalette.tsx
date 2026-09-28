@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { type KeyboardEvent, type MouseEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
-import { DialogHeading } from '~/ui/Dialog'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { tw } from '~/ui/tw'
 import { useAppMetadata } from '../AppMetadataContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -24,7 +25,7 @@ import {
 	type QuickAddSuggestionGroup,
 	type QuickAddSuggestionKind
 } from '../quickAdd/quickAddSuggestions'
-import { ProButton, ProChip, ProDialog, proButtonStyles, proInputStyles, proMenuGroupLabelStyles } from '../ui'
+import { ProChip, proButtonStyles, proInputStyles, proMenuGroupLabelStyles } from '../ui'
 import type { DashboardItemPlacement } from '../useDashboardActions'
 import { TOAST_DURATION_SHORT } from './dashboardToasts'
 import { EntityIcon } from './EntityIcon'
@@ -62,7 +63,7 @@ const DASHBOARD_NOT_READY_MESSAGE = 'The dashboard is still loading. Try again i
 
 const KBD_STYLES = tw`rounded-sm border border-pro-cards-border px-1 text-xs text-pro-text-secondary`
 
-const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 px-4 py-2 text-left data-active-item:bg-pro-hover-fill`
+const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 rounded-md px-2 py-2 text-left data-active-item:bg-pro-hover-fill`
 
 const CUSTOMIZE_STYLES = proButtonStyles({ variant: 'ghost', size: 'sm' })
 
@@ -153,7 +154,8 @@ export interface QuickAddPaletteProps {
 
 export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFullEditor }: QuickAddPaletteProps) {
 	const [value, setValue] = useState('')
-	const [status, setStatus] = useState('')
+	// The line under the search: what the last Enter added, or why it could not add. Both clear after a moment.
+	const [status, setStatus] = useState<{ tone: 'added' | 'error'; text: string } | null>(null)
 	const [recents, setRecents] = useState<Array<QuickAddRecent>>(readQuickAddRecents)
 	const lastAddedIdRef = useRef<string | null>(null)
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -221,12 +223,12 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		})
 	}
 
-	function showStatus(message: string) {
+	function showStatus(next: { tone: 'added' | 'error'; text: string }) {
 		if (statusTimeoutRef.current !== null) clearTimeout(statusTimeoutRef.current)
-		setStatus(message)
+		setStatus(next)
 		statusTimeoutRef.current = setTimeout(() => {
 			statusTimeoutRef.current = null
-			setStatus('')
+			setStatus(null)
 		}, TOAST_DURATION_SHORT)
 	}
 
@@ -248,7 +250,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 			return
 		}
 		if (addedId !== null) lastAddedIdRef.current = addedId
-		showStatus(`Added ${suggestion.title}`)
+		showStatus({ tone: 'added', text: `Added ${suggestion.title}` })
 		if (closeAfter) {
 			handleClose()
 			return
@@ -267,7 +269,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		}
 		const addedIds = handleAppendItems(suggestion.build, placement)
 		if (addedIds === false) {
-			toast.error(DASHBOARD_NOT_READY_MESSAGE, { id: 'dashboard-not-ready' })
+			showStatus({ tone: 'error', text: DASHBOARD_NOT_READY_MESSAGE })
 			return
 		}
 		completeAdd(suggestion, addedIds[0] ?? null, closeAfter)
@@ -317,67 +319,42 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 	))
 
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<ProDialog
-				width="md"
-				autoFocusOnHide={() => !openingEditorRef.current}
-				bodyClassName="p-0"
-				closeButtonProps={{ ariaLabel: 'Close quick add' }}
-				leading={
-					<>
-						<Icon name="search" height={16} width={16} className="shrink-0 text-pro-text-tertiary" />
-						<DialogHeading className="sr-only">Quick add</DialogHeading>
-					</>
-				}
-				footer={
-					<div className="flex w-full items-center justify-between gap-3">
-						<span className="hidden items-center gap-1.5 text-xs text-pro-text-tertiary md:flex">
-							<kbd className={KBD_STYLES}>↵</kbd>
-							add
-							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>⇧↵</kbd>
-							add &amp; close
-							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>Tab</kbd>
-							customize
-							<span aria-hidden="true">·</span>
-							<kbd className={KBD_STYLES}>Esc</kbd>
-							close
-						</span>
-						<ProButton
-							type="button"
-							variant="secondary"
-							size="md"
-							data-umami-event="dashboard-quick-add-open-editor"
-							onClick={() => openFullEditor(null)}
-						>
-							All card types…
-						</ProButton>
-					</div>
-				}
-			>
-				<Ariakit.ComboboxProvider store={combobox}>
-					<div className="border-b border-pro-cards-border px-4 py-3">
-						<Ariakit.Combobox
-							ref={inputRef}
-							autoFocus
-							autoSelect="always"
-							aria-label="Quick add"
-							placeholder={QUICK_ADD_PLACEHOLDER}
-							className={proInputStyles}
-							onKeyDownCapture={handleKeyDownCapture}
-						/>
-						<p role="status" className="px-1 text-xs text-pro-text-secondary empty:hidden">
-							{status ? (
-								<span key={status} className="inline-block animate-pro-fade-in pt-1.5">
-									{status}
-								</span>
-							) : null}
-						</p>
-					</div>
-					<Ariakit.ComboboxList alwaysVisible aria-label="Quick add suggestions" className="max-h-96 py-1">
+		<Dialog
+			size="md"
+			scope="pro"
+			store={dialogStore}
+			portal
+			unmountOnHide
+			autoFocusOnHide={() => !openingEditorRef.current}
+		>
+			<Ariakit.ComboboxProvider store={combobox}>
+				<DialogSearchHeader title="Quick add">
+					<Ariakit.Combobox
+						ref={inputRef}
+						autoFocus
+						autoSelect="always"
+						aria-label="Quick add"
+						placeholder={QUICK_ADD_PLACEHOLDER}
+						className={proInputStyles}
+						onKeyDownCapture={handleKeyDownCapture}
+					/>
+					{status?.tone === 'error' ? (
+						<div className="pt-2">
+							<InlineStatus variant="error">{status.text}</InlineStatus>
+						</div>
+					) : null}
+					<p role="status" className="px-1 text-xs text-pro-text-secondary empty:hidden">
+						{status?.tone === 'added' ? (
+							<span key={status.text} className="inline-block animate-pro-fade-in pt-1.5">
+								{status.text}
+							</span>
+						) : null}
+					</p>
+				</DialogSearchHeader>
+				<DialogBody kind="list">
+					<Ariakit.ComboboxList alwaysVisible aria-label="Quick add suggestions">
 						{protocolsLoading ? (
-							<p role="status" className="px-4 py-2 text-xs text-pro-text-tertiary">
+							<p role="status" className="px-2 py-2 text-xs text-pro-text-tertiary">
 								Loading protocols…
 							</p>
 						) : null}
@@ -397,8 +374,34 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 							: null}
 						{grouped ? rows.filter((_, index) => suggestions[index]?.group === undefined) : rows}
 					</Ariakit.ComboboxList>
-				</Ariakit.ComboboxProvider>
-			</ProDialog>
-		</Ariakit.DialogProvider>
+				</DialogBody>
+				<DialogFooter
+					leading={
+						<span className="hidden items-center gap-1.5 text-xs text-pro-text-tertiary md:flex">
+							<kbd className={KBD_STYLES}>↵</kbd>
+							add
+							<span aria-hidden="true">·</span>
+							<kbd className={KBD_STYLES}>⇧↵</kbd>
+							add &amp; close
+							<span aria-hidden="true">·</span>
+							<kbd className={KBD_STYLES}>Tab</kbd>
+							customize
+							<span aria-hidden="true">·</span>
+							<kbd className={KBD_STYLES}>Esc</kbd>
+							close
+						</span>
+					}
+				>
+					<Button
+						type="button"
+						size="md"
+						data-umami-event="dashboard-quick-add-open-editor"
+						onClick={() => openFullEditor(null)}
+					>
+						All card types…
+					</Button>
+				</DialogFooter>
+			</Ariakit.ComboboxProvider>
+		</Dialog>
 	)
 }

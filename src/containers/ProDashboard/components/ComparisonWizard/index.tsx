@@ -1,5 +1,6 @@
 import type { MutationStatus } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { DialogBody, DialogToolbar } from '~/ui/Dialog'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -8,7 +9,7 @@ import { type ChartConfig, getProDashboardChartTypeConfig, type MetricConfig, ty
 import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from '../../unifiedTable/config/current'
 import { generateItemId } from '../../utils/dashboardUtils'
 import { ComparisonWizardProvider, useComparisonWizardContext } from './ComparisonWizardContext'
-import { WizardNavigation } from './components/WizardNavigation'
+import { WizardNavigation, WizardSteps } from './components/WizardNavigation'
 import { PreviewStep } from './steps/PreviewStep'
 import { SelectItemsStep } from './steps/SelectItemsStep'
 import { SelectMetricsStep } from './steps/SelectMetricsStep'
@@ -25,9 +26,11 @@ interface ComparisonWizardProps {
 		items: Array<DashboardItemConfig>
 	}) => void
 	comparisonPreset?: ComparisonPreset
+	/** Creation feedback from the caller, shown at the end of the body above the footer. */
+	feedback: ReactNode
 }
 
-function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus }: ComparisonWizardProps) {
+function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus, feedback }: ComparisonWizardProps) {
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chainsByName } = useAppMetadata()
@@ -219,29 +222,37 @@ function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus 
 		}
 	})()
 
+	// Rendered straight into the dialog surface: the steps band, the scrolling step, and the navigation footer.
 	return (
-		<div className="flex min-h-[480px] flex-col">
-			<div className="flex-1 overflow-y-auto p-6">{stepContent}</div>
-			<div className="border-t border-pro-cards-border bg-pro-cards-bg px-6 py-4">
-				<WizardNavigation
-					currentStep={state.step}
-					canProceed={derived.canProceed}
-					canGoBack={derived.canGoBack}
-					onNext={actions.goToNextStep}
-					onBack={actions.goToPrevStep}
-					onGenerate={handleGenerate}
-					creationStatus={creationStatus}
-				/>
-			</div>
-		</div>
+		<>
+			<DialogToolbar>
+				<WizardSteps currentStep={state.step} />
+			</DialogToolbar>
+			<DialogBody>
+				{/* A floor on the step height keeps the dialog from jumping between steps on desktop. */}
+				<div className="sm:min-h-88">{stepContent}</div>
+				{feedback}
+			</DialogBody>
+			<WizardNavigation
+				currentStep={state.step}
+				comparisonType={state.comparisonType}
+				canProceed={derived.canProceed}
+				canGoBack={derived.canGoBack}
+				onNext={actions.goToNextStep}
+				onBack={actions.goToPrevStep}
+				onGenerate={handleGenerate}
+				creationStatus={creationStatus}
+			/>
+		</>
 	)
 }
 
-export function ComparisonWizard({ onComplete, comparisonPreset, creationStatus }: ComparisonWizardProps) {
+export function ComparisonWizard({ onComplete, comparisonPreset, creationStatus, feedback }: ComparisonWizardProps) {
 	return (
 		<ComparisonWizardProvider>
 			<ComparisonWizardContent
 				creationStatus={creationStatus}
+				feedback={feedback}
 				onComplete={onComplete}
 				{...(comparisonPreset !== undefined ? { comparisonPreset } : {})}
 			/>

@@ -1,9 +1,9 @@
-import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 
 export const EMBED_ORIGIN = 'https://defillama.com'
 export const EMBED_THEMES = ['dark', 'light'] as const
@@ -42,64 +42,82 @@ interface EmbedSnippetDialogProps {
 
 export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: EmbedSnippetDialogProps) {
 	const [theme, setTheme] = useState<EmbedTheme>('dark')
+	// The copy result shows in the dialog itself: "Copied" on the button for 2s, or an inline error.
+	const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const snippet = snippetFor(theme)
+	const copySnippet = async () => {
+		if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
+		try {
+			await navigator.clipboard.writeText(snippet)
+		} catch {
+			setCopyStatus('failed')
+			return
+		}
+		setCopyStatus('copied')
+		copiedTimeoutRef.current = setTimeout(() => setCopyStatus('idle'), 2000)
+	}
 	return (
-		<Ariakit.DialogProvider
+		<Dialog
+			size="sm"
+			scope="pro"
 			open={open}
-			setOpen={(next) => {
-				if (!next) onClose()
+			onClose={() => {
+				setCopyStatus('idle')
+				onClose()
 			}}
+			portal
+			unmountOnHide
 		>
-			<Ariakit.Dialog className={`${dialogSurfaceStyles} pro-dashboard [--dialog-width:520px]`} portal unmountOnHide>
-				<div className="flex items-center justify-between border-b border-subtle p-3">
-					<DialogHeading>{heading}</DialogHeading>
-					<DialogCloseButton />
-				</div>
-				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-3 p-3`}>
-					<div className="flex items-center justify-between gap-2">
-						<span className="label-sm text-secondary">Theme</span>
-						<div role="group" aria-label="Embed theme" className="flex gap-1">
-							{EMBED_THEMES.map((option) => (
-								<Button
-									key={option}
-									type="button"
-									size="sm"
-									variant="toggle"
-									data-active={theme === option}
-									aria-pressed={theme === option}
-									onClick={() => setTheme(option)}
-								>
-									{EMBED_THEME_LABELS[option]}
-								</Button>
-							))}
-						</div>
-					</div>
-					<textarea
-						readOnly
-						value={snippet}
-						rows={4}
-						aria-label="Embed code"
-						spellCheck={false}
-						onFocus={(event) => event.currentTarget.select()}
-						className="w-full resize-none rounded-md border border-medium bg-surface-elevated-1 p-2 font-mono text-xs text-primary focus-visible:focus-ring"
-					/>
-					<div className="flex items-center justify-between gap-3">
-						<p className="body-sm text-secondary">Paste this into your page&apos;s HTML.</p>
-						<Button
-							type="button"
-							size="md"
-							variant="primary"
-							data-umami-event="copy-embed-snippet"
-							onClick={() => {
-								void copyTextToClipboard(snippet, 'Embed code copied')
-							}}
-						>
-							<Icon name="copy" className="size-4" aria-hidden="true" />
-							Copy code
-						</Button>
+			<DialogHeader title={heading} />
+			<DialogBody>
+				<div className="flex items-center justify-between gap-2">
+					<span className="label-sm text-secondary">Theme</span>
+					<div role="group" aria-label="Embed theme" className="flex gap-1">
+						{EMBED_THEMES.map((option) => (
+							<Button
+								key={option}
+								type="button"
+								size="sm"
+								variant="toggle"
+								data-active={theme === option}
+								aria-pressed={theme === option}
+								onClick={() => setTheme(option)}
+							>
+								{EMBED_THEME_LABELS[option]}
+							</Button>
+						))}
 					</div>
 				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+				<textarea
+					readOnly
+					value={snippet}
+					rows={4}
+					aria-label="Embed code"
+					spellCheck={false}
+					onFocus={(event) => event.currentTarget.select()}
+					className="w-full resize-none rounded-md border border-medium bg-surface-elevated-1 p-2 font-mono text-xs text-primary focus-visible:focus-ring"
+				/>
+				{copyStatus === 'failed' ? (
+					<InlineStatus variant="error">
+						Could not copy to clipboard. Select the code and copy it manually.
+					</InlineStatus>
+				) : null}
+			</DialogBody>
+			<DialogFooter leading={<p className="body-sm text-secondary">Paste this into your page&apos;s HTML.</p>}>
+				<Button
+					type="button"
+					size="md"
+					variant="primary"
+					data-umami-event="copy-embed-snippet"
+					onClick={() => {
+						void copySnippet()
+					}}
+				>
+					<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} className="size-4" aria-hidden="true" />
+					{copyStatus === 'copied' ? 'Copied' : 'Copy code'}
+				</Button>
+			</DialogFooter>
+		</Dialog>
 	)
 }

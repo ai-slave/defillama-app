@@ -1,8 +1,10 @@
-import * as Ariakit from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { FREE_TIER_MAX_DASHBOARDS } from '../hooks/useFreeTierStatus'
-import { ProButton, ProDialog, proPanelStyles } from '../ui'
+import { proPanelStyles } from '../ui'
 
 export type PaywallReason = 'dashboard-limit' | 'llamaai' | 'private-dashboard' | 'pro-feature'
 
@@ -65,42 +67,39 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 	const config = REASON_CONFIG[reason]
 
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<ProDialog width="sm" heading={config.title}>
+		<Dialog size="sm" scope="pro" store={dialogStore} portal unmountOnHide>
+			<DialogHeader title={config.title} />
+			<DialogBody>
 				<div className="flex flex-col items-center gap-4 text-center">
 					<div className="flex size-14 items-center justify-center rounded-full bg-sub-purple/15">
 						<Icon name={config.icon} height={28} width={28} className="text-sub-purple" />
 					</div>
-
-					<p className="text-sm leading-relaxed text-pro-text-secondary">{config.description}</p>
-
-					<div className={`w-full ${proPanelStyles}`}>
-						<p className="mb-2.5 text-left text-xs font-medium tracking-wide text-pro-text-tertiary uppercase">
-							Included with Pro
-						</p>
-						<ul className="space-y-2">
-							{config.features.map((feature) => (
-								<li key={feature} className="flex items-center gap-2.5 text-left text-sm text-pro-text-secondary">
-									<Icon name="check" height={14} width={14} className="shrink-0 text-sub-purple" />
-									{feature}
-								</li>
-							))}
-						</ul>
-					</div>
-
-					<ProButton
-						as={BasicLink}
-						variant="primary"
-						size="lg"
-						href="/subscription"
-						data-umami-event="dashboard-paywall-upgrade"
-						className="w-full"
-					>
-						<Icon name="sparkles" height={16} width={16} />
-						Upgrade to Pro
-					</ProButton>
+					<p className="body-sm text-secondary">{config.description}</p>
 				</div>
-			</ProDialog>
-		</Ariakit.DialogProvider>
+				<div className={proPanelStyles}>
+					<p className="mb-2.5 label-sm text-tertiary">Included with Pro</p>
+					<ul className="space-y-2">
+						{config.features.map((feature) => (
+							<li key={feature} className="flex items-center gap-2.5 body-sm text-secondary">
+								<Icon name="check" height={14} width={14} className="shrink-0 text-sub-purple" />
+								{feature}
+							</li>
+						))}
+					</ul>
+				</div>
+			</DialogBody>
+			<DialogFooter>
+				<Button
+					as={BasicLink}
+					variant="primary"
+					size="md"
+					href="/subscription"
+					data-umami-event="dashboard-paywall-upgrade"
+				>
+					<Icon name="sparkles" height={14} width={14} />
+					Upgrade to Pro
+				</Button>
+			</DialogFooter>
+		</Dialog>
 	)
 }

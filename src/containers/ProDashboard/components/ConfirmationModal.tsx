@@ -1,6 +1,5 @@
-import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
-import { ProButton, ProDialog } from '../ui'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 
 interface ConfirmationModalProps {
 	finalFocus?: RefObject<HTMLElement | null>
@@ -15,7 +14,6 @@ interface ConfirmationModalProps {
 	title?: string
 	message?: string
 	confirmText?: string
-	cancelText?: string
 	tone?: 'danger' | 'primary'
 }
 
@@ -32,61 +30,31 @@ export function ConfirmationModal({
 	title = 'Confirm Action',
 	message = 'Are you sure you want to proceed with this action?',
 	confirmText = 'Confirm',
-	cancelText = 'Cancel',
 	tone = 'danger'
 }: ConfirmationModalProps) {
 	return (
-		<Ariakit.DialogProvider
+		<ConfirmDialog
 			open={isOpen}
-			setOpen={(open) => {
-				if (!open) onClose()
+			onClose={onClose}
+			portal
+			unmountOnHide
+			scope="pro"
+			finalFocus={finalFocus}
+			autoFocusOnHide={(element) => {
+				if (element?.isConnected) return true
+				fallbackFocus?.current?.focus()
+				return false
 			}}
-		>
-			<ProDialog
-				width="sm"
-				heading={title}
-				finalFocus={finalFocus}
-				autoFocusOnHide={(element) => {
-					if (element?.isConnected) return true
-					fallbackFocus?.current?.focus()
-					return false
-				}}
-				closeButtonProps={{ disabled: pending, ariaLabel: 'Close modal' }}
-				hideOnEscape={!pending}
-				hideOnInteractOutside={!pending}
-				footer={
-					<>
-						<Ariakit.DialogDismiss
-							autoFocus
-							disabled={pending}
-							render={<ProButton type="button" variant="secondary" size="md" />}
-						>
-							{cancelText}
-						</Ariakit.DialogDismiss>
-						<Ariakit.Button
-							accessibleWhenDisabled
-							disabled={pending}
-							render={<ProButton type="button" variant={tone} size="md" {...(pending ? { loading: true } : {})} />}
-							onClick={() => {
-								onConfirm()
-								if (closeOnConfirm) onClose()
-							}}
-						>
-							{pending ? pendingText : confirmText}
-						</Ariakit.Button>
-					</>
-				}
-			>
-				<Ariakit.DialogDescription className="text-pro-text-secondary">{message}</Ariakit.DialogDescription>
-				{error ? (
-					<p role="alert" className="mt-4 text-sm text-error">
-						{error}
-					</p>
-				) : null}
-				<span role="status" className="sr-only">
-					{pending ? pendingText : ''}
-				</span>
-			</ProDialog>
-		</Ariakit.DialogProvider>
+			title={title}
+			description={message}
+			confirmLabel={confirmText}
+			pendingLabel={pending ? pendingText : null}
+			error={error}
+			tone={tone === 'danger' ? 'destructive' : 'primary'}
+			onConfirm={() => {
+				onConfirm()
+				if (closeOnConfirm) onClose()
+			}}
+		/>
 	)
 }

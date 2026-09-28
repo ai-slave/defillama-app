@@ -6,8 +6,11 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBackButton, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
 	DASHBOARD_DESCRIPTION_MAX_LENGTH,
@@ -20,7 +23,7 @@ import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { DASHBOARD_TEMPLATES, generateTemplateCharts, getTemplateItems, type ChainCategoryData } from '../templates'
-import { ProButton, ProDialog, ProMeta, proInputStyles } from '../ui'
+import { ProButton, ProMeta, proInputStyles } from '../ui'
 import type { ComparisonPreset } from './ComparisonWizard/types'
 
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
@@ -83,179 +86,173 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		})
 	}
 	const [comparisonPresetHandled, setComparisonPresetHandled] = useState(false)
+	const formId = useId()
+	const pending = creation.isPending
+	const locked = creation.isPending || creation.isSuccess
+	// The pending state lives on the button that started it; this region only announces it.
+	const announcement = (
+		<span role="status" className="sr-only">
+			{pending ? 'Creating dashboard…' : creation.isSuccess ? 'Dashboard created.' : ''}
+		</span>
+	)
 	// The free-tier limit is refused before the request, so its message is the only thing that tells the
 	// user why, and that retrying will not help.
-	const creationFeedback = creation.isPending ? (
-		<p role="status" className="px-6 py-3 text-sm">
-			Creating dashboard…
-		</p>
-	) : creation.isSuccess ? (
-		<p role="status" className="px-6 py-3 text-sm">
+	const creationFeedback = creation.isSuccess ? (
+		<p className="body-sm text-secondary">
 			Dashboard created.{' '}
 			<BasicLink href={`/pro/${dashboardUrlKey(creation.data)}/edit`} className="underline">
 				Open dashboard
 			</BasicLink>
 		</p>
 	) : creation.isError ? (
-		<p role="alert" className="px-6 py-3 text-sm text-error">
+		<InlineStatus variant="error">
 			{creation.error.message}
 			<span className="block text-pro-text-tertiary">Your choices are still here.</span>
-		</p>
+		</InlineStatus>
 	) : null
 	const effectiveMode: PickerMode = comparisonPreset && !comparisonPresetHandled ? 'comparison' : mode
-
-	const handleClose = () => {
-		setMode('picker')
-		setComparisonPresetHandled(false)
-		dialogStore.toggle()
-	}
 
 	const handleBackToPicker = () => {
 		setComparisonPresetHandled(true)
 		setMode('picker')
 	}
+	const backButton = <DialogBackButton label="Back to dashboard choices" onClick={handleBackToPicker} />
 
+	// Every step renders the same Dialog, so switching steps keeps one open surface; closing remounts the
+	// keyed picker, which resets the step.
 	if (effectiveMode === 'scratch') {
 		return (
-			<ProDialog
-				ref={dialogRef}
-				store={dialogStore}
-				width="sm"
-				heading="Create New Dashboard"
-				bodyClassName="p-0"
-				closeButtonProps={{ disabled: creation.isPending }}
-				leading={
-					<ProButton
-						type="button"
-						square
+			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" pending={pending} portal unmountOnHide>
+				<DialogHeader title="Create New Dashboard" leading={backButton} />
+				<DialogBody>
+					<CreateDashboardModalContent
+						formId={formId}
+						onCreate={submitCreation}
+						status={creation.status}
+						team={team ?? null}
+					/>
+					{creationFeedback}
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss type="button" disabled={pending} render={<Button size="md" />}>
+							Cancel
+						</Ariakit.DialogDismiss>
+					}
+				>
+					<Button
+						type="submit"
+						form={formId}
+						variant="primary"
 						size="md"
-						variant="ghost"
-						aria-label="Back to dashboard choices"
-						disabled={creation.isPending}
-						onClick={handleBackToPicker}
+						data-umami-event="dashboard-create"
+						disabled={creation.isSuccess}
+						pendingLabel={pending ? 'Creating…' : null}
 					>
-						<Icon name="arrow-left" height={16} width={16} />
-					</ProButton>
-				}
-			>
-				<CreateDashboardModalContent onCreate={submitCreation} status={creation.status} team={team ?? null} />
-				{creationFeedback}
-			</ProDialog>
+						{creation.isSuccess ? <Icon name="check" height={16} width={16} /> : null}
+						{creation.isSuccess ? 'Created' : 'Create Dashboard'}
+					</Button>
+				</DialogFooter>
+				{announcement}
+			</Dialog>
 		)
 	}
 
 	if (effectiveMode === 'comparison') {
 		return (
-			<ProDialog
+			<Dialog
 				ref={dialogRef}
 				store={dialogStore}
-				width="lg"
-				heading="Create Comparison Dashboard"
-				bodyClassName="p-0"
-				closeButtonProps={{
-					ariaLabel: 'Close comparison creation',
-					disabled: creation.isPending,
-					onClick: handleClose
-				}}
-				leading={
-					<ProButton
-						type="button"
-						square
-						size="md"
-						variant="ghost"
-						aria-label="Back to dashboard choices"
-						disabled={creation.isPending}
-						onClick={handleBackToPicker}
-					>
-						<Icon name="arrow-left" height={16} width={16} />
-					</ProButton>
-				}
+				size="lg"
+				fullSheet
+				scope="pro"
+				pending={pending}
+				portal
+				unmountOnHide
 			>
-				<fieldset disabled={creation.isPending || creation.isSuccess} className="contents">
+				<DialogHeader title="Create Comparison Dashboard" leading={backButton} />
+				<fieldset disabled={locked} className="contents">
 					<Suspense
 						fallback={
-							<div className="flex h-96 items-center justify-center">
-								<LoadingSpinner size={32} />
-							</div>
+							<DialogBody>
+								<div className="flex h-96 items-center justify-center">
+									<LoadingSpinner size={32} />
+								</div>
+							</DialogBody>
 						}
 					>
 						<ComparisonWizard
 							creationStatus={creation.status}
 							onComplete={submitCreation}
+							feedback={creationFeedback}
 							{...(comparisonPreset !== null ? { comparisonPreset } : {})}
 						/>
 					</Suspense>
 				</fieldset>
-				{creationFeedback}
-			</ProDialog>
+				{announcement}
+			</Dialog>
 		)
 	}
 
 	return (
-		<ProDialog
-			ref={dialogRef}
-			store={dialogStore}
-			width="md"
-			heading="Create New Dashboard"
-			closeButtonProps={{
-				disabled: creation.isPending,
-				accessibleWhenDisabled: true,
-				onClick: handleClose
-			}}
-		>
-			<fieldset className="contents">
-				<p className="mb-6 text-sm text-pro-text-secondary">How would you like to create your dashboard?</p>
+		<Dialog ref={dialogRef} store={dialogStore} size="lg" scope="pro" pending={pending} portal unmountOnHide>
+			<DialogHeader title="Create New Dashboard" />
+			<DialogBody>
+				<fieldset className="contents">
+					<p className="text-sm text-pro-text-secondary">How would you like to create your dashboard?</p>
 
-				<div className="grid gap-4 sm:grid-cols-2">
-					<button
-						type="button"
-						disabled={creation.isPending || creation.isSuccess}
-						onClick={() => {
-							setComparisonPresetHandled(true)
-							setMode('scratch')
-						}}
-						className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
-					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
-							<Icon name="file-plus" height={20} width={20} />
-						</div>
-						<div>
-							<h3 className="text-base font-semibold text-pro-text-primary">From Scratch</h3>
-							<p className="mt-1 text-sm text-pro-text-tertiary">Create an empty dashboard and add charts manually</p>
-						</div>
-					</button>
+					<div className="grid gap-4 sm:grid-cols-2">
+						<button
+							type="button"
+							disabled={locked}
+							onClick={() => {
+								setComparisonPresetHandled(true)
+								setMode('scratch')
+							}}
+							className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
+						>
+							<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
+								<Icon name="file-plus" height={20} width={20} />
+							</div>
+							<div>
+								<h3 className="text-base font-semibold text-pro-text-primary">From Scratch</h3>
+								<p className="mt-1 text-sm text-pro-text-tertiary">Create an empty dashboard and add charts manually</p>
+							</div>
+						</button>
 
-					<button
-						type="button"
-						disabled={creation.isPending || creation.isSuccess}
-						onClick={() => {
-							setComparisonPresetHandled(true)
-							setMode('comparison')
-						}}
-						className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
-					>
-						<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
-							<Icon name="bar-chart-2" height={20} width={20} />
-						</div>
-						<div>
-							<h3 className="text-base font-semibold text-pro-text-primary">Comparison</h3>
-							<p className="mt-1 text-sm text-pro-text-tertiary">Compare chains or protocols with pre-built charts</p>
-						</div>
-					</button>
-				</div>
+						<button
+							type="button"
+							disabled={locked}
+							onClick={() => {
+								setComparisonPresetHandled(true)
+								setMode('comparison')
+							}}
+							className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
+						>
+							<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
+								<Icon name="bar-chart-2" height={20} width={20} />
+							</div>
+							<div>
+								<h3 className="text-base font-semibold text-pro-text-primary">Comparison</h3>
+								<p className="mt-1 text-sm text-pro-text-tertiary">Compare chains or protocols with pre-built charts</p>
+							</div>
+						</button>
+					</div>
 
-				<div className="mt-6 border-t border-pro-cards-border pt-6">
-					<h3 className="mb-3 text-sm font-medium text-pro-text-secondary">Or use a template</h3>
-					{open ? (
-						<DashboardTemplates
-							onCreate={submitCreation}
-							pendingName={creation.isPending || creation.isSuccess ? creation.variables.dashboardName : null}
-						/>
-					) : null}
-				</div>
-			</fieldset>
-			{creationFeedback}
-		</ProDialog>
+					<div className="border-t border-pro-cards-border pt-4">
+						<h3 className="mb-3 text-sm font-medium text-pro-text-secondary">Or use a template</h3>
+						{open ? (
+							<DashboardTemplates
+								onCreate={submitCreation}
+								pendingName={locked ? creation.variables.dashboardName : null}
+							/>
+						) : null}
+					</div>
+				</fieldset>
+				{creationFeedback}
+			</DialogBody>
+			{announcement}
+		</Dialog>
 	)
 }
 
@@ -367,11 +364,14 @@ function DashboardTemplates({
 	)
 }
 
+// The form owns its fields; its submit button sits in the dialog footer and joins it through `form={formId}`.
 function CreateDashboardModalContent({
+	formId,
 	onCreate,
 	status,
 	team
 }: {
+	formId: string
 	status: MutationStatus
 	onCreate: (data: {
 		dashboardName: string
@@ -439,21 +439,27 @@ function CreateDashboardModalContent({
 	}
 
 	return (
-		<form className="p-6" onSubmit={handleCreate}>
+		<form id={formId} onSubmit={handleCreate}>
 			<fieldset disabled={status === 'pending' || status === 'success'} className="space-y-6">
 				<div>
 					<label htmlFor="create-dashboard-name" className="mb-3 block text-sm font-medium text-pro-text-primary">
 						Dashboard Name
 					</label>
-					<input
-						id="create-dashboard-name"
-						name="dashboardName"
-						type="text"
-						maxLength={DASHBOARD_NAME_MAX_LENGTH}
-						onInput={(e) => e.currentTarget.setCustomValidity('')}
-						placeholder="Enter dashboard name"
-						className={proInputStyles}
-						required
+					{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
+					<Ariakit.Focusable
+						autoFocus
+						render={
+							<input
+								id="create-dashboard-name"
+								name="dashboardName"
+								type="text"
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								onInput={(e) => e.currentTarget.setCustomValidity('')}
+								placeholder="Enter dashboard name"
+								className={proInputStyles}
+								required
+							/>
+						}
 					/>
 				</div>
 
@@ -597,30 +603,6 @@ function CreateDashboardModalContent({
 					</p>
 				</div>
 			</fieldset>
-
-			<div className="mt-8 flex gap-3">
-				<Ariakit.DialogDismiss
-					type="button"
-					disabled={status === 'pending'}
-					render={<ProButton variant="secondary" className="flex-1" />}
-				>
-					Cancel
-				</Ariakit.DialogDismiss>
-				<ProButton
-					type="submit"
-					variant="primary"
-					className="flex-1"
-					data-umami-event="dashboard-create"
-					disabled={status === 'pending' || status === 'success'}
-				>
-					{status === 'pending' ? (
-						<LoadingSpinner size={16} />
-					) : status === 'success' ? (
-						<Icon name="check" height={16} width={16} />
-					) : null}
-					{status === 'pending' ? 'Creating…' : status === 'success' ? 'Created' : 'Create Dashboard'}
-				</ProButton>
-			</div>
 		</form>
 	)
 }

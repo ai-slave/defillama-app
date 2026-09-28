@@ -155,7 +155,6 @@ export function DashboardOverflowMenu({
 				title="Delete Dashboard"
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."
 				confirmText="Delete"
-				cancelText="Cancel"
 			/>
 		</>
 	)

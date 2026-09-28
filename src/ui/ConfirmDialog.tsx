@@ -13,6 +13,7 @@ export function ConfirmDialog({
 	title,
 	description,
 	confirmLabel,
+	cancelLabel = 'Cancel',
 	pendingLabel,
 	error,
 	tone = 'destructive',
@@ -22,12 +23,14 @@ export function ConfirmDialog({
 	title: string
 	description: ReactNode
 	confirmLabel: string
+	/** Name the safe choice when "Cancel" would be ambiguous, e.g. "Keep draft" beside "Discard draft". */
+	cancelLabel?: string
 	/** Set while the confirmed action runs. */
 	pendingLabel: string | null
 	error: ReactNode
 	tone?: 'destructive' | 'primary'
 	onConfirm: () => void
-} & Omit<ComponentProps<typeof Ariakit.Dialog>, 'className' | 'role' | 'children'>) {
+} & Omit<ComponentProps<typeof Dialog>, 'size' | 'role' | 'children' | 'pending'>) {
 	const pending = pendingLabel !== null
 	return (
 		<Dialog size="sm" role={tone === 'destructive' ? 'alertdialog' : 'dialog'} pending={pending} {...props}>
@@ -38,7 +41,7 @@ export function ConfirmDialog({
 			</DialogBody>
 			<DialogFooter>
 				<Ariakit.DialogDismiss autoFocus disabled={pending} accessibleWhenDisabled render={<Button size="md" />}>
-					Cancel
+					{cancelLabel}
 				</Ariakit.DialogDismiss>
 				<Button type="button" size="md" variant={tone} pendingLabel={pendingLabel} onClick={onConfirm}>
 					{confirmLabel}

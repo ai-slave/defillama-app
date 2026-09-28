@@ -490,7 +490,6 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				title="Duplicate Table"
 				message="Create a duplicate of this table in the dashboard?"
 				confirmText="Duplicate"
-				cancelText="Cancel"
 				tone="primary"
 			/>
 		</div>

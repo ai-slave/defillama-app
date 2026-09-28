@@ -201,7 +201,7 @@ export function SelectItemsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-pro-text-primary">Select {typeLabel}</h2>
+				<h3 className="label-md text-pro-text-primary">Select {typeLabel}</h3>
 				<p className="mt-1 text-sm text-pro-text-secondary">Choose 1-10 {typeLabel.toLowerCase()} for your dashboard</p>
 			</div>
 

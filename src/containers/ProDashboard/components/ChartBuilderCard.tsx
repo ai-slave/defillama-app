@@ -600,7 +600,6 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				title="Duplicate Chart"
 				message="Create a duplicate of this chart in the dashboard?"
 				confirmText="Duplicate"
-				cancelText="Cancel"
 				tone="primary"
 			/>
 		</div>

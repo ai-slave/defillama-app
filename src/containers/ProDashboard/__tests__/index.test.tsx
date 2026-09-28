@@ -318,6 +318,7 @@ describe('an editor', () => {
 				.map((node) => node.textContent?.trim())
 				.filter(Boolean)
 		).toEqual(['Add card', 'Add section', 'Edit with LlamaAI', 'Undo AI changes', 'Settings'])
+		expect(dialog.textContent).not.toContain('Group cards into a section')
 		await act(async () =>
 			Array.from(dialog.querySelectorAll('button'))
 				.find((node) => node.textContent?.trim() === 'Undo AI changes')!
@@ -336,6 +337,11 @@ describe('an editor', () => {
 		)
 		expect(rows.map((node) => node.textContent?.trim())).toEqual(['Add card', 'Add section'])
 		expect(rows.map((node) => node.getAttribute('aria-disabled'))).toEqual(['true', 'true'])
+		// The sheet is phone-only, so the reason is visible text tied to each row, not a title tooltip.
+		expect(rows.map((node) => document.getElementById(node.getAttribute('aria-describedby')!)?.textContent)).toEqual([
+			'Loading dashboard…',
+			'Loading dashboard…'
+		])
 		await act(async () => rows[0]!.click())
 		await act(async () => rows[1]!.click())
 		expect(document.body.querySelector('[role="dialog"]')).not.toBeNull()

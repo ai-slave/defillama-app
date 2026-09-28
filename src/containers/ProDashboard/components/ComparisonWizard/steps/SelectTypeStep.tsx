@@ -30,7 +30,7 @@ export function SelectTypeStep() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-pro-text-primary">What would you like to compare?</h2>
+				<h3 className="label-md text-pro-text-primary">What would you like to compare?</h3>
 				<p className="mt-1 text-sm text-pro-text-secondary">
 					Choose whether to compare blockchain networks or DeFi protocols
 				</p>

@@ -5,8 +5,10 @@ import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -14,7 +16,7 @@ import { createDashboardStreamLineParser } from '../dashboardStreamLines'
 import type { Dashboard } from '../dashboardTypes'
 import { restoreItemsAfterIterate, stripCustomDataRows } from '../dashboardVariables/resolve'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProButton, ProDialog } from '../ui'
+import { ProButton } from '../ui'
 
 const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
 const EMPTY_DASHBOARD_TAGS: Array<string> = []
@@ -273,12 +275,6 @@ function GenerateDashboardModalInner({
 		)
 	}
 
-	const handleClose = () => {
-		if (!pending) {
-			onClose()
-		}
-	}
-
 	const handleAddTag = () => {
 		const input = tagInputRef.current
 		if (!input) return
@@ -301,19 +297,10 @@ function GenerateDashboardModalInner({
 	}
 
 	return (
-		<Ariakit.DialogProvider
-			open={isOpen}
-			setOpen={(open) => {
-				if (!open) handleClose()
-			}}
-		>
-			<ProDialog
-				width="md"
-				heading={mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'}
-				closeButtonProps={{ disabled: pending }}
-				hideOnInteractOutside
-			>
-				<form ref={formRef} onSubmit={handleGenerate}>
+		<Dialog size="md" scope="pro" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
+			<form ref={formRef} onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader title={mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'} />
+				<DialogBody>
 					<div className="space-y-6">
 						{mode === 'create' ? (
 							<div>
@@ -323,15 +310,21 @@ function GenerateDashboardModalInner({
 								>
 									Dashboard Name
 								</label>
-								<input
-									id="generate-dashboard-name"
-									name="dashboardName"
-									type="text"
-									onInput={(e) => e.currentTarget.setCustomValidity('')}
-									placeholder="e.g., Ethereum vs Arbitrum Analysis"
-									className={`w-full rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
-									readOnly={fieldsLocked}
-									required
+								{/* Ariakit's autoFocus, so the dialog starts on the first field instead of the header ×. */}
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<input
+											id="generate-dashboard-name"
+											name="dashboardName"
+											type="text"
+											onInput={(e) => e.currentTarget.setCustomValidity('')}
+											placeholder="e.g., Ethereum vs Arbitrum Analysis"
+											className={`w-full rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+											readOnly={fieldsLocked}
+											required
+										/>
+									}
 								/>
 							</div>
 						) : null}
@@ -345,22 +338,27 @@ function GenerateDashboardModalInner({
 									? 'Describe what you want to add or change'
 									: 'Describe the dashboard you want to create'}
 							</label>
-							<textarea
-								id="generate-dashboard-description"
-								name="aiDescription"
-								onInput={(e) => {
-									e.currentTarget.setCustomValidity('')
-									if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
-								}}
-								placeholder={
-									mode === 'iterate'
-										? 'e.g., Add a chart showing weekly DEX volume breakdown by top 5 protocols, or Remove the stablecoin chart and add TVL comparison...'
-										: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
+							<Ariakit.Focusable
+								autoFocus={mode === 'iterate'}
+								render={
+									<textarea
+										id="generate-dashboard-description"
+										name="aiDescription"
+										onInput={(e) => {
+											e.currentTarget.setCustomValidity('')
+											if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
+										}}
+										placeholder={
+											mode === 'iterate'
+												? 'e.g., Add a chart showing weekly DEX volume breakdown by top 5 protocols, or Remove the stablecoin chart and add TVL comparison...'
+												: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
+										}
+										rows={4}
+										className={`w-full resize-none rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+										readOnly={fieldsLocked}
+										required
+									/>
 								}
-								rows={4}
-								className={`w-full resize-none rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
-								readOnly={fieldsLocked}
-								required
 							/>
 							<p className="mt-1 text-xs text-pro-text-tertiary">
 								{mode === 'iterate'
@@ -427,7 +425,7 @@ function GenerateDashboardModalInner({
 										className={`min-w-0 flex-1 rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 										disabled={fieldsLocked}
 									/>
-									<ProButton type="button" onClick={handleAddTag} disabled={fieldsLocked} variant="primary">
+									<ProButton type="button" onClick={handleAddTag} disabled={fieldsLocked} variant="secondary">
 										Add Tag
 									</ProButton>
 								</div>
@@ -460,57 +458,45 @@ function GenerateDashboardModalInner({
 					</div>
 
 					{error ? (
-						<p role="alert" className="mt-4 text-sm text-error">
+						<InlineStatus variant="error">
 							{error.message}{' '}
 							{generation.data
 								? 'Your generated dashboard is ready. Retry saving it without generating again.'
 								: 'Your draft is still here; please try again.'}
-						</p>
+						</InlineStatus>
 					) : null}
-					{generation.data && !pending ? (
-						<button
-							type="button"
-							onClick={() => {
-								generation.reset()
-								save.reset()
-							}}
-							className="mt-3 text-sm text-link underline"
-						>
-							Edit prompt and regenerate
-						</button>
-					) : null}
-					<div className="mt-8 flex gap-3">
-						<Ariakit.DialogDismiss
-							type="button"
-							disabled={pending}
-							render={<ProButton variant="secondary" className="flex-1" />}
-						>
+				</DialogBody>
+				<DialogFooter
+					leading={
+						generation.data && !pending ? (
+							<Button
+								type="button"
+								variant="ghost"
+								size="md"
+								onClick={() => {
+									generation.reset()
+									save.reset()
+								}}
+							>
+								Edit prompt and regenerate
+							</Button>
+						) : null
+					}
+					dismiss={
+						<Button type="button" size="md" onClick={onClose} disabled={pending}>
 							Cancel
-						</Ariakit.DialogDismiss>
-						<Ariakit.Button
-							type="submit"
-							accessibleWhenDisabled
-							disabled={pending}
-							render={<ProButton variant="primary" className={pending ? 'flex-1' : 'flex-1 animate-pro-glow'} />}
-						>
-							{pending ? (
-								<>
-									<LoadingSpinner size={16} />
-									{pendingLabel}…
-								</>
-							) : (
-								<>
-									<Icon name="sparkles" height={16} width={16} />
-									{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
-								</>
-							)}
-						</Ariakit.Button>
-						<span role="status" className="sr-only">
-							{pending ? `${pendingLabel} dashboard` : ''}
-						</span>
-					</div>
-				</form>
-			</ProDialog>
-		</Ariakit.DialogProvider>
+						</Button>
+					}
+				>
+					<Button type="submit" variant="primary" size="md" pendingLabel={pending ? `${pendingLabel}…` : null}>
+						<Icon name="sparkles" height={16} width={16} />
+						{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
+					</Button>
+				</DialogFooter>
+				<span role="status" className="sr-only">
+					{pending ? `${pendingLabel} dashboard` : ''}
+				</span>
+			</form>
+		</Dialog>
 	)
 }

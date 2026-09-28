@@ -587,7 +587,7 @@ function ProContent({
 					</TabPanel>
 				) : null}
 
-				<Suspense fallback={createDialogOpen ? <ProDialogFallback width="sm" /> : null}>
+				<Suspense fallback={createDialogOpen ? <ProDialogFallback width="lg" /> : null}>
 					<CreateDashboardPicker
 						dialogStore={createDashboardDialogStore}
 						onCreate={handleCreateDashboard}

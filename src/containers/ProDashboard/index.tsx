@@ -941,7 +941,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={createDashboardDialogOpen ? <ProDialogFallback width="sm" /> : null}>
+			<Suspense fallback={createDashboardDialogOpen ? <ProDialogFallback width="lg" /> : null}>
 				<CreateDashboardPicker
 					dialogStore={createDashboardDialogStore}
 					onCreate={handleCreateDashboard}

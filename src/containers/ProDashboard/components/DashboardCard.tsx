@@ -268,7 +268,6 @@ export function DashboardCard({
 				title={`Delete ${dashboard.data.dashboardName || 'dashboard'}?`}
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."
 				confirmText="Delete"
-				cancelText="Cancel"
 			/>
 		</div>
 	)

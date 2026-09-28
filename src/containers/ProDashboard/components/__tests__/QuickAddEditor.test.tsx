@@ -148,7 +148,7 @@ test.each(['Escape', 'close button'])('closing quick add with %s still returns f
 				new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
 			)
 		} else {
-			document.querySelector<HTMLButtonElement>('[aria-label="Close quick add"]')!.click()
+			document.querySelector<HTMLButtonElement>('[role="dialog"] [aria-label="Close dialog"]')!.click()
 		}
 	})
 	await waitForUi(() => expect(document.activeElement).toBe(trigger))

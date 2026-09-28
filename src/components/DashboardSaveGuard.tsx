@@ -7,7 +7,7 @@ import { useAuthContext } from '~/auth'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import type { DashboardUpdate } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { Button } from '~/ui/Button'
-import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { getDashboardRecovery, type DashboardSaveAttempt } from './dashboardRecovery'
 
 // Writes and recoverable drafts outlive the Pro route. Keep the warning and recovery UI with them.
@@ -78,9 +78,17 @@ function FailedDashboardDraft({ request, userId }: { request: DashboardUpdate; u
 					<Ariakit.DialogDisclosure render={<Button size="md" />}>Discard draft…</Ariakit.DialogDisclosure>
 				</div>
 			</section>
-			<Ariakit.Dialog
-				role="alertdialog"
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
+			<ConfirmDialog
+				title="Discard unsaved dashboard changes?"
+				description={
+					<span className="break-words">
+						This discards the unsaved draft for {request.data.dashboardName}. The saved dashboard stays unchanged.
+					</span>
+				}
+				confirmLabel="Discard draft"
+				cancelLabel="Keep draft"
+				pendingLabel={null}
+				error={null}
 				autoFocusOnHide={(element) => {
 					if (element) return true
 					// Discard removes this notice and its trigger. Return to the page content in that case.
@@ -91,32 +99,17 @@ function FailedDashboardDraft({ request, userId }: { request: DashboardUpdate; u
 					}
 					return false
 				}}
-			>
-				<DialogHeading className="shrink-0 p-3">Discard unsaved dashboard changes?</DialogHeading>
-				<div className={`${dialogScrollableBodyStyles} px-3`}>
-					<Ariakit.DialogDescription className="body-sm break-words text-secondary">
-						This discards the unsaved draft for {request.data.dashboardName}. The saved dashboard stays unchanged.
-					</Ariakit.DialogDescription>
-				</div>
-				<footer className="flex shrink-0 justify-end gap-2 p-3">
-					<Ariakit.DialogDismiss autoFocus render={<Button size="md" />}>
-						Keep draft
-					</Ariakit.DialogDismiss>
-					<Ariakit.Button
-						render={<Button size="md" variant="destructive" />}
-						onClick={() => {
-							const filters = { mutationKey: ['pro-dashboard-update', request.id, userId] }
-							if (client.isMutating(filters)) return
-							for (const mutation of client.getMutationCache().findAll(filters)) {
-								if ((mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave')
-									client.getMutationCache().remove(mutation)
-							}
-						}}
-					>
-						Discard draft
-					</Ariakit.Button>
-				</footer>
-			</Ariakit.Dialog>
+				onConfirm={() => {
+					const filters = { mutationKey: ['pro-dashboard-update', request.id, userId] }
+					// A save that starts hides this notice and its dialog (getDashboardRecovery), so this only
+					// catches a click that lands before that re-render.
+					if (client.isMutating(filters)) return
+					for (const mutation of client.getMutationCache().findAll(filters)) {
+						if ((mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave')
+							client.getMutationCache().remove(mutation)
+					}
+				}}
+			/>
 		</Ariakit.DialogProvider>
 	)
 }

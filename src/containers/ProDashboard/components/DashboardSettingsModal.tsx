@@ -3,9 +3,12 @@ import { useMutation } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import type { DashboardTeam } from '../dashboardTypes'
-import { ProButton, ProDialog, proInputStyles } from '../ui'
+import { ProButton, proInputStyles } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
@@ -85,9 +88,10 @@ function DashboardSettingsModalInner({
 		save.mutate(
 			{ visibility: localVisibility, tags: localTags },
 			{
+				// Confirm only once the dialog is gone, so the toast never sits over it.
 				onSuccess: () => {
-					toast.success('Settings saved', statusToastOptions('dashboard-settings-saved', TOAST_DURATION_SHORT))
 					onClose()
+					toast.success('Settings saved', statusToastOptions('dashboard-settings-saved', TOAST_DURATION_SHORT))
 				}
 			}
 		)
@@ -136,19 +140,18 @@ function DashboardSettingsModalInner({
 
 	return (
 		<>
-			<Ariakit.DialogProvider
+			<Dialog
+				size="sm"
+				scope="pro"
 				open={isOpen}
-				setOpen={(open) => {
-					if (!open) onClose()
-				}}
+				onClose={onClose}
+				pending={save.isPending || deletion.isPending}
+				portal
+				unmountOnHide
 			>
-				<ProDialog
-					width="sm"
-					heading="Dashboard Settings"
-					closeButtonProps={{ ariaLabel: 'Close dashboard settings' }}
-					hideOnInteractOutside
-				>
-					<form ref={formRef} onSubmit={handleSave}>
+				<form ref={formRef} onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
+					<DialogHeader title="Dashboard Settings" />
+					<DialogBody>
 						<fieldset className="min-w-0 space-y-6">
 							<div>
 								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
@@ -312,32 +315,31 @@ function DashboardSettingsModalInner({
 							) : null}
 						</fieldset>
 						{failureMessage && !showDeleteConfirm ? (
-							<p role="alert" className="mt-4 text-sm text-error">
-								{failureMessage}
-							</p>
+							<InlineStatus variant="error">{failureMessage}</InlineStatus>
 						) : null}
-
-						<div className="mt-8 flex gap-3">
-							<Ariakit.DialogDismiss type="button" render={<ProButton variant="secondary" className="flex-1" />}>
+					</DialogBody>
+					<DialogFooter
+						dismiss={
+							<Button type="button" size="md" onClick={onClose} disabled={save.isPending || deletion.isPending}>
 								Cancel
-							</Ariakit.DialogDismiss>
-							<Ariakit.Button
-								type="submit"
-								accessibleWhenDisabled
-								disabled={save.isPending || deletion.isPending}
-								render={
-									<ProButton variant="primary" className="flex-1" {...(save.isPending ? { loading: true } : {})} />
-								}
-							>
-								<span>{save.isPending ? 'Saving…' : 'Save Changes'}</span>
-							</Ariakit.Button>
-							<span role="status" className="sr-only">
-								{save.isPending ? 'Saving dashboard changes' : ''}
-							</span>
-						</div>
-					</form>
-				</ProDialog>
-			</Ariakit.DialogProvider>
+							</Button>
+						}
+					>
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							disabled={deletion.isPending}
+							pendingLabel={save.isPending ? 'Saving…' : null}
+						>
+							Save Changes
+						</Button>
+					</DialogFooter>
+					<span role="status" className="sr-only">
+						{save.isPending ? 'Saving dashboard changes' : ''}
+					</span>
+				</form>
+			</Dialog>
 
 			<ConfirmationModal
 				isOpen={showDeleteConfirm}
@@ -350,7 +352,6 @@ function DashboardSettingsModalInner({
 				title="Delete Dashboard"
 				message={`Are you sure you want to delete “${dashboardName}”? This action cannot be undone.`}
 				confirmText="Delete"
-				cancelText="Cancel"
 			/>
 		</>
 	)

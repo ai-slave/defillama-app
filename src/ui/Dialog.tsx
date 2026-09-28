@@ -77,9 +77,10 @@ export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto o
 
 const DialogPendingContext = createContext(false)
 
-type DialogSize = 'sm' | 'md' | 'lg'
+export type DialogSize = 'sm' | 'md' | 'lg'
 
-const DIALOG_WIDTH: Record<DialogSize, string> = {
+/** Width per size, for a surface that is not a Dialog itself (a Suspense placeholder shaped like one). */
+export const dialogWidthStyles: Record<DialogSize, string> = {
 	sm: '[--dialog-width:448px]',
 	md: '[--dialog-width:600px]',
 	lg: '[--dialog-width:880px]'
@@ -89,20 +90,24 @@ type SurfaceProps = {
 	pending?: boolean
 } & Omit<ComponentProps<typeof Ariakit.Dialog>, 'className'>
 
+// Product token scopes: portalled dialogs sit outside the product's own root, so they re-apply its tokens.
+const DIALOG_SCOPE = { pro: 'pro-dashboard' } as const
+
 export function Dialog({
 	size,
 	fullSheet = false,
+	scope,
 	pending = false,
 	hideOnEscape = true,
 	hideOnInteractOutside = true,
 	...props
-}: SurfaceProps & { size: DialogSize; fullSheet?: boolean }) {
+}: SurfaceProps & { size: DialogSize; fullSheet?: boolean; scope?: keyof typeof DIALOG_SCOPE }) {
 	return (
 		<DialogPendingContext value={pending}>
 			<Ariakit.Dialog
 				hideOnEscape={!pending && hideOnEscape}
 				hideOnInteractOutside={!pending && hideOnInteractOutside}
-				className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${DIALOG_WIDTH[size]}`}
+				className={`${fullSheet ? dialogFullSheetSurfaceStyles : dialogSurfaceStyles} ${dialogWidthStyles[size]} ${scope ? DIALOG_SCOPE[scope] : ''}`.trim()}
 				{...props}
 			/>
 		</DialogPendingContext>
@@ -144,23 +149,38 @@ export function SideSheet({
 	)
 }
 
-/** The title row: heading, an optional body-sm subtitle, and the × (confirmations pass closable={false}). */
+/** The title row: an optional leading control (DialogBackButton, a 32px icon tile), the heading, an optional
+    body-sm subtitle, and the × (confirmations pass closable={false}). */
 export function DialogHeader({
 	title,
 	subtitle,
+	leading,
 	closable = true
 }: {
 	title: ReactNode
 	subtitle?: ReactNode
+	leading?: ReactNode
 	closable?: boolean
 }) {
 	return (
 		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
+			{leading}
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<DialogHeading className="break-words">{title}</DialogHeading>
 				{subtitle ? <p className="body-sm text-secondary">{subtitle}</p> : null}
 			</div>
 			{closable ? <DialogCloseButton /> : null}
+		</header>
+	)
+}
+
+/** The header row of a palette: the search field takes the title's place, which stays for screen readers. */
+export function DialogSearchHeader({ title, children }: { title: string; children: ReactNode }) {
+	return (
+		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
+			<DialogHeading className="sr-only">{title}</DialogHeading>
+			<div className="min-w-0 flex-1">{children}</div>
+			<DialogCloseButton />
 		</header>
 	)
 }
@@ -231,6 +251,26 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 	)
 }
 
+/** The header's back control, mirroring DialogCloseButton on the left: its icon sits on the content edge. */
+export function DialogBackButton({ label, onClick }: { label: string; onClick: () => void }) {
+	const pending = useContext(DialogPendingContext)
+	return (
+		<Button
+			type="button"
+			variant="ghost"
+			size="md"
+			square
+			aria-label={label}
+			disabled={pending}
+			onClick={onClick}
+			// Below sm the hit area grows to 44px without changing the 32px look, like the ×.
+			className="relative -ml-2 max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
+		>
+			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
+		</Button>
+	)
+}
+
 type DialogFooterProps = {
 	/** Far-left actions or a status line, such as Clear all. */
 	leading?: ReactNode
@@ -248,8 +288,8 @@ type DialogFooterProps = {
 export function DialogFooter({ leading, dismiss, children }: DialogFooterProps) {
 	const hasActions = Children.toArray(children).length > 0
 	return (
-		<footer className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t border-subtle bg-overlay px-4 py-3">
-			{leading ? <div className="flex items-center gap-2 max-sm:[&>button]:min-h-11">{leading}</div> : null}
+		<footer className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t border-subtle px-4 py-3">
+			{leading ? <div className="flex min-w-0 items-center gap-2 max-sm:[&>button]:min-h-11">{leading}</div> : null}
 			<div className="ml-auto flex flex-1 items-center justify-end gap-2 sm:flex-none">
 				{/* With no commit action beside it, Cancel stays visible so the row is never empty on phones. */}
 				{dismiss ? (

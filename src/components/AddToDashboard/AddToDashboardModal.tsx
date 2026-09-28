@@ -22,11 +22,10 @@ import { dashboardAPI, type LiteDashboardSummary } from '~/containers/ProDashboa
 import { addItemToDashboard, replaceItemInDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles, DialogFooter } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
@@ -325,7 +324,13 @@ export function AddToDashboardModal({
 		}
 	}, [])
 
-	const { mutate: submitAddToDashboardMutation, isPending: isSubmitting } = useMutation({
+	const {
+		mutate: submitAddToDashboardMutation,
+		isPending: isSubmitting,
+		error: submitError,
+		variables: submitVariables,
+		reset: resetSubmit
+	} = useMutation({
 		mutationFn: async (variables: AddToDashboardMutationVariables) => {
 			return submitAddToDashboard({
 				authorizedFetch,
@@ -345,12 +350,9 @@ export function AddToDashboardModal({
 			}
 			invalidateDashboardQueries(queryClient)
 			safeTrackAddToDashboardSubmit(result.type)
-			showViewToast(result.message, result.href, router.push)
+			// Hide first, so the toast never sits over the dialog.
 			dialogStore.hide()
-		},
-		onError: (error, variables) => {
-			const fallbackErrorMessage = variables.isCreatingNew ? 'Failed to create dashboard' : 'Failed to add chart'
-			toast.error(getErrorMessage(error, fallbackErrorMessage))
+			showViewToast(result.message, result.href, router.push)
 		}
 	})
 
@@ -366,15 +368,8 @@ export function AddToDashboardModal({
 			const nextDashboardName = (typeof nextDashboardNameValue === 'string' ? nextDashboardNameValue : '').trim()
 			const nextChartName = (typeof nextChartNameValue === 'string' ? nextChartNameValue : '').trim()
 
-			if (isCreatingNew && !nextDashboardName) {
-				toast.error('Please enter a dashboard name')
-				return
-			}
-
-			if (!isCreatingNew && !selectedDashboardId) {
-				toast.error('Please select a dashboard')
-				return
-			}
+			// The footer states why submit is disabled; this only stops a submit that slips past it.
+			if (isCreatingNew ? !nextDashboardName : !selectedDashboardId) return
 
 			submitAddToDashboardMutation({
 				isCreatingNew,
@@ -397,23 +392,16 @@ export function AddToDashboardModal({
 		return null
 	}
 
-	const canSubmit = isCreatingNew ? newDashboardNameInput.trim().length > 0 : selectedDashboardId !== null
+	let blockedReason: string | null = null
+	if (isCreatingNew && !newDashboardNameInput.trim()) blockedReason = 'Enter a name for the new dashboard'
+	if (!isCreatingNew && selectedDashboardId === null) blockedReason = 'Pick a dashboard or create a new one'
 
 	return (
-		<Ariakit.Dialog
-			store={dialogStore}
-			className={`${dialogFullSheetSurfaceStyles} [--dialog-width:448px]`}
-			unmountOnHide
-			portal
-			hideOnInteractOutside
-		>
+		<Dialog size="sm" fullSheet store={dialogStore} pending={isSubmitting} onClose={resetSubmit} unmountOnHide portal>
 			<form onSubmit={handleAdd} className="flex min-h-0 flex-auto flex-col">
-				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<DialogHeading>{repairTarget ? 'Replace Dashboard Chart' : 'Add to Dashboard'}</DialogHeading>
-					<DialogCloseButton />
-				</div>
+				<DialogHeader title={repairTarget ? 'Replace Dashboard Chart' : 'Add to Dashboard'} />
 
-				<div className="flex min-h-0 flex-auto flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
+				<DialogBody>
 					{!repairTarget ? (
 						<label className="relative block">
 							<span className="sr-only">Search dashboards</span>
@@ -516,27 +504,37 @@ export function AddToDashboardModal({
 							</p>
 						</div>
 					) : null}
-				</div>
+
+					{submitError ? (
+						<InlineStatus variant="error">
+							{getErrorMessage(
+								submitError,
+								submitVariables?.isCreatingNew ? 'Failed to create dashboard' : 'Failed to add chart'
+							)}
+						</InlineStatus>
+					) : null}
+				</DialogBody>
 
 				<DialogFooter
+					leading={blockedReason ? <p className="body-sm text-tertiary">{blockedReason}</p> : null}
 					dismiss={
 						<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" />}>
 							Cancel
 						</Ariakit.DialogDismiss>
 					}
 				>
-					<Button type="submit" variant="primary" size="md" disabled={isSubmitting || !canSubmit}>
-						{isSubmitting ? (
-							<LoadingSpinner size={16} />
-						) : (
-							<>
-								<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
-								{repairTarget ? 'Replace Chart' : 'Add to Dashboard'}
-							</>
-						)}
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						disabled={blockedReason !== null}
+						pendingLabel={isSubmitting ? (repairTarget ? 'Replacing…' : 'Adding…') : null}
+					>
+						<Icon name={repairTarget ? 'repeat' : 'plus'} className="size-3.5" />
+						{repairTarget ? 'Replace Chart' : 'Add to Dashboard'}
 					</Button>
 				</DialogFooter>
 			</form>
-		</Ariakit.Dialog>
+		</Dialog>
 	)
 }
