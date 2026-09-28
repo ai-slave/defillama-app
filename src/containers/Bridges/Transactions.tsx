@@ -583,6 +583,7 @@ export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeIn
 				<label className="flex flex-col gap-1.5">
 					<span className="label-sm text-secondary uppercase">Bridge</span>
 					<SelectWithCombobox
+						heading="Bridge"
 						allValues={bridgeOptions}
 						selectedValues={selectedBridgeId}
 						setSelectedValues={setSelectedBridgeId}

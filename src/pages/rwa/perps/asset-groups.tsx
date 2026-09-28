@@ -47,7 +47,7 @@ export default function RWAPerpsAssetGroupsPage({
 			canonicalUrl="/rwa/perps/asset-groups"
 		>
 			<RWAPerpsTabNav active="assetGroups" />
-			<RowLinksWithDropdown links={assetGroupLinks} activeLink="All" />
+			<RowLinksWithDropdown heading="Asset groups" links={assetGroupLinks} activeLink="All" />
 			<RWAPerpsAssetGroupsOverview
 				assetGroups={assetGroups}
 				dexAssetGroups={dexAssetGroups}

@@ -134,6 +134,7 @@ function LiquidationsDistributionChartCard({
 				) : (
 					<div className="mr-auto flex min-w-0 flex-wrap items-center gap-2">
 						<SelectWithCombobox
+							heading="Token"
 							allValues={tokenOptions}
 							selectedValues={chartState.token ? [chartState.token] : []}
 							setSelectedValues={(values) => {
@@ -162,6 +163,7 @@ function LiquidationsDistributionChartCard({
 				)}
 				{displayOptions.showBreakdownSelector ? (
 					<Select
+						heading="Breakdown"
 						allValues={breakdownOptions}
 						selectedValues={chartState.breakdownMode}
 						setSelectedValues={(value: string) => setBreakdownMode(value as BreakdownMode)}

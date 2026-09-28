@@ -335,6 +335,13 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'surface-chrome-override',
+		description:
+			'shadow, background, border, radius or padding passed to MenuSurface/PopoverSurface/ComboboxSurface — the variant owns the surface chrome; className is layout only (width, z-index)',
+		pattern:
+			/<(?:MenuSurface|PopoverSurface|ComboboxSurface)\b[^>]*?className="[^"]*(?<![\w-])(?:shadow|bg|border|rounded|p[xytblr]?)-[^\s"]*/g
+	},
+	{
 		id: 'toolbar-justify-override',
 		description:
 			'justify-* passed to TableToolbar/TableToolbarControlGroup/PanelHeader/ChartPanelToolbar — they own justify-end; give the left-side item (search, title, view switch) mr-auto instead',

@@ -53,6 +53,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 
 	return (
 		<FilterBetweenRange
+			heading="APY"
 			trigger={
 				<>
 					{min || max ? (

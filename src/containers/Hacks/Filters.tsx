@@ -146,6 +146,7 @@ function Filters({
 				excludeQueryKey="excludeChain"
 			/>
 			<FilterBetweenRange
+				heading="Amount lost"
 				trigger={
 					minLostVal != null || maxLostVal != null ? (
 						<>

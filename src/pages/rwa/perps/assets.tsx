@@ -47,7 +47,7 @@ export default function RWAPerpsAssetsPage({
 			canonicalUrl="/rwa/perps/assets"
 		>
 			<RWAPerpsTabNav active="assets" />
-			<RowLinksWithDropdown links={assetLinks} activeLink="All" />
+			<RowLinksWithDropdown heading="Assets" links={assetLinks} activeLink="All" />
 			<RWAPerpsAssetsOverview assets={assets} dexAssets={dexAssets} initialChartDataset={initialChartDataset} />
 		</Layout>
 	)

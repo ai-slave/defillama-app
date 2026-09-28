@@ -270,7 +270,7 @@ export function OracleOverview({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={chainLinks} activeLink={chain ?? 'All'} />
+			<RowLinksWithDropdown heading="Chains" links={chainLinks} activeLink={chain ?? 'All'} />
 
 			<SummaryCardGrid>
 				<SummaryStatsCard>

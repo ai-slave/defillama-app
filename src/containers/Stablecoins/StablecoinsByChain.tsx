@@ -454,7 +454,7 @@ export function StablecoinsByChain({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={chainOptions} activeLink={selectedChain} />
+			<RowLinksWithDropdown heading="Chains" links={chainOptions} activeLink={selectedChain} />
 			{entityQuestions != null && entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip
 					questions={entityQuestions}
@@ -504,6 +504,7 @@ export function StablecoinsByChain({
 							className="mr-auto"
 						/>
 						<Select
+							heading="Chart view"
 							allValues={chartViewOptions}
 							selectedValues={chartView}
 							setSelectedValues={onChartViewChange}

@@ -47,7 +47,7 @@ export default function RWAPerpsVenuesPage({
 			canonicalUrl="/rwa/perps/venues"
 		>
 			<RWAPerpsTabNav active="venues" />
-			<RowLinksWithDropdown links={venueLinks} activeLink="All" />
+			<RowLinksWithDropdown heading="Venues" links={venueLinks} activeLink="All" />
 			<RWAPerpsVenuesOverview venues={venues} dexVenues={dexVenues} initialChartDataset={initialChartDataset} />
 		</Layout>
 	)

@@ -47,7 +47,7 @@ function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: Calend
 		<Ariakit.MenuProvider>
 			{isProtocolPage ? <ProtocolPageButton /> : <RegularButton />}
 
-			<MenuSurface variant="actions" className="shadow-sm">
+			<MenuSurface variant="actions">
 				<MenuItem
 					render={
 						<a

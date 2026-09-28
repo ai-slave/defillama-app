@@ -425,6 +425,7 @@ export function BannerForm({ banner }: Props) {
 								Countries <span className="font-normal text-tertiary">(optional when a region is selected)</span>
 							</span>
 							<MultiSelectCombobox
+								heading="Countries"
 								data={availableCountryOptions}
 								placeholder="Search countries…"
 								selectedValues={state.targetCountries}

@@ -171,7 +171,7 @@ export function ForksOverview({
 	const { chartInstance: pieChartInstance, handleChartReady: handlePieChartReady } = useGetChartInstance()
 	return (
 		<>
-			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
+			<RowLinksWithDropdown heading="Forks" links={forkLinks} activeLink="All" />
 			<div className="flex flex-col gap-2 xl:flex-row">
 				<ChartPanel className="isolate flex-1">
 					<ChartPanelToolbar>

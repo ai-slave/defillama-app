@@ -8,6 +8,8 @@ interface ILink {
 
 interface IRowLinksProps {
 	links: Array<ILink>
+	/** Names the list, e.g. "Chains". The phone drawer's title; the trigger shows the active link. */
+	heading: string
 	name?: string
 	activeLink?: string
 	alternativeOthersText?: string
@@ -18,6 +20,7 @@ export function RowLinksWithDropdown(props: IRowLinksProps) {
 		<span>
 			<span className="sm:hidden">
 				<OtherLinks
+					heading={props.heading}
 					name={
 						props.links.find((link) => link.label === props.activeLink)?.label ??
 						props.alternativeOthersText ??

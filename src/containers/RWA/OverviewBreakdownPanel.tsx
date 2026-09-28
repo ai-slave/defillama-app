@@ -235,6 +235,7 @@ export function RWAOverviewBreakdownPanel({
 	const treemapNestedByLabel = getTreemapNestedByLabel(treemapNestedBy)
 	const treemapNestedBySwitch = (
 		<Select
+			heading="Nested by"
 			allValues={treemapNestedByOptions}
 			selectedValues={treemapNestedBy}
 			setSelectedValues={(value: string) => {

@@ -133,7 +133,9 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 
 	return (
 		<>
-			{props.chains.length > 1 ? <RowLinksWithDropdown links={props.chains} activeLink={props.chain} /> : null}
+			{props.chains.length > 1 ? (
+				<RowLinksWithDropdown heading="Chains" links={props.chains} activeLink={props.chain} />
+			) : null}
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					{props.chain === 'All' ? (
@@ -235,6 +237,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						{chartBreakdownOptions.length > 1 ? (
 							<div className="mr-auto">
 								<Select
+									heading="Breakdown"
 									allValues={chartBreakdownOptions}
 									selectedValues={chartBreakdown}
 									setSelectedValues={(value: string) => {

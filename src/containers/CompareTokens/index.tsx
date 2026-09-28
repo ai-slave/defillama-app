@@ -162,6 +162,7 @@ export function CompareTokens({
 					</div>
 				</div>
 				<Select
+					heading="Compare by"
 					allValues={compareTypeOptions}
 					selectedValues={compareType.value}
 					setSelectedValues={(type) => void pushShallowQuery(router, { type })}

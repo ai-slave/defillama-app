@@ -20,8 +20,7 @@ export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ 
 				<Icon name="settings" height={16} width={16} />
 			</Ariakit.ComboboxSelect>
 			{/* Stays mounted: mobile nav control that must open instantly (#2640). */}
-			<ComboboxSurface unmountOnHide={false}>
-				<h2 className="px-3 py-2 label-sm text-secondary">Settings</h2>
+			<ComboboxSurface heading="Settings" unmountOnHide={false}>
 				{tvlOptions.map((option) => (
 					<Ariakit.ComboboxItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
 						{option.name}

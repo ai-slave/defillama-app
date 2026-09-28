@@ -19,8 +19,10 @@ export function LiquidationsProtocolPage(props: LiquidationsProtocolPageProps) {
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.protocolLinks} activeLink={props.protocolName} />
-			{props.chainLinks.length > 2 ? <RowLinksWithDropdown links={props.chainLinks} activeLink="All Chains" /> : null}
+			<RowLinksWithDropdown heading="Protocols" links={props.protocolLinks} activeLink={props.protocolName} />
+			{props.chainLinks.length > 2 ? (
+				<RowLinksWithDropdown heading="Chains" links={props.chainLinks} activeLink="All Chains" />
+			) : null}
 
 			<div className="relative isolate flex flex-col gap-2">
 				<LiquidationsSummaryStats

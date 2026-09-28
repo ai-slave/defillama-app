@@ -339,6 +339,7 @@ export function RWAPerpsOverviewChart({
 					className="mr-auto"
 				/>
 				<Select
+					heading="Series"
 					allValues={TIME_SERIES_MODE_OPTIONS.map(({ key, label }) => ({ key, name: label }))}
 					selectedValues={timeSeriesMode}
 					setSelectedValues={onSelectTimeSeriesMode}

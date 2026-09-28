@@ -50,7 +50,7 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 
 	return (
 		<>
-			<RowLinksWithDropdown links={chains} activeLink="All" />
+			<RowLinksWithDropdown heading="Chains" links={chains} activeLink="All" />
 			<SearchTableProvider options={{ data, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
 				<Card padding="none">
 					<TableToolbar>

@@ -108,7 +108,7 @@ export function CopyDashboardLinkButton({
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
 
-			<PopoverSurface variant="list" gutter={8} style={{ minWidth: '280px' }}>
+			<PopoverSurface variant="list" heading="Share dashboard" gutter={8} style={{ minWidth: '280px' }}>
 				{isPrivate ? (
 					<div className="flex flex-col gap-2 p-3">
 						<p className="text-xs text-pro-text-secondary">This dashboard is private. Only you can open the link.</p>

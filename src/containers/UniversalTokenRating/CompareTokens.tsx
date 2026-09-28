@@ -114,6 +114,7 @@ function CompareColumn({
 			<div className="flex items-center gap-2">
 				<span className="label-md">{label}:</span>
 				<SelectWithCombobox
+					heading="Token"
 					allValues={universe.rows
 						.filter((entry) => entry.asset !== exclude)
 						.map((entry) => ({ key: entry.asset, name: `${entry.name} (${entry.symbol})` }))}

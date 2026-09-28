@@ -31,12 +31,17 @@ function LiquidationsShellChrome({
 		<>
 			{protocolLinks?.length ? (
 				<RowLinksWithDropdown
+					heading="Protocols"
 					links={protocolLinks}
 					{...(activeProtocolLink ? { activeLink: activeProtocolLink } : {})}
 				/>
 			) : null}
 			{chainLinks && chainLinks.length > 2 ? (
-				<RowLinksWithDropdown links={chainLinks} {...(activeChainLink ? { activeLink: activeChainLink } : {})} />
+				<RowLinksWithDropdown
+					heading="Chains"
+					links={chainLinks}
+					{...(activeChainLink ? { activeLink: activeChainLink } : {})}
+				/>
 			) : null}
 		</>
 	)

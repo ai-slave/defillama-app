@@ -2233,11 +2233,15 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			{isVenueMode ? (
-				<RowLinksWithDropdown links={props.data.venueLinks} activeLink={props.data.venue} />
+				<RowLinksWithDropdown heading="Venues" links={props.data.venueLinks} activeLink={props.data.venue} />
 			) : isAssetGroupMode ? (
-				<RowLinksWithDropdown links={props.data.assetGroupLinks} activeLink={props.data.assetGroup} />
+				<RowLinksWithDropdown
+					heading="Asset groups"
+					links={props.data.assetGroupLinks}
+					activeLink={props.data.assetGroup}
+				/>
 			) : isAssetMode ? (
-				<RowLinksWithDropdown links={props.data.assetLinks} activeLink={props.data.asset} />
+				<RowLinksWithDropdown heading="Assets" links={props.data.assetLinks} activeLink={props.data.asset} />
 			) : null}
 			{showForexToggle ? (
 				<Card padding="sm" className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -2269,6 +2273,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					<ChartPanelToolbar>
 						{timeSeriesMetricSwitch}
 						<Select
+							heading="Chart view"
 							allValues={chartViewOptions}
 							selectedValues={chartState.view}
 							setSelectedValues={onSelectView}
@@ -2279,6 +2284,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						/>
 						{showBreakdownSelect ? (
 							<Select
+								heading="Breakdown"
 								allValues={timeSeriesBreakdownOptions}
 								selectedValues={chartState.timeSeriesMode === 'grouped' ? 'total' : chartState.breakdown}
 								setSelectedValues={onSelectBreakdown}
@@ -2345,6 +2351,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					<ChartPanelToolbar>
 						{timeSeriesMetricSwitch}
 						<Select
+							heading="Chart view"
 							allValues={chartViewOptions}
 							selectedValues={chartState.view}
 							setSelectedValues={onSelectView}
@@ -2355,6 +2362,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						/>
 						{showBreakdownSelect ? (
 							<Select
+								heading="Breakdown"
 								allValues={chartBreakdownOptions}
 								selectedValues={chartState.breakdown}
 								setSelectedValues={onSelectBreakdown}
@@ -2366,6 +2374,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						) : null}
 						{chartControls.nestedBy ? (
 							<Select
+								heading="Nested by"
 								allValues={treemapNestedByOptions}
 								selectedValues={chartState.treemapNestedBy}
 								setSelectedValues={onSelectTreemapNestedBy}

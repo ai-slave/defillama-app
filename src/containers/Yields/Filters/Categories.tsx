@@ -26,6 +26,7 @@ export function FiltersByCategory({
 
 	return (
 		<SelectWithCombobox
+			heading={label}
 			variant="default"
 			size="sm"
 			label={label}

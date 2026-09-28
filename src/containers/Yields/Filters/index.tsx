@@ -78,7 +78,7 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 				Save view
 				{count > 0 ? <span className="rounded-full bg-surface-elevated-1 px-1.5 label-xs">{count}</span> : null}
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="list" overflowPadding={16} className="w-72">
+			<PopoverSurface variant="list" heading="Saved views" overflowPadding={16} className="w-72">
 				<div className="border-b border-subtle p-2">
 					<form onSubmit={handleSave} className="flex gap-1.5">
 						<input

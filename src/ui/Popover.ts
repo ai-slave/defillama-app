@@ -3,8 +3,8 @@ import { tw } from './tw'
    Popover/menu surface recipe from Figma 6183:293478.
 
    Surface owns the elevated background, medium border, 12px radius, scrollbars,
-   overscroll, drawer behavior, and max height. Rows/search/action/footer blocks
-   own all spacing.
+   overscroll, drawer behavior, and max height. Rows and footers own their
+   spacing; the search/toggle/action block above a list is `PopoverHeader`.
 ---------------------------------------------------------------------------- */
 
 export const surfaceMotionStyles = tw`sm:origin-(--popover-transform-origin) sm:scale-[.98] sm:opacity-0 sm:transition-[opacity,scale] sm:duration-180 sm:ease-out-quart sm:data-enter:scale-100 sm:data-enter:opacity-100 sm:data-leave:duration-140`
@@ -27,33 +27,25 @@ export const popoverMenuItemStyles = tw`flex shrink-0 cursor-pointer items-cente
 
 export const popoverTreeRowStyles = tw`group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row max-sm:min-h-11`
 
-export const popoverActionBarStyles = tw`grid w-full min-w-0 grid-cols-2 border-b border-subtle bg-overlay body-sm text-link`
-
-export const popoverActionButtonStyles = tw`flex min-w-0 items-center justify-center truncate px-3 py-2 text-link hover:bg-hover-row focus-visible:bg-hover-row`
-
-export const popoverSearchBlockStyles = tw`relative p-3`
+/* The list under a PopoverHeader scrolls on its own, so the title row and header stay put when Ariakit
+   scrolls the selected option into view on open, or the user scrolls a long list. It and the header both
+   reserve the scrollbar gutter, so rows and the search field end on the same edge with classic scrollbars. */
+export const popoverScrollAreaStyles = tw`min-h-0 flex-1 overflow-y-auto overscroll-contain`
 
 export const popoverFooterActionStyles = tw`flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row max-sm:min-h-11`
 
 export const popoverSeeMoreStyles = tw`w-full cursor-pointer px-3 py-2 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring max-sm:min-h-11`
 
-export const nestedMenuRootRowStyles = tw`grid min-h-10 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1rem] items-center overflow-hidden px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+// Nested-menu rows only render in phone sheets, so they keep the 44px touch height outright.
+export const nestedMenuRootRowStyles = tw`grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1rem] items-center overflow-hidden px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuSelectRowStyles = tw`grid min-h-10 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1.25rem] items-center overflow-hidden border-b border-subtle px-4 py-2.5 text-left body-sm text-primary last-of-type:border-b-0 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const nestedMenuSelectRowStyles = tw`grid min-h-11 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1.25rem] items-center overflow-hidden border-b border-subtle px-4 py-2.5 text-left body-sm text-primary last-of-type:border-b-0 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuSeeMoreStyles = tw`min-h-10 w-full cursor-pointer px-4 py-2.5 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
+export const nestedMenuSeeMoreStyles = tw`min-h-11 w-full cursor-pointer px-4 py-2.5 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 
-export const nestedMenuActionStyles = tw`flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40`
-
-export const nestedMenuActionBarStyles = tw`grid w-full min-w-0 grid-cols-2 border-b border-subtle body-sm text-link`
-
-export const nestedMenuActionButtonStyles = tw`flex min-h-10 min-w-0 items-center justify-center px-4 py-2.5 text-center text-link hover:bg-hover-row focus-visible:bg-hover-row`
-
-export const nestedMenuSearchBlockStyles = tw`relative px-4 py-3`
+export const nestedMenuActionStyles = tw`flex min-h-11 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40`
 
 export const nestedMenuDisclosureIconStyles = tw`size-4 justify-self-end text-tertiary`
-
-export const nestedMenuHeaderIconButtonStyles = tw`flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary`
 
 export const nestedMenuRootFilterButtonStyles = tw`flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row`
 

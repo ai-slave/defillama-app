@@ -413,6 +413,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						) : null}
 
 						<Select
+							heading="Chart type"
 							size="sm"
 							allValues={CHART_TYPE_OPTIONS}
 							selectedValues={config.chartType}
@@ -436,6 +437,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 						{config.chartType === 'treemap' && !isSnapshotChart ? (
 							<Select
+								heading="Chart type"
 								size="sm"
 								allValues={TREEMAP_VALUE_OPTIONS}
 								selectedValues={treemapMode}
@@ -447,6 +449,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						) : null}
 						{config.chartType !== 'treemap' && hasExactRemainder ? (
 							<Select
+								heading="Values"
 								size="sm"
 								allValues={VALUE_TYPE_OPTIONS}
 								selectedValues={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
@@ -473,6 +476,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						{hasExactRemainder &&
 						(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
 							<Select
+								heading="Show"
 								size="sm"
 								allValues={hideOthersOptions}
 								selectedValues={config.hideOthers ? `Top ${config.limit}` : 'All'}

@@ -302,6 +302,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 
 						{hasAnyData && !hasMultipleMetrics && allBarType ? (
 							<Select
+								heading="Display"
 								size="sm"
 								allValues={CUMULATIVE_DISPLAY_OPTIONS}
 								selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
@@ -318,6 +319,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						) : null}
 						{hasAnyData && !hasMultipleMetrics && canStack && !showCumulative && !showTreemap ? (
 							<Select
+								heading="Stacking"
 								size="sm"
 								allValues={STACKING_DISPLAY_OPTIONS}
 								selectedValues={showStacked ? 'Stacked' : 'Separate'}
@@ -332,6 +334,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						) : null}
 						{hasAnyData && !hasMultipleMetrics && !showTreemap ? (
 							<Select
+								heading="Values"
 								size="sm"
 								allValues={VALUE_TYPE_OPTIONS}
 								selectedValues={showPercentage ? '% Percentage' : '$ Absolute'}
@@ -346,6 +349,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 						) : null}
 						{hasAnyData && !hasMultipleMetrics ? (
 							<Select
+								heading="Chart type"
 								size="sm"
 								allValues={CHART_LAYOUT_OPTIONS}
 								selectedValues={showTreemap ? 'treemap' : 'chart'}

@@ -391,7 +391,11 @@ export function TokenUsageSearch() {
 				/>
 			</span>
 
-			<ComboboxSurface variant="list" sameWidth>
+			<ComboboxSurface
+				variant="search-results"
+				sameWidth
+				className="max-h-[min(400px,var(--popover-available-height))]"
+			>
 				{isLoading ? (
 					<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">
 						<LoadingIndicator />

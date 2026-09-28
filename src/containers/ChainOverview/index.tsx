@@ -48,7 +48,7 @@ export function ChainOverview(props: IChainOverviewData) {
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.allChains} activeLink={props.metadata.name} />
+			<RowLinksWithDropdown heading="Chains" links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
 				{investorRelations ? (
 					<nav className={`${tabTrackStyles} scrollbar-none min-h-10 shrink-0`}>

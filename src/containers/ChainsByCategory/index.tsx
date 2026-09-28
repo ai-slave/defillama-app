@@ -155,7 +155,7 @@ export function ChainsByCategory({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={allCategories} activeLink={categoryName} />
+			<RowLinksWithDropdown heading="Categories" links={allCategories} activeLink={categoryName} />
 			{entityQuestions && entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip questions={entityQuestions} entitySlug="chains" entityType="page" entityName="Chains" />
 			) : null}

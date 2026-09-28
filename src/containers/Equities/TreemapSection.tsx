@@ -165,6 +165,7 @@ export function EquitiesTreemapSection({
 						/>
 					) : null}
 					<SelectWithCombobox
+						heading="Size by"
 						allValues={SIZE_METRIC_OPTIONS}
 						selectedValues={[sizeMetric]}
 						setSelectedValues={(values) => {

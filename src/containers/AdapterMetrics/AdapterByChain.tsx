@@ -195,7 +195,12 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 
 	return (
 		<>
-			<RowLinksWithDropdown name={`${props.type}-chains`} links={props.chains} activeLink={props.chain} />
+			<RowLinksWithDropdown
+				heading="Chains"
+				name={`${props.type}-chains`}
+				links={props.chains}
+				activeLink={props.chain}
+			/>
 			{props.entityQuestions && props.entityQuestions.length > 0 ? (
 				<EntityQuestionsStrip
 					questions={props.entityQuestions}

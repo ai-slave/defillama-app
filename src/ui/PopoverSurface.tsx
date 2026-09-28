@@ -1,4 +1,6 @@
 import * as Ariakit from '@ariakit/react'
+import type { ReactNode } from 'react'
+import { Button } from './Button'
 import { Icon } from './Icon'
 import { surfaceMotionStyles } from './Popover'
 import { tw } from './tw'
@@ -14,11 +16,17 @@ import { tw } from './tw'
      actions — a short, fixed set of actions. Fits its content on phones
                (capped at the drawer height), no close button: the scrim tap
                and Escape close it. Export menus, row overflow menus.
-     panel   — content-sized like `actions`, with a close button. Small
+     panel   — content-sized like `actions`, with a title row. Small
                forms and controls where a user may be mid-task: date pickers,
                save-view forms, annotation editors.
      list    — the tall drawer (reserved height on phones, 400px on desktop)
-               with a close button. Selects, comboboxes, searchable lists.
+               with a title row. Selects, comboboxes, searchable lists.
+
+   On phones a `panel` or `list` drawer opens with a title row: its required
+   `heading` beside the close button, so the sheet says what it is. From `sm`
+   the popover sits under its trigger, which already names it, so the row is
+   hidden; the heading still labels the surface. `dismiss="own"` is for a
+   surface that renders its own header row with `<DrawerDismiss>` inside it.
      nested  — a submenu flyout opened from inside another surface. Slides in
                from the right on phones over the parent sheet, so it has no
                scrim of its own and no close button: the caller renders the
@@ -29,8 +37,8 @@ import { tw } from './tw'
 
    `className` is for LAYOUT only — width (`w-72`), stacking (`z-50` when the
    trigger sits inside a dialog). Never override the surface colors/radius.
-   `wrapperClassName` extends the positioning wrapper the same way, e.g.
-   `w-full!` to make a combobox match its input width.
+   Results that match their input's width pass `sameWidth`: surfaces portal to
+   body, so a width on the wrapper would size them to the viewport.
 
    Every surface unmounts its content on hide, like the dialogs and tooltips
    in this repo and the shared Select. Pass `unmountOnHide={false}` only with
@@ -68,7 +76,8 @@ const popoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:r
 
 const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-auto! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:w-full! max-sm:transform-none!`
 
-const popoverMobileDismissStyles = tw`ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary sm:hidden`
+// The row's 4px plus the close button's 8px inset puts the x on the 12px content edge.
+const drawerTitleRowStyles = tw`flex min-h-12 shrink-0 items-center gap-2 pt-2 pr-1 pl-3 sm:hidden`
 
 export type PopoverSurfaceVariant = 'actions' | 'panel' | 'list' | 'nested'
 
@@ -86,60 +95,135 @@ const VARIANT_WRAPPER_STYLES: Record<PopoverSurfaceVariant, string> = {
 	nested: nestedPopoverMobileWrapperClassName
 }
 
-const VARIANT_HAS_DISMISS: Record<PopoverSurfaceVariant, boolean> = {
-	actions: false,
-	panel: true,
-	list: true,
-	nested: false
-}
-
 function join(recipe: string, layout?: string) {
 	return layout ? `${recipe} ${layout}` : recipe
 }
+
+const DRAWER_ICON_BUTTON_CLASS = "relative shrink-0 before:absolute before:-inset-1.5 before:content-['']"
 
 /** Mobile-only close button for drawer surfaces. Works inside Menu, Popover
     and ComboboxPopover alike: they all share the popover store. */
 export function DrawerDismiss({ label = 'Close' }: { label?: string }) {
 	return (
-		<Ariakit.PopoverDismiss aria-label={label} className={popoverMobileDismissStyles}>
+		<Ariakit.PopoverDismiss
+			render={
+				<Button
+					type="button"
+					variant="ghost"
+					size="md"
+					square
+					// Same recipe as DialogCloseButton: 32px to look at, a 44px hit area.
+					className={`${DRAWER_ICON_BUTTON_CLASS} ml-auto sm:hidden`}
+				/>
+			}
+			aria-label={label}
+		>
 			<Icon name="x" className="size-4" aria-hidden="true" />
 		</Ariakit.PopoverDismiss>
 	)
 }
 
-export type SurfaceOwnProps = {
-	variant: PopoverSurfaceVariant
-	/** Layout placement only: width, z-index. */
-	className?: string
-	/** Layout for the positioning wrapper, e.g. `w-full!`. */
-	wrapperClassName?: string
-	/** aria-label of the mobile close button (`panel` and `list`). */
-	dismissLabel?: string
-	/** `own` when the surface has a header row and renders `<DrawerDismiss>`
-	    inside it itself, so the close button sits inline with the title. */
-	dismiss?: 'auto' | 'own'
+/** Header of a `nested` flyout, which slides over its parent sheet on phones: back, title, close. The
+    2rem columns in 8px padding put both icons on the 16px nested-row edge. */
+export function NestedDrawerHeader({
+	title,
+	backLabel,
+	onBack,
+	closeLabel,
+	onClose,
+	visibleFromSm = false
+}: {
+	title: ReactNode
+	backLabel: string
+	onBack: () => void
+	closeLabel: string
+	onClose: () => void
+	/** For a flyout that can open from `sm` too, e.g. inside a narrow container. */
+	visibleFromSm?: boolean
+}) {
+	return (
+		<div
+			className={`grid min-h-12 shrink-0 grid-cols-[2rem_1fr_2rem] items-center gap-2 px-2 pt-2 ${visibleFromSm ? '' : 'sm:hidden'}`}
+		>
+			<Button
+				type="button"
+				variant="ghost"
+				size="md"
+				square
+				aria-label={backLabel}
+				onClick={onBack}
+				className={DRAWER_ICON_BUTTON_CLASS}
+			>
+				<Icon name="chevron-left" className="size-4" aria-hidden="true" />
+			</Button>
+			<Ariakit.PopoverHeading className="min-w-0 truncate text-center label-md text-primary">
+				{title}
+			</Ariakit.PopoverHeading>
+			<Button
+				type="button"
+				variant="ghost"
+				size="md"
+				square
+				aria-label={closeLabel}
+				onClick={onClose}
+				className={DRAWER_ICON_BUTTON_CLASS}
+			>
+				<Icon name="x" className="size-4" aria-hidden="true" />
+			</Button>
+		</div>
+	)
 }
 
+type SurfaceLayout = {
+	/** Layout placement only: width, z-index. */
+	className?: string
+}
+
+type DrawerChrome =
+	| {
+			/** Names the phone drawer beside its close button. */
+			heading: string
+			dismiss?: 'auto'
+	  }
+	| {
+			/** The surface renders its own header row with `<DrawerDismiss>` inside it. */
+			dismiss: 'own'
+			heading?: never
+	  }
+
+type SurfaceChrome =
+	| { variant: 'actions' | 'nested'; heading?: never; dismiss?: never }
+	| ({ variant: 'panel' | 'list' } & DrawerChrome)
+
+export type SurfaceOwnProps = SurfaceLayout & SurfaceChrome
+
 /** The three wired pieces, for the surface components in this folder. */
-export function surfaceProps({ variant, className, wrapperClassName }: Omit<SurfaceOwnProps, 'dismissLabel'>) {
+export function surfaceProps(variant: PopoverSurfaceVariant, { className }: SurfaceLayout) {
 	return {
 		className: join(VARIANT_SURFACE_STYLES[variant], className),
-		wrapperProps: { className: join(VARIANT_WRAPPER_STYLES[variant], wrapperClassName) }
+		wrapperProps: { className: VARIANT_WRAPPER_STYLES[variant] }
 	}
 }
 
-export function surfaceDismiss(variant: PopoverSurfaceVariant, label: string, dismiss: 'auto' | 'own') {
-	return dismiss === 'auto' && VARIANT_HAS_DISMISS[variant] ? <DrawerDismiss label={label} /> : null
+export function surfaceTitleRow(heading: string | undefined) {
+	if (heading === undefined) return null
+	return (
+		<div className={drawerTitleRowStyles}>
+			<Ariakit.PopoverHeading className="min-w-0 flex-1 truncate label-md text-primary">
+				{heading}
+			</Ariakit.PopoverHeading>
+			<DrawerDismiss label={`Close ${heading}`} />
+		</div>
+	)
 }
 
-type PopoverSurfaceProps = SurfaceOwnProps & Omit<Ariakit.PopoverProps, 'className' | 'wrapperProps'>
+type PopoverSurfaceProps = SurfaceOwnProps & Omit<Ariakit.PopoverProps, 'className' | 'wrapperProps' | 'title'>
 
 export function PopoverSurface({
 	variant,
 	className,
-	wrapperClassName,
-	dismissLabel = 'Close',
-	dismiss = 'auto',
+	heading,
+	dismiss: _dismiss,
 	children,
 	gutter = 6,
 	portal = true,
@@ -152,24 +236,27 @@ export function PopoverSurface({
 			gutter={gutter}
 			portal={portal}
 			unmountOnHide={unmountOnHide}
-			{...surfaceProps({ variant, className, wrapperClassName })}
+			{...surfaceProps(variant, { className })}
 		>
-			{surfaceDismiss(variant, dismissLabel, dismiss)}
+			{surfaceTitleRow(heading)}
 			{children}
 		</Ariakit.Popover>
 	)
 }
 
-type ComboboxSurfaceProps = { variant?: PopoverSurfaceVariant | 'search-results' } & Omit<SurfaceOwnProps, 'variant'> &
-	Omit<Ariakit.ComboboxPopoverProps, 'className' | 'wrapperProps'>
+type ComboboxSurfaceProps = SurfaceLayout &
+	(
+		| { variant: 'search-results' | 'actions' | 'nested'; heading?: never; dismiss?: never }
+		| ({ variant?: 'panel' | 'list' } & DrawerChrome)
+	) &
+	Omit<Ariakit.ComboboxPopoverProps, 'className' | 'wrapperProps' | 'title'>
 
 /** Combobox results are a list by nature, so `variant` defaults to `list`. */
 export function ComboboxSurface({
 	variant = 'list',
 	className,
-	wrapperClassName,
-	dismissLabel = 'Close options',
-	dismiss = 'auto',
+	heading,
+	dismiss: _dismiss,
 	children,
 	gutter = 6,
 	portal = true,
@@ -188,11 +275,13 @@ export function ComboboxSurface({
 							'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm',
 							className
 						),
-						wrapperProps: { className: wrapperClassName }
+						// Results match their field's edges. The default 8px viewport padding is wider than the 4px
+						// phone page gutter, so it pushed full-width results 4px right of their field.
+						overflowPadding: 0
 					}
-				: surfaceProps({ variant, className, wrapperClassName }))}
+				: surfaceProps(variant, { className }))}
 		>
-			{variant === 'search-results' ? null : surfaceDismiss(variant, dismissLabel, dismiss)}
+			{surfaceTitleRow(heading)}
 			{children}
 		</Ariakit.ComboboxPopover>
 	)

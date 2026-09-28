@@ -507,6 +507,7 @@ export function AdapterByChainChart({
 				leading={
 					<>
 						<Select
+							heading="Chart view"
 							allValues={CHART_VIEW_MODE_OPTIONS}
 							selectedValues={chartViewMode}
 							setSelectedValues={(value: string) => onChangeChartViewMode(value as AdapterByChainViewMode)}
@@ -517,6 +518,7 @@ export function AdapterByChainChart({
 						/>
 						{chartViewMode === 'Breakdown' ? (
 							<Select
+								heading="Chart type"
 								allValues={CHART_KIND_OPTIONS}
 								selectedValues={
 									breakdownChartState.chartKind === 'treemap'
@@ -536,6 +538,7 @@ export function AdapterByChainChart({
 						) : null}
 						{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
 							<Select
+								heading="Values"
 								allValues={BAR_VALUE_MODE_OPTIONS}
 								selectedValues={breakdownChartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
 								setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
@@ -547,6 +550,7 @@ export function AdapterByChainChart({
 						) : null}
 						{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
 							<Select
+								heading="Layout"
 								allValues={BAR_LAYOUT_OPTIONS}
 								selectedValues={breakdownChartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
 								setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}
@@ -948,6 +952,7 @@ export function ChainsByAdapterChart({
 				leading={
 					<>
 						<Select
+							heading="Chart type"
 							allValues={CHART_KIND_OPTIONS}
 							selectedValues={
 								chartState.chartKind === 'treemap'
@@ -966,6 +971,7 @@ export function ChainsByAdapterChart({
 						/>
 						{chartState.chartKind === 'bar' ? (
 							<Select
+								heading="Values"
 								allValues={BAR_VALUE_MODE_OPTIONS}
 								selectedValues={chartState.valueMode === 'relative' ? 'Relative' : 'Absolute'}
 								setSelectedValues={(value: string) => onChangeValueMode(value as ChainsByAdapterValueMode)}
@@ -977,6 +983,7 @@ export function ChainsByAdapterChart({
 						) : null}
 						{chartState.chartKind === 'bar' ? (
 							<Select
+								heading="Layout"
 								allValues={BAR_LAYOUT_OPTIONS}
 								selectedValues={chartState.barLayout === 'separate' ? 'Separate' : 'Stacked'}
 								setSelectedValues={(value: string) => onChangeBarLayout(value as ChainsByAdapterBarLayout)}

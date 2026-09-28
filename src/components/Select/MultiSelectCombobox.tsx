@@ -2,13 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
-import {
-	popoverMultiSelectCheckStyles,
-	popoverRowWithBorderStyles,
-	popoverSearchBlockStyles,
-	popoverSeeMoreStyles
-} from '~/ui/Popover'
+import { popoverMultiSelectCheckStyles, popoverRowWithBorderStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { LoadingIndicator } from '~/ui/Status'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
@@ -19,6 +13,7 @@ const DEFAULT_VIEWABLE_MATCHES = 10
 
 export function MultiSelectCombobox({
 	data,
+	heading,
 	placeholder,
 	selectedValues,
 	setSelectedValues,
@@ -28,6 +23,8 @@ export function MultiSelectCombobox({
 	emptyMessage = 'No options found'
 }: {
 	data: ReadonlyArray<MultiSelectOption>
+	/** Accessible name of the search results. */
+	heading: string
 	placeholder: string
 	selectedValues: Array<string>
 	setSelectedValues: (values: Array<string>) => void
@@ -56,6 +53,7 @@ export function MultiSelectCombobox({
 	const [open, setOpen] = useState(false)
 
 	const comboboxRef = useRef<HTMLDivElement>(null)
+	const anchorRef = useRef<HTMLSpanElement>(null)
 
 	// Closing by any route (selection, Escape, outside click) clears the search, so the next open starts
 	// from the full list.
@@ -92,7 +90,10 @@ export function MultiSelectCombobox({
 			open={open}
 			setOpen={setOpenAndResetSearch}
 		>
-			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page focus-within:border-brand">
+			<span
+				ref={anchorRef}
+				className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page focus-within:border-brand"
+			>
 				{selectedValues.length > 0 ? (
 					<div className="flex flex-wrap items-center gap-1 pl-1">
 						{selectedValues.map((value) => (
@@ -120,17 +121,14 @@ export function MultiSelectCombobox({
 					<Icon name="chevron-down" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />
 				)}
 			</span>
-			<ComboboxSurface preventBodyScroll sameWidth>
-				<span className={popoverSearchBlockStyles}>
-					<input
-						placeholder="Search..."
-						className={`${inputStyles} w-full`}
-						onInput={(e) => {
-							updateSearch(e.currentTarget.value)
-						}}
-					/>
-				</span>
-
+			<ComboboxSurface
+				variant="search-results"
+				aria-label={heading}
+				// Chips reduce the input width; anchor results to the whole control.
+				getAnchorRect={() => anchorRef.current?.getBoundingClientRect() ?? null}
+				sameWidth
+				className="max-h-[min(400px,var(--popover-available-height))]"
+			>
 				<Ariakit.ComboboxList ref={comboboxRef}>
 					{isLoading ? (
 						<p role="status" aria-live="polite" className="flex justify-center px-3 py-6">

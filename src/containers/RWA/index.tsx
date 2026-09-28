@@ -342,7 +342,9 @@ export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolea
 			{/* <Announcement>
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
-			{props.hideEntityNav ? null : <RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />}
+			{props.hideEntityNav ? null : (
+				<RowLinksWithDropdown heading={MODE_LINKS_HEADING[mode]} links={navLinks} activeLink={selectedModeLabel} />
+			)}
 			<RWAOverviewFilters {...filterProps} leading={tableControls} />
 			{props.platformPage && platformKpi ? (
 				<SummaryCardGrid>
@@ -382,6 +384,13 @@ const getRWAOverviewMode = (props: IRWAAssetsOverview): RWAOverviewMode => {
 	if (props.categoryLinks.length > 0) return 'category'
 	if (props.platformLinks.length > 0) return 'platform'
 	return 'chain'
+}
+
+const MODE_LINKS_HEADING: Record<RWAOverviewMode, string> = {
+	chain: 'Chains',
+	category: 'Categories',
+	platform: 'Platforms',
+	assetGroup: 'Asset groups'
 }
 
 const getModeLinks = (

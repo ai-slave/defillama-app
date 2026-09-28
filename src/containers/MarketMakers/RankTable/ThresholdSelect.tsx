@@ -13,7 +13,7 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 				<span className="hidden min-[713px]:inline">Threshold</span>
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface variant="list" className="z-50 min-w-[10rem]">
+			<ComboboxSurface variant="list" heading="Threshold" className="z-50 min-w-[10rem]">
 				{THRESHOLDS.map((threshold) => (
 					<Ariakit.ComboboxItem key={threshold} value={threshold} className={popoverRowWithBorderStyles}>
 						<span>{threshold} Threshold</span>

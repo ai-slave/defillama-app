@@ -3,7 +3,6 @@ import { useRef } from 'react'
 import { readSelectionFromQuery, updateQueryFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SelectTriggerSize } from '~/components/Select/types'
-import { nestedMenuActionButtonStyles, popoverActionButtonStyles } from '~/ui/Popover'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -35,6 +34,7 @@ export function FilterByChain({ chainList = EMPTY_ARRAY, evmChains, nestedMenu, 
 
 	return (
 		<SelectWithCombobox
+			heading="Chains"
 			variant="default"
 			label="Chains"
 			allValues={chainList}
@@ -47,22 +47,7 @@ export function FilterByChain({ chainList = EMPTY_ARRAY, evmChains, nestedMenu, 
 				}
 				prevSelectionRef.current = new Set(values)
 			}}
-			customHeader={
-				evmOptions.length > 0 ? (
-					// Same bar treatment as the picker's Deselect All / Select All row below it. The row tucks into
-					// the search block's bottom padding so the two gaps don't stack, and the button keeps even
-					// padding so its hover background stays centered on the label.
-					<span className="-mt-2 flex w-full border-b border-subtle body-sm text-link">
-						<button
-							type="button"
-							onClick={selectEvmChains}
-							className={`flex-1 ${nestedMenu ? nestedMenuActionButtonStyles : popoverActionButtonStyles}`}
-						>
-							Only EVM chains
-						</button>
-					</span>
-				) : null
-			}
+			quickActions={evmOptions.length > 0 ? [{ label: 'Only EVM chains', onSelect: selectEvmChains }] : undefined}
 			{...(nestedMenu !== undefined ? { nestedMenu } : {})}
 			labelType={selectedChains.length === chainList.length ? 'none' : 'regular'}
 			size={size}

@@ -55,7 +55,11 @@ export function RaisesSearch({ list }: { list?: Array<string> }) {
 			>
 				<Input placeholder="Search Investors..." open={open} setOpen={setOpen} />
 
-				<ComboboxSurface variant="list" wrapperClassName="w-full!">
+				<ComboboxSurface
+					variant="search-results"
+					sameWidth
+					className="max-h-[min(400px,var(--popover-available-height))]"
+				>
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((option: string) => (

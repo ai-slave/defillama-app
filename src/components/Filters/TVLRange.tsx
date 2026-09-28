@@ -71,6 +71,7 @@ export function TVLRange({
 
 	return (
 		<FilterBetweenRange
+			heading={label}
 			{...(minPresets ? { quickPicks: minPresets.map((value) => ({ label: formatPresetLabel(value), value })) } : {})}
 			trigger={
 				variant === 'secondary' ? (

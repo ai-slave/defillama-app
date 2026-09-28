@@ -11,6 +11,8 @@ type RangeQuickPick = { label: string; value: number }
 
 interface IFilterBetweenRange {
 	trigger: ReactNode
+	/** Names the phone drawer; the trigger may carry the current range. */
+	heading: string
 	onSubmit: FormSubmitHandler
 	onClear: () => void
 	nestedMenu?: boolean
@@ -28,6 +30,7 @@ interface IFilterBetweenRange {
 
 export function FilterBetweenRange({
 	trigger,
+	heading,
 	onSubmit: handleSubmit,
 	onClear,
 	nestedMenu,
@@ -86,7 +89,7 @@ export function FilterBetweenRange({
 
 			<PopoverSurface
 				variant="list"
-				dismissLabel="Close range filter"
+				heading={heading}
 				overflowPadding={16} // distance from the boundary edges
 			>
 				<div className="mx-auto w-full sm:w-[260px]">

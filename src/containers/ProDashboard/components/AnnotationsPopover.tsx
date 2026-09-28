@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { DrawerDismiss, PopoverSurface } from '~/ui/PopoverSurface'
 import { isValidAnnotationDate } from '../dashboardConfig/migrate'
 import {
 	DASHBOARD_ANNOTATION_LABEL_MAX_LENGTH,
@@ -42,11 +42,14 @@ export function AnnotationsPopover() {
 				<span>Annotations</span>
 				{annotations.length > 0 ? <ProBadge tone="info">{annotations.length}</ProBadge> : null}
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface variant="panel" gutter={8} dismissLabel="Close annotations" aria-label="Dashboard annotations">
+			<PopoverSurface variant="panel" gutter={8} dismiss="own">
 				<div className="flex w-[340px] max-w-full flex-col">
-					<div className="flex flex-col gap-0.5 border-b border-subtle px-3 py-2">
-						<p className="label-sm text-pro-text-primary">Annotations</p>
-						<p className="body-xs text-pro-text-secondary">Dated marks shown on every time-series chart.</p>
+					<div className="flex items-center gap-2 border-b border-subtle py-2 pr-1 pl-3">
+						<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+							<Ariakit.PopoverHeading className="label-sm text-pro-text-primary">Annotations</Ariakit.PopoverHeading>
+							<p className="body-xs text-pro-text-secondary">Dated marks shown on every time-series chart.</p>
+						</div>
+						<DrawerDismiss label="Close annotations" />
 					</div>
 					{annotations.length === 0 ? (
 						<p className="px-3 py-3 body-sm text-pro-text-secondary">No annotations yet.</p>

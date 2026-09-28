@@ -87,13 +87,17 @@ afterEach(async () => {
 	query = {}
 })
 
-test('Deselect All in the event type picker selects no types and shows no protocols', async () => {
+test('clearing Select all in the event type picker selects no types and shows no protocols', async () => {
 	await act(async () => root.render(table()))
 	expect(typePicker().textContent).toBe('2Next Event Types')
 	expect(container.textContent).toContain('Alpha')
 
 	await click(typePicker())
-	await click([...document.querySelectorAll('button')].find((button) => button.textContent === 'Deselect All')!)
+	await click(
+		[...document.querySelectorAll<HTMLElement>('[role="option"]')].find((option) =>
+			option.textContent?.startsWith('Select all')
+		)!
+	)
 	expect(query).toEqual({ unlockType: 'None' })
 	expect(typePicker().textContent).toBe('0Next Event Types')
 	expect(container.textContent).not.toContain('Alpha')

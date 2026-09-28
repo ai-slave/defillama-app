@@ -488,6 +488,7 @@ export function PeggedAssetInfo({
 							className="mr-auto"
 						/>
 						<Select
+							heading="Chart view"
 							allValues={chartViewOptions}
 							selectedValues={chartView}
 							setSelectedValues={onChartViewChange}

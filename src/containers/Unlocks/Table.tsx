@@ -339,6 +339,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 				</Button>
 
 				<FilterBetweenRange
+					heading="Next 24h Value"
 					trigger={<span>Next 24h Value</span>}
 					onSubmit={handleUnlockValueSubmit}
 					onClear={handleUnlockValueClear}
@@ -350,6 +351,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols, ini
 				/>
 
 				<FilterBetweenRange
+					heading="Next 24h %"
 					trigger={<span>Next 24h %</span>}
 					onSubmit={handleUnlockPercSubmit}
 					onClear={handleUnlockPercClear}

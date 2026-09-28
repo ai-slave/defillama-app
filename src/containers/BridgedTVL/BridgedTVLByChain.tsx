@@ -153,7 +153,7 @@ export function BridgedTVLByChain({
 	return (
 		<>
 			<LinkPreviewCard cardName={chainName} token={chain} />
-			<RowLinksWithDropdown links={chains} activeLink={chainName} />
+			<RowLinksWithDropdown heading="Chains" links={chains} activeLink={chainName} />
 			<SummaryCardGrid>
 				<SummaryStatsCard gap="sm">
 					<h1 className="mb-3 flex items-center gap-2 heading-sm">
@@ -217,6 +217,7 @@ export function BridgedTVLByChain({
 					<ChartPanelToolbar>
 						<div className="mr-auto">
 							<Select
+								heading="Chart type"
 								allValues={chartTypeOptions}
 								selectedValues={chartType}
 								setSelectedValues={(value: string) => {

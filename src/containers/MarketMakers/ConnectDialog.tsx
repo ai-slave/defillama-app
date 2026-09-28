@@ -47,7 +47,7 @@ function InterestSelect({ value, onChange }: { value: string; onChange: (value: 
 				<span className={selected ? '' : 'text-tertiary'}>{selected?.label ?? 'Select an option'}</span>
 				<Ariakit.ComboboxSelectArrow />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface variant="list" sameWidth className="z-50">
+			<ComboboxSurface variant="list" heading="Interest" sameWidth className="z-50">
 				{INTEREST_OPTIONS.map((option) => (
 					<Ariakit.ComboboxItem key={option.value} value={option.value} className={popoverRowWithBorderStyles}>
 						<span>{option.label}</span>
@@ -84,7 +84,11 @@ function TokenCombobox({ onSelect, onManual }: { onSelect: (token: TokenSearchRe
 				autoSelect
 				className={`w-full ${inputStyles}`}
 			/>
-			<ComboboxSurface variant="list" sameWidth className="z-50 max-h-[320px] overflow-y-auto">
+			<ComboboxSurface
+				variant="search-results"
+				sameWidth
+				className="z-50 max-h-[min(320px,var(--popover-available-height))]"
+			>
 				{tokens.map((token) => (
 					<Ariakit.ComboboxItem
 						key={token.searchId}

@@ -21,6 +21,7 @@ export function RWATableGroupBySelect({
 	const options = getRwaGroupByOptions(view, { scope })
 	return (
 		<Select
+			heading="Group by"
 			allValues={options}
 			selectedValues={value}
 			setSelectedValues={(next: string) => {

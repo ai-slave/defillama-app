@@ -10,6 +10,7 @@ interface ILink {
 
 interface IRowLinksProps {
 	links: Array<ILink>
+	heading: string
 	name?: string
 	activeLink?: string
 	alternativeOthersText?: string
@@ -144,6 +145,7 @@ function recalculateFromCache(containerWidth: number, cached: CachedLayout, link
 // Resize uses cached widths for instant recalculation — no DOM churn.
 export function LinksWithDropdown({
 	links = EMPTY_LINKS,
+	heading,
 	name = 'row-links',
 	activeLink,
 	alternativeOthersText,
@@ -244,6 +246,7 @@ export function LinksWithDropdown({
 	if (overflowState.renderMenuOnly) {
 		return (
 			<OtherLinks
+				heading={heading}
 				name={alternativeOthersText ?? 'Others'}
 				keyPrefix={name}
 				isActive={isActiveLinkInList}
@@ -271,6 +274,7 @@ export function LinksWithDropdown({
 			   runs before paint so the user never sees the sentinel. */}
 			{overflowState.isMeasuring || hasOverflow ? (
 				<OtherLinks
+					heading={heading}
 					name={
 						isLinkInDropdown ? (activeLink ?? alternativeOthersText ?? 'Others') : (alternativeOthersText ?? 'Others')
 					}

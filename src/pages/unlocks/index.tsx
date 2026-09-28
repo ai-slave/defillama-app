@@ -179,6 +179,7 @@ function UpcomingUnlockVolumeChart({
 			<ChartPanelToolbar>
 				<div className="mr-auto">
 					<Select
+						heading="Release type"
 						allValues={UPCOMING_UNLOCK_TYPE_OPTIONS}
 						selectedValues={unlockType}
 						setSelectedValues={(value: string) => {

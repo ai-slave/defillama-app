@@ -125,6 +125,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 		<>
 			<div className="w-full">
 				<MultiSelectCombobox
+					heading="Protocols"
 					data={protocolsList}
 					placeholder="Select Protocols..."
 					selectedValues={selectedProtocols}

@@ -4,14 +4,11 @@ import * as React from 'react'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import {
-	nestedMenuActionBarStyles,
-	nestedMenuActionButtonStyles,
 	nestedMenuSeeMoreStyles,
 	nestedMenuSelectRowStyles,
-	popoverActionBarStyles,
-	popoverActionButtonStyles,
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
+	popoverScrollAreaStyles,
 	popoverSeeMoreStyles,
 	popoverSingleSelectCheckStyles
 } from '~/ui/Popover'
@@ -19,15 +16,19 @@ import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
 
+/** With `labelType="none"` the trigger shows the current value, so `heading` names the phone drawer; otherwise the label does. */
+type SelectLabelProps =
+	| { label: React.ReactNode; labelType?: 'regular' | 'smol' | 'none'; heading: string }
+	| { label: React.ReactNode; labelType?: 'regular' | 'smol'; heading?: undefined }
+
 interface ISelectBase {
 	allValues: SelectValues
-	label: React.ReactNode
 	nestedMenu?: boolean
-	labelType?: 'regular' | 'smol' | 'none'
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
 	/** Placement and layout classes appended to the trigger; `variant` and `size` own its look. */
@@ -62,13 +63,13 @@ interface ISelectWithStateSingle extends ISelectBase {
 	setSelectedValues: (value: string) => void
 }
 
-type ISelect = ISelectWithUrlParams | ISelectWithStateArray | ISelectWithStateSingle
+type ISelect = SelectLabelProps & (ISelectWithUrlParams | ISelectWithStateArray | ISelectWithStateSingle)
 
-function isUrlSelect(props: ISelect): props is ISelectWithUrlParams {
+function isUrlSelect(props: ISelect): props is ISelect & ISelectWithUrlParams {
 	return typeof props.includeQueryKey === 'string'
 }
 
-function isMultiStateSelect(props: ISelect): props is ISelectWithStateArray {
+function isMultiStateSelect(props: ISelect): props is ISelect & ISelectWithStateArray {
 	return !isUrlSelect(props) && Array.isArray(props.selectedValues)
 }
 
@@ -78,6 +79,7 @@ export function Select(props: ISelect) {
 		label,
 		nestedMenu,
 		labelType = 'regular',
+		heading,
 		variant,
 		size,
 		className,
@@ -170,6 +172,9 @@ export function Select(props: ISelect) {
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
 
 	const selectRef = React.useRef<HTMLDivElement>(null)
+	const selectAllState = getSelectAllState(getAllKeys(), canSelectOnlyOne ? [] : selectedValues)
+	const toggleSelectAll = selectAllState === 'all' ? clearAll : toggleAll
+	const selectAllContent = <SelectAllContent label="Select all" state={selectAllState} />
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
 
 	const NestedSelectItem = canSelectOnlyOne ? Ariakit.MenuItemRadio : Ariakit.MenuItemCheckbox
@@ -193,22 +198,22 @@ export function Select(props: ISelect) {
 		const previousCount = viewableMatches
 		setViewableMatches((prev) => prev + 20)
 		const containerRef = nestedMenuRef.current ? nestedMenuRef : selectRef
-		focusFirstNewItem(containerRef, nestedMenu ? '[role^="menuitem"]' : '[role="option"]', previousCount)
+		// The index skips the "Select all" row that leads a multi-select list.
+		focusFirstNewItem(
+			containerRef,
+			nestedMenu ? '[role^="menuitem"]' : '[role="option"]',
+			(showCheckboxes ? 1 : 0) + previousCount
+		)
 	}
 
 	if (nestedMenu) {
 		return (
 			<NestedMenu combobox={null} label={label} render={<button type="button" />}>
-				<div ref={nestedMenuRef}>
+				<div ref={nestedMenuRef} className={popoverScrollAreaStyles}>
 					{showCheckboxes ? (
-						<span className={nestedMenuActionBarStyles}>
-							<button type="button" onClick={clearAll} className={nestedMenuActionButtonStyles}>
-								Deselect All
-							</button>
-							<button type="button" onClick={toggleAll} className={nestedMenuActionButtonStyles}>
-								Select All
-							</button>
-						</span>
+						<NestedMenuItem hideOnClick={false} onClick={toggleSelectAll} className={nestedMenuSelectRowStyles}>
+							{selectAllContent}
+						</NestedMenuItem>
 					) : null}
 					{allValues.slice(0, viewableMatches).map((option) => (
 						<NestedSelectItem
@@ -286,20 +291,25 @@ export function Select(props: ISelect) {
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface hideOnInteractOutside className={popoverClassName} ref={selectRef}>
+			<ComboboxSurface
+				hideOnInteractOutside
+				heading={heading ?? labelText}
+				className={popoverClassName}
+				ref={selectRef}
+			>
 				{allValues.length > 0 ? (
-					<>
+					<div className={popoverScrollAreaStyles}>
 						{showCheckboxes ? (
-							<span className={popoverActionBarStyles}>
-								<button type="button" onClick={clearAll} className={popoverActionButtonStyles}>
-									Deselect All
-								</button>
-								<button type="button" onClick={toggleAll} className={popoverActionButtonStyles}>
-									Select All
-								</button>
-							</span>
+							<Ariakit.ComboboxItem
+								value={SELECT_ALL_VALUE}
+								selectValueOnClick={false}
+								hideOnClick={false}
+								onClick={toggleSelectAll}
+								className={`${popoverRowWithBorderStyles} gap-2`}
+							>
+								{selectAllContent}
+							</Ariakit.ComboboxItem>
 						) : null}
-
 						{allValues.slice(0, viewableMatches).map((option) => (
 							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
@@ -343,7 +353,7 @@ export function Select(props: ISelect) {
 								See more...
 							</Ariakit.ComboboxItem>
 						) : null}
-					</>
+					</div>
 				) : (
 					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
 						No results found

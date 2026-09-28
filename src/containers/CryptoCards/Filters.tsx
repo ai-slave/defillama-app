@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { ResetFiltersButton } from '~/components/Filters/ResetFiltersButton'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
+import { NestedMenuToggle } from '~/components/NestedMenu'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { Card } from '~/ui/Card'
@@ -34,6 +35,7 @@ function AvailabilityFilter({ nestedMenu, rows }: { nestedMenu: boolean; rows: A
 
 	return (
 		<SelectWithCombobox
+			heading="Availability"
 			allValues={countryOptions}
 			selectedValues={[country ?? ALL_COUNTRIES_SELECTION]}
 			setSelectedValues={(values) => {
@@ -52,7 +54,7 @@ function AvailabilityFilter({ nestedMenu, rows }: { nestedMenu: boolean; rows: A
 			variant="filter"
 			size="md"
 			searchPlaceholder="Search countries..."
-			customHeader={
+			headerRow={
 				<Checkbox
 					variant="filter-borderless"
 					checked={includeUnknown}
@@ -114,14 +116,15 @@ function OnlyWithCheckbox({
 	children: ReactNode
 }) {
 	const router = useRouter()
-	return (
-		<Checkbox
-			variant={nestedMenu ? 'filter-borderless' : 'filter'}
-			checked={checked}
-			onChange={(event) => {
-				void pushShallowQuery(router, { [queryKey]: event.target.checked ? 'true' : undefined })
-			}}
-		>
+	const setChecked = (next: boolean) => {
+		void pushShallowQuery(router, { [queryKey]: next ? 'true' : undefined })
+	}
+	return nestedMenu ? (
+		<NestedMenuToggle checked={checked} onChange={setChecked}>
+			{children}
+		</NestedMenuToggle>
+	) : (
+		<Checkbox variant="filter" checked={checked} onChange={(event) => setChecked(event.target.checked)}>
 			{children}
 		</Checkbox>
 	)

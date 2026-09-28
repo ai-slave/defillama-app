@@ -307,7 +307,7 @@ export function BridgesOverviewByChain({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={chainOptions} activeLink={selectedChain} />
+			<RowLinksWithDropdown heading="Chains" links={chainOptions} activeLink={selectedChain} />
 
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">

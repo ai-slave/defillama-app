@@ -101,6 +101,7 @@ export function MyDashboardsControls({
 				size="md"
 			/>
 			<Select
+				heading="Sort by"
 				variant="pro"
 				size="md"
 				allValues={MY_DASHBOARDS_SORT_OPTIONS}

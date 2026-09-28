@@ -64,6 +64,7 @@ export function LoopCountSelect() {
 	return (
 		<Tooltip content={LOOP_HELP}>
 			<Select
+				heading="Loops"
 				allValues={LOOP_OPTIONS}
 				selectedValues={String(value)}
 				setSelectedValues={onChange}

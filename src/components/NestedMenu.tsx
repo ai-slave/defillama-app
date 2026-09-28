@@ -1,14 +1,17 @@
 import * as Ariakit from '@ariakit/react'
+import { useId, type ReactNode } from 'react'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuSurface } from '~/ui/MenuSurface'
 import {
 	nestedMenuDisclosureIconStyles,
-	nestedMenuHeaderIconButtonStyles,
 	nestedMenuRootFilterButtonStyles,
-	nestedMenuRootRowStyles
+	nestedMenuRootRowStyles,
+	nestedMenuSelectRowStyles,
+	popoverMultiSelectCheckStyles
 } from '~/ui/Popover'
-import { DrawerDismiss } from '~/ui/PopoverSurface'
+import { DrawerDismiss, NestedDrawerHeader } from '~/ui/PopoverSurface'
 
 interface NestedMenuItemProps extends Ariakit.MenuItemProps {
 	ref?: React.Ref<HTMLDivElement>
@@ -48,40 +51,56 @@ export function NestedMenu({ label, children, combobox, buttonVariant = 'default
 				)}
 			</Ariakit.MenuButton>
 			<MenuSurface
-				variant={menu.parent ? 'nested' : 'list'}
-				dismiss="own"
+				{...(menu.parent ? { variant: 'nested' as const } : { variant: 'list' as const, dismiss: 'own' as const })}
 				hideOnInteractOutside
 				gutter={menu.parent ? 4 : 8}
 				shift={menu.parent ? -9 : 0}
 				className={menu.parent ? 'z-20' : 'z-10'}
 			>
 				{menu.parent ? (
-					<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 sm:hidden">
-						<button
-							type="button"
-							className={nestedMenuHeaderIconButtonStyles}
-							onClick={() => {
-								menu.hide()
-							}}
-							aria-label="Back to parent menu"
-						>
-							<Icon name="chevron-left" className="size-4" />
-						</button>
-						<Ariakit.MenuHeading className="min-w-0 truncate text-center label-md text-primary">
-							{label}
-						</Ariakit.MenuHeading>
-						<Ariakit.MenuDismiss onClick={() => menu.hideAll()} className={nestedMenuHeaderIconButtonStyles}>
-							<Icon name="x" className="size-4" />
-							<span className="sr-only">Close menu</span>
-						</Ariakit.MenuDismiss>
-					</div>
+					<NestedDrawerHeader
+						title={label}
+						backLabel="Back to parent menu"
+						onBack={menu.hide}
+						closeLabel="Close menu"
+						onClose={menu.hideAll}
+					/>
 				) : (
-					<div className="flex min-h-12 items-center justify-end px-2 py-1 sm:hidden">
+					// pr-2 plus the close button's 8px inset puts the x on the 16px nested-row edge.
+					<div className="flex min-h-12 items-center gap-2 pt-2 pr-2 pl-4 sm:hidden">
+						<Ariakit.MenuHeading className="min-w-0 flex-1 truncate label-md text-primary">{label}</Ariakit.MenuHeading>
 						<DrawerDismiss label="Close menu" />
 					</div>
 				)}
 				{children}
 			</MenuSurface>
 		</Ariakit.MenuProvider>
+	)
+}
+
+/** An on/off filter inside the phone filter menu: a check row the arrow keys reach, like the select rows. */
+export function NestedMenuToggle({
+	checked,
+	onChange,
+	children
+}: {
+	checked: boolean
+	onChange: (checked: boolean) => void
+	children: ReactNode
+}) {
+	const name = useId()
+	return (
+		<Ariakit.MenuItemCheckbox
+			name={name}
+			checked={checked}
+			onChange={(event) => onChange(event.currentTarget.checked)}
+			hideOnClick={false}
+			className={nestedMenuSelectRowStyles}
+		>
+			<span className="flex min-w-0 items-center gap-2">{children}</span>
+			<span className={popoverMultiSelectCheckStyles(checked)} aria-hidden>
+				{checked ? <SelectCheckIcon /> : null}
+			</span>
+		</Ariakit.MenuItemCheckbox>
 	)
 }

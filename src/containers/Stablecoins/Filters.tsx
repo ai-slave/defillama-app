@@ -87,6 +87,7 @@ function McapRange({ nestedMenu }: { nestedMenu: boolean }) {
 
 	return (
 		<FilterBetweenRange
+			heading="Mcap"
 			trigger={
 				<>
 					{min || max ? (

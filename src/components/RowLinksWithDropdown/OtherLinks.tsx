@@ -7,18 +7,21 @@ import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuSurface } from '~/ui/MenuSurface'
 import { NoResults } from '~/ui/NoResults'
-import { popoverRowWithBorderStyles, popoverSearchBlockStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { popoverRowWithBorderStyles, popoverScrollAreaStyles, popoverSeeMoreStyles } from '~/ui/Popover'
+import { PopoverHeader } from '~/ui/PopoverHeader'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 interface IProps {
 	options: Array<{ label: string; to: string }>
+	/** Names the drawer; `name` is the trigger label, which can be the active link. */
+	heading: string
 	name: string
 	keyPrefix?: string
 	isActive: boolean
 	className?: string
 }
 
-export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, className }: IProps) {
+export function OtherLinks({ options, heading, name, keyPrefix = 'row-links', isActive, className }: IProps) {
 	const [searchValue, setSearchValue] = useState('')
 	const matches = useMemo(() => {
 		if (!searchValue) return options
@@ -60,12 +63,10 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 				</Ariakit.MenuButton>
 
 				{/* Stays mounted: header menu that must open instantly on phones (#2640). */}
-				<MenuSurface variant="panel" unmountOnHide={false} gutter={6}>
-					<span className={popoverSearchBlockStyles}>
-						<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />
-					</span>
+				<MenuSurface variant="panel" heading={heading} unmountOnHide={false} gutter={6}>
+					<PopoverHeader search={<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />} />
 					{matches.length > 0 ? (
-						<Ariakit.ComboboxList ref={comboboxRef}>
+						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
 							{matches.slice(0, viewableMatches).map((value) => (
 								<Item label={value.label} to={value.to} key={`${keyPrefix}:${value.label}:${value.to}`} />
 							))}

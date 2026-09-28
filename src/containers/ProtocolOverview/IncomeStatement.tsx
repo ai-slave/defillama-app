@@ -780,6 +780,7 @@ export function IncomeStatement({
 								/>
 								{sankeyGroupBy !== 'Cumulative' && sankeyPeriodSelectOptions.length > 0 ? (
 									<Select
+										heading="Period"
 										allValues={sankeyPeriodSelectOptions}
 										selectedValues={validSankeyPeriod ?? ''}
 										setSelectedValues={(value: string) => startTransition(() => setSelectedSankeyPeriod(value))}

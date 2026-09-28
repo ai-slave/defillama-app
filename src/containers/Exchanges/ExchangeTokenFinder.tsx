@@ -174,6 +174,7 @@ export function ExchangeTokenFinder({
 				<div className="flex flex-wrap gap-2">
 					<div className="min-w-0 basis-full lg:flex-1 lg:basis-96">
 						<MultiSelectCombobox
+							heading="Tokens"
 							data={tokenOptions}
 							placeholder="Select up to 8 tokens"
 							selectedValues={selectedTokens}

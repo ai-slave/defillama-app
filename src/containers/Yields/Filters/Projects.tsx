@@ -101,6 +101,7 @@ export function YieldProjects({ projectList, projectGroups = EMPTY_GROUPS, label
 
 	return (
 		<SelectWithCombobox
+			heading={label ?? 'Projects'}
 			variant="default"
 			size="sm"
 			allValues={options}

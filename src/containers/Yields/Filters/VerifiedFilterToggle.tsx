@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router'
-import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
+import { NestedMenuToggle } from '~/components/NestedMenu'
 import { Button } from '~/ui/Button'
-import { nestedMenuSelectRowStyles, popoverMultiSelectCheckStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
@@ -34,15 +33,10 @@ export function VerifiedFilterToggle({ nestedMenu = false }: { nestedMenu?: bool
 
 	if (nestedMenu) {
 		return (
-			<button type="button" onClick={toggle} aria-pressed={active} className={nestedMenuSelectRowStyles}>
-				<span className="flex min-w-0 items-center gap-2">
-					{glyph}
-					<span className="truncate">{name}</span>
-				</span>
-				<span className={popoverMultiSelectCheckStyles(active)} aria-hidden>
-					{active ? <SelectCheckIcon /> : null}
-				</span>
-			</button>
+			<NestedMenuToggle checked={active} onChange={toggle}>
+				{glyph}
+				<span className="truncate">{name}</span>
+			</NestedMenuToggle>
 		)
 	}
 

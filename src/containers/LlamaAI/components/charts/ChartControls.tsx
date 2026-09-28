@@ -114,6 +114,7 @@ export function ChartControls({
 
 			{controls.showCumulative ? (
 				<Select
+					heading="Display"
 					size="md"
 					allValues={CUMULATIVE_DISPLAY_OPTIONS}
 					selectedValues={controls.state.cumulative ? 'Cumulative' : 'Individual'}
@@ -132,6 +133,7 @@ export function ChartControls({
 
 			{controls.showStack ? (
 				<Select
+					heading="Stacking"
 					size="md"
 					allValues={STACKING_DISPLAY_OPTIONS}
 					selectedValues={controls.state.stacked ? 'Stacked' : 'Separate'}
@@ -148,6 +150,7 @@ export function ChartControls({
 
 			{controls.showPercentage ? (
 				<Select
+					heading="Values"
 					size="md"
 					allValues={VALUE_TYPE_OPTIONS}
 					selectedValues={controls.state.percentage ? '% Percentage' : '$ Absolute'}
@@ -163,6 +166,7 @@ export function ChartControls({
 
 			{controls.showLogScale ? (
 				<Select
+					heading="Scale"
 					size="md"
 					allValues={SCALE_OPTIONS}
 					selectedValues={controls.state.logScale ? 'Log' : 'Linear'}
@@ -178,6 +182,7 @@ export function ChartControls({
 
 			{controls.showHallmarks ? (
 				<Select
+					heading="Hallmarks"
 					size="md"
 					allValues={HALLMARK_OPTIONS}
 					selectedValues={controls.state.showHallmarks ? 'Show Hallmarks' : 'Hide Hallmarks'}
@@ -193,6 +198,7 @@ export function ChartControls({
 
 			{controls.showLabels ? (
 				<Select
+					heading="Labels"
 					size="md"
 					allValues={LABEL_OPTIONS}
 					selectedValues={controls.state.showLabels ? 'Show' : 'Hide'}

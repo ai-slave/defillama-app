@@ -50,6 +50,7 @@ export function AvailableRange({
 
 	return (
 		<FilterBetweenRange
+			heading="Available"
 			trigger={
 				min || max ? (
 					<>

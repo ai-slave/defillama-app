@@ -490,6 +490,7 @@ export function RWAOverviewChartPanel({
 	)
 	const chartViewSwitch = (
 		<Select
+			heading="Chart view"
 			allValues={chartViewOptions}
 			selectedValues={chartView}
 			setSelectedValues={(value: string) => {

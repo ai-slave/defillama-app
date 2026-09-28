@@ -78,6 +78,7 @@ function TokenBorrowAvailableRange({
 
 	return (
 		<FilterBetweenRange
+			heading="Available"
 			trigger={
 				hasRange ? (
 					<>
@@ -353,6 +354,7 @@ export function TokenBorrowSection({
 									{(nestedMenu) => (
 										<>
 											<SelectWithCombobox
+												heading="Chains"
 												label="Chains"
 												allValues={chainList}
 												selectedValues={selectedChains}

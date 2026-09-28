@@ -2,7 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
-import { nestedMenuHeaderIconButtonStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { NestedDrawerHeader } from '~/ui/PopoverSurface'
 import { useMoveSessionToProject, useProjectList } from './hooks'
 
 interface MoveToProjectMenuItemProps {
@@ -32,25 +33,13 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				<Icon name="chevron-right" height={14} width={14} className="shrink-0 text-tertiary" />
 			</Ariakit.MenuItem>
 			<MenuSurface variant="nested" composite={false} aria-label="Move to project" gutter={4} className="z-50">
-				<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 sm:hidden">
-					<button
-						type="button"
-						aria-label="Back to session actions"
-						className={nestedMenuHeaderIconButtonStyles}
-						onClick={menu.hide}
-					>
-						<Icon name="chevron-left" className="size-4" />
-					</button>
-					<Ariakit.DialogHeading className="text-center label-md text-primary">Move to project</Ariakit.DialogHeading>
-					<button
-						type="button"
-						aria-label="Close session menus"
-						className={nestedMenuHeaderIconButtonStyles}
-						onClick={menu.hideAll}
-					>
-						<Icon name="x" className="size-4" />
-					</button>
-				</div>
+				<NestedDrawerHeader
+					title="Move to project"
+					backLabel="Back to session actions"
+					onBack={menu.hide}
+					closeLabel="Close session menus"
+					onClose={menu.hideAll}
+				/>
 				{projects.isFetching ? (
 					<div role="status" className="flex items-center justify-center gap-2 px-3 py-2 body-sm">
 						<LoadingSpinner size={12} />

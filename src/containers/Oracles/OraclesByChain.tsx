@@ -112,7 +112,7 @@ export function OraclesByChain({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={chainLinks} activeLink={activeLink} />
+			<RowLinksWithDropdown heading="Chains" links={chainLinks} activeLink={activeLink} />
 
 			<div className="flex flex-col gap-2 xl:flex-row">
 				<ChartPanel className="isolate flex-1">

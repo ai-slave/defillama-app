@@ -292,14 +292,14 @@ function Capability({
 				getAnchorRect={getAnchorRect}
 				gutter={14}
 				flip={false}
-				dismissLabel={`Close ${cap.name} prompts`}
+				dismiss="own"
 				className="z-50 w-[min(calc(100vw-32px),42rem)] max-w-xl overflow-hidden sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-subtle py-1 pr-2 pl-3">
 					<Icon name={cap.icon} height={14} width={14} className="text-brand" />
 					<Ariakit.PopoverHeading className="label-md text-primary">{cap.name}</Ariakit.PopoverHeading>
 					<Ariakit.PopoverDismiss
-						render={<Button type="button" variant="ghost" size="md" square className="ml-auto max-sm:hidden" />}
+						render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
 						aria-label={`Close ${cap.name} prompts`}
 					>
 						<Icon name="x" className="size-4" />

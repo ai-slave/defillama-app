@@ -233,6 +233,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 						) : null}
 						{presentation.offersCumulative ? (
 							<Select
+								heading="Display"
 								size="sm"
 								allValues={CUMULATIVE_DISPLAY_OPTIONS}
 								selectedValues={presentation.cumulative ? 'Cumulative' : 'Individual'}

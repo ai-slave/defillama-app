@@ -43,7 +43,7 @@ export function Menu({
 				{name}
 				<Ariakit.MenuButtonArrow />
 			</Ariakit.MenuButton>
-			<MenuSurface variant="panel" hideOnInteractOutside portal={shouldPortalMenu}>
+			<MenuSurface variant="panel" heading={name} hideOnInteractOutside portal={shouldPortalMenu}>
 				{_options.map(({ item: value, key }) =>
 					onItemClick ? (
 						<Ariakit.MenuItem

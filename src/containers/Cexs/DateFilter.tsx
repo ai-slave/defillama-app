@@ -175,6 +175,7 @@ export function DateFilter({
 				</Ariakit.PopoverDisclosure>
 				<PopoverSurface
 					variant="list"
+					heading="Custom range"
 					overflowPadding={16} // distance from the boundary edges
 				>
 					<div className="mx-auto w-full sm:w-[260px]">

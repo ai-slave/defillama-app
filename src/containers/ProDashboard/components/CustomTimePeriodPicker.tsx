@@ -124,7 +124,7 @@ export function CustomTimePeriodPicker({
 				</span>
 			</Ariakit.PopoverDisclosure>
 
-			<PopoverSurface variant="list" gutter={8} style={{ minWidth: '300px' }}>
+			<PopoverSurface variant="list" heading="Custom time period" gutter={8} style={{ minWidth: '300px' }}>
 				<form onSubmit={handleApply} className="flex flex-col gap-4 p-4">
 					<ProSegmented<'relative' | 'absolute'>
 						value={mode}

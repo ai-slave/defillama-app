@@ -56,7 +56,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
+			<RowLinksWithDropdown heading="Chains" links={props.chains} activeLink={props.chain} />
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">
 					{props.chain !== 'All' ? (

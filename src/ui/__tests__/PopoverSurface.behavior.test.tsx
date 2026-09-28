@@ -24,15 +24,29 @@ function surfaceOf(role: string) {
 	return surface!
 }
 
+function accessibleName(element: HTMLElement) {
+	const labelledBy = element.getAttribute('aria-labelledby')
+	return labelledBy ? document.getElementById(labelledBy)?.textContent : element.getAttribute('aria-label')
+}
+
 async function renderMenu(variant: PopoverSurfaceVariant) {
+	const items = (
+		<>
+			<MenuItem>Download image</MenuItem>
+			<MenuItem>Copy to clipboard</MenuItem>
+		</>
+	)
 	await act(async () =>
 		root.render(
 			<Ariakit.MenuProvider defaultOpen>
 				<Ariakit.MenuButton>Open</Ariakit.MenuButton>
-				<MenuSurface variant={variant}>
-					<MenuItem>Download image</MenuItem>
-					<MenuItem>Copy to clipboard</MenuItem>
-				</MenuSurface>
+				{variant === 'panel' || variant === 'list' ? (
+					<MenuSurface variant={variant} heading="Export">
+						{items}
+					</MenuSurface>
+				) : (
+					<MenuSurface variant={variant}>{items}</MenuSurface>
+				)}
 			</Ariakit.MenuProvider>
 		)
 	)
@@ -44,38 +58,43 @@ test.each([
 	['panel', true],
 	['list', true],
 	['nested', false]
-] as const)('a %s menu shows its items with a drawer close button: %s', async (variant, hasDismiss) => {
+] as const)('a %s menu shows its items with a titled drawer close button: %s', async (variant, hasTitleRow) => {
 	const menu = await renderMenu(variant)
 	expect(menu.querySelectorAll('[role="menuitem"]')).toHaveLength(2)
-	expect(menu.querySelector('button[aria-label="Close menu"]') != null).toBe(hasDismiss)
+	expect(menu.querySelector('button[aria-label="Close Export"]') != null).toBe(hasTitleRow)
+	expect(accessibleName(menu) === 'Export').toBe(hasTitleRow)
 })
 
-test('a popover panel labels its close button', async () => {
+test('a popover panel is named by its heading', async () => {
 	await act(async () =>
 		root.render(
 			<Ariakit.PopoverProvider defaultOpen>
 				<Ariakit.PopoverDisclosure>Open</Ariakit.PopoverDisclosure>
-				<PopoverSurface variant="panel" dismissLabel="Close saved views">
+				<PopoverSurface variant="panel" heading="Saved views">
 					<form>view</form>
 				</PopoverSurface>
 			</Ariakit.PopoverProvider>
 		)
 	)
-	expect(surfaceOf('dialog').querySelector('button[aria-label="Close saved views"]')).not.toBeNull()
+	const dialog = surfaceOf('dialog')
+	expect(accessibleName(dialog)).toBe('Saved views')
+	expect(dialog.querySelector('button[aria-label="Close Saved views"]')).not.toBeNull()
 })
 
-test('a combobox surface defaults to the list drawer with a close button', async () => {
+test('a combobox surface defaults to the titled list drawer', async () => {
 	await act(async () =>
 		root.render(
 			<Ariakit.ComboboxProvider defaultOpen>
 				<Ariakit.Combobox />
-				<ComboboxSurface>
+				<ComboboxSurface heading="Chains">
 					<Ariakit.ComboboxItem value="Ethereum" />
 				</ComboboxSurface>
 			</Ariakit.ComboboxProvider>
 		)
 	)
-	expect(surfaceOf('listbox').querySelector('button[aria-label="Close options"]')).not.toBeNull()
+	const listbox = surfaceOf('listbox')
+	expect(accessibleName(listbox)).toBe('Chains')
+	expect(listbox.querySelector('button[aria-label="Close Chains"]')).not.toBeNull()
 })
 
 test('dismiss="own" lets a headed panel place the close button inside its header', async () => {

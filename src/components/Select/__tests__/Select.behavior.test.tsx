@@ -19,8 +19,11 @@ function trigger() {
 	return document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
 }
 
+/** The rows a user picks from, without the "Select all" row that leads a multi-select list. */
 function options() {
-	return [...document.querySelectorAll<HTMLElement>('[role="option"]')]
+	return [...document.querySelectorAll<HTMLElement>('[role="option"]')].filter(
+		(option) => !option.textContent?.startsWith('Select all')
+	)
 }
 
 function optionByText(text: string) {
@@ -332,9 +335,7 @@ describe('nested filter composition', () => {
 		await click(buttonByText('Metrics'))
 		expect(document.querySelector<HTMLInputElement>('input[role="combobox"]')!.value).toBe('')
 		const submenu = document.querySelector('[role="listbox"]')!.closest('[role="dialog"]')!
-		await click(
-			[...submenu.querySelectorAll<HTMLElement>('button')].find((button) => button.textContent === 'Close menu')!
-		)
+		await click(submenu.querySelector<HTMLElement>('button[aria-label="Close menu"]')!)
 		expect(buttonByText('Filters').getAttribute('aria-expanded')).toBe('false')
 	})
 })

@@ -6,23 +6,20 @@ import { NestedMenu } from '~/components/NestedMenu'
 import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import {
-	nestedMenuActionBarStyles,
-	nestedMenuActionButtonStyles,
 	nestedMenuSeeMoreStyles,
-	nestedMenuSearchBlockStyles,
 	nestedMenuSelectRowStyles,
-	popoverActionBarStyles,
-	popoverActionButtonStyles,
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
-	popoverSearchBlockStyles,
+	popoverScrollAreaStyles,
 	popoverSeeMoreStyles,
 	popoverSingleSelectCheckStyles
 } from '~/ui/Popover'
+import { PopoverHeader } from '~/ui/PopoverHeader'
 import { ComboboxSurface } from '~/ui/PopoverSurface'
 import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { readSelectionFromQuery, updateQueryFromSelected } from './query'
+import { getSelectAllState, SELECT_ALL_VALUE, SelectAllContent } from './SelectAll'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
 import { selectTriggerStyles } from './types'
@@ -31,10 +28,8 @@ interface ISelectWithComboboxBase {
 	allValues: SelectValues
 	/** What the trigger lists instead of `selectedValues`, e.g. one group name for its selected members. */
 	selectedLabels?: Array<string>
-	label: string
 	singleSelect?: boolean
 	nestedMenu?: boolean
-	labelType?: 'regular' | 'smol' | 'none'
 	variant: SelectTriggerVariant
 	size: SelectTriggerSize
 	/** Placement and layout classes appended to the trigger; `variant` and `size` own its look. */
@@ -43,7 +38,10 @@ interface ISelectWithComboboxBase {
 	/** The trigger's accessible name comes from `triggerProps`; a top-level `aria-label` was silently dropped. */
 	'aria-label'?: never
 	customFooter?: React.ReactNode
-	customHeader?: React.ReactNode
+	/** Full-bleed rows under the search field, e.g. a toggle that qualifies the selection. */
+	headerRow?: React.ReactNode
+	/** Rows under "Select all" that select a preset, e.g. only EVM chains. */
+	quickActions?: ReadonlyArray<{ label: string; onSelect: () => void }>
 	onEditCustomColumn?: (idx: number) => void
 	onDeleteCustomColumn?: (idx: number) => void
 	onValuesChange?: (values: Array<string>, label: string) => void
@@ -74,7 +72,16 @@ interface ISelectWithComboboxState extends ISelectWithComboboxBase {
 	setSelectedValues: (values: Array<string>) => void
 }
 
-type ISelectWithCombobox = ISelectWithComboboxUrlParams | ISelectWithComboboxState
+/** With `labelType="none"` the trigger shows the current value, so `heading` names the phone drawer; otherwise the label does. */
+type SelectWithComboboxLabelProps =
+	| { label: string; labelType?: 'regular' | 'smol' | 'none'; heading: string }
+	| { label: string; labelType?: 'regular' | 'smol'; heading?: undefined }
+
+type ISelectWithCombobox = SelectWithComboboxLabelProps & (ISelectWithComboboxUrlParams | ISelectWithComboboxState)
+
+const EMPTY_QUICK_ACTIONS: ReadonlyArray<{ label: string; onSelect: () => void }> = []
+
+const NAVIGATION_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'])
 
 export function getSelectOptionLabel(allValues: SelectValues, selectedValue: string): string {
 	for (const option of allValues) {
@@ -116,12 +123,14 @@ export function SelectWithCombobox({
 	singleSelect = false,
 	nestedMenu,
 	labelType,
+	heading,
 	variant,
 	size,
 	className,
 	triggerProps,
 	customFooter,
-	customHeader,
+	headerRow,
+	quickActions = EMPTY_QUICK_ACTIONS,
 	onEditCustomColumn,
 	onDeleteCustomColumn,
 	includeQueryKey,
@@ -295,9 +304,76 @@ export function SelectWithCombobox({
 		: () => setSelectedValuesFromState(getSelectAllValues())
 	const hasOptionLimit = visibleOptionLimit !== null
 	const visibleMatches = hasOptionLimit ? matches.slice(0, viewableMatches) : matches
-	const selectAllLabel = selectAllScope === 'matches' && searchValue.trim() ? 'Select shown' : 'Select All'
+	// With a search typed and `selectAllScope="matches"`, the row acts on the shown options only.
+	const selectsShown = selectAllScope === 'matches' && searchValue.trim() !== ''
+	const selectAllScopeKeys = selectsShown ? getMatchKeys() : getAllKeys()
+	const selectAllState = getSelectAllState(selectAllScopeKeys, selectedValues)
+	const toggleSelectAll = () => {
+		if (selectAllState !== 'all') return toggleAll()
+		if (!selectsShown) return clearAll()
+		const shown = new Set(selectAllScopeKeys)
+		setSelectedValues(selectedValues.filter((value) => !shown.has(value)))
+	}
+	// "See more" focuses the first new option by index, past the rows that lead the list.
+	const leadingRowCount = (showCheckboxes ? 1 : 0) + quickActions.length
 
 	const comboboxRef = React.useRef<HTMLDivElement>(null)
+
+	// Ariakit makes the last selected option active on open and scrolls to it. In a multi-select that option is
+	// arbitrary, so the list opens at its top and scrolls only to follow arrow-key navigation.
+	const movedSinceOpenRef = React.useRef(false)
+	// Spread only in multi-select: an undefined prop would replace Ariakit's own scroller.
+	const optionScrollProps = showCheckboxes
+		? {
+				unstable_scrollIntoView: (element: HTMLElement) => {
+					if (movedSinceOpenRef.current) element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+				}
+			}
+		: {}
+	const searchProps = showCheckboxes
+		? {
+				...optionScrollProps,
+				// Capture: Ariakit moves the active option in its own keydown handler, before a bubbling one runs.
+				onKeyDownCapture: (event: React.KeyboardEvent) => {
+					if (NAVIGATION_KEYS.has(event.key)) movedSinceOpenRef.current = true
+				}
+			}
+		: {}
+	const setOpen = (open: boolean) => {
+		if (open) movedSinceOpenRef.current = false
+	}
+
+	const renderLeadingRows = (rowStyles: string, actionStyles: string) => (
+		<>
+			{showCheckboxes ? (
+				<Ariakit.ComboboxItem
+					value={SELECT_ALL_VALUE}
+					{...optionScrollProps}
+					selectValueOnClick={false}
+					resetValueOnSelect={false}
+					hideOnClick={false}
+					onClick={toggleSelectAll}
+					className={rowStyles}
+				>
+					<SelectAllContent label={selectsShown ? 'Select all shown' : 'Select all'} state={selectAllState} />
+				</Ariakit.ComboboxItem>
+			) : null}
+			{quickActions.map((action) => (
+				<Ariakit.ComboboxItem
+					key={action.label}
+					value={`__quick_action__${action.label}`}
+					{...optionScrollProps}
+					selectValueOnClick={false}
+					resetValueOnSelect={false}
+					hideOnClick={false}
+					onClick={action.onSelect}
+					className={actionStyles}
+				>
+					{action.label}
+				</Ariakit.ComboboxItem>
+			))}
+		</>
+	)
 
 	const renderCheck = () => {
 		return (
@@ -321,7 +397,7 @@ export function SelectWithCombobox({
 		e.stopPropagation()
 		const previousCount = viewableMatches
 		setViewableMatches((prev) => prev + 20)
-		focusFirstNewItem(comboboxRef, '[role="option"]', previousCount)
+		focusFirstNewItem(comboboxRef, '[role="option"]', leadingRowCount + previousCount)
 	}
 
 	const setInputValue = (value: string) => {
@@ -340,30 +416,29 @@ export function SelectWithCombobox({
 		return (
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
+				setOpen={setOpen}
 				setInputValue={setInputValue}
 				selectedValue={providerValue}
 				setSelectedValue={setSelectedValue}
 			>
 				<NestedMenu label={label} render={<button type="button" />}>
-					<span className={nestedMenuSearchBlockStyles}>
-						<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
-					</span>
-					{customHeader ? <>{customHeader}</> : null}
-					{showCheckboxes ? (
-						<span className={nestedMenuActionBarStyles}>
-							<button type="button" onClick={clearAll} className={nestedMenuActionButtonStyles}>
-								Deselect All
-							</button>
-							<button type="button" onClick={toggleAll} className={nestedMenuActionButtonStyles}>
-								{selectAllLabel}
-							</button>
-						</span>
-					) : null}
-					<Ariakit.ComboboxList ref={comboboxRef}>
+					<PopoverHeader
+						inset="nested"
+						search={
+							<Ariakit.Combobox {...searchProps} placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
+						}
+					>
+						{headerRow}
+					</PopoverHeader>
+					<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+						{visibleMatches.length > 0
+							? renderLeadingRows(nestedMenuSelectRowStyles, `${nestedMenuSeeMoreStyles} border-b border-subtle`)
+							: null}
 						{visibleMatches.map((option) => (
 							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
 								value={getOptionKey(option)}
+								{...optionScrollProps}
 								resetValueOnSelect={false}
 								hideOnClick={false}
 								className={nestedMenuSelectRowStyles}
@@ -404,6 +479,7 @@ export function SelectWithCombobox({
 	return (
 		<Ariakit.ComboboxProvider
 			resetValueOnHide
+			setOpen={setOpen}
 			setInputValue={setInputValue}
 			selectedValue={providerValue}
 			setSelectedValue={setSelectedValue}
@@ -437,24 +513,25 @@ export function SelectWithCombobox({
 				)}
 				<Ariakit.ComboboxSelectArrow className="text-tertiary" />
 			</Ariakit.ComboboxSelect>
-			<ComboboxSurface hideOnInteractOutside className={popoverClassName}>
-				<span className={popoverSearchBlockStyles}>
-					<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
-				</span>
-				{customHeader ? <>{customHeader}</> : null}
+			<ComboboxSurface hideOnInteractOutside heading={heading ?? label} className={popoverClassName}>
+				<PopoverHeader
+					search={
+						<Ariakit.ComboboxInput
+							{...searchProps}
+							placeholder={searchPlaceholder}
+							className={`w-full ${inputStyles}`}
+						/>
+					}
+				>
+					{headerRow}
+				</PopoverHeader>
 				{matches.length > 0 ? (
 					<>
-						{showCheckboxes ? (
-							<span className={popoverActionBarStyles}>
-								<button type="button" onClick={clearAll} className={popoverActionButtonStyles}>
-									Deselect All
-								</button>
-								<button type="button" onClick={toggleAll} className={popoverActionButtonStyles}>
-									{selectAllLabel}
-								</button>
-							</span>
-						) : null}
-						<Ariakit.ComboboxList ref={comboboxRef}>
+						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+							{renderLeadingRows(
+								`${popoverRowWithBorderStyles} gap-2`,
+								`${popoverSeeMoreStyles} border-b border-subtle`
+							)}
 							{visibleMatches.map((option) => {
 								const isCustom = typeof option === 'object' && option.isCustom
 								const customIndex = typeof option === 'object' ? option.customIndex : undefined
@@ -524,6 +601,7 @@ export function SelectWithCombobox({
 									<Ariakit.ComboboxItem
 										key={`${label}-${optionKey}`}
 										value={optionKey}
+										{...optionScrollProps}
 										resetValueOnSelect={false}
 										className={`${popoverRowWithBorderStyles} group gap-2`}
 									>

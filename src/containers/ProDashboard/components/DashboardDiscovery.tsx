@@ -215,6 +215,7 @@ export function DashboardDiscovery({
 					{!isBrowseMode ? (
 						<div className="ml-auto flex flex-wrap items-center gap-4">
 							<Select
+								heading="Items per page"
 								variant="pro"
 								size="md"
 								allValues={itemsPerPageOptions}
@@ -230,6 +231,7 @@ export function DashboardDiscovery({
 								triggerProps={{ 'aria-label': 'Items per page' }}
 							/>
 							<Select
+								heading="Sort by"
 								variant="pro"
 								size="md"
 								allValues={sortOptions}
@@ -256,6 +258,7 @@ export function DashboardDiscovery({
 							/>
 							{selectedSortBy.key === 'trending' ? (
 								<Select
+									heading="Time frame"
 									variant="pro"
 									size="md"
 									allValues={timeFrameOptions}

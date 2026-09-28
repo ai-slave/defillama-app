@@ -149,6 +149,7 @@ export function UnifiedTableHeader({
 					<>
 						{isGroupingInteractive && groupingOptions?.length ? (
 							<Select
+								heading="Group rows by"
 								size="sm"
 								variant="pro"
 								label={groupingLabel}

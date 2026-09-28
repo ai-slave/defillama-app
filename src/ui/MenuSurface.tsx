@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { popoverMenuItemStyles, popoverTreeRowStyles } from './Popover'
-import { type SurfaceOwnProps, surfaceDismiss, surfaceProps } from './PopoverSurface'
+import { type SurfaceOwnProps, surfaceProps, surfaceTitleRow } from './PopoverSurface'
 
 /* ----------------------------------------------------------------------------
    Menu surface — `Ariakit.Menu` with the popover surface contract wired in
@@ -16,14 +16,13 @@ import { type SurfaceOwnProps, surfaceDismiss, surfaceProps } from './PopoverSur
    for a destructive action.
 ---------------------------------------------------------------------------- */
 
-type MenuSurfaceProps = SurfaceOwnProps & Omit<Ariakit.MenuProps, 'className' | 'wrapperProps'>
+type MenuSurfaceProps = SurfaceOwnProps & Omit<Ariakit.MenuProps, 'className' | 'wrapperProps' | 'title'>
 
 export function MenuSurface({
 	variant,
 	className,
-	wrapperClassName,
-	dismissLabel = 'Close menu',
-	dismiss = 'auto',
+	heading,
+	dismiss: _dismiss,
 	children,
 	gutter = 8,
 	portal = true,
@@ -36,9 +35,9 @@ export function MenuSurface({
 			gutter={gutter}
 			portal={portal}
 			unmountOnHide={unmountOnHide}
-			{...surfaceProps({ variant, className, wrapperClassName })}
+			{...surfaceProps(variant, { className })}
 		>
-			{surfaceDismiss(variant, dismissLabel, dismiss)}
+			{surfaceTitleRow(heading)}
 			{children}
 		</Ariakit.Menu>
 	)

@@ -80,6 +80,7 @@ function OperatorSelect({
 }) {
 	return (
 		<Select
+			heading="Operator"
 			allValues={OPERATOR_OPTIONS}
 			selectedValues={value}
 			setSelectedValues={(nextValue) => onChange(nextValue as EquityNumericOperator)}

@@ -108,12 +108,7 @@ export function AddVariablePopover() {
 				<Icon name="plus" height={14} width={14} />
 				<span>Parameter</span>
 			</Ariakit.PopoverDisclosure>
-			<PopoverSurface
-				variant="panel"
-				gutter={8}
-				dismissLabel="Close parameter form"
-				aria-label="Add a dashboard parameter"
-			>
+			<PopoverSurface variant="panel" gutter={8} heading="Add a dashboard parameter">
 				<form onSubmit={handleSubmit} className="flex w-[320px] max-w-full flex-col gap-3 p-3">
 					<p className="text-xs text-pro-text-tertiary">
 						A parameter lets viewers switch every bound card to another chain or protocol. Bind cards below or later

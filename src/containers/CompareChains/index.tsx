@@ -265,6 +265,7 @@ function ChartFilters() {
 
 	return (
 		<Select
+			heading="Charts"
 			allValues={supportedCharts}
 			selectedValues={selectedValues}
 			setSelectedValues={setSelectedValues}
@@ -333,6 +334,7 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<div className="flex-1">
 					<MultiSelectCombobox
+						heading="Chains"
 						data={chains}
 						placeholder="Select Chains..."
 						selectedValues={selectedChainValues}

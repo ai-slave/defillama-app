@@ -47,7 +47,10 @@ async function click(element: HTMLElement) {
 }
 
 const trigger = () => document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
-const button = (text: string) => [...document.querySelectorAll('button')].find((b) => b.textContent === text)!
+const selectAllRow = () =>
+	[...document.querySelectorAll<HTMLElement>('[role="option"]')].find((option) =>
+		option.textContent?.startsWith('Select all')
+	)!
 const selected = () =>
 	[...document.querySelectorAll('[role="option"]')]
 		.filter((option) => option.getAttribute('aria-selected') === 'true')
@@ -67,19 +70,22 @@ afterEach(async () => {
 	labelType = 'smol'
 })
 
-test('shows the selection the URL holds and writes Deselect All and Select All back to it', async () => {
+test('the Select all row shows how much the URL selects and writes all or none back to it', async () => {
 	router.query = { excludeCategory: 'Lending' }
 	await act(async () => root.render(picker()))
 	await click(trigger())
 	expect(selected()).toEqual(['Dexs', 'Bridge'])
+	expect(selectAllRow().textContent).toBe('Select all, some selected')
 
-	await click(button('Deselect All'))
-	expect(router.query).toEqual({ category: 'None' })
-	expect(selected()).toEqual([])
-
-	await click(button('Select All'))
+	await click(selectAllRow())
 	expect(router.query).toEqual({})
 	expect(selected()).toEqual(['Dexs', 'Lending', 'Bridge'])
+	expect(selectAllRow().textContent).toBe('Select all, all selected')
+
+	await click(selectAllRow())
+	expect(router.query).toEqual({ category: 'None' })
+	expect(selected()).toEqual([])
+	expect(selectAllRow().textContent).toBe('Select all')
 })
 
 test('names an empty or all-except selection on the trigger, so a filter never looks like the default', async () => {

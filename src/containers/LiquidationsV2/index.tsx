@@ -18,7 +18,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.protocolLinks} activeLink="Overview" />
+			<RowLinksWithDropdown heading="Protocols" links={props.protocolLinks} activeLink="Overview" />
 
 			<div className="relative isolate flex flex-col gap-2">
 				<LiquidationsSummaryStats

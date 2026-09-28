@@ -36,7 +36,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 
 	return (
 		<>
-			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
+			<RowLinksWithDropdown heading="Chains" links={props.chains} activeLink={props.chain} />
 			<SearchTableProvider
 				options={{
 					data: protocols,

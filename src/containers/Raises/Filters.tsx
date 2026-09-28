@@ -137,6 +137,7 @@ function RaisedRange({
 
 	return (
 		<FilterBetweenRange
+			heading="Amount Raised"
 			trigger={
 				<>
 					{min !== null || max !== null ? (

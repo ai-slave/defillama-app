@@ -37,7 +37,8 @@ async function click(element: HTMLElement) {
 }
 
 const trigger = () => document.querySelector<HTMLButtonElement>('button[role="combobox"]')!
-const button = (text: string) => [...document.querySelectorAll('button')].find((b) => b.textContent === text)!
+const row = (text: string) =>
+	[...document.querySelectorAll<HTMLElement>('[role="option"]')].find((option) => option.textContent?.startsWith(text))!
 const selected = () =>
 	[...document.querySelectorAll('[role="option"]')]
 		.filter((option) => option.getAttribute('aria-selected') === 'true')
@@ -56,11 +57,15 @@ afterEach(async () => {
 	router.query = {}
 })
 
-test('keeps every chain on Select All from the default view', async () => {
+test('from the default view, Select all clears every chain and then checks them all again', async () => {
 	await act(async () => root.render(picker()))
 	await click(trigger())
 
-	await click(button('Select All'))
+	await click(row('Select all'))
+	expect(router.query).toEqual({ chain: 'None' })
+	expect(selected()).toEqual([])
+
+	await click(row('Select all'))
 	expect(router.query).toEqual({})
 	expect(selected()).toEqual(['Ethereum', 'Solana', 'Base'])
 })
@@ -69,11 +74,11 @@ test('checks the real EVM chains, and Select All returns to every chain', async 
 	await act(async () => root.render(picker()))
 	await click(trigger())
 
-	await click(button('Only EVM chains'))
+	await click(row('Only EVM chains'))
 	expect(router.query).toEqual({ excludeChain: 'Solana' })
 	expect(selected()).toEqual(['Ethereum', 'Base'])
 
-	await click(button('Select All'))
+	await click(row('Select all'))
 	expect(router.query).toEqual({})
 	expect(selected()).toEqual(['Ethereum', 'Solana', 'Base'])
 })

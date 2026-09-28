@@ -66,7 +66,7 @@ export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData 
 
 	return (
 		<>
-			<RowLinksWithDropdown links={forkLinks} activeLink={fork} alternativeOthersText="Others" />
+			<RowLinksWithDropdown heading="Forks" links={forkLinks} activeLink={fork} alternativeOthersText="Others" />
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<h1 className="flex items-center gap-2 heading-sm">

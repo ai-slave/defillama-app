@@ -4,8 +4,8 @@ import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/conta
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { MenuSurface } from '~/ui/MenuSurface'
-import { nestedMenuHeaderIconButtonStyles, popoverMenuItemStyles } from '~/ui/Popover'
-import { PopoverSurface } from '~/ui/PopoverSurface'
+import { popoverMenuItemStyles } from '~/ui/Popover'
+import { NestedDrawerHeader, PopoverSurface } from '~/ui/PopoverSurface'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
@@ -155,6 +155,7 @@ export function MobileToolsPopover({
 
 				<Ariakit.MenuSeparator className="border-t border-subtle" />
 
+				{/* Scoped to the menu content, so closing the menu unmounts it and each open starts at the root. */}
 				<Ariakit.PopoverProvider placement="right-start">
 					<Ariakit.PopoverDisclosure
 						render={<Ariakit.MenuItem hideOnClick={false} />}
@@ -173,19 +174,7 @@ export function MobileToolsPopover({
 						aria-label="Explore AI capabilities"
 						className="z-20 overflow-hidden sm:max-h-[min(420px,var(--popover-available-height))] sm:w-[600px] sm:max-w-[calc(100vw-2rem)]"
 					>
-						<div className="grid min-h-12 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1">
-							<Ariakit.PopoverDismiss aria-label="Back to mobile tools" className={nestedMenuHeaderIconButtonStyles}>
-								<Icon name="chevron-left" className="size-4" />
-							</Ariakit.PopoverDismiss>
-							<span className="text-center label-md text-primary">Explore</span>
-							<Ariakit.PopoverDismiss
-								aria-label="Close mobile tools"
-								onClick={() => menu.hideAll()}
-								className={nestedMenuHeaderIconButtonStyles}
-							>
-								<Icon name="x" className="size-4" />
-							</Ariakit.PopoverDismiss>
-						</div>
+						<ExploreHeader onCloseTools={menu.hideAll} />
 						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
 					</PopoverSurface>
 				</Ariakit.PopoverProvider>
@@ -203,5 +192,22 @@ export function MobileToolsPopover({
 				) : null}
 			</MenuSurface>
 		</Ariakit.MenuProvider>
+	)
+}
+
+function ExploreHeader({ onCloseTools }: { onCloseTools: () => void }) {
+	const explore = Ariakit.usePopoverContext()!
+	return (
+		<NestedDrawerHeader
+			title="Explore"
+			backLabel="Back to mobile tools"
+			onBack={explore.hide}
+			closeLabel="Close mobile tools"
+			onClose={() => {
+				explore.hide()
+				onCloseTools()
+			}}
+			visibleFromSm
+		/>
 	)
 }

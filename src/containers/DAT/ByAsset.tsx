@@ -46,7 +46,7 @@ export function DATByAsset({
 
 	return (
 		<>
-			<RowLinksWithDropdown links={allAssets} activeLink={metadata.name} />
+			<RowLinksWithDropdown heading="Assets" links={allAssets} activeLink={metadata.name} />
 			<SummaryCardGrid>
 				<SummaryStatsCard>
 					<Tooltip
