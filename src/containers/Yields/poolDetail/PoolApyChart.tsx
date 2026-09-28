@@ -196,6 +196,11 @@ const valueOf = (p: ChartTooltipItem): number | null => {
 	return n != null && Number.isFinite(n) ? n : null
 }
 
+const tooltipRow = (p: ChartTooltipItem, symbol: string) => {
+	const v = valueOf(p)
+	return v == null ? '' : li(`${p.marker} ${p.seriesName}: ${fmtVal(v, symbol)}`)
+}
+
 // Components keep their declared order (never re-sorted by value).
 function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow) {
 	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
@@ -219,11 +224,6 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 		const ts = getChartTooltipTimestamp(first)
 		const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
 
-		const row = (p: ChartTooltipItem, symbol: string) => {
-			const v = valueOf(p)
-			return v == null ? '' : li(`${p.marker} ${p.seriesName}: ${fmtVal(v, symbol)}`)
-		}
-
 		let html = date
 
 		let total = 0
@@ -235,7 +235,7 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 			if (v == null) continue
 			hasBar = true
 			total += v
-			html += row(p, '%')
+			html += tooltipRow(p, '%')
 		}
 
 		const summaryStyle = 'font-weight:600;'
@@ -249,7 +249,7 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 
 		for (const overlay of overlays) {
 			const item = byName.get(overlay.label)
-			if (item) html += row(item, overlay.symbol)
+			if (item) html += tooltipRow(item, overlay.symbol)
 		}
 
 		return html

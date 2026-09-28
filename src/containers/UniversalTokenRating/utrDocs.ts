@@ -1162,6 +1162,12 @@ function appendixChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 	}
 }
 
+function describeCategories(categories: Array<UtrScoringCategoryConfig>): string {
+	return categories
+		.map((category) => `${category.label} (${formatPercent(categoryWeight(category.criteria), PERCENT_OPTIONS)})`)
+		.join(', ')
+}
+
 function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null): UtrDocChapter {
 	if (!config) return chapter
 	const categoryByKey = new Map(
@@ -1174,10 +1180,6 @@ function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 		'Tokenomics (Performance Category)': 'tokenomics_p',
 		'Total Market (Category)': 'total_market'
 	}
-	const describeCategories = (categories: Array<UtrScoringCategoryConfig>) =>
-		categories
-			.map((category) => `${category.label} (${formatPercent(categoryWeight(category.criteria), PERCENT_OPTIONS)})`)
-			.join(', ')
 	let heading = ''
 	return {
 		...chapter,

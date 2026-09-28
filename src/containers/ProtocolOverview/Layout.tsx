@@ -136,15 +136,15 @@ export function ProtocolOverviewLayout({
 			{showsActiveLoansTvlNotice(tab, category) ? (
 				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-primary">
 					<p>
-						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
-						click{' '}
+						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info, read
+						the{' '}
 						<a
 							href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/6163"
 							target="_blank"
 							rel="noreferrer noopener"
 							className="underline"
 						>
-							here
+							active loans discussion
 						</a>
 						.
 					</p>

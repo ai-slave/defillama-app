@@ -22,13 +22,15 @@ function mergeYAxisOptions(
 	return domainAxes.map((axis) => mergeDeep(axis, override))
 }
 
+const EMPTY_CHART_OPTIONS: NonNullable<IProtocolCoreChartProps['chartOptions']> = {}
+
 export default function ProtocolChart({
 	chartData,
 	chartColors,
 	valueSymbol = '',
 	hallmarks,
 	rangeHallmarks,
-	chartOptions = {},
+	chartOptions = EMPTY_CHART_OPTIONS,
 	height,
 	unlockTokenSymbol = '',
 	gasUsedValueSymbol,

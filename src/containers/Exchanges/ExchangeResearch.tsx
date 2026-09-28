@@ -35,10 +35,13 @@ const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: Arr
 	}
 ]
 
+const EMPTY_DEPTH_ROWS: Array<DepthCurveRow> = []
+const EMPTY_BTC_EXECUTION_ROWS: Array<BtcExecutionRowModel> = []
+
 export function ExchangeResearch({
 	loadReport,
-	depthRows = [],
-	btcExecutionRows = []
+	depthRows = EMPTY_DEPTH_ROWS,
+	btcExecutionRows = EMPTY_BTC_EXECUTION_ROWS
 }: {
 	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 	/** Venue rows carrying only what the depth curve reads. Empty means no snapshots. */

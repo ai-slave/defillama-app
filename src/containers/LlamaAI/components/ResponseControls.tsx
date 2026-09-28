@@ -16,6 +16,7 @@ import {
 import { formatResponseCost, formatResponseDuration } from '~/containers/LlamaAI/utils/responseMetrics'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { buttonStyles } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -125,6 +126,17 @@ const FeedbackDialog = memo(function FeedbackDialog({
 	)
 })
 
+// Mounts only after hydration: "today" is the reader's local day, which the server cannot know.
+function CompletedTime({ completedAt }: { completedAt: Date }) {
+	const nowSeconds = useNowSeconds()
+	const completedToday = completedAt.toDateString() === new Date(nowSeconds * 1000).toDateString()
+	return (
+		<time dateTime={completedAt.toISOString()} title="Response completed at">
+			{completedToday ? formatLocalTime(completedAt) : formatDateTime(completedAt, { timeZone: 'local' })}
+		</time>
+	)
+}
+
 export function ResponseControls({
 	timestamp,
 	messageId,
@@ -140,7 +152,6 @@ export function ResponseControls({
 }: ResponseControlsProps) {
 	const isClient = useIsClient()
 	const completedAt = timestamp != null ? new Date(timestamp) : null
-	const completedToday = completedAt?.toDateString() === new Date().toDateString()
 	const openArticleExport = useArticleExport()
 	const detailsPopover = Ariakit.usePopoverStore({ placement: 'top' })
 	const [isDarkMode] = useDarkModeManager()
@@ -404,11 +415,7 @@ export function ResponseControls({
 					(messageMetadata?.executionTimeMs != null || messageMetadata?.x402CostUsd != null) ? (
 						<span aria-hidden="true">·</span>
 					) : null}
-					{completedAt && isClient ? (
-						<time dateTime={completedAt.toISOString()} title="Response completed at">
-							{completedToday ? formatLocalTime(completedAt) : formatDateTime(completedAt, { timeZone: 'local' })}
-						</time>
-					) : null}
+					{completedAt && isClient ? <CompletedTime completedAt={completedAt} /> : null}
 				</div>
 			</div>
 			<FeedbackDialog

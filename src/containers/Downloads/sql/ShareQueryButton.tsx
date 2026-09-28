@@ -19,13 +19,15 @@ interface ShareQueryButtonProps {
 
 const MAX_SAFE_URL_LENGTH = 7500
 
+const EMPTY_NOTEBOOK_CELLS: NonNullable<ShareQueryButtonProps['notebookCells']> = []
+
 export function ShareQueryButton({
 	sql,
 	tables,
 	chartConfig,
 	disabled,
 	mode = 'query',
-	notebookCells = [],
+	notebookCells = EMPTY_NOTEBOOK_CELLS,
 	notebookTitle
 }: ShareQueryButtonProps) {
 	const [copied, setCopied] = useState(false)

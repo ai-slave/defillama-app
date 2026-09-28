@@ -5,7 +5,8 @@ export type TimestampInput = 'seconds' | 'milliseconds'
 type NumericDateOptions = { input: TimestampInput }
 type DateTimeOptions = { timeZone: 'UTC' } | { timeZone: 'local'; timeZoneName?: 'short' }
 type NumericDateTimeOptions = NumericDateOptions & DateTimeOptions
-type RelativeTimeOptions = { now?: Date }
+// pastLabel replaces "… ago" for scheduled times, where a time already reached is still pending.
+type RelativeTimeOptions = { now?: Date; pastLabel?: string }
 type NumericRelativeTimeOptions = NumericDateOptions & RelativeTimeOptions
 type DateValue = string | number | Date | null | undefined
 type NonNumericDateValue = string | Date | null | undefined
@@ -160,6 +161,7 @@ export function formatRelativeTime(value: DateValue, options?: RelativeTimeOptio
 	const now = options?.now?.getTime() ?? Date.now()
 	if (!Number.isFinite(now)) return null
 	const diffMs = date.getTime() - now
+	if (diffMs <= 0 && options?.pastLabel) return options.pastLabel
 	const absoluteMs = Math.abs(diffMs)
 	if (absoluteMs < 5000) return 'just now'
 	if (absoluteMs >= 604_800_000) return UTC_DATE_FORMATTER.format(date)

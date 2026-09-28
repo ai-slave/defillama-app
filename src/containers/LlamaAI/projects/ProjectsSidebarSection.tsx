@@ -33,8 +33,10 @@ interface ProjectsSidebarSectionProps {
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
 }
 
+const EMPTY_SESSIONS: NonNullable<ProjectsSidebarSectionProps['sessions']> = []
+
 export function ProjectsSidebarSection({
-	sessions = [],
+	sessions = EMPTY_SESSIONS,
 	currentProjectId,
 	currentSessionProjectId,
 	currentSessionId,

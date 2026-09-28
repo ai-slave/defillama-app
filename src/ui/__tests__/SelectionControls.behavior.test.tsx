@@ -23,11 +23,13 @@ async function press(element: HTMLElement, key: string) {
 	})
 }
 
+const EMPTY_DISABLED: Array<Value> = []
+
 function Selection({
 	kind,
 	onChange,
 	initial = 'table',
-	disabled = [],
+	disabled = EMPTY_DISABLED,
 	external,
 	keepMounted = false
 }: {

@@ -35,10 +35,12 @@ function mergeYAxisOptions(
 	return domainAxes.map((axis) => mergeDeep(axis, override))
 }
 
+const EMPTY_CHART_OPTIONS: NonNullable<ChainCoreChartProps['chartOptions']> = {}
+
 export default function ChainCoreChart({
 	chartData,
 	valueSymbol = '',
-	chartOptions = {},
+	chartOptions = EMPTY_CHART_OPTIONS,
 	height,
 	unlockTokenSymbol = '',
 	isThemeDark,

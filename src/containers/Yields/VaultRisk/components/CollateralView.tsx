@@ -24,6 +24,9 @@ function pooledMarketNote(protocolId: string, poolType: PoolType): string | null
 	return null
 }
 
+const EMPTY_MARKET_ORACLES: Array<MarketOracle> = []
+const EMPTY_ORACLE_DEPENDENCIES: Array<OracleDependency> = []
+
 // One consolidated collateral view, identical in shape across pool types; vaults add the
 // numeric Allocation column.
 export function CollateralView({
@@ -35,8 +38,8 @@ export function CollateralView({
 	allocatedUsd = null,
 	idleUsd = null,
 	trustScope,
-	marketOracles = [],
-	oracleDependencies = [],
+	marketOracles = EMPTY_MARKET_ORACLES,
+	oracleDependencies = EMPTY_ORACLE_DEPENDENCIES,
 	oracleExposure = null,
 	chain
 }: {

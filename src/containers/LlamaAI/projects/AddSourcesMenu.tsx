@@ -86,7 +86,6 @@ export function AddSourcesMenu({
 				hidden
 				// @ts-expect-error — non-standard attribute supported by Chromium/WebKit/Firefox.
 				webkitdirectory=""
-				directory=""
 				onChange={(e) => {
 					const list = e.target.files ? Array.from(e.target.files) : []
 					void handleFiles(list)

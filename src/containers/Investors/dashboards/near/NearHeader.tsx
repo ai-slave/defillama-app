@@ -82,7 +82,7 @@ export default function NearHeader() {
 					className="ml-1 flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-semibold text-on-brand transition-opacity hover:opacity-85"
 					style={{ background: 'linear-gradient(135deg, #00C1DE, #00E4AA)' }}
 				>
-					Learn More
+					Visit NEAR
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="size-3.5">
 						<path d="M7 17L17 7M17 7H7M17 7v10" />
 					</svg>

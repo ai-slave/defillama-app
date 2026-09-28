@@ -414,9 +414,9 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 									</div>
 									{category === 'RWA' ? (
 										<p className="text-sm text-pro-text-secondary">
-											Download more RWA data{' '}
+											Download more RWA data from the{' '}
 											<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
-												here
+												RWA overview
 											</a>
 											.
 										</p>
@@ -496,14 +496,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					<h2 className="heading-xs text-pro-text-primary">FAQ</h2>
 					<div className="divide-y divide-(--border-subtle) border-y border-subtle">
 						<FaqItem question="How do I subscribe to download data from DefiLlama?">
-							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
+							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans on the{' '}
 							<a
 								href="https://defillama.com/subscription"
 								className="text-brand underline hover:opacity-80"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								here
+								subscription page
 							</a>
 							.
 						</FaqItem>
@@ -520,14 +520,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							.
 						</FaqItem>
 						<FaqItem question="How can I contact DefiLlama with questions?">
-							You can contact us by email, a support form, or live support{' '}
+							You can contact us by email, a support form, or live support on the{' '}
 							<a
 								href="https://defillama.com/support"
 								className="text-brand underline hover:opacity-80"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
-								here
+								support page
 							</a>
 							.
 						</FaqItem>

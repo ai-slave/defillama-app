@@ -16,7 +16,7 @@ import {
 	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
 } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
-import { LearnMoreLink } from './docsLinks'
+import { MethodologyLink } from './docsLinks'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -259,7 +259,7 @@ export function ProfileMetrics({
 						tooltip={
 							<>
 								What a $10k market order really costs here: taker fee plus half the spread, measured from actual fills.
-								Details on the Execution tab. <LearnMoreLink />
+								Details on the Execution tab. <MethodologyLink />
 							</>
 						}
 						value={`${formatUsd(profile.execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} /$10k`}

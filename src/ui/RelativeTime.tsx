@@ -5,12 +5,14 @@ type RelativeTimeProps = {
 	value: string | number | Date | null | undefined
 	input?: TimestampInput
 	prefix?: string
+	/** Shown once the time has passed, for scheduled times where "ago" reads wrong. */
+	pastLabel?: string
 	fallback?: string
 	className?: string
 }
 
 /** Hydration-safe freshness label with a ticking relative value and an exact timestamp tooltip. */
-export function RelativeTime({ value, input, prefix, fallback = '-', className }: RelativeTimeProps) {
+export function RelativeTime({ value, input, prefix, pastLabel, fallback = '-', className }: RelativeTimeProps) {
 	const [now, setNow] = useState<Date | null>(null)
 
 	useEffect(() => {
@@ -31,9 +33,9 @@ export function RelativeTime({ value, input, prefix, fallback = '-', className }
 	const relative = now
 		? typeof value === 'number'
 			? input
-				? formatRelativeTime(value, { input, now })
+				? formatRelativeTime(value, { input, now, pastLabel })
 				: null
-			: formatRelativeTime(value, { now })
+			: formatRelativeTime(value, { now, pastLabel })
 		: null
 	const label = relative ?? absolute ?? fallback
 

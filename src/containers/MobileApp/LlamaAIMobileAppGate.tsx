@@ -99,6 +99,8 @@ function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
 	)
 }
 
+const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
+
 function useMobileAppPromotion() {
 	const isClient = useIsClient()
 	const isMobile = useMedia('(max-width: 1023px)')
@@ -108,13 +110,11 @@ function useMobileAppPromotion() {
 		() => false
 	)
 
-	const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
-
-	return { isClient, shouldShow: isClient && isMobile && !hasContinued, continueOnWeb }
+	return { isClient, shouldShow: isClient && isMobile && !hasContinued }
 }
 
 export function LlamaAIMobileAppPromotion() {
-	const { shouldShow, continueOnWeb } = useMobileAppPromotion()
+	const { shouldShow } = useMobileAppPromotion()
 	return shouldShow ? <MobileAppPromotion onContinue={continueOnWeb} /> : null
 }
 
@@ -125,7 +125,7 @@ export function LlamaAIMobileAppGate({
 	children: ReactNode
 	interactive?: boolean
 }) {
-	const { isClient, shouldShow, continueOnWeb } = useMobileAppPromotion()
+	const { isClient, shouldShow } = useMobileAppPromotion()
 
 	// Interactive chat must not mount until the viewport is known, otherwise a
 	// queued prompt could submit during mobile hydration behind the promotion.

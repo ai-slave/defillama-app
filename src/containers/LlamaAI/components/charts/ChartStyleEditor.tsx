@@ -182,11 +182,13 @@ function getSeriesNameProblem(series: ChartConfiguration['series']): string | nu
 	return null
 }
 
+const EMPTY_CATEGORIES: NonNullable<ChartStyleEditorProps['categories']> = []
+
 export function ChartStyleEditor({
 	config,
 	original,
 	caps,
-	categories = [],
+	categories = EMPTY_CATEGORIES,
 	view,
 	resetView,
 	onPreview,

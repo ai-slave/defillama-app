@@ -187,6 +187,8 @@ export function createStackTooltipFormatter({
 	maxItems: number
 	showTotal: boolean
 }) {
+	const line = (marker: string, name: string, value: number, style = 'list-style:none') =>
+		`<li style="${style}">${marker}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
 	return (params: unknown) => {
 		const items = normalizeTooltipItems(params)
 		if (items.length === 0) return ''
@@ -211,8 +213,6 @@ export function createStackTooltipFormatter({
 		const visible = catchAll || hasTail ? rows.slice(0, maxItems - 1) : rows
 		let tail = catchAll?.value ?? 0
 		for (const row of rows.slice(visible.length)) tail += row.value
-		const line = (marker: string, name: string, value: number, style = 'list-style:none') =>
-			`<li style="${style}">${marker}${escapeHtml(name)}&nbsp;&nbsp;${formatTooltipValue(value, valueSymbol)}</li>`
 		for (const row of visible) output += line(row.marker, row.name, row.value)
 		if (catchAll || hasTail)
 			output += line(catchAll?.marker ?? rows[visible.length]?.marker ?? '', catchAll?.name ?? 'Others', tail)

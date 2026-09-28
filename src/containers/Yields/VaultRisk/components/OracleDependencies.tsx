@@ -52,12 +52,14 @@ function vendorlessGroups(collateral: Array<CollateralVM>): Array<VendorlessGrou
 	return [...acc.values()].sort((a, b) => b.exposureUsd - a.exposureUsd)
 }
 
+const EMPTY_COLLATERAL: Array<CollateralVM> = []
+
 // The vault's oracle attack surface: leads with the union total (per-collateral, never
 // double-counted); per-control rows overlap (a multi-admin feed counts toward each) and are never summed.
 export function OracleDependencies({
 	providers,
 	deps,
-	collateral = [],
+	collateral = EMPTY_COLLATERAL,
 	chain,
 	explorers,
 	totalDrainableUsd = 0,

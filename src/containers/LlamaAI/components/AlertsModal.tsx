@@ -66,6 +66,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
@@ -448,22 +449,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const updateErrorMessage = updateAlertMutation.error?.message
 	const deleteErrorMessage = deleteAlertMutation.error?.message
 
-	// Reads the clock, so it must stay a local: at module scope the React Compiler memoizes the call
-	// against the alert fields alone, and the relative label goes stale on rerenders that leave the
-	// alert unchanged (expanding execution history, say).
-	// eslint-disable-next-line unicorn/consistent-function-scoping
-	const formatNextRun = (date: string) => {
-		const d = new Date(date)
-		const now = new Date()
-		const diffMs = d.getTime() - now.getTime()
-		const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-		const diffDays = Math.floor(diffHours / 24)
-		if (diffDays > 1) return `in ${diffDays} days`
-		if (diffDays === 1) return 'tomorrow'
-		if (diffHours > 0) return `in ${diffHours}h`
-		return 'soon'
-	}
-
 	const deliveryFields = (
 		<div className="flex flex-col gap-1.5">
 			<span className={alertFieldLabelClass}>Deliver to</span>
@@ -661,9 +646,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						{alert.condition ? <p className="mt-0.5 body-sm text-secondary">If: {alert.condition}</p> : null}
 						<p className="mt-1 body-sm text-secondary">
 							{channelLabel}
-							{isPriceAlert
-								? ` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`
-								: ` · ${alert.enabled ? `next run ${formatNextRun(alert.next_run_at)}` : 'paused'} · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
+							{/* A paused alert's status chip already says so. */}
+							{!isPriceAlert && alert.enabled ? (
+								<>
+									{' · '}
+									<RelativeTime value={alert.next_run_at} prefix="Next run" pastLabel="soon" />
+								</>
+							) : null}
+							{` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
 						</p>
 						{alert.last_run_status === 'error' && alert.last_error ? (
 							<p className="mt-1 body-sm text-error">{alert.last_error}</p>

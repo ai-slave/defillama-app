@@ -87,7 +87,7 @@ function ScenarioRow({
 		</>
 	)
 	return (
-		<Fragment>
+		<>
 			<tr
 				id={scenarioRowId(s.scenarioId)}
 				onClick={() => clickable && onToggle()}
@@ -145,7 +145,7 @@ function ScenarioRow({
 					</td>
 				</tr>
 			) : null}
-		</Fragment>
+		</>
 	)
 }
 

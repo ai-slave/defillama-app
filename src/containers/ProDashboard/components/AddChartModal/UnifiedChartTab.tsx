@@ -160,6 +160,12 @@ interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
 	onSelectedRwaAssetMetricsChange?: (metrics: Array<RWAOverviewChartMetric>) => void
 }
 
+const DEFAULT_SELECTED_RWA_ASSET_METRICS: NonNullable<UnifiedChartTabPropsExtended['selectedRwaAssetMetrics']> = [
+	'activeMcap',
+	'onChainMcap',
+	'defiActiveTvl'
+]
+
 export function UnifiedChartTab({
 	selectedChartTab,
 	selectedChartTypes,
@@ -239,7 +245,7 @@ export function UnifiedChartTab({
 	selectedRwaTreemapNestedBy = 'none',
 	selectedRwaAssetId = null,
 	selectedRwaAssetName = null,
-	selectedRwaAssetMetrics = ['activeMcap', 'onChainMcap', 'defiActiveTvl'],
+	selectedRwaAssetMetrics = DEFAULT_SELECTED_RWA_ASSET_METRICS,
 	onRwaModeChange,
 	onSelectedRwaChainChange,
 	onSelectedRwaMetricChange,

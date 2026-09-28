@@ -44,8 +44,10 @@ export function toTokenSearchOption(token: TokenSearchOption): TokenSearchResult
 	}
 }
 
+const EMPTY_INITIAL_TOKENS: NonNullable<TokenSearchDialogProps['initialTokens']> = []
+
 export function TokenSearchDialog({
-	initialTokens = [],
+	initialTokens = EMPTY_INITIAL_TOKENS,
 	coinsData,
 	selectToken,
 	dialogStore,

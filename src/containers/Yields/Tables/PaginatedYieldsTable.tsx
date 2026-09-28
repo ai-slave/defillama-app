@@ -10,6 +10,8 @@ export const tableFeaturesConfig = paginatedTableFeatures
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100, 200] as const
 
+const EMPTY_SORTING_STATE: SortingState = []
+
 export function PaginatedYieldsTable<TRow>({
 	data,
 	columns,
@@ -20,7 +22,7 @@ export function PaginatedYieldsTable<TRow>({
 	manualPagination = false,
 	manualSorting = false,
 	paginationState,
-	sortingState = [],
+	sortingState = EMPTY_SORTING_STATE,
 	onPaginationChange,
 	onSortingChange,
 	interactionDisabled = false,

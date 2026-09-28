@@ -174,20 +174,20 @@ export const getTvlBreakdownData = async (
 		}
 	}
 
+	const buildSeriesForSlug = async (slug: string): Promise<Array<[number, number]>> => {
+		const chart = await fetchProtocolTvlChart({ protocol: slug, breakdownType: 'chain-breakdown' })
+		return sumProtocolTvlBreakdown(chart, {
+			...(chainFilterMode === 'exclude' && hasRealExcludedChains
+				? { excludeChains: excludedChainSetForProtocols }
+				: null),
+			...(chainFilterMode === 'include' && !isAll && includedChainSetForProtocols.size > 0
+				? { includeChains: includedChainSetForProtocols }
+				: null)
+		})
+	}
+
 	const protocolSeries = await mapWithConcurrency(top, 8, async (t) => {
 		const useChildrenOnly = groupByParent && !!t.parentId && categoriesFilter.length > 0
-
-		const buildSeriesForSlug = async (slug: string): Promise<Array<[number, number]>> => {
-			const chart = await fetchProtocolTvlChart({ protocol: slug, breakdownType: 'chain-breakdown' })
-			return sumProtocolTvlBreakdown(chart, {
-				...(chainFilterMode === 'exclude' && hasRealExcludedChains
-					? { excludeChains: excludedChainSetForProtocols }
-					: null),
-				...(chainFilterMode === 'include' && !isAll && includedChainSetForProtocols.size > 0
-					? { includeChains: includedChainSetForProtocols }
-					: null)
-			})
-		}
 
 		if (useChildrenOnly) {
 			const childSet = t.parentId ? childrenByParent.get(t.parentId) : undefined

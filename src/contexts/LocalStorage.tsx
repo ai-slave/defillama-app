@@ -589,6 +589,77 @@ export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens
 	}, [snapshot, watchlistKey, selectedPortfolioKey])
 }
 
+function setCustomColumns(cols: Array<CustomColumnDef>) {
+	writeAppStorage({ ...readAppStorage(), [CUSTOM_COLUMNS]: cols })
+}
+
+function setSavedDownloads(next: Array<SavedDownload>) {
+	writeAppStorage({ ...readAppStorage(), [SAVED_DOWNLOADS]: next })
+}
+
+function saveDownload(config: SavedDownload, options?: { replaceByName?: boolean }) {
+	const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
+	if (options?.replaceByName) {
+		const without = current.filter((c) => c.name !== config.name)
+		setSavedDownloads([config, ...without])
+		return
+	}
+	setSavedDownloads([config, ...current])
+}
+
+function updateDownload(id: string, patch: Partial<SavedDownload>) {
+	const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
+	const next = current.map((c) => (c.id === id ? ({ ...c, ...patch } as SavedDownload) : c))
+	setSavedDownloads(next)
+}
+
+function deleteDownload(id: string) {
+	const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
+	setSavedDownloads(current.filter((c) => c.id !== id))
+}
+
+function renameDownload(id: string, name: string) {
+	updateDownload(id, { name } as Partial<SavedDownload>)
+}
+
+function markRun(id: string) {
+	updateDownload(id, { lastRunAt: Date.now() } as Partial<SavedDownload>)
+}
+
+function setRecentDownloads(next: Array<SavedDownload>) {
+	writeAppStorage({ ...readAppStorage(), [RECENT_DOWNLOADS]: next })
+}
+
+function recordRecent(config: SavedDownload) {
+	const store = readAppStorage()
+	const currentRecents = (store[RECENT_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
+	const dedupedRecents = currentRecents.filter((c) => !sameSavedConfigShape(c, config))
+	const nextRecents = [config, ...dedupedRecents].slice(0, MAX_RECENT_DOWNLOADS)
+
+	// Every real download flows through recordRecent, so use it to bump lastRunAt
+	// on any saved preset whose shape matches — handles saved/recent/ad-hoc uniformly.
+	const currentSaved = (store[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
+	const now = Date.now()
+	let savedChanged = false
+	const nextSaved = currentSaved.map((s) => {
+		if (sameSavedConfigShape(s, config)) {
+			savedChanged = true
+			return { ...s, lastRunAt: now }
+		}
+		return s
+	})
+
+	writeAppStorage({
+		...store,
+		[RECENT_DOWNLOADS]: nextRecents,
+		...(savedChanged ? { [SAVED_DOWNLOADS]: nextSaved } : {})
+	})
+}
+
+function clearRecents() {
+	setRecentDownloads([])
+}
+
 export function useCustomColumns() {
 	const snapshot = useSyncExternalStore(
 		subscribeToLocalStorage,
@@ -608,10 +679,6 @@ export function useCustomColumns() {
 			return []
 		}
 	}, [snapshot])
-
-	function setCustomColumns(cols: Array<CustomColumnDef>) {
-		writeAppStorage({ ...readAppStorage(), [CUSTOM_COLUMNS]: cols })
-	}
 
 	function addCustomColumn(col: CustomColumnDef) {
 		setCustomColumns([...customColumns, col])
@@ -653,39 +720,6 @@ export function useSavedDownloads() {
 		}
 	}, [snapshot])
 
-	function setList(next: Array<SavedDownload>) {
-		writeAppStorage({ ...readAppStorage(), [SAVED_DOWNLOADS]: next })
-	}
-
-	function saveDownload(config: SavedDownload, options?: { replaceByName?: boolean }) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-		if (options?.replaceByName) {
-			const without = current.filter((c) => c.name !== config.name)
-			setList([config, ...without])
-			return
-		}
-		setList([config, ...current])
-	}
-
-	function updateDownload(id: string, patch: Partial<SavedDownload>) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-		const next = current.map((c) => (c.id === id ? ({ ...c, ...patch } as SavedDownload) : c))
-		setList(next)
-	}
-
-	function deleteDownload(id: string) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-		setList(current.filter((c) => c.id !== id))
-	}
-
-	function renameDownload(id: string, name: string) {
-		updateDownload(id, { name } as Partial<SavedDownload>)
-	}
-
-	function markRun(id: string) {
-		updateDownload(id, { lastRunAt: Date.now() } as Partial<SavedDownload>)
-	}
-
 	return {
 		savedDownloads,
 		saveDownload,
@@ -714,40 +748,6 @@ export function useRecentDownloads() {
 			return [] as Array<SavedDownload>
 		}
 	}, [snapshot])
-
-	function setList(next: Array<SavedDownload>) {
-		writeAppStorage({ ...readAppStorage(), [RECENT_DOWNLOADS]: next })
-	}
-
-	function recordRecent(config: SavedDownload) {
-		const store = readAppStorage()
-		const currentRecents = (store[RECENT_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-		const dedupedRecents = currentRecents.filter((c) => !sameSavedConfigShape(c, config))
-		const nextRecents = [config, ...dedupedRecents].slice(0, MAX_RECENT_DOWNLOADS)
-
-		// Every real download flows through recordRecent, so use it to bump lastRunAt
-		// on any saved preset whose shape matches — handles saved/recent/ad-hoc uniformly.
-		const currentSaved = (store[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
-		const now = Date.now()
-		let savedChanged = false
-		const nextSaved = currentSaved.map((s) => {
-			if (sameSavedConfigShape(s, config)) {
-				savedChanged = true
-				return { ...s, lastRunAt: now }
-			}
-			return s
-		})
-
-		writeAppStorage({
-			...store,
-			[RECENT_DOWNLOADS]: nextRecents,
-			...(savedChanged ? { [SAVED_DOWNLOADS]: nextSaved } : {})
-		})
-	}
-
-	function clearRecents() {
-		setList([])
-	}
 
 	return {
 		recentDownloads,

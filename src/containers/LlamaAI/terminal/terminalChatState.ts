@@ -63,9 +63,12 @@ export function flushTerminalChatSave(keepalive = false): Promise<void> {
 	return saving
 }
 
+function onPageHide() {
+	void flushTerminalChatSave(true)
+}
+
 export function startTerminalChatSaving(fetchFn: typeof fetch): () => void {
 	saveFetch = fetchFn
-	const onPageHide = () => void flushTerminalChatSave(true)
 	window.addEventListener('pagehide', onPageHide)
 	return () => {
 		window.removeEventListener('pagehide', onPageHide)

@@ -446,10 +446,12 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 	)
 }
 
+const EMPTY_PROTOCOL_INCIDENTS: Array<ProtocolIncidentInput> = []
+
 export function HistoryStrip({
 	audits,
 	incidents,
-	protocolIncidents = [],
+	protocolIncidents = EMPTY_PROTOCOL_INCIDENTS,
 	nowIso
 }: {
 	audits: Array<Audit>

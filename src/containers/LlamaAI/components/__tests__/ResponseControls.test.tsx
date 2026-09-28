@@ -110,6 +110,18 @@ test('shows final cost, duration and server completion time without opening deta
 	expect(container.querySelector('[aria-label="Response details"]')).toBeNull()
 })
 
+test("a response from today shows only its time, and gains its date once the reader's day turns", async () => {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] })
+	vi.setSystemTime(new Date(2026, 8, 11, 23, 59, 30))
+	const timestamp = new Date(2026, 8, 11, 10, 0).getTime()
+	await act(async () =>
+		root.render(<ResponseControls messageId="message" content="Response" readOnly timestamp={timestamp} />)
+	)
+	expect(container.querySelector('time')?.textContent).toBe('10:00 AM')
+	await act(async () => vi.advanceTimersByTime(60_000))
+	expect(container.querySelector('time')?.textContent).toBe('Sep 11, 2026, 10:00 AM')
+})
+
 test('older answers omit missing timing, while a recorded zero remains visible', async () => {
 	expect(container.querySelector('time')).toBeNull()
 	expect(container.textContent).not.toContain('External data')

@@ -19,30 +19,31 @@ const stringAttr = (attr: string, dataAttr: string) => ({
 	renderHTML: (attrs: Record<string, unknown>) => (attrs[attr] ? { [dataAttr]: String(attrs[attr]) } : {})
 })
 
+// The node is persisted as ProseMirror JSON, but clipboard copy-paste inside
+// the editor roundtrips through renderHTML -> parseHTML. Object attrs are
+// serialized as JSON data-attributes so a pasted chart keeps its config/data
+// instead of degrading to "[object Object]".
+const jsonAttr = (attr: string) => ({
+	default: null,
+	parseHTML: (el: HTMLElement) => {
+		const raw = el.getAttribute(`data-${attr}`)
+		if (!raw) return null
+		try {
+			return JSON.parse(raw)
+		} catch {
+			return null
+		}
+	},
+	renderHTML: (attrs: Record<string, unknown>) =>
+		attrs[toCamel(attr)] == null ? {} : { [`data-${attr}`]: JSON.stringify(attrs[toCamel(attr)]) }
+})
+
 export const LlamaAIChart = Node.create({
 	name: 'llamaaiChart',
 	group: 'block',
 	atom: true,
 
 	addAttributes() {
-		// The node is persisted as ProseMirror JSON, but clipboard copy-paste inside
-		// the editor roundtrips through renderHTML -> parseHTML. Object attrs are
-		// serialized as JSON data-attributes so a pasted chart keeps its config/data
-		// instead of degrading to "[object Object]".
-		const jsonAttr = (attr: string) => ({
-			default: null,
-			parseHTML: (el: HTMLElement) => {
-				const raw = el.getAttribute(`data-${attr}`)
-				if (!raw) return null
-				try {
-					return JSON.parse(raw)
-				} catch {
-					return null
-				}
-			},
-			renderHTML: (attrs: Record<string, unknown>) =>
-				attrs[toCamel(attr)] == null ? {} : { [`data-${attr}`]: JSON.stringify(attrs[toCamel(attr)]) }
-		})
 		return {
 			chartConfig: jsonAttr('chart-config'),
 			chartData: jsonAttr('chart-data'),

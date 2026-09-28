@@ -88,16 +88,17 @@ function CreateProjectForm({
 	const [name, setName] = useState(project?.name ?? '')
 	const [description, setDescription] = useState(project?.description ?? '')
 
+	// Both read through an optional chain, which the compiler cannot lower inside a try or catch, so
+	// submit calls out to them instead. The form can unmount while the request is still running, which
+	// is why the check has to happen after the await rather than before the try.
+	const isStillMounted = () => formRef.current?.isConnected === true
+	const notifyCreated = (created: Project) => onCreated?.(created)
+
 	const submit = async (e: { preventDefault: () => void }) => {
 		e.preventDefault()
 		const trimmed = name.trim()
 		if (!trimmed || create.isPending || update.isPending) return
 		const payload = { name: trimmed, description: description.trim() || null }
-		// Both read through an optional chain, which the compiler cannot lower inside a try or catch, so
-		// they are called out to instead. The form can unmount while the request is still running, which
-		// is why the check has to happen after the await rather than before the try.
-		const isStillMounted = () => formRef.current?.isConnected === true
-		const notifyCreated = (created: Project) => onCreated?.(created)
 		const isRename = mode === 'rename' && project != null
 		const closedMessage = isRename ? 'Project updated' : 'Project created'
 		try {

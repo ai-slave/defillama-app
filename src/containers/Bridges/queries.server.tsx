@@ -150,6 +150,25 @@ function mergeAggregateAddressMapInto(
 	}
 }
 
+function normalizeDailyBridgePoints(points: Array<BridgeVolumeChartPoint>): Array<BridgeVolumeChartPoint> {
+	const normalized: Array<BridgeVolumeChartPoint> = []
+	for (const point of points) {
+		const utcDay = Math.floor(point.date / 86_400) * 86_400
+		const last = normalized[normalized.length - 1]
+		if (last?.date === utcDay) {
+			last.Deposited = addKnownBridgeLeg(last.Deposited, point.Deposited)
+			last.Withdrawn = addKnownBridgeLeg(last.Withdrawn, point.Withdrawn)
+		} else {
+			normalized.push({
+				date: utcDay,
+				Deposited: point.Deposited,
+				Withdrawn: point.Withdrawn
+			})
+		}
+	}
+	return normalized
+}
+
 export function buildVolumeDataByChain({
 	volume,
 	chains,
@@ -161,24 +180,6 @@ export function buildVolumeDataByChain({
 }): BridgePageData['volumeDataByChain'] {
 	const volumeDataByChain: BridgePageData['volumeDataByChain'] = {}
 	const volumeOnAllChains = new Map<number, BridgeVolumeChartPoint>()
-	const normalizeDailyBridgePoints = (points: Array<BridgeVolumeChartPoint>): Array<BridgeVolumeChartPoint> => {
-		const normalized: Array<BridgeVolumeChartPoint> = []
-		for (const point of points) {
-			const utcDay = Math.floor(point.date / 86_400) * 86_400
-			const last = normalized[normalized.length - 1]
-			if (last?.date === utcDay) {
-				last.Deposited = addKnownBridgeLeg(last.Deposited, point.Deposited)
-				last.Withdrawn = addKnownBridgeLeg(last.Withdrawn, point.Withdrawn)
-			} else {
-				normalized.push({
-					date: utcDay,
-					Deposited: point.Deposited,
-					Withdrawn: point.Withdrawn
-				})
-			}
-		}
-		return normalized
-	}
 
 	if (volume.length !== chains.length) throw new Error('Bridge volume responses must align with requested chains')
 	for (let index = 0; index < chains.length; index++) {

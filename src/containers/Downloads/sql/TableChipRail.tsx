@@ -24,11 +24,13 @@ interface TableChipRailProps {
 	totalSchemaCount: number
 }
 
+const EMPTY_PENDING: NonNullable<TableChipRailProps['pending']> = []
+
 export function TableChipRail({
 	tables,
 	onBrowseSchema,
 	onRemove,
-	pending = [],
+	pending = EMPTY_PENDING,
 	totalSchemaCount
 }: TableChipRailProps) {
 	const [openName, setOpenName] = useState<string | null>(null)

@@ -9,16 +9,20 @@ import { AuditsBlock, GovernanceBlock } from './GovernanceBlock'
 import { HistoryStrip, type HistoryIncident, type ProtocolIncidentInput } from './HistoryStrip'
 import { VaultRolesBlock } from './VaultRolesBlock'
 
+const EMPTY_INCIDENTS: Array<HistoryIncident> = []
+const EMPTY_SCENARIOS: Array<ScenarioVM> = []
+const EMPTY_VAULT_DEPENDENCIES: Array<ExternalDependency> = []
+
 export function TrustPanel({
 	protocol,
 	explorers,
-	incidents = [],
+	incidents = EMPTY_INCIDENTS,
 	nowIso,
 	chain,
 	poolType = 'vault',
-	scenarios = [],
+	scenarios = EMPTY_SCENARIOS,
 	vaultRoles = null,
-	vaultDependencies = []
+	vaultDependencies = EMPTY_VAULT_DEPENDENCIES
 }: {
 	protocol: ProtocolRiskFixture | null
 	explorers?: BlockExplorersResponse

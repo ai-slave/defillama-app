@@ -50,11 +50,13 @@ interface ProjectLandingProps {
 	enterToSend: boolean
 }
 
+const EMPTY_SESSION_LIST: NonNullable<ProjectLandingProps['sessionList']> = []
+
 export function ProjectLanding({
 	projectId,
 	tier,
 	initialTab = 'chats',
-	sessionList = [],
+	sessionList = EMPTY_SESSION_LIST,
 	onSubmit,
 	isStreaming,
 	onPickSession,

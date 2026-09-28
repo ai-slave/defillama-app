@@ -167,7 +167,9 @@ interface ResearchLatestProps {
 	initialData?: BannerLookupResult | null
 }
 
-export function ResearchLatest({ articles = [], initialData }: ResearchLatestProps) {
+const EMPTY_ARTICLES: NonNullable<ResearchLatestProps['articles']> = []
+
+export function ResearchLatest({ articles = EMPTY_ARTICLES, initialData }: ResearchLatestProps) {
 	const { data } = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'landing'],
 		queryFn: () => getLandingBanner(),

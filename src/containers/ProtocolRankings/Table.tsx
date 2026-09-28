@@ -204,11 +204,6 @@ function ChainProtocolsTableInner({
 
 	const customColumnDialogStore = Ariakit.useDialogStore()
 	const customColumnDialogOpen = Ariakit.useStoreState(customColumnDialogStore, 'open')
-	const clearPresetSelection = () => {
-		removeStorageItem(legacyTableFilterStateKey)
-		removeStorageItem(tableMetricPresetKey)
-		removeStorageItem(tablePeriodKey)
-	}
 	const handleAddCustomColumn = () => {
 		setCustomColumnModalEditIndex(null)
 		setCustomColumnModalInitialValues(undefined)
@@ -673,6 +668,12 @@ const tableColumnOptionsKey = PROTOCOL_RANKING_STORAGE_KEYS.columns
 const legacyTableFilterStateKey = PROTOCOL_RANKING_STORAGE_KEYS.legacyPreset
 const tableMetricPresetKey = PROTOCOL_RANKING_STORAGE_KEYS.metricPreset
 const tablePeriodKey = PROTOCOL_RANKING_STORAGE_KEYS.period
+
+function clearPresetSelection() {
+	removeStorageItem(legacyTableFilterStateKey)
+	removeStorageItem(tableMetricPresetKey)
+	removeStorageItem(tablePeriodKey)
+}
 
 const TABLE_PRESETS = {
 	FEES: 'Fees',

@@ -170,8 +170,8 @@ export function BannerForm({ banner }: Props) {
 		showOnLanding: state.kind === 'promo' ? state.showOnLanding : true,
 		enabled: true,
 		createdByPbUserId: banner?.createdByPbUserId ?? '',
-		createdAt: banner?.createdAt ?? new Date().toISOString(),
-		updatedAt: banner?.updatedAt ?? new Date().toISOString()
+		createdAt: banner?.createdAt ?? '',
+		updatedAt: banner?.updatedAt ?? ''
 	}
 
 	return (

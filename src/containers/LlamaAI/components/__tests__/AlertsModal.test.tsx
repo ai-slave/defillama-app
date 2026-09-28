@@ -70,6 +70,23 @@ function toggle() {
 	return document.querySelector<HTMLInputElement>('[role="switch"]')!
 }
 
+test('the next run label counts down while the modal stays open, then reads soon once overdue', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	vi.setSystemTime(new Date('2026-09-10T06:00:00Z'))
+	session.serve({ [ALERTS_URL]: { alerts: [alert] } })
+	session.client.setQueryData([ALERTS_QUERY_KEY, 'user'], [alert])
+	try {
+		await render()
+		await settle(() => expect(document.body.textContent).toContain('Next run in 3h'))
+		await act(async () => vi.advanceTimersByTime(2 * 60 * 60 * 1000))
+		expect(document.body.textContent).toContain('Next run in 1h')
+		await act(async () => vi.advanceTimersByTime(90 * 60 * 1000))
+		expect(document.body.textContent).toContain('Next run soon')
+	} finally {
+		vi.useRealTimers()
+	}
+})
+
 test('a failed refresh retains alerts and exposes retry', async () => {
 	let online = false
 	session.serve({

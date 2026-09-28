@@ -355,11 +355,15 @@ function assertReceiptsSigned(receipts: Array<{ signature?: string }>) {
 	}
 }
 
+const EMPTY_PROJECTS: Array<UtrClaimProjectOption> = []
+const EMPTY_EXCHANGE_OPTIONS: Array<UtrClaimExchangeOption> = []
+const EMPTY_MARKET_MAKER_OPTIONS: Array<UtrClaimMarketMakerOption> = []
+
 export function ClaimTokenProfile({
 	variant = 'claim',
-	projects = [],
-	exchangeOptions = [],
-	marketMakerOptions = [],
+	projects = EMPTY_PROJECTS,
+	exchangeOptions = EMPTY_EXCHANGE_OPTIONS,
+	marketMakerOptions = EMPTY_MARKET_MAKER_OPTIONS,
 	scoringConfig
 }: {
 	variant?: 'claim' | 'join'

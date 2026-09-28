@@ -124,9 +124,10 @@ function GitHubConnectForm({
 		return all.filter((b) => b.name.toLowerCase().includes(q))
 	}, [branches.data, branchQuery])
 
+	const isStillMounted = () => formRef.current?.isConnected === true
+
 	const onConnect = async () => {
 		if (connect.isPending) return
-		const isStillMounted = () => formRef.current?.isConnected === true
 		if (!selectedRepo || !effectiveBranch || !effectiveInstallId) {
 			toast.error('Choose a repository and branch before connecting.')
 			return

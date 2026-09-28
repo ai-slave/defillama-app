@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
 import type {
 	ArticleCollaborator,
@@ -113,7 +114,8 @@ export function ArticleMetaDialog({
 		}
 	}
 
-	const minScheduleLocal = toDateTimeLocal(new Date().toISOString())
+	const nowSeconds = useNowSeconds()
+	const minScheduleLocal = toDateTimeLocal(new Date(nowSeconds * 1000).toISOString())
 
 	const commitGuestAuthors = (rows: Array<ArticleGuestAuthor & { id: string }>) =>
 		updateArticle(
