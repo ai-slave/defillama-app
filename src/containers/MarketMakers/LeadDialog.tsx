@@ -38,7 +38,7 @@ export function LeadDialogHeader({ title, hidden = false }: { title: ReactNode; 
 		)
 	}
 	return (
-		<div className="flex items-center justify-between gap-3 border-b border-subtle p-3">
+		<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 			<DialogHeading>{title}</DialogHeading>
 			<DialogCloseButton />
 		</div>
@@ -46,11 +46,7 @@ export function LeadDialogHeader({ title, hidden = false }: { title: ReactNode; 
 }
 
 export function LeadDialogBody({ children }: { children: ReactNode }) {
-	return <div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-3`}>{children}</div>
-}
-
-export function LeadDialogFooter({ children }: { children: ReactNode }) {
-	return <div className="flex items-center justify-end gap-2 border-t border-subtle p-3">{children}</div>
+	return <div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>{children}</div>
 }
 
 export function LeadField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {

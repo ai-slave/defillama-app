@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
+import { DialogFooter } from '~/ui/Dialog'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from './ClaimTurnstile'
@@ -11,7 +12,6 @@ import {
 	LeadCancelButton,
 	LeadDialog,
 	LeadDialogBody,
-	LeadDialogFooter,
 	LeadDialogHeader,
 	LeadError,
 	LeadField,
@@ -276,8 +276,7 @@ function ClaimDialogForm({
 				)}
 			</LeadDialogBody>
 			{submit.isSuccess ? null : (
-				<LeadDialogFooter>
-					<LeadCancelButton />
+				<DialogFooter dismiss={<LeadCancelButton />}>
 					<Button
 						type="button"
 						variant="primary"
@@ -287,7 +286,7 @@ function ClaimDialogForm({
 					>
 						{submit.isPending ? 'Submitting…' : 'Submit Claim Request'}
 					</Button>
-				</LeadDialogFooter>
+				</DialogFooter>
 			)}
 		</>
 	)

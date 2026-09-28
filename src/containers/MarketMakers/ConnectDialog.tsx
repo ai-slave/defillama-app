@@ -6,6 +6,7 @@ import { searchTokens } from '~/containers/TokenSearch/search'
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
+import { DialogFooter } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles } from '~/ui/Popover'
@@ -16,7 +17,6 @@ import {
 	LeadCancelButton,
 	LeadDialog,
 	LeadDialogBody,
-	LeadDialogFooter,
 	LeadDialogHeader,
 	LeadError,
 	LeadField,
@@ -34,7 +34,7 @@ const INTEREST_OPTIONS = [
 const TOKEN_STATUS_OPTIONS = [
 	{ value: 'pre-tge', label: 'Pre-TGE' },
 	{ value: 'listed', label: 'Listed' },
-	{ value: 'no-token', label: "I don't have a Token" }
+	{ value: 'no-token', label: 'No token' }
 ] as const
 
 type TokenStatus = (typeof TOKEN_STATUS_OPTIONS)[number]['value']
@@ -258,7 +258,7 @@ function ConnectDialogForm({
 								variant="default"
 								size="md"
 								className="w-full!"
-								buttonClassName="inline-flex flex-1 items-center justify-center"
+								buttonClassName="inline-flex flex-1 basis-0 items-center justify-center"
 							/>
 						</div>
 						{tokenStatus === 'listed' && !manualToken ? (
@@ -351,12 +351,11 @@ function ConnectDialogForm({
 				)}
 			</LeadDialogBody>
 			{submit.isSuccess ? null : (
-				<LeadDialogFooter>
-					<LeadCancelButton />
+				<DialogFooter dismiss={<LeadCancelButton />}>
 					<Button type="button" variant="primary" size="md" disabled={submit.isPending} onClick={onSubmit}>
 						{submit.isPending ? 'Submitting…' : 'Submit Request'}
 					</Button>
-				</LeadDialogFooter>
+				</DialogFooter>
 			)}
 		</>
 	)
