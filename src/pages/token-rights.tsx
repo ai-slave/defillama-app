@@ -9,6 +9,7 @@ import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
@@ -248,7 +249,7 @@ function resolveTokenRightsListItem(
 			entry,
 			name,
 			logo: tokenRecord.logo ?? tokenIconUrl(name),
-			href: tokenRecord.route ?? null,
+			href: tokenRecord.route ? `${tokenRecord.route}#${TOKEN_RIGHTS_SECTION_ID}` : null,
 			holdersRevenueByDefillamaId,
 			deprecated
 		})
@@ -625,10 +626,7 @@ const columns = columnHelper.columns([
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
 						<span className="flex items-center gap-1 overflow-hidden">
-							<Link
-								href={`${row.original.href}#token-rights`}
-								className="min-w-0 truncate label-md text-link hover:underline"
-							>
+							<Link href={href} className="min-w-0 truncate label-md text-link hover:underline">
 								{name}
 							</Link>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}

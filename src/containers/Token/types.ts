@@ -113,6 +113,9 @@ export type TokenPageSection =
 
 export type TokenPageSectionId = TokenPageSection['id']
 
+// Pages that link into the token rights section build their hash from this id.
+export const TOKEN_RIGHTS_SECTION_ID = 'token-rights-and-value-accrual' satisfies TokenPageSectionId
+
 export type TokenPageProps = {
 	seoTitle: string
 	seoDescription: string

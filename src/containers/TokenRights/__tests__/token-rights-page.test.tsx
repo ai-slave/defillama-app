@@ -131,7 +131,7 @@ describe('token rights page', () => {
 				protocols: [
 					{
 						name: 'Ethereum',
-						href: '/token/ETH',
+						href: '/token/ETH#token-rights-and-value-accrual',
 						tokens: ['ETH'],
 						holdersRevenue24h: 1200,
 						governanceRights: [true, false, true],
@@ -143,7 +143,7 @@ describe('token rights page', () => {
 					},
 					{
 						name: 'Lido',
-						href: '/token/LDO',
+						href: '/token/LDO#token-rights-and-value-accrual',
 						tokens: ['LDO'],
 						holdersRevenue24h: null,
 						feeSwitchStatus: 'OFF'
@@ -151,6 +151,24 @@ describe('token rights page', () => {
 				]
 			},
 			revalidate: expect.any(Number)
+		})
+	})
+
+	test('links rows to the token rights section of the token page', async () => {
+		setup({
+			protocolMetadata: {
+				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
+			},
+			tokensJson: {
+				ldo: { name: 'Lido DAO', symbol: 'LDO', token_nk: 'coingecko:lido-dao', route: '/token/LDO' }
+			},
+			tokenRightsEntries: [tokenRightsEntry({ 'Protocol Name': 'Lido DAO', 'DefiLlama ID': '182' })]
+		})
+
+		const result = await getStaticProps({} as never)
+		// The token page only scrolls to and highlights a hash that matches one of its section ids.
+		expect(result).toMatchObject({
+			props: { protocols: [{ name: 'Lido', href: '/token/LDO#token-rights-and-value-accrual' }] }
 		})
 	})
 
@@ -326,7 +344,7 @@ describe('token rights page', () => {
 
 		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Plume Mainnet', href: '/token/PLUME' }]
+				protocols: [{ name: 'Plume Mainnet', href: '/token/PLUME#token-rights-and-value-accrual' }]
 			},
 			revalidate: expect.any(Number)
 		})
@@ -350,7 +368,7 @@ describe('token rights page', () => {
 
 		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Backpack SOL', href: '/token/BP' }]
+				protocols: [{ name: 'Backpack SOL', href: '/token/BP#token-rights-and-value-accrual' }]
 			},
 			revalidate: expect.any(Number)
 		})
@@ -372,7 +390,7 @@ describe('token rights page', () => {
 
 		await expect(getStaticProps({} as never)).resolves.toMatchObject({
 			props: {
-				protocols: [{ name: 'Backpack', href: '/token/BP' }]
+				protocols: [{ name: 'Backpack', href: '/token/BP#token-rights-and-value-accrual' }]
 			},
 			revalidate: expect.any(Number)
 		})

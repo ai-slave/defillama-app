@@ -24,6 +24,7 @@ import type {
 	TokenPageSection,
 	TokenYieldsHydration
 } from './types'
+import { TOKEN_RIGHTS_SECTION_ID } from './types'
 
 export function getCoinGeckoId(tokenNk: string | undefined): string | null {
 	if (!tokenNk?.startsWith('coingecko:')) return null
@@ -162,7 +163,7 @@ export function getTokenPageSections({
 	}
 	if (tokenRightsData) {
 		sections.push({
-			id: 'token-rights-and-value-accrual',
+			id: TOKEN_RIGHTS_SECTION_ID,
 			label: 'Token Rights',
 			name: record.name,
 			symbol: record.symbol,

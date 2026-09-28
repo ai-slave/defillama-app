@@ -3,6 +3,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import type { Raise } from '~/containers/Raises/model'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
+import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import { Card } from '~/ui/Card'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
@@ -49,8 +50,6 @@ const TOOLTIPS = {
 	Domain:
 		'Which entity owns the primary domain name(s) and frontend interface of the protocol. Domain ownership affects user access and frontend fee capture.'
 } as const
-
-const EMBEDDED_TOKEN_RIGHTS_SECTION_ID = 'token-rights-and-value-accrual'
 
 type TokenRightsView = 'overview' | 'details'
 
@@ -313,7 +312,7 @@ export function TokenRightsByProtocol({
 			id={TOKEN_RIGHTS_PANEL_PREFIX}
 		>
 			<div
-				id={isEmbedded ? EMBEDDED_TOKEN_RIGHTS_SECTION_ID : undefined}
+				id={isEmbedded ? TOKEN_RIGHTS_SECTION_ID : undefined}
 				className={isEmbedded ? 'scroll-mt-24 rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
 			>
 				{showHeader ? (
@@ -324,7 +323,7 @@ export function TokenRightsByProtocol({
 								<a
 									aria-hidden="true"
 									tabIndex={-1}
-									href={`#${EMBEDDED_TOKEN_RIGHTS_SECTION_ID}`}
+									href={`#${TOKEN_RIGHTS_SECTION_ID}`}
 									className="absolute top-0 right-0 z-10 flex size-full items-center"
 								/>
 								<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />

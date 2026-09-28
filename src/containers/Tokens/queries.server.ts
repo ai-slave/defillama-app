@@ -5,6 +5,7 @@ import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
+import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
@@ -416,7 +417,7 @@ export function buildTokensSourceRows({
 			href,
 			tokenRightsHref: rights
 				? href
-					? `${href}#token-rights-and-value-accrual`
+					? `${href}#${TOKEN_RIGHTS_SECTION_ID}`
 					: protocolTokenRightsSlug
 						? `/protocol/token-rights/${protocolTokenRightsSlug}`
 						: null
