@@ -79,13 +79,15 @@ export function SignInFlow({
 	initialStep = 'signin',
 	suppressVerifyEmailPrompt,
 	prompt,
-	onAuthenticated
+	onAuthenticated,
+	closeable = true
 }: {
 	dialogStore: Ariakit.DialogStore
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
 	prompt?: string
 	onAuthenticated?: () => void
+	closeable?: boolean
 }) {
 	const [flowStore] = useState(() => createSignInFlowStore(initialStep))
 	useEffect(() => flowStore.cancelAuthRequest, [flowStore])
@@ -113,6 +115,7 @@ export function SignInFlow({
 				}
 				prompt={prompt}
 				store={dialogStore}
+				closeable={closeable}
 				showBackLabel={state.kind === 'wallet'}
 				onBack={state.kind !== 'signin' ? () => flowStore.dispatch({ kind: 'navigate', screen: 'signin' }) : undefined}
 			/>

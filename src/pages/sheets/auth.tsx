@@ -11,7 +11,7 @@ import { ClientOnly } from '~/layout/ClientOnly'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-const SignInFlow = dynamic<{ dialogStore: Ariakit.DialogStore }>(
+const SignInFlow = dynamic<{ dialogStore: Ariakit.DialogStore; closeable: boolean }>(
 	() => import('~/containers/Subscription/SignInDialog').then((mod) => mod.SignInFlow),
 	{ ssr: false }
 )
@@ -70,8 +70,6 @@ function AuthContent() {
 		}
 	}, [isAuthenticated, redirectUrl, routerQuery, user, isSubscriptionLoading, isSubscriptionError, subscription])
 
-	const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
-
 	return (
 		<>
 			<Head>
@@ -114,11 +112,18 @@ function AuthContent() {
 					</div>
 				) : (
 					<div className="flex w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-medium bg-overlay shadow-dialog">
-						<SignInFlow dialogStore={dialogStore} />
+						<InlineSignIn />
 					</div>
 				)}
 				<Toast />
 			</div>
 		</>
 	)
+}
+
+// The flow only accepts auth results while its store is open, and hides it after signing in.
+// Owning the store here gives each signed-out view a fresh open one, and nothing can close it.
+function InlineSignIn() {
+	const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
+	return <SignInFlow dialogStore={dialogStore} closeable={false} />
 }
