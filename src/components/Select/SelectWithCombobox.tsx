@@ -81,8 +81,6 @@ type ISelectWithCombobox = SelectWithComboboxLabelProps & (ISelectWithComboboxUr
 
 const EMPTY_QUICK_ACTIONS: ReadonlyArray<{ label: string; onSelect: () => void }> = []
 
-const NAVIGATION_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End', 'PageDown', 'PageUp'])
-
 export function getSelectOptionLabel(allValues: SelectValues, selectedValue: string): string {
 	for (const option of allValues) {
 		if (typeof option === 'string') {
@@ -319,36 +317,11 @@ export function SelectWithCombobox({
 
 	const comboboxRef = React.useRef<HTMLDivElement>(null)
 
-	// Ariakit makes the last selected option active on open and scrolls to it. In a multi-select that option is
-	// arbitrary, so the list opens at its top and scrolls only to follow arrow-key navigation.
-	const movedSinceOpenRef = React.useRef(false)
-	// Spread only in multi-select: an undefined prop would replace Ariakit's own scroller.
-	const optionScrollProps = showCheckboxes
-		? {
-				unstable_scrollIntoView: (element: HTMLElement) => {
-					if (movedSinceOpenRef.current) element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-				}
-			}
-		: {}
-	const searchProps = showCheckboxes
-		? {
-				...optionScrollProps,
-				// Capture: Ariakit moves the active option in its own keydown handler, before a bubbling one runs.
-				onKeyDownCapture: (event: React.KeyboardEvent) => {
-					if (NAVIGATION_KEYS.has(event.key)) movedSinceOpenRef.current = true
-				}
-			}
-		: {}
-	const setOpen = (open: boolean) => {
-		if (open) movedSinceOpenRef.current = false
-	}
-
 	const renderLeadingRows = (rowStyles: string, actionStyles: string) => (
 		<>
 			{showCheckboxes ? (
 				<Ariakit.ComboboxItem
 					value={SELECT_ALL_VALUE}
-					{...optionScrollProps}
 					selectValueOnClick={false}
 					resetValueOnSelect={false}
 					hideOnClick={false}
@@ -362,7 +335,6 @@ export function SelectWithCombobox({
 				<Ariakit.ComboboxItem
 					key={action.label}
 					value={`__quick_action__${action.label}`}
-					{...optionScrollProps}
 					selectValueOnClick={false}
 					resetValueOnSelect={false}
 					hideOnClick={false}
@@ -416,7 +388,6 @@ export function SelectWithCombobox({
 		return (
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
-				setOpen={setOpen}
 				setInputValue={setInputValue}
 				selectedValue={providerValue}
 				setSelectedValue={setSelectedValue}
@@ -424,9 +395,7 @@ export function SelectWithCombobox({
 				<NestedMenu label={label} render={<button type="button" />}>
 					<PopoverHeader
 						inset="nested"
-						search={
-							<Ariakit.Combobox {...searchProps} placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
-						}
+						search={<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />}
 					>
 						{headerRow}
 					</PopoverHeader>
@@ -438,7 +407,6 @@ export function SelectWithCombobox({
 							<Ariakit.ComboboxItem
 								key={getOptionKey(option)}
 								value={getOptionKey(option)}
-								{...optionScrollProps}
 								resetValueOnSelect={false}
 								hideOnClick={false}
 								className={nestedMenuSelectRowStyles}
@@ -479,7 +447,6 @@ export function SelectWithCombobox({
 	return (
 		<Ariakit.ComboboxProvider
 			resetValueOnHide
-			setOpen={setOpen}
 			setInputValue={setInputValue}
 			selectedValue={providerValue}
 			setSelectedValue={setSelectedValue}
@@ -515,13 +482,7 @@ export function SelectWithCombobox({
 			</Ariakit.ComboboxSelect>
 			<ComboboxSurface hideOnInteractOutside heading={heading ?? label} className={popoverClassName}>
 				<PopoverHeader
-					search={
-						<Ariakit.ComboboxInput
-							{...searchProps}
-							placeholder={searchPlaceholder}
-							className={`w-full ${inputStyles}`}
-						/>
-					}
+					search={<Ariakit.ComboboxInput placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />}
 				>
 					{headerRow}
 				</PopoverHeader>
@@ -601,7 +562,6 @@ export function SelectWithCombobox({
 									<Ariakit.ComboboxItem
 										key={`${label}-${optionKey}`}
 										value={optionKey}
-										{...optionScrollProps}
 										resetValueOnSelect={false}
 										className={`${popoverRowWithBorderStyles} group gap-2`}
 									>
