@@ -29,6 +29,8 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/token/*': ['markets', 'liquidations', 'raises', 'treasuries', 'yields', 'token-rights', 'risk'],
 	'/token-rights': ['token-rights'],
 	'/protocol/token-rights/*': ['token-rights'],
+	'/revenue': ['token-rights'],
+	'/revenue/chain/*': ['token-rights'],
 	'/liquidations': ['liquidations'],
 	'/liquidations/**': ['liquidations'],
 	'/api/private/liquidations': ['liquidations'],

@@ -73,12 +73,15 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(redirectDestination)
 		}
 
+		const { loadTokenBadgeSources } = await import('~/containers/TokenRights/server/badge.server')
 		const data = await getAdapterByChainPageData({
 			adapterType,
 			dataType,
 			chain: metadata.name,
 			route: 'revenue',
-			metricName: type
+			metricName: type,
+			// Not awaited: token sources load while the adapter requests run.
+			tokenSources: loadTokenBadgeSources()
 		})
 
 		if (!data) throw new Error(`Missing page data for route=/revenue/chain/[chain] chain=${chain}`)

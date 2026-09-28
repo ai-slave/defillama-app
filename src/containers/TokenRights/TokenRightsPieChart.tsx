@@ -1,22 +1,38 @@
 import { useId } from 'react'
-import type { TokenRightsPieTone } from './utils'
+import type { TokenRightsPieTone, TokenRightsPieTones } from './utils'
 
-const PIE_LABELS = [
-	{ text: 'Treasury', x: 110, y: 33, rotate: 0 },
-	{ text: 'Revenue', x: 177, y: 72, rotate: 58 },
-	{ text: 'Burns', x: 177, y: 154, rotate: -58 },
-	{ text: 'Equity', x: 110, y: 198, rotate: 0 },
-	{ text: 'Value Accrual', lines: ['Value', 'Accrual'], x: 35, y: 151, rotate: 58 },
-	{ text: 'Governance', x: 43, y: 72, rotate: -58 }
-] as const
-
-const PIE_SEGMENT_PATHS = [
-	'M 110 110 L 76 51.11 A 68 68 0 0 1 144 51.11 Z',
-	'M 110 110 L 144 51.11 A 68 68 0 0 1 178 110 Z',
-	'M 110 110 L 178 110 A 68 68 0 0 1 144 168.89 Z',
-	'M 110 110 L 144 168.89 A 68 68 0 0 1 76 168.89 Z',
-	'M 110 110 L 76 168.89 A 68 68 0 0 1 42 110 Z',
-	'M 110 110 L 42 110 A 68 68 0 0 1 76 51.11 Z'
+/** Six equal slices, clockwise from the top. */
+const PIE_SLICES = [
+	{
+		key: 'treasury',
+		path: 'M 110 110 L 76 51.11 A 68 68 0 0 1 144 51.11 Z',
+		label: { text: 'Treasury', x: 110, y: 33, rotate: 0 }
+	},
+	{
+		key: 'revenue',
+		path: 'M 110 110 L 144 51.11 A 68 68 0 0 1 178 110 Z',
+		label: { text: 'Revenue', x: 177, y: 72, rotate: 58 }
+	},
+	{
+		key: 'burns',
+		path: 'M 110 110 L 178 110 A 68 68 0 0 1 144 168.89 Z',
+		label: { text: 'Burns', x: 177, y: 154, rotate: -58 }
+	},
+	{
+		key: 'equity',
+		path: 'M 110 110 L 144 168.89 A 68 68 0 0 1 76 168.89 Z',
+		label: { text: 'Equity', x: 110, y: 198, rotate: 0 }
+	},
+	{
+		key: 'valueAccrual',
+		path: 'M 110 110 L 76 168.89 A 68 68 0 0 1 42 110 Z',
+		label: { text: 'Value Accrual', lines: ['Value', 'Accrual'], x: 35, y: 151, rotate: 58 }
+	},
+	{
+		key: 'governance',
+		path: 'M 110 110 L 42 110 A 68 68 0 0 1 76 51.11 Z',
+		label: { text: 'Governance', x: 43, y: 72, rotate: -58 }
+	}
 ] as const
 
 const PIE_TONE_COLORS: Record<TokenRightsPieTone, string> = {
@@ -26,17 +42,17 @@ const PIE_TONE_COLORS: Record<TokenRightsPieTone, string> = {
 }
 
 export function TokenRightsPieChart({
-	segments,
+	tones,
 	showLabels = true,
 	className = 'h-[200px] w-[200px]'
 }: {
-	segments: ReadonlyArray<{ label: string; tone: TokenRightsPieTone }>
+	tones: TokenRightsPieTones
 	showLabels?: boolean
 	className?: string
 }) {
 	const accessibleNameId = useId()
 	const accessibleDescriptionId = useId()
-	const stateDescription = segments.map((segment) => `${segment.label}: ${segment.tone}`).join('; ')
+	const stateDescription = PIE_SLICES.map((slice) => `${slice.label.text}: ${tones[slice.key]}`).join('; ')
 
 	return (
 		<svg
@@ -47,19 +63,11 @@ export function TokenRightsPieChart({
 		>
 			<title id={accessibleNameId}>Token rights summary</title>
 			<desc id={accessibleDescriptionId}>{stateDescription}</desc>
-			{segments.map((segment, index) => (
-				<path
-					key={segment.label}
-					d={PIE_SEGMENT_PATHS[index]}
-					fill={PIE_TONE_COLORS[segment.tone]}
-					stroke="var(--bg-surface)"
-					strokeWidth="4"
-				/>
-			))}
-			{showLabels
-				? PIE_LABELS.map((label) => (
+			{PIE_SLICES.map(({ key, path, label }) => (
+				<g key={key}>
+					<path d={path} fill={PIE_TONE_COLORS[tones[key]]} stroke="var(--bg-surface)" strokeWidth="4" />
+					{showLabels ? (
 						<text
-							key={label.text}
 							x={label.x}
 							y={label.y}
 							textAnchor="middle"
@@ -74,8 +82,9 @@ export function TokenRightsPieChart({
 									))
 								: label.text}
 						</text>
-					))
-				: null}
+					) : null}
+				</g>
+			))}
 		</svg>
 	)
 }

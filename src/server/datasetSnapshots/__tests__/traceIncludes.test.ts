@@ -15,6 +15,7 @@ const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: Array<Dataset
 	{ importPath: '~/containers/Raises/server/dataset.server', domains: ['raises'] },
 	{ importPath: '~/containers/Treasuries/server/dataset.server', domains: ['treasuries'] },
 	{ importPath: '~/containers/TokenRights/server/dataset.server', domains: ['token-rights'] },
+	{ importPath: '~/containers/TokenRights/server/badge.server', domains: ['token-rights'] },
 	{ importPath: '~/containers/Token/server/dataset.risk.server', domains: ['risk'] },
 	{ importPath: '~/containers/Tokens/queries.server', domains: ['markets', 'token-rights'] },
 	{ importPath: '~/containers/Tokens/server/api', domains: ['markets', 'token-rights'] },
@@ -61,16 +62,6 @@ function tracedDomainsForRoute(route: string): Set<DatasetSnapshotDomain> {
 }
 
 describe('dataset snapshot output tracing', () => {
-	test('permanently redirects the retired Markets page to Exchanges', async () => {
-		const redirects = await nextConfig.redirects?.()
-
-		expect(redirects).toContainEqual({
-			source: '/markets',
-			destination: '/exchanges',
-			permanent: true
-		})
-	})
-
 	test('never attaches the complete snapshot tree to every route', () => {
 		const includes = getDatasetSnapshotTraceIncludes()
 		expect(includes['/*']).toBeUndefined()

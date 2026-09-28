@@ -12,12 +12,15 @@ const dataType = ADAPTER_DATA_TYPES.DAILY_REVENUE
 const type = 'Revenue'
 
 export const getStaticProps = withPerformanceLogging(`${type}/index`, async () => {
+	const { loadTokenBadgeSources } = await import('~/containers/TokenRights/server/badge.server')
 	const data = await getAdapterByChainPageData({
 		adapterType,
 		dataType,
 		chain: 'All',
 		route: 'revenue',
-		metricName: type
+		metricName: type,
+		// Not awaited: token sources load while the adapter requests run.
+		tokenSources: loadTokenBadgeSources()
 	})
 
 	if (!data) throw new Error('Missing page data for route=/revenue')

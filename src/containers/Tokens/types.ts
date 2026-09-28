@@ -1,4 +1,4 @@
-import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
+import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 
 export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 15
 export const TOKENS_CHART_GECKO_LOGO_PREFIX = '@'
@@ -72,31 +72,6 @@ export interface TokensNumericFilter {
 }
 export type TokensDisplayTone = 'positive' | 'negative' | 'neutral'
 
-export interface TokensRightsSummary {
-	protocolName: string
-	identityTokens: Array<string>
-	utilityItems: Array<string>
-	primaryValue: string | null
-	primaryDetails: string | null
-	governance: boolean
-	governanceTokens: Array<string>
-	treasury: boolean
-	treasuryTokens: Array<string>
-	revenue: boolean
-	revenueTokens: Array<string>
-	feeSwitchStatus: string
-	buybacks: boolean
-	buybackTokens: Array<string>
-	dividends: boolean
-	dividendTokens: Array<string>
-	burns: boolean
-	burnsStatus: string
-	equityRevenueCapture: string
-	equityTone: TokenRightsPieTone
-	fundraisingLabel: string | null
-	associatedEntities: Array<string>
-}
-
 export interface TokensTableRowDisplay {
 	price: string | null
 	priceChange24h: string | null
@@ -146,7 +121,7 @@ interface TokensRowCore {
 	revenue24h: number | null
 	holdersRevenue24h: number | null
 	trsPercent: number | null
-	rights: TokensRightsSummary | null
+	rights: TokenRightsPreview | null
 	unlock30dUsd: number | null
 	upcomingUnlockUsd: number | null
 	isStablecoin: boolean

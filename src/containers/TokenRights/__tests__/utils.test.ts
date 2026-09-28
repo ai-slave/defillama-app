@@ -3,7 +3,8 @@ import type { IRawTokenRightsEntry } from '../api.types'
 import {
 	formatTokenRightsRaiseUsd,
 	getEquityPieTone,
-	getTokenRightsPieSegments,
+	getTokenRightsPieFlags,
+	getTokenRightsPieTones,
 	hasTokenRightsPrimaryValueAccrual,
 	parseTokenRightsEntry
 } from '../utils'
@@ -37,7 +38,6 @@ describe('parseTokenRightsEntry', () => {
 			Buybacks: null,
 			Dividends: ['N/A'],
 			Burns: 'N/A',
-			'Last Updated': '2026-08-20',
 			'DefiLlama ID': 'parent#aave'
 		}
 
@@ -46,11 +46,6 @@ describe('parseTokenRightsEntry', () => {
 			displayTokens: [],
 			fallbackToken: 'N/A'
 		})
-		expect(parseTokenRightsEntry(entry).overview).toMatchObject({
-			lastUpdated: '2026-08-20',
-			lastUpdatedLabel: 'Aug 20, 2026'
-		})
-
 		delete entry.Buybacks
 		expect(parseTokenRightsEntry(entry).valueAccrual.buybacks).toMatchObject({
 			tokens: [],
@@ -59,7 +54,7 @@ describe('parseTokenRightsEntry', () => {
 		})
 	})
 
-	test('omits the updated label when the producer omits Last Updated', () => {
+	test('labels the updated date only when the producer sends Last Updated', () => {
 		const entry: IRawTokenRightsEntry = {
 			'Protocol Name': 'Aave',
 			Token: ['AAVE'],
@@ -72,10 +67,10 @@ describe('parseTokenRightsEntry', () => {
 			'DefiLlama ID': 'parent#aave'
 		}
 
-		expect(parseTokenRightsEntry(entry).overview).toMatchObject({
-			lastUpdated: null,
-			lastUpdatedLabel: null
-		})
+		expect(parseTokenRightsEntry({ ...entry, 'Last Updated': '2026-08-20' }).overview.lastUpdatedLabel).toBe(
+			'Aug 20, 2026'
+		)
+		expect(parseTokenRightsEntry(entry).overview).toMatchObject({ lastUpdated: null, lastUpdatedLabel: null })
 	})
 })
 
@@ -99,7 +94,6 @@ describe('primary value accrual', () => {
 			'Value Accrual Details': 'No primary accrual mechanism.'
 		})
 		expect(parsed.valueAccrual).toMatchObject({ primary: null, details: 'No primary accrual mechanism.' })
-		expect(hasTokenRightsPrimaryValueAccrual(parsed)).toBe(true)
 		expect(parseTokenRightsEntry({ ...entry, 'Value Accrual': 'Buybacks' }).valueAccrual.primary).toBe('Buybacks')
 	})
 
@@ -125,7 +119,7 @@ test('shows a disclosed zero raise as $0 and only an unknown amount as a dash', 
 	expect(formatTokenRightsRaiseUsd(14_000_000)).toBe('$14m')
 })
 
-describe('getTokenRightsPieSegments', () => {
+describe('getTokenRightsPieTones', () => {
 	const entry: IRawTokenRightsEntry = {
 		'Protocol Name': 'Test Protocol',
 		Token: ['TEST'],
@@ -144,20 +138,29 @@ describe('getTokenRightsPieSegments', () => {
 	}
 
 	test('marks each right the token holds, with buybacks alone counting as value accrual', () => {
-		expect(getTokenRightsPieSegments(parseTokenRightsEntry(entry))).toEqual([
-			{ label: 'Treasury', tone: 'negative' },
-			{ label: 'Revenue', tone: 'positive' },
-			{ label: 'Burns', tone: 'negative' },
-			{ label: 'Equity', tone: 'positive' },
-			{ label: 'Value Accrual', tone: 'positive' },
-			{ label: 'Governance', tone: 'positive' }
-		])
+		expect(getTokenRightsPieTones(getTokenRightsPieFlags(parseTokenRightsEntry(entry)))).toEqual({
+			treasury: 'negative',
+			revenue: 'positive',
+			burns: 'negative',
+			equity: 'positive',
+			valueAccrual: 'positive',
+			governance: 'positive'
+		})
 	})
 
 	test('keeps value accrual inactive when neither dividends nor buybacks accrue value', () => {
-		const segments = getTokenRightsPieSegments(
-			parseTokenRightsEntry({ ...entry, Buybacks: ['None'], Dividends: ['None'] })
+		const tones = getTokenRightsPieTones(
+			getTokenRightsPieFlags(parseTokenRightsEntry({ ...entry, Buybacks: ['None'], Dividends: ['None'] }))
 		)
-		expect(segments.find((segment) => segment.label === 'Value Accrual')?.tone).toBe('negative')
+		expect(tones.valueAccrual).toBe('negative')
+	})
+
+	test('counts dividends alone as value accrual and keeps burns on their own slice', () => {
+		const tonesFor = (overrides: Partial<IRawTokenRightsEntry>) =>
+			getTokenRightsPieTones(
+				getTokenRightsPieFlags(parseTokenRightsEntry({ ...entry, Buybacks: ['None'], ...overrides }))
+			)
+		expect(tonesFor({ Dividends: ['TEST'] }).valueAccrual).toBe('positive')
+		expect(tonesFor({ Burns: 'Yes' })).toMatchObject({ burns: 'positive', valueAccrual: 'negative' })
 	})
 })

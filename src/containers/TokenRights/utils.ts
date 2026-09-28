@@ -5,7 +5,8 @@ import type {
 	ITokenRightsData,
 	ITokenRightsParsedAddress,
 	ITokenRightsParsedLink,
-	ITokenRightsTokenDisplay
+	ITokenRightsTokenDisplay,
+	TokenRightsPreview
 } from './types'
 
 function optionalText(value: string | undefined): string | null {
@@ -150,6 +151,8 @@ function normalizeTokenRightsValue(value: string): string {
 }
 
 export type TokenRightsPieTone = 'positive' | 'negative' | 'warning'
+type TokenRightsPieSlice = 'treasury' | 'revenue' | 'burns' | 'equity' | 'valueAccrual' | 'governance'
+export type TokenRightsPieTones = Record<TokenRightsPieSlice, TokenRightsPieTone>
 
 export function getEquityPieTone(fundraising: Array<string>, equityRevenueCapture: string | null): TokenRightsPieTone {
 	if (
@@ -172,19 +175,6 @@ export function getEquityPieTone(fundraising: Array<string>, equityRevenueCaptur
 /** Dividends or buybacks: either one means the token accrues value. */
 export function hasTokenRightsValueAccrual({ valueAccrual }: ITokenRightsData): boolean {
 	return valueAccrual.dividends.displayTokens.length > 0 || valueAccrual.buybacks.displayTokens.length > 0
-}
-
-/** The overview pie: one slice per right, green when the token holds it. */
-export function getTokenRightsPieSegments(data: ITokenRightsData): Array<{ label: string; tone: TokenRightsPieTone }> {
-	const { governance, decisions, valueAccrual, alignment } = data
-	return [
-		{ label: 'Treasury', tone: decisions.treasury.displayTokens.length > 0 ? 'positive' : 'negative' },
-		{ label: 'Revenue', tone: decisions.revenue.displayTokens.length > 0 ? 'positive' : 'negative' },
-		{ label: 'Burns', tone: valueAccrual.burns.isActive ? 'positive' : 'negative' },
-		{ label: 'Equity', tone: getEquityPieTone(alignment.fundraising, alignment.equityRevenueCapture) },
-		{ label: 'Value Accrual', tone: hasTokenRightsValueAccrual(data) ? 'positive' : 'negative' },
-		{ label: 'Governance', tone: governance.decisionTokenDisplay.displayTokens.length > 0 ? 'positive' : 'negative' }
-	]
 }
 
 function splitUtilityLabels(value: string | null): Array<string> {
@@ -286,5 +276,46 @@ export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsDa
 			addresses: parseAddresses(raw['Foundation Multisigs / Addresses']),
 			reports: parseMarkdownLinks(raw['Latest Treasury / Token Report'])
 		}
+	}
+}
+
+type TokenRightsPieFlags = Pick<
+	TokenRightsPreview,
+	'governance' | 'treasury' | 'revenue' | 'buybacks' | 'dividends' | 'burns' | 'equityTone'
+>
+
+/** The facts the pie colors come from, derived once from parsed token rights. */
+export function getTokenRightsPieFlags(parsed: ITokenRightsData): TokenRightsPieFlags {
+	return {
+		governance: parsed.governance.decisionTokenDisplay.displayTokens.length > 0,
+		treasury: parsed.decisions.treasury.displayTokens.length > 0,
+		revenue: parsed.decisions.revenue.displayTokens.length > 0,
+		buybacks: parsed.valueAccrual.buybacks.displayTokens.length > 0,
+		dividends: parsed.valueAccrual.dividends.displayTokens.length > 0,
+		burns: parsed.valueAccrual.burns.isActive,
+		equityTone: getEquityPieTone(parsed.alignment.fundraising, parsed.alignment.equityRevenueCapture)
+	}
+}
+
+export function getTokenRightsPreview(parsed: ITokenRightsData): TokenRightsPreview {
+	return {
+		protocolName: parsed.overview.protocolName,
+		identityTokens: parsed.overview.identityTokens,
+		utilityItems: parsed.overview.utilityItems,
+		primaryValue: parsed.valueAccrual.primary,
+		primaryDetails: parsed.valueAccrual.details,
+		...getTokenRightsPieFlags(parsed)
+	}
+}
+
+/** Tone for each pie slice; the hover text in TokenRightsPieChart describes these rules. */
+export function getTokenRightsPieTones(rights: TokenRightsPieFlags): TokenRightsPieTones {
+	return {
+		treasury: rights.treasury ? 'positive' : 'negative',
+		revenue: rights.revenue ? 'positive' : 'negative',
+		burns: rights.burns ? 'positive' : 'negative',
+		equity: rights.equityTone,
+		valueAccrual: rights.buybacks || rights.dividends ? 'positive' : 'negative',
+		governance: rights.governance ? 'positive' : 'negative'
 	}
 }

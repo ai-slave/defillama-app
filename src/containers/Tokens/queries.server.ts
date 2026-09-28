@@ -8,8 +8,8 @@ import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOvervi
 import { TOKEN_RIGHTS_SECTION_ID } from '~/containers/Token/types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
-import type { ITokenRightsData } from '~/containers/TokenRights/types'
-import { formatFeeSwitchStatus, getEquityPieTone, parseTokenRightsEntry } from '~/containers/TokenRights/utils'
+import type { TokenRightsPreview } from '~/containers/TokenRights/types'
+import { getTokenRightsPreview, parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import { getEmissionAmountBreakdownOverInterval } from '~/containers/Unlocks/eventAmount'
 import { getAllProtocolEmissions, type EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { cachedResult } from '~/server/api/resultCache'
@@ -36,7 +36,6 @@ import type {
 	TokensPageResponse,
 	TokensPageStats,
 	TokensFilterOption,
-	TokensRightsSummary,
 	TokensSortIndexes,
 	TokensSourceRow,
 	TokensOptionalSource
@@ -112,46 +111,11 @@ function buildMetricMap(rows: Array<AdapterProtocolMetric>): Map<string, number>
 	return map
 }
 
-function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
-	const treasury = parsed.decisions.treasury.displayTokens.length > 0
-	const revenue = parsed.decisions.revenue.displayTokens.length > 0
-	const burns = parsed.valueAccrual.burns.isActive
-	const dividends = parsed.valueAccrual.dividends.displayTokens.length > 0
-	const buybacks = parsed.valueAccrual.buybacks.displayTokens.length > 0
-	const equityTone = getEquityPieTone(parsed.alignment.fundraising, parsed.alignment.equityRevenueCapture)
-	const governance = parsed.governance.decisionTokenDisplay.displayTokens.length > 0
-
-	return {
-		protocolName: parsed.overview.protocolName,
-		identityTokens: parsed.overview.identityTokens,
-		utilityItems: parsed.overview.utilityItems,
-		primaryValue: parsed.valueAccrual.primary,
-		primaryDetails: parsed.valueAccrual.details,
-		governance,
-		governanceTokens: parsed.governance.decisionTokenDisplay.displayTokens,
-		treasury,
-		treasuryTokens: parsed.decisions.treasury.displayTokens,
-		revenue,
-		revenueTokens: parsed.decisions.revenue.displayTokens,
-		feeSwitchStatus: formatFeeSwitchStatus(parsed.economic.feeSwitchStatus),
-		buybacks,
-		buybackTokens: parsed.valueAccrual.buybacks.displayTokens,
-		dividends,
-		dividendTokens: parsed.valueAccrual.dividends.displayTokens,
-		burns,
-		burnsStatus: parsed.valueAccrual.burns.status || 'None',
-		equityRevenueCapture: parsed.alignment.equityRevenueCapture ?? 'Unknown',
-		equityTone,
-		fundraisingLabel: parsed.alignment.fundraisingLabel,
-		associatedEntities: parsed.alignment.associatedEntities
-	}
-}
-
-function buildTokenRightsMap(entries: Array<IRawTokenRightsEntry>): Map<string, TokensRightsSummary> {
-	const map = new Map<string, TokensRightsSummary>()
+function buildTokenRightsMap(entries: Array<IRawTokenRightsEntry>): Map<string, TokenRightsPreview> {
+	const map = new Map<string, TokenRightsPreview>()
 	for (const entry of entries) {
 		const parsed = parseTokenRightsEntry(entry)
-		map.set(entry['DefiLlama ID'], getTokenRightsSummary(parsed))
+		map.set(entry['DefiLlama ID'], getTokenRightsPreview(parsed))
 	}
 	return map
 }
@@ -185,11 +149,11 @@ function buildUnlocksMap(rows: Array<EnrichedProtocolEmission>, nowSec: number):
 	return map
 }
 
-function resolveTokenRightsSummary(
+function resolveTokenRightsPreview(
 	record: TokenDirectoryRecord | undefined,
 	protocolId: string | null,
-	rightsByDefillamaId: Map<string, TokensRightsSummary>
-): TokensRightsSummary | null {
+	rightsByDefillamaId: Map<string, TokenRightsPreview>
+): TokenRightsPreview | null {
 	if (record?.chainId) {
 		const rights = rightsByDefillamaId.get(record.chainId)
 		if (rights) return rights
@@ -399,7 +363,7 @@ export function buildTokensSourceRows({
 		const perpsVolume24h = sumSegments(marketsEntry, 'volume_24h')
 		const openInterest24h = sumSegments(marketsEntry, 'oi_usd')
 		const href = record ? getCanonicalTokenRoute(record) : null
-		const rights = resolveTokenRightsSummary(record, protocolId, rightsByDefillamaId)
+		const rights = resolveTokenRightsPreview(record, protocolId, rightsByDefillamaId)
 		const protocolTokenRightsSlug =
 			protocolId && protocolMetadata?.tokenRights
 				? slug(protocolMetadata.displayName || protocolMetadata.name || protocolId)

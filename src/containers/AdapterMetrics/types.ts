@@ -1,4 +1,5 @@
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { EntityToken } from '~/containers/TokenRights/badge'
 import type { IAdapterChainMetrics, IAdapterChart, IAdapterProtocolMetrics } from './api.types'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
@@ -47,6 +48,8 @@ export type IProtocol = Pick<ApiProtocol, 'name' | 'slug' | 'logo' | 'chains'> &
 	warning?: string
 	breakdownAliases?: Array<string>
 	childProtocols?: Array<IProtocol>
+	/** Top-level rows on pages that show token badges, when there are token rights or a UTR grade. */
+	token?: EntityToken
 }
 
 export interface IAdapterByChainPageData {

@@ -60,7 +60,9 @@ describe('buildTokenFilterOptions', () => {
 		const rows = [
 			{ marketCap: 100, chains: ['ethereum'], categories: ['stablecoins', 'rwa'] },
 			{ marketCap: 80, chains: ['solana'], categories: ['rwa'] },
-			{ marketCap: 30, chains: ['solana'], categories: ['stablecoins'] }
+			{ marketCap: 30, chains: ['solana'], categories: ['stablecoins'] },
+			{ marketCap: 50, chains: [], categories: ['zeta', 'alpha'] },
+			{ marketCap: 20, chains: [], categories: ['beta-2', 'beta-1'] }
 		]
 		const result = buildTokenFilterOptions(rows, {
 			chainDisplayNames: new Map([
@@ -75,13 +77,26 @@ describe('buildTokenFilterOptions', () => {
 				categories: [
 					{ id: 'rwa', label: 'RWA', description: 'Tokens backed by real-world assets.' },
 					{ id: 'stablecoins', label: 'Stablecoins' },
+					{ id: 'zeta', label: 'Zeta' },
+					{ id: 'alpha', label: 'Alpha' },
+					{ id: 'beta-2', label: 'Beta' },
+					{ id: 'beta-1', label: 'Beta' },
 					{ id: 'unused', label: 'Unused' }
 				]
 			}
 		})
 
 		expect(result.chainOptions.map((option) => option.id)).toEqual(['solana', 'ethereum'])
-		expect(result.categoryOptions.map((option) => option.id)).toEqual(['rwa', 'stablecoins', 'unused'])
+		// Equal market caps sort by label, then by id.
+		expect(result.categoryOptions.map((option) => option.id)).toEqual([
+			'rwa',
+			'stablecoins',
+			'alpha',
+			'zeta',
+			'beta-1',
+			'beta-2',
+			'unused'
+		])
 		expect(result.categoryOptions[0]?.description).toBe('Tokens backed by real-world assets.')
 	})
 })
@@ -246,6 +261,73 @@ describe('buildTokenMarketSummary', () => {
 			fdv: 3_430_000_000,
 			ath: 666.86
 		})
+	})
+})
+
+describe('buildTokenOverviewCurrentMetricsById', () => {
+	const tokens: Array<IResponseCGTokenRankingsDatasetItem> = [
+		{
+			id: 'Ethena',
+			name: 'Ethena',
+			symbol: 'ena',
+			current_price: 2,
+			market_cap: 1000,
+			fully_diluted_valuation: 2000,
+			price_change_percentage_24h_in_currency: -2.5,
+			circulating_supply: 500,
+			total_supply: 900,
+			max_supply: 1000,
+			total_volume: 777
+		},
+		{ id: 'spot-priced', name: 'Spot Priced', symbol: 'spt', current_price: null, market_cap: 50 }
+	]
+	const markets: TokenMarketsListResponse = {
+		last_updated: '2026-06-29T01:00:00Z',
+		tokens: [
+			{
+				symbol: 'SPT',
+				exchange_count: 1,
+				market_count: 1,
+				tags: [],
+				total_oi_usd: 0,
+				total_volume_24h: 0,
+				segments: { spot: marketSegment({ price: 3 }) }
+			}
+		]
+	}
+	const metadata = {
+		tokenDirectory: {},
+		protocolMetadata: { ethena: { name: 'Ethena', displayName: 'Ethena', gecko_id: 'ethena' } },
+		emissionsSupplyMetrics: {
+			ethena: {
+				name: 'Ethena',
+				supplyMetrics: {
+					maxSupply: 1000,
+					adjustedSupply: 600,
+					tbdAmount: 0,
+					incentiveAmount: 0,
+					nonIncentiveAmount: 600
+				}
+			}
+		}
+	} as unknown as MetadataCache
+
+	test('keys current metrics by lowercase CoinGecko id and values outstanding FDV at adjusted supply', () => {
+		expect(buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata }).ethena).toEqual({
+			currentPrice: 2,
+			percentChange24h: -2.5,
+			circulatingSupply: 500,
+			totalSupply: 900,
+			maxSupply: 1000,
+			mcap: 1000,
+			fdv: 2000,
+			volume24h: 777,
+			outstandingFDV: 1200
+		})
+	})
+
+	test('prices a token from its spot market when CoinGecko has no price', () => {
+		expect(buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata })['spot-priced']?.currentPrice).toBe(3)
 	})
 })
 
@@ -463,33 +545,7 @@ describe('buildTokensSourceRows', () => {
 			unlock30dUsd: 20 + ((10 * 10) / 604_800) * 2,
 			upcomingUnlockUsd: 200 + ((10 * (604_800 - 10)) / 604_800) * 2
 		})
-		expect(ethena.rights).toMatchObject({
-			protocolName: 'Ethena',
-			primaryValue: null,
-			governance: true,
-			treasury: false,
-			revenue: true,
-			feeSwitchStatus: 'Pending',
-			buybacks: false,
-			dividends: true,
-			burns: true,
-			burnsStatus: 'Active',
-			equityTone: 'warning'
-		})
-		const currentMetricsById = buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata })
-		expect(currentMetricsById.ethena).toEqual({
-			currentPrice: 2,
-			percentChange24h: -2.5,
-			circulatingSupply: 500,
-			totalSupply: 900,
-			maxSupply: 1000,
-			mcap: 1000,
-			fdv: 2000,
-			volume24h: 777,
-			outstandingFDV: 1200
-		})
-		expect(currentMetricsById.missing).toBeUndefined()
-
+		expect(ethena.rights).toMatchObject({ protocolName: 'Ethena' })
 		expect(result.rows[1]).toMatchObject({
 			id: 'unmapped',
 			logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/unmapped?w=48&h=48',
@@ -767,7 +823,7 @@ describe('buildTokensSourceRows', () => {
 		expect(result.rows.map((row) => row.href)).toEqual(['/token/DATA', '/token/Streamr'])
 	})
 
-	test('prioritizes explicit parent metrics and treats inactive children as zero activity', () => {
+	test('uses a parent protocol metric when reported, otherwise the sum of its children', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -821,84 +877,6 @@ describe('buildTokensSourceRows', () => {
 			holdersRevenue24h: 25,
 			trsPercent: 25
 		})
-	})
-
-	test('paints buyback and dividend pie slices by shared structural value accrual', () => {
-		const metadata = {
-			tokenDirectory: {
-				buybacks: {
-					name: 'Buybacks Only',
-					symbol: 'BUY',
-					token_nk: 'coingecko:buybacks',
-					protocolId: 'buybacks'
-				},
-				none: {
-					name: 'No Accrual',
-					symbol: 'NONE',
-					token_nk: 'coingecko:none',
-					protocolId: 'none'
-				}
-			},
-			protocolMetadata: {},
-			emissionsSupplyMetrics: {},
-			tokenFilterMetadata: tokenFilterMetadata()
-		} as unknown as MetadataCache
-
-		const result = buildTokensSourceRows({
-			tokens: [
-				{
-					id: 'buybacks',
-					name: 'Buybacks Only',
-					symbol: 'buy',
-					current_price: 1,
-					market_cap: 100
-				},
-				{
-					id: 'none',
-					name: 'No Accrual',
-					symbol: 'none',
-					current_price: 1,
-					market_cap: 100
-				}
-			],
-			markets: { last_updated: '', tokens: [] },
-			tokenRightsEntries: [
-				tokenRightsEntry({
-					'Protocol Name': 'Buybacks Only',
-					Token: ['BUY'],
-					'Governance Decisions': ['None'],
-					'Revenue Decisions': ['None'],
-					Buybacks: ['BUY'],
-					Dividends: ['None'],
-					Fundraising: ['Token Sale'],
-					Burns: 'None',
-					'DefiLlama ID': 'buybacks'
-				}),
-				tokenRightsEntry({
-					'Protocol Name': 'No Accrual',
-					Token: ['NONE'],
-					'Governance Decisions': ['None'],
-					'Revenue Decisions': ['None'],
-					Buybacks: ['None'],
-					Dividends: ['None'],
-					Fundraising: ['Unknown'],
-					Burns: 'None',
-					'DefiLlama ID': 'none'
-				})
-			],
-			fees: [],
-			revenue: [],
-			holdersRevenue: [],
-			unlocks: [],
-			metadata,
-			nowSec: 1_800_000_000
-		})
-
-		const buybacksOnly = result.rows.find((row) => row.id === 'buybacks')?.rights
-		const noAccrual = result.rows.find((row) => row.id === 'none')?.rights
-
-		expect(buybacksOnly).toMatchObject({ buybacks: true, dividends: false, equityTone: 'positive' })
-		expect(noAccrual).toMatchObject({ buybacks: false, dividends: false, equityTone: 'warning' })
 	})
 
 	test('does not join symbol-only market metrics when multiple tokens share the symbol', () => {

@@ -14,12 +14,12 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
-import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
+import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
+import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
-import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -51,7 +51,6 @@ import type {
 	TokensFilterOption,
 	TokensPageProps,
 	TokensPageStatsDisplay,
-	TokensRightsSummary,
 	TokensTableRow
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
@@ -66,15 +65,6 @@ export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDE
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokensTableRow>()
-
-type RightsTone = 'positive' | 'negative' | 'warning' | 'neutral'
-
-const RIGHTS_CHIP_TONE_CLASSES: Record<RightsTone, string> = {
-	positive: 'border-success/30 bg-success/10 text-success',
-	negative: 'border-error/30 bg-error/10 text-error-on-tint',
-	warning: 'border-warning/30 bg-warning/10 text-warning',
-	neutral: 'border-medium bg-surface text-secondary'
-}
 
 const VALUE_TONE_CLASSES: Record<TokensDisplayTone, string> = {
 	positive: 'text-data-up',
@@ -161,101 +151,17 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 	)
 }
 
-function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
-	return (
-		<span
-			className={`inline-flex w-fit shrink-0 items-center rounded-md border px-1.5 py-0.5 label-sm whitespace-nowrap ${RIGHTS_CHIP_TONE_CLASSES[tone]}`}
-		>
-			{label}
-		</span>
-	)
-}
-
-function RightsChipList({ items, tone, wrap = false }: { items: Array<string>; tone: RightsTone; wrap?: boolean }) {
-	return (
-		<span className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}>
-			{items.map((item, index) => (
-				// oxlint-disable-next-line react/no-array-index-key -- These read-only labels preserve repeated occurrences from authored text.
-				<RightsChip key={`${item}-${index}`} label={item} tone={tone} />
-			))}
-		</span>
-	)
-}
-
-function getRightsPieSegments(rights: TokensRightsSummary): Parameters<typeof TokenRightsPieChart>[0]['segments'] {
-	const hasValueAccrual = rights.buybacks || rights.dividends
-	return [
-		{ label: 'Treasury', tone: rights.treasury ? 'positive' : 'negative' },
-		{ label: 'Revenue', tone: rights.revenue ? 'positive' : 'negative' },
-		{ label: 'Burns', tone: rights.burns ? 'positive' : 'negative' },
-		{ label: 'Equity', tone: rights.equityTone },
-		{ label: 'Value Accrual', tone: hasValueAccrual ? 'positive' : 'negative' },
-		{ label: 'Governance', tone: rights.governance ? 'positive' : 'negative' }
-	]
-}
-
-function RightsPopover({ rights, fullRightsHref }: { rights: TokensRightsSummary; fullRightsHref: string | null }) {
-	const hasPrimaryValueAccrual = rights.primaryValue !== null || rights.primaryDetails !== null
-	const pieSegments = getRightsPieSegments(rights)
-	return (
-		<div className="w-[min(24rem,var(--popover-available-width))] whitespace-normal text-primary">
-			<div className="flex min-w-0 flex-col gap-2.5">
-				<div className="flex flex-wrap items-center gap-1.5">
-					<h3 className="text-base leading-tight font-semibold">{rights.protocolName}</h3>
-					{rights.identityTokens.length > 0 ? (
-						<RightsChipList items={rights.identityTokens} tone="positive" wrap />
-					) : null}
-				</div>
-
-				{hasPrimaryValueAccrual ? (
-					<div className="flex flex-col gap-1 rounded-md border border-success/30 bg-success/10 p-2">
-						<div className="label-sm tracking-wider text-secondary uppercase">Primary Value Accrual</div>
-						{rights.primaryValue !== null ? (
-							<div className="text-sm font-semibold text-success">{rights.primaryValue}</div>
-						) : null}
-						{rights.primaryDetails ? <p className="label-sm text-secondary">{rights.primaryDetails}</p> : null}
-					</div>
-				) : null}
-
-				<div className="flex justify-center">
-					<TokenRightsPieChart segments={pieSegments} />
-				</div>
-
-				{rights.utilityItems.length > 0 ? (
-					<div className="flex flex-col items-center gap-1.5">
-						<div className="label-sm tracking-wider text-secondary uppercase">Utility</div>
-						<RightsChipList items={rights.utilityItems} tone="neutral" wrap />
-					</div>
-				) : null}
-
-				{fullRightsHref ? (
-					<div className="flex justify-end border-t border-subtle pt-2">
-						<BasicLink
-							href={fullRightsHref}
-							className="inline-flex items-center gap-1 label-sm text-link hover:underline"
-						>
-							Full token rights
-							<Icon name="external-link" className="size-3.5" />
-						</BasicLink>
-					</div>
-				) : null}
-			</div>
-		</div>
-	)
-}
-
-function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | null; fullRightsHref: string | null }) {
+function RightsPie({
+	name,
+	rights,
+	fullRightsHref
+}: {
+	name: string
+	rights: TokenRightsPreview | null
+	fullRightsHref: string | null
+}) {
 	if (!rights) return <Dash />
-
-	return (
-		<Hovercard
-			content={<RightsPopover rights={rights} fullRightsHref={fullRightsHref} />}
-			placement="left"
-			className="align-middle"
-		>
-			<TokenRightsPieChart segments={getRightsPieSegments(rights)} showLabels={false} className="size-7 shrink-0" />
-		</Hovercard>
-	)
+	return <TokenRightsPieHovercard name={name} rights={rights} fullRightsHref={fullRightsHref} utr={null} />
 }
 
 const SPEC_HEADERS = new Map(TOKENS_HIDEABLE_COLUMN_SPECS.map((spec) => [spec.id, spec.header]))
@@ -445,7 +351,7 @@ export const TOKENS_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.rights ?? undefined, {
 		...specColumn('rights'),
 		cell: ({ getValue, row }) => (
-			<RightsPie rights={getValue() ?? null} fullRightsHref={row.original.tokenRightsHref} />
+			<RightsPie name={row.original.name} rights={getValue() ?? null} fullRightsHref={row.original.tokenRightsHref} />
 		),
 		enableSorting: false,
 		meta: {

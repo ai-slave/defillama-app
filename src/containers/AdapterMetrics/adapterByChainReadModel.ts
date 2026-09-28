@@ -1,3 +1,4 @@
+import { resolveEntityToken, type TokenRightsBadgeSources } from '~/containers/TokenRights/badge'
 import { slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { IAdapterChainMetrics } from './api.types'
@@ -22,6 +23,24 @@ type AdapterByChainReadModel = {
 	categories: Array<string>
 	openInterest: number | null
 	activeLiquidity: number | null
+}
+
+/** A top-level row's entity ids for token lookup: its own ids first, then the ids it falls back to. */
+type RowTokenIds = { primary: Set<string>; fallback: Set<string> }
+
+function addRowTokenIds(
+	rows: Map<string, RowTokenIds>,
+	rowName: string,
+	primary: string | null | undefined,
+	fallback: string | null | undefined
+) {
+	let ids = rows.get(rowName)
+	if (!ids) {
+		ids = { primary: new Set(), fallback: new Set() }
+		rows.set(rowName, ids)
+	}
+	if (primary) ids.primary.add(primary)
+	if (fallback) ids.fallback.add(fallback)
 }
 
 function buildProtocolsMcap(protocolsData: ProtocolMcapData) {
@@ -294,7 +313,8 @@ export function buildAdapterByChainReadModel({
 	adapterType,
 	dataType,
 	rankBy,
-	cantonIncentivesWarning
+	cantonIncentivesWarning,
+	tokenSources
 }: {
 	data: IAdapterChainOverview
 	protocolsData: ProtocolMcapData
@@ -305,6 +325,8 @@ export function buildAdapterByChainReadModel({
 	dataType: AdapterByChainDataType | undefined
 	rankBy: AdapterByChainRankBy
 	cantonIncentivesWarning: string | null
+	/** Only pages that show token badges pass sources; their top-level rows then carry `token`. */
+	tokenSources?: TokenRightsBadgeSources
 }): AdapterByChainReadModel {
 	const protocolsMcap = buildProtocolsMcap(protocolsData)
 	const openInterestProtocols = new Map<string, OpenInterestData>()
@@ -340,6 +362,7 @@ export function buildAdapterByChainReadModel({
 	const protocols = new Map<string, IProtocol>()
 	const parentProtocols = new Map<string, NonEmptyArray<IProtocol>>()
 	const categories = new Set<string>()
+	const rowTokenIds = new Map<string, RowTokenIds>()
 
 	for (const protocol of data.protocols) {
 		const summary = buildProtocolSummary({
@@ -361,8 +384,10 @@ export function buildAdapterByChainReadModel({
 			} else {
 				parentProtocols.set(parentProtocol, [summary])
 			}
+			if (tokenSources) addRowTokenIds(rowTokenIds, parentProtocol, protocol.parentProtocol, protocol.defillamaId)
 		} else {
 			protocols.set(protocol.displayName, summary)
+			if (tokenSources) addRowTokenIds(rowTokenIds, protocol.displayName, protocol.defillamaId, protocol.parentProtocol)
 		}
 		if (protocol.category) {
 			categories.add(protocol.category)
@@ -375,6 +400,15 @@ export function buildAdapterByChainReadModel({
 			continue
 		}
 		protocols.set(protocol, buildParentProtocolSummary({ protocol, childProtocols, protocolsMcap, dataType }))
+	}
+
+	// Child rows share their parent's token, so only top-level rows carry one; rows without data carry none.
+	if (tokenSources) {
+		for (const [rowName, row] of protocols) {
+			const ids = rowTokenIds.get(rowName)!
+			const token = resolveEntityToken(tokenSources, [...ids.primary, ...ids.fallback], rowName)
+			if (token) row.token = token
+		}
 	}
 
 	return {

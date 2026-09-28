@@ -11,22 +11,29 @@ function resolveGradeOrLabel(
 	return { grade, color: utrGradeColor(grade) }
 }
 
+const GRADE_BADGE_SIZE_CLASSES = {
+	md: 'h-6 w-10 label-sm',
+	lg: 'h-8 w-12 text-base'
+} as const
+
 export function GradeBadge({
 	score,
 	gradingScale,
 	grade: gradeLabel,
+	size = 'md',
 	className = ''
 }: {
 	score: number | null
 	scale?: UtrScoreScale
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	grade?: string | null
+	size?: keyof typeof GRADE_BADGE_SIZE_CLASSES
 	className?: string
 }) {
 	const { grade, color } = resolveGradeOrLabel(score, gradingScale, gradeLabel)
 	return (
 		<span
-			className={`inline-flex h-6 w-10 items-center justify-center rounded-sm label-sm ${grade ? `${color.solid} text-utr-grade-on-color` : 'bg-surface-elevated-1 text-tertiary'} ${className}`.trim()}
+			className={`inline-flex items-center justify-center rounded-sm ${GRADE_BADGE_SIZE_CLASSES[size]} ${grade ? `${color.solid} text-utr-grade-on-color` : 'bg-surface-elevated-1 text-tertiary'} ${className}`.trim()}
 		>
 			{grade ?? 'N/A'}
 		</span>

@@ -5,6 +5,7 @@ import type {
 import { V2_SERVER_URL } from '~/constants'
 import { getDimensionAdapterChainEarningsOverview } from '~/containers/Incentives/queries'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import type { TokenRightsBadgeSources } from '~/containers/TokenRights/badge'
 import type { ChainNativeFeeRevenueRankingDataType } from '~/metrics/definitions'
 import { feeRevenueMetrics, getChainNativeFeeRevenueRankingMetric } from '~/metrics/feesRevenue'
 import { slug } from '~/utils'
@@ -188,7 +189,8 @@ export const getAdapterByChainPageData = async ({
 	dataType,
 	route,
 	hasOpenInterest,
-	metricName
+	metricName,
+	tokenSources
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	chain: string
@@ -196,6 +198,8 @@ export const getAdapterByChainPageData = async ({
 	route: string
 	hasOpenInterest?: boolean
 	metricName: string
+	/** Started by the page's getStaticProps and awaited after the adapter requests, so the two overlap. */
+	tokenSources?: Promise<TokenRightsBadgeSources>
 }): Promise<IAdapterByChainPageData | null> => {
 	const showFeesChart = FEES_CHART_ROUTES.has(route)
 	const rankBy = route === 'pf' || route === 'ps' ? 'pfOrPs' : 'total24h'
@@ -251,7 +255,8 @@ export const getAdapterByChainPageData = async ({
 		adapterType,
 		dataType,
 		rankBy,
-		cantonIncentivesWarning
+		cantonIncentivesWarning,
+		tokenSources: await tokenSources
 	})
 
 	const chartData = buildAdapterByChainChartDataset({

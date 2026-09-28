@@ -1,4 +1,6 @@
 // Parsed token-rights types consumed by app UI. Backend response types live in api.types.ts.
+import type { TokenRightsPieTone } from './utils'
+
 export interface ITokenRightsParsedLink {
 	label: string
 	url: string
@@ -84,4 +86,20 @@ export interface ITokenRightsData {
 	valueAccrual: ITokenRightsValueAccrual
 	alignment: ITokenRightsAlignment
 	resources: ITokenRightsResources
+}
+
+/** What table rows and their popover render: the pie flags plus the card's headline facts. */
+export interface TokenRightsPreview {
+	protocolName: string
+	identityTokens: Array<string>
+	utilityItems: Array<string>
+	primaryValue: string | null
+	primaryDetails: string | null
+	governance: boolean
+	treasury: boolean
+	revenue: boolean
+	buybacks: boolean
+	dividends: boolean
+	burns: boolean
+	equityTone: TokenRightsPieTone
 }

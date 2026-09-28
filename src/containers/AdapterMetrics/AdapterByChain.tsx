@@ -29,6 +29,8 @@ import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton
 import type { chainCharts } from '~/containers/ChainOverview/constants'
 import type { protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
+import { UtrGradeHovercard } from '~/containers/TokenRights/UtrPopover'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
@@ -80,6 +82,8 @@ const SUPPORTED_OLD_VIEWS = new Set<TPageType>([
 	'Bridge Aggregator Volume'
 ])
 const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Fees', 'Revenue', 'Holders Revenue'])
+// These pages load token sources in getStaticProps, so their top-level rows carry `token`.
+const TOKEN_BADGE_PAGE_TYPES = new Set<TPageType>(['Revenue'])
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
 
@@ -447,8 +451,9 @@ type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<typeof tableFeaturesConfig, AdapterProtocolRow>()
 
-const NameColumn = (type: IProps['type']) =>
-	columnHelper.accessor('name', {
+const NameColumn = (type: IProps['type']) => {
+	const showsTokenBadges = TOKEN_BADGE_PAGE_TYPES.has(type)
+	return columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
 		enableSorting: false,
@@ -498,9 +503,24 @@ const NameColumn = (type: IProps['type']) =>
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 
+					{showsTokenBadges ? (
+						// Every row keeps the slot, so pies line up and child rows stay indented under their parent.
+						<span className="flex w-7 shrink-0 justify-center">
+							{row.original.token?.rights ? (
+								<TokenRightsPieHovercard
+									name={row.original.name}
+									rights={row.original.token.rights.preview}
+									fullRightsHref={row.original.token.rights.href}
+									utr={row.original.token.utr}
+									placement="right-start"
+								/>
+							) : null}
+						</span>
+					) : null}
+
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
-					<span className="-my-2 flex flex-col">
+					<span className="-my-2 flex min-w-0 flex-col">
 						<span className="flex min-w-0 items-center gap-1">
 							<BasicLink
 								href={`/${basePath}/${row.original.slug}${chartKey ? `?tvl=false&events=false&${chartKey}=true` : ''}`}
@@ -508,6 +528,13 @@ const NameColumn = (type: IProps['type']) =>
 							>
 								{value}
 							</BasicLink>
+							{row.original.token?.utr ? (
+								<UtrGradeHovercard
+									name={row.original.name}
+									utr={row.original.token.utr}
+									rights={row.original.token.rights}
+								/>
+							) : null}
 							{row.original.warning ? (
 								<Tooltip content={row.original.warning}>
 									<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
@@ -521,9 +548,12 @@ const NameColumn = (type: IProps['type']) =>
 			)
 		},
 		meta: {
-			headerClassName: 'w-[180px] sm:w-[240px] md:w-[280px]'
+			// Measured on /revenue: badges take 36px, so small screens widen by that. From md up the column
+			// stays at 280px, the widest that keeps the last metric column readable at 1440px.
+			headerClassName: showsTokenBadges ? 'w-[220px] sm:w-[280px]' : 'w-[180px] sm:w-[240px] md:w-[280px]'
 		}
 	})
+}
 
 const categoryColumn = (align?: 'center') =>
 	columnHelper.accessor('category', {

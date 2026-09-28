@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import type { TokenRightsBadgeSources } from '~/containers/TokenRights/badge'
+import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { buildAdapterByChainReadModel } from '../adapterByChainReadModel'
 import type { IAdapterChainMetrics } from '../api.types'
 import { ADAPTER_TYPES } from '../constants'
@@ -81,7 +83,8 @@ function buildReadModel({
 	openInterestData = null,
 	activeLiquidityData = null,
 	normalizedVolumeData = null,
-	adapterType = ADAPTER_TYPES.DEXS
+	adapterType = ADAPTER_TYPES.DEXS,
+	tokenSources
 }: {
 	protocols: Array<AdapterProtocol>
 	protocolsData?: Parameters<typeof buildAdapterByChainReadModel>[0]['protocolsData']
@@ -89,6 +92,7 @@ function buildReadModel({
 	activeLiquidityData?: IAdapterChainOverview | null
 	normalizedVolumeData?: IAdapterChainMetrics | null
 	adapterType?: Parameters<typeof buildAdapterByChainReadModel>[0]['adapterType']
+	tokenSources?: TokenRightsBadgeSources
 }) {
 	return buildAdapterByChainReadModel({
 		data: overview(protocols),
@@ -99,7 +103,8 @@ function buildReadModel({
 		adapterType,
 		dataType: undefined,
 		rankBy: 'total24h',
-		cantonIncentivesWarning: null
+		cantonIncentivesWarning: null,
+		tokenSources
 	})
 }
 
@@ -285,5 +290,73 @@ describe('buildAdapterByChainReadModel', () => {
 			normalizedVolume24h: 140,
 			childProtocols: [{ normalizedVolume24h: 100 }, { normalizedVolume24h: 40 }]
 		})
+	})
+})
+
+describe('token badges', () => {
+	const aaveRights: TokenRightsPreview = {
+		protocolName: 'Aave',
+		identityTokens: ['AAVE'],
+		utilityItems: [],
+		primaryValue: null,
+		primaryDetails: null,
+		governance: true,
+		treasury: true,
+		revenue: true,
+		buybacks: true,
+		dividends: false,
+		burns: false,
+		equityTone: 'positive'
+	}
+	const tokenSources: TokenRightsBadgeSources = {
+		rightsById: new Map([['parent#aave', aaveRights]]),
+		rightsRouteById: new Map([['parent#aave', '/token/AAVE']]),
+		utrByGeckoId: new Map(),
+		protocolMetadata: {
+			'parent#aave': { displayName: 'Aave', gecko_id: 'aave', tokenRights: true },
+			'111': { displayName: 'Aave V2', parentProtocol: 'parent#aave' },
+			'1599': { displayName: 'Aave V3', parentProtocol: 'parent#aave' },
+			'2001': { displayName: 'Solo', gecko_id: 'solo-token' },
+			'2002': { displayName: 'Tokenless' }
+		},
+		chainMetadata: {}
+	}
+
+	test('grouped rows carry their parent token, and children and rows without data carry none', () => {
+		const aaveLinks = ['Aave', 'Aave V2', 'Aave V3']
+		const result = buildReadModel({
+			protocols: [
+				protocol({
+					defillamaId: '111',
+					name: 'Aave V2',
+					displayName: 'Aave V2',
+					slug: 'aave-v2',
+					parentProtocol: 'parent#aave',
+					linkedProtocols: aaveLinks,
+					total24h: 40
+				}),
+				protocol({
+					defillamaId: '1599',
+					name: 'Aave V3',
+					displayName: 'Aave V3',
+					slug: 'aave-v3',
+					parentProtocol: 'parent#aave',
+					linkedProtocols: aaveLinks,
+					total24h: 30
+				}),
+				protocol({ defillamaId: '2001', name: 'Solo', displayName: 'Solo', slug: 'solo', total24h: 20 }),
+				protocol({ defillamaId: '2002', name: 'Tokenless', displayName: 'Tokenless', slug: 'tokenless', total24h: 10 })
+			],
+			tokenSources
+		})
+
+		expect(result.protocols.map((row) => row.token)).toEqual([
+			{ rights: { preview: aaveRights, href: '/token/AAVE#token-rights-and-value-accrual' }, utr: null },
+			undefined,
+			undefined
+		])
+		expect(result.protocols[0].childProtocols?.map((child) => child.token)).toEqual([undefined, undefined])
+		// Serializable for getStaticProps: rows without data omit `token` instead of holding undefined.
+		expect(JSON.parse(JSON.stringify(result))).toStrictEqual(result)
 	})
 })

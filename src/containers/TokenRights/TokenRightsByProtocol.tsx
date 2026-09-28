@@ -12,12 +12,14 @@ import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
+import { TokenRightsChip, TokenRightsChipList, type TokenRightsChipTone } from './TokenRightsChips'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
 import {
 	formatFeeSwitchStatus,
 	formatTokenRightsRaiseUsd,
-	getTokenRightsPieSegments,
+	getTokenRightsPieFlags,
+	getTokenRightsPieTones,
 	hasTokenRightsPrimaryValueAccrual,
 	hasTokenRightsValueAccrual
 } from './utils'
@@ -382,7 +384,7 @@ function TokenRightsOverviewView({
 	const displayName = overview.protocolName || name
 	const hasPrimaryValueAccrual = hasTokenRightsPrimaryValueAccrual(tokenRightsData)
 	const hasValueAccrual = hasTokenRightsValueAccrual(tokenRightsData)
-	const pieSegments = getTokenRightsPieSegments(tokenRightsData)
+	const pieTones = getTokenRightsPieTones(getTokenRightsPieFlags(tokenRightsData))
 	const rightsFields = [
 		{
 			label: 'Governance',
@@ -439,7 +441,7 @@ function TokenRightsOverviewView({
 		<Card as="section" padding="sm" className="w-full">
 			<div className="grid max-w-[1040px] gap-2 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
 				<div className="flex min-w-0 flex-col items-center gap-2">
-					<TokenRightsPieChart segments={pieSegments} />
+					<TokenRightsPieChart tones={pieTones} />
 					{overview.utilityItems.length > 0 ? (
 						<div className="flex w-full flex-col items-center gap-2">
 							<div className="label-sm text-secondary uppercase">Utility</div>
@@ -536,23 +538,7 @@ function OverviewEquityCaptureValue({ value }: { value: string | null }) {
 // Shared primitives
 // ---------------------------------------------------------------------------
 
-type StatusTone = 'positive' | 'negative' | 'warning' | 'neutral'
-type TokenRightsChipVariant = 'overview' | 'details'
-
-const CHIP_TONE_CLASSES: Record<TokenRightsChipVariant, Record<StatusTone, string>> = {
-	overview: {
-		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-error/30 bg-error/10 text-error-on-tint',
-		warning: 'border-warning/30 bg-warning/10 text-warning',
-		neutral: 'border-medium bg-surface text-secondary'
-	},
-	details: {
-		positive: 'border-success/30 bg-success/10 text-success',
-		negative: 'border-error/30 bg-error/10 text-error-on-tint',
-		warning: 'border-warning/30 bg-warning/10 text-warning',
-		neutral: 'border-medium bg-surface-elevated-1 text-secondary'
-	}
-}
+type StatusTone = TokenRightsChipTone
 
 const TEXT_TONE_CLASSES: Record<StatusTone, string> = {
 	positive: 'text-success',
@@ -563,47 +549,6 @@ const TEXT_TONE_CLASSES: Record<StatusTone, string> = {
 
 function TokenRightsToneText({ label, tone }: { label: string; tone: StatusTone }) {
 	return <span className={`label-md whitespace-nowrap ${TEXT_TONE_CLASSES[tone]}`}>{label}</span>
-}
-
-function TokenRightsChipList({
-	items,
-	tone,
-	variant,
-	wrap
-}: {
-	items: Array<string>
-	tone: StatusTone
-	variant: TokenRightsChipVariant
-	wrap?: boolean
-}) {
-	const shouldWrap = wrap ?? variant === 'details'
-	return (
-		<div className={`flex items-center gap-1.5 ${shouldWrap ? 'flex-wrap' : 'flex-nowrap'}`}>
-			{items.map((item, index) => (
-				// oxlint-disable-next-line react/no-array-index-key -- These read-only labels preserve repeated occurrences from authored text.
-				<TokenRightsChip key={`${item}-${index}`} label={item} tone={tone} variant={variant} />
-			))}
-		</div>
-	)
-}
-
-function TokenRightsChip({
-	label,
-	tone,
-	variant
-}: {
-	label: string
-	tone: StatusTone
-	variant: TokenRightsChipVariant
-}) {
-	const shapeClass = variant === 'overview' ? 'rounded-md px-2 py-0.5 font-medium' : 'rounded-full px-2.5 py-0.5'
-	return (
-		<span
-			className={`inline-flex w-fit shrink-0 items-center border label-sm whitespace-nowrap ${shapeClass} ${CHIP_TONE_CLASSES[variant][tone]}`}
-		>
-			{label}
-		</span>
-	)
 }
 
 function SectionCard({ title, badge, children }: { title: string; badge?: string; children: ReactNode }) {
