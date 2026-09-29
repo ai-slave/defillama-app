@@ -67,7 +67,7 @@ const isLoadedMultiChartItem = (item: ChartRuntimeView): boolean =>
 	!item.isLoading && !item.hasError && item.data.length > 0
 
 function MultiChartCard({ multi }: MultiChartCardProps) {
-	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
+	const { getProtocolInfo, protocolRelations, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const {
 		handleGroupingChange,
@@ -99,7 +99,7 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		timePeriod,
 		customTimePeriod,
 		authToken,
-		parentMapping
+		protocolRelations
 	)
 	const runtimeItems = useMemo<Array<ChartRuntimeView>>(
 		() =>

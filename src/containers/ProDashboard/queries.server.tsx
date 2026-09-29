@@ -10,6 +10,7 @@ import type { PersistedDashboard } from './dashboardConfig/persisted'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 import type { ProDashboardAppMetadata, ProDashboardChartRequest } from './dataContracts'
+import { getOpenInterestChartProtocols } from './openInterestChartProtocols'
 import {
 	buildProDashboardProtocolCatalog,
 	type ProDashboardProtocolCatalog,
@@ -139,6 +140,15 @@ export async function fetchSingleChartData(
 	}
 
 	if (isProtocolTokenChartType(chart.type)) return []
+
+	const openInterestProtocols = protocolRelations
+		? getOpenInterestChartProtocols(chart.type, item, protocolRelations)
+		: null
+	if (openInterestProtocols) {
+		const childSeries = await Promise.all(openInterestProtocols.map((protocol) => fetchProtocol(protocol)))
+		const data = Array.from(sumSeriesByTimestamp(childSeries).entries()).sort((a, b) => a[0] - b[0])
+		return filterDataByTimePeriod(data, timePeriod || 'all', customTimePeriod)
+	}
 
 	const parent = protocolRelations?.protocolsBySlug.get(item)
 	const children = parent ? (protocolRelations?.childrenByParentId.get(parent.id) ?? []) : []

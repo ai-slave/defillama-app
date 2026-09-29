@@ -201,6 +201,7 @@ export async function fetchProProtocolChartData(
 		case 'perps':
 			return fetchProtocolAdapterData(protocol, 'derivatives')
 		case 'openInterest':
+		case 'optionsOpenInterest':
 			return fetchProtocolAdapterData(protocol, 'open-interest', 'openInterestAtEnd')
 		case 'aggregators':
 			return fetchProtocolAdapterData(protocol, 'aggregators')

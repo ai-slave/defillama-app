@@ -23,6 +23,7 @@ const PROTOCOL_FLAG_KEYS = [
 	'openInterest',
 	'optionsNotionalVolume',
 	'optionsPremiumVolume',
+	'optionsOpenInterest',
 	'bridgeAggregators',
 	'dexAggregators',
 	'perpsAggregators',
@@ -244,6 +245,7 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 			if (flags.bridgeAggregators) types.add('bridgeAggregators')
 			if (flags.optionsPremiumVolume) types.add('optionsPremium')
 			if (flags.optionsNotionalVolume) types.add('optionsNotional')
+			if (flags.optionsOpenInterest) types.add('optionsOpenInterest')
 			if (flags.activeUsers) types.add('activeUsers')
 			if (flags.newUsers) types.add('newUsers')
 			if (flags.txCount) types.add('txs')

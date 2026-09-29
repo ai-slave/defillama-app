@@ -5,6 +5,7 @@ import type { BlockExplorersResponse } from '~/api/types'
 import { V2_SERVER_URL } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
+import type { IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
@@ -40,7 +41,7 @@ import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
-import { splitProtocolOpenInterest } from './openInterestSplit'
+import { selectOpenInterestProtocols } from './openInterestSplit'
 import { fetchProtocolRwaAumChart } from './rwa'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
@@ -119,20 +120,48 @@ export const getProtocolMetricFlags = ({
 
 const OPEN_INTEREST_REQUEST = { adapterType: 'open-interest', dataType: 'openInterestAtEnd' } as const
 
-async function fetchProtocolOpenInterest({ protocol, hasOptions }: { protocol: string; hasOptions: boolean }) {
+async function fetchProtocolOpenInterest({
+	protocol,
+	flags,
+	protocolMetadata
+}: {
+	protocol: string
+	flags: IProtocolMetadata
+	protocolMetadata: Record<string, IProtocolMetadata>
+}) {
 	const data = await fetchAdapterProtocolMetrics({ ...OPEN_INTEREST_REQUEST, protocol })
 	const childProtocols = data.childProtocols ?? []
-	if (!hasOptions || childProtocols.length === 0) return splitProtocolOpenInterest({ protocol: data, children: [] })
+	const children = childProtocols.map((child) => ({
+		name: child.displayName,
+		flags: protocolMetadata[child.defillamaId]
+	}))
+	const protocols = {
+		openInterest: selectOpenInterestProtocols(protocol, flags, children, 'openInterest'),
+		optionsOpenInterest: selectOpenInterestProtocols(protocol, flags, children, 'optionsOpenInterest')
+	}
 
-	// Each child's own endpoint carries its category and total. Without one of them the split is unknown,
-	// so the page shows no open interest rather than a mixed one.
-	const children = await Promise.all(
-		childProtocols.map((child) =>
-			fetchAdapterProtocolMetrics({ ...OPEN_INTEREST_REQUEST, protocol: child.displayName }).catch(() => null)
-		)
-	)
-	if (children.some((child) => child === null)) return null
-	return splitProtocolOpenInterest({ protocol: data, children: children.filter((child) => child !== null) })
+	// A parent's total can lag its children's, so a kind read from children sums the children's own totals.
+	// A kind whose child fails to load is hidden rather than understated.
+	const readKind = async (names: Array<string>): Promise<IAdapterProtocolMetrics | null> => {
+		if (names.length === 0) return null
+		if (names[0] === protocol) return data
+		const kindChildren = await Promise.all(
+			names.map((name) => fetchAdapterProtocolMetrics({ ...OPEN_INTEREST_REQUEST, protocol: name }))
+		).catch(() => null)
+		if (!kindChildren) return null
+		const totals = kindChildren.map((child) => child.total24h).filter((total) => total != null)
+		return {
+			...data,
+			total24h: totals.length === 0 ? null : totals.reduce((sum, total) => sum + total, 0),
+			chainBreakdown: null,
+			childProtocols: childProtocols.filter((child) => names.includes(child.displayName))
+		}
+	}
+	const [openInterest, optionsOpenInterest] = await Promise.all([
+		readKind(protocols.openInterest),
+		readKind(protocols.optionsOpenInterest)
+	])
+	return { openInterest, optionsOpenInterest, protocols }
 }
 
 type IProtocolTvlChartSeedResult = {
@@ -154,6 +183,7 @@ const hasStandardAdapterMetrics = (data: Awaited<ReturnType<typeof formatAdapter
 export const getProtocolOverviewPageData = async ({
 	protocolId,
 	currentProtocolMetadata,
+	protocolMetadata,
 	rwaPlatformActiveAum,
 	isCEX = false,
 	chainMetadata,
@@ -169,6 +199,7 @@ export const getProtocolOverviewPageData = async ({
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
+	protocolMetadata: Record<string, IProtocolMetadata>
 	rwaPlatformActiveAum: number | null
 	isCEX?: boolean
 	chainMetadata: Record<string, IChainMetadata>
@@ -376,7 +407,8 @@ export const getProtocolOverviewPageData = async ({
 		currentProtocolMetadata.openInterest || currentProtocolMetadata.optionsOpenInterest
 			? fetchProtocolOpenInterest({
 					protocol: currentProtocolMetadata.displayName ?? '',
-					hasOptions: !!currentProtocolMetadata.optionsOpenInterest
+					flags: currentProtocolMetadata,
+					protocolMetadata
 				})
 			: Promise.resolve(null),
 		currentProtocolMetadata.perpsAggregators
@@ -927,7 +959,7 @@ export const getProtocolOverviewPageData = async ({
 		optionsPremiumVolume: optionsPremiumVolumeData,
 		optionsNotionalVolume: optionsNotionalVolumeData,
 		optionsOpenInterest: optionsOpenInterestData,
-		optionsOpenInterestSeries: openInterestSplit?.optionsOpenInterestSeries ?? null,
+		openInterestProtocols: openInterestSplit?.protocols ?? null,
 		liquidationVolume: liquidationVolumeData,
 		collateralLiquidated: collateralLiquidatedData,
 		bridgeVolume: bridgeVolumeData || null,

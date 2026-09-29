@@ -3,7 +3,7 @@ import { lazy, Suspense, useContext, useMemo, type ReactNode } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
-import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
+import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
 	getChartQueryFn,
@@ -57,7 +57,7 @@ export function ArticleChartBlock({
 
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { data: catalog } = useProtocolsAndChains()
-	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
+	const protocolRelations = useMemo(() => buildProDashboardProtocolRelations(catalog ?? null), [catalog])
 
 	const queries = useQueries({
 		queries: series.map((s) => ({
@@ -74,7 +74,7 @@ export function ArticleChartBlock({
 				s.slug,
 				s.geckoId ?? null,
 				undefined,
-				parentMapping,
+				protocolRelations,
 				undefined,
 				undefined,
 				authToken

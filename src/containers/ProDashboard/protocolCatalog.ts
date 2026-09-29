@@ -14,6 +14,9 @@ export interface ProProtocolCatalogSourceRow {
 	geckoId: string | null
 	hasMisrepresentedTokens: boolean
 	excludeTvlFromParent: boolean
+	// Set only when true: the catalog lists every protocol, and few have open interest.
+	openInterest?: true
+	optionsOpenInterest?: true
 }
 
 export interface ProDashboardProtocolCatalog {
@@ -97,6 +100,8 @@ export function buildProDashboardProtocolCatalog(
 			tvl: source.tvl ?? 0,
 			geckoId: source.geckoId,
 			...(source.hasMisrepresentedTokens ? { misrepresentedTokens: true } : {}),
+			...(source.openInterest ? { openInterest: true } : {}),
+			...(source.optionsOpenInterest ? { optionsOpenInterest: true } : {}),
 			parentProtocol: isChild ? source.parentSlug : null
 		}
 		if (!protocolsBySlug.has(source.slug)) protocolsBySlug.set(source.slug, protocol)

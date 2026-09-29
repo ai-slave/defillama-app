@@ -139,7 +139,7 @@ function ChartRenderer({
 }
 
 export function ChartCard({ chart }: ChartCardProps) {
-	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
+	const { getChainInfo, getProtocolInfo, protocolRelations, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
@@ -152,7 +152,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 		timePeriod,
 		customTimePeriod,
 		authToken,
-		parentMapping
+		protocolRelations
 	)
 	const chartState = toChartRuntimeState(
 		chartQuery,

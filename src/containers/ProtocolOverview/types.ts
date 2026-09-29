@@ -10,6 +10,7 @@ import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
 import type { IncomeStatementMetric, IProtocolMetricsV2 } from './api.types'
 import type { protocolCharts, ProtocolChartsLabels } from './constants'
+import type { OpenInterestKind } from './openInterestSplit'
 
 export interface IProtocolPageMetrics {
 	tvl: boolean
@@ -133,8 +134,8 @@ export interface IProtocolOverviewPageData {
 	optionsNotionalVolume: IAdapterOverview | null
 	// Options-category open interest, kept apart from perp open interest.
 	optionsOpenInterest?: IAdapterOverview | null
-	// Version-breakdown series of the open-interest chart that are options OI.
-	optionsOpenInterestSeries?: Array<string> | null
+	// Protocols whose open-interest endpoints make up each kind; see openInterestSplit.ts.
+	openInterestProtocols?: Record<OpenInterestKind, Array<string>> | null
 	liquidationVolume: IAdapterOverview | null
 	collateralLiquidated: IAdapterOverview | null
 	bridgeVolume: Array<Pick<BridgeVolumePoint, 'date' | 'depositUSD' | 'withdrawUSD'>> | null

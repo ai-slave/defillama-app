@@ -8,7 +8,7 @@ import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { getProDashboardChartSourceQueryKey } from '~/containers/ProDashboard/chartSource'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardTypes'
-import { buildProDashboardParentMapping } from '~/containers/ProDashboard/protocolCatalog'
+import { buildProDashboardProtocolRelations } from '~/containers/ProDashboard/protocolCatalog'
 import {
 	filterDataByTimePeriod,
 	getChartQueryFn,
@@ -174,7 +174,7 @@ function MultiPreview({
 }) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { data: catalog } = useProtocolsAndChains()
-	const parentMapping = useMemo(() => buildProDashboardParentMapping(catalog?.protocols ?? []), [catalog])
+	const protocolRelations = useMemo(() => buildProDashboardProtocolRelations(catalog ?? null), [catalog])
 	const queries = useQueries({
 		queries: series.map((s) => ({
 			queryKey: getProDashboardChartSourceQueryKey({
@@ -190,7 +190,7 @@ function MultiPreview({
 				s.slug,
 				s.geckoId ?? null,
 				undefined,
-				parentMapping,
+				protocolRelations,
 				undefined,
 				undefined,
 				authToken

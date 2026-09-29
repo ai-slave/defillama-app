@@ -70,7 +70,11 @@ import { useDashboardPermissions, type DashboardReadOnlyReason } from './hooks/u
 import { useDashboardStream } from './hooks/useDashboardStream'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { isDashboardInitialRenderHydration } from './initialDashboard'
-import { buildProDashboardParentMapping } from './protocolCatalog'
+import {
+	buildProDashboardParentMapping,
+	buildProDashboardProtocolRelations,
+	type ProDashboardProtocolRelations
+} from './protocolCatalog'
 import { ProxyAuthTokenContext, StreamDoneContext, StreamItemReadinessContext, useProtocolsAndChains } from './queries'
 import { DashboardError, dashboardUrlKey, matchesDashboardKey } from './services/DashboardAPI'
 import type { Chain, DashboardBindableField, Protocol } from './types'
@@ -138,6 +142,7 @@ interface ProDashboardCatalogContextType {
 	getProtocolInfo: (protocolId: string) => Protocol | undefined
 	parentMapping: ReadonlyMap<string, ReadonlyArray<string>>
 	protocolBySlug: ReadonlyMap<string, Protocol>
+	protocolRelations: ProDashboardProtocolRelations
 }
 
 interface ProDashboardPermissionsContextType {
@@ -511,11 +516,11 @@ function ProDashboardAPIProviderInner({
 	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS
 	const chains = rawChains
 	const parentMapping = useMemo(() => buildProDashboardParentMapping(protocols), [protocols])
-	const protocolBySlug = useMemo(() => {
-		const map = new Map<string, Protocol>()
-		for (const protocol of protocols) map.set(protocol.slug, protocol)
-		return map
-	}, [protocols])
+	const protocolRelations = useMemo(
+		() => buildProDashboardProtocolRelations(protocolsAndChains ?? null),
+		[protocolsAndChains]
+	)
+	const protocolBySlug = protocolRelations.protocolsBySlug
 
 	const applyDashboard = useCallback(
 		(dashboard: Dashboard) => {
@@ -1292,9 +1297,20 @@ function ProDashboardAPIProviderInner({
 			getChainInfo,
 			getProtocolInfo,
 			parentMapping,
-			protocolBySlug
+			protocolBySlug,
+			protocolRelations
 		}),
-		[protocols, chains, protocolsLoading, protocolCatalog, getChainInfo, getProtocolInfo, parentMapping, protocolBySlug]
+		[
+			protocols,
+			chains,
+			protocolsLoading,
+			protocolCatalog,
+			getChainInfo,
+			getProtocolInfo,
+			parentMapping,
+			protocolBySlug,
+			protocolRelations
+		]
 	)
 
 	const readOnlyReason: DashboardReadOnlyReason =

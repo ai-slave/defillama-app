@@ -10,8 +10,9 @@ import { sumSeriesByTimestamp } from '~/utils/breakdowns'
 import { getChartDataPrerequisite, type ChartDataPrerequisite } from './chartRuntime'
 import { getProDashboardChartSourceQueryKey, isChainTokenChartType, isProtocolTokenChartType } from './chartSource'
 import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
+import { getOpenInterestChartProtocols } from './openInterestChartProtocols'
 import { buildProDashboardProtocolCatalog } from './protocolCatalog'
-import type { ProProtocolCatalogSourceRow } from './protocolCatalog'
+import type { ProDashboardProtocolRelations, ProProtocolCatalogSourceRow } from './protocolCatalog'
 import { fetchProChainChartData } from './services/ChainCharts'
 import { fetchProDashboardBridgedTvl } from './services/fetchBridgedTvl'
 import { fetchProDashboardProxy } from './services/fetchViaProxy'
@@ -97,7 +98,7 @@ export function getChartQueryFn(
 	item: string,
 	geckoId?: string | null,
 	timePeriod?: TimePeriod,
-	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>,
+	relations?: ProDashboardProtocolRelations,
 	customPeriod?: CustomTimePeriod | null,
 	dataType?: string,
 	authToken?: string | null
@@ -108,6 +109,19 @@ export function getChartQueryFn(
 		: fetchChartDirect(type, itemType, item, geckoId, timePeriod, customPeriod, dataType)
 
 	if (itemType === 'protocol') {
+		const fetchChildren = async (childSlugs: ReadonlyArray<string>) => {
+			const seriesList = await Promise.all(
+				childSlugs.map((childSlug) =>
+					(authToken
+						? fetchChartProxied(type, 'protocol', childSlug, authToken, undefined, dataType)
+						: fetchChartDirect(type, 'protocol', childSlug, undefined, timePeriod, customPeriod, dataType))()
+				)
+			)
+			return Array.from(sumSeriesByTimestamp(seriesList).entries()).sort((a, b) => a[0] - b[0])
+		}
+		const openInterestProtocols = relations ? getOpenInterestChartProtocols(type, item, relations) : null
+		if (openInterestProtocols) return () => fetchChildren(openInterestProtocols)
+
 		return async () => {
 			if (isProtocolTokenChartType(type)) {
 				return fetcher()
@@ -122,7 +136,8 @@ export function getChartQueryFn(
 			}
 			if (direct.length > 0) return direct
 
-			const children = parentMapping?.get(item) || []
+			const parent = relations?.protocolsBySlug.get(item)
+			const children = parent ? (relations?.childrenByParentId.get(parent.id) ?? []) : []
 			if (children.length === 0) {
 				if (directError) {
 					throw directError instanceof Error
@@ -132,18 +147,10 @@ export function getChartQueryFn(
 				return direct
 			}
 
-			const childFetchers = children.map((childSlug) =>
-				authToken
-					? fetchChartProxied(type, 'protocol', childSlug, authToken, undefined, dataType)
-					: fetchChartDirect(type, 'protocol', childSlug, undefined, timePeriod, customPeriod, dataType)
-			)
-
 			// A parent total must never be assembled from a partial child set. If one
 			// canonical child source fails, surface the query error instead of rendering
 			// an understated series as though it were complete.
-			const seriesList = await Promise.all(childFetchers.map((fetchChild) => fetchChild()))
-
-			return Array.from(sumSeriesByTimestamp(seriesList).entries()).sort((a, b) => a[0] - b[0])
+			return fetchChildren(children.map((child) => child.slug))
 		}
 	}
 	return fetcher
@@ -228,7 +235,7 @@ function getChartSourceQueryOptions(
 	streamDone: boolean,
 	prerequisite: ChartDataPrerequisite,
 	authToken: string | null | undefined,
-	parentMapping: ReadonlyMap<string, ReadonlyArray<string>> | undefined
+	relations: ProDashboardProtocolRelations | undefined
 ) {
 	const itemType = chart.subjectType
 	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
@@ -241,7 +248,7 @@ function getChartSourceQueryOptions(
 			item,
 			chart.geckoId,
 			undefined,
-			parentMapping,
+			relations,
 			undefined,
 			chart.dataType,
 			authToken
@@ -266,13 +273,13 @@ export function useChartData(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>
+	relations?: ProDashboardProtocolRelations
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const prerequisite = getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
 	const sourceQueryOptions = useMemo(
-		() => getChartSourceQueryOptions(chart, streamDone, prerequisite, authToken, parentMapping),
-		[authToken, chart, parentMapping, prerequisite, streamDone]
+		() => getChartSourceQueryOptions(chart, streamDone, prerequisite, authToken, relations),
+		[authToken, chart, relations, prerequisite, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
 	// Relative periods refresh with the source data; a day rolling over without new data does not re-project.
@@ -294,7 +301,7 @@ export function useChartsData(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>
+	relations?: ProDashboardProtocolRelations
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const observerPlan = useMemo(() => buildProDashboardChartObserverPlan(charts), [charts])
@@ -306,10 +313,10 @@ export function useChartsData(
 					streamDone,
 					getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug),
 					authToken,
-					parentMapping
+					relations
 				)
 			),
-		[authToken, observerPlan.sources, parentMapping, protocolBySlug, protocolCatalog, streamDone]
+		[authToken, observerPlan.sources, relations, protocolBySlug, protocolCatalog, streamDone]
 	)
 	const projectionTimePeriod = timePeriod ?? 'all'
 	const combineSourceQueries = useCallback(

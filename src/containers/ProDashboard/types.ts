@@ -549,6 +549,9 @@ export interface Protocol {
 	parentProtocol?: string | null
 	category?: string
 	misrepresentedTokens?: boolean
+	// Metadata open-interest flags of a listed protocol; parents leave them unset.
+	openInterest?: boolean
+	optionsOpenInterest?: boolean
 }
 
 const COUNT_CHART_TYPES: ReadonlySet<string> = new Set(['activeUsers', 'newUsers', 'txs', 'pfRatio', 'psRatio'])
@@ -656,6 +659,12 @@ export const CHART_TYPES = {
 		title: 'Open Interest',
 		chartType: 'area',
 		color: '#3394c1'
+	},
+	optionsOpenInterest: {
+		id: 'optionsOpenInterest',
+		title: 'Options Open Interest',
+		chartType: 'area',
+		color: '#9f4fd1'
 	},
 	optionsPremium: {
 		id: 'optionsPremium',
@@ -809,6 +818,7 @@ export const PROTOCOL_CHART_TYPES = [
 	'bridgeAggregators',
 	'optionsPremium',
 	'optionsNotional',
+	'optionsOpenInterest',
 	'activeUsers',
 	'newUsers',
 	'txs',

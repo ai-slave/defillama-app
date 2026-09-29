@@ -40,6 +40,7 @@ export const getStaticProps = withPerformanceLogging(
 		const data = await getProtocolOverviewPageData({
 			protocolId: cexRoute.id,
 			currentProtocolMetadata: protocolMetadata,
+			protocolMetadata: metadataCache.protocolMetadata,
 			rwaPlatformActiveAum: protocolMetadata.rwaPlatformSlug
 				? (metadataCache.rwaPlatformsIndex.platforms[protocolMetadata.rwaPlatformSlug]?.activeAum ?? null)
 				: null,

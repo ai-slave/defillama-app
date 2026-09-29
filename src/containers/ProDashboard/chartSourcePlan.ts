@@ -42,6 +42,7 @@ const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, ReadonlyArray
 	bridgeAggregators: ['bridgeAggregators'],
 	optionsPremium: ['optionsPremiumVolume'],
 	optionsNotional: ['optionsNotionalVolume'],
+	optionsOpenInterest: ['optionsOpenInterest'],
 	activeUsers: ['activeUsers'],
 	newUsers: ['newUsers'],
 	txs: ['txCount'],

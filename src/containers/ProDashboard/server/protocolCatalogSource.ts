@@ -15,7 +15,10 @@ interface LensProtocolCatalogRow {
 }
 
 export async function fetchProProtocolCatalogSourceRows(): Promise<Array<ProProtocolCatalogSourceRow>> {
-	const { llamaDb } = await import('~/server/db/llama')
+	const [{ llamaDb }, metadataCache] = await Promise.all([
+		import('~/server/db/llama'),
+		import('~/utils/metadata').then((module) => module.default)
+	])
 	const rows = await llamaDb.query<Array<LensProtocolCatalogRow>>(`
 		SELECT
 			p.slug,
@@ -32,17 +35,24 @@ export async function fetchProProtocolCatalogSourceRows(): Promise<Array<ProProt
 		LEFT JOIN dim.token token ON token.token_sk = p.canonical_token_sk
 		ORDER BY p.slug
 	`)
-	return rows.map((row) => ({
-		slug: row.slug,
-		name: row.name,
-		parentSlug: row.protocol,
-		category: row.category,
-		tvl: row.tvl_base,
-		symbol: row.symbol,
-		geckoId: row.token_nk?.startsWith('coingecko:') ? row.token_nk.slice('coingecko:'.length) : null,
-		hasMisrepresentedTokens: row.has_misrepresented_tokens,
-		excludeTvlFromParent: row.exclude_tvl_from_parent
-	}))
+	return rows.map((row) => {
+		// Open-interest flags ride with the catalog so its clients can split a parent's perp and options children.
+		const protocolId = metadataCache.protocolRouteIdBySlug[row.slug]
+		const metadata = protocolId ? metadataCache.protocolMetadata[protocolId] : undefined
+		return {
+			slug: row.slug,
+			name: row.name,
+			parentSlug: row.protocol,
+			category: row.category,
+			tvl: row.tvl_base,
+			symbol: row.symbol,
+			geckoId: row.token_nk?.startsWith('coingecko:') ? row.token_nk.slice('coingecko:'.length) : null,
+			hasMisrepresentedTokens: row.has_misrepresented_tokens,
+			excludeTvlFromParent: row.exclude_tvl_from_parent,
+			...(metadata?.openInterest ? { openInterest: true as const } : {}),
+			...(metadata?.optionsOpenInterest ? { optionsOpenInterest: true as const } : {})
+		}
+	})
 }
 
 type ProtocolCatalogSourceResponse = Array<ProProtocolCatalogSourceRow> | { error: string }

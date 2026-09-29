@@ -238,7 +238,7 @@ export function useMetricData(metric: MetricConfig) {
 	}, [metric.compare])
 	const itemType = subject.itemType
 	const item = subject.itemType === 'protocol' ? subject.protocol : subject.chain
-	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
+	const { getChainInfo, getProtocolInfo, protocolRelations, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const geckoId =
 		subject.geckoId ??
 		(subject.itemType === 'protocol'
@@ -260,7 +260,17 @@ export function useMetricData(metric: MetricConfig) {
 				: { subjectType: 'chain', chain: item }),
 			...(geckoId === undefined ? {} : { geckoId })
 		}),
-		queryFn: getChartQueryFn(type, itemType, item, geckoId, undefined, parentMapping, undefined, undefined, authToken),
+		queryFn: getChartQueryFn(
+			type,
+			itemType,
+			item,
+			geckoId,
+			undefined,
+			protocolRelations,
+			undefined,
+			undefined,
+			authToken
+		),
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		select: selectFiniteMetricSeries,
 		enabled:

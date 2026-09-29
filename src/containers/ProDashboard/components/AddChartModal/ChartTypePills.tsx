@@ -21,7 +21,7 @@ const PROTOCOL_GROUPS = [
 	['Value', ['tvl', 'treasury']],
 	['Volume', ['volume', 'aggregators', 'perps', 'perpsAggregators', 'bridgeAggregators']],
 	['Fees & Revenue', ['fees', 'revenue', 'unlocks', 'incentives', 'holdersRevenue']],
-	['Derivatives', ['openInterest', 'optionsPremium', 'optionsNotional']],
+	['Derivatives', ['openInterest', 'optionsPremium', 'optionsNotional', 'optionsOpenInterest']],
 	['Token', ['tokenMcap', 'tokenPrice', 'tokenVolume']],
 	['DeFi', ['medianApy', 'borrowed']],
 	['Ratios', ['pfRatio', 'psRatio']]

@@ -3,15 +3,22 @@ import {
 	fetchAdapterChainChartDataByChainBreakdown,
 	fetchAdapterChainChartDataByProtocolBreakdown,
 	fetchAdapterChainMetrics,
-	fetchAdapterProtocolChartDataByBreakdownType
+	fetchAdapterProtocolChartDataByBreakdownType,
+	fetchAdapterProtocolMetrics
 } from '~/containers/AdapterMetrics/api'
-import type { AdapterChainProtocol, IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
+import type {
+	AdapterChainProtocol,
+	IAdapterBreakdownChartData,
+	IAdapterChainMetrics
+} from '~/containers/AdapterMetrics/api.types'
 import {
 	displayChainName,
 	resolveAllowedChainNamesFromCategories,
 	resolveAllowedChainSlugsFromCategories
 } from '~/containers/ProDashboard/server/chartBuilder/breakdownChains'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import { selectOpenInterestProtocols } from '~/containers/ProtocolOverview/openInterestSplit'
+import { resolveProtocolParamFromMetadata } from '~/containers/ProtocolOverview/server/routes'
 import { stableCacheKey } from '~/server/api/cacheKey'
 import { addApiRoutePhase, timeApiRoutePhase } from '~/server/api/phaseTelemetry'
 import { cachedResult } from '~/server/api/resultCache'
@@ -141,6 +148,40 @@ const getProtocolCategoryLookup = async (): Promise<ProtocolCategoryLookup> => {
 	return lookup
 }
 
+// The open-interest metric is perp open interest. A parent with options open interest reads it from its
+// flagged children, like the protocol page; see openInterestSplit.ts.
+async function fetchOpenInterestChainBreakdown(protocol: string): Promise<IAdapterBreakdownChartData> {
+	const request = { adapterType: 'open-interest', type: 'chain', dataType: 'openInterestAtEnd' } as const
+	const metadataCache = await import('~/utils/metadata').then((module) => module.default)
+	const route = resolveProtocolParamFromMetadata(protocol, metadataCache)
+	if (!route?.metadata.optionsOpenInterest)
+		return fetchAdapterProtocolChartDataByBreakdownType({ ...request, protocol })
+
+	const summary = await fetchAdapterProtocolMetrics({
+		adapterType: 'open-interest',
+		protocol,
+		dataType: 'openInterestAtEnd'
+	})
+	const children = (summary.childProtocols ?? []).map((child) => ({
+		name: child.displayName,
+		flags: metadataCache.protocolMetadata[child.defillamaId]
+	}))
+	const charts = await Promise.all(
+		selectOpenInterestProtocols(protocol, route.metadata, children, 'openInterest').map((name) =>
+			fetchAdapterProtocolChartDataByBreakdownType({ ...request, protocol: name })
+		)
+	)
+	const totalsByTimestamp = new Map<number, Record<string, number>>()
+	for (const chart of charts) {
+		for (const [timestamp, values] of chart) {
+			const totals = totalsByTimestamp.get(timestamp) ?? {}
+			for (const chain in values) totals[chain] = (totals[chain] ?? 0) + values[chain]
+			totalsByTimestamp.set(timestamp, totals)
+		}
+	}
+	return Array.from(totalsByTimestamp).sort((a, b) => a[0] - b[0])
+}
+
 async function getDimensionsProtocolChainData(
 	protocol: string,
 	metric: AdapterChartBuilderMetric,
@@ -154,12 +195,14 @@ async function getDimensionsProtocolChainData(
 
 	try {
 		const breakdown = await timeApiRoutePhase('adapter_protocol_chain_fetch_breakdown', () =>
-			fetchAdapterProtocolChartDataByBreakdownType({
-				adapterType: config.endpoint,
-				protocol,
-				type: 'chain',
-				...(config.dataType ? { dataType: config.dataType } : {})
-			})
+			config.endpoint === 'open-interest'
+				? fetchOpenInterestChainBreakdown(protocol)
+				: fetchAdapterProtocolChartDataByBreakdownType({
+						adapterType: config.endpoint,
+						protocol,
+						type: 'chain',
+						...(config.dataType ? { dataType: config.dataType } : {})
+					})
 		)
 		const projectStartedAt = Date.now()
 

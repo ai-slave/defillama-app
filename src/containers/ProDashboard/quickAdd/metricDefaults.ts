@@ -69,6 +69,7 @@ export const QUICK_ADD_METRIC_PRIORITY: ReadonlyArray<ProDashboardChartType> = [
 	'bridgeAggregators',
 	'optionsPremium',
 	'optionsNotional',
+	'optionsOpenInterest',
 	'tokenVolume',
 	'stablecoinInflows',
 	'chainFees',

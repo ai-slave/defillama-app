@@ -66,6 +66,7 @@ export function DashboardTestProvider({ children, ...state }: DashboardTestState
 										getProtocolInfo: () => undefined,
 										parentMapping: EMPTY_MAP,
 										protocolBySlug: EMPTY_MAP,
+										protocolRelations: { protocolsBySlug: EMPTY_MAP, childrenByParentId: EMPTY_MAP },
 										...state.catalog
 									}}
 								>
