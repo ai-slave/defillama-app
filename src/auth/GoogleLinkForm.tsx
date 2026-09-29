@@ -2,11 +2,12 @@ import type { DialogStore } from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useCallback, useId, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
-import { authInputStyles, authPrimaryButtonStyles } from '~/auth/AuthDialog'
+import { authInputStyles } from '~/auth/AuthDialog'
 import { OtpRequestError } from '~/auth/emailVerification'
 import type { GoogleLinkChallenge, SignInFlowStore } from '~/auth/signInFlowStore'
 import type { FormSubmitEvent } from '~/types/forms'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Button } from '~/ui/Button'
+import { InlineStatus } from '~/ui/Status'
 
 function useDeadlinePassed(timestamp: string) {
 	const getSnapshot = useCallback(() => Date.now() >= Date.parse(timestamp), [timestamp])
@@ -46,16 +47,18 @@ export function GoogleLinkForm({
 	if (expired) {
 		return (
 			<div className="flex flex-col gap-4">
-				<p className="text-sm leading-5 text-tertiary">
+				<p className="body-sm text-secondary">
 					This verification code expired. Continue with Google again to request a new code.
 				</p>
-				<button
+				<Button
 					type="button"
-					className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand"
+					variant="primary"
+					size="md"
+					className="w-full"
 					onClick={() => store.dispatch({ kind: 'googleLinkExpired' })}
 				>
 					Back to sign in
-				</button>
+				</Button>
 			</div>
 		)
 	}
@@ -119,16 +122,15 @@ export function GoogleLinkForm({
 
 	return (
 		<form className="flex flex-col gap-4" onSubmit={(event) => void handleSubmit(event)}>
-			<p className="text-sm leading-5 text-tertiary">
+			<p className="body-sm text-secondary">
 				This Google account uses an email managed outside Google. Enter the 6-digit code sent to your email to confirm
 				the account link.
 			</p>
-			<label>
-				<span className="sr-only">Verification code</span>
+			<label className="flex flex-col">
+				<span className="mb-1.5 label-sm text-secondary">Verification code</span>
 				<input
 					type="text"
 					name="code"
-					aria-label="Verification code"
 					disabled={pending}
 					aria-describedby={error ? errorId : undefined}
 					inputMode="numeric"
@@ -142,51 +144,42 @@ export function GoogleLinkForm({
 						event.currentTarget.value = event.currentTarget.value.replace(/\D/g, '').slice(0, 6)
 					}}
 				/>
-				<span className="mt-1 hidden text-xs text-error peer-user-invalid:block">Enter the 6-digit code.</span>
+				<span className="mt-1 hidden body-sm text-data-down peer-user-invalid:block">Enter the 6-digit code.</span>
 			</label>
-			<button
+			<Button
 				type="submit"
-				disabled={confirmGoogleLinkMutation.isPending || resendGoogleLinkMutation.isPending}
-				className={authPrimaryButtonStyles}
+				variant="primary"
+				size="md"
+				className="w-full"
+				disabled={resendGoogleLinkMutation.isPending}
+				pendingLabel={confirmGoogleLinkMutation.isPending ? 'Verifying…' : null}
 			>
-				{confirmGoogleLinkMutation.isPending ? (
-					<span className="inline-flex items-center gap-2">
-						<LoadingSpinner size={14} />
-						Verifying...
-					</span>
-				) : (
-					'Verify account'
-				)}
-			</button>
+				Verify account
+			</Button>
 			{error ? (
-				<p id={errorId} role="alert" className="text-center text-xs text-error">
-					{error}
-				</p>
+				<div id={errorId}>
+					<InlineStatus variant="error">{error}</InlineStatus>
+				</div>
 			) : null}
-			<button
-				type="button"
-				className="text-center text-xs text-link disabled:cursor-not-allowed disabled:text-tertiary"
-				onClick={(event) => void handleResend(event.currentTarget.form!)}
-				disabled={!canResend || resendGoogleLinkMutation.isPending || confirmGoogleLinkMutation.isPending}
-			>
-				{resendGoogleLinkMutation.isPending ? (
-					<span className="inline-flex items-center gap-2">
-						<LoadingSpinner size={14} />
-						Sending...
-					</span>
-				) : canResend ? (
-					'Resend code'
-				) : (
-					'Resend available shortly'
-				)}
-			</button>
-			<button
-				type="button"
-				className="text-center text-sm text-link"
-				onClick={() => store.dispatch({ kind: 'useAnotherMethod' })}
-			>
-				Use another sign-in method
-			</button>
+			<div className="flex flex-col items-center gap-3">
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={(event) => void handleResend(event.currentTarget.form!)}
+					disabled={!resendGoogleLinkMutation.isPending && (!canResend || pending)}
+					pendingLabel={resendGoogleLinkMutation.isPending ? 'Sending code…' : null}
+				>
+					{canResend ? 'Resend code' : 'Resend available shortly'}
+				</Button>
+				<button
+					type="button"
+					className="body-sm text-link"
+					onClick={() => store.dispatch({ kind: 'useAnotherMethod' })}
+				>
+					Use another sign-in method
+				</button>
+			</div>
 		</form>
 	)
 }

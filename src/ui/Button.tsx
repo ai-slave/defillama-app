@@ -25,7 +25,8 @@ import { LoadingSpinner } from './Loaders'
    `pendingLabel` is the pending state: while an action runs, pass its label
    ("Saving…") and the button shows a spinner and that label, stays focusable
    (aria-disabled, announced as busy) and ignores clicks, so a form cannot
-   submit twice through Enter either. Pass null once the action settles.
+   submit twice through Enter either. It keeps full colour, unlike a disabled
+   button, so it reads as working. Pass null once the action settles.
 
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
@@ -89,7 +90,7 @@ export function buttonStyles({
 	size: ButtonSize
 	square?: boolean
 }): string {
-	return `flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
+	return `flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
@@ -126,8 +127,25 @@ export function Button<T extends ElementType = 'button'>({
 			// A pending button swallows clicks, including the one a form's Enter key sends to its submit button.
 			onClick={(event: MouseEvent) => event.preventDefault()}
 		>
-			<LoadingSpinner size={14} />
-			{pendingLabel}
+			{square ? (
+				// An icon-only button has no room for a label: the spinner replaces the icon, the label is announced.
+				<>
+					<LoadingSpinner size={14} />
+					<span className="sr-only">{pendingLabel}</span>
+				</>
+			) : (
+				// The idle content stays in the same grid cell, invisible and hidden from assistive tech, so the button
+				// keeps the wider of its two widths and the row around it does not reflow while the action runs.
+				<span className="grid">
+					<span aria-hidden className="invisible col-start-1 row-start-1 flex items-center justify-center gap-1">
+						{props.children}
+					</span>
+					<span className="col-start-1 row-start-1 flex items-center justify-center gap-1">
+						<LoadingSpinner size={14} />
+						{pendingLabel}
+					</span>
+				</span>
+			)}
 		</Component>
 	)
 }

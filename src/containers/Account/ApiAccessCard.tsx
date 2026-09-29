@@ -141,7 +141,7 @@ export function ApiAccessCard({
 
 			{copy.error ? (
 				<p role="alert" className="text-sm text-error">
-					Could not copy the API key. Please try again.
+					Could not copy the API key. Try again.
 				</p>
 			) : null}
 			{confirmRegenerate ? (

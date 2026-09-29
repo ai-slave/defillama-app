@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ConfirmationModal } from '../ConfirmationModal'
 import { DashboardCard } from '../DashboardCard'
@@ -25,9 +26,7 @@ afterEach(async () => {
 	container.remove()
 })
 function button(name: string) {
-	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(e) => e.getAttribute('aria-label') === name || e.textContent?.trim() === name
-	)
+	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)
 	expect(el).toBeDefined()
 	return el!
 }

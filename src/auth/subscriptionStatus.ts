@@ -79,10 +79,13 @@ export function clearPersistedSubscriptionStatus(userId: string | null | undefin
 
 export async function fetchSubscriptionStatus({
 	token,
-	signal
+	signal,
+	subscriptionType
 }: {
 	token: string
 	signal?: AbortSignal
+	/** Reads that plan's record. Without it the server returns the first active plan, whichever that is. */
+	subscriptionType?: string
 }): Promise<Subscription | null> {
 	const response = await fetch(`${AUTH_SERVER}/subscription/status`, {
 		method: 'POST',
@@ -90,6 +93,7 @@ export async function fetchSubscriptionStatus({
 			'Content-Type': 'application/json',
 			Authorization: `Bearer ${token}`
 		},
+		...(subscriptionType ? { body: JSON.stringify({ subscriptionType }) } : {}),
 		signal
 	})
 

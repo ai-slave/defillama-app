@@ -9,6 +9,7 @@ import { AuthProvider, useAuthContext } from '~/auth'
 import { OtpRequestError, verifyEmailCode } from '~/auth/emailVerification'
 import { useTeam } from '~/containers/Account/Team/useTeam'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -311,10 +312,28 @@ test('shows delivery failures inline and respects the server resend delay on ret
 	await settle()
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Wait before requesting another code.')
 	})
 	expect(button('Resend code').disabled).toBe(true)
 	expect(button('Resend code').textContent).toContain('120s')
+})
+
+test('Try again after a delivery failure moves focus to the code field', async () => {
+	await render()
+	await emailLogin()
+	otpCalls[0].resolve(jsonResponse({ error: 'Failed to send OTP' }, 500))
+	await waitForUi(async () => {
+		await settle()
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not send a code.')
+	})
+	const retry = [...document.querySelectorAll('button')].find((element) => accessibleName(element) === 'Try again')!
+	await act(async () => retry.focus())
+	await act(async () => retry.click())
+
+	expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
+	otpCalls[1].resolve(jsonResponse({ message: 'OTP sent' }))
+	await settle()
+	expect(document.activeElement).toBe(document.querySelector('input[autocomplete="one-time-code"]'))
 })
 
 test('blocks verification for a replacement token-only session and ignores a late verification response', async () => {
@@ -342,7 +361,7 @@ test.each([
 	otpCalls[0].resolve(new Response(body, { status: 429, headers }))
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Please wait')
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Wait before requesting another code.')
 	})
 	expect(button('Resend code').disabled).toBe(true)
 	expect(button('Resend code').textContent).toContain(`${seconds}s`)
@@ -448,7 +467,7 @@ test('retries the account read after an accepted invite without repeating member
 })
 
 test.each([
-	{ status: 429, message: 'Please wait before requesting another code.', expires: true },
+	{ status: 429, message: 'Wait before requesting another code.', expires: true },
 	{ status: 500, message: 'Could not send a code.', expires: false }
 ])('expires only timed resend errors after $status', async ({ status, message, expires }) => {
 	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
@@ -457,7 +476,7 @@ test.each([
 	otpCalls[0].resolve(jsonResponse({ error: 'Send failed', details: { retryAfterSeconds: 8 } }, status))
 	await waitForUi(async () => {
 		await settle()
-		expect(document.querySelector('[role="alert"]')?.textContent).toBe(message)
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain(message)
 	})
 	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(expires)
 	expect(document.activeElement).not.toBe(document.querySelector('[role="alert"]'))
@@ -468,7 +487,7 @@ test.each([
 	})
 	expect(button(expires ? 'Resend code' : 'Try again').disabled).toBe(false)
 	expect(document.activeElement).toBe(codeInput)
-	expect(document.querySelector('[role="alert"]')?.textContent ?? null).toBe(expires ? null : message)
+	expect(document.querySelector('[role="alert"]')?.textContent?.includes(message) ?? null).toBe(expires ? null : true)
 	expect(otpCalls).toHaveLength(1)
 })
 

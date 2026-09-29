@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import {
 	Elements,
 	EmbeddedCheckout,
@@ -14,17 +13,13 @@ import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
 import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import type { FormSubmitEvent } from '~/types/forms'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import { formatNumber } from '~/utils/numberFormat'
 
 const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
-const checkoutBackdrop = <div className="fixed inset-0 bg-black/80" />
-const checkoutDialogClassName =
-	'dialog fixed inset-0 z-50 m-auto flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-[600px] flex-col gap-0 overflow-y-auto rounded-2xl border border-sub-border-slate-100 bg-white p-0 shadow-xl'
-const checkoutHeaderClassName = 'flex items-center justify-between border-b border-sub-border-slate-100 px-5 py-4'
-const checkoutTitleClassName = 'text-xl leading-7 font-semibold text-sub-dark-page'
-const checkoutCloseButtonClassName = 'rounded-full p-1 text-sub-dark-page transition-colors disabled:opacity-50'
 const formatAmount = (cents: number, currency: string) => {
 	const amount = cents / 100
 	const currencyCode = currency.toUpperCase()
@@ -34,19 +29,19 @@ const formatAmount = (cents: number, currency: string) => {
 const getFriendlyPaymentStatus = (status: string) => {
 	switch (status) {
 		case 'requires_action':
-			return 'Requires additional authentication. Please complete the verification step and try again.'
+			return 'Your payment needs additional authentication. Complete the verification step and try again.'
 		case 'processing':
-			return 'Payment is processing. This may take a few minutes, please check your account shortly.'
+			return 'Your payment is processing. This can take a few minutes, so check your account shortly.'
 		case 'requires_capture':
 			return 'Payment is authorized and awaiting final confirmation.'
 		case 'requires_payment_method':
-			return 'Payment failed. Please use a different payment method and try again.'
+			return 'Payment failed. Use a different payment method and try again.'
 		case 'requires_confirmation':
-			return 'Payment needs confirmation. Please submit again to continue.'
+			return 'Payment needs confirmation. Submit again to continue.'
 		case 'canceled':
-			return 'Payment was canceled. Please try again when ready.'
+			return 'Payment was canceled. Try again when you are ready.'
 		default:
-			return 'Payment is pending confirmation. Please check your account for updates.'
+			return 'Payment is pending confirmation. Check your account for updates.'
 	}
 }
 
@@ -73,7 +68,13 @@ interface StripeCheckoutModalProps {
 	upgradeReturnPath?: string
 }
 
-export function StripeCheckoutModal({
+// Each opening asks for a fresh checkout session, and a closing dialog keeps its last step through the fade-out
+// instead of mounting a new checkout that would ask for another session.
+export function StripeCheckoutModal(props: StripeCheckoutModalProps) {
+	return <StripeCheckoutDialog key={useOpeningKey(props.isOpen)} {...props} />
+}
+
+function StripeCheckoutDialog({
 	isOpen,
 	onClose,
 	paymentMethod,
@@ -85,7 +86,12 @@ export function StripeCheckoutModal({
 }: StripeCheckoutModalProps) {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
-	const postCheckoutPath = isUpgradeFlow ? (upgradeReturnPath ?? '/account?success=true') : '/welcome'
+	// The return page confirms an upgrade only once the subscription reads as the plan bought here. The base only
+	// parses the relative path; the query merges with any the caller's path already has.
+	const upgradeReturn = new URL(upgradeReturnPath ?? '/account?success=true', 'https://defillama.com')
+	upgradeReturn.searchParams.set('plan', type)
+	upgradeReturn.searchParams.set('interval', billingInterval)
+	const postCheckoutPath = isUpgradeFlow ? `${upgradeReturn.pathname}${upgradeReturn.search}` : '/welcome'
 
 	const subscriptionMutation = useMutation({
 		mutationFn: async (): Promise<SubscriptionResult> => {
@@ -139,16 +145,10 @@ export function StripeCheckoutModal({
 		onSuccess: async (result) => {
 			if (result.kind === 'freeUpgrade') {
 				await queryClient.invalidateQueries({ queryKey: ['subscription'] })
-				handleClose()
+				onClose()
 			}
 		}
 	})
-
-	const resetMutation = subscriptionMutation.reset
-	const handleClose = useCallback(() => {
-		resetMutation()
-		onClose()
-	}, [resetMutation, onClose])
 
 	const createSubscription = subscriptionMutation.mutateAsync
 
@@ -163,129 +163,82 @@ export function StripeCheckoutModal({
 
 	if (stripeInstance == null) {
 		return (
-			<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-				<Ariakit.Dialog className={checkoutDialogClassName} backdrop={checkoutBackdrop} portal unmountOnHide>
-					<div className={checkoutHeaderClassName}>
-						<h2 className={checkoutTitleClassName}>Checkout</h2>
-						<Ariakit.DialogDismiss className={checkoutCloseButtonClassName}>
-							<Icon name="x" className="size-6" />
-						</Ariakit.DialogDismiss>
-					</div>
-					<div className="px-5 py-8 text-center text-sub-text-muted">
-						<p className="mb-2 text-base text-sub-dark-page">Stripe is not configured.</p>
-						<p className="text-sm">Please set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in your environment.</p>
-					</div>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+			<Dialog size="md" open={isOpen} onClose={onClose} portal unmountOnHide>
+				<DialogHeader title="Checkout" />
+				<DialogBody>
+					<InlineStatus variant="error">
+						Stripe is not configured. Set <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> in your environment.
+					</InlineStatus>
+				</DialogBody>
+			</Dialog>
 		)
 	}
 
 	if (result?.kind === 'paidUpgrade') {
-		const planName = type === 'api' ? 'API' : type === 'llamafeed' ? 'Pro' : type
-		const billingPeriod = billingInterval === 'year' ? 'Annual' : 'Monthly'
-
 		return (
-			<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-				<Ariakit.Dialog className={checkoutDialogClassName} backdrop={checkoutBackdrop} portal unmountOnHide>
-					<div className={checkoutHeaderClassName}>
-						<h2 className={checkoutTitleClassName}>Complete Your Upgrade</h2>
-						<Ariakit.DialogDismiss className={checkoutCloseButtonClassName}>
-							<Icon name="x" className="size-6" />
-						</Ariakit.DialogDismiss>
-					</div>
-
-					<div className="border-b border-sub-border-slate-100 bg-sub-surface-panel px-5 py-4">
-						<div className="space-y-3 text-sub-dark-page">
-							<div>
-								<h3 className="text-xs font-medium text-sub-text-muted">Upgrading to</h3>
-								<p className="text-lg font-semibold text-sub-dark-page">
-									{planName} - {billingPeriod}
-								</p>
-							</div>
-
-							{result.pricing ? (
-								<div className="space-y-2 pt-2">
-									<div className="flex justify-between text-sm">
-										<span className="text-sub-text-muted">New subscription price</span>
-										<span className="font-medium text-sub-dark-page">
-											{formatAmount(result.pricing.newSubscriptionPrice, result.pricing.currency)}
-											<span className="text-sub-text-muted">/{billingInterval === 'year' ? 'year' : 'month'}</span>
-										</span>
-									</div>
-
-									{result.pricing.prorationCredit > 0 ? (
-										<div className="flex justify-between text-sm">
-											<span className="text-sub-text-muted">Proration credit</span>
-											<span className="font-medium text-success">
-												-{formatAmount(result.pricing.prorationCredit, result.pricing.currency)}
-											</span>
-										</div>
-									) : null}
-
-									<div className="border-t border-sub-border-slate-100 pt-2">
-										<div className="flex justify-between">
-											<span className="font-semibold text-sub-dark-page">Amount due today</span>
-											<span className="text-lg font-semibold text-sub-brand-primary">
-												{formatAmount(result.pricing.amount, result.pricing.currency)}
-											</span>
-										</div>
-									</div>
-
-									<p className="pt-1 text-xs text-sub-text-muted">
-										You'll be charged immediately and your subscription will be updated.
-									</p>
-								</div>
-							) : (
-								<p className="text-sm text-sub-text-muted">Enter your payment details below to complete the upgrade.</p>
-							)}
-						</div>
-					</div>
-
-					<div className="p-5">
-						<Elements
-							stripe={stripeInstance}
-							options={{
-								clientSecret: result.clientSecret
-							}}
-						>
-							<UpgradePaymentForm postCheckoutPath={postCheckoutPath} />
-						</Elements>
-					</div>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+			<Elements stripe={stripeInstance} options={{ clientSecret: result.clientSecret }}>
+				<UpgradePaymentDialog
+					isOpen={isOpen}
+					onClose={onClose}
+					planLabel={`${type === 'api' ? 'API' : 'Pro'} - ${billingInterval === 'year' ? 'Annual' : 'Monthly'}`}
+					pricing={result.pricing}
+					billingInterval={billingInterval}
+					postCheckoutPath={postCheckoutPath}
+				/>
+			</Elements>
 		)
 	}
 
+	// The embedded checkout loads and grows inside its iframe, so the phone sheet keeps its full height.
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-			<Ariakit.Dialog className={checkoutDialogClassName} backdrop={checkoutBackdrop} portal unmountOnHide>
-				<div className={checkoutHeaderClassName}>
-					<h2 className={checkoutTitleClassName}>Complete Your Purchase</h2>
-					<Ariakit.DialogDismiss className={checkoutCloseButtonClassName}>
-						<Icon name="x" className="size-6" />
-					</Ariakit.DialogDismiss>
-				</div>
-
-				{errorMessage ? (
-					<div className="border-b border-sub-border-slate-100 bg-sub-warning-text-dark/10 p-4">
-						<div className="flex items-center gap-2 text-error">
-							<Icon name="alert-warning" height={20} width={20} className="shrink-0" />
-							<p className="text-sm">{errorMessage}</p>
-						</div>
-					</div>
-				) : (
-					<div className="min-h-[400px] p-4">
+		<Dialog size="md" fullSheet open={isOpen} onClose={onClose} portal unmountOnHide>
+			<DialogHeader title="Complete Your Purchase" />
+			{errorMessage ? (
+				<>
+					<DialogBody>
+						<InlineStatus variant="error">{errorMessage}</InlineStatus>
+					</DialogBody>
+					<DialogFooter>
+						{/* A fresh checkout provider asks the server for a new session. */}
+						<Button type="button" variant="primary" size="md" onClick={subscriptionMutation.reset}>
+							Try Again
+						</Button>
+					</DialogFooter>
+				</>
+			) : (
+				<DialogBody kind="flush">
+					<div className="relative min-h-[400px]">
+						{/* The checkout draws nothing until the session arrives, so the wait needs its own label. */}
+						{result ? null : (
+							<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center">
+								<LoadingIndicator label="Loading checkout" />
+							</div>
+						)}
 						<EmbeddedCheckoutProvider stripe={stripeInstance} options={{ fetchClientSecret }}>
 							<EmbeddedCheckout />
 						</EmbeddedCheckoutProvider>
 					</div>
-				)}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+				</DialogBody>
+			)}
+		</Dialog>
 	)
 }
 
-function UpgradePaymentForm({ postCheckoutPath }: { postCheckoutPath: string }) {
+function UpgradePaymentDialog({
+	isOpen,
+	onClose,
+	planLabel,
+	pricing,
+	billingInterval,
+	postCheckoutPath
+}: {
+	isOpen: boolean
+	onClose: () => void
+	planLabel: string
+	pricing: UpgradePricing | null
+	billingInterval: 'year' | 'month'
+	postCheckoutPath: string
+}) {
 	const stripe = useStripe()
 	const elements = useElements()
 
@@ -311,7 +264,7 @@ function UpgradePaymentForm({ postCheckoutPath }: { postCheckoutPath: string }) 
 			}
 
 			if (!confirmResult.paymentIntent) {
-				throw new Error('Unexpected payment response. Please check your account or try again.')
+				throw new Error('Unexpected payment response. Check your account or try again.')
 			}
 
 			if (confirmResult.paymentIntent.status !== 'succeeded') {
@@ -319,35 +272,82 @@ function UpgradePaymentForm({ postCheckoutPath }: { postCheckoutPath: string }) 
 			}
 
 			return confirmResult.paymentIntent
-		},
-		onSuccess: () => {
-			window.location.href = `${window.location.origin}${postCheckoutPath}`
 		}
 	})
 
+	// A charged payment stays locked while the page navigates away, so it cannot be submitted twice.
+	const paying = paymentMutation.isPending || paymentMutation.isSuccess
+
 	const handleSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
-		paymentMutation.mutate()
+		if (paying) return
+		paymentMutation.mutate(undefined, {
+			// A mutate() callback, unlike the hook's onSuccess, is dropped once this dialog unmounts on close.
+			onSuccess: () => {
+				window.location.href = `${window.location.origin}${postCheckoutPath}`
+			}
+		})
 	}
 
+	// The payment cannot be cancelled once confirmPayment starts, so the dialog stays open until it settles.
 	return (
-		<form onSubmit={handleSubmit} className="flex flex-col gap-5">
-			{paymentMutation.error ? (
-				<div className="rounded-lg bg-sub-warning-text-dark/10 p-3">
-					<div className="flex items-center gap-2 text-error">
-						<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
-						<p className="text-sm">{paymentMutation.error.message}</p>
+		<Dialog size="md" fullSheet open={isOpen} onClose={onClose} pending={paying} portal unmountOnHide>
+			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader title="Complete Your Upgrade" />
+				<DialogBody>
+					<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-elevated-1 px-4 py-3">
+						<div className="flex flex-col gap-1">
+							<p className="label-sm text-secondary">Upgrading to</p>
+							<p className="label-lg text-primary">{planLabel}</p>
+						</div>
+
+						{pricing ? (
+							<div className="flex flex-col gap-2 body-sm">
+								<div className="flex justify-between gap-2">
+									<span className="text-secondary">New subscription price</span>
+									<span className="text-primary">
+										{formatAmount(pricing.newSubscriptionPrice, pricing.currency)}
+										<span className="text-secondary">/{billingInterval === 'year' ? 'year' : 'month'}</span>
+									</span>
+								</div>
+
+								{pricing.prorationCredit > 0 ? (
+									<div className="flex justify-between gap-2">
+										<span className="text-secondary">Proration credit</span>
+										<span className="text-success">-{formatAmount(pricing.prorationCredit, pricing.currency)}</span>
+									</div>
+								) : null}
+
+								<div className="flex justify-between gap-2 border-t border-subtle pt-2">
+									<span className="label-md text-primary">Amount due today</span>
+									<span className="label-md text-primary">{formatAmount(pricing.amount, pricing.currency)}</span>
+								</div>
+							</div>
+						) : null}
 					</div>
-				</div>
-			) : null}
-			<PaymentElement />
-			<button
-				type="submit"
-				disabled={!stripe || paymentMutation.isPending}
-				className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-6 text-sm font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				{paymentMutation.isPending ? 'Processing...' : 'Complete Upgrade'}
-			</button>
-		</form>
+					<p className="body-sm text-secondary">
+						{pricing
+							? "You'll be charged immediately and your subscription will be updated."
+							: 'Enter your payment details below to complete the upgrade.'}
+					</p>
+					<PaymentElement />
+					{paymentMutation.error ? <InlineStatus variant="error">{paymentMutation.error.message}</InlineStatus> : null}
+				</DialogBody>
+				<DialogFooter leading={stripe ? null : <p className="body-sm text-secondary">Loading payment form…</p>}>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						disabled={!stripe}
+						pendingLabel={paying ? 'Processing…' : null}
+					>
+						Complete Upgrade
+					</Button>
+				</DialogFooter>
+				<span role="status" className="sr-only">
+					{paying ? 'Processing payment' : ''}
+				</span>
+			</form>
+		</Dialog>
 	)
 }

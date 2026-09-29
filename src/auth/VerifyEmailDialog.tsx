@@ -1,15 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState } from 'react'
-import {
-	AuthDialogHeader,
-	authDialogStyles,
-	authBodyStyles,
-	authInputStyles,
-	authPrimaryButtonStyles
-} from '~/auth/AuthDialog'
+import { AuthDialogHeader, authInputStyles } from '~/auth/AuthDialog'
 import { OtpRequestError, sendVerificationCode, verifyEmailCode } from '~/auth/emailVerification'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody } from '~/ui/Dialog'
+import { InlineStatus } from '~/ui/Status'
 
 export function VerifyEmailDialog({
 	accountId,
@@ -27,6 +23,7 @@ export function VerifyEmailDialog({
 	const [otp, setOtp] = useState('')
 	const [cooldownSeconds, setCooldownSeconds] = useState(0)
 	const autoSent = useRef(false)
+	const codeRef = useRef<HTMLInputElement>(null)
 	const errorId = useId()
 	const send = useMutation({
 		mutationFn: () => sendVerificationCode(accountId),
@@ -54,6 +51,17 @@ export function VerifyEmailDialog({
 	const sendFailure =
 		send.error instanceof OtpRequestError && send.error.retryAt > 0 && cooldownSeconds === 0 ? null : send.error
 	const failure = verify.error ?? sendFailure
+	// A rate limit waits out its countdown on the resend button; any other delivery failure offers a retry.
+	const deliveryFailed = sendFailure !== null && !verify.error && cooldownSeconds === 0
+	const resend = () => {
+		verify.reset()
+		sendCode()
+	}
+	// Try again replaces itself with the sending state, so focus moves on to the field the new code goes in.
+	const retryDelivery = () => {
+		resend()
+		codeRef.current!.focus()
+	}
 	const error =
 		failure instanceof OtpRequestError
 			? failure.message
@@ -62,27 +70,28 @@ export function VerifyEmailDialog({
 				: null
 
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
-			<Ariakit.Dialog backdrop={<div className="bg-screen-dim" />} className={authDialogStyles} portal unmountOnHide>
-				<AuthDialogHeader title="Verify your email" />
+		<Dialog size="sm" open={isOpen} onClose={onClose} portal unmountOnHide>
+			<AuthDialogHeader title="Verify your email" />
+			<DialogBody>
 				<form
-					className={authBodyStyles}
+					className="flex flex-col gap-4"
 					onSubmit={(event) => {
 						event.preventDefault()
 						if (pending || otp.length !== 6) return
 						verify.mutate(otp)
 					}}
 				>
-					<p className="text-sm leading-5 text-tertiary">
+					<Ariakit.DialogDescription className="body-sm text-secondary">
 						You&apos;re signed in. Verify {email ? <span className="text-primary">{email}</span> : 'your email'} to
 						continue with features that require verification.
-					</p>
-					<p className="text-sm text-secondary" aria-live="polite">
+					</Ariakit.DialogDescription>
+					<p className="body-sm text-secondary" aria-live="polite">
 						{send.isSuccess ? 'Code sent. Check your inbox.' : 'Enter the 6-digit code from your email.'}
 					</p>
-					<label>
-						<span className="sr-only">Verification code</span>
+					<label className="flex flex-col">
+						<span className="mb-1.5 label-sm text-secondary">Verification code</span>
 						<input
+							ref={codeRef}
 							type="text"
 							inputMode="numeric"
 							autoComplete="one-time-code"
@@ -91,7 +100,8 @@ export function VerifyEmailDialog({
 							placeholder="000000"
 							className={`${authInputStyles} text-center text-base tracking-[0.4em] placeholder:tracking-normal`}
 							value={otp}
-							disabled={pending}
+							// Read-only rather than disabled while a request runs, so the field keeps focus.
+							readOnly={pending}
 							aria-invalid={verify.isError}
 							aria-describedby={error ? errorId : undefined}
 							onChange={(event) => {
@@ -100,48 +110,51 @@ export function VerifyEmailDialog({
 							}}
 						/>
 					</label>
-					<button type="submit" disabled={pending || otp.length !== 6} className={authPrimaryButtonStyles}>
-						{verify.isPending ? (
-							<span className="inline-flex items-center gap-2">
-								<LoadingSpinner size={16} />
-								Verifying...
-							</span>
-						) : (
-							'Verify email'
-						)}
-					</button>
-					{verify.error && error ? (
-						<p id={errorId} role="alert" className="text-center text-xs text-error">
-							{error}
-						</p>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						className="w-full"
+						disabled={pending || otp.length !== 6}
+						pendingLabel={verify.isPending ? 'Verifying…' : null}
+					>
+						Verify email
+					</Button>
+					{/* One slot for verify and delivery failures: the field describes itself with it either way. */}
+					{error ? (
+						<div id={errorId}>
+							<InlineStatus variant="error">
+								{/* A delivery failure offers its retry beside the message; a wrong code is fixed in the field. */}
+								{deliveryFailed ? (
+									<div className="flex flex-wrap items-center justify-between gap-2">
+										<span>{error}</span>
+										<Button type="button" size="sm" onClick={retryDelivery}>
+											Try again
+										</Button>
+									</div>
+								) : (
+									error
+								)}
+							</InlineStatus>
+						</div>
 					) : null}
-					<div className="flex flex-wrap items-baseline justify-center gap-x-2 gap-y-1">
-						{!verify.error && error ? (
-							<p id={errorId} role="alert" className="text-center text-xs text-error">
-								{error}
-							</p>
-						) : null}
-						<button
-							type="button"
-							disabled={pending || cooldownSeconds > 0}
-							className="text-center text-xs text-link disabled:text-tertiary"
-							onClick={() => {
-								verify.reset()
-								sendCode()
-							}}
-						>
-							{send.isPending
-								? 'Sending code...'
-								: cooldownSeconds > 0
-									? `Resend code (${cooldownSeconds}s)`
-									: sendFailure && !verify.error
-										? 'Try again'
-										: 'Resend code'}
-						</button>
+					<div className="flex flex-col items-center gap-3">
+						{deliveryFailed ? null : (
+							<Button
+								type="button"
+								variant="ghost"
+								size="sm"
+								disabled={!send.isPending && (pending || cooldownSeconds > 0)}
+								pendingLabel={send.isPending ? 'Sending code…' : null}
+								onClick={resend}
+							>
+								{cooldownSeconds > 0 ? `Resend code (${cooldownSeconds}s)` : 'Resend code'}
+							</Button>
+						)}
+						<Ariakit.DialogDismiss className="body-sm text-link">Verify later</Ariakit.DialogDismiss>
 					</div>
-					<Ariakit.DialogDismiss className="text-center text-sm text-link">Verify later</Ariakit.DialogDismiss>
 				</form>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+			</DialogBody>
+		</Dialog>
 	)
 }

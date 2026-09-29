@@ -4,13 +4,20 @@ import { useEffect, useId, useState } from 'react'
 import { type Connector, useConfig, useConnection, useConnectors } from 'wagmi'
 import { disconnect, getConnection, signMessage, watchConnection } from 'wagmi/actions'
 import { useAuthContext } from '~/auth'
-import { LastUsedChip, authPrimaryButtonStyles, authWalletPickerStyles } from '~/auth/AuthDialog'
+import {
+	LastUsedCorner,
+	authWalletRowStyles,
+	authProviderIconSlotStyles,
+	authWalletPickerStyles
+} from '~/auth/AuthDialog'
 import { useLastSignIn } from '~/auth/lastSignIn'
 import type { SignInFlowStore } from '~/auth/signInFlowStore'
 import { signInWithWallet } from '~/auth/walletAuth'
 import { connectWallet } from '~/auth/walletConnection'
 import { isWalletRequestRejected, walletErrorMessage } from '~/auth/walletErrors'
 import { WalletProviderClient } from '~/layout/WalletProviderClient'
+import { Button } from '~/ui/Button'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 
 export type WalletSignInProps = {
 	dialogStore: Ariakit.DialogStore
@@ -18,7 +25,6 @@ export type WalletSignInProps = {
 	onAuthenticated: () => void
 }
 
-const primaryClass = authPrimaryButtonStyles
 const walletIcons: Record<string, string | undefined> = {
 	metaMaskSDK: '/assets/wallets/metamask.svg',
 	coinbaseWalletSDK: '/assets/wallets/coinbase.svg',
@@ -66,6 +72,7 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 		connection.isConnected &&
 		!connectMutation.isPending
 	const busy = connectMutation.isPending || disconnectMutation.isPending || signInMutation.isPending
+	const reviewIcon = connection.connector ? (connection.connector.icon ?? walletIcons[connection.connector.id]) : null
 
 	useEffect(() => store.cancelAuthRequest, [store])
 
@@ -151,74 +158,75 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 		setSelected(null)
 	}
 
+	const errorStatus = error ? (
+		<div id={errorId}>
+			<InlineStatus variant="error">{error}</InlineStatus>
+		</div>
+	) : null
+
 	return (
 		<div className={`flex flex-col gap-4 ${reviewing ? '' : authWalletPickerStyles}`}>
 			{reviewing ? (
 				<>
-					<div className="rounded-lg border border-medium p-3 text-sm text-primary">
-						<p className="mb-1 font-medium">{connection.connector?.name}</p>
-						<p className="font-mono text-xs break-all">{connection.address}</p>
+					<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface-elevated-1 p-3">
+						<div className="flex items-center gap-2">
+							{reviewIcon ? <img src={reviewIcon} alt="" className="size-6 shrink-0 rounded-sm" /> : null}
+							<p className="min-w-0 flex-1 truncate label-md text-primary">{connection.connector?.name}</p>
+							<Button
+								type="button"
+								size="sm"
+								disabled={signInMutation.isPending}
+								pendingLabel={disconnectMutation.isPending ? 'Disconnecting…' : null}
+								onClick={() => void changeWallet()}
+							>
+								Disconnect
+							</Button>
+						</div>
+						<p className="mono-sm text-balance break-all text-secondary">{connection.address}</p>
 					</div>
-					<p className="text-xs text-secondary">Sign a message to sign in. No transaction or gas fee.</p>
-					{connection.chainId !== 1 ? (
-						<p className="text-xs text-secondary">The message identifies Ethereum; no network switch is needed.</p>
-					) : null}
-					<button
+					<p className="body-sm text-secondary">
+						Sign a free message to prove you own this wallet. No transaction, gas fee or network switch.
+					</p>
+					<Button
 						type="button"
-						className={primaryClass}
-						disabled={busy}
+						variant="primary"
+						size="md"
+						className="w-full"
+						disabled={connectMutation.isPending || disconnectMutation.isPending}
 						aria-describedby={error ? errorId : undefined}
-						onClick={() => void submit()}
-					>
-						{signInMutation.isPending ? (
-							<>
-								<Spinner />
-								{stage === 'preparing'
+						pendingLabel={
+							signInMutation.isPending
+								? stage === 'preparing'
 									? 'Preparing sign-in…'
 									: stage === 'signing'
-										? 'Approve in your wallet…'
-										: 'Signing in…'}
-							</>
-						) : (
-							'Sign in'
-						)}
-					</button>
-					{error ? (
-						<p id={errorId} role="alert" className="text-xs text-error">
-							{error}
-						</p>
-					) : null}
-					<button
-						type="button"
-						className="text-sm text-link"
-						disabled={disconnectMutation.isPending}
-						onClick={() => void changeWallet()}
+										? `Waiting for ${connection.connector?.name ?? 'your wallet'}…`
+										: 'Signing in…'
+								: null
+						}
+						onClick={() => void submit()}
 					>
-						{disconnectMutation.isPending ? 'Disconnecting…' : 'Change wallet'}
-					</button>
-					<p className="text-center text-xs text-secondary">Changing wallets disconnects this wallet from DefiLlama.</p>
+						Sign in
+					</Button>
+					{errorStatus}
 				</>
 			) : (
 				<>
-					<p className="text-xs text-secondary">Use a wallet already linked to your account.</p>
+					<p className="body-sm text-secondary">Use a wallet already linked to your account.</p>
 					{disconnectMutation.isSuccess ? (
-						<p className="text-xs text-secondary">
+						<p className="body-sm text-secondary">
 							To switch addresses, choose another account in your wallet before reconnecting. Reconnecting alone may
 							return the same address.
 						</p>
 					) : null}
 					{selected && connectMutation.isPending ? (
-						<>
-							<p role="status" className="flex items-center gap-2 text-sm text-primary">
-								<Spinner />
-								Waiting for {selected.name}…
-							</p>
-							<p className="text-xs text-secondary">
+						<div role="status" aria-live="polite" className="flex flex-col gap-1">
+							<LoadingIndicator label={`Waiting for ${selected.name}`} />
+							<p className="body-sm text-secondary">
 								Approve the connection in your wallet. Connecting won’t sign you in.
 							</p>
-						</>
+						</div>
 					) : (
-						<div className="flex flex-col gap-2">
+						<div className="flex flex-col gap-3">
 							{available.map((connector) => {
 								const icon = connector.icon ?? walletIcons[connector.id]
 								return (
@@ -226,44 +234,27 @@ export function WalletSignInForm({ dialogStore, store, onAuthenticated }: Wallet
 										key={connector.uid}
 										type="button"
 										disabled={busy}
-										className="flex min-h-11 items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left text-sm text-primary disabled:opacity-50"
+										className={authWalletRowStyles}
 										onClick={() => void chooseWallet(connector)}
 									>
-										<span className="flex size-6 shrink-0 items-center justify-center" aria-hidden>
-											{icon ? <img src={icon} alt="" className="size-6 rounded-sm" /> : null}
+										<span className={authProviderIconSlotStyles} aria-hidden>
+											{icon ? <img src={icon} alt="" className="size-5 rounded-sm" /> : null}
 										</span>
 										<span className="min-w-0 flex-1 truncate" title={connector.name}>
 											{connector.id === 'injected' ? 'Browser wallet' : connector.name}
 										</span>
-										<span className="ml-auto flex shrink-0 items-center gap-1">
-											{connector.type === 'injected' ? (
-												<span className="rounded-full bg-brand-muted px-2 py-0.5 label-xs text-link-on-tint max-[380px]:px-1">
-													Installed
-												</span>
-											) : null}
-											{connector.id === lastConnectorId ? <LastUsedChip /> : null}
+										<span className="flex shrink-0 items-center gap-2">
+											{connector.type === 'injected' ? <span className="label-xs text-tertiary">Installed</span> : null}
+											{connector.id === lastConnectorId ? <LastUsedCorner /> : null}
 										</span>
 									</button>
 								)
 							})}
 						</div>
 					)}
-					{error ? (
-						<p id={errorId} role="alert" className="text-xs text-error">
-							{error}
-						</p>
-					) : null}
+					{errorStatus}
 				</>
 			)}
 		</div>
-	)
-}
-
-function Spinner() {
-	return (
-		<span
-			aria-hidden
-			className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
-		/>
 	)
 }

@@ -3,6 +3,7 @@
 import { act, createElement, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { GoogleSignInButton, revokeGoogleCredentialSharing } from '../GoogleSignInButton'
 
 vi.mock('next/script', () => ({
@@ -140,7 +141,9 @@ test('does not exchange a denied authorization and lets the user retry', async (
 	try {
 		await act(async () => view.button.click())
 		await act(async () => google.options.callback({ error: 'access_denied' }))
-		expect(view.container.querySelector('[role="alert"]')?.textContent).toContain('not completed')
+		expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+			'Google sign-in did not finish. Try again.'
+		)
 		expect(view.button.disabled).toBe(false)
 		expect(onCode).not.toHaveBeenCalled()
 	} finally {
@@ -224,6 +227,27 @@ test('recovers from a script timeout using the retry button', async () => {
 		expect(view.button.disabled).toBe(false)
 		await act(async () => view.button.click())
 		expect(google.requestCode).toHaveBeenCalledOnce()
+	} finally {
+		await view.unmount()
+	}
+})
+
+test('a retry that loads Google moves focus to the Google button', async () => {
+	vi.useFakeTimers()
+	const view = await mountButton({ loading: false, onCode: vi.fn() })
+	try {
+		await act(async () => {
+			vi.advanceTimersByTime(10_000)
+		})
+		const retry = [...view.container.querySelectorAll('button')].find(
+			(button) => accessibleName(button) === 'Try again'
+		)!
+		// Google is reachable by the time the visitor retries.
+		installGooglePopup()
+		await act(async () => retry.focus())
+		await act(async () => retry.click())
+
+		expect(document.activeElement).toBe(view.button)
 	} finally {
 		await view.unmount()
 	}

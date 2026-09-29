@@ -1,7 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 
 const DEFAULT_BENEFITS = [
 	'Unlimited CSV downloads',
@@ -22,7 +24,12 @@ interface EndTrialModalProps {
 	secondaryLabel?: string
 }
 
-export function EndTrialModal({
+// Each opening starts fresh, and a closing dialog keeps its last step through the fade-out.
+export function EndTrialModal(props: EndTrialModalProps) {
+	return <EndTrialDialog key={useOpeningKey(props.isOpen)} {...props} />
+}
+
+function EndTrialDialog({
 	isOpen,
 	onClose,
 	title = 'Upgrade to Full Access',
@@ -40,123 +47,95 @@ export function EndTrialModal({
 	const error = endTrialMutation.isError ? endTrialMutation.error.message : null
 	const isLoading = endTrialMutation.isPending
 
-	const handleConfirm = useCallback(() => {
-		endTrialMutation.mutate()
-	}, [endTrialMutation])
-
-	const handleClose = useCallback(() => {
-		endTrialMutation.reset()
+	const handleClose = () => {
+		if (isLoading) return
 		onClose()
-	}, [endTrialMutation, onClose])
+	}
 
+	// A charge-now confirmation: no ×, the choice is the footer, and Close stays visible at every width.
 	return (
-		<Ariakit.Dialog
-			open={isOpen}
-			onClose={() => {
-				if (!isLoading) handleClose()
-			}}
-			className="dialog flex max-h-[90dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-medium bg-white p-6 text-gray-900 shadow-2xl max-sm:drawer max-sm:rounded-b-none dark:border-sub-line dark:bg-sub-dark-panel dark:text-sub-text-primary"
-			portal
-			unmountOnHide
-		>
-			<div className="flex items-center justify-between">
-				<h3 className="text-xl font-bold">{upgraded ? 'Upgrade Successful' : title}</h3>
-				<button
-					type="button"
-					onClick={handleClose}
-					disabled={isLoading}
-					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary"
-				>
-					<Icon name="x" height={18} width={18} />
-				</button>
-			</div>
-
+		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={handleClose} pending={isLoading} portal unmountOnHide>
+			<DialogHeader title={upgraded ? 'Upgrade Successful' : title} closable={false} />
 			{upgraded ? (
 				<>
-					<div className="rounded-lg border border-success/30 bg-success/10 p-4">
-						<div className="flex items-start gap-3">
-							<Icon name="check" height={20} width={20} className="mt-0.5 shrink-0 text-success" />
-							<p className="text-sm text-secondary dark:text-sub-text-soft">
-								Please wait a few minutes and refresh the page after upgrading, the upgrade might take a few minutes to
-								apply.
-							</p>
-						</div>
-					</div>
-					<button
-						type="button"
-						onClick={handleClose}
-						className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90"
-					>
-						Close
-					</button>
+					<DialogBody>
+						<Ariakit.DialogDescription className="body-sm text-secondary">
+							The upgrade can take a few minutes to apply. Refresh the page if your account still shows the trial.
+						</Ariakit.DialogDescription>
+					</DialogBody>
+					<DialogFooter>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={handleClose}>
+							Close
+						</Button>
+					</DialogFooter>
 				</>
 			) : (
 				<>
-					{description ? <p className="text-sm text-tertiary dark:text-sub-text-muted">{description}</p> : null}
+					<DialogBody>
+						{description ? <p className="body-sm text-secondary">{description}</p> : null}
 
-					{/* Benefits */}
-					<div className="mt-2 flex flex-col gap-2">
-						<p className="text-sm text-tertiary dark:text-sub-text-muted">{benefitsTitle}</p>
-						<ul className="flex flex-col gap-1 text-sm">
-							{benefits.map((b) => (
-								<li key={b} className="flex items-center gap-2">
-									<Icon name="check" height={14} width={14} className="shrink-0 text-success dark:text-success" />
-									<span>{b}</span>
-								</li>
-							))}
-						</ul>
-					</div>
+						<div className="flex flex-col gap-2">
+							<p className="body-sm text-secondary">{benefitsTitle}</p>
+							<ul className="flex flex-col gap-1 body-sm text-primary">
+								{benefits.map((b) => (
+									<li key={b} className="flex items-center gap-2">
+										<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+										<span>{b}</span>
+									</li>
+								))}
+							</ul>
+						</div>
 
-					{/* Warning — single source of truth for the instant-charge disclosure */}
-					<div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
-						<div className="flex items-start gap-3">
-							<Icon name="alert-triangle" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
-							<p className="text-sm text-secondary dark:text-sub-text-soft">
+						{/* The single source of truth for the instant-charge disclosure. */}
+						<InlineStatus variant="warning">
+							<Ariakit.DialogDescription>
 								By upgrading, you will end your free trial early and be charged the full subscription amount ($49/month)
 								immediately.
-							</p>
-						</div>
-					</div>
+							</Ariakit.DialogDescription>
+						</InlineStatus>
 
-					{error ? (
-						<div className="rounded-lg border border-error/30 bg-error/10 p-3">
-							<div className="flex items-center gap-2 text-error">
-								<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
-								<p className="text-sm">{error}</p>
-							</div>
-						</div>
-					) : null}
-
-					{/* Actions */}
-					<div className="mt-2 flex flex-col gap-3">
-						<button
+						{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
+					</DialogBody>
+					<DialogFooter
+						leading={
+							secondaryHref ? (
+								// Without an href the link is inert, so it cannot leave the page while the charge runs.
+								<Button
+									as="a"
+									variant="ghost"
+									size="md"
+									href={isLoading ? undefined : secondaryHref}
+									aria-disabled={isLoading || undefined}
+								>
+									{secondaryLabel ?? 'View all plans'}
+								</Button>
+							) : null
+						}
+					>
+						<Ariakit.DialogDismiss
 							type="button"
-							onClick={() => void handleConfirm()}
+							autoFocus
 							disabled={isLoading}
-							className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+							accessibleWhenDisabled
+							render={<Button size="md" />}
 						>
-							{isLoading ? 'Processing...' : confirmLabel}
-						</button>
-						{secondaryHref ? (
-							<a
-								href={secondaryHref}
-								className="w-full rounded-lg border border-medium px-4 py-2 text-center text-tertiary transition-colors hover:bg-page hover:text-secondary dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-dark-card-raised dark:hover:text-sub-text-primary"
-							>
-								{secondaryLabel ?? 'View all plans'}
-							</a>
-						) : (
-							<button
-								type="button"
-								onClick={handleClose}
-								disabled={isLoading}
-								className="w-full rounded-lg border border-medium px-4 py-2 text-tertiary transition-colors hover:bg-page hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-dark-card-raised dark:hover:text-sub-text-primary"
-							>
-								{secondaryLabel ?? 'Close'}
-							</button>
-						)}
-					</div>
+							Close
+						</Ariakit.DialogDismiss>
+						<Button
+							type="button"
+							variant="primary"
+							size="md"
+							pendingLabel={isLoading ? 'Processing…' : null}
+							onClick={() => endTrialMutation.mutate()}
+						>
+							{confirmLabel}
+						</Button>
+					</DialogFooter>
+					<span role="status" className="sr-only">
+						{isLoading ? 'Processing…' : ''}
+					</span>
 				</>
 			)}
-		</Ariakit.Dialog>
+		</Dialog>
 	)
 }

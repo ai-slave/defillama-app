@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import type { FormEvent, RefObject } from 'react'
-import { DialogHeading } from '~/ui/Dialog'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { InlineStatus } from '~/ui/Status'
 import type { TeamMember, TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
@@ -21,75 +22,78 @@ function getSubscriptionLabel(type: string): string {
 
 export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }: AssignSubscriptionModalProps) {
 	const { teamSubscriptions, assignMemberMutation } = useTeam()
+	const pending = assignMemberMutation.isPending
 
 	const availableSubscriptions = teamSubscriptions.filter((sub: TeamSubscription) => sub.seats.availableSeats > 0)
 
 	const handleClose = () => {
-		if (assignMemberMutation.isPending) return
+		if (pending) return
 		assignMemberMutation.reset()
 		onClose()
 	}
 
 	const handleAssign = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (assignMemberMutation.isPending) return
+		if (pending) return
 		const subscriptionType = new FormData(event.currentTarget).get('subscriptionType')
 		if (!subscriptionType) return
 		assignMemberMutation.mutate(
 			{ userId: member.userId, subscriptionType: String(subscriptionType) },
-			{ onSuccess: onClose }
+			{
+				onSuccess: () => {
+					onClose()
+					toast.success('Subscription assigned')
+				}
+			}
 		)
 	}
 
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-			<Ariakit.Dialog
-				finalFocus={finalFocus}
-				backdrop={<div className="bg-black/80" />}
-				className="dialog h-fit max-h-[90dvh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[380px]"
-				hideOnEscape={!assignMemberMutation.isPending}
-				hideOnInteractOutside={!assignMemberMutation.isPending}
-				portal
-				unmountOnHide
-			>
-				<form onSubmit={handleAssign} className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
-					<div className="flex items-center justify-between">
-						<DialogHeading className="text-base font-semibold text-sub-text-primary">Assign Subscription</DialogHeading>
-						<Ariakit.DialogDismiss
-							aria-label="Close"
-							disabled={assignMemberMutation.isPending}
-							className="flex size-8 shrink-0 items-center justify-center rounded-full text-sub-text-muted transition-colors hover:text-sub-text-primary"
-						>
-							<Icon name="x" height={18} width={18} />
-						</Ariakit.DialogDismiss>
-					</div>
-					<p className="text-sm break-words text-sub-text-muted">
-						Select a subscription type to assign to{' '}
-						<span className="font-medium text-sub-text-primary">{member.email}</span>.
-					</p>
+		<Dialog
+			size="sm"
+			open={isOpen}
+			onClose={handleClose}
+			pending={pending}
+			finalFocus={finalFocus}
+			portal
+			unmountOnHide
+		>
+			<form onSubmit={handleAssign} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader title="Assign Subscription" />
+				<DialogBody>
+					<Ariakit.DialogDescription className="body-sm break-words text-secondary">
+						Select a subscription type to assign to <span className="font-medium text-primary">{member.email}</span>.
+					</Ariakit.DialogDescription>
 
 					{availableSubscriptions.length === 0 ? (
-						<p className="text-sm text-sub-text-muted">
-							No available seats. Purchase more seats to assign subscriptions.
-						</p>
+						// Assign stays disabled; this says why.
+						<InlineStatus variant="error">
+							No seats are available. Purchase more seats to assign a subscription.
+						</InlineStatus>
 					) : (
 						<div className="flex flex-col gap-2">
-							{availableSubscriptions.map((sub: TeamSubscription) => (
+							{availableSubscriptions.map((sub: TeamSubscription, index) => (
 								<label
 									key={sub.id}
-									className="flex cursor-pointer items-center gap-3 rounded-lg border border-sub-border p-3 transition-colors has-checked:border-sub-brand-primary has-checked:bg-sub-brand-primary/5"
+									className="flex cursor-pointer items-center gap-3 rounded-lg border border-medium p-3 transition-colors has-checked:border-brand has-checked:bg-brand-muted"
 								>
-									<input
-										type="radio"
-										name="subscriptionType"
-										value={sub.type}
-										required
-										disabled={assignMemberMutation.isPending}
-										className="size-4 accent-sub-brand-primary"
+									{/* Ariakit's autoFocus, so the dialog starts on the first plan instead of the ×. */}
+									<Ariakit.Focusable
+										autoFocus={index === 0}
+										render={
+											<input
+												type="radio"
+												name="subscriptionType"
+												value={sub.type}
+												required
+												disabled={pending}
+												className="size-4 accent-brand"
+											/>
+										}
 									/>
 									<div className="flex flex-col">
-										<span className="text-sm font-medium text-sub-text-primary">{getSubscriptionLabel(sub.type)}</span>
-										<span className="text-xs text-sub-text-muted">
+										<span className="label-sm text-primary">{getSubscriptionLabel(sub.type)}</span>
+										<span className="body-sm text-secondary">
 											{sub.seats.availableSeats} seat{sub.seats.availableSeats !== 1 ? 's' : ''} available
 										</span>
 									</div>
@@ -99,38 +103,30 @@ export function AssignSubscriptionModal({ isOpen, onClose, member, finalFocus }:
 					)}
 
 					{assignMemberMutation.isError ? (
-						<div
-							role="alert"
-							className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
-						>
-							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
-							<p className="text-sm">{assignMemberMutation.error.message}</p>
-						</div>
+						<InlineStatus variant="error">{assignMemberMutation.error.message}</InlineStatus>
 					) : null}
-					<div className="flex gap-3">
-						<Ariakit.Button
-							type="button"
-							onClick={handleClose}
-							disabled={assignMemberMutation.isPending}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
-						>
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Button type="button" size="md" onClick={handleClose} disabled={pending}>
 							Cancel
-						</Ariakit.Button>
-						<Ariakit.Button
-							type="submit"
-							accessibleWhenDisabled
-							disabled={availableSubscriptions.length === 0 || assignMemberMutation.isPending}
-							className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50 aria-disabled:opacity-50"
-						>
-							{assignMemberMutation.isPending ? <LoadingSpinner size={14} /> : null}
-							{assignMemberMutation.isPending ? 'Assigning...' : 'Assign'}
-						</Ariakit.Button>
-					</div>
-					<span role="status" className="sr-only">
-						{assignMemberMutation.isPending ? 'Assigning subscription' : ''}
-					</span>
-				</form>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						</Button>
+					}
+				>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						disabled={availableSubscriptions.length === 0}
+						pendingLabel={pending ? 'Assigning…' : null}
+					>
+						Assign
+					</Button>
+				</DialogFooter>
+				<span role="status" className="sr-only">
+					{pending ? 'Assigning subscription' : ''}
+				</span>
+			</form>
+		</Dialog>
 	)
 }

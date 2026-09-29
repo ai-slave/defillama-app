@@ -28,7 +28,7 @@ export function Turnstile({ onVerify, onError, onExpire, action, ref }: Turnstil
 				options={{
 					...(action ? { action } : {}),
 					theme,
-					size: 'normal',
+					size: 'flexible',
 					appearance: 'always'
 				}}
 			/>

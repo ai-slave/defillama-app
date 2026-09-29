@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession, type SessionAccount } from '~/utils/testing/subscriberSession'
@@ -81,10 +82,13 @@ async function mount(mode = 'From Scratch') {
 	}
 }
 async function click(name: string) {
+	const buttons = [...document.querySelectorAll<HTMLButtonElement>('button')]
+	// Mode cards are named by their title plus description, so a title matches by prefix once no name matches exactly.
+	const target =
+		buttons.find((button) => accessibleName(button) === name) ??
+		buttons.find((button) => accessibleName(button).startsWith(name))!
 	await act(async () => {
-		;[...document.querySelectorAll<HTMLButtonElement>('button')]
-			.find((button) => button.getAttribute('aria-label') === name || button.textContent?.trim().startsWith(name))!
-			.click()
+		target.click()
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
@@ -184,12 +188,12 @@ describe('a subscriber', () => {
 			document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
 		}
 		const createButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(button) => button.textContent?.trim() === 'Create Dashboard'
+			(button) => accessibleName(button) === 'Create Dashboard'
 		)!
 		await click('Create Dashboard')
-		expect(createButton.textContent?.trim()).toBe('Creating…')
+		expect(accessibleName(createButton)).toBe('Creating…')
 		const exitButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(button) => button.getAttribute('aria-label') === exit || button.textContent?.trim() === exit
+			(button) => accessibleName(button) === exit
 		)!
 		// happy-dom click() does not enforce disabled ancestor fieldsets.
 		await click('Creating…')
@@ -203,7 +207,7 @@ describe('a subscriber', () => {
 		await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).not.toBeNull())
 		expect(toast.error).not.toHaveBeenCalled()
 		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open dashboard')
-		expect(createButton.textContent?.trim()).toBe('Created')
+		expect(accessibleName(createButton)).toBe('Created')
 		await click('Created')
 		expect(create).toHaveBeenCalledOnce()
 		expect(exitButton.disabled).toBe(false)
@@ -227,7 +231,7 @@ describe('a subscriber', () => {
 		await click('Back')
 		await click('TVL')
 		const next = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(button) => button.textContent?.trim() === 'Next'
+			(button) => accessibleName(button) === 'Next'
 		)!
 		expect(next.disabled).toBe(true)
 		expect(document.querySelector('footer')!.textContent).toContain('Pick at least 1 metric')

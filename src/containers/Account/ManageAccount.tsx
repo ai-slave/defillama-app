@@ -5,6 +5,8 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { DashboardAuthorProfileCard } from '~/containers/Authors/DashboardAuthorProfileCard'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { buttonStyles } from '~/ui/Button'
+import { LoadingIndicator } from '~/ui/Status'
 import { AuthenticationCard } from './AuthenticationCard'
 import { DeleteAccountCard } from './DeleteAccountCard'
 import { ReferralCard } from './ReferralCard'
@@ -36,8 +38,8 @@ export function ManageAccount() {
 
 	if (!isClient || loaders.userLoading || !router.isReady) {
 		return (
-			<div className="flex h-64 items-center justify-center">
-				<div className="size-8 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
+			<div role="status" aria-live="polite" className="flex h-64 items-center justify-center">
+				<LoadingIndicator />
 			</div>
 		)
 	}
@@ -52,15 +54,12 @@ export function ManageAccount() {
 			<div className="flex flex-col items-center gap-6 py-16">
 				<img src="/assets/account_avatar.png" alt="" className="size-16 rounded-full" />
 				<div className="flex flex-col gap-2 text-center">
-					<h2 className="text-xl font-semibold text-sub-text-primary">Account Access Required</h2>
-					<p className="max-w-md text-sm text-sub-text-muted">
-						Please sign in to view and manage your account information and subscription details.
+					<h2 className="heading-sm text-sub-text-primary">Account Access Required</h2>
+					<p className="max-w-md body-md text-sub-text-muted">
+						Sign in to view and manage your account and subscription.
 					</p>
 				</div>
-				<SignInModal
-					text="Sign In"
-					className="flex h-10 items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand"
-				/>
+				<SignInModal text="Sign In" className={buttonStyles({ variant: 'primary', size: 'md' })} />
 			</div>
 		)
 	}
@@ -69,7 +68,7 @@ export function ManageAccount() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<h1 className="text-xl font-semibold text-sub-text-primary">Manage Account</h1>
+			<h1 className="heading-sm text-sub-text-primary">Manage Account</h1>
 			<UserHeader displayName={displayName} onLogout={logout} />
 
 			<Ariakit.TabProvider store={tabStore}>

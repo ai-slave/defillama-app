@@ -1,10 +1,9 @@
-import { LoadingSpinner } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 
 export function TopupCheckoutLoading() {
 	return (
-		<div role="status" className="flex min-h-[400px] items-center justify-center gap-2 body-md text-secondary">
-			<LoadingSpinner size={16} />
-			<span>Loading card payments…</span>
+		<div role="status" aria-live="polite" className="flex min-h-[400px] items-center justify-center">
+			<LoadingIndicator label="Loading card payments" />
 		</div>
 	)
 }

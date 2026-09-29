@@ -161,7 +161,7 @@ export const useSubscribe = () => {
 			isTrial = false
 		) => {
 			if (!isAuthenticated) {
-				toast.error('Please sign in to subscribe')
+				toast.error('Sign in to subscribe')
 				return
 			}
 
@@ -201,7 +201,7 @@ export const useSubscribe = () => {
 	const topupMutation = useMutation<void, Error, { type: 'api' | 'llamafeed'; billingInterval?: 'year' | 'month' }>({
 		mutationFn: async ({ type, billingInterval = 'month' }) => {
 			if (!isAuthenticated) {
-				throw new Error('Please sign in to top up')
+				throw new Error('Sign in to top up')
 			}
 
 			const topupData: SubscriptionRequest = {
@@ -394,7 +394,7 @@ export const useSubscribe = () => {
 		},
 		onError: (error) => {
 			console.log('Failed to create portal session:', error)
-			toast.error(getErrorMessage(error, 'Failed to open the billing portal. Please try again.'))
+			toast.error(getErrorMessage(error, 'Failed to open the billing portal. Try again.'))
 		}
 	})
 
@@ -444,7 +444,7 @@ export const useSubscribe = () => {
 	const enableOverageMutation = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated) {
-				throw new Error('Please sign in to enable overage')
+				throw new Error('Sign in to enable overage')
 			}
 
 			if (apiSubscription.status !== 'active') {
@@ -478,7 +478,7 @@ export const useSubscribe = () => {
 	const disableOverageMutation = useMutation({
 		mutationFn: async () => {
 			if (!isAuthenticated) {
-				throw new Error('Please sign in to disable overage')
+				throw new Error('Sign in to disable overage')
 			}
 
 			if (apiSubscription.status !== 'active') {

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, onTestFinished, test } from 'vitest'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -111,20 +111,41 @@ test('a failed email request can retry unchanged and does not claim the address 
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('A confirmation link'))
 	expect(emailRequests()).toEqual(['first@example.com', 'first@example.com'])
 })
-test('closing and reopening email change ignores the previous request completion', async () => {
+test('email change stays open while its request runs', async () => {
 	const first = Promise.withResolvers<Response>()
 	emailReplies.push(() => first.promise)
 	await mount(<EmailHarness />)
-	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
+	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
+	await change(input, 'first@example.com')
 	await click('Confirm Email')
 	await waitForUi(() => expect(emailRequests()).toHaveLength(1))
-	await click('Close email change')
-	await click('Open email')
-	const input = document.querySelector<HTMLInputElement>('input[type=email]')!
-	await change(input, 'second@example.com')
-	await act(async () => first.resolve(emailSent()))
-	expect(input.value).toBe('second@example.com')
+	expect(button('Close dialog').getAttribute('aria-disabled')).toBe('true')
+	await click('Close dialog')
+	await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	expect(input.isConnected).toBe(true)
+	await act(async () => first.resolve(emailSent()))
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('first@example.com'))
+})
+test('the sent step stays on screen while the dialog closes, and a reopened dialog starts from a fresh form', async () => {
+	// The dialog fades out as it does in the browser, so its content stays mounted while it closes.
+	const fade = document.head.appendChild(document.createElement('style'))
+	fade.textContent = '[role="dialog"] { transition-property: opacity; transition-duration: 200ms; }'
+	onTestFinished(() => fade.remove())
+	const heading = () => document.querySelector('[role=dialog] h2')?.textContent
+	await mount(<EmailHarness />)
+	await change(document.querySelector<HTMLInputElement>('input[type=email]')!, 'first@example.com')
+	await click('Confirm Email')
+	await waitForUi(() => expect(heading()).toBe('Confirmation Link Sent'))
+
+	await click('Done')
+	expect(heading()).toBe('Confirmation Link Sent')
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')).toBeNull())
+
+	await click('Open email')
+	expect(heading()).toBe('Change Your Email')
+	const reopened = document.querySelector<HTMLInputElement>('input[type=email]')!
+	expect(reopened.value).toBe('')
+	await change(reopened, 'second@example.com')
 	await click('Confirm Email')
 	await waitForUi(() => expect(document.querySelector('[role=dialog]')?.textContent).toContain('second@example.com'))
 	expect(emailRequests()).toEqual(['first@example.com', 'second@example.com'])

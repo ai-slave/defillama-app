@@ -9,6 +9,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider } from '~/auth'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { GOOGLE_CODE, installOAuthBoundary } from '~/utils/testing/oauthBoundary'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SignInDialog, SignInFlow } from '../SignInDialog'
@@ -24,18 +25,23 @@ vi.mock('next/script', () => ({
 }))
 vi.mock('next/dynamic', () => ({ default: () => () => null }))
 vi.mock('~/containers/Subscription/Turnstile', () => ({
-	Turnstile: function TestTurnstile({ onVerify }: { onVerify: (token: string) => void }) {
+	Turnstile: function TestTurnstile({ onVerify, onError }: { onVerify: (token: string) => void; onError: () => void }) {
 		const [complete, setComplete] = useState(false)
 		return (
-			<button
-				type="button"
-				onClick={() => {
-					setComplete(true)
-					onVerify('test-captcha')
-				}}
-			>
-				{complete ? 'CAPTCHA complete' : 'Test CAPTCHA'}
-			</button>
+			<>
+				<button
+					type="button"
+					onClick={() => {
+						setComplete(true)
+						onVerify('test-captcha')
+					}}
+				>
+					{complete ? 'CAPTCHA complete' : 'Test CAPTCHA'}
+				</button>
+				<button type="button" onClick={onError}>
+					Fail CAPTCHA
+				</button>
+			</>
 		)
 	}
 }))
@@ -131,7 +137,7 @@ test('keeps credentials on network failure, shows it inline, and allows a succes
 	await submit()
 	expect(input('email').disabled).toBe(true)
 	expect(input('password').disabled).toBe(true)
-	expect(container.textContent).toContain('Signing in...')
+	expect(container.textContent).toContain('Signing in…')
 	requests[0].reject(new TypeError('Failed to fetch'))
 	await settle()
 	expect(container.querySelector('[role="alert"]')?.textContent).toContain('Check your connection')
@@ -229,6 +235,36 @@ test('preserves signup fields after failure and disables submit until a fresh CA
 	expect(onAuthenticated).toHaveBeenCalledOnce()
 })
 
+test('explains a failed security check and mounts a fresh check on retry', async () => {
+	const submitButton = () => container.querySelector<HTMLButtonElement>('button[type="submit"]')!
+	await completeCaptcha()
+	expect(submitButton().disabled).toBe(false)
+	await act(async () => buttonNamed('Fail CAPTCHA').click())
+	expect(container.querySelector('[role="alert"]')?.textContent).toContain('The security check failed.')
+	expect(submitButton().disabled).toBe(true)
+	await act(async () =>
+		Array.from(container.querySelectorAll<HTMLButtonElement>('[role="alert"] button'))
+			.find((button) => button.textContent === 'Try again')!
+			.click()
+	)
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect(container.textContent).toContain('Test CAPTCHA')
+	await completeCaptcha()
+	expect(submitButton().disabled).toBe(false)
+})
+
+test('Try again on a failed security check moves focus to the fresh check', async () => {
+	await act(async () => buttonNamed('Fail CAPTCHA').click())
+	const retry = [...container.querySelectorAll('[role="alert"] button')].find(
+		(button) => accessibleName(button) === 'Try again'
+	) as HTMLButtonElement
+	await act(async () => retry.focus())
+	await act(async () => retry.click())
+
+	expect(document.activeElement?.getAttribute('aria-label')).toBe('Security check')
+	expect(document.activeElement?.textContent).toContain('Test CAPTCHA')
+})
+
 test('keeps password recovery in the sheet with inline retry and an email-link confirmation', async () => {
 	await act(async () =>
 		Array.from(container.querySelectorAll('button'))
@@ -267,8 +303,12 @@ test('keeps password recovery in the sheet with inline retry and an email-link c
 		expect(container.querySelector('[role="status"]')?.textContent).toContain('password reset link')
 	})
 	expect(container.textContent).toContain('person@example.com')
+	expect(container.querySelector('h2')?.textContent).toBe('Check your email')
 	expect(onAuthenticated).not.toHaveBeenCalled()
 	expect(pb.authStore.token).toBe('')
+	await act(async () => buttonNamed('Back to sign in').click())
+	expect(container.querySelector('h2')?.textContent).toBe('Sign in')
+	expect(container.querySelector('input[name="password"]')).not.toBeNull()
 })
 
 test.each(['person@example.com', ''])(
@@ -301,6 +341,8 @@ test.each(['person@example.com', ''])(
 				.find((button) => button.textContent === 'Use another email')!
 				.click()
 		)
+		// With the same empty email the flow state is unchanged, so the form returns on the mutation reset's notify.
+		await settle()
 		expect(input('email').value).toBe('')
 		expect(requests).toHaveLength(1)
 	}
@@ -368,14 +410,15 @@ test('keeps other sign-in methods available when the GitHub popup is blocked', a
 	await settle()
 	const alert = container.querySelector('[role="alert"]')!
 	expect(container.querySelector('form')!.contains(alert)).toBe(true)
-	expect(container.querySelector('form')!.getAttribute('aria-describedby')).toBe(alert.id)
+	const description = document.getElementById(container.querySelector('form')!.getAttribute('aria-describedby')!)
+	expect(description?.contains(alert)).toBe(true)
 })
 
 test('stops waiting for GitHub and offers a retry when the person closes its popup', async () => {
 	await act(async () => buttonNamed('Continue with GitHub').click())
 	await oauth.github.waitForPopup()
 	await settle()
-	expect(container.textContent).toContain('Waiting for GitHub...')
+	expect(container.textContent).toContain('Waiting for GitHub…')
 	expect(input('email').disabled).toBe(true)
 	oauth.popup!.closed = true
 	// GitHub sign-in polls the popup every 300ms.
@@ -407,16 +450,17 @@ test('finishes sign-in even when accepting the session unmounts the form', async
 test.each([
 	{ method: 'google', label: 'Continue with Google' },
 	{ method: 'github', label: 'Continue with GitHub' },
-	{ method: 'email', label: 'Sign in' },
+	// The email badge marks the Email field, so it never dims with the disabled Sign in button.
+	{ method: 'email', label: 'Email' },
 	{ method: 'wallet', connectorId: 'io.rabby', label: 'Sign in with a wallet' }
 ] as const)('badges the last successful $method without starting authentication', async ({ label, ...method }) => {
 	await completeCaptcha()
 	await act(async () => rememberSignIn(method))
 	expect(container.textContent?.match(/Last used/g) ?? []).toHaveLength(1)
-	const markedButtons = Array.from(container.querySelectorAll('button')).filter((button) =>
-		button.textContent?.includes('Last used')
+	const marked = Array.from(container.querySelectorAll('button, label')).filter(
+		(element) => element.textContent?.includes('Last used') && !element.querySelector('button, label')
 	)
-	expect(markedButtons.map((button) => button.textContent?.includes(label))).toEqual([true])
+	expect(marked.map((element) => element.textContent?.includes(label))).toEqual([true])
 	for (const text of ['Continue with Google', 'Continue with GitHub', 'Sign in', 'Sign in with a wallet']) {
 		expect(
 			Array.from(container.querySelectorAll('button')).find((button) => button.textContent?.startsWith(text))?.disabled
@@ -483,7 +527,7 @@ test('focuses the heading on opening and navigation without stealing focus for a
 		)
 	)
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sign in'))
-	expect(document.activeElement?.tagName).toBe('H2')
+	expect(document.activeElement?.closest('h2')).not.toBeNull()
 	await act(async () => document.querySelector<HTMLInputElement>('input[name="email"]')!.focus())
 	await act(async () => rememberSignIn({ method: 'github' }))
 	expect(document.activeElement).toBe(document.querySelector<HTMLInputElement>('input[name="email"]')!)
@@ -493,7 +537,7 @@ test('focuses the heading on opening and navigation without stealing focus for a
 			.click()
 	)
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Create an account'))
-	expect(document.activeElement?.tagName).toBe('H2')
+	expect(document.activeElement?.closest('h2')).not.toBeNull()
 })
 
 async function startOnSignup(label: string) {

@@ -327,6 +327,12 @@ const RULES = [
 		uiOwned: true
 	},
 	{
+		id: 'ascii-ellipsis',
+		description:
+			'three ASCII dots ending UI copy ("Saving...") — type the ellipsis character "…" in labels, placeholders and status text',
+		pattern: /[A-Za-z]\.\.\.(?=['"`<{}])/g
+	},
+	{
 		id: 'raw-scope-note',
 		description:
 			'hand-rolled scope or failed-data note (a `px-* pt-* body-sm text-tertiary|text-data-down` paragraph) — render ScopeNote or FailedDataNote from src/ui/ScopeNote under the chart toolbar',

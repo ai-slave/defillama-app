@@ -14,6 +14,7 @@ import { AuthDialogHeader } from '~/auth/AuthDialog'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import { createSignInFlowStore } from '~/auth/signInFlowStore'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { WalletSignInForm } from '../WalletSignIn'
 
@@ -120,8 +121,7 @@ beforeEach(async () => {
 			<Ariakit.DialogProvider store={dialogStore}>
 				<AuthDialogHeader
 					title="Sign in with a wallet"
-					store={dialogStore}
-					closeable={false}
+					closable={false}
 					onBack={() => store.dispatch({ kind: 'navigate', screen: 'signin' })}
 				/>
 				<WalletSignInForm dialogStore={dialogStore} store={store} onAuthenticated={onAuthenticated} />
@@ -151,7 +151,7 @@ afterEach(async () => {
 	pb.authStore.clear()
 })
 const button = (text: string) =>
-	Array.from(container.querySelectorAll('button')).find((element) => element.textContent?.startsWith(text))!
+	Array.from(container.querySelectorAll('button')).find((element) => accessibleName(element).startsWith(text))!
 async function click(text: string) {
 	await act(async () => button(text).click())
 }
@@ -172,7 +172,8 @@ test('connects without signing, then signs only on the explicit button', async (
 	expect(requestedSignatures).not.toHaveBeenCalled()
 	await click('Sign in')
 	await waitForUi(() => expect(requestedSignatures).toHaveBeenCalledOnce())
-	expect(button('Approve in your wallet…').disabled).toBe(true)
+	// A pending button stays focusable but ignores clicks.
+	expect(button('Waiting for Fixture wallet…').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => completeSignature('0x1234'))
 	await waitForUi(() => expect(pb.authStore.token).toBe(session.token))
 	expect(onAuthenticated).toHaveBeenCalledOnce()
@@ -243,9 +244,9 @@ test('keeps the address during disconnect, then reopens on the picker', async ()
 	pendingDisconnect = new Promise((resolve) => {
 		finishDisconnect = resolve
 	})
-	await click('Change wallet')
+	await click('Disconnect')
 	expect(container.textContent).toContain(first)
-	expect(button('Disconnecting…').disabled).toBe(true)
+	expect(button('Disconnecting…').getAttribute('aria-disabled')).toBe('true')
 	await act(async () => finishDisconnect())
 	expect(button('Fixture wallet').disabled).toBe(false)
 	await act(async () => store.dispatch({ kind: 'navigate', screen: 'signin' }))

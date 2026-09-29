@@ -1,10 +1,13 @@
 import { lazy, Suspense, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingIndicator } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
-import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
@@ -60,15 +63,15 @@ function isRenewingSub(sub: TeamSubscription): boolean {
 function InfoRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="shrink-0 text-xs leading-4 text-sub-text-muted">{label}</span>
+			<span className="shrink-0 body-sm text-sub-text-muted">{label}</span>
 			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
-			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
+			<span className={`shrink-0 body-sm ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
 		</div>
 	)
 }
 
 function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
-	const { canChangeTeamBilling, upgradeSeatsMutation } = useTeam()
+	const { canChangeTeamBilling, billingWait, billingLockReason, upgradeSeatsMutation } = useTeam()
 	const manageButtonRef = useRef<HTMLButtonElement>(null)
 	const [showManageModal, setShowManageModal] = useState(false)
 	const [showUpgradeConfirm, setShowUpgradeConfirm] = useState(false)
@@ -87,7 +90,12 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 		if (!canChangeTeamBilling) return
 		upgradeSeatsMutation.mutate(
 			{ subscriptionType: subscription.type },
-			{ onSuccess: () => setShowUpgradeConfirm(false) }
+			{
+				onSuccess: () => {
+					setShowUpgradeConfirm(false)
+					toast.success('Subscription upgraded to yearly billing')
+				}
+			}
 		)
 	}
 
@@ -95,10 +103,10 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 		<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex flex-col">
-					<span className="text-sm font-medium text-sub-text-primary">
+					<span className="label-md text-sub-text-primary">
 						{label} — {subscription.billingInterval === 'year' ? 'Yearly' : 'Monthly'}
 					</span>
-					<span className="text-xs text-sub-text-muted">
+					<span className="body-sm text-sub-text-muted">
 						{subscription.seats.seatCount} seat{subscription.seats.seatCount === 1 ? '' : 's'} × {formatUsd(unit)}
 						{intervalSuffix}
 					</span>
@@ -106,27 +114,27 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="text-sm font-semibold text-sub-text-primary">{`${formatUsd(total)}${intervalSuffix}`}</span>
 					{isMonthly && active && !isCanceling && (
-						<button
+						<Button
 							type="button"
+							size="md"
 							onClick={() => setShowUpgradeConfirm(true)}
 							disabled={!canChangeTeamBilling}
-							className="flex min-h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium whitespace-nowrap text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 						>
-							<Icon name="sparkles" height={12} width={12} />
+							<Icon name="sparkles" height={14} width={14} />
 							Upgrade to Yearly
-						</button>
+						</Button>
 					)}
-					<button
+					<Button
 						type="button"
+						size="md"
 						ref={manageButtonRef}
 						aria-label={`Manage ${label} seats`}
 						onClick={() => setShowManageModal(true)}
 						disabled={!canChangeTeamBilling}
-						className="flex min-h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium whitespace-nowrap text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 					>
-						<Icon name="settings" height={12} width={12} />
+						<Icon name="settings" height={14} width={14} />
 						Manage
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -159,22 +167,31 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				</Suspense>
 			)}
 
-			<ConfirmActionModal
-				confirmDisabled={!canChangeTeamBilling}
-				finalFocus={manageButtonRef}
-				isOpen={showUpgradeConfirm}
+			<ConfirmDialog
+				open={showUpgradeConfirm}
 				onClose={() => {
-					if (upgradeSeatsMutation.isPending) return
 					upgradeSeatsMutation.reset()
 					setShowUpgradeConfirm(false)
 				}}
-				onConfirm={handleConfirmUpgrade}
-				isLoading={upgradeSeatsMutation.isPending}
-				error={upgradeSeatsMutation.isError ? upgradeSeatsMutation.error.message : null}
+				portal
+				unmountOnHide
+				finalFocus={manageButtonRef}
+				tone="primary"
 				title={`Upgrade ${label} to Yearly`}
 				description={`Upgrade your ${label} subscription (${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'}) to yearly billing? Stripe will immediately charge your saved card the prorated yearly amount.`}
 				confirmLabel="Upgrade to Yearly"
-				pendingLabel="Upgrading..."
+				confirmDisabled={!upgradeSeatsMutation.isPending && billingLockReason !== null}
+				pendingLabel={upgradeSeatsMutation.isPending ? 'Upgrading…' : null}
+				waitingLabel={billingWait}
+				// A lock blocks the confirm button, so it shows where a failure would.
+				error={
+					upgradeSeatsMutation.isError
+						? upgradeSeatsMutation.error.message
+						: upgradeSeatsMutation.isPending
+							? null
+							: billingLockReason
+				}
+				onConfirm={handleConfirmUpgrade}
 			/>
 		</div>
 	)
@@ -199,7 +216,7 @@ function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscriptio
 		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
 			{rows.map((row) => (
 				<div key={row.id} className="flex flex-wrap items-center justify-between gap-2">
-					<span className="text-sm font-medium text-sub-text-primary">{row.label}</span>
+					<span className="label-md text-sub-text-primary">{row.label}</span>
 					<span className="text-sm font-semibold text-sub-text-primary">{row.value}</span>
 				</div>
 			))}
@@ -226,7 +243,8 @@ function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }
 }
 
 export function TeamSeatsCard() {
-	const { canChangeTeamBilling, isTeamRefreshError, isTeamRetrying, refetchTeam, teamSubscriptions } = useTeam()
+	const { billingWait, canChangeTeamBilling, isTeamRefreshError, isTeamRetrying, refetchTeam, teamSubscriptions } =
+		useTeam()
 	const { createPortalSession, createPortalSessionMutation } = useSubscribe()
 	const [showPurchaseModal, setShowPurchaseModal] = useState(false)
 
@@ -237,29 +255,34 @@ export function TeamSeatsCard() {
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
 					<Icon name="receipt" height={20} width={20} className="text-sub-text-primary" />
-					<span className="text-base leading-5 font-medium text-sub-text-primary">Subscriptions & Billing</span>
+					<span className="label-lg text-sub-text-primary">Subscriptions & Billing</span>
+					{/* The one reason the billing buttons are disabled while it runs; a failed refresh's retry shows its own. */}
+					<div role="status">
+						{billingWait && !isTeamRefreshError ? <LoadingIndicator label={billingWait.replace('…', '')} /> : null}
+					</div>
 				</div>
 				<div className="flex items-center gap-2">
 					{teamSubscriptions.length > 0 && hasStripe && (
-						<button
+						<Button
 							type="button"
+							size="md"
 							onClick={() => void createPortalSession()}
-							disabled={createPortalSessionMutation.isPending}
-							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
+							pendingLabel={createPortalSessionMutation.isPending ? 'Opening…' : null}
 						>
-							<Icon name="external-link" height={12} width={12} />
-							{createPortalSessionMutation.isPending ? 'Opening...' : 'Manage in Stripe'}
-						</button>
+							<Icon name="external-link" height={14} width={14} />
+							Manage in Stripe
+						</Button>
 					)}
-					<button
+					<Button
 						type="button"
+						variant="primary"
+						size="md"
 						disabled={!canChangeTeamBilling}
 						onClick={() => setShowPurchaseModal(true)}
-						className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:opacity-50"
 					>
 						<Icon name="plus" height={14} width={14} />
 						Purchase Seats
-					</button>
+					</Button>
 				</div>
 			</div>
 
@@ -272,7 +295,7 @@ export function TeamSeatsCard() {
 			) : null}
 
 			{teamSubscriptions.length === 0 ? (
-				<p className="text-sm text-sub-text-muted">
+				<p className="body-sm text-tertiary">
 					No seats purchased yet. Purchase seats to assign subscriptions to team members.
 				</p>
 			) : (

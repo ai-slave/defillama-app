@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -50,11 +51,12 @@ afterEach(async () => {
 	container.remove()
 	delete window.google
 	vi.restoreAllMocks()
+	vi.useRealTimers()
 })
 
 const text = () => document.body.textContent ?? ''
 const button = (label: string) =>
-	[...document.querySelectorAll('button')].find((element) => element.textContent?.trim() === label)
+	[...document.querySelectorAll('button')].find((element) => accessibleName(element) === label)
 const deleteRequests = () => session.requests.filter((request) => request.url.href === DELETE)
 const signedOut = () => pb.authStore.token === ''
 
@@ -80,7 +82,7 @@ function deferred<T>() {
 	return { promise, resolve }
 }
 
-async function openDialog() {
+async function startDialog() {
 	await act(async () =>
 		root.render(
 			<session.Wrapper>
@@ -91,6 +93,11 @@ async function openDialog() {
 	await waitFor(() => expect(button('Delete Account')!.disabled).toBe(false))
 	await act(async () => button('Delete Account')!.click())
 	await waitFor(() => expect(text()).toContain('This permanently deletes your DefiLlama account'))
+}
+
+async function openDialog() {
+	await startDialog()
+	await waitFor(() => expect(button('Checking…')).toBeUndefined())
 }
 
 async function continueAndSubmit(fill = () => setInput('#delete-account-confirmation', 'DELETE')) {
@@ -134,6 +141,32 @@ test('requires the email code and sends it with the final deletion request', asy
 	await waitFor(() => expect(signedOut()).toBe(true))
 
 	expect(deleteRequests()[0]!.init!.body).toBe('{"confirmation":"DELETE","otp":"123456"}')
+})
+
+test('shows the warning copy while the account check runs and holds Continue until it passes', async () => {
+	const pending = deferred<Response>()
+	session.serve({ [ELIGIBILITY]: () => pending.promise })
+	await startDialog()
+
+	const checking = button('Checking…')!
+	expect(checking.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => checking.click())
+	expect(session.requests.some((request) => request.url.href === REQUEST)).toBe(false)
+
+	await act(async () => pending.resolve(Response.json(eligibility)))
+	await waitFor(() => expect(button('Continue')!.getAttribute('aria-disabled')).toBeNull())
+})
+
+test('a failed account check shows its error in the dialog and Try Again recovers', async () => {
+	session.serve({ [ELIGIBILITY]: fixtureStatus(503, { error: 'Account service unavailable' }) })
+	await startDialog()
+	await waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Account service unavailable'))
+	expect(button('Continue')).toBeUndefined()
+
+	session.serve({ [ELIGIBILITY]: eligibility })
+	await act(async () => button('Try Again')!.click())
+	await waitFor(() => expect(button('Continue')).toBeDefined())
+	expect(text()).not.toContain('Account service unavailable')
 })
 
 test('shows team blockers without offering the destructive flow', async () => {
@@ -269,4 +302,22 @@ test('refuses to delete through a dialog opened by an older session', async () =
 	expect(text()).toContain('Your session changed')
 	expect(deleteRequests()).toHaveLength(0)
 	expect(signedOut()).toBe(false)
+})
+
+test('a resent deletion code is confirmed inside the dialog', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	session.serve({
+		[ELIGIBILITY]: { ...eligibility, requiredConfirmation: otp },
+		[REQUEST]: { message: 'Deletion code sent', requiredConfirmation: otp }
+	})
+	await openDialog()
+	await act(async () => button('Continue')!.click())
+	await waitFor(() => expect(text()).toContain('Resend code (60s)'))
+	await act(async () => vi.advanceTimersByTime(60_000))
+	await act(async () => button('Resend code')!.click())
+
+	await waitFor(() =>
+		expect(document.querySelector('[role=alertdialog] [role=status]')?.textContent).toBe('Code sent. Check your inbox.')
+	)
+	expect(session.requests.filter((request) => request.url.href === REQUEST)).toHaveLength(2)
 })

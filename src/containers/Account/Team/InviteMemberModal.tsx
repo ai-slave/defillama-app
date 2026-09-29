@@ -34,7 +34,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 				// Confirm only once the dialog is gone, so the toast never sits over it.
 				onSuccess: () => {
 					onClose()
-					toast.success('Invite sent successfully!')
+					toast.success('Invite sent')
 				}
 			}
 		)

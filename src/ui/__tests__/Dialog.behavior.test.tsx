@@ -2,6 +2,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Button } from '../Button'
 import { Dialog, DialogBody, DialogHeader } from '../Dialog'
@@ -39,13 +40,13 @@ test('a pending submit button keeps focus, shows its pending label and submits n
 	button.focus()
 	await act(async () => root.render(<Form pending />))
 	expect(document.activeElement).toBe(button)
-	expect(button.textContent).toBe('Saving…')
+	expect(accessibleName(button)).toBe('Saving…')
 	expect(button.getAttribute('aria-disabled')).toBe('true')
 	expect(button.getAttribute('aria-busy')).toBe('true')
 	await act(async () => button.click())
 	expect(submit).not.toHaveBeenCalled()
 	await act(async () => root.render(<Form pending={false} />))
-	expect(button.textContent).toBe('Save')
+	expect(accessibleName(button)).toBe('Save')
 	await act(async () => button.click())
 	expect(submit).toHaveBeenCalledOnce()
 })

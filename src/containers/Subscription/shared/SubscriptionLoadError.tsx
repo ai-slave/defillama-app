@@ -1,3 +1,6 @@
+import { Button } from '~/ui/Button'
+import { InlineStatus } from '~/ui/Status'
+
 export function SubscriptionLoadError({
 	isRetrying,
 	onRetry,
@@ -8,14 +11,13 @@ export function SubscriptionLoadError({
 	message?: string
 }) {
 	return (
-		<div
-			role="alert"
-			className="flex flex-wrap items-center gap-3 rounded-lg border border-sub-border-strong p-4 text-sm text-sub-text-primary"
-		>
-			<p>{message}</p>
-			<button type="button" onClick={onRetry} disabled={isRetrying} className="underline disabled:opacity-50">
-				{isRetrying ? 'Retrying…' : 'Try again'}
-			</button>
-		</div>
+		<InlineStatus variant="error">
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<span>{message}</span>
+				<Button type="button" size="sm" onClick={onRetry} pendingLabel={isRetrying ? 'Retrying…' : null}>
+					Try again
+				</Button>
+			</div>
+		</InlineStatus>
 	)
 }

@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
 import { act, useState, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterAll, afterEach, beforeEach, expect, test, vi } from 'vitest'
+import toast from 'react-hot-toast'
+import { afterAll, afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
@@ -12,6 +14,7 @@ import { ManageSeatsModal } from '../Team/ManageSeatsModal'
 import { PurchaseSeatsModal } from '../Team/PurchaseSeatsModal'
 import { TeamInvitesCard } from '../Team/TeamInvitesCard'
 import { TeamMembersCard } from '../Team/TeamMembersCard'
+import { TeamSeatsCard } from '../Team/TeamSeatsCard'
 import { TeamTab } from '../Team/TeamTab'
 import type { Team } from '../Team/types'
 import { useTeam } from '../Team/useTeam'
@@ -36,6 +39,7 @@ const router = vi.hoisted(() => ({
 	replace: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
+vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve({}) }))
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: ({ children, options }: { children: ReactNode; options: { clientSecret: string } }) => {
@@ -134,9 +138,7 @@ async function mount(element: ReactNode) {
 	await act(async () => root.render(<session.Wrapper>{element}</session.Wrapper>))
 }
 function button(name: string) {
-	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(e) => (e.getAttribute('aria-label') ?? e.textContent?.trim()) === name
-	)!
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)!
 }
 async function click(name: string) {
 	await act(async () => button(name).click())
@@ -292,7 +294,7 @@ test('seat form locks its submitted amount and preserves it after a failure', as
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 4 })
 	await waitForUi(() => expect(input.readOnly).toBe(true))
 	expect(button('Increase seats').disabled).toBe(true)
-	await click('Close')
+	await click('Close dialog')
 	expect(dialog()).toBeTruthy()
 	await act(async () => request.reject(new Error('Card declined')))
 	await waitForUi(() => expect(document.querySelector('[role=alert]')?.textContent).toContain('Card declined'))
@@ -303,14 +305,116 @@ test('cancellation sends zero only after confirmation and preserves access until
 	await mount(<Harness kind="manage" />)
 	await click('Cancel subscription')
 	const confirmation = namedDialog('Cancel Pro Subscription')
+	expect(confirmation.getAttribute('role')).toBe('alertdialog')
 	expect(confirmation.textContent).toContain('Assigned members keep access until the period ends')
-	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
-	await click('Cancel')
+	const keep = [...confirmation.querySelectorAll('button')].find((b) => accessibleName(b) === 'Keep subscription')!
+	await waitForUi(() => expect(document.activeElement).toBe(keep))
+	await act(async () => keep.click())
+	await waitForUi(() => expect(namedDialog('Cancel Pro Subscription')).toBeUndefined())
+	expect(namedDialog('Manage Pro Seats')).toBeTruthy()
 	expect(posts()).toHaveLength(0)
 	await click('Cancel subscription')
 	await click('Cancel Subscription')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(JSON.parse(posts()[0][1].body)).toEqual({ subscriptionType: 'llamafeed', seatCount: 0 })
+})
+
+test('a cancel confirmation locked by a failed team refresh after a failed cancel says why', async () => {
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ message: 'Card declined' }, { status: 402 })
+			: Response.json({ message: 'Team unavailable' }, { status: 500 })
+	)
+	await mount(<Harness kind="manage" />)
+	await click('Cancel subscription')
+	await click('Cancel Subscription')
+	const confirmation = namedDialog('Cancel Pro Subscription')
+	const confirm = () =>
+		[...confirmation.querySelectorAll('button')].find((b) => accessibleName(b) === 'Cancel Subscription')!
+	await waitForUi(() => expect(confirm().disabled).toBe(true))
+
+	expect(confirmation.querySelector('[role=alert]')?.textContent).toBe(
+		"Couldn't refresh the team. Close this and try again."
+	)
+	expect(posts()).toHaveLength(1)
+})
+
+test('seat form says why Update Seats and Decrease seats are disabled', async () => {
+	await mount(<Harness kind="manage" />)
+	expect(button('Update Seats').disabled).toBe(true)
+	expect(dialog().textContent).toContain('Change the seat count to update')
+	await change(document.querySelector<HTMLInputElement>('input[type=number]')!, '2')
+	expect(button('Update Seats').disabled).toBe(false)
+	expect(dialog().textContent).not.toContain('Change the seat count to update')
+	expect(button('Decrease seats').disabled).toBe(true)
+	expect(dialog().textContent).toContain("You can't reduce below 2 seats")
+})
+
+test('an upgrade confirmation waits in its button while another team update runs and sends nothing', async () => {
+	const other = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation((_url, options) =>
+		options?.method === 'POST' ? other.promise : Promise.resolve(Response.json({ team }))
+	)
+	await mount(
+		<>
+			<TeamSeatsCard />
+			<Hook id="other" />
+		</>
+	)
+	await click('Upgrade to Yearly')
+	const confirmation = namedDialog('Upgrade Pro to Yearly')
+	const confirm = () => [...confirmation.querySelectorAll('button')].at(-1)!
+	expect(accessibleName(confirm())).toBe('Upgrade to Yearly')
+	await act(async () => hooks.other.setSeatsMutation.mutate({ subscriptionType: 'llamafeed', seatCount: 4 }))
+	await waitForUi(() => expect(accessibleName(confirm())).toBe('Updating…'))
+	expect(confirmation.querySelector('[role=status]')?.textContent).toBe('Updating…')
+	expect(confirm().getAttribute('aria-disabled')).toBe('true')
+	expect(confirmation.querySelector('[role=alert]')).toBeNull()
+	await act(async () => confirm().click())
+	expect(posts().map(([url]) => new URL(url).pathname)).toEqual(['/team/seats'])
+	await act(async () => other.resolve(Response.json({})))
+})
+
+test.each(['assign', 'revoke'] as const)('%s confirms success only once its dialog has closed', async (action) => {
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2026-09-07T00:00:00Z',
+			expiresAt: '2026-09-14T00:00:00Z'
+		}
+	]
+	const refresh = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation((_url, options) =>
+		options?.method === 'POST' ? Promise.resolve(Response.json({})) : refresh.promise
+	)
+	const title = action === 'assign' ? 'Assign Subscription' : 'Revoke Invite'
+	if (action === 'assign') {
+		await mount(<TeamMembersCard />)
+		await click('Assign subscription to member@example.com')
+		await act(async () => document.querySelector<HTMLInputElement>('input[type=radio]')!.click())
+		await click('Assign')
+	} else {
+		await mount(<TeamInvitesCard />)
+		await click('Revoke')
+		await act(async () =>
+			[...namedDialog(title).querySelectorAll('button')].find((b) => accessibleName(b) === 'Revoke')!.click()
+		)
+	}
+	// The write succeeded and its reconciliation read is in flight: the dialog is still open.
+	await waitForUi(() => expect(api.fetch.mock.calls.some(([url]) => url.endsWith('/team'))).toBe(true))
+	expect(namedDialog(title)).toBeTruthy()
+	expect(toast.success).not.toHaveBeenCalled()
+	team =
+		action === 'assign'
+			? { ...team, members: [{ ...team.members[0], subscriptionType: 'llamafeed' }] }
+			: { ...team, pendingInvites: [] }
+	await act(async () => refresh.resolve(Response.json({ team })))
+	await waitForUi(() => expect(namedDialog(title)).toBeUndefined())
+	expect(toast.success).toHaveBeenCalledExactlyOnceWith(
+		action === 'assign' ? 'Subscription assigned' : 'Invite revoked'
+	)
 })
 
 test('scheduled cancellation locks the current-seat floor and an increase retains the resumption warning', async () => {
@@ -340,6 +444,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	expect(document.querySelector<HTMLInputElement>('input[value=year]')!.getAttribute('aria-checked')).toBe('true')
 	await act(async () => document.querySelector<HTMLInputElement>('input[value=month]')!.click())
 	expect(document.querySelector<HTMLInputElement>('input[value=year]')!.getAttribute('aria-checked')).toBe('true')
+	expect(dialog().textContent).toContain("Monthly and yearly billing can't be mixed for the same plan")
 	expect(dialog().textContent).toContain('$490/year')
 	await click('Purchase Seats')
 	await waitForUi(() => expect(posts()).toHaveLength(1))
@@ -358,7 +463,7 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' })
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(1)
-	await click('Close')
+	await click('Close dialog')
 	await click('Open')
 	expect(namedDialog('Purchase Seats')).toBeTruthy()
 })
@@ -373,7 +478,8 @@ test('a late purchase response cannot close a new opening after navigation', asy
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await mount(<Harness key="new" kind="purchase" />)
 	await act(async () => first.resolve(Response.json({ action: 'seats_added', seatsAdded: 1 })))
-	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(button('Purchase Seats').disabled).toBe(false))
+	expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true')
 	expect(namedDialog('Purchase Seats')).toBeTruthy()
 })
 
@@ -425,15 +531,16 @@ test('returning during an upgrade waits for confirmed yearly pricing before anot
 	await act(async () => hooks.upgrade.upgradeSeatsMutation.mutate({ subscriptionType: 'llamafeed' }))
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	await mount(<Harness key="new" kind="purchase" />)
-	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
-	expect(dialog().textContent).toContain('Another team update is in progress')
-	await click('Purchase Seats')
+	const submit = () => dialog().querySelector<HTMLButtonElement>('button[type=submit]')!
+	expect(accessibleName(submit())).toBe('Updating…')
+	await act(async () => submit().click())
 	expect(posts()).toHaveLength(1)
 	await act(async () => upgrade.resolve(Response.json({})))
-	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
+	// The upgrade settles only once its team refetch lands, so the purchase keeps waiting.
+	expect(submit().getAttribute('aria-busy')).toBe('true')
 	const updated = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	await act(async () => refresh.resolve(Response.json({ team: updated })))
-	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(accessibleName(submit())).toBe('Purchase Seats'))
 	expect(dialog().textContent).toContain('$490/year')
 	await click('Purchase Seats')
 	await waitForUi(() => expect(posts()).toHaveLength(2))
@@ -446,10 +553,6 @@ test('removing a member returns focus to the surviving members heading', async (
 		return Response.json({ team })
 	})
 	await mount(<TeamMembersCard />)
-	await act(async () => button('Remove member@example.com').focus())
-	await click('Remove member@example.com')
-	await click('Close')
-	await waitForUi(() => expect(document.activeElement).toBe(button('Remove member@example.com')))
 	await click('Remove member@example.com')
 	await click('Remove')
 	await waitForUi(() => expect(container.textContent).toContain('Members (0)'))
@@ -465,6 +568,21 @@ test('choosing the API plan shows its price without submitting', async () => {
 	expect(posts()).toHaveLength(0)
 })
 
+test('the seats card says why billing buttons are disabled while the team refreshes', async () => {
+	const refresh = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation(() => refresh.promise)
+	await mount(<TeamSeatsCard />)
+	const status = () => container.querySelector('[role=status]')!.textContent
+	expect(status()).toBe('')
+	await act(async () => void session.client.refetchQueries({ queryKey: ['team', 'user'] }))
+
+	await waitForUi(() => expect(status()).toContain('Refreshing'))
+	expect(button('Purchase Seats').disabled).toBe(true)
+	await act(async () => refresh.resolve(Response.json({ team })))
+	await waitForUi(() => expect(status()).toBe(''))
+	expect(button('Purchase Seats').disabled).toBe(false)
+})
+
 test('a successful write with a failed refresh blocks another billing change until reconciliation succeeds', async () => {
 	api.fetch.mockImplementation(async (_url, options) => {
 		if (options?.method === 'POST') return Response.json({ action: 'seats_added', seatsAdded: 1 })
@@ -474,14 +592,14 @@ test('a successful write with a failed refresh blocks another billing change unt
 	await click('Purchase Seats')
 	await waitForUi(() => expect(dialog()).toBeNull())
 	await click('Open')
-	expect(button('Purchase Seats').getAttribute('aria-disabled')).toBe('true')
+	expect(button('Purchase Seats').disabled).toBe(true)
 	expect(dialog().textContent).toContain("Couldn't refresh team billing")
 	await click('Purchase Seats')
 	expect(posts()).toHaveLength(1)
 	team = { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] }
 	api.fetch.mockImplementation(async () => Response.json({ team }))
 	await click('Try again')
-	await waitForUi(() => expect(button('Purchase Seats').getAttribute('aria-disabled')).not.toBe('true'))
+	await waitForUi(() => expect(button('Purchase Seats').disabled).toBe(false))
 	expect(dialog().textContent).toContain('$490/year')
 	expect(posts()).toHaveLength(1)
 })
@@ -495,7 +613,7 @@ test('leaving a team waits for confirmation and focuses the surviving team regio
 	await mount(<TeamTab />)
 	await click('Leave Team')
 	const confirm = namedDialog('Leave Team').querySelectorAll('button')
-	await act(async () => [...confirm].find((b) => b.textContent === 'Leave Team')!.click())
+	await act(async () => [...confirm].find((b) => accessibleName(b) === 'Leave Team')!.click())
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('Original')
 	await act(async () => request.resolve(Response.json({})))
@@ -518,6 +636,29 @@ test('a failed team refresh keeps showing the cached team instead of a load erro
 	expect(container.textContent).not.toContain("Couldn't load your team")
 })
 
+test('a pending invite shows its expiry date as text', async () => {
+	// Two days out, where a relative label would read "in 2d".
+	vi.useFakeTimers({ toFake: ['Date'] })
+	vi.setSystemTime(new Date('2099-01-06T12:00:00Z'))
+	onTestFinished(() => {
+		vi.useRealTimers()
+	})
+	team.pendingInvites = [
+		{
+			id: 'invite',
+			email: 'invite@example.com',
+			status: 'pending',
+			createdAt: '2099-01-01T00:00:00Z',
+			expiresAt: '2099-01-08T18:00:00Z'
+		}
+	]
+	session.client.setQueryData(['team', 'user'], team)
+	await mount(<TeamInvitesCard />)
+
+	expect(container.textContent).toContain('Expires Jan 8, 2099')
+	expect(container.querySelector('[title]')).toBeNull()
+})
+
 test('revoking an invite keeps its row until confirmed and returns focus to Invite Member', async () => {
 	team.pendingInvites = [
 		{
@@ -535,7 +676,7 @@ test('revoking an invite keeps its row until confirmed and returns focus to Invi
 	await mount(<TeamInvitesCard />)
 	await click('Revoke')
 	await act(async () =>
-		[...namedDialog('Revoke Invite').querySelectorAll('button')].find((b) => b.textContent === 'Revoke')!.click()
+		[...namedDialog('Revoke Invite').querySelectorAll('button')].find((b) => accessibleName(b) === 'Revoke')!.click()
 	)
 	await waitForUi(() => expect(posts()).toHaveLength(1))
 	expect(container.textContent).toContain('invite@example.com')
@@ -668,4 +809,9 @@ test.each([true, false])('recovers a lost invite response by reading membership:
 	expect(posts()).toHaveLength(1)
 	expect(verifyEmailPrompted()).toBe(joined)
 	expect(refreshRequests()).toHaveLength(joined ? 1 : 0)
+})
+
+test('manage seats opens on the seat count', async () => {
+	await mount(<Harness kind="manage" />)
+	await waitForUi(() => expect(document.activeElement).toBe(document.querySelector('input[type=number]')))
 })

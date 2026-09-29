@@ -7,6 +7,7 @@ import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
@@ -178,9 +179,7 @@ async function mountManaged() {
 	)
 }
 function button(name: string) {
-	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => el.getAttribute('aria-label') === name || el.textContent?.trim() === name
-	)
+	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)
 	expect(result).toBeDefined()
 	return result!
 }
@@ -277,9 +276,7 @@ async function openShareMenu(isPublic: boolean) {
 	return trigger
 }
 const namedButton = (name: string) =>
-	[...document.querySelectorAll<HTMLElement>('button,[role=menuitem]')].find(
-		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
-	)!
+	[...document.querySelectorAll<HTMLElement>('button,[role=menuitem]')].find((el) => accessibleName(el) === name)!
 
 test('making a chat private confirms first, keeps failures retryable, and restores menu focus', async () => {
 	const request = Promise.withResolvers<Response>()
@@ -292,14 +289,14 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	await act(async () => namedButton('Make Private').click())
 	const confirm = document.querySelector<HTMLElement>('[role="alertdialog"]')!
 	await act(async () =>
-		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
+		[...confirm.querySelectorAll('button')].find((el) => accessibleName(el) === 'Make private')!.click()
 	)
 	await waitForUi(() => expect(confirm.textContent).toContain('Updating…'))
 	await act(async () => request.resolve(Response.json({ message: 'Not available' }, { status: 503 })))
 	await waitForUi(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
 	expect(toastError).not.toHaveBeenCalled()
 	await act(async () =>
-		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
+		[...confirm.querySelectorAll('button')].find((el) => accessibleName(el) === 'Make private')!.click()
 	)
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
 	await waitForUi(() => expect(document.activeElement).toBe(trigger))

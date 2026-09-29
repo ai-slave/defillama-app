@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { FileDropProvider } from '../../components/FileDrop'
@@ -59,9 +60,7 @@ afterEach(async () => {
 	container.remove()
 })
 function button(name: string) {
-	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(e) => e.getAttribute('aria-label') === name || e.textContent?.trim() === name
-	)
+	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)
 	expect(el).toBeDefined()
 	return el!
 }

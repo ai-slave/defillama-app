@@ -4,14 +4,37 @@ import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
-import { PricingCardContent } from '~/containers/Subscription/components'
 import { MONTHLY_PRICING_CARDS } from '~/containers/Subscription/data'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import type { FeatureItem } from '~/containers/Subscription/types'
 import { ClientOnly } from '~/layout/ClientOnly'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const PRO_CARD = MONTHLY_PRICING_CARDS.find((c) => c.key === 'pro')!
+
+// The pricing page's card look stays on the page; inside the dialog the plan reads as dialog copy.
+function FeatureLabel({ item }: { item: FeatureItem }) {
+	if (!item.link) return item.label
+	const idx = item.linkText ? item.label.indexOf(item.linkText) : -1
+	if (idx === -1)
+		return (
+			<a href={item.link} className="text-link underline">
+				{item.label}
+			</a>
+		)
+	return (
+		<>
+			{item.label.slice(0, idx)}
+			<a href={item.link} className="text-link underline">
+				{item.linkText}
+			</a>
+			{item.label.slice(idx + item.linkText!.length)}
+		</>
+	)
+}
 
 interface SubscribeProModalProps {
 	dialogStore: Ariakit.DialogStore
@@ -39,44 +62,65 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 
 	return (
 		<ClientOnly>
-			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.Dialog
-					className="dialog flex max-h-[85dvh] max-w-md flex-col overflow-hidden rounded-xl border border-sub-border-slate-100 bg-white p-4 text-sub-text-primary shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6 dark:border-sub-border-strong dark:bg-sub-surface-dark"
-					portal
-					unmountOnHide
+			<Dialog size="sm" store={dialogStore} portal unmountOnHide>
+				<DialogHeader title={`Upgrade to ${PRO_CARD.title}`} subtitle={PRO_CARD.subtitle} />
+				<DialogBody>
+					<div className="flex flex-col gap-1">
+						<p className="flex items-baseline gap-1">
+							<span className="heading-sm text-primary">{PRO_CARD.priceMain}</span>
+							<span className="body-sm text-secondary">{PRO_CARD.priceUnit}</span>
+						</p>
+						<p className="body-sm text-secondary">
+							{isTrialAvailable ? '7-day free trial available' : PRO_CARD.priceSecondary}
+						</p>
+					</div>
+					<p className="body-sm text-secondary">{PRO_CARD.includedTierText}</p>
+					{PRO_CARD.sections.map((section) => (
+						<section key={section.title} className="flex flex-col gap-2">
+							<h3 className="label-sm text-primary">{section.title}</h3>
+							<ul className="flex flex-col gap-1.5 body-sm">
+								{section.items.map((item) => (
+									<li
+										key={item.label}
+										className={`flex items-start gap-2 ${item.isSubItem ? 'pl-6 text-secondary' : item.availability === 'check' ? 'text-primary' : 'text-tertiary'}`}
+									>
+										{item.isSubItem ? null : (
+											<Icon
+												name={item.availability === 'check' ? 'check' : 'x'}
+												className={`size-4 shrink-0 ${item.availability === 'check' ? 'text-link' : 'text-tertiary'}`}
+												aria-hidden
+											/>
+										)}
+										<span>
+											{item.availability === 'check' ? null : <span className="sr-only">Not included: </span>}
+											<FeatureLabel item={item} />
+										</span>
+									</li>
+								))}
+							</ul>
+						</section>
+					))}
+				</DialogBody>
+				<DialogFooter
+					leading={
+						isAuthenticated ? null : (
+							<Button type="button" variant="ghost" size="md" onClick={signInDialogStore.show}>
+								Already a subscriber? Sign in
+							</Button>
+						)
+					}
 				>
-					<span className="mx-auto flex h-full w-full max-w-[440px] flex-col overflow-hidden">
-						<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary dark:text-sub-text-muted dark:hover:bg-sub-dark-card">
-							<Icon name="x" height={18} width={18} />
-							<span className="sr-only">Close</span>
-						</Ariakit.DialogDismiss>
-						<div className="min-h-0 flex-1 overflow-y-auto">
-							<PricingCardContent card={PRO_CARD} isTrialAvailable={isTrialAvailable} />
-						</div>
-						<div className="flex shrink-0 flex-col gap-3 pt-3">
-							<BasicLink
-								href="/subscription"
-								data-umami-event="subscribe-modal-goto-page"
-								className="block w-full rounded-lg bg-sub-brand-primary px-4 py-2 text-center font-medium text-on-brand transition-colors hover:opacity-90"
-							>
-								Unlock Pro Features
-							</BasicLink>
-
-							{!isAuthenticated ? (
-								<button
-									type="button"
-									className="mx-auto w-full flex-1 rounded-lg border border-sub-border-slate-100 py-2 text-center font-medium text-sub-text-secondary transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary disabled:cursor-not-allowed dark:border-sub-border-strong dark:text-sub-text-muted dark:hover:bg-sub-dark-card"
-									onClick={() => {
-										signInDialogStore.show()
-									}}
-								>
-									Already a subscriber? Sign In
-								</button>
-							) : null}
-						</div>
-					</span>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+					<Button
+						as={BasicLink}
+						variant="primary"
+						size="md"
+						href="/subscription"
+						data-umami-event="subscribe-modal-goto-page"
+					>
+						Unlock Pro Features
+					</Button>
+				</DialogFooter>
+			</Dialog>
 			<SignInModal store={signInDialogStore} />
 		</ClientOnly>
 	)

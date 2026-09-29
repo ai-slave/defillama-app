@@ -1,14 +1,18 @@
-import { useState } from 'react'
+import { type FormEvent, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { useTeam } from './useTeam'
 
 export function CreateTeamCard() {
 	const { createTeamMutation } = useTeam()
 	const [isCreating, setIsCreating] = useState(false)
 	const [teamName, setTeamName] = useState('')
+	const pending = createTeamMutation.isPending
 
-	const handleCreate = () => {
-		if (!teamName.trim() || createTeamMutation.isPending) return
+	const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (!teamName.trim() || pending) return
 		createTeamMutation.mutate(
 			{ name: teamName.trim() },
 			{
@@ -21,62 +25,68 @@ export function CreateTeamCard() {
 	}
 
 	return (
-		<div className="flex flex-col items-center gap-6 rounded-2xl border border-sub-border-slate-100 bg-white p-8 text-center dark:border-sub-border-strong dark:bg-sub-surface-dark">
-			<div className="flex size-16 items-center justify-center rounded-full bg-sub-brand-primary/10">
-				<Icon name="users" height={32} width={32} className="text-sub-brand-primary" />
-			</div>
+		<div className="flex flex-col items-center gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-8 text-center dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex flex-col gap-2">
-				<h2 className="text-lg font-semibold text-sub-text-primary">Team Management</h2>
-				<p className="max-w-sm text-sm text-sub-text-muted">
+				<h2 className="heading-sm text-sub-text-primary">Team Management</h2>
+				<p className="max-w-sm body-md text-sub-text-muted">
 					Create a team to manage subscriptions for your organization. Purchase seats and invite members.
 				</p>
 			</div>
 
 			{isCreating ? (
-				<div className="flex w-full max-w-xs flex-col gap-3">
-					<input
-						type="text"
-						placeholder="Team name"
-						value={teamName}
-						onChange={(e) => setTeamName(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') handleCreate()
-						}}
-						className="w-full rounded-lg border border-sub-border-slate-100 bg-white px-3 py-2 text-sm text-sub-text-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
-						autoFocus
-					/>
-					{createTeamMutation.isError ? <p className="text-xs text-error">{createTeamMutation.error.message}</p> : null}
+				<form onSubmit={handleCreate} className="flex w-full max-w-xs flex-col gap-3 text-left">
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor="create-team-name" className="label-sm text-secondary">
+							Team name
+						</label>
+						<Input
+							id="create-team-name"
+							type="text"
+							value={teamName}
+							readOnly={pending}
+							onChange={(e) => setTeamName(e.target.value)}
+							aria-invalid={createTeamMutation.isError}
+							aria-describedby={createTeamMutation.isError ? 'create-team-error' : undefined}
+							className="w-full"
+							autoFocus
+						/>
+					</div>
+					{createTeamMutation.isError ? (
+						<p id="create-team-error" role="alert" className="body-sm text-data-down">
+							{createTeamMutation.error.message}
+						</p>
+					) : null}
 					<div className="flex gap-2">
-						<button
+						<Button
 							type="button"
-							onClick={handleCreate}
-							disabled={!teamName.trim() || createTeamMutation.isPending}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
-						>
-							{createTeamMutation.isPending ? 'Creating...' : 'Create'}
-						</button>
-						<button
-							type="button"
+							size="md"
+							className="flex-1"
+							disabled={pending}
 							onClick={() => {
 								createTeamMutation.reset()
 								setIsCreating(false)
 								setTeamName('')
 							}}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
-						</button>
+						</Button>
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							className="flex-1"
+							disabled={!pending && !teamName.trim()}
+							pendingLabel={pending ? 'Creating…' : null}
+						>
+							Create
+						</Button>
 					</div>
-				</div>
+				</form>
 			) : (
-				<button
-					type="button"
-					onClick={() => setIsCreating(true)}
-					className="flex h-10 items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand"
-				>
+				<Button type="button" variant="primary" size="md" onClick={() => setIsCreating(true)}>
 					<Icon name="plus" height={16} width={16} />
 					Create Team
-				</button>
+				</Button>
 			)}
 		</div>
 	)

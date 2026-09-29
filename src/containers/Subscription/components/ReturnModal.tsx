@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { type NextRouter, useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 
 /** The subscription page query once the post-sign-in return intent is consumed. */
 export function withoutReturnUrl(query: NextRouter['query']): NextRouter['query'] {
@@ -50,41 +51,23 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 		)
 		onClose()
 	}
+	// A two-choice confirmation: no ×, both choices stay visible at every width; Escape and an outside tap stay.
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-			<Ariakit.Dialog
-				className="dialog gap-0 border border-[#4a4a50]/10 bg-[#131415] p-0 shadow-sub-purple-aura md:max-w-[400px]"
-				portal
-				unmountOnHide
-			>
-				<Ariakit.DialogDismiss
-					aria-label="Close"
-					className="absolute top-3 right-3 z-20 rounded-full p-1 text-tertiary transition-colors hover:bg-gray-700 hover:text-on-brand"
-				>
-					<Icon name="x" className="size-6" />
-				</Ariakit.DialogDismiss>
-				<div className="mx-auto max-w-[400px] p-8">
-					<h2 className="mb-4 text-center text-2xl font-bold text-on-brand">Welcome Back!</h2>
-					<p className="mb-6 text-center text-tertiary">
-						Would you like to return to the page you were on before signing in?
-					</p>
-					<div className="flex flex-col gap-3">
-						<BasicLink
-							href={returnUrl}
-							className="w-full rounded-lg bg-sub-purple px-4 py-3 text-center font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
-						>
-							Yes, take me back
-						</BasicLink>
-						<button
-							type="button"
-							onClick={handleClose}
-							className="w-full rounded-lg bg-[#22242930] px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-line"
-						>
-							Stay on this page
-						</button>
-					</div>
-				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+		<Dialog size="sm" open={isOpen} onClose={handleClose} portal unmountOnHide>
+			<DialogHeader title="Go back to where you were?" closable={false} />
+			<DialogBody>
+				<Ariakit.DialogDescription className="body-sm text-secondary">
+					Would you like to return to the page you were on before signing in?
+				</Ariakit.DialogDescription>
+			</DialogBody>
+			<DialogFooter>
+				<Button type="button" size="md" onClick={handleClose}>
+					Stay on this page
+				</Button>
+				<Button as={BasicLink} variant="primary" size="md" href={returnUrl}>
+					Take me back
+				</Button>
+			</DialogFooter>
+		</Dialog>
 	)
 }

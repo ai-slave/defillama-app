@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
+import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { formatDate, formatDateTime, formatRelativeTime, parseDateTimestamp } from '~/utils/dateFormat'
-import { ConfirmActionModal } from './ConfirmActionModal'
+import { formatDate, parseDateTimestamp } from '~/utils/dateFormat'
 import { InviteMemberModal } from './InviteMemberModal'
 import type { TeamInvite } from './types'
 import { useTeam } from './useTeam'
@@ -40,68 +42,73 @@ function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: Ref
 
 	const expiresAt = parseDateTimestamp(invite.expiresAt)
 	const isExpired = now != null && expiresAt != null && expiresAt <= now
-	const expiresLabel = now ? formatRelativeTime(invite.expiresAt, { now: new Date(now) }) : formatDate(invite.expiresAt)
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
+			{/* Phones stack the actions under the invite, so the address, expiry and any error keep the full width. */}
+			<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 sm:flex-row sm:items-center dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
-					<span className="block truncate text-sm text-sub-text-primary">{invite.email}</span>
+					<span className="block truncate body-md text-sub-text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
-						<span
-							className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}
-							title={formatDateTime(invite.expiresAt, { timeZone: 'UTC' }) ?? undefined}
-						>
+						<span className={`body-sm ${isExpired ? 'text-data-down' : 'text-sub-text-muted'}`}>
 							{/* An expired token can't be resent; the supported flow is revoke, then invite again. */}
-							{isExpired ? 'Expired — revoke this invite and send a new one' : `Expires ${expiresLabel ?? 'Unknown'}`}
+							{isExpired
+								? 'Expired — revoke this invite and send a new one'
+								: `Expires ${formatDate(invite.expiresAt) ?? 'Unknown'}`}
 						</span>
 					</div>
 					{resendInviteMutation.isError ? (
-						<p role="alert" className="mt-1 text-xs text-error">
+						<p role="alert" className="mt-1 body-sm text-data-down">
 							{resendInviteMutation.error.message}
 						</p>
 					) : null}
 				</div>
-				{!isExpired && (
-					<button
-						type="button"
-						onClick={handleResend}
-						disabled={onCooldown || isResending}
-						className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-sub-brand-primary hover:text-sub-brand-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-border-strong"
-						title={onCooldown ? `Wait ${remainingSeconds}s to resend again` : 'Resend invite'}
-					>
-						<Icon name="mail" height={12} width={12} />
-						{isResending ? 'Sending...' : onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
-					</button>
-				)}
-				<button
-					type="button"
-					onClick={() => setShowRevokeConfirm(true)}
-					className="flex h-7 shrink-0 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
-					title="Revoke invite"
-				>
-					<Icon name="x" height={12} width={12} />
-					Revoke
-				</button>
+				<div className="flex gap-2 max-sm:*:flex-1">
+					{!isExpired && (
+						<Button
+							type="button"
+							size="md"
+							onClick={handleResend}
+							// The cooldown label says why it is disabled.
+							disabled={onCooldown}
+							pendingLabel={isResending ? 'Sending…' : null}
+						>
+							<Icon name="mail" height={14} width={14} />
+							{onCooldown ? `Resend in ${remainingSeconds}s` : 'Resend'}
+						</Button>
+					)}
+					<Button type="button" size="md" onClick={() => setShowRevokeConfirm(true)}>
+						<Icon name="x" height={14} width={14} />
+						Revoke
+					</Button>
+				</div>
 			</div>
 
-			<ConfirmActionModal
-				finalFocus={finalFocus}
-				isOpen={showRevokeConfirm}
+			<ConfirmDialog
+				open={showRevokeConfirm}
 				onClose={() => {
 					revokeInviteMutation.reset()
 					setShowRevokeConfirm(false)
 				}}
-				onConfirm={() => {
-					revokeInviteMutation.mutate({ inviteId: invite.id }, { onSuccess: () => setShowRevokeConfirm(false) })
-				}}
-				isLoading={revokeInviteMutation.isPending}
+				portal
+				unmountOnHide
+				finalFocus={finalFocus}
 				title="Revoke Invite"
 				description={`Are you sure you want to revoke the invite for ${invite.email}?`}
 				confirmLabel="Revoke"
-				pendingLabel="Revoking..."
-				confirmVariant="danger"
+				pendingLabel={revokeInviteMutation.isPending ? 'Revoking…' : null}
 				error={revokeInviteMutation.isError ? revokeInviteMutation.error.message : null}
+				onConfirm={() => {
+					// Success drops this row, and mutate() callbacks with it; the returned promise still settles.
+					revokeInviteMutation.mutateAsync({ inviteId: invite.id }).then(
+						() => {
+							setShowRevokeConfirm(false)
+							toast.success('Invite revoked')
+						},
+						// The dialog shows the failure from the mutation state.
+						() => {}
+					)
+				}}
 			/>
 		</>
 	)
@@ -117,21 +124,22 @@ export function TeamInvitesCard() {
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Icon name="mail" height={20} width={20} className="text-sub-text-primary" />
-					<span className="text-base leading-5 font-medium text-sub-text-primary">Pending Invites</span>
+					<span className="label-lg text-sub-text-primary">Pending Invites</span>
 				</div>
-				<button
+				<Button
 					type="button"
+					variant="primary"
+					size="md"
 					ref={inviteButtonRef}
 					onClick={() => setShowInviteModal(true)}
-					className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>
 					<Icon name="plus" height={14} width={14} />
 					Invite Member
-				</button>
+				</Button>
 			</div>
 
 			{pendingInvites.length === 0 ? (
-				<p className="text-sm text-sub-text-muted">No pending invites.</p>
+				<p className="body-sm text-tertiary">No pending invites.</p>
 			) : (
 				<div className="flex flex-col gap-2">
 					{pendingInvites.map((invite) => (

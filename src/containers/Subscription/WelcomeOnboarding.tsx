@@ -11,6 +11,7 @@ import {
 } from '~/containers/Subscription/utils/slackAcquisition'
 import { readAppStorage, setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
+import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const ONBOARDING_OPTIONS = [
@@ -242,27 +243,29 @@ export function WelcomeOnboarding() {
 
 	if (loaders.userLoading) {
 		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<div className="flex flex-col items-center gap-4">
-					<div className="size-8 animate-spin rounded-full border-2 border-sub-line border-t-[#5C5CF9]" />
-					<p className="text-sub-text-muted">Loading your subscription...</p>
-				</div>
+			<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center">
+				<LoadingIndicator label="Loading your subscription" />
 			</div>
 		)
 	}
 
 	if (!loaders.userLoading && !hasActiveSubscription && isAuthenticated) {
+		// The automatic re-reads above are bounded, so once they run out the page stops promising more.
+		const checking = confirmationReads < CONFIRMATION_READS
 		return (
-			<div className="flex min-h-[60vh] items-center justify-center">
-				<div className="flex flex-col items-center gap-4 text-center">
-					<div className="flex size-16 items-center justify-center rounded-full bg-sub-purple/10">
-						<Icon name="clock" height={28} width={28} className="text-sub-purple" />
-					</div>
-					<h2 className="text-xl font-bold text-on-brand">Processing your payment...</h2>
-					<p className="max-w-sm text-sub-text-muted">
-						This usually takes a few seconds — we&apos;ll keep checking automatically. If it doesn&apos;t update, try
-						refreshing.
+			<div className="flex min-h-[60vh] items-center justify-center px-4">
+				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
+					<h2 className="heading-sm text-on-brand">Processing your payment</h2>
+					<p className="body-md text-sub-text-muted">
+						{checking
+							? 'This usually takes a few seconds, and this page checks again automatically.'
+							: 'Confirming your payment is taking longer than usual. Refresh the page to check again.'}
 					</p>
+					{checking ? (
+						<div role="status" aria-live="polite">
+							<LoadingIndicator label="Checking your payment" />
+						</div>
+					) : null}
 					<button
 						type="button"
 						onClick={() => window.location.reload()}

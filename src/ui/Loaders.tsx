@@ -10,7 +10,7 @@ export function LoadingDots() {
 
 export function LoadingSpinner({ size }: { size: number }) {
 	return (
-		<span className="animate-spin">
+		<span className="inline-flex shrink-0 animate-spin">
 			<svg
 				className="shrink-0"
 				xmlns="http://www.w3.org/2000/svg"

@@ -16,6 +16,8 @@ const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage:
 	return details || fallbackMessage
 }
 
+const SIGNED_OUT_MESSAGE = "You're signed out. Sign in and try again."
+
 const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
 
@@ -31,6 +33,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// Seats, membership and billing share server state. Serialize writes across hook
 	// instances, and show confirmed data instead of rolling back whole-team snapshots.
+	// Callers confirm success with a toast once their dialog has closed; a toast here would sit over it.
 	const mutationKey = ['team-write', currentUserId]
 	const isTeamUpdating = useIsMutating({ mutationKey }) > 0
 	const scope = { id: `team:${currentUserId}` }
@@ -48,14 +51,14 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		queryKey: ['team-invite-accept', currentUserId, inviteToken],
 		queryFn: async () => {
 			if (!inviteToken || !currentUserId || pb.authStore.record?.id !== currentUserId)
-				throw new Error('Not authenticated')
+				throw new Error(SIGNED_OUT_MESSAGE)
 
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/accept`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ token: inviteToken })
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to accept invite'))
 			})
@@ -100,8 +103,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			const queryKey = ['auth', 'status', currentUserId]
 			await queryClient.cancelQueries({ queryKey, exact: true })
 			const account = await refreshSession()
-			if (!account || pb.authStore.record?.id !== currentUserId)
-				throw new Error('Could not confirm your account. Please retry.')
+			if (!account || pb.authStore.record?.id !== currentUserId) throw new Error('Could not confirm your account.')
 			queryClient.setQueryData(queryKey, account)
 			return account
 		},
@@ -122,6 +124,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	const members = team?.members ?? []
 	const pendingInvites = team?.pendingInvites ?? []
 	const teamSubscriptions = team?.subscriptions ?? []
+	// A write or refresh that billing changes wait on; the blocked button shows it as its pending label.
+	const billingWait = isTeamUpdating ? 'Updating…' : teamQuery.isFetching ? 'Refreshing…' : null
+	// Why billing changes are blocked after a failed refresh, for the text beside the disabled control.
+	const billingLockReason =
+		billingWait === null && teamQuery.isError ? "Couldn't refresh the team. Close this and try again." : null
 
 	// ── Mutation: POST /team/create ──
 	const createTeamMutation = useMutation({
@@ -134,14 +141,14 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name })
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to create team'))
 			})
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('Team created successfully!')
+			toast.success('Team created')
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			return refetch()
 		},
@@ -161,7 +168,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ name })
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to update team'))
 			})
@@ -191,17 +198,14 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to purchase seats'))
 			})
 			return normalized.json()
 		},
 		onSuccess: (data) => {
-			if (data.action === 'seats_added') {
-				toast.success(`${data.seatsAdded} seat(s) added successfully!`)
-				return refetch()
-			}
+			if (data.action === 'seats_added') return refetch()
 		},
 		onError: (error) => {
 			console.log('Failed to purchase seats:', error)
@@ -220,14 +224,13 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to upgrade subscription'))
 			})
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('Subscription upgraded to yearly billing')
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 			return refetch()
 		},
@@ -247,14 +250,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to update seats'))
 			})
 			return normalized.json()
-		},
-		onSuccess: (_data, { seatCount }) => {
-			if (seatCount === 0) toast.success('Subscription will cancel at the end of the current period')
 		},
 		onSettled: reconcileTeam
 	})
@@ -270,14 +270,13 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to assign member'))
 			})
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('Subscription assigned successfully!')
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
 		onSettled: reconcileTeam
@@ -294,14 +293,13 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to unassign member'))
 			})
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('Subscription removed from member')
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
 		onSettled: reconcileTeam
@@ -318,13 +316,12 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to send invite'))
 			})
 			return normalized.json()
 		},
-		// InviteMemberModal confirms success after it closes; a toast here would sit over the open dialog.
 		onSettled: reconcileTeam
 	})
 
@@ -339,7 +336,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to resend invite'))
 			})
@@ -365,14 +362,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to revoke invite'))
 			})
 			return normalized.json()
-		},
-		onSuccess: () => {
-			toast.success('Invite revoked')
 		},
 		onSettled: reconcileTeam
 	})
@@ -388,14 +382,11 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data)
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to remove member'))
 			})
 			return normalized.json()
-		},
-		onSuccess: () => {
-			toast.success('Member removed from team')
 		},
 		onSettled: reconcileTeam
 	})
@@ -409,14 +400,13 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/leave`, {
 				method: 'POST'
 			})
-			if (!response) throw new Error('Not authenticated')
+			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
 			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
 				throw new Error(getErrorMessage(error, 'Failed to leave team'))
 			})
 			return normalized.json()
 		},
 		onSuccess: () => {
-			toast.success('You have left the team')
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
@@ -426,7 +416,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	return {
 		// Query state
 		isTeamUpdating,
-		canChangeTeamBilling: !isTeamUpdating && !teamQuery.isFetching && !teamQuery.isError,
+		canChangeTeamBilling: billingWait === null && billingLockReason === null,
+		billingWait,
+		billingLockReason,
 		isTeamRefreshError: teamQuery.isError && teamQuery.data != null,
 		team,
 		isTeamLoading,

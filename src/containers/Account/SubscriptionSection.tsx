@@ -47,7 +47,7 @@ function getPaymentLabel(provider: string): string {
 }
 
 function getOverageErrorText(error: Error, action: 'enable' | 'disable'): string {
-	return error.message || `Failed to ${action} overage. Please try again.`
+	return error.message || `Failed to ${action} overage. Try again.`
 }
 
 function getPlanName(type: string): string {
@@ -99,17 +99,17 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 		<div className="flex items-center rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
 			<div className="flex w-full flex-col gap-8.5 sm:w-[155px]">
 				<div className="flex flex-col gap-3">
-					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-lg leading-[22px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-[64%]">
+					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text heading-xs text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-[64%]">
 						Save {savings} with annual billing
 					</p>
-					<p className="text-xs leading-4 text-sub-text-primary">
+					<p className="body-sm text-sub-text-primary">
 						Switch to yearly and get 12 months of {subscriptionLabel} for the price of 10.
 					</p>
 				</div>
 				<button
 					type="button"
 					onClick={onUpgrade}
-					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
+					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 label-sm text-on-brand"
 				>
 					{buttonLabel}
 				</button>
@@ -123,16 +123,16 @@ function FreeUpgradeBanner() {
 		<div className="relative overflow-hidden rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
 			<div className="relative z-10 flex max-w-[250px] flex-col gap-6.5">
 				<div className="flex flex-col gap-3">
-					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-lg leading-[22px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-77%">
+					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text heading-xs text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-77%">
 						Unlock the full power of DefiLlama
 					</p>
-					<p className="text-xs leading-4 text-sub-text-primary">
+					<p className="body-sm text-sub-text-primary">
 						Upgrade to Pro for advanced analytics tools, or get the API plan to power your own applications.
 					</p>
 				</div>
 				<BasicLink
 					href="/subscription"
-					className="flex h-8 w-fit items-center rounded-lg bg-sub-brand-primary px-3 text-xs leading-4 font-medium text-on-brand"
+					className="flex h-8 w-fit items-center rounded-lg bg-sub-brand-primary px-3 label-sm text-on-brand"
 				>
 					View & Compare Plans
 				</BasicLink>
@@ -190,7 +190,7 @@ function PastDueSubscriptionCard({
 					<h3 className="text-base font-semibold text-sub-warning-text-light dark:text-sub-warning-text-dark">
 						{planName} Subscription Past Due
 					</h3>
-					<p className="text-sm text-sub-warning-text-light dark:text-sub-warning-text-dark">
+					<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
 						Your most recent payment failed. To keep your subscription active, update your payment method on Stripe.
 						{onCancel ? ' Otherwise, you can cancel the overdue subscription below.' : ''}
 					</p>
@@ -202,7 +202,7 @@ function PastDueSubscriptionCard({
 						type="button"
 						onClick={onUpdatePayment}
 						disabled={isUpdateLoading}
-						className="flex h-9 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 text-sm font-medium whitespace-nowrap text-on-brand disabled:opacity-50"
+						className="flex h-9 items-center gap-1 rounded-lg bg-sub-brand-primary px-3 label-md whitespace-nowrap text-on-brand disabled:opacity-50"
 					>
 						{isUpdateLoading ? 'Loading...' : 'Update Payment on Stripe'}
 						{!isUpdateLoading && <Icon name="circle-external-link" height={16} width={16} className="shrink-0" />}
@@ -212,7 +212,7 @@ function PastDueSubscriptionCard({
 					<button
 						type="button"
 						onClick={onCancel}
-						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
+						className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 label-md whitespace-nowrap text-sub-text-primary dark:border-sub-border-strong"
 					>
 						Cancel Subscription
 					</button>
@@ -231,7 +231,7 @@ function LegacyWarning() {
 				width={20}
 				className="mt-0.5 shrink-0 text-sub-warning-text-light dark:text-sub-warning-text-dark"
 			/>
-			<p className="text-sm text-sub-warning-text-light dark:text-sub-warning-text-dark">
+			<p className="body-md text-sub-warning-text-light dark:text-sub-warning-text-dark">
 				Your current subscription is a legacy plan. You need to unsubscribe via{' '}
 				<a href="https://subscriptions.llamapay.io/" target="_blank" rel="noopener noreferrer" className="underline">
 					LlamaPay
@@ -255,16 +255,16 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
 				<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
-				<span className="text-sm font-medium text-sub-text-primary">Team Subscription</span>
+				<span className="label-md text-sub-text-primary">Team Subscription</span>
 			</div>
 			{hasAssigned ? (
-				<p className="text-sm text-sub-text-muted">
+				<p className="body-md text-sub-text-muted">
 					Your <span className="font-medium text-sub-text-primary">{getTeamSubLabel(subscriptionType)}</span>{' '}
 					subscription is managed by <span className="font-medium text-sub-text-primary">{teamName}</span>. Billing and
 					seat changes are handled by your team admin.
 				</p>
 			) : (
-				<p className="text-sm text-sub-text-muted">
+				<p className="body-md text-sub-text-muted">
 					You're a member of <span className="font-medium text-sub-text-primary">{teamName}</span>. Contact your team
 					admin to be assigned a subscription.
 				</p>
@@ -316,7 +316,7 @@ export function SubscriptionSection() {
 			<SubscriptionLoadError
 				isRetrying={isTeamRetrying}
 				onRetry={() => void refetchTeam()}
-				message="Couldn't load your team. Please try again."
+				message="Couldn't load your team."
 			/>
 		)
 	}
@@ -391,7 +391,7 @@ export function SubscriptionSection() {
 
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
-		<p className="text-xs leading-4 text-sub-text-muted">
+		<p className="body-sm text-sub-text-muted">
 			Couldn't check payment status.{' '}
 			<button
 				type="button"

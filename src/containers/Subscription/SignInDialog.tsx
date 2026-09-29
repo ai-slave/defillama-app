@@ -1,17 +1,16 @@
-import * as Ariakit from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
-import { type ReactNode, useCallback, useEffect, useId, useState, useSyncExternalStore } from 'react'
+import { type ReactNode, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { type PromotionalEmailsValue, useAuthContext } from '~/auth'
 import {
 	AuthDialogHeader,
-	authDialogStyles,
-	authBodyStyles,
 	authInputStyles,
-	authPrimaryButtonStyles,
 	authProviderButtonStyles,
 	authWalletPickerStyles,
-	LastUsedChip
+	authProviderIconSlotStyles,
+	LastUsedChip,
+	LastUsedCorner
 } from '~/auth/AuthDialog'
 import { GoogleLinkForm } from '~/auth/GoogleLinkForm'
 import { GoogleSignInButton } from '~/auth/GoogleSignInButton'
@@ -22,22 +21,20 @@ import { BasicLink } from '~/components/Link'
 import { Turnstile } from '~/containers/Subscription/Turnstile'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Dialog, DialogBody } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import type { WalletSignInProps } from './WalletSignIn'
 
 const inputCls = authInputStyles
-const primaryBtnCls = authPrimaryButtonStyles
+const fieldLabelCls = 'mb-1.5 label-sm text-secondary'
 
 const WalletSignIn = dynamic<WalletSignInProps>(() => import('./WalletSignIn').then((module) => module.WalletSignIn), {
 	ssr: false,
 	loading: () => (
-		<div
-			role="status"
-			className={`${authWalletPickerStyles} flex flex-col items-center justify-center gap-3 text-sm text-secondary`}
-		>
-			<LoadingSpinner size={16} />
-			<span>Loading wallets…</span>
+		<div role="status" aria-live="polite" className={`${authWalletPickerStyles} flex items-center justify-center`}>
+			<LoadingIndicator label="Loading wallets" />
 		</div>
 	)
 })
@@ -56,13 +53,7 @@ export function SignInDialog({
 	onAuthenticated?: () => void
 }) {
 	return (
-		<Ariakit.Dialog
-			store={store}
-			getPersistentElements={() => document.querySelectorAll('w3m-modal')}
-			className={authDialogStyles}
-			backdrop={<div className="bg-screen-dim" />}
-			unmountOnHide
-		>
+		<Dialog size="sm" store={store} getPersistentElements={() => document.querySelectorAll('w3m-modal')} unmountOnHide>
 			<SignInFlow
 				dialogStore={store}
 				initialStep={initialStep}
@@ -70,7 +61,7 @@ export function SignInDialog({
 				prompt={prompt}
 				onAuthenticated={onAuthenticated}
 			/>
-		</Ariakit.Dialog>
+		</Dialog>
 	)
 }
 
@@ -98,28 +89,35 @@ export function SignInFlow({
 		dialogStore.hide()
 	}, [dialogStore, flowStore, onAuthenticated])
 
+	// Keyed by title, so each step's title takes focus on mount and a step change is announced.
+	const header = (title: string) => (
+		<AuthDialogHeader
+			key={title}
+			title={title}
+			prompt={prompt}
+			closable={closeable}
+			onBack={state.kind !== 'signin' ? () => flowStore.dispatch({ kind: 'navigate', screen: 'signin' }) : undefined}
+		/>
+	)
+
+	// The reset screen names its own outcome in the header, so it renders the header itself.
+	if (state.kind === 'forgot')
+		return (
+			<ForgotPasswordScreen dialogStore={dialogStore} store={flowStore} initialEmail={state.email} header={header} />
+		)
+
 	return (
 		<>
-			<AuthDialogHeader
-				key={state.kind}
-				title={
-					state.kind === 'signup'
-						? 'Create an account'
-						: state.kind === 'forgot'
-							? 'Reset password'
-							: state.kind === 'googleLink'
-								? 'Confirm your email'
-								: state.kind === 'wallet'
-									? 'Sign in with a wallet'
-									: 'Sign in'
-				}
-				prompt={prompt}
-				store={dialogStore}
-				closeable={closeable}
-				showBackLabel={state.kind === 'wallet'}
-				onBack={state.kind !== 'signin' ? () => flowStore.dispatch({ kind: 'navigate', screen: 'signin' }) : undefined}
-			/>
-			<div className={authBodyStyles}>
+			{header(
+				state.kind === 'signup'
+					? 'Create an account'
+					: state.kind === 'googleLink'
+						? 'Confirm your email'
+						: state.kind === 'wallet'
+							? 'Sign in with a wallet'
+							: 'Sign in'
+			)}
+			<DialogBody>
 				{state.kind === 'googleLink' ? (
 					<GoogleLinkForm
 						dialogStore={dialogStore}
@@ -132,80 +130,119 @@ export function SignInFlow({
 					<WalletSignIn dialogStore={dialogStore} store={flowStore} onAuthenticated={finishAuthentication} />
 				) : (
 					<div key={state.kind}>
-						{state.kind === 'signin' || state.kind === 'signup' ? (
-							<AuthScreen
-								dialogStore={dialogStore}
-								suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
-								state={state}
-								store={flowStore}
-								onAuthenticated={finishAuthentication}
-							/>
-						) : (
-							<ForgotPasswordScreen dialogStore={dialogStore} store={flowStore} initialEmail={state.email} />
-						)}
+						<AuthScreen
+							dialogStore={dialogStore}
+							suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
+							state={state}
+							store={flowStore}
+							onAuthenticated={finishAuthentication}
+						/>
 					</div>
 				)}
-			</div>
+			</DialogBody>
 		</>
 	)
 }
 
-function LastUsedHint({ visible, onPrimary = false }: { visible: boolean; onPrimary?: boolean }) {
-	return visible ? (
-		<span className="pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2">
-			<LastUsedChip onPrimary={onPrimary} />
-		</span>
-	) : null
+function FieldError({ children }: { children: ReactNode }) {
+	return <span className="mt-1 hidden body-sm text-data-down peer-user-invalid:block">{children}</span>
 }
 
-function FieldError({ children }: { children: ReactNode }) {
-	return <span className="mt-1 hidden text-xs text-error peer-user-invalid:block">{children}</span>
+/** The Turnstile widget and its failure state. Key it by spent token: a submitted attempt mounts a fresh widget.
+    Its own Try again mounts a fresh widget inside the same wrapper and moves focus there, since the button is gone. */
+function Captcha({ disabled, onToken }: { disabled: boolean; onToken: (token: string) => void }) {
+	const [failed, setFailed] = useState(false)
+	const [retry, setRetry] = useState(0)
+	const wrapperRef = useRef<HTMLDivElement>(null)
+	return (
+		<>
+			<div ref={wrapperRef} role="group" aria-label="Security check" tabIndex={-1} inert={disabled}>
+				<Turnstile
+					key={retry}
+					onVerify={(token) => {
+						// Turnstile retries on its own, so a later success clears the failure.
+						setFailed(false)
+						onToken(token)
+					}}
+					onError={() => {
+						setFailed(true)
+						onToken('')
+					}}
+					onExpire={() => onToken('')}
+				/>
+			</div>
+			{failed ? (
+				<InlineStatus variant="error">
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<span>The security check failed.</span>
+						<Button
+							type="button"
+							size="sm"
+							onClick={() => {
+								setFailed(false)
+								setRetry(retry + 1)
+								wrapperRef.current!.focus()
+							}}
+						>
+							Try again
+						</Button>
+					</div>
+				</InlineStatus>
+			) : null}
+		</>
+	)
 }
 
 function PasswordField({
 	name,
-	placeholder,
+	label,
+	action,
 	error,
 	minLength,
 	disabled,
 	autoComplete
 }: {
 	name: string
-	placeholder: string
+	label: string
+	/** Sits at the right end of the label row, after the field in tab order. */
+	action?: ReactNode
 	error: string
 	minLength?: number
 	disabled?: boolean
 	autoComplete?: string
 }) {
 	const [visible, setVisible] = useState(false)
+	const id = useId()
 	return (
-		<div className="relative">
-			<label>
-				<span className="sr-only">{placeholder}</span>
+		<div className="grid grid-cols-[1fr_auto] items-center">
+			<label htmlFor={id} className={`${fieldLabelCls} col-start-1 row-start-1`}>
+				{label}
+			</label>
+			<div className="relative col-span-2 row-start-2">
 				<input
+					id={id}
 					type={visible ? 'text' : 'password'}
-					aria-label={placeholder}
 					name={name}
 					required
 					disabled={disabled}
 					autoComplete={autoComplete}
 					minLength={minLength}
-					placeholder={placeholder}
 					className={`${inputCls} pr-10`}
 				/>
+				<Button
+					type="button"
+					variant="ghost"
+					size="md"
+					square
+					className="absolute top-1 right-1"
+					onClick={() => setVisible((value) => !value)}
+					aria-label={visible ? 'Hide password' : 'Show password'}
+				>
+					<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
+				</Button>
 				<FieldError>{error}</FieldError>
-			</label>
-			<Button
-				type="button"
-				variant="ghost"
-				size="md"
-				square
-				className="absolute top-1 right-1"
-				onClick={() => setVisible((value) => !value)}
-				aria-label={visible ? 'Hide password' : 'Show password'}
-			>
-				<Icon name={visible ? 'eye-off' : 'eye'} height={16} width={16} />
-			</Button>
+			</div>
+			{action ? <div className="col-start-2 row-start-1 mb-1.5 body-sm">{action}</div> : null}
 		</div>
 	)
 }
@@ -366,7 +403,7 @@ function AuthScreen({
 			{state.pendingGoogleLink ? (
 				<button
 					type="button"
-					className="mb-4 w-full text-center text-sm text-link"
+					className="mb-4 w-full text-center body-sm text-link"
 					onClick={() => store.dispatch({ kind: 'resumeGoogleLink' })}
 				>
 					Continue Google email verification
@@ -378,53 +415,42 @@ function AuthScreen({
 					className="flex flex-col gap-4"
 					onSubmit={(event) => void handleSignUp(event)}
 				>
-					<label>
-						<span className="sr-only">Email</span>
+					<label className="flex flex-col">
+						<span className={fieldLabelCls}>Email</span>
 						<input
 							type="email"
-							aria-label="Email"
 							autoComplete="username"
 							disabled={isPending}
 							name="email"
 							required
-							placeholder="Enter your email address"
 							className={inputCls}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
 					<PasswordField
 						name="password"
-						placeholder="Create a password"
+						label="Password"
 						error="Password must be at least 8 characters."
 						minLength={8}
 						disabled={isPending}
 						autoComplete="new-password"
 					/>
-					<label>
-						<span className="sr-only">Confirm password</span>
+					<label className="flex flex-col">
+						<span className={fieldLabelCls}>Confirm password</span>
 						<input
 							type="password"
 							name="passwordConfirm"
-							aria-label="Confirm password"
 							required
 							minLength={8}
 							disabled={isPending}
 							autoComplete="new-password"
-							placeholder="Confirm password"
 							className={inputCls}
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 						/>
 						<FieldError>Passwords must match and contain at least 8 characters.</FieldError>
 					</label>
 
-					<div inert={isPending}>
-						<Turnstile
-							key={captchaRetry}
-							onVerify={setTurnstileToken}
-							onError={() => setTurnstileToken('')}
-							onExpire={() => setTurnstileToken('')}
-						/>
-					</div>
+					<Captcha key={captchaRetry} disabled={isPending} onToken={setTurnstileToken} />
 
 					<label className="flex items-start gap-2">
 						<input
@@ -433,7 +459,7 @@ function AuthScreen({
 							required
 							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 						/>
-						<span className="text-xs leading-4 text-tertiary">
+						<span className="body-sm text-secondary">
 							I agree to the{' '}
 							<BasicLink href="/terms" target="_blank" className="text-link underline">
 								Terms of Service
@@ -453,28 +479,25 @@ function AuthScreen({
 							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 							defaultChecked
 						/>
-						<span className="text-xs leading-4 text-tertiary">
+						<span className="body-sm text-secondary">
 							Receive emails about upcoming DefiLlama products and new releases
 						</span>
 					</label>
 
-					<button type="submit" disabled={isPending || !turnstileToken} className={primaryBtnCls}>
-						{signupMutation.isPending ? (
-							<span className="inline-flex items-center gap-2">
-								<span
-									aria-hidden
-									className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-								/>
-								Creating account...
-							</span>
-						) : (
-							'Create account'
-						)}
-					</button>
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						className="w-full"
+						disabled={isPending || !turnstileToken}
+						pendingLabel={signupMutation.isPending ? 'Creating account…' : null}
+					>
+						Create account
+					</Button>
 					{state.error?.method === 'email' ? (
-						<p id={errorId} role="alert" className="text-left text-xs text-error">
-							{state.error.message}
-						</p>
+						<div id={errorId}>
+							<InlineStatus variant="error">{state.error.message}</InlineStatus>
+						</div>
 					) : null}
 				</form>
 			) : (
@@ -484,80 +507,70 @@ function AuthScreen({
 					aria-describedby={state.error?.method === 'email' ? errorId : undefined}
 					onSubmit={(event) => void handleSignIn(event)}
 				>
-					<label>
-						<span className="sr-only">Email</span>
+					<label className="flex flex-col">
+						<span className={`${fieldLabelCls} flex items-center gap-2`}>
+							Email
+							{lastMethod === 'email' ? <LastUsedChip /> : null}
+						</span>
 						<input
 							type="email"
-							aria-label="Email"
 							autoComplete="username"
 							disabled={isPending}
 							name="email"
 							required
-							placeholder="Enter your email address"
 							className={inputCls}
 						/>
 						<FieldError>Enter a valid email address.</FieldError>
 					</label>
 					<PasswordField
 						name="password"
-						placeholder="Enter your password"
+						label="Password"
 						error="Enter your password."
 						disabled={isPending}
 						autoComplete="current-password"
+						action={
+							<button
+								type="button"
+								className="text-link"
+								form={formId}
+								onClick={(event) =>
+									store.dispatch({
+										kind: 'navigate',
+										screen: 'forgot',
+										email: (event.currentTarget.form!.elements.namedItem('email') as HTMLInputElement).value
+									})
+								}
+							>
+								Forgot password?
+							</button>
+						}
 					/>
-					<p className="text-right text-sm">
-						<button
-							type="button"
-							className="text-link"
-							form={formId}
-							onClick={(event) =>
-								store.dispatch({
-									kind: 'navigate',
-									screen: 'forgot',
-									email: (event.currentTarget.form!.elements.namedItem('email') as HTMLInputElement).value
-								})
-							}
-						>
-							Forgot password?
-						</button>
-					</p>
 
-					<div inert={isPending}>
-						<Turnstile
-							key={captchaRetry}
-							onVerify={setTurnstileToken}
-							onError={() => setTurnstileToken('')}
-							onExpire={() => setTurnstileToken('')}
-						/>
-					</div>
+					<Captcha key={captchaRetry} disabled={isPending} onToken={setTurnstileToken} />
 
 					<div>
-						<button type="submit" disabled={isPending || !turnstileToken} className={`${primaryBtnCls} relative`}>
-							{loginMutation.isPending ? (
-								<span className="inline-flex items-center gap-2">
-									<span
-										aria-hidden
-										className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-									/>
-									Signing in...
-								</span>
-							) : (
-								'Sign in'
-							)}
-							<LastUsedHint visible={lastMethod === 'email'} onPrimary />
-						</button>
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							className="w-full"
+							disabled={isPending || !turnstileToken}
+							pendingLabel={loginMutation.isPending ? 'Signing in…' : null}
+						>
+							Sign in
+						</Button>
 					</div>
 					{state.error?.method === 'email' ? (
-						<p id={errorId} role="alert" className="text-left text-xs text-error">
-							{state.error.message}
-						</p>
+						<div id={errorId}>
+							<InlineStatus variant="error">{state.error.message}</InlineStatus>
+						</div>
 					) : null}
 				</form>
 			)}
 
-			<div className="my-5 border-t border-medium" aria-hidden />
+			<div className="my-5 border-t border-subtle" aria-hidden />
 
-			<div className="flex flex-col gap-2">
+			<div className="flex flex-col gap-3">
 				<div>
 					<GoogleSignInButton
 						loading={signInWithGoogleMutation.isPending}
@@ -567,53 +580,53 @@ function AuthScreen({
 						onCode={handleGoogleCode}
 					/>
 
+					{/* GoogleSignInButton places its own load failure the same way. */}
 					{state.error?.method === 'google' ? (
-						<p id={errorId} role="alert" className="mt-2 text-left text-xs text-error">
-							{state.error.message}
-						</p>
+						<div className="mt-2">
+							<InlineStatus variant="error">{state.error.message}</InlineStatus>
+						</div>
 					) : null}
 				</div>
-				<div>
+				<div className="flex flex-col gap-2">
 					<button
 						type="button"
-						className={`${authProviderButtonStyles} relative ${lastMethod === 'github' ? 'max-[380px]:pr-19' : ''}`}
+						className={authProviderButtonStyles}
 						onClick={() => void handleGithubSignIn()}
 						disabled={isPending}
 					>
-						{signInWithGithubMutation.isPending ? (
-							<span
-								aria-hidden
-								className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
-							/>
-						) : (
-							<Icon name="github" height={18} width={18} className="shrink-0" />
-						)}
-						<span>{signInWithGithubMutation.isPending ? 'Waiting for GitHub...' : 'Continue with GitHub'}</span>
-						<LastUsedHint visible={lastMethod === 'github'} />
+						<span className={authProviderIconSlotStyles}>
+							{signInWithGithubMutation.isPending ? (
+								<LoadingSpinner size={16} />
+							) : (
+								<Icon name="github" height={18} width={18} />
+							)}
+						</span>
+						<span className="min-w-0 truncate">
+							{signInWithGithubMutation.isPending ? 'Waiting for GitHub…' : 'Continue with GitHub'}
+						</span>
+						{lastMethod === 'github' ? <LastUsedCorner /> : null}
 					</button>
 
-					{state.error?.method === 'github' ? (
-						<p id={errorId} role="alert" className="mt-2 text-left text-xs text-error">
-							{state.error.message}
-						</p>
-					) : null}
+					{state.error?.method === 'github' ? <InlineStatus variant="error">{state.error.message}</InlineStatus> : null}
 				</div>
 
 				{!isSignup ? (
 					<div>
 						<button
 							type="button"
-							className={`${authProviderButtonStyles} relative ${lastMethod === 'wallet' ? 'max-[380px]:pr-19' : ''}`}
+							className={authProviderButtonStyles}
 							onClick={() => store.dispatch({ kind: 'navigate', screen: 'wallet' })}
 						>
-							<Icon name="wallet" className="size-4 shrink-0" aria-hidden />
-							<span>Sign in with a wallet</span>
-							<LastUsedHint visible={lastMethod === 'wallet'} />
+							<span className={authProviderIconSlotStyles}>
+								<Icon name="wallet" className="size-4" aria-hidden />
+							</span>
+							<span className="min-w-0 truncate">Sign in with a wallet</span>
+							{lastMethod === 'wallet' ? <LastUsedCorner /> : null}
 						</button>
 					</div>
 				) : null}
 			</div>
-			<p className="mt-5 text-center text-sm text-secondary">
+			<p className="mt-5 text-center body-sm text-secondary">
 				{isSignup ? 'Already have an account? ' : 'New to DefiLlama? '}
 				<button
 					type="button"
@@ -630,11 +643,13 @@ function AuthScreen({
 function ForgotPasswordScreen({
 	dialogStore,
 	store,
-	initialEmail
+	initialEmail,
+	header
 }: {
 	dialogStore: Ariakit.DialogStore
 	store: SignInFlowStore
 	initialEmail: string
+	header: (title: string) => ReactNode
 }) {
 	const errorId = useId()
 	const [turnstileToken, setTurnstileToken] = useState('')
@@ -657,78 +672,79 @@ function ForgotPasswordScreen({
 		reset.mutate({ email: String(data.get('email')), signal: store.beginAuthRequest(), token })
 	}
 
+	if (reset.data)
+		return (
+			<>
+				{header('Check your email')}
+				<DialogBody>
+					<p role="status" className="body-sm text-secondary">
+						If an account exists for <span className="text-primary">{reset.data}</span>, we&apos;ve sent a password
+						reset link. Use the link to choose a new password, then return here to sign in.
+					</p>
+					<Button
+						type="button"
+						variant="primary"
+						size="md"
+						className="w-full"
+						onClick={() => store.dispatch({ kind: 'navigate', screen: 'signin' })}
+					>
+						Back to sign in
+					</Button>
+					<button
+						type="button"
+						className="body-sm text-link"
+						onClick={() => {
+							reset.reset()
+							store.dispatch({ kind: 'navigate', screen: 'forgot', email: '' })
+						}}
+					>
+						Use another email
+					</button>
+				</DialogBody>
+			</>
+		)
+
 	return (
 		<>
-			{reset.data ? <h3 className="font-medium text-primary">Check your email</h3> : null}
-			{reset.data ? (
-				<p role="status" className="mt-2 text-sm text-secondary">
-					If an account exists for {reset.data}, we&apos;ve sent a password reset link. Use the link to choose a new
-					password, then return here to sign in.
-				</p>
-			) : (
-				<>
-					<p className="mb-4 text-sm text-secondary">Enter your email and we&apos;ll send you a reset link.</p>
-					<form
-						className="flex flex-col gap-4"
-						onSubmit={handleSubmit}
-						aria-describedby={reset.error ? errorId : undefined}
-					>
-						<label>
-							<span className="sr-only">Email</span>
-							<input
-								type="email"
-								aria-label="Email"
-								name="email"
-								autoComplete="email"
-								defaultValue={initialEmail}
-								required
-								disabled={reset.isPending}
-								placeholder="Enter your email address"
-								className={inputCls}
-							/>
-							<FieldError>Enter a valid email address.</FieldError>
-						</label>
-						<div inert={reset.isPending}>
-							<Turnstile
-								key={captchaRetry}
-								onVerify={setTurnstileToken}
-								onError={() => setTurnstileToken('')}
-								onExpire={() => setTurnstileToken('')}
-							/>
-						</div>
-						<button type="submit" disabled={reset.isPending || !turnstileToken} className={primaryBtnCls}>
-							{reset.isPending ? (
-								<span className="inline-flex items-center gap-2">
-									<span
-										aria-hidden
-										className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-									/>
-									Sending reset link...
-								</span>
-							) : (
-								'Send reset link'
-							)}
-						</button>
-						{reset.error ? (
-							<p id={errorId} role="alert" className="text-center text-xs text-error">
-								{reset.error.message}
-							</p>
-						) : null}
-					</form>
-				</>
-			)}
-			{reset.data ? (
-				<button
-					type="button"
-					className="mt-4 w-full text-center text-sm text-link"
-					onClick={() => {
-						reset.reset()
-						store.dispatch({ kind: 'navigate', screen: 'forgot', email: '' })
-					}}
+			{header('Reset password')}
+			<DialogBody>
+				<p className="body-sm text-secondary">Enter your email and we&apos;ll send you a reset link.</p>
+				<form
+					className="flex flex-col gap-4"
+					onSubmit={handleSubmit}
+					aria-describedby={reset.error ? errorId : undefined}
 				>
-					Use another email
-				</button>
-			) : null}
+					<label className="flex flex-col">
+						<span className={fieldLabelCls}>Email</span>
+						<input
+							type="email"
+							name="email"
+							autoComplete="email"
+							defaultValue={initialEmail}
+							required
+							disabled={reset.isPending}
+							className={inputCls}
+						/>
+						<FieldError>Enter a valid email address.</FieldError>
+					</label>
+					<Captcha key={captchaRetry} disabled={reset.isPending} onToken={setTurnstileToken} />
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						className="w-full"
+						disabled={reset.isPending || !turnstileToken}
+						pendingLabel={reset.isPending ? 'Sending reset link…' : null}
+					>
+						Send reset link
+					</Button>
+					{reset.error ? (
+						<div id={errorId}>
+							<InlineStatus variant="error">{reset.error.message}</InlineStatus>
+						</div>
+					) : null}
+				</form>
+			</DialogBody>
 		</>
 	)
 }

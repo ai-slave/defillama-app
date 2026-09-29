@@ -94,7 +94,6 @@ interface AuthContextType {
 	resendGoogleLink: (request: AuthRequest & { challengeToken: string }) => Promise<GoogleLinkChallenge | null>
 	addWallet: (address: string, signMessageFunction: any, onSuccess?: () => void) => Promise<void>
 	resetPasswordMutation: UseMutationResult<void, Error, { email: string; turnstileToken: string }>
-	changeEmail: (email: string) => void
 	addEmail: (email: string) => Promise<void>
 	setPromotionalEmails: (value: string) => void
 	promptVerifyEmail: (accountId: string | undefined) => void
@@ -108,7 +107,6 @@ interface AuthContextType {
 	loaders: {
 		logout: boolean
 		addWallet: boolean
-		changeEmail: boolean
 		addEmail: boolean
 		setPromotionalEmails: boolean
 		userLoading: boolean
@@ -153,7 +151,7 @@ const resendGoogleLink: AuthContextType['resendGoogleLink'] = (request) =>
 			})
 			// The linking endpoint enforces a minute between sends but returns no retry timestamp.
 			if (response.status === 429)
-				throw new OtpRequestError('Please wait before requesting another code.', Date.now() + 60_000)
+				throw new OtpRequestError('Wait before requesting another code.', Date.now() + 60_000)
 			if (!response.ok) throw new Error(await getAuthErrorMessageFromResponse(response, 'Could not resend the code.'))
 			const result = readGoogleAuthResult(await response.json())
 			if (result.kind !== 'link_verification_required') throw new Error('Invalid Google link response')
@@ -311,7 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return response
 			} catch (error) {
 				if (error instanceof Error && error.message === 'Session expired') {
-					toast.error('Your session has expired. Please login again.')
+					toast.error('Your session expired. Sign in again.')
 					logout()
 				}
 				throw error
@@ -486,19 +484,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const resetPasswordMutation = useMutation({
 		mutationFn: async ({ email, turnstileToken }: { email: string; turnstileToken: string }) => {
+			// The reset dialog confirms the send inline, so no toast covers it.
 			await requestPasswordReset(email, turnstileToken)
-			toast.success('Password reset email sent')
-		}
-	})
-
-	const changeEmail = useMutation({
-		mutationFn: async (email: string) => {
-			try {
-				await pb.collection('users').requestEmailChange(email)
-				toast.success('Email change request sent')
-			} catch {
-				toast.error('User with this email already exists')
-			}
 		}
 	})
 
@@ -617,7 +604,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		resendGoogleLink,
 		addWallet,
 		resetPasswordMutation,
-		changeEmail: changeEmail.mutate,
 		addEmail: addEmail.mutateAsync,
 		setPromotionalEmails: setPromotionalEmailsFromSettings,
 		promptVerifyEmail,
@@ -630,7 +616,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		loaders: {
 			logout: logoutMutation.isPending,
 			addWallet: addWalletMutation.isPending,
-			changeEmail: changeEmail.isPending,
 			addEmail: addEmail.isPending,
 			setPromotionalEmails: setPromotionalEmails.isPending,
 			userLoading,

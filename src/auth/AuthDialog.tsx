@@ -1,68 +1,59 @@
 import * as Ariakit from '@ariakit/react'
-import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
-import { Icon } from '~/ui/Icon'
+import { DialogBackButton, DialogHeader } from '~/ui/Dialog'
 
-export const authDialogStyles = `${dialogSurfaceStyles} [--dialog-width:420px] motion-reduce:transition-none`
-export const authBodyStyles = `${dialogScrollableBodyStyles} flex flex-col gap-4 p-4 sm:p-5`
 // Reserve four wallet rows and the helper (two lines on mobile) while the SDK loads.
 export const authWalletPickerStyles = 'min-h-62 sm:min-h-58'
+// Kept off ~/ui/Input: `peer` drives the FieldError sibling and user-invalid draws the error border from native
+// validation without React state, and the 40px field seats the 32px password-eye button inside it.
 export const authInputStyles =
-	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 text-base sm:text-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error disabled:opacity-60'
-export const authPrimaryButtonStyles =
-	'flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-60'
+	'peer h-10 w-full rounded-lg border border-medium bg-surface px-3 text-base sm:body-md text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden user-invalid:border-error user-invalid:focus:border-error aria-invalid:border-error aria-invalid:focus:border-error disabled:opacity-60'
+// Sign-in method buttons keep a centred label; the "Last used" chip sits on the top-right corner (LastUsedCorner),
+// so no label moves to make room at any width. A pending spinner takes the icon's slot.
 export const authProviderButtonStyles =
-	'flex min-h-10 w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-medium bg-surface px-3 py-2 text-sm font-medium text-primary enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+	'relative flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium px-3 py-2 label-md text-primary enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+// Wallet picker rows list choices with their tags, so they read left to right.
+export const authWalletRowStyles =
+	'relative flex min-h-10 w-full items-center gap-2 rounded-lg border border-medium px-3 py-2 text-left label-md text-primary enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+export const authProviderIconSlotStyles = 'flex size-5 shrink-0 items-center justify-center'
 
+/** The auth header: the title takes focus on every mount (callers key it by step), so a step change is announced. */
 export function AuthDialogHeader({
 	title,
 	prompt,
 	onBack,
-	showBackLabel = false,
-	store,
-	closeable = true
+	closable = true
 }: {
 	title: string
 	prompt?: string
 	onBack?: () => void
-	showBackLabel?: boolean
-	store?: Ariakit.DialogStore
-	closeable?: boolean
+	closable?: boolean
 }) {
 	return (
-		<div className="shrink-0 border-b border-subtle px-4 py-3 sm:px-5">
-			<div className="flex flex-wrap items-center gap-2">
-				{onBack ? (
-					<div className={showBackLabel ? 'w-full' : 'contents'}>
-						<Button
-							type="button"
-							variant="ghost"
-							size="md"
-							square={!showBackLabel}
-							className={showBackLabel ? '-ml-4' : '-ml-2'}
-							onClick={onBack}
-							aria-label="Back to sign in"
-						>
-							<Icon name="arrow-left" className="size-4" aria-hidden />
-							{showBackLabel ? 'Back to sign in' : null}
-						</Button>
-					</div>
-				) : null}
-				<Ariakit.Focusable render={<DialogHeading />} autoFocus tabIndex={-1} className="flex-1 focus:outline-hidden">
+		<DialogHeader
+			title={
+				<Ariakit.Focusable render={<span />} autoFocus tabIndex={-1} className="focus:outline-hidden">
 					{title}
 				</Ariakit.Focusable>
-				{closeable ? <DialogCloseButton store={store} ariaLabel="Close" /> : null}
-			</div>
-			{prompt ? <p className="mt-2 text-sm text-secondary">{prompt}</p> : null}
-		</div>
+			}
+			subtitle={prompt}
+			leading={onBack ? <DialogBackButton label="Back to sign in" onClick={onBack} /> : null}
+			closable={closable}
+		/>
 	)
 }
 
-export function LastUsedChip({ onPrimary = false }: { onPrimary?: boolean }) {
+/** The chip straddling a method button's top border. The dialog fill behind it hides the border line under the tinted pill. */
+export function LastUsedCorner() {
 	return (
-		<span
-			className={`shrink-0 rounded-full px-2 py-0.5 label-xs whitespace-nowrap max-[380px]:px-1 ${onPrimary ? 'bg-surface text-primary' : 'bg-brand-muted text-link-on-tint'}`}
-		>
+		<span className="pointer-events-none absolute -top-2 right-3 rounded-full bg-overlay">
+			<LastUsedChip />
+		</span>
+	)
+}
+
+export function LastUsedChip() {
+	return (
+		<span className="shrink-0 rounded-full bg-brand-muted px-2 py-0.5 label-xs whitespace-nowrap text-link-on-tint">
 			Last used
 		</span>
 	)

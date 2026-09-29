@@ -1,12 +1,15 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
 import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 import pb from '~/utils/pocketbase'
-import { ResendCooldown, type ResendCooldownHandle } from './ResendCooldown'
+import { ResendCooldown } from './ResendCooldown'
 
 interface SwitchToEmailModalProps {
 	isOpen: boolean
@@ -15,6 +18,12 @@ interface SwitchToEmailModalProps {
 }
 
 type Step = 'email' | 'confirm' | 'success'
+
+// A code or password error names its field and shows under it; any other request failure belongs to the whole form.
+interface FormError {
+	field: 'form' | 'otp' | 'password' | 'passwordConfirm'
+	message: string
+}
 
 interface SwitchToEmailErrorResponse {
 	error?: string
@@ -74,59 +83,51 @@ function switchErrorMessage(error: unknown, fallback: string) {
 	return (error as { message?: string } | null | undefined)?.message || fallback
 }
 
-export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEmailModalProps) {
+// Each opening starts fresh, and a closing dialog keeps its last step through the fade-out.
+export function SwitchToEmailModal(props: SwitchToEmailModalProps) {
+	return <SwitchToEmailDialog key={useOpeningKey(props.isOpen)} {...props} />
+}
+
+function SwitchToEmailDialog({ isOpen, onClose, defaultEmail }: SwitchToEmailModalProps) {
 	const fieldId = useId()
 	const [step, setStep] = useState<Step>('email')
 	const [email, setEmail] = useState(defaultEmail ?? '')
 	const [otp, setOtp] = useState('')
 	const [password, setPassword] = useState('')
 	const [passwordConfirm, setPasswordConfirm] = useState('')
-	const [error, setError] = useState('')
+	const [error, setError] = useState<FormError | null>(null)
+	const [codeResent, setCodeResent] = useState(false)
 	const [showPassword, setShowPassword] = useState(false)
 	const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
-	const resendRef = useRef<ResendCooldownHandle>(null)
-	// An optional call cannot be lowered inside a try, and both handlers start the timer from inside one.
-	const startResendCooldown = () => resendRef.current?.start()
+	// When the last code went out; the resend countdown runs from it.
+	const [codeSentAt, setCodeSentAt] = useState<number | null>(null)
 	// The whole flow is pinned to the session it started in: every request uses the
 	// token captured at the first OTP send, and a session change in the meantime
 	// discards the result instead of writing into the newer account.
 	const sessionTokenRef = useRef('')
 	const requestOtpMutation = useMutation({ mutationFn: requestSwitchToEmailOtp })
 	const confirmMutation = useMutation({ mutationFn: confirmSwitchToEmail })
+	// Neither request can be cancelled, so the dialog stays open until it settles; a late result
+	// therefore always lands in the opening that started it.
 	const isLoading = requestOtpMutation.isPending || confirmMutation.isPending
-
-	const resetState = () => {
-		sessionTokenRef.current = ''
-		setStep('email')
-		setEmail(defaultEmail ?? '')
-		setOtp('')
-		setPassword('')
-		setPasswordConfirm('')
-		setError('')
-		requestOtpMutation.reset()
-		confirmMutation.reset()
-		setShowPassword(false)
-		setShowPasswordConfirm(false)
-	}
-
-	const handleClose = () => {
-		resetState()
-		onClose()
-	}
+	const confirmIncomplete = otp.length !== 6 || !password || !passwordConfirm
 
 	const handleRequestOtp = async (e: React.FormEvent) => {
 		e.preventDefault()
 		if (!email || isLoading) return
 
-		setError('')
+		setError(null)
 		sessionTokenRef.current = pb.authStore.token
 
 		try {
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			startResendCooldown()
+			setCodeSentAt(Math.floor(Date.now() / 1000))
 			setStep('confirm')
 		} catch (requestError) {
-			setError(switchErrorMessage(requestError, 'Failed to send verification code. Please try again.'))
+			setError({
+				field: 'form',
+				message: switchErrorMessage(requestError, 'Failed to send verification code. Try again.')
+			})
 		}
 	}
 
@@ -135,16 +136,17 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 		if (!otp || !password || !passwordConfirm || isLoading) return
 
 		if (password !== passwordConfirm) {
-			setError('Passwords do not match.')
+			setError({ field: 'passwordConfirm', message: 'Passwords do not match.' })
 			return
 		}
 
 		if (password.length < 8) {
-			setError('Password must be at least 8 characters.')
+			setError({ field: 'password', message: 'Password must be at least 8 characters.' })
 			return
 		}
 
-		setError('')
+		setError(null)
+		setCodeResent(false)
 
 		const sessionToken = sessionTokenRef.current
 
@@ -155,7 +157,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 			// through server-side, but this dialog belongs to a session that no longer
 			// exists — close quietly instead of overwriting or announcing success.
 			if (pb.authStore.token !== sessionToken) {
-				handleClose()
+				onClose()
 				return
 			}
 
@@ -165,229 +167,266 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 			setStep('success')
 		} catch (confirmError) {
-			setError(switchErrorMessage(confirmError, 'Failed to switch to email authentication. Please try again.'))
+			const message = switchErrorMessage(confirmError, 'Failed to switch to email authentication. Try again.')
+			// The server names the code "OTP" in each of its code rejections: missing, malformed, invalid or expired.
+			setError({ field: /\bOTP\b/.test(message) ? 'otp' : 'form', message })
 		}
 	}
 
 	const handleResendOtp = async () => {
 		if (isLoading) return
 
-		setError('')
+		setError(null)
+		setCodeResent(false)
 
 		try {
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			startResendCooldown()
-			toast.success('Verification code resent!')
+			setCodeSentAt(Math.floor(Date.now() / 1000))
+			setCodeResent(true)
 		} catch (resendError) {
-			setError(switchErrorMessage(resendError, 'Failed to resend verification code.'))
+			setError({ field: 'form', message: switchErrorMessage(resendError, 'Failed to resend verification code.') })
 		}
 	}
 
 	const handleSuccessDone = () => {
-		handleClose()
+		onClose()
 		// Refresh auth to pick up the new user state
 		refreshSession().catch(() => {})
 	}
 
-	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-			<Ariakit.Dialog
-				backdrop={<div className="bg-black/80" />}
-				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[380px]"
-				portal
-				unmountOnHide
-			>
-				{step === 'email' && (
-					<div className="flex flex-col gap-5 px-5 py-6">
-						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Switch to Email</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
-								<Icon name="x" height={24} width={24} />
-							</Ariakit.DialogDismiss>
-						</div>
+	const clearError = () => {
+		if (error) setError(null)
+	}
 
-						<p className="text-sm leading-5 text-sub-text-muted">
+	const cancelButton = (
+		<Button type="button" size="md" disabled={isLoading} onClick={onClose}>
+			Cancel
+		</Button>
+	)
+
+	return (
+		<Dialog
+			size="sm"
+			open={isOpen}
+			// Leaving the success step by any route still picks up the new sign-in method.
+			onClose={step === 'success' ? handleSuccessDone : onClose}
+			pending={isLoading}
+			portal
+			unmountOnHide
+		>
+			{step === 'email' && (
+				<form onSubmit={handleRequestOtp} className="flex min-h-0 flex-auto flex-col">
+					<DialogHeader title="Switch to Email" />
+					<DialogBody>
+						<p className="body-sm text-secondary">
 							Enter the email address you'd like to use for signing in. We'll send you a verification code.
 						</p>
 
-						{/* Form */}
-						<form onSubmit={handleRequestOtp} className="flex flex-col gap-5">
-							<div className="flex flex-col gap-2">
-								<label htmlFor={`${fieldId}-email`} className="text-sm leading-[21px] text-sub-text-primary">
-									Email
-								</label>
-								<input
-									type="email"
-									id={`${fieldId}-email`}
-									required
-									value={email}
-									onChange={(e) => {
-										setEmail(e.target.value)
-										if (error) setError('')
-									}}
-									placeholder="your.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
-										error
-											? 'border-error'
-											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
-									}`}
-								/>
-								{error && <p className="text-xs leading-4 text-error">{error}</p>}
-							</div>
-
-							<button
-								type="submit"
-								disabled={!email || isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
-							>
-								{isLoading ? 'Sending...' : 'Send Verification Code'}
-							</button>
-						</form>
-					</div>
-				)}
-
-				{step === 'confirm' && (
-					<div className="flex flex-col gap-5 px-5 py-6">
-						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Verify & Set Password</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
-								<Icon name="x" height={24} width={24} />
-							</Ariakit.DialogDismiss>
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${fieldId}-email`} className="label-sm text-secondary">
+								Email
+							</label>
+							{/* Ariakit's autoFocus, so the step opens on the field instead of the header ×. */}
+							<Ariakit.Focusable
+								autoFocus
+								render={
+									<Input
+										type="email"
+										id={`${fieldId}-email`}
+										required
+										readOnly={isLoading}
+										value={email}
+										aria-invalid={error ? true : undefined}
+										onChange={(e) => {
+											setEmail(e.target.value)
+											clearError()
+										}}
+										placeholder="your.email@example.com"
+										className="w-full"
+									/>
+								}
+							/>
 						</div>
 
-						<p className="text-sm leading-5 text-sub-text-muted">
-							Enter the 6-digit code sent to <span className="font-medium text-sub-text-primary">{email}</span> and
-							choose a password.
+						{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
+					</DialogBody>
+					<DialogFooter
+						leading={!email ? <p className="body-sm text-tertiary">Enter an email address</p> : null}
+						dismiss={cancelButton}
+					>
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							disabled={!email}
+							pendingLabel={requestOtpMutation.isPending ? 'Sending…' : null}
+						>
+							Send Verification Code
+						</Button>
+					</DialogFooter>
+				</form>
+			)}
+
+			{step === 'confirm' && (
+				<form onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
+					<DialogHeader title="Verify & Set Password" />
+					<DialogBody>
+						<p className="body-sm text-secondary">
+							Enter the 6-digit code sent to <span className="font-medium text-primary">{email}</span> and choose a
+							password.
 						</p>
 
-						<form onSubmit={handleConfirm} className="flex flex-col gap-4">
-							<div className="flex flex-col gap-2">
-								<label htmlFor={`${fieldId}-otp`} className="text-sm leading-[21px] text-sub-text-primary">
-									Verification Code
-								</label>
-								<input
-									type="text"
-									inputMode="numeric"
-									id={`${fieldId}-otp`}
-									maxLength={6}
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${fieldId}-otp`} className="label-sm text-secondary">
+								Verification code
+							</label>
+							<Input
+								type="text"
+								inputMode="numeric"
+								id={`${fieldId}-otp`}
+								maxLength={6}
+								required
+								readOnly={isLoading}
+								value={otp}
+								aria-invalid={error?.field === 'otp' || undefined}
+								aria-describedby={error?.field === 'otp' ? `${fieldId}-otp-error` : undefined}
+								onChange={(e) => {
+									setOtp(e.target.value.replace(/\D/g, ''))
+									clearError()
+								}}
+								placeholder="000000"
+								className="w-full tracking-widest"
+							/>
+							{error?.field === 'otp' ? (
+								<p id={`${fieldId}-otp-error`} role="alert" className="body-sm text-data-down">
+									{error.message}
+								</p>
+							) : null}
+							<ResendCooldown
+								sentAtSeconds={codeSentAt}
+								onResend={handleResendOtp}
+								disabled={isLoading}
+								pending={requestOtpMutation.isPending}
+							/>
+							{codeResent ? (
+								<p role="status" className="body-sm text-secondary">
+									Code sent. Check your inbox.
+								</p>
+							) : null}
+						</div>
+
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${fieldId}-password`} className="label-sm text-secondary">
+								Password
+							</label>
+							<div className="relative">
+								<Input
+									type={showPassword ? 'text' : 'password'}
+									id={`${fieldId}-password`}
 									required
-									value={otp}
+									readOnly={isLoading}
+									value={password}
+									aria-invalid={error?.field === 'password' || undefined}
+									aria-describedby={error?.field === 'password' ? `${fieldId}-password-error` : undefined}
 									onChange={(e) => {
-										const val = e.target.value.replace(/\D/g, '')
-										setOtp(val)
-										if (error) setError('')
+										setPassword(e.target.value)
+										clearError()
 									}}
-									placeholder="000000"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
-										error
-											? 'border-error'
-											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
-									}`}
+									placeholder="At least 8 characters"
+									className="w-full pr-10"
 								/>
+								<button
+									type="button"
+									onClick={() => setShowPassword(!showPassword)}
+									aria-label={showPassword ? 'Hide password' : 'Show password'}
+									className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary"
+								>
+									<Icon name={showPassword ? 'eye-off' : 'eye'} height={16} width={16} />
+								</button>
 							</div>
-
-							<div className="flex flex-col gap-2">
-								<label htmlFor={`${fieldId}-password`} className="text-sm leading-[21px] text-sub-text-primary">
-									Password
-								</label>
-								<div className="relative">
-									<input
-										type={showPassword ? 'text' : 'password'}
-										id={`${fieldId}-password`}
-										required
-										value={password}
-										onChange={(e) => {
-											setPassword(e.target.value)
-											if (error) setError('')
-										}}
-										placeholder="At least 8 characters"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
-											error
-												? 'border-error'
-												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
-										}`}
-									/>
-									<button
-										type="button"
-										onClick={() => setShowPassword(!showPassword)}
-										aria-label={showPassword ? 'Hide password' : 'Show password'}
-										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
-									>
-										<Icon name={showPassword ? 'eye-off' : 'eye'} height={16} width={16} />
-									</button>
-								</div>
-							</div>
-
-							{/* Confirm Password */}
-							<div className="flex flex-col gap-2">
-								<label htmlFor={`${fieldId}-confirm`} className="text-sm leading-[21px] text-sub-text-primary">
-									Confirm Password
-								</label>
-								<div className="relative">
-									<input
-										type={showPasswordConfirm ? 'text' : 'password'}
-										id={`${fieldId}-confirm`}
-										required
-										value={passwordConfirm}
-										onChange={(e) => {
-											setPasswordConfirm(e.target.value)
-											if (error) setError('')
-										}}
-										placeholder="Re-enter your password"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
-											error
-												? 'border-error'
-												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
-										}`}
-									/>
-									<button
-										type="button"
-										onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-										aria-label={showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'}
-										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
-									>
-										<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} height={16} width={16} />
-									</button>
-								</div>
-							</div>
-
-							{error && <p className="text-xs leading-4 text-error">{error}</p>}
-
-							<button
-								type="submit"
-								disabled={!otp || otp.length !== 6 || !password || !passwordConfirm || isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
-							>
-								{isLoading ? 'Switching...' : 'Complete Switch'}
-							</button>
-
-							<ResendCooldown ref={resendRef} onResend={handleResendOtp} disabled={isLoading} />
-						</form>
-					</div>
-				)}
-
-				{step === 'success' && (
-					<div className="flex flex-col items-center gap-6 px-5 py-8">
-						<div className="flex size-16 items-center justify-center rounded-full bg-sub-brand-primary/10">
-							<Icon name="check" height={32} width={32} className="text-sub-brand-primary" />
+							{error?.field === 'password' ? (
+								<p id={`${fieldId}-password-error`} role="alert" className="body-sm text-data-down">
+									{error.message}
+								</p>
+							) : null}
 						</div>
-						<div className="flex flex-col gap-2 text-center">
-							<h2 className="text-xl font-semibold text-sub-text-primary">Switch Successful!</h2>
-							<p className="text-sm text-sub-text-muted">
-								Your account now uses email authentication. You can sign in with{' '}
-								<span className="font-medium text-sub-text-primary">{email}</span> and your password going forward.
-							</p>
+
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${fieldId}-confirm`} className="label-sm text-secondary">
+								Confirm password
+							</label>
+							<div className="relative">
+								<Input
+									type={showPasswordConfirm ? 'text' : 'password'}
+									id={`${fieldId}-confirm`}
+									required
+									readOnly={isLoading}
+									value={passwordConfirm}
+									aria-invalid={error?.field === 'passwordConfirm' || undefined}
+									aria-describedby={error?.field === 'passwordConfirm' ? `${fieldId}-confirm-error` : undefined}
+									onChange={(e) => {
+										setPasswordConfirm(e.target.value)
+										clearError()
+									}}
+									placeholder="Re-enter your password"
+									className="w-full pr-10"
+								/>
+								<button
+									type="button"
+									onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+									aria-label={showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'}
+									className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary"
+								>
+									<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} height={16} width={16} />
+								</button>
+							</div>
+							{error?.field === 'passwordConfirm' ? (
+								<p id={`${fieldId}-confirm-error`} role="alert" className="body-sm text-data-down">
+									{error.message}
+								</p>
+							) : null}
 						</div>
-						<button
-							type="button"
-							onClick={handleSuccessDone}
-							className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
+
+						{error?.field === 'form' ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
+					</DialogBody>
+					<DialogFooter
+						leading={
+							confirmIncomplete && !isLoading ? (
+								<p className="body-sm text-tertiary">Enter the code and your password twice</p>
+							) : null
+						}
+						dismiss={cancelButton}
+					>
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							// A resend in flight also holds the switch; its own control shows "Sending code…".
+							disabled={confirmIncomplete || requestOtpMutation.isPending}
+							pendingLabel={confirmMutation.isPending ? 'Switching…' : null}
 						>
+							Complete Switch
+						</Button>
+					</DialogFooter>
+				</form>
+			)}
+
+			{step === 'success' && (
+				<>
+					<DialogHeader title="Switch Successful" closable={false} />
+					<DialogBody>
+						<p className="body-sm text-secondary">
+							Your account now uses email authentication. You can sign in with{' '}
+							<span className="font-medium text-primary">{email}</span> and your password going forward.
+						</p>
+					</DialogBody>
+					<DialogFooter>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={handleSuccessDone}>
 							Done
-						</button>
-					</div>
-				)}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						</Button>
+					</DialogFooter>
+				</>
+			)}
+		</Dialog>
 	)
 }

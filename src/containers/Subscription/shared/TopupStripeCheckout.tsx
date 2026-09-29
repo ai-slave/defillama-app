@@ -2,6 +2,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe
 import { loadStripe } from '@stripe/stripe-js'
 import { use } from 'react'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
+import { InlineStatus } from '~/ui/Status'
 import { TopupCheckoutLoading } from './TopupCheckoutLoading'
 
 // A blocked Stripe script should leave the dialog usable for another method.
@@ -17,9 +18,9 @@ export default function TopupStripeCheckout({
 	const stripe = stripeInstance ? use(stripeInstance) : null
 	if (!stripe) {
 		return (
-			<div role="alert" className="body-md text-error">
+			<InlineStatus variant="error">
 				Card payments are unavailable. Go back and choose another payment method.
-			</div>
+			</InlineStatus>
 		)
 	}
 

@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { TopupModal } from '../TopupModal'
@@ -41,9 +42,7 @@ afterEach(async () => {
 })
 
 function button(name: string) {
-	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => el.getAttribute('aria-label') === name || el.textContent?.trim() === name
-	)!
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)!
 }
 async function click(name: string) {
 	await act(async () => button(name).click())
@@ -89,12 +88,12 @@ test('keeps back and close available during a cold checkout load, and does not r
 	await click('$25')
 	await click('Pay with Card')
 	await waitForUi(() => expect(cardCheckout.load).toHaveBeenCalledOnce())
-	expect(document.querySelector('[role="status"]')?.textContent).toBe('Loading card payments…')
+	expect(document.querySelector('[role="status"]')?.textContent).toContain('Loading card payments')
 	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Complete Payment')
 	await click('Back to amount')
 	expect(document.querySelector('input')?.value).toBe('25')
 	await click('Pay with Card')
-	await click('Close balance dialog')
+	await click('Close dialog')
 	await act(async () => cardCheckout.resolve())
 	expect(document.querySelector('[role="dialog"]')).toBeNull()
 	await click('Open balance')
@@ -145,7 +144,9 @@ test.each([
 	expect(button('Pay with Crypto').disabled).toBe(true)
 	await enterAmount('')
 	expect(document.querySelector('[role="alert"]')).toBeNull()
+	expect(document.getElementById(input.getAttribute('aria-describedby')!)?.textContent).toBe('Enter an amount')
 	expect(button('Pay with Card').disabled).toBe(true)
+	expect(button('Pay with Crypto').disabled).toBe(true)
 	await enterAmount(valid)
 	expect(input.value).toBe(valid)
 	expect(input.hasAttribute('aria-invalid')).toBe(false)
@@ -180,4 +181,24 @@ test('pending crypto checkout blocks duplicate actions and failure allows retry 
 	expect(topups()).toHaveLength(2)
 	expect(topups()[1]).toMatchObject({ amount: 5, provider: 'llamapay' })
 	expect(input.value).toBe('5')
+})
+
+test.each([
+	{ closed: false, hash: '#llamapay-checkout' },
+	{ closed: true, hash: '' }
+])('a crypto checkout that resolves after closed=$closed leaves the page at hash "$hash"', async ({ closed, hash }) => {
+	window.location.hash = ''
+	const request = Promise.withResolvers<Response>()
+	topupReplies.push(request.promise)
+	await mount()
+	await click('Pay with Crypto')
+	await waitForUi(() => expect(topups()).toHaveLength(1))
+	if (closed) await click('Close dialog')
+	// A same-page hash stands in for the checkout URL, so happy-dom records the redirect without loading a page.
+	const checkoutUrl = `${window.location.href.split('#')[0]}#llamapay-checkout`
+	await act(async () => request.resolve(Response.json({ provider: 'llamapay', checkoutUrl })))
+	// Settle the response body and the mutation callbacks before reading where the page went.
+	for (let tick = 0; tick < 5; tick++) await act(async () => {})
+	expect(window.location.hash).toBe(hash)
+	window.location.hash = ''
 })

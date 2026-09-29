@@ -533,7 +533,7 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 
 	input,
 	textarea {
-		@apply text-sm placeholder:text-sm;
+		@apply text-sm;
 	}
 
 	input,

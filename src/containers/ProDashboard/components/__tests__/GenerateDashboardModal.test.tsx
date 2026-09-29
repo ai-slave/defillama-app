@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -129,13 +130,13 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
 		'Add a fees comparison to this dashboard'
 	await submit()
-	await waitForUi(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Updating…'))
+	await waitForUi(() => expect(accessibleName(document.querySelector('button[type="submit"]')!)).toBe('Updating…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Updating dashboard')
 	expect(save).not.toHaveBeenCalled()
 	await act(async () =>
 		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
 	)
-	await waitForUi(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Saving…'))
+	await waitForUi(() => expect(accessibleName(document.querySelector('button[type="submit"]')!)).toBe('Saving…'))
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard')
 	expect(save).toHaveBeenCalledOnce()
 	expect(JSON.parse(mocks.creator.mock.calls[0][1].body)).toEqual({
@@ -195,7 +196,7 @@ test('editing the prompt explicitly discards the generated result before generat
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
 	expect(document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.readOnly).toBe(true)
 	await act(async () =>
-		[...document.querySelectorAll('button')].find((el) => el.textContent === 'Edit prompt and regenerate')!.click()
+		[...document.querySelectorAll('button')].find((el) => accessibleName(el) === 'Edit prompt and regenerate')!.click()
 	)
 	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
 	await waitForUi(() => expect(prompt.readOnly).toBe(false))

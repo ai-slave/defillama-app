@@ -40,7 +40,7 @@ export async function sendVerificationCode(accountId: string) {
 				if (Number.isFinite(deadline) && deadline > now) retryAt = deadline
 			}
 		}
-		throw new OtpRequestError('Please wait before requesting another code.', retryAt)
+		throw new OtpRequestError('Wait before requesting another code.', retryAt)
 	}
 	if (!response.ok) throw new OtpRequestError('Could not send a code.')
 	return Date.now() + 60_000

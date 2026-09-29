@@ -43,7 +43,7 @@ export function signupWithEmail(request: SignupRequest, onAccepted: (record: Sig
 			}
 			if (!response.ok) {
 				const body: { error?: string } = await response.json().catch(() => ({}))
-				if (response.status === 429) throw new Error('Too many attempts. Please wait before trying again.')
+				if (response.status === 429) throw new Error('Too many attempts. Wait before trying again.')
 				if (response.status === 400 && body.error) {
 					// Validation errors arrive as JSON inside the error string; display the field messages.
 					let validation: { data?: Record<string, { message: string }> } | null = null

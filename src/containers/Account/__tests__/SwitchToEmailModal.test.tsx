@@ -7,6 +7,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { SwitchToEmailModal } from '../SwitchToEmailModal'
 
 const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
@@ -16,14 +17,18 @@ let root: Root
 let client: QueryClient
 let container: HTMLDivElement
 let confirmCalls: Array<{ authorization: string | null; resolve: (response: Response) => void }>
+/** Replies for the next code requests, in order; an empty queue answers 200 at once. */
+let codeReplies: Array<Promise<Response>>
+const codeSent = () => new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
 
 beforeEach(() => {
 	confirmCalls = []
+	codeReplies = []
 	vi.stubGlobal(
 		'fetch',
 		vi.fn((url: string | URL, config?: RequestInit) => {
 			if (String(url) === `${AUTH_SERVER}/switch-to-email/request`) {
-				return Promise.resolve(new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }))
+				return codeReplies.shift() ?? Promise.resolve(codeSent())
 			}
 			if (String(url) === `${AUTH_SERVER}/switch-to-email/confirm`) {
 				return new Promise<Response>((resolve) => {
@@ -44,6 +49,7 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 	vi.unstubAllGlobals()
+	vi.useRealTimers()
 	pb.authStore.clear()
 	localStorage.clear()
 })
@@ -61,7 +67,7 @@ function submitForm(element: Element) {
 	form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 }
 
-async function renderModalAtConfirmStep() {
+async function renderModalAtCodeStep() {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
@@ -75,7 +81,10 @@ async function renderModalAtConfirmStep() {
 	await act(async () => setInput(emailInput, 'new.email@example.com'))
 	await act(async () => submitForm(emailInput))
 	await settle()
+}
 
+async function renderModalAtConfirmStep() {
+	await renderModalAtCodeStep()
 	const otpInput = document.querySelector<HTMLInputElement>('input[placeholder="000000"]')!
 	expect(otpInput).not.toBeNull()
 	const passwordInput = document.querySelector<HTMLInputElement>('input[placeholder="At least 8 characters"]')!
@@ -104,7 +113,7 @@ test('saves the switched session while it is still the current one', async () =>
 	await settle()
 
 	expect(pb.authStore.token).toBe(token('switched-user'))
-	expect(document.body.textContent).toContain('Switch Successful!')
+	expect(document.body.textContent).toContain('Switch Successful')
 })
 
 test('does not overwrite a newer session with a late confirmation', async () => {
@@ -124,4 +133,100 @@ test('does not overwrite a newer session with a late confirmation', async () => 
 
 	expect(pb.authStore.token).toBe(token('account-b'))
 	expect(pb.authStore.record?.id).toBe('account-b')
+})
+
+const button = (label: string) =>
+	[...document.querySelectorAll('button')].find((element) => accessibleName(element) === label)
+
+test('resending the code labels only the resend as pending and confirms the new code inline', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	// The countdown starts with the first code, even though the code step mounts after it was sent.
+	expect(button('Resend code (60s)')!.disabled).toBe(true)
+	await act(async () => vi.advanceTimersByTime(60_000))
+
+	const resend = Promise.withResolvers<Response>()
+	codeReplies.push(resend.promise)
+	await act(async () => button('Resend code')!.click())
+	await settle()
+
+	expect(button('Sending code…')).toBeDefined()
+	expect(button('Complete Switch')).toBeDefined()
+	await act(async () => resend.resolve(codeSent()))
+	await settle()
+
+	expect(document.querySelector('[role=dialog] [role=status]')?.textContent).toBe('Code sent. Check your inbox.')
+	expect(button('Resend code (60s)')!.disabled).toBe(true)
+})
+
+test('a failed code request shows its reason inside the dialog', async () => {
+	codeReplies.push(Promise.resolve(Response.json({ error: 'Email already in use' }, { status: 409 })))
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe('Email already in use')
+	expect(document.querySelector('input[type="email"]')).not.toBeNull()
+})
+
+test('mismatched passwords are reported under the confirmation field without sending the switch', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtCodeStep()
+	const password = document.querySelector<HTMLInputElement>('input[placeholder="At least 8 characters"]')!
+	const confirm = document.querySelector<HTMLInputElement>('input[placeholder="Re-enter your password"]')!
+	await act(async () => {
+		setInput(document.querySelector<HTMLInputElement>('input[placeholder="000000"]')!, '123456')
+		setInput(password, 'password123')
+		setInput(confirm, 'password124')
+	})
+	await act(async () => submitForm(confirm))
+
+	expect(document.getElementById(confirm.getAttribute('aria-describedby')!)?.textContent).toBe(
+		'Passwords do not match.'
+	)
+	expect(confirm.getAttribute('aria-invalid')).toBe('true')
+	expect(password.hasAttribute('aria-invalid')).toBe(false)
+	expect(confirmCalls).toHaveLength(0)
+})
+
+const confirmFields = () =>
+	[
+		'input[placeholder="000000"]',
+		'input[placeholder="At least 8 characters"]',
+		'input[placeholder="Re-enter your password"]'
+	].map((selector) => document.querySelector<HTMLInputElement>(selector)!)
+
+test('a general switch failure shows at the end of the form and leaves every field valid', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtConfirmStep()
+	confirmCalls[0].resolve(Response.json({ error: 'Failed to switch authentication method' }, { status: 500 }))
+	await settle()
+
+	expect(document.querySelector('[role=dialog] [role=alert]')?.textContent).toBe(
+		'Failed to switch authentication method'
+	)
+	expect(confirmFields().map((input) => input.getAttribute('aria-invalid'))).toEqual([null, null, null])
+})
+
+test('a rejected code is reported under the code field only', async () => {
+	pb.authStore.save(token('wallet-user'), record('wallet-user'))
+	await renderModalAtConfirmStep()
+	confirmCalls[0].resolve(Response.json({ error: 'Invalid or expired OTP' }, { status: 400 }))
+	await settle()
+
+	const [code, password, confirm] = confirmFields()
+	expect(document.getElementById(code.getAttribute('aria-describedby')!)?.textContent).toBe('Invalid or expired OTP')
+	expect([code, password, confirm].map((input) => input.getAttribute('aria-invalid'))).toEqual(['true', null, null])
+})
+
+test('the email step opens on its email field', async () => {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<SwitchToEmailModal isOpen onClose={() => {}} />
+			</QueryClientProvider>
+		)
+	)
+	await settle()
+	expect(document.activeElement).toBe(document.querySelector('input[type="email"]'))
 })

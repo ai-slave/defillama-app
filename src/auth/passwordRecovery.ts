@@ -14,8 +14,8 @@ export async function requestPasswordReset(email: string, turnstileToken: string
 	}
 	if (response.ok) return
 	const body: { error?: string } = await response.json().catch(() => ({}))
-	if (response.status === 429) throw new Error('Too many reset requests. Please wait before trying again.')
+	if (response.status === 429) throw new Error('Too many reset requests. Wait before trying again.')
 	if (response.status === 400 && /captcha/i.test(body.error ?? ''))
 		throw new Error('Complete the CAPTCHA verification again.')
-	throw new Error('Could not request a reset link. Please try again.')
+	throw new Error('Could not request a reset link. Try again.')
 }

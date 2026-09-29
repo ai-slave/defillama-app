@@ -1,14 +1,18 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { type FormEvent, type RefObject, useRef, useState } from 'react'
+import { type FormEvent, type ReactNode, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { revokeGoogleCredentialSharing } from '~/auth/GoogleSignInButton'
 import { AUTH_SERVER } from '~/constants'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 import pb from '~/utils/pocketbase'
-import { ResendCooldown, type ResendCooldownHandle } from './ResendCooldown'
+import { ResendCooldown } from './ResendCooldown'
 
 type ConfirmationType = 'apple_reauth' | 'otp' | 'typed_confirmation'
 
@@ -74,11 +78,11 @@ function readDeleteAccountResult(value: unknown): DeleteAccountResult {
 		!('deletedAt' in value) ||
 		typeof value.deletedAt !== 'string'
 	) {
-		throw new Error('Account deletion did not complete. Please try again.')
+		throw new Error('Account deletion did not complete. Try again.')
 	}
 	const deletedAt = new Date(value.deletedAt)
 	if (Number.isNaN(deletedAt.getTime()) || deletedAt.toISOString() !== value.deletedAt) {
-		throw new Error('Account deletion did not complete. Please try again.')
+		throw new Error('Account deletion did not complete. Try again.')
 	}
 
 	return { deletedAt: value.deletedAt, status: value.status }
@@ -104,70 +108,104 @@ async function fetchDeleteAccountJson<T>(path: string, sessionToken: string, opt
 	return data
 }
 
+type EligibilityState =
+	| { kind: 'checking' }
+	| { kind: 'failed'; message: string; retrying: boolean; onRetry: () => void }
+	| { kind: 'ready'; eligibility: DeleteAccountEligibility; requiredConfirmation: RequiredConfirmation }
+
+// One message reads as a sentence; a bullet only helps once there are several.
+function StatusMessages({ messages }: { messages: Array<string> }) {
+	if (messages.length === 1) return messages[0]
+	return (
+		<ul className="flex list-disc flex-col gap-1 pl-4">
+			{messages.map((message) => (
+				<li key={message}>{message}</li>
+			))}
+		</ul>
+	)
+}
+
 function DeleteAccountOverview({
-	eligibility,
+	actionError,
+	cancel,
+	check,
 	isRequesting,
-	onContinue,
-	requiredConfirmation
+	onContinue
 }: {
-	eligibility: DeleteAccountEligibility
+	actionError: string
+	cancel: ReactNode
+	check: EligibilityState
 	isRequesting: boolean
 	onContinue: () => void
-	requiredConfirmation: RequiredConfirmation
 }) {
-	const isBlocked = !eligibility.canDelete || eligibility.blockers.length > 0
+	const eligibility = check.kind === 'ready' ? check.eligibility : null
+	const confirmationType = check.kind === 'ready' ? check.requiredConfirmation.type : null
+	const isBlocked = eligibility !== null && (!eligibility.canDelete || eligibility.blockers.length > 0)
 
 	return (
 		<>
-			<p className="text-sm leading-[21px] text-sub-text-primary">
-				This permanently deletes your DefiLlama account and associated account data. You will be signed out, and this
-				cannot be undone.
-			</p>
+			<DialogBody>
+				<Ariakit.DialogDescription className="body-sm text-secondary">
+					This permanently deletes your DefiLlama account and associated account data. You will be signed out, and this
+					cannot be undone.
+				</Ariakit.DialogDescription>
 
-			{eligibility.warnings.length > 0 ? (
-				<div className="flex items-start gap-2 rounded-lg border border-sub-warning-border-light bg-sub-warning-bg/10 p-3 text-sub-warning-text-light dark:border-sub-warning-border-dark dark:text-sub-warning-text-dark">
-					<Icon name="alert-triangle" height={18} width={18} className="mt-0.5 shrink-0" />
-					<ul className="flex list-disc flex-col gap-1 pl-4 text-sm">
-						{eligibility.warnings.map((warning) => (
-							<li key={`${warning.code}:${warning.provider}`}>{warning.message}</li>
-						))}
-					</ul>
-				</div>
-			) : null}
+				{eligibility && eligibility.warnings.length > 0 ? (
+					<InlineStatus variant="warning">
+						<StatusMessages messages={eligibility.warnings.map((warning) => warning.message)} />
+					</InlineStatus>
+				) : null}
 
-			{isBlocked ? (
-				<div
-					className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
-					role="alert"
-				>
-					<Icon name="alert-warning" height={16} width={16} className="mt-0.5 shrink-0" />
-					<ul className="flex list-disc flex-col gap-1 pl-4 text-sm">
-						{eligibility.blockers.map((blocker) => (
-							<li key={blocker.code}>{blocker.message}</li>
-						))}
-					</ul>
-				</div>
-			) : requiredConfirmation.type === 'apple_reauth' ? (
-				<div className="flex items-start gap-2 rounded-lg border border-sub-warning-border-light bg-sub-warning-bg/10 p-3 text-sub-warning-text-light dark:border-sub-warning-border-dark dark:text-sub-warning-text-dark">
-					<Icon name="smartphone" height={18} width={18} className="mt-0.5 shrink-0" />
-					<p className="text-sm">Open the DefiLlama mobile app and reauthenticate with Apple to delete this account.</p>
-				</div>
-			) : (
-				<button
-					type="button"
-					onClick={onContinue}
-					disabled={isRequesting}
-					className="flex h-10 w-full items-center justify-center rounded-lg bg-error text-sm font-medium text-on-brand disabled:opacity-50"
-				>
-					{isRequesting ? (requiredConfirmation.type === 'otp' ? 'Sending Code...' : 'Preparing...') : 'Continue'}
-				</button>
-			)}
+				{eligibility && isBlocked ? (
+					<InlineStatus variant="error">
+						<StatusMessages messages={eligibility.blockers.map((blocker) => blocker.message)} />
+					</InlineStatus>
+				) : confirmationType === 'apple_reauth' ? (
+					<InlineStatus variant="warning">
+						Open the DefiLlama mobile app and reauthenticate with Apple to delete this account.
+					</InlineStatus>
+				) : null}
+
+				{check.kind === 'failed' ? <InlineStatus variant="error">{check.message}</InlineStatus> : null}
+				{actionError ? <InlineStatus variant="error">{actionError}</InlineStatus> : null}
+			</DialogBody>
+			<DialogFooter>
+				{cancel}
+				{check.kind === 'checking' ? (
+					// The eligibility check only gates Continue, so it waits in that button instead of replacing the dialog.
+					<Button type="button" variant="destructive" size="md" pendingLabel="Checking…">
+						Continue
+					</Button>
+				) : check.kind === 'failed' ? (
+					<Button
+						type="button"
+						variant="primary"
+						size="md"
+						onClick={check.onRetry}
+						pendingLabel={check.retrying ? 'Checking…' : null}
+					>
+						Try Again
+					</Button>
+				) : !isBlocked && confirmationType !== 'apple_reauth' ? (
+					<Button
+						type="button"
+						variant="destructive"
+						size="md"
+						onClick={onContinue}
+						pendingLabel={isRequesting ? (confirmationType === 'otp' ? 'Sending Code…' : 'Preparing…') : null}
+					>
+						Continue
+					</Button>
+				) : null}
+			</DialogFooter>
 		</>
 	)
 }
 
 function DeleteAccountConfirmationForm({
 	actionError,
+	cancel,
+	codeResent,
 	confirmation,
 	isDeleting,
 	isRequesting,
@@ -177,9 +215,11 @@ function DeleteAccountConfirmationForm({
 	onResendOtp,
 	otp,
 	requiredConfirmation,
-	resendRef
+	codeSentAt
 }: {
 	actionError: string
+	cancel: ReactNode
+	codeResent: boolean
 	confirmation: string
 	isDeleting: boolean
 	isRequesting: boolean
@@ -189,71 +229,82 @@ function DeleteAccountConfirmationForm({
 	onResendOtp: () => void
 	otp: string
 	requiredConfirmation: RequiredConfirmation
-	resendRef: RefObject<ResendCooldownHandle | null>
+	codeSentAt: number | null
 }) {
 	const needsOtp = requiredConfirmation.type === 'otp'
 	const canSubmit = confirmation === requiredConfirmation.text && (!needsOtp || otp.length === 6)
 
 	return (
-		<form onSubmit={onDelete} className="flex flex-col gap-4">
-			<p className="text-sm leading-[21px] text-sub-text-primary">
-				{needsOtp
-					? 'Enter the verification code sent to your email, then confirm the permanent deletion.'
-					: 'Confirm that you want to permanently delete your account.'}
-			</p>
+		<form onSubmit={onDelete} className="flex min-h-0 flex-auto flex-col">
+			<DialogBody>
+				<Ariakit.DialogDescription className="body-sm text-secondary">
+					{needsOtp
+						? 'Enter the verification code sent to your email, then confirm the permanent deletion.'
+						: 'Confirm that you want to permanently delete your account.'}
+				</Ariakit.DialogDescription>
 
-			{needsOtp ? (
-				<div className="flex flex-col gap-2">
-					<label htmlFor="delete-account-otp" className="text-sm text-sub-text-primary">
-						Verification Code
+				{needsOtp ? (
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor="delete-account-otp" className="label-sm text-secondary">
+							Verification code
+						</label>
+						<Input
+							id="delete-account-otp"
+							type="text"
+							inputMode="numeric"
+							autoComplete="one-time-code"
+							maxLength={6}
+							readOnly={isDeleting}
+							value={otp}
+							onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, ''))}
+							placeholder="000000"
+							className="w-full tracking-widest"
+						/>
+						<ResendCooldown
+							sentAtSeconds={codeSentAt}
+							onResend={onResendOtp}
+							disabled={isDeleting}
+							pending={isRequesting}
+						/>
+						{codeResent ? (
+							<p role="status" className="body-sm text-secondary">
+								Code sent. Check your inbox.
+							</p>
+						) : null}
+					</div>
+				) : null}
+
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor="delete-account-confirmation" className="label-sm text-secondary">
+						Type <span className="font-semibold text-primary">{requiredConfirmation.text}</span> to confirm
 					</label>
-					<input
-						id="delete-account-otp"
+					<Input
+						id="delete-account-confirmation"
 						type="text"
-						inputMode="numeric"
-						autoComplete="one-time-code"
-						maxLength={6}
-						value={otp}
-						onChange={(event) => onOtpChange(event.target.value.replace(/\D/g, ''))}
-						placeholder="000000"
-						className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel px-3 text-sm tracking-widest text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-dark-page"
+						autoComplete="off"
+						readOnly={isDeleting}
+						value={confirmation}
+						onChange={(event) => onConfirmationChange(event.target.value)}
+						placeholder={requiredConfirmation.text}
+						className="w-full"
 					/>
-					<ResendCooldown ref={resendRef} onResend={onResendOtp} disabled={isRequesting || isDeleting} />
 				</div>
-			) : null}
 
-			<div className="flex flex-col gap-2">
-				<label htmlFor="delete-account-confirmation" className="text-sm text-sub-text-primary">
-					Type <span className="font-semibold">{requiredConfirmation.text}</span> to confirm
-				</label>
-				<input
-					id="delete-account-confirmation"
-					type="text"
-					autoComplete="off"
-					value={confirmation}
-					onChange={(event) => onConfirmationChange(event.target.value)}
-					placeholder={requiredConfirmation.text}
-					className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel px-3 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-dark-page"
-				/>
-			</div>
-
-			<button
-				type="submit"
-				disabled={!canSubmit || isDeleting || isRequesting}
-				className="flex h-10 w-full items-center justify-center rounded-lg bg-error text-sm font-medium text-on-brand disabled:opacity-50"
-			>
-				{isDeleting ? 'Deleting Account...' : 'Delete Account Permanently'}
-			</button>
-
-			{actionError ? (
-				<div
-					className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
-					role="alert"
+				{actionError ? <InlineStatus variant="error">{actionError}</InlineStatus> : null}
+			</DialogBody>
+			<DialogFooter>
+				{cancel}
+				<Button
+					type="submit"
+					variant="destructive"
+					size="md"
+					// The field labels above say what unlocks it; a resend in flight shows its own "Sending code…".
+					disabled={!canSubmit || isRequesting}
+					pendingLabel={isDeleting ? 'Deleting Account…' : null}
 				>
-					<Icon name="alert-warning" height={16} width={16} className="mt-0.5 shrink-0" />
-					<p className="text-sm">{actionError}</p>
-				</div>
-			) : null}
+					Delete Account Permanently
+				</Button>
+			</DialogFooter>
 		</form>
 	)
 }
@@ -274,13 +325,15 @@ function DeleteAccountModal({
 		sessionToken
 	})
 	const flowSessionToken = flowSession.sessionToken
-	const resendRef = useRef<ResendCooldownHandle>(null)
+	// When the last code went out; the resend countdown runs from it.
+	const [codeSentAt, setCodeSentAt] = useState<number | null>(null)
 	const deleteSubmissionPendingRef = useRef(false)
 	const [step, setStep] = useState<'overview' | 'confirm'>('overview')
 	const [requestedConfirmation, setRequestedConfirmation] = useState<RequiredConfirmation | null>(null)
 	const [confirmation, setConfirmation] = useState('')
 	const [otp, setOtp] = useState('')
 	const [localError, setLocalError] = useState('')
+	const [codeResent, setCodeResent] = useState(false)
 
 	const isCurrentSession = () => pb.authStore.token === flowSessionToken
 	const assertCurrentSession = () => {
@@ -321,13 +374,13 @@ function DeleteAccountModal({
 					setLocalError('Account verification requirements changed. Close this dialog and try again.')
 					return
 				}
-				resendRef.current?.start()
-				toast.success('Deletion code resent')
+				setCodeSentAt(Math.floor(Date.now() / 1000))
+				setCodeResent(true)
 				return
 			}
 			if (data.requiredConfirmation.type !== 'apple_reauth') {
 				setStep('confirm')
-				if (data.requiredConfirmation.type === 'otp') setTimeout(() => resendRef.current?.start(), 0)
+				if (data.requiredConfirmation.type === 'otp') setCodeSentAt(Math.floor(Date.now() / 1000))
 			}
 		}
 	})
@@ -344,11 +397,31 @@ function DeleteAccountModal({
 		onSuccess: () => onDeleted(flowSession)
 	})
 
+	// Neither request can be cancelled, so the dialog stays open until it settles.
+	const pending = requestMutation.isPending || deleteMutation.isPending
 	const requiredConfirmation = requestedConfirmation ?? eligibilityQuery.data?.requiredConfirmation
 	const actionError =
 		localError ||
 		(requestMutation.error instanceof Error ? requestMutation.error.message : '') ||
 		(deleteMutation.error instanceof Error ? deleteMutation.error.message : '')
+
+	const check: EligibilityState = eligibilityQuery.data
+		? {
+				kind: 'ready',
+				eligibility: eligibilityQuery.data,
+				requiredConfirmation: requestedConfirmation ?? eligibilityQuery.data.requiredConfirmation
+			}
+		: eligibilityQuery.isError
+			? {
+					kind: 'failed',
+					message:
+						eligibilityQuery.error instanceof Error
+							? eligibilityQuery.error.message
+							: 'Failed to load account deletion details',
+					retrying: eligibilityQuery.isFetching,
+					onRetry: () => void eligibilityQuery.refetch()
+				}
+			: { kind: 'checking' }
 
 	const requireCurrentSession = () => {
 		if (isCurrentSession()) return true
@@ -379,107 +452,64 @@ function DeleteAccountModal({
 		)
 	}
 
-	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && !deleteMutation.isPending && onClose()}>
-			<Ariakit.Dialog
-				backdrop={<div className="bg-screen-dim" />}
-				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[420px]"
-				portal
-				unmountOnHide
-			>
-				<div className="flex flex-col gap-5 px-5 py-6">
-					<div className="flex items-center justify-between gap-4">
-						<Ariakit.DialogHeading className="text-xl leading-7 font-semibold text-sub-text-primary">
-							Delete Account
-						</Ariakit.DialogHeading>
-						<Ariakit.DialogDismiss
-							type="button"
-							disabled={deleteMutation.isPending}
-							aria-label="Close account deletion dialog"
-							className="rounded-full p-1 text-sub-text-primary transition-colors disabled:opacity-50"
-						>
-							<Icon name="x" height={24} width={24} />
-						</Ariakit.DialogDismiss>
-					</div>
+	const cancel = (
+		<Ariakit.DialogDismiss
+			type="button"
+			autoFocus
+			disabled={pending}
+			accessibleWhenDisabled
+			render={<Button size="md" />}
+		>
+			Cancel
+		</Ariakit.DialogDismiss>
+	)
 
-					{eligibilityQuery.isPending ? (
-						<div className="flex items-center gap-3 py-6 text-sm text-sub-text-muted" role="status">
-							<div className="size-5 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
-							Checking your account...
-						</div>
-					) : eligibilityQuery.isError ? (
-						<>
-							<div
-								className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
-								role="alert"
-							>
-								<Icon name="alert-warning" height={16} width={16} className="mt-0.5 shrink-0" />
-								<p className="text-sm">
-									{eligibilityQuery.error instanceof Error
-										? eligibilityQuery.error.message
-										: 'Failed to load account deletion details'}
-								</p>
-							</div>
-							<button
-								type="button"
-								onClick={() => void eligibilityQuery.refetch()}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
-							>
-								Try Again
-							</button>
-						</>
-					) : eligibilityQuery.data && requiredConfirmation ? (
-						step === 'overview' ? (
-							<>
-								<DeleteAccountOverview
-									eligibility={eligibilityQuery.data}
-									requiredConfirmation={requiredConfirmation}
-									isRequesting={requestMutation.isPending}
-									onContinue={() => {
-										if (!requireCurrentSession()) return
-										clearActionError()
-										requestMutation.mutate('continue')
-									}}
-								/>
-								{actionError ? (
-									<div
-										className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
-										role="alert"
-									>
-										<Icon name="alert-warning" height={16} width={16} className="mt-0.5 shrink-0" />
-										<p className="text-sm">{actionError}</p>
-									</div>
-								) : null}
-							</>
-						) : (
-							<DeleteAccountConfirmationForm
-								requiredConfirmation={requiredConfirmation}
-								confirmation={confirmation}
-								otp={otp}
-								actionError={actionError}
-								isRequesting={requestMutation.isPending}
-								isDeleting={deleteMutation.isPending}
-								resendRef={resendRef}
-								onConfirmationChange={(value) => {
-									clearActionError()
-									setConfirmation(value)
-								}}
-								onOtpChange={(value) => {
-									clearActionError()
-									setOtp(value)
-								}}
-								onResendOtp={() => {
-									if (!requireCurrentSession()) return
-									clearActionError()
-									requestMutation.mutate('resend')
-								}}
-								onDelete={handleDelete}
-							/>
-						)
-					) : null}
-				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+	// A destructive confirmation on every step: no ×, and Cancel stays in the footer at every width,
+	// so the exit never moves between the header and the footer mid-flow.
+	return (
+		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
+			<DialogHeader title="Delete Account" closable={false} />
+			{step === 'confirm' && requiredConfirmation ? (
+				<DeleteAccountConfirmationForm
+					requiredConfirmation={requiredConfirmation}
+					cancel={cancel}
+					codeResent={codeResent}
+					confirmation={confirmation}
+					otp={otp}
+					actionError={actionError}
+					isRequesting={requestMutation.isPending}
+					isDeleting={deleteMutation.isPending}
+					codeSentAt={codeSentAt}
+					onConfirmationChange={(value) => {
+						clearActionError()
+						setConfirmation(value)
+					}}
+					onOtpChange={(value) => {
+						clearActionError()
+						setOtp(value)
+					}}
+					onResendOtp={() => {
+						if (!requireCurrentSession()) return
+						clearActionError()
+						setCodeResent(false)
+						requestMutation.mutate('resend')
+					}}
+					onDelete={handleDelete}
+				/>
+			) : (
+				<DeleteAccountOverview
+					actionError={actionError}
+					cancel={cancel}
+					check={check}
+					isRequesting={requestMutation.isPending}
+					onContinue={() => {
+						if (!requireCurrentSession()) return
+						clearActionError()
+						requestMutation.mutate('continue')
+					}}
+				/>
+			)}
+		</Dialog>
 	)
 }
 
@@ -520,21 +550,22 @@ export function DeleteAccountCard() {
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-surface p-4 dark:border-sub-border-strong">
 				<div className="flex items-center gap-2">
 					<Icon name="trash-2" height={28} width={28} className="text-error" />
-					<span className="text-base font-medium text-sub-text-primary">Delete Account</span>
+					<span className="label-lg text-sub-text-primary">Delete Account</span>
 				</div>
 				<div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-					<p className="max-w-[440px] text-xs leading-4 text-sub-text-muted">
+					<p className="max-w-[440px] body-sm text-sub-text-muted">
 						Permanently delete your account data and remove your email from DefiLlama marketing services. This action
 						cannot be undone.
 					</p>
-					<button
+					<Button
 						type="button"
+						variant="destructive"
+						size="md"
 						onClick={() => setIsModalOpen(true)}
 						disabled={!authToken || !user?.id}
-						className="flex h-9 shrink-0 items-center justify-center rounded-lg border border-error/40 px-3 text-xs font-medium text-error transition-colors hover:bg-error/5 disabled:opacity-50"
 					>
 						Delete Account
-					</button>
+					</Button>
 				</div>
 			</div>
 

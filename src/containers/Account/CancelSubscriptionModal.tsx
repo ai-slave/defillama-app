@@ -1,6 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useSubscribe } from '~/auth/useSubscribe'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
+import { textareaStyles } from '~/ui/Input'
+import { InlineStatus } from '~/ui/Status'
 
 interface CancelSubscriptionModalProps {
 	isOpen: boolean
@@ -17,7 +20,12 @@ const CANCEL_BODY_TEXT = {
 	pastDue: 'Because the latest payment failed, cancellation takes effect immediately and access ends right away.'
 } as const
 
-export function CancelSubscriptionModal({ isOpen, onClose, variant = 'trial' }: CancelSubscriptionModalProps) {
+// Each opening starts fresh, and a closing dialog keeps its last step through the fade-out.
+export function CancelSubscriptionModal(props: CancelSubscriptionModalProps) {
+	return <CancelSubscriptionDialog key={useOpeningKey(props.isOpen)} {...props} />
+}
+
+function CancelSubscriptionDialog({ isOpen, onClose, variant = 'trial' }: CancelSubscriptionModalProps) {
 	const isTrial = variant === 'trial'
 	// The modal owns the cancellation: the mutation is the single source of the
 	// pending/success/error state, and all feedback renders inside the dialog.
@@ -26,12 +34,11 @@ export function CancelSubscriptionModal({ isOpen, onClose, variant = 'trial' }: 
 	const cancelled = cancelSubscriptionMutation.isSuccess
 	const cancelledImmediately = Boolean(cancelSubscriptionMutation.data?.cancelled_immediately)
 	const error = cancelSubscriptionMutation.isError
-		? cancelSubscriptionMutation.error.message || 'Failed to cancel subscription. Please try again or contact support.'
+		? cancelSubscriptionMutation.error.message || 'Failed to cancel subscription. Try again or contact support.'
 		: null
 
 	const handleClose = () => {
 		if (isLoading) return
-		cancelSubscriptionMutation.reset()
 		onClose()
 	}
 
@@ -43,97 +50,69 @@ export function CancelSubscriptionModal({ isOpen, onClose, variant = 'trial' }: 
 		cancelSubscriptionMutation.mutate(message || undefined)
 	}
 
+	// A confirmation: no ×, the choice is the footer, and Cancel stays visible at every width.
 	return (
-		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
-			<Ariakit.Dialog
-				backdrop={<div className="bg-black/80" />}
-				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[380px]"
-				portal
-				unmountOnHide
-			>
-				{cancelled ? (
-					<div className="flex flex-col gap-5 px-5 py-6">
-						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">
-								{cancelledImmediately ? 'Subscription Cancelled' : 'Cancellation Scheduled'}
-							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
-								<Icon name="x" height={24} width={24} />
-							</Ariakit.DialogDismiss>
-						</div>
-						<p className="text-sm leading-[21px] text-sub-text-primary">
+		<Dialog size="sm" role="alertdialog" open={isOpen} onClose={handleClose} pending={isLoading} portal unmountOnHide>
+			{cancelled ? (
+				<>
+					<DialogHeader
+						title={cancelledImmediately ? 'Subscription Cancelled' : 'Cancellation Scheduled'}
+						closable={false}
+					/>
+					<DialogBody>
+						<Ariakit.DialogDescription className="body-sm text-secondary">
 							{cancelledImmediately
 								? 'Your subscription has been cancelled and access has ended.'
 								: `Your ${isTrial ? 'trial' : 'subscription'} stays active until the end of the current period and will not renew.`}
-						</p>
-						<button
-							type="button"
-							onClick={handleClose}
-							className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
-						>
+						</Ariakit.DialogDescription>
+					</DialogBody>
+					<DialogFooter>
+						<Button type="button" variant="primary" size="md" autoFocus onClick={handleClose}>
 							Close
-						</button>
-					</div>
-				) : (
-					<form onSubmit={handleConfirm} className="flex flex-col gap-5 px-5 py-6">
-						{/* Header */}
-						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">
-								{isTrial ? 'Cancel Free Trial' : 'Cancel Subscription'}
-							</h3>
-							<Ariakit.DialogDismiss
-								type="button"
-								disabled={isLoading}
-								className="rounded-full p-1 text-sub-text-primary transition-colors disabled:opacity-50"
-							>
-								<Icon name="x" height={24} width={24} />
-							</Ariakit.DialogDismiss>
-						</div>
-
-						{/* Body */}
-						<p className="text-sm leading-[21px] text-sub-text-primary">{CANCEL_BODY_TEXT[variant]}</p>
-
-						{/* Feedback */}
-						<div className="flex flex-col gap-2">
-							<label htmlFor="cancel-reason" className="text-xs font-medium text-sub-text-muted">
+						</Button>
+					</DialogFooter>
+				</>
+			) : (
+				<form onSubmit={handleConfirm} className="flex min-h-0 flex-auto flex-col">
+					<DialogHeader title={isTrial ? 'Cancel Free Trial' : 'Cancel Subscription'} closable={false} />
+					<DialogBody>
+						<Ariakit.DialogDescription className="body-sm text-secondary">
+							{CANCEL_BODY_TEXT[variant]}
+						</Ariakit.DialogDescription>
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor="cancel-reason" className="label-sm text-secondary">
 								Reason for cancelling (optional)
 							</label>
 							<textarea
 								id="cancel-reason"
 								name="message"
-								placeholder="Let us know why you're cancelling..."
+								placeholder="Let us know why you're cancelling…"
 								rows={3}
-								className="w-full resize-none rounded-lg border border-sub-border-muted bg-transparent p-3 text-sm text-sub-text-primary outline-hidden placeholder:text-sub-text-muted focus:border-sub-brand-primary dark:border-sub-border-strong"
+								readOnly={isLoading}
+								className={`${textareaStyles} w-full resize-none`}
 							/>
 						</div>
-
-						{error ? (
-							<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
-								<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
-								<p className="text-sm">{error}</p>
-							</div>
-						) : null}
-
-						{/* Actions */}
-						<div className="flex flex-col gap-2">
-							<button
-								type="submit"
-								disabled={isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-error text-sm font-medium text-on-brand disabled:opacity-50"
-							>
-								{isLoading ? 'Cancelling...' : 'Confirm Cancellation'}
-							</button>
-							<Ariakit.DialogDismiss
-								type="button"
-								disabled={isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg border border-sub-border-muted text-sm text-sub-text-muted disabled:opacity-50 dark:border-sub-border-strong"
-							>
-								{isTrial ? 'Keep Trial' : 'Keep Subscription'}
-							</Ariakit.DialogDismiss>
-						</div>
-					</form>
-				)}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
+					</DialogBody>
+					<DialogFooter>
+						<Ariakit.DialogDismiss
+							type="button"
+							autoFocus
+							disabled={isLoading}
+							accessibleWhenDisabled
+							render={<Button size="md" />}
+						>
+							{isTrial ? 'Keep Trial' : 'Keep Subscription'}
+						</Ariakit.DialogDismiss>
+						<Button type="submit" variant="destructive" size="md" pendingLabel={isLoading ? 'Cancelling…' : null}>
+							Confirm Cancellation
+						</Button>
+					</DialogFooter>
+					<span role="status" className="sr-only">
+						{isLoading ? 'Cancelling…' : ''}
+					</span>
+				</form>
+			)}
+		</Dialog>
 	)
 }

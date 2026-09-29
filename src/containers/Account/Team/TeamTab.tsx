@@ -2,7 +2,8 @@ import { useRouter } from 'next/router'
 import { useEffect, useRef, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
+import { LoadingIndicator } from '~/ui/Status'
 import { CreateTeamCard } from './CreateTeamCard'
 import { TeamFaqCard } from './TeamFaqCard'
 import { TeamInfoCard } from './TeamInfoCard'
@@ -46,11 +47,8 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 
 	if ((inviteAcceptance.isFetching || (membershipConfirmed && inviteAccount.isPending)) && token) {
 		return (
-			<div className="flex flex-col items-center gap-4 py-16">
-				<div className="size-8 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
-				<p className="text-sm text-sub-text-muted">
-					{membershipConfirmed ? 'Invite accepted. Loading your account...' : 'Accepting invite...'}
-				</p>
+			<div role="status" aria-live="polite" className="flex justify-center py-16">
+				<LoadingIndicator label={membershipConfirmed ? 'Invite accepted. Loading your account' : 'Accepting invite'} />
 			</div>
 		)
 	}
@@ -67,42 +65,37 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 
 	if (inviteAcceptance.isError && token && !isTeamLoading && !team) {
 		return (
-			<div className="flex flex-col items-center gap-4 py-16">
-				<div className="flex size-16 items-center justify-center rounded-full bg-error/10">
-					<Icon name="alert-triangle" height={32} width={32} className="text-error" />
-				</div>
-				<div className="flex flex-col gap-2 text-center">
-					<h2 className="text-lg font-semibold text-sub-text-primary">Check your invitation</h2>
-					<p className="text-sm text-sub-text-muted">
-						{inviteAcceptance.error?.message ||
-							'Something went wrong. The invite may have expired or already been used.'}
+			<div className="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
+				<h2 className="heading-xs text-primary">Check your invitation</h2>
+				<p className="body-sm text-secondary">
+					{inviteAcceptance.error?.message || 'The invite may have expired or already been used.'}
+				</p>
+				<p className="body-sm text-secondary">
+					Make sure you&apos;re signed in with the email address the invite was sent to. If the connection dropped,
+					check whether you already joined.
+				</p>
+				{isTeamError ? (
+					<p role="alert" className="body-sm text-data-down">
+						Could not check membership.
 					</p>
-					<p className="text-sm text-sub-text-muted">
-						Make sure you&apos;re signed in with the email address the invite was sent to. If the connection dropped,
-						check whether you already joined.
-					</p>
-					{isTeamError ? (
-						<p role="alert" className="text-sm text-error">
-							Could not check membership.
-						</p>
-					) : null}
-					<button
-						type="button"
-						className="mx-auto rounded-lg border border-sub-border px-4 py-2 text-sm text-sub-text-primary disabled:opacity-50"
-						disabled={isTeamRetrying}
-						onClick={() => void refetchTeam()}
-					>
-						{isTeamRetrying ? 'Checking membership...' : 'Check membership'}
-					</button>
-				</div>
+				) : null}
+				<Button
+					type="button"
+					size="md"
+					className="mt-2"
+					onClick={() => void refetchTeam()}
+					pendingLabel={isTeamRetrying ? 'Checking membership…' : null}
+				>
+					Check membership
+				</Button>
 			</div>
 		)
 	}
 
 	if (isTeamLoading) {
 		return (
-			<div className="flex h-64 items-center justify-center">
-				<div className="size-8 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
+			<div role="status" aria-live="polite" className="flex h-64 items-center justify-center">
+				<LoadingIndicator />
 			</div>
 		)
 	}

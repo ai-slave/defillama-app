@@ -1,9 +1,12 @@
 import Script from 'next/script'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { authProviderButtonStyles, LastUsedChip } from '~/auth/AuthDialog'
+import { flushSync } from 'react-dom'
+import { authProviderButtonStyles, authProviderIconSlotStyles, LastUsedCorner } from '~/auth/AuthDialog'
 import { GOOGLE_WEB_CLIENT_ID } from '~/constants'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 
 type CodeResponse = { code?: string; error?: string }
 type CodeClient = { requestCode: () => void }
@@ -124,6 +127,7 @@ export function GoogleSignInButton({
 	const [popupPending, setPopupPending] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const clientRef = useRef<CodeClient | null>(null)
+	const buttonRef = useRef<HTMLButtonElement>(null)
 	const latest = useRef({ loading, disabled, onCode })
 	if ((disabled || loading) && popupPending) setPopupPending(false)
 	useLayoutEffect(() => {
@@ -160,7 +164,7 @@ export function GoogleSignInButton({
 			callback: (response) => {
 				if (!finish()) return
 				if (response.error || !response.code) {
-					setError('Google sign-in was not completed. Please try again.')
+					setError('Google sign-in did not finish. Try again.')
 					return
 				}
 				latest.current.onCode(response.code)
@@ -178,12 +182,17 @@ export function GoogleSignInButton({
 	const retryLoad = async () => {
 		setLoadStatus('loading')
 		document.querySelector<HTMLScriptElement>(`script[src="${GOOGLE_IDENTITY_SCRIPT_URL}"]`)?.remove()
-		try {
-			await loadGoogleIdentity()
-			setLoadStatus('ready')
-		} catch {
+		const loaded = await loadGoogleIdentity().then(
+			() => true,
+			() => false
+		)
+		if (!loaded) {
 			setLoadStatus('failed')
+			return
 		}
+		// Try again is gone once Google loads, so focus moves on to the button it enabled.
+		flushSync(() => setLoadStatus('ready'))
+		buttonRef.current?.focus()
 	}
 
 	const busy = loading || popupPending
@@ -197,48 +206,46 @@ export function GoogleSignInButton({
 				onError={() => setLoadStatus('failed')}
 			/>
 			<button
+				ref={buttonRef}
 				type="button"
-				className={`${authProviderButtonStyles} relative ${lastUsed ? 'max-[380px]:pr-19' : ''}`}
+				className={authProviderButtonStyles}
 				disabled={disabled || busy || loadStatus !== 'ready'}
 				aria-busy={busy}
 				onClick={requestCode}
 			>
-				{busy || loadStatus === 'loading' ? (
-					<LoadingSpinner size={14} />
-				) : (
-					<Icon name="google" height={18} width={18} className="shrink-0" />
-				)}
-				<span>
+				<span className={authProviderIconSlotStyles}>
+					{busy || loadStatus === 'loading' ? (
+						<LoadingSpinner size={14} />
+					) : (
+						<Icon name="google" height={18} width={18} />
+					)}
+				</span>
+				<span className="min-w-0 truncate">
 					{loading
-						? 'Signing in...'
+						? 'Signing in…'
 						: popupPending
-							? 'Waiting for Google...'
+							? 'Waiting for Google…'
 							: loadStatus === 'loading'
-								? 'Loading Google...'
+								? 'Loading Google…'
 								: 'Continue with Google'}
 				</span>
-				{lastUsed ? (
-					<span className="pointer-events-none absolute top-1/2 right-2 flex -translate-y-1/2">
-						<LastUsedChip />
-					</span>
-				) : null}
+				{lastUsed ? <LastUsedCorner /> : null}
 			</button>
 			{loadStatus === 'failed' ? (
-				<p role="alert" className="mt-2 text-center text-xs text-error">
-					Google could not load.{' '}
-					<button
-						type="button"
-						disabled={loading || disabled}
-						onClick={() => void retryLoad()}
-						className="text-link disabled:opacity-60"
-					>
-						Try again
-					</button>
-				</p>
+				<div className="mt-2">
+					<InlineStatus variant="error">
+						<div className="flex flex-wrap items-center justify-between gap-2">
+							<span>Google could not load.</span>
+							<Button type="button" size="sm" disabled={loading || disabled} onClick={() => void retryLoad()}>
+								Try again
+							</Button>
+						</div>
+					</InlineStatus>
+				</div>
 			) : error ? (
-				<p role="alert" className="mt-2 text-left text-xs text-error">
-					{error}
-				</p>
+				<div className="mt-2">
+					<InlineStatus variant="error">{error}</InlineStatus>
+				</div>
 			) : null}
 		</>
 	)

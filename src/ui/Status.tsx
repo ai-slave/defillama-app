@@ -45,17 +45,11 @@ export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
 	)
 }
 
-export function InlineStatus({
-	children,
-	variant
-}: {
-	children: ReactNode
-	variant: Exclude<StatusVariant, 'loading'>
-}) {
+export function InlineStatus({ children, variant }: { children: ReactNode; variant: 'empty' | 'error' | 'warning' }) {
 	return (
 		<div
 			role={variant === 'error' ? 'alert' : 'status'}
-			className={`rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm ${STATUS_TEXT[variant]}`}
+			className={`rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm ${variant === 'warning' ? 'text-warning' : STATUS_TEXT[variant]}`}
 		>
 			{children}
 		</div>

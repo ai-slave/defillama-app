@@ -32,7 +32,7 @@ export async function signInWithPassword({
 			}
 			if (!response.ok) {
 				const body: { error?: string } = await response.json().catch(() => ({}))
-				if (response.status === 429) throw new Error('Too many sign-in attempts. Please wait before trying again.')
+				if (response.status === 429) throw new Error('Too many sign-in attempts. Wait before trying again.')
 				if (response.status === 400 || response.status === 401) {
 					if (/captcha/i.test(body.error ?? '')) throw new Error('Complete the CAPTCHA verification again.')
 					throw new Error('Invalid email or password.')

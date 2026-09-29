@@ -3,6 +3,7 @@ import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { DashboardSettingsModal } from '~/containers/ProDashboard/components/DashboardSettingsModal'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -159,7 +160,7 @@ test('dashboard deletion keeps its confirmation open on error and closes setting
 	remove.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
 	await dashboard(true)
 	const button = (name: string) =>
-		[...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => e.textContent?.trim() === name)!
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)!
 	await act(async () => button('Delete Dashboard').click())
 	await act(async () => button('Delete').click())
 	await waitForUi(() => expect(button('Deleting…')).toBeDefined())

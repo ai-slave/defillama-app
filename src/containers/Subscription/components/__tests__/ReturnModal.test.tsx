@@ -82,14 +82,14 @@ describe('ReturnModal', () => {
 		expect(router.current.replace).not.toHaveBeenCalled()
 	})
 
-	test.each(['Stay on this page', 'Close', 'Escape'])('%s consumes the return intent', async (action) => {
+	test.each(['Stay on this page', 'Escape'])('%s consumes the return intent', async (action) => {
 		await act(async () => {
 			if (action === 'Escape') {
 				dialog().focus()
 				dialog().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 			} else {
 				Array.from(dialog().querySelectorAll('button'))
-					.find((button) => button.textContent === action || button.getAttribute('aria-label') === action)!
+					.find((button) => button.textContent === action)!
 					.click()
 			}
 		})

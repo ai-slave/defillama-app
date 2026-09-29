@@ -94,7 +94,7 @@ test('does not overwrite a replacement token-only session or resurrect it after 
 test.each([
 	[400, { message: 'Internal details must not leak' }, 'Invalid email or password.'],
 	[400, { error: 'Invalid captcha verification' }, 'Complete the CAPTCHA verification again.'],
-	[429, { error: 'Too many attempts' }, 'Too many sign-in attempts. Please wait before trying again.'],
+	[429, { error: 'Too many attempts' }, 'Too many sign-in attempts. Wait before trying again.'],
 	[503, { error: 'Authentication service unavailable' }, 'Unable to sign in right now.']
 ])('gives an actionable error for HTTP %s %j without changing the session', async (status, body, message) => {
 	const result = attempt()

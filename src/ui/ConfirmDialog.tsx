@@ -7,7 +7,9 @@ import { InlineStatus } from './Status'
 /* The confirmation layout: title, what happens, then Cancel and the confirm
    action. Cancel stays visible at every width and there is no ×, because the
    choice is the footer. While `pendingLabel` is set the dialog cannot be
-   closed and both buttons are inert; `error` shows above the footer.
+   closed and both buttons are inert; `waitingLabel` shows a check the
+   choice waits on in the confirm button without locking the dialog; `error`
+   shows above the footer.
    role="alertdialog" only for destructive or irreversible choices. */
 export function ConfirmDialog({
 	title,
@@ -15,7 +17,9 @@ export function ConfirmDialog({
 	confirmLabel,
 	cancelLabel = 'Cancel',
 	pendingLabel,
+	waitingLabel = null,
 	error,
+	confirmDisabled = false,
 	tone = 'destructive',
 	onConfirm,
 	...props
@@ -27,7 +31,11 @@ export function ConfirmDialog({
 	cancelLabel?: string
 	/** Set while the confirmed action runs. */
 	pendingLabel: string | null
+	/** Set while something the choice depends on settles, e.g. "Refreshing…"; Cancel stays available. */
+	waitingLabel?: string | null
 	error: ReactNode
+	/** The choice is unavailable right now; the description must say why. */
+	confirmDisabled?: boolean
 	tone?: 'destructive' | 'primary'
 	onConfirm: () => void
 } & Omit<ComponentProps<typeof Dialog>, 'size' | 'role' | 'children' | 'pending'>) {
@@ -43,12 +51,19 @@ export function ConfirmDialog({
 				<Ariakit.DialogDismiss autoFocus disabled={pending} accessibleWhenDisabled render={<Button size="md" />}>
 					{cancelLabel}
 				</Ariakit.DialogDismiss>
-				<Button type="button" size="md" variant={tone} pendingLabel={pendingLabel} onClick={onConfirm}>
+				<Button
+					type="button"
+					size="md"
+					variant={tone}
+					pendingLabel={pendingLabel ?? waitingLabel}
+					disabled={confirmDisabled}
+					onClick={onConfirm}
+				>
 					{confirmLabel}
 				</Button>
 			</DialogFooter>
 			<span role="status" className="sr-only">
-				{pendingLabel ?? ''}
+				{pendingLabel ?? waitingLabel ?? ''}
 			</span>
 		</Dialog>
 	)

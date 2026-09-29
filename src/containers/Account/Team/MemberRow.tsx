@@ -1,8 +1,10 @@
 import { useRef, useState, type RefObject } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
 import { AssignSubscriptionModal } from './AssignSubscriptionModal'
-import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamMember } from './types'
 import { useTeam } from './useTeam'
 
@@ -31,16 +33,16 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate text-sm text-sub-text-primary">{member.email}</span>
+						<span className="truncate body-md text-sub-text-primary">{member.email}</span>
 						{isAdminMember && (
-							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-sub-brand-primary">
+							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 label-xs text-sub-brand-primary">
 								Admin
 							</span>
 						)}
-						{isCurrentUser && <span className="shrink-0 text-[10px] text-sub-text-muted">(you)</span>}
+						{isCurrentUser && <span className="shrink-0 body-xs text-sub-text-muted">(you)</span>}
 					</div>
 					<div className="mt-1 flex items-center gap-2">
-						<span className={`text-xs ${hasSubscription ? 'text-sub-success' : 'text-sub-text-muted'}`}>
+						<span className={`body-sm ${hasSubscription ? 'text-sub-success' : 'text-sub-text-muted'}`}>
 							{getSubscriptionLabel(member.subscriptionType)}
 						</span>
 					</div>
@@ -50,41 +52,42 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 					<div className="flex shrink-0 items-center gap-1">
 						{!hasSubscription ? (
 							hasAvailableSeats && (
-								<button
+								<Button
 									type="button"
+									size="md"
 									ref={subscriptionFocusRef}
 									onClick={() => setShowAssignModal(true)}
-									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong"
 									aria-label={`Assign subscription to ${member.email}`}
 								>
-									<Icon name="plus" height={12} width={12} />
+									<Icon name="plus" height={14} width={14} />
 									Assign
-								</button>
+								</Button>
 							)
 						) : (
-							<button
+							<Button
 								type="button"
+								size="md"
 								ref={subscriptionFocusRef}
 								onClick={() => setShowUnassignConfirm(true)}
-								className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								aria-label={`Unassign subscription from ${member.email}`}
 							>
-								<Icon name="x" height={12} width={12} />
+								<Icon name="x" height={14} width={14} />
 								Unassign
-							</button>
+							</Button>
 						)}
 						{!isCurrentUser && !isAdminMember && (
-							<button
+							<Button
 								type="button"
+								size="md"
+								square
 								onClick={(event) => {
 									removeFocusRef.current = event.currentTarget
 									setShowRemoveConfirm(true)
 								}}
-								className="flex h-7 items-center justify-center rounded-md border border-sub-border-muted px-2 text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								aria-label={`Remove ${member.email}`}
 							>
-								<Icon name="trash-2" height={14} width={14} />
-							</button>
+								<Icon name="trash-2" height={16} width={16} />
+							</Button>
 						)}
 					</div>
 				)}
@@ -99,53 +102,62 @@ export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFoc
 				/>
 			)}
 
-			<ConfirmActionModal
-				finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
-				isOpen={showUnassignConfirm}
+			<ConfirmDialog
+				open={showUnassignConfirm}
 				onClose={() => {
 					unassignMemberMutation.reset()
 					setShowUnassignConfirm(false)
 				}}
-				onConfirm={() => {
-					unassignMemberMutation.mutate({ userId: member.userId }, { onSuccess: () => setShowUnassignConfirm(false) })
-				}}
-				isLoading={unassignMemberMutation.isPending}
+				portal
+				unmountOnHide
+				finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
 				title="Unassign Subscription"
 				description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
 				confirmLabel="Unassign"
-				pendingLabel="Unassigning..."
-				confirmVariant="danger"
+				pendingLabel={unassignMemberMutation.isPending ? 'Unassigning…' : null}
 				error={unassignMemberMutation.isError ? unassignMemberMutation.error.message : null}
-			/>
-
-			<ConfirmActionModal
-				finalFocus={removeFocusRef}
-				isOpen={showRemoveConfirm}
-				onClose={() => {
-					removeMemberMutation.reset()
-					setShowRemoveConfirm(false)
-				}}
 				onConfirm={() => {
-					const trigger = removeFocusRef.current
-					// Reconciliation can unmount this row before the success callback runs.
-					removeFocusRef.current = finalFocus?.current ?? trigger
-					removeMemberMutation.mutate(
+					unassignMemberMutation.mutate(
 						{ userId: member.userId },
 						{
-							onSuccess: () => setShowRemoveConfirm(false),
-							onError: () => {
-								removeFocusRef.current = trigger
+							onSuccess: () => {
+								setShowUnassignConfirm(false)
+								toast.success('Subscription removed from member')
 							}
 						}
 					)
 				}}
-				isLoading={removeMemberMutation.isPending}
+			/>
+
+			<ConfirmDialog
+				open={showRemoveConfirm}
+				onClose={() => {
+					removeMemberMutation.reset()
+					setShowRemoveConfirm(false)
+				}}
+				portal
+				unmountOnHide
+				finalFocus={removeFocusRef}
 				title="Remove Member"
 				description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
 				confirmLabel="Remove"
-				pendingLabel="Removing..."
-				confirmVariant="danger"
+				pendingLabel={removeMemberMutation.isPending ? 'Removing…' : null}
 				error={removeMemberMutation.isError ? removeMemberMutation.error.message : null}
+				onConfirm={() => {
+					const trigger = removeFocusRef.current
+					// Reconciliation can unmount this row before the success callback runs.
+					removeFocusRef.current = finalFocus?.current ?? trigger
+					// Success drops this row, and mutate() callbacks with it; the returned promise still settles.
+					removeMemberMutation.mutateAsync({ userId: member.userId }).then(
+						() => {
+							setShowRemoveConfirm(false)
+							toast.success('Member removed from team')
+						},
+						() => {
+							removeFocusRef.current = trigger
+						}
+					)
+				}}
 			/>
 		</>
 	)

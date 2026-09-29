@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { ResearchSponsorsAdminView } from '~/containers/Articles/admin/ResearchSponsorsAdminView'
 import { TrustedByAdminView } from '~/containers/Articles/admin/TrustedByAdminView'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
@@ -80,9 +81,7 @@ async function mount(element: React.ReactNode) {
 	await act(async () => root.render(<session.Wrapper>{element}</session.Wrapper>))
 }
 function button(name: string) {
-	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
-	)
+	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)
 	expect(result).toBeDefined()
 	return result!
 }
@@ -168,7 +167,7 @@ test('regeneration keeps confirmation and old key on failure, retries, and close
 	await click('Cancel')
 	expect(regenerate).not.toHaveBeenCalled()
 	await click('Regenerate')
-	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => el.textContent?.trim() === 'Regenerate')!
+	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => accessibleName(el) === 'Regenerate')!
 	await act(async () => confirm.click())
 	await waitForUi(() => expect(confirm.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => confirm.click())
@@ -311,7 +310,7 @@ test('sponsor deletion removes the row and restores focus to the surviving headi
 	await waitForUi(() => expect(button('Remove')).toBeDefined())
 	await click('Remove')
 	await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
-	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => el.textContent === 'Remove')!
+	const confirm = [...dialog()!.querySelectorAll('button')].find((el) => accessibleName(el) === 'Remove')!
 	await act(async () => confirm.click())
 	await waitForUi(() => expect(container.textContent).not.toContain('Original sponsor'))
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Sponsored reports'))

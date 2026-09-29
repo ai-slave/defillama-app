@@ -3,6 +3,7 @@ import {
 	Children,
 	createContext,
 	useContext,
+	useState,
 	type ComponentProps,
 	type ComponentPropsWithoutRef,
 	type ReactNode
@@ -112,6 +113,15 @@ export function Dialog({
 			/>
 		</DialogPendingContext>
 	)
+}
+
+/** A key that changes each time `open` turns true. Key a dialog's stateful component by it instead of resetting
+    its steps in the close handler: every opening starts fresh, and a closing dialog keeps its last step on screen
+    through the fade-out. */
+export function useOpeningKey(open: boolean) {
+	const [opening, setOpening] = useState({ open, key: 0 })
+	if (opening.open !== open) setOpening({ open, key: open ? opening.key + 1 : opening.key })
+	return opening.key
 }
 
 const SIDE_SHEET_WIDTH: Record<DialogSize, string> = {
@@ -290,14 +300,16 @@ export function DialogFooter({ leading, dismiss, children }: DialogFooterProps) 
 	return (
 		<footer className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t border-subtle px-4 py-3">
 			{leading ? <div className="flex min-w-0 items-center gap-2 max-sm:[&>button]:min-h-11">{leading}</div> : null}
-			<div className="ml-auto flex flex-1 items-center justify-end gap-2 sm:flex-none">
+			{/* min-w-fit keeps the global `min-width: 0` from squeezing the actions below their labels: when the row runs
+			    out of room, the leading slot wraps onto its own line instead. */}
+			<div className="ml-auto flex min-w-fit flex-1 items-center justify-end gap-2 sm:flex-none">
 				{/* With no commit action beside it, Cancel stays visible so the row is never empty on phones. */}
 				{dismiss ? (
 					<div className={`flex ${hasActions ? 'max-sm:hidden' : 'flex-1 *:flex-1 max-sm:*:min-h-11 sm:flex-none'}`}>
 						{dismiss}
 					</div>
 				) : null}
-				<div className="flex flex-1 items-center gap-2 *:flex-1 max-sm:*:min-h-11 sm:flex-none sm:*:flex-none">
+				<div className="flex min-w-fit flex-1 items-center gap-2 *:flex-1 max-sm:*:min-h-11 sm:flex-none sm:*:flex-none">
 					{children}
 				</div>
 			</div>

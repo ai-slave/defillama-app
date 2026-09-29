@@ -71,7 +71,7 @@ async function signIn() {
 
 test('offers no close button on the page, so the inline form keeps sending sign-ins', async () => {
 	await renderPage()
-	expect(button('Close')).toBeUndefined()
+	expect(button('Close dialog')).toBeUndefined()
 	await signIn()
 	expect(logins()).toHaveLength(1)
 })

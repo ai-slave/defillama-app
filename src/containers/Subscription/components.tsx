@@ -213,7 +213,7 @@ function PricingCardCta({
 				<p className="text-center text-[13px] leading-5 text-sub-text-cool-muted dark:text-sub-text-muted">
 					{isTeamProvided
 						? `Your ${card.title} plan is provided through your team. Ask your team admin about plan changes.`
-						: `Your ${card.title} plan was provided by the DefiLlama team. To make any changes, please contact the team.`}
+						: `Your ${card.title} plan was provided by the DefiLlama team. To make any changes, contact the team.`}
 				</p>
 			</>
 		)
