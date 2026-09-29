@@ -1,10 +1,13 @@
 import * as Ariakit from '@ariakit/react'
+import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import type { CryptoCardIssuersResponse } from '~/containers/CryptoCards/api.types'
+import { findCryptoCardIssuerSlug } from '~/containers/CryptoCards/models'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
 import { IrTabMenu } from '~/containers/Investors/IrTabMenu'
 import { getMainSiteIrBaseHref } from '~/containers/Investors/mainSiteDashboards'
@@ -14,6 +17,7 @@ import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
+import { fetchJson } from '~/utils/async'
 import {
 	getProtocolLayoutSeo,
 	type ProtocolTab,
@@ -36,7 +40,9 @@ export function ProtocolOverviewLayout({
 	warningBanners,
 	seoTitle,
 	seoDescription,
-	entityQuestions
+	entityQuestions,
+	informationHref,
+	cardDetailsSlug
 }: {
 	children: React.ReactNode
 	isCEX?: boolean
@@ -58,6 +64,8 @@ export function ProtocolOverviewLayout({
 	seoTitle?: string
 	seoDescription?: string
 	entityQuestions?: Array<string>
+	informationHref?: string | null
+	cardDetailsSlug?: string
 }) {
 	const { user } = useAuthContext()
 
@@ -116,6 +124,16 @@ export function ProtocolOverviewLayout({
 	}, [metrics])
 
 	const entitySlug = slug(name)
+	const protocolInformationHref = informationHref === undefined ? `/protocol/${entitySlug}` : informationHref
+	const cardIssuers = useQuery({
+		queryKey: ['crypto-cards', 'issuers'],
+		queryFn: () => fetchJson<CryptoCardIssuersResponse>('/api/dynamic/crypto-cards/issuers'),
+		enabled: !isCEX && user != null && cardDetailsSlug == null,
+		staleTime: 5 * 60 * 1000
+	})
+	const cardIssuerSlug =
+		cardDetailsSlug ?? (cardIssuers.data ? findCryptoCardIssuerSlug(cardIssuers.data.issuers, entitySlug) : null)
+	const showCardDetails = !isCEX && (tab === 'cardDetails' || cardIssuerSlug !== null)
 	const seo = getProtocolLayoutSeo({ name, isCEX, tab, seoTitle, seoDescription })
 	const { investorRelations: irDashboard, announcement: dashboardAnnouncement } = resolveProtocolDashboards({
 		name,
@@ -254,9 +272,9 @@ export function ProtocolOverviewLayout({
 								</TabLink>
 							) : null}
 						</>
-					) : (
+					) : protocolInformationHref ? (
 						<>
-							<TabLink as={ButtonLink} href={`/protocol/${slug(name)}`} data-active={!tab || tab === 'information'}>
+							<TabLink as={ButtonLink} href={protocolInformationHref} data-active={!tab || tab === 'information'}>
 								Information
 							</TabLink>
 							{metrics.tvl ? (
@@ -265,7 +283,7 @@ export function ProtocolOverviewLayout({
 								</TabLink>
 							) : null}
 						</>
-					)}
+					) : null}
 					{!isCEX
 						? protocolTabs.map((pt) => (
 								<TabLink
@@ -278,6 +296,15 @@ export function ProtocolOverviewLayout({
 								</TabLink>
 							))
 						: null}
+					{showCardDetails && cardIssuerSlug ? (
+						<TabLink
+							as={ButtonLink}
+							href={`${tabs.cardDetails.route}/${cardIssuerSlug}`}
+							data-active={tab === 'cardDetails'}
+						>
+							Card Details
+						</TabLink>
+					) : null}
 					{irDashboard ? (
 						irDashboard.tabPlacement === 'menu' ? (
 							<IrTabMenu dashboard={irDashboard} active={tab === 'investorRelations'} activeTabId={irTab} />

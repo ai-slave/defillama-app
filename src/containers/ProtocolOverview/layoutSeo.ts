@@ -29,6 +29,7 @@ export const protocolTabs = {
 	options: { id: 'options', name: 'Options Volume', route: '/protocol/options' },
 	tokenRights: { id: 'tokenRights', name: 'Token Rights', route: '/protocol/token-rights' },
 	forks: { id: 'forks', name: 'Forks', route: '/protocol/forks' },
+	cardDetails: { id: 'cardDetails', name: 'Card Details', route: '/protocol/card-details' },
 	investorRelations: { id: 'investorRelations', name: 'Investor Relations', route: '/protocol/investor-relations' }
 } as const
 

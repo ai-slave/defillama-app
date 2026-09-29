@@ -989,6 +989,12 @@
       "route": "/price-check",
       "category": "Tools",
       "description": "Check whether DefiLlama has a current price for a token address on a chain"
+    },
+    {
+      "name": "Crypto Cards",
+      "route": "/crypto-cards",
+      "category": "Tools",
+      "description": "Compare crypto cards by rewards, fees, supported assets, requirements, and availability"
     }
   ],
   "Main": [

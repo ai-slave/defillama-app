@@ -12,11 +12,18 @@ export interface CardsAmount {
 	currencies: Array<string>
 }
 
+export interface CardsAssetQuantity {
+	amount: number
+	asset: string
+}
+
 export interface CardsGateOption {
 	kind: 'deposit' | 'fee' | 'points' | 'spend' | 'stake' | 'volume' | 'unknown'
 	label: string
 	period?: string
 	lock_months?: number
+	money?: CardsAmount
+	asset?: CardsAssetQuantity
 }
 
 export interface CardsGate {
@@ -96,8 +103,11 @@ export interface CardsTierIntegrations {
 }
 
 export interface CardsTierAtm {
+	available?: CardsIntegrationFlag
+	withdrawal_fee?: CardsAmount
 	label?: string
 	withdrawal_fee_bps?: number
+	free_withdrawal_limit?: CardsAmount
 	free_withdrawal_period?: string
 }
 
@@ -146,7 +156,7 @@ export interface CardsRollup {
 export interface CardsIndexCard {
 	id: string
 	name: string
-	/** Parent protocol slug. Self-references and absent values mean the card is standalone. */
+	/** Parent card-issuer slug. Self-references and absent values mean the card is standalone. */
 	parent_id?: string
 	logo?: string
 	url?: string
@@ -184,4 +194,61 @@ export interface CardsIndexResponse {
 	reference: CardsReference
 	facets: CardsFacets
 	cards: Array<CardsIndexCard>
+}
+
+export interface CryptoCardIssuersResponse {
+	issuers: Array<string>
+}
+
+export interface CardsDetailValue {
+	label: string
+	money?: CardsAmount
+	asset?: CardsAssetQuantity
+	rate_bps?: number
+	period?: string
+}
+
+export interface CardsDetailFee extends CardsDetailValue {
+	kind: 'issuance' | 'shipping' | 'replacement' | 'atm' | 'fx' | 'other'
+	form_factor?: 'virtual' | 'physical'
+}
+
+export interface CardsSourceEvidence {
+	source_verbatim: string
+	source_url: string
+	source_updated_at?: string
+	content_sha256: string
+}
+
+export interface CardsDisclosureDerivation {
+	operation: string
+	rule_id?: string
+	rule_version?: number
+	explanation: string
+	evidence: Array<CardsSourceEvidence>
+}
+
+export interface CardsDisclosure {
+	status: 'confirmed' | 'explicitly_none' | 'not_publicly_disclosed'
+	absence_reason?: 'not_published' | 'no_qualifying_value' | 'contradictory_sources'
+	derivations?: Array<CardsDisclosureDerivation>
+}
+
+export interface CardsDetailTier {
+	id: string
+	other_fees: Array<CardsDetailFee>
+	card_issue: Array<CardsDetailFee>
+	signup_bonus?: string
+	referral?: CardsDetailValue
+	kyc?: string
+	subscription?: string
+	staking?: string
+	disclosure: Record<string, CardsDisclosure>
+}
+
+export interface CardsDetailResponse {
+	version: string
+	id: string
+	parent_id?: string
+	tiers: Array<CardsDetailTier>
 }

@@ -2,6 +2,7 @@ import { createColumnHelper, type TableOptions } from '@tanstack/react-table'
 import { useEffect, useRef, useState } from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
@@ -259,18 +260,12 @@ export function buildCardsColumns(
 							</button>
 						) : null}
 						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
-						{card.url ? (
-							<a
-								href={card.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="block truncate label-md text-link hover:underline"
-							>
-								{card.cardName}
-							</a>
-						) : (
-							<span className="block truncate label-md">{card.cardName}</span>
-						)}
+						<BasicLink
+							href={`/protocol/card-details/${encodeURIComponent(card.parentId)}`}
+							className="block truncate label-md text-link hover:underline"
+						>
+							{card.cardName}
+						</BasicLink>
 					</div>
 				)
 			},

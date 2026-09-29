@@ -65,6 +65,23 @@ export interface CardsIndexModel {
 	reference: CardsReferenceModel
 }
 
+export function getCryptoCardIssuerSlugs(cards: Array<Pick<CardsIndexCard, 'id' | 'parent_id'>>): Array<string> {
+	return [...new Set(cards.map((card) => card.parent_id ?? card.id))].sort()
+}
+
+export function normalizeCryptoCardIssuerSlug(value: string): string {
+	return value.replace(/[^a-z0-9]/gi, '').toLowerCase()
+}
+
+export function findCryptoCardIssuerSlug(issuers: Array<string>, entitySlug: string): string | null {
+	const exactMatch = issuers.find((issuer) => issuer === entitySlug)
+	if (exactMatch) return exactMatch
+
+	const normalizedEntitySlug = normalizeCryptoCardIssuerSlug(entitySlug)
+	const normalizedMatches = issuers.filter((issuer) => normalizeCryptoCardIssuerSlug(issuer) === normalizedEntitySlug)
+	return normalizedMatches.length === 1 ? normalizedMatches[0]! : null
+}
+
 const CURRENCY_SYMBOLS: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' }
 
 function amountLabel(amount: CardsAmount | undefined): string | null {
@@ -311,7 +328,7 @@ function cardRow(tiers: NonEmptyArray<CardTierRow>): CardTableRow {
 
 const NON_ALPHANUMERIC = /[^a-z0-9]/gi
 
-function parentProtocolName(parentId: string, cards: NonEmptyArray<CardTableRow>): string {
+function parentIssuerName(parentId: string, cards: NonEmptyArray<Pick<CardTableRow, 'cardName'>>): string {
 	const normalizedParentId = parentId.replace(NON_ALPHANUMERIC, '').toLowerCase()
 	for (const card of cards) {
 		const words = card.cardName.split(/\s+/)
@@ -331,13 +348,22 @@ function parentProtocolName(parentId: string, cards: NonEmptyArray<CardTableRow>
 		.join(' ')
 }
 
+export function getCryptoCardIssuerName(issuerSlug: string, cards: Array<CardsIndexCard>): string | null {
+	const issuerCards = cards.filter((card) => (card.parent_id ?? card.id) === issuerSlug)
+	if (issuerCards.length === 0) return null
+	return parentIssuerName(
+		issuerSlug,
+		issuerCards.map((card) => ({ cardName: card.name })) as NonEmptyArray<Pick<CardTableRow, 'cardName'>>
+	)
+}
+
 function parentRow(
 	parentId: string,
 	cards: NonEmptyArray<CardTableRow>,
 	tiers: NonEmptyArray<CardTierRow>
 ): CardTableRow {
 	const merged = mergeTiers(tiers)
-	const cardName = parentProtocolName(parentId, cards)
+	const cardName = parentIssuerName(parentId, cards)
 	const countryCodes = mergedList(cards.map((card) => card.countryCodes))
 	return {
 		...merged,
@@ -358,7 +384,7 @@ function parentRow(
 	}
 }
 
-/** One row per standalone card or parent protocol. Parent protocols expand
+/** One row per standalone card or parent issuer. Parent issuers expand
  *  into cards, and multi-tier cards expand once more into their tiers. Group
  *  after filtering so every rollup reflects only surviving tiers. */
 export function groupCardRows(rows: Array<CardTierRow>): Array<CardTableRow> {
