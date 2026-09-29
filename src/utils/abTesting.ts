@@ -1,6 +1,5 @@
 export const AB_EXPERIMENT_ID = 'foundation-aa-v1'
 export const REWARDS_EXPERIMENT_ID = 'rewards-featured-cards-v1'
-export const HOME_CHART_EXPERIMENT_ID = 'home-chart-dat-v1'
 export const AB_VISITOR_COOKIE_NAME = 'defillama-ab-id'
 export const AB_GROUP_COOKIE_NAME = 'defillama-ab-group'
 export const AB_GROUP_ATTRIBUTE = 'data-ab-group'

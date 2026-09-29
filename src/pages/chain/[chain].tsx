@@ -55,7 +55,8 @@ export const getStaticProps = withPerformanceLogging('chain/[chain]', async ({ p
 				categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
 				rwaChainsForActiveMcap: metadataCache.rwaList.chains,
 				tokenDirectory: metadataCache.tokenDirectory,
-				researchSponsorEntitySlug: chainRoute?.canonicalSlug
+				researchSponsorEntitySlug: chainRoute?.canonicalSlug,
+				includeHomepageRwaActiveMcap: isAllChain
 			})
 		)
 

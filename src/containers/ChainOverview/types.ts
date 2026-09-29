@@ -111,19 +111,9 @@ export interface IChainOverviewData {
 	charts: Array<ChainChartLabels>
 	description: string
 	isDataAvailable: boolean
-	datInflows: {
+	totalRwaActiveMcap: {
+		total: number
 		chart: Array<[number, number]>
-		total30d: number
-	} | null
-	homepageExperimentMetrics?: {
-		combinedPerpsOpenInterest: {
-			total: number | null
-			chart: Array<[number, number]>
-		} | null
-		totalRwaActiveMcap: {
-			total: number
-			chart: Array<[number, number]>
-		} | null
 	} | null
 	chainStablecoins: Array<{ name: string; url: string; symbol: string | null }> | null
 	website: string | null

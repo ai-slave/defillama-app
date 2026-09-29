@@ -18,7 +18,6 @@ interface SmolStatCardProps {
 	layout?: 'stack' | 'split'
 	/** Height classes; the grid decides how tall its cards are. */
 	className?: string
-	'data-ab-variant'?: 'a' | 'b'
 	/** The chart or bars under the value line. */
 	children: ReactNode
 }
@@ -33,7 +32,6 @@ export function SmolStatCard({
 	change,
 	layout = 'stack',
 	className,
-	'data-ab-variant': abVariant,
 	children
 }: SmolStatCardProps) {
 	// Tooltip spreads its props over its default <span>, and taps only toggle it without `render`, so pass it only for a link.
@@ -72,7 +70,6 @@ export function SmolStatCard({
 			<Card
 				padding="sm"
 				className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
-				data-ab-variant={abVariant}
 			>
 				<div className="flex flex-col gap-1">
 					{titleRow}
@@ -84,11 +81,7 @@ export function SmolStatCard({
 	}
 
 	return (
-		<Card
-			padding="sm"
-			className={`col-span-1 flex flex-col gap-1 ${className ?? ''}`.trim()}
-			data-ab-variant={abVariant}
-		>
+		<Card padding="sm" className={`col-span-1 flex flex-col gap-1 ${className ?? ''}`.trim()}>
 			{titleRow}
 			{valueLine}
 			{children}
