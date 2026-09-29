@@ -265,10 +265,11 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 	)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
-	const { startDate, endDate, handleStartDateChange, handleEndDateChange, validateDateRange } = useDateRangeValidation({
-		defaultStartDate: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60),
-		defaultEndDate: unixToDateString(maxSelectableDateUnix)
-	})
+	const { startDate, endDate, dateError, handleStartDateChange, handleEndDateChange, validateDateRange } =
+		useDateRangeValidation({
+			defaultStartDate: unixToDateString(maxSelectableDateUnix - 7 * 24 * 60 * 60),
+			defaultEndDate: unixToDateString(maxSelectableDateUnix)
+		})
 
 	useEffect(() => {
 		if (router.isReady) {
@@ -479,6 +480,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 						<DateInput
 							label="Start Date"
 							value={startDate}
+							error={dateError}
 							onChange={(value) => handleDateChange(value, true)}
 							min={unixToDateString(0)}
 							max={unixToDateString(maxSelectableDateUnix)}
@@ -486,6 +488,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 						<DateInput
 							label="End Date"
 							value={endDate}
+							error={dateError}
 							onChange={(value) => handleDateChange(value, false)}
 							min={startDate}
 							max={unixToDateString(maxSelectableDateUnix)}

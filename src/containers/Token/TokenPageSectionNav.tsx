@@ -121,21 +121,18 @@ export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSec
 			}
 		})
 
-		const handleScrollEnd = () => {
-			if (!clickLockTargetId.current) return
+		// A click holds the highlight on its section until that section reaches the top or the reader moves the page
+		// themselves. The end of the jump is not a release: a short last section never reaches the top, and the section
+		// above it can still fill the observer's band. Scrollbar drags arrive as pointerdown.
+		const releaseClickLock = () => {
 			clickLockTargetId.current = null
-			updateFromObserver()
 		}
-
-		if ('onscrollend' in window) {
-			window.addEventListener('scrollend', handleScrollEnd, { passive: true })
-		}
+		const releaseEvents = ['wheel', 'touchstart', 'keydown', 'pointerdown'] as const
+		for (const type of releaseEvents) window.addEventListener(type, releaseClickLock, { passive: true })
 
 		return () => {
 			window.cancelAnimationFrame(frameId)
-			if ('onscrollend' in window) {
-				window.removeEventListener('scrollend', handleScrollEnd)
-			}
+			for (const type of releaseEvents) window.removeEventListener(type, releaseClickLock)
 			observer.disconnect()
 			observerEntriesMap.clear()
 		}

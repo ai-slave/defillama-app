@@ -12,19 +12,18 @@ import {
 	type SortingState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { startTransition, useCallback, useMemo, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
+import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
-import { useDebouncedCallback } from '~/hooks/useDebounce'
 import defs from '~/public/equities-definitions.json'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { StaleText } from '~/ui/StaleText'
 import { TabPanel, Tabs } from '~/ui/Tabs'
@@ -838,43 +837,6 @@ function EquitiesRankingsTable({
 	)
 }
 
-/** Uncontrolled so typing stays instant; the URL (and the fetch) update after a debounce. */
-function EquitiesSearchInput({ search, updateSearch }: { search: string; updateSearch: (search: string) => void }) {
-	const inputRef = useRef<HTMLInputElement>(null)
-	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
-
-	useEffect(() => {
-		const input = inputRef.current
-		// Sync only on external URL changes (back navigation, a removed pill); the URL holds the trimmed
-		// value, so comparing the raw field would rewrite it and eat a trailing space mid-phrase.
-		if (input && input.value.trim() !== search) input.value = search
-	}, [search])
-
-	return (
-		<form
-			onSubmit={(event) => {
-				event.preventDefault()
-				debouncedUpdateSearch.cancel()
-				updateSearch(inputRef.current?.value.trim() ?? '')
-			}}
-			className={searchFieldWrapperStyles}
-		>
-			<label className="relative block min-w-0">
-				<span className="sr-only">Search companies or tickers</span>
-				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-				<Input
-					ref={inputRef}
-					name="search"
-					defaultValue={search}
-					onInput={(event) => debouncedUpdateSearch(event.currentTarget.value.trim())}
-					placeholder="Search companies or tickers"
-					className={searchFieldInputPlacementStyles}
-				/>
-			</label>
-		</form>
-	)
-}
-
 const VIEW_TABS: ReadonlyArray<ViewTab<EquitiesPageView>> = [
 	{ id: 'table', label: 'Table' },
 	{ id: 'map', label: 'Market Map' }
@@ -962,7 +924,12 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 
 	const sharedControls = (
 		<>
-			<EquitiesSearchInput search={serverTable.search} updateSearch={serverTable.updateSearch} />
+			<UrlSearchInput
+				search={serverTable.search}
+				updateSearch={serverTable.updateSearch}
+				label="Search companies or tickers"
+				placeholder="Search companies or tickers"
+			/>
 			<EquitiesFiltersDialog categoricalOptions={serverTable.options} filters={filters} onFiltersChange={setFilters} />
 		</>
 	)

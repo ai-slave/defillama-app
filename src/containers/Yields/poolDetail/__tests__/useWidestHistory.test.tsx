@@ -47,4 +47,29 @@ describe('useWidestHistory', () => {
 		expect(load).toHaveBeenCalledWith('max')
 		expect(latest!.model).toBe('max-model')
 	})
+
+	test('a range that failed shows loading, not the error, when the reader comes back to it', async () => {
+		const load = vi
+			.fn<(range: PoolHistoryRange) => Promise<string>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockReturnValueOnce(new Promise(() => {}))
+		let latest: ReturnType<typeof useWidestHistory<string>>
+		function Harness({ range }: { range: PoolHistoryRange }) {
+			latest = useWidestHistory('30d', 'initial-model', range, load)
+			return null
+		}
+		const show = (range: PoolHistoryRange) =>
+			act(async () => {
+				root.render(<Harness range={range} />)
+				await Promise.resolve()
+			})
+
+		await show('max')
+		expect(latest!).toEqual({ model: 'initial-model', loading: false, error: true })
+
+		await show('30d')
+		await show('max')
+		expect(load).toHaveBeenCalledTimes(2)
+		expect(latest!).toEqual({ model: 'initial-model', loading: true, error: false })
+	})
 })

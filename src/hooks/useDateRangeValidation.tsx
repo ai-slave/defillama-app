@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import toast from 'react-hot-toast'
 
 interface DateRangeValidationOptions {
 	/** Shown until the reader picks a date. It may move with the clock, and untouched inputs follow it. */
@@ -61,7 +60,6 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 		if (!startDateValue || !endDateValue) {
 			const errorMsg = 'Both start and end dates are required'
 			setDateError(errorMsg)
-			toast.error(errorMsg)
 			return false
 		}
 
@@ -73,7 +71,6 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 		if (end < start) {
 			const errorMsg = 'End date cannot be before start date'
 			setDateError(errorMsg)
-			toast.error(errorMsg)
 			return false
 		}
 
@@ -81,14 +78,12 @@ export const useDateRangeValidation = (options?: DateRangeValidationOptions) => 
 			if (start > today) {
 				const errorMsg = 'Start date cannot be in the future'
 				setDateError(errorMsg)
-				toast.error(errorMsg)
 				return false
 			}
 
 			if (end > today) {
 				const errorMsg = 'End date cannot be in the future'
 				setDateError(errorMsg)
-				toast.error(errorMsg)
 				return false
 			}
 		}

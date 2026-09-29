@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FocusEvent } from 'react'
+import { useId, useState } from 'react'
 import { Input } from '~/ui/Input'
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -15,60 +15,50 @@ const isPlausibleIsoDate = (value: string): boolean => {
 export function DateInput({
 	label,
 	value,
+	error,
 	onChange,
 	min,
 	max
 }: {
 	label: string
 	value: string
+	/** Why the page rejected the last date it was given. */
+	error: string
 	onChange: (value: string) => void
 	min?: string
 	max?: string
 }) {
-	const inputRef = useRef<HTMLInputElement>(null)
-	const lastCommittedRef = useRef(value)
+	// What the reader is typing, only while the field has focus; on blur it shows the committed value, so a date the
+	// page rejected goes away. Controlled with the browser's own value, so React never rewrites a date mid-edit.
+	const [draft, setDraft] = useState<string | null>(null)
+	const errorId = useId()
+	// The error belongs to the rejected date, so it shows only while this field still holds one.
+	const shownError = draft !== null && draft !== value && error ? error : null
 
-	// Uncontrolled defaultValue avoids React clobbering the browser date editor mid-edit; sync prop -> DOM when not focused.
-	useEffect(() => {
-		lastCommittedRef.current = value
-		const node = inputRef.current
-		if (!node) return
-		if (node.value === value) return
-		if (document.activeElement === node) return
-		node.value = value
-	}, [value])
-
-	const tryCommit = (next: string) => {
-		if (next === lastCommittedRef.current) return
-		if (!isPlausibleIsoDate(next)) return
-		onChange(next)
-	}
-
-	const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
-		const next = event.target.value
-		if (isPlausibleIsoDate(next)) {
-			tryCommit(next)
-			return
-		}
-		const node = inputRef.current
-		if (node && node.value !== lastCommittedRef.current) {
-			node.value = lastCommittedRef.current
-		}
+	const handleChange = (next: string) => {
+		setDraft(next)
+		if (next !== value && isPlausibleIsoDate(next)) onChange(next)
 	}
 
 	return (
 		<label className="flex flex-col gap-1.5">
 			<span className="body-sm text-secondary">{label}</span>
 			<Input
-				ref={inputRef}
 				type="date"
-				defaultValue={value}
-				onChange={(event) => tryCommit(event.target.value)}
-				onBlur={handleBlur}
+				value={draft ?? value}
+				onChange={(event) => handleChange(event.target.value)}
+				onBlur={() => setDraft(null)}
+				aria-invalid={shownError ? true : undefined}
+				aria-describedby={shownError ? errorId : undefined}
 				min={min}
 				max={max}
 				className="cursor-pointer dark:scheme-dark"
 			/>
+			{shownError ? (
+				<p id={errorId} role="alert" className="body-sm text-error">
+					{shownError}
+				</p>
+			) : null}
 		</label>
 	)
 }

@@ -35,8 +35,8 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 		const cardOverflowing = !!card && card.scrollHeight > card.clientHeight + 1
 		// oxlint-disable-next-line react/set-state-in-effect -- layout measurement result
 		setClipped(textClipped || cardOverflowing)
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- re-measure whenever the rendered text or slot changes
-	}, [quote.quote, quote.username, slotIndex, hasQuoteContent])
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- re-measure when the slot or any text QuoteBlock renders changes
+	}, [quote.quote, quote.username, quote.social_media_name, slotIndex, hasQuoteContent])
 
 	if (!hasQuoteContent) {
 		return (

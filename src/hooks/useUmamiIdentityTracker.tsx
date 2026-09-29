@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAuthContext } from '~/auth'
-
-const UMAMI_READY_RETRY_INTERVAL_MS = 500
-const MAX_UMAMI_READY_RETRIES = 10
+import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 
 export function useUmamiIdentityTracker() {
 	const { user } = useAuthContext()
@@ -11,75 +9,23 @@ export function useUmamiIdentityTracker() {
 	const distinctId = user?.id ?? null
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return
-
 		if (!distinctId) {
 			lastIdentifiedIdRef.current = null
 			return
 		}
+		if (shouldSkipIdentify) return
 
+		// Umami loads lazily, so the user may resolve before or after it does.
 		const identifyCurrentUser = () => {
-			if (shouldSkipIdentify) {
-				return true
-			}
-
 			const umami = window.umami
-			if (!umami) return false
-			if (lastIdentifiedIdRef.current === distinctId) return true
-
+			if (!umami || lastIdentifiedIdRef.current === distinctId) return
 			umami.identify(distinctId)
 			lastIdentifiedIdRef.current = distinctId
 			umami.track()
-			return true
 		}
 
-		let intervalId: number | null = null
-		const runIdentifyWorkflow = () => {
-			if (identifyCurrentUser()) return
-
-			// For the case when userId is already resolved, but window.umami isn't ready yet,
-			// we'll keep trying to identify until succeed/retry limit
-			let retryCount = 0
-			intervalId = window.setInterval(() => {
-				if (identifyCurrentUser()) {
-					if (intervalId !== null) {
-						window.clearInterval(intervalId)
-						intervalId = null
-					}
-					return
-				}
-
-				retryCount += 1
-				if (retryCount >= MAX_UMAMI_READY_RETRIES && intervalId !== null) {
-					window.clearInterval(intervalId)
-					intervalId = null
-				}
-			}, UMAMI_READY_RETRY_INTERVAL_MS)
-		}
-
-		let idleCallbackId: number | null = null
-		let timeoutId: number | null = null
-
-		if (typeof window.requestIdleCallback === 'function') {
-			idleCallbackId = window.requestIdleCallback(() => {
-				runIdentifyWorkflow()
-			})
-		} else {
-			timeoutId = window.setTimeout(() => {
-				runIdentifyWorkflow()
-			}, 0)
-		}
-
-		return () => {
-			if (idleCallbackId !== null && typeof window.cancelIdleCallback === 'function') {
-				window.cancelIdleCallback(idleCallbackId)
-			}
-			if (timeoutId !== null) {
-				window.clearTimeout(timeoutId)
-			}
-			if (intervalId !== null) {
-				window.clearInterval(intervalId)
-			}
-		}
+		identifyCurrentUser()
+		window.addEventListener(UMAMI_READY_EVENT, identifyCurrentUser)
+		return () => window.removeEventListener(UMAMI_READY_EVENT, identifyCurrentUser)
 	}, [distinctId, shouldSkipIdentify])
 }

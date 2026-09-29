@@ -1,12 +1,11 @@
 import { useEffect } from 'react'
 import { useInvestorsSite } from '~/containers/Investors/SiteContext'
+import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { checkParentAuth } from '~/utils/checkParentAuth'
 
 // Only runs on investor hosts, including when both sites share one deployment.
 
 const SESSION_KEY = 'ir-parent-auth-tracked'
-const UMAMI_RETRY_INTERVAL_MS = 500
-const MAX_UMAMI_RETRIES = 10
 
 export function useParentAuthTracker() {
 	const site = useInvestorsSite()
@@ -19,7 +18,7 @@ export function useParentAuthTracker() {
 		}
 
 		let cancelled = false
-		let intervalId: number | null = null
+		let trackVisit: (() => void) | null = null
 
 		checkParentAuth().then((user) => {
 			if (cancelled) return
@@ -29,37 +28,24 @@ export function useParentAuthTracker() {
 			}
 
 			console.log('[auth-tracker] authenticated user:', user.id)
-			sessionStorage.setItem(SESSION_KEY, user.id ?? 'unknown')
-
-			const trackVisit = (): boolean => {
+			// Umami loads lazily, so the visit is sent now or when it is ready. The session counts as tracked only
+			// once it is sent: a visitor who leaves first is tracked on their next page load.
+			trackVisit = () => {
 				const umami = window.umami
-				if (!umami) return false
-
+				if (!umami || sessionStorage.getItem(SESSION_KEY)) return
 				umami.identify(user.id ?? 'unknown')
 				umami.track('ir-authenticated-visit', {
 					userId: user.id
 				})
-				return true
+				sessionStorage.setItem(SESSION_KEY, user.id ?? 'unknown')
 			}
-
-			if (trackVisit()) return
-
-			let retries = 0
-			intervalId = window.setInterval(() => {
-				const tracked = trackVisit()
-				retries += 1
-				if ((tracked || retries >= MAX_UMAMI_RETRIES) && intervalId !== null) {
-					window.clearInterval(intervalId)
-					intervalId = null
-				}
-			}, UMAMI_RETRY_INTERVAL_MS)
+			trackVisit()
+			window.addEventListener(UMAMI_READY_EVENT, trackVisit)
 		})
 
 		return () => {
 			cancelled = true
-			if (intervalId !== null) {
-				window.clearInterval(intervalId)
-			}
+			if (trackVisit) window.removeEventListener(UMAMI_READY_EVENT, trackVisit)
 		}
 	}, [site])
 }

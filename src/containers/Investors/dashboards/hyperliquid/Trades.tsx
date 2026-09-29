@@ -295,11 +295,14 @@ export default function Trades() {
 		}
 	})
 
+	// The 1m and 5m windows move with the clock while the tape has trades. Keyed on the trade count, a trade
+	// at least every second restarted the timer before it fired, so the windows stopped moving.
+	const hasTrades = trades.length > 0
 	useEffect(() => {
-		if (trades.length === 0) return
+		if (!hasTrades) return
 		const id = setInterval(() => setNow(Date.now()), 1000)
 		return () => clearInterval(id)
-	}, [trades.length])
+	}, [hasTrades])
 
 	const metrics = useMemo(() => {
 		const bestBid = book.bids[0]?.px ?? 0

@@ -17,7 +17,7 @@ export function useWidestHistory<Model>(
 	enabled = true
 ): { model: Model; loading: boolean; error: boolean } {
 	const [widest, setWidest] = useState({ range: initialRange, model: initialModel })
-	// The range whose load last failed. It reads as an error only while that range is the one asked for.
+	// The range whose load last failed, while the reader still asks for it.
 	const [failed, setFailed] = useState<PoolHistoryRange | null>(null)
 	const reqId = useRef(0)
 	// Read at call time through a ref, so callers can pass an inline closure without re-arming
@@ -30,6 +30,9 @@ export function useWidestHistory<Model>(
 	// Already covered by the widest loaded range → slice locally, no network. Loading and error are
 	// derived from that, so the effect below only starts requests and records their outcome.
 	const pending = enabled && !rangeCovers(widest.range, range)
+	// A failure lasts only while its range stays pending: coming back to that range retries it, and
+	// the retry shows as loading.
+	if (failed !== null && (!pending || failed !== range)) setFailed(null)
 
 	useEffect(() => {
 		if (!pending) return
@@ -49,6 +52,6 @@ export function useWidestHistory<Model>(
 		}
 	}, [pending, range])
 
-	const error = pending && failed === range
+	const error = failed !== null
 	return { model: widest.model, loading: pending && !error, error }
 }

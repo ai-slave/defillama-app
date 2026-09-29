@@ -12,16 +12,15 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
+import { UrlSearchInput } from '~/components/Table/search/UrlSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieHovercard } from '~/containers/TokenRights/TokenRightsPopover'
 import type { TokenRightsPreview } from '~/containers/TokenRights/types'
 import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
-import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
@@ -487,31 +486,6 @@ function TokensSharedControls({
 	onChainQueryChange: (updates: Record<string, string | Array<string> | undefined>) => void
 	onNativeOnlyChange: (nativeOnly: boolean) => void
 }) {
-	const searchInputRef = React.useRef<HTMLInputElement>(null)
-	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
-
-	React.useEffect(() => {
-		const input = searchInputRef.current
-		// Sync only on external URL changes (back navigation, a removed pill); the URL holds the trimmed
-		// value, so comparing the raw field would rewrite it and eat a trailing space mid-phrase.
-		if (input && input.value.trim() !== search) input.value = search
-	}, [search])
-
-	const handleSearchInput = React.useCallback(
-		(event: React.FormEvent<HTMLInputElement>) => {
-			debouncedUpdateSearch(event.currentTarget.value.trim())
-		},
-		[debouncedUpdateSearch]
-	)
-	const handleSubmit = React.useCallback(
-		(event: React.FormEvent<HTMLFormElement>) => {
-			event.preventDefault()
-			const value = new FormData(event.currentTarget).get('search')
-			debouncedUpdateSearch.cancel()
-			updateSearch(typeof value === 'string' ? value.trim() : '')
-		},
-		[debouncedUpdateSearch, updateSearch]
-	)
 	const chainSelectOptions = React.useMemo(
 		() => chainOptions.map((option) => ({ key: option.id, name: option.label })),
 		[chainOptions]
@@ -528,20 +502,12 @@ function TokensSharedControls({
 
 	return (
 		<>
-			<form onSubmit={handleSubmit} className={searchFieldWrapperStyles}>
-				<label className="relative block min-w-0">
-					<span className="sr-only">Search tokens</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<Input
-						ref={searchInputRef}
-						name="search"
-						defaultValue={search}
-						onInput={handleSearchInput}
-						placeholder="Search tokens..."
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
-			</form>
+			<UrlSearchInput
+				search={search}
+				updateSearch={updateSearch}
+				label="Search tokens"
+				placeholder="Search tokens..."
+			/>
 			<SelectWithCombobox
 				allValues={chainSelectOptions}
 				includeQueryKey="chains"

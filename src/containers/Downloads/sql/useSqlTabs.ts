@@ -646,6 +646,32 @@ function hydrate(): TabsState {
 	return { tabs, activeTabId }
 }
 
+function writeUnsaved(unsavedRef: { current: TabsState | null }) {
+	const state = unsavedRef.current
+	if (!state) return
+	unsavedRef.current = null
+	const payload: PersistedState = {
+		tabs: state.tabs.map(({ id, title, titleAuto, sql, chartConfig, mode, cells, activeCellId }) => ({
+			id,
+			title,
+			titleAuto,
+			sql,
+			chartConfig,
+			mode,
+			cells: cells?.map((c) => ({
+				id: c.id,
+				type: c.type,
+				source: c.source,
+				chartConfig: c.chartConfig,
+				preferredView: c.preferredView
+			})),
+			activeCellId
+		})),
+		activeTabId: state.activeTabId
+	}
+	setStorageJSON(STORAGE_KEY, payload)
+}
+
 export interface OpenTabOptions {
 	sql?: string
 	title?: string
@@ -693,35 +719,21 @@ export interface UseSqlTabsReturn {
 export function useSqlTabs(): UseSqlTabsReturn {
 	const [state, setState] = useState<TabsState>(hydrate)
 
-	const persistTimer = useRef<number | null>(null)
+	// The newest state not yet in storage. Leaving SQL Studio or the page inside the debounce still writes it.
+	const unsavedRef = useRef<TabsState | null>(null)
 	useEffect(() => {
-		if (persistTimer.current) window.clearTimeout(persistTimer.current)
-		persistTimer.current = window.setTimeout(() => {
-			const payload: PersistedState = {
-				tabs: state.tabs.map(({ id, title, titleAuto, sql, chartConfig, mode, cells, activeCellId }) => ({
-					id,
-					title,
-					titleAuto,
-					sql,
-					chartConfig,
-					mode,
-					cells: cells?.map((c) => ({
-						id: c.id,
-						type: c.type,
-						source: c.source,
-						chartConfig: c.chartConfig,
-						preferredView: c.preferredView
-					})),
-					activeCellId
-				})),
-				activeTabId: state.activeTabId
-			}
-			setStorageJSON(STORAGE_KEY, payload)
-		}, PERSIST_DEBOUNCE_MS)
-		return () => {
-			if (persistTimer.current) window.clearTimeout(persistTimer.current)
-		}
+		unsavedRef.current = state
+		const timer = window.setTimeout(() => writeUnsaved(unsavedRef), PERSIST_DEBOUNCE_MS)
+		return () => window.clearTimeout(timer)
 	}, [state])
+	useEffect(() => {
+		const flush = () => writeUnsaved(unsavedRef)
+		window.addEventListener('pagehide', flush)
+		return () => {
+			window.removeEventListener('pagehide', flush)
+			flush()
+		}
+	}, [])
 
 	const activeTab = useMemo(() => state.tabs.find((t) => t.id === state.activeTabId) ?? state.tabs[0], [state])
 
