@@ -133,7 +133,7 @@ function resolve(text, mode) {
 }
 
 const changed = execSync(
-	'git diff --name-only HEAD -- "src/containers/LlamaAI" "src/pages/ai" "src/components/EntityQuestionsStrip" "src/components/LlamaAIFloatingButton"',
+	'git diff --name-only HEAD -- "src/containers/LlamaAI" "src/pages/ai" "src/components/EntityQuestionsStrip"',
 	{ cwd: ROOT, encoding: 'utf8' }
 )
 	.split('\n')

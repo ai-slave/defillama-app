@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { ResponseControls } from '../ResponseControls'
 
 // Heavy children whose output these tests do not read.
-vi.mock('~/containers/LlamaAI/components/FeedbackForm', () => ({ FeedbackForm: () => null }))
+vi.mock('~/containers/LlamaAI/components/FeedbackForm', () => ({ FeedbackDialog: () => null }))
 vi.mock('~/containers/LlamaAI/components/PDFExportButton', () => ({ PDFExportButton: () => null }))
 let root: Root
 let container: HTMLDivElement

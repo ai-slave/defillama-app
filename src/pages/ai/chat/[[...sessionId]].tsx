@@ -2,9 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
-import { setPendingPrompt } from '~/components/LlamaAIFloatingButton'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
+import { setPendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 
 function LlamaAIPage() {

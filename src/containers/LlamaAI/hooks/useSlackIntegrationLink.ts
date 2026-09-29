@@ -140,6 +140,8 @@ export function useSlackIntegrationLink(opts: Options = {}) {
 		cancelPending,
 		isStarting: startMutation.isPending,
 		isDisconnecting: unlinkMutation.isPending,
+		disconnectFailed: unlinkMutation.isError,
+		resetDisconnect: unlinkMutation.reset,
 		isCancelingPending: cancelMutation.isPending
 	}
 }

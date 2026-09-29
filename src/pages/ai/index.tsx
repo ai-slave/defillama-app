@@ -4,9 +4,9 @@ import { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
-import { setPendingPrompt, setPendingSuggestedFlag } from '~/components/LlamaAIFloatingButton'
 import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
+import { setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
 import { TOOL_ICONS, TOOL_LABELS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/toolMetadata'
 import type { LandingQuestion } from '~/containers/LlamaAI/types'
 import { StoreButtons } from '~/containers/MobileApp'
@@ -22,7 +22,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 const EXAMPLE_CONVERSATIONS = [
 	{
 		id: 'find-alpha',
-		category: 'Find Alpha',
+		category: 'Find alpha',
 		prompt: 'Show me the top 5 protocols with growing TVL but declining token prices',
 		description: 'Table + chart analysis identifying potential value opportunities and key insights',
 		url: 'https://defillama.com/ai/chat/shared/34525e47-528e-4b20-8ab4-4d2dd5d31252',
@@ -47,20 +47,20 @@ const EXAMPLE_CONVERSATIONS = [
 ] as const
 
 const CAPABILITIES = [
-	{ icon: 'bar-chart-2' as const, label: 'Charts & Analytics', sub: 'Auto-generated charts' },
-	{ icon: 'trending-up' as const, label: 'Price Forecasts', sub: 'Monte Carlo + technicals' },
-	{ icon: 'link' as const, label: 'On-chain Analysis', sub: 'Smart money & logs' },
-	{ icon: 'calendar' as const, label: 'Scheduled Alerts', sub: 'Automated daily checks' },
-	{ icon: 'file-text' as const, label: 'Research Reports', sub: 'Multi-agent deep dives' }
+	{ icon: 'bar-chart-2' as const, label: 'Charts & analytics', sub: 'Auto-generated charts' },
+	{ icon: 'trending-up' as const, label: 'Price forecasts', sub: 'Monte Carlo + technicals' },
+	{ icon: 'link' as const, label: 'On-chain analysis', sub: 'Smart money & logs' },
+	{ icon: 'calendar' as const, label: 'Scheduled alerts', sub: 'Automated daily checks' },
+	{ icon: 'file-text' as const, label: 'Research reports', sub: 'Multi-agent deep dives' }
 ]
 
 const FALLBACK_QUESTIONS: Array<LandingQuestion> = [
-	{ text: 'Which protocols have growing TVL but declining token prices right now?', tag: 'Find Alpha' },
-	{ text: 'Build a conviction-scored trade thesis on ETH with technicals and on-chain data', tag: 'Trade Thesis' },
-	{ text: 'What are the best delta-neutral yield strategies for 10 ETH on Ethereum?', tag: 'Yield Strategy' },
+	{ text: 'Which protocols have growing TVL but declining token prices right now?', tag: 'Find alpha' },
+	{ text: 'Build a conviction-scored trade thesis on ETH with technicals and on-chain data', tag: 'Trade thesis' },
+	{ text: 'What are the best delta-neutral yield strategies for 10 ETH on Ethereum?', tag: 'Yield strategy' },
 	{ text: 'Show me all USDC mint events on Ethereum this week', tag: 'On-Chain' },
 	{ text: 'Deep research report on the current state of restaking protocols', tag: 'Research' },
-	{ text: 'What tokens does vitalik.eth hold and what changed recently?', tag: 'Wallet Analysis' },
+	{ text: 'What tokens does vitalik.eth hold and what changed recently?', tag: 'Wallet analysis' },
 	{ text: 'Compare Uniswap vs Curve vs Balancer fees and volume over the last 30 days', tag: 'Analytics' },
 	{ text: 'What are the latest crypto fundraising rounds this month?', tag: 'Raises' },
 	{ text: 'Price estimate for BTC using Monte Carlo simulation and prediction markets', tag: 'Forecasting' }
@@ -420,9 +420,9 @@ function ExampleShowcase() {
 }
 
 const CATEGORY_TAGS: Record<string, string> = {
-	find_alpha: 'Find Alpha',
+	find_alpha: 'Find alpha',
 	analytics: 'Analytics',
-	speculative_guidance: 'Trade Thesis',
+	speculative_guidance: 'Trade thesis',
 	learn: 'Learn',
 	research_report: 'Research'
 }
@@ -673,7 +673,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 
 							{/* Scheduled Alerts */}
 							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 text-base font-bold text-ai-gold dark:text-ai-gold-bright">Scheduled Alerts</h3>
+								<h3 className="mb-1.5 text-base font-bold text-ai-gold dark:text-ai-gold-bright">Scheduled alerts</h3>
 								<p className="mb-4 text-sm leading-relaxed text-tertiary">
 									Automate recurring prompts. Set up daily price checks, portfolio summaries, or custom data monitors on
 									your schedule.
@@ -700,12 +700,12 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 													<line x1="3" y1="10" x2="21" y2="10" />
 												</svg>
 											</div>
-											<span className="text-[11px] font-semibold text-secondary">Your Alerts</span>
+											<span className="text-[11px] font-semibold text-secondary">Your alerts</span>
 										</div>
 									</div>
 									<div className="flex items-center gap-2 px-3 py-2.5">
 										<div className="min-w-0 flex-1">
-											<p className="truncate text-[11px] font-medium text-secondary">Daily Crypto Price Check</p>
+											<p className="truncate text-[11px] font-medium text-secondary">Daily crypto price check</p>
 											<p className="text-[10px] text-tertiary">Daily at 9 AM UTC</p>
 										</div>
 										<div className="h-3.5 w-6 shrink-0 rounded-full bg-brand p-0.5">
@@ -718,7 +718,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 							{/* Memory & Settings */}
 							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
 								<h3 className="mb-1.5 text-base font-bold text-ai-gold dark:text-ai-gold-bright">
-									Customize Your Experience
+									Customize your experience
 								</h3>
 								<p className="mb-4 text-sm leading-relaxed text-tertiary">
 									LlamaAI learns what you care about and tailors responses to your style. Set custom instructions and
@@ -749,7 +749,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 									</div>
 									<div className="divide-subtle space-y-0 divide-y">
 										<div className="px-3 py-2">
-											<p className="text-[11px] font-medium text-secondary">Custom Instructions</p>
+											<p className="text-[11px] font-medium text-secondary">Custom instructions</p>
 											<p className="text-[10px] text-tertiary">Be concise. Always include % changes.</p>
 										</div>
 										<div className="flex items-center gap-2 px-3 py-2">
@@ -766,7 +766,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 
 							{/* Research Reports - wide card */}
 							<div className="group relative overflow-hidden rounded-2xl border border-subtle bg-ai-white p-6 pb-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-ai-gold/40 md:col-span-2 dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30">
-								<h3 className="mb-1.5 text-base font-bold text-ai-gold dark:text-ai-gold-bright">Research Reports</h3>
+								<h3 className="mb-1.5 text-base font-bold text-ai-gold dark:text-ai-gold-bright">Research reports</h3>
 								<p className="mb-4 max-w-lg text-sm leading-relaxed text-tertiary">
 									Generate in-depth research reports on any protocol, sector, or trend. Multiple agents research in
 									parallel, then synthesize everything into a single exportable PDF.

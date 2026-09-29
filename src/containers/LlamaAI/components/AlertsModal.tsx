@@ -8,6 +8,7 @@ import {
 	execChipLabel,
 	execChipTone,
 	formatPriceAlertSummary,
+	formatTokenLabel,
 	getAlertsAccessState,
 	isAlertsUpsellActive,
 	isFiredOneTimePriceAlert
@@ -20,7 +21,11 @@ import {
 	setAlertEnabled,
 	updateAlert
 } from '~/containers/LlamaAI/components/alerts/api'
-import { getUpsellCopy, type TriggerType } from '~/containers/LlamaAI/components/alerts/createAlertForm'
+import {
+	deriveAlertTitle,
+	getUpsellCopy,
+	type TriggerType
+} from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { EmptyAlertsState } from '~/containers/LlamaAI/components/alerts/EmptyAlertsState'
 import { PriceAlertEditor } from '~/containers/LlamaAI/components/alerts/PriceAlertEditor'
 import { ALERTS_QUERY_KEY } from '~/containers/LlamaAI/components/alerts/queryKeys'
@@ -38,16 +43,14 @@ import type {
 	AlertExecutionDetail,
 	AlertsUsage,
 	DeliveryChannel,
+	PriceTrigger,
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertDialogClass,
 	alertFieldLabelClass,
 	alertIconButtonClass,
-	alertInputClass,
-	alertPrimaryButtonClass,
 	alertSelectClass,
-	AlertsDialogHeader,
+	AlertsHeaderIcon,
 	SegmentedToggle,
 	DELIVERY_OPTIONS,
 	StatusChip,
@@ -63,10 +66,13 @@ import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrati
 import { prepareAlertSummaryMarkdown, sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Input } from '~/ui/Input'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
@@ -131,95 +137,92 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 		enabled: isOpen && isAuthenticated && !!user
 	})
 
+	const view =
+		accessState !== 'ready'
+			? accessState
+			: isLoading
+				? 'loading'
+				: alerts && alerts.length > 0
+					? 'list'
+					: alertsError
+						? 'error'
+						: upsellActive
+							? 'upsell'
+							: 'empty'
+	const footerAction =
+		view === 'sign-in' ? (
+			<Button type="button" variant="primary" size="md" onClick={signInModalStore.show}>
+				Sign in
+			</Button>
+		) : view === 'upsell' || (view === 'list' && upsellActive) ? (
+			<Button as={BasicLink} href="/subscription" variant="primary" size="md">
+				Upgrade to Pro
+			</Button>
+		) : view === 'list' ? (
+			<Button type="button" variant="primary" size="md" onClick={() => openCreateModal('schedule')}>
+				<Icon name="plus" className="size-3.5" />
+				New alert
+			</Button>
+		) : null
+
 	return (
 		<>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.Dialog
-					className={alertDialogClass}
-
-					portal
-					unmountOnHide
-				>
-					<AlertsDialogHeader
+				<Dialog size="md" fullSheet portal unmountOnHide>
+					<DialogHeader
 						title="Alerts"
 						subtitle={getAlertsSubtitle(alertsUsage, alerts?.length)}
-						right={
-							accessState === 'ready' && !upsellActive && alerts && alerts.length > 0 ? (
-								<Button type="button" size="md" variant="outline" onClick={() => openCreateModal('schedule')}>
-									<Icon name="plus" className="size-3.5" />
-									New alert
-								</Button>
-							) : null
-						}
+						leading={<AlertsHeaderIcon />}
 					/>
-
-					<div className="min-h-0 flex-1 overflow-y-auto">
-						{accessState === 'loading' ? (
-							<div role="status" aria-label="Loading alerts" className="flex items-center justify-center py-16">
-								<LoadingSpinner size={24} />
+					{view === 'empty' ? (
+						<DialogBody kind="flush">
+							<EmptyAlertsState onOpenCreate={openCreateModal} onChipSelect={handleChipSelect} />
+						</DialogBody>
+					) : view === 'list' ? (
+						<DialogBody kind="list">
+							<div className="flex flex-col gap-2">
+								{alertsError ? (
+									<RetryNotice
+										message="Couldn't load alerts."
+										retrying={isFetchingAlerts}
+										onRetry={() => void refetchAlerts()}
+									/>
+								) : null}
+								{upsellActive ? (
+									<InlineStatus variant="warning">
+										{getUpsellCopy(alertsUsage ?? null)}. Upgrade to Pro to create more alerts.
+									</InlineStatus>
+								) : null}
+								{alerts!.map((alert) => (
+									<AlertRow key={alert.id} alert={alert} />
+								))}
 							</div>
-						) : accessState === 'sign-in' ? (
-							<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-								<div className="flex size-14 items-center justify-center rounded-lg bg-warning/10 text-warning">
-									<Icon name="calendar-plus" className="size-6 text-warning" />
+						</DialogBody>
+					) : (
+						<DialogBody>
+							{view === 'loading' ? (
+								<div role="status" className="flex justify-center py-16">
+									<LoadingIndicator label="Loading alerts" />
 								</div>
-								<div>
-									<p className="m-0 text-sm font-semibold text-primary">Sign in to use alerts</p>
-									<p className="m-0 mt-1 body-sm text-secondary">
-										Create alerts and manage their delivery from one place.
-									</p>
-								</div>
-								<button type="button" onClick={signInModalStore.show} className={alertPrimaryButtonClass}>
-									Sign in
-								</button>
-							</div>
-						) : alertsError ? (
-							<div className="px-5 py-3">
+							) : view === 'sign-in' ? (
+								<p className="body-sm text-secondary">
+									Sign in to use alerts and manage their delivery from one place.
+								</p>
+							) : view === 'error' ? (
 								<RetryNotice
 									message="Couldn't load alerts."
 									retrying={isFetchingAlerts}
 									onRetry={() => void refetchAlerts()}
 								/>
-							</div>
-						) : null}
-						{accessState !== 'ready' ? null : isLoading ? (
-							<div role="status" aria-label="Loading alerts" className="flex items-center justify-center py-16">
-								<LoadingSpinner size={24} />
-							</div>
-						) : !alerts || alerts.length === 0 ? (
-							alertsError ? null : upsellActive ? (
-								<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-									<div className="flex size-14 items-center justify-center rounded-lg bg-warning/10 text-warning">
-										<Icon name="alert-triangle" className="size-6 text-warning" />
-									</div>
-									<p className="text-sm text-tertiary">{getUpsellCopy(alertsUsage ?? null)}</p>
-									<BasicLink href="/subscription" className={alertPrimaryButtonClass}>
-										Upgrade to Pro
-									</BasicLink>
-								</div>
 							) : (
-								<EmptyAlertsState onOpenCreate={openCreateModal} onChipSelect={handleChipSelect} />
-							)
-						) : (
-							<div className="flex flex-col gap-2 p-3">
-								{upsellActive ? (
-									<div className="bg-warning/0.06 flex items-center justify-between gap-3 rounded-xl border border-warning/20 px-4 py-3">
-										<p className="m-0 text-xs text-warning">{getUpsellCopy(alertsUsage ?? null)}</p>
-										<BasicLink
-											href="/subscription"
-											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white hover:brightness-110"
-										>
-											Upgrade
-										</BasicLink>
-									</div>
-								) : null}
-								{alerts.map((alert) => (
-									<AlertRow key={alert.id} alert={alert} />
-								))}
-							</div>
-						)}
-					</div>
-				</Ariakit.Dialog>
+								<p className="body-sm text-secondary">
+									{getUpsellCopy(alertsUsage ?? null)}. Upgrade to Pro to create alerts.
+								</p>
+							)}
+						</DialogBody>
+					)}
+					{footerAction ? <DialogFooter>{footerAction}</DialogFooter> : null}
+				</Dialog>
 			</Ariakit.DialogProvider>
 			<SignInModal store={signInModalStore} prompt="Sign in to create alerts and manage their delivery" />
 			{hasOpenedCreate ? (
@@ -244,6 +247,15 @@ const formatExecDate = (iso: string) => {
 
 const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${formatFixedNumber(ms / 1000, 1)}s`)
 
+const priceAlertTitle = (trigger: PriceTrigger) =>
+	deriveAlertTitle({
+		triggerType: 'price',
+		prompt: '',
+		symbol: formatTokenLabel(trigger.token_nk),
+		op: trigger.op,
+		value: String(trigger.value)
+	})
+
 const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const { authorizedFetch, user } = useAuthContext()
 	const queryClient = useQueryClient()
@@ -251,6 +263,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const parsedSchedule = parseScheduleExpression(alert.schedule_expression)
 	const initialTimezone = parsedSchedule.timezone ?? getUserTimezone()
 	const conditionId = `alert-condition-${alert.id}`
+	const titleId = `alert-title-${alert.id}`
 	const [frequency, setFrequency] = useState<'daily' | 'weekly'>(
 		alert.schedule_expression.includes('Weekly') ? 'weekly' : 'daily'
 	)
@@ -259,7 +272,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alert.delivery_channel ?? 'email')
 	const [slackTeamId, setSlackTeamId] = useState<string>(alert.slack_team_id ?? '')
 	const [slackChannelId, setSlackChannelId] = useState<string>(alert.slack_channel_id ?? '')
-	const priceEditTitleRef = useRef<HTMLInputElement>(null)
+	const titleInputRef = useRef<HTMLInputElement>(null)
+	const focusChannelsOnLoadRef = useRef(false)
 	const [mode, setMode] = useState<'view' | 'editing' | 'deleting'>('view')
 	const [showRearmNote, setShowRearmNote] = useState(false)
 	const [showExecutions, setShowExecutions] = useState(false)
@@ -278,10 +292,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		channels.sort((a, b) => Number(a.is_private) - Number(b.is_private) || a.name.localeCompare(b.name))
 		return channels
 	}, [slackChannels])
-	const deliveryReady =
-		deliveryChannel === 'email' ||
-		(deliveryChannel === 'telegram' && telegramLinked) ||
-		(deliveryChannel === 'slack' && !!slackTeamId && !!slackChannelId)
 	const timezoneOptions = useMemo(() => {
 		if (GMT_OFFSETS.some((option) => option.value === timezone)) return GMT_OFFSETS
 		return [...GMT_OFFSETS, { value: timezone, label: getTimezoneLabel(timezone) }]
@@ -375,29 +385,17 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		}
 	})
 
-	const deleteAlertMutation = useMutation<string, Error, string, { previous?: Array<Alert> }>({
+	// The row stays until the server confirms: removing it first unmounted the confirmation, so a failed delete
+	// restored the row with no error to show.
+	const deleteAlertMutation = useMutation<string, Error, string>({
 		mutationFn: async (alertId: string) => {
 			if (!authorizedFetch) {
 				throw new Error('Not authenticated')
 			}
 			return deleteAlert(authorizedFetch, alertId)
 		},
-		onMutate: async (alertId: string) => {
-			await queryClient.cancelQueries({ queryKey: alertsQueryKey })
-			const previous = queryClient.getQueryData<Array<Alert>>(alertsQueryKey)
-			queryClient.setQueryData(alertsQueryKey, (old: Array<Alert> | undefined) => {
-				if (!old) return []
-				return old.filter((item) => item.id !== alertId)
-			})
-			return { previous }
-		},
-		onError: (_error, _alertId, context) => {
-			if (context?.previous) {
-				queryClient.setQueryData(alertsQueryKey, context.previous)
-			}
-		},
-		onSuccess: () => {
-			switchMode('view')
+		onSuccess: (alertId) => {
+			queryClient.setQueryData<Array<Alert>>(alertsQueryKey, (old) => old?.filter((item) => item.id !== alertId))
 		},
 		onSettled: () => {
 			void queryClient.invalidateQueries({ queryKey: [ALERTS_QUERY_KEY] })
@@ -445,9 +443,43 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		toggleAlertMutation.mutate({ alertId: alert.id, enabled: true })
 	}
 
-	const toggleErrorMessage = toggleAlertMutation.error?.message
-	const updateErrorMessage = updateAlertMutation.error?.message
-	const deleteErrorMessage = deleteAlertMutation.error?.message
+	const updateErrorMessage = updateAlertMutation.isError ? "Couldn't save the alert. Try again." : null
+	const deliveryBlockReason =
+		deliveryChannel === 'telegram' && !telegramLinked
+			? 'Link Telegram first'
+			: deliveryChannel === 'slack' && !slackTeamId
+				? slackWorkspaces.length > 0
+					? 'Pick a Slack workspace'
+					: 'Connect a Slack workspace first'
+				: deliveryChannel === 'slack' && !slackChannelId
+					? 'Pick a Slack channel'
+					: null
+	// An emptied name falls back to the one a new alert of the same kind gets, so the list never shows a blank title.
+	const defaultTitle =
+		isPriceAlert && alert.trigger
+			? priceAlertTitle(alert.trigger)
+			: deriveAlertTitle({
+					triggerType: 'schedule',
+					prompt: alert.original_query,
+					symbol: null,
+					op: 'above',
+					value: ''
+				})
+	const nameField = (
+		<div className="flex flex-col gap-1.5">
+			<label htmlFor={titleId} className={alertFieldLabelClass}>
+				Name (optional)
+			</label>
+			<Input
+				ref={titleInputRef}
+				id={titleId}
+				name="title"
+				defaultValue={alert.title}
+				placeholder={defaultTitle}
+				className="w-full"
+			/>
+		</div>
+	)
 
 	const deliveryFields = (
 		<div className="flex flex-col gap-1.5">
@@ -460,16 +492,16 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					options={DELIVERY_OPTIONS}
 				/>
 				{deliveryChannel === 'telegram' && !telegramLinked && (
-					<span className="text-xs text-warning">
+					<span className="body-sm text-warning">
 						Telegram isn't linked yet. Link it in <SettingsIntegrationsLink />
 					</span>
 				)}
 				{deliveryChannel === 'slack' && (
 					<>
 						{slackWorkspacesQuery.isLoading ? (
-							<span className="text-xs text-tertiary">Loading workspaces…</span>
+							<span className="body-sm text-tertiary">Loading workspaces…</span>
 						) : slackWorkspaces.length === 0 ? (
-							<span className="text-xs text-warning">
+							<span className="body-sm text-warning">
 								No Slack workspaces connected. Connect one from <SettingsIntegrationsLink />
 							</span>
 						) : (
@@ -495,11 +527,24 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						{slackTeamId && (
 							<>
 								{slackChannelsQuery.isLoading ? (
-									<span className="text-xs text-tertiary">Loading channels…</span>
+									<span className="body-sm text-tertiary">Loading channels…</span>
 								) : slackChannelsQuery.isError ? (
-									<span className="text-xs text-error">Failed to load channels</span>
+									<RetryNotice
+										message="Couldn't load Slack channels."
+										retrying={slackChannelsQuery.isFetching}
+										onRetry={() => {
+											focusChannelsOnLoadRef.current = true
+											void slackChannelsQuery.refetch()
+										}}
+									/>
 								) : (
 									<select
+										// A retried channel list focuses the select that replaces the retry button.
+										ref={(select) => {
+											if (!select || !focusChannelsOnLoadRef.current) return
+											focusChannelsOnLoadRef.current = false
+											select.focus()
+										}}
 										value={slackChannelId}
 										onChange={(e) => setSlackChannelId(e.target.value)}
 										className={alertSelectClass}
@@ -523,38 +568,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			</div>
 		</div>
 	)
-
-	if (mode === 'deleting') {
-		return (
-			<div className="bg-error/0.04 rounded-xl border border-error/20 px-4 py-3.5">
-				<div className="flex flex-wrap items-center justify-between gap-3">
-					<p className="m-0 min-w-0 text-sm text-primary">
-						Delete “{alert.title}”?
-						<span className="ml-1.5 text-xs text-tertiary">This can’t be undone.</span>
-					</p>
-					<div className="flex shrink-0 gap-2">
-						<button
-							type="button"
-							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
-						>
-							Cancel
-						</button>
-						<button
-							type="button"
-							onClick={() => deleteAlertMutation.mutate(alert.id)}
-							disabled={deleteAlertMutation.isPending}
-							className="flex items-center gap-1.5 rounded-lg bg-error px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-error disabled:opacity-50"
-						>
-							{deleteAlertMutation.isPending ? <LoadingSpinner size={12} /> : null}
-							Delete
-						</button>
-					</div>
-				</div>
-				{deleteErrorMessage ? <p className="mt-2 text-xs text-error">{deleteErrorMessage}</p> : null}
-			</div>
-		)
-	}
 
 	const channelLabel =
 		alert.delivery_channel === 'telegram'
@@ -594,7 +607,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				) : selectedExec.error_message ? (
 					<p className="text-xs text-error">{selectedExec.error_message}</p>
 				) : (
-					<p className="text-xs text-tertiary">No content available.</p>
+					<p className="body-sm text-tertiary">No content available.</p>
 				)}
 				{charts.length > 0
 					? charts
@@ -761,18 +774,31 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				</div>
 			</div>
 
-			{toggleErrorMessage ? (
-				<p role="alert" className="mt-2 text-xs text-error">
-					{toggleErrorMessage}
-				</p>
+			{toggleAlertMutation.isError ? (
+				<div className="mt-2">
+					<InlineStatus variant="error">Couldn't update the alert. Try again.</InlineStatus>
+				</div>
+			) : null}
+
+			{mode === 'deleting' ? (
+				<ConfirmDialog
+					open
+					onClose={() => switchMode('view')}
+					title="Delete alert?"
+					description={`“${alert.title}” stops running and its deliveries end. This can’t be undone.`}
+					confirmLabel="Delete"
+					pendingLabel={deleteAlertMutation.isPending ? 'Deleting…' : null}
+					error={deleteAlertMutation.isError ? "Couldn't delete the alert. Try again." : null}
+					onConfirm={() => deleteAlertMutation.mutate(alert.id)}
+				/>
 			) : null}
 
 			{showExecutions ? (
 				<div className="mt-3 border-t border-subtle pt-3">
 					<p className="mb-2 label-xs tracking-wide text-tertiary uppercase">History</p>
 					{executionsQuery.isLoading ? (
-						<div role="status" aria-label="Loading alert history" className="flex justify-center py-4">
-							<LoadingSpinner size={16} />
+						<div role="status" className="flex justify-center py-4">
+							<LoadingIndicator label="Loading history" />
 						</div>
 					) : executionsQuery.isError ? (
 						<RetryNotice
@@ -781,7 +807,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							onRetry={() => void executionsQuery.refetch()}
 						/>
 					) : !executionsQuery.data || executionsQuery.data.length === 0 ? (
-						<p className="text-center text-xs text-tertiary">No executions yet.</p>
+						<p className="text-center body-sm text-tertiary">No runs yet.</p>
 					) : (
 						<div className="flex flex-col">
 							{executionsQuery.data.map((exec) => (
@@ -804,8 +830,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						</div>
 					)}
 					{execDetailQuery.isLoading ? (
-						<div role="status" aria-label="Loading alert execution" className="mt-2 flex justify-center">
-							<LoadingSpinner size={16} />
+						<div role="status" className="mt-2 flex justify-center">
+							<LoadingIndicator label="Loading run" />
 						</div>
 					) : execDetailQuery.isError ? (
 						<RetryNotice
@@ -820,36 +846,24 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			{mode === 'editing' && isPriceAlert && alert.trigger ? (
 				<div className="mt-3 flex flex-col gap-3 border-t border-subtle pt-3">
 					{showRearmNote ? (
-						<p className="m-0 text-xs text-warning">
+						<InlineStatus variant="warning">
 							Re-armed — if the price is still past your level, it fires again within seconds. Adjust the level below to
 							wait for the next cross.
-						</p>
+						</InlineStatus>
 					) : null}
-					<input
-						ref={priceEditTitleRef}
-						defaultValue={alert.title}
-						required
-						placeholder="Alert title"
-						className={alertInputClass}
-					/>
-					{deliveryFields}
 					<PriceAlertEditor
 						trigger={alert.trigger}
 						isSaving={updateAlertMutation.isPending}
-						canSave={deliveryReady}
-						errorMessage={updateAlertMutation.error?.message}
+						blockReason={deliveryBlockReason}
+						errorMessage={updateErrorMessage}
 						onCancel={() => switchMode('view')}
 						onSave={(trigger) => {
-							const titleValue = priceEditTitleRef.current?.value.trim() ?? ''
-							if (!titleValue) return
-							if (deliveryChannel === 'telegram' && !telegramLinked) return
-							if (deliveryChannel === 'slack' && (!slackTeamId || !slackChannelId)) return
 							trackUmamiEvent('llamaai-alert-edit')
 							const channelName =
 								deliveryChannel === 'slack' ? (slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null) : null
 							updateAlertMutation.mutate({
 								alertId: alert.id,
-								title: titleValue,
+								title: titleInputRef.current!.value.trim() || priceAlertTitle(trigger),
 								delivery_channel: deliveryChannel,
 								condition: alert.condition || '',
 								trigger,
@@ -858,23 +872,23 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 								slack_channel_name: channelName
 							})
 						}}
-					/>
+					>
+						{nameField}
+						{deliveryFields}
+					</PriceAlertEditor>
 				</div>
 			) : mode === 'editing' ? (
 				<form
 					onSubmit={(e) => {
 						e.preventDefault()
+						if (deliveryBlockReason || updateAlertMutation.isPending) return
 						const fd = new FormData(e.currentTarget)
-						const titleValue = (fd.get('title') as string).trim()
-						if (!titleValue) return
-						if (deliveryChannel === 'telegram' && !telegramLinked) return
-						if (deliveryChannel === 'slack' && (!slackTeamId || !slackChannelId)) return
 						trackUmamiEvent('llamaai-alert-edit')
 						const channelName =
 							deliveryChannel === 'slack' ? (slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null) : null
 						updateAlertMutation.mutate({
 							alertId: alert.id,
-							title: titleValue,
+							title: (fd.get('title') as string).trim() || defaultTitle,
 							alertConfig: {
 								frequency: fd.get('frequency') as 'daily' | 'weekly',
 								hour: Number(fd.get('hour')),
@@ -890,13 +904,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					}}
 					className="mt-3 flex flex-col gap-3 border-t border-subtle pt-3"
 				>
-					<input
-						name="title"
-						defaultValue={alert.title}
-						required
-						placeholder="Alert title"
-						className={alertInputClass}
-					/>
+					{nameField}
 					<div className="flex flex-col gap-1.5">
 						<span className={alertFieldLabelClass}>Schedule</span>
 						<div className="flex flex-wrap items-center gap-2">
@@ -920,7 +928,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							) : (
 								<input type="hidden" name="dayOfWeek" value={1} />
 							)}
-							<span className="text-xs text-tertiary">at</span>
+							<span className="body-sm text-secondary">at</span>
 							<select
 								key={`hour-${timezone}`}
 								name="hour"
@@ -953,36 +961,30 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<label htmlFor={conditionId} className={alertFieldLabelClass}>
 							Condition (optional)
 						</label>
-						<input
+						<Input
 							id={conditionId}
 							name="condition"
 							defaultValue={alert.condition || ''}
-							placeholder="e.g. only send if TVL drops below $1B"
-							className={alertInputClass}
+							placeholder="Only send if TVL drops below $1B"
+							className="w-full"
 						/>
 					</div>
-					<div className="flex justify-end gap-2">
-						<button
-							type="button"
-							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
-						>
+					{updateErrorMessage ? <InlineStatus variant="error">{updateErrorMessage}</InlineStatus> : null}
+					<div className="flex flex-wrap items-center justify-end gap-2">
+						{deliveryBlockReason ? <p className="mr-auto body-sm text-secondary">{deliveryBlockReason}</p> : null}
+						<Button type="button" size="md" disabled={updateAlertMutation.isPending} onClick={() => switchMode('view')}>
 							Cancel
-						</button>
-						<button
+						</Button>
+						<Button
 							type="submit"
-							disabled={updateAlertMutation.isPending || !deliveryReady}
-							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:brightness-110 disabled:opacity-50"
+							variant="primary"
+							size="md"
+							disabled={!!deliveryBlockReason}
+							pendingLabel={updateAlertMutation.isPending ? 'Saving…' : null}
 						>
-							{updateAlertMutation.isPending ? (
-								<LoadingSpinner size={12} />
-							) : (
-								<Icon name="check" className="size-3.5" />
-							)}
 							Save
-						</button>
+						</Button>
 					</div>
-					{updateErrorMessage ? <p className="text-center text-xs text-error">{updateErrorMessage}</p> : null}
 				</form>
 			) : null}
 		</AlertCard>

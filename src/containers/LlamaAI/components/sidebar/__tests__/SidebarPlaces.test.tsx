@@ -164,7 +164,7 @@ test('the rail search opens the sidebar with the search field showing', async ()
 
 const fullscreenButton = () =>
 	[...container.querySelectorAll<HTMLButtonElement>('header button')].find((b) =>
-		(b.querySelector('.sr-only')?.textContent ?? '').endsWith('Fullscreen')
+		(b.querySelector('.sr-only')?.textContent ?? '').endsWith('fullscreen')
 	)
 
 /** The site menu choice is one setting for the whole product, so it is reachable from both places. */
@@ -182,7 +182,7 @@ test('when the window forces fullscreen, the button shows it and cannot turn it 
 	await render({ place: 'terminal' })
 	const locked = fullscreenButton()!
 	expect(locked.getAttribute('aria-disabled')).toBe('true')
-	expect(locked.querySelector('.sr-only')?.textContent).toBe('Exit Fullscreen')
+	expect(locked.querySelector('.sr-only')?.textContent).toBe('Exit fullscreen')
 	await act(async () => locked.click())
 	expect(mocks.toggleFullscreen).not.toHaveBeenCalled()
 })

@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { LlamaAIChromeContext } from '~/containers/LlamaAI/chrome'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { CreateProjectModal } from '../CreateProjectModal'
@@ -56,10 +57,14 @@ const project: Project = {
 	created_at: '2026-09-07',
 	updated_at: '2026-09-07'
 }
+// The plan's project cap, which the create dialog reads before sending anything.
+let usage: { project_count: number; limits: { projects: number | null } }
 beforeEach(() => {
 	vi.resetAllMocks()
 	localStorage.setItem('llamaai:sidebar-projects-open', 'true')
+	usage = { project_count: 1, limits: { projects: null } }
 	session.serve({
+		[`${AI_SERVER}/projects/usage`]: () => Response.json(usage),
 		[AI_SERVER]: (url: URL, init?: RequestInit) =>
 			api.request(url.href.slice(AI_SERVER.length), {
 				method: init?.method,
@@ -103,9 +108,7 @@ async function mount(mode: 'create' | 'rename' | 'delete') {
 	await click('Open project dialog')
 }
 function button(name: string) {
-	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => el.textContent?.trim() === name || el.getAttribute('aria-label') === name
-	)
+	const el = [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)
 	expect(el).toBeDefined()
 	return el!
 }
@@ -143,7 +146,9 @@ test('rename errors preserve both drafts, pending blocks duplicate submission, a
 	await click('Saving…')
 	expect(api.request).toHaveBeenCalledTimes(1)
 	await act(async () => reject(new Error('Offline')))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't save the project. Try again.")
+	)
 	expect(input.value).toBe('Draft name')
 	expect(description.value).toBe('Draft description')
 	await click('Save')
@@ -162,11 +167,37 @@ test('delete cancellation, failure and retry retain the named project and comple
 	expect(api.request).not.toHaveBeenCalled()
 	await click('Open project dialog')
 	await click('Delete project')
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
-	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('QA Project')
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete this project. Try again.")
+	)
+	expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('QA Project')
 	expect(api.deleted).not.toHaveBeenCalled()
 	await click('Retry deletion')
 	await waitForUi(() => expect(api.deleted).toHaveBeenCalledTimes(1))
+})
+
+test('creating with a blank name names the field instead of sending', async () => {
+	await mount('create')
+	const input = document.querySelector<HTMLInputElement>('input')!
+	await fill(input, '   ')
+	await click('Create project')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Enter a name for the project.')
+	expect(input.getAttribute('aria-invalid')).toBe('true')
+	expect(document.activeElement).toBe(input)
+	expect(api.request).not.toHaveBeenCalled()
+	await fill(input, 'Research')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+})
+
+test('at the plan cap, creating says why it is unavailable instead of sending', async () => {
+	usage = { project_count: 3, limits: { projects: 3 } }
+	await mount('create')
+	await waitForUi(() =>
+		expect(document.body.textContent).toContain('Your plan allows 3 projects. Delete one to create another.')
+	)
+	await fill(document.querySelector<HTMLInputElement>('input')!, 'Research')
+	await click('Create project')
+	expect(api.request).not.toHaveBeenCalled()
 })
 
 test('canceling and reopening creation clears the abandoned draft and stale error', async () => {
@@ -271,14 +302,14 @@ test.each(['success', 'failure'] as const)(
 		await click('Delete project')
 		await waitForUi(() => expect(api.request).toHaveBeenCalledTimes(1))
 		await render('Beta')
-		await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.hasAttribute('hidden')).toBe(false))
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')?.hasAttribute('hidden')).toBe(false))
 		await act(async () => {
 			if (outcome === 'success') resolve()
 			else reject(new Error('Offline'))
 		})
 		await waitForUi(() => expect(outcome === 'success' ? api.success : api.error).toHaveBeenCalledTimes(1))
 		expect(api.deleted).not.toHaveBeenCalled()
-		const dialog = document.querySelector('[role="dialog"]')!
+		const dialog = document.querySelector('[role="alertdialog"]')!
 		expect(dialog.textContent).toContain('Beta')
 		expect(dialog.hasAttribute('hidden')).toBe(false)
 		expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -333,7 +364,7 @@ test.each([true, false])(
 		await click('Actions for project Renamed project')
 		await chooseAction('Delete project')
 		await waitForUi(() =>
-			expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Attached sessions remain')
+			expect(document.querySelector('[role="alertdialog"]')?.textContent).toContain('Attached sessions remain')
 		)
 		await click('Delete project')
 		await waitForUi(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
@@ -342,7 +373,7 @@ test.each([true, false])(
 		if (switchedChat) await renderSidebar(null)
 		await act(async () => deletion.resolve())
 		await waitForUi(() => expect(container.textContent).not.toContain('Renamed project'))
-		await waitForUi(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+		await waitForUi(() => expect(document.querySelector('[role="alertdialog"]:not([hidden])')).toBeNull())
 		expect(api.push.mock.calls).toEqual(switchedChat ? [] : [['/ai/projects']])
 		await waitForUi(() => expect(document.activeElement).toBe(button('New project')))
 	}

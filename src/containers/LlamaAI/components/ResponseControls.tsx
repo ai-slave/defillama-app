@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
-import { memo, useCallback, useEffect, useReducer, useRef } from 'react'
+import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/useArticleExport'
-import { FeedbackForm } from '~/containers/LlamaAI/components/FeedbackForm'
+import { FeedbackDialog } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
 import type { ArtifactRegistry } from '~/containers/LlamaAI/renderModel'
 import type { MessageMetadata, UnifiedCitationReference } from '~/containers/LlamaAI/types'
@@ -18,7 +18,6 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
@@ -84,47 +83,6 @@ function responseControlsReducer(state: ResponseControlsState, action: ResponseC
 			return state
 	}
 }
-
-interface FeedbackDialogProps {
-	open: boolean
-	setOpen: (value: boolean) => void
-	messageId: string
-	selectedRating: Rating
-	setSelectedRating: (value: Rating) => void
-	onRatingSubmitted: (value: Rating) => void
-}
-
-const FeedbackDialog = memo(function FeedbackDialog({
-	open,
-	setOpen,
-	messageId,
-	selectedRating,
-	setSelectedRating,
-	onRatingSubmitted
-}: FeedbackDialogProps) {
-	return (
-		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
-				unmountOnHide
-				portal
-				hideOnInteractOutside
-			>
-				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<DialogHeading>Provide Feedback</DialogHeading>
-					<DialogCloseButton ariaLabel="Close feedback dialog" />
-				</div>
-				<FeedbackForm
-					messageId={messageId}
-					selectedRating={selectedRating}
-					setSelectedRating={setSelectedRating}
-					setShowFeedback={setOpen}
-					onRatingSubmitted={onRatingSubmitted}
-				/>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
-	)
-})
 
 // Mounts only after hydration: "today" is the reader's local day, which the server cannot know.
 function CompletedTime({ completedAt }: { completedAt: Date }) {
@@ -318,7 +276,7 @@ export function ResponseControls({
 								className={CONTROL}
 							>
 								<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
-								<span className="sr-only">Thumbs Up</span>
+								<span className="sr-only">Thumbs up</span>
 							</Tooltip>
 							<Tooltip
 								content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
@@ -332,7 +290,7 @@ export function ResponseControls({
 								className={CONTROL}
 							>
 								<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
-								<span className="sr-only">Thumbs Down</span>
+								<span className="sr-only">Thumbs down</span>
 							</Tooltip>
 						</>
 					) : null}
@@ -365,7 +323,7 @@ export function ResponseControls({
 					) : null}
 					{!readOnly ? (
 						<Tooltip
-							content="Provide Feedback"
+							content="Provide feedback"
 							render={
 								<button
 									type="button"
@@ -376,7 +334,7 @@ export function ResponseControls({
 							className={CONTROL}
 						>
 							<Icon name="message-square-warning" height={16} width={16} />
-							<span className="sr-only">Provide Feedback</span>
+							<span className="sr-only">Provide feedback</span>
 						</Tooltip>
 					) : null}
 					{sessionId && !readOnly && onShare ? (

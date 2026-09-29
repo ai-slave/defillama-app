@@ -28,7 +28,6 @@ const BASELINE_PATH = path.join(import.meta.dirname, 'design-token-baseline.json
 // a leak.
 const PRODUCT_SURFACE_PREFIXES = [
 	'src/components/EntityQuestionsStrip/',
-	'src/components/LlamaAIFloatingButton/',
 	'src/components/Newsletter/',
 	'src/components/SubscribeCards/',
 	'src/containers/Account/',
@@ -54,7 +53,6 @@ const PRODUCT_SURFACE_PREFIXES = [
 const PRODUCT_SURFACE_FILES = new Set([
 	// The UTR launch banner keeps its product palette while living next to the announcement registry.
 	'src/containers/Announcements/UniversalTokenRatingAnnouncement.tsx',
-	'src/components/Modal/LlamaAIWelcomeModal.tsx',
 	'src/components/StripeCheckoutModal.tsx',
 	'src/components/TopupModal.tsx',
 	'src/pages/account.tsx',

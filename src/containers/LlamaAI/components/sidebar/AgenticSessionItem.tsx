@@ -300,7 +300,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			</button>
 			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center gap-0.5 rounded-r-md bg-surface-elevated-1 px-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-[active=true]:bg-brand-muted">
 				<Tooltip
-					content="Edit Session Title"
+					content="Edit session title"
 					render={
 						<Button
 							type="button"
@@ -344,7 +344,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								className="border-b border-subtle last-of-type:border-b-0"
 							>
 								<Icon name="pin" height={14} width={14} className="shrink-0" />
-								{session.isPinned ? 'Unpin' : 'Pin to Top'}
+								{session.isPinned ? 'Unpin' : 'Pin to top'}
 							</MenuItem>
 							<MenuItem
 								onClick={() => {
@@ -361,12 +361,12 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 									<Icon name="copy" height={14} width={14} className="shrink-0" />
 								)}
 								{!session.isPublic
-									? 'Make Public to Share'
+									? 'Make public to share'
 									: copyLink.isPending
 										? 'Copying…'
 										: copyLink.isSuccess
 											? 'Link copied'
-											: 'Copy Link'}
+											: 'Copy link'}
 							</MenuItem>
 							<MenuItem
 								onClick={() => {
@@ -387,7 +387,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								) : (
 									<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
 								)}
-								{session.isPublic ? 'Make Private' : 'Make Public'}
+								{session.isPublic ? 'Make private' : 'Make public'}
 							</MenuItem>
 							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 							<MenuItem
@@ -404,7 +404,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								) : (
 									<Icon name="trash-2" height={14} width={14} className="shrink-0" />
 								)}
-								Delete Session
+								Delete session
 							</MenuItem>
 						</Ariakit.MenuList>
 						{copyLink.error ? (

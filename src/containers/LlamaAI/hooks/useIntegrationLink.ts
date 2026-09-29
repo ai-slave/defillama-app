@@ -109,7 +109,6 @@ export function deriveTelegramLocalState({
 	confirmLinked,
 	initialTgloginToken,
 	startError,
-	unlinkError,
 	confirmError,
 	confirmWasForced,
 	statusError,
@@ -119,7 +118,6 @@ export function deriveTelegramLocalState({
 	confirmLinked: boolean
 	initialTgloginToken: string | null | undefined
 	startError: Error | null
-	unlinkError: Error | null
 	confirmError: Error | null
 	confirmWasForced: boolean
 	statusError: Error | null
@@ -130,8 +128,7 @@ export function deriveTelegramLocalState({
 
 	const mutationError =
 		(confirmWasForced ? getMutationErrorState(confirmError, 'Switch failed') : null) ??
-		getMutationErrorState(startError, 'Failed to start linking') ??
-		getMutationErrorState(unlinkError, 'Failed to unlink Telegram')
+		getMutationErrorState(startError, 'Failed to start linking')
 	if (mutationError) return mutationError
 
 	if (initialTgloginToken) return { status: 'awaiting_code', token: initialTgloginToken }
@@ -262,7 +259,6 @@ export function useIntegrationLink(opts: Options = {}) {
 		confirmLinked: !!(confirmMutation.data && 'linked' in confirmMutation.data && confirmMutation.data.linked),
 		initialTgloginToken: opts.initialTgloginToken,
 		startError: startMutation.error,
-		unlinkError: unlinkMutation.error,
 		confirmError: confirmMutation.error,
 		confirmWasForced: !!confirmMutation.variables?.force,
 		statusError: statusQuery.error,
@@ -277,5 +273,15 @@ export function useIntegrationLink(opts: Options = {}) {
 		isConfirming: confirmMutation.isPending
 	})
 
-	return { state, connect, disconnect, confirmCode, confirmSwitch, cancelSwitch }
+	return {
+		state,
+		connect,
+		disconnect,
+		isDisconnecting: unlinkMutation.isPending,
+		disconnectFailed: unlinkMutation.isError,
+		resetDisconnect: unlinkMutation.reset,
+		confirmCode,
+		confirmSwitch,
+		cancelSwitch
+	}
 }

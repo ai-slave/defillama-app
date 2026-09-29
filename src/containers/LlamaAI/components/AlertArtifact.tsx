@@ -558,7 +558,7 @@ export function AlertArtifact({
 						className="w-full"
 					>
 						{isSaving ? <LoadingSpinner size={14} /> : <Icon name="calendar-plus" className="size-3.5" />}
-						{isSaving ? 'Saving…' : 'Save Alert'}
+						{isSaving ? 'Saving…' : 'Save alert'}
 					</Button>
 
 					{saveError ? (

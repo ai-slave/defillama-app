@@ -1,36 +1,47 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useDeferredValue, useState } from 'react'
+import { memo, useDeferredValue, useId, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
-import { dialogScrollableBodyStyles } from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
-interface FeedbackFormProps {
-	messageId?: string
-	selectedRating: 'good' | 'bad' | null
-	setSelectedRating: (rating: 'good' | 'bad' | null) => void
-	setShowFeedback: (show: boolean) => void
-	onRatingSubmitted: (rating: 'good' | 'bad' | null) => void
+type Rating = 'good' | 'bad' | null
+
+interface FeedbackDialogProps {
+	open: boolean
+	setOpen: (value: boolean) => void
+	messageId: string
+	selectedRating: Rating
+	setSelectedRating: (value: Rating) => void
+	onRatingSubmitted: (value: Rating) => void
 }
 
-export function FeedbackForm({
+export const FeedbackDialog = memo(function FeedbackDialog(props: FeedbackDialogProps) {
+	// Each opening starts without the last opening's text or error; the closing dialog keeps them through its fade.
+	const openingKey = useOpeningKey(props.open)
+	return <FeedbackDialogOpening key={openingKey} {...props} />
+})
+
+function FeedbackDialogOpening({
+	open,
+	setOpen,
 	messageId,
 	selectedRating,
 	setSelectedRating,
-	setShowFeedback,
 	onRatingSubmitted
-}: FeedbackFormProps) {
+}: FeedbackDialogProps) {
+	const id = useId()
 	const { authorizedFetch } = useAuthContext()
-	const { mutate: submitFeedback, isPending: isSubmittingFeedback } = useMutation({
-		mutationFn: async ({ rating, feedback }: { rating: 'good' | 'bad' | null; feedback?: string }) => {
+	const submission = useMutation({
+		mutationFn: async ({ rating, feedback }: { rating: Rating; feedback?: string }) => {
 			const res = await authorizedFetch(`${AI_SERVER}/user/messages/${messageId}/rate`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -44,32 +55,34 @@ export function FeedbackForm({
 		},
 		onSuccess: (_, variables) => {
 			onRatingSubmitted(variables.rating)
-			setShowFeedback(false)
+			setOpen(false)
+			// After the dialog closes: nothing toasts over an open dialog.
 			toast.success('Thank you for your feedback!')
 		},
 		onError: (error) => {
 			console.error('Failed to submit feedback:', error)
-			toast.error(error instanceof Error ? error.message : 'Failed to submit feedback. Please try again.')
 		}
 	})
+	const pending = submission.isPending
 
 	const [feedbackText, setFeedbackText] = useState('')
 	const finalFeedbackText = useDeferredValue(feedbackText)
 	const handleSubmitFeedback = () => {
 		trackUmamiEvent('llamaai-feedback-text-submit')
-		submitFeedback({ rating: selectedRating, feedback: feedbackText.trim() || undefined })
+		submission.mutate({ rating: selectedRating, feedback: feedbackText.trim() || undefined })
 	}
 
 	return (
-		<>
-			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
+		<Dialog size="sm" open={open} onClose={() => setOpen(false)} pending={pending} unmountOnHide portal>
+			<DialogHeader title="Provide feedback" />
+			<DialogBody>
 				<fieldset className="flex flex-col gap-2">
 					<legend className="mb-2 label-sm text-secondary">Rate this response</legend>
 					<div className="flex gap-2">
 						<button
 							type="button"
 							onClick={() => setSelectedRating('good')}
-							disabled={isSubmittingFeedback}
+							disabled={pending}
 							aria-pressed={selectedRating === 'good'}
 							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
 								selectedRating === 'good'
@@ -83,7 +96,7 @@ export function FeedbackForm({
 						<button
 							type="button"
 							onClick={() => setSelectedRating('bad')}
-							disabled={isSubmittingFeedback}
+							disabled={pending}
 							aria-pressed={selectedRating === 'bad'}
 							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
 								selectedRating === 'bad'
@@ -96,35 +109,54 @@ export function FeedbackForm({
 						</button>
 					</div>
 				</fieldset>
-				<label className="flex flex-col gap-1.5">
-					<span className="label-sm text-secondary">Additional feedback (optional)</span>
-					<textarea
-						placeholder="Share your thoughts..."
-						className={`${textareaStyles} w-full resize-none`}
-						rows={3}
-						maxLength={500}
-						value={feedbackText}
-						disabled={isSubmittingFeedback}
-						onChange={(e) => setFeedbackText(e.target.value)}
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${id}-feedback`} className="label-sm text-secondary">
+						Additional feedback (optional)
+					</label>
+					{/* Ariakit's autoFocus, so the dialog starts in the text field instead of the header ×. */}
+					<Ariakit.Focusable
+						autoFocus
+						render={
+							<textarea
+								id={`${id}-feedback`}
+								placeholder="e.g. The TVL figure is out of date"
+								className={`${textareaStyles} w-full resize-none`}
+								rows={3}
+								maxLength={500}
+								value={feedbackText}
+								readOnly={pending}
+								aria-describedby={`${id}-count`}
+								onChange={(e) => setFeedbackText(e.target.value)}
+							/>
+						}
 					/>
-					<span className="body-sm text-tertiary">{finalFeedbackText.length}/500</span>
-				</label>
-			</div>
-			<div className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
-				<Ariakit.DialogDismiss disabled={isSubmittingFeedback} render={<Button size="md" />}>
-					Cancel
-				</Ariakit.DialogDismiss>
+					<p id={`${id}-count`} className="body-sm text-tertiary">
+						{finalFeedbackText.length}/500
+					</p>
+				</div>
+				{submission.error ? (
+					<InlineStatus variant="error">Couldn&apos;t send your feedback. Try again.</InlineStatus>
+				) : null}
+			</DialogBody>
+			<DialogFooter
+				leading={selectedRating ? null : <p className="body-sm text-secondary">Choose Good or Bad to submit.</p>}
+				dismiss={
+					<Button type="button" size="md" onClick={() => setOpen(false)} disabled={pending}>
+						Cancel
+					</Button>
+				}
+			>
 				<Button
 					type="button"
 					size="md"
 					variant="primary"
 					onClick={handleSubmitFeedback}
-					disabled={isSubmittingFeedback || !selectedRating}
+					disabled={!selectedRating}
+					pendingLabel={pending ? 'Submitting…' : null}
 				>
-					{isSubmittingFeedback ? <LoadingSpinner size={14} /> : null}
-					{isSubmittingFeedback ? 'Submitting…' : 'Submit'}
+					Submit
 				</Button>
-			</div>
-		</>
+			</DialogFooter>
+		</Dialog>
 	)
 }

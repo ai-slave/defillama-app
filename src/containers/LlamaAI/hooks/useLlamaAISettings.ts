@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
@@ -474,8 +473,8 @@ export function useLlamaAISettings() {
 			}
 		},
 		onError: (error) => {
+			// SettingsModal, the only caller, reports the failure in the dialog.
 			console.error('[llama-ai] failed to persist settings:', getErrorMessage(error))
-			toast.error('Could not save AI settings. Please try again.')
 		}
 	})
 

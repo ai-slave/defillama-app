@@ -2,17 +2,10 @@ import * as Ariakit from '@ariakit/react'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Button } from '~/ui/Button'
-import {
-	DialogCloseButton,
-	DialogHeading,
-	dialogScrollableBodyStyles,
-	dialogSurfaceStyles,
-	DialogFooter
-} from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Input, textareaStyles } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { getErrorMessage } from '~/utils/error'
-import { useCreateProject, useUpdateProject } from './hooks'
+import { InlineStatus } from '~/ui/Status'
+import { useCreateProject, useProjectUsage, useUpdateProject } from './hooks'
 import type { Project } from './types'
 
 interface CreateProjectModalProps {
@@ -23,84 +16,56 @@ interface CreateProjectModalProps {
 	onCreated?: (project: Project) => void
 }
 
-export function CreateProjectModal({
+// Each opening starts from the saved project, and a closing dialog keeps its draft through the fade-out.
+export function CreateProjectModal(props: CreateProjectModalProps) {
+	const open = Ariakit.useStoreState(props.dialogStore, 'open')
+	return <CreateProjectDialog key={useOpeningKey(open)} {...props} />
+}
+
+function CreateProjectDialog({
 	dialogStore,
 	mode = 'create',
 	project = null,
 	finalFocus,
 	onCreated
 }: CreateProjectModalProps) {
-	const nameRef = useRef<HTMLInputElement>(null)
-	const create = useCreateProject()
-	const update = useUpdateProject(project?.id ?? '')
-	const pending = create.isPending || update.isPending
-	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
-
-	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog
-				initialFocus={nameRef}
-				finalFocus={finalFocus}
-				onClose={() => {
-					create.reset()
-					update.reset()
-				}}
-				hideOnEscape={!pending}
-				hideOnInteractOutside={!pending}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
-				unmountOnHide
-				portal
-			>
-				{isOpen ? (
-					<CreateProjectForm
-						key={`${mode}-${project?.id ?? 'new'}`}
-						dialogStore={dialogStore}
-						mode={mode}
-						project={project}
-						onCreated={onCreated}
-						nameRef={nameRef}
-						create={create}
-						update={update}
-					/>
-				) : null}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
-	)
-}
-
-function CreateProjectForm({
-	dialogStore,
-	mode,
-	project,
-	onCreated,
-	create,
-	update,
-	nameRef
-}: {
-	nameRef: React.RefObject<HTMLInputElement | null>
-	create: ReturnType<typeof useCreateProject>
-	update: ReturnType<typeof useUpdateProject>
-} & Required<Pick<CreateProjectModalProps, 'dialogStore' | 'mode'>> &
-	Pick<CreateProjectModalProps, 'project' | 'onCreated'>) {
 	const formRef = useRef<HTMLFormElement>(null)
+	const nameRef = useRef<HTMLInputElement>(null)
 	const nameId = useId()
 	const descriptionId = useId()
 	const [name, setName] = useState(project?.name ?? '')
 	const [description, setDescription] = useState(project?.description ?? '')
+	// Set by a submit with an empty name; the field error then follows what is typed.
+	const [checkRequired, setCheckRequired] = useState(false)
+	const create = useCreateProject()
+	const update = useUpdateProject(project?.id ?? '')
+	const isRename = mode === 'rename' && project != null
+	const pending = create.isPending || update.isPending
+	const failed = create.isError || update.isError
+	const nameMissing = checkRequired && !name.trim()
+	// The server refuses a project past the plan's cap, so say so up front instead of after a failed create.
+	const usage = useProjectUsage(!isRename)
+	const projectCap = isRename ? null : (usage.data?.limits.projects ?? null)
+	const atCap = projectCap !== null && usage.data!.project_count >= projectCap
 
-	// Both read through an optional chain, which the compiler cannot lower inside a try or catch, so
-	// submit calls out to them instead. The form can unmount while the request is still running, which
-	// is why the check has to happen after the await rather than before the try.
+	// The compiler cannot lower optional chains or conditionals inside a try or catch, so submit reads
+	// them before the try or calls out to these. The dialog can unmount while the request is still running (its host
+	// re-keys it), which is why the check has to happen after the await rather than before the try.
 	const isStillMounted = () => formRef.current?.isConnected === true
 	const notifyCreated = (created: Project) => onCreated?.(created)
 
-	const submit = async (e: { preventDefault: () => void }) => {
+	const submit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
+		if (pending || atCap) return
 		const trimmed = name.trim()
-		if (!trimmed || create.isPending || update.isPending) return
+		if (!trimmed) {
+			setCheckRequired(true)
+			nameRef.current?.focus()
+			return
+		}
 		const payload = { name: trimmed, description: description.trim() || null }
-		const isRename = mode === 'rename' && project != null
-		const closedMessage = isRename ? 'Project updated' : 'Project created'
+		const doneMessage = isRename ? 'Project updated' : 'Project created'
+		const failedMessage = isRename ? "Couldn't save the project." : "Couldn't create the project."
 		try {
 			if (isRename) {
 				await update.mutateAsync(payload)
@@ -109,81 +74,98 @@ function CreateProjectForm({
 				if (isStillMounted()) notifyCreated(created)
 			}
 			if (isStillMounted()) dialogStore.hide()
-			else toast.success(closedMessage)
-		} catch (error) {
-			if (!isStillMounted()) toast.error(getErrorMessage(error))
+			else toast.success(doneMessage)
+		} catch {
+			// The dialog shows the error while it is open; after it closes, only a toast can.
+			if (!isStillMounted()) toast.error(failedMessage)
 		}
 	}
 
-	const isPending = create.isPending || update.isPending
-
 	return (
-		<form ref={formRef} onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
-			<header className="flex shrink-0 items-start justify-between gap-3 border-b border-subtle px-4 py-3">
-				<div className="flex flex-col gap-0.5">
-					<DialogHeading>{mode === 'rename' ? 'Rename project' : 'New project'}</DialogHeading>
-					<p className="body-sm text-secondary">Group sessions and give them shared file knowledge.</p>
-				</div>
-				<DialogCloseButton disabled={isPending} ariaLabel="Close project dialog" />
-			</header>
+		<Dialog store={dialogStore} size="sm" pending={pending} finalFocus={finalFocus} unmountOnHide portal>
+			<form ref={formRef} onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader
+					title={isRename ? 'Rename project' : 'New project'}
+					subtitle="Group sessions and give them shared file knowledge."
+				/>
+				<DialogBody>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={nameId} className="label-sm text-secondary">
+							Name
+						</label>
+						<Ariakit.Focusable
+							autoFocus
+							render={
+								<Input
+									id={nameId}
+									ref={nameRef}
+									readOnly={pending}
+									maxLength={120}
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									aria-invalid={nameMissing || undefined}
+									aria-describedby={nameMissing ? `${nameId}-error` : undefined}
+									placeholder="My research project"
+								/>
+							}
+						/>
+						{nameMissing ? (
+							<p id={`${nameId}-error`} role="alert" className="body-sm text-data-down">
+								Enter a name for the project.
+							</p>
+						) : null}
+					</div>
 
-			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={nameId} className="label-sm text-secondary">
-						Name
-					</label>
-					<Input
-						id={nameId}
-						ref={nameRef}
-						autoFocus
-						required
-						disabled={isPending}
-						maxLength={120}
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						placeholder="My research project"
-					/>
-				</div>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={descriptionId} className="label-sm text-secondary">
+							Description (optional)
+						</label>
+						<textarea
+							id={descriptionId}
+							readOnly={pending}
+							rows={3}
+							maxLength={500}
+							value={description ?? ''}
+							onChange={(e) => setDescription(e.target.value)}
+							placeholder="What's this project about?"
+							className={`${textareaStyles} resize-none`}
+						/>
+					</div>
 
-				<div className="flex flex-col gap-1.5">
-					<label htmlFor={descriptionId} className="label-sm text-secondary">
-						Description (optional)
-					</label>
-					<textarea
-						id={descriptionId}
-						disabled={isPending}
-						rows={3}
-						maxLength={500}
-						value={description ?? ''}
-						onChange={(e) => setDescription(e.target.value)}
-						placeholder="What's this project about?"
-						className={`${textareaStyles} resize-none`}
-					/>
-				</div>
-
-				{create.error || update.error ? (
-					<p role="alert" className="body-sm text-data-down">
-						{(create.error || update.error)?.message} Edit the project or retry saving.
-					</p>
-				) : null}
-			</div>
-			<DialogFooter
-				dismiss={
-					<Ariakit.DialogDismiss type="button" disabled={isPending} render={<Button size="md" />}>
-						Cancel
-					</Ariakit.DialogDismiss>
-				}
-			>
-				<Ariakit.Button
-					accessibleWhenDisabled
-					type="submit"
-					disabled={!name.trim() || isPending}
-					render={<Button size="md" variant="primary" />}
+					{atCap ? (
+						<InlineStatus variant="warning">
+							{`Your plan allows ${projectCap} projects. Delete one to create another.`}
+						</InlineStatus>
+					) : null}
+					{failed ? (
+						<InlineStatus variant="error">
+							{isRename ? "Couldn't save the project. Try again." : "Couldn't create the project. Try again."}
+						</InlineStatus>
+					) : null}
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss
+							type="button"
+							disabled={pending}
+							accessibleWhenDisabled
+							render={<Button size="md" />}
+						>
+							Cancel
+						</Ariakit.DialogDismiss>
+					}
 				>
-					{isPending ? <LoadingSpinner size={14} /> : null}
-					{isPending ? (mode === 'rename' ? 'Saving…' : 'Creating…') : mode === 'rename' ? 'Save' : 'Create project'}
-				</Ariakit.Button>
-			</DialogFooter>
-		</form>
+					<Button
+						type="submit"
+						size="md"
+						variant="primary"
+						disabled={atCap}
+						pendingLabel={pending ? (isRename ? 'Saving…' : 'Creating…') : null}
+					>
+						{isRename ? 'Save' : 'Create project'}
+					</Button>
+				</DialogFooter>
+			</form>
+		</Dialog>
 	)
 }

@@ -95,7 +95,7 @@ async function render() {
 async function pinItem(sessionId: string) {
 	await click(`Actions for ${sessionId}`)
 	const items = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter((item) =>
-		item.textContent?.includes('Pin to Top')
+		item.textContent?.includes('Pin to top')
 	)
 	expect(items).toHaveLength(1)
 	return items[0]
@@ -189,7 +189,7 @@ async function click(name: string) {
 async function openDelete() {
 	await click('Actions for chat')
 	const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((el) =>
-		el.textContent?.includes('Delete Session')
+		el.textContent?.includes('Delete session')
 	)!
 	await act(async () => item.click())
 	await waitForUi(() => expect(document.querySelector('[role="alertdialog"]')).not.toBeNull())
@@ -216,7 +216,9 @@ test('deletion keeps feedback mounted, prevents duplicates, retries, and complet
 	expect(requestsTo('/user/sessions/chat', 'DELETE')).toHaveLength(1)
 	expect(button('Actions for chat')).toBeDefined()
 	await act(async () => first.resolve(failure('Offline')))
-	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	await waitForUi(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't delete this chat. Try again.")
+	)
 	expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
 	await click('Retry deletion')
 	await waitForUi(() => expect(container.textContent).toContain('Deletion completed'))
@@ -282,11 +284,11 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	const request = Promise.withResolvers<Response>()
 	auth.serveInOrder(`${AI}/user/sessions/chat/share`, [() => request.promise], { isPublic: false })
 	const trigger = await openShareMenu(true)
-	await act(async () => namedButton('Make Private').click())
+	await act(async () => namedButton('Make private').click())
 	await waitForUi(() => expect(document.activeElement?.textContent).toBe('Cancel'))
 	await act(async () => namedButton('Cancel').click())
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toEqual([])
-	await act(async () => namedButton('Make Private').click())
+	await act(async () => namedButton('Make private').click())
 	const confirm = document.querySelector<HTMLElement>('[role="alertdialog"]')!
 	await act(async () =>
 		[...confirm.querySelectorAll('button')].find((el) => accessibleName(el) === 'Make private')!.click()
@@ -314,14 +316,14 @@ test('making a chat public reports failure in the menu without adding a private-
 		{ isPublic: true }
 	)
 	const trigger = await openShareMenu(false)
-	await act(async () => namedButton('Make Public').click())
+	await act(async () => namedButton('Make public').click())
 	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
 	)
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
 	await reopenMenu(trigger)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await act(async () => namedButton('Make Public').click())
+	await act(async () => namedButton('Make public').click())
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 	expect(requestsTo('/user/sessions/chat/share', 'PUT')).toHaveLength(2)
 })
@@ -334,7 +336,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 		.mockReturnValueOnce(request.promise)
 		.mockResolvedValueOnce(undefined)
 	const trigger = await openShareMenu(true)
-	await act(async () => namedButton('Copy Link').click())
+	await act(async () => namedButton('Copy link').click())
 	await waitForUi(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
 	)
@@ -342,7 +344,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
 	await reopenMenu(trigger)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await act(async () => namedButton('Copy Link').click())
+	await act(async () => namedButton('Copy link').click())
 	await act(async () =>
 		document
 			.querySelector('[role="menu"]')!
@@ -352,7 +354,7 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	await act(async () => request.reject(new Error('Clipboard blocked')))
 	await waitForUi(() => expect(toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
 	await act(async () => trigger.click())
-	await act(async () => namedButton('Copy Link').click())
+	await act(async () => namedButton('Copy link').click())
 	await waitForUi(() => expect(namedButton('Link copied')).toBeDefined())
 	expect(copy).toHaveBeenLastCalledWith(`${window.location.origin}/ai/chat/shared/test-share`)
 })
@@ -361,7 +363,7 @@ test('repeated link copies restart success feedback without clearing a later pen
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
 	const copy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
 	await openShareMenu(true)
-	await act(async () => namedButton('Copy Link').click())
+	await act(async () => namedButton('Copy link').click())
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(1)
 	})
@@ -393,7 +395,7 @@ test('repeated link copies restart success feedback without clearing a later pen
 	await act(async () => {
 		await vi.advanceTimersByTimeAsync(2100)
 	})
-	expect(namedButton('Copy Link')).toBeDefined()
+	expect(namedButton('Copy link')).toBeDefined()
 })
 
 async function reopenMenu(trigger: HTMLElement) {
@@ -417,9 +419,9 @@ test.each(['copy', 'visibility'] as const)(
 		const copy = vi.spyOn(navigator.clipboard, 'writeText').mockReturnValue(copyRequest.promise)
 		auth.serve({ [`${AI}/user/sessions/chat/share`]: () => visibilityRequest.promise })
 		const trigger = await openShareMenu(action === 'copy')
-		await act(async () => namedButton(action === 'copy' ? 'Copy Link' : 'Make Public').click())
+		await act(async () => namedButton(action === 'copy' ? 'Copy link' : 'Make public').click())
 		await reopenMenu(trigger)
-		const pendingItem = namedButton(action === 'copy' ? 'Copying…' : 'Make Public')
+		const pendingItem = namedButton(action === 'copy' ? 'Copying…' : 'Make public')
 		expect(pendingItem.getAttribute('aria-disabled')).toBe('true')
 		await act(async () => pendingItem.click())
 		expect(copy.mock.calls).toEqual(action === 'copy' ? [[`${window.location.origin}/ai/chat/shared/test-share`]] : [])

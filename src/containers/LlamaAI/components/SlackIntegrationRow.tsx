@@ -1,9 +1,8 @@
-import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { useSlackIntegrationLink } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { Button } from '~/ui/Button'
-import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { InlineStatus } from '~/ui/Status'
 
 type Props = {
@@ -52,13 +51,11 @@ function SlackLogo() {
 function WorkspaceRow({
 	workspace,
 	onDisconnect,
-	onReconnect,
-	isDisconnecting
+	onReconnect
 }: {
 	workspace: SlackLink
 	onDisconnect: () => void
 	onReconnect: () => void
-	isDisconnecting: boolean
 }) {
 	const needsReconnect = !workspace.revoked && workspace.needs_reconnect === true
 	return (
@@ -86,8 +83,8 @@ function WorkspaceRow({
 						Reconnect
 					</button>
 				) : (
-					<Button type="button" size="md" onClick={onDisconnect} disabled={isDisconnecting}>
-						{isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+					<Button type="button" size="md" onClick={onDisconnect}>
+						Disconnect
 					</Button>
 				)}
 			</div>
@@ -98,12 +95,12 @@ function WorkspaceRow({
 export function SlackIntegrationRow({ title, description, glyph }: Props) {
 	const link = useSlackIntegrationLink()
 	const [disconnectTarget, setDisconnectTarget] = useState<SlackLink | null>(null)
-
-	const confirmDisconnect = () => {
-		if (!disconnectTarget) return
-		link.disconnect(disconnectTarget.team_id)
-		setDisconnectTarget(null)
-	}
+	// A disconnected workspace leaves the list, and its confirmation closes with it.
+	const targetListed =
+		disconnectTarget !== null &&
+		link.state.status === 'linked' &&
+		link.state.workspaces.some((w) => w.team_id === disconnectTarget.team_id)
+	if (disconnectTarget && !targetListed) setDisconnectTarget(null)
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
@@ -140,8 +137,13 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						<button type="button" onClick={() => link.connect()} disabled={link.isStarting} className={SLACK_BUTTON}>
 							{link.isStarting ? 'Opening…' : 'Start over'}
 						</button>
-						<Button type="button" size="md" onClick={() => link.cancelPending()} disabled={link.isCancelingPending}>
-							{link.isCancelingPending ? 'Canceling…' : 'Cancel'}
+						<Button
+							type="button"
+							size="md"
+							pendingLabel={link.isCancelingPending ? 'Canceling…' : null}
+							onClick={() => link.cancelPending()}
+						>
+							Cancel
 						</Button>
 					</div>
 				</div>
@@ -153,9 +155,11 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 						<WorkspaceRow
 							key={w.team_id}
 							workspace={w}
-							onDisconnect={() => setDisconnectTarget(w)}
+							onDisconnect={() => {
+								link.resetDisconnect()
+								setDisconnectTarget(w)
+							}}
 							onReconnect={() => link.connect()}
-							isDisconnecting={link.isDisconnecting}
 						/>
 					))}
 					<div className="flex justify-end">
@@ -169,33 +173,20 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 					<InlineStatus variant="error">{link.state.message}</InlineStatus>
 				</div>
 			)}
-			<Ariakit.DialogProvider open={!!disconnectTarget} setOpen={(open) => !open && setDisconnectTarget(null)}>
-				<Ariakit.Dialog portal className={`${dialogSurfaceStyles} [--dialog-width:448px]`}>
-					<header className="shrink-0 border-b border-subtle p-3">
-						<DialogHeading>Disconnect Slack workspace?</DialogHeading>
-					</header>
-					<div className={`${dialogScrollableBodyStyles} p-3`}>
-						<Ariakit.DialogDescription className="body-sm text-secondary">
-							{disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts
-							targeting this workspace will be paused.
-						</Ariakit.DialogDescription>
-					</div>
-					<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
-						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
-							Cancel
-						</Ariakit.DialogDismiss>
-						<Button
-							type="button"
-							size="md"
-							variant="destructive"
-							onClick={confirmDisconnect}
-							disabled={!disconnectTarget || link.isDisconnecting}
-						>
-							Disconnect
-						</Button>
-					</footer>
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
+			<ConfirmDialog
+				open={disconnectTarget !== null}
+				onClose={() => setDisconnectTarget(null)}
+				portal
+				unmountOnHide
+				title="Disconnect Slack workspace?"
+				description={`${disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts targeting this workspace will be paused.`}
+				confirmLabel="Disconnect"
+				pendingLabel={link.isDisconnecting ? 'Disconnecting…' : null}
+				error={link.disconnectFailed ? "Couldn't disconnect this workspace. Try again." : null}
+				onConfirm={() => {
+					if (disconnectTarget) link.disconnect(disconnectTarget.team_id)
+				}}
+			/>
 		</div>
 	)
 }

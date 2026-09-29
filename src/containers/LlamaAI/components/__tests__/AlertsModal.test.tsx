@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import pb from '~/utils/pocketbase'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { ALERTS_QUERY_KEY } from '../alerts/queryKeys'
@@ -123,7 +124,7 @@ test('pending toggles block repeats, even after opening edit, and roll back on f
 	await act(async () => pending.resolve(new Response('nope', { status: 500 })))
 	await settle(() => expect(toggle().checked).toBe(true))
 	expect(toggle().getAttribute('aria-disabled')).not.toBe('true')
-	expect(document.body.textContent).toContain('Failed to update alert')
+	expect(document.body.textContent).toContain("Couldn't update the alert. Try again.")
 })
 
 test('signed out, the modal asks to sign in without an empty alert state or an alerts request', async () => {
@@ -178,7 +179,7 @@ test('a failed toggle preserves other alert changes and allows retry without dup
 	await settle(() => expect(checked()).toEqual(['true', 'false']))
 	expect(first.getAttribute('aria-label')).toBe('Alert enabled')
 	expect(first.getAttribute('aria-disabled')).not.toBe('true')
-	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Failed to update alert')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe("Couldn't update the alert. Try again.")
 	await act(async () => first.click())
 	await act(async () => patches[1].resolve(Response.json({})))
 	await settle(() => expect(first.getAttribute('aria-checked')).toBe('false'))
@@ -208,4 +209,57 @@ test('finishing one toggle does not refetch over another pending row', async () 
 	await act(async () => second.resolve(Response.json({})))
 	await settle(() => expect(listReads()).toBe(reads + 1))
 	expect(checked()).toEqual(['true', 'false'])
+})
+
+function buttonNamed(scope: ParentNode, name: string) {
+	return [...scope.querySelectorAll<HTMLButtonElement>('button')].find((button) => accessibleName(button) === name)!
+}
+
+test('a failed delete keeps the alert and says so in the confirmation; a retry that succeeds removes it', async () => {
+	let deleteStatus = 500
+	session.serve({
+		[ALERTS_URL]: () => Response.json({ alerts: deleteStatus === 500 ? [alert] : [] }),
+		[`${ALERTS_URL}/alert`]: (_url: URL, init?: RequestInit) =>
+			init?.method === 'DELETE' ? new Response(null, { status: deleteStatus }) : Response.json(alert)
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('Weekly yields'))
+	const confirmDelete = () => [...document.querySelectorAll('button')].findLast((b) => accessibleName(b) === 'Delete')!
+	await act(async () => buttonNamed(document, 'Delete').click())
+	await act(async () => confirmDelete().click())
+	await settle(() =>
+		expect(document.querySelector('[role="alertdialog"] [role="alert"]')?.textContent).toBe(
+			"Couldn't delete the alert. Try again."
+		)
+	)
+	expect(document.querySelector('h3')?.textContent).toBe('Weekly yields')
+	deleteStatus = 204
+	await act(async () => confirmDelete().click())
+	await settle(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	expect(document.body.textContent).not.toContain('Weekly yields')
+})
+
+test('a price alert saved with its name cleared takes the name a new alert of that price would get', async () => {
+	const priceAlert: Alert = {
+		...alert,
+		title: 'My BTC alert',
+		trigger: { type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100_000, recurring: false }
+	}
+	session.serve({
+		[ALERTS_URL]: { alerts: [priceAlert] },
+		[`${ALERTS_URL}/alert`]: () => Response.json({})
+	})
+	await render()
+	await settle(() => expect(document.body.textContent).toContain('My BTC alert'))
+	await act(async () => buttonNamed(document, 'Edit').click())
+	const name = [...document.querySelectorAll('input')].find((input) => input.value === 'My BTC alert')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, '')
+		name.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await act(async () => buttonNamed(document, 'Save').click())
+	await settle(() => expect(alertRequests().filter((request) => request.init?.method === 'PATCH')).toHaveLength(1))
+	const patch = alertRequests().find((request) => request.init?.method === 'PATCH')!
+	expect(JSON.parse(patch.init!.body as string)).toMatchObject({ title: 'BITCOIN above $100,000' })
+	expect(name.placeholder).toBe('BITCOIN above $100,000')
 })

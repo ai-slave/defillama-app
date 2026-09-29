@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
-import { roundPriceValue } from '~/containers/LlamaAI/components/alerts/createAlertForm'
+import { roundPriceValue, validatePriceTrigger } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import {
 	alertFieldLabelClass,
@@ -8,72 +8,78 @@ import {
 	PRICE_OPERATOR_OPTIONS,
 	SegmentedToggle
 } from '~/containers/LlamaAI/components/alerts/ui'
-import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Button } from '~/ui/Button'
+import { InlineStatus } from '~/ui/Status'
 
 interface PriceAlertEditorProps {
 	trigger: PriceTrigger
 	isSaving: boolean
-	canSave?: boolean
+	/** Why saving is unavailable, shown beside Save; null when the alert can be saved. */
+	blockReason?: string | null
 	errorMessage?: string | null
 	onCancel: () => void
 	onSave: (trigger: PriceTrigger) => void
+	/** Fields that save with the trigger, such as the name and delivery, placed above it inside the form. */
+	children?: ReactNode
 }
 
 export function PriceAlertEditor({
 	trigger,
 	isSaving,
-	canSave = true,
+	blockReason = null,
 	errorMessage,
 	onCancel,
-	onSave
+	onSave,
+	children
 }: PriceAlertEditorProps) {
 	const [op, setOp] = useState<'above' | 'below'>(trigger.op)
 	const [value, setValue] = useState(() => roundPriceValue(trigger.value))
 
-	const numericValue = Number(value)
-	const isValueValid = value.trim() !== '' && Number.isFinite(numericValue) && numericValue > 0
+	const priceError = validatePriceTrigger({ tokenNk: trigger.token_nk, value })
+	const saveBlockReason = priceError ?? blockReason
 
 	return (
 		<form
 			onSubmit={(e) => {
 				e.preventDefault()
-				if (!isValueValid || !canSave || isSaving) return
-				onSave({ type: 'price', token_nk: trigger.token_nk, op, value: numericValue, recurring: trigger.recurring })
+				if (saveBlockReason || isSaving) return
+				onSave({ type: 'price', token_nk: trigger.token_nk, op, value: Number(value), recurring: trigger.recurring })
 			}}
 			className="flex flex-col gap-3"
 		>
+			{children}
 			<div className="flex flex-col gap-1">
 				<span className={alertFieldLabelClass}>Token</span>
 				<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 			</div>
-			<div className="flex flex-wrap items-center gap-2">
-				<SegmentedToggle<'above' | 'below'>
-					label="Price comparison"
-					value={op}
-					onChange={setOp}
-					options={PRICE_OPERATOR_OPTIONS}
-				/>
-				<PriceInput value={value} onValueChange={setValue} />
+			<div className="flex flex-col gap-1.5">
+				<span className={alertFieldLabelClass}>Fires when the price goes</span>
+				<div className="flex flex-wrap items-center gap-2">
+					<SegmentedToggle<'above' | 'below'>
+						label="Price comparison"
+						value={op}
+						onChange={setOp}
+						options={PRICE_OPERATOR_OPTIONS}
+					/>
+					<PriceInput value={value} onValueChange={setValue} />
+				</div>
 			</div>
-			<div className="flex justify-end gap-2">
-				<button
-					type="button"
-					onClick={onCancel}
-					className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
-				>
+			{errorMessage ? <InlineStatus variant="error">{errorMessage}</InlineStatus> : null}
+			<div className="flex flex-wrap items-center justify-end gap-2">
+				{saveBlockReason ? <p className="mr-auto body-sm text-secondary">{saveBlockReason}</p> : null}
+				<Button type="button" size="md" disabled={isSaving} onClick={onCancel}>
 					Cancel
-				</button>
-				<button
+				</Button>
+				<Button
 					type="submit"
-					disabled={isSaving || !isValueValid || !canSave}
-					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:brightness-110 disabled:opacity-50"
+					variant="primary"
+					size="md"
+					disabled={!!saveBlockReason}
+					pendingLabel={isSaving ? 'Saving…' : null}
 				>
-					{isSaving ? <LoadingSpinner size={12} /> : <Icon name="check" className="size-3.5" />}
 					Save
-				</button>
+				</Button>
 			</div>
-			{errorMessage ? <p className="text-center text-xs text-error">{errorMessage}</p> : null}
 		</form>
 	)
 }

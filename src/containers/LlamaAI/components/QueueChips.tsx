@@ -4,7 +4,7 @@ import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurr
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
 import { Button, buttonStyles } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
 import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -140,38 +140,29 @@ export function QueueChips({
 					<p className="m-0 body-sm text-tertiary">{isPaused ? 'Queue paused' : 'Clear was not confirmed'}</p>
 					<div className="flex items-center gap-1.5">
 						{isPaused ? (
-							<button
+							<Button
 								type="button"
-								disabled={queueAction !== null || quotaResetCopy !== null}
-								className={primaryButtonClass}
+								size="sm"
+								variant="primary"
+								disabled={queueAction === 'clearing' || quotaResetCopy !== null}
+								pendingLabel={queueAction === 'continuing' ? 'Continuing…' : null}
 								onClick={onContinue}
 							>
-								{queueAction === 'continuing' ? (
-									<LoadingSpinner size={12} />
-								) : quotaResetCopy ? (
-									`Continue in ${quotaResetCopy}`
-								) : (
-									'Continue queue'
-								)}
-							</button>
+								{quotaResetCopy ? `Continue in ${quotaResetCopy}` : 'Continue queue'}
+							</Button>
 						) : null}
-						<button
+						<Button
 							type="button"
-							disabled={queueAction !== null}
-							className={secondaryButtonClass}
+							size="sm"
+							disabled={queueAction === 'continuing'}
+							pendingLabel={queueAction === 'clearing' ? 'Clearing…' : null}
 							onClick={(event) => {
 								returnFocus.current = event.currentTarget
 								clearStore.show()
 							}}
 						>
-							{queueAction === 'clearing' ? (
-								<LoadingSpinner size={12} />
-							) : queueActionError?.action === 'clearing' ? (
-								'Retry clear'
-							) : (
-								'Clear queue'
-							)}
-						</button>
+							{queueActionError?.action === 'clearing' ? 'Retry clear' : 'Clear queue'}
+						</Button>
 					</div>
 				</div>
 			) : null}
@@ -183,37 +174,22 @@ export function QueueChips({
 			<span role="status" className="sr-only">
 				{queueAction === 'clearing' ? 'Clearing queued prompts' : ''}
 			</span>
-			<Ariakit.Dialog
+			<ConfirmDialog
 				store={clearStore}
 				unmountOnHide
 				finalFocus={returnFocus}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
-			>
-				<header className="shrink-0 border-b border-subtle p-3">
-					<DialogHeading>Clear all queued prompts?</DialogHeading>
-				</header>
-				<div className={`${dialogScrollableBodyStyles} p-3`}>
-					<Ariakit.DialogDescription className="body-sm text-secondary">
-						This removes every queued and waiting prompt from this conversation.
-					</Ariakit.DialogDescription>
-				</div>
-				<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
-					<Ariakit.DialogDismiss autoFocus render={<Button size="md" />}>
-						Cancel
-					</Ariakit.DialogDismiss>
-					<Ariakit.Button
-						render={<Button size="md" variant="destructive" />}
-						onClick={() => {
-							// The queue owns pending/error feedback after confirmation, including a lost response.
-							returnFocus.current = promptInputRef?.current ?? returnFocus.current
-							clearStore.hide()
-							onClear()
-						}}
-					>
-						Clear queue
-					</Ariakit.Button>
-				</footer>
-			</Ariakit.Dialog>
+				title="Clear all queued prompts?"
+				description="This removes every queued and waiting prompt from this conversation."
+				confirmLabel="Clear queue"
+				// The dialog closes on confirm: the queue row owns pending and error feedback, including a lost response.
+				pendingLabel={null}
+				error={null}
+				onConfirm={() => {
+					returnFocus.current = promptInputRef?.current ?? returnFocus.current
+					clearStore.hide()
+					onClear()
+				}}
+			/>
 			<ul className="flex flex-col gap-1.5">
 				{rows.map((item, index) => {
 					const rowKey = item.kind === 'local' ? item.payload.clientMutationId : (item.clientMutationId ?? item.id)

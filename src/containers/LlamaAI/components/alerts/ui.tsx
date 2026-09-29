@@ -1,13 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogFullSheetSurfaceStyles } from '~/ui/Dialog'
-import { Icon, type IIcon } from '~/ui/Icon'
-import { inputStyles } from '~/ui/Input'
+import { Icon } from '~/ui/Icon'
+import { Input, inputStyles } from '~/ui/Input'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
 
@@ -35,47 +33,20 @@ export function SettingsIntegrationsLink() {
 	)
 }
 
-export const alertDialogClass = `${dialogFullSheetSurfaceStyles} [--dialog-width:512px]`
-
 export const alertInputClass = `${inputStyles} w-full`
 
 export const alertSelectClass = inputStyles
 
 export const alertFieldLabelClass = 'label-sm text-secondary'
 
-export const alertPrimaryButtonClass = buttonStyles({ variant: 'primary', size: 'md' })
-
-export const alertGhostButtonClass = buttonStyles({ variant: 'ghost', size: 'md' })
-
 export const alertIconButtonClass = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
-export function AlertsDialogHeader({
-	title,
-	subtitle,
-	icon = 'calendar-plus',
-	right
-}: {
-	title: string
-	subtitle?: string
-	icon?: IIcon['name']
-	right?: ReactNode
-}) {
+/** The 32px tile that leads every alerts dialog header. */
+export function AlertsHeaderIcon() {
 	return (
-		<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-			<div className="flex min-w-0 items-center gap-3">
-				<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
-					<Icon name={icon} className="size-4" />
-				</div>
-				<div className="flex min-w-0 flex-col gap-0.5">
-					<DialogHeading>{title}</DialogHeading>
-					{subtitle ? <p className="m-0 truncate body-sm text-secondary">{subtitle}</p> : null}
-				</div>
-			</div>
-			<div className="flex shrink-0 items-center gap-1.5">
-				{right}
-				<DialogCloseButton />
-			</div>
-		</header>
+		<span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+			<Icon name="calendar-plus" className="size-4" aria-hidden="true" />
+		</span>
 	)
 }
 
@@ -95,7 +66,7 @@ export function PriceInput({
 	return (
 		<div className="relative w-32">
 			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-tertiary">$</span>
-			<input
+			<Input
 				type="text"
 				inputMode="decimal"
 				value={display}
@@ -112,7 +83,7 @@ export function PriceInput({
 				}}
 				placeholder={placeholder}
 				aria-label={placeholder}
-				className={`${alertInputClass} pl-6`}
+				className="w-full pl-6"
 			/>
 		</div>
 	)

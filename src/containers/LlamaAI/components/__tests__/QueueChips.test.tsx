@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import type { QueueSurface, QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
+import { accessibleName } from '~/utils/testing/accessibleName'
 
 function pending(overrides: Partial<QueueServerRow> = {}): QueueServerRow {
 	return {
@@ -100,6 +101,30 @@ describe('QueueChips', () => {
 		expect(onContinue).toHaveBeenCalledOnce()
 	})
 
+	test('a confirmed Clear names its pending state in the Clear button', async () => {
+		const onClear = vi.fn()
+		await render(surface({ rows: [pending({ state: 'not_sent', reason: 'execution_failed' })], onClear }))
+		const clear = [...container.querySelectorAll('button')].find((button) => accessibleName(button) === 'Clear queue')!
+		await act(async () => clear.click())
+		const dialog = document.querySelector('[role="alertdialog"]')!
+		const confirm = [...dialog.querySelectorAll('button')].find((button) => accessibleName(button) === 'Clear queue')!
+		await act(async () => confirm.click())
+		expect(onClear).toHaveBeenCalledOnce()
+
+		await render(
+			surface({ rows: [pending({ state: 'not_sent', reason: 'execution_failed' })], queueAction: 'clearing' })
+		)
+		const names = [...container.querySelectorAll('button')].map((button) => [
+			accessibleName(button),
+			button.getAttribute('aria-busy')
+		])
+		expect(names).toEqual([
+			['Continue queue', null],
+			['Clearing…', 'true'],
+			['Dismiss', null]
+		])
+	})
+
 	test('keeps Retry clear available after an ambiguous Clear failure', async () => {
 		const onClear = vi.fn()
 		await render(
@@ -121,7 +146,7 @@ describe('QueueChips', () => {
 		await act(async () => retryClear?.click())
 
 		expect(onClear).not.toHaveBeenCalled()
-		const dialog = document.querySelector('[role="dialog"]')!
+		const dialog = document.querySelector('[role="alertdialog"]')!
 		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe(
 			'Clear all queued prompts?'
 		)

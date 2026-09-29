@@ -410,8 +410,8 @@ function SidebarPanel({
 								fullscreenLocked
 									? 'Needs a wider window to show the DefiLlama menu'
 									: showsFullscreen
-										? 'Exit Fullscreen'
-										: 'Enter Fullscreen'
+										? 'Exit fullscreen'
+										: 'Enter fullscreen'
 							}
 							render={
 								<Ariakit.Button
@@ -434,7 +434,7 @@ function SidebarPanel({
 							}
 						>
 							<Icon name={showsFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
-							<span className="sr-only">{showsFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+							<span className="sr-only">{showsFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
 						</Tooltip>
 					</div>
 
@@ -626,7 +626,7 @@ function SidebarPanel({
 							}}
 							className="flex-1"
 						>
-							{allSelected ? 'Deselect All' : 'Select All'}
+							{allSelected ? 'Deselect all' : 'Select all'}
 						</Button>
 						<Button
 							type="button"

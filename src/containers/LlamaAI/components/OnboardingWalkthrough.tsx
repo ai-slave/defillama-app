@@ -91,7 +91,7 @@ const SPOTLIGHT_CONFIGS = {
 	},
 	alerts: {
 		selectors: ['[data-walkthrough="alerts-button"]'],
-		title: 'Scheduled Alerts',
+		title: 'Scheduled alerts',
 		description:
 			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
 		icon: 'calendar-plus',
@@ -100,7 +100,7 @@ const SPOTLIGHT_CONFIGS = {
 	},
 	upload: {
 		selectors: ['[data-walkthrough="image-upload"]'],
-		title: 'File Upload',
+		title: 'File upload',
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
 		tone: 'success',
@@ -116,7 +116,7 @@ const SPOTLIGHT_CONFIGS = {
 	},
 	'mobile-upload': {
 		selectors: ['[data-walkthrough="mobile-upload-item"]'],
-		title: 'File Upload',
+		title: 'File upload',
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
 		tone: 'success',
@@ -141,7 +141,7 @@ const SPOTLIGHT_CONFIGS = {
 	},
 	'mobile-alerts': {
 		selectors: ['[data-walkthrough="mobile-alerts-item"]'],
-		title: 'Scheduled Alerts',
+		title: 'Scheduled alerts',
 		description:
 			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
 		icon: 'calendar-plus',

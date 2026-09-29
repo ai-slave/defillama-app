@@ -141,6 +141,9 @@ test('unlinked delivery blocks submission; a rejected email save preserves the p
 		})
 	])
 	expect(store.getState().open).toBe(true)
+	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
+		"Couldn't create the alert. Try again."
+	)
 	expect(document.querySelector<HTMLInputElement>('[aria-label="Price"]')!.value).toBe(initialPrice)
 	expect(radio('Price comparison', 'Below').getAttribute('aria-checked')).toBe('true')
 	await act(async () => {
@@ -153,6 +156,61 @@ test('unlinked delivery blocks submission; a rejected email save preserves the p
 	})
 	expect(radio('Price comparison', 'Below').getAttribute('aria-checked')).toBe('true')
 	expect(radio('Delivery channel', 'Email').getAttribute('aria-checked')).toBe('true')
+})
+
+test('a created alert shows its outcome in the dialog until Done closes it', async () => {
+	session.serve({
+		[`${AI}/alerts`]: () => Response.json({ id: 'new', alertExpression: 'Daily at 9:00 UTC', nextRunAt: '' })
+	})
+	const store = await mountModal({
+		prefill: { token_nk: 'coingecko:bitcoin', symbol: 'btc', value: 50_000, op: 'below' }
+	})
+	await act(async () => {
+		document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click()
+		await settle()
+	})
+	const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+	expect(dialog.querySelector('h2')?.textContent).toBe('Alert created')
+	expect(dialog.textContent).toContain('Fires once when BTC goes below $50,000, delivered to your email.')
+	expect(store.getState().open).toBe(true)
+	const done = [...dialog.querySelectorAll('button')].find((button) => button.textContent === 'Done')!
+	await act(async () => {
+		done.click()
+		await settle()
+	})
+	expect(store.getState().open).toBe(false)
+	expect(alertCreations()).toHaveLength(1)
+})
+
+test('while an alert is being created its fields cannot change what the outcome describes', async () => {
+	const created = Promise.withResolvers<Response>()
+	session.serve({ [`${AI}/alerts`]: () => created.promise })
+	await mountModal({
+		prefill: { token_nk: 'coingecko:bitcoin', symbol: 'btc', value: 50_000, op: 'below' }
+	})
+	await act(async () => {
+		document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click()
+		await settle()
+	})
+	const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
+	const fields = [...dialog.querySelectorAll<HTMLElement>('input, select, textarea')]
+	expect(fields.length).toBeGreaterThan(0)
+	// A browser disables every field inside a disabled fieldset; happy-dom does not compute that, so read it the same way.
+	expect(fields.every((field) => field.matches(':disabled') || field.closest('fieldset[disabled]') !== null)).toBe(true)
+
+	// The token picker is not a native field: clearing it with Backspace must do nothing while the create runs.
+	const tokenLabel = [...dialog.querySelectorAll('label')].find((label) => label.textContent === 'Token')!
+	const tokenInput = document.getElementById(tokenLabel.htmlFor)!
+	await act(async () => {
+		tokenInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }))
+		await settle()
+	})
+
+	await act(async () => {
+		created.resolve(Response.json({ id: 'new', alertExpression: '', nextRunAt: '' }))
+		await settle()
+	})
+	expect(dialog.textContent).toContain('Fires once when BTC goes below $50,000, delivered to your email.')
 })
 
 test('segmented radios do not notify on mount or external changes and respect disabled state', async () => {
@@ -208,28 +266,28 @@ test('price editor saves the keyboard-selected operator and keeps invalid values
 })
 
 test.each([
-	{ isSaving: true, canSave: true },
-	{ isSaving: false, canSave: false }
+	{ isSaving: true, blockReason: null },
+	{ isSaving: false, blockReason: 'Pick a Slack channel' }
 ])('price editor rejects form submission while blocked: %j', async (state) => {
 	const onSave = vi.fn()
-	const render = async (isSaving: boolean, canSave: boolean) =>
+	const render = async (isSaving: boolean, blockReason: string | null) =>
 		act(async () =>
 			root.render(
 				<PriceAlertEditor
 					trigger={{ type: 'price', token_nk: 'coingecko:bitcoin', op: 'above', value: 100 }}
 					isSaving={isSaving}
-					canSave={canSave}
+					blockReason={blockReason}
 					onCancel={vi.fn()}
 					onSave={onSave}
 				/>
 			)
 		)
-	await render(state.isSaving, state.canSave)
+	await render(state.isSaving, state.blockReason)
 	await act(async () => {
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})
 	expect(onSave).not.toHaveBeenCalled()
-	await render(false, true)
+	await render(false, null)
 	await act(async () => {
 		container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 	})

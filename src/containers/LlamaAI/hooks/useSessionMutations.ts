@@ -12,7 +12,6 @@ import {
 	updateSessionInInfiniteData
 } from '~/containers/LlamaAI/hooks/sessionListCache'
 import {
-	mutationActionError,
 	SESSION_WRITE_KEY,
 	useInvalidateSessionWrites,
 	useInvalidateProjectSessions
@@ -275,8 +274,9 @@ export function useSessionMutations() {
 					method: 'DELETE',
 					json: { sessionIds }
 				})
-			} catch (error) {
-				throw mutationActionError('Failed to bulk delete sessions', error)
+			} catch {
+				// The confirmation, or the toast after it closes, shows this sentence rather than the transport's.
+				throw new Error("Couldn't delete the selected chats. Try again.")
 			}
 		},
 		onSuccess: (_data, sessionIds) => {
@@ -307,7 +307,7 @@ export function useSessionMutations() {
 		(projectId?: string | null, firstMessage?: string) => {
 			const sessionId = crypto.randomUUID()
 			const placeholder = placeholderTitleFromMessage(firstMessage)
-			const title = placeholder ?? 'New Chat'
+			const title = placeholder ?? 'New chat'
 			const now = new Date().toISOString()
 
 			if (user) {

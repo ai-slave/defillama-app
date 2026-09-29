@@ -10,9 +10,9 @@ export function TokenLimitModal({ isOpen, onClose }: TokenLimitModalProps) {
 		<EndTrialModal
 			isOpen={isOpen}
 			onClose={onClose}
-			title="Daily Usage Limit Reached"
+			title="Daily usage limit reached"
 			description="You've reached your daily AI usage limit on the trial plan. Upgrade to a full subscription for unlimited access."
-			confirmLabel="Upgrade Now"
+			confirmLabel="Upgrade now"
 		/>
 	)
 }

@@ -3,8 +3,8 @@
 import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { setPendingPageContext, setPendingPrompt, setPendingSuggestedFlag } from '~/components/LlamaAIFloatingButton'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
+import { setPendingPageContext, setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 
 const track = installUmamiSink()

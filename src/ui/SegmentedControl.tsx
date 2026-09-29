@@ -12,14 +12,14 @@ import { Tooltip } from './Tooltip'
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	chips: {
-		container: 'flex w-fit max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto',
+		container: 'flex w-fit max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto overflow-y-hidden',
 		button:
-			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {
@@ -30,9 +30,9 @@ export const TAG_GROUP_VARIANTS = {
 	},
 	responsive: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto overflow-y-hidden rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'touch-target hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target before:inset-x-0 hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
@@ -51,7 +51,9 @@ export const TAG_GROUP_VARIANTS = {
 	}
 } as const
 
-/* Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. In a phone sheet's rows the
+/* The scrolling variants (default, chips, responsive) keep each segment's touch target inside the row: a target
+   reaching past a scroller's edge made it scroll, which drew a scrollbar beside the last segment on touch screens.
+   Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. In a phone sheet's rows the
    padded variants are 44px with a 4px inset and 14px labels, like the fields around them. */
 export const TAG_GROUP_SIZES = {
 	sm: 'min-h-6',

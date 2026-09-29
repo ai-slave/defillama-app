@@ -6,7 +6,7 @@ import {
 	hasNoPendingPrompt,
 	hasPendingPrompt,
 	subscribeToPendingPrompt
-} from '~/components/LlamaAIFloatingButton'
+} from '~/containers/LlamaAI/pendingPrompt'
 import type { ChatPageContext } from '~/containers/LlamaAI/streamState'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

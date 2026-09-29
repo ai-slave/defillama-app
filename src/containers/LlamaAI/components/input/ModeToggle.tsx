@@ -67,7 +67,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 							Quick
 						</span>
 					),
-					tooltip: <TooltipBody title="Quick Mode" body="Fast responses for most queries" />
+					tooltip: <TooltipBody title="Quick mode" body="Fast responses for most queries" />
 				},
 				{
 					value: 'fact_checked',
@@ -107,7 +107,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 					),
 					tooltip: (
 						<TooltipBody
-							title="Research Mode"
+							title="Research mode"
 							body={
 								<>
 									Comprehensive reports with in-depth analysis and citations

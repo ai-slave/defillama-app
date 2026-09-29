@@ -126,7 +126,10 @@ export function ProjectsGrid() {
 					<div className="flex flex-wrap items-center gap-2">
 						{hasProjectLimit ? (
 							<span className="body-sm text-secondary tabular-nums">
-								{allProjects.length} / {projectLimit} projects
+								{/* The visible reason New project is disabled; its tooltip alone would hide it from touch and keyboard. */}
+								{reachedProjectCap
+									? `Project limit reached (${allProjects.length} / ${projectLimit})`
+									: `${allProjects.length} / ${projectLimit} projects`}
 							</span>
 						) : null}
 						<label className="flex items-center gap-1.5 label-sm text-secondary">
@@ -281,14 +284,14 @@ export function ProjectsGrid() {
 
 			<CreateProjectModal dialogStore={createStore} onCreated={onCreated} />
 			<CreateProjectModal
-				key={projectToRename?.id}
+				key={`rename-${projectToRename?.id}`}
 				finalFocus={renameRef}
 				dialogStore={renameStore}
 				mode="rename"
 				project={projectToRename}
 			/>
 			<DeleteProjectModal
-				key={projectToDelete?.id}
+				key={`delete-${projectToDelete?.id}`}
 				finalFocus={deleteRef}
 				fallbackFocus={createRef}
 				dialogStore={deleteStore}

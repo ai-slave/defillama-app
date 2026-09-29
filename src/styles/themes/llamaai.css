@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------
    LlamaAI product theme — the chat's kept brand exceptions only
-   (containers/LlamaAI, pages/ai, EntityQuestionsStrip, LlamaAIFloatingButton).
+   (containers/LlamaAI, pages/ai, EntityQuestionsStrip).
 
    Everything ordinary — text tiers, borders, surfaces, hover washes,
    backdrops, status colors, blues — comes from semantics.css and the shared

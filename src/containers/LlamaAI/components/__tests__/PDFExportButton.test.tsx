@@ -8,7 +8,7 @@ import { PDFExportButton } from '../PDFExportButton'
 
 const session = installSubscriberSession('reader', { resolved: true })
 
-test('Dark Mode exports the message as a dark PDF and downloads the file', async () => {
+test('Dark mode exports the message as a dark PDF and downloads the file', async () => {
 	session.serve({
 		'https://ai.llama.fi/export/pdf': { success: true, pdfUrl: 'https://files.llama.fi/export-1.pdf' },
 		'https://files.llama.fi/export-1.pdf': () => new Response(new Blob(['%PDF'], { type: 'application/pdf' }))
@@ -35,7 +35,7 @@ test('Dark Mode exports the message as a dark PDF and downloads the file', async
 		)
 		const darkMode = await waitForUi(() => {
 			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
-				(element) => element.textContent === 'Dark Mode'
+				(element) => element.textContent === 'Dark mode'
 			)
 			expect(item?.getAttribute('aria-disabled')).not.toBe('true')
 			return item!

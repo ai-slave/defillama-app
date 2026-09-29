@@ -12,6 +12,7 @@ import type {
 	WebMobilePreference,
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -42,6 +43,10 @@ const settle = (assertion: () => void) =>
 	act(async () => {
 		await waitForUi(assertion)
 	})
+const buttonNamed = (name: string, within: ParentNode = document) =>
+	[...within.querySelectorAll<HTMLButtonElement>('button')].find((node) => accessibleName(node) === name)
+const confirmation = () => document.querySelector<HTMLElement>('[role="alertdialog"]')
+const alertText = (within: ParentNode = document) => within.querySelector('[role="alert"]')?.textContent
 const agentHomeRequests = (path: string, method = 'GET') =>
 	session.requests.filter(
 		(request) => request.url.href === `${AGENT_HOME}${path}` && (request.init?.method ?? 'GET') === method
@@ -205,20 +210,19 @@ describe('SettingsModal instructions', () => {
 				el.textContent?.includes("Couldn't load memories")
 			)!
 		await act(async () => loadError().querySelector('button')!.click())
-		await settle(() => expect(loadError().querySelector('button')!.disabled).toBe(true))
+		await settle(() => expect(loadError().querySelector('button')!.getAttribute('aria-busy')).toBe('true'))
 		await act(async () => memoriesRefresh.resolve(offline()))
-		const deletion = () =>
-			[...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => el.textContent === 'Delete')!
-		await act(async () => deletion().click())
-		const deleteError = () =>
-			[...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
-				el.textContent?.includes("Couldn't delete")
-			)
-		await settle(() => expect(deleteError()).toBeDefined())
-		await act(async () => deleteError()!.querySelector('button')!.click())
-		await settle(() => expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(2))
-		await settle(() => expect(deletion().disabled).toBe(true))
+		// Deleting asks first, and the confirmation owns the request: its error, its retry of the same memory, its pending.
+		await act(async () => buttonNamed('Delete')!.click())
+		await settle(() => expect(confirmation()?.textContent).toContain('Delete this memory?'))
+		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(0)
+		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
+		await settle(() => expect(alertText(confirmation()!)).toBe("Couldn't delete this memory. Try again."))
+		await act(async () => buttonNamed('Delete', confirmation()!)!.click())
+		await settle(() => expect(buttonNamed('Deleting…', confirmation()!)).toBeDefined())
+		expect(agentHomeRequests('/memories/memory-1', 'DELETE')).toBe(2)
 		await act(async () => retriedDelete.resolve(Response.json({ deleted: true })))
+		await settle(() => expect(confirmation()).toBeNull())
 	})
 	test('a successfully loaded empty workspace still shows its empty states', async () => {
 		await openMemory()
@@ -246,7 +250,7 @@ describe('SettingsModal instructions', () => {
 		expect(textarea().value).toBe('Keep this draft')
 		const dialog = document.querySelector('[role="dialog"]')!
 		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Settings')
-		expect(document.querySelector('[aria-label="Close settings"]')).not.toBeNull()
+		expect(buttonNamed('Close dialog', dialog)).toBeDefined()
 	})
 
 	test('derives the character count from the controlled draft', async () => {
@@ -406,6 +410,75 @@ describe('SettingsModal instructions', () => {
 		)
 		await act(async () => retryButton?.click())
 		expect(retry).toHaveBeenCalledOnce()
+	})
+
+	test('a refused setting save says so inside the dialog', async () => {
+		actions.setEnterToSend = vi.fn(async () => false)
+		await act(async () => buttonNamed('App')!.click())
+		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
+
+		await settle(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
+		expect(document.querySelector('[role="alert"]')!.closest('[role="dialog"]')).not.toBeNull()
+	})
+
+	test('a save refused after closing and reopening still says so in the reopened dialog', async () => {
+		const pendingSave = Promise.withResolvers<boolean>()
+		actions.setEnterToSend = vi.fn(() => pendingSave.promise)
+		await act(async () => buttonNamed('App')!.click())
+		await act(async () => document.querySelector<HTMLInputElement>('[aria-label="Enter to send"]')!.click())
+		await act(async () => dialogStore.hide())
+		await act(async () => dialogStore.show())
+		await act(async () => buttonNamed('App')!.click())
+
+		await act(async () => pendingSave.resolve(false))
+		await settle(() => expect(alertText()).toBe("Couldn't save that setting. Try again."))
+	})
+
+	test('Save shows its progress, and a refused save keeps the dialog open with its error', async () => {
+		const firstSave = Promise.withResolvers<boolean>()
+		setCustomInstructions.mockImplementationOnce(() => firstSave.promise).mockResolvedValueOnce(false)
+		await act(async () => change('Answer in bullet points'))
+		await act(async () => buttonNamed('Save')!.click())
+		expect(buttonNamed('Saving…')).toBeDefined()
+
+		await act(async () => firstSave.resolve(false))
+		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+		expect(buttonNamed('Save')).toBeDefined()
+
+		await act(async () => {
+			textarea().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true }))
+		})
+		await settle(() => expect(setCustomInstructions).toHaveBeenCalledTimes(2))
+		expect(dialogStore.getState().open).toBe(true)
+		expect(alertText()).toBe("Couldn't save your instructions. Try again.")
+	})
+
+	test('Clear all asks first, keeps its progress and error in the confirmation, and closes once cleared', async () => {
+		const entry = { id: 'memory-1', text: 'Prefers ETH pairs', chars: 17 }
+		let cleared = false
+		const retriedClear = Promise.withResolvers<Response>()
+		let clears = 0
+		session.serve({
+			[`${AGENT_HOME}/memories`]: () => Response.json({ ...emptyMemories, user: cleared ? [] : [entry] }),
+			[`${AGENT_HOME}/memories?target=user`]: () => (++clears === 1 ? offline() : retriedClear.promise)
+		})
+		await openMemory()
+		await settle(() => expect(document.body.textContent).toContain('Prefers ETH pairs'))
+
+		await act(async () => buttonNamed('Clear all')!.click())
+		await settle(() => expect(confirmation()?.textContent).toContain('Clear everything about you?'))
+		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(0)
+
+		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
+		await settle(() => expect(alertText(confirmation()!)).toBe("Couldn't clear these memories. Try again."))
+		await act(async () => buttonNamed('Clear all', confirmation()!)!.click())
+		await settle(() => expect(buttonNamed('Clearing…', confirmation()!)).toBeDefined())
+
+		cleared = true
+		await act(async () => retriedClear.resolve(Response.json({ cleared: 1 })))
+		await settle(() => expect(confirmation()).toBeNull())
+		expect(document.body.textContent).toContain('Nothing remembered yet.')
+		expect(agentHomeRequests('/memories?target=user', 'DELETE')).toBe(2)
 	})
 
 	test('restores the spend cap after a failed save', async () => {

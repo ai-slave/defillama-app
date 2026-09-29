@@ -8,16 +8,10 @@ import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { toShareToken, type ShareToken } from '~/containers/LlamaAI/ids'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Button } from '~/ui/Button'
-import {
-	DialogCloseButton,
-	DialogHeading,
-	dialogScrollableBodyStyles,
-	dialogSurfaceStyles,
-	DialogFooter
-} from '~/ui/Dialog'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
@@ -39,19 +33,13 @@ function buildShareLink(shareToken: ShareToken, messageId?: string | null) {
 }
 
 const CLIPBOARD_UNAVAILABLE = 'Clipboard access is unavailable here. Copy the link from the field above.'
+const CREATION_FAILED = 'Couldn’t create a share link.'
 
 export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, messageId }: ShareModalProps) {
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
-				unmountOnHide
-				portal
-				hideOnInteractOutside
-			>
-				{open ? <ShareModalBody key={`${sessionId}:${messageId}`} sessionId={sessionId} messageId={messageId} /> : null}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+		<Dialog size="sm" open={open} onClose={() => setOpen(false)} unmountOnHide portal>
+			{open ? <ShareModalBody key={`${sessionId}:${messageId}`} sessionId={sessionId} messageId={messageId} /> : null}
+		</Dialog>
 	)
 })
 
@@ -60,7 +48,8 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const hasStartedRef = useRef(false)
-	const openingRef = useRef<HTMLDivElement>(null)
+	const openingRef = useRef<HTMLSpanElement>(null)
+	const primaryRef = useRef<HTMLButtonElement>(null)
 	const shareLinkInputId = useId()
 	const copy = useMutation({
 		mutationFn: async (link: string) => {
@@ -91,7 +80,8 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		},
 		onError: (error) => {
-			if (!openingRef.current?.isConnected) toast.error(error.message)
+			console.error('Failed to create share link:', error)
+			if (!openingRef.current?.isConnected) toast.error(CREATION_FAILED)
 		}
 	})
 	const { mutate: createShareLink } = creation
@@ -131,128 +121,132 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 		}
 	})
 	const nativeShareError = nativeShare.error?.name !== 'AbortError' ? nativeShare.error : null
-	const pending = creation.isPending || copy.isPending
+	const status = creation.isPending
+		? 'Creating share link…'
+		: copy.isPending
+			? 'Copying share link…'
+			: copy.isSuccess
+				? 'Share link copied to clipboard'
+				: shareLink
+					? 'Share link ready'
+					: ''
 
 	return (
 		<>
-			<div
-				ref={openingRef}
-				className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3"
-			>
-				<DialogHeading>Share conversation</DialogHeading>
-				<DialogCloseButton ariaLabel="Close share dialog" />
-			</div>
-			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
-				<p role="status" className="m-0 body-sm text-secondary">
-					{!sessionId
-						? 'Sharing is available once the conversation is saved.'
-						: creation.isPending
-							? 'Creating share link…'
-							: copy.isPending
-								? 'Copying share link…'
-								: copy.isSuccess
-									? 'Share link copied to clipboard'
-									: shareLink
-										? 'Share link ready'
-										: ''}
-				</p>
-				{shareLink ? (
+			<DialogHeader
+				title="Share conversation"
+				subtitle={
+					sessionId
+						? 'Anyone with the link can view this conversation.'
+						: 'Sharing is available once the conversation is saved.'
+				}
+			/>
+			{sessionId ? (
+				<DialogBody>
 					<div className="flex min-w-0 flex-col gap-1.5">
-						<p className="m-0 body-sm text-secondary">Anyone with the link can view this conversation.</p>
 						<label htmlFor={shareLinkInputId} className="label-sm text-secondary">
-							Share Link
+							Share link
 						</label>
+						{/* The field keeps its place while the link is created, so the dialog does not grow when it lands. */}
 						<Input
 							id={shareLinkInputId}
 							type="text"
 							value={shareLink}
 							readOnly
+							aria-busy={creation.isPending}
 							onFocus={(event) => event.currentTarget.select()}
 							className="w-full min-w-0"
 						/>
 					</div>
-				) : null}
-				{creation.error ? (
-					<p role="alert" className="body-sm text-data-down">
-						{creation.error.message}
-					</p>
-				) : null}
-				{copy.error ? (
-					<p role="alert" className="body-sm text-data-down">
-						{copy.error.message === CLIPBOARD_UNAVAILABLE
-							? CLIPBOARD_UNAVAILABLE
-							: 'Couldn’t copy the link. Try again or copy it from the field above.'}
-					</p>
-				) : null}
-				{nativeShareError ? (
-					<p role="alert" className="body-sm text-data-down">
-						Couldn’t share the link. Try again or copy it instead.
-					</p>
-				) : null}
-				{shareLink ? (
-					<div className="flex flex-wrap gap-2">
-						{typeof navigator.share === 'function' ? (
-							<Ariakit.Button
+					{creation.error ? (
+						<InlineStatus variant="error">
+							<div className="flex flex-wrap items-center justify-between gap-2">
+								<span>{CREATION_FAILED}</span>
+								<Button
+									type="button"
+									size="sm"
+									onClick={() => {
+										// The copy button takes this button's place as the request runs, so focus moves to it.
+										primaryRef.current?.focus()
+										startShare()
+									}}
+								>
+									Try again
+								</Button>
+							</div>
+						</InlineStatus>
+					) : null}
+					{copy.error ? (
+						<InlineStatus variant="error">
+							{copy.error.message === CLIPBOARD_UNAVAILABLE
+								? CLIPBOARD_UNAVAILABLE
+								: 'Couldn’t copy the link. Try again or copy it from the field above.'}
+						</InlineStatus>
+					) : null}
+					{nativeShareError ? (
+						<InlineStatus variant="error">Couldn’t share the link. Try again or copy it instead.</InlineStatus>
+					) : null}
+				</DialogBody>
+			) : null}
+			<DialogFooter
+				leading={
+					shareLink ? (
+						<>
+							{typeof navigator.share === 'function' ? (
+								<Button
+									type="button"
+									size="md"
+									onClick={() => nativeShare.mutate()}
+									pendingLabel={nativeShare.isPending ? 'Sharing…' : null}
+								>
+									Share…
+								</Button>
+							) : null}
+							<Button
 								type="button"
-								onClick={() => nativeShare.mutate()}
-								disabled={nativeShare.isPending}
-								accessibleWhenDisabled
-								render={<Button size="md" />}
+								size="md"
+								onClick={() => {
+									const text = encodeURIComponent('Check out this conversation from LlamaAI')
+									window.open(
+										`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareLink)}`,
+										'_blank',
+										'noopener,noreferrer'
+									)
+								}}
+								data-umami-event="llamaai-share-to-x"
 							>
-								{nativeShare.isPending ? <LoadingSpinner size={14} /> : null}
-								{nativeShare.isPending ? 'Sharing…' : 'Share…'}
-							</Ariakit.Button>
-						) : null}
-						<Button
-							type="button"
-							size="md"
-							onClick={() => {
-								const text = encodeURIComponent('Check out this conversation from LlamaAI')
-								window.open(
-									`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareLink)}`,
-									'_blank',
-									'noopener,noreferrer'
-								)
-							}}
-							data-umami-event="llamaai-share-to-x"
-						>
-							Share to X
-						</Button>
-					</div>
-				) : null}
-			</div>
-			<DialogFooter dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Close</Ariakit.DialogDismiss>}>
+								Share to X
+							</Button>
+						</>
+					) : null
+				}
+				dismiss={<Ariakit.DialogDismiss render={<Button size="md" />}>Close</Ariakit.DialogDismiss>}
+			>
 				{sessionId ? (
+					// Focusable while disabled: the retry above hands focus to it. Without a link, or without clipboard
+					// access, the error above says why it is unavailable.
 					<Ariakit.Button
+						ref={primaryRef}
 						type="button"
-						onClick={() => {
-							if (pending) return
-							if (shareLink) copyLink(shareLink)
-							else startShare()
-						}}
-						disabled={pending || copy.error?.message === CLIPBOARD_UNAVAILABLE}
+						onClick={() => copyLink(shareLink)}
+						disabled={!shareLink || copy.error?.message === CLIPBOARD_UNAVAILABLE}
 						accessibleWhenDisabled
-						render={<Button size="md" variant="primary" />}
+						render={
+							<Button
+								size="md"
+								variant="primary"
+								pendingLabel={creation.isPending ? 'Creating…' : copy.isPending ? 'Copying…' : null}
+							/>
+						}
 					>
-						{pending ? (
-							<LoadingSpinner size={14} />
-						) : (
-							<Icon name={copy.isSuccess ? 'check-circle' : 'copy'} height={14} width={14} />
-						)}
-						{creation.isPending
-							? 'Creating…'
-							: copy.isPending
-								? 'Copying…'
-								: copy.isSuccess
-									? 'Copied'
-									: shareLink
-										? 'Copy link'
-										: 'Retry'}
+						<Icon name={copy.isSuccess ? 'check-circle' : 'copy'} height={14} width={14} />
+						{copy.isSuccess ? 'Copied' : 'Copy link'}
 					</Ariakit.Button>
 				) : null}
 			</DialogFooter>
-			<span role="status" className="sr-only">
-				{nativeShare.isPending ? 'Sharing link' : ''}
+			{/* Also how a late failure tells whether this opening is still on screen. */}
+			<span ref={openingRef} role="status" className="sr-only">
+				{nativeShare.isPending ? 'Sharing link' : status}
 			</span>
 		</>
 	)

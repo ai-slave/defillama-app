@@ -6,11 +6,7 @@ import {
 	SESSIONS_QUERY_KEY,
 	type SessionListInfiniteData
 } from '~/containers/LlamaAI/hooks/sessionListCache'
-import {
-	mutationActionError,
-	SESSION_WRITE_KEY,
-	useInvalidateSessionWrites
-} from '~/containers/LlamaAI/hooks/sessionMutationCache'
+import { SESSION_WRITE_KEY, useInvalidateSessionWrites } from '~/containers/LlamaAI/hooks/sessionMutationCache'
 
 // Its own hook so a caller that only deletes does not instantiate every session mutation.
 export function useDeleteSession() {
@@ -24,8 +20,9 @@ export function useDeleteSession() {
 		mutationFn: async ({ sessionId }: { sessionId: string; projectId?: string | null }) => {
 			try {
 				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}`, { method: 'DELETE' })
-			} catch (error) {
-				throw mutationActionError('Failed to delete session', error)
+			} catch {
+				// The confirmation, or the toast after it closes, shows this sentence rather than the transport's.
+				throw new Error("Couldn't delete this chat. Try again.")
 			}
 		},
 		// Keep the row and its confirmation available until the server accepts deletion.

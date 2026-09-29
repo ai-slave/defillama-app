@@ -13,6 +13,7 @@ const { writeText, nativeShare, toastError } = vi.hoisted(() => ({
 // The toast library is the app's notification boundary; its calls are what a user would see.
 vi.mock('react-hot-toast', () => ({ toast: { error: toastError } }))
 
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { ShareModal } from '../ShareModal'
 
@@ -39,9 +40,7 @@ async function render(open: boolean, sessionId: string | null = 's1', messageId?
 	)
 }
 function button(name: string) {
-	const result = [...document.querySelectorAll('button')].find(
-		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
-	)
+	const result = [...document.querySelectorAll('button')].find((el) => accessibleName(el) === name)
 	expect(result, `button ${name}`).not.toBeUndefined()
 	return result!
 }
@@ -83,33 +82,32 @@ test('opening shares once in Strict Mode and copies the message link', async () 
 	expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/tok-1#msg-m1')
 })
 
-test('retry keeps its focus through creation, clipboard failure and successful manual copy', async () => {
+test('Try again moves focus to the copy button, which keeps it through creation, clipboard failure and a manual copy', async () => {
 	session.serveInOrder(SHARE, [fail('Sharing is unavailable')])
 	await render(true)
-	await expectText('Sharing is unavailable')
+	await expectText('Couldn’t create a share link.')
+	expect(document.body.textContent).not.toContain('Sharing is unavailable')
+	const copyLink = button('Copy link')
+	expect(copyLink.getAttribute('aria-disabled')).toBe('true')
 	const request = Promise.withResolvers<Response>()
 	session.serveInOrder(SHARE, [() => request.promise])
-	const retry = button('Retry')
-	await act(async () => {
-		retry.focus()
-		retry.click()
-	})
+	await act(async () => button('Try again').click())
 	await settle()
-	expect(document.activeElement).toBe(retry)
+	expect(document.activeElement).toBe(copyLink)
+	expect(accessibleName(copyLink)).toBe('Creating…')
 	expect(document.querySelector('[role="status"]')?.textContent).toBe('Creating share link…')
 	expect(toastError.mock.calls).toEqual([])
-	expect(retry.getAttribute('aria-disabled')).toBe('true')
-	await act(async () => retry.click())
+	await act(async () => copyLink.click())
 	expect(shareRequests()).toHaveLength(2)
 	writeText.mockRejectedValueOnce(new Error('Denied'))
 	await act(async () => request.resolve(shareResponse()))
 	await expectText('Couldn’t copy the link.')
-	expect(document.activeElement).toBe(retry)
-	expect(button('Copy link')).toBe(retry)
+	expect(document.activeElement).toBe(copyLink)
+	expect(button('Copy link')).toBe(copyLink)
 	expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/tok-1')
-	await act(async () => retry.click())
+	await act(async () => copyLink.click())
 	await expectText('Share link copied to clipboard')
-	expect(document.activeElement).toBe(retry)
+	expect(document.activeElement).toBe(copyLink)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(writeText.mock.calls).toEqual([
 		['http://localhost:3000/ai/chat/shared/tok-1'],
@@ -217,7 +215,7 @@ test('failed creation after dismissal reports once and reopening permits a fresh
 	await expectText('Creating share link…')
 	await render(false)
 	await act(async () => request.reject(new Error('Sharing is unavailable')))
-	expect(toastError.mock.calls).toEqual([['Sharing is unavailable']])
+	expect(toastError.mock.calls).toEqual([['Couldn’t create a share link.']])
 	session.serve({ [SHARE]: () => shareResponse() })
 	await render(true)
 	await expectText('Share link copied to clipboard')

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Router from 'next/router'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { activateDashboardArtifacts, prepareDashboardArtifactSave } from '~/containers/LlamaAI/dashboardArtifactFlow'
@@ -10,8 +10,8 @@ import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { formatUsd } from '~/utils/numberFormat'
 
 interface DashboardPanelProps {
@@ -26,6 +26,8 @@ interface DashboardPanelProps {
 }
 
 const NOOP = () => {}
+const CREATE_FAILED = "Couldn't create the dashboard. Try again."
+const USD_3DP = { minimumFractionDigits: 3, maximumFractionDigits: 3 }
 
 function DashboardPanelInner({
 	config,
@@ -39,6 +41,9 @@ function DashboardPanelInner({
 }: DashboardPanelProps) {
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const queryClient = useQueryClient()
+	// Premium data bills every refresh, so saving it waits for the reader to accept the cost.
+	const [confirmingCost, setConfirmingCost] = useState(false)
+	const costConfirmRef = useRef<HTMLDivElement>(null)
 
 	const enrichedItems = useMemo(() => {
 		if (!config) return []
@@ -53,19 +58,15 @@ function DashboardPanelInner({
 		})
 	}, [config])
 
-	const { mutate: handleCreateDashboard, isPending } = useMutation({
+	const artifactSave = useMemo(
+		() => (config ? prepareDashboardArtifactSave(config.items, config.artifactOutcomes) : null),
+		[config]
+	)
+
+	const creation = useMutation({
 		mutationFn: async () => {
-			if (!config) {
+			if (!config || !artifactSave) {
 				throw new Error('No dashboard configuration')
-			}
-			const artifactSave = prepareDashboardArtifactSave(config.items, config.artifactOutcomes)
-			if (
-				artifactSave.containsPremium &&
-				!window.confirm(
-					`This dashboard uses premium data. Daily refreshes will bill your account up to ${formatUsd(artifactSave.estimatedMaxCostUsd, { minimumFractionDigits: 3, maximumFractionDigits: 3 })} per refresh window. Continue?`
-				)
-			) {
-				throw new Error('Dashboard creation cancelled')
 			}
 
 			const dashboard = await dashboardAPI.createDashboard(
@@ -104,6 +105,8 @@ function DashboardPanelInner({
 			return { dashboard, activationPending }
 		},
 		onSuccess: ({ dashboard, activationPending }) => {
+			setConfirmingCost(false)
+			// After the confirmation closes: nothing toasts over an open dialog.
 			if (activationPending)
 				toast.error('Dashboard saved, but refresh setup is pending. Your current chart snapshots are safe.')
 			queryClient.setQueryData(
@@ -112,10 +115,24 @@ function DashboardPanelInner({
 			)
 			void Router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 		},
-		onError: (err) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to create dashboard')
+		// Hook-level so it survives the panel unmounting mid-request. The cost confirmation shows its own error while it is
+		// on screen; a route change can remove it mid-save, so the check is the element, not the state that opened it.
+		onError: (error) => {
+			console.error('Failed to create dashboard:', error)
+			if (!costConfirmRef.current?.isConnected) toast.error(CREATE_FAILED)
 		}
 	})
+	const { isPending } = creation
+
+	const handleCreateDashboard = () => {
+		if (artifactSave?.containsPremium) {
+			// A reopened confirmation starts without the last attempt's error.
+			creation.reset()
+			setConfirmingCost(true)
+			return
+		}
+		creation.mutate()
+	}
 
 	const hasMultipleVersions = versions.length > 1
 
@@ -147,11 +164,10 @@ function DashboardPanelInner({
 								type="button"
 								size="md"
 								variant="primary"
-								onClick={() => handleCreateDashboard()}
-								disabled={isPending || !config}
+								onClick={handleCreateDashboard}
+								pendingLabel={isPending ? 'Creating…' : null}
 							>
-								{isPending ? <LoadingSpinner size={14} /> : null}
-								{isPending ? 'Creating…' : 'Create Dashboard'}
+								Create dashboard
 							</Button>
 							<Button
 								type="button"
@@ -200,6 +216,22 @@ function DashboardPanelInner({
 						</div>
 					) : null}
 				</div>
+			) : null}
+			{artifactSave?.containsPremium ? (
+				<ConfirmDialog
+					ref={costConfirmRef}
+					open={confirmingCost}
+					onClose={() => setConfirmingCost(false)}
+					tone="primary"
+					title="Create a dashboard with premium data?"
+					description={`Daily refreshes will bill your account up to ${formatUsd(artifactSave.estimatedMaxCostUsd, USD_3DP)} per refresh window.`}
+					confirmLabel="Create dashboard"
+					pendingLabel={isPending ? 'Creating…' : null}
+					error={creation.error ? CREATE_FAILED : null}
+					onConfirm={() => creation.mutate()}
+					portal
+					unmountOnHide
+				/>
 			) : null}
 		</div>
 	)

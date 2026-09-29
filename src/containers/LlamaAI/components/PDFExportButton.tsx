@@ -188,7 +188,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="sun" height={14} width={14} className="shrink-0" />
-						Light Mode
+						Light mode
 					</MenuItem>
 					<MenuItem
 						data-umami-event="export-pdf"
@@ -200,7 +200,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 						className="aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
 					>
 						<Icon name="moon" height={14} width={14} className="shrink-0" />
-						Dark Mode
+						Dark mode
 					</MenuItem>
 				</MenuSurface>
 			</Ariakit.MenuProvider>

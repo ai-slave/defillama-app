@@ -2,6 +2,7 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installDownloadSink } from '~/utils/testing/downloadSink'
 import type { AttachmentPreview } from '../../utils/attachmentPreview'
 import { TextChip } from '../input/ImageUpload'
@@ -32,9 +33,7 @@ afterEach(async () => {
 })
 
 function button(name: string) {
-	return [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(el) => el.getAttribute('aria-label') === name || el.textContent?.trim() === name
-	)!
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) => accessibleName(el) === name)!
 }
 async function click(name: string) {
 	await act(async () => button(name).click())
@@ -84,7 +83,7 @@ test('copy keeps focus, blocks repeats while pending and resets when the preview
 	)
 	await mount({ filename: 'data.csv', content: 'a,b\n1,2' })
 	const copy = button('Copy')
-	copy.focus()
+	await act(async () => copy.focus())
 	await click('Copy')
 	expect(copy.getAttribute('aria-busy')).toBe('true')
 	expect(document.activeElement).toBe(copy)

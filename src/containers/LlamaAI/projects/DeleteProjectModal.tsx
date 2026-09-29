@@ -1,15 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import toast from 'react-hot-toast'
-import { Button } from '~/ui/Button'
-import {
-	DialogCloseButton,
-	DialogHeading,
-	dialogScrollableBodyStyles,
-	dialogSurfaceStyles,
-	DialogFooter
-} from '~/ui/Dialog'
-import { LoadingSpinner } from '~/ui/Loaders'
-import { getErrorMessage } from '~/utils/error'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { useOpeningKey } from '~/ui/Dialog'
 import { useDeleteProject } from './hooks'
 import type { Project } from './types'
 
@@ -21,13 +13,15 @@ interface DeleteProjectModalProps {
 	onDeleted?: () => void
 }
 
-export function DeleteProjectModal({
-	dialogStore,
-	project,
-	onDeleted,
-	finalFocus,
-	fallbackFocus
-}: DeleteProjectModalProps) {
+const DELETE_FAILED = "Couldn't delete this project. Try again."
+
+// Each opening starts without the last opening's error, and a closing dialog keeps it through the fade-out.
+export function DeleteProjectModal(props: DeleteProjectModalProps) {
+	const open = Ariakit.useStoreState(props.dialogStore, 'open')
+	return <DeleteProjectConfirm key={useOpeningKey(open)} {...props} />
+}
+
+function DeleteProjectConfirm({ dialogStore, project, onDeleted, finalFocus, fallbackFocus }: DeleteProjectModalProps) {
 	const remove = useDeleteProject()
 
 	// This and isStillOpen read through an optional chain, which the compiler cannot lower inside a try
@@ -46,59 +40,27 @@ export function DeleteProjectModal({
 				dialogStore.hide()
 				notifyDeleted()
 			} else toast.success('Project deleted')
-		} catch (error) {
-			if (!isStillOpen()) toast.error(getErrorMessage(error))
+		} catch {
+			// The dialog shows the error while it is open; after it closes, only a toast can.
+			if (!isStillOpen()) toast.error(DELETE_FAILED)
 		}
 	}
 
 	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog
-				finalFocus={finalFocus}
-				autoFocusOnHide={(element) => {
-					if (element) return true
-					fallbackFocus?.current?.focus()
-					return false
-				}}
-				onClose={() => remove.reset()}
-				hideOnEscape={!remove.isPending}
-				hideOnInteractOutside={!remove.isPending}
-				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
-			>
-				<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-					<DialogHeading>Delete project?</DialogHeading>
-					<DialogCloseButton disabled={remove.isPending} ariaLabel="Close delete project dialog" />
-				</header>
-				<div className={`${dialogScrollableBodyStyles} p-4`}>
-					<Ariakit.DialogDescription className="body-sm text-secondary">
-						{project?.name ? `“${project.name}” ` : 'This project '}
-						will be soft-deleted and permanently removed in 14 days. Attached sessions remain.
-					</Ariakit.DialogDescription>
-					{remove.error ? (
-						<p role="alert" className="mt-3 body-sm text-data-down">
-							{remove.error.message} Try again.
-						</p>
-					) : null}
-				</div>
-				<DialogFooter>
-					<Ariakit.DialogDismiss type="button" disabled={remove.isPending} autoFocus render={<Button size="md" />}>
-						Cancel
-					</Ariakit.DialogDismiss>
-					<Ariakit.Button
-						accessibleWhenDisabled
-						type="button"
-						onClick={() => {
-							if (!project || remove.isPending) return
-							void onConfirm()
-						}}
-						disabled={remove.isPending || !project}
-						render={<Button size="md" variant="destructive" />}
-					>
-						{remove.isPending ? <LoadingSpinner size={14} /> : null}
-						{remove.isPending ? 'Deleting…' : remove.error ? 'Retry deletion' : 'Delete project'}
-					</Ariakit.Button>
-				</DialogFooter>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+		<ConfirmDialog
+			store={dialogStore}
+			finalFocus={finalFocus}
+			autoFocusOnHide={(element) => {
+				if (element) return true
+				fallbackFocus?.current?.focus()
+				return false
+			}}
+			title="Delete project?"
+			description={`${project?.name ? `“${project.name}”` : 'This project'} will be soft-deleted and permanently removed in 14 days. Attached sessions remain.`}
+			confirmLabel={remove.error ? 'Retry deletion' : 'Delete project'}
+			pendingLabel={remove.isPending ? 'Deleting…' : null}
+			error={remove.error ? DELETE_FAILED : null}
+			onConfirm={() => void onConfirm()}
+		/>
 	)
 }

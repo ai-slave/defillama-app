@@ -37,7 +37,8 @@ afterEach(async () => {
 	container.remove()
 })
 
-const openDialog = () => [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((dialog) => !dialog.hidden)
+const openDialog = () =>
+	[...document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')].find((dialog) => !dialog.hidden)
 const dialogTitle = () => document.getElementById(openDialog()!.getAttribute('aria-labelledby')!)?.textContent
 
 test('project cards have a real link with separate rename and delete controls', async () => {

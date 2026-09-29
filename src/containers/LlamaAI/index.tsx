@@ -2609,7 +2609,7 @@ export function AgenticChat({
 		readOnly,
 		isSharedView,
 		draftScope: promptDraftScope,
-		title: readOnly ? effectiveSessionTitle || 'Shared Conversation' : 'What can I help you with?',
+		title: readOnly ? effectiveSessionTitle || 'Shared conversation' : 'What can I help you with?',
 		handleSubmit: (
 			prompt: string,
 			entities?: Array<{ term: string; slug: string; type?: string }>,
@@ -3139,7 +3139,7 @@ const ChatControls = memo(function ChatControls({
 	onShare: () => void
 }) {
 	const { toggleSidebar } = useLlamaAIChrome()
-	const tooltipContent = sessionTitle ? `Open Chat History: ${sessionTitle}` : 'Open Chat History'
+	const tooltipContent = sessionTitle ? `Open chat history: ${sessionTitle}` : 'Open chat history'
 
 	return (
 		<nav className="flex flex-wrap items-center gap-2 p-2.5 lg:hidden" aria-label="Chat controls">
@@ -3157,7 +3157,7 @@ const ChatControls = memo(function ChatControls({
 				className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 			>
 				<Icon name="panel-left-open" height={16} width={16} />
-				<span className="sr-only">Open Chat History</span>
+				<span className="sr-only">Open chat history</span>
 			</Tooltip>
 			<Tooltip
 				content="New chat"

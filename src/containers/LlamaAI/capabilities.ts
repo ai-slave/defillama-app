@@ -13,7 +13,7 @@ export const CAPABILITIES: Array<Capability> = [
 	// ── Featured ─────────────────────────────────────────────
 	{
 		key: 'trade_thesis',
-		name: 'Trade Thesis',
+		name: 'Trade thesis',
 		icon: 'activity',
 		badge: 'HOT',
 		description:
@@ -83,7 +83,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'onchain_analytics',
-		name: 'On-Chain Analytics',
+		name: 'On-chain analytics',
 		icon: 'chain',
 		description: 'Look up any wallet, find top depositors, trace token flows, and query raw on-chain events.',
 		prompts: [
@@ -101,7 +101,7 @@ export const CAPABILITIES: Array<Capability> = [
 	// ── Explore ──────────────────────────────────────────────
 	{
 		key: 'price_forecast',
-		name: 'Price Forecast',
+		name: 'Price forecast',
 		icon: 'trending-up',
 		description: 'See where prices could go — simulated forecasts with confidence bands and momentum signals.',
 		prompts: [
@@ -115,7 +115,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'wallet_xray',
-		name: 'Wallet X-Ray',
+		name: 'Wallet X-ray',
 		icon: 'wallet',
 		description: 'Paste any wallet or ENS and instantly see holdings, DeFi positions, and full transaction history.',
 		prompts: [
@@ -188,7 +188,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'etf',
-		name: 'ETF Flows',
+		name: 'ETF flows',
 		icon: 'banknote',
 		description: 'Track institutional money — Bitcoin and Ethereum ETF flows, net inflows, and record-breaking days.',
 		prompts: [
@@ -216,7 +216,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'income_statement',
-		name: 'Income Statement',
+		name: 'Income statement',
 		icon: 'file-text',
 		description:
 			'See if a protocol actually makes money — full P&L with revenue, costs, earnings, and profitability rankings.',
@@ -231,7 +231,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'token_unlocks',
-		name: 'Token Unlocks',
+		name: 'Token unlocks',
 		icon: 'linear-unlock',
 		description: "Don't get diluted — see upcoming token unlocks, vesting cliffs, and how much supply is about to hit.",
 		prompts: [
@@ -259,7 +259,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'people_search',
-		name: 'People Search',
+		name: 'People search',
 		icon: 'users',
 		description: 'Find the people behind any project — founders, team members, investors, and their LinkedIn profiles.',
 		prompts: [
@@ -273,7 +273,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'dat',
-		name: 'Corporate Holdings',
+		name: 'Corporate holdings',
 		icon: 'blocks',
 		description:
 			'Which public companies hold Bitcoin? Track MicroStrategy, Tesla, and every institutional crypto position.',
@@ -316,7 +316,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'cex',
-		name: 'CEX Data',
+		name: 'CEX data',
 		icon: 'bar-chart',
 		description:
 			'Compare centralized exchanges — trading volume, reserves, leverage, and how they stack up against DEXes.',
@@ -331,7 +331,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'relative_returns',
-		name: 'Token Returns',
+		name: 'Token returns',
 		icon: 'flag',
 		description: "Who's winning? Compare token returns head-to-head, build custom indices, and rank by performance.",
 		prompts: [
@@ -345,7 +345,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'user_activity',
-		name: 'User Activity',
+		name: 'User activity',
 		icon: 'layers',
 		description:
 			'Are people actually using it? Daily active users, new users, transactions, and gas spend by protocol.',
@@ -360,7 +360,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'token_categories',
-		name: 'Token Categories',
+		name: 'Token categories',
 		icon: 'tag',
 		description:
 			'Explore 260+ token categories — meme coins, AI agents, RWA, liquid staking, and every niche in between.',
@@ -375,7 +375,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'open_interest',
-		name: 'Open Interest',
+		name: 'Open interest',
 		icon: 'eye',
 		description: 'Track where traders are positioned — open interest across perp DEXes, by protocol and chain.',
 		prompts: [
@@ -389,7 +389,7 @@ export const CAPABILITIES: Array<Capability> = [
 	},
 	{
 		key: 'fork',
-		name: 'Fork Analysis',
+		name: 'Fork analysis',
 		icon: 'plug',
 		description: 'Which forks outperformed the original? Fork TVL, dominance, and the protocols they were built from.',
 		prompts: [

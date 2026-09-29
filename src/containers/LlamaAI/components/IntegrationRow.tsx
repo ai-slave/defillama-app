@@ -1,9 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Input } from '~/ui/Input'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 
 export type IntegrationKind = 'telegram'
@@ -47,8 +47,15 @@ export function IntegrationRow({
 		initialTgloginToken: kind === 'telegram' ? initialTgloginToken : null
 	})
 
+	const codeId = useId()
 	const [codeDraft, setCodeDraft] = useState('')
 	const [inlineError, setInlineError] = useState<string | null>(null)
+	// Which prompt started the confirm request, so that prompt stays on screen with its button pending.
+	const [confirming, setConfirming] = useState<'code' | 'switch' | null>(null)
+	const linkedHandle = link.state.status === 'linked' ? formatHandle(link.state.username) : ''
+	const [disconnectHandle, setDisconnectHandle] = useState<string | null>(null)
+	// Once unlinked there is nothing left to confirm.
+	if (disconnectHandle !== null && link.state.status !== 'linked') setDisconnectHandle(null)
 
 	return (
 		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
@@ -62,11 +69,16 @@ export function IntegrationRow({
 				</div>
 				{link.state.status === 'linked' ? (
 					<div className="flex shrink-0 flex-col items-end gap-2">
-						<span className="body-sm whitespace-nowrap text-secondary">
-							Linked as {formatHandle(link.state.username)}
-						</span>
+						<span className="body-sm whitespace-nowrap text-secondary">Linked as {linkedHandle}</span>
 						<div className="flex gap-2">
-							<Button type="button" size="md" onClick={() => link.disconnect()}>
+							<Button
+								type="button"
+								size="md"
+								onClick={() => {
+									link.resetDisconnect()
+									setDisconnectHandle(linkedHandle)
+								}}
+							>
 								Disconnect
 							</Button>
 							<Button type="button" size="md" variant="primary" onClick={() => link.connect()}>
@@ -79,11 +91,12 @@ export function IntegrationRow({
 						type="button"
 						size="md"
 						variant="primary"
-						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
+						pendingLabel={
+							link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : null
+						}
 						onClick={() => link.connect()}
 					>
-						{link.state.status !== 'idle' ? <LoadingSpinner size={14} /> : null}
-						{link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : 'Connect'}
+						Connect
 					</Button>
 				) : null}
 			</div>
@@ -101,61 +114,77 @@ export function IntegrationRow({
 				</div>
 			)}
 
-			{link.state.status === 'confirming' && (
-				<div className="mt-3 rounded-lg bg-surface-elevated-2 p-3 body-sm text-secondary">
-					Confirming Telegram link…
-				</div>
-			)}
-
-			{link.state.status === 'awaiting_code' && (
+			{link.state.status === 'awaiting_code' || (link.state.status === 'confirming' && confirming === 'code') ? (
 				<form
 					onSubmit={(e) => {
 						e.preventDefault()
 						setInlineError(null)
+						setConfirming('code')
 						link
 							.confirmCode(codeDraft)
 							.then((result) => {
 								if (result && 'linked' in result && result.linked) onInitialStateConsumed?.()
 							})
-							.catch((error: any) => {
-								setInlineError(error?.body?.error || error?.message || 'Invalid code')
-							})
+							.catch(() => setInlineError("That code didn't work. Check it in Telegram and try again."))
+							.finally(() => setConfirming(null))
 					}}
-					className="mt-3 flex gap-2"
+					className="mt-3 flex flex-col gap-1.5"
 				>
-					<Input
-						value={codeDraft}
-						onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
-						placeholder="6-digit code from Telegram"
-						aria-label="Telegram code"
-						maxLength={6}
-						inputMode="numeric"
-						className="flex-1"
-					/>
-					<Button type="submit" size="md" variant="primary" disabled={codeDraft.length !== 6}>
-						Confirm
-					</Button>
+					<label htmlFor={codeId} className="label-sm text-secondary">
+						Code from Telegram
+					</label>
+					<div className="flex gap-2">
+						<Input
+							id={codeId}
+							value={codeDraft}
+							onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
+							placeholder="123456"
+							maxLength={6}
+							inputMode="numeric"
+							autoComplete="one-time-code"
+							aria-invalid={inlineError !== null}
+							aria-describedby={`${codeId}-hint`}
+							className="flex-1"
+						/>
+						<Button
+							type="submit"
+							size="md"
+							variant="primary"
+							pendingLabel={confirming === 'code' ? 'Confirming…' : null}
+							disabled={codeDraft.length !== 6}
+						>
+							Confirm
+						</Button>
+					</div>
+					{inlineError ? (
+						<p id={`${codeId}-hint`} role="alert" className="m-0 body-sm text-error">
+							{inlineError}
+						</p>
+					) : (
+						<p id={`${codeId}-hint`} className="m-0 body-sm text-secondary">
+							Enter the 6-digit code the bot sent you.
+						</p>
+					)}
 				</form>
-			)}
+			) : null}
 
-			{link.state.status === 'awaiting_code' && inlineError && (
-				<p role="alert" className="mt-2 body-sm text-error">
-					{inlineError}
-				</p>
-			)}
-
-			{link.state.status === 'switch_confirm' && (
-				<div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 body-sm text-primary">
-					<p className="m-0 mb-2">
-						You&apos;re already linked to {formatHandle(link.state.currentTelegramUsername)}. Switch to this Telegram?
-					</p>
+			{link.state.status === 'switch_confirm' || (link.state.status === 'confirming' && confirming === 'switch') ? (
+				<div className="mt-3 flex flex-col gap-3">
+					<InlineStatus variant="warning">
+						{link.state.status === 'switch_confirm'
+							? `You're already linked to ${formatHandle(link.state.currentTelegramUsername)}. Switch to this Telegram?`
+							: "You're already linked to another Telegram account. Switch to this one?"}
+					</InlineStatus>
 					<div className="flex gap-2">
 						<Button
 							type="button"
 							size="md"
 							variant="primary"
+							pendingLabel={confirming === 'switch' ? 'Switching…' : null}
 							onClick={() => {
-								link.confirmSwitch().then((consumed) => {
+								setConfirming('switch')
+								void link.confirmSwitch().then((consumed) => {
+									setConfirming(null)
 									if (consumed) onInitialStateConsumed?.()
 								})
 							}}
@@ -165,6 +194,7 @@ export function IntegrationRow({
 						<Button
 							type="button"
 							size="md"
+							disabled={confirming === 'switch'}
 							onClick={() => {
 								link.cancelSwitch()
 								onInitialStateConsumed?.()
@@ -174,13 +204,26 @@ export function IntegrationRow({
 						</Button>
 					</div>
 				</div>
-			)}
+			) : null}
 
 			{link.state.status === 'error' && (
 				<div className="mt-3">
 					<InlineStatus variant="error">{link.state.message}</InlineStatus>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={disconnectHandle !== null}
+				onClose={() => setDisconnectHandle(null)}
+				portal
+				unmountOnHide
+				title="Disconnect Telegram?"
+				description={`LlamaAI stops chatting with ${disconnectHandle ?? 'your account'} and sending alerts there.`}
+				confirmLabel="Disconnect"
+				pendingLabel={link.isDisconnecting ? 'Disconnecting…' : null}
+				error={link.disconnectFailed ? "Couldn't disconnect Telegram. Try again." : null}
+				onConfirm={link.disconnect}
+			/>
 		</div>
 	)
 }
