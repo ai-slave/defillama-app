@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast from 'react-hot-toast'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER } from '~/constants'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { appMetadataFixtures } from '~/utils/testing/appMetadata'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
@@ -19,11 +20,13 @@ function signInAs(account: SessionAccount) {
 	const installed = installSubscriberSession('u1', { account, resolved: true })
 	beforeEach(() => {
 		session = installed
-		// The templates read chain categories and dimension rankings; these tests need none of them.
+		// The templates and the wizard's chain step read chain categories and dimension rankings; these tests need none of them.
 		session.serve({
 			...appMetadataFixtures({ chains: { ethereum: { name: 'Ethereum', id: 'ethereum' } } }),
+			'https://api.llama.fi/chains2': { categories: [] },
 			'https://api.llama.fi/chains2/': { chainsUnique: [] },
-			'http://localhost:3000/api/dynamic/adapter-metrics/': { protocols: [] }
+			'http://localhost:3000/api/dynamic/adapter-metrics/': { protocols: [] },
+			[`${FEATURES_SERVER}/lite/dashboards`]: { items: [] }
 		})
 	})
 }
@@ -45,7 +48,7 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
 })
-async function mount(mode = 'From Scratch') {
+async function mount(mode = 'From Scratch', { toPreview = true } = {}) {
 	if (mode === 'Comparison') await import('../ComparisonWizard')
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: true })
@@ -74,6 +77,7 @@ async function mount(mode = 'From Scratch') {
 			mode === 'Comparison' ? 'Select Metrics to Compare' : 'How would you like to create your dashboard?'
 		)
 	)
+	if (mode === 'Comparison' && !toPreview) return
 	if (mode === 'Comparison') {
 		await click('TVL')
 		await click('Next')
@@ -130,6 +134,7 @@ describe('a subscriber', () => {
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})
 		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+		expect(document.querySelector('[role="alert"]')!.textContent).toBe('UnavailableYour choices are still here.')
 		expect(name.value).toBe('Keep my draft')
 		expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
 		await click('Create Dashboard')
@@ -161,25 +166,10 @@ describe('a subscriber', () => {
 		expect(navigation.push).not.toHaveBeenCalled()
 	})
 
-	test('a refusal shows why it was refused, not an invitation to retry', async () => {
-		const limit = 'You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.'
-		create.mockRejectedValueOnce(new Error(limit))
-		await mount()
-		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
-		await click('Create Dashboard')
-		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
-		const alert = document.querySelector('[role="alert"]')!
-		expect(alert.textContent).toContain(limit)
-		expect(alert.textContent).not.toContain('please try again')
-		expect(store.getState().open).toBe(true)
-	})
-
 	test.each([
-		['From Scratch', 'Back to dashboard choices'],
 		['From Scratch', 'Cancel'],
-		['Comparison', 'Back to dashboard choices'],
 		['Comparison', 'Close dialog']
-	])('%s permits %s after navigation fails without allowing another creation', async (mode, exit) => {
+	])('%s shows the created dashboard after navigation fails and cannot create it again', async (mode, exit) => {
 		const saved = Promise.withResolvers<{ id: string; slug: string }>()
 		create.mockReturnValueOnce(saved.promise)
 		navigation.push.mockRejectedValueOnce(new Error('Route unavailable'))
@@ -206,20 +196,16 @@ describe('a subscriber', () => {
 		await act(async () => saved.resolve({ id: 'created', slug: 'created-dashboard' }))
 		await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).not.toBeNull())
 		expect(toast.error).not.toHaveBeenCalled()
-		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open dashboard')
-		expect(accessibleName(createButton)).toBe('Created')
-		await click('Created')
-		expect(create).toHaveBeenCalledOnce()
-		expect(exitButton.disabled).toBe(false)
-		expect(exitButton.closest('fieldset[disabled]')).toBeNull()
-		await click(exit)
-		if (exit === 'Back to dashboard choices') {
-			await click('From Scratch')
-			await click('Close dialog')
-		}
+		expect(document.querySelector('[role=dialog] h2')?.textContent).toBe('Dashboard Created')
+		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')?.textContent).toBe('Open Dashboard')
+		expect(
+			[...document.querySelectorAll('button')].some((button) => accessibleName(button) === 'Create Dashboard')
+		).toBe(false)
+		await click('Close')
 		expect(store.getState().open).toBe(false)
 		await act(async () => store.show())
-		if (mode === 'Comparison') await click('Back to dashboard choices')
+		// The preset reopens the wizard on its metrics step; Back walks out through the first step.
+		if (mode === 'Comparison') for (let step = 0; step < 3; step++) await click('Back')
 		await click('From Scratch')
 		expect(document.querySelector('a[href="/pro/created-dashboard/edit"]')).toBeNull()
 		expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
@@ -238,6 +224,58 @@ describe('a subscriber', () => {
 		await click('TVL')
 		expect(next.disabled).toBe(false)
 		expect(document.querySelector('footer')!.textContent).not.toContain('Pick at least')
+	})
+
+	test('the wizard has one back control, and Back on its first step returns to the dashboard choices', async () => {
+		await mount('Comparison')
+		const names = () => [...document.querySelectorAll('button')].map((button) => accessibleName(button))
+		expect(names()).not.toContain('Back to dashboard choices')
+		await click('Back')
+		await click('Back')
+		await click('Back')
+		expect(document.body.textContent).toContain('What would you like to compare?')
+		await click('Back')
+		await waitFor(() => expect(document.body.textContent).toContain('How would you like to create your dashboard?'))
+		await click('From Scratch')
+		expect(names()).toContain('Back to dashboard choices')
+	})
+
+	test('the metrics step counts one available metric in the singular', async () => {
+		await mount('Comparison')
+		await click('Back')
+		// The fixture chain only has TVL, so one metric is available.
+		expect(document.body.textContent).toContain('1 metric available')
+	})
+
+	test('the metrics step offers a retry when metric availability fails to load, and recovers', async () => {
+		let available = false
+		session.serve({
+			'https://api.llama.fi/config/smol/appMetadata-chains.json': () =>
+				available
+					? Response.json({ ethereum: { name: 'Ethereum', id: 'ethereum' } })
+					: new Response('Unavailable', { status: 503 })
+		})
+		await mount('Comparison', { toPreview: false })
+		await waitFor(() =>
+			expect(document.querySelector('[role="alert"]')?.textContent).toContain(
+				'Could not check which metrics the selected chains have.'
+			)
+		)
+		available = true
+		await click('Try again')
+		await waitFor(() => expect(document.body.textContent).toContain('1 metric available'))
+		expect(document.querySelector('[role="alert"]')).toBeNull()
+	})
+
+	test('the comparison summary counts one card, one chart and one table in the singular', async () => {
+		await mount('Comparison')
+		const output = () =>
+			[...document.querySelectorAll('span')].find((span) => span.textContent === 'Output')!.nextElementSibling!
+				.textContent
+		expect(output()).toBe('1 chart + 1 table')
+		const metricCard = [...document.querySelectorAll('label')].find((label) => label.textContent === 'TVL')!
+		await act(async () => metricCard.querySelector('input')!.click())
+		expect(output()).toBe('1 card + 1 chart + 1 table')
 	})
 
 	test('navigation completion cannot dismiss a newer picker opening', async () => {
@@ -282,6 +320,25 @@ describe('a subscriber', () => {
 
 describe('a free account', () => {
 	signInAs('free')
+
+	test('at the free dashboard limit a refusal says why and offers the upgrade instead of a retry', async () => {
+		session.serve({ [`${FEATURES_SERVER}/lite/dashboards`]: { items: [{ id: 'first', name: 'First dashboard' }] } })
+		const limit = 'You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.'
+		create.mockRejectedValueOnce(new Error(limit))
+		await mount()
+		// The limit comes from the account's dashboard list, which loads alongside the picker.
+		await waitFor(() => expect(localStorage.getItem('lite-dashboards')).toContain('first'))
+		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
+		await click('Create Dashboard')
+		await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+		const alert = document.querySelector('[role="alert"]')!
+		expect(alert.querySelector('span')!.textContent).toBe(limit)
+		expect(alert.textContent).not.toContain('Your choices are still here.')
+		const upgrade = alert.querySelector('a')!
+		expect(upgrade.textContent).toBe('Upgrade to Pro')
+		expect(upgrade.getAttribute('href')).toBe('/subscription')
+		expect(store.getState().open).toBe(true)
+	})
 
 	test('a free account creates a public dashboard it cannot make private', async () => {
 		create.mockResolvedValueOnce({ id: 'created', slug: 'free-dashboard' })

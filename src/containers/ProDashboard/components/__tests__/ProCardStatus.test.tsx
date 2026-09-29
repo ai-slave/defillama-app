@@ -34,15 +34,11 @@ test('the loading state is busy with an accessible label and no live region', as
 	expect(container.querySelector('[aria-live]')).toBeNull()
 })
 
-test('the loading state shows a skeleton for the card shape and keeps the spinner on request', async () => {
+test('the loading state shows a skeleton for the card shape', async () => {
 	await act(async () => root.render(<ProCardLoading label="Loading table…" variant="table" />))
 	const busy = container.querySelector('[aria-busy="true"]')
 	expect(busy?.querySelector('[data-skeleton="table"]')).not.toBeNull()
 	expect(busy?.textContent).toContain('Loading table…')
-
-	await act(async () => root.render(<ProCardLoading label="Running the query…" variant="spinner" />))
-	expect(container.querySelector('[data-skeleton]')).toBeNull()
-	expect(container.querySelector('[aria-busy="true"]')?.textContent).toContain('Running the query…')
 })
 
 test('the error state is an alert and calls back from Try again', async () => {

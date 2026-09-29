@@ -14,7 +14,7 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../unifiedTable/config/types'
 import { BoundParameterBadge } from '../BoundParameterBadge'
 import { ConfirmationModal } from '../ConfirmationModal'
-import { ProCardError, ProCardLoading } from '../ProCardStatus'
+import { ProCardError, ProCardLoading, ProCardRefreshFailed } from '../ProCardStatus'
 import { TablePagination } from '../Table/TablePagination'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
 import type { CsvExportLevel } from './core/csvExportLevels'
@@ -412,6 +412,13 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 
 	return (
 		<div className="flex h-full w-full flex-col overflow-hidden p-0">
+			{unifiedTable.loadError === 'refresh' ? (
+				<ProCardRefreshFailed
+					onRetry={() => {
+						void unifiedTable.refetch()
+					}}
+				/>
+			) : null}
 			<UnifiedTableHeader
 				title={title}
 				titleBadge={<BoundParameterBadge {...(config.bindings === undefined ? {} : { bindings: config.bindings })} />}
@@ -440,7 +447,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 						<ProCardLoading variant="table" />
 					</div>
-				) : unifiedTable.hasInitialError ? (
+				) : unifiedTable.loadError === 'initial' ? (
 					<div className="relative isolate flex h-[calc(450px*var(--card-scale,1))] overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg">
 						<ProCardError
 							title="Couldn't load this table"
@@ -461,7 +468,10 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 						/>
 						{unifiedTable.leafRows.length === 0 ? (
 							<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
-								<div className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 text-sm text-pro-text-secondary">
+								<div
+									role="status"
+									className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 body-md text-pro-text-secondary"
+								>
 									No rows match your scope or filters.
 								</div>
 							</div>

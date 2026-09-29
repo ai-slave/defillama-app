@@ -177,7 +177,9 @@ export function DialogHeader({
 			{leading}
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<DialogHeading className="break-words">{title}</DialogHeading>
-				{subtitle ? <p className="body-sm text-secondary">{subtitle}</p> : null}
+				{subtitle ? (
+					<Ariakit.DialogDescription className="body-sm text-secondary">{subtitle}</Ariakit.DialogDescription>
+				) : null}
 			</div>
 			{closable ? <DialogCloseButton /> : null}
 		</header>
@@ -189,7 +191,7 @@ export function DialogSearchHeader({ title, children }: { title: string; childre
 	return (
 		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
 			<DialogHeading className="sr-only">{title}</DialogHeading>
-			<div className="min-w-0 flex-1">{children}</div>
+			<div className="min-w-0 flex-1 *:w-full">{children}</div>
 			<DialogCloseButton />
 		</header>
 	)
@@ -265,19 +267,24 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 export function DialogBackButton({ label, onClick }: { label: string; onClick: () => void }) {
 	const pending = useContext(DialogPendingContext)
 	return (
-		<Button
-			type="button"
-			variant="ghost"
-			size="md"
-			square
-			aria-label={label}
+		<Ariakit.Button
 			disabled={pending}
+			accessibleWhenDisabled
+			render={
+				<Button
+					type="button"
+					variant="ghost"
+					size="md"
+					square
+					// Below sm the hit area grows to 44px without changing the 32px look, like the ×.
+					className="relative -ml-2 max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
+				/>
+			}
+			aria-label={label}
 			onClick={onClick}
-			// Below sm the hit area grows to 44px without changing the 32px look, like the ×.
-			className="relative -ml-2 max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
 		>
 			<Icon name="arrow-left" className="size-4" aria-hidden="true" />
-		</Button>
+		</Ariakit.Button>
 	)
 }
 

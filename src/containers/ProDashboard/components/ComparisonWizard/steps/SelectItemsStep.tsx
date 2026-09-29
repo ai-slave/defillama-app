@@ -4,8 +4,11 @@ import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chains/api'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
+import { Button } from '~/ui/Button'
+import { CheckboxIndicator } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import { AriakitMultiSelect } from '../../AriakitMultiSelect'
@@ -201,22 +204,25 @@ export function SelectItemsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h3 className="label-md text-pro-text-primary">Select {typeLabel}</h3>
-				<p className="mt-1 text-sm text-pro-text-secondary">Choose 1-10 {typeLabel.toLowerCase()} for your dashboard</p>
+				<h3 className="label-md text-primary">Select {typeLabel}</h3>
+				<p className="mt-1 body-sm text-secondary">Choose 1–10 {typeLabel.toLowerCase()} for your dashboard.</p>
 			</div>
 
 			<div className="flex flex-col gap-2">
 				<div className="flex items-center justify-between">
-					<span className="text-sm font-medium text-pro-text-secondary">
-						Selected ({state.selectedItems.length}/10)
-					</span>
-					<button
-						type="button"
-						onClick={() => actions.setSelectedItems([])}
-						className={`text-xs text-pro-text-tertiary hover:text-brand ${state.selectedItems.length === 0 ? 'invisible' : ''}`}
-					>
-						Clear all
-					</button>
+					<span className="label-sm text-secondary">Selected ({state.selectedItems.length}/10)</span>
+					{state.selectedItems.length > 0 ? (
+						// -mr-2.25 (px-2 + 1px border) puts the label on the list's edge; -my-1 keeps the row 16px.
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={() => actions.setSelectedItems([])}
+							className="-my-1 -mr-2.25"
+						>
+							Clear all
+						</Button>
+					) : null}
 				</div>
 				<div className="relative">
 					<div className="flex h-[32px] [scrollbar-width:none] items-center gap-2 overflow-x-auto scroll-smooth pr-6 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
@@ -224,32 +230,34 @@ export function SelectItemsStep() {
 							selectedLabels.map((item) => (
 								<div
 									key={item.value}
-									className="flex shrink-0 items-center gap-2 rounded-full border border-pro-cards-border py-1 pr-1 pl-2 text-sm"
+									className="flex shrink-0 items-center gap-1.5 rounded-md border border-medium pl-1.5 body-sm text-primary"
 								>
-									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={20} />
-									<span className="whitespace-nowrap text-pro-text-primary">{item.label}</span>
-									<button
+									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={16} />
+									<span className="whitespace-nowrap">{item.label}</span>
+									<Button
 										type="button"
+										variant="ghost"
+										size="sm"
+										square
 										aria-label={`Remove ${item.label}`}
 										onClick={() => handleRemoveItem(item.value)}
-										className="flex size-5 shrink-0 items-center justify-center rounded-full text-pro-text-tertiary transition-colors hover:bg-error/20 hover:text-error"
 									>
 										<Icon name="x" height={12} width={12} />
-									</button>
+									</Button>
 								</div>
 							))
 						) : (
-							<span className="text-sm text-pro-text-tertiary">No {typeLabel.toLowerCase()} selected</span>
+							<span className="body-sm text-tertiary">No {typeLabel.toLowerCase()} selected.</span>
 						)}
 					</div>
 					{state.selectedItems.length > 2 ? (
-						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-pro-cards-bg to-transparent" />
+						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-overlay to-transparent" />
 					) : null}
 				</div>
 			</div>
 
-			<div className="flex flex-col overflow-hidden rounded-lg border border-pro-cards-border">
-				<div className="border-b border-pro-cards-border p-2">
+			<div className="flex flex-col overflow-hidden rounded-lg border border-subtle">
+				<div className="border-b border-subtle p-2">
 					<div className="mb-2">
 						<AriakitMultiSelect
 							label="Filter by Category"
@@ -265,39 +273,33 @@ export function SelectItemsStep() {
 						/>
 					</div>
 					<div className="relative">
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
-						/>
-						<input
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Input
 							type="text"
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							aria-label={`Search ${typeLabel.toLowerCase()}`}
-							placeholder={`Search ${typeLabel.toLowerCase()}...`}
-							className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 py-2 pr-3 pl-9 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+							placeholder={`Search ${typeLabel.toLowerCase()}…`}
+							className={searchFieldInputPlacementStyles}
 						/>
 					</div>
 				</div>
 
-				<div ref={listRef} className="h-[280px] overflow-y-auto bg-pro-cards-bg">
+				<div ref={listRef} className="h-[280px] overflow-y-auto">
 					{protocolsLoading ? (
-						<div className="flex h-full items-center justify-center text-pro-text-tertiary">
-							<LoadingSpinner size={24} />
+						<div role="status" aria-live="polite" className="flex h-full items-center justify-center">
+							<LoadingIndicator label={`Loading ${typeLabel.toLowerCase()}`} />
 						</div>
 					) : protocolCatalog.status === 'error' ? (
-						<div role="alert" className="flex h-full flex-col items-center justify-center gap-2 text-pro-text-tertiary">
-							<span className="text-sm">Failed to load {typeLabel.toLowerCase()}</span>
-							<button type="button" onClick={protocolCatalog.retry} className="text-sm text-brand hover:underline">
+						<div className="flex h-full flex-col items-center justify-center gap-2 p-3">
+							<InlineStatus variant="error">Failed to load {typeLabel.toLowerCase()}.</InlineStatus>
+							<Button type="button" size="sm" onClick={protocolCatalog.retry}>
 								Retry
-							</button>
+							</Button>
 						</div>
 					) : filteredOptions.length === 0 ? (
-						<div className="flex h-full flex-col items-center justify-center gap-2 text-pro-text-tertiary">
-							<Icon name="search" height={24} width={24} />
-							<span className="text-sm">No {typeLabel.toLowerCase()} found</span>
-						</div>
+						<p role="status" className="flex h-full items-center justify-center body-sm text-tertiary">
+							No {typeLabel.toLowerCase()} found.
+						</p>
 					) : (
 						<div
 							style={{
@@ -324,33 +326,25 @@ export function SelectItemsStep() {
 										aria-label={option.label}
 										onClick={() => !isDisabled && handleToggle(option.value)}
 										disabled={isDisabled}
-										className={`absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${
-											isSelected ? 'bg-brand/10' : isDisabled ? 'cursor-not-allowed opacity-50' : ''
+										className={`group absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+											isSelected ? 'bg-brand-faint' : 'not-disabled:hover:bg-hover-row'
 										} ${option.isChild ? 'pl-8' : ''}`}
 										style={{
 											height: `${virtualRow.size}px`,
 											transform: `translateY(${virtualRow.start}px)`
 										}}
 									>
-										<div
-											className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-												isSelected ? 'border-brand bg-brand' : 'border-pro-cards-border bg-surface-elevated-1'
-											}`}
-										>
-											{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
-										</div>
+										<CheckboxIndicator checked={!!isSelected} />
 
 										<span className={option.isChild ? 'opacity-70' : undefined}>
 											<TokenLogo src={option.logo} alt={`Logo of ${option.label}`} size={24} />
 										</span>
 
-										<div className="min-w-0 flex-1">
-											<span
-												className={`truncate ${option.isChild ? 'text-pro-text-secondary' : 'text-pro-text-primary'}`}
-											>
-												{option.label}
-											</span>
-										</div>
+										<span
+											className={`min-w-0 flex-1 truncate body-md ${option.isChild ? 'text-secondary' : 'text-primary'}`}
+										>
+											{option.label}
+										</span>
 									</button>
 								)
 							})}

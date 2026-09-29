@@ -22,19 +22,17 @@ export function WizardSteps({ currentStep }: { currentStep: WizardStep }) {
 				return (
 					<div key={step} className="flex items-center gap-2">
 						<div
-							className={`flex size-8 items-center justify-center rounded-full text-xs font-medium transition-colors ${
-								isActive ? 'bg-brand text-on-brand' : isCompleted ? 'bg-brand/20 text-brand' : 'text-pro-text-tertiary'
+							className={`flex size-8 items-center justify-center rounded-full label-sm transition-colors ${
+								isActive ? 'bg-brand text-on-brand' : isCompleted ? 'bg-brand/20 text-brand' : 'text-tertiary'
 							}`}
 						>
 							{isCompleted ? <Icon name="check" height={14} width={14} /> : index + 1}
 						</div>
-						<span
-							className={`hidden text-xs sm:inline ${isActive ? 'font-medium text-pro-text-primary' : 'text-pro-text-tertiary'}`}
-						>
+						<span className={`hidden label-sm sm:inline ${isActive ? 'text-primary' : 'text-tertiary'}`}>
 							{STEP_LABELS[step]}
 						</span>
 						{index < WIZARD_STEPS.length - 1 ? (
-							<div className={`h-px w-8 ${isCompleted ? 'bg-brand/40' : 'bg-pro-cards-border'}`} />
+							<div className={`h-px w-8 ${isCompleted ? 'bg-brand/40' : 'bg-border-subtle'}`} />
 						) : null}
 					</div>
 				)
@@ -61,7 +59,6 @@ interface WizardNavigationProps {
 	currentStep: WizardStep
 	comparisonType: ComparisonType | null
 	canProceed: boolean
-	canGoBack: boolean
 	onNext: () => void
 	onBack: () => void
 	onGenerate: () => void
@@ -72,7 +69,6 @@ export function WizardNavigation({
 	currentStep,
 	comparisonType,
 	canProceed,
-	canGoBack,
 	onNext,
 	onBack,
 	onGenerate,
@@ -84,7 +80,7 @@ export function WizardNavigation({
 		<DialogFooter
 			leading={
 				<>
-					<Button type="button" size="md" onClick={onBack} disabled={!canGoBack}>
+					<Button type="button" size="md" onClick={onBack}>
 						<Icon name="arrow-left" height={14} width={14} />
 						Back
 					</Button>
@@ -98,11 +94,11 @@ export function WizardNavigation({
 					variant="primary"
 					size="md"
 					onClick={onGenerate}
-					disabled={!canProceed || creationStatus === 'success'}
+					disabled={!canProceed}
 					pendingLabel={creationStatus === 'pending' ? 'Creating…' : null}
 				>
-					<Icon name={creationStatus === 'success' ? 'check' : 'plus'} height={14} width={14} />
-					{creationStatus === 'success' ? 'Created' : 'Create Dashboard'}
+					<Icon name="plus" height={14} width={14} />
+					Create Dashboard
 				</Button>
 			) : (
 				<Button type="button" variant="primary" size="md" onClick={onNext} disabled={!canProceed}>

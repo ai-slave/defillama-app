@@ -384,6 +384,14 @@ export function SelectWithCombobox({
 		onValuesChange?.(nextValues, label)
 	}
 
+	const emptyState = (
+		<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
+			<Ariakit.ComboboxInputValue>
+				{(value) => (value && typeof emptyLabel === 'string' ? `${emptyLabel} for "${value}"` : emptyLabel)}
+			</Ariakit.ComboboxInputValue>
+		</p>
+	)
+
 	if (nestedMenu) {
 		return (
 			<Ariakit.ComboboxProvider
@@ -399,46 +407,48 @@ export function SelectWithCombobox({
 					>
 						{headerRow}
 					</PopoverHeader>
-					<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
-						{visibleMatches.length > 0
-							? renderLeadingRows(nestedMenuSelectRowStyles, `${nestedMenuSeeMoreStyles} border-b border-subtle`)
-							: null}
-						{visibleMatches.map((option) => (
-							<Ariakit.ComboboxItem
-								key={getOptionKey(option)}
-								value={getOptionKey(option)}
-								resetValueOnSelect={false}
-								hideOnClick={false}
-								className={nestedMenuSelectRowStyles}
-							>
-								{isStringValue(option) ? (
-									<span>{option}</span>
-								) : !isStringValue(option) && option.help ? (
-									<Tooltip content={option.help}>
-										<span className="mr-1">{option.name}</span>
-										<Icon name="help-circle" height={15} width={15} />
-									</Tooltip>
-								) : (
-									<span className="inline-flex items-center gap-1.5">
-										{isStringValue(option) ? option : option.name}
-										{isStringValue(option) ? null : option.icon}
-									</span>
-								)}
-								{renderCheck()}
-							</Ariakit.ComboboxItem>
-						))}
-						{hasOptionLimit && matches.length > viewableMatches ? (
-							<Ariakit.ComboboxItem
-								value="__see_more__"
-								selectValueOnClick={false}
-								hideOnClick={false}
-								className={nestedMenuSeeMoreStyles}
-								onClick={handleSeeMore}
-							>
-								See more...
-							</Ariakit.ComboboxItem>
-						) : null}
-					</Ariakit.ComboboxList>
+					{matches.length > 0 ? (
+						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+							{renderLeadingRows(nestedMenuSelectRowStyles, `${nestedMenuSeeMoreStyles} border-b border-subtle`)}
+							{visibleMatches.map((option) => (
+								<Ariakit.ComboboxItem
+									key={getOptionKey(option)}
+									value={getOptionKey(option)}
+									resetValueOnSelect={false}
+									hideOnClick={false}
+									className={nestedMenuSelectRowStyles}
+								>
+									{isStringValue(option) ? (
+										<span>{option}</span>
+									) : !isStringValue(option) && option.help ? (
+										<Tooltip content={option.help}>
+											<span className="mr-1">{option.name}</span>
+											<Icon name="help-circle" height={15} width={15} />
+										</Tooltip>
+									) : (
+										<span className="inline-flex items-center gap-1.5">
+											{isStringValue(option) ? option : option.name}
+											{isStringValue(option) ? null : option.icon}
+										</span>
+									)}
+									{renderCheck()}
+								</Ariakit.ComboboxItem>
+							))}
+							{hasOptionLimit && matches.length > viewableMatches ? (
+								<Ariakit.ComboboxItem
+									value="__see_more__"
+									selectValueOnClick={false}
+									hideOnClick={false}
+									className={nestedMenuSeeMoreStyles}
+									onClick={handleSeeMore}
+								>
+									See more...
+								</Ariakit.ComboboxItem>
+							) : null}
+						</Ariakit.ComboboxList>
+					) : (
+						emptyState
+					)}
 				</NestedMenu>
 			</Ariakit.ComboboxProvider>
 		)
@@ -487,118 +497,110 @@ export function SelectWithCombobox({
 					{headerRow}
 				</PopoverHeader>
 				{matches.length > 0 ? (
-					<>
-						<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
-							{renderLeadingRows(
-								`${popoverRowWithBorderStyles} gap-2`,
-								`${popoverSeeMoreStyles} border-b border-subtle`
-							)}
-							{visibleMatches.map((option) => {
-								const isCustom = typeof option === 'object' && option.isCustom
-								const customIndex = typeof option === 'object' ? option.customIndex : undefined
-								const optionKey = getOptionKey(option)
-								const optionContent = (
-									<>
-										{isStringValue(option) ? (
-											<span>{option}</span>
-										) : option.help ? (
-											<span className="inline-flex items-center">
-												<span className="mr-1">{option.name}</span>
-												<Icon name="help-circle" height={15} width={15} />
-											</span>
-										) : (
-											<span className="inline-flex items-center gap-1.5">
-												{option.name}
-												{option.icon}
-											</span>
-										)}
-										{isCustom && typeof customIndex === 'number' ? (
-											<span className="ml-2 flex gap-1">
-												<button
-													type="button"
-													tabIndex={-1}
-													className="rounded-sm p-1 hover:bg-hover-row"
-													onClick={(e) => {
-														e.stopPropagation()
-														onEditCustomColumn?.(customIndex)
-													}}
-													title="Edit custom column"
-													aria-label="Edit custom column"
-												>
-													<Icon name="settings" height={14} width={14} />
-												</button>
-												<button
-													type="button"
-													tabIndex={-1}
-													className="hover-wash rounded-sm p-1 text-secondary hover:text-data-down"
-													onClick={(e) => {
-														e.stopPropagation()
-														onDeleteCustomColumn?.(customIndex)
-													}}
-													title="Delete custom column"
-													aria-label="Delete custom column"
-												>
-													<Icon name="trash-2" height={14} width={14} />
-												</button>
-											</span>
-										) : null}
-										{showCheckboxes ? (
+					<Ariakit.ComboboxList ref={comboboxRef} className={popoverScrollAreaStyles}>
+						{renderLeadingRows(`${popoverRowWithBorderStyles} gap-2`, `${popoverSeeMoreStyles} border-b border-subtle`)}
+						{visibleMatches.map((option) => {
+							const isCustom = typeof option === 'object' && option.isCustom
+							const customIndex = typeof option === 'object' ? option.customIndex : undefined
+							const optionKey = getOptionKey(option)
+							const optionContent = (
+								<>
+									{isStringValue(option) ? (
+										<span>{option}</span>
+									) : option.help ? (
+										<span className="inline-flex items-center">
+											<span className="mr-1">{option.name}</span>
+											<Icon name="help-circle" height={15} width={15} />
+										</span>
+									) : (
+										<span className="inline-flex items-center gap-1.5">
+											{option.name}
+											{option.icon}
+										</span>
+									)}
+									{isCustom && typeof customIndex === 'number' ? (
+										<span className="ml-2 flex gap-1">
 											<button
 												type="button"
+												tabIndex={-1}
+												className="rounded-sm p-1 hover:bg-hover-row"
 												onClick={(e) => {
 													e.stopPropagation()
-													selectOnlyOne(optionKey)
+													onEditCustomColumn?.(customIndex)
 												}}
-												className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
+												title="Edit custom column"
+												aria-label="Edit custom column"
 											>
-												Only
+												<Icon name="settings" height={14} width={14} />
 											</button>
-										) : null}
-										{renderCheck()}
-									</>
-								)
-								// Keep the typed filter while toggling several matches in a multi-select.
-								const selectItem = (
-									<Ariakit.ComboboxItem
-										key={`${label}-${optionKey}`}
-										value={optionKey}
-										resetValueOnSelect={false}
-										className={`${popoverRowWithBorderStyles} group gap-2`}
-									>
-										{optionContent}
-									</Ariakit.ComboboxItem>
-								)
-
-								return !isStringValue(option) && option.help ? (
-									<Tooltip key={`${label}-${optionKey}`} content={option.help} render={selectItem}>
-										{optionContent}
-									</Tooltip>
-								) : (
-									selectItem
-								)
-							})}
-
-							{hasOptionLimit && matches.length > viewableMatches ? (
+											<button
+												type="button"
+												tabIndex={-1}
+												className="hover-wash rounded-sm p-1 text-secondary hover:text-data-down"
+												onClick={(e) => {
+													e.stopPropagation()
+													onDeleteCustomColumn?.(customIndex)
+												}}
+												title="Delete custom column"
+												aria-label="Delete custom column"
+											>
+												<Icon name="trash-2" height={14} width={14} />
+											</button>
+										</span>
+									) : null}
+									{showCheckboxes ? (
+										<button
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation()
+												selectOnlyOne(optionKey)
+											}}
+											className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
+										>
+											Only
+										</button>
+									) : null}
+									{renderCheck()}
+								</>
+							)
+							// Keep the typed filter while toggling several matches in a multi-select.
+							const selectItem = (
 								<Ariakit.ComboboxItem
-									value="__see_more__"
-									selectValueOnClick={false}
-									hideOnClick={false}
-									className={popoverSeeMoreStyles}
-									onClick={handleSeeMore}
+									key={`${label}-${optionKey}`}
+									value={optionKey}
+									resetValueOnSelect={false}
+									className={`${popoverRowWithBorderStyles} group gap-2`}
 								>
-									See more...
+									{optionContent}
 								</Ariakit.ComboboxItem>
-							) : null}
-						</Ariakit.ComboboxList>
-						{customFooter ? <>{customFooter}</> : null}
-					</>
+							)
+
+							return !isStringValue(option) && option.help ? (
+								<Tooltip key={`${label}-${optionKey}`} content={option.help} render={selectItem}>
+									{optionContent}
+								</Tooltip>
+							) : (
+								selectItem
+							)
+						})}
+
+						{hasOptionLimit && matches.length > viewableMatches ? (
+							<Ariakit.ComboboxItem
+								value="__see_more__"
+								selectValueOnClick={false}
+								hideOnClick={false}
+								className={popoverSeeMoreStyles}
+								onClick={handleSeeMore}
+							>
+								See more...
+							</Ariakit.ComboboxItem>
+						) : null}
+					</Ariakit.ComboboxList>
 				) : (
-					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
-						<Ariakit.ComboboxInputValue>
-							{(value) => (value && typeof emptyLabel === 'string' ? `${emptyLabel} for "${value}"` : emptyLabel)}
-						</Ariakit.ComboboxInputValue>
-					</p>
+					emptyState
 				)}
+				{/* The footer's actions (such as adding a custom column) matter most when a search finds nothing. */}
+				{customFooter}
 			</ComboboxSurface>
 		</Ariakit.ComboboxProvider>
 	)

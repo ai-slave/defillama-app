@@ -78,8 +78,6 @@ export const KPI_ROWS: Array<BreakdownRowConfig> = [
 	{ label: 'Bid-Ask Spread Adherence', key: 'bidAskSpread', kind: 'percent' }
 ]
 
-export const BREAKDOWN_SKELETON_ROWS = { depth: 24, volume: 9, spread: 2, kpi: 4 } as const
-
 const BORDER = 'border-subtle'
 
 function HeadCell({
@@ -215,31 +213,15 @@ export function BreakdownTable({
 	)
 }
 
-export function BreakdownTableSkeleton({ title, rowCount }: { title: string; rowCount: number }) {
-	return (
-		<div className="flex flex-col gap-2">
-			<div className="h-5 w-2/3 animate-pulse rounded-sm bg-surface-elevated-2" />
-			<div className={`flex flex-col gap-1 rounded-lg border ${BORDER} bg-surface p-3`}>
-				<span className="sr-only">{title} loading</span>
-				{Array.from({ length: rowCount }).map((_, i) => (
-					// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
-					<div key={i} className="h-6 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
-				))}
-			</div>
-		</div>
-	)
-}
-
 const BREAKDOWN_SECTIONS: Array<{
 	title: string
 	rows: Array<BreakdownRowConfig>
-	skeletonKey: keyof typeof BREAKDOWN_SKELETON_ROWS
 	dataKey: keyof BreakdownSections
 }> = [
-	{ title: 'Depth KPIs', rows: DEPTH_ROWS, skeletonKey: 'depth', dataKey: 'depth' },
-	{ title: 'Volume KPIs', rows: VOLUME_ROWS, skeletonKey: 'volume', dataKey: 'volume' },
-	{ title: 'Spread KPIs', rows: SPREAD_ROWS, skeletonKey: 'spread', dataKey: 'spread' },
-	{ title: 'KPI Adherence', rows: KPI_ROWS, skeletonKey: 'kpi', dataKey: 'kpi' }
+	{ title: 'Depth KPIs', rows: DEPTH_ROWS, dataKey: 'depth' },
+	{ title: 'Volume KPIs', rows: VOLUME_ROWS, dataKey: 'volume' },
+	{ title: 'Spread KPIs', rows: SPREAD_ROWS, dataKey: 'spread' },
+	{ title: 'KPI Adherence', rows: KPI_ROWS, dataKey: 'kpi' }
 ]
 
 export function BreakdownTables({ sections, badge }: { sections: BreakdownSections; badge: string }) {
@@ -253,20 +235,6 @@ export function BreakdownTables({ sections, badge }: { sections: BreakdownSectio
 					rows={section.rows}
 					data={sections[section.dataKey]}
 					sectionKey={section.dataKey}
-				/>
-			))}
-		</section>
-	)
-}
-
-export function BreakdownTablesSkeleton() {
-	return (
-		<section className="flex flex-col gap-5">
-			{BREAKDOWN_SECTIONS.map((section) => (
-				<BreakdownTableSkeleton
-					key={section.title}
-					title={section.title}
-					rowCount={BREAKDOWN_SKELETON_ROWS[section.skeletonKey]}
 				/>
 			))}
 		</section>

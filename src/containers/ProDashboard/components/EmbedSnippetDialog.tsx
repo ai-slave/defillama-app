@@ -96,7 +96,7 @@ export function EmbedSnippetDialog({ open, onClose, heading, snippetFor }: Embed
 					aria-label="Embed code"
 					spellCheck={false}
 					onFocus={(event) => event.currentTarget.select()}
-					className="w-full resize-none rounded-md border border-medium bg-surface-elevated-1 p-2 font-mono text-xs text-primary focus-visible:focus-ring"
+					className="w-full resize-none rounded-md border border-medium bg-surface-elevated-1 p-2 mono-sm text-primary focus-visible:focus-ring"
 				/>
 				{copyStatus === 'failed' ? (
 					<InlineStatus variant="error">

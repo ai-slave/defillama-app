@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
 
@@ -46,8 +46,18 @@ export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
 }
 
 export function InlineStatus({ children, variant }: { children: ReactNode; variant: 'empty' | 'error' | 'warning' }) {
+	const ref = useRef<HTMLDivElement>(null)
+	useEffect(() => {
+		// A dialog's request error renders at the end of its scrolling body while the button that caused it sits in the
+		// footer, so on a phone it can appear below the fold. `nearest` leaves an error already in view where it is.
+		// Page errors never scroll: moving the page under the reader is worse than an error they scroll to.
+		if (variant === 'error' && ref.current?.closest('[role=dialog],[role=alertdialog]')) {
+			ref.current.scrollIntoView({ block: 'nearest' })
+		}
+	}, [variant])
 	return (
 		<div
+			ref={ref}
 			role={variant === 'error' ? 'alert' : 'status'}
 			className={`rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm ${variant === 'warning' ? 'text-warning' : STATUS_TEXT[variant]}`}
 		>

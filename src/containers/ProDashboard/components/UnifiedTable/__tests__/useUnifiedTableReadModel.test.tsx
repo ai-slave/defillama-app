@@ -59,7 +59,7 @@ function DataView({ searchTerm, shares }: { searchTerm: string; shares: boolean 
 		<output>
 			{JSON.stringify({
 				loading: data.isLoading,
-				error: data.hasInitialError,
+				error: data.loadError,
 				rows: data.rows.map((row) => ({ name: row.displayName, tvl: row.metrics.tvl, share: row.filteredShares.tvl })),
 				leaves: data.leaves.length
 			})}
@@ -85,7 +85,7 @@ test('refreshes cached metrics and recalculates filtered shares without fetching
 		await act(async () => render('', true))
 		expect(JSON.parse(container.textContent!)).toEqual({
 			loading: false,
-			error: false,
+			error: null,
 			rows: [
 				{ name: 'Alpha', tvl: 100, share: 50 },
 				{ name: 'Beta', tvl: 100, share: 50 }
@@ -103,7 +103,7 @@ test('refreshes cached metrics and recalculates filtered shares without fetching
 		await act(async () => render('Beta', true))
 		expect(JSON.parse(container.textContent!)).toEqual({
 			loading: false,
-			error: false,
+			error: null,
 			rows: [{ name: 'Beta', tvl: 100, share: 100 }],
 			leaves: 1
 		})
@@ -134,7 +134,7 @@ test('waits for dashboard streaming before making the initial request', async ()
 		)
 	try {
 		await act(async () => render(false))
-		expect(JSON.parse(container.textContent!)).toEqual({ loading: true, error: false, rows: [], leaves: 0 })
+		expect(JSON.parse(container.textContent!)).toEqual({ loading: true, error: null, rows: [], leaves: 0 })
 		expect(fetchJson).not.toHaveBeenCalled()
 		await act(async () => {
 			render(true)

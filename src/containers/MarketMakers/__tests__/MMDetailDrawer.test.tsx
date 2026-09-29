@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installChartCanvas } from '~/utils/testing/chartCanvas'
-import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { MMDetailDrawer } from '../MMDetailDrawer'
 
@@ -41,7 +42,8 @@ let container: HTMLDivElement
 let client: QueryClient
 beforeEach(() => {
 	installChartCanvas()
-	client = new QueryClient()
+	// The drawer's queries retry once; no delay keeps a failing request inside the test budget.
+	client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } })
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
@@ -127,4 +129,34 @@ test('scrolls to the requested volume breakdown after its data loads', async () 
 	} finally {
 		scroll.mockRestore()
 	}
+})
+
+test('says the market maker failed to load instead of showing zero scores when a request fails', async () => {
+	http.serve({ '/api/public/market-makers/performance': fixtureStatus(404) })
+	await mount()
+	await waitForUi(() => {
+		expect(document.querySelector('[role="dialog"] [role="alert"] p')?.textContent).toBe(
+			'Could not load this market maker.'
+		)
+	})
+	expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('/10.00')
+})
+
+test('Try again reloads the market maker after a failed request and moves focus to it', async () => {
+	http.serve({ '/api/public/market-makers/performance': fixtureStatus(404) })
+	await mount()
+	const tryAgain = () =>
+		[...document.querySelectorAll('[role="dialog"] button')].find((button) => accessibleName(button) === 'Try again')
+	await waitForUi(() => expect(tryAgain()).toBeInstanceOf(HTMLButtonElement))
+	// Held until the loading screen has replaced Try again, as a real network would.
+	let respond = () => {}
+	http.serve({
+		'/api/public/market-makers/performance': () => new Promise((resolve) => (respond = () => resolve([performance])))
+	})
+	await act(async () => (tryAgain() as HTMLButtonElement).click())
+	await waitForUi(() => expect(tryAgain()).toBeUndefined())
+	await act(async () => respond())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('9.50/10.00'))
+	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
+	expect(document.activeElement?.textContent).toContain('About Lhava')
 })

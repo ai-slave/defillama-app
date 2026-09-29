@@ -26,7 +26,8 @@ import { LoadingSpinner } from './Loaders'
    ("Saving…") and the button shows a spinner and that label, stays focusable
    (aria-disabled, announced as busy) and ignores clicks, so a form cannot
    submit twice through Enter either. It keeps full colour, unlike a disabled
-   button, so it reads as working. Pass null once the action settles.
+   button, so it reads as working, even when a disabled <fieldset> around it
+   also disables it (the `not-aria-busy` guards). Pass null once the action settles.
 
    For Ariakit hosts, prefer composing the component itself:
    <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
@@ -90,7 +91,7 @@ export function buttonStyles({
 	size: ButtonSize
 	square?: boolean
 }): string {
-	return `flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
+	return `flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }

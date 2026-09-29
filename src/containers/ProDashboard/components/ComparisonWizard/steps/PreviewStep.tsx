@@ -1,7 +1,8 @@
-import * as Ariakit from '@ariakit/react'
-import { useId, useMemo, useState } from 'react'
-import { useAuthContext } from '~/auth'
+import { useId, useMemo } from 'react'
+import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
+import { DASHBOARD_NAME_MAX_LENGTH } from '../../../dashboardTypes'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
 import {
 	type DashboardGrouping,
@@ -9,8 +10,8 @@ import {
 	type MetricAggregator,
 	type MetricWindow
 } from '../../../types'
-import { AriakitCheckbox } from '../../AriakitCheckbox'
 import { AriakitSelect, type SelectOption } from '../../AriakitSelect'
+import { dashboardFieldLabelStyles, DescriptionField, TagsField, VisibilityField } from '../../DashboardFormFields'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { DisplayMode } from '../types'
 
@@ -46,21 +47,20 @@ const WINDOW_OPTIONS: Array<SelectOption<MetricWindow>> = [
 	{ value: 'all', label: 'All' }
 ]
 
-function visibilityOptionStyles(selected: boolean, disabled: boolean) {
-	return `flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors has-focus-visible:focus-ring ${
-		selected
-			? 'border-brand bg-brand/10 text-brand'
-			: disabled
-				? 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary opacity-50'
-				: 'border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
-	}`
+function count(n: number, noun: string) {
+	return `${n} ${noun}${n === 1 ? '' : 's'}`
+}
+
+function outputSummary(cards: number, charts: number, includeTable: boolean) {
+	const parts = [count(charts, 'chart')]
+	if (cards > 0) parts.unshift(count(cards, 'card'))
+	if (includeTable) parts.push('1 table')
+	return parts.join(' + ')
 }
 
 export function PreviewStep() {
 	const { state, actions } = useComparisonWizardContext()
-	const { hasActiveSubscription } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
-	const [tagInput, setTagInput] = useState('')
 	const id = useId()
 
 	const selectedItemLabels = useMemo(() => {
@@ -72,75 +72,27 @@ export function PreviewStep() {
 		})
 	}, [state.selectedItems, state.comparisonType, getProtocolInfo])
 
-	const handleAddTag = () => {
-		const tag = tagInput.trim()
-		if (tag) {
-			actions.addTag(tag)
-		}
-		setTagInput('')
-	}
-
-	const handleRemoveTag = (tag: string) => {
-		actions.removeTag(tag)
-	}
-
-	const handleTagKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			handleAddTag()
-		}
-	}
-
 	const metricCardsCount = state.metricsForCards.length * state.selectedItems.length
 
 	return (
 		<div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
-			<div className="flex min-w-0 flex-col gap-3">
-				<div>
-					<label htmlFor="comparison-dashboard-name" className="mb-1 block text-sm font-medium text-pro-text-primary">
-						Dashboard Name <span className="text-error">*</span>
+			<div className="flex min-w-0 flex-col gap-4">
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
+						Dashboard Name
 					</label>
-					<input
-						id="comparison-dashboard-name"
+					<Input
+						id={`${id}-name`}
 						type="text"
 						value={state.dashboardName}
 						onChange={(e) => actions.setDashboardName(e.target.value)}
+						maxLength={DASHBOARD_NAME_MAX_LENGTH}
 						placeholder="Enter dashboard name"
-						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						required
 					/>
 				</div>
 
-				<div>
-					<p id={`${id}-visibility`} className="mb-1 block text-sm font-medium text-pro-text-primary">
-						Visibility
-					</p>
-					<Ariakit.RadioProvider
-						value={state.visibility}
-						setValue={(value) => actions.setVisibility(value as 'public' | 'private')}
-					>
-						<Ariakit.RadioGroup className="flex gap-1.5" aria-labelledby={`${id}-visibility`}>
-							<label htmlFor={`${id}-public`} className={visibilityOptionStyles(state.visibility === 'public', false)}>
-								<Ariakit.Radio id={`${id}-public`} value="public" className="sr-only" />
-								<Icon name="earth" height={12} width={12} />
-								Public
-							</label>
-							<label
-								htmlFor={`${id}-private`}
-								className={visibilityOptionStyles(state.visibility === 'private', !hasActiveSubscription)}
-							>
-								<Ariakit.Radio
-									id={`${id}-private`}
-									value="private"
-									disabled={!hasActiveSubscription}
-									className="sr-only"
-								/>
-								<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} height={12} width={12} />
-								Private
-								{!hasActiveSubscription ? <span className="text-xs font-normal opacity-70">(Pro)</span> : null}
-							</label>
-						</Ariakit.RadioGroup>
-					</Ariakit.RadioProvider>
-				</div>
+				<VisibilityField value={state.visibility} onChange={actions.setVisibility} sharedWithTeam={false} />
 
 				<div className="grid grid-cols-2 gap-2">
 					<AriakitSelect
@@ -157,76 +109,18 @@ export function PreviewStep() {
 					/>
 				</div>
 
-				<div>
-					<label htmlFor="comparison-dashboard-tags" className="mb-1 block text-sm font-medium text-pro-text-primary">
-						Tags
-					</label>
-					<div className="flex gap-1.5">
-						<input
-							id="comparison-dashboard-tags"
-							type="text"
-							value={tagInput}
-							onChange={(e) => setTagInput(e.target.value)}
-							onKeyDown={handleTagKeyDown}
-							placeholder="Add tags..."
-							className="min-w-0 flex-1 rounded-md border border-pro-cards-border bg-surface-elevated-1 px-2 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-						/>
-						<button
-							type="button"
-							onClick={handleAddTag}
-							disabled={!tagInput.trim()}
-							className="rounded-md border border-pro-cards-border px-2 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							Add
-						</button>
-					</div>
-					{state.tags.length > 0 ? (
-						<div className="mt-1.5 flex flex-wrap gap-1">
-							{state.tags.map((tag) => (
-								<span
-									key={tag}
-									className="flex items-center gap-1 rounded-full border border-pro-cards-border px-2 py-0.5 text-xs"
-								>
-									{tag}
-									<button
-										type="button"
-										onClick={() => handleRemoveTag(tag)}
-										className="text-pro-text-tertiary hover:text-error"
-									>
-										<Icon name="x" height={10} width={10} />
-									</button>
-								</span>
-							))}
-						</div>
-					) : null}
-				</div>
-
-				<div>
-					<label
-						htmlFor="comparison-dashboard-description"
-						className="mb-1 block text-sm font-medium text-pro-text-primary"
-					>
-						Description <span className="text-xs font-normal text-pro-text-tertiary">(optional)</span>
-					</label>
-					<input
-						id="comparison-dashboard-description"
-						type="text"
-						value={state.description}
-						onChange={(e) => actions.setDescription(e.target.value)}
-						placeholder="Brief description..."
-						className="w-full rounded-md border border-pro-cards-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-					/>
-				</div>
+				<TagsField tags={state.tags} onChange={actions.setTags} />
+				<DescriptionField value={state.description} onChange={actions.setDescription} />
 			</div>
 
 			<div className="flex min-w-0 flex-col gap-3">
-				<div className="rounded-lg border border-pro-cards-border p-3">
+				<div className="rounded-lg border border-subtle p-3">
 					<div className="mb-2 flex items-center justify-between">
-						<h3 className="flex items-center gap-1.5 text-sm font-semibold text-pro-text-primary">
+						<h3 className="flex items-center gap-1.5 label-sm text-primary">
 							<Icon name="activity" height={14} width={14} />
 							Add Metric Cards
 						</h3>
-						<span className="text-xs text-pro-text-tertiary">Optional</span>
+						<span className="body-sm text-tertiary">Optional</span>
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{state.selectedMetrics.map((metric) => {
@@ -236,10 +130,10 @@ export function PreviewStep() {
 							return (
 								<label
 									key={metric}
-									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
+									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 label-sm transition-colors ${
 										isSelected
-											? 'border-brand bg-brand/10 text-brand'
-											: 'border-pro-cards-border text-pro-text-secondary hover:border-brand/40'
+											? 'border-brand bg-brand-muted text-link-on-tint'
+											: 'border-medium text-secondary hover:border-brand/40'
 									}`}
 								>
 									<input
@@ -255,7 +149,7 @@ export function PreviewStep() {
 						})}
 					</div>
 					{state.metricsForCards.length > 0 ? (
-						<div className="mt-2 flex items-center gap-2 border-t border-pro-cards-border pt-2">
+						<div className="mt-2 flex items-center gap-2 border-t border-subtle pt-2">
 							<AriakitSelect
 								options={AGGREGATOR_OPTIONS}
 								selectedValue={state.metricSettings.aggregator}
@@ -272,38 +166,40 @@ export function PreviewStep() {
 					) : null}
 				</div>
 
-				<div className="rounded-lg border border-pro-cards-border p-3">
-					<AriakitCheckbox
+				<div className="rounded-lg border border-subtle p-3">
+					<Checkbox
+						variant="consent"
 						checked={state.includeTable}
-						onChange={(checked) => actions.setIncludeTable(checked)}
-						label={
-							<span className="flex items-center gap-1.5 text-sm font-medium text-pro-text-primary">
+						onChange={(event) => actions.setIncludeTable(event.target.checked)}
+					>
+						<span className="flex min-w-0 flex-col gap-0.5">
+							<span className="flex items-center gap-1.5 label-sm text-primary">
 								<Icon name="layout-grid" height={14} width={14} />
 								Include Comparison Table
 							</span>
-						}
-						description="Adds a data table showing detailed metrics for all compared items"
-					/>
+							<span className="body-sm text-secondary">
+								Adds a table with detailed metrics for every compared item.
+							</span>
+						</span>
+					</Checkbox>
 				</div>
 
-				<div className="rounded-lg border border-pro-cards-border p-3">
-					<h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-pro-text-primary">
+				<div className="rounded-lg border border-subtle p-3">
+					<h3 className="mb-2 flex items-center gap-1.5 label-sm text-primary">
 						<Icon name="file-text" height={14} width={14} />
 						Summary
 					</h3>
-					<div className="space-y-1.5 text-xs">
+					<div className="space-y-1.5 body-sm">
 						<div className="flex items-start justify-between gap-3">
-							<span className="shrink-0 text-pro-text-tertiary">Comparing</span>
-							<span className="min-w-0 text-right font-medium wrap-break-word text-pro-text-primary">
+							<span className="shrink-0 text-tertiary">Comparing</span>
+							<span className="min-w-0 text-right font-medium wrap-break-word text-primary">
 								{selectedItemLabels.join(', ')}
 							</span>
 						</div>
 						<div className="flex items-start justify-between gap-3">
-							<span className="shrink-0 text-pro-text-tertiary">Output</span>
+							<span className="shrink-0 text-tertiary">Output</span>
 							<span className="min-w-0 text-right font-medium text-brand">
-								{metricCardsCount > 0 ? `${metricCardsCount} cards + ` : null}
-								{state.selectedMetrics.length} charts
-								{state.includeTable ? ' + 1 table' : null}
+								{outputSummary(metricCardsCount, state.selectedMetrics.length, state.includeTable)}
 							</span>
 						</div>
 					</div>

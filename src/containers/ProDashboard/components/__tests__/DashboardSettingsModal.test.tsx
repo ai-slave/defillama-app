@@ -61,6 +61,11 @@ function teamSwitch() {
 	return document.querySelector<HTMLInputElement>('input[type="checkbox"][id$="-share-team"]')
 }
 
+function tagInput() {
+	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === 'Tags')!
+	return document.getElementById(label.htmlFor) as HTMLInputElement
+}
+
 function button(label: string) {
 	return Array.from(document.body.querySelectorAll('button')).find((node) => node.textContent?.trim() === label)
 }
@@ -75,8 +80,7 @@ test('the form keeps visibility and tags and no longer carries the name or descr
 	await renderSettings()
 	expect(document.querySelector('[name="dashboardName"]')).toBeNull()
 	expect(document.querySelector('[name="description"]')).toBeNull()
-	const tagInput = document.querySelector<HTMLInputElement>('#dashboard-settings-tag-input')!
-	tagInput.value = 'Lending'
+	tagInput().value = 'Lending'
 	await act(async () => button('Add Tag')!.click())
 	await act(async () => document.querySelector<HTMLInputElement>('input[type="radio"][value="private"]')!.click())
 	await submit()
@@ -100,7 +104,7 @@ test('deletion runs through the confirmation dialog and reports a failure there'
 	remove.mockRejectedValueOnce(new Error('Offline'))
 	await renderSettings()
 	await act(async () => button('Delete Dashboard')!.click())
-	expect(document.body.textContent).toContain('Are you sure you want to delete')
+	expect(document.body.textContent).toContain('Deleting “Original” cannot be undone.')
 	await act(async () => button('Delete')!.click())
 	await waitForUi(() =>
 		expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('Could not delete')
@@ -152,6 +156,7 @@ test('members see the sharing state but cannot change it, and users without a te
 	})
 	expect(teamSwitch()!.disabled).toBe(true)
 	expect(teamSwitch()!.checked).toBe(true)
+	expect(document.body.textContent).toContain('Only the creator or a team admin can change this.')
 
 	await renderSettings([], { myTeam: null, team: null, canMove: true })
 	expect(teamSwitch()).toBeNull()

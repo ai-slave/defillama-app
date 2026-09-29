@@ -13,8 +13,10 @@ import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { useMyTeam } from '~/containers/ProDashboard/hooks/useMyTeam'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { isMacPlatform } from '~/utils/platform'
@@ -154,31 +156,30 @@ function AuthorProfileSetupNotice() {
 	if (dismissed) return null
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-pro-link-button-bg px-3 py-2 text-sm">
+		<div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-pro-link-button-bg px-3 py-2">
 			<div className="flex min-w-0 items-start gap-2">
 				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
 				<div className="min-w-0">
-					<p className="font-medium text-pro-text-primary">Set up your dashboard author profile</p>
-					<p className="mt-0.5 text-xs leading-5 text-pro-text-secondary">
+					<p className="label-md text-pro-text-primary">Set up your dashboard author profile</p>
+					<p className="mt-0.5 body-sm text-pro-text-secondary">
 						Add your name, avatar, and links so visitors can see who built this dashboard.
 					</p>
 				</div>
 			</div>
 			<div className="flex shrink-0 items-center gap-2">
-				<BasicLink
-					href="/account?tab=profile"
-					className="rounded-md bg-link px-3 py-1.5 text-xs font-medium text-on-brand"
-				>
+				<Button as={BasicLink} href="/account?tab=profile" variant="primary" size="md">
 					Open settings
-				</BasicLink>
-				<button
+				</Button>
+				<Button
 					type="button"
+					variant="ghost"
+					size="md"
+					square
 					onClick={() => setDismissed(true)}
 					aria-label="Dismiss profile setup notice"
-					className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-pro-cards-bg hover:text-pro-text-primary"
 				>
-					<Icon name="x" className="size-3.5" />
-				</button>
+					<Icon name="x" className="size-4" aria-hidden="true" />
+				</Button>
 			</div>
 		</div>
 	)
@@ -222,8 +223,8 @@ function DemoPreviewFallback() {
 			role="alert"
 			className="mx-auto my-12 flex max-w-xl flex-col items-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-6 text-center"
 		>
-			<p className="text-sm text-pro-text-secondary">The preview could not be displayed.</p>
-			<BasicLink href="/pro?tab=discover" className="text-sm font-medium text-link hover:underline">
+			<p className="body-sm text-data-down">The preview could not be displayed.</p>
+			<BasicLink href="/pro?tab=discover" className="label-sm text-link hover:underline">
 				See community dashboards
 			</BasicLink>
 		</div>
@@ -594,7 +595,13 @@ function ProDashboardContent() {
 			<ErrorBoundary fallback={<DemoPreviewFallback />}>
 				<Suspense
 					fallback={
-						<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
+						<div
+							role="status"
+							aria-live="polite"
+							className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1"
+						>
+							<LoadingIndicator label="Loading preview" />
+						</div>
 					}
 				>
 					<DemoPreview />
@@ -661,7 +668,7 @@ function ProDashboardContent() {
 							{doneStatusLabel ? (
 								<span
 									aria-hidden="true"
-									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 text-sm text-pro-text-secondary"
+									className="inline-flex min-h-8 animate-pro-fade-in items-center gap-1 px-2 body-md text-pro-text-secondary"
 								>
 									{autoSaving ? <LoadingSpinner size={14} /> : <Icon name="check" height={14} width={14} />}
 									{doneStatusLabel}
@@ -676,9 +683,9 @@ function ProDashboardContent() {
 									variant="primary"
 									onClick={finishEditing}
 									icon={<Icon name="check" height={16} width={16} />}
-									{...(sqlRefreshActive ? { loading: true, title: 'Wait for SQL cards to finish refreshing' } : {})}
+									{...(sqlRefreshActive ? { loading: true } : {})}
 								>
-									<span>Done</span>
+									<span>{sqlRefreshActive ? 'Refreshing SQL…' : 'Done'}</span>
 								</ProButton>
 							) : null}
 							{isReadOnly && currentDashboard?.user !== user?.id ? (

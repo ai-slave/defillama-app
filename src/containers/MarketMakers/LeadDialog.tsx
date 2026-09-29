@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Button } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
-import { Icon } from '~/ui/Icon'
+import { DialogBody, DialogFooter, DialogHeader, dialogSurfaceStyles } from '~/ui/Dialog'
 
 /**
  * Shell only. The header, body and footer are rendered by the form inside, so that the form — and every
@@ -25,34 +24,10 @@ export function LeadDialog({ open, onClose, children }: { open: boolean; onClose
 	)
 }
 
-/** The heading is always rendered for assistive tech; `hidden` only takes it out of the visual flow. */
-export function LeadDialogHeader({ title, hidden = false }: { title: ReactNode; hidden?: boolean }) {
-	if (hidden) {
-		return (
-			<>
-				<Ariakit.VisuallyHidden>
-					<DialogHeading>{title}</DialogHeading>
-				</Ariakit.VisuallyHidden>
-				<DialogCloseButton className="absolute top-3 right-5 z-10" />
-			</>
-		)
-	}
-	return (
-		<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
-			<DialogHeading>{title}</DialogHeading>
-			<DialogCloseButton />
-		</div>
-	)
-}
-
-export function LeadDialogBody({ children }: { children: ReactNode }) {
-	return <div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>{children}</div>
-}
-
 export function LeadField({ label, error, children }: { label: string; error?: string | null; children: ReactNode }) {
 	return (
 		<label className="flex flex-col gap-1.5">
-			<span className="label-md text-primary">{label}</span>
+			<span className="label-sm text-primary">{label}</span>
 			{children}
 			{error ? <span className="body-sm text-error">{error}</span> : null}
 		</label>
@@ -63,18 +38,21 @@ export function LeadCancelButton() {
 	return <Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
 }
 
-export function LeadSuccess({ title, message, onClose }: { title: string; message: string; onClose: () => void }) {
+/** The outcome step: the header names the outcome, one plain sentence says what happens next, and Done closes. */
+export function LeadSuccess({ title, message }: { title: string; message: string }) {
 	return (
-		<div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-			<span className="flex size-12 items-center justify-center rounded-full bg-success/10 text-success">
-				<Icon name="check" height={24} width={24} />
-			</span>
-			<h3 className="heading-sm text-primary">{title}</h3>
-			<p className="max-w-[400px] body-sm text-secondary">{message}</p>
-			<Button type="button" size="md" onClick={onClose} className="mt-2 w-full sm:w-2/3">
-				Got It
-			</Button>
-		</div>
+		<>
+			<DialogHeader title={title} />
+			<DialogBody>
+				<Ariakit.DialogDescription className="body-sm text-secondary">{message}</Ariakit.DialogDescription>
+			</DialogBody>
+			<DialogFooter>
+				{/* The submit button that had focus is gone, so focus moves to the only action. */}
+				<Ariakit.DialogDismiss autoFocus render={<Button type="button" variant="primary" size="md" />}>
+					Done
+				</Ariakit.DialogDismiss>
+			</DialogFooter>
+		</>
 	)
 }
 

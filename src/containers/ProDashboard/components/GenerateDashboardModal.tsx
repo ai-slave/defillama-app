@@ -1,29 +1,38 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input, textareaStyles } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { createDashboardStreamLineParser } from '../dashboardStreamLines'
-import type { Dashboard } from '../dashboardTypes'
+import { DASHBOARD_NAME_MAX_LENGTH, type Dashboard } from '../dashboardTypes'
 import { restoreItemsAfterIterate, stripCustomDataRows } from '../dashboardVariables/resolve'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import { ProButton } from '../ui'
+import { dashboardFieldHintStyles, dashboardFieldLabelStyles, TagsField, VisibilityField } from './DashboardFormFields'
 
 const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
 const EMPTY_DASHBOARD_TAGS: Array<string> = []
-const VISIBILITY_OPTIONS = [
-	{ value: 'public', label: 'Public', icon: 'earth' },
-	{ value: 'private', label: 'Private', icon: 'key' }
-] as const
+const PROMPT_MAX_LENGTH = 5000
+const UNEXPECTED_RESPONSE = 'LlamaAI sent an unexpected response.'
+
+// fetch and stream reads reject with a TypeError ("Failed to fetch", "network error") when the connection fails.
+function reportUnreachable(error: unknown): never {
+	throw error instanceof TypeError ? new Error('Could not reach LlamaAI. Check your connection.') : error
+}
+
+// Server messages arrive with or without a full stop; the alert reads them as sentences.
+function asSentence(message: string) {
+	return /[.!?…]$/.test(message) ? message : `${message}.`
+}
 
 type AIGeneratedHistory = Record<
 	string,
@@ -78,7 +87,7 @@ async function readDashboardCreatorStream(reader: ReadableStreamDefaultReader<Ui
 			return
 		}
 		if (event.type === 'dashboard_complete') completedDashboards.push(event)
-		else throw new Error(event.message || 'Failed to generate dashboard')
+		else throw new Error(event.message || 'LlamaAI could not generate the dashboard.')
 	})
 
 	try {
@@ -134,13 +143,14 @@ function GenerateDashboardModalInner({
 	existingDashboard,
 	onGenerate
 }: GenerateDashboardModalProps) {
+	const id = useId()
 	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
 	const formRef = useRef<HTMLFormElement>(null)
 	const save = useMutation({
 		mutationFn: onGenerate,
 		onError: (error) => {
-			if (!formRef.current?.isConnected) toast.error(error.message)
+			if (!formRef.current?.isConnected) toast.error(asSentence(error.message))
 		}
 	})
 	const saveGeneratedDashboard = (payload: Parameters<GenerateDashboardModalProps['onGenerate']>[0]) => {
@@ -159,18 +169,18 @@ function GenerateDashboardModalInner({
 			request: DashboardCreatorRequest
 			payload: Omit<Parameters<GenerateDashboardModalProps['onGenerate']>[0], 'items'>
 		}) => {
-			if (!isAuthenticated || !user?.id) throw new Error('Please sign in to generate dashboards')
+			if (!isAuthenticated || !user?.id) throw new Error('Sign in to generate dashboards.')
 			const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(request)
-			})
-			if (!response) throw new Error('Authentication failed. Please sign in again.')
-			if (!response.ok) throw new Error('Failed to generate dashboard. Please try again.')
+			}).catch(reportUnreachable)
+			if (!response) throw new Error('Authentication failed. Sign in again.')
+			if (!response.ok) throw new Error('LlamaAI could not generate the dashboard.')
 			const reader = response.body?.getReader()
-			if (!reader) throw new Error('Failed to read response stream')
-			const data = await readDashboardCreatorStream(reader)
-			if (!data) throw new Error('Invalid response format from AI service')
+			if (!reader) throw new Error(UNEXPECTED_RESPONSE)
+			const data = await readDashboardCreatorStream(reader).catch(reportUnreachable)
+			if (!data) throw new Error(UNEXPECTED_RESPONSE)
 			const aiGenerationContext = data.metadata?.sessionId
 				? {
 						sessionId: data.metadata.sessionId,
@@ -190,7 +200,7 @@ function GenerateDashboardModalInner({
 		},
 		onError: (error) => {
 			// Each opening owns its form. A request can still fail after navigating away.
-			if (!formRef.current?.isConnected) toast.error(error.message)
+			if (!formRef.current?.isConnected) toast.error(asSentence(error.message))
 		}
 	})
 	const pending = generation.isPending || save.isPending
@@ -200,7 +210,6 @@ function GenerateDashboardModalInner({
 	const error = save.error ?? generation.error
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
-	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
 
 	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
@@ -240,8 +249,8 @@ function GenerateDashboardModalInner({
 			descInput?.reportValidity()
 			return
 		}
-		if (aiDescription.length > 5000) {
-			descInput?.setCustomValidity('Description must be 5000 characters or less')
+		if (aiDescription.length > PROMPT_MAX_LENGTH) {
+			descInput?.setCustomValidity(`Description must be ${PROMPT_MAX_LENGTH} characters or less`)
 			descInput?.reportValidity()
 			return
 		}
@@ -275,52 +284,28 @@ function GenerateDashboardModalInner({
 		)
 	}
 
-	const handleAddTag = () => {
-		const input = tagInputRef.current
-		if (!input) return
-		const trimmedTag = input.value.trim().toLowerCase()
-		if (trimmedTag) {
-			setTags((prev) => (prev.includes(trimmedTag) ? prev : [...prev, trimmedTag]))
-		}
-		input.value = ''
-	}
-
-	const handleRemoveTag = (tag: string) => {
-		setTags((prev) => prev.filter((t) => t !== tag))
-	}
-
-	const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			handleAddTag()
-		}
-	}
-
 	return (
 		<Dialog size="md" scope="pro" open={isOpen} onClose={onClose} pending={pending} portal unmountOnHide>
 			<form ref={formRef} onSubmit={handleGenerate} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'} />
 				<DialogBody>
-					<div className="space-y-6">
+					<div className="flex flex-col gap-4">
 						{mode === 'create' ? (
-							<div>
-								<label
-									htmlFor="generate-dashboard-name"
-									className="mb-3 block text-sm font-medium text-pro-text-primary"
-								>
+							<div className="flex flex-col gap-1.5">
+								<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
 									Dashboard Name
 								</label>
 								{/* Ariakit's autoFocus, so the dialog starts on the first field instead of the header ×. */}
 								<Ariakit.Focusable
 									autoFocus
 									render={
-										<input
-											id="generate-dashboard-name"
+										<Input
+											id={`${id}-name`}
 											name="dashboardName"
 											type="text"
+											maxLength={DASHBOARD_NAME_MAX_LENGTH}
 											onInput={(e) => e.currentTarget.setCustomValidity('')}
-											placeholder="e.g., Ethereum vs Arbitrum Analysis"
-											className={`w-full rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+											placeholder="e.g. Ethereum vs Arbitrum"
 											readOnly={fieldsLocked}
 											required
 										/>
@@ -329,11 +314,8 @@ function GenerateDashboardModalInner({
 							</div>
 						) : null}
 
-						<div>
-							<label
-								htmlFor="generate-dashboard-description"
-								className="mb-3 block text-sm font-medium text-pro-text-primary"
-							>
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor={`${id}-prompt`} className={dashboardFieldLabelStyles}>
 								{mode === 'iterate'
 									? 'Describe what you want to add or change'
 									: 'Describe the dashboard you want to create'}
@@ -342,7 +324,7 @@ function GenerateDashboardModalInner({
 								autoFocus={mode === 'iterate'}
 								render={
 									<textarea
-										id="generate-dashboard-description"
+										id={`${id}-prompt`}
 										name="aiDescription"
 										onInput={(e) => {
 											e.currentTarget.setCustomValidity('')
@@ -350,119 +332,50 @@ function GenerateDashboardModalInner({
 										}}
 										placeholder={
 											mode === 'iterate'
-												? 'e.g., Add a chart showing weekly DEX volume breakdown by top 5 protocols, or Remove the stablecoin chart and add TVL comparison...'
-												: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
+												? 'e.g. Add a chart of weekly DEX volume for the top 5 protocols, or remove the stablecoin chart and add a TVL comparison…'
+												: 'e.g. Build a DeFi yields dashboard with the top earning protocols, comparing chains and showing historical performance…'
 										}
 										rows={4}
-										className={`w-full resize-none rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+										aria-describedby={`${id}-prompt-hint`}
+										className={`${textareaStyles} resize-none`}
 										readOnly={fieldsLocked}
 										required
 									/>
 								}
 							/>
-							<p className="mt-1 text-xs text-pro-text-tertiary">
-								{mode === 'iterate'
-									? 'Be specific about what you want to add, remove, or modify'
-									: 'Be specific about what data, charts, and insights you want to see'}{' '}
-								(<span ref={charCountRef}>0</span>/5000)
+							<p id={`${id}-prompt-hint`} className={`flex justify-between gap-3 ${dashboardFieldHintStyles}`}>
+								<span>
+									{mode === 'iterate'
+										? 'Be specific about what you want to add, remove or change.'
+										: 'Be specific about the data, charts and insights you want to see.'}
+								</span>
+								<span className="shrink-0">
+									<span ref={charCountRef}>0</span>/{PROMPT_MAX_LENGTH}
+								</span>
 							</p>
 						</div>
 
 						{mode === 'create' ? (
-							<div>
-								<p id="generate-dashboard-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
-									Visibility
-								</p>
-								<Ariakit.RadioProvider
+							<>
+								<VisibilityField
 									value={visibility}
-									setValue={(value) => setVisibility(value as 'public' | 'private')}
-								>
-									<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="generate-dashboard-visibility">
-										{VISIBILITY_OPTIONS.map((option) => (
-											<label
-												key={option.value}
-												className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
-													visibility === option.value
-														? 'border-brand bg-pro-info-100/60 text-pro-text-primary'
-														: 'border-pro-cards-border text-pro-text-secondary hover:text-pro-text-primary'
-												} ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
-											>
-												<Ariakit.Radio
-													value={option.value}
-													className="sr-only"
-													disabled={fieldsLocked}
-													accessibleWhenDisabled
-												/>
-												<Icon name={option.icon} height={16} width={16} className="mr-2 inline" />
-												{option.label}
-											</label>
-										))}
-									</Ariakit.RadioGroup>
-								</Ariakit.RadioProvider>
-								{visibility === 'public' ? (
-									<p className="mt-2 text-sm text-pro-text-tertiary">
-										Public dashboards are visible in the Discover tab
-									</p>
-								) : null}
-							</div>
-						) : null}
-
-						{mode === 'create' ? (
-							<div>
-								<label
-									htmlFor="generate-dashboard-tag-input"
-									className="mb-3 block text-sm font-medium text-pro-text-primary"
-								>
-									Tags
-								</label>
-								<div className="flex gap-2">
-									<input
-										id="generate-dashboard-tag-input"
-										ref={tagInputRef}
-										type="text"
-										onKeyDown={handleTagInputKeyDown}
-										placeholder="Enter tag name"
-										className={`min-w-0 flex-1 rounded-md border border-pro-cards-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
-										disabled={fieldsLocked}
-									/>
-									<ProButton type="button" onClick={handleAddTag} disabled={fieldsLocked} variant="secondary">
-										Add Tag
-									</ProButton>
-								</div>
-
-								<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
-
-								{tags.length > 0 ? (
-									<div className="mt-3 flex flex-wrap gap-2">
-										{tags.map((tag) => (
-											<span
-												key={tag}
-												className="flex max-w-full items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
-											>
-												<span className="min-w-0 wrap-anywhere">{tag}</span>
-												<button
-													type="button"
-													onClick={() => handleRemoveTag(tag)}
-													aria-label={`Remove tag ${tag}`}
-													className="hover:text-pro-info-400"
-													disabled={fieldsLocked}
-												>
-													<Icon name="x" height={12} width={12} />
-												</button>
-											</span>
-										))}
-									</div>
-								) : null}
-							</div>
+									onChange={setVisibility}
+									sharedWithTeam={false}
+									disabled={fieldsLocked}
+								/>
+								<TagsField tags={tags} onChange={setTags} disabled={fieldsLocked} />
+							</>
 						) : null}
 					</div>
 
 					{error ? (
 						<InlineStatus variant="error">
-							{error.message}{' '}
-							{generation.data
-								? 'Your generated dashboard is ready. Retry saving it without generating again.'
-								: 'Your draft is still here; please try again.'}
+							{asSentence(error.message)}
+							<span className="block">
+								{generation.data
+									? 'Your generated dashboard is ready. Retry saving it without generating again.'
+									: 'Your draft is still here. Try again.'}
+							</span>
 						</InlineStatus>
 					) : null}
 				</DialogBody>

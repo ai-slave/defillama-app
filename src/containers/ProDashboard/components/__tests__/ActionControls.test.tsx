@@ -130,7 +130,14 @@ test('synchronous widget confirmation still closes immediately', async () => {
 	function Harness() {
 		const [open, setOpen] = useState(true)
 		return (
-			<ConfirmationModal isOpen={open} onClose={() => setOpen(false)} onConfirm={confirm} confirmText="Duplicate" />
+			<ConfirmationModal
+				isOpen={open}
+				onClose={() => setOpen(false)}
+				onConfirm={confirm}
+				title="Duplicate dashboard"
+				message="Create a copy of this dashboard."
+				confirmText="Duplicate"
+			/>
 		)
 	}
 	await act(async () => root.render(<Harness />))

@@ -29,13 +29,14 @@ const SCORE_KEYS: Array<keyof RadarScores> = [
 	'integrationLevel'
 ]
 
+// The side labels get about 80px beside the chart in a 375px-wide drawer, so the two longest wrap onto two lines.
 const INDICATORS = [
 	'Composite Score',
-	'Trading KPIs',
+	'Trading\nKPIs',
 	'Trust',
 	'Coverage & Capabilities',
 	'Uptime',
-	'Integration Level'
+	'Integration\nLevel'
 ] as const
 
 function toValues(scores: RadarScores): Array<number> {
@@ -47,7 +48,8 @@ export function buildRadarOption(scores: RadarScores, axisColor?: string): EChar
 	return {
 		tooltip: {
 			trigger: 'item',
-			formatter: () => INDICATORS.map((name, i) => `${name}: ${formatNumber(values[i] ?? 0)}`).join('<br/>')
+			formatter: () =>
+				INDICATORS.map((name, i) => `${name.replace('\n', ' ')}: ${formatNumber(values[i] ?? 0)}`).join('<br/>')
 		},
 		radar: {
 			indicator: INDICATORS.map((name) => ({ name, max: 10 })),

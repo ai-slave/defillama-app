@@ -208,6 +208,27 @@ describe('SelectWithCombobox on one Combobox store', () => {
 		await type(input, 'zzz')
 		expect(document.querySelector('[role="status"]')?.textContent).toBe('No results found for "zzz"')
 	})
+
+	test('keeps the footer action when a search matches nothing', async () => {
+		await act(async () =>
+			root.render(
+				<SelectWithCombobox
+					allValues={OPTIONS}
+					selectedValues={[]}
+					setSelectedValues={vi.fn()}
+					label="Columns"
+					variant="filter"
+					size="md"
+					customFooter={<button type="button">Add Custom Column</button>}
+				/>
+			)
+		)
+
+		await click(trigger())
+		await type(document.querySelector<HTMLInputElement>('input[role="combobox"]')!, 'zzz')
+		expect(document.querySelector('[role="status"]')?.textContent).toBe('No results found for "zzz"')
+		expect([...document.querySelectorAll('button')].map((button) => button.textContent)).toContain('Add Custom Column')
+	})
 })
 
 function buttonByText(text: string) {
@@ -315,6 +336,12 @@ describe('nested filter composition', () => {
 		expect(document.querySelectorAll('[role="menuitemcheckbox"]')).toHaveLength(8)
 		expect(document.activeElement?.textContent).toBe('Option 7')
 		expect(document.querySelector('output')?.textContent).toBe('tvl')
+	})
+	test('says a nested search matched nothing', async () => {
+		await open({ searchable: true })
+		await type(document.querySelector<HTMLInputElement>('input[role="combobox"]')!, 'zzz')
+		expect(options()).toHaveLength(0)
+		expect(document.querySelector('[role="status"]')?.textContent).toBe('No results found for "zzz"')
 	})
 	test('keeps searchable nested options in the listbox and preserves search while toggling', async () => {
 		await open({ searchable: true })

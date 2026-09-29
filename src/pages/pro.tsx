@@ -22,6 +22,7 @@ import {
 	MY_DASHBOARDS_FILTERED_PAGE_SIZE
 } from '~/containers/ProDashboard/components/myDashboardsControls.utils'
 import { MyProfileTab } from '~/containers/ProDashboard/components/MyProfileTab'
+import { ProCardError } from '~/containers/ProDashboard/components/ProCardStatus'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import {
@@ -40,7 +41,7 @@ import {
 } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
-import { ProButton, ProDialogFallback, ProMeta, proTabStyles } from '~/containers/ProDashboard/ui'
+import { ProButton, ProDialogFallback, ProMeta, proPanelStyles, proTabStyles } from '~/containers/ProDashboard/ui'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
 import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
@@ -268,6 +269,8 @@ function ProContent({
 		isLoading: isLoadingMyDashboards,
 		totalPages: myDashboardsTotalPages,
 		totalItems: myDashboardsTotalItems,
+		error: myDashboardsError,
+		refetch: refetchMyDashboards,
 		goToPage
 	} = useMyDashboards({
 		...getMyDashboardsRequest(myDashboardsControls, selectedPage),
@@ -281,12 +284,17 @@ function ProContent({
 		isLoading: isLoadingTeamDashboards,
 		totalPages: teamDashboardsTotalPages,
 		totalItems: teamDashboardsTotalItems,
+		error: teamDashboardsError,
+		refetch: refetchTeamDashboards,
 		goToPage: goToTeamPage
 	} = useTeamDashboards({
 		page: activeTab === 'team' ? selectedPage : 1,
 		limit: 20,
 		enabled: isAuthenticated && !!myTeam
 	})
+	// A failed list load is not an empty list: without this the page offers "Create your first dashboard".
+	const myDashboardsFailed = !!myDashboardsError && myDashboards.length === 0
+	const teamDashboardsFailed = !!teamDashboardsError && teamDashboards.length === 0
 
 	useEffect(() => {
 		if (createDialogOpen && !dialogWasOpenRef.current) {
@@ -430,7 +438,7 @@ function ProContent({
 							onVisibilityChange={(visibility) => setMyDashboardsControls((previous) => ({ ...previous, visibility }))}
 						/>
 
-						{!isLoadingMyDashboards ? (
+						{!isLoadingMyDashboards && !myDashboardsFailed ? (
 							<ProMeta
 								items={[
 									myDashboardsControlsActive
@@ -443,22 +451,28 @@ function ProContent({
 							/>
 						) : null}
 
-						<DashboardList
-							dashboards={visibleMyDashboards}
-							isLoading={isLoadingMyDashboards}
-							onCreateNew={() => createDashboardDialogStore.show()}
-							onDeleteDashboard={deleteDashboard}
-							{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
-								? {
-										emptyMessage: {
-											title: myDashboardsControls.query.trim()
-												? `No dashboards match “${myDashboardsControls.query.trim()}”`
-												: 'No dashboards match these filters',
-											onClearFilters: () => setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
+						{myDashboardsFailed ? (
+							<div className={`${proPanelStyles} flex flex-col py-12`}>
+								<ProCardError title="Couldn't load your dashboards." onRetry={() => void refetchMyDashboards()} />
+							</div>
+						) : (
+							<DashboardList
+								dashboards={visibleMyDashboards}
+								isLoading={isLoadingMyDashboards}
+								onCreateNew={() => createDashboardDialogStore.show()}
+								onDeleteDashboard={deleteDashboard}
+								{...(myDashboardsControlsActive && myDashboardsTotalItems > 0
+									? {
+											emptyMessage: {
+												title: myDashboardsControls.query.trim()
+													? `No dashboards match “${myDashboardsControls.query.trim()}”`
+													: 'No dashboards match these filters',
+												onClearFilters: () => setMyDashboardsControls(DEFAULT_MY_DASHBOARDS_CONTROLS)
+											}
 										}
-									}
-								: {})}
-						/>
+									: {})}
+							/>
+						)}
 
 						{!myDashboardsControlsActive && myDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">
@@ -531,7 +545,7 @@ function ProContent({
 
 				{isAuthenticated && myTeam ? (
 					<TabPanel value="team" className="flex flex-col gap-4">
-						{!isLoadingTeamDashboards ? (
+						{!isLoadingTeamDashboards && !teamDashboardsFailed ? (
 							<ProMeta
 								items={[
 									`Shared with ${myTeam.name}`,
@@ -540,12 +554,18 @@ function ProContent({
 							/>
 						) : null}
 
-						<DashboardList
-							dashboards={teamDashboards}
-							isLoading={isLoadingTeamDashboards}
-							onCreateNew={() => createDashboardDialogStore.show()}
-							onDeleteDashboard={deleteDashboard}
-						/>
+						{teamDashboardsFailed ? (
+							<div className={`${proPanelStyles} flex flex-col py-12`}>
+								<ProCardError title="Couldn't load team dashboards" onRetry={() => void refetchTeamDashboards()} />
+							</div>
+						) : (
+							<DashboardList
+								dashboards={teamDashboards}
+								isLoading={isLoadingTeamDashboards}
+								onCreateNew={() => createDashboardDialogStore.show()}
+								onDeleteDashboard={deleteDashboard}
+							/>
+						)}
 
 						{teamDashboardsTotalPages > 1 ? (
 							<div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto">

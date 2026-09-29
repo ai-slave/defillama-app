@@ -26,11 +26,19 @@ interface ComparisonWizardProps {
 		items: Array<DashboardItemConfig>
 	}) => void
 	comparisonPreset?: ComparisonPreset
+	/** Leaves the wizard; the footer's Back calls it from the first step. */
+	onExit: () => void
 	/** Creation feedback from the caller, shown at the end of the body above the footer. */
 	feedback: ReactNode
 }
 
-function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus, feedback }: ComparisonWizardProps) {
+function ComparisonWizardContent({
+	onComplete,
+	onExit,
+	comparisonPreset,
+	creationStatus,
+	feedback
+}: ComparisonWizardProps) {
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chainsByName } = useAppMetadata()
@@ -237,9 +245,8 @@ function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus,
 				currentStep={state.step}
 				comparisonType={state.comparisonType}
 				canProceed={derived.canProceed}
-				canGoBack={derived.canGoBack}
 				onNext={actions.goToNextStep}
-				onBack={actions.goToPrevStep}
+				onBack={derived.canGoBack ? actions.goToPrevStep : onExit}
 				onGenerate={handleGenerate}
 				creationStatus={creationStatus}
 			/>
@@ -247,13 +254,20 @@ function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus,
 	)
 }
 
-export function ComparisonWizard({ onComplete, comparisonPreset, creationStatus, feedback }: ComparisonWizardProps) {
+export function ComparisonWizard({
+	onComplete,
+	onExit,
+	comparisonPreset,
+	creationStatus,
+	feedback
+}: ComparisonWizardProps) {
 	return (
 		<ComparisonWizardProvider>
 			<ComparisonWizardContent
 				creationStatus={creationStatus}
 				feedback={feedback}
 				onComplete={onComplete}
+				onExit={onExit}
 				{...(comparisonPreset !== undefined ? { comparisonPreset } : {})}
 			/>
 		</ComparisonWizardProvider>

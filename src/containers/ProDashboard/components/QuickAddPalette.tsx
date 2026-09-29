@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { type KeyboardEvent, type MouseEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { Button } from '~/ui/Button'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogSearchHeader } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { inputStyles } from '~/ui/Input'
+import { LoadingIndicator } from '~/ui/Status'
+import { Tag } from '~/ui/Tag'
 import { tw } from '~/ui/tw'
 import { useAppMetadata } from '../AppMetadataContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -25,7 +27,6 @@ import {
 	type QuickAddSuggestionGroup,
 	type QuickAddSuggestionKind
 } from '../quickAdd/quickAddSuggestions'
-import { ProChip, proButtonStyles, proInputStyles, proMenuGroupLabelStyles } from '../ui'
 import type { DashboardItemPlacement } from '../useDashboardActions'
 import { TOAST_DURATION_SHORT } from './dashboardToasts'
 import { EntityIcon } from './EntityIcon'
@@ -58,14 +59,14 @@ const GROUP_LABELS: Record<QuickAddSuggestionGroup, string> = {
 
 const GROUP_ORDER: ReadonlyArray<QuickAddSuggestionGroup> = ['suggested', 'recent', 'start']
 
-const QUICK_ADD_PLACEHOLDER = 'Uniswap fees · Ethereum TVL · Aave vs Compound revenue · table · text'
+const QUICK_ADD_PLACEHOLDER = 'Search charts, protocols, chains…'
 const DASHBOARD_NOT_READY_MESSAGE = 'The dashboard is still loading. Try again in a moment.'
 
-const KBD_STYLES = tw`rounded-sm border border-pro-cards-border px-1 text-xs text-pro-text-secondary`
+const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondary`
 
-const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 rounded-md px-2 py-2 text-left data-active-item:bg-pro-hover-fill`
+const ROW_STYLES = tw`group flex w-full cursor-pointer scroll-my-1 items-center gap-3 rounded-md px-2 py-2 text-left data-active-item:bg-hover-row`
 
-const CUSTOMIZE_STYLES = proButtonStyles({ variant: 'ghost', size: 'sm' })
+const CUSTOMIZE_STYLES = buttonStyles({ variant: 'ghost', size: 'sm' })
 
 function rowElementId(index: number): string {
 	return `quick-add-row-${index}`
@@ -115,13 +116,13 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 			{entity ? (
 				<EntityIcon src={entity.logo} name={entity.name} />
 			) : (
-				<span className="inline-flex size-5 shrink-0 items-center justify-center text-pro-text-tertiary">
+				<span className="inline-flex size-5 shrink-0 items-center justify-center text-tertiary">
 					<Icon name={KIND_ICONS[suggestion.kind]} height={14} width={14} />
 				</span>
 			)}
 			<span className="flex min-w-0 flex-1 flex-col">
-				<span className="truncate text-sm text-pro-text-primary">{suggestion.title}</span>
-				<span className="truncate text-xs text-pro-text-tertiary">
+				<span className="truncate body-md text-primary">{suggestion.title}</span>
+				<span className="truncate body-sm text-tertiary">
 					{suggestion.alreadyOnDashboard ? 'Already on dashboard' : suggestion.detail}
 				</span>
 			</span>
@@ -138,7 +139,7 @@ function QuickAddRow({ suggestion, index, onSelect, onCustomize }: QuickAddRowPr
 					<kbd className={KBD_STYLES}>Tab</kbd>
 				</span>
 			) : null}
-			<ProChip className="max-sm:hidden">{KIND_LABELS[suggestion.kind]}</ProChip>
+			<Tag className="max-sm:hidden">{KIND_LABELS[suggestion.kind]}</Tag>
 			<kbd className={`hidden ${KBD_STYLES} md:group-data-active-item:inline`}>↵</kbd>
 		</Ariakit.ComboboxItem>
 	)
@@ -154,8 +155,9 @@ export interface QuickAddPaletteProps {
 
 export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFullEditor }: QuickAddPaletteProps) {
 	const [value, setValue] = useState('')
-	// The line under the search: what the last Enter added, or why it could not add. Both clear after a moment.
-	const [status, setStatus] = useState<{ tone: 'added' | 'error'; text: string } | null>(null)
+	// The line under the search: what the last Enter added, or that the dashboard is not ready to take it yet (a
+	// wait, not an error). Both clear after a moment.
+	const [status, setStatus] = useState<{ tone: 'added' | 'wait'; text: string } | null>(null)
 	const [recents, setRecents] = useState<Array<QuickAddRecent>>(readQuickAddRecents)
 	const lastAddedIdRef = useRef<string | null>(null)
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -223,7 +225,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		})
 	}
 
-	function showStatus(next: { tone: 'added' | 'error'; text: string }) {
+	function showStatus(next: { tone: 'added' | 'wait'; text: string }) {
 		if (statusTimeoutRef.current !== null) clearTimeout(statusTimeoutRef.current)
 		setStatus(next)
 		statusTimeoutRef.current = setTimeout(() => {
@@ -269,7 +271,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 		}
 		const addedIds = handleAppendItems(suggestion.build, placement)
 		if (addedIds === false) {
-			showStatus({ tone: 'error', text: DASHBOARD_NOT_READY_MESSAGE })
+			showStatus({ tone: 'wait', text: DASHBOARD_NOT_READY_MESSAGE })
 			return
 		}
 		completeAdd(suggestion, addedIds[0] ?? null, closeAfter)
@@ -335,28 +337,28 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 						autoSelect="always"
 						aria-label="Quick add"
 						placeholder={QUICK_ADD_PLACEHOLDER}
-						className={proInputStyles}
+						className={inputStyles}
 						onKeyDownCapture={handleKeyDownCapture}
 					/>
-					{status?.tone === 'error' ? (
-						<div className="pt-2">
-							<InlineStatus variant="error">{status.text}</InlineStatus>
-						</div>
-					) : null}
-					<p role="status" className="px-1 text-xs text-pro-text-secondary empty:hidden">
-						{status?.tone === 'added' ? (
-							<span key={status.text} className="inline-block animate-pro-fade-in pt-1.5">
-								{status.text}
-							</span>
-						) : null}
-					</p>
 				</DialogSearchHeader>
+				{/* Its own row under the header, so a message never pushes the × out of line with the search. The live
+				    region stays mounted so each message is announced. */}
+				<p role="status" className="shrink-0 px-5 pt-3 body-sm empty:hidden">
+					{status ? (
+						<span
+							key={status.text}
+							className={`inline-block animate-pro-fade-in ${status.tone === 'wait' ? 'text-warning' : 'text-secondary'}`}
+						>
+							{status.text}
+						</span>
+					) : null}
+				</p>
 				<DialogBody kind="list">
 					<Ariakit.ComboboxList alwaysVisible aria-label="Quick add suggestions">
 						{protocolsLoading ? (
-							<p role="status" className="px-2 py-2 text-xs text-pro-text-tertiary">
-								Loading protocols…
-							</p>
+							<div role="status" aria-live="polite" className="px-2 py-2">
+								<LoadingIndicator label="Loading protocols" />
+							</div>
 						) : null}
 						{grouped
 							? GROUP_ORDER.map((group) => {
@@ -364,7 +366,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 									if (groupRows.length === 0) return null
 									return (
 										<Ariakit.ComboboxGroup key={group}>
-											<Ariakit.ComboboxGroupLabel className={proMenuGroupLabelStyles}>
+											<Ariakit.ComboboxGroupLabel className="px-3 pt-2 pb-1 label-sm text-tertiary">
 												{GROUP_LABELS[group]}
 											</Ariakit.ComboboxGroupLabel>
 											{groupRows}
@@ -377,7 +379,7 @@ export function QuickAddPalette({ open, onClose, onClosed, placement, onOpenFull
 				</DialogBody>
 				<DialogFooter
 					leading={
-						<span className="hidden items-center gap-1.5 text-xs text-pro-text-tertiary md:flex">
+						<span className="hidden items-center gap-1.5 body-sm text-tertiary md:flex">
 							<kbd className={KBD_STYLES}>↵</kbd>
 							add
 							<span aria-hidden="true">·</span>

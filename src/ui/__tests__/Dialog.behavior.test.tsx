@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { Button } from '../Button'
-import { Dialog, DialogBody, DialogHeader } from '../Dialog'
+import { Dialog, DialogBackButton, DialogBody, DialogHeader } from '../Dialog'
 
 let root: Root
 let container: HTMLDivElement
@@ -77,4 +77,41 @@ test('a pending dialog ignores Escape and its close button, then closes again on
 	await act(async () => root.render(<Harness pending={false} />))
 	await act(async () => dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
 	await waitForUi(() => expect(container.textContent).toContain('Closed'))
+})
+
+test('a pending dialog keeps focus on its back button and ignores it until the request settles', async () => {
+	const back = vi.fn()
+	function Harness({ pending }: { pending: boolean }) {
+		return (
+			<Dialog size="sm" open onClose={() => {}} pending={pending}>
+				<DialogHeader title="New dashboard" leading={<DialogBackButton label="Back to choices" onClick={back} />} />
+			</Dialog>
+		)
+	}
+	await act(async () => root.render(<Harness pending={false} />))
+	await waitForUi(() => expect(document.querySelector('[aria-label="Back to choices"]')).not.toBeNull())
+	const backButton = document.querySelector<HTMLButtonElement>('[aria-label="Back to choices"]')!
+	await act(async () => backButton.focus())
+	await act(async () => root.render(<Harness pending />))
+	expect(document.activeElement).toBe(backButton)
+	expect(backButton.disabled).toBe(false)
+	expect(backButton.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => backButton.click())
+	expect(back).not.toHaveBeenCalled()
+	await act(async () => root.render(<Harness pending={false} />))
+	await act(async () => backButton.click())
+	expect(back).toHaveBeenCalledOnce()
+})
+
+test('the header subtitle is announced as the dialog description', async () => {
+	await act(async () =>
+		root.render(
+			<Dialog size="sm" open onClose={() => {}}>
+				<DialogHeader title="Chart metrics" subtitle="3 of 40 selected" />
+			</Dialog>
+		)
+	)
+	await waitForUi(() => expect(document.querySelector('[role=dialog]')).not.toBeNull())
+	const describedBy = document.querySelector('[role=dialog]')!.getAttribute('aria-describedby')
+	expect(describedBy && document.getElementById(describedBy)?.textContent).toBe('3 of 40 selected')
 })

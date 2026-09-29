@@ -9,34 +9,34 @@ import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/
 import { Button } from '~/ui/Button'
 import { Dialog, DialogBackButton, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
-import { InlineStatus } from '~/ui/Status'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus, LoadingIndicator } from '~/ui/Status'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import {
-	DASHBOARD_DESCRIPTION_MAX_LENGTH,
 	DASHBOARD_NAME_MAX_LENGTH,
 	type Dashboard,
 	type DashboardTeam,
 	type DashboardVariable
 } from '../dashboardTypes'
 import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
+import { useFreeTierStatus } from '../hooks/useFreeTierStatus'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { DASHBOARD_TEMPLATES, generateTemplateCharts, getTemplateItems, type ChainCategoryData } from '../templates'
-import { ProButton, ProMeta, proInputStyles } from '../ui'
 import type { ComparisonPreset } from './ComparisonWizard/types'
+import {
+	dashboardFieldHintStyles,
+	dashboardFieldLabelStyles,
+	DescriptionField,
+	TagsField,
+	VisibilityField
+} from './DashboardFormFields'
 
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
 
 type PickerMode = 'picker' | 'scratch' | 'comparison'
-
-function visibilityCardStyles(selected: boolean) {
-	return `relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition-colors has-focus-visible:focus-ring ${
-		selected
-			? 'border-brand bg-pro-info-100/60 text-pro-text-primary'
-			: 'border-pro-cards-border text-pro-text-secondary hover:text-pro-text-primary'
-	}`
-}
 
 interface CreateDashboardPickerProps {
 	dialogStore: Ariakit.DialogStore
@@ -88,7 +88,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 	const [comparisonPresetHandled, setComparisonPresetHandled] = useState(false)
 	const formId = useId()
 	const pending = creation.isPending
-	const locked = creation.isPending || creation.isSuccess
+	const locked = creation.isPending
 	// The pending state lives on the button that started it; this region only announces it.
 	const announcement = (
 		<span role="status" className="sr-only">
@@ -96,18 +96,29 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		</span>
 	)
 	// The free-tier limit is refused before the request, so its message is the only thing that tells the
-	// user why, and that retrying will not help.
-	const creationFeedback = creation.isSuccess ? (
-		<p className="body-sm text-secondary">
-			Dashboard created.{' '}
-			<BasicLink href={`/pro/${dashboardUrlKey(creation.data)}/edit`} className="underline">
-				Open dashboard
-			</BasicLink>
-		</p>
-	) : creation.isError ? (
+	// user why; a retry cannot succeed, so it offers the upgrade instead of keeping the draft for one.
+	const { canCreateDashboard } = useFreeTierStatus()
+	const creationFeedback = creation.isError ? (
 		<InlineStatus variant="error">
-			{creation.error.message}
-			<span className="block text-pro-text-tertiary">Your choices are still here.</span>
+			{canCreateDashboard ? (
+				<>
+					{creation.error.message}
+					<span className="block">Your choices are still here.</span>
+				</>
+			) : (
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<span>{creation.error.message}</span>
+					<Button
+						as={BasicLink}
+						variant="primary"
+						size="sm"
+						href="/subscription"
+						data-umami-event="dashboard-limit-upgrade"
+					>
+						Upgrade to Pro
+					</Button>
+				</div>
+			)}
 		</InlineStatus>
 	) : null
 	const effectiveMode: PickerMode = comparisonPreset && !comparisonPresetHandled ? 'comparison' : mode
@@ -116,14 +127,49 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 		setComparisonPresetHandled(true)
 		setMode('picker')
 	}
-	const backButton = <DialogBackButton label="Back to dashboard choices" onClick={handleBackToPicker} />
+
+	// Creation navigates to the new dashboard; this step shows while that runs, or when it fails,
+	// and replaces the form so nothing can create a second dashboard.
+	if (creation.isSuccess) {
+		return (
+			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" portal unmountOnHide>
+				<DialogHeader title="Dashboard Created" />
+				<DialogBody>
+					<Ariakit.DialogDescription className="body-sm text-secondary">
+						Your dashboard is saved.
+					</Ariakit.DialogDescription>
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
+							Close
+						</Ariakit.DialogDismiss>
+					}
+				>
+					<Button
+						as={BasicLink}
+						href={`/pro/${dashboardUrlKey(creation.data)}/edit`}
+						variant="primary"
+						size="md"
+						autoFocus
+					>
+						Open Dashboard
+					</Button>
+				</DialogFooter>
+				{announcement}
+			</Dialog>
+		)
+	}
 
 	// Every step renders the same Dialog, so switching steps keeps one open surface; closing remounts the
 	// keyed picker, which resets the step.
 	if (effectiveMode === 'scratch') {
 		return (
 			<Dialog ref={dialogRef} store={dialogStore} size="sm" scope="pro" pending={pending} portal unmountOnHide>
-				<DialogHeader title="Create New Dashboard" leading={backButton} />
+				<DialogHeader
+					title="Create New Dashboard"
+					leading={<DialogBackButton label="Back to dashboard choices" onClick={handleBackToPicker} />}
+				/>
 				<DialogBody>
 					<CreateDashboardModalContent
 						formId={formId}
@@ -146,11 +192,9 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						variant="primary"
 						size="md"
 						data-umami-event="dashboard-create"
-						disabled={creation.isSuccess}
 						pendingLabel={pending ? 'Creating…' : null}
 					>
-						{creation.isSuccess ? <Icon name="check" height={16} width={16} /> : null}
-						{creation.isSuccess ? 'Created' : 'Create Dashboard'}
+						Create Dashboard
 					</Button>
 				</DialogFooter>
 				{announcement}
@@ -170,13 +214,14 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 				portal
 				unmountOnHide
 			>
-				<DialogHeader title="Create Comparison Dashboard" leading={backButton} />
+				{/* The footer's Back leads out of the wizard from its first step, so the header has no second back. */}
+				<DialogHeader title="Create Comparison Dashboard" />
 				<fieldset disabled={locked} className="contents">
 					<Suspense
 						fallback={
 							<DialogBody>
-								<div className="flex h-96 items-center justify-center">
-									<LoadingSpinner size={32} />
+								<div role="status" aria-live="polite" className="flex h-96 items-center justify-center">
+									<LoadingIndicator label="Loading comparison builder" />
 								</div>
 							</DialogBody>
 						}
@@ -184,6 +229,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 						<ComparisonWizard
 							creationStatus={creation.status}
 							onComplete={submitCreation}
+							onExit={handleBackToPicker}
 							feedback={creationFeedback}
 							{...(comparisonPreset !== null ? { comparisonPreset } : {})}
 						/>
@@ -199,7 +245,9 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 			<DialogHeader title="Create New Dashboard" />
 			<DialogBody>
 				<fieldset className="contents">
-					<p className="text-sm text-pro-text-secondary">How would you like to create your dashboard?</p>
+					<Ariakit.DialogDescription className="body-sm text-secondary">
+						How would you like to create your dashboard?
+					</Ariakit.DialogDescription>
 
 					<div className="grid gap-4 sm:grid-cols-2">
 						<button
@@ -209,14 +257,16 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 								setComparisonPresetHandled(true)
 								setMode('scratch')
 							}}
-							className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
+							className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
 						>
-							<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
+							<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
 								<Icon name="file-plus" height={20} width={20} />
 							</div>
 							<div>
-								<h3 className="text-base font-semibold text-pro-text-primary">From Scratch</h3>
-								<p className="mt-1 text-sm text-pro-text-tertiary">Create an empty dashboard and add charts manually</p>
+								<span className="block label-md text-primary">From Scratch</span>
+								<span className="mt-1 block body-sm text-tertiary">
+									Create an empty dashboard and add charts manually
+								</span>
 							</div>
 						</button>
 
@@ -227,20 +277,22 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset, t
 								setComparisonPresetHandled(true)
 								setMode('comparison')
 							}}
-							className="flex flex-col items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5 text-center transition-colors hover:border-pro-accent/40"
+							className="flex flex-col items-center gap-4 rounded-lg border border-subtle bg-surface p-5 text-center transition-colors hover:border-pro-accent/40"
 						>
-							<div className="flex size-10 items-center justify-center rounded-md bg-pro-info-100 text-pro-info-400">
+							<div className="flex size-10 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
 								<Icon name="bar-chart-2" height={20} width={20} />
 							</div>
 							<div>
-								<h3 className="text-base font-semibold text-pro-text-primary">Comparison</h3>
-								<p className="mt-1 text-sm text-pro-text-tertiary">Compare chains or protocols with pre-built charts</p>
+								<span className="block label-md text-primary">Comparison</span>
+								<span className="mt-1 block body-sm text-tertiary">
+									Compare chains or protocols with pre-built charts
+								</span>
 							</div>
 						</button>
 					</div>
 
-					<div className="border-t border-pro-cards-border pt-4">
-						<h3 className="mb-3 text-sm font-medium text-pro-text-secondary">Or use a template</h3>
+					<div className="border-t border-subtle pt-4">
+						<h3 className="mb-3 label-sm text-secondary">Or use a template</h3>
 						{open ? (
 							<DashboardTemplates
 								onCreate={submitCreation}
@@ -264,6 +316,7 @@ function DashboardTemplates({
 	onCreate: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => void
 }) {
 	const id = useId()
+	const listRef = useRef<HTMLDivElement>(null)
 	const { hasActiveSubscription } = useAuthContext()
 	const { protocols, chains, protocolCatalog } = useProDashboardCatalog()
 	const categories = useQuery({
@@ -289,77 +342,105 @@ function DashboardTemplates({
 			})
 		)
 	}, [protocols, chains, categoryData, perps, dexs, dexAggregators])
+	const sourceQueries = [categories, dimensions.perps, dimensions.dexs, dimensions.dexAggregators]
+
+	const cards = DASHBOARD_TEMPLATES.map((template, index) => {
+		const parameterized = template.parameterized === true
+		const selection = selections[index] ?? []
+		const dimension = parameterized ? undefined : template.filter.metadataFlag
+		const query = parameterized
+			? undefined
+			: dimension
+				? dimensions[dimension]
+				: template.type === 'chains'
+					? categories
+					: undefined
+		const needsCatalog = !parameterized && !dimension
+		const queryMissing = query && query.data === undefined
+		const failed =
+			(needsCatalog && protocolCatalog.status === 'error') || (queryMissing && query.isError && !query.isFetching)
+		const loading = !failed && ((needsCatalog && protocolCatalog.status === 'loading') || queryMissing)
+		const empty = !parameterized && !failed && !loading && selection.length === 0
+		return { template, selection, failed: !!failed, loading: !!loading, empty }
+	})
+	const anyFailed = cards.some((card) => card.failed)
+
+	// One failure notice covers every template it blocks; the cards stay listed but cannot start.
+	const retry = () => {
+		if (protocolCatalog.status === 'error') protocolCatalog.retry()
+		for (const query of sourceQueries) {
+			if (query.data === undefined && query.isError) void query.refetch()
+		}
+		// The notice leaves while the data reloads, so focus moves to the templates that replace it.
+		listRef.current?.focus()
+	}
 
 	return (
-		<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-			{DASHBOARD_TEMPLATES.map((template, index) => {
-				const creating = pendingName === template.name
-				const parameterized = template.parameterized === true
-				const selection = selections[index] ?? []
-				const dimension = parameterized ? undefined : template.filter.metadataFlag
-				const query = parameterized
-					? undefined
-					: dimension
-						? dimensions[dimension]
-						: template.type === 'chains'
-							? categories
-							: undefined
-				const needsCatalog = !parameterized && !dimension
-				const queryMissing = query && query.data === undefined
-				const catalogError = needsCatalog && protocolCatalog.status === 'error'
-				const failed = catalogError || (queryMissing && query.isError && !query.isFetching)
-				const loading = !failed && ((needsCatalog && protocolCatalog.status === 'loading') || queryMissing)
-				const empty = !parameterized && !failed && !loading && selection.length === 0
-				const status = creating
-					? 'Creating dashboard…'
-					: failed
-						? 'Could not load template data. Retry'
+		<div className="flex flex-col gap-3">
+			{anyFailed ? (
+				<InlineStatus variant="error">
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<span>Could not load template data.</span>
+						<Button type="button" size="sm" onClick={retry}>
+							Try again
+						</Button>
+					</div>
+				</InlineStatus>
+			) : null}
+			<div
+				ref={listRef}
+				role="group"
+				aria-label="Templates"
+				tabIndex={-1}
+				className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+			>
+				{cards.map(({ template, selection, failed, loading, empty }) => {
+					const creating = pendingName === template.name
+					const unavailable = pendingName !== null || failed || loading || empty
+					const status = creating
+						? 'Creating dashboard…'
 						: loading
 							? 'Loading template data…'
 							: empty
-								? 'No matching data available'
+								? 'No matching data available.'
 								: ''
-				return (
-					<Ariakit.Button
-						key={template.id}
-						type="button"
-						aria-label={failed ? `Retry ${template.name}` : template.name}
-						aria-describedby={`${id}-${template.id}`}
-						aria-busy={creating}
-						disabled={pendingName !== null || loading || empty}
-						accessibleWhenDisabled
-						onClick={() => {
-							if (failed) {
-								if (catalogError) protocolCatalog.retry()
-								if (queryMissing && query.isError) void query.refetch()
-								return
-							}
-							if (pendingName !== null || loading || empty) return
-							const generated = generateTemplateCharts(template, selection)
-							onCreate({
-								dashboardName: template.name,
-								visibility: hasActiveSubscription ? 'private' : 'public',
-								tags: [],
-								description: template.description,
-								items: generated.items,
-								variables: generated.variables
-							})
-						}}
-						className={`rounded-lg border p-3 text-left transition-colors hover:border-pro-accent/40 aria-disabled:cursor-not-allowed ${creating ? 'border-pro-accent/40' : 'border-pro-cards-border aria-disabled:opacity-60'}`}
-					>
-						<span className="flex items-center gap-2 text-sm font-medium text-pro-text-primary">
-							{template.name}
-							{creating || loading ? <LoadingSpinner size={14} /> : null}
-						</span>
-						<span id={`${id}-${template.id}`} className="mt-0.5 block">
-							<ProMeta items={[template.description]} />
-							<span role="status" className={`block text-xs ${failed ? 'text-error' : 'text-pro-text-tertiary'}`}>
-								{status}
+					return (
+						<Ariakit.Button
+							key={template.id}
+							type="button"
+							aria-label={template.name}
+							aria-describedby={`${id}-${template.id}`}
+							aria-busy={creating}
+							disabled={unavailable}
+							accessibleWhenDisabled
+							onClick={() => {
+								if (unavailable) return
+								const generated = generateTemplateCharts(template, selection)
+								onCreate({
+									dashboardName: template.name,
+									visibility: hasActiveSubscription ? 'private' : 'public',
+									tags: [],
+									description: template.description,
+									items: generated.items,
+									variables: generated.variables
+								})
+							}}
+							className={`rounded-lg border p-3 text-left transition-colors hover:border-pro-accent/40 aria-disabled:cursor-not-allowed ${creating ? 'border-pro-accent/40' : 'border-subtle aria-disabled:opacity-60'}`}
+						>
+							<span className="flex items-center gap-2 label-md text-primary">
+								{template.name}
+								{creating || loading ? <LoadingSpinner size={14} /> : null}
 							</span>
-						</span>
-					</Ariakit.Button>
-				)
-			})}
+							<span id={`${id}-${template.id}`} className="mt-0.5 block body-sm text-tertiary">
+								<span className="block">{template.description}</span>
+								<span role="status" className="block">
+									{status}
+								</span>
+							</span>
+						</Ariakit.Button>
+					)
+				})}
+			</div>
 		</div>
 	)
 }
@@ -388,17 +469,13 @@ function CreateDashboardModalContent({
 	const canCreateInTeam = !!team && hasActiveSubscription
 	const [createIn, setCreateIn] = useState<'personal' | 'team'>('personal')
 	const [tags, setTags] = useState<Array<string>>([])
-	const tagInputRef = useRef<HTMLInputElement>(null)
-	const charCountRef = useRef<HTMLSpanElement>(null)
+	const [description, setDescription] = useState('')
 
 	const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const form = e.currentTarget
-		const formData = new FormData(form)
-		const dashboardNameValue = formData.get('dashboardName')
-		const descriptionValue = formData.get('description')
+		const dashboardNameValue = new FormData(form).get('dashboardName')
 		const dashboardName = typeof dashboardNameValue === 'string' ? dashboardNameValue.trim() : ''
-		const description = typeof descriptionValue === 'string' ? descriptionValue.slice(0, 200) : ''
 
 		const nameElement = form.elements.namedItem('dashboardName')
 		const nameInput = nameElement instanceof HTMLInputElement ? nameElement : null
@@ -417,46 +494,24 @@ function CreateDashboardModalContent({
 		})
 	}
 
-	const handleAddTag = () => {
-		const input = tagInputRef.current
-		if (!input) return
-		const trimmedTag = input.value.trim().toLowerCase()
-		if (trimmedTag) {
-			setTags((prev) => (prev.includes(trimmedTag) ? prev : [...prev, trimmedTag]))
-		}
-		input.value = ''
-	}
-
-	const handleRemoveTag = (tag: string) => {
-		setTags((prev) => prev.filter((t) => t !== tag))
-	}
-
-	const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			e.preventDefault()
-			handleAddTag()
-		}
-	}
-
 	return (
 		<form id={formId} onSubmit={handleCreate}>
-			<fieldset disabled={status === 'pending' || status === 'success'} className="space-y-6">
-				<div>
-					<label htmlFor="create-dashboard-name" className="mb-3 block text-sm font-medium text-pro-text-primary">
+			<fieldset disabled={status === 'pending' || status === 'success'} className="flex flex-col gap-4">
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${id}-name`} className={dashboardFieldLabelStyles}>
 						Dashboard Name
 					</label>
 					{/* Ariakit's autoFocus, so the step starts on the name instead of the header controls. */}
 					<Ariakit.Focusable
 						autoFocus
 						render={
-							<input
-								id="create-dashboard-name"
+							<Input
+								id={`${id}-name`}
 								name="dashboardName"
 								type="text"
 								maxLength={DASHBOARD_NAME_MAX_LENGTH}
 								onInput={(e) => e.currentTarget.setCustomValidity('')}
 								placeholder="Enter dashboard name"
-								className={proInputStyles}
 								required
 							/>
 						}
@@ -464,144 +519,57 @@ function CreateDashboardModalContent({
 				</div>
 
 				{team ? (
-					<div>
-						<p id="create-dashboard-owner" className="mb-3 block text-sm font-medium text-pro-text-primary">
+					<div className="flex flex-col gap-1.5">
+						<p id={`${id}-owner`} className={dashboardFieldLabelStyles}>
 							Create in
 						</p>
-						<Ariakit.RadioProvider value={createIn} setValue={(value) => setCreateIn(value as 'personal' | 'team')}>
-							<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="create-dashboard-owner">
-								<label htmlFor={`${id}-personal`} className={visibilityCardStyles(createIn === 'personal')}>
-									<Ariakit.Radio id={`${id}-personal`} value="personal" className="sr-only" />
-									<Icon name="user" height={16} width={16} className="mr-2 inline" />
-									My dashboards
-								</label>
-								<label
-									htmlFor={`${id}-team`}
-									className={`${visibilityCardStyles(createIn === 'team')} ${
-										!canCreateInTeam ? 'cursor-not-allowed opacity-50' : ''
-									}`}
-								>
-									<Ariakit.Radio id={`${id}-team`} value="team" disabled={!canCreateInTeam} className="sr-only" />
-									<Icon name="users" height={16} width={16} className="mr-2 inline" />
-									<span className="truncate">{team.name}</span>
-									{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
-								</label>
-							</Ariakit.RadioGroup>
-						</Ariakit.RadioProvider>
-						<p className="mt-2 text-sm text-pro-text-tertiary">
+						<SegmentedControl
+							aria-labelledby={`${id}-owner`}
+							label="Create in"
+							variant="field"
+							size="md"
+							value={createIn}
+							onValueChange={(value) => setCreateIn(value)}
+							options={[
+								{
+									value: 'personal',
+									label: (
+										<>
+											<Icon name="user" height={14} width={14} />
+											My dashboards
+										</>
+									)
+								},
+								{
+									value: 'team',
+									disabled: !canCreateInTeam,
+									label: (
+										<>
+											<Icon name="users" height={14} width={14} />
+											<span className="truncate">{team.name}</span>
+											{hasActiveSubscription ? null : '(Pro)'}
+										</>
+									)
+								}
+							]}
+						/>
+						<p className={dashboardFieldHintStyles}>
 							{createIn === 'team' && canCreateInTeam
 								? 'Teammates with a seat can edit it. It stays with the team if you leave.'
-								: 'Only you can edit it. You can share it with your team later from Settings.'}
+								: canCreateInTeam
+									? 'Only you can edit it. You can share it with your team later from Settings.'
+									: 'Only you can edit it. Team dashboards need a seat or Pro.'}
 						</p>
 					</div>
 				) : null}
 
-				<div>
-					<p id="create-dashboard-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
-						Visibility
-					</p>
-					<Ariakit.RadioProvider value={visibility} setValue={(value) => setVisibility(value as 'public' | 'private')}>
-						<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="create-dashboard-visibility">
-							<label htmlFor={`${id}-public`} className={visibilityCardStyles(visibility === 'public')}>
-								<Ariakit.Radio id={`${id}-public`} value="public" className="sr-only" />
-								<Icon name="earth" height={16} width={16} className="mr-2 inline" />
-								Public
-							</label>
-							<label
-								htmlFor={`${id}-private`}
-								className={`${visibilityCardStyles(visibility === 'private')} ${
-									!hasActiveSubscription ? 'cursor-not-allowed opacity-50' : ''
-								}`}
-							>
-								<Ariakit.Radio
-									id={`${id}-private`}
-									value="private"
-									disabled={!hasActiveSubscription}
-									className="sr-only"
-								/>
-								<Icon
-									name={hasActiveSubscription ? 'key' : 'file-lock-2'}
-									height={16}
-									width={16}
-									className="mr-2 inline"
-								/>
-								Private
-								{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
-							</label>
-						</Ariakit.RadioGroup>
-					</Ariakit.RadioProvider>
-					<p className="mt-2 text-sm text-pro-text-tertiary">
-						{visibility === 'public'
-							? 'Listed in Discover.'
-							: 'Only you can see it. Publish later from Share or Settings.'}
-					</p>
-					{!hasActiveSubscription ? (
-						<p className="mt-2 text-xs text-pro-text-tertiary">Upgrade to Pro to create private dashboards</p>
-					) : null}
-				</div>
-
-				<div>
-					<label htmlFor="create-dashboard-tag-input" className="mb-3 block text-sm font-medium text-pro-text-primary">
-						Tags
-					</label>
-					<div className="flex gap-2">
-						<input
-							id="create-dashboard-tag-input"
-							ref={tagInputRef}
-							type="text"
-							onKeyDown={handleTagInputKeyDown}
-							placeholder="Enter tag name"
-							className={`${proInputStyles} min-w-0 flex-1`}
-						/>
-						<ProButton type="button" variant="secondary" onClick={handleAddTag}>
-							Add Tag
-						</ProButton>
-					</div>
-					<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
-					{tags.length > 0 ? (
-						<div className="mt-3 flex flex-wrap gap-2">
-							{tags.map((tag) => (
-								<span
-									key={tag}
-									className="flex items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
-								>
-									{tag}
-									<button
-										type="button"
-										onClick={() => handleRemoveTag(tag)}
-										aria-label={`Remove tag ${tag}`}
-										className="text-pro-text-tertiary hover:text-brand"
-									>
-										<Icon name="x" height={12} width={12} />
-									</button>
-								</span>
-							))}
-						</div>
-					) : null}
-				</div>
-
-				<div>
-					<label
-						htmlFor="create-dashboard-description"
-						className="mb-3 block text-sm font-medium text-pro-text-primary"
-					>
-						Description
-					</label>
-					<textarea
-						id="create-dashboard-description"
-						name="description"
-						onInput={(e) => {
-							if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
-						}}
-						placeholder="Describe your dashboard..."
-						maxLength={DASHBOARD_DESCRIPTION_MAX_LENGTH}
-						rows={3}
-						className={`${proInputStyles} resize-none`}
-					/>
-					<p className="mt-1 text-xs text-pro-text-tertiary">
-						<span ref={charCountRef}>0</span>/{DASHBOARD_DESCRIPTION_MAX_LENGTH} characters
-					</p>
-				</div>
+				<VisibilityField
+					value={visibility}
+					onChange={setVisibility}
+					sharedWithTeam={canCreateInTeam && createIn === 'team'}
+				/>
+				<TagsField tags={tags} onChange={setTags} />
+				<DescriptionField value={description} onChange={setDescription} />
 			</fieldset>
 		</form>
 	)

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import HomePage from '~/pages/pro'
 import pb from '~/utils/pocketbase'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 
@@ -229,4 +230,27 @@ test('a team member opens the Team tab on the team scope', async () => {
 	])
 	expect(panel(team).hidden).toBe(false)
 	await waitForUi(() => expect(listRequests()).toContain('1/20/team'))
+})
+
+test('a failed My Dashboards load shows an error with a retry instead of an empty list', async () => {
+	// The dashboards context also reads this endpoint and logs its own failure.
+	const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+	onTestFinished(() => log.mockRestore())
+	session.serve({ [`${FEATURES_SERVER}/dashboards`]: fixtureStatus(500, { message: 'Unavailable' }) })
+	router.query = { tab: 'my-dashboards' }
+	await render()
+	const alert = await waitForUi(() => {
+		const node = container.querySelector('[role="alert"]')
+		expect(node?.textContent).toContain("Couldn't load your dashboards")
+		return node!
+	})
+	expect(container.textContent).not.toContain('Showing 0 of 0 dashboards')
+
+	session.serve({ [`${FEATURES_SERVER}/dashboards`]: emptyPage })
+	await act(async () =>
+		[...alert.querySelectorAll('button')].find((button) => button.textContent === 'Try again')!.click()
+	)
+	await waitForUi(() => expect(container.textContent).toContain('Showing 0 of 0 dashboards'))
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect(listRequests()).toEqual(['1/20', '1/20'])
 })

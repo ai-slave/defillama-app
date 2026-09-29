@@ -72,9 +72,9 @@ function FailedDashboardDraft({ request, userId }: { request: DashboardUpdate; u
 					Unsaved changes to {request.data.dashboardName}. Open the editor to retry, or discard this draft.
 				</p>
 				<div className="mt-2 flex flex-wrap gap-2">
-					<Link href={`/pro/${encodeURIComponent(request.id)}/edit`} className="self-center text-link underline">
+					<Button as={Link} href={`/pro/${encodeURIComponent(request.id)}/edit`} variant="primary" size="md">
 						Open editor
-					</Link>
+					</Button>
 					<Ariakit.DialogDisclosure render={<Button size="md" />}>Discard draft…</Ariakit.DialogDisclosure>
 				</div>
 			</section>

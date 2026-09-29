@@ -105,17 +105,28 @@ test.each(['success', 'failure'] as const)(
 		expect(close).not.toHaveBeenCalled()
 		expect(mocks.push).not.toHaveBeenCalled()
 		expect(document.querySelector('[role="alert"]')).toBeNull()
-		expect(vi.mocked(toast.error).mock.calls).toEqual(outcome === 'failure' ? [['Earlier generation failed']] : [])
+		expect(vi.mocked(toast.error).mock.calls).toEqual(outcome === 'failure' ? [['Earlier generation failed.']] : [])
 	}
 )
-test('a stream error is shown inline without attempting to save', async () => {
-	mocks.creator.mockResolvedValueOnce(new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'))
+test.each([
+	[
+		'a stream error',
+		() => new Response('data: {"type":"error","message":"Generation unavailable"}\n\n'),
+		'Generation unavailable.'
+	],
+	[
+		'a network failure',
+		() => Promise.reject(new TypeError('Failed to fetch')),
+		'Could not reach LlamaAI. Check your connection.'
+	],
+	['a stream without a dashboard', () => new Response(''), 'LlamaAI sent an unexpected response.']
+])('%s is explained inline in plain sentences without attempting to save', async (_case, answer, message) => {
+	mocks.creator.mockImplementationOnce(answer)
 	await render()
 	draft()
 	await submit()
-	await waitForUi(() =>
-		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Generation unavailable')
-	)
+	await waitForUi(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
+	expect(document.querySelector('[role="alert"]')!.textContent).toBe(`${message}Your draft is still here. Try again.`)
 	expect(save).not.toHaveBeenCalled()
 	expect(close).not.toHaveBeenCalled()
 	expect(toast.error).not.toHaveBeenCalled()

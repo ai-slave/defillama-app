@@ -510,14 +510,14 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			<div className="flex flex-col gap-1 px-3 pb-1">
 				{effectiveShowColors && hasRenderableData ? (
 					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
-						<span className="shrink-0 text-xs font-medium text-pro-text-label">Series Colors</span>
+						<span className="shrink-0 label-sm text-pro-text-label">Series Colors</span>
 						{displayedSeries.map((series: ChartSeries) => {
 							const colorValue = seriesColors[series.name] || series.color || DEFAULT_SERIES_COLOR
 							const hasOverride = Boolean(seriesColors[series.name])
 							return (
 								<div
 									key={series.name}
-									className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs"
+									className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 body-sm"
 								>
 									<span className="max-w-[140px] truncate" title={series.name}>
 										{series.name}

@@ -61,6 +61,7 @@ type ChainRecord = {
 type AppMetadataContextType = {
 	loading: boolean
 	error: string | undefined
+	retry: () => void
 	protocolsBySlug: Map<string, ProtocolRecord>
 	hasProtocolBuilderMetric: (slug: string, metric: BuilderMetric) => boolean
 	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => Array<ProtocolChartType>
@@ -152,7 +153,8 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 	const {
 		data: rawData,
 		isLoading: loading,
-		error: queryError
+		error: queryError,
+		refetch
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'app-metadata'],
 		queryFn: async () => {
@@ -279,7 +281,8 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 			availableProtocolChartTypes,
 			chainsByName,
 			availableChainChartTypes,
-			requestMetadata
+			requestMetadata,
+			retry: () => void refetch()
 		}),
 		[
 			metadataRequested,
@@ -292,7 +295,8 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 			availableProtocolChartTypes,
 			availableChainChartTypes,
 			hasProtocolBuilderMetric,
-			requestMetadata
+			requestMetadata,
+			refetch
 		]
 	)
 

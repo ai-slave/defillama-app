@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { MenuItem, MenuSurface } from '~/ui/MenuSurface'
 import type { Dashboard, DashboardTeam } from '../dashboardTypes'
+import { useProDashboardDashboard } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { ProButton } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
@@ -36,6 +37,7 @@ export function DashboardOverflowMenu({
 	moveTeam
 }: DashboardOverflowMenuProps) {
 	const router = useRouter()
+	const { dashboardName } = useProDashboardDashboard()
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 	const move = useMutation({
 		mutationFn: (teamId: string | null) => moveTeam!.onMove(teamId),
@@ -126,9 +128,9 @@ export function DashboardOverflowMenu({
 					) : null}
 					{onDelete ? (
 						<>
-							<Ariakit.MenuSeparator className="my-1 border-pro-cards-border" />
+							<Ariakit.MenuSeparator className="my-1 border-subtle" />
 							<MenuItem
-								className="text-error"
+								className="text-data-down"
 								data-umami-event="dashboard-delete"
 								onClick={() => {
 									deletion.reset()
@@ -151,9 +153,9 @@ export function DashboardOverflowMenu({
 				closeOnConfirm={false}
 				pending={deletion.isPending}
 				pendingText="Deleting…"
-				error={deletion.isError ? 'Could not delete the dashboard. Please try again.' : null}
+				error={deletion.isError ? 'Could not delete the dashboard. Try again.' : null}
 				title="Delete Dashboard"
-				message="Are you sure you want to delete this dashboard? This action cannot be undone."
+				message={`Deleting “${dashboardName}” cannot be undone.`}
 				confirmText="Delete"
 			/>
 		</>

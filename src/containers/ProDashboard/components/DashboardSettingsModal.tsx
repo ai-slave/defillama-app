@@ -1,15 +1,15 @@
-import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Button } from '~/ui/Button'
+import { Checkbox } from '~/ui/Checkbox'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
 import type { DashboardTeam } from '../dashboardTypes'
-import { ProButton, proInputStyles } from '../ui'
 import { ConfirmationModal } from './ConfirmationModal'
+import { dashboardFieldHintStyles, TagsField, VisibilityField } from './DashboardFormFields'
 import { statusToastOptions, TOAST_DURATION_SHORT } from './dashboardToasts'
 
 interface DashboardSettingsModalProps {
@@ -28,14 +28,6 @@ interface DashboardSettingsModalProps {
 	/** Creator or team admin. Others see the current state without a switch. */
 	canMove?: boolean
 	onMoveTeam?: (teamId: string | null) => Promise<void>
-}
-
-function visibilityCardStyles(selected: boolean) {
-	return `relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center text-sm transition-colors has-focus-visible:focus-ring ${
-		selected
-			? 'border-brand bg-pro-info-100/60 text-pro-text-primary'
-			: 'border-pro-cards-border text-pro-text-secondary hover:text-pro-text-primary'
-	}`
 }
 
 function DashboardSettingsModalInner({
@@ -80,11 +72,11 @@ function DashboardSettingsModalInner({
 		}
 	})
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-	const tagInputRef = useRef<HTMLInputElement>(null)
+	const busy = save.isPending || deletion.isPending
 
 	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (save.isPending || deletion.isPending) return
+		if (busy) return
 		save.mutate(
 			{ visibility: localVisibility, tags: localTags },
 			{
@@ -95,28 +87,6 @@ function DashboardSettingsModalInner({
 				}
 			}
 		)
-	}
-
-	const handleAddTag = () => {
-		const input = tagInputRef.current
-		if (!input) return
-		const trimmedTag = input.value.trim().toLowerCase()
-		if (trimmedTag) {
-			setLocalTags((prev) => (prev.includes(trimmedTag) ? prev : [...prev, trimmedTag]))
-		}
-		input.value = ''
-	}
-
-	const handleRemoveTag = (tag: string) => {
-		setLocalTags((prev) => prev.filter((t) => t !== tag))
-	}
-
-	const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
-		if (e.key === 'Enter') {
-			if (save.isPending || deletion.isPending) return
-			e.preventDefault()
-			handleAddTag()
-		}
 	}
 
 	const handleDeleteClick = () => {
@@ -133,184 +103,72 @@ function DashboardSettingsModalInner({
 	// must not describe a delete that just failed.
 	const failureMessage =
 		deletion.isError && (!save.isError || deletion.submittedAt > save.submittedAt)
-			? 'Could not delete the dashboard. Please try again.'
+			? 'Could not delete the dashboard. Try again.'
 			: save.isError
-				? 'Could not save changes. Your draft is still here; please try again.'
+				? 'Could not save changes. Your draft is still here. Try again.'
 				: null
 
 	return (
 		<>
-			<Dialog
-				size="sm"
-				scope="pro"
-				open={isOpen}
-				onClose={onClose}
-				pending={save.isPending || deletion.isPending}
-				portal
-				unmountOnHide
-			>
+			<Dialog size="sm" scope="pro" open={isOpen} onClose={onClose} pending={busy} portal unmountOnHide>
 				<form ref={formRef} onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col">
 					<DialogHeader title="Dashboard Settings" />
 					<DialogBody>
-						<fieldset className="min-w-0 space-y-6">
-							<div>
-								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
-									Visibility
-								</p>
-								<Ariakit.RadioProvider
-									value={localVisibility}
-									setValue={(value) => setLocalVisibility(value as 'public' | 'private')}
-								>
-									<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="dashboard-settings-visibility">
-										<label htmlFor={`${id}-public`} className={visibilityCardStyles(localVisibility === 'public')}>
-											<Ariakit.Radio
-												id={`${id}-public`}
-												value="public"
-												accessibleWhenDisabled
-												disabled={save.isPending || deletion.isPending}
-												className="sr-only"
-												tabIndex={!hasActiveSubscription && localVisibility === 'private' ? 0 : undefined}
-											/>
-											<Icon name="earth" height={16} width={16} className="mr-2 inline" />
-											Public
-										</label>
-										<label
-											htmlFor={`${id}-private`}
-											className={`${visibilityCardStyles(localVisibility === 'private')} ${
-												!hasActiveSubscription && localVisibility !== 'private' ? 'cursor-not-allowed opacity-50' : ''
-											}`}
-										>
-											<Ariakit.Radio
-												id={`${id}-private`}
-												value="private"
-												className="sr-only"
-												accessibleWhenDisabled={hasActiveSubscription}
-												disabled={!hasActiveSubscription || save.isPending || deletion.isPending}
-											/>
-											<Icon
-												name={hasActiveSubscription ? 'key' : 'file-lock-2'}
-												height={16}
-												width={16}
-												className="mr-2 inline"
-											/>
-											Private
-											{!hasActiveSubscription ? <span className="ml-1 text-xs opacity-70">(Pro)</span> : null}
-										</label>
-									</Ariakit.RadioGroup>
-								</Ariakit.RadioProvider>
-								{localVisibility === 'public' ? (
-									<p className="mt-2 text-sm text-pro-text-tertiary">
-										Public dashboards are visible in the Discover tab
-									</p>
-								) : null}
-								{!hasActiveSubscription ? (
-									<p className="mt-2 text-xs text-pro-text-tertiary">Upgrade to Pro to make dashboards private</p>
-								) : null}
-							</div>
+						<fieldset className="flex min-w-0 flex-col gap-4">
+							<VisibilityField
+								value={localVisibility}
+								onChange={setLocalVisibility}
+								sharedWithTeam={localSharedWithTeam}
+								disabled={busy}
+							/>
 
 							{showTeamSwitch && myTeam ? (
-								<div>
-									<label
-										htmlFor={`${id}-share-team`}
-										className={`flex items-start gap-3 rounded-md border px-4 py-3 text-sm transition-colors has-focus-visible:focus-ring ${
-											localSharedWithTeam ? 'border-brand bg-pro-info-100/60' : 'border-pro-cards-border'
-										} ${canMove && hasActiveSubscription ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+								<div className="flex flex-col gap-1.5">
+									{/* A locked choice keeps full contrast; the line below says why it is locked. */}
+									<Checkbox
+										variant="consent"
+										id={`${id}-share-team`}
+										checked={localSharedWithTeam}
+										disabled={!canMove || !hasActiveSubscription || busy}
+										onChange={(event) => setLocalSharedWithTeam(event.target.checked)}
 									>
-										<input
-											id={`${id}-share-team`}
-											type="checkbox"
-											className="mt-0.5 size-4 accent-brand"
-											checked={localSharedWithTeam}
-											disabled={!canMove || !hasActiveSubscription || save.isPending || deletion.isPending}
-											onChange={(event) => setLocalSharedWithTeam(event.target.checked)}
-										/>
 										<span className="flex min-w-0 flex-col gap-0.5">
-											<span className="font-medium text-pro-text-primary">
-												<Icon name="users" height={14} width={14} className="mr-1.5 inline" />
+											<span className="flex items-center gap-1.5 label-sm text-primary">
+												<Icon name="users" height={14} width={14} />
 												Share with {myTeam.name}
 											</span>
-											<span className="text-xs text-pro-text-tertiary">
+											<span className="body-sm text-secondary">
 												{localSharedWithTeam
 													? 'Teammates with a seat can edit it. It stays with the team if you leave.'
-													: 'Only you can open it unless it is public.'}
+													: 'Only you can edit it.'}
 											</span>
 										</span>
-									</label>
+									</Checkbox>
 									{!hasActiveSubscription ? (
-										<p className="mt-2 text-xs text-pro-text-tertiary">A seat or Pro is required to share dashboards</p>
+										<p className={dashboardFieldHintStyles}>Team dashboards need a seat or Pro.</p>
+									) : !canMove ? (
+										<p className={dashboardFieldHintStyles}>Only the creator or a team admin can change this.</p>
 									) : null}
 								</div>
 							) : null}
 
-							<div>
-								<label
-									htmlFor="dashboard-settings-tag-input"
-									className="mb-3 block text-sm font-medium text-pro-text-primary"
-								>
-									Tags
-								</label>
-								<div className="flex gap-2">
-									<input
-										id="dashboard-settings-tag-input"
-										ref={tagInputRef}
-										readOnly={save.isPending || deletion.isPending}
-										type="text"
-										onKeyDown={handleTagInputKeyDown}
-										placeholder="Enter tag name"
-										className={`${proInputStyles} min-w-0 flex-1`}
-									/>
-									<ProButton
-										type="button"
-										variant="secondary"
-										onClick={handleAddTag}
-										disabled={save.isPending || deletion.isPending}
-									>
-										Add Tag
-									</ProButton>
-								</div>
-
-								<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
-
-								{localTags.length > 0 ? (
-									<div className="mt-3 flex flex-wrap gap-2">
-										{localTags.map((tag) => (
-											<span
-												key={tag}
-												className="flex max-w-full items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
-											>
-												<span className="min-w-0 wrap-anywhere">{tag}</span>
-												<button
-													type="button"
-													onClick={() => handleRemoveTag(tag)}
-													disabled={save.isPending || deletion.isPending}
-													aria-label={`Remove tag ${tag}`}
-													title={`Remove tag ${tag}`}
-													className="hover:text-pro-info-400"
-												>
-													<Icon name="x" height={12} width={12} />
-												</button>
-											</span>
-										))}
-									</div>
-								) : null}
-							</div>
+							<TagsField tags={localTags} onChange={setLocalTags} disabled={busy} />
 
 							{onDelete && dashboardId ? (
-								<div className="border-t border-pro-cards-border pt-6">
-									<p className="mb-3 block text-sm font-medium text-error">Danger Zone</p>
-									<p className="mb-4 text-sm text-pro-text-tertiary">
-										Once you delete a dashboard, there is no going back.
-									</p>
-									<ProButton
+								<div className="border-t border-subtle pt-4">
+									<p className="mb-1.5 block label-sm text-data-down">Danger Zone</p>
+									<p className="mb-3 body-sm text-tertiary">Once you delete a dashboard, there is no going back.</p>
+									<Button
 										type="button"
-										variant="danger"
+										variant="destructive"
+										size="md"
 										onClick={handleDeleteClick}
 										disabled={save.isPending}
-										icon={<Icon name="trash-2" height={16} width={16} />}
-										{...(deletion.isPending ? { loading: true } : {})}
+										pendingLabel={deletion.isPending ? 'Deleting…' : null}
 									>
-										<span>Delete Dashboard</span>
-									</ProButton>
+										<Icon name="trash-2" height={16} width={16} />
+										Delete Dashboard
+									</Button>
 								</div>
 							) : null}
 						</fieldset>
@@ -320,7 +178,7 @@ function DashboardSettingsModalInner({
 					</DialogBody>
 					<DialogFooter
 						dismiss={
-							<Button type="button" size="md" onClick={onClose} disabled={save.isPending || deletion.isPending}>
+							<Button type="button" size="md" onClick={onClose} disabled={busy}>
 								Cancel
 							</Button>
 						}
@@ -348,9 +206,9 @@ function DashboardSettingsModalInner({
 				closeOnConfirm={false}
 				pending={deletion.isPending}
 				pendingText="Deleting…"
-				error={deletion.isError ? 'Could not delete the dashboard. Please try again.' : null}
+				error={deletion.isError ? 'Could not delete the dashboard. Try again.' : null}
 				title="Delete Dashboard"
-				message={`Are you sure you want to delete “${dashboardName}”? This action cannot be undone.`}
+				message={`Deleting “${dashboardName}” cannot be undone.`}
 				confirmText="Delete"
 			/>
 		</>

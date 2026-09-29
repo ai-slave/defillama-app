@@ -156,7 +156,7 @@ export function useUnifiedTable({
 	return {
 		table,
 		isLoading: readModel.isLoading,
-		hasInitialError: readModel.hasInitialError,
+		loadError: readModel.loadError,
 		refetch: readModel.refetch,
 		leafRows: readModel.leaves,
 		rows,

@@ -21,6 +21,12 @@ export const TAG_GROUP_VARIANTS = {
 		button:
 			'hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
+	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
+	field: {
+		container: 'body-sm flex w-full flex-nowrap items-center gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
+		button:
+			'hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+	},
 	responsive: {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full',
@@ -116,7 +122,7 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
 					className={clsx(
 						button,
 						buttonClassName,
-						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed',
+						'relative cursor-pointer has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-60',
 						variant === 'solid' && 'inline-flex items-center justify-center',
 						(variant === 'solid' || variant === 'solid-responsive') &&
 							'data-[active=true]:has-focus-visible:focus-ring-on-brand'

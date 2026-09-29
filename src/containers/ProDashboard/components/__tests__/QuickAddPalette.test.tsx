@@ -188,16 +188,14 @@ test('closing after an add reveals the last added card once', async () => {
 	expect(onClose).toHaveBeenCalledOnce()
 })
 
-test('a dashboard that cannot take items yet says so inside the palette and adds nothing', async () => {
+test('a dashboard that cannot take items yet asks to wait inside the palette, not as an error, and adds nothing', async () => {
 	mocks.appendItems.mockImplementation(() => false)
 	await renderPalette()
 	await type('uniswap fees')
 	await pressKey('Enter')
 
-	expect(document.querySelector('[role="dialog"] [role="alert"]')?.textContent).toBe(
-		'The dashboard is still loading. Try again in a moment.'
-	)
-	expect(statusText()).not.toContain('Added')
+	expect(statusText()).toBe('The dashboard is still loading. Try again in a moment.')
+	expect(document.querySelector('[role="dialog"] [role="alert"]')).toBeNull()
 	expect(input().value).toBe('uniswap fees')
 })
 
@@ -234,7 +232,7 @@ test('a loading catalog still offers the commands beside a loading status', asyn
 	mocks.protocolsLoading = true
 	await renderPalette()
 
-	expect(statusText()).toContain('Loading protocols…')
+	expect(statusText()).toContain('Loading protocols')
 	const titles = rows().map((row) => row.textContent ?? '')
 	expect(titles.some((title) => title.includes('Text block'))).toBe(true)
 	expect(titles.at(-1)).toContain('All card types…')

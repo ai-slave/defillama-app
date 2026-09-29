@@ -241,7 +241,7 @@ async function submitAddToDashboard({
 
 	const selectedDashboardId = variables.selectedDashboardId
 	if (!selectedDashboardId) {
-		throw new Error('Please select a dashboard')
+		throw new Error('Select a dashboard')
 	}
 
 	const isRepair = repairTarget?.dashboardId === selectedDashboardId
@@ -413,7 +413,7 @@ export function AddToDashboardModal({
 								type="text"
 								onInput={(e) => setSearch(e.currentTarget.value)}
 								onKeyDown={handleSearchKeyDown}
-								placeholder="Search dashboards..."
+								placeholder="Search dashboards…"
 								className="w-full pl-8"
 							/>
 						</label>
@@ -468,7 +468,7 @@ export function AddToDashboardModal({
 									name="newDashboardName"
 									required={isCreatingNew}
 									onChange={(e) => setNewDashboardNameInput(e.target.value)}
-									placeholder="New dashboard name..."
+									placeholder="New dashboard name…"
 									className="w-full"
 								/>
 							) : (
@@ -490,19 +490,17 @@ export function AddToDashboardModal({
 								type="text"
 								name="chartName"
 								defaultValue={configName}
-								placeholder={configName || 'Enter chart name...'}
+								placeholder={configName || 'Enter chart name…'}
 								className="w-full"
 							/>
 						</div>
 					) : null}
 
 					{unsupportedMetrics.length > 0 ? (
-						<div className="rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2">
-							<p className="body-sm text-warning">
-								{unsupportedMetrics.length} metric{unsupportedMetrics.length > 1 ? 's' : ''} not supported:{' '}
-								{unsupportedMetrics.join(', ')}
-							</p>
-						</div>
+						<InlineStatus variant="warning">
+							{unsupportedMetrics.length} metric{unsupportedMetrics.length > 1 ? 's' : ''} not supported:{' '}
+							{unsupportedMetrics.join(', ')}
+						</InlineStatus>
 					) : null}
 
 					{submitError ? (

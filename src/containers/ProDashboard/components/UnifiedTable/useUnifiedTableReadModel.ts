@@ -116,7 +116,8 @@ export function useUnifiedTableReadModel({
 		rows: readModel.rows,
 		leaves: readModel.leaves,
 		isLoading: isLoading || (!streamDone && data === undefined),
-		hasInitialError: isError && data === undefined,
+		// A failed refetch keeps the cached rows, so it is a refresh failure, not an empty table.
+		loadError: !isError ? null : data === undefined ? ('initial' as const) : ('refresh' as const),
 		refetch
 	}
 }

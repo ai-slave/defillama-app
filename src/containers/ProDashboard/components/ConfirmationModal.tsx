@@ -11,8 +11,8 @@ interface ConfirmationModalProps {
 	isOpen: boolean
 	onClose: () => void
 	onConfirm: () => void
-	title?: string
-	message?: string
+	title: string
+	message: string
 	confirmText?: string
 	tone?: 'danger' | 'primary'
 }
@@ -27,8 +27,8 @@ export function ConfirmationModal({
 	isOpen,
 	onClose,
 	onConfirm,
-	title = 'Confirm Action',
-	message = 'Are you sure you want to proceed with this action?',
+	title,
+	message,
 	confirmText = 'Confirm',
 	tone = 'danger'
 }: ConfirmationModalProps) {

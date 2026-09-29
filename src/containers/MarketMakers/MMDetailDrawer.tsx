@@ -5,10 +5,11 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { formatUsd, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
 import type { BreakdownSections } from './breakdown'
-import { BreakdownTables, BreakdownTablesSkeleton } from './BreakdownTable'
+import { BreakdownTables } from './BreakdownTable'
 import { ClaimDialog } from './ClaimDialog'
 import {
 	type LeaderboardRange,
@@ -259,8 +260,8 @@ function ClaimBanner({ onClaim }: { onClaim: () => void }) {
 		<section className="flex gap-3 rounded-lg bg-brand p-4">
 			<Icon name="shield-check" height={24} width={24} className="mt-0.5 shrink-0 text-on-brand" />
 			<div className="flex flex-col gap-2">
-				<h3 className="text-base font-semibold text-on-brand">Claim this organization</h3>
-				<p className="text-sm leading-relaxed text-on-brand/70">
+				<h3 className="label-lg text-on-brand">Claim this organization</h3>
+				<p className="body-md text-on-brand/70">
 					Claimed organizations have a better chance to improve the leaderboard score. Join Forgd today, complete your
 					profile details, and start tracking your activity.
 				</p>
@@ -294,7 +295,17 @@ function DrawerBody({
 	const performance = useMarketMakerPerformance(marketMakerId, range, open)
 
 	const isPending = detail.isPending || breakdown.isPending || performance.isPending
+	// Any one of the three missing would show fallbacks and 0.00 scores as if they were this market maker's data.
+	const isError = detail.isError || breakdown.isError || performance.isError
 	const bodyRef = useRef<HTMLDivElement | null>(null)
+	// Try again gives way to the loading screen, then the content; the content takes focus as it mounts.
+	const focusAfterRetryRef = useRef(false)
+	const setBody = (node: HTMLDivElement | null) => {
+		bodyRef.current = node
+		if (!node || !focusAfterRetryRef.current) return
+		focusAfterRetryRef.current = false
+		node.focus()
+	}
 	useEffect(() => {
 		if (!open || isPending || !focusSection) return
 		let cancelScroll = () => {}
@@ -309,15 +320,25 @@ function DrawerBody({
 		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- marketMakerId is the trigger: a different market maker re-runs the scroll for the same focused section.
 	}, [open, isPending, focusSection, marketMakerId])
 
-	if (isPending) {
+	if (isPending) return <SurfaceBodyLoadingStatus />
+	if (isError) {
+		const queries = [detail, breakdown, performance]
+		const retry = () => {
+			focusAfterRetryRef.current = true
+			for (const query of queries) if (query.isError) void query.refetch()
+		}
 		return (
-			<div className="flex flex-col gap-6 p-4">
-				<div className="h-6 w-2/3 animate-pulse rounded-sm bg-surface-elevated-2" />
-				<div className="h-24 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
-				<BreakdownTablesSkeleton />
-				<div className="h-64 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
-				<div className="h-40 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
-			</div>
+			<SurfaceBodyStatus variant="error" contentClassName="flex flex-col items-center gap-3">
+				<p>Could not load this market maker.</p>
+				<Button
+					type="button"
+					size="sm"
+					onClick={retry}
+					pendingLabel={queries.some((query) => query.isFetching) ? 'Retrying…' : null}
+				>
+					Try again
+				</Button>
+			</SurfaceBodyStatus>
 		)
 	}
 
@@ -336,7 +357,7 @@ function DrawerBody({
 	const b = asDict(breakdown.data)
 
 	return (
-		<div ref={bodyRef} className="flex flex-col gap-6 p-4">
+		<div ref={setBody} tabIndex={-1} className="flex flex-col gap-6 p-4">
 			<section className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					{logo ? <TokenLogo src={logo} size={28} alt={name} /> : null}
@@ -363,9 +384,9 @@ function DrawerBody({
 				<RadarChart scores={scores} />
 				<div className={`flex flex-col p-3 ${CARD_BORDER}`}>
 					{SCORE_ROWS.map((row) => (
-						<div key={row.key} className="flex h-8 items-center justify-between text-sm">
-							<span className="text-secondary">{row.label}</span>
-							<span className="font-medium">
+						<div key={row.key} className="flex h-8 items-center justify-between">
+							<span className="body-md text-secondary">{row.label}</span>
+							<span className="label-md">
 								{formatNumber(scores[row.key] ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/10.00
 							</span>
 						</div>
@@ -386,7 +407,7 @@ function DrawerBody({
 							className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3 ${CARD_BORDER}`}
 						>
 							<div className="flex flex-col gap-1">
-								<h4 className="flex items-center gap-2 text-sm font-semibold">
+								<h4 className="flex items-center gap-2 label-md">
 									<Icon name={card.icon} height={16} width={16} className="shrink-0 text-secondary" />
 									{card.label}
 								</h4>
@@ -406,11 +427,11 @@ function DrawerBody({
 			<section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
 					<span className="body-sm text-secondary">Active Engagements in Forgd</span>
-					<span className="text-xl font-bold">{activeEngagements == null ? FALLBACK : activeEngagements}</span>
+					<span className="heading-sm">{activeEngagements == null ? FALLBACK : activeEngagements}</span>
 				</div>
 				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
 					<span className="body-sm text-secondary">Avg. FDV of Projects in Forgd</span>
-					<span className="text-xl font-bold">{avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}</span>
+					<span className="heading-sm">{avgFdv == null ? FALLBACK : formatUsd(Math.round(avgFdv))}</span>
 				</div>
 			</section>
 

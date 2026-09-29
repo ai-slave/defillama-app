@@ -10,7 +10,7 @@ async function responseError(response: Response, fallback: string): Promise<Erro
 					? body.message
 					: null
 			: null
-	if (response.status === 429) return new Error('Too many requests — please try again later')
+	if (response.status === 429) return new Error('Too many requests. Try again in a few minutes.')
 	return new Error(message ?? fallback)
 }
 

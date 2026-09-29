@@ -48,7 +48,11 @@ export function DashboardActionsSheet({ actions }: { actions: Array<DashboardShe
 							// The sheet is phone-only, where a title tooltip never shows: a disabled action states why in text.
 							const reasonId = action.disabled && action.title ? `${id}-${index}-reason` : undefined
 							return (
-								<div key={action.label} className="flex flex-col gap-1">
+								// A reason hugs its own action (4px) and leaves 12px before the next, so it reads as that action's.
+								<div
+									key={action.label}
+									className={`flex flex-col gap-1 ${reasonId && index < actions.length - 1 ? 'pb-1' : ''}`}
+								>
 									<ProButton
 										type="button"
 										variant={action.variant ?? 'secondary'}

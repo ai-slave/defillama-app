@@ -32,10 +32,11 @@ export function DeleteSessionDialog({
 				return false
 			}}
 			title={title}
-			description="This permanently deletes the selected chat history. This cannot be undone."
+			description="This permanently deletes the selected chat history."
 			confirmLabel={error ? 'Retry deletion' : 'Delete'}
 			pendingLabel={pending ? 'Deleting…' : null}
-			error={error ? `${error.message} Try again.` : null}
+			// The confirm button already offers the retry, so the message is the error alone.
+			error={error?.message}
 			onConfirm={onConfirm}
 		/>
 	)

@@ -5,52 +5,64 @@ import { act, type ReactElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { installFixtureFetch } from '~/utils/testing/fixtureFetch'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { ClaimDialog } from '../ClaimDialog'
 import { ConnectDialog } from '../ConnectDialog'
 
+// The Cloudflare widget cannot run in Node; the form only needs it mounted, never verified.
+vi.mock('@marsidev/react-turnstile', () => ({ Turnstile: () => null }))
+
 const http = installFixtureFetch()
 
+let container: HTMLDivElement
+let root: Root
+let client: QueryClient
+
+function render(element: ReactElement) {
+	return act(async () => {
+		root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
+	})
+}
+
+function inputByLabel(label: string) {
+	const field = Array.from(document.querySelectorAll('label')).find((el) => el.textContent?.includes(label))
+	return field?.querySelector('input') ?? null
+}
+
+function buttonByText(text: string) {
+	return Array.from(document.querySelectorAll('button')).find((el) => el.textContent === text) ?? null
+}
+
+function type(el: HTMLInputElement, value: string) {
+	const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+	return act(async () => {
+		setValue.call(el, value)
+		el.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+}
+
+function click(el: HTMLElement) {
+	return act(async () => el.click())
+}
+
+beforeEach(() => {
+	client = new QueryClient()
+	vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
+	http.serve({ '/api/public/market-makers/cta': { clickId: 'click-1' } })
+	globalThis.IS_REACT_ACT_ENVIRONMENT = true
+	container = document.createElement('div')
+	document.body.appendChild(container)
+	root = createRoot(container)
+})
+
+afterEach(async () => {
+	await act(async () => root.unmount())
+	container.remove()
+	client.clear()
+	vi.unstubAllEnvs()
+})
+
 describe('lead dialogs start from a fresh form on each open', () => {
-	let container: HTMLDivElement
-	let root: Root
-	let client: QueryClient
-
-	function render(element: ReactElement) {
-		return act(async () => {
-			root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>)
-		})
-	}
-
-	function inputByLabel(label: string) {
-		const field = Array.from(document.querySelectorAll('label')).find((el) => el.textContent?.includes(label))
-		return field?.querySelector('input') ?? null
-	}
-
-	function type(el: HTMLInputElement, value: string) {
-		const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
-		return act(async () => {
-			setValue.call(el, value)
-			el.dispatchEvent(new Event('input', { bubbles: true }))
-		})
-	}
-
-	beforeEach(() => {
-		client = new QueryClient()
-		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
-		http.serve({ '/api/public/market-makers/cta': { clickId: 'click-1' } })
-		globalThis.IS_REACT_ACT_ENVIRONMENT = true
-		container = document.createElement('div')
-		document.body.appendChild(container)
-		root = createRoot(container)
-	})
-
-	afterEach(async () => {
-		await act(async () => root.unmount())
-		container.remove()
-		client.clear()
-		vi.unstubAllEnvs()
-	})
-
 	test('the claim form does not keep what was typed before it was closed', async () => {
 		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		const fullName = inputByLabel('Your Full Name')!
@@ -72,5 +84,40 @@ describe('lead dialogs start from a fresh form on each open', () => {
 		await render(<ConnectDialog open={false} onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		await render(<ConnectDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
 		expect(inputByLabel('Full Name')!.value).toBe('')
+	})
+})
+
+describe('claim form submission', () => {
+	test('asks for the verification check when Submit is pressed before it passes', async () => {
+		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')
+		await render(<ClaimDialog open onClose={vi.fn()} marketMakerId="mm-1" marketMakerName="Acme" />)
+
+		await click(buttonByText('Submit Claim Request')!)
+
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain(
+			'Complete the verification check to submit'
+		)
+		expect(http.urls().some((url) => url.includes('/lead/claim'))).toBe(false)
+	})
+
+	test('names the outcome in the header after a claim is sent, and Done closes the dialog', async () => {
+		http.serve({ '/api/public/market-makers/lead/claim': { status: 'ok', request_id: 'req-1' } })
+		const onClose = vi.fn()
+		await render(<ClaimDialog open onClose={onClose} marketMakerId="mm-1" marketMakerName="Acme" />)
+		await type(inputByLabel('Position at Organization')!, 'CEO')
+		await type(inputByLabel('Your Full Name')!, 'Ada Lovelace')
+		await type(inputByLabel('Your LinkedIn or X profile')!, 'linkedin.com/in/ada')
+		await type(inputByLabel('Your organization email address')!, 'ada@acme.com')
+		for (const checkbox of document.querySelectorAll<HTMLInputElement>('[role="dialog"] input[type="checkbox"]')) {
+			await click(checkbox)
+		}
+
+		await click(buttonByText('Submit Claim Request')!)
+
+		await waitForUi(() =>
+			expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Claim request received')
+		)
+		await click(buttonByText('Done')!)
+		expect(onClose).toHaveBeenCalledOnce()
 	})
 })

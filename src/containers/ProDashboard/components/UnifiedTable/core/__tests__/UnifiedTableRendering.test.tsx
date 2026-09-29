@@ -507,6 +507,7 @@ describe('UnifiedTable rendering', () => {
 		)
 		await waitForContent(container, "Couldn't load this table")
 		expect(container.textContent).not.toContain('No rows match your scope or filters.')
+		expect(container.textContent).not.toContain("Couldn't refresh this card")
 
 		const attemptsBeforeRetry = fetchMock.mock.calls.length
 		await act(async () => button('Try again').click())
@@ -514,19 +515,17 @@ describe('UnifiedTable rendering', () => {
 		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
 	})
 
-	test('keeps stale table rows visible when a background refresh fails', async () => {
+	test('keeps stale rows visible and offers a retry when a background refresh fails', async () => {
 		let shouldFail = false
-		vi.stubGlobal(
-			'fetch',
-			vi.fn(async () =>
-				shouldFail
-					? new Response('upstream unavailable', { status: 400 })
-					: new Response(JSON.stringify(unifiedTableResponse), {
-							status: 200,
-							headers: { 'content-type': 'application/json' }
-						})
-			)
+		const fetchMock = vi.fn(async () =>
+			shouldFail
+				? new Response('upstream unavailable', { status: 400 })
+				: new Response(JSON.stringify(unifiedTableResponse), {
+						status: 200,
+						headers: { 'content-type': 'application/json' }
+					})
 		)
+		vi.stubGlobal('fetch', fetchMock)
 		const queryClient = createQueryClient()
 
 		await act(async () =>
@@ -544,18 +543,18 @@ describe('UnifiedTable rendering', () => {
 		await act(async () => {
 			await queryClient.invalidateQueries()
 		})
-		// retry: 1 lands the error after invalidateQueries resolves, so wait for the refresh to settle.
-		for (
-			let attempt = 0;
-			attempt < 20 && queryClient.getQueryCache().getAll()[0]!.state.status !== 'error';
-			attempt++
-		) {
-			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-		}
-		// One more tick lets the observer render the settled error.
-		await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
-		expect(queryClient.getQueryCache().getAll()[0]!.state.status).toBe('error')
+		await waitForContent(container, "Couldn't refresh this card. Showing the last loaded data.")
 		expect(container.textContent).toContain('Aave')
 		expect(container.textContent).not.toContain("Couldn't load this table")
+
+		shouldFail = false
+		const attemptsBeforeRetry = fetchMock.mock.calls.length
+		await act(async () => button('Try again').click())
+		for (let attempt = 0; attempt < 20 && container.textContent?.includes("Couldn't refresh this card"); attempt++) {
+			await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+		}
+		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
+		expect(container.textContent).not.toContain("Couldn't refresh this card")
+		expect(container.textContent).toContain('Aave')
 	})
 })

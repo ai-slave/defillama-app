@@ -383,14 +383,16 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 			/>
 			<div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
 				{loadingItems.length > 0 && failedItems.length < limitedItems.length ? (
-					<ProMeta
-						items={[
-							<>
-								<LoadingSpinner size={12} />
-								{validItems.length}/{limitedItems.length - failedItems.length}
-							</>
-						]}
-					/>
+					<div role="status" aria-live="polite">
+						<ProMeta
+							items={[
+								<>
+									<LoadingSpinner size={12} />
+									{validItems.length} of {limitedItems.length - failedItems.length} charts loaded
+								</>
+							]}
+						/>
+					</div>
 				) : null}
 				{hasAnyData && failedItems.length > 0 ? (
 					<ProCardNotice

@@ -60,7 +60,8 @@ async function submit() {
 	await act(async () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
 }
 function tagInput() {
-	return document.querySelector<HTMLInputElement>('#dashboard-settings-tag-input')!
+	const label = [...document.querySelectorAll('label')].find((node) => node.textContent === 'Tags')!
+	return document.getElementById(label.htmlFor) as HTMLInputElement
 }
 async function addTag(tag: string) {
 	tagInput().value = tag

@@ -37,7 +37,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="relative z-10 inline-flex max-w-full items-center gap-1.5 text-xs text-pro-text-tertiary transition-colors hover:text-pro-accent"
+			className="relative z-10 inline-flex max-w-full items-center gap-1.5 body-sm text-pro-text-tertiary transition-colors hover:text-pro-accent"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -79,7 +79,7 @@ function DashboardCardActionsMenu({
 			</Ariakit.MenuButton>
 			<MenuSurface variant="actions" gutter={6}>
 				<MenuItem
-					className="text-error"
+					className="text-data-down"
 					onClick={(event) => onDelete(triggerRef.current ?? (event.currentTarget as HTMLElement))}
 				>
 					Delete…
@@ -216,7 +216,7 @@ export function DashboardCard({
 			{viewMode === 'grid' ? (
 				<div className="flex flex-1 flex-col gap-1.5 p-3">
 					{titleRow}
-					<p className="line-clamp-2 h-10 text-sm leading-5 text-pro-text-secondary">{dashboard.description}</p>
+					<p className="line-clamp-2 h-[2lh] body-md text-pro-text-secondary">{dashboard.description}</p>
 					{tagRow}
 					<div className="mt-auto pt-1">{meta}</div>
 				</div>
@@ -225,7 +225,7 @@ export function DashboardCard({
 					<div className="flex min-w-0 flex-1 flex-col gap-1">
 						{titleRow}
 						{dashboard.description ? (
-							<p className="line-clamp-1 text-sm text-pro-text-secondary">{dashboard.description}</p>
+							<p className="line-clamp-1 body-md text-pro-text-secondary">{dashboard.description}</p>
 						) : null}
 					</div>
 					{tagRow}
@@ -266,7 +266,7 @@ export function DashboardCard({
 				pendingText="Deleting…"
 				error={deletion.error?.message}
 				title={`Delete ${dashboard.data.dashboardName || 'dashboard'}?`}
-				message="Are you sure you want to delete this dashboard? This action cannot be undone."
+				message="Deleting a dashboard cannot be undone."
 				confirmText="Delete"
 			/>
 		</div>

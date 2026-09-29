@@ -168,25 +168,30 @@ test.each([
 })
 
 test.each(['catalog', 'category', 'dimension'] as const)(
-	'%s failure is retryable without creating a partial dashboard',
+	'%s failure shows one retry for the templates and creates nothing partial',
 	async (source) => {
 		api[source].mockRejectedValue(new Error('Unavailable'))
 		await mount()
 		await click('Create new dashboard')
 		const name = source === 'catalog' ? 'Lending Protocols' : source === 'category' ? 'L2 Ecosystem' : 'DEX Leaders'
 		await act(async () => {
-			await waitForUi(() => expect(button(`Retry ${name}`)).toBeDefined())
+			await waitForUi(() =>
+				expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load template data.')
+			)
 		})
-		const retry = button(`Retry ${name}`)
-		await act(async () => retry.focus())
+		expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1)
+		expect(button(name).getAttribute('aria-disabled')).toBe('true')
+		await click(name)
+		expect(api.create).not.toHaveBeenCalled()
 		const response = Promise.withResolvers<unknown>()
 		api[source].mockReturnValue(response.promise)
-		await click(`Retry ${name}`)
+		await click('Try again')
+		// The notice leaves once the refetch starts, which React Query reports on its next notify tick.
 		await act(async () => {
-			await waitForUi(() => expect(retry.getAttribute('aria-disabled')).toBe('true'))
+			await waitForUi(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 		})
-		expect(api.create).not.toHaveBeenCalled()
-		if (source !== 'catalog') await ready('Lending Protocols')
+		// The notice left while the data reloads, so focus lands on the templates instead of the page.
+		expect(document.activeElement).toBe(document.querySelector('[role="group"][aria-label="Templates"]'))
 		await act(async () =>
 			response.resolve(
 				source === 'catalog'
@@ -197,7 +202,6 @@ test.each(['catalog', 'category', 'dimension'] as const)(
 			)
 		)
 		await ready(name)
-		expect(document.activeElement).toBe(retry)
 		await click(name)
 		expect(savedFilters()).toEqual(
 			source === 'catalog'
@@ -215,7 +219,7 @@ test('empty dimension data cannot fall back to unrelated TVL data or create an e
 	await click('Create new dashboard')
 	await ready('Lending Protocols')
 	await act(async () => {
-		await waitForUi(() => expect(button('DEX Leaders').textContent).toContain('No matching data available'))
+		await waitForUi(() => expect(button('DEX Leaders').textContent).toContain('No matching data available.'))
 	})
 	await click('DEX Leaders')
 	expect(api.create).not.toHaveBeenCalled()
@@ -264,7 +268,7 @@ test('pending template creation keeps focus and ignores duplicate activation, th
 	expect(savedFilters()).toEqual({ protocols: ['aave', 'spark'] })
 })
 
-test('keeps the selected template busy until navigation finishes without creating another dashboard', async () => {
+test('replaces the templates with the created dashboard until navigation finishes', async () => {
 	const navigation = Promise.withResolvers<boolean>()
 	api.push.mockReturnValueOnce(navigation.promise)
 	await mount()
@@ -273,12 +277,10 @@ test('keeps the selected template busy until navigation finishes without creatin
 	await click('Lending Protocols')
 	await act(async () => {
 		await waitForUi(() =>
-			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
+			expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open Dashboard')
 		)
 	})
-	expect(button('Lending Protocols').getAttribute('aria-disabled')).toBe('true')
-	expect(document.querySelector('a[href="/pro/template-created/edit"]')?.textContent).toBe('Open dashboard')
-	await click('Lending Protocols')
+	expect(button('Lending Protocols')).toBeUndefined()
 	expect(api.create).toHaveBeenCalledOnce()
 	await act(async () => navigation.resolve(true))
 	await act(async () => {

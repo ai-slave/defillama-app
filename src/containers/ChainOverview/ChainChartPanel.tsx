@@ -153,6 +153,8 @@ export function ChainChartPanel({
 	}
 	// The toggle stays on, so switching back from cumulative restores the series.
 	const isActiveAddressesHidden = groupBy === 'cumulative' && toggledCharts.includes('Active Addresses')
+	// Cumulative hides Active Addresses, so a chart picked down to it alone draws nothing to export or embed.
+	const plotsSeries = toggledCharts.length > (isActiveAddressesHidden ? 1 : 0)
 
 	const { chartInstance: chainChartInstance, handleChartReady } = useChartImageExport()
 	const imageExportFilename = slug(metadata.name)
@@ -229,6 +231,12 @@ export function ChainChartPanel({
 	}, [router, charts, toggledCharts])
 
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
+	// The data request and the lazy chart chunk wait behind the same indicator.
+	const chartLoading = (
+		<ChartPanelBodyFallback role="status" aria-live="polite">
+			<LoadingIndicator />
+		</ChartPanelBodyFallback>
+	)
 
 	return (
 		<ChartPanel className="col-span-2">
@@ -326,18 +334,13 @@ export function ChainChartPanel({
 										))}
 
 										{groupedFilteredOptions.length === 0 ? (
-											<div className="flex flex-col items-center gap-1 py-8 text-center">
-												<p className="text-sm text-secondary">
-													No metrics match{' '}
-													<span className="font-medium text-primary">"{deferredMetricsSearchValue}"</span>
+											<div className="flex flex-col items-center gap-2 py-6 text-center">
+												<p role="status" aria-live="polite" className="body-sm text-tertiary">
+													No metrics match “{deferredMetricsSearchValue}”
 												</p>
-												<button
-													type="button"
-													onClick={() => setMetricsSearchValue('')}
-													className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
-												>
+												<Button type="button" variant="ghost" size="sm" onClick={() => setMetricsSearchValue('')}>
 													Clear search
-												</button>
+												</Button>
 											</div>
 										) : null}
 									</DialogBody>
@@ -408,17 +411,19 @@ export function ChainChartPanel({
 						options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 					/>
 				) : null}
-				<EmbedChart />
+				{plotsSeries ? <EmbedChart /> : null}
 				{canAddToDashboard ? (
 					<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
 				) : null}
-				<ChartExportButtons
-					chartInstance={chainChartInstance}
-					csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
-					filename={imageExportFilename}
-					title={imageExportTitle}
-					iconUrl={metadata.name !== 'All' ? chainIconUrl(metadata.name) : undefined}
-				/>
+				{plotsSeries ? (
+					<ChartExportButtons
+						chartInstance={chainChartInstance}
+						csvSource={{ type: 'prepare-csv', prepare: prepareCsv }}
+						filename={imageExportFilename}
+						title={imageExportTitle}
+						iconUrl={metadata.name !== 'All' ? chainIconUrl(metadata.name) : undefined}
+					/>
+				) : null}
 			</ChartPanelToolbar>
 			{isClient && !isFetchingChartData ? (
 				<FailedDataNote labels={failedMetrics.map(selectedChartLabel)} shows="The chart shows the other metrics." />
@@ -426,13 +431,15 @@ export function ChainChartPanel({
 
 			<ChartPanelBody>
 				{isFetchingChartData ? (
-					<ChartPanelBodyFallback role="status" aria-live="polite">
-						<LoadingIndicator />
+					chartLoading
+				) : toggledCharts.length === 0 ? (
+					<ChartPanelBodyFallback role="status" className="body-sm text-tertiary">
+						{charts.length > 0 ? 'Pick metrics to plot' : 'No chart data for this chain'}
 					</ChartPanelBodyFallback>
 				) : isActiveAddressesHidden && toggledCharts.length === 1 ? (
 					<CumulativeUnavailableNotice metric="Active Addresses" fill onShowDaily={() => updateGroupBy('daily')} />
 				) : (
-					<Suspense fallback={<ChartPanelBodyFallback />}>
+					<Suspense fallback={chartLoading}>
 						{isActiveAddressesHidden ? (
 							<CumulativeUnavailableNotice
 								metric="Active Addresses"
