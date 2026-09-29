@@ -73,13 +73,6 @@
       "oldName": "Bridged TVL"
     },
     {
-      "name": "Active Loans by Protocol",
-      "route": "/active-loans",
-      "category": "Total Value Locked",
-      "description": "Sum of value currently borrowed across all active loans on a lending protocol",
-      "tab": "Protocols"
-    },
-    {
       "name": "Top Protocols",
       "route": "/top-protocols",
       "category": "Total Value Locked",
@@ -87,6 +80,13 @@
       "tab": "Protocols",
       "oldCategory": "Market Overview",
       "oldName": "Top Protocols"
+    },
+    {
+      "name": "Active Loans by Protocol",
+      "route": "/active-loans",
+      "category": "Total Value Locked",
+      "description": "Sum of value currently borrowed across all active loans on a lending protocol",
+      "tab": "Protocols"
     },
     {
       "name": "Forks",
@@ -734,30 +734,6 @@
       "oldName": "Investors"
     },
     {
-      "name": "Treasuries",
-      "route": "/treasuries",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols",
-      "oldName": "Treasuries"
-    },
-    {
-      "name": "Treasury: Entities",
-      "route": "/entities",
-      "category": "Treasury",
-      "description": "Treasury by entity",
-      "totalTrackedKey": "treasury.entities"
-    },
-    {
-      "name": "Net Project Treasury",
-      "route": "/net-project-treasury",
-      "category": "Treasury",
-      "description": "Value of tokens owned by a protocol, excluding its own token",
-      "totalTrackedKey": "treasury.protocols",
-      "tab": "Protocols"
-    },
-    {
       "name": "Unlocks: Overview",
       "route": "/unlocks",
       "category": "Unlocks",
@@ -781,6 +757,30 @@
       "tab": "Protocols",
       "oldCategory": "Unlocks",
       "oldName": "Calendar"
+    },
+    {
+      "name": "Treasuries",
+      "route": "/treasuries",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, including its own token and breakdown of assets held",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols",
+      "oldName": "Treasuries"
+    },
+    {
+      "name": "Net Project Treasury",
+      "route": "/net-project-treasury",
+      "category": "Treasury",
+      "description": "Value of tokens owned by a protocol, excluding its own token",
+      "totalTrackedKey": "treasury.protocols",
+      "tab": "Protocols"
+    },
+    {
+      "name": "Treasury: Entities",
+      "route": "/entities",
+      "category": "Treasury",
+      "description": "Treasury by entity",
+      "totalTrackedKey": "treasury.entities"
     },
     {
       "name": "Recently Listed Protocols",

@@ -2,6 +2,7 @@ import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAAssetPage } from '~/containers/RWA/Asset'
 import { resolveRWAAssetRoute } from '~/containers/RWA/assetRoute'
+import { getRWAPlatformHref } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetData } from '~/containers/RWA/queries'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -60,7 +61,11 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		return {
-			props: { asset, canonicalMarketId: assetRoute.canonicalMarketId },
+			props: {
+				asset,
+				canonicalMarketId: assetRoute.canonicalMarketId,
+				parentPlatformHref: getRWAPlatformHref(asset.parentPlatform, rwaList)
+			},
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -70,7 +75,8 @@ const pageName = ['RWA']
 
 export default function RWAAssetDetailPage({
 	asset,
-	canonicalMarketId
+	canonicalMarketId,
+	parentPlatformHref
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	const displayName =
 		asset.assetName && asset.ticker
@@ -84,7 +90,7 @@ export default function RWAAssetDetailPage({
 			pageName={pageName}
 			canonicalUrl={`/rwa/asset/${encodeURIComponent(canonicalMarketId)}`}
 		>
-			<RWAAssetPage asset={asset} />
+			<RWAAssetPage asset={asset} parentPlatformHref={parentPlatformHref} />
 		</Layout>
 	)
 }

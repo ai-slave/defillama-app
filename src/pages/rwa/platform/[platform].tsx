@@ -3,7 +3,7 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { RWAOverview } from '~/containers/RWA'
 import { getRWAPlatformRoutes } from '~/containers/RWA/platformRoutes'
 import { getRWAAssetsOverview } from '~/containers/RWA/queries'
-import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { findByRwaSlug, rwaSlug } from '~/containers/RWA/rwaSlug'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -51,7 +51,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		if (!platformName) {
-			return { notFound: true }
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
 		if (params.platform !== platformSlug) {
@@ -65,10 +65,12 @@ export const getStaticProps = withPerformanceLogging(
 		})
 
 		const meta = platformsIndex.platforms[platformSlug] ?? null
+		const isPerpsVenue = findByRwaSlug(platformSlug, metadataCache.rwaPerpsList.venues) != null
 
-		// Platforms-sheet rows with no spot assets and no live perps markets (e.g. an unpublished perps adapter) render blank.
-		// isPerpsVenue comes from the index so a failed perps fetch can't 404 a live venue.
-		if (!props || (props.assets.length === 0 && !meta?.isPerpsVenue)) {
+		// 404 only when the listing and the index both have nothing (e.g. an unpublished perps adapter), so a
+		// transient empty listing or failed perps fetch can't hide a platform with index AUM or a live perps venue.
+		const isIndexedEmpty = meta != null && !isPerpsVenue && meta.onchainAum <= 0 && (meta.activeAum ?? 0) <= 0
+		if (!props || (props.assets.length === 0 && isIndexedEmpty)) {
 			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 		const platformPage = meta ? { meta } : null

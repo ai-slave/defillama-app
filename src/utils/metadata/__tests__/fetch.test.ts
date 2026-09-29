@@ -59,7 +59,7 @@ describe('fetchCoreMetadata', () => {
 				byPid: { '1': 'old-active-name', '2': 'metadata-only' },
 				platforms: {
 					'old-active-name': { name: 'Canonical Active Name', slug: 'old-active-name' },
-					'metadata-only': { name: 'Metadata Only', slug: 'metadata-only' }
+					'metadata-only': { name: 'Metadata Only', slug: 'metadata-only', onchainAum: 1 }
 				}
 			}
 		})
@@ -77,9 +77,74 @@ describe('fetchCoreMetadata', () => {
 			byPid: { '1': 'old-active-name', '2': 'metadata-only' },
 			platforms: {
 				'old-active-name': { name: 'Canonical Active Name', slug: 'old-active-name' },
-				'metadata-only': { name: 'Metadata Only', slug: 'metadata-only' }
+				'metadata-only': { name: 'Metadata Only', slug: 'metadata-only', onchainAum: 1 }
 			}
 		})
+	})
+
+	test('gives a platform only the index knows a page when it has AUM or a live perps venue', async () => {
+		serveCoreMetadata({
+			rwaList: { canonicalMarketIds: [], platforms: ['Ondo'], chains: [], categories: [], assetGroups: [], idMap: {} },
+			rwaPlatformsIndex: {
+				generatedAt: 1,
+				byPid: {},
+				platforms: {
+					ondo: { name: 'Ondo', slug: 'ondo', onchainAum: 0, activeAum: 0 },
+					sivo: { name: 'Sivo', slug: 'sivo', onchainAum: 0, activeAum: 12_500_000 },
+					entropy: { name: 'Entropy', slug: 'entropy', onchainAum: 0, activeAum: 0 },
+					// A Platforms-sheet row with nothing behind it, e.g. an unpublished perps adapter.
+					bitget: { name: 'Bitget', slug: 'bitget', onchainAum: 0, activeAum: 0 }
+				}
+			},
+			rwaPerpsList: { contracts: [], venues: ['Entropy'], categories: [], assets: [], assetGroups: [], total: 0 }
+		})
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.rwaList.platformRoutes).toEqual([
+			{ name: 'Ondo', slug: 'ondo' },
+			{ name: 'Sivo', slug: 'sivo' },
+			{ name: 'Entropy', slug: 'entropy' }
+		])
+		expect(payload.rwaList.platforms).toEqual(['Ondo', 'Sivo', 'Entropy'])
+	})
+
+	test('gives no RWA tab or retired-TVL redirect onto a platform without a page', async () => {
+		serveCoreMetadata({
+			protocols: {
+				'6378': { name: 'xstocks', displayName: 'xStocks' },
+				'5873': { name: 'synthetix', displayName: 'Synthetix', tvl: true },
+				'6567': { name: 'aden', displayName: 'ADEN' }
+			},
+			rwaList: {
+				canonicalMarketIds: [],
+				platforms: ['xStocks'],
+				chains: [],
+				categories: [],
+				assetGroups: [],
+				idMap: {}
+			},
+			rwaPlatformsIndex: {
+				generatedAt: 1,
+				byPid: {},
+				byProtocolSlug: { xstocks: 'xstocks', synthetix: 'synthetix-perps', aden: 'aden' },
+				redirectByProtocolSlug: { xstocks: 'xstocks', synthetix: 'synthetix-perps', aden: 'aden' },
+				platforms: {
+					xstocks: { name: 'xStocks', slug: 'xstocks', onchainAum: 0, activeAum: 0 },
+					'synthetix-perps': { name: 'Synthetix Perps', slug: 'synthetix-perps', onchainAum: 0, activeAum: 0 },
+					aden: { name: 'ADEN', slug: 'aden', onchainAum: 0, activeAum: 0 }
+				}
+			}
+		})
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.protocols['6378'].rwaPlatformSlug).toBe('xstocks')
+		expect(payload.protocols['6378'].rwaPlatformRedirectSlug).toBe('xstocks')
+		expect(payload.protocols['5873'].rwaPlatformSlug).toBeUndefined()
+		expect(payload.protocols['5873'].rwaPlatformRedirectSlug).toBeUndefined()
+		expect(payload.protocols['6567'].rwaPlatformSlug).toBeUndefined()
+		expect(payload.protocols['6567'].rwaPlatformRedirectSlug).toBeUndefined()
 	})
 
 	test('stamps the declared RWA platform onto its protocol metadata', async () => {

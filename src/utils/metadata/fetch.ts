@@ -139,10 +139,25 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		const slug = rwaSlug(platform)
 		if (slug) platformRoutesBySlug.set(slug, { name: platform, slug })
 	}
+	const listedPlatformSlugs = new Set(platformRoutesBySlug.keys())
+	const perpsVenueSlugs = new Set(rwaPerpsList.venues.map((venue) => rwaSlug(venue)))
+	const unroutedPlatformSlugs = new Set<string>()
 	for (const slug in rwaPlatformsIndex.platforms) {
 		const platform = rwaPlatformsIndex.platforms[slug]
 		if (!platform) continue
 		const nameSlug = rwaSlug(platform.name)
+		// A sheet row with no listed assets, no AUM and no live perps venue would only render an empty page.
+		const hasContent =
+			listedPlatformSlugs.has(platform.slug) ||
+			listedPlatformSlugs.has(nameSlug) ||
+			perpsVenueSlugs.has(platform.slug) ||
+			perpsVenueSlugs.has(nameSlug) ||
+			platform.onchainAum > 0 ||
+			(platform.activeAum ?? 0) > 0
+		if (!hasContent) {
+			unroutedPlatformSlugs.add(platform.slug)
+			continue
+		}
 		if (nameSlug !== platform.slug) platformRoutesBySlug.delete(nameSlug)
 		platformRoutesBySlug.set(platform.slug, { name: platform.name, slug: platform.slug })
 	}
@@ -170,10 +185,11 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		const protocol = protocols[protocolId]
 		if (!protocol) continue
 		const protocolSlug = normalizeSlug(protocol.displayName || protocol.name)
+		// No RWA tab or retired-TVL redirect onto a platform that was just denied a page.
 		const platformSlug = platformSlugByProtocolSlug[protocolSlug]
-		if (platformSlug) protocol.rwaPlatformSlug = platformSlug
+		if (platformSlug && !unroutedPlatformSlugs.has(platformSlug)) protocol.rwaPlatformSlug = platformSlug
 		const redirectSlug = redirectSlugByProtocolSlug[protocolSlug]
-		if (redirectSlug) protocol.rwaPlatformRedirectSlug = redirectSlug
+		if (redirectSlug && !unroutedPlatformSlugs.has(redirectSlug)) protocol.rwaPlatformRedirectSlug = redirectSlug
 		const protocolMcapSlug = protocolMcapSlugById.get(protocolId)
 		if (protocolMcapSlug) protocol.rwaProtocolMcapSlug = protocolMcapSlug
 	}

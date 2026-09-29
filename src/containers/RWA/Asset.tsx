@@ -368,7 +368,13 @@ function ChainBadge({
 
 const EMPTY_YIELD_POOLS: Array<EarnPageRow> = []
 
-export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
+export function RWAAssetPage({
+	asset,
+	parentPlatformHref
+}: {
+	asset: IRWAAssetData
+	parentPlatformHref: string | null
+}) {
 	const router = useRouter()
 	const displayName = asset.assetName ?? asset.ticker ?? 'Unknown asset'
 	const keyBase = asset.ticker ?? asset.assetName ?? 'asset'
@@ -696,9 +702,13 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 									<span className="flex flex-wrap items-center gap-x-1 font-medium">
 										{parentPlatforms.map((platform, idx) => (
 											<span key={platform} className="flex items-center gap-0.5">
-												<BasicLink href={`/rwa/platform/${rwaSlug(platform)}`} className="text-link hover:underline">
-													{platform}
-												</BasicLink>
+												{parentPlatformHref ? (
+													<BasicLink href={parentPlatformHref} className="text-link hover:underline">
+														{platform}
+													</BasicLink>
+												) : (
+													platform
+												)}
 												{idx < parentPlatforms.length - 1 ? ',' : null}
 											</span>
 										))}

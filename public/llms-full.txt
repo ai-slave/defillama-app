@@ -125,8 +125,8 @@ Common usage examples:
 - [TVL by Chain](https://defillama.com/chains): Chains ranked by combined TVL of all protocols on the chain Category: Total Value Locked.
 - [Oracles](https://defillama.com/oracles): Total Value Secured by an oracle, where oracle failure would lead to a loss equal to TVS Category: Total Value Locked.
 - [Bridged TVL by Chain](https://defillama.com/bridged): Value of all tokens held on the chain Category: Total Value Locked.
-- [Active Loans by Protocol](https://defillama.com/active-loans): Sum of value currently borrowed across all active loans on a lending protocol Category: Total Value Locked.
 - [Top Protocols](https://defillama.com/top-protocols): Overview of top protocols with the highest TVL by chain on each category Category: Total Value Locked.
+- [Active Loans by Protocol](https://defillama.com/active-loans): Sum of value currently borrowed across all active loans on a lending protocol Category: Total Value Locked.
 - [Forks](https://defillama.com/forks): Sum of TVL across all forks of a protocol Category: Total Value Locked.
 - [Pool2 TVL by Protocol](https://defillama.com/pool2): Total value locked in pool2 of a protocol Category: Total Value Locked.
 - [Total Staked by Protocol](https://defillama.com/total-staked): Total value of the protocol's own tokens staked on their platform Category: Total Value Locked.
@@ -156,6 +156,7 @@ Common usage examples:
 - [Perp Aggregator Volume by Protocol](https://defillama.com/perps-aggregators): Notional volume of all trades in a perp aggregator, includes leverage Category: Volume.
 - [Normalized Volume by Chain](https://defillama.com/normalized-volume/chains): Sum of genuine trading activity volume in perp exchanges on the chain, adjusted to exclude wash trading and non-economic volume Category: Volume.
 - [Normalized Volume by Protocol](https://defillama.com/normalized-volume): Volume of genuine trading activity in perp exchanges, adjusted to exclude wash trading and non-economic volume Category: Volume.
+- [Options by Protocol](https://defillama.com/options): Premium volume, notional volume and open interest of options exchanges Category: Volume.
 - [Options Premium Volume by Protocol](https://defillama.com/options/premium-volume): Sum of value paid buying and selling options Category: Volume.
 - [Options Notional Volume by Protocol](https://defillama.com/options/notional-volume): Sum of the notional value of all options that have been traded on options exchanges Category: Volume.
 - [Stablecoins by Market Cap](https://defillama.com/stablecoins): Total market cap of stable assets Category: Stablecoins.
@@ -187,11 +188,11 @@ Common usage examples:
 - [Bridge Volume by Chain](https://defillama.com/bridges/chains): Sum of the value of all assets that were bridged through the protocol on each chain Category: Bridge.
 - [Raises: Overview](https://defillama.com/raises): Total amount of capital raised by a project Category: Raises.
 - [Investors](https://defillama.com/raises/investors): List of investors that have invested in a project Category: Raises.
-- [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
-- [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
-- [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
 - [Unlocks: Overview](https://defillama.com/unlocks): Overview of token emissions by protocol Category: Unlocks.
 - [Unlocks: Calendar](https://defillama.com/unlocks/calendar): Upcoming total token emissions by date Category: Unlocks.
+- [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
+- [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
+- [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
 - [Recently Listed Protocols](https://defillama.com/recent): List of recently listed protocols Category: Others.
 - [Narrative Tracker](https://defillama.com/narrative-tracker): MCap-Weighted category performance to track narrative changes in the ecosystem Category: Others.
 - [Staked ETH by Protocol](https://defillama.com/lst): Total value of ETH staked on LSTs Category: Others.
@@ -218,6 +219,7 @@ Common usage examples:
 - [Llama News Round-Up](https://defillama.com/roundup): Recent round-up of the most important news in the ecosystem
 - [Rewards](https://defillama.com/rewards): Explore protocol rewards, points, referral programs, and trading contests
 - [Token Pricing Coverage](https://defillama.com/price-check): Check whether DefiLlama has a current price for a token address on a chain
+- [Crypto Cards](https://defillama.com/crypto-cards): Compare crypto cards by rewards, fees, supported assets, requirements, and availability
 
 ## Dashboard catalog - Main
 

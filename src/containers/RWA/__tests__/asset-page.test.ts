@@ -16,6 +16,27 @@ vi.mock('~/utils/async', async (importOriginal) => ({
 				defiActiveTvl: { Ethereum: { Morpho: 10 } }
 			}
 		if (pathname.endsWith('/chart/asset/asset-1')) return []
+		if (pathname.endsWith('/rwa/ousg'))
+			return {
+				id: 'ousg',
+				ticker: 'OUSG',
+				assetName: 'Ondo Short-Term US Government Treasuries',
+				parentPlatform: 'Ondo',
+				onChainMcap: { Ethereum: 100 },
+				activeMcap: { Ethereum: 90 },
+				defiActiveTvl: {}
+			}
+		if (pathname.endsWith('/rwa/avantis-gold'))
+			return {
+				id: 'avantis-gold',
+				ticker: 'GOLD',
+				assetName: 'Avantis Gold Perp',
+				parentPlatform: 'Avantis',
+				onChainMcap: {},
+				activeMcap: {},
+				defiActiveTvl: {}
+			}
+		if (pathname.endsWith('/chart/asset/ousg') || pathname.endsWith('/chart/asset/avantis-gold')) return []
 		if (pathname.includes('explorer')) return []
 		throw new Error(`Unrouted upstream request: ${url}`)
 	}
@@ -78,6 +99,28 @@ describe('rwa asset page', () => {
 
 		await expect(page.getStaticProps({ params: { asset: 'usdf-falcon' } })).resolves.toEqual({
 			redirect: { destination: '/rwa/asset/USDf-Falcon', permanent: false }
+		})
+	})
+
+	test('links the parent platform only when that platform has a page', async () => {
+		metadata.seed({
+			rwaList: {
+				canonicalMarketIds: ['OUSG', 'avantis:XAU-USD'],
+				idMap: { OUSG: 'ousg', 'avantis:XAU-USD': 'avantis-gold' },
+				platforms: ['Ondo'],
+				platformRoutes: [{ name: 'Ondo', slug: 'ondo' }],
+				chains: [],
+				categories: [],
+				assetGroups: []
+			}
+		})
+		const page = await import('~/pages/rwa/asset/[asset]')
+
+		await expect(page.getStaticProps({ params: { asset: 'OUSG' } })).resolves.toMatchObject({
+			props: { parentPlatformHref: '/rwa/platform/ondo' }
+		})
+		await expect(page.getStaticProps({ params: { asset: 'avantis:XAU-USD' } })).resolves.toMatchObject({
+			props: { parentPlatformHref: null }
 		})
 	})
 
