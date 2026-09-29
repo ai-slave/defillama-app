@@ -9,6 +9,7 @@ import { Toast } from '~/components/Toast'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const SignInFlow = dynamic<{ dialogStore: Ariakit.DialogStore; closeable: boolean }>(
@@ -26,6 +27,13 @@ export default function AuthPage() {
 	)
 }
 
+// Subscription details go only to the two add-ons that sign in here (DefiLlama/google-sheets-plugin).
+// Google's OAuth2 library for Apps Script returns to its script's own usercallback, keyed by the script id.
+const SHEETS_CALLBACK_URL =
+	'https://script.google.com/macros/d/1QqeBzdso-_WVCAamI1F0uKUhzYGFX9KbG8ufLVJ2AKupWAblK9agpcl4/usercallback'
+// Local Excel sign-in is unsupported; subscription details go only to the published add-in.
+const EXCEL_ORIGIN = 'https://excel.llama.fi'
+
 function AuthContent() {
 	const router = useRouter()
 	const { isAuthenticated, logout, user } = useAuthContext()
@@ -33,6 +41,7 @@ function AuthContent() {
 	// so these are the values that actually change.
 	const routerQuery = router.query
 	const redirectUrl = routerQuery.redirect_uri
+	const isUnknownRedirect = redirectUrl !== undefined && redirectUrl !== SHEETS_CALLBACK_URL
 
 	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
 		useSubscribe()
@@ -41,10 +50,9 @@ function AuthContent() {
 		// A failed read must not be forwarded as an inactive subscription.
 		if (isAuthenticated && !isSubscriptionLoading && !isSubscriptionError) {
 			trackUmamiEvent('sheets-auth-sign-in', { user_id: user?.id })
-			// google sheets auth, requiring redirect url
-			if (redirectUrl) {
+			if (redirectUrl === SHEETS_CALLBACK_URL) {
 				void Router.push({
-					pathname: redirectUrl as string,
+					pathname: SHEETS_CALLBACK_URL,
 					query: {
 						...routerQuery,
 						subscription_id: subscription?.id || '',
@@ -53,18 +61,15 @@ function AuthContent() {
 						provider: subscription?.provider || ''
 					}
 				})
-			} else if (window.opener) {
-				// ms excel auth, we open auth page with `window.open` and send back the sub data to parent window
-				window.opener.postMessage(
-					{
-						subscription_id: subscription?.id || '',
-						subscription_status: subscription?.status || '',
-						expires_at: subscription?.expires_at || '',
-						provider: subscription?.provider || ''
-					},
-					'*'
-				)
-
+			} else if (redirectUrl === undefined && window.opener) {
+				const message = {
+					subscription_id: subscription?.id || '',
+					subscription_status: subscription?.status || '',
+					expires_at: subscription?.expires_at || '',
+					provider: subscription?.provider || ''
+				}
+				// The browser drops a message whose target origin is not the opener's, so an unknown opener receives nothing.
+				window.opener.postMessage(message, EXCEL_ORIGIN)
 				window.close()
 			}
 		}
@@ -86,7 +91,14 @@ function AuthContent() {
 							</div>
 							<h2 className="mb-2 text-2xl font-bold text-on-brand">Successfully logged in.</h2>
 							{user?.email ? <p className="text-sm text-sub-text-muted">Signed in as {user.email}</p> : null}
-							{isSubscriptionError ? (
+							{isUnknownRedirect ? (
+								<div className="mt-2 text-left">
+									<InlineStatus variant="error">
+										This sign-in link did not come from the DefiLlama Sheets or Excel add-on, so your subscription was
+										not shared. Start signing in again from the add-on.
+									</InlineStatus>
+								</div>
+							) : isSubscriptionError ? (
 								<div className="mt-2 text-left">
 									<SubscriptionLoadError
 										isRetrying={isSubscriptionRetrying}
