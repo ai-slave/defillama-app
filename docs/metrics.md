@@ -168,6 +168,21 @@ Implementation notes:
 - Do not redirect Chain Revenue to app revenue aggregation.
 - Client chart requests should pass `entity=chain` for Chain Revenue so the API validates the value against chain metadata and requires the `chainRevenue` flag.
 
+### Chain Holders Revenue
+
+Chain Holders Revenue is chain-level economics: the part of chain revenue distributed to token holders, usually by burning fees.
+
+- Chain overview label: `Holders Revenue`
+- Metadata flag: `chainHoldersRevenue`, set by the backend for chains with a `chain#` row in the holders revenue overview.
+- Adapter behavior: fees adapter, protocol-style chain IDs with `dataType=dailyHoldersRevenue`, for example `/chart/fees/protocol/ethereum?dataType=dailyHoldersRevenue`.
+- It has no chain-native ranking page. Chain rows on `/holders-revenue` link to the chain overview with this chart selected.
+
+Implementation notes:
+
+- Do not gate it on `chainRevenue`. Many chains report chain revenue with no holder series, and upstream rejects their holders revenue requests.
+- Do not confuse it with the holders revenue of apps on a chain (`/holders-revenue/chain/[chain]`), which is app-on-chain aggregation.
+- The chain overview offers the chart from the metadata flag alone and fetches the series on the client, so the server makes no holders revenue request.
+
 ### App Fees
 
 App Fees are app-on-chain aggregation.

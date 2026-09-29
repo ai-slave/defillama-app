@@ -62,6 +62,23 @@ export const feeRevenueMetrics = {
 			}
 		}
 	},
+	chainHoldersRevenue: {
+		id: 'chainHoldersRevenue',
+		label: 'Holders Revenue',
+		concept: 'chain-native',
+		metadataFlag: 'chainHoldersRevenue',
+		chainOverview: {
+			chartKey: 'holdersRevenue',
+			queryKey: 'holders-revenue',
+			excludeAllChains: false,
+			source: {
+				kind: 'adapter-protocol',
+				entity: 'chain',
+				adapterType: 'fees',
+				dataType: 'dailyHoldersRevenue'
+			}
+		}
+	},
 	appFees: {
 		id: 'appFees',
 		label: 'App Fees',

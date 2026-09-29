@@ -13,6 +13,7 @@ const noSources: ChainChartSources = {
 	tokenPriceHistory: null,
 	chainFees: null,
 	chainRevenue: null,
+	holdersRevenue: null,
 	dexVolume: null,
 	perpsVolume: null,
 	appFees: null,
@@ -68,6 +69,14 @@ const usableEthHistory = {
 }
 
 describe('chain chart data', () => {
+	test('uses the chain-native burn series for holders revenue instead of chain revenue', () => {
+		expect(
+			build({
+				toggledCharts: ['Holders Revenue'],
+				sources: { chainRevenue: [[timestamp / 1e3, 900]], holdersRevenue: [[timestamp / 1e3, 250]] }
+			}).finalCharts
+		).toEqual({ 'Holders Revenue': [[timestamp, 250]] })
+	})
 	test('reports loading charts without building partial series', () => {
 		expect(
 			build({ toggledCharts: ['TVL', 'Chain Fees'], loadingCharts: ['Chain Fees', 'Token Price'], denomination: 'ETH' })

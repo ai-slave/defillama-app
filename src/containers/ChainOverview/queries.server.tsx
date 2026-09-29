@@ -283,6 +283,11 @@ export async function getChainOverviewData({
 		metadata: currentChainMetadata,
 		chain
 	})
+	const hasChainHoldersRevenue = shouldFetchChainOverviewFeeRevenueMetric({
+		metric: feeRevenueMetrics.chainHoldersRevenue,
+		metadata: currentChainMetadata,
+		chain
+	})
 	const shouldFetchAppFeesMetric = shouldFetchChainOverviewFeeRevenueMetric({
 		metric: appFeesMetric,
 		metadata: currentChainMetadata,
@@ -580,6 +585,10 @@ export async function getChainOverviewData({
 		}
 		if (chainRevenue?.total24h != null) {
 			charts.push(chainRevenueMetric.label)
+		}
+		// The chart reads its series on the client, so the metadata flag alone decides whether it is offered.
+		if (hasChainHoldersRevenue) {
+			charts.push(feeRevenueMetrics.chainHoldersRevenue.label)
 		}
 		if (shouldFetchDexs && dexs?.total24h != null) {
 			charts.push('DEXs Volume')

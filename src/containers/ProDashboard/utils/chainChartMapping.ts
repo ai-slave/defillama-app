@@ -6,6 +6,7 @@ const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, ChainChartType | n
 	'Stablecoins Mcap': 'stablecoins',
 	'Chain Fees': 'chainFees',
 	'Chain Revenue': 'chainRevenue',
+	'Holders Revenue': null,
 	'DEXs Volume': 'volume',
 	'Perps Volume': 'perps',
 	'Token Incentives': null,

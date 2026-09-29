@@ -395,6 +395,7 @@ const protocolChartsKeys: Partial<Record<IProps['type'], (typeof protocolCharts)
 const chainChartsKeys: Partial<Record<IProps['type'], (typeof chainCharts)[keyof typeof chainCharts]>> = {
 	Fees: 'chainFees',
 	Revenue: 'chainRevenue',
+	'Holders Revenue': 'holdersRevenue',
 	'DEX Volume': 'dexsVolume',
 	'Perp Volume': 'perpsVolume'
 }

@@ -46,7 +46,7 @@ const getChainMetricLabel = (chart: ChainChartLabels, tokenSymbol?: string | nul
 
 const chainChartCategories = {
 	Core: ['TVL', 'Stablecoins Mcap', 'Bridged TVL', 'Net Inflows'],
-	Revenue: ['Chain Fees', 'Chain Revenue', 'App Fees', 'App Revenue'],
+	Revenue: ['Chain Fees', 'Chain Revenue', 'Holders Revenue', 'App Fees', 'App Revenue'],
 	Volume: ['DEXs Volume', 'Perps Volume'],
 	Token: ['Token Price', 'Token Mcap', 'Token Volume', 'Token Incentives'],
 	Activity: ['Active Addresses', 'New Addresses', 'Transactions'],

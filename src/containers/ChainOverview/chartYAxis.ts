@@ -41,9 +41,11 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ChainChartLabels, AxisConfig>> = {
 				? chartColors['Chain Fees']
 				: chartsInSeries.has('Chain Revenue')
 					? chartColors['Chain Revenue']
-					: chartsInSeries.has('App Fees')
-						? chartColors['App Fees']
-						: chartColors['App Revenue']
+					: chartsInSeries.has('Holders Revenue')
+						? chartColors['Holders Revenue']
+						: chartsInSeries.has('App Fees')
+							? chartColors['App Fees']
+							: chartColors['App Revenue']
 	},
 	'DEXs Volume': {
 		resolveColor: ({ chartColors }) => chartColors['DEXs Volume']

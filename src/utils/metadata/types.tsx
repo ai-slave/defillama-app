@@ -8,6 +8,7 @@ export interface IChainMetadata {
 	revenue?: boolean
 	chainFees?: boolean
 	chainRevenue?: boolean
+	chainHoldersRevenue?: boolean
 	perps?: boolean
 	openInterest?: boolean
 	normalizedVolume?: boolean

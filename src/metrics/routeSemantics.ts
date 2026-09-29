@@ -35,11 +35,12 @@ export function getChainNativeFeeRevenueMetricForAdapterProtocol({
 	adapterType: string
 	dataType: string | undefined
 }): ChainNativeFeeRevenueMetric | null {
-	// Chain Fees/Revenue are chain-level economics, but upstream exposes their
-	// series through the adapter protocol chart path. Only these two data types
-	// are allowed to use the chain metadata fallback.
+	// Chain Fees, Chain Revenue and Chain Holders Revenue are chain-level economics, but
+	// upstream exposes their series through the adapter protocol chart path. Only these
+	// data types are allowed to use the chain metadata fallback.
 	if (adapterType !== 'fees') return null
 	if (!dataType || dataType === 'dailyFees') return feeRevenueMetrics.chainFees
 	if (dataType === 'dailyRevenue') return feeRevenueMetrics.chainRevenue
+	if (dataType === 'dailyHoldersRevenue') return feeRevenueMetrics.chainHoldersRevenue
 	return null
 }

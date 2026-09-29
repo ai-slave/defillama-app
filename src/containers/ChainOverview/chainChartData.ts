@@ -15,6 +15,7 @@ import type { ChainOverviewChartData } from './types'
 
 const chainFeesMetric = feeRevenueMetrics.chainFees
 const chainRevenueMetric = feeRevenueMetrics.chainRevenue
+const chainHoldersRevenueMetric = feeRevenueMetrics.chainHoldersRevenue
 const appFeesMetric = feeRevenueMetrics.appFees
 const appRevenueMetric = feeRevenueMetrics.appRevenue
 
@@ -45,6 +46,8 @@ export function getChainChartApiUrl(label: FetchedChainChartLabel, chain: string
 			return buildChainChartApiUrl(getFeeRevenueChainChartApiParams({ metric: chainFeesMetric, chain }))
 		case 'Chain Revenue':
 			return buildChainChartApiUrl(getFeeRevenueChainChartApiParams({ metric: chainRevenueMetric, chain }))
+		case 'Holders Revenue':
+			return buildChainChartApiUrl(getFeeRevenueChainChartApiParams({ metric: chainHoldersRevenueMetric, chain }))
 		case 'App Fees':
 			return buildChainChartApiUrl(getFeeRevenueChainChartApiParams({ metric: appFeesMetric, chain }))
 		case 'App Revenue':
@@ -180,6 +183,7 @@ export type ChainChartSources = {
 	tokenPriceHistory: DenominationPriceHistory | null
 	chainFees: Series
 	chainRevenue: Series
+	holdersRevenue: Series
 	dexVolume: Series
 	perpsVolume: Series
 	appFees: Series
@@ -251,6 +255,7 @@ export function buildChainChartData({
 	}
 	addBarChart(chainFeesMetric.label, sources.chainFees)
 	addBarChart(chainRevenueMetric.label, sources.chainRevenue)
+	addBarChart(chainHoldersRevenueMetric.label, sources.holdersRevenue)
 	addBarChart('DEXs Volume', sources.dexVolume)
 	addBarChart('Perps Volume', sources.perpsVolume)
 	addBarChart(appFeesMetric.label, sources.appFees)

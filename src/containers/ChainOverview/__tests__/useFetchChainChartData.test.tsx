@@ -15,6 +15,7 @@ const http = installFixtureFetch()
 const charts = [
 	['Chain Fees', 1],
 	['Chain Revenue', 2],
+	['Holders Revenue', 11],
 	['App Fees', 3],
 	['App Revenue', 4],
 	['DEXs Volume', 5],
@@ -27,6 +28,9 @@ const charts = [
 const daySec = Date.UTC(2026, 0, 1) / 1e3
 
 test('each toggled chain chart shows the response of its own endpoint', async () => {
+	expect(getChainChartApiUrl('Holders Revenue', 'Ethereum')).toBe(
+		'/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=fees&protocol=Ethereum&dataType=dailyHoldersRevenue'
+	)
 	vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
 	const fixtures: Record<string, unknown> = {}
 	for (const [label, value] of charts)

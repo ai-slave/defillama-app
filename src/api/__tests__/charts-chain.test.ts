@@ -12,7 +12,9 @@ beforeEach(() =>
 	seed({
 		protocolMetadata: { aave: { name: 'aave', displayName: 'Aave' } },
 		protocolRouteIdBySlug: { aave: 'aave', 'aave-v3': 'aave' },
-		chainMetadata: { base: { name: 'Base', id: 'base', chainFees: true, chainRevenue: true } },
+		chainMetadata: {
+			base: { name: 'Base', id: 'base', chainFees: true, chainRevenue: true, chainHoldersRevenue: true }
+		},
 		chainRouteKeyBySlug: { base: 'base' },
 		emissionsProtocolBySlug: { aave: 'aave' }
 	})
@@ -38,7 +40,8 @@ describe('public chain charts', () => {
 	})
 	test.each([
 		['chainFees', undefined],
-		['chainRevenue', 'dailyRevenue']
+		['chainRevenue', 'dailyRevenue'],
+		['chainHoldersRevenue', 'dailyHoldersRevenue']
 	] as const)('requires the %s flag for native chain fee metrics', async (flag, dataType) => {
 		const query = { kind: 'adapter-protocol', adapterType: 'fees', protocol: 'Base', dataType }
 		const url = `${V2_SERVER_URL}/chart/fees/protocol/base${dataType ? `?dataType=${dataType}` : ''}`
@@ -49,17 +52,29 @@ describe('public chain charts', () => {
 		seed({ chainMetadata: { base: { name: 'Base', id: 'base', [flag]: false } } })
 		expect((await run({ ...query, entity: 'chain' })).status).toBe(404)
 	})
-	test.each(['dailyAppFees', 'dailyAppRevenue', 'dailyHoldersRevenue'])(
-		'does not treat %s as native chain revenue',
-		async (dataType) => {
-			const responses = await Promise.all(
-				['chain', undefined].map((entity) =>
-					run({ kind: 'adapter-protocol', adapterType: 'fees', dataType, protocol: 'Base', entity })
-				)
+	test('rejects holders revenue for a chain that has chain revenue but no holder series', async () => {
+		seed({ chainMetadata: { base: { name: 'Base', id: 'base', chainFees: true, chainRevenue: true } } })
+		const responses = await Promise.all(
+			['chain', undefined].map((entity) =>
+				run({
+					kind: 'adapter-protocol',
+					adapterType: 'fees',
+					dataType: 'dailyHoldersRevenue',
+					protocol: 'Base',
+					entity
+				})
 			)
-			expect(responses.map((response) => response.status)).toEqual([404, 404])
-		}
-	)
+		)
+		expect(responses.map((response) => response.status)).toEqual([404, 404])
+	})
+	test.each(['dailyAppFees', 'dailyAppRevenue'])('does not treat %s as native chain revenue', async (dataType) => {
+		const responses = await Promise.all(
+			['chain', undefined].map((entity) =>
+				run({ kind: 'adapter-protocol', adapterType: 'fees', dataType, protocol: 'Base', entity })
+			)
+		)
+		expect(responses.map((response) => response.status)).toEqual([404, 404])
+	})
 	test.each([
 		['active-users', undefined],
 		['new-users', undefined],

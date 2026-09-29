@@ -5,6 +5,7 @@ import {
 	getChainNativeFeeRevenueMetricForAdapterProtocol,
 	getFeeRevenueChainChartApiParams
 } from '~/metrics/routeSemantics'
+import type { IChainMetadata } from '~/utils/metadata/types'
 
 describe('fee/revenue metric semantics', () => {
 	test('keeps chain-native fees and revenue on adapter protocol chart paths', () => {
@@ -92,6 +93,17 @@ describe('fee/revenue metric semantics', () => {
 		).toBe(true)
 	})
 
+	test('offers chain holders revenue only for chains flagged with their own holder series', () => {
+		const offered = (metadata: IChainMetadata) =>
+			shouldFetchChainOverviewFeeRevenueMetric({
+				metric: feeRevenueMetrics.chainHoldersRevenue,
+				metadata,
+				chain: metadata.id
+			})
+		expect(offered({ id: 'base', name: 'Base', chainRevenue: true })).toBe(false)
+		expect(offered({ id: 'tron', name: 'Tron', chainRevenue: true, chainHoldersRevenue: true })).toBe(true)
+	})
+
 	test('does not fetch app aggregation metrics for the All chain overview', () => {
 		expect(
 			shouldFetchChainOverviewFeeRevenueMetric({
@@ -109,7 +121,7 @@ describe('fee/revenue metric semantics', () => {
 		).toBe(false)
 	})
 
-	test('maps only chain-native fees and revenue to adapter protocol chain fallback semantics', () => {
+	test('maps only chain-native fees, revenue and holders revenue to adapter protocol chain fallback semantics', () => {
 		expect(
 			getChainNativeFeeRevenueMetricForAdapterProtocol({
 				adapterType: ADAPTER_TYPES.FEES,
@@ -128,6 +140,12 @@ describe('fee/revenue metric semantics', () => {
 				dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
 			})
 		).toBe(feeRevenueMetrics.chainRevenue)
+		expect(
+			getChainNativeFeeRevenueMetricForAdapterProtocol({
+				adapterType: ADAPTER_TYPES.FEES,
+				dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+			})
+		).toBe(feeRevenueMetrics.chainHoldersRevenue)
 		expect(
 			getChainNativeFeeRevenueMetricForAdapterProtocol({
 				adapterType: ADAPTER_TYPES.FEES,

@@ -1,9 +1,9 @@
-export type FeeRevenueMetricId = 'chainFees' | 'chainRevenue' | 'appFees' | 'appRevenue' | 'rev'
+export type FeeRevenueMetricId = 'chainFees' | 'chainRevenue' | 'chainHoldersRevenue' | 'appFees' | 'appRevenue' | 'rev'
 export type ChainOverviewFeeRevenueMetricId = Exclude<FeeRevenueMetricId, 'rev'>
-export type FeeRevenueChartLabel = 'Chain Fees' | 'Chain Revenue' | 'App Fees' | 'App Revenue'
+export type FeeRevenueChartLabel = 'Chain Fees' | 'Chain Revenue' | 'Holders Revenue' | 'App Fees' | 'App Revenue'
 export type FeeRevenueRankingLabel = FeeRevenueChartLabel | 'REV'
 export type FeeRevenueConcept = 'chain-native' | 'app-aggregation' | 'rev'
-export type FeeRevenueMetadataFlag = 'chainFees' | 'chainRevenue' | 'fees' | 'revenue'
+export type FeeRevenueMetadataFlag = 'chainFees' | 'chainRevenue' | 'chainHoldersRevenue' | 'fees' | 'revenue'
 export type FeeRevenueRankingRoute =
 	| '/fees/chains'
 	| '/revenue/chains'
@@ -41,7 +41,7 @@ export type AdapterProtocolChainChartSource = {
 	kind: 'adapter-protocol'
 	entity: 'chain'
 	adapterType: FeeRevenueAdapterType
-	dataType?: 'dailyRevenue'
+	dataType?: 'dailyRevenue' | 'dailyHoldersRevenue'
 }
 
 export type AdapterChainChartSource = {
@@ -55,7 +55,8 @@ export type FeeRevenueChartSource = AdapterProtocolChainChartSource | AdapterCha
 export type ChainOverviewFeeRevenueSemantics = {
 	chartKey: string
 	queryKey: string
-	phase: string
+	// Names the server request's timing; only metrics the server fetches have one.
+	phase?: string
 	excludeAllChains: boolean
 	source: FeeRevenueChartSource
 }
@@ -65,7 +66,8 @@ export type FeeRevenueMetric = {
 	label: FeeRevenueRankingLabel
 	concept: FeeRevenueConcept
 	metadataFlag: FeeRevenueMetadataFlag
-	ranking: FeeRevenueRankingSemantics
+	// Chain Holders Revenue has no chain-native ranking page.
+	ranking?: FeeRevenueRankingSemantics
 	chainOverview?: ChainOverviewFeeRevenueSemantics
 }
 
@@ -76,9 +78,9 @@ export type ChainOverviewFeeRevenueMetric = FeeRevenueMetric & {
 }
 
 export type ChainNativeFeeRevenueMetric = ChainOverviewFeeRevenueMetric & {
-	id: 'chainFees' | 'chainRevenue'
+	id: 'chainFees' | 'chainRevenue' | 'chainHoldersRevenue'
 	concept: 'chain-native'
-	metadataFlag: 'chainFees' | 'chainRevenue'
+	metadataFlag: 'chainFees' | 'chainRevenue' | 'chainHoldersRevenue'
 	chainOverview: ChainOverviewFeeRevenueSemantics & {
 		source: AdapterProtocolChainChartSource
 	}

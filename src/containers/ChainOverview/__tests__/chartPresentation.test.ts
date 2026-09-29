@@ -8,6 +8,11 @@ const seriesSummary = (presentation: ReturnType<typeof buildChainChartPresentati
 	presentation.charts.map((chart) => [chart.name, chart.type, chart.yAxisIndex])
 
 describe('chain chart presentation', () => {
+	test('gives every chain metric its own color so toggled series stay distinguishable', () => {
+		const colors = Object.values(chainOverviewChartColors)
+		expect(new Set(colors).size).toBe(colors.length)
+	})
+
 	test('keeps sparse per-metric data and gives each metric its own type and axis', () => {
 		const presentation = buildChainChartPresentation(
 			{
@@ -20,6 +25,7 @@ describe('chain chart presentation', () => {
 					[2000, 3]
 				],
 				'Chain Revenue': [[1000, 1]],
+				'Holders Revenue': [[1000, 0.5]],
 				'Active Addresses': [[2000, 100]]
 			},
 			'daily'
@@ -29,6 +35,7 @@ describe('chain chart presentation', () => {
 			['TVL', 'line', 0],
 			['Chain Fees', 'bar', 1],
 			['Chain Revenue', 'bar', 1],
+			['Holders Revenue', 'bar', 1],
 			['Active Addresses', 'bar', 2]
 		])
 		expect(presentation.charts[0]?.data).toEqual([
@@ -52,6 +59,20 @@ describe('chain chart presentation', () => {
 			['Chain Fees', 'line', 1],
 			['Core Developers', 'bar', 2]
 		])
+	})
+
+	test('shows a holders-revenue-only burn chart with the correct axis color', () => {
+		const presentation = buildChainChartPresentation({ 'Holders Revenue': [[1000, 500]] }, 'daily')
+		const axes = buildChainYAxis({
+			allYAxis: presentation.allYAxis,
+			baseYAxis: {},
+			chartColors: chainOverviewChartColors,
+			chartsInSeries: presentation.chartsInSeries,
+			themeText: '#000'
+		})
+		expect(seriesSummary(presentation)).toEqual([['Holders Revenue', 'bar', 0]])
+		expect(presentation.charts[0]?.data).toEqual([[1000, 500]])
+		expect(axes[0]?.axisLine?.lineStyle?.color).toBe(chainOverviewChartColors['Holders Revenue'])
 	})
 
 	test('keeps converted and intrinsically USD series units distinct on axes and tooltips', () => {

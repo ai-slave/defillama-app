@@ -21,6 +21,7 @@ import { buildChainTvlChartState } from './tvlChart'
 
 const chainFeesMetric = feeRevenueMetrics.chainFees
 const chainRevenueMetric = feeRevenueMetrics.chainRevenue
+const chainHoldersRevenueMetric = feeRevenueMetrics.chainHoldersRevenue
 const appFeesMetric = feeRevenueMetrics.appFees
 const appRevenueMetric = feeRevenueMetrics.appRevenue
 
@@ -116,6 +117,16 @@ export const useFetchChainChartData = ({
 		retry: 0,
 		enabled: isChainRevenueEnabled
 	})
+	const { data: holdersRevenueDataChart = null, isLoading: fetchingHoldersRevenue } = useQuery<Array<[number, number]>>(
+		{
+			queryKey: ['chain-overview', chainHoldersRevenueMetric.chainOverview.queryKey, selectedChain],
+			queryFn: () => fetchJson(getChainChartApiUrl(chainHoldersRevenueMetric.label, selectedChain)),
+			staleTime: 60 * 60 * 1000,
+			refetchOnWindowFocus: false,
+			retry: 0,
+			enabled: toggledChartsSet.has(chainHoldersRevenueMetric.label)
+		}
+	)
 
 	const isDexVolumeEnabled = toggledChartsSet.has('DEXs Volume')
 	const { data: dexVolumeDataChart = null, isLoading: fetchingDexVolume } = useQuery<Array<[number, number]>>({
@@ -249,6 +260,7 @@ export const useFetchChainChartData = ({
 		if (fetchingTokenPriceHistory) loadingCharts.push('Token Price')
 		if (fetchingChainFees) loadingCharts.push(chainFeesMetric.label)
 		if (fetchingChainRevenue) loadingCharts.push(chainRevenueMetric.label)
+		if (fetchingHoldersRevenue) loadingCharts.push(chainHoldersRevenueMetric.label)
 		if (fetchingDexVolume) loadingCharts.push('DEXs Volume')
 		if (fetchingPerpVolume) loadingCharts.push('Perps Volume')
 		if (fetchingChainAppFees) loadingCharts.push(appFeesMetric.label)
@@ -275,6 +287,7 @@ export const useFetchChainChartData = ({
 				tokenPriceHistory,
 				chainFees: chainFeesDataChart,
 				chainRevenue: chainRevenueDataChart,
+				holdersRevenue: holdersRevenueDataChart,
 				dexVolume: dexVolumeDataChart,
 				perpsVolume: perpsVolumeDataChart,
 				appFees: chainAppFeesDataChart,
@@ -294,6 +307,7 @@ export const useFetchChainChartData = ({
 		fetchingTokenPriceHistory,
 		fetchingChainFees,
 		fetchingChainRevenue,
+		fetchingHoldersRevenue,
 		fetchingDexVolume,
 		fetchingPerpVolume,
 		fetchingChainAppFees,
@@ -317,6 +331,7 @@ export const useFetchChainChartData = ({
 		tokenPriceHistory,
 		chainFeesDataChart,
 		chainRevenueDataChart,
+		holdersRevenueDataChart,
 		dexVolumeDataChart,
 		perpsVolumeDataChart,
 		chainAppFeesDataChart,
