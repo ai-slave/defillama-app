@@ -11,10 +11,7 @@ export function StatsCard({
 	subtle?: string
 	variant?: 'default' | 'highlight'
 }) {
-	const valueClass =
-		variant === 'highlight'
-			? 'font-jetbrains text-2xl font-semibold text-primary'
-			: 'font-jetbrains text-xl font-semibold text-primary'
+	const valueClass = variant === 'highlight' ? 'text-primary mono-xl' : 'text-primary mono-lg'
 
 	return (
 		<Card as="dl" padding="sm" className="flex min-h-[86px] flex-col gap-1 transition-colors duration-200">

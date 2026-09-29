@@ -22,7 +22,8 @@
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
 		"chart-toolbar-auto-margin": 0,
-		"conflicting-named-typography": 31
+		"conflicting-named-typography": 30,
+		"off-scale-mono-weight": 0
 	},
 	"product": {
 		"hex-in-classname": 36,
@@ -47,6 +48,7 @@
 		"surface-chrome-override": 0,
 		"toolbar-justify-override": 0,
 		"chart-toolbar-auto-margin": 0,
-		"conflicting-named-typography": 0
+		"conflicting-named-typography": 0,
+		"off-scale-mono-weight": 0
 	}
 }

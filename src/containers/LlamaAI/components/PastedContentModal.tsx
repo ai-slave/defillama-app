@@ -156,7 +156,7 @@ function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps
 					render={<pre />}
 					role="document"
 					aria-label="File content"
-					className={`${CODE_BLOCK} min-h-0 overscroll-contain focus-visible:focus-ring ${preview.isPasted ? 'font-sans! body-md!' : 'mono-md!'} ${isCsv ? 'whitespace-pre!' : ''}`}
+					className={`${CODE_BLOCK} min-h-0 overscroll-contain focus-visible:focus-ring ${preview.isPasted ? 'body-md! font-sans!' : 'mono-md!'} ${isCsv ? 'whitespace-pre!' : ''}`}
 				>
 					{preview.content}
 				</Ariakit.Focusable>

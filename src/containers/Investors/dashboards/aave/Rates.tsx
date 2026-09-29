@@ -333,17 +333,17 @@ export default function Rates() {
 						</h3>
 						{kpis?.optimalUtil && (
 							<span className="text-[11px] text-pro-text-tertiary">
-								Optimal <span className="font-jetbrains font-semibold text-pro-text-secondary">{kpis.optimalUtil}</span>
+								Optimal <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.optimalUtil}</span>
 							</span>
 						)}
 						{kpis?.slope1 && (
 							<span className="text-[11px] text-pro-text-tertiary">
-								Slope 1 <span className="font-jetbrains font-semibold text-pro-text-secondary">{kpis.slope1}</span>
+								Slope 1 <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.slope1}</span>
 							</span>
 						)}
 						{kpis?.slope2 && (
 							<span className="text-[11px] text-pro-text-tertiary">
-								Slope 2 <span className="font-jetbrains font-semibold text-pro-text-secondary">{kpis.slope2}</span>
+								Slope 2 <span className="font-jetbrains font-bold text-pro-text-secondary">{kpis.slope2}</span>
 							</span>
 						)}
 					</div>

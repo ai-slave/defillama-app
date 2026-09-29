@@ -52,7 +52,7 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 					<Ariakit.TooltipAnchor render={<summary className="flex flex-col" />}>
 						<span className="text-secondary underline decoration-dotted">{definitions.totalVolume24h.label}</span>
 						<span className="flex items-center gap-2">
-							<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+							<span className="min-h-8 mono-xl">
 								{formatUsd(summary.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 							</span>
 							<Icon

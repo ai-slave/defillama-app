@@ -17,7 +17,7 @@ interface HeroMetricProps {
 
 /** Headline stat at the top of a summary card: big value, optionally expanding to per-chain rows. */
 export function HeroMetric({ label, tooltip, value, byChain, byChainTitle }: HeroMetricProps) {
-	const valueEl = <StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">{value}</StaleText>
+	const valueEl = <StaleText className="min-h-8 mono-xl">{value}</StaleText>
 
 	if (!byChain || byChain.length === 0) {
 		return (

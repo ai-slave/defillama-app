@@ -42,9 +42,7 @@ export function ArticleEditorPreview({
 							<Icon name="eye" className="size-4 text-link" />
 						</div>
 						<div className="min-w-0 flex-1">
-							<div className="font-jetbrains text-[10px] font-medium tracking-[0.24em] text-tertiary uppercase">
-								Rendered proof
-							</div>
+							<div className="font-jetbrains text-[10px] tracking-[0.24em] text-tertiary uppercase">Rendered proof</div>
 							<div className="text-sm leading-snug font-medium break-words text-primary" title={article.title}>
 								{article.title || 'Untitled research'}
 							</div>

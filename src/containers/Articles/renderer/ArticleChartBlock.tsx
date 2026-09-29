@@ -170,7 +170,7 @@ export function ArticleChartBlock({
 					{latestLabel ? (
 						<div className="flex flex-col leading-tight">
 							<span className="font-jetbrains text-[9px] tracking-[0.2em] text-tertiary uppercase">Latest</span>
-							<span className="font-jetbrains text-base font-semibold text-primary tabular-nums">{latestLabel}</span>
+							<span className="font-jetbrains text-base font-bold text-primary tabular-nums">{latestLabel}</span>
 						</div>
 					) : null}
 					{figureLabel ? (
@@ -253,9 +253,7 @@ export function ArticleChartBlock({
 					{config.annotations.map((a, i) => (
 						// oxlint-disable-next-line react/no-array-index-key -- Lettered annotation legend slots may share dates and labels.
 						<li key={`${a.date}-${i}`} className="flex gap-2">
-							<span className="font-jetbrains text-[10px] font-semibold text-tertiary">
-								{String.fromCharCode(65 + i)}
-							</span>
+							<span className="font-jetbrains text-[10px] font-bold text-tertiary">{String.fromCharCode(65 + i)}</span>
 							<span className="font-jetbrains text-[10px] text-tertiary">{formatDate(a.date)}</span>
 							<span className="text-secondary">{a.label}</span>
 						</li>

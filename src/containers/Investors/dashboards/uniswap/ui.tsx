@@ -242,9 +242,7 @@ function KpiCard({ label, value, def }: { label: string; value: string; def?: st
 					</Tooltip>
 				)}
 			</span>
-			<span className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
-				{value}
-			</span>
+			<span className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</span>
 		</div>
 	)
 }
@@ -368,11 +366,7 @@ export function ChartCard({
 					)}
 				</div>
 				<div className="flex shrink-0 items-center gap-3">
-					{value && (
-						<p className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
-							{value}
-						</p>
-					)}
+					{value && <p className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
 					{control}
 				</div>
 			</div>

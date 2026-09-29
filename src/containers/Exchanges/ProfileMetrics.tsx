@@ -169,7 +169,7 @@ export function ProfileMetrics({
 					>
 						<span className="flex w-full items-center gap-2">
 							{profile.quality.tier ? <TierBadge tier={profile.quality.tier} /> : null}
-							<span className="font-jetbrains text-xl leading-none font-semibold">
+							<span className="font-jetbrains text-xl leading-none font-bold">
 								{formatNumber(profile.quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
 							<span className="body-sm text-tertiary">/ 100</span>
@@ -185,9 +185,7 @@ export function ProfileMetrics({
 			<div className="flex flex-col">
 				<span className="body-sm text-secondary">24h Volume{showGlobalLabel ? ' · Global' : ''}</span>
 				<span className="flex flex-wrap items-baseline gap-2">
-					<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-						{formatUsd(totalVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
-					</span>
+					<span className="min-h-8 mono-xl">{formatUsd(totalVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</span>
 					{volumeChange != null ? <ChangePct value={volumeChange} /> : null}
 				</span>
 			</div>

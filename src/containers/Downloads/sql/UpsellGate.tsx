@@ -185,7 +185,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 				<header className="flex flex-col gap-5">
 					<div className="flex items-center gap-2">
 						<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
-						<span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-sub-brand-primary uppercase">
+						<span className="font-mono text-[11px] font-bold tracking-[0.18em] text-sub-brand-primary uppercase">
 							API plan
 						</span>
 					</div>
@@ -203,7 +203,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 			<section className="flex flex-col gap-6">
 				<div className="flex items-baseline justify-between gap-3">
-					<h3 className="font-mono text-[11px] font-semibold tracking-[0.18em] text-pro-text-tertiary uppercase">
+					<h3 className="font-mono text-[11px] font-bold tracking-[0.18em] text-pro-text-tertiary uppercase">
 						Everything in SQL Studio
 					</h3>
 					<span className="hidden text-xs text-pro-text-tertiary sm:inline">
@@ -225,7 +225,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 		<div className="flex flex-col gap-6 rounded-xl border border-sub-brand-primary/30 bg-surface p-6 shadow-sm lg:sticky lg:top-4">
 			<div className="flex items-center gap-2">
 				<span aria-hidden className="inline-block size-1.5 rounded-full bg-sub-brand-primary" />
-				<span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-sub-brand-primary uppercase">
+				<span className="font-mono text-[11px] font-bold tracking-[0.18em] text-sub-brand-primary uppercase">
 					API plan
 				</span>
 			</div>
@@ -243,7 +243,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 			</div>
 
 			<div className="flex flex-col gap-3 border-t border-subtle pt-5">
-				<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-pro-text-tertiary uppercase">
+				<span className="font-mono text-[10px] font-bold tracking-[0.18em] text-pro-text-tertiary uppercase">
 					What's included
 				</span>
 				<ul className="flex flex-col gap-2.5">
@@ -287,7 +287,7 @@ function FeatureTile({
 }) {
 	return (
 		<div className="group flex gap-4 border-t border-subtle py-5 transition-colors hover:border-sub-brand-primary/40">
-			<span className="font-mono text-[11px] font-semibold text-pro-text-tertiary/70 tabular-nums">
+			<span className="font-mono text-[11px] font-bold text-pro-text-tertiary/70 tabular-nums">
 				{String(index).padStart(2, '0')}
 			</span>
 			<div className="flex flex-col gap-1.5">
@@ -530,7 +530,7 @@ function ChartNotebookCell() {
 			<div className="px-3 pb-3 pl-9">
 				<div className="rounded-md border border-subtle bg-pro-app-bg/30 px-3 pt-3">
 					<div className="mb-2 flex items-baseline justify-between">
-						<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-pro-text-tertiary uppercase">
+						<span className="font-mono text-[10px] font-bold tracking-[0.18em] text-pro-text-tertiary uppercase">
 							30d fees by protocol
 						</span>
 						<span className="font-mono text-[10px] text-pro-text-tertiary tabular-nums">bar · top 7</span>
@@ -615,7 +615,7 @@ function QueryBody() {
 			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-sub-brand-primary" />
-					<span className="truncate font-mono text-xs font-medium text-pro-text-secondary">fees-vs-revenue.sql</span>
+					<span className="truncate font-mono text-xs text-pro-text-secondary">fees-vs-revenue.sql</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 text-[11px]">
 					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
@@ -669,7 +669,7 @@ function QueryBody() {
 
 			<div className="flex flex-col gap-3 px-4 py-3.5">
 				<div className="flex items-baseline justify-between">
-					<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-pro-text-tertiary uppercase">
+					<span className="font-mono text-[10px] font-bold tracking-[0.18em] text-pro-text-tertiary uppercase">
 						30d fees by protocol
 					</span>
 					<span className="font-mono text-[10px] text-pro-text-tertiary tabular-nums">bar · top 7</span>
@@ -686,7 +686,7 @@ function AltQueryBody() {
 			<div className="flex items-center justify-between gap-3 border-b border-subtle bg-pro-app-bg/30 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
-					<span className="truncate font-mono text-xs font-medium text-pro-text-secondary">chains-tvl.sql</span>
+					<span className="truncate font-mono text-xs text-pro-text-secondary">chains-tvl.sql</span>
 					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-pro-premium-300" />
 					<span className="font-mono text-[10px] tracking-[0.12em] text-pro-premium-300 uppercase">unsaved</span>
 				</div>
@@ -741,9 +741,9 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-semibold text-pro-text-primary">{col.name}</span>
+									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-pro-text-tertiary/80">
+								<span className="truncate font-mono text-[10px] tracking-tight text-pro-text-tertiary/80">
 									{col.type}
 								</span>
 							</div>
@@ -827,7 +827,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 									style={{ height: Math.max(h, 1.5) }}
 								/>
 								<span
-									className="absolute truncate font-mono text-[10px] font-medium text-pro-text-tertiary"
+									className="absolute truncate font-mono text-[10px] text-pro-text-tertiary"
 									style={{ top: '100%', marginTop: 6, maxWidth: '100%' }}
 								>
 									{b.label}

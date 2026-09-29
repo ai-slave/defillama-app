@@ -64,6 +64,8 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 @theme {
 	--font-inter: Inter var, 'Inter-fallback', sans-serif;
 	--font-jetbrains: JetBrains Mono, monospace;
+	/* One mono font: Tailwind's font-mono would otherwise fall back to the system monospace (SF Mono, Consolas). */
+	--font-mono: var(--font-jetbrains);
 
 	/* Repository-owned application radius contracts. */
 	--radius-lg: 0.5rem; /* 8px at the standard root: cards, panels, inputs, medium controls */
@@ -442,10 +444,12 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 		src: url('/fonts/inter.woff2') format('woff2');
 	}
 
+	/* The shipped file is the variable font (wght axis 100-800). A single weight here would tell the browser
+	   the face is 800 only, and every mono weight would render at 800. */
 	@font-face {
 		font-family: 'JetBrains Mono';
 		font-style: normal;
-		font-weight: 800;
+		font-weight: 100 800;
 		font-display: swap;
 		src: url('/fonts/jetbrains.ttf') format('truetype');
 	}

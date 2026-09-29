@@ -503,11 +503,7 @@ function LedgerColumn({
 	return (
 		<section className="p-4 sm:p-5">
 			<p className="label-xs font-semibold tracking-[0.08em] text-tertiary uppercase">{label}</p>
-			<p
-				className="mt-2 font-jetbrains text-xl font-extrabold tracking-tight text-primary tabular-nums"
-				aria-live="polite"
-				aria-atomic="true"
-			>
+			<p className="mt-2 mono-lg tracking-tight text-primary tabular-nums" aria-live="polite" aria-atomic="true">
 				<span key={displayValue} className="attn-total-dissolve">
 					{displayValue}
 				</span>
@@ -712,7 +708,7 @@ function ReconciliationLedger() {
 					</span>
 					<div className="min-w-0 text-right">
 						<p className="label-xs text-tertiary">Verified surplus</p>
-						<p className="attn-equation-value mt-1 truncate font-jetbrains font-extrabold text-data-up tabular-nums">
+						<p className="attn-equation-value mt-1 truncate font-jetbrains font-bold text-data-up tabular-nums">
 							<AuditValue
 								key={`surplus-${run}`}
 								prefix="+$"
@@ -730,7 +726,7 @@ function ReconciliationLedger() {
 				>
 					<div>
 						<p className="label-xs font-semibold tracking-[0.08em] text-tertiary uppercase">Coverage</p>
-						<p className="mt-1 font-jetbrains text-3xl font-extrabold text-primary tabular-nums" aria-hidden>
+						<p className="mt-1 font-jetbrains text-3xl font-bold text-primary tabular-nums" aria-hidden>
 							{coverageLabel}
 						</p>
 						<span className="sr-only">167 percent coverage</span>
@@ -808,7 +804,7 @@ function VenueFlow() {
 			</div>
 			<div className="my-3 text-center text-lg text-tertiary">↓</div>
 			<p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-center">
-				<span className="flex items-center gap-2.5 font-jetbrains text-2xl font-extrabold text-primary tabular-nums">
+				<span className="flex items-center gap-2.5 mono-xl text-primary tabular-nums">
 					<CheckIcon className="size-5 text-data-up" />
 					NAV $86,412,904
 				</span>
@@ -1403,7 +1399,7 @@ export default function VerifiedLanding() {
 									{howSteps.map((step) => (
 										<div key={step.number} className="border-t border-subtle pt-5">
 											<div className="flex items-baseline justify-between gap-3">
-												<span className="font-jetbrains label-sm font-bold text-tertiary">{step.number}</span>
+												<span className="mono-sm-bold text-tertiary">{step.number}</span>
 												<span className="label-xs font-semibold tracking-[0.08em] text-link uppercase">
 													{step.label}
 												</span>

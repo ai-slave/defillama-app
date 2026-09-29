@@ -53,7 +53,7 @@ function HistoryRecord({ details, amount }: { details: ReactNode; amount: ReactN
 	return (
 		<div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 p-3 hover:bg-hover-row">
 			<div className="min-w-0">{details}</div>
-			<div className="text-right font-jetbrains font-semibold">{amount}</div>
+			<div className="text-right font-jetbrains font-bold">{amount}</div>
 		</div>
 	)
 }
@@ -76,11 +76,11 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 				<div className="grid grid-cols-1 sm:grid-cols-2">
 					<div className="p-3">
 						<p className="label-sm text-tertiary">Funds lost in recorded hacks</p>
-						<p className="mt-1 font-jetbrains text-xl font-semibold">{hackedTotalLabel}</p>
+						<p className="mt-1 mono-lg">{hackedTotalLabel}</p>
 					</div>
 					<div className="border-t border-subtle p-3 sm:border-t-0 sm:border-l">
 						<p className="label-sm text-tertiary">Total disclosed raises</p>
-						<p className="mt-1 font-jetbrains text-xl font-semibold">
+						<p className="mt-1 mono-lg">
 							{profile.raises.length > 0 ? (
 								<RaisesTotal {...summarizeRaises(profile.raises)} />
 							) : (

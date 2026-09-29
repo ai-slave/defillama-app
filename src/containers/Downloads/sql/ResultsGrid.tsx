@@ -81,9 +81,9 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-semibold text-pro-text-primary">{col.name}</span>
+									<span className="truncate font-mono font-bold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-pro-text-tertiary/80">
+								<span className="truncate font-mono text-[10px] tracking-tight text-pro-text-tertiary/80">
 									{col.type}
 								</span>
 							</div>

@@ -58,7 +58,7 @@ export function SeriesChip({
 					onClick={toggleKind}
 					aria-label={`Series ${name} type: ${kind}`}
 					title={`Series type: ${kind}`}
-					className="flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg font-mono label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
+					className="flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
 				>
 					{kind === 'line' ? '—' : '▮'}
 				</button>
@@ -70,7 +70,7 @@ export function SeriesChip({
 					aria-label={`Use right axis for ${name}`}
 					aria-pressed={isRight}
 					title={`Axis: ${isRight ? 'right' : 'left'}`}
-					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono label-sm transition-colors ${
+					className={`flex h-4 w-5 items-center justify-center rounded-sm border label-sm transition-colors ${
 						isRight
 							? 'border-brand bg-brand text-on-brand'
 							: 'border-subtle bg-pro-app-bg text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'

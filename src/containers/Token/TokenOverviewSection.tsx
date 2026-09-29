@@ -218,7 +218,7 @@ export function TokenPageHero({
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
 						<span className="basis-full text-secondary">Token Price</span>
-						<StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">
+						<StaleText className="min-h-8 mono-xl">
 							{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 						</StaleText>
 						<Icon
@@ -270,7 +270,7 @@ export function TokenPageHero({
 			) : (
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 					<span className="basis-full text-secondary">Token Price</span>
-					<StaleText className="min-h-8 font-jetbrains text-2xl font-semibold">
+					<StaleText className="min-h-8 mono-xl">
 						{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					</StaleText>
 					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}

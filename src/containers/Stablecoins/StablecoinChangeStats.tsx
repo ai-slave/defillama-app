@@ -18,7 +18,7 @@ function ChangeValue({ stat, prominent = false }: { stat: ValidChangeStat; promi
 			<span className="flex w-full flex-col">
 				<span className="text-secondary">Change ({stat.days}d)</span>
 				<span className="flex flex-nowrap items-end justify-between gap-1">
-					<span className="font-jetbrains text-2xl font-semibold">{stat.absolute}</span>
+					<span className="mono-xl">{stat.absolute}</span>
 					<span className={`${color} truncate font-jetbrains`}>
 						{formatPercent(stat.percent, { input: 'percent' })}
 					</span>

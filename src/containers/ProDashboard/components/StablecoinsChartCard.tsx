@@ -225,7 +225,7 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 					<div className="mb-2 flex gap-4">
 						<div className="flex flex-col">
 							<span className="text-xs text-pro-text-tertiary uppercase">Total Market Cap</span>
-							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
+							<span className="font-jetbrains text-sm font-bold" style={{ color: '#3e79cc' }}>
 								{formatUsd(latestMcap, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 							</span>
 						</div>

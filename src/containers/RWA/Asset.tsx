@@ -772,7 +772,7 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 									>
 										{definitions.isin.label}
 									</Tooltip>
-									<span className="font-mono font-medium">{asset.isin}</span>
+									<span className="font-mono">{asset.isin}</span>
 								</p>
 							) : null}
 							{asset.issuerRegistryInfo && asset.issuerRegistryInfo.length > 0 ? (

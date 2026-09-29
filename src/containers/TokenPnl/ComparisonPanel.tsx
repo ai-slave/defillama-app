@@ -31,7 +31,7 @@ export function ComparisonPanel({ entries, activeId }: { entries: Array<Comparis
 								) : null}
 								<span className="label-sm text-primary uppercase">{entry.symbol}</span>
 							</div>
-							<p className={`font-jetbrains text-2xl font-semibold ${isPositive ? 'text-data-up' : 'text-data-down'}`}>
+							<p className={`${isPositive ? 'text-data-up' : 'text-data-down'} mono-xl`}>
 								{formatPnlPercent(entry.percentChange)}
 							</p>
 							<p className="body-xs text-secondary">{`${isPositive ? '+$' : '-$'}${absChange}`}</p>

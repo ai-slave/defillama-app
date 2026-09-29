@@ -75,7 +75,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
 										<span className="text-secondary">Flows</span>
 										<span
-											className={`ml-auto font-jetbrains text-base font-medium ${assetFlows > 0 ? 'text-data-up' : assetFlows < 0 ? 'text-data-down' : ''}`}
+											className={`ml-auto font-jetbrains text-base ${assetFlows > 0 ? 'text-data-up' : assetFlows < 0 ? 'text-data-down' : ''}`}
 										>
 											{formatUsd(assetFlows, {
 												compact: true,
@@ -86,7 +86,7 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 									</p>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
 										<span className="text-secondary">AUM</span>
-										<span className="ml-auto font-jetbrains text-base font-medium">
+										<span className="ml-auto font-jetbrains text-base">
 											{formatUsd(aum, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 										</span>
 									</p>

@@ -280,7 +280,7 @@ function HeroMock() {
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 font-mono text-xs font-semibold text-sub-live ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
+						className={`flex items-center px-3 py-2.5 font-mono text-xs text-sub-live ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''} font-bold`}
 					>
 						{row.value}
 					</div>

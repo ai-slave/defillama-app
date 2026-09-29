@@ -172,7 +172,7 @@ function matchDeprecatedTailwindSpelling(content) {
 }
 
 const NAMED_TYPOGRAPHY_UTILITY =
-	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|md(?:-bold)?|sm(?:-bold)?))$/
+	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|lg|md(?:-bold)?|sm(?:-bold)?))$/
 // text-[…] counts as typography only when the arbitrary value is not a color
 // (text-[#999], text-[rgba(…)], text-[var(--x)] set color, not size).
 const RAW_TYPOGRAPHY_UTILITY =
@@ -202,6 +202,23 @@ function matchConflictingNamedTypography(content) {
 		for (const { named, raw } of scopes.values()) {
 			if (named.length > 1 || (named.length > 0 && raw.length > 0)) found.push(named[0])
 		}
+	}
+	return found.length > 0 ? found : null
+}
+
+// Mono has two weights: 400 for every figure and 700 for the number a block exists to show. A
+// font-jetbrains/font-mono class string that picks any other weight is flagged; use mono-* or font-bold.
+const MONO_FAMILY = /(?:^|\s)font-(?:jetbrains|mono)(?=\s|$)/
+const OFF_SCALE_MONO_WEIGHT = /(?:^|\s)font-(?:thin|extralight|light|medium|semibold|extrabold|black)(?=\s|$)/
+function matchOffScaleMonoWeight(content) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		// Like the named-typography rule, skip dynamic templates: their branches are not one class set.
+		if (literal.startsWith('`') && literal.includes('${')) continue
+		const body = literal.slice(1, -1)
+		if (MONO_FAMILY.test(body) && OFF_SCALE_MONO_WEIGHT.test(body))
+			found.push(body.match(OFF_SCALE_MONO_WEIGHT)[0].trim())
 	}
 	return found.length > 0 ? found : null
 }
@@ -365,6 +382,12 @@ const RULES = [
 		description:
 			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
 		match: matchConflictingNamedTypography
+	},
+	{
+		id: 'off-scale-mono-weight',
+		description:
+			'mono uses two weights: 400 for figures, 700 for the headline number; use mono-* (mono-xl, mono-lg, mono-*-bold) or font-bold, never medium, semibold or extrabold',
+		match: matchOffScaleMonoWeight
 	}
 ]
 

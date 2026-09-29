@@ -27,14 +27,10 @@ export function KpiCard({
 				)}
 			</span>
 			<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-				<span className="font-mono text-2xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
-					{value}
-				</span>
+				<span className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</span>
 				{change && (
 					<span
-						className={`flex items-center gap-0.5 font-mono text-xs font-medium tabular-nums ${
-							change.value >= 0 ? 'text-success' : 'text-error'
-						}`}
+						className={`flex items-center gap-0.5 font-mono text-xs tabular-nums ${change.value >= 0 ? 'text-success' : 'text-error'}`}
 					>
 						<span aria-hidden>{change.value >= 0 ? '▲' : '▼'}</span>
 						{change.formatted}
@@ -77,9 +73,7 @@ export function ChartCard({
 					</h3>
 					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-label">{subtitle}</p>}
 				</div>
-				{value && (
-					<p className="font-mono text-2xl font-semibold tracking-tight text-pro-text-primary tabular-nums">{value}</p>
-				)}
+				{value && <p className="mono-xl tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
 			</div>
 			{children}
 		</div>

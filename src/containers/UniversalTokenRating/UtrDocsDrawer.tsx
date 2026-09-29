@@ -145,7 +145,7 @@ function DocBlock({ block, chapterId }: { block: UtrDocBlock; chapterId: string 
 				</p>
 			)
 		case 'formula':
-			return <p className="font-jetbrains text-base font-normal text-secondary italic">{block.text}</p>
+			return <p className="font-jetbrains text-base text-secondary italic">{block.text}</p>
 		case 'bullets':
 			return <DocList ordered={false} items={block.items} />
 		case 'numbered':

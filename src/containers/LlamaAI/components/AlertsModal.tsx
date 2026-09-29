@@ -794,7 +794,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 								>
 									<div className="flex items-baseline gap-2">
 										<span className="font-mono text-xs text-primary">{formatExecDate(exec.executed_at)}</span>
-										<span className="font-mono label-xs text-tertiary">{formatDuration(exec.duration_ms)}</span>
+										<span className="label-xs text-tertiary">{formatDuration(exec.duration_ms)}</span>
 									</div>
 									<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>
 										{execChipLabel(exec.status)}

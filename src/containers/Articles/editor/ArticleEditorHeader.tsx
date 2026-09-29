@@ -131,9 +131,7 @@ export function ArticleEditorHeader({
 					·
 				</span>
 				<span
-					className={`font-jetbrains text-[10px] font-medium tracking-[0.22em] uppercase ${
-						isPublished ? 'text-success' : articleIsScheduled ? 'text-link' : 'text-warning'
-					}`}
+					className={`font-jetbrains text-[10px] tracking-[0.22em] uppercase ${isPublished ? 'text-success' : articleIsScheduled ? 'text-link' : 'text-warning'}`}
 					title={articleIsScheduled ? `Scheduled for ${formatArticleDate(article.goLiveAt)}` : undefined}
 				>
 					{articleIsScheduled ? 'draft · scheduled' : article.status}

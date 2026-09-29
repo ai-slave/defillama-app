@@ -182,9 +182,7 @@ function KpiCard({ label, value, sub, def }: { label: string; value: string; sub
 					</Tooltip>
 				)}
 			</span>
-			<span className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
-				{value}
-			</span>
+			<span className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</span>
 			{sub && <span className="font-jetbrains text-[11px] text-pro-text-tertiary tabular-nums">{sub}</span>}
 		</div>
 	)
@@ -244,7 +242,7 @@ export function Kpi({
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-pro-cards-border bg-pro-cards-bg p-4">
 			<span className="text-[11px] font-medium tracking-wider text-pro-text-tertiary uppercase">{label}</span>
-			<span className="font-jetbrains text-xl font-semibold text-tertiary tabular-nums">—</span>
+			<span className="mono-lg text-tertiary tabular-nums">—</span>
 			<span className="font-jetbrains text-[10px] text-tertiary">{note ? `awaiting ${note}` : 'awaiting data'}</span>
 		</div>
 	)
@@ -318,11 +316,7 @@ export function ChartCard({
 					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-pro-text-tertiary">{subtitle}</p>}
 				</div>
 				<div className="flex items-center gap-3">
-					{value && (
-						<p className="font-jetbrains text-xl font-semibold tracking-tight text-pro-text-primary tabular-nums">
-							{value}
-						</p>
-					)}
+					{value && <p className="mono-lg tracking-tight text-pro-text-primary tabular-nums">{value}</p>}
 					{control}
 				</div>
 			</div>

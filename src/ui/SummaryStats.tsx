@@ -60,7 +60,7 @@ interface StatItemProps {
 	truncate?: boolean
 }
 
-/** Headline stat: text-secondary label over a font-jetbrains text-2xl font-semibold value. */
+/** Headline stat: text-secondary label over a mono-xl value. */
 export function StatItem({ label, value, tooltip, labelAs = 'span', className, truncate }: StatItemProps) {
 	const Container = labelAs === 'span' ? 'p' : 'div'
 	const Label = labelAs
@@ -74,7 +74,7 @@ export function StatItem({ label, value, tooltip, labelAs = 'span', className, t
 			) : (
 				<Label className="text-secondary">{label}</Label>
 			)}
-			<span className={`font-jetbrains text-2xl font-semibold${truncate ? ' min-h-8 truncate' : ''}`}>{value}</span>
+			<span className={`${truncate ? ' min-h-8 truncate' : ''} mono-xl`}>{value}</span>
 		</Container>
 	)
 }

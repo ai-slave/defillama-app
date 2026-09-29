@@ -385,9 +385,7 @@ function FlatRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
-							{entry.tableName}
-						</span>
+						<span className="font-mono text-[13.5px] font-bold break-all text-pro-text-primary">{entry.tableName}</span>
 						<KindTag kind="flat" />
 						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : <AutoLoadHint />}
 					</div>
@@ -453,7 +451,7 @@ function TsRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 grow basis-48 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
+						<span className="font-mono text-[13.5px] font-bold break-all text-pro-text-primary">
 							{param ? resolvedName : <span className="text-pro-text-secondary">{entry.displayName}</span>}
 						</span>
 						<KindTag kind="ts" />

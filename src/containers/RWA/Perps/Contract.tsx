@@ -127,7 +127,7 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 				<Tooltip content={d.price.description} className="text-secondary underline decoration-dotted">
 					{d.price.label}
 				</Tooltip>
-				<p className="min-h-8 truncate font-jetbrains text-2xl font-semibold">
+				<p className="min-h-8 truncate mono-xl">
 					{formatUsd(contract.market.price, {
 						compact: true,
 						minimumCompactValue: 1_000_000,

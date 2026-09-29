@@ -83,7 +83,7 @@ function FeeMechanics() {
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 				{FEE_MECHANICS.map(([version, text]) => (
 					<div key={version} className="flex flex-col gap-1">
-						<span className="font-jetbrains text-sm font-semibold text-pro-text-primary">{version}</span>
+						<span className="font-jetbrains text-sm font-bold text-pro-text-primary">{version}</span>
 						<p className="text-xs leading-relaxed text-pro-text-secondary">{text}</p>
 					</div>
 				))}

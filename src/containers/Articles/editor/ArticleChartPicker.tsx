@@ -689,7 +689,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 												key={annotation.id}
 												className="grid grid-cols-[16px_120px_1fr_24px] items-center gap-2 rounded-md border border-medium bg-page px-2 py-1.5"
 											>
-												<span className="font-jetbrains text-[10px] font-semibold text-tertiary">
+												<span className="font-jetbrains text-[10px] font-bold text-tertiary">
 													{String.fromCharCode(65 + i)}
 												</span>
 												<input

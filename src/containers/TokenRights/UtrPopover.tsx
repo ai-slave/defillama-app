@@ -93,7 +93,7 @@ export function UtrPopover({
 					<div className="flex min-w-0 flex-col">
 						<span className="label-xs tracking-wider text-tertiary uppercase">Overall score</span>
 						<span className="flex items-baseline gap-2">
-							<span className="font-jetbrains text-base font-semibold tabular-nums">
+							<span className="font-jetbrains text-base font-bold tabular-nums">
 								{utr.score != null ? formatScore(utr.score) : 'N/A'}
 							</span>
 							<span className="label-xs text-tertiary">/ 100</span>

@@ -202,7 +202,7 @@ export default function Mandates() {
 							<div className="flex flex-col gap-1">
 								<span className="label-sm tracking-wider text-pro-text-label uppercase">Annual excess return</span>
 								<span className="flex items-center gap-1.5">
-									<span className={`font-mono text-xl font-medium tabular-nums ${signClass(perf?.excess)}`}>
+									<span className={`tabular-nums ${signClass(perf?.excess)} mono-lg`}>
 										{perf ? usdSignedFromMillions(perf.excess) : '—'}
 									</span>
 									<InfoTip text={perfEarnedTitle} />

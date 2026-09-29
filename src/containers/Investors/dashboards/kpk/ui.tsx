@@ -227,9 +227,7 @@ export function LedgerTile({
 				<div className="mx-auto h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			) : (
 				<span
-					className={`flex font-mono text-3xl font-medium tracking-tight tabular-nums ${
-						suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'
-					} ${valueClass ?? 'text-pro-text-primary'}`}
+					className={`flex font-mono text-3xl tracking-tight tabular-nums ${suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'} ${valueClass ?? 'text-pro-text-primary'} font-bold`}
 				>
 					{value}
 					{suffix && <small className="text-sm font-normal text-pro-text-label">{suffix}</small>}
@@ -251,7 +249,7 @@ export function LedgerTile({
 				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
 					{pairs.map((pair) => (
 						<span key={`${pair.value}${pair.label ?? ''}`}>
-							<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{pair.value}</b>
+							<b className="font-mono text-sm text-pro-text-primary tabular-nums">{pair.value}</b>
 							{pair.label ? ` ${pair.label}` : null}
 							<InfoTip text={pair.title} className="ml-1" />
 							{pair.ref && (
@@ -757,9 +755,14 @@ export function DataTable<Row extends object>({
 								{cols.map((col, index) => (
 									<td
 										key={col.key}
-										className={`px-3 first:pl-0 last:pr-0 ${
-											row.muted ? 'pt-1.5 font-normal' : 'pt-3 font-medium text-pro-text-primary'
-										} ${col.right ? 'text-right font-mono tabular-nums' : ''} ${footCell(index === 0, !!row.muted)}`}
+										className={`px-3 first:pl-0 last:pr-0 ${row.muted ? 'pt-1.5' : 'pt-3 text-pro-text-primary'} ${
+											// A total's figures are the emphasised mono weight; its label keeps the text font's medium.
+											col.right
+												? `text-right font-mono tabular-nums ${row.muted ? '' : 'font-bold'}`
+												: row.muted
+													? ''
+													: 'font-medium'
+										} ${footCell(index === 0, !!row.muted)}`}
 									>
 										{footContent(row, col.key, index === 0)}
 									</td>

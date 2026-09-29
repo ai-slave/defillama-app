@@ -206,7 +206,7 @@ function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' 
 			: 'border-warning/40 bg-warning/10 text-warning dark:text-warning'
 	return (
 		<span
-			className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px font-jetbrains text-[9px] font-medium tracking-[0.18em] uppercase ${styles}`}
+			className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px font-jetbrains text-[9px] tracking-[0.18em] uppercase ${styles}`}
 		>
 			<span
 				aria-hidden
@@ -237,7 +237,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-research-tint font-jetbrains font-medium text-link"
+			className="grid shrink-0 place-items-center rounded-full bg-research-tint font-jetbrains text-link"
 		>
 			{initials || '·'}
 		</span>
@@ -654,9 +654,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 															</span>
 															<div className="min-w-0 flex-1">
 																<div className="flex items-center gap-2">
-																	<span
-																		className={`font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
-																	>
+																	<span className={`font-jetbrains text-[10px] tracking-[0.18em] uppercase ${tone}`}>
 																		{EVENT_LABELS[entry.eventType] ?? entry.eventType}
 																	</span>
 																	{isLive ? <StatusBadge label="Live" tone="live" /> : null}
@@ -831,7 +829,7 @@ function PreviewSpecimenHeader({
 				<div className="grid min-w-0 gap-2">
 					<div className="flex flex-wrap items-center gap-2">
 						<span
-							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
+							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] uppercase ${tone}`}
 						>
 							{revision ? <EventGlyph type={eventType} active={false} /> : null}
 							{revision ? EVENT_LABELS[eventType] : '—'}
@@ -1169,7 +1167,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	if (op.type === 'add') {
 		return (
 			<div className={`${baseClasses} bg-success/7.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-success">
+				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-success">
 					+
 				</span>
 				<p className="text-sm">{op.value}</p>
@@ -1181,7 +1179,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 			<div
 				className={`${baseClasses} bg-error/6 text-error/85 line-through ring-1 ring-red-500/20 ring-inset dark:text-error/85`}
 			>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-error no-underline">
+				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-error no-underline">
 					−
 				</span>
 				<p className="text-sm">{op.value}</p>
@@ -1190,7 +1188,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	}
 	return (
 		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-research-warning-bright/20 ring-inset`}>
-			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-warning">
+			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] text-warning">
 				~
 			</span>
 			<p className="text-sm [overflow-wrap:anywhere]">

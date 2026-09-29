@@ -350,9 +350,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					/>
 					<p className="flex flex-col">
 						<span className="text-secondary">{defs.marketCap.label}</span>
-						<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-							{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
-						</span>
+						<span className="min-h-8 mono-xl">{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}</span>
 					</p>
 					<EquityKeyMetrics summary={props.summary} />
 				</Card>
@@ -369,7 +367,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 							<p className="flex flex-col">
 								<span className="text-secondary">{defs.marketCap.label}</span>
-								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+								<span className="min-h-8 mono-xl">
 									{formatEquitiesCompactValue(props.summary.marketCap, '$') ?? '-'}
 								</span>
 							</p>

@@ -1117,13 +1117,13 @@ export function YieldsChartTab({
 									<div className="mb-3 flex gap-4">
 										<div className="flex flex-col">
 											<span className="text-xs text-pro-text-tertiary uppercase">Latest APY</span>
-											<span className="font-jetbrains text-base font-semibold" style={{ color: '#cc3e82' }}>
+											<span className="font-jetbrains text-base font-bold" style={{ color: '#cc3e82' }}>
 												{formatPercent(latestYieldData.apy, { input: 'percent' })}
 											</span>
 										</div>
 										<div className="flex flex-col">
 											<span className="text-xs text-pro-text-tertiary uppercase">TVL</span>
-											<span className="font-jetbrains text-base font-semibold" style={{ color: '#3e79cc' }}>
+											<span className="font-jetbrains text-base font-bold" style={{ color: '#3e79cc' }}>
 												{formatUsd(latestYieldData.tvl, {
 													compact: true,
 													minimumCompactValue: 1_000_000,

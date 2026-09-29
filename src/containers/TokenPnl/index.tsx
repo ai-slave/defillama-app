@@ -164,14 +164,14 @@ function TokenPnlContent({
 			<section className="grid gap-2 sm:grid-cols-3" aria-label="Performance summary">
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Return</dt>
-					<dd className={`font-jetbrains text-3xl font-semibold ${isProfit ? 'text-data-up' : 'text-data-down'}`}>
+					<dd className={`font-jetbrains text-3xl ${isProfit ? 'text-data-up' : 'text-data-down'} font-bold`}>
 						{formatPnlPercent(percentChange)}
 					</dd>
 					<dd className="body-sm text-secondary">{quantityLabel}</dd>
 				</Card>
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Holding Period</dt>
-					<dd className="font-jetbrains text-3xl font-semibold text-primary">
+					<dd className="font-jetbrains text-3xl font-bold text-primary">
 						{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
 					</dd>
 					<dd className="body-sm text-secondary">
@@ -182,7 +182,7 @@ function TokenPnlContent({
 				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
 					<dt className="label-xs text-secondary uppercase">Annualised Return</dt>
 					<dd
-						className={`font-jetbrains text-3xl font-semibold ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'}`}
+						className={`font-jetbrains text-3xl ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'} font-bold`}
 					>
 						{formatPnlPercent(annualizedReturn)}
 					</dd>

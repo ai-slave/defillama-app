@@ -1642,7 +1642,7 @@ function StatCard({
 				<span className="text-secondary">{label}</span>
 			)}
 			<span className="flex items-end justify-between gap-2 font-jetbrains">
-				<span className="font-jetbrains text-2xl font-semibold">{value}</span>
+				<span className="mono-xl">{value}</span>
 				{change != null ? (
 					changeTooltip ? (
 						<Tooltip

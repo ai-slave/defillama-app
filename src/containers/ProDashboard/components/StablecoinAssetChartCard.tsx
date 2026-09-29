@@ -372,7 +372,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 					<div className="mb-2 flex gap-4">
 						<p className="flex flex-col">
 							<span className="text-xs text-pro-text-tertiary uppercase">Total Circulating</span>
-							<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
+							<span className="font-jetbrains text-sm font-bold" style={{ color: '#3e79cc' }}>
 								{formatCompactNumber(latestCirculating, {
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'

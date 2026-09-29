@@ -117,7 +117,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 			dismissButtonClassName="rounded-full text-on-brand/80 transition-colors hover:bg-research-white/10 hover:text-on-brand"
 			dismissLabel="Dismiss banner"
 		>
-			<p className="m-0 text-center font-jetbrains text-[11px] font-semibold tracking-[0.18em] uppercase">
+			<p className="m-0 text-center font-jetbrains text-[11px] font-bold tracking-[0.18em] uppercase">
 				<span>{banner.text}</span>
 				{hasLink ? (
 					<>

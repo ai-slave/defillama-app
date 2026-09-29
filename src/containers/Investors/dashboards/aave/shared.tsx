@@ -133,7 +133,7 @@ export function KpiCard({ label, value }: { label: string; value: string | numbe
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
 			<span className="text-[11px] font-medium tracking-wide text-pro-text-tertiary">{label}</span>
-			<span className="font-jetbrains text-xl font-semibold text-pro-text-primary tabular-nums">{value ?? '—'}</span>
+			<span className="mono-lg text-pro-text-primary tabular-nums">{value ?? '—'}</span>
 		</div>
 	)
 }

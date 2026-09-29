@@ -975,7 +975,7 @@ export function ColumnManager({
 								<div className="flex items-center justify-between">
 									<span className="text-pro-text-secondary">Result:</span>
 									{preview !== null ? (
-										<span className="font-mono font-semibold text-success">{preview}</span>
+										<span className="font-mono font-bold text-success">{preview}</span>
 									) : (
 										<span className="text-error">{expressionValidation.error || 'Invalid'}</span>
 									)}
