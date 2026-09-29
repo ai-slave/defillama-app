@@ -72,7 +72,8 @@ const baseMetrics: IProtocolPageMetrics = {
 	collateralLiquidated: false,
 	borrowed: false,
 	tokenRights: false,
-	rwa: false
+	rwa: false,
+	cryptoCards: false
 }
 
 const feeProps: ProbeProps = {

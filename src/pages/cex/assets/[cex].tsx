@@ -56,7 +56,11 @@ export const getStaticProps = withPerformanceLogging(
 				parentProtocol: protocolData.parentProtocol ?? null,
 				otherProtocols: protocolData.otherProtocols ?? [],
 				category: protocolData.category ?? null,
-				metrics: { tvl: Boolean(cexRoute.metadata.tvl), stablecoins: Boolean(cexRoute.metadata.tvl) },
+				metrics: {
+					tvl: Boolean(cexRoute.metadata.tvl),
+					stablecoins: Boolean(cexRoute.metadata.tvl),
+					cryptoCards: Boolean(cexRoute.metadata.cryptoCardIssuer)
+				},
 				ownToken: cexRoute.cexMetadata?.coin ?? null
 			},
 			revalidate: maxAgeForNext([22])

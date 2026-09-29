@@ -1,12 +1,10 @@
-import { useAuthContext } from '~/auth'
-import { NotFoundPage } from '~/components/NotFoundPage'
 import { CardsTable } from '~/containers/CryptoCards/CardsTable'
 import { CardsFilters } from '~/containers/CryptoCards/Filters'
+import { getCryptoCardDetailsHrefs } from '~/containers/CryptoCards/issuers'
 import type { CardsIndexModel } from '~/containers/CryptoCards/models'
 import { mapCardsIndex } from '~/containers/CryptoCards/models'
 import { PromoBanners } from '~/containers/CryptoCards/PromoBanners'
 import { fetchCardsIndexFromNetwork } from '~/containers/CryptoCards/server/upstream'
-import { useIsClient } from '~/hooks/useIsClient'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -15,7 +13,11 @@ import { withPerformanceLogging } from '~/utils/perf'
 type CryptoCardsPageProps = CardsIndexModel
 
 export const getStaticProps = withPerformanceLogging<CryptoCardsPageProps>('crypto-cards', async () => {
-	const { rows, reference } = mapCardsIndex(await fetchCardsIndexFromNetwork())
+	const [{ default: metadataCache }, index] = await Promise.all([
+		import('~/utils/metadata'),
+		fetchCardsIndexFromNetwork()
+	])
+	const { rows, reference } = mapCardsIndex(index, getCryptoCardDetailsHrefs(metadataCache.protocolMetadata))
 	return {
 		props: { rows, reference },
 		revalidate: maxAgeForNext([22])
@@ -31,12 +33,6 @@ export const CRYPTO_CARDS_PAGE_METADATA = {
 }
 
 export default function CryptoCardsPage({ rows, reference }: CryptoCardsPageProps) {
-	const { isAuthenticated, loaders, user } = useAuthContext()
-	const isClient = useIsClient()
-
-	if (!isClient || loaders.userLoading) return null
-	if (!isAuthenticated || user?.flags?.is_llama !== true) return <NotFoundPage />
-
 	return (
 		<Layout {...CRYPTO_CARDS_PAGE_METADATA}>
 			<header className="flex flex-col gap-1 px-1 pb-2">

@@ -1,4 +1,5 @@
 import { COINS_SERVER_URL } from '~/constants'
+import { stampCryptoCardIssuers } from '~/containers/CryptoCards/issuers'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import {
 	buildUnlocksHistoricalPriceRequests,
@@ -176,6 +177,8 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		const protocolMcapSlug = protocolMcapSlugById.get(protocolId)
 		if (protocolMcapSlug) protocol.rwaProtocolMcapSlug = protocolMcapSlug
 	}
+
+	stampCryptoCardIssuers(protocols)
 
 	return {
 		protocols,

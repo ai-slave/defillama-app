@@ -13,27 +13,27 @@ const CARD_PROMOS = [
 	{
 		id: 'ethena-pay',
 		name: 'Ethena Pay',
-		src: '/assets/crypto-cards/ethena-pay.webp',
+		src: '/assets/crypto-cards/ethena-pay-v2.webp',
 		alt: 'Ethena Pay promotion placeholder: earn yield on your balance, cashback on everyday spending, and use global multi-currency payments.'
 	},
 	{
 		id: 'plasma-one',
 		name: 'Plasma One Card',
-		src: '/assets/crypto-cards/plasma-one.webp',
+		src: '/assets/crypto-cards/plasma-one-v2.webp',
 		href: 'https://www.plasma.org/download/LLAMAA',
 		alt: 'Plasma One Card promotion placeholder: spend stablecoins anywhere Visa is accepted, earn XPL cashback and yield, and get premium travel perks.'
 	},
 	{
 		id: 'etherfi-cash',
 		name: 'ether.fi Cash Card',
-		src: '/assets/crypto-cards/etherfi-cash.webp',
+		src: '/assets/crypto-cards/etherfi-cash-v2.webp',
 		href: 'https://www.ether.fi/@defillama',
 		alt: 'ether.fi Cash Card promotion placeholder: borrow against ETH, earn cashback paid in ETH, and keep self-custody.'
 	},
 	{
 		id: 'defillama-partner',
 		name: 'DefiLlama partnership',
-		src: '/assets/crypto-cards/defillama-partner.webp',
+		src: '/assets/crypto-cards/defillama-partner-v2.webp',
 		href: 'https://calendly.com/research-defillama/30min',
 		alt: 'DefiLlama partnership promotion placeholder inviting card providers to set up a call.'
 	}
@@ -52,7 +52,7 @@ export function PromoBanners() {
 							src={promo.src}
 							alt={promo.alt}
 							width={1200}
-							height={640}
+							height={565}
 							loading={index === 0 ? 'eager' : 'lazy'}
 							sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 83vw"
 							className="h-auto w-full"

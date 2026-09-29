@@ -1,122 +1,47 @@
-import type { GetStaticPropsContext, GetStaticPropsResult } from 'next'
-import { CryptoCardDetailsPage, type CryptoCardDetailsPageProps } from '~/containers/CryptoCards/CardDetails'
-import {
-	findCryptoCardIssuerSlug,
-	getCryptoCardIssuerName,
-	getCryptoCardIssuerSlugs
-} from '~/containers/CryptoCards/models'
-import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
-import { tokenIconUrl } from '~/utils/icons'
+import type { GetStaticPropsContext } from 'next'
+import { CryptoCardDetailsPage } from '~/containers/CryptoCards/CardDetails'
+import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
-
-type CardDetailsRouteParams = { protocol?: string }
-
-const EMPTY_PROTOCOL_METRICS: IProtocolPageMetrics = {
-	tvl: false,
-	dexs: false,
-	dexsNotionalVolume: false,
-	perps: false,
-	openInterest: false,
-	optionsPremiumVolume: false,
-	optionsNotionalVolume: false,
-	dexAggregators: false,
-	perpsAggregators: false,
-	bridgeAggregators: false,
-	stablecoins: false,
-	bridge: false,
-	treasury: false,
-	unlocks: false,
-	incentives: false,
-	yields: false,
-	fees: false,
-	revenue: false,
-	forks: false,
-	dev: false,
-	inflows: false,
-	activeUsers: false,
-	newUsers: false,
-	txCount: false,
-	gasUsed: false,
-	liquidationVolume: false,
-	collateralLiquidated: false,
-	borrowed: false,
-	tokenRights: false,
-	rwa: false
-}
+import { canonicalRouteRedirect } from '~/utils/route'
 
 export const getStaticProps = withPerformanceLogging(
 	'protocol/card-details/[protocol]',
-	async (
-		context: GetStaticPropsContext<CardDetailsRouteParams>
-	): Promise<GetStaticPropsResult<CryptoCardDetailsPageProps>> => {
-		const routeParam = context.params?.protocol
-		if (!routeParam) return { notFound: true }
+	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
+		if (!params?.protocol) return { notFound: true }
 
+		const { protocol } = params
 		const [
 			{ default: metadataCache },
-			{ resolveProtocolParamFromMetadata },
-			{ fetchProtocolOverviewMetrics },
-			{ getProtocolMetricFlags },
-			{ getProtocolWarningBanners },
-			{ fetchCardDetailFromNetwork, fetchCardsIndexFromNetwork },
-			{ maxAgeForNext }
+			{ resolveProtocolFeatureRouteFromMetadata, resolveProtocolParamFromMetadata },
+			{ getCryptoCardDetailsPageProps }
 		] = await Promise.all([
 			import('~/utils/metadata'),
 			import('~/containers/ProtocolOverview/server/routes'),
-			import('~/containers/ProtocolOverview/api'),
-			import('~/containers/ProtocolOverview/queries'),
-			import('~/containers/ProtocolOverview/utils'),
-			import('~/containers/CryptoCards/server/upstream'),
-			import('~/utils/maxAgeForNext')
+			import('~/containers/CryptoCards/server/detailsPage')
 		])
-
-		const index = await fetchCardsIndexFromNetwork()
-		const issuerSlug = findCryptoCardIssuerSlug(getCryptoCardIssuerSlugs(index.cards), routeParam)
-		if (!issuerSlug) return { notFound: true, revalidate: maxAgeForNext([22]) }
-
-		const issuerCards = index.cards.filter((card) => (card.parent_id ?? card.id) === issuerSlug)
-		if (issuerCards.length === 0) return { notFound: true, revalidate: maxAgeForNext([22]) }
-
-		const exactRoute = resolveProtocolParamFromMetadata(issuerSlug, metadataCache)
-		const normalizedProtocolSlug = exactRoute
-			? null
-			: findCryptoCardIssuerSlug(Object.keys(metadataCache.protocolRouteIdBySlug), issuerSlug)
-		const resolvedRoute =
-			exactRoute ??
-			(normalizedProtocolSlug ? resolveProtocolParamFromMetadata(normalizedProtocolSlug, metadataCache) : null)
-		const route = resolvedRoute?.metadata.cex ? null : resolvedRoute
-		const protocolData = route ? await fetchProtocolOverviewMetrics(route.canonicalSlug) : null
-
-		const details = await Promise.all(issuerCards.map((card) => fetchCardDetailFromNetwork(card.id)))
-		const detailByCardId = new Map(details.map((detail) => [detail.id, detail]))
-		for (const card of issuerCards) {
-			const detail = detailByCardId.get(card.id)
-			if (!detail) throw new Error(`Missing crypto card detail for ${card.id}`)
-			if (detail.version !== index.version) {
-				throw new Error(`Crypto card cache version mismatch for ${card.id}: ${index.version} !== ${detail.version}`)
-			}
+		const resolution = resolveProtocolFeatureRouteFromMetadata({
+			cexRoutePrefix: 'cex/card-details',
+			hasMetric: (metadata) => Boolean(metadata.cryptoCardIssuer),
+			metadataCache,
+			protocol,
+			routePrefix: 'protocol/card-details'
+		})
+		if (!resolution) {
+			// A child of a card-issuing parent shows the tab, but the cards live on the parent's page.
+			const redirectSlug = resolveProtocolParamFromMetadata(protocol, metadataCache)?.metadata.cryptoCardRedirectSlug
+			return redirectSlug ? canonicalRouteRedirect(`/protocol/card-details/${redirectSlug}`) : { notFound: true }
 		}
-		const issuerName = protocolData?.name ?? getCryptoCardIssuerName(issuerSlug, index.cards) ?? issuerSlug
-		const issuerLogo = issuerCards.find((card) => card.logo)?.logo ?? tokenIconUrl(issuerName)
+		if (resolution.type === 'redirect') return canonicalRouteRedirect(resolution.destination)
 
-		return {
-			props: {
-				issuerSlug,
-				name: issuerName,
-				logo: issuerLogo,
-				overviewHref: protocolData && route ? `/protocol/${route.canonicalSlug}` : null,
-				category: protocolData?.category ?? null,
-				otherProtocols: protocolData?.otherProtocols ?? [],
-				metrics:
-					protocolData && route
-						? getProtocolMetricFlags({ protocolData, metadata: route.metadata })
-						: EMPTY_PROTOCOL_METRICS,
-				warningBanners: protocolData ? getProtocolWarningBanners(protocolData) : [],
-				cards: issuerCards.map((card) => ({ card, detail: detailByCardId.get(card.id)! })),
-				countries: index.countries
-			},
-			revalidate: maxAgeForNext([22])
-		}
+		const { route } = resolution
+		const props = await getCryptoCardDetailsPageProps({
+			issuer: route.metadata.cryptoCardIssuer!,
+			canonicalSlug: route.canonicalSlug,
+			metadata: route.metadata,
+			isCEX: false
+		})
+		if (!props) return { notFound: true, revalidate: maxAgeForNext([22]) }
+		return { props, revalidate: maxAgeForNext([22]) }
 	}
 )
 

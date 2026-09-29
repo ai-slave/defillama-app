@@ -58,6 +58,8 @@ export interface CardTierRow {
 export interface CardsReferenceModel {
 	coinGeckoIds: Record<string, string>
 	chainNames: Record<string, string>
+	/** Card page per issuer; issuers without one link to their website. */
+	detailsHrefByIssuer: Record<string, string>
 }
 
 export interface CardsIndexModel {
@@ -65,33 +67,20 @@ export interface CardsIndexModel {
 	reference: CardsReferenceModel
 }
 
-export function getCryptoCardIssuerSlugs(cards: Array<Pick<CardsIndexCard, 'id' | 'parent_id'>>): Array<string> {
-	return [...new Set(cards.map((card) => card.parent_id ?? card.id))].sort()
-}
-
-export function normalizeCryptoCardIssuerSlug(value: string): string {
-	return value.replace(/[^a-z0-9]/gi, '').toLowerCase()
-}
-
-export function findCryptoCardIssuerSlug(issuers: Array<string>, entitySlug: string): string | null {
-	const exactMatch = issuers.find((issuer) => issuer === entitySlug)
-	if (exactMatch) return exactMatch
-
-	const normalizedEntitySlug = normalizeCryptoCardIssuerSlug(entitySlug)
-	const normalizedMatches = issuers.filter((issuer) => normalizeCryptoCardIssuerSlug(issuer) === normalizedEntitySlug)
-	return normalizedMatches.length === 1 ? normalizedMatches[0]! : null
-}
-
 const CURRENCY_SYMBOLS: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' }
 
-function amountLabel(amount: CardsAmount | undefined): string | null {
+/** One amount can be payable in several currencies ("10 EURe / 10 GBPe"); every one is named.
+ *  The API sends explicitly-none money with no currency. */
+export function amountLabel(amount: CardsAmount | undefined): string | null {
 	if (!amount) return null
+	if (amount.currencies.length === 0) return 'None'
 	const value = amount.amount_minor / 10 ** amount.minor_exponent
 	const formatted = formatNumber(value, { maximumFractionDigits: 2 })
-	const currency = amount.currencies[0]
-	if (!currency) return formatted
-	if (CURRENCY_SYMBOLS[currency]) return `${CURRENCY_SYMBOLS[currency]}${formatted}`
-	return `${formatted} ${currency}`
+	return amount.currencies
+		.map((currency) =>
+			CURRENCY_SYMBOLS[currency] ? `${CURRENCY_SYMBOLS[currency]}${formatted}` : `${formatted} ${currency}`
+		)
+		.join(' / ')
 }
 
 function payoutCapLabel(cashback: CardsTierCashback | undefined): string | null {
@@ -100,11 +89,11 @@ function payoutCapLabel(cashback: CardsTierCashback | undefined): string | null 
 	return cashback?.payout_cap_period ? `${cap}/${cashback.payout_cap_period}` : cap
 }
 
-function bpsLabel(bps: number | undefined): string | null {
+export function bpsLabel(bps: number | undefined): string | null {
 	return bps == null ? null : formatPercent(bps / 100, { input: 'percent', maximumFractionDigits: 2 })
 }
 
-function accessLabel(tier: CardsTier): string | null {
+export function accessLabel(tier: CardsTier): string | null {
 	if (tier.access === 'ungated') return 'None'
 	if (tier.access !== 'gated') return null
 	const options = tier.gate?.options.map((option) => option.label) ?? []
@@ -126,7 +115,7 @@ function integrationBoolean(value: CardsIntegrationFlag | undefined): boolean | 
 	return value == null ? null : value !== 0
 }
 
-function perkLabel(perk: CardsPerk): string {
+export function perkLabel(perk: CardsPerk): string {
 	if (perk.status === 'available') return perk.label
 	return `${perk.label} (${perk.status.replaceAll('_', ' ')})`
 }
@@ -328,7 +317,7 @@ function cardRow(tiers: NonEmptyArray<CardTierRow>): CardTableRow {
 
 const NON_ALPHANUMERIC = /[^a-z0-9]/gi
 
-function parentIssuerName(parentId: string, cards: NonEmptyArray<Pick<CardTableRow, 'cardName'>>): string {
+function parentIssuerName(parentId: string, cards: NonEmptyArray<CardTableRow>): string {
 	const normalizedParentId = parentId.replace(NON_ALPHANUMERIC, '').toLowerCase()
 	for (const card of cards) {
 		const words = card.cardName.split(/\s+/)
@@ -346,15 +335,6 @@ function parentIssuerName(parentId: string, cards: NonEmptyArray<Pick<CardTableR
 		.split(/[-_]+/)
 		.map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
 		.join(' ')
-}
-
-export function getCryptoCardIssuerName(issuerSlug: string, cards: Array<CardsIndexCard>): string | null {
-	const issuerCards = cards.filter((card) => (card.parent_id ?? card.id) === issuerSlug)
-	if (issuerCards.length === 0) return null
-	return parentIssuerName(
-		issuerSlug,
-		issuerCards.map((card) => ({ cardName: card.name })) as NonEmptyArray<Pick<CardTableRow, 'cardName'>>
-	)
 }
 
 function parentRow(
@@ -424,7 +404,10 @@ export function groupCardRows(rows: Array<CardTierRow>): Array<CardTableRow> {
 	return groupedRows
 }
 
-export function mapCardsIndex(response: CardsIndexResponse): CardsIndexModel {
+export function mapCardsIndex(
+	response: CardsIndexResponse,
+	detailsHrefByIssuer: Record<string, string>
+): CardsIndexModel {
 	const rows: Array<CardTierRow> = []
 	for (const card of response.cards) {
 		for (const tier of card.tiers) rows.push(mapTier(card, tier))
@@ -433,7 +416,8 @@ export function mapCardsIndex(response: CardsIndexResponse): CardsIndexModel {
 		rows,
 		reference: {
 			coinGeckoIds: response.reference.coin_gecko_ids,
-			chainNames: response.reference.defillama_chain_names
+			chainNames: response.reference.defillama_chain_names,
+			detailsHrefByIssuer
 		}
 	}
 }

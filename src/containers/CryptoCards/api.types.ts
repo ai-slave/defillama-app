@@ -196,10 +196,6 @@ export interface CardsIndexResponse {
 	cards: Array<CardsIndexCard>
 }
 
-export interface CryptoCardIssuersResponse {
-	issuers: Array<string>
-}
-
 export interface CardsDetailValue {
 	label: string
 	money?: CardsAmount

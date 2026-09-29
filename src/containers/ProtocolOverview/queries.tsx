@@ -112,7 +112,8 @@ export const getProtocolMetricFlags = ({
 		collateralLiquidated: !!metadata.collateralLiquidated,
 		borrowed: !!metadata.borrowed,
 		tokenRights: !!metadata.tokenRights,
-		rwa: !!metadata.rwaPlatformSlug
+		rwa: !!metadata.rwaPlatformSlug,
+		cryptoCards: !!(metadata.cryptoCardIssuer || metadata.cryptoCardRedirectSlug)
 	}
 }
 

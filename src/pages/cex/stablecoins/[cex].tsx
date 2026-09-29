@@ -48,6 +48,7 @@ export const getStaticProps = withPerformanceLogging(
 				metrics: {
 					stablecoins: Boolean(cexRoute.metadata.tvl),
 					tvl: Boolean(cexRoute.metadata.tvl),
+					cryptoCards: Boolean(cexRoute.metadata.cryptoCardIssuer),
 					dexs: false,
 					perps: false,
 					openInterest: false,

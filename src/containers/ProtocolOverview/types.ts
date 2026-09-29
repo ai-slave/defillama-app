@@ -43,6 +43,7 @@ export interface IProtocolPageMetrics {
 	borrowed: boolean
 	tokenRights: boolean
 	rwa: boolean
+	cryptoCards: boolean
 }
 
 export interface IProtocolFaqAnswerPart {

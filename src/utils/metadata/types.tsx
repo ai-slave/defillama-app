@@ -94,6 +94,12 @@ export interface IProtocolMetadata {
 	// Wins over rwaPlatformSlug for the AUM headline and chart: the platform aggregate covers
 	// the whole parent book, which is wrong on a single-product child page.
 	rwaProtocolMcapSlug?: string
+	// Derived at metadata-build time from CRYPTO_CARD_ISSUER_PROTOCOL_IDS. The cards issuer whose
+	// cards this protocol's Card Details page shows.
+	cryptoCardIssuer?: string
+	// Set on the children of a card-issuing host: they show the Card Details tab, and their card
+	// page redirects to the host's, which lives at this slug.
+	cryptoCardRedirectSlug?: string
 }
 
 export interface ICexItem {

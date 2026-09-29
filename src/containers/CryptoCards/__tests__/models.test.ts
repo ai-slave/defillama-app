@@ -179,7 +179,7 @@ describe('mapCardsIndex', () => {
 			]
 		} satisfies CardsIndexResponse
 
-		expect(mapCardsIndex(response)).toEqual({
+		expect(mapCardsIndex(response, {})).toEqual({
 			rows: [
 				{
 					rowKind: 'tier',
@@ -222,13 +222,14 @@ describe('mapCardsIndex', () => {
 			],
 			reference: {
 				coinGeckoIds: { USDC: 'usd-coin' },
-				chainNames: { Ethereum: 'Ethereum' }
+				chainNames: { Ethereum: 'Ethereum' },
+				detailsHrefByIssuer: {}
 			}
 		})
 
 		const responseWithoutLogo = structuredClone(response)
 		responseWithoutLogo.cards[0].logo = undefined
-		expect(mapCardsIndex(responseWithoutLogo).rows[0]?.logo).toBe(
+		expect(mapCardsIndex(responseWithoutLogo, {}).rows[0]?.logo).toBe(
 			'https://icons.llamao.fi/icons/crypto-cards/example-card?w=48&h=48'
 		)
 	})

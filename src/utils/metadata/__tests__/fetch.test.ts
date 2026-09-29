@@ -133,6 +133,14 @@ describe('fetchCoreMetadata', () => {
 		expect(payload.protocols['4980'].rwaPlatformRedirectSlug).toBeUndefined()
 	})
 
+	test('stamps crypto card issuers onto protocol metadata', async () => {
+		serveCoreMetadata({ protocols: { '7480': { name: 'kast-card', displayName: 'Kast Card' } } })
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.protocols['7480'].cryptoCardIssuer).toBe('kast')
+	})
+
 	test('stamps the per-protocol RWA mcap slug only where the protocol issues its own assets', async () => {
 		serveCoreMetadata({
 			protocols: {

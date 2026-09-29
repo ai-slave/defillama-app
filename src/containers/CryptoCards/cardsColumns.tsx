@@ -230,7 +230,7 @@ export function buildCardsColumns(
 				const card = row.original
 				if (card.rowKind === 'tier') {
 					return (
-						<span className={`block truncate label-md text-secondary ${row.depth > 1 ? 'pl-22' : 'pl-14'}`}>
+						<span className={`block truncate label-md text-secondary ${row.depth > 1 ? 'pl-20' : 'pl-14'}`}>
 							{card.tierName}
 						</span>
 					)
@@ -238,11 +238,11 @@ export function buildCardsColumns(
 				const nestedCard = card.rowKind === 'card' && row.depth > 0
 				const expansionLabel = card.rowKind === 'parent' ? 'cards' : 'tiers'
 				return (
-					<div className={`relative flex w-full min-w-0 items-center gap-2 ${nestedCard ? 'pl-14' : 'pl-6'}`}>
+					<div className={`relative flex w-full min-w-0 items-center gap-2 ${nestedCard ? 'pl-12' : 'pl-6'}`}>
 						{row.getCanExpand() ? (
 							<button
 								type="button"
-								className={`absolute flex size-6 items-center justify-center rounded-md hover:bg-hover-row ${nestedCard ? 'left-7' : '-left-1'}`}
+								className={`absolute flex size-6 items-center justify-center rounded-md hover:bg-hover-row ${nestedCard ? 'left-5' : '-left-1'}`}
 								onClick={row.getToggleExpandedHandler()}
 								aria-expanded={row.getIsExpanded()}
 							>
@@ -260,17 +260,30 @@ export function buildCardsColumns(
 							</button>
 						) : null}
 						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
-						<BasicLink
-							href={`/protocol/card-details/${encodeURIComponent(card.parentId)}`}
-							className="block truncate label-md text-link hover:underline"
-						>
-							{card.cardName}
-						</BasicLink>
+						{reference.detailsHrefByIssuer[card.parentId] ? (
+							<BasicLink
+								href={reference.detailsHrefByIssuer[card.parentId]}
+								className="block truncate label-md text-link hover:underline"
+							>
+								{card.cardName}
+							</BasicLink>
+						) : card.url ? (
+							<a
+								href={card.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="block truncate label-md text-link hover:underline"
+							>
+								{card.cardName}
+							</a>
+						) : (
+							<span className="block truncate label-md">{card.cardName}</span>
+						)}
 					</div>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(188px,45vw)]',
+				headerClassName: 'w-[min(224px,45vw)]',
 				csvValue: (row) => (row.tierName ? `${row.cardName} — ${row.tierName}` : row.cardName)
 			}
 		}),

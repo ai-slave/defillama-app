@@ -112,7 +112,8 @@ export const getStaticProps = withPerformanceLogging(
 				collateralLiquidated: false,
 				borrowed: false,
 				rwa: false,
-				tokenRights: false
+				tokenRights: false,
+				cryptoCards: false
 			}),
 			tokenRights: true
 		}
