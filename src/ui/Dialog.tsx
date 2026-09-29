@@ -173,7 +173,7 @@ export function DialogHeader({
 	closable?: boolean
 }) {
 	return (
-		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
+		<header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-subtle px-4 py-2.5">
 			{leading}
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<DialogHeading className="break-words">{title}</DialogHeading>
@@ -189,7 +189,7 @@ export function DialogHeader({
 /** The header row of a palette: the search field takes the title's place, which stays for screen readers. */
 export function DialogSearchHeader({ title, children }: { title: string; children: ReactNode }) {
 	return (
-		<header className="flex shrink-0 items-center gap-3 border-b border-subtle px-4 py-3">
+		<header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-subtle px-4 py-2.5">
 			<DialogHeading className="sr-only">{title}</DialogHeading>
 			<div className="min-w-0 flex-1 *:w-full">{children}</div>
 			<DialogCloseButton />
@@ -199,7 +199,11 @@ export function DialogSearchHeader({ title, children }: { title: string; childre
 
 /** A band under the header for search, tabs or steps. */
 export function DialogToolbar({ children }: { children: ReactNode }) {
-	return <div className="shrink-0 border-b border-subtle px-4 py-3">{children}</div>
+	return (
+		<div data-sheet className="shrink-0 border-b border-subtle px-4 py-3">
+			{children}
+		</div>
+	)
 }
 
 const DIALOG_BODY_KIND = {
@@ -217,7 +221,11 @@ export function DialogBody({
 	kind?: keyof typeof DIALOG_BODY_KIND
 	children: ReactNode
 }) {
-	return <div className={`${dialogScrollableBodyStyles} ${DIALOG_BODY_KIND[kind]}`.trim()}>{children}</div>
+	return (
+		<div data-sheet className={`${dialogScrollableBodyStyles} ${DIALOG_BODY_KIND[kind]}`.trim()}>
+			{children}
+		</div>
+	)
 }
 
 type DialogHeadingProps = {
@@ -245,16 +253,7 @@ export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...pr
 		<Ariakit.DialogDismiss
 			disabled={pending}
 			accessibleWhenDisabled
-			render={
-				<Button
-					type="button"
-					variant="ghost"
-					size="md"
-					square
-					// Below sm the x is the only visible dismiss, so its hit area grows to 44px without changing the 32px look.
-					className={`relative -mr-2 max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-[''] ${className ?? ''}`.trim()}
-				/>
-			}
+			render={<Button type="button" variant="ghost" size="md" square className={`-mr-2 ${className ?? ''}`.trim()} />}
 			aria-label={ariaLabel}
 			{...props}
 		>
@@ -270,16 +269,7 @@ export function DialogBackButton({ label, onClick }: { label: string; onClick: (
 		<Ariakit.Button
 			disabled={pending}
 			accessibleWhenDisabled
-			render={
-				<Button
-					type="button"
-					variant="ghost"
-					size="md"
-					square
-					// Below sm the hit area grows to 44px without changing the 32px look, like the ×.
-					className="relative -ml-2 max-sm:before:absolute max-sm:before:-inset-1.5 max-sm:before:content-['']"
-				/>
-			}
+			render={<Button type="button" variant="ghost" size="md" square className="-ml-2" />}
 			aria-label={label}
 			onClick={onClick}
 		>
@@ -305,7 +295,7 @@ type DialogFooterProps = {
 export function DialogFooter({ leading, dismiss, children }: DialogFooterProps) {
 	const hasActions = Children.toArray(children).length > 0
 	return (
-		<footer className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t border-subtle px-4 py-3">
+		<footer data-sheet className="mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t border-subtle px-4 py-3">
 			{leading ? <div className="flex min-w-0 items-center gap-2 max-sm:[&>button]:min-h-11">{leading}</div> : null}
 			{/* min-w-fit keeps the global `min-width: 0` from squeezing the actions below their labels: when the row runs
 			    out of room, the leading slot wraps onto its own line instead. */}

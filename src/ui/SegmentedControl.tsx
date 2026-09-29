@@ -12,37 +12,38 @@ import { Tooltip } from './Tooltip'
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary sheet:self-stretch hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	chips: {
 		container: 'flex w-fit max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto',
 		button:
-			'hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash shrink-0 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	// A form field's choice (visibility, owner): fills its row with equal segments, icon beside label.
 	field: {
-		container: 'body-sm flex w-full flex-nowrap items-center gap-0.5 rounded-lg border border-medium bg-surface p-0.5',
+		container:
+			'body-sm flex w-full flex-nowrap items-center gap-0.5 rounded-lg border border-medium bg-surface p-0.5 sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash inline-flex flex-1 basis-0 items-center justify-center gap-1.5 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	responsive: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full sheet:min-h-11 sheet:p-1 sheet:body-md',
 		button:
-			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+			'touch-target hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap sheet:self-stretch text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
 		button:
-			'hover-wash shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+			'touch-target hover-wash shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	'solid-responsive': {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle max-sm:w-full',
 		button:
-			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+			'touch-target hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	pro: {
 		container: 'flex w-fit items-center rounded-md',
@@ -50,7 +51,8 @@ export const TAG_GROUP_VARIANTS = {
 	}
 } as const
 
-/* Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
+/* Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. In a phone sheet's rows the
+   padded variants are 44px with a 4px inset and 14px labels, like the fields around them. */
 export const TAG_GROUP_SIZES = {
 	sm: 'min-h-6',
 	md: 'min-h-8'

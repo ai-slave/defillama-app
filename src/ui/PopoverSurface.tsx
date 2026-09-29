@@ -99,23 +99,12 @@ function join(recipe: string, layout?: string) {
 	return layout ? `${recipe} ${layout}` : recipe
 }
 
-const DRAWER_ICON_BUTTON_CLASS = "relative shrink-0 before:absolute before:-inset-1.5 before:content-['']"
-
 /** Mobile-only close button for drawer surfaces. Works inside Menu, Popover
     and ComboboxPopover alike: they all share the popover store. */
 export function DrawerDismiss({ label = 'Close' }: { label?: string }) {
 	return (
 		<Ariakit.PopoverDismiss
-			render={
-				<Button
-					type="button"
-					variant="ghost"
-					size="md"
-					square
-					// Same recipe as DialogCloseButton: 32px to look at, a 44px hit area.
-					className={`${DRAWER_ICON_BUTTON_CLASS} ml-auto sm:hidden`}
-				/>
-			}
+			render={<Button type="button" variant="ghost" size="md" square className="ml-auto shrink-0 sm:hidden" />}
 			aria-label={label}
 		>
 			<Icon name="x" className="size-4" aria-hidden="true" />
@@ -152,7 +141,7 @@ export function NestedDrawerHeader({
 				square
 				aria-label={backLabel}
 				onClick={onBack}
-				className={DRAWER_ICON_BUTTON_CLASS}
+				className="shrink-0"
 			>
 				<Icon name="chevron-left" className="size-4" aria-hidden="true" />
 			</Button>
@@ -166,7 +155,7 @@ export function NestedDrawerHeader({
 				square
 				aria-label={closeLabel}
 				onClick={onClose}
-				className={DRAWER_ICON_BUTTON_CLASS}
+				className="shrink-0"
 			>
 				<Icon name="x" className="size-4" aria-hidden="true" />
 			</Button>

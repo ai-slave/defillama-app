@@ -4,13 +4,17 @@ import { tw } from './tw'
 /* ----------------------------------------------------------------------------
    Input — the design.md text-input recipe.
 
-   Field: 32px (min-h-8, padding-driven like Button md), bg-page on the
-   surface it sits in, border-medium 1px, 8px radius, px-3 py-1.5. Entered
-   text and placeholder are body-sm (text-primary / text-tertiary); focus
-   swaps the border to brand, and `aria-invalid` keeps it border-error while
-   focused too. Mobile stays text-base below the sm breakpoint
-   so iOS Safari does not zoom the page when the field focuses — sm:body-sm
-   takes over from there (variant utilities sort after base ones, verified).
+   Field: 32px (the min-h-8 floor decides; py-0.5 keeps the 16px phone text
+   under it, like Button md), bg-page on the surface it sits in,
+   border-medium 1px, 8px radius, px-3. Inside a phone sheet's rows the floor
+   is 44px (`sheet:`), matching the sheet's footer buttons. Entered text and
+   placeholder are body-sm (text-primary / text-tertiary); focus swaps the
+   border to brand, and `aria-invalid` keeps it border-error while focused
+   too. Entered text stays text-base below the sm breakpoint so iOS Safari
+   does not zoom the page when the field focuses (it reads the typed size
+   only), while the placeholder drops to 14px on the same 24px line, so the
+   hint reads as a hint — sm:body-sm takes over from there (variant
+   utilities sort after base ones, verified).
 
    Leading icon (optional, per the recipe's 16px icon + gap-1): wrap the
    field in a `relative` label, absolutely position a 16px icon at left-3,
@@ -28,10 +32,10 @@ import { tw } from './tw'
 
 const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error aria-invalid:focus:border-error`
 
-export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-1.5 sm:body-sm`
+export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-0.5 max-sm:placeholder:text-sm/6 sm:body-sm sheet:min-h-11`
 
 /** Multiline prose needs the body ramp; callers own rows, resizing, and height limits. */
-export const textareaStyles = `${fieldSurfaceStyles} py-2 sm:body-md`
+export const textareaStyles = `${fieldSurfaceStyles} py-2 max-sm:placeholder:text-sm/6 sm:body-md`
 
 export const searchFieldWrapperStyles = tw`relative mr-auto w-full min-w-0 sm:max-w-[280px]`
 

@@ -11,6 +11,8 @@ import type { ReactNode } from 'react'
    Below `sm` the header always sits under a drawer title row, which already
    leaves room above the field, so the field's top gap shrinks to 4px there.
    `inset="nested"` matches the phone nested-menu rows (16px sides, not 12px).
+   The search row is a sheet row (`data-sheet`): in a phone drawer its field
+   is 44px, like a field in a dialog sheet.
 ---------------------------------------------------------------------------- */
 
 type PopoverHeaderInset = 'popover' | 'nested'
@@ -30,7 +32,9 @@ export function PopoverHeader({
 	return (
 		<div className="flex shrink-0 flex-col overflow-hidden border-b border-subtle bg-overlay">
 			{/* 12px frames the field unless a row follows; that row brings its own padding. */}
-			<div className={`relative pt-3 max-sm:pt-1 ${SIDE_PADDING[inset]} ${children ? 'pb-1' : 'pb-3'}`}>{search}</div>
+			<div data-sheet className={`relative pt-3 max-sm:pt-1 ${SIDE_PADDING[inset]} ${children ? 'pb-1' : 'pb-3'}`}>
+				{search}
+			</div>
 			{children}
 		</div>
 	)

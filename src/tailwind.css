@@ -18,6 +18,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Controls in a phone sheet's rows (DialogBody, DialogToolbar, a drawer's search) take the 44px touch
+   height; the row marks itself with data-sheet. Desktop, page toolbars and the sheet header keep 32px. */
+@custom-variant sheet {
+	@media (width < 40rem) {
+		&:where([data-sheet] *) {
+			@slot;
+		}
+	}
+}
+
 [data-ab-variant='b'] {
 	display: none;
 }
@@ -572,6 +582,21 @@ html[data-ab-group='b'] [data-ab-variant='b'] {
 
 /* ------------------------------- Components ------------------------------- */
 @layer components {
+	/* A 44px touch target around a smaller control on touch screens, without changing how it looks. The
+	   pseudo-element reaches (44px - height) / 2 past each edge, so a 32px control gets 6px and a 24px one
+	   10px. It lives in the components layer so a caller's absolute or sticky utility still wins. */
+	@media (pointer: coarse) {
+		.touch-target {
+			position: relative;
+		}
+		.touch-target::before {
+			content: '';
+			position: absolute;
+			inset-block: min(0px, calc((100% - 2.75rem) / 2));
+			inset-inline: min(0px, calc((100% - 2.75rem) / 2));
+		}
+	}
+
 	[data-backdrop] {
 		background-color: var(--bg-screen-dim);
 		opacity: 0;

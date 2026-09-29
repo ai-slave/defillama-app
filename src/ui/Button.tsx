@@ -65,10 +65,13 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
    mixed content (16px icons vs 16px text lines) stay exactly level; padding
    supplies the breathing room within. sm py is 0.5 (not 1) because label-sm's
    16px line + py-1 + border = 26px would overshoot the 24px floor — content
-   must stay under min-h so the floor decides the height. */
+   must stay under min-h so the floor decides the height. A text md button in
+   a phone sheet's rows is 44px with a 14px label (`sheet:`), level with the
+   fields beside it and the footer below; sm and icon-only buttons keep their size there, and
+   touch screens give every size a 44px touch target instead. */
 const SIZE_CLASSES: Record<ButtonSize, string> = {
 	sm: 'label-sm min-h-6 gap-1 px-2 py-0.5',
-	md: 'label-sm min-h-8 gap-1 px-3 py-1.5'
+	md: 'label-sm min-h-8 gap-1 px-3 py-1.5 sheet:min-h-11 sheet:label-md'
 }
 
 /** Icon-only buttons: aspect-square + self-center so flex rows can't stretch them. */
@@ -91,7 +94,7 @@ export function buttonStyles({
 	size: ButtonSize
 	square?: boolean
 }): string {
-	return `flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
+	return `touch-target flex min-w-fit shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-60 aria-disabled:not-aria-busy:cursor-not-allowed aria-disabled:not-aria-busy:opacity-60 aria-busy:cursor-progress ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
 }
