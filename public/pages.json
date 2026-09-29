@@ -388,6 +388,14 @@
       "tab": "Protocols"
     },
     {
+      "name": "Options by Protocol",
+      "route": "/options",
+      "category": "Volume",
+      "description": "Premium volume, notional volume and open interest of options exchanges",
+      "totalTrackedKey": "optionsPremiumVolume.protocols",
+      "tab": "Protocols"
+    },
+    {
       "name": "Options Premium Volume by Protocol",
       "route": "/options/premium-volume",
       "category": "Volume",

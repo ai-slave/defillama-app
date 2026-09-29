@@ -40,6 +40,7 @@ type KeyMetricsOptionalFields = Partial<
 		| 'liquidationVolume'
 		| 'collateralLiquidated'
 		| 'openInterest'
+		| 'optionsOpenInterest'
 		| 'fees'
 		| 'revenue'
 		| 'holdersRevenue'
@@ -205,6 +206,15 @@ function buildStandardVolumeMetrics(
 	return metrics
 }
 
+const OPEN_INTEREST_METRICS = [
+	{ dataProp: 'openInterest', name: 'Open Interest', tooltipContent: definitions.openInterest.protocol },
+	{
+		dataProp: 'optionsOpenInterest',
+		name: 'Options Open Interest',
+		tooltipContent: definitions.optionsOpenInterest.protocol
+	}
+] as const
+
 export function buildStandardMetricSections(
 	props: IKeyMetricsProps,
 	primaryMetricSource: string | undefined
@@ -300,24 +310,27 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 					dataType={dataType}
 				/>
 			))}
-			{props.openInterest?.total24h != null ? (
-				<SmolStats
-					data={[
-						{
-							name: 'Open Interest',
-							tooltipContent: definitions.openInterest.protocol,
-							value: props.openInterest.total24h,
-							chainBreakdown: props.openInterest.chainBreakdown
-								? extractChainValues(props.openInterest.chainBreakdown, 'total24h')
-								: null
-						}
-					]}
-					protocolName={props.name}
-					formatPrice={props.formatPrice}
-					openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
-					dataType="Open Interest"
-				/>
-			) : null}
+			{OPEN_INTEREST_METRICS.map(({ dataProp, name, tooltipContent }) => {
+				const data = props[dataProp]
+				if (data?.total24h == null) return null
+				return (
+					<SmolStats
+						key={name}
+						data={[
+							{
+								name,
+								tooltipContent,
+								value: data.total24h,
+								chainBreakdown: data.chainBreakdown ? extractChainValues(data.chainBreakdown, 'total24h') : null
+							}
+						]}
+						protocolName={props.name}
+						formatPrice={props.formatPrice}
+						openSmolStatsSummaryByDefault={props.openSmolStatsSummaryByDefault}
+						dataType={name}
+					/>
+				)
+			})}
 			<BridgeVolume {...props} />
 			<TokenCGData {...props} />
 			{props.currentTvlByChain?.staking != null ? (

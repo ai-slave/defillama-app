@@ -23,7 +23,14 @@ import {
 } from './api'
 import type { IAdapterChainMetrics } from './api.types'
 import type { ADAPTER_TYPES } from './constants'
-import { ADAPTER_DATA_TYPE_KEYS, ADAPTER_DATA_TYPES, getChainMetadataKey, REV_PROTOCOLS } from './constants'
+import {
+	ADAPTER_DATA_TYPE_KEYS,
+	ADAPTER_DATA_TYPES,
+	getChainMetadataKey,
+	OPTIONS_OPEN_INTEREST_CATEGORY,
+	REV_PROTOCOLS
+} from './constants'
+import { withOptionsRatios } from './optionsRatios'
 import type {
 	IAdapterByChainPageData,
 	IAdapterChainOverview,
@@ -124,19 +131,27 @@ export async function getAdapterChainOverview({
 	adapterType,
 	chain,
 	excludeTotalDataChart,
-	dataType
+	dataType,
+	category
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	chain: string
 	excludeTotalDataChart: boolean
 	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
+	category?: string
 }): Promise<IAdapterChainOverview> {
 	if (dataType !== 'dailyEarnings') {
+		const request = {
+			adapterType,
+			chain,
+			...(dataType !== undefined ? { dataType } : {}),
+			...(category !== undefined ? { category } : {})
+		}
 		const [overviewData, totalDataChart] = await Promise.all([
-			fetchAdapterChainMetrics({ adapterType, chain, ...(dataType !== undefined ? { dataType } : {}) }),
+			fetchAdapterChainMetrics(request),
 			excludeTotalDataChart
 				? Promise.resolve<IAdapterChainOverview['totalDataChart']>([])
-				: fetchAdapterChainChartData({ adapterType, chain, ...(dataType !== undefined ? { dataType } : {}) })
+				: fetchAdapterChainChartData(request)
 		])
 
 		const overview: IAdapterChainOverview = { ...overviewData, totalDataChart }
@@ -189,6 +204,7 @@ export const getAdapterByChainPageData = async ({
 	dataType,
 	route,
 	hasOpenInterest,
+	hasOptionsMetrics,
 	metricName,
 	tokenSources
 }: {
@@ -197,6 +213,8 @@ export const getAdapterByChainPageData = async ({
 	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
 	route: string
 	hasOpenInterest?: boolean
+	// Notional volume, fees, revenue and their ratios for the options overview.
+	hasOptionsMetrics?: boolean
 	metricName: string
 	/** Started by the page's getStaticProps and awaited after the adapter requests, so the two overlap. */
 	tokenSources?: Promise<TokenRightsBadgeSources>
@@ -205,7 +223,16 @@ export const getAdapterByChainPageData = async ({
 	const rankBy = route === 'pf' || route === 'ps' ? 'pfOrPs' : 'total24h'
 	const cantonIncentivesWarning = metricName === 'Fees' || metricName === 'Revenue' ? CANTON_INCENTIVES_WARNING : null
 
-	const [data, protocolsData, openInterestData, activeLiquidityData, normalizedVolumeData]: [
+	const [
+		data,
+		protocolsData,
+		openInterestData,
+		activeLiquidityData,
+		normalizedVolumeData,
+		notionalVolumeData,
+		feesData,
+		revenueData
+	]: [
 		IAdapterChainOverview,
 		{
 			protocols: Array<{ name: string; mcap: number | null }>
@@ -213,6 +240,9 @@ export const getAdapterByChainPageData = async ({
 		},
 		IAdapterChainOverview | null,
 		IAdapterChainOverview | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
+		IAdapterChainMetrics | null,
 		IAdapterChainMetrics | null
 	] = await Promise.all([
 		getAdapterChainOverview({
@@ -225,6 +255,7 @@ export const getAdapterByChainPageData = async ({
 		hasOpenInterest
 			? getAdapterChainOverview({
 					adapterType: 'open-interest',
+					...(adapterType === 'options' ? { category: OPTIONS_OPEN_INTEREST_CATEGORY } : {}),
 					chain,
 					dataType: 'openInterestAtEnd',
 					excludeTotalDataChart: false
@@ -243,6 +274,23 @@ export const getAdapterByChainPageData = async ({
 					adapterType: 'normalized-volume',
 					chain
 				}).catch(() => null)
+			: Promise.resolve(null),
+		hasOptionsMetrics
+			? fetchAdapterChainMetrics({
+					adapterType,
+					chain,
+					dataType: ADAPTER_DATA_TYPES.DAILY_NOTIONAL_VOLUME
+				}).catch(() => null)
+			: Promise.resolve(null),
+		hasOptionsMetrics
+			? fetchAdapterChainMetrics({ adapterType: 'fees', chain, dataType: ADAPTER_DATA_TYPES.DAILY_FEES }).catch(
+					() => null
+				)
+			: Promise.resolve(null),
+		hasOptionsMetrics
+			? fetchAdapterChainMetrics({ adapterType: 'fees', chain, dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE }).catch(
+					() => null
+				)
 			: Promise.resolve(null)
 	])
 
@@ -252,6 +300,9 @@ export const getAdapterByChainPageData = async ({
 		openInterestData,
 		activeLiquidityData,
 		normalizedVolumeData,
+		optionsData: hasOptionsMetrics
+			? { notionalVolume24h: notionalVolumeData, fees24h: feesData, revenue24h: revenueData }
+			: null,
 		adapterType,
 		dataType,
 		rankBy,
@@ -277,7 +328,7 @@ export const getAdapterByChainPageData = async ({
 			{ label: 'All', to: `/${route}` },
 			...data.allChains.map((chainName) => ({ label: chainName, to: `/${route}/chain/${slug(chainName)}` }))
 		],
-		protocols: readModel.protocols,
+		protocols: hasOptionsMetrics ? withOptionsRatios(readModel.protocols) : readModel.protocols,
 		categories: readModel.categories,
 		adapterType,
 		chartData,
@@ -290,7 +341,8 @@ export const getAdapterByChainPageData = async ({
 		change_1m: data.change_1m ?? null,
 		change_7dover7d: data.change_7dover7d ?? null,
 		openInterest: readModel.openInterest,
-		activeLiquidity: readModel.activeLiquidity
+		activeLiquidity: readModel.activeLiquidity,
+		optionsTotals: readModel.optionsTotals
 	}
 }
 

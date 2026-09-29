@@ -90,15 +90,21 @@ export function buildAdapterByChainChartDataset({
 	const primaryDataMap = toChartPointMap(primaryChartData)
 	const primaryDimensionLabel = metricName
 
+	const hasOpenInterestSeries = adapterType === 'derivatives' || adapterType === 'options'
 	const secondaryDimensionLabel =
-		adapterType === 'derivatives' ? 'Open Interest' : adapterType === 'normalized-volume' ? 'Active Liquidity' : null
+		adapterType === 'options'
+			? 'Notional OI'
+			: hasOpenInterestSeries
+				? 'Open Interest'
+				: adapterType === 'normalized-volume'
+					? 'Active Liquidity'
+					: null
 
-	const secondarySourceData =
-		adapterType === 'derivatives'
-			? openInterestChartData
-			: adapterType === 'normalized-volume'
-				? activeLiquidityChartData
-				: []
+	const secondarySourceData = hasOpenInterestSeries
+		? openInterestChartData
+		: adapterType === 'normalized-volume'
+			? activeLiquidityChartData
+			: []
 
 	const secondaryDataMap = toChartPointMap(secondarySourceData)
 	const hasSecondarySeries = secondaryDataMap.size > 0

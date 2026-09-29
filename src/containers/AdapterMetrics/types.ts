@@ -1,7 +1,8 @@
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { EntityToken } from '~/containers/TokenRights/badge'
 import type { IAdapterChainMetrics, IAdapterChart, IAdapterProtocolMetrics } from './api.types'
-import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
+import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES, OptionsTotalKey } from './constants'
+import type { OptionsRatioKey } from './optionsRatios'
 
 // Chain-level adapter data with chart. Metric periods retain the producer's
 // exact optionality; page read models decide where a missing period is shown as null.
@@ -41,6 +42,13 @@ export type IProtocol = Pick<ApiProtocol, 'name' | 'slug' | 'logo' | 'chains'> &
 	openInterest?: number | null
 	activeLiquidity?: number | null
 	normalizedVolume24h?: number | null
+	notionalVolume24h?: number | null
+	fees24h?: number | null
+	revenue24h?: number | null
+	notionalToPremium?: number | null
+	openInterestToPremium?: number | null
+	// Median the ratio is compared against, set only when the ratio is flagged as high.
+	highRatioMedians?: Partial<Record<OptionsRatioKey, number>>
 	pfOrPs?: number | null
 	methodology?: string | null
 	doublecounted?: boolean
@@ -70,6 +78,7 @@ export interface IAdapterByChainPageData {
 	openInterest: number | null
 	entityQuestions?: Array<string>
 	activeLiquidity: number | null
+	optionsTotals: Partial<Record<OptionsTotalKey, number>> | null
 	deprecated?: boolean
 }
 

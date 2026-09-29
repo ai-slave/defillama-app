@@ -357,6 +357,129 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
+	describe('open interest', () => {
+		const openInterest = (protocol: string) =>
+			`${V2_SERVER_URL}/metrics/open-interest/protocol/${protocol}?dataType=openInterestAtEnd`
+		const child = (name: string, defillamaId: string, displayName = name) => ({
+			name,
+			displayName,
+			defillamaId,
+			methodology: null
+		})
+		const optionsMetadata = {
+			displayName: 'Test Protocol',
+			openInterest: true,
+			optionsOpenInterest: true
+		} satisfies IProtocolMetadata
+		// The parent total lags its children; the options child's adapter name differs from its display name.
+		const parent = {
+			name: 'Test Protocol',
+			total24h: 90,
+			childProtocols: [child('Test Perps', '1'), child('test-options', '2', 'Test Options')]
+		}
+
+		beforeEach(() => {
+			http.serve({
+				[openInterest('test-protocol')]: parent,
+				[openInterest('test-perps')]: { defillamaId: '1', category: 'Derivatives', total24h: 100 },
+				[openInterest('test-options')]: { defillamaId: '2', category: 'Options', total24h: 30 }
+			})
+		})
+
+		test('sums perp and options open interest from their own children', async () => {
+			const data = await pageData({ currentProtocolMetadata: optionsMetadata })
+
+			expect(data.openInterest?.total24h).toBe(100)
+			expect(data.optionsOpenInterest?.total24h).toBe(30)
+			expect(data.optionsOpenInterestSeries).toEqual(['Test Options', 'test-options'])
+			expect(data.availableCharts).toEqual(expect.arrayContaining(['Open Interest', 'Options Open Interest']))
+		})
+
+		test('shows no open interest at all when a child fails to load', async () => {
+			http.serve({ [openInterest('test-options')]: fixtureStatus(500) })
+
+			const data = await pageData({ currentProtocolMetadata: optionsMetadata })
+
+			expect(data.openInterest).toBeNull()
+			expect(data.optionsOpenInterest).toBeNull()
+		})
+
+		test('hides an options total the options child has not reported, and keeps its chart', async () => {
+			http.serve({ [openInterest('test-options')]: { defillamaId: '2', category: 'Options', total24h: null } })
+
+			const data = await pageData({ currentProtocolMetadata: optionsMetadata })
+
+			expect(data.openInterest?.total24h).toBe(100)
+			expect(data.optionsOpenInterest?.total24h).toBeNull()
+			expect(data.availableCharts).toContain('Options Open Interest')
+		})
+
+		test('keeps children of other categories in open interest', async () => {
+			http.serve({
+				[openInterest('test-protocol')]: {
+					name: 'Test Protocol',
+					total24h: 650,
+					childProtocols: [child('Test Perps', '1'), child('Test Predictions', '3')]
+				},
+				[openInterest('test-predictions')]: { defillamaId: '3', category: 'Prediction Market', total24h: 550 }
+			})
+
+			const data = await pageData({ currentProtocolMetadata: optionsMetadata })
+
+			expect(data.openInterest?.total24h).toBe(650)
+			expect(data.optionsOpenInterest).toBeNull()
+			expect(data.availableCharts).not.toContain('Options Open Interest')
+		})
+
+		test('an options protocol shows all its open interest as options open interest', async () => {
+			http.serve({ [openInterest('test-protocol')]: { name: 'Test Protocol', category: 'Options', total24h: 30 } })
+
+			const data = await pageData({
+				currentProtocolMetadata: { displayName: 'Test Protocol', optionsOpenInterest: true } satisfies IProtocolMetadata
+			})
+
+			expect(data.openInterest).toBeNull()
+			expect(data.optionsOpenInterest?.total24h).toBe(30)
+			expect(data.optionsOpenInterestSeries).toEqual([])
+			expect(data.availableCharts).toContain('Options Open Interest')
+			expect(data.availableCharts).not.toContain('Open Interest')
+		})
+
+		// A parent whose only options child has no options volume adapter, like Synapse and Hypercall.
+		test('the options open interest flag alone splits out an options child', async () => {
+			http.serve({
+				[openInterest('test-protocol')]: {
+					name: 'Test Protocol',
+					total24h: 30,
+					childProtocols: [child('test-options', '2', 'Test Options')]
+				}
+			})
+
+			const data = await pageData({
+				currentProtocolMetadata: { displayName: 'Test Protocol', optionsOpenInterest: true } satisfies IProtocolMetadata
+			})
+
+			expect(data.openInterest).toBeNull()
+			expect(data.optionsOpenInterest?.total24h).toBe(30)
+		})
+
+		test('an options exchange without open interest requests none', async () => {
+			http.serve({
+				[`${V2_SERVER_URL}/metrics/options/protocol/test-protocol?dataType=dailyPremiumVolume`]: { total24h: 5 }
+			})
+
+			const data = await pageData({
+				currentProtocolMetadata: {
+					displayName: 'Test Protocol',
+					optionsPremiumVolume: true
+				} satisfies IProtocolMetadata
+			})
+
+			expect(data.optionsPremiumVolume?.total24h).toBe(5)
+			expect(http.urls().filter((url) => url.includes('/open-interest/'))).toEqual([])
+		})
+	})
+
 	test('default-toggles secondary charts without server-prefetching their series', async () => {
 		http.serve({ [`${V2_SERVER_URL}/metrics/fees/protocol/test-protocol`]: { totalAllTime: 1, methodology: null } })
 		const data = await pageData({ currentProtocolMetadata: { displayName: 'Test Protocol', fees: true } })

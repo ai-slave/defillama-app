@@ -382,5 +382,12 @@ export const definitions = {
     "common": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
     "protocol": "USD notional value of outstanding perpetual futures positions, normalized to a single-sided basis rather than summing long and short open interest",
     "chain": "USD notional value of outstanding perpetual futures positions across all perp exchanges on the chain, normalized to a single-sided basis rather than summing long and short open interest, updated daily at 00:00 UTC"
+  },
+  "optionsOpenInterest": {
+    "common": "USD notional value of outstanding options contracts, counted once per contract rather than summing long and short open interest",
+    "protocol": "USD notional value of outstanding options contracts on the exchange, counted once per contract rather than summing long and short open interest",
+    "chain": "USD notional value of outstanding options contracts across all options exchanges on the chain, counted once per contract rather than summing long and short open interest, updated daily at 00:00 UTC",
+    "notionalToPremium": "24h notional volume divided by 24h premium volume: the notional value traded per dollar of premium paid",
+    "openInterestToPremium": "Notional open interest divided by 24h premium volume"
   }
 } as const

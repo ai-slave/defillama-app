@@ -18,6 +18,7 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolCha
 	'Open Interest': 'openInterest',
 	'Options Premium Volume': 'optionsPremium',
 	'Options Notional Volume': 'optionsNotional',
+	'Options Open Interest': null,
 	'Perp Aggregator Volume': 'perpsAggregators',
 	'Bridge Aggregator Volume': 'bridgeAggregators',
 	'DEX Aggregator Volume': 'aggregators',

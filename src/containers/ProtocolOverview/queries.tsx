@@ -40,6 +40,7 @@ import { oracleProtocols } from './constants'
 import { buildAvailableCharts, buildDefaultToggledCharts } from './defaultCharts'
 import { buildProtocolFaq, buildProtocolFaqRelationship } from './faq'
 import { formatAdapterData } from './formatAdapterData'
+import { splitProtocolOpenInterest } from './openInterestSplit'
 import { fetchProtocolRwaAumChart } from './rwa'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from './types'
 import { getProtocolWarningBanners } from './utils'
@@ -88,6 +89,7 @@ export const getProtocolMetricFlags = ({
 		openInterest: !!metadata.openInterest,
 		optionsPremiumVolume: !!metadata.optionsPremiumVolume,
 		optionsNotionalVolume: !!metadata.optionsNotionalVolume,
+		optionsOpenInterest: !!metadata.optionsOpenInterest,
 		dexAggregators: !!metadata.dexAggregators,
 		perpsAggregators: !!metadata.perpsAggregators,
 		bridgeAggregators: !!metadata.bridgeAggregators,
@@ -112,6 +114,24 @@ export const getProtocolMetricFlags = ({
 		tokenRights: !!metadata.tokenRights,
 		rwa: !!metadata.rwaPlatformSlug
 	}
+}
+
+const OPEN_INTEREST_REQUEST = { adapterType: 'open-interest', dataType: 'openInterestAtEnd' } as const
+
+async function fetchProtocolOpenInterest({ protocol, hasOptions }: { protocol: string; hasOptions: boolean }) {
+	const data = await fetchAdapterProtocolMetrics({ ...OPEN_INTEREST_REQUEST, protocol })
+	const childProtocols = data.childProtocols ?? []
+	if (!hasOptions || childProtocols.length === 0) return splitProtocolOpenInterest({ protocol: data, children: [] })
+
+	// Each child's own endpoint carries its category and total. Without one of them the split is unknown,
+	// so the page shows no open interest rather than a mixed one.
+	const children = await Promise.all(
+		childProtocols.map((child) =>
+			fetchAdapterProtocolMetrics({ ...OPEN_INTEREST_REQUEST, protocol: child.displayName }).catch(() => null)
+		)
+	)
+	if (children.some((child) => child === null)) return null
+	return splitProtocolOpenInterest({ protocol: data, children: children.filter((child) => child !== null) })
 }
 
 type IProtocolTvlChartSeedResult = {
@@ -234,7 +254,7 @@ export const getProtocolOverviewPageData = async ({
 		dexNotionalVolumeData,
 		dexAggregatorVolumeData,
 		perpVolumeData,
-		openInterestData,
+		openInterestSplit,
 		perpAggregatorVolumeData,
 		bridgeAggregatorVolumeData,
 		optionsPremiumVolumeData,
@@ -352,12 +372,11 @@ export const getProtocolOverviewPageData = async ({
 					protocol: currentProtocolMetadata.displayName ?? ''
 				}).then((data) => formatAdapterData({ data, methodologyKey: 'perps' }))
 			: Promise.resolve(null),
-		currentProtocolMetadata.openInterest
-			? fetchAdapterProtocolMetrics({
-					adapterType: 'open-interest',
+		currentProtocolMetadata.openInterest || currentProtocolMetadata.optionsOpenInterest
+			? fetchProtocolOpenInterest({
 					protocol: currentProtocolMetadata.displayName ?? '',
-					dataType: 'openInterestAtEnd'
-				}).then((data) => formatAdapterData({ data, methodologyKey: 'openInterest' }))
+					hasOptions: !!currentProtocolMetadata.optionsOpenInterest
+				})
 			: Promise.resolve(null),
 		currentProtocolMetadata.perpsAggregators
 			? fetchAdapterProtocolMetrics({
@@ -560,6 +579,11 @@ export const getProtocolOverviewPageData = async ({
 		fetchBlockExplorers().catch((): BlockExplorersResponse => []),
 		tokenMarketSummaryPromise
 	])
+	const openInterestData = formatAdapterData({ data: openInterestSplit?.openInterest, methodologyKey: 'openInterest' })
+	const optionsOpenInterestData = formatAdapterData({
+		data: openInterestSplit?.optionsOpenInterest,
+		methodologyKey: 'optionsOpenInterest'
+	})
 
 	const resolvedCategory = resolveProtocolCategory({
 		protocolData,
@@ -632,6 +656,7 @@ export const getProtocolOverviewPageData = async ({
 		hasStandardAdapterMetrics(liquidationVolumeData) ||
 		hasStandardAdapterMetrics(collateralLiquidatedData) ||
 		openInterestData?.total24h != null ||
+		optionsOpenInterestData?.total24h != null ||
 		bridgeVolumeData?.length ||
 		isOracleProtocol ||
 		protocolData.tokenCGData ||
@@ -698,6 +723,7 @@ export const getProtocolOverviewPageData = async ({
 		hasOpenInterest: Boolean(openInterestData),
 		hasOptionsPremiumVolume: Boolean(optionsPremiumVolumeData),
 		hasOptionsNotionalVolume: Boolean(optionsNotionalVolumeData),
+		hasOptionsOpenInterest: Boolean(optionsOpenInterestData),
 		hasDexAggregatorVolume: Boolean(dexAggregatorVolumeData),
 		hasPerpAggregatorVolume: Boolean(perpAggregatorVolumeData),
 		hasBridgeAggregatorVolume: Boolean(bridgeAggregatorVolumeData),
@@ -899,6 +925,8 @@ export const getProtocolOverviewPageData = async ({
 		bridgeAggregatorVolume: bridgeAggregatorVolumeData,
 		optionsPremiumVolume: optionsPremiumVolumeData,
 		optionsNotionalVolume: optionsNotionalVolumeData,
+		optionsOpenInterest: optionsOpenInterestData,
+		optionsOpenInterestSeries: openInterestSplit?.optionsOpenInterestSeries ?? null,
 		liquidationVolume: liquidationVolumeData,
 		collateralLiquidated: collateralLiquidatedData,
 		bridgeVolume: bridgeVolumeData || null,

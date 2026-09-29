@@ -9,6 +9,7 @@ import {
 	formatLineChart,
 	formatNullableBarChart
 } from '~/components/ECharts/shared/timeSeries'
+import type { IAdapterBreakdownChartData } from '~/containers/AdapterMetrics/api.types'
 import {
 	useFetchProtocolActivityChart,
 	useFetchProtocolMedianAPY,
@@ -21,6 +22,7 @@ import { fetchJson } from '~/utils/async'
 import { ADAPTER_CHART_DESCRIPTORS, type AdapterChartDescriptorLabel } from './chartDescriptors'
 import { getGroupedTimestampSec, normalizeSeriesToMilliseconds, normalizeSeriesToSeconds } from './chartSeries.utils'
 import { oracleProtocols, protocolCharts, type ProtocolChartsLabels } from './constants'
+import { selectOpenInterestBreakdownSeries } from './openInterestSplit'
 import {
 	buildExtraTvlCharts,
 	buildTvlChart,
@@ -91,7 +93,8 @@ export const useFetchProtocolChartData = ({
 	tvlSettings,
 	isCEX,
 	rwaPlatformSlug,
-	rwaProtocolMcapSlug
+	rwaProtocolMcapSlug,
+	optionsOpenInterestSeries
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartInterval
@@ -403,22 +406,44 @@ export const useFetchProtocolChartData = ({
 				}
 			}
 
+			// Options children split the version-breakdown chart; a protocol that is all options keeps the plain one.
+			const openInterestSplit = !optionsOpenInterestSeries?.length
+				? null
+				: descriptor.label === 'Options Open Interest'
+					? 'options'
+					: descriptor.label === 'Open Interest'
+						? 'perps'
+						: null
 			const queryParamKey = protocolCharts[descriptor.label]
 			const enabled = !!(toggledMetrics[queryParamKey] === 'true' && hasMetric && canFetchClientCharts)
+			const dataType = 'dataType' in descriptor.chartRequest ? descriptor.chartRequest.dataType : undefined
 			const { prefetchedData, queryOptions } = getPrefetchedProtocolChartQueryOptions({
 				label: descriptor.label,
 				queryKey: ['protocol-overview', protocolSlug, descriptor.clientQueryKey],
 				enabled,
 				prefetchedCharts: prefetchedNumericCharts,
-				queryFn: () =>
-					fetchJson<Array<[number, number]> | null>(
-						buildProtocolChartApiUrl({
-							kind: 'adapter',
-							adapterType: descriptor.chartRequest.adapterType,
-							protocol: name,
-							dataType: 'dataType' in descriptor.chartRequest ? descriptor.chartRequest.dataType : undefined
-						})
-					)
+				queryFn: openInterestSplit
+					? () =>
+							fetchJson<IAdapterBreakdownChartData>(
+								buildProtocolChartApiUrl({
+									kind: 'adapter-breakdown',
+									adapterType: descriptor.chartRequest.adapterType,
+									protocol: name,
+									type: 'version',
+									dataType
+								})
+							).then((chart) =>
+								selectOpenInterestBreakdownSeries(chart, optionsOpenInterestSeries ?? [], openInterestSplit)
+							)
+					: () =>
+							fetchJson<Array<[number, number]> | null>(
+								buildProtocolChartApiUrl({
+									kind: 'adapter',
+									adapterType: descriptor.chartRequest.adapterType,
+									protocol: name,
+									dataType
+								})
+							)
 			})
 			configs.push({
 				descriptor,
@@ -429,7 +454,15 @@ export const useFetchProtocolChartData = ({
 		}
 
 		return configs
-	}, [metrics, toggledMetrics, canFetchClientCharts, protocolSlug, name, prefetchedNumericCharts])
+	}, [
+		metrics,
+		toggledMetrics,
+		canFetchClientCharts,
+		protocolSlug,
+		name,
+		prefetchedNumericCharts,
+		optionsOpenInterestSeries
+	])
 
 	const adapterChartQueryResults = useQueries({
 		queries: adapterChartConfigs.map(({ queryOptions }) => queryOptions)

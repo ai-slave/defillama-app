@@ -253,6 +253,65 @@ describe('chains by adapter page data', () => {
 		).resolves.toEqual({ dimensions: ['timestamp', 'Ethereum'], source: [] })
 	})
 
+	test('options page shows options open interest, notional volume, fees and revenue, not perp open interest', async () => {
+		const derive = (total24h: number, name = 'Derive Options') =>
+			adapterProtocolRow({ defillamaId: 'derive', name, displayName: 'Derive Options', category: 'Options', total24h })
+		fetchJsonMock.mockImplementation((url: string) => {
+			const { pathname, searchParams } = new URL(url)
+			if (pathname.endsWith('/chart/open-interest/category/options')) return Promise.resolve([[1_700_000_000, 50]])
+			if (pathname.endsWith('/chart/open-interest')) return Promise.resolve([[1_700_000_000, 999]])
+			if (pathname.endsWith('/chart/options')) return Promise.resolve([[1_700_000_000, 10]])
+			if (pathname.endsWith('/metrics/open-interest/category/options'))
+				return Promise.resolve(adapterMetricsResponse({ total24h: 50, protocols: [derive(50)] }))
+			if (pathname.endsWith('/metrics/open-interest'))
+				return Promise.resolve(adapterMetricsResponse({ total24h: 999, protocols: [derive(999)] }))
+			// The fees listing covers every protocol, not only options exchanges, and its adapter names differ.
+			if (pathname.endsWith('/metrics/fees')) {
+				const options = searchParams.get('dataType') === 'dailyRevenue' ? 3 : 7
+				return Promise.resolve(
+					adapterMetricsResponse({
+						total24h: options + 1000,
+						protocols: [
+							derive(options, 'derive-fees'),
+							adapterProtocolRow({ defillamaId: 'uniswap', name: 'Uniswap', displayName: 'Uniswap', total24h: 1000 })
+						]
+					})
+				)
+			}
+			const total24h = searchParams.get('dataType') === 'dailyNotionalVolume' ? 400 : 10
+			return Promise.resolve(adapterMetricsResponse({ total24h, protocols: [derive(total24h)] }))
+		})
+
+		const data = await getAdapterByChainPageData({
+			adapterType: ADAPTER_TYPES.OPTIONS,
+			chain: 'All',
+			dataType: ADAPTER_DATA_TYPES.DAILY_PREMIUM_VOLUME,
+			route: 'options',
+			hasOpenInterest: true,
+			hasOptionsMetrics: true,
+			metricName: 'Options Premium Volume'
+		})
+
+		expect(data?.openInterest).toBe(50)
+		expect(data?.optionsTotals).toEqual({ notionalVolume24h: 400, fees24h: 7, revenue24h: 3 })
+		expect(data?.protocols).toEqual([
+			expect.objectContaining({
+				name: 'Derive Options',
+				total24h: 10,
+				notionalVolume24h: 400,
+				openInterest: 50,
+				fees24h: 7,
+				revenue24h: 3,
+				notionalToPremium: 40,
+				openInterestToPremium: 5
+			})
+		])
+		expect(data?.chartData).toEqual({
+			dimensions: ['timestamp', 'Options Premium Volume', 'Notional OI'],
+			source: [[1_700_000_000_000, 10, 50]]
+		})
+	})
+
 	test('uses protocol revenue methodology and falls back to revenue methodology', async () => {
 		fetchJsonMock.mockImplementation((url: string) => {
 			if (new URL(url).pathname.includes('/chart/')) return Promise.resolve([])

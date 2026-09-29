@@ -65,6 +65,7 @@ Examples of ambiguous pairings:
 
 - `dailyVolume` is used by DEXs, perps, DEX aggregators, and perp aggregators. The metadata flag depends on `adapterType`.
 - `dailyNotionalVolume` is used by DEX notional volume and options notional volume. The metadata flag depends on `adapterType`.
+- The `open-interest` adapter serves perp and options open interest, told apart by protocol category; never sum them. Requests without a category return only `Derivatives`, so `/perps` and `/open-interest` exclude options, and `/options` requests the `Options` category. Protocol metadata keeps them apart too: `openInterest` flags non-options open interest and `optionsOpenInterest` flags the `Options` category, each set on the protocol and its parent. A parent protocol's endpoints add up every child whatever its category, and its total can lag its chart, so the protocol page sums perp and options open interest from the children's own endpoints and splits the version-breakdown chart (`src/containers/ProtocolOverview/openInterestSplit.ts`).
 
 ### Activity Availability And Aggregation
 

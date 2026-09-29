@@ -2,7 +2,13 @@ import { resolveEntityToken, type TokenRightsBadgeSources } from '~/containers/T
 import { slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import type { IAdapterChainMetrics } from './api.types'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES, ZERO_FEE_PERPS } from './constants'
+import {
+	ADAPTER_DATA_TYPES,
+	ADAPTER_TYPES,
+	OPTIONS_TOTAL_KEYS,
+	type OptionsTotalKey,
+	ZERO_FEE_PERPS
+} from './constants'
 import { mergeParentEarningsMetricPeriods, mergeParentMetricPeriods } from './metricPeriods'
 import type { IAdapterByChainPageData, IAdapterChainOverview, IProtocol } from './types'
 import type { ActiveLiquidityData, NormalizedVolumeData, OpenInterestData } from './utils'
@@ -23,7 +29,10 @@ type AdapterByChainReadModel = {
 	categories: Array<string>
 	openInterest: number | null
 	activeLiquidity: number | null
+	optionsTotals: IAdapterByChainPageData['optionsTotals']
 }
+
+type OptionsTotalsById = Partial<Record<OptionsTotalKey, Map<string, number | null>>>
 
 /** A top-level row's entity ids for token lookup: its own ids first, then the ids it falls back to. */
 type RowTokenIds = { primary: Set<string>; fallback: Set<string> }
@@ -86,6 +95,7 @@ function buildProtocolSummary({
 	openInterestProtocols,
 	activeLiquidityProtocols,
 	normalizedVolumeProtocols,
+	optionsTotalsById,
 	cantonIncentivesWarning
 }: {
 	protocol: AdapterChainProtocolMetric
@@ -95,6 +105,7 @@ function buildProtocolSummary({
 	openInterestProtocols: Map<string, OpenInterestData>
 	activeLiquidityProtocols: Map<string, ActiveLiquidityData>
 	normalizedVolumeProtocols: Map<string, NormalizedVolumeData>
+	optionsTotalsById: OptionsTotalsById
 	cantonIncentivesWarning: string | null
 }): IProtocol {
 	const warning = protocol.slug === 'canton' ? cantonIncentivesWarning : null
@@ -114,7 +125,7 @@ function buildProtocolSummary({
 				? Math.min(rawNormalizedVolume24h, protocol.total24h)
 				: null
 
-	return {
+	const summary: IProtocol = {
 		name: protocol.displayName,
 		slug: protocol.slug,
 		logo: protocol.protocolType === 'chain' ? chainIconUrl(protocol.slug) : tokenIconUrl(protocol.slug),
@@ -147,6 +158,11 @@ function buildProtocolSummary({
 		...(normalizedVolume24h != null ? { normalizedVolume24h } : {}),
 		...(protocol.displayName !== protocol.name ? { breakdownAliases: [protocol.name] } : {})
 	}
+	for (const key of OPTIONS_TOTAL_KEYS) {
+		const value = optionsTotalsById[key]?.get(protocol.defillamaId)
+		if (value != null) summary[key] = value
+	}
+	return summary
 }
 
 function buildSingleChildParentSummary(protocol: string, childProtocol: IProtocol): IProtocol {
@@ -275,8 +291,20 @@ function buildParentProtocolSummary({
 		...(warning ? { warning } : {}),
 		...(openInterest != null ? { openInterest } : {}),
 		...(activeLiquidity != null ? { activeLiquidity } : {}),
-		...(normalizedVolume24h != null ? { normalizedVolume24h } : {})
+		...(normalizedVolume24h != null ? { normalizedVolume24h } : {}),
+		...sumOptionsTotals(childProtocols)
 	}
+}
+
+function sumOptionsTotals(protocols: ReadonlyArray<IProtocol>) {
+	const totals: Partial<Record<OptionsTotalKey, number>> = {}
+	for (const protocol of protocols) {
+		for (const key of OPTIONS_TOTAL_KEYS) {
+			const value = protocol[key]
+			if (value != null) totals[key] = (totals[key] ?? 0) + value
+		}
+	}
+	return totals
 }
 
 function sortFinalProtocols({
@@ -310,6 +338,7 @@ export function buildAdapterByChainReadModel({
 	openInterestData,
 	activeLiquidityData,
 	normalizedVolumeData,
+	optionsData = null,
 	adapterType,
 	dataType,
 	rankBy,
@@ -321,6 +350,8 @@ export function buildAdapterByChainReadModel({
 	openInterestData: IAdapterChainOverview | null
 	activeLiquidityData: IAdapterChainOverview | null
 	normalizedVolumeData: IAdapterChainMetrics | null
+	// Options overview metrics joined onto rows by protocol id.
+	optionsData?: Partial<Record<OptionsTotalKey, IAdapterChainMetrics | null>> | null
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: AdapterByChainDataType | undefined
 	rankBy: AdapterByChainRankBy
@@ -332,6 +363,15 @@ export function buildAdapterByChainReadModel({
 	const openInterestProtocols = new Map<string, OpenInterestData>()
 	const activeLiquidityProtocols = new Map<string, ActiveLiquidityData>()
 	const normalizedVolumeProtocols = new Map<string, NormalizedVolumeData>()
+	// Fees and revenue are the whole protocol's; there is no options-only fees listing.
+	const optionsTotalsById: OptionsTotalsById = {}
+	for (const key of OPTIONS_TOTAL_KEYS) {
+		const byId = new Map<string, number | null>()
+		for (const protocol of optionsData?.[key]?.protocols ?? [])
+			byId.set(protocol.defillamaId, protocol.total24h ?? null)
+		optionsTotalsById[key] = byId
+	}
+	const leafSummaries: Array<IProtocol> = []
 
 	if (openInterestData) {
 		for (const protocol of openInterestData.protocols) {
@@ -373,8 +413,10 @@ export function buildAdapterByChainReadModel({
 			openInterestProtocols,
 			activeLiquidityProtocols,
 			normalizedVolumeProtocols,
+			optionsTotalsById,
 			cantonIncentivesWarning
 		})
+		leafSummaries.push(summary)
 
 		const parentProtocol = protocol.linkedProtocols?.[0]
 		if (protocol.linkedProtocols && protocol.linkedProtocols.length > 1 && parentProtocol !== undefined) {
@@ -415,6 +457,15 @@ export function buildAdapterByChainReadModel({
 		protocols: sortFinalProtocols({ protocols, rankBy }),
 		categories: adapterType === 'fees' ? Array.from(categories).sort() : [],
 		openInterest: openInterestData?.total24h ?? null,
-		activeLiquidity: activeLiquidityData?.total24h ?? null
+		activeLiquidity: activeLiquidityData?.total24h ?? null,
+		// Fees sum over this page's rows; notional takes the listing total, like total24h and openInterest.
+		optionsTotals: optionsData
+			? {
+					...sumOptionsTotals(leafSummaries),
+					...(optionsData.notionalVolume24h?.total24h != null
+						? { notionalVolume24h: optionsData.notionalVolume24h.total24h }
+						: {})
+				}
+			: null
 	}
 }

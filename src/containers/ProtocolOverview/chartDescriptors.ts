@@ -14,6 +14,7 @@ type AdapterChartMetricKey = keyof Pick<
 	| 'openInterest'
 	| 'optionsPremiumVolume'
 	| 'optionsNotionalVolume'
+	| 'optionsOpenInterest'
 	| 'dexAggregators'
 	| 'perpsAggregators'
 	| 'bridgeAggregators'
@@ -113,6 +114,16 @@ export const ADAPTER_CHART_DESCRIPTORS = [
 		clientQueryKey: 'options-notional-volume',
 		metricKeys: ['optionsNotionalVolume'],
 		renderKind: 'bar'
+	},
+	{
+		// Split out of the open-interest chart by options series; see openInterestSplit.ts.
+		label: 'Options Open Interest',
+		chartRequest: { adapterType: 'open-interest', dataType: 'openInterestAtEnd' },
+		metricsRequest: { adapterType: 'open-interest', dataType: 'openInterestAtEnd' },
+		methodologyKey: 'optionsOpenInterest',
+		clientQueryKey: 'options-open-interest',
+		metricKeys: ['optionsOpenInterest'],
+		renderKind: 'line'
 	},
 	{
 		label: 'DEX Aggregator Volume',

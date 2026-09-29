@@ -18,6 +18,7 @@ interface IBuildAvailableChartsParams {
 	hasOpenInterest: boolean
 	hasOptionsPremiumVolume: boolean
 	hasOptionsNotionalVolume: boolean
+	hasOptionsOpenInterest?: boolean
 	hasDexAggregatorVolume: boolean
 	hasPerpAggregatorVolume: boolean
 	hasBridgeAggregatorVolume: boolean
@@ -56,6 +57,7 @@ export function buildAvailableCharts(params: IBuildAvailableChartsParams): Array
 	if (params.hasOpenInterest) charts.push('Open Interest')
 	if (params.hasOptionsPremiumVolume) charts.push('Options Premium Volume')
 	if (params.hasOptionsNotionalVolume) charts.push('Options Notional Volume')
+	if (params.hasOptionsOpenInterest) charts.push('Options Open Interest')
 	if (params.hasDexAggregatorVolume) charts.push('DEX Aggregator Volume')
 	if (params.hasPerpAggregatorVolume) charts.push('Perp Aggregator Volume')
 	if (params.hasBridgeAggregatorVolume) charts.push('Bridge Aggregator Volume')

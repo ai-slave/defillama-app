@@ -399,14 +399,10 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
+		// Temporary: browsers keep a permanent redirect with no expiry, and this target has changed before.
 		source: '/option',
-		destination: '/options/premium-volume',
-		permanent: true
-	},
-	{
-		source: '/options',
-		destination: '/options/premium-volume',
-		permanent: true
+		destination: '/options',
+		permanent: false
 	},
 	{
 		source: '/options/chain',

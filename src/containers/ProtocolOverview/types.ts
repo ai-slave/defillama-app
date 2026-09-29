@@ -19,6 +19,7 @@ export interface IProtocolPageMetrics {
 	openInterest: boolean
 	optionsPremiumVolume: boolean
 	optionsNotionalVolume: boolean
+	optionsOpenInterest: boolean
 	dexAggregators: boolean
 	perpsAggregators: boolean
 	bridgeAggregators: boolean
@@ -129,6 +130,10 @@ export interface IProtocolOverviewPageData {
 	bridgeAggregatorVolume: IAdapterOverview | null
 	optionsPremiumVolume: IAdapterOverview | null
 	optionsNotionalVolume: IAdapterOverview | null
+	// Options-category open interest, kept apart from perp open interest.
+	optionsOpenInterest?: IAdapterOverview | null
+	// Version-breakdown series of the open-interest chart that are options OI.
+	optionsOpenInterestSeries?: Array<string> | null
 	liquidationVolume: IAdapterOverview | null
 	collateralLiquidated: IAdapterOverview | null
 	bridgeVolume: Array<Pick<BridgeVolumePoint, 'date' | 'depositUSD' | 'withdrawUSD'>> | null
@@ -264,6 +269,7 @@ export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
 	openInterest: 'false',
 	optionsPremiumVolume: 'false',
 	optionsNotionalVolume: 'false',
+	optionsOpenInterest: 'false',
 	perpAggregatorVolume: 'false',
 	bridgeAggregatorVolume: 'false',
 	dexAggregatorVolume: 'false',

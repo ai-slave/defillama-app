@@ -19,6 +19,7 @@ const commonMethodology: Readonly<Record<string, string>> = {
 	bridgeAggregators: definitions.bridgeAggregators.common,
 	optionsPremiumVolume: definitions.optionsPremium.common,
 	optionsNotionalVolume: definitions.optionsNotional.common,
+	optionsOpenInterest: definitions.optionsOpenInterest.common,
 	LiquidationVolume: definitions.liquidationVolume.common,
 	CollateralLiquidated: definitions.collateralLiquidated.common
 }

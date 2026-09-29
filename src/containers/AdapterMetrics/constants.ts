@@ -111,7 +111,15 @@ export function getChainMetadataKey(
 
 // Dimensions rendered as lines instead of bars. Also checked against chartName in breakdown
 // mode, where individual series are protocol names that won't match these dimension names.
-export const LINE_DIMENSIONS = new Set(['Open Interest', 'Active Liquidity'])
+export const LINE_DIMENSIONS = new Set(['Open Interest', 'Notional OI', 'Active Liquidity'])
+
+// The open-interest adapter serves perp and options OI. Unfiltered requests return only the Derivatives
+// category; options OI is requested by this category and kept apart from perp OI.
+export const OPTIONS_OPEN_INTEREST_CATEGORY = 'Options'
+
+// Per-protocol 24h totals the options overview joins onto its rows.
+export const OPTIONS_TOTAL_KEYS = ['notionalVolume24h', 'fees24h', 'revenue24h'] as const
+export type OptionsTotalKey = (typeof OPTIONS_TOTAL_KEYS)[number]
 
 // MEV/REV adapters folded into chain REV aggregations
 export const REV_PROTOCOLS: Readonly<Record<string, ReadonlyArray<string>>> = {

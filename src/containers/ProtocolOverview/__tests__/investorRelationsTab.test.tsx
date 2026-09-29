@@ -32,6 +32,7 @@ const metrics: IProtocolPageMetrics = {
 	openInterest: false,
 	optionsPremiumVolume: false,
 	optionsNotionalVolume: false,
+	optionsOpenInterest: false,
 	dexAggregators: false,
 	perpsAggregators: false,
 	bridgeAggregators: false,

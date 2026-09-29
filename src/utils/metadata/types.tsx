@@ -53,11 +53,13 @@ export interface IProtocolMetadata {
 	dexs?: boolean
 	dexsNotionalVolume?: boolean
 	perps?: boolean
+	// Perp and other non-options open interest; options open interest is optionsOpenInterest.
 	openInterest?: boolean
 	normalizedVolume?: boolean
 	dexAggregators?: boolean
 	optionsPremiumVolume?: boolean
 	optionsNotionalVolume?: boolean
+	optionsOpenInterest?: boolean
 	perpsAggregators?: boolean
 	bridgeAggregators?: boolean
 	deprecated?: boolean

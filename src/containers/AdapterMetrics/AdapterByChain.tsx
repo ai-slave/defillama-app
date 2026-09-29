@@ -45,6 +45,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { AdapterByChainChart } from './ChainChart'
+import { getRatio, HIGH_RATIO_MULTIPLE, type OptionsRatioKey } from './optionsRatios'
 import type { IAdapterByChainPageData } from './types'
 import { filterProtocolsByCategoryQuery } from './utils'
 
@@ -63,6 +64,7 @@ type TPageType =
 	| 'DEX Aggregator Volume'
 	| 'Options Premium Volume'
 	| 'Options Notional Volume'
+	| 'Options'
 	| 'Earnings'
 	| 'P/F'
 	| 'P/S'
@@ -86,6 +88,10 @@ const FEES_CHART_PAGE_TYPES = new Set<TPageType>(['Fees', 'Revenue', 'Holders Re
 const TOKEN_BADGE_PAGE_TYPES = new Set<TPageType>(['Revenue'])
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
+// Columns left unchecked in the Columns picker until a user turns them on.
+const DEFAULT_HIDDEN_COLUMNS: Partial<Record<TPageType, Record<string, false>>> = {
+	Options: { revenue24h: false, total30d: false }
+}
 
 const pageSlugByType: Partial<Record<TPageType, string>> = {
 	'Perp Volume': 'perps',
@@ -106,6 +112,7 @@ const pageTypeByDefinition: Partial<Record<TPageType, Record<string, string>>> =
 	'DEX Aggregator Volume': definitions.dexAggregators.chain,
 	'Options Premium Volume': definitions.optionsPremium.chain,
 	'Options Notional Volume': definitions.optionsNotional.chain,
+	Options: definitions.optionsPremium.chain,
 	Earnings: definitions.earnings.chain
 }
 
@@ -144,6 +151,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		defaultColumn: {
 			sortUndefined: 'last'
 		},
+		initialState: { columnVisibility: DEFAULT_HIDDEN_COLUMNS[props.type] ?? {} },
 		enableSortingRemoval: false,
 		filterFromLeafRows: true,
 		getSubRows: (row: IAdapterByChainPageData['protocols'][0]) => row.childProtocols,
@@ -177,7 +185,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		instance,
 		columnOrders
 	})
-	const metricName = props.type
+	const metricName = props.type === 'Options' ? 'Options Premium Volume' : props.type
 	const columnsKey = `columns-${props.type}`
 
 	const setColumnOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (newOptions) => {
@@ -251,15 +259,55 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						) : null}
 
 						<div className="flex flex-col">
+							{props.optionsTotals?.notionalVolume24h != null ? (
+								<MetricRow
+									label="Notional Volume (24h)"
+									tooltip={definitions.optionsNotional.chain['24h']}
+									value={formatUsd(props.optionsTotals.notionalVolume24h, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								/>
+							) : null}
 							{props.openInterest ? (
 								<MetricRow
-									label="Open Interest"
-									tooltip={definitions.openInterest.chain}
+									label={props.adapterType === 'options' ? 'Notional OI' : 'Open Interest'}
+									tooltip={
+										props.adapterType === 'options'
+											? definitions.optionsOpenInterest.chain
+											: definitions.openInterest.chain
+									}
 									value={formatUsd(props.openInterest, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
 									})}
+								/>
+							) : null}
+							{props.optionsTotals?.fees24h != null ? (
+								<MetricRow
+									label="Fees (24h)"
+									tooltip={definitions.fees.chain['24h']}
+									value={formatUsd(props.optionsTotals.fees24h, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}
+								/>
+							) : null}
+							{getRatio(props.optionsTotals?.notionalVolume24h, props.total24h) != null ? (
+								<MetricRow
+									label="Notional / Premium"
+									tooltip={definitions.optionsOpenInterest.notionalToPremium}
+									value={formatRatio(getRatio(props.optionsTotals?.notionalVolume24h, props.total24h))}
+								/>
+							) : null}
+							{props.adapterType === 'options' && getRatio(props.openInterest, props.total24h) != null ? (
+								<MetricRow
+									label="OI / Premium"
+									tooltip={definitions.optionsOpenInterest.openInterestToPremium}
+									value={formatRatio(getRatio(props.openInterest, props.total24h))}
 								/>
 							) : null}
 							{props.activeLiquidity != null ? (
@@ -357,7 +405,12 @@ const columnOrders: ColumnOrdersByBreakpoint = {
 		'name',
 		'normalizedVolume24h',
 		'total24h',
+		'notionalVolume24h',
 		'openInterest',
+		'fees24h',
+		'notionalToPremium',
+		'openInterestToPremium',
+		'revenue24h',
 		'activeLiquidity',
 		'total7d',
 		'total30d',
@@ -370,7 +423,12 @@ const columnOrders: ColumnOrdersByBreakpoint = {
 		'category',
 		'definition',
 		'total24h',
+		'notionalVolume24h',
 		'openInterest',
+		'fees24h',
+		'notionalToPremium',
+		'openInterestToPremium',
+		'revenue24h',
 		'activeLiquidity',
 		'total7d',
 		'total30d'
@@ -383,6 +441,7 @@ const protocolChartsKeys: Partial<Record<IProps['type'], (typeof protocolCharts)
 	'Holders Revenue': 'holdersRevenue',
 	'Options Premium Volume': 'optionsPremiumVolume',
 	'Options Notional Volume': 'optionsNotionalVolume',
+	Options: 'optionsPremiumVolume',
 	'DEX Volume': 'dexVolume',
 	'Perp Volume': 'perpVolume',
 	'Open Interest': 'openInterest',
@@ -752,6 +811,31 @@ const openInterestMetricColumn = (
 		}
 	})
 
+const ratioColumn = (id: OptionsRatioKey, header: string, headerHelperText: string) =>
+	columnHelper.accessor((protocol) => protocol[id] ?? undefined, {
+		id,
+		header,
+		cell: (info) => {
+			const median = info.row.original.highRatioMedians?.[id]
+			if (median == null) return formatRatio(info.getValue())
+			return (
+				<span className="flex items-center justify-center gap-1">
+					<Tooltip
+						content={`More than ${HIGH_RATIO_MULTIPLE}x the median across exchanges on this page (${formatRatio(median)})`}
+					>
+						<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
+					</Tooltip>
+					{formatRatio(info.getValue())}
+				</span>
+			)
+		},
+		meta: {
+			headerClassName: getMetricColumnWidthClass(160),
+			align: 'center',
+			headerHelperText
+		}
+	})
+
 const pfOrPsColumn = (label: 'P/F' | 'P/S', headerHelperText: string) =>
 	columnHelper.accessor((protocol) => protocol.pfOrPs ?? undefined, {
 		id: 'pfOrPs',
@@ -863,6 +947,54 @@ const COLUMNS_BY_TYPE = {
 			'Notional Volume 30d',
 			(protocol) => protocol.total30d,
 			definitions.optionsNotional.protocol['30d'],
+			180
+		)
+	],
+	Options: [
+		NameColumn('Options'),
+		metricColumn(
+			'total24h',
+			'Premium Volume 24h',
+			(protocol) => protocol.total24h,
+			definitions.optionsPremium.protocol['24h'],
+			180
+		),
+		metricColumn(
+			'notionalVolume24h',
+			'Notional Volume 24h',
+			(protocol) => protocol.notionalVolume24h,
+			definitions.optionsNotional.protocol['24h'],
+			180
+		),
+		openInterestMetricColumn(
+			'openInterest',
+			'Notional OI',
+			(protocol) => protocol.openInterest,
+			definitions.optionsOpenInterest.protocol,
+			160
+		),
+		metricColumn('fees24h', 'Fees 24h', (protocol) => protocol.fees24h, definitions.fees.protocol['24h'], 128),
+		ratioColumn('notionalToPremium', 'Notional / Premium', definitions.optionsOpenInterest.notionalToPremium),
+		ratioColumn('openInterestToPremium', 'OI / Premium', definitions.optionsOpenInterest.openInterestToPremium),
+		metricColumn(
+			'revenue24h',
+			'Revenue 24h',
+			(protocol) => protocol.revenue24h,
+			definitions.revenue.protocol['24h'],
+			128
+		),
+		metricColumn(
+			'total7d',
+			'Premium Volume 7d',
+			(protocol) => protocol.total7d,
+			definitions.optionsPremium.protocol['7d'],
+			180
+		),
+		metricColumn(
+			'total30d',
+			'Premium Volume 30d',
+			(protocol) => protocol.total30d,
+			definitions.optionsPremium.protocol['30d'],
 			180
 		)
 	],

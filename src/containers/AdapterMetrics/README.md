@@ -12,7 +12,7 @@ Common route families owned here:
 - `/fees/chain/[chain]`, `/revenue/chain/[chain]`, `/holders-revenue/chain/[chain]`, and related chain detail routes
 - `/fees/chains`, `/revenue/chains`, `/app-fees/chains`, `/app-revenue/chains`, `/rev/chains`
 - `/dexs`, `/perps`, `/dex-aggregators`, `/perps-aggregators`
-- `/options/premium-volume`, `/options/notional-volume`
+- `/options` and `/options/chain/:chain` (premium volume ranking with notional volume, options open interest, fees and ratios), `/options/premium-volume`, `/options/notional-volume`
 - `/bridge-aggregators`, `/open-interest`, `/normalized-volume`
 - each supported `/chains` or `/chain/[chain]` variant for those metric families
 
@@ -88,6 +88,7 @@ Important rules:
 - Always reason about `adapterType` and `dataType` together.
 - `dailyVolume` is shared across DEXs, perps, DEX aggregators, and perp aggregators.
 - `dailyNotionalVolume` is shared across DEX notional and options notional paths.
+- `open-interest` serves perp and options OI, split by protocol category: unfiltered requests are `Derivatives` only, options OI is the `Options` category. Keep them apart (see `docs/metrics.md`).
 - `liquidations` is currently consumed as protocol overview metrics/charts, not as an AdapterMetrics ranking page.
 - `getChainMetadataKey(adapterType, dataType)` is the local source for AdapterMetrics chain metadata flag disambiguation.
 - Do not move a rule into `src/metrics` unless another container or public API endpoint consumes the same invariant.

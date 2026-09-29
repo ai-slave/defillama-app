@@ -83,7 +83,8 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ProtocolChartsLabels, AxisConfig>> = {
 										: chartColors['DEX Volume']
 	},
 	'Open Interest': {
-		resolveColor: ({ chartColors }) => chartColors['Open Interest']
+		resolveColor: ({ chartColors, chartsInSeries }) =>
+			chartsInSeries.has('Open Interest') ? chartColors['Open Interest'] : chartColors['Options Open Interest']
 	},
 	Unlocks: {
 		formatter: (value, { unlockTokenSymbol }) =>
