@@ -6,6 +6,8 @@ import { useAuthContext } from '~/auth'
 import { getReferrer } from '~/auth/referrer'
 import { subscriptionStatusQueryOptions, type Subscription } from '~/auth/subscriptionStatus'
 import { AUTH_SERVER } from '~/constants'
+import { holdEndTrial } from '~/containers/Account/endTrialHold'
+import { scheduleConfirmationReads } from '~/containers/Account/utils'
 import { getStorageItem, removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
@@ -431,10 +433,13 @@ export const useSubscribe = () => {
 
 			return normalizedResponse.json()
 		},
-		onSuccess: async () => {
-			// The modal that runs this mutation shows the success state itself.
-			await queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
-			await queryClient.invalidateQueries({ queryKey: ['subscription'] })
+		// Hook-level, so the hold and the re-reads survive the dialog unmounting mid-request.
+		// The modal that runs this mutation shows the success state itself.
+		onSuccess: () => {
+			// The webhook clears the trial after this returns, so both trial signals are re-read a few times.
+			if (user) holdEndTrial(user.id)
+			scheduleConfirmationReads(queryClient, ['auth', 'status'])
+			scheduleConfirmationReads(queryClient, ['subscription'])
 		},
 		onError: (error) => {
 			console.log('End trial subscription error:', error)

@@ -1,4 +1,5 @@
 import { Icon } from '~/ui/Icon'
+import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from './endTrialHold'
 
 interface TrialUpgradeBannerProps {
 	onUpgrade: () => void
@@ -12,6 +13,7 @@ const BENEFITS = [
 ]
 
 export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
+	const isApplying = useEndTrialApplying()
 	return (
 		<div className="flex items-center rounded-2xl border border-sub-brand-primary bg-sub-brand-primary/20 p-4">
 			<div className="flex w-full flex-col gap-4 sm:w-[200px]">
@@ -31,10 +33,12 @@ export function TrialUpgradeBanner({ onUpgrade }: TrialUpgradeBannerProps) {
 				<button
 					type="button"
 					onClick={onUpgrade}
-					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
+					disabled={isApplying}
+					className="flex h-8 w-full items-center justify-center rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					Upgrade to Pro
 				</button>
+				{isApplying ? <p className="text-xs leading-4 text-sub-text-muted">{END_TRIAL_APPLYING_REASON}</p> : null}
 			</div>
 		</div>
 	)

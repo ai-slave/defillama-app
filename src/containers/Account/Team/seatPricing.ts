@@ -6,6 +6,10 @@ const SEAT_PRICE = {
 	llamafeed: { month: 49, year: 490 }
 } as const
 
+// Team subscription types are strings on the wire; anything but API is Pro.
+export const seatPrice = (type: string, interval: 'month' | 'year') =>
+	(type === 'api' ? SEAT_PRICE.api : SEAT_PRICE.llamafeed)[interval]
+
 export function formatSeatTotal(type: 'api' | 'llamafeed', interval: 'month' | 'year', seatCount: number) {
-	return `${formatUsd(SEAT_PRICE[type][interval] * seatCount)}/${interval}`
+	return `${formatUsd(seatPrice(type, interval) * seatCount)}/${interval}`
 }

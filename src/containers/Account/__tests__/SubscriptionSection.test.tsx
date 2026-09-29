@@ -139,3 +139,22 @@ test('treats a failed team read as unknown billing ownership, not personal billi
 	await waitFor(() => expect(text()).toContain("Couldn't load your team"))
 	expect(text()).not.toContain('Cancel Subscription')
 })
+
+test('keeps the cancellation result on screen when the refetch after it fails', async () => {
+	session.serve({
+		'/subscription/status': { subscription: apiSubscription },
+		'/subscription/cancel': () => {
+			session.serve({ '/subscription/status': fixtureStatus(500, { message: 'Internal error' }) })
+			return { message: 'ok' }
+		}
+	})
+	await render()
+
+	await waitFor(() => expect(button('Cancel Subscription')).toBeDefined())
+	await act(async () => button('Cancel Subscription')!.click())
+	await waitFor(() => expect(button('Confirm Cancellation')).toBeDefined())
+	await act(async () => button('Confirm Cancellation')!.click())
+
+	await waitFor(() => expect(text()).toContain("Couldn't load your subscription"))
+	expect(document.querySelector('[role=alertdialog] h2')?.textContent).toBe('Cancellation Scheduled')
+})

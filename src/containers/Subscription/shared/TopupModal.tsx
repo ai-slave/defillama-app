@@ -63,8 +63,10 @@ export function TopupForm({
 
 	const handleStripe = useCallback(() => {
 		if (!isValidAmount || isPaymentPending) return
+		// The card step hides itself while the mutation holds an error, so a failed crypto attempt must not carry over.
+		topupMutation.reset()
 		setStep('stripe')
-	}, [isValidAmount, isPaymentPending])
+	}, [isValidAmount, isPaymentPending, topupMutation])
 
 	const handleLlamaPay = () => {
 		if (!isValidAmount || isPaymentPending) return

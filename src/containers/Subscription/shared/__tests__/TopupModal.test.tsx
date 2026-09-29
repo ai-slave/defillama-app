@@ -104,16 +104,15 @@ test('keeps back and close available during a cold checkout load, and does not r
 	expect(topups()).toEqual([])
 })
 
-test('keeps a failed payment error visible on the card step with a route back to the amount', async () => {
+test('a failed crypto payment does not carry over: Pay with Card mounts the card checkout without its error', async () => {
 	topupReplies.push(unavailable())
 	await mount()
 	await click('Pay with Crypto')
 	await waitForUi(() => expect(document.querySelector('[role="alert"]')?.textContent).toBe('Checkout unavailable'))
 	await click('Pay with Card')
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Checkout unavailable')
-	await click('Back to amount')
+	await act(async () => cardCheckout.resolve())
+	await waitForUi(() => expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Card checkout'))
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	expect(document.querySelector('input')?.value).toBe('10')
 })
 
 test('preset selection follows the numeric amount and a preset replaces a custom amount', async () => {

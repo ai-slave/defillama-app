@@ -4,6 +4,7 @@ import { Button } from '~/ui/Button'
 import { Dialog, DialogBody, DialogFooter, DialogHeader, useOpeningKey } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { InlineStatus } from '~/ui/Status'
+import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from './endTrialHold'
 
 const DEFAULT_BENEFITS = [
 	'Unlimited CSV downloads',
@@ -46,6 +47,8 @@ function EndTrialDialog({
 	const upgraded = endTrialMutation.isSuccess
 	const error = endTrialMutation.isError ? endTrialMutation.error.message : null
 	const isLoading = endTrialMutation.isPending
+	// An upgrade sent from any opener still charges until the trial reads as ended, so a reopened dialog cannot send another.
+	const isApplying = useEndTrialApplying()
 
 	const handleClose = () => {
 		if (isLoading) return
@@ -60,7 +63,7 @@ function EndTrialDialog({
 				<>
 					<DialogBody>
 						<Ariakit.DialogDescription className="body-sm text-secondary">
-							The upgrade can take a few minutes to apply. Refresh the page if your account still shows the trial.
+							{END_TRIAL_APPLYING_REASON}
 						</Ariakit.DialogDescription>
 					</DialogBody>
 					<DialogFooter>
@@ -95,6 +98,7 @@ function EndTrialDialog({
 						</InlineStatus>
 
 						{error ? <InlineStatus variant="error">{error}</InlineStatus> : null}
+						{isApplying ? <p className="body-sm text-secondary">{END_TRIAL_APPLYING_REASON}</p> : null}
 					</DialogBody>
 					<DialogFooter
 						leading={
@@ -126,6 +130,7 @@ function EndTrialDialog({
 							variant="primary"
 							size="md"
 							pendingLabel={isLoading ? 'Processing…' : null}
+							disabled={isApplying}
 							onClick={() => endTrialMutation.mutate()}
 						>
 							{confirmLabel}

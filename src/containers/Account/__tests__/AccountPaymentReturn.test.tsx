@@ -3,12 +3,14 @@ import { act, useEffect, useState, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterAll, afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { subscriptionStatusQueryKey, type Subscription } from '~/auth/subscriptionStatus'
-import { StripeCheckoutModal } from '~/containers/Subscription/shared/StripeCheckoutModal'
+import { Toast } from '~/components/Toast'
+import { teamCheckoutReturnPath } from '~/containers/Account/Team/pendingTeamCheckout'
+import { readPendingUpgrade, savePendingUpgrade } from '~/containers/Subscription/shared/pendingUpgrade'
+import { checkoutReturnPath } from '~/containers/Subscription/shared/useStripeCheckout'
 import Account from '~/pages/account'
 import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
-import { waitForUi } from '~/utils/testing/waitForUi'
 
 // Constants read the publishable key at import time; checkout only loads Stripe when it is set.
 const originalKey = vi.hoisted(() => {
@@ -20,7 +22,9 @@ afterAll(() => {
 	if (originalKey === undefined) delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 	else process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = originalKey
 })
-vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve({}) }))
+// Stripe's record of the stored upgrade payment, which the return page reads before it forgets that payment.
+const stripe = vi.hoisted(() => ({ retrievePaymentIntent: vi.fn() }))
+vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve(stripe) }))
 // Stripe's iframe cannot run in Node. Like the real provider, this asks for the session once on mount.
 vi.mock('@stripe/react-stripe-js', () => ({
 	EmbeddedCheckoutProvider: function Provider({
@@ -70,6 +74,7 @@ const proPlan = (billing_interval: 'month' | 'year') =>
 	({ status: 'active', expires_at: '2100-01-01', type: 'llamafeed', billing_interval }) as Subscription
 
 beforeEach(() => {
+	stripe.retrievePaymentIntent.mockReset()
 	// An older return link: only the success flag, without the purchased plan or Stripe's outcome.
 	router.query = { success: 'true' }
 	router.replace.mockClear()
@@ -78,35 +83,18 @@ afterEach(() => {
 	vi.useRealTimers()
 })
 
-/** The query Stripe returns a Pro yearly upgrade to: the return path the checkout dialog asks for, plus the
-    params Stripe appends to it. */
+/** The query Stripe returns a Pro yearly upgrade to: the return path the checkout asks for, plus the params Stripe
+    appends to it. */
 async function upgradeReturnQuery(redirectStatus: string) {
-	session.serve({ '/subscription/create': { clientSecret: 'cs_fixture' } })
-	const host = document.body.appendChild(document.createElement('div'))
-	const root = createRoot(host)
-	await act(async () =>
-		root.render(
-			<session.Wrapper>
-				<StripeCheckoutModal
-					isOpen
-					onClose={() => {}}
-					paymentMethod="stripe"
-					type="llamafeed"
-					billingInterval="year"
-					isUpgradeFlow
-					upgradeReturnPath="/account?success=true"
-				/>
-			</session.Wrapper>
-		)
+	const returnUrl = new URL(
+		checkoutReturnPath({
+			type: 'llamafeed',
+			billingInterval: 'year',
+			isUpgradeFlow: true,
+			upgradeReturnPath: '/account?success=true'
+		}),
+		'https://defillama.com'
 	)
-	const create = await waitForUi(() => {
-		const request = session.requests.find((request) => request.url.pathname === '/subscription/create')
-		expect(request).toBeDefined()
-		return request!
-	})
-	await act(async () => root.unmount())
-	host.remove()
-	const returnUrl = new URL(JSON.parse(String(create.init!.body)).redirectUrl)
 	expect(returnUrl.pathname).toBe('/account')
 	returnUrl.searchParams.set('payment_intent', 'pi_fixture')
 	returnUrl.searchParams.set('payment_intent_client_secret', 'pi_fixture_secret_fixture')
@@ -127,6 +115,7 @@ async function renderReturnFromCheckout() {
 		root.render(
 			<session.Wrapper>
 				<Account />
+				<Toast />
 			</session.Wrapper>
 		)
 	)
@@ -293,6 +282,117 @@ test('a checkout return that never reads active says the payment is still confir
 		expect(page.buttons()).toEqual(['Close dialog', 'Done'])
 		for (let step = 0; step < 3; step++) await page.wait(4000)
 		expect(statusReads()).toHaveLength(6)
+	} finally {
+		await page.unmount()
+	}
+})
+
+const pendingUpgradeKey = 'pending-upgrade:checkout-user'
+const earlierUpgrade = JSON.stringify({
+	plan: 'llamafeed',
+	interval: 'year',
+	clientSecret: 'pi_old_secret',
+	startedAt: 1
+})
+
+test.each([
+	['failed', 'Payment Not Completed'],
+	['processing', 'Payment Processing']
+])('a %s redirect return leaves the open upgrade payment to be resumed', async (status, title) => {
+	localStorage.setItem(pendingUpgradeKey, earlierUpgrade)
+	router.query = await upgradeReturnQuery(status)
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(page.title()).toBe(title)
+		expect(localStorage.getItem(pendingUpgradeKey)).toBe(earlierUpgrade)
+	} finally {
+		await page.unmount()
+	}
+})
+
+// The upgrade payment this browser has open when the Pro yearly return lands: possibly another payment for that plan.
+const storedUpgrade = {
+	plan: 'llamafeed',
+	interval: 'year',
+	clientSecret: 'pi_stored_secret_stored',
+	pricing: null,
+	createdAt: 1
+} as const
+
+test.each([
+	['forgets a stored payment for that plan once Stripe says it succeeded', 'succeeded', null],
+	['keeps guarding a stored payment for that plan that is still payable', 'requires_payment_method', storedUpgrade],
+	['keeps guarding a stored payment for that plan that is still processing', 'processing', storedUpgrade]
+])('a confirmed return %s', async (_case, status, remaining) => {
+	savePendingUpgrade('checkout-user', storedUpgrade)
+	stripe.retrievePaymentIntent.mockResolvedValue({ paymentIntent: { status } })
+	router.query = await upgradeReturnQuery('succeeded')
+	session.serve({ '/subscription/status': { subscription: proPlan('year') } })
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(page.title()).toBe('Payment Successful')
+		expect(stripe.retrievePaymentIntent).toHaveBeenCalledWith(storedUpgrade.clientSecret)
+		expect(readPendingUpgrade('checkout-user')).toEqual(remaining)
+	} finally {
+		await page.unmount()
+	}
+})
+
+test('a finished check of one payment keeps a newer payment stored while it ran', async () => {
+	savePendingUpgrade('checkout-user', storedUpgrade)
+	let answerStripe!: () => void
+	stripe.retrievePaymentIntent.mockReturnValue(
+		new Promise((resolve) => {
+			answerStripe = () => resolve({ paymentIntent: { status: 'succeeded' } })
+		})
+	)
+	router.query = await upgradeReturnQuery('succeeded')
+	session.serve({ '/subscription/status': { subscription: proPlan('year') } })
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(stripe.retrievePaymentIntent).toHaveBeenCalledWith(storedUpgrade.clientSecret)
+		// Another tab records a newer payment for the same plan while this check waits on Stripe.
+		const newer = { ...storedUpgrade, clientSecret: 'pi_newer_secret_newer', createdAt: 2 }
+		savePendingUpgrade('checkout-user', newer)
+		await act(async () => answerStripe())
+		await page.wait(0)
+		expect(readPendingUpgrade('checkout-user')).toEqual(newer)
+	} finally {
+		await page.unmount()
+	}
+})
+
+test('a paid team checkout names its seats and holds a second checkout of that plan', async () => {
+	router.query = Object.fromEntries(
+		new URL(teamCheckoutReturnPath('llamafeed', 3), 'https://defillama.com').searchParams
+	)
+	session.serve({ '/team': { team: null } })
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(document.body.textContent).toContain('Payment received. 3 seats will be available shortly.')
+		expect(JSON.parse(localStorage.getItem('pending-team-checkout:checkout-user:llamafeed')!)).toMatchObject({
+			seats: 3
+		})
+		expect(router.replace).toHaveBeenCalledWith({ pathname: '/account', query: { tab: 'team' } }, undefined, {
+			shallow: true
+		})
+	} finally {
+		await page.unmount()
+	}
+})
+
+test('a team checkout return with an unreadable seat count keeps the plain message and holds nothing', async () => {
+	router.query = { tab: 'team', 'team-checkout': 'success', type: 'llamafeed', seats: 'lots' }
+	session.serve({ '/team': { team: null } })
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(document.body.textContent).toContain('Payment received! Your team seats will be available shortly.')
+		expect(localStorage.getItem('pending-team-checkout:checkout-user:llamafeed')).toBeNull()
 	} finally {
 		await page.unmount()
 	}

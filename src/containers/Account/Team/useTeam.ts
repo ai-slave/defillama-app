@@ -5,6 +5,7 @@ import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
 import { handleSimpleFetchResponse } from '~/utils/async'
 import pb from '~/utils/pocketbase'
+import { scheduleConfirmationReads } from '../utils'
 import type { PurchaseSeatsResponse, Team } from './types'
 
 const normalizeHttpErrorMessage = (message: string | undefined, fallbackMessage: string): string => {
@@ -20,6 +21,21 @@ const SIGNED_OUT_MESSAGE = "You're signed out. Sign in and try again."
 
 const getErrorMessage = (error: unknown, fallbackMessage: string): string =>
 	error instanceof Error ? normalizeHttpErrorMessage(error.message, fallbackMessage) : fallbackMessage
+
+// A 4xx is the server's definite answer. No answer, or a 5xx such as a gateway timeout, leaves the outcome
+// unknown: the billing write may have been applied before the failure.
+export class UnconfirmedTeamWriteError extends Error {}
+
+async function sendTeamWrite(request: Promise<Response | null>, fallbackMessage: string): Promise<Response> {
+	const response = await request.catch((error) => {
+		throw new UnconfirmedTeamWriteError(getErrorMessage(error, fallbackMessage))
+	})
+	if (!response) throw new Error(SIGNED_OUT_MESSAGE)
+	return handleSimpleFetchResponse(response).catch((error) => {
+		const message = getErrorMessage(error, fallbackMessage)
+		throw response.status >= 500 ? new UnconfirmedTeamWriteError(message) : new Error(message)
+	})
+}
 
 type UseTeamOptions = {
 	inviteToken?: string
@@ -53,16 +69,15 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			if (!inviteToken || !currentUserId || pb.authStore.record?.id !== currentUserId)
 				throw new Error(SIGNED_OUT_MESSAGE)
 
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/accept`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ token: inviteToken })
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to accept invite'))
-			})
-			const data = await normalized.json()
+			const response = await sendTeamWrite(
+				authorizedFetch(`${AUTH_SERVER}/team/invite/accept`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ token: inviteToken })
+				}),
+				'Failed to accept invite'
+			)
+			const data = await response.json()
 
 			if (pb.authStore.record?.id !== currentUserId) throw new Error('Your account changed. Open the invite again.')
 			await queryClient.invalidateQueries({ queryKey: teamQueryKey })
@@ -94,6 +109,15 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	})
 
 	const team = teamQuery.data ?? null
+	// A failed acceptance counts as joined only when a team read shows membership and the failure could be this
+	// invite's own acceptance: a lost answer, or the replay rejection. The backend sends no error code, so the replay
+	// is matched by its message; any other rejection, such as already being on another team, stands.
+	const inviteMembershipConfirmed =
+		inviteAcceptance.isSuccess ||
+		(inviteAcceptance.isError &&
+			team != null &&
+			(inviteAcceptance.error instanceof UnconfirmedTeamWriteError ||
+				inviteAcceptance.error.message === 'This invite has already been accepted.'))
 
 	// Keep the accepted write separate from its follow-up read. Retrying account
 	// loading must never accept the invitation a second time.
@@ -107,9 +131,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			queryClient.setQueryData(queryKey, account)
 			return account
 		},
-		enabled: Boolean(
-			currentUserId && inviteToken && (inviteAcceptance.isSuccess || (inviteAcceptance.isError && team != null))
-		),
+		enabled: Boolean(currentUserId && inviteToken && inviteMembershipConfirmed),
 		retry: false,
 		refetchOnWindowFocus: false,
 		refetchOnReconnect: false,
@@ -193,23 +215,21 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			redirectUrl: string
 			cancelUrl: string
 		}): Promise<PurchaseSeatsResponse> => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/seats/purchase`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to purchase seats'))
-			})
-			return normalized.json()
+			const response = await sendTeamWrite(
+				authorizedFetch(`${AUTH_SERVER}/team/seats/purchase`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data)
+				}),
+				'Failed to purchase seats'
+			)
+			return response.json()
 		},
 		onSuccess: (data) => {
 			if (data.action === 'seats_added') return refetch()
 		},
-		onError: (error) => {
-			console.log('Failed to purchase seats:', error)
-		}
+		// A failed purchase may still have added seats server-side, so the team is read again while it settles.
+		onError: () => scheduleConfirmationReads(queryClient, ['team'])
 	})
 
 	// ── Mutation: POST /team/seats/upgrade ──
@@ -219,24 +239,22 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		scope,
 		retry: false,
 		mutationFn: async (data: { subscriptionType: string }) => {
-			const response = await authorizedFetch(`${AUTH_SERVER}/team/seats/upgrade`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data)
-			})
-			if (!response) throw new Error(SIGNED_OUT_MESSAGE)
-			const normalized = await handleSimpleFetchResponse(response).catch((error) => {
-				throw new Error(getErrorMessage(error, 'Failed to upgrade subscription'))
-			})
-			return normalized.json()
+			const response = await sendTeamWrite(
+				authorizedFetch(`${AUTH_SERVER}/team/seats/upgrade`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(data)
+				}),
+				'Failed to upgrade subscription'
+			)
+			return response.json()
 		},
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 			return refetch()
 		},
-		onError: (error) => {
-			console.log('Failed to upgrade subscription:', error)
-		}
+		// A failed upgrade may still have switched the plan to yearly, so the team is read again while it settles.
+		onError: () => scheduleConfirmationReads(queryClient, ['team'])
 	})
 
 	// ── Mutation: POST /team/seats ──
@@ -430,6 +448,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		teamSubscriptions,
 		refetchTeam: teamQuery.refetch,
 		inviteAcceptance,
+		inviteMembershipConfirmed,
 		inviteAccount,
 
 		// Mutations

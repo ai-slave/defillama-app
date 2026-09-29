@@ -1,3 +1,5 @@
+import { END_TRIAL_APPLYING_REASON, useEndTrialApplying } from '~/containers/Account/endTrialHold'
+import { PRO_TRIAL_CONVERSION_PRICE } from '~/containers/Subscription/data'
 import type {
 	Availability,
 	BillingCycle,
@@ -183,6 +185,8 @@ function PricingCardCta({
 	billingCycle: BillingCycle
 	isPageStateLoading?: boolean
 } & PricingCardCallbacks) {
+	const isEndTrialApplying = useEndTrialApplying()
+
 	/* ── Still loading auth/subscription data: hide CTAs ── */
 	if (isPageStateLoading) return null
 
@@ -251,9 +255,21 @@ function PricingCardCta({
 				) : null}
 				{!isSelfServeStripe && !isTrial ? <ProviderManageNotice provider={currentProvider ?? null} /> : null}
 				{isTrial ? (
-					<button type="button" className={filledBtnCls} onClick={onEndTrial}>
-						Upgrade to Full Access
-					</button>
+					<>
+						<button
+							type="button"
+							className={`${filledBtnCls} disabled:cursor-not-allowed disabled:opacity-60`}
+							onClick={onEndTrial}
+							disabled={isEndTrialApplying}
+						>
+							Upgrade to Full Access
+						</button>
+						{isEndTrialApplying ? (
+							<p className="text-center text-xs leading-4 text-sub-text-cool-muted dark:text-sub-text-muted">
+								{END_TRIAL_APPLYING_REASON}
+							</p>
+						) : null}
+					</>
 				) : null}
 				{canUpgradeCycle && !isCancelPending ? (
 					<>
@@ -327,8 +343,7 @@ function PricingCardCta({
 							<li>• No CSV downloads — paid Pro only</li>
 						</ul>
 						<p className="mt-1.5 text-[11px] sm:text-[10px]">
-							No charge for 7 days — converts to {card.priceMain}
-							{card.priceUnit} after
+							No charge for 7 days — converts to {PRO_TRIAL_CONVERSION_PRICE} after
 						</p>
 					</div>
 					{card.secondaryCta ? (

@@ -1,19 +1,27 @@
 import * as Ariakit from '@ariakit/react'
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
+import { useQueryClient } from '@tanstack/react-query'
 import { useId, useState, type FormEvent } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
 import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
+import { formatDate } from '~/utils/dateFormat'
 import { formatNumber } from '~/utils/numberFormat'
+import { scheduleConfirmationReads } from '../utils'
+import { readPendingTeamCheckout, TEAM_CHECKOUT_HOLD_MS, teamCheckoutReturnPath } from './pendingTeamCheckout'
 import { formatSeatTotal } from './seatPricing'
+import { getCancelAtDate, isCancelingSub } from './subscriptionCancel'
 import type { TeamSubscription } from './types'
-import { useTeam } from './useTeam'
+import { UnconfirmedTeamWriteError, useTeam } from './useTeam'
 
 function getExistingInterval(
 	subscriptions: Array<TeamSubscription>,
@@ -23,6 +31,15 @@ function getExistingInterval(
 		(sub) => sub.type === type && (sub.status === undefined || sub.status === 'active')
 	)
 	return existing?.billingInterval ?? null
+}
+
+// A purchase without a definite answer names what the team shows now, from the latest successful read.
+function getUnconfirmedPurchaseMessage(subscriptions: Array<TeamSubscription>, type: string): string {
+	const label = type === 'api' ? 'API' : 'Pro'
+	const existing = subscriptions.find((sub) => sub.type === type)
+	if (!existing) return `We couldn't confirm this purchase. Your team currently has no ${label} seats.`
+	const seats = existing.seats.seatCount
+	return `We couldn't confirm this purchase. Your team currently shows ${seats} ${label} seat${seats === 1 ? '' : 's'}.`
 }
 
 // Radio labels host a visually hidden Ariakit.Radio, so the label draws the focus ring.
@@ -43,6 +60,9 @@ interface PurchaseSeatsModalProps {
 
 export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps) {
 	const radioId = useId()
+	const queryClient = useQueryClient()
+	const { user } = useAuthContext()
+	const nowSeconds = useNowSeconds()
 	const {
 		canChangeTeamBilling,
 		billingWait,
@@ -59,8 +79,18 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 	const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
 	const checkoutClientSecret =
 		purchaseSeatsMutation.data?.action === 'checkout_created' ? purchaseSeatsMutation.data.clientSecret : null
+	const [confirmLeave, setConfirmLeave] = useState(false)
 
 	const lockedInterval = getExistingInterval(teamSubscriptions, subscriptionType)
+	const typeLabel = subscriptionType === 'api' ? 'API' : 'Pro'
+	const existing = teamSubscriptions.find((sub) => sub.type === subscriptionType)
+	// The purchase clears a scheduled cancellation, so every seat renews on the date the plan would have ended.
+	const resumedEndDate = existing && isCancelingSub(existing) ? getCancelAtDate(existing) : null
+	// A paid checkout returns before its webhook adds the plan, and a second checkout opened meanwhile could be paid
+	// too. Once the team shows the plan, a purchase adds seats to it instead of opening a checkout.
+	const pendingCheckout = existing || !user ? null : readPendingTeamCheckout(user.id, subscriptionType)
+	const holdsForPendingCheckout =
+		pendingCheckout !== null && nowSeconds * 1000 - pendingCheckout.startedAt < TEAM_CHECKOUT_HOLD_MS
 
 	// When the selected type has an existing sub, the interval is forced to match it — the backend rejects
 	// mixing monthly and yearly for the same subscription type. Written into state, so it is still the
@@ -72,13 +102,13 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 
 	const handlePurchase = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
-		if (!canChangeTeamBilling || checkoutClientSecret) return
+		if (!canChangeTeamBilling || checkoutClientSecret || holdsForPendingCheckout) return
 		purchaseSeatsMutation.mutate(
 			{
 				subscriptionType,
 				seatCount,
 				billingInterval,
-				redirectUrl: `${window.location.origin}/account?tab=team&team-checkout=success`,
+				redirectUrl: `${window.location.origin}${teamCheckoutReturnPath(subscriptionType, seatCount)}`,
 				cancelUrl: `${window.location.origin}/account?tab=team`
 			},
 			{
@@ -97,11 +127,19 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 		onClose()
 	}
 
+	// A payment submitted just before Leave still completes and its webhook lags, so the team is read a few times.
+	const leaveCheckout = () => {
+		setConfirmLeave(false)
+		handleClose()
+		scheduleConfirmationReads(queryClient, ['team'])
+	}
+
 	return (
 		<Dialog
 			size={checkoutClientSecret ? 'md' : 'sm'}
 			open={isOpen}
-			onClose={handleClose}
+			// Closing mid-payment asks first: leaving drops the checkout and whatever was entered in it.
+			onClose={checkoutClientSecret ? () => setConfirmLeave(true) : handleClose}
 			pending={pending}
 			// Stripe owns the payment's submit state, so a stray tap outside must not drop a payment mid-submit.
 			hideOnInteractOutside={!checkoutClientSecret}
@@ -267,6 +305,13 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 								</span>
 							</div>
 
+							{existing && resumedEndDate ? (
+								<InlineStatus variant="warning">
+									This {typeLabel} subscription is set to end on {formatDate(resumedEndDate)}. Buying seats resumes it,
+									and all {existing.seats.seatCount + seatCount} seats renew on {formatDate(resumedEndDate)}.
+								</InlineStatus>
+							) : null}
+
 							{billingInterval === 'month' && !lockedInterval && (
 								<div className="flex items-start gap-2">
 									<Icon name="sparkles" height={12} width={12} className="mt-0.5 shrink-0 text-tertiary" />
@@ -285,8 +330,18 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									message="Couldn't refresh team billing. Refresh before making another change."
 								/>
 							) : null}
+							{holdsForPendingCheckout ? (
+								<InlineStatus variant="warning">
+									Your earlier payment for {typeLabel} seats is still being confirmed. It can take a few minutes to
+									appear.
+								</InlineStatus>
+							) : null}
 							{purchaseSeatsMutation.isError ? (
-								<InlineStatus variant="error">{purchaseSeatsMutation.error.message}</InlineStatus>
+								<InlineStatus variant="error">
+									{purchaseSeatsMutation.error instanceof UnconfirmedTeamWriteError
+										? getUnconfirmedPurchaseMessage(teamSubscriptions, purchaseSeatsMutation.variables.subscriptionType)
+										: purchaseSeatsMutation.error.message}
+								</InlineStatus>
 							) : null}
 						</>
 					)}
@@ -304,7 +359,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							variant="primary"
 							size="md"
 							// While pending the button stays focusable and shows its label instead.
-							disabled={!pending && !billingWait && !canChangeTeamBilling}
+							disabled={!pending && !billingWait && (!canChangeTeamBilling || holdsForPendingCheckout)}
 							pendingLabel={pending ? 'Processing…' : billingWait}
 						>
 							Purchase Seats
@@ -315,6 +370,19 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 					{pending ? 'Processing request' : ''}
 				</span>
 			</form>
+			<ConfirmDialog
+				open={confirmLeave}
+				onClose={() => setConfirmLeave(false)}
+				portal
+				unmountOnHide
+				title="Leave checkout?"
+				description="Your seats aren't purchased until the payment finishes. Leaving closes this checkout."
+				cancelLabel="Keep paying"
+				confirmLabel="Leave"
+				pendingLabel={null}
+				error={null}
+				onConfirm={leaveCheckout}
+			/>
 		</Dialog>
 	)
 }

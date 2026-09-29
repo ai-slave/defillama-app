@@ -1,9 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
-import Router from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
 import {
 	persistSlackAcquisitionIfFirst,
 	readSlackAcquisition,
@@ -81,6 +82,8 @@ const ONBOARDING_OPTIONS = [
 
 const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets', 'verified-yields'] as const
 
+// The return URL is user-editable, so only a plan the checkout sells is trusted as the purchase.
+
 // `window.sessionStorage` throws by itself when browser policy denies storage, so the access has to be
 // guarded and not just the getItem call. Both effects below read through this.
 function getSessionStorage(): Storage | null {
@@ -110,10 +113,38 @@ function readTrialCheckoutMarker(storage: Storage): { variant: string } | null {
 
 export function WelcomeOnboarding() {
 	const queryClient = useQueryClient()
+	const router = useRouter()
 	const { isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
 	const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set())
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
 	const slackAcquisitionHandledRef = useRef(false)
+
+	// The purchase params stay in the URL: the Refresh button below reloads, and without them a reload would confirm any
+	// active plan. Stripe's payment intent and its client secret are dropped, so the secret never sits in the address
+	// bar or history. Stripe reports a declined redirect payment as `failed` or `requires_payment_method`; a processing one can
+	// still clear while the page is open, so it waits for the plan like a paid one.
+	const returnPlan = queryValue(router.query.plan)
+	const returnInterval = queryValue(router.query.interval)
+	const redirectStatus = queryValue(router.query.redirect_status)
+	const isPaymentFailed = redirectStatus === 'failed' || redirectStatus === 'requires_payment_method'
+	const isPaymentProcessing = redirectStatus === 'processing'
+	// Null on a plain visit or an older link without the plan: any active plan then confirms, as before.
+	const purchase =
+		!isPaymentFailed && returnPlan && returnInterval && PURCHASABLE_PLANS.has(returnPlan)
+			? { plan: returnPlan, interval: returnInterval }
+			: null
+
+	// Any active plan is not the purchase: an API subscriber buying Pro already reads active. The untyped status read
+	// returns just the first active plan, so the bought one is read by type, under the subscription key so the reads
+	// below refresh it. A trial checkout lands here too, so a trial record of the bought plan confirms it.
+	const purchasedSubscription = usePlanRecord(purchase?.plan ?? null)
+	const isConfirmed =
+		!isPaymentFailed &&
+		(purchase
+			? purchasedSubscription != null &&
+				purchasedSubscription.type === purchase.plan &&
+				purchasedSubscription.billing_interval === purchase.interval
+			: hasActiveSubscription)
 
 	// Stripe redirects here before the webhook grants the entitlement. Re-read the
 	// canonical status a bounded number of times because one read can race the webhook.
@@ -121,7 +152,7 @@ export function WelcomeOnboarding() {
 	const CONFIRMATION_READS = 6
 	const [confirmationReads, setConfirmationReads] = useState(0)
 	useEffect(() => {
-		if (!isAuthenticated || hasActiveSubscription || loaders.userLoading) return
+		if (!isAuthenticated || isConfirmed || isPaymentFailed || loaders.userLoading || !router.isReady) return
 		if (confirmationReads >= CONFIRMATION_READS) return
 		const id = window.setTimeout(
 			() => {
@@ -131,18 +162,32 @@ export function WelcomeOnboarding() {
 			confirmationReads === 0 ? 0 : 4000
 		)
 		return () => window.clearTimeout(id)
-	}, [confirmationReads, isAuthenticated, hasActiveSubscription, loaders.userLoading, queryClient])
+	}, [
+		confirmationReads,
+		isAuthenticated,
+		isConfirmed,
+		loaders.userLoading,
+		router.isReady,
+		isPaymentFailed,
+		queryClient
+	])
+
+	useEffect(() => {
+		if (!router.isReady || (!router.query.payment_intent && !router.query.payment_intent_client_secret)) return
+		const { payment_intent: _intent, payment_intent_client_secret: _secret, ...nextQuery } = router.query
+		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
+	}, [router])
 
 	const trialActivationFiredRef = useRef(false)
 	useEffect(() => {
-		if (trialActivationFiredRef.current || !hasActiveSubscription) return
+		if (trialActivationFiredRef.current || !isConfirmed) return
 		const storage = getSessionStorage()
 		if (!storage) return
 		const marker = readTrialCheckoutMarker(storage)
 		if (!marker) return
 		trialActivationFiredRef.current = true
 		trackUmamiEvent('llamaai-trial-activated', { variant: marker.variant })
-	}, [hasActiveSubscription])
+	}, [isConfirmed])
 
 	useEffect(() => {
 		if (slackAcquisitionHandledRef.current) return
@@ -241,7 +286,8 @@ export function WelcomeOnboarding() {
 		}
 	}, [selectedFeatures])
 
-	if (loaders.userLoading) {
+	// Until the router reads the query, a checkout return looks like a plain visit and would confirm any active plan.
+	if (loaders.userLoading || !router.isReady) {
 		return (
 			<div role="status" aria-live="polite" className="flex min-h-[60vh] items-center justify-center">
 				<LoadingIndicator label="Loading your subscription" />
@@ -249,17 +295,41 @@ export function WelcomeOnboarding() {
 		)
 	}
 
-	if (!loaders.userLoading && !hasActiveSubscription && isAuthenticated) {
+	if (isPaymentFailed) {
+		return (
+			<div className="flex min-h-[60vh] items-center justify-center px-4">
+				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
+					<h2 className="heading-sm text-on-brand">Payment Not Completed</h2>
+					<p className="body-md text-sub-text-muted">Your payment didn't go through, so your plan hasn't changed.</p>
+					<button
+						type="button"
+						onClick={() => void Router.push('/subscription')}
+						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
+					>
+						Back to plans
+					</button>
+				</div>
+			</div>
+		)
+	}
+
+	if (!isConfirmed && isAuthenticated) {
 		// The automatic re-reads above are bounded, so once they run out the page stops promising more.
 		const checking = confirmationReads < CONFIRMATION_READS
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center px-4">
 				<div className="flex max-w-sm flex-col items-center gap-4 text-center">
-					<h2 className="heading-sm text-on-brand">Processing your payment</h2>
+					<h2 className="heading-sm text-on-brand">
+						{isPaymentProcessing ? 'Payment Processing' : 'Processing your payment'}
+					</h2>
 					<p className="body-md text-sub-text-muted">
-						{checking
-							? 'This usually takes a few seconds, and this page checks again automatically.'
-							: 'Confirming your payment is taking longer than usual. Refresh the page to check again.'}
+						{isPaymentProcessing
+							? checking
+								? 'Your bank is still processing the payment. Your plan updates once it clears.'
+								: 'Your bank is still processing the payment. Refresh the page later to see your plan.'
+							: checking
+								? 'This usually takes a few seconds, and this page checks again automatically.'
+								: 'Confirming your payment is taking longer than usual. Refresh the page to check again.'}
 					</p>
 					{checking ? (
 						<div role="status" aria-live="polite">
@@ -278,14 +348,15 @@ export function WelcomeOnboarding() {
 		)
 	}
 
+	const planName = purchase?.plan === 'api' ? 'API' : 'Pro'
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
 				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple/25 bg-sub-purple/8 px-3 py-1 text-xs font-medium tracking-wide text-sub-purple-soft">
 					<Icon name="check-circle" height={13} width={13} />
-					Pro activated
+					{planName} activated
 				</span>
-				<h1 className="text-2xl font-bold tracking-tight text-on-brand">Welcome to DefiLlama Pro</h1>
+				<h1 className="text-2xl font-bold tracking-tight text-on-brand">Welcome to DefiLlama {planName}</h1>
 				<p className="text-sm text-sub-text-muted">What brought you here? Pick all that apply.</p>
 			</div>
 

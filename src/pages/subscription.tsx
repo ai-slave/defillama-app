@@ -25,6 +25,7 @@ import {
 	SubscriptionTrustedBlock
 } from '~/containers/Subscription/sections'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
 import { useSubscriptionPageState } from '~/containers/Subscription/usePageState'
@@ -72,13 +73,7 @@ function SubscriptionContent() {
 
 	const signInDialog = Ariakit.useDialogStore()
 
-	const [stripeCheckout, setStripeCheckout] = useState<{
-		isOpen: boolean
-		type: 'api' | 'llamafeed'
-		billingInterval: 'year' | 'month'
-		isTrial: boolean
-		isUpgradeFlow: boolean
-	} | null>(null)
+	const stripeCheckout = useStripeCheckout()
 
 	/* ── End trial modal ──────────────────────────────────────────────── */
 	const [showEndTrialModal, setShowEndTrialModal] = useState(false)
@@ -149,7 +144,7 @@ function SubscriptionContent() {
 	) => {
 		requireAuth(() => {
 			requireVerified(() => {
-				setStripeCheckout({ isOpen: true, type, billingInterval: interval, isTrial: trial, isUpgradeFlow: upgrade })
+				stripeCheckout.open({ type, billingInterval: interval, isTrial: trial, isUpgradeFlow: upgrade })
 			})
 		})
 	}
@@ -302,17 +297,9 @@ function SubscriptionContent() {
 			<SignInModal store={signInDialog} />
 
 			{/* Stripe checkout modal */}
-			{stripeCheckout?.isOpen ? (
+			{stripeCheckout.isOpen ? (
 				<Suspense fallback={null}>
-					<StripeCheckoutModal
-						isOpen
-						onClose={() => setStripeCheckout(null)}
-						paymentMethod="stripe"
-						type={stripeCheckout.type}
-						billingInterval={stripeCheckout.billingInterval}
-						isTrial={stripeCheckout.isTrial}
-						isUpgradeFlow={stripeCheckout.isUpgradeFlow}
-					/>
+					<StripeCheckoutModal checkout={stripeCheckout} />
 				</Suspense>
 			) : null}
 

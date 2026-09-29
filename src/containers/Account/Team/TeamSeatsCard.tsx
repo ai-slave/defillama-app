@@ -1,5 +1,6 @@
-import { lazy, Suspense, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Button } from '~/ui/Button'
@@ -8,8 +9,11 @@ import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
+import { clearPendingTeamCheckout } from './pendingTeamCheckout'
+import { seatPrice } from './seatPricing'
+import { getCancelAtDate, isCancelingSub } from './subscriptionCancel'
 import type { TeamSubscription } from './types'
-import { useTeam } from './useTeam'
+import { UnconfirmedTeamWriteError, useTeam } from './useTeam'
 
 const PurchaseSeatsModal = lazy(() => import('./PurchaseSeatsModal').then((m) => ({ default: m.PurchaseSeatsModal })))
 const ManageSeatsModal = lazy(() => import('./ManageSeatsModal').then((m) => ({ default: m.ManageSeatsModal })))
@@ -20,40 +24,12 @@ function getSubscriptionLabel(type: string): string {
 	return type
 }
 
-function getUnitPrice(type: string, billingInterval: 'month' | 'year'): number {
-	if (type === 'api') return billingInterval === 'year' ? 3000 : 300
-	return billingInterval === 'year' ? 490 : 49
-}
-
 function getIntervalSuffix(interval: 'month' | 'year'): string {
 	return interval === 'year' ? '/year' : '/month'
 }
 
-function parseBackendDate(raw: string): Date | null {
-	// Backend returns "2026-05-17 08:24:42.000Z" with a space; normalize to ISO.
-	const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T')
-	const date = new Date(isoLike)
-	return isNaN(date.getTime()) ? null : date
-}
-
 function isActiveSub(sub: TeamSubscription): boolean {
 	return sub.status === undefined || sub.status === 'active'
-}
-
-function getCancelAtDate(sub: TeamSubscription): Date | null {
-	if (sub.cancelsAt) {
-		const parsed = parseBackendDate(sub.cancelsAt)
-		if (parsed) return parsed
-	}
-	if (sub.canceledAtPeriodEnd && typeof sub.effectiveAt === 'number') {
-		const fromSeconds = new Date(sub.effectiveAt * 1000)
-		if (!isNaN(fromSeconds.getTime())) return fromSeconds
-	}
-	return null
-}
-
-function isCancelingSub(sub: TeamSubscription): boolean {
-	return sub.canceledAtPeriodEnd === true || Boolean(sub.cancelsAt) || getCancelAtDate(sub) !== null
 }
 
 function isRenewingSub(sub: TeamSubscription): boolean {
@@ -77,7 +53,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	const [showUpgradeConfirm, setShowUpgradeConfirm] = useState(false)
 
 	const label = getSubscriptionLabel(subscription.type)
-	const unit = getUnitPrice(subscription.type, subscription.billingInterval)
+	const unit = seatPrice(subscription.type, subscription.billingInterval)
 	const total = unit * subscription.seats.seatCount
 	const intervalSuffix = getIntervalSuffix(subscription.billingInterval)
 	const active = isActiveSub(subscription)
@@ -85,6 +61,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	const cancelAtDate = getCancelAtDate(subscription)
 
 	const isMonthly = subscription.billingInterval === 'month'
+	const yearlyUnit = seatPrice(subscription.type, 'year')
 
 	const handleConfirmUpgrade = () => {
 		if (!canChangeTeamBilling) return
@@ -178,7 +155,8 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				finalFocus={manageButtonRef}
 				tone="primary"
 				title={`Upgrade ${label} to Yearly`}
-				description={`Upgrade your ${label} subscription (${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'}) to yearly billing? Stripe will immediately charge your saved card the prorated yearly amount.`}
+				// Stripe invoices the yearly price for every seat at once, credited for the unused monthly time.
+				description={`Stripe charges your saved card now: up to ${formatUsd(yearlyUnit * subscription.seats.seatCount)} for ${subscription.seats.seatCount} seat${subscription.seats.seatCount === 1 ? '' : 's'} at ${formatUsd(yearlyUnit)}/year, less credit for the unused part of this month. The plan then renews yearly from today.`}
 				confirmLabel="Upgrade to Yearly"
 				confirmDisabled={!upgradeSeatsMutation.isPending && billingLockReason !== null}
 				pendingLabel={upgradeSeatsMutation.isPending ? 'Upgrading…' : null}
@@ -186,7 +164,9 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				// A lock blocks the confirm button, so it shows where a failure would.
 				error={
 					upgradeSeatsMutation.isError
-						? upgradeSeatsMutation.error.message
+						? upgradeSeatsMutation.error instanceof UnconfirmedTeamWriteError
+							? `We couldn't confirm this upgrade. Your ${label} plan currently bills ${isMonthly ? 'monthly' : 'yearly'}.`
+							: upgradeSeatsMutation.error.message
 						: upgradeSeatsMutation.isPending
 							? null
 							: billingLockReason
@@ -201,7 +181,7 @@ function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscriptio
 	const totals = { monthly: 0, yearly: 0 }
 	for (const sub of subscriptions) {
 		if (!isRenewingSub(sub)) continue
-		const amount = getUnitPrice(sub.type, sub.billingInterval) * sub.seats.seatCount
+		const amount = seatPrice(sub.type, sub.billingInterval) * sub.seats.seatCount
 		if (sub.billingInterval === 'year') totals.yearly += amount
 		else totals.monthly += amount
 	}
@@ -228,8 +208,8 @@ function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }
 	const monthlySubs = subscriptions.filter((sub) => isRenewingSub(sub) && sub.billingInterval === 'month')
 	if (monthlySubs.length === 0) return null
 
-	const monthlyTotal = monthlySubs.reduce((acc, sub) => acc + getUnitPrice(sub.type, 'month') * sub.seats.seatCount, 0)
-	const yearlyTotal = monthlySubs.reduce((acc, sub) => acc + getUnitPrice(sub.type, 'year') * sub.seats.seatCount, 0)
+	const monthlyTotal = monthlySubs.reduce((acc, sub) => acc + seatPrice(sub.type, 'month') * sub.seats.seatCount, 0)
+	const yearlyTotal = monthlySubs.reduce((acc, sub) => acc + seatPrice(sub.type, 'year') * sub.seats.seatCount, 0)
 	const savings = monthlyTotal * 12 - yearlyTotal
 
 	return (
@@ -247,6 +227,13 @@ export function TeamSeatsCard() {
 		useTeam()
 	const { createPortalSession, createPortalSessionMutation } = useSubscribe()
 	const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+	const userId = useAuthContext().user?.id ?? null
+
+	// A paid checkout's note holds a second checkout only until the team shows that plan.
+	useEffect(() => {
+		if (!userId) return
+		for (const sub of teamSubscriptions) clearPendingTeamCheckout(userId, sub.type)
+	}, [teamSubscriptions, userId])
 
 	const hasStripe = teamSubscriptions.some((sub) => sub.provider === undefined || sub.provider === 'stripe')
 

@@ -5,6 +5,7 @@ import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
+import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
@@ -283,8 +284,7 @@ export function SubscriptionSection() {
 	const [isCancelSubscriptionModalOpen, setIsCancelSubscriptionModalOpen] = useState(false)
 	const [isCancelSubModalOpen, setIsCancelSubModalOpen] = useState(false)
 	const [isCancelPastDueModalOpen, setIsCancelPastDueModalOpen] = useState(false)
-	const [isYearlyUpgradeModalOpen, setIsYearlyUpgradeModalOpen] = useState(false)
-	const [yearlyUpgradeType, setYearlyUpgradeType] = useState<'api' | 'llamafeed' | null>(null)
+	const yearlyUpgrade = useStripeCheckout()
 	const {
 		apiSubscription,
 		llamafeedSubscription,
@@ -378,17 +378,6 @@ export function SubscriptionSection() {
 	const teamBanner =
 		isTeamMember && team ? <TeamSubscriptionBanner teamName={team.name} subscriptionType={null} /> : null
 
-	// A failed read is unknown, not Free: show a retry state instead of an upsell
-	// banner or a misleading payment warning.
-	if (isSubscriptionError) {
-		return (
-			<>
-				{teamBanner}
-				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
-			</>
-		)
-	}
-
 	// The overdue check failing silently would read as "no payment problems".
 	const pastDueCheckFailedNotice = isPastDueError ? (
 		<p className="body-sm text-sub-text-muted">
@@ -434,8 +423,12 @@ export function SubscriptionSection() {
 	}
 
 	const handleUpgradeToYearly = (type: 'llamafeed' | 'api') => {
-		setYearlyUpgradeType(type)
-		setIsYearlyUpgradeModalOpen(true)
+		yearlyUpgrade.open({
+			type,
+			billingInterval: 'year',
+			isUpgradeFlow: true,
+			upgradeReturnPath: '/account?success=true'
+		})
 	}
 
 	const handleTopup = () => {
@@ -524,27 +517,26 @@ export function SubscriptionSection() {
 			/>
 			<EndTrialModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
 			{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
-			{isYearlyUpgradeModalOpen && yearlyUpgradeType ? (
+			{yearlyUpgrade.isOpen ? (
 				<Suspense fallback={null}>
-					<StripeCheckoutModal
-						isOpen={isYearlyUpgradeModalOpen}
-						onClose={() => {
-							setIsYearlyUpgradeModalOpen(false)
-							setYearlyUpgradeType(null)
-						}}
-						paymentMethod="stripe"
-						type={yearlyUpgradeType}
-						billingInterval="year"
-						isUpgradeFlow
-						upgradeReturnPath="/account?success=true"
-					/>
+					<StripeCheckoutModal checkout={yearlyUpgrade} />
 				</Suspense>
 			) : null}
 		</>
 	)
 
 	let body: ReactNode = null
-	if (isPastDue && pastDueSubscription) {
+	// A failed read is unknown, not Free: show a retry state instead of an upsell
+	// banner or a misleading payment warning. The dialogs stay mounted, because the
+	// refetch after a cancel or an upgrade can fail while its result is on screen.
+	if (isSubscriptionError) {
+		body = (
+			<>
+				{teamBanner}
+				<SubscriptionLoadError isRetrying={isSubscriptionRetrying} onRetry={() => void refetchSubscription()} />
+			</>
+		)
+	} else if (isPastDue && pastDueSubscription) {
 		body = (
 			<>
 				{teamBanner}

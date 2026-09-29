@@ -171,6 +171,10 @@ const CYCLE_PRICING: Record<
 	}
 }
 
+// "Start Free Trial" always opens a monthly Pro trial, so the trial converts at the
+// monthly price whichever billing cycle the toggle shows.
+export const PRO_TRIAL_CONVERSION_PRICE = `${CYCLE_PRICING.monthly.pro.priceMain}${CYCLE_PRICING.monthly.pro.priceUnit}`
+
 function buildPricingCards(cycle: BillingCycle): Array<PricingCardData> {
 	return CARD_CONTENT.map((card) => ({ ...card, ...CYCLE_PRICING[cycle][card.key] }))
 }

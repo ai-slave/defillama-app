@@ -11,6 +11,12 @@ import { waitForUi } from '~/utils/testing/waitForUi'
 import { AssignSubscriptionModal } from '../Team/AssignSubscriptionModal'
 import { InviteMemberModal } from '../Team/InviteMemberModal'
 import { ManageSeatsModal } from '../Team/ManageSeatsModal'
+import {
+	clearPendingTeamCheckout,
+	readPendingTeamCheckout,
+	savePendingTeamCheckout,
+	TEAM_CHECKOUT_HOLD_MS
+} from '../Team/pendingTeamCheckout'
 import { PurchaseSeatsModal } from '../Team/PurchaseSeatsModal'
 import { TeamInvitesCard } from '../Team/TeamInvitesCard'
 import { TeamMembersCard } from '../Team/TeamMembersCard'
@@ -30,7 +36,9 @@ const api = vi.hoisted(() => ({
 	fetch: vi.fn(),
 	/** PocketBase auth-refresh replies with this account record. */
 	refresh: vi.fn<() => Promise<object>>(),
-	checkout: vi.fn()
+	checkout: vi.fn(),
+	/** Called once per mount of Stripe's embedded checkout provider. */
+	checkoutMount: vi.fn()
 }))
 const router = vi.hoisted(() => ({
 	isReady: true,
@@ -41,13 +49,17 @@ const router = vi.hoisted(() => ({
 vi.mock('next/router', () => ({ useRouter: () => router }))
 vi.mock('react-hot-toast', () => ({ default: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }) }))
 vi.mock('@stripe/stripe-js', () => ({ loadStripe: () => Promise.resolve({}) }))
-vi.mock('@stripe/react-stripe-js', () => ({
-	EmbeddedCheckoutProvider: ({ children, options }: { children: ReactNode; options: { clientSecret: string } }) => {
-		api.checkout(options)
-		return children
-	},
-	EmbeddedCheckout: () => null
-}))
+vi.mock('@stripe/react-stripe-js', async () => {
+	const { useEffect } = await import('react')
+	return {
+		EmbeddedCheckoutProvider: ({ children, options }: { children: ReactNode; options: { clientSecret: string } }) => {
+			api.checkout(options)
+			useEffect(() => api.checkoutMount(), [])
+			return children
+		},
+		EmbeddedCheckout: () => null
+	}
+})
 const session = installSubscriberSession('user')
 const refreshRequests = () =>
 	session.requests.filter((request) => request.url.pathname === '/api/collections/users/auth-refresh')
@@ -463,9 +475,274 @@ test('purchase respects the existing billing interval and does not repeat a requ
 	expect(api.checkout).toHaveBeenLastCalledWith({ clientSecret: 'test-secret' })
 	await act(async () => document.querySelector('form')!.requestSubmit())
 	expect(posts()).toHaveLength(1)
+})
+
+async function openSeatCheckout() {
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ action: 'checkout_created', clientSecret: 'test-secret' })
+			: Response.json({ team })
+	)
+	await mount(<Harness kind="purchase" />)
+	await click('Purchase Seats')
+	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeTruthy())
+}
+const teamReads = () => api.fetch.mock.calls.filter(([url, options]) => url.endsWith('/team') && !options?.method)
+function confirmButton(title: string, name: string) {
+	return [...namedDialog(title).querySelectorAll('button')].find((b) => accessibleName(b) === name)!
+}
+
+test('closing the seat checkout asks first, and Keep paying keeps the same checkout', async () => {
+	await openSeatCheckout()
 	await click('Close dialog')
+	expect(namedDialog('Leave checkout?').textContent).toContain(
+		"Your seats aren't purchased until the payment finishes. Leaving closes this checkout."
+	)
+	await act(async () => confirmButton('Leave checkout?', 'Keep paying').click())
+	await waitForUi(() => expect(namedDialog('Leave checkout?')).toBeUndefined())
+	expect(namedDialog('Complete Payment')).toBeTruthy()
+	await act(async () => {
+		document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+	})
+	await waitForUi(() => expect(namedDialog('Leave checkout?')).toBeTruthy())
+	expect(namedDialog('Complete Payment')).toBeTruthy()
+	expect(api.checkoutMount).toHaveBeenCalledTimes(1)
+	expect(posts()).toHaveLength(1)
+})
+
+test('leaving the seat checkout closes it and reads the team now and again later', async () => {
+	await openSeatCheckout()
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+	onTestFinished(() => {
+		vi.useRealTimers()
+	})
+	await click('Close dialog')
+	const readsBefore = teamReads().length
+	await act(async () => confirmButton('Leave checkout?', 'Leave').click())
+	await waitForUi(() => expect(namedDialog('Complete Payment')).toBeUndefined())
+	await waitForUi(() => expect(teamReads()).toHaveLength(readsBefore + 1))
+	await act(async () => vi.advanceTimersByTimeAsync(4000))
+	await waitForUi(() => expect(teamReads()).toHaveLength(readsBefore + 2))
+	expect(posts()).toHaveLength(1)
 	await click('Open')
 	expect(namedDialog('Purchase Seats')).toBeTruthy()
+})
+
+test('a seat checkout returns to the team tab with the purchased type and seat count', async () => {
+	await mount(<Harness kind="purchase" />)
+	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
+	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '4')
+	await click('Purchase Seats')
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+	expect(JSON.parse(posts()[0][1].body)).toMatchObject({
+		redirectUrl: `${window.location.origin}/account?tab=team&team-checkout=success&type=api&seats=4`,
+		cancelUrl: `${window.location.origin}/account?tab=team`
+	})
+})
+
+test('closing the seat form before checkout needs no confirmation', async () => {
+	await mount(<Harness kind="purchase" />)
+	await click('Close dialog')
+	await waitForUi(() => expect(namedDialog('Purchase Seats')).toBeUndefined())
+	expect(namedDialog('Leave checkout?')).toBeUndefined()
+})
+
+function useFakeTimeouts() {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+	onTestFinished(() => {
+		vi.useRealTimers()
+	})
+}
+const withSeats = (seatCount: number): Team => ({
+	...team,
+	subscriptions: [{ ...team.subscriptions[0], seats: { seatCount, occupiedSeats: 2, availableSeats: seatCount - 2 } }]
+})
+
+test.each([
+	['unchanged', () => Response.json({ team }), 3],
+	['updated', () => Response.json({ team: withSeats(4) }), 4],
+	['failed', () => Response.json({ message: 'Team unavailable' }, { status: 500 }), 3]
+] as const)(
+	'a timed-out purchase names the seats the team shows after a %s re-read, without retrying',
+	async (_case, read, seats) => {
+		useFakeTimeouts()
+		const reread = Promise.withResolvers<Response>()
+		api.fetch.mockImplementation((_url, options) =>
+			options?.method === 'POST' ? Promise.resolve(new Response('upstream timed out', { status: 504 })) : reread.promise
+		)
+		await mount(<Harness kind="purchase" />)
+		await click('Purchase Seats')
+		const submit = () => dialog().querySelector<HTMLButtonElement>('button[type=submit]')!
+		await waitForUi(() => expect(accessibleName(submit())).toBe('Refreshing…'))
+		await act(async () => submit().click())
+		expect(posts()).toHaveLength(1)
+		await act(async () => reread.resolve(read()))
+		await waitForUi(() =>
+			expect(dialog().textContent).toContain(
+				`We couldn't confirm this purchase. Your team currently shows ${seats} Pro seats.`
+			)
+		)
+		expect(dialog().textContent).not.toContain('upstream timed out')
+		expect(posts()).toHaveLength(1)
+	}
+)
+
+test('a timed-out first purchase of a plan says the team has none of its seats yet', async () => {
+	useFakeTimeouts()
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST' ? new Response('upstream timed out', { status: 504 }) : Response.json({ team })
+	)
+	await mount(<Harness kind="purchase" />)
+	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
+	await click('Purchase Seats')
+	await waitForUi(() =>
+		expect(dialog().textContent).toContain("We couldn't confirm this purchase. Your team currently has no API seats.")
+	)
+})
+
+test('a rejected purchase shows the server message', async () => {
+	useFakeTimeouts()
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ message: 'Team already has a monthly llamafeed subscription.' }, { status: 400 })
+			: Response.json({ team })
+	)
+	await mount(<Harness kind="purchase" />)
+	await click('Purchase Seats')
+	await waitForUi(() =>
+		expect(dialog().querySelector('[role=alert]')?.textContent).toBe(
+			'Team already has a monthly llamafeed subscription.'
+		)
+	)
+})
+
+test('Purchase stays locked while the purchase request runs', async () => {
+	const request = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation((_url, options) =>
+		options?.method === 'POST' ? request.promise : Promise.resolve(Response.json({ team }))
+	)
+	await mount(<Harness kind="purchase" />)
+	await click('Purchase Seats')
+	const submit = () => dialog().querySelector<HTMLButtonElement>('button[type=submit]')!
+	await waitForUi(() => expect(accessibleName(submit())).toBe('Processing…'))
+	await act(async () => submit().click())
+	await act(async () => document.querySelector('form')!.requestSubmit())
+	expect(posts()).toHaveLength(1)
+	await act(async () => request.resolve(Response.json({ action: 'seats_added', seatsAdded: 1 })))
+})
+
+test('a timed-out yearly upgrade names the billing the team shows after its re-read', async () => {
+	useFakeTimeouts()
+	const reread = Promise.withResolvers<Response>()
+	api.fetch.mockImplementation((_url, options) =>
+		options?.method === 'POST' ? Promise.resolve(new Response('upstream timed out', { status: 504 })) : reread.promise
+	)
+	await mount(<TeamSeatsCard />)
+	await click('Upgrade to Yearly')
+	await act(async () => confirmButton('Upgrade Pro to Yearly', 'Upgrade to Yearly').click())
+	await waitForUi(() => expect(teamReads()).toHaveLength(1))
+	await act(async () =>
+		reread.resolve(
+			Response.json({ team: { ...team, subscriptions: [{ ...team.subscriptions[0], billingInterval: 'year' }] } })
+		)
+	)
+	await waitForUi(() =>
+		expect(namedDialog('Upgrade Pro to Yearly').querySelector('[role=alert]')?.textContent).toBe(
+			"We couldn't confirm this upgrade. Your Pro plan currently bills yearly."
+		)
+	)
+	expect(posts()).toHaveLength(1)
+})
+
+test('buying seats on a plan set to end says it resumes and how many seats renew', async () => {
+	team.subscriptions[0].cancelsAt = '2099-03-14 08:24:42.000Z'
+	await mount(<Harness kind="purchase" />)
+	const warning = () =>
+		[...dialog().querySelectorAll('[role=status]')].find((e) => e.textContent?.startsWith('This Pro'))
+	expect(warning()?.textContent).toBe(
+		'This Pro subscription is set to end on Mar 14, 2099. Buying seats resumes it, and all 4 seats renew on Mar 14, 2099.'
+	)
+	await change(document.querySelector<HTMLInputElement>('#seat-count')!, '5')
+	expect(warning()?.textContent).toContain('all 8 seats renew on Mar 14, 2099.')
+	await click('Purchase Seats')
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+	expect(JSON.parse(posts()[0][1].body)).toMatchObject({ subscriptionType: 'llamafeed', seatCount: 5 })
+})
+
+test('buying seats on a renewing plan shows no resumption warning', async () => {
+	await mount(<Harness kind="purchase" />)
+	expect(dialog().textContent).not.toContain('set to end on')
+})
+
+test('managing seats on a plan set to end shows its end date from cancelsAt', async () => {
+	team.subscriptions[0].cancelsAt = '2099-03-14 08:24:42.000Z'
+	await mount(<Harness kind="manage" />)
+	expect(dialog().textContent).toContain('This subscription is scheduled to cancel on Mar 14, 2099.')
+	expect(button('Decrease seats').disabled).toBe(true)
+})
+
+test.each([
+	[
+		'Upgrade Pro to Yearly',
+		'llamafeed',
+		10,
+		'Stripe charges your saved card now: up to $4,900 for 10 seats at $490/year, less credit for the unused part of this month. The plan then renews yearly from today.'
+	],
+	[
+		'Upgrade API to Yearly',
+		'api',
+		2,
+		'Stripe charges your saved card now: up to $6,000 for 2 seats at $3,000/year, less credit for the unused part of this month. The plan then renews yearly from today.'
+	]
+])('%s states the charge for its seats before sending', async (title, type, seatCount, copy) => {
+	team.subscriptions[0] = {
+		...team.subscriptions[0],
+		type,
+		seats: { seatCount, occupiedSeats: 2, availableSeats: seatCount - 2 }
+	}
+	await mount(<TeamSeatsCard />)
+	await click('Upgrade to Yearly')
+	expect(namedDialog(title).querySelector('p')?.textContent).toBe(copy)
+	expect(posts()).toHaveLength(0)
+})
+
+function notePaidCheckout(ageMs: number) {
+	savePendingTeamCheckout('user', 'llamafeed', { seats: 2, startedAt: Date.now() - ageMs })
+	onTestFinished(() => clearPendingTeamCheckout('user', 'llamafeed'))
+}
+const heldReason = 'Your earlier payment for Pro seats is still being confirmed. It can take a few minutes to appear.'
+
+test('a paid Pro checkout still being confirmed holds a second Pro checkout and says why', async () => {
+	team.subscriptions = []
+	notePaidCheckout(60_000)
+	await mount(<Harness kind="purchase" />)
+	expect(dialog().textContent).toContain(heldReason)
+	expect(button('Purchase Seats').disabled).toBe(true)
+	await act(async () => document.querySelector('form')!.requestSubmit())
+	expect(posts()).toHaveLength(0)
+	await act(async () => document.querySelector<HTMLInputElement>('input[value=api]')!.click())
+	expect(dialog().textContent).not.toContain('still being confirmed')
+	expect(button('Purchase Seats').disabled).toBe(false)
+})
+
+test('a paid checkout note clears once the team shows the plan, and seats can be bought', async () => {
+	notePaidCheckout(60_000)
+	await mount(<TeamSeatsCard />)
+	await waitForUi(() => expect(readPendingTeamCheckout('user', 'llamafeed')).toBeNull())
+	await click('Purchase Seats')
+	await waitForUi(() => expect(namedDialog('Purchase Seats')).toBeTruthy())
+	expect(namedDialog('Purchase Seats').textContent).not.toContain('still being confirmed')
+	await act(async () => document.querySelector('form')!.requestSubmit())
+	await waitForUi(() => expect(posts()).toHaveLength(1))
+})
+
+test('a paid checkout note older than the hold no longer holds a purchase', async () => {
+	team.subscriptions = []
+	notePaidCheckout(TEAM_CHECKOUT_HOLD_MS + 60_000)
+	await mount(<Harness kind="purchase" />)
+	expect(dialog().textContent).not.toContain('still being confirmed')
+	await click('Purchase Seats')
+	await waitForUi(() => expect(posts()).toHaveLength(1))
 })
 
 test('a late purchase response cannot close a new opening after navigation', async () => {
@@ -809,6 +1086,40 @@ test.each([true, false])('recovers a lost invite response by reading membership:
 	expect(posts()).toHaveLength(1)
 	expect(verifyEmailPrompted()).toBe(joined)
 	expect(refreshRequests()).toHaveLength(joined ? 1 : 0)
+})
+
+test('an invite rejected because the user is on another team shows the rejection, not a join', async () => {
+	pb.authStore.save(pb.authStore.token, inviteAccount)
+	router.query = { token: 'invite-token' }
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ message: 'You are already on a team. Leave your current team first.' }, { status: 400 })
+			: Response.json({ team })
+	)
+	await mount(<TeamTab />)
+	await waitForUi(() =>
+		expect(container.textContent).toContain('You are already on a team. Leave your current team first.')
+	)
+	expect(container.textContent).not.toContain('Invite accepted')
+	expect(refreshRequests()).toHaveLength(0)
+	expect(router.replace).not.toHaveBeenCalled()
+})
+
+test('a replayed acceptance of the same invite still confirms the join', async () => {
+	pb.authStore.save(pb.authStore.token, inviteAccount)
+	router.query = { token: 'invite-token' }
+	api.fetch.mockImplementation(async (_url, options) =>
+		options?.method === 'POST'
+			? Response.json({ message: 'This invite has already been accepted.' }, { status: 400 })
+			: Response.json({ team })
+	)
+	await mount(<TeamTab />)
+	await waitForUi(async () => {
+		await act(async () => {})
+		expect(router.replace).toHaveBeenCalled()
+	})
+	expect(refreshRequests()).toHaveLength(1)
+	expect(container.textContent).not.toContain('This invite has already been accepted.')
 })
 
 test('manage seats opens on the seat count', async () => {

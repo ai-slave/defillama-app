@@ -28,14 +28,19 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 	const router = useRouter()
 	const { promptVerifyEmail } = useAuthContext()
 	const token = router.isReady ? getQueryParam(router.query.token) : undefined
-	const { team, isTeamLoading, isTeamError, isTeamRetrying, refetchTeam, isAdmin, inviteAcceptance, inviteAccount } =
-		useTeam({
-			inviteToken: token
-		})
-
-	// An invite token replay fails once membership exists (lost response, re-opened
-	// link), so actual membership wins over the stale invite error.
-	const membershipConfirmed = inviteAcceptance.isSuccess || (inviteAcceptance.isError && Boolean(team))
+	const {
+		team,
+		isTeamLoading,
+		isTeamError,
+		isTeamRetrying,
+		refetchTeam,
+		isAdmin,
+		inviteAcceptance,
+		inviteMembershipConfirmed: membershipConfirmed,
+		inviteAccount
+	} = useTeam({
+		inviteToken: token
+	})
 
 	useEffect(() => {
 		if (!router.isReady || !token) return
@@ -63,7 +68,7 @@ function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | nu
 		)
 	}
 
-	if (inviteAcceptance.isError && token && !isTeamLoading && !team) {
+	if (inviteAcceptance.isError && token && !isTeamLoading && !membershipConfirmed) {
 		return (
 			<div className="mx-auto flex max-w-md flex-col items-center gap-2 py-16 text-center">
 				<h2 className="heading-xs text-primary">Check your invitation</h2>

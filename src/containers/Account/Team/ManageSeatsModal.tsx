@@ -10,6 +10,8 @@ import { Input } from '~/ui/Input'
 import { InlineStatus } from '~/ui/Status'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
+import { seatPrice } from './seatPricing'
+import { getCancelAtDate, isCancelingSub } from './subscriptionCancel'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
@@ -26,26 +28,12 @@ function getSubscriptionLabel(type: string): string {
 }
 
 function getUnitPrice(type: string, billingInterval: 'month' | 'year'): { amount: number; suffix: string } {
-	if (type === 'api') {
-		return billingInterval === 'year' ? { amount: 3000, suffix: '/year' } : { amount: 300, suffix: '/month' }
-	}
-	return billingInterval === 'year' ? { amount: 490, suffix: '/year' } : { amount: 49, suffix: '/month' }
+	return { amount: seatPrice(type, billingInterval), suffix: `/${billingInterval}` }
 }
 
 // The stepper keeps its 40px controls; control heights move in their own change.
 const seatStepperButtonStyles =
 	'flex size-10 shrink-0 items-center justify-center rounded-lg border border-medium text-primary not-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
-
-function formatCancelDate(raw: string | number): string {
-	let date: Date
-	if (typeof raw === 'number') {
-		date = new Date(raw * 1000)
-	} else {
-		const isoLike = raw.includes('T') ? raw : raw.replace(' ', 'T')
-		date = new Date(isoLike)
-	}
-	return formatDate(date) ?? ''
-}
 
 export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsModalProps) {
 	const {
@@ -67,12 +55,8 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	const occupiedSeats = subscription.seats.occupiedSeats
 	const diff = seatCount - subscription.seats.seatCount
 	const hasChange = diff !== 0
-	const cancelAt: string | number | null = subscription.cancelsAt
-		? subscription.cancelsAt
-		: subscription.canceledAtPeriodEnd && typeof subscription.effectiveAt === 'number'
-			? subscription.effectiveAt
-			: null
-	const isCanceling = subscription.canceledAtPeriodEnd === true || cancelAt !== null
+	const cancelAtDate = getCancelAtDate(subscription)
+	const isCanceling = isCancelingSub(subscription)
 	// When canceling, lock the floor at the current count — only increases (which undo
 	// the pending cancel) are allowed.
 	const minSeats = isCanceling ? subscription.seats.seatCount : Math.max(1, occupiedSeats)
@@ -124,9 +108,9 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 			<form onSubmit={handleSubmit} className="flex min-h-0 flex-auto flex-col">
 				<DialogHeader title={`Manage ${label} Seats`} />
 				<DialogBody>
-					{isCanceling && cancelAt ? (
+					{isCanceling && cancelAtDate ? (
 						<InlineStatus variant="warning">
-							This subscription is scheduled to cancel on {formatCancelDate(cancelAt)}. Increasing the seat count will
+							This subscription is scheduled to cancel on {formatDate(cancelAtDate)}. Increasing the seat count will
 							resume billing and undo the pending cancellation.
 						</InlineStatus>
 					) : null}

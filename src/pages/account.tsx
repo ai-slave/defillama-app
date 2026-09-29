@@ -1,12 +1,15 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { fetchSubscriptionStatus, subscriptionStatusQueryKey } from '~/auth/subscriptionStatus'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { ManageAccount } from '~/containers/Account/ManageAccount'
+import { savePendingTeamCheckout } from '~/containers/Account/Team/pendingTeamCheckout'
+import { scheduleConfirmationReads } from '~/containers/Account/utils'
+import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
+import { forgetFinishedUpgrade } from '~/containers/Subscription/shared/useStripeCheckout'
 import Layout from '~/layout'
 import { ClientOnly } from '~/layout/ClientOnly'
 import { Button } from '~/ui/Button'
@@ -51,14 +54,12 @@ type PaymentReturn =
 	| { outcome: 'paid' | 'processing'; purchase: { plan: string; interval: string } | null; reads: number }
 
 // The return URL is user-editable, so only a plan the checkout sells is trusted as the purchase.
-const PURCHASABLE_PLANS = new Set(['api', 'llamafeed'])
-
-const queryValue = (value: string | Array<string> | undefined) => (Array.isArray(value) ? value[0] : value)
 
 export default function Account() {
 	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { isAuthenticated, user, authToken } = useAuthContext()
+	const userId = user?.id ?? null
 	const { hasActiveSubscription } = useSubscribe()
 	const topupProcessedRef = useRef(false)
 	const successProcessedRef = useRef(false)
@@ -71,28 +72,15 @@ export default function Account() {
 	const success = queryValue(router.query.success)
 	const teamCheckout = queryValue(router.query['team-checkout'])
 
-	// The checkout redirect lands before the webhook applies the purchase, so
-	// re-read the affected data a bounded number of times instead of announcing
-	// the result as already applied.
-	const scheduleConfirmationReads = useCallback(
-		(queryKey: Array<string>) => {
-			void queryClient.invalidateQueries({ queryKey })
-			for (const delay of [4000, 12_000]) {
-				window.setTimeout(() => void queryClient.invalidateQueries({ queryKey }), delay)
-			}
-		},
-		[queryClient]
-	)
-
 	// Handle ?topup=success
 	useEffect(() => {
 		if (topupSuccess !== 'success' || !isAuthenticated || topupProcessedRef.current) return
 		topupProcessedRef.current = true
-		scheduleConfirmationReads(['ai-balance'])
+		scheduleConfirmationReads(queryClient, ['ai-balance'])
 		toast.success('Top-up payment received! Your External Data Balance will update shortly.')
 		const { topup: _ignored, ...nextQuery } = router.query
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
-	}, [topupSuccess, isAuthenticated, scheduleConfirmationReads, router])
+	}, [topupSuccess, isAuthenticated, queryClient, router])
 
 	useEffect(() => {
 		if (topupSuccess !== 'success') {
@@ -133,12 +121,7 @@ export default function Account() {
 	// The untyped status read returns just the first active plan, so a user with Pro and API reads the bought one
 	// by type. It sits under the subscription key, so the reads below refresh it with the rest.
 	const purchase = paymentReturn !== null && paymentReturn.outcome !== 'failed' ? paymentReturn.purchase : null
-	const purchasedSubscription = useQuery({
-		queryKey: [...subscriptionStatusQueryKey(user?.id ?? null), 'purchase', purchase?.plan ?? null],
-		queryFn: ({ signal }) => fetchSubscriptionStatus({ token: authToken!, signal, subscriptionType: purchase!.plan }),
-		enabled: purchase !== null && authToken !== null,
-		retry: false
-	}).data
+	const purchasedSubscription = usePlanRecord(purchase?.plan ?? null)
 	// The trial flag arrives as Stripe metadata, which the plan cards read as a string too.
 	const paymentConfirmed = purchase
 		? purchasedSubscription != null &&
@@ -146,6 +129,14 @@ export default function Account() {
 			purchasedSubscription.billing_interval === purchase.interval &&
 			String(purchasedSubscription.metadata?.isTrial) !== 'true'
 		: hasActiveSubscription
+
+	// Once the bought plan shows, this browser's record of an open upgrade payment may be finished. It is judged on
+	// that payment's own Stripe status, since a return can belong to another payment for the same plan. A failed
+	// check keeps the record, and the next upgrade opening checks it again.
+	const purchaseConfirmed = purchase !== null && paymentConfirmed
+	useEffect(() => {
+		if (userId && authToken && purchaseConfirmed) void forgetFinishedUpgrade(userId, authToken).catch(() => {})
+	}, [purchaseConfirmed, userId, authToken])
 
 	// A read counts once it settles, so the budget cannot run out while the last one is in flight.
 	useEffect(() => {
@@ -187,11 +178,22 @@ export default function Account() {
 	useEffect(() => {
 		if (teamCheckout !== 'success' || !isAuthenticated || teamCheckoutProcessedRef.current) return
 		teamCheckoutProcessedRef.current = true
-		scheduleConfirmationReads(['team'])
-		toast.success('Payment received! Your team seats will be available shortly.')
-		const { 'team-checkout': _ignored, ...nextQuery } = router.query
+		scheduleConfirmationReads(queryClient, ['team'])
+		// The seat count and plan ride in the return URL for the message and the purchase hold only; the re-reads decide
+		// what the seats card shows.
+		const seats = Number(queryValue(router.query.seats))
+		const type = queryValue(router.query.type)
+		if (userId && type && PURCHASABLE_PLANS.has(type) && Number.isInteger(seats) && seats > 0) {
+			savePendingTeamCheckout(userId, type, { seats, startedAt: Date.now() })
+		}
+		toast.success(
+			Number.isInteger(seats) && seats > 0
+				? `Payment received. ${seats} seat${seats === 1 ? '' : 's'} will be available shortly.`
+				: 'Payment received! Your team seats will be available shortly.'
+		)
+		const { 'team-checkout': _ignored, seats: _seats, type: _type, ...nextQuery } = router.query
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
-	}, [teamCheckout, isAuthenticated, scheduleConfirmationReads, router])
+	}, [teamCheckout, isAuthenticated, queryClient, router, userId])
 
 	useEffect(() => {
 		if (teamCheckout !== 'success') {

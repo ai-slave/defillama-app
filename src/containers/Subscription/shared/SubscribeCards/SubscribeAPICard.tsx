@@ -1,6 +1,7 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense } from 'react'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { PaymentButton } from '~/containers/Subscription/Crypto'
+import { useStripeCheckout } from '~/containers/Subscription/shared/useStripeCheckout'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Icon } from '~/ui/Icon'
 import { formatUsd } from '~/utils/numberFormat'
@@ -31,10 +32,10 @@ export function SubscribeAPICard({
 	const displayPrice = billingInterval === 'year' ? yearlyPrice / 12 : monthlyPrice
 	const displayPeriod = '/month'
 	const { loading } = useSubscribe()
-	const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
+	const checkout = useStripeCheckout()
 
 	const handleUpgradeToYearly = () => {
-		setIsUpgradeModalOpen(true)
+		checkout.open({ type: 'api', billingInterval: 'year', isUpgradeFlow: true })
 	}
 
 	return (
@@ -152,16 +153,9 @@ export function SubscribeAPICard({
 				)}
 			</div>
 
-			{isUpgradeModalOpen ? (
+			{checkout.isOpen ? (
 				<Suspense fallback={null}>
-					<StripeCheckoutModal
-						isOpen={isUpgradeModalOpen}
-						onClose={() => setIsUpgradeModalOpen(false)}
-						paymentMethod="stripe"
-						type="api"
-						billingInterval="year"
-						isUpgradeFlow
-					/>
+					<StripeCheckoutModal checkout={checkout} />
 				</Suspense>
 			) : null}
 		</>

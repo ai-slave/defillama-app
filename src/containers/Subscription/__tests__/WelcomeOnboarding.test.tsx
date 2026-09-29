@@ -10,7 +10,7 @@ import { installUmamiSink } from '~/utils/testing/umamiSink'
 const track = installUmamiSink()
 import { WelcomeOnboarding } from '../WelcomeOnboarding'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
-vi.mock('next/router', () => ({ default: { push }, useRouter: () => ({ push }) }))
+vi.mock('next/router', () => ({ default: { push }, useRouter: () => ({ push, isReady: true, query: {} }) }))
 let root: Root
 let container: HTMLDivElement
 beforeEach(async () => {
