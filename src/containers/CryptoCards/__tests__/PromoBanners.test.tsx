@@ -20,7 +20,7 @@ afterEach(async () => {
 	container.remove()
 })
 
-test('the Ethena Pay banner reveals the invite code, signup guide, and app destination', async () => {
+test('the Ethena Pay banner reveals an invite code to copy and the app to use it in', async () => {
 	await act(async () => root.render(<PromoBanners />))
 	expect(document.body.textContent).not.toContain('TDQTXQ')
 
@@ -30,14 +30,7 @@ test('the Ethena Pay banner reveals the invite code, signup guide, and app desti
 	await waitForUi(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
 
 	const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!
-	expect(dialog.querySelector('h2')?.textContent).toBe('Get an Ethena Pay invite code')
-	expect(dialog.textContent).toContain('Copy this code, then enter it when joining Ethena Pay.')
-	expect(dialog.textContent).toContain('TDQTXQ')
-	expect(Array.from(dialog.querySelectorAll('li')).map((item) => item.textContent)).toEqual([
-		'Download and open the Ethena Pay app.',
-		'Start signing up and enter the invite code when prompted.',
-		'Complete the remaining account setup in the app.'
-	])
+	expect(dialog.querySelector('output')?.textContent).toBe('TDQTXQ')
 	expect(dialog.querySelector<HTMLAnchorElement>('a')?.href).toBe('https://pay.ethena.fi/download')
 
 	await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Copy Ethena Pay invite code"]')!.click())

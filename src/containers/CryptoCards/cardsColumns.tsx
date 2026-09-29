@@ -10,6 +10,7 @@ import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
+import { GetCardButton } from './GetCardButton'
 import {
 	type CardsReferenceModel,
 	type CardBooleanField,
@@ -36,16 +37,17 @@ export const CARDS_COLUMN_GROUPS = [
 const ALWAYS_VISIBLE_COLUMN_IDS = ['name'] as const
 
 const GROUP_COLUMN_IDS: Record<CardsColumnGroup, Array<string>> = {
+	// Where a card works and whether it's available come first; the issuing bank matters least.
 	overview: [
-		'issuer',
 		'region',
-		'classification',
-		'network',
+		'availability',
 		'cashbackRate',
 		'annualFee',
 		'fxFee',
 		'access',
-		'availability'
+		'classification',
+		'network',
+		'issuer'
 	],
 	rewards: ['cashbackRate', 'cashbackCurrency', 'maxCashbackPerMonth', 'perks'],
 	fees: ['annualFee', 'fxFee', 'atmFee', 'atmAllowance'],
@@ -260,82 +262,54 @@ export function buildCardsColumns(
 							</button>
 						) : null}
 						<TokenLogo src={card.logo} fallbackSrc={letterLogoDataUri(card.cardName)} alt={`${card.cardName} logo`} />
-						{reference.detailsHrefByIssuer[card.parentId] ? (
-							<BasicLink
-								href={reference.detailsHrefByIssuer[card.parentId]}
-								className="block truncate label-md text-link hover:underline"
-							>
-								{card.cardName}
-							</BasicLink>
-						) : card.url ? (
-							<a
-								href={card.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="block truncate label-md text-link hover:underline"
-							>
-								{card.cardName}
-							</a>
-						) : (
-							<span className="block truncate label-md">{card.cardName}</span>
-						)}
+						{/* The name opens the card page; the Get pill beside it is the one way to the issuer. */}
+						<div className="min-w-0 flex-1">
+							{reference.detailsHrefByIssuer[card.parentId] ? (
+								<BasicLink
+									href={reference.detailsHrefByIssuer[card.parentId]}
+									className="block max-w-fit truncate label-md text-link hover:underline"
+								>
+									{card.cardName}
+								</BasicLink>
+							) : (
+								<span className="block truncate label-md">{card.cardName}</span>
+							)}
+						</div>
+						{card.rowKind === 'card' ? (
+							<GetCardButton cardId={card.cardId} cardName={card.cardName} url={card.url} placement="table" />
+						) : null}
 					</div>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(224px,45vw)]',
+				headerClassName: 'w-[min(288px,58vw)]',
 				csvValue: (row) => (row.tierName ? `${row.cardName} — ${row.tierName}` : row.cardName)
-			}
-		}),
-		columnHelper.accessor((row) => row.issuer ?? undefined, {
-			id: 'issuer',
-			header: 'Issuer',
-			cell: ({ row }) => <TextValue row={row.original} field="issuer" value={row.original.issuer} />,
-			meta: {
-				headerClassName: 'w-[122px] min-w-[122px] whitespace-nowrap',
-				headerHelperText: 'Issuing bank / BIN sponsor.'
 			}
 		}),
 		columnHelper.accessor((row) => row.region, {
 			id: 'region',
 			header: 'Region',
+			// Regions mix blocs, single countries and "Global", so A–Z order means nothing; the
+			// Availability filter answers "does it work where I live".
+			enableSorting: false,
 			cell: ({ row }) => <TextValue row={row.original} field="region" value={row.original.region || null} />,
 			meta: {
 				headerClassName: 'w-[118px] min-w-[118px]',
 				headerHelperText: 'Region this tier’s terms apply to.'
 			}
 		}),
-		columnHelper.accessor((row) => capitalize(row.cardClassification) ?? undefined, {
-			id: 'classification',
-			header: 'Type',
-			cell: ({ row }) => (
-				<TextValue row={row.original} field="cardClassification" value={capitalize(row.original.cardClassification)} />
-			),
-			meta: {
-				headerClassName: 'w-[116px] min-w-[116px] whitespace-nowrap',
-				headerHelperText: 'Debit, credit, prepaid, or spend.',
-				csvValue: (row) => capitalize(row.cardClassification) ?? ''
-			}
-		}),
-		columnHelper.accessor((row) => capitalize(row.network) ?? undefined, {
-			id: 'network',
-			header: 'Network',
-			cell: ({ row }) => <TextValue row={row.original} field="network" value={capitalize(row.original.network)} />,
-			meta: {
-				headerClassName: 'w-[104px] min-w-[104px] whitespace-nowrap',
-				headerHelperText: 'Payment network the card runs on.',
-				csvValue: (row) => capitalize(row.network) ?? ''
-			}
-		}),
-		columnHelper.accessor((row) => capitalize(row.custodyType) ?? undefined, {
-			id: 'custody',
-			header: 'Custody',
-			cell: ({ row }) => (
-				<TextValue row={row.original} field="custodyType" value={capitalize(row.original.custodyType)} />
-			),
+		columnHelper.accessor((row) => (row.availabilityUnknown ? undefined : row.countryCount), {
+			id: 'availability',
+			header: 'Availability',
+			cell: ({ row }) => {
+				const label = availabilityLabel(row.original)
+				return label == null ? <EmptyValue /> : <span className="whitespace-nowrap">{label}</span>
+			},
 			meta: {
 				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
-				csvValue: (row) => capitalize(row.custodyType) ?? ''
+				align: 'end',
+				headerHelperText: 'Countries where the card can be issued.',
+				csvValue: (row) => availabilityLabel(row) ?? ''
 			}
 		}),
 		columnHelper.accessor((row) => row.cashbackRate ?? undefined, {
@@ -437,6 +411,58 @@ export function buildCardsColumns(
 				headerHelperText: 'Fee-free ATM withdrawal allowance.'
 			}
 		}),
+		columnHelper.accessor((row) => row.access ?? undefined, {
+			id: 'access',
+			header: 'Requirements',
+			enableSorting: false,
+			cell: ({ row }) => <ProseValue row={row.original} field="access" value={row.original.access} />,
+			meta: {
+				headerClassName: 'w-[170px] min-w-[170px] 2xl:w-[180px] 2xl:min-w-[180px]',
+				headerHelperText: 'What unlocks this tier: deposits, stakes, points, or fees. None means anyone can get it.'
+			}
+		}),
+		columnHelper.accessor((row) => capitalize(row.cardClassification) ?? undefined, {
+			id: 'classification',
+			header: 'Type',
+			cell: ({ row }) => (
+				<TextValue row={row.original} field="cardClassification" value={capitalize(row.original.cardClassification)} />
+			),
+			meta: {
+				headerClassName: 'w-[116px] min-w-[116px] whitespace-nowrap',
+				headerHelperText: 'Debit, credit, prepaid, or spend.',
+				csvValue: (row) => capitalize(row.cardClassification) ?? ''
+			}
+		}),
+		columnHelper.accessor((row) => capitalize(row.network) ?? undefined, {
+			id: 'network',
+			header: 'Network',
+			cell: ({ row }) => <TextValue row={row.original} field="network" value={capitalize(row.original.network)} />,
+			meta: {
+				headerClassName: 'w-[104px] min-w-[104px] whitespace-nowrap',
+				headerHelperText: 'Payment network the card runs on.',
+				csvValue: (row) => capitalize(row.network) ?? ''
+			}
+		}),
+		columnHelper.accessor((row) => row.issuer ?? undefined, {
+			id: 'issuer',
+			header: 'Issuer',
+			cell: ({ row }) => <TextValue row={row.original} field="issuer" value={row.original.issuer} />,
+			meta: {
+				headerClassName: 'w-[122px] min-w-[122px] whitespace-nowrap',
+				headerHelperText: 'Issuing bank / BIN sponsor.'
+			}
+		}),
+		columnHelper.accessor((row) => capitalize(row.custodyType) ?? undefined, {
+			id: 'custody',
+			header: 'Custody',
+			cell: ({ row }) => (
+				<TextValue row={row.original} field="custodyType" value={capitalize(row.original.custodyType)} />
+			),
+			meta: {
+				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
+				csvValue: (row) => capitalize(row.custodyType) ?? ''
+			}
+		}),
 		columnHelper.accessor((row) => (row.supportedChains.length > 0 ? row.supportedChains.length : undefined), {
 			id: 'supportedChains',
 			header: 'Chains',
@@ -477,16 +503,6 @@ export function buildCardsColumns(
 				align: 'end',
 				headerHelperText: 'Tokens the card can spend or be funded with.',
 				csvValue: (row) => row.supportedCoins.join(', ')
-			}
-		}),
-		columnHelper.accessor((row) => row.access ?? undefined, {
-			id: 'access',
-			header: 'Requirements',
-			enableSorting: false,
-			cell: ({ row }) => <ProseValue row={row.original} field="access" value={row.original.access} />,
-			meta: {
-				headerClassName: 'w-[170px] min-w-[170px] 2xl:w-[180px] 2xl:min-w-[180px]',
-				headerHelperText: 'What unlocks this tier: deposits, stakes, points, or fees. None means anyone can get it.'
 			}
 		}),
 		columnHelper.accessor((row) => row.virtualPhysical ?? undefined, {
@@ -553,20 +569,6 @@ export function buildCardsColumns(
 			meta: {
 				headerClassName: 'w-[200px] min-w-[200px] 2xl:w-[240px] 2xl:min-w-[240px]',
 				headerHelperText: 'Provider-set monthly spending limit.'
-			}
-		}),
-		columnHelper.accessor((row) => (row.availabilityUnknown ? undefined : row.countryCount), {
-			id: 'availability',
-			header: 'Availability',
-			cell: ({ row }) => {
-				const label = availabilityLabel(row.original)
-				return label == null ? <EmptyValue /> : <span className="whitespace-nowrap">{label}</span>
-			},
-			meta: {
-				headerClassName: 'w-[120px] min-w-[120px] whitespace-nowrap',
-				align: 'end',
-				headerHelperText: 'Countries where the card can be issued.',
-				csvValue: (row) => availabilityLabel(row) ?? ''
 			}
 		})
 	]

@@ -1,13 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import Image from 'next/image'
-import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { CopyHelper } from '~/ui/Copy'
-import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
-import { Icon } from '~/ui/Icon'
-
-const ETHENA_PAY_INVITE_CODE = 'TDQTXQ'
-const ETHENA_PAY_DOWNLOAD_URL = 'https://pay.ethena.fi/download'
+import { EthenaPayInviteDialog } from './GetCardButton'
 
 const CARD_PROMOS = [
 	{
@@ -92,47 +86,7 @@ export function PromoBanners() {
 					)
 				})}
 			</section>
-			<Dialog size="sm" portal unmountOnHide backdrop={<div className="fixed inset-0 z-50 bg-screen-dim opacity-80" />}>
-				<DialogHeader title="Get an Ethena Pay invite code" />
-				<DialogBody>
-					<p className="body-md text-secondary">Copy this code, then enter it when joining Ethena Pay.</p>
-					<div className="flex items-center justify-between gap-4 rounded-lg border border-subtle bg-surface-elevated-1 p-4">
-						<output className="min-w-0 mono-xl tracking-widest break-all text-primary" aria-label="Invite code">
-							{ETHENA_PAY_INVITE_CODE}
-						</output>
-						<CopyHelper
-							toCopy={ETHENA_PAY_INVITE_CODE}
-							size={20}
-							aria-label="Copy Ethena Pay invite code"
-							data-umami-event="crypto-cards-invite-code-copy"
-							data-umami-event-card="ethena-pay"
-						/>
-					</div>
-					<div>
-						<h3 className="label-md text-primary">How to use your code</h3>
-						<ol className="mt-2 flex list-decimal flex-col gap-2 pl-5 body-sm text-secondary">
-							<li>Download and open the Ethena Pay app.</li>
-							<li>Start signing up and enter the invite code when prompted.</li>
-							<li>Complete the remaining account setup in the app.</li>
-						</ol>
-					</div>
-				</DialogBody>
-				<DialogFooter>
-					<Button
-						as="a"
-						href={ETHENA_PAY_DOWNLOAD_URL}
-						target="_blank"
-						rel="noopener noreferrer sponsored"
-						variant="primary"
-						size="md"
-						data-umami-event="crypto-cards-invite-app-open"
-						data-umami-event-card="ethena-pay"
-					>
-						Download Ethena Pay
-						<Icon name="arrow-up-right" className="size-3.5" aria-hidden="true" />
-					</Button>
-				</DialogFooter>
-			</Dialog>
+			<EthenaPayInviteDialog />
 		</Ariakit.DialogProvider>
 	)
 }

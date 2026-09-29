@@ -206,6 +206,23 @@ function matchConflictingNamedTypography(content) {
 	return found.length > 0 ? found : null
 }
 
+// Tailwind drops a class it does not know without a warning, so a type name off the scale
+// (`heading-md`, `label-2xl`) renders as unstyled body text.
+const TYPOGRAPHY_FAMILY_TOKEN = /^(?:heading|label|body|mono)-[a-z0-9-]+$/
+function matchUnknownNamedTypography(content) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		for (const token of literal.slice(1, -1).split(/\s+/)) {
+			const utility = token.match(VARIANT_UTILITY)?.[2]
+			if (utility && TYPOGRAPHY_FAMILY_TOKEN.test(utility) && !NAMED_TYPOGRAPHY_UTILITY.test(utility)) {
+				found.push(utility)
+			}
+		}
+	}
+	return found.length > 0 ? found : null
+}
+
 // Mono has two weights: 400 for every figure and 700 for the number a block exists to show. A
 // font-jetbrains/font-mono class string that picks any other weight is flagged; use mono-* or font-bold.
 const MONO_FAMILY = /(?:^|\s)font-(?:jetbrains|mono)(?=\s|$)/
@@ -384,6 +401,14 @@ const RULES = [
 		match: matchConflictingNamedTypography
 	},
 	{
+		id: 'unknown-named-typography',
+		description:
+			'a heading-*, label-*, body-* or mono-* class that src/styles/typography.css does not define renders as unstyled text; use one of the named styles in design.md → Typography',
+		match: matchUnknownNamedTypography,
+		// Test titles are sentences ("label-level maps"), not class strings.
+		skipTests: true
+	},
+	{
 		id: 'off-scale-mono-weight',
 		description:
 			'mono uses two weights: 400 for figures, 700 for the headline number; use mono-* (mono-xl, mono-lg, mono-*-bold) or font-bold, never medium, semibold or extrabold',
@@ -424,6 +449,7 @@ for (const file of files) {
 		)
 			continue
 		if (rule.uiOwned && file.startsWith('src/ui/')) continue
+		if (rule.skipTests && /(?:^|\/)__tests__\/|\.test\.tsx?$/.test(file)) continue
 		if (
 			rule.productLeak &&
 			(bucket === 'product' ||
