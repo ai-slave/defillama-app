@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
@@ -50,15 +50,17 @@ export function SubscribeProModal({ dialogStore, source, placement }: SubscribeP
 
 	const isTrialAvailable = isAuthenticated ? isTrialAvailableFromApi : true
 
+	const open = Ariakit.useStoreState(dialogStore, 'open')
+	const onOpened = useEffectEvent(() => {
+		trackUmamiEvent('subscribe-modal-open', {
+			page: router.asPath,
+			...(source ? { source } : {}),
+			...(placement ? { placement } : {})
+		})
+	})
 	useEffect(() => {
-		if (dialogStore?.getState()?.open) {
-			trackUmamiEvent('subscribe-modal-open', {
-				page: router?.asPath,
-				...(source ? { source } : {}),
-				...(placement ? { placement } : {})
-			})
-		}
-	}, [dialogStore, placement, router?.asPath, source])
+		if (open) onOpened()
+	}, [open])
 
 	return (
 		<ClientOnly>

@@ -9,11 +9,11 @@ import {
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
-import { lazy, useEffect, useMemo, useState } from 'react'
+import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { sortingFeatures } from '~/components/Table/features/sorting'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatPercent } from '~/utils/numberFormat'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
@@ -308,17 +308,9 @@ function AssetBreakdownSection({
 
 export default function Ecosystem() {
 	const { data, isLoading } = useEcosystemData()
-	const onContentReady = useContentReady()
 
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
-
-	if (isLoading || !data) {
-		return null
-	}
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load Sonic ecosystem data.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

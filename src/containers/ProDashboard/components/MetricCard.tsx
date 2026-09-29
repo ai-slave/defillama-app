@@ -1,4 +1,6 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 
 const SparklineChart = lazy(() =>
 	import('~/components/ECharts/SparklineChart').then((m) => ({ default: m.SparklineChart }))
@@ -155,8 +157,10 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 	const chartSeries = chartType === 'none' ? EMPTY_CHART_SERIES : sparklineData
 
+	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
 	const sparklineColor =
-		change.direction === 'up' ? 'var(--success)' : change.direction === 'down' ? 'var(--error)' : 'var(--bg-brand)'
+		change.direction === 'up' ? chartTheme.dataUp : change.direction === 'down' ? chartTheme.dataDown : chartTheme.brand
 
 	const content = useMemo(() => {
 		if (isLoading) {

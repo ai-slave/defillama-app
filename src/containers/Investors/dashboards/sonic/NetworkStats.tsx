@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatNumber, formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { useNetworkStatsData } from './networkStatsApi'
 
@@ -171,17 +171,9 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 export default function NetworkStats() {
 	const { data, isLoading } = useNetworkStatsData()
 	const stream = useBurnStream()
-	const onContentReady = useContentReady()
 
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
-
-	if (isLoading || !data) {
-		return null
-	}
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load Sonic network stats.</TabStatus>
 
 	const burnWindows = stream.burnWindows
 	const liveBlock = stream.blockNumber || data.network.blockNumber?.value

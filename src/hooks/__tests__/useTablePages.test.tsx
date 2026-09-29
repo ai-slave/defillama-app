@@ -23,19 +23,18 @@ function buildPageUrl({ version, cursor }: { version?: string | null; cursor?: s
 type HookResult = ReturnType<typeof useTablePages<Row, Page>>
 
 function Harness({ signature, onRender }: { signature: string; onRender: (result: HookResult) => void }) {
-	onRender(
-		useTablePages<Row, Page>({
-			mode: 'cursor',
-			sourceKey: `all:${initialPage.version}`,
-			initialRows: [row('ssr')],
-			initialPage,
-			querySignature: signature,
-			defaultQuerySignature: DEFAULT_SIGNATURE,
-			getRowKey: (item) => item.id,
-			buildPageUrl
-		})
-	)
-	return null
+	const result = useTablePages<Row, Page>({
+		mode: 'cursor',
+		sourceKey: `all:${initialPage.version}`,
+		initialRows: [row('ssr')],
+		initialPage,
+		querySignature: signature,
+		defaultQuerySignature: DEFAULT_SIGNATURE,
+		getRowKey: (item) => item.id,
+		buildPageUrl
+	})
+	onRender(result)
+	return <div ref={result.sentinelRef} />
 }
 
 type PendingRequest = { url: string; signal: AbortSignal; resolve: (response: Response) => void }
@@ -53,6 +52,7 @@ describe('useTablePages cursor mode', () => {
 	let root: Root
 	let latest: HookResult
 	let pending: Array<PendingRequest>
+	let intersect: (() => void) | null
 
 	const render = async (signature: string) => {
 		await act(async () => {
@@ -66,15 +66,32 @@ describe('useTablePages cursor mode', () => {
 		document.body.appendChild(container)
 		root = createRoot(container)
 		pending = []
+		intersect = null
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(
 				(url: string | URL | Request, init?: RequestInit) =>
-					new Promise<Response>((resolve) => {
-						if (!init?.signal) throw new Error('Expected an abort signal')
-						pending.push({ url: String(url), signal: init.signal, resolve })
+					new Promise<Response>((resolve, reject) => {
+						const signal = init?.signal
+						if (!signal) throw new Error('Expected an abort signal')
+						// Like the real fetch, an abort rejects the request.
+						signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+						pending.push({ url: String(url), signal, resolve })
 					})
 			)
+		)
+		// Holds the observer callback so a test can scroll the sentinel into view; null while disconnected.
+		vi.stubGlobal(
+			'IntersectionObserver',
+			class {
+				constructor(private callback: IntersectionObserverCallback) {}
+				observe() {
+					intersect = () => this.callback([{ isIntersecting: true } as IntersectionObserverEntry], this as never)
+				}
+				disconnect() {
+					intersect = null
+				}
+			}
 		)
 	})
 
@@ -199,5 +216,40 @@ describe('useTablePages cursor mode', () => {
 
 		act(() => void latest.retry?.())
 		expect(pending).toHaveLength(2)
+	})
+
+	test('settles when the query returns to the loaded one before the replacement answers', async () => {
+		await render(DEFAULT_SIGNATURE)
+		await render('sig:search')
+		expect(latest.isReplacing).toBe(true)
+		expect(pending).toHaveLength(1)
+
+		await render(DEFAULT_SIGNATURE)
+
+		expect(latest.isReplacing).toBe(false)
+		expect(latest.error).toBe(null)
+		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
+		await act(async () => intersect?.())
+		expect(pending).toHaveLength(2)
+		expect(pending[1]?.url).toBe('/api/test-rows?version=v-initial&cursor=next')
+	})
+
+	test('drops a superseded replacement that answers after a newer one started', async () => {
+		await render('sig:first')
+		let answerFirst: (body: Page) => void = () => {}
+		const firstBody = new Promise<Page>((resolve) => (answerFirst = resolve))
+		// The first response arrives but its body is still streaming when the query changes again.
+		await act(async () => pending[0]?.resolve({ ok: true, status: 200, json: () => firstBody } as Response))
+
+		await render('sig:second')
+		expect(pending).toHaveLength(2)
+		await act(async () => answerFirst(page('first')))
+
+		expect(latest.isReplacing).toBe(true)
+		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
+
+		await act(async () => pending[1]?.resolve(response(page('second'))))
+		expect(latest.isReplacing).toBe(false)
+		expect(latest.rows.map((item) => item.id)).toEqual(['second'])
 	})
 })

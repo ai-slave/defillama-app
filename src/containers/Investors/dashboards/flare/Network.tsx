@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useEffect } from 'react'
+import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
@@ -21,13 +21,8 @@ export default function Network() {
 		refetchOnWindowFocus: false
 	})
 
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		if (query.data) onContentReady()
-	}, [query.data, onContentReady])
-
-	if (!query.data) return null
+	if (query.error) return <TabStatus variant="error">Couldn't load Flare network data.</TabStatus>
+	if (!query.data) return <TabStatus variant="loading" />
 
 	const k = query.data.kpis
 	const c = query.data.charts

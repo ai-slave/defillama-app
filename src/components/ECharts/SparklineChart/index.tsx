@@ -4,8 +4,10 @@ import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef } from 'react'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { withEChartsRenderVisibility } from '../renderVisibility'
+import { useChartTheme } from '../shared/chartTheme'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
 
@@ -66,6 +68,7 @@ function parseRgbColor(base: string): RgbColor | null {
 
 interface SparklineChartProps {
 	data?: Array<PrimitiveSparklinePoint>
+	/** A literal colour: ECharts draws to canvas and cannot read var(). Defaults to the theme's brand colour. */
 	color?: string
 	areaColor?: string
 	className?: string
@@ -75,12 +78,15 @@ interface SparklineChartProps {
 
 function SparklineChartRenderer({
 	data,
-	color = 'var(--bg-brand)',
+	color,
 	areaColor,
 	className,
 	height = 48,
 	smooth = true
 }: SparklineChartProps) {
+	const [isDark] = useDarkModeManager()
+	const chartTheme = useChartTheme(isDark)
+	const lineColor = color ?? chartTheme.brand
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
@@ -115,46 +121,17 @@ function SparklineChartRenderer({
 		if (!instance) return
 		if (seriesData.length === 0) return
 
-		const resolveColor = (input?: string) => {
-			if (!input) return undefined
-			const match = input.match(/^var\(([^)]+)\)$/)
-			if (!match) {
-				return input
-			}
-			const variableExpression = match[1]
-			if (variableExpression === undefined) return input
-			const [variable = '', fallback] = variableExpression.split(',').map((part) => part.trim())
-			let value = ''
-			try {
-				const target: HTMLElement = document.documentElement
-				value = getComputedStyle(target).getPropertyValue(variable)
-			} catch {
-				value = ''
-			}
-			return value?.trim() || fallback || input
-		}
-
-		let resolvedLine = resolveColor(color) || color
-		if (resolvedLine.startsWith('var(')) {
-			resolvedLine = '#6BA5FF'
-		}
-
-		let resolvedArea = resolveColor(areaColor) || resolvedLine
-		if (resolvedArea.startsWith('var(')) {
-			resolvedArea = resolvedLine
-		}
-
-		const rgb = areaColor ? null : parseRgbColor(resolvedLine)
+		const rgb = areaColor ? null : parseRgbColor(lineColor)
 		const areaFill = areaColor
-			? resolvedArea
+			? areaColor
 			: rgb
 				? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
 						{ offset: 0, color: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.28)` },
 						{ offset: 1, color: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.04)` }
 					])
-				: resolvedLine
+				: lineColor
 
-		const shadowColor = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)` : resolvedLine
+		const shadowColor = rgb ? `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)` : lineColor
 
 		if (instance.isDisposed()) return
 
@@ -211,7 +188,7 @@ function SparklineChartRenderer({
 					data: seriesData,
 					showSymbol: false,
 					lineStyle: {
-						color: resolvedLine,
+						color: lineColor,
 						width: 2,
 						cap: 'round',
 						join: 'round',
@@ -227,7 +204,7 @@ function SparklineChartRenderer({
 			]
 		}
 		instance.setOption(option, true)
-	}, [seriesData, color, areaColor, smooth])
+	}, [seriesData, lineColor, areaColor, smooth])
 
 	if (!hasData) {
 		return null

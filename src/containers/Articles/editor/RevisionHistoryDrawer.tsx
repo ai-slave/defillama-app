@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
+import { InlineStatus } from '~/ui/Status'
 import {
 	deleteArticleRevision,
 	getArticleRevision,
@@ -289,22 +290,16 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	})
 	const { mutateAsync: restoreRevision } = restoreRevisionMutation
 	const { mutateAsync: deleteRevision } = deleteRevisionMutation
+	// A failed restore or delete says so in the header of the revision it was for, not in a toast over the drawer.
+	// It follows the mutation's own revision, so picking another hides it without resetting a request still in flight.
+	const actionError =
+		restoreRevisionMutation.isError && restoreRevisionMutation.variables === selectedId
+			? messageOf(restoreRevisionMutation.error, 'Failed to restore revision')
+			: deleteRevisionMutation.isError && deleteRevisionMutation.variables === selectedId
+				? messageOf(deleteRevisionMutation.error, 'Failed to delete revision')
+				: null
 	const isRestoring = restoreRevisionMutation.isPending
 	const pendingDeleteId = deleteRevisionMutation.isPending ? (deleteRevisionMutation.variables ?? null) : null
-
-	useEffect(() => {
-		if (revisionsQuery.error) {
-			toast.error(revisionsQuery.error instanceof Error ? revisionsQuery.error.message : 'Failed to load history')
-		}
-	}, [revisionsQuery.error])
-
-	useEffect(() => {
-		if (selectedRevisionQuery.error) {
-			toast.error(
-				selectedRevisionQuery.error instanceof Error ? selectedRevisionQuery.error.message : 'Failed to load revision'
-			)
-		}
-	}, [selectedRevisionQuery.error])
 
 	const loadMore = useCallback(async () => {
 		if (!revisionsQuery.hasNextPage) return
@@ -320,11 +315,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		if (!selectedId) return
 		try {
 			const saved = await restoreRevision(selectedId)
-			toast.success('Restored as pending')
 			onRestored(saved)
 			onClose()
-		} catch (error) {
-			toast.error(messageOf(error, 'Failed to restore revision'))
+			// The drawer is closing, so the confirmation can toast.
+			toast.success('Restored as pending')
+		} catch {
+			// The header shows the mutation's error.
 		}
 		setConfirming(null)
 	}, [restoreRevision, onRestored, onClose, selectedId])
@@ -350,9 +346,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						return items.find((entry) => entry.id !== revisionId)?.id ?? null
 					})
 				}
-				toast.success('Revision removed from history')
-			} catch (error) {
-				toast.error(messageOf(error, 'Failed to delete revision'))
+			} catch {
+				// The header shows the mutation's error; a success needs no toast, the entry leaves the list.
 			}
 			// Ran in a finally before: neither body exits early, so after the catch is the same thing, and
 			// the compiler cannot lower a finalizer.
@@ -411,12 +406,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			if (filtered.length === 0) return
 			const nextIndex = Math.min(filtered.length - 1, Math.max(0, selectedIndex + delta))
 			const next = filtered[nextIndex]
-			if (next) {
-				setConfirming(null)
-				setSelectedIdState(next.id)
-			}
+			if (next) selectRevision(next.id)
 		},
-		[filtered, selectedIndex]
+		[filtered, selectRevision, selectedIndex]
 	)
 
 	useEffect(() => {
@@ -491,14 +483,6 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		enabled: viewMode === 'diff' && !!baseId,
 		retry: false
 	})
-
-	useEffect(() => {
-		if (baseRevisionQuery.error) {
-			toast.error(
-				baseRevisionQuery.error instanceof Error ? baseRevisionQuery.error.message : 'Failed to load base revision'
-			)
-		}
-	}, [baseRevisionQuery.error])
 
 	const baseRevision = baseRevisionQuery.data ?? null
 
@@ -607,6 +591,10 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 					<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
 						{isLoading ? (
 							<TimelineSkeleton />
+						) : revisionsQuery.isLoadingError ? (
+							<div className="p-5">
+								<InlineStatus variant="error">{messageOf(revisionsQuery.error, 'Failed to load history')}</InlineStatus>
+							</div>
 						) : grouped.length === 0 ? (
 							<EmptyState filter={filter} />
 						) : (
@@ -681,7 +669,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 									</section>
 								))}
 								{revisionsQuery.hasNextPage ? (
-									<div className="px-5 py-4">
+									<div className="grid gap-2 px-5 py-4">
+										{revisionsQuery.isFetchNextPageError ? (
+											<InlineStatus variant="error">
+												{messageOf(revisionsQuery.error, 'Failed to load history')}
+											</InlineStatus>
+										) : null}
 										<button
 											type="button"
 											onClick={loadMore}
@@ -717,6 +710,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						onCancelConfirm={() => setConfirming(null)}
 						onConfirmRestore={() => void handleRestore()}
 						onConfirmDelete={() => selectedId && void handleDelete(selectedId)}
+						actionError={actionError}
 						viewMode={viewMode}
 						onChangeView={setViewMode}
 						baseMode={baseMode}
@@ -728,6 +722,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 					<div className="min-h-0 flex-1 overflow-y-auto">
 						{isLoadingRevision ? (
 							<PreviewSkeleton />
+						) : selectedRevisionQuery.isLoadingError ? (
+							<div className="px-6 py-8">
+								<InlineStatus variant="error">
+									{messageOf(selectedRevisionQuery.error, 'Failed to load revision')}
+								</InlineStatus>
+							</div>
 						) : !previewArticle ? (
 							<div className="grid h-full place-items-center px-6">
 								<div className="max-w-sm text-center">
@@ -746,6 +746,11 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 								base={baseRevision}
 								baseMode={baseMode}
 								baseUnavailable={baseUnavailable}
+								baseError={
+									baseRevisionQuery.isLoadingError
+										? messageOf(baseRevisionQuery.error, 'Failed to load base revision')
+										: null
+								}
 								diff={diff}
 							/>
 						) : (
@@ -781,7 +786,8 @@ function PreviewSpecimenHeader({
 	onChangeBase,
 	baseAvailability,
 	baseRevision,
-	diffStats: stats
+	diffStats: stats,
+	actionError
 }: {
 	revision: ArticleRevision | null
 	isLoading: boolean
@@ -804,6 +810,7 @@ function PreviewSpecimenHeader({
 	baseAvailability: Record<BaseMode, string | null>
 	baseRevision: ArticleRevision | null
 	diffStats: { added: number; removed: number } | null
+	actionError: string | null
 }) {
 	const restoreRef = useRef<HTMLButtonElement>(null)
 	const deleteRef = useRef<HTMLButtonElement>(null)
@@ -932,6 +939,11 @@ function PreviewSpecimenHeader({
 				</div>
 			</div>
 
+			{actionError ? (
+				<div className="px-4 pb-4 lg:px-7">
+					<InlineStatus variant="error">{actionError}</InlineStatus>
+				</div>
+			) : null}
 			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-medium bg-page/50 px-7 py-2.5">
 				<div className="inline-flex items-center gap-px rounded-md border border-medium bg-surface p-0.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase">
 					{(['preview', 'diff'] as Array<ViewMode>).map((mode) => {
@@ -1022,12 +1034,14 @@ function DiffPane({
 	base,
 	baseMode,
 	baseUnavailable,
+	baseError,
 	diff
 }: {
 	selected: ArticleRevision | null
 	base: ArticleRevision | null
 	baseMode: BaseMode
 	baseUnavailable: BaseUnavailable | null
+	baseError: string | null
 	diff: {
 		paragraphs: Array<ParagraphDiffOp>
 		metadata: Array<FieldChange>
@@ -1051,6 +1065,13 @@ function DiffPane({
 					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Nothing to compare</p>
 					<p className="mt-2 text-sm text-secondary">{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}</p>
 				</div>
+			</div>
+		)
+	}
+	if (baseError) {
+		return (
+			<div className="px-6 py-8">
+				<InlineStatus variant="error">{baseError}</InlineStatus>
 			</div>
 		)
 	}

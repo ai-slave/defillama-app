@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useEffect, useState } from 'react'
+import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatNumber } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
@@ -79,15 +79,11 @@ export default function Tokenomics() {
 		refetchOnWindowFocus: false
 	})
 
-	const onContentReady = useContentReady()
 	const [burnView, setBurnView] = useState<BurnView>('daily')
 	const [protocolView, setProtocolView] = useState<'emitted' | 'burned'>('burned')
 
-	useEffect(() => {
-		if (query.data) onContentReady()
-	}, [query.data, onContentReady])
-
-	if (!query.data) return null
+	if (query.error) return <TabStatus variant="error">Couldn't load Flare tokenomics.</TabStatus>
+	if (!query.data) return <TabStatus variant="loading" />
 
 	const { burn: b, emissions: e, inflation: inf, fire } = query.data
 	const bk = b.kpis

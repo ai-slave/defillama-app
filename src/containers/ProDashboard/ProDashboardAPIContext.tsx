@@ -25,7 +25,7 @@ import {
 } from './dashboardHydrationState'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import { streamPrefetchItemIds } from './dashboardLayout/buildDashboardLayout'
-import { dashboardReducer, initDashboardState } from './dashboardReducer'
+import { type DashboardHistoryEntry, dashboardReducer, initDashboardState } from './dashboardReducer'
 import { dashboardItemHasStreamSources, dashboardStreamNeedsProtocolCatalog } from './dashboardStreamCapabilities'
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from './dashboardStreamContract'
 import type {
@@ -287,7 +287,8 @@ interface ProDashboardAnnotationsContextType {
 interface ProDashboardHistoryContextType {
 	canUndo: boolean
 	canRedo: boolean
-	undoDepth: number
+	/** The entry Undo restores next. */
+	undoEntry: DashboardHistoryEntry | null
 	undo: () => boolean
 	redo: () => boolean
 }
@@ -1281,7 +1282,7 @@ function ProDashboardAPIProviderInner({
 		() => ({
 			canUndo: history.past.length > 0,
 			canRedo: history.future.length > 0,
-			undoDepth: history.past.length,
+			undoEntry: history.past.at(-1) ?? null,
 			undo,
 			redo
 		}),

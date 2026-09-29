@@ -1,8 +1,8 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
-import { lazy, useEffect } from 'react'
+import { lazy } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
@@ -139,11 +139,6 @@ const tokenColumns = tokenColumnHelper.columns([
 
 export default function Blockchain() {
 	const { data, isLoading } = useBlockchainData()
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		if (data && !isLoading) onContentReady()
-	}, [data, isLoading, onContentReady])
 
 	const tokenTable = useTable({
 		features: tableFeaturesConfig,
@@ -155,7 +150,8 @@ export default function Blockchain() {
 		}
 	})
 
-	if (isLoading || !data) return null
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load Berachain blockchain data.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

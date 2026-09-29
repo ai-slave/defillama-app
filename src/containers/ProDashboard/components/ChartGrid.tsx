@@ -58,7 +58,7 @@ import {
 	getReadOnlyCardMinHeight,
 	getDashboardItemHeight
 } from '../dashboardLayout/cardHeight'
-import { DASHBOARD_HISTORY_LIMIT } from '../dashboardReducer'
+import type { DashboardHistoryEntry } from '../dashboardReducer'
 
 export { getReadOnlyCardMinHeight }
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '../dashboardStreamContract'
@@ -569,7 +569,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		handleEditItem,
 		handleUpdateSection
 	} = useProDashboardEditorActions()
-	const { undo, undoDepth } = useProDashboardHistory()
+	const { undo, undoEntry } = useProDashboardHistory()
 	const { isReadOnly } = useProDashboardPermissions()
 	const isSmallScreen = useMedia('(max-width: 768px)')
 	const gridRef = useRef<HTMLDivElement>(null)
@@ -601,13 +601,20 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 	})
 	const sortableItemIds = useMemo(() => items.map((item) => item.id), [items])
 
-	const expectedUndoDepthRef = useRef<number | null>(null)
+	// A removal toast belongs to the undo entry its removal pushes ('pending' until that commit lands), so
+	// any other newest entry means a later edit, undo or redo. Compare entries, not depth: once history is
+	// full, every edit leaves the depth at its cap.
+	const removalEntryRef = useRef<DashboardHistoryEntry | 'pending' | null>(null)
 	useEffect(() => {
-		if (expectedUndoDepthRef.current === null || expectedUndoDepthRef.current === undoDepth) return
-		expectedUndoDepthRef.current = null
+		if (removalEntryRef.current === null || removalEntryRef.current === undoEntry) return
+		if (removalEntryRef.current === 'pending') {
+			removalEntryRef.current = undoEntry
+			return
+		}
+		removalEntryRef.current = null
 		toast.dismiss(CARD_REMOVED_TOAST_ID)
 		toast.dismiss(SECTION_REMOVED_TOAST_ID)
-	}, [undoDepth])
+	}, [undoEntry])
 	useEffect(
 		() => () => {
 			toast.dismiss(CARD_REMOVED_TOAST_ID)
@@ -657,10 +664,6 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 		}
 	}, [items, activeTabId, layout, rawById])
 
-	const rememberUndoDepth = () => {
-		expectedUndoDepthRef.current = Math.min(undoDepth + 1, DASHBOARD_HISTORY_LIMIT)
-	}
-
 	const undoToast = (message: string, id: string) => {
 		actionToast({
 			message,
@@ -674,7 +677,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 	const handleDeleteClick = (itemId: string) => {
 		handleRemoveItem(itemId)
 		gridRef.current?.focus()
-		rememberUndoDepth()
+		removalEntryRef.current = 'pending'
 		undoToast('Card removed', CARD_REMOVED_TOAST_ID)
 	}
 
@@ -703,7 +706,7 @@ export function ChartGrid({ onAddChartClick, onEditItem, tabQueryParam }: ChartG
 			const remainingTab = layout.tabs?.find((tab) => tab.section.id !== sectionId)
 			if (remainingTab) setActiveTab(remainingTab.section.id)
 		}
-		rememberUndoDepth()
+		removalEntryRef.current = 'pending'
 		undoToast('Section removed · cards stay', SECTION_REMOVED_TOAST_ID)
 	}
 

@@ -9,7 +9,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { TreemapLabelContrast } from '~/components/ECharts/TreemapChart/labelContrast'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { lastNDaysZoom } from './chartDefaults'
@@ -251,13 +251,6 @@ const columns = columnHelper.columns([
 
 export default function FeeM() {
 	const { data, isLoading } = useFeeMData()
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
 
 	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
@@ -269,9 +262,8 @@ export default function FeeM() {
 		}
 	})
 
-	if (isLoading || !data) {
-		return null
-	}
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load FeeM data.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

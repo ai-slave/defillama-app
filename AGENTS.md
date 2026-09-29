@@ -108,6 +108,12 @@ Before changing metric routes, chart queries, metadata flags, public API validat
 - Before calling UI work done, look at it in the browser at desktop width and at the 375px mobile preset, in light and dark mode. Tests do not show layout, wrapping or contrast.
 - When fixing a reported UI problem, also fix what allowed it: add or correct the recipe in `design.md`, move the pattern into a shared `src/ui` component, or extend a policy check when the rule is mechanical. A fix at one call site leaves the same mistake on the next page.
 
+## Effects
+
+- An effect synchronizes with something outside React: a subscription, a timer, the DOM, a widget, the network. Work caused by a user action runs in that action's handler or mutation callback, and state computed from other state is derived during render.
+- Never infer that an element exists, a dialog opened, or a request settled from a data flag. Attach work to the element through a callback ref (`useHorizontalOverflow`), use the library's own callback (Ariakit `autoFocusOnShow`, `initialFocus`, `setMounted`), or settle the state where the request ends. An effect keyed on `hasData`, `isPending` or `open` runs when the flag flips, which is not when the thing it stands for happens.
+- A query or mutation error renders where its data would be, never as a toast from an effect watching `.error`. See design.md → Status states.
+
 ## Local User Instructions
 
 If `.codex/local-instructions.md` exists, read and follow it before making code changes. It contains local user preferences and skill routing, and is intentionally gitignored.

@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
-import { Fragment, startTransition, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TOTAL_TRACKED_BY_METRIC_API } from '~/constants'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
@@ -47,44 +47,26 @@ type Tab = (typeof TABS)[number]
 
 const newMetricTagStyles = 'flex items-center gap-1 rounded-md bg-brand px-1.5 py-1 label-xs text-on-brand'
 
+function findCurrentCategory(pathname: string) {
+	if (pathname === '/') return null
+	return metricsByCategory.find(
+		(category) => category.category !== 'Trending' && category.metrics.some((metric) => metric.route === pathname)
+	)?.category
+}
+
 export function Metrics({
 	canDismiss = false,
-	hasScrolledToCategoryRef
+	searchInputRef
 }: {
 	canDismiss?: boolean
-	hasScrolledToCategoryRef?: React.RefObject<string>
+	searchInputRef?: React.RefObject<HTMLInputElement | null>
 }) {
 	const [tab, setTab] = useState<Tab>('All')
 	const [searchValue, setSearchValue] = useState('')
 	const deferredSearchValue = useDeferredValue(searchValue)
 
 	const router = useRouter()
-
-	const currentCategory =
-		router.pathname === '/'
-			? null
-			: metricsByCategory.find(
-					(category) =>
-						category.category !== 'Trending' && category.metrics.some((metric) => metric.route === router.pathname)
-				)?.category
-
-	const metricsInputRef = useRef<HTMLInputElement>(null)
-
-	useEffect(() => {
-		if (currentCategory && canDismiss) {
-			const el = document.querySelector(`[data-category="${currentCategory}"]`)
-			if (el && hasScrolledToCategoryRef && hasScrolledToCategoryRef.current !== `${currentCategory}-true`) {
-				requestAnimationFrame(() => {
-					hasScrolledToCategoryRef.current = `${currentCategory}-true`
-					el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-				})
-			}
-		} else if (metricsInputRef.current) {
-			requestAnimationFrame(() => {
-				metricsInputRef.current?.focus()
-			})
-		}
-	}, [currentCategory, canDismiss, hasScrolledToCategoryRef])
+	const currentCategory = findCurrentCategory(router.pathname)
 
 	const tabPages = useMemo(() => {
 		return metricsByCategory
@@ -166,7 +148,9 @@ export function Metrics({
 					<span className="sr-only">Search pages</span>
 					<Icon name="search" height={16} width={16} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
 					<Input
-						ref={metricsInputRef}
+						ref={searchInputRef}
+						// The dialog moves focus itself when it opens; see MetricsAndTools.
+						autoFocus={!canDismiss}
 						type="text"
 						inputMode="search"
 						placeholder="Search..."
@@ -337,8 +321,10 @@ const getTotalTracked = (totalTrackedByMetric: Record<string, unknown>, totalTra
 
 export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string> }) {
 	const dialogStore = Ariakit.useDialogStore()
-	const hasScrolledToCategoryRef = useRef('')
+	const searchInputRef = useRef<HTMLInputElement>(null)
+	const scrolledToCategoryRef = useRef<string | null>(null)
 	const router = useRouter()
+	const currentCategory = findCurrentCategory(router.pathname)
 
 	const trackDialogOpen = (trigger: 'pill' | 'browse-search', metric?: string) => {
 		trackUmamiEvent('metrics-and-tools-open', {
@@ -435,8 +421,21 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 				// Keep the selected tab, search query, and category scroll position when reopening.
 				unmountOnHide={false}
 				hideOnInteractOutside
+				// A metric page keeps Ariakit's default focus so the phone keyboard stays down; other pages focus search.
+				initialFocus={currentCategory ? undefined : searchInputRef}
+				autoFocusOnShow={() => {
+					// Only the first open scrolls to the page's category; later opens keep the reader's scroll.
+					if (currentCategory && scrolledToCategoryRef.current !== currentCategory) {
+						scrolledToCategoryRef.current = currentCategory
+						dialogStore
+							.getState()
+							.contentElement!.querySelector(`[data-category="${currentCategory}"]`)
+							?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+					}
+					return true
+				}}
 			>
-				<Metrics canDismiss hasScrolledToCategoryRef={hasScrolledToCategoryRef} />
+				<Metrics canDismiss searchInputRef={searchInputRef} />
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

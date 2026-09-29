@@ -8,6 +8,8 @@ import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
+import { InlineStatus, PanelStatus } from '~/ui/Status'
 import { formatDateTime, formatRelativeTime } from '~/utils/dateFormat'
 import {
 	ArticleApiError,
@@ -200,12 +202,23 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		refetchOnWindowFocus: false
 	})
 	const createArticleMutation = useMutation({
-		mutationFn: () => createArticle(createEmptyLocalArticle(), authorizedFetch),
-		onError: (error) => {
-			autoCreatingRef.current = false
-			toast.error(error instanceof Error ? error.message : 'Failed to create draft')
-		}
+		mutationFn: () => createArticle(createEmptyLocalArticle(), authorizedFetch)
 	})
+	const { mutate: createArticleMutate } = createArticleMutation
+	// The mutation forgets its error when a retry starts, so the page keeps the last one: the retry then waits in
+	// its Try again button with the message still shown, instead of dropping back to the page loader.
+	const [createError, setCreateError] = useState<string | null>(null)
+	// The redirect into the new draft belongs to the mutate call, not the mutation: a reader who
+	// confirmed the "save in progress" prompt and left must not be pulled back into the editor.
+	const createDraft = useCallback(() => {
+		createArticleMutate(undefined, {
+			onError: (error) => setCreateError(errorMessageOr(error, 'Failed to create draft')),
+			onSuccess: (saved) => {
+				autoRedirectingRef.current = true
+				void Router.replace(`/research/edit/${saved.id}`)
+			}
+		})
+	}, [createArticleMutate])
 	const saveArticleMutation = useMutation({
 		mutationFn: ({
 			targetArticleId,
@@ -221,7 +234,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const setOwnedArticleCache = (saved: LocalArticleDocument) => {
 		if (saved.id) queryClient.setQueryData(articleQueryKey(saved.id), saved)
 	}
-	const isLoading = loaders.userLoading || ownedArticleQuery.isLoading || createArticleMutation.isPending
+	const isLoading =
+		loaders.userLoading || ownedArticleQuery.isLoading || (createArticleMutation.isPending && createError === null)
 	const isSaving = saveArticleMutation.isPending
 
 	useEffect(() => {
@@ -231,18 +245,12 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			return
 		}
 		if (!articleId) {
+			// One automatic attempt per visit; after a failure the reader retries with Try again.
 			if (autoCreatingRef.current) return
 			autoCreatingRef.current = true
-			// The redirect into the new draft belongs to the mutate call, not the mutation: a reader who
-			// confirmed the "save in progress" prompt and left must not be pulled back into the editor.
-			createArticleMutation.mutate(undefined, {
-				onSuccess: (saved) => {
-					autoRedirectingRef.current = true
-					void Router.replace(`/research/edit/${saved.id}`)
-				}
-			})
+			createDraft()
 		}
-	}, [articleId, createArticleMutation, editor, isAuthenticated, loaders.userLoading])
+	}, [articleId, createDraft, editor, isAuthenticated, loaders.userLoading])
 
 	useEffect(() => {
 		// A different route article must hydrate again even if its query data was already applied once.
@@ -267,14 +275,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		setSavedAt(latestArticleUpdatedAt(merged))
 	}, [editor, ownedArticleQuery.data])
 
-	useEffect(() => {
-		if (ownedArticleQuery.error) {
-			toast.error(
-				ownedArticleQuery.error instanceof Error ? ownedArticleQuery.error.message : 'Failed to load research'
-			)
-		}
-	}, [ownedArticleQuery.error])
-
 	const markArticleDirty = useCallback(() => {
 		draftRevisionRef.current += 1
 		setIsDirty(true)
@@ -295,6 +295,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 
 	const saveArticle = async (opts: { silent?: boolean } = {}) => {
 		if (!editor) return false
+		// An edit route saves only its own loaded article; saving before it loads would create an unrelated draft.
+		if (articleId && !article.id) return false
 		if (!isAuthenticated) {
 			if (!opts.silent) toast.error('Please sign in to save research')
 			return false
@@ -863,6 +865,36 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 					text="Sign in"
 					className="mr-auto rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand"
 				/>
+			</div>
+		)
+	}
+
+	// Without the article there is nothing to edit: an editor here would save as an unrelated new draft.
+	// A failed background refetch keeps the loaded article on screen.
+	if (ownedArticleQuery.isLoadingError) {
+		return (
+			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
+				<PanelStatus variant="error">{errorMessageOr(ownedArticleQuery.error, 'Failed to load research')}</PanelStatus>
+			</div>
+		)
+	}
+
+	if (!article.id && createError) {
+		return (
+			<div className="mx-auto w-full max-w-[760px] px-4 sm:px-6">
+				<InlineStatus variant="error">
+					<div className="flex flex-wrap items-center justify-between gap-2">
+						<span>{createError}</span>
+						<Button
+							type="button"
+							size="sm"
+							onClick={createDraft}
+							pendingLabel={createArticleMutation.isPending ? 'Retrying…' : null}
+						>
+							Try again
+						</Button>
+					</div>
+				</InlineStatus>
 			</div>
 		)
 	}

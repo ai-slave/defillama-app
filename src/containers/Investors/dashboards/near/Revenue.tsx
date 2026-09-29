@@ -1,12 +1,12 @@
 import { createColumnHelper, useTable } from '@tanstack/react-table'
-import { lazy, useEffect, useMemo, useState } from 'react'
+import { lazy, useMemo, useState } from 'react'
 import {
 	createSingleSeriesChartOptions,
 	createTimeSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { buildRevenueChartModels, timeframeStartIndex, type Aggregation, type Timeframe } from './chartData'
 import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
@@ -144,16 +144,9 @@ const walletColumns = walletColumnHelper.columns([
 
 export default function Revenue() {
 	const { data, isLoading } = useRevenueData()
-	const onContentReady = useContentReady()
 	const [globalTimeframe, setGlobalTimeframe] = useState<Timeframe>('all')
 	const [aggregation, setAggregation] = useState<Aggregation>('daily')
 	const [emissionsView, setEmissionsView] = useState<'percentage' | 'absolute'>('percentage')
-
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
 
 	const walletTable = useTable({
 		features: tableFeaturesConfig,
@@ -199,7 +192,9 @@ export default function Revenue() {
 		[aggregation, data, globalTimeframe]
 	)
 
-	if (isLoading || !data || !chartView || !emissionsDataset) return null
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data || !chartView || !emissionsDataset)
+		return <TabStatus variant="error">Couldn't load NEAR revenue.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

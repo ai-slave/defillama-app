@@ -23,6 +23,11 @@ export interface ChartTheme {
 	/** Chart accents (candles, up/down fills) — fixed across modes per the library. */
 	up: string
 	down: string
+	/** Rising and falling values drawn as data (sparklines), the --text-data-* text colours. */
+	dataUp: string
+	dataDown: string
+	/** The brand accent, for single-series lines without a direction. */
+	brand: string
 	gridline: string
 	areaGradientTo: string
 	zoomBorder: string
@@ -59,6 +64,9 @@ const TOKENS: Record<
 	},
 	up: { cssVar: '--chart-up', light: '#3eb84f', dark: '#3eb84f' },
 	down: { cssVar: '--chart-down', light: '#e24a42', dark: '#e24a42' },
+	dataUp: { cssVar: '--text-data-up', light: '#32933f', dark: '#3eb84f' },
+	dataDown: { cssVar: '--text-data-down', light: '#b53b35', dark: '#e24a42' },
+	brand: { cssVar: '--bg-brand', light: '#1f67d2', dark: '#1f67d2' },
 	gridline: { cssVar: '--chart-gridline', light: 'rgba(0, 0, 0, 0.03)', dark: 'rgba(255, 255, 255, 0.02)' },
 	areaGradientTo: {
 		cssVar: '--chart-area-gradient-to',

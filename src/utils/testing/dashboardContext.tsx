@@ -131,7 +131,7 @@ export function DashboardTestProvider({ children, ...state }: DashboardTestState
 																	value={{
 																		canUndo: false,
 																		canRedo: false,
-																		undoDepth: 0,
+																		undoEntry: null,
 																		undo: () => false,
 																		redo: () => false,
 																		...state.history

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { useQuery } from '@tanstack/react-query'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { readInvestorApiJson, type ApiUnixMillisecondsString } from '../../api.types'
 
@@ -115,72 +115,34 @@ function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 }
 
 export default function PressReleases() {
-	const contentReady = useContentReady()
-	const [pressReleases, setPressReleases] = useState<Array<ParagraphPost>>([])
-	const [financialReports, setFinancialReports] = useState<Array<ParagraphPost>>([])
-	const [loading, setLoading] = useState(true)
-
-	useEffect(() => {
-		fetch('/api/public/spark/reports')
-			.then((response) => {
-				if (!response.ok) throw new Error(`Spark reports API error: ${response.status}`)
-				return readInvestorApiJson<{ items?: Array<ParagraphPost> }>(response)
-			})
-			.then((apiData) => {
-				const posts = dedupePosts(apiData.items || [])
-
-				// Separate financial reports from regular press releases
-				const reports: Array<ParagraphPost> = []
-				const releases: Array<ParagraphPost> = []
-
-				for (const post of posts) {
-					if (isFinancialReport(post)) {
-						reports.push(post)
-					} else if (isWithinLastThreeMonths(post.publishedAt)) {
-						// Only include press releases from the last 3 months
-						releases.push(post)
-					}
+	const { data, error } = useQuery({
+		queryKey: ['spark-reports'],
+		queryFn: async () => {
+			const response = await fetch('/api/public/spark/reports')
+			if (!response.ok) throw new Error(`Spark reports API error: ${response.status}`)
+			const apiData = await readInvestorApiJson<{ items?: Array<ParagraphPost> }>(response)
+			const financialReports: Array<ParagraphPost> = []
+			const pressReleases: Array<ParagraphPost> = []
+			for (const post of dedupePosts(apiData.items || [])) {
+				if (isFinancialReport(post)) {
+					financialReports.push(post)
+				} else if (isWithinLastThreeMonths(post.publishedAt)) {
+					// Only include press releases from the last 3 months
+					pressReleases.push(post)
 				}
+			}
+			return { financialReports, pressReleases }
+		},
+		staleTime: 10 * 60 * 1000,
+		refetchOnWindowFocus: false
+	})
 
-				setFinancialReports(reports)
-				setPressReleases(releases)
-				setLoading(false)
-				contentReady()
-			})
-			.catch((error) => {
-				console.error('Failed to fetch press releases:', error)
-				setLoading(false)
-				contentReady()
-			})
-	}, [contentReady])
+	if (error) return <TabStatus variant="error">Couldn't load Spark reports and press releases.</TabStatus>
+	if (!data) return <TabStatus variant="loading" />
 
-	if (loading) {
-		return (
-			<div className="flex h-96 items-center justify-center">
-				<div className="flex flex-col items-center gap-3">
-					<div className="size-8 animate-spin rounded-full border-2 border-pro-text-label border-t-transparent" />
-					<p className="text-sm text-pro-text-secondary">Loading reports and press releases...</p>
-				</div>
-			</div>
-		)
-	}
-
+	const { financialReports, pressReleases } = data
 	if (financialReports.length === 0 && pressReleases.length === 0) {
-		return (
-			<div className="flex h-96 items-center justify-center rounded-xl border border-pro-cards-border bg-pro-cards-bg">
-				<div className="flex flex-col items-center gap-2">
-					<svg className="size-12 text-pro-text-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={1.5}
-							d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-						/>
-					</svg>
-					<p className="text-sm text-pro-text-secondary">No reports or press releases available</p>
-				</div>
-			</div>
-		)
+		return <TabStatus variant="empty">No reports or press releases available</TabStatus>
 	}
 
 	return (

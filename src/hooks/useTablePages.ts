@@ -52,6 +52,7 @@ type ClientAction<Row, Page extends CursorTablePage<Row>> =
 	| { type: 'append-start'; request: number }
 	| { type: 'success'; request: number; mode: 'replace' | 'append'; page: Page; querySignature: string }
 	| { type: 'failed'; request: number; mode: 'replace' | 'append' }
+	| { type: 'cancelled'; request: number }
 
 export function createTablePagesReducer<Row, Page extends CursorTablePage<Row>>(getRowKey: (row: Row) => string) {
 	return function reducer(state: ClientState<Row, Page>, action: ClientAction<Row, Page>): ClientState<Row, Page> {
@@ -74,6 +75,7 @@ export function createTablePagesReducer<Row, Page extends CursorTablePage<Row>>(
 			return { ...state, activeRequest: action.request, isLoadingMore: true, error: null }
 		}
 		if (action.request !== state.activeRequest) return state
+		if (action.type === 'cancelled') return { ...state, isReplacing: false, isLoadingMore: false }
 		if (action.type === 'failed') {
 			return { ...state, isReplacing: false, isLoadingMore: false, error: action.mode }
 		}
@@ -233,7 +235,13 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 					: healed
 			const isCurrent = requestRef.current === request
 			if (isCurrent) requestPendingRef.current = false
-			if (controller.signal.aborted || !isCurrent) return
+			if (!isCurrent) return
+			// Still current yet aborted: the query went back to the loaded one, so no
+			// newer request will settle the replacing state.
+			if (controller.signal.aborted) {
+				dispatch({ type: 'cancelled', request })
+				return
+			}
 			if (page) {
 				dispatch({ type: 'success', request, mode: 'replace', page, querySignature })
 				onRequestSettledRef.current?.({ mode: requestMode, status: 'success' })

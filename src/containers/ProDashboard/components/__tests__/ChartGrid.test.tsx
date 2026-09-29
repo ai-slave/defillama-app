@@ -2,11 +2,20 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import hotToast, { Toaster } from 'react-hot-toast'
-import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { FEATURES_SERVER, SERVER_URL } from '~/constants'
 import { DashboardTestProvider } from '~/utils/testing/dashboardContext'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
+import { DASHBOARD_HISTORY_LIMIT } from '../../dashboardReducer'
+import type { Dashboard } from '../../dashboardTypes'
+import {
+	ProDashboardAPIProvider,
+	useProDashboardDashboard,
+	useProDashboardEditorActions,
+	useProDashboardHistory
+} from '../../ProDashboardAPIContext'
 import { ChartGrid } from '../ChartGrid'
 
 const mocks = vi.hoisted(() => ({
@@ -56,7 +65,6 @@ const onEditItem = vi.fn()
 type GridState = {
 	items: Array<DashboardItemConfig>
 	isReadOnly?: boolean
-	undoDepth?: number
 	tabQueryParam?: string
 	streamDone?: boolean
 	readyItemIds?: ReadonlySet<string>
@@ -85,7 +93,6 @@ afterEach(async () => {
 async function renderGrid({
 	items,
 	isReadOnly = false,
-	undoDepth = 0,
 	tabQueryParam,
 	streamDone = true,
 	readyItemIds = null
@@ -99,7 +106,7 @@ async function renderGrid({
 					permissions={{ isReadOnly }}
 					dashboard={{ dashboardId: 'dashboard' }}
 					editorActions={actions}
-					history={{ undo, undoDepth }}
+					history={{ undo }}
 					streamDone={streamDone}
 					readyItemIds={readyItemIds}
 				>
@@ -345,40 +352,6 @@ async function mountToaster() {
 	}
 }
 
-test('an edit made while the card removal toast is alive dismisses it', async () => {
-	const toaster = await mountToaster()
-	const items = [notes('text-1', 'Notes')]
-	await renderGrid({ items })
-	await openCardMenu('text-1')
-	await act(async () => menuItem('Remove card').click())
-	expect(toaster.text()).toContain('Card removed')
-
-	// The removal itself raises the undo depth by one; the toast stays for it.
-	await renderGrid({ items, undoDepth: 1 })
-	await settle(20)
-	expect(toaster.text()).toContain('Card removed')
-
-	await renderGrid({ items, undoDepth: 2 })
-	await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
-	await toaster.unmount()
-})
-
-test('an undo made while the card removal toast is alive dismisses it', async () => {
-	const toaster = await mountToaster()
-	const items = [notes('text-1', 'Notes')]
-	await renderGrid({ items, undoDepth: 3 })
-	await openCardMenu('text-1')
-	await act(async () => menuItem('Remove card').click())
-
-	await renderGrid({ items, undoDepth: 4 })
-	await settle(20)
-	expect(toaster.text()).toContain('Card removed')
-
-	await renderGrid({ items, undoDepth: 3 })
-	await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
-	await toaster.unmount()
-})
-
 test('a card permalink expands the collapsed heading holding the card', async () => {
 	const scrollIntoView = vi.fn()
 	HTMLElement.prototype.scrollIntoView = scrollIntoView
@@ -561,4 +534,106 @@ test('an empty tab says so, and only offers the add tile to an editor', async ()
 		'Nothing in this tab yet'
 	)
 	expect(buttons().some((node) => node.textContent?.trim() === 'Add card')).toBe(false)
+})
+
+describe('the removal Undo toast in a real editor', () => {
+	const saved: Dashboard = {
+		id: 'dashboard',
+		user: 'owner',
+		visibility: 'private',
+		created: '',
+		updated: '',
+		data: { dashboardName: 'Analysis', items: [notes('text-1', 'Notes'), notes('text-2', 'Draft')] }
+	}
+	let editor: ReturnType<typeof useProDashboardEditorActions>
+	let history: ReturnType<typeof useProDashboardHistory>
+	let dashboard: ReturnType<typeof useProDashboardDashboard>
+	function Probe() {
+		editor = useProDashboardEditorActions()
+		history = useProDashboardHistory()
+		dashboard = useProDashboardDashboard()
+		return null
+	}
+
+	async function openEditor() {
+		session.serve({
+			'http://localhost:3000/api/dynamic/pro-dashboard/': () =>
+				new Response(`${JSON.stringify({ type: 'dashboard', data: saved })}\n{"type":"done"}\n`),
+			'/api/private/pro-dashboard/save': (_url: URL, init?: RequestInit) => {
+				const body = JSON.parse(String(init!.body))
+				return { ...saved, data: { ...saved.data, ...body.data } }
+			},
+			'/api/dynamic/pro-dashboard/protocol-catalog-source': [],
+			[`${SERVER_URL}/lite/protocols2`]: { protocols: [], chains: [], parentProtocols: [] },
+			[`${SERVER_URL}/chains`]: [],
+			[`${FEATURES_SERVER}/lite/dashboards`]: { items: [] },
+			[`${FEATURES_SERVER}/dashboards`]: { items: [] },
+			[`${FEATURES_SERVER}/dashboards/`]: saved
+		})
+		await act(async () =>
+			root.render(
+				<session.Wrapper>
+					<ProDashboardAPIProvider mode="edit" initialDashboardId={saved.id} initialDashboard={saved}>
+						<Probe />
+						<ChartGrid onAddChartClick={onAddChartClick} onEditItem={onEditItem} />
+					</ProDashboardAPIProvider>
+				</session.Wrapper>
+			)
+		)
+		await waitForUi(() => expect(dashboard.streamHasResolved).toBe(true))
+	}
+
+	let edits = 0
+	const editOnce = (text: string) => act(async () => editor.handleEditItem('text-2', notes('text-2', text)))
+	async function editDraft(times: number) {
+		for (let step = 0; step < times; step++) {
+			edits++
+			await editOnce(`Draft ${edits}`)
+		}
+	}
+
+	async function removeNotes() {
+		await openCardMenu('text-1')
+		await act(async () => menuItem('Remove card').click())
+	}
+
+	test('the toast outlives the removal and the next edit dismisses it', async () => {
+		const toaster = await mountToaster()
+		await openEditor()
+		await editDraft(3)
+		await removeNotes()
+		await settle(20)
+		expect(container.querySelector('[data-item-id="text-1"]')).toBeNull()
+		expect(toaster.text()).toContain('Card removed')
+
+		await editDraft(1)
+		await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
+		await toaster.unmount()
+	})
+
+	test('once the undo history is full, an edit after a removal still dismisses its toast', async () => {
+		const toaster = await mountToaster()
+		await openEditor()
+		await editDraft(DASHBOARD_HISTORY_LIMIT)
+		await removeNotes()
+		await settle(20)
+		expect(toaster.text()).toContain('Card removed')
+
+		await editDraft(1)
+		await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
+		await toaster.unmount()
+	})
+
+	test('an undo made while the removal toast is alive dismisses it', async () => {
+		const toaster = await mountToaster()
+		await openEditor()
+		await removeNotes()
+		await settle(20)
+		expect(toaster.text()).toContain('Card removed')
+
+		await act(async () => history.undo())
+		expect(container.querySelector('[data-item-id="text-1"]')).not.toBeNull()
+		await waitForUi(() => expect(toaster.text()).not.toContain('Card removed'))
+		await toaster.unmount()
+	})
 })

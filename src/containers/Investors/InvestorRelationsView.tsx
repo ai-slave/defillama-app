@@ -1,13 +1,10 @@
 import { Suspense, useEffect, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
-import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { resolveEmbeddedDashboardTabs } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
 import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { getDashboardModule, isDashboardRegistered } from './registry'
-
-const NOOP = () => {}
 
 function PillStrip({
 	tabs,
@@ -125,40 +122,38 @@ export function InvestorRelationsView({
 	return (
 		<AppMetadataProvider>
 			<CustomServerDataContext.Provider value={customServerData ?? {}}>
-				<ContentReadyContext.Provider value={NOOP}>
-					<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4 pro-dashboard">
-						{HeaderComponent ? (
-							<Suspense fallback={null}>
-								<HeaderComponent />
-							</Suspense>
-						) : null}
-						{tabs == null ? (
-							<SkeletonTable />
-						) : (
-							<>
-								{isControlled ? null : <PillStrip tabs={tabs} activeTab={resolvedTab} onSelect={setSelectedTab} />}
-								{customOnly ? (
-									<CustomOnlyContent
-										tabs={tabs}
-										activeTab={resolvedTab}
-										displayName={entityName}
-										hasCustomHeader={!!HeaderComponent}
-										hideDuplicateButton
-									/>
-								) : (
-									<InvestorsContent
-										tabs={tabs}
-										activeTab={resolvedTab}
-										displayName={entityName}
-										dashboardId={dashboardId}
-										hasCustomHeader={!!HeaderComponent}
-										hideDuplicateButton
-									/>
-								)}
-							</>
-						)}
-					</div>
-				</ContentReadyContext.Provider>
+				<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4 pro-dashboard">
+					{HeaderComponent ? (
+						<Suspense fallback={null}>
+							<HeaderComponent />
+						</Suspense>
+					) : null}
+					{tabs == null ? (
+						<SkeletonTable />
+					) : (
+						<>
+							{isControlled ? null : <PillStrip tabs={tabs} activeTab={resolvedTab} onSelect={setSelectedTab} />}
+							{customOnly ? (
+								<CustomOnlyContent
+									tabs={tabs}
+									activeTab={resolvedTab}
+									displayName={entityName}
+									hasCustomHeader={!!HeaderComponent}
+									hideDuplicateButton
+								/>
+							) : (
+								<InvestorsContent
+									tabs={tabs}
+									activeTab={resolvedTab}
+									displayName={entityName}
+									dashboardId={dashboardId}
+									hasCustomHeader={!!HeaderComponent}
+									hideDuplicateButton
+								/>
+							)}
+						</>
+					)}
+				</div>
 			</CustomServerDataContext.Provider>
 		</AppMetadataProvider>
 	)

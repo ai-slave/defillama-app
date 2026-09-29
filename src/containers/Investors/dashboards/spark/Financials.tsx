@@ -1,9 +1,9 @@
 import type * as echarts from 'echarts/core'
-import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, useCallback, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatPercent } from '~/utils/numberFormat'
 import { assignColors } from './api'
 import {
@@ -616,17 +616,9 @@ function TreasurySection({ data }: { data: FinData }) {
 
 export default function Financials() {
 	const { data, isLoading } = useFinancialsData()
-	const onContentReady = useContentReady()
 
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
-
-	if (isLoading || !data) {
-		return null
-	}
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load Spark financials.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

@@ -1,9 +1,10 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { formatTooltipChartDate } from '~/components/ECharts/shared/formatters'
 import { getTooltipAxisValue, getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { useLocalSelection } from '~/components/Select/localSelection'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { type ApiUsageChartColors, buildApiUsageChartData, rankRoutesByTotal } from './apiUsageChart'
@@ -28,48 +29,21 @@ interface ApiUsageBreakdownProps {
 }
 
 const DEFAULT_WINDOW_DAYS = 30
-const CSS_VAR_KEYS = {
-	routes: [
-		'--sub-chart-1',
-		'--sub-chart-2',
-		'--sub-chart-3',
-		'--sub-chart-4',
-		'--sub-chart-5',
-		'--sub-chart-6',
-		'--sub-chart-7'
-	],
-	others: '--sub-chart-others',
-	split: '--sub-chart-split',
-	muted: '--sub-text-muted',
-	axis: '--sub-chart-axis',
-	tooltipBg: '--sub-chart-tooltip-bg',
-	tooltipBorder: '--sub-chart-tooltip-border'
-} as const
-
-function resolveChartColors() {
-	const style = getComputedStyle(document.documentElement)
-	const get = (key: string) => style.getPropertyValue(key).trim()
-	return {
-		routes: CSS_VAR_KEYS.routes.map(get),
-		others: get(CSS_VAR_KEYS.others),
-		split: get(CSS_VAR_KEYS.split),
-		muted: get(CSS_VAR_KEYS.muted),
-		axis: get(CSS_VAR_KEYS.axis),
-		tooltipBg: get(CSS_VAR_KEYS.tooltipBg),
-		tooltipBorder: get(CSS_VAR_KEYS.tooltipBorder)
-	}
+// ECharts draws to canvas and cannot read var(), so these are the --sub-chart-* and --sub-text-muted values
+// from src/styles/themes/subscription.css. Only the split lines and the axis differ between themes.
+const LIGHT_CHART_COLORS: ApiUsageChartColors = {
+	routes: ['#1f67d2', '#22c55e', '#f59e0b', '#38bdf8', '#f97316', '#a855f7', '#14b8a6'],
+	others: '#64748b',
+	split: 'rgba(0, 0, 0, 0.06)',
+	muted: '#878787',
+	axis: '#ced8e6',
+	tooltipBg: '#131516',
+	tooltipBorder: '#2f3336'
 }
-
-type ChartColors = ApiUsageChartColors
-
-const FALLBACK_CHART_COLORS: ChartColors = {
-	routes: CSS_VAR_KEYS.routes.map(() => ''),
-	others: '',
-	split: '',
-	muted: '',
-	axis: '',
-	tooltipBg: '',
-	tooltipBorder: ''
+const DARK_CHART_COLORS: ApiUsageChartColors = {
+	...LIGHT_CHART_COLORS,
+	split: 'rgba(255, 255, 255, 0.06)',
+	axis: '#2f3336'
 }
 
 function useChartSource(usageStats: ApiUsageStats | null | undefined) {
@@ -98,7 +72,7 @@ function useChartData(
 	windowDays: number,
 	routeSeries: Array<string>,
 	selectedRoutes: Array<string>,
-	colors: ChartColors,
+	colors: ApiUsageChartColors,
 	fetchedAt: number | null
 ) {
 	return useMemo(
@@ -108,18 +82,8 @@ function useChartData(
 }
 
 export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBreakdownProps) {
-	const [colors, setColors] = useState<ChartColors | null>(null)
-	const resolved = useRef(false)
-
-	useEffect(() => {
-		if (!resolved.current) {
-			resolved.current = true
-			setColors(resolveChartColors())
-		}
-	}, [])
-
-	// Use fallback colors for SSR / first render — will be replaced immediately on mount
-	const activeColors = colors ?? FALLBACK_CHART_COLORS
+	const [isDark] = useDarkModeManager()
+	const activeColors = isDark ? DARK_CHART_COLORS : LIGHT_CHART_COLORS
 
 	const { sortedStats, totalRequests, averageRequests, windowDays, routeSeries } = useChartSource(usageStats)
 	const { activeSeries, setSelectedSeries } = useLocalSelection({
@@ -170,8 +134,8 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 			},
 			tooltip: {
 				trigger: 'axis',
-				backgroundColor: activeColors.tooltipBg || '#131516',
-				borderColor: activeColors.tooltipBorder || '#2f3336',
+				backgroundColor: activeColors.tooltipBg,
+				borderColor: activeColors.tooltipBorder,
 				borderWidth: 1,
 				extraCssText: `box-shadow: 0 4px 12px rgba(0,0,0,0.3);`,
 				textStyle: { color: '#fff', fontSize: 12 },

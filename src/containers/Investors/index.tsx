@@ -2,7 +2,6 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { getInvestorsProjects, type InvestorsSite } from './config'
-import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { DEFAULT_TABS, resolveActiveTab } from './dashboardTabs'
 import { CustomOnlyContent, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
@@ -11,8 +10,6 @@ import { Logo } from './Logo'
 import { getDashboardModule } from './registry'
 import { scrollToPageTop } from './scrollToPageTop'
 import { useInvestorsSite } from './SiteContext'
-
-export { useContentReady } from './ContentReadyContext'
 
 type ShellProject = {
 	name: string
@@ -111,15 +108,8 @@ function InvestorsShell({
 	const [activeProject, setActiveProject] = useState(defaultProject)
 	const [expandedProject, setExpandedProject] = useState<string | null>(defaultProject)
 	const [sidebarOpen, setSidebarOpen] = useState(false)
-	const [contentReadyProjects, setContentReadyProjects] = useState<Set<string>>(new Set())
 
 	const closeSidebar = useCallback(() => setSidebarOpen(false), [])
-	const markContentReady = useCallback(() => {
-		setContentReadyProjects((prev) => {
-			if (prev.has(activeProject)) return prev
-			return new Set(prev).add(activeProject)
-		})
-	}, [activeProject])
 
 	const activeProjectConfig = visibleProjects.find((p) => p.id === activeProject)
 	const dashboardId = activeProjectConfig?.dashboardId ?? visibleProjects[0]?.dashboardId ?? ''
@@ -127,10 +117,6 @@ function InvestorsShell({
 	const tabs = tabsByProject[activeProject] ?? DEFAULT_TABS
 	const HeaderComponent = headersByProject[activeProject]
 	const resolvedTab = resolveActiveTab(tabs, activeTab)
-
-	// Only show the global loader when the active tab is the pro dashboard (Overview) tab.
-	// Custom tabs handle their own loading state and should not be blocked by the stream.
-	const showGlobalLoader = !!HeaderComponent && !contentReadyProjects.has(activeProject) && resolvedTab === 'dashboard'
 
 	return (
 		<CustomServerDataContext.Provider value={customServerData ?? {}}>
@@ -315,38 +301,31 @@ function InvestorsShell({
 				</aside>
 
 				<div className="relative flex flex-1 flex-col gap-4 p-5 md:ml-56">
-					{showGlobalLoader && (
-						<div className="fixed inset-0 z-50 flex items-center justify-center bg-pro-app-bg md:left-56">
-							<Logo animate />
-						</div>
+					{HeaderComponent && (
+						<Suspense fallback={null}>
+							<HeaderComponent />
+						</Suspense>
 					)}
-					<ContentReadyContext.Provider value={markContentReady}>
-						{HeaderComponent && (
-							<Suspense fallback={null}>
-								<HeaderComponent />
-							</Suspense>
-						)}
-						{activeProjectConfig?.comingSoon ? (
-							<ProjectComingSoon />
-						) : activeProjectConfig?.customOnly ? (
-							<CustomOnlyContent
-								tabs={tabs}
-								activeTab={resolvedTab}
-								displayName={displayName}
-								hasCustomHeader={!!HeaderComponent}
-								hideDuplicateButton
-							/>
-						) : loadingProjects.has(activeProject) ? null : (
-							<InvestorsContent
-								tabs={tabs}
-								activeTab={resolvedTab}
-								displayName={displayName}
-								dashboardId={dashboardId}
-								hasCustomHeader={!!HeaderComponent}
-								hideDuplicateButton
-							/>
-						)}
-					</ContentReadyContext.Provider>
+					{activeProjectConfig?.comingSoon ? (
+						<ProjectComingSoon />
+					) : activeProjectConfig?.customOnly ? (
+						<CustomOnlyContent
+							tabs={tabs}
+							activeTab={resolvedTab}
+							displayName={displayName}
+							hasCustomHeader={!!HeaderComponent}
+							hideDuplicateButton
+						/>
+					) : loadingProjects.has(activeProject) ? null : (
+						<InvestorsContent
+							tabs={tabs}
+							activeTab={resolvedTab}
+							displayName={displayName}
+							dashboardId={dashboardId}
+							hasCustomHeader={!!HeaderComponent}
+							hideDuplicateButton
+						/>
+					)}
 				</div>
 			</div>
 		</CustomServerDataContext.Provider>

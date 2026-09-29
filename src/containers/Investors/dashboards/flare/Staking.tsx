@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useEffect } from 'react'
+import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
@@ -20,13 +20,8 @@ export default function Staking() {
 		refetchOnWindowFocus: false
 	})
 
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		if (query.data) onContentReady()
-	}, [query.data, onContentReady])
-
-	if (!query.data) return null
+	if (query.error) return <TabStatus variant="error">Couldn't load Flare staking data.</TabStatus>
+	if (!query.data) return <TabStatus variant="loading" />
 
 	const k = query.data.kpis
 	const chart = query.data.chart

@@ -1,6 +1,3 @@
-import { useEffect } from 'react'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-
 const PRODUCTS = ['Native Swap', 'Native Perps', 'Lending', 'LST', 'Concentrated Liquidity', 'Vault', 'USSD', 'Perps']
 
 const SKELETON_WIDTHS = [
@@ -13,12 +10,6 @@ const SKELETON_WIDTHS = [
 ]
 
 export default function VerticalIntegration() {
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		onContentReady()
-	}, [onContentReady])
-
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col gap-6">
 			<div className="max-w-2xl">

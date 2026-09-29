@@ -1,6 +1,3 @@
-import { useEffect } from 'react'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-
 const SKELETON_WIDTHS = [
 	['w-16', 'w-2/3', 'w-12', 'w-24', 'w-10'],
 	['w-14', 'w-1/2', 'w-14', 'w-20', 'w-16'],
@@ -11,12 +8,6 @@ const SKELETON_WIDTHS = [
 ]
 
 export default function Stablecoins() {
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		onContentReady()
-	}, [onContentReady])
-
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col">
 			<div className="relative flex-1">

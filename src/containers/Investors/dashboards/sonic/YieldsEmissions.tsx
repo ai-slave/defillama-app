@@ -1,8 +1,8 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { lazy, useEffect } from 'react'
+import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
-import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { TabStatus } from '~/containers/Investors/TabStatus'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
@@ -78,13 +78,6 @@ const columns = columnHelper.columns([
 
 export default function YieldsEmissions() {
 	const { data, isLoading } = useYieldsEmissionsData()
-	const onContentReady = useContentReady()
-
-	useEffect(() => {
-		if (data && !isLoading) {
-			onContentReady()
-		}
-	}, [data, isLoading, onContentReady])
 
 	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
@@ -96,9 +89,8 @@ export default function YieldsEmissions() {
 		}
 	})
 
-	if (isLoading || !data) {
-		return null
-	}
+	if (isLoading) return <TabStatus variant="loading" />
+	if (!data) return <TabStatus variant="error">Couldn't load Sonic yields and emissions.</TabStatus>
 
 	return (
 		<div className="flex flex-col gap-6">

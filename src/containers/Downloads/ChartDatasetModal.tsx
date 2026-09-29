@@ -1,11 +1,22 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import {
+	type CSSProperties,
+	lazy,
+	Suspense,
+	useCallback,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { useHorizontalOverflow } from '~/hooks/useHorizontalOverflow'
 import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -207,7 +218,16 @@ export function ChartDatasetModal({
 	> | null>(null)
 	const [categoryDraft, setCategoryDraft] = useState({ category: selectedCategory, options, aligned: false })
 	const tableContainerRef = useRef<HTMLDivElement>(null)
-	const rightShadowRef = useRef<HTMLDivElement>(null)
+	const { ref: attachOverflow, canScrollLeft, canScrollRight } = useHorizontalOverflow()
+	// The virtualizer reads the scroller through tableContainerRef; the overflow hook follows it across the
+	// remount when a search or date range empties the table. Kept stable so React does not detach it every render.
+	const setTableContainer = useCallback(
+		(node: HTMLDivElement | null) => {
+			tableContainerRef.current = node
+			attachOverflow(node)
+		},
+		[attachOverflow]
+	)
 	const deferredSearch = useDeferredValue(search.trim().toLowerCase())
 
 	const supportsBreakdown = dataset.paramType === 'protocol' && !!dataset.categoryBreakdown
@@ -503,30 +523,6 @@ export function ChartDatasetModal({
 
 	const readyCount = useMemo(() => csvQueries.filter((q) => !!q.data).length, [csvQueries])
 	const loadingCount = useMemo(() => csvQueries.filter((q) => q.isLoading).length, [csvQueries])
-
-	const updateScrollShadows = useCallback(() => {
-		const el = tableContainerRef.current
-		if (!el) return
-		const scrolled = el.scrollLeft > 1
-		const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
-		el.style.setProperty('--sticky-shadow', scrolled ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none')
-		if (rightShadowRef.current) {
-			rightShadowRef.current.style.opacity = canScrollRight ? '1' : '0'
-		}
-	}, [])
-
-	useEffect(() => {
-		const el = tableContainerRef.current
-		if (!el || !hasData) return
-		updateScrollShadows()
-		el.addEventListener('scroll', updateScrollShadows, { passive: true })
-		const ro = new ResizeObserver(updateScrollShadows)
-		ro.observe(el)
-		return () => {
-			el.removeEventListener('scroll', updateScrollShadows)
-			ro.disconnect()
-		}
-	}, [updateScrollShadows, hasData])
 
 	const rowVirtualizer = useVirtualItems({
 		count: sortedRows.length,
@@ -1354,13 +1350,21 @@ export function ChartDatasetModal({
 							) : (
 								<div className="relative min-h-0 flex-1">
 									<div
-										ref={rightShadowRef}
-										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 opacity-0 transition-opacity duration-200"
-										style={{ background: 'linear-gradient(to left, var(--bg-surface) 0%, transparent 100%)' }}
+										aria-hidden
+										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 transition-opacity duration-200"
+										style={{
+											opacity: canScrollRight ? 1 : 0,
+											background: 'linear-gradient(to left, var(--bg-surface) 0%, transparent 100%)'
+										}}
 									/>
 									<div
-										ref={tableContainerRef}
+										ref={setTableContainer}
 										className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
+										style={
+											{
+												'--sticky-shadow': canScrollLeft ? '4px 0 8px -2px rgba(0,0,0,0.25)' : 'none'
+											} as CSSProperties
+										}
 									>
 										<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
 											<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
