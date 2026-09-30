@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEditor } from '@tiptap/react'
 import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -42,7 +42,15 @@ import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } 
 import { CoverDetailsDialog, DeleteArticleDialog } from './ArticleEditorDialogs'
 import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
-import { articleQueryKey, sanitizeLinkHref, slugFromTitle, useTicker, formatArticleDate } from './ArticleEditorUtils'
+import {
+	articleQueryKey,
+	articleWriteKey,
+	cacheWrittenArticle,
+	sanitizeLinkHref,
+	slugFromTitle,
+	useTicker,
+	formatArticleDate
+} from './ArticleEditorUtils'
 import { ArticleMetaDialog } from './ArticleMetaDialog'
 import { ArticleTitleFields } from './ArticleTitleFields'
 import { EmbedPicker } from './EmbedPicker'
@@ -70,7 +78,15 @@ function publishValidationErrors(error: unknown) {
 	return error.validationErrors ?? []
 }
 
+/**
+ * One editor per article. Moving between articles on the same route mounts a fresh editor, so a request an old
+ * article started (a save, a publish, a restore) can update that article's cache but never this editor's state.
+ */
 export function ArticleEditorClient({ articleId }: { articleId?: string }) {
+	return <ArticleEditorSession key={articleId ?? 'new'} articleId={articleId} />
+}
+
+function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	const router = useRouter()
 	const routeView = Array.isArray(router.query.view) ? router.query.view[0] : router.query.view
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
@@ -220,6 +236,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		})
 	}, [createArticleMutate])
 	const saveArticleMutation = useMutation({
+		mutationKey: articleWriteKey(articleId),
 		mutationFn: ({
 			targetArticleId,
 			articlePayload
@@ -229,13 +246,18 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		}) =>
 			targetArticleId
 				? updateRemoteArticle(targetArticleId, articlePayload, authorizedFetch)
-				: createArticle(articlePayload, authorizedFetch)
+				: createArticle(articlePayload, authorizedFetch),
+		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
-	const setOwnedArticleCache = (saved: LocalArticleDocument) => {
-		if (saved.id) queryClient.setQueryData(articleQueryKey(saved.id), saved)
-	}
+	// A write started on an earlier visit to this article decides what it holds. Until it settles the editor
+	// waits instead of opening the older copy, which a later save would send back over the write.
+	const isArticleWriteRunning = useIsMutating({ mutationKey: articleWriteKey(articleId) }) > 0
 	const isLoading =
-		loaders.userLoading || ownedArticleQuery.isLoading || (createArticleMutation.isPending && createError === null)
+		loaders.userLoading ||
+		ownedArticleQuery.isLoading ||
+		// Only an editor that has not opened its article waits; a new draft has no id on either side.
+		(isArticleWriteRunning && article.id !== articleId) ||
+		(createArticleMutation.isPending && createError === null)
 	const isSaving = saveArticleMutation.isPending
 
 	useEffect(() => {
@@ -253,13 +275,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	}, [articleId, createDraft, editor, isAuthenticated, loaders.userLoading])
 
 	useEffect(() => {
-		// A different route article must hydrate again even if its query data was already applied once.
-		hydratedArticleIdRef.current = null
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the route article id is the reset trigger.
-	}, [articleId])
-
-	useEffect(() => {
-		if (!editor || !ownedArticleQuery.data) return
+		if (!editor || !ownedArticleQuery.data || isArticleWriteRunning) return
 		if (hydratedArticleIdRef.current === ownedArticleQuery.data.id) return
 		hydratedArticleIdRef.current = ownedArticleQuery.data.id
 		const merged = applyPendingToLocalArticle(ownedArticleQuery.data, ownedArticleQuery.data.pending)
@@ -273,7 +289,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		const text = merged.plainText || ''
 		setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0)
 		setSavedAt(latestArticleUpdatedAt(merged))
-	}, [editor, ownedArticleQuery.data])
+	}, [editor, isArticleWriteRunning, ownedArticleQuery.data])
 
 	const markArticleDirty = useCallback(() => {
 		draftRevisionRef.current += 1
@@ -324,7 +340,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				articlePayload: normalized.value
 			})
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
-			setOwnedArticleCache(saved)
 			setSavedAt(latestArticleUpdatedAt(merged))
 			setSaveError(false)
 			if (savedRevision === draftRevisionRef.current) {
@@ -600,17 +615,20 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 
 	const [historyOpen, setHistoryOpen] = useState(false)
 	const publishMutation = useMutation({
+		mutationKey: articleWriteKey(articleId),
 		mutationFn: ({ articleId: targetArticleId, goLiveAt }: { articleId: string; goLiveAt?: string | null }) =>
 			publishArticle(targetArticleId, authorizedFetch, goLiveAt !== undefined ? { goLiveAt } : {}),
-		onSuccess: (saved) => setOwnedArticleCache(saved)
+		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const unpublishMutation = useMutation({
+		mutationKey: articleWriteKey(articleId),
 		mutationFn: (targetArticleId: string) => unpublishArticle(targetArticleId, authorizedFetch),
-		onSuccess: (saved) => setOwnedArticleCache(saved)
+		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const discardPendingMutation = useMutation({
+		mutationKey: articleWriteKey(articleId),
 		mutationFn: (targetArticleId: string) => discardPendingEdits(targetArticleId, authorizedFetch),
-		onSuccess: (saved) => setOwnedArticleCache(saved)
+		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const deleteArticleMutation = useMutation({
 		mutationFn: (targetArticleId: string) => deleteArticle(targetArticleId, authorizedFetch),
@@ -641,8 +659,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		articleId: article.id,
 		authorizedFetch,
 		queryClient,
-		setArticle,
-		setOwnedArticleCache
+		setArticle
 	})
 
 	const flushPendingSave = useCallback(async () => {
@@ -699,13 +716,20 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		}
 	}
 
+	// A server result replaces the document without an update event. The editor is gone when the reader left
+	// the article while the request was out, and a destroyed editor cannot take content.
+	const replaceEditorContent = (contentJson: LocalArticleDocument['contentJson']) => {
+		if (!editor || editor.isDestroyed) return
+		editor.commands.setContent(contentJson, { emitUpdate: false })
+	}
+
 	const handleUnpublish = async () => {
 		if (!article.id) return
 		try {
 			const saved = await unpublishMutation.mutateAsync(article.id)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
+			replaceEditorContent(merged.contentJson)
 			setSavedAt(merged.updatedAt)
 			revalidateLanding()
 			toast.success('Moved to drafts')
@@ -725,7 +749,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			const saved = await discardPendingMutation.mutateAsync(article.id)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
+			replaceEditorContent(merged.contentJson)
 			setSavedAt(merged.updatedAt)
 			setIsDirty(false)
 			toast.success('Pending changes discarded')
@@ -742,7 +766,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			}
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
+			if (editor && !editor.isDestroyed) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
 			setSavedAt(latestArticleUpdatedAt(merged))
 			setIsDirty(false)
 			setSaveError(false)
@@ -1138,7 +1162,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 
 			{article.id && historyOpen ? (
 				<RevisionHistoryDrawer
-					key={article.id}
 					onClose={() => setHistoryOpen(false)}
 					articleId={article.id}
 					authorizedFetch={authorizedFetch}
@@ -1155,7 +1178,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				/>
 			) : null}
 
-			<LlamaAIChartPickerDialog key={article.id} dialogStore={llamaaiChartDialog} editor={editor} />
+			<LlamaAIChartPickerDialog dialogStore={llamaaiChartDialog} editor={editor} />
 
 			{embedDialogOpen ? (
 				<EmbedPicker

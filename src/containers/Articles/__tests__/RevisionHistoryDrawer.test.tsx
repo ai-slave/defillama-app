@@ -221,6 +221,65 @@ describe('RevisionHistoryDrawer diff base', () => {
 		expect(http.requests.filter((request) => request.url.pathname.endsWith('/restore-pending'))).toHaveLength(1)
 	})
 
+	async function confirmRestore() {
+		await waitForUi(() => expect(paneText()).toContain('Revision 4'))
+		await click(
+			Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.startsWith('Restore as pending'))!
+		)
+		await click(button('Confirm restore'))
+	}
+
+	async function renderDrawerWith(onClose: () => void, onRestored: () => void) {
+		await act(async () => {
+			root.render(
+				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+					<RevisionHistoryDrawer
+						onClose={onClose}
+						articleId="article-1"
+						authorizedFetch={authorizedFetch}
+						onRestored={onRestored}
+					/>
+				</QueryClientProvider>
+			)
+		})
+		await flush()
+	}
+
+	test('the drawer cannot be closed while a restore runs', async () => {
+		http.serve({ '/articles/article-1/revisions/rev-4/restore-pending': () => new Promise<Response>(() => {}) })
+		const onClose = vi.fn()
+		await renderDrawerWith(onClose, vi.fn())
+		await confirmRestore()
+
+		await click(document.querySelector('button[aria-label="Close"]')!)
+		await act(async () => {
+			document
+				.querySelector('[role="dialog"]')!
+				.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+		})
+		await flush()
+		expect(onClose).not.toHaveBeenCalled()
+	})
+
+	test('a restore that settles after the drawer is gone does not replace the editor or close a later drawer', async () => {
+		let answer!: (response: Response) => void
+		http.serve({
+			'/articles/article-1/revisions/rev-4/restore-pending': () =>
+				new Promise<Response>((resolve) => (answer = resolve))
+		})
+		const onClose = vi.fn()
+		const onRestored = vi.fn()
+		await renderDrawerWith(onClose, onRestored)
+		await confirmRestore()
+
+		// The reader leaves the article while the restore is still out.
+		await act(async () => root.render(null))
+		await act(async () => answer(Response.json({ article: { id: 'article-1', title: 'Restored' } })))
+		await flush()
+		expect(onRestored).not.toHaveBeenCalled()
+		expect(onClose).not.toHaveBeenCalled()
+	})
+
 	test('a failed delete says so in the drawer and keeps the revision listed', async () => {
 		const revision = revisions.find((entry) => entry.id === 'rev-2')!
 		http.serve({

@@ -1,4 +1,6 @@
+import type { QueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import type { ArticleDocument } from '../types'
 
 const SAFE_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:', 'tel:'])
 
@@ -57,4 +59,19 @@ export function useTicker(intervalMs = 30_000) {
 
 export function articleQueryKey(articleId: string | undefined) {
 	return ['research', 'owned-article', articleId] as const
+}
+
+/** Every write that answers with the article carries this key, so an editor opening the article can wait for it. */
+export function articleWriteKey(articleId: string | undefined) {
+	return ['research', 'article-write', articleId] as const
+}
+
+/**
+ * Stores a write's answer as the article, from the mutation's own onSuccess so it lands even after the reader
+ * leaves and before the write stops counting as running. A read that started before the write finished is
+ * cancelled first, or its older answer would replace this one.
+ */
+export async function cacheWrittenArticle(queryClient: QueryClient, saved: ArticleDocument) {
+	await queryClient.cancelQueries({ queryKey: articleQueryKey(saved.id) })
+	queryClient.setQueryData(articleQueryKey(saved.id), saved)
 }

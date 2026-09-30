@@ -13,6 +13,7 @@ import {
 } from '../api'
 import { applyPendingToLocalArticle } from '../document'
 import type { LocalArticleDocument } from '../types'
+import { articleWriteKey, cacheWrittenArticle } from './ArticleEditorUtils'
 
 type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response | null>
 
@@ -21,15 +22,13 @@ type UseArticleCollaboratorsArgs = {
 	authorizedFetch: AuthorizedFetch
 	queryClient: QueryClient
 	setArticle: Dispatch<SetStateAction<LocalArticleDocument>>
-	setOwnedArticleCache: (saved: LocalArticleDocument) => void
 }
 
 export function useArticleCollaborators({
 	articleId,
 	authorizedFetch,
 	queryClient,
-	setArticle,
-	setOwnedArticleCache
+	setArticle
 }: UseArticleCollaboratorsArgs) {
 	const [collaboratorEmail, setCollaboratorEmail] = useState('')
 	const [collaboratorError, setCollaboratorError] = useState<string | null>(null)
@@ -84,11 +83,12 @@ export function useArticleCollaborators({
 		}
 	})
 	const transferOwnershipMutation = useMutation({
+		mutationKey: articleWriteKey(articleId),
 		mutationFn: ({ targetArticleId, pbUserId }: { targetArticleId: string; pbUserId: string }) =>
 			transferOwnership(targetArticleId, { pbUserId }, authorizedFetch),
-		onSuccess: (updated) => {
-			setOwnedArticleCache(updated)
+		onSuccess: async (updated) => {
 			void queryClient.invalidateQueries({ queryKey: collaboratorsQueryKey })
+			await cacheWrittenArticle(queryClient, updated)
 		}
 	})
 

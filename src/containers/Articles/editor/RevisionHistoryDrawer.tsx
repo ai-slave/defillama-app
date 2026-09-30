@@ -18,6 +18,7 @@ import type {
 	ArticleRevisionSummary,
 	LocalArticleDocument
 } from '../types'
+import { articleWriteKey, cacheWrittenArticle } from './ArticleEditorUtils'
 import { diffMetadata, diffParagraphs, diffStats, type FieldChange, type ParagraphDiffOp } from './revisionDiff'
 
 type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response | null>
@@ -283,12 +284,14 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	const isLoadingMore = revisionsQuery.isFetchingNextPage
 	const isLoadingRevision = selectedRevisionQuery.isLoading
 	const restoreRevisionMutation = useMutation({
-		mutationFn: (revisionId: string) => restoreArticleRevisionToPending(articleId, revisionId, authorizedFetch)
+		mutationKey: articleWriteKey(articleId),
+		mutationFn: (revisionId: string) => restoreArticleRevisionToPending(articleId, revisionId, authorizedFetch),
+		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const deleteRevisionMutation = useMutation({
 		mutationFn: (revisionId: string) => deleteArticleRevision(articleId, revisionId, authorizedFetch)
 	})
-	const { mutateAsync: restoreRevision } = restoreRevisionMutation
+	const { mutate: restoreRevision } = restoreRevisionMutation
 	const { mutateAsync: deleteRevision } = deleteRevisionMutation
 	// A failed restore or delete says so in the header of the revision it was for, not in a toast over the drawer.
 	// It follows the mutation's own revision, so picking another hides it without resetting a request still in flight.
@@ -311,18 +314,20 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		setSelectedIdState(revisionId)
 	}, [])
 
-	const handleRestore = useCallback(async () => {
+	// A restore belongs to this opening. The drawer cannot close while it runs, and its result replaces the
+	// editor only from these per-call callbacks, which React Query drops if the reader leaves the article first.
+	const handleRestore = useCallback(() => {
 		if (!selectedId) return
-		try {
-			const saved = await restoreRevision(selectedId)
-			onRestored(saved)
-			onClose()
-			// The drawer is closing, so the confirmation can toast.
-			toast.success('Restored as pending')
-		} catch {
+		restoreRevision(selectedId, {
+			onSuccess: (saved) => {
+				onRestored(saved)
+				onClose()
+				// The drawer is closing, so the confirmation can toast.
+				toast.success('Restored as pending')
+			},
 			// The header shows the mutation's error.
-		}
-		setConfirming(null)
+			onSettled: () => setConfirming(null)
+		})
 	}, [restoreRevision, onRestored, onClose, selectedId])
 
 	const handleDelete = useCallback(
@@ -503,10 +508,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			open
 			onClose={onClose}
 			hideOnEscape={() => {
+				if (isRestoring) return false
 				if (!confirming) return true
 				setConfirming(null)
 				return false
 			}}
+			hideOnInteractOutside={!isRestoring}
 			onKeyDown={(event) => {
 				if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
 				const target = event.target as HTMLElement
@@ -557,7 +564,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				<Ariakit.DialogDismiss
 					type="button"
 					aria-label="Close"
-					className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
+					disabled={isRestoring}
+					accessibleWhenDisabled
+					className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors not-disabled:hover:border-link/40 not-disabled:hover:text-primary disabled:opacity-60"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -708,7 +717,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						onAskRestore={() => setConfirming('restore')}
 						onAskDelete={() => setConfirming('delete')}
 						onCancelConfirm={() => setConfirming(null)}
-						onConfirmRestore={() => void handleRestore()}
+						onConfirmRestore={handleRestore}
 						onConfirmDelete={() => selectedId && void handleDelete(selectedId)}
 						actionError={actionError}
 						viewMode={viewMode}
