@@ -223,16 +223,20 @@ export function TopupForm({
 
 	return (
 		<>
-			<header className="flex flex-col gap-1">
-				<div className="flex items-center gap-2">
-					{step === 'stripe' ? (
-						<Button type="button" variant="ghost" size="md" square aria-label="Back to amount" onClick={goBack}>
-							<Icon name="arrow-left" height={16} width={16} />
-						</Button>
-					) : null}
-					<h3 className="min-w-0 flex-1 label-md text-primary">{step === 'stripe' ? 'Complete payment' : 'Top up'}</h3>
+			{/* Inside a settings section the step's back is a labelled link above the heading, not a second
+			    icon-only back beside the host dialog's own header. */}
+			<header className="flex flex-col items-start gap-3">
+				{step === 'stripe' ? (
+					<Button type="button" variant="ghost" size="sm" className="-ml-2" onClick={goBack}>
+						<Icon name="arrow-left" className="size-3.5" aria-hidden="true" />
+						Back to amount
+					</Button>
+				) : null}
+				{/* The Settings section heading: title and description as one block, as SectionHeading draws them. */}
+				<div className="flex flex-col gap-1">
+					<h3 className="label-md text-primary">{step === 'stripe' ? 'Complete payment' : 'Top up'}</h3>
+					{step === 'stripe' ? <p className="body-md text-secondary">{stripeDescription}</p> : null}
 				</div>
-				{step === 'stripe' ? <p className="body-md text-secondary">{stripeDescription}</p> : null}
 			</header>
 			<div className="flex flex-col gap-4">{content}</div>
 		</>

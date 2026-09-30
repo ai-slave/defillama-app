@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import type { ArticlePdf } from '../types'
@@ -21,16 +22,12 @@ function formatSize(bytes: number): string {
 
 export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, helperText }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null)
-	const { uploadWithToast, isUploading } = usePdfUpload({ articleId })
+	const { uploadFile, isUploading, errorMessage } = usePdfUpload({ articleId })
 
 	const handleFile = async (file: File | null | undefined) => {
 		if (!file) return
-		try {
-			const result = await uploadWithToast(file)
-			onUploaded(result)
-		} catch {
-			// surfaced via toast
-		}
+		// A failure shows under the control; the file row itself shows a success.
+		await uploadFile(file).then(onUploaded, () => {})
 		if (inputRef.current) inputRef.current.value = ''
 	}
 
@@ -59,30 +56,26 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 							>
 								{currentPdf.originalName || 'report.pdf'}
 							</a>
-							<span className="text-[11px] text-tertiary">
+							<span className="body-sm text-tertiary">
 								{formatSize(currentPdf.sizeBytes)}
 								{currentPdf.pageCount ? ` · ${currentPdf.pageCount} pages` : ''}
 							</span>
 						</div>
 					</div>
 					<div className="flex flex-wrap gap-2">
-						<button
+						<Button
 							type="button"
-							disabled={disabled}
+							size="sm"
+							disabled={!articleId}
 							onClick={open}
-							className="rounded-md border border-medium bg-surface px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+							pendingLabel={isUploading ? 'Uploading…' : null}
 						>
-							{isUploading ? 'Uploading…' : 'Replace PDF'}
-						</button>
+							Replace PDF
+						</Button>
 						{onCleared ? (
-							<button
-								type="button"
-								disabled={disabled}
-								onClick={onCleared}
-								className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
-							>
+							<Button type="button" size="sm" variant="ghost" disabled={disabled} onClick={onCleared}>
 								Remove
-							</button>
+							</Button>
 						) : null}
 					</div>
 				</div>
@@ -97,10 +90,14 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
 				</button>
 			)}
-			{helperText ? <span className="text-[11px] text-tertiary">{helperText}</span> : null}
-			{!articleId ? (
-				<span className="text-[11px] text-tertiary">Save the article first to enable PDF upload.</span>
+			{errorMessage ? (
+				<p role="alert" className="body-sm text-data-down">
+					{errorMessage}
+				</p>
+			) : helperText ? (
+				<p className="body-sm text-tertiary">{helperText}</p>
 			) : null}
+			{!articleId ? <p className="body-sm text-tertiary">Save the article first to enable PDF upload.</p> : null}
 		</div>
 	)
 }

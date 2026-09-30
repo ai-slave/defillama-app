@@ -2,8 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
+import { Button } from '~/ui/Button'
+import { ConfirmDialog } from '~/ui/ConfirmDialog'
+import { DialogBackButton, DialogBody, DialogHeader, SideSheet } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
-import { InlineStatus } from '~/ui/Status'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { tw } from '~/ui/tw'
 import {
 	deleteArticleRevision,
 	getArticleRevision,
@@ -84,6 +89,21 @@ const FILTER_LABELS: Record<FilterKey, string> = {
 	edits: 'Drafts',
 	restores: 'Restores'
 }
+
+const FILTER_KEYS: Array<FilterKey> = ['all', 'publishes', 'pending', 'edits', 'restores']
+
+const VIEW_OPTIONS: Array<{ value: ViewMode; label: string }> = [
+	{ value: 'preview', label: 'Preview' },
+	{ value: 'diff', label: 'Diff' }
+]
+
+const BASE_OPTIONS: Array<{ value: BaseMode; label: string }> = [
+	{ value: 'previous', label: 'Previous' },
+	{ value: 'live', label: 'Live' },
+	{ value: 'pending', label: 'Pending' }
+]
+
+const KBD_STYLES = tw`rounded-sm border border-medium px-1 body-sm text-secondary`
 
 const FILTER_MATCH: Record<FilterKey, (e: ArticleRevisionEventType) => boolean> = {
 	all: () => true,
@@ -203,13 +223,9 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 
 function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' }) {
 	const styles =
-		tone === 'live'
-			? 'border-emerald-500/40 bg-success/10 text-success dark:text-success'
-			: 'border-warning/40 bg-warning/10 text-warning dark:text-warning'
+		tone === 'live' ? 'border-success/40 bg-success/10 text-success' : 'border-warning/40 bg-warning/10 text-warning'
 	return (
-		<span
-			className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px font-jetbrains text-[9px] tracking-[0.18em] uppercase ${styles}`}
-		>
+		<span className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px label-xs ${styles}`}>
 			<span
 				aria-hidden
 				className={`size-1 rounded-full ${tone === 'live' ? 'bg-success' : 'animate-pulse bg-warning'}`}
@@ -246,10 +262,10 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	)
 }
 
-// A conditional cannot be lowered inside a catch, and both handlers here need one. Kept local with the
-// fallback passed in so each message stays exactly what it was.
-function messageOf(error: unknown, fallback: string) {
-	return error instanceof Error ? error.message : fallback
+// A retry that succeeds replaces its button, so focus moves to the pane that now holds the content.
+async function retryInto(retry: () => Promise<{ isError: boolean }>, pane: RefObject<HTMLDivElement | null>) {
+	const result = await retry()
+	if (!result.isError) pane.current?.focus()
 }
 
 export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onRestored }: Props) {
@@ -258,7 +274,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	const [confirming, setConfirming] = useState<null | 'restore' | 'delete'>(null)
 	const [viewMode, setViewMode] = useState<ViewMode>('preview')
 	const [baseMode, setBaseMode] = useState<BaseMode>('previous')
+	// Below md one pane shows at a time: the list, or the picked revision with a back button.
+	const [narrowPane, setNarrowPane] = useState<'list' | 'detail'>('list')
 	const listRef = useRef<HTMLDivElement | null>(null)
+	const previewRef = useRef<HTMLDivElement | null>(null)
+	const restoreRef = useRef<HTMLButtonElement | null>(null)
+	const deleteRef = useRef<HTMLButtonElement | null>(null)
 	const queryClient = useQueryClient()
 	const revisionsQueryKey = useMemo(() => ['research', 'article-revisions', articleId] as const, [articleId])
 	const revisionsQuery = useInfiniteQuery({
@@ -272,7 +293,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		() => revisionsQuery.data?.pages.flatMap((page) => page.items) ?? EMPTY_ARTICLE_REVISIONS,
 		[revisionsQuery.data]
 	)
-	const selectedId = selectedIdState ?? items[0]?.id ?? null
+	// A pick that left the list (a deleted revision) falls back to the newest one.
+	const selectedId =
+		selectedIdState && items.some((entry) => entry.id === selectedIdState) ? selectedIdState : (items[0]?.id ?? null)
 	const selectedRevisionQuery = useQuery({
 		queryKey: ['research', 'article-revision', articleId, selectedId],
 		queryFn: () => getArticleRevision(articleId, selectedId!, authorizedFetch),
@@ -280,86 +303,59 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		retry: false
 	})
 	const selectedRevision = selectedRevisionQuery.data ?? null
-	const isLoading = revisionsQuery.isLoading
-	const isLoadingMore = revisionsQuery.isFetchingNextPage
-	const isLoadingRevision = selectedRevisionQuery.isLoading
 	const restoreRevisionMutation = useMutation({
 		mutationKey: articleWriteKey(articleId),
 		mutationFn: (revisionId: string) => restoreArticleRevisionToPending(articleId, revisionId, authorizedFetch),
 		onSuccess: (saved) => cacheWrittenArticle(queryClient, saved)
 	})
 	const deleteRevisionMutation = useMutation({
-		mutationFn: (revisionId: string) => deleteArticleRevision(articleId, revisionId, authorizedFetch)
+		mutationFn: (revisionId: string) => deleteArticleRevision(articleId, revisionId, authorizedFetch),
+		onSuccess: (_, revisionId) =>
+			queryClient.setQueryData<typeof revisionsQuery.data>(revisionsQueryKey, (current) =>
+				current
+					? {
+							...current,
+							pages: current.pages.map((page) => ({
+								...page,
+								items: page.items.filter((entry) => entry.id !== revisionId)
+							}))
+						}
+					: current
+			)
 	})
-	const { mutate: restoreRevision } = restoreRevisionMutation
-	const { mutateAsync: deleteRevision } = deleteRevisionMutation
-	// A failed restore or delete says so in the header of the revision it was for, not in a toast over the drawer.
-	// It follows the mutation's own revision, so picking another hides it without resetting a request still in flight.
-	const actionError =
-		restoreRevisionMutation.isError && restoreRevisionMutation.variables === selectedId
-			? messageOf(restoreRevisionMutation.error, 'Failed to restore revision')
-			: deleteRevisionMutation.isError && deleteRevisionMutation.variables === selectedId
-				? messageOf(deleteRevisionMutation.error, 'Failed to delete revision')
-				: null
 	const isRestoring = restoreRevisionMutation.isPending
-	const pendingDeleteId = deleteRevisionMutation.isPending ? (deleteRevisionMutation.variables ?? null) : null
 
-	const loadMore = useCallback(async () => {
-		if (!revisionsQuery.hasNextPage) return
-		await revisionsQuery.fetchNextPage()
-	}, [revisionsQuery])
-
-	const selectRevision = useCallback((revisionId: string) => {
-		setConfirming(null)
-		setSelectedIdState(revisionId)
-	}, [])
+	// Each confirmation starts without the error of an earlier attempt. Neither can open while its request runs,
+	// because the open confirmation cannot close until the request settles.
+	const askRestore = () => {
+		restoreRevisionMutation.reset()
+		setConfirming('restore')
+	}
+	const askDelete = () => {
+		deleteRevisionMutation.reset()
+		setConfirming('delete')
+	}
 
 	// A restore belongs to this opening. The drawer cannot close while it runs, and its result replaces the
 	// editor only from these per-call callbacks, which React Query drops if the reader leaves the article first.
-	const handleRestore = useCallback(() => {
+	// A failure keeps the confirmation open with its error.
+	const handleRestore = () => {
 		if (!selectedId) return
-		restoreRevision(selectedId, {
+		restoreRevisionMutation.mutate(selectedId, {
 			onSuccess: (saved) => {
 				onRestored(saved)
 				onClose()
 				// The drawer is closing, so the confirmation can toast.
 				toast.success('Restored as pending')
-			},
-			// The header shows the mutation's error.
-			onSettled: () => setConfirming(null)
-		})
-	}, [restoreRevision, onRestored, onClose, selectedId])
-
-	const handleDelete = useCallback(
-		async (revisionId: string) => {
-			try {
-				await deleteRevision(revisionId)
-				queryClient.setQueryData<typeof revisionsQuery.data>(revisionsQueryKey, (current) =>
-					current
-						? {
-								...current,
-								pages: current.pages.map((page) => ({
-									...page,
-									items: page.items.filter((entry) => entry.id !== revisionId)
-								}))
-							}
-						: current
-				)
-				if (selectedId === revisionId) {
-					setSelectedIdState((current) => {
-						if (current !== revisionId) return current
-						return items.find((entry) => entry.id !== revisionId)?.id ?? null
-					})
-				}
-			} catch {
-				// The header shows the mutation's error; a success needs no toast, the entry leaves the list.
 			}
-			// Ran in a finally before: neither body exits early, so after the catch is the same thing, and
-			// the compiler cannot lower a finalizer.
-			setConfirming(null)
-		},
-		[deleteRevision, items, queryClient, revisionsQueryKey, selectedId]
-	)
+		})
+	}
+
+	// The entry leaves the list from the mutation's own onSuccess; a failure keeps the confirmation open.
+	const handleDelete = () => {
+		if (!selectedId) return
+		deleteRevisionMutation.mutate(selectedId, { onSuccess: () => setConfirming(null) })
+	}
 
 	const liveAnchorId = useMemo(() => {
 		const anchor = items.find((entry) => entry.eventType === 'publish' || entry.eventType === 'create')
@@ -392,18 +388,6 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		return groups
 	}, [filtered])
 
-	const counts = useMemo(() => {
-		const c: Record<FilterKey, number> = { all: 0, publishes: 0, pending: 0, edits: 0, restores: 0 }
-		for (const entry of items) {
-			c.all += 1
-			for (const key of Object.keys(FILTER_MATCH) as Array<FilterKey>) {
-				if (key === 'all') continue
-				if (FILTER_MATCH[key](entry.eventType)) c[key] += 1
-			}
-		}
-		return c
-	}, [items])
-
 	const selectedIndex = useMemo(() => filtered.findIndex((entry) => entry.id === selectedId), [filtered, selectedId])
 
 	const moveSelection = useCallback(
@@ -411,9 +395,9 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			if (filtered.length === 0) return
 			const nextIndex = Math.min(filtered.length - 1, Math.max(0, selectedIndex + delta))
 			const next = filtered[nextIndex]
-			if (next) selectRevision(next.id)
+			if (next) setSelectedIdState(next.id)
 		},
-		[filtered, selectRevision, selectedIndex]
+		[filtered, selectedIndex]
 	)
 
 	useEffect(() => {
@@ -503,21 +487,18 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		return { paragraphs, metadata, stats }
 	}, [viewMode, selectedRevision, baseRevision])
 
+	const isLive = selectedId !== null && selectedId === liveAnchorId
+
 	return (
-		<Ariakit.Dialog
+		<SideSheet
+			size="lg"
 			open
 			onClose={onClose}
-			hideOnEscape={() => {
-				if (isRestoring) return false
-				if (!confirming) return true
-				setConfirming(null)
-				return false
-			}}
-			hideOnInteractOutside={!isRestoring}
+			pending={isRestoring}
 			onKeyDown={(event) => {
 				if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return
 				const target = event.target as HTMLElement
-				// Nested controls own their keys; history shortcuts only act inside this drawer.
+				// Nested controls own their keys; history shortcuts only act inside this drawer, not in its confirmations.
 				if (target.closest('[role="dialog"], [role="alertdialog"]') !== event.currentTarget) return
 				if (
 					target.closest(
@@ -531,246 +512,272 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				} else if (event.key === 'k' || event.key === 'ArrowUp') {
 					event.preventDefault()
 					moveSelection(-1)
-				} else if (event.key === 'r' && selectedId) {
+				} else if (event.key === 'r' && selectedRevision) {
 					event.preventDefault()
-					setConfirming('restore')
+					askRestore()
 				}
 			}}
-			backdrop={<div className="fixed inset-0 z-50 bg-research-backdrop-soft backdrop-blur-sm" />}
-			className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl"
 		>
-			<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
-				<div className="grid gap-1">
-					<div className="flex items-center gap-2 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-						<span aria-hidden>›</span>
-						<span>Article</span>
-						<span aria-hidden>·</span>
-						<span>Ledger</span>
-					</div>
-					<Ariakit.DialogHeading className="text-2xl leading-tight font-semibold tracking-tight text-primary">
-						Revision history
-					</Ariakit.DialogHeading>
-					<p className="font-jetbrains text-[11px] text-tertiary">
-						<span className="text-secondary tabular-nums">{counts.all}</span> entries
-						<span aria-hidden> · </span>
-						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">J/K</kbd>
-						<span> navigate </span>
-						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">R</kbd>
-						<span> restore </span>
-						<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">Esc</kbd>
-						<span> close</span>
-					</p>
-				</div>
-				<Ariakit.DialogDismiss
-					type="button"
-					aria-label="Close"
-					disabled={isRestoring}
-					accessibleWhenDisabled
-					className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors not-disabled:hover:border-link/40 not-disabled:hover:text-primary disabled:opacity-60"
-				>
-					<Icon name="x" className="size-4" />
-				</Ariakit.DialogDismiss>
-			</header>
+			<DialogHeader
+				title="Revision history"
+				leading={
+					narrowPane === 'detail' ? (
+						<div className="flex md:hidden">
+							<DialogBackButton label="Back to revisions" onClick={() => setNarrowPane('list')} />
+						</div>
+					) : null
+				}
+				subtitle={
+					revisionsQuery.data ? (
+						<>
+							{items.length}
+							{revisionsQuery.hasNextPage ? '+' : ''} {items.length === 1 ? 'entry' : 'entries'}
+							{/* Keyboard hints mean nothing on a touch screen. */}
+							<span className="max-sm:hidden pointer-coarse:hidden">
+								<span aria-hidden> · </span>
+								<kbd className={KBD_STYLES}>J</kbd> <kbd className={KBD_STYLES}>K</kbd> move,{' '}
+								<kbd className={KBD_STYLES}>R</kbd> restore, <kbd className={KBD_STYLES}>Esc</kbd> close
+							</span>
+						</>
+					) : null
+				}
+			/>
 
-			<div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,2fr)] md:grid-cols-[360px_minmax(0,1fr)] md:grid-rows-1">
-				<aside className="flex min-h-0 flex-col border-b border-medium md:border-r md:border-b-0">
-					<div className="flex flex-wrap items-center gap-1 border-b border-medium px-3 py-2">
-						{(Object.keys(FILTER_LABELS) as Array<FilterKey>).map((key) => {
-							const isActive = filter === key
-							return (
-								<button
-									key={key}
-									type="button"
-									onClick={() => setFilter(key)}
-									className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
-										isActive
-											? 'bg-primary text-surface'
-											: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
-									}`}
-								>
-									<span>{FILTER_LABELS[key]}</span>
-									<span className={`tabular-nums ${isActive ? 'text-surface/70' : 'text-tertiary/60'}`}>
-										{counts[key]}
-									</span>
-								</button>
-							)
-						})}
-					</div>
-
-					<div ref={listRef} className="min-h-0 flex-1 overflow-y-auto">
-						{isLoading ? (
-							<TimelineSkeleton />
-						) : revisionsQuery.isLoadingError ? (
-							<div className="p-5">
-								<InlineStatus variant="error">{messageOf(revisionsQuery.error, 'Failed to load history')}</InlineStatus>
-							</div>
-						) : grouped.length === 0 ? (
-							<EmptyState filter={filter} />
-						) : (
-							<div className="relative">
-								{grouped.map((group) => (
-									<section key={group.key}>
-										<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-medium bg-surface/95 px-5 py-2 backdrop-blur">
-											<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-												{group.label}
-											</span>
-											<span className="font-jetbrains text-[10px] text-tertiary/70 tabular-nums">
-												{group.items.length}
-											</span>
-										</header>
-										<ul className="relative">
-											<span
-												aria-hidden
-												className="pointer-events-none absolute top-2 bottom-2 left-[34px] w-px bg-border-medium"
-											/>
-											{group.items.map((entry) => {
-												const isSelected = entry.id === selectedId
-												const isLive = entry.id === liveAnchorId
-												const isPendingAnchor = entry.id === pendingAnchorId
-												const tone = EVENT_TONES[entry.eventType] ?? 'text-secondary'
-												const isDeleting = pendingDeleteId === entry.id
-												return (
-													<li
-														key={entry.id}
-														data-revision-id={entry.id}
-														className={`group relative ${isDeleting ? 'opacity-50' : ''}`}
-													>
-														<button
-															type="button"
-															onClick={() => selectRevision(entry.id)}
-															aria-current={isSelected}
-															className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
-															}`}
-														>
-															{isSelected ? (
-																<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
-															) : null}
-															<span className="relative z-10 mt-0.5 grid size-5 place-items-center rounded-full bg-surface">
-																<EventGlyph type={entry.eventType} active={isSelected} />
-															</span>
-															<div className="min-w-0 flex-1">
-																<div className="flex items-center gap-2">
-																	<span className={`font-jetbrains text-[10px] tracking-[0.18em] uppercase ${tone}`}>
-																		{EVENT_LABELS[entry.eventType] ?? entry.eventType}
-																	</span>
-																	{isLive ? <StatusBadge label="Live" tone="live" /> : null}
-																	{isPendingAnchor ? <StatusBadge label="Pending" tone="pending" /> : null}
-																</div>
-																<div className="mt-1 flex items-baseline gap-2">
-																	<span className="font-jetbrains text-xs text-primary tabular-nums">
-																		{formatTime(entry.createdAt)}
-																	</span>
-																	<span className="text-[11px] text-tertiary">{formatRelative(entry.createdAt)}</span>
-																</div>
-																{entry.actor ? (
-																	<div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-tertiary">
-																		<ActorAvatar name={entry.actor.displayName} url={entry.actor.avatarUrl} size={14} />
-																		<span className="truncate">{entry.actor.displayName}</span>
-																	</div>
-																) : null}
-															</div>
-														</button>
-													</li>
-												)
-											})}
-										</ul>
-									</section>
-								))}
-								{revisionsQuery.hasNextPage ? (
-									<div className="grid gap-2 px-5 py-4">
-										{revisionsQuery.isFetchNextPageError ? (
-											<InlineStatus variant="error">
-												{messageOf(revisionsQuery.error, 'Failed to load history')}
-											</InlineStatus>
-										) : null}
-										<button
-											type="button"
-											onClick={loadMore}
-											disabled={isLoadingMore}
-											className="w-full rounded-sm border border-dashed border-medium bg-transparent px-3 py-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors hover:border-secondary hover:text-secondary disabled:opacity-50"
-										>
-											{isLoadingMore ? 'Loading…' : '↓  Older revisions'}
-										</button>
-									</div>
-								) : items.length > 0 ? (
-									<div className="px-5 py-6 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
-										· end of ledger ·
-									</div>
-								) : null}
-							</div>
-						)}
-					</div>
-				</aside>
-
-				<section className="flex min-h-0 min-w-0 flex-col bg-page">
-					<PreviewSpecimenHeader
-						revision={selectedRevision}
-						isLoading={isLoadingRevision}
-						wordCount={wordCount}
-						isLive={selectedRevision ? selectedRevision.id === liveAnchorId : false}
-						isPendingAnchor={selectedRevision ? selectedRevision.id === pendingAnchorId : false}
-						confirming={confirming}
-						isRestoring={isRestoring}
-						isDeleting={selectedId ? pendingDeleteId === selectedId : false}
-						canDelete={!!selectedRevision && selectedRevision.id !== liveAnchorId}
-						onAskRestore={() => setConfirming('restore')}
-						onAskDelete={() => setConfirming('delete')}
-						onCancelConfirm={() => setConfirming(null)}
-						onConfirmRestore={handleRestore}
-						onConfirmDelete={() => selectedId && void handleDelete(selectedId)}
-						actionError={actionError}
-						viewMode={viewMode}
-						onChangeView={setViewMode}
-						baseMode={baseMode}
-						onChangeBase={setBaseMode}
-						baseAvailability={baseAvailability}
-						baseRevision={baseRevision}
-						diffStats={diff?.stats ?? null}
-					/>
-					<div className="min-h-0 flex-1 overflow-y-auto">
-						{isLoadingRevision ? (
-							<PreviewSkeleton />
-						) : selectedRevisionQuery.isLoadingError ? (
-							<div className="px-6 py-8">
-								<InlineStatus variant="error">
-									{messageOf(selectedRevisionQuery.error, 'Failed to load revision')}
-								</InlineStatus>
-							</div>
-						) : !previewArticle ? (
-							<div className="grid h-full place-items-center px-6">
-								<div className="max-w-sm text-center">
-									<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
-										<Icon name="clock" className="size-5 text-tertiary" />
-									</div>
-									<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-										No revision selected
-									</p>
-									<p className="mt-2 text-sm text-secondary">Pick an entry from the ledger to inspect its snapshot.</p>
-								</div>
-							</div>
-						) : viewMode === 'diff' ? (
-							<DiffPane
-								selected={selectedRevision}
-								base={baseRevision}
-								baseMode={baseMode}
-								baseUnavailable={baseUnavailable}
-								baseError={
-									baseRevisionQuery.isLoadingError
-										? messageOf(baseRevisionQuery.error, 'Failed to load base revision')
-										: null
-								}
-								diff={diff}
+			<DialogBody kind="flush">
+				<div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[360px_minmax(0,1fr)]">
+					<aside
+						className={`flex min-h-0 flex-col md:border-r md:border-subtle ${narrowPane === 'detail' ? 'max-md:hidden' : ''}`}
+					>
+						<div className="border-b border-subtle px-3 py-2">
+							<SegmentedControl<FilterKey>
+								label="Filter revisions"
+								value={filter}
+								onValueChange={setFilter}
+								// No per-filter counts: five labels with numbers overflow the 360px list, and the header already
+								// counts the entries.
+								options={FILTER_KEYS.map((key) => ({ value: key, label: FILTER_LABELS[key] }))}
+								variant="default"
+								size="md"
+								className="max-w-full"
 							/>
-						) : (
-							<div className="article-page-frame">
-								<ArticleRenderer article={previewArticle} />
-							</div>
-						)}
-					</div>
-				</section>
-			</div>
-		</Ariakit.Dialog>
+						</div>
+
+						<div ref={listRef} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
+							{revisionsQuery.isLoading ? (
+								<SurfaceBodyLoadingStatus label="Loading revisions" />
+							) : revisionsQuery.isLoadingError ? (
+								<LoadError
+									message="Couldn't load the revision history."
+									retrying={revisionsQuery.isFetching}
+									onRetry={() => void retryInto(revisionsQuery.refetch, listRef)}
+								/>
+							) : grouped.length === 0 ? (
+								<SurfaceBodyStatus variant="empty">
+									{filter === 'all'
+										? 'No revisions yet. Saving or publishing adds the first one.'
+										: 'No revisions match this filter.'}
+								</SurfaceBodyStatus>
+							) : (
+								<div className="relative">
+									{grouped.map((group) => (
+										<section key={group.key}>
+											<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-subtle bg-overlay px-5 py-2">
+												<span className="label-sm text-secondary">{group.label}</span>
+											</header>
+											<ul>
+												{group.items.map((entry, index) => {
+													const isSelected = entry.id === selectedId
+													const isDeleting =
+														deleteRevisionMutation.isPending && deleteRevisionMutation.variables === entry.id
+													return (
+														<li
+															key={entry.id}
+															data-revision-id={entry.id}
+															className={`group relative ${isDeleting ? 'opacity-50' : ''}`}
+														>
+															<button
+																type="button"
+																onClick={() => {
+																	setSelectedIdState(entry.id)
+																	setNarrowPane('detail')
+																}}
+																aria-current={isSelected}
+																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
+																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
+																}`}
+															>
+																{isSelected ? (
+																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
+																) : null}
+																{/* The day's timeline: segments above and below each glyph, centred on it (the 20px inset
+																    plus half the 20px glyph), so no backdrop has to hide a line behind the glyph. */}
+																{index > 0 ? (
+																	<span
+																		aria-hidden
+																		className="absolute top-0 left-7.5 h-3 w-px -translate-x-1/2 bg-border-medium"
+																	/>
+																) : null}
+																{index < group.items.length - 1 ? (
+																	<span
+																		aria-hidden
+																		className="absolute top-9 bottom-0 left-7.5 w-px -translate-x-1/2 bg-border-medium"
+																	/>
+																) : null}
+																<span className="mt-0.5 grid size-5 shrink-0 place-items-center">
+																	<EventGlyph type={entry.eventType} active={isSelected} />
+																</span>
+																<div className="min-w-0 flex-1">
+																	{/* The event names the row; the glyph and the Live/Pending badge carry its tone. */}
+																	<div className="flex items-center gap-2">
+																		<span className="label-md text-primary">
+																			{EVENT_LABELS[entry.eventType] ?? entry.eventType}
+																		</span>
+																		{entry.id === liveAnchorId ? <StatusBadge label="Live" tone="live" /> : null}
+																		{entry.id === pendingAnchorId ? (
+																			<StatusBadge label="Pending" tone="pending" />
+																		) : null}
+																	</div>
+																	<p className="mt-0.5 body-sm text-secondary tabular-nums">
+																		{formatTime(entry.createdAt)}
+																		<span className="text-tertiary"> · {formatRelative(entry.createdAt)}</span>
+																	</p>
+																	{entry.actor ? (
+																		<div className="mt-1.5 flex items-center gap-1.5 body-sm text-tertiary">
+																			<ActorAvatar
+																				name={entry.actor.displayName}
+																				url={entry.actor.avatarUrl}
+																				size={14}
+																			/>
+																			<span className="truncate">{entry.actor.displayName}</span>
+																		</div>
+																	) : null}
+																</div>
+															</button>
+														</li>
+													)
+												})}
+											</ul>
+										</section>
+									))}
+									{revisionsQuery.hasNextPage ? (
+										<div className="grid gap-2 px-5 py-4">
+											{revisionsQuery.isFetchNextPageError ? (
+												<InlineStatus variant="error">Couldn't load older revisions. Try again.</InlineStatus>
+											) : null}
+											<Button
+												type="button"
+												size="md"
+												onClick={() => void revisionsQuery.fetchNextPage()}
+												pendingLabel={revisionsQuery.isFetchingNextPage ? 'Loading…' : null}
+											>
+												Load older revisions
+											</Button>
+										</div>
+									) : null}
+								</div>
+							)}
+						</div>
+					</aside>
+
+					<section className={`flex min-h-0 min-w-0 flex-col bg-page ${narrowPane === 'list' ? 'max-md:hidden' : ''}`}>
+						{selectedId ? (
+							<PreviewSpecimenHeader
+								revision={selectedRevision}
+								isLoading={selectedRevisionQuery.isLoading}
+								wordCount={wordCount}
+								isLive={isLive}
+								isPendingAnchor={selectedId === pendingAnchorId}
+								restoreRef={restoreRef}
+								deleteRef={deleteRef}
+								onAskRestore={askRestore}
+								onAskDelete={askDelete}
+								viewMode={viewMode}
+								onChangeView={setViewMode}
+								baseMode={baseMode}
+								onChangeBase={setBaseMode}
+								baseRevision={baseRevision}
+								diffStats={diff?.stats ?? null}
+							/>
+						) : null}
+						<div ref={previewRef} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
+							{revisionsQuery.isLoading || selectedRevisionQuery.isLoading ? (
+								<SurfaceBodyLoadingStatus label="Loading revision" />
+							) : selectedRevisionQuery.isLoadingError ? (
+								<LoadError
+									message="Couldn't load this revision."
+									retrying={selectedRevisionQuery.isFetching}
+									onRetry={() => void retryInto(selectedRevisionQuery.refetch, previewRef)}
+								/>
+							) : !previewArticle ? (
+								<SurfaceBodyStatus variant="empty">No revision selected.</SurfaceBodyStatus>
+							) : viewMode === 'diff' ? (
+								baseUnavailable ? (
+									<SurfaceBodyStatus variant="empty">
+										{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}
+									</SurfaceBodyStatus>
+								) : baseRevisionQuery.isLoadingError ? (
+									<LoadError
+										message="Couldn't load the revision to compare against."
+										retrying={baseRevisionQuery.isFetching}
+										onRetry={() => void retryInto(baseRevisionQuery.refetch, previewRef)}
+									/>
+								) : diff ? (
+									<DiffPane diff={diff} />
+								) : (
+									<SurfaceBodyLoadingStatus label="Loading comparison" />
+								)
+							) : (
+								<div className="article-page-frame">
+									{/* The page's share and contents rail belongs to the page, not to a preview pane. */}
+									<ArticleRenderer article={previewArticle} hideSidePanel />
+								</div>
+							)}
+						</div>
+					</section>
+				</div>
+			</DialogBody>
+
+			<ConfirmDialog
+				open={confirming === 'restore'}
+				onClose={() => setConfirming(null)}
+				unmountOnHide
+				finalFocus={restoreRef}
+				tone="primary"
+				title="Restore as pending?"
+				description="This snapshot loads into the editor as a pending edit."
+				confirmLabel="Restore"
+				pendingLabel={isRestoring ? 'Restoring…' : null}
+				error={restoreRevisionMutation.isError ? "Couldn't restore this revision. Try again." : null}
+				onConfirm={handleRestore}
+			/>
+			<ConfirmDialog
+				open={confirming === 'delete'}
+				onClose={() => setConfirming(null)}
+				unmountOnHide
+				finalFocus={deleteRef}
+				title="Delete this revision?"
+				description="The snapshot is removed from the history permanently."
+				confirmLabel="Delete"
+				pendingLabel={deleteRevisionMutation.isPending ? 'Deleting…' : null}
+				error={deleteRevisionMutation.isError ? "Couldn't delete this revision. Try again." : null}
+				onConfirm={handleDelete}
+			/>
+		</SideSheet>
+	)
+}
+
+function LoadError({ message, retrying, onRetry }: { message: string; retrying: boolean; onRetry: () => void }) {
+	return (
+		<div className="p-4">
+			<InlineStatus variant="error">
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<span>{message}</span>
+					<Button type="button" size="sm" onClick={onRetry} pendingLabel={retrying ? 'Retrying…' : null}>
+						Try again
+					</Button>
+				</div>
+			</InlineStatus>
+		</div>
 	)
 }
 
@@ -780,81 +787,57 @@ function PreviewSpecimenHeader({
 	wordCount,
 	isLive,
 	isPendingAnchor,
-	confirming,
-	isRestoring,
-	isDeleting,
-	canDelete,
+	restoreRef,
+	deleteRef,
 	onAskRestore,
 	onAskDelete,
-	onCancelConfirm,
-	onConfirmRestore,
-	onConfirmDelete,
 	viewMode,
 	onChangeView,
 	baseMode,
 	onChangeBase,
-	baseAvailability,
 	baseRevision,
-	diffStats: stats,
-	actionError
+	diffStats: stats
 }: {
 	revision: ArticleRevision | null
 	isLoading: boolean
 	wordCount: number
 	isLive: boolean
 	isPendingAnchor: boolean
-	confirming: null | 'restore' | 'delete'
-	isRestoring: boolean
-	isDeleting: boolean
-	canDelete: boolean
+	restoreRef: RefObject<HTMLButtonElement | null>
+	deleteRef: RefObject<HTMLButtonElement | null>
 	onAskRestore: () => void
 	onAskDelete: () => void
-	onCancelConfirm: () => void
-	onConfirmRestore: () => void
-	onConfirmDelete: () => void
 	viewMode: ViewMode
 	onChangeView: (mode: ViewMode) => void
 	baseMode: BaseMode
 	onChangeBase: (mode: BaseMode) => void
-	baseAvailability: Record<BaseMode, string | null>
 	baseRevision: ArticleRevision | null
 	diffStats: { added: number; removed: number } | null
-	actionError: string | null
 }) {
-	const restoreRef = useRef<HTMLButtonElement>(null)
-	const deleteRef = useRef<HTMLButtonElement>(null)
 	const eventType = revision?.eventType ?? 'save'
 	const tone = EVENT_TONES[eventType] ?? 'text-secondary'
 	const snapshot = (revision?.snapshot ?? {}) as { title?: string; slug?: string; status?: string }
 	const title = snapshot.title || (isLoading ? 'Loading…' : '—')
 	const slug = snapshot.slug ?? '—'
 	const status = snapshot.status
-
-	const baseLabels: Record<BaseMode, string> = {
-		previous: 'Previous',
-		live: 'Live',
-		pending: 'Pending'
-	}
 	const baseRevisionLabel = baseRevision
 		? `${EVENT_LABELS[baseRevision.eventType] ?? baseRevision.eventType} · ${formatExact(baseRevision.createdAt)}`
 		: null
 
 	return (
-		<div className="border-b border-medium bg-surface">
-			<div className="grid grid-cols-1 items-start gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 lg:px-7 lg:py-5">
+		<div className="border-b border-subtle bg-overlay">
+			<div className="grid grid-cols-1 items-start gap-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-6 lg:px-6">
 				<div className="grid min-w-0 gap-2">
 					<div className="flex flex-wrap items-center gap-2">
 						<span
-							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] uppercase ${tone}`}
+							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 label-sm ${tone}`}
 						>
 							{revision ? <EventGlyph type={eventType} active={false} /> : null}
 							{revision ? EVENT_LABELS[eventType] : '—'}
 						</span>
 						{isLive ? <StatusBadge label="Currently live" tone="live" /> : null}
 						{isPendingAnchor ? <StatusBadge label="Currently pending" tone="pending" /> : null}
-						{status ? (
-							<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">{status}</span>
-						) : null}
+						{status ? <span className="label-sm text-tertiary capitalize">{status}</span> : null}
 					</div>
 					<h3
 						className="text-xl leading-tight font-semibold tracking-tight break-words text-primary"
@@ -863,26 +846,26 @@ function PreviewSpecimenHeader({
 					>
 						{title}
 					</h3>
-					<dl className="flex flex-wrap items-center gap-x-5 gap-y-1 font-jetbrains text-[11px] text-tertiary">
+					<dl className="flex flex-wrap items-center gap-x-5 gap-y-1 body-sm">
 						<div className="flex items-center gap-1.5">
-							<dt className="text-tertiary/60">slug</dt>
+							<dt className="text-tertiary">Slug</dt>
 							<dd className="text-secondary">{slug}</dd>
 						</div>
 						<div className="flex items-center gap-1.5">
-							<dt className="text-tertiary/60">words</dt>
+							<dt className="text-tertiary">Words</dt>
 							<dd className="text-secondary tabular-nums">{wordCount}</dd>
 						</div>
 						{revision ? (
 							<>
 								<div className="flex items-center gap-1.5">
-									<dt className="text-tertiary/60">when</dt>
+									<dt className="text-tertiary">When</dt>
 									<dd className="text-secondary tabular-nums" title={revision.createdAt}>
 										{formatExact(revision.createdAt)}
 									</dd>
 								</div>
 								{revision.actor ? (
 									<div className="flex items-center gap-1.5">
-										<dt className="text-tertiary/60">by</dt>
+										<dt className="text-tertiary">By</dt>
 										<dd className="flex items-center gap-1.5 text-secondary">
 											<ActorAvatar name={revision.actor.displayName} url={revision.actor.avatarUrl} size={14} />
 											{revision.actor.displayName}
@@ -894,142 +877,75 @@ function PreviewSpecimenHeader({
 					</dl>
 				</div>
 
-				<div className="flex items-center gap-2">
-					{confirming === 'restore' ? (
-						<InlineConfirm
-							tone="primary"
-							finalFocus={restoreRef}
-							title="Restore as pending?"
-							description="Loads this snapshot into the editor as a pending edit."
-							confirmLabel={isRestoring ? 'Restoring…' : 'Confirm restore'}
-							onConfirm={onConfirmRestore}
-							onCancel={onCancelConfirm}
-							disabled={isRestoring}
-						/>
-					) : confirming === 'delete' ? (
-						<InlineConfirm
-							tone="danger"
-							finalFocus={deleteRef}
-							title="Remove from history?"
-							description="The snapshot will be permanently deleted."
-							confirmLabel={isDeleting ? 'Deleting…' : 'Confirm delete'}
-							onConfirm={onConfirmDelete}
-							onCancel={onCancelConfirm}
-							disabled={isDeleting}
-						/>
-					) : (
-						<>
-							<button
-								type="button"
-								ref={restoreRef}
-								onClick={onAskRestore}
-								disabled={!revision || isRestoring}
-								className="group flex h-9 items-center gap-2 rounded-md bg-link px-3.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
-								<span>Restore as pending</span>
-								<kbd className="hidden rounded-sm border border-research-invert/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
-									R
-								</kbd>
-							</button>
-							<button
-								type="button"
-								ref={deleteRef}
-								aria-label="Delete revision"
-								onClick={onAskDelete}
-								disabled={!revision || !canDelete || isDeleting}
-								title={canDelete ? 'Delete this revision' : 'The current live revision cannot be deleted'}
-								className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-error/50 hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
-							>
-								<Icon name="trash-2" className="size-3.5" />
-							</button>
-						</>
-					)}
+				<div className="grid justify-items-start gap-1.5 lg:justify-items-end">
+					<div className="flex items-center gap-2">
+						<Button
+							ref={restoreRef}
+							type="button"
+							variant="primary"
+							size="md"
+							onClick={onAskRestore}
+							disabled={!revision}
+						>
+							<Icon name="repeat" className="size-3.5" aria-hidden="true" />
+							Restore as pending
+						</Button>
+						{/* Stays focusable while unavailable, so a closing delete confirmation can hand focus back to it. */}
+						<Ariakit.Button
+							ref={deleteRef}
+							disabled={!revision || isLive}
+							accessibleWhenDisabled
+							onClick={onAskDelete}
+							render={<Button type="button" size="md" variant="destructive" />}
+						>
+							<Icon name="trash-2" className="size-3.5" aria-hidden="true" />
+							Delete
+						</Ariakit.Button>
+					</div>
+					{isLive ? <p className="body-sm text-tertiary">The live revision can't be deleted.</p> : null}
 				</div>
 			</div>
 
-			{actionError ? (
-				<div className="px-4 pb-4 lg:px-7">
-					<InlineStatus variant="error">{actionError}</InlineStatus>
-				</div>
-			) : null}
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-medium bg-page/50 px-7 py-2.5">
-				<div className="inline-flex items-center gap-px rounded-md border border-medium bg-surface p-0.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase">
-					{(['preview', 'diff'] as Array<ViewMode>).map((mode) => {
-						const isActive = viewMode === mode
-						return (
-							<button
-								key={mode}
-								type="button"
-								onClick={() => onChangeView(mode)}
-								className={`rounded-sm px-3 py-1.5 transition-colors ${
-									isActive
-										? 'bg-primary text-surface'
-										: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
-								}`}
-							>
-								{mode}
-							</button>
-						)
-					})}
-				</div>
+			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle px-4 py-2.5 lg:px-6">
+				<SegmentedControl
+					label="View"
+					value={viewMode}
+					onValueChange={onChangeView}
+					options={VIEW_OPTIONS}
+					variant="default"
+					size="md"
+				/>
 
 				{viewMode === 'diff' ? (
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary/70 uppercase">
-							compare against
-						</span>
-						<div className="flex items-center gap-px rounded-md border border-medium bg-surface p-0.5">
-							{(['previous', 'live', 'pending'] as Array<BaseMode>).map((mode) => {
-								const enabled = !!baseAvailability[mode]
-								const isActive = baseMode === mode
-								return (
-									<button
-										key={mode}
-										type="button"
-										onClick={() => enabled && onChangeBase(mode)}
-										aria-pressed={isActive}
-										disabled={!enabled}
-										title={
-											!enabled
-												? mode === 'previous'
-													? 'No earlier revision'
-													: mode === 'live'
-														? 'No live revision recorded'
-														: 'No pending revision'
-												: undefined
-										}
-										className={`rounded-sm px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-											isActive
-												? 'bg-link text-on-brand'
-												: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
-										}`}
-									>
-										{baseLabels[mode]}
-									</button>
-								)
-							})}
-						</div>
+						<span className="label-sm text-secondary">Compare against</span>
+						{/* Every base stays pickable; one with nothing to compare says why in the pane. */}
+						<SegmentedControl
+							label="Compare against"
+							value={baseMode}
+							onValueChange={onChangeBase}
+							options={BASE_OPTIONS}
+							variant="default"
+							size="md"
+						/>
 						{stats ? (
-							<div className="flex items-center gap-2 font-jetbrains text-[11px] tabular-nums">
-								<span className="inline-flex items-center gap-1 text-success dark:text-success">
+							<div className="flex items-center gap-2 mono-sm">
+								<span className="inline-flex items-center gap-1 text-success">
 									<span aria-hidden>+</span>
 									{stats.added}
 								</span>
-								<span aria-hidden className="text-tertiary/40">
+								<span aria-hidden className="text-tertiary">
 									/
 								</span>
 								<span className="inline-flex items-center gap-1 text-error">
 									<span aria-hidden>−</span>
 									{stats.removed}
 								</span>
-								<span className="text-tertiary/70">words</span>
+								<span className="body-sm text-tertiary">words</span>
 							</div>
 						) : null}
 						{baseRevisionLabel ? (
-							<span className="hidden truncate font-jetbrains text-[11px] text-tertiary lg:inline">
-								base · {baseRevisionLabel}
-							</span>
+							<span className="hidden truncate body-sm text-tertiary lg:inline">Base: {baseRevisionLabel}</span>
 						) : null}
 					</div>
 				) : null}
@@ -1039,85 +955,27 @@ function PreviewSpecimenHeader({
 }
 
 function DiffPane({
-	selected,
-	base,
-	baseMode,
-	baseUnavailable,
-	baseError,
 	diff
 }: {
-	selected: ArticleRevision | null
-	base: ArticleRevision | null
-	baseMode: BaseMode
-	baseUnavailable: BaseUnavailable | null
-	baseError: string | null
 	diff: {
 		paragraphs: Array<ParagraphDiffOp>
 		metadata: Array<FieldChange>
 		stats: { added: number; removed: number }
-	} | null
+	}
 }) {
-	if (!selected) {
-		return (
-			<div className="grid h-full place-items-center px-6">
-				<p className="font-jetbrains text-[11px] tracking-[0.18em] text-tertiary uppercase">Select a revision</p>
-			</div>
-		)
-	}
-	if (baseUnavailable) {
-		return (
-			<div className="grid h-full place-items-center px-6">
-				<div className="max-w-sm text-center">
-					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
-						<Icon name="code" className="size-5 text-tertiary" />
-					</div>
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Nothing to compare</p>
-					<p className="mt-2 text-sm text-secondary">{BASE_UNAVAILABLE_TEXT[baseMode][baseUnavailable]}</p>
-				</div>
-			</div>
-		)
-	}
-	if (baseError) {
-		return (
-			<div className="px-6 py-8">
-				<InlineStatus variant="error">{baseError}</InlineStatus>
-			</div>
-		)
-	}
-	if (!base || !diff) {
-		return (
-			<div className="grid h-full place-items-center px-6 py-12">
-				<div className="text-center">
-					<div className="mx-auto mb-3 h-1 w-24 animate-pulse rounded-sm bg-border-medium" />
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">computing diff</p>
-				</div>
-			</div>
-		)
-	}
-
 	const noBodyChanges =
 		diff.stats.added === 0 && diff.stats.removed === 0 && diff.paragraphs.every((op) => op.type === 'equal')
 	const noMetadataChanges = diff.metadata.length === 0
 
 	if (noBodyChanges && noMetadataChanges) {
-		return (
-			<div className="grid h-full place-items-center px-6">
-				<div className="max-w-sm text-center">
-					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-medium bg-surface">
-						<Icon name="check" className="size-5 text-success" />
-					</div>
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Identical</p>
-					<p className="mt-2 text-sm text-secondary">No textual or metadata changes between these revisions.</p>
-				</div>
-			</div>
-		)
+		return <SurfaceBodyStatus variant="empty">No text or metadata changes between these revisions.</SurfaceBodyStatus>
 	}
 
 	return (
 		<div className="mx-auto w-full max-w-[860px] px-6 py-8">
 			{!noMetadataChanges ? <MetadataDiffSection changes={diff.metadata} /> : null}
 			{noBodyChanges ? (
-				<div className="mt-2 rounded-md border border-dashed border-medium bg-surface/50 px-4 py-3 font-jetbrains text-[11px] text-tertiary">
+				<div className="mt-2 rounded-md border border-dashed border-medium bg-page px-4 py-3 body-sm text-tertiary">
 					Body unchanged.
 				</div>
 			) : (
@@ -1131,14 +989,14 @@ function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 	return (
 		<section className="mb-8 grid gap-2">
 			<header className="flex items-baseline justify-between gap-2">
-				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
+				<h4 className="label-sm text-secondary">
 					Metadata · {changes.length} change{changes.length === 1 ? '' : 's'}
 				</h4>
 			</header>
 			<dl className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 				{changes.map((change) => (
 					<div key={change.key} className="grid grid-cols-[120px_1fr] gap-4 px-4 py-3">
-						<dt className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">{change.label}</dt>
+						<dt className="label-sm text-tertiary">{change.label}</dt>
 						<dd className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
 							<MetaValue value={change.before} tone="remove" />
 							<span aria-hidden className="hidden font-jetbrains text-[10px] text-tertiary/60 sm:inline">
@@ -1170,7 +1028,7 @@ function BodyDiffSection({ ops }: { ops: Array<ParagraphDiffOp> }) {
 	return (
 		<section className="grid gap-3">
 			<header>
-				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Body</h4>
+				<h4 className="label-sm text-secondary">Body</h4>
 			</header>
 			<div className="grid gap-2 rounded-md border border-medium bg-surface p-2">
 				{ops.map((op, idx) => (
@@ -1240,126 +1098,6 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 					)
 				})}
 			</p>
-		</div>
-	)
-}
-
-function InlineConfirm({
-	tone,
-	title,
-	description,
-	confirmLabel,
-	onConfirm,
-	onCancel,
-	disabled,
-	finalFocus
-}: {
-	tone: 'primary' | 'danger'
-	title: string
-	description: string
-	confirmLabel: string
-	onConfirm: () => void
-	onCancel: () => void
-	disabled: boolean
-	finalFocus: RefObject<HTMLButtonElement | null>
-}) {
-	const accent = tone === 'danger' ? 'border-error/40 bg-error/5' : 'border-link/40 bg-link/5'
-	const button = tone === 'danger' ? 'bg-error hover:bg-error/90' : 'bg-link hover:opacity-90'
-	return (
-		<Ariakit.Dialog
-			open
-			modal={false}
-			portal={false}
-			backdrop={false}
-			hideOnInteractOutside={false}
-			onClose={onCancel}
-			finalFocus={finalFocus}
-			role="alertdialog"
-			aria-label={title}
-			className={`flex flex-wrap items-center gap-3 rounded-md border px-3 py-2 ${accent}`}
-		>
-			<div className="grid">
-				<div className="text-xs font-medium text-primary">{title}</div>
-				<Ariakit.DialogDescription className="text-[11px] text-tertiary">{description}</Ariakit.DialogDescription>
-			</div>
-			<div className="flex items-center gap-1.5">
-				<Ariakit.DialogDismiss
-					type="button"
-					disabled={disabled}
-					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-research-tint-hover disabled:opacity-50"
-				>
-					Cancel
-				</Ariakit.DialogDismiss>
-				<button
-					type="button"
-					onClick={onConfirm}
-					disabled={disabled}
-					className={`rounded-md px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${button}`}
-				>
-					{confirmLabel}
-				</button>
-			</div>
-		</Ariakit.Dialog>
-	)
-}
-
-function TimelineSkeleton() {
-	return (
-		<div className="grid gap-1 p-5">
-			{[0.9, 0.7, 0.55, 0.85, 0.6, 0.7].map((scale, idx) => (
-				// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
-				<div key={idx} className="flex items-start gap-3 py-2">
-					<span aria-hidden className="mt-1 size-2 rounded-full bg-border-medium" />
-					<div className="grid flex-1 gap-1.5">
-						<span aria-hidden className="h-2 rounded-sm bg-border-medium" style={{ width: `${scale * 100}%` }} />
-						<span aria-hidden className="bg-border-medium/60 h-2 w-24 rounded-sm" />
-					</div>
-				</div>
-			))}
-			<div className="mt-2 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
-				· loading ·
-			</div>
-		</div>
-	)
-}
-
-function PreviewSkeleton() {
-	return (
-		<div className="mx-auto grid w-full max-w-[760px] gap-4 px-6 py-12">
-			<span aria-hidden className="bg-border-medium/70 h-3 w-32 rounded-sm" />
-			<span aria-hidden className="h-10 w-3/4 rounded-sm bg-border-medium" />
-			<span aria-hidden className="bg-border-medium/70 h-5 w-2/3 rounded-sm" />
-			<div className="mt-6 grid gap-2">
-				{[1, 0.95, 0.9, 0.7, 0.85, 0.6].map((scale, idx) => (
-					<span
-						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
-						key={idx}
-						aria-hidden
-						className="bg-border-medium/50 h-3 rounded-sm"
-						style={{ width: `${scale * 100}%` }}
-					/>
-				))}
-			</div>
-		</div>
-	)
-}
-
-function EmptyState({ filter }: { filter: FilterKey }) {
-	return (
-		<div className="grid h-full place-items-center px-6 py-16">
-			<div className="max-w-xs text-center">
-				<div className="mx-auto mb-4 grid size-14 place-items-center rounded-full border border-dashed border-medium">
-					<Icon name="file-text" className="size-6 text-tertiary" />
-				</div>
-				<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
-					{filter === 'all' ? 'No revisions yet' : 'No matches'}
-				</p>
-				<p className="mt-2 text-sm text-secondary">
-					{filter === 'all'
-						? 'Save or publish to start writing the ledger.'
-						: 'Try another filter — or switch back to All.'}
-				</p>
-			</div>
 		</div>
 	)
 }

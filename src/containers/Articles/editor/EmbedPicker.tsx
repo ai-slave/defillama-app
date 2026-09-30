@@ -1,6 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useId, useMemo, useState } from 'react'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Input, textareaStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Tag } from '~/ui/Tag'
 import { detectEmbed, getEmbedProviderLabel, type EmbedDetection } from '../embedProviders'
 import type { ArticleEmbedAspectRatio, ArticleEmbedConfig } from '../types'
 
@@ -19,15 +23,19 @@ const ASPECT_OPTIONS: Array<{ value: ArticleEmbedAspectRatio; label: string }> =
 
 export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 	const urlId = useId()
+	const titleId = useId()
+	const captionId = useId()
+	const aspectId = useId()
 	const [rawUrl, setRawUrl] = useState(initialConfig?.sourceUrl ?? '')
 	const [title, setTitle] = useState(initialConfig?.title ?? '')
 	const [caption, setCaption] = useState(initialConfig?.caption ?? '')
 	const [aspectRatio, setAspectRatio] = useState<ArticleEmbedAspectRatio | null>(initialConfig?.aspectRatio ?? null)
 
 	const detection: EmbedDetection | null = useMemo(() => detectEmbed(rawUrl), [rawUrl])
-	const detectionStatus = rawUrl.trim().length === 0 ? 'empty' : detection ? 'ok' : 'invalid'
+	const invalid = rawUrl.trim().length > 0 && !detection
 
-	const submit = () => {
+	const submit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 		if (!detection) return
 		const config: ArticleEmbedConfig = {
 			provider: detection.provider,
@@ -47,120 +55,102 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 	const aspectValue = aspectRatio || detection?.aspectRatio || '16/9'
 
 	return (
-		<Ariakit.Dialog
-			store={store}
-			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(640px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
-		>
-			<div className="flex shrink-0 items-center justify-between gap-3 border-b border-medium px-5 py-3">
-				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-primary">
-					{initialConfig ? 'Edit embed' : 'Insert embed'}
-				</Ariakit.DialogHeading>
-				<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-tertiary hover:border-medium hover:text-primary">
-					Close
-				</Ariakit.DialogDismiss>
-			</div>
+		<Dialog store={store} size="md" unmountOnHide portal>
+			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader title={initialConfig ? 'Edit embed' : 'Insert embed'} />
+				<DialogBody>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={urlId} className="label-sm text-secondary">
+							URL
+						</label>
+						<Ariakit.Focusable
+							autoFocus
+							render={
+								<Input
+									id={urlId}
+									inputMode="url"
+									aria-describedby={`${urlId}-detection`}
+									aria-invalid={invalid || undefined}
+									value={rawUrl}
+									onChange={(e) => setRawUrl(e.target.value)}
+									placeholder="https://www.youtube.com/watch?v=…"
+								/>
+							}
+						/>
+						{/* The primary action stays disabled until this line recognises the URL, so it also says why. */}
+						<p id={`${urlId}-detection`} className="body-sm">
+							{invalid ? (
+								<span className="text-data-down">
+									This URL isn&apos;t from a supported source. Use a tweet, YouTube, Telegram, Flourish, Datawrapper,
+									Medium, Substack or GitHub gist link.
+								</span>
+							) : detection ? (
+								<span className="flex min-w-0 items-center gap-2">
+									<Tag className="shrink-0">{getEmbedProviderLabel(detection.provider)}</Tag>
+									<span className="truncate text-tertiary">{detection.url}</span>
+								</span>
+							) : (
+								<span className="text-tertiary">
+									Paste a tweet, YouTube video, Telegram post, Flourish or Datawrapper chart, Medium or Substack post,
+									or GitHub gist. Other sources can&apos;t be embedded.
+								</span>
+							)}
+						</p>
+					</div>
 
-			<div className="grid min-h-0 gap-4 overflow-y-auto px-5 py-4">
-				<label htmlFor={urlId} className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">URL</span>
-					<Ariakit.Focusable
-						autoFocus
-						render={
-							<input
-								id={urlId}
-								aria-describedby={`${urlId}-detection`}
-								aria-invalid={detectionStatus === 'invalid'}
-								value={rawUrl}
-								onChange={(e) => setRawUrl(e.target.value)}
-								placeholder="x.com · youtube · t.me · flourish · datawrapper · medium · substack · github"
-								className="rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						}
-					/>
-				</label>
-				<div id={`${urlId}-detection`} className="-mt-2">
-					<DetectionLine status={detectionStatus} detection={detection} />
-				</div>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={titleId} className="label-sm text-secondary">
+							Title (optional)
+						</label>
+						<Input
+							id={titleId}
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							placeholder="Short label shown above the embed"
+						/>
+					</div>
 
-				<label className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Title (optional)</span>
-					<input
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						placeholder="Short label shown above the embed"
-						className="rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-					/>
-				</label>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={captionId} className="label-sm text-secondary">
+							Caption (optional)
+						</label>
+						<textarea
+							id={captionId}
+							value={caption}
+							onChange={(e) => setCaption(e.target.value)}
+							rows={2}
+							placeholder="Source notes or context shown below the embed"
+							className={`${textareaStyles} resize-none`}
+						/>
+					</div>
 
-				<label className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-						Caption (optional)
-					</span>
-					<textarea
-						value={caption}
-						onChange={(e) => setCaption(e.target.value)}
-						rows={2}
-						placeholder="Source notes or context shown below the embed"
-						className="resize-none rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-					/>
-				</label>
-
-				<SegmentedControl<ArticleEmbedAspectRatio>
-					label="Aspect ratio"
-					value={aspectValue}
-					onValueChange={setAspectRatio}
-					options={ASPECT_OPTIONS}
-					variant="responsive"
-					size="sm"
-					className="w-full"
-					buttonClassName="flex-1"
-				/>
-			</div>
-
-			<div className="flex shrink-0 items-center justify-end gap-2 border-t border-medium bg-page/30 px-5 py-3">
-				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-tint-hover">
-					Cancel
-				</Ariakit.DialogDismiss>
-				<button
-					type="button"
-					disabled={!detection}
-					onClick={submit}
-					className="rounded-md bg-research-tint px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+					<div className="flex flex-col gap-1.5">
+						<span id={aspectId} className="label-sm text-secondary">
+							Aspect ratio
+						</span>
+						<SegmentedControl<ArticleEmbedAspectRatio>
+							label="Aspect ratio"
+							aria-labelledby={aspectId}
+							value={aspectValue}
+							onValueChange={setAspectRatio}
+							options={ASPECT_OPTIONS}
+							variant="field"
+							size="md"
+						/>
+					</div>
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
+							Cancel
+						</Ariakit.DialogDismiss>
+					}
 				>
-					{initialConfig ? 'Update embed' : 'Insert embed'}
-				</button>
-			</div>
-		</Ariakit.Dialog>
-	)
-}
-
-function DetectionLine({
-	status,
-	detection
-}: {
-	status: 'empty' | 'ok' | 'invalid'
-	detection: EmbedDetection | null
-}) {
-	if (status === 'empty') {
-		return (
-			<span className="text-[11px] text-tertiary">
-				Tweet, YouTube, Telegram post, Flourish, Datawrapper, Medium, Substack, or GitHub gist. Other domains are
-				blocked.
-			</span>
-		)
-	}
-	if (status === 'invalid') {
-		return <span className="text-[11px] text-error">URL not recognized or domain not on allowlist.</span>
-	}
-	if (!detection) return null
-	return (
-		<span className="flex items-center gap-2 text-[11px] text-secondary">
-			<span className="rounded-sm border border-medium bg-page px-1.5 py-0.5 font-jetbrains text-[10px] tracking-wider text-secondary uppercase">
-				{getEmbedProviderLabel(detection.provider)}
-			</span>
-			<span className="truncate text-tertiary">{detection.url}</span>
-		</span>
+					<Button type="submit" size="md" variant="primary" disabled={!detection}>
+						{initialConfig ? 'Update embed' : 'Insert embed'}
+					</Button>
+				</DialogFooter>
+			</form>
+		</Dialog>
 	)
 }

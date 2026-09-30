@@ -32,7 +32,7 @@ type ArticleEditorHeaderProps = {
 	commitSlugEdit: () => void
 	handleDeleteArticle: () => void
 	handleDiscardPending: () => void
-	handlePublish: () => Promise<boolean>
+	handlePublish: () => void
 	handleUnpublish: () => Promise<void>
 	onOpenHistory: () => void
 	onOpenMeta: () => void
@@ -244,9 +244,7 @@ export function ArticleEditorHeader({
 								<button
 									type="button"
 									disabled={isPublishing || isDiscarding}
-									onClick={async () => {
-										await handlePublish()
-									}}
+									onClick={handlePublish}
 									className="flex h-9 items-center gap-1.5 rounded-md bg-success px-3.5 text-xs font-medium text-on-brand shadow-publish transition-all hover:bg-success hover:shadow-publish-hover disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									<span>{isPublishing ? 'Publishing…' : 'Publish update'}</span>

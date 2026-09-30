@@ -139,5 +139,15 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 		[uploadFile]
 	)
 
-	return { uploadFile, uploadWithToast, isUploading: upload.isPending }
+	return {
+		uploadFile,
+		uploadWithToast,
+		isUploading: upload.isPending,
+		// Client checks and the server's 4xx reasons name the fix; anything else is a plain retry.
+		errorMessage: upload.error
+			? upload.error instanceof ImageUploadError && upload.error.status < 500
+				? upload.error.message
+				: "Couldn't upload this image. Try again."
+			: null
+	}
 }

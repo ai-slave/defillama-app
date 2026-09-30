@@ -47,9 +47,6 @@ const radioOptionStyles =
 	'relative flex h-10 flex-1 cursor-pointer items-center justify-center rounded-lg label-sm transition-colors has-focus-visible:focus-ring has-[input[aria-disabled=true]]:cursor-not-allowed has-[input[aria-disabled=true]]:opacity-60'
 const radioOptionSelectedStyles = 'border border-brand bg-brand-muted text-link-on-tint'
 const radioOptionIdleStyles = 'border border-medium text-primary'
-// The stepper keeps its 40px controls; control heights move in their own change.
-const seatStepperButtonStyles =
-	'flex size-10 shrink-0 items-center justify-center rounded-lg border border-medium text-primary not-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
 
 const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 
@@ -264,15 +261,16 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									Number of seats
 								</label>
 								<div className="flex items-center gap-2">
-									<button
+									<Button
 										type="button"
 										aria-label="Decrease seats"
 										onClick={() => setSeatInput(String(Math.max(1, seatCount - 1)))}
 										disabled={seatCount <= 1 || !canChangeTeamBilling}
-										className={seatStepperButtonStyles}
+										size="md"
+										square
 									>
-										<Icon name="minus" height={16} width={16} />
-									</button>
+										<Icon name="minus" className="size-4" aria-hidden="true" />
+									</Button>
 									<Input
 										id="seat-count"
 										type="number"
@@ -283,17 +281,18 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										inputMode="numeric"
 										value={seatInput}
 										onChange={(e) => setSeatInput(e.target.value)}
-										className="h-10 w-20 text-center"
+										className="w-20 text-center"
 									/>
-									<button
+									<Button
 										type="button"
 										aria-label="Increase seats"
 										disabled={!canChangeTeamBilling}
 										onClick={() => setSeatInput(String(Math.max(1, seatCount + 1)))}
-										className={seatStepperButtonStyles}
+										size="md"
+										square
 									>
-										<Icon name="plus" height={16} width={16} />
-									</button>
+										<Icon name="plus" className="size-4" aria-hidden="true" />
+									</Button>
 								</div>
 							</div>
 

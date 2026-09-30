@@ -5,10 +5,13 @@ import StarterKit from '@tiptap/starter-kit'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
+import { fixtureStatus } from '~/utils/testing/fixtureFetch'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
+import { waitForUi } from '~/utils/testing/waitForUi'
 import { LlamaAIChartPickerDialog } from '../LlamaAIChartPicker'
 import { LlamaAIChart } from '../nodes/LlamaAIChart'
-import { makeEmptyPeoplePanelItem } from '../peoplePanel'
+import { makeEmptyPeoplePanelItem, type ArticlePeoplePanelConfig } from '../peoplePanel'
 import { PeoplePanelDialog } from '../PeoplePanelDialog'
 
 const api = vi.hoisted(() => ({ error: vi.fn() }))
@@ -40,32 +43,22 @@ function deferred<T>() {
 	})
 	return { promise, resolve }
 }
-async function click(name: string) {
-	await act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 0))
-	})
-	await act(async () => {
-		const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-			(e) => e.getAttribute('aria-label') === name || e.textContent?.trim() === name
-		)!
-		button.click()
-	})
+function findButton(name: string) {
+	return [...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => accessibleName(e) === name)
 }
-async function mountPanel() {
+async function click(name: string) {
+	const button = await waitForUi(() => {
+		const found = findButton(name)
+		expect(found).toBeDefined()
+		return found!
+	})
+	await act(async () => button.click())
+}
+async function mountPanel(initialConfig: ArticlePeoplePanelConfig | null = peopleConfig) {
 	const submit = vi.fn()
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: true })
-		return (
-			<PeoplePanelDialog
-				store={store}
-				articleId="article"
-				onSubmit={submit}
-				initialConfig={{
-					label: 'People',
-					items: ['Alice', 'Bob'].map((name) => ({ ...makeEmptyPeoplePanelItem(), name, src: `/${name}.png` }))
-				}}
-			/>
-		)
+		return <PeoplePanelDialog store={store} articleId="article" onSubmit={submit} initialConfig={initialConfig} />
 	}
 	await act(async () =>
 		root.render(
@@ -76,10 +69,14 @@ async function mountPanel() {
 	)
 	return submit
 }
-async function uploadFirst() {
+const peopleConfig = {
+	label: 'People',
+	items: ['Alice', 'Bob'].map((name) => ({ ...makeEmptyPeoplePanelItem(), name, src: `/${name}.png` }))
+}
+async function uploadFirst(file = new File(['image'], 'replacement.png', { type: 'image/png' })) {
 	await act(async () => {
 		const input = document.querySelector<HTMLInputElement>('input[type="file"]')!
-		Object.defineProperty(input, 'files', { value: [new File(['image'], 'replacement.png', { type: 'image/png' })] })
+		Object.defineProperty(input, 'files', { value: [file] })
 		input.dispatchEvent(new Event('change', { bubbles: true }))
 	})
 }
@@ -106,6 +103,31 @@ test('an in-flight upload of a removed person does not block saving the remainin
 	await click('Remove person 1')
 	await click('Update panel')
 	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
+})
+test('inserting a panel with a person missing an image shows the error on that row and focuses its image', async () => {
+	const submit = await mountPanel(null)
+	await click('Insert panel')
+	expect(submit).not.toHaveBeenCalled()
+	expect(document.querySelector('[role="dialog"]')?.textContent).toContain('An image is required for each person.')
+	expect(accessibleName(document.activeElement!)).toBe('Upload image')
+	expect(store.getState().open).toBe(true)
+})
+test('a failed upload shows a plain error under that person, not a toast or the server message', async () => {
+	session.serve({ '/uploads/image': fixtureStatus(500, { error: 'bucket write failed' }) })
+	await mountPanel()
+	await uploadFirst()
+	await waitForUi(() =>
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Couldn't upload this image. Try again.")
+	)
+	expect(document.body.textContent).not.toContain('bucket write failed')
+	expect(api.error).not.toHaveBeenCalled()
+})
+test('an image the upload rejects before sending says how to fix it', async () => {
+	await mountPanel()
+	await uploadFirst(new File(['notes'], 'notes.txt', { type: 'text/plain' }))
+	await waitForUi(() =>
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Allowed formats: PNG, JPEG, WebP, GIF')
+	)
 })
 const chart = {
 	chartConfig: {
@@ -165,9 +187,11 @@ test('closing and reopening the picker ignores an old insertion but allows the n
 	await act(async () => first.resolve(Response.json(chart)))
 	expect(editor.getJSON().content?.some((n) => n.type === 'llamaaiChart')).toBe(false)
 	expect(
-		[...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => e.textContent?.includes('Saved chart'))!
-			.disabled
-	).toBe(true)
+		[...document.querySelectorAll<HTMLButtonElement>('button')]
+			.find((e) => e.textContent?.includes('Saved chart'))!
+			.getAttribute('aria-busy')
+	).toBe('true')
+	expect(document.body.textContent).toContain('Inserting…')
 	await act(async () => second.resolve(Response.json(chart)))
 	expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1)
 	expect(store.getState().open).toBe(false)
@@ -181,7 +205,7 @@ test('offers a retry for list failures and distinguishes a search miss from an e
 		}
 	})
 	await mountCharts()
-	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not load saved charts')
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load your saved charts.")
 	expect(document.body.textContent).not.toContain('No saved charts yet')
 	session.serve({ '/charts': { charts: [{ id: 'saved', title: 'Saved chart', created_at: '2026-09-01' }] } })
 	await click('Try again')
@@ -197,24 +221,37 @@ test('offers a retry for list failures and distinguishes a search miss from an e
 	expect(document.body.textContent).not.toContain('No saved charts yet')
 })
 
-test('allows insertion retry after a detail request fails', async () => {
+async function selectSavedChart() {
+	await act(async () =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')]
+			.find((e) => e.textContent?.includes('Saved chart'))!
+			.click()
+	)
+}
+test('a failed insertion shows a plain error under the chart inside the open picker, and a retry inserts it', async () => {
 	session.serve({
 		'/charts/saved': () => {
 			throw new Error('Detail unavailable')
 		}
 	})
 	await mountCharts()
-	const select = async () => {
-		await act(async () =>
-			[...document.querySelectorAll<HTMLButtonElement>('button')]
-				.find((e) => e.textContent?.includes('Saved chart'))!
-				.click()
-		)
-	}
-	await select()
-	expect(api.error).toHaveBeenCalledWith('Detail unavailable')
+	await selectSavedChart()
+	await waitForUi(() =>
+		expect(document.querySelector('li [role="alert"]')?.textContent).toBe("Couldn't insert this chart. Try again.")
+	)
+	expect(document.body.textContent).not.toContain('Detail unavailable')
+	expect(api.error).not.toHaveBeenCalled()
 	expect(store.getState().open).toBe(true)
 	session.serve({ '/charts/saved': chart })
-	await select()
-	expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1)
+	await selectSavedChart()
+	await waitForUi(() => expect(editor.getJSON().content?.filter((n) => n.type === 'llamaaiChart')).toHaveLength(1))
+})
+test('a saved chart without usable data says so instead of inserting', async () => {
+	session.serve({ '/charts/saved': { chartConfig: chart.chartConfig, chartData: [] } })
+	await mountCharts()
+	await selectSavedChart()
+	await waitForUi(() =>
+		expect(document.querySelector('li [role="alert"]')?.textContent).toBe('This chart has no data to insert.')
+	)
+	expect(editor.getJSON().content?.some((n) => n.type === 'llamaaiChart')).toBe(false)
 })

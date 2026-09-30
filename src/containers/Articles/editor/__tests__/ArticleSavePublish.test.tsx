@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, LocalArticleDocument } from '../../types'
@@ -90,7 +91,7 @@ async function mount(articleId = 'test-article') {
 }
 function button(name: string) {
 	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
-		(x) => x.textContent?.trim().replace(/\s*[→▾]$/, '') === name || x.getAttribute('aria-label') === name
+		(x) => accessibleName(x).replace(/\s*[→▾]$/, '') === name
 	)
 	if (!result) throw new Error(`Missing button: ${name}`)
 	return result
@@ -146,8 +147,10 @@ test('keeps the saved draft and review available after a publish failure', async
 	expect(article.title).toBe('Draft survives publish failure')
 	expect(article.status).toBe('draft')
 	expect(title().value).toBe('Draft survives publish failure')
-	expect(button('Publish now').closest<HTMLElement>('[role="dialog"]')!.hidden).toBe(false)
-	expect(button('Publish now').disabled).toBe(false)
+	const review = button('Publish now').closest<HTMLElement>('[role="dialog"]')!
+	expect(review.hidden).toBe(false)
+	expect(review.textContent).toContain('Publish unavailable')
+	expect(api.error).not.toHaveBeenCalled()
 	await click('Publish now')
 	expect(api.publish).toHaveBeenCalledTimes(2)
 	expect(api.save).toHaveBeenCalledOnce()
@@ -178,7 +181,7 @@ test('blocks duplicate publish actions until the response resolves', async () =>
 	api.publish.mockReturnValueOnce(pending.promise)
 	await click('Publish')
 	await click('Publish now')
-	expect(button('Publishing…').disabled).toBe(true)
+	expect(button('Publishing…').getAttribute('aria-busy')).toBe('true')
 	await click('Publishing…')
 	expect(api.publish).toHaveBeenCalledOnce()
 	await act(async () => pending.resolve({ ...article, status: 'published' }))
@@ -186,14 +189,15 @@ test('blocks duplicate publish actions until the response resolves', async () =>
 	expect(button('Live')).toBeTruthy()
 })
 
-test('validates required fields before issuing a publish request', async () => {
+test('lists the missing page fields in the review before issuing a publish request', async () => {
 	await mount()
 	await typeTitle('')
 	await click('Publish')
 	await click('Publish now')
 	expect(api.publish).not.toHaveBeenCalled()
-	expect(api.error).toHaveBeenCalledWith('Fix required fields before publishing')
-	expect(button('Keep editing')).toBeTruthy()
+	const review = button('Keep editing').closest<HTMLElement>('[role="dialog"]')!
+	expect(review.textContent).toContain('Fix these on the page before publishing:Headline is required')
+	expect(api.error).not.toHaveBeenCalled()
 })
 
 test('retains the listing dialog when its save fails', async () => {
@@ -210,8 +214,8 @@ test('retains the listing dialog when its save fails', async () => {
 	await click('Save changes')
 	const review = button('Save changes').closest<HTMLElement>('[role="dialog"]')!
 	expect(review.hidden).toBe(false)
-	expect(button('Save changes').disabled).toBe(false)
-	expect(api.error).toHaveBeenCalledWith('Save unavailable')
+	expect(review.textContent).toContain("Couldn't save your changes. Try again.")
+	expect(api.error).not.toHaveBeenCalled()
 	await click('Save changes')
 	expect(review.hidden).toBe(true)
 })

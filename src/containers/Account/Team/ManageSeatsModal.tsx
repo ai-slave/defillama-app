@@ -31,10 +31,6 @@ function getUnitPrice(type: string, billingInterval: 'month' | 'year'): { amount
 	return { amount: seatPrice(type, billingInterval), suffix: `/${billingInterval}` }
 }
 
-// The stepper keeps its 40px controls; control heights move in their own change.
-const seatStepperButtonStyles =
-	'flex size-10 shrink-0 items-center justify-center rounded-lg border border-medium text-primary not-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
-
 export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsModalProps) {
 	const {
 		canChangeTeamBilling,
@@ -131,15 +127,16 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 							New seat count
 						</label>
 						<div className="flex items-center gap-2">
-							<button
+							<Button
 								type="button"
 								aria-label="Decrease seats"
 								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
 								disabled={decrementDisabled || !canChangeTeamBilling}
-								className={seatStepperButtonStyles}
+								size="md"
+								square
 							>
-								<Icon name="minus" height={16} width={16} />
-							</button>
+								<Icon name="minus" className="size-4" aria-hidden="true" />
+							</Button>
 							{/* Ariakit's autoFocus, so the dialog opens on the seat count instead of the header ×. */}
 							<Ariakit.Focusable
 								autoFocus
@@ -155,19 +152,20 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 										value={seatInput}
 										onChange={(e) => setSeatInput(e.target.value)}
 										aria-describedby={floorHint ? 'manage-seat-floor' : undefined}
-										className="h-10 w-20 text-center"
+										className="w-20 text-center"
 									/>
 								}
 							/>
-							<button
+							<Button
 								type="button"
 								aria-label="Increase seats"
 								disabled={!canChangeTeamBilling}
 								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
-								className={seatStepperButtonStyles}
+								size="md"
+								square
 							>
-								<Icon name="plus" height={16} width={16} />
-							</button>
+								<Icon name="plus" className="size-4" aria-hidden="true" />
+							</Button>
 						</div>
 						{floorHint ? (
 							<p id="manage-seat-floor" className="body-sm text-secondary">

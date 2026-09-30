@@ -22,7 +22,7 @@ export function SelectMetricsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h3 className="label-md text-primary">Select Metrics to Compare</h3>
+				<h3 className="label-md text-primary">Select metrics to compare</h3>
 				<p className="mt-1 body-sm text-secondary">
 					Choose the metrics you want to compare across your selected {typeLabel}.
 				</p>

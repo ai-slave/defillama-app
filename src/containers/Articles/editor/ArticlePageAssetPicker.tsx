@@ -2,7 +2,10 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import type { PageAssetSearchHit } from '../pageAssetMarket'
 import type { ArticlePageAsset } from '../types'
@@ -66,8 +69,8 @@ export function ArticlePageAssetPicker({
 	}
 
 	return (
-		<div className="grid gap-2.5">
-			<p className="-mt-1 text-[11px] leading-snug text-tertiary">
+		<div className="grid gap-2">
+			<p className="-mt-1 body-sm text-tertiary">
 				Pick the tokens this article covers. Live price and 24h change render in the sidebar — only the token identity
 				is saved.
 			</p>
@@ -79,17 +82,14 @@ export function ArticlePageAssetPicker({
 				setInputValue={setSearchValue}
 				resetValueOnHide
 			>
-				<div
-					className={`relative flex items-center rounded-md border bg-page ${
-						atLimit ? 'border-medium opacity-60' : 'border-medium focus-within:border-link/60'
-					}`}
-				>
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
+				<div className="relative">
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Ariakit.Combobox
+						aria-label="Search tokens to add"
 						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
 						disabled={atLimit}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent py-2 pr-3 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary disabled:cursor-not-allowed"
+						className={searchFieldInputStyles}
 					/>
 				</div>
 				<Ariakit.ComboboxPopover
@@ -97,11 +97,11 @@ export function ArticlePageAssetPicker({
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
+					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-overlay py-1 shadow-xl outline-hidden"
 				>
-					{isFetching && hits.length === 0 ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
+					{isFetching && hits.length === 0 ? <p className="p-3 text-center body-sm text-tertiary">Searching…</p> : null}
 					{!isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (
-						<p className="p-3 text-center text-xs text-tertiary">No tokens found</p>
+						<p className="p-3 text-center body-sm text-tertiary">No tokens found</p>
 					) : null}
 					{hits.map((hit) => (
 						<Ariakit.ComboboxItem
@@ -109,64 +109,87 @@ export function ArticlePageAssetPicker({
 							value={hit.geckoId}
 							setValueOnClick={false}
 							onClick={() => addAsset(hit)}
-							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 data-active-item:bg-research-tint"
+							className="flex min-h-9 cursor-pointer items-center gap-2 px-3 py-2 data-active-item:bg-research-tint"
 						>
 							<TokenLogo src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)} size={20} alt={hit.symbol} />
-							<span className="text-sm font-semibold text-primary">{hit.symbol}</span>
-							<span className="truncate text-xs text-tertiary">{hit.name}</span>
+							<span className="label-md text-primary">{hit.symbol}</span>
+							<span className="truncate body-sm text-tertiary">{hit.name}</span>
 						</Ariakit.ComboboxItem>
 					))}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
 
 			{value.length > 0 ? (
-				<ul className="m-0 grid list-none gap-1.5 p-0">
+				<ul className="m-0 grid list-none gap-2 p-0">
 					{value.map((asset, index) => (
 						<li
 							key={asset.geckoId}
-							className="group flex items-center gap-2.5 rounded-lg border border-medium bg-page px-2.5 py-2 transition-colors hover:border-tertiary/40"
+							className="flex items-center gap-2 rounded-lg border border-subtle bg-page px-3 py-2"
 						>
-							<TokenLogo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={22} alt={asset.symbol} />
+							<TokenLogo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={20} alt={asset.symbol} />
 							<div className="flex min-w-0 flex-col">
-								<span className="text-sm leading-tight font-semibold text-primary">{asset.symbol}</span>
-								<span className="truncate text-[11px] leading-tight text-tertiary">{asset.name}</span>
+								<span className="label-md text-primary">{asset.symbol}</span>
+								<span className="truncate body-sm text-tertiary">{asset.name}</span>
 							</div>
-							<div className="ml-auto flex items-center gap-0.5">
-								<button
-									type="button"
-									onClick={() => moveAsset(index, -1)}
+							{/* Always visible: a remove that appears on hover never appears on a touch screen. */}
+							<div className="ml-auto flex items-center gap-1">
+								<RowAction
+									tip="Move up"
+									label={`Move ${asset.symbol} up`}
+									icon="chevron-up"
 									disabled={index === 0}
-									aria-label={`Move ${asset.symbol} up`}
-									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:pointer-events-none disabled:opacity-30"
-								>
-									<Icon name="chevron-up" height={14} width={14} />
-								</button>
-								<button
-									type="button"
-									onClick={() => moveAsset(index, 1)}
+									onClick={() => moveAsset(index, -1)}
+								/>
+								<RowAction
+									tip="Move down"
+									label={`Move ${asset.symbol} down`}
+									icon="chevron-down"
 									disabled={index === value.length - 1}
-									aria-label={`Move ${asset.symbol} down`}
-									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:pointer-events-none disabled:opacity-30"
-								>
-									<Icon name="chevron-down" height={14} width={14} />
-								</button>
-								<button
-									type="button"
-									onClick={() => removeAsset(index)}
-									aria-label={`Remove ${asset.symbol}`}
-									className="grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-research-tint-hover hover:text-error focus-visible:opacity-100"
-								>
-									<Icon name="x" height={13} width={13} />
-								</button>
+									onClick={() => moveAsset(index, 1)}
+								/>
+								<RowAction tip="Remove" label={`Remove ${asset.symbol}`} icon="x" onClick={() => removeAsset(index)} />
 							</div>
 						</li>
 					))}
 				</ul>
 			) : (
-				<div className="rounded-lg border border-dashed border-medium px-3 py-3 text-center text-[11px] leading-snug text-tertiary">
-					<p>No assets yet. Search above to add the tokens this article covers.</p>
-				</div>
+				<p className="rounded-lg border border-dashed border-medium bg-page px-3 py-3 text-center body-sm text-tertiary">
+					No assets yet. Search above to add the tokens this article covers.
+				</p>
 			)}
 		</div>
+	)
+}
+
+function RowAction({
+	tip,
+	label,
+	icon,
+	disabled = false,
+	onClick
+}: {
+	tip: string
+	label: string
+	icon: 'chevron-up' | 'chevron-down' | 'x'
+	disabled?: boolean
+	onClick: () => void
+}) {
+	return (
+		<Tooltip
+			content={tip}
+			render={
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					square
+					disabled={disabled}
+					aria-label={label}
+					onClick={onClick}
+				/>
+			}
+		>
+			<Icon name={icon} className="size-4" aria-hidden="true" />
+		</Tooltip>
 	)
 }

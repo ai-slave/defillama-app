@@ -1,7 +1,15 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutationState, type MutationKey } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
-import { useImageUpload, type UploadResult } from '../upload/useImageUpload'
+import { flushSync } from 'react-dom'
+import { Button } from '~/ui/Button'
+import { Dialog, DialogBody, DialogFooter, DialogHeader } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
+import { Input, textareaStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
+import { Tooltip } from '~/ui/Tooltip'
+import { useImageUpload } from '../upload/useImageUpload'
 import {
 	makeEmptyPeoplePanelConfig,
 	makeEmptyPeoplePanelItem,
@@ -16,8 +24,11 @@ type Props = {
 	initialConfig?: ArticlePeoplePanelConfig | null
 }
 
+const getImageButtonId = (groupId: string, rowId: string) => `${groupId}-${rowId}-image`
+
 export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }: Props) {
 	const uploadGroupId = useId()
+	const labelId = useId()
 	const initialPanel = initialConfig ?? makeEmptyPeoplePanelConfig()
 	const [label, setLabel] = useState(initialPanel.label)
 	const [items, setItems] = useState(() =>
@@ -26,6 +37,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 			item
 		}))
 	)
+	// Set by an insert with a person still missing an image; each row's error then follows its own image.
 	const [showErrors, setShowErrors] = useState(false)
 
 	const updateItem = (id: string, patch: Partial<ArticlePeoplePanelItem>) => {
@@ -56,18 +68,21 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
-	// Removed rows may still finish uploading; only people still in this draft block Save.
+	// Removed rows may still finish uploading; only people still in this draft hold Insert.
 	const pendingUploadIds = useMutationState({
 		filters: { mutationKey: ['article-person-image', uploadGroupId], status: 'pending' },
 		select: (mutation) => mutation.options.mutationKey?.[2]
 	})
 	const hasPendingUploads = items.some(({ id }) => pendingUploadIds.includes(id))
-	const itemsHaveImage = items.every(({ item }) => Boolean(item.src))
-	const canSubmit = items.length > 0 && itemsHaveImage && !hasPendingUploads
 
-	const submit = () => {
-		if (!canSubmit) {
-			setShowErrors(true)
+	const submit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (hasPendingUploads) return
+		const firstMissing = items.find(({ item }) => !item.src)
+		if (firstMissing) {
+			// Render the row errors before focusing, so the focused image button is announced with its error.
+			flushSync(() => setShowErrors(true))
+			document.getElementById(getImageButtonId(uploadGroupId, firstMissing.id))?.focus()
 			return
 		}
 		onSubmit({
@@ -83,46 +98,35 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 	}
 
 	return (
-		<Ariakit.Dialog
-			store={store}
-			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
-		>
-			<div className="flex items-center justify-between gap-3 border-b border-medium px-5 py-3">
-				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-primary">
-					{initialConfig ? 'Edit people panel' : 'Insert people panel'}
-				</Ariakit.DialogHeading>
-				<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-tertiary hover:border-medium hover:text-primary">
-					Close
-				</Ariakit.DialogDismiss>
-			</div>
+		<Dialog store={store} size="md" unmountOnHide portal>
+			<form onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+				<DialogHeader title={initialConfig ? 'Edit people panel' : 'Insert people panel'} />
+				<DialogBody>
+					{!articleId ? (
+						<InlineStatus variant="warning">
+							Save the article as a draft before adding people. Image uploads need a saved article.
+						</InlineStatus>
+					) : null}
 
-			<div className="grid gap-5 overflow-y-auto px-5 py-4">
-				<label className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
-						Section label (optional)
-					</span>
-					<input
-						value={label}
-						onChange={(e) => setLabel(e.target.value)}
-						placeholder="e.g. Moderated by:"
-						className="rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-					/>
-				</label>
-
-				<div className="grid gap-3">
-					<div className="flex items-center justify-between">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">People</span>
-						<span className="font-jetbrains text-[10px] tracking-tight text-tertiary tabular-nums">
-							{items.length} {items.length === 1 ? 'entry' : 'entries'}
-						</span>
+					<div className="flex flex-col gap-1.5">
+						<label htmlFor={labelId} className="label-sm text-secondary">
+							Section label (optional)
+						</label>
+						<Input id={labelId} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Moderated by:" />
 					</div>
-					<div className="grid gap-3">
+
+					<div className="flex flex-col gap-3">
+						<div className="flex items-center justify-between gap-2">
+							<h3 className="label-sm text-secondary">People</h3>
+							<span className="body-sm text-tertiary tabular-nums">
+								{items.length} {items.length === 1 ? 'person' : 'people'}
+							</span>
+						</div>
 						{items.map(({ id, item }, idx) => (
 							<PersonRow
 								key={id}
 								uploadKey={['article-person-image', uploadGroupId, id]}
+								imageButtonId={getImageButtonId(uploadGroupId, id)}
 								item={item}
 								idx={idx}
 								total={items.length}
@@ -133,42 +137,36 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 								onMove={(dir) => moveItem(idx, dir)}
 							/>
 						))}
+						<Button type="button" size="md" onClick={addItem} className="w-full">
+							<Icon name="plus" className="size-3.5" aria-hidden="true" />
+							Add person
+						</Button>
 					</div>
-					<button
-						type="button"
-						onClick={addItem}
-						className="rounded-md border border-dashed border-medium bg-page px-3 py-2 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary"
-					>
-						+ Add person
-					</button>
-				</div>
-
-				{!articleId ? (
-					<div className="rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-warning">
-						Save the article as a draft before adding people — image uploads need an article id.
-					</div>
-				) : null}
-			</div>
-
-			<div className="flex items-center justify-end gap-2 border-t border-medium bg-page/30 px-5 py-3">
-				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-tint-hover">
-					Cancel
-				</Ariakit.DialogDismiss>
-				<button
-					type="button"
-					disabled={!canSubmit}
-					onClick={submit}
-					className="rounded-md bg-research-tint px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+				</DialogBody>
+				<DialogFooter
+					dismiss={
+						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
+							Cancel
+						</Ariakit.DialogDismiss>
+					}
 				>
-					{hasPendingUploads ? 'Uploading images…' : initialConfig ? 'Update panel' : 'Insert panel'}
-				</button>
-			</div>
-		</Ariakit.Dialog>
+					<Button
+						type="submit"
+						size="md"
+						variant="primary"
+						pendingLabel={hasPendingUploads ? 'Uploading images…' : null}
+					>
+						{initialConfig ? 'Update panel' : 'Insert panel'}
+					</Button>
+				</DialogFooter>
+			</form>
+		</Dialog>
 	)
 }
 
 type RowProps = {
 	uploadKey: MutationKey
+	imageButtonId: string
 	item: ArticlePeoplePanelItem
 	idx: number
 	total: number
@@ -179,9 +177,21 @@ type RowProps = {
 	onMove: (direction: -1 | 1) => void
 }
 
-function PersonRow({ uploadKey, item, idx, total, articleId, showErrors, onChange, onRemove, onMove }: RowProps) {
+function PersonRow({
+	uploadKey,
+	imageButtonId,
+	item,
+	idx,
+	total,
+	articleId,
+	showErrors,
+	onChange,
+	onRemove,
+	onMove
+}: RowProps) {
+	const fieldId = useId()
 	const inputRef = useRef<HTMLInputElement>(null)
-	const { uploadWithToast, isUploading } = useImageUpload({
+	const { uploadFile, isUploading, errorMessage } = useImageUpload({
 		scope: 'article-inline',
 		articleId,
 		mutationKey: uploadKey
@@ -190,111 +200,158 @@ function PersonRow({ uploadKey, item, idx, total, articleId, showErrors, onChang
 	const handleFile = async (file: File | null | undefined) => {
 		if (!file) return
 		try {
-			const result: UploadResult = await uploadWithToast(file)
+			const result = await uploadFile(file)
 			onChange({ imageId: result.id, src: result.url, width: result.width, height: result.height })
 		} catch {
-			// surfaced via toast
+			// Shown under this person's image through errorMessage.
 		}
 		if (inputRef.current) inputRef.current.value = ''
 	}
 
-	const missingImage = showErrors && !item.src
+	const imageError = errorMessage ?? (showErrors && !item.src ? 'An image is required for each person.' : null)
+	const person = idx + 1
 
 	return (
-		<div
-			className={`grid grid-cols-[80px_minmax(0,1fr)_auto] gap-4 rounded-md border bg-page/40 p-3 ${
-				missingImage ? 'border-error/50' : 'border-medium'
-			}`}
-		>
+		<fieldset className="grid grid-cols-[80px_minmax(0,1fr)] gap-3 rounded-lg border border-subtle p-3 sm:grid-cols-[80px_minmax(0,1fr)_auto] sm:gap-4">
+			{/* Every field has its visible label; the legend tells the rows apart for screen readers, as the move and
+			    remove buttons' names do. */}
+			<legend className="sr-only">Person {person}</legend>
 			<input
 				ref={inputRef}
 				type="file"
 				accept="image/png,image/jpeg,image/webp,image/gif"
 				className="hidden"
-				aria-label={`Upload image for person ${idx + 1}`}
+				aria-label={`Upload image for person ${person}`}
 				onChange={(e) => handleFile(e.target.files?.[0])}
 			/>
-			<button
-				type="button"
-				disabled={isUploading || !articleId}
-				onClick={() => inputRef.current?.click()}
-				className="group relative aspect-square overflow-hidden rounded-full border border-medium bg-surface outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link disabled:cursor-not-allowed disabled:opacity-60"
-				aria-label={item.src ? 'Replace image' : 'Upload image'}
-			>
-				{item.src ? (
-					<>
-						<img src={item.src} alt="" className="h-full w-full object-cover" />
-						<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-invert/0 text-[10px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
-							{isUploading ? '…' : 'Replace'}
+			<div className="col-start-1 row-start-1 flex flex-col gap-1.5">
+				<Ariakit.Button
+					id={imageButtonId}
+					disabled={isUploading || !articleId}
+					accessibleWhenDisabled
+					aria-busy={isUploading || undefined}
+					aria-invalid={imageError ? true : undefined}
+					aria-describedby={imageError ? `${fieldId}-image-error` : undefined}
+					onClick={() => inputRef.current?.click()}
+					className={`group relative aspect-square w-20 overflow-hidden rounded-full border bg-surface transition-[border-color] not-aria-disabled:hover:border-brand aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${
+						imageError ? 'border-error' : 'border-medium'
+					}`}
+					aria-label={item.src ? 'Replace image' : 'Upload image'}
+				>
+					{item.src ? (
+						<>
+							<img src={item.src} alt="" className="h-full w-full object-cover" />
+							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-backdrop-soft label-sm text-on-brand opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+								Replace
+							</span>
+						</>
+					) : (
+						<span className="flex h-full w-full items-center justify-center label-sm text-tertiary">Upload</span>
+					)}
+					{isUploading ? (
+						<span className="absolute inset-0 flex items-center justify-center bg-research-backdrop-soft">
+							<LoadingSpinner size={16} />
+							<span className="sr-only">Uploading</span>
 						</span>
-					</>
-				) : (
-					<span className="flex h-full w-full items-center justify-center text-[10px] font-medium tracking-[0.16em] text-tertiary uppercase">
-						{isUploading ? '…' : 'Upload'}
-					</span>
-				)}
-			</button>
-
-			<div className="grid min-w-0 gap-2">
-				<input
-					value={item.name}
-					onChange={(e) => onChange({ name: e.target.value })}
-					aria-label={`Person ${idx + 1} name, role, organization`}
-					placeholder="Name, role, organization"
-					className="rounded-md border border-medium bg-surface px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-				/>
-				<textarea
-					value={item.bio}
-					onChange={(e) => onChange({ bio: e.target.value })}
-					rows={3}
-					aria-label={`Person ${idx + 1} biography`}
-					placeholder="Short bio paragraph"
-					className="resize-y rounded-md border border-medium bg-surface px-3 py-2 text-sm leading-snug text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-				/>
-				<input
-					type="url"
-					inputMode="url"
-					value={item.href}
-					onChange={(e) => onChange({ href: e.target.value })}
-					aria-label={`Person ${idx + 1} link`}
-					placeholder="Link (optional) — e.g. https://twitter.com/…"
-					className="rounded-md border border-medium bg-surface px-3 py-2 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-				/>
-				{missingImage ? <span className="text-[11px] text-error">An image is required for each person.</span> : null}
+					) : null}
+				</Ariakit.Button>
 			</div>
 
-			<div className="flex flex-col items-stretch gap-1">
-				<button
-					type="button"
-					onClick={() => onMove(-1)}
-					disabled={idx === 0}
-					title="Move up"
-					aria-label={`Move person ${idx + 1} up`}
-					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					↑
-				</button>
-				<button
-					type="button"
-					onClick={() => onMove(1)}
-					disabled={idx === total - 1}
-					title="Move down"
-					aria-label={`Move person ${idx + 1} down`}
-					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					↓
-				</button>
-				<button
-					type="button"
-					onClick={onRemove}
-					disabled={total === 1}
-					title="Remove"
-					aria-label={`Remove person ${idx + 1}`}
-					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					×
-				</button>
+			<div className="col-span-2 row-start-2 flex min-w-0 flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+				{imageError ? (
+					<p id={`${fieldId}-image-error`} className="body-sm text-data-down">
+						{imageError}
+					</p>
+				) : null}
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${fieldId}-name`} className="label-sm text-secondary">
+						Name, role and organization
+					</label>
+					<Input
+						id={`${fieldId}-name`}
+						value={item.name}
+						onChange={(e) => onChange({ name: e.target.value })}
+						placeholder="Jane Doe, Head of Research, DefiLlama"
+					/>
+				</div>
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${fieldId}-bio`} className="label-sm text-secondary">
+						Bio
+					</label>
+					<textarea
+						id={`${fieldId}-bio`}
+						value={item.bio}
+						onChange={(e) => onChange({ bio: e.target.value })}
+						rows={3}
+						placeholder="Short bio paragraph"
+						className={`${textareaStyles} resize-y`}
+					/>
+				</div>
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={`${fieldId}-link`} className="label-sm text-secondary">
+						Link (optional)
+					</label>
+					<Input
+						id={`${fieldId}-link`}
+						inputMode="url"
+						value={item.href}
+						onChange={(e) => onChange({ href: e.target.value })}
+						placeholder="https://x.com/…"
+					/>
+				</div>
 			</div>
-		</div>
+
+			{/* 12px between the buttons keeps their 44px touch targets apart on desktop, where they draw at 32px. */}
+			<div className="col-start-2 row-start-1 flex items-start justify-end gap-3 sm:col-start-3 sm:flex-col sm:justify-start">
+				<Tooltip
+					content="Move up"
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							square
+							onClick={() => onMove(-1)}
+							disabled={idx === 0}
+							aria-label={`Move person ${person} up`}
+						/>
+					}
+				>
+					<Icon name="arrow-up" className="size-4" aria-hidden="true" />
+				</Tooltip>
+				<Tooltip
+					content="Move down"
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							square
+							onClick={() => onMove(1)}
+							disabled={idx === total - 1}
+							aria-label={`Move person ${person} down`}
+						/>
+					}
+				>
+					<Icon name="arrow-down" className="size-4" aria-hidden="true" />
+				</Tooltip>
+				<Tooltip
+					content="Remove"
+					render={
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							square
+							onClick={onRemove}
+							disabled={total === 1}
+							aria-label={`Remove person ${person}`}
+						/>
+					}
+				>
+					<Icon name="x" className="size-4" aria-hidden="true" />
+				</Tooltip>
+			</div>
+		</fieldset>
 	)
 }

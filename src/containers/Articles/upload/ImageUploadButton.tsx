@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { type UploadResult, type UploadScope, useImageUpload } from './useImageUpload'
 
@@ -24,18 +25,21 @@ export function ImageUploadButton({
 	previewShape = 'wide'
 }: Props) {
 	const inputRef = useRef<HTMLInputElement>(null)
-	const { uploadWithToast, isUploading } = useImageUpload({ scope, articleId })
+	const { uploadFile, isUploading, errorMessage } = useImageUpload({ scope, articleId })
 
 	const handleFile = async (file: File | null | undefined) => {
 		if (!file) return
-		try {
-			const result = await uploadWithToast(file)
-			onUploaded(result)
-		} catch {
-			// surfaced via toast; nothing to do here
-		}
+		// A failure shows under the control; the preview itself shows a success.
+		await uploadFile(file).then(onUploaded, () => {})
 		if (inputRef.current) inputRef.current.value = ''
 	}
+	const status = errorMessage ? (
+		<p role="alert" className="body-sm text-data-down">
+			{errorMessage}
+		</p>
+	) : helperText ? (
+		<p className="body-sm text-tertiary">{helperText}</p>
+	) : null
 
 	const open = () => inputRef.current?.click()
 	const isSquare = previewShape === 'square'
@@ -66,7 +70,7 @@ export function ImageUploadButton({
 								alt=""
 								className="size-full object-cover transition-opacity group-hover:opacity-70"
 							/>
-							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/0 text-[11px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
+							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/0 label-sm text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
 								{isUploading ? 'Uploading…' : 'Replace'}
 							</span>
 						</button>
@@ -78,31 +82,21 @@ export function ImageUploadButton({
 							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
-							<span className="text-[10px] font-medium tracking-wider uppercase">{isUploading ? '…' : 'Upload'}</span>
+							<span className="label-sm">{isUploading ? 'Uploading…' : 'Upload'}</span>
 						</button>
 					)}
 					<div className="flex min-w-0 flex-col gap-2 pt-1">
 						<div className="flex flex-wrap gap-2">
-							<button
-								type="button"
-								disabled={isUploading}
-								onClick={open}
-								className="rounded-md border border-medium bg-surface px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								{isUploading ? 'Uploading…' : currentUrl ? 'Replace' : `Upload ${label.toLowerCase()}`}
-							</button>
+							<Button type="button" size="sm" onClick={open} pendingLabel={isUploading ? 'Uploading…' : null}>
+								{currentUrl ? 'Replace' : `Upload ${label.toLowerCase()}`}
+							</Button>
 							{currentUrl && onCleared ? (
-								<button
-									type="button"
-									disabled={isUploading}
-									onClick={onCleared}
-									className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
-								>
+								<Button type="button" size="sm" variant="ghost" disabled={isUploading} onClick={onCleared}>
 									Remove
-								</button>
+								</Button>
 							) : null}
 						</div>
-						{helperText ? <span className="text-[11px] leading-relaxed text-tertiary">{helperText}</span> : null}
+						{status}
 					</div>
 				</>
 			) : (
@@ -127,23 +121,13 @@ export function ImageUploadButton({
 								</span>
 							</button>
 							<div className="flex flex-wrap gap-2">
-								<button
-									type="button"
-									disabled={isUploading}
-									onClick={open}
-									className="rounded-md border border-medium bg-surface px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-								>
-									{isUploading ? 'Uploading…' : 'Replace'}
-								</button>
+								<Button type="button" size="sm" onClick={open} pendingLabel={isUploading ? 'Uploading…' : null}>
+									Replace
+								</Button>
 								{onCleared ? (
-									<button
-										type="button"
-										disabled={isUploading}
-										onClick={onCleared}
-										className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
-									>
+									<Button type="button" size="sm" variant="ghost" disabled={isUploading} onClick={onCleared}>
 										Remove
-									</button>
+									</Button>
 								) : null}
 							</div>
 						</div>
@@ -160,7 +144,7 @@ export function ImageUploadButton({
 							</span>
 						</button>
 					)}
-					{helperText ? <span className="text-[11px] text-tertiary">{helperText}</span> : null}
+					{status}
 				</>
 			)}
 		</div>

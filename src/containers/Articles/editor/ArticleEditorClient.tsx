@@ -39,9 +39,10 @@ import { ArticleChartPickerDialog } from './ArticleChartPicker'
 import { ArticleCoverImageEditor } from './ArticleCoverImageEditor'
 import { ArticleEditorCanvas } from './ArticleEditorCanvas'
 import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } from './ArticleEditorControls'
-import { CoverDetailsDialog, DeleteArticleDialog } from './ArticleEditorDialogs'
+import { CoverDetailsDialog, DeleteArticleDialog, DiscardPendingDialog } from './ArticleEditorDialogs'
 import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
+import type { PublishResult } from './ArticleEditorTypes'
 import {
 	articleQueryKey,
 	articleWriteKey,
@@ -127,6 +128,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 	})
 	const metaDialog = Ariakit.useDialogStore()
 	const deleteDialog = Ariakit.useDialogStore()
+	const deleteConfirmRef = useRef<HTMLDivElement>(null)
+	const discardDialog = Ariakit.useDialogStore()
 	const coverDetailsDialog = Ariakit.useDialogStore()
 	const [saveError, setSaveError] = useState(false)
 	const [slugEditing, setSlugEditing] = useState(false)
@@ -635,27 +638,15 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		onSuccess: () => {
 			revalidateLanding()
 		},
-		onError: (error) => {
-			toast.error(error instanceof Error ? error.message : 'Failed to delete')
+		// The confirm shows a failure while it is open; after a route change only a toast can.
+		onError: () => {
+			if (!deleteConfirmRef.current?.isConnected) toast.error("Couldn't delete this article. Try again.")
 		}
 	})
 	const isPublishing = publishMutation.isPending || unpublishMutation.isPending
 	const articleIsScheduled = isScheduled(article)
 	const isDiscarding = discardPendingMutation.isPending
-	const {
-		collaboratorAdding,
-		collaboratorEmail,
-		collaboratorError,
-		collaborators,
-		collaboratorsLoadError,
-		collaboratorsLoading,
-		handleAddCollaborator,
-		handleRemoveCollaborator,
-		handleToggleHidden,
-		handleTransferOwnership,
-		setCollaboratorEmail,
-		setCollaboratorError
-	} = useArticleCollaborators({
+	const collaborators = useArticleCollaborators({
 		articleId: article.id,
 		authorizedFetch,
 		queryClient,
@@ -671,16 +662,13 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		return isDirty ? saveRef.current({ silent: true }) : true
 	}, [isDirty])
 
-	const handlePublish = async (opts?: { goLiveAt?: string | null }): Promise<boolean> => {
-		if (!article.id) {
-			toast.error('Save the draft before publishing')
-			return false
-		}
+	// Reports instead of toasting, so the review sheet can show a failure inside itself.
+	const handlePublish = async (opts?: { goLiveAt?: string | null }): Promise<PublishResult> => {
+		if (!article.id) return { ok: false, error: 'Save the draft before publishing.' }
 		const localErrors = validateLocalArticleForPublish(article)
 		if (localErrors.length > 0) {
 			setPublishErrors(Object.fromEntries(localErrors.map((e) => [e.field, e.message])))
-			toast.error('Fix required fields before publishing')
-			return false
+			return { ok: false, error: null }
 		}
 		setPublishErrors({})
 		// An explicit `goLiveAt` wins; otherwise publishing a scheduled article
@@ -688,32 +676,34 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		const goLiveAt = opts && 'goLiveAt' in opts ? opts.goLiveAt : article.goLiveAt != null ? null : undefined
 		const publishPayload = { articleId: article.id, ...(goLiveAt !== undefined ? { goLiveAt } : {}) }
 		const publishedMessage = article.status === 'published' ? 'Update published' : 'Published'
+		let saved: Awaited<ReturnType<typeof publishArticle>>
 		try {
-			if (!(await flushPendingSave())) {
-				toast.error('Save the latest edits before publishing.')
-				return false
-			}
-			const saved = await publishMutation.mutateAsync(publishPayload)
-			const merged = applyPendingToLocalArticle(saved, saved.pending)
-			setArticle(merged)
-			setSavedAt(merged.updatedAt)
-			revalidateLanding()
-			if (isScheduled(merged)) {
-				toast.success(`Scheduled for ${formatArticleDate(merged.goLiveAt)}`)
-			} else if (merged.status === 'published') {
-				toast.success(publishedMessage)
-			} else {
-				toast.success('Saved')
-			}
-			return true
+			if (!(await flushPendingSave())) return { ok: false, error: 'Save the latest edits before publishing.' }
+			saved = await publishMutation.mutateAsync(publishPayload)
 		} catch (error) {
 			const validationErrors = publishValidationErrors(error)
-			if (validationErrors.length > 0) {
-				setPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message])))
-			}
-			toast.error(errorMessageOr(error, 'Failed to publish'))
-			return false
+			if (validationErrors.length === 0) return { ok: false, error: errorMessageOr(error, 'Failed to publish') }
+			setPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message])))
+			return { ok: false, error: null }
 		}
+		const merged = applyPendingToLocalArticle(saved, saved.pending)
+		setArticle(merged)
+		setSavedAt(merged.updatedAt)
+		revalidateLanding()
+		if (isScheduled(merged)) return { ok: true, message: `Scheduled for ${formatArticleDate(merged.goLiveAt)}` }
+		return { ok: true, message: merged.status === 'published' ? publishedMessage : 'Saved' }
+	}
+
+	const openMeta = () => {
+		metaDialog.show()
+	}
+
+	// The header has no surface of its own: results toast, and missing fields open the review sheet that marks them.
+	const publishFromHeader = async () => {
+		const result = await handlePublish()
+		if (result.ok === true) toast.success(result.message)
+		else if (result.error === null) openMeta()
+		else toast.error(result.error)
 	}
 
 	// A server result replaces the document without an update event. The editor is gone when the reader left
@@ -740,22 +730,20 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 
 	const handleDiscardPending = async () => {
 		if (!article.id) return
-		if (!confirm('Discard pending changes? The live version will not be modified.')) return
-		try {
-			if (debounceRef.current) {
-				clearTimeout(debounceRef.current)
-				debounceRef.current = null
-			}
-			const saved = await discardPendingMutation.mutateAsync(article.id)
-			const merged = applyPendingToLocalArticle(saved, saved.pending)
-			setArticle(merged)
-			replaceEditorContent(merged.contentJson)
-			setSavedAt(merged.updatedAt)
-			setIsDirty(false)
-			toast.success('Pending changes discarded')
-		} catch (error) {
-			toast.error(errorMessageOr(error, 'Failed to discard changes'))
+		if (debounceRef.current) {
+			clearTimeout(debounceRef.current)
+			debounceRef.current = null
 		}
+		const saved = await discardPendingMutation.mutateAsync(article.id).catch(() => null)
+		// The confirm shows the failure.
+		if (!saved) return
+		const merged = applyPendingToLocalArticle(saved, saved.pending)
+		setArticle(merged)
+		replaceEditorContent(merged.contentJson)
+		setSavedAt(merged.updatedAt)
+		setIsDirty(false)
+		discardDialog.hide()
+		toast.success('Pending changes discarded')
 	}
 
 	const handleRevisionRestored = useCallback(
@@ -808,17 +796,23 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 		})
 	}
 
+	// Each opening of a confirm starts without the previous attempt's error.
 	const handleDeleteArticle = () => {
 		if (!article.id) return
+		deleteArticleMutation.reset()
 		deleteDialog.show()
 	}
 
 	const confirmDeleteArticle = () => {
 		if (!article.id) return
-		deleteArticleMutation.mutate(article.id, {
-			onSuccess: () => void Router.replace('/research'),
-			onSettled: () => deleteDialog.hide()
-		})
+		// The confirm stays open, pending, until the route leaves this article. A reader who already left
+		// must not be pulled back to the list, so the redirect belongs to this call.
+		deleteArticleMutation.mutate(article.id, { onSuccess: () => void Router.replace('/research') })
+	}
+
+	const openDiscardPending = () => {
+		discardPendingMutation.reset()
+		discardDialog.show()
 	}
 
 	const isOwner = canManageResearchArticle(article)
@@ -1041,8 +1035,8 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				commitSlugEdit={commitSlugEdit}
 				deletePending={deleteArticleMutation.isPending}
 				handleDeleteArticle={handleDeleteArticle}
-				handleDiscardPending={handleDiscardPending}
-				handlePublish={handlePublish}
+				handleDiscardPending={openDiscardPending}
+				handlePublish={() => void publishFromHeader()}
 				handleUnpublish={handleUnpublish}
 				hasPendingEdits={hasPendingEdits}
 				isDiscarding={isDiscarding}
@@ -1050,7 +1044,7 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 				isPublished={isPublished}
 				isPublishing={isPublishing}
 				onOpenHistory={() => setHistoryOpen(true)}
-				onOpenMeta={() => metaDialog.show()}
+				onOpenMeta={openMeta}
 				pillDot={pillDot}
 				pillLabel={pillLabel}
 				pillState={pillState}
@@ -1119,28 +1113,15 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			<ArticleMetaDialog
 				article={article}
 				articleIsScheduled={articleIsScheduled}
-				collaboratorAdding={collaboratorAdding}
-				collaboratorEmail={collaboratorEmail}
-				collaboratorError={collaboratorError}
 				collaborators={collaborators}
-				collaboratorsLoadError={collaboratorsLoadError}
-				collaboratorsLoading={collaboratorsLoading}
-				handleAddCollaborator={handleAddCollaborator}
 				handlePublish={handlePublish}
-				handleRemoveCollaborator={handleRemoveCollaborator}
-				handleToggleHidden={handleToggleHidden}
-				handleTransferOwnership={handleTransferOwnership}
 				hasPendingEdits={hasPendingEdits}
 				isCollaborator={isCollaborator}
-				isDiscarding={isDiscarding}
 				isOwner={isOwner}
 				isPublished={isPublished}
-				isPublishing={isPublishing}
 				isSaving={isSaving}
 				publishErrors={publishErrors}
 				saveArticle={saveArticle}
-				setCollaboratorEmail={setCollaboratorEmail}
-				setCollaboratorError={setCollaboratorError}
 				store={metaDialog}
 				updateArticle={updateArticle}
 			/>
@@ -1153,11 +1134,20 @@ function ArticleEditorSession({ articleId }: { articleId?: string }) {
 			/>
 
 			<DeleteArticleDialog
+				ref={deleteConfirmRef}
 				confirmDeleteArticle={confirmDeleteArticle}
+				failed={deleteArticleMutation.isError}
 				isPending={deleteArticleMutation.isPending}
 				isPublished={isPublished}
 				store={deleteDialog}
 				title={article.title}
+			/>
+
+			<DiscardPendingDialog
+				failed={discardPendingMutation.isError}
+				isPending={isDiscarding}
+				store={discardDialog}
+				onConfirm={() => void handleDiscardPending()}
 			/>
 
 			{article.id && historyOpen ? (

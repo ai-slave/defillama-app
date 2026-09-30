@@ -1,6 +1,4 @@
 import { useMutation } from '@tanstack/react-query'
-import { useCallback } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
 
@@ -89,16 +87,14 @@ export function usePdfUpload(args: { articleId: string | null | undefined }) {
 	})
 	const { mutateAsync: uploadFile } = upload
 
-	const uploadWithToast = useCallback(
-		async (file: File): Promise<PdfUploadResult> => {
-			return toast.promise(uploadFile(file), {
-				loading: 'Uploading PDF…',
-				success: 'PDF uploaded',
-				error: (err) => (err instanceof Error ? err.message : 'Upload failed')
-			})
-		},
-		[uploadFile]
-	)
-
-	return { uploadFile, uploadWithToast, isUploading: upload.isPending }
+	return {
+		uploadFile,
+		isUploading: upload.isPending,
+		// Client checks and the server's 4xx reasons name the fix; anything else is a plain retry.
+		errorMessage: upload.error
+			? upload.error instanceof PdfUploadError && upload.error.status < 500
+				? upload.error.message
+				: "Couldn't upload this PDF. Try again."
+			: null
+	}
 }

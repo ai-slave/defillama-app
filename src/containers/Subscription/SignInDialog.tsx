@@ -229,12 +229,14 @@ function PasswordField({
 					minLength={minLength}
 					className={`${inputCls} pr-10`}
 				/>
+				{/* sm, centred: an md square grows to 44px in a phone sheet and would hang out of the 40px field.
+				    touch-target keeps its 44px hit area. */}
 				<Button
 					type="button"
 					variant="ghost"
-					size="md"
+					size="sm"
 					square
-					className="absolute top-1 right-1"
+					className="absolute top-1/2 right-2 -translate-y-1/2"
 					onClick={() => setVisible((value) => !value)}
 					aria-label={visible ? 'Hide password' : 'Show password'}
 				>

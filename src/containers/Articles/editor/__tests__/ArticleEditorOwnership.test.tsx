@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, ArticleRevision, LocalArticleDocument } from '../../types'
@@ -169,7 +170,8 @@ async function restoreFromHistory() {
 	await click(container.querySelector('button[title="Revision history"]')!)
 	await settle()
 	await click(button('Restore as pending'))
-	await click(button('Confirm restore'))
+	// The confirmation's own button, not the drawer's "Restore as pending".
+	await click([...document.querySelectorAll('button')].find((el) => accessibleName(el) === 'Restore')!)
 }
 
 test('a successful restore puts the revision in the editor and closes history', async () => {

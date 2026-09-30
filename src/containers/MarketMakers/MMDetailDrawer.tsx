@@ -177,7 +177,7 @@ function WebsiteButton({ href, name }: { href: string; name: string }) {
 			href={href}
 			target="_blank"
 			rel="noopener noreferrer"
-			size="md"
+			size="sm"
 			data-umami-event="market-maker-website-click"
 			data-umami-event-mm={name}
 			data-umami-event-placement="drawer"
@@ -365,8 +365,11 @@ function DrawerBody({
 				</div>
 				<p className="body-sm text-secondary">{description}</p>
 				<div className="flex flex-wrap items-center gap-2">
-					<StatusBadge status={status ?? 'none'} label={integrationLabel(status)} className="h-8 px-3" />
-					{country ? <SecondaryBadge className="h-8">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge> : null}
+					{/* Chips and a small link level at 24px; a 32px pin broke once md buttons grew in phone sheets. */}
+					<StatusBadge status={status ?? 'none'} label={integrationLabel(status)} className="min-h-6 px-2.5" />
+					{country ? (
+						<SecondaryBadge className="min-h-6">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge>
+					) : null}
 					{website ? <WebsiteButton href={website} name={name} /> : null}
 				</div>
 				<button type="button" className={forgdCtaPrimaryButtonStyles} onClick={() => onOpenLead('connect')}>

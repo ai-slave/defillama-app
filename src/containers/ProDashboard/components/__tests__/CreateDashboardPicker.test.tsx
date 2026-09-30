@@ -74,7 +74,7 @@ async function mount(mode = 'From scratch', { toPreview = true } = {}) {
 	)
 	await waitFor(() =>
 		expect(document.body.textContent).toContain(
-			mode === 'Comparison' ? 'Select Metrics to Compare' : 'How would you like to create your dashboard?'
+			mode === 'Comparison' ? 'Select metrics to compare' : 'How would you like to create your dashboard?'
 		)
 	)
 	if (mode === 'Comparison' && !toPreview) return

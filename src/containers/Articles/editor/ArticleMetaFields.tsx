@@ -3,8 +3,9 @@ import { useId, type ReactNode } from 'react'
 
 export function MetaSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
-		<section className="grid gap-3">
-			<h3 className="text-[10px] font-medium tracking-[0.18em] text-tertiary uppercase">{title}</h3>
+		// A long settings sheet reads as groups only when the gap between them beats the gap inside them.
+		<section className="grid gap-3 border-t border-subtle pt-5 first:border-t-0 first:pt-0">
+			<h3 className="label-md text-primary">{title}</h3>
 			{children}
 		</section>
 	)
@@ -31,11 +32,11 @@ export function MetaSwitch({
 			}`}
 		>
 			<span className="grid min-w-0 gap-0.5">
-				<span id={`${id}-label`} className="text-sm font-medium text-primary">
+				<span id={`${id}-label`} className="label-md text-primary">
 					{label}
 				</span>
 				{description ? (
-					<span id={`${id}-description`} className="text-[11px] leading-snug text-tertiary">
+					<span id={`${id}-description`} className="body-sm text-tertiary">
 						{description}
 					</span>
 				) : null}
@@ -52,14 +53,15 @@ export function MetaSwitch({
 			/>
 			<span
 				aria-hidden="true"
-				className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors peer-focus-visible:focus-ring ${
-					checked ? 'border-link/60 bg-link' : 'border-medium bg-page group-hover:border-tertiary'
+				// The shared Switch's track and knob (src/ui/Switch.tsx); this row keeps its own label and description.
+				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${
+					checked
+						? 'bg-brand peer-focus-visible:focus-ring-on-brand'
+						: 'bg-surface-elevated-2 peer-focus-visible:focus-ring'
 				}`}
 			>
 				<span
-					className={`absolute top-1/2 inline-block size-3 -translate-y-1/2 rounded-full shadow-sm transition-all duration-200 ease-out ${
-						checked ? 'left-[15px] bg-research-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
-					}`}
+					className={`block size-4 rounded-full bg-white shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''}`}
 				/>
 			</span>
 		</label>
@@ -69,12 +71,11 @@ export function MetaSwitch({
 export function MetaFieldHint({ children, error }: { children?: ReactNode; error?: string | null }) {
 	if (error) {
 		return (
-			<span className="flex items-center gap-1.5 text-[11px] text-error">
-				<span aria-hidden className="inline-block size-1 rounded-full bg-error" />
+			<p role="alert" className="body-sm text-data-down">
 				{error}
-			</span>
+			</p>
 		)
 	}
 	if (!children) return null
-	return <span className="text-[11px] leading-snug text-tertiary">{children}</span>
+	return <p className="body-sm text-tertiary">{children}</p>
 }

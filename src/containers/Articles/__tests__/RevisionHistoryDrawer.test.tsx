@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { accessibleName } from '~/utils/testing/accessibleName'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { waitForUi } from '~/utils/testing/waitForUi'
 import { RevisionHistoryDrawer } from '../editor/RevisionHistoryDrawer'
@@ -36,7 +37,7 @@ async function flush() {
 	})
 }
 
-describe('RevisionHistoryDrawer diff base', () => {
+describe('RevisionHistoryDrawer', () => {
 	let container: HTMLDivElement
 	let root: Root
 
@@ -58,10 +59,23 @@ describe('RevisionHistoryDrawer diff base', () => {
 		container.remove()
 	})
 
-	function button(text: string) {
-		const match = Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.trim() === text)
-		if (!match) throw new Error(`No button "${text}"`)
+	function button(name: string, scope: ParentNode = document) {
+		const match = Array.from(scope.querySelectorAll('button')).find((el) => accessibleName(el) === name)
+		if (!match) throw new Error(`No button "${name}"`)
 		return match
+	}
+
+	function radio(group: string, value: string) {
+		return document.querySelector<HTMLInputElement>(
+			`[role="radiogroup"][aria-label="${group}"] input[value="${value}"]`
+		)!
+	}
+
+	function chosen(group: string) {
+		return document
+			.querySelector(`[role="radiogroup"][aria-label="${group}"] input:checked`)
+			?.closest('label')
+			?.textContent?.trim()
 	}
 
 	async function click(el: Element) {
@@ -71,165 +85,34 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await flush()
 	}
 
+	async function pick(group: string, value: string) {
+		await act(async () => radio(group, value).click())
+		await flush()
+	}
+
 	function selectRevision(id: string) {
 		return click(document.querySelector(`[data-revision-id="${id}"] button`)!)
 	}
 
-	function activeBase() {
-		return document.querySelector('button[aria-pressed="true"]')?.textContent?.trim()
+	function sheet() {
+		return document.querySelector<HTMLElement>('[role="dialog"]')!
 	}
 
-	function paneText() {
-		return document.querySelector('[role="dialog"]')?.textContent ?? ''
+	function sheetText() {
+		return sheet()?.textContent ?? ''
 	}
 
-	test('the chosen base is kept when the selected revision is that base, and the pane says why', async () => {
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-					<RevisionHistoryDrawer
-						onClose={vi.fn()}
-						articleId="article-1"
-						authorizedFetch={authorizedFetch}
-						onRestored={vi.fn()}
-					/>
-				</QueryClientProvider>
-			)
-		})
-		await flush()
-
-		await click(button('diff'))
-		await click(button('Live'))
-		expect(activeBase()).toBe('Live')
-
-		// The live revision cannot be compared with itself: Live stays chosen and the pane explains.
-		await selectRevision('rev-3')
-		expect(activeBase()).toBe('Live')
-		expect(button('Live').disabled).toBe(true)
-		expect(paneText()).toContain('This is the live revision')
-
-		// The next selection is compared against Live again, as the user asked.
-		await selectRevision('rev-2')
-		expect(activeBase()).toBe('Live')
-		expect(paneText()).toContain('base · Published')
-	})
-
-	test('the oldest revision explains that nothing earlier exists', async () => {
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-					<RevisionHistoryDrawer
-						onClose={vi.fn()}
-						articleId="article-1"
-						authorizedFetch={authorizedFetch}
-						onRestored={vi.fn()}
-					/>
-				</QueryClientProvider>
-			)
-		})
-		await flush()
-
-		await click(button('diff'))
-		await selectRevision('rev-1')
-		expect(activeBase()).toBe('Previous')
-		expect(paneText()).toContain('This is the oldest revision')
-	})
-	async function renderDrawer() {
-		await act(async () => {
-			root.render(
-				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-					<RevisionHistoryDrawer
-						onClose={vi.fn()}
-						articleId="article-1"
-						authorizedFetch={authorizedFetch}
-						onRestored={vi.fn()}
-					/>
-				</QueryClientProvider>
-			)
-		})
-		await flush()
+	function sheetAlert() {
+		return sheet()?.querySelector('[role="alert"]')?.textContent
 	}
 
-	function dialogAlert() {
-		return document.querySelector('[role="dialog"] [role="alert"]')?.textContent
-	}
-
-	test('a failed history load says so in the drawer instead of showing an empty ledger', async () => {
-		http.serve({ '/articles/article-1/revisions': fixtureStatus(500, { error: 'History is unavailable' }) })
-		await renderDrawer()
-		await waitForUi(() => expect(dialogAlert()).toBe('History is unavailable'))
-		expect(paneText()).not.toContain('No revisions yet')
-	})
-
-	test('a failed older-revisions page says so beside the button and keeps the loaded entries', async () => {
-		http.serve({
-			'/articles/article-1/revisions': (url: URL) =>
-				url.searchParams.get('cursor')
-					? fixtureStatus(500, { error: 'Older revisions are unavailable' })()
-					: { items: revisions, nextCursor: 'page-2' }
-		})
-		await renderDrawer()
-		await click(button('↓  Older revisions'))
-		await waitForUi(() => expect(dialogAlert()).toBe('Older revisions are unavailable'))
-		expect(document.querySelector('[data-revision-id="rev-4"]')).not.toBeNull()
-	})
-
-	test('a failed revision load says so in the preview pane instead of asking to pick an entry', async () => {
-		http.serve({ '/articles/article-1/revisions/rev-4': fixtureStatus(404, { error: 'Revision not found' }) })
-		await renderDrawer()
-		await waitForUi(() => expect(dialogAlert()).toBe('Revision not found'))
-		expect(paneText()).not.toContain('Pick an entry')
-	})
-
-	test('a failed diff base load says so instead of computing the diff forever', async () => {
-		http.serve({ '/articles/article-1/revisions/rev-3': fixtureStatus(500, { error: 'Base revision is unavailable' }) })
-		await renderDrawer()
-		await click(button('diff'))
-		await waitForUi(() => expect(dialogAlert()).toBe('Base revision is unavailable'))
-		expect(paneText()).not.toContain('computing diff')
-	})
-
-	test('a failed restore says so in the drawer, and picking another revision clears it', async () => {
-		http.serve({
-			'/articles/article-1/revisions/rev-4/restore-pending': fixtureStatus(500, { error: 'Restore is unavailable' })
-		})
-		await renderDrawer()
-		await waitForUi(() => expect(paneText()).toContain('Revision 4'))
-		// The button also shows its R shortcut.
-		await click(
-			Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.startsWith('Restore as pending'))!
+	function confirmation(title: string) {
+		return Array.from(document.querySelectorAll('[role="dialog"], [role="alertdialog"]')).find(
+			(dialog) => dialog.querySelector('h2')?.textContent === title
 		)
-		await click(button('Confirm restore'))
-		await waitForUi(() => expect(dialogAlert()).toBe('Restore is unavailable'))
-		await selectRevision('rev-2')
-		expect(dialogAlert()).toBeUndefined()
-	})
-
-	test('picking a revision while a restore runs keeps that restore pending and sends no second one', async () => {
-		http.serve({ '/articles/article-1/revisions/rev-4/restore-pending': () => new Promise<Response>(() => {}) })
-		await renderDrawer()
-		await waitForUi(() => expect(paneText()).toContain('Revision 4'))
-		await click(
-			Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.startsWith('Restore as pending'))!
-		)
-		await click(button('Confirm restore'))
-		await selectRevision('rev-4')
-		const restore = Array.from(document.querySelectorAll('button')).find((el) =>
-			el.textContent?.startsWith('Restore as pending')
-		)
-		expect(restore?.disabled).toBe(true)
-		expect(http.requests.filter((request) => request.url.pathname.endsWith('/restore-pending'))).toHaveLength(1)
-	})
-
-	async function confirmRestore() {
-		await waitForUi(() => expect(paneText()).toContain('Revision 4'))
-		await click(
-			Array.from(document.querySelectorAll('button')).find((el) => el.textContent?.startsWith('Restore as pending'))!
-		)
-		await click(button('Confirm restore'))
 	}
 
-	async function renderDrawerWith(onClose: () => void, onRestored: () => void) {
+	async function renderDrawer(onClose: () => void = vi.fn(), onRestored: () => void = vi.fn()) {
 		await act(async () => {
 			root.render(
 				<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -245,20 +128,118 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await flush()
 	}
 
-	test('the drawer cannot be closed while a restore runs', async () => {
+	async function askRestore() {
+		await waitForUi(() => expect(sheetText()).toContain('Revision 4'))
+		await click(button('Restore as pending'))
+	}
+
+	test('a base with nothing to compare stays pickable and the pane says why', async () => {
+		await renderDrawer()
+		await pick('View', 'diff')
+		await selectRevision('rev-3')
+
+		// The live revision cannot be compared with itself: Live is still chosen and the pane explains.
+		await pick('Compare against', 'live')
+		expect(chosen('Compare against')).toBe('Live')
+		expect(sheetText()).toContain('This is the live revision')
+
+		// The next selection is compared against Live, as the user asked.
+		await selectRevision('rev-2')
+		expect(chosen('Compare against')).toBe('Live')
+		await waitForUi(() => expect(sheetText()).toContain('Base: Published'))
+	})
+
+	test('the oldest revision explains that nothing earlier exists', async () => {
+		await renderDrawer()
+		await pick('View', 'diff')
+		await selectRevision('rev-1')
+		expect(chosen('Compare against')).toBe('Previous')
+		expect(sheetText()).toContain('This is the oldest revision')
+	})
+
+	test('a failed history load says so in the drawer instead of showing an empty history', async () => {
+		http.serve({ '/articles/article-1/revisions': fixtureStatus(500, { error: 'History is unavailable' }) })
+		await renderDrawer()
+		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load the revision history."))
+		expect(sheetText()).not.toContain('History is unavailable')
+		expect(sheetText()).not.toContain('No revisions yet')
+	})
+
+	test('Try again reloads a history that failed to load', async () => {
+		http.serve({ '/articles/article-1/revisions': fixtureStatus(500, { error: 'History is unavailable' }) })
+		await renderDrawer()
+		await waitForUi(() => expect(sheetAlert()).toBeDefined())
+
+		http.serve({ '/articles/article-1/revisions': { items: revisions, nextCursor: null } })
+		await click(button('Try again'))
+		await waitForUi(() => expect(document.querySelector('[data-revision-id="rev-4"]')).not.toBeNull())
+		expect(sheetAlert()).toBeUndefined()
+	})
+
+	test('a failed older-revisions page says so beside the button and keeps the loaded entries', async () => {
+		http.serve({
+			'/articles/article-1/revisions': (url: URL) =>
+				url.searchParams.get('cursor')
+					? fixtureStatus(500, { error: 'Older revisions are unavailable' })()
+					: { items: revisions, nextCursor: 'page-2' }
+		})
+		await renderDrawer()
+		await waitForUi(() => expect(sheetText()).toContain('4+ entries'))
+		await click(button('Load older revisions'))
+		await waitForUi(() => expect(sheetAlert()).toBe("Couldn't load older revisions. Try again."))
+		expect(document.querySelector('[data-revision-id="rev-4"]')).not.toBeNull()
+	})
+
+	test('a failed revision load says so in the preview pane instead of showing no selection', async () => {
+		http.serve({ '/articles/article-1/revisions/rev-4': fixtureStatus(404, { error: 'Revision not found' }) })
+		await renderDrawer()
+		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load this revision."))
+		expect(sheetText()).not.toContain('No revision selected')
+	})
+
+	test('a failed diff base load says so instead of loading the comparison forever', async () => {
+		http.serve({ '/articles/article-1/revisions/rev-3': fixtureStatus(500, { error: 'Base revision is unavailable' }) })
+		await renderDrawer()
+		await pick('View', 'diff')
+		await waitForUi(() => expect(sheetAlert()).toContain("Couldn't load the revision to compare against."))
+		expect(sheetText()).not.toContain('Loading comparison')
+	})
+
+	test('a failed restore says so in its confirmation, which stays open, and a new attempt starts clean', async () => {
+		http.serve({
+			'/articles/article-1/revisions/rev-4/restore-pending': fixtureStatus(500, { error: 'Restore is unavailable' })
+		})
+		await renderDrawer()
+		await askRestore()
+		await click(button('Restore'))
+		const confirm = () => confirmation('Restore as pending?')
+		await waitForUi(() =>
+			expect(confirm()?.querySelector('[role="alert"]')?.textContent).toBe("Couldn't restore this revision. Try again.")
+		)
+
+		await click(button('Cancel'))
+		await waitForUi(() => expect(confirm()).toBeUndefined())
+		await click(button('Restore as pending'))
+		await waitForUi(() => expect(confirm()).toBeDefined())
+		expect(confirm()!.querySelector('[role="alert"]')).toBeNull()
+	})
+
+	test('a running restore shows Restoring… and nothing closes the drawer or its confirmation', async () => {
 		http.serve({ '/articles/article-1/revisions/rev-4/restore-pending': () => new Promise<Response>(() => {}) })
 		const onClose = vi.fn()
-		await renderDrawerWith(onClose, vi.fn())
-		await confirmRestore()
+		await renderDrawer(onClose)
+		await askRestore()
+		await click(button('Restore'))
+		expect(confirmation('Restore as pending?')?.textContent).toContain('Restoring…')
 
-		await click(document.querySelector('button[aria-label="Close"]')!)
+		await click(button('Close dialog'))
 		await act(async () => {
-			document
-				.querySelector('[role="dialog"]')!
-				.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+			document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 		})
 		await flush()
 		expect(onClose).not.toHaveBeenCalled()
+		expect(confirmation('Restore as pending?')).toBeDefined()
+		expect(http.requests.filter((request) => request.url.pathname.endsWith('/restore-pending'))).toHaveLength(1)
 	})
 
 	test('a restore that settles after the drawer is gone does not replace the editor or close a later drawer', async () => {
@@ -269,8 +250,9 @@ describe('RevisionHistoryDrawer diff base', () => {
 		})
 		const onClose = vi.fn()
 		const onRestored = vi.fn()
-		await renderDrawerWith(onClose, onRestored)
-		await confirmRestore()
+		await renderDrawer(onClose, onRestored)
+		await askRestore()
+		await click(button('Restore'))
 
 		// The reader leaves the article while the restore is still out.
 		await act(async () => root.render(null))
@@ -280,7 +262,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 		expect(onClose).not.toHaveBeenCalled()
 	})
 
-	test('a failed delete says so in the drawer and keeps the revision listed', async () => {
+	test('a failed delete says so in its confirmation and keeps the revision listed', async () => {
 		const revision = revisions.find((entry) => entry.id === 'rev-2')!
 		http.serve({
 			'/articles/article-1/revisions/rev-2': (_url: URL, init?: RequestInit) =>
@@ -288,14 +270,48 @@ describe('RevisionHistoryDrawer diff base', () => {
 		})
 		await renderDrawer()
 		await selectRevision('rev-2')
-		await waitForUi(() => expect(paneText()).toContain('Revision 2'))
-		await click(document.querySelector('button[aria-label="Delete revision"]')!)
-		await click(button('Confirm delete'))
-		await waitForUi(() => expect(dialogAlert()).toBe('Delete is unavailable'))
+		await waitForUi(() => expect(sheetText()).toContain('Revision 2'))
+		await click(button('Delete'))
+		await waitForUi(() => expect(confirmation('Delete this revision?')).toBeDefined())
+		await click(button('Delete', confirmation('Delete this revision?')!))
+		await waitForUi(() =>
+			expect(confirmation('Delete this revision?')?.querySelector('[role="alert"]')?.textContent).toBe(
+				"Couldn't delete this revision. Try again."
+			)
+		)
 		expect(document.querySelector('[data-revision-id="rev-2"]')).not.toBeNull()
 	})
 
-	test('history owns focus and shortcuts; Escape cancels confirmation before closing', async () => {
+	test('a deleted revision leaves the list and the newest revision is shown', async () => {
+		const revision = revisions.find((entry) => entry.id === 'rev-2')!
+		http.serve({
+			'/articles/article-1/revisions/rev-2': (_url: URL, init?: RequestInit) =>
+				init?.method === 'DELETE' ? new Response(null, { status: 204 }) : { revision }
+		})
+		await renderDrawer()
+		await selectRevision('rev-2')
+		await waitForUi(() => expect(sheetText()).toContain('Revision 2'))
+		await click(button('Delete'))
+		await waitForUi(() => expect(confirmation('Delete this revision?')).toBeDefined())
+		await click(button('Delete', confirmation('Delete this revision?')!))
+		await waitForUi(() => expect(document.querySelector('[data-revision-id="rev-2"]')).toBeNull())
+		expect(confirmation('Delete this revision?')).toBeUndefined()
+		expect(sheetText()).toContain('3 entries')
+		expect(document.querySelector('[data-revision-id="rev-4"] button')!.getAttribute('aria-current')).toBe('true')
+	})
+
+	test('the live revision says why it cannot be deleted', async () => {
+		await renderDrawer()
+		await selectRevision('rev-3')
+		await waitForUi(() => expect(sheetText()).toContain('Revision 3'))
+		expect(sheetText()).toContain("The live revision can't be deleted.")
+		expect(button('Delete').getAttribute('aria-disabled')).toBe('true')
+
+		await selectRevision('rev-2')
+		expect(sheetText()).not.toContain("The live revision can't be deleted.")
+	})
+
+	test('history owns focus and shortcuts; Escape closes the confirmation before the drawer', async () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 		const onClose = vi.fn()
 		function Harness() {
@@ -326,7 +342,7 @@ describe('RevisionHistoryDrawer diff base', () => {
 			trigger.click()
 		})
 		await flush()
-		const drawer = document.querySelector<HTMLElement>('[role="dialog"]')!
+		const drawer = sheet()
 		await waitForUi(() => expect(drawer.contains(document.activeElement)).toBe(true))
 		expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)!.textContent).toBe('Revision history')
 		const press = async (target: HTMLElement, key: string) => {
@@ -338,13 +354,13 @@ describe('RevisionHistoryDrawer diff base', () => {
 		await press(drawer, 'j')
 		expect(revisionRequests().at(-1)).toBe('/articles/article-1/revisions/rev-3')
 		await press(drawer, 'k')
-		expect(drawer.textContent).toContain('Revision 4')
+		await waitForUi(() => expect(drawer.textContent).toContain('Revision 4'))
 		await press(drawer, 'r')
 		await waitForUi(() => expect(document.activeElement).toBe(button('Cancel')))
 		await press(button('Cancel'), 'Escape')
-		expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+		await waitForUi(() => expect(confirmation('Restore as pending?')).toBeUndefined())
 		expect(onClose).not.toHaveBeenCalled()
-		await waitForUi(() => expect(document.activeElement?.textContent).toContain('Restore as pending'))
+		await waitForUi(() => expect(document.activeElement).toBe(button('Restore as pending')))
 		await press(document.activeElement as HTMLElement, 'Escape')
 		await waitForUi(() => expect(document.activeElement).toBe(trigger))
 		expect(onClose).toHaveBeenCalledTimes(1)

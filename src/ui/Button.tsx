@@ -67,8 +67,9 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
    16px line + py-1 + border = 26px would overshoot the 24px floor — content
    must stay under min-h so the floor decides the height. A text md button in
    a phone sheet's rows is 44px with a 14px label (`sheet:`), level with the
-   fields beside it and the footer below; sm and icon-only buttons keep their size there, and
-   touch screens give every size a 44px touch target instead. */
+   fields beside it and the footer below. An icon-only md button grows with it to 44x44, so a row
+   never pairs a 44px text button with a 32px square; sm keeps its size there, and touch screens
+   give every size a 44px touch target instead. */
 const SIZE_CLASSES: Record<ButtonSize, string> = {
 	sm: 'label-sm min-h-6 gap-1 px-2 py-0.5',
 	md: 'label-sm min-h-8 gap-1 px-3 py-1.5 sheet:min-h-11 sheet:label-md'
@@ -77,7 +78,7 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 /** Icon-only buttons: aspect-square + self-center so flex rows can't stretch them. */
 const SQUARE_SIZE_CLASSES: Record<ButtonSize, string> = {
 	sm: 'aspect-square min-h-6 self-center p-0.5',
-	md: 'aspect-square min-h-8 self-center p-1.5'
+	md: 'aspect-square min-h-8 self-center p-1.5 sheet:min-h-11'
 }
 
 const RADIUS_CLASSES: Record<ButtonSize, string> = {
