@@ -2,7 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import { setPendingPrompt, setPendingPageContext, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
+import {
+	setPendingEntrySource,
+	setPendingPageContext,
+	setPendingPrompt,
+	setPendingSuggestedFlag
+} from '~/containers/LlamaAI/pendingPrompt'
 import { Icon } from '~/ui/Icon'
 import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -75,6 +80,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 		if (!loaders.userLoading && isAuthenticated) {
 			setPendingPrompt(question)
 			setPendingSuggestedFlag()
+			setPendingEntrySource('entity-strip')
 			setPendingPageContext({
 				entitySlug,
 				entityType,
@@ -84,6 +90,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 		} else {
 			setPendingPrompt(question)
 			setPendingSuggestedFlag()
+			setPendingEntrySource('entity-strip')
 			setPendingPageContext({
 				entitySlug,
 				entityType,

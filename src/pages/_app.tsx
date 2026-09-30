@@ -8,6 +8,7 @@ import Script from 'next/script'
 import type { ReactElement } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { AuthProvider } from '~/auth'
+import { captureFirstTouchUtm } from '~/auth/signupAttribution'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
@@ -24,6 +25,7 @@ import {
 	AB_EXPERIMENT_ID,
 	AB_GROUP_ATTRIBUTE,
 	AB_GROUP_COOKIE_NAME,
+	AB_SEED_COOKIE_NAME,
 	AB_VISITOR_COOKIE_NAME,
 	getABClientAssignment,
 	getABGroupFromCookie
@@ -56,6 +58,7 @@ function ensureClientABAssignment() {
 			}`
 			if (assignment.shouldSetVisitorCookie) {
 				document.cookie = `${AB_VISITOR_COOKIE_NAME}=${assignment.visitorId}; ${attributes}`
+				document.cookie = `${AB_SEED_COOKIE_NAME}=${assignment.visitorId}; ${attributes}`
 			}
 			document.cookie = `${AB_GROUP_COOKIE_NAME}=${assignment.group}; ${attributes}`
 		}
@@ -70,6 +73,7 @@ function ensureClientABAssignment() {
 
 if (typeof window !== 'undefined') {
 	ensureClientABAssignment()
+	captureFirstTouchUtm(window.location.search)
 	window.umamiABBeforeSend = (_type, payload) => addABTag(payload, document.cookie)
 }
 

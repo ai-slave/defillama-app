@@ -4,7 +4,12 @@ import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
-import { setPendingPageContext, setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
+import {
+	setPendingEntrySource,
+	setPendingPageContext,
+	setPendingPrompt,
+	setPendingSuggestedFlag
+} from '~/containers/LlamaAI/pendingPrompt'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 
 const track = installUmamiSink()
@@ -75,7 +80,12 @@ describe('useDeepLinkPrompt', () => {
 		setPendingSuggestedFlag()
 		await mount()
 
-		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', { route: '/protocol/aave' }, true)
+		expect(options.submitPrompt).toHaveBeenCalledWith(
+			'from floating button',
+			{ route: '/protocol/aave' },
+			true,
+			undefined
+		)
 		expect(api.confirmationPrompt).toBeNull()
 	})
 
@@ -88,7 +98,7 @@ describe('useDeepLinkPrompt', () => {
 
 		act(() => api.confirm())
 
-		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl')
+		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'deep-link')
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
 		expect(api.confirmationPrompt).toBeNull()
 		expect(track.mock.calls.map(([event]) => event)).toEqual(['llamaai-deeplink-view', 'llamaai-deeplink-run'])
@@ -106,7 +116,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(committed.filter((value) => value !== null)).toEqual([])
 		expect(api.confirmationPrompt).toBeNull()
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
-		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined)
+		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined, undefined)
 	})
 
 	// The queue and the link can both arrive after mount, so precedence cannot be settled once at
@@ -121,7 +131,26 @@ describe('useDeepLinkPrompt', () => {
 		await mount()
 
 		expect(committed.filter((value) => value !== null)).toEqual([])
-		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined)
+		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined, undefined)
+	})
+
+	test('a pending prompt keeps the entry point it came from, once, so funnels can tell a strip click from a typed question', async () => {
+		setPendingPrompt('why is aave tvl down')
+		setPendingEntrySource('entity-strip')
+		await mount()
+
+		expect(options.submitPrompt).toHaveBeenCalledWith('why is aave tvl down', undefined, undefined, 'entity-strip')
+		expect(localStorage.getItem('llamaai-pending-entry-source')).toBeNull()
+	})
+
+	test('a deep link run from a newsletter is attributed to its utm source so its bounce can be compared with shared chats', async () => {
+		options.deepLinkPrompt = 'what is tvl'
+		options.utmSource = 'newsletter'
+		await mount()
+
+		act(() => api.confirm())
+
+		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'newsletter')
 	})
 
 	test('asks again when the same link comes back after a dismissal', async () => {
@@ -144,7 +173,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(api.confirmationPrompt).toBe('  what is tvl  ')
 
 		act(() => api.confirm())
-		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl')
+		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl', undefined, undefined, 'deep-link')
 		expect(api.confirmationPrompt).toBeNull()
 	})
 

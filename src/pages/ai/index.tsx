@@ -6,7 +6,7 @@ import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { SEO } from '~/components/SEO'
 import { AI_SERVER } from '~/constants'
-import { setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
+import { setPendingEntrySource, setPendingPrompt, setPendingSuggestedFlag } from '~/containers/LlamaAI/pendingPrompt'
 import { TOOL_ICONS, TOOL_LABELS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/toolMetadata'
 import type { LandingQuestion } from '~/containers/LlamaAI/types'
 import { StoreButtons } from '~/containers/MobileApp'
@@ -84,10 +84,12 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 		if (!loaders.userLoading && isAuthenticated) {
 			setPendingPrompt(question.text)
 			setPendingSuggestedFlag()
+			setPendingEntrySource('landing')
 			void router.push('/ai/chat')
 		} else {
 			setPendingPrompt(question.text)
 			setPendingSuggestedFlag()
+			setPendingEntrySource('landing')
 			signInDialogStore.show()
 		}
 	}
@@ -150,9 +152,11 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 					trackUmamiEvent('llamaai-landing-freeform-submit', { question: value.slice(0, 50) })
 					if (!loaders.userLoading && isAuthenticated) {
 						setPendingPrompt(value)
+						setPendingEntrySource('landing')
 						void router.push('/ai/chat')
 					} else {
 						setPendingPrompt(value)
+						setPendingEntrySource('landing')
 						signInDialogStore.show()
 					}
 				}}

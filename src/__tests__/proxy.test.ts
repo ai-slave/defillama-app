@@ -1,7 +1,13 @@
 import { unstable_doesMiddlewareMatch } from 'next/experimental/testing/server'
 import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABGroup, isABVisitorId } from '~/utils/abTesting'
+import {
+	AB_GROUP_COOKIE_NAME,
+	AB_SEED_COOKIE_NAME,
+	AB_VISITOR_COOKIE_NAME,
+	getABGroup,
+	isABVisitorId
+} from '~/utils/abTesting'
 
 async function loadProxy(allowedOrigins = '', investorsPreview = '') {
 	vi.resetModules()
@@ -120,15 +126,43 @@ describe('a/b assignment', () => {
 		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
 	})
 
-	test('keeps an existing valid assignment without resetting cookies', async () => {
+	test('gives new visitors a readable seed equal to the visitor id so signed-out analytics can join to the user later', async () => {
+		const { proxy } = await loadProxy()
+		const response = proxy(pageRequest('https://defillama.com/chains'))
+		const visitorCookie = response.cookies.get(AB_VISITOR_COOKIE_NAME)
+		const seedCookie = response.cookies.get(AB_SEED_COOKIE_NAME)
+
+		expect(seedCookie?.value).toBe(visitorCookie?.value)
+		expect(seedCookie?.httpOnly).toBeFalsy()
+		expect(seedCookie).toMatchObject({ path: '/', sameSite: 'lax', secure: true })
+	})
+
+	test('backfills the readable seed for visitors assigned before the seed existed, without rebucketing them', async () => {
 		const { proxy } = await loadProxy()
 		const visitorId = '00000000-0000-4000-8000-000000000009'
 		const response = proxy(
 			pageRequest('https://defillama.com/chains', `${AB_VISITOR_COOKIE_NAME}=${visitorId}; ${AB_GROUP_COOKIE_NAME}=b`)
 		)
 
+		expect(response.cookies.get(AB_SEED_COOKIE_NAME)?.value).toBe(visitorId)
 		expect(response.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
 		expect(response.cookies.get(AB_GROUP_COOKIE_NAME)).toBeUndefined()
+		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
+	})
+
+	test('keeps an existing valid assignment without resetting cookies', async () => {
+		const { proxy } = await loadProxy()
+		const visitorId = '00000000-0000-4000-8000-000000000009'
+		const response = proxy(
+			pageRequest(
+				'https://defillama.com/chains',
+				`${AB_VISITOR_COOKIE_NAME}=${visitorId}; ${AB_GROUP_COOKIE_NAME}=b; ${AB_SEED_COOKIE_NAME}=${visitorId}`
+			)
+		)
+
+		expect(response.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
+		expect(response.cookies.get(AB_GROUP_COOKIE_NAME)).toBeUndefined()
+		expect(response.cookies.get(AB_SEED_COOKIE_NAME)).toBeUndefined()
 		expect(response.headers.get('Cache-Control')).toBeNull()
 	})
 

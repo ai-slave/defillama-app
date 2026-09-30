@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { useAuthContext } from '~/auth'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
-import { setPendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
+import { setPendingEntrySource, setPendingPrompt } from '~/containers/LlamaAI/pendingPrompt'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 
 function LlamaAIPage() {
@@ -21,6 +21,7 @@ function LlamaAIPage() {
 	const handleConfirmDeepLinkPrompt = () => {
 		if (!promptParam) return
 		setPendingPrompt(promptParam)
+		setPendingEntrySource(typeof router.query.utm_source === 'string' ? router.query.utm_source : 'deep-link')
 		void router.replace(cleanUrl, undefined, { shallow: true, scroll: false })
 		signInDialogStore.show()
 	}

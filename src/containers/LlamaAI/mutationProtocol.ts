@@ -13,6 +13,7 @@ export interface OutgoingAttachment {
 }
 
 export interface AgenticMutationEnvelope {
+	readonly abVisitorId?: string
 	readonly blockedSkills?: ReadonlyArray<string>
 	readonly clientMutationId: string
 	readonly customInstructions?: string
@@ -20,6 +21,7 @@ export interface AgenticMutationEnvelope {
 	readonly effort?: string
 	readonly enablePremiumTools: boolean
 	readonly entities?: ReadonlyArray<{ term: string; slug: string; type?: string }>
+	readonly entrySource?: string
 	readonly images?: ReadonlyArray<OutgoingAttachment>
 	readonly isSuggestedQuestion?: true
 	readonly message: string
@@ -63,6 +65,7 @@ export class AgenticMutationReconcileError extends Error {
 }
 
 export function createAgenticMutationEnvelope(args: {
+	abVisitorId?: string
 	blockedSkills?: Array<string>
 	clientMutationId: string
 	customInstructions?: string
@@ -70,6 +73,7 @@ export function createAgenticMutationEnvelope(args: {
 	effort?: string
 	enablePremiumTools: boolean
 	entities?: Array<{ term: string; slug: string; type?: string }>
+	entrySource?: string
 	images?: Array<OutgoingAttachment>
 	isSuggestedQuestion?: boolean
 	message: string
@@ -108,6 +112,8 @@ export function createAgenticMutationEnvelope(args: {
 		...(args.projectId ? { projectId: args.projectId } : {}),
 		...(args.editMessageId ? { editMessageId: args.editMessageId } : {}),
 		...(args.terminalContext ? { terminalContext: args.terminalContext } : {}),
+		...(args.entrySource ? { entrySource: args.entrySource } : {}),
+		...(args.abVisitorId ? { abVisitorId: args.abVisitorId } : {}),
 		...(timezone ? { timezone } : {})
 	}
 }

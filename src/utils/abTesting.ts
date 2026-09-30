@@ -2,6 +2,7 @@ export const AB_EXPERIMENT_ID = 'foundation-aa-v1'
 export const REWARDS_EXPERIMENT_ID = 'rewards-featured-cards-v1'
 export const AB_VISITOR_COOKIE_NAME = 'defillama-ab-id'
 export const AB_GROUP_COOKIE_NAME = 'defillama-ab-group'
+export const AB_SEED_COOKIE_NAME = 'defillama-ab-seed'
 export const AB_GROUP_ATTRIBUTE = 'data-ab-group'
 export const AB_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365
 
@@ -54,6 +55,11 @@ export function getABClientAssignment(cookieString: string, createVisitorId: () 
 		group: getABGroup(visitorId),
 		shouldSetVisitorCookie: !hasValidVisitorId
 	}
+}
+
+export function getABSeedFromCookie(cookieString: string): string | null {
+	const seed = getCookieValue(cookieString, AB_SEED_COOKIE_NAME) ?? getCookieValue(cookieString, AB_VISITOR_COOKIE_NAME)
+	return isABVisitorId(seed) ? seed : null
 }
 
 export function getABTag(group: ABGroup): string {

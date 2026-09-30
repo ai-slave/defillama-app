@@ -1,9 +1,15 @@
+import { useEffect } from 'react'
 import { BasicLink } from '~/components/Link'
 import type { FreeLimitOffer } from '~/containers/LlamaAI/types'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export function FreeLimitCard({ offer }: { offer: FreeLimitOffer }) {
+	useEffect(() => {
+		trackUmamiEvent('llamaai-free-limit-view', { limit: offer.code })
+	}, [offer.code])
+
 	return (
 		<div className="my-2.5 flex w-full flex-col gap-4 rounded-lg border border-subtle bg-surface p-4">
 			<div className="flex items-start gap-3">

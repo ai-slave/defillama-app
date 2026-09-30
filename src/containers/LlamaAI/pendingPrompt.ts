@@ -53,6 +53,20 @@ export function consumePendingPrompt(): string | null {
 }
 
 const PENDING_SUGGESTED_KEY = 'llamaai-pending-suggested'
+const PENDING_ENTRY_SOURCE_KEY = 'llamaai-pending-entry-source'
+
+export function setPendingEntrySource(source: string) {
+	if (typeof window !== 'undefined') {
+		localStorage.setItem(PENDING_ENTRY_SOURCE_KEY, source)
+	}
+}
+
+export function consumePendingEntrySource(): string | undefined {
+	if (typeof window === 'undefined') return undefined
+	const val = localStorage.getItem(PENDING_ENTRY_SOURCE_KEY)
+	if (val) localStorage.removeItem(PENDING_ENTRY_SOURCE_KEY)
+	return val || undefined
+}
 
 export function setPendingSuggestedFlag() {
 	if (typeof window !== 'undefined') {

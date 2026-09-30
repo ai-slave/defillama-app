@@ -15,6 +15,7 @@ import { OAuthWelcomeDialog } from '~/auth/OAuthWelcomeDialog'
 import { requestPasswordReset } from '~/auth/passwordRecovery'
 import { getReferrer } from '~/auth/referrer'
 import type { GoogleLinkChallenge } from '~/auth/signInFlowStore'
+import { getSignupAttribution } from '~/auth/signupAttribution'
 import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
 import { clearPersistedSubscriptionStatus, subscriptionStatusQueryOptions } from '~/auth/subscriptionStatus'
 import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
@@ -131,7 +132,7 @@ const attributeSignup = (
 	void fetch(`${AUTH_SERVER}/user/attribution`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-		body: JSON.stringify({ source, referrer, provider })
+		body: JSON.stringify({ source, referrer, provider, ...getSignupAttribution() })
 	}).catch(() => {
 		/* Attribution must not block an accepted sign-in. */
 	})

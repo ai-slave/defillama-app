@@ -9,6 +9,7 @@ import { isExtraConversationPath, legacyTerminalRedirect } from '~/containers/Ll
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
+	AB_SEED_COOKIE_NAME,
 	AB_VISITOR_COOKIE_NAME,
 	getABGroup,
 	isABVisitorId
@@ -107,6 +108,7 @@ function applyABAssignment(response: NextResponse, request: NextRequest) {
 	const visitorId = hasValidVisitorId ? currentVisitorId : crypto.randomUUID()
 	const group = getABGroup(visitorId)
 	const shouldSetGroup = currentGroup !== group
+	const shouldSetSeed = request.cookies.get(AB_SEED_COOKIE_NAME)?.value !== visitorId
 	const secure = request.nextUrl.protocol === 'https:'
 
 	if (!hasValidVisitorId) {
@@ -132,7 +134,18 @@ function applyABAssignment(response: NextResponse, request: NextRequest) {
 		})
 	}
 
-	if (!hasValidVisitorId || shouldSetGroup) {
+	if (shouldSetSeed) {
+		response.cookies.set({
+			name: AB_SEED_COOKIE_NAME,
+			value: visitorId,
+			maxAge: AB_COOKIE_MAX_AGE_SECONDS,
+			path: '/',
+			sameSite: 'lax',
+			secure
+		})
+	}
+
+	if (!hasValidVisitorId || shouldSetGroup || shouldSetSeed) {
 		response.headers.set('Cache-Control', 'private, no-store')
 	}
 }

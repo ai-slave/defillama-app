@@ -52,6 +52,7 @@ import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containe
 import { ExecutionCoordinator, type ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
 import { fetchAgenticResponse } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { useAgenticRouteTransition } from '~/containers/LlamaAI/hooks/useAgenticRouteTransition'
+import { useAnswerAttention } from '~/containers/LlamaAI/hooks/useAnswerAttention'
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
@@ -125,6 +126,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { getABSeedFromCookie } from '~/utils/abTesting'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { DuelPanel, type DuelChoice } from './components/DuelPanel'
 import { useDuelStream } from './hooks/useDuelStream'
@@ -180,6 +182,16 @@ const DashboardPanel = lazy(() =>
 )
 
 type RestoreSessionSnapshotResult = { status: 'restored' | 'failed' | 'aborted' }
+
+const LIMIT_HIT_TYPE = {
+	FREE_FORM_LIMIT: 'typed',
+	FREE_QUESTION_LIMIT: 'suggested',
+	FREE_DAILY_LIMIT: 'daily_cost'
+} as const
+
+function trackLimitHit(type: string) {
+	trackUmamiEvent('llamaai-limit-hit', { type })
+}
 
 function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['code'] }): Message {
 	const isDaily = err.code === 'FREE_DAILY_LIMIT'
@@ -382,6 +394,12 @@ export function AgenticChat({
 	const streamStore = useConstant(createStreamStore)
 	const streamState = useSyncExternalStore(streamStore.subscribe, streamStore.getSnapshot, streamStore.getSnapshot)
 	const dispatchStream = streamStore.dispatch
+	const [answerEntrySource, setAnswerEntrySource] = useState<string>()
+	useAnswerAttention({
+		isStreaming: streamState.isStreaming,
+		hasText: streamState.text.length > 0,
+		entrySource: answerEntrySource
+	})
 	const [promptFailures, dispatchPromptFailure] = useReducer(
 		promptFailuresReducer,
 		undefined,
@@ -448,7 +466,7 @@ export function AgenticChat({
 		if (entry.cleanUrl) void router.replace(entry.cleanUrl, undefined, { shallow: true, scroll: false })
 	}, [router, isLlama, isSharedPage])
 	const submitPendingPromptRef = useRef<
-		(prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean) => void
+		(prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean, entrySource?: string) => void
 	>(() => {})
 	const deepLinkPrompt = route.kind === 'chat-new' ? route.initialPrompt?.trim() || undefined : undefined
 	const deepLinkUtmSource = typeof router.query.utm_source === 'string' ? router.query.utm_source : null
@@ -466,8 +484,8 @@ export function AgenticChat({
 		clearDeepLinkFromUrl: () => {
 			void router.replace(withTerminalView('/ai/chat'), undefined, { shallow: true })
 		},
-		submitPrompt: (prompt, pageContext, isSuggestedQuestion) =>
-			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion)
+		submitPrompt: (prompt, pageContext, isSuggestedQuestion, entrySource) =>
+			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion, entrySource)
 	})
 	const {
 		settings,
@@ -1790,11 +1808,13 @@ export function AgenticChat({
 							return
 						}
 						if (kind === 'free-limit' && isFreeLimitError(err)) {
+							trackLimitHit(LIMIT_HIT_TYPE[err.code])
 							appendMessage(buildFreeLimitMessage(err))
 							dispatchStream({ type: 'RESET_STREAM' })
 							return
 						}
 						if (err.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
+							trackLimitHit('fact_checked')
 							dispatchStream({
 								type: 'SET_RATE_LIMIT_DETAILS',
 								value: {
@@ -1809,6 +1829,7 @@ export function AgenticChat({
 							return
 						}
 						if (kind === 'usage-limit') {
+							trackLimitHit(err.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
 							dispatchStream({
 								type: 'SET_RATE_LIMIT_DETAILS',
 								value: {
@@ -1963,6 +1984,7 @@ export function AgenticChat({
 				isSuggestedQuestion?: boolean
 				modeOverride?: AgenticAnswerMode
 				quotedTextOverride?: string | null
+				entrySource?: string
 			}
 		): boolean => {
 			const trimmed = prompt.trim()
@@ -1976,6 +1998,8 @@ export function AgenticChat({
 			}
 
 			const effectiveMode = options?.modeOverride ?? mode
+			const entrySource = options?.entrySource ?? (sharedSession ? 'shared-chat' : isTerminalView ? 'terminal' : 'chat')
+			setAnswerEntrySource(entrySource)
 			const terminalSymbol = isTerminalView ? getTerminalSymbol() : null
 			const terminalEntity = terminalSymbol ? getCurrentTerminalEntity() : null
 			const submitPageContext: ChatPageContext | undefined =
@@ -2033,6 +2057,8 @@ export function AgenticChat({
 						model: settings.model || undefined,
 						effort: settings.effort || undefined,
 						isSuggestedQuestion: options?.isSuggestedQuestion,
+						entrySource,
+						abVisitorId: getABSeedFromCookie(document.cookie) ?? undefined,
 						blockedSkills: isMobileChatView ? ['dashboard'] : undefined,
 						shareToken: currentShareToken,
 						projectId: submitProjectId,
@@ -2278,6 +2304,7 @@ export function AgenticChat({
 							}
 						}
 						if (kind === 'free-limit' && isFreeLimitError(editError)) {
+							trackLimitHit(LIMIT_HIT_TYPE[editError.code])
 							setMessages(messagesSnapshot)
 							setActiveLeafMessageId(activeLeafSnapshot)
 							appendMessage(buildFreeLimitMessage(editError))
@@ -2285,6 +2312,7 @@ export function AgenticChat({
 							return
 						}
 						if (editError.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
+							trackLimitHit('fact_checked')
 							setMessages(messagesSnapshot)
 							setActiveLeafMessageId(activeLeafSnapshot)
 							dispatchStream({
@@ -2301,6 +2329,7 @@ export function AgenticChat({
 							return
 						}
 						if (kind === 'usage-limit') {
+							trackLimitHit(editError.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
 							setMessages(messagesSnapshot)
 							setActiveLeafMessageId(activeLeafSnapshot)
 							dispatchStream({
@@ -2487,7 +2516,7 @@ export function AgenticChat({
 	// Reuse the same submit path for assistant action buttons.
 	const handleActionClick = useCallback(
 		(message: string) => {
-			if (!isStreaming) handleSubmit(message)
+			if (!isStreaming) handleSubmit(message, undefined, undefined, undefined, { entrySource: 'follow-up' })
 		},
 		[isStreaming, handleSubmit]
 	)
@@ -2539,8 +2568,8 @@ export function AgenticChat({
 	// after commit rather than during render keeps the component optimizable; the only caller is the
 	// hook's own confirm handler, which cannot run before the first commit.
 	useLayoutEffect(() => {
-		submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion) => {
-			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
+		submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion, entrySource) => {
+			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion, entrySource })
 		}
 	})
 
@@ -2599,7 +2628,7 @@ export function AgenticChat({
 				alertsModalStore.show()
 			},
 			toggleResearchMode: () => setMode((current) => (current === 'research' ? 'quick' : 'research')),
-			submitPrompt: (prompt: string) => handleSubmit(prompt)
+			submitPrompt: (prompt: string) => handleSubmit(prompt, undefined, undefined, undefined, { entrySource: 'tip' })
 		}),
 		[openSettingsModal, alertsModalStore, setMode, handleSubmit]
 	)

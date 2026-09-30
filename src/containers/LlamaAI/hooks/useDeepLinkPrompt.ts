@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import {
+	consumePendingEntrySource,
 	consumePendingPageContext,
 	consumePendingPrompt,
 	consumePendingSuggestedFlag,
@@ -10,7 +11,12 @@ import {
 import type { ChatPageContext } from '~/containers/LlamaAI/streamState'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-export type PendingPromptSubmit = (prompt: string, pageContext?: ChatPageContext, isSuggestedQuestion?: boolean) => void
+export type PendingPromptSubmit = (
+	prompt: string,
+	pageContext?: ChatPageContext,
+	isSuggestedQuestion?: boolean,
+	entrySource?: string
+) => void
 
 function deepLinkKey(prompt: string, source: string | null, campaign: string | null) {
 	return `${prompt}\n${source ?? ''}\n${campaign ?? ''}`
@@ -75,6 +81,7 @@ export function useDeepLinkPrompt({
 		const pendingPrompt = consumePendingPrompt()
 		const pendingPageContext = consumePendingPageContext()
 		const isSuggested = consumePendingSuggestedFlag()
+		const entrySource = consumePendingEntrySource()
 		if (pendingPrompt) {
 			if (deepLinkPrompt) {
 				// The one write left here. A pending prompt outranks the link, and the banner has to go
@@ -83,7 +90,7 @@ export function useDeepLinkPrompt({
 				setAnsweredKey(deepLinkKey(deepLinkPrompt, utmSource, utmCampaign))
 				clearDeepLinkFromUrlRef.current()
 			}
-			submitPromptRef.current(pendingPrompt, pendingPageContext ?? undefined, isSuggested || undefined)
+			submitPromptRef.current(pendingPrompt, pendingPageContext ?? undefined, isSuggested || undefined, entrySource)
 			return
 		}
 
@@ -103,7 +110,7 @@ export function useDeepLinkPrompt({
 		setAnsweredKey(linkKey)
 		trackUmamiEvent('llamaai-deeplink-run', deepLinkEventProps(prompt, utmSource, utmCampaign))
 		clearDeepLinkFromUrlRef.current()
-		submitPromptRef.current(prompt)
+		submitPromptRef.current(prompt, undefined, undefined, utmSource ?? 'deep-link')
 	}, [confirmationPrompt, linkKey, utmCampaign, utmSource])
 
 	const dismiss = useCallback(() => {

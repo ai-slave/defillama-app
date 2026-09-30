@@ -1,6 +1,7 @@
 import { acceptAuthSession, type AuthRequest } from '~/auth/authRequest'
 import { rememberSignIn } from '~/auth/lastSignIn'
 import { getReferrer } from '~/auth/referrer'
+import { getSignupAttribution } from '~/auth/signupAttribution'
 import { getSignupSource } from '~/auth/signupSource'
 import { AUTH_SERVER } from '~/constants'
 
@@ -30,6 +31,7 @@ export function signupWithEmail(request: SignupRequest, onAccepted: (record: Sig
 						auth_method: 'email',
 						source: getSignupSource(),
 						referrer: getReferrer(),
+						...getSignupAttribution(),
 						turnstile_token: request.turnstileToken,
 						promotionalEmails: request.promotionalEmails,
 						sendVerificationEmail: false
