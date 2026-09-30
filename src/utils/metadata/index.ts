@@ -76,7 +76,7 @@ async function doRefresh(source: string): Promise<void> {
 	const startedAt = Date.now()
 	const staleAgeMs = lastSuccessfulRefreshMs === 0 ? undefined : startedAt - lastSuccessfulRefreshMs
 	try {
-		const payload = validateCoreMetadataPayload(await fetchCoreMetadata())
+		const payload = validateCoreMetadataPayload(await fetchCoreMetadata(metadataCache.protocolMetadata))
 		replaceMetadataCacheContents(metadataCache, payload)
 		const now = Date.now()
 		lastSuccessfulRefreshMs = now

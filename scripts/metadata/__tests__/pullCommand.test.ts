@@ -3,6 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../../../src/utils/metadata/artifactContract'
+import { loadMetadataArtifactsFromDisk } from '../../../src/utils/metadata/artifacts'
 import { readMetadataArtifactManifest, writeMetadataArtifacts } from '../../../src/utils/metadata/artifactWriter'
 import { getMetadataCacheDir } from '../../../src/utils/metadata/config'
 import { METADATA_MANIFEST_FILE, createMetadataArtifactManifest } from '../../../src/utils/metadata/manifest'
@@ -127,6 +128,33 @@ describe('pull metadata command', () => {
 		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.tokenlist), 'utf8'))).toEqual({
 			aave: tokenEntry
 		})
+	})
+
+	test('provides ready card metadata to a stale artifact pull', async () => {
+		const repoRoot = await createRepoRoot()
+		const cacheDir = getMetadataCacheDir(repoRoot)
+		const previous = createPayload()
+		previous.protocols['7480'] = { name: 'kast-card', displayName: 'Kast Card', cryptoCardIssuer: 'kast' }
+		await writeMetadataArtifacts(cacheDir, previous, 'ready', 1000)
+
+		const result = await runPullMetadataCommand({
+			env: { NODE_ENV: 'production' } as NodeJS.ProcessEnv,
+			fetchMetadata: async (previousProtocolMetadata) => {
+				const next = createPayload()
+				next.protocols['7480'] = {
+					name: 'kast-card',
+					displayName: 'Kast Card',
+					cryptoCardIssuer: previousProtocolMetadata?.['7480']?.cryptoCardIssuer
+				}
+				return next
+			},
+			logger: { log: vi.fn() },
+			now: 1000 + 60 * 60 * 1000,
+			repoRoot
+		})
+
+		expect(result.exitCode).toBe(0)
+		expect(loadMetadataArtifactsFromDisk(cacheDir).payload.protocols['7480'].cryptoCardIssuer).toBe('kast')
 	})
 
 	test('treats old-version manifests as invalid and publishes a fresh ready cache', async () => {

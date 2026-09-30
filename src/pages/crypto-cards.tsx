@@ -17,7 +17,10 @@ export const getStaticProps = withPerformanceLogging<CryptoCardsPageProps>('cryp
 		import('~/utils/metadata'),
 		fetchCardsIndexFromNetwork()
 	])
-	const { rows, reference } = mapCardsIndex(index, getCryptoCardDetailsHrefs(metadataCache.protocolMetadata))
+	const { rows, reference } = mapCardsIndex(
+		index,
+		getCryptoCardDetailsHrefs(metadataCache.protocolMetadata, index.cards)
+	)
 	return {
 		props: { rows, reference },
 		revalidate: maxAgeForNext([22])

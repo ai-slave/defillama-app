@@ -9,6 +9,7 @@ import {
 	RWA_PERPS_SERVER_URL,
 	LIQUIDATIONS_SERVER_URL_V2,
 	BRIDGES_SERVER_URL,
+	CARDS_SERVER_URL,
 	EQUITIES_SERVER_URL,
 	PRE_IPO_SERVER_URL
 } from '~/constants'
@@ -89,6 +90,7 @@ export function serveCoreMetadata(
 			tokens: { aave: { chains: ['ethereum'], primaryChain: 'ethereum', categories: ['governance'] } },
 			categories: [{ id: 'governance', label: 'Governance' }]
 		},
+		cardsIndex: { cards: [] },
 		...overrides
 	}
 	http.serve({
@@ -118,6 +120,7 @@ export function serveCoreMetadata(
 			institutions: [{ institutionId: 1 }],
 			institutionMetadata: { '1': { institutionId: 1, ticker: 'MSTR' } }
 		},
-		[`${STABLECOINS_SERVER_URL}/config`]: { Tether: 'pegged-1' }
+		[`${STABLECOINS_SERVER_URL}/config`]: { Tether: 'pegged-1' },
+		[`${CARDS_SERVER_URL}/index`]: sources.cardsIndex
 	})
 }

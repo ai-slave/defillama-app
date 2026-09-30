@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { COINS_SERVER_URL } from '~/constants'
+import { CARDS_SERVER_URL, COINS_SERVER_URL } from '~/constants'
 import { fixtureStatus, installFixtureFetch } from '~/utils/testing/fixtureFetch'
 import { fetchCoreMetadata } from '../fetch'
 import { serveCoreMetadata as serveSources } from './sourceFixture'
@@ -199,11 +199,46 @@ describe('fetchCoreMetadata', () => {
 	})
 
 	test('stamps crypto card issuers onto protocol metadata', async () => {
-		serveCoreMetadata({ protocols: { '7480': { name: 'kast-card', displayName: 'Kast Card' } } })
+		serveCoreMetadata({
+			protocols: { '7480': { name: 'kast-card', displayName: 'Kast Card' } },
+			cardsIndex: { cards: [{ id: 'kast', defillama_id: '7480' }] }
+		})
 
 		const payload = await fetchCoreMetadata()
 
 		expect(payload.protocols['7480'].cryptoCardIssuer).toBe('kast')
+	})
+
+	test('keeps core metadata available when the optional cards index fails', async () => {
+		serveCoreMetadata()
+		http.serve({ [`${CARDS_SERVER_URL}/index`]: fixtureStatus(503, 'cards unavailable') })
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+		await expect(fetchCoreMetadata()).resolves.toMatchObject({ protocols: { 'parent#aave': { name: 'aave' } } })
+	})
+
+	test('preserves card tabs and redirects across an index failure, but removes them on a successful empty index', async () => {
+		serveCoreMetadata({
+			protocols: {
+				'parent#ether-fi': { name: 'ether.fi', displayName: 'ether.fi' },
+				'6373': { name: 'etherfi-cash-liquid', displayName: 'EtherFi Cash Liquid' }
+			},
+			cardsIndex: { cards: [{ id: 'etherfi', defillama_id: '6373', defillama_parent_id: 'parent#ether-fi' }] }
+		})
+		const initial = await fetchCoreMetadata()
+		expect(initial.protocols['parent#ether-fi'].cryptoCardIssuer).toBe('etherfi')
+		expect(initial.protocols['6373'].cryptoCardRedirectSlug).toBe('ether.fi')
+
+		http.serve({ [`${CARDS_SERVER_URL}/index`]: fixtureStatus(503, 'cards unavailable') })
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const refreshed = await fetchCoreMetadata(initial.protocols)
+		expect(refreshed.protocols['parent#ether-fi'].cryptoCardIssuer).toBe('etherfi')
+		expect(refreshed.protocols['6373'].cryptoCardRedirectSlug).toBe('ether.fi')
+
+		http.serve({ [`${CARDS_SERVER_URL}/index`]: { cards: [] } })
+		const cleared = await fetchCoreMetadata(refreshed.protocols)
+		expect(cleared.protocols['parent#ether-fi'].cryptoCardIssuer).toBeUndefined()
+		expect(cleared.protocols['6373'].cryptoCardRedirectSlug).toBeUndefined()
 	})
 
 	test('stamps the per-protocol RWA mcap slug only where the protocol issues its own assets', async () => {

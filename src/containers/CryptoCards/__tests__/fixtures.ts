@@ -49,6 +49,7 @@ export function cardsIndexCard(id: string, parentId?: string): CardsIndexCard {
 		name: id,
 		...(parentId ? { parent_id: parentId } : {}),
 		as_of: '2026-09-29',
+		checked_at: '2026-09-30T00:00:00.000Z',
 		availability: 'confirmed',
 		data_status: 'refreshed',
 		roll: { networks: [], classes: [], has_confirmed_ungated_tier: true },
@@ -57,13 +58,15 @@ export function cardsIndexCard(id: string, parentId?: string): CardsIndexCard {
 				id: `${id}--standard`,
 				name: 'Standard',
 				region: 'Global',
+				region_type: 'global',
 				availability: 'confirmed',
 				access: 'ungated',
+				cashback_status: 'not_publicly_disclosed',
 				fees: {},
 				type: {},
 				crypto: {},
 				integrations: {},
-				atm: {},
+				atm: { fee_status: 'not_publicly_disclosed' },
 				limits: {}
 			}
 		]
@@ -94,6 +97,10 @@ export function cardDetail(card: CardsIndexCard): CardsDetailResponse {
 	return {
 		version: 'run-1',
 		id: card.id,
+		...(card.parent_id ? { parent_id: card.parent_id } : {}),
+		...(card.defillama_slug ? { defillama_slug: card.defillama_slug } : {}),
+		...(card.defillama_id ? { defillama_id: card.defillama_id } : {}),
+		...(card.defillama_parent_id ? { defillama_parent_id: card.defillama_parent_id } : {}),
 		tiers: card.tiers.map((tier) => ({ id: tier.id, other_fees: [], card_issue: [], disclosure: {} }))
 	}
 }

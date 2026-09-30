@@ -1,6 +1,9 @@
 import { COINS_SERVER_URL } from '~/constants'
+import type { CardsIndexCard } from '~/containers/CryptoCards/api.types'
 import { stampCryptoCardIssuers } from '~/containers/CryptoCards/issuers'
+import { fetchCardsIndexFromNetwork } from '~/containers/CryptoCards/server/upstream'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import { getErrorMessage } from '~/utils/error'
 import {
 	buildUnlocksHistoricalPriceRequests,
 	type UnlockHistoricalPriceProtocol
@@ -11,7 +14,7 @@ import { fetchMetadataJson } from './http'
 import { extractLiquidationsTokenSymbols } from './liquidations'
 import { fetchMetadataRouteIndexes } from './routeIndexes'
 import { fetchCoreMetadataSources } from './sources'
-import type { IEmissionsHistoricalPrices, ITokenListEntry } from './types'
+import type { IEmissionsHistoricalPrices, IProtocolMetadata, ITokenListEntry } from './types'
 
 const normalizeSlug = (value: string | null | undefined): string =>
 	String(value ?? '')
@@ -20,6 +23,21 @@ const normalizeSlug = (value: string | null | undefined): string =>
 		.replace(/'/g, '')
 
 const EMISSIONS_HISTORICAL_PRICES_BATCH_SIZE = 50
+
+async function fetchCryptoCardProtocolReferences(): Promise<Array<CardsIndexCard> | null> {
+	try {
+		const index = await fetchCardsIndexFromNetwork()
+		if (Array.isArray(index.cards)) return index.cards
+		console.warn(
+			'[metadata] Crypto cards index has no cards array; retaining existing Card Details tabs when available'
+		)
+	} catch (error) {
+		console.warn(
+			`[metadata] Crypto cards index failed; retaining existing Card Details tabs when available: ${getErrorMessage(error)}`
+		)
+	}
+	return null
+}
 
 async function fetchEmissionsHistoricalPrices(
 	emissions: Array<UnlockHistoricalPriceProtocol>
@@ -61,7 +79,9 @@ async function fetchEmissionsHistoricalPriceBatch(coins: Record<string, Array<nu
 	return response.coins
 }
 
-export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
+export async function fetchCoreMetadata(
+	previousProtocolMetadata: Readonly<Record<string, IProtocolMetadata>> = {}
+): Promise<CoreMetadataPayload> {
 	const [
 		{
 			protocols,
@@ -84,8 +104,9 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 			preIpoCompanyIds,
 			tokenFilterMetadata
 		},
-		routeIndexes
-	] = await Promise.all([fetchCoreMetadataSources(), fetchMetadataRouteIndexes()])
+		routeIndexes,
+		cryptoCardProtocolReferences
+	] = await Promise.all([fetchCoreMetadataSources(), fetchMetadataRouteIndexes(), fetchCryptoCardProtocolReferences()])
 
 	const tokenlist: Record<string, ITokenListEntry> = {}
 	for (const t of tokenlistArray) {
@@ -194,7 +215,15 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 		if (protocolMcapSlug) protocol.rwaProtocolMcapSlug = protocolMcapSlug
 	}
 
-	stampCryptoCardIssuers(protocols)
+	if (cryptoCardProtocolReferences !== null) {
+		stampCryptoCardIssuers(protocols, cryptoCardProtocolReferences)
+	} else {
+		for (const [id, protocol] of Object.entries(protocols)) {
+			const previous = previousProtocolMetadata[id]
+			if (previous?.cryptoCardIssuer) protocol.cryptoCardIssuer = previous.cryptoCardIssuer
+			if (previous?.cryptoCardRedirectSlug) protocol.cryptoCardRedirectSlug = previous.cryptoCardRedirectSlug
+		}
+	}
 
 	return {
 		protocols,

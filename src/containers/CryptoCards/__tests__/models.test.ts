@@ -139,6 +139,7 @@ describe('mapCardsIndex', () => {
 					logo: 'https://example.com/logo.png',
 					url: 'https://example.com',
 					as_of: '2026-08-29',
+					checked_at: '2026-09-30T00:00:00.000Z',
 					availability: 'not_publicly_disclosed',
 					data_status: 'refreshed',
 					countries: ['CA', 'US'],
@@ -153,8 +154,10 @@ describe('mapCardsIndex', () => {
 							id: 'example-card--metal',
 							name: 'Metal',
 							region: 'United States',
+							region_type: 'country',
 							availability: 'confirmed',
 							access: 'gated',
+							cashback_status: 'confirmed',
 							countries: ['US'],
 							gate: {
 								mode: 'any',
@@ -170,7 +173,12 @@ describe('mapCardsIndex', () => {
 							type: { class: 'debit', network: 'visa', forms: ['virtual'], issuer: 'Example Bank' },
 							crypto: { chains: ['Ethereum'], coins: ['USDC'], custody: 'self-custodial' },
 							integrations: { apple_pay: 1, iban: 0 },
-							atm: { label: '$500/month', withdrawal_fee_bps: 120, free_withdrawal_period: 'month' },
+							atm: {
+								fee_status: 'confirmed',
+								label: '$500/month',
+								withdrawal_fee_bps: 120,
+								free_withdrawal_period: 'month'
+							},
 							limits: { daily_label: '$1,000/day', monthly_label: '$10,000/month' },
 							perks: [{ code: 'lounge', label: 'Lounge access', status: 'coming_soon' }]
 						}

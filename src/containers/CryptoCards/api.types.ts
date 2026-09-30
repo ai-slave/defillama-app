@@ -4,6 +4,7 @@ export type CardsAvailability = 'confirmed' | 'not_publicly_disclosed'
 export type CardsAccess = 'gated' | 'ungated' | 'not_publicly_disclosed'
 export type CardsDataStatus = 'carried_forward' | 'refreshed'
 export type CardsIntegrationFlag = 0 | 1
+export type CardsRegionType = 'global' | 'country' | 'bloc' | 'regulatory_zone'
 
 export interface CardsAmount {
 	amount_minor: number
@@ -104,6 +105,7 @@ export interface CardsTierIntegrations {
 
 export interface CardsTierAtm {
 	available?: CardsIntegrationFlag
+	fee_status: CardsAvailability
 	withdrawal_fee?: CardsAmount
 	label?: string
 	withdrawal_fee_bps?: number
@@ -128,8 +130,10 @@ export interface CardsTier {
 	id: string
 	name: string
 	region: string
+	region_type: CardsRegionType
 	availability: CardsAvailability
 	access: CardsAccess
+	cashback_status: CardsAvailability
 	gate?: CardsGate
 	/** Tier-specific country override; when absent, the card-level countries apply. */
 	countries?: Array<string>
@@ -158,9 +162,13 @@ export interface CardsIndexCard {
 	name: string
 	/** Parent card-issuer slug. Self-references and absent values mean the card is standalone. */
 	parent_id?: string
+	defillama_slug?: string
+	defillama_id?: string
+	defillama_parent_id?: string
 	logo?: string
 	url?: string
 	as_of: string
+	checked_at: string
 	availability: CardsAvailability
 	data_status: CardsDataStatus
 	/** ISO 3166-1 alpha-2 codes across the whole card. */
@@ -246,5 +254,8 @@ export interface CardsDetailResponse {
 	version: string
 	id: string
 	parent_id?: string
+	defillama_slug?: string
+	defillama_id?: string
+	defillama_parent_id?: string
 	tiers: Array<CardsDetailTier>
 }

@@ -34,8 +34,13 @@ function protocolMetrics(id: string, name: string): IProtocolMetricsV2Api {
 	}
 }
 
-const kastCard = cardsIndexCard('kast')
-const cryptoComCard = cardsIndexCard('crypto-com-card', 'crypto-com')
+const kastCard = { ...cardsIndexCard('kast'), defillama_id: '7480' }
+const cryptoComCard = { ...cardsIndexCard('crypto-com-card', 'crypto-com'), defillama_id: '2270' }
+const cardProtocolReferences = [
+	kastCard,
+	cryptoComCard,
+	{ id: 'etherfi', defillama_id: '6373', defillama_parent_id: 'parent#ether-fi' }
+]
 
 describe('card detail routes', () => {
 	beforeEach(() => {
@@ -47,7 +52,7 @@ describe('card detail routes', () => {
 			'2270': { name: 'crypto-com', displayName: 'Crypto-com', tvl: true, cex: true },
 			'parent#aave': { name: 'aave', displayName: 'Aave', tvl: true }
 		}
-		stampCryptoCardIssuers(protocolMetadata)
+		stampCryptoCardIssuers(protocolMetadata, cardProtocolReferences)
 		metadata.seed({
 			protocolMetadata,
 			protocolRouteIdBySlug: {

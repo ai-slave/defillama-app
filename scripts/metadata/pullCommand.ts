@@ -1,4 +1,5 @@
 import type { CoreMetadataPayload } from '../../src/utils/metadata/artifactContract'
+import { loadMetadataArtifactsFromDisk } from '../../src/utils/metadata/artifacts'
 import {
 	getMissingMetadataArtifacts,
 	hasMetadataArtifactFiles,
@@ -10,10 +11,13 @@ import { getMetadataCacheDir } from '../../src/utils/metadata/config'
 import { fetchCoreMetadata } from '../../src/utils/metadata/fetch'
 import { isMetadataArtifactManifestFresh } from '../../src/utils/metadata/manifest'
 import { shouldSkipMetadataRefresh, shouldWriteMetadataStubsOnFailure } from '../../src/utils/metadata/policy'
+import type { IProtocolMetadata } from '../../src/utils/metadata/types'
 
 type PullMetadataCommandOptions = {
 	env?: NodeJS.ProcessEnv
-	fetchMetadata?: () => Promise<CoreMetadataPayload>
+	fetchMetadata?: (
+		previousProtocolMetadata?: Readonly<Record<string, IProtocolMetadata>>
+	) => Promise<CoreMetadataPayload>
 	logger?: Pick<Console, 'log'>
 	now?: number
 	repoRoot?: string
@@ -64,7 +68,11 @@ export async function runPullMetadataCommand({
 	}
 
 	try {
-		const metadataPayload = await fetchMetadata()
+		const previousProtocolMetadata =
+			manifest?.status === 'ready' && hasCompleteArtifacts
+				? loadMetadataArtifactsFromDisk(cacheDir).payload.protocols
+				: undefined
+		const metadataPayload = await fetchMetadata(previousProtocolMetadata)
 		await writeMetadataArtifacts(cacheDir, metadataPayload, 'ready', now)
 
 		logger.log('[dev:prepare] Metadata cache: pulled and cached data')

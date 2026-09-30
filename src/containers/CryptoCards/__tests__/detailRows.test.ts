@@ -7,13 +7,15 @@ const baseTier: CardsTier = {
 	id: 'kast--standard',
 	name: 'Standard',
 	region: 'Global',
+	region_type: 'global',
 	availability: 'confirmed',
 	access: 'ungated',
+	cashback_status: 'not_publicly_disclosed',
 	fees: {},
 	type: {},
 	crypto: {},
 	integrations: {},
-	atm: {},
+	atm: { fee_status: 'not_publicly_disclosed' },
 	limits: {}
 }
 
@@ -152,9 +154,10 @@ describe('rate rows the issuer text already states', () => {
 
 	test('leaves out an ATM fee the ATM terms already state, and keeps one they do not', () => {
 		const atmLabels = (label: string) =>
-			feeSection(baseDetail, { ...baseTier, atm: { label, withdrawal_fee_bps: 65 } })?.fields.map(
-				(field) => field.label
-			)
+			feeSection(baseDetail, {
+				...baseTier,
+				atm: { fee_status: 'confirmed', label, withdrawal_fee_bps: 65 }
+			})?.fields.map((field) => field.label)
 
 		expect(atmLabels('$1.00 + 0.65% per withdrawal')).toEqual(['ATM terms'])
 		expect(atmLabels('$250/day; maximum 3 withdrawals/day')).toEqual(['ATM terms', 'ATM withdrawal fee'])
@@ -269,7 +272,14 @@ describe('compareTiers', () => {
 	test('shows shared values once and lines tiers up only where they differ', () => {
 		const comparison = compare(
 			[{ name: 'Platinum', fees: { annual_label: 'None' } }, { kyc: 'KYC required' }],
-			[{ name: 'Signature', fees: { annual_label: '$20/year' }, atm: { label: '$250/day' } }, { kyc: 'KYC required' }]
+			[
+				{
+					name: 'Signature',
+					fees: { annual_label: '$20/year' },
+					atm: { fee_status: 'not_publicly_disclosed', label: '$250/day' }
+				},
+				{ kyc: 'KYC required' }
+			]
 		)
 
 		expect(comparison).toEqual({

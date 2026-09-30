@@ -1,47 +1,41 @@
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
+import type { CardsIndexCard } from './api.types'
 
-/** Cards issuer (`parent_id ?? id` in the cards index) → DefiLlama protocol ids that show the
- *  Card Details tab. The first id hosts the card page; any others are its children, which show
- *  the tab and redirect to the host. Protocol metadata does not carry parent links, so the
- *  children are listed here. Ids, not slugs, so a rename keeps the tab. An issuer missing from
- *  this map has no card page, and the /crypto-cards table links to its website instead. */
-export const CRYPTO_CARD_ISSUER_PROTOCOL_IDS: Record<string, [string, ...Array<string>]> = {
-	'avalanche-card': ['8779'],
-	avici: ['8034'],
-	'bitget-wallet': ['7379'],
-	bybit: ['2286'],
-	coinbase: ['8780'],
-	'crypto-com': ['2270'],
-	'ethena-pay': ['parent#ethena', '8804'],
-	etherfi: ['parent#ether-fi', '6373'],
-	exa: ['7378'],
-	'gnosis-pay': ['7364'],
-	hyperbeat: ['parent#hyperbeat'],
-	karta: ['8180'],
-	kast: ['7480'],
-	kolo: ['8131'],
-	kraken: ['8781'],
-	metamask: ['7363'],
-	mexc: ['3075'],
-	'nexo-card': ['7522'],
-	'phantom-cash': ['parent#phantom'],
-	'plasma-one': ['7789'],
-	redotpay: ['7519'],
-	revolut: ['8782'],
-	'robinhood-gold': ['3732'],
-	safepal: ['8104'],
-	solayer: ['parent#solayer', '7375'],
-	tria: ['parent#tria', '7362'],
-	tuyo: ['8179'],
-	vaultleap: ['8783'],
-	'wirex-one': ['8784']
+type CryptoCardProtocolReference = Pick<CardsIndexCard, 'id' | 'parent_id' | 'defillama_id' | 'defillama_parent_id'>
+
+interface CryptoCardIssuerProtocolIds {
+	hostId: string
+	childIds: Set<string>
+}
+
+function getCryptoCardIssuerProtocolIds(
+	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+): Map<string, CryptoCardIssuerProtocolIds> {
+	const issuers = new Map<string, CryptoCardIssuerProtocolIds>()
+	for (const card of cards ?? []) {
+		if (!card) continue
+		const issuer = card.parent_id || card.id
+		const hostId = card.defillama_parent_id || card.defillama_id
+		if (!issuer || !hostId) continue
+
+		const existing = issuers.get(issuer)
+		// Keep the first complete issuer mapping if an inconsistent upstream record slips through.
+		if (existing && existing.hostId !== hostId) continue
+		const protocolIds = existing ?? { hostId, childIds: new Set<string>() }
+		if (card.defillama_id && card.defillama_id !== hostId) protocolIds.childIds.add(card.defillama_id)
+		issuers.set(issuer, protocolIds)
+	}
+	return issuers
 }
 
 /** Runs at metadata-build time so every protocol and exchange page can offer the Card Details
  *  tab from its own metadata. */
-export function stampCryptoCardIssuers(protocols: Record<string, IProtocolMetadata>): void {
-	for (const [issuer, [hostId, ...childIds]] of Object.entries(CRYPTO_CARD_ISSUER_PROTOCOL_IDS)) {
+export function stampCryptoCardIssuers(
+	protocols: Record<string, IProtocolMetadata>,
+	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+): void {
+	for (const [issuer, { hostId, childIds }] of getCryptoCardIssuerProtocolIds(cards)) {
 		const host = protocols[hostId]
 		if (!host) continue
 		host.cryptoCardIssuer = issuer
@@ -53,11 +47,14 @@ export function stampCryptoCardIssuers(protocols: Record<string, IProtocolMetada
 	}
 }
 
-/** The card page of each mapped issuer whose host protocol exists. Exchanges keep their card
- *  page under /cex, beside the exchange's other tabs. */
-export function getCryptoCardDetailsHrefs(protocols: Record<string, IProtocolMetadata>): Record<string, string> {
+/** The card page of each API-declared issuer whose host protocol exists. Exchanges keep their
+ *  card page under /cex, beside the exchange's other tabs. */
+export function getCryptoCardDetailsHrefs(
+	protocols: Record<string, IProtocolMetadata>,
+	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+): Record<string, string> {
 	const hrefs: Record<string, string> = {}
-	for (const [issuer, [hostId]] of Object.entries(CRYPTO_CARD_ISSUER_PROTOCOL_IDS)) {
+	for (const [issuer, { hostId }] of getCryptoCardIssuerProtocolIds(cards)) {
 		const host = protocols[hostId]
 		if (!host) continue
 		hrefs[issuer] = host.cex
