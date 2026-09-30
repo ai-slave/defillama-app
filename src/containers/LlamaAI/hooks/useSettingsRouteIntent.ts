@@ -88,8 +88,7 @@ export function useSettingsRouteIntent({
 						toast.error(message)
 					})
 			}
-			if (initialState.tab || initialState.tgloginToken || initialState.slackloginToken || initialState.slackResult)
-				setInitialIntegrationsState(initialState)
+			setInitialIntegrationsState(initialState)
 			void queryClient.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY })
 			settingsModalStore.show()
 		},

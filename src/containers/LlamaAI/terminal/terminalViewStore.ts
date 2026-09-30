@@ -220,13 +220,15 @@ export function leaveTerminalForChatHome() {
 	void Router.push('/ai/chat')
 }
 
-// Reading localStorage at module scope would break hydration, so the view is restored from an
-// effect on the client instead.
-export function restoreTerminalView() {
+// Read on the first client snapshot: reading localStorage at module scope would break hydration. The server
+// snapshot renders the defaults, and useSyncExternalStore moves to the stored layout once hydrated.
+let restoredLayout = false
+function restoreStoredLayout() {
+	if (restoredLayout) return
+	restoredLayout = true
 	const stored = readStored()
 	chatRatio = clampChatRatio(stored.chatRatio ?? DEFAULT_CHAT_RATIO)
 	chatCollapsed = stored.chatCollapsed === true
-	notify()
 }
 
 export function setTerminalChatRatio(next: number) {
@@ -300,7 +302,10 @@ export function useTerminalSymbol() {
 export function useTerminalChatRatio() {
 	return useSyncExternalStore(
 		subscribe,
-		() => chatRatio,
+		() => {
+			restoreStoredLayout()
+			return chatRatio
+		},
 		() => DEFAULT_CHAT_RATIO
 	)
 }
@@ -308,7 +313,10 @@ export function useTerminalChatRatio() {
 export function useTerminalChatCollapsed() {
 	return useSyncExternalStore(
 		subscribe,
-		() => chatCollapsed,
+		() => {
+			restoreStoredLayout()
+			return chatCollapsed
+		},
 		() => false
 	)
 }

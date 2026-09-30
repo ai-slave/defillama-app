@@ -55,9 +55,8 @@ describe('stored pane layout', () => {
 			getItem: (key: string) => storage.get(key) ?? null,
 			setItem: (key: string, value: string) => storage.set(key, value)
 		})
-		const { getTerminalViewOpen, restoreTerminalView, setTerminalChatRatio } = await load()
+		const { getTerminalViewOpen, setTerminalChatRatio } = await load()
 
-		restoreTerminalView()
 		expect(getTerminalViewOpen()).toBe(false)
 
 		setTerminalChatRatio(0.5)

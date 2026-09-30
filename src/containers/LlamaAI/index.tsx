@@ -54,6 +54,7 @@ import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecuti
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import { useChatScroll } from '~/containers/LlamaAI/hooks/useChatScroll'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
+import { useComposerPrefill } from '~/containers/LlamaAI/hooks/useComposerPrefill'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
 import { useForegroundRecovery } from '~/containers/LlamaAI/hooks/useForegroundRecovery'
 import { useForkInitialPrompt } from '~/containers/LlamaAI/hooks/useForkInitialPrompt'
@@ -64,7 +65,6 @@ import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutati
 import { useSettingsRouteIntent } from '~/containers/LlamaAI/hooks/useSettingsRouteIntent'
 import { useSidebarVisibility } from '~/containers/LlamaAI/hooks/useSidebarVisibility'
 import { useStreamNotification } from '~/containers/LlamaAI/hooks/useStreamNotification'
-import { useVisualViewport } from '~/containers/LlamaAI/hooks/useVisualViewport'
 import { useWebCompletionSeen } from '~/containers/LlamaAI/hooks/useWebCompletionSeen'
 import {
 	useWebMobilePushPreference,
@@ -146,7 +146,6 @@ import {
 	MIN_CHART_PX,
 	MIN_CHAT_PX,
 	openTerminalHome,
-	restoreTerminalView,
 	setTerminalChatCollapsed,
 	setTerminalViewOpen,
 	TERMINAL_RAIL_PX,
@@ -389,11 +388,7 @@ export function AgenticChat({
 	const promptFailuresRef = useRef(promptFailures)
 	const [mode, setMode] = useState<AgenticAnswerMode>('quick')
 	const [quotedText, setQuotedText] = useState<string | null>(null)
-	const [alertPrefillRequest, setAlertPrefillRequest] = useState<{
-		key: number
-		text: string
-		entities?: Array<{ term: string; slug: string; type?: string }>
-	} | null>(null)
+	const composerPrefill = useComposerPrefill()
 	const [
 		{
 			isOpen: dashboardPanelIsOpen,
@@ -403,12 +398,24 @@ export function AgenticChat({
 		},
 		dispatchDashboardPanel
 	] = useReducer(dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE)
-	const citationSheet = useCitationSheetController()
+	const citationSheet = useCitationSheetController(sessionId)
 	const [showTokenLimitModal, setShowTokenLimitModal] = useState(false)
 	const [showShareModal, setShowShareModal] = useState(false)
 	const [shareTargetMessageId, setShareTargetMessageId] = useState<string | null>(null)
 	const [initialIntegrationsState, setInitialIntegrationsState] = useState<SettingsInitialState | null>(null)
 	const router = useRouter()
+	// A chat link hands over ?prompt and ?shareToken once, and each leaves the URL when the chat takes it: the
+	// prompt when it fills the composer, the share token when the first request carries it. The rest of the
+	// query stays.
+	const removeLinkParams = useCallback(
+		(keys: Array<'prompt' | 'shareToken'>) => {
+			const url = new URL(router.asPath, 'https://defillama.com')
+			if (!keys.some((key) => url.searchParams.has(key))) return
+			for (const key of keys) url.searchParams.delete(key)
+			void router.replace(`${url.pathname}${url.search}${url.hash}`, undefined, { shallow: true, scroll: false })
+		},
+		[router]
+	)
 	const isTerminalOpen = useTerminalViewOpen()
 	const isTerminalView = isTerminalOpen && isLlama && !isMobileChatView && !readOnly && !sharedSession
 	const terminalChatRatio = useTerminalChatRatio()
@@ -419,9 +426,6 @@ export function AgenticChat({
 	const [isSidebarSearchOpen, setSidebarSearchOpen] = useState(false)
 	if (isSidebarSearchOpen && !(isTerminalView ? isHistoryDrawerOpen : sidebarVisible)) setSidebarSearchOpen(false)
 	const isSharedPage = !!sharedSession
-	useEffect(() => {
-		if (isLlama) restoreTerminalView()
-	}, [isLlama])
 	useEffect(() => {
 		if (!isTerminalView) return
 		return startTerminalChatSaving(authorizedFetchCompat)
@@ -503,7 +507,6 @@ export function AgenticChat({
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const scrollContentRef = useRef<HTMLDivElement>(null)
-	const { keyboardOpen, viewportHeight } = useVisualViewport()
 	const promptInputRef = useRef<HTMLTextAreaElement>(null)
 	const promptSubmissionLockRef = useRef<number | null>(null)
 	const nextPromptSubmissionIdRef = useRef(0)
@@ -667,21 +670,6 @@ export function AgenticChat({
 	const shouldStartDetachedForAnchor = typeof window !== 'undefined' && window.location.hash.startsWith('#msg-')
 
 	useEffect(() => {
-		if (!quotedText || readOnly) return
-
-		const frameId = window.requestAnimationFrame(() => {
-			const input = promptInputRef.current
-			if (!input) return
-
-			input.focus()
-			const cursorPosition = input.value.length
-			input.setSelectionRange(cursorPosition, cursorPosition)
-		})
-
-		return () => window.cancelAnimationFrame(frameId)
-	}, [quotedText, readOnly])
-
-	useEffect(() => {
 		return () => {
 			stopSettlementControllerRef.current?.abort()
 			stopSettlementControllerRef.current = null
@@ -710,18 +698,6 @@ export function AgenticChat({
 		const frameId = window.requestAnimationFrame(() => promptInputRef.current?.focus())
 		return () => window.cancelAnimationFrame(frameId)
 	}, [sessionId, restoringSessionId, readOnly, isMobileChatView])
-
-	const closeCitationSheet = citationSheet.close
-	useEffect(() => {
-		closeCitationSheet()
-		// eslint-disable-next-line react/exhaustive-effect-dependencies -- sessionId is the trigger: close the citation sheet when the chat changes
-	}, [sessionId, closeCitationSheet])
-
-	useEffect(() => {
-		const timer = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 250)
-		return () => clearTimeout(timer)
-		// eslint-disable-next-line react/exhaustive-effect-dependencies -- the panel state is the trigger: charts remeasure after it opens or its config changes
-	}, [dashboardPanelIsOpen, dashboardPanelMountedConfig])
 
 	useSettingsRouteIntent({ router, user, settingsModalStore, setInitialIntegrationsState })
 
@@ -901,13 +877,9 @@ export function AgenticChat({
 	}, [sessionId, paginationState, loadNewerMessagesMutation, isStreaming, paginationCoordinator])
 
 	// Expose the load-more callback through a stable event wrapper for the scroll listener.
-	const handleLoadMoreMessagesEvent = useStableCallback(() => {
-		void handleLoadMoreMessages()
-	})
+	const handleLoadMoreMessagesEvent = useStableCallback(() => handleLoadMoreMessages())
 
-	const handleLoadNewerMessagesEvent = useStableCallback(() => {
-		void handleLoadNewerMessages()
-	})
+	const handleLoadNewerMessagesEvent = useStableCallback(() => handleLoadNewerMessages())
 
 	const {
 		attach,
@@ -921,12 +893,10 @@ export function AgenticChat({
 		scrollContainerRef,
 		scrollContentRef,
 		isStreaming,
-		items: effectiveMessages,
 		hasMessages,
 		paginationState: renderedPaginationState,
 		onLoadMoreMessages: handleLoadMoreMessagesEvent,
 		onLoadNewerMessages: handleLoadNewerMessagesEvent,
-		keyboardOpen,
 		startDetached: shouldStartDetachedForAnchor
 	})
 	const { preference: webMobilePreference, setEnabled: setWebMobilePushEnabled } = useWebMobilePushPreference()
@@ -971,16 +941,20 @@ export function AgenticChat({
 			sessionListEntry?.hasUnseenCompletion === true || projectSessionEntry?.hasUnseenCompletion === true
 	})
 
-	const openSettings = useCallback(() => {
-		void queryClient.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY })
-		settingsModalStore.show()
-	}, [queryClient, settingsModalStore])
-	const openSettingsAtTab = useCallback(
-		(tab: SettingsTabId) => {
-			setInitialIntegrationsState({ tab, tgloginToken: null })
-			openSettings()
+	// Every opener hands Settings its own state, null included, so one opening's tab or top-up result never
+	// carries into the next.
+	const openSettingsWith = useCallback(
+		(state: SettingsInitialState | null) => {
+			setInitialIntegrationsState(state)
+			void queryClient.invalidateQueries({ queryKey: WEB_MOBILE_PUSH_QUERY_KEY })
+			settingsModalStore.show()
 		},
-		[openSettings]
+		[queryClient, settingsModalStore]
+	)
+	const openSettings = useCallback(() => openSettingsWith(null), [openSettingsWith])
+	const openSettingsAtTab = useCallback(
+		(tab: SettingsTabId) => openSettingsWith({ tab, tgloginToken: null }),
+		[openSettingsWith]
 	)
 	const openSettingsModal = useCallback(
 		(tab?: SettingsTabId) => {
@@ -2033,7 +2007,10 @@ export function AgenticChat({
 				// A share token forks a public snapshot exactly once. The immutable
 				// request retains it if the network later needs an exact replay.
 				const currentShareToken = !shareTokenConsumedRef.current ? effectiveShareToken : undefined
-				if (currentShareToken) shareTokenConsumedRef.current = true
+				if (currentShareToken) {
+					shareTokenConsumedRef.current = true
+					removeLinkParams(['prompt', 'shareToken'])
+				}
 
 				const failedRequest: FailedRequest = {
 					mutation: createAgenticMutationEnvelope({
@@ -2072,6 +2049,7 @@ export function AgenticChat({
 			createFakeSession,
 			quotedText,
 			effectiveShareToken,
+			removeLinkParams,
 			settings.customInstructions,
 			settings.enablePremiumTools,
 			settings.model,
@@ -2565,6 +2543,16 @@ export function AgenticChat({
 		}
 	})
 
+	// Fills an empty composer; a draft the reader already typed stays.
+	const { prefill: requestComposerPrefill } = composerPrefill
+	const prefillComposer = useCallback(
+		(text: string, focus: boolean) => {
+			requestComposerPrefill(text)
+			if (focus) requestAnimationFrame(() => promptInputRef.current?.focus())
+		},
+		[requestComposerPrefill, promptInputRef]
+	)
+
 	useForkInitialPrompt({
 		initialPrompt: routeInitialPrompt,
 		routeSessionId,
@@ -2573,23 +2561,15 @@ export function AgenticChat({
 		sessionId,
 		resolveSessionAlias,
 		submitPrompt: (prompt) => {
-			handleSubmit(prompt)
+			// On a shared chat the reader pressed Send before signing in, so the prompt goes out.
+			if (sharedSession) return handleSubmit(prompt)
+			// A chat link's prompt is typed input: it fills the composer and waits for the reader to send it.
+			// Phones are not focused: opening a link would pop the keyboard.
+			prefillComposer(prompt, !isMobileChatView)
+			removeLinkParams(['prompt'])
+			return true
 		}
 	})
-
-	// Shared/public sessions are read-only snapshots, so they should never create a fake local session.
-	useEffect(() => {
-		if (!sharedSession) return
-		isFirstMessageRef.current = false
-	}, [sharedSession])
-
-	const handleAlertPrefillPrompt = useCallback(
-		(text: string) => {
-			setAlertPrefillRequest((prev) => ({ key: (prev?.key ?? 0) + 1, text }))
-			requestAnimationFrame(() => promptInputRef.current?.focus())
-		},
-		[promptInputRef]
-	)
 
 	const tipActionHandlers = useMemo(
 		() => ({
@@ -2621,8 +2601,8 @@ export function AgenticChat({
 		handleStopRequest,
 		isStreaming,
 		isStopping,
-		restoreRequest: alertPrefillRequest,
-		onRestoreConsumed: () => setAlertPrefillRequest(null),
+		restoreRequest: composerPrefill.request,
+		onRestoreConsumed: composerPrefill.consume,
 		mode,
 		setMode,
 		researchUsage,
@@ -2721,8 +2701,8 @@ export function AgenticChat({
 		attachScrollContent,
 		messagesEndRef,
 		promptInputRef,
-		restoreRequest: alertPrefillRequest,
-		onRestoreConsumed: () => setAlertPrefillRequest(null),
+		restoreRequest: composerPrefill.request,
+		onRestoreConsumed: composerPrefill.consume,
 		isScrollAttached,
 		showScrollToBottom,
 		scrollToBottom,
@@ -2876,8 +2856,9 @@ export function AgenticChat({
 							<UploadTargetProvider sessionId={sessionId} projectId={currentSessionProjectId}>
 								<div
 									ref={splitBoundsRef}
-									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-32px)]"
-									style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
+									// On phones the chat ends at the top of the soft keyboard: iOS Safari keeps the layout
+									// viewport under it, and useKeyboardInset publishes the height it covers.
+									className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-(--keyboard-inset,0px) max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-32px)]"
 								>
 									{!readOnly && !isTerminalView ? (
 										sidebarVisible ? (
@@ -3054,7 +3035,10 @@ export function AgenticChat({
 											messages={messages}
 											onSelect={(text) => {
 												setQuotedText(text)
-												promptInputRef.current?.focus()
+												const input = promptInputRef.current
+												if (!input) return
+												input.focus()
+												input.setSelectionRange(input.value.length, input.value.length)
 											}}
 										/>
 									) : null}
@@ -3090,7 +3074,7 @@ export function AgenticChat({
 										<AlertsModal
 											dialogStore={alertsModalStore}
 											alertsUsage={alertsUsage}
-											onPrefillPrompt={handleAlertPrefillPrompt}
+											onPrefillPrompt={(text) => prefillComposer(text, true)}
 										/>
 									) : null}
 									{shouldRenderSubscribeModal ? (

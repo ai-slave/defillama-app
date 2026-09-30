@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { startTransition, type RefObject, useCallback, useEffect, useRef, useState } from 'react'
+import { startTransition, type RefObject, useCallback, useRef, useState } from 'react'
 import { useGetEntities, type EntityResult } from '~/containers/LlamaAI/hooks/useGetEntities'
 import { calculateComboboxPlacement, detectTrigger } from '~/containers/LlamaAI/hooks/useTriggerDetection'
 import { getAnchorRect, replaceValue } from '~/containers/LlamaAI/utils/entitySuggestions'
@@ -74,18 +74,6 @@ export function useEntityCombobox({ promptInputRef, currentValue, applyPromptEdi
 	const { data: matches, isFetching, isLoading } = useGetEntities(searchTerm)
 
 	const hasMatches = !!matches && matches.length > 0
-
-	// Re-render Ariakit's popover positioning whenever the combobox state changes.
-	useEffect(() => {
-		combobox.render()
-	}, [combobox])
-
-	// Always hide the popover on unmount so stale UI never lingers across route changes.
-	useEffect(() => {
-		return () => {
-			combobox.hide()
-		}
-	}, [combobox])
 
 	// Keep the popover above or below the textarea depending on the available viewport space.
 	const updatePlacement = useCallback(

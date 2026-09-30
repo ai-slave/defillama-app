@@ -8,6 +8,7 @@ import pb from '~/utils/pocketbase'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { installUmamiSink } from '~/utils/testing/umamiSink'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { LlamaAITipBanner } from '../../components/LlamaAITipBanner'
 import type { TipDTO } from '../useLlamaAISettings'
 import { useActiveTip } from '../useLlamaAITip'
 
@@ -125,4 +126,27 @@ test('the resolved server tip wins over the cached one', async () => {
 	serverTip = tipFor('tip-server')
 	await render()
 	await waitForUi(() => expect(seen.at(-1)).toBe('tip-server'))
+})
+
+test('only a surface that shows the tip records its impression, and only once', async () => {
+	const tip = { ...tipFor('tip-impression'), title: 'Try alerts', cta: { kind: 'none' } } as TipDTO
+	serverTip = tip
+	const seenPosts = () => session.urls().filter((url) => url === `${AI_SERVER}/user-tips/tip-impression/seen`)
+	// A read-only chat landing reads the tip without showing it.
+	await render()
+	await waitForUi(() => expect(seen.at(-1)).toBe('tip-impression'))
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+	expect(seenPosts()).toHaveLength(0)
+
+	await act(async () =>
+		root.render(
+			<session.Wrapper>
+				<Harness />
+				<LlamaAITipBanner />
+				<LlamaAITipBanner />
+			</session.Wrapper>
+		)
+	)
+	await waitForUi(() => expect(container.textContent).toContain('Try alerts'))
+	await waitForUi(() => expect(seenPosts()).toHaveLength(1))
 })

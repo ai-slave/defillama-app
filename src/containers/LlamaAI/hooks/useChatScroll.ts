@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 
 interface PaginationState {
@@ -13,12 +13,11 @@ interface UseChatScrollParams {
 	/** The element whose height is the conversation; following happens when it grows. */
 	scrollContentRef: RefObject<HTMLElement | null>
 	isStreaming: boolean
-	items: ReadonlyArray<unknown>
 	hasMessages: boolean
 	paginationState: PaginationState
-	onLoadMoreMessages: () => void
-	onLoadNewerMessages?: () => void
-	keyboardOpen?: boolean
+	/** Settles when the load ends, whether or not it changed anything; the next load waits for that. */
+	onLoadMoreMessages: () => void | Promise<void>
+	onLoadNewerMessages?: () => void | Promise<void>
 	startDetached?: boolean
 }
 
@@ -52,7 +51,7 @@ const BOTTOM_PAGINATION_THRESHOLD_PX = 50
 //                               │
 //                               └──(scrollend / 800ms timeout)──► attached
 //
-// Only 'attached' mode auto-follows new content (content resize observer + items effect).
+// Only 'attached' mode auto-follows new content, through the content resize observer.
 // 'reattaching' is a transient mode for the smooth scroll animation — nothing writes
 // scrollTop during it so the browser animation isn't cancelled.
 // 'detached' is fully passive — the user has full scroll control.
@@ -63,12 +62,10 @@ export function useChatScroll({
 	scrollContainerRef,
 	scrollContentRef,
 	isStreaming,
-	items,
 	hasMessages,
 	paginationState,
 	onLoadMoreMessages,
 	onLoadNewerMessages,
-	keyboardOpen,
 	startDetached = false
 }: UseChatScrollParams) {
 	const modeRef = useRef<ScrollMode>(startDetached ? 'detached' : 'attached')
@@ -206,27 +203,7 @@ export function useChatScroll({
 
 	useEffect(() => {
 		paginationRef.current = paginationState
-		if (!paginationState.isLoadingMore) {
-			paginationLoadInFlightRef.current = false
-		}
-		if (!paginationState.isLoadingNewer) {
-			newerPaginationLoadInFlightRef.current = false
-		}
 	}, [paginationState])
-
-	// Completion updates the button, but only user intent may end a detachment.
-	useEffect(() => {
-		if (isStreaming) return
-		const timer = setTimeout(() => {
-			requestAnimationFrame(() => {
-				const container = scrollContainerRef.current
-				if (!container) return
-
-				syncScrollToBottomVisibility(container)
-			})
-		}, 100)
-		return () => clearTimeout(timer)
-	}, [isStreaming, scrollContainerRef, syncScrollToBottomVisibility])
 
 	// Content follow: pin the viewport to the bottom in the same frame the conversation changes size,
 	// but ONLY in 'attached' mode — 'reattaching' and 'detached' are left alone so smooth-scroll
@@ -237,28 +214,15 @@ export function useChatScroll({
 	useEffect(() => {
 		const container = mountedContainer
 		if (!mountedContent || !container) return
+		// The same resize settles the scroll-to-bottom button: a finished answer or a new message changes the
+		// content's size, and only user intent may end a detachment.
 		const resizeObserver = new ResizeObserver(() => {
 			if (modeRef.current === 'attached') followBottom(container)
+			syncScrollToBottomVisibility(container)
 		})
 		resizeObserver.observe(mountedContent)
 		return () => resizeObserver.disconnect()
-	}, [followBottom, mountedContainer, mountedContent])
-
-	// Items effect: when the message list changes (new message added, content updated),
-	// snap to bottom in the next frame — but only if already attached. This handles
-	// the gap between item renders and the next streaming interval tick.
-	useEffect(() => {
-		const container = scrollContainerRef.current
-		if (modeRef.current === 'attached' && container) {
-			requestAnimationFrame(() => {
-				const currentContainer = scrollContainerRef.current
-				if (currentContainer && modeRef.current === 'attached') {
-					followBottom(currentContainer)
-				}
-			})
-		}
-		// eslint-disable-next-line react/exhaustive-effect-dependencies -- items is the trigger: follow the bottom when a new message arrives
-	}, [followBottom, items, scrollContainerRef])
+	}, [followBottom, mountedContainer, mountedContent, syncScrollToBottomVisibility])
 
 	useEffect(() => {
 		const container = mountedContainer
@@ -272,12 +236,6 @@ export function useChatScroll({
 		resizeObserver.observe(container)
 		return () => resizeObserver.disconnect()
 	}, [mountedContainer, syncAfterLayout, syncScrollToBottomVisibility])
-
-	// Keyboard open: when the soft keyboard appears and we're attached, snap to bottom
-	// so the latest content stays visible above the input.
-	useLayoutEffect(() => {
-		if (keyboardOpen) syncAfterLayout()
-	}, [keyboardOpen, syncAfterLayout])
 
 	// Gesture intent: while content streams, the resize observer rewrites scrollTop (and
 	// lastScrollTopRef) between a user's scroll and the scroll event, which erases the upward
@@ -445,7 +403,9 @@ export function useChatScroll({
 					!paginationLoadInFlightRef.current
 				) {
 					paginationLoadInFlightRef.current = true
-					onLoadMoreMessages()
+					void Promise.resolve(onLoadMoreMessages()).finally(() => {
+						paginationLoadInFlightRef.current = false
+					})
 				}
 
 				const distanceFromBottom = scrollHeight - scrollTop - clientHeight
@@ -460,7 +420,9 @@ export function useChatScroll({
 					onLoadNewerMessages
 				) {
 					newerPaginationLoadInFlightRef.current = true
-					onLoadNewerMessages()
+					void Promise.resolve(onLoadNewerMessages()).finally(() => {
+						newerPaginationLoadInFlightRef.current = false
+					})
 				}
 
 				ticking = false

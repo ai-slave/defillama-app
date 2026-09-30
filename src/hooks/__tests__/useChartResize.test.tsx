@@ -78,7 +78,7 @@ describe('useChartResize', () => {
 		vi.unstubAllGlobals()
 	})
 
-	test('uses one listener pair to resize every live chart instance', async () => {
+	test('uses one resize listener to resize every live chart instance', async () => {
 		const addListener = vi.spyOn(window, 'addEventListener')
 		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
@@ -93,12 +93,10 @@ describe('useChartResize', () => {
 		)
 
 		expect(addListener.mock.calls.filter(([type]) => type === 'resize')).toHaveLength(1)
-		expect(addListener.mock.calls.filter(([type]) => type === 'chartResize')).toHaveLength(1)
 
 		window.dispatchEvent(new Event('resize'))
-		window.dispatchEvent(new Event('chartResize'))
-		expect(first.resize).toHaveBeenCalledTimes(2)
-		expect(second.resize).toHaveBeenCalledTimes(2)
+		expect(first.resize).toHaveBeenCalledOnce()
+		expect(second.resize).toHaveBeenCalledOnce()
 	})
 
 	test('uses one element observer and resizes only the chart whose container changed', async () => {
@@ -131,10 +129,6 @@ describe('useChartResize', () => {
 		window.dispatchEvent(new Event('resize'))
 		expect(first.resize).toHaveBeenCalledOnce()
 		expect(second.resize).toHaveBeenCalledTimes(2)
-
-		window.dispatchEvent(new Event('chartResize'))
-		expect(first.resize).toHaveBeenCalledTimes(2)
-		expect(second.resize).toHaveBeenCalledTimes(3)
 
 		await act(async () => root.render(null))
 		expect(observerUnobserve).toHaveBeenCalledTimes(2)
@@ -184,13 +178,11 @@ describe('useChartResize', () => {
 
 		getBounds.mockReturnValue({ width: 0, height: 180 } as DOMRect)
 		window.dispatchEvent(new Event('resize'))
-		window.dispatchEvent(new Event('chartResize'))
 		expect(instance.resize).not.toHaveBeenCalled()
 
 		getBounds.mockReturnValue({ width: 320, height: 180 } as DOMRect)
 		window.dispatchEvent(new Event('resize'))
-		window.dispatchEvent(new Event('chartResize'))
-		expect(instance.resize).toHaveBeenCalledTimes(2)
+		expect(instance.resize).toHaveBeenCalledOnce()
 	})
 
 	test('moves observation to a chart element recreated after an empty render', async () => {

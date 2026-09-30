@@ -77,6 +77,7 @@ or generated snippets are edited.
 - `fact-check-pill` must stay in the markdown sanitize allowlist, or verified
   citation markers disappear.
 - `/ai/chat?prompt=...` must ask for confirmation before submitting the prompt.
+- `/ai/chat/<session>?prompt=...` fills the composer and never sends by itself.
 - Shared-session fork paths should use branded `ShareToken` and `SessionId`
   helpers at the boundary.
 - Integration polling should stop when the derived state is linked or idle and

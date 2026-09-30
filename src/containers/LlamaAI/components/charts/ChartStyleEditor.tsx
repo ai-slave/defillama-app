@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
+import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
@@ -202,46 +203,18 @@ export function ChartStyleEditor({
 	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
-	const previewTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const pendingPreview = useRef<{ draft: ChartConfiguration; view: ChartStyleEditorView } | null>(null)
 	const isCombo = draft.type === 'combo'
-
-	const clearPreviewTimer = () => {
-		if (previewTimer.current) clearTimeout(previewTimer.current)
-		previewTimer.current = null
-	}
+	const debouncedPreview = useDebouncedCallback(onPreview, PREVIEW_DEBOUNCE_MS)
 
 	const publishPreview = (nextDraft: EditorDraft, nextView: ChartStyleEditorView, mode: PreviewMode) => {
 		const previewConfig = draftConfig(nextDraft)
-		clearPreviewTimer()
-		pendingPreview.current = { draft: previewConfig, view: nextView }
 		if (mode === 'immediate') {
-			pendingPreview.current = null
+			debouncedPreview.cancel()
 			onPreview(previewConfig, nextView)
 			return
 		}
-		previewTimer.current = setTimeout(() => {
-			const pending = pendingPreview.current
-			pendingPreview.current = null
-			previewTimer.current = null
-			if (pending) onPreview(pending.draft, pending.view)
-		}, PREVIEW_DEBOUNCE_MS)
+		debouncedPreview(previewConfig, nextView)
 	}
-
-	const flushPendingPreview = () => {
-		const pending = pendingPreview.current
-		if (!pending) return
-		clearPreviewTimer()
-		pendingPreview.current = null
-		onPreview(pending.draft, pending.view)
-	}
-
-	useEffect(
-		() => () => {
-			if (previewTimer.current) clearTimeout(previewTimer.current)
-		},
-		[previewTimer]
-	)
 
 	const update = (mutate: (d: EditorDraft) => void, mode: PreviewMode = 'debounced') => {
 		const next = structuredClone(draft)
@@ -250,8 +223,7 @@ export function ChartStyleEditor({
 		// Invalid display identities make the adapter reject the entire chart. Keep the
 		// last valid preview visible while the user finishes editing the draft.
 		if (getSeriesNameProblem(next.series)) {
-			clearPreviewTimer()
-			pendingPreview.current = null
+			debouncedPreview.cancel()
 			return
 		}
 		publishPreview(next, draftView, mode)
@@ -359,7 +331,7 @@ export function ChartStyleEditor({
 	}
 
 	return (
-		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary" onBlurCapture={flushPendingPreview}>
+		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary" onBlurCapture={debouncedPreview.flush}>
 			<span className={sectionLabel}>Style</span>
 
 			<div className={section}>

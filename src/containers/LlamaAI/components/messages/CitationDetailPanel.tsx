@@ -26,21 +26,14 @@ export function CitationDetailPanel({
 	onBackToDashboard?: () => void
 	advancedProvenance: boolean
 }) {
-	const { activeRef, close } = useCitationSheet()
+	const { activeRef, close, restoreFocus } = useCitationSheet()
 	const isMobile = useMedia('(max-width: 1023px)')
 	const panelRef = useRef<HTMLDivElement>(null)
-	const triggerRef = useRef<HTMLElement | null>(null)
-	useEffect(() => {
-		if (isMobile || !activeRef) return
-		if (document.activeElement instanceof HTMLElement && !panelRef.current?.contains(document.activeElement)) {
-			triggerRef.current = document.activeElement
-		}
-	}, [isMobile, activeRef])
 	const closeDesktopPanel = useCallback(() => {
 		// Closing a nonmodal panel must not move focus away from another part of the page.
-		if (panelRef.current?.contains(document.activeElement)) triggerRef.current?.focus()
+		if (panelRef.current?.contains(document.activeElement)) restoreFocus()
 		close()
-	}, [close])
+	}, [close, restoreFocus])
 	useEffect(() => {
 		if (isMobile || !activeRef) return
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -135,6 +128,7 @@ export function CitationDetailPanel({
 		<div className="hidden shrink-0 overflow-hidden pl-2.5 lg:block">
 			<div
 				ref={panelRef}
+				data-citation-panel
 				role="region"
 				aria-label="Source detail"
 				className="relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-subtle bg-surface"

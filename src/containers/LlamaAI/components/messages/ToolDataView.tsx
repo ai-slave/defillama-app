@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import {
 	CODE_BLOCK,
 	DATA_TABLE,
@@ -85,6 +85,13 @@ export function ToolDataView({ name, data }: { name: string; data: Record<string
 	return getOwnRegistryValue(TOOL_DATA_RENDERERS, name)?.(data) ?? null
 }
 
+/** Centers the cited cell in its table's scroller when the cell mounts, including rows that arrive late. */
+function centerCitedCell(cell: HTMLTableCellElement | null) {
+	const container = cell?.closest<HTMLElement>('[data-cited-scroller]')
+	if (!cell || !container) return
+	container.scrollLeft = Math.max(0, cell.offsetLeft - (container.clientWidth - cell.offsetWidth) / 2)
+}
+
 export function CitationRowsTable({
 	rows,
 	columns,
@@ -94,24 +101,11 @@ export function CitationRowsTable({
 	columns?: Array<string>
 	citedCell?: CitedCell | null
 }) {
-	const scrollContainerRef = useRef<HTMLDivElement | null>(null)
-	const citedCellRef = useRef<HTMLTableCellElement | null>(null)
-	const citedRowIndex = citedCell?.rowIndex
-	const citedColumn = citedCell?.column
-
-	useEffect(() => {
-		const container = scrollContainerRef.current
-		const cell = citedCellRef.current
-		if (citedRowIndex == null || !citedColumn || !container || !cell) return
-		const targetLeft = cell.offsetLeft - (container.clientWidth - cell.offsetWidth) / 2
-		container.scrollLeft = Math.max(0, targetLeft)
-	}, [citedRowIndex, citedColumn])
-
 	if (!rows || rows.length === 0) return null
 	const cols = columns && columns.length > 0 ? columns : Object.keys(rows[0])
 
 	return (
-		<div ref={scrollContainerRef} className={DATA_TABLE_WRAPPER}>
+		<div data-cited-scroller className={DATA_TABLE_WRAPPER}>
 			<table className={DATA_TABLE}>
 				<thead>
 					<tr>
@@ -131,7 +125,7 @@ export function CitationRowsTable({
 								return (
 									<td
 										key={c}
-										ref={isCited ? citedCellRef : null}
+										ref={isCited ? centerCitedCell : null}
 										className={`${DATA_TABLE_CELL} ${isCited ? 'bg-brand-muted font-medium text-link-on-tint' : ''}`}
 									>
 										{isCited ? (

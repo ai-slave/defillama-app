@@ -490,15 +490,9 @@ export function useChatQueueController({
 	const pendingSnapshotRef = useRef<QueueSnapshot | null>(null)
 	const snapshotCursorRef = useRef({ sessionId, revision: -1 })
 	const latestSnapshotRef = useRef<QueueSnapshot | null>(null)
-	const renewalTimerRef = useRef<number | null>(null)
-	const renewalControllerRef = useRef<AbortController | null>(null)
 	const abortCommands = useCallback(() => {
 		for (const controller of controllersRef.current) controller.abort()
 		controllersRef.current.clear()
-		if (renewalTimerRef.current !== null) window.clearInterval(renewalTimerRef.current)
-		renewalTimerRef.current = null
-		renewalControllerRef.current?.abort()
-		renewalControllerRef.current = null
 	}, [])
 	const snapshotEvent = useCallback((snapshot: QueueSnapshot): QueueControllerEvent => {
 		const rememberedEdit = rememberedEditsRef.current.get(snapshot.sessionId)
@@ -872,33 +866,32 @@ export function useChatQueueController({
 	const ownedEditId = ownedEdit?.id ?? null
 	const ownedEditLeaseId = ownedEdit?.state === 'editing' ? ownedEdit.editLeaseId : null
 
+	// The lease renews for as long as this tab owns an open edit. The effect alone owns the timer: aborting
+	// commands (jumping to a message in the same chat) leaves the edit open, so it must keep renewing.
 	useEffect(() => {
 		if (!enabled || !sessionId || !ownedEditId || !ownedEditLeaseId) return
+		let renewal: AbortController | null = null
 		const renew = async () => {
-			const renewalController = new AbortController()
-			renewalControllerRef.current = renewalController
+			const controller = new AbortController()
+			renewal = controller
 			try {
 				const result = await renewQueuedMessageEdit(
 					authorizedFetch,
 					sessionId,
 					ownedEditId,
 					ownedEditLeaseId,
-					renewalController.signal
+					controller.signal
 				)
 				applySnapshot(result.snapshot)
 			} catch (error) {
 				const snapshot = snapshotFromError(error)
 				if (snapshot) applySnapshot(snapshot)
 			}
-			if (renewalControllerRef.current === renewalController) renewalControllerRef.current = null
 		}
 		const timer = window.setInterval(() => void renew(), 30_000)
-		renewalTimerRef.current = timer
 		return () => {
 			window.clearInterval(timer)
-			if (renewalTimerRef.current === timer) renewalTimerRef.current = null
-			renewalControllerRef.current?.abort()
-			renewalControllerRef.current = null
+			renewal?.abort()
 		}
 	}, [applySnapshot, authorizedFetch, enabled, ownedEditId, ownedEditLeaseId, sessionId])
 

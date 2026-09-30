@@ -21,7 +21,7 @@ afterEach(async () => {
 	container.remove()
 })
 function Harness() {
-	const sheet = useCitationSheetController()
+	const sheet = useCitationSheetController(null)
 	return (
 		<CitationSheetProvider value={sheet}>
 			<button type="button" onClick={() => sheet.open({ id: 1, sourceType: 'data', label: 'First' })}>

@@ -38,13 +38,11 @@ function addGlobalResizeListeners() {
 	// ResizeObserver handles layout changes, while window.resize also covers a
 	// device-pixel-ratio change where the CSS box itself does not change.
 	window.addEventListener('resize', resizeCharts)
-	window.addEventListener('chartResize', resizeCharts)
 }
 
 function removeGlobalResizeListeners() {
 	if (chartElementsByInstanceRef.size > 0) return
 	window.removeEventListener('resize', resizeCharts)
-	window.removeEventListener('chartResize', resizeCharts)
 }
 
 function observeChartElement(instanceRef: ChartInstanceRef, element: Element, options: ChartResizeOptions = {}) {
@@ -81,8 +79,8 @@ function unobserveChartElement(instanceRef: ChartInstanceRef, element: Element) 
 }
 
 /**
- * Registers a chart with the shared resize dispatcher. All mounted charts use one browser
- * `resize` listener and one app-level `chartResize` listener instead of one pair per chart.
+ * Registers a chart with the shared resize dispatcher. All mounted charts share one browser `resize`
+ * listener, and each chart's element is observed so a layout change resizes it.
  *
  * @param instanceRef - A ref containing the ECharts instance to resize
  * @param elementRef - The chart element to observe for layout-driven size changes

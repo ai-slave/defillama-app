@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { DeepLinkPromptModal } from '~/containers/LlamaAI/components/DeepLinkPromptModal'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
@@ -15,13 +14,7 @@ function LlamaAIPage() {
 	const isSession = Array.isArray(router.query.sessionId) && router.query.sessionId.length === 1
 	const cleanUrl = router.asPath.split(/[?#]/)[0]
 
-	useEffect(() => {
-		if (!router.isReady || !isSession || (!router.query.prompt && !router.query.shareToken)) return
-		const frameId = window.requestAnimationFrame(() => {
-			void router.replace(cleanUrl, undefined, { shallow: true, scroll: false })
-		})
-		return () => window.cancelAnimationFrame(frameId)
-	}, [router, isSession, cleanUrl])
+	// A session link's ?prompt and ?shareToken stay in the URL, through sign-in too: the chat removes them once it sends them.
 
 	if (loaders.userLoading || user) return null
 

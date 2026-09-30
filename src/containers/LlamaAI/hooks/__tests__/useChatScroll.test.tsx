@@ -1,13 +1,12 @@
 // @vitest-environment happy-dom
 
-import { act, useRef, useState } from 'react'
+import { act, useRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useChatScroll } from '../useChatScroll'
 
 const BOTTOM = 5000
 const VIEWPORT = 800
-const items: ReadonlyArray<unknown> = []
 const paginationState = { hasMore: false, isLoadingMore: false }
 function onLoadMoreMessages() {}
 
@@ -23,26 +22,27 @@ function flushFrames() {
 function Harness({
 	isStreaming,
 	onReady,
-	mounted = true
+	mounted = true,
+	pagination = paginationState,
+	loadMore = onLoadMoreMessages
 }: {
 	isStreaming: boolean
 	onReady: (api: any) => void
 	mounted?: boolean
+	pagination?: { hasMore: boolean; isLoadingMore: boolean }
+	loadMore?: () => void | Promise<void>
 }) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const scrollContentRef = useRef<HTMLDivElement>(null)
-	const [keyboardOpen, setKeyboardOpen] = useState(false)
 	const api = useChatScroll({
 		scrollContainerRef,
 		scrollContentRef,
 		isStreaming,
-		items,
 		hasMessages: true,
-		paginationState,
-		onLoadMoreMessages,
-		keyboardOpen
+		paginationState: pagination,
+		onLoadMoreMessages: loadMore
 	})
-	onReady({ ...api, setKeyboardOpen })
+	onReady(api)
 	if (!mounted) return null
 	return (
 		<div ref={api.attachScrollContainer}>
@@ -103,6 +103,8 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 		Object.defineProperty(container, 'scrollHeight', { value: BOTTOM, configurable: true })
 		Object.defineProperty(container, 'clientHeight', { value: VIEWPORT, configurable: true })
 		container.scrollTop = BOTTOM - VIEWPORT
+		// A ResizeObserver reports each element once when it starts observing it.
+		await act(async () => growContent(BOTTOM))
 		await act(async () => flushFrames())
 	})
 
@@ -197,6 +199,42 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 
 		expect(api.isAttached).toBe(false)
 		expect(container.scrollTop).toBe(scrolledUpTo)
+	})
+
+	test('loads older messages once at a time, and again after a load that changed nothing', async () => {
+		// The chat can end a load without touching pagination state, for example when its session moved on.
+		let finishLoad = () => {}
+		const loadMore = vi.fn(() => new Promise<void>((resolve) => (finishLoad = resolve)))
+		const pagination = { hasMore: true, isLoadingMore: false }
+		await act(async () => {
+			root.render(
+				<Harness isStreaming={false} pagination={pagination} loadMore={loadMore} onReady={(next) => (api = next)} />
+			)
+		})
+		const scrollTo = async (top: number) => {
+			await act(async () => {
+				container.scrollTop = top
+				container.dispatchEvent(new Event('scroll'))
+				flushFrames()
+			})
+		}
+		await act(async () => {
+			container.scrollTop = 1200
+			const wheel = new Event('wheel') as any
+			wheel.deltaY = -120
+			container.dispatchEvent(wheel)
+		})
+		await scrollTo(1200)
+
+		await scrollTo(10)
+		await scrollTo(300)
+		await scrollTo(10)
+		expect(loadMore).toHaveBeenCalledTimes(1)
+
+		await act(async () => finishLoad())
+		await scrollTo(300)
+		await scrollTo(10)
+		expect(loadMore).toHaveBeenCalledTimes(2)
 	})
 
 	test('keeps wheel-up detachment through later layout updates', async () => {
@@ -442,11 +480,15 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 		await act(async () => document.dispatchEvent(new Event('pointerup')))
 	})
 
+	// The soft keyboard shrinks the chat from below, which the hook sees as its container resizing.
 	test('stays attached when the keyboard opens after a layout clamp', async () => {
 		await act(async () => growContent(BOTTOM + 100))
 		Object.defineProperty(container, 'scrollHeight', { value: 4000, configurable: true })
 		container.scrollTop = 3200
-		await act(async () => api.setKeyboardOpen(true))
+		await act(async () => {
+			Object.defineProperty(container, 'clientHeight', { value: VIEWPORT - 300, configurable: true })
+			resizeContainer()
+		})
 
 		expect(api.isAttached).toBe(true)
 		expect(container.scrollTop).toBe(4000)
@@ -459,7 +501,10 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 			container.dispatchEvent(wheel)
 		})
 		container.scrollTop = 1200
-		await act(async () => api.setKeyboardOpen(true))
+		await act(async () => {
+			Object.defineProperty(container, 'clientHeight', { value: VIEWPORT - 300, configurable: true })
+			resizeContainer()
+		})
 
 		expect(api.isAttached).toBe(false)
 		expect(container.scrollTop).toBe(1200)

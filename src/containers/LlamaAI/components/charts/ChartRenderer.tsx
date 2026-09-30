@@ -8,10 +8,8 @@ import {
 	type SetStateAction,
 	Suspense,
 	useCallback,
-	useEffect,
 	useMemo,
 	useReducer,
-	useRef,
 	useState
 } from 'react'
 import toast from 'react-hot-toast'
@@ -71,7 +69,6 @@ interface ChartRendererProps {
 	isLoading?: boolean
 	hasError?: boolean
 	chartTypes?: Array<string>
-	resizeTrigger?: number
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
@@ -88,7 +85,6 @@ interface ChartRendererRuntimeProps {
 	isLoading: boolean
 	hasError: boolean
 	chartTypes: Array<string> | undefined
-	resizeTrigger: number
 	sessionId: string | null | undefined
 	messageId: string | undefined
 	readOnly: boolean | undefined
@@ -604,12 +600,6 @@ function ActiveSingleChart({
 	}, [data, config])
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
-	useEffect(() => {
-		if (!editing) return
-		const target = window
-		const t = setTimeout(() => target.dispatchEvent(new CustomEvent('chartResize')), 60)
-		return () => clearTimeout(t)
-	}, [editing])
 	const handleStackedChange = useCallback(
 		(stacked: boolean) => dispatch({ type: 'SET_STACKED', payload: stacked }),
 		[dispatch]
@@ -874,7 +864,6 @@ export function ChartRenderer({
 	isLoading = false,
 	hasError = false,
 	chartTypes,
-	resizeTrigger = 0,
 	sessionId,
 	messageId,
 	readOnly,
@@ -890,7 +879,6 @@ export function ChartRenderer({
 				isLoading,
 				hasError,
 				chartTypes,
-				resizeTrigger,
 				sessionId,
 				messageId,
 				readOnly,
@@ -908,7 +896,6 @@ function ChartRendererImpl({
 	isLoading = false,
 	hasError = false,
 	chartTypes,
-	resizeTrigger,
 	sessionId,
 	messageId,
 	readOnly,
@@ -916,38 +903,8 @@ function ChartRendererImpl({
 	artifactRefs,
 	onLocalStyleSave
 }: ChartRendererRuntimeProps) {
-	const containerRef = useRef<HTMLDivElement>(null)
 	const [selectedChartId, setSelectedChartId] = useState(charts[0]?.id)
 	const activeChartId = charts.some((chart) => chart.id === selectedChartId) ? selectedChartId : charts[0]?.id
-
-	useEffect(() => {
-		const el = containerRef.current
-		if (!el) return
-		let lastWidth = el.getBoundingClientRect().width
-		let timer: ReturnType<typeof setTimeout> | null = null
-		// ECharts instances listen for the shared resize event; debounce container
-		// width changes so side panels and fullscreen toggles do not thrash charts.
-		const observer = new ResizeObserver((entries) => {
-			const w = entries[0]?.contentRect.width ?? 0
-			if (Math.abs(w - lastWidth) < 1) return
-			lastWidth = w
-			if (timer) clearTimeout(timer)
-			timer = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 150)
-		})
-		observer.observe(el)
-		return () => {
-			observer.disconnect()
-			if (timer) clearTimeout(timer)
-		}
-	}, [])
-
-	useEffect(() => {
-		if (resizeTrigger <= 0) return undefined
-		const timer = setTimeout(() => {
-			window.dispatchEvent(new CustomEvent('chartResize'))
-		}, 100)
-		return () => clearTimeout(timer)
-	}, [resizeTrigger])
 
 	if (hasError && (!charts || charts.length === 0)) {
 		return <ChartErrorPlaceholder />
@@ -964,7 +921,7 @@ function ChartRendererImpl({
 	const hasMultipleCharts = charts.length > 1
 
 	return (
-		<div ref={containerRef} className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface pt-2">
+		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface pt-2">
 			{hasMultipleCharts ? (
 				<div className="-mt-2 flex border-b border-subtle">
 					{charts.map((chart) => (
@@ -1011,7 +968,6 @@ const ChartRendererMemoized = memo(ChartRendererImpl, (prev, next) => {
 	return (
 		prev.isLoading === next.isLoading &&
 		prev.hasError === next.hasError &&
-		prev.resizeTrigger === next.resizeTrigger &&
 		prev.sessionId === next.sessionId &&
 		prev.messageId === next.messageId &&
 		prev.readOnly === next.readOnly &&

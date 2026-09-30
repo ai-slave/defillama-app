@@ -132,10 +132,5 @@ export function useActiveTip(): {
 		[clearTipInCache, postTipAsync]
 	)
 
-	useEffect(() => {
-		if (!tip) return
-		markSeen(tip)
-	}, [tip, markSeen])
-
 	return { tip, isResolved, markSeen, dismissTip, clickTip }
 }

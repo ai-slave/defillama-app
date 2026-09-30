@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 
 export interface CitationSheetValue {
@@ -6,15 +6,34 @@ export interface CitationSheetValue {
 	isOpen: boolean
 	open: (reference: UnifiedCitationReference) => void
 	close: () => void
+	/** Focuses the control that opened the panel. */
+	restoreFocus: () => void
 }
 
 const CitationSheetContext = createContext<CitationSheetValue | null>(null)
 
-export function useCitationSheetController(): CitationSheetValue {
-	const [activeRef, setActiveRef] = useState<UnifiedCitationReference | null>(null)
-	const open = useCallback((reference: UnifiedCitationReference) => setActiveRef(reference), [])
-	const close = useCallback(() => setActiveRef(null), [])
-	return useMemo(() => ({ activeRef, isOpen: activeRef !== null, open, close }), [activeRef, open, close])
+/** The open citation belongs to the chat it was opened in: switching chats closes it in the same render. */
+export function useCitationSheetController(sessionId: string | null): CitationSheetValue {
+	const [opened, setOpened] = useState<{ reference: UnifiedCitationReference; sessionId: string | null } | null>(null)
+	// Dropped rather than hidden, so coming back to the first chat does not reopen it.
+	if (opened && opened.sessionId !== sessionId) setOpened(null)
+	const activeRef = opened?.reference ?? null
+	const triggerRef = useRef<HTMLElement | null>(null)
+	const open = useCallback(
+		(reference: UnifiedCitationReference) => {
+			// A citation opened from inside the panel keeps the control that first opened it.
+			const active = document.activeElement
+			if (active instanceof HTMLElement && !active.closest('[data-citation-panel]')) triggerRef.current = active
+			setOpened({ reference, sessionId })
+		},
+		[sessionId]
+	)
+	const close = useCallback(() => setOpened(null), [])
+	const restoreFocus = useCallback(() => triggerRef.current?.focus(), [])
+	return useMemo(
+		() => ({ activeRef, isOpen: activeRef !== null, open, close, restoreFocus }),
+		[activeRef, open, close, restoreFocus]
+	)
 }
 
 export function CitationSheetProvider({ value, children }: { value: CitationSheetValue; children: ReactNode }) {
@@ -23,5 +42,5 @@ export function CitationSheetProvider({ value, children }: { value: CitationShee
 
 export function useCitationSheet(): CitationSheetValue {
 	const ctx = useContext(CitationSheetContext)
-	return ctx ?? { activeRef: null, isOpen: false, open: () => {}, close: () => {} }
+	return ctx ?? { activeRef: null, isOpen: false, open: () => {}, close: () => {}, restoreFocus: () => {} }
 }

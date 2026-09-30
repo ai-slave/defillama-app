@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import Router from 'next/router'
-import { type RefObject, useCallback, useEffect, useRef } from 'react'
+import { type RefObject, useCallback, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { OnboardingWalkthrough } from '~/containers/LlamaAI/components/OnboardingWalkthrough'
@@ -79,15 +79,10 @@ export function ChatLanding({
 }: ChatLandingProps) {
 	const { hasActiveSubscription } = useAuthContext()
 	const [hasSeenWelcome, markWelcomeSeen] = useLlamaAIWelcome(hasActiveSubscription)
-	const { tip, dismissTip, clickTip } = useActiveTip()
+	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
 	const tipActions = useTipActions()
 	const greetingTip = !readOnly && !isSharedView && hasSeenWelcome && tip?.placement === 'greeting' ? tip : null
 	const showBanner = !readOnly && !isSharedView && hasSeenWelcome && !greetingTip
-
-	useEffect(() => {
-		if (readOnly || isSharedView || !hasSeenWelcome) return
-		promptInputRef.current?.focus()
-	}, [readOnly, isSharedView, hasSeenWelcome, promptInputRef])
 
 	const onGreetingCta = () => {
 		if (!greetingTip || greetingTip.cta.kind === 'none') return
@@ -127,7 +122,10 @@ export function ChatLanding({
 						Suggested for you
 					</span>
 				) : null}
-				<h1 className="text-center heading-lg text-primary">{greetingTip ? greetingTip.title : title}</h1>
+				{/* A greeting tip is shown by replacing the heading, so the heading records its impression. */}
+				<h1 ref={greetingTip ? () => markSeen(greetingTip) : undefined} className="text-center heading-lg text-primary">
+					{greetingTip ? greetingTip.title : title}
+				</h1>
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
 					<div className="flex items-center gap-3 body-sm">
 						<button

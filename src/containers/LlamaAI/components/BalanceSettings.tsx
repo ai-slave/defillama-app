@@ -7,10 +7,12 @@ import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Button } from '~/ui/Button'
 import { formatUsd } from '~/utils/numberFormat'
 
-export function BalanceSettings({ result }: { result?: TopupResult }) {
+export function BalanceSettings({ result, balanceBefore }: { result?: TopupResult; balanceBefore?: number }) {
 	const { hasActiveSubscription } = useAuthContext()
 	const { balance, totalAvailable, isLoading, isError, refetch } = useAiBalance()
-	const initialBalance = useRef<number | null>(balance ? totalAvailable : null)
+	// The balance the payment is measured against: the one at checkout start when the return URL carries it,
+	// else the first read after return, which may already include the credit.
+	const initialBalance = useRef<number | null>(balanceBefore ?? (balance ? totalAvailable : null))
 	const [returnState, setReturnState] = useState<'pending' | 'exhausted' | 'updated' | 'hidden'>('pending')
 	useEffect(() => {
 		if (!balance || result !== 'success') return
@@ -44,8 +46,10 @@ export function BalanceSettings({ result }: { result?: TopupResult }) {
 	currentUrl.searchParams.set('modal', 'settings')
 	currentUrl.searchParams.set('tab', 'balance')
 	currentUrl.searchParams.set('topup', 'success')
+	if (balance) currentUrl.searchParams.set('topup_from', String(totalAvailable))
 	const redirectUrl = currentUrl.href
 	currentUrl.searchParams.set('topup', 'cancelled')
+	currentUrl.searchParams.delete('topup_from')
 	return (
 		<div className="space-y-6">
 			<section aria-label="External data balance" className="space-y-3">

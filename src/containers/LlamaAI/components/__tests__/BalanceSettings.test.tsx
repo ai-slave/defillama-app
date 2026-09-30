@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { installSubscriberSession } from '~/utils/testing/subscriberSession'
 import { waitForUi } from '~/utils/testing/waitForUi'
+import { getSettingsIntentFromQuery } from '../../utils/settingsIntent'
 import { BalanceSettings } from '../BalanceSettings'
 
 const session = installSubscriberSession('reader')
@@ -102,6 +103,28 @@ test('crypto checkout returns to Balance with separate completion and cancel res
 		expect(url.searchParams.get('tab')).toBe('balance')
 		expect(url.searchParams.get('topup')).toBe(result)
 	}
+})
+
+test('a payment credited before the reader returns shows as updated on the first read', async () => {
+	await draw(<BalanceSettings />)
+	await settle(() => expect(button('Pay with crypto')).toBeDefined())
+	await act(async () => button('Pay with crypto')!.click())
+	await settle(() => expect(session.requests.some((request) => request.url.pathname === '/topup/create')).toBe(true))
+	const topup = session.requests.find((request) => request.url.pathname === '/topup/create')!
+	const returnUrl = new URL(JSON.parse(topup.init!.body as string).redirectUrl)
+
+	// The webhook credits $10 before the checkout sends the reader back.
+	balance = { ...balance, toppedUpBalance: '17' }
+	await act(async () => root.unmount())
+	session.client.clear()
+	root = createRoot(host)
+	const intent = getSettingsIntentFromQuery(Object.fromEntries(returnUrl.searchParams))!
+	await draw(
+		<BalanceSettings result={intent.initialState.topupResult} balanceBefore={intent.initialState.topupBalanceBefore} />
+	)
+
+	await settle(() => expect(host.textContent).toContain('Balance updated'))
+	expect(host.textContent).toContain('Your current balance is $20.00')
 })
 
 test('accounts without an active subscription can see balance but cannot start a payment', async () => {

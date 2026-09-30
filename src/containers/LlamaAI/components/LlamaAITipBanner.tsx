@@ -8,7 +8,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export function LlamaAITipBanner() {
-	const { tip, dismissTip, clickTip } = useActiveTip()
+	const { tip, markSeen, dismissTip, clickTip } = useActiveTip()
 	const actions = useTipActions()
 	if (!tip) return null
 
@@ -30,7 +30,11 @@ export function LlamaAITipBanner() {
 	}
 
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5">
+		// The impression is recorded by the element that shows the tip; markSeen sends it once per tip.
+		<div
+			ref={() => markSeen(tip)}
+			className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5"
+		>
 			<Tooltip
 				content={tip.title}
 				render={<p />}

@@ -160,11 +160,6 @@ export const SettingsModal = memo(function SettingsModal({
 	const pendingInstructionsSavesRef = useRef(0)
 	const instructionsDirty = instructionsDraft.value.trim() !== instructionsDraft.savedValue
 
-	useEffect(() => {
-		if (!isOpen) return
-		if (initialState && !initialState.tgloginToken && onInitialStateConsumed) onInitialStateConsumed()
-	}, [isOpen, initialState, onInitialStateConsumed])
-
 	// Value passed in rather than defaulted from the draft: a member expression in a default parameter is
 	// one the compiler cannot reorder. Resolves false only when this save was refused; a draft already
 	// submitted counts as saved.
@@ -499,7 +494,10 @@ export const SettingsModal = memo(function SettingsModal({
 						<TabPanel ref={panelRef} value={activeTab} className="flex min-w-0 flex-1 flex-col gap-4 p-4">
 							{activeTab === 'balance' && (
 								<div className="space-y-6">
-									<BalanceSettings result={appliedInitialState?.topupResult} />
+									<BalanceSettings
+										result={appliedInitialState?.topupResult}
+										balanceBefore={appliedInitialState?.topupBalanceBefore}
+									/>
 									<SettingsCard>
 										<ToggleRow
 											label="Show balance in sidebar"

@@ -101,6 +101,12 @@ events. Stale request protection belongs there.
 unauthenticated `/ai/chat` page uses the same modal so shared prompt URLs never
 auto-run work on page load.
 
+`/ai/chat/<session>?prompt=...` fills the composer once the session restores and
+waits for the reader to send it; only `?prompt` then leaves the URL. A
+`?shareToken` stays in the URL until the first request sent in that chat
+carries it. The one prompt that sends by itself is the message a reader typed on
+a shared chat before signing in: they already pressed Send.
+
 ## Message And Artifact Model
 
 Messages enter the UI from three sources: persisted restore, shared-session

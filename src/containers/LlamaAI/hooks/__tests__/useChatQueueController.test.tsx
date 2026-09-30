@@ -165,6 +165,18 @@ describe('useChatQueueController', () => {
 		expect(renewals()).toHaveLength(2)
 	})
 
+	test('keeps renewing an open edit after in-flight commands are aborted, as jumping to a message does', async () => {
+		vi.useFakeTimers()
+		await openEditor()
+		autoRespond = (call) => (call.path.endsWith('/renew') ? { snapshot: snapshot(3, [editing]) } : undefined)
+
+		await act(async () => controller.abortCommands())
+		await act(async () => vi.advanceTimersByTimeAsync(30_000))
+		expect(renewals().map((call) => [call.path, call.body])).toEqual([
+			['/agentic/queue/session-1/q1/edit/renew', { editLeaseId: 'lease-1' }]
+		])
+	})
+
 	test('restores this tab edit ownership and draft when returning to a session', async () => {
 		await openEditor()
 		controller.updateEditDraft('q1', 'draft from session one')

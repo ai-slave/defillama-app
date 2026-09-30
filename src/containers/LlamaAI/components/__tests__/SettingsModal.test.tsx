@@ -505,6 +505,7 @@ describe('SettingsModal initial tab', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let actions: LlamaAISettingsActions
+	let tabDialogStore: Ariakit.DialogStore
 
 	function Harness({
 		initialState,
@@ -514,6 +515,7 @@ describe('SettingsModal initial tab', () => {
 		currentSettings?: LlamaAISettings
 	}) {
 		const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
+		tabDialogStore = dialogStore
 		return (
 			<session.Wrapper>
 				<SettingsModal
@@ -605,6 +607,20 @@ describe('SettingsModal initial tab', () => {
 		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
 		await act(async () => tab('App').click())
 		expect(openTabId()).toBe(tab('App').id)
+	})
+
+	test('reopening Settings without a top-up does not check the payment again', async () => {
+		await render({ tab: 'balance', topupResult: 'success' })
+		await settle(() =>
+			expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain('Checking your payment')
+		)
+		await act(async () => tabDialogStore.hide())
+
+		// The sidebar's Settings button opens it with no state of its own.
+		await render(null)
+		await act(async () => tabDialogStore.show())
+		await settle(() => expect(openTabId()).toBe(tab('Balance').id))
+		expect(document.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Checking your payment')
 	})
 
 	test.each([false, true])('the Balance sidebar toggle shows saved value %s and flips it', async (saved) => {
