@@ -79,7 +79,12 @@ export class ExecutionCoordinator {
 		}
 	}
 
-	adoptSession(previousSessionId: string, nextSessionId: string): void {
+	/** What the running operation is for, from the moment it starts until its promise settles. */
+	runningIntent(): ExecutionIntent | null {
+		return this.current?.intent ?? null
+	}
+
+	adoptSession(previousSessionId: string | null, nextSessionId: string): void {
 		if (this.current?.sessionId === previousSessionId) this.current.sessionId = nextSessionId
 	}
 

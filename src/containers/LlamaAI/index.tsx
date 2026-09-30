@@ -12,7 +12,8 @@ import {
 	useMemo,
 	useReducer,
 	useRef,
-	useState
+	useState,
+	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
@@ -99,14 +100,12 @@ import {
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import { reportChatError } from '~/containers/LlamaAI/reportChatError'
 import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
-import { runPromptSubmission } from '~/containers/LlamaAI/runPromptSubmission'
 import { settleStopRequest } from '~/containers/LlamaAI/stopSettlement'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
-	createInitialStreamState,
 	createStreamBuffer,
+	createStreamStore,
 	hasStreamBufferContent,
-	streamReducer,
 	type ChatPageContext,
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
@@ -379,7 +378,9 @@ export function AgenticChat({
 	const [sessionId, setSessionId] = useState<string | null>(null)
 	const [sessionTitle, setSessionTitle] = useState<string | null>(null)
 	const [currentSessionProjectId, setCurrentSessionProjectId] = useState<string | null>(null)
-	const [streamState, dispatchStream] = useReducer(streamReducer, undefined, createInitialStreamState)
+	const streamStore = useConstant(createStreamStore)
+	const streamState = useSyncExternalStore(streamStore.subscribe, streamStore.getSnapshot, streamStore.getSnapshot)
+	const dispatchStream = streamStore.dispatch
 	const [promptFailures, dispatchPromptFailure] = useReducer(
 		promptFailuresReducer,
 		undefined,
@@ -508,8 +509,6 @@ export function AgenticChat({
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const scrollContentRef = useRef<HTMLDivElement>(null)
 	const promptInputRef = useRef<HTMLTextAreaElement>(null)
-	const promptSubmissionLockRef = useRef<number | null>(null)
-	const nextPromptSubmissionIdRef = useRef(0)
 	const isFirstMessageRef = useRef(true)
 	const promptTransitionTimerRef = useRef<number | null>(null)
 	const currentSessionIdRef = useRef(sessionId)
@@ -589,9 +588,7 @@ export function AgenticChat({
 		wasStreamingRef.current = isStreaming
 	}, [isStreaming, queryClient])
 
-	const isStreamingRef = useRef(isStreaming)
-
-	// These four carry the latest value into network callbacks that must not be rebuilt on every change.
+	// These three carry the latest value into network callbacks that must not be rebuilt on every change.
 	// Writing them during render is what costs this component its compiler optimization, and nothing
 	// reads them before commit: every reader is an event handler, a stream callback or a later effect.
 	// A layout effect keeps them ahead of every passive effect in the tree.
@@ -599,7 +596,6 @@ export function AgenticChat({
 		currentSessionIdRef.current = sessionId
 		routeSessionIdRef.current = routeSessionId
 		currentSessionProjectIdRef.current = currentSessionProjectId
-		isStreamingRef.current = isStreaming
 	})
 	// Network callbacks need the latest failure before React commits the queued reducer action.
 	const updatePromptFailures = useCallback((action: PromptFailureAction) => {
@@ -725,7 +721,7 @@ export function AgenticChat({
 		})
 		setLimitModalFeature('fact_checked')
 		researchModalStore.show()
-	}, [researchModalStore])
+	}, [dispatchStream, researchModalStore])
 
 	const setShareModalOpen = useCallback((nextOpen: boolean) => {
 		setShowShareModal(nextOpen)
@@ -1113,14 +1109,17 @@ export function AgenticChat({
 		}
 	)
 
-	const clearRecoveryController = useCallback((resetState = true) => {
-		const controller = recoveryControllerRef.current
-		if (controller && controller.timer !== null) window.clearTimeout(controller.timer)
-		recoveryControllerRef.current = null
-		if (resetState) {
-			dispatchStream({ type: 'RESET_RECOVERY' })
-		}
-	}, [])
+	const clearRecoveryController = useCallback(
+		(resetState = true) => {
+			const controller = recoveryControllerRef.current
+			if (controller && controller.timer !== null) window.clearTimeout(controller.timer)
+			recoveryControllerRef.current = null
+			if (resetState) {
+				dispatchStream({ type: 'RESET_RECOVERY' })
+			}
+		},
+		[dispatchStream]
+	)
 
 	const { ensureQueueAttached, resumeIfRunning, recoverExecution } = useChatExecutionOwner({
 		appendMessage,
@@ -1236,7 +1235,7 @@ export function AgenticChat({
 
 			return { status: 'restored' }
 		},
-		[attach, authorizedFetchCompat, isLlama, restoreQueueSnapshot, restoreSession, router, sessions]
+		[dispatchStream, attach, authorizedFetchCompat, isLlama, restoreQueueSnapshot, restoreSession, router, sessions]
 	)
 
 	const exhaustRecovery = useCallback(
@@ -1258,7 +1257,7 @@ export function AgenticChat({
 				dispatchStream({ type: 'SET_ERROR', value: recoveryErrorMessage })
 			}
 		},
-		[appendMessage, clearRecoveryController, rememberPromptFailure]
+		[dispatchStream, appendMessage, clearRecoveryController, rememberPromptFailure]
 	)
 
 	// The retry timer must call the latest attempt closure, not the one from the render that scheduled it,
@@ -1376,14 +1375,13 @@ export function AgenticChat({
 			scheduleRecoveryAttempt(controller, 0, () => void attemptRecoveryForController(controller.id))
 			return true
 		},
-		[attemptRecoveryForController, clearRecoveryController, rememberPromptFailure]
+		[dispatchStream, attemptRecoveryForController, clearRecoveryController, rememberPromptFailure]
 	)
 
 	// Invalidate callbacks before waiting for transport cleanup. A slow reader must
 	// never delay or remain authoritative during navigation to another session.
 	const abortActiveRequest = useCallback(() => {
 		executionCoordinator.invalidate()
-		promptSubmissionLockRef.current = null
 		currentMessageIdRef.current = null
 		clearRecoveryController()
 	}, [clearRecoveryController, executionCoordinator])
@@ -1398,7 +1396,7 @@ export function AgenticChat({
 		dispatchStream({ type: 'SET_ERROR', value: null })
 		dispatchStream({ type: 'SET_RATE_LIMIT_DETAILS', value: null })
 		dispatchStream({ type: 'SET_CONTEXT_WARNING', value: null })
-	}, [clearRecoveryController, resetPromptTransition])
+	}, [dispatchStream, clearRecoveryController, resetPromptTransition])
 
 	const clearConversationState = useCallback(() => {
 		restoreCoordinator.invalidate()
@@ -1606,13 +1604,19 @@ export function AgenticChat({
 		}
 	})
 
+	// A new prompt waits while an answer is live or a prompt or edit of this chat still runs. Both run past
+	// their stream: a prompt first reloads an abandoned duel, and `done` arrives before the response closes.
+	// The stream store and the coordinator answer synchronously, so a second submit in the same tick is refused.
+	const isChatBusy = useCallback(() => {
+		const intent = executionCoordinator.runningIntent()
+		return streamStore.getSnapshot().isStreaming || intent === 'prompt' || intent === 'edit'
+	}, [executionCoordinator, streamStore])
+
 	const startPromptSubmission = useCallback(
 		(effectiveMode: AgenticAnswerMode, prepare: () => PreparedPromptSubmission): boolean => {
-			if (isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
+			if (isChatBusy()) return false
 			abortActiveRequest()
 			triggerPromptTransition(shouldShowLanding ? 'landing' : 'conversation')
-			const submissionId = ++nextPromptSubmissionIdRef.current
-			promptSubmissionLockRef.current = submissionId
 			if (effectiveMode === 'research') {
 				try {
 					if (!localStorage.getItem('llamaai-research-duration-toast')) {
@@ -1629,7 +1633,7 @@ export function AgenticChat({
 
 			const abandonedDuelSessionId = duelPairId ? sessionId : null
 
-			const execute = async () => {
+			const execute = async (operation: ExecutionOperation) => {
 				setViewError(null)
 				setPaginationError(null)
 				primeAudio()
@@ -1639,10 +1643,10 @@ export function AgenticChat({
 				// persisted branch instead: the server has already resolved it to the default
 				// answer, and asking for it keeps the client blind to which arm that was.
 				if (abandonedDuelSessionId) {
-					await restoreCoordinator.run(abandonedDuelSessionId, (operation) =>
-						restoreSessionSnapshot(abandonedDuelSessionId, operation)
+					await restoreCoordinator.run(abandonedDuelSessionId, (restore) =>
+						restoreSessionSnapshot(abandonedDuelSessionId, restore)
 					)
-					if (promptSubmissionLockRef.current !== submissionId) return
+					if (!operation.isCurrent()) return
 				}
 				dispatchStream({ type: 'START_STREAM' })
 				currentMessageIdRef.current = null
@@ -1652,6 +1656,8 @@ export function AgenticChat({
 				let { failedRequest } = prepared
 				const { submitProjectId } = prepared
 				const { mutation } = failedRequest
+				// A first prompt names its session only while preparing.
+				executionCoordinator.adoptSession(operation.sessionId, currentSessionId)
 				const isPromptFailureReplay =
 					promptFailuresRef.current.get(currentSessionId)?.request.mutation.clientMutationId ===
 					mutation.clientMutationId
@@ -1710,204 +1716,203 @@ export function AgenticChat({
 					}
 				}
 
-				const execution = executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
-					await runAgenticRequest({
-						mode: 'prompt',
-						operation,
-						createCallbacks: ({ isCurrent }) =>
-							createChatStreamCallbacks({
-								buffer,
-								isCurrent,
-								targetSessionId: currentSessionId!,
-								deferEmptyDone: true,
-								onDuelStart: (pairId) => {
-									startDuel(pairId)
-									trackUmamiEvent('llamaai-duel-shown')
-								},
-								onSessionId: (id) => {
-									if (!isCurrent()) return
-									adoptResponseSession(id)
-								},
-								onUserMessageId: (messageId) => {
-									mutationAccepted = true
-									failedRequest = { ...failedRequest, optimisticMessageId: messageId }
-									clearPromptFailure(currentSessionId, mutation.clientMutationId)
-								},
-								onTitle: (title) => {
-									if (!isCurrent()) return
-									setSessionTitle(title)
-									if (currentSessionId) {
-										applyServerSessionTitle(currentSessionId, title, submitProjectId)
-										moveSessionToTop(currentSessionId, submitProjectId)
-									}
-								}
-							}),
-						execute: ({ callbacks, signal, eventCounter }) =>
-							fetchAgenticResponse({
-								mutation,
-								abortSignal: signal,
-								fetchFn: authorizedFetchCompat,
-								eventCounter,
-								callbacks
-							}),
-						onError: async ({ kind, error: err }, { isCurrent, eventCounter }) => {
-							if (!isCurrent()) return
-							if (err instanceof AgenticMutationReconcileError) {
-								adoptResponseSession(err.sessionId)
-								if (err.messageId) {
-									replaceLocalUserMessageId(err.messageId)
-									failedRequest = { ...failedRequest, optimisticMessageId: err.messageId }
-								}
-								if (err.status === 'pending') {
-									rememberPromptFailure(err.sessionId, {
-										kind: 'reconnect',
-										error: 'The prompt request is still being processed. Reconnect to check again.',
-										request: failedRequest
-									})
-									dispatchStream({ type: 'SET_ERROR', value: null })
-									dispatchStream({ type: 'RESET_STREAM' })
-									return
-								}
-								clearPromptFailure(err.sessionId, mutation.clientMutationId)
+				await runAgenticRequest({
+					mode: 'prompt',
+					operation,
+					createCallbacks: ({ isCurrent }) =>
+						createChatStreamCallbacks({
+							buffer,
+							isCurrent,
+							targetSessionId: currentSessionId!,
+							deferEmptyDone: true,
+							onDuelStart: (pairId) => {
+								startDuel(pairId)
+								trackUmamiEvent('llamaai-duel-shown')
+							},
+							onSessionId: (id) => {
+								if (!isCurrent()) return
+								adoptResponseSession(id)
+							},
+							onUserMessageId: (messageId) => {
 								mutationAccepted = true
-								startRecoveryCycle({
-									targetSessionId: err.sessionId,
-									buffer,
-									failedRequest: null,
-									error: err
-								})
-								return
-							}
-							if (kind === 'abort') {
-								appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
-								dispatchStream({ type: 'RESET_STREAM' })
-								return
-							}
-							if (kind === 'free-limit' && isFreeLimitError(err)) {
-								appendMessage(buildFreeLimitMessage(err))
-								dispatchStream({ type: 'RESET_STREAM' })
-								return
-							}
-							if (err.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
-								dispatchStream({
-									type: 'SET_RATE_LIMIT_DETAILS',
-									value: {
-										period: 'blocked',
-										limit: 0,
-										resetTime: null
-									}
-								})
-								dispatchStream({ type: 'RESET_STREAM' })
-								setLimitModalFeature('fact_checked')
-								researchModalStore.show()
-								return
-							}
-							if (kind === 'usage-limit') {
-								dispatchStream({
-									type: 'SET_RATE_LIMIT_DETAILS',
-									value: {
-										period: err.details?.period || 'lifetime',
-										limit: err.details?.limit || 0,
-										resetTime: err.details?.resetTime || null
-									}
-								})
-								dispatchStream({ type: 'RESET_STREAM' })
-								setLimitModalFeature(err.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
-								researchModalStore.show()
-								return
-							}
-							if (kind === 'temporary-connectivity' && currentSessionId && buffer.executionId) {
-								buffer.receivedEventCount = eventCounter.count
-								if (
-									startRecoveryCycle({
-										targetSessionId: currentSessionId,
-										buffer,
-										failedRequest,
-										error: err
-									})
-								) {
-									return
+								failedRequest = { ...failedRequest, optimisticMessageId: messageId }
+								clearPromptFailure(currentSessionId, mutation.clientMutationId)
+							},
+							onTitle: (title) => {
+								if (!isCurrent()) return
+								setSessionTitle(title)
+								if (currentSessionId) {
+									applyServerSessionTitle(currentSessionId, title, submitProjectId)
+									moveSessionToTop(currentSessionId, submitProjectId)
 								}
 							}
-							rememberPromptFailure(currentSessionId, {
-								kind: kind === 'temporary-connectivity' ? 'reconnect' : 'retry',
-								error: err.message || 'Failed to get response',
-								request: failedRequest
+						}),
+					execute: ({ callbacks, signal, eventCounter }) =>
+						fetchAgenticResponse({
+							mutation,
+							abortSignal: signal,
+							fetchFn: authorizedFetchCompat,
+							eventCounter,
+							callbacks
+						}),
+					onError: async ({ kind, error: err }, { isCurrent, eventCounter }) => {
+						if (!isCurrent()) return
+						if (err instanceof AgenticMutationReconcileError) {
+							adoptResponseSession(err.sessionId)
+							if (err.messageId) {
+								replaceLocalUserMessageId(err.messageId)
+								failedRequest = { ...failedRequest, optimisticMessageId: err.messageId }
+							}
+							if (err.status === 'pending') {
+								rememberPromptFailure(err.sessionId, {
+									kind: 'reconnect',
+									error: 'The prompt request is still being processed. Reconnect to check again.',
+									request: failedRequest
+								})
+								dispatchStream({ type: 'SET_ERROR', value: null })
+								dispatchStream({ type: 'RESET_STREAM' })
+								return
+							}
+							clearPromptFailure(err.sessionId, mutation.clientMutationId)
+							mutationAccepted = true
+							startRecoveryCycle({
+								targetSessionId: err.sessionId,
+								buffer,
+								failedRequest: null,
+								error: err
 							})
-							dispatchStream({ type: 'SET_ERROR', value: null })
+							return
+						}
+						if (kind === 'abort') {
 							appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 							dispatchStream({ type: 'RESET_STREAM' })
-						},
-						onSuccess: async ({ isCurrent, eventCounter }) => {
-							let handedOffToResume = false
-							let recoveryStarted = false
-							if (
-								isCurrent() &&
-								currentSessionId &&
-								!buffer.error &&
-								!hasStreamBufferContent(buffer) &&
-								canProbeSessionAfterEmptyResponse(isPromptFailureReplay, mutationAccepted)
-							) {
-								// The HTTP stream can finish without local content if the result was
-								// persisted server-side first; attach to that execution before clearing UI.
-								buffer.receivedEventCount = eventCounter.count
-								const resumeSessionId = currentSessionId
-								const resumeOutcome = await recoverExecution({
-									targetSessionId: resumeSessionId,
-									buffer,
-									resetStream: false,
-									operation,
-									onTemporaryDisconnect: (disconnectError, streamBuffer) => {
-										recoveryStarted = startRecoveryCycle({
-											targetSessionId: resumeSessionId,
-											buffer: streamBuffer,
-											failedRequest,
-											error: disconnectError
-										})
-									}
-								})
-								handedOffToResume = resumeOutcome === 'settled'
-								if (!handedOffToResume && !recoveryStarted && isCurrent()) {
-									dispatchStream({ type: 'RESET_STREAM' })
+							return
+						}
+						if (kind === 'free-limit' && isFreeLimitError(err)) {
+							appendMessage(buildFreeLimitMessage(err))
+							dispatchStream({ type: 'RESET_STREAM' })
+							return
+						}
+						if (err.code === 'FACT_CHECKED_REQUIRES_SUBSCRIPTION') {
+							dispatchStream({
+								type: 'SET_RATE_LIMIT_DETAILS',
+								value: {
+									period: 'blocked',
+									limit: 0,
+									resetTime: null
 								}
-							} else if (isCurrent() && isPromptFailureReplay && !mutationAccepted) {
+							})
+							dispatchStream({ type: 'RESET_STREAM' })
+							setLimitModalFeature('fact_checked')
+							researchModalStore.show()
+							return
+						}
+						if (kind === 'usage-limit') {
+							dispatchStream({
+								type: 'SET_RATE_LIMIT_DETAILS',
+								value: {
+									period: err.details?.period || 'lifetime',
+									limit: err.details?.limit || 0,
+									resetTime: err.details?.resetTime || null
+								}
+							})
+							dispatchStream({ type: 'RESET_STREAM' })
+							setLimitModalFeature(err.details?.feature === 'fact_checked' ? 'fact_checked' : 'research')
+							researchModalStore.show()
+							return
+						}
+						if (kind === 'temporary-connectivity' && currentSessionId && buffer.executionId) {
+							buffer.receivedEventCount = eventCounter.count
+							if (
+								startRecoveryCycle({
+									targetSessionId: currentSessionId,
+									buffer,
+									failedRequest,
+									error: err
+								})
+							) {
+								return
+							}
+						}
+						rememberPromptFailure(currentSessionId, {
+							kind: kind === 'temporary-connectivity' ? 'reconnect' : 'retry',
+							error: err.message || 'Failed to get response',
+							request: failedRequest
+						})
+						dispatchStream({ type: 'SET_ERROR', value: null })
+						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
+						dispatchStream({ type: 'RESET_STREAM' })
+					},
+					onSuccess: async ({ isCurrent, eventCounter }) => {
+						let handedOffToResume = false
+						let recoveryStarted = false
+						if (
+							isCurrent() &&
+							currentSessionId &&
+							!buffer.error &&
+							!hasStreamBufferContent(buffer) &&
+							canProbeSessionAfterEmptyResponse(isPromptFailureReplay, mutationAccepted)
+						) {
+							// The HTTP stream can finish without local content if the result was
+							// persisted server-side first; attach to that execution before clearing UI.
+							buffer.receivedEventCount = eventCounter.count
+							const resumeSessionId = currentSessionId
+							const resumeOutcome = await recoverExecution({
+								targetSessionId: resumeSessionId,
+								buffer,
+								resetStream: false,
+								operation,
+								onTemporaryDisconnect: (disconnectError, streamBuffer) => {
+									recoveryStarted = startRecoveryCycle({
+										targetSessionId: resumeSessionId,
+										buffer: streamBuffer,
+										failedRequest,
+										error: disconnectError
+									})
+								}
+							})
+							handedOffToResume = resumeOutcome === 'settled'
+							if (!handedOffToResume && !recoveryStarted && isCurrent()) {
 								dispatchStream({ type: 'RESET_STREAM' })
 							}
-
-							if (!handedOffToResume && isCurrent()) {
-								setActiveLeafMessageId(currentMessageIdRef.current)
-							}
-							if (
-								isCurrent() &&
-								currentSessionId &&
-								!buffer.error &&
-								!recoveryStarted &&
-								isPromptMutationConfirmed(mutationAccepted, hasStreamBufferContent(buffer))
-							) {
-								clearPromptFailure(currentSessionId, mutation.clientMutationId)
-							}
-						},
-						onFinally: ({ isCurrent }) => {
-							if (isCurrent()) finishDuel()
+						} else if (isCurrent() && isPromptFailureReplay && !mutationAccepted) {
+							dispatchStream({ type: 'RESET_STREAM' })
 						}
-					})
-				})
-				await execution.finally(() => router.events.off('routeChangeStart', onRouteChangeStart))
+
+						if (!handedOffToResume && isCurrent()) {
+							setActiveLeafMessageId(currentMessageIdRef.current)
+						}
+						if (
+							isCurrent() &&
+							currentSessionId &&
+							!buffer.error &&
+							!recoveryStarted &&
+							isPromptMutationConfirmed(mutationAccepted, hasStreamBufferContent(buffer))
+						) {
+							clearPromptFailure(currentSessionId, mutation.clientMutationId)
+						}
+					},
+					onFinally: ({ isCurrent }) => {
+						if (isCurrent()) finishDuel()
+					}
+				}).finally(() => router.events.off('routeChangeStart', onRouteChangeStart))
 			}
-			void runPromptSubmission({
-				submissionId,
-				submissionLockRef: promptSubmissionLockRef,
-				execute,
-				onFailure: (submissionError) => {
+			// The prompt owns the chat from here until its response closes, including an abandoned duel's reload.
+			// A failure after another request replaced it belongs to nobody and is dropped.
+			void executionCoordinator.run(sessionId, 'prompt', (operation) =>
+				execute(operation).catch((submissionError) => {
+					if (!operation.isCurrent()) return
 					dispatchStream({ type: 'RESET_STREAM' })
 					setViewError('The request was interrupted. Reload this conversation before trying again.')
 					reportChatError(submissionError, 'submission', '')
-				}
-			})
+				})
+			)
 
 			return true
 		},
 		[
+			isChatBusy,
+			dispatchStream,
 			startDuel,
 			finishDuel,
 			resetDuel,
@@ -1961,7 +1966,7 @@ export function AgenticChat({
 		): boolean => {
 			const trimmed = prompt.trim()
 			const hasImages = !!images?.length
-			if ((!trimmed && !hasImages) || isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
+			if ((!trimmed && !hasImages) || isChatBusy()) return false
 			if (sessionId && promptFailuresRef.current.has(sessionId)) return false
 
 			if (sharedSession && !sessionId && !hasUser) {
@@ -2038,6 +2043,7 @@ export function AgenticChat({
 			})
 		},
 		[
+			isChatBusy,
 			sharedSession,
 			sessionId,
 			hasUser,
@@ -2138,11 +2144,11 @@ export function AgenticChat({
 			const queueIsActive =
 				!queueAdmissionPaused &&
 				!queuePaused &&
-				(queueHasLocalRows || shouldQueuePrompt(isStreamingRef.current, getServerQueue()))
+				(queueHasLocalRows || shouldQueuePrompt(streamStore.getSnapshot().isStreaming, getServerQueue()))
 			if (queueIsActive) return handleQueue(prompt, entities, images)
 			return handleSubmit(prompt, entities, images)
 		},
-		[getServerQueue, handleQueue, handleSubmit, queueAdmissionPaused, queueHasLocalRows, queuePaused]
+		[streamStore, getServerQueue, handleQueue, handleSubmit, queueAdmissionPaused, queueHasLocalRows, queuePaused]
 	)
 
 	const handleEditMessage = useCallback(
@@ -2161,8 +2167,6 @@ export function AgenticChat({
 
 			abortActiveRequest()
 
-			const submissionId = ++nextPromptSubmissionIdRef.current
-			promptSubmissionLockRef.current = submissionId
 			triggerPromptTransition('conversation')
 
 			setViewError(null)
@@ -2318,7 +2322,6 @@ export function AgenticChat({
 						shouldThrowEditError = editError
 					},
 					onFinally: ({ isCurrent }) => {
-						if (promptSubmissionLockRef.current === submissionId) promptSubmissionLockRef.current = null
 						if (isCurrent()) finishDuel()
 					}
 				})
@@ -2336,6 +2339,7 @@ export function AgenticChat({
 			}
 		},
 		[
+			dispatchStream,
 			activeLeafMessageId,
 			appendMessage,
 			attach,
@@ -2401,7 +2405,15 @@ export function AgenticChat({
 				}
 			})
 		},
-		[abortActiveRequest, branchCoordinator, isStreaming, restoreSessionSnapshot, sessionId, switchActiveLeaf]
+		[
+			dispatchStream,
+			abortActiveRequest,
+			branchCoordinator,
+			isStreaming,
+			restoreSessionSnapshot,
+			sessionId,
+			switchActiveLeaf
+		]
 	)
 
 	const submitDuelVote = useCallback(
@@ -2461,7 +2473,15 @@ export function AgenticChat({
 			resetDuel()
 			dispatchStream({ type: 'RESET_STREAM' })
 		})()
-	}, [sessionId, streamPhase.status, abortActiveRequest, authorizedFetchCompat, resetDuel, applyQueueSnapshot])
+	}, [
+		dispatchStream,
+		sessionId,
+		streamPhase.status,
+		abortActiveRequest,
+		authorizedFetchCompat,
+		resetDuel,
+		applyQueueSnapshot
+	])
 
 	// Reuse the same submit path for assistant action buttons.
 	const handleActionClick = useCallback(
@@ -2505,7 +2525,7 @@ export function AgenticChat({
 			failedRequest,
 			submitProjectId: failedRequest.mutation.projectId ?? null
 		}))
-	}, [sessionId, sessionPromptFailure, startPromptSubmission])
+	}, [dispatchStream, sessionId, sessionPromptFailure, startPromptSubmission])
 
 	const handleDiscardPromptFailure = useCallback(() => {
 		if (!sessionId || sessionPromptFailure?.kind !== 'retry') return

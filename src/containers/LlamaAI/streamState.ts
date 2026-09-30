@@ -422,3 +422,27 @@ export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string):
 }
 
 export type StreamDispatch = Dispatch<StreamAction>
+
+/**
+ * The chat's stream state, readable the moment an action is dispatched. React reads it through
+ * useSyncExternalStore; submit guards call getSnapshot, so they never wait for React to commit a start.
+ */
+export function createStreamStore() {
+	let state = createInitialStreamState()
+	const listeners = new Set<() => void>()
+	return {
+		getSnapshot: () => state,
+		subscribe: (listener: () => void) => {
+			listeners.add(listener)
+			return () => {
+				listeners.delete(listener)
+			}
+		},
+		dispatch: (action: StreamAction) => {
+			const next = streamReducer(state, action)
+			if (next === state) return
+			state = next
+			for (const listener of listeners) listener()
+		}
+	}
+}

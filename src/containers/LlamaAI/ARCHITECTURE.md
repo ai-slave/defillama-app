@@ -47,6 +47,14 @@ call `resumeIfRunning`. Dropped streams call `recoverExecution`. Do not add a
 third path. Ancillary latest-wins requests such as restore and pagination use
 separate `AbortScope` instances, so they cannot take stream ownership.
 
+A new prompt starts only when `isChatBusy()` in `index.tsx` is false: no answer
+is live (the stream store) and no prompt or edit operation is running (the
+coordinator's `runningIntent()`). A prompt operation covers more than its
+stream: it reloads an abandoned duel first, and it runs until the response body
+closes, after `done`. A resume or queue operation that is only checking for
+work does not block a prompt; the prompt replaces it. Both sources answer
+synchronously, so handlers read them directly; never mirror either in a ref.
+
 Direct prompt and edit mutations carry a stable `clientMutationId`. Reusing the
 same identifier reattaches to the retained execution or reconciles an already
 persisted mutation instead of starting duplicate work.

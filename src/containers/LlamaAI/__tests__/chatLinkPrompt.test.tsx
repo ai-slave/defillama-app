@@ -114,19 +114,13 @@ test("a chat link's prompt fills the composer once the account loads, and its sh
 		subscription.resolve(Response.json({ subscription: { status: 'active', expires_at: '2100-01-01', type: 'pro' } }))
 	)
 	// Only the prompt leaves the URL; the share token waits for the first message sent.
-	await act(async () => {
-		await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?shareToken=shared-1&view=terminal'))
-	})
+	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?shareToken=shared-1&view=terminal'))
 	// The shallow replace re-renders the page with the new URL.
 	await draw()
 	expect(composerPrefill()).toBe('Compare these')
 	expect(agenticPosts()).toEqual([])
 
 	await act(async () => sendButton()!.click())
-	await act(async () => {
-		await waitForUi(() => expect(agenticPosts()).toMatchObject([{ message: 'Hello', shareToken: 'shared-1' }]))
-	})
-	await act(async () => {
-		await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?view=terminal'))
-	})
+	await waitForUi(() => expect(agenticPosts()).toMatchObject([{ message: 'Hello', shareToken: 'shared-1' }]))
+	await waitForUi(() => expect(api.router.asPath).toBe('/ai/chat/old-chat?view=terminal'))
 })
