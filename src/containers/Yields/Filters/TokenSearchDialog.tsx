@@ -264,6 +264,7 @@ function TokenResults({
 	const familiesRef = useRef<HTMLDivElement | null>(null)
 	const assetsRef = useRef<HTMLDivElement | null>(null)
 	const [scrollMargin, setScrollMargin] = useState(0)
+	const [headerHeight, setHeaderHeight] = useState(0)
 	const getAssetKey = useCallback((index: number) => assets[index]?.[1] ?? index, [assets])
 
 	// This component mounts inside Ariakit's portal, so the scroll element exists
@@ -274,6 +275,8 @@ function TokenResults({
 		estimateSize: () => 40,
 		overscan: 10,
 		scrollMargin,
+		// Rows scrolled to the top stop below the sticky Tokens header.
+		scrollPaddingStart: headerHeight,
 		getItemKey: getAssetKey
 	})
 
@@ -285,8 +288,10 @@ function TokenResults({
 		const familiesEl = familiesRef.current
 		const assetsEl = assetsRef.current
 		if (!scrollEl || !assetsEl) return
-		const updateScrollMargin = () =>
+		const updateScrollMargin = () => {
 			setScrollMargin(assetsEl.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop)
+			setHeaderHeight((assetsEl.previousElementSibling as HTMLElement | null)?.offsetHeight ?? 0)
+		}
 		updateScrollMargin()
 		const observer = new ResizeObserver(updateScrollMargin)
 		observer.observe(scrollEl)
