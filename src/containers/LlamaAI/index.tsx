@@ -395,11 +395,7 @@ export function AgenticChat({
 	const streamState = useSyncExternalStore(streamStore.subscribe, streamStore.getSnapshot, streamStore.getSnapshot)
 	const dispatchStream = streamStore.dispatch
 	const [answerEntrySource, setAnswerEntrySource] = useState<string>()
-	useAnswerAttention({
-		isStreaming: streamState.isStreaming,
-		hasText: streamState.text.length > 0,
-		entrySource: answerEntrySource
-	})
+	const { markAnswered } = useAnswerAttention({ streamStore, entrySource: answerEntrySource })
 	const [promptFailures, dispatchPromptFailure] = useReducer(
 		promptFailuresReducer,
 		undefined,
@@ -1117,6 +1113,7 @@ export function AgenticChat({
 				onCompletion: (messageId) => {
 					markWebCompletionSeen(completionSessionId, messageId)
 				},
+				onAnswer: markAnswered,
 				onTitle:
 					onTitle ??
 					((title) => {

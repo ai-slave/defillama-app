@@ -8,16 +8,16 @@ function exit(status: VerifiedExitStatus, overrides: Partial<VerifiedExit> = {})
 }
 
 // The withdrawable share is DERIVED from the two measured amounts now, so a fixture states it by
-// setting them: `fraction` of $1,000 deposits.
-function block(exitValue: VerifiedExit | null, fraction: number | null = 1): VerifiedBlock {
+// setting them: `fraction` of `depositsUsd`.
+function block(exitValue: VerifiedExit | null, fraction: number | null = 1, depositsUsd = 1000): VerifiedBlock {
 	return {
 		apy: { avg_1d: 1, avg_7d: 1, avg_30d: 1 },
 		apy_as_of: '2026-08-10T00:00:00.000Z',
 		apy_confidence: 'high',
 		exit: exitValue,
 		exit_liquidity:
-			fraction == null ? null : { amount: '1', usd: fraction * 1000, slippage_bps: 0, as_of: '2026-08-09' },
-		tvl: { amount: '1000', usd: 1000, as_of: '2026-08-09' }
+			fraction == null ? null : { amount: '1', usd: fraction * depositsUsd, slippage_bps: 0, as_of: '2026-08-09' },
+		tvl: { amount: String(depositsUsd), usd: depositsUsd, as_of: '2026-08-09' }
 	}
 }
 
@@ -42,9 +42,21 @@ describe('exitSortScore', () => {
 		expect(unavailable).toBeGreaterThan(blocked)
 	})
 
-	test('ranks sized exits by withdrawable dollars, whatever their status', () => {
-		expect(score(exit('partial'), 0.5)!).toBeGreaterThan(score(exit('instant'), 0.1)!)
-		expect(score(exit('partial'), 0.35)!).toBeGreaterThan(score(exit('partial'), 0.0099)!)
+	// The input runs opposite to the expected order, and neither status bands nor share of the pool
+	// would produce it: the partial exit holds the most dollars, and the smallest share holds the least.
+	test('ranks sized exits by withdrawable dollars, not by status or share of the pool', () => {
+		const pools = [
+			{ name: 'instant, a tenth of a $100k pool', verified: block(exit('instant'), 0.1, 100_000) },
+			{ name: 'instant, all of a $20k pool', verified: block(exit('instant'), 1, 20_000) },
+			{ name: 'partial, half of a $1M pool', verified: block(exit('partial'), 0.5, 1_000_000) }
+		]
+		const ranked = [...pools].sort((a, b) => exitSortScore(b.verified)! - exitSortScore(a.verified)!)
+
+		expect(ranked.map((pool) => pool.name)).toEqual([
+			'partial, half of a $1M pool',
+			'instant, all of a $20k pool',
+			'instant, a tenth of a $100k pool'
+		])
 	})
 
 	test('ranks an unsized exit below every sized one and above a queue', () => {

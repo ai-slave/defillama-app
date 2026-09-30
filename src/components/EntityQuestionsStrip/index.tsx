@@ -77,25 +77,17 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 			page: router.asPath,
 			hasSub: isAuthenticated && hasActiveSubscription
 		})
+		setPendingPrompt(question)
+		setPendingSuggestedFlag()
+		setPendingEntrySource('entity-strip')
+		setPendingPageContext({
+			entitySlug,
+			entityType,
+			route: router.asPath
+		})
 		if (!loaders.userLoading && isAuthenticated) {
-			setPendingPrompt(question)
-			setPendingSuggestedFlag()
-			setPendingEntrySource('entity-strip')
-			setPendingPageContext({
-				entitySlug,
-				entityType,
-				route: router.asPath
-			})
 			void router.push('/ai/chat')
 		} else {
-			setPendingPrompt(question)
-			setPendingSuggestedFlag()
-			setPendingEntrySource('entity-strip')
-			setPendingPageContext({
-				entitySlug,
-				entityType,
-				route: router.asPath
-			})
 			setPendingQuestion(question)
 			signInDialogStore.show()
 		}

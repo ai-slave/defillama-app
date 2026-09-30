@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { createAgenticMutationEnvelope } from '../mutationProtocol'
 
 const base = {
@@ -10,6 +10,17 @@ const base = {
 }
 
 describe('createAgenticMutationEnvelope attribution', () => {
+	beforeEach(() => {
+		const resolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions
+		vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockImplementation(function (this: Intl.DateTimeFormat) {
+			return { ...resolvedOptions.call(this), timeZone: 'Asia/Jakarta' }
+		})
+	})
+
+	afterEach(() => {
+		vi.restoreAllMocks()
+	})
+
 	test('carries where the question came from and the visitor seed so the backend can join the funnel', () => {
 		const envelope = createAgenticMutationEnvelope({
 			...base,
@@ -17,14 +28,24 @@ describe('createAgenticMutationEnvelope attribution', () => {
 			abVisitorId: '00000000-0000-4000-8000-00000000000a'
 		})
 
-		expect(envelope.entrySource).toBe('entity-strip')
-		expect(envelope.abVisitorId).toBe('00000000-0000-4000-8000-00000000000a')
+		expect(envelope).toEqual({
+			clientMutationId: 'mutation-1',
+			enablePremiumTools: false,
+			message: 'What is Aave TVL?',
+			sessionId: 'session-1',
+			entrySource: 'entity-strip',
+			abVisitorId: '00000000-0000-4000-8000-00000000000a',
+			timezone: 'Asia/Jakarta'
+		})
 	})
 
 	test('omits the fields when unknown instead of sending empty values', () => {
-		const envelope = createAgenticMutationEnvelope(base)
-
-		expect(envelope).not.toHaveProperty('entrySource')
-		expect(envelope).not.toHaveProperty('abVisitorId')
+		expect(createAgenticMutationEnvelope({ ...base, entrySource: '', abVisitorId: '' })).toEqual({
+			clientMutationId: 'mutation-1',
+			enablePremiumTools: false,
+			message: 'What is Aave TVL?',
+			sessionId: 'session-1',
+			timezone: 'Asia/Jakarta'
+		})
 	})
 })

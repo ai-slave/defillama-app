@@ -10,11 +10,10 @@ interface CryptoCardIssuerProtocolIds {
 }
 
 export function getCryptoCardIssuerProtocolIds(
-	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+	cards: ReadonlyArray<CryptoCardProtocolReference>
 ): Map<string, CryptoCardIssuerProtocolIds> {
 	const issuers = new Map<string, CryptoCardIssuerProtocolIds>()
-	for (const card of cards ?? []) {
-		if (!card) continue
+	for (const card of cards) {
 		const issuer = card.parent_id || card.id
 		const hostId = card.defillama_parent_id || card.defillama_id
 		if (!issuer || !hostId) continue
@@ -33,7 +32,7 @@ export function getCryptoCardIssuerProtocolIds(
  *  tab from its own metadata. */
 export function stampCryptoCardIssuers(
 	protocols: Record<string, IProtocolMetadata>,
-	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+	cards: ReadonlyArray<CryptoCardProtocolReference>
 ): void {
 	for (const [issuer, { hostId, childIds }] of getCryptoCardIssuerProtocolIds(cards)) {
 		const host = protocols[hostId]
@@ -51,7 +50,7 @@ export function stampCryptoCardIssuers(
  *  card page under /cex, beside the exchange's other tabs. */
 export function getCryptoCardDetailsHrefs(
 	protocols: Record<string, IProtocolMetadata>,
-	cards: ReadonlyArray<CryptoCardProtocolReference | null | undefined> | null | undefined
+	cards: ReadonlyArray<CryptoCardProtocolReference>
 ): Record<string, string> {
 	const hrefs: Record<string, string> = {}
 	for (const [issuer, { hostId }] of getCryptoCardIssuerProtocolIds(cards)) {

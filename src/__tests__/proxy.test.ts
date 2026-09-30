@@ -6,6 +6,7 @@ import {
 	AB_SEED_COOKIE_NAME,
 	AB_VISITOR_COOKIE_NAME,
 	getABGroup,
+	getABSeedFromCookie,
 	isABVisitorId
 } from '~/utils/abTesting'
 
@@ -126,15 +127,18 @@ describe('a/b assignment', () => {
 		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
 	})
 
-	test('gives new visitors a readable seed equal to the visitor id so signed-out analytics can join to the user later', async () => {
+	test('gives new visitors a seed the browser can read, equal to the visitor id, so signed-out analytics can join to the user later', async () => {
 		const { proxy } = await loadProxy()
 		const response = proxy(pageRequest('https://defillama.com/chains'))
-		const visitorCookie = response.cookies.get(AB_VISITOR_COOKIE_NAME)
-		const seedCookie = response.cookies.get(AB_SEED_COOKIE_NAME)
+		// document.cookie only exposes the cookies set without HttpOnly.
+		const documentCookie = response.cookies
+			.getAll()
+			.filter((cookie) => !cookie.httpOnly)
+			.map((cookie) => `${cookie.name}=${cookie.value}`)
+			.join('; ')
 
-		expect(seedCookie?.value).toBe(visitorCookie?.value)
-		expect(seedCookie?.httpOnly).toBeFalsy()
-		expect(seedCookie).toMatchObject({ path: '/', sameSite: 'lax', secure: true })
+		expect(getABSeedFromCookie(documentCookie)).toBe(response.cookies.get(AB_VISITOR_COOKIE_NAME)?.value)
+		expect(response.cookies.get(AB_SEED_COOKIE_NAME)).toMatchObject({ path: '/', sameSite: 'lax', secure: true })
 	})
 
 	test('backfills the readable seed for visitors assigned before the seed existed, without rebucketing them', async () => {

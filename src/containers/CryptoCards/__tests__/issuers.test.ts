@@ -48,13 +48,7 @@ describe('getCryptoCardDetailsHrefs', () => {
 	})
 
 	test('gives no card page when the API omits the protocol id or metadata lacks it', () => {
-		const incompleteCards = [
-			...cards,
-			{ id: 'missing-id' },
-			{ id: 'missing-metadata', defillama_id: '9999' },
-			null,
-			undefined
-		]
+		const incompleteCards = [...cards, { id: 'missing-id' }, { id: 'missing-metadata', defillama_id: '9999' }]
 		const protocols = protocolMetadata()
 		const hrefs = getCryptoCardDetailsHrefs(protocols, incompleteCards)
 		stampCryptoCardIssuers(protocols, incompleteCards)

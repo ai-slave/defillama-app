@@ -56,6 +56,7 @@ export function createAgenticCallbacks({
 	onMessageIdObserved,
 	onUserMessageIdObserved,
 	onCompletion,
+	onAnswer,
 	notify
 }: {
 	isCurrent: () => boolean
@@ -80,6 +81,8 @@ export function createAgenticCallbacks({
 	onMessageIdObserved?: (messageId: string) => void
 	onUserMessageIdObserved?: (messageId: string) => void
 	onCompletion?: (messageId: string) => void
+	/** The stream delivered content and reported no error. */
+	onAnswer?: () => void
 	notify: () => void
 }): AgenticSSECallbacks {
 	// One guard wraps every callback so late chunks from an aborted or superseded
@@ -269,9 +272,11 @@ export function createAgenticCallbacks({
 				return
 			}
 			committed = true
+			const answered = !buffer.error && hasStreamBufferContent(buffer)
 			appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
 			dispatch({ type: 'COMMIT_STREAM' })
 			notify()
+			if (answered) onAnswer?.()
 			if (completedMessageId) onCompletion?.(completedMessageId)
 		})
 	}

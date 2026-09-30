@@ -14,7 +14,7 @@ describe('FreeLimitCard', () => {
 		const container = document.createElement('div')
 		const root = createRoot(container)
 
-		await act(async () => root.render(<FreeLimitCard offer={{ code: 'FREE_FORM_LIMIT' } as never} />))
+		await act(async () => root.render(<FreeLimitCard offer={{ code: 'FREE_FORM_LIMIT' }} />))
 
 		expect(track).toHaveBeenCalledWith('llamaai-free-limit-view', { limit: 'FREE_FORM_LIMIT' })
 		await act(async () => root.unmount())
