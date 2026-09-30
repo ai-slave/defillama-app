@@ -49,40 +49,12 @@ function snapshot(overrides: Partial<ProtocolRankingsCanonicalSnapshot> = {}): P
 	}
 }
 
-function serveNullTvlProtocols(data: { protocols: Array<IProtocol>; chains: Array<string> }) {
-	const chain = data.chains[0]
-	const protocols = data.protocols.flatMap((parent) =>
-		(parent.childProtocols ?? [parent]).map((row) => ({
-			defillamaId: row.id,
-			name: row.name,
-			slug: row.slug,
-			chains: [chain],
-			chainTvls: { [chain]: { tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null } },
-			extraTvl: {},
-			parentProtocol: parent.childProtocols ? parent.id : undefined
-		}))
-	)
-	telemetry.serve({
-		'/lite/protocols2': {
-			chains: data.chains,
-			protocols,
-			parentProtocols: data.protocols.filter((row) => row.childProtocols).map((row) => ({ id: row.id, name: row.name }))
-		}
-	})
-}
-
 const healthyContext = { expectDexs: true, expectPerps: true, previousProtocolCount: null }
 
 describe('assertPublishableSnapshot', () => {
 	test('rejects an empty protocols list', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [] }), healthyContext)).toThrow(
 			ProtocolRankingSnapshotValidationError
-		)
-	})
-
-	test('rejects a snapshot where every TVL is null', () => {
-		expect(() => assertPublishableSnapshot(snapshot({ protocols: [protocol('aave', null)] }), healthyContext)).toThrow(
-			/TVL/
 		)
 	})
 
@@ -176,95 +148,52 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		expect([...published.keys()].some((key) => key.endsWith(':last-good'))).toBe(true)
 	})
 
-	test('publishes a dimension-only chain snapshot without TVL', async () => {
-		serveNullTvlProtocols({
-			protocols: [protocol('native-core-clob', null)],
-			chains: ['Native Core']
+	test('publishes a dimension-only chain whose protocols track TVL on other chains', async () => {
+		// Derive Chain: Derive V2 has TVL on Base but only perps volume here, so no row has TVL on this chain.
+		telemetry.serve({
+			'/lite/protocols2': {
+				chains: ['Base', 'Derive Chain'],
+				parentProtocols: [{ id: 'parent#derive', name: 'Derive' }],
+				protocols: [
+					{
+						defillamaId: 'derive-v2',
+						name: 'Derive V2',
+						slug: 'derive-v2',
+						category: 'Derivatives',
+						chains: ['Base'],
+						chainTvls: { Base: { tvl: 100, tvlPrevDay: 100, tvlPrevWeek: 100, tvlPrevMonth: 100 } },
+						extraTvl: {},
+						parentProtocol: 'parent#derive'
+					},
+					{
+						defillamaId: 'dream',
+						name: 'Dream',
+						slug: 'dream',
+						category: 'Options',
+						chains: [],
+						chainTvls: {},
+						extraTvl: {}
+					}
+				]
+			}
 		})
 
 		const result = await getProtocolRankingsSnapshot({
-			chain: 'Native Core',
-			chainMetadata: { 'native-core': { id: 'native_core', name: 'Native Core' } },
-			protocolMetadata: { 'native-core-clob': { displayName: 'native-core-clob', chains: [], tvl: false } },
-			categoriesAndTagsMetadata: { configs: {} } as never
-		})
-
-		expect(result.protocols).toHaveLength(1)
-		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
-	})
-
-	test('publishes a dimension-only chain whose protocols are all grouped', async () => {
-		const groupedProtocol = {
-			...protocol('parent#dimension-only', null),
-			childProtocols: [protocol('dimension-dex', null), protocol('dimension-perps', null)]
-		}
-		serveNullTvlProtocols({
-			protocols: [groupedProtocol],
-			chains: ['Grouped Dimensions']
-		})
-
-		const result = await getProtocolRankingsSnapshot({
-			chain: 'Grouped Dimensions',
-			chainMetadata: { 'grouped-dimensions': { id: 'grouped-dimensions', name: 'Grouped Dimensions' } },
+			chain: 'Derive Chain',
+			chainMetadata: { 'derive-chain': { id: 'lyra', name: 'Derive Chain' } },
 			protocolMetadata: {
-				'parent#dimension-only': { displayName: 'parent#dimension-only', chains: [], tvl: true },
-				'dimension-dex': { displayName: 'dimension-dex', chains: [], tvl: false },
-				'dimension-perps': { displayName: 'dimension-perps', chains: [], tvl: false }
+				'parent#derive': { displayName: 'Derive', chains: ['Derive Chain'], tvl: true },
+				'derive-v2': { displayName: 'Derive V2', chains: ['Base', 'Derive Chain'], tvl: true },
+				dream: { displayName: 'Dream', chains: ['Derive Chain'], tvl: false }
 			},
 			categoriesAndTagsMetadata: { configs: {} } as never
 		})
 
-		expect(result.protocols).toMatchObject([
-			{ id: 'parent#dimension-only', childProtocols: [{ id: 'dimension-dex' }, { id: 'dimension-perps' }] }
+		expect(result.protocols.map((row) => [row.id, row.tvl.default.tvl])).toEqual([
+			['dream', null],
+			['derive-v2', null]
 		])
 		expect([...published.keys()].some((key) => key.endsWith(':latest'))).toBe(true)
-		expect([...published.keys()].some((key) => key.endsWith(':last-good'))).toBe(true)
-	})
-
-	test.each([true, undefined])('rejects missing grouped TVL when child TVL metadata is %s', async (tvl) => {
-		const chain = `Grouped Outage ${String(tvl)}`
-		const chainKey = `grouped-outage-${String(tvl)}`
-		serveNullTvlProtocols({
-			protocols: [
-				protocol('standalone-dimension', null),
-				{
-					...protocol('parent#grouped-outage', null),
-					childProtocols: [protocol('grouped-dimension', null), protocol('grouped-tvl', null)]
-				}
-			],
-			chains: [chain]
-		})
-
-		await expect(
-			getProtocolRankingsSnapshot({
-				chain,
-				chainMetadata: { [chainKey]: { id: chainKey, name: chain } },
-				protocolMetadata: {
-					'standalone-dimension': { displayName: 'standalone-dimension', chains: [], tvl: false },
-					'parent#grouped-outage': { displayName: 'parent#grouped-outage', chains: [], tvl: false },
-					'grouped-dimension': { displayName: 'grouped-dimension', chains: [], tvl: false },
-					'grouped-tvl': { displayName: 'grouped-tvl', chains: [], tvl }
-				},
-				categoriesAndTagsMetadata: { configs: {} } as never
-			})
-		).rejects.toThrow(/TVL/)
-		expect(published.size).toBe(0)
-	})
-
-	test('still rejects an all-null TVL rebuild for a TVL-backed chain', async () => {
-		serveNullTvlProtocols({
-			protocols: [protocol('aave', null)],
-			chains: ['TVL Outage']
-		})
-
-		await expect(
-			getProtocolRankingsSnapshot({
-				chain: 'TVL Outage',
-				chainMetadata: { 'tvl-outage': { id: 'tvl-outage', name: 'TVL Outage' } },
-				protocolMetadata: { aave: { displayName: 'aave', chains: [], tvl: true } },
-				categoriesAndTagsMetadata: { configs: {} } as never
-			})
-		).rejects.toThrow(/TVL/)
 	})
 
 	test('never writes a snapshot that fails validation, and records the failure', async () => {

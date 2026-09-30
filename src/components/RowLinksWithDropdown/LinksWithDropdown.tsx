@@ -281,7 +281,7 @@ export function LinksWithDropdown({
 					isActive={isLinkInDropdown}
 					options={links}
 					keyPrefix={name}
-					className="mr-1 ml-1 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand"
+					className="mr-1 ml-1 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand data-[active=true]:*:text-on-brand"
 				/>
 			) : null}
 		</>

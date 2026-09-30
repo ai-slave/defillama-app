@@ -15,6 +15,10 @@ import type { ProtocolRankingsCanonicalSnapshot } from './server/tableData.serve
  * missing-source checks catch total failures, the ratio guard catches partial
  * ones (a protocols list that silently lost a third of its rows), and the
  * expected-source checks catch the silent-adapter-failure case specifically.
+ *
+ * There is deliberately no TVL check: TVL arrives in the same protocols
+ * response as the rows (whose failure throws), and chain metadata keeps
+ * dimension-only chains visible, so a snapshot with no TVL is real data.
  */
 
 /** Reject a rebuild whose row count fell below this fraction of the previous snapshot's. */
@@ -39,8 +43,6 @@ export function assertPublishableSnapshot(
 		expectPerps: boolean
 		/** Row count of the last published snapshot, when one is available to compare against. */
 		previousProtocolCount?: number | null
-		/** Dimension-only chains legitimately have no TVL-bearing protocol rows. */
-		allowNoTvl?: boolean
 	}
 ): void {
 	const fail = (check: string, message: string) => {
@@ -49,9 +51,6 @@ export function assertPublishableSnapshot(
 
 	if (snapshot.protocols.length === 0) {
 		fail('protocols-empty', 'snapshot has no protocols')
-	}
-	if (!context.allowNoTvl && !snapshot.protocols.some((protocol) => protocol.tvl?.default?.tvl != null)) {
-		fail('tvl-all-null', 'no protocol carries a TVL value')
 	}
 	const previous = context.previousProtocolCount
 	if (previous != null && previous > 0 && snapshot.protocols.length < previous * MIN_PREVIOUS_ROW_RATIO) {

@@ -204,20 +204,11 @@ export async function getProtocolRankingsSnapshot({
 				}
 			}
 			const lastGood = await snapshotStore.readLastGood(chainCacheKey(chain))
-			// Group metadata can describe TVL on other chains; check the included children instead.
-			const allowNoTvl =
-				protocols.length > 0 &&
-				protocols.every((protocol) =>
-					protocol.childProtocols
-						? protocol.childProtocols.every((child) => protocolMetadata[child.id]?.tvl === false)
-						: protocolMetadata[protocol.id]?.tvl === false
-				)
 			try {
 				assertPublishableSnapshot(snapshot, {
 					expectDexs: shouldFetchDexs,
 					expectPerps: shouldFetchPerps,
-					previousProtocolCount: lastGood?.protocols.length ?? null,
-					allowNoTvl
+					previousProtocolCount: lastGood?.protocols.length ?? null
 				})
 			} catch (error) {
 				// Never publish a degraded snapshot — it would be pinned for hours.

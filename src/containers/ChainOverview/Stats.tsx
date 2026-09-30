@@ -140,7 +140,7 @@ export function Stats(props: IStatsProps) {
 						</span>
 					</h1>
 				) : null}
-				{props.protocols.length > 0 ? (
+				{props.protocols.length > 0 && totalValueUSD != null ? (
 					<div className="flex flex-nowrap items-end justify-between gap-8">
 						<StatItem
 							label="Total Value Locked in DeFi"

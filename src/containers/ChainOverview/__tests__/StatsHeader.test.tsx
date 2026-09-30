@@ -56,6 +56,27 @@ describe('ChainOverview Stats header', () => {
 		expect(link?.getAttribute('href')).toBe('https://ethereum.org/')
 	})
 
+	test('shows the TVL headline only when the chain has TVL', () => {
+		// Dimension-only chains (e.g. Derive Chain) list protocols but carry no TVL.
+		const renderHeadline = (totalValueUSD: number | null) => {
+			const props = {
+				...statsProps,
+				protocols: [{ name: 'Derive' }],
+				tvlChartSummary: { ...statsProps.tvlChartSummary, totalValueUSD }
+			} as unknown as IChainOverviewData
+			return renderToStaticMarkup(
+				<session.Wrapper>
+					<PageClockProvider pageClockSec={1_700_000_000}>
+						<Stats {...props} hideChart />
+					</PageClockProvider>
+				</session.Wrapper>
+			).includes('Total Value Locked in DeFi')
+		}
+
+		expect(renderHeadline(null)).toBe(false)
+		expect(renderHeadline(1_000_000)).toBe(true)
+	})
+
 	test('shows the dollar change when the TVL change is tapped', async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		const container = document.createElement('div')
