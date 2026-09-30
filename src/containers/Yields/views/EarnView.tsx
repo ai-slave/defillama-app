@@ -235,7 +235,7 @@ function EarnView({
 				watchlist
 			/>
 
-			<NewsletterSignup layout="strip" />
+			<NewsletterSignup layout="strip" className="max-lg:hidden" />
 
 			{questions.length > 0 ? (
 				<EntityQuestionsStrip questions={questions} entitySlug="yields" entityType="page" entityName="Yields" />
