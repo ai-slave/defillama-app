@@ -6,7 +6,7 @@ import { canVoteOnDuel, hasDuelProgress } from '../duelVoting'
 const arm = (message: Message, error: string | null = null): DuelArmState => ({
 	message,
 	messageId: 'message-id',
-	isStreaming: false,
+	answered: true,
 	error
 })
 const prose: Message = { role: 'assistant', content: 'answer' }

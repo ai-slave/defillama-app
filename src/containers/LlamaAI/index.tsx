@@ -344,7 +344,6 @@ export function AgenticChat({
 	const duelMessageIdB = duelStream.b.messageId
 	const startDuel = duelStream.start
 	const handleDuelArmEvent = duelStream.handleArmEvent
-	const finishDuel = duelStream.finish
 	const resetDuel = duelStream.reset
 	const markDuelReady = duelStream.markReady
 
@@ -1910,9 +1909,6 @@ export function AgenticChat({
 						) {
 							clearPromptFailure(currentSessionId, mutation.clientMutationId)
 						}
-					},
-					onFinally: ({ isCurrent }) => {
-						if (isCurrent()) finishDuel()
 					}
 				}).finally(() => router.events.off('routeChangeStart', onRouteChangeStart))
 			}
@@ -1933,7 +1929,6 @@ export function AgenticChat({
 			isChatBusy,
 			dispatchStream,
 			startDuel,
-			finishDuel,
 			resetDuel,
 			duelPairId,
 			restoreSessionSnapshot,
@@ -2347,9 +2342,6 @@ export function AgenticChat({
 						setViewError(getErrorMessage(editError))
 						dispatchStream({ type: 'RESET_STREAM' })
 						shouldThrowEditError = editError
-					},
-					onFinally: ({ isCurrent }) => {
-						if (isCurrent()) finishDuel()
 					}
 				})
 			})
@@ -2374,7 +2366,6 @@ export function AgenticChat({
 			abortActiveRequest,
 			createChatStreamCallbacks,
 			executionCoordinator,
-			finishDuel,
 			isMobileChatView,
 			isTerminalView,
 			mode,

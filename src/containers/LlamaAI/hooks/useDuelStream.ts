@@ -1,4 +1,4 @@
-import { useCallback, useReducer, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
 	dispatchAgenticEvent,
 	type AgenticArmEvent,
@@ -7,100 +7,74 @@ import {
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
 	buildAssistantMessage,
-	createInitialStreamState,
 	createStreamBuffer,
 	hasStreamBufferContent,
-	streamReducer
+	type StreamBuffer,
+	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
 import type { Message } from '~/containers/LlamaAI/types'
 
 export interface DuelArmState {
 	message: Message | null
+	/** The persisted id of this arm's answer; a vote resolves the thread to it. */
 	messageId: string | null
-	isStreaming: boolean
+	/** The arm saw its own `response_end`. Whether it is still streaming is the turn's state, not the arm's. */
+	answered: boolean
 	error: string | null
 }
 
+const EMPTY_ARM: DuelArmState = { message: null, messageId: null, answered: false, error: null }
+
+// The buffer is the arm's only copy of its answer; nothing reads a live stream state for it.
+const ignoreStreamAction: StreamDispatch = () => undefined
+
 function useDuelArm() {
-	const [streamState, dispatch] = useReducer(streamReducer, undefined, createInitialStreamState)
-	const [persistedMessageId, setPersistedMessageId] = useState<string | null>(null)
-	const bufferRef = useRef(createStreamBuffer())
-	const currentMessageIdRef = useRef<string | null>(null)
-	// The answer is snapshotted out of the buffer after each event rather than rebuilt during render.
-	// The buffer has to stay mutable and has to outlive COMMIT_STREAM -- which clears the reducer's
-	// runtime fields -- because duel answers never enter shared message history. Snapshotting keeps
-	// that lifetime while giving render an immutable value it can memoise.
-	const [message, setMessage] = useState<Message | null>(null)
-	const callbacksRef = useRef<AgenticSSECallbacks | null>(null)
+	const [arm, setArm] = useState<DuelArmState>(EMPTY_ARM)
+	// Mutable and outside React: every event lands here, and render reads the snapshot in `arm`.
+	const streamRef = useRef<{ buffer: StreamBuffer; callbacks: AgenticSSECallbacks } | null>(null)
 
 	const start = useCallback(() => {
 		const buffer = createStreamBuffer()
-		bufferRef.current = buffer
-		currentMessageIdRef.current = null
-		setPersistedMessageId(null)
-		setMessage(null)
-		dispatch({ type: 'START_STREAM' })
-		callbacksRef.current = createAgenticCallbacks({
-			isCurrent: () => callbacksRef.current !== null,
+		streamRef.current = {
 			buffer,
-			dispatch,
-			currentMessageIdRef,
-			// Duel answers render from their arm buffer and never enter shared message history;
-			// callback dispatches already provide the render notification for every event.
-			appendMessage: () => undefined,
-			notify: () => undefined
-		})
+			callbacks: createAgenticCallbacks({
+				isCurrent: () => true,
+				buffer,
+				dispatch: ignoreStreamAction,
+				// `message_id` is session-scoped and never arm-tagged; the arm's id comes from `arm_message_id`.
+				currentMessageIdRef: { current: null },
+				appendMessage: () => undefined,
+				notify: () => undefined
+			})
+		}
+		setArm(EMPTY_ARM)
 	}, [])
 
-	const settle = useCallback(() => {
-		dispatch({ type: 'COMMIT_STREAM' })
+	const apply = useCallback((event: AgenticArmEvent) => {
+		const stream = streamRef.current
+		if (!stream) return
+		// The agent closes each answer with `response_end`; `done` is session-scoped
+		// and would settle both arms as soon as either one finished.
+		if (event.type === 'response_end') {
+			setArm((current) => ({ ...current, answered: true }))
+			return
+		}
+		if (event.type === 'arm_message_id') {
+			setArm((current) => ({ ...current, messageId: event.messageId }))
+			return
+		}
+		dispatchAgenticEvent(event, stream.callbacks)
+		const { buffer } = stream
+		const message = hasStreamBufferContent(buffer) ? buildAssistantMessage(buffer) : null
+		setArm((current) => ({ ...current, message, error: buffer.error }))
 	}, [])
-
-	const apply = useCallback(
-		(event: AgenticArmEvent) => {
-			const callbacks = callbacksRef.current
-			if (!callbacks) return
-			// The agent closes each answer with `response_end`; `done` is session-scoped
-			// and would settle both arms as soon as either one finished.
-			if (event.type === 'response_end') {
-				settle()
-				return
-			}
-			// The persisted id of this arm's answer; it resolves the thread on vote and
-			// is never answer content.
-			if (event.type === 'arm_message_id') {
-				setPersistedMessageId(event.messageId)
-				return
-			}
-			dispatchAgenticEvent(event, callbacks)
-			const buffer = bufferRef.current
-			setMessage(
-				hasStreamBufferContent(buffer) ? buildAssistantMessage(buffer, currentMessageIdRef.current ?? undefined) : null
-			)
-		},
-		[settle]
-	)
 
 	const reset = useCallback(() => {
-		callbacksRef.current = null
-		bufferRef.current = createStreamBuffer()
-		currentMessageIdRef.current = null
-		setPersistedMessageId(null)
-		setMessage(null)
-		dispatch({ type: 'RESET_STREAM' })
-		dispatch({ type: 'SET_ERROR', value: null })
+		streamRef.current = null
+		setArm(EMPTY_ARM)
 	}, [])
 
-	return {
-		message,
-		messageId: persistedMessageId,
-		isStreaming: streamState.isStreaming,
-		error: streamState.error,
-		start,
-		apply,
-		settle,
-		reset
-	}
+	return { arm, start, apply, reset }
 }
 
 /**
@@ -117,8 +91,6 @@ export function useDuelStream() {
 	const startB = armB.start
 	const applyA = armA.apply
 	const applyB = armB.apply
-	const settleA = armA.settle
-	const settleB = armB.settle
 	const resetA = armA.reset
 	const resetB = armB.reset
 
@@ -142,11 +114,6 @@ export function useDuelStream() {
 		[applyA, applyB]
 	)
 
-	const finish = useCallback(() => {
-		settleA()
-		settleB()
-	}, [settleA, settleB])
-
 	const reset = useCallback(() => {
 		setPairId(null)
 		setReady(false)
@@ -154,18 +121,5 @@ export function useDuelStream() {
 		resetB()
 	}, [resetA, resetB])
 
-	const a: DuelArmState = {
-		message: armA.message,
-		messageId: armA.messageId,
-		isStreaming: armA.isStreaming,
-		error: armA.error
-	}
-	const b: DuelArmState = {
-		message: armB.message,
-		messageId: armB.messageId,
-		isStreaming: armB.isStreaming,
-		error: armB.error
-	}
-
-	return { pairId, ready, a, b, start, markReady, handleArmEvent, finish, reset }
+	return { pairId, ready, a: armA.arm, b: armB.arm, start, markReady, handleArmEvent, reset }
 }

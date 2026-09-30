@@ -4,8 +4,9 @@ import { Icon } from '~/ui/Icon'
 import { LoadingIndicator } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
 import type { Message } from '../types'
-import { canVoteOnDuel, hasDuelAnswer, hasDuelProgress } from './duelVoting'
+import { canVoteOnDuel, getDuelArmStatus, hasDuelAnswer, hasDuelProgress, type DuelArmStatus } from './duelVoting'
 import { MessageBubble } from './messages/MessageBubble'
+import { ChatStatusLine } from './status/ChatStatusLine'
 
 export type DuelChoice = 'a' | 'b' | 'tie' | 'both_bad'
 
@@ -23,7 +24,7 @@ function AnswerColumn({
 	label,
 	message,
 	sessionId,
-	isStreaming,
+	status,
 	error,
 	hasAnswer,
 	canChoose,
@@ -32,14 +33,17 @@ function AnswerColumn({
 	label: string
 	message: Message | null
 	sessionId: string | null
-	isStreaming: boolean
+	status: DuelArmStatus
 	error: string | null
 	hasAnswer: boolean
 	canChoose: boolean
 	onChoose: () => void
 }) {
+	const isStreaming = status === 'streaming'
 	// Out-of-band artifacts receive fallback blocks only after streaming settles.
 	const hasVisibleContent = isStreaming ? hasDuelProgress(message) : hasAnswer
+	// What the arm produced stays on screen; the line says why it is not a final answer.
+	const statusText = error ?? (status === 'interrupted' ? 'This response was interrupted.' : null)
 
 	return (
 		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-lg border border-subtle bg-surface">
@@ -49,15 +53,16 @@ function AnswerColumn({
 			</div>
 
 			<div className="min-w-0 grow overflow-x-auto px-4 pb-2">
-				{error ? (
-					<p role="alert" className="py-3 text-sm text-error">
-						{error}
-					</p>
-				) : null}
-				{!error && message ? (
+				{message ? (
 					<MessageBubble message={message} sessionId={sessionId} readOnly hideControls isDraft={isStreaming} />
 				) : null}
-				{!error && !hasVisibleContent ? (
+				{statusText ? (
+					<div className="py-3">
+						<ChatStatusLine variant="error" align="start">
+							{statusText}
+						</ChatStatusLine>
+					</div>
+				) : !hasVisibleContent ? (
 					<div role="status" aria-live="polite" className="py-3">
 						<LoadingIndicator label={`Waiting for ${label}`} />
 					</div>
@@ -105,7 +110,7 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 					label="Response 1"
 					message={a.message}
 					sessionId={sessionId}
-					isStreaming={a.isStreaming}
+					status={getDuelArmStatus(a, isStreaming)}
 					error={a.error}
 					hasAnswer={aHasAnswer}
 					canChoose={canVote && !voted}
@@ -115,7 +120,7 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 					label="Response 2"
 					message={b.message}
 					sessionId={sessionId}
-					isStreaming={b.isStreaming}
+					status={getDuelArmStatus(b, isStreaming)}
 					error={b.error}
 					hasAnswer={bHasAnswer}
 					canChoose={canVote && !voted}

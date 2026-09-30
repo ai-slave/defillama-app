@@ -24,6 +24,15 @@ export function hasDuelAnswer(message: Message | null) {
 	return parseMessageToRenderModel({ ...message, content: undefined, alerts: undefined }).blocks.length > 0
 }
 
+export type DuelArmStatus = 'streaming' | 'answered' | 'interrupted'
+
+// `isStreaming` stays true while the turn reconnects and turns false however it ends, so an arm without its
+// own `response_end` is still arriving while the turn streams and was cut off once it stops.
+export function getDuelArmStatus(arm: DuelArmState, isStreaming: boolean): DuelArmStatus {
+	if (arm.answered) return 'answered'
+	return isStreaming ? 'streaming' : 'interrupted'
+}
+
 // Choosing an answer switches the thread onto that sibling, and the branch loader
 // refuses to run mid-turn, so the vote opens only once the turn has settled. Both answers
 // must exist for a preference to mean anything — an arm that failed is not a comparison.

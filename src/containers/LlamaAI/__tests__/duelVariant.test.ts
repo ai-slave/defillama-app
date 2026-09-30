@@ -192,29 +192,7 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	test('settles both arms when the outer request finishes without response_end events', () => {
-		const duel = mountDuelStream()
-
-		act(() => duel.current.start('pair-1'))
-		act(() => {
-			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer a', arm: 'a' })
-			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer b', arm: 'b' })
-		})
-
-		expect(duel.current.a.isStreaming).toBe(true)
-		expect(duel.current.b.isStreaming).toBe(true)
-
-		act(() => duel.current.finish())
-
-		expect(duel.current.a.isStreaming).toBe(false)
-		expect(duel.current.b.isStreaming).toBe(false)
-		expect(duel.current.a.message?.content).toBe('answer a')
-		expect(duel.current.b.message?.content).toBe('answer b')
-
-		duel.unmount()
-	})
-
-	test('settles an arm on its typed response_end event', () => {
+	test('marks only the arm whose response_end arrived as answered', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
@@ -223,38 +201,29 @@ describe('useDuelStream', () => {
 			duel.current.handleArmEvent({ type: 'response_end', arm: 'a' })
 		})
 
-		expect(duel.current.a.isStreaming).toBe(false)
-		expect(duel.current.b.isStreaming).toBe(true)
+		expect(duel.current.a.answered).toBe(true)
+		expect(duel.current.b.answered).toBe(false)
 		expect(duel.current.a.message?.content).toBe('answer a')
 
 		duel.unmount()
 	})
 
-	test('clears arm errors when the next duel starts', () => {
+	test('clears arm errors and answers when the next duel starts', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
-		act(() => duel.current.handleArmEvent({ type: 'error', content: 'arm failed', arm: 'a' }))
+		act(() => {
+			duel.current.handleArmEvent({ type: 'error', content: 'arm failed', arm: 'a' })
+			duel.current.handleArmEvent({ type: 'response_end', arm: 'a' })
+		})
 		expect(duel.current.a.error).toBe('arm failed')
+		expect(duel.current.a.answered).toBe(true)
 
 		// The server can open the next duel without the page resetting first.
 		act(() => duel.current.start('pair-2'))
 
 		expect(duel.current.a.error).toBeNull()
-		expect(duel.current.a.isStreaming).toBe(true)
-
-		duel.unmount()
-	})
-
-	test('keeps consuming chunks after an outer stream hands off', () => {
-		const duel = mountDuelStream()
-
-		act(() => duel.current.start('pair-1'))
-		act(() => duel.current.handleArmEvent({ type: 'response_chunk', content: 'partial', arm: 'a' }))
-		act(() => duel.current.finish())
-		act(() => duel.current.handleArmEvent({ type: 'response_chunk', content: ' answer', arm: 'a' }))
-
-		expect(duel.current.a.message?.content).toBe('partial answer')
+		expect(duel.current.a.answered).toBe(false)
 
 		duel.unmount()
 	})

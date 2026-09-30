@@ -11,7 +11,7 @@ vi.mock('~/containers/LlamaAI/components/messages/MessageBubble', () => ({ Messa
 const arm: DuelArmState = {
 	message: { role: 'assistant', content: 'answer' },
 	messageId: 'message-id',
-	isStreaming: false,
+	answered: true,
 	error: null
 }
 
