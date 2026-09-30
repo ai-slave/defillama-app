@@ -1,8 +1,9 @@
 // Sort key for the earn table's Exit column. Server sorting reads one scalar per row, so the
 // composite order is folded into a single number, higher is better, in disjoint bands:
 //
-//   instant      4.0
-//   partial      [3.0, 3.99]   more withdrawable ranks higher
+//   sized        > 5           instant or partial with a measured amount, ranked by that amount
+//   instant      4.0           size not measured
+//   partial      3.0           size not measured
 //   queued       (2.0, 2.99]   shorter wait ranks higher
 //   depleted     1.75          a lane that exists but holds nothing
 //   unavailable  1.5
@@ -11,8 +12,9 @@
 
 import type { VerifiedBlock } from './types'
 
+const SIZED_BASE = 5
 const INSTANT = 4
-const PARTIAL_BASE = 3
+const PARTIAL = 3
 const QUEUED_BASE = 2
 const DEPLETED = 1.75
 const UNAVAILABLE = 1.5
@@ -31,18 +33,22 @@ export function withdrawableFraction(verified: VerifiedBlock | null | undefined)
 	return Math.min(Math.max(availableUsd / depositsUsd, 0), 1)
 }
 
+export function exitWithdrawableUsd(verified: VerifiedBlock | null | undefined): number | null {
+	const status = verified?.exit?.status
+	if (status !== 'instant' && status !== 'partial') return null
+	return verified?.exit_liquidity?.usd ?? null
+}
+
 export function exitSortScore(verified: VerifiedBlock | null | undefined): number | null {
 	const exit = verified?.exit
 	if (!exit) return null
+	const withdrawableUsd = exitWithdrawableUsd(verified)
+	if (withdrawableUsd != null) return SIZED_BASE + withdrawableUsd
 	switch (exit.status) {
 		case 'instant':
 			return INSTANT
-		case 'partial': {
-			const fraction = withdrawableFraction(verified)
-			if (fraction == null) return PARTIAL_BASE
-			// Scaled by 0.99 so fraction === 1 stays inside the partial band.
-			return PARTIAL_BASE + fraction * 0.99
-		}
+		case 'partial':
+			return PARTIAL
 		case 'queued': {
 			const eta = exit.eta_seconds
 			// An unknown wait is the worst kind of queue, so it sits at the band floor. Otherwise

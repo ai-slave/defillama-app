@@ -42,13 +42,18 @@ describe('exitSortScore', () => {
 		expect(unavailable).toBeGreaterThan(blocked)
 	})
 
-	test('orders partial exits by how much actually came out', () => {
+	test('ranks sized exits by withdrawable dollars, whatever their status', () => {
+		expect(score(exit('partial'), 0.5)!).toBeGreaterThan(score(exit('instant'), 0.1)!)
 		expect(score(exit('partial'), 0.35)!).toBeGreaterThan(score(exit('partial'), 0.0099)!)
 	})
 
-	// A fully-withdrawable partial must still rank below a true instant exit.
-	test('keeps a fraction of 1 inside the partial band', () => {
-		expect(score(exit('partial'), 1)!).toBeLessThan(score(exit('instant'))!)
+	test('ranks an unsized exit below every sized one and above a queue', () => {
+		const unsizedInstant = score(exit('instant'), null)!
+		const unsizedPartial = score(exit('partial'), null)!
+
+		expect(unsizedInstant).toBeLessThan(score(exit('partial'), 0.001)!)
+		expect(unsizedPartial).toBeLessThan(unsizedInstant)
+		expect(unsizedPartial).toBeGreaterThan(score(exit('queued', { eta_seconds: 86_400 }))!)
 	})
 
 	test('orders queued exits by how long the wait is', () => {

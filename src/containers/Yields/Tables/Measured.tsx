@@ -442,7 +442,12 @@ export function MeasuredCard({
 
 			{/* The exit has its own column and card; a fee stays here because it comes out of the yield. */}
 			<span className="flex items-center justify-end border-t border-subtle pt-2">
-				<a href={poolUrl} className="shrink-0 whitespace-nowrap text-link hover:underline">
+				<a
+					href={poolUrl}
+					data-umami-event="yields-verified-evidence-click"
+					data-umami-event-source="apy"
+					className="shrink-0 whitespace-nowrap text-link hover:underline"
+				>
 					Evidence →
 				</a>
 			</span>

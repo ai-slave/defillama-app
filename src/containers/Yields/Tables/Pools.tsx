@@ -238,8 +238,8 @@ function createEarnColumns(
 					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Now / 7d / 30d).'
 			}
 		}),
-		// Measured exit outcome. Sorts on the numeric `exitStatus` (higher is better: instant >
-		// partial by fraction > queued by ETA > blocked), while the cell reads `verified.exit` —
+		// Measured exit outcome. Sorts on the numeric `exitStatus` (higher is better: withdrawable
+		// USD > instant > partial > queued by ETA > blocked), while the cell reads `verified.exit` —
 		// the same score/label split the Stability column uses. Unmeasured pools sort last in
 		// both directions, because the server always pushes null keys to the bottom.
 		columnHelper.accessor((row) => row.exitStatus ?? undefined, {

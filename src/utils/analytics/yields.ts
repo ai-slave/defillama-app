@@ -30,7 +30,8 @@ export const YIELDS_EVENTS = {
 	// Premium
 	YIELD_SCORE_CLICK: 'yields-yield-score-click',
 	VERIFIED_UNLOCK_CLICK: 'yields-verified-unlock-click',
-	VERIFIED_MODAL_CLOSE: 'yields-verified-modal-close'
+	VERIFIED_MODAL_CLOSE: 'yields-verified-modal-close',
+	VERIFIED_EVIDENCE_CLICK: 'yields-verified-evidence-click'
 } as const
 
 type YieldsEventName = (typeof YIELDS_EVENTS)[keyof typeof YIELDS_EVENTS]

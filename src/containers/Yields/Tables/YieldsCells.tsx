@@ -7,7 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatRatio, formatUsd, formatPercent, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
-import { withdrawableFraction } from '../data/exit'
+import { exitWithdrawableUsd, withdrawableFraction } from '../data/exit'
 import { getDepegWarningSeverity, hasPart } from '../domain/apyPresentation'
 import {
 	EXIT_TONE_CLASS,
@@ -305,16 +305,12 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 
 	const feeWarning = exitFeeWarning(exit.fee_bps)
 	const share = withdrawableFraction(verified)
-	const availableUsd = verified.exit_liquidity?.usd ?? null
+	const withdrawableUsd = exitWithdrawableUsd(verified)
 	const depositsUsd = verified.tvl?.usd ?? null
-	// The bar is the cell's ring unrolled, with the dollars the cell has no room for: colour is the
-	// withdrawable share, filling from the left under the figure that names it. Both figures are
-	// needed; with either missing, the coverage line states what IS known and never draws a zero.
-	const showFigures =
-		(exit.status === 'instant' || exit.status === 'partial') &&
-		share != null &&
-		availableUsd != null &&
-		depositsUsd != null
+	// The bar is the cell's ring unrolled: colour is the withdrawable share, filling from the left
+	// under the figure that names it. Both figures are needed; with either missing, the coverage
+	// line states what IS known and never draws a zero.
+	const showFigures = share != null && withdrawableUsd != null && depositsUsd != null
 	const note = exitCoverageLine(verified)
 	const toneClass = EXIT_TONE_CLASS[exitTone(verified)]
 
@@ -355,7 +351,7 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 							<span className="flex justify-between gap-3 text-secondary tabular-nums">
 								<span className="whitespace-nowrap">
 									<span className="font-medium text-primary">
-										{formatUsd(availableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
+										{formatUsd(withdrawableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
 									</span>{' '}
 									withdrawable now
 								</span>
@@ -379,6 +375,8 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 					<span className="flex items-center justify-end border-t border-subtle pt-2">
 						<a
 							href={`/yields/pool/${row.configID}#${EXIT_STATUS_ID}`}
+							data-umami-event="yields-verified-evidence-click"
+							data-umami-event-source="exit"
 							className="shrink-0 whitespace-nowrap text-link hover:underline"
 						>
 							Evidence →
@@ -387,11 +385,16 @@ export function ExitCell({ row }: { row: IYieldTableRow }) {
 				</span>
 			}
 		>
-			<span className="flex items-center gap-1.5 whitespace-nowrap">
-				<ExitStatusIcon verified={verified} />
-				{/* The value inherits the table's text like every other column; the icon carries the tone. */}
-				<span className="underline decoration-dotted">{label}</span>
-				{feeWarning ? <Icon name="alert-triangle" height={12} width={12} className="shrink-0 text-warning" /> : null}
+			<span className="flex flex-col items-end leading-tight whitespace-nowrap">
+				<span className="flex items-center gap-1.5">
+					<ExitStatusIcon verified={verified} />
+					{/* The value inherits the table's text like every other column; the icon carries the tone. */}
+					<span className="underline decoration-dotted">{label}</span>
+					{feeWarning ? <Icon name="alert-triangle" height={12} width={12} className="shrink-0 text-warning" /> : null}
+				</span>
+				{withdrawableUsd != null ? (
+					<span className="text-secondary">{formatUsd(withdrawableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
+				) : null}
 			</span>
 		</Hovercard>
 	)
