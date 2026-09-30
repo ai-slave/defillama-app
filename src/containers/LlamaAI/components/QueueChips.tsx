@@ -12,7 +12,8 @@ import { LoadingSpinner } from '~/ui/Loaders'
 const REASON_COPY: Record<QueueNotSentReason, string> = {
 	execution_stopped: 'You stopped the run',
 	execution_failed: 'The previous run failed',
-	epoch_changed: 'You edited the conversation',
+	// The server sends this after an edit, a switch to another reply, or a duel vote for the other answer.
+	epoch_changed: 'The conversation changed',
 	quota_exceeded: 'Out of messages',
 	server_restarted: 'Server restarted',
 	expired: 'Message expired',
