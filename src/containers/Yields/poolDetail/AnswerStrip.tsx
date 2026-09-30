@@ -151,6 +151,7 @@ export function AnswerStrip({
 	composition,
 	verifiedAsOf,
 	verifiedNote,
+	stepAccrual = false,
 	hasRisk,
 	poolId
 }: {
@@ -163,6 +164,7 @@ export function AnswerStrip({
 	composition: MeasuredComposition | null
 	verifiedAsOf: string | null
 	verifiedNote: string | null
+	stepAccrual?: boolean
 	hasRisk: boolean
 	poolId: string
 }) {
@@ -207,7 +209,7 @@ export function AnswerStrip({
 							{verifiedAsOf ? (
 								<RelativeTime
 									value={verifiedAsOf}
-									prefix={snapshot.current ? 'Measured' : 'Last measured'}
+									prefix={!snapshot.current ? 'Last measured' : stepAccrual ? 'Rate last changed' : 'Measured'}
 									className={snapshot.current ? '' : 'text-warning'}
 								/>
 							) : null}

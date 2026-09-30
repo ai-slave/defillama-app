@@ -334,6 +334,7 @@ export function PoolDetailView({
 				composition={composition}
 				verifiedAsOf={verified?.apy_as_of ?? null}
 				verifiedNote={verified?.apy_note ?? null}
+				stepAccrual={stepAccrual}
 				hasRisk={hasRisk}
 				poolId={poolId}
 			/>
