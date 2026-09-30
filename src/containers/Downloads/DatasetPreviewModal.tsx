@@ -175,18 +175,9 @@ interface Props {
 	isTrial?: boolean
 	isPreview?: boolean
 	initialConfig?: DatasetSavedConfig
-	onConfigChange?: (config: SavedDownloadInput) => void
 }
 
-export function DatasetPreviewModal({
-	dataset,
-	authorizedFetch,
-	onClose,
-	isTrial,
-	isPreview,
-	initialConfig,
-	onConfigChange
-}: Props) {
+export function DatasetPreviewModal({ dataset, authorizedFetch, onClose, isTrial, isPreview, initialConfig }: Props) {
 	const queryClient = useQueryClient()
 	const subscribeModalStore = Ariakit.useDialogStore()
 	const { savedDownloads, saveDownload } = useSavedDownloads()
@@ -519,11 +510,6 @@ export function DatasetPreviewModal({
 			rowLimit
 		})
 	}, [dataset.slug, headers, selectedColumns, cols, sortState, selectedChain, excludeState, rowLimit])
-
-	useEffect(() => {
-		if (!currentConfig || !onConfigChange) return
-		onConfigChange(currentConfig)
-	}, [currentConfig, onConfigChange])
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {

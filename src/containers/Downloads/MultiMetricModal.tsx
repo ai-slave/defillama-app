@@ -66,7 +66,6 @@ interface MultiMetricModalProps {
 	onClose: () => void
 	isPreview: boolean
 	initialConfig?: MultiMetricSavedConfig
-	onConfigChange?: (config: SavedDownloadInput) => void
 }
 
 function resolveDatasetValue(
@@ -141,8 +140,7 @@ export function MultiMetricModal({
 	authorizedFetch,
 	onClose,
 	isPreview,
-	initialConfig,
-	onConfigChange
+	initialConfig
 }: MultiMetricModalProps) {
 	const subscribeModalStore = Ariakit.useDialogStore()
 	const { savedDownloads, saveDownload } = useSavedDownloads()
@@ -442,11 +440,6 @@ export function MultiMetricModal({
 			dateRange
 		})
 	}, [param, paramType, selectedMetrics, dateRange])
-
-	useEffect(() => {
-		if (!currentConfig || !onConfigChange) return
-		onConfigChange(currentConfig)
-	}, [currentConfig, onConfigChange])
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {

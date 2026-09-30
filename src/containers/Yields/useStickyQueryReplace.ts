@@ -41,7 +41,6 @@ export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 		started: boolean
 		superseded: boolean
 	} | null>(null)
-	const mountedRef = React.useRef(false)
 	const key = target == null ? null : JSON.stringify([router.pathname, router.query, target])
 	// Reset the retry budget when the destination changes.
 	if (failure && failure.key !== key) setFailure(null)
@@ -49,7 +48,6 @@ export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 	const exhausted = failures >= 2
 
 	React.useEffect(() => {
-		mountedRef.current = true
 		const onNavigationStart = (url: string) => {
 			const attempt = attemptedRef.current
 			if (!attempt || attempt.superseded) return
@@ -62,7 +60,6 @@ export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 		}
 		router.events.on('routeChangeStart', onNavigationStart)
 		return () => {
-			mountedRef.current = false
 			router.events.off('routeChangeStart', onNavigationStart)
 		}
 	}, [router.events])
@@ -85,7 +82,7 @@ export function useStickyQueryReplace(target: QueryRecord | null): boolean {
 		}
 		attemptedRef.current = attempt
 		const onFailure = () => {
-			if (!mountedRef.current || attemptedRef.current !== attempt || attempt.superseded) return
+			if (attemptedRef.current !== attempt || attempt.superseded) return
 			setFailure({ key, count: failures + 1 })
 			if (failures === 1) console.warn('Unable to restore yields view preferences; using the current URL.')
 		}

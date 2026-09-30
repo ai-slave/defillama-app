@@ -111,16 +111,19 @@ async function renderReturnFromCheckout() {
 	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
 	const host = document.body.appendChild(document.createElement('div'))
 	const root = createRoot(host)
-	await act(async () =>
-		root.render(
-			<session.Wrapper>
-				<Account />
-				<Toast />
-			</session.Wrapper>
+	const render = () =>
+		act(async () =>
+			root.render(
+				<session.Wrapper>
+					<Account />
+					<Toast />
+				</session.Wrapper>
+			)
 		)
-	)
+	await render()
 	const dialog = () => document.querySelector('[role="dialog"]')
 	return {
+		rerender: render,
 		dialog,
 		title: () => dialog()?.querySelector('h2')?.textContent,
 		buttons: () => [...dialog()!.querySelectorAll('button')].map(accessibleName),
@@ -393,6 +396,24 @@ test('a team checkout return with an unreadable seat count keeps the plain messa
 		await page.wait(0)
 		expect(document.body.textContent).toContain('Payment received! Your team seats will be available shortly.')
 		expect(localStorage.getItem('pending-team-checkout:checkout-user:llamafeed')).toBeNull()
+	} finally {
+		await page.unmount()
+	}
+})
+
+test('a second top-up return on the same page confirms again', async () => {
+	const confirmations = () => document.body.textContent!.split('Top-up payment received!').length - 1
+	router.query = { topup: 'success' }
+	const page = await renderReturnFromCheckout()
+	try {
+		await page.wait(0)
+		expect(confirmations()).toBe(1)
+		router.query = {}
+		await page.rerender()
+		router.query = { topup: 'success' }
+		await page.rerender()
+		await page.wait(0)
+		expect(confirmations()).toBe(2)
 	} finally {
 		await page.unmount()
 	}

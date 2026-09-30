@@ -24,7 +24,6 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
-import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
 import { prefersReducedMotion } from '~/hooks/usePrefersReducedMotion'
 import { useStableCallback } from '~/hooks/useStableCallback'
@@ -165,7 +164,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	// The end-label formatter needs the live instance, but echarts calls it while painting, never during
 	// render. A stable getter keeps the ref itself out of the series build below.
 	const getChart = useStableCallback(() => chartRef.current)
-	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 	const { hasEnteredRef } = persistentLifecycle
 
@@ -518,10 +516,9 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			latestTooltipDataIndexRef.current = null
 			tooltipSizeCacheRef.current = null
 			instance.dispose()
-			handleChartReady(null)
 			emitReady(null)
 		}
-	}, [handleChartReady, persistentLifecycle, showLatestTooltip, syncCategoryLogos])
+	}, [persistentLifecycle, showLatestTooltip, syncCategoryLogos])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -529,10 +526,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		if (!instance || !el || !syncGroup) return
 		return joinChartHoverSync(syncGroup, instance, el)
 	}, [syncGroup])
-
-	useEffect(() => {
-		handleChartReady(shouldEnableCSVDownload || shouldEnableImageExport ? chartRef.current : null)
-	}, [handleChartReady, shouldEnableCSVDownload, shouldEnableImageExport])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -865,7 +858,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 						headingAs={headingAs}
 						exportButtons={
 							<ChartExportButtons
-								chartInstance={chartInstance}
+								chartInstance={getChart}
 								filename={exportFilename}
 								title={exportTitle}
 								iconUrl={exportButtonsConfig?.pngIconUrl}

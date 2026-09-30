@@ -135,3 +135,24 @@ test('onboarding still renders when browser policy denies session storage', asyn
 		if (original) Object.defineProperty(window, 'sessionStorage', original)
 	}
 })
+
+test('tracks a trial activation once per checkout, even when onboarding mounts again', async () => {
+	sessionStorage.setItem('llamaai_checkout', JSON.stringify({ variant: 'trial', ts: Date.now() }))
+	for (let mount = 0; mount < 2; mount++) {
+		const again = document.body.appendChild(document.createElement('div'))
+		const againRoot = createRoot(again)
+		await act(async () =>
+			againRoot.render(
+				<session.Wrapper>
+					<WelcomeOnboarding />
+				</session.Wrapper>
+			)
+		)
+		await waitForUi(() => expect(again.textContent).toContain('Pick all that apply'))
+		await act(async () => againRoot.unmount())
+		again.remove()
+	}
+	expect(track.mock.calls.filter(([name]) => name === 'llamaai-trial-activated')).toEqual([
+		['llamaai-trial-activated', { variant: 'trial' }]
+	])
+})

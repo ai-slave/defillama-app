@@ -76,10 +76,6 @@ export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T e
 			return () => target.removeEventListener('scroll', onScroll)
 		}
 	})
-	useEffect(() => {
-		rowVirtualizer.measure()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- triggers, not inputs: the virtualizer re-measures after a different row count or offset has rendered.
-	}, [rowVirtualizer, rows.length, containerOffset])
 	const virtualItems = rowVirtualizer.getVirtualItems()
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
 		if ((e.ctrlKey || e.metaKey) && e.code === 'KeyF') {

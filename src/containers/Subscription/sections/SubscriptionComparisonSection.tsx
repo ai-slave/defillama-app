@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { type UIEvent, useEffect, useRef, useState } from 'react'
 import { ComparisonCell, SELECTED_COLUMN_HIGHLIGHT } from '~/containers/Subscription/components'
 import { PLAN_META_BY_CYCLE } from '~/containers/Subscription/data'
 import type { BillingCycle, ComparisonSection, PlanKey } from '~/containers/Subscription/types'
@@ -160,7 +160,6 @@ export function SubscriptionComparisonSection({
 	hidePlanActions?: boolean
 	onPlanAction?: (plan: PlanKey) => void
 }) {
-	const bodyScrollRef = useRef<HTMLDivElement>(null)
 	const headerPlanTrackRef = useRef<HTMLDivElement>(null)
 
 	const [overlayMetrics, setOverlayMetrics] = useState<{
@@ -184,23 +183,10 @@ export function SubscriptionComparisonSection({
 	}, [selectedPlan, planOrder])
 
 	/* ── Sync horizontal scroll: body → header track ── */
-	const syncHeaderTrackOffset = useCallback((nextScrollLeft?: number) => {
-		const headerPlanTrack = headerPlanTrackRef.current
-		const bodyScroll = bodyScrollRef.current
-		if (!headerPlanTrack || !bodyScroll) return
-
-		const scrollLeft = nextScrollLeft ?? bodyScroll.scrollLeft
-		headerPlanTrack.style.transform = `translate3d(${-scrollLeft}px, 0, 0)`
-	}, [])
-
-	const onBodyScroll = useCallback(() => {
-		syncHeaderTrackOffset()
-	}, [syncHeaderTrackOffset])
-
-	useEffect(() => {
-		syncHeaderTrackOffset()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- triggers, not inputs: each changes the rendered table, and the sticky header has to be re-aligned to it.
-	}, [syncHeaderTrackOffset, billingCycle, planOrder, selectedPlan])
+	// The browser fires scroll when a narrower table clamps scrollLeft, so this also covers plan and billing switches.
+	const onBodyScroll = (event: UIEvent<HTMLDivElement>) => {
+		headerPlanTrackRef.current!.style.transform = `translate3d(${-event.currentTarget.scrollLeft}px, 0, 0)`
+	}
 
 	return (
 		<section className="mt-12 bg-white py-12 md:mt-0 md:py-20 dark:bg-sub-mobile-table-section-bg md:dark:bg-sub-desktop-table-section-bg">
@@ -244,7 +230,6 @@ export function SubscriptionComparisonSection({
 
 				{/* ── Scrollable body ── */}
 				<div
-					ref={bodyScrollRef}
 					className="relative isolate scrollbar-none overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
 					onScroll={onBodyScroll}
 				>

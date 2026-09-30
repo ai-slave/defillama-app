@@ -1,10 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
+import { useRouter } from 'next/router'
 import { useCallback, useDeferredValue, useMemo, useRef, useState, type RefObject } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { useIsClient } from '~/hooks/useIsClient'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -29,6 +31,7 @@ import {
 	type SavedDownload
 } from './savedDownloads'
 import { SavePresetDialog } from './SavePresetDialog'
+import { decodeDownloadConfig, encodeDownloadConfig } from './urlState'
 
 const ALL_TABS = [
 	{ value: 'datasets', label: 'Datasets' },
@@ -76,21 +79,34 @@ function filterDownloadGroups<T extends { category: string; description: string;
 	return filteredGroups
 }
 
+type CatalogView =
+	| { kind: 'dataset'; dataset: DatasetDefinition; config?: DatasetSavedConfig }
+	| { kind: 'chart'; dataset: ChartDatasetDefinition; config?: ChartSavedConfig }
+	| { kind: 'multiMetric'; config?: MultiMetricSavedConfig }
+	| { kind: 'trialLimit' }
+
+// What a saved preset or a shared link opens. Null for a SQL query, which the SQL workspace opens, and when its
+// dataset no longer exists.
+function viewForConfig(config: SavedDownload, isTrialAccount: boolean): CatalogView | null {
+	if (isTrialAccount) return { kind: 'trialLimit' }
+	if (config.kind === 'query') return null
+	if (config.kind === 'multiMetric') return { kind: 'multiMetric', config }
+	if (config.kind === 'chart') {
+		const dataset = chartDatasetsBySlug.get(config.slug)
+		return dataset ? { kind: 'chart', dataset, config } : null
+	}
+	const dataset = datasetsBySlug.get(config.slug)
+	return dataset ? { kind: 'dataset', dataset, config } : null
+}
+
 export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOptionsMap }) {
 	const savedTabRef = useRef<HTMLButtonElement>(null)
 	const { isAuthenticated, hasActiveSubscription, isTrial, loaders, authorizedFetch } = useAuthContext()
 	const { savedDownloads, deleteDownload, renameDownload } = useSavedDownloads()
 	const { recentDownloads, clearRecents } = useRecentDownloads()
 	const [activeTab, setActiveTab] = useState<CatalogTab>('datasets')
-	const [previewDataset, setPreviewDataset] = useState<DatasetDefinition | null>(null)
-	const [previewChartDataset, setPreviewChartDataset] = useState<ChartDatasetDefinition | null>(null)
-	const [trialLimitOpen, setTrialLimitOpen] = useState(false)
-	const [combineModalOpen, setCombineModalOpen] = useState(false)
-	const [datasetInitialConfig, setDatasetInitialConfig] = useState<DatasetSavedConfig | undefined>(undefined)
-	const [chartInitialConfig, setChartInitialConfig] = useState<ChartSavedConfig | undefined>(undefined)
-	const [multiMetricInitialConfig, setMultiMetricInitialConfig] = useState<MultiMetricSavedConfig | undefined>(
-		undefined
-	)
+	// What a card, a preset or the combine button opened. Only one shows at a time: each dialog covers the catalog.
+	const [opened, setOpened] = useState<CatalogView | null>(null)
 
 	const [searchValue, setSearchValue] = useState('')
 	const deferredSearch = useDeferredValue(searchValue)
@@ -137,11 +153,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	const handleCardClick = useCallback(
 		(dataset: DatasetDefinition) => {
 			if (isAuthenticated && hasActiveSubscription && isTrial) {
-				setTrialLimitOpen(true)
+				setOpened({ kind: 'trialLimit' })
 				return
 			}
 
-			setPreviewDataset(dataset)
+			setOpened({ kind: 'dataset', dataset })
 		},
 		[isAuthenticated, hasActiveSubscription, isTrial]
 	)
@@ -149,48 +165,54 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	const handleChartCardClick = useCallback(
 		(dataset: ChartDatasetDefinition) => {
 			if (isAuthenticated && hasActiveSubscription && isTrial) {
-				setTrialLimitOpen(true)
+				setOpened({ kind: 'trialLimit' })
 				return
 			}
 
-			setPreviewChartDataset(dataset)
+			setOpened({ kind: 'chart', dataset })
 		},
 		[isAuthenticated, hasActiveSubscription, isTrial]
 	)
 
 	const handleRunPreset = useCallback(
 		(preset: SavedDownload) => {
-			if (isAuthenticated && hasActiveSubscription && isTrial) {
-				setTrialLimitOpen(true)
-				return
-			}
-			if (preset.kind === 'dataset') {
-				const ds = datasetsBySlug.get(preset.slug)
-				if (!ds) {
-					toast.error(`Dataset "${preset.slug}" no longer available`)
-					return
-				}
-				setDatasetInitialConfig(preset)
-				setPreviewDataset(ds)
-			} else if (preset.kind === 'chart') {
-				const cd = chartDatasetsBySlug.get(preset.slug)
-				if (!cd) {
-					toast.error(`Chart "${preset.slug}" no longer available`)
-					return
-				}
-				setChartInitialConfig(preset)
-				setPreviewChartDataset(cd)
-			} else if (preset.kind === 'multiMetric') {
-				setMultiMetricInitialConfig(preset)
-				setCombineModalOpen(true)
-			} else {
-				// Query presets open the SQL workspace — handled at the router level.
-				toast.error('Saved SQL query — switch to SQL mode to run it.')
+			const view = viewForConfig(preset, isAuthenticated && hasActiveSubscription && isTrial)
+			if (view) setOpened(view)
+			// Query presets open the SQL workspace — handled at the router level.
+			else if (preset.kind === 'query') toast.error('Saved SQL query — switch to SQL mode to run it.')
+			else if (preset.kind !== 'multiMetric') {
+				toast.error(`${preset.kind === 'chart' ? 'Chart' : 'Dataset'} "${preset.slug}" no longer available`)
 			}
 			// lastRunAt is bumped inside recordRecent when the download actually completes.
 		},
 		[isAuthenticated, hasActiveSubscription, isTrial]
 	)
+
+	// A shared link opens its preview from the URL, which holds it until the preview closes. The pages router fills
+	// the query only after hydration, and the trial check waits for the account, which reads as signed out until the
+	// hydration render is over. SQL links carry mode=sql, so the SQL workspace opens those.
+	const router = useRouter()
+	const isClient = useIsClient()
+	const isAccountLoading = loaders.userLoading || loaders.subscriptionInitialCheck
+	const sharedConfig = isClient && router.isReady && !isAccountLoading ? decodeDownloadConfig(router.query) : null
+	const linkedView = sharedConfig
+		? viewForConfig(
+				// The modals key on the id and never read the name.
+				{ ...sharedConfig, id: 'shared-link', name: '', createdAt: 0 },
+				isAuthenticated && hasActiveSubscription && isTrial
+			)
+		: null
+	const view = opened ?? linkedView
+	const closeView = () => {
+		if (opened) {
+			setOpened(null)
+			return
+		}
+		// Drop exactly the params the link writer set.
+		const nextQuery = { ...router.query }
+		for (const key in encodeDownloadConfig(sharedConfig!)) delete nextQuery[key]
+		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
+	}
 
 	const isUserLoading = loaders.userLoading
 
@@ -349,11 +371,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							<button
 								type="button"
 								onClick={() => {
-									if (isTrial) {
-										setTrialLimitOpen(true)
-										return
-									}
-									setCombineModalOpen(true)
+									setOpened(isTrial ? { kind: 'trialLimit' } : { kind: 'multiMetric' })
 								}}
 								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand/30 bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand/60 hover:from-brand/12 hover:to-brand/4"
 							>
@@ -438,59 +456,48 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 					)}
 				</TabPanel>
 
-				{combineModalOpen ? (
+				{view?.kind === 'multiMetric' ? (
 					// Keyed by the saved config so opening a different preset builds a fresh modal rather than
 					// resetting the one on screen.
 					<MultiMetricModal
-						key={multiMetricInitialConfig?.id ?? 'new'}
+						key={view.config?.id ?? 'new'}
 						chartOptionsMap={chartOptionsMap}
 						authorizedFetch={authorizedFetch}
 						isPreview={isPreview}
-						initialConfig={multiMetricInitialConfig}
-						onClose={() => {
-							setCombineModalOpen(false)
-							setMultiMetricInitialConfig(undefined)
-						}}
+						initialConfig={view.config}
+						onClose={closeView}
 					/>
 				) : null}
 
-				{previewChartDataset && (
+				{view?.kind === 'chart' ? (
 					// Keyed by what the modal is showing: running a different saved preset while it is open
 					// builds a fresh modal instead of resetting the one on screen.
 					<ChartDatasetModal
-						key={`${previewChartDataset.slug}:${chartInitialConfig?.id ?? 'new'}`}
-						dataset={previewChartDataset}
-						options={chartOptionsMap[previewChartDataset.slug] ?? []}
+						key={`${view.dataset.slug}:${view.config?.id ?? 'new'}`}
+						dataset={view.dataset}
+						options={chartOptionsMap[view.dataset.slug] ?? []}
 						authorizedFetch={authorizedFetch}
-						onClose={() => {
-							setPreviewChartDataset(null)
-							setChartInitialConfig(undefined)
-						}}
+						onClose={closeView}
 						isTrial={isTrial}
 						isPreview={isPreview}
-						initialConfig={chartInitialConfig}
+						initialConfig={view.config}
 					/>
-				)}
+				) : null}
 
-				{previewDataset && (
+				{view?.kind === 'dataset' ? (
 					// Keyed by what the modal is showing, as above.
 					<DatasetPreviewModal
-						key={`${previewDataset.slug}:${datasetInitialConfig?.id ?? 'new'}`}
-						dataset={previewDataset}
+						key={`${view.dataset.slug}:${view.config?.id ?? 'new'}`}
+						dataset={view.dataset}
 						authorizedFetch={authorizedFetch}
-						onClose={() => {
-							setPreviewDataset(null)
-							setDatasetInitialConfig(undefined)
-						}}
+						onClose={closeView}
 						isTrial={isTrial}
 						isPreview={isPreview}
-						initialConfig={datasetInitialConfig}
+						initialConfig={view.config}
 					/>
-				)}
-
-				{trialLimitOpen ? (
-					<TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} />
 				) : null}
+
+				{view?.kind === 'trialLimit' ? <TrialCsvLimitModal isOpen onClose={closeView} /> : null}
 
 				<section className="mt-8 flex flex-col gap-4 border-t border-subtle pt-8">
 					<h2 className="heading-xs text-pro-text-primary">FAQ</h2>

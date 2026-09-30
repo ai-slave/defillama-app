@@ -86,7 +86,7 @@ function TreemapChart({
 		onReadyRef.current = onReady
 	})
 
-	// Stable resize listener - never re-attaches when dependencies change
+	// Observes the container, so a new height resizes the chart too
 	useChartResize(chartRef, containerRef)
 
 	const chartTheme = useMemo(() => getChartTheme(isDark), [isDark])
@@ -345,19 +345,6 @@ function TreemapChart({
 		treeData,
 		variant
 	])
-
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		// Container height changes don't automatically trigger echarts resize.
-		const raf = requestAnimationFrame(() => {
-			if (instance.isDisposed()) return
-			instance.resize()
-		})
-		return () => cancelAnimationFrame(raf)
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
-	}, [height])
 
 	const resolvedHeight = height ?? (variant === 'narrative' ? '533px' : '800px')
 	// Treemap zoom can paint outside the series rectangle, but never outside

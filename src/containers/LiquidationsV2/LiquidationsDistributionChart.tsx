@@ -12,6 +12,7 @@ import { useLocalSelection } from '~/components/Select/localSelection'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -87,7 +88,7 @@ function LiquidationsDistributionChartCard({
 	title,
 	iconUrl,
 	tokenOptions,
-	chartInstanceRef
+	chartInstance
 }: {
 	availableSeries: Array<string>
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
@@ -117,7 +118,7 @@ function LiquidationsDistributionChartCard({
 	title: string | undefined
 	iconUrl: string | undefined
 	tokenOptions: Array<{ key: string; name: string }>
-	chartInstanceRef: React.MutableRefObject<ECharts | null>
+	chartInstance: () => ECharts | null
 }) {
 	const exportFilename = slug(
 		[title ?? 'liquidation-distribution', '100k', chartState.token, chartState.modeLabel, chartState.breakdownLabel]
@@ -207,7 +208,7 @@ function LiquidationsDistributionChartCard({
 					size="md"
 				/>
 				<ChartExportButtons
-					chartInstance={() => chartInstanceRef.current}
+					chartInstance={chartInstance}
 					filename={exportFilename}
 					title={[
 						title ?? 'Liquidation Distribution',
@@ -439,16 +440,7 @@ export function LiquidationsDistributionChart({
 	tokenStateMode?: 'query' | 'local'
 }) {
 	const router = useRouter()
-	const chartInstanceRef = React.useRef<ECharts | null>(null)
-	const onChartReady = React.useCallback((instance: ECharts | null) => {
-		chartInstanceRef.current = instance
-	}, [])
-
-	React.useEffect(() => {
-		return () => {
-			chartInstanceRef.current = null
-		}
-	}, [])
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const tokenOptions = React.useMemo(
 		() => chart.tokens.map((entry) => ({ key: entry.key, name: entry.label })),
@@ -705,7 +697,7 @@ export function LiquidationsDistributionChart({
 			deferredChartModel={deferredChartModel}
 			prepareExportDataset={prepareExportDataset}
 			displayOptions={{ hideTokenSelector, shouldHideDataZoom, showBreakdownLegend, showBreakdownSelector }}
-			onChartReady={onChartReady}
+			onChartReady={handleChartReady}
 			setBreakdownMode={setBreakdownMode}
 			setChartMode={setChartMode}
 			setMetric={setMetric}
@@ -716,7 +708,7 @@ export function LiquidationsDistributionChart({
 			title={title}
 			iconUrl={iconUrl}
 			tokenOptions={tokenOptions}
-			chartInstanceRef={chartInstanceRef}
+			chartInstance={chartInstance}
 		/>
 	)
 }

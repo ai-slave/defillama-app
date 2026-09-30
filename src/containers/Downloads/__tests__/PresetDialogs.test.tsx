@@ -12,6 +12,7 @@ vi.mock('../DatasetPreviewModal', () => ({ DatasetPreviewModal: () => null }))
 vi.mock('../ChartDatasetModal', () => ({ ChartDatasetModal: () => null }))
 vi.mock('../MultiMetricModal', () => ({ MultiMetricModal: () => null }))
 vi.mock('~/containers/Subscription/shared/TrialCsvLimitModal', () => ({ TrialCsvLimitModal: () => null }))
+vi.mock('next/router', () => ({ useRouter: () => ({ isReady: true, pathname: '/downloads', query: {} }) }))
 
 const session = installSubscriberSession('downloader')
 const savedNames = () => (readAppStorage().SAVED_DOWNLOADS ?? []).map((preset) => preset.name)

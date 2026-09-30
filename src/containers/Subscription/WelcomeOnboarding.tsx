@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import Router, { useRouter } from 'next/router'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { PURCHASABLE_PLANS, queryValue, usePlanRecord } from '~/containers/Subscription/purchaseReturn'
@@ -117,7 +117,6 @@ export function WelcomeOnboarding() {
 	const { isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
 	const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set())
 	const [slackAcquisition, setSlackAcquisition] = useState<SlackAcquisition | null>(null)
-	const slackAcquisitionHandledRef = useRef(false)
 
 	// The purchase params stay in the URL: the Refresh button below reloads, and without them a reload would confirm any
 	// active plan. Stripe's payment intent and its client secret are dropped, so the secret never sits in the address
@@ -178,34 +177,24 @@ export function WelcomeOnboarding() {
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
 	}, [router])
 
-	const trialActivationFiredRef = useRef(false)
+	// The marker is removed as it is read, so the event fires once per checkout.
 	useEffect(() => {
-		if (trialActivationFiredRef.current || !isConfirmed) return
+		if (!isConfirmed) return
 		const storage = getSessionStorage()
 		if (!storage) return
 		const marker = readTrialCheckoutMarker(storage)
 		if (!marker) return
-		trialActivationFiredRef.current = true
 		trackUmamiEvent('llamaai-trial-activated', { variant: marker.variant })
 	}, [isConfirmed])
 
 	useEffect(() => {
-		if (slackAcquisitionHandledRef.current) return
 		if (!hasActiveSubscription || !isAuthenticated || loaders.userLoading) return
-		if (typeof window === 'undefined') return
 		const storage = getSessionStorage()
-		if (!storage) {
-			slackAcquisitionHandledRef.current = true
-			return
-		}
+		if (!storage) return
+		// Removed from storage as it is read, so later runs find nothing and it is persisted once.
 		const acquisition = readSlackAcquisition(storage)
-		if (!acquisition) {
-			slackAcquisitionHandledRef.current = true
-			return
-		}
-		slackAcquisitionHandledRef.current = true
-		// Reads sessionStorage once after hydration and marks a ref guard in the same step, so it cannot
-		// move into render.
+		if (!acquisition) return
+		// sessionStorage is only readable after hydration, and reading it consumes it, so it cannot move into render.
 		// oxlint-disable-next-line react/set-state-in-effect -- see above
 		setSlackAcquisition(acquisition)
 		void persistSlackAcquisitionIfFirst(acquisition, {

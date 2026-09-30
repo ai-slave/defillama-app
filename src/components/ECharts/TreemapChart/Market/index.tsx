@@ -490,18 +490,6 @@ export default function MarketTreemapChart({
 		}
 	}, [chartDataTree, colorLabel, formatSizeValue, groupItemsLabel, hasGroups, isDark, showMarketCapRow, sizeLabel])
 
-	useEffect(() => {
-		const instance = chartRef.current
-		if (!instance) return
-
-		const raf = requestAnimationFrame(() => {
-			if (instance.isDisposed()) return
-			instance.resize()
-		})
-		return () => cancelAnimationFrame(raf)
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
-	}, [height])
-
 	return (
 		<div className="w-full overflow-hidden" style={{ height, padding: CHART_INSET, boxSizing: 'border-box' }}>
 			<div ref={containerRef} className="h-full w-full" />

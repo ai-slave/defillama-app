@@ -10,8 +10,8 @@ import { ChartDatasetModal } from '../ChartDatasetModal'
 import { DatasetPreviewModal } from '../DatasetPreviewModal'
 import type { DatasetDefinition } from '../datasets'
 import type { ChartSavedConfig, DatasetSavedConfig, SavedDownloadInput } from '../savedDownloads'
+import { decodeDownloadConfig } from '../urlState'
 
-const mocks = vi.hoisted(() => ({ changed: vi.fn() }))
 const chart: ChartDatasetDefinition = {
 	slug: 'test-chart',
 	name: 'Test chart',
@@ -55,8 +55,10 @@ let root: Root
 let container: HTMLDivElement
 let client: QueryClient
 let fetchCsv: ReturnType<typeof vi.fn<(url: string) => Promise<Response>>>
+let writeClipboard: ReturnType<typeof vi.fn<(text: string) => Promise<void>>>
 beforeEach(() => {
-	vi.clearAllMocks()
+	writeClipboard = vi.fn(async () => {})
+	Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: writeClipboard } })
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	fetchCsv = vi.fn(async () => new Response(csv))
 	container = document.createElement('div')
@@ -81,8 +83,11 @@ async function render(node: ReactNode) {
 }
 const missingColumnNotices = () =>
 	document.body.textContent!.split('1 saved column no longer available: missing').length - 1
-function latest(): SavedDownloadInput {
-	return mocks.changed.mock.calls.at(-1)![0]
+// The draft as the modal shares it: the Copy link URL, read back by the page's own decoder.
+async function sharedLink(): Promise<SavedDownloadInput> {
+	await click(button('Copy shareable link'))
+	const url = new URL(writeClipboard.mock.calls.at(-1)![0])
+	return decodeDownloadConfig(Object.fromEntries(url.searchParams))!
 }
 // Refetches through the modal's own fetcher, so the test does not depend on its query keys.
 async function refreshCsv(body: string) {
@@ -121,7 +126,6 @@ async function renderChart(nextOptions = options, initialConfig = config) {
 			authorizedFetch={fetchCsv}
 			onClose={() => {}}
 			initialConfig={initialConfig}
-			onConfigChange={mocks.changed}
 		/>
 	)
 	await settle()
@@ -131,7 +135,7 @@ test('late options and CSV initialize saved selections once, preserving edits an
 	await renderChart([])
 	await renderChart()
 	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
-	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
+	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await click(column('date'))
 	expect(selectedColumns()).toEqual([])
 	await renderChart([...options])
@@ -147,7 +151,7 @@ test('switching or removing the active preview and toggling sum reset table cont
 	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
 	await click(button('Preview Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
-	expect(latest()).toMatchObject({
+	expect(await sharedLink()).toMatchObject({
 		sort: { column: 'date', dir: 'desc' },
 		dateRange: { kind: 'custom', from: '2026-01-01', to: '2026-12-31' }
 	})
@@ -156,13 +160,13 @@ test('switching or removing the active preview and toggling sum reset table cont
 	expect(selectedColumns()).toEqual(['date', 'value'])
 	await click(button('Remove Beta'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
-	expect(latest()).toMatchObject({
+	expect(await sharedLink()).toMatchObject({
 		params: ['alpha'],
 		dateRange: { kind: 'custom', from: '2026-01-01', to: '2026-12-31' }
 	})
 	await click(button('Sum all'))
 	expect(selectedColumns()).toEqual(['date', 'total'])
-	expect(latest()).toMatchObject({ dateRange: { kind: 'custom', from: '2026-01-01', to: '2026-12-31' } })
+	expect(await sharedLink()).toMatchObject({ dateRange: { kind: 'custom', from: '2026-01-01', to: '2026-12-31' } })
 	await click(button('Sum all'))
 	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
 })
@@ -171,11 +175,11 @@ test('category drafts use CSV protocols absent from the catalog and do not resel
 	fetchCsv.mockResolvedValue(new Response('date,Alpha,Unlisted\n2026-09-01,20,30'))
 	const categoryConfig = { ...config, columns: undefined, categoryBreakdown: { category: 'Lending' } }
 	await renderChart(options, categoryConfig)
-	await waitForUi(() => expect(latest()).toMatchObject({ params: ['alpha', 'unlisted'] }))
-	expect(selectedColumns()).toEqual(['date', 'Alpha', 'Unlisted'])
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date', 'Alpha', 'Unlisted']))
+	expect(await sharedLink()).toMatchObject({ params: ['alpha', 'unlisted'] })
 	await click(column('Unlisted'))
 	await renderChart(options, categoryConfig)
-	expect(latest()).toMatchObject({ columns: ['date', 'Alpha'] })
+	expect(await sharedLink()).toMatchObject({ columns: ['date', 'Alpha'] })
 	const clearCategory = document.querySelector<HTMLButtonElement>('[aria-label="Clear category"]')!
 	await click(clearCategory)
 	expect(button('All categories').getAttribute('aria-expanded')).toBe('false')
@@ -194,17 +198,11 @@ test('dataset defaults initialize from loaded rows and saved settings do not ove
 		sort: { column: 'value', dir: 'asc' }
 	}
 	await render(
-		<DatasetPreviewModal
-			dataset={dataset}
-			authorizedFetch={fetchCsv}
-			onClose={() => {}}
-			initialConfig={saved}
-			onConfigChange={mocks.changed}
-		/>
+		<DatasetPreviewModal dataset={dataset} authorizedFetch={fetchCsv} onClose={() => {}} initialConfig={saved} />
 	)
 	await settle()
 	await waitForUi(() => expect(selectedColumns()).toEqual(['date']))
-	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
+	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await waitForUi(() => expect(missingColumnNotices()).toBe(1))
 	await click(column('date'))
 	expect(selectedColumns()).toEqual([])
@@ -214,19 +212,12 @@ test('dataset defaults initialize from loaded rows and saved settings do not ove
 })
 
 test('dataset default sort initializes without a preset and remains user-editable after refresh', async () => {
-	await render(
-		<DatasetPreviewModal
-			dataset={dataset}
-			authorizedFetch={fetchCsv}
-			onClose={() => {}}
-			onConfigChange={mocks.changed}
-		/>
-	)
+	await render(<DatasetPreviewModal dataset={dataset} authorizedFetch={fetchCsv} onClose={() => {}} />)
 	await settle()
-	await waitForUi(() => expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'desc' } }))
-	expect(selectedColumns()).toEqual(['date', 'value', 'other'])
+	await waitForUi(() => expect(selectedColumns()).toEqual(['date', 'value', 'other']))
+	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'desc' } })
 	await click(button('value'))
-	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
+	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 	await refreshCsv(`${csv}\n2026-09-03,50,2`)
-	expect(latest()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
+	expect(await sharedLink()).toMatchObject({ sort: { column: 'value', dir: 'asc' } })
 })

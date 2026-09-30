@@ -74,7 +74,12 @@ export default function Account() {
 
 	// Handle ?topup=success
 	useEffect(() => {
-		if (topupSuccess !== 'success' || !isAuthenticated || topupProcessedRef.current) return
+		if (topupSuccess !== 'success') {
+			// A later return with the same param is a new payment.
+			topupProcessedRef.current = false
+			return
+		}
+		if (!isAuthenticated || topupProcessedRef.current) return
 		topupProcessedRef.current = true
 		scheduleConfirmationReads(queryClient, ['ai-balance'])
 		toast.success('Top-up payment received! Your External Data Balance will update shortly.')
@@ -82,17 +87,15 @@ export default function Account() {
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
 	}, [topupSuccess, isAuthenticated, queryClient, router])
 
-	useEffect(() => {
-		if (topupSuccess !== 'success') {
-			topupProcessedRef.current = false
-		}
-	}, [topupSuccess])
-
 	// Handle ?success=true (post-upgrade redirect from Stripe). The dialog opens at once and
 	// follows the re-reads below: a single read can race the webhook and cache a premature
 	// 404 as confirmed Free.
 	useEffect(() => {
-		if (success !== 'true' || !isAuthenticated || successProcessedRef.current) return
+		if (success !== 'true') {
+			successProcessedRef.current = false
+			return
+		}
+		if (!isAuthenticated || successProcessedRef.current) return
 		successProcessedRef.current = true
 		const redirectStatus = queryValue(router.query.redirect_status)
 		const plan = queryValue(router.query.plan)
@@ -110,12 +113,6 @@ export default function Account() {
 		for (const key of CHECKOUT_RETURN_PARAMS) delete nextQuery[key]
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
 	}, [success, isAuthenticated, router])
-
-	useEffect(() => {
-		if (success !== 'true') {
-			successProcessedRef.current = false
-		}
-	}, [success])
 
 	// An upgrade starts from an active plan (a trial, or monthly before yearly), so only the bought plan confirms it.
 	// The untyped status read returns just the first active plan, so a user with Pro and API reads the bought one
@@ -176,7 +173,11 @@ export default function Account() {
 
 	// Handle ?team-checkout=success
 	useEffect(() => {
-		if (teamCheckout !== 'success' || !isAuthenticated || teamCheckoutProcessedRef.current) return
+		if (teamCheckout !== 'success') {
+			teamCheckoutProcessedRef.current = false
+			return
+		}
+		if (!isAuthenticated || teamCheckoutProcessedRef.current) return
 		teamCheckoutProcessedRef.current = true
 		scheduleConfirmationReads(queryClient, ['team'])
 		// The seat count and plan ride in the return URL for the message and the purchase hold only; the re-reads decide
@@ -194,12 +195,6 @@ export default function Account() {
 		const { 'team-checkout': _ignored, seats: _seats, type: _type, ...nextQuery } = router.query
 		void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true })
 	}, [teamCheckout, isAuthenticated, queryClient, router, userId])
-
-	useEffect(() => {
-		if (teamCheckout !== 'success') {
-			teamCheckoutProcessedRef.current = false
-		}
-	}, [teamCheckout])
 
 	return (
 		<ClientOnly>

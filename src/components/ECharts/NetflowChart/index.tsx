@@ -29,12 +29,11 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 	const [period, setPeriod] = useState<BridgeNetflowPeriod>('month')
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
-	const hasAppliedInitialHeightRef = useRef(false)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
 
-	// Stable resize listener - never re-attaches when dependencies change
+	// Observes the container, so a new height resizes the chart too
 	useChartResize(chartRef, containerRef)
 
 	const { positiveData, negativeData, chains, csvSource } = useMemo(
@@ -194,15 +193,6 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 
 		instance.setOption(option, { notMerge: true })
 	}, [chains, positiveData, negativeData, isThemeDark, chartTheme, csvSource])
-
-	useEffect(() => {
-		if (!hasAppliedInitialHeightRef.current) {
-			hasAppliedInitialHeightRef.current = true
-			return
-		}
-		chartRef.current?.resize()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- height is the trigger, not an input: echarts re-measures the container after the new height renders.
-	}, [height])
 
 	useEffect(() => {
 		const instance = chartRef.current

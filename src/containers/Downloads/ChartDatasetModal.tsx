@@ -186,7 +186,6 @@ interface Props {
 	isTrial?: boolean
 	isPreview?: boolean
 	initialConfig?: ChartSavedConfig
-	onConfigChange?: (config: SavedDownloadInput) => void
 }
 
 export function ChartDatasetModal({
@@ -196,8 +195,7 @@ export function ChartDatasetModal({
 	onClose,
 	isTrial,
 	isPreview,
-	initialConfig,
-	onConfigChange
+	initialConfig
 }: Props) {
 	const queryClient = useQueryClient()
 	const subscribeModalStore = Ariakit.useDialogStore()
@@ -991,11 +989,6 @@ export function ChartDatasetModal({
 			categoryBreakdown: isCategoryMode && selectedCategory ? { category: selectedCategory } : null
 		})
 	}, [dataset.slug, headers, selectedParams, cols, sortState, dateRange, isCategoryMode, selectedCategory])
-
-	useEffect(() => {
-		if (!currentConfig || !onConfigChange) return
-		onConfigChange(currentConfig)
-	}, [currentConfig, onConfigChange])
 
 	const handleCopyLink = useCallback(async () => {
 		if (!currentConfig) {
