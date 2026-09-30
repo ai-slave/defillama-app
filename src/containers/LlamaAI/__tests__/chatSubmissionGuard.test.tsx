@@ -68,8 +68,6 @@ function answerStream(): Response {
 }
 /** Answers the resume probe that runs when a saved chat opens; the default answers at once. */
 let answerProbe: () => Promise<Response> | object
-/** Answers a reload of the new chat, as a prompt sent after a duel asks for; the default answers at once. */
-let answerReload: () => Promise<Response> | object
 
 let root: Root
 
@@ -96,7 +94,6 @@ beforeEach(() => {
 	sent = 0
 	answers = []
 	answerProbe = () => ({ active: false, execution: null })
-	answerReload = () => ({ messages: [{ id: 'answer-1', role: 'assistant', content: 'The default answer' }] })
 	api.router.push.mockImplementation(async (url: string) => {
 		goTo(url)
 		return true
@@ -119,7 +116,6 @@ beforeEach(() => {
 		'https://ai.llama.fi/agentic/active/': () => answerProbe(),
 		'https://ai.llama.fi/agentic': () => answerStream(),
 		'/user/sessions': { sessions: [], hasMore: false },
-		'/user/sessions/new-chat/restore': () => answerReload(),
 		'/user/sessions/old-chat/restore': {
 			messages: [{ id: 'old-answer', role: 'assistant', content: 'An older answer' }]
 		}
@@ -137,18 +133,6 @@ const taken = () => document.querySelector('[data-testid="taken"]')!.textContent
 async function send() {
 	const button = [...document.querySelectorAll('button')].find((el) => el.textContent === 'Send prompt')!
 	await act(async () => button.click())
-}
-
-async function finishFirstAnswer(...extra: Array<object>) {
-	answers[0].write(
-		{ type: 'session', sessionId: 'new-chat', startedAt: 1, streamCursor: 0 },
-		{ type: 'user_message_id', messageId: 'question-1' },
-		...extra,
-		{ type: 'message_id', messageId: 'answer-1' },
-		{ type: 'response_chunk', content: 'An answer' },
-		{ type: 'done', streamCursor: 5 }
-	)
-	await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 test('a prompt sent after an answer is done but before its response closes is refused, and goes out once it closes', async () => {
@@ -211,29 +195,4 @@ test('a submission that fails before its request starts says so in the chat', as
 		)
 	)
 	expect(agenticPosts()).toEqual([])
-})
-
-test('a prompt sent while an abandoned duel reloads is refused, and the prompt that started the reload goes out', async () => {
-	goTo('/ai/chat')
-	await draw()
-	await send()
-	await waitForUi(() => expect(answers).toHaveLength(1))
-	await act(async () => {
-		await finishFirstAnswer({ type: 'duel_start', pairId: 'pair-1' })
-		answers[0].close()
-		await new Promise((resolve) => setTimeout(resolve, 0))
-	})
-	await draw()
-
-	const reload = Promise.withResolvers<Response>()
-	answerReload = () => reload.promise
-	await send()
-	expect(taken()).toBe('true')
-	await send()
-	expect(taken()).toBe('false')
-
-	await act(async () =>
-		reload.resolve(Response.json({ messages: [{ id: 'answer-1', role: 'assistant', content: 'The default answer' }] }))
-	)
-	await waitForUi(() => expect(agenticPosts()).toEqual(['Prompt 1', 'Prompt 2']))
 })

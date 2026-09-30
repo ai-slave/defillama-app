@@ -164,7 +164,7 @@ describe('useDuelStream', () => {
 	test('binds each arm to its persisted message id without rendering it as answer content', () => {
 		const duel = mountDuelStream()
 
-		act(() => duel.current.start('pair-1'))
+		act(() => duel.current.start('pair-1', 'answer-a'))
 		act(() => {
 			duel.current.handleArmEvent({ type: 'arm_message_id', messageId: 'message-a', arm: 'a' })
 			duel.current.handleArmEvent({ type: 'arm_message_id', messageId: 'message-b', arm: 'b' })
@@ -195,7 +195,7 @@ describe('useDuelStream', () => {
 	test('marks only the arm whose response_end arrived as answered', () => {
 		const duel = mountDuelStream()
 
-		act(() => duel.current.start('pair-1'))
+		act(() => duel.current.start('pair-1', 'answer-a'))
 		act(() => {
 			duel.current.handleArmEvent({ type: 'response_chunk', content: 'answer a', arm: 'a' })
 			duel.current.handleArmEvent({ type: 'response_end', arm: 'a' })
@@ -211,7 +211,7 @@ describe('useDuelStream', () => {
 	test('clears arm errors and answers when the next duel starts', () => {
 		const duel = mountDuelStream()
 
-		act(() => duel.current.start('pair-1'))
+		act(() => duel.current.start('pair-1', 'answer-a'))
 		act(() => {
 			duel.current.handleArmEvent({ type: 'error', content: 'arm failed', arm: 'a' })
 			duel.current.handleArmEvent({ type: 'response_end', arm: 'a' })
@@ -220,7 +220,7 @@ describe('useDuelStream', () => {
 		expect(duel.current.a.answered).toBe(true)
 
 		// The server can open the next duel without the page resetting first.
-		act(() => duel.current.start('pair-2'))
+		act(() => duel.current.start('pair-2', 'answer-c'))
 
 		expect(duel.current.a.error).toBeNull()
 		expect(duel.current.a.answered).toBe(false)

@@ -83,6 +83,8 @@ function useDuelArm() {
  */
 export function useDuelStream() {
 	const [pairId, setPairId] = useState<string | null>(null)
+	/** The execution whose stream delivered `duel_start`. Any other execution streaming in the chat ends the duel. */
+	const [ownerExecutionId, setOwnerExecutionId] = useState<string | null>(null)
 	const [ready, setReady] = useState(false)
 	const armA = useDuelArm()
 	const armB = useDuelArm()
@@ -95,8 +97,9 @@ export function useDuelStream() {
 	const resetB = armB.reset
 
 	const start = useCallback(
-		(nextPairId: string) => {
+		(nextPairId: string, executionId: string) => {
 			setPairId(nextPairId)
+			setOwnerExecutionId(executionId)
 			setReady(false)
 			startA()
 			startB()
@@ -116,10 +119,11 @@ export function useDuelStream() {
 
 	const reset = useCallback(() => {
 		setPairId(null)
+		setOwnerExecutionId(null)
 		setReady(false)
 		resetA()
 		resetB()
 	}, [resetA, resetB])
 
-	return { pairId, ready, a: armA.arm, b: armB.arm, start, markReady, handleArmEvent, reset }
+	return { pairId, ownerExecutionId, ready, a: armA.arm, b: armB.arm, start, markReady, handleArmEvent, reset }
 }

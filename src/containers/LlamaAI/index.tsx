@@ -112,6 +112,7 @@ import {
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
 import type { AgenticAnswerMode, FreeLimitOffer, Message } from '~/containers/LlamaAI/types'
+import { insertAbandonedDuelAnswer } from '~/containers/LlamaAI/utils/abandonedDuel'
 import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import { shouldFocusComposerOnSessionChange } from '~/containers/LlamaAI/utils/composerFocus'
 import { shouldQueuePrompt } from '~/containers/LlamaAI/utils/composerSubmit'
@@ -340,6 +341,7 @@ export function AgenticChat({
 
 	const duelStream = useDuelStream()
 	const duelPairId = duelStream.pairId
+	const duelOwnerExecutionId = duelStream.ownerExecutionId
 	const duelMessageIdA = duelStream.a.messageId
 	const duelMessageIdB = duelStream.b.messageId
 	const startDuel = duelStream.start
@@ -1062,6 +1064,23 @@ export function AgenticChat({
 		})
 	}, [])
 
+	// A duel belongs to the execution that emitted `duel_start` and ends once any other execution streams in
+	// this chat: the arms' status derives from the chat's `isStreaming`, and the panel would hide the new answer.
+	// `streamingExecutionId` is null for a prompt that has no execution yet. Both duel answers only ever
+	// lived in the panel; the server already kept one for the thread, so it goes back in without the client
+	// learning which arm that was.
+	const endDuel = useStableCallback((targetSessionId: string, streamingExecutionId: string | null) => {
+		if (!duelPairId || streamingExecutionId === duelOwnerExecutionId) return
+		const armMessageIds = [duelMessageIdA, duelMessageIdB]
+		resetDuel()
+		void restoreCoordinator.run(targetSessionId, async (operation) => {
+			const result = await restoreSession(targetSessionId, 10, undefined, operation.signal).catch(() => null)
+			if (!result || !operation.isCurrent()) return
+			const saved = result.messages.map(mapPersistedMessage)
+			setMessages((current) => insertAbandonedDuelAnswer(current, saved, armMessageIds))
+		})
+	})
+
 	const createChatStreamCallbacks = useStableCallback(
 		({
 			buffer,
@@ -1095,7 +1114,11 @@ export function AgenticChat({
 				setMessageSiblingInfo,
 				deferEmptyDone,
 				notify,
-				onDuelStart: onDuelStart ?? startDuel,
+				onDuelStart: (pairId) => {
+					// Every stream opens with `message_id`, so the execution that owns the duel is known by now.
+					startDuel(pairId, buffer.executionId!)
+					onDuelStart?.(pairId)
+				},
 				onArmEvent: handleDuelArmEvent,
 				onDuelReady: markDuelReady,
 				onDashboardArtifact: (dashboard) => dispatchDashboardPanel({ type: 'APPEND', value: dashboard }),
@@ -1104,6 +1127,7 @@ export function AgenticChat({
 				onTerminalRequest: (request) => {
 					void respondToTerminalRequest(request, completionSessionId, authorizedFetchCompat)
 				},
+				onMessageIdObserved: (messageId) => endDuel(targetSessionId, messageId),
 				onUserMessageIdObserved: onUserMessageId,
 				onSessionId: (observedSessionId) => {
 					completionSessionId = observedSessionId
@@ -1620,7 +1644,7 @@ export function AgenticChat({
 	})
 
 	// A new prompt waits while an answer is live or a prompt or edit of this chat still runs. Both run past
-	// their stream: a prompt first reloads an abandoned duel, and `done` arrives before the response closes.
+	// their stream: `done` arrives before the response closes.
 	// The stream store and the coordinator answer synchronously, so a second submit in the same tick is refused.
 	const isChatBusy = useCallback(() => {
 		const intent = executionCoordinator.runningIntent()
@@ -1646,23 +1670,12 @@ export function AgenticChat({
 				}
 			}
 
-			const abandonedDuelSessionId = duelPairId ? sessionId : null
+			if (sessionId) endDuel(sessionId, null)
 
 			const execute = async (operation: ExecutionOperation) => {
 				setViewError(null)
 				setPaginationError(null)
 				primeAudio()
-				resetDuel()
-				// Both duel answers only ever lived in the duel panel, never in the message list,
-				// so moving on without choosing would erase that turn from the thread. Reload the
-				// persisted branch instead: the server has already resolved it to the default
-				// answer, and asking for it keeps the client blind to which arm that was.
-				if (abandonedDuelSessionId) {
-					await restoreCoordinator.run(abandonedDuelSessionId, (restore) =>
-						restoreSessionSnapshot(abandonedDuelSessionId, restore)
-					)
-					if (!operation.isCurrent()) return
-				}
 				dispatchStream({ type: 'START_STREAM' })
 				currentMessageIdRef.current = null
 
@@ -1740,10 +1753,7 @@ export function AgenticChat({
 							isCurrent,
 							targetSessionId: currentSessionId!,
 							deferEmptyDone: true,
-							onDuelStart: (pairId) => {
-								startDuel(pairId)
-								trackUmamiEvent('llamaai-duel-shown')
-							},
+							onDuelStart: () => trackUmamiEvent('llamaai-duel-shown'),
 							onSessionId: (id) => {
 								if (!isCurrent()) return
 								adoptResponseSession(id)
@@ -1912,7 +1922,7 @@ export function AgenticChat({
 					}
 				}).finally(() => router.events.off('routeChangeStart', onRouteChangeStart))
 			}
-			// The prompt owns the chat from here until its response closes, including an abandoned duel's reload.
+			// The prompt owns the chat from here until its response closes.
 			// A failure after another request replaced it belongs to nobody and is dropped.
 			void executionCoordinator.run(sessionId, 'prompt', (operation) =>
 				execute(operation).catch((submissionError) => {
@@ -1928,10 +1938,7 @@ export function AgenticChat({
 		[
 			isChatBusy,
 			dispatchStream,
-			startDuel,
-			resetDuel,
-			duelPairId,
-			restoreSessionSnapshot,
+			endDuel,
 			sessionId,
 			authorizedFetchCompat,
 			createSession,
@@ -1944,7 +1951,6 @@ export function AgenticChat({
 			createChatStreamCallbacks,
 			executionCoordinator,
 			adoptQueueSession,
-			restoreCoordinator,
 			recoverExecution,
 			startRecoveryCycle,
 			sessionTitle,
@@ -2184,6 +2190,8 @@ export function AgenticChat({
 			// can only replay from the truncated local history.
 			const isBranchingEdit = !/^(local|persisted|shared)-/.test(messageId)
 
+			// A showing duel stays until the edit's stream names its execution: a refused edit rolls back to the
+			// thread it replaced, and the duel is still open on the server.
 			abortActiveRequest()
 
 			triggerPromptTransition('conversation')

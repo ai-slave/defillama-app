@@ -50,8 +50,7 @@ separate `AbortScope` instances, so they cannot take stream ownership.
 A new prompt starts only when `isChatBusy()` in `index.tsx` is false: no answer
 is live (the stream store) and no prompt or edit operation is running (the
 coordinator's `runningIntent()`). A prompt operation covers more than its
-stream: it reloads an abandoned duel first, and it runs until the response body
-closes, after `done`. A resume or queue operation that is only checking for
+stream: it runs until the response body closes, after `done`. A resume or queue operation that is only checking for
 work does not block a prompt; the prompt replaces it. Both sources answer
 synchronously, so handlers read them directly; never mirror either in a ref.
 
@@ -101,6 +100,17 @@ The stream has two representations by design:
 
 Do not bypass the guarded callbacks in `streamCallbacks.ts` when adding new SSE
 events. Stale request protection belongs there.
+
+A duel belongs to the execution whose stream delivered `duel_start`, and it
+ends when any other execution streams in the chat. Every stream opens with a
+`message_id` that names its execution, so the chat stream callbacks end the
+duel for an edit or a queued, replacement, or resumed execution. A prompt ends
+it when submitted, because a refused prompt stays in the thread. A refused edit
+rolls back to the thread it replaced, and its duel is still open. The arms' status derives from the chat's
+`isStreaming`, which is only right while the duel's own execution streams.
+Ending a duel without a vote puts the answer the server kept for that turn
+back into the thread (`utils/abandonedDuel.ts`), because the duel's answers
+never enter message history.
 
 ## Deep Links
 
